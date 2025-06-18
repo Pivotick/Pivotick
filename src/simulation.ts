@@ -15,17 +15,30 @@ import type { SimulationOptions } from './graph-options'
 
 
 const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
-    d3AlphaMin: 0.01,
-    d3AlphaDecay: 0.0228,
+    d3Alpha: 1.0,
+    d3AlphaMin: 0.0001,
+    d3AlphaDecay: 0.05,
     d3AlphaTarget: 0.3,
-    d3VelocityDecay: 0.4,
-    d3LinkDistance: 30,
+    d3VelocityDecay: 0.5,
+    d3LinkDistance: 20,
     d3ManyBodyStrength: -30,
     d3ManyBodyTheta: 0.9,
-    d3CollideRadius: 10,
+    d3CollideRadius: 12,
     d3CollideStrength: 1,
     d3CollideIterations: 1,
     warmupTicks: 50,
+    // d3Alpha: 1.0,
+    // d3AlphaMin: 0.0001,
+    // d3AlphaDecay: 0.05,
+    // d3AlphaTarget: 0.3,
+    // d3VelocityDecay: 0.4,
+    // d3LinkDistance: 20,
+    // d3ManyBodyStrength: -30,
+    // d3ManyBodyTheta: 0.9,
+    // d3CollideRadius: 10,
+    // d3CollideStrength: 1,
+    // d3CollideIterations: 1,
+    // warmupTicks: 50,
 }
 
 export class Simulation {
@@ -79,7 +92,7 @@ export class Simulation {
         this.simulation.velocityDecay(this.options.d3VelocityDecay)
     }
 
-    update() {
+    public update() {
         // Feed data to force-directed layout
         this.simulation
             .nodes(this.graph.getNodes())
@@ -97,40 +110,53 @@ export class Simulation {
     /**
      * Restart the simulation with rendering on each animation frame.
      */
-    restart() {
-        this.startAnimationLoop(0.5)
+    public restart() {
+        this.engineRunning = true
     }
 
     /**
      * Start the simulation with rendering on each animation frame.
      */
-    start() {
-        this.tick(this.warmupTicks)
-        this.startAnimationLoop(1.0)
+    public start() {
+        this.tick(this.options.warmupTicks)
+        this.engineRunning = true
+        if (this.animationFrameId === null) {
+            this.startAnimationLoop()
+        }
+    }
+
+    /**
+     * Manually stop the simulation and cancel animation frame.
+     */
+    public stop() {
+        if (this.animationFrameId !== null) {
+            cancelAnimationFrame(this.animationFrameId)
+            this.animationFrameId = null
+        }
+        this.simulation.stop()
     }
 
     /**
      * Start the simulation loop with rendering on each animation frame.
      */
-    startAnimationLoop(alpha: number) {
+    private startAnimationLoop() {
         const animate = () => {
             this.animationFrameId = requestAnimationFrame(animate)
             this.simulationTick()
         }
 
         this.engineRunning = true
-        this.simulation.alpha(alpha).restart()
+        this.simulation.alpha(this.options.d3Alpha).restart()
         this.animationFrameId = requestAnimationFrame(animate)
-
-        animate()
     }
 
     /**
      * Evaluate at each tick to update the simulation state and request rendering
      */
-    simulationTick() {
+    private simulationTick() {
+        
         if (this.engineRunning) {
-            if (this.simulation.alpha() < this.options.d3AlphaMin) {
+            if (this.options.d3AlphaMin > 0 && this.simulation.alpha() < this.options.d3AlphaMin) {
                 this.engineRunning = false
                 this.simulation.stop()
             }
@@ -140,31 +166,22 @@ export class Simulation {
     }
 
     /**
-     * Manually stop the simulation and cancel animation frame.
+     * Manually step the simulation
      */
-    stop() {
-        if (this.animationFrameId !== null) {
-            cancelAnimationFrame(this.animationFrameId)
-            this.animationFrameId = null
-        }
-        this.simulation.stop()
-    }
-
-    /**
-     * Manually step the simulation (for external control/testing).
-     */
-    tick(n: number = 1) {
+    public tick(n: number = 1) {
         for (let i = 0; i < n; i++) {
             this.simulation.tick()
         }
     }
 
-    createDragBehavior() {
+    public createDragBehavior() {
         return d3Drag<SVGCircleElement, Node>()
             .on('start', (event, d) => {
                 if (!event.active) {
                     this.restart()
-                    this.simulation.alphaTarget(this.options.d3AlphaTarget)
+                    this.simulation
+                        .alphaTarget(this.options.d3AlphaTarget)
+                        .restart()
                 }
                 d.fx = d.x
                 d.fy = d.y

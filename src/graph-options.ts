@@ -58,28 +58,18 @@ export interface SvgRendererOptions {
 }
 
 export interface SimulationOptions {
-    /** @default 0.001 */
-    d3AlphaMin: number;
-    /** @default 0.0228 */
-    d3AlphaDecay: number;
-    /** @default 0 */
-    d3AlphaTarget: number;
-    /** @default 0.4 */
-    d3VelocityDecay: number;
-    /** @default 30 */
-    d3LinkDistance: number;
-    /** @default -30 */
-    d3ManyBodyStrength: number;
-    /** @default 0.9 */
-    d3ManyBodyTheta: number;
-    /** @default 1 */
-    d3CollideRadius: number;
-    /** @default 1 */
-    d3CollideStrength: number;
-    /** @default 1 */
-    d3CollideIterations: number;
-    /** @default 50 */
-    warmupTicks: number;
+    d3Alpha: number; /** @default 1.0 */
+    d3AlphaMin: number; /** @default 0.001 */
+    d3AlphaDecay: number; /** @default 0.0228 */
+    d3AlphaTarget: number; /** @default 0 */
+    d3VelocityDecay: number; /** @default 0.4 */
+    d3LinkDistance: number; /** @default 30 */
+    d3ManyBodyStrength: number; /** @default -30 */
+    d3ManyBodyTheta: number; /** @default 0.9 */
+    d3CollideRadius: number; /** @default 1 */
+    d3CollideStrength: number; /** @default 1 */
+    d3CollideIterations: number; /** @default 1 */
+    warmupTicks: number; /** @default 50 */
 }
 
 export interface graphData {

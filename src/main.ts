@@ -24,6 +24,7 @@ export function createSampleGraph(): Pivotick {
         simulation: {
             // d3LinkDistance: 100,
             // d3ManyBodyTheta: 0.9
+            // warmupTicks: 500
         },
         callbacks: {
             onNodeSelect: (nodeId) => console.log(`Node selected: ${nodeId}`),
