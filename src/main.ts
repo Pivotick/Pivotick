@@ -12,11 +12,13 @@ export function createSampleGraph(): Pivotick {
         autoResize: true,
         callbacks: {
             onNodeSelect: (nodeId) => console.log(`Node selected: ${nodeId}`),
+        },
+        render: {
             // renderNode: (node: Node, nodeSelection: d3.Selection<SVGCircleElement, Node, null, undefined>): HTMLElement | string | void => {
             //     nodeSelection
             //         .attr("r", 10)
             //         .attr("fill", '#907acc')
-            // },
+            // }
             // renderEdge: (edge: Edge, edgeSelection: d3.Selection<SVGLineElement, Edge, null, undefined>): HTMLElement | string | void => {
             //     edgeSelection
             //         .attr("stroke", "#a07")
@@ -44,6 +46,17 @@ export function createSampleGraph(): Pivotick {
     // setInterval(() => {
     //     addRandomNode(++counter, graph)
     // }, 1000);
+
+    // const N = 300;
+    // const nodes = [...Array(N).keys()].map(i => (new Node(i, { label: `Node ${i}` })))
+    // const edges = [...Array(N).keys()]
+    //     .filter(id => id)
+    //     .map(id => {
+    //         const source = nodes[id]
+    //         const target = nodes[Math.round(Math.random() * (id - 1))]
+    //         return new Edge(`${id}-${target}`, source, target, { relation: 'connects to' })
+    //     })
+    // graph.graphData(nodes, edges)
 
     return graph;
 }

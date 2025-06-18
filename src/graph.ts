@@ -22,8 +22,12 @@ export class Graph {
             layout: 'force-directed',
             ...options,
         };
-        this.renderer = new SvgRenderer(container, this)
-        this.simulation = new Simulation(this)
+
+        this.renderer = new SvgRenderer(this, container, this.options?.render)
+
+        const simulationOptions = {
+        }
+        this.simulation = new Simulation(this, simulationOptions)
 
         this.simulation.start()
         this.renderer.render()
@@ -35,6 +39,25 @@ export class Graph {
 
     onChange() {
         this.simulation?.update()
+    }
+
+    graphData(nodes: Array<Node>, edges: Array<Edge>): void {
+        nodes.forEach(node => {
+            if (this.nodes.has(node.id)) {
+                throw new Error(`Node with id ${node.id} already exists.`);
+            }
+            this.nodes.set(node.id, node)
+        });
+        edges.forEach(edge => {
+            if (this.edges.has(edge.id)) {
+                throw new Error(`Edge with id ${edge.id} already exists.`);
+            }
+            if (!this.nodes.has(edge.from.id) || !this.nodes.has(edge.to.id)) {
+                throw new Error('Both nodes must exist in the graph before adding an edge.');
+            }
+            this.edges.set(edge.id, edge);
+        });
+        this.onChange()
     }
 
     /**

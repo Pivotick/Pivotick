@@ -1,48 +1,66 @@
-import { select as d3Select } from 'd3-selection'
+import { select as d3Select, type Selection } from 'd3-selection'
+import { zoom as d3Zoom, zoomTransform as d3ZoomTransform, type ZoomBehavior } from 'd3-zoom';
 import { Edge } from '../edge';
 import { Node } from '../node';
 import type { Graph } from '../graph';
-import type { GraphCallbacks } from '../graph-options';
+import type { SvgRendererOptions } from '../graph-options';
 
 
-
-export interface SvgRendererOptions {
-    renderNode?: GraphCallbacks['renderNode']
-    renderEdge?: GraphCallbacks['renderEdge']
+const DEFAULT_RENDERER_OPTIONS: SvgRendererOptions = {
+    minZoom: 0.1,
+    maxZoom: 10,
 }
 
 export class SvgRenderer {
     private container: HTMLElement;
     private graph: Graph;
+    private zoom: ZoomBehavior<SVGSVGElement, unknown>;
+
+    private options: SvgRendererOptions
     
     private svgCanvas: SVGSVGElement;
 
-    private svg: d3.Selection<SVGSVGElement, unknown, null, undefined>
-    private edgeGroup: d3.Selection<SVGGElement, unknown, null, undefined>
-    private nodeGroup: d3.Selection<SVGGElement, unknown, null, undefined>
-    private edgeSelection!: d3.Selection<SVGLineElement, Edge, SVGGElement, unknown>;
-    private nodeSelection!: d3.Selection<SVGCircleElement, Node, SVGGElement, unknown>
+    private svg: Selection<SVGSVGElement, unknown, null, undefined>
+    private zoomGroup: Selection<SVGGElement, unknown, null, undefined>
+    private edgeGroup: Selection<SVGGElement, unknown, null, undefined>
+    private nodeGroup: Selection<SVGGElement, unknown, null, undefined>
+    private edgeSelection!: Selection<SVGLineElement, Edge, SVGGElement, unknown>;
+    private nodeSelection!: Selection<SVGCircleElement, Node, SVGGElement, unknown>
 
     private renderNodeCB?: SvgRendererOptions['renderNode'];
     private renderEdgeCB?: SvgRendererOptions['renderEdge'];
 
-    constructor(container: HTMLElement, graph: Graph) {
+    constructor(graph: Graph, container: HTMLElement, options: Partial<SvgRendererOptions>) {
         this.graph = graph;
         this.container = container;
 
-        this.renderNodeCB = this.graph.getOptions()?.callbacks?.renderNode
-        this.renderEdgeCB = this.graph.getOptions()?.callbacks?.renderEdge
+        this.options = {
+            ...DEFAULT_RENDERER_OPTIONS,
+            ...options,
+        }
+
+        this.renderNodeCB = this.options?.renderNode
+        this.renderEdgeCB = this.options?.renderEdge
 
         this.svgCanvas = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
         this.svgCanvas.setAttribute('width', '100%')
-        this.svgCanvas.setAttribute('height', '100%')
+        this.svgCanvas.setAttribute('height', '100%')   
 
         this.container.appendChild(this.svgCanvas)
         this.svg = d3Select(this.svgCanvas)
         
 
-        this.edgeGroup = this.svg.append('g').attr('class', 'edges');
-        this.nodeGroup = this.svg.append('g').attr('class', 'nodes');
+        this.zoomGroup = this.svg.append('g').attr('class', 'zoom-layer');
+        this.edgeGroup = this.zoomGroup.append('g').attr('class', 'edges');
+        this.nodeGroup = this.zoomGroup.append('g').attr('class', 'nodes');
+
+        this.zoom = d3Zoom<SVGSVGElement, unknown>()
+        this.svg.call(this.zoom)
+        this.zoom
+            .scaleExtent([this.options.minZoom, this.options.maxZoom])
+            .on('zoom', (event) => {
+                this.zoomGroup.attr('transform', event.transform);
+            })
     }
 
     getCanvas(): SVGSVGElement {
@@ -50,10 +68,6 @@ export class SvgRenderer {
     }
 
     render(): void {
-        this._render()
-    }
-
-    _render(): void {
         this.renderEdges() // Render edges first so nodes are drawn on top of them
         this.renderNodes()
     }
@@ -65,20 +79,27 @@ export class SvgRenderer {
             .attr("stroke", "#fff")
             .attr("stroke-width", 2)
             .selectAll<SVGCircleElement, Node>('circle')
-        
+
+        const that = this
         this.nodeSelection
             .data(nodes)
             .join(
-                enter => enter.append('circle'),
-                update => update,
+                (enter) => enter
+                    .append('circle')
+                    .each(function (this: SVGCircleElement, node: Node) {
+                        const theNodeSelection = d3Select<SVGCircleElement, Node>(this)
+                        that.renderNode(theNodeSelection, node)
+                    }),
+                update => update
+                    .each(function (this: SVGCircleElement, node: Node) {
+                        const theNodeSelection = d3Select<SVGCircleElement, Node>(this);
+                        that.renderNode(theNodeSelection, node);
+                    }),
                 exit => exit.remove()
             )
 
-        const that = this
-        this.nodeSelection.each(function (this: SVGCircleElement, node: Node) {
-            const theNodeSelection = d3Select<SVGCircleElement, Node>(this)
-            that.renderNode(theNodeSelection, node)
-        })
+        this.nodeSelection.call(this.graph.simulation.createDragBehavior())
+
 
         this.nodeSelection
             .attr("cx", (d: Node) => d.x ?? 0)
@@ -111,7 +132,7 @@ export class SvgRenderer {
             .attr("y2", (d: Edge) => d.to.y ?? 0)
     }
 
-    renderNode(theNodeSelection: d3.Selection<SVGCircleElement, Node, null, undefined>, node: Node): void {
+    renderNode(theNodeSelection: Selection<SVGCircleElement, Node, null, undefined>, node: Node): void {
         if (this.renderNodeCB) {
             const rendered = this?.renderNodeCB?.(node, theNodeSelection)
             const fo = theNodeSelection.append('foreignObject')
@@ -125,13 +146,13 @@ export class SvgRenderer {
             }
             // In here, we could add support of other lightweight framework such as jQuery, Vue.js, ..
         } else {
-            this.nodeSelection
+            theNodeSelection
                 .attr("r", 10)
                 .attr("fill", '#007acc')
         }
     }
 
-    renderEdge(theEdgeSelection: d3.Selection<SVGLineElement, Edge, null, undefined>, edge: Edge): void {
+    renderEdge(theEdgeSelection: Selection<SVGLineElement, Edge, null, undefined>, edge: Edge): void {
         if (this.renderEdgeCB) {
             const rendered = this?.renderEdgeCB?.(edge, theEdgeSelection)
             const fo = theEdgeSelection.append('foreignObject')

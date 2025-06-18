@@ -1,3 +1,4 @@
+import { type Selection } from 'd3-selection'
 import { Node } from "./node";
 import { Edge } from "./edge";
 
@@ -18,13 +19,13 @@ export interface GraphCallbacks {
      * Custom renderer for nodes.
      * Receives node data and should return HTML or SVG element or string or directly calling d3 methods on the selection.
      */
-    renderNode?: (node: Node, nodeSelection: d3.Selection<SVGCircleElement, Node, null, undefined>) => HTMLElement | string | void;
+    renderNode?: (node: Node, nodeSelection: Selection<SVGCircleElement, Node, null, undefined>) => HTMLElement | string | void;
 
     /**
      * Custom renderer for edges.
      * Receives edge data and should return HTML or SVG element or string or directly calling d3 methods on the selection.
      */
-    renderEdge?: (edge: Edge, nodeSelection: d3.Selection<SVGLineElement, Edge, null, undefined>) => HTMLElement | string | void;
+    renderEdge?: (edge: Edge, nodeSelection: Selection<SVGLineElement, Edge, null, undefined>) => HTMLElement | string | void;
 
     /**
      * Called when a node is expanded (e.g., drilled down or pivoted).
@@ -47,7 +48,23 @@ export interface GraphCallbacks {
     onEdgeHover?: (edgeId: string) => void;
 }
 
+export interface SvgRendererOptions {
+    renderNode?: Function;
+    renderEdge?: Function;
+    /** @default 0.1 */
+    minZoom: number;
+    /** @default 10 */
+    maxZoom: number;
+}
+
+
 export interface GraphOptions {
+    /**
+     * Options for the rendering engine
+     */
+    render?: Partial<SvgRendererOptions>
+
+
     /**
      * Automatically resize graph container when its parent container size changes.
      * Default: true
