@@ -1,11 +1,11 @@
-import { Pivotick, Node, Edge } from './index';
+import { Pivotick, Node, Edge } from './index'
 
 /**
  * Example of creating a graph instance and adding nodes/edges.
  * This is just a simple demo usage; your users will build on this.
  */
 export function createSampleGraph(): Pivotick {
-    const container = document.getElementById('app')!;
+    const container = document.getElementById('app')!
     const graph = new Pivotick(container, {
         width: 600,
         height: 400,
@@ -26,21 +26,21 @@ export function createSampleGraph(): Pivotick {
             //         .attr("stroke-width", 1)
             // },
         }
-    });
+    })
 
-    const nodeA = new Node('A', { label: 'Node A' });
-    const nodeB = new Node('B', { label: 'Node B' });
-    const nodeC = new Node('C', { label: 'Node C' });
+    const nodeA = new Node('A', { label: 'Node A' })
+    const nodeB = new Node('B', { label: 'Node B' })
+    const nodeC = new Node('C', { label: 'Node C' })
 
-    graph.addNode(nodeA);
-    graph.addNode(nodeB);
-    graph.addNode(nodeC);
+    graph.addNode(nodeA)
+    graph.addNode(nodeB)
+    graph.addNode(nodeC)
 
-    const edgeAB = new Edge('AB', nodeA, nodeB, { relation: 'connects to' });
-    const edgeBC = new Edge('BC', nodeB, nodeC, { relation: 'connects to' });
+    const edgeAB = new Edge('AB', nodeA, nodeB, { relation: 'connects to' })
+    const edgeBC = new Edge('BC', nodeB, nodeC, { relation: 'connects to' })
 
-    graph.addEdge(edgeAB);
-    graph.addEdge(edgeBC);
+    graph.addEdge(edgeAB)
+    graph.addEdge(edgeBC)
 
     // let counter = 1;
     // setInterval(() => {
@@ -58,19 +58,19 @@ export function createSampleGraph(): Pivotick {
     //     })
     // graph.graphData(nodes, edges)
 
-    return graph;
+    return graph
 }
 
 function addRandomNode(counter: number, graph: Pivotick) {
-    const newNode = new Node(`N${Date.now()}ID${counter}`, { label: `Node ${counter}` });
+    const newNode = new Node(`N${Date.now()}ID${counter}`, { label: `Node ${counter}` })
 
-    const existingNodes = graph.getNodes();
-    const randomNode = existingNodes[Math.floor(Math.random() * existingNodes.length)];
+    const existingNodes = graph.getNodes()
+    const randomNode = existingNodes[Math.floor(Math.random() * existingNodes.length)]
 
-    const newEdge = new Edge(`E${Date.now()}ID${counter}`, randomNode, newNode, { relation: 'auto-linked' });
+    const newEdge = new Edge(`E${Date.now()}ID${counter}`, randomNode, newNode, { relation: 'auto-linked' })
 
-    graph.addNode(newNode);
-    graph.addEdge(newEdge);
+    graph.addNode(newNode)
+    graph.addEdge(newEdge)
 }
 
 createSampleGraph()

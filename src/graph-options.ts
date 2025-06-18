@@ -1,6 +1,6 @@
 import { type Selection } from 'd3-selection'
-import { Node } from "./node";
-import { Edge } from "./edge";
+import { Node } from './node'
+import { Edge } from './edge'
 
 export interface GraphCallbacks {
     /**
@@ -49,8 +49,8 @@ export interface GraphCallbacks {
 }
 
 export interface SvgRendererOptions {
-    renderNode?: Function;
-    renderEdge?: Function;
+    renderNode?: (node: Node, nodeSelection: Selection<SVGCircleElement, Node, null, undefined>) => HTMLElement | string | void;
+    renderEdge?: (edge: Edge, nodeSelection: Selection<SVGLineElement, Edge, null, undefined>) => HTMLElement | string | void;
     /** @default 0.1 */
     minZoom: number;
     /** @default 10 */

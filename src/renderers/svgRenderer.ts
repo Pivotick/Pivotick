@@ -1,9 +1,9 @@
 import { select as d3Select, type Selection } from 'd3-selection'
-import { zoom as d3Zoom, zoomTransform as d3ZoomTransform, type ZoomBehavior } from 'd3-zoom';
-import { Edge } from '../edge';
-import { Node } from '../node';
-import type { Graph } from '../graph';
-import type { SvgRendererOptions } from '../graph-options';
+import { zoom as d3Zoom, zoomTransform as d3ZoomTransform, type ZoomBehavior } from 'd3-zoom'
+import { Edge } from '../edge'
+import { Node } from '../node'
+import type { Graph } from '../graph'
+import type { SvgRendererOptions } from '../graph-options'
 
 
 const DEFAULT_RENDERER_OPTIONS: SvgRendererOptions = {
@@ -12,27 +12,27 @@ const DEFAULT_RENDERER_OPTIONS: SvgRendererOptions = {
 }
 
 export class SvgRenderer {
-    private container: HTMLElement;
-    private graph: Graph;
-    private zoom: ZoomBehavior<SVGSVGElement, unknown>;
+    private container: HTMLElement
+    private graph: Graph
+    private zoom: ZoomBehavior<SVGSVGElement, unknown>
 
     private options: SvgRendererOptions
     
-    private svgCanvas: SVGSVGElement;
+    private svgCanvas: SVGSVGElement
 
     private svg: Selection<SVGSVGElement, unknown, null, undefined>
     private zoomGroup: Selection<SVGGElement, unknown, null, undefined>
     private edgeGroup: Selection<SVGGElement, unknown, null, undefined>
     private nodeGroup: Selection<SVGGElement, unknown, null, undefined>
-    private edgeSelection!: Selection<SVGLineElement, Edge, SVGGElement, unknown>;
+    private edgeSelection!: Selection<SVGLineElement, Edge, SVGGElement, unknown>
     private nodeSelection!: Selection<SVGCircleElement, Node, SVGGElement, unknown>
 
-    private renderNodeCB?: SvgRendererOptions['renderNode'];
-    private renderEdgeCB?: SvgRendererOptions['renderEdge'];
+    private renderNodeCB?: SvgRendererOptions['renderNode']
+    private renderEdgeCB?: SvgRendererOptions['renderEdge']
 
     constructor(graph: Graph, container: HTMLElement, options: Partial<SvgRendererOptions>) {
-        this.graph = graph;
-        this.container = container;
+        this.graph = graph
+        this.container = container
 
         this.options = {
             ...DEFAULT_RENDERER_OPTIONS,
@@ -50,16 +50,16 @@ export class SvgRenderer {
         this.svg = d3Select(this.svgCanvas)
         
 
-        this.zoomGroup = this.svg.append('g').attr('class', 'zoom-layer');
-        this.edgeGroup = this.zoomGroup.append('g').attr('class', 'edges');
-        this.nodeGroup = this.zoomGroup.append('g').attr('class', 'nodes');
+        this.zoomGroup = this.svg.append('g').attr('class', 'zoom-layer')
+        this.edgeGroup = this.zoomGroup.append('g').attr('class', 'edges')
+        this.nodeGroup = this.zoomGroup.append('g').attr('class', 'nodes')
 
         this.zoom = d3Zoom<SVGSVGElement, unknown>()
         this.svg.call(this.zoom)
         this.zoom
             .scaleExtent([this.options.minZoom, this.options.maxZoom])
             .on('zoom', (event) => {
-                this.zoomGroup.attr('transform', event.transform);
+                this.zoomGroup.attr('transform', event.transform)
             })
     }
 
@@ -73,27 +73,26 @@ export class SvgRenderer {
     }
 
     renderNodes(): void {
-        const nodes = this.graph.getNodes();
+        const nodes = this.graph.getNodes()
 
         this.nodeSelection = this.nodeGroup
-            .attr("stroke", "#fff")
-            .attr("stroke-width", 2)
+            .attr('stroke', '#fff')
+            .attr('stroke-width', 2)
             .selectAll<SVGCircleElement, Node>('circle')
 
-        const that = this
         this.nodeSelection
             .data(nodes)
             .join(
                 (enter) => enter
                     .append('circle')
-                    .each(function (this: SVGCircleElement, node: Node) {
-                        const theNodeSelection = d3Select<SVGCircleElement, Node>(this)
-                        that.renderNode(theNodeSelection, node)
-                    }),
+                    .each((node: Node, i: number, nodes: ArrayLike<SVGCircleElement>) => {
+                        const selection = d3Select<SVGCircleElement, Node>(nodes[i])
+                        this.renderNode(selection, node)
+                      }),
                 update => update
-                    .each(function (this: SVGCircleElement, node: Node) {
-                        const theNodeSelection = d3Select<SVGCircleElement, Node>(this);
-                        that.renderNode(theNodeSelection, node);
+                    .each((node: Node, i: number, nodes: ArrayLike<SVGCircleElement>) => {
+                        const selection = d3Select<SVGCircleElement, Node>(nodes[i])
+                        this.renderNode(selection, node)
                     }),
                 exit => exit.remove()
             )
@@ -102,8 +101,8 @@ export class SvgRenderer {
 
 
         this.nodeSelection
-            .attr("cx", (d: Node) => d.x ?? 0)
-            .attr("cy", (d: Node) => d.y ?? 0);
+            .attr('cx', (d: Node) => d.x ?? 0)
+            .attr('cy', (d: Node) => d.y ?? 0)
     }
 
     renderEdges(): void {
@@ -114,22 +113,25 @@ export class SvgRenderer {
         this.edgeSelection
             .data(edges)
             .join(
-                enter => enter.append('line'),
-                update => update,
+                (enter) => enter
+                    .append('line')
+                    .each((edge: Edge, i: number, edges: ArrayLike<SVGLineElement>) => {
+                        const selection = d3Select<SVGLineElement, Edge>(edges[i])
+                        this.renderEdge(selection, edge)
+                    }),
+                update => update
+                    .each((edge: Edge, i: number, edges: ArrayLike<SVGLineElement>) => {
+                        const selection = d3Select<SVGLineElement, Edge>(edges[i])
+                        this.renderEdge(selection, edge)
+                    }),
                 exit => exit.remove()
             )
 
-        const that = this
-        this.edgeSelection.each(function (this: SVGLineElement, edge: Edge) {
-            const theEdgeSelection = d3Select<SVGLineElement, Edge>(this)
-            that.renderEdge(theEdgeSelection, edge)
-        })
-
         this.edgeSelection
-            .attr("x1", (d: Edge) => d.from.x ?? 0)
-            .attr("y1", (d: Edge) => d.from.y ?? 0)
-            .attr("x2", (d: Edge) => d.to.x ?? 0)
-            .attr("y2", (d: Edge) => d.to.y ?? 0)
+            .attr('x1', (d: Edge) => d.from.x ?? 0)
+            .attr('y1', (d: Edge) => d.from.y ?? 0)
+            .attr('x2', (d: Edge) => d.to.x ?? 0)
+            .attr('y2', (d: Edge) => d.to.y ?? 0)
     }
 
     renderNode(theNodeSelection: Selection<SVGCircleElement, Node, null, undefined>, node: Node): void {
@@ -140,15 +142,15 @@ export class SvgRenderer {
                 .attr('height', 40)
 
             if (typeof rendered === 'string') {
-                fo.html(rendered);
+                fo.html(rendered)
             } else if (rendered instanceof HTMLElement) {
-                fo.node()?.append(rendered);
+                fo.node()?.append(rendered)
             }
             // In here, we could add support of other lightweight framework such as jQuery, Vue.js, ..
         } else {
             theNodeSelection
-                .attr("r", 10)
-                .attr("fill", '#007acc')
+                .attr('r', 10)
+                .attr('fill', '#007acc')
         }
     }
 
@@ -160,16 +162,16 @@ export class SvgRenderer {
                 .attr('height', 40)
 
             if (typeof rendered === 'string') {
-                fo.html(rendered);
+                fo.html(rendered)
             } else if (rendered instanceof HTMLElement) {
-                fo.node()?.append(rendered);
+                fo.node()?.append(rendered)
             }
             // In here, we could add support of other lightweight framework such as jQuery, Vue.js, ..
         } else {
             theEdgeSelection
-                .attr("stroke", "#999")
-                .attr("stroke-opacity", 0.8)
-                .attr("stroke-width", 2)
+                .attr('stroke', '#999')
+                .attr('stroke-opacity', 0.8)
+                .attr('stroke-width', 2)
         }
     }
 }

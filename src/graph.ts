@@ -1,16 +1,16 @@
-import { Node } from './node';
-import { Edge } from './edge';
-import type { GraphOptions } from './graph-options';
-import { SvgRenderer } from './renderers/svgRenderer';
-import { Simulation } from './simulation';
+import { Node } from './node'
+import { Edge } from './edge'
+import type { GraphOptions } from './graph-options'
+import { SvgRenderer } from './renderers/svgRenderer'
+import { Simulation } from './simulation'
 
 
 export class Graph {
-    private nodes: Map<string, Node> = new Map();
-    private edges: Map<string, Edge> = new Map();
-    public renderer: SvgRenderer;
-    public simulation: Simulation;
-    private options: GraphOptions;
+    private nodes: Map<string, Node> = new Map()
+    private edges: Map<string, Edge> = new Map()
+    public renderer: SvgRenderer
+    public simulation: Simulation
+    private options: GraphOptions
 
     constructor(container: HTMLElement, options?: GraphOptions) {
         this.options = {
@@ -21,7 +21,7 @@ export class Graph {
             enablePan: true,
             layout: 'force-directed',
             ...options,
-        };
+        }
 
         this.renderer = new SvgRenderer(this, container, this.options?.render)
 
@@ -44,19 +44,19 @@ export class Graph {
     graphData(nodes: Array<Node>, edges: Array<Edge>): void {
         nodes.forEach(node => {
             if (this.nodes.has(node.id)) {
-                throw new Error(`Node with id ${node.id} already exists.`);
+                throw new Error(`Node with id ${node.id} already exists.`)
             }
             this.nodes.set(node.id, node)
-        });
+        })
         edges.forEach(edge => {
             if (this.edges.has(edge.id)) {
-                throw new Error(`Edge with id ${edge.id} already exists.`);
+                throw new Error(`Edge with id ${edge.id} already exists.`)
             }
             if (!this.nodes.has(edge.from.id) || !this.nodes.has(edge.to.id)) {
-                throw new Error('Both nodes must exist in the graph before adding an edge.');
+                throw new Error('Both nodes must exist in the graph before adding an edge.')
             }
-            this.edges.set(edge.id, edge);
-        });
+            this.edges.set(edge.id, edge)
+        })
         this.onChange()
     }
 
@@ -66,7 +66,7 @@ export class Graph {
      */
     addNode(node: Node): void {
         if (this.nodes.has(node.id)) {
-            throw new Error(`Node with id ${node.id} already exists.`);
+            throw new Error(`Node with id ${node.id} already exists.`)
         }
         this.nodes.set(node.id, node)
         this.onChange()
@@ -76,20 +76,20 @@ export class Graph {
      * Get a node by its id.
      */
     getNode(id: string): Node | undefined {
-        return this.nodes.get(id);
+        return this.nodes.get(id)
     }
 
     /**
      * Remove a node and its associated edges.
      */
     removeNode(id: string): void {
-        if (!this.nodes.has(id)) return;
-        this.nodes.delete(id);
+        if (!this.nodes.has(id)) return
+        this.nodes.delete(id)
 
         // Remove edges connected to this node
         for (const [edgeId, edge] of this.edges) {
             if (edge.from.id === id || edge.to.id === id) {
-                this.edges.delete(edgeId);
+                this.edges.delete(edgeId)
             }
         }
         this.onChange()
@@ -101,12 +101,12 @@ export class Graph {
      */
     addEdge(edge: Edge): void {
         if (this.edges.has(edge.id)) {
-            throw new Error(`Edge with id ${edge.id} already exists.`);
+            throw new Error(`Edge with id ${edge.id} already exists.`)
         }
         if (!this.nodes.has(edge.from.id) || !this.nodes.has(edge.to.id)) {
-            throw new Error('Both nodes must exist in the graph before adding an edge.');
+            throw new Error('Both nodes must exist in the graph before adding an edge.')
         }
-        this.edges.set(edge.id, edge);
+        this.edges.set(edge.id, edge)
         this.onChange()
     }
 
@@ -114,14 +114,14 @@ export class Graph {
      * Get an edge by id.
      */
     getEdge(id: string): Edge | undefined {
-        return this.edges.get(id);
+        return this.edges.get(id)
     }
 
     /**
      * Remove an edge by id.
      */
     removeEdge(id: string): void {
-        this.edges.delete(id);
+        this.edges.delete(id)
         this.onChange()
     }
 
@@ -129,25 +129,25 @@ export class Graph {
      * Get all nodes in the graph.
      */
     getNodes(): Node[] {
-        return Array.from(this.nodes.values());
+        return Array.from(this.nodes.values())
     }
 
     /**
      * Get all edges in the graph.
      */
     getEdges(): Edge[] {
-        return Array.from(this.edges.values());
+        return Array.from(this.edges.values())
     }
 
     /**
      * Find edges connected to a given node id.
      */
     getEdgesFromNode(nodeId: string): Edge[] {
-        return this.getEdges().filter(edge => edge.from.id === nodeId);
+        return this.getEdges().filter(edge => edge.from.id === nodeId)
     }
 
     getEdgesToNode(nodeId: string): Edge[] {
-        return this.getEdges().filter(edge => edge.to.id === nodeId);
+        return this.getEdges().filter(edge => edge.to.id === nodeId)
     }
 
     render(): void {

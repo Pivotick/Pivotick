@@ -8,16 +8,16 @@ export interface NodeData {
  * Represents a single node (vertex) in a graph.
  */
 export class Node<T = NodeData> {
-    public readonly id: string;
-    private data: T;
+    public readonly id: string
+    private data: T
 
     // Layout/physics properties (optional)
-    x?: number;
-    y?: number;
-    vx?: number;
-    vy?: number;
-    fx?: number;
-    fy?: number;
+    x?: number
+    y?: number
+    vx?: number
+    vy?: number
+    fx?: number
+    fy?: number
 
     /**
      * Create a new Node instance.
@@ -25,15 +25,15 @@ export class Node<T = NodeData> {
      * @param data - Optional data payload associated with the node
      */
     constructor(id: string, data?: T) {
-        this.id = id;
-        this.data = data ?? ({} as T);
+        this.id = id
+        this.data = data ?? ({} as T)
     }
 
     /**
      * Get the node's data.
      */
     getData(): T {
-        return this.data;
+        return this.data
     }
 
     /**
@@ -41,7 +41,7 @@ export class Node<T = NodeData> {
      * @param newData - New data to set
      */
     setData(newData: T): void {
-        this.data = newData;
+        this.data = newData
     }
 
     /**
@@ -50,13 +50,13 @@ export class Node<T = NodeData> {
      * @param partialData - Partial data object to merge
      */
     updateData(partialData: Partial<T>): void {
-        this.data = { ...this.data, ...partialData };
+        this.data = { ...this.data, ...partialData }
     }
 
     /**
      * Convert node to a simple JSON object representation.
      */
-    toJSON(): Object {
+    toJSON(): object {
         return {
             id: this.id,
             x: this.x,
@@ -66,7 +66,7 @@ export class Node<T = NodeData> {
             fx: this.fx,
             fy: this.fy,
             data: this.data,
-        };
+        }
     }
 }
   

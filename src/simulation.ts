@@ -4,12 +4,12 @@ import {
     type ForceLink as d3ForceLinkType,
     forceManyBody as d3ForceManyBody,
     forceCenter as d3ForceCenter
-} from 'd3-force';
+} from 'd3-force'
 import { type Simulation as d3Simulation } from 'd3-force'
-import { drag as d3Drag } from 'd3-drag';
-import type { Graph } from './graph';
-import type { Node } from './node';
-import type { Edge } from './edge';
+import { drag as d3Drag } from 'd3-drag'
+import type { Graph } from './graph'
+import type { Node } from './node'
+import type { Edge } from './edge'
 
 
 interface SimulationOptions {
@@ -69,7 +69,7 @@ export class Simulation {
             .nodes(this.graph.getNodes())
 
         // add links (if link force is still active)
-        const linkForce = this.simulation.force('link');
+        const linkForce = this.simulation.force('link')
         if (linkForce) {
             (linkForce as d3ForceLinkType<Node, Edge>)
                 .id((node) => node.id)
@@ -114,7 +114,7 @@ export class Simulation {
      */
     stop() {
         if (this.animationFrameId !== null) {
-            cancelAnimationFrame(this.animationFrameId);
+            cancelAnimationFrame(this.animationFrameId)
             this.animationFrameId = null
         }
         this.simulation.stop()
@@ -134,22 +134,22 @@ export class Simulation {
             .on('start', (event, d) => {
                 if (!event.active) {
                     this.start()
-                    this.simulation.alphaTarget(0.3);
+                    this.simulation.alphaTarget(0.3)
                 }
-                d.fx = d.x;
-                d.fy = d.y;
+                d.fx = d.x
+                d.fy = d.y
             })
             .on('drag', (event, d) => {
-                d.fx = event.x;
-                d.fy = event.y;
+                d.fx = event.x
+                d.fy = event.y
             })
             .on('end', (event, d) => {
                 if (!event.active) {
                     this.start()
-                    this.simulation.alphaTarget(0);
+                    this.simulation.alphaTarget(0)
                 }
-                d.fx = undefined;
-                d.fy = undefined;
-            });
+                d.fx = undefined
+                d.fy = undefined
+            })
     }
 }

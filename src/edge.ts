@@ -1,4 +1,4 @@
-import { Node } from './node';
+import { Node } from './node'
 
 export interface EdgeData {
     [key: string]: any;
@@ -8,10 +8,10 @@ export interface EdgeData {
  * Represents an edge (connection) between two nodes in a graph.
  */
 export class Edge<T = EdgeData> {
-    public readonly id: string;
-    public readonly from: Node;
-    public readonly to: Node;
-    private data: T;
+    public readonly id: string
+    public readonly from: Node
+    public readonly to: Node
+    private data: T
 
     /**
      * Create a new Edge instance.
@@ -21,25 +21,25 @@ export class Edge<T = EdgeData> {
      * @param data - Optional data payload for the edge
      */
     constructor(id: string, from: Node, to: Node, data?: T) {
-        this.id = id;
-        this.from = from;
-        this.to = to;
-        this.data = data ?? ({} as T);
+        this.id = id
+        this.from = from
+        this.to = to
+        this.data = data ?? ({} as T)
     }
 
     /** Required by d3-force */
     get source(): Node {
-        return this.from;
+        return this.from
     }
     get target(): Node {
-        return this.to;
+        return this.to
     }
 
     /**
      * Get the edge's data.
      */
     getData(): T {
-        return this.data;
+        return this.data
     }
 
     /**
@@ -47,7 +47,7 @@ export class Edge<T = EdgeData> {
      * @param newData - New data to set
      */
     setData(newData: T): void {
-        this.data = newData;
+        this.data = newData
     }
 
     /**
@@ -55,7 +55,7 @@ export class Edge<T = EdgeData> {
      * @param partialData - Partial data object to merge
      */
     updateData(partialData: Partial<T>): void {
-        this.data = { ...this.data, ...partialData };
+        this.data = { ...this.data, ...partialData }
     }
 
     /**
@@ -67,6 +67,6 @@ export class Edge<T = EdgeData> {
             from: this.from.id,
             to: this.to.id,
             data: this.data,
-        };
+        }
     }
 }
