@@ -6,10 +6,25 @@ import { Pivotick, Node, Edge } from './index'
  */
 export function createSampleGraph(): Pivotick {
     const container = document.getElementById('app')!
-    const graph = new Pivotick(container, {
+
+    const N = 300
+    const nodes = [...Array(N).keys()].map(i => (new Node(i, { label: `Node ${i}` })))
+    const edges = [...Array(N).keys()]
+        .filter(id => id)
+        .map(id => {
+            const source = nodes[id]
+            const target = nodes[Math.round(Math.random() * (id - 1))]
+            return new Edge(`${id}-${target}`, source, target, { relation: 'connects to' })
+        })
+
+    const graph = new Pivotick(container, {nodes: nodes, edges: edges}, {
         width: 600,
         height: 400,
         autoResize: true,
+        simulation: {
+            // d3LinkDistance: 100,
+            // d3ManyBodyTheta: 0.9
+        },
         callbacks: {
             onNodeSelect: (nodeId) => console.log(`Node selected: ${nodeId}`),
         },
@@ -28,19 +43,19 @@ export function createSampleGraph(): Pivotick {
         }
     })
 
-    const nodeA = new Node('A', { label: 'Node A' })
-    const nodeB = new Node('B', { label: 'Node B' })
-    const nodeC = new Node('C', { label: 'Node C' })
+    // const nodeA = new Node('A', { label: 'Node A' })
+    // const nodeB = new Node('B', { label: 'Node B' })
+    // const nodeC = new Node('C', { label: 'Node C' })
 
-    graph.addNode(nodeA)
-    graph.addNode(nodeB)
-    graph.addNode(nodeC)
+    // graph.addNode(nodeA)
+    // graph.addNode(nodeB)
+    // graph.addNode(nodeC)
 
-    const edgeAB = new Edge('AB', nodeA, nodeB, { relation: 'connects to' })
-    const edgeBC = new Edge('BC', nodeB, nodeC, { relation: 'connects to' })
+    // const edgeAB = new Edge('AB', nodeA, nodeB, { relation: 'connects to' })
+    // const edgeBC = new Edge('BC', nodeB, nodeC, { relation: 'connects to' })
 
-    graph.addEdge(edgeAB)
-    graph.addEdge(edgeBC)
+    // graph.addEdge(edgeAB)
+    // graph.addEdge(edgeBC)
 
     // let counter = 1;
     // setInterval(() => {

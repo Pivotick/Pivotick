@@ -3,32 +3,29 @@ import {
     forceLink as d3ForceLink,
     type ForceLink as d3ForceLinkType,
     forceManyBody as d3ForceManyBody,
-    forceCenter as d3ForceCenter
+    forceCenter as d3ForceCenter,
+    forceCollide as d3ForceCollide,
 } from 'd3-force'
 import { type Simulation as d3Simulation } from 'd3-force'
 import { drag as d3Drag } from 'd3-drag'
 import type { Graph } from './graph'
 import type { Node } from './node'
 import type { Edge } from './edge'
+import type { SimulationOptions } from './graph-options'
 
-
-interface SimulationOptions {
-    /** @default 0.001 */
-    d3AlphaMin: number;
-    /** @default 0.0228 */
-    d3AlphaDecay: number;
-    /** @default 0 */
-    d3AlphaTarget: number;
-    /** @default 0.4 */
-    d3VelocityDecay: number;
-
-}
 
 const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
-    d3AlphaMin: 0.001,
+    d3AlphaMin: 0.01,
     d3AlphaDecay: 0.0228,
-    d3AlphaTarget: 0,
+    d3AlphaTarget: 0.3,
     d3VelocityDecay: 0.4,
+    d3LinkDistance: 30,
+    d3ManyBodyStrength: -30,
+    d3ManyBodyTheta: 0.9,
+    d3CollideRadius: 10,
+    d3CollideStrength: 1,
+    d3CollideIterations: 1,
+    warmupTicks: 50,
 }
 
 export class Simulation {
@@ -41,6 +38,13 @@ export class Simulation {
 
     private options: SimulationOptions
 
+    private forceSimulation = {
+        link: d3ForceLink(),
+        charge: d3ForceManyBody(),
+        center: d3ForceCenter(),
+        collide: d3ForceCollide(),
+    }
+
     constructor(graph: Graph, options?: Partial<SimulationOptions>) {
         this.graph = graph
         this.options = {
@@ -52,15 +56,27 @@ export class Simulation {
         const canvasBCR = this.canvas.getBoundingClientRect()
 
         this.simulation = d3ForceSimulation<Node>()
-            .force('link', d3ForceLink())
-            .force('charge', d3ForceManyBody())
-            .force('center', d3ForceCenter(canvasBCR.width / 2, canvasBCR.height / 2))
+            .force('link', this.forceSimulation.link)
+            .force('charge', this.forceSimulation.charge)
+            .force('center', this.forceSimulation.center)
+            .force('collide', this.forceSimulation.collide)
+
+        this.forceSimulation.center
+            .x(canvasBCR.width / 2)
+            .y(canvasBCR.height / 2)
+        this.forceSimulation.link.distance(this.options.d3LinkDistance)
+        this.forceSimulation.charge
+            .strength(this.options.d3ManyBodyStrength) 
+            .theta(this.options.d3ManyBodyTheta)
+        this.forceSimulation.collide
+            .radius(this.options.d3CollideRadius)
+            .strength(this.options.d3CollideStrength)
+
 
         this.simulation.alphaMin(this.options.d3AlphaMin)
         this.simulation.alphaDecay(this.options.d3AlphaDecay)
         this.simulation.alphaTarget(this.options.d3AlphaTarget)
         this.simulation.velocityDecay(this.options.d3VelocityDecay)
-
     }
 
     update() {
@@ -68,7 +84,6 @@ export class Simulation {
         this.simulation
             .nodes(this.graph.getNodes())
 
-        // add links (if link force is still active)
         const linkForce = this.simulation.force('link')
         if (linkForce) {
             (linkForce as d3ForceLinkType<Node, Edge>)
@@ -76,20 +91,35 @@ export class Simulation {
                 .links(this.graph.getEdges())
         }
 
-        this.start()
+        this.restart()
+    }
+
+    /**
+     * Restart the simulation with rendering on each animation frame.
+     */
+    restart() {
+        this.startAnimationLoop(0.5)
     }
 
     /**
      * Start the simulation with rendering on each animation frame.
      */
     start() {
+        this.tick(this.warmupTicks)
+        this.startAnimationLoop(1.0)
+    }
+
+    /**
+     * Start the simulation loop with rendering on each animation frame.
+     */
+    startAnimationLoop(alpha: number) {
         const animate = () => {
             this.animationFrameId = requestAnimationFrame(animate)
             this.simulationTick()
         }
 
         this.engineRunning = true
-        this.simulation.alpha(1).restart()
+        this.simulation.alpha(alpha).restart()
         this.animationFrameId = requestAnimationFrame(animate)
 
         animate()
@@ -133,8 +163,8 @@ export class Simulation {
         return d3Drag<SVGCircleElement, Node>()
             .on('start', (event, d) => {
                 if (!event.active) {
-                    this.start()
-                    this.simulation.alphaTarget(0.3)
+                    this.restart()
+                    this.simulation.alphaTarget(this.options.d3AlphaTarget)
                 }
                 d.fx = d.x
                 d.fy = d.y
@@ -145,7 +175,7 @@ export class Simulation {
             })
             .on('end', (event, d) => {
                 if (!event.active) {
-                    this.start()
+                    this.restart()
                     this.simulation.alphaTarget(0)
                 }
                 d.fx = undefined

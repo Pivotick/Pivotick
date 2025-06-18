@@ -1,6 +1,6 @@
 import { Node } from './node'
 import { Edge } from './edge'
-import type { GraphOptions } from './graph-options'
+import type { graphData, GraphOptions } from './graph-options'
 import { SvgRenderer } from './renderers/svgRenderer'
 import { Simulation } from './simulation'
 
@@ -12,7 +12,7 @@ export class Graph {
     public simulation: Simulation
     private options: GraphOptions
 
-    constructor(container: HTMLElement, options?: GraphOptions) {
+    constructor(container: HTMLElement, data?: graphData, options?: GraphOptions) {
         this.options = {
             autoResize: true,
             width: '100%',
@@ -23,11 +23,20 @@ export class Graph {
             ...options,
         }
 
-        this.renderer = new SvgRenderer(this, container, this.options?.render)
+        const rendererOptions = {
+            ...this.options.render
+        }
+        this.renderer = new SvgRenderer(this, container, rendererOptions)
 
         const simulationOptions = {
+            ...this.options.simulation
         }
         this.simulation = new Simulation(this, simulationOptions)
+
+        if (data) {
+            this._setData(data?.nodes, data?.edges)
+            this.simulation?.update()
+        }
 
         this.simulation.start()
         this.renderer.render()
@@ -41,7 +50,12 @@ export class Graph {
         this.simulation?.update()
     }
 
-    graphData(nodes: Array<Node>, edges: Array<Edge>): void {
+    setData(nodes: Array<Node>, edges: Array<Edge>): void {
+        this._setData(nodes, edges)
+        this.onChange()
+    }
+
+    _setData(nodes: Array<Node>, edges: Array<Edge>): void {
         nodes.forEach(node => {
             if (this.nodes.has(node.id)) {
                 throw new Error(`Node with id ${node.id} already exists.`)
@@ -57,7 +71,6 @@ export class Graph {
             }
             this.edges.set(edge.id, edge)
         })
-        this.onChange()
     }
 
     /**
