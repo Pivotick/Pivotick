@@ -12,6 +12,7 @@ import type { Graph } from './graph'
 import type { Node } from './node'
 import type { Edge } from './edge'
 import type { SimulationOptions } from './graph-options'
+import merge from 'lodash.merge'
 
 
 const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
@@ -60,10 +61,7 @@ export class Simulation {
 
     constructor(graph: Graph, options?: Partial<SimulationOptions>) {
         this.graph = graph
-        this.options = {
-            ...DEFAULT_SIMULATION_OPTIONS,
-            ...options,
-        }
+        this.options = merge({}, DEFAULT_SIMULATION_OPTIONS, options)
 
         this.canvas = this.graph.renderer.getCanvas()
         const canvasBCR = this.canvas.getBoundingClientRect()
@@ -118,7 +116,7 @@ export class Simulation {
      * Start the simulation with rendering on each animation frame.
      */
     public start() {
-        this.tick(this.options.warmupTicks)
+        this.simulation.tick(this.options.warmupTicks)
         this.engineRunning = true
         if (this.animationFrameId === null) {
             this.startAnimationLoop()
@@ -165,17 +163,8 @@ export class Simulation {
         }
     }
 
-    /**
-     * Manually step the simulation
-     */
-    public tick(n: number = 1) {
-        for (let i = 0; i < n; i++) {
-            this.simulation.tick()
-        }
-    }
-
     public createDragBehavior() {
-        return d3Drag<SVGCircleElement, Node>()
+        return d3Drag<SVGGElement, Node>()
             .on('start', (event, d) => {
                 if (!event.active) {
                     this.restart()

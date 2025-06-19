@@ -2,7 +2,7 @@ import { type Selection } from 'd3-selection'
 import { Node } from './node'
 import { Edge } from './edge'
 
-export interface GraphCallbacks {
+export interface InterractionCallbacks {
     /**
      * Called when a node is selected by the user.
      * @param nodeId - The ID of the selected node
@@ -14,18 +14,6 @@ export interface GraphCallbacks {
      * @param edgeId - The ID of the selected edge
      */
     onEdgeSelect?: (edgeId: string) => void;
-
-    /**
-     * Custom renderer for nodes.
-     * Receives node data and should return HTML or SVG element or string or directly calling d3 methods on the selection.
-     */
-    renderNode?: (node: Node, nodeSelection: Selection<SVGCircleElement, Node, null, undefined>) => HTMLElement | string | void;
-
-    /**
-     * Custom renderer for edges.
-     * Receives edge data and should return HTML or SVG element or string or directly calling d3 methods on the selection.
-     */
-    renderEdge?: (edge: Edge, nodeSelection: Selection<SVGLineElement, Edge, null, undefined>) => HTMLElement | string | void;
 
     /**
      * Called when a node is expanded (e.g., drilled down or pivoted).
@@ -49,8 +37,23 @@ export interface GraphCallbacks {
 }
 
 export interface SvgRendererOptions {
-    renderNode?: (node: Node, nodeSelection: Selection<SVGCircleElement, Node, null, undefined>) => HTMLElement | string | void;
-    renderEdge?: (edge: Edge, nodeSelection: Selection<SVGLineElement, Edge, null, undefined>) => HTMLElement | string | void;
+    /**
+     * Custom renderer for nodes.
+     * Receives node data and selection, and should return HTML or SVG element or string or directly calling d3 methods on the selection.
+     */
+    renderNode?: (node: Node, nodeSelection: Selection<SVGGElement, Node, null, undefined>) => HTMLElement | string | void;
+    /**
+     * Custom renderer for edges.
+     * Receives edge data and selection, and should return HTML or SVG element or string or directly calling d3 methods on the selection.
+    */
+   renderEdge?: (edge: Edge, nodeSelection: Selection<SVGLineElement, Edge, null, undefined>) => HTMLElement | string | void;
+   defaultNodeStyle?: {
+       shape?: 'circle' | 'square' | 'triangle' | 'hexagon' | string;
+       color?: string;
+       size?: number;
+       strokeColor?: string;
+       strokeWidth?: number;
+   }
     /** @default 0.1 */
     minZoom: number;
     /** @default 10 */
@@ -88,70 +91,46 @@ export interface GraphOptions {
      */
     simulation?: Partial<SimulationOptions>
 
-
     /**
      * Automatically resize graph container when its parent container size changes.
-     * Default: true
+     * @default true
      */
     autoResize?: boolean;
 
     /**
      * Width of the graph container. Can be any valid CSS size string or number (pixels).
-     * Default: '100%'
+     * @default '100%'
      */
     width?: string | number;
 
     /**
      * Height of the graph container. Can be any valid CSS size string or number (pixels).
-     * Default: '100%'
+     * @default '100%'
      */
     height?: string | number;
 
     /**
      * Callbacks to handle various graph events and render hooks.
      */
-    callbacks?: GraphCallbacks;
+    callbacks?: InterractionCallbacks;
 
     /**
      * Enable zooming (scroll wheel, pinch, etc.)
-     * Default: true
+     *@default true
      */
     enableZoom?: boolean;
 
     /**
      * Enable panning (drag to move viewport)
-     * Default: true
+     * @default true
      */
     enablePan?: boolean;
-
-    /**
-     * Minimum zoom scale allowed
-     * Default: 0.1
-     */
-    minZoom?: number;
-
-    /**
-     * Maximum zoom scale allowed
-     * Default: 4
-     */
-    maxZoom?: number;
 
     /**
      * Whether to show node labels by default
      * Default: true
      */
     showLabels?: boolean;
-
-    /**
-     * Default styling options for nodes (e.g., color, size)
-     */
-    defaultNodeStyle?: {
-        color?: string;
-        size?: number;
-        shape?: 'circle' | 'square' | 'triangle' | 'hexagon' | string;
-        borderColor?: string;
-        borderWidth?: number;
-    };
 
     /**
      * Default styling options for edges (e.g., color, width)
@@ -165,13 +144,13 @@ export interface GraphOptions {
 
     /**
      * Whether to allow multi-select (select multiple nodes/edges)
-     * Default: false
+     * @default false
      */
     multiSelect?: boolean;
 
     /**
      * Enable animation on node expansion or layout changes
-     * Default: true
+     * @default true
      */
     animate?: boolean;
 

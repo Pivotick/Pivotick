@@ -7,8 +7,9 @@ import { Pivotick, Node, Edge } from './index'
 export function createSampleGraph(): Pivotick {
     const container = document.getElementById('app')!
 
+    const shapes = ['circle', 'triangle', 'hexagon', 'square', ]
     const N = 300
-    const nodes = [...Array(N).keys()].map(i => (new Node(i, { label: `Node ${i}` })))
+    const nodes = [...Array(N).keys()].map(i => (new Node(i, { label: `Node ${i}` }, { shape: shapes[Math.round(Math.random() * (shapes.length-1))]})))
     const edges = [...Array(N).keys()]
         .filter(id => id)
         .map(id => {
@@ -30,7 +31,10 @@ export function createSampleGraph(): Pivotick {
             onNodeSelect: (nodeId) => console.log(`Node selected: ${nodeId}`),
         },
         render: {
-            // renderNode: (node: Node, nodeSelection: d3.Selection<SVGCircleElement, Node, null, undefined>): HTMLElement | string | void => {
+            // defaultNodeStyle: {
+            //     shape: 'hexagon'
+            // }
+            // renderNode: (node: Node, nodeSelection: d3.Selection<SVGElement, Node, null, undefined>): HTMLElement | string | void => {
             //     nodeSelection
             //         .attr("r", 10)
             //         .attr("fill", '#907acc')

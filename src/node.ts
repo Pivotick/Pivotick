@@ -10,6 +10,7 @@ export interface NodeData {
 export class Node<T = NodeData> {
     public readonly id: string
     private data: T
+    private style: T
 
     // Layout/physics properties (optional)
     x?: number
@@ -24,9 +25,10 @@ export class Node<T = NodeData> {
      * @param id - Unique identifier for the node
      * @param data - Optional data payload associated with the node
      */
-    constructor(id: string, data?: T) {
+    constructor(id: string, data?: T, style?: T) {
         this.id = id
         this.data = data ?? ({} as T)
+        this.style = style ?? ({} as T)
     }
 
     /**
@@ -54,6 +56,31 @@ export class Node<T = NodeData> {
     }
 
     /**
+     * Get the node's data.
+     */
+    getStyle(): T {
+        return this.style
+    }
+
+    /**
+     * Update the node's data.
+     * @param newStyle - New data to set
+     */
+    setStyle(newStyle: T): void {
+        this.style = newStyle
+    }
+
+    /**
+     * Merge partial data into the current node data.
+     * Useful for updating only parts of the data.
+     * @param partialData - Partial data object to merge
+     */
+    updateStyle(partialStyle: Partial<T>): void {
+        this.style = { ...this.style, ...partialStyle }
+    }
+
+
+    /**
      * Convert node to a simple JSON object representation.
      */
     toJSON(): object {
@@ -66,6 +93,7 @@ export class Node<T = NodeData> {
             fx: this.fx,
             fy: this.fy,
             data: this.data,
+            style: this.style,
         }
     }
 }

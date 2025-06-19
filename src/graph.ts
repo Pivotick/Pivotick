@@ -36,6 +36,7 @@ export class Graph {
         if (data) {
             this._setData(data?.nodes, data?.edges)
             this.simulation?.update()
+            this.renderer.init()
         }
 
         this.simulation.start()
