@@ -3,11 +3,11 @@ import { zoom as d3Zoom, zoomTransform as d3ZoomTransform, type ZoomBehavior } f
 import { Edge } from '../edge'
 import { Node } from '../node'
 import type { Graph } from '../graph'
-import type { SvgRendererOptions } from '../graph-options'
+import type { NodeStyle, SvgRendererOptions } from '../graph-options'
 import merge from 'lodash.merge'
 
 
-const DEFAULT_RENDERER_OPTIONS: SvgRendererOptions = {
+const DEFAULT_RENDERER_OPTIONS = {
     minZoom: 0.1,
     maxZoom: 10,
     defaultNodeStyle: {
@@ -17,7 +17,7 @@ const DEFAULT_RENDERER_OPTIONS: SvgRendererOptions = {
         strokeColor: '#fff',
         strokeWidth: 2,
     }
-}
+} satisfies SvgRendererOptions
 
 export class SvgRenderer {
     private container: HTMLElement
@@ -183,56 +183,84 @@ export class SvgRenderer {
     }
 
     private defaultNodeRender(nodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
-        const shape = node.getStyle()?.shape ?? this.options.defaultNodeStyle?.shape
-        let actualShape = shape
-        if (shape == 'square') {
+        let styleFromStyleMap: Partial<NodeStyle> = {}
+        if (this.options.nodeStyleMap && typeof this.options.nodeTypeAccessor === 'function') {
+            const nodeType = this.options.nodeTypeAccessor(node)
+            if (nodeType) {
+                styleFromStyleMap = this.options.nodeStyleMap[nodeType] ?? {}
+            }
+        }
+        const styleFromNode = {
+            shape: node.getStyle()?.shape ?? styleFromStyleMap?.shape,
+            strokeColor: node.getStyle()?.strokeColor ?? styleFromStyleMap?.strokeColor,
+            strokeWidth: node.getStyle()?.strokeWidth ?? styleFromStyleMap?.strokeWidth,
+            size: node.getStyle()?.size ?? styleFromStyleMap?.size,
+            color: node.getStyle()?.color ?? styleFromStyleMap?.color,
+        }
+        const style = this.mergeNodeStylingOptions(styleFromNode)
+        this.genericNodeRender(nodeSelection, style)
+    }
+
+    private mergeNodeStylingOptions(style: Partial<NodeStyle>): NodeStyle {
+        const mergedStyle = {
+            shape: style?.shape ?? this.options.defaultNodeStyle.shape,
+            strokeColor: style?.strokeColor ?? this.options.defaultNodeStyle.strokeColor,
+            strokeWidth: style?.strokeWidth ?? this.options.defaultNodeStyle.strokeWidth,
+            size: style?.size ?? this.options.defaultNodeStyle.size,
+            color: style?.color ?? this.options.defaultNodeStyle.color,
+        }
+        return mergedStyle
+    }
+
+    private genericNodeRender(nodeSelection: Selection<SVGGElement, Node, null, undefined>, style: NodeStyle): void {
+        let actualShape = style.shape
+        if (style.shape == 'square') {
             actualShape = 'rect'
-        } else if (['triangle', 'hexagon', ].includes(shape)) {
+        } else if (['triangle', 'hexagon',].includes(style.shape)) {
             actualShape = 'path'
         }
 
-        const strokeColor = node.getStyle()?.strokeColor ?? this.options.defaultNodeStyle?.strokeColor
-        const strokeWidth = node.getStyle()?.strokeWidth ?? this.options.defaultNodeStyle?.strokeWidth
-        const size = node.getStyle()?.size ?? this.options.defaultNodeStyle?.size
-        const color = node.getStyle()?.size ?? this.options.defaultNodeStyle?.color
-
         const renderedNode = nodeSelection
             .append(actualShape)
-            .attr('stroke', strokeColor)
-            .attr('stroke-width', strokeWidth)
-            .attr('fill', color)
+            .attr('stroke', style.strokeColor)
+            .attr('stroke-width', style.strokeWidth)
+            .attr('fill', style.color)
 
-        switch (shape) {
+        switch (style.shape) {
             case 'circle':
-                renderedNode.attr('r', size)
+                renderedNode.attr('r', style.size)
                 break
             case 'square':
                 renderedNode
-                    .attr('width', size * 2)
-                    .attr('height', size * 2)
-                    .attr('x', -size)
-                    .attr('y', -size)
+                    .attr('width', style.size * 2)
+                    .attr('height', style.size * 2)
+                    .attr('x', -style.size)
+                    .attr('y', -style.size)
                 break
             case 'triangle':
-                { const trianglePath = [
-                    [0, -size],
-                    [size, size],
-                    [-size, size]
-                ].map(p => p.join(',')).join(' ')
-                renderedNode
-                    .attr('d', `M${trianglePath}Z`)
-                    break }
+                {
+                    const trianglePath = [
+                        [0, -style.size],
+                        [style.size, style.size],
+                        [-style.size, style.size]
+                    ].map(p => p.join(',')).join(' ')
+                    renderedNode
+                        .attr('d', `M${trianglePath}Z`)
+                    break
+                }
             case 'hexagon':
-                { const angle = Math.PI / 3 // 60°
-                const hexPoints = Array.from({ length: 6 }, (_, i) => {
-                    const a = angle * i
-                    return [Math.cos(a) * size, Math.sin(a) * size]
-                }).map(p => p.join(',')).join(' ')
-                renderedNode
-                    .attr('d', `M${hexPoints}Z`)
-                break }
+                {
+                    const angle = Math.PI / 3 // 60°
+                    const hexPoints = Array.from({ length: 6 }, (_, i) => {
+                        const a = angle * i
+                        return [Math.cos(a) * style.size, Math.sin(a) * style.size]
+                    }).map(p => p.join(',')).join(' ')
+                    renderedNode
+                        .attr('d', `M${hexPoints}Z`)
+                    break
+                }
             default:
-                renderedNode.attr('r', size)
+                renderedNode.attr('r', style.size)
                 break
         }
     }

@@ -36,6 +36,14 @@ export interface InterractionCallbacks {
     onEdgeHover?: (edgeId: string) => void;
 }
 
+export interface NodeStyle {
+    shape: 'circle' | 'square' | 'triangle' | 'hexagon' | string;
+    color: string;
+    size: number;
+    strokeColor: string;
+    strokeWidth: number;
+}
+
 export interface SvgRendererOptions {
     /**
      * Custom renderer for nodes.
@@ -46,14 +54,10 @@ export interface SvgRendererOptions {
      * Custom renderer for edges.
      * Receives edge data and selection, and should return HTML or SVG element or string or directly calling d3 methods on the selection.
     */
-   renderEdge?: (edge: Edge, nodeSelection: Selection<SVGLineElement, Edge, null, undefined>) => HTMLElement | string | void;
-   defaultNodeStyle?: {
-       shape?: 'circle' | 'square' | 'triangle' | 'hexagon' | string;
-       color?: string;
-       size?: number;
-       strokeColor?: string;
-       strokeWidth?: number;
-   }
+    renderEdge?: (edge: Edge, nodeSelection: Selection<SVGLineElement, Edge, null, undefined>) => HTMLElement | string | void;
+    defaultNodeStyle?: NodeStyle;
+    nodeTypeAccessor?: (node: Node) => string | undefined;
+    nodeStyleMap?: Record<string, NodeStyle>;
     /** @default 0.1 */
     minZoom: number;
     /** @default 10 */

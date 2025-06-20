@@ -7,9 +7,8 @@ import { Pivotick, Node, Edge } from './index'
 export function createSampleGraph(): Pivotick {
     const container = document.getElementById('app')!
 
-    const shapes = ['circle', 'triangle', 'hexagon', 'square', ]
     const N = 300
-    const nodes = [...Array(N).keys()].map(i => (new Node(i, { label: `Node ${i}` }, { shape: shapes[Math.round(Math.random() * (shapes.length-1))]})))
+    const nodes = [...Array(N).keys()].map(i => (new Node(i, { label: `Node ${i}`, type: Math.random() < 0.8 ? 'leaf' : 'hub' })))
     const edges = [...Array(N).keys()]
         .filter(id => id)
         .map(id => {
@@ -31,6 +30,11 @@ export function createSampleGraph(): Pivotick {
             onNodeSelect: (nodeId) => console.log(`Node selected: ${nodeId}`),
         },
         render: {
+            // nodeTypeAccessor: (node: Node) => node.getData()?.type,
+            // nodeStyleMap: {
+            //     'hub': { shape: 'hexagon', color: '#aaa', size: 30 },
+            //     'leaf': { shape: 'triangle', color: '#f00' },
+            // }
             // defaultNodeStyle: {
             //     shape: 'hexagon'
             // }
