@@ -1,9 +1,9 @@
 import { select as d3Select, type Selection } from 'd3-selection'
-import { zoom as d3Zoom, zoomTransform as d3ZoomTransform, type ZoomBehavior } from 'd3-zoom'
+import { zoom as d3Zoom, type ZoomBehavior } from 'd3-zoom'
 import { Edge } from '../edge'
 import { Node } from '../node'
 import type { Graph } from '../graph'
-import type { NodeStyle, SvgRendererOptions } from '../graph-options'
+import type { EdgeStyle, NodeStyle, SvgRendererOptions } from '../graph-options'
 import merge from 'lodash.merge'
 
 
@@ -16,7 +16,12 @@ const DEFAULT_RENDERER_OPTIONS = {
         size: 10,
         strokeColor: '#fff',
         strokeWidth: 2,
-    }
+    },
+    defaultEdgeStyle: {
+        strokeColor: '#999',
+        strokeWidth: 2,
+        opacity: 0.8,
+    },
 } satisfies SvgRendererOptions
 
 export class SvgRenderer {
@@ -44,10 +49,6 @@ export class SvgRenderer {
         this.graph = graph
         this.container = container
 
-        // this.options = {
-        //     ...DEFAULT_RENDERER_OPTIONS,
-        //     ...options,
-        // }
         this.options = merge({}, DEFAULT_RENDERER_OPTIONS, options)
 
         this.renderNodeCB = this.options?.renderNode
@@ -175,10 +176,7 @@ export class SvgRenderer {
             }
             // In here, we could add support of other lightweight framework such as jQuery, Vue.js, ..
         } else {
-            theEdgeSelection
-                .attr('stroke', '#999')
-                .attr('stroke-opacity', 0.8)
-                .attr('stroke-width', 2)
+            this.defaultEdgeRender(theEdgeSelection, edge)
         }
     }
 
@@ -263,5 +261,31 @@ export class SvgRenderer {
                 renderedNode.attr('r', style.size)
                 break
         }
+    }
+
+    private defaultEdgeRender(edgeSelection: Selection<SVGLineElement, Edge, null, undefined>, edge: Edge): void {
+        const styleFromEdge = {
+            strokeColor: edge.getStyle()?.strokeColor,
+            strokeWidth: edge.getStyle()?.strokeWidth,
+            opacity: edge.getStyle()?.color,
+        }
+        const style = this.mergeEdgeStylingOptions(styleFromEdge)
+        this.genericEdgeRender(edgeSelection, style)
+    }
+
+    private mergeEdgeStylingOptions(style: Partial<EdgeStyle>): EdgeStyle {
+        const mergedStyle = {
+            strokeColor: style?.strokeColor ?? this.options.defaultEdgeStyle.strokeColor,
+            strokeWidth: style?.strokeWidth ?? this.options.defaultEdgeStyle.strokeWidth,
+            opacity: style?.opacity ?? this.options.defaultEdgeStyle.opacity,
+        }
+        return mergedStyle
+    }
+
+    private genericEdgeRender(edgeSelection: Selection<SVGLineElement, Edge, null, undefined>, style: EdgeStyle): void {
+        edgeSelection
+            .attr('stroke', style.strokeColor)
+            .attr('stroke-width', style.strokeWidth)
+            .attr('stroke-opacity', style.opacity)
     }
 }

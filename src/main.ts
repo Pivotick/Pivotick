@@ -22,12 +22,15 @@ export function createSampleGraph(): Pivotick {
         height: 400,
         autoResize: true,
         simulation: {
-            // d3LinkDistance: 100,
-            // d3ManyBodyTheta: 0.9
             // warmupTicks: 500
         },
         callbacks: {
             onNodeSelect: (nodeId) => console.log(`Node selected: ${nodeId}`),
+            // onEdgeSelect?: (edgeId: string) => void,
+            // nodeExpansion?: (nodeId: string) => void,
+            // onRenderComplete?: () => void,
+            // onNodeHover?: (nodeId: string) => void,
+            // onEdgeHover?: (edgeId: string) => void,
         },
         render: {
             // nodeTypeAccessor: (node: Node) => node.getData()?.type,
@@ -51,37 +54,6 @@ export function createSampleGraph(): Pivotick {
             // },
         }
     })
-
-    // const nodeA = new Node('A', { label: 'Node A' })
-    // const nodeB = new Node('B', { label: 'Node B' })
-    // const nodeC = new Node('C', { label: 'Node C' })
-
-    // graph.addNode(nodeA)
-    // graph.addNode(nodeB)
-    // graph.addNode(nodeC)
-
-    // const edgeAB = new Edge('AB', nodeA, nodeB, { relation: 'connects to' })
-    // const edgeBC = new Edge('BC', nodeB, nodeC, { relation: 'connects to' })
-
-    // graph.addEdge(edgeAB)
-    // graph.addEdge(edgeBC)
-
-    // let counter = 1;
-    // setInterval(() => {
-    //     addRandomNode(++counter, graph)
-    // }, 1000);
-
-    // const N = 300;
-    // const nodes = [...Array(N).keys()].map(i => (new Node(i, { label: `Node ${i}` })))
-    // const edges = [...Array(N).keys()]
-    //     .filter(id => id)
-    //     .map(id => {
-    //         const source = nodes[id]
-    //         const target = nodes[Math.round(Math.random() * (id - 1))]
-    //         return new Edge(`${id}-${target}`, source, target, { relation: 'connects to' })
-    //     })
-    // graph.graphData(nodes, edges)
-
     return graph
 }
 

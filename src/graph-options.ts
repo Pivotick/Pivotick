@@ -44,6 +44,12 @@ export interface NodeStyle {
     strokeWidth: number;
 }
 
+export interface EdgeStyle {
+    strokeColor: string;
+    strokeWidth: number;
+    opacity: number,
+}
+
 export interface SvgRendererOptions {
     /**
      * Custom renderer for nodes.
@@ -56,6 +62,7 @@ export interface SvgRendererOptions {
     */
     renderEdge?: (edge: Edge, nodeSelection: Selection<SVGLineElement, Edge, null, undefined>) => HTMLElement | string | void;
     defaultNodeStyle?: NodeStyle;
+    defaultEdgeStyle?: EdgeStyle;
     nodeTypeAccessor?: (node: Node) => string | undefined;
     nodeStyleMap?: Record<string, NodeStyle>;
     /** @default 0.1 */

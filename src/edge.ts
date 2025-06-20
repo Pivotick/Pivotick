@@ -12,6 +12,7 @@ export class Edge<T = EdgeData> {
     public readonly from: Node
     public readonly to: Node
     private data: T
+    private style: T
 
     /**
      * Create a new Edge instance.
@@ -20,11 +21,12 @@ export class Edge<T = EdgeData> {
      * @param to - Target node
      * @param data - Optional data payload for the edge
      */
-    constructor(id: string, from: Node, to: Node, data?: T) {
+    constructor(id: string, from: Node, to: Node, data?: T, style?: T) {
         this.id = id
         this.from = from
         this.to = to
         this.data = data ?? ({} as T)
+        this.style = style ?? ({} as T)
     }
 
     /** Required by d3-force */
@@ -56,6 +58,30 @@ export class Edge<T = EdgeData> {
      */
     updateData(partialData: Partial<T>): void {
         this.data = { ...this.data, ...partialData }
+    }
+
+    /**
+     * Get the node's data.
+     */
+    getStyle(): T {
+        return this.style
+    }
+
+    /**
+     * Update the node's data.
+     * @param newStyle - New data to set
+     */
+    setStyle(newStyle: T): void {
+        this.style = newStyle
+    }
+
+    /**
+     * Merge partial data into the current node data.
+     * Useful for updating only parts of the data.
+     * @param partialData - Partial data object to merge
+     */
+    updateStyle(partialStyle: Partial<T>): void {
+        this.style = { ...this.style, ...partialStyle }
     }
 
     /**
