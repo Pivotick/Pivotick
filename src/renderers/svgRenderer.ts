@@ -188,12 +188,17 @@ export class SvgRenderer {
                 styleFromStyleMap = this.options.nodeStyleMap[nodeType] ?? {}
             }
         }
-        const styleFromNode = {
-            shape: node.getStyle()?.shape ?? styleFromStyleMap?.shape,
-            strokeColor: node.getStyle()?.strokeColor ?? styleFromStyleMap?.strokeColor,
-            strokeWidth: node.getStyle()?.strokeWidth ?? styleFromStyleMap?.strokeWidth,
-            size: node.getStyle()?.size ?? styleFromStyleMap?.size,
-            color: node.getStyle()?.color ?? styleFromStyleMap?.color,
+        let styleFromNode
+        if (node.getStyle()?.styleCb) {
+            styleFromNode = node.getStyle().styleCb(node)
+        } else {
+            styleFromNode = {
+                shape: node.getStyle()?.shape ?? styleFromStyleMap?.shape,
+                strokeColor: node.getStyle()?.strokeColor ?? styleFromStyleMap?.strokeColor,
+                strokeWidth: node.getStyle()?.strokeWidth ?? styleFromStyleMap?.strokeWidth,
+                size: node.getStyle()?.size ?? styleFromStyleMap?.size,
+                color: node.getStyle()?.color ?? styleFromStyleMap?.color,
+            }
         }
         const style = this.mergeNodeStylingOptions(styleFromNode)
         this.genericNodeRender(nodeSelection, style)

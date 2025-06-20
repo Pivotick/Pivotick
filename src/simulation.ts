@@ -21,8 +21,9 @@ const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
     d3AlphaDecay: 0.05,
     d3AlphaTarget: 0.3,
     d3VelocityDecay: 0.5,
-    d3LinkDistance: 10,
-    d3ManyBodyStrength: -30,
+    d3LinkDistance: 0,
+    d3LinkStrength: 1,
+    d3ManyBodyStrength: -50,
     d3ManyBodyTheta: 0.9,
     d3CollideRadius: 12,
     d3CollideStrength: 1,
@@ -67,6 +68,9 @@ export class Simulation {
             .x(canvasBCR.width / 2)
             .y(canvasBCR.height / 2)
         this.forceSimulation.link.distance(this.options.d3LinkDistance)
+        if (this.options.d3LinkStrength) {
+            this.forceSimulation.link.strength(this.options.d3LinkStrength)
+        }
         this.forceSimulation.charge
             .strength(this.options.d3ManyBodyStrength) 
             .theta(this.options.d3ManyBodyTheta)

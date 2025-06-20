@@ -8,7 +8,16 @@ export function createSampleGraph(): Pivotick {
     const container = document.getElementById('app')!
 
     const N = 300
-    const nodes = [...Array(N).keys()].map(i => (new Node(i, { label: `Node ${i}`, type: Math.random() < 0.8 ? 'leaf' : 'hub' })))
+    const nodes = [...Array(N).keys()].map(i => (
+        new Node(i.toString(),
+            {
+                label: `Node ${i}`,
+                type: Math.random() < 0.8 ? 'leaf' : 'hub'
+            },
+            {
+            }
+        )
+    ))
     const edges = [...Array(N).keys()]
         .filter(id => id)
         .map(id => {
@@ -25,12 +34,11 @@ export function createSampleGraph(): Pivotick {
             // warmupTicks: 500
         },
         callbacks: {
-            onNodeSelect: (nodeId) => console.log(`Node selected: ${nodeId}`),
-            // onEdgeSelect?: (edgeId: string) => void,
-            // nodeExpansion?: (nodeId: string) => void,
-            // onRenderComplete?: () => void,
-            // onNodeHover?: (nodeId: string) => void,
-            // onEdgeHover?: (edgeId: string) => void,
+            onNodeSelect: (nodeId) => console.log(`onNodeSelect: ${nodeId}`),
+            onEdgeSelect: (edgeId: string) => console.log(`onEdgeSelect: ${edgeId}`),
+            nodeExpansion: (nodeId: string) => console.log(`nodeExpansion: ${nodeId}`),
+            onNodeHover: (nodeId: string) => console.log(`onNodeHover: ${nodeId}`),
+            onEdgeHover: (edgeId: string) => console.log(`onEdgeHover: ${edgeId}`),
         },
         render: {
             // nodeTypeAccessor: (node: Node) => node.getData()?.type,

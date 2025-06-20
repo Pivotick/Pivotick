@@ -21,11 +21,6 @@ export interface InterractionCallbacks {
     nodeExpansion?: (nodeId: string) => void;
 
     /**
-     * Called when the graph is fully rendered or updated.
-     */
-    onRenderComplete?: () => void;
-
-    /**
      * Called when a user hovers over a node.
      */
     onNodeHover?: (nodeId: string) => void;
@@ -42,6 +37,7 @@ export interface NodeStyle {
     size: number;
     strokeColor: string;
     strokeWidth: number;
+    styleCb?: (node: Node) => Partial<NodeStyle>
 }
 
 export interface EdgeStyle {
@@ -78,6 +74,7 @@ export interface SimulationOptions {
     d3AlphaTarget: number; /** @default 0 */
     d3VelocityDecay: number; /** @default 0.4 */
     d3LinkDistance: number; /** @default 30 */
+    d3LinkStrength: number | null; /** @default null */
     d3ManyBodyStrength: number; /** @default -30 */
     d3ManyBodyTheta: number; /** @default 0.9 */
     d3CollideRadius: number; /** @default 1 */
