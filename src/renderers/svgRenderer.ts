@@ -132,6 +132,10 @@ export class SvgRenderer {
         return this.svgCanvas
     }
 
+    public getCanvasSelection(): Selection<SVGSVGElement, unknown, null, undefined> {
+        return this.svg
+    }
+
     public render(): void {
         this.renderEdges() // Render edges first so nodes are drawn on top of them
         this.renderNodes()

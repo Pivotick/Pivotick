@@ -34,13 +34,14 @@ export function createSampleGraph(): Pivotick {
             // warmupTicks: 500
         },
         callbacks: {
-            onNodeClick: (e, node) => console.log(`onNodeClick: ${node.id}`),
-            onNodeDbclick: (e, node) => console.log(`onNodeDbclick: ${node.id}`),
-            onNodeSelect: (e, node) => console.log(`onNodeSelect: ${node.id}`),
-            onNodeHoverIn: (e, node) => console.log(`nodeHoverIn: ${node.id}`),
-            onNodeHoverOut: (e, node) => console.log(`nodeHoverOut: ${node.id}`),
-            onNodeExpansion: (e, node) => console.log(`nodeExpansion: ${node.id}`),
-            onEdgeClick: (e, edge) => console.log(`onEdgeClick: ${edge.id}`),
+            // onNodeClick: (e, node) => console.log(`onNodeClick: ${node.id}`),
+            // onNodeDbclick: (e, node) => console.log(`onNodeDbclick: ${node.id}`),
+            onNodeSelect: (node) => console.log(`onNodeSelect: ${node.id}`),
+            onNodeBlur: (node) => console.log(`onNodeBlur: ${node.id}`),
+            // onNodeHoverIn: (e, node) => console.log(`nodeHoverIn: ${node.id}`),
+            // onNodeHoverOut: (e, node) => console.log(`nodeHoverOut: ${node.id}`),
+            // onNodeExpansion: (e, node) => console.log(`nodeExpansion: ${node.id}`),
+            // onEdgeClick: (e, edge) => console.log(`onEdgeClick: ${edge.id}`),
         },
         render: {
             // nodeTypeAccessor: (node: Node) => node.getData()?.type,

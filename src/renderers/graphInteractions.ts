@@ -1,10 +1,15 @@
 import type { Graph } from '../graph'
 import type { InterractionCallbacks } from '../graph-options'
-import type { Node } from '../node'
+import type { Node, NodeData } from '../node'
 import type { Edge } from '../edge'
 import type { SvgRenderer } from './svgRenderer'
 import { select as d3Select, type Selection } from 'd3-selection'
 
+
+interface NodeSelection {
+    node: Node,
+    svgNode: SVGGElement,
+}
 
 
 export class GraphInteractions {
@@ -12,6 +17,8 @@ export class GraphInteractions {
     private graph: Graph
     private renderer: SvgRenderer
     private callbacks: Partial<InterractionCallbacks>
+
+    private selectedNode: NodeSelection | null = null
 
     constructor(graph: Graph, renderer: SvgRenderer) {
         this.graph = graph
@@ -26,10 +33,12 @@ export class GraphInteractions {
 
         this.renderer.getNodeSelection()
             .on('dblclick', (event: PointerEvent, node: Node) => {
+                event.stopPropagation()
                 const svgNode = event.currentTarget as SVGGElement
                 this.nodeDbclick(svgNode, event, node)
             })
             .on('click', (event: PointerEvent, node: Node) => {
+                event.stopPropagation()
                 const svgNode = event.currentTarget as SVGGElement
                 this.nodeClick(svgNode, event, node)
             })
@@ -44,10 +53,12 @@ export class GraphInteractions {
 
         this.renderer.getEdgeSelection()
             .on('dblclick', (event: PointerEvent, edge: Edge) => {
+                event.stopPropagation()
                 const svgEdge = event.currentTarget as SVGLineElement
                 this.edgeDbclick(svgEdge, event, edge)
             })
             .on('click', (event: PointerEvent, edge: Edge) => {
+                event.stopPropagation()
                 const svgEdge = event.currentTarget as SVGLineElement
                 this.edgeClick(svgEdge, event, edge)
             })
@@ -60,9 +71,15 @@ export class GraphInteractions {
                 this.edgeHoverOut(svgNode, event, edge)
             })
 
+        this.renderer.getCanvasSelection()
+            .on('click', () => {
+                this.unselectNode()
+            })
+
     }
 
     private nodeClick(svgNode: SVGGElement, event: PointerEvent, node: Node): void {
+        this.selectNode(svgNode, node)
         if (this.callbacks.onNodeClick && typeof this.callbacks.onNodeClick === 'function') {
             this.callbacks.onNodeClick(event, node, svgNode)
         }
@@ -74,13 +91,13 @@ export class GraphInteractions {
         }
     }
 
-    private nodeHoverIn = (svgNode: SVGGElement, event: PointerEvent, node: Node) => {
+    private nodeHoverIn = (svgNode: SVGGElement, event: PointerEvent, node: Node): void => {
         if (this.callbacks.onNodeHoverIn && typeof this.callbacks.onNodeHoverIn === 'function') {
             this.callbacks.onNodeHoverIn(event, node, svgNode)
         }
     }
 
-    private nodeHoverOut = (svgNode: SVGGElement, event: PointerEvent, node: Node) => {
+    private nodeHoverOut = (svgNode: SVGGElement, event: PointerEvent, node: Node): void => {
         if (this.callbacks.onNodeHoverOut && typeof this.callbacks.onNodeHoverOut === 'function') {
             this.callbacks.onNodeHoverOut(event, node, svgNode)
         }
@@ -98,15 +115,37 @@ export class GraphInteractions {
         }
     }
 
-    private edgeHoverIn(svgEdge: SVGLineElement, event: PointerEvent, edge: Edge) {
+    private edgeHoverIn(svgEdge: SVGLineElement, event: PointerEvent, edge: Edge): void {
         if (this.callbacks.onEdgeHoverIn && typeof this.callbacks.onNodeHoverIn === 'function') {
             this.callbacks.onEdgeHoverIn(event, edge, svgEdge)
         }
     }
 
-    private edgeHoverOut(svgEdge: SVGLineElement, event: PointerEvent, edge: Edge) {
+    private edgeHoverOut(svgEdge: SVGLineElement, event: PointerEvent, edge: Edge): void {
         if (this.callbacks.onEdgeHoverOut && typeof this.callbacks.onNodeHoverOut === 'function') {
             this.callbacks.onEdgeHoverOut(event, edge, svgEdge)
+        }
+    }
+
+    private selectNode(svgNode: SVGGElement, node: Node<NodeData>): void {
+        this.unselectNode()
+        this.selectedNode = {
+            node: node,
+            svgNode: svgNode,
+        }
+        if (this.callbacks.onNodeSelect && typeof this.callbacks.onNodeSelect === 'function') {
+            this.callbacks.onNodeSelect(node, svgNode)
+        }
+    }
+
+    private unselectNode(): void {
+        if (this.selectedNode === null)
+            return
+        const oldSelectionNode = this.selectedNode.node
+        const oldSelectionSvgNode = this.selectedNode.svgNode
+        this.selectedNode = null
+        if (this.callbacks.onNodeBlur && typeof this.callbacks.onNodeBlur === 'function') {
+            this.callbacks.onNodeBlur(oldSelectionNode, oldSelectionSvgNode)
         }
     }
 

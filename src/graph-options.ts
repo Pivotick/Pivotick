@@ -25,7 +25,12 @@ export interface InterractionCallbacks {
     /**
     * Called when a node is selected by the user.
     */
-    onNodeSelect?: (event: PointerEvent, node: Node, svgNode: SVGGElement) => void;
+    onNodeSelect?: (node: Node, svgNode: SVGGElement) => void;
+
+    /**
+    * Called when a node is selected by the user.
+    */
+    onNodeBlur?: (node: Node, svgNode: SVGGElement) => void;
 
     /**
      * Called when a node is expanded (e.g., drilled down or pivoted).
