@@ -17,29 +17,19 @@ import merge from 'lodash.merge'
 
 const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
     d3Alpha: 1.0,
-    d3AlphaMin: 0.0001,
+    d3AlphaMin: 0,
     d3AlphaDecay: 0.05,
     d3AlphaTarget: 0.3,
     d3VelocityDecay: 0.5,
-    d3LinkDistance: 20,
+    d3LinkDistance: 10,
     d3ManyBodyStrength: -30,
     d3ManyBodyTheta: 0.9,
     d3CollideRadius: 12,
     d3CollideStrength: 1,
     d3CollideIterations: 1,
+
+    cooldownTime: 2000,
     warmupTicks: 50,
-    // d3Alpha: 1.0,
-    // d3AlphaMin: 0.0001,
-    // d3AlphaDecay: 0.05,
-    // d3AlphaTarget: 0.3,
-    // d3VelocityDecay: 0.4,
-    // d3LinkDistance: 20,
-    // d3ManyBodyStrength: -30,
-    // d3ManyBodyTheta: 0.9,
-    // d3CollideRadius: 10,
-    // d3CollideStrength: 1,
-    // d3CollideIterations: 1,
-    // warmupTicks: 50,
 }
 
 export class Simulation {
@@ -48,6 +38,7 @@ export class Simulation {
     private canvas: SVGSVGElement | undefined
 
     private animationFrameId: number | null = null
+    private startSimulationTime: number = 0
     private engineRunning: boolean = false
 
     private options: SimulationOptions
@@ -109,6 +100,7 @@ export class Simulation {
      * Restart the simulation with rendering on each animation frame.
      */
     public restart() {
+        this.startSimulationTime = (new Date()).getTime()
         this.engineRunning = true
     }
 
@@ -154,7 +146,10 @@ export class Simulation {
     private simulationTick() {
         
         if (this.engineRunning) {
-            if (this.options.d3AlphaMin > 0 && this.simulation.alpha() < this.options.d3AlphaMin) {
+            if (
+                (new Date()).getTime() - this.startSimulationTime > this.options.cooldownTime ||
+                this.options.d3AlphaMin > 0 && this.simulation.alpha() < this.options.d3AlphaMin
+            ) {
                 this.engineRunning = false
                 this.simulation.stop()
             }
@@ -182,7 +177,9 @@ export class Simulation {
             .on('end', (event, d) => {
                 if (!event.active) {
                     this.restart()
-                    this.simulation.alphaTarget(0)
+                    this.simulation
+                        .alphaTarget(0)
+                        .restart()
                 }
                 d.fx = undefined
                 d.fy = undefined
