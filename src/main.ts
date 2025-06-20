@@ -38,6 +38,8 @@ export function createSampleGraph(): Pivotick {
             // onNodeDbclick: (e, node) => console.log(`onNodeDbclick: ${node.id}`),
             onNodeSelect: (node) => console.log(`onNodeSelect: ${node.id}`),
             onNodeBlur: (node) => console.log(`onNodeBlur: ${node.id}`),
+            onEdgeSelect: (edge) => console.log(`onEdgeSelect: ${edge.id}`),
+            onEdgeBlur: (edge) => console.log(`onEdgeBlur: ${edge.id}`),
             // onNodeHoverIn: (e, node) => console.log(`nodeHoverIn: ${node.id}`),
             // onNodeHoverOut: (e, node) => console.log(`nodeHoverOut: ${node.id}`),
             // onNodeExpansion: (e, node) => console.log(`nodeExpansion: ${node.id}`),

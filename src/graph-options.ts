@@ -28,7 +28,7 @@ export interface InterractionCallbacks {
     onNodeSelect?: (node: Node, svgNode: SVGGElement) => void;
 
     /**
-    * Called when a node is selected by the user.
+    * Called when a node is unselected by the user.
     */
     onNodeBlur?: (node: Node, svgNode: SVGGElement) => void;
 
@@ -48,8 +48,13 @@ export interface InterractionCallbacks {
 
     /**
      * Called when an edge is selected by the user.
-     */
-    onEdgeSelect?: (event: PointerEvent, edge: Edge, svgEdge: SVGLineElement) => void;
+    */
+   onEdgeSelect?: (edge: Edge, svgEdge: SVGLineElement) => void;
+
+    /**
+    * Called when an edge is unselected by the user.
+    */
+    onEdgeBlur?: (edge: Edge, svgEdge: SVGLineElement) => void;
 
     /**
      * Called when a user hovers over an edge.

@@ -11,6 +11,11 @@ interface NodeSelection {
     svgNode: SVGGElement,
 }
 
+interface EdgeSelection {
+    edge: Edge,
+    svgEdge: SVGLineElement,
+}
+
 
 export class GraphInteractions {
 
@@ -19,6 +24,7 @@ export class GraphInteractions {
     private callbacks: Partial<InterractionCallbacks>
 
     private selectedNode: NodeSelection | null = null
+    private selectedEdge: EdgeSelection | null = null
 
     constructor(graph: Graph, renderer: SvgRenderer) {
         this.graph = graph
@@ -74,6 +80,7 @@ export class GraphInteractions {
         this.renderer.getCanvasSelection()
             .on('click', () => {
                 this.unselectNode()
+                this.unselectEdge()
             })
 
     }
@@ -104,6 +111,7 @@ export class GraphInteractions {
     }
 
     private edgeClick(svgEdge: SVGLineElement, event: PointerEvent, edge: Edge): void {
+        this.selectEdge(svgEdge, edge)
         if (this.callbacks.onEdgeClick && typeof this.callbacks.onEdgeClick === 'function') {
             this.callbacks.onEdgeClick(event, edge, svgEdge)
         }
@@ -127,7 +135,7 @@ export class GraphInteractions {
         }
     }
 
-    private selectNode(svgNode: SVGGElement, node: Node<NodeData>): void {
+    private selectNode(svgNode: SVGGElement, node: Node): void {
         this.unselectNode()
         this.selectedNode = {
             node: node,
@@ -146,6 +154,28 @@ export class GraphInteractions {
         this.selectedNode = null
         if (this.callbacks.onNodeBlur && typeof this.callbacks.onNodeBlur === 'function') {
             this.callbacks.onNodeBlur(oldSelectionNode, oldSelectionSvgNode)
+        }
+    }
+
+    private selectEdge(svgEdge: SVGLineElement, edge: Edge): void {
+        this.unselectEdge()
+        this.selectedEdge = {
+            edge: edge,
+            svgEdge: svgEdge,
+        }
+        if (this.callbacks.onEdgeSelect && typeof this.callbacks.onEdgeSelect === 'function') {
+            this.callbacks.onEdgeSelect(edge, svgEdge)
+        }
+    }
+
+    private unselectEdge(): void {
+        if (this.selectedEdge === null)
+            return
+        const oldSelectionNode = this.selectedEdge.edge
+        const oldSelectionSvgNode = this.selectedEdge.svgEdge
+        this.selectedEdge = null
+        if (this.callbacks.onEdgeBlur && typeof this.callbacks.onEdgeBlur === 'function') {
+            this.callbacks.onEdgeBlur(oldSelectionNode, oldSelectionSvgNode)
         }
     }
 
