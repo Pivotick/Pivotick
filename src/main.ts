@@ -23,7 +23,7 @@ export function createSampleGraph(): Pivotick {
         .map(id => {
             const source = nodes[id]
             const target = nodes[Math.round(Math.random() * (id - 1))]
-            return new Edge(`${id}-${target}`, source, target, { relation: 'connects to' })
+            return new Edge(`${id}-${target.id}`, source, target, { relation: 'connects to' })
         })
 
     const graph = new Pivotick(container, {nodes: nodes, edges: edges}, {
@@ -34,11 +34,13 @@ export function createSampleGraph(): Pivotick {
             // warmupTicks: 500
         },
         callbacks: {
-            onNodeSelect: (nodeId) => console.log(`onNodeSelect: ${nodeId}`),
-            onEdgeSelect: (edgeId: string) => console.log(`onEdgeSelect: ${edgeId}`),
-            nodeExpansion: (nodeId: string) => console.log(`nodeExpansion: ${nodeId}`),
-            onNodeHover: (nodeId: string) => console.log(`onNodeHover: ${nodeId}`),
-            onEdgeHover: (edgeId: string) => console.log(`onEdgeHover: ${edgeId}`),
+            onNodeClick: (e, node) => console.log(`onNodeClick: ${node.id}`),
+            onNodeDbclick: (e, node) => console.log(`onNodeDbclick: ${node.id}`),
+            onNodeSelect: (e, node) => console.log(`onNodeSelect: ${node.id}`),
+            onNodeHoverIn: (e, node) => console.log(`nodeHoverIn: ${node.id}`),
+            onNodeHoverOut: (e, node) => console.log(`nodeHoverOut: ${node.id}`),
+            onNodeExpansion: (e, node) => console.log(`nodeExpansion: ${node.id}`),
+            onEdgeClick: (e, edge) => console.log(`onEdgeClick: ${edge.id}`),
         },
         render: {
             // nodeTypeAccessor: (node: Node) => node.getData()?.type,

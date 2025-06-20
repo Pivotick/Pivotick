@@ -4,31 +4,56 @@ import { Edge } from './edge'
 
 export interface InterractionCallbacks {
     /**
-     * Called when a node is selected by the user.
-     * @param nodeId - The ID of the selected node
+     * Called when a node is clicked.
      */
-    onNodeSelect?: (nodeId: string) => void;
+    onNodeClick?: (event: PointerEvent, node: Node, svgNode: SVGGElement) => void;
 
     /**
-     * Called when an edge is selected by the user.
-     * @param edgeId - The ID of the selected edge
+     * Called when a node is double clicked.
      */
-    onEdgeSelect?: (edgeId: string) => void;
+    onNodeDbclick?: (event: PointerEvent, node: Node, svgNode: SVGGElement) => void;
+    
+    /**
+     * Called when a user hovers over a node.
+    */
+    onNodeHoverIn?: (event: PointerEvent, node: Node, svgNode: SVGGElement) => void;
+    /**
+     * Called when a user hovers out of a node.
+    */
+    onNodeHoverOut?: (event: PointerEvent, node: Node, svgNode: SVGGElement) => void;
+
+    /**
+    * Called when a node is selected by the user.
+    */
+    onNodeSelect?: (event: PointerEvent, node: Node, svgNode: SVGGElement) => void;
 
     /**
      * Called when a node is expanded (e.g., drilled down or pivoted).
      */
-    nodeExpansion?: (nodeId: string) => void;
+    onNodeExpansion?: (event: PointerEvent, edge: Edge, svgNode: SVGGElement) => void;
 
     /**
-     * Called when a user hovers over a node.
+     * Called when an edge is selected by the user.
      */
-    onNodeHover?: (nodeId: string) => void;
+    onEdgeClick?: (event: PointerEvent, edge: Edge, svgEdge: SVGLineElement) => void;
+    /**
+     * Called when an edge is selected by the user.
+     */
+    onEdgeDbclick?: (event: PointerEvent, edge: Edge, svgEdge: SVGLineElement) => void;
+
+    /**
+     * Called when an edge is selected by the user.
+     */
+    onEdgeSelect?: (event: PointerEvent, edge: Edge, svgEdge: SVGLineElement) => void;
 
     /**
      * Called when a user hovers over an edge.
      */
-    onEdgeHover?: (edgeId: string) => void;
+    onEdgeHoverIn?: (event: PointerEvent, edge: Edge, svgEdge: SVGLineElement) => void;
+    /**
+     * Called when a user hovers over an edge.
+     */
+    onEdgeHoverOut?: (event: PointerEvent, edge: Edge, svgEdge: SVGLineElement) => void;
 }
 
 export interface NodeStyle {

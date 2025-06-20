@@ -1,6 +1,6 @@
 import { Node } from './node'
 import { Edge } from './edge'
-import type { graphData, GraphOptions } from './graph-options'
+import type { graphData, GraphOptions, InterractionCallbacks } from './graph-options'
 import { SvgRenderer } from './renderers/svgRenderer'
 import { Simulation } from './simulation'
 
@@ -45,6 +45,10 @@ export class Graph {
 
     getOptions(): GraphOptions {
         return this.options
+    }
+
+    getCallbacks(): Partial<InterractionCallbacks> | undefined {
+        return this.options?.callbacks
     }
 
     onChange() {

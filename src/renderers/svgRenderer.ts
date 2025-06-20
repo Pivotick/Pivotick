@@ -5,6 +5,7 @@ import { Node } from '../node'
 import type { Graph } from '../graph'
 import type { EdgeStyle, NodeStyle, SvgRendererOptions } from '../graph-options'
 import merge from 'lodash.merge'
+import { GraphInteractions } from './graphInteractions'
 
 
 const DEFAULT_RENDERER_OPTIONS = {
@@ -28,6 +29,7 @@ export class SvgRenderer {
     private container: HTMLElement
     private graph: Graph
     private zoom: ZoomBehavior<SVGSVGElement, unknown>
+    private graphInteraction: GraphInteractions;
 
     private options: SvgRendererOptions
     
@@ -51,6 +53,8 @@ export class SvgRenderer {
 
         this.options = merge({}, DEFAULT_RENDERER_OPTIONS, options)
 
+        this.graphInteraction = new GraphInteractions(this.graph, this)
+
         this.renderNodeCB = this.options?.renderNode
         this.renderEdgeCB = this.options?.renderEdge
 
@@ -60,7 +64,6 @@ export class SvgRenderer {
 
         this.container.appendChild(this.svgCanvas)
         this.svg = d3Select(this.svgCanvas)
-        
 
         this.zoomGroup = this.svg.append('g').attr('class', 'zoom-layer')
         this.edgeGroup = this.zoomGroup.append('g').attr('class', 'edges')
@@ -68,6 +71,7 @@ export class SvgRenderer {
 
         this.zoom = d3Zoom<SVGSVGElement, unknown>()
         this.svg.call(this.zoom)
+        this.svg.on('dblclick.zoom', null)
         this.zoom
             .scaleExtent([this.options.minZoom, this.options.maxZoom])
             .on('zoom', (event) => {
@@ -98,7 +102,7 @@ export class SvgRenderer {
                 exit => exit.remove()
             )
 
-        this.nodeSelection.call(this.graph.simulation.createDragBehavior())
+        // this.nodeSelection.call(this.graph.simulation.createDragBehavior())
 
         const edges = this.graph.getEdges()
         this.edgeGroupSelection = this.edgeGroup
@@ -120,6 +124,8 @@ export class SvgRenderer {
                     }),
                 exit => exit.remove()
             )
+
+        this.graphInteraction.init()
     }
 
     public getCanvas(): SVGSVGElement {
@@ -136,7 +142,15 @@ export class SvgRenderer {
             .attr('transform', d => `translate(${d.x ?? 0},${d.y ?? 0})`)
     }
 
-    renderEdges(): void {
+    public getNodeSelection(): Selection<SVGGElement, Node, SVGGElement, unknown> {
+        return this.nodeSelection
+    }
+
+    public getEdgeSelection(): Selection<SVGLineElement, Edge, SVGGElement, unknown> {
+        return this.edgeSelection
+    }
+
+    private renderEdges(): void {
         this.edgeSelection
             .attr('x1', (d: Edge) => d.from.x ?? 0)
             .attr('y1', (d: Edge) => d.from.y ?? 0)
@@ -144,7 +158,7 @@ export class SvgRenderer {
             .attr('y2', (d: Edge) => d.to.y ?? 0)
     }
 
-    renderNode(theNodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
+    private renderNode(theNodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
         if (this.renderNodeCB) {
             const rendered = this?.renderNodeCB?.(node, theNodeSelection)
             const fo = theNodeSelection.append('foreignObject')
@@ -162,7 +176,7 @@ export class SvgRenderer {
         }
     }
 
-    renderEdge(theEdgeSelection: Selection<SVGLineElement, Edge, null, undefined>, edge: Edge): void {
+    private renderEdge(theEdgeSelection: Selection<SVGLineElement, Edge, null, undefined>, edge: Edge): void {
         if (this.renderEdgeCB) {
             const rendered = this?.renderEdgeCB?.(edge, theEdgeSelection)
             const fo = theEdgeSelection.append('foreignObject')
