@@ -7,7 +7,7 @@ import { Pivotick, Node, Edge } from './index'
 export function createSampleGraph(): Pivotick {
     const container = document.getElementById('app')!
 
-    const N = 300
+    const N = 2
     const nodes = [...Array(N).keys()].map(i => (
         new Node(i.toString(),
             {
@@ -18,20 +18,25 @@ export function createSampleGraph(): Pivotick {
             }
         )
     ))
-    const edges = [...Array(N).keys()]
-        .filter(id => id)
-        .map(id => {
-            const source = nodes[id]
-            const target = nodes[Math.round(Math.random() * (id - 1))]
-            return new Edge(`${id}-${target.id}`, source, target, { relation: 'connects to' })
-        })
+    // const edges = [...Array(N).keys()]
+    //     .filter(id => id)
+    //     .map(id => {
+    //         const source = nodes[id]
+    //         const target = nodes[Math.round(Math.random() * (id - 1))]
+    //         return new Edge(`${id}-${target.id}`, source, target, { relation: 'connects to' })
+    //     })
+    const edges = []
+    edges.push(new Edge('0-0', nodes[0], nodes[0], { relation : 'self-loop'}))
+    edges.push(new Edge('0-1', nodes[0], nodes[1], { relation : 'a'}))
+    edges.push(new Edge('1-0', nodes[1], nodes[0], { relation : 'b'}))
 
     const graph = new Pivotick(container, {nodes: nodes, edges: edges}, {
-        width: 600,
-        height: 400,
-        autoResize: true,
+        // isDirected: false,
         simulation: {
             // warmupTicks: 500
+            d3ManyBodyStrength: -500,
+            d3LinkStrength: 0.1,
+            d3LinkDistance: 50,
         },
         callbacks: {
             // onNodeClick: (e, node) => console.log(`onNodeClick: ${node.id}`),
@@ -51,15 +56,17 @@ export function createSampleGraph(): Pivotick {
             //     'hub': { shape: 'hexagon', color: '#aaa', size: 30 },
             //     'leaf': { shape: 'triangle', color: '#f00' },
             // }
-            // defaultNodeStyle: {
-            //     shape: 'hexagon'
-            // }
+            defaultNodeStyle: {
+                // shape: 'hexagon'
+                // color: '#aaaaaa33',
+                // strokeColor: '#ffffff33',
+            }
             // renderNode: (node: Node, nodeSelection: d3.Selection<SVGElement, Node, null, undefined>): HTMLElement | string | void => {
             //     nodeSelection
             //         .attr("r", 10)
             //         .attr("fill", '#907acc')
             // }
-            // renderEdge: (edge: Edge, edgeSelection: d3.Selection<SVGLineElement, Edge, null, undefined>): HTMLElement | string | void => {
+            // renderEdge: (edge: Edge, edgeSelection: d3.Selection<SVGPathElement, Edge, null, undefined>): HTMLElement | string | void => {
             //     edgeSelection
             //         .attr("stroke", "#a07")
             //         .attr("stroke-opacity", 0.8)

@@ -13,7 +13,7 @@ interface NodeSelection {
 
 interface EdgeSelection {
     edge: Edge,
-    svgEdge: SVGLineElement,
+    svgEdge: SVGPathElement,
 }
 
 
@@ -60,20 +60,20 @@ export class GraphInteractions {
         this.renderer.getEdgeSelection()
             .on('dblclick', (event: PointerEvent, edge: Edge) => {
                 event.stopPropagation()
-                const svgEdge = event.currentTarget as SVGLineElement
+                const svgEdge = event.currentTarget as SVGPathElement
                 this.edgeDbclick(svgEdge, event, edge)
             })
             .on('click', (event: PointerEvent, edge: Edge) => {
                 event.stopPropagation()
-                const svgEdge = event.currentTarget as SVGLineElement
+                const svgEdge = event.currentTarget as SVGPathElement
                 this.edgeClick(svgEdge, event, edge)
             })
             .on('mouseenter', (event: PointerEvent, edge: Edge) => {
-                const svgNode = event.currentTarget as SVGLineElement
+                const svgNode = event.currentTarget as SVGPathElement
                 this.edgeHoverIn(svgNode, event, edge)
             })
             .on('mouseleave', (event: PointerEvent, edge: Edge) => {
-                const svgNode = event.currentTarget as SVGLineElement
+                const svgNode = event.currentTarget as SVGPathElement
                 this.edgeHoverOut(svgNode, event, edge)
             })
 
@@ -110,26 +110,26 @@ export class GraphInteractions {
         }
     }
 
-    private edgeClick(svgEdge: SVGLineElement, event: PointerEvent, edge: Edge): void {
+    private edgeClick(svgEdge: SVGPathElement, event: PointerEvent, edge: Edge): void {
         this.selectEdge(svgEdge, edge)
         if (this.callbacks.onEdgeClick && typeof this.callbacks.onEdgeClick === 'function') {
             this.callbacks.onEdgeClick(event, edge, svgEdge)
         }
     }
 
-    private edgeDbclick(svgEdge: SVGLineElement, event: PointerEvent, edge: Edge): void {
+    private edgeDbclick(svgEdge: SVGPathElement, event: PointerEvent, edge: Edge): void {
         if (this.callbacks.onEdgeDbclick && typeof this.callbacks.onEdgeDbclick === 'function') {
             this.callbacks.onEdgeDbclick(event, edge, svgEdge)
         }
     }
 
-    private edgeHoverIn(svgEdge: SVGLineElement, event: PointerEvent, edge: Edge): void {
+    private edgeHoverIn(svgEdge: SVGPathElement, event: PointerEvent, edge: Edge): void {
         if (this.callbacks.onEdgeHoverIn && typeof this.callbacks.onNodeHoverIn === 'function') {
             this.callbacks.onEdgeHoverIn(event, edge, svgEdge)
         }
     }
 
-    private edgeHoverOut(svgEdge: SVGLineElement, event: PointerEvent, edge: Edge): void {
+    private edgeHoverOut(svgEdge: SVGPathElement, event: PointerEvent, edge: Edge): void {
         if (this.callbacks.onEdgeHoverOut && typeof this.callbacks.onNodeHoverOut === 'function') {
             this.callbacks.onEdgeHoverOut(event, edge, svgEdge)
         }
@@ -157,7 +157,7 @@ export class GraphInteractions {
         }
     }
 
-    private selectEdge(svgEdge: SVGLineElement, edge: Edge): void {
+    private selectEdge(svgEdge: SVGPathElement, edge: Edge): void {
         this.unselectEdge()
         this.selectedEdge = {
             edge: edge,

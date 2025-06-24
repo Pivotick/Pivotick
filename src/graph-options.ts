@@ -40,30 +40,30 @@ export interface InterractionCallbacks {
     /**
      * Called when an edge is selected by the user.
      */
-    onEdgeClick?: (event: PointerEvent, edge: Edge, svgEdge: SVGLineElement) => void;
+    onEdgeClick?: (event: PointerEvent, edge: Edge, svgEdge: SVGPathElement) => void;
     /**
      * Called when an edge is selected by the user.
      */
-    onEdgeDbclick?: (event: PointerEvent, edge: Edge, svgEdge: SVGLineElement) => void;
+    onEdgeDbclick?: (event: PointerEvent, edge: Edge, svgEdge: SVGPathElement) => void;
 
     /**
      * Called when an edge is selected by the user.
     */
-   onEdgeSelect?: (edge: Edge, svgEdge: SVGLineElement) => void;
+    onEdgeSelect?: (edge: Edge, svgEdge: SVGPathElement) => void;
 
     /**
     * Called when an edge is unselected by the user.
     */
-    onEdgeBlur?: (edge: Edge, svgEdge: SVGLineElement) => void;
+    onEdgeBlur?: (edge: Edge, svgEdge: SVGPathElement) => void;
 
     /**
      * Called when a user hovers over an edge.
      */
-    onEdgeHoverIn?: (event: PointerEvent, edge: Edge, svgEdge: SVGLineElement) => void;
+    onEdgeHoverIn?: (event: PointerEvent, edge: Edge, svgEdge: SVGPathElement) => void;
     /**
      * Called when a user hovers over an edge.
      */
-    onEdgeHoverOut?: (event: PointerEvent, edge: Edge, svgEdge: SVGLineElement) => void;
+    onEdgeHoverOut?: (event: PointerEvent, edge: Edge, svgEdge: SVGPathElement) => void;
 }
 
 export interface NodeStyle {
@@ -91,7 +91,7 @@ export interface SvgRendererOptions {
      * Custom renderer for edges.
      * Receives edge data and selection, and should return HTML or SVG element or string or directly calling d3 methods on the selection.
     */
-    renderEdge?: (edge: Edge, nodeSelection: Selection<SVGLineElement, Edge, null, undefined>) => HTMLElement | string | void;
+    renderEdge?: (edge: Edge, nodeSelection: Selection<SVGPathElement, Edge, null, undefined>) => HTMLElement | string | void;
     defaultNodeStyle?: NodeStyle;
     defaultEdgeStyle?: EdgeStyle;
     nodeTypeAccessor?: (node: Node) => string | undefined;
@@ -136,6 +136,17 @@ export interface GraphOptions {
     simulation?: Partial<SimulationOptions>
 
     /**
+     * Callbacks to handle various graph events and render hooks.
+     */
+    callbacks?: InterractionCallbacks;
+
+    /**
+     * Enable wether the graph is directed or not
+     * @default true
+     */
+    isDirected?: boolean,
+
+    /**
      * Automatically resize graph container when its parent container size changes.
      * @default true
      */
@@ -152,11 +163,6 @@ export interface GraphOptions {
      * @default '100%'
      */
     height?: string | number;
-
-    /**
-     * Callbacks to handle various graph events and render hooks.
-     */
-    callbacks?: InterractionCallbacks;
 
     /**
      * Enable zooming (scroll wheel, pinch, etc.)

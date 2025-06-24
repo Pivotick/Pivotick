@@ -11,6 +11,7 @@ export class Edge<T = EdgeData> {
     public readonly id: string
     public readonly from: Node
     public readonly to: Node
+    public readonly directed: boolean | null
     private data: T
     private style: T
 
@@ -21,10 +22,11 @@ export class Edge<T = EdgeData> {
      * @param to - Target node
      * @param data - Optional data payload for the edge
      */
-    constructor(id: string, from: Node, to: Node, data?: T, style?: T) {
+    constructor(id: string, from: Node, to: Node, data?: T, style?: T, directed: boolean | null = null) {
         this.id = id
         this.from = from
         this.to = to
+        this.directed = directed
         this.data = data ?? ({} as T)
         this.style = style ?? ({} as T)
     }

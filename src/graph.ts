@@ -14,12 +14,7 @@ export class Graph {
 
     constructor(container: HTMLElement, data?: graphData, options?: GraphOptions) {
         this.options = {
-            autoResize: true,
-            width: '100%',
-            height: '100%',
-            enableZoom: true,
-            enablePan: true,
-            layout: 'force-directed',
+            isDirected: true,
             ...options,
         }
 

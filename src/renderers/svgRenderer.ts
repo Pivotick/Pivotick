@@ -1,6 +1,6 @@
 import { select as d3Select, type Selection } from 'd3-selection'
 import { zoom as d3Zoom, type ZoomBehavior } from 'd3-zoom'
-import { Edge } from '../edge'
+import { Edge, type EdgeData } from '../edge'
 import { Node } from '../node'
 import type { Graph } from '../graph'
 import type { EdgeStyle, NodeStyle, SvgRendererOptions } from '../graph-options'
@@ -29,23 +29,25 @@ export class SvgRenderer {
     private container: HTMLElement
     private graph: Graph
     private zoom: ZoomBehavior<SVGSVGElement, unknown>
-    private graphInteraction: GraphInteractions;
+    private graphInteraction: GraphInteractions
+
+    private NodeRenderer: NodeRenderer
+    private EdgeRenderer: EdgeRenderer
 
     private options: SvgRendererOptions
-    
     private svgCanvas: SVGSVGElement
 
     private svg: Selection<SVGSVGElement, unknown, null, undefined>
     private zoomGroup: Selection<SVGGElement, unknown, null, undefined>
     private edgeGroup: Selection<SVGGElement, unknown, null, undefined>
     private nodeGroup: Selection<SVGGElement, unknown, null, undefined>
-    private nodeGroupSelection!: Selection<SVGGElement, Node, SVGGElement, unknown>
-    private edgeGroupSelection!: Selection<SVGLineElement, Edge, SVGGElement, unknown>
-    private nodeSelection!: Selection<SVGGElement, Node, SVGGElement, unknown>
-    private edgeSelection!: Selection<SVGLineElement, Edge, SVGGElement, unknown>
+    private defs: Selection<SVGDefsElement, unknown, null, undefined>
+    private marker: Selection<SVGMarkerElement, unknown, null, undefined>
 
-    private renderNodeCB?: SvgRendererOptions['renderNode']
-    private renderEdgeCB?: SvgRendererOptions['renderEdge']
+    private nodeGroupSelection!: Selection<SVGGElement, Node, SVGGElement, unknown>
+    private edgeGroupSelection!: Selection<SVGPathElement, Edge, SVGGElement, unknown>
+    private nodeSelection!: Selection<SVGGElement, Node, SVGGElement, unknown>
+    private edgeSelection!: Selection<SVGPathElement, Edge, SVGGElement, unknown>
 
     constructor(graph: Graph, container: HTMLElement, options: Partial<SvgRendererOptions>) {
         this.graph = graph
@@ -54,13 +56,13 @@ export class SvgRenderer {
         this.options = merge({}, DEFAULT_RENDERER_OPTIONS, options)
 
         this.graphInteraction = new GraphInteractions(this.graph, this)
-
-        this.renderNodeCB = this.options?.renderNode
-        this.renderEdgeCB = this.options?.renderEdge
+        this.NodeRenderer = new NodeRenderer(this.options, this.graph)
+        this.EdgeRenderer = new EdgeRenderer(this.options, this.graph)
 
         this.svgCanvas = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
         this.svgCanvas.setAttribute('width', '100%')
-        this.svgCanvas.setAttribute('height', '100%')   
+        this.svgCanvas.setAttribute('height', '100%')
+        this.svgCanvas.setAttribute('fill', 'none')
 
         this.container.appendChild(this.svgCanvas)
         this.svg = d3Select(this.svgCanvas)
@@ -68,6 +70,9 @@ export class SvgRenderer {
         this.zoomGroup = this.svg.append('g').attr('class', 'zoom-layer')
         this.edgeGroup = this.zoomGroup.append('g').attr('class', 'edges')
         this.nodeGroup = this.zoomGroup.append('g').attr('class', 'nodes')
+        this.defs = this.svg.append('defs')
+        this.marker = this.defs.append('marker')
+        this.renderMarkers()
 
         this.zoom = d3Zoom<SVGSVGElement, unknown>()
         this.svg.call(this.zoom)
@@ -92,35 +97,33 @@ export class SvgRenderer {
                     .append('g').classed('node-shape', true)
                     .each((node: Node, i: number, nodes: ArrayLike<SVGGElement>) => {
                         const selection = d3Select<SVGGElement, Node>(nodes[i])
-                        this.renderNode(selection, node)
+                        this.NodeRenderer.renderNode(selection, node)
                     }),
                 update => update
                     .each((node: Node, i: number, nodes: ArrayLike<SVGGElement>) => {
                         const selection = d3Select<SVGGElement, Node>(nodes[i])
-                        this.renderNode(selection, node)
+                        this.NodeRenderer.renderNode(selection, node)
                     }),
                 exit => exit.remove()
             )
 
-        // this.nodeSelection.call(this.graph.simulation.createDragBehavior())
-
         const edges = this.graph.getEdges()
         this.edgeGroupSelection = this.edgeGroup
-            .selectAll<SVGLineElement, Edge>('line')
+            .selectAll<SVGPathElement, Edge>('path')
 
         this.edgeSelection = this.edgeGroupSelection
             .data(edges)
             .join(
                 (enter) => enter
-                    .append('line')
-                    .each((edge: Edge, i: number, edges: ArrayLike<SVGLineElement>) => {
-                        const selection = d3Select<SVGLineElement, Edge>(edges[i])
-                        this.renderEdge(selection, edge)
+                    .append('path')
+                    .each((edge: Edge, i: number, edges: ArrayLike<SVGPathElement>) => {
+                        const selection = d3Select<SVGPathElement, Edge>(edges[i])
+                        this.EdgeRenderer.renderEdge(selection, edge)
                     }),
                 update => update
-                    .each((edge: Edge, i: number, edges: ArrayLike<SVGLineElement>) => {
-                        const selection = d3Select<SVGLineElement, Edge>(edges[i])
-                        this.renderEdge(selection, edge)
+                    .each((edge: Edge, i: number, edges: ArrayLike<SVGPathElement>) => {
+                        const selection = d3Select<SVGPathElement, Edge>(edges[i])
+                        this.EdgeRenderer.renderEdge(selection, edge)
                     }),
                 exit => exit.remove()
             )
@@ -150,19 +153,109 @@ export class SvgRenderer {
         return this.nodeSelection
     }
 
-    public getEdgeSelection(): Selection<SVGLineElement, Edge, SVGGElement, unknown> {
+    public getEdgeSelection(): Selection<SVGPathElement, Edge, SVGGElement, unknown> {
         return this.edgeSelection
     }
 
     private renderEdges(): void {
         this.edgeSelection
-            .attr('x1', (d: Edge) => d.from.x ?? 0)
-            .attr('y1', (d: Edge) => d.from.y ?? 0)
-            .attr('x2', (d: Edge) => d.to.x ?? 0)
-            .attr('y2', (d: Edge) => d.to.y ?? 0)
+            .attr('d', (d: Edge): string | null => {
+                const { from, to } = d
+
+                if (!from.x || !from.y || !to.x || !to.y)
+                    return null
+
+                const draw_offset = 4 // Distance from which to end the edge
+                if (from === to) { // self-loop
+                    const x = from.x ?? 0
+                    const y = from.y ?? 0
+                    const nodeRadius = this.NodeRenderer.computeNodeStyle(from).size
+                    const control_point_radius = 6 * nodeRadius
+
+                    // 80° NE
+                    const angle1 = (80 * Math.PI) / 180
+                    const cx1 = x + control_point_radius * Math.cos(angle1)
+                    const cy1 = y - control_point_radius * Math.sin(angle1)
+
+                    // 10° NE
+                    const angle2 = (10 * Math.PI) / 180
+                    const cx2 = x + control_point_radius * Math.cos(angle2)
+                    const cy2 = y - control_point_radius * Math.sin(angle2)
+
+                    // Start point offset by (r + draw_offset) in angle1 direction
+                    const startX = x + (nodeRadius) * Math.cos(angle1)
+                    const startY = y - (nodeRadius) * Math.sin(angle1)
+
+                    // End point offset by (r + draw_offset) in angle2 direction
+                    const endX = x + (nodeRadius + draw_offset) * Math.cos(angle2)
+                    const endY = y - (nodeRadius + draw_offset) * Math.sin(angle2)
+
+                    return `M ${startX} ${startY} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${endX} ${endY}`
+                }
+
+                // Direction angle from source to target
+                const dx = to.x - from.x
+                const dy = to.y - from.y
+                const distance = Math.sqrt(dx * dx + dy * dy)
+                const normX = dx / distance
+                const normY = dy / distance
+
+                // Compute source/target node radius
+                const rFrom = this.NodeRenderer.computeNodeStyle(from).size
+                const rTo = this.NodeRenderer.computeNodeStyle(to).size
+
+                // Offset both ends of the line
+                const startX = from.x + (rFrom + draw_offset) * normX
+                const startY = from.y + (rFrom + draw_offset) * normY
+                const endX = to.x - (rTo + draw_offset) * normX
+                const endY = to.y - (rTo + draw_offset) * normY
+
+                return `M ${startX},${startY} L ${endX},${endY}`
+            })
     }
 
-    private renderNode(theNodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
+    private renderMarkers(): void {
+        this.marker
+            .attr('id', 'arrow')
+            .attr('viewBox', '0 -5 10 10')
+            .attr('refX', 5) // Or play with norm and node radius..
+            .attr('refY', 0)
+            .attr('markerWidth', 6)
+            .attr('markerHeight', 6)
+            .attr('markerUnits', 'userSpaceOnUse')
+            .attr('orient', 'auto')
+        this.marker
+            .append('path')
+            .attr('d', 'M0,-5L10,0L0,5')
+            .attr('fill', '#999')
+    }
+
+}
+
+class NodeRenderer {
+
+    private graph: Graph
+    private rendererOptions: SvgRendererOptions
+    private renderNodeCB?: SvgRendererOptions['renderNode']
+
+    public constructor(rendererOptions: SvgRendererOptions, graph: Graph) {
+        this.graph = graph
+        this.rendererOptions = rendererOptions
+        this.renderNodeCB = this.rendererOptions?.renderNode
+    }
+
+    public mergeNodeStylingOptions(style: Partial<NodeStyle>): NodeStyle {
+        const mergedStyle = {
+            shape: style?.shape ?? this.rendererOptions.defaultNodeStyle.shape,
+            strokeColor: style?.strokeColor ?? this.rendererOptions.defaultNodeStyle.strokeColor,
+            strokeWidth: style?.strokeWidth ?? this.rendererOptions.defaultNodeStyle.strokeWidth,
+            size: style?.size ?? this.rendererOptions.defaultNodeStyle.size,
+            color: style?.color ?? this.rendererOptions.defaultNodeStyle.color,
+        }
+        return mergedStyle
+    }
+
+    public renderNode(theNodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
         if (this.renderNodeCB) {
             const rendered = this?.renderNodeCB?.(node, theNodeSelection)
             const fo = theNodeSelection.append('foreignObject')
@@ -180,32 +273,20 @@ export class SvgRenderer {
         }
     }
 
-    private renderEdge(theEdgeSelection: Selection<SVGLineElement, Edge, null, undefined>, edge: Edge): void {
-        if (this.renderEdgeCB) {
-            const rendered = this?.renderEdgeCB?.(edge, theEdgeSelection)
-            const fo = theEdgeSelection.append('foreignObject')
-                .attr('width', 40)  // FIXME: calculate the correct size of the FO based on the rendered content
-                .attr('height', 40)
-
-            if (typeof rendered === 'string') {
-                fo.html(rendered)
-            } else if (rendered instanceof HTMLElement) {
-                fo.node()?.append(rendered)
-            }
-            // In here, we could add support of other lightweight framework such as jQuery, Vue.js, ..
-        } else {
-            this.defaultEdgeRender(theEdgeSelection, edge)
-        }
+    public defaultNodeRender(nodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
+        const style = this.computeNodeStyle(node)
+        this.genericNodeRender(nodeSelection, style)
     }
 
-    private defaultNodeRender(nodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
+    public computeNodeStyle(node: Node): NodeStyle {
         let styleFromStyleMap: Partial<NodeStyle> = {}
-        if (this.options.nodeStyleMap && typeof this.options.nodeTypeAccessor === 'function') {
-            const nodeType = this.options.nodeTypeAccessor(node)
+        if (this.rendererOptions.nodeStyleMap && typeof this.rendererOptions.nodeTypeAccessor === 'function') {
+            const nodeType = this.rendererOptions.nodeTypeAccessor(node)
             if (nodeType) {
-                styleFromStyleMap = this.options.nodeStyleMap[nodeType] ?? {}
+                styleFromStyleMap = this.rendererOptions.nodeStyleMap[nodeType] ?? {}
             }
         }
+
         let styleFromNode
         if (node.getStyle()?.styleCb) {
             styleFromNode = node.getStyle().styleCb(node)
@@ -218,22 +299,10 @@ export class SvgRenderer {
                 color: node.getStyle()?.color ?? styleFromStyleMap?.color,
             }
         }
-        const style = this.mergeNodeStylingOptions(styleFromNode)
-        this.genericNodeRender(nodeSelection, style)
+        return this.mergeNodeStylingOptions(styleFromNode)
     }
 
-    private mergeNodeStylingOptions(style: Partial<NodeStyle>): NodeStyle {
-        const mergedStyle = {
-            shape: style?.shape ?? this.options.defaultNodeStyle.shape,
-            strokeColor: style?.strokeColor ?? this.options.defaultNodeStyle.strokeColor,
-            strokeWidth: style?.strokeWidth ?? this.options.defaultNodeStyle.strokeWidth,
-            size: style?.size ?? this.options.defaultNodeStyle.size,
-            color: style?.color ?? this.options.defaultNodeStyle.color,
-        }
-        return mergedStyle
-    }
-
-    private genericNodeRender(nodeSelection: Selection<SVGGElement, Node, null, undefined>, style: NodeStyle): void {
+    public genericNodeRender(nodeSelection: Selection<SVGGElement, Node, null, undefined>, style: NodeStyle): void {
         let actualShape = style.shape
         if (style.shape == 'square') {
             actualShape = 'rect'
@@ -286,7 +355,43 @@ export class SvgRenderer {
         }
     }
 
-    private defaultEdgeRender(edgeSelection: Selection<SVGLineElement, Edge, null, undefined>, edge: Edge): void {
+}
+
+class EdgeRenderer {
+
+    private graph: Graph
+    private rendererOptions: SvgRendererOptions
+    private renderEdgeCB?: SvgRendererOptions['renderEdge']
+
+    public constructor(rendererOptions: SvgRendererOptions, graph: Graph) {
+        this.graph = graph
+        this.rendererOptions = rendererOptions
+        this.renderEdgeCB = this.rendererOptions?.renderEdge
+    }
+
+    public renderEdge(theEdgeSelection: Selection<SVGPathElement, Edge, null, undefined>, edge: Edge): void {
+        if (this.renderEdgeCB) {
+            const rendered = this?.renderEdgeCB?.(edge, theEdgeSelection)
+            const fo = theEdgeSelection.append('foreignObject')
+                .attr('width', 40)  // FIXME: calculate the correct size of the FO based on the rendered content
+                .attr('height', 40)
+
+            if (typeof rendered === 'string') {
+                fo.html(rendered)
+            } else if (rendered instanceof HTMLElement) {
+                fo.node()?.append(rendered)
+            }
+            // In here, we could add support of other lightweight framework such as jQuery, Vue.js, ..
+        } else {
+            this.defaultEdgeRender(theEdgeSelection, edge)
+        }
+
+        if (this.graph.getOptions().isDirected || edge.directed) {
+            this.drawEdgeMarker(theEdgeSelection, edge)
+        }
+    }
+
+    public defaultEdgeRender(edgeSelection: Selection<SVGPathElement, Edge, null, undefined>, edge: Edge): void {
         const styleFromEdge = {
             strokeColor: edge.getStyle()?.strokeColor,
             strokeWidth: edge.getStyle()?.strokeWidth,
@@ -296,19 +401,25 @@ export class SvgRenderer {
         this.genericEdgeRender(edgeSelection, style)
     }
 
-    private mergeEdgeStylingOptions(style: Partial<EdgeStyle>): EdgeStyle {
+    public mergeEdgeStylingOptions(style: Partial<EdgeStyle>): EdgeStyle {
         const mergedStyle = {
-            strokeColor: style?.strokeColor ?? this.options.defaultEdgeStyle.strokeColor,
-            strokeWidth: style?.strokeWidth ?? this.options.defaultEdgeStyle.strokeWidth,
-            opacity: style?.opacity ?? this.options.defaultEdgeStyle.opacity,
+            strokeColor: style?.strokeColor ?? this.rendererOptions.defaultEdgeStyle.strokeColor,
+            strokeWidth: style?.strokeWidth ?? this.rendererOptions.defaultEdgeStyle.strokeWidth,
+            opacity: style?.opacity ?? this.rendererOptions.defaultEdgeStyle.opacity,
         }
         return mergedStyle
     }
 
-    private genericEdgeRender(edgeSelection: Selection<SVGLineElement, Edge, null, undefined>, style: EdgeStyle): void {
+    public genericEdgeRender(edgeSelection: Selection<SVGPathElement, Edge, null, undefined>, style: EdgeStyle): void {
         edgeSelection
             .attr('stroke', style.strokeColor)
             .attr('stroke-width', style.strokeWidth)
             .attr('stroke-opacity', style.opacity)
     }
+
+    public drawEdgeMarker(edgeSelection: Selection<SVGPathElement, Edge<EdgeData>, null, undefined>, edge: Edge<EdgeData>): void {
+        edgeSelection
+            .attr('marker-end', 'url(#arrow)')
+    }
+
 }
