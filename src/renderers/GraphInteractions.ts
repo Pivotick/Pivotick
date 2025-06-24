@@ -1,8 +1,8 @@
-import type { Graph } from '../graph'
-import type { InterractionCallbacks } from '../graph-options'
-import type { Node, NodeData } from '../node'
-import type { Edge } from '../edge'
-import type { SvgRenderer } from './svgRenderer'
+import type { Graph } from '../Graph'
+import type { InterractionCallbacks } from '../GraphOptions'
+import type { Node, NodeData } from '../Node'
+import type { Edge } from '../Edge'
+import type { GraphSvgRenderer } from './GraphSvgRenderer'
 import { select as d3Select, type Selection } from 'd3-selection'
 
 
@@ -20,13 +20,13 @@ interface EdgeSelection {
 export class GraphInteractions {
 
     private graph: Graph
-    private renderer: SvgRenderer
+    private renderer: GraphSvgRenderer
     private callbacks: Partial<InterractionCallbacks>
 
     private selectedNode: NodeSelection | null = null
     private selectedEdge: EdgeSelection | null = null
 
-    constructor(graph: Graph, renderer: SvgRenderer) {
+    constructor(graph: Graph, renderer: GraphSvgRenderer) {
         this.graph = graph
         this.renderer = renderer
         this.callbacks = this.graph.getCallbacks() ?? {}

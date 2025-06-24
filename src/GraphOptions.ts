@@ -1,6 +1,6 @@
 import { type Selection } from 'd3-selection'
-import { Node } from './node'
-import { Edge } from './edge'
+import { Node } from './Node'
+import { Edge } from './Edge'
 
 export interface InterractionCallbacks {
     /**
@@ -81,7 +81,7 @@ export interface EdgeStyle {
     opacity: number,
 }
 
-export interface SvgRendererOptions {
+export interface GraphSvgRendererOptions {
     /**
      * Custom renderer for nodes.
      * Receives node data and selection, and should return HTML or SVG element or string or directly calling d3 methods on the selection.
@@ -129,7 +129,7 @@ export interface GraphOptions {
     /**
      * Options for the rendering engine
      */
-    render?: Partial<SvgRendererOptions>
+    render?: Partial<GraphSvgRendererOptions>
     /**
      * Options for the simultion engine
      */

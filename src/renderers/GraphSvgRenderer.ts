@@ -1,11 +1,11 @@
 import { select as d3Select, type Selection } from 'd3-selection'
 import { zoom as d3Zoom, type ZoomBehavior } from 'd3-zoom'
-import { Edge, type EdgeData } from '../edge'
-import { Node } from '../node'
-import type { Graph } from '../graph'
-import type { EdgeStyle, NodeStyle, SvgRendererOptions } from '../graph-options'
+import { Edge, type EdgeData } from '../Edge'
+import { Node } from '../Node'
+import type { Graph } from '../Graph'
+import type { EdgeStyle, NodeStyle, GraphSvgRendererOptions } from '../GraphOptions'
 import merge from 'lodash.merge'
-import { GraphInteractions } from './graphInteractions'
+import { GraphInteractions } from './GraphInteractions'
 
 
 const DEFAULT_RENDERER_OPTIONS = {
@@ -23,18 +23,18 @@ const DEFAULT_RENDERER_OPTIONS = {
         strokeWidth: 2,
         opacity: 0.8,
     },
-} satisfies SvgRendererOptions
+} satisfies GraphSvgRendererOptions
 
-export class SvgRenderer {
+export class GraphSvgRenderer {
     private container: HTMLElement
     private graph: Graph
     private zoom: ZoomBehavior<SVGSVGElement, unknown>
     private graphInteraction: GraphInteractions
 
-    private NodeRenderer: NodeRenderer
-    private EdgeRenderer: EdgeRenderer
+    private nodeDrawer: NodeDrawer
+    private edgeDrawer: EdgeDrawer
 
-    private options: SvgRendererOptions
+    private options: GraphSvgRendererOptions
     private svgCanvas: SVGSVGElement
 
     private svg: Selection<SVGSVGElement, unknown, null, undefined>
@@ -49,15 +49,15 @@ export class SvgRenderer {
     private nodeSelection!: Selection<SVGGElement, Node, SVGGElement, unknown>
     private edgeSelection!: Selection<SVGPathElement, Edge, SVGGElement, unknown>
 
-    constructor(graph: Graph, container: HTMLElement, options: Partial<SvgRendererOptions>) {
+    constructor(graph: Graph, container: HTMLElement, options: Partial<GraphSvgRendererOptions>) {
         this.graph = graph
         this.container = container
 
         this.options = merge({}, DEFAULT_RENDERER_OPTIONS, options)
 
         this.graphInteraction = new GraphInteractions(this.graph, this)
-        this.NodeRenderer = new NodeRenderer(this.options, this.graph)
-        this.EdgeRenderer = new EdgeRenderer(this.options, this.graph)
+        this.nodeDrawer = new NodeDrawer(this.options, this.graph)
+        this.edgeDrawer = new EdgeDrawer(this.options, this.graph)
 
         this.svgCanvas = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
         this.svgCanvas.setAttribute('width', '100%')
@@ -97,12 +97,12 @@ export class SvgRenderer {
                     .append('g').classed('node-shape', true)
                     .each((node: Node, i: number, nodes: ArrayLike<SVGGElement>) => {
                         const selection = d3Select<SVGGElement, Node>(nodes[i])
-                        this.NodeRenderer.renderNode(selection, node)
+                        this.nodeDrawer.renderNode(selection, node)
                     }),
                 update => update
                     .each((node: Node, i: number, nodes: ArrayLike<SVGGElement>) => {
                         const selection = d3Select<SVGGElement, Node>(nodes[i])
-                        this.NodeRenderer.renderNode(selection, node)
+                        this.nodeDrawer.renderNode(selection, node)
                     }),
                 exit => exit.remove()
             )
@@ -118,12 +118,12 @@ export class SvgRenderer {
                     .append('path')
                     .each((edge: Edge, i: number, edges: ArrayLike<SVGPathElement>) => {
                         const selection = d3Select<SVGPathElement, Edge>(edges[i])
-                        this.EdgeRenderer.renderEdge(selection, edge)
+                        this.edgeDrawer.renderEdge(selection, edge)
                     }),
                 update => update
                     .each((edge: Edge, i: number, edges: ArrayLike<SVGPathElement>) => {
                         const selection = d3Select<SVGPathElement, Edge>(edges[i])
-                        this.EdgeRenderer.renderEdge(selection, edge)
+                        this.edgeDrawer.renderEdge(selection, edge)
                     }),
                 exit => exit.remove()
             )
@@ -139,12 +139,12 @@ export class SvgRenderer {
         return this.svg
     }
 
-    public render(): void {
-        this.renderEdges() // Render edges first so nodes are drawn on top of them
-        this.renderNodes()
+    public updatePositions(): void {
+        this.updateEdgePositions() // Render edges first so nodes are drawn on top of them
+        this.updateNodePositions()
     }
 
-    public renderNodes(): void {
+    public updateNodePositions(): void {
         this.nodeSelection
             .attr('transform', d => `translate(${d.x ?? 0},${d.y ?? 0})`)
     }
@@ -157,7 +157,7 @@ export class SvgRenderer {
         return this.edgeSelection
     }
 
-    private renderEdges(): void {
+    private updateEdgePositions(): void {
         this.edgeSelection
             .attr('d', (d: Edge): string | null => {
                 const { from, to } = d
@@ -169,7 +169,7 @@ export class SvgRenderer {
                 if (from === to) { // self-loop
                     const x = from.x ?? 0
                     const y = from.y ?? 0
-                    const nodeRadius = this.NodeRenderer.computeNodeStyle(from).size
+                    const nodeRadius = this.nodeDrawer.computeNodeStyle(from).size
                     const control_point_radius = 6 * nodeRadius
 
                     // 80° NE
@@ -201,8 +201,8 @@ export class SvgRenderer {
                 const normY = dy / distance
 
                 // Compute source/target node radius
-                const rFrom = this.NodeRenderer.computeNodeStyle(from).size
-                const rTo = this.NodeRenderer.computeNodeStyle(to).size
+                const rFrom = this.nodeDrawer.computeNodeStyle(from).size
+                const rTo = this.nodeDrawer.computeNodeStyle(to).size
 
                 // Offset both ends of the line
                 const startX = from.x + (rFrom + draw_offset) * normX
@@ -232,13 +232,13 @@ export class SvgRenderer {
 
 }
 
-class NodeRenderer {
+class NodeDrawer {
 
     private graph: Graph
-    private rendererOptions: SvgRendererOptions
-    private renderNodeCB?: SvgRendererOptions['renderNode']
+    private rendererOptions: GraphSvgRendererOptions
+    private renderNodeCB?: GraphSvgRendererOptions['renderNode']
 
-    public constructor(rendererOptions: SvgRendererOptions, graph: Graph) {
+    public constructor(rendererOptions: GraphSvgRendererOptions, graph: Graph) {
         this.graph = graph
         this.rendererOptions = rendererOptions
         this.renderNodeCB = this.rendererOptions?.renderNode
@@ -357,13 +357,13 @@ class NodeRenderer {
 
 }
 
-class EdgeRenderer {
+class EdgeDrawer {
 
     private graph: Graph
-    private rendererOptions: SvgRendererOptions
-    private renderEdgeCB?: SvgRendererOptions['renderEdge']
+    private rendererOptions: GraphSvgRendererOptions
+    private renderEdgeCB?: GraphSvgRendererOptions['renderEdge']
 
-    public constructor(rendererOptions: SvgRendererOptions, graph: Graph) {
+    public constructor(rendererOptions: GraphSvgRendererOptions, graph: Graph) {
         this.graph = graph
         this.rendererOptions = rendererOptions
         this.renderEdgeCB = this.rendererOptions?.renderEdge

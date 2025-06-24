@@ -8,10 +8,10 @@ import {
 } from 'd3-force'
 import { type Simulation as d3Simulation } from 'd3-force'
 import { drag as d3Drag } from 'd3-drag'
-import type { Graph } from './graph'
-import type { Node } from './node'
-import type { Edge } from './edge'
-import type { SimulationOptions } from './graph-options'
+import type { Graph } from './Graph'
+import type { Node } from './Node'
+import type { Edge } from './Edge'
+import type { SimulationOptions } from './GraphOptions'
 import merge from 'lodash.merge'
 
 
@@ -158,7 +158,7 @@ export class Simulation {
                 this.simulation.stop()
             }
             this.simulation.tick()
-            this.graph.render()
+            this.graph.updatePositions()
         }
     }
 

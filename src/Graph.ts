@@ -1,14 +1,14 @@
-import { Node } from './node'
-import { Edge } from './edge'
-import type { graphData, GraphOptions, InterractionCallbacks } from './graph-options'
-import { SvgRenderer } from './renderers/svgRenderer'
-import { Simulation } from './simulation'
+import { Node } from './Node'
+import { Edge } from './Edge'
+import type { graphData, GraphOptions, InterractionCallbacks } from './GraphOptions'
+import { GraphSvgRenderer } from './renderers/GraphSvgRenderer'
+import { Simulation } from './Simulation'
 
 
 export class Graph {
     private nodes: Map<string, Node> = new Map()
     private edges: Map<string, Edge> = new Map()
-    public renderer: SvgRenderer
+    public renderer: GraphSvgRenderer
     public simulation: Simulation
     private options: GraphOptions
 
@@ -21,7 +21,7 @@ export class Graph {
         const rendererOptions = {
             ...this.options.render
         }
-        this.renderer = new SvgRenderer(this, container, rendererOptions)
+        this.renderer = new GraphSvgRenderer(this, container, rendererOptions)
 
         const simulationOptions = {
             ...this.options.simulation
@@ -35,7 +35,7 @@ export class Graph {
         }
 
         this.simulation.start()
-        this.renderer.render()
+        this.renderer.updatePositions()
     }
 
     getOptions(): GraphOptions {
@@ -163,7 +163,7 @@ export class Graph {
         return this.getEdges().filter(edge => edge.to.id === nodeId)
     }
 
-    render(): void {
-        this.renderer?.render()
+    updatePositions(): void {
+        this.renderer?.updatePositions()
     }
 }
