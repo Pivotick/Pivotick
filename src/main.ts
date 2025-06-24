@@ -7,7 +7,7 @@ import { Pivotick, Node, Edge } from './index'
 export function createSampleGraph(): Pivotick {
     const container = document.getElementById('app')!
 
-    const N = 2
+    const N = 100
     const nodes = [...Array(N).keys()].map(i => (
         new Node(i.toString(),
             {
@@ -18,25 +18,25 @@ export function createSampleGraph(): Pivotick {
             }
         )
     ))
-    // const edges = [...Array(N).keys()]
-    //     .filter(id => id)
-    //     .map(id => {
-    //         const source = nodes[id]
-    //         const target = nodes[Math.round(Math.random() * (id - 1))]
-    //         return new Edge(`${id}-${target.id}`, source, target, { relation: 'connects to' })
-    //     })
-    const edges = []
-    edges.push(new Edge('0-0', nodes[0], nodes[0], { relation : 'self-loop'}))
-    edges.push(new Edge('0-1', nodes[0], nodes[1], { relation : 'a'}))
-    edges.push(new Edge('1-0', nodes[1], nodes[0], { relation : 'b'}))
+    const edges = [...Array(N).keys()]
+        .filter(id => id)
+        .map(id => {
+            const source = nodes[id]
+            const target = nodes[Math.round(Math.random() * (id - 1))]
+            return new Edge(`${id}-${target.id}`, source, target, { relation: 'connects to' })
+        })
+    // const edges = []
+    // edges.push(new Edge('0-0', nodes[0], nodes[0], { relation : 'self-loop'}))
+    // edges.push(new Edge('0-1', nodes[0], nodes[1], { relation : 'a'}))
+    // edges.push(new Edge('1-0', nodes[1], nodes[0], { relation : 'b'}))
 
     const graph = new Pivotick(container, {nodes: nodes, edges: edges}, {
         // isDirected: false,
         simulation: {
             // warmupTicks: 500
-            d3ManyBodyStrength: -500,
-            d3LinkStrength: 0.1,
-            d3LinkDistance: 50,
+            // d3ManyBodyStrength: -500,
+            // d3LinkStrength: 0.1,
+            // d3LinkDistance: 50,
         },
         callbacks: {
             // onNodeClick: (e, node) => console.log(`onNodeClick: ${node.id}`),

@@ -41,6 +41,7 @@ export class Simulation {
     private animationFrameId: number | null = null
     private startSimulationTime: number = 0
     private engineRunning: boolean = false
+    private dragInProgress: boolean = false
 
     private options: SimulationOptions
 
@@ -151,8 +152,11 @@ export class Simulation {
         
         if (this.engineRunning) {
             if (
-                (new Date()).getTime() - this.startSimulationTime > this.options.cooldownTime ||
-                this.options.d3AlphaMin > 0 && this.simulation.alpha() < this.options.d3AlphaMin
+                !this.dragInProgress &&
+                (
+                    (new Date()).getTime() - this.startSimulationTime > this.options.cooldownTime ||
+                    this.options.d3AlphaMin > 0 && this.simulation.alpha() < this.options.d3AlphaMin
+                )
             ) {
                 this.engineRunning = false
                 this.simulation.stop()
@@ -166,6 +170,7 @@ export class Simulation {
         return d3Drag<SVGGElement, Node>()
             .on('start', (event, d) => {
                 if (!event.active) {
+                    this.dragInProgress = true
                     this.restart()
                     this.simulation
                         .alphaTarget(this.options.d3AlphaTarget)
@@ -180,6 +185,7 @@ export class Simulation {
             })
             .on('end', (event, d) => {
                 if (!event.active) {
+                    this.dragInProgress = false
                     this.restart()
                     this.simulation
                         .alphaTarget(0)
