@@ -31,8 +31,8 @@ export class GraphSvgRenderer {
     private zoom: ZoomBehavior<SVGSVGElement, unknown>
     private graphInteraction: GraphInteractions
 
-    private nodeDrawer: NodeDrawer
-    private edgeDrawer: EdgeDrawer
+    public nodeDrawer: NodeDrawer
+    public edgeDrawer: EdgeDrawer
 
     private options: GraphSvgRendererOptions
     private svgCanvas: SVGSVGElement
@@ -56,8 +56,8 @@ export class GraphSvgRenderer {
         this.options = merge({}, DEFAULT_RENDERER_OPTIONS, options)
 
         this.graphInteraction = new GraphInteractions(this.graph, this)
-        this.nodeDrawer = new NodeDrawer(this.options, this.graph)
-        this.edgeDrawer = new EdgeDrawer(this.options, this.graph)
+        this.nodeDrawer = new NodeDrawer(this.options, this.graph, this)
+        this.edgeDrawer = new EdgeDrawer(this.options, this.graph, this)
 
         this.svgCanvas = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
         this.svgCanvas.setAttribute('width', '100%')
@@ -86,24 +86,33 @@ export class GraphSvgRenderer {
     }
 
     public init(): void {
+        this.update()
+        this.graphInteraction.init()
+    }
+
+    public update(): void {
         const nodes = this.graph.getNodes()
         this.nodeGroupSelection = this.nodeGroup
             .selectAll<SVGGElement, Node>('g.node-shape')
 
         this.nodeSelection = this.nodeGroupSelection
-            .data(nodes)
+            .data(nodes, (node: Node) => node.id)
             .join(
-                (enter) => enter
-                    .append('g').classed('node-shape', true)
-                    .each((node: Node, i: number, nodes: ArrayLike<SVGGElement>) => {
+                (enter) => {
+                    return enter
+                        .append('g').classed('node-shape', true)
+                        .each((node: Node, i: number, nodes: ArrayLike<SVGGElement>) => {
+                            const selection = d3Select<SVGGElement, Node>(nodes[i])
+                            this.nodeDrawer.renderNode(selection, node)
+                        })
+                },
+                (update) => {
+                    return update.each((node: Node, i: number, nodes: ArrayLike<SVGGElement>) => {
                         const selection = d3Select<SVGGElement, Node>(nodes[i])
+                        selection.selectChildren().remove()
                         this.nodeDrawer.renderNode(selection, node)
-                    }),
-                update => update
-                    .each((node: Node, i: number, nodes: ArrayLike<SVGGElement>) => {
-                        const selection = d3Select<SVGGElement, Node>(nodes[i])
-                        this.nodeDrawer.renderNode(selection, node)
-                    }),
+                    })
+                },
                 exit => exit.remove()
             )
 
@@ -112,7 +121,7 @@ export class GraphSvgRenderer {
             .selectAll<SVGPathElement, Edge>('path')
 
         this.edgeSelection = this.edgeGroupSelection
-            .data(edges)
+            .data(edges, (edge: Edge) => edge.id)
             .join(
                 (enter) => enter
                     .append('path')
@@ -123,12 +132,11 @@ export class GraphSvgRenderer {
                 update => update
                     .each((edge: Edge, i: number, edges: ArrayLike<SVGPathElement>) => {
                         const selection = d3Select<SVGPathElement, Edge>(edges[i])
+                        selection.selectChildren().remove()
                         this.edgeDrawer.renderEdge(selection, edge)
                     }),
                 exit => exit.remove()
             )
-
-        this.graphInteraction.init()
     }
 
     public getCanvas(): SVGSVGElement {
@@ -159,58 +167,8 @@ export class GraphSvgRenderer {
 
     private updateEdgePositions(): void {
         this.edgeSelection
-            .attr('d', (d: Edge): string | null => {
-                const { from, to } = d
-
-                if (!from.x || !from.y || !to.x || !to.y)
-                    return null
-
-                const draw_offset = 4 // Distance from which to end the edge
-                if (from === to) { // self-loop
-                    const x = from.x ?? 0
-                    const y = from.y ?? 0
-                    const nodeRadius = this.nodeDrawer.computeNodeStyle(from).size
-                    const control_point_radius = 6 * nodeRadius
-
-                    // 80° NE
-                    const angle1 = (80 * Math.PI) / 180
-                    const cx1 = x + control_point_radius * Math.cos(angle1)
-                    const cy1 = y - control_point_radius * Math.sin(angle1)
-
-                    // 10° NE
-                    const angle2 = (10 * Math.PI) / 180
-                    const cx2 = x + control_point_radius * Math.cos(angle2)
-                    const cy2 = y - control_point_radius * Math.sin(angle2)
-
-                    // Start point offset by (r + draw_offset) in angle1 direction
-                    const startX = x + (nodeRadius) * Math.cos(angle1)
-                    const startY = y - (nodeRadius) * Math.sin(angle1)
-
-                    // End point offset by (r + draw_offset) in angle2 direction
-                    const endX = x + (nodeRadius + draw_offset) * Math.cos(angle2)
-                    const endY = y - (nodeRadius + draw_offset) * Math.sin(angle2)
-
-                    return `M ${startX} ${startY} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${endX} ${endY}`
-                }
-
-                // Direction angle from source to target
-                const dx = to.x - from.x
-                const dy = to.y - from.y
-                const distance = Math.sqrt(dx * dx + dy * dy)
-                const normX = dx / distance
-                const normY = dy / distance
-
-                // Compute source/target node radius
-                const rFrom = this.nodeDrawer.computeNodeStyle(from).size
-                const rTo = this.nodeDrawer.computeNodeStyle(to).size
-
-                // Offset both ends of the line
-                const startX = from.x + (rFrom + draw_offset) * normX
-                const startY = from.y + (rFrom + draw_offset) * normY
-                const endX = to.x - (rTo + draw_offset) * normX
-                const endY = to.y - (rTo + draw_offset) * normY
-
-                return `M ${startX},${startY} L ${endX},${endY}`
+            .attr('d', (edge: Edge): string | null => {
+                return this.edgeDrawer.linkPathRouter(edge)
             })
     }
 
@@ -236,9 +194,11 @@ class NodeDrawer {
 
     private graph: Graph
     private rendererOptions: GraphSvgRendererOptions
+    private graphSvgRenderer: GraphSvgRenderer
     private renderNodeCB?: GraphSvgRendererOptions['renderNode']
 
-    public constructor(rendererOptions: GraphSvgRendererOptions, graph: Graph) {
+    public constructor(rendererOptions: GraphSvgRendererOptions, graph: Graph, graphSvgRenderer: GraphSvgRenderer) {
+        this.graphSvgRenderer = graphSvgRenderer
         this.graph = graph
         this.rendererOptions = rendererOptions
         this.renderNodeCB = this.rendererOptions?.renderNode
@@ -361,9 +321,11 @@ class EdgeDrawer {
 
     private graph: Graph
     private rendererOptions: GraphSvgRendererOptions
+    private graphSvgRenderer: GraphSvgRenderer
     private renderEdgeCB?: GraphSvgRendererOptions['renderEdge']
 
-    public constructor(rendererOptions: GraphSvgRendererOptions, graph: Graph) {
+    public constructor(rendererOptions: GraphSvgRendererOptions, graph: Graph, graphSvgRenderer: GraphSvgRenderer) {
+        this.graphSvgRenderer = graphSvgRenderer
         this.graph = graph
         this.rendererOptions = rendererOptions
         this.renderEdgeCB = this.rendererOptions?.renderEdge
@@ -421,5 +383,92 @@ class EdgeDrawer {
         edgeSelection
             .attr('marker-end', 'url(#arrow)')
     }
+
+    public linkPathRouter(edge: Edge): string | null {
+        const { from, to } = edge
+
+        if (!from.x || !from.y || !to.x || !to.y)
+            return null
+
+        if (from === to) // self-loop
+            return this.linkSelfLoop(edge)
+
+        return this.linkStraight(edge)
+    }
+
+    protected linkSelfLoop(edge: Edge): string | null {
+        const { from, to } = edge
+
+        if (!from.x || !from.y || !to.x || !to.y)
+            return null
+
+        const draw_offset = 4 // Distance from which to end the edge
+
+        const x = from.x ?? 0
+        const y = from.y ?? 0
+        const nodeRadius = this.graphSvgRenderer.nodeDrawer.computeNodeStyle(from).size
+        const control_point_radius = 6 * nodeRadius
+
+        // 80° NE
+        const angle1 = (80 * Math.PI) / 180
+        const cx1 = x + control_point_radius * Math.cos(angle1)
+        const cy1 = y - control_point_radius * Math.sin(angle1)
+
+        // 10° NE
+        const angle2 = (10 * Math.PI) / 180
+        const cx2 = x + control_point_radius * Math.cos(angle2)
+        const cy2 = y - control_point_radius * Math.sin(angle2)
+
+        // Start point offset by (r + draw_offset) in angle1 direction
+        const startX = x + (nodeRadius) * Math.cos(angle1)
+        const startY = y - (nodeRadius) * Math.sin(angle1)
+
+        // End point offset by (r + draw_offset) in angle2 direction
+        const endX = x + (nodeRadius + draw_offset) * Math.cos(angle2)
+        const endY = y - (nodeRadius + draw_offset) * Math.sin(angle2)
+
+        return `M ${startX} ${startY} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${endX} ${endY}`
+    }
+
+    protected linkStraight(edge: Edge): string | null {
+        const { from, to } = edge
+
+        if (!from.x || !from.y || !to.x || !to.y)
+            return null
+
+        const draw_offset = 4 // Distance from which to end the edge
+
+        // Direction angle from source to target
+        const dx = to.x - from.x
+        const dy = to.y - from.y
+        const distance = Math.sqrt(dx * dx + dy * dy)
+        const normX = dx / distance
+        const normY = dy / distance
+
+        // Compute source/target node radius
+        const rFrom = this.graphSvgRenderer.nodeDrawer.computeNodeStyle(from).size
+        const rTo = this.graphSvgRenderer.nodeDrawer.computeNodeStyle(to).size
+
+        // Offset both ends of the line
+        const startX = from.x + (rFrom + draw_offset) * normX
+        const startY = from.y + (rFrom + draw_offset) * normY
+        const endX = to.x - (rTo + draw_offset) * normX
+        const endY = to.y - (rTo + draw_offset) * normY
+
+        return `M ${startX},${startY} L ${endX},${endY}`
+    }
+
+    protected linkArc(edge: Edge): string | null {
+        const { from, to } = edge
+
+        if (!from.x || !from.y || !to.x || !to.y)
+            return null
+
+        const r = Math.hypot(to.x - from.x, to.y - from.y)
+        return `
+          M${from.x},${from.y}
+          A${r},${r} 0 0,1 ${to.x},${to.y}
+        `
+      }
 
 }

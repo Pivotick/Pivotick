@@ -48,27 +48,45 @@ export class Graph {
 
     onChange() {
         this.simulation?.update()
+        this.renderer?.update()
     }
 
-    setData(nodes: Array<Node>, edges: Array<Edge>): void {
+    updateData(newNodes?: Array<Node>, newEdges?: Array<Edge>): void{
+        if (newNodes) {
+            newNodes.forEach(newNode => {
+                if (this.nodes.has(newNode.id)) {
+                    this.nodes.set(newNode.id, newNode)
+                } else {
+                    this.addNode(newNode)
+                }
+            })
+        }
+        if (newEdges) {
+            newEdges.forEach(newEdge => {
+                if (this.edges.has(newEdge.id)) {
+                    this.edges.set(newEdge.id, newEdge)
+                } else {
+                    this.addEdge(newEdge)
+                }
+            })
+        }
+        if (newNodes || newEdges) {
+            this.onChange()
+        }
+    }
+
+    setData(nodes: Array<Node> = [], edges: Array<Edge> = []): void {
+        this.nodes.clear()
+        this.edges.clear()
         this._setData(nodes, edges)
         this.onChange()
     }
 
     _setData(nodes: Array<Node>, edges: Array<Edge>): void {
         nodes.forEach(node => {
-            if (this.nodes.has(node.id)) {
-                throw new Error(`Node with id ${node.id} already exists.`)
-            }
             this.nodes.set(node.id, node)
         })
         edges.forEach(edge => {
-            if (this.edges.has(edge.id)) {
-                throw new Error(`Edge with id ${edge.id} already exists.`)
-            }
-            if (!this.nodes.has(edge.from.id) || !this.nodes.has(edge.to.id)) {
-                throw new Error('Both nodes must exist in the graph before adding an edge.')
-            }
             this.edges.set(edge.id, edge)
         })
     }

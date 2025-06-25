@@ -7,7 +7,7 @@ import { Pivotick, Node, Edge } from './index'
 export function createSampleGraph(): Pivotick {
     const container = document.getElementById('app')!
 
-    const N = 100
+    const N = 10
     const nodes = [...Array(N).keys()].map(i => (
         new Node(i.toString(),
             {
@@ -35,8 +35,8 @@ export function createSampleGraph(): Pivotick {
         simulation: {
             // warmupTicks: 500
             // d3ManyBodyStrength: -500,
-            // d3LinkStrength: 0.1,
-            // d3LinkDistance: 50,
+            d3LinkStrength: 0.1,
+            d3LinkDistance: 50,
         },
         callbacks: {
             // onNodeClick: (e, node) => console.log(`onNodeClick: ${node.id}`),
@@ -51,11 +51,11 @@ export function createSampleGraph(): Pivotick {
             // onEdgeClick: (e, edge) => console.log(`onEdgeClick: ${edge.id}`),
         },
         render: {
-            // nodeTypeAccessor: (node: Node) => node.getData()?.type,
-            // nodeStyleMap: {
-            //     'hub': { shape: 'hexagon', color: '#aaa', size: 30 },
-            //     'leaf': { shape: 'triangle', color: '#f00' },
-            // }
+            nodeTypeAccessor: (node: Node) => node.getData()?.type,
+            nodeStyleMap: {
+                'hub': { shape: 'hexagon', color: '#aaa', size: 30 },
+                'leaf': { shape: 'triangle', color: '#f00' },
+            },
             defaultNodeStyle: {
                 // shape: 'hexagon'
                 // color: '#aaaaaa33',
@@ -89,4 +89,21 @@ function addRandomNode(counter: number, graph: Pivotick) {
     graph.addEdge(newEdge)
 }
 
-createSampleGraph()
+const graph = createSampleGraph()
+// let counter = 0
+// setInterval(() => {
+//     addRandomNode(counter, graph)
+//     counter++
+// }, 1000)
+
+setInterval(() => {
+    const randomNode = graph.getNodes()[Math.floor(Math.random() * graph.getNodes().length)]
+    randomNode.setData({type: 'circle'})
+    graph.updateData([randomNode])
+
+    // const firstNode = graph.getNodes()[0]
+    // firstNode.setData({ type: 'circle' })
+    // graph.updateData([firstNode])
+    // console.log(graph.getNodes()[0].getData())
+    
+}, 1000)
