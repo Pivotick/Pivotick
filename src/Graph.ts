@@ -103,11 +103,27 @@ export class Graph {
         this.onChange()
     }
 
+
     /**
      * Get a node by its id.
      */
-    getNode(id: string): Node | undefined {
-        return this.nodes.get(id)
+    getNode(id: string | Node): Node | undefined {
+        return this._getNode(id)
+    }
+
+
+    private _getNode(id: string | Node): Node | undefined {
+        if (typeof id === 'string') {
+            const node = this.nodes.get(id)
+            if (!node) {
+                return undefined
+            }
+            return node
+        } else if (id instanceof Node) {
+            return id
+        } else {
+            return undefined
+        }
     }
 
     /**
@@ -171,14 +187,35 @@ export class Graph {
     }
 
     /**
-     * Find edges connected to a given node id.
+     * Find edges going out of a given node id.
      */
-    getEdgesFromNode(nodeId: string): Edge[] {
-        return this.getEdges().filter(edge => edge.from.id === nodeId)
+    getEdgesFromNode(queryNode: string | Node): Edge[] {
+        const node: Node | undefined = this.getNode(queryNode)
+        if (!node)
+            return []
+        return this.getEdges().filter(edge => edge.from.id === node.id)
     }
 
-    getEdgesToNode(nodeId: string): Edge[] {
-        return this.getEdges().filter(edge => edge.to.id === nodeId)
+    /**
+     * Find edges going to a given node id.
+     */
+    getEdgesToNode(queryNode: string | Node): Edge[] {
+        const node: Node | undefined = this.getNode(queryNode)
+        if (!node)
+            return []
+        return this.getEdges().filter(edge => edge.to.id === node.id)
+    }
+
+    /**
+     * Get nodes connected to the given node id
+     */
+    getConnectedNodes(queryNode: string | Node): Node[] {
+        const node: Node | undefined = this.getNode(queryNode)
+        if (!node)
+            return []
+        const edgesFrom = this.getEdgesFromNode(node.id)
+        const connectedNodes = edgesFrom.map(edge => edge.to)
+        return connectedNodes
     }
 
     updatePositions(): void {

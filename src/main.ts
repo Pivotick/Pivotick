@@ -26,7 +26,9 @@ export function createSampleGraph(): Pivotick {
             return new Edge(`${id}-${target.id}`, source, target, { relation: 'connects to' })
         })
     // const edges = []
-    // edges.push(new Edge('0-0', nodes[0], nodes[0], { relation : 'self-loop'}))
+    edges.push(new Edge('0-0', nodes[0], nodes[0], { relation : 'self-loop'}))
+    edges.push(new Edge('a-b', nodes[3], nodes[2], { relation : 'a'}))
+    edges.push(new Edge('b-a', nodes[2], nodes[3], { relation : 'b'}))
     // edges.push(new Edge('0-1', nodes[0], nodes[1], { relation : 'a'}))
     // edges.push(new Edge('1-0', nodes[1], nodes[0], { relation : 'b'}))
 
@@ -51,15 +53,18 @@ export function createSampleGraph(): Pivotick {
             // onEdgeClick: (e, edge) => console.log(`onEdgeClick: ${edge.id}`),
         },
         render: {
-            nodeTypeAccessor: (node: Node) => node.getData()?.type,
-            nodeStyleMap: {
-                'hub': { shape: 'hexagon', color: '#aaa', size: 30 },
-                'leaf': { shape: 'triangle', color: '#f00' },
-            },
-            defaultNodeStyle: {
-                // shape: 'hexagon'
-                // color: '#aaaaaa33',
-                // strokeColor: '#ffffff33',
+            // nodeTypeAccessor: (node: Node) => node.getData()?.type,
+            // nodeStyleMap: {
+            //     'hub': { shape: 'hexagon', color: '#aaa', size: 30 },
+            //     'leaf': { shape: 'triangle', color: '#f00' },
+            // },
+            // defaultNodeStyle: {
+            //     // shape: 'hexagon'
+            //     color: '#aaaaaa33',
+            //     strokeColor: '#ffffff33',
+            // }
+            defaultEdgeStyle: {
+                curved: false,
             }
             // renderNode: (node: Node, nodeSelection: d3.Selection<SVGElement, Node, null, undefined>): HTMLElement | string | void => {
             //     nodeSelection
@@ -96,14 +101,14 @@ const graph = createSampleGraph()
 //     counter++
 // }, 1000)
 
-setInterval(() => {
-    const randomNode = graph.getNodes()[Math.floor(Math.random() * graph.getNodes().length)]
-    randomNode.setData({type: 'circle'})
-    graph.updateData([randomNode])
+// setInterval(() => {
+//     const randomNode = graph.getNodes()[Math.floor(Math.random() * graph.getNodes().length)]
+//     randomNode.setData({type: 'circle'})
+//     graph.updateData([randomNode])
 
-    // const firstNode = graph.getNodes()[0]
-    // firstNode.setData({ type: 'circle' })
-    // graph.updateData([firstNode])
-    // console.log(graph.getNodes()[0].getData())
+//     // const firstNode = graph.getNodes()[0]
+//     // firstNode.setData({ type: 'circle' })
+//     // graph.updateData([firstNode])
+//     // console.log(graph.getNodes()[0].getData())
     
-}, 1000)
+// }, 1000)

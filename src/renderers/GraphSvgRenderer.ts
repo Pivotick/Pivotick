@@ -22,6 +22,7 @@ const DEFAULT_RENDERER_OPTIONS = {
         strokeColor: '#999',
         strokeWidth: 2,
         opacity: 0.8,
+        curveStyle: 'bidirectional',
     },
 } satisfies GraphSvgRendererOptions
 
@@ -71,8 +72,7 @@ export class GraphSvgRenderer {
         this.edgeGroup = this.zoomGroup.append('g').attr('class', 'edges')
         this.nodeGroup = this.zoomGroup.append('g').attr('class', 'nodes')
         this.defs = this.svg.append('defs')
-        this.marker = this.defs.append('marker')
-        this.renderMarkers()
+        this.edgeDrawer.renderMarkers(this.defs)
 
         this.zoom = d3Zoom<SVGSVGElement, unknown>()
         this.svg.call(this.zoom)
@@ -170,22 +170,6 @@ export class GraphSvgRenderer {
             .attr('d', (edge: Edge): string | null => {
                 return this.edgeDrawer.linkPathRouter(edge)
             })
-    }
-
-    private renderMarkers(): void {
-        this.marker
-            .attr('id', 'arrow')
-            .attr('viewBox', '0 -5 10 10')
-            .attr('refX', 5) // Or play with norm and node radius..
-            .attr('refY', 0)
-            .attr('markerWidth', 6)
-            .attr('markerHeight', 6)
-            .attr('markerUnits', 'userSpaceOnUse')
-            .attr('orient', 'auto')
-        this.marker
-            .append('path')
-            .attr('d', 'M0,-5L10,0L0,5')
-            .attr('fill', '#999')
     }
 
 }
@@ -347,10 +331,6 @@ class EdgeDrawer {
         } else {
             this.defaultEdgeRender(theEdgeSelection, edge)
         }
-
-        if (this.graph.getOptions().isDirected || edge.directed) {
-            this.drawEdgeMarker(theEdgeSelection, edge)
-        }
     }
 
     public defaultEdgeRender(edgeSelection: Selection<SVGPathElement, Edge, null, undefined>, edge: Edge): void {
@@ -358,9 +338,14 @@ class EdgeDrawer {
             strokeColor: edge.getStyle()?.strokeColor,
             strokeWidth: edge.getStyle()?.strokeWidth,
             opacity: edge.getStyle()?.color,
+            curveStyle: edge.getStyle()?.curveStyle,
         }
         const style = this.mergeEdgeStylingOptions(styleFromEdge)
         this.genericEdgeRender(edgeSelection, style)
+
+        if (this.graph.getOptions().isDirected || edge.directed) {
+            this.drawEdgeMarker(edgeSelection, style)
+        }
     }
 
     public mergeEdgeStylingOptions(style: Partial<EdgeStyle>): EdgeStyle {
@@ -368,6 +353,7 @@ class EdgeDrawer {
             strokeColor: style?.strokeColor ?? this.rendererOptions.defaultEdgeStyle.strokeColor,
             strokeWidth: style?.strokeWidth ?? this.rendererOptions.defaultEdgeStyle.strokeWidth,
             opacity: style?.opacity ?? this.rendererOptions.defaultEdgeStyle.opacity,
+            curveStyle: style?.curveStyle ?? this.rendererOptions.defaultEdgeStyle.curveStyle,
         }
         return mergedStyle
     }
@@ -379,7 +365,7 @@ class EdgeDrawer {
             .attr('stroke-opacity', style.opacity)
     }
 
-    public drawEdgeMarker(edgeSelection: Selection<SVGPathElement, Edge<EdgeData>, null, undefined>, edge: Edge<EdgeData>): void {
+    public drawEdgeMarker(edgeSelection: Selection<SVGPathElement, Edge<EdgeData>, null, undefined>, style: EdgeStyle): void {
         edgeSelection
             .attr('marker-end', 'url(#arrow)')
     }
@@ -393,16 +379,21 @@ class EdgeDrawer {
         if (from === to) // self-loop
             return this.linkSelfLoop(edge)
 
+        const connectedNodes = this.graph.getConnectedNodes(to)
+        if (connectedNodes.filter((node) => node.id === from.id).length > 0) {
+            // The other node has also an edge to the source node
+            return this.linkArc(edge)
+        }
         return this.linkStraight(edge)
     }
 
     protected linkSelfLoop(edge: Edge): string | null {
         const { from, to } = edge
 
-        if (!from.x || !from.y || !to.x || !to.y)
+        if (!from.x || !from.y || !to.x || !to.y || from !== to)
             return null
 
-        const draw_offset = 4 // Distance from which to end the edge
+        const drawOffset = 4 // Distance from which to end the edge
 
         const x = from.x ?? 0
         const y = from.y ?? 0
@@ -419,13 +410,13 @@ class EdgeDrawer {
         const cx2 = x + control_point_radius * Math.cos(angle2)
         const cy2 = y - control_point_radius * Math.sin(angle2)
 
-        // Start point offset by (r + draw_offset) in angle1 direction
+        // Start point offset by (r + drawOffset) in angle1 direction
         const startX = x + (nodeRadius) * Math.cos(angle1)
         const startY = y - (nodeRadius) * Math.sin(angle1)
 
-        // End point offset by (r + draw_offset) in angle2 direction
-        const endX = x + (nodeRadius + draw_offset) * Math.cos(angle2)
-        const endY = y - (nodeRadius + draw_offset) * Math.sin(angle2)
+        // End point offset by (r + drawOffset) in angle2 direction
+        const endX = x + (nodeRadius + drawOffset) * Math.cos(angle2)
+        const endY = y - (nodeRadius + drawOffset) * Math.sin(angle2)
 
         return `M ${startX} ${startY} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${endX} ${endY}`
     }
@@ -436,7 +427,7 @@ class EdgeDrawer {
         if (!from.x || !from.y || !to.x || !to.y)
             return null
 
-        const draw_offset = 4 // Distance from which to end the edge
+        const drawOffset = 4 // Distance from which to end the edge
 
         // Direction angle from source to target
         const dx = to.x - from.x
@@ -450,10 +441,10 @@ class EdgeDrawer {
         const rTo = this.graphSvgRenderer.nodeDrawer.computeNodeStyle(to).size
 
         // Offset both ends of the line
-        const startX = from.x + (rFrom + draw_offset) * normX
-        const startY = from.y + (rFrom + draw_offset) * normY
-        const endX = to.x - (rTo + draw_offset) * normX
-        const endY = to.y - (rTo + draw_offset) * normY
+        const startX = from.x + (rFrom + drawOffset) * normX
+        const startY = from.y + (rFrom + drawOffset) * normY
+        const endX = to.x - (rTo + drawOffset) * normX
+        const endY = to.y - (rTo + drawOffset) * normY
 
         return `M ${startX},${startY} L ${endX},${endY}`
     }
@@ -465,10 +456,276 @@ class EdgeDrawer {
             return null
 
         const r = Math.hypot(to.x - from.x, to.y - from.y)
-        return `
-          M${from.x},${from.y}
-          A${r},${r} 0 0,1 ${to.x},${to.y}
-        `
-      }
+        const arcParams: ArcParams = {
+            from: { x: from.x, y: from.y },
+            to: { x: to.x, y: to.y },
+            rx: r,
+            ry: r,
+            xAxisRotation: 0,
+            largeArcFlag: false,
+            sweepFlag: true,
+          }
 
+        const drawOffset = 4 // Distance from which to end the edge
+        const rTo = this.graphSvgRenderer.nodeDrawer.computeNodeStyle(to).size
+        const rTotalOffset = rTo + drawOffset
+
+        const arcCenter = getArcCenter(arcParams)
+
+        if (arcCenter.rx === arcCenter.ry && arcCenter.xAxisRotation === 0) {
+            // Circular arc shortcut
+            const intersections = circleCircleIntersections(
+                arcCenter.cx,
+                arcCenter.cy,
+                arcCenter.rx,
+                arcParams.to,
+                rTotalOffset
+            )
+
+            const validIntersection = pickValidArcIntersection(intersections, arcCenter)
+            if (!validIntersection)
+                return ''
+
+            return `
+                M${from.x},${from.y}
+                A${r},${r} 0 0,1 ${validIntersection.x},${validIntersection.y}
+            `
+        } else {
+            console.log('Arc is elliptical or rotated, numerical methods needed for intersection.')
+        }
+
+        return ''
+    }
+
+    public renderMarkers(defsContainer: Selection<SVGDefsElement, unknown, null, undefined>): void {
+        const markerForStraight = defsContainer.append('marker')
+        markerForStraight
+            .attr('id', 'arrow')
+            .attr('viewBox', '0 -5 10 10')
+            .attr('refX', 5) // Or play with norm and node radius..
+            .attr('refY', 0)
+            .attr('markerWidth', 6)
+            .attr('markerHeight', 6)
+            .attr('markerUnits', 'userSpaceOnUse')
+            .attr('orient', 'auto')
+        markerForStraight
+            .append('path')
+            .attr('d', 'M0,-5L10,0L0,5')
+            .attr('fill', '#999')
+    }
 }
+
+
+interface Point {
+    x: number;
+    y: number;
+}
+
+interface ArcParams {
+    rx: number;
+    ry: number;
+    xAxisRotation: number; // degrees
+    largeArcFlag: boolean;
+    sweepFlag: boolean;
+    from: Point;
+    to: Point;
+}
+
+interface ArcCenterResult {
+    cx: number;
+    cy: number;
+    startAngle: number; // radians
+    deltaAngle: number; // radians
+    rx: number;
+    ry: number;
+    xAxisRotation: number; // radians
+}
+
+/**
+ * Converts degrees to radians.
+ */
+function degToRad(degrees: number): number {
+    return (degrees * Math.PI) / 180
+}
+
+/**
+ * Normalize angle to [0, 2π)
+ */
+function normalizeAngle(angle: number): number {
+    while (angle < 0) angle += 2 * Math.PI
+    while (angle >= 2 * Math.PI) angle -= 2 * Math.PI
+    return angle
+}
+
+/**
+ * Recover ellipse center and angles from SVG arc parameters.
+ * Based on SVG implementation notes: https://www.w3.org/TR/SVG/implnote.html#ArcImplementationNotes
+ */
+function getArcCenter(params: ArcParams): ArcCenterResult {
+    const { rx, ry, xAxisRotation, largeArcFlag, sweepFlag, from, to } = params
+    const φ = degToRad(xAxisRotation)
+    const cosφ = Math.cos(φ)
+    const sinφ = Math.sin(φ)
+
+    // Step 1: Compute (x1', y1')
+    const dx = (from.x - to.x) / 2
+    const dy = (from.y - to.y) / 2
+
+    const x1p = cosφ * dx + sinφ * dy
+    const y1p = -sinφ * dx + cosφ * dy
+
+    // Ensure radii are large enough
+    let rxsq = rx * rx
+    let rysq = ry * ry
+    const x1psq = x1p * x1p
+    const y1psq = y1p * y1p
+
+    // Correct radii if too small
+    const radicant = x1psq / rxsq + y1psq / rysq
+    if (radicant > 1) {
+        const scale = Math.sqrt(radicant)
+        rx *= scale
+        ry *= scale
+        rxsq = rx * rx
+        rysq = ry * ry
+    }
+
+    // Step 2: Compute (cx', cy')
+    const sign = (largeArcFlag !== sweepFlag) ? 1 : -1
+    const numerator = rxsq * rysq - rxsq * y1psq - rysq * x1psq
+    const denominator = rxsq * y1psq + rysq * x1psq
+    const coef = sign * Math.sqrt(Math.max(0, numerator / denominator))
+
+    const cxp = coef * ((rx * y1p) / ry)
+    const cyp = coef * (-(ry * x1p) / rx)
+
+    // Step 3: Compute (cx, cy) from (cx', cy')
+    const cx = cosφ * cxp - sinφ * cyp + (from.x + to.x) / 2
+    const cy = sinφ * cxp + cosφ * cyp + (from.y + to.y) / 2
+
+    // Step 4: Compute start angle and delta angle
+    // Vector angle helper
+    function vectorAngle(ux: number, uy: number, vx: number, vy: number): number {
+        const dot = ux * vx + uy * vy
+        const len = Math.sqrt(ux * ux + uy * uy) * Math.sqrt(vx * vx + vy * vy)
+        let ang = Math.acos(Math.min(Math.max(dot / len, -1), 1)) // clamp due to floating errors
+        if (ux * vy - uy * vx < 0) ang = -ang
+        return ang
+    }
+
+    // Compute start angle
+    const vx1 = (x1p - cxp) / rx
+    const vy1 = (y1p - cyp) / ry
+    const vx2 = (-x1p - cxp) / rx
+    const vy2 = (-y1p - cyp) / ry
+
+    let startAngle = vectorAngle(1, 0, vx1, vy1)
+    let deltaAngle = vectorAngle(vx1, vy1, vx2, vy2)
+
+    if (!sweepFlag && deltaAngle > 0) {
+        deltaAngle -= 2 * Math.PI
+    } else if (sweepFlag && deltaAngle < 0) {
+        deltaAngle += 2 * Math.PI
+    }
+
+    startAngle = normalizeAngle(startAngle)
+    deltaAngle = normalizeAngle(deltaAngle)
+
+    return {
+        cx,
+        cy,
+        startAngle,
+        deltaAngle,
+        rx,
+        ry,
+        xAxisRotation: φ,
+    }
+  }
+
+/**
+* Find intersection points between two circles:
+* Circle 1: center (cx, cy), radius r
+* Circle 2: center (to.x, to.y), radius rTo
+* Returns 0, 1 or 2 intersection points as array of Points.
+*/
+function circleCircleIntersections(
+    cx: number,
+    cy: number,
+    r: number,
+    to: Point,
+    rTo: number
+): Point[] {
+    const dx = to.x - cx
+    const dy = to.y - cy
+    const d = Math.sqrt(dx * dx + dy * dy)
+
+    // No solution cases
+    if (d > r + rTo) return [] // Circles too far apart
+    if (d < Math.abs(r - rTo)) return [] // One circle inside the other
+    if (d === 0 && r === rTo) return [] // Circles coincide
+
+    // Find intersection points
+    const a = (r * r - rTo * rTo + d * d) / (2 * d)
+    const h = Math.sqrt(r * r - a * a)
+
+    const xm = cx + (a * dx) / d
+    const ym = cy + (a * dy) / d
+
+    const xs1 = xm + (h * dy) / d
+    const ys1 = ym - (h * dx) / d
+
+    const xs2 = xm - (h * dy) / d
+    const ys2 = ym + (h * dx) / d
+
+    if (h === 0) {
+        return [{ x: xs1, y: ys1 }] // One intersection (tangent)
+    }
+
+    return [
+        { x: xs1, y: ys1 },
+        { x: xs2, y: ys2 },
+    ]
+  }
+
+function isAngleOnArc(
+    angle: number,
+    start: number,
+    delta: number
+): boolean {
+    angle = normalizeAngle(angle)
+    start = normalizeAngle(start)
+    const end = normalizeAngle(start + delta)
+
+    if (delta >= 0) {
+        if (start <= end) {
+            return angle >= start && angle <= end
+        } else {
+            // Wrap around 2π
+            return angle >= start || angle <= end
+        }
+    } else {
+        if (end <= start) {
+            return angle <= start && angle >= end
+        } else {
+            // Wrap around 0
+            return angle <= start || angle >= end
+        }
+    }
+}
+
+function pickValidArcIntersection(
+    intersections: Point[],
+    arc: ArcCenterResult
+): Point | null {
+    const { cx, cy, startAngle, deltaAngle } = arc
+
+    for (const pt of intersections) {
+        const angle = Math.atan2(pt.y - cy, pt.x - cx)
+        if (isAngleOnArc(angle, startAngle, deltaAngle)) {
+            return pt
+        }
+    }
+
+    return null // none match (unlikely)
+}
+  
