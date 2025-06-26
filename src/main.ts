@@ -63,9 +63,9 @@ export function createSampleGraph(): Pivotick {
             //     color: '#aaaaaa33',
             //     strokeColor: '#ffffff33',
             // }
-            defaultEdgeStyle: {
-                curved: false,
-            }
+            // defaultEdgeStyle: {
+            //     curveStyle: 'bidirectional',
+            // }
             // renderNode: (node: Node, nodeSelection: d3.Selection<SVGElement, Node, null, undefined>): HTMLElement | string | void => {
             //     nodeSelection
             //         .attr("r", 10)

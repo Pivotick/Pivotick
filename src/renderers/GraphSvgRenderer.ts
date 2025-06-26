@@ -334,18 +334,27 @@ class EdgeDrawer {
     }
 
     public defaultEdgeRender(edgeSelection: Selection<SVGPathElement, Edge, null, undefined>, edge: Edge): void {
-        const styleFromEdge = {
-            strokeColor: edge.getStyle()?.strokeColor,
-            strokeWidth: edge.getStyle()?.strokeWidth,
-            opacity: edge.getStyle()?.color,
-            curveStyle: edge.getStyle()?.curveStyle,
-        }
-        const style = this.mergeEdgeStylingOptions(styleFromEdge)
+        const style = this.getEdgeStyle(edge)
         this.genericEdgeRender(edgeSelection, style)
 
         if (this.graph.getOptions().isDirected || edge.directed) {
             this.drawEdgeMarker(edgeSelection, style)
         }
+    }
+
+    public getEdgeStyle(edge: Edge): EdgeStyle {
+        let styleFromEdge
+        if (edge.getStyle()?.styleCb) {
+            styleFromEdge = edge.getStyle().styleCb(edge)
+        } else {
+            styleFromEdge = {
+                strokeColor: edge.getStyle()?.strokeColor,
+                strokeWidth: edge.getStyle()?.strokeWidth,
+                opacity: edge.getStyle()?.color,
+                curveStyle: edge.getStyle()?.curveStyle,
+            }
+        }
+        return this.mergeEdgeStylingOptions(styleFromEdge)
     }
 
     public mergeEdgeStylingOptions(style: Partial<EdgeStyle>): EdgeStyle {
@@ -380,11 +389,21 @@ class EdgeDrawer {
             return this.linkSelfLoop(edge)
 
         const connectedNodes = this.graph.getConnectedNodes(to)
-        if (connectedNodes.filter((node) => node.id === from.id).length > 0) {
-            // The other node has also an edge to the source node
+
+        const edgeStyle = this.getEdgeStyle(edge)
+
+        if (edgeStyle.curveStyle === 'straight') {
+            return this.linkStraight(edge)
+        } else if (edgeStyle.curveStyle === 'curved') {
             return this.linkArc(edge)
+        } else {
+            if (connectedNodes.filter((node) => node.id === from.id).length > 0) {
+                // The other node has also an edge to the source node
+                return this.linkArc(edge)
+            }
+            return this.linkStraight(edge)
         }
-        return this.linkStraight(edge)
+
     }
 
     protected linkSelfLoop(edge: Edge): string | null {
