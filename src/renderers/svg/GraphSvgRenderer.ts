@@ -1,13 +1,13 @@
 import { select as d3Select, type Selection } from 'd3-selection'
 import { zoom as d3Zoom, type ZoomBehavior } from 'd3-zoom'
-import { Edge } from '../Edge'
-import { Node } from '../Node'
+import { Edge } from '../../Edge'
+import { Node } from '../../Node'
 import { NodeDrawer } from './NodeDrawer'
-import { EdgeDrawer } from './svg/EdgeDrawer'
-import type { Graph } from '../Graph'
-import type { GraphSvgRendererOptions } from '../GraphOptions'
+import { EdgeDrawer } from './EdgeDrawer'
+import type { Graph } from '../../Graph'
+import type { GraphSvgRendererOptions } from '../../GraphOptions'
 import merge from 'lodash.merge'
-import { GraphInteractions } from '../GraphInteractions'
+import { GraphInteractions } from '../../GraphInteractions'
 
 
 

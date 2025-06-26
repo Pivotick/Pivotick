@@ -1,7 +1,7 @@
 import { Node } from './Node'
 import { Edge } from './Edge'
 import type { graphData, GraphOptions, InterractionCallbacks } from './GraphOptions'
-import { GraphSvgRenderer } from './renderers/GraphSvgRenderer'
+import { GraphSvgRenderer } from './renderers/svg/GraphSvgRenderer'
 import { Simulation } from './Simulation'
 
 
