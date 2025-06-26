@@ -5,7 +5,7 @@ import { Node } from '../Node'
 import type { Graph } from '../Graph'
 import type { EdgeStyle, NodeStyle, GraphSvgRendererOptions } from '../GraphOptions'
 import merge from 'lodash.merge'
-import { GraphInteractions } from './GraphInteractions'
+import { GraphInteractions } from '../GraphInteractions'
 
 
 const DEFAULT_RENDERER_OPTIONS = {
