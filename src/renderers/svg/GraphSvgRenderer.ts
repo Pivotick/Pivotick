@@ -105,14 +105,14 @@ export class GraphSvgRenderer {
                         .append('g').classed('node-shape', true)
                         .each((node: Node, i: number, nodes: ArrayLike<SVGGElement>) => {
                             const selection = d3Select<SVGGElement, Node>(nodes[i])
-                            this.nodeDrawer.renderNode(selection, node)
+                            this.nodeDrawer.render(selection, node)
                         })
                 },
                 (update) => {
                     return update.each((node: Node, i: number, nodes: ArrayLike<SVGGElement>) => {
                         const selection = d3Select<SVGGElement, Node>(nodes[i])
                         selection.selectChildren().remove()
-                        this.nodeDrawer.renderNode(selection, node)
+                        this.nodeDrawer.render(selection, node)
                     })
                 },
                 exit => exit.remove()
@@ -129,13 +129,13 @@ export class GraphSvgRenderer {
                     .append('path')
                     .each((edge: Edge, i: number, edges: ArrayLike<SVGPathElement>) => {
                         const selection = d3Select<SVGPathElement, Edge>(edges[i])
-                        this.edgeDrawer.renderEdge(selection, edge)
+                        this.edgeDrawer.render(selection, edge)
                     }),
                 update => update
                     .each((edge: Edge, i: number, edges: ArrayLike<SVGPathElement>) => {
                         const selection = d3Select<SVGPathElement, Edge>(edges[i])
                         selection.selectChildren().remove()
-                        this.edgeDrawer.renderEdge(selection, edge)
+                        this.edgeDrawer.render(selection, edge)
                     }),
                 exit => exit.remove()
             )
@@ -158,6 +158,13 @@ export class GraphSvgRenderer {
         this.nodeSelection
             .attr('transform', d => `translate(${d.x ?? 0},${d.y ?? 0})`)
     }
+    
+        private updateEdgePositions(): void {
+            this.edgeSelection
+                .attr('d', (edge: Edge): string | null => {
+                    return this.edgeDrawer.linkPathRouter(edge)
+                })
+        }
 
     public getNodeSelection(): Selection<SVGGElement, Node, SVGGElement, unknown> {
         return this.nodeSelection
@@ -165,13 +172,6 @@ export class GraphSvgRenderer {
 
     public getEdgeSelection(): Selection<SVGPathElement, Edge, SVGGElement, unknown> {
         return this.edgeSelection
-    }
-
-    private updateEdgePositions(): void {
-        this.edgeSelection
-            .attr('d', (edge: Edge): string | null => {
-                return this.edgeDrawer.linkPathRouter(edge)
-            })
     }
 
 }

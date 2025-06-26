@@ -1,4 +1,4 @@
-import { select as d3Select, type Selection } from 'd3-selection'
+import { type Selection } from 'd3-selection'
 import { Node } from '../../Node'
 import type { Graph } from '../../Graph'
 import type { GraphSvgRendererOptions, NodeStyle } from '../../GraphOptions'
@@ -9,29 +9,18 @@ export class NodeDrawer {
     private graph: Graph
     private rendererOptions: GraphSvgRendererOptions
     private graphSvgRenderer: GraphSvgRenderer
-    private renderNodeCB?: GraphSvgRendererOptions['renderNode']
+    private renderCB?: GraphSvgRendererOptions['renderNode']
 
     public constructor(rendererOptions: GraphSvgRendererOptions, graph: Graph, graphSvgRenderer: GraphSvgRenderer) {
         this.graphSvgRenderer = graphSvgRenderer
         this.graph = graph
         this.rendererOptions = rendererOptions
-        this.renderNodeCB = this.rendererOptions?.renderNode
+        this.renderCB = this.rendererOptions?.renderNode
     }
 
-    public mergeNodeStylingOptions(style: Partial<NodeStyle>): NodeStyle {
-        const mergedStyle = {
-            shape: style?.shape ?? this.rendererOptions.defaultNodeStyle.shape,
-            strokeColor: style?.strokeColor ?? this.rendererOptions.defaultNodeStyle.strokeColor,
-            strokeWidth: style?.strokeWidth ?? this.rendererOptions.defaultNodeStyle.strokeWidth,
-            size: style?.size ?? this.rendererOptions.defaultNodeStyle.size,
-            color: style?.color ?? this.rendererOptions.defaultNodeStyle.color,
-        }
-        return mergedStyle
-    }
-
-    public renderNode(theNodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
-        if (this.renderNodeCB) {
-            const rendered = this?.renderNodeCB?.(node, theNodeSelection)
+    public render(theNodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
+        if (this.renderCB) {
+            const rendered = this?.renderCB?.(node, theNodeSelection)
             const fo = theNodeSelection.append('foreignObject')
                 .attr('width', 40)  // FIXME: calculate the correct size of the FO based on the rendered content
                 .attr('height', 40)
@@ -47,12 +36,23 @@ export class NodeDrawer {
         }
     }
 
-    public defaultNodeRender(nodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
+    private defaultNodeRender(nodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
         const style = this.computeNodeStyle(node)
         this.genericNodeRender(nodeSelection, style)
     }
 
-    public computeNodeStyle(node: Node): NodeStyle {
+    private mergeNodeStylingOptions(style: Partial<NodeStyle>): NodeStyle {
+        const mergedStyle = {
+            shape: style?.shape ?? this.rendererOptions.defaultNodeStyle.shape,
+            strokeColor: style?.strokeColor ?? this.rendererOptions.defaultNodeStyle.strokeColor,
+            strokeWidth: style?.strokeWidth ?? this.rendererOptions.defaultNodeStyle.strokeWidth,
+            size: style?.size ?? this.rendererOptions.defaultNodeStyle.size,
+            color: style?.color ?? this.rendererOptions.defaultNodeStyle.color,
+        }
+        return mergedStyle
+    }
+
+    private computeNodeStyle(node: Node): NodeStyle {
         let styleFromStyleMap: Partial<NodeStyle> = {}
         if (this.rendererOptions.nodeStyleMap && typeof this.rendererOptions.nodeTypeAccessor === 'function') {
             const nodeType = this.rendererOptions.nodeTypeAccessor(node)
@@ -76,7 +76,11 @@ export class NodeDrawer {
         return this.mergeNodeStylingOptions(styleFromNode)
     }
 
-    public genericNodeRender(nodeSelection: Selection<SVGGElement, Node, null, undefined>, style: NodeStyle): void {
+    public getNodeStyle(node: Node): NodeStyle {
+        return this.computeNodeStyle(node)
+    }
+
+    private genericNodeRender(nodeSelection: Selection<SVGGElement, Node, null, undefined>, style: NodeStyle): void {
         let actualShape = style.shape
         if (style.shape == 'square') {
             actualShape = 'rect'

@@ -10,18 +10,18 @@ export class EdgeDrawer {
     private graph: Graph
     private rendererOptions: GraphSvgRendererOptions
     private graphSvgRenderer: GraphSvgRenderer
-    private renderEdgeCB?: GraphSvgRendererOptions['renderEdge']
+    private renderCB?: GraphSvgRendererOptions['renderEdge']
 
     public constructor(rendererOptions: GraphSvgRendererOptions, graph: Graph, graphSvgRenderer: GraphSvgRenderer) {
         this.graphSvgRenderer = graphSvgRenderer
         this.graph = graph
         this.rendererOptions = rendererOptions
-        this.renderEdgeCB = this.rendererOptions?.renderEdge
+        this.renderCB = this.rendererOptions?.renderEdge
     }
 
-    public renderEdge(theEdgeSelection: Selection<SVGPathElement, Edge, null, undefined>, edge: Edge): void {
-        if (this.renderEdgeCB) {
-            const rendered = this?.renderEdgeCB?.(edge, theEdgeSelection)
+    public render(theEdgeSelection: Selection<SVGPathElement, Edge, null, undefined>, edge: Edge): void {
+        if (this.renderCB) {
+            const rendered = this?.renderCB?.(edge, theEdgeSelection)
             const fo = theEdgeSelection.append('foreignObject')
                 .attr('width', 40)  // FIXME: calculate the correct size of the FO based on the rendered content
                 .attr('height', 40)
@@ -37,7 +37,7 @@ export class EdgeDrawer {
         }
     }
 
-    public defaultEdgeRender(edgeSelection: Selection<SVGPathElement, Edge, null, undefined>, edge: Edge): void {
+    private defaultEdgeRender(edgeSelection: Selection<SVGPathElement, Edge, null, undefined>, edge: Edge): void {
         const style = this.getEdgeStyle(edge)
         this.genericEdgeRender(edgeSelection, style)
 
@@ -46,7 +46,7 @@ export class EdgeDrawer {
         }
     }
 
-    public getEdgeStyle(edge: Edge): EdgeStyle {
+    private getEdgeStyle(edge: Edge): EdgeStyle {
         let styleFromEdge
         if (edge.getStyle()?.styleCb) {
             styleFromEdge = edge.getStyle().styleCb(edge)
@@ -61,7 +61,7 @@ export class EdgeDrawer {
         return this.mergeEdgeStylingOptions(styleFromEdge)
     }
 
-    public mergeEdgeStylingOptions(style: Partial<EdgeStyle>): EdgeStyle {
+    private mergeEdgeStylingOptions(style: Partial<EdgeStyle>): EdgeStyle {
         const mergedStyle = {
             strokeColor: style?.strokeColor ?? this.rendererOptions.defaultEdgeStyle.strokeColor,
             strokeWidth: style?.strokeWidth ?? this.rendererOptions.defaultEdgeStyle.strokeWidth,
@@ -71,14 +71,14 @@ export class EdgeDrawer {
         return mergedStyle
     }
 
-    public genericEdgeRender(edgeSelection: Selection<SVGPathElement, Edge, null, undefined>, style: EdgeStyle): void {
+    private genericEdgeRender(edgeSelection: Selection<SVGPathElement, Edge, null, undefined>, style: EdgeStyle): void {
         edgeSelection
             .attr('stroke', style.strokeColor)
             .attr('stroke-width', style.strokeWidth)
             .attr('stroke-opacity', style.opacity)
     }
 
-    public drawEdgeMarker(edgeSelection: Selection<SVGPathElement, Edge<EdgeData>, null, undefined>, style: EdgeStyle): void {
+    private drawEdgeMarker(edgeSelection: Selection<SVGPathElement, Edge<EdgeData>, null, undefined>, style: EdgeStyle): void {
         edgeSelection
             .attr('marker-end', 'url(#arrow)')
     }
@@ -110,7 +110,7 @@ export class EdgeDrawer {
 
     }
 
-    protected linkSelfLoop(edge: Edge): string | null {
+    private linkSelfLoop(edge: Edge): string | null {
         const { from, to } = edge
 
         if (!from.x || !from.y || !to.x || !to.y || from !== to)
@@ -120,7 +120,7 @@ export class EdgeDrawer {
 
         const x = from.x ?? 0
         const y = from.y ?? 0
-        const nodeRadius = this.graphSvgRenderer.nodeDrawer.computeNodeStyle(from).size
+        const nodeRadius = this.graphSvgRenderer.nodeDrawer.getNodeStyle(from).size
         const control_point_radius = 6 * nodeRadius
 
         // 80° NE
@@ -144,7 +144,7 @@ export class EdgeDrawer {
         return `M ${startX} ${startY} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${endX} ${endY}`
     }
 
-    protected linkStraight(edge: Edge): string | null {
+    private linkStraight(edge: Edge): string | null {
         const { from, to } = edge
 
         if (!from.x || !from.y || !to.x || !to.y)
@@ -160,8 +160,8 @@ export class EdgeDrawer {
         const normY = dy / distance
 
         // Compute source/target node radius
-        const rFrom = this.graphSvgRenderer.nodeDrawer.computeNodeStyle(from).size
-        const rTo = this.graphSvgRenderer.nodeDrawer.computeNodeStyle(to).size
+        const rFrom = this.graphSvgRenderer.nodeDrawer.getNodeStyle(from).size
+        const rTo = this.graphSvgRenderer.nodeDrawer.getNodeStyle(to).size
 
         // Offset both ends of the line
         const startX = from.x + (rFrom + drawOffset) * normX
@@ -172,7 +172,7 @@ export class EdgeDrawer {
         return `M ${startX},${startY} L ${endX},${endY}`
     }
 
-    protected linkArc(edge: Edge): string | null {
+    private linkArc(edge: Edge): string | null {
         const { from, to } = edge
 
         if (!from.x || !from.y || !to.x || !to.y)
@@ -181,7 +181,7 @@ export class EdgeDrawer {
         const r = Math.hypot(to.x - from.x, to.y - from.y)
 
         const drawOffset = 4 // Distance from which to end the edge
-        const rTo = this.graphSvgRenderer.nodeDrawer.computeNodeStyle(to).size
+        const rTo = this.graphSvgRenderer.nodeDrawer.getNodeStyle(to).size
         const rTotalOffset = rTo + drawOffset
 
         const arcParams: ArcParams = {

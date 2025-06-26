@@ -93,8 +93,8 @@ export interface GraphSvgRendererOptions {
      * Receives edge data and selection, and should return HTML or SVG element or string or directly calling d3 methods on the selection.
     */
     renderEdge?: (edge: Edge, nodeSelection: Selection<SVGPathElement, Edge, null, undefined>) => HTMLElement | string | void
-    defaultNodeStyle?: NodeStyle
-    defaultEdgeStyle?: EdgeStyle
+    defaultNodeStyle: NodeStyle
+    defaultEdgeStyle: EdgeStyle
     nodeTypeAccessor?: (node: Node) => string | undefined
     nodeStyleMap?: Record<string, NodeStyle>
     /** @default 0.1 */
