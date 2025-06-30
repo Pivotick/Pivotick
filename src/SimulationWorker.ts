@@ -61,6 +61,7 @@ self.onmessage = (e: MessageEvent<WorkerInput>) => {
     warmupTicks = warmupTicks === 'auto' ? MAX_EXECUTION_TICKS : warmupTicks
     warmupTicks = warmupTicks - REHEAT_TICKS
 
+    simulation.alphaTarget(0.3)
     const startTime = (new Date()).getTime() // Ensure the simulation eventually stops
     for (let i = 0; i < warmupTicks; ++i) {
         if ((new Date()).getTime() - startTime > MAX_EXECUTION_TIME) {
@@ -73,12 +74,10 @@ self.onmessage = (e: MessageEvent<WorkerInput>) => {
         simulation.tick()
     }
 
+    simulation.alphaTarget(0)
     simulation.alpha(1) // small bump
     for (let i = 0; i < REHEAT_TICKS; ++i) {
         simulation.tick()
-        if (i % REHEAT_TICKS/2 === 0) {
-            simulation.alpha(1) // last small bump
-        }
         if (i % 5 === 0) {
             postMessage({ type: 'tick', progress: (warmupTicks + i) / MAX_EXECUTION_TICKS })
         }
