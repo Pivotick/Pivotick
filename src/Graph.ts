@@ -1,14 +1,15 @@
 import { Node } from './Node'
 import { Edge } from './Edge'
 import type { graphData, GraphOptions, InterractionCallbacks } from './GraphOptions'
-import { GraphSvgRenderer } from './renderers/svg/GraphSvgRenderer'
+import { createGraphRenderer } from './renderers/GraphRendererFactory'
+import type { GraphRenderer } from './GraphRenderer'
 import { Simulation } from './Simulation'
 
 
 export class Graph {
     private nodes: Map<string, Node> = new Map()
     private edges: Map<string, Edge> = new Map()
-    public renderer: GraphSvgRenderer
+    public renderer: GraphRenderer
     public simulation: Simulation
     private options: GraphOptions
 
@@ -21,7 +22,8 @@ export class Graph {
         const rendererOptions = {
             ...this.options.render
         }
-        this.renderer = new GraphSvgRenderer(this, container, rendererOptions)
+        this.renderer = createGraphRenderer('svg', this, container, rendererOptions)
+        this.renderer.setupRendering()
 
         const simulationOptions = {
             ...this.options.simulation

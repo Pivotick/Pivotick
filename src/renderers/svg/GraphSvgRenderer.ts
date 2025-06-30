@@ -8,6 +8,7 @@ import type { Graph } from '../../Graph'
 import type { GraphSvgRendererOptions } from '../../GraphOptions'
 import merge from 'lodash.merge'
 import { GraphInteractions } from '../../GraphInteractions'
+import { GraphRenderer } from '../../GraphRenderer'
 
 
 const DEFAULT_RENDERER_OPTIONS = {
@@ -28,20 +29,17 @@ const DEFAULT_RENDERER_OPTIONS = {
     },
 } satisfies GraphSvgRendererOptions
 
-const PROGRESS_BAR_WIDTH = 200
-const PROGRESS_BAR_HEIGHT = 8
-export class GraphSvgRenderer {
-    private container: HTMLElement
-    private graph: Graph
+export class GraphSvgRenderer extends GraphRenderer {
+    protected options: GraphSvgRendererOptions
+
     private zoom: ZoomBehavior<SVGSVGElement, unknown>
     private graphInteraction: GraphInteractions
 
     public nodeDrawer: NodeDrawer
     public edgeDrawer: EdgeDrawer
 
-    private options: GraphSvgRendererOptions
     private svgCanvas: SVGSVGElement
-    private progressBar: SVGRectElement
+    // private progressBar: SVGRectElement
 
     private svg: Selection<SVGSVGElement, unknown, null, undefined>
     private zoomGroup: Selection<SVGGElement, unknown, null, undefined>
@@ -54,11 +52,10 @@ export class GraphSvgRenderer {
     private nodeSelection!: Selection<SVGGElement, Node, SVGGElement, unknown>
     private edgeSelection!: Selection<SVGPathElement, Edge, SVGGElement, unknown>
 
-    private layoutProgress = 0
+    // private layoutProgress = 0
 
     constructor(graph: Graph, container: HTMLElement, options: Partial<GraphSvgRendererOptions>) {
-        this.graph = graph
-        this.container = container
+        super(graph, container, options)
 
         this.options = merge({}, DEFAULT_RENDERER_OPTIONS, options)
 
@@ -88,38 +85,6 @@ export class GraphSvgRenderer {
             .on('zoom', (event) => {
                 this.zoomGroup.attr('transform', event.transform)
             })
-
-        const loadingPb = document.createElementNS('http://www.w3.org/2000/svg', 'g')
-
-        const track = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
-        track.setAttribute('width', '200')
-        track.setAttribute('height', '8')
-        track.setAttribute('fill', '#e0e0e0')
-        track.setAttribute('rx', '4')
-        track.setAttribute('ry', '4')
-        loadingPb.appendChild(track)
-
-        const progressFill = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
-        progressFill.setAttribute('id', 'progress-fill')
-        progressFill.setAttribute('width', '0')
-        progressFill.setAttribute('height', '8')
-        progressFill.setAttribute('fill', '#3f51b5')
-        progressFill.setAttribute('rx', '4')
-        progressFill.setAttribute('ry', '4')
-        progressFill.setAttribute('filter', 'url(#shadow)')
-        loadingPb.appendChild(progressFill)
-
-        this.progressBar = progressFill
-
-        const bbox = this.svgCanvas.getBoundingClientRect()
-        const centerX = bbox.width / 2 - PROGRESS_BAR_WIDTH / 2
-        const centerY = bbox.height / 2 - PROGRESS_BAR_HEIGHT / 2
-
-        loadingPb.setAttribute('transform', `translate(${centerX}, ${centerY})`)
-        loadingPb.setAttribute('visibility', 'hidden')
-        this.svgCanvas.appendChild(loadingPb)
-
-        const svgShadow = '<filter id="shadow"><feDropShadow dx="0" dy="0" stdDeviation="1" flood-color="#000" flood-opacity="0.2"/></filter>'
 
     }
 
@@ -177,10 +142,6 @@ export class GraphSvgRenderer {
             )
     }
 
-    public getCanvas(): SVGSVGElement {
-        return this.svgCanvas
-    }
-
     public getCanvasSelection(): Selection<SVGSVGElement, unknown, null, undefined> {
         return this.svg
     }
@@ -190,7 +151,7 @@ export class GraphSvgRenderer {
         this.updateNodePositions()
     }
 
-    public updateNodePositions(): void {
+    private updateNodePositions(): void {
         this.nodeSelection
             .attr('transform', d => `translate(${d.x ?? 0},${d.y ?? 0})`)
     }
@@ -209,19 +170,4 @@ export class GraphSvgRenderer {
     public getEdgeSelection(): Selection<SVGPathElement, Edge, SVGGElement, unknown> {
         return this.edgeSelection
     }
-
-    public updateLayoutProgress(progress: number): void {
-        this.layoutProgress = progress
-        this.progressBar.setAttribute('width', `${progress * PROGRESS_BAR_WIDTH}px`)
-        this.toggleLayoutProgressVisilibility()
-    }
-
-    public toggleLayoutProgressVisilibility(): void {
-        if (this.layoutProgress >= 0 && this.layoutProgress !== 1) {
-            this.progressBar.parentNode.setAttribute('visibility', 'visible')
-        } else {
-            this.progressBar.parentNode.setAttribute('visibility', 'hidden')
-        }
-    }
-
 }

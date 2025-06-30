@@ -40,7 +40,7 @@ const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
 export class Simulation {
     private simulation: d3Simulation<Node, undefined>
     private graph: Graph
-    private canvas: SVGSVGElement | undefined
+    private canvas: HTMLElement | undefined
 
     private animationFrameId: number | null = null
     private startSimulationTime: number = 0
@@ -61,6 +61,9 @@ export class Simulation {
         this.options = merge({}, DEFAULT_SIMULATION_OPTIONS, options)
 
         this.canvas = this.graph.renderer.getCanvas()
+        if (!this.canvas) {
+            throw new Error('Canvas element is not defined in the graph renderer.')
+        }
         const canvasBCR = this.canvas.getBoundingClientRect()
 
         const simulationForces = Simulation.initSimulationForces(this.options, canvasBCR)

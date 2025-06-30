@@ -27,7 +27,7 @@ export interface WorkerInput {
 }
 
 const MAX_EXECUTION_TIME = 2000
-const MAX_EXECUTION_TICKS = 2000
+const MAX_EXECUTION_TICKS = 1000
 const REHEAT_TICKS = 0.15 * MAX_EXECUTION_TICKS
 
 self.onmessage = (e: MessageEvent<WorkerInput>) => {
