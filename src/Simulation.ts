@@ -3,8 +3,11 @@ import {
     forceLink as d3ForceLink,
     type ForceLink as d3ForceLinkType,
     forceManyBody as d3ForceManyBody,
+    type ForceManyBody as d3ForceManyBodyType,
     forceCenter as d3ForceCenter,
+    type ForceCenter as d3ForceCenterType,
     forceCollide as d3ForceCollide,
+    type ForceCollide as d3ForceCollideType,
 } from 'd3-force'
 import { type Simulation as d3Simulation } from 'd3-force'
 import { drag as d3Drag } from 'd3-drag'
@@ -12,25 +15,26 @@ import type { Graph } from './Graph'
 import type { Node } from './Node'
 import type { Edge } from './Edge'
 import type { SimulationOptions } from './GraphOptions'
+import { runSimulationInWorker } from './SimulationWorkerWrapper'
 import merge from 'lodash.merge'
 
 
 const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
     d3Alpha: 1.0,
-    d3AlphaMin: 0,
+    d3AlphaMin: 0.001,
     d3AlphaDecay: 0.05,
-    d3AlphaTarget: 0.3,
-    d3VelocityDecay: 0.5,
-    d3LinkDistance: 0,
+    d3AlphaTarget: 0.0,
+    d3VelocityDecay: 0.45,
+    d3LinkDistance: 40,
     d3LinkStrength: 1,
-    d3ManyBodyStrength: -50,
+    d3ManyBodyStrength: -150,
     d3ManyBodyTheta: 0.9,
     d3CollideRadius: 12,
     d3CollideStrength: 1,
     d3CollideIterations: 1,
 
     cooldownTime: 2000,
-    warmupTicks: 50,
+    warmupTicks: 'auto',
 }
 
 export class Simulation {
@@ -45,11 +49,11 @@ export class Simulation {
 
     private options: SimulationOptions
 
-    private forceSimulation = {
-        link: d3ForceLink(),
-        charge: d3ForceManyBody(),
-        center: d3ForceCenter(),
-        collide: d3ForceCollide(),
+    private forceSimulation: {
+        link: d3ForceLinkType<Node, Edge>,
+        charge: d3ForceManyBodyType<Node>,
+        center: d3ForceCenterType<Node>,
+        collide: d3ForceCollideType<Node>,
     }
 
     constructor(graph: Graph, options?: Partial<SimulationOptions>) {
@@ -59,31 +63,57 @@ export class Simulation {
         this.canvas = this.graph.renderer.getCanvas()
         const canvasBCR = this.canvas.getBoundingClientRect()
 
-        this.simulation = d3ForceSimulation<Node>()
-            .force('link', this.forceSimulation.link)
-            .force('charge', this.forceSimulation.charge)
-            .force('center', this.forceSimulation.center)
-            .force('collide', this.forceSimulation.collide)
+        const simulationForces = Simulation.initSimulationForces(this.options, canvasBCR)
+        this.simulation = simulationForces.simulation
+        this.forceSimulation = simulationForces.forceSimulation
+    }
 
-        this.forceSimulation.center
+    public static initSimulationForces(options: SimulationOptions, canvasBCR: DOMRect): {
+        simulation: d3.Simulation<Node, undefined>,
+        forceSimulation: {
+            link: d3ForceLinkType<Node, Edge>,
+            charge: d3ForceManyBodyType<Node>,
+            center: d3ForceCenterType<Node>,
+            collide: d3ForceCollideType<Node>,
+        }
+    } {
+        const forceSimulation = {
+            link: d3ForceLink() as d3ForceLinkType<Node, Edge>,
+            charge: d3ForceManyBody(),
+            center: d3ForceCenter(),
+            collide: d3ForceCollide(),
+        }
+
+        const simulation = d3ForceSimulation<Node>()
+            .force('link', forceSimulation.link)
+            .force('charge', forceSimulation.charge)
+            .force('center', forceSimulation.center)
+            .force('collide', forceSimulation.collide)
+
+        forceSimulation.center
             .x(canvasBCR.width / 2)
             .y(canvasBCR.height / 2)
-        this.forceSimulation.link.distance(this.options.d3LinkDistance)
-        if (this.options.d3LinkStrength) {
-            this.forceSimulation.link.strength(this.options.d3LinkStrength)
+        forceSimulation.link.distance(options.d3LinkDistance)
+        if (options.d3LinkStrength) {
+            forceSimulation.link.strength(options.d3LinkStrength)
         }
-        this.forceSimulation.charge
-            .strength(this.options.d3ManyBodyStrength) 
-            .theta(this.options.d3ManyBodyTheta)
-        this.forceSimulation.collide
-            .radius(this.options.d3CollideRadius)
-            .strength(this.options.d3CollideStrength)
+        forceSimulation.charge
+            .strength(options.d3ManyBodyStrength)
+            .theta(options.d3ManyBodyTheta)
+        forceSimulation.collide
+            .radius(options.d3CollideRadius)
+            .strength(options.d3CollideStrength)
 
 
-        this.simulation.alphaMin(this.options.d3AlphaMin)
-        this.simulation.alphaDecay(this.options.d3AlphaDecay)
-        this.simulation.alphaTarget(this.options.d3AlphaTarget)
-        this.simulation.velocityDecay(this.options.d3VelocityDecay)
+        simulation.alphaMin(options.d3AlphaMin)
+        simulation.alphaDecay(options.d3AlphaDecay)
+        simulation.alphaTarget(0)
+        simulation.velocityDecay(options.d3VelocityDecay)
+
+        return {
+            simulation: simulation,
+            forceSimulation: forceSimulation,
+        }
     }
 
     public update() {
@@ -112,8 +142,8 @@ export class Simulation {
     /**
      * Start the simulation with rendering on each animation frame.
      */
-    public start() {
-        this.simulation.tick(this.options.warmupTicks)
+    public async start() {
+        await this.runSimulationWorker()
         this.engineRunning = true
         if (this.animationFrameId === null) {
             this.startAnimationLoop()
@@ -141,7 +171,7 @@ export class Simulation {
         }
 
         this.engineRunning = true
-        this.simulation.alpha(this.options.d3Alpha).restart()
+        this.simulation.alpha(0.01).restart()
         this.animationFrameId = requestAnimationFrame(animate)
     }
 
@@ -166,6 +196,31 @@ export class Simulation {
         }
     }
 
+    private async runSimulationWorker() {
+        const canvasBCR = this.canvas?.getBoundingClientRect()
+        if (!canvasBCR) return
+
+        const nodes = this.graph.getNodes()
+        const edges = this.graph.getEdges()
+
+        const onWorkerProgress = (progress: number) =>  {
+            this.graph.updateLayoutProgress(progress)
+        }
+
+        const { nodes: updatedNodes, edges: updatedEdges } = await runSimulationInWorker(
+            nodes,
+            edges,
+            this.options,
+            canvasBCR,
+            onWorkerProgress
+        )
+        updatedNodes.forEach((updatedNode, i) => {
+            nodes[i].x = updatedNode.x
+            nodes[i].y = updatedNode.y
+        })
+        this.graph.updateData(nodes)
+    }
+
     public createDragBehavior() {
         return d3Drag<SVGGElement, Node>()
             .on('start', (event, d) => {
@@ -173,7 +228,7 @@ export class Simulation {
                     this.dragInProgress = true
                     this.restart()
                     this.simulation
-                        .alphaTarget(this.options.d3AlphaTarget)
+                        .alphaTarget(0.3)
                         .restart()
                 }
                 d.fx = d.x
@@ -188,7 +243,7 @@ export class Simulation {
                     this.dragInProgress = false
                     this.restart()
                     this.simulation
-                        .alphaTarget(0)
+                        .alphaTarget(this.options.d3AlphaTarget)
                         .restart()
                 }
                 d.fx = undefined

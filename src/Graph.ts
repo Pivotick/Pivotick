@@ -34,7 +34,11 @@ export class Graph {
             this.renderer.init()
         }
 
-        this.simulation.start()
+        this.startAndRender()
+    }
+
+    private async startAndRender() {
+        await this.simulation.start()
         this.renderer.updatePositions()
     }
 
@@ -51,7 +55,7 @@ export class Graph {
         this.renderer?.update()
     }
 
-    updateData(newNodes?: Array<Node>, newEdges?: Array<Edge>): void{
+    updateData(newNodes?: Array<Node>, newEdges?: Array<Edge>): void {
         if (newNodes) {
             newNodes.forEach(newNode => {
                 if (this.nodes.has(newNode.id)) {
@@ -220,5 +224,9 @@ export class Graph {
 
     updatePositions(): void {
         this.renderer?.updatePositions()
+    }
+
+    updateLayoutProgress(progress: number): void {
+        this.renderer?.updateLayoutProgress(progress)
     }
 }

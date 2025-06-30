@@ -117,7 +117,7 @@ export interface SimulationOptions {
     d3CollideStrength: number /** @default 1 */
     d3CollideIterations: number /** @default 1 */
     cooldownTime: number /** @default 2000 */
-    warmupTicks: number /** @default 50 */
+    warmupTicks: number | 'auto' /** @default auto */
 }
 
 export interface graphData {

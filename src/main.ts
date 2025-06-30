@@ -7,38 +7,131 @@ import { Pivotick, Node, Edge } from './index'
 export function createSampleGraph(): Pivotick {
     const container = document.getElementById('app')!
 
-    const N = 10
-    const nodes = [...Array(N).keys()].map(i => (
-        new Node(i.toString(),
-            {
-                label: `Node ${i}`,
-                type: Math.random() < 0.8 ? 'leaf' : 'hub'
-            },
-            {
-            }
-        )
-    ))
-    const edges = [...Array(N).keys()]
-        .filter(id => id)
-        .map(id => {
-            const source = nodes[id]
-            const target = nodes[Math.round(Math.random() * (id - 1))]
-            return new Edge(`${id}-${target.id}`, source, target, { relation: 'connects to' })
-        })
+    // const N = 10
+    // const nodes = [...Array(N).keys()].map(i => (
+    //     new Node(i.toString(),
+    //         {
+    //             label: `Node ${i}`,
+    //             type: Math.random() < 0.8 ? 'leaf' : 'hub'
+    //         },
+    //         {
+    //         }
+    //     )
+    // ))
+    // const edges = [...Array(N).keys()]
+    //     .filter(id => id)
+    //     .map(id => {
+    //         const source = nodes[id]
+    //         const target = nodes[Math.round(Math.random() * (id - 1))]
+    //         return new Edge(`${id}-${target.id}`, source, target, { relation: 'connects to' })
+    //     })
     // const edges = []
-    edges.push(new Edge('0-0', nodes[0], nodes[0], { relation : 'self-loop'}))
-    edges.push(new Edge('a-b', nodes[3], nodes[2], { relation : 'a'}))
-    edges.push(new Edge('b-a', nodes[2], nodes[3], { relation : 'b'}))
+    // edges.push(new Edge('0-0', nodes[0], nodes[0], { relation : 'self-loop'}))
+    // edges.push(new Edge('a-b', nodes[3], nodes[2], { relation : 'a'}))
+    // edges.push(new Edge('b-a', nodes[2], nodes[3], { relation : 'b'}))
     // edges.push(new Edge('0-1', nodes[0], nodes[1], { relation : 'a'}))
     // edges.push(new Edge('1-0', nodes[1], nodes[0], { relation : 'b'}))
 
-    const graph = new Pivotick(container, {nodes: nodes, edges: edges}, {
+
+    const createNodes = (): Node[] => {
+        return Array.from({ length: 24 }, (_, i) => new Node(`n${i + 1}`))
+    }
+    const topologies = {
+        tree: (() => {
+            const nodes = createNodes()
+            const edges: Edge[] = []
+
+            for (let i = 0; i < nodes.length/2; i++) {
+                const left = 2 * i + 1
+                const right = 2 * i + 2
+                if (left < nodes.length) edges.push(new Edge(`e${edges.length}`, nodes[i], nodes[left], {}, {}, true))
+                if (right < nodes.length) edges.push(new Edge(`e${edges.length}`, nodes[i], nodes[right], {}, {}, true))
+            }
+
+            return { nodes, edges }
+        })(),
+
+        ring: (() => {
+            const nodes = createNodes()
+            const edges: Edge[] = []
+
+            for (let i = 0; i < nodes.length; i++) {
+                const next = (i + 1) % nodes.length
+                edges.push(new Edge(`e${i}`, nodes[i], nodes[next], {}, {}, true))
+            }
+
+            return { nodes, edges }
+        })(),
+
+        star: (() => {
+            const nodes = createNodes()
+            const edges: Edge[] = []
+
+            const center = nodes[0]
+            for (let i = 1; i < nodes.length; i++) {
+                edges.push(new Edge(`e${i}`, center, nodes[i], {}, {}, true))
+            }
+
+            return { nodes, edges }
+        })(),
+
+        mesh: (() => {
+            const nodes = createNodes()
+            const edges: Edge[] = []
+
+            let edgeId = 0
+            for (let i = 0; i < nodes.length; i++) {
+                for (let j = i + 1; j < nodes.length; j++) {
+                    edges.push(new Edge(`e${edgeId++}`, nodes[i], nodes[j], {}, {}, true))
+                    edges.push(new Edge(`e${edgeId++}`, nodes[j], nodes[i], {}, {}, true))
+                }
+            }
+
+            return { nodes, edges }
+        })(),
+
+        line: (() => {
+            const nodes = createNodes()
+            const edges: Edge[] = []
+
+            for (let i = 0; i < nodes.length - 1; i++) {
+                edges.push(new Edge(`e${i}`, nodes[i], nodes[i + 1], {}, {}, true))
+            }
+
+            return { nodes, edges }
+        })(),
+
+        random: (() => {
+            const nodes = createNodes()
+            const edges: Edge[] = []
+            const edgeSet = new Set<string>()
+
+            const getEdgeKey = (a: number, b: number) => `${Math.min(a, b)}-${Math.max(a, b)}`
+
+            while (edges.length < nodes.length*2) {
+                const from = Math.floor(Math.random() * nodes.length)
+                const to = Math.floor(Math.random() * nodes.length)
+                if (from === to) continue
+
+                const key = getEdgeKey(from, to)
+                if (!edgeSet.has(key)) {
+                    edgeSet.add(key)
+                    edges.push(new Edge(`e${edges.length}`, nodes[from], nodes[to], {}, {}, true))
+                }
+            }
+
+            return { nodes, edges }
+        })(),
+    }
+
+    const topo = 'tree'
+    const graph = new Pivotick(container, {nodes: topologies[topo].nodes, edges: topologies[topo].edges}, {
         // isDirected: false,
         simulation: {
-            // warmupTicks: 500
+            // warmupTicks: 5000,
             // d3ManyBodyStrength: -500,
-            d3LinkStrength: 0.1,
-            d3LinkDistance: 50,
+            // d3LinkStrength: 0.1,
+            // d3LinkDistance: 50,
         },
         callbacks: {
             // onNodeClick: (e, node) => console.log(`onNodeClick: ${node.id}`),

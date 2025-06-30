@@ -12,7 +12,7 @@ export class Node<T = NodeData> {
     private data: T
     private style: T
 
-    // Layout/physics properties (optional)
+    // Layout/physics properties
     x?: number
     y?: number
     vx?: number

@@ -10,7 +10,6 @@ import merge from 'lodash.merge'
 import { GraphInteractions } from '../../GraphInteractions'
 
 
-
 const DEFAULT_RENDERER_OPTIONS = {
     minZoom: 0.1,
     maxZoom: 10,
@@ -29,6 +28,8 @@ const DEFAULT_RENDERER_OPTIONS = {
     },
 } satisfies GraphSvgRendererOptions
 
+const PROGRESS_BAR_WIDTH = 200
+const PROGRESS_BAR_HEIGHT = 8
 export class GraphSvgRenderer {
     private container: HTMLElement
     private graph: Graph
@@ -40,6 +41,7 @@ export class GraphSvgRenderer {
 
     private options: GraphSvgRendererOptions
     private svgCanvas: SVGSVGElement
+    private progressBar: SVGRectElement
 
     private svg: Selection<SVGSVGElement, unknown, null, undefined>
     private zoomGroup: Selection<SVGGElement, unknown, null, undefined>
@@ -51,6 +53,8 @@ export class GraphSvgRenderer {
     private edgeGroupSelection!: Selection<SVGPathElement, Edge, SVGGElement, unknown>
     private nodeSelection!: Selection<SVGGElement, Node, SVGGElement, unknown>
     private edgeSelection!: Selection<SVGPathElement, Edge, SVGGElement, unknown>
+
+    private layoutProgress = 0
 
     constructor(graph: Graph, container: HTMLElement, options: Partial<GraphSvgRendererOptions>) {
         this.graph = graph
@@ -84,6 +88,38 @@ export class GraphSvgRenderer {
             .on('zoom', (event) => {
                 this.zoomGroup.attr('transform', event.transform)
             })
+
+        const loadingPb = document.createElementNS('http://www.w3.org/2000/svg', 'g')
+
+        const track = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
+        track.setAttribute('width', '200')
+        track.setAttribute('height', '8')
+        track.setAttribute('fill', '#e0e0e0')
+        track.setAttribute('rx', '4')
+        track.setAttribute('ry', '4')
+        loadingPb.appendChild(track)
+
+        const progressFill = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
+        progressFill.setAttribute('id', 'progress-fill')
+        progressFill.setAttribute('width', '0')
+        progressFill.setAttribute('height', '8')
+        progressFill.setAttribute('fill', '#3f51b5')
+        progressFill.setAttribute('rx', '4')
+        progressFill.setAttribute('ry', '4')
+        progressFill.setAttribute('filter', 'url(#shadow)')
+        loadingPb.appendChild(progressFill)
+
+        this.progressBar = progressFill
+
+        const bbox = this.svgCanvas.getBoundingClientRect()
+        const centerX = bbox.width / 2 - PROGRESS_BAR_WIDTH / 2
+        const centerY = bbox.height / 2 - PROGRESS_BAR_HEIGHT / 2
+
+        loadingPb.setAttribute('transform', `translate(${centerX}, ${centerY})`)
+        loadingPb.setAttribute('visibility', 'hidden')
+        this.svgCanvas.appendChild(loadingPb)
+
+        const svgShadow = '<filter id="shadow"><feDropShadow dx="0" dy="0" stdDeviation="1" flood-color="#000" flood-opacity="0.2"/></filter>'
 
     }
 
@@ -158,13 +194,13 @@ export class GraphSvgRenderer {
         this.nodeSelection
             .attr('transform', d => `translate(${d.x ?? 0},${d.y ?? 0})`)
     }
-    
-        private updateEdgePositions(): void {
-            this.edgeSelection
-                .attr('d', (edge: Edge): string | null => {
-                    return this.edgeDrawer.linkPathRouter(edge)
-                })
-        }
+
+    private updateEdgePositions(): void {
+        this.edgeSelection
+            .attr('d', (edge: Edge): string | null => {
+                return this.edgeDrawer.linkPathRouter(edge)
+            })
+    }
 
     public getNodeSelection(): Selection<SVGGElement, Node, SVGGElement, unknown> {
         return this.nodeSelection
@@ -172,6 +208,20 @@ export class GraphSvgRenderer {
 
     public getEdgeSelection(): Selection<SVGPathElement, Edge, SVGGElement, unknown> {
         return this.edgeSelection
+    }
+
+    public updateLayoutProgress(progress: number): void {
+        this.layoutProgress = progress
+        this.progressBar.setAttribute('width', `${progress * PROGRESS_BAR_WIDTH}px`)
+        this.toggleLayoutProgressVisilibility()
+    }
+
+    public toggleLayoutProgressVisilibility(): void {
+        if (this.layoutProgress >= 0 && this.layoutProgress !== 1) {
+            this.progressBar.parentNode.setAttribute('visibility', 'visible')
+        } else {
+            this.progressBar.parentNode.setAttribute('visibility', 'hidden')
+        }
     }
 
 }

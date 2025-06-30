@@ -40,6 +40,7 @@ export class GraphSvgRenderer {
 
     private options: GraphSvgRendererOptions
     private svgCanvas: SVGSVGElement
+    private progressBar: SVGRectElement
 
     private svg: Selection<SVGSVGElement, unknown, null, undefined>
     private zoomGroup: Selection<SVGGElement, unknown, null, undefined>
@@ -84,6 +85,30 @@ export class GraphSvgRenderer {
             .on('zoom', (event) => {
                 this.zoomGroup.attr('transform', event.transform)
             })
+
+        const loadingPb = document.createElementNS('http://www.w3.org/2000/svg', 'g')
+
+        // Create the track
+        const track = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
+        track.setAttribute('width', '200')
+        track.setAttribute('height', '8')
+        track.setAttribute('fill', '#e0e0e0')
+        track.setAttribute('rx', '4')
+        track.setAttribute('ry', '4')
+        loadingPb.appendChild(track)
+
+        // Create the progress fill
+        const progressFill = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
+        progressFill.setAttribute('id', 'progress-fill')
+        progressFill.setAttribute('width', '0')
+        progressFill.setAttribute('height', '8')
+        progressFill.setAttribute('fill', '#3f51b5')
+        progressFill.setAttribute('rx', '4')
+        progressFill.setAttribute('ry', '4')
+        loadingPb.appendChild(progressFill)
+
+        // If you want to store a reference
+        this.progressBar = progressFill
 
     }
 
@@ -172,6 +197,10 @@ export class GraphSvgRenderer {
             .attr('d', (edge: Edge): string | null => {
                 return this.edgeDrawer.linkPathRouter(edge)
             })
+    }
+
+    public layoutComputationProgress(progress: number): void {
+        this.progressBar.setAttribute('width', `${progress*100}%`)
     }
 
 }
