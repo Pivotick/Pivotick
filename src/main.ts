@@ -34,7 +34,7 @@ export function createSampleGraph(): Pivotick {
 
 
     const createNodes = (): Node[] => {
-        return Array.from({ length: 24 }, (_, i) => new Node(`n${i + 1}`))
+        return Array.from({ length: 240 }, (_, i) => new Node(`n${i + 1}`))
     }
     const topologies = {
         tree: (() => {
@@ -132,6 +132,9 @@ export function createSampleGraph(): Pivotick {
             // d3ManyBodyStrength: -500,
             // d3LinkStrength: 0.1,
             // d3LinkDistance: 50,
+        },
+        layout: {
+            type: 'tree',
         },
         callbacks: {
             // onNodeClick: (e, node) => console.log(`onNodeClick: ${node.id}`),

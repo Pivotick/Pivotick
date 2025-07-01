@@ -3,6 +3,7 @@ import { Simulation } from './Simulation'
 import { Node, type NodeData, type Node as NodeType } from './Node'
 import { Edge, type EdgeData, type Edge as EdgeType } from './Edge'
 import type { SimulationOptions } from './GraphOptions'
+import { TreeLayout } from './plugins/layout/Tree'
 
 export interface PlainNode<T = NodeData> {
     id: string
@@ -27,15 +28,14 @@ export interface WorkerInput {
 }
 
 const MAX_EXECUTION_TIME = 2000
-const MAX_EXECUTION_TICKS = 1000
+const MAX_EXECUTION_TICKS = 500
 const REHEAT_TICKS = 0.15 * MAX_EXECUTION_TICKS
 
 self.onmessage = (e: MessageEvent<WorkerInput>) => {
     const { nodes: plainNodes, edges: plainEdges, options, canvasBCR } = e.data
 
-    const simulation = Simulation
-        .initSimulationForces(options, canvasBCR).simulation
-        .stop()
+    const {simulation, simulationForces} = Simulation
+        .initSimulationForces(options, canvasBCR)
 
     const nodes = plainNodes.map(n => new Node(n.id, n.data, n.style))
     const nodeMap = new Map<string, Node>(nodes.map(n => [n.id, n]))
@@ -55,6 +55,17 @@ self.onmessage = (e: MessageEvent<WorkerInput>) => {
         (linkForce as d3ForceLinkType<NodeType, EdgeType>)
             .id((node) => node.id)
             .links(edges)
+    }
+
+    if (options.layout?.type === 'tree') {
+        TreeLayout.registerForcesOnSimulation(
+            nodes,
+            edges,
+            simulation,
+            simulationForces,
+            options.layout,
+            canvasBCR
+        )
     }
 
     let warmupTicks = options.warmupTicks || MAX_EXECUTION_TICKS

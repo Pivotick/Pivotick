@@ -118,6 +118,8 @@ export interface SimulationOptions {
     d3CollideIterations: number /** @default 1 */
     cooldownTime: number /** @default 2000 */
     warmupTicks: number | 'auto' /** @default auto */
+
+    layout?: LayoutOptions
 }
 
 export interface graphData {
@@ -125,6 +127,25 @@ export interface graphData {
     edges: Array<Edge>,
 }
 
+export type LayoutType = 'force' | 'tree'
+
+
+export interface BaseLayoutOptions {
+    type: LayoutType /** @default force */
+}
+
+
+export type LayoutOptions = TreeLayoutOptions | ForceLayoutOptions
+
+export interface ForceLayoutOptions extends BaseLayoutOptions {
+    type: 'force'
+}
+export interface TreeLayoutOptions extends BaseLayoutOptions {
+    type: 'tree'
+    rootId?: string /** @default: undefined */
+    strength?: number /** @default: 0.1 */
+    radial?: boolean /** @default: false */
+}
 
 export interface GraphOptions {
     /**
@@ -135,6 +156,11 @@ export interface GraphOptions {
      * Options for the simultion engine
      */
     simulation?: Partial<SimulationOptions>
+
+    /**
+    * Layout-specific configuration (e.g. tree, radial, etc.)
+    */
+    layout?: Partial<LayoutOptions>
 
     /**
      * Callbacks to handle various graph events and render hooks.
@@ -204,13 +230,6 @@ export interface GraphOptions {
      * @default true
      */
     animate?: boolean
-
-    /**
-     * Initial graph layout algorithm
-     * Options could be 'force-directed', 'circular', 'grid', 'tree', etc.
-     * Default: 'force-directed'
-     */
-    layout?: 'force-directed' | 'circular' | 'grid' | 'tree' | 'random' | string
 
     /**
      * Duration of layout animation in milliseconds

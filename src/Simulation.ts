@@ -1,12 +1,12 @@
 import {
     forceSimulation as d3ForceSimulation,
     forceLink as d3ForceLink,
-    type ForceLink as d3ForceLinkType,
     forceManyBody as d3ForceManyBody,
-    type ForceManyBody as d3ForceManyBodyType,
     forceCenter as d3ForceCenter,
-    type ForceCenter as d3ForceCenterType,
     forceCollide as d3ForceCollide,
+    type ForceLink as d3ForceLinkType,
+    type ForceManyBody as d3ForceManyBodyType,
+    type ForceCenter as d3ForceCenterType,
     type ForceCollide as d3ForceCollideType,
 } from 'd3-force'
 import { type Simulation as d3Simulation } from 'd3-force'
@@ -17,6 +17,7 @@ import type { Edge } from './Edge'
 import type { SimulationOptions } from './GraphOptions'
 import { runSimulationInWorker } from './SimulationWorkerWrapper'
 import merge from 'lodash.merge'
+import { TreeLayout } from './plugins/layout/Tree'
 
 
 const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
@@ -35,12 +36,24 @@ const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
 
     cooldownTime: 2000,
     warmupTicks: 'auto',
+
+    layout: {
+        type: 'force',
+    },
+}
+
+export interface simulationForces {
+    link: d3ForceLinkType<Node, Edge>,
+    charge: d3ForceManyBodyType<Node>,
+    center: d3ForceCenterType<Node>,
+    collide: d3ForceCollideType<Node>,
 }
 
 export class Simulation {
     private simulation: d3Simulation<Node, undefined>
     private graph: Graph
     private canvas: HTMLElement | undefined
+    private layout
 
     private animationFrameId: number | null = null
     private startSimulationTime: number = 0
@@ -49,14 +62,9 @@ export class Simulation {
 
     private options: SimulationOptions
 
-    private forceSimulation: {
-        link: d3ForceLinkType<Node, Edge>,
-        charge: d3ForceManyBodyType<Node>,
-        center: d3ForceCenterType<Node>,
-        collide: d3ForceCollideType<Node>,
-    }
+    private simulationForces: simulationForces
 
-    constructor(graph: Graph, options?: Partial<SimulationOptions>) {
+    constructor(graph: Graph, options: Partial<SimulationOptions> = {}) {
         this.graph = graph
         this.options = merge({}, DEFAULT_SIMULATION_OPTIONS, options)
 
@@ -68,19 +76,23 @@ export class Simulation {
 
         const simulationForces = Simulation.initSimulationForces(this.options, canvasBCR)
         this.simulation = simulationForces.simulation
-        this.forceSimulation = simulationForces.forceSimulation
+        this.simulationForces = simulationForces.simulationForces
+
+        if (this.options.layout?.type === 'tree') {
+            this.layout = new TreeLayout(this.graph, this.simulation, this.simulationForces, this.options.layout)
+        }
     }
 
     public static initSimulationForces(options: SimulationOptions, canvasBCR: DOMRect): {
         simulation: d3.Simulation<Node, undefined>,
-        forceSimulation: {
+        simulationForces: {
             link: d3ForceLinkType<Node, Edge>,
             charge: d3ForceManyBodyType<Node>,
             center: d3ForceCenterType<Node>,
             collide: d3ForceCollideType<Node>,
         }
     } {
-        const forceSimulation = {
+        const simulationForces = {
             link: d3ForceLink() as d3ForceLinkType<Node, Edge>,
             charge: d3ForceManyBody(),
             center: d3ForceCenter(),
@@ -88,22 +100,22 @@ export class Simulation {
         }
 
         const simulation = d3ForceSimulation<Node>()
-            .force('link', forceSimulation.link)
-            .force('charge', forceSimulation.charge)
-            .force('center', forceSimulation.center)
-            .force('collide', forceSimulation.collide)
+            .force('link', simulationForces.link)
+            .force('charge', simulationForces.charge)
+            .force('center', simulationForces.center)
+            .force('collide', simulationForces.collide)
 
-        forceSimulation.center
+        simulationForces.center
             .x(canvasBCR.width / 2)
             .y(canvasBCR.height / 2)
-        forceSimulation.link.distance(options.d3LinkDistance)
+        simulationForces.link.distance(options.d3LinkDistance)
         if (options.d3LinkStrength) {
-            forceSimulation.link.strength(options.d3LinkStrength)
+            simulationForces.link.strength(options.d3LinkStrength)
         }
-        forceSimulation.charge
+        simulationForces.charge
             .strength(options.d3ManyBodyStrength)
             .theta(options.d3ManyBodyTheta)
-        forceSimulation.collide
+        simulationForces.collide
             .radius(options.d3CollideRadius)
             .strength(options.d3CollideStrength)
 
@@ -115,19 +127,24 @@ export class Simulation {
 
         return {
             simulation: simulation,
-            forceSimulation: forceSimulation,
+            simulationForces: simulationForces,
         }
     }
 
     public update() {
         // Feed data to force-directed layout
+
+        if (this.layout) {
+            this.layout.update()
+        }
+
         this.simulation
             .nodes(this.graph.getNodes())
 
         const linkForce = this.simulation.force('link')
         if (linkForce) {
             (linkForce as d3ForceLinkType<Node, Edge>)
-                .id((node) => node.id)
+                .id((node: Node) => node.id)
                 .links(this.graph.getEdges())
         }
 
@@ -210,7 +227,7 @@ export class Simulation {
             this.graph.updateLayoutProgress(progress)
         }
 
-        const { nodes: updatedNodes, edges: updatedEdges } = await runSimulationInWorker(
+        const { nodes: updatedNodes } = await runSimulationInWorker(
             nodes,
             edges,
             this.options,
@@ -252,5 +269,9 @@ export class Simulation {
                 d.fx = undefined
                 d.fy = undefined
             })
+    }
+
+    public getForceSimulation(): typeof this.simulationForces {
+        return this.simulationForces
     }
 }

@@ -1,6 +1,6 @@
 import { Node } from './Node'
 import { Edge } from './Edge'
-import type { graphData, GraphOptions, InterractionCallbacks } from './GraphOptions'
+import type { graphData, GraphOptions, InterractionCallbacks, LayoutOptions } from './GraphOptions'
 import { createGraphRenderer } from './renderers/GraphRendererFactory'
 import type { GraphRenderer } from './GraphRenderer'
 import { Simulation } from './Simulation'
@@ -26,7 +26,8 @@ export class Graph {
         this.renderer.setupRendering()
 
         const simulationOptions = {
-            ...this.options.simulation
+            ...this.options.simulation,
+            layout: this.options?.layout as LayoutOptions
         }
         this.simulation = new Simulation(this, simulationOptions)
 
