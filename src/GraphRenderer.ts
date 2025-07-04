@@ -21,11 +21,11 @@ export abstract class GraphRenderer {
     }
 
     abstract init(): void
-    abstract update(): void
-    abstract updatePositions(): void
+    abstract dataUpdate(): void
+    abstract tickUpdate(): void
 
-    public getCanvas(): HTMLElement | undefined {
-        return this.container?.firstChild as HTMLElement
+    public getCanvas(): HTMLElement {
+        return this.container.firstChild as HTMLElement
     }
 
     public updateLayoutProgress(progress: number): void {

@@ -42,7 +42,7 @@ export class Graph {
 
     private async startAndRender() {
         await this.simulation.start()
-        this.renderer.updatePositions()
+        this.renderer.tickUpdate()
     }
 
     getOptions(): GraphOptions {
@@ -55,7 +55,7 @@ export class Graph {
 
     onChange() {
         this.simulation?.update()
-        this.renderer?.update()
+        this.renderer?.dataUpdate()
     }
 
     updateData(newNodes?: Array<Node>, newEdges?: Array<Edge>): void {
@@ -254,8 +254,8 @@ export class Graph {
         return connectedNodes
     }
 
-    updatePositions(): void {
-        this.renderer?.updatePositions()
+    tickUpdate(): void {
+        this.renderer?.tickUpdate()
     }
 
     updateLayoutProgress(progress: number): void {

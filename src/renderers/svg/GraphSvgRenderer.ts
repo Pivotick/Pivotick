@@ -89,11 +89,11 @@ export class GraphSvgRenderer extends GraphRenderer {
     }
 
     public init(): void {
-        this.update()
+        this.dataUpdate()
         this.graphInteraction.init()
     }
 
-    public update(): void {
+    public dataUpdate(): void {
         const nodes = this.graph.getMutableNodes()
         this.nodeGroupSelection = this.nodeGroup
             .selectAll<SVGGElement, Node>('g.node-shape')
@@ -146,7 +146,7 @@ export class GraphSvgRenderer extends GraphRenderer {
         return this.svg
     }
 
-    public updatePositions(): void {
+    public tickUpdate(): void {
         this.updateEdgePositions() // Render edges first so nodes are drawn on top of them
         this.updateNodePositions()
     }

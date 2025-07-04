@@ -212,7 +212,7 @@ export class Simulation {
                 this.simulation.stop()
             }
             this.simulation.tick()
-            this.graph.updatePositions()
+            this.graph.tickUpdate()
         }
     }
 

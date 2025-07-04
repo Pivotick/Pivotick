@@ -2,7 +2,7 @@ import type { Graph } from './Graph'
 import type { InterractionCallbacks } from './GraphOptions'
 import type { Node, NodeData } from './Node'
 import type { Edge } from './Edge'
-import type { GraphSvgRenderer } from './renderers/svg/GraphSvgRenderer'
+import type { GraphSvgRenderer } from './renderers/GraphSvgRenderer'
 import { select as d3Select, type Selection } from 'd3-selection'
 
 
