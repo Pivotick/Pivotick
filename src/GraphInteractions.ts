@@ -34,54 +34,54 @@ export class GraphInteractions {
 
     public init() {
 
-        this.renderer.getNodeSelection()
-            .call(this.graph.simulation.createDragBehavior())
+        // this.renderer.getNodeSelection()
+        //     .call(this.graph.simulation.createDragBehavior())
 
-        this.renderer.getNodeSelection()
-            .on('dblclick', (event: PointerEvent, node: Node) => {
-                event.stopPropagation()
-                const svgNode = event.currentTarget as SVGGElement
-                this.nodeDbclick(svgNode, event, node)
-            })
-            .on('click', (event: PointerEvent, node: Node) => {
-                event.stopPropagation()
-                const svgNode = event.currentTarget as SVGGElement
-                this.nodeClick(svgNode, event, node)
-            })
-            .on('mouseenter', (event: PointerEvent, node: Node) => {
-                const svgNode = event.currentTarget as SVGGElement
-                this.nodeHoverIn(svgNode, event, node)
-            })
-            .on('mouseleave', (event: PointerEvent, node: Node) => {
-                const svgNode = event.currentTarget as SVGGElement
-                this.nodeHoverOut(svgNode, event, node)
-            })
+        // this.renderer.getNodeSelection()
+        //     .on('dblclick', (event: PointerEvent, node: Node) => {
+        //         event.stopPropagation()
+        //         const svgNode = event.currentTarget as SVGGElement
+        //         this.nodeDbclick(svgNode, event, node)
+        //     })
+        //     .on('click', (event: PointerEvent, node: Node) => {
+        //         event.stopPropagation()
+        //         const svgNode = event.currentTarget as SVGGElement
+        //         this.nodeClick(svgNode, event, node)
+        //     })
+        //     .on('mouseenter', (event: PointerEvent, node: Node) => {
+        //         const svgNode = event.currentTarget as SVGGElement
+        //         this.nodeHoverIn(svgNode, event, node)
+        //     })
+        //     .on('mouseleave', (event: PointerEvent, node: Node) => {
+        //         const svgNode = event.currentTarget as SVGGElement
+        //         this.nodeHoverOut(svgNode, event, node)
+        //     })
 
-        this.renderer.getEdgeSelection()
-            .on('dblclick', (event: PointerEvent, edge: Edge) => {
-                event.stopPropagation()
-                const svgEdge = event.currentTarget as SVGPathElement
-                this.edgeDbclick(svgEdge, event, edge)
-            })
-            .on('click', (event: PointerEvent, edge: Edge) => {
-                event.stopPropagation()
-                const svgEdge = event.currentTarget as SVGPathElement
-                this.edgeClick(svgEdge, event, edge)
-            })
-            .on('mouseenter', (event: PointerEvent, edge: Edge) => {
-                const svgNode = event.currentTarget as SVGPathElement
-                this.edgeHoverIn(svgNode, event, edge)
-            })
-            .on('mouseleave', (event: PointerEvent, edge: Edge) => {
-                const svgNode = event.currentTarget as SVGPathElement
-                this.edgeHoverOut(svgNode, event, edge)
-            })
+        // this.renderer.getEdgeSelection()
+        //     .on('dblclick', (event: PointerEvent, edge: Edge) => {
+        //         event.stopPropagation()
+        //         const svgEdge = event.currentTarget as SVGPathElement
+        //         this.edgeDbclick(svgEdge, event, edge)
+        //     })
+        //     .on('click', (event: PointerEvent, edge: Edge) => {
+        //         event.stopPropagation()
+        //         const svgEdge = event.currentTarget as SVGPathElement
+        //         this.edgeClick(svgEdge, event, edge)
+        //     })
+        //     .on('mouseenter', (event: PointerEvent, edge: Edge) => {
+        //         const svgNode = event.currentTarget as SVGPathElement
+        //         this.edgeHoverIn(svgNode, event, edge)
+        //     })
+        //     .on('mouseleave', (event: PointerEvent, edge: Edge) => {
+        //         const svgNode = event.currentTarget as SVGPathElement
+        //         this.edgeHoverOut(svgNode, event, edge)
+        //     })
 
-        this.renderer.getCanvasSelection()
-            .on('click', () => {
-                this.unselectNode()
-                this.unselectEdge()
-            })
+        // this.renderer.getCanvasSelection()
+        //     .on('click', () => {
+        //         this.unselectNode()
+        //         this.unselectEdge()
+        //     })
 
     }
 

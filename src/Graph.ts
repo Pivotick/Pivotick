@@ -22,7 +22,8 @@ export class Graph {
         const rendererOptions = {
             ...this.options.render
         }
-        this.renderer = createGraphRenderer('svg', this, container, rendererOptions)
+        // this.renderer = createGraphRenderer('svg', this, container, rendererOptions)
+        this.renderer = createGraphRenderer('canvas', this, container, rendererOptions)
         this.renderer.setupRendering()
 
         const simulationOptions = {
