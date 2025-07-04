@@ -97,4 +97,19 @@ export class Edge<T = EdgeData> {
             data: this.data,
         }
     }
+
+    clone(): Edge<T> {
+        // Shallow copies of data and style
+        const clonedData = { ...this.data }
+        const clonedStyle = { ...this.style }
+
+        return new Edge<T>(
+            this.id,
+            this.from,
+            this.to,
+            clonedData,
+            clonedStyle,
+            this.directed
+        )
+    }
 }

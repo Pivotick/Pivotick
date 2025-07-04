@@ -135,6 +135,7 @@ export function createSampleGraph(): Pivotick {
         },
         layout: {
             type: 'tree',
+            // radial: true,
         },
         callbacks: {
             // onNodeClick: (e, node) => console.log(`onNodeClick: ${node.id}`),

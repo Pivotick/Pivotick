@@ -110,11 +110,18 @@ export class Graph {
         this.onChange()
     }
 
-
     /**
      * Get a node by its id.
      */
     getNode(id: string | Node): Node | undefined {
+        const node = this._getNode(id)
+        return node ? structuredClone(node) : undefined
+    }
+
+    /**
+     * Get a node by its id.
+     */
+    getMutableNode(id: string | Node): Node | undefined {
         return this._getNode(id)
     }
 
@@ -168,6 +175,14 @@ export class Graph {
      * Get an edge by id.
      */
     getEdge(id: string): Edge | undefined {
+        const edge = this.edges.get(id)
+        return edge ? structuredClone(edge) : undefined
+    }
+
+    /**
+     * Get an edge by id.
+     */
+    getMutableEdge(id: string): Edge | undefined {
         return this.edges.get(id)
     }
 
@@ -183,6 +198,13 @@ export class Graph {
      * Get all nodes in the graph.
      */
     getNodes(): Node[] {
+        return Array.from(this.nodes.values()).map((node: Node) => node.clone())
+    }
+
+    /**
+     * Get all mutable nodes in the graph.
+     */
+    getMutableNodes(): Node[] {
         return Array.from(this.nodes.values())
     }
 
@@ -190,6 +212,13 @@ export class Graph {
      * Get all edges in the graph.
      */
     getEdges(): Edge[] {
+        return Array.from(this.edges.values()).map((edge: Edge) => edge.clone())
+    }
+
+    /**
+     * Get all mutable edges in the graph.
+     */
+    getMutableEdges(): Edge[] {
         return Array.from(this.edges.values())
     }
 

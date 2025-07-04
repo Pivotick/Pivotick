@@ -94,7 +94,7 @@ export class GraphSvgRenderer extends GraphRenderer {
     }
 
     public update(): void {
-        const nodes = this.graph.getNodes()
+        const nodes = this.graph.getMutableNodes()
         this.nodeGroupSelection = this.nodeGroup
             .selectAll<SVGGElement, Node>('g.node-shape')
 

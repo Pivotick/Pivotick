@@ -38,7 +38,7 @@ export class NodeDrawer {
 
     private defaultNodeRender(nodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
         const style = this.computeNodeStyle(node)
-        this.genericNodeRender(nodeSelection, style)
+        this.genericNodeRender(nodeSelection, style, node)
     }
 
     private mergeNodeStylingOptions(style: Partial<NodeStyle>): NodeStyle {
@@ -80,7 +80,7 @@ export class NodeDrawer {
         return this.computeNodeStyle(node)
     }
 
-    private genericNodeRender(nodeSelection: Selection<SVGGElement, Node, null, undefined>, style: NodeStyle): void {
+    private genericNodeRender(nodeSelection: Selection<SVGGElement, Node, null, undefined>, style: NodeStyle, node: Node): void {
         let actualShape = style.shape
         if (style.shape == 'square') {
             actualShape = 'rect'

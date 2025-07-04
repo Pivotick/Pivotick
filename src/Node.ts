@@ -96,5 +96,22 @@ export class Node<T = NodeData> {
             style: this.style,
         }
     }
+
+    clone(): Node<T> {
+        // Shallow clone (deep optional below)
+        const clonedData = { ...this.data }
+        const clonedStyle = { ...this.style }
+
+        const clone = new Node<T>(this.id, clonedData, clonedStyle)
+
+        // Copy layout/physics properties
+        clone.x = this.x
+        clone.y = this.y
+        clone.vx = this.vx
+        clone.vy = this.vy
+        clone.fx = this.fx
+        clone.fy = this.fy
+
+        return clone
+    }
 }
-  

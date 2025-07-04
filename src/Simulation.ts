@@ -139,13 +139,13 @@ export class Simulation {
         }
 
         this.simulation
-            .nodes(this.graph.getNodes())
+            .nodes(this.graph.getMutableNodes())
 
         const linkForce = this.simulation.force('link')
         if (linkForce) {
             (linkForce as d3ForceLinkType<Node, Edge>)
                 .id((node: Node) => node.id)
-                .links(this.graph.getEdges())
+                .links(this.graph.getMutableEdges())
         }
 
         this.restart()
@@ -220,8 +220,8 @@ export class Simulation {
         const canvasBCR = this.canvas?.getBoundingClientRect()
         if (!canvasBCR) return
 
-        const nodes = this.graph.getNodes()
-        const edges = this.graph.getEdges()
+        const nodes = this.graph.getMutableNodes()
+        const edges = this.graph.getMutableEdges()
 
         const onWorkerProgress = (progress: number) =>  {
             this.graph.updateLayoutProgress(progress)
@@ -237,6 +237,10 @@ export class Simulation {
         updatedNodes.forEach((updatedNode, i) => {
             nodes[i].x = updatedNode.x
             nodes[i].y = updatedNode.y
+            // if (updatedNode.fx)
+            //     nodes[i].fx = updatedNode.fx
+            // if (updatedNode.fy)
+            //     nodes[i].fy = updatedNode.fy
         })
         this.graph.updateData(nodes)
     }
