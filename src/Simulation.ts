@@ -221,15 +221,16 @@ export class Simulation {
         if (!canvasBCR) return
 
         const nodes = this.graph.getMutableNodes()
-        const edges = this.graph.getMutableEdges()
+        const nodesCopy = this.graph.getNodes()
+        const edgesCopy = this.graph.getEdges()
 
         const onWorkerProgress = (progress: number) =>  {
             this.graph.updateLayoutProgress(progress)
         }
 
         const { nodes: updatedNodes } = await runSimulationInWorker(
-            nodes,
-            edges,
+            nodesCopy,
+            edgesCopy,
             this.options,
             canvasBCR,
             onWorkerProgress
@@ -237,10 +238,11 @@ export class Simulation {
         updatedNodes.forEach((updatedNode, i) => {
             nodes[i].x = updatedNode.x
             nodes[i].y = updatedNode.y
-            // if (updatedNode.fx)
-            //     nodes[i].fx = updatedNode.fx
-            // if (updatedNode.fy)
-            //     nodes[i].fy = updatedNode.fy
+            
+            if (updatedNode.fx)
+                nodes[i].fx = updatedNode.fx
+            if (updatedNode.fy)
+                nodes[i].fy = updatedNode.fy
         })
         this.graph.updateData(nodes)
     }

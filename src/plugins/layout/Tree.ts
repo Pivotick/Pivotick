@@ -92,6 +92,25 @@ export class TreeLayout {
         this.center = [this.width / 2, this.height / 2]
     }
 
+    private setNodePositions(positionedNodes: HierarchyNode<TreeNode>[], options: TreeLayoutOptions): void {
+        for (const positionedNode of positionedNodes) {
+            const node = this.graph.getMutableNode(positionedNode.data.id)
+            if (node) {
+                if (options.radial) {
+                    const angle = positionedNode.x ?? 0
+                    const r = positionedNode.y ?? 0
+
+                    node.x = r * Math.cos(angle - Math.PI / 2)
+                    node.y = r * Math.sin(angle - Math.PI / 2)
+                } else {
+                    node.x = positionedNode.x
+                    node.y = positionedNode.y
+                    node.fy = positionedNode.y
+                }
+            }
+        }
+    }
+
     private registerForces(): void {
         const strength = this.options.strength ?? 0.1
         if (this.options.radial) {
@@ -109,7 +128,6 @@ export class TreeLayout {
                 return this.positionedNodesByID.get(node.id)?.x ?? 0
             }).strength(strength))
         }
-
 
         TreeLayout.adjustOtherSimulationForces(this.simulationForces, this.options)
     }
@@ -161,20 +179,17 @@ export class TreeLayout {
         }
     }
 
-    private setNodePositions(positionedNodes: HierarchyNode<TreeNode>[], options: TreeLayoutOptions): void {
-        for (const positionedNode of positionedNodes) {
-            const node = this.graph.getMutableNode(positionedNode.data.id)
-            if (node) {
-                if (options.radial) {
-                    const angle = positionedNode.x ?? 0
-                    const r = positionedNode.y ?? 0
-
-                    node.x = r * Math.cos(angle - Math.PI / 2)
-                    node.y = r * Math.sin(angle - Math.PI / 2)
-                } else {
-                    node.x = positionedNode.x
-                    node.y = positionedNode.y
-                }
+    static simulationDone(
+        nodes: Node[],
+        edges: Edge[],
+        simulation: d3Simulation<Node, undefined>,
+        partialOptions: Partial<TreeLayoutOptions>,
+        canvasBCR: DOMRect
+    ): void {
+        const options = merge({}, DEFAULT_TREE_LAYOUT_OPTIONS, partialOptions)
+        for (const node of nodes) {
+            if (!options.radial) {
+                node.fy = node.y
             }
         }
     }

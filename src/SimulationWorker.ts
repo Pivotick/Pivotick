@@ -95,6 +95,15 @@ self.onmessage = (e: MessageEvent<WorkerInput>) => {
     }
 
     postMessage({ type: 'tick', progress: 1 })
+    if (options.layout?.type === 'tree') {
+        TreeLayout.simulationDone(
+            nodes,
+            edges,
+            simulation,
+            options.layout,
+            canvasBCR
+        )
+    }
     self.postMessage({
         type: 'done',
         nodes,
