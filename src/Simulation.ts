@@ -8,6 +8,7 @@ import {
     type ForceManyBody as d3ForceManyBodyType,
     type ForceCenter as d3ForceCenterType,
     type ForceCollide as d3ForceCollideType,
+    type SimulationNodeDatum,
 } from 'd3-force'
 import { type Simulation as d3Simulation } from 'd3-force'
 import { drag as d3Drag } from 'd3-drag'
@@ -27,7 +28,7 @@ const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
     d3AlphaTarget: 0.0,
     d3VelocityDecay: 0.45,
     d3LinkDistance: 40,
-    d3LinkStrength: 1,
+    d3LinkStrength: null,
     d3ManyBodyStrength: -150,
     d3ManyBodyTheta: 0.9,
     d3CollideRadius: 12,
@@ -108,15 +109,26 @@ export class Simulation {
         simulationForces.center
             .x(canvasBCR.width / 2)
             .y(canvasBCR.height / 2)
+
         simulationForces.link.distance(options.d3LinkDistance)
         if (options.d3LinkStrength) {
             simulationForces.link.strength(options.d3LinkStrength)
         }
         simulationForces.charge
-            .strength(options.d3ManyBodyStrength)
             .theta(options.d3ManyBodyTheta)
+            .strength((node: SimulationNodeDatum) => {
+                const n = node as Node
+                const baseStrength = options.d3ManyBodyStrength
+
+                const radius = n._circleRadius ?? 10
+                return baseStrength * (radius * radius) / 100
+            })
+
         simulationForces.collide
-            .radius(options.d3CollideRadius)
+            .radius((node: SimulationNodeDatum) => {
+                const n = node as Node
+                return n._circleRadius ? 1.2 * n._circleRadius : options.d3CollideRadius
+            })
             .strength(options.d3CollideStrength)
 
 

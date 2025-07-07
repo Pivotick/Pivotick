@@ -150,7 +150,8 @@ export class EdgeDrawer {
         if (!from.x || !from.y || !to.x || !to.y)
             return null
 
-        const drawOffset = 4 // Distance from which to end the edge
+        const drawOffsetStart = 2 // Distance from which to start the edge
+        const drawOffsetEnd = 4 // Distance from which to end the edge
 
         // Direction angle from source to target
         const dx = to.x - from.x
@@ -164,10 +165,10 @@ export class EdgeDrawer {
         const rTo = this.graphSvgRenderer.nodeDrawer.getNodeStyle(to).size
 
         // Offset both ends of the line
-        const startX = from.x + (rFrom + drawOffset) * normX
-        const startY = from.y + (rFrom + drawOffset) * normY
-        const endX = to.x - (rTo + drawOffset) * normX
-        const endY = to.y - (rTo + drawOffset) * normY
+        const startX = from.x + (rFrom + drawOffsetStart) * normX
+        const startY = from.y + (rFrom + drawOffsetStart) * normY
+        const endX = to.x - (rTo + drawOffsetEnd) * normX
+        const endY = to.y - (rTo + drawOffsetEnd) * normY
 
         return `M ${startX},${startY} L ${endX},${endY}`
     }
@@ -181,7 +182,8 @@ export class EdgeDrawer {
         const r = Math.hypot(to.x - from.x, to.y - from.y)
 
         const drawOffset = 4 // Distance from which to end the edge
-        const rTo = this.graphSvgRenderer.nodeDrawer.getNodeStyle(to).size
+
+        const rTo = edge.target._circleRadius ? edge.target._circleRadius : this.graphSvgRenderer.nodeDrawer.getNodeStyle(to).size
         const rTotalOffset = rTo + drawOffset
 
         const arcParams: ArcParams = {

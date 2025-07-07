@@ -95,7 +95,7 @@ export interface GraphRendererOptions {
      * Custom renderer for nodes.
      * Receives node data and selection, and should return HTML or SVG element or string or directly calling d3 methods on the selection.
      */
-    renderNode?: (node: Node, nodeSelection: Selection<SVGGElement, Node, null, undefined>) => HTMLElement | string | void
+    renderNode?: (node: Node, nodeSelection: Selection<SVGForeignObjectElement, Node, null, undefined>) => HTMLElement | string | void
     /**
      * Custom renderer for edges.
      * Receives edge data and selection, and should return HTML or SVG element or string or directly calling d3 methods on the selection.
@@ -121,7 +121,7 @@ export interface SimulationOptions {
     d3LinkStrength: number | null /** @default null */
     d3ManyBodyStrength: number /** @default -30 */
     d3ManyBodyTheta: number /** @default 0.9 */
-    d3CollideRadius: number /** @default 1 */
+    d3CollideRadius: number /** @default 12 */
     d3CollideStrength: number /** @default 1 */
     d3CollideIterations: number /** @default 1 */
     cooldownTime: number /** @default 2000 */

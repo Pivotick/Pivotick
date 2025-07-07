@@ -33,13 +33,13 @@ export function createSampleGraph(): Pivotick {
     // edges.push(new Edge('1-0', nodes[1], nodes[0], { relation : 'b'}))
 
 
+    const N = 5
     const createNodes = (): Node[] => {
-        return Array.from({ length: 30 }, (_, i) => new Node(`n${i + 1}`))
+        return Array.from({ length: N }, (_, i) => new Node(`n${i + 1}`))
     }
     const topologies = {
         custom: (() => {
-            const N = 10
-            let nodes = [...Array(N).keys()].map(i => (
+            const nodes = [...Array(N).keys()].map(i => (
                 new Node(i.toString(),
                     {
                         label: `Node ${i}`,
@@ -49,7 +49,7 @@ export function createSampleGraph(): Pivotick {
                     }
                 )
             ))
-            let edges = [...Array(N).keys()]
+            const edges = [...Array(N).keys()]
                 .filter(id => id)
                 .map(id => {
                     const source = nodes[id]
@@ -178,7 +178,7 @@ export function createSampleGraph(): Pivotick {
             // onEdgeClick: (e, edge) => console.log(`onEdgeClick: ${edge.id}`),
         },
         render: {
-            type: 'svg'
+            type: 'svg',
             // nodeTypeAccessor: (node: Node) => node.getData()?.type,
             // nodeStyleMap: {
             //     'hub': { shape: 'hexagon', color: '#aaa', size: 30 },
@@ -192,10 +192,19 @@ export function createSampleGraph(): Pivotick {
             // defaultEdgeStyle: {
             //     curveStyle: 'bidirectional',
             // }
-            // renderNode: (node: Node, nodeSelection: d3.Selection<SVGElement, Node, null, undefined>): HTMLElement | string | void => {
-            //     nodeSelection
-            //         .attr("r", 10)
-            //         .attr("fill", '#907acc')
+            // renderNode: (node: Node, nodeSelection: d3.Selection<SVGForeignObjectElement, Node, null, undefined>): HTMLElement | string | void => {
+            //     const size = 12
+            //     const style = [
+            //         'display:block',
+            //         `width:${size}px`,
+            //         `height:${size}px`,
+            //         'background-color:#907acc',
+            //         'border: 2px solid #fff',
+            //         'border-radius:50%',
+            //         'opacity: 1',
+            //     ].join(';')
+
+            //     return `<span style="${style}"></span>`
             // }
             // renderEdge: (edge: Edge, edgeSelection: d3.Selection<SVGPathElement, Edge, null, undefined>): HTMLElement | string | void => {
             //     edgeSelection

@@ -19,6 +19,7 @@ export class Node<T = NodeData> {
     vy?: number
     fx?: number
     fy?: number
+    _circleRadius?: number
 
     /**
      * Create a new Node instance.

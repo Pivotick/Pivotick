@@ -25,7 +25,7 @@ export class NodeDrawer {
         ctx.stroke()
     }
 
-    private defaultNodeRender(nodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
+    private defaultNodeRender(nodeSelection: Selection<SVGForeignObjectElement, Node, null, undefined>, node: Node): void {
         const style = this.computeNodeStyle(node)
         this.genericNodeRender(nodeSelection, style, node)
     }
@@ -69,7 +69,7 @@ export class NodeDrawer {
         return this.computeNodeStyle(node)
     }
 
-    private genericNodeRender(nodeSelection: Selection<SVGGElement, Node, null, undefined>, style: NodeStyle, node: Node): void {
+    private genericNodeRender(nodeSelection: Selection<SVGForeignObjectElement, Node, null, undefined>, style: NodeStyle, node: Node): void {
         let actualShape = style.shape
         if (style.shape == 'square') {
             actualShape = 'rect'

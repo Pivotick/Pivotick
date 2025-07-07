@@ -18,25 +18,58 @@ export class NodeDrawer {
         this.renderCB = this.rendererOptions?.renderNode
     }
 
-    public render(theNodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
+    public render(theNodeSelection: Selection<SVGForeignObjectElement, Node, null, undefined>, node: Node): void {
         if (this.renderCB) {
-            const rendered = this?.renderCB?.(node, theNodeSelection)
             const fo = theNodeSelection.append('foreignObject')
-                .attr('width', 40)  // FIXME: calculate the correct size of the FO based on the rendered content
-                .attr('height', 40)
+            const rendered = this?.renderCB?.(node, fo)
+            fo.attr('width', 20)
+                .attr('height', 20)
+            node._circleRadius = 10
 
             if (typeof rendered === 'string') {
                 fo.html(rendered)
             } else if (rendered instanceof HTMLElement) {
                 fo.node()?.append(rendered)
             }
+
+            requestAnimationFrame(() => {
+                const foNode = fo.node() as SVGForeignObjectElement
+                if (!foNode) return
+
+                const content = foNode.firstElementChild as HTMLElement | null
+                if (!content) return
+
+                const bcr = content.getBoundingClientRect()
+                const width = Math.ceil(bcr.width)
+                const height = Math.ceil(bcr.height)
+
+                fo.attr('width', width)
+                    .attr('height', height)
+
+                // Offset the position so it's centered
+                fo.attr('x', -width / 2)
+                    .attr('y', -height / 2)
+
+                node._circleRadius = 0.5 * Math.max(width, height)
+              })
+
             // In here, we could add support of other lightweight framework such as jQuery, Vue.js, ..
         } else {
             this.defaultNodeRender(theNodeSelection, node)
+            requestAnimationFrame(() => {
+                const nodeElement = theNodeSelection.node()
+                if (!nodeElement) return
+
+                const bbox = nodeElement.getBBox()
+                const width = Math.ceil(bbox.width)
+                const height = Math.ceil(bbox.height)
+
+                node._circleRadius = 0.5 * Math.max(width, height)
+            })
         }
     }
 
-    private defaultNodeRender(nodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
+    private defaultNodeRender(nodeSelection: Selection<SVGForeignObjectElement, Node, null, undefined>, node: Node): void {
         const style = this.computeNodeStyle(node)
         this.genericNodeRender(nodeSelection, style, node)
     }
@@ -80,7 +113,7 @@ export class NodeDrawer {
         return this.computeNodeStyle(node)
     }
 
-    private genericNodeRender(nodeSelection: Selection<SVGGElement, Node, null, undefined>, style: NodeStyle, node: Node): void {
+    private genericNodeRender(nodeSelection: Selection<SVGForeignObjectElement, Node, null, undefined>, style: NodeStyle, node: Node): void {
         let actualShape = style.shape
         if (style.shape == 'square') {
             actualShape = 'rect'
