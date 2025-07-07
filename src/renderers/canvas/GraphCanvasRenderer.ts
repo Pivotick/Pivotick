@@ -1,15 +1,15 @@
 import { select as d3Select, zoom as d3Zoom, type ZoomBehavior, zoomIdentity } from 'd3'
 import { Graph } from '../../Graph'
-import { Node } from '../../Node'
-import { Edge } from '../../Edge'
 import { NodeDrawer } from './NodeDrawer'
 import { EdgeDrawer } from './EdgeDrawer'
 import { GraphRenderer } from '../../GraphRenderer'
 import { GraphInteractions } from '../../GraphInteractions'
-import type { GraphSvgRendererOptions } from '../../GraphOptions'
+import type { GraphRendererOptions } from '../../GraphOptions'
 import merge from 'lodash.merge'
+import { EventHandler } from './EventHandler'
 
 const DEFAULT_RENDERER_OPTIONS = {
+    type: 'canvas',
     minZoom: 0.1,
     maxZoom: 10,
     defaultNodeStyle: {
@@ -25,12 +25,14 @@ const DEFAULT_RENDERER_OPTIONS = {
         opacity: 0.8,
         curveStyle: 'bidirectional',
     },
-} satisfies GraphSvgRendererOptions
+} satisfies GraphRendererOptions
 
 export class GraphCanvasRenderer extends GraphRenderer {
-    protected options: GraphSvgRendererOptions
+    protected options: GraphRendererOptions
 
-    private graphInteraction: GraphInteractions
+    private graphInteraction: GraphInteractions<CanvasRenderingContext2D>
+    private eventHandler: EventHandler
+
     private canvas: HTMLCanvasElement
     private context: CanvasRenderingContext2D
     private zoomBehavior: ZoomBehavior<HTMLCanvasElement, unknown>
@@ -39,11 +41,13 @@ export class GraphCanvasRenderer extends GraphRenderer {
     public nodeDrawer: NodeDrawer
     public edgeDrawer: EdgeDrawer
 
-    constructor(graph: Graph, container: HTMLElement, options: Partial<GraphSvgRendererOptions>) {
+    constructor(graph: Graph, container: HTMLElement, graphInteraction: GraphInteractions<CanvasRenderingContext2D>, options: Partial<GraphRendererOptions>) {
         super(graph, container, options)
 
         this.options = merge({}, DEFAULT_RENDERER_OPTIONS, options)
-        this.graphInteraction = new GraphInteractions(this.graph, this)
+        this.graphInteraction = graphInteraction
+        this.eventHandler = new EventHandler(this.graph)
+
 
         this.canvas = document.createElement('canvas')
         this.canvas.width = container.clientWidth
@@ -66,7 +70,7 @@ export class GraphCanvasRenderer extends GraphRenderer {
     }
 
     public init(): void {
-        this.graphInteraction.init()
+        this.eventHandler.init(this, this.graphInteraction)
     }
 
     public dataUpdate(): void {

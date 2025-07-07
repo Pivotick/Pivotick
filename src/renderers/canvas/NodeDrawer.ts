@@ -1,15 +1,15 @@
 import { type Selection } from 'd3-selection'
 import { Node } from '../../Node'
 import type { Graph } from '../../Graph'
-import type { GraphSvgRendererOptions, NodeStyle } from '../../GraphOptions'
+import type { GraphRendererOptions, NodeStyle } from '../../GraphOptions'
 
 export class NodeDrawer {
 
     private graph: Graph
-    private rendererOptions: GraphSvgRendererOptions
-    private renderCB?: GraphSvgRendererOptions['renderNode']
+    private rendererOptions: GraphRendererOptions
+    private renderCB?: GraphRendererOptions['renderNode']
 
-    public constructor(rendererOptions: GraphSvgRendererOptions, graph: Graph) {
+    public constructor(rendererOptions: GraphRendererOptions, graph: Graph) {
         this.graph = graph
         this.rendererOptions = rendererOptions
         this.renderCB = this.rendererOptions?.renderNode

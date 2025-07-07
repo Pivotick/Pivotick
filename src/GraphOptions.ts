@@ -2,68 +2,73 @@ import { type Selection } from 'd3-selection'
 import { Node } from './Node'
 import { Edge } from './Edge'
 
-export interface InterractionCallbacks {
+export interface InterractionCallbacks<TElement = unknown> {
     /**
      * Called when a node is clicked.
      */
-    onNodeClick?: (event: PointerEvent, node: Node, svgNode: SVGGElement) => void
+    onNodeClick?: (event: PointerEvent, node: Node, element: TElement) => void
 
     /**
      * Called when a node is double clicked.
      */
-    onNodeDbclick?: (event: PointerEvent, node: Node, svgNode: SVGGElement) => void
+    onNodeDbclick?: (event: PointerEvent, node: Node, element: TElement) => void
     
     /**
      * Called when a user hovers over a node.
     */
-    onNodeHoverIn?: (event: PointerEvent, node: Node, svgNode: SVGGElement) => void
+    onNodeHoverIn?: (event: PointerEvent, node: Node, element: TElement) => void
     /**
      * Called when a user hovers out of a node.
     */
-    onNodeHoverOut?: (event: PointerEvent, node: Node, svgNode: SVGGElement) => void
+    onNodeHoverOut?: (event: PointerEvent, node: Node, element: TElement) => void
 
     /**
     * Called when a node is selected by the user.
     */
-    onNodeSelect?: (node: Node, svgNode: SVGGElement) => void
+    onNodeSelect?: (node: Node, element: TElement) => void
 
     /**
     * Called when a node is unselected by the user.
     */
-    onNodeBlur?: (node: Node, svgNode: SVGGElement) => void
+    onNodeBlur?: (node: Node, element: TElement) => void
 
     /**
      * Called when a node is expanded (e.g., drilled down or pivoted).
      */
-    onNodeExpansion?: (event: PointerEvent, edge: Edge, svgNode: SVGGElement) => void
+    onNodeExpansion?: (event: PointerEvent, edge: Edge, element: TElement) => void
 
     /**
      * Called when an edge is selected by the user.
      */
-    onEdgeClick?: (event: PointerEvent, edge: Edge, svgEdge: SVGPathElement) => void
+    onEdgeClick?: (event: PointerEvent, edge: Edge, element: TElement) => void
     /**
      * Called when an edge is selected by the user.
      */
-    onEdgeDbclick?: (event: PointerEvent, edge: Edge, svgEdge: SVGPathElement) => void
+    onEdgeDbclick?: (event: PointerEvent, edge: Edge, element: TElement) => void
 
     /**
      * Called when an edge is selected by the user.
     */
-    onEdgeSelect?: (edge: Edge, svgEdge: SVGPathElement) => void
+    onEdgeSelect?: (edge: Edge, element: TElement) => void
 
     /**
     * Called when an edge is unselected by the user.
     */
-    onEdgeBlur?: (edge: Edge, svgEdge: SVGPathElement) => void
+    onEdgeBlur?: (edge: Edge, element: TElement) => void
 
     /**
      * Called when a user hovers over an edge.
      */
-    onEdgeHoverIn?: (event: PointerEvent, edge: Edge, svgEdge: SVGPathElement) => void
+    onEdgeHoverIn?: (event: PointerEvent, edge: Edge, element: TElement) => void
     /**
      * Called when a user hovers over an edge.
      */
-    onEdgeHoverOut?: (event: PointerEvent, edge: Edge, svgEdge: SVGPathElement) => void
+    onEdgeHoverOut?: (event: PointerEvent, edge: Edge, element: TElement) => void
+
+    /**
+     * Called when the canvas is clicked.
+     */
+    onCanvasClick?: (event: PointerEvent) => void
 }
 
 export interface NodeStyle {
@@ -82,7 +87,10 @@ export interface EdgeStyle {
     curveStyle: 'straight' | 'curved' | 'bidirectional' /** @default: bidirectional */
 }
 
-export interface GraphSvgRendererOptions {
+export type RendererType = 'svg' | 'canvas'
+
+export interface GraphRendererOptions {
+    type: RendererType,
     /**
      * Custom renderer for nodes.
      * Receives node data and selection, and should return HTML or SVG element or string or directly calling d3 methods on the selection.
@@ -151,7 +159,7 @@ export interface GraphOptions {
     /**
      * Options for the rendering engine
      */
-    render?: Partial<GraphSvgRendererOptions>
+    render?: Partial<GraphRendererOptions>
     /**
      * Options for the simultion engine
      */

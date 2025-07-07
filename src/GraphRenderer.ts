@@ -1,5 +1,5 @@
 import type { Graph } from './Graph'
-import type { GraphSvgRendererOptions } from './GraphOptions'
+import type { GraphRendererOptions } from './GraphOptions'
 import { createSvgElement } from './utils/ElementCreation'
 
 export type RendererType = 'svg' | 'canvas'
@@ -10,11 +10,11 @@ const PROGRESS_BAR_HEIGHT = 8
 export abstract class GraphRenderer {
     protected graph: Graph
     protected container: HTMLElement
-    protected options: Partial<GraphSvgRendererOptions>
+    protected options: Partial<GraphRendererOptions>
     protected layoutProgress = 0
     protected progressBar: SVGRectElement | null = null
 
-    constructor(graph: Graph, container: HTMLElement, options: Partial<GraphSvgRendererOptions>) {
+    constructor(graph: Graph, container: HTMLElement, options: Partial<GraphRendererOptions>) {
         this.graph = graph
         this.container = container
         this.options = options

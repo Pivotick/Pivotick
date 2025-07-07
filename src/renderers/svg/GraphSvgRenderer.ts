@@ -4,14 +4,16 @@ import { Edge } from '../../Edge'
 import { Node } from '../../Node'
 import { NodeDrawer } from './NodeDrawer'
 import { EdgeDrawer } from './EdgeDrawer'
+import { EventHandler } from './EventHandler'
 import type { Graph } from '../../Graph'
-import type { GraphSvgRendererOptions } from '../../GraphOptions'
+import type { GraphRendererOptions } from '../../GraphOptions'
 import merge from 'lodash.merge'
 import { GraphInteractions } from '../../GraphInteractions'
 import { GraphRenderer } from '../../GraphRenderer'
 
 
 const DEFAULT_RENDERER_OPTIONS = {
+    type: 'svg',
     minZoom: 0.1,
     maxZoom: 10,
     defaultNodeStyle: {
@@ -27,13 +29,14 @@ const DEFAULT_RENDERER_OPTIONS = {
         opacity: 0.8,
         curveStyle: 'bidirectional',
     },
-} satisfies GraphSvgRendererOptions
+} satisfies GraphRendererOptions
 
 export class GraphSvgRenderer extends GraphRenderer {
-    protected options: GraphSvgRendererOptions
+    protected options: GraphRendererOptions
 
     private zoom: ZoomBehavior<SVGSVGElement, unknown>
-    private graphInteraction: GraphInteractions
+    private graphInteraction: GraphInteractions<SVGGElement | SVGPathElement>
+    private eventHandler: EventHandler
 
     public nodeDrawer: NodeDrawer
     public edgeDrawer: EdgeDrawer
@@ -54,12 +57,13 @@ export class GraphSvgRenderer extends GraphRenderer {
 
     // private layoutProgress = 0
 
-    constructor(graph: Graph, container: HTMLElement, options: Partial<GraphSvgRendererOptions>) {
+    constructor(graph: Graph, container: HTMLElement, graphInteraction: GraphInteractions<SVGGElement | SVGPathElement>, options: Partial<GraphRendererOptions>) {
         super(graph, container, options)
 
         this.options = merge({}, DEFAULT_RENDERER_OPTIONS, options)
 
-        this.graphInteraction = new GraphInteractions(this.graph, this)
+        this.graphInteraction = graphInteraction
+        this.eventHandler = new EventHandler(this.graph)
         this.nodeDrawer = new NodeDrawer(this.options, this.graph, this)
         this.edgeDrawer = new EdgeDrawer(this.options, this.graph, this)
 
@@ -90,7 +94,7 @@ export class GraphSvgRenderer extends GraphRenderer {
 
     public init(): void {
         this.dataUpdate()
-        this.graphInteraction.init()
+        this.eventHandler.init(this, this.graphInteraction)
     }
 
     public dataUpdate(): void {

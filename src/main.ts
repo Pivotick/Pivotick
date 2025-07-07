@@ -34,9 +34,37 @@ export function createSampleGraph(): Pivotick {
 
 
     const createNodes = (): Node[] => {
-        return Array.from({ length: 240 }, (_, i) => new Node(`n${i + 1}`))
+        return Array.from({ length: 30 }, (_, i) => new Node(`n${i + 1}`))
     }
     const topologies = {
+        custom: (() => {
+            const N = 10
+            let nodes = [...Array(N).keys()].map(i => (
+                new Node(i.toString(),
+                    {
+                        label: `Node ${i}`,
+                        type: Math.random() < 0.8 ? 'leaf' : 'hub'
+                    },
+                    {
+                    }
+                )
+            ))
+            let edges = [...Array(N).keys()]
+                .filter(id => id)
+                .map(id => {
+                    const source = nodes[id]
+                    const target = nodes[Math.round(Math.random() * (id - 1))]
+                    return new Edge(`${id}-${target.id}`, source, target, { relation: 'connects to' })
+                })
+            // edges = []
+            edges.push(new Edge('0-0', nodes[0], nodes[0], { relation : 'self-loop'}))
+            edges.push(new Edge('a-b', nodes[3], nodes[2], { relation : 'a'}))
+            edges.push(new Edge('b-a', nodes[2], nodes[3], { relation : 'b'}))
+            edges.push(new Edge('0-1', nodes[0], nodes[1], { relation : 'a'}))
+            edges.push(new Edge('1-0', nodes[1], nodes[0], { relation : 'b'}))
+
+            return { nodes, edges }
+        })(),
         tree: (() => {
             const nodes = createNodes()
             const edges: Edge[] = []
@@ -124,7 +152,7 @@ export function createSampleGraph(): Pivotick {
         })(),
     }
 
-    const topo = 'tree'
+    const topo = 'custom'
     const graph = new Pivotick(container, {nodes: topologies[topo].nodes, edges: topologies[topo].edges}, {
         // isDirected: false,
         simulation: {
@@ -134,7 +162,7 @@ export function createSampleGraph(): Pivotick {
             // d3LinkDistance: 50,
         },
         layout: {
-            type: 'tree',
+            // type: 'tree',
             // radial: true
         },
         callbacks: {
@@ -150,6 +178,7 @@ export function createSampleGraph(): Pivotick {
             // onEdgeClick: (e, edge) => console.log(`onEdgeClick: ${edge.id}`),
         },
         render: {
+            type: 'svg'
             // nodeTypeAccessor: (node: Node) => node.getData()?.type,
             // nodeStyleMap: {
             //     'hub': { shape: 'hexagon', color: '#aaa', size: 30 },

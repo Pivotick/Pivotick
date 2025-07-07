@@ -1,6 +1,6 @@
 import { type Selection } from 'd3-selection'
 import { Edge, type EdgeData } from '../../Edge'
-import type { EdgeStyle, GraphSvgRendererOptions } from '../../GraphOptions'
+import type { EdgeStyle, GraphRendererOptions } from '../../GraphOptions'
 import { getArcIntersectionWithCircle, type ArcParams, type Circle } from '../../utils/GeometryHelper'
 import type { Graph } from '../../Graph'
 import type { GraphSvgRenderer } from './GraphSvgRenderer'
@@ -8,11 +8,11 @@ import type { GraphSvgRenderer } from './GraphSvgRenderer'
 export class EdgeDrawer {
 
     private graph: Graph
-    private rendererOptions: GraphSvgRendererOptions
+    private rendererOptions: GraphRendererOptions
     private graphSvgRenderer: GraphSvgRenderer
-    private renderCB?: GraphSvgRendererOptions['renderEdge']
+    private renderCB?: GraphRendererOptions['renderEdge']
 
-    public constructor(rendererOptions: GraphSvgRendererOptions, graph: Graph, graphSvgRenderer: GraphSvgRenderer) {
+    public constructor(rendererOptions: GraphRendererOptions, graph: Graph, graphSvgRenderer: GraphSvgRenderer) {
         this.graphSvgRenderer = graphSvgRenderer
         this.graph = graph
         this.rendererOptions = rendererOptions
