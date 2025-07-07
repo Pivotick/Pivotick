@@ -26,7 +26,7 @@ const DEFAULT_RENDERER_OPTIONS = {
     defaultEdgeStyle: {
         strokeColor: '#999',
         strokeWidth: 2,
-        opacity: 0.8,
+        opacity: 1.0,
         curveStyle: 'bidirectional',
     },
 } satisfies GraphRendererOptions
