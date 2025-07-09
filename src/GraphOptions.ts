@@ -85,6 +85,7 @@ export interface EdgeStyle {
     strokeWidth: number
     opacity: number
     curveStyle: 'straight' | 'curved' | 'bidirectional' /** @default: bidirectional */
+    rotateLabel: boolean /** @default: false */
 }
 
 export type RendererType = 'svg' | 'canvas'
@@ -100,7 +101,7 @@ export interface GraphRendererOptions {
      * Custom renderer for edges.
      * Receives edge data and selection, and should return HTML or SVG element or string or directly calling d3 methods on the selection.
     */
-    renderEdge?: (edge: Edge, nodeSelection: Selection<SVGPathElement, Edge, null, undefined>) => HTMLElement | string | void
+    renderEdge?: (edge: Edge, nodeSelection: Selection<SVGGElement, Edge, null, undefined>) => HTMLElement | string | void
     defaultNodeStyle: NodeStyle
     defaultEdgeStyle: EdgeStyle
     nodeTypeAccessor?: (node: Node) => string | undefined

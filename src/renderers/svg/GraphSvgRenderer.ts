@@ -28,6 +28,7 @@ const DEFAULT_RENDERER_OPTIONS = {
         strokeWidth: 2,
         opacity: 1.0,
         curveStyle: 'bidirectional',
+        rotateLabel: false,
     },
 } satisfies GraphRendererOptions
 
@@ -53,7 +54,15 @@ export class GraphSvgRenderer extends GraphRenderer {
     private nodeGroupSelection!: Selection<SVGGElement, Node, SVGGElement, unknown>
     private edgeGroupSelection!: Selection<SVGPathElement, Edge, SVGGElement, unknown>
     private nodeSelection!: Selection<SVGGElement, Node, SVGGElement, unknown>
-    private edgeSelection!: Selection<SVGPathElement, Edge, SVGGElement, unknown>
+
+    /**
+     * I tried to add a label to a link
+     * So I had to wrap the svg' path into a group
+     * Which messed up the rendering since it's not the path but the group that's tied to the update position function
+     * Trying to fix this right now.
+     */
+    
+    private edgeSelection!: Selection<SVGGElement, Edge, SVGGElement, unknown>
 
     // private layoutProgress = 0
 
@@ -125,20 +134,20 @@ export class GraphSvgRenderer extends GraphRenderer {
 
         const edges = this.graph.getEdges()
         this.edgeGroupSelection = this.edgeGroup
-            .selectAll<SVGPathElement, Edge>('path')
+            .selectAll<SVGPathElement, Edge>('g.edge-group')
 
         this.edgeSelection = this.edgeGroupSelection
             .data(edges, (edge: Edge) => edge.id)
             .join(
                 (enter) => enter
-                    .append('path')
-                    .each((edge: Edge, i: number, edges: ArrayLike<SVGPathElement>) => {
-                        const selection = d3Select<SVGPathElement, Edge>(edges[i])
+                    .append('g').classed('edge-group', true)
+                    .each((edge: Edge, i: number, edges: ArrayLike<SVGGElement>) => {
+                        const selection = d3Select<SVGGElement, Edge>(edges[i])
                         this.edgeDrawer.render(selection, edge)
                     }),
                 update => update
                     .each((edge: Edge, i: number, edges: ArrayLike<SVGPathElement>) => {
-                        const selection = d3Select<SVGPathElement, Edge>(edges[i])
+                        const selection = d3Select<SVGGElement, Edge>(edges[i])
                         selection.selectChildren().remove()
                         this.edgeDrawer.render(selection, edge)
                     }),
@@ -156,22 +165,18 @@ export class GraphSvgRenderer extends GraphRenderer {
     }
 
     private updateNodePositions(): void {
-        this.nodeSelection
-            .attr('transform', d => `translate(${d.x ?? 0},${d.y ?? 0})`)
+        this.nodeDrawer.updatePositions(this.nodeSelection)
     }
 
     private updateEdgePositions(): void {
-        this.edgeSelection
-            .attr('d', (edge: Edge): string | null => {
-                return this.edgeDrawer.linkPathRouter(edge)
-            })
+        this.edgeDrawer.updatePositions(this.edgeSelection)
     }
 
     public getNodeSelection(): Selection<SVGGElement, Node, SVGGElement, unknown> {
         return this.nodeSelection
     }
 
-    public getEdgeSelection(): Selection<SVGPathElement, Edge, SVGGElement, unknown> {
+    public getEdgeSelection(): Selection<SVGGElement, Edge, SVGGElement, unknown> {
         return this.edgeSelection
     }
 }

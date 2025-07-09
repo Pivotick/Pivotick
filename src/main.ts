@@ -54,14 +54,14 @@ export function createSampleGraph(): Pivotick {
                 .map(id => {
                     const source = nodes[id]
                     const target = nodes[Math.round(Math.random() * (id - 1))]
-                    return new Edge(`${id}-${target.id}`, source, target, { relation: 'connects to' })
+                    return new Edge(`${id}-${target.id}`, source, target, { label: 'connects to' })
                 })
             // edges = []
-            edges.push(new Edge('0-0', nodes[0], nodes[0], { relation : 'self-loop'}))
-            edges.push(new Edge('a-b', nodes[3], nodes[2], { relation : 'a'}))
-            edges.push(new Edge('b-a', nodes[2], nodes[3], { relation : 'b'}))
-            edges.push(new Edge('0-1', nodes[0], nodes[1], { relation : 'a'}))
-            edges.push(new Edge('1-0', nodes[1], nodes[0], { relation : 'b'}))
+            edges.push(new Edge('0-0', nodes[0], nodes[0], { label : 'self-loop'}))
+            edges.push(new Edge('a-b', nodes[3], nodes[2], { label : 'a'}))
+            edges.push(new Edge('b-a', nodes[2], nodes[3], { label : 'b'}))
+            edges.push(new Edge('0-1', nodes[0], nodes[1], { label : 'a'}))
+            edges.push(new Edge('1-0', nodes[1], nodes[0], { label : 'b'}))
 
             return { nodes, edges }
         })(),
@@ -185,9 +185,10 @@ export function createSampleGraph(): Pivotick {
             //     'leaf': { shape: 'triangle', color: '#f00' },
             // },
             // defaultNodeStyle: {
-            //     // shape: 'hexagon'
+            //     shape: 'hexagon',
             //     color: '#aaaaaa33',
             //     strokeColor: '#ffffff33',
+            //     size: 20,
             // }
             // defaultEdgeStyle: {
             //     curveStyle: 'bidirectional',

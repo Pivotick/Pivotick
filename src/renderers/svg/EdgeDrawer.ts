@@ -19,7 +19,7 @@ export class EdgeDrawer {
         this.renderCB = this.rendererOptions?.renderEdge
     }
 
-    public render(theEdgeSelection: Selection<SVGPathElement, Edge, null, undefined>, edge: Edge): void {
+    public render(theEdgeSelection: Selection<SVGGElement, Edge, null, undefined>, edge: Edge): void {
         if (this.renderCB) {
             const rendered = this?.renderCB?.(edge, theEdgeSelection)
             const fo = theEdgeSelection.append('foreignObject')
@@ -37,12 +37,13 @@ export class EdgeDrawer {
         }
     }
 
-    private defaultEdgeRender(edgeSelection: Selection<SVGPathElement, Edge, null, undefined>, edge: Edge): void {
+    private defaultEdgeRender(edgeSelection: Selection<SVGGElement, Edge, null, undefined>, edge: Edge): void {
         const style = this.getEdgeStyle(edge)
-        this.genericEdgeRender(edgeSelection, style)
+        const pathSelection = this.genericEdgeRender(edgeSelection, style)
+        this.labelRender(edgeSelection, edge, style)
 
         if (this.graph.getOptions().isDirected || edge.directed) {
-            this.drawEdgeMarker(edgeSelection, style)
+            this.drawEdgeMarker(pathSelection, style)
         }
     }
 
@@ -56,6 +57,7 @@ export class EdgeDrawer {
                 strokeWidth: edge.getStyle()?.strokeWidth,
                 opacity: edge.getStyle()?.color,
                 curveStyle: edge.getStyle()?.curveStyle,
+                rotateLabel: edge.getStyle()?.rotateLabel,
             }
         }
         return this.mergeEdgeStylingOptions(styleFromEdge)
@@ -67,12 +69,14 @@ export class EdgeDrawer {
             strokeWidth: style?.strokeWidth ?? this.rendererOptions.defaultEdgeStyle.strokeWidth,
             opacity: style?.opacity ?? this.rendererOptions.defaultEdgeStyle.opacity,
             curveStyle: style?.curveStyle ?? this.rendererOptions.defaultEdgeStyle.curveStyle,
+            rotateLabel: style?.rotateLabel ?? this.rendererOptions.defaultEdgeStyle.rotateLabel,
         }
         return mergedStyle
     }
 
-    private genericEdgeRender(edgeSelection: Selection<SVGPathElement, Edge, null, undefined>, style: EdgeStyle): void {
-        edgeSelection
+    private genericEdgeRender(edgeSelection: Selection<SVGGElement, Edge, null, undefined>, style: EdgeStyle): Selection<SVGPathElement, Edge, null, undefined> {
+        return edgeSelection
+            .append('path')
             .attr('stroke', style.strokeColor)
             .attr('stroke-width', style.strokeWidth)
             .attr('stroke-opacity', style.opacity)
@@ -83,7 +87,34 @@ export class EdgeDrawer {
             .attr('marker-end', 'url(#arrow)')
     }
 
-    public linkPathRouter(edge: Edge): string | null {
+    public updatePositions(edgeGroupSelection: Selection<SVGGElement, Edge, SVGGElement, unknown>): void {
+        const edgePathSelection = edgeGroupSelection.selectAll<SVGPathElement, Edge>('path')
+        const edgeLabelSelection = edgeGroupSelection.selectAll<SVGGElement, Edge>('g.label-container')
+
+        edgePathSelection.attr('d', (edge: Edge): string | null => {
+                return this.linkPathRouter(edge)
+            })
+        
+        edgeLabelSelection.attr('transform', (edge: Edge) => {
+            const style = this.getEdgeStyle(edge)
+            const x1 = edge.source.x ?? 0
+            const y1 = edge.source.y ?? 0
+            const x2 = edge.target.x ?? 0
+            const y2 = edge.target.y ?? 0
+            const midX = (x1 + x2) / 2
+            const midY = (y1 + y2) / 2
+
+            if (style.rotateLabel) {
+                const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI
+                const correctedAngle = angle > 90 || angle < -90 ? angle + 180 : angle
+                return `translate(${midX}, ${midY}) rotate(${correctedAngle})`
+            } else {
+                return `translate(${midX}, ${midY})`
+            }
+        })
+    }
+
+    private linkPathRouter(edge: Edge): string | null {
         const { from, to } = edge
 
         if (!from.x || !from.y || !to.x || !to.y)
@@ -209,6 +240,33 @@ export class EdgeDrawer {
             `
 
         return ''
+    }
+
+    private labelRender(edgeSelection: Selection<SVGGElement, Edge, null, undefined>, edge: Edge, style: EdgeStyle): void {
+        const labelContainer = edgeSelection
+            .append('g')
+            .classed('label-container', true)
+
+        const text = labelContainer.append('text')
+            .text(edge.getData().label ?? '')
+            .attr('font-size', 12)
+            .attr('text-anchor', 'middle')
+            .attr('alignment-baseline', 'central')
+            .attr('pointer-events', 'none')
+            .attr('fill', '#333')
+
+        const bbox = text.node()?.getBBox()
+        if (bbox) {
+            labelContainer.insert('rect', 'text')
+                .attr('x', bbox.x - 2)
+                .attr('y', bbox.y - 2)
+                .attr('width', bbox.width + 4)
+                .attr('height', bbox.height + 4)
+                .attr('fill', 'white')
+                .attr('opacity', 0.8)
+                .attr('rx', 2)
+                .attr('ry', 2)
+        }
     }
 
     public renderMarkers(defsContainer: Selection<SVGDefsElement, unknown, null, undefined>): void {

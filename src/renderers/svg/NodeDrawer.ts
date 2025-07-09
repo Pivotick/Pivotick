@@ -1,5 +1,5 @@
 import { type Selection } from 'd3-selection'
-import { Node } from '../../Node'
+import { Node, type NodeData } from '../../Node'
 import type { Graph } from '../../Graph'
 import type { GraphRendererOptions, NodeStyle } from '../../GraphOptions'
 import type { GraphSvgRenderer } from './GraphSvgRenderer'
@@ -18,7 +18,7 @@ export class NodeDrawer {
         this.renderCB = this.rendererOptions?.renderNode
     }
 
-    public render(theNodeSelection: Selection<SVGForeignObjectElement, Node, null, undefined>, node: Node): void {
+    public render(theNodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
         if (this.renderCB) {
             const fo = theNodeSelection.append('foreignObject')
             const rendered = this?.renderCB?.(node, fo)
@@ -69,7 +69,12 @@ export class NodeDrawer {
         }
     }
 
-    private defaultNodeRender(nodeSelection: Selection<SVGForeignObjectElement, Node, null, undefined>, node: Node): void {
+    public updatePositions(nodeSelection: Selection<SVGGElement, Node<NodeData>, SVGGElement, unknown>): void {
+        nodeSelection
+            .attr('transform', d => `translate(${d.x ?? 0},${d.y ?? 0})`)
+    }
+
+    private defaultNodeRender(nodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
         const style = this.computeNodeStyle(node)
         this.genericNodeRender(nodeSelection, style, node)
     }
@@ -113,7 +118,7 @@ export class NodeDrawer {
         return this.computeNodeStyle(node)
     }
 
-    private genericNodeRender(nodeSelection: Selection<SVGForeignObjectElement, Node, null, undefined>, style: NodeStyle, node: Node): void {
+    private genericNodeRender(nodeSelection: Selection<SVGGElement, Node, null, undefined>, style: NodeStyle, node: Node): void {
         let actualShape = style.shape
         if (style.shape == 'square') {
             actualShape = 'rect'
