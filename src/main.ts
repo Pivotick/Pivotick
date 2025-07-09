@@ -58,10 +58,11 @@ export function createSampleGraph(): Pivotick {
                 })
             // edges = []
             edges.push(new Edge('0-0', nodes[0], nodes[0], { label : 'self-loop'}))
-            edges.push(new Edge('a-b', nodes[3], nodes[2], { label : 'a'}))
-            edges.push(new Edge('b-a', nodes[2], nodes[3], { label : 'b'}))
-            edges.push(new Edge('0-1', nodes[0], nodes[1], { label : 'a'}))
-            edges.push(new Edge('1-0', nodes[1], nodes[0], { label : 'b'}))
+            // edges.push(new Edge('a-b', nodes[3], nodes[2], { label : 'a'}))
+            // edges.push(new Edge('b-a', nodes[2], nodes[3], { label : 'b'}))
+            edges.push(new Edge('0-1', nodes[0], nodes[1], { label : 'A'}, {label: {backgroundColor: '#ff0044', color: '#fff'}}))
+            edges.push(new Edge('1-2', nodes[1], nodes[2], { label: 'a' }, {label: {backgroundColor: '#ff0044', color: '#fff'}}))
+            // edges.push(new Edge('1-0', nodes[1], nodes[0], { label : 'b'}))
 
             return { nodes, edges }
         })(),

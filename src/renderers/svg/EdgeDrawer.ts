@@ -1,6 +1,6 @@
-import { type Selection } from 'd3-selection'
+import { type Selection, select as d3Select } from 'd3-selection'
 import { Edge, type EdgeData } from '../../Edge'
-import type { EdgeStyle, GraphRendererOptions } from '../../GraphOptions'
+import type { EdgeStyle, GraphRendererOptions, LabelStyle } from '../../GraphOptions'
 import { getArcIntersectionWithCircle, type ArcParams, type Circle } from '../../utils/GeometryHelper'
 import type { Graph } from '../../Graph'
 import type { GraphSvgRenderer } from './GraphSvgRenderer'
@@ -11,12 +11,14 @@ export class EdgeDrawer {
     private rendererOptions: GraphRendererOptions
     private graphSvgRenderer: GraphSvgRenderer
     private renderCB?: GraphRendererOptions['renderEdge']
+    private renderLabelCB?: GraphRendererOptions['renderLabel']
 
     public constructor(rendererOptions: GraphRendererOptions, graph: Graph, graphSvgRenderer: GraphSvgRenderer) {
         this.graphSvgRenderer = graphSvgRenderer
         this.graph = graph
         this.rendererOptions = rendererOptions
         this.renderCB = this.rendererOptions?.renderEdge
+        this.renderLabelCB = this.rendererOptions?.renderLabel
     }
 
     public render(theEdgeSelection: Selection<SVGGElement, Edge, null, undefined>, edge: Edge): void {
@@ -39,25 +41,54 @@ export class EdgeDrawer {
 
     private defaultEdgeRender(edgeSelection: Selection<SVGGElement, Edge, null, undefined>, edge: Edge): void {
         const style = this.getEdgeStyle(edge)
+        const labelStyle = this.getLabelStyle(edge)
+
         const pathSelection = this.genericEdgeRender(edgeSelection, style)
-        this.labelRender(edgeSelection, edge, style)
+        this.labelRender(edgeSelection, edge, labelStyle)
 
         if (this.graph.getOptions().isDirected || edge.directed) {
             this.drawEdgeMarker(pathSelection, style)
         }
     }
 
+    private getLabelStyle(edge: Edge): LabelStyle {
+        let styleFromLabel
+        const labelStyle = edge.getLabelStyle()
+
+        if (labelStyle && labelStyle.styleCb) {
+            styleFromLabel = labelStyle.styleCb(edge)
+        } else {
+            styleFromLabel = {
+                backgroundColor: edge.getLabelStyle()?.backgroundColor,
+                fontSize: edge.getLabelStyle()?.fontSize,
+                color: edge.getLabelStyle()?.color,
+            }
+        }
+        return this.mergeLabelStylingOptions(styleFromLabel)
+    }
+
+
+    private mergeLabelStylingOptions(style: Partial<LabelStyle>): LabelStyle {
+        const mergedStyle = {
+            backgroundColor: style?.backgroundColor ?? this.rendererOptions.defaultLabelStyle.backgroundColor,
+            fontSize: style?.fontSize ?? this.rendererOptions.defaultLabelStyle.fontSize,
+            color: style?.color ?? this.rendererOptions.defaultLabelStyle.color,
+        }
+        return mergedStyle
+    }
+
     private getEdgeStyle(edge: Edge): EdgeStyle {
         let styleFromEdge
-        if (edge.getStyle()?.styleCb) {
-            styleFromEdge = edge.getStyle().styleCb(edge)
+        const edgeStyle = edge.getEdgeStyle()
+        if (edgeStyle && edgeStyle.styleCb) {
+            styleFromEdge = edgeStyle.styleCb(edge)
         } else {
             styleFromEdge = {
-                strokeColor: edge.getStyle()?.strokeColor,
-                strokeWidth: edge.getStyle()?.strokeWidth,
-                opacity: edge.getStyle()?.color,
-                curveStyle: edge.getStyle()?.curveStyle,
-                rotateLabel: edge.getStyle()?.rotateLabel,
+                strokeColor: edgeStyle?.strokeColor,
+                strokeWidth: edgeStyle?.strokeWidth,
+                opacity: edgeStyle?.opacity,
+                curveStyle: edgeStyle?.curveStyle,
+                rotateLabel: edgeStyle?.rotateLabel,
             }
         }
         return this.mergeEdgeStylingOptions(styleFromEdge)
@@ -95,17 +126,34 @@ export class EdgeDrawer {
                 return this.linkPathRouter(edge)
             })
         
-        edgeLabelSelection.attr('transform', (edge: Edge) => {
+        edgeLabelSelection.attr('transform', (edge: Edge, i, labels) => {
             const style = this.getEdgeStyle(edge)
-            const x1 = edge.source.x ?? 0
-            const y1 = edge.source.y ?? 0
-            const x2 = edge.target.x ?? 0
-            const y2 = edge.target.y ?? 0
-            const midX = (x1 + x2) / 2
-            const midY = (y1 + y2) / 2
+
+            const labelGroup = labels[i].parentNode
+            let pathEl: SVGPathElement | null = null
+            if (labelGroup && labelGroup instanceof Element) {
+                pathEl = d3Select(labelGroup as Element).select('path').node() as SVGPathElement
+            }
+
+            let midX, midY
+            if (pathEl) {
+                const length = pathEl.getTotalLength()
+                const point = pathEl.getPointAtLength(length / 2)
+                midX = point.x
+                midY = point.y
+            } else {
+                const x1 = edge.source.x ?? 0
+                const y1 = edge.source.y ?? 0
+                const x2 = edge.target.x ?? 0
+                const y2 = edge.target.y ?? 0
+                midX = (x1 + x2) / 2
+                midY = (y1 + y2) / 2
+            }
 
             if (style.rotateLabel) {
-                const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI
+                const dx = (edge.target.x ?? 0) - (edge.source.x ?? 0)
+                const dy = (edge.target.y ?? 0) - (edge.source.y ?? 0)
+                const angle = Math.atan2(dy, dx) * 180 / Math.PI
                 const correctedAngle = angle > 90 || angle < -90 ? angle + 180 : angle
                 return `translate(${midX}, ${midY}) rotate(${correctedAngle})`
             } else {
@@ -242,28 +290,29 @@ export class EdgeDrawer {
         return ''
     }
 
-    private labelRender(edgeSelection: Selection<SVGGElement, Edge, null, undefined>, edge: Edge, style: EdgeStyle): void {
+    private labelRender(edgeSelection: Selection<SVGGElement, Edge, null, undefined>, edge: Edge, style: LabelStyle): void {
         const labelContainer = edgeSelection
             .append('g')
             .classed('label-container', true)
 
         const text = labelContainer.append('text')
             .text(edge.getData().label ?? '')
-            .attr('font-size', 12)
+            .attr('font-size', style.fontSize)
             .attr('text-anchor', 'middle')
             .attr('alignment-baseline', 'central')
             .attr('pointer-events', 'none')
-            .attr('fill', '#333')
+            .attr('fill', style.color)
 
         const bbox = text.node()?.getBBox()
         if (bbox) {
+            const paddingX = 4
+            const paddingY = 2
             labelContainer.insert('rect', 'text')
-                .attr('x', bbox.x - 2)
-                .attr('y', bbox.y - 2)
-                .attr('width', bbox.width + 4)
-                .attr('height', bbox.height + 4)
-                .attr('fill', 'white')
-                .attr('opacity', 0.8)
+                .attr('x', bbox.x - paddingX)
+                .attr('y', bbox.y - paddingY)
+                .attr('width', bbox.width + 2 * paddingX)
+                .attr('height', bbox.height + 2 * paddingY)
+                .attr('fill', style.backgroundColor)
                 .attr('rx', 2)
                 .attr('ry', 2)
         }

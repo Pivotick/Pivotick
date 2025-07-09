@@ -80,12 +80,25 @@ export interface NodeStyle {
     styleCb?: (node: Node) => Partial<NodeStyle>
 }
 
+export interface EdgeFullStyle {
+    edge: EdgeStyle,
+    label: LabelStyle,
+}
+
 export interface EdgeStyle {
     strokeColor: string
     strokeWidth: number
     opacity: number
     curveStyle: 'straight' | 'curved' | 'bidirectional' /** @default: bidirectional */
     rotateLabel: boolean /** @default: false */
+    styleCb?: (edge: Edge) => Partial<EdgeStyle>
+}
+
+export interface LabelStyle {
+    backgroundColor: string  /** @default: #ffffff90 */
+    fontSize: number  /** @default: 12 */
+    color: string  /** @default: #333 */
+    styleCb?: (edge: Edge) => Partial<LabelStyle>
 }
 
 export type RendererType = 'svg' | 'canvas'
@@ -96,14 +109,20 @@ export interface GraphRendererOptions {
      * Custom renderer for nodes.
      * Receives node data and selection, and should return HTML or SVG element or string or directly calling d3 methods on the selection.
      */
-    renderNode?: (node: Node, nodeSelection: Selection<SVGForeignObjectElement, Node, null, undefined>) => HTMLElement | string | void
+    renderNode?: (node: Node, edgeSelection: Selection<SVGForeignObjectElement, Node, null, undefined>) => HTMLElement | string | void
     /**
      * Custom renderer for edges.
      * Receives edge data and selection, and should return HTML or SVG element or string or directly calling d3 methods on the selection.
     */
-    renderEdge?: (edge: Edge, nodeSelection: Selection<SVGGElement, Edge, null, undefined>) => HTMLElement | string | void
+    renderEdge?: (edge: Edge, edgeSelection: Selection<SVGGElement, Edge, null, undefined>) => HTMLElement | string | void
+    /**
+     * Custom renderer for edge labels.
+     * Receives edge data and selection, and should return HTML or SVG element or string or directly calling d3 methods on the selection.
+    */
+    renderLabel?: (edge: Edge, edgeSelection: Selection<SVGGElement, Edge, null, undefined>) => HTMLElement | string | void
     defaultNodeStyle: NodeStyle
     defaultEdgeStyle: EdgeStyle
+    defaultLabelStyle: LabelStyle
     nodeTypeAccessor?: (node: Node) => string | undefined
     nodeStyleMap?: Record<string, NodeStyle>
     /** @default 0.1 */

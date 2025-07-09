@@ -30,6 +30,11 @@ const DEFAULT_RENDERER_OPTIONS = {
         curveStyle: 'bidirectional',
         rotateLabel: false,
     },
+    defaultLabelStyle: {
+        backgroundColor: '#ffffff90',
+        fontSize: 12,
+        color: '#333',
+    },
 } satisfies GraphRendererOptions
 
 export class GraphSvgRenderer extends GraphRenderer {

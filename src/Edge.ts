@@ -1,3 +1,4 @@
+import type { EdgeFullStyle, EdgeStyle, LabelStyle } from './GraphOptions'
 import { Node } from './Node'
 
 export interface EdgeData {
@@ -7,13 +8,13 @@ export interface EdgeData {
 /**
  * Represents an edge (connection) between two nodes in a graph.
  */
-export class Edge<T = EdgeData> {
+export class Edge<T = EdgeData, U = EdgeFullStyle> {
     public readonly id: string
     public readonly from: Node
     public readonly to: Node
     public readonly directed: boolean | null
     private data: T
-    private style: T
+    private style: U
 
     /**
      * Create a new Edge instance.
@@ -22,13 +23,13 @@ export class Edge<T = EdgeData> {
      * @param to - Target node
      * @param data - Optional data payload for the edge
      */
-    constructor(id: string, from: Node, to: Node, data?: T, style?: T, directed: boolean | null = null) {
+    constructor(id: string, from: Node, to: Node, data?: T, style?: U, directed: boolean | null = null) {
         this.id = id
         this.from = from
         this.to = to
         this.directed = directed
         this.data = data ?? ({} as T)
-        this.style = style ?? ({} as T)
+        this.style = style ?? ({} as U)
     }
 
     /** Required by d3-force */
@@ -63,26 +64,41 @@ export class Edge<T = EdgeData> {
     }
 
     /**
-     * Get the node's data.
+     * Get the edge's style.
      */
-    getStyle(): T {
+    getStyle(): U {
         return this.style
     }
 
     /**
-     * Update the node's data.
-     * @param newStyle - New data to set
+     * Get the edge's style.
      */
-    setStyle(newStyle: T): void {
+    getEdgeStyle(): Partial<EdgeStyle> {
+        return (this.style)?.edge ?? {}
+    }
+
+    /**
+     * Get the edge's label style if available.
+     */
+    getLabelStyle(): Partial<LabelStyle> {
+        // Only return labelStyle if it exists on style
+        return (this.style)?.label ?? {}
+    }
+
+    /**
+     * Update the edge's style.
+     * @param newStyle - New style to set
+     */
+    setStyle(newStyle: U): void {
         this.style = newStyle
     }
 
     /**
-     * Merge partial data into the current node data.
-     * Useful for updating only parts of the data.
-     * @param partialData - Partial data object to merge
+     * Merge partial style into the current edge style.
+     * Useful for updating only parts of the style.
+     * @param partialStyle - Partial style object to merge
      */
-    updateStyle(partialStyle: Partial<T>): void {
+    updateStyle(partialStyle: Partial<U>): void {
         this.style = { ...this.style, ...partialStyle }
     }
 
