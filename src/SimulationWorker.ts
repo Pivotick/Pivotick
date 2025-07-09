@@ -34,11 +34,17 @@ const REHEAT_TICKS = 0.15 * MAX_EXECUTION_TICKS
 self.onmessage = (e: MessageEvent<WorkerInput>) => {
     const { nodes: plainNodes, edges: plainEdges, options, canvasBCR } = e.data
 
-    const {simulation, simulationForces} = Simulation
-        .initSimulationForces(options, canvasBCR)
-
     const nodes = plainNodes.map(n => new Node(n.id, n.data, n.style))
     const nodeMap = new Map<string, Node>(nodes.map(n => [n.id, n]))
+
+    if (options.layout?.type === 'force') {
+        const updatedOptions = Simulation.scaleSimuationOptions(options, canvasBCR, nodeMap.size)
+        options.d3ManyBodyStrength = updatedOptions.d3ManyBodyStrength
+        options.d3CollideStrength = updatedOptions.d3ManyBodyStrength
+    }
+
+    const {simulation, simulationForces} = Simulation
+        .initSimulationForces(options, canvasBCR)
 
     const edges: Edge[] = []
     for (const e of plainEdges) {

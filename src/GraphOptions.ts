@@ -113,6 +113,7 @@ export interface GraphRendererOptions {
 }
 
 export interface SimulationOptions {
+    /** Note: These may be scalled based on the amount of node and canvas size */
     d3Alpha: number /** @default 1.0 */
     d3AlphaMin: number /** @default 0.001 */
     d3AlphaDecay: number /** @default 0.0228 */

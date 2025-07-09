@@ -56,10 +56,12 @@ export class Simulation {
     private canvas: HTMLElement | undefined
     private layout
 
+    private canvasBCR: DOMRect
     private animationFrameId: number | null = null
     private startSimulationTime: number = 0
     private engineRunning: boolean = false
     private dragInProgress: boolean = false
+    private scale: number | null
 
     private options: SimulationOptions
 
@@ -73,14 +75,17 @@ export class Simulation {
         if (!this.canvas) {
             throw new Error('Canvas element is not defined in the graph renderer.')
         }
-        const canvasBCR = this.canvas.getBoundingClientRect()
+        this.canvasBCR = this.canvas.getBoundingClientRect()
+        this.scale = null
 
-        const simulationForces = Simulation.initSimulationForces(this.options, canvasBCR)
+        const simulationForces = Simulation.initSimulationForces(this.options, this.canvasBCR)
         this.simulation = simulationForces.simulation
         this.simulationForces = simulationForces.simulationForces
 
         if (this.options.layout?.type === 'tree') {
             this.layout = new TreeLayout(this.graph, this.simulation, this.simulationForces, this.options.layout)
+        } else {
+            this.scaleSimulationOptions()
         }
     }
 
@@ -148,6 +153,8 @@ export class Simulation {
 
         if (this.layout) {
             this.layout.update()
+        } else {
+            this.scaleSimulationOptions()
         }
 
         this.simulation
@@ -161,6 +168,19 @@ export class Simulation {
         }
 
         this.restart()
+    }
+
+    public scaleSimulationOptions(): void {
+        Simulation.scaleSimuationOptions(this.options, this.canvasBCR, this.graph.getNodeCount())
+    }
+
+    public static scaleSimuationOptions(options: SimulationOptions, canvasBCR: DOMRect, nodeCount: number): SimulationOptions {
+        const density = nodeCount / (canvasBCR.width * canvasBCR.height)
+        const scale = Math.min(3, 0.000075 / density) // or some other heuristic
+
+        options.d3ManyBodyStrength = options.d3ManyBodyStrength * scale
+        options.d3CollideStrength = options.d3ManyBodyStrength * scale
+        return options
     }
 
     /**

@@ -197,6 +197,13 @@ export class Graph {
     /**
      * Get all nodes in the graph.
      */
+    getNodeCount(): number {
+        return this.nodes.size
+    }
+
+    /**
+     * Get all nodes in the graph.
+     */
     getNodes(): Node[] {
         return Array.from(this.nodes.values()).map((node: Node) => node.clone())
     }
