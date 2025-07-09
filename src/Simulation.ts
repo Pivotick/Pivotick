@@ -231,7 +231,6 @@ export class Simulation {
      * Evaluate at each tick to update the simulation state and request rendering
      */
     private simulationTick() {
-        
         if (this.engineRunning) {
             if (
                 !this.dragInProgress &&

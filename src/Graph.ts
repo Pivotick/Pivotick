@@ -49,7 +49,7 @@ export class Graph {
         return this.options
     }
 
-    getCallbacks(): Partial<InterractionCallbacks> | undefined {
+    private getCallbacks(): Partial<InterractionCallbacks> | undefined {
         return this.options?.callbacks
     }
 
@@ -89,7 +89,7 @@ export class Graph {
         this.onChange()
     }
 
-    _setData(nodes: Array<Node>, edges: Array<Edge>): void {
+    private _setData(nodes: Array<Node>, edges: Array<Edge>): void {
         nodes.forEach(node => {
             this.nodes.set(node.id, node)
         })

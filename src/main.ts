@@ -33,7 +33,7 @@ export function createSampleGraph(): Pivotick {
     // edges.push(new Edge('1-0', nodes[1], nodes[0], { relation : 'b'}))
 
 
-    const N = 5
+    const N = 6
     const createNodes = (): Node[] => {
         return Array.from({ length: N }, (_, i) => new Node(`n${i + 1}`))
     }
@@ -187,7 +187,7 @@ export function createSampleGraph(): Pivotick {
             // },
             // defaultNodeStyle: {
             //     shape: 'hexagon',
-            //     color: '#aaaaaa33',
+            //     color: '#aa33aa33',
             //     strokeColor: '#ffffff33',
             //     size: 20,
             // }

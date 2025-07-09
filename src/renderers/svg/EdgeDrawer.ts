@@ -127,6 +127,7 @@ export class EdgeDrawer {
             })
         
         edgeLabelSelection.attr('transform', (edge: Edge, i, labels) => {
+            const { from, to } = edge
             const style = this.getEdgeStyle(edge)
 
             const labelGroup = labels[i].parentNode
@@ -141,6 +142,10 @@ export class EdgeDrawer {
                 const point = pathEl.getPointAtLength(length / 2)
                 midX = point.x
                 midY = point.y
+                if (from === to) { // self-loop
+                    midX += 12
+                    midY -= 4
+                }
             } else {
                 const x1 = edge.source.x ?? 0
                 const y1 = edge.source.y ?? 0
