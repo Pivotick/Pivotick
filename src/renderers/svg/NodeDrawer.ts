@@ -32,6 +32,8 @@ export class NodeDrawer {
                 fo.node()?.append(rendered)
             }
 
+            // In here, we could add support of other lightweight framework such as jQuery, Vue.js, ..
+
             requestAnimationFrame(() => {
                 const foNode = fo.node() as SVGForeignObjectElement
                 if (!foNode) return
@@ -53,7 +55,6 @@ export class NodeDrawer {
                 node._circleRadius = 0.5 * Math.max(width, height)
               })
 
-            // In here, we could add support of other lightweight framework such as jQuery, Vue.js, ..
         } else {
             this.defaultNodeRender(theNodeSelection, node)
             requestAnimationFrame(() => {

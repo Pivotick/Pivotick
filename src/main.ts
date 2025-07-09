@@ -208,11 +208,17 @@ export function createSampleGraph(): Pivotick {
 
             //     return `<span style="${style}"></span>`
             // }
-            // renderEdge: (edge: Edge, edgeSelection: d3.Selection<SVGPathElement, Edge, null, undefined>): HTMLElement | string | void => {
-            //     edgeSelection
-            //         .attr("stroke", "#a07")
-            //         .attr("stroke-opacity", 0.8)
-            //         .attr("stroke-width", 1)
+            // renderLabel: (edge: Edge, edgeSelection: d3.Selection<SVGForeignObjectElement, Edge, null, undefined>): HTMLElement | string | void => {
+            //         const style = [
+            //             'display:inline-block',
+            //             'background-color:#907acc',
+            //             'border: 2px solid #fff',
+            //             'border-radius:50%',
+            //             'opacity: 1',
+            //         ].join(';')
+            //         const text = edge.getData().label
+
+            //         // return `<span style="${style}">${text}</span>`
             // },
         }
     })

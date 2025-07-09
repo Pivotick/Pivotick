@@ -8,12 +8,12 @@ export class EdgeDrawer {
 
     private graph: Graph
     private rendererOptions: GraphRendererOptions
-    private renderCB?: GraphRendererOptions['renderEdge']
+    private renderLabelCB?: GraphRendererOptions['renderLabelCB']
 
     public constructor(rendererOptions: GraphRendererOptions, graph: Graph) {
         this.graph = graph
         this.rendererOptions = rendererOptions
-        this.renderCB = this.rendererOptions?.renderEdge
+        this.renderLabelCB = this.rendererOptions?.renderLabelCB
     }
 
     render(ctx: CanvasRenderingContext2D, edge: Edge): void {

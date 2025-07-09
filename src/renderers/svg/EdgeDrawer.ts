@@ -10,45 +10,67 @@ export class EdgeDrawer {
     private graph: Graph
     private rendererOptions: GraphRendererOptions
     private graphSvgRenderer: GraphSvgRenderer
-    private renderCB?: GraphRendererOptions['renderEdge']
     private renderLabelCB?: GraphRendererOptions['renderLabel']
 
     public constructor(rendererOptions: GraphRendererOptions, graph: Graph, graphSvgRenderer: GraphSvgRenderer) {
         this.graphSvgRenderer = graphSvgRenderer
         this.graph = graph
         this.rendererOptions = rendererOptions
-        this.renderCB = this.rendererOptions?.renderEdge
         this.renderLabelCB = this.rendererOptions?.renderLabel
     }
 
     public render(theEdgeSelection: Selection<SVGGElement, Edge, null, undefined>, edge: Edge): void {
-        if (this.renderCB) {
-            const rendered = this?.renderCB?.(edge, theEdgeSelection)
-            const fo = theEdgeSelection.append('foreignObject')
-                .attr('width', 40)  // FIXME: calculate the correct size of the FO based on the rendered content
-                .attr('height', 40)
-
-            if (typeof rendered === 'string') {
-                fo.html(rendered)
-            } else if (rendered instanceof HTMLElement) {
-                fo.node()?.append(rendered)
-            }
-            // In here, we could add support of other lightweight framework such as jQuery, Vue.js, ..
-        } else {
-            this.defaultEdgeRender(theEdgeSelection, edge)
-        }
+        this.defaultEdgeRender(theEdgeSelection, edge)
     }
 
     private defaultEdgeRender(edgeSelection: Selection<SVGGElement, Edge, null, undefined>, edge: Edge): void {
         const style = this.getEdgeStyle(edge)
         const labelStyle = this.getLabelStyle(edge)
 
-        const pathSelection = this.genericEdgeRender(edgeSelection, style)
-        this.labelRender(edgeSelection, edge, labelStyle)
-
         if (this.graph.getOptions().isDirected || edge.directed) {
+            const pathSelection = this.genericEdgeRender(edgeSelection, style)
             this.drawEdgeMarker(pathSelection, style)
         }
+
+        if (this.renderLabelCB) {
+            const fo = edgeSelection
+                .append('g').classed('label-container', true)
+                .append('foreignObject')
+            const rendered = this?.renderLabelCB?.(edge, fo)
+            fo.attr('width', 200)
+                .attr('height', 100)
+
+            if (typeof rendered === 'string') {
+                fo.html(rendered)
+            } else if (rendered instanceof HTMLElement) {
+                fo.node()?.append(rendered)
+            }
+
+            // In here, we could add support of other lightweight framework such as jQuery, Vue.js, ..
+
+            requestAnimationFrame(() => {
+                const foNode = fo.node() as SVGForeignObjectElement
+                if (!foNode) return
+
+                const content = foNode.firstElementChild as HTMLElement | null
+                if (!content) return
+
+                const bcr = content.getBoundingClientRect()
+                const width = Math.ceil(bcr.width)
+                const height = Math.ceil(bcr.height)
+
+                fo.attr('width', width)
+                    .attr('height', height)
+
+                // Offset the position so it's centered
+                fo.attr('x', -width / 2)
+                    .attr('y', -height / 2)
+
+            })
+        } else {
+            this.defaultLabelRender(edgeSelection, edge, labelStyle)
+        }
+
     }
 
     private getLabelStyle(edge: Edge): LabelStyle {
@@ -123,8 +145,8 @@ export class EdgeDrawer {
         const edgeLabelSelection = edgeGroupSelection.selectAll<SVGGElement, Edge>('g.label-container')
 
         edgePathSelection.attr('d', (edge: Edge): string | null => {
-                return this.linkPathRouter(edge)
-            })
+            return this.linkPathRouter(edge)
+        })
         
         edgeLabelSelection.attr('transform', (edge: Edge, i, labels) => {
             const { from, to } = edge
@@ -301,7 +323,7 @@ export class EdgeDrawer {
         return ''
     }
 
-    private labelRender(edgeSelection: Selection<SVGGElement, Edge, null, undefined>, edge: Edge, style: LabelStyle): void {
+    private defaultLabelRender(edgeSelection: Selection<SVGGElement, Edge, null, undefined>, edge: Edge, style: LabelStyle): void {
         const labelContainer = edgeSelection
             .append('g')
             .classed('label-container', true)

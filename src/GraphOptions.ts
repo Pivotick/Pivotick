@@ -111,15 +111,10 @@ export interface GraphRendererOptions {
      */
     renderNode?: (node: Node, edgeSelection: Selection<SVGForeignObjectElement, Node, null, undefined>) => HTMLElement | string | void
     /**
-     * Custom renderer for edges.
-     * Receives edge data and selection, and should return HTML or SVG element or string or directly calling d3 methods on the selection.
-    */
-    renderEdge?: (edge: Edge, edgeSelection: Selection<SVGGElement, Edge, null, undefined>) => HTMLElement | string | void
-    /**
      * Custom renderer for edge labels.
      * Receives edge data and selection, and should return HTML or SVG element or string or directly calling d3 methods on the selection.
     */
-    renderLabel?: (edge: Edge, edgeSelection: Selection<SVGGElement, Edge, null, undefined>) => HTMLElement | string | void
+    renderLabel?: (edge: Edge, edgeSelection: Selection<SVGForeignObjectElement, Edge, null, undefined>) => HTMLElement | string | void
     defaultNodeStyle: NodeStyle
     defaultEdgeStyle: EdgeStyle
     defaultLabelStyle: LabelStyle
