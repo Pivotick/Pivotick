@@ -218,8 +218,8 @@ export class EdgeDrawer {
         const cy2 = y - control_point_radius * Math.sin(angle2)
 
         // Start point offset by (r + drawOffset) in angle1 direction
-        const startX = x + (nodeRadius) * Math.cos(angle1)
-        const startY = y - (nodeRadius) * Math.sin(angle1)
+        const startX = x + (nodeRadius + drawOffset) * Math.cos(angle1)
+        const startY = y - (nodeRadius + drawOffset) * Math.sin(angle1)
 
         // End point offset by (r + drawOffset) in angle2 direction
         const endX = x + (nodeRadius + drawOffset) * Math.cos(angle2)
@@ -279,17 +279,23 @@ export class EdgeDrawer {
             largeArcFlag: false,
             sweepFlag: true,
         }
-        const circle: Circle = {
+        const circleFrom: Circle = {
+            cx: from.x,
+            cy: from.y,
+            r: rTotalOffset,
+        }
+        const circleTo: Circle = {
             cx: to.x,
             cy: to.y,
             r: rTotalOffset,
         }
-        const intersection = getArcIntersectionWithCircle(arcParams, circle)
+        const intersectionFrom = getArcIntersectionWithCircle(arcParams, circleFrom)
+        const intersectionTo = getArcIntersectionWithCircle(arcParams, circleTo)
 
-        if (intersection)
+        if (intersectionFrom && intersectionTo)
             return `
-                M${from.x},${from.y}
-                A${r},${r} 0 0,1 ${intersection.x},${intersection.y}
+                M${intersectionFrom.x},${intersectionFrom.y}
+                A${r},${r} 0 0,1 ${intersectionTo.x},${intersectionTo.y}
             `
 
         return ''
