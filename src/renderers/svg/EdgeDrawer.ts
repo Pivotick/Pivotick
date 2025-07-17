@@ -321,10 +321,11 @@ export class EdgeDrawer {
 
         const r = Math.hypot(to.x - from.x, to.y - from.y)
 
-        const drawOffset = 4 // Distance from which to end the edge
+        const drawOffsetStart = 4 // Distance from which to start the edge
+        const drawOffsetEnd = 4 // Distance from which to end the edge
 
+        const rFrom = edge.source._circleRadius ? edge.source._circleRadius : this.graphSvgRenderer.nodeDrawer.getNodeStyle(from).size
         const rTo = edge.target._circleRadius ? edge.target._circleRadius : this.graphSvgRenderer.nodeDrawer.getNodeStyle(to).size
-        const rTotalOffset = rTo + drawOffset
 
         const arcParams: ArcParams = {
             from: { x: from.x, y: from.y },
@@ -338,12 +339,12 @@ export class EdgeDrawer {
         const circleFrom: Circle = {
             cx: from.x,
             cy: from.y,
-            r: rTotalOffset,
+            r: rFrom + drawOffsetStart,
         }
         const circleTo: Circle = {
             cx: to.x,
             cy: to.y,
-            r: rTotalOffset,
+            r: rTo + drawOffsetEnd,
         }
         const intersectionFrom = getArcIntersectionWithCircle(arcParams, circleFrom)
         const intersectionTo = getArcIntersectionWithCircle(arcParams, circleTo)

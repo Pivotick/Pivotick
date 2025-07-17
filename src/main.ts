@@ -180,11 +180,11 @@ export function createSampleGraph(): Pivotick {
         },
         render: {
             type: 'svg',
-            // nodeTypeAccessor: (node: Node) => node.getData()?.type,
-            // nodeStyleMap: {
-            //     'hub': { shape: 'hexagon', color: '#aaa', size: 30 },
-            //     'leaf': { shape: 'triangle', color: '#f00' },
-            // },
+            nodeTypeAccessor: (node: Node) => node.getData()?.type,
+            nodeStyleMap: {
+                'hub': { shape: 'hexagon', color: '#aaa', size: 30 },
+                'leaf': { shape: 'triangle', color: '#f00' },
+            },
             // defaultNodeStyle: {
             //     shape: 'hexagon',
             //     color: '#aa33aa33',
