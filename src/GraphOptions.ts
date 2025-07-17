@@ -90,6 +90,8 @@ export interface EdgeStyle {
     strokeWidth: number
     opacity: number
     curveStyle: 'straight' | 'curved' | 'bidirectional' /** @default: bidirectional */
+    dashed?: boolean /** @default: false — whether the stroke is dashed */
+    animateDash?: boolean /** @default: true — whether the dash should animate (e.g., move along the path) */
     rotateLabel: boolean /** @default: false */
     markerEnd?: ((edge: Edge) => string) | string /** @default: default_arrow */
     markerStart?: ((edge: Edge) => string) | string /** @default: undefined */

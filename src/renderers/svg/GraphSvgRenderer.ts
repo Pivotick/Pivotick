@@ -28,6 +28,8 @@ const DEFAULT_RENDERER_OPTIONS = {
         strokeWidth: 2,
         opacity: 1.0,
         curveStyle: 'bidirectional',
+        dashed: false,
+        animateDash: true,
         rotateLabel: false,
         markerEnd: 'default_arrow',
         markerStart: undefined,
@@ -133,6 +135,7 @@ export class GraphSvgRenderer extends GraphRenderer {
     public init(): void {
         this.dataUpdate()
         this.eventHandler.init(this, this.graphInteraction)
+        this.injectCss()
     }
 
     public dataUpdate(): void {
@@ -182,6 +185,23 @@ export class GraphSvgRenderer extends GraphRenderer {
                     }),
                 exit => exit.remove()
             )
+    }
+
+    private injectCss(): void {
+        // TODO: Make it configurable and easier to maintain
+        const styleId = 'edge-style-dash-animation'
+        if (!document.getElementById(styleId)) {
+            const styleTag = document.createElement('style')
+            styleTag.id = styleId
+            styleTag.textContent = `
+                    @keyframes dashmove {
+                        to {
+                            stroke-dashoffset: -10;
+                        }
+                    }
+                `
+            document.head.appendChild(styleTag)
+        }
     }
 
     public getCanvasSelection(): Selection<SVGSVGElement, unknown, null, undefined> {

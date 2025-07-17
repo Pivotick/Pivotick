@@ -103,6 +103,7 @@ export class EdgeDrawer {
     private getEdgeStyle(edge: Edge): EdgeStyle {
         let styleFromEdge
         const edgeStyle = edge.getEdgeStyle()
+
         if (edgeStyle && edgeStyle.styleCb) {
             styleFromEdge = edgeStyle.styleCb(edge)
         } else {
@@ -111,6 +112,8 @@ export class EdgeDrawer {
                 strokeWidth: edgeStyle?.strokeWidth,
                 opacity: edgeStyle?.opacity,
                 curveStyle: edgeStyle?.curveStyle,
+                dashed: edgeStyle?.dashed,
+                animateDash: edgeStyle?.animateDash,
                 rotateLabel: edgeStyle?.rotateLabel,
                 markerEnd: edgeStyle?.markerEnd,
                 markerStart: edgeStyle?.markerStart,
@@ -125,6 +128,8 @@ export class EdgeDrawer {
             strokeWidth: style?.strokeWidth ?? this.rendererOptions.defaultEdgeStyle.strokeWidth,
             opacity: style?.opacity ?? this.rendererOptions.defaultEdgeStyle.opacity,
             curveStyle: style?.curveStyle ?? this.rendererOptions.defaultEdgeStyle.curveStyle,
+            dashed: style?.dashed ?? this.rendererOptions.defaultEdgeStyle.dashed,
+            animateDash: style?.animateDash ?? this.rendererOptions.defaultEdgeStyle.animateDash,
             rotateLabel: style?.rotateLabel ?? this.rendererOptions.defaultEdgeStyle.rotateLabel,
             markerEnd: style?.markerEnd ?? this.rendererOptions.defaultEdgeStyle.markerEnd,
             markerStart: style?.markerStart ?? this.rendererOptions.defaultEdgeStyle.markerStart,
@@ -133,11 +138,24 @@ export class EdgeDrawer {
     }
 
     private genericEdgeRender(edgeSelection: Selection<SVGGElement, Edge, null, undefined>, style: EdgeStyle): Selection<SVGPathElement, Edge, null, undefined> {
-        return edgeSelection
+        const pathSelection = edgeSelection
             .append('path')
             .attr('stroke', style.strokeColor)
             .attr('stroke-width', style.strokeWidth)
             .attr('stroke-opacity', style.opacity)
+
+        if (style.dashed) {
+            pathSelection
+                .attr('stroke-dasharray', '6, 4') // You can adjust dash/gap lengths as needed
+
+            if (style.animateDash) {
+                pathSelection
+                    .attr('stroke-dashoffset', 0)
+                    .style('animation', 'dashmove 1s linear infinite')
+            }
+        }
+
+        return pathSelection
     }
 
     private drawEdgeMarker(edgeSelection: Selection<SVGPathElement, Edge<EdgeData>, null, undefined>, edge: Edge, style: EdgeStyle): void {

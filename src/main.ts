@@ -54,7 +54,7 @@ export function createSampleGraph(): Pivotick {
                 .map(id => {
                     const source = nodes[id]
                     const target = nodes[Math.round(Math.random() * (id - 1))]
-                    return new Edge(`${id}-${target.id}`, source, target, { label: 'connects to', mstart: Math.random() < 0.5 ? 'circle' : 'diamond', mend: Math.random() < 0.5 ? 'default_arrow' : 'circle' })
+                    return new Edge(`${id}-${target.id}`, source, target, { label: 'connects to', mstart: Math.random() < 0.5 ? 'circle' : 'diamond', mend: Math.random() < 0.5 ? 'default_arrow' : 'circle' }, { edge: { dashed: Math.random() < 0.5 }})
                 })
             // edges = []
             edges.push(new Edge('0-0', nodes[0], nodes[0], { label : 'self-loop'}))
