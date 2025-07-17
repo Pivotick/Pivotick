@@ -29,11 +29,35 @@ const DEFAULT_RENDERER_OPTIONS = {
         opacity: 1.0,
         curveStyle: 'bidirectional',
         rotateLabel: false,
+        markerEnd: 'default_arrow',
+        markerStart: undefined,
     },
     defaultLabelStyle: {
         backgroundColor: '#ffffff90',
         fontSize: 12,
         color: '#333',
+    },
+    markerStyleMap: {
+        'circle': {
+            size: 10,
+            fill: '#999',
+            pathD: 'M5,5m-3,0a3,3 0 1,0 6,0a3,3 0 1,0 -6,0',
+            viewBox: '0 0 10 10',
+            refX: 5,
+            refY: 5,
+            markerUnits: 'userSpaceOnUse',
+            orient: 0
+        },
+        'diamond': {
+            size: 8,
+            fill: '#999',
+            pathD: 'M0,-4L4,0L0,4L-4,0Z',
+            viewBox: '-5 -5 10 10',
+            refX: 0,
+            refY: 0,
+            markerUnits: 'userSpaceOnUse',
+            orient: 0
+        }
     },
 } satisfies GraphRendererOptions
 
@@ -93,7 +117,7 @@ export class GraphSvgRenderer extends GraphRenderer {
         this.edgeGroup = this.zoomGroup.append('g').attr('class', 'edges')
         this.nodeGroup = this.zoomGroup.append('g').attr('class', 'nodes')
         this.defs = this.svg.append('defs')
-        this.edgeDrawer.renderMarkers(this.defs)
+        this.edgeDrawer.renderDefinitions(this.defs)
 
         this.zoom = d3Zoom<SVGSVGElement, unknown>()
         this.svg.call(this.zoom)

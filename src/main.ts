@@ -54,7 +54,7 @@ export function createSampleGraph(): Pivotick {
                 .map(id => {
                     const source = nodes[id]
                     const target = nodes[Math.round(Math.random() * (id - 1))]
-                    return new Edge(`${id}-${target.id}`, source, target, { label: 'connects to' })
+                    return new Edge(`${id}-${target.id}`, source, target, { label: 'connects to', mstart: Math.random() < 0.5 ? 'circle' : 'diamond', mend: Math.random() < 0.5 ? 'default_arrow' : 'circle' })
                 })
             // edges = []
             edges.push(new Edge('0-0', nodes[0], nodes[0], { label : 'self-loop'}))
@@ -191,9 +191,16 @@ export function createSampleGraph(): Pivotick {
             //     strokeColor: '#ffffff33',
             //     size: 20,
             // }
-            // defaultEdgeStyle: {
-            //     curveStyle: 'bidirectional',
-            // }
+            defaultEdgeStyle: {
+                markerStart: (edge: Edge) => edge.getData().mstart,
+                markerEnd: (edge: Edge) => edge.getData().mend,
+                // curveStyle: 'bidirectional',
+            },
+            markerStyleMap: {
+                'diamond': {
+                    fill: '#44c77f',
+                }
+            },
             // renderNode: (node: Node, nodeSelection: d3.Selection<SVGForeignObjectElement, Node, null, undefined>): HTMLElement | string | void => {
             //     const size = 12
             //     const style = [

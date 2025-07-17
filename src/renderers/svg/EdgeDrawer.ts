@@ -4,6 +4,7 @@ import type { EdgeStyle, GraphRendererOptions, LabelStyle } from '../../GraphOpt
 import { getArcIntersectionWithCircle, type ArcParams, type Circle } from '../../utils/GeometryHelper'
 import type { Graph } from '../../Graph'
 import type { GraphSvgRenderer } from './GraphSvgRenderer'
+import { tryResolveString } from '../../utils/Getters'
 
 export class EdgeDrawer {
 
@@ -29,7 +30,7 @@ export class EdgeDrawer {
 
         if (this.graph.getOptions().isDirected || edge.directed) {
             const pathSelection = this.genericEdgeRender(edgeSelection, style)
-            this.drawEdgeMarker(pathSelection, style)
+            this.drawEdgeMarker(pathSelection, edge, style)
         }
 
         if (this.renderLabelCB) {
@@ -111,6 +112,8 @@ export class EdgeDrawer {
                 opacity: edgeStyle?.opacity,
                 curveStyle: edgeStyle?.curveStyle,
                 rotateLabel: edgeStyle?.rotateLabel,
+                markerEnd: edgeStyle?.markerEnd,
+                markerStart: edgeStyle?.markerStart,
             }
         }
         return this.mergeEdgeStylingOptions(styleFromEdge)
@@ -123,6 +126,8 @@ export class EdgeDrawer {
             opacity: style?.opacity ?? this.rendererOptions.defaultEdgeStyle.opacity,
             curveStyle: style?.curveStyle ?? this.rendererOptions.defaultEdgeStyle.curveStyle,
             rotateLabel: style?.rotateLabel ?? this.rendererOptions.defaultEdgeStyle.rotateLabel,
+            markerEnd: style?.markerEnd ?? this.rendererOptions.defaultEdgeStyle.markerEnd,
+            markerStart: style?.markerStart ?? this.rendererOptions.defaultEdgeStyle.markerStart,
         }
         return mergedStyle
     }
@@ -135,9 +140,20 @@ export class EdgeDrawer {
             .attr('stroke-opacity', style.opacity)
     }
 
-    private drawEdgeMarker(edgeSelection: Selection<SVGPathElement, Edge<EdgeData>, null, undefined>, style: EdgeStyle): void {
-        edgeSelection
-            .attr('marker-end', 'url(#arrow)')
+    private drawEdgeMarker(edgeSelection: Selection<SVGPathElement, Edge<EdgeData>, null, undefined>, edge: Edge, style: EdgeStyle): void {
+        if (!this.rendererOptions.markerStyleMap)
+            return
+
+        const markerEnd = style.markerEnd !== undefined ? tryResolveString(style.markerEnd, edge) : undefined
+        const markerStart = style.markerStart !== undefined ? tryResolveString(style.markerStart, edge) : undefined
+
+        if (markerEnd && this.rendererOptions.markerStyleMap[markerEnd]) {
+            edgeSelection.attr('marker-end', `url(#${markerEnd})`)
+        } else {
+            edgeSelection.attr('marker-end', 'url(#default_arrow)')
+        }
+        if (markerStart && this.rendererOptions.markerStyleMap[markerStart])
+            edgeSelection.attr('marker-start', `url(#${markerStart})`)
     }
 
     public updatePositions(edgeGroupSelection: Selection<SVGGElement, Edge, SVGGElement, unknown>): void {
@@ -256,7 +272,7 @@ export class EdgeDrawer {
         if (!from.x || !from.y || !to.x || !to.y)
             return null
 
-        const drawOffsetStart = 2 // Distance from which to start the edge
+        const drawOffsetStart = 4 // Distance from which to start the edge
         const drawOffsetEnd = 4 // Distance from which to end the edge
 
         // Direction angle from source to target
@@ -350,11 +366,14 @@ export class EdgeDrawer {
                 .attr('ry', 2)
         }
     }
+    public renderDefinitions(defsContainer: Selection<SVGDefsElement, unknown, null, undefined>): void {
+        this.renderMarkers(defsContainer)
+    }
 
-    public renderMarkers(defsContainer: Selection<SVGDefsElement, unknown, null, undefined>): void {
-        const markerForStraight = defsContainer.append('marker')
-        markerForStraight
-            .attr('id', 'arrow')
+    private renderMarkers(defsContainer: Selection<SVGDefsElement, unknown, null, undefined>): void {
+        const defaultMarker = defsContainer.append('marker')
+        defaultMarker
+            .attr('id', 'default_arrow')
             .attr('viewBox', '0 -5 10 10')
             .attr('refX', 5) // Or play with norm and node radius..
             .attr('refY', 0)
@@ -362,9 +381,28 @@ export class EdgeDrawer {
             .attr('markerHeight', 6)
             .attr('markerUnits', 'userSpaceOnUse')
             .attr('orient', 'auto')
-        markerForStraight
+        defaultMarker
             .append('path')
             .attr('d', 'M0,-5L10,0L0,5')
             .attr('fill', '#999')
+
+        if (this.rendererOptions.markerStyleMap) {
+            for (const markerId in this.rendererOptions.markerStyleMap) {
+                const config = this.rendererOptions.markerStyleMap[markerId]
+                const marker = defsContainer.append('marker')
+                    .attr('id', markerId)
+                    .attr('viewBox', config.viewBox)
+                    .attr('refX', config.refX)
+                    .attr('refY', config.refY)
+                    .attr('markerWidth', config.size)
+                    .attr('markerHeight', config.size)
+                    .attr('markerUnits', config.markerUnits || 'userSpaceOnUse')
+                    .attr('orient', config.orient ?? 'auto')
+
+                marker.append('path')
+                    .attr('d', config.pathD)
+                    .attr('fill', config.fill)
+            }
+        }
     }
 }

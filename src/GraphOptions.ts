@@ -91,6 +91,8 @@ export interface EdgeStyle {
     opacity: number
     curveStyle: 'straight' | 'curved' | 'bidirectional' /** @default: bidirectional */
     rotateLabel: boolean /** @default: false */
+    markerEnd?: ((edge: Edge) => string) | string /** @default: default_arrow */
+    markerStart?: ((edge: Edge) => string) | string /** @default: undefined */
     styleCb?: (edge: Edge) => Partial<EdgeStyle>
 }
 
@@ -99,6 +101,17 @@ export interface LabelStyle {
     fontSize: number  /** @default: 12 */
     color: string  /** @default: #333 */
     styleCb?: (edge: Edge) => Partial<LabelStyle>
+}
+
+export interface MarkerStyle {
+    size: number
+    fill: string
+    pathD: string
+    viewBox: string
+    refX: number
+    refY: number
+    markerUnits?: 'userSpaceOnUse' | 'strokeWidth'
+    orient?: 'auto' | 'auto-start-reverse' | number
 }
 
 export type RendererType = 'svg' | 'canvas'
@@ -118,6 +131,7 @@ export interface GraphRendererOptions {
     defaultNodeStyle: NodeStyle
     defaultEdgeStyle: EdgeStyle
     defaultLabelStyle: LabelStyle
+    markerStyleMap?: Record<string, MarkerStyle>
     nodeTypeAccessor?: (node: Node) => string | undefined
     nodeStyleMap?: Record<string, NodeStyle>
     /** @default 0.1 */
