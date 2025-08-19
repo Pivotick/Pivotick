@@ -22,7 +22,12 @@ export class Graph {
         const rendererOptions = {
             ...this.options.render
         }
-        this.renderer = createGraphRenderer(this, container, rendererOptions)
+        const appContainer = document.createElement('div')
+        appContainer.id = 'pivotick-app'
+        appContainer.classList.add('graph-container')
+        container.appendChild(appContainer)
+
+        this.renderer = createGraphRenderer(this, appContainer, rendererOptions)
         this.renderer.setupRendering()
 
         const simulationOptions = {

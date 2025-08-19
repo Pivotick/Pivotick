@@ -84,6 +84,7 @@ export class EdgeDrawer {
             styleFromLabel = {
                 backgroundColor: edge.getLabelStyle()?.backgroundColor,
                 fontSize: edge.getLabelStyle()?.fontSize,
+                fontFamily: edge.getLabelStyle()?.fontFamily,
                 color: edge.getLabelStyle()?.color,
             }
         }
@@ -95,6 +96,7 @@ export class EdgeDrawer {
         const mergedStyle = {
             backgroundColor: style?.backgroundColor ?? this.rendererOptions.defaultLabelStyle.backgroundColor,
             fontSize: style?.fontSize ?? this.rendererOptions.defaultLabelStyle.fontSize,
+            fontFamily: style?.fontFamily ?? this.rendererOptions.defaultLabelStyle.fontFamily,
             color: style?.color ?? this.rendererOptions.defaultLabelStyle.color,
         }
         return mergedStyle
@@ -366,6 +368,7 @@ export class EdgeDrawer {
         const text = labelContainer.append('text')
             .text(edge.getData().label ?? '')
             .attr('font-size', style.fontSize)
+            .attr('font-family', style.fontFamily)
             .attr('text-anchor', 'middle')
             .attr('alignment-baseline', 'central')
             .attr('pointer-events', 'none')

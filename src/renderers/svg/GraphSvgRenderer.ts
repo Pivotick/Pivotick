@@ -35,7 +35,8 @@ const DEFAULT_RENDERER_OPTIONS = {
         markerStart: undefined,
     },
     defaultLabelStyle: {
-        backgroundColor: '#ffffff90',
+        backgroundColor: '#ffffffa0',
+        fontFamily: 'system-ui',
         fontSize: 12,
         color: '#333',
     },
@@ -60,7 +61,7 @@ const DEFAULT_RENDERER_OPTIONS = {
             markerUnits: 'userSpaceOnUse',
             orient: 0
         }
-    },
+    }
 } satisfies GraphRendererOptions
 
 export class GraphSvgRenderer extends GraphRenderer {
