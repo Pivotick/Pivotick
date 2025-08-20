@@ -172,7 +172,7 @@ export class EdgeDrawer {
         if (markerEnd && this.rendererOptions.markerStyleMap[markerEnd]) {
             edgeSelection.attr('marker-end', `url(#${markerEnd})`)
         } else {
-            edgeSelection.attr('marker-end', 'url(#default_arrow)')
+            edgeSelection.attr('marker-end', 'url(#arrow)')
         }
         if (markerStart && this.rendererOptions.markerStyleMap[markerStart])
             edgeSelection.attr('marker-start', `url(#${markerStart})`)
@@ -399,36 +399,6 @@ export class EdgeDrawer {
     }
 
     private renderMarkers(defsContainer: Selection<SVGDefsElement, unknown, null, undefined>): void {
-        const defaultMarker = defsContainer.append('marker')
-        defaultMarker
-            .attr('id', 'default_arrow')
-            .attr('viewBox', '0 -5 10 10')
-            .attr('refX', 5) // Or play with norm and node radius..
-            .attr('refY', 0)
-            .attr('markerWidth', 6)
-            .attr('markerHeight', 6)
-            .attr('markerUnits', 'userSpaceOnUse')
-            .attr('orient', 'auto')
-        defaultMarker
-            .append('path')
-            .attr('d', 'M0,-5L10,0L0,5')
-            .attr('fill', '#999')
-
-        const defaultSelectedMarker = defsContainer.append('marker')
-        defaultSelectedMarker
-            .attr('id', 'default_arrow_selected')
-            .attr('viewBox', '0 -5 10 10')
-            .attr('refX', 6) // Or play with norm and node radius..
-            .attr('refY', 0)
-            .attr('markerWidth', 12)
-            .attr('markerHeight', 12)
-            .attr('markerUnits', 'userSpaceOnUse')
-            .attr('orient', 'auto')
-        defaultSelectedMarker
-            .append('path')
-            .attr('d', 'M0,-5L10,0L0,5')
-            .attr('fill', 'orange')
-
         if (this.rendererOptions.markerStyleMap) {
             for (const markerId in this.rendererOptions.markerStyleMap) {
                 const config = this.rendererOptions.markerStyleMap[markerId]
@@ -437,14 +407,28 @@ export class EdgeDrawer {
                     .attr('viewBox', config.viewBox)
                     .attr('refX', config.refX)
                     .attr('refY', config.refY)
-                    .attr('markerWidth', config.size)
-                    .attr('markerHeight', config.size)
+                    .attr('markerWidth', config.markerWidth)
+                    .attr('markerHeight', config.markerHeight)
                     .attr('markerUnits', config.markerUnits || 'userSpaceOnUse')
                     .attr('orient', config.orient ?? 'auto')
 
                 marker.append('path')
                     .attr('d', config.pathD)
                     .attr('fill', config.fill)
+
+                const selectedMarker = defsContainer.append('marker')
+                    .attr('id', markerId + '_selected')
+                    .attr('viewBox', config.selected?.viewBox ?? config.viewBox)
+                    .attr('refX', config.selected?.refX ?? config.refX)
+                    .attr('refY', config.selected?.refY ?? config.refY)
+                    .attr('markerWidth', config.selected?.markerWidth ?? config.markerWidth)
+                    .attr('markerHeight', config.selected?.markerHeight ?? config.markerHeight)
+                    .attr('markerUnits', (config.selected?.markerUnits ?? config.markerUnits) || 'userSpaceOnUse')
+                    .attr('orient', (config.selected?.orient ?? config.orient) ?? 'auto')
+
+                selectedMarker.append('path')
+                    .attr('d', config.selected?.pathD ?? config.pathD)
+                    .attr('fill', config.selected?.fill ?? config.fill)
             }
         }
     }

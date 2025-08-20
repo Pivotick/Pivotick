@@ -93,7 +93,7 @@ export interface EdgeStyle {
     dashed?: boolean /** @default: false — whether the stroke is dashed */
     animateDash?: boolean /** @default: true — whether the dash should animate (e.g., move along the path) */
     rotateLabel: boolean /** @default: false */
-    markerEnd?: ((edge: Edge) => string) | string /** @default: default_arrow */
+    markerEnd?: ((edge: Edge) => string) | string /** @default: arrow */
     markerStart?: ((edge: Edge) => string) | string /** @default: undefined */
     styleCb?: (edge: Edge) => Partial<EdgeStyle>
 }
@@ -107,14 +107,16 @@ export interface LabelStyle {
 }
 
 export interface MarkerStyle {
-    size: number
     fill: string
     pathD: string
     viewBox: string
     refX: number
     refY: number
+    markerWidth: number
+    markerHeight: number
     markerUnits?: 'userSpaceOnUse' | 'strokeWidth'
     orient?: 'auto' | 'auto-start-reverse' | number
+    selected?: Partial<MarkerStyle>
 }
 
 export type RendererType = 'svg' | 'canvas'
