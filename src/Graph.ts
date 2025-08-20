@@ -54,7 +54,7 @@ export class Graph {
         return this.options
     }
 
-    private getCallbacks(): Partial<InterractionCallbacks> | undefined {
+    getCallbacks(): Partial<InterractionCallbacks> | undefined {
         return this.options?.callbacks
     }
 
