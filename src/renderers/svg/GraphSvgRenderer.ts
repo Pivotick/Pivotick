@@ -151,21 +151,25 @@ export class GraphSvgRenderer extends GraphRenderer {
                     return enter
                         .append('g').classed('node-shape', true)
                         .each((node: Node, i: number, nodes: ArrayLike<SVGGElement>) => {
+                            node.clearDirty()
                             const selection = d3Select<SVGGElement, Node>(nodes[i])
                             this.nodeDrawer.render(selection, node)
                         })
                 },
                 (update) => {
                     return update.each((node: Node, i: number, nodes: ArrayLike<SVGGElement>) => {
-                        const selection = d3Select<SVGGElement, Node>(nodes[i])
-                        selection.selectChildren().remove()
-                        this.nodeDrawer.render(selection, node)
+                        if (node.isDirty()) {
+                            node.clearDirty()
+                            const selection = d3Select<SVGGElement, Node>(nodes[i])
+                            selection.selectChildren().remove()
+                            this.nodeDrawer.render(selection, node)
+                        }
                     })
                 },
                 exit => exit.remove()
             )
 
-        const edges = this.graph.getEdges()
+        const edges = this.graph.getMutableEdges()
         this.edgeGroupSelection = this.edgeGroup
             .selectAll<SVGPathElement, Edge>('g.edge-group')
 
@@ -175,14 +179,18 @@ export class GraphSvgRenderer extends GraphRenderer {
                 (enter) => enter
                     .append('g').classed('edge-group', true)
                     .each((edge: Edge, i: number, edges: ArrayLike<SVGGElement>) => {
+                        edge.clearDirty()
                         const selection = d3Select<SVGGElement, Edge>(edges[i])
                         this.edgeDrawer.render(selection, edge)
                     }),
                 update => update
                     .each((edge: Edge, i: number, edges: ArrayLike<SVGPathElement>) => {
-                        const selection = d3Select<SVGGElement, Edge>(edges[i])
-                        selection.selectChildren().remove()
-                        this.edgeDrawer.render(selection, edge)
+                        if (edge.isDirty()) {
+                            edge.clearDirty()
+                            const selection = d3Select<SVGGElement, Edge>(edges[i])
+                            selection.selectChildren().remove()
+                            this.edgeDrawer.render(selection, edge)
+                        }
                     }),
                 exit => exit.remove()
             )
@@ -228,5 +236,13 @@ export class GraphSvgRenderer extends GraphRenderer {
 
     public getEdgeSelection(): Selection<SVGGElement, Edge, SVGGElement, unknown> {
         return this.edgeSelection
+    }
+
+    public getGraphInteraction(): GraphInteractions<SVGGElement | SVGPathElement> {
+        return this.graphInteraction
+    }
+
+    public getEventHandler(): EventHandler {
+        return this.eventHandler
     }
 }

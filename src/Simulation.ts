@@ -281,17 +281,17 @@ export class Simulation {
     public createDragBehavior() {
         return d3Drag<SVGGElement, Node>()
             .on('start', (event, d) => {
-                if (!event.active) {
+                d.fx = d.x
+                d.fy = d.y
+            })
+            .on('drag', (event, d) => {
+                if (!this.dragInProgress) {
                     this.dragInProgress = true
                     this.restart()
                     this.simulation
                         .alphaTarget(0.3)
                         .restart()
                 }
-                d.fx = d.x
-                d.fy = d.y
-            })
-            .on('drag', (event, d) => {
                 d.fx = event.x
                 d.fy = event.y
             })

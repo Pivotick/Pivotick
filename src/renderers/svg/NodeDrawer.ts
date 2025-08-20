@@ -53,6 +53,7 @@ export class NodeDrawer {
                     .attr('y', -height / 2)
 
                 node._circleRadius = 0.5 * Math.max(width, height)
+                this.highlightSelection(theNodeSelection, node)
               })
 
         } else {
@@ -66,6 +67,7 @@ export class NodeDrawer {
                 const height = Math.ceil(bbox.height)
 
                 node._circleRadius = 0.5 * Math.max(width, height)
+                this.highlightSelection(theNodeSelection, node)
             })
         }
     }
@@ -169,6 +171,20 @@ export class NodeDrawer {
             default:
                 renderedNode.attr('r', style.size)
                 break
+        }
+    }
+
+    private highlightSelection(nodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
+        nodeSelection.selectAll('.node-highlight').remove() // remove old overlay if exists
+        if (this.graphSvgRenderer.getGraphInteraction().getSelectedNode()?.node.id === node.id) {
+            nodeSelection
+                .append('circle')
+                .attr('class', 'node-highlight')
+                .attr('r', node._circleRadius ?? 4) // slightly larger than node
+                .attr('fill', 'none')
+                .attr('stroke', 'yellow')
+                .attr('stroke-width', 3)
+                .attr('pointer-events', 'none') // doesn't interfere with interaction
         }
     }
 

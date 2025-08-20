@@ -20,6 +20,7 @@ export class Node<T = NodeData> {
     fx?: number
     fy?: number
     _circleRadius?: number
+    private _dirty:boolean
 
     /**
      * Create a new Node instance.
@@ -30,6 +31,7 @@ export class Node<T = NodeData> {
         this.id = id
         this.data = data ?? ({} as T)
         this.style = style ?? ({} as T)
+        this._dirty = true
     }
 
     /**
@@ -45,6 +47,7 @@ export class Node<T = NodeData> {
      */
     setData(newData: T): void {
         this.data = newData
+        this.markDirty()
     }
 
     /**
@@ -54,6 +57,7 @@ export class Node<T = NodeData> {
      */
     updateData(partialData: Partial<T>): void {
         this.data = { ...this.data, ...partialData }
+        this.markDirty()
     }
 
     /**
@@ -69,6 +73,7 @@ export class Node<T = NodeData> {
      */
     setStyle(newStyle: T): void {
         this.style = newStyle
+        this.markDirty()
     }
 
     /**
@@ -78,8 +83,8 @@ export class Node<T = NodeData> {
      */
     updateStyle(partialStyle: Partial<T>): void {
         this.style = { ...this.style, ...partialStyle }
+        this.markDirty()
     }
-
 
     /**
      * Convert node to a simple JSON object representation.
@@ -114,5 +119,17 @@ export class Node<T = NodeData> {
         clone.fy = this.fy
 
         return clone
+    }
+
+    markDirty() {
+        this._dirty = true
+    }
+
+    clearDirty() {
+        this._dirty = false
+    }
+
+    isDirty(): boolean {
+        return this._dirty
     }
 }

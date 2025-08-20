@@ -66,10 +66,12 @@ export class EdgeDrawer {
                 // Offset the position so it's centered
                 fo.attr('x', -width / 2)
                     .attr('y', -height / 2)
+                this.highlightSelection(edgeSelection, edge)
 
             })
         } else {
             this.defaultLabelRender(edgeSelection, edge, labelStyle)
+            this.highlightSelection(edgeSelection, edge)
         }
 
     }
@@ -254,11 +256,13 @@ export class EdgeDrawer {
 
     private linkSelfLoop(edge: Edge): string | null {
         const { from, to } = edge
+        const isEdgeSelected = this.graphSvgRenderer.getGraphInteraction().getSelectedEdge()?.edge.id === edge.id
 
         if (!from.x || !from.y || !to.x || !to.y || from !== to)
             return null
 
-        const drawOffset = 4 // Distance from which to end the edge
+        const drawOffsetStart = 4 + (isEdgeSelected ? 2 : 0) // Distance from which to start the edge
+        const drawOffsetEnd = 4 + (isEdgeSelected ? 2 : 0) // Distance from which to end the edge
 
         const x = from.x ?? 0
         const y = from.y ?? 0
@@ -276,24 +280,25 @@ export class EdgeDrawer {
         const cy2 = y - control_point_radius * Math.sin(angle2)
 
         // Start point offset by (r + drawOffset) in angle1 direction
-        const startX = x + (nodeRadius + drawOffset) * Math.cos(angle1)
-        const startY = y - (nodeRadius + drawOffset) * Math.sin(angle1)
+        const startX = x + (nodeRadius + drawOffsetStart) * Math.cos(angle1)
+        const startY = y - (nodeRadius + drawOffsetStart) * Math.sin(angle1)
 
         // End point offset by (r + drawOffset) in angle2 direction
-        const endX = x + (nodeRadius + drawOffset) * Math.cos(angle2)
-        const endY = y - (nodeRadius + drawOffset) * Math.sin(angle2)
+        const endX = x + (nodeRadius + drawOffsetEnd) * Math.cos(angle2)
+        const endY = y - (nodeRadius + drawOffsetEnd) * Math.sin(angle2)
 
         return `M ${startX} ${startY} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${endX} ${endY}`
     }
 
     private linkStraight(edge: Edge): string | null {
         const { from, to } = edge
+        const isEdgeSelected = this.graphSvgRenderer.getGraphInteraction().getSelectedEdge()?.edge.id === edge.id
 
         if (!from.x || !from.y || !to.x || !to.y)
             return null
 
-        const drawOffsetStart = 4 // Distance from which to start the edge
-        const drawOffsetEnd = 4 // Distance from which to end the edge
+        const drawOffsetStart = 4 + (isEdgeSelected ? 2 : 0) // Distance from which to start the edge
+        const drawOffsetEnd = 4 + (isEdgeSelected ? 2 : 0) // Distance from which to end the edge
 
         // Direction angle from source to target
         const dx = to.x - from.x
@@ -317,14 +322,15 @@ export class EdgeDrawer {
 
     private linkArc(edge: Edge): string | null {
         const { from, to } = edge
+        const isEdgeSelected = this.graphSvgRenderer.getGraphInteraction().getSelectedEdge()?.edge.id === edge.id
 
         if (!from.x || !from.y || !to.x || !to.y)
             return null
 
         const r = Math.hypot(to.x - from.x, to.y - from.y)
 
-        const drawOffsetStart = 4 // Distance from which to start the edge
-        const drawOffsetEnd = 4 // Distance from which to end the edge
+        const drawOffsetStart = 4 + (isEdgeSelected ? 2 : 0) // Distance from which to start the edge
+        const drawOffsetEnd = 4 + (isEdgeSelected ? 2 : 0) // Distance from which to end the edge
 
         const rFrom = edge.source._circleRadius ? edge.source._circleRadius : this.graphSvgRenderer.nodeDrawer.getNodeStyle(from).size
         const rTo = edge.target._circleRadius ? edge.target._circleRadius : this.graphSvgRenderer.nodeDrawer.getNodeStyle(to).size
@@ -408,6 +414,21 @@ export class EdgeDrawer {
             .attr('d', 'M0,-5L10,0L0,5')
             .attr('fill', '#999')
 
+        const defaultSelectedMarker = defsContainer.append('marker')
+        defaultSelectedMarker
+            .attr('id', 'default_arrow_selected')
+            .attr('viewBox', '0 -5 10 10')
+            .attr('refX', 6) // Or play with norm and node radius..
+            .attr('refY', 0)
+            .attr('markerWidth', 12)
+            .attr('markerHeight', 12)
+            .attr('markerUnits', 'userSpaceOnUse')
+            .attr('orient', 'auto')
+        defaultSelectedMarker
+            .append('path')
+            .attr('d', 'M0,-5L10,0L0,5')
+            .attr('fill', 'orange')
+
         if (this.rendererOptions.markerStyleMap) {
             for (const markerId in this.rendererOptions.markerStyleMap) {
                 const config = this.rendererOptions.markerStyleMap[markerId]
@@ -426,5 +447,24 @@ export class EdgeDrawer {
                     .attr('fill', config.fill)
             }
         }
+    }
+
+    private highlightSelection(edgeSelection: Selection<SVGGElement, Edge, null, undefined>, edge: Edge): void {
+        const edgePathSelection = edgeSelection.selectAll<SVGPathElement, Edge>('path')
+        const edgeLabelSelection = edgeSelection.selectAll<SVGGElement, Edge>('g.label-container')
+
+        if (this.graphSvgRenderer.getGraphInteraction().getSelectedEdge()?.edge.id === edge.id) {
+            edgePathSelection.classed('edge-highlight', true)
+            edgeLabelSelection.classed('edge-label-highlight', true)
+            const currentMarkerStart = edgePathSelection.attr('marker-start')?.match(/#.*(?=\))/)
+            if (currentMarkerStart) {
+                edgePathSelection.attr('marker-start', `url(${currentMarkerStart[0]}_selected)`)
+            }
+            const currentMarkerEnd = edgePathSelection.attr('marker-end')?.match(/#.*(?=\))/)
+            if (currentMarkerEnd) {
+                edgePathSelection.attr('marker-end', `url(${currentMarkerEnd[0]}_selected)`)
+            }
+        }
+
     }
 }

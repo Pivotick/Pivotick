@@ -15,6 +15,7 @@ export class Edge<T = EdgeData, U = EdgeFullStyle> {
     public readonly directed: boolean | null
     private data: T
     private style: U
+    private _dirty: boolean
 
     /**
      * Create a new Edge instance.
@@ -30,6 +31,7 @@ export class Edge<T = EdgeData, U = EdgeFullStyle> {
         this.directed = directed
         this.data = data ?? ({} as T)
         this.style = style ?? ({} as U)
+        this._dirty = true
     }
 
     /** Required by d3-force */
@@ -53,6 +55,7 @@ export class Edge<T = EdgeData, U = EdgeFullStyle> {
      */
     setData(newData: T): void {
         this.data = newData
+        this.markDirty()
     }
 
     /**
@@ -61,6 +64,7 @@ export class Edge<T = EdgeData, U = EdgeFullStyle> {
      */
     updateData(partialData: Partial<T>): void {
         this.data = { ...this.data, ...partialData }
+        this.markDirty()
     }
 
     /**
@@ -91,6 +95,7 @@ export class Edge<T = EdgeData, U = EdgeFullStyle> {
      */
     setStyle(newStyle: U): void {
         this.style = newStyle
+        this.markDirty()
     }
 
     /**
@@ -100,6 +105,7 @@ export class Edge<T = EdgeData, U = EdgeFullStyle> {
      */
     updateStyle(partialStyle: Partial<U>): void {
         this.style = { ...this.style, ...partialStyle }
+        this.markDirty()
     }
 
     /**
@@ -127,5 +133,18 @@ export class Edge<T = EdgeData, U = EdgeFullStyle> {
             clonedStyle,
             this.directed
         )
+    }
+
+
+    markDirty() {
+        this._dirty = true
+    }
+
+    clearDirty() {
+        this._dirty = false
+    }
+
+    isDirty(): boolean {
+        return this._dirty
     }
 }

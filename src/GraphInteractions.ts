@@ -94,17 +94,21 @@ export class GraphInteractions<TElement = unknown> {
         if (this.callbacks.onNodeSelect && typeof this.callbacks.onNodeSelect === 'function') {
             this.callbacks.onNodeSelect(node, element)
         }
+        node.markDirty()
+        this.graph.renderer.dataUpdate()
     }
 
     public unselectNode(): void {
         if (this.selectedNode === null)
             return
+        this.selectedNode.node.markDirty()
         const oldSelectionNode = this.selectedNode.node
         const oldSelectionElement = this.selectedNode.element
         this.selectedNode = null
         if (this.callbacks.onNodeBlur && typeof this.callbacks.onNodeBlur === 'function') {
             this.callbacks.onNodeBlur(oldSelectionNode, oldSelectionElement)
         }
+        this.graph.renderer.dataUpdate()
     }
 
     public selectEdge(element: TElement, edge: Edge): void {
@@ -116,17 +120,31 @@ export class GraphInteractions<TElement = unknown> {
         if (this.callbacks.onEdgeSelect && typeof this.callbacks.onEdgeSelect === 'function') {
             this.callbacks.onEdgeSelect(edge, element)
         }
+        edge.markDirty()
+        this.graph.renderer.dataUpdate()
+        this.graph.renderer.tickUpdate()
     }
 
     public unselectEdge(): void {
         if (this.selectedEdge === null)
             return
+        this.selectedEdge.edge.markDirty()
         const oldSelectionNode = this.selectedEdge.edge
         const oldSelectionElement = this.selectedEdge.element
         this.selectedEdge = null
         if (this.callbacks.onEdgeBlur && typeof this.callbacks.onEdgeBlur === 'function') {
             this.callbacks.onEdgeBlur(oldSelectionNode, oldSelectionElement)
         }
+        this.graph.renderer.dataUpdate()
+        this.graph.renderer.tickUpdate()
+    }
+
+    public getSelectedNode(): NodeSelection<TElement> | null {
+        return this.selectedNode
+    }
+
+    public getSelectedEdge(): EdgeSelection<TElement> | null {
+        return this.selectedEdge
     }
 
 }
