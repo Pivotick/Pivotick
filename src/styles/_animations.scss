@@ -14,3 +14,9 @@
         filter: drop-shadow(0 0 6px var(--pivotick-node-selected-color));
     }
 }
+
+@keyframes dashmove {
+    to {
+        stroke-dashoffset: -10;
+    }
+}

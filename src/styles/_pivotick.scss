@@ -5,6 +5,37 @@
     background-image: var(--pivotick-background-image);
 }
 
+.pivotick-loading-progress-bar {
+    visibility: hidden;
+
+    rect.background {
+        fill: #fafafa;
+        rx: 4;
+        ry: 4;
+        x: -10px;
+        y: -10px;
+        height: 60px;
+        filter: drop-shadow(0px 4px 4px rgba(0, 0, 0, 0.3));
+    }
+    rect.track {
+        fill: #e0e0e0;
+        height: 8px;
+        rx: 4;
+        ry: 4;
+    }
+    rect.fill {
+        height: 8px;
+        fill: #3f51b5;
+        rx: 4;
+        ry: 4;
+    }
+    text.label {
+        text-anchor: middle;
+        font-size: 16px;
+        fill: #555;
+    }
+}
+
 .pivotick-node-selected-highlight {
     stroke: var(--pivotick-node-selected-stroke);
     stroke-width: var(--pivotick-node-selected-stroke-width);
@@ -18,6 +49,15 @@
         stroke: var(--pivotick-edge-stroke);
         stroke-width: var(--pivotick-edge-stroke-width);
         filter: var(--pivotick-edge-filter);
+
+        &.dashed {
+            stroke-dasharray: 6, 4;
+
+            &.animated {
+                stroke-dashoffset: 0;
+                animation: dashmove 1s linear infinite;
+            }
+        }
     }
 
     .label-container {

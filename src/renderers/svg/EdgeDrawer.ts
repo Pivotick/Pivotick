@@ -150,12 +150,11 @@ export class EdgeDrawer {
 
         if (style.dashed) {
             pathSelection
-                .attr('stroke-dasharray', '6, 4')
+                .classed('dashed', true)
 
             if (style.animateDash) {
                 pathSelection
-                    .attr('stroke-dashoffset', 0)
-                    .style('animation', 'dashmove 1s linear infinite')
+                    .classed('animated', true)
             }
         }
 

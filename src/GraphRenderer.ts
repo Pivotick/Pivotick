@@ -31,7 +31,7 @@ export abstract class GraphRenderer {
     public updateLayoutProgress(progress: number): void {
         this.layoutProgress = progress
         if (this.progressBar) {
-            this.progressBar.setAttribute('width', `${progress * PROGRESS_BAR_WIDTH}px`)
+            this.progressBar.setAttribute('width', `${progress * PROGRESS_BAR_WIDTH}`)
             this.toggleLayoutProgressVisibility()
         }
     }
@@ -40,7 +40,7 @@ export abstract class GraphRenderer {
         if (this.progressBar && this.progressBar.parentNode) {
             (this.progressBar.parentNode as Element).setAttribute(
                 'visibility',
-                this.layoutProgress >= 0 && this.layoutProgress < 1 ? 'visible' : 'hidden'
+                this.layoutProgress >= 0 && this.layoutProgress < 1 || 1 ? 'visible' : 'hidden'
             )
         }
     }
@@ -58,39 +58,35 @@ export abstract class GraphRenderer {
         const centerX = bbox.width / 2 - PROGRESS_BAR_WIDTH / 2
         const centerY = bbox.height / 2 - PROGRESS_BAR_HEIGHT / 2
 
+        const bg = createSvgElement('rect', {
+            class: 'background',
+            width: PROGRESS_BAR_WIDTH + 2 * 10,
+        })
+
         const track = createSvgElement('rect', {
+            class: 'track',
             width: PROGRESS_BAR_WIDTH,
-            height: PROGRESS_BAR_HEIGHT,
-            fill: '#e0e0e0',
-            rx: 4,
-            ry: 4,
         })
 
         const progressFill = createSvgElement('rect', {
+            class: 'fill',
             width: 0,
-            height: PROGRESS_BAR_HEIGHT,
-            fill: '#3f51b5',
-            rx: 4,
-            ry: 4,
         })
 
         const textLabel = createSvgElement('text', {
+            class: 'label',
             x: PROGRESS_BAR_WIDTH / 2,
-            y: PROGRESS_BAR_HEIGHT + 16,
-            'text-anchor': 'middle',
-            'font-size': 12,
-            fill: '#555',
+            y: PROGRESS_BAR_HEIGHT + 20,
         })
         textLabel.textContent = 'Optimizing node positions...'
 
         const loadingPb = createSvgElement('g',
             {
                 transform: `translate(${centerX}, ${centerY})`,
-                visibility: 'hidden',
             },
-            [track, progressFill, textLabel]
+            [bg, track, progressFill, textLabel]
         )
-        loadingPb.classList.add('loading-progress-bar')
+        loadingPb.classList.add('pivotick-loading-progress-bar')
 
         canvas.appendChild(loadingPb)
         this.progressBar = progressFill
