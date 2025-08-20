@@ -101,7 +101,7 @@ export interface EdgeStyle {
 export interface LabelStyle {
     backgroundColor: string  /** @default: #ffffff90 */
     fontSize: number  /** @default: 12 */
-    fontFamily: string  /** @default: system-ui */
+    fontFamily: string  /** @default: system-ui, sans-serif */
     color: string  /** @default: #333 */
     styleCb?: (edge: Edge) => Partial<LabelStyle>
 }

@@ -150,7 +150,7 @@ export class EdgeDrawer {
 
         if (style.dashed) {
             pathSelection
-                .attr('stroke-dasharray', '6, 4') // You can adjust dash/gap lengths as needed
+                .attr('stroke-dasharray', '6, 4')
 
             if (style.animateDash) {
                 pathSelection
@@ -450,12 +450,12 @@ export class EdgeDrawer {
     }
 
     private highlightSelection(edgeSelection: Selection<SVGGElement, Edge, null, undefined>, edge: Edge): void {
-        const edgePathSelection = edgeSelection.selectAll<SVGPathElement, Edge>('path')
-        const edgeLabelSelection = edgeSelection.selectAll<SVGGElement, Edge>('g.label-container')
-
+        
+        edgeSelection.classed('selected', false)
         if (this.graphSvgRenderer.getGraphInteraction().getSelectedEdge()?.edge.id === edge.id) {
-            edgePathSelection.classed('edge-highlight', true)
-            edgeLabelSelection.classed('edge-label-highlight', true)
+            edgeSelection.classed('selected', true)
+
+            const edgePathSelection = edgeSelection.selectAll<SVGPathElement, Edge>('path')
             const currentMarkerStart = edgePathSelection.attr('marker-start')?.match(/#.*(?=\))/)
             if (currentMarkerStart) {
                 edgePathSelection.attr('marker-start', `url(${currentMarkerStart[0]}_selected)`)

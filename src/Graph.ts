@@ -24,7 +24,7 @@ export class Graph {
         }
         const appContainer = document.createElement('div')
         appContainer.id = 'pivotick-app'
-        appContainer.classList.add('graph-container')
+        appContainer.classList.add('pivotick-graph-container')
         container.appendChild(appContainer)
 
         this.renderer = createGraphRenderer(this, appContainer, rendererOptions)

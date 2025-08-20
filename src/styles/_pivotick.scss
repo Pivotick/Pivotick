@@ -1,0 +1,55 @@
+.pivotick-graph-container {
+    width: 100%;
+    height: 100%;
+    background-color: var(--pivotick-bg);
+    background-image: var(--pivotick-background-image);
+}
+
+.pivotick-node-selected-highlight {
+    stroke: var(--pivotick-node-selected-stroke);
+    stroke-width: var(--pivotick-node-selected-stroke-width);
+    stroke-opacity: var(--pivotick-edge-selected-stroke-opacity);
+    filter: var(--pivotick-node-selected-filter);
+    animation: var(--pivotick-node-selected-animation);
+}
+
+.edge-group {
+    path {
+        stroke: var(--pivotick-edge-stroke);
+        stroke-width: var(--pivotick-edge-stroke-width);
+        filter: var(--pivotick-edge-filter);
+    }
+
+    .label-container {
+        rect {
+            stroke: var(--pivotick-edge-label-stroke);
+            stroke-width: var(--pivotick-edge-label-stroke-width);
+            background-color: var(--pivotick-edge-label-bg);
+        }
+        text {
+            color: var(--pivotick-edge-label-color);
+            font-family: var(--pivotick-edge-label-font-family);
+            font-size: var(--pivotick-edge-label-font-size);
+        }
+    }
+
+    &.selected {
+        path {
+            stroke: var(--pivotick-edge-selected-stroke);
+            stroke-width: var(--pivotick-edge-selected-stroke-width);
+            filter: var(--pivotick-edge-selected-filter);
+        }
+    
+        .label-container {
+            rect {
+                stroke: var(--pivotick-edge-label-selected-stroke);
+                stroke-width: var(--pivotick-edge-label-selected-stroke-width);
+                background-color: var(--pivotick-edge-label-selected-bg);
+            }
+            text {
+                color: var(--pivotick-edge-label-selected-color);
+                font-size: var(--pivotick-edge-label-selected-font-size);
+            }
+        }
+    }
+}

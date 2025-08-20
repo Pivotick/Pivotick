@@ -1,0 +1,54 @@
+:root {
+    --pivotick-bg: #ffffff;
+    --pivotick-grid-color: #f5f5f5;
+    --pivotick-background-image:
+        repeating-linear-gradient(0deg, var(--pivotick-grid-color) 0px, var(--pivotick-grid-color) 1px, transparent 1px, transparent 20px),
+        repeating-linear-gradient(90deg, var(--pivotick-grid-color) 0px, var(--pivotick-grid-color) 1px, transparent 1px, transparent 20px);
+    ;
+
+    /* Node defaults */
+    --pivotick-node-color: #007acc;
+    --pivotick-node-stroke: #fff;
+
+    /* Node selected state */
+    --pivotick-node-selected-color: orange;
+    --pivotick-node-selected-stroke: var(--pivotick-node-selected-color);
+    --pivotick-node-selected-stroke-width: 3;
+    --pivotick-node-selected-filter: drop-shadow(0 0 6px var(--pivotick-node-selected-color));
+    --pivotick-node-selected-animation: glowPulse 1.5s infinite;
+
+    /* Edge defaults */
+    --pivotick-edge-stroke: #999;
+    --pivotick-edge-stroke-width: 2;
+    --pivotick-edge-stroke-opacity: 1;
+    --pivotick-edge-filter: none;
+    --pivotick-edge-label-bg: #ffffffa0;
+    --pivotick-edge-label-font-family: system-ui, sans-serif;
+    --pivotick-edge-label-stroke: none;
+    --pivotick-edge-label-stroke-width: 1;
+    --pivotick-edge-label-color: #333;
+    --pivotick-edge-label-font-size: 12px;
+
+    /* Edge selected state */
+    --pivotick-edge-selected-stroke: orange;
+    --pivotick-edge-selected-stroke-width: 5;
+    --pivotick-edge-selected-stroke-opacity: 0.8;
+    --pivotick-edge-selected-filter: drop-shadow(0 0 1px orange);
+    --pivotick-edge-label-selected-stroke: orange;
+    --pivotick-edge-label-selected-stroke-width: 2;
+    --pivotick-edge-label-selected-color: var(--pivotick-edge-label-color);
+    --pivotick-edge-label-selected-font-size: var(--pivotick-edge-label-font-size);
+    --pivotick-edge-label-selected-bg: #ffffffa0;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --pivotick-bg: #1e1e1e;
+        --pivotick-grid-color: #333;
+    }
+}
+
+[data-theme="dark"] {
+    --pivotick-bg: #1e1e1e;
+    --pivotick-grid-color: #333;
+}

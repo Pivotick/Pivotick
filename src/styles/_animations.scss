@@ -1,0 +1,16 @@
+@keyframes glowPulse {
+    0% {
+        stroke-width: 3;
+        filter: drop-shadow(0 0 6px var(--pivotick-node-selected-color));
+    }
+
+    50% {
+        stroke-width: 5;
+        filter: drop-shadow(0 0 12px var(--pivotick-node-selected-color));
+    }
+
+    100% {
+        stroke-width: 3;
+        filter: drop-shadow(0 0 6px var(--pivotick-node-selected-color));
+    }
+}

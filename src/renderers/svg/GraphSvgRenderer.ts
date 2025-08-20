@@ -16,15 +16,16 @@ const DEFAULT_RENDERER_OPTIONS = {
     type: 'svg',
     minZoom: 0.1,
     maxZoom: 10,
+
     defaultNodeStyle: {
         shape: 'circle',
-        color: '#007acc',
         size: 10,
-        strokeColor: '#fff',
         strokeWidth: 2,
+        color: 'var(--pivotick-node-color, #007acc)',
+        strokeColor: 'var(--pivotick-node-stroke, #fff)',
     },
+
     defaultEdgeStyle: {
-        strokeColor: '#999',
         strokeWidth: 2,
         opacity: 1.0,
         curveStyle: 'bidirectional',
@@ -33,36 +34,40 @@ const DEFAULT_RENDERER_OPTIONS = {
         rotateLabel: false,
         markerEnd: 'default_arrow',
         markerStart: undefined,
+        strokeColor: 'var(--pivotick-edge-color, #999)',
     },
+
     defaultLabelStyle: {
-        backgroundColor: '#ffffffa0',
-        fontFamily: 'system-ui',
         fontSize: 12,
-        color: '#333',
+        fontFamily: 'var(--pivotick-label-font, system-ui, sans-serif)',
+        color: 'var(--pivotick-edge-label-color, #333)',
+        backgroundColor: 'var(--pivotick-edge-label-bg, #ffffffa0)',
     },
+
     markerStyleMap: {
-        'circle': {
+        circle: {
             size: 10,
-            fill: '#999',
             pathD: 'M5,5m-3,0a3,3 0 1,0 6,0a3,3 0 1,0 -6,0',
             viewBox: '0 0 10 10',
             refX: 5,
             refY: 5,
             markerUnits: 'userSpaceOnUse',
-            orient: 0
+            orient: 0,
+            fill: 'var(--pivotick-marker-fill, #999)',
         },
-        'diamond': {
+        diamond: {
             size: 8,
-            fill: '#999',
             pathD: 'M0,-4L4,0L0,4L-4,0Z',
             viewBox: '-5 -5 10 10',
             refX: 0,
             refY: 0,
             markerUnits: 'userSpaceOnUse',
-            orient: 0
+            orient: 0,
+            fill: 'var(--pivotick-marker-fill, #999)',
         }
     }
-} satisfies GraphRendererOptions
+} satisfies GraphRendererOptions;
+
 
 export class GraphSvgRenderer extends GraphRenderer {
     protected options: GraphRendererOptions
