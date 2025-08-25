@@ -146,8 +146,9 @@ export class GraphSvgRenderer extends GraphRenderer {
         this.svgCanvas.setAttribute('width', '100%')
         this.svgCanvas.setAttribute('height', '100%')
         this.svgCanvas.setAttribute('fill', 'none')
+        this.svgCanvas.setAttribute('class', 'pivotick-canvas')
 
-        this.container.appendChild(this.svgCanvas)
+        this.getCanvasContainer().appendChild(this.svgCanvas)
         this.svg = d3Select(this.svgCanvas)
 
         this.zoomGroup = this.svg.append('g').attr('class', 'zoom-layer')
@@ -165,6 +166,13 @@ export class GraphSvgRenderer extends GraphRenderer {
                 this.zoomGroup.attr('transform', event.transform)
             })
 
+    }
+
+    public setupRendering(): void {
+        this.createSvgProgressBar()
+        if (this.graph.getOptions().mode === 'full' || this.graph.getOptions().mode === 'light') {
+            this.createUI()
+        }
     }
 
     public init(): void {

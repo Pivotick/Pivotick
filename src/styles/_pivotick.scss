@@ -1,8 +1,8 @@
-.pivotick-graph-container {
+.pivotick-canvas-container {
     width: 100%;
     height: 100%;
     background-color: var(--pivotick-bg);
-    background-image: var(--pivotick-background-image);
+    background-image: var(--pivotick-graph-background-image);
 }
 
 .pivotick-loading-progress-bar {
@@ -51,11 +51,11 @@
         filter: var(--pivotick-edge-filter);
 
         &.dashed {
-            stroke-dasharray: 6, 4;
+            stroke-dasharray: var(--pivotick-edge-stroke-dasharray);
 
             &.animated {
                 stroke-dashoffset: 0;
-                animation: dashmove 1s linear infinite;
+                animation: var(--pivotick-edge-animation);
             }
         }
     }

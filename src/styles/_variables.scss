@@ -1,9 +1,33 @@
 :root {
     --pivotick-bg: #ffffff;
-    --pivotick-grid-color: #f5f5f5;
-    --pivotick-background-image:
-        repeating-linear-gradient(0deg, var(--pivotick-grid-color) 0px, var(--pivotick-grid-color) 1px, transparent 1px, transparent 20px),
-        repeating-linear-gradient(90deg, var(--pivotick-grid-color) 0px, var(--pivotick-grid-color) 1px, transparent 1px, transparent 20px);
+    --pivotick-text-color: #fff;
+    --pivotick-text-color-dark: #333;
+    --pivotick-primary-bg-color: #2563EB;
+    --pivotick-secondary-bg-color: #7C3AED;
+    --pivotick-warning-bg-color: #F59E0B;
+    --pivotick-danger-bg-color: #DC2626;
+
+    /* Layout */
+    --pivotick-sidebar-width: 340px;
+    --pivotick-toolbar-height: 48px;
+    --pivotick-border-color: #ccc;
+
+    /* Sidebar */
+    --pivotick-sidebar-panelheader-bg: #f9f9f9;
+    --pivotick-sidebar-panelbody-bg: #fff;
+    --pivotick-sidebar-panel-border: 1px solid var(--pivotick-border-color);
+    --pivotic-sidebar-layout-shadow-right: rgba(0, 0, 0, 0.07) 2px 0px 3px 0px,
+                                           rgba(0, 0, 0, 0.04) 3px 0px 2px 0px;
+    // --pivotic-sidebar-layout-shadow-bottom: rgba(0, 0, 0, 0.07) 0px 2px 3px 0px,
+    //                                         rgba(0, 0, 0, 0.04) 0px 3px 2px 0px;
+    --pivotic-sidebar-layout-shadow-bottom: rgba(0, 0, 0, 0.07) 3px 2px 3px 0px,
+                                            rgba(0, 0, 0, 0.04) 2px 3px 2px 0px;
+
+    /* Graph canvas */
+    --pivotick-graph-grid-color: #f5f5f5;
+    --pivotick-graph-background-image:
+        repeating-linear-gradient(0deg, var(--pivotick-graph-grid-color) 0px, var(--pivotick-graph-grid-color) 1px, transparent 1px, transparent 20px),
+        repeating-linear-gradient(90deg, var(--pivotick-graph-grid-color) 0px, var(--pivotick-graph-grid-color) 1px, transparent 1px, transparent 20px);
     ;
 
     /* Node defaults */
@@ -21,13 +45,15 @@
     --pivotick-edge-stroke: #999;
     --pivotick-edge-stroke-width: 2;
     --pivotick-edge-stroke-opacity: 1;
+    --pivotick-edge-stroke-dasharray: 6, 4;
+    --pivotick-edge-animation: dashmove 1s linear infinite;
     --pivotick-edge-filter: none;
     --pivotick-edge-label-bg: #ffffffa0;
     --pivotick-edge-label-font-family: system-ui, sans-serif;
+    --pivotick-edge-label-font-size: 12px;
+    --pivotick-edge-label-color: #333;
     --pivotick-edge-label-stroke: none;
     --pivotick-edge-label-stroke-width: 1;
-    --pivotick-edge-label-color: #333;
-    --pivotick-edge-label-font-size: 12px;
 
     /* Edge selected state */
     --pivotick-edge-selected-stroke: orange;

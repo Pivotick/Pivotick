@@ -190,6 +190,14 @@ export interface TreeLayoutOptions extends BaseLayoutOptions {
     radial?: boolean /** @default: false */
 }
 
+/**
+ * - `"viewer"`: Navigate the graph (pan, zoom, drag), no UI panels.
+ * - `"full"`: Full UI and interactions.
+ * - `"light"`: Minimal UI, interactions enabled.
+ * - `"static"`: Static graph, no UI, no interactions.
+ */
+export type GraphMode = 'viewer' | 'full' | 'light' | 'static';
+
 export interface GraphOptions {
     /**
      * Options for the rendering engine
@@ -217,66 +225,14 @@ export interface GraphOptions {
     isDirected?: boolean,
 
     /**
-     * Automatically resize graph container when its parent container size changes.
-     * @default true
+     * Graph renderer mode.
+     * @default "viewer"
      */
-    autoResize?: boolean
-
-    /**
-     * Width of the graph container. Can be any valid CSS size string or number (pixels).
-     * @default '100%'
-     */
-    width?: string | number
-
-    /**
-     * Height of the graph container. Can be any valid CSS size string or number (pixels).
-     * @default '100%'
-     */
-    height?: string | number
-
-    /**
-     * Enable zooming (scroll wheel, pinch, etc.)
-     *@default true
-     */
-    enableZoom?: boolean
-
-    /**
-     * Enable panning (drag to move viewport)
-     * @default true
-     */
-    enablePan?: boolean
-
-    /**
-     * Whether to show node labels by default
-     * Default: true
-     */
-    showLabels?: boolean
-
-    /**
-     * Default styling options for edges (e.g., color, width)
-     */
-    defaultEdgeStyle?: {
-        color?: string
-        width?: number
-        dashed?: boolean
-        arrowHead?: boolean
-    }
+    mode?: GraphMode,
 
     /**
      * Whether to allow multi-select (select multiple nodes/edges)
      * @default false
      */
     multiSelect?: boolean
-
-    /**
-     * Enable animation on node expansion or layout changes
-     * @default true
-     */
-    animate?: boolean
-
-    /**
-     * Duration of layout animation in milliseconds
-     * Default: 1000
-     */
-    layoutAnimationDuration?: number
 }

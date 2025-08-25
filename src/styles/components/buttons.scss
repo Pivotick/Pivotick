@@ -1,0 +1,95 @@
+@mixin button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+@mixin button-variant($bg-color) {
+    @include button;
+    background-color: var($bg-color);
+    color: var(--pivotick-text-color);
+
+    &:hover {
+        background-color: color-mix(in srgb, var($bg-color) 90%, black);
+    }
+
+    &:active {
+        background-color: color-mix(in srgb, var($bg-color) 85%, black);
+    }
+
+    &:disabled {
+        background-color: color-mix(in srgb, var($bg-color) 80%, white);
+        cursor: not-allowed;
+    }
+}
+
+@mixin button-primary {
+    @include button-variant(--pivotick-primary-bg-color);
+}
+@mixin button-secondary {
+    @include button-variant(--pivotick-secondary-bg-color);
+}
+@mixin button-warning {
+    @include button-variant(--pivotick-warning-bg-color);
+}
+@mixin button-danger {
+    @include button-variant(--pivotick-danger-bg-color);
+}
+
+/**
+ * Outline button
+ */
+@mixin button-outline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 0.25rem;
+    transition: background-color 0.2s ease;
+}
+
+@mixin button-outline-variant($bg-color) {
+    @include button-outline;
+    background-color: transparent;
+    // color: var($bg-color);
+    // border: 1px solid color-mix(in srgb, var($bg-color) 80%, white);
+    color: var(--pivotick-text-color-black);
+    border: none;
+
+    &:hover {
+        background-color: color-mix(in srgb, var($bg-color) 80%, white);
+        color: var(--pivotick-text-color);
+    }
+
+    &:active {
+        background-color: color-mix(in srgb, var($bg-color) 85%, black);
+    }
+
+    &:disabled {
+        background-color: color-mix(in srgb, var($bg-color) 80%, white);
+        cursor: not-allowed;
+    }
+}
+
+@mixin button-outline-primary {
+    @include button-outline-variant(--pivotick-primary-bg-color);
+}
+@mixin button-outline-secondary {
+    @include button-outline-variant(--pivotick-secondary-bg-color);
+}
+@mixin button-outline-warning {
+    @include button-outline-variant(--pivotick-warning-bg-color);
+}
+@mixin button-outline-danger {
+    @include button-outline-variant(--pivotick-danger-bg-color);
+}

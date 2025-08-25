@@ -1,0 +1,184 @@
+@import 'components/buttons.scss';
+
+.pivotick-graph-container {
+    width: 100%;
+    height: 100%;
+    background-color: var(--pivotick-bg);
+    position: relative;
+}
+
+.pivotick-layout {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: var(--pivotick-sidebar-width) 1fr;
+    grid-template-rows: var(--pivotick-toolbar-height) 1fr;
+    grid-template-areas: 
+        "sidebar toolbar"
+        "sidebar canvas";
+}
+
+.pivotick-sidebar-container {
+    grid-area: sidebar;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+    box-shadow: var(--pivotic-sidebar-layout-shadow-right);
+
+    .pivotick-sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 10px 8px;
+
+        .pivotick-mainheader-panel{
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            min-height: 60px;
+            background-color: var(--pivotick-sidebar-panelheader-bg);
+            border: var(--pivotick-sidebar-panel-border);
+            padding: 8px 10px;
+        }
+
+        .pivotick-header-panel{
+            min-height: 40px;
+            background-color: var(--pivotick-sidebar-panelheader-bg);
+            border: var(--pivotick-sidebar-panel-border);
+            padding: 0px 10px;
+        }
+        
+        .pivotick-body-panel{
+            min-height: 60px;
+            background-color: var(--pivotick-sidebar-panelbody-bg);
+            border-left: var(--pivotick-sidebar-panel-border);
+            border-bottom: var(--pivotick-sidebar-panel-border);
+            border-right: var(--pivotick-sidebar-panel-border);
+            padding: 8px 10px;
+        }
+    }
+}
+
+.pivotick-canvas-container {
+    grid-area: canvas;
+    height: 100%;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+
+    .slide-panel {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 300px;
+        height: 100%;
+        background: #fff;
+        box-shadow: -2px 0 8px rgba(0, 0, 0, 0.2);
+        transform: translateX(100%);
+        transition: transform 0.3s ease-in-out;
+        z-index: 1000;
+
+        &.open {
+            transform: translateX(0);
+        }
+        .slide-panel__header {
+            padding: 1rem;
+            font-weight: bold;
+            border-bottom: 1px solid #ddd;
+        }
+    
+        .slide-panel__content {
+            padding: 1rem;
+            overflow-y: auto;
+            height: calc(100% - 3rem);
+        }
+    }
+}
+
+.pivotick-toolbar-container {
+    grid-area: toolbar;
+    height: 100%;
+    width: calc(100%);// - 12px);
+    z-index: 10;
+    box-shadow: var(--pivotic-sidebar-layout-shadow-bottom);
+
+    .pivotick-toolbar {
+        display: flex;
+        flex-direction: row;
+        gap: 4px;
+        align-items: center;
+        margin: 2px 6px;
+
+        .pivotick-searchbox {
+            flex-grow: 1;
+            position: relative;
+
+            label {
+                margin-bottom: 0.2rem;
+                font-size: 0.9rem;
+            }
+
+            div.input-container {
+                position: relative;
+
+                div.icon-container {
+                    position: absolute;
+                    inset-block: 0;
+                    inset-inline-start: 0;
+                    display: flex;
+                    align-items: center;
+                    padding-inline-start: 0.75rem;
+                    pointer-events: none;
+
+                    svg {
+                        width: 1rem;
+                        height: 1rem;;
+                        color: #444;
+                    }
+                }
+
+                input {
+                    display: block;
+                    width: 100%;
+                    padding: 0.8rem;
+                    padding-inline-start: 2rem;
+                    font-size: 0.8rem;
+                    border: 1px solid var(--pivotick-border-color);
+                    background: var(--pivotick-sidebar-panelbody-bg);
+                }
+
+                button {
+                    @include button-primary;
+                    position: absolute;
+                    right: 0.4rem;
+                    bottom: 0.4rem;
+                }
+
+            }
+        }
+
+        .pivotick-filter {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            gap: 4px;
+
+            button {
+                @include button-outline-secondary;
+                padding: 0.5rem 0.5rem;
+            }
+
+            div.pivotick-filter-group {
+                display: inline-flex;
+                flex-direction: row;
+                flex-wrap: nowrap;
+            }
+        }
+    }
+}
+
+.pivotick-graphcontrols-container {
+}
+

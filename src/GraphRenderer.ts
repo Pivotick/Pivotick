@@ -24,8 +24,12 @@ export abstract class GraphRenderer {
     abstract dataUpdate(): void
     abstract tickUpdate(): void
 
+    public getCanvasContainer(): HTMLElement {
+        return this.container.querySelector('.pivotick-canvas-container') as HTMLElement
+    }
+
     public getCanvas(): HTMLElement {
-        return this.container.firstChild as HTMLElement
+        return this.container.querySelector('.pivotick-canvas') as HTMLElement
     }
 
     public updateLayoutProgress(progress: number): void {

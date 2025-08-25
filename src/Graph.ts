@@ -4,11 +4,13 @@ import type { graphData, GraphOptions, InterractionCallbacks, LayoutOptions } fr
 import { createGraphRenderer } from './renderers/GraphRendererFactory'
 import type { GraphRenderer } from './GraphRenderer'
 import { Simulation } from './Simulation'
+import { UIManager, type UIManagerOptions } from './ui/UIManager'
 
 
 export class Graph {
     private nodes: Map<string, Node> = new Map()
     private edges: Map<string, Edge> = new Map()
+    public UIManager: UIManager
     public renderer: GraphRenderer
     public simulation: Simulation
     private options: GraphOptions
@@ -22,11 +24,16 @@ export class Graph {
         const rendererOptions = {
             ...this.options.render
         }
+        const UIManagerOptions = {} as UIManagerOptions
+        if (this.options.mode) {
+            UIManagerOptions['mode'] = this.options.mode
+        }
         const appContainer = document.createElement('div')
         appContainer.id = 'pivotick-app'
         appContainer.classList.add('pivotick-graph-container')
         container.appendChild(appContainer)
 
+        this.UIManager = new UIManager(this, appContainer, UIManagerOptions)
         this.renderer = createGraphRenderer(this, appContainer, rendererOptions)
         this.renderer.setupRendering()
 
