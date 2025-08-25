@@ -1,9 +1,13 @@
-import type { UIElement } from "../UIManager";
+import type { UIElement, UIManager } from "../UIManager";
 
 export class Sidebar implements UIElement {
+    private uiManager: UIManager;
+
     public sidebar?: HTMLDivElement;
 
-    constructor() { }
+    constructor(uiManager: UIManager) {
+        this.uiManager = uiManager
+    }
 
     mount(container: HTMLElement | undefined) {
         if (!container) return;
@@ -33,4 +37,7 @@ export class Sidebar implements UIElement {
         this.sidebar?.remove();
         this.sidebar = undefined;
     }
+
+    afterMount() {}
+
 }

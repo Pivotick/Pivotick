@@ -5,7 +5,7 @@ export class Layout implements UIElement {
     public canvas?: HTMLDivElement;
     public sidebar?: HTMLDivElement;
     public toolbar?: HTMLDivElement;
-    public slidePanel?: HTMLDivElement;
+    // public slidePanel?: HTMLDivElement;
     public graphcontrols?: HTMLDivElement;
 
     constructor() { }
@@ -30,21 +30,6 @@ export class Layout implements UIElement {
         this.graphcontrols.className = "pivotick-graphcontrols-container"
         this.layout.appendChild(this.graphcontrols)
 
-        const templateSlidePanel = document.createElement("template");
-        templateSlidePanel.innerHTML = `
-  <div class="slide-panel" id="side-panel">
-    <div class="slide-panel__header">
-        My Panel
-        <button id="closePanel" style="float:right;">×</button>
-    </div>
-    <div class="slide-panel__content">
-        <p>This is the content of the panel.</p>
-    </div>
-    </div>
-`;
-        this.slidePanel = templateSlidePanel.content.firstElementChild as HTMLDivElement;
-        this.canvas.appendChild(this.slidePanel)
-
         container.appendChild(this.layout);
     }
 
@@ -52,4 +37,7 @@ export class Layout implements UIElement {
         this.layout?.remove();
         this.layout = undefined;
     }
+
+    afterMount() { }
+
 }

@@ -36,6 +36,9 @@
 @mixin button-secondary {
     @include button-variant(--pivotick-secondary-bg-color);
 }
+@mixin button-info {
+    @include button-variant(--pivotick-info-bg-color);
+}
 @mixin button-warning {
     @include button-variant(--pivotick-warning-bg-color);
 }
@@ -86,6 +89,9 @@
 }
 @mixin button-outline-secondary {
     @include button-outline-variant(--pivotick-secondary-bg-color);
+}
+@mixin button-outline-info {
+    @include button-outline-variant(--pivotick-info-bg-color);
 }
 @mixin button-outline-warning {
     @include button-outline-variant(--pivotick-warning-bg-color);

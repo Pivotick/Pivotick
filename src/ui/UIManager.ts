@@ -2,6 +2,7 @@ import { Graph } from '../Graph';
 import type { GraphMode } from '../GraphOptions';
 import { Layout } from './elements/Layout'
 import { Sidebar } from './elements/Sidebar'
+import { SlidePanel } from './elements/SlidePanel';
 import { Toolbar } from './elements/Toolbar';
 
 export interface UIManagerOptions {
@@ -11,6 +12,7 @@ export interface UIManagerOptions {
 export interface UIElement {
     mount(container: HTMLElement): void;
     destroy(): void;
+    afterMount(): void;
   }
 
 /**
@@ -22,7 +24,10 @@ export class UIManager {
     protected container: HTMLElement
     private options: UIManagerOptions;
 
-    private layout?: Layout;
+    public layout?: Layout;
+    public slidePanel?: SlidePanel;
+    public sidebar?: Sidebar;
+    public toolbar?: Toolbar;
 
     constructor(graph: Graph, container: HTMLElement, options: UIManagerOptions = {}) {
         this.graph = graph;
@@ -63,8 +68,11 @@ export class UIManager {
         this.buildLayout()
         this.buildUIGraphNavigation()
         this.buildUIGraphControls()
+        this.buildSlidePanel()
         this.buildToolbar()
         this.buildSidebar()
+
+        this.callAfterMount()
     }
 
     private setupLightMode() {
@@ -84,14 +92,19 @@ export class UIManager {
     private buildUIGraphControls() {
     }
 
+    private buildSlidePanel() {
+        this.slidePanel = new SlidePanel(this)
+        this.slidePanel.mount(this.layout?.canvas)
+    }
+
     private buildToolbar() {
-        const toobar = new Toolbar()
-        toobar.mount(this.layout?.toolbar)
+        this.toolbar = new Toolbar(this)
+        this.toolbar.mount(this.layout?.toolbar)
     }
 
     private buildSidebar() {
-        const sidebar = new Sidebar()
-        sidebar.mount(this.layout?.sidebar)
+        this.sidebar = new Sidebar(this)
+        this.sidebar.mount(this.layout?.sidebar)
     }
     
 
@@ -102,4 +115,10 @@ export class UIManager {
         }
     }
     
+    private callAfterMount() { // TODO: Instead, these should register an afterMount callback
+        this.layout?.afterMount()
+        this.slidePanel?.afterMount()
+        this.toolbar?.afterMount()
+        this.sidebar?.afterMount()
+    }
 }
