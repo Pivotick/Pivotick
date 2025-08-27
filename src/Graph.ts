@@ -55,6 +55,7 @@ export class Graph {
     private async startAndRender() {
         await this.simulation.start()
         this.renderer.tickUpdate()
+        this.renderer.fitAndCenter()
     }
 
     getOptions(): GraphOptions {

@@ -229,7 +229,7 @@ export class EdgeDrawer {
     private linkPathRouter(edge: Edge): string | null {
         const { from, to } = edge
 
-        if (!from.x || !from.y || !to.x || !to.y)
+        if (from.x === undefined || from.y === undefined || to.x === undefined || to.y === undefined)
             return null
 
         if (from === to) // self-loop
@@ -257,7 +257,7 @@ export class EdgeDrawer {
         const { from, to } = edge
         const isEdgeSelected = this.graphSvgRenderer.getGraphInteraction().getSelectedEdge()?.edge.id === edge.id
 
-        if (!from.x || !from.y || !to.x || !to.y || from !== to)
+        if (from.x === undefined || from.y === undefined || to.x === undefined || to.y === undefined)
             return null
 
         const drawOffsetStart = 4 + (isEdgeSelected ? 2 : 0) // Distance from which to start the edge
@@ -293,7 +293,7 @@ export class EdgeDrawer {
         const { from, to } = edge
         const isEdgeSelected = this.graphSvgRenderer.getGraphInteraction().getSelectedEdge()?.edge.id === edge.id
 
-        if (!from.x || !from.y || !to.x || !to.y)
+        if (from.x === undefined || from.y === undefined || to.x === undefined || to.y === undefined)
             return null
 
         const drawOffsetStart = 4 + (isEdgeSelected ? 2 : 0) // Distance from which to start the edge
@@ -323,7 +323,7 @@ export class EdgeDrawer {
         const { from, to } = edge
         const isEdgeSelected = this.graphSvgRenderer.getGraphInteraction().getSelectedEdge()?.edge.id === edge.id
 
-        if (!from.x || !from.y || !to.x || !to.y)
+        if (from.x === undefined || from.y === undefined || to.x === undefined || to.y === undefined)
             return null
 
         const r = Math.hypot(to.x - from.x, to.y - from.y)
@@ -370,8 +370,12 @@ export class EdgeDrawer {
             .append('g')
             .classed('label-container', true)
 
+        const labelContent = edge.getData().label
+        if (!labelContent || labelContent === '') return
+
         const text = labelContainer.append('text')
-            .text(edge.getData().label ?? '')
+            // .text(edge.getData().label ?? '')
+            .text(labelContent)
             .attr('font-size', style.fontSize)
             .attr('font-family', style.fontFamily)
             .attr('text-anchor', 'middle')

@@ -1,5 +1,3 @@
-import { type Selection } from 'd3-selection'
-import type { ZoomBehavior } from "d3-zoom";
 import type { UIElement, UIManager } from "../../UIManager";
 import "./graphNavigation.scss"
 
@@ -58,27 +56,15 @@ export class GraphNavigation implements UIElement {
         const resetButton = this.navigation.querySelector("#pivotick-graphnavigation-reset");
         
         zoomInButton?.addEventListener("click", () => {
-            const zoomBehavior = this.uiManager.graph.renderer.getZoomBehavior()
-            const canvas = this.uiManager.graph.renderer.getCanvasSelection()
-
-            if (!zoomBehavior || !canvas) return;
-            canvas.transition().duration(300).call(zoomBehavior.scaleBy, 1.5)
+            this.uiManager.graph.renderer.zoomIn()
         });
 
         zoomOutButton?.addEventListener("click", () => {
-            const zoomBehavior = this.uiManager.graph.renderer.getZoomBehavior()
-            const canvas = this.uiManager.graph.renderer.getCanvasSelection()
-
-            if (!zoomBehavior || !canvas) return;
-            canvas.transition().duration(300).call(zoomBehavior.scaleBy, 0.667)
+            this.uiManager.graph.renderer.zoomOut()
         });
-
+        
         resetButton?.addEventListener("click", () => {
-            const zoomBehavior = this.uiManager.graph.renderer.getZoomBehavior()
-            const canvas = this.uiManager.graph.renderer.getCanvasSelection()
-
-            if (!zoomBehavior || !canvas) return;
-            canvas.transition().duration(300).call(zoomBehavior.scaleBy, 1)
+            this.uiManager.graph.renderer.fitAndCenter()
         });
     }
 }

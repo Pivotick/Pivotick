@@ -1,5 +1,5 @@
 import { select as d3Select, type Selection } from 'd3-selection'
-import { zoom as d3Zoom, type ZoomBehavior } from 'd3-zoom'
+import { zoom as d3Zoom, type ZoomBehavior, zoomIdentity as d3ZoomIdentity } from 'd3-zoom'
 import { Edge } from '../../Edge'
 import { Node } from '../../Node'
 import { NodeDrawer } from './NodeDrawer'
@@ -258,6 +258,57 @@ export class GraphSvgRenderer extends GraphRenderer {
     public tickUpdate(): void {
         this.updateEdgePositions() // Render edges first so nodes are drawn on top of them
         this.updateNodePositions()
+    }
+
+    public zoomIn(): void {
+        const zoomBehavior = this.getZoomBehavior()
+        const canvas = this.getCanvasSelection()
+
+        if (!zoomBehavior || !canvas) return;
+        canvas.transition().duration(300).call(zoomBehavior.scaleBy, 1.5)
+    }
+
+    public zoomOut(): void {
+        const zoomBehavior = this.getZoomBehavior()
+        const canvas = this.getCanvasSelection()
+
+        if (!zoomBehavior || !canvas) return;
+        canvas.transition().duration(300).call(zoomBehavior.scaleBy, 0.667)
+    }
+
+    public fitAndCenter(): void {
+        const zoomBehavior = this.getZoomBehavior()
+        const canvas = this.getCanvasSelection()
+        const svgEl = canvas.node() as SVGSVGElement
+        const zoomLayerEl = canvas.select('.zoom-layer').node() as SVGGElement
+
+        if (!zoomBehavior || !svgEl || !zoomLayerEl) return;
+
+        const bounds = zoomLayerEl.getBBox();
+
+        const fullWidth = svgEl.clientWidth;
+        const fullHeight = svgEl.clientHeight;
+        const width = bounds.width;
+        const height = bounds.height;
+
+        // Midpoint of content
+        const midX = bounds.x + width / 2;
+        const midY = bounds.y + height / 2;
+
+        // Scale so that content fits (with some padding)
+        const scale = Math.min(
+            fullWidth / width,
+            fullHeight / height
+        ) * 0.8;
+
+        const translateX = fullWidth / 2 - scale * midX;
+        const translateY = fullHeight / 2 - scale * midY;
+
+        const transform = d3ZoomIdentity
+            .translate(translateX, translateY)
+            .scale(scale);
+
+        canvas.transition().duration(300).call(zoomBehavior.transform, transform);
     }
 
     private updateNodePositions(): void {
