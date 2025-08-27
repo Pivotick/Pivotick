@@ -35,8 +35,8 @@
                     svg {
                         width: 1rem;
                         height: 1rem;
-                        ;
-                        color: #444;
+                        color: var(--pivotick-text-color);
+                        opacity: 0.7;
                     }
                 }
 

@@ -14,7 +14,7 @@
 @mixin button-variant($bg-color) {
     @include button;
     background-color: var($bg-color);
-    color: var(--pivotick-text-color);
+    color: #fff;
 
     &:hover {
         background-color: color-mix(in srgb, var($bg-color) 90%, black);
@@ -66,14 +66,12 @@
 @mixin button-outline-variant($bg-color) {
     @include button-outline;
     background-color: transparent;
-    // color: var($bg-color);
-    // border: 1px solid color-mix(in srgb, var($bg-color) 80%, white);
-    color: var(--pivotick-text-color-black);
+    color: var(--pivotick-text-color);
     border: none;
 
     &:hover {
         background-color: color-mix(in srgb, var($bg-color) 80%, white);
-        color: var(--pivotick-text-color);
+        color: #fff;
     }
 
     &:active {

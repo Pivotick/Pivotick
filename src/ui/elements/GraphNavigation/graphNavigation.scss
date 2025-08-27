@@ -9,18 +9,24 @@
         padding: 3px;
         cursor: pointer;
         font-size: 1.0rem;
-        color: color-mix(in srgb, var(--pivotick-text-color-dark) 80%, white);
+        color: color-mix(in srgb, var(--pivotick-text-color-softer) 80%, white);
+        @media (prefers-color-scheme: dark) {
+            color: #bbb;
+        }
         transition: font-size 0.15s ease;
 
         &:hover,
         &:active {
-            color: color-mix(in srgb, var(--pivotick-text-color-dark) 70%, black);
+            color: color-mix(in srgb, var(--pivotick-text-color-softer) 70%, black);
+            @media (prefers-color-scheme: dark) {
+                color: #fff;
+            }
         }
     }
 
     .pivotick-graphnavigation-zoom-fit {
-        background-color: var(--pivotick-bg);
-        box-shadow: rgba(0, 0, 0, 0.22) 0px 0px 4px, rgba(0, 0, 0, 0.30) 0px 1px 2px;
+        background-color: color-mix(in srgb, var(--pivotick-bg) 80%, white);
+        box-shadow: var(--pivotic-graph-navigation-control-container-shadow);
         border-radius: 4px;
         margin-bottom: 6px;
     }
@@ -28,8 +34,8 @@
     .pivotick-graphnavigation-zoom-controls {
         display: flex;
         flex-direction: column;
-        background-color: var(--pivotick-bg);
-        box-shadow: rgba(0, 0, 0, 0.22) 0px 0px 4px, rgba(0, 0, 0, 0.30) 0px 1px 2px;
+        background-color: color-mix(in srgb, var(--pivotick-bg) 80%, white);
+        box-shadow: var(--pivotic-graph-navigation-control-container-shadow);
         border-radius: 4px;
 
         .pivotick-zoom-divider {

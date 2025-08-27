@@ -1,23 +1,43 @@
-@mixin input-primary {
+@mixin input {
     display: inline-block;
     width: 100%;
     padding: 0.5rem 0.75rem;
     font-size: 1rem;
-    border: 1px solid var(--pivotick-border-color);
     border-radius: 0.25rem;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  
+
     &::placeholder {
-      opacity: 0.7;
+        opacity: 0.7;
     }
-  
+
     &:focus {
-      outline: none;
-      border-color: color-mix(in srgb, var(--pivotick-primary-bg-color) 80%, black);
+        outline: none;
     }
-  
+    
+}
+
+
+@mixin input-variant($bg-color) {
+    @include input;
+    background-color: transparent;
+    color: var(--pivotick-text-color);
+    border: 1px solid var(--pivotick-border-color);
+
+    &::placeholder {
+        color: var(--pivotick-text-color);
+        opacity: 0.7;
+    }
+
+    &:focus {
+        border-color: color-mix(in srgb, var($bg-color) 80%, black);
+    }
+
     &:disabled {
-      background-color: #f8f9fa; // subtle gray
-      border-color: color-mix(in srgb, var(--pivotick-primary-bg-color) 70%, white);
+        background-color: #f8f9fa; // subtle gray
+        border-color: color-mix(in srgb, var($bg-color) 70%, white);
     }
+}
+
+@mixin input-primary {
+    @include input-variant(--pivotick-primary-bg-color);
 }

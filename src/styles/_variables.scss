@@ -1,14 +1,14 @@
 :root {
     --pivotick-bg: #ffffff;
-    --pivotick-text-color: #fff;
-    --pivotick-text-color-dark: #333;
+    --pivotick-border-color: #ccc;
+    --pivotick-text-color: #000;
+    --pivotick-text-color-softer: #333;
     --pivotick-primary-bg-color: #2563EB;
     --pivotick-secondary-bg-color: #7C3AED;
     --pivotick-info-bg-color: #25b6eb;
     --pivotick-warning-bg-color: #F59E0B;
     --pivotick-danger-bg-color: #DC2626;
 
-    --pivotick-border-color: #ccc;
 
     /* Sidebar */
     --pivotick-sidebar-panelheader-bg: #f9f9f9;
@@ -26,7 +26,9 @@
     --pivotick-graph-background-image:
         repeating-linear-gradient(0deg, var(--pivotick-graph-grid-color) 0px, var(--pivotick-graph-grid-color) 1px, transparent 1px, transparent 20px),
         repeating-linear-gradient(90deg, var(--pivotick-graph-grid-color) 0px, var(--pivotick-graph-grid-color) 1px, transparent 1px, transparent 20px);
-    ;
+    --pivotic-graph-navigation-control-container-shadow:
+        rgba(0, 0, 0, 0.22) 0px 0px 4px,
+        rgba(0, 0, 0, 0.30) 0px 1px 2px;
 
     /* Node defaults */
     --pivotick-node-color: #007acc;
@@ -70,12 +72,33 @@
 
 @media (prefers-color-scheme: dark) {
     :root {
-        --pivotick-bg: #1e1e1e;
-        --pivotick-grid-color: #333;
+        --pivotick-bg: #031233;
+        --pivotick-border-color: #455b8e;
+
+        --pivotick-text-color: #fff;
+        --pivotick-text-color-softer: #333;
+    
+        /* Sidebar */
+        --pivotick-sidebar-panelheader-bg: #2a457f;
+        --pivotick-sidebar-panelbody-bg: #112d6a;
+        --pivotic-sidebar-layout-shadow-right:
+            rgba(255, 255, 255, 0.08) 2px 0px 3px 0px,
+            rgba(255, 255, 255, 0.04) 3px 0px 2px 0px;
+        --pivotic-sidebar-layout-shadow-bottom:
+            rgba(255, 255, 255, 0.08) 3px 2px 3px 0px,
+            rgba(255, 255, 255, 0.04) 2px 3px 2px 0px;
+    
+        /* Graph canvas */
+        --pivotick-graph-grid-color: #3d3d3d99;
+        --pivotick-graph-background-image:
+            repeating-linear-gradient(0deg, var(--pivotick-graph-grid-color) 0px, var(--pivotick-graph-grid-color) 1px, transparent 1px, transparent 20px),
+            repeating-linear-gradient(90deg, var(--pivotick-graph-grid-color) 0px, var(--pivotick-graph-grid-color) 1px, transparent 1px, transparent 20px);
+        --pivotic-graph-navigation-control-container-shadow:
+            rgba(255, 255, 255, 0.15) 0px 0px 4px,
+            rgba(255, 255, 255, 0.10) 0px 1px 2px;
     }
 }
 
 [data-theme="dark"] {
-    --pivotick-bg: #1e1e1e;
-    --pivotick-grid-color: #333;
+    --pivotick-bg: #031233;
 }
