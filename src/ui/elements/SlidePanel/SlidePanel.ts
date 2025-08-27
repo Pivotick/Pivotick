@@ -1,4 +1,5 @@
-import type { UIElement, UIManager } from "../UIManager";
+import type { UIElement, UIManager } from "../../UIManager";
+import "./slidePanel.scss"
 
 export class SlidePanel implements UIElement {
     private uiManager: UIManager;

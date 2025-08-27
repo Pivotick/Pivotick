@@ -23,6 +23,8 @@ export abstract class GraphRenderer {
     abstract init(): void
     abstract dataUpdate(): void
     abstract tickUpdate(): void
+    abstract getZoomBehavior(): any
+    abstract getCanvasSelection(): any
 
     public getCanvasContainer(): HTMLElement {
         return this.container.querySelector('.pivotick-canvas-container') as HTMLElement

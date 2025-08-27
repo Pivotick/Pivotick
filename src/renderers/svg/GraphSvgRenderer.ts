@@ -23,6 +23,13 @@ const DEFAULT_RENDERER_OPTIONS = {
         strokeWidth: 2,
         color: 'var(--pivotick-node-color, #007acc)',
         strokeColor: 'var(--pivotick-node-stroke, #fff)',
+        fontFamily: 'var(--pivotick-label-font, system-ui, sans-serif)',
+        textColor: 'var(--pivotick-node-text-color, #fff)',
+        iconUnicode: undefined,
+        iconClass: undefined,
+        svgIcon: undefined,
+        imagePath: undefined,
+        text: undefined,
     },
 
     defaultEdgeStyle: {
@@ -161,6 +168,12 @@ export class GraphSvgRenderer extends GraphRenderer {
         this.svg.call(this.zoom)
         this.svg.on('dblclick.zoom', null)
         this.zoom
+            .filter((event) => {
+                if (event.ctrlKey)
+                    return false
+                const target = event.target as HTMLElement;
+                return !(target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA');
+            })
             .scaleExtent([this.options.minZoom, this.options.maxZoom])
             .on('zoom', (event) => {
                 this.zoomGroup.attr('transform', event.transform)
@@ -170,9 +183,10 @@ export class GraphSvgRenderer extends GraphRenderer {
 
     public setupRendering(): void {
         this.createSvgProgressBar()
-        if (this.graph.getOptions().mode === 'full' || this.graph.getOptions().mode === 'light') {
-            this.createUI()
-        }
+    }
+
+    public getZoomBehavior(): ZoomBehavior<SVGSVGElement, unknown> {
+        return this.zoom
     }
 
     public init(): void {

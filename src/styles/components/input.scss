@@ -1,0 +1,23 @@
+@mixin input-primary {
+    display: inline-block;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    font-size: 1rem;
+    border: 1px solid var(--pivotick-border-color);
+    border-radius: 0.25rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  
+    &::placeholder {
+      opacity: 0.7;
+    }
+  
+    &:focus {
+      outline: none;
+      border-color: color-mix(in srgb, var(--pivotick-primary-bg-color) 80%, black);
+    }
+  
+    &:disabled {
+      background-color: #f8f9fa; // subtle gray
+      border-color: color-mix(in srgb, var(--pivotick-primary-bg-color) 70%, white);
+    }
+}

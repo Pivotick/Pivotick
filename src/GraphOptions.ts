@@ -77,6 +77,13 @@ export interface NodeStyle {
     size: number
     strokeColor: string
     strokeWidth: number
+    fontFamily: string
+    textColor: string
+    iconClass?: string,
+    iconUnicode?: string,
+    svgIcon?: string,
+    imagePath?: string,
+    text?: string,
     styleCb?: (node: Node) => Partial<NodeStyle>
 }
 
@@ -104,6 +111,7 @@ export interface LabelStyle {
     fontFamily: string  /** @default: system-ui, sans-serif */
     color: string  /** @default: #333 */
     styleCb?: (edge: Edge) => Partial<LabelStyle>
+    labelAccessor?: (edge: Edge) => HTMLElement | string | void
 }
 
 export interface MarkerStyle {

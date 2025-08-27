@@ -1,4 +1,5 @@
-import type { UIElement, UIManager } from "../UIManager";
+import type { UIElement, UIManager } from "../../UIManager";
+import "./toolbar.scss";
 
 export class Toolbar implements UIElement {
     private uiManager: UIManager;

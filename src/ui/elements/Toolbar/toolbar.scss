@@ -1,0 +1,86 @@
+@import "../../../styles/components/buttons.scss";
+@import "../../../styles/components/input.scss";
+
+.pivotick-toolbar-container {
+    box-shadow: var(--pivotic-sidebar-layout-shadow-bottom);
+
+    .pivotick-toolbar {
+        display: flex;
+        flex-direction: row;
+        gap: 4px;
+        align-items: center;
+        margin: 2px 6px;
+
+        .pivotick-searchbox {
+            flex-grow: 1;
+            position: relative;
+
+            label {
+                margin-bottom: 0.2rem;
+                font-size: 0.9rem;
+            }
+
+            div.input-container {
+                position: relative;
+
+                div.icon-container {
+                    position: absolute;
+                    inset-block: 0;
+                    inset-inline-start: 0;
+                    display: flex;
+                    align-items: center;
+                    padding-inline-start: 0.75rem;
+                    pointer-events: none;
+
+                    svg {
+                        width: 1rem;
+                        height: 1rem;
+                        ;
+                        color: #444;
+                    }
+                }
+
+                input {
+                    @include input-primary;
+                    display: block;
+                    width: 100%;
+                    padding: 0.8rem;
+                    padding-inline-start: 2.5rem;
+                    padding-inline-end: 5rem;
+                    font-size: 0.8rem;
+                }
+
+                button {
+                    @include button-primary;
+                    position: absolute;
+                    right: 0.4rem;
+                    bottom: 5px;
+                }
+
+            }
+        }
+
+        .pivotick-filter {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            gap: 4px;
+
+            button.pivotick-button-filter {
+                @include button-outline-secondary;
+                padding: 0.5rem 0.5rem;
+            }
+
+            div.pivotick-undoredo-group {
+                display: inline-flex;
+                flex-direction: row;
+                flex-wrap: nowrap;
+
+                button {
+                    @include button-outline-info;
+                    padding: 0.5rem 0.5rem;
+                }
+            }
+        }
+    }
+}

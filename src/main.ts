@@ -46,6 +46,11 @@ export function createSampleGraph(): Pivotick {
                         type: Math.random() < 0.8 ? 'leaf' : 'hub'
                     },
                     {
+                        text: 'text',
+                        // iconUnicode: `\uf007`,
+                        // iconClass: `fa-solid fa-user`,
+                        // svgIcon: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M16.5 14h1v-1.5H19v-1h-1.5V10h-1v1.5H15v1h1.5zM11 15h1.5v-2.25L14.25 15h1.825l-2.325-3l2.325-3H14.25l-1.75 2.25V9H11zm-5 0h4v-3.5H7.5v-1H10V9H6v3.5h2.5v1H6zm-3 6V3h18v18zm2-2h14V5H5zm0 0V5z" /></svg>`,
+                        // imagePath: '/vite.svg'
                     }
                 )
             ))
@@ -54,7 +59,7 @@ export function createSampleGraph(): Pivotick {
                 .map(id => {
                     const source = nodes[id]
                     const target = nodes[Math.round(Math.random() * (id - 1))]
-                    return new Edge(`${id}-${target.id}`, source, target, { label: 'connects to', mstart: Math.random() < 0.5 ? 'circle' : 'diamond', mend: Math.random() < 0.5 ? 'default_arrow' : 'circle' }, { edge: { dashed: Math.random() < 0.5 }})
+                    return new Edge(`${id}-${target.id}`, source, target, { label: 'connects to', mstart: Math.random() < 0.5 ? 'circle' : 'diamond', mend: Math.random() < 0.5 ? 'arrow' : 'circle' }, { edge: { dashed: Math.random() < 0.5 }})
                 })
             // edges = []
             edges.push(new Edge('0-0', nodes[0], nodes[0], { label : 'self-loop'}))
@@ -183,7 +188,7 @@ export function createSampleGraph(): Pivotick {
             nodeTypeAccessor: (node: Node) => node.getData()?.type,
             nodeStyleMap: {
                 'hub': { shape: 'hexagon', color: '#aaa', size: 30 },
-                'leaf': { shape: 'triangle', color: '#f00' },
+                // 'leaf': { shape: 'triangle', color: '#f00' },
             },
             // defaultNodeStyle: {
             //     shape: 'hexagon',
@@ -227,7 +232,8 @@ export function createSampleGraph(): Pivotick {
 
             //         // return `<span style="${style}">${text}</span>`
             // },
-        }
+        },
+        mode: 'full',
     })
     return graph
 }

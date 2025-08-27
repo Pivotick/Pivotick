@@ -1,4 +1,5 @@
-import type { UIElement, UIManager } from "../UIManager";
+import type { UIElement, UIManager } from "../../UIManager";
+import "./sidebar.scss"
 
 export class Sidebar implements UIElement {
     private uiManager: UIManager;

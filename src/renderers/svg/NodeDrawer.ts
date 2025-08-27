@@ -1,8 +1,9 @@
 import { type Selection } from 'd3-selection'
 import { Node, type NodeData } from '../../Node'
 import type { Graph } from '../../Graph'
-import type { GraphRendererOptions, NodeStyle } from '../../GraphOptions'
+import type { GraphRendererOptions, NodeStyle, NodeStyleFinal } from '../../GraphOptions'
 import type { GraphSvgRenderer } from './GraphSvgRenderer'
+import { faGlyph, tryResolveString } from '../../utils/Getters'
 
 export class NodeDrawer {
 
@@ -87,9 +88,17 @@ export class NodeDrawer {
             shape: style?.shape ?? this.rendererOptions.defaultNodeStyle.shape,
             strokeColor: style?.strokeColor ?? this.rendererOptions.defaultNodeStyle.strokeColor,
             strokeWidth: style?.strokeWidth ?? this.rendererOptions.defaultNodeStyle.strokeWidth,
+            fontFamily: style?.fontFamily ?? this.rendererOptions.defaultNodeStyle.fontFamily,
             size: style?.size ?? this.rendererOptions.defaultNodeStyle.size,
             color: style?.color ?? this.rendererOptions.defaultNodeStyle.color,
+            textColor: style?.textColor ?? this.rendererOptions.defaultNodeStyle.textColor,
+            iconUnicode: style?.iconUnicode ?? this.rendererOptions.defaultNodeStyle.iconUnicode,
+            iconClass: style?.iconClass ?? this.rendererOptions.defaultNodeStyle.iconClass,
+            svgIcon: style?.svgIcon ?? this.rendererOptions.defaultNodeStyle.svgIcon,
+            imagePath: style?.imagePath ?? this.rendererOptions.defaultNodeStyle.imagePath,
+            text: style?.text ?? this.rendererOptions.defaultNodeStyle.text,
         }
+        
         return mergedStyle
     }
 
@@ -110,8 +119,15 @@ export class NodeDrawer {
                 shape: node.getStyle()?.shape ?? styleFromStyleMap?.shape,
                 strokeColor: node.getStyle()?.strokeColor ?? styleFromStyleMap?.strokeColor,
                 strokeWidth: node.getStyle()?.strokeWidth ?? styleFromStyleMap?.strokeWidth,
+                fontFamily: node.getStyle()?.fontFamily ?? styleFromStyleMap?.fontFamily,
                 size: node.getStyle()?.size ?? styleFromStyleMap?.size,
                 color: node.getStyle()?.color ?? styleFromStyleMap?.color,
+                textColor: node.getStyle()?.textColor ?? styleFromStyleMap?.textColor,
+                iconUnicode: node.getStyle()?.iconUnicode ?? styleFromStyleMap?.iconUnicode,
+                iconClass: node.getStyle()?.iconClass ?? styleFromStyleMap?.iconClass,
+                svgIcon: node.getStyle()?.svgIcon ?? styleFromStyleMap?.svgIcon,
+                imagePath: node.getStyle()?.imagePath ?? styleFromStyleMap?.imagePath,
+                text: node.getStyle()?.text ?? styleFromStyleMap?.text,
             }
         }
         return this.mergeNodeStylingOptions(styleFromNode)
@@ -171,6 +187,50 @@ export class NodeDrawer {
             default:
                 renderedNode.attr('r', style.size)
                 break
+        }
+
+        // ---- Content ----
+        if (style.iconUnicode || style.iconClass) {
+            nodeSelection
+                .append('text')
+                .attr('fill', style.textColor)
+                .attr('text-anchor', 'middle')
+                .attr('dominant-baseline', 'central')
+                .attr('font-size', style.size * 1.2)
+                .attr('class', 'icon ' + (style.iconUnicode ? 'icon-unicode' : (style.iconClass ?? '')))
+                .text(style.iconUnicode ?? (faGlyph(style.iconClass ?? '') ?? '☐'))
+        } else if (style.svgIcon) {
+            const svgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svgEl.innerHTML = style.svgIcon;
+            if (svgEl.children[0]?.nodeName === 'svg') { // Make sure the icon takes the full size of the container
+                svgEl.children[0].removeAttribute('width')
+                svgEl.children[0].removeAttribute('height')
+            }
+            nodeSelection
+                .append(() => svgEl)
+                .attr("x", -style.size * 0.7)
+                .attr("y", -style.size * 0.7)
+                .attr("width", style.size * 1.4)
+                .attr("height", style.size * 1.4)
+                .attr('color', style.strokeColor)
+        } else if (style.imagePath) {
+            const scale = 1.2
+            nodeSelection
+                .append('image')
+                .attr('xlink:href', style.imagePath)
+                .attr('x', -style.size * (scale/2))
+                .attr('y', -style.size * (scale/2))
+                .attr('width', style.size * scale)
+                .attr('height', style.size * scale)
+        } else if (style.text) {
+            nodeSelection
+                .append('text')
+                .attr('text-anchor', 'middle')
+                .attr('dominant-baseline', 'central')
+                .attr('font-size', style.size * 0.8)
+                .attr('font-family', style.fontFamily)
+                .attr('fill', style.textColor)
+                .text(style.text)
         }
     }
 

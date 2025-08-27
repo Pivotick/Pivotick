@@ -1,0 +1,39 @@
+@import "../../../styles/components/buttons.scss";
+
+.slide-panel {
+    background: #fff;
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.2);
+    transform: translateX(100%);
+    transition: transform 0.3s ease-in-out;
+
+    &.open {
+        transform: translateX(0);
+    }
+
+    .slide-panel__header {
+        padding: 0.75rem;
+        font-weight: bold;
+        border-bottom: 1px solid #ddd;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: center;
+
+        button.pivotick-close-button {
+            @include button-outline-danger;
+            padding: 0.25rem 0.5rem;
+            align-self: flex-start;
+            font-size: 1.2rem;
+            line-height: 0.8rem;
+            margin-left: auto;
+        }
+
+        ;
+    }
+
+    .slide-panel__content {
+        padding: 1rem;
+        overflow-y: auto;
+        height: calc(100% - 3rem);
+    }
+}

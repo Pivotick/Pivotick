@@ -1,0 +1,37 @@
+.pivotick-sidebar-container {
+    position: relative;
+    box-shadow: var(--pivotic-sidebar-layout-shadow-right);
+
+    .pivotick-sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 10px 8px;
+    
+        .pivotick-mainheader-panel {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            min-height: 60px;
+            background-color: var(--pivotick-sidebar-panelheader-bg);
+            border: var(--pivotick-sidebar-panel-border);
+            padding: 8px 10px;
+        }
+    
+        .pivotick-header-panel {
+            min-height: 40px;
+            background-color: var(--pivotick-sidebar-panelheader-bg);
+            border: var(--pivotick-sidebar-panel-border);
+            padding: 0px 10px;
+        }
+    
+        .pivotick-body-panel {
+            min-height: 60px;
+            background-color: var(--pivotick-sidebar-panelbody-bg);
+            border-left: var(--pivotick-sidebar-panel-border);
+            border-bottom: var(--pivotick-sidebar-panel-border);
+            border-right: var(--pivotick-sidebar-panel-border);
+            padding: 8px 10px;
+        }
+    }
+}
