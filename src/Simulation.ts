@@ -15,13 +15,13 @@ import { drag as d3Drag } from 'd3-drag'
 import type { Graph } from './Graph'
 import type { Node } from './Node'
 import type { Edge } from './Edge'
-import type { SimulationOptions } from './GraphOptions'
+import type { LayoutType, SimulationCallbacks, SimulationOptions, TreeLayoutOptions } from './GraphOptions'
 import { runSimulationInWorker } from './SimulationWorkerWrapper'
 import merge from 'lodash.merge'
 import { TreeLayout } from './plugins/layout/Tree'
 
 
-const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
+export const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
     d3Alpha: 1.0,
     d3AlphaMin: 0.001,
     d3AlphaDecay: 0.05,
@@ -34,12 +34,19 @@ const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
     d3CollideRadius: 12,
     d3CollideStrength: 1,
     d3CollideIterations: 1,
+    d3CenterStrength: 1,
 
     cooldownTime: 2000,
     warmupTicks: 'auto',
 
     layout: {
         type: 'force',
+    },
+    callbacks: {
+        onInit: () => {},
+        onStart: () => {},
+        onStop: () => {},
+        onTick: () => {},
     },
 }
 
@@ -55,6 +62,7 @@ export class Simulation {
     private graph: Graph
     private canvas: HTMLElement | undefined
     private layout
+    private selectedLayout: string | undefined
 
     private canvasBCR: DOMRect
     private animationFrameId: number | null = null
@@ -64,12 +72,18 @@ export class Simulation {
     private scale: number | null
 
     private options: SimulationOptions
+    private callbacks: Partial<SimulationCallbacks>
 
     private simulationForces: simulationForces
+    private scaledForces: Record<string, number> = {
+        d3ManyBodyStrength: DEFAULT_SIMULATION_OPTIONS.d3ManyBodyStrength,
+        d3CollideStrength: DEFAULT_SIMULATION_OPTIONS.d3CollideStrength,
+    }
 
     constructor(graph: Graph, options: Partial<SimulationOptions> = {}) {
         this.graph = graph
         this.options = merge({}, DEFAULT_SIMULATION_OPTIONS, options)
+        this.callbacks = this.options.callbacks
 
         this.canvas = this.graph.renderer.getCanvas()
         if (!this.canvas) {
@@ -81,11 +95,25 @@ export class Simulation {
         const simulationForces = Simulation.initSimulationForces(this.options, this.canvasBCR)
         this.simulation = simulationForces.simulation
         this.simulationForces = simulationForces.simulationForces
+        this.scaledForces.d3ManyBodyStrength = this.options.d3ManyBodyStrength || DEFAULT_SIMULATION_OPTIONS.d3ManyBodyStrength
+        this.scaledForces.d3CollideStrength = this.options.d3CollideStrength || DEFAULT_SIMULATION_OPTIONS.d3CollideStrength
 
-        if (this.options.layout?.type === 'tree') {
-            this.layout = new TreeLayout(this.graph, this.simulation, this.simulationForces, this.options.layout)
+        // this.selectedLayout = this.options.layout.type
+        if (this.options.layout.type === 'tree') {
+            this.layout = new TreeLayout(
+                this.graph,
+                this.simulation,
+                this.simulationForces,
+                this.options.layout.type === 'tree'
+                    ? (this.options.layout as TreeLayoutOptions)
+                    : undefined
+            )
         } else {
             this.scaleSimulationOptions()
+        }
+
+        if (this.callbacks.onInit) {
+            this.callbacks.onInit(this)
         }
     }
 
@@ -171,16 +199,31 @@ export class Simulation {
     }
 
     public scaleSimulationOptions(): void {
-        Simulation.scaleSimuationOptions(this.options, this.canvasBCR, this.graph.getNodeCount())
+        const scaled = Simulation.scaleSimulationOptions(this.options, this.canvasBCR, this.graph.getNodeCount())
+        this.scaledForces.d3ManyBodyStrength = scaled.d3ManyBodyStrength ?? DEFAULT_SIMULATION_OPTIONS.d3ManyBodyStrength
+        this.scaledForces.d3CollideStrength = scaled.d3CollideStrength ?? DEFAULT_SIMULATION_OPTIONS.d3CollideStrength
     }
 
-    public static scaleSimuationOptions(options: SimulationOptions, canvasBCR: DOMRect, nodeCount: number): SimulationOptions {
+    public static scaleSimulationOptions(options: SimulationOptions, canvasBCR: DOMRect, nodeCount: number): Partial<SimulationOptions> {
         const density = nodeCount / (canvasBCR.width * canvasBCR.height)
-        const scale = Math.min(3, 0.000075 / density) // or some other heuristic
+        const scale = Math.min(2, 0.000075 / density) // or some other heuristic
 
-        options.d3ManyBodyStrength = options.d3ManyBodyStrength * scale
-        options.d3CollideStrength = options.d3ManyBodyStrength * scale
-        return options
+        return {
+            d3ManyBodyStrength: options.d3ManyBodyStrength * scale,
+            d3CollideStrength: options.d3ManyBodyStrength * scale,
+        }
+    }
+
+    public applyScalledSimulationOptions(): void {
+        this.simulationForces.charge.strength(this.options.d3ManyBodyStrength)
+        this.simulationForces.collide.strength(this.options.d3CollideStrength)
+    }
+
+    /**
+     * Pause the simulation
+     */
+    public pause() {
+        this.engineRunning = false
     }
 
     /**
@@ -197,6 +240,9 @@ export class Simulation {
     public async start() {
         await this.runSimulationWorker()
         this.engineRunning = true
+        if (this.callbacks.onStart) {
+            this.callbacks.onStart(this)
+        }
         if (this.animationFrameId === null) {
             this.startAnimationLoop()
         }
@@ -211,6 +257,9 @@ export class Simulation {
             this.animationFrameId = null
         }
         this.simulation.stop()
+        if (this.callbacks.onStop) {
+            this.callbacks.onStop(this)
+        }
     }
 
     /**
@@ -241,10 +290,34 @@ export class Simulation {
             ) {
                 this.engineRunning = false
                 this.simulation.stop()
+                if (this.callbacks.onStop) {
+                    this.callbacks.onStop(this)
+                }
             }
             this.simulation.tick()
             this.graph.tickUpdate()
+            if (this.callbacks.onTick) {
+                this.callbacks.onTick(this)
+            }
         }
+    }
+
+    /**
+     * Returns a promise that resolves when the simulation stops naturally.
+     * Useful for performing actions (like fitAndCenter) after stabilization.
+     */
+    public waitForSimulationStop(): Promise<void> {
+        return new Promise(resolve => {
+            const originalOnStop = this.callbacks.onStop;
+            this.callbacks.onStop = (sim: Simulation) => {
+                // Call original callback if it exists
+                if (originalOnStop) originalOnStop(sim);
+                // Restore original callback
+                this.callbacks.onStop = originalOnStop;
+                // Resolve the promise
+                resolve();
+            };
+        });
     }
 
     private async runSimulationWorker() {
@@ -259,10 +332,11 @@ export class Simulation {
             this.graph.updateLayoutProgress(progress)
         }
 
+        const { callbacks, ...optionsWithoutCBs } = this.options;
         const { nodes: updatedNodes } = await runSimulationInWorker(
             nodesCopy,
             edgesCopy,
-            this.options,
+            optionsWithoutCBs,
             canvasBCR,
             onWorkerProgress
         )
@@ -310,5 +384,31 @@ export class Simulation {
 
     public getForceSimulation(): typeof this.simulationForces {
         return this.simulationForces
+    }
+
+    public async changeLayout(type: LayoutType, layoutOptions: any = {}) {
+        if (this.options.layout?.type == type)
+            return
+
+        if (this.layout) {
+            this.layout?.unregisterLayout()
+            this.layout = undefined
+        }
+
+        if (type === 'force') {
+            this.applyScalledSimulationOptions()
+        } else if (type === 'tree') {
+            this.layout = new TreeLayout(this.graph, this.simulation, this.simulationForces, layoutOptions)
+        } else if (type === 'tree-radial') {
+            this.layout = new TreeLayout(this.graph, this.simulation, this.simulationForces, layoutOptions)
+        }
+        this.options.layout.type = type
+        this.update()
+        this.pause()
+        await this.runSimulationWorker()
+        this.restart()
+
+        await this.waitForSimulationStop()
+        this.graph.renderer.fitAndCenter()
     }
 }

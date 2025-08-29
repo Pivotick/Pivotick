@@ -1,5 +1,5 @@
 import type { ForceLink as d3ForceLinkType } from 'd3-force'
-import { Simulation } from './Simulation'
+import { DEFAULT_SIMULATION_OPTIONS, Simulation } from './Simulation'
 import { Node, type NodeData, type Node as NodeType } from './Node'
 import { Edge, type EdgeData, type Edge as EdgeType } from './Edge'
 import type { SimulationOptions } from './GraphOptions'
@@ -38,9 +38,9 @@ self.onmessage = (e: MessageEvent<WorkerInput>) => {
     const nodeMap = new Map<string, Node>(nodes.map(n => [n.id, n]))
 
     if (options.layout?.type === 'force') {
-        const updatedOptions = Simulation.scaleSimuationOptions(options, canvasBCR, nodeMap.size)
-        options.d3ManyBodyStrength = updatedOptions.d3ManyBodyStrength
-        options.d3CollideStrength = updatedOptions.d3ManyBodyStrength
+        const updatedOptions = Simulation.scaleSimulationOptions(options, canvasBCR, nodeMap.size)
+        options.d3ManyBodyStrength = updatedOptions.d3ManyBodyStrength ?? DEFAULT_SIMULATION_OPTIONS.d3ManyBodyStrength
+        options.d3CollideStrength = updatedOptions.d3ManyBodyStrength ?? DEFAULT_SIMULATION_OPTIONS.d3ManyBodyStrength
     }
 
     const {simulation, simulationForces} = Simulation

@@ -13,7 +13,6 @@ export class GraphNavigation implements UIElement {
     mount(container: HTMLElement | undefined) {
         if (!container) return;
 
-
         const template = document.createElement("template");
         template.innerHTML = `
   <div class="pivotick-graphnavigation">

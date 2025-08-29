@@ -2,6 +2,8 @@ import {
     forceRadial as d3ForceRadial,
     forceX as d3ForceX,
     forceY as d3ForceY,
+    forceCenter as d3ForceCenter,
+    type SimulationNodeDatum,
 } from 'd3-force'
 import { type Simulation as d3Simulation } from 'd3-force'
 import { hierarchy, type HierarchyNode, tree } from 'd3-hierarchy'
@@ -10,6 +12,7 @@ import type { Graph } from '../../Graph'
 import type { simulationForces } from '../../Simulation'
 import type { Node } from '../../Node'
 import type { Edge } from '../../Edge'
+import type { SimulationOptions } from '../../GraphOptions'
 
 export interface TreeLayoutOptions {
     rootId: string | undefined
@@ -38,6 +41,7 @@ export class TreeLayout {
     private simulationForces: simulationForces
     private options: Required<TreeLayoutOptions>
 
+    private originalForceStrength
     private canvasBCR!: DOMRect
     private width: number
     private height: number
@@ -50,12 +54,17 @@ export class TreeLayout {
         graph: Graph,
         simulation: d3Simulation<Node, undefined>,
         simulationForces: typeof this.simulationForces,
-        partialOptions: Partial<TreeLayoutOptions> = {}
+        partialOptions: Partial<TreeLayoutOptions> = {},
     ) {
         this.graph = graph
         this.simulation = simulation
         this.simulationForces = simulationForces
         this.options = merge({}, DEFAULT_TREE_LAYOUT_OPTIONS, partialOptions)
+        this.originalForceStrength = {
+            link: this.simulationForces.link.strength(),
+            charge: this.simulationForces.charge.strength(),
+            center: this.simulationForces.center.strength(),
+        }
 
         this.width = 0
         this.height = 0
@@ -111,6 +120,12 @@ export class TreeLayout {
         }
     }
 
+    private unsetNodePositions(): void {
+        this.graph.getMutableNodes().forEach(mutableNode => {
+            delete mutableNode.fy
+        })
+    }
+
     private registerForces(): void {
         const strength = this.options.strength ?? 0.1
         if (this.options.radial) {
@@ -130,6 +145,18 @@ export class TreeLayout {
         }
 
         TreeLayout.adjustOtherSimulationForces(this.simulationForces, this.options)
+    }
+
+    public unregisterLayout(): void {
+        this.unregisterForces()
+        this.unsetNodePositions()
+    }
+
+    private unregisterForces(): void {
+        this.simulation.force('tree-radial', null)
+        this.simulation.force('tree-y', null)
+        this.simulation.force('tree-x', null)
+        TreeLayout.resetOtherSimulationForces(this.simulationForces, this.originalForceStrength)
     }
 
     static registerForcesOnSimulation(
@@ -172,11 +199,18 @@ export class TreeLayout {
         if (options?.radial) {
             simulationForces.link.strength(0)
             simulationForces.charge.strength(0)
+            // simulationForces.center.strength(0.00001)
         } else {
             simulationForces.link.strength(0)
             simulationForces.charge.strength(0)
             simulationForces.center.strength(0.00001)
         }
+    }
+
+    static resetOtherSimulationForces(simulationForces: simulationForces, originalForceStrength: { link: any; charge: any; center: any }): void {
+        simulationForces.link.strength(originalForceStrength.link)
+        simulationForces.charge.strength(originalForceStrength.charge)
+        simulationForces.center.strength(originalForceStrength.center)
     }
 
     static simulationDone(

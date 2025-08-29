@@ -47,10 +47,7 @@ export abstract class GraphRenderer {
 
     protected toggleLayoutProgressVisibility(): void {
         if (this.progressBar && this.progressBar.parentNode) {
-            (this.progressBar.parentNode as Element).setAttribute(
-                'visibility',
-                this.layoutProgress >= 0 && this.layoutProgress < 1 || 1 ? 'visible' : 'hidden'
-            )
+            (this.progressBar.parentNode as SVGGElement).classList.toggle('hidden', this.layoutProgress >= 1)
         }
     }
 

@@ -8,6 +8,7 @@ export class Layout implements UIElement {
     public toolbar?: HTMLDivElement;
     // public slidePanel?: HTMLDivElement;
     public graphnavigation?: HTMLDivElement;
+    public graphcontrols?: HTMLDivElement;
 
     constructor() { }
 
@@ -35,6 +36,10 @@ export class Layout implements UIElement {
             this.graphnavigation = document.createElement("div")
             this.graphnavigation.className = "pivotick-graphnavigation-container"
             this.canvas.appendChild(this.graphnavigation)
+
+            this.graphcontrols = document.createElement("div")
+            this.graphcontrols.className = "pivotick-graphcontrols-container"
+            this.canvas.appendChild(this.graphcontrols)
         }
 
         container.appendChild(this.layout);

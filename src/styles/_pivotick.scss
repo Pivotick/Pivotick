@@ -10,7 +10,9 @@
 }
 
 .pivotick-loading-progress-bar {
-    visibility: hidden;
+    &.hidden {
+        visibility: hidden;
+    }
 
     rect.background {
         fill: #fafafa;

@@ -1,6 +1,7 @@
 import { type Selection } from 'd3-selection'
 import { Node } from './Node'
 import { Edge } from './Edge'
+import type { Simulation } from './Simulation'
 
 export interface InterractionCallbacks<TElement = unknown> {
     /**
@@ -167,10 +168,31 @@ export interface SimulationOptions {
     d3CollideRadius: number /** @default 12 */
     d3CollideStrength: number /** @default 1 */
     d3CollideIterations: number /** @default 1 */
+    d3CenterStrength: number /** @default 1 */
     cooldownTime: number /** @default 2000 */
     warmupTicks: number | 'auto' /** @default auto */
 
-    layout?: LayoutOptions
+    layout: LayoutOptions
+    callbacks?: SimulationCallbacks
+}
+
+export interface SimulationCallbacks {
+    /**
+     * Called when the simulation initialize
+     */
+    onInit?: (simulation: Simulation) => void
+    /**
+     * Called when the simulation starts
+     */
+    onStart?: (simulation: Simulation) => void
+    /**
+     * Called when the simulation stops
+     */
+    onStop?: (simulation: Simulation) => void
+    /**
+     * Called when the simulation ticks
+     */
+    onTick?: (simulation: Simulation) => void
 }
 
 export interface graphData {
@@ -178,7 +200,7 @@ export interface graphData {
     edges: Array<Edge>,
 }
 
-export type LayoutType = 'force' | 'tree'
+export type LayoutType = 'force' | 'tree' | 'tree-radial'
 
 
 export interface BaseLayoutOptions {
@@ -192,7 +214,7 @@ export interface ForceLayoutOptions extends BaseLayoutOptions {
     type: 'force'
 }
 export interface TreeLayoutOptions extends BaseLayoutOptions {
-    type: 'tree'
+    type: 'tree' | 'tree-radial'
     rootId?: string /** @default: undefined */
     strength?: number /** @default: 0.1 */
     radial?: boolean /** @default: false */

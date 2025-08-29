@@ -1,5 +1,6 @@
 import { Graph } from '../Graph';
 import type { GraphMode } from '../GraphOptions';
+import { GraphControls } from './elements/GraphControls/GraphControls';
 import { GraphNavigation } from './elements/GraphNavigation/GraphNavigation';
 import { Layout } from './elements/Layout'
 import { Sidebar } from './elements/Sidebar/Sidebar'
@@ -30,6 +31,7 @@ export class UIManager {
     public sidebar?: Sidebar;
     public toolbar?: Toolbar;
     public graphNaviation?: GraphNavigation;
+    public graphControls?: GraphControls;
 
     constructor(graph: Graph, container: HTMLElement, options: UIManagerOptions = {}) {
         this.graph = graph;
@@ -124,6 +126,8 @@ export class UIManager {
     }
 
     private buildUIGraphControls() {
+        this.graphControls = new GraphControls(this)
+        this.graphControls.mount(this.layout?.graphcontrols)
     }
 
     private buildSlidePanel() {
@@ -155,5 +159,6 @@ export class UIManager {
         this.toolbar?.afterMount()
         this.sidebar?.afterMount()
         this.graphNaviation?.afterMount()
+        this.graphControls?.afterMount()
     }
 }
