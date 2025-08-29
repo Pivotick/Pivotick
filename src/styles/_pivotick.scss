@@ -31,7 +31,7 @@
     }
     rect.fill {
         height: 8px;
-        fill: #3f51b5;
+        fill: var(--pivotick-primary-bg-color);
         rx: 4;
         ry: 4;
     }
