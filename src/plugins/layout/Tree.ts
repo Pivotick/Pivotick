@@ -17,8 +17,9 @@ import type { SimulationOptions } from '../../GraphOptions'
 export interface TreeLayoutOptions {
     rootId: string | undefined
     strength: number // Force strength (default 0.1)
-    radial: boolean  // Use radial tree layout
+    radial: boolean  /** @default: false Use radial tree layout */
     radialGap: number /** @default: 750 */
+    horizontal: boolean  /** @default: false Make the tree layour horizontal instead of vertical */
 }
 
 const DEFAULT_TREE_LAYOUT_OPTIONS: TreeLayoutOptions = {
@@ -26,6 +27,7 @@ const DEFAULT_TREE_LAYOUT_OPTIONS: TreeLayoutOptions = {
     strength: 0.25,
     radial: false,
     radialGap: 750,
+    horizontal: false,
 }
 
 export interface TreeNode extends Node {
@@ -72,9 +74,13 @@ export class TreeLayout {
         this.positionedNodesByID = new Map()
         this.levels = {}
 
-        this.setSizes()
-        this.update()
-        this.registerForces()
+        const nodes = this.graph.getNodes()
+        const edges = this.graph.getEdges()
+        if (!TreeLayout.hasCycle(nodes, edges)) {
+            this.setSizes()
+            this.update()
+            this.registerForces()
+        }
     }
 
     public update(): void {
@@ -111,10 +117,16 @@ export class TreeLayout {
 
                     node.x = r * Math.cos(angle - Math.PI / 2)
                     node.y = r * Math.sin(angle - Math.PI / 2)
+                } else if (options.horizontal) {
+                    node.x = positionedNode.y
+                    node.fx = positionedNode.y
+                    node.y = positionedNode.x
+                    delete node.fy
                 } else {
                     node.x = positionedNode.x
                     node.y = positionedNode.y
                     node.fy = positionedNode.y
+                    delete node.fx
                 }
             }
         }
@@ -123,6 +135,7 @@ export class TreeLayout {
     private unsetNodePositions(): void {
         this.graph.getMutableNodes().forEach(mutableNode => {
             delete mutableNode.fy
+            delete mutableNode.fx
         })
     }
 
@@ -137,10 +150,18 @@ export class TreeLayout {
             this.simulation.force('tree-radial', radialForce)
         } else {
             this.simulation.force('tree-y', d3ForceY((node: Node) => {
-                return this.positionedNodesByID.get(node.id)?.y ?? 0
+                if (this.options.horizontal) {
+                    return this.positionedNodesByID.get(node.id)?.x ?? 0
+                } else {
+                    return this.positionedNodesByID.get(node.id)?.y ?? 0
+                }
             }).strength(strength))
             this.simulation.force('tree-x', d3ForceX((node: Node) => {
-                return this.positionedNodesByID.get(node.id)?.x ?? 0
+                if (this.options.horizontal) {
+                    return this.positionedNodesByID.get(node.id)?.y ?? 0
+                } else {
+                    return this.positionedNodesByID.get(node.id)?.x ?? 0
+                }
             }).strength(strength))
         }
 
@@ -172,7 +193,11 @@ export class TreeLayout {
         const width = canvasBCR.width
         const height = canvasBCR.height
         const center = [width / 2, height / 2]
-        
+
+        if (TreeLayout.hasCycle(nodes, edges)) {
+            return
+        }
+
         const { levels } = TreeLayout.buildLevels(nodes, edges)
         const { nodeById: positionedNodesByID } = TreeLayout.buildTree(nodes, edges, options, canvasBCR)
 
@@ -185,10 +210,18 @@ export class TreeLayout {
             simulation.force('tree-radial', radialForce)
         } else {
             simulation.force('tree-y', d3ForceY((node: Node) => {
-                return positionedNodesByID.get(node.id)?.y ?? 0
+                if (options.horizontal) {
+                    return positionedNodesByID.get(node.id)?.x ?? 0
+                } else {
+                    return positionedNodesByID.get(node.id)?.y ?? 0
+                }
             }).strength(strength))
             simulation.force('tree-x', d3ForceX((node: Node) => {
-                return positionedNodesByID.get(node.id)?.x ?? 0
+                if (options.horizontal) {
+                    return positionedNodesByID.get(node.id)?.y ?? 0
+                } else {
+                    return positionedNodesByID.get(node.id)?.x ?? 0
+                }
             }).strength(strength))
         }
 
@@ -222,9 +255,13 @@ export class TreeLayout {
     ): void {
         const options = merge({}, DEFAULT_TREE_LAYOUT_OPTIONS, partialOptions)
         for (const node of nodes) {
-            if (!options.radial) {
-                node.fy = node.y
-            }
+            if (options.horizontal) {
+                node.fx = node.x;
+                delete node.fy;
+            } else {
+                node.fy = node.y;
+                delete node.fx;
+              }
         }
     }
 
@@ -245,6 +282,16 @@ export class TreeLayout {
                 nodeById: new Map<string, HierarchyNode<TreeNode>>(),
             }
         }
+
+        if (TreeLayout.hasCycle(nodes, edges)) {
+            console.warn("Cycle detected in graph. Tree layout will not be computed.");
+            return {
+                root: null,
+                nodes: [],
+                nodeById: new Map<string, HierarchyNode<TreeNode>>(),
+            }
+        }
+
         const nodeMap = new Map<string, TreeNode>()
         for (const node of nodes) {
             const treeNode = node as TreeNode
@@ -278,13 +325,13 @@ export class TreeLayout {
         if (options.radial) {
             treeLayout.size([width, height])
         } else {
-            treeLayout.nodeSize([50, 100])
+            treeLayout.nodeSize(options.horizontal ? [100, 50] : [50, 100])
                 .separation((a, b) => {
                     const siblingsCount = a.parent?.children?.length ?? 1
                     return a.parent === b.parent ? 1.5 / siblingsCount : 1.5
                 })
         }
-            
+
         const rootHierarchy = hierarchy(root)
         const treeRoot = treeLayout(rootHierarchy)
 
@@ -389,5 +436,43 @@ export class TreeLayout {
             if (!targets.has(node.id)) return node.id
         }
         return nodes[0].id
+    }
+
+    /**
+     * Detects whether a directed graph contains at least one cycle.
+     *
+     * This function performs a depth-first search (DFS) across all nodes in the graph.
+     *
+     * @param nodes - The list of graph nodes to inspect.
+     * @param edges - The list of directed graph edges connecting the nodes.
+     * @returns `true` if the graph contains a cycle, otherwise `false`.
+     */
+    private static hasCycle(nodes: Node[], edges: Edge[]): boolean {
+        const adj: Record<string, string[]> = {}
+        for (const node of nodes) {
+            adj[node.id] = []
+        }
+        for (const { source, target } of edges) {
+            adj[source.id].push(target.id)
+        }
+
+        const visited = new Set<string>()
+        const recStack = new Set<string>()
+
+        const dfs = (nodeId: string): boolean => {
+            if (!visited.has(nodeId)) {
+                visited.add(nodeId)
+                recStack.add(nodeId)
+
+                for (const neighbor of adj[nodeId]) {
+                    if (!visited.has(neighbor) && dfs(neighbor)) return true
+                    else if (recStack.has(neighbor)) return true
+                }
+            }
+            recStack.delete(nodeId)
+            return false
+        }
+
+        return nodes.some(node => dfs(node.id))
     }
 }

@@ -387,9 +387,6 @@ export class Simulation {
     }
 
     public async changeLayout(type: LayoutType, layoutOptions: any = {}) {
-        if (this.options.layout?.type == type)
-            return
-
         if (this.layout) {
             this.layout?.unregisterLayout()
             this.layout = undefined

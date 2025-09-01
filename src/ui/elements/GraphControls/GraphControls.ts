@@ -23,8 +23,14 @@ export class GraphControls implements UIElement {
             </svg>
         </button>
         <div class="pivotick-divider"></div>
-        <button id="pivotick-graphcontrols-layout-tree" class="pivotick-graphcontrols-layout-tree" title="Change Graph Layout to Tree">
+        <button id="pivotick-graphcontrols-layout-tree-v" class="pivotick-graphcontrols-layout-tree" title="Change Graph Layout to Tree">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 20a2 2 0 1 0-4 0a2 2 0 0 0 4 0M16 4a2 2 0 1 0-4 0a2 2 0 0 0 4 0m0 16a2 2 0 1 0-4 0a2 2 0 0 0 4 0m-5-8a2 2 0 1 0-4 0a2 2 0 0 0 4 0m10 0a2 2 0 1 0-4 0a2 2 0 0 0 4 0M5.058 18.306l2.88-4.606m2.123-3.397l2.877-4.604m-2.873 8.006l2.876 4.6M15.063 5.7l2.881 4.61" />
+            </svg>
+        </button>
+        <div class="pivotick-divider"></div>
+        <button id="pivotick-graphcontrols-layout-tree-h" class="pivotick-graphcontrols-layout-tree" title="Change Graph Layout to Tree">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="transform: rotate(-90deg);">
                 <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 20a2 2 0 1 0-4 0a2 2 0 0 0 4 0M16 4a2 2 0 1 0-4 0a2 2 0 0 0 4 0m0 16a2 2 0 1 0-4 0a2 2 0 0 0 4 0m-5-8a2 2 0 1 0-4 0a2 2 0 0 0 4 0m10 0a2 2 0 1 0-4 0a2 2 0 0 0 4 0M5.058 18.306l2.88-4.606m2.123-3.397l2.877-4.604m-2.873 8.006l2.876 4.6M15.063 5.7l2.881 4.61" />
             </svg>
         </button>
@@ -50,14 +56,18 @@ export class GraphControls implements UIElement {
     afterMount() {
         if (!this.navigation) return;
         const organicButton = this.navigation.querySelector("#pivotick-graphcontrols-layout-organic");
-        const treeButton = this.navigation.querySelector("#pivotick-graphcontrols-layout-tree");
+        const treeVButton = this.navigation.querySelector("#pivotick-graphcontrols-layout-tree-v");
+        const treeHButton = this.navigation.querySelector("#pivotick-graphcontrols-layout-tree-h");
         const radialButton = this.navigation.querySelector("#pivotick-graphcontrols-layout-tree-radial");
 
         organicButton?.addEventListener("click", () => {
             this.uiManager.graph.simulation.changeLayout('force')
         });
-        treeButton?.addEventListener("click", () => {
-            this.uiManager.graph.simulation.changeLayout('tree')
+        treeVButton?.addEventListener("click", () => {
+            this.uiManager.graph.simulation.changeLayout('tree', { horizontal: false })
+        });
+        treeHButton?.addEventListener("click", () => {
+            this.uiManager.graph.simulation.changeLayout('tree', { horizontal: true })
         });
         radialButton?.addEventListener("click", () => {
             this.uiManager.graph.simulation.changeLayout('tree-radial', { radial: true })
