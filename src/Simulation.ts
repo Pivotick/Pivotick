@@ -62,14 +62,12 @@ export class Simulation {
     private graph: Graph
     private canvas: HTMLElement | undefined
     private layout
-    private selectedLayout: string | undefined
 
     private canvasBCR: DOMRect
     private animationFrameId: number | null = null
     private startSimulationTime: number = 0
     private engineRunning: boolean = false
     private dragInProgress: boolean = false
-    private scale: number | null
 
     private options: SimulationOptions
     private callbacks: Partial<SimulationCallbacks>
@@ -83,14 +81,13 @@ export class Simulation {
     constructor(graph: Graph, options: Partial<SimulationOptions> = {}) {
         this.graph = graph
         this.options = merge({}, DEFAULT_SIMULATION_OPTIONS, options)
-        this.callbacks = this.options.callbacks
+        this.callbacks = this.options.callbacks ?? {}
 
         this.canvas = this.graph.renderer.getCanvas()
         if (!this.canvas) {
             throw new Error('Canvas element is not defined in the graph renderer.')
         }
         this.canvasBCR = this.canvas.getBoundingClientRect()
-        this.scale = null
 
         const simulationForces = Simulation.initSimulationForces(this.options, this.canvasBCR)
         this.simulation = simulationForces.simulation
@@ -98,7 +95,6 @@ export class Simulation {
         this.scaledForces.d3ManyBodyStrength = this.options.d3ManyBodyStrength || DEFAULT_SIMULATION_OPTIONS.d3ManyBodyStrength
         this.scaledForces.d3CollideStrength = this.options.d3CollideStrength || DEFAULT_SIMULATION_OPTIONS.d3CollideStrength
 
-        // this.selectedLayout = this.options.layout.type
         if (this.options.layout.type === 'tree') {
             this.layout = new TreeLayout(
                 this.graph,
