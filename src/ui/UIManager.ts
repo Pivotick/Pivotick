@@ -6,6 +6,7 @@ import { Layout } from './elements/Layout'
 import { Sidebar } from './elements/Sidebar/Sidebar'
 import { SlidePanel } from './elements/SlidePanel/SlidePanel';
 import { Toolbar } from './elements/Toolbar/Toolbar';
+import type { Notification } from './Notifier';
 
 export interface UIManagerOptions {
     mode?: GraphMode;
@@ -160,5 +161,44 @@ export class UIManager {
         this.sidebar?.afterMount()
         this.graphNaviation?.afterMount()
         this.graphControls?.afterMount()
+    }
+
+    /**
+   * Show a notification in the UI.
+   * 
+   * @param notification - The notification to display
+   */
+    public showNotification(notification: Notification): void {
+        const { level, title, message } = notification
+        const container = this.layout?.notification;
+        if (!container) return
+
+        const template = document.createElement("template");
+        template.innerHTML = `
+  <div class="pivotick-toast pivotick-toast-${level}">
+    <div class="pivotick-toast-title">
+    </div>
+    <div class="pivotick-toast-body">
+    </div>
+  </div>
+`
+        const toast = template.content.firstElementChild as HTMLDivElement
+        const titleEl = toast.querySelector(".pivotick-toast-title")
+        const bodyEl = toast.querySelector(".pivotick-toast-body")
+
+        if (titleEl) titleEl.textContent = title
+        if (bodyEl) bodyEl.textContent = message ?? ""
+
+        container.appendChild(toast)
+        requestAnimationFrame(() => {
+            toast.classList.add("show")
+        })
+
+        setTimeout(() => {
+            toast.classList.remove("show")
+            toast.addEventListener("transitionend", () => {
+                toast.remove()
+            }, { once: true })
+        }, 4000);
     }
 }

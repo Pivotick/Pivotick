@@ -6,6 +6,7 @@ export class Layout implements UIElement {
     public canvas?: HTMLDivElement;
     public sidebar?: HTMLDivElement;
     public toolbar?: HTMLDivElement;
+    public notification?: HTMLDivElement;
     // public slidePanel?: HTMLDivElement;
     public graphnavigation?: HTMLDivElement;
     public graphcontrols?: HTMLDivElement;
@@ -19,6 +20,10 @@ export class Layout implements UIElement {
         this.canvas = document.createElement("div")
         this.canvas.className = "pivotick-canvas-container"
         this.layout.appendChild(this.canvas)
+
+        this.notification = document.createElement("div")
+        this.notification.className = "pivotick-notification-container"
+        this.canvas.appendChild(this.notification)
 
         if (mode === 'full') {
             this.sidebar = document.createElement("div")

@@ -196,7 +196,7 @@ export class EdgeDrawer {
             }
 
             let midX, midY
-            if (pathEl) {
+            if (pathEl && pathEl.getTotalLength() > 0) {
                 const length = pathEl.getTotalLength()
                 const point = pathEl.getPointAtLength(length / 2)
                 midX = point.x

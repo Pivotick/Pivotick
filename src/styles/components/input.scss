@@ -13,7 +13,11 @@
     &:focus {
         outline: none;
     }
-    
+
+    &[type="search"]::-webkit-search-cancel-button {
+        -webkit-appearance: none;
+        appearance: none;
+    }
 }
 
 

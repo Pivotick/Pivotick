@@ -1,13 +1,25 @@
+@import 'utils';
+
+$primary: #2563EB;
+$secondary: #7C3AED;
+$info: #25B6EB;
+$warning: #F59E0B;
+$danger: #DC2626;
+$success: #16A34A;
+
+$toast-text-success: text-color($success);
+
 :root {
     --pivotick-bg: #ffffff;
     --pivotick-border-color: #ccc;
     --pivotick-text-color: #000;
     --pivotick-text-color-softer: #333;
-    --pivotick-primary-bg-color: #2563EB;
-    --pivotick-secondary-bg-color: #7C3AED;
-    --pivotick-info-bg-color: #25b6eb;
-    --pivotick-warning-bg-color: #F59E0B;
-    --pivotick-danger-bg-color: #DC2626;
+    --pivotick-primary-bg-color: #{$primary};
+    --pivotick-secondary-bg-color: #{$secondary};
+    --pivotick-info-bg-color: #{$info};
+    --pivotick-warning-bg-color: #{$warning};
+    --pivotick-danger-bg-color: #{$danger};
+    --pivotick-success-bg-color: #{$success};
 
 
     /* Sidebar */
@@ -16,10 +28,23 @@
     --pivotick-sidebar-panel-border: 1px solid var(--pivotick-border-color);
     --pivotic-sidebar-layout-shadow-right: rgba(0, 0, 0, 0.07) 2px 0px 3px 0px,
                                            rgba(0, 0, 0, 0.04) 3px 0px 2px 0px;
-    // --pivotic-sidebar-layout-shadow-bottom: rgba(0, 0, 0, 0.07) 0px 2px 3px 0px,
-    //                                         rgba(0, 0, 0, 0.04) 0px 3px 2px 0px;
     --pivotic-sidebar-layout-shadow-bottom: rgba(0, 0, 0, 0.07) 3px 2px 3px 0px,
                                             rgba(0, 0, 0, 0.04) 2px 3px 2px 0px;
+
+    /* Graph notification */
+    --pivotick-toast-bg-color-primary: #{mix(white, $primary, 40%)};
+    --pivotick-toast-bg-color-secondary: #{mix(white, $secondary, 40%)};
+    --pivotick-toast-bg-color-info: #{mix(white, $info, 40%)};
+    --pivotick-toast-bg-color-warning: #{mix(white, $warning, 40%)};
+    --pivotick-toast-bg-color-danger: #{mix(white, $danger, 40%)};
+    --pivotick-toast-bg-color-success: #{mix(white, $success, 40%)};
+
+    --pivotick-toast-text-color-primary: #{mix(black, $primary, 70%)};
+    --pivotick-toast-text-color-secondary: #{mix(black, $secondary, 70%)};
+    --pivotick-toast-text-color-info: #{mix(black, $info, 70%)};
+    --pivotick-toast-text-color-warning: #{mix(black, $warning, 70%)};
+    --pivotick-toast-text-color-danger: #{mix(black, $danger, 70%)};
+    --pivotick-toast-text-color-success: #{mix(black, $success, 70%)};
 
     /* Graph canvas */
     --pivotick-graph-grid-color: #f5f5f5;

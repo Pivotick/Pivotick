@@ -1,4 +1,4 @@
-@import 'components/buttons.scss';
+@use 'components/buttons.scss';
 
 .pivotick-graph-container {
     width: 100%;
@@ -61,6 +61,16 @@
         width: 300px;
         height: 100%;
         z-index: 1000;
+    }
+
+    .pivotick-notification-container {
+        position: absolute;
+        top: 1em;
+        right: 3em;
+        max-width: 280px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
     }
 }
 

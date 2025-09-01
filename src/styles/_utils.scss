@@ -1,0 +1,8 @@
+
+@function text-color($bg) {
+    $r: red($bg);
+    $g: green($bg);
+    $b: blue($bg);
+    $luminance: 0.299 * $r + 0.587 * $g + 0.114 * $b;
+    @return if($luminance > 186, black, white);
+}

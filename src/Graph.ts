@@ -5,12 +5,14 @@ import { createGraphRenderer } from './renderers/GraphRendererFactory'
 import type { GraphRenderer } from './GraphRenderer'
 import { Simulation } from './Simulation'
 import { UIManager, type UIManagerOptions } from './ui/UIManager'
+import { Notifier } from './ui/Notifier'
 
 
 export class Graph {
     private nodes: Map<string, Node> = new Map()
     private edges: Map<string, Edge> = new Map()
     public UIManager: UIManager
+    public Notifier: Notifier
     public renderer: GraphRenderer
     public simulation: Simulation
     private options: GraphOptions
@@ -34,6 +36,7 @@ export class Graph {
         container.appendChild(appContainer)
 
         this.UIManager = new UIManager(this, appContainer, UIManagerOptions)
+        this.Notifier = new Notifier(this, this.UIManager)
         this.renderer = createGraphRenderer(this, appContainer, rendererOptions)
         this.renderer.setupRendering()
 

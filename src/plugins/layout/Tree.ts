@@ -76,11 +76,13 @@ export class TreeLayout {
 
         const nodes = this.graph.getNodes()
         const edges = this.graph.getEdges()
-        if (!TreeLayout.hasCycle(nodes, edges)) {
-            this.setSizes()
-            this.update()
-            this.registerForces()
+        if (TreeLayout.hasCycle(nodes, edges)) {
+            this.graph.Notifier.warning("Tree layout unavailable", "The graph contains a cycle, so it cannot be displayed as a tree.")
+            return
         }
+        this.setSizes()
+        this.update()
+        this.registerForces()
     }
 
     public update(): void {
