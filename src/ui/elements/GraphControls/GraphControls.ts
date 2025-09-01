@@ -1,3 +1,5 @@
+import type { Graph } from "../../../Graph";
+import hasCycle from "../../../plugins/analytics/cycle";
 import type { UIElement, UIManager } from "../../UIManager";
 import "./graphControls.scss"
 
@@ -72,5 +74,24 @@ export class GraphControls implements UIElement {
         radialButton?.addEventListener("click", () => {
             this.uiManager.graph.simulation.changeLayout('tree-radial', { radial: true })
         });
+    }
+
+    graphReady() {
+        if (!this.navigation) return;
+        const treeVButton = this.navigation.querySelector("#pivotick-graphcontrols-layout-tree-v");
+        const treeHButton = this.navigation.querySelector("#pivotick-graphcontrols-layout-tree-h");
+        const radialButton = this.navigation.querySelector("#pivotick-graphcontrols-layout-tree-radial");
+
+        const nodes = this.uiManager.graph.getNodes()
+        const edges = this.uiManager.graph.getEdges()
+        if (hasCycle(nodes, edges)) {
+            treeVButton?.setAttribute('disabled', 'disabled')
+            treeHButton?.setAttribute('disabled', 'disabled')
+            radialButton?.setAttribute('disabled', 'disabled')
+        } else {
+            treeVButton?.removeAttribute('disabled')
+            treeHButton?.removeAttribute('disabled')
+            radialButton?.removeAttribute('disabled')
+        }
     }
 }

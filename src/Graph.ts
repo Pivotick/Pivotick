@@ -36,7 +36,7 @@ export class Graph {
         container.appendChild(appContainer)
 
         this.UIManager = new UIManager(this, appContainer, UIManagerOptions)
-        this.Notifier = new Notifier(this, this.UIManager)
+        this.Notifier = new Notifier(this)
         this.renderer = createGraphRenderer(this, appContainer, rendererOptions)
         this.renderer.setupRendering()
 
@@ -59,6 +59,7 @@ export class Graph {
         await this.simulation.start()
         this.renderer.tickUpdate()
         this.renderer.fitAndCenter()
+        this.UIManager.callGraphReady()
     }
 
     getOptions(): GraphOptions {

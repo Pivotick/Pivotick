@@ -153,7 +153,7 @@ export class UIManager {
             this.layout = undefined;
         }
     }
-    
+
     private callAfterMount() { // TODO: Instead, these should register an afterMount callback
         this.layout?.afterMount()
         this.slidePanel?.afterMount()
@@ -161,6 +161,10 @@ export class UIManager {
         this.sidebar?.afterMount()
         this.graphNaviation?.afterMount()
         this.graphControls?.afterMount()
+    }
+
+    public callGraphReady() { // TODO: Instead, these should register an afterMount callback
+        this.graphControls?.graphReady()
     }
 
     /**

@@ -25,11 +25,6 @@
         transform: translateX(0);
     }
 
-    &.hide {
-        opacity: 0;
-        transform: translateX(20px);
-    }
-
     &.pivotick-toast-primary {
         --pivotick-toast-bg: var(--pivotick-toast-bg-color-primary);
         --pivotick-toast-color: var(--pivotick-toast-text-color-primary);

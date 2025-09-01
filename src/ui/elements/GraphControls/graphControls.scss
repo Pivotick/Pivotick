@@ -19,13 +19,18 @@
 
         transition: font-size 0.15s ease;
 
-        &:hover,
-        &:active {
+        &:hover:not(:disabled),
+        &:active:not(:disabled) {
             color: color-mix(in srgb, var(--pivotick-text-color-softer) 70%, black);
 
             @media (prefers-color-scheme: dark) {
                 color: #fff;
             }
+        }
+
+        &:disabled {
+            filter: brightness(2);
+            cursor: not-allowed;
         }
     }
 
