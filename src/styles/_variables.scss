@@ -1,4 +1,5 @@
-@import 'utils';
+@use 'sass:color';
+@use 'utils';
 
 $primary: #2563EB;
 $secondary: #7C3AED;
@@ -32,19 +33,19 @@ $toast-text-success: text-color($success);
                                             rgba(0, 0, 0, 0.04) 2px 3px 2px 0px;
 
     /* Graph notification */
-    --pivotick-toast-bg-color-primary: #{mix(white, $primary, 40%)};
-    --pivotick-toast-bg-color-secondary: #{mix(white, $secondary, 40%)};
-    --pivotick-toast-bg-color-info: #{mix(white, $info, 40%)};
-    --pivotick-toast-bg-color-warning: #{mix(white, $warning, 40%)};
-    --pivotick-toast-bg-color-danger: #{mix(white, $danger, 40%)};
-    --pivotick-toast-bg-color-success: #{mix(white, $success, 40%)};
+    --pivotick-toast-bg-color-primary: #{color.mix(white, $primary, 40%)};
+    --pivotick-toast-bg-color-secondary: #{color.mix(white, $secondary, 40%)};
+    --pivotick-toast-bg-color-info: #{color.mix(white, $info, 40%)};
+    --pivotick-toast-bg-color-warning: #{color.mix(white, $warning, 40%)};
+    --pivotick-toast-bg-color-danger: #{color.mix(white, $danger, 40%)};
+    --pivotick-toast-bg-color-success: #{color.mix(white, $success, 40%)};
 
-    --pivotick-toast-text-color-primary: #{mix(black, $primary, 70%)};
-    --pivotick-toast-text-color-secondary: #{mix(black, $secondary, 70%)};
-    --pivotick-toast-text-color-info: #{mix(black, $info, 70%)};
-    --pivotick-toast-text-color-warning: #{mix(black, $warning, 70%)};
-    --pivotick-toast-text-color-danger: #{mix(black, $danger, 70%)};
-    --pivotick-toast-text-color-success: #{mix(black, $success, 70%)};
+    --pivotick-toast-text-color-primary: #{color.mix(black, $primary, 70%)};
+    --pivotick-toast-text-color-secondary: #{color.mix(black, $secondary, 70%)};
+    --pivotick-toast-text-color-info: #{color.mix(black, $info, 70%)};
+    --pivotick-toast-text-color-warning: #{color.mix(black, $warning, 70%)};
+    --pivotick-toast-text-color-danger: #{color.mix(black, $danger, 70%)};
+    --pivotick-toast-text-color-success: #{color.mix(black, $success, 70%)};
 
     /* Graph canvas */
     --pivotick-graph-grid-color: #f5f5f5;

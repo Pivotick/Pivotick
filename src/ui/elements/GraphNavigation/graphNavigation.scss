@@ -10,10 +10,10 @@
         cursor: pointer;
         font-size: 1.0rem;
         color: color-mix(in srgb, var(--pivotick-text-color-softer) 80%, white);
+        transition: font-size 0.15s ease;
         @media (prefers-color-scheme: dark) {
             color: #bbb;
         }
-        transition: font-size 0.15s ease;
 
         &:hover,
         &:active {

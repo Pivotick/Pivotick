@@ -1,4 +1,4 @@
-@import "../../../styles/components/buttons.scss";
+@use "../../../styles/components/buttons.scss";
 
 .slide-panel {
     background: #fff;
@@ -20,7 +20,7 @@
         align-items: center;
 
         button.pivotick-close-button {
-            @include button-outline-danger;
+            @include buttons.button-outline-danger;
             padding: 0.25rem 0.5rem;
             align-self: flex-start;
             font-size: 1.2rem;

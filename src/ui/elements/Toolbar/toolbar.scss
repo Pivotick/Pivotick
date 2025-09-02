@@ -1,5 +1,5 @@
-@import "../../../styles/components/buttons.scss";
-@import "../../../styles/components/input.scss";
+@use "../../../styles/components/buttons.scss";
+@use "../../../styles/components/input.scss";
 
 .pivotick-toolbar-container {
     box-shadow: var(--pivotic-sidebar-layout-shadow-bottom);
@@ -41,7 +41,7 @@
                 }
 
                 input {
-                    @include input-primary;
+                    @include input.input-primary;
                     display: block;
                     width: 100%;
                     padding: 0.8rem;
@@ -51,7 +51,7 @@
                 }
 
                 button {
-                    @include button-primary;
+                    @include buttons.button-primary;
                     position: absolute;
                     right: 0.4rem;
                     bottom: 5px;
@@ -67,7 +67,7 @@
             gap: 4px;
 
             button.pivotick-button-filter {
-                @include button-outline-secondary;
+                @include buttons.button-outline-secondary;
                 padding: 0.5rem 0.5rem;
             }
 
@@ -77,7 +77,7 @@
                 flex-wrap: nowrap;
 
                 button {
-                    @include button-outline-info;
+                    @include buttons.button-outline-info;
                     padding: 0.5rem 0.5rem;
                 }
             }

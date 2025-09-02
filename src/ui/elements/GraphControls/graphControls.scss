@@ -12,12 +12,12 @@
         width: 24px;
         height: 24px;
         color: color-mix(in srgb, var(--pivotick-text-color-softer) 80%, white);
+        transition: font-size 0.15s ease;
 
         @media (prefers-color-scheme: dark) {
             color: #bbb;
         }
 
-        transition: font-size 0.15s ease;
 
         &:hover:not(:disabled),
         &:active:not(:disabled) {
