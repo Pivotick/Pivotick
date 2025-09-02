@@ -86,8 +86,11 @@ export class GraphControls implements UIElement {
         const edges = this.uiManager.graph.getEdges()
         if (hasCycle(nodes, edges)) {
             treeVButton?.setAttribute('disabled', 'disabled')
+            treeVButton?.setAttribute('title', 'The graph contains a cycle, so it cannot be displayed as a tree.')
             treeHButton?.setAttribute('disabled', 'disabled')
+            treeHButton?.setAttribute('title', 'The graph contains a cycle, so it cannot be displayed as a tree.')
             radialButton?.setAttribute('disabled', 'disabled')
+            radialButton?.setAttribute('title', 'The graph contains a cycle, so it cannot be displayed as a tree.')
         } else {
             treeVButton?.removeAttribute('disabled')
             treeHButton?.removeAttribute('disabled')

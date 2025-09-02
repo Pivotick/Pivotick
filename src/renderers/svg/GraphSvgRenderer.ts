@@ -158,7 +158,7 @@ export class GraphSvgRenderer extends GraphRenderer {
         this.getCanvasContainer().appendChild(this.svgCanvas)
         this.svg = d3Select(this.svgCanvas)
 
-        this.zoomGroup = this.svg.append('g').attr('class', 'zoom-layer')
+        this.zoomGroup = this.svg.append('g').attr('class', 'zoom-layer hidden')
         this.edgeGroup = this.zoomGroup.append('g').attr('class', 'edges')
         this.nodeGroup = this.zoomGroup.append('g').attr('class', 'nodes')
         this.defs = this.svg.append('defs')
@@ -253,6 +253,10 @@ export class GraphSvgRenderer extends GraphRenderer {
 
     public getCanvasSelection(): Selection<SVGSVGElement, unknown, null, undefined> {
         return this.svg
+    }
+
+    public getZoomGroup(): SVGGElement | null {
+        return this.zoomGroup.node()
     }
 
     public tickUpdate(): void {

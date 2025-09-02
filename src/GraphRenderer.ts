@@ -25,6 +25,7 @@ export abstract class GraphRenderer {
     abstract tickUpdate(): void
     abstract getZoomBehavior(): any
     abstract getCanvasSelection(): any
+    abstract getZoomGroup(): any
     abstract zoomIn(): void
     abstract zoomOut(): void
     abstract fitAndCenter(): void
@@ -46,6 +47,10 @@ export abstract class GraphRenderer {
     }
 
     protected toggleLayoutProgressVisibility(): void {
+        const zoomGroup = this.getZoomGroup()
+        if (zoomGroup) {
+            zoomGroup.classList.toggle('hidden', this.layoutProgress < 1)
+        }
         if (this.progressBar && this.progressBar.parentNode) {
             (this.progressBar.parentNode as SVGGElement).classList.toggle('hidden', this.layoutProgress >= 1)
         }
