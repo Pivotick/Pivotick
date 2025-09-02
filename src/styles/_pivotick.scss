@@ -105,21 +105,25 @@
     }
 }
 
-.node-shape text.icon {
-    user-select: none;
-    pointer-events: none;
+.node-shape {
+    // transition: transform 0.3s ease;
 
-    &.icon-unicode {
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-        font-family: var(--pivotick-node-icon-font-family, "Font Awesome 7 Free");
-        font-feature-settings: normal;
-        font-style: normal;
-        font-synthesis: none;
-        font-variant: normal;
-        font-weight: var(--pivotick-node-icon-font-weight, 900);
-        line-height: 1;
-        text-align: center;
-        text-rendering: auto;
+    text.icon {
+        user-select: none;
+        pointer-events: none;
+
+        &.icon-unicode {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            font-family: var(--pivotick-node-icon-font-family, "Font Awesome 7 Free");
+            font-feature-settings: normal;
+            font-style: normal;
+            font-synthesis: none;
+            font-variant: normal;
+            font-weight: var(--pivotick-node-icon-font-weight, 900);
+            line-height: 1;
+            text-align: center;
+            text-rendering: auto;
+        }
     }
 }
