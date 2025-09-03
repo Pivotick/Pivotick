@@ -20,12 +20,19 @@
             border: var(--pivotick-sidebar-panel-border);
             box-shadow: 0 3px 4px rgba(0, 0, 0, 0.10);
 
-
             & > div {
                 display: flex;
                 flex-direction: row;
                 align-items: center;
                 gap: 10px;
+                transition: opacity 0.25s ease, transform 0.25s ease;
+                opacity: 0;
+                transform: translateX(-6px);
+
+                &.enter-active {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
 
                 .pivotick-mainheader-nodepreview {
                     flex-shrink: 0;
