@@ -15,6 +15,7 @@ $toast-text-success: text-color($success);
     --pivotick-border-color: #ccc;
     --pivotick-text-color: #000;
     --pivotick-text-color-softer: #333;
+    --pivotick-text-color-softer2: #666;
     --pivotick-primary-bg-color: #{$primary};
     --pivotick-secondary-bg-color: #{$secondary};
     --pivotick-info-bg-color: #{$info};
@@ -24,9 +25,10 @@ $toast-text-success: text-color($success);
 
 
     /* Sidebar */
-    --pivotick-sidebar-panelheader-bg: #f9f9f9;
+    --pivotick-sidebar-panelheader-bg: #fdfdfd;
     --pivotick-sidebar-panelbody-bg: #fff;
-    --pivotick-sidebar-panel-border: 1px solid var(--pivotick-border-color);
+    --pivotick-sidebar-panel-border: 1px solid #e0e0e0;
+    --pivotick-mainheader-nodepreview-bg: #ffffff;
     --pivotic-sidebar-layout-shadow-right: rgba(0, 0, 0, 0.07) 2px 0px 3px 0px,
                                            rgba(0, 0, 0, 0.04) 3px 0px 2px 0px;
     --pivotic-sidebar-layout-shadow-bottom: rgba(0, 0, 0, 0.07) 3px 2px 3px 0px,
@@ -67,7 +69,7 @@ $toast-text-success: text-color($success);
     --pivotick-node-selected-color: orange;
     --pivotick-node-selected-stroke: var(--pivotick-node-selected-color);
     --pivotick-node-selected-stroke-width: 3;
-    --pivotick-node-selected-filter: drop-shadow(0 0 6px var(--pivotick-node-selected-color));
+    --pivotick-node-selected-filter: drop-shadow(0 0 2px var(--pivotick-node-selected-color));
     --pivotick-node-selected-animation: glowPulse 1.5s infinite;
 
     /* Edge defaults */
@@ -102,7 +104,8 @@ $toast-text-success: text-color($success);
         --pivotick-border-color: #455b8e;
 
         --pivotick-text-color: #fff;
-        --pivotick-text-color-softer: #333;
+        --pivotick-text-color-softer: #ccc;
+        --pivotick-text-color-softer2: #aaa;
     
         /* Sidebar */
         --pivotick-sidebar-panelheader-bg: #2a457f;

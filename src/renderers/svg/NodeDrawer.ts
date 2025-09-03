@@ -197,7 +197,7 @@ export class NodeDrawer {
                 .attr('text-anchor', 'middle')
                 .attr('dominant-baseline', 'central')
                 .attr('font-size', style.size * 1.2)
-                .attr('class', 'icon ' + (style.iconUnicode ? 'icon-unicode' : (style.iconClass ?? '')))
+                .attr('class', 'node-content icon ' + (style.iconUnicode ? 'icon-unicode' : (style.iconClass ?? '')))
                 .text(style.iconUnicode ?? (faGlyph(style.iconClass ?? '') ?? '☐'))
         } else if (style.svgIcon) {
             const svgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -208,6 +208,7 @@ export class NodeDrawer {
             }
             nodeSelection
                 .append(() => svgEl)
+                .attr("class", 'node-content')
                 .attr("x", -style.size * 0.7)
                 .attr("y", -style.size * 0.7)
                 .attr("width", style.size * 1.4)
@@ -217,6 +218,7 @@ export class NodeDrawer {
             const scale = 1.2
             nodeSelection
                 .append('image')
+                .attr("class", 'node-content')
                 .attr('xlink:href', style.imagePath)
                 .attr('x', -style.size * (scale/2))
                 .attr('y', -style.size * (scale/2))

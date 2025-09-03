@@ -24,6 +24,7 @@ export abstract class GraphRenderer {
     abstract dataUpdate(): void
     abstract tickUpdate(): void
     abstract getZoomBehavior(): any
+    abstract getGraphInteraction(): any
     abstract getCanvasSelection(): any
     abstract getZoomGroup(): any
     abstract zoomIn(): void

@@ -165,6 +165,7 @@ export class UIManager {
 
     public callGraphReady() { // TODO: Instead, these should register an afterMount callback
         this.graphControls?.graphReady()
+        this.sidebar?.graphReady()
     }
 
     /**

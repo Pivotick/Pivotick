@@ -128,16 +128,7 @@ export class GraphSvgRenderer extends GraphRenderer {
     private edgeGroupSelection!: Selection<SVGPathElement, Edge, SVGGElement, unknown>
     private nodeSelection!: Selection<SVGGElement, Node, SVGGElement, unknown>
 
-    /**
-     * I tried to add a label to a link
-     * So I had to wrap the svg' path into a group
-     * Which messed up the rendering since it's not the path but the group that's tied to the update position function
-     * Trying to fix this right now.
-     */
-    
     private edgeSelection!: Selection<SVGGElement, Edge, SVGGElement, unknown>
-
-    // private layoutProgress = 0
 
     constructor(graph: Graph, container: HTMLElement, graphInteraction: GraphInteractions<SVGGElement | SVGPathElement>, options: Partial<GraphRendererOptions>) {
         super(graph, container, options)

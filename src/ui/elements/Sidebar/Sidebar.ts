@@ -1,21 +1,24 @@
+import type { Node } from "../../../Node";
+import { createHtmlTemplate } from "../../../utils/ElementCreation";
 import type { UIElement, UIManager } from "../../UIManager";
 import "./sidebar.scss"
 
 export class Sidebar implements UIElement {
     private uiManager: UIManager;
-
+    
     public sidebar?: HTMLDivElement;
-
+    
+    private mainHeaderPanel?: HTMLDivElement;
+    private mainBodyPanel?: HTMLDivElement;
+    
     constructor(uiManager: UIManager) {
         this.uiManager = uiManager
     }
-
+    
     mount(container: HTMLElement | undefined) {
         if (!container) return;
 
-
-        const template = document.createElement("template");
-        template.innerHTML = `
+        const template = `
   <div class="pivotick-sidebar">
     <div class="pivotick-mainheader-panel"></div>
     <div class="pivotick-properties-panel">
@@ -25,11 +28,12 @@ export class Sidebar implements UIElement {
         (should be hidden instead)
       </div>
     </div>
-  </div>
-`;
-        this.sidebar = template.content.firstElementChild as HTMLDivElement;
-        /** Other Panels */
+</div>
 
+  </div>`
+        this.sidebar = createHtmlTemplate(template) as HTMLDivElement
+
+        /** Other Panels */
 
         container.appendChild(this.sidebar);
     }
@@ -39,6 +43,76 @@ export class Sidebar implements UIElement {
         this.sidebar = undefined;
     }
 
-    afterMount() {}
+    afterMount() {
+        if (!this.sidebar) return;
+        this.mainHeaderPanel = this.sidebar.querySelector(".pivotick-mainheader-panel") ?? undefined;
+        this.mainBodyPanel = this.sidebar.querySelector(".pivotick-body-panel") ?? undefined
+        this.clearNodeOverview()
+    }
+    
+    graphReady() {
+        this.uiManager.graph.renderer.getGraphInteraction().on("selectNode", (node: Node, element: any) => {
+            this.injectNodeOverview(node, element)
+        })
+        this.uiManager.graph.renderer.getGraphInteraction().on("unselectNode", (node: Node, element: any) => {
+            this.clearNodeOverview()
+        })
+    }
 
+    private clearNodeOverview(): void {
+        if (this.mainHeaderPanel) {
+            this.mainHeaderPanel.innerHTML = ''
+        }
+        this.showSelectedNodeCount()
+    }
+
+    private showSelectedNodeCount(): void {
+        const selectedNodeCount = 0
+        if (this.mainHeaderPanel) {
+            this.mainHeaderPanel.innerHTML = `Total nodes ${selectedNodeCount}`
+        }
+    }
+
+    private injectNodeOverview(node: Node, element: any): void {
+        const fixedPreviewSize = 42
+        const template = `<div>
+    <div class="pivotick-mainheader-nodepreview">
+        <svg class="pivotick-mainheader-icon" width="${fixedPreviewSize}" height="${fixedPreviewSize}" viewBox="0 0 ${fixedPreviewSize} ${fixedPreviewSize}" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+    <div class="pivotick-mainheader-nodeinfo">
+        <div class="pivotick-mainheader-nodeinfo-name"></div>
+        <div class="pivotick-mainheader-nodeinfo-subtitle"></div>
+    </div>
+    <div class="pivotick-mainheader-nodeinfo-action">
+    </div>
+</div>`
+        const mainheaderContent = createHtmlTemplate(template) as HTMLDivElement
+        const iconElem = mainheaderContent.querySelector(".pivotick-mainheader-icon");
+        const nodeinfoElem = mainheaderContent.querySelector(".pivotick-mainheader-nodeinfo");
+        const nameElem = mainheaderContent.querySelector(".pivotick-mainheader-nodeinfo-name");
+        const subtitleElem = mainheaderContent.querySelector(".pivotick-mainheader-nodeinfo-subtitle");
+        const actionElem = mainheaderContent.querySelector(".pivotick-mainheader-nodeinfo-action");
+
+        if (iconElem) {
+            if (element) {
+                const clonedGroup = element.cloneNode(true)
+                const bbox = element.getBBox()
+                const scale = fixedPreviewSize / Math.max(bbox.width, bbox.height)
+                clonedGroup.setAttribute(
+                    "transform",
+                    `translate(${(fixedPreviewSize - bbox.width * scale) / 2 - bbox.x * scale}, ${(fixedPreviewSize - bbox.height * scale) / 2 - bbox.y * scale}) scale(${scale})`
+                  );
+                iconElem.appendChild(clonedGroup)
+            }
+        }
+        if (nameElem) {
+            nameElem.innerHTML = node.getData().label
+        }
+        if (subtitleElem) {
+            subtitleElem.innerHTML = 'Optional subtitle or description'
+        }
+        if (this.mainHeaderPanel) {
+            this.mainHeaderPanel.innerHTML = mainheaderContent.outerHTML
+        }
+    }
 }
