@@ -15,7 +15,7 @@ export function createSvgElement<K extends keyof SVGElementTagNameMap>(
 export function createHtmlElement<K extends keyof HTMLElementTagNameMap>(
     tag: K,
     attributes: Record<string, string> = {},
-    children: Array<HTMLElement | Text> = []
+    children: Array<HTMLElement | Text | string> = []
 ): HTMLElementTagNameMap[K] {
     const element = document.createElement(tag)
 
@@ -24,7 +24,11 @@ export function createHtmlElement<K extends keyof HTMLElementTagNameMap>(
     }
 
     for (const child of children) {
-        element.appendChild(child)
+        if (typeof child === 'string') {
+            element.appendChild(document.createTextNode(child))
+        } else {
+            element.appendChild(child)
+        }
     }
 
     return element

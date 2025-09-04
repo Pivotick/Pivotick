@@ -3,11 +3,27 @@ import type { Node } from "../../../Node";
 import type { Edge } from "../../../Edge";
 
 
+function nodeNameGetter(node: Node): string {
+    return node.getData().label ?? 'Optional name or label'
+}
+
+function nodeDescriptionGetter(node: Node): string {
+    return node.getData().description ?? 'Optional subtitle or description'
+}
+
+function edgeNameGetter(edge: Edge): string {
+    return edge.getData().label ?? 'Optional name or label'
+}
+
+function edgeDescriptionGetter(edge: Edge): string {
+    return edge.getData().description ?? 'Optional subtitle or description'
+}
+
 export function injectNodeOverview(mainHeaderPanel: HTMLDivElement | undefined, node: Node, element: any): void {
     if (!mainHeaderPanel) return;
 
     const fixedPreviewSize = 42
-    const template = `<div>
+    const template = `<div class="enter-ready">
     <div class="pivotick-mainheader-nodepreview">
         <svg class="pivotick-mainheader-icon" width="${fixedPreviewSize}" height="${fixedPreviewSize}" viewBox="0 0 ${fixedPreviewSize} ${fixedPreviewSize}" preserveAspectRatio="xMidYMid meet"></svg>
     </div>
@@ -37,26 +53,23 @@ export function injectNodeOverview(mainHeaderPanel: HTMLDivElement | undefined, 
         }
     }
     if (nameElem) {
-        nameElem.innerHTML = node.getData().label
+        nameElem.innerHTML = nodeNameGetter(node)
     }
     if (subtitleElem) {
-        subtitleElem.innerHTML = 'Optional subtitle or description'
+        subtitleElem.innerHTML = nodeDescriptionGetter(node)
     }
 
-    if (mainHeaderPanel) {
-        mainHeaderPanel.innerHTML = mainheaderContent.outerHTML
-    }
+    mainHeaderPanel.innerHTML = mainheaderContent.outerHTML
     requestAnimationFrame(() => {
         mainHeaderPanel?.firstElementChild?.classList.add('enter-active')
     })
 }
 
-
 export function injectEdgeOverview(mainHeaderPanel: HTMLDivElement | undefined, edge: Edge, element: any): void {
     if (!mainHeaderPanel) return;
 
     const fixedPreviewSize = 42
-    const template = `<div>
+    const template = `<div class="enter-ready">
 <div class="pivotick-mainheader-nodepreview">
     <svg xmlns="http://www.w3.org/2000/svg" width="${fixedPreviewSize}" height="${fixedPreviewSize}" viewBox="0 0 24 24" style="filter: drop-shadow(0px 2px 1px #00000033);">
         <g fill="none" stroke="currentColor" stroke-width="1.5">
@@ -78,16 +91,27 @@ export function injectEdgeOverview(mainHeaderPanel: HTMLDivElement | undefined, 
     const actionElem = mainheaderContent.querySelector(".pivotick-mainheader-nodeinfo-action");
 
     if (nameElem) {
-        nameElem.innerHTML = edge.getData().label
+        nameElem.innerHTML = edgeNameGetter(edge)
     }
     if (subtitleElem) {
-        subtitleElem.innerHTML = 'Optional subtitle or description'
+        subtitleElem.innerHTML = edgeDescriptionGetter(edge)
     }
 
-    if(mainHeaderPanel) {
-        mainHeaderPanel.innerHTML = mainheaderContent.outerHTML
-    }
+    mainHeaderPanel.innerHTML = mainheaderContent.outerHTML
     requestAnimationFrame(() => {
         mainHeaderPanel?.firstElementChild?.classList.add('enter-active')
     })
+}
+
+export function clearHeader(mainHeaderPanel: HTMLDivElement | undefined): void {
+    if (!mainHeaderPanel) return;
+
+    mainHeaderPanel.innerHTML = ''
+    showSelectedNodeCount(mainHeaderPanel)
+}
+
+export function showSelectedNodeCount(mainHeaderPanel: HTMLDivElement | undefined): void {
+    if (!mainHeaderPanel) return;
+    const selectedNodeCount = 0
+    mainHeaderPanel.innerHTML = `Total nodes ${selectedNodeCount}`
 }
