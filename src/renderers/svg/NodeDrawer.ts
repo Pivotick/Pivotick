@@ -200,25 +200,25 @@ export class NodeDrawer {
                 .attr('class', 'node-content icon ' + (style.iconUnicode ? 'icon-unicode' : (style.iconClass ?? '')))
                 .text(style.iconUnicode ?? (faGlyph(style.iconClass ?? '') ?? '☐'))
         } else if (style.svgIcon) {
-            const svgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-            svgEl.innerHTML = style.svgIcon;
+            const svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+            svgEl.innerHTML = style.svgIcon
             if (svgEl.children[0]?.nodeName === 'svg') { // Make sure the icon takes the full size of the container
                 svgEl.children[0].removeAttribute('width')
                 svgEl.children[0].removeAttribute('height')
             }
             nodeSelection
                 .append(() => svgEl)
-                .attr("class", 'node-content')
-                .attr("x", -style.size * 0.7)
-                .attr("y", -style.size * 0.7)
-                .attr("width", style.size * 1.4)
-                .attr("height", style.size * 1.4)
+                .attr('class', 'node-content')
+                .attr('x', -style.size * 0.7)
+                .attr('y', -style.size * 0.7)
+                .attr('width', style.size * 1.4)
+                .attr('height', style.size * 1.4)
                 .attr('color', style.strokeColor)
         } else if (style.imagePath) {
             const scale = 1.2
             nodeSelection
                 .append('image')
-                .attr("class", 'node-content')
+                .attr('class', 'node-content')
                 .attr('xlink:href', style.imagePath)
                 .attr('x', -style.size * (scale/2))
                 .attr('y', -style.size * (scale/2))

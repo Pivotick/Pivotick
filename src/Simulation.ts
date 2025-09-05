@@ -304,16 +304,16 @@ export class Simulation {
      */
     public waitForSimulationStop(): Promise<void> {
         return new Promise(resolve => {
-            const originalOnStop = this.callbacks.onStop;
+            const originalOnStop = this.callbacks.onStop
             this.callbacks.onStop = (sim: Simulation) => {
                 // Call original callback if it exists
-                if (originalOnStop) originalOnStop(sim);
+                if (originalOnStop) originalOnStop(sim)
                 // Restore original callback
-                this.callbacks.onStop = originalOnStop;
+                this.callbacks.onStop = originalOnStop
                 // Resolve the promise
-                resolve();
-            };
-        });
+                resolve()
+            }
+        })
     }
 
     private async runSimulationWorker() {
@@ -328,7 +328,7 @@ export class Simulation {
             this.graph.updateLayoutProgress(progress)
         }
 
-        const { callbacks, ...optionsWithoutCBs } = this.options;
+        const { callbacks, ...optionsWithoutCBs } = this.options
         const { nodes: updatedNodes } = await runSimulationInWorker(
             nodesCopy,
             edgesCopy,

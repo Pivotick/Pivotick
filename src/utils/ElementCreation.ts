@@ -35,7 +35,7 @@ export function createHtmlElement<K extends keyof HTMLElementTagNameMap>(
 }
 
 export function createHtmlTemplate(template: string): HTMLElement {
-    const templateEl = document.createElement("template");
-    templateEl.innerHTML = template.trim();
-    return templateEl.content.firstElementChild as HTMLElement;
+    const templateEl = document.createElement('template')
+    templateEl.innerHTML = template.trim()
+    return templateEl.content.firstElementChild as HTMLElement
 }

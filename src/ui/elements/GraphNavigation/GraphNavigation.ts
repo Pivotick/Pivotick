@@ -1,19 +1,19 @@
-import type { UIElement, UIManager } from "../../UIManager";
-import "./graphNavigation.scss"
+import type { UIElement, UIManager } from '../../UIManager'
+import './graphNavigation.scss'
 
 export class GraphNavigation implements UIElement {
-    private uiManager: UIManager;
+    private uiManager: UIManager
 
-    public navigation?: HTMLDivElement;
+    public navigation?: HTMLDivElement
 
     constructor(uiManager: UIManager) {
         this.uiManager = uiManager
     }
 
     mount(container: HTMLElement | undefined) {
-        if (!container) return;
+        if (!container) return
 
-        const template = document.createElement("template");
+        const template = document.createElement('template')
         template.innerHTML = `
   <div class="pivotick-graphnavigation">
     <div class="pivotick-graphnavigation-zoom-fit">
@@ -37,33 +37,33 @@ export class GraphNavigation implements UIElement {
         </button>
     </div>
   </div>
-`;
-        this.navigation = template.content.firstElementChild as HTMLDivElement;
+`
+        this.navigation = template.content.firstElementChild as HTMLDivElement
 
-        container.appendChild(this.navigation);
+        container.appendChild(this.navigation)
     }
 
     destroy() {
-        this.navigation?.remove();
-        this.navigation = undefined;
+        this.navigation?.remove()
+        this.navigation = undefined
     }
 
     afterMount() {
-        if (!this.navigation) return;
-        const zoomInButton = this.navigation.querySelector("#pivotick-graphnavigation-zoom-in");
-        const zoomOutButton = this.navigation.querySelector("#pivotick-graphnavigation-zoom-out");
-        const resetButton = this.navigation.querySelector("#pivotick-graphnavigation-reset");
+        if (!this.navigation) return
+        const zoomInButton = this.navigation.querySelector('#pivotick-graphnavigation-zoom-in')
+        const zoomOutButton = this.navigation.querySelector('#pivotick-graphnavigation-zoom-out')
+        const resetButton = this.navigation.querySelector('#pivotick-graphnavigation-reset')
         
-        zoomInButton?.addEventListener("click", () => {
+        zoomInButton?.addEventListener('click', () => {
             this.uiManager.graph.renderer.zoomIn()
-        });
+        })
 
-        zoomOutButton?.addEventListener("click", () => {
+        zoomOutButton?.addEventListener('click', () => {
             this.uiManager.graph.renderer.zoomOut()
-        });
+        })
         
-        resetButton?.addEventListener("click", () => {
+        resetButton?.addEventListener('click', () => {
             this.uiManager.graph.renderer.fitAndCenter()
-        });
+        })
     }
 }

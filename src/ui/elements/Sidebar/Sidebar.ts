@@ -1,25 +1,25 @@
-import type { Node } from "../../../Node";
-import type { Edge } from "../../../Edge";
-import { createHtmlTemplate } from "../../../utils/ElementCreation";
-import type { UIElement, UIManager } from "../../UIManager";
-import "./sidebar.scss"
-import { injectNodeOverview, injectEdgeOverview, clearHeader } from "./MainHeader";
-import { clearProperties, injectEdgeProperties, injectNodeProperties } from "./Properties";
+import type { Node } from '../../../Node'
+import type { Edge } from '../../../Edge'
+import { createHtmlTemplate } from '../../../utils/ElementCreation'
+import type { UIElement, UIManager } from '../../UIManager'
+import './sidebar.scss'
+import { injectNodeOverview, injectEdgeOverview, clearHeader } from './MainHeader'
+import { clearProperties, injectEdgeProperties, injectNodeProperties } from './Properties'
 
 export class Sidebar implements UIElement {
-    private uiManager: UIManager;
+    private uiManager: UIManager
 
-    public sidebar?: HTMLDivElement;
+    public sidebar?: HTMLDivElement
 
-    private mainHeaderPanel?: HTMLDivElement;
-    private mainBodyPanel?: HTMLDivElement;
+    private mainHeaderPanel?: HTMLDivElement
+    private mainBodyPanel?: HTMLDivElement
 
     constructor(uiManager: UIManager) {
         this.uiManager = uiManager
     }
 
     mount(container: HTMLElement | undefined) {
-        if (!container) return;
+        if (!container) return
 
         const template = `
   <div class="pivotick-sidebar">
@@ -38,36 +38,36 @@ export class Sidebar implements UIElement {
 
         /** Other Panels */
 
-        container.appendChild(this.sidebar);
+        container.appendChild(this.sidebar)
     }
 
     destroy() {
-        this.sidebar?.remove();
-        this.sidebar = undefined;
+        this.sidebar?.remove()
+        this.sidebar = undefined
     }
 
     afterMount() {
-        if (!this.sidebar) return;
-        this.mainHeaderPanel = this.sidebar.querySelector(".pivotick-mainheader-panel") ?? undefined;
-        this.mainBodyPanel = this.sidebar.querySelector(".pivotick-properties-body-panel") ?? undefined
+        if (!this.sidebar) return
+        this.mainHeaderPanel = this.sidebar.querySelector('.pivotick-mainheader-panel') ?? undefined
+        this.mainBodyPanel = this.sidebar.querySelector('.pivotick-properties-body-panel') ?? undefined
         clearHeader(this.mainHeaderPanel)
         clearProperties(this.mainBodyPanel)
     }
 
     graphReady() {
-        this.uiManager.graph.renderer.getGraphInteraction().on("selectNode", (node: Node, element: any) => {
+        this.uiManager.graph.renderer.getGraphInteraction().on('selectNode', (node: Node, element: any) => {
             injectNodeOverview(this.mainHeaderPanel, node, element, this.uiManager.getOptions())
             injectNodeProperties(this.mainBodyPanel, node, element, this.uiManager.getOptions())
         })
-        this.uiManager.graph.renderer.getGraphInteraction().on("unselectNode", (node: Node, element: any) => {
+        this.uiManager.graph.renderer.getGraphInteraction().on('unselectNode', (node: Node, element: any) => {
             clearHeader(this.mainHeaderPanel)
             clearProperties(this.mainBodyPanel)
         })
-        this.uiManager.graph.renderer.getGraphInteraction().on("selectEdge", (edge: Edge, element: any) => {
+        this.uiManager.graph.renderer.getGraphInteraction().on('selectEdge', (edge: Edge, element: any) => {
             injectEdgeOverview(this.mainHeaderPanel, edge, element, this.uiManager.getOptions())
             injectEdgeProperties(this.mainBodyPanel, edge, element, this.uiManager.getOptions())
         })
-        this.uiManager.graph.renderer.getGraphInteraction().on("unselectEdge", (edge: Edge, element: any) => {
+        this.uiManager.graph.renderer.getGraphInteraction().on('unselectEdge', (edge: Edge, element: any) => {
             clearHeader(this.mainHeaderPanel)
             clearProperties(this.mainBodyPanel)
         })

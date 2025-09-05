@@ -1,8 +1,8 @@
-import { createHtmlTemplate } from "../../../utils/ElementCreation";
-import type { Node } from "../../../Node";
-import type { Edge } from "../../../Edge";
-import type { GraphUI } from "../../../GraphOptions";
-import { tryResolveString } from "../../../utils/Getters";
+import { createHtmlTemplate } from '../../../utils/ElementCreation'
+import type { Node } from '../../../Node'
+import type { Edge } from '../../../Edge'
+import type { GraphUI } from '../../../GraphOptions'
+import { tryResolveString } from '../../../utils/Getters'
 
 
 function nodeNameGetter(node: Node, options: GraphUI): string {
@@ -34,7 +34,7 @@ function edgeDescriptionGetter(edge: Edge, options: GraphUI): string {
 }
 
 export function injectNodeOverview(mainHeaderPanel: HTMLDivElement | undefined, node: Node, element: any, options: GraphUI): void {
-    if (!mainHeaderPanel) return;
+    if (!mainHeaderPanel) return
 
     const fixedPreviewSize = 42
     const template = `<div class="enter-ready">
@@ -49,10 +49,10 @@ export function injectNodeOverview(mainHeaderPanel: HTMLDivElement | undefined, 
     </div>
 </div>`
     const mainheaderContent = createHtmlTemplate(template) as HTMLDivElement
-    const iconElem = mainheaderContent.querySelector(".pivotick-mainheader-icon");
-    const nameElem = mainheaderContent.querySelector(".pivotick-mainheader-nodeinfo-name");
-    const subtitleElem = mainheaderContent.querySelector(".pivotick-mainheader-nodeinfo-subtitle");
-    const actionElem = mainheaderContent.querySelector(".pivotick-mainheader-nodeinfo-action");
+    const iconElem = mainheaderContent.querySelector('.pivotick-mainheader-icon')
+    const nameElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-name')
+    const subtitleElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-subtitle')
+    const actionElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-action')
 
     if (iconElem) {
         if (element) {
@@ -60,9 +60,9 @@ export function injectNodeOverview(mainHeaderPanel: HTMLDivElement | undefined, 
             const bbox = element.getBBox()
             const scale = fixedPreviewSize / Math.max(bbox.width, bbox.height)
             clonedGroup.setAttribute(
-                "transform",
+                'transform',
                 `translate(${(fixedPreviewSize - bbox.width * scale) / 2 - bbox.x * scale}, ${(fixedPreviewSize - bbox.height * scale) / 2 - bbox.y * scale}) scale(${scale})`
-                );
+                )
             iconElem.appendChild(clonedGroup)
         }
     }
@@ -80,7 +80,7 @@ export function injectNodeOverview(mainHeaderPanel: HTMLDivElement | undefined, 
 }
 
 export function injectEdgeOverview(mainHeaderPanel: HTMLDivElement | undefined, edge: Edge, element: any, options: GraphUI): void {
-    if (!mainHeaderPanel) return;
+    if (!mainHeaderPanel) return
 
     const fixedPreviewSize = 42
     const template = `<div class="enter-ready">
@@ -100,9 +100,9 @@ export function injectEdgeOverview(mainHeaderPanel: HTMLDivElement | undefined, 
 </div>
 </div>`
     const mainheaderContent = createHtmlTemplate(template) as HTMLDivElement
-    const nameElem = mainheaderContent.querySelector(".pivotick-mainheader-nodeinfo-name");
-    const subtitleElem = mainheaderContent.querySelector(".pivotick-mainheader-nodeinfo-subtitle");
-    const actionElem = mainheaderContent.querySelector(".pivotick-mainheader-nodeinfo-action");
+    const nameElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-name')
+    const subtitleElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-subtitle')
+    const actionElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-action')
 
     if (nameElem) {
         nameElem.innerHTML = edgeNameGetter(edge, options)
@@ -118,14 +118,14 @@ export function injectEdgeOverview(mainHeaderPanel: HTMLDivElement | undefined, 
 }
 
 export function clearHeader(mainHeaderPanel: HTMLDivElement | undefined): void {
-    if (!mainHeaderPanel) return;
+    if (!mainHeaderPanel) return
 
     mainHeaderPanel.innerHTML = ''
     showSelectedNodeCount(mainHeaderPanel)
 }
 
 export function showSelectedNodeCount(mainHeaderPanel: HTMLDivElement | undefined): void {
-    if (!mainHeaderPanel) return;
+    if (!mainHeaderPanel) return
     const selectedNodeCount = 0
     mainHeaderPanel.innerHTML = `Total nodes ${selectedNodeCount}`
 }

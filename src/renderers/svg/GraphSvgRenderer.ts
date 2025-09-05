@@ -102,7 +102,7 @@ const DEFAULT_RENDERER_OPTIONS = {
             }
         }
     }
-} satisfies GraphRendererOptions;
+} satisfies GraphRendererOptions
 
 
 export class GraphSvgRenderer extends GraphRenderer {
@@ -162,8 +162,8 @@ export class GraphSvgRenderer extends GraphRenderer {
             .filter((event) => {
                 if (event.ctrlKey)
                     return false
-                const target = event.target as HTMLElement;
-                return !(target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA');
+                const target = event.target as HTMLElement
+                return !(target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA')
             })
             .scaleExtent([this.options.minZoom, this.options.maxZoom])
             .on('zoom', (event) => {
@@ -259,7 +259,7 @@ export class GraphSvgRenderer extends GraphRenderer {
         const zoomBehavior = this.getZoomBehavior()
         const canvas = this.getCanvasSelection()
 
-        if (!zoomBehavior || !canvas) return;
+        if (!zoomBehavior || !canvas) return
         canvas.transition().duration(300).call(zoomBehavior.scaleBy, 1.5)
     }
 
@@ -267,7 +267,7 @@ export class GraphSvgRenderer extends GraphRenderer {
         const zoomBehavior = this.getZoomBehavior()
         const canvas = this.getCanvasSelection()
 
-        if (!zoomBehavior || !canvas) return;
+        if (!zoomBehavior || !canvas) return
         canvas.transition().duration(300).call(zoomBehavior.scaleBy, 0.667)
     }
 
@@ -277,33 +277,33 @@ export class GraphSvgRenderer extends GraphRenderer {
         const svgEl = canvas.node() as SVGSVGElement
         const zoomLayerEl = canvas.select('.zoom-layer').node() as SVGGElement
 
-        if (!zoomBehavior || !svgEl || !zoomLayerEl) return;
+        if (!zoomBehavior || !svgEl || !zoomLayerEl) return
 
-        const bounds = zoomLayerEl.getBBox();
+        const bounds = zoomLayerEl.getBBox()
 
-        const fullWidth = svgEl.clientWidth;
-        const fullHeight = svgEl.clientHeight;
-        const width = bounds.width;
-        const height = bounds.height;
+        const fullWidth = svgEl.clientWidth
+        const fullHeight = svgEl.clientHeight
+        const width = bounds.width
+        const height = bounds.height
 
         // Midpoint of content
-        const midX = bounds.x + width / 2;
-        const midY = bounds.y + height / 2;
+        const midX = bounds.x + width / 2
+        const midY = bounds.y + height / 2
 
         // Scale so that content fits (with some padding)
         const scale = Math.min(
             fullWidth / width,
             fullHeight / height
-        ) * 0.8;
+        ) * 0.8
 
-        const translateX = fullWidth / 2 - scale * midX;
-        const translateY = fullHeight / 2 - scale * midY;
+        const translateX = fullWidth / 2 - scale * midX
+        const translateY = fullHeight / 2 - scale * midY
 
         const transform = d3ZoomIdentity
             .translate(translateX, translateY)
-            .scale(scale);
+            .scale(scale)
 
-        canvas.transition().duration(300).call(zoomBehavior.transform, transform);
+        canvas.transition().duration(300).call(zoomBehavior.transform, transform)
     }
 
     private updateNodePositions(): void {

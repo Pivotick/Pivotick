@@ -1,5 +1,5 @@
-import type { Edge } from "../../Edge"
-import type { Node } from "../../Node"
+import type { Edge } from '../../Edge'
+import type { Node } from '../../Node'
 
 /**
  * Detects whether a directed graph contains at least one cycle.

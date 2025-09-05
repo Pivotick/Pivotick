@@ -1,11 +1,11 @@
-import type { Graph } from "../Graph";
-import type { UIManager } from "./UIManager";
+import type { Graph } from '../Graph'
+import type { UIManager } from './UIManager'
 
 export enum NotificationLevel {
-    Success = "success",
-    Warning = "warning",
-    Danger = "danger",
-    Info = "info",
+    Success = 'success',
+    Warning = 'warning',
+    Danger = 'danger',
+    Info = 'info',
 }
 
 export interface Notification {
@@ -31,23 +31,23 @@ export class Notifier {
      * @param message - Optional detailed message for the notification.
      */
     public notify(level: NotificationLevel, title: string, message?: string): void {
-        const notification: Notification = { level, title, message };
-        this.UIManager.showNotification(notification);
+        const notification: Notification = { level, title, message }
+        this.UIManager.showNotification(notification)
     }
 
     public success(title: string, message?: string): void {
-        this.notify(NotificationLevel.Success, title, message);
+        this.notify(NotificationLevel.Success, title, message)
     }
 
     public warning(title: string, message?: string): void {
-        this.notify(NotificationLevel.Warning, title, message);
+        this.notify(NotificationLevel.Warning, title, message)
     }
 
     public error(title: string, message?: string): void {
-        this.notify(NotificationLevel.Danger, title, message);
+        this.notify(NotificationLevel.Danger, title, message)
     }
 
     public info(title: string, message?: string): void {
-        this.notify(NotificationLevel.Info, title, message);
+        this.notify(NotificationLevel.Info, title, message)
     }
 }

@@ -1,15 +1,15 @@
-import { Graph } from '../Graph';
+import { Graph } from '../Graph'
 import { Node } from  '../Node'
 import { Edge } from  '../Edge'
-import type { GraphMode, GraphUI } from '../GraphOptions';
-import { GraphControls } from './elements/GraphControls/GraphControls';
-import { GraphNavigation } from './elements/GraphNavigation/GraphNavigation';
+import type { GraphMode, GraphUI } from '../GraphOptions'
+import { GraphControls } from './elements/GraphControls/GraphControls'
+import { GraphNavigation } from './elements/GraphNavigation/GraphNavigation'
 import { Layout } from './elements/Layout'
 import { Sidebar } from './elements/Sidebar/Sidebar'
-import { SlidePanel } from './elements/SlidePanel/SlidePanel';
-import { Toolbar } from './elements/Toolbar/Toolbar';
-import type { Notification } from './Notifier';
-import merge from 'lodash.merge';
+import { SlidePanel } from './elements/SlidePanel/SlidePanel'
+import { Toolbar } from './elements/Toolbar/Toolbar'
+import type { Notification } from './Notifier'
+import merge from 'lodash.merge'
 
 export const DEFAULT_UI_OPTIONS: GraphUI = {
     mode: 'viewer',
@@ -58,22 +58,22 @@ export interface UIElement {
  * based on the selected mode.
  */
 export class UIManager {
-    public graph: Graph;
+    public graph: Graph
     protected container: HTMLElement
-    private options: GraphUI;
+    private options: GraphUI
 
-    public layout?: Layout;
-    public slidePanel?: SlidePanel;
-    public sidebar?: Sidebar;
-    public toolbar?: Toolbar;
-    public graphNaviation?: GraphNavigation;
-    public graphControls?: GraphControls;
+    public layout?: Layout
+    public slidePanel?: SlidePanel
+    public sidebar?: Sidebar
+    public toolbar?: Toolbar
+    public graphNaviation?: GraphNavigation
+    public graphControls?: GraphControls
 
     constructor(graph: Graph, container: HTMLElement, options: GraphUI) {
-        this.graph = graph;
-        this.container = container;
+        this.graph = graph
+        this.container = container
         this.options = merge({}, DEFAULT_UI_OPTIONS, options)
-        this.setup();
+        this.setup()
     }
 
     private setup() {
@@ -81,21 +81,21 @@ export class UIManager {
 
         switch (this.options.mode) {
             case 'viewer':
-                this.setupViewerMode();
-                break;
+                this.setupViewerMode()
+                break
             case 'full':
-                this.setupFullMode();
-                break;
+                this.setupFullMode()
+                break
             case 'light':
-                this.setupLightMode();
-                break;
+                this.setupLightMode()
+                break
             case 'static':
-                this.setupStaticMode();
-                break;
+                this.setupStaticMode()
+                break
             default:
-                console.warn(`Unknown mode: ${this.options.mode}. Defaulting to 'viewer'.`);
-                this.setupViewerMode();
-                break;
+                console.warn(`Unknown mode: ${this.options.mode}. Defaulting to 'viewer'.`)
+                this.setupViewerMode()
+                break
         }
         this.callAfterMount()
     }
@@ -122,7 +122,7 @@ export class UIManager {
 
     private setupFullMode() {
         if (!this.hasEnoughSpaceForFullMode()) {
-            console.warn("Not enough space for full mode UI. Switching to light mode.");
+            console.warn('Not enough space for full mode UI. Switching to light mode.')
             this.options.mode = 'light'
             this.setupLightMode()
             return
@@ -138,7 +138,7 @@ export class UIManager {
 
     private setupLightMode() {
         if (!this.hasEnoughSpaceForLightMode()) {
-            console.warn("Not enough space for light mode UI. Switching to viewer mode.");
+            console.warn('Not enough space for light mode UI. Switching to viewer mode.')
             this.options.mode = 'viewer'
             this.setupViewerMode()
             return
@@ -184,8 +184,8 @@ export class UIManager {
 
     private destroy() {
         if (this.layout) {
-            this.layout.destroy();
-            this.layout = undefined;
+            this.layout.destroy()
+            this.layout = undefined
         }
     }
 
@@ -214,10 +214,10 @@ export class UIManager {
    */
     public showNotification(notification: Notification): void {
         const { level, title, message } = notification
-        const container = this.layout?.notification;
+        const container = this.layout?.notification
         if (!container) return
 
-        const template = document.createElement("template");
+        const template = document.createElement('template')
         template.innerHTML = `
   <div class="pivotick-toast pivotick-toast-${level}">
     <div class="pivotick-toast-title">
@@ -227,22 +227,22 @@ export class UIManager {
   </div>
 `
         const toast = template.content.firstElementChild as HTMLDivElement
-        const titleEl = toast.querySelector(".pivotick-toast-title")
-        const bodyEl = toast.querySelector(".pivotick-toast-body")
+        const titleEl = toast.querySelector('.pivotick-toast-title')
+        const bodyEl = toast.querySelector('.pivotick-toast-body')
 
         if (titleEl) titleEl.textContent = title
-        if (bodyEl) bodyEl.textContent = message ?? ""
+        if (bodyEl) bodyEl.textContent = message ?? ''
 
         container.appendChild(toast)
         requestAnimationFrame(() => {
-            toast.classList.add("show")
+            toast.classList.add('show')
         })
 
         setTimeout(() => {
-            toast.classList.remove("show")
-            toast.addEventListener("transitionend", () => {
+            toast.classList.remove('show')
+            toast.addEventListener('transitionend', () => {
                 toast.remove()
             }, { once: true })
-        }, 4000);
+        }, 4000)
     }
 }

@@ -1,21 +1,21 @@
-import type { Graph } from "../../../Graph";
-import hasCycle from "../../../plugins/analytics/cycle";
-import type { UIElement, UIManager } from "../../UIManager";
-import "./graphControls.scss"
+import type { Graph } from '../../../Graph'
+import hasCycle from '../../../plugins/analytics/cycle'
+import type { UIElement, UIManager } from '../../UIManager'
+import './graphControls.scss'
 
 export class GraphControls implements UIElement {
-    private uiManager: UIManager;
+    private uiManager: UIManager
 
-    public navigation?: HTMLDivElement;
+    public navigation?: HTMLDivElement
 
     constructor(uiManager: UIManager) {
         this.uiManager = uiManager
     }
 
     mount(container: HTMLElement | undefined) {
-        if (!container) return;
+        if (!container) return
 
-        const template = document.createElement("template");
+        const template = document.createElement('template')
         template.innerHTML = `
   <div class="pivotick-graphcontrols">
     <div class="pivotick-graphcontrols-panel">
@@ -44,43 +44,43 @@ export class GraphControls implements UIElement {
         </button>
     </div>
   </div>
-`;
-        this.navigation = template.content.firstElementChild as HTMLDivElement;
+`
+        this.navigation = template.content.firstElementChild as HTMLDivElement
 
-        container.appendChild(this.navigation);
+        container.appendChild(this.navigation)
     }
 
     destroy() {
-        this.navigation?.remove();
-        this.navigation = undefined;
+        this.navigation?.remove()
+        this.navigation = undefined
     }
 
     afterMount() {
-        if (!this.navigation) return;
-        const organicButton = this.navigation.querySelector("#pivotick-graphcontrols-layout-organic");
-        const treeVButton = this.navigation.querySelector("#pivotick-graphcontrols-layout-tree-v");
-        const treeHButton = this.navigation.querySelector("#pivotick-graphcontrols-layout-tree-h");
-        const radialButton = this.navigation.querySelector("#pivotick-graphcontrols-layout-tree-radial");
+        if (!this.navigation) return
+        const organicButton = this.navigation.querySelector('#pivotick-graphcontrols-layout-organic')
+        const treeVButton = this.navigation.querySelector('#pivotick-graphcontrols-layout-tree-v')
+        const treeHButton = this.navigation.querySelector('#pivotick-graphcontrols-layout-tree-h')
+        const radialButton = this.navigation.querySelector('#pivotick-graphcontrols-layout-tree-radial')
 
-        organicButton?.addEventListener("click", () => {
+        organicButton?.addEventListener('click', () => {
             this.uiManager.graph.simulation.changeLayout('force')
-        });
-        treeVButton?.addEventListener("click", () => {
+        })
+        treeVButton?.addEventListener('click', () => {
             this.uiManager.graph.simulation.changeLayout('tree', { horizontal: false })
-        });
-        treeHButton?.addEventListener("click", () => {
+        })
+        treeHButton?.addEventListener('click', () => {
             this.uiManager.graph.simulation.changeLayout('tree', { horizontal: true })
-        });
-        radialButton?.addEventListener("click", () => {
+        })
+        radialButton?.addEventListener('click', () => {
             this.uiManager.graph.simulation.changeLayout('tree-radial', { radial: true })
-        });
+        })
     }
 
     graphReady() {
-        if (!this.navigation) return;
-        const treeVButton = this.navigation.querySelector("#pivotick-graphcontrols-layout-tree-v");
-        const treeHButton = this.navigation.querySelector("#pivotick-graphcontrols-layout-tree-h");
-        const radialButton = this.navigation.querySelector("#pivotick-graphcontrols-layout-tree-radial");
+        if (!this.navigation) return
+        const treeVButton = this.navigation.querySelector('#pivotick-graphcontrols-layout-tree-v')
+        const treeHButton = this.navigation.querySelector('#pivotick-graphcontrols-layout-tree-h')
+        const radialButton = this.navigation.querySelector('#pivotick-graphcontrols-layout-tree-radial')
 
         const nodes = this.uiManager.graph.getNodes()
         const edges = this.uiManager.graph.getEdges()

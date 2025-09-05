@@ -54,16 +54,16 @@ export function tryResolveArray<TArgs extends unknown[], TItem>(
  * nodeSelection.append("text").text(glyph);
  */
 export function faGlyph(className: string): string {
-    const el = document.createElement("i");
-    el.className = className;
-    document.body.appendChild(el);
+    const el = document.createElement('i')
+    el.className = className
+    document.body.appendChild(el)
 
-    const style = getComputedStyle(el);
-    const propertyValue = style.getPropertyValue("--fa")
-    let glyph = propertyValue.replace(/["']/g, "")
+    const style = getComputedStyle(el)
+    const propertyValue = style.getPropertyValue('--fa')
+    let glyph = propertyValue.replace(/["']/g, '')
     const codePoint = parseInt(glyph.slice(1), 16)
     glyph = String.fromCharCode(codePoint)
 
-    document.body.removeChild(el);
-    return glyph;
+    document.body.removeChild(el)
+    return glyph
 }

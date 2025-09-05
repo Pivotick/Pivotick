@@ -1,8 +1,8 @@
-import { createHtmlElement, createHtmlTemplate } from "../../../utils/ElementCreation";
-import type { Node } from "../../../Node";
-import type { Edge } from "../../../Edge";
-import type { GraphUI, PropertyEntry } from "../../../GraphOptions";
-import { tryResolveArray } from "../../../utils/Getters";
+import { createHtmlElement, createHtmlTemplate } from '../../../utils/ElementCreation'
+import type { Node } from '../../../Node'
+import type { Edge } from '../../../Edge'
+import type { GraphUI, PropertyEntry } from '../../../GraphOptions'
+import { tryResolveArray } from '../../../utils/Getters'
 
 
 function nodePropertiesGetter(node: Node, options: GraphUI): Array<PropertyEntry> {
@@ -57,7 +57,7 @@ function injectRowForProperties(dl: HTMLDListElement, properties: Array<Property
 }
 
 export function injectNodeProperties(mainBodyPanel: HTMLDivElement | undefined, node: Node, element: any, options: GraphUI): void {
-    if (!mainBodyPanel) return;
+    if (!mainBodyPanel) return
 
     const template = `<div class="pivotick-properties-container">
     <div class="enter-ready">
@@ -65,7 +65,7 @@ export function injectNodeProperties(mainBodyPanel: HTMLDivElement | undefined, 
     </div>
 </div>`
     const propertiesContainer = createHtmlTemplate(template) as HTMLDivElement
-    const dl = propertiesContainer.querySelector("dl");
+    const dl = propertiesContainer.querySelector('dl')
 
     if (dl) {
         const properties = nodePropertiesGetter(node, options)
@@ -79,7 +79,7 @@ export function injectNodeProperties(mainBodyPanel: HTMLDivElement | undefined, 
 }
 
 export function injectEdgeProperties(mainBodyPanel: HTMLDivElement | undefined, edge: Edge, element: any, options: GraphUI): void {
-    if (!mainBodyPanel) return;
+    if (!mainBodyPanel) return
 
     const template = `<div class="pivotick-properties-container">
     <div class="enter-ready">
@@ -87,7 +87,7 @@ export function injectEdgeProperties(mainBodyPanel: HTMLDivElement | undefined, 
     </div>
 </div>`
     const propertiesContainer = createHtmlTemplate(template) as HTMLDivElement
-    const dl = propertiesContainer.querySelector("dl");
+    const dl = propertiesContainer.querySelector('dl')
 
     if (dl) {
         const properties = edgePropertiesGetter(edge, options)
@@ -102,6 +102,6 @@ export function injectEdgeProperties(mainBodyPanel: HTMLDivElement | undefined, 
 
 
 export function clearProperties(mainBodyPanel: HTMLDivElement | undefined): void {
-    if (!mainBodyPanel) return;
+    if (!mainBodyPanel) return
     mainBodyPanel.innerHTML = ''
 }

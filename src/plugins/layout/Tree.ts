@@ -77,7 +77,7 @@ export class TreeLayout {
         const nodes = this.graph.getNodes()
         const edges = this.graph.getEdges()
         if (hasCycle(nodes, edges)) {
-            this.graph.Notifier.warning("Tree layout unavailable", "The graph contains a cycle, so it cannot be displayed as a tree.")
+            this.graph.Notifier.warning('Tree layout unavailable', 'The graph contains a cycle, so it cannot be displayed as a tree.')
             return
         }
         this.setSizes()
@@ -258,11 +258,11 @@ export class TreeLayout {
         const options = merge({}, DEFAULT_TREE_LAYOUT_OPTIONS, partialOptions)
         for (const node of nodes) {
             if (options.horizontal) {
-                node.fx = node.x;
-                delete node.fy;
+                node.fx = node.x
+                delete node.fy
             } else {
-                node.fy = node.y;
-                delete node.fx;
+                node.fy = node.y
+                delete node.fx
               }
         }
     }
@@ -286,7 +286,7 @@ export class TreeLayout {
         }
 
         if (hasCycle(nodes, edges)) {
-            console.warn("Cycle detected in graph. Tree layout will not be computed.");
+            console.warn('Cycle detected in graph. Tree layout will not be computed.')
             return {
                 root: null,
                 nodes: [],
