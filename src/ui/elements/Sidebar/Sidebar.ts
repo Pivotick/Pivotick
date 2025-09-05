@@ -8,16 +8,16 @@ import { clearProperties, injectEdgeProperties, injectNodeProperties } from "./P
 
 export class Sidebar implements UIElement {
     private uiManager: UIManager;
-    
+
     public sidebar?: HTMLDivElement;
-    
+
     private mainHeaderPanel?: HTMLDivElement;
     private mainBodyPanel?: HTMLDivElement;
-    
+
     constructor(uiManager: UIManager) {
         this.uiManager = uiManager
     }
-    
+
     mount(container: HTMLElement | undefined) {
         if (!container) return;
 
@@ -56,16 +56,16 @@ export class Sidebar implements UIElement {
 
     graphReady() {
         this.uiManager.graph.renderer.getGraphInteraction().on("selectNode", (node: Node, element: any) => {
-            injectNodeOverview(this.mainHeaderPanel, node, element)
-            injectNodeProperties(this.mainBodyPanel, node, element)
+            injectNodeOverview(this.mainHeaderPanel, node, element, this.uiManager.getOptions())
+            injectNodeProperties(this.mainBodyPanel, node, element, this.uiManager.getOptions())
         })
         this.uiManager.graph.renderer.getGraphInteraction().on("unselectNode", (node: Node, element: any) => {
             clearHeader(this.mainHeaderPanel)
             clearProperties(this.mainBodyPanel)
         })
         this.uiManager.graph.renderer.getGraphInteraction().on("selectEdge", (edge: Edge, element: any) => {
-            injectEdgeOverview(this.mainHeaderPanel, edge, element)
-            injectEdgeProperties(this.mainBodyPanel, edge, element)
+            injectEdgeOverview(this.mainHeaderPanel, edge, element, this.uiManager.getOptions())
+            injectEdgeProperties(this.mainBodyPanel, edge, element, this.uiManager.getOptions())
         })
         this.uiManager.graph.renderer.getGraphInteraction().on("unselectEdge", (edge: Edge, element: any) => {
             clearHeader(this.mainHeaderPanel)

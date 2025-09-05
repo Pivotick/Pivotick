@@ -1,10 +1,10 @@
 import { Node } from './Node'
 import { Edge } from './Edge'
-import type { graphData, GraphOptions, InterractionCallbacks, LayoutOptions } from './GraphOptions'
+import type { graphData, GraphOptions, GraphUI, InterractionCallbacks, LayoutOptions } from './GraphOptions'
 import { createGraphRenderer } from './renderers/GraphRendererFactory'
 import type { GraphRenderer } from './GraphRenderer'
 import { Simulation } from './Simulation'
-import { UIManager, type UIManagerOptions } from './ui/UIManager'
+import { UIManager } from './ui/UIManager'
 import { Notifier } from './ui/Notifier'
 
 
@@ -26,10 +26,7 @@ export class Graph {
         const rendererOptions = {
             ...this.options.render
         }
-        const UIManagerOptions = {} as UIManagerOptions
-        if (this.options.mode) {
-            UIManagerOptions['mode'] = this.options.mode
-        }
+        const UIManagerOptions = this.options.UI as GraphUI
         const appContainer = document.createElement('div')
         appContainer.id = 'pivotick-app'
         appContainer.classList.add('pivotick-graph-container')

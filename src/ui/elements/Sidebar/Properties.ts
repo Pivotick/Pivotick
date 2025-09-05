@@ -1,15 +1,17 @@
 import { createHtmlElement, createHtmlTemplate } from "../../../utils/ElementCreation";
 import type { Node } from "../../../Node";
 import type { Edge } from "../../../Edge";
+import type { GraphUI, PropertyEntry } from "../../../GraphOptions";
+import { tryResolveArray } from "../../../utils/Getters";
 
-interface propertyItem {
-    name: string,
-    value: string,
-}
 
-function nodePropertiesGetter(node: Node): Array<propertyItem> {
+function nodePropertiesGetter(node: Node, options: GraphUI): Array<PropertyEntry> {
     const data = node.getData()
-    const properties: Array<propertyItem> = []
+    const properties: Array<PropertyEntry> = []
+
+    if (options.propertiesPanel.nodePropertiesMap) {
+        return tryResolveArray<[Node], PropertyEntry>(options.propertiesPanel.nodePropertiesMap, node)
+    }
 
     for (const[key, value] of Object.entries(data)) {
         properties.push({
@@ -20,9 +22,13 @@ function nodePropertiesGetter(node: Node): Array<propertyItem> {
     return properties
 }
 
-function edgePropertiesGetter(edge: Edge): Array<propertyItem> {
+function edgePropertiesGetter(edge: Edge, options: GraphUI): Array<PropertyEntry> {
     const data = edge.getData()
-    const properties: Array<propertyItem> = []
+    const properties: Array<PropertyEntry> = []
+
+    if (options.propertiesPanel.edgePropertiesMap) {
+        return tryResolveArray<[Edge], PropertyEntry>(options.propertiesPanel.edgePropertiesMap, edge)
+    }
 
     for (const [key, value] of Object.entries(data)) {
         properties.push({
@@ -33,7 +39,7 @@ function edgePropertiesGetter(edge: Edge): Array<propertyItem> {
     return properties
 }
 
-function injectRowForProperties(dl: HTMLDListElement, properties: Array<propertyItem>): void {
+function injectRowForProperties(dl: HTMLDListElement, properties: Array<PropertyEntry>): void {
     for (const property of properties) {
         const row = createHtmlElement('dl',
             {
@@ -41,14 +47,16 @@ function injectRowForProperties(dl: HTMLDListElement, properties: Array<property
             },
             [
                 createHtmlElement('dt', { class: 'pivotick-property-name' }, [property.name]),
-                createHtmlElement('dd', { class: 'pivotick-property-value' }, [property.value]),
+                createHtmlElement('dd', { class: 'pivotick-property-value' }, [
+                    typeof property.value === 'string' ? property.value : JSON.stringify(property.value)
+                ]),
             ]
         )
         dl.append(row)
     }
 }
 
-export function injectNodeProperties(mainBodyPanel: HTMLDivElement | undefined, node: Node, element: any): void {
+export function injectNodeProperties(mainBodyPanel: HTMLDivElement | undefined, node: Node, element: any, options: GraphUI): void {
     if (!mainBodyPanel) return;
 
     const template = `<div class="pivotick-properties-container">
@@ -60,7 +68,7 @@ export function injectNodeProperties(mainBodyPanel: HTMLDivElement | undefined, 
     const dl = propertiesContainer.querySelector("dl");
 
     if (dl) {
-        const properties = nodePropertiesGetter(node)
+        const properties = nodePropertiesGetter(node, options)
         injectRowForProperties(dl, properties)
     }
 
@@ -70,7 +78,7 @@ export function injectNodeProperties(mainBodyPanel: HTMLDivElement | undefined, 
     })
 }
 
-export function injectEdgeProperties(mainBodyPanel: HTMLDivElement | undefined, edge: Edge, element: any): void {
+export function injectEdgeProperties(mainBodyPanel: HTMLDivElement | undefined, edge: Edge, element: any, options: GraphUI): void {
     if (!mainBodyPanel) return;
 
     const template = `<div class="pivotick-properties-container">
@@ -82,7 +90,7 @@ export function injectEdgeProperties(mainBodyPanel: HTMLDivElement | undefined, 
     const dl = propertiesContainer.querySelector("dl");
 
     if (dl) {
-        const properties = edgePropertiesGetter(edge)
+        const properties = edgePropertiesGetter(edge, options)
         injectRowForProperties(dl, properties)
     }
 

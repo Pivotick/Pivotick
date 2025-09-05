@@ -207,7 +207,6 @@ export interface BaseLayoutOptions {
     type: LayoutType /** @default force */
 }
 
-
 export type LayoutOptions = TreeLayoutOptions | ForceLayoutOptions
 
 export interface ForceLayoutOptions extends BaseLayoutOptions {
@@ -226,7 +225,29 @@ export interface TreeLayoutOptions extends BaseLayoutOptions {
  * - `"light"`: Minimal UI, interactions enabled.
  * - `"static"`: Static graph, no UI, no interactions.
  */
-export type GraphMode = 'viewer' | 'full' | 'light' | 'static';
+export type GraphUIMode = 'viewer' | 'full' | 'light' | 'static';
+
+export interface HeaderMapEntry {
+    'title': ((element: Node | Edge) => string) | string,
+    'subtitle': ((element: Node | Edge) => string) | string,
+}
+
+export interface PropertyEntry {
+    'name': string,
+    'value': string,
+}
+
+export interface GraphUI {
+    mode: GraphUIMode,
+    mainHeader: {
+        nodeHeaderMap: HeaderMapEntry
+        edgeHeaderMap: HeaderMapEntry
+    },
+    propertiesPanel: {
+        nodePropertiesMap: Array<PropertyEntry> | ((node: Node) => Array<PropertyEntry>)
+        edgePropertiesMap: Array<PropertyEntry> | ((edge: Edge) => Array<PropertyEntry>)
+    }
+}
 
 export interface GraphOptions {
     /**
@@ -258,7 +279,7 @@ export interface GraphOptions {
      * Graph renderer mode.
      * @default "viewer"
      */
-    mode?: GraphMode,
+    UI?: Partial<GraphUI>,
 
     /**
      * Whether to allow multi-select (select multiple nodes/edges)

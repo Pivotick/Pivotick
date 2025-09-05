@@ -1,5 +1,7 @@
 import { Graph } from '../Graph';
-import type { GraphMode } from '../GraphOptions';
+import { Node } from  '../Node'
+import { Edge } from  '../Edge'
+import type { GraphMode, GraphUI } from '../GraphOptions';
 import { GraphControls } from './elements/GraphControls/GraphControls';
 import { GraphNavigation } from './elements/GraphNavigation/GraphNavigation';
 import { Layout } from './elements/Layout'
@@ -7,9 +9,42 @@ import { Sidebar } from './elements/Sidebar/Sidebar'
 import { SlidePanel } from './elements/SlidePanel/SlidePanel';
 import { Toolbar } from './elements/Toolbar/Toolbar';
 import type { Notification } from './Notifier';
+import merge from 'lodash.merge';
 
-export interface UIManagerOptions {
-    mode?: GraphMode;
+export const DEFAULT_UI_OPTIONS: GraphUI = {
+    mode: 'viewer',
+    mainHeader: {
+        nodeHeaderMap: {
+            'title': (node: Node | Edge) => node.getData().label || 'Could not resolve title',
+            'subtitle': (node: Node | Edge) => node.getData().description || 'Could not resolve subtitle',
+        },
+        edgeHeaderMap: {
+            'title': (edge: Node | Edge) => edge.getData().label || 'Could not resolve title',
+            'subtitle': (edge: Node | Edge) => edge.getData().description || 'Could not resolve subtitle',
+        },
+    },
+    propertiesPanel: {
+        nodePropertiesMap: (node: Node) => {
+            const properties = []
+            for (const [key, value] of Object.entries(node.getData())) {
+                properties.push({
+                    name: key,
+                    value: value,
+                })
+            }
+            return properties
+        },
+        edgePropertiesMap: (edge: Edge) => {
+            const properties = []
+            for (const [key, value] of Object.entries(edge.getData())) {
+                properties.push({
+                    name: key,
+                    value: value,
+                })
+            }
+            return properties
+        },
+    }
 }
 
 export interface UIElement {
@@ -25,7 +60,7 @@ export interface UIElement {
 export class UIManager {
     public graph: Graph;
     protected container: HTMLElement
-    private options: UIManagerOptions;
+    private options: GraphUI;
 
     public layout?: Layout;
     public slidePanel?: SlidePanel;
@@ -34,10 +69,10 @@ export class UIManager {
     public graphNaviation?: GraphNavigation;
     public graphControls?: GraphControls;
 
-    constructor(graph: Graph, container: HTMLElement, options: UIManagerOptions = {}) {
+    constructor(graph: Graph, container: HTMLElement, options: GraphUI) {
         this.graph = graph;
         this.container = container;
-        this.options = { mode: options.mode ?? 'viewer' };
+        this.options = merge({}, DEFAULT_UI_OPTIONS, options)
         this.setup();
     }
 
@@ -161,6 +196,10 @@ export class UIManager {
         this.sidebar?.afterMount()
         this.graphNaviation?.afterMount()
         this.graphControls?.afterMount()
+    }
+
+    public getOptions() {
+        return this.options
     }
 
     public callGraphReady() { // TODO: Instead, these should register an afterMount callback

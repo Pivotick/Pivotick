@@ -21,6 +21,27 @@ export function tryResolveString<T extends unknown[]>(
 }
 
 /**
+ * Resolves the input to an Array. If it's a function, it is invoked with the given arguments.
+ *
+ * @param input - An Array or a function that returns a Array.
+ * @param args - Arguments to pass to the function, if applicable.
+ * @returns An Array if resolved successfully, otherwise undefined.
+ */
+export function tryResolveArray<TArgs extends unknown[], TItem>(
+    input: TItem[] | ((...args: TArgs) => TItem[]),
+    ...args: TArgs
+): TItem[] {
+    
+    if (Array.isArray(input)) {
+        return input
+    } else if (typeof input === 'function') {
+        const result = input(...args)
+        return Array.isArray(result) ? result : []
+    }
+    return []
+}
+
+/**
  * Returns the Font Awesome glyph character for a given icon class (e.g. "fa-solid fa-user").
  * 
  * This function reads the CSS custom property `--fa` defined by Font Awesome for the icon class.

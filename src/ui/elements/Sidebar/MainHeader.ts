@@ -1,25 +1,39 @@
 import { createHtmlTemplate } from "../../../utils/ElementCreation";
 import type { Node } from "../../../Node";
 import type { Edge } from "../../../Edge";
+import type { GraphUI } from "../../../GraphOptions";
+import { tryResolveString } from "../../../utils/Getters";
 
 
-function nodeNameGetter(node: Node): string {
+function nodeNameGetter(node: Node, options: GraphUI): string {
+    if (options.mainHeader.nodeHeaderMap.title) {
+        return tryResolveString(options.mainHeader.nodeHeaderMap.title, node) || 'Could not resolve title'
+    }
     return node.getData().label ?? 'Optional name or label'
 }
 
-function nodeDescriptionGetter(node: Node): string {
+function nodeDescriptionGetter(node: Node, options: GraphUI): string {
+    if (options.mainHeader.nodeHeaderMap.subtitle) {
+        return tryResolveString(options.mainHeader.nodeHeaderMap.subtitle, node) || 'Could not resolve subtitle'
+    }
     return node.getData().description ?? 'Optional subtitle or description'
 }
 
-function edgeNameGetter(edge: Edge): string {
+function edgeNameGetter(edge: Edge, options: GraphUI): string {
+    if (options.mainHeader.edgeHeaderMap.title) {
+        return tryResolveString(options.mainHeader.nodeHeaderMap.title, edge) || 'Could not resolve title'
+    }
     return edge.getData().label ?? 'Optional name or label'
 }
 
-function edgeDescriptionGetter(edge: Edge): string {
+function edgeDescriptionGetter(edge: Edge, options: GraphUI): string {
+    if (options.mainHeader.edgeHeaderMap.subtitle) {
+        return tryResolveString(options.mainHeader.nodeHeaderMap.subtitle, edge) || 'Could not resolve subtitle'
+    }
     return edge.getData().description ?? 'Optional subtitle or description'
 }
 
-export function injectNodeOverview(mainHeaderPanel: HTMLDivElement | undefined, node: Node, element: any): void {
+export function injectNodeOverview(mainHeaderPanel: HTMLDivElement | undefined, node: Node, element: any, options: GraphUI): void {
     if (!mainHeaderPanel) return;
 
     const fixedPreviewSize = 42
@@ -53,10 +67,10 @@ export function injectNodeOverview(mainHeaderPanel: HTMLDivElement | undefined, 
         }
     }
     if (nameElem) {
-        nameElem.innerHTML = nodeNameGetter(node)
+        nameElem.innerHTML = nodeNameGetter(node, options)
     }
     if (subtitleElem) {
-        subtitleElem.innerHTML = nodeDescriptionGetter(node)
+        subtitleElem.innerHTML = nodeDescriptionGetter(node, options)
     }
 
     mainHeaderPanel.innerHTML = mainheaderContent.outerHTML
@@ -65,7 +79,7 @@ export function injectNodeOverview(mainHeaderPanel: HTMLDivElement | undefined, 
     })
 }
 
-export function injectEdgeOverview(mainHeaderPanel: HTMLDivElement | undefined, edge: Edge, element: any): void {
+export function injectEdgeOverview(mainHeaderPanel: HTMLDivElement | undefined, edge: Edge, element: any, options: GraphUI): void {
     if (!mainHeaderPanel) return;
 
     const fixedPreviewSize = 42
@@ -91,10 +105,10 @@ export function injectEdgeOverview(mainHeaderPanel: HTMLDivElement | undefined, 
     const actionElem = mainheaderContent.querySelector(".pivotick-mainheader-nodeinfo-action");
 
     if (nameElem) {
-        nameElem.innerHTML = edgeNameGetter(edge)
+        nameElem.innerHTML = edgeNameGetter(edge, options)
     }
     if (subtitleElem) {
-        subtitleElem.innerHTML = edgeDescriptionGetter(edge)
+        subtitleElem.innerHTML = edgeDescriptionGetter(edge, options)
     }
 
     mainHeaderPanel.innerHTML = mainheaderContent.outerHTML
