@@ -73,6 +73,10 @@ export class GraphInteractions<TElement = unknown> {
         this.listeners[event] = this.listeners[event].filter(h => h !== handler)
     }
 
+    public getGraph(): Graph {
+        return this.graph
+    }
+
     private emit<K extends keyof GraphInteractionEvents<TElement>>(
         event: K,
         ...args: Parameters<GraphInteractionEvents<TElement>[K]>

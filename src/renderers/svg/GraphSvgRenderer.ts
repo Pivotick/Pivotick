@@ -10,6 +10,7 @@ import type { GraphRendererOptions } from '../../GraphOptions'
 import merge from 'lodash.merge'
 import { GraphInteractions } from '../../GraphInteractions'
 import { GraphRenderer } from '../../GraphRenderer'
+import { SelectionBox } from './SelectionBox'
 
 
 const DEFAULT_RENDERER_OPTIONS = {
@@ -111,6 +112,7 @@ export class GraphSvgRenderer extends GraphRenderer {
     private zoom: ZoomBehavior<SVGSVGElement, unknown>
     private graphInteraction: GraphInteractions<SVGGElement | SVGPathElement>
     private eventHandler: EventHandler
+    private selectionBox: SelectionBox
 
     public nodeDrawer: NodeDrawer
     public edgeDrawer: EdgeDrawer
@@ -122,6 +124,7 @@ export class GraphSvgRenderer extends GraphRenderer {
     private zoomGroup: Selection<SVGGElement, unknown, null, undefined>
     private edgeGroup: Selection<SVGGElement, unknown, null, undefined>
     private nodeGroup: Selection<SVGGElement, unknown, null, undefined>
+    private selectionBoxGroup: Selection<SVGGElement, unknown, null, undefined>
     private defs: Selection<SVGDefsElement, unknown, null, undefined>
 
     private nodeGroupSelection!: Selection<SVGGElement, Node, SVGGElement, unknown>
@@ -151,6 +154,7 @@ export class GraphSvgRenderer extends GraphRenderer {
 
         this.zoomGroup = this.svg.append('g').attr('class', 'zoom-layer hidden')
         this.edgeGroup = this.zoomGroup.append('g').attr('class', 'edges')
+        this.selectionBoxGroup = this.svg.append('g').attr('class', 'selection-box')
         this.nodeGroup = this.zoomGroup.append('g').attr('class', 'nodes')
         this.defs = this.svg.append('defs')
         this.edgeDrawer.renderDefinitions(this.defs)
@@ -160,7 +164,7 @@ export class GraphSvgRenderer extends GraphRenderer {
         this.svg.on('dblclick.zoom', null)
         this.zoom
             .filter((event) => {
-                if (event.ctrlKey)
+                if (event.ctrlKey || event.shiftKey)
                     return false
                 const target = event.target as HTMLElement
                 return !(target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA')
@@ -170,6 +174,7 @@ export class GraphSvgRenderer extends GraphRenderer {
                 this.zoomGroup.attr('transform', event.transform)
             })
 
+        this.selectionBox = new SelectionBox(this, this.svgCanvas, this.selectionBoxGroup.node())
     }
 
     public setupRendering(): void {
@@ -199,6 +204,7 @@ export class GraphSvgRenderer extends GraphRenderer {
                         .each((node: Node, i: number, nodes: ArrayLike<SVGGElement>) => {
                             node.clearDirty()
                             const selection = d3Select<SVGGElement, Node>(nodes[i])
+                            selection.attr('id', node.id)
                             this.nodeDrawer.render(selection, node)
                         })
                 },

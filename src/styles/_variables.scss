@@ -57,6 +57,8 @@ $toast-text-success: text-color($success);
     --pivotic-graph-navigation-control-container-shadow:
         rgba(0, 0, 0, 0.22) 0px 0px 4px,
         rgba(0, 0, 0, 0.30) 0px 1px 2px;
+    --pivotick-selection-rectangle-fill: color-mix(in srgb, var(--pivotick-primary-bg-color) 20%, #ffffff00);
+    --pivotick-selection-rectangle-stroke:color-mix(in srgb, var(--pivotick-primary-bg-color) 80%, #ffffff00);
 
     /* Node defaults */
     --pivotick-node-color: #007acc;

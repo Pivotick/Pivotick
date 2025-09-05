@@ -127,3 +127,9 @@
         }
     }
 }
+
+.selection-rectangle {
+    fill: var(--pivotick-selection-rectangle-fill);
+    stroke: var(--pivotick-selection-rectangle-stroke);
+    stroke-width: 2px;
+}
