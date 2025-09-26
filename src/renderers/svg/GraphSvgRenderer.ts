@@ -204,7 +204,7 @@ export class GraphSvgRenderer extends GraphRenderer {
                         .each((node: Node, i: number, nodes: ArrayLike<SVGGElement>) => {
                             node.clearDirty()
                             const selection = d3Select<SVGGElement, Node>(nodes[i])
-                            selection.attr('id', node.id)
+                            selection.attr('id', `node-${node.id}`)
                             this.nodeDrawer.render(selection, node)
                         })
                 },

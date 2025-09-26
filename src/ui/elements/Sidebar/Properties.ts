@@ -60,7 +60,9 @@ function injectRowForProperties(dl: HTMLDListElement, properties: Array<Property
 }
 
 function injectTableForAggregatedProperties(div: HTMLDivElement, aggregatedProperties: aggregatedProperties, selectedNodeCount: number): void {
-    for (const [propName, valueCountMap] of aggregatedProperties) {
+    const sortedAggregatedProperties = sortAggregatedProperties(aggregatedProperties)
+
+    for (const [propName, valueCountMap] of sortedAggregatedProperties) {
         const section = createHtmlElement('div', {
             'class': 'pivotick-aggregated-property-section'
         })
@@ -71,7 +73,22 @@ function injectTableForAggregatedProperties(div: HTMLDivElement, aggregatedPrope
             class: 'pivotick-aggregated-property-container',
         })
 
+        let i = 0
         for (const [value, count] of valueCountMap) {
+            if (i >= 10) {
+                const row = createHtmlElement('div',
+                    {},
+                    [
+                        createHtmlElement('div', {
+                            style: 'text-align: center; font-weight: 300; font-size: 0.9rem; color: var(--pivotick-text-color-softer);'
+                        }, [
+                            `... ${valueCountMap.size - i} more`
+                        ]),
+                    ]
+                )
+                container.append(row)
+                break
+            }
             const row = createHtmlElement('div',
                 {
                     class: 'pivotick-aggregated-property-row',
@@ -86,6 +103,7 @@ function injectTableForAggregatedProperties(div: HTMLDivElement, aggregatedPrope
                 ]
             )
             container.append(row)
+            i++
         }
 
         section.appendChild(sectionTitle)
@@ -209,4 +227,33 @@ function aggregateProperties(allProperties: Array<PropertyEntry>[]): aggregatedP
     })
 
     return aggregatedProperties
+}
+
+/**
+ * Sorts an aggregated properties map.
+ * 
+ * 1. Inner maps (value -> count) are sorted by count (descending).
+ * 2. Outer map (property -> Map) is sorted by inner map size (ascending).
+ *
+ * @param aggregated Map of property -> Map of value -> count
+ * @returns A new Map with the same structure but sorted.
+ */
+export function sortAggregatedProperties(
+    aggregated: aggregatedProperties
+): aggregatedProperties {
+    // Step 1: sort each inner map by count (descending)
+    const sortedInnerMaps = new Map<string, Map<string, number>>()
+    for (const [prop, valuesMap] of aggregated.entries()) {
+        const sortedEntries = Array.from(valuesMap.entries()).sort(
+            (a, b) => b[1] - a[1] // high count first
+        )
+        sortedInnerMaps.set(prop, new Map(sortedEntries))
+    }
+
+    // Step 2: sort outer map by inner map size (ascending)
+    const sortedOuterEntries = Array.from(sortedInnerMaps.entries()).sort(
+        (a, b) => a[1].size - b[1].size
+    )
+
+    return new Map(sortedOuterEntries)
 }

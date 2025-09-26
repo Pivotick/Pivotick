@@ -97,11 +97,11 @@
                 border-bottom: var(--pivotick-sidebar-panel-border);
                 border-right: var(--pivotick-sidebar-panel-border);
                 padding: 8px 10px;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 
                 dl {
                     margin: 0;
                     background: #fff;
-                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
                     font-size: 0.95em;
 
                     .pivotick-property-row {
@@ -128,6 +128,7 @@
                     margin-bottom: 14px;
                     border: var(--pivotick-sidebar-panel-border);
                     border-radius: 4px;
+                    // box-shadow: ;
                     
                     .pivotick-aggregated-property-title {
                         display: block;

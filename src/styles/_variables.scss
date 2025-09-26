@@ -34,9 +34,6 @@ $toast-text-success: text-color($success);
                                            rgba(0, 0, 0, 0.04) 3px 0px 2px 0px;
     --pivotic-sidebar-layout-shadow-bottom: rgba(0, 0, 0, 0.07) 3px 2px 3px 0px,
                                             rgba(0, 0, 0, 0.04) 2px 3px 2px 0px;
-    --pivotick-sidebar-properties-table-pb-fill-bg: #e5e7eb;
-    --pivotick-sidebar-properties-table-pb-bar-bg: var(--pivotick-primary-bg-color);
-    
 
     /* Graph notification */
     --pivotick-toast-bg-color-primary: #{color.mix(white, $primary, 40%)};
@@ -102,6 +99,12 @@ $toast-text-success: text-color($success);
     --pivotick-edge-label-selected-color: var(--pivotick-edge-label-color);
     --pivotick-edge-label-selected-font-size: var(--pivotick-edge-label-font-size);
     --pivotick-edge-label-selected-bg: #ffffffa0;
+
+    /* Component */
+    --pivotick-inline-bar-bg: #e5e7eb;
+    --pivotick-inline-bar-fill-bg: var(--pivotick-primary-bg-color);
+    --pivotick-inline-bar-height: 0.5rem;
+    --pivotick-inline-bar-width: 80px;
 }
 
 @media (prefers-color-scheme: dark) {

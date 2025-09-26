@@ -1,14 +1,14 @@
 .pivotick-inline-bar-container {
     display: inline-flex;
-    height: 0.5rem;
-    width: 80px;
-    background-color: var(--pivotick-sidebar-properties-table-pb-fill-bg);
+    height: var(--pivotick-inline-bar-height);
+    width: var(--pivotick-inline-bar-width);
+    background-color: var(--pivotick-inline-bar-bg);
     border-radius: 4px;
     overflow: hidden;
 
     .pivotick-inline-bar-fill {
         display: block;
         height: 100%;
-        background-color: var(--pivotick-sidebar-properties-table-pb-bar-bg);
+        background-color: var(--pivotick-inline-bar-fill-bg);
     }
 }
