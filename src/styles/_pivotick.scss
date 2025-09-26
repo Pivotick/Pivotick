@@ -81,6 +81,7 @@
             color: var(--pivotick-edge-label-color);
             font-family: var(--pivotick-edge-label-font-family);
             font-size: var(--pivotick-edge-label-font-size);
+            user-select: none;
         }
     }
 
