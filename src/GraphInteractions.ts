@@ -4,12 +4,12 @@ import type { Node } from './Node'
 import type { Edge } from './Edge'
 
 
-interface NodeSelection<TElement> {
+export interface NodeSelection<TElement> {
     node: Node,
     element: TElement,
 }
 
-interface EdgeSelection<TElement> {
+export interface EdgeSelection<TElement> {
     edge: Edge,
     element: TElement,
 }
@@ -33,8 +33,13 @@ type GraphInteractionEvents<TElement> = {
 
     selectNode: (node: Node, element: TElement) => void;
     unselectNode: (node: Node, element: TElement) => void;
+    selectNodes: (nodes: NodeSelection<TElement>[]) => void;
+    unselectNodes: (nodes: NodeSelection<TElement>[]) => void;
+
     selectEdge: (edge: Edge, element: TElement) => void;
     unselectEdge: (edge: Edge, element: TElement) => void;
+    selectEdges: (edges: EdgeSelection<TElement>[]) => void;
+    unselectEdges: (edges: EdgeSelection<TElement>[]) => void;
 }
 
 export class GraphInteractions<TElement = unknown> {
@@ -45,6 +50,8 @@ export class GraphInteractions<TElement = unknown> {
 
     private selectedNode: NodeSelection<TElement> | null = null
     private selectedEdge: EdgeSelection<TElement> | null = null
+    private selectedNodes: NodeSelection<TElement>[] = []
+    private selectedEdges: EdgeSelection<TElement>[] = []
 
     constructor(graph: Graph) {
         this.graph = graph
@@ -56,6 +63,7 @@ export class GraphInteractions<TElement = unknown> {
             edgeSelect: [], edgeBlur: [],
             canvasClick: [],
             selectNode: [], unselectNode: [], selectEdge: [], unselectEdge: [],
+            selectNodes: [], unselectNodes: [], selectEdges: [], unselectEdges: [],
         }
     }
 
@@ -145,8 +153,7 @@ export class GraphInteractions<TElement = unknown> {
     }
 
     public canvasClick(event: PointerEvent): void {
-        this.unselectNode()
-        this.unselectEdge()
+        this.unselectAll()
         this.emit('canvasClick', event)
         if (this.callbacks.onCanvasClick && typeof this.callbacks.onCanvasClick === 'function') {
             this.callbacks.onCanvasClick(event)
@@ -181,6 +188,24 @@ export class GraphInteractions<TElement = unknown> {
         this.refreshRendering()
     }
 
+    public selectNodes(selection: Array<[Node, TElement]>): void {
+        this.unselectAll()
+        this.selectedNodes = selection.map((selection) => {
+            return {
+                node: selection[0],
+                element: selection[1],
+            }
+        })
+        this.emit('selectNodes', this.selectedNodes)
+        this.selectedNodes.forEach(({ node, element }) => {
+            if (this.callbacks.onNodeSelect && typeof this.callbacks.onNodeSelect === 'function') {
+                this.callbacks.onNodeSelect(node, element)
+            }
+            node.markDirty()
+        })
+        this.refreshRendering()
+    }
+
     public selectEdge(element: TElement, edge: Edge): void {
         this.unselectAll()
         this.selectedEdge = {
@@ -192,6 +217,24 @@ export class GraphInteractions<TElement = unknown> {
             this.callbacks.onEdgeSelect(edge, element)
         }
         edge.markDirty()
+        this.refreshRendering()
+    }
+
+    public selectEdges(selection: Array<[Edge, TElement]>): void {
+        this.unselectAll()
+        this.selectedEdges = selection.map((selection) => {
+            return {
+                edge: selection[0],
+                element: selection[1],
+            }
+        })
+        this.emit('selectEdges', this.selectedEdges)
+        this.selectedEdges.forEach(({ edge, element }) => {
+            if (this.callbacks.onEdgeSelect && typeof this.callbacks.onEdgeSelect === 'function') {
+                this.callbacks.onEdgeSelect(edge, element)
+            }
+            edge.markDirty()
+        })
         this.refreshRendering()
     }
 
@@ -212,6 +255,31 @@ export class GraphInteractions<TElement = unknown> {
     public unselectAll(): void {
         this.unselectNode()
         this.unselectEdge()
+        this.clearNodeSelectionList()
+        this.clearEdgeSelectionList()
+        this.refreshRendering()
+    }
+
+    public clearNodeSelectionList(): void {
+        this.emit('unselectNodes', this.selectedNodes)
+        this.selectedNodes.forEach(({ node, element }) => {
+            if (this.callbacks.onNodeBlur && typeof this.callbacks.onNodeBlur === 'function') {
+                this.callbacks.onNodeBlur(node, element)
+            }
+            node.markDirty()
+        })
+        this.selectedNodes = []
+    }
+
+    public clearEdgeSelectionList(): void {
+        this.emit('unselectEdges', this.selectedEdges)
+        this.selectedEdges.forEach(({ edge, element }) => {
+            if (this.callbacks.onEdgeBlur && typeof this.callbacks.onEdgeBlur === 'function') {
+                this.callbacks.onEdgeBlur(edge, element)
+            }
+            edge.markDirty()
+        })
+        this.selectedEdges = []
     }
 
     public refreshRendering(): void {
@@ -225,6 +293,14 @@ export class GraphInteractions<TElement = unknown> {
 
     public getSelectedEdge(): EdgeSelection<TElement> | null {
         return this.selectedEdge
+    }
+
+    public getSelectedNodeIDs(): string[] | null {
+        return this.selectedNodes?.map(selection => selection.node.id) ?? null
+    }
+
+    public getSelectedEdgeIDs(): string[] | null {
+        return this.selectedEdge?.map(selection => selection.edge.id) ?? null
     }
 
 }

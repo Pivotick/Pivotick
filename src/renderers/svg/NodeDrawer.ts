@@ -245,6 +245,13 @@ export class NodeDrawer {
                 .attr('r', node._circleRadius ?? 4) // slightly larger than node
                 .attr('pointer-events', 'none') // doesn't interfere with interaction
         }
+        if (this.graphSvgRenderer.getGraphInteraction().getSelectedNodeIDs()?.includes(node.id)) {
+            nodeSelection
+                .append('circle')
+                .attr('class', 'pivotick-node-selected-highlight')
+                .attr('r', node._circleRadius ?? 4) // slightly larger than node
+                .attr('pointer-events', 'none') // doesn't interfere with interaction
+        }
     }
 
 }

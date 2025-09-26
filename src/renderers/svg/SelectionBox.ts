@@ -66,7 +66,7 @@ export class SelectionBox {
         const bbox = this.rect.getBoundingClientRect()
         const selectedNodes = this.getNodesInRect(bbox)
 
-        // this.renderer.getGraphInteraction().selectNode(selectedNodes)
+        this.renderer.getGraphInteraction().selectNodes(selectedNodes)
 
         this.selectionBoxGroup.removeChild(this.rect)
         this.rect = null
