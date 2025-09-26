@@ -28,6 +28,8 @@ export class SelectionBox {
         if (!this.selectionBoxGroup) return
         if (!e.shiftKey) return // only with Shift+Click
 
+        this.svg.querySelectorAll('.selection-rectangle').forEach(el => el.remove())
+
         this.isSelecting = true
         const { x, y } = this.getSvgPoint(e)
         this.startX = x
@@ -45,6 +47,10 @@ export class SelectionBox {
 
     private onMouseMove = (e: MouseEvent) => {
         if (!this.isSelecting || !this.rect) return
+        if (!e.shiftKey) { // only with Shift+Click
+            this.onMouseUp()
+            return
+        }
 
         const { x, y } = this.getSvgPoint(e)
         const minX = Math.min(this.startX, x)
