@@ -24,6 +24,10 @@ export class SelectionBox {
         this.svg.addEventListener('mouseup', this.onMouseUp)
     }
 
+    private onSvgMouseLeave = () => {
+        if (this.isSelecting) this.onMouseUp()
+    }
+
     private onMouseDown = (e: MouseEvent) => {
         if (!this.selectionBoxGroup) return
         if (!e.shiftKey) return // only with Shift+Click
@@ -43,14 +47,12 @@ export class SelectionBox {
         this.rect.setAttribute('class', 'selection-rectangle')
 
         this.selectionBoxGroup.appendChild(this.rect)
+
+        this.svg.addEventListener('mouseleave', this.onSvgMouseLeave)
     }
 
     private onMouseMove = (e: MouseEvent) => {
         if (!this.isSelecting || !this.rect) return
-        if (!e.shiftKey) { // only with Shift+Click
-            this.onMouseUp()
-            return
-        }
 
         const { x, y } = this.getSvgPoint(e)
         const minX = Math.min(this.startX, x)
@@ -76,6 +78,7 @@ export class SelectionBox {
 
         this.selectionBoxGroup.removeChild(this.rect)
         this.rect = null
+        this.svg.removeEventListener('mouseleave', this.onSvgMouseLeave)
     }
 
     private getSvgPoint(evt: MouseEvent) {
