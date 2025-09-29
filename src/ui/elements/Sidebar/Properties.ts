@@ -5,255 +5,361 @@ import type { GraphUI, PropertyEntry } from '../../../GraphOptions'
 import { tryResolveArray } from '../../../utils/Getters'
 import type { EdgeSelection, NodeSelection } from '../../../GraphInteractions'
 import { createInlineBar } from '../../components/InlineBar'
+import type { UIElement, UIManager } from '../../UIManager'
+import './properties.scss'
+
 
 type aggregatedProperties = Map<string, Map<string, number>>
 
-function nodePropertiesGetter(node: Node, options: GraphUI): Array<PropertyEntry> {
-    const data = node.getData()
-    const properties: Array<PropertyEntry> = []
+export class SidebarProperties implements UIElement {
+    private uiManager: UIManager
 
-    if (options.propertiesPanel.nodePropertiesMap) {
-        return tryResolveArray<[Node], PropertyEntry>(options.propertiesPanel.nodePropertiesMap, node)
+    private panel?: HTMLDivElement
+    private header?: HTMLDivElement
+    private body?: HTMLDivElement
+
+    private panelVisible = false
+
+    constructor(uiManager: UIManager) {
+        this.uiManager = uiManager
     }
 
-    for (const[key, value] of Object.entries(data)) {
-        properties.push({
-            name: key,
-            value: value,
-        })
-    }
-    return properties
-}
+    public mount(rootContainer: HTMLElement | undefined) {
+        if (!rootContainer) return
 
-function edgePropertiesGetter(edge: Edge, options: GraphUI): Array<PropertyEntry> {
-    const data = edge.getData()
-    const properties: Array<PropertyEntry> = []
+        const template = `
+<div class="enter-ready">
+    <div class="pivotick-properties-header-panel"></div>
+    <div class="pivotick-properties-body-panel"></div>
+</div>`
+        this.panel = createHtmlTemplate(template) as HTMLDivElement
+        this.header = this.panel.querySelector('.pivotick-properties-header-panel') as HTMLDivElement
+        this.body = this.panel.querySelector('.pivotick-properties-body-panel') as HTMLDivElement
 
-    if (options.propertiesPanel.edgePropertiesMap) {
-        return tryResolveArray<[Edge], PropertyEntry>(options.propertiesPanel.edgePropertiesMap, edge)
+        rootContainer.appendChild(this.panel)
     }
 
-    for (const [key, value] of Object.entries(data)) {
-        properties.push({
-            name: key,
-            value: value,
-        })
+    public destroy() {
+        this.panel?.remove()
+        this.panel = undefined
     }
-    return properties
-}
 
-function injectRowForProperties(dl: HTMLDListElement, properties: Array<PropertyEntry>): void {
-    for (const property of properties) {
-        const row = createHtmlElement('dl',
-            {
-                'class': 'pivotick-property-row',
-            },
-            [
-                createHtmlElement('dt', { class: 'pivotick-property-name' }, [property.name]),
-                createHtmlElement('dd', { class: 'pivotick-property-value' }, [
-                    typeof property.value === 'string' ? property.value : JSON.stringify(property.value)
-                ]),
-            ]
-        )
-        dl.append(row)
+    public afterMount() {
+        this.clearProperties()
     }
-}
 
-function injectTableForAggregatedProperties(div: HTMLDivElement, aggregatedProperties: aggregatedProperties, selectedNodeCount: number): void {
-    const sortedAggregatedProperties = sortAggregatedProperties(aggregatedProperties)
+    public clearProperties(): void {
+        if (!this.body) return
+        this.body.innerHTML = ''
+        this.hidePanel()
+    }
 
-    for (const [propName, valueCountMap] of sortedAggregatedProperties) {
-        const section = createHtmlElement('div', {
-            'class': 'pivotick-aggregated-property-section'
-        })
-        const sectionTitle = createHtmlElement('span', {
-            'class': 'pivotick-aggregated-property-title'
-        }, [`.${propName}`])
-        const container = createHtmlElement('div', {
-            class: 'pivotick-aggregated-property-container',
-        })
+    private setHeaderBasicNode() {
+        this.header!.innerText = 'Basic Node Properties'
+    }
 
-        let i = 0
-        for (const [value, count] of valueCountMap) {
-            if (i >= 10) {
+    private setHeaderBasicEdge() {
+        this.header!.innerText = 'Basic Edge Properties'
+    }
+
+    private setHeaderMultiSelectNode() {
+        this.header!.innerText = 'Aggregated Node Properties'
+    }
+
+    private setHeaderMultiSelectEdge() {
+        this.header!.innerText = 'Aggregated Edge Properties'
+    }
+
+    private showPanel() {
+        this.panelVisible = true
+        this.panel!.classList.add('enter-active')
+    }
+
+    private hidePanel() {
+        this.panelVisible = false
+        this.panel!.classList.remove('enter-active')
+    }
+
+    /* Single selection */
+    public updateNodeProperties(node: Node, element: any): void {
+        if (!this.body) return
+
+        this.setHeaderBasicNode()
+        this.showPanel()
+
+        const template = `
+<div class="pivotick-properties-container">
+    <div class="">
+        <dl></dl>
+    </div>
+</div>`
+        const propertiesContainer = createHtmlTemplate(template) as HTMLDivElement
+        const dl = propertiesContainer.querySelector('dl')
+
+        if (dl) {
+            const properties = this.nodePropertiesGetter(node, this.uiManager.getOptions())
+            this.injectRowForProperties(dl, properties)
+        }
+
+        this.body.innerHTML = propertiesContainer.outerHTML
+    }
+
+    public updateEdgeProperties(edge: Edge, element: any): void {
+        if (!this.body) return
+        this.setHeaderBasicEdge()
+        this.showPanel()
+
+        const template = `
+<div class="pivotick-properties-container">
+    <div class="">
+        <dl></dl>
+    </div>
+</div>`
+        const propertiesContainer = createHtmlTemplate(template) as HTMLDivElement
+        const dl = propertiesContainer.querySelector('dl')
+
+        if (dl) {
+            const properties = this.edgePropertiesGetter(edge, this.uiManager.getOptions())
+            this.injectRowForProperties(dl, properties)
+        }
+
+        this.body.innerHTML = propertiesContainer.outerHTML
+    }
+
+
+    /* Multiple selection */
+    public updateNodesProperties(nodes: NodeSelection[]): void {
+        if (!this.body) return
+        this.setHeaderMultiSelectNode()
+        this.showPanel()
+
+        const template = `
+<div class="pivotick-properties-container">
+    <div class="">
+        <div class="pivotick-aggregated-properties"></div>
+    </div>
+</div>`
+        const propertiesContainer = createHtmlTemplate(template) as HTMLDivElement
+        const div = propertiesContainer.querySelector('div.pivotick-aggregated-properties') as HTMLDivElement
+
+        if (div) {
+            const allProperties: Array<PropertyEntry>[] = []
+            nodes.forEach((selectedNode) => {
+                const { node } = selectedNode
+                const properties = this.nodePropertiesGetter(node, this.uiManager.getOptions())
+                allProperties.push(properties)
+            })
+            const aggregatedProperties = this.aggregateProperties(allProperties)
+            this.injectTableForAggregatedProperties(div, aggregatedProperties, nodes.length)
+        }
+
+        this.body.innerHTML = propertiesContainer.outerHTML
+    }
+
+    public updateEdgesProperties(edges: EdgeSelection[]): void {
+        if (!this.body) return
+        this.setHeaderMultiSelectEdge()
+        this.showPanel()
+
+        const template = `
+<div class="pivotick-properties-container">
+    <div class="">
+        <div class="pivotick-aggregated-properties"></div>
+    </div>
+</div>`
+        const propertiesContainer = createHtmlTemplate(template) as HTMLDivElement
+        const div = propertiesContainer.querySelector('div.pivotick-aggregated-properties') as HTMLDivElement
+
+        if (div) {
+            const allProperties: Array<PropertyEntry>[] = []
+            edges.forEach((selectedEdge) => {
+                const { node } = selectedEdge
+                const properties = this.edgePropertiesGetter(node, this.uiManager.getOptions())
+                allProperties.push(properties)
+            })
+            const aggregatedProperties = this.aggregateProperties(allProperties)
+            this.injectTableForAggregatedProperties(div, aggregatedProperties, edges.length)
+        }
+
+        this.body.innerHTML = propertiesContainer.outerHTML
+    }
+
+    /* Private methods */
+    private nodePropertiesGetter(node: Node, options: GraphUI): Array<PropertyEntry> {
+        const data = node.getData()
+        const properties: Array<PropertyEntry> = []
+
+        if (options.propertiesPanel.nodePropertiesMap) {
+            return tryResolveArray<[Node], PropertyEntry>(options.propertiesPanel.nodePropertiesMap, node)
+        }
+
+        for (const [key, value] of Object.entries(data)) {
+            properties.push({
+                name: key,
+                value: value,
+            })
+        }
+        return properties
+    }
+
+    private edgePropertiesGetter(edge: Edge, options: GraphUI): Array<PropertyEntry> {
+        const data = edge.getData()
+        const properties: Array<PropertyEntry> = []
+
+        if (options.propertiesPanel.edgePropertiesMap) {
+            return tryResolveArray<[Edge], PropertyEntry>(options.propertiesPanel.edgePropertiesMap, edge)
+        }
+
+        for (const [key, value] of Object.entries(data)) {
+            properties.push({
+                name: key,
+                value: value,
+            })
+        }
+        return properties
+    }
+
+    private injectRowForProperties(dl: HTMLDListElement, properties: Array<PropertyEntry>): void {
+        for (const property of properties) {
+            const row = createHtmlElement('dl',
+                {
+                    'class': 'pivotick-property-row',
+                },
+                [
+                    createHtmlElement('dt', { class: 'pivotick-property-name' }, [property.name]),
+                    createHtmlElement('dd', { class: 'pivotick-property-value' }, [
+                        typeof property.value === 'string' ? property.value : JSON.stringify(property.value)
+                    ]),
+                ]
+            )
+            dl.append(row)
+        }
+    }
+
+    private injectTableForAggregatedProperties(div: HTMLDivElement, aggregatedProperties: aggregatedProperties, selectedNodeCount: number): void {
+        const sortedAggregatedProperties = this.sortAggregatedProperties(aggregatedProperties)
+
+        for (const [propName, valueCountMap] of sortedAggregatedProperties) {
+            const section = createHtmlElement('div', {
+                'class': 'pivotick-aggregated-property-section'
+            })
+            const sectionTitle = createHtmlElement('span', {
+                'class': 'pivotick-aggregated-property-title'
+            }, [`.${propName}`])
+            const container = createHtmlElement('div', {
+                class: 'pivotick-aggregated-property-container',
+            })
+
+            let i = 0
+            for (const [value, count] of valueCountMap) {
+                if (i >= 10) {
+                    const row = createHtmlElement('div',
+                        {},
+                        [
+                            createHtmlElement('div', {
+                                style: 'text-align: center; font-weight: 300; font-size: 0.9rem; color: var(--pivotick-text-color-softer);'
+                            }, [
+                                `... ${valueCountMap.size - i} more`
+                            ]),
+                        ]
+                    )
+                    container.append(row)
+                    break
+                }
                 const row = createHtmlElement('div',
-                    {},
+                    {
+                        class: 'pivotick-aggregated-property-row',
+                    },
                     [
-                        createHtmlElement('div', {
-                            style: 'text-align: center; font-weight: 300; font-size: 0.9rem; color: var(--pivotick-text-color-softer);'
-                        }, [
-                            `... ${valueCountMap.size - i} more`
+                        createHtmlElement('span', { class: 'pivotick-aggregated-property-value' }, [
+                            typeof value === 'string' ? value : JSON.stringify(value)
+                        ]),
+                        createHtmlElement('span', { class: 'pivotick-aggregated-property-count' }, [
+                            createInlineBar(count, selectedNodeCount)
                         ]),
                     ]
                 )
                 container.append(row)
-                break
+                i++
             }
-            const row = createHtmlElement('div',
-                {
-                    class: 'pivotick-aggregated-property-row',
-                },
-                [
-                    createHtmlElement('span', { class: 'pivotick-aggregated-property-value' }, [
-                        typeof value === 'string' ? value : JSON.stringify(value)
-                    ]),
-                    createHtmlElement('span', { class: 'pivotick-aggregated-property-count' }, [
-                        createInlineBar(count, selectedNodeCount)
-                    ]),
-                ]
+
+            section.appendChild(sectionTitle)
+            section.appendChild(container)
+            div.appendChild(section)
+        }
+    }
+
+    /**
+     * Aggregates a collection of property entries into a nested map structure.
+     *
+     * For each property name, this function counts the occurrences of each
+     * property value across all provided entries. The result is a map where:
+     *
+     * - Keys are property names (e.g. "label", "type").
+     * - Values are maps of property values to their occurrence counts.
+     *
+     * Example:
+     * ```ts
+     * [
+     *   [ { name: "type", value: "node" }, { name: "label", value: "Node 1" } ],
+     *   [ { name: "type", value: "node" }, { name: "label", value: "Node 2" } ],
+     *   [ { name: "type", value: "node" }, { name: "label", value: "Node 1" } ]
+     * ]
+     *
+     * => Map {
+     *   "type"  => Map { "node" => 3 },
+     *   "label" => Map { "Node 1" => 2, "Node 2" => 1 }
+     * }
+     * ```
+     *
+     * @param allProperties Array of property entry arrays, where each inner array
+     * represents the properties of a node.
+     * @returns A nested map of property name → (property value → count).
+     */
+    private aggregateProperties(allProperties: Array<PropertyEntry>[]): aggregatedProperties {
+        const aggregatedProperties: aggregatedProperties = new Map()
+
+        allProperties.forEach(properties => {
+            properties.forEach(prop => {
+                if (!aggregatedProperties.has(prop.name)) {
+                    aggregatedProperties.set(prop.name, new Map())
+                }
+                const valueCountMap = aggregatedProperties.get(prop.name)
+                const currentCount = valueCountMap!.get(prop.value) || 0
+                valueCountMap!.set(prop.value, currentCount + 1)
+            })
+        })
+
+        return aggregatedProperties
+    }
+
+    /**
+     * Sorts an aggregated properties map.
+     * 
+     * 1. Inner maps (value -> count) are sorted by count (descending).
+     * 2. Outer map (property -> Map) is sorted by inner map size (ascending).
+     *
+     * @param aggregated Map of property -> Map of value -> count
+     * @returns A new Map with the same structure but sorted.
+     */
+    private sortAggregatedProperties(
+        aggregated: aggregatedProperties
+    ): aggregatedProperties {
+        // Step 1: sort each inner map by count (descending)
+        const sortedInnerMaps = new Map<string, Map<string, number>>()
+        for (const [prop, valuesMap] of aggregated.entries()) {
+            const sortedEntries = Array.from(valuesMap.entries()).sort(
+                (a, b) => b[1] - a[1] // high count first
             )
-            container.append(row)
-            i++
+            sortedInnerMaps.set(prop, new Map(sortedEntries))
         }
 
-        section.appendChild(sectionTitle)
-        section.appendChild(container)
-        div.appendChild(section)
-    }
-}
-
-export function injectNodeProperties(mainBodyPanel: HTMLDivElement | undefined, node: Node, element: any, options: GraphUI): void {
-    if (!mainBodyPanel) return
-
-    const template = `<div class="pivotick-properties-container">
-    <div class="enter-ready">
-        <dl></dl>
-    </div>
-</div>`
-    const propertiesContainer = createHtmlTemplate(template) as HTMLDivElement
-    const dl = propertiesContainer.querySelector('dl')
-
-    if (dl) {
-        const properties = nodePropertiesGetter(node, options)
-        injectRowForProperties(dl, properties)
-    }
-
-    mainBodyPanel.innerHTML = propertiesContainer.outerHTML
-    requestAnimationFrame(() => {
-        mainBodyPanel?.firstElementChild?.firstElementChild?.classList.add('enter-active')
-    })
-}
-
-export function injectEdgeProperties(mainBodyPanel: HTMLDivElement | undefined, edge: Edge, element: any, options: GraphUI): void {
-    if (!mainBodyPanel) return
-
-    const template = `<div class="pivotick-properties-container">
-    <div class="enter-ready">
-        <dl></dl>
-    </div>
-</div>`
-    const propertiesContainer = createHtmlTemplate(template) as HTMLDivElement
-    const dl = propertiesContainer.querySelector('dl')
-
-    if (dl) {
-        const properties = edgePropertiesGetter(edge, options)
-        injectRowForProperties(dl, properties)
-    }
-
-    mainBodyPanel.innerHTML = propertiesContainer.outerHTML
-    requestAnimationFrame(() => {
-        mainBodyPanel?.firstElementChild?.firstElementChild?.classList.add('enter-active')
-    })
-}
-
-
-export function clearProperties(mainBodyPanel: HTMLDivElement | undefined): void {
-    if (!mainBodyPanel) return
-    mainBodyPanel.innerHTML = ''
-}
-
-export function injectNodesProperties(mainBodyPanel: HTMLDivElement | undefined, nodes: NodeSelection, options: GraphUI, nodeCount: number): void {
-    if (!mainBodyPanel) return
-
-    const template = `<div class="pivotick-properties-container">
-    <div class="enter-ready">
-        <div class="pivotick-aggregated-properties"></div>
-    </div>
-</div>`
-    const propertiesContainer = createHtmlTemplate(template) as HTMLDivElement
-    const div = propertiesContainer.querySelector('div.pivotick-aggregated-properties') as HTMLDivElement
-
-    if (div) {
-        const allProperties: Array<PropertyEntry>[] = []
-        nodes.forEach(selecteNode => {
-            const { node } = selecteNode
-            const properties = nodePropertiesGetter(node, options)
-            allProperties.push(properties)
-        })
-        const aggregatedProperties = aggregateProperties(allProperties)
-        injectTableForAggregatedProperties(div, aggregatedProperties, nodes.length)
-    }
-
-    mainBodyPanel.innerHTML = propertiesContainer.outerHTML
-    requestAnimationFrame(() => {
-        mainBodyPanel?.firstElementChild?.firstElementChild?.classList.add('enter-active')
-    })
-}
-
-export function injectEdgesProperties(mainBodyPanel: HTMLDivElement | undefined, edges: EdgeSelection, options: GraphUI): void {
-    if (!mainBodyPanel) return
-
-    const template = `<div class="pivotick-properties-container">
-    <div class="enter-ready">
-        <dl></dl>
-    </div>
-</div>`
-    const propertiesContainer = createHtmlTemplate(template) as HTMLDivElement
-    const dl = propertiesContainer.querySelector('dl')
-
-    if (dl) {
-        const properties = nodePropertiesGetter(node, options)
-        injectRowForProperties(dl, properties)
-    }
-
-    mainBodyPanel.innerHTML = propertiesContainer.outerHTML
-    requestAnimationFrame(() => {
-        mainBodyPanel?.firstElementChild?.firstElementChild?.classList.add('enter-active')
-    })
-}
-
-function aggregateProperties(allProperties: Array<PropertyEntry>[]): aggregatedProperties {
-    const aggregatedProperties: aggregatedProperties = new Map()
-
-    allProperties.forEach(properties => {
-        properties.forEach(prop => {
-            if (!aggregatedProperties.has(prop.name)) {
-                aggregatedProperties.set(prop.name, new Map())
-            }
-            const valueCountMap = aggregatedProperties.get(prop.name)
-            const currentCount = valueCountMap!.get(prop.value) || 0
-            valueCountMap!.set(prop.value, currentCount + 1)
-        })
-    })
-
-    return aggregatedProperties
-}
-
-/**
- * Sorts an aggregated properties map.
- * 
- * 1. Inner maps (value -> count) are sorted by count (descending).
- * 2. Outer map (property -> Map) is sorted by inner map size (ascending).
- *
- * @param aggregated Map of property -> Map of value -> count
- * @returns A new Map with the same structure but sorted.
- */
-export function sortAggregatedProperties(
-    aggregated: aggregatedProperties
-): aggregatedProperties {
-    // Step 1: sort each inner map by count (descending)
-    const sortedInnerMaps = new Map<string, Map<string, number>>()
-    for (const [prop, valuesMap] of aggregated.entries()) {
-        const sortedEntries = Array.from(valuesMap.entries()).sort(
-            (a, b) => b[1] - a[1] // high count first
+        // Step 2: sort outer map by inner map size (ascending)
+        const sortedOuterEntries = Array.from(sortedInnerMaps.entries()).sort(
+            (a, b) => a[1].size - b[1].size
         )
-        sortedInnerMaps.set(prop, new Map(sortedEntries))
+
+        return new Map(sortedOuterEntries)
     }
 
-    // Step 2: sort outer map by inner map size (ascending)
-    const sortedOuterEntries = Array.from(sortedInnerMaps.entries()).sort(
-        (a, b) => a[1].size - b[1].size
-    )
-
-    return new Map(sortedOuterEntries)
 }

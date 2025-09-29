@@ -16,6 +16,11 @@
             transition: opacity 0.3s ease, transform 0.3s ease;
             opacity: 0;
             transform: translateX(-8px);
+
+            &.fast-transition {
+                transition-duration: 0.1s;
+                transform: translateX(-6px);
+            }
         }
 
         .pivotick-mainheader-panel {
@@ -77,109 +82,5 @@
                 }
             }
         }
-
-        .pivotick-properties-panel {
-            .pivotick-properties-header-panel {
-                min-height: 40px;
-                background-color: var(--pivotick-sidebar-panelheader-bg);
-                border: var(--pivotick-sidebar-panel-border);
-                padding: 0px 10px;
-    
-                h4 {
-                    font-weight: 400;
-                }
-            }
-        
-            .pivotick-properties-body-panel {
-                min-height: 32px;
-                background-color: var(--pivotick-sidebar-panelbody-bg);
-                border-left: var(--pivotick-sidebar-panel-border);
-                border-bottom: var(--pivotick-sidebar-panel-border);
-                border-right: var(--pivotick-sidebar-panel-border);
-                padding: 8px 10px;
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-
-                dl {
-                    margin: 0;
-                    background: #fff;
-                    font-size: 0.95em;
-
-                    .pivotick-property-row {
-                        display: grid;
-                        grid-template-columns: 80px 1fr;
-                        gap: 8px 12px;
-                        padding: 0.5em 0;
-                        align-items: center;
-
-                      .pivotick-property-name {
-                        font-weight: 300;
-                        color: var(--pivotick-text-color-softer);
-                      }
-
-                      .pivotick-property-value {
-                        margin-inline-start: 0;
-                        font-weight: 400;
-                        color: var(--pivotick-text-color);
-                      }
-                    }
-                }
-
-                .pivotick-aggregated-property-section {
-                    margin-bottom: 14px;
-                    border: var(--pivotick-sidebar-panel-border);
-                    border-radius: 4px;
-                    box-shadow: var(--pivotic-sidebar-layout-shadow-bottom);
-                    
-                    .pivotick-aggregated-property-title {
-                        display: block;
-                        padding: 8px;
-                        border-top-left-radius: 4px;
-                        border-top-right-radius: 4px;
-                        border-bottom: var(--pivotick-sidebar-panel-border);
-                        background-color: var(--pivotick-sidebar-subpanelheader-bg);
-                        text-align: left;
-                        font-size: .9rem;
-                        font-weight: 500;
-                        color: color-mix(in srgb, var(--pivotick-primary-bg-color) 70%, #000);
-                        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-                        text-transform: uppercase;
-                    }
-    
-                    .pivotick-aggregated-property-container {
-                        padding: 4px;
-                        display: flex;
-                        flex-direction: column;
-                        gap: 2px;
-
-                        .pivotick-aggregated-property-row {
-                            display: flex;
-                            flex-direction: row;
-                            align-items: center;
-        
-                            .pivotick-aggregated-property-value {
-                                flex-grow: 1;
-                                font-family: monospace;
-                                font-size: 0.9rem;
-                                padding: 2px 4px;
-                                border: 1px solid #eee;
-                                border-radius: 4px;
-                                background-color: #f5f5f5;
-                                color: #333;
-                                margin-right: 8px;
-                                text-overflow: ellipsis;
-                                overflow: hidden;
-                                user-select: contain;
-                            }
-        
-                            .pivotick-aggregated-property-count {
-        
-                            }
-                        }
-                    }
-                }
-
-            }
-        }
-
     }
 }

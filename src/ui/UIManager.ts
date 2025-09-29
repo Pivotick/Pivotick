@@ -51,7 +51,7 @@ export interface UIElement {
     mount(container: HTMLElement): void;
     destroy(): void;
     afterMount(): void;
-  }
+}
 
 /**
  * Responsible for creating UI elements and registering interactions
