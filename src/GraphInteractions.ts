@@ -46,7 +46,7 @@ export class GraphInteractions<TElement = unknown> {
 
     private graph: Graph
     private callbacks: Partial<InterractionCallbacks>
-    private listeners: { [K in keyof GraphInteractionEvents<TElement>]: GraphInteractionEvents<TElement>[K][] }
+    private listeners: Record<keyof GraphInteractionEvents<TElement>, Array<GraphInteractionEvents<TElement>[keyof GraphInteractionEvents<TElement>]>>
 
     private selectedNode: NodeSelection<TElement> | null = null
     private selectedEdge: EdgeSelection<TElement> | null = null
@@ -90,7 +90,7 @@ export class GraphInteractions<TElement = unknown> {
         ...args: Parameters<GraphInteractionEvents<TElement>[K]>
     ): void {
         for (const handler of this.listeners[event]) {
-            handler(...args)
+            (handler as (...args: Parameters<GraphInteractionEvents<TElement>[K]>) => void)(...args)
         }
     }
 
@@ -300,7 +300,7 @@ export class GraphInteractions<TElement = unknown> {
     }
 
     public getSelectedEdgeIDs(): string[] | null {
-        return this.selectedEdge?.map(selection => selection.edge.id) ?? null
+        return this.selectedEdges?.map(selection => selection.edge.id) ?? null
     }
 
 }

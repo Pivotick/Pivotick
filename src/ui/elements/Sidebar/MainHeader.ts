@@ -34,7 +34,7 @@ function edgeDescriptionGetter(edge: Edge, options: GraphUI): string {
     return edge.getData().description ?? 'Optional subtitle or description'
 }
 
-export function injectNodeOverview(mainHeaderPanel: HTMLDivElement | undefined, node: Node, element: any, options: GraphUI): void {
+export function injectNodeOverview(mainHeaderPanel: HTMLDivElement | undefined, node: Node, element: unknown, options: GraphUI): void {
     if (!mainHeaderPanel) return
 
     const fixedPreviewSize = 42
@@ -56,8 +56,8 @@ export function injectNodeOverview(mainHeaderPanel: HTMLDivElement | undefined, 
     const actionElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-action')
 
     if (iconElem) {
-        if (element) {
-            const clonedGroup = element.cloneNode(true)
+        if (element && element instanceof SVGGElement) {
+            const clonedGroup = element.cloneNode(true) as SVGGElement
             const bbox = element.getBBox()
             const scale = fixedPreviewSize / Math.max(bbox.width, bbox.height)
             clonedGroup.setAttribute(
@@ -80,7 +80,7 @@ export function injectNodeOverview(mainHeaderPanel: HTMLDivElement | undefined, 
     })
 }
 
-export function injectEdgeOverview(mainHeaderPanel: HTMLDivElement | undefined, edge: Edge, element: any, options: GraphUI): void {
+export function injectEdgeOverview(mainHeaderPanel: HTMLDivElement | undefined, edge: Edge, element: unknown, options: GraphUI): void {
     if (!mainHeaderPanel) return
 
     const fixedPreviewSize = 42
@@ -132,7 +132,7 @@ export function showSelectedNodeCount(mainHeaderPanel: HTMLDivElement | undefine
 }
 
 
-export function injectNodesOverview(mainHeaderPanel: HTMLDivElement | undefined, nodes: NodeSelection<any>[], options: GraphUI, nodeCount: number): void {
+export function injectNodesOverview(mainHeaderPanel: HTMLDivElement | undefined, nodes: NodeSelection<unknown>[], options: GraphUI, nodeCount: number): void {
     if (!mainHeaderPanel) return
 
     const fixedPreviewSize = 42
@@ -171,7 +171,7 @@ export function injectNodesOverview(mainHeaderPanel: HTMLDivElement | undefined,
     })
 }
 
-export function injectEdgesOverview(mainHeaderPanel: HTMLDivElement | undefined, edges: EdgeSelection, options: GraphUI): void {
+export function injectEdgesOverview(mainHeaderPanel: HTMLDivElement | undefined, edges: EdgeSelection<unknown>[], options: GraphUI, edgeCount: number): void {
     if (!mainHeaderPanel) return
 
     const fixedPreviewSize = 42
@@ -197,10 +197,10 @@ export function injectEdgesOverview(mainHeaderPanel: HTMLDivElement | undefined,
     const actionElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-action')
 
     if (nameElem) {
-        nameElem.innerHTML = edgeNameGetter(edge, options)
+        nameElem.innerHTML = `${edges.length} edges selected`
     }
     if (subtitleElem) {
-        subtitleElem.innerHTML = edgeDescriptionGetter(edge, options)
+        subtitleElem.innerHTML = `Out of ${edgeCount} total`
     }
 
     mainHeaderPanel.innerHTML = mainheaderContent.outerHTML

@@ -218,6 +218,13 @@ export class Graph {
     /**
      * Get all nodes in the graph.
      */
+    getEdgeCount(): number {
+        return this.edges.size
+    }
+
+    /**
+     * Get all nodes in the graph.
+     */
     getNodes(): Node[] {
         return Array.from(this.nodes.values()).map((node: Node) => node.clone())
     }

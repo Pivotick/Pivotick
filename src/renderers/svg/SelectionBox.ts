@@ -1,6 +1,5 @@
 import type { GraphRenderer } from '../../GraphRenderer'
 import type { Node } from '../../Node'
-import type { Edge } from '../../Edge'
 
 export class SelectionBox {
     private renderer: GraphRenderer

@@ -18,8 +18,6 @@ export class SidebarProperties implements UIElement {
     private header?: HTMLDivElement
     private body?: HTMLDivElement
 
-    private panelVisible = false
-
     constructor(uiManager: UIManager) {
         this.uiManager = uiManager
     }
@@ -71,17 +69,15 @@ export class SidebarProperties implements UIElement {
     }
 
     private showPanel() {
-        this.panelVisible = true
         this.panel!.classList.add('enter-active')
     }
 
     private hidePanel() {
-        this.panelVisible = false
         this.panel!.classList.remove('enter-active')
     }
 
     /* Single selection */
-    public updateNodeProperties(node: Node, element: any): void {
+    public updateNodeProperties(node: Node): void {
         if (!this.body) return
 
         this.setHeaderBasicNode()
@@ -104,7 +100,7 @@ export class SidebarProperties implements UIElement {
         this.body.innerHTML = propertiesContainer.outerHTML
     }
 
-    public updateEdgeProperties(edge: Edge, element: any): void {
+    public updateEdgeProperties(edge: Edge): void {
         if (!this.body) return
         this.setHeaderBasicEdge()
         this.showPanel()
@@ -128,7 +124,7 @@ export class SidebarProperties implements UIElement {
 
 
     /* Multiple selection */
-    public updateNodesProperties(nodes: NodeSelection[]): void {
+    public updateNodesProperties(nodes: NodeSelection<unknown>[]): void {
         if (!this.body) return
         this.setHeaderMultiSelectNode()
         this.showPanel()
@@ -156,7 +152,7 @@ export class SidebarProperties implements UIElement {
         this.body.innerHTML = propertiesContainer.outerHTML
     }
 
-    public updateEdgesProperties(edges: EdgeSelection[]): void {
+    public updateEdgesProperties(edges: EdgeSelection<unknown>[]): void {
         if (!this.body) return
         this.setHeaderMultiSelectEdge()
         this.showPanel()
@@ -173,8 +169,8 @@ export class SidebarProperties implements UIElement {
         if (div) {
             const allProperties: Array<PropertyEntry>[] = []
             edges.forEach((selectedEdge) => {
-                const { node } = selectedEdge
-                const properties = this.edgePropertiesGetter(node, this.uiManager.getOptions())
+                const { edge } = selectedEdge
+                const properties = this.edgePropertiesGetter(edge, this.uiManager.getOptions())
                 allProperties.push(properties)
             })
             const aggregatedProperties = this.aggregateProperties(allProperties)

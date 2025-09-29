@@ -89,8 +89,10 @@
                         overflow: hidden;
                         user-select: contain;
                     }
-
-                    .pivotick-aggregated-property-count {}
+                    
+                    .pivotick-aggregated-property-count {
+                        --pivotick-inline-bar-width: 60px;
+                    }
                 }
             }
         }
