@@ -10,8 +10,6 @@ export class SelectionBox {
     private startY = 0
     private isSelecting = false
 
-    private animationFrame: number | null = null
-
     constructor(renderer: GraphRenderer, svg: SVGSVGElement, selectionBoxGroup: SVGGElement | null) {
         this.renderer = renderer
         this.svg = svg
@@ -55,22 +53,20 @@ export class SelectionBox {
     private onMouseMove = (e: MouseEvent) => {
         if (!this.isSelecting || !this.rect) return
 
-        if (this.animationFrame) cancelAnimationFrame(this.animationFrame)
+        if (!this.rect) return
 
-        this.animationFrame = requestAnimationFrame(() => {
-            const { x, y } = this.getSvgPoint(e)
-            const minX = Math.min(this.startX, x)
-            const minY = Math.min(this.startY, y)
-            const width = Math.abs(x - this.startX)
-            const height = Math.abs(y - this.startY)
+        const { x, y } = this.getSvgPoint(e)
+        const minX = Math.min(this.startX, x)
+        const minY = Math.min(this.startY, y)
+        const width = Math.abs(x - this.startX)
+        const height = Math.abs(y - this.startY)
 
-            this.rect!.setAttribute('x', minX.toString())
-            this.rect!.setAttribute('y', minY.toString())
-            this.rect!.setAttribute('width', width.toString())
-            this.rect!.setAttribute('height', height.toString())
+        this.rect.setAttribute('x', minX.toString())
+        this.rect.setAttribute('y', minY.toString())
+        this.rect.setAttribute('width', width.toString())
+        this.rect.setAttribute('height', height.toString())
 
-            this.animationFrame = null
-        })
+        this.animationFrame = null
     }
 
     private onMouseUp = () => {

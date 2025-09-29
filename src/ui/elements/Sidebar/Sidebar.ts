@@ -3,7 +3,7 @@ import type { Edge } from '../../../Edge'
 import { createHtmlTemplate } from '../../../utils/ElementCreation'
 import type { UIElement, UIManager } from '../../UIManager'
 import './sidebar.scss'
-import { injectNodeOverview, injectEdgeOverview, clearHeader, injectNodesOverview, injectEdgesOverview } from './MainHeader'
+import { SidebarMainHeader } from './MainHeader'
 import { SidebarProperties } from './Properties'
 import type { EdgeSelection, NodeSelection } from '../../../GraphInteractions'
 
@@ -12,6 +12,7 @@ export class Sidebar implements UIElement {
 
     public sidebar?: HTMLDivElement
 
+    private sidebarMainHeader: SidebarMainHeader
     private sidebarProperties: SidebarProperties
     
     private mainHeaderPanel?: HTMLDivElement
@@ -19,6 +20,7 @@ export class Sidebar implements UIElement {
 
     constructor(uiManager: UIManager) {
         this.uiManager = uiManager
+        this.sidebarMainHeader = new SidebarMainHeader(this.uiManager)
         this.sidebarProperties = new SidebarProperties(this.uiManager)
     }
 
@@ -40,6 +42,9 @@ export class Sidebar implements UIElement {
     }
 
     public destroy() {
+        this.sidebarMainHeader.destroy()
+        this.sidebarProperties.destroy()
+
         this.sidebar?.remove()
         this.sidebar = undefined
     }
@@ -47,45 +52,56 @@ export class Sidebar implements UIElement {
     public afterMount() {
         if (!this.sidebar) return
         this.mainHeaderPanel = this.sidebar.querySelector('.pivotick-mainheader-panel') ?? undefined
-        clearHeader(this.mainHeaderPanel)
+        this.sidebarMainHeader.mount(this.mainHeaderPanel)
         this.mainBodyPanel = this.sidebar.querySelector('.pivotick-properties-panel') ?? undefined
         this.sidebarProperties.mount(this.mainBodyPanel)
+
+        this.sidebarMainHeader.afterMount()
+        this.sidebarProperties.afterMount()
     }
 
     public graphReady() {
         /* Single selection */
         this.uiManager.graph.renderer.getGraphInteraction().on('selectNode', (node: Node, element: unknown) => {
-            injectNodeOverview(this.mainHeaderPanel, node, element, this.uiManager.getOptions())
+            // injectNodeOverview(this.mainHeaderPanel, node, element, this.uiManager.getOptions())
+            this.sidebarMainHeader.updateNodeOverview(node, element)
             this.sidebarProperties.updateNodeProperties(node)
         })
         this.uiManager.graph.renderer.getGraphInteraction().on('unselectNode', () => {
-            clearHeader(this.mainHeaderPanel)
+            // clearHeader(this.mainHeaderPanel)
+            this.sidebarMainHeader.clearOverview()
             this.sidebarProperties.clearProperties()
         })
         this.uiManager.graph.renderer.getGraphInteraction().on('selectEdge', (edge: Edge, element: unknown) => {
-            injectEdgeOverview(this.mainHeaderPanel, edge, element, this.uiManager.getOptions())
+            // injectEdgeOverview(this.mainHeaderPanel, edge, element, this.uiManager.getOptions())
+            this.sidebarMainHeader.updateEdgeOverview(edge)
             this.sidebarProperties.updateEdgeProperties(edge)
         })
         this.uiManager.graph.renderer.getGraphInteraction().on('unselectEdge', () => {
-            clearHeader(this.mainHeaderPanel)
+            // clearHeader(this.mainHeaderPanel)
+            this.sidebarMainHeader.clearOverview()
             this.sidebarProperties.clearProperties()
         })
 
         /* Multi selection */
         this.uiManager.graph.renderer.getGraphInteraction().on('selectNodes', (nodes: NodeSelection<unknown>[]) => {
-            injectNodesOverview(this.mainHeaderPanel, nodes, this.uiManager.getOptions(), this.uiManager.graph.getNodeCount())
+            // injectNodesOverview(this.mainHeaderPanel, nodes, this.uiManager.getOptions(), this.uiManager.graph.getNodeCount())
+            this.sidebarMainHeader.updateNodesOverview(nodes)
             this.sidebarProperties.updateNodesProperties(nodes)
         })
         this.uiManager.graph.renderer.getGraphInteraction().on('unselectNodes', () => {
-            clearHeader(this.mainHeaderPanel)
+            // clearHeader(this.mainHeaderPanel)
+            this.sidebarMainHeader.clearOverview()
             this.sidebarProperties.clearProperties()
         })
         this.uiManager.graph.renderer.getGraphInteraction().on('selectEdges', (edges: EdgeSelection<unknown>[]) => {
-            injectEdgesOverview(this.mainHeaderPanel, edges, this.uiManager.getOptions())
+            // injectEdgesOverview(this.mainHeaderPanel, edges, this.uiManager.getOptions(), this.uiManager.graph.getNodeCount())
+            this.sidebarMainHeader.updateEdgesOverview(edges)
             this.sidebarProperties.updateEdgesProperties(edges)
         })
         this.uiManager.graph.renderer.getGraphInteraction().on('unselectEdges', () => {
-            clearHeader(this.mainHeaderPanel)
+            // clearHeader(this.mainHeaderPanel)
+            this.sidebarMainHeader.clearOverview()
             this.sidebarProperties.clearProperties()
         })
     }

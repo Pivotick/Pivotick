@@ -1,0 +1,59 @@
+.pivotick-mainheader-panel {
+    min-height: 70px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    box-sizing: border-box;
+
+    padding: 10px 12px;
+    background-color: var(--pivotick-sidebar-panelheader-bg);
+    border: var(--pivotick-sidebar-panel-border);
+    box-shadow: var(--pivotic-sidebar-layout-shadow-bottom);
+
+    & > div {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+
+        .pivotick-mainheader-nodepreview {
+            flex-shrink: 0;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--pivotick-mainheader-nodepreview-bg);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), inset 0 0 0 1px hsla(0, 0%, 0%, .05);
+
+            .pivotick-mainheader-icon {
+                width: 42px;
+                height: 42px;
+            }
+        }
+
+        .pivotick-mainheader-nodeinfo {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            font-family: 'Segoe UI', sans-serif;
+
+            .pivotick-mainheader-nodeinfo-name {
+                font-size: 16px;
+                font-weight: 600;
+                color: var(--pivotick-text-color);
+            }
+
+            .pivotick-mainheader-nodeinfo-subtitle {
+                font-size: 12px;
+                color: var(--pivotick-text-color-softer);
+            }
+
+            .pivotick-mainheader-nodeinfo-action {
+                flex-shrink: 1;
+            }
+        }
+    }
+}
