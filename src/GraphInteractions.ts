@@ -30,6 +30,7 @@ type GraphInteractionEvents<TElement> = {
     edgeBlur: (edge: Edge, element: TElement) => void;
 
     canvasClick: (event: PointerEvent) => void;
+    canvasMousemove: (event: MouseEvent) => void;
 
     selectNode: (node: Node, element: TElement) => void;
     unselectNode: (node: Node, element: TElement) => void;
@@ -61,7 +62,7 @@ export class GraphInteractions<TElement = unknown> {
             nodeSelect: [], nodeBlur: [],
             edgeClick: [], edgeDbclick: [], edgeHoverIn: [], edgeHoverOut: [],
             edgeSelect: [], edgeBlur: [],
-            canvasClick: [],
+            canvasClick: [], canvasMousemove: [],
             selectNode: [], unselectNode: [], selectEdge: [], unselectEdge: [],
             selectNodes: [], unselectNodes: [], selectEdges: [], unselectEdges: [],
         }
@@ -157,6 +158,13 @@ export class GraphInteractions<TElement = unknown> {
         this.emit('canvasClick', event)
         if (this.callbacks.onCanvasClick && typeof this.callbacks.onCanvasClick === 'function') {
             this.callbacks.onCanvasClick(event)
+        }
+    }
+
+    public canvasMousemove(event: MouseEvent): void {
+        this.emit('canvasMousemove', event)
+        if (this.callbacks.onCanvasMousemove && typeof this.callbacks.onCanvasMousemove === 'function') {
+            this.callbacks.onCanvasMousemove(event)
         }
     }
 

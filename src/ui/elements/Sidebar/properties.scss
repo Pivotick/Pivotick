@@ -30,7 +30,7 @@
 
             .pivotick-property-row {
                 display: grid;
-                grid-template-columns: 80px 1fr;
+                grid-template-columns: minmax(80px, 1fr) 2fr;
                 gap: 8px 12px;
                 padding: 0.5em 0;
                 align-items: center;

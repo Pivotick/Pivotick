@@ -68,5 +68,8 @@ export class EventHandler {
             .on('click', (event: PointerEvent) => {
                 this.graphInteraction?.canvasClick(event)
             })
+            .on('mousemove', (event: PointerEvent) => {
+                this.graphInteraction?.canvasMousemove(event)
+            })
     }
 }

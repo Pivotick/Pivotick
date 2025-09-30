@@ -1,5 +1,8 @@
 import { Pivotick, Node, Edge } from './index'
 
+import {graph as vtGraph} from './vt-graph'
+
+
 /**
  * Example of creating a graph instance and adding nodes/edges.
  * This is just a simple demo usage; your users will build on this.
@@ -33,10 +36,10 @@ export function createSampleGraph(): Pivotick {
     // edges.push(new Edge('1-0', nodes[1], nodes[0], { relation : 'b'}))
 
 
-    // const N = 260
-    const N = 6
+    const N = 26
+    // const N = 6
     const createNodes = (): Node[] => {
-        return Array.from({ length: N }, (_, i) => new Node(`n${i + 1}`, { label: `Node ${i}`, type: 'A Type'}))
+        return Array.from({ length: N }, (_, i) => new Node(`n${i + 1}`, { label: `Node ${i}`, type: 'node'}))
     }
     const topologies = {
         custom: (() => {
@@ -157,6 +160,22 @@ export function createSampleGraph(): Pivotick {
 
             return { nodes, edges }
         })(),
+
+        vt: (() => {
+            const nodes = vtGraph.nodes.map(n => new Node(n.entity_id, {
+                label: n.text,
+                type: n.type,
+                ...n.entity_attributes
+            }))
+            const edges = []
+            for (let i = 0; i < vtGraph.links.length - 1; i++) {
+                const e = vtGraph.links[i]
+                edges.push(new Edge(`e${i}`, nodes.find(n => n.id === e.source)!, nodes.find(n => n.id === e.target)!, {
+                    label: e.connection_type || '?'
+                }, {}))
+            }
+            return { nodes, edges }
+        })()
     }
 
     const topo = 'custom'
@@ -166,7 +185,7 @@ export function createSampleGraph(): Pivotick {
             // warmupTicks: 5000,
             // d3ManyBodyStrength: -500,
             // d3LinkStrength: 0.1,
-            // d3LinkDistance: 50,
+            d3LinkDistance: 90,
         },
         layout: {
             // type: 'tree',

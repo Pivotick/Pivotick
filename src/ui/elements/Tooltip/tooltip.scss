@@ -1,0 +1,22 @@
+.pivotick-tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: rgba(30, 30, 30, 0.9);
+    color: #f9f9f9;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.4;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    // transform: translate(-50%, -120%);
+    left: -10000px;
+    opacity: 0;
+    transition: opacity 0.1s ease-out;
+    z-index: 1000;
+
+    &.shown {
+        opacity: 100;
+    }
+}

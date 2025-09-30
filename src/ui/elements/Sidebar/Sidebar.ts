@@ -63,44 +63,36 @@ export class Sidebar implements UIElement {
     public graphReady() {
         /* Single selection */
         this.uiManager.graph.renderer.getGraphInteraction().on('selectNode', (node: Node, element: unknown) => {
-            // injectNodeOverview(this.mainHeaderPanel, node, element, this.uiManager.getOptions())
             this.sidebarMainHeader.updateNodeOverview(node, element)
             this.sidebarProperties.updateNodeProperties(node)
         })
         this.uiManager.graph.renderer.getGraphInteraction().on('unselectNode', () => {
-            // clearHeader(this.mainHeaderPanel)
             this.sidebarMainHeader.clearOverview()
             this.sidebarProperties.clearProperties()
         })
-        this.uiManager.graph.renderer.getGraphInteraction().on('selectEdge', (edge: Edge, element: unknown) => {
-            // injectEdgeOverview(this.mainHeaderPanel, edge, element, this.uiManager.getOptions())
+        this.uiManager.graph.renderer.getGraphInteraction().on('selectEdge', (edge: Edge) => {
             this.sidebarMainHeader.updateEdgeOverview(edge)
             this.sidebarProperties.updateEdgeProperties(edge)
         })
         this.uiManager.graph.renderer.getGraphInteraction().on('unselectEdge', () => {
-            // clearHeader(this.mainHeaderPanel)
             this.sidebarMainHeader.clearOverview()
             this.sidebarProperties.clearProperties()
         })
 
         /* Multi selection */
         this.uiManager.graph.renderer.getGraphInteraction().on('selectNodes', (nodes: NodeSelection<unknown>[]) => {
-            // injectNodesOverview(this.mainHeaderPanel, nodes, this.uiManager.getOptions(), this.uiManager.graph.getNodeCount())
             this.sidebarMainHeader.updateNodesOverview(nodes)
             this.sidebarProperties.updateNodesProperties(nodes)
         })
         this.uiManager.graph.renderer.getGraphInteraction().on('unselectNodes', () => {
-            // clearHeader(this.mainHeaderPanel)
             this.sidebarMainHeader.clearOverview()
             this.sidebarProperties.clearProperties()
         })
         this.uiManager.graph.renderer.getGraphInteraction().on('selectEdges', (edges: EdgeSelection<unknown>[]) => {
-            // injectEdgesOverview(this.mainHeaderPanel, edges, this.uiManager.getOptions(), this.uiManager.graph.getNodeCount())
             this.sidebarMainHeader.updateEdgesOverview(edges)
             this.sidebarProperties.updateEdgesProperties(edges)
         })
         this.uiManager.graph.renderer.getGraphInteraction().on('unselectEdges', () => {
-            // clearHeader(this.mainHeaderPanel)
             this.sidebarMainHeader.clearOverview()
             this.sidebarProperties.clearProperties()
         })

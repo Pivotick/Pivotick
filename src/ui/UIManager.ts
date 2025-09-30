@@ -1,7 +1,7 @@
 import { Graph } from '../Graph'
 import { Node } from  '../Node'
 import { Edge } from  '../Edge'
-import type { GraphMode, GraphUI } from '../GraphOptions'
+import type { GraphUI } from '../GraphOptions'
 import { GraphControls } from './elements/GraphControls/GraphControls'
 import { GraphNavigation } from './elements/GraphNavigation/GraphNavigation'
 import { Layout } from './elements/Layout'
@@ -10,41 +10,64 @@ import { SlidePanel } from './elements/SlidePanel/SlidePanel'
 import { Toolbar } from './elements/Toolbar/Toolbar'
 import type { Notification } from './Notifier'
 import merge from 'lodash.merge'
+import { Tooltip } from './elements/Tooltip/Tooltip'
+
+
+const defaultHeaderMapNodeTitle = (node: Node | Edge) => node.getData().label || 'Could not resolve title'
+const defaultHeaderMapNodeSubtitle = (node: Node | Edge) => node.getData().description || 'Could not resolve subtitle'
+const defaultHeaderMapEdgeTitle = (edge: Node | Edge) => edge.getData().label || 'Could not resolve title'
+const defaultHeaderMapEdgeSubtitle = (edge: Node | Edge) => edge.getData().description || 'Could not resolve subtitle'
+
+const defaultPropertiesMapNode = (node: Node) => {
+    const properties = []
+    for (const [key, value] of Object.entries(node.getData())) {
+        properties.push({
+            name: key,
+            value: value,
+        })
+    }
+    return properties
+}
+const defaultPropertiesMapEdge = (edge: Edge) => {
+    const properties = []
+    for (const [key, value] of Object.entries(edge.getData())) {
+        properties.push({
+            name: key,
+            value: value,
+        })
+    }
+    return properties
+}
 
 export const DEFAULT_UI_OPTIONS: GraphUI = {
     mode: 'viewer',
     mainHeader: {
         nodeHeaderMap: {
-            'title': (node: Node | Edge) => node.getData().label || 'Could not resolve title',
-            'subtitle': (node: Node | Edge) => node.getData().description || 'Could not resolve subtitle',
+            title: defaultHeaderMapNodeTitle,
+            subtitle: defaultHeaderMapNodeSubtitle,
         },
         edgeHeaderMap: {
-            'title': (edge: Node | Edge) => edge.getData().label || 'Could not resolve title',
-            'subtitle': (edge: Node | Edge) => edge.getData().description || 'Could not resolve subtitle',
+            title: defaultHeaderMapEdgeTitle,
+            subtitle: defaultHeaderMapEdgeSubtitle,
         },
     },
     propertiesPanel: {
-        nodePropertiesMap: (node: Node) => {
-            const properties = []
-            for (const [key, value] of Object.entries(node.getData())) {
-                properties.push({
-                    name: key,
-                    value: value,
-                })
-            }
-            return properties
+        nodePropertiesMap: defaultPropertiesMapNode,
+        edgePropertiesMap: defaultPropertiesMapEdge,
+    },
+    tooltip: {
+        enable: true,
+        nodePropertiesMap: defaultPropertiesMapNode,
+        edgePropertiesMap: defaultPropertiesMapEdge,
+        nodeHeaderMap: {
+            title: defaultHeaderMapNodeTitle,
+            subtitle: defaultHeaderMapNodeSubtitle,
         },
-        edgePropertiesMap: (edge: Edge) => {
-            const properties = []
-            for (const [key, value] of Object.entries(edge.getData())) {
-                properties.push({
-                    name: key,
-                    value: value,
-                })
-            }
-            return properties
+        edgeHeaderMap: {
+            title: defaultHeaderMapEdgeTitle,
+            subtitle: defaultHeaderMapEdgeSubtitle,
         },
-    }
+    },
 }
 
 export interface UIElement {
@@ -68,6 +91,7 @@ export class UIManager {
     public toolbar?: Toolbar
     public graphNaviation?: GraphNavigation
     public graphControls?: GraphControls
+    public tooltip?: Tooltip
 
     constructor(graph: Graph, container: HTMLElement, options: GraphUI) {
         this.graph = graph
@@ -159,6 +183,10 @@ export class UIManager {
     private buildUIGraphNavigation() {
         this.graphNaviation = new GraphNavigation(this)
         this.graphNaviation.mount(this.layout?.graphnavigation)
+        if (this.options.tooltip?.enable) {
+            this.tooltip = new Tooltip(this)
+            this.tooltip.mount(this.layout?.canvas)
+        }
     }
 
     private buildUIGraphControls() {
@@ -196,6 +224,9 @@ export class UIManager {
         this.sidebar?.afterMount()
         this.graphNaviation?.afterMount()
         this.graphControls?.afterMount()
+        if (this.options.tooltip?.enable) {
+            this.tooltip?.afterMount()
+        }
     }
 
     public getOptions() {
@@ -205,6 +236,7 @@ export class UIManager {
     public callGraphReady() { // TODO: Instead, these should register an afterMount callback
         this.graphControls?.graphReady()
         this.sidebar?.graphReady()
+        this.tooltip?.graphReady()
     }
 
     /**

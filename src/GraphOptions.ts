@@ -70,6 +70,11 @@ export interface InterractionCallbacks<TElement = unknown> {
      * Called when the canvas is clicked.
      */
     onCanvasClick?: (event: PointerEvent) => void
+
+    /**
+     * Called when the mouse move over the canvas.
+     */
+    onCanvasMousemove?: (event: MouseEvent) => void
 }
 
 export interface NodeStyle {
@@ -136,7 +141,7 @@ export interface GraphRendererOptions {
      * Custom renderer for nodes.
      * Receives node data and selection, and should return HTML or SVG element or string or directly calling d3 methods on the selection.
      */
-    renderNode?: (node: Node, edgeSelection: Selection<SVGForeignObjectElement, Node, null, undefined>) => HTMLElement | string | void
+    renderNode?: (node: Node, nodeSelection: Selection<SVGForeignObjectElement, Node, null, undefined>) => HTMLElement | string | void
     /**
      * Custom renderer for edge labels.
      * Receives edge data and selection, and should return HTML or SVG element or string or directly calling d3 methods on the selection.
@@ -227,6 +232,14 @@ export interface TreeLayoutOptions extends BaseLayoutOptions {
  */
 export type GraphUIMode = 'viewer' | 'full' | 'light' | 'static';
 
+/**
+ * Mapping functions to extract a node/edge's title and subtitle.
+ *
+ * Example for node. Replace with edge for edge mapping.
+ * @default
+ * title   = node.getData().label || "Could not resolve title"
+ * subtitle= node.getData().description || "Could not resolve subtitle"
+ */
 export interface HeaderMapEntry {
     'title': ((element: Node | Edge) => string) | string,
     'subtitle': ((element: Node | Edge) => string) | string,
@@ -244,8 +257,28 @@ export interface GraphUI {
         edgeHeaderMap: HeaderMapEntry
     },
     propertiesPanel: {
-        nodePropertiesMap: Array<PropertyEntry> | ((node: Node) => Array<PropertyEntry>)
-        edgePropertiesMap: Array<PropertyEntry> | ((edge: Edge) => Array<PropertyEntry>)
+        /**
+         * A function that computes the list of node/edge properties to display
+         *
+         * @default All key/value pairs from node.getData() or edge.getData()
+         */
+        nodePropertiesMap: ((node: Node) => Array<PropertyEntry>)
+        edgePropertiesMap: ((edge: Edge) => Array<PropertyEntry>)
+    },
+    tooltip: {
+        enable?: boolean /** @default true */
+        /**
+         * Custom renderer for node/edge tooltips.
+         * Can return an HTMLElement, an HTML string, or nothing (to suppress tooltip).
+         *
+         * @default undefined
+         */
+        node?: (node: Node) => HTMLElement | string,
+        edge?: (edge: Edge) => HTMLElement | string,
+        nodeHeaderMap: HeaderMapEntry,
+        edgeHeaderMap: HeaderMapEntry,
+        nodePropertiesMap: ((node: Node) => Array<PropertyEntry>),
+        edgePropertiesMap: ((edge: Edge) => Array<PropertyEntry>),
     }
 }
 
