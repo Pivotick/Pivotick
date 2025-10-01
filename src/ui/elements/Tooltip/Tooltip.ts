@@ -19,7 +19,9 @@ export class Tooltip implements UIElement {
     private y: number = 0
     private hoveredElement: string | null = null
     private showDelay: number = 200
+    private hideDelay: number = 1
     private tooltipTimeout: ReturnType<typeof setTimeout> | null = null
+    private hideTimeout: ReturnType<typeof setTimeout> | null = null
 
     constructor(uiManager: UIManager) {
         this.uiManager = uiManager
@@ -48,10 +50,18 @@ export class Tooltip implements UIElement {
         if (!this.tooltip) return
 
         this.uiManager.graph.renderer.getGraphInteraction().on('nodeHoverIn', this.nodeHovered.bind(this))
-        this.uiManager.graph.renderer.getGraphInteraction().on('nodeHoverOut', () => { this.hide() })
+        this.uiManager.graph.renderer.getGraphInteraction().on('nodeHoverOut', () => { this.delayedHide() })
         this.uiManager.graph.renderer.getGraphInteraction().on('edgeHoverIn', this.edgeHovered.bind(this))
-        this.uiManager.graph.renderer.getGraphInteraction().on('edgeHoverOut', () => { this.hide() })
+        this.uiManager.graph.renderer.getGraphInteraction().on('edgeHoverOut', () => { this.delayedHide() })
         this.uiManager.graph.renderer.getGraphInteraction().on('canvasMousemove', this.updateMousePosition.bind(this))
+
+        this.tooltip.addEventListener('mouseenter', () => {
+            if (this.hideTimeout) {
+                clearTimeout(this.hideTimeout)
+                this.hideTimeout = null
+            }
+        })
+        this.tooltip.addEventListener('mouseleave', () => this.hide())
     }
 
     private updateMousePosition(event: MouseEvent) {
@@ -71,7 +81,9 @@ export class Tooltip implements UIElement {
 
     public edgeHovered(_event: MouseEvent, edge: Edge) {
         if (!this.tooltip) return
+        if (this.hoveredElement === edge.id) return
 
+        this.hoveredElement = edge.id
         this.show(() => {
             this.createEdgeTooltip(edge)
         })
@@ -197,13 +209,22 @@ export class Tooltip implements UIElement {
         this.tooltip.style.top = `${this.y + mouseOffset}px`
     }
 
+    private delayedHide() {
+        if (this.hideTimeout) clearTimeout(this.hideTimeout)
+        this.hideTimeout = setTimeout(() => this.hide(), this.hideDelay)
+    }
+
     private hide() {
+        if (!this.tooltip) return
+
+        if (this.hideTimeout) clearTimeout(this.hideTimeout)
         if (this.tooltipTimeout) {
             clearTimeout(this.tooltipTimeout)
             this.tooltipTimeout = null
         }
         this.hoveredElement = null
-        this.tooltip?.classList.remove('shown')
+        this.tooltip.classList.remove('shown')
+        this.tooltip.style.left = '-10000px'
     }
 
     private show(cb: { (): void; (): void } | undefined) {

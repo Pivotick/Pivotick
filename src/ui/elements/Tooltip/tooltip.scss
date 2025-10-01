@@ -1,6 +1,6 @@
 .pivotick-tooltip {
     position: absolute;
-    pointer-events: none;
+    pointer-events: auto;
     background-color: var(--pivotick-sidebar-panelheader-bg);
     border: var(--pivotick-sidebar-panel-border);
     box-shadow: var(--pivotick-box-shadow-strong);
