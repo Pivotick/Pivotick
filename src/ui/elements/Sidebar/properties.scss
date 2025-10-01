@@ -23,31 +23,6 @@
         border-right: var(--pivotick-sidebar-panel-border);
         padding: 8px 10px;
 
-        dl {
-            margin: 0;
-            background: #fff;
-            font-size: 0.95em;
-
-            .pivotick-property-row {
-                display: grid;
-                grid-template-columns: minmax(80px, 1fr) 2fr;
-                gap: 8px 12px;
-                padding: 0.5em 0;
-                align-items: center;
-
-                .pivotick-property-name {
-                    font-weight: 300;
-                    color: var(--pivotick-text-color-softer);
-                }
-
-                .pivotick-property-value {
-                    margin-inline-start: 0;
-                    font-weight: 400;
-                    color: var(--pivotick-text-color);
-                }
-            }
-        }
-
         .pivotick-aggregated-property-section {
             margin-bottom: 14px;
             border: var(--pivotick-sidebar-panel-border);

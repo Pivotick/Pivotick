@@ -232,6 +232,11 @@ export interface TreeLayoutOptions extends BaseLayoutOptions {
  */
 export type GraphUIMode = 'viewer' | 'full' | 'light' | 'static';
 
+export interface MainHeader {
+    nodeHeaderMap: HeaderMapEntry
+    edgeHeaderMap: HeaderMapEntry
+}
+
 /**
  * Mapping functions to extract a node/edge's title and subtitle.
  *
@@ -250,21 +255,20 @@ export interface PropertyEntry {
     'value': string,
 }
 
+export interface PropertiesPanel {
+    /**
+     * A function that computes the list of node/edge properties to display
+     *
+     * @default All key/value pairs from node.getData() or edge.getData()
+     */
+    nodePropertiesMap: ((node: Node) => Array<PropertyEntry>)
+    edgePropertiesMap: ((edge: Edge) => Array<PropertyEntry>)
+}
+
 export interface GraphUI {
     mode: GraphUIMode,
-    mainHeader: {
-        nodeHeaderMap: HeaderMapEntry
-        edgeHeaderMap: HeaderMapEntry
-    },
-    propertiesPanel: {
-        /**
-         * A function that computes the list of node/edge properties to display
-         *
-         * @default All key/value pairs from node.getData() or edge.getData()
-         */
-        nodePropertiesMap: ((node: Node) => Array<PropertyEntry>)
-        edgePropertiesMap: ((edge: Edge) => Array<PropertyEntry>)
-    },
+    mainHeader: MainHeader,
+    propertiesPanel: PropertiesPanel,
     tooltip: {
         enable?: boolean /** @default true */
         /**

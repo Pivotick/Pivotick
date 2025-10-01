@@ -1,12 +1,12 @@
-import { createHtmlElement, createHtmlTemplate } from '../../../utils/ElementCreation'
-import type { Node } from '../../../Node'
+import { createHtmlDL, createHtmlElement, createHtmlTemplate } from '../../../utils/ElementCreation'
+import type { Node, NodeData } from '../../../Node'
 import type { Edge } from '../../../Edge'
 import type { GraphUI, PropertyEntry } from '../../../GraphOptions'
-import { tryResolveArray } from '../../../utils/Getters'
 import type { EdgeSelection, NodeSelection } from '../../../GraphInteractions'
 import { createInlineBar } from '../../components/InlineBar'
 import type { UIElement, UIManager } from '../../UIManager'
 import './properties.scss'
+import { edgePropertiesGetter, nodePropertiesGetter } from '../../../utils/GraphGetters'
 
 
 type aggregatedProperties = Map<string, Map<string, number>>
@@ -85,16 +85,15 @@ export class SidebarProperties implements UIElement {
 
         const template = `
 <div class="pivotick-properties-container">
-    <div class="">
-        <dl></dl>
+    <div class="dl-container">
     </div>
 </div>`
         const propertiesContainer = createHtmlTemplate(template) as HTMLDivElement
-        const dl = propertiesContainer.querySelector('dl')
+        const dlContainer = propertiesContainer.querySelector('.dl-container')
 
-        if (dl) {
-            const properties = this.nodePropertiesGetter(node, this.uiManager.getOptions())
-            this.injectRowForProperties(dl, properties)
+        if (dlContainer) {
+            const properties = nodePropertiesGetter(node, this.uiManager.getOptions().propertiesPanel)
+            dlContainer.append(createHtmlDL(properties))
         }
 
         this.body.innerHTML = propertiesContainer.outerHTML
@@ -107,16 +106,15 @@ export class SidebarProperties implements UIElement {
 
         const template = `
 <div class="pivotick-properties-container">
-    <div class="">
-        <dl></dl>
+    <div class="dl-container">
     </div>
 </div>`
         const propertiesContainer = createHtmlTemplate(template) as HTMLDivElement
-        const dl = propertiesContainer.querySelector('dl')
+        const dlContainer = propertiesContainer.querySelector('.dl-container')
 
-        if (dl) {
-            const properties = this.edgePropertiesGetter(edge, this.uiManager.getOptions())
-            this.injectRowForProperties(dl, properties)
+        if (dlContainer) {
+            const properties = edgePropertiesGetter(edge, this.uiManager.getOptions().propertiesPanel)
+            dlContainer.append(createHtmlDL(properties))
         }
 
         this.body.innerHTML = propertiesContainer.outerHTML
@@ -151,6 +149,9 @@ export class SidebarProperties implements UIElement {
 
         this.body.innerHTML = propertiesContainer.outerHTML
     }
+    nodePropertiesGetter(node: Node<NodeData>, arg1: GraphUI) {
+        throw new Error('Method not implemented.')
+    }
 
     public updateEdgesProperties(edges: EdgeSelection<unknown>[]): void {
         if (!this.body) return
@@ -170,7 +171,7 @@ export class SidebarProperties implements UIElement {
             const allProperties: Array<PropertyEntry>[] = []
             edges.forEach((selectedEdge) => {
                 const { edge } = selectedEdge
-                const properties = this.edgePropertiesGetter(edge, this.uiManager.getOptions())
+                const properties = this.nodePropertiesGetter(edge, this.uiManager.getOptions())
                 allProperties.push(properties)
             })
             const aggregatedProperties = this.aggregateProperties(allProperties)
@@ -178,58 +179,6 @@ export class SidebarProperties implements UIElement {
         }
 
         this.body.innerHTML = propertiesContainer.outerHTML
-    }
-
-    /* Private methods */
-    private nodePropertiesGetter(node: Node, options: GraphUI): Array<PropertyEntry> {
-        const data = node.getData()
-        const properties: Array<PropertyEntry> = []
-
-        if (options.propertiesPanel.nodePropertiesMap) {
-            return tryResolveArray<[Node], PropertyEntry>(options.propertiesPanel.nodePropertiesMap, node)
-        }
-
-        for (const [key, value] of Object.entries(data)) {
-            properties.push({
-                name: key,
-                value: value,
-            })
-        }
-        return properties
-    }
-
-    private edgePropertiesGetter(edge: Edge, options: GraphUI): Array<PropertyEntry> {
-        const data = edge.getData()
-        const properties: Array<PropertyEntry> = []
-
-        if (options.propertiesPanel.edgePropertiesMap) {
-            return tryResolveArray<[Edge], PropertyEntry>(options.propertiesPanel.edgePropertiesMap, edge)
-        }
-
-        for (const [key, value] of Object.entries(data)) {
-            properties.push({
-                name: key,
-                value: value,
-            })
-        }
-        return properties
-    }
-
-    private injectRowForProperties(dl: HTMLDListElement, properties: Array<PropertyEntry>): void {
-        for (const property of properties) {
-            const row = createHtmlElement('dl',
-                {
-                    'class': 'pivotick-property-row',
-                },
-                [
-                    createHtmlElement('dt', { class: 'pivotick-property-name' }, [property.name]),
-                    createHtmlElement('dd', { class: 'pivotick-property-value' }, [
-                        typeof property.value === 'string' ? property.value : JSON.stringify(property.value)
-                    ]),
-                ]
-            )
-            dl.append(row)
-        }
     }
 
     private injectTableForAggregatedProperties(div: HTMLDivElement, aggregatedProperties: aggregatedProperties, selectedNodeCount: number): void {

@@ -1,4 +1,8 @@
+import type { Edge } from '../../../Edge'
+import type { PropertyEntry } from '../../../GraphOptions'
 import type { Node } from '../../../Node'
+import { createHtmlDL, createHtmlElement, createHtmlTemplate } from '../../../utils/ElementCreation'
+import { edgeDescriptionGetter, edgeNameGetter, edgePropertiesGetter, nodeDescriptionGetter, nodeNameGetter, nodePropertiesGetter } from '../../../utils/GraphGetters'
 import type { UIElement, UIManager } from '../../UIManager'
 import './tooltip.scss'
 
@@ -13,8 +17,8 @@ export class Tooltip implements UIElement {
     private mouseY: number = 0
     private x: number = 0
     private y: number = 0
-    private visible: boolean = false
-    private showDelay: number = 300
+    private hoveredElement: string | null = null
+    private showDelay: number = 200
     private tooltipTimeout: ReturnType<typeof setTimeout> | null = null
 
     constructor(uiManager: UIManager) {
@@ -55,39 +59,142 @@ export class Tooltip implements UIElement {
         this.mouseY = event.pageY
     }
 
-    public nodeHovered(node: Node) {
+    public nodeHovered(_event: MouseEvent, node: Node) {
         if (!this.tooltip) return
+        if (this.hoveredElement === node.id) return
 
-        this.show()
-
-
+        this.hoveredElement = node.id
+        this.show(() => {
+            this.createNodeTooltip(node)
+        })
     }
 
-    public edgeHovered(node: Node) {
+    public edgeHovered(_event: MouseEvent, edge: Edge) {
         if (!this.tooltip) return
 
-        this.show()
+        this.show(() => {
+            this.createEdgeTooltip(edge)
+        })
+    }
+
+    private createNodeTooltip(node: Node) {
+        this.tooltip!.innerHTML = ''
+
+        const fixedPreviewSize = 32
+        const template = `
+<div class="pivotick-tooltip-container">
+    <div class="pivotick-mainheader-container">
+        <div class="pivotick-mainheader-nodepreview">
+            <svg class="pivotick-mainheader-icon" width="${fixedPreviewSize}" height="${fixedPreviewSize}" viewBox="0 0 ${fixedPreviewSize} ${fixedPreviewSize}" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+        <div class="pivotick-mainheader-nodeinfo">
+            <div class="pivotick-mainheader-nodeinfo-name"></div>
+            <div class="pivotick-mainheader-nodeinfo-subtitle"></div>
+        </div>
+        <div class="pivotick-mainheader-nodeinfo-action">
+        </div>
+    </div>
+</div>`
+        const tooltipContainer = createHtmlTemplate(template) as HTMLDivElement
+        const mainheaderContent = tooltipContainer.querySelector('.pivotick-mainheader-container')!
+        const iconElem = tooltipContainer.querySelector('.pivotick-mainheader-icon')!
+        const nameElem = tooltipContainer.querySelector('.pivotick-mainheader-nodeinfo-name')!
+        const subtitleElem = tooltipContainer.querySelector('.pivotick-mainheader-nodeinfo-subtitle')!
+
+        const properties = nodePropertiesGetter(node, this.uiManager.getOptions().propertiesPanel)
+
+        const element = node.getGraphElement()
+        if (element && element instanceof SVGGElement) {
+            const clonedGroup = element.cloneNode(true) as SVGGElement
+            clonedGroup.querySelector('circle.pivotick-node-selected-highlight')?.remove()
+            const bbox = element.getBBox()
+            const scale = fixedPreviewSize / Math.max(bbox.width, bbox.height)
+            clonedGroup.setAttribute(
+                'transform',
+                `translate(${(fixedPreviewSize - bbox.width * scale) / 2 - bbox.x * scale}, ${(fixedPreviewSize - bbox.height * scale) / 2 - bbox.y * scale}) scale(${scale})`
+            )
+            iconElem.appendChild(clonedGroup)
+        }
+
+        nameElem.innerHTML = nodeNameGetter(node, this.uiManager.getOptions().mainHeader)
+        subtitleElem.innerHTML = nodeDescriptionGetter(node, this.uiManager.getOptions().mainHeader)
+
+        const propertiesContainer = createHtmlElement('div', { class: 'pivotick-properties-container'}, [createHtmlDL(properties)]) as HTMLDivElement
+
+        tooltipContainer.appendChild(mainheaderContent)
+        tooltipContainer.appendChild(propertiesContainer)
+        this.tooltip!.appendChild(tooltipContainer)
+    }
+
+    private createEdgeTooltip(edge: Edge) {
+        this.tooltip!.innerHTML = ''
+
+        const fixedPreviewSize = 32
+        const template = `
+<div class="pivotick-tooltip-container">
+    <div class="pivotick-mainheader-container">
+        <div class="pivotick-mainheader-nodepreview">
+            <svg xmlns="http://www.w3.org/2000/svg" width="${fixedPreviewSize}" height="${fixedPreviewSize}" viewBox="0 0 24 24" style="filter: drop-shadow(0px 2px 1px #00000033);">
+                <g fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linejoin="round" d="M8 6h1.78c2.017 0 3.025 0 3.534.241a2.5 2.5 0 0 1 1.211 3.276c-.229.515-.994 1.17-2.525 2.483c-1.53 1.312-2.296 1.968-2.525 2.483a2.5 2.5 0 0 0 1.211 3.276c.51.241 1.517.241 3.534.241H16" />
+                    <path d="M2 6a3 3 0 1 0 6 0a3 3 0 0 0-6 0Zm14 12a3 3 0 1 0 6 0a3 3 0 0 0-6 0Z" />
+                </g>
+            </svg>
+        </div>
+        <div class="pivotick-mainheader-nodeinfo">
+            <div class="pivotick-mainheader-nodeinfo-name"></div>
+            <div class="pivotick-mainheader-nodeinfo-subtitle"></div>
+        </div>
+        <div class="pivotick-mainheader-nodeinfo-action">
+        </div>
+    </div>
+</div>`
+        const tooltipContainer = createHtmlTemplate(template) as HTMLDivElement
+        const mainheaderContent = tooltipContainer.querySelector('.pivotick-mainheader-container')!
+        const nameElem = tooltipContainer.querySelector('.pivotick-mainheader-nodeinfo-name')!
+        const subtitleElem = tooltipContainer.querySelector('.pivotick-mainheader-nodeinfo-subtitle')!
+
+        const properties = edgePropertiesGetter(edge, this.uiManager.getOptions().propertiesPanel)
+
+        nameElem.innerHTML = edgeNameGetter(edge, this.uiManager.getOptions().mainHeader)
+        subtitleElem.innerHTML = edgeDescriptionGetter(edge, this.uiManager.getOptions().mainHeader)
+
+        const propertiesContainer = createHtmlElement('div', { class: 'pivotick-properties-container' }, [createHtmlDL(properties)]) as HTMLDivElement
+
+        tooltipContainer.appendChild(mainheaderContent)
+        tooltipContainer.appendChild(propertiesContainer)
+        this.tooltip!.appendChild(tooltipContainer)
     }
 
     private setPosition() {
         if (!this.tooltip) return
 
-        const offset = 10
+        const mouseOffset = 10
+        const offset =  mouseOffset + 20 // Extra offset to give more space around the tooltip
         this.x = this.mouseX
         this.y = this.mouseY
 
-        // // Adjust horizontal position if overflowing
-        // if (this.x + tooltipWidth + offset > parentX + parentWidth) {
-        //     this.x = parentX + parentWidth - tooltipWidth - offset
-        // }
+        const bbox = this.parentContainer?.getBoundingClientRect()
+        if (!bbox) return
+        const parentX = bbox.left + window.scrollX
+        const parentY = bbox.top + window.scrollY
+        const parentWidth = bbox.width
+        const parentHeight = bbox.height
+        const tooltipWidth = this.tooltip.offsetWidth
+        const tooltipHeight = this.tooltip.offsetHeight
 
-        // // Adjust vertical position if overflowing
-        // if (this.y + tooltipHeight + offset > parentY + parentHeight) {
-        //     this.y = parentY + parentHeight - tooltipHeight - offset
-        // }
+        // Adjust horizontal position if overflowing
+        if (this.x + tooltipWidth + offset > parentX + parentWidth) {
+            this.x -= tooltipWidth + mouseOffset
+        }
 
-        this.tooltip.style.left = `${this.x + offset}px`
-        this.tooltip.style.top = `${this.y + offset}px`
+        // Adjust vertical position if overflowing
+        if (this.y + tooltipHeight + offset > parentY + parentHeight) {
+            this.y -= tooltipHeight + mouseOffset
+        }
+
+        this.tooltip.style.left = `${this.x + mouseOffset}px`
+        this.tooltip.style.top = `${this.y + mouseOffset}px`
     }
 
     private hide() {
@@ -95,15 +202,17 @@ export class Tooltip implements UIElement {
             clearTimeout(this.tooltipTimeout)
             this.tooltipTimeout = null
         }
-        this.visible = false
+        this.hoveredElement = null
         this.tooltip?.classList.remove('shown')
     }
 
-    private show() {
+    private show(cb: { (): void; (): void } | undefined) {
         this.tooltipTimeout = setTimeout(() => {
-            this.visible = true
+            if (cb) cb()
             this.tooltip?.classList.add('shown')
-            this.setPosition()
+            requestAnimationFrame(() => {
+                this.setPosition()
+            })
         }, this.showDelay)
     }
 }

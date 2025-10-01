@@ -1,16 +1,13 @@
 .pivotick-tooltip {
     position: absolute;
     pointer-events: none;
-    background: rgba(30, 30, 30, 0.9);
-    color: #f9f9f9;
-    padding: 6px 10px;
-    border-radius: 6px;
+    background-color: var(--pivotick-sidebar-panelheader-bg);
+    border: var(--pivotick-sidebar-panel-border);
+    box-shadow: var(--pivotick-box-shadow-strong);
     font-size: 13px;
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     line-height: 1.4;
     white-space: nowrap;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-    // transform: translate(-50%, -120%);
     left: -10000px;
     opacity: 0;
     transition: opacity 0.1s ease-out;
@@ -19,4 +16,72 @@
     &.shown {
         opacity: 100;
     }
+
+    .pivotick-tooltip-container {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 8px;
+
+        .pivotick-mainheader-container {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 10px;
+    
+            .pivotick-mainheader-nodepreview {
+                flex-shrink: 0;
+                width: 38px;
+                height: 38px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: var(--pivotick-mainheader-nodepreview-bg);
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), inset 0 0 0 1px hsla(0, 0%, 0%, .05);
+    
+                .pivotick-mainheader-icon {
+                    width: 32px;
+                    height: 32px;
+                }
+            }
+
+            .pivotick-mainheader-nodeinfo {
+                flex-grow: 1;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                font-family: 'Segoe UI', sans-serif;
+
+                .pivotick-mainheader-nodeinfo-name {
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: var(--pivotick-text-color);
+                }
+
+                .pivotick-mainheader-nodeinfo-subtitle {
+                    font-size: 12px;
+                    color: var(--pivotick-text-color-softer);
+                }
+
+                .pivotick-mainheader-nodeinfo-action {
+                    flex-shrink: 1;
+                }
+            }
+        }
+    
+        .pivotick-properties-container {
+            padding: 4px 2px;
+            box-shadow: var(--pivotick-box-shadow-light);
+            border: var(--pivotick-sidebar-panel-border);
+    
+            dl.pivotick-property-list {
+
+                .pivotick-property-row {
+                    padding: 0.2em;
+                }
+            }
+        }
+    }
+
 }

@@ -1,11 +1,10 @@
 import { createHtmlTemplate } from '../../../utils/ElementCreation'
 import type { Node } from '../../../Node'
 import type { Edge } from '../../../Edge'
-import type { GraphUI } from '../../../GraphOptions'
-import { tryResolveString } from '../../../utils/Getters'
 import type { EdgeSelection, NodeSelection } from '../../../GraphInteractions'
 import type { UIManager } from '../../UIManager'
 import './mainHeader.scss'
+import { edgeDescriptionGetter, edgeNameGetter, nodeDescriptionGetter, nodeNameGetter } from '../../../utils/GraphGetters'
 
 
 export class SidebarMainHeader implements UIElement {
@@ -49,7 +48,8 @@ export class SidebarMainHeader implements UIElement {
         if (!this.panel) return
 
         const fixedPreviewSize = 42
-        const template = `<div class="enter-ready">
+        const template = `
+<div class="enter-ready">
     <div class="pivotick-mainheader-nodepreview">
         <svg class="pivotick-mainheader-icon" width="${fixedPreviewSize}" height="${fixedPreviewSize}" viewBox="0 0 ${fixedPreviewSize} ${fixedPreviewSize}" preserveAspectRatio="xMidYMid meet"></svg>
     </div>
@@ -79,10 +79,10 @@ export class SidebarMainHeader implements UIElement {
             }
         }
         if (nameElem) {
-            nameElem.innerHTML = nodeNameGetter(node, this.uiManager.getOptions())
+            nameElem.innerHTML = nodeNameGetter(node, this.uiManager.getOptions().mainHeader)
         }
         if (subtitleElem) {
-            subtitleElem.innerHTML = nodeDescriptionGetter(node, this.uiManager.getOptions())
+            subtitleElem.innerHTML = nodeDescriptionGetter(node, this.uiManager.getOptions().mainHeader)
         }
 
         this.panel.innerHTML = mainheaderContent.outerHTML
@@ -117,10 +117,10 @@ export class SidebarMainHeader implements UIElement {
         const actionElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-action')
 
         if (nameElem) {
-            nameElem.innerHTML = edgeNameGetter(edge, this.uiManager.getOptions())
+            nameElem.innerHTML = edgeNameGetter(edge, this.uiManager.getOptions().mainHeader)
         }
         if (subtitleElem) {
-            subtitleElem.innerHTML = edgeDescriptionGetter(edge, this.uiManager.getOptions())
+            subtitleElem.innerHTML = edgeDescriptionGetter(edge, this.uiManager.getOptions().mainHeader)
         }
 
         this.panel.innerHTML = mainheaderContent.outerHTML
@@ -215,32 +215,4 @@ export class SidebarMainHeader implements UIElement {
         this.panel.innerHTML = `Total selected nodes ${selectedNodeCount}`
     }
 
-}
-
-function nodeNameGetter(node: Node, options: GraphUI): string {
-    if (options.mainHeader.nodeHeaderMap.title) {
-        return tryResolveString(options.mainHeader.nodeHeaderMap.title, node) || 'Could not resolve title'
-    }
-    return node.getData().label ?? 'Optional name or label'
-}
-
-function nodeDescriptionGetter(node: Node, options: GraphUI): string {
-    if (options.mainHeader.nodeHeaderMap.subtitle) {
-        return tryResolveString(options.mainHeader.nodeHeaderMap.subtitle, node) || 'Could not resolve subtitle'
-    }
-    return node.getData().description ?? 'Optional subtitle or description'
-}
-
-function edgeNameGetter(edge: Edge, options: GraphUI): string {
-    if (options.mainHeader.edgeHeaderMap.title) {
-        return tryResolveString(options.mainHeader.nodeHeaderMap.title, edge) || 'Could not resolve title'
-    }
-    return edge.getData().label ?? 'Optional name or label'
-}
-
-function edgeDescriptionGetter(edge: Edge, options: GraphUI): string {
-    if (options.mainHeader.edgeHeaderMap.subtitle) {
-        return tryResolveString(options.mainHeader.nodeHeaderMap.subtitle, edge) || 'Could not resolve subtitle'
-    }
-    return edge.getData().description ?? 'Optional subtitle or description'
 }

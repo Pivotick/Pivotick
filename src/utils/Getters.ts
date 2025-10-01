@@ -1,4 +1,3 @@
-
 /**
  * Resolves the input to a string. If it's a function, it is invoked with the given arguments.
  *

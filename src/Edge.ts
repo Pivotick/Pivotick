@@ -108,6 +108,10 @@ export class Edge<T = EdgeData, U = EdgeFullStyle> {
         this.markDirty()
     }
 
+    getGraphElement(): SVGGElement | null {
+        return document.getElementById(`edge-${this.id}`) as SVGGElement | null
+    }
+
     /**
      * Convert edge to a simple JSON object representation.
      */
@@ -127,8 +131,8 @@ export class Edge<T = EdgeData, U = EdgeFullStyle> {
 
         return new Edge<T>(
             this.id,
-            this.from,
-            this.to,
+            this.from.clone(),
+            this.to.clone(),
             clonedData,
             clonedStyle,
             this.directed

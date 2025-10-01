@@ -233,6 +233,7 @@ export class GraphSvgRenderer extends GraphRenderer {
                     .each((edge: Edge, i: number, edges: ArrayLike<SVGGElement>) => {
                         edge.clearDirty()
                         const selection = d3Select<SVGGElement, Edge>(edges[i])
+                        selection.attr('id', `edge-${edge.id}`)
                         this.edgeDrawer.render(selection, edge)
                     }),
                 update => update

@@ -86,6 +86,10 @@ export class Node<T = NodeData> {
         this.markDirty()
     }
 
+    getGraphElement(): SVGGElement | null {
+        return document.getElementById(`node-${this.id}`) as SVGGElement | null
+    }
+
     /**
      * Convert node to a simple JSON object representation.
      */

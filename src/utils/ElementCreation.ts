@@ -1,3 +1,4 @@
+import type { PropertyEntry } from "../GraphOptions"
 
 export function createSvgElement<K extends keyof SVGElementTagNameMap>(
     tag: K,
@@ -38,4 +39,23 @@ export function createHtmlTemplate(template: string): HTMLElement {
     const templateEl = document.createElement('template')
     templateEl.innerHTML = template.trim()
     return templateEl.content.firstElementChild as HTMLElement
+}
+
+export function createHtmlDL(data: Array<PropertyEntry>): HTMLDListElement {
+    const dl = createHtmlElement('dl', { class: 'pivotick-property-list' })
+    for (const entry of data) {
+        const row = createHtmlElement('dl',
+            {
+                'class': 'pivotick-property-row',
+            },
+            [
+                createHtmlElement('dt', { class: 'pivotick-property-name' }, [entry.name]),
+                createHtmlElement('dd', { class: 'pivotick-property-value' }, [
+                    typeof entry.value === 'string' ? entry.value : JSON.stringify(entry.value)
+                ]),
+            ]
+        )
+        dl.append(row)
+    }
+    return dl
 }
