@@ -1,7 +1,7 @@
 .pivotick-tooltip {
     position: absolute;
     pointer-events: auto;
-    background-color: var(--pivotick-sidebar-panelheader-bg);
+    background-color: var(--pivotick-sidebar-panelbody-bg);
     border: var(--pivotick-sidebar-panel-border);
     box-shadow: var(--pivotick-box-shadow-strong);
     font-size: 13px;
@@ -18,17 +18,26 @@
     }
 
     .pivotick-tooltip-container {
+        position: relative;
         display: flex;
         flex-direction: column;
-        gap: 12px;
-        padding: 8px;
+        gap: 4px;
 
         .pivotick-mainheader-container {
             display: flex;
             flex-direction: row;
             align-items: center;
             gap: 10px;
-    
+            padding: 8px;
+            border-bottom: var(--pivotick-sidebar-panel-border);
+            background-color: var(--pivotick-sidebar-panelheader-bg);
+
+            .pivotick-mainheader-topright {
+                position: absolute;
+                top: 2px;
+                right: 2px;
+            }
+            
             .pivotick-mainheader-nodepreview {
                 flex-shrink: 0;
                 width: 38px;
@@ -71,11 +80,12 @@
         }
     
         .pivotick-properties-container {
-            padding: 4px 2px;
-            box-shadow: var(--pivotick-box-shadow-light);
-            border: var(--pivotick-sidebar-panel-border);
-    
+            padding: 8px;
+
             dl.pivotick-property-list {
+                padding: 4px 2px;
+                box-shadow: var(--pivotick-box-shadow-light);
+                border: var(--pivotick-sidebar-panel-border);
 
                 .pivotick-property-row {
                     padding: 0.2em;

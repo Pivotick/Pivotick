@@ -3,6 +3,7 @@ import type { PropertyEntry } from '../../../GraphOptions'
 import type { Node } from '../../../Node'
 import { createHtmlDL, createHtmlElement, createHtmlTemplate } from '../../../utils/ElementCreation'
 import { edgeDescriptionGetter, edgeNameGetter, edgePropertiesGetter, nodeDescriptionGetter, nodeNameGetter, nodePropertiesGetter } from '../../../utils/GraphGetters'
+import { createButton } from '../../components/Button'
 import type { UIElement, UIManager } from '../../UIManager'
 import './tooltip.scss'
 
@@ -98,6 +99,7 @@ export class Tooltip implements UIElement {
     <div class="pivotick-mainheader-container">
         <div class="pivotick-mainheader-nodepreview">
             <svg class="pivotick-mainheader-icon" width="${fixedPreviewSize}" height="${fixedPreviewSize}" viewBox="0 0 ${fixedPreviewSize} ${fixedPreviewSize}" preserveAspectRatio="xMidYMid meet"></svg>
+            <span class="pivotick-mainheader-topright"></span>
         </div>
         <div class="pivotick-mainheader-nodeinfo">
             <div class="pivotick-mainheader-nodeinfo-name"></div>
@@ -112,6 +114,8 @@ export class Tooltip implements UIElement {
         const iconElem = tooltipContainer.querySelector('.pivotick-mainheader-icon')!
         const nameElem = tooltipContainer.querySelector('.pivotick-mainheader-nodeinfo-name')!
         const subtitleElem = tooltipContainer.querySelector('.pivotick-mainheader-nodeinfo-subtitle')!
+        const toprightElem = tooltipContainer.querySelector('.pivotick-mainheader-topright')!
+        const actionElem = tooltipContainer.querySelector('.pivotick-mainheader-nodeinfo-action')!
 
         const properties = nodePropertiesGetter(node, this.uiManager.getOptions().propertiesPanel)
 
@@ -130,6 +134,14 @@ export class Tooltip implements UIElement {
 
         nameElem.innerHTML = nodeNameGetter(node, this.uiManager.getOptions().mainHeader)
         subtitleElem.innerHTML = nodeDescriptionGetter(node, this.uiManager.getOptions().mainHeader)
+
+        toprightElem.appendChild(createButton({
+            title: 'Pin Tooltip',
+            variant: 'outline-primary',
+            size: 'sm',
+            svgIcon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="m15.113 3.21l.094.083l5.5 5.5a1 1 0 0 1-1.175 1.59l-3.172 3.171l-1.424 3.797a1 1 0 0 1-.158.277l-.07.08l-1.5 1.5a1 1 0 0 1-1.32.082l-.095-.083L9 16.415l-3.793 3.792a1 1 0 0 1-1.497-1.32l.083-.094L7.585 15l-2.792-2.793a1 1 0 0 1-.083-1.32l.083-.094l1.5-1.5a1 1 0 0 1 .258-.187l.098-.042l3.796-1.425l3.171-3.17a1 1 0 0 1 1.497-1.26z"/></svg>',
+            onClick: this.pinTooltip,
+        }))
 
         const propertiesContainer = createHtmlElement('div', { class: 'pivotick-properties-container'}, [createHtmlDL(properties)]) as HTMLDivElement
 
@@ -165,6 +177,7 @@ export class Tooltip implements UIElement {
         const mainheaderContent = tooltipContainer.querySelector('.pivotick-mainheader-container')!
         const nameElem = tooltipContainer.querySelector('.pivotick-mainheader-nodeinfo-name')!
         const subtitleElem = tooltipContainer.querySelector('.pivotick-mainheader-nodeinfo-subtitle')!
+        const actionElem = tooltipContainer.querySelector('.pivotick-mainheader-nodeinfo-action')!
 
         const properties = edgePropertiesGetter(edge, this.uiManager.getOptions().propertiesPanel)
 
@@ -235,5 +248,9 @@ export class Tooltip implements UIElement {
                 this.setPosition()
             })
         }, this.showDelay)
+    }
+
+    private pinTooltip(): void {
+        console.log('pin')
     }
 }

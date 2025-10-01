@@ -47,6 +47,26 @@
 @mixin button-danger {
     @include button-variant(--pivotick-danger-bg-color);
 }
+@mixin button-link {
+    @include button;
+    background-color: transparent;
+    color: var(--pivotick-text-color);
+
+    &:hover {
+        color: color-mix(in srgb, var(--pivotick-text-color-softer) 80%, white);
+    }
+
+    &:active {
+        color: color-mix(in srgb, var(--pivotick-text-color-softer) 85%, black);
+        transition: transform 0.05s ease-out;
+        transform: scale(0.95);
+    }
+
+    &:disabled {
+        color: color-mix(in srgb, var(--pivotick-text-color-softer) 80%, white);
+        cursor: not-allowed;
+    }
+}
 
 /**
  * Outline button
@@ -100,4 +120,52 @@
 }
 @mixin button-outline-danger {
     @include button-outline-variant(--pivotick-danger-bg-color);
+}
+
+button.pivotick-button-primary {
+    @include button-primary;
+}
+button.pivotick-button-secondary {
+    @include button-secondary;
+}
+button.pivotick-button-info {
+    @include button-info;
+}
+button.pivotick-button-warning {
+    @include button-warning;
+}
+button.pivotick-button-danger {
+    @include button-danger;
+}
+button.pivotick-button-link {
+    @include button-link;
+}
+button.pivotick-button-outline-primary {
+    @include button-outline-primary;
+}
+button.pivotick-button-outline-secondary {
+    @include button-outline-secondary;
+}
+button.pivotick-button-outline-info {
+    @include button-outline-info;
+}
+button.pivotick-button-outline-warning {
+    @include button-outline-warning;
+}
+button.pivotick-button-outline-danger {
+    @include button-outline-danger;
+}
+
+button.pivotick-button-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: 0.25rem;
+}
+
+button.pivotick-button-xs {
+    padding: 0.1rem 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 0.25rem;
 }
