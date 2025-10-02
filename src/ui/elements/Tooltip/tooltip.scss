@@ -47,6 +47,17 @@
         flex-direction: column;
         gap: 4px;
 
+        &::before {
+            content: '';
+            position: absolute;
+            top: -15px;
+            left: -15px;
+            width: calc(100% + 30px);
+            height: calc(100% + 30px);
+            background: rgba(0, 0, 0, 0);
+            z-index: -1;
+        }
+
         .pivotick-mainheader-container {
             display: flex;
             flex-direction: row;
