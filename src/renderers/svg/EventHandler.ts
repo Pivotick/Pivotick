@@ -43,6 +43,10 @@ export class EventHandler {
                 const svgNode = event.currentTarget as SVGGElement
                 this.graphInteraction?.nodeHoverOut(svgNode, event, node)
             })
+            .on('dragging', (event: PointerEvent, node: Node) => {
+                const svgNode = event.currentTarget as SVGGElement
+                this.graphInteraction?.dragging(svgNode, event, node)
+            })
 
         this.renderer.getEdgeSelection()
             .on('dblclick', (event: PointerEvent, edge: Edge) => {

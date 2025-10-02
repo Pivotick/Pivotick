@@ -372,6 +372,7 @@ export class Simulation {
                 }
                 d.fx = event.x
                 d.fy = event.y
+                this.graph.renderer.getGraphInteraction().dragging(event.sourceEvent, event.subject)
             })
             .on('end', (event, d) => {
                 if (!event.active) {

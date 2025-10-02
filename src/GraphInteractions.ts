@@ -21,6 +21,7 @@ type GraphInteractionEvents<TElement> = {
     nodeHoverOut: (event: PointerEvent, node: Node, element: TElement) => void;
     nodeSelect: (node: Node, element: TElement) => void;
     nodeBlur: (node: Node, element: TElement) => void;
+    dragging: (event: MouseEvent, node: Node) => void;
 
     edgeClick: (event: PointerEvent, edge: Edge, element: TElement) => void;
     edgeDbclick: (event: PointerEvent, edge: Edge, element: TElement) => void;
@@ -59,7 +60,7 @@ export class GraphInteractions<TElement = unknown> {
         this.callbacks = this.graph.getCallbacks() ?? {}
         this.listeners = {
             nodeClick: [], nodeDbclick: [], nodeHoverIn: [], nodeHoverOut: [],
-            nodeSelect: [], nodeBlur: [],
+            nodeSelect: [], nodeBlur: [], dragging: [],
             edgeClick: [], edgeDbclick: [], edgeHoverIn: [], edgeHoverOut: [],
             edgeSelect: [], edgeBlur: [],
             canvasClick: [], canvasMousemove: [],
@@ -121,6 +122,13 @@ export class GraphInteractions<TElement = unknown> {
         this.emit('nodeHoverOut', event, node, element)
         if (this.callbacks.onNodeHoverOut && typeof this.callbacks.onNodeHoverOut === 'function') {
             this.callbacks.onNodeHoverOut(event, node, element)
+        }
+    }
+
+    public dragging = (event: PointerEvent, node: Node): void => {
+        this.emit('dragging', event, node)
+        if (this.callbacks.onNodeDragging && typeof this.callbacks.onNodeDragging === 'function') {
+            this.callbacks.onNodeDragging(event, node)
         }
     }
 
