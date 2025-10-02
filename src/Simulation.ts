@@ -378,6 +378,10 @@ export class Simulation {
             })
     }
 
+    public isDragging(): boolean {
+        return this.dragInProgress
+    }
+
     public getForceSimulation(): typeof this.simulationForces {
         return this.simulationForces
     }

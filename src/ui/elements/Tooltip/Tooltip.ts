@@ -75,6 +75,7 @@ export class Tooltip implements UIElement {
 
     public nodeHovered(_event: MouseEvent, node: Node) {
         if (!this.tooltip) return
+        if (this.uiManager.graph.simulation.isDragging()) return
         if (this.hoveredElementID === node.id) return
 
         this.hoveredElementID = node.id
@@ -91,6 +92,11 @@ export class Tooltip implements UIElement {
         this.hoveredElementID = edge.id
         this.hoveredElement = edge
         this.show(() => {
+            if (this.uiManager.graph.simulation.isDragging()) {
+                this.hide()
+                return
+            }
+
             this.createEdgeTooltip(edge)
         })
     }
