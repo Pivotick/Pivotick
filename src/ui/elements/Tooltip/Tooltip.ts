@@ -184,6 +184,7 @@ export class Tooltip implements UIElement {
                     <path d="M2 6a3 3 0 1 0 6 0a3 3 0 0 0-6 0Zm14 12a3 3 0 1 0 6 0a3 3 0 0 0-6 0Z" />
                 </g>
             </svg>
+            <span class="pivotick-mainheader-topright"></span>
         </div>
         <div class="pivotick-mainheader-nodeinfo">
             <div class="pivotick-mainheader-nodeinfo-name"></div>
@@ -197,7 +198,20 @@ export class Tooltip implements UIElement {
         const mainheaderContent = tooltipContainer.querySelector('.pivotick-mainheader-container')!
         const nameElem = tooltipContainer.querySelector('.pivotick-mainheader-nodeinfo-name')!
         const subtitleElem = tooltipContainer.querySelector('.pivotick-mainheader-nodeinfo-subtitle')!
+        const toprightElem = tooltipContainer.querySelector('.pivotick-mainheader-topright')!
         const actionElem = tooltipContainer.querySelector('.pivotick-mainheader-nodeinfo-action')!
+
+        const pinButton = createButton({
+            title: 'Pin Tooltip',
+            variant: 'outline-primary',
+            size: 'sm',
+            class: 'pin-button',
+            svgIcon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="m15.113 3.21l.094.083l5.5 5.5a1 1 0 0 1-1.175 1.59l-3.172 3.171l-1.424 3.797a1 1 0 0 1-.158.277l-.07.08l-1.5 1.5a1 1 0 0 1-1.32.082l-.095-.083L9 16.415l-3.793 3.792a1 1 0 0 1-1.497-1.32l.083-.094L7.585 15l-2.792-2.793a1 1 0 0 1-.083-1.32l.083-.094l1.5-1.5a1 1 0 0 1 .258-.187l.098-.042l3.796-1.425l3.171-3.17a1 1 0 0 1 1.497-1.26z"/></svg>',
+            onClick: (evt) => {
+                this.pinTooltip()
+            },
+        })
+        toprightElem.appendChild(pinButton)
 
         const properties = edgePropertiesGetter(edge, this.uiManager.getOptions().propertiesPanel)
 
