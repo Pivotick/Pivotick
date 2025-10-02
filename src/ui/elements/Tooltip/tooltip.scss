@@ -17,6 +17,10 @@
         opacity: 100;
     }
 
+    &.pivotick-tooltip-floating {
+        border-color: var(--pivotick-primary-bg-color);
+    }
+
     .pivotick-tooltip-container {
         position: relative;
         display: flex;
@@ -31,6 +35,15 @@
             padding: 8px;
             border-bottom: var(--pivotick-sidebar-panel-border);
             background-color: var(--pivotick-sidebar-panelheader-bg);
+
+            &.draggable {
+                cursor: grab;
+                user-select: none;
+
+                :active {
+                    cursor: grabbing;
+                }
+            }
 
             .pivotick-mainheader-topright {
                 position: absolute;

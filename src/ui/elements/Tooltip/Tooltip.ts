@@ -1,7 +1,7 @@
 import type { Edge } from '../../../Edge'
 import type { PropertyEntry } from '../../../GraphOptions'
 import type { Node } from '../../../Node'
-import { createHtmlDL, createHtmlElement, createHtmlTemplate } from '../../../utils/ElementCreation'
+import { createHtmlDL, createHtmlElement, createHtmlTemplate, generateDomId, makeDraggable } from '../../../utils/ElementCreation'
 import { edgeDescriptionGetter, edgeNameGetter, edgePropertiesGetter, nodeDescriptionGetter, nodeNameGetter, nodePropertiesGetter } from '../../../utils/GraphGetters'
 import { createButton } from '../../components/Button'
 import type { UIElement, UIManager } from '../../UIManager'
@@ -135,13 +135,17 @@ export class Tooltip implements UIElement {
         nameElem.innerHTML = nodeNameGetter(node, this.uiManager.getOptions().mainHeader)
         subtitleElem.innerHTML = nodeDescriptionGetter(node, this.uiManager.getOptions().mainHeader)
 
-        toprightElem.appendChild(createButton({
+        const pinButton = createButton({
             title: 'Pin Tooltip',
             variant: 'outline-primary',
             size: 'sm',
+            class: 'pin-button',
             svgIcon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="m15.113 3.21l.094.083l5.5 5.5a1 1 0 0 1-1.175 1.59l-3.172 3.171l-1.424 3.797a1 1 0 0 1-.158.277l-.07.08l-1.5 1.5a1 1 0 0 1-1.32.082l-.095-.083L9 16.415l-3.793 3.792a1 1 0 0 1-1.497-1.32l.083-.094L7.585 15l-2.792-2.793a1 1 0 0 1-.083-1.32l.083-.094l1.5-1.5a1 1 0 0 1 .258-.187l.098-.042l3.796-1.425l3.171-3.17a1 1 0 0 1 1.497-1.26z"/></svg>',
-            onClick: this.pinTooltip,
-        }))
+            onClick: (evt) => {
+                this.pinTooltip()
+            },
+        })
+        toprightElem.appendChild(pinButton)
 
         const propertiesContainer = createHtmlElement('div', { class: 'pivotick-properties-container'}, [createHtmlDL(properties)]) as HTMLDivElement
 
@@ -251,6 +255,27 @@ export class Tooltip implements UIElement {
     }
 
     private pinTooltip(): void {
-        console.log('pin')
+        if (!this.tooltip || !this.parentContainer) return
+
+        const clonedTooltip = this.tooltip.cloneNode(true) as HTMLDivElement
+        clonedTooltip.classList.add('pivotick-tooltip-floating')
+
+        const pinBtn = clonedTooltip.querySelector('.pin-button')
+        if (pinBtn) {
+            const closeButton = createButton({
+                title: 'Close Tooltip',
+                variant: 'outline-danger',
+                size: 'sm',
+                class: ['close-button'],
+                svgIcon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="m7 7l10 10M7 17L17 7"/></svg>',
+                onClick: () => {
+                    clonedTooltip.remove()
+                },
+            })
+            pinBtn.replaceWith(closeButton)
+            const mainheaderContent = clonedTooltip.querySelector('.pivotick-mainheader-container')! as HTMLDivElement
+            makeDraggable(clonedTooltip, mainheaderContent)
+        }
+        this.parentContainer.appendChild(clonedTooltip)
     }
 }

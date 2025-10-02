@@ -74,7 +74,7 @@ export function createButton(options: ButtonOptions): HTMLButtonElement {
     btn.append(textEl)
 
     if (typeof onClick === 'function') {
-        btn.addEventListener('click', onClick)
+        btn.addEventListener('click', (evt) => { onClick(evt) })
     }
 
     return btn

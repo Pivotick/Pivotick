@@ -61,6 +61,30 @@ export function createHtmlDL(data: Array<PropertyEntry>): HTMLDListElement {
     return dl
 }
 
+/**
+ * Generate a random DOM-safe unique ID string.
+ *
+ * Rules:
+ * - Always starts with a letter (to be a valid HTML id).
+ * - Contains only [A-Za-z0-9-_].
+ * 
+ * @param {number} length - Length of the random part (default: 8)
+ * @returns {string} Random DOM-safe ID
+ */
+export function generateDomId(length = 8) {
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+    const chars = letters + '0123456789-_'
+
+    let id = letters.charAt(Math.floor(Math.random() * letters.length))
+
+    for (let i = 1; i < length; i++) {
+        id += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
+
+    return `id-${id}`
+}
+
+
 type iconOptions = {
     iconUnicode?: string,
     iconClass?: string,
@@ -106,4 +130,40 @@ export function createIcon(options: iconOptions): HTMLSpanElement {
         span.append(imgEl)
     }
     return span
+}
+
+export function makeDraggable(draggableEl: HTMLElement, handleEl: HTMLElement) {
+    let isDragging = false
+    let startX = 0, startY = 0, initialX = 0, initialY = 0
+
+    handleEl.classList.add('draggable')
+
+    handleEl.addEventListener('mousedown', (e: MouseEvent) => {
+        const controller = new AbortController()
+        const { signal } = controller
+        isDragging = true
+        handleEl.style.transition = 'none' // disable smooth transitions while dragging
+        startX = e.clientX
+        startY = e.clientY
+        initialX = draggableEl.offsetLeft
+        initialY = draggableEl.offsetTop
+        document.addEventListener('mousemove', onMouseMove, { signal })
+        document.addEventListener('mouseup', () => {
+            controller.abort()
+            onMouseUp()
+        }, { signal })
+    })
+
+    function onMouseMove(e: MouseEvent) {
+        if (!isDragging) return
+        const dx = e.clientX - startX
+        const dy = e.clientY - startY
+        draggableEl.style.left = initialX + dx + 'px'
+        draggableEl.style.top = initialY + dy + 'px'
+    }
+
+    function onMouseUp() {
+        isDragging = false
+        draggableEl.style.transition = '' // restore transitions
+    }
 }
