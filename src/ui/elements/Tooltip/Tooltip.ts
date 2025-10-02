@@ -18,11 +18,14 @@ export class Tooltip implements UIElement {
     private mouseY: number = 0
     private x: number = 0
     private y: number = 0
-    private hoveredElement: string | null = null
+    private hoveredElementID: string | null = null
+    private hoveredElement: Node | Edge | null = null
     private showDelay: number = 200
     private hideDelay: number = 1
     private tooltipTimeout: ReturnType<typeof setTimeout> | null = null
     private hideTimeout: ReturnType<typeof setTimeout> | null = null
+
+    private tooltipDataMap = new WeakMap<HTMLElement, Node | Edge>()
 
     constructor(uiManager: UIManager) {
         this.uiManager = uiManager
@@ -72,9 +75,10 @@ export class Tooltip implements UIElement {
 
     public nodeHovered(_event: MouseEvent, node: Node) {
         if (!this.tooltip) return
-        if (this.hoveredElement === node.id) return
+        if (this.hoveredElementID === node.id) return
 
-        this.hoveredElement = node.id
+        this.hoveredElementID = node.id
+        this.hoveredElement = node
         this.show(() => {
             this.createNodeTooltip(node)
         })
@@ -82,9 +86,10 @@ export class Tooltip implements UIElement {
 
     public edgeHovered(_event: MouseEvent, edge: Edge) {
         if (!this.tooltip) return
-        if (this.hoveredElement === edge.id) return
+        if (this.hoveredElementID === edge.id) return
 
-        this.hoveredElement = edge.id
+        this.hoveredElementID = edge.id
+        this.hoveredElement = edge
         this.show(() => {
             this.createEdgeTooltip(edge)
         })
@@ -239,6 +244,7 @@ export class Tooltip implements UIElement {
             clearTimeout(this.tooltipTimeout)
             this.tooltipTimeout = null
         }
+        this.hoveredElementID = null
         this.hoveredElement = null
         this.tooltip.classList.remove('shown')
         this.tooltip.style.left = '-10000px'
@@ -255,27 +261,60 @@ export class Tooltip implements UIElement {
     }
 
     private pinTooltip(): void {
-        if (!this.tooltip || !this.parentContainer) return
+        if (!this.tooltip || !this.parentContainer || !this.hoveredElement) return
 
         const clonedTooltip = this.tooltip.cloneNode(true) as HTMLDivElement
+        this.tooltipDataMap.set(clonedTooltip, this.hoveredElement)
+
         clonedTooltip.classList.add('pivotick-tooltip-floating')
 
-        const pinBtn = clonedTooltip.querySelector('.pin-button')
-        if (pinBtn) {
-            const closeButton = createButton({
-                title: 'Close Tooltip',
-                variant: 'outline-danger',
-                size: 'sm',
-                class: ['close-button'],
-                svgIcon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="m7 7l10 10M7 17L17 7"/></svg>',
-                onClick: () => {
-                    clonedTooltip.remove()
-                },
-            })
-            pinBtn.replaceWith(closeButton)
-            const mainheaderContent = clonedTooltip.querySelector('.pivotick-mainheader-container')! as HTMLDivElement
-            makeDraggable(clonedTooltip, mainheaderContent)
-        }
+        clonedTooltip.querySelector('.pin-button')?.remove()
+        const closeButton = createButton({
+            title: 'Close Tooltip',
+            variant: 'outline-danger',
+            size: 'sm',
+            class: ['close-button'],
+            svgIcon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="m7 7l10 10M7 17L17 7"/></svg>',
+            onClick: () => {
+                clonedTooltip.remove()
+            },
+        })
+        const focusElementButton = createButton({
+            title: 'Focus Element in Graph',
+            variant: 'outline-primary',
+            size: 'sm',
+            class: ['focus-element'],
+            svgIcon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 48 48"><defs><mask id="SVGhUb5Xdyy"><g fill="none"><path stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M16 6H8a2 2 0 0 0-2 2v8m10 26H8a2 2 0 0 1-2-2v-8m26 10h8a2 2 0 0 0 2-2v-8M32 6h8a2 2 0 0 1 2 2v8"/><rect width="20" height="20" x="14" y="14" fill="#fff" stroke="#fff" stroke-width="4" rx="10"/><circle r="3" fill="#000" transform="matrix(-1 0 0 1 24 24)"/></g></mask></defs><path fill="currentColor" d="M0 0h48v48H0z" mask="url(#SVGhUb5Xdyy)"/></svg>',
+            onClick: () => {
+                const element = this.tooltipDataMap.get(clonedTooltip)
+                if (element)
+                    this.uiManager.graph.focusElement(element)
+            },
+        })
+        const selectElementButton = createButton({
+            title: 'Focus Element in Graph',
+            variant: 'outline-primary',
+            size: 'sm',
+            class: ['select-element'],
+            svgIcon: '<svg xmlns="http://www.w3.org/2000/svg" width="${fixedPreviewSize}" height="${fixedPreviewSize}" viewBox="0 0 256 256" ><g fill="currentColor"><path d="M216 40v176H40V40Z" opacity="0.2"/><path d="M152 40a8 8 0 0 1-8 8h-32a8 8 0 0 1 0-16h32a8 8 0 0 1 8 8m-8 168h-32a8 8 0 0 0 0 16h32a8 8 0 0 0 0-16m64-176h-24a8 8 0 0 0 0 16h24v24a8 8 0 0 0 16 0V48a16 16 0 0 0-16-16m8 72a8 8 0 0 0-8 8v32a8 8 0 0 0 16 0v-32a8 8 0 0 0-8-8m0 72a8 8 0 0 0-8 8v24h-24a8 8 0 0 0 0 16h24a16 16 0 0 0 16-16v-24a8 8 0 0 0-8-8M40 152a8 8 0 0 0 8-8v-32a8 8 0 0 0-16 0v32a8 8 0 0 0 8 8m32 56H48v-24a8 8 0 0 0-16 0v24a16 16 0 0 0 16 16h24a8 8 0 0 0 0-16m0-176H48a16 16 0 0 0-16 16v24a8 8 0 0 0 16 0V48h24a8 8 0 0 0 0-16"/></g></svg>',
+            onClick: () => {
+                const element = this.tooltipDataMap.get(clonedTooltip)
+                if (element)
+                    this.uiManager.graph.selectElement(element)
+            },
+        })
+
+        const topbar = createHtmlElement('div', {
+            class: 'pivotick-tooltip-topbar'
+        }, [
+            focusElementButton,
+            selectElementButton,
+            closeButton,
+        ]) as HTMLDivElement
+        clonedTooltip.prepend(topbar)
+
+
+        makeDraggable(clonedTooltip, topbar)
         this.parentContainer.appendChild(clonedTooltip)
     }
 }

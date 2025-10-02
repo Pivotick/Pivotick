@@ -40,6 +40,9 @@ $toast-text-success: text-color($success);
     --pivotic-sidebar-layout-shadow-bottom: rgba(0, 0, 0, 0.07) 3px 2px 3px 0px,
                                             rgba(0, 0, 0, 0.04) 2px 3px 2px 0px;
 
+    /* Tooltip */
+    --pivotick-tooltip-floating-bg-color: #d6d6d6;
+
     /* Graph notification */
     --pivotick-toast-bg-color-primary: #{color.mix(white, $primary, 40%)};
     --pivotick-toast-bg-color-secondary: #{color.mix(white, $secondary, 40%)};

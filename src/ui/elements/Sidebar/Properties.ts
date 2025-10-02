@@ -140,7 +140,7 @@ export class SidebarProperties implements UIElement {
             const allProperties: Array<PropertyEntry>[] = []
             nodes.forEach((selectedNode) => {
                 const { node } = selectedNode
-                const properties = this.nodePropertiesGetter(node, this.uiManager.getOptions())
+                const properties = nodePropertiesGetter(node, this.uiManager.getOptions().propertiesPanel)
                 allProperties.push(properties)
             })
             const aggregatedProperties = this.aggregateProperties(allProperties)
@@ -148,9 +148,6 @@ export class SidebarProperties implements UIElement {
         }
 
         this.body.innerHTML = propertiesContainer.outerHTML
-    }
-    nodePropertiesGetter(node: Node<NodeData>, arg1: GraphUI) {
-        throw new Error('Method not implemented.')
     }
 
     public updateEdgesProperties(edges: EdgeSelection<unknown>[]): void {
@@ -171,7 +168,7 @@ export class SidebarProperties implements UIElement {
             const allProperties: Array<PropertyEntry>[] = []
             edges.forEach((selectedEdge) => {
                 const { edge } = selectedEdge
-                const properties = this.nodePropertiesGetter(edge, this.uiManager.getOptions())
+                const properties = edgePropertiesGetter(edge, this.uiManager.getOptions().propertiesPanel)
                 allProperties.push(properties)
             })
             const aggregatedProperties = this.aggregateProperties(allProperties)

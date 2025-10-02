@@ -289,4 +289,12 @@ export class Graph {
     updateLayoutProgress(progress: number): void {
         this.renderer?.updateLayoutProgress(progress)
     }
+
+    focusElement(element: Node | Edge): void {
+        console.log(element)
+    }
+
+    selectElement(element: Node | Edge): void {
+        console.log(element)
+    }
 }
