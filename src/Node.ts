@@ -87,6 +87,7 @@ export class Node<T = NodeData> {
     }
 
     getGraphElement(): SVGGElement | null {
+        if (!document) return null
         return document.getElementById(`node-${this.id}`) as SVGGElement | null
     }
 

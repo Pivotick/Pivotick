@@ -109,6 +109,7 @@ export class Edge<T = EdgeData, U = EdgeFullStyle> {
     }
 
     getGraphElement(): SVGGElement | null {
+        if (!document) return null
         return document.getElementById(`edge-${this.id}`) as SVGGElement | null
     }
 

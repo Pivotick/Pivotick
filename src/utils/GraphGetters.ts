@@ -31,6 +31,10 @@ export function edgeDescriptionGetter(edge: Edge, mainHeader: MainHeader): strin
     return edge.getData().description ?? 'Optional subtitle or description'
 }
 
+export function edgeLabelGetter(edge: Edge): string {
+    return edge.getData().label || ''
+}
+
 export function nodePropertiesGetter(node: Node, propertiesPanel: PropertiesPanel): Array<PropertyEntry> {
     const data = node.getData()
     const properties: Array<PropertyEntry> = []

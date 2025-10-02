@@ -19,6 +19,7 @@ import type { LayoutType, SimulationCallbacks, SimulationOptions, TreeLayoutOpti
 import { runSimulationInWorker } from './SimulationWorkerWrapper'
 import merge from 'lodash.merge'
 import { TreeLayout } from './plugins/layout/Tree'
+import { edgeLabelGetter } from './utils/GraphGetters'
 
 
 export const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
@@ -139,7 +140,14 @@ export class Simulation {
             .x(canvasBCR.width / 2)
             .y(canvasBCR.height / 2)
 
-        simulationForces.link.distance(options.d3LinkDistance)
+        simulationForces.link.distance((d) => {
+            const labelContent = edgeLabelGetter(d)
+            if (!labelContent || labelContent === '') {
+                return options.d3LinkDistance
+            }
+            const labelGuessedSize = labelContent.length * 10
+            return Math.max(options.d3LinkDistance, labelGuessedSize)
+        })
         if (options.d3LinkStrength) {
             simulationForces.link.strength(options.d3LinkStrength)
         }

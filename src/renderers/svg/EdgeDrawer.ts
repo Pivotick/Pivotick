@@ -5,6 +5,7 @@ import { getArcIntersectionWithCircle, type ArcParams, type Circle } from '../..
 import type { Graph } from '../../Graph'
 import type { GraphSvgRenderer } from './GraphSvgRenderer'
 import { tryResolveString } from '../../utils/Getters'
+import { edgeLabelGetter } from '../../utils/GraphGetters'
 
 export class EdgeDrawer {
 
@@ -370,11 +371,10 @@ export class EdgeDrawer {
             .append('g')
             .classed('label-container', true)
 
-        const labelContent = edge.getData().label
+        const labelContent = edgeLabelGetter(edge)
         if (!labelContent || labelContent === '') return
 
         const text = labelContainer.append('text')
-            // .text(edge.getData().label ?? '')
             .text(labelContent)
             .attr('font-size', style.fontSize)
             .attr('font-family', style.fontFamily)
