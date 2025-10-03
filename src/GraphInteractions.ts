@@ -17,6 +17,7 @@ export interface EdgeSelection<TElement> {
 type GraphInteractionEvents<TElement> = {
     nodeClick: (event: PointerEvent, node: Node, element: TElement) => void;
     nodeDbclick: (event: PointerEvent, node: Node, element: TElement) => void;
+    nodeContextmenu: (event: PointerEvent, node: Node, element: TElement) => void;
     nodeHoverIn: (event: PointerEvent, node: Node, element: TElement) => void;
     nodeHoverOut: (event: PointerEvent, node: Node, element: TElement) => void;
     nodeSelect: (node: Node, element: TElement) => void;
@@ -25,6 +26,7 @@ type GraphInteractionEvents<TElement> = {
 
     edgeClick: (event: PointerEvent, edge: Edge, element: TElement) => void;
     edgeDbclick: (event: PointerEvent, edge: Edge, element: TElement) => void;
+    edgeContextmenu: (event: PointerEvent, edge: Edge, element: TElement) => void;
     edgeHoverIn: (event: PointerEvent, edge: Edge, element: TElement) => void;
     edgeHoverOut: (event: PointerEvent, edge: Edge, element: TElement) => void;
     edgeSelect: (edge: Edge, element: TElement) => void;
@@ -32,6 +34,7 @@ type GraphInteractionEvents<TElement> = {
 
     canvasClick: (event: PointerEvent) => void;
     canvasMousemove: (event: MouseEvent) => void;
+    canvasContextmenu: (event: PointerEvent) => void;
 
     selectNode: (node: Node, element: TElement) => void;
     unselectNode: (node: Node, element: TElement) => void;
@@ -60,10 +63,10 @@ export class GraphInteractions<TElement = unknown> {
         this.callbacks = this.graph.getCallbacks() ?? {}
         this.listeners = {
             nodeClick: [], nodeDbclick: [], nodeHoverIn: [], nodeHoverOut: [],
-            nodeSelect: [], nodeBlur: [], dragging: [],
+            nodeSelect: [], nodeBlur: [], dragging: [], nodeContextmenu: [],
             edgeClick: [], edgeDbclick: [], edgeHoverIn: [], edgeHoverOut: [],
-            edgeSelect: [], edgeBlur: [],
-            canvasClick: [], canvasMousemove: [],
+            edgeSelect: [], edgeBlur: [], edgeContextmenu: [],
+            canvasClick: [], canvasMousemove: [], canvasContextmenu: [],
             selectNode: [], unselectNode: [], selectEdge: [], unselectEdge: [],
             selectNodes: [], unselectNodes: [], selectEdges: [], unselectEdges: [],
         }
@@ -111,6 +114,13 @@ export class GraphInteractions<TElement = unknown> {
         }
     }
 
+    public nodeContextmenu(element: TElement, event: PointerEvent, node: Node): void {
+        this.emit('nodeContextmenu', event, node, element)
+        if (this.callbacks.onNodeContextmenu && typeof this.callbacks.onNodeContextmenu === 'function') {
+            this.callbacks.onNodeContextmenu(event, node, element)
+        }
+    }
+
     public nodeHoverIn = (element: TElement, event: PointerEvent, node: Node): void => {
         this.emit('nodeHoverIn', event, node, element)
         if (this.callbacks.onNodeHoverIn && typeof this.callbacks.onNodeHoverIn === 'function') {
@@ -147,9 +157,16 @@ export class GraphInteractions<TElement = unknown> {
         }
     }
 
+    public edgeContextmenu(element: TElement, event: PointerEvent, edge: Edge): void {
+        this.emit('edgeContextmenu', event, edge, element)
+        if (this.callbacks.onEdgeContextmenu && typeof this.callbacks.onEdgeContextmenu === 'function') {
+            this.callbacks.onEdgeContextmenu(event, edge, element)
+        }
+    }
+
     public edgeHoverIn(element: TElement, event: PointerEvent, edge: Edge): void {
         this.emit('edgeHoverIn', event, edge, element)
-        if (this.callbacks.onEdgeHoverIn && typeof this.callbacks.onNodeHoverIn === 'function') {
+        if (this.callbacks.onEdgeHoverIn && typeof this.callbacks.onEdgeHoverIn === 'function') {
             this.callbacks.onEdgeHoverIn(event, edge, element)
         }
     }
@@ -166,6 +183,13 @@ export class GraphInteractions<TElement = unknown> {
         this.emit('canvasClick', event)
         if (this.callbacks.onCanvasClick && typeof this.callbacks.onCanvasClick === 'function') {
             this.callbacks.onCanvasClick(event)
+        }
+    }
+
+    public canvasContextmenu(event: PointerEvent): void {
+        this.emit('canvasContextmenu', event)
+        if (this.callbacks.onCanvasContextmenu && typeof this.callbacks.onCanvasContextmenu === 'function') {
+            this.callbacks.onCanvasContextmenu(event)
         }
     }
 

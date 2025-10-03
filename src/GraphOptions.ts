@@ -13,6 +13,11 @@ export interface InterractionCallbacks<TElement = unknown> {
      * Called when a node is double clicked.
      */
     onNodeDbclick?: (event: PointerEvent, node: Node, element: TElement) => void
+
+    /**
+     * Called when a node is right clicked.
+     */
+    onNodeContextmenu?: (event: PointerEvent, node: Node, element: TElement) => void
     
     /**
      * Called when a user hovers over a node.
@@ -51,6 +56,10 @@ export interface InterractionCallbacks<TElement = unknown> {
      * Called when an edge is selected by the user.
      */
     onEdgeDbclick?: (event: PointerEvent, edge: Edge, element: TElement) => void
+    /**
+     * Called when an edge is right clicked.
+     */
+    onEdgeContextmenu?: (event: PointerEvent, edge: Edge, element: TElement) => void
 
     /**
      * Called when an edge is selected by the user.
@@ -75,6 +84,11 @@ export interface InterractionCallbacks<TElement = unknown> {
      * Called when the canvas is clicked.
      */
     onCanvasClick?: (event: PointerEvent) => void
+
+    /**
+     * Called when the canvas is right clicked.
+     */
+    onCanvasContextmenu?: (event: PointerEvent) => void
 
     /**
      * Called when the mouse move over the canvas.
@@ -288,6 +302,9 @@ export interface GraphUI {
         edgeHeaderMap: HeaderMapEntry,
         nodePropertiesMap: ((node: Node) => Array<PropertyEntry>),
         edgePropertiesMap: ((edge: Edge) => Array<PropertyEntry>),
+    },
+    contextMenu: {
+        enable?: boolean /** @default true */
     }
 }
 

@@ -261,7 +261,7 @@ export class Tooltip implements UIElement {
         this.hideTimeout = setTimeout(() => this.hide(), this.hideDelay)
     }
 
-    private hide() {
+    public hide() {
         if (!this.tooltip) return
 
         if (this.hideTimeout) clearTimeout(this.hideTimeout)
@@ -275,7 +275,10 @@ export class Tooltip implements UIElement {
         this.tooltip.style.left = '-10000px'
     }
 
-    private show(cb: { (): void; (): void } | undefined) {
+    public show(cb: { (): void; (): void } | undefined) {
+        if (this.uiManager.contextMenu?.visible)
+            return
+
         this.tooltipTimeout = setTimeout(() => {
             if (cb) cb()
             this.tooltip?.classList.add('shown')
@@ -317,7 +320,7 @@ export class Tooltip implements UIElement {
             },
         })
         const selectElementButton = createButton({
-            title: 'Focus Element in Graph',
+            title: 'Select Element in Graph',
             variant: 'outline-primary',
             size: 'sm',
             class: ['select-element'],

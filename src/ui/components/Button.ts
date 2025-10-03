@@ -1,7 +1,7 @@
 import { createIcon } from '../../utils/ElementCreation'
+import type { UIVariant } from '../../utils/ElementCreation.ts'
 
-type ButtonVariant = 'primary' | 'secondary' | 'info' | 'warning' | 'danger' | 'link' |
-                     'outline-primary' | 'outline-secondary' | 'outline-info' | 'outline-warning' | 'outline-danger' | 'outline-link'
+type ButtonVariant = UIVariant
 type ButtonSize = 'sm' | 'xs'
 type ButtonOptions = {
     variant: ButtonVariant,

@@ -11,6 +11,7 @@ import { Toolbar } from './elements/Toolbar/Toolbar'
 import type { Notification } from './Notifier'
 import merge from 'lodash.merge'
 import { Tooltip } from './elements/Tooltip/Tooltip'
+import { ContextMenu } from './elements/ContextMenu/ContextMenu'
 
 
 const defaultHeaderMapNodeTitle = (node: Node | Edge) => node.getData().label || 'Could not resolve title'
@@ -68,6 +69,9 @@ export const DEFAULT_UI_OPTIONS: GraphUI = {
             subtitle: defaultHeaderMapEdgeSubtitle,
         },
     },
+    contextMenu: {
+        enable: true,
+    }
 }
 
 export interface UIElement {
@@ -92,6 +96,7 @@ export class UIManager {
     public graphNaviation?: GraphNavigation
     public graphControls?: GraphControls
     public tooltip?: Tooltip
+    public contextMenu?: ContextMenu
 
     constructor(graph: Graph, container: HTMLElement, options: GraphUI) {
         this.graph = graph
@@ -187,6 +192,10 @@ export class UIManager {
             this.tooltip = new Tooltip(this)
             this.tooltip.mount(this.layout?.canvas)
         }
+        if (this.options.contextMenu?.enable) {
+            this.contextMenu = new ContextMenu(this)
+            this.contextMenu.mount(this.layout?.canvas)
+        }
     }
 
     private buildUIGraphControls() {
@@ -227,6 +236,9 @@ export class UIManager {
         if (this.options.tooltip?.enable) {
             this.tooltip?.afterMount()
         }
+        if (this.options.contextMenu?.enable) {
+            this.contextMenu?.afterMount()
+        }
     }
 
     public getOptions() {
@@ -237,6 +249,7 @@ export class UIManager {
         this.graphControls?.graphReady()
         this.sidebar?.graphReady()
         this.tooltip?.graphReady()
+        this.contextMenu?.graphReady()
     }
 
     /**

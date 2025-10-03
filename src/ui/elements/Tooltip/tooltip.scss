@@ -50,10 +50,10 @@
         &::before {
             content: '';
             position: absolute;
-            top: -15px;
-            left: -15px;
-            width: calc(100% + 30px);
-            height: calc(100% + 30px);
+            top: -10px;
+            left: -10px;
+            width: calc(100% + 20px);
+            height: calc(100% + 20px);
             background: rgba(0, 0, 0, 0);
             z-index: -1;
         }

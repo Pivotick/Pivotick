@@ -35,6 +35,12 @@ export class EventHandler {
                 const svgNode = event.currentTarget as SVGGElement
                 this.graphInteraction?.nodeClick(svgNode, event, node)
             })
+            .on('contextmenu', (event: PointerEvent, node: Node) => {
+                event.preventDefault()
+                event.stopPropagation()
+                const svgNode = event.currentTarget as SVGGElement
+                this.graphInteraction?.nodeContextmenu(svgNode, event, node)
+            })
             .on('mouseenter', (event: PointerEvent, node: Node) => {
                 const svgNode = event.currentTarget as SVGGElement
                 this.graphInteraction?.nodeHoverIn(svgNode, event, node)
@@ -44,8 +50,7 @@ export class EventHandler {
                 this.graphInteraction?.nodeHoverOut(svgNode, event, node)
             })
             .on('dragging', (event: PointerEvent, node: Node) => {
-                const svgNode = event.currentTarget as SVGGElement
-                this.graphInteraction?.dragging(svgNode, event, node)
+                this.graphInteraction?.dragging(event, node)
             })
 
         this.renderer.getEdgeSelection()
@@ -59,6 +64,12 @@ export class EventHandler {
                 const svgEdge = event.currentTarget as SVGPathElement
                 this.graphInteraction?.edgeClick(svgEdge, event, edge)
             })
+            .on('contextmenu', (event: PointerEvent, edge: Edge) => {
+                event.preventDefault()
+                event.stopPropagation()
+                const svgEdge = event.currentTarget as SVGPathElement
+                this.graphInteraction?.edgeContextmenu(svgEdge, event, edge)
+            })
             .on('mouseenter', (event: PointerEvent, edge: Edge) => {
                 const svgNode = event.currentTarget as SVGPathElement
                 this.graphInteraction?.edgeHoverIn(svgNode, event, edge)
@@ -71,6 +82,10 @@ export class EventHandler {
         this.renderer.getCanvasSelection()
             .on('click', (event: PointerEvent) => {
                 this.graphInteraction?.canvasClick(event)
+            })
+            .on('contextmenu', (event: PointerEvent) => {
+                event.preventDefault()
+                this.graphInteraction?.canvasContextmenu(event)
             })
             .on('mousemove', (event: PointerEvent) => {
                 this.graphInteraction?.canvasMousemove(event)

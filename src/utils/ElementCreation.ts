@@ -1,5 +1,10 @@
 import type { PropertyEntry } from '../GraphOptions'
 import { faGlyph } from './Getters'
+import type { Node } from '../Node'
+import type { Edge } from '../Edge'
+
+export type UIVariant = 'primary' | 'secondary' | 'info' | 'warning' | 'danger' |
+'outline-primary' | 'outline-secondary' | 'outline-info' | 'outline-warning' | 'outline-danger' | 'outline-link'
 
 export function createSvgElement<K extends keyof SVGElementTagNameMap>(
     tag: K,
@@ -16,13 +21,17 @@ export function createSvgElement<K extends keyof SVGElementTagNameMap>(
 
 export function createHtmlElement<K extends keyof HTMLElementTagNameMap>(
     tag: K,
-    attributes: Record<string, string> = {},
+    attributes: Record<string, string | string[]> = {},
     children: Array<HTMLElement | Text | string> = []
 ): HTMLElementTagNameMap[K] {
     const element = document.createElement(tag)
 
     for (const [key, value] of Object.entries(attributes)) {
-        element.setAttribute(key, value)
+        if (Array.isArray(value)) {
+            element.setAttribute(key, value.join(' '))
+        } else {
+            element.setAttribute(key, value)
+        }
     }
 
     for (const child of children) {
@@ -61,6 +70,43 @@ export function createHtmlDL(data: Array<PropertyEntry>): HTMLDListElement {
     return dl
 }
 
+
+type ActionItemOptions = {
+    iconUnicode?: string,
+    iconClass?: string,
+    svgIcon?: string,
+    imagePath?: string,
+    text: string,
+    title: string,
+    variant: UIVariant,
+    cb: (element: Node | Edge) => void
+}
+export function createActionList(actions: ActionItemOptions[]): HTMLDivElement {
+    const div = createHtmlElement('div', { class: 'pivotick-action-list' })
+    actions.forEach(action => {
+        const row = createActionItem(action)
+        div.appendChild(row)
+    })
+    return div
+}
+
+export function createActionItem(action: ActionItemOptions): HTMLDivElement {
+    const div = createHtmlElement('div',
+        {
+            class: ['pivotick-action-item', `pivotick-action-item-${action.variant}`]
+        },
+        [
+            createIcon(action),
+            createHtmlElement('span', { 
+                class: 'pivotick-action-text',
+                title: action.title,
+            }, [ action.title ]),
+        ]
+    )
+    div.addEventListener('click', action.cb)
+    return div
+}
+
 /**
  * Generate a random DOM-safe unique ID string.
  *
@@ -93,6 +139,8 @@ type iconOptions = {
 }
 export function createIcon(options: iconOptions): HTMLSpanElement {
     const span = document.createElement('span')
+    span.classList.add('pivotick-icon')
+
     if (options.iconUnicode || options.iconClass) {
         const textEl = document.createElement('text')
         if (options.iconUnicode) {
