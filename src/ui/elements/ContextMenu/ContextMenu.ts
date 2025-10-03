@@ -1,6 +1,7 @@
 import type { Edge } from '../../../Edge'
 import type { Node } from '../../../Node'
 import { createHtmlElement, createIcon, type UIVariant } from '../../../utils/ElementCreation'
+import { tryResolveValue } from '../../../utils/Getters'
 import { createButton } from '../../components/Button'
 import { expand, focusElement, hide, inspect, pin, selectElement, unpin } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
@@ -178,10 +179,22 @@ export class ContextMenu implements UIElement {
     }
 
     private createEdgeMenu(edge: Edge): void {
+        if (!this.menu) return
+
+        const topbar = this.menu.querySelector('.pivotick-contextmenu-topbar')!
+        const mainMenu = this.menu.querySelector('.pivotick-contextmenu-mainmenu')!
+        topbar.innerHTML = ''
+        mainMenu.innerHTML = ''
         console.log('edge cm')
     }
 
     private createCanvasMenu(): void {
+        if (!this.menu) return
+
+        const topbar = this.menu.querySelector('.pivotick-contextmenu-topbar')!
+        const mainMenu = this.menu.querySelector('.pivotick-contextmenu-mainmenu')!
+        topbar.innerHTML = ''
+        mainMenu.innerHTML = ''
         console.log('canvas cm')
     }
 
@@ -226,8 +239,11 @@ export class ContextMenu implements UIElement {
     private createActionList(actions: ActionItemOptions[]): HTMLDivElement {
         const div = createHtmlElement('div', { class: 'pivotick-action-list' })
         actions.forEach(action => {
-            const row = this.createActionItem(action)
-            div.appendChild(row)
+            const isVisible = tryResolveValue(action.visible, this.element) ?? true
+            if (isVisible) {
+                const row = this.createActionItem(action)
+                div.appendChild(row)
+            }
         })
         return div
     }

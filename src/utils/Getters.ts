@@ -20,6 +20,27 @@ export function tryResolveString<T extends unknown[]>(
 }
 
 /**
+ * Resolves the input to a string. If it's a function, it is invoked with the given arguments.
+ *
+ * @param input - A string or a function that returns a string.
+ * @param args - Arguments to pass to the function, if applicable.
+ * @returns A string if resolved successfully, otherwise undefined.
+ */
+export function tryResolveValue<T extends unknown[]>(
+    input: string | boolean | number | ((...args: T) => string | boolean | number),
+    ...args: T
+): string | boolean | number | undefined {
+    
+    if (typeof input === 'string' || typeof input === 'boolean' || typeof input === 'number') {
+        return input
+    } else if (typeof input === 'function') {
+        const result = input(...args)
+        return (typeof input === 'string' || typeof input === 'boolean' || typeof input === 'number') ? result : undefined
+    }
+    return undefined
+}
+
+/**
  * Resolves the input to an Array. If it's a function, it is invoked with the given arguments.
  *
  * @param input - An Array or a function that returns a Array.
