@@ -45,7 +45,6 @@ export class ContextMenu implements UIElement {
                 },
                 cb: (evt: PointerEvent, node: Node) => {
                     node.freeze()
-                    this.hide()
                 }
             },
             {
@@ -57,7 +56,6 @@ export class ContextMenu implements UIElement {
                 },
                 cb: (evt: PointerEvent, node: Node) => {
                     node.unfreeze()
-                    this.hide()
                 }
             },
             {
@@ -273,9 +271,12 @@ export class ContextMenu implements UIElement {
                 })
             ]
         )
-        span.addEventListener('click', (event: PointerEvent) => {
-            action.cb(event, this.element)
-        })
+        if (typeof action.cb === 'function') {
+            span.addEventListener('click', (event: PointerEvent) => {
+                action.cb(event, this.element)
+                this.hide()
+            })
+        }
         return span
     }
 
@@ -292,9 +293,12 @@ export class ContextMenu implements UIElement {
                 }, [ action.text ?? '' ])
             ]
         )
-        div.addEventListener('click', (event: PointerEvent) => {
-            action.cb(event, this.element)
-        })
+        if (typeof action.cb === 'function') {
+            div.addEventListener('click', (event: PointerEvent) => {
+                action.cb(event, this.element)
+                this.hide()
+            })
+        }
         return div
     }
 }
