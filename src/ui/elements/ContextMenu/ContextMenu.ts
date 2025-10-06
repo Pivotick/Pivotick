@@ -89,7 +89,7 @@ export class ContextMenu implements UIElement {
                 svgIcon: inspect,
                 variant: 'outline-primary',
             },
-        ] as ActionItemOptions[]
+        ] as ActionItemOptions[],
     }
 
     private menuEdge = {
@@ -135,6 +135,7 @@ export class ContextMenu implements UIElement {
         this.uiManager.graph.renderer.getGraphInteraction().on('edgeContextmenu', this.edgeClicked.bind(this))
         this.uiManager.graph.renderer.getGraphInteraction().on('canvasContextmenu', this.canvasClicked.bind(this))
         this.uiManager.graph.renderer.getGraphInteraction().on('canvasClick', () => { this.hide() })
+        this.uiManager.graph.renderer.getGraphInteraction().on('canvasZoom', () => { this.hide() })
     }
 
     private nodeClicked(event: PointerEvent, node: Node): void {
@@ -185,7 +186,6 @@ export class ContextMenu implements UIElement {
         const mainMenu = this.menu.querySelector('.pivotick-contextmenu-mainmenu')!
         topbar.innerHTML = ''
         mainMenu.innerHTML = ''
-        console.log('edge cm')
     }
 
     private createCanvasMenu(): void {
@@ -195,10 +195,10 @@ export class ContextMenu implements UIElement {
         const mainMenu = this.menu.querySelector('.pivotick-contextmenu-mainmenu')!
         topbar.innerHTML = ''
         mainMenu.innerHTML = ''
-        console.log('canvas cm')
     }
 
     public show(): void {
+        if (this.visible) return
         if (!this.menu) return
 
         this.uiManager.tooltip?.hide()
@@ -207,6 +207,7 @@ export class ContextMenu implements UIElement {
     }
 
     public hide(): void {
+        if (!this.visible) return
         if (!this.menu) return
 
         this.elementID = null
@@ -251,7 +252,7 @@ export class ContextMenu implements UIElement {
     private createQuickActionItem(action: QuickActionItemOptions): HTMLSpanElement {
         const span = createHtmlElement('span',
             {
-                class: ['pivotick-action-item', `pivotick-action-item-${action.variant}`],
+                class: ['pivotick-quickaction-item', `pivotick-quickaction-item-${action.variant}`],
                 style: `${action.flushRight ? 'margin-left: auto;' : ''}`
             },
             [
@@ -285,5 +286,4 @@ export class ContextMenu implements UIElement {
         })
         return div
     }
-
 }

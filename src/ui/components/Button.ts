@@ -29,6 +29,7 @@ export function createButton(options: ButtonOptions): HTMLButtonElement {
     } = options
     const btn = document.createElement('button')
 
+    btn.classList.add('pivotick-button')
     btn.classList.add(`pivotick-button-${variant}`)
     if (size)
         btn.classList.add(`pivotick-button-${size}`)

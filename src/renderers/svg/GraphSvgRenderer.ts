@@ -172,6 +172,7 @@ export class GraphSvgRenderer extends GraphRenderer {
             .scaleExtent([this.options.minZoom, this.options.maxZoom])
             .on('zoom', (event) => {
                 this.zoomGroup.attr('transform', event.transform)
+                this.graphInteraction.canvasZoom(event)
             })
 
         this.selectionBox = new SelectionBox(this, this.svgCanvas, this.selectionBoxGroup.node())

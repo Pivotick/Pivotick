@@ -33,6 +33,7 @@ type GraphInteractionEvents<TElement> = {
     edgeBlur: (edge: Edge, element: TElement) => void;
 
     canvasClick: (event: PointerEvent) => void;
+    canvasZoom: (event: unknown) => void;
     canvasMousemove: (event: MouseEvent) => void;
     canvasContextmenu: (event: PointerEvent) => void;
 
@@ -66,7 +67,7 @@ export class GraphInteractions<TElement = unknown> {
             nodeSelect: [], nodeBlur: [], dragging: [], nodeContextmenu: [],
             edgeClick: [], edgeDbclick: [], edgeHoverIn: [], edgeHoverOut: [],
             edgeSelect: [], edgeBlur: [], edgeContextmenu: [],
-            canvasClick: [], canvasMousemove: [], canvasContextmenu: [],
+            canvasClick: [], canvasMousemove: [], canvasContextmenu: [], canvasZoom: [],
             selectNode: [], unselectNode: [], selectEdge: [], unselectEdge: [],
             selectNodes: [], unselectNodes: [], selectEdges: [], unselectEdges: [],
         }
@@ -183,6 +184,14 @@ export class GraphInteractions<TElement = unknown> {
         this.emit('canvasClick', event)
         if (this.callbacks.onCanvasClick && typeof this.callbacks.onCanvasClick === 'function') {
             this.callbacks.onCanvasClick(event)
+        }
+    }
+
+    public canvasZoom(event: unknown): void {
+        this.unselectAll()
+        this.emit('canvasZoom', event)
+        if (this.callbacks.onCanvasZoom && typeof this.callbacks.onCanvasZoom === 'function') {
+            this.callbacks.onCanvasZoom(event)
         }
     }
 

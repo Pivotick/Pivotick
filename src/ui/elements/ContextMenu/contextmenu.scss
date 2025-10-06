@@ -31,10 +31,14 @@
             display: flex;
             flex-direction: row;
             gap: 0.5em;
-            
-            .pivotick-icon {
-                font-size: 20px;
+
+            .pivotick-button {
+                border-radius: 4px;
+                .pivotick-icon {
+                    font-size: 20px;
+                }
             }
+            
         }
     }
 
@@ -43,7 +47,6 @@
         flex-direction: row;
         align-items: center;
         gap: 10px;
-        border-bottom: var(--pivotick-sidebar-panel-border);
         background-color: var(--pivotick-sidebar-panelheader-bg);
         
         .pivotick-action-list {
