@@ -1,5 +1,7 @@
 import type { Graph } from '../../../Graph'
+import type { NodeSelection } from '../../../GraphInteractions'
 import hasCycle from '../../../plugins/analytics/cycle'
+import { graphControlLayoutOrganic, graphControlLayoutTreeH, graphControlLayoutTreeR, graphControlLayoutTreeV } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import './graphControls.scss'
 
@@ -7,6 +9,10 @@ export class GraphControls implements UIElement {
     private uiManager: UIManager
 
     public navigation?: HTMLDivElement
+
+    private menuNode = {
+
+    }
 
     constructor(uiManager: UIManager) {
         this.uiManager = uiManager
@@ -18,30 +24,24 @@ export class GraphControls implements UIElement {
         const template = document.createElement('template')
         template.innerHTML = `
   <div class="pivotick-graphcontrols">
-    <div class="pivotick-graphcontrols-panel">
+    <div class="pivotick-graphcontrols-panel pivotick-graphcontrols-layout">
         <button id="pivotick-graphcontrols-layout-organic" class="pivotick-graphcontrols-layout-organic" title="Change Graph Layout to Organic">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19a2 2 0 1 0-4 0a2 2 0 0 0 4 0m8-14a2 2 0 1 0-4 0a2 2 0 0 0 4 0m-8 0a2 2 0 1 0-4 0a2 2 0 0 0 4 0m-4 7a2 2 0 1 0-4 0a2 2 0 0 0 4 0m12 7a2 2 0 1 0-4 0a2 2 0 0 0 4 0m-4-7a2 2 0 1 0-4 0a2 2 0 0 0 4 0m8 0a2 2 0 1 0-4 0a2 2 0 0 0 4 0M6 12h4m4 0h4m-3-5l-2 3M9 7l2 3m0 4l-2 3m4-3l2 3M10 5h4m-4 14h4m3-2l2-3m0-4l-2-3M7 7l-2 3m0 4l2 3" />
-            </svg>
+            ${graphControlLayoutOrganic}
         </button>
         <div class="pivotick-divider"></div>
         <button id="pivotick-graphcontrols-layout-tree-v" class="pivotick-graphcontrols-layout-tree" title="Change Graph Layout to Tree">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 20a2 2 0 1 0-4 0a2 2 0 0 0 4 0M16 4a2 2 0 1 0-4 0a2 2 0 0 0 4 0m0 16a2 2 0 1 0-4 0a2 2 0 0 0 4 0m-5-8a2 2 0 1 0-4 0a2 2 0 0 0 4 0m10 0a2 2 0 1 0-4 0a2 2 0 0 0 4 0M5.058 18.306l2.88-4.606m2.123-3.397l2.877-4.604m-2.873 8.006l2.876 4.6M15.063 5.7l2.881 4.61" />
-            </svg>
+            ${graphControlLayoutTreeV}
         </button>
         <div class="pivotick-divider"></div>
         <button id="pivotick-graphcontrols-layout-tree-h" class="pivotick-graphcontrols-layout-tree" title="Change Graph Layout to Tree">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="transform: rotate(-90deg);">
-                <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 20a2 2 0 1 0-4 0a2 2 0 0 0 4 0M16 4a2 2 0 1 0-4 0a2 2 0 0 0 4 0m0 16a2 2 0 1 0-4 0a2 2 0 0 0 4 0m-5-8a2 2 0 1 0-4 0a2 2 0 0 0 4 0m10 0a2 2 0 1 0-4 0a2 2 0 0 0 4 0M5.058 18.306l2.88-4.606m2.123-3.397l2.877-4.604m-2.873 8.006l2.876 4.6M15.063 5.7l2.881 4.61" />
-            </svg>
+            ${graphControlLayoutTreeH}
         </button>
         <div class="pivotick-divider"></div>
         <button id="pivotick-graphcontrols-layout-tree-radial" class="pivotick-graphcontrols-layout-tree-radial" title="Change Graph Layout to Radial Tree">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19a2 2 0 1 0-4 0a2 2 0 0 0 4 0m8-14a2 2 0 1 0-4 0a2 2 0 0 0 4 0m-8 0a2 2 0 1 0-4 0a2 2 0 0 0 4 0m-4 7a2 2 0 1 0-4 0a2 2 0 0 0 4 0m12 7a2 2 0 1 0-4 0a2 2 0 0 0 4 0m-4-7a2 2 0 1 0-4 0a2 2 0 0 0 4 0m8 0a2 2 0 1 0-4 0a2 2 0 0 0 4 0M6 12h4m4 0h4m-3-5l-2 3M9 7l2 3m0 4l-2 3m4-3l2 3" />
-            </svg>
+            ${graphControlLayoutTreeR}
         </button>
+    </div>
+    <div class="pivotick-graphcontrols-panel pivotick-graphcontrols-selection">
     </div>
   </div>
 `
@@ -96,5 +96,20 @@ export class GraphControls implements UIElement {
             treeHButton?.removeAttribute('disabled')
             radialButton?.removeAttribute('disabled')
         }
+
+        this.uiManager.graph.renderer.getGraphInteraction().on('selectNodes', (nodes: NodeSelection<unknown>[]) => {
+            this.populateSelectionContainer(nodes)
+        })
+        this.uiManager.graph.renderer.getGraphInteraction().on('unselectNodes', () => {
+            this.clearSelectionContainer()
+        })
+    }
+
+    private populateSelectionContainer(nodes: NodeSelection<unknown>[]): void {
+        return
+    }
+
+    private clearSelectionContainer(): void {
+        return
     }
 }

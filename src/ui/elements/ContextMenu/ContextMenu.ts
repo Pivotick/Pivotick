@@ -1,6 +1,7 @@
 import type { Edge } from '../../../Edge'
+import type { MenuActionItemOptions, MenuQuickActionItemOptions } from '../../../GraphOptions'
 import type { Node } from '../../../Node'
-import { createHtmlElement, createIcon, type UIVariant } from '../../../utils/ElementCreation'
+import { createHtmlElement, createIcon } from '../../../utils/ElementCreation'
 import { tryResolveValue } from '../../../utils/Getters'
 import { createButton } from '../../components/Button'
 import { expand, focusElement, hide, inspect, pin, selectElement, unpin } from '../../icons'
@@ -8,20 +9,6 @@ import type { UIElement, UIManager } from '../../UIManager'
 import './contextmenu.scss'
 
 
-type ActionItemOptions = {
-    iconUnicode?: string,
-    iconClass?: string,
-    svgIcon?: string,
-    imagePath?: string,
-    text: string,
-    title: string,
-    variant: UIVariant,
-    visible: boolean | ((element: Node | Edge | null) => boolean)
-    cb: (evt: PointerEvent, element: Node | Edge | null) => void
-}
-type QuickActionItemOptions = ActionItemOptions & {
-    flushRight?: boolean;
-}
 export class ContextMenu implements UIElement {
     private uiManager: UIManager
 
@@ -31,8 +18,6 @@ export class ContextMenu implements UIElement {
 
     private elementID: string | null = null
     private element: Node | Edge | null = null
-
-    private dataMap = new WeakMap<HTMLElement, Node | Edge>()
 
     private menuNode = {
         topbar: [
@@ -69,7 +54,7 @@ export class ContextMenu implements UIElement {
                 variant: 'outline-danger',
                 flushRight: true,
             },
-        ] as QuickActionItemOptions[],
+        ] as MenuQuickActionItemOptions[],
         menu: [
             {
                 text: 'Select Neighbors',
@@ -95,7 +80,7 @@ export class ContextMenu implements UIElement {
                 svgIcon: inspect,
                 variant: 'outline-primary',
             },
-        ] as ActionItemOptions[],
+        ] as MenuActionItemOptions[],
     }
 
     private menuEdge = {
@@ -234,7 +219,7 @@ export class ContextMenu implements UIElement {
         this.menu.style.top = `${y + offset}px`
     }
 
-    private createQuickActionList(actions: QuickActionItemOptions[]): HTMLDivElement {
+    private createQuickActionList(actions: MenuQuickActionItemOptions[]): HTMLDivElement {
         const div = createHtmlElement('div', { class: 'pivotick-quickaction-list' })
         actions.forEach(action => {
             const isVisible = tryResolveValue(action.visible, this.element) ?? true
@@ -246,7 +231,7 @@ export class ContextMenu implements UIElement {
         return div
     }
 
-    private createActionList(actions: ActionItemOptions[]): HTMLDivElement {
+    private createActionList(actions: MenuActionItemOptions[]): HTMLDivElement {
         const div = createHtmlElement('div', { class: 'pivotick-action-list' })
         actions.forEach(action => {
             const isVisible = tryResolveValue(action.visible, this.element) ?? true
@@ -258,7 +243,7 @@ export class ContextMenu implements UIElement {
         return div
     }
 
-    private createQuickActionItem(action: QuickActionItemOptions): HTMLSpanElement {
+    private createQuickActionItem(action: MenuQuickActionItemOptions): HTMLSpanElement {
         const span = createHtmlElement('span',
             {
                 class: ['pivotick-quickaction-item', `pivotick-quickaction-item-${action.variant}`],
@@ -280,7 +265,7 @@ export class ContextMenu implements UIElement {
         return span
     }
 
-    private createActionItem(action: ActionItemOptions): HTMLDivElement {
+    private createActionItem(action: MenuActionItemOptions): HTMLDivElement {
         const div = createHtmlElement('div',
             {
                 class: ['pivotick-action-item', `pivotick-action-item-${action.variant}`]

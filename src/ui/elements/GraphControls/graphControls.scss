@@ -34,17 +34,23 @@
         }
     }
 
-    .pivotick-graphcontrols-panel {
-        display: flex;
-        flex-direction: row;
-        background-color: color-mix(in srgb, var(--pivotick-bg) 80%, white);
-        box-shadow: var(--pivotic-graph-navigation-control-container-shadow);
-        border-radius: 4px;
-        margin-bottom: 6px;
+        .pivotick-graphcontrols {
+            display: flex;
+            flex-direction: row;
+            gap: 12px;
 
-        .pivotick-divider {
-            border-left: 1px solid color-mix(in srgb, var(--pivotick-border-color) 40%, transparent);
-            margin: 5px 5px;
+            .pivotick-graphcontrols-panel {
+                display: flex;
+                flex-direction: row;
+                background-color: color-mix(in srgb, var(--pivotick-bg) 80%, white);
+                box-shadow: var(--pivotic-graph-navigation-control-container-shadow);
+                border-radius: 4px;
+                margin-bottom: 6px;
+        
+                .pivotick-divider {
+                    border-left: 1px solid color-mix(in srgb, var(--pivotick-border-color) 40%, transparent);
+                    margin: 5px 5px;
+                }
+            }
         }
-    }
 }

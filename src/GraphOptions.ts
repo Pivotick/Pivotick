@@ -2,6 +2,7 @@ import { type Selection } from 'd3-selection'
 import { Node } from './Node'
 import { Edge } from './Edge'
 import type { Simulation } from './Simulation'
+import type { UIVariant } from './utils/ElementCreation'
 
 export interface InterractionCallbacks<TElement = unknown> {
     /**
@@ -312,6 +313,21 @@ export interface GraphUI {
     contextMenu: {
         enable?: boolean /** @default true */
     }
+}
+
+export type MenuActionItemOptions = {
+    iconUnicode?: string,
+    iconClass?: string,
+    svgIcon?: string,
+    imagePath?: string,
+    text: string,
+    title: string,
+    variant: UIVariant,
+    visible: boolean | ((element: Node | Edge | null) => boolean)
+    cb: (evt: PointerEvent, element: Node | Edge | null) => void
+}
+export type MenuQuickActionItemOptions = MenuActionItemOptions & {
+    flushRight?: boolean;
 }
 
 export interface GraphOptions {
