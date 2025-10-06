@@ -244,6 +244,7 @@ export class ContextMenu implements UIElement {
     }
 
     private createQuickActionItem(action: MenuQuickActionItemOptions): HTMLSpanElement {
+        const { cb, ...actionWithoutCb } = action
         const span = createHtmlElement('span',
             {
                 class: ['pivotick-quickaction-item', `pivotick-quickaction-item-${action.variant}`],
@@ -252,13 +253,13 @@ export class ContextMenu implements UIElement {
             [
                 createButton({
                     size: 'sm',
-                    ...action,
+                    ...actionWithoutCb,
                 })
             ]
         )
-        if (typeof action.cb === 'function') {
+        if (typeof cb === 'function') {
             span.addEventListener('click', (event: PointerEvent) => {
-                action.cb(event, this.element)
+                cb(event, this.element)
                 this.hide()
             })
         }

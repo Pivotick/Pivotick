@@ -365,6 +365,13 @@ export class Simulation {
         this.graph.updateData(nodes)
     }
 
+    public reheat(): void {
+        this.restart()
+        this.simulation
+            .alpha(0.7)
+            .restart()
+    }
+
     public createDragBehavior() {
         return d3Drag<SVGGElement, Node>()
             .on('start', (event, d) => {

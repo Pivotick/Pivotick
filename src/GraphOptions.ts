@@ -324,7 +324,7 @@ export type MenuActionItemOptions = {
     title: string,
     variant: UIVariant,
     visible: boolean | ((element: Node | Edge | null) => boolean)
-    cb: (evt: PointerEvent, element: Node | Edge | null) => void
+    cb: (evt: PointerEvent, element: Node | Node[] | Edge | Edge[] | null) => void
 }
 export type MenuQuickActionItemOptions = MenuActionItemOptions & {
     flushRight?: boolean;
