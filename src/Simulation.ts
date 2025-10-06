@@ -20,6 +20,7 @@ import { runSimulationInWorker } from './SimulationWorkerWrapper'
 import merge from 'lodash.merge'
 import { TreeLayout } from './plugins/layout/Tree'
 import { edgeLabelGetter } from './utils/GraphGetters'
+import type { NodeSelection } from './GraphInteractions'
 
 
 export const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
@@ -59,6 +60,12 @@ export interface simulationForces {
     collide: d3ForceCollideType<Node>,
 }
 
+interface dragSelectionNode {
+    node: Node,
+    dx: number,
+    dy: number,
+}
+
 export class Simulation {
     private simulation: d3Simulation<Node, undefined>
     private graph: Graph
@@ -70,6 +77,7 @@ export class Simulation {
     private startSimulationTime: number = 0
     private engineRunning: boolean = false
     private dragInProgress: boolean = false
+    private dragSelection: dragSelectionNode[] = []
 
     private options: SimulationOptions
     private callbacks: Partial<SimulationCallbacks>
@@ -360,7 +368,20 @@ export class Simulation {
     public createDragBehavior() {
         return d3Drag<SVGGElement, Node>()
             .on('start', (event, d) => {
-                d.freeze()
+                if (this.graph.renderer.getGraphInteraction().hasActiveMultiselection()) {
+                    this.dragSelection = this.graph.renderer.getGraphInteraction().getSelectedNodes().map((nodeSelection: NodeSelection<SVGGElement>) => {
+                        const { node } = nodeSelection
+                        node.freeze()
+                        return {
+                            node,
+                            dx: node.x! - d.x!,
+                            dy: node.y! - d.y!,
+                        }
+                    })
+                } else {
+                    this.dragSelection = []
+                    d.freeze()
+                }
             })
             .on('drag', (event, d) => {
                 if (!this.dragInProgress) {
@@ -370,8 +391,15 @@ export class Simulation {
                         .alphaTarget(0.3)
                         .restart()
                 }
-                d.fx = event.x
-                d.fy = event.y
+                if (this.graph.renderer.getGraphInteraction().hasActiveMultiselection()) {
+                    this.dragSelection.forEach(({ node, dx, dy }) => {
+                        node.fx = event.x + dx
+                        node.fy = event.y + dy
+                    })
+                } else {
+                    d.fx = event.x
+                    d.fy = event.y
+                }
                 this.graph.renderer.getGraphInteraction().dragging(event.sourceEvent, event.subject)
             })
             .on('end', (event, d) => {
@@ -383,7 +411,12 @@ export class Simulation {
                         .restart()
                 }
                 if (!this.options.freezeNodesOnDrag) {
-                    d.unfreeze()
+                    if (this.graph.renderer.getGraphInteraction().hasActiveMultiselection()) {
+                        this.dragSelection.forEach(({ node }) => node.unfreeze())
+                        this.dragSelection = []
+                    } else {
+                        d.unfreeze()
+                    }
                 }
             })
     }

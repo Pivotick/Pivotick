@@ -18,6 +18,8 @@ export class Tooltip implements UIElement {
     private mouseY: number = 0
     private x: number = 0
     private y: number = 0
+    private triggerX: number = 0
+    private triggerY: number = 0
     private hoveredElementID: string | null = null
     private hoveredElement: Node | Edge | null = null
     private showDelay: number = 350
@@ -78,11 +80,25 @@ export class Tooltip implements UIElement {
         this.mouseY = event.pageY
     }
 
-    public nodeHovered(_event: MouseEvent, node: Node) {
-        if (!this.tooltip) return
-        if (this.uiManager.graph.simulation.isDragging()) return
+    private tooltipCanBeShown(): boolean {
+        if (!this.tooltip) return false
+        if (this.uiManager.graph.simulation.isDragging()) return false
+        if (this.uiManager.graph.renderer.getSelectionBox().selectionInProgress()) return false
+        if (
+            Math.abs(this.triggerX - this.mouseX) >= 50 &&
+            Math.abs(this.triggerY - this.mouseY) >= 50
+        ) {
+            return false  // Since tooltip display is delayed, make sure the pointer is still close to where it should be
+        }
+        return true
+    }
+
+    public nodeHovered(event: MouseEvent, node: Node) {
+        if (!this.tooltipCanBeShown) return
         if (this.hoveredElementID === node.id) return
 
+        this.triggerX = event.pageX
+        this.triggerY = event.pageY
         this.hoveredElementID = node.id
         this.hoveredElement = node
         this.show(() => {
@@ -90,10 +106,12 @@ export class Tooltip implements UIElement {
         })
     }
 
-    public edgeHovered(_event: MouseEvent, edge: Edge) {
-        if (!this.tooltip) return
+    public edgeHovered(event: MouseEvent, edge: Edge) {
+        if (!this.tooltipCanBeShown) return
         if (this.hoveredElementID === edge.id) return
 
+        this.triggerX = event.pageX
+        this.triggerY = event.pageY
         this.hoveredElementID = edge.id
         this.hoveredElement = edge
         this.show(() => {
@@ -271,6 +289,8 @@ export class Tooltip implements UIElement {
         }
         this.hoveredElementID = null
         this.hoveredElement = null
+        this.triggerX = -2000
+        this.triggerY = -2000
         this.tooltip.classList.remove('shown')
         this.tooltip.style.left = '-10000px'
     }

@@ -17,6 +17,10 @@ export class SelectionBox {
         this.init()
     }
 
+    public selectionInProgress(): boolean {
+        return this.isSelecting
+    }
+
     private init() {
         this.svg.addEventListener('mousedown', this.onMouseDown)
         this.svg.addEventListener('mousemove', this.onMouseMove)
@@ -65,8 +69,6 @@ export class SelectionBox {
         this.rect.setAttribute('y', minY.toString())
         this.rect.setAttribute('width', width.toString())
         this.rect.setAttribute('height', height.toString())
-
-        this.animationFrame = null
     }
 
     private onMouseUp = () => {

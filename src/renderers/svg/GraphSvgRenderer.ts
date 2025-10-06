@@ -186,6 +186,10 @@ export class GraphSvgRenderer extends GraphRenderer {
         return this.zoom
     }
 
+    public getSelectionBox(): SelectionBox {
+        return this.selectionBox
+    }
+
     public init(): void {
         this.dataUpdate()
         this.eventHandler.init(this, this.graphInteraction)

@@ -331,6 +331,10 @@ export class GraphInteractions<TElement = unknown> {
         this.selectedEdges = []
     }
 
+    public hasActiveMultiselection(): boolean {
+        return this.selectedNodes.length > 1 || this.selectedEdges.length > 1
+    }
+
     public refreshRendering(): void {
         this.graph.renderer.dataUpdate()
         this.graph.renderer.tickUpdate()
@@ -348,8 +352,16 @@ export class GraphInteractions<TElement = unknown> {
         return this.selectedNodes?.map(selection => selection.node.id) ?? null
     }
 
+    public getSelectedNodes(): NodeSelection<TElement>[] {
+        return this.selectedNodes
+    }
+
     public getSelectedEdgeIDs(): string[] | null {
         return this.selectedEdges?.map(selection => selection.edge.id) ?? null
+    }
+
+    public getSelectedEdges(): EdgeSelection<TElement>[] {
+        return this.selectedEdges
     }
 
 }
