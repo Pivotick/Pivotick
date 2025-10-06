@@ -41,7 +41,11 @@ export class ContextMenu implements UIElement {
                 svgIcon: pin,
                 variant: 'outline-primary',
                 visible: (node: Node) => {
-                    return node.isPinned
+                    return !node.frozen
+                },
+                cb: (evt: PointerEvent, node: Node) => {
+                    node.freeze()
+                    this.hide()
                 }
             },
             {
@@ -49,7 +53,11 @@ export class ContextMenu implements UIElement {
                 svgIcon: unpin,
                 variant: 'outline-primary',
                 visible: (node: Node) => {
-                    return node.isPinned
+                    return node.frozen
+                },
+                cb: (evt: PointerEvent, node: Node) => {
+                    node.unfreeze()
+                    this.hide()
                 }
             },
             {
@@ -231,8 +239,11 @@ export class ContextMenu implements UIElement {
     private createQuickActionList(actions: QuickActionItemOptions[]): HTMLDivElement {
         const div = createHtmlElement('div', { class: 'pivotick-quickaction-list' })
         actions.forEach(action => {
-            const row = this.createQuickActionItem(action)
-            div.appendChild(row)
+            const isVisible = tryResolveValue(action.visible, this.element) ?? true
+            if (isVisible) {
+                const row = this.createQuickActionItem(action)
+                div.appendChild(row)
+            }
         })
         return div
     }

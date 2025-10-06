@@ -39,7 +39,8 @@ export const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
 
     cooldownTime: 2000,
     warmupTicks: 'auto',
-
+    freezeNodesOnDrag: true,
+    
     layout: {
         type: 'force',
     },
@@ -359,8 +360,7 @@ export class Simulation {
     public createDragBehavior() {
         return d3Drag<SVGGElement, Node>()
             .on('start', (event, d) => {
-                d.fx = d.x
-                d.fy = d.y
+                d.freeze()
             })
             .on('drag', (event, d) => {
                 if (!this.dragInProgress) {
@@ -382,8 +382,9 @@ export class Simulation {
                         .alphaTarget(this.options.d3AlphaTarget)
                         .restart()
                 }
-                d.fx = undefined
-                d.fy = undefined
+                if (!this.options.freezeNodesOnDrag) {
+                    d.unfreeze()
+                }
             })
     }
 

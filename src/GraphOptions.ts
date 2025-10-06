@@ -200,6 +200,7 @@ export interface SimulationOptions {
     d3CenterStrength: number /** @default 1 */
     cooldownTime: number /** @default 2000 */
     warmupTicks: number | 'auto' /** @default auto */
+    freezeNodesOnDrag: boolean /** @default true */
 
     layout: LayoutOptions
     callbacks?: SimulationCallbacks

@@ -19,6 +19,7 @@ export class Node<T = NodeData> {
     vy?: number
     fx?: number
     fy?: number
+    frozen?: boolean
     _circleRadius?: number
     private _dirty:boolean
 
@@ -32,6 +33,7 @@ export class Node<T = NodeData> {
         this.data = data ?? ({} as T)
         this.style = style ?? ({} as T)
         this._dirty = true
+        this.frozen = false
     }
 
     /**
@@ -136,5 +138,17 @@ export class Node<T = NodeData> {
 
     isDirty(): boolean {
         return this._dirty
+    }
+
+    freeze(): void {
+        this.frozen = true
+        this.fx = this.x
+        this.fy = this.y
+    }
+
+    unfreeze(): void {
+        this.frozen = false
+        this.fx = undefined
+        this.fy = undefined
     }
 }

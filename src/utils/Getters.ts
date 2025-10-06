@@ -30,12 +30,11 @@ export function tryResolveValue<T extends unknown[]>(
     input: string | boolean | number | ((...args: T) => string | boolean | number),
     ...args: T
 ): string | boolean | number | undefined {
-    
     if (typeof input === 'string' || typeof input === 'boolean' || typeof input === 'number') {
         return input
     } else if (typeof input === 'function') {
         const result = input(...args)
-        return (typeof input === 'string' || typeof input === 'boolean' || typeof input === 'number') ? result : undefined
+        return (typeof result === 'string' || typeof result === 'boolean' || typeof result === 'number') ? result : undefined
     }
     return undefined
 }
