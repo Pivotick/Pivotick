@@ -188,7 +188,6 @@ export class GraphInteractions<TElement = unknown> {
     }
 
     public canvasZoom(event: unknown): void {
-        this.unselectAll()
         this.emit('canvasZoom', event)
         if (this.callbacks.onCanvasZoom && typeof this.callbacks.onCanvasZoom === 'function') {
             this.callbacks.onCanvasZoom(event)

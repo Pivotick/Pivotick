@@ -94,6 +94,7 @@ export class GraphControls implements UIElement {
         </button>
     </div>
     <div class="pivotick-graphcontrols-panel pivotick-graphcontrols-selection">
+        <div class="pivotick-graphcontrols-selection-title"></div>
         <div class="pivotick-graphcontrols-selection-topbar"></div>
         <div class="pivotick-graphcontrols-selection-mainmenu"></div>
     </div>
@@ -181,13 +182,16 @@ export class GraphControls implements UIElement {
     private populateNodeSelectionContainer(fullNodeSelection: NodeSelection<unknown>[]): void {
         if (!this.navigation || !this.selectionMenu) return
 
+        const title = this.selectionMenu.querySelector('.pivotick-graphcontrols-selection-title')!
         const topbar = this.selectionMenu.querySelector('.pivotick-graphcontrols-selection-topbar')!
         const mainMenu = this.selectionMenu.querySelector('.pivotick-graphcontrols-selection-mainmenu')!
 
         const nodes = this.getNodesFromSelection(fullNodeSelection)
+        title.innerHTML = ''
         topbar.innerHTML = ''
         mainMenu.innerHTML = ''
 
+        title.innerText = `${nodes.length} nodes selected`
         topbar.appendChild(this.createQuickActionList(this.menuNode.topbar, nodes))
         mainMenu.appendChild(this.createActionList(this.menuNode.menu, nodes))
     }
@@ -195,8 +199,10 @@ export class GraphControls implements UIElement {
     private clearSelectionContainer(): void {
         if (!this.navigation || !this.selectionMenu) return
 
+        const title = this.selectionMenu.querySelector('.pivotick-graphcontrols-selection-title')!
         const topbar = this.selectionMenu.querySelector('.pivotick-graphcontrols-selection-topbar')!
         const mainMenu = this.selectionMenu.querySelector('.pivotick-graphcontrols-selection-mainmenu')!
+        title.innerHTML = ''
         topbar.innerHTML = ''
         mainMenu.innerHTML = ''
     }

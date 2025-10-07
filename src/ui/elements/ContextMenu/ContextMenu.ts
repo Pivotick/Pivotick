@@ -4,7 +4,7 @@ import type { Node } from '../../../Node'
 import { createHtmlElement, createIcon } from '../../../utils/ElementCreation'
 import { tryResolveValue } from '../../../utils/Getters'
 import { createButton } from '../../components/Button'
-import { expand, focusElement, hide, inspect, pin, selectElement, unpin } from '../../icons'
+import { expand, focusElement, hide, inspect, pin, selectElement, selectNeighbor, unpin } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import './contextmenu.scss'
 
@@ -59,7 +59,7 @@ export class ContextMenu implements UIElement {
             {
                 text: 'Select Neighbors',
                 title: 'Select Neighbors',
-                svgIcon: selectElement,
+                svgIcon: selectNeighbor,
                 variant: 'outline-primary',
             },
             {

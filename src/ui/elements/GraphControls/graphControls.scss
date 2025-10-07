@@ -1,4 +1,5 @@
 .pivotick-graphcontrols-container {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
     .pivotick-graphcontrols {
         display: flex;
@@ -66,6 +67,15 @@
                 transform: translateX(0px);
             }
 
+            .pivotick-graphcontrols-selection-title {
+                background-color: var(--pivotick-sidebar-panelheader-bg);
+                font-size: 16px;
+                font-weight: 600;
+                color: var(--pivotick-text-color);
+                text-align: center;
+                padding: 4px 8px;
+            }
+
             .pivotick-graphcontrols-selection-topbar {
                 display: flex;
                 align-items: center;
@@ -76,7 +86,7 @@
                     width: 100%;
                     display: flex;
                     flex-direction: row;
-                    gap: 0.5em;
+                    gap: 0em;
     
                     .pivotick-button {
                         border-radius: 4px;
