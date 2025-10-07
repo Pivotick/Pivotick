@@ -191,7 +191,7 @@ export class GraphControls implements UIElement {
         topbar.innerHTML = ''
         mainMenu.innerHTML = ''
 
-        title.innerText = `${nodes.length} nodes selected`
+        title.textContent = `${nodes.length} nodes selected`
         topbar.appendChild(this.createQuickActionList(this.menuNode.topbar, nodes))
         mainMenu.appendChild(this.createActionList(this.menuNode.menu, nodes))
     }

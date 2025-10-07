@@ -71,6 +71,18 @@ export const DEFAULT_UI_OPTIONS: GraphUI = {
     },
     contextMenu: {
         enable: true,
+        menuNode: {
+            topbar: [],
+            menu: [],
+        },
+        menuEdge: {
+            topbar: [],
+            menu: [],
+        },
+        menuCanvas: {
+            topbar: [],
+            menu: [],
+        },
     }
 }
 

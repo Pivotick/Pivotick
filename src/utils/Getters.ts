@@ -20,11 +20,11 @@ export function tryResolveString<T extends unknown[]>(
 }
 
 /**
- * Resolves the input to a string. If it's a function, it is invoked with the given arguments.
+ * Resolves the input to a boolean. If it's a function, it is invoked with the given arguments.
  *
- * @param input - A string or a function that returns a string.
+ * @param input - A boolean or a function that returns a boolean.
  * @param args - Arguments to pass to the function, if applicable.
- * @returns A string if resolved successfully, otherwise undefined.
+ * @returns A boolean if resolved successfully, otherwise undefined.
  */
 export function tryResolveBoolean<T extends unknown[]>(
     input: boolean | ((...args: T) => boolean),
@@ -40,7 +40,7 @@ export function tryResolveBoolean<T extends unknown[]>(
 }
 
 /**
- * Resolves the input to a string. If it's a function, it is invoked with the given arguments.
+ * Resolves the input to a string, boolean or number. If it's a function, it is invoked with the given arguments.
  *
  * @param input - A string or a function that returns a string.
  * @param args - Arguments to pass to the function, if applicable.
@@ -78,6 +78,48 @@ export function tryResolveArray<TArgs extends unknown[], TItem>(
         return Array.isArray(result) ? result : []
     }
     return []
+}
+
+/**
+ * Resolves the input to an html element. If it's a function, it is invoked with the given arguments.
+ *
+ * @param input - A string or a function that returns a string or html element.
+ * @param args - Arguments to pass to the function, if applicable.
+ * @returns A html element if resolved successfully, otherwise undefined.
+ */
+export function tryResolveHTMLElement<T extends unknown[]>(
+    input: string | HTMLElement | ((...args: T) => string | HTMLElement),
+    ...args: T
+): HTMLElement | undefined {
+
+    if (input instanceof HTMLElement) {
+        return input
+    } else if (typeof input === 'string') {
+        const template = document.createElement('template')
+        const trimmed = input.trim()
+        template.innerHTML = trimmed
+        if (template.content.firstElementChild) {
+            return template.content.firstElementChild as HTMLElement
+        }
+        const span = document.createElement('span')
+        span.textContent = trimmed
+        return span
+    } else if (typeof input === 'function') {
+        const result = input(...args)
+        if (typeof result === 'string') {
+            const template = document.createElement('template')
+            template.innerHTML = result
+            if (template.content.firstElementChild) {
+                return template.content.firstElementChild as HTMLElement
+            }
+            const span = document.createElement('span')
+            span.textContent = result
+            return span
+        } else {
+            return result
+        }
+    }
+    return undefined
 }
 
 /**

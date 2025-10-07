@@ -70,7 +70,7 @@ export function createButton(options: ButtonOptions): HTMLButtonElement {
         if (iconEl)
             iconEl.style.marginRight = '0.1em'
 
-        textEl.innerText = text
+        textEl.textContent = text
     }
     btn.append(textEl)
 

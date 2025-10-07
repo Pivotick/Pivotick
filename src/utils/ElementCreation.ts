@@ -136,10 +136,14 @@ type iconOptions = {
     iconClass?: string,
     svgIcon?: string,
     imagePath?: string,
+    fixedWidth?: boolean,
 }
 export function createIcon(options: iconOptions): HTMLSpanElement {
     const span = document.createElement('span')
     span.classList.add('pivotick-icon')
+    if (options.fixedWidth) {
+        span.classList.add('fixed-width')
+    }
 
     if (options.iconUnicode || options.iconClass) {
         const textEl = document.createElement('text')
@@ -150,7 +154,7 @@ export function createIcon(options: iconOptions): HTMLSpanElement {
             textEl.className = `icon ${options.iconClass ?? ''}`
         }
         if (options.iconUnicode) {
-            textEl.innerText = options.iconUnicode ?? (faGlyph(options.iconClass ?? '') ?? '☐')
+            textEl.textContent = options.iconUnicode ?? (faGlyph(options.iconClass ?? '') ?? '☐')
         }
         span.append(textEl)
     } else if (options.svgIcon) {
@@ -164,7 +168,6 @@ export function createIcon(options: iconOptions): HTMLSpanElement {
         span.style.alignItems = 'center'
         span.style.justifyContent = 'center'
         span.style.width = '1em'
-        span.style.width = '1em'
         span.append(svgEl)
     } else if (options.imagePath) {
         const imgEl = document.createElement('img')
@@ -173,7 +176,6 @@ export function createIcon(options: iconOptions): HTMLSpanElement {
         span.style.display = 'inline-flex'
         span.style.alignItems = 'center'
         span.style.justifyContent = 'center'
-        span.style.width = '1em'
         span.style.width = '1em'
         span.append(imgEl)
     }

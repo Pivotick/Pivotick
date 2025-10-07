@@ -291,10 +291,16 @@ export interface PropertiesPanel {
     edgePropertiesMap: ((edge: Edge) => Array<PropertyEntry>)
 }
 
+export interface ExtraPanel {
+    'title': ((element: Node | Edge | null) => HTMLElement | string) | HTMLElement | string,
+    'content': ((element: Node | Edge | null) => HTMLElement | string) | HTMLElement | string,
+}
+
 export interface GraphUI {
     mode: GraphUIMode,
     mainHeader: MainHeader,
     propertiesPanel: PropertiesPanel,
+    extraPanels: ExtraPanel[],
     tooltip: {
         enable?: boolean /** @default true */
         /**
@@ -312,6 +318,18 @@ export interface GraphUI {
     },
     contextMenu: {
         enable?: boolean /** @default true */
+        menuNode?: {
+            topbar?: MenuQuickActionItemOptions[],
+            menu?: MenuActionItemOptions[],
+        },
+        menuEdge?: {
+            topbar?: MenuQuickActionItemOptions[],
+            menu?: MenuActionItemOptions[],
+        },
+        menuCanvas?: {
+            topbar?: MenuQuickActionItemOptions[],
+            menu?: MenuActionItemOptions[],
+        },
     }
 }
 

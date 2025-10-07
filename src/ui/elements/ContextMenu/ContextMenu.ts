@@ -1,3 +1,4 @@
+import merge from 'lodash.merge'
 import type { Edge } from '../../../Edge'
 import type { MenuActionItemOptions, MenuQuickActionItemOptions } from '../../../GraphOptions'
 import type { Node } from '../../../Node'
@@ -7,7 +8,108 @@ import { createButton } from '../../components/Button'
 import { expand, focusElement, hide, inspect, pin, selectElement, selectNeighbor, unpin } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import './contextmenu.scss'
+import { deepMerge } from '../../../utils/utils'
 
+
+
+const defaultMenuNode = {
+    topbar: [
+        {
+            title: 'Pin Node',
+            svgIcon: pin,
+            variant: 'outline-primary',
+            visible: (node: Node) => {
+                return !node.frozen
+            },
+            cb: (evt: PointerEvent, node: Node) => {
+                node.freeze()
+            }
+        },
+        {
+            title: 'Unpin Node',
+            svgIcon: unpin,
+            variant: 'outline-primary',
+            visible: (node: Node) => {
+                return node.frozen
+            },
+            cb: (evt: PointerEvent, node: Node) => {
+                node.unfreeze()
+            }
+        },
+        {
+            title: 'Focus Node',
+            svgIcon: focusElement,
+            variant: 'outline-primary',
+        },
+        {
+            title: 'Hide Node',
+            svgIcon: hide,
+            variant: 'outline-danger',
+            flushRight: true,
+        },
+    ] as MenuQuickActionItemOptions[],
+    menu: [
+        {
+            text: 'Select Neighbors',
+            title: 'Select Neighbors',
+            svgIcon: selectNeighbor,
+            variant: 'outline-primary',
+        },
+        {
+            text: 'Hide Children',
+            title: 'Hide Children',
+            svgIcon: hide,
+            variant: 'outline-primary',
+        },
+        {
+            text: 'Expand Node',
+            title: 'Expand Node',
+            svgIcon: expand,
+            variant: 'outline-primary',
+        },
+        {
+            text: 'Inspect Properties',
+            title: 'Inspect Properties',
+            svgIcon: inspect,
+            variant: 'outline-primary',
+        },
+    ] as MenuActionItemOptions[],
+}
+
+const defaultMenuEdge: { topbar: MenuQuickActionItemOptions[]; menu: MenuActionItemOptions[] } = {
+    topbar: [],
+    menu: [],
+}
+
+const defaultMenuCanvas = {
+    topbar: [
+        {
+            title: 'Pin All',
+            svgIcon: pin,
+            variant: 'outline-primary',
+            visible: true,
+            cb: () => {
+                this.uiManager.graph.getMutableNodes().forEach((node: Node) => {
+                    node.freeze()
+                })
+            }
+        },
+        {
+            title: 'Unpin All',
+            svgIcon: unpin,
+            variant: 'outline-primary',
+            visible: true,
+            cb: () => {
+                this.uiManager.graph.getMutableNodes().forEach((node: Node) => {
+                    node.unfreeze()
+                    this.uiManager.graph.simulation.reheat()
+                })
+            }
+        },
+    ] as MenuQuickActionItemOptions[],
+    menu: [
+    ] as MenuActionItemOptions[],
+}
 
 export class ContextMenu implements UIElement {
     private uiManager: UIManager
@@ -19,108 +121,17 @@ export class ContextMenu implements UIElement {
     private elementID: string | null = null
     private element: Node | Edge | null = null
 
-    private menuNode = {
-        topbar: [
-            {
-                title: 'Pin Node',
-                svgIcon: pin,
-                variant: 'outline-primary',
-                visible: (node: Node) => {
-                    return !node.frozen
-                },
-                cb: (evt: PointerEvent, node: Node) => {
-                    node.freeze()
-                }
-            },
-            {
-                title: 'Unpin Node',
-                svgIcon: unpin,
-                variant: 'outline-primary',
-                visible: (node: Node) => {
-                    return node.frozen
-                },
-                cb: (evt: PointerEvent, node: Node) => {
-                    node.unfreeze()
-                }
-            },
-            {
-                title: 'Focus Node',
-                svgIcon: focusElement,
-                variant: 'outline-primary',
-            },
-            {
-                title: 'Hide Node',
-                svgIcon: hide,
-                variant: 'outline-danger',
-                flushRight: true,
-            },
-        ] as MenuQuickActionItemOptions[],
-        menu: [
-            {
-                text: 'Select Neighbors',
-                title: 'Select Neighbors',
-                svgIcon: selectNeighbor,
-                variant: 'outline-primary',
-            },
-            {
-                text: 'Hide Children',
-                title: 'Hide Children',
-                svgIcon: hide,
-                variant: 'outline-primary',
-            },
-            {
-                text: 'Expand Node',
-                title: 'Expand Node',
-                svgIcon: expand,
-                variant: 'outline-primary',
-            },
-            {
-                text: 'Inspect Properties',
-                title: 'Inspect Properties',
-                svgIcon: inspect,
-                variant: 'outline-primary',
-            },
-        ] as MenuActionItemOptions[],
-    }
-
-    private menuEdge = {
-        topbar: [],
-        menu: [],
-    }
-
-    private menuCanvas = {
-        topbar: [
-            {
-                title: 'Pin All',
-                svgIcon: pin,
-                variant: 'outline-primary',
-                visible: true,
-                cb: () => {
-                    this.uiManager.graph.getMutableNodes().forEach((node: Node) => {
-                        node.freeze()
-                    })
-                }
-            },
-            {
-                title: 'Unpin All',
-                svgIcon: unpin,
-                variant: 'outline-primary',
-                visible: true,
-                cb: () => {
-                    this.uiManager.graph.getMutableNodes().forEach((node: Node) => {
-                        node.unfreeze()
-                        this.uiManager.graph.simulation.reheat()
-                    })
-                }
-            },
-        ] as MenuQuickActionItemOptions[],
-        menu: [],
-    }
-
+    private menuNode: { topbar: MenuQuickActionItemOptions[]; menu: MenuActionItemOptions[] }
+    private menuEdge: { topbar: MenuQuickActionItemOptions[]; menu: MenuActionItemOptions[] }
+    private menuCanvas: { topbar: MenuQuickActionItemOptions[]; menu: MenuActionItemOptions[] }
 
     constructor(uiManager: UIManager) {
         this.uiManager = uiManager
         this.visible = false
+
+        this.menuNode = deepMerge(defaultMenuNode, this.uiManager.getOptions().contextMenu.menuNode ?? {})
+        this.menuEdge = deepMerge(defaultMenuEdge, this.uiManager.getOptions().contextMenu.menuEdge ?? {})
+        this.menuCanvas = deepMerge(defaultMenuCanvas, this.uiManager.getOptions().contextMenu.menuCanvas ?? {})
     }
 
     public mount(container: HTMLElement | undefined) {
@@ -302,7 +313,7 @@ export class ContextMenu implements UIElement {
                 class: ['pivotick-action-item', `pivotick-action-item-${action.variant}`]
             },
             [
-                createIcon(action),
+                createIcon({fixedWidth: true, ...action}),
                 createHtmlElement('span', { 
                     class: 'pivotick-action-text',
                     title: action.title,

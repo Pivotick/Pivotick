@@ -6,6 +6,7 @@ import './sidebar.scss'
 import { SidebarMainHeader } from './MainHeader'
 import { SidebarProperties } from './Properties'
 import type { EdgeSelection, NodeSelection } from '../../../GraphInteractions'
+import { ExtraPanelManager } from './ExtraPanelManager'
 
 export class Sidebar implements UIElement {
     private uiManager: UIManager
@@ -14,14 +15,17 @@ export class Sidebar implements UIElement {
 
     private sidebarMainHeader: SidebarMainHeader
     private sidebarProperties: SidebarProperties
-    
+    private extraPanelManager: ExtraPanelManager
+
     private mainHeaderPanel?: HTMLDivElement
     private mainBodyPanel?: HTMLDivElement
+    private extraPanelContainer?: HTMLDivElement
 
     constructor(uiManager: UIManager) {
         this.uiManager = uiManager
         this.sidebarMainHeader = new SidebarMainHeader(this.uiManager)
         this.sidebarProperties = new SidebarProperties(this.uiManager)
+        this.extraPanelManager = new ExtraPanelManager(this.uiManager)
     }
 
     public mount(container: HTMLElement | undefined) {
@@ -30,7 +34,8 @@ export class Sidebar implements UIElement {
         const template = `
   <div class="pivotick-sidebar">
     <div class="pivotick-mainheader-panel"></div>
-    <div class="pivotick-properties-panel"></div>
+    <div class="pivotick-properties-panel pivotick-sidebar-panel"></div>
+    <div class="pivotick-extra-panel pivotick-sidebar-panel"></div>
 </div>
 
   </div>`
@@ -55,9 +60,12 @@ export class Sidebar implements UIElement {
         this.sidebarMainHeader.mount(this.mainHeaderPanel)
         this.mainBodyPanel = this.sidebar.querySelector('.pivotick-properties-panel') ?? undefined
         this.sidebarProperties.mount(this.mainBodyPanel)
+        this.extraPanelContainer = this.sidebar.querySelector('.pivotick-extra-panel') ?? undefined
+        this.extraPanelManager.mount(this.extraPanelContainer)
 
         this.sidebarMainHeader.afterMount()
-        this.sidebarProperties.afterMount()
+        this.sidebarMainHeader.afterMount()
+        this.extraPanelManager.afterMount()
     }
 
     public graphReady() {
@@ -65,36 +73,44 @@ export class Sidebar implements UIElement {
         this.uiManager.graph.renderer.getGraphInteraction().on('selectNode', (node: Node, element: unknown) => {
             this.sidebarMainHeader.updateNodeOverview(node, element)
             this.sidebarProperties.updateNodeProperties(node)
+            this.extraPanelManager.updateNode(node)
         })
         this.uiManager.graph.renderer.getGraphInteraction().on('unselectNode', () => {
             this.sidebarMainHeader.clearOverview()
             this.sidebarProperties.clearProperties()
+            this.extraPanelManager.clear()
         })
         this.uiManager.graph.renderer.getGraphInteraction().on('selectEdge', (edge: Edge) => {
             this.sidebarMainHeader.updateEdgeOverview(edge)
             this.sidebarProperties.updateEdgeProperties(edge)
+            this.extraPanelManager.updateEdge(edge)
         })
         this.uiManager.graph.renderer.getGraphInteraction().on('unselectEdge', () => {
             this.sidebarMainHeader.clearOverview()
             this.sidebarProperties.clearProperties()
+            this.extraPanelManager.clear()
         })
 
         /* Multi selection */
         this.uiManager.graph.renderer.getGraphInteraction().on('selectNodes', (nodes: NodeSelection<unknown>[]) => {
             this.sidebarMainHeader.updateNodesOverview(nodes)
             this.sidebarProperties.updateNodesProperties(nodes)
+            this.extraPanelManager.updateNodes(nodes)
         })
         this.uiManager.graph.renderer.getGraphInteraction().on('unselectNodes', () => {
             this.sidebarMainHeader.clearOverview()
             this.sidebarProperties.clearProperties()
+            this.extraPanelManager.clear()
         })
         this.uiManager.graph.renderer.getGraphInteraction().on('selectEdges', (edges: EdgeSelection<unknown>[]) => {
             this.sidebarMainHeader.updateEdgesOverview(edges)
             this.sidebarProperties.updateEdgesProperties(edges)
+            this.extraPanelManager.updateEdges(edges)
         })
         this.uiManager.graph.renderer.getGraphInteraction().on('unselectEdges', () => {
             this.sidebarMainHeader.clearOverview()
             this.sidebarProperties.clearProperties()
+            this.extraPanelManager.clear()
         })
     }
 }

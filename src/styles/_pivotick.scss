@@ -159,3 +159,7 @@ dl.pivotick-property-list {
     stroke: var(--pivotick-selection-rectangle-stroke);
     stroke-width: 2px;
 }
+
+.pivotick-icon.fixed-width {
+    width: 1em;
+}
