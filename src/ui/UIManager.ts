@@ -83,7 +83,14 @@ export const DEFAULT_UI_OPTIONS: GraphUI = {
             topbar: [],
             menu: [],
         },
-    }
+    },
+    selectionMenu: {
+        menuNode: {
+            topbar: [],
+            menu: [],
+        },
+    },
+    extraPanels: [],
 }
 
 export interface UIElement {

@@ -8,6 +8,57 @@ import './graphControls.scss'
 import { tryResolveBoolean } from '../../../utils/Getters'
 import { createHtmlElement, createIcon } from '../../../utils/ElementCreation'
 import { createButton } from '../../components/Button'
+import { deepMerge } from '../../../utils/utils'
+
+
+const defaultMenuNode = {
+    topbar: [
+        {
+            title: 'Pin Nodes',
+            svgIcon: pin,
+            variant: 'outline-primary',
+            visible: true,
+            cb: (_evt: PointerEvent, nodes: Node[]) => {
+                nodes.forEach((node: Node) => {
+                    node.freeze()
+                })
+            }
+        },
+        {
+            title: 'Unpin Node',
+            svgIcon: unpin,
+            variant: 'outline-primary',
+            visible: true,
+            cb: (_evt: PointerEvent, nodes: Node[]) => {
+                nodes.forEach((node: Node) => {
+                    node.unfreeze()
+                    this.uiManager.graph.simulation.reheat()
+                })
+            }
+        },
+        {
+            title: 'Hide Nodes',
+            svgIcon: hide,
+            variant: 'outline-danger',
+            visible: true,
+            flushRight: true,
+            cb: (_evt: PointerEvent, nodes: Node[]) => {
+                nodes.forEach((node: Node) => {
+                    node.unfreeze()
+                })
+            }
+        },
+    ] as MenuQuickActionItemOptions[],
+    menu: [
+        {
+            text: 'Expand Nodes',
+            title: 'Expand Node',
+            svgIcon: expand,
+            variant: 'outline-primary',
+            visible: true,
+        },
+    ] as MenuActionItemOptions[]
+}
 
 export class GraphControls implements UIElement {
     private uiManager: UIManager
@@ -17,57 +68,12 @@ export class GraphControls implements UIElement {
 
     private selectionMenuShown: boolean = false
 
-    private menuNode = {
-        topbar: [
-            {
-                title: 'Pin Nodes',
-                svgIcon: pin,
-                variant: 'outline-primary',
-                visible: true,
-                cb: (_evt: PointerEvent, nodes: Node[]) => {
-                    nodes.forEach((node: Node) => {
-                        node.freeze()
-                    })
-                }
-            },
-            {
-                title: 'Unpin Node',
-                svgIcon: unpin,
-                variant: 'outline-primary',
-                visible: true,
-                cb: (_evt: PointerEvent, nodes: Node[]) => {
-                    nodes.forEach((node: Node) => {
-                        node.unfreeze()
-                        this.uiManager.graph.simulation.reheat()
-                    })
-                }
-            },
-            {
-                title: 'Hide Nodes',
-                svgIcon: hide,
-                variant: 'outline-danger',
-                visible: true,
-                flushRight: true,
-                cb: (_evt: PointerEvent, nodes: Node[]) => {
-                    nodes.forEach((node: Node) => {
-                        node.unfreeze()
-                    })
-                }
-            },
-        ] as MenuQuickActionItemOptions[],
-        menu: [
-            {
-                text: 'Expand Nodes',
-                title: 'Expand Node',
-                svgIcon: expand,
-                variant: 'outline-primary',
-                visible: true,
-            },
-        ] as MenuActionItemOptions[]
-    }
+    private menuNode: { topbar: MenuQuickActionItemOptions[]; menu: MenuActionItemOptions[] }
 
     constructor(uiManager: UIManager) {
         this.uiManager = uiManager
+
+        this.menuNode = deepMerge(defaultMenuNode, this.uiManager.getOptions().selectionMenu.menuNode ?? {})
     }
 
     mount(container: HTMLElement | undefined) {
@@ -266,7 +272,7 @@ export class GraphControls implements UIElement {
                 class: ['pivotick-action-item', `pivotick-action-item-${action.variant}`]
             },
             [
-                createIcon(action),
+                createIcon({ fixedWidth: true, ...action }),
                 createHtmlElement('span', { 
                     class: 'pivotick-action-text',
                     title: action.title,

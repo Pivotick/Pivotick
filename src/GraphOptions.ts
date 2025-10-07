@@ -330,6 +330,12 @@ export interface GraphUI {
             topbar?: MenuQuickActionItemOptions[],
             menu?: MenuActionItemOptions[],
         },
+    },
+    selectionMenu: {
+        menuNode?: {
+            topbar?: MenuQuickActionItemOptions[],
+            menu?: MenuActionItemOptions[],
+        }
     }
 }
 

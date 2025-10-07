@@ -3,8 +3,8 @@ import { faGlyph } from './Getters'
 import type { Node } from '../Node'
 import type { Edge } from '../Edge'
 
-export type UIVariant = 'primary' | 'secondary' | 'info' | 'warning' | 'danger' |
-'outline-primary' | 'outline-secondary' | 'outline-info' | 'outline-warning' | 'outline-danger' | 'outline-link'
+export type UIVariant = 'primary' | 'secondary' | 'info' | 'warning' | 'danger' | 'success' |
+'outline-primary' | 'outline-secondary' | 'outline-info' | 'outline-warning' | 'outline-danger' | 'outline-success'
 
 export function createSvgElement<K extends keyof SVGElementTagNameMap>(
     tag: K,

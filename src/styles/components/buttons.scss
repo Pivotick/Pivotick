@@ -47,6 +47,9 @@
 @mixin button-danger {
     @include button-variant(--pivotick-danger-bg-color);
 }
+@mixin button-success {
+    @include button-variant(--pivotick-success-bg-color);
+}
 @mixin button-link {
     @include button;
     background-color: transparent;
@@ -121,6 +124,9 @@
 @mixin button-outline-danger {
     @include button-outline-variant(--pivotick-danger-bg-color);
 }
+@mixin button-outline-success {
+    @include button-outline-variant(--pivotick-success-bg-color);
+}
 
 button.pivotick-button-primary {
     @include button-primary;
@@ -136,6 +142,9 @@ button.pivotick-button-warning {
 }
 button.pivotick-button-danger {
     @include button-danger;
+}
+button.pivotick-button-success {
+    @include button-success;
 }
 button.pivotick-button-link {
     @include button-link;
@@ -154,6 +163,9 @@ button.pivotick-button-outline-warning {
 }
 button.pivotick-button-outline-danger {
     @include button-outline-danger;
+}
+button.pivotick-button-outline-success {
+    @include button-outline-success;
 }
 
 button.pivotick-button-sm {
