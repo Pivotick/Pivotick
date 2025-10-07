@@ -1,5 +1,5 @@
 import type { PropertyEntry } from '../GraphOptions'
-import { faGlyph } from './Getters'
+import { faGlyph, tryResolveHTMLElement } from './Getters'
 import type { Node } from '../Node'
 import type { Edge } from '../Edge'
 
@@ -51,18 +51,19 @@ export function createHtmlTemplate(template: string): HTMLElement {
     return templateEl.content.firstElementChild as HTMLElement
 }
 
-export function createHtmlDL(data: Array<PropertyEntry>): HTMLDListElement {
+export function createHtmlDL(data: Array<PropertyEntry>, element: Node | Edge | null): HTMLDListElement {
     const dl = createHtmlElement('dl', { class: 'pivotick-property-list' })
     for (const entry of data) {
+        const resolvedName = tryResolveHTMLElement(entry.name, element) || ''
+        const resolvedValue = tryResolveHTMLElement(entry.value, element) || ''
+
         const row = createHtmlElement('dl',
             {
                 'class': 'pivotick-property-row',
             },
             [
-                createHtmlElement('dt', { class: 'pivotick-property-name' }, [entry.name]),
-                createHtmlElement('dd', { class: 'pivotick-property-value' }, [
-                    typeof entry.value === 'string' ? entry.value : JSON.stringify(entry.value)
-                ]),
+                createHtmlElement('dt', { class: 'pivotick-property-name' }, [resolvedName]),
+                createHtmlElement('dd', { class: 'pivotick-property-value' }, [resolvedValue]),
             ]
         )
         dl.append(row)

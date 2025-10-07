@@ -93,7 +93,7 @@ export class SidebarProperties implements UIElement {
 
         if (dlContainer) {
             const properties = nodePropertiesGetter(node, this.uiManager.getOptions().propertiesPanel)
-            dlContainer.append(createHtmlDL(properties))
+            dlContainer.append(createHtmlDL(properties, node))
         }
 
         this.body.innerHTML = propertiesContainer.outerHTML
@@ -114,7 +114,7 @@ export class SidebarProperties implements UIElement {
 
         if (dlContainer) {
             const properties = edgePropertiesGetter(edge, this.uiManager.getOptions().propertiesPanel)
-            dlContainer.append(createHtmlDL(properties))
+            dlContainer.append(createHtmlDL(properties, edge))
         }
 
         this.body.innerHTML = propertiesContainer.outerHTML

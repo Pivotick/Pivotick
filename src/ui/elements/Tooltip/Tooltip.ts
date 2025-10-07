@@ -181,7 +181,7 @@ export class Tooltip implements UIElement {
         })
         toprightElem.appendChild(pinButton)
 
-        const propertiesContainer = createHtmlElement('div', { class: 'pivotick-properties-container'}, [createHtmlDL(properties)]) as HTMLDivElement
+        const propertiesContainer = createHtmlElement('div', { class: 'pivotick-properties-container'}, [createHtmlDL(properties, node)]) as HTMLDivElement
 
         tooltipContainer.appendChild(mainheaderContent)
         tooltipContainer.appendChild(propertiesContainer)
@@ -236,7 +236,7 @@ export class Tooltip implements UIElement {
         nameElem.innerHTML = edgeNameGetter(edge, this.uiManager.getOptions().mainHeader)
         subtitleElem.innerHTML = edgeDescriptionGetter(edge, this.uiManager.getOptions().mainHeader)
 
-        const propertiesContainer = createHtmlElement('div', { class: 'pivotick-properties-container' }, [createHtmlDL(properties)]) as HTMLDivElement
+        const propertiesContainer = createHtmlElement('div', { class: 'pivotick-properties-container' }, [createHtmlDL(properties, edge)]) as HTMLDivElement
 
         tooltipContainer.appendChild(mainheaderContent)
         tooltipContainer.appendChild(propertiesContainer)

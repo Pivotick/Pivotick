@@ -277,8 +277,8 @@ export interface HeaderMapEntry {
 }
 
 export interface PropertyEntry {
-    'name': string,
-    'value': string,
+    'name': ((element: Node | Edge | null) => HTMLElement | string) | HTMLElement | string,
+    'value': ((element: Node | Edge | null) => HTMLElement | string) | HTMLElement | string,
 }
 
 export interface PropertiesPanel {
