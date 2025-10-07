@@ -84,11 +84,37 @@ export class ContextMenu implements UIElement {
     }
 
     private menuEdge = {
-        
+        topbar: [],
+        menu: [],
     }
 
     private menuCanvas = {
-
+        topbar: [
+            {
+                title: 'Pin All',
+                svgIcon: pin,
+                variant: 'outline-primary',
+                visible: true,
+                cb: () => {
+                    this.uiManager.graph.getMutableNodes().forEach((node: Node) => {
+                        node.freeze()
+                    })
+                }
+            },
+            {
+                title: 'Unpin All',
+                svgIcon: unpin,
+                variant: 'outline-primary',
+                visible: true,
+                cb: () => {
+                    this.uiManager.graph.getMutableNodes().forEach((node: Node) => {
+                        node.unfreeze()
+                        this.uiManager.graph.simulation.reheat()
+                    })
+                }
+            },
+        ] as MenuQuickActionItemOptions[],
+        menu: [],
     }
 
 
@@ -177,6 +203,8 @@ export class ContextMenu implements UIElement {
         const mainMenu = this.menu.querySelector('.pivotick-contextmenu-mainmenu')!
         topbar.innerHTML = ''
         mainMenu.innerHTML = ''
+        topbar.appendChild(this.createQuickActionList(this.menuEdge.topbar))
+        mainMenu.appendChild(this.createActionList(this.menuEdge.menu))
     }
 
     private createCanvasMenu(): void {
@@ -186,6 +214,8 @@ export class ContextMenu implements UIElement {
         const mainMenu = this.menu.querySelector('.pivotick-contextmenu-mainmenu')!
         topbar.innerHTML = ''
         mainMenu.innerHTML = ''
+        topbar.appendChild(this.createQuickActionList(this.menuCanvas.topbar))
+        mainMenu.appendChild(this.createActionList(this.menuCanvas.menu))
     }
 
     public show(): void {

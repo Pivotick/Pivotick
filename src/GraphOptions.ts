@@ -320,7 +320,7 @@ export type MenuActionItemOptions = {
     iconClass?: string,
     svgIcon?: string,
     imagePath?: string,
-    text: string,
+    text?: string,
     title: string,
     variant: UIVariant,
     visible: boolean | ((element: Node | Edge | null) => boolean)
