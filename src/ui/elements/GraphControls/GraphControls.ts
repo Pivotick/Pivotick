@@ -29,7 +29,7 @@ const defaultMenuNode = {
             svgIcon: unpin,
             variant: 'outline-primary',
             visible: true,
-            cb: (_evt: PointerEvent, nodes: Node[]) => {
+            cb: function(_evt: PointerEvent, nodes: Node[]) {
                 nodes.forEach((node: Node) => {
                     node.unfreeze()
                     this.uiManager.graph.simulation.reheat()
@@ -42,7 +42,7 @@ const defaultMenuNode = {
             variant: 'outline-danger',
             visible: true,
             flushRight: true,
-            cb: (_evt: PointerEvent, nodes: Node[]) => {
+            cb: function(_evt: PointerEvent, nodes: Node[]) {
                 nodes.forEach((node: Node) => {
                     node.unfreeze()
                 })
@@ -260,7 +260,7 @@ export class GraphControls implements UIElement {
         )
         if (typeof cb === 'function') {
             span.addEventListener('click', (event: PointerEvent) => {
-                cb(event, nodes)
+                cb.call(this, event, nodes)
             })
         }
         return span
@@ -281,7 +281,7 @@ export class GraphControls implements UIElement {
         )
         if (typeof action.cb === 'function') {
             div.addEventListener('click', (event: PointerEvent) => {
-                if (action.cb) action.cb(event, nodes)
+                action.cb.call(this, event, nodes)
             })
         }
         return div
