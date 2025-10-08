@@ -170,8 +170,8 @@ export class Tooltip implements UIElement {
             iconElem.appendChild(clonedGroup)
         }
 
-        nameElem.innerHTML = nodeNameGetter(node, this.uiManager.getOptions().mainHeader)
-        subtitleElem.innerHTML = nodeDescriptionGetter(node, this.uiManager.getOptions().mainHeader)
+        nameElem.textContent = nodeNameGetter(node, this.uiManager.getOptions().mainHeader)
+        subtitleElem.textContent = nodeDescriptionGetter(node, this.uiManager.getOptions().mainHeader)
 
         const pinButton = createButton({
             title: 'Pin Tooltip',
@@ -273,8 +273,8 @@ export class Tooltip implements UIElement {
 
         const properties = edgePropertiesGetter(edge, this.uiManager.getOptions().propertiesPanel)
 
-        nameElem.innerHTML = edgeNameGetter(edge, this.uiManager.getOptions().mainHeader)
-        subtitleElem.innerHTML = edgeDescriptionGetter(edge, this.uiManager.getOptions().mainHeader)
+        nameElem.textContent = edgeNameGetter(edge, this.uiManager.getOptions().mainHeader)
+        subtitleElem.textContent = edgeDescriptionGetter(edge, this.uiManager.getOptions().mainHeader)
 
         const propertiesContainer = createHtmlElement('div', { class: 'pivotick-properties-container' }, [createHtmlDL(properties, edge)]) as HTMLDivElement
 

@@ -80,14 +80,14 @@ export class SidebarMainHeader implements UIElement {
             }
         }
         if (nameElem) {
-            nameElem.innerHTML = nodeNameGetter(node, this.uiManager.getOptions().mainHeader)
+            nameElem.textContent = nodeNameGetter(node, this.uiManager.getOptions().mainHeader)
         }
         if (subtitleElem) {
             const description = nodeDescriptionGetter(node, this.uiManager.getOptions().mainHeader)
-            subtitleElem.innerHTML = description ?? ''
+            subtitleElem.textContent = description ?? ''
         }
 
-        this.panel.innerHTML = mainheaderContent.outerHTML
+        this.panel.appendChild(mainheaderContent)
         requestAnimationFrame(() => {
             this.panel?.firstElementChild?.classList.add('enter-active')
         })
@@ -114,13 +114,13 @@ export class SidebarMainHeader implements UIElement {
         const actionElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-action')
 
         if (nameElem) {
-            nameElem.innerHTML = edgeNameGetter(edge, this.uiManager.getOptions().mainHeader)
+            nameElem.textContent = edgeNameGetter(edge, this.uiManager.getOptions().mainHeader)
         }
         if (subtitleElem) {
-            subtitleElem.innerHTML = edgeDescriptionGetter(edge, this.uiManager.getOptions().mainHeader)
+            subtitleElem.textContent = edgeDescriptionGetter(edge, this.uiManager.getOptions().mainHeader)
         }
 
-        this.panel.innerHTML = mainheaderContent.outerHTML
+        this.panel.appendChild(mainheaderContent)
         requestAnimationFrame(() => {
             this.panel?.firstElementChild?.classList.add('enter-active')
         })
@@ -154,13 +154,13 @@ export class SidebarMainHeader implements UIElement {
             iconElem.appendChild(selectionIcon)
         }
         if (nameElem) {
-            nameElem.innerHTML = `${nodes.length} nodes selected`
+            nameElem.textContent = `${nodes.length} nodes selected`
         }
         if (subtitleElem) {
-            subtitleElem.innerHTML = `Out of ${this.uiManager.graph.getNodeCount()} total`
+            subtitleElem.textContent = `Out of ${this.uiManager.graph.getNodeCount()} total`
         }
 
-        this.panel.innerHTML = mainheaderContent.outerHTML
+        this.panel.appendChild(mainheaderContent)
         requestAnimationFrame(() => {
             this.panel?.firstElementChild?.classList.add('enter-active')
         })
@@ -187,13 +187,13 @@ export class SidebarMainHeader implements UIElement {
         const actionElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-action')
 
         if (nameElem) {
-            nameElem.innerHTML = `${edges.length} edges selected`
+            nameElem.textContent = `${edges.length} edges selected`
         }
         if (subtitleElem) {
-            subtitleElem.innerHTML = `Out of ${this.uiManager.graph.getEdgeCount() } total`
+            subtitleElem.textContent = `Out of ${this.uiManager.graph.getEdgeCount() } total`
         }
 
-        this.panel.innerHTML = mainheaderContent.outerHTML
+        this.panel.appendChild(mainheaderContent)
         requestAnimationFrame(() => {
             this.panel?.firstElementChild?.classList.add('enter-active')
         })
@@ -204,7 +204,7 @@ export class SidebarMainHeader implements UIElement {
     private showSelectedNodeCount(): void {
         if (!this.panel) return
         const selectedNodeCount = 0
-        this.panel.innerHTML = `Total selected nodes ${selectedNodeCount}`
+        this.panel.textContent = `Total selected nodes ${selectedNodeCount}`
     }
 
 }

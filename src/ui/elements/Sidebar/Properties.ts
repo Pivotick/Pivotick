@@ -96,7 +96,7 @@ export class SidebarProperties implements UIElement {
             dlContainer.append(createHtmlDL(properties, node))
         }
 
-        this.body.innerHTML = propertiesContainer.outerHTML
+        this.body.appendChild(propertiesContainer)
     }
 
     public updateEdgeProperties(edge: Edge): void {
@@ -117,7 +117,7 @@ export class SidebarProperties implements UIElement {
             dlContainer.append(createHtmlDL(properties, edge))
         }
 
-        this.body.innerHTML = propertiesContainer.outerHTML
+        this.body.appendChild(propertiesContainer)
     }
 
 
@@ -147,7 +147,7 @@ export class SidebarProperties implements UIElement {
             this.injectTableForAggregatedProperties(div, aggregatedProperties, nodes.length)
         }
 
-        this.body.innerHTML = propertiesContainer.outerHTML
+        this.body.appendChild(propertiesContainer)
     }
 
     public updateEdgesProperties(edges: EdgeSelection<unknown>[]): void {
@@ -175,7 +175,7 @@ export class SidebarProperties implements UIElement {
             this.injectTableForAggregatedProperties(div, aggregatedProperties, edges.length)
         }
 
-        this.body.innerHTML = propertiesContainer.outerHTML
+        this.body.appendChild(propertiesContainer)
     }
 
     private injectTableForAggregatedProperties(div: HTMLDivElement, aggregatedProperties: aggregatedProperties, selectedNodeCount: number): void {
@@ -183,10 +183,10 @@ export class SidebarProperties implements UIElement {
 
         for (const [propName, valueCountMap] of sortedAggregatedProperties) {
             const section = createHtmlElement('div', {
-                'class': 'pivotick-aggregated-property-section'
+                class: 'pivotick-aggregated-property-section'
             })
             const sectionTitle = createHtmlElement('span', {
-                'class': 'pivotick-aggregated-property-title'
+                class: 'pivotick-aggregated-property-title'
             }, [`.${propName}`])
             const container = createHtmlElement('div', {
                 class: 'pivotick-aggregated-property-container',
@@ -263,12 +263,17 @@ export class SidebarProperties implements UIElement {
 
         allProperties.forEach(properties => {
             properties.forEach(prop => {
-                if (!aggregatedProperties.has(prop.name)) {
-                    aggregatedProperties.set(prop.name, new Map())
+                if (
+                    (typeof prop.name === 'string' || typeof prop.name === 'number' || typeof prop.name === 'boolean') &&
+                    (typeof prop.value === 'string' || typeof prop.value === 'number' || typeof prop.value === 'boolean')
+                ) {
+                    if (!aggregatedProperties.has(prop.name)) {
+                        aggregatedProperties.set(prop.name, new Map())
+                    }
+                    const valueCountMap = aggregatedProperties.get(prop.name)
+                    const currentCount = valueCountMap!.get(prop.value) || 0
+                    valueCountMap!.set(prop.value, currentCount + 1)
                 }
-                const valueCountMap = aggregatedProperties.get(prop.name)
-                const currentCount = valueCountMap!.get(prop.value) || 0
-                valueCountMap!.set(prop.value, currentCount + 1)
             })
         })
 
