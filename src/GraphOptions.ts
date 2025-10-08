@@ -304,7 +304,7 @@ export interface GraphUI {
     tooltip: {
         enable?: boolean /** @default true */
         /**
-         * Custom renderer for node/edge tooltips.
+         * Custom renderer for node/edge tooltips. The new content will be appened after the default tooltip
          * Can return an HTMLElement, an HTML string, or nothing (to suppress tooltip).
          *
          * @default undefined
@@ -315,6 +315,13 @@ export interface GraphUI {
         edgeHeaderMap: HeaderMapEntry,
         nodePropertiesMap: ((node: Node) => Array<PropertyEntry>),
         edgePropertiesMap: ((edge: Edge) => Array<PropertyEntry>),
+        /**
+         * Custom renderer for node/edge tooltips. The result replaces the entire content of the tooltip
+         * Can return an HTMLElement, an HTML string, or nothing (to suppress tooltip).
+         *
+         * @default undefined
+         */
+        render?: ((element: Node | Edge) => HTMLElement | string) | HTMLElement | string,
     },
     contextMenu: {
         enable?: boolean /** @default true */

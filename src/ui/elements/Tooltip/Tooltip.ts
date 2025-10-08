@@ -185,6 +185,19 @@ export class Tooltip implements UIElement {
         })
         toprightElem.appendChild(pinButton)
 
+        const renderCb = this.uiManager.getOptions().tooltip.render
+        if (renderCb && typeof renderCb === 'function') {
+            const tooltipContent = tryResolveHTMLElement(renderCb, node)
+            if (tooltipContent) {
+                const tooltipContentWrapped = createHtmlElement('div', { class: 'pivotick-extra-content-container' }, [
+                    tooltipContent
+                ]) as HTMLDivElement
+                tooltipContainer.appendChild(tooltipContentWrapped)
+            }
+            this.tooltip.appendChild(tooltipContainer)
+            return
+        }
+
         const propertiesContainer = createHtmlElement('div', { class: 'pivotick-properties-container'}, [
             createHtmlDL(properties, node)
         ]) as HTMLDivElement
@@ -192,9 +205,9 @@ export class Tooltip implements UIElement {
         tooltipContainer.appendChild(mainheaderContent)
         tooltipContainer.appendChild(propertiesContainer)
 
-        const renderCb = this.uiManager.getOptions().tooltip.node
-        if (renderCb && typeof renderCb === 'function') {
-            const extraContent = tryResolveHTMLElement(renderCb, node)
+        const nodeRenderCb = this.uiManager.getOptions().tooltip.node
+        if (nodeRenderCb && typeof nodeRenderCb === 'function') {
+            const extraContent = tryResolveHTMLElement(nodeRenderCb, node)
             if (extraContent) {
                 const extraContentWrapped = createHtmlElement('div', { class: 'pivotick-extra-content-container' }, [
                     extraContent
@@ -245,6 +258,19 @@ export class Tooltip implements UIElement {
         })
         toprightElem.appendChild(pinButton)
 
+        const renderCb = this.uiManager.getOptions().tooltip.render
+        if (renderCb && typeof renderCb === 'function') {
+            const tooltipContent = tryResolveHTMLElement(renderCb, edge)
+            if (tooltipContent) {
+                const tooltipContentWrapped = createHtmlElement('div', { class: 'pivotick-extra-content-container' }, [
+                    tooltipContent
+                ]) as HTMLDivElement
+                tooltipContainer.appendChild(tooltipContentWrapped)
+            }
+            this.tooltip.appendChild(tooltipContainer)
+            return
+        }
+
         const properties = edgePropertiesGetter(edge, this.uiManager.getOptions().propertiesPanel)
 
         nameElem.innerHTML = edgeNameGetter(edge, this.uiManager.getOptions().mainHeader)
@@ -255,9 +281,9 @@ export class Tooltip implements UIElement {
         tooltipContainer.appendChild(mainheaderContent)
         tooltipContainer.appendChild(propertiesContainer)
 
-        const renderCb = this.uiManager.getOptions().tooltip.edge
-        if (renderCb && typeof renderCb === 'function') {
-            const extraContent = tryResolveHTMLElement(renderCb, edge)
+        const edgeRenderCb = this.uiManager.getOptions().tooltip.edge
+        if (edgeRenderCb && typeof edgeRenderCb === 'function') {
+            const extraContent = tryResolveHTMLElement(edgeRenderCb, edge)
             if (extraContent) {
                 const extraContentWrapped = createHtmlElement('div', { class: 'pivotick-extra-content-container' }, [
                     extraContent
