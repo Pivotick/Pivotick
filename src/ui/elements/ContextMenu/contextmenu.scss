@@ -14,17 +14,22 @@
     transition: opacity 0.1s ease-out, transform 0.1s ease-out;
     transform: translateY(-10px);
     min-width: 200px;
-
+    border-radius: 4px;
+    
     &.shown {
         opacity: 100;
         transform: translateY(0px);
     }
-
+    
     .pivotick-contextmenu-topbar {
         display: flex;
         align-items: center;
-        background-color: var(--pivotick-tooltip-floating-bg-color);
+        background-color: var(--pivotick-sidebar-panelheader-bg);
+        border-bottom: 1px solid var(--pivotick-tooltip-floating-bg-color);
         padding: 2px;
+        margin-bottom: 4px;
+        border-top-right-radius: 4px;
+        border-top-left-radius: 4px;
 
         .pivotick-quickaction-list {
             width: 100%;
@@ -49,7 +54,9 @@
         align-items: center;
         gap: 10px;
         background-color: var(--pivotick-sidebar-panelheader-bg);
-        
+        border-bottom-right-radius: 4px;
+        border-bottom-left-radius: 4px;
+
         .pivotick-action-list {
             width: 100%;
 
@@ -62,7 +69,7 @@
                 align-items: center;
 
                 .pivotick-icon {
-                    font-size: 24px;
+                    font-size: 20px;
                 }
                 .pivotick-action-text {
                     margin-left: 1em;
