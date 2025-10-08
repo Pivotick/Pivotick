@@ -4,6 +4,7 @@ import type { Node } from '../../../Node'
 import { createHtmlDL, createHtmlElement, createHtmlTemplate, generateDomId, makeDraggable } from '../../../utils/ElementCreation'
 import { edgeDescriptionGetter, edgeNameGetter, edgePropertiesGetter, nodeDescriptionGetter, nodeNameGetter, nodePropertiesGetter } from '../../../utils/GraphGetters'
 import { createButton } from '../../components/Button'
+import { graphEdgeIcon, pin, closeIcon, selectElement, focusElement } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import './tooltip.scss'
 
@@ -174,7 +175,7 @@ export class Tooltip implements UIElement {
             variant: 'outline-primary',
             size: 'sm',
             class: 'pin-button',
-            svgIcon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="m15.113 3.21l.094.083l5.5 5.5a1 1 0 0 1-1.175 1.59l-3.172 3.171l-1.424 3.797a1 1 0 0 1-.158.277l-.07.08l-1.5 1.5a1 1 0 0 1-1.32.082l-.095-.083L9 16.415l-3.793 3.792a1 1 0 0 1-1.497-1.32l.083-.094L7.585 15l-2.792-2.793a1 1 0 0 1-.083-1.32l.083-.094l1.5-1.5a1 1 0 0 1 .258-.187l.098-.042l3.796-1.425l3.171-3.17a1 1 0 0 1 1.497-1.26z"/></svg>',
+            svgIcon: pin,
             onClick: (evt) => {
                 this.pinTooltip()
             },
@@ -196,12 +197,7 @@ export class Tooltip implements UIElement {
 <div class="pivotick-tooltip-container">
     <div class="pivotick-mainheader-container">
         <div class="pivotick-mainheader-nodepreview">
-            <svg xmlns="http://www.w3.org/2000/svg" width="${fixedPreviewSize}" height="${fixedPreviewSize}" viewBox="0 0 24 24" style="filter: drop-shadow(0px 2px 1px #00000033);">
-                <g fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path stroke-linejoin="round" d="M8 6h1.78c2.017 0 3.025 0 3.534.241a2.5 2.5 0 0 1 1.211 3.276c-.229.515-.994 1.17-2.525 2.483c-1.53 1.312-2.296 1.968-2.525 2.483a2.5 2.5 0 0 0 1.211 3.276c.51.241 1.517.241 3.534.241H16" />
-                    <path d="M2 6a3 3 0 1 0 6 0a3 3 0 0 0-6 0Zm14 12a3 3 0 1 0 6 0a3 3 0 0 0-6 0Z" />
-                </g>
-            </svg>
+            ${graphEdgeIcon(fixedPreviewSize)}
             <span class="pivotick-mainheader-topright"></span>
         </div>
         <div class="pivotick-mainheader-nodeinfo">
@@ -224,7 +220,7 @@ export class Tooltip implements UIElement {
             variant: 'outline-primary',
             size: 'sm',
             class: 'pin-button',
-            svgIcon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="m15.113 3.21l.094.083l5.5 5.5a1 1 0 0 1-1.175 1.59l-3.172 3.171l-1.424 3.797a1 1 0 0 1-.158.277l-.07.08l-1.5 1.5a1 1 0 0 1-1.32.082l-.095-.083L9 16.415l-3.793 3.792a1 1 0 0 1-1.497-1.32l.083-.094L7.585 15l-2.792-2.793a1 1 0 0 1-.083-1.32l.083-.094l1.5-1.5a1 1 0 0 1 .258-.187l.098-.042l3.796-1.425l3.171-3.17a1 1 0 0 1 1.497-1.26z"/></svg>',
+            svgIcon: pin,
             onClick: (evt) => {
                 this.pinTooltip()
             },
@@ -322,7 +318,7 @@ export class Tooltip implements UIElement {
             variant: 'outline-danger',
             size: 'sm',
             class: ['close-button'],
-            svgIcon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="m7 7l10 10M7 17L17 7"/></svg>',
+            svgIcon: closeIcon,
             onClick: () => {
                 clonedTooltip.remove()
             },
@@ -332,7 +328,7 @@ export class Tooltip implements UIElement {
             variant: 'outline-primary',
             size: 'sm',
             class: ['focus-element'],
-            svgIcon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 48 48"><defs><mask id="SVGhUb5Xdyy"><g fill="none"><path stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M16 6H8a2 2 0 0 0-2 2v8m10 26H8a2 2 0 0 1-2-2v-8m26 10h8a2 2 0 0 0 2-2v-8M32 6h8a2 2 0 0 1 2 2v8"/><rect width="20" height="20" x="14" y="14" fill="#fff" stroke="#fff" stroke-width="4" rx="10"/><circle r="3" fill="#000" transform="matrix(-1 0 0 1 24 24)"/></g></mask></defs><path fill="currentColor" d="M0 0h48v48H0z" mask="url(#SVGhUb5Xdyy)"/></svg>',
+            svgIcon: focusElement,
             onClick: () => {
                 const element = this.tooltipDataMap.get(clonedTooltip)
                 if (element)
@@ -344,7 +340,7 @@ export class Tooltip implements UIElement {
             variant: 'outline-primary',
             size: 'sm',
             class: ['select-element'],
-            svgIcon: '<svg xmlns="http://www.w3.org/2000/svg" width="${fixedPreviewSize}" height="${fixedPreviewSize}" viewBox="0 0 256 256" ><g fill="currentColor"><path d="M216 40v176H40V40Z" opacity="0.2"/><path d="M152 40a8 8 0 0 1-8 8h-32a8 8 0 0 1 0-16h32a8 8 0 0 1 8 8m-8 168h-32a8 8 0 0 0 0 16h32a8 8 0 0 0 0-16m64-176h-24a8 8 0 0 0 0 16h24v24a8 8 0 0 0 16 0V48a16 16 0 0 0-16-16m8 72a8 8 0 0 0-8 8v32a8 8 0 0 0 16 0v-32a8 8 0 0 0-8-8m0 72a8 8 0 0 0-8 8v24h-24a8 8 0 0 0 0 16h24a16 16 0 0 0 16-16v-24a8 8 0 0 0-8-8M40 152a8 8 0 0 0 8-8v-32a8 8 0 0 0-16 0v32a8 8 0 0 0 8 8m32 56H48v-24a8 8 0 0 0-16 0v24a16 16 0 0 0 16 16h24a8 8 0 0 0 0-16m0-176H48a16 16 0 0 0-16 16v24a8 8 0 0 0 16 0V48h24a8 8 0 0 0 0-16"/></g></svg>',
+            svgIcon: selectElement,
             onClick: () => {
                 const element = this.tooltipDataMap.get(clonedTooltip)
                 if (element)

@@ -272,13 +272,13 @@ export interface MainHeader {
  * subtitle= node.getData().description || "Could not resolve subtitle"
  */
 export interface HeaderMapEntry {
-    'title': ((element: Node | Edge) => string) | string,
-    'subtitle': ((element: Node | Edge) => string) | string,
+    title: ((element: Node | Edge) => string) | string,
+    subtitle: ((element: Node | Edge) => string) | string,
 }
 
 export interface PropertyEntry {
-    'name': ((element: Node | Edge | null) => HTMLElement | string) | HTMLElement | string,
-    'value': ((element: Node | Edge | null) => HTMLElement | string) | HTMLElement | string,
+    name: ((element: Node | Edge | null) => HTMLElement | string) | HTMLElement | string,
+    value: ((element: Node | Edge | null) => HTMLElement | string) | HTMLElement | string,
 }
 
 export interface PropertiesPanel {
@@ -292,8 +292,8 @@ export interface PropertiesPanel {
 }
 
 export interface ExtraPanel {
-    'title': ((element: Node | Edge | null) => HTMLElement | string) | HTMLElement | string,
-    'content': ((element: Node | Edge | null) => HTMLElement | string) | HTMLElement | string,
+    title: ((element: Node | Edge | null) => HTMLElement | string) | HTMLElement | string,
+    content: ((element: Node | Edge | null) => HTMLElement | string) | HTMLElement | string,
 }
 
 export interface GraphUI {

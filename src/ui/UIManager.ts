@@ -97,6 +97,7 @@ export interface UIElement {
     mount(container: HTMLElement): void;
     destroy(): void;
     afterMount(): void;
+    graphReady(): void;
 }
 
 /**
