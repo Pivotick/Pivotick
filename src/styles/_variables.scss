@@ -46,6 +46,9 @@ $toast-text-success: text-color($success);
                                            rgba(0, 0, 0, 0.04) 3px 0px 2px 0px;
     --pivotic-sidebar-layout-shadow-bottom: rgba(0, 0, 0, 0.07) 3px 2px 3px 0px,
                                             rgba(0, 0, 0, 0.04) 2px 3px 2px 0px;
+    --pivotic-sidebar-collapse-bg: var(--pivotick-bg);
+    --pivotic-sidebar-collapse-color: var(--pivotick-text-color-softer2);
+    --pivotic-sidebar-collapse-shadow: var(--pivotick-box-shadow-strong);
 
     /* Tooltip */
     --pivotick-tooltip-floating-bg-color: #d6d6d6;

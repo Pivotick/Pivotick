@@ -1,25 +1,29 @@
 import type { Node } from '../../../Node'
 import type { Edge } from '../../../Edge'
-import { createHtmlTemplate } from '../../../utils/ElementCreation'
+import { createHtmlElement, createHtmlTemplate, createIcon } from '../../../utils/ElementCreation'
 import type { UIElement, UIManager } from '../../UIManager'
 import './sidebar.scss'
 import { SidebarMainHeader } from './MainHeader'
 import { SidebarProperties } from './Properties'
 import type { EdgeSelection, NodeSelection } from '../../../GraphInteractions'
 import { ExtraPanelManager } from './ExtraPanelManager'
+import { sidebarCollapse, sidebarExpand } from '../../icons'
 
 export class Sidebar implements UIElement {
     private uiManager: UIManager
 
     public sidebar?: HTMLDivElement
 
+    private sidebarOpen: boolean = true
+
     private sidebarMainHeader: SidebarMainHeader
     private sidebarProperties: SidebarProperties
     private extraPanelManager: ExtraPanelManager
-
+    
     private mainHeaderPanel?: HTMLDivElement
     private mainBodyPanel?: HTMLDivElement
     private extraPanelContainer?: HTMLDivElement
+    private collapse?: HTMLSpanElement
 
     constructor(uiManager: UIManager) {
         this.uiManager = uiManager
@@ -32,13 +36,11 @@ export class Sidebar implements UIElement {
         if (!container) return
 
         const template = `
-  <div class="pivotick-sidebar">
+<div class="pivotick-sidebar">
     <div class="pivotick-mainheader-panel"></div>
     <div class="pivotick-properties-panel pivotick-sidebar-panel"></div>
     <div class="pivotick-extra-panel pivotick-sidebar-panel"></div>
-</div>
-
-  </div>`
+</div>`
         this.sidebar = createHtmlTemplate(template) as HTMLDivElement
 
         /** Other Panels */
@@ -62,6 +64,12 @@ export class Sidebar implements UIElement {
         this.sidebarProperties.mount(this.mainBodyPanel)
         this.extraPanelContainer = this.sidebar.querySelector('.pivotick-extra-panel') ?? undefined
         this.extraPanelManager.mount(this.extraPanelContainer)
+
+        this.collapse = createHtmlElement('span', { class: 'pivotick-sidebar-collapse-container' }, [
+            createHtmlElement('span', { class: 'pivotick-sidebar-collapse-button pivotick-sidebar-collapse-button-collapse' }, [createIcon({ svgIcon: sidebarCollapse })]) as HTMLSpanElement,
+            createHtmlElement('span', { class: 'pivotick-sidebar-collapse-button pivotick-sidebar-collapse-button-expand' }, [createIcon({ svgIcon: sidebarExpand })]) as HTMLSpanElement,
+        ]) as HTMLSpanElement
+        this.sidebar.parentElement!.appendChild(this.collapse)
 
         this.sidebarMainHeader.afterMount()
         this.sidebarMainHeader.afterMount()
@@ -112,5 +120,27 @@ export class Sidebar implements UIElement {
             this.sidebarProperties.clearProperties()
             this.extraPanelManager.clear()
         })
+
+        this.collapse?.addEventListener('click', () => {
+            this.toggleSidebar()
+        })
+    }
+
+    public toggleSidebar(): void {
+        const sidebarContainer = this.sidebar!.closest('.pivotick-sidebar-container') as HTMLElement
+        sidebarContainer.classList.toggle('pivotick-sidebar-collapsed', this.sidebarOpen)
+        this.sidebarOpen = !this.sidebarOpen
+    }
+
+    public showSidebar(): void {
+        const sidebarContainer = this.sidebar!.closest('.pivotick-sidebar-container') as HTMLElement
+        sidebarContainer.classList.remove('pivotick-sidebar-collapsed')
+        this.sidebarOpen = true
+    }
+
+    public hideSidebar(): void {
+        const sidebarContainer = this.sidebar!.closest('.pivotick-sidebar-container') as HTMLElement
+        sidebarContainer.classList.add('pivotick-sidebar-collapsed')
+        this.sidebarOpen = false
     }
 }

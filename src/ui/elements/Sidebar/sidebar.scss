@@ -3,6 +3,7 @@
     box-shadow: var(--pivotic-sidebar-layout-shadow-right);
 
     .pivotick-sidebar {
+        overflow: hidden;
         display: flex;
         flex-direction: column;
         gap: 10px;
@@ -51,4 +52,53 @@
             }
         }
     }
+
+    .pivotick-sidebar-collapse-container {
+        position: absolute;
+        right: -40px;
+        bottom: 7px;
+        background-color: var(--pivotic-sidebar-collapse-bg);
+        color: var(--pivotic-sidebar-collapse-color);
+        box-shadow: var(--pivotic-sidebar-collapse-shadow);
+        border: 1px solid var(--pivotic-sidebar-collapse-border-color);
+        padding: 4px;
+        font-size: 20px;
+        border-radius: 50%;
+        width: 26px;
+        height: 26px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+
+        &:hover {
+            color: color-mix(in srgb, var(--pivotic-sidebar-collapse-color) 70%, black);
+        }
+
+        &:active {
+            color: color-mix(in srgb, var(--pivotic-sidebar-collapse-color) 85%, black);
+            transition: transform 0.05s ease-out;
+            transform: scale(0.95);
+        }
+
+        .pivotick-sidebar-collapse-button {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 24px;
+            height: 24px;
+        }
+
+        .pivotick-sidebar-collapse-button-expand {
+            display: none;
+        }
+    }
+}
+
+.pivotick-sidebar-collapsed .pivotick-sidebar-collapse-button-collapse {
+    display: none !important;
+}
+
+.pivotick-sidebar-collapsed .pivotick-sidebar-collapse-button-expand {
+    display: flex !important;
 }

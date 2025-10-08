@@ -17,7 +17,7 @@
     width: 100%;
     height: 100%;
     display: grid;
-    grid-template-columns: var(--pivotick-sidebar-width) 1fr;
+    grid-template-columns: auto 1fr;
     grid-template-rows: var(--pivotick-toolbar-height) 1fr;
     grid-template-areas: 
         "sidebar toolbar"
@@ -40,10 +40,23 @@
 }
 
 .pivotick-sidebar-container {
+    width: var(--pivotick-sidebar-width);
     grid-area: sidebar;
     height: 100%;
-    width: 100%;
-    overflow: hidden;
+    transition: width 0.1s ease-out;
+    
+    .pivotick-sidebar {
+        transition: opacity 0.1s cubic-bezier(0, 0, 1, -0.15);
+        opacity: 100%;
+    }
+
+    &.pivotick-sidebar-collapsed {
+        width: 0px;
+
+        .pivotick-sidebar {
+            opacity: 0%;
+        }
+    }
 }
 
 .pivotick-canvas-container {
