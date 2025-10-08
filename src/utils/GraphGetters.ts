@@ -10,9 +10,9 @@ export function nodeNameGetter(node: Node, mainHeader: MainHeader): string {
     return node.getData().label ?? 'Optional name or label'
 }
 
-export function nodeDescriptionGetter(node: Node, mainHeader: MainHeader): string {
+export function nodeDescriptionGetter(node: Node, mainHeader: MainHeader): string | null {
     if (mainHeader.nodeHeaderMap.subtitle) {
-        return tryResolveString(mainHeader.nodeHeaderMap.subtitle, node) || 'Could not resolve subtitle'
+        return tryResolveString(mainHeader.nodeHeaderMap.subtitle, node) || null
     }
     return node.getData().description ?? 'Optional subtitle or description'
 }
@@ -24,9 +24,9 @@ export function edgeNameGetter(edge: Edge, mainHeader: MainHeader): string {
     return edge.getData().label ?? 'Optional name or label'
 }
 
-export function edgeDescriptionGetter(edge: Edge, mainHeader: MainHeader): string {
+export function edgeDescriptionGetter(edge: Edge, mainHeader: MainHeader): string | null {
     if (mainHeader.edgeHeaderMap.subtitle) {
-        return tryResolveString(mainHeader.nodeHeaderMap.subtitle, edge) || 'Could not resolve subtitle'
+        return tryResolveString(mainHeader.nodeHeaderMap.subtitle, edge) || null
     }
     return edge.getData().description ?? 'Optional subtitle or description'
 }

@@ -311,8 +311,8 @@ export interface GraphUI {
          */
         node?: (node: Node) => HTMLElement | string,
         edge?: (edge: Edge) => HTMLElement | string,
-        nodeHeaderMap: HeaderMapEntry,
-        edgeHeaderMap: HeaderMapEntry,
+        nodeHeaderMap: Partial<HeaderMapEntry>,
+        edgeHeaderMap: Partial<HeaderMapEntry>,
         nodePropertiesMap: ((node: Node) => Array<PropertyEntry>),
         edgePropertiesMap: ((edge: Edge) => Array<PropertyEntry>),
         /**

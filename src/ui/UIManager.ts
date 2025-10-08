@@ -15,9 +15,9 @@ import { ContextMenu } from './elements/ContextMenu/ContextMenu'
 
 
 const defaultHeaderMapNodeTitle = (node: Node | Edge) => node.getData().label || 'Could not resolve title'
-const defaultHeaderMapNodeSubtitle = (node: Node | Edge) => node.getData().description || 'Could not resolve subtitle'
+const defaultHeaderMapNodeSubtitle = (node: Node | Edge) => node.getData().description || null
 const defaultHeaderMapEdgeTitle = (edge: Node | Edge) => edge.getData().label || 'Could not resolve title'
-const defaultHeaderMapEdgeSubtitle = (edge: Node | Edge) => edge.getData().description || 'Could not resolve subtitle'
+const defaultHeaderMapEdgeSubtitle = (edge: Node | Edge) => edge.getData().description || null
 
 const defaultPropertiesMapNode = (node: Node) => {
     const properties = []

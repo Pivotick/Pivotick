@@ -82,7 +82,8 @@ export class SidebarMainHeader implements UIElement {
             nameElem.innerHTML = nodeNameGetter(node, this.uiManager.getOptions().mainHeader)
         }
         if (subtitleElem) {
-            subtitleElem.innerHTML = nodeDescriptionGetter(node, this.uiManager.getOptions().mainHeader)
+            const description = nodeDescriptionGetter(node, this.uiManager.getOptions().mainHeader)
+            subtitleElem.innerHTML = description ?? ''
         }
 
         this.panel.innerHTML = mainheaderContent.outerHTML

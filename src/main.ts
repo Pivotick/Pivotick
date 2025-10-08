@@ -178,7 +178,7 @@ export function createSampleGraph(): Pivotick {
         })()
     }
 
-    const topo = 'custom'
+    const topo = 'tree'
     const graph = new Pivotick(container, {nodes: topologies[topo].nodes, edges: topologies[topo].edges}, {
         // isDirected: false,
         simulation: {
@@ -255,6 +255,11 @@ export function createSampleGraph(): Pivotick {
         },
         UI: {
             mode: 'full',
+            mainHeader: {
+                nodeHeaderMap: {
+                    subtitle: (node: Node | Edge) => node.getData().type,
+                },
+            }
         }
     })
     return graph
