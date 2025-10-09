@@ -2,7 +2,7 @@ import type { Node } from '../../../Node'
 import type { NodeSelection } from '../../../GraphInteractions'
 import type { MenuActionItemOptions, MenuQuickActionItemOptions } from '../../../GraphOptions'
 import hasCycle from '../../../plugins/analytics/cycle'
-import { expand, graphControlLayoutOrganic, graphControlLayoutTreeH, graphControlLayoutTreeR, graphControlLayoutTreeV, hide, pin, unpin } from '../../icons'
+import { expand, graphControlLayoutOrganic, graphControlLayoutTreeH, graphControlLayoutTreeR, graphControlLayoutTreeV, hide, pin, timeDuration10, timeDuration15, timeDuration5, unpin } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import './graphControls.scss'
 import { tryResolveBoolean } from '../../../utils/Getters'
@@ -83,17 +83,40 @@ export class GraphControls implements UIElement {
         template.innerHTML = `
   <div class="pivotick-graphcontrols">
     <div class="pivotick-graphcontrols-panel pivotick-graphcontrols-layout">
-        <button id="pivotick-graphcontrols-layout-organic" class="pivotick-graphcontrols-layout-organic" title="Change Graph Layout to Organic">
-            ${graphControlLayoutOrganic}
-        </button>
+        <div class="pivotick-graphcontrols-layout-type-container">
+            <div>
+                <button id="pivotick-graphcontrols-layout-organic" class="pivotick-graphcontrols-layout-organic" title="Change Graph Layout to Organic">
+                ${graphControlLayoutOrganic}
+                </button>
+            </div>
+            <div class="pivotick-graphcontrols-layout-type-options">
+                <button id="pivotick-graphcontrols-layout-organic-5" class="pivotick-graphcontrols-layout-organic-5" title="Run Organic Layout for 5 seconds">
+                ${timeDuration5}
+                </button>
+                <button id="pivotick-graphcontrols-layout-organic-10" class="pivotick-graphcontrols-layout-organic-10" title="Run Organic Layout for 10 seconds">
+                ${timeDuration10}
+                </button>
+                <button id="pivotick-graphcontrols-layout-organic-15" class="pivotick-graphcontrols-layout-organic-15" title="Run Organic Layout for 15 seconds">
+                ${timeDuration15}
+                </button>
+            </div>
+        </div>
         <div class="pivotick-divider"></div>
-        <button id="pivotick-graphcontrols-layout-tree-v" class="pivotick-graphcontrols-layout-tree" title="Change Graph Layout to Tree">
-            ${graphControlLayoutTreeV}
-        </button>
+        <div class="pivotick-graphcontrols-layout-type-container">
+            <div>
+                <button id="pivotick-graphcontrols-layout-tree-v" class="pivotick-graphcontrols-layout-tree" title="Change Graph Layout to Tree">
+                    ${graphControlLayoutTreeV}
+                </button>
+            </div>
+        </div>
         <div class="pivotick-divider"></div>
-        <button id="pivotick-graphcontrols-layout-tree-h" class="pivotick-graphcontrols-layout-tree" title="Change Graph Layout to Tree">
-            ${graphControlLayoutTreeH}
-        </button>
+        <div class="pivotick-graphcontrols-layout-type-container">
+            <div>
+                <button id="pivotick-graphcontrols-layout-tree-h" class="pivotick-graphcontrols-layout-tree" title="Change Graph Layout to Tree">
+                    ${graphControlLayoutTreeH}
+                </button>
+            </div>
+        </div>
         <div class="pivotick-divider"></div>
         <button id="pivotick-graphcontrols-layout-tree-radial" class="pivotick-graphcontrols-layout-tree-radial" title="Change Graph Layout to Radial Tree">
             ${graphControlLayoutTreeR}
@@ -119,6 +142,9 @@ export class GraphControls implements UIElement {
     afterMount() {
         if (!this.navigation) return
         const organicButton = this.navigation.querySelector('#pivotick-graphcontrols-layout-organic')
+        const organicButton5 = this.navigation.querySelector('#pivotick-graphcontrols-layout-organic-5')
+        const organicButton10 = this.navigation.querySelector('#pivotick-graphcontrols-layout-organic-10')
+        const organicButton15 = this.navigation.querySelector('#pivotick-graphcontrols-layout-organic-15')
         const treeVButton = this.navigation.querySelector('#pivotick-graphcontrols-layout-tree-v')
         const treeHButton = this.navigation.querySelector('#pivotick-graphcontrols-layout-tree-h')
         const radialButton = this.navigation.querySelector('#pivotick-graphcontrols-layout-tree-radial')
@@ -126,6 +152,15 @@ export class GraphControls implements UIElement {
 
         organicButton?.addEventListener('click', () => {
             this.uiManager.graph.simulation.changeLayout('force')
+        })
+        organicButton5?.addEventListener('click', () => {
+            this.uiManager.graph.simulation.changeLayout('force', { cooldownTime: 5000 })
+        })
+        organicButton10?.addEventListener('click', () => {
+            this.uiManager.graph.simulation.changeLayout('force', { cooldownTime: 10000 })
+        })
+        organicButton15?.addEventListener('click', () => {
+            this.uiManager.graph.simulation.changeLayout('force', { cooldownTime: 15000 })
         })
         treeVButton?.addEventListener('click', () => {
             this.uiManager.graph.simulation.changeLayout('tree', { horizontal: false })

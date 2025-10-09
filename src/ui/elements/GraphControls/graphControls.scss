@@ -22,6 +22,24 @@
         }
 
         .pivotick-graphcontrols-layout {
+
+            .pivotick-graphcontrols-layout-type-container {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+
+                .pivotick-graphcontrols-layout-type-options {
+                    max-width: 0;
+                    display: flex;
+                    flex-direction: row;
+                    transition: max-width 0.2s ease-out;
+                    overflow: hidden;
+                }
+                &:hover .pivotick-graphcontrols-layout-type-options {
+                    max-width: 200px;
+                }
+            }
+
             button {
                 border: none;
                 background: none;

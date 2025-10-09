@@ -13,6 +13,7 @@ export abstract class GraphRenderer {
     protected options: Partial<GraphRendererOptions>
     protected layoutProgress = 0
     protected progressBar: SVGRectElement | null = null
+    protected timerLabel: SVGTextElement | null = null
 
     constructor(graph: Graph, container: HTMLElement, options: Partial<GraphRendererOptions>) {
         this.graph = graph
@@ -40,10 +41,11 @@ export abstract class GraphRenderer {
         return this.container.querySelector('.pivotick-canvas') as HTMLElement
     }
 
-    public updateLayoutProgress(progress: number): void {
+    public updateLayoutProgress(progress: number, elapsedTime: number): void {
         this.layoutProgress = progress
-        if (this.progressBar) {
+        if (this.progressBar && this.timerLabel) {
             this.progressBar.setAttribute('width', `${progress * PROGRESS_BAR_WIDTH}`)
+            this.timerLabel.textContent = `Elapsed time: ${(elapsedTime / 1000).toFixed(1)} sec`
             this.toggleLayoutProgressVisibility()
         }
     }
@@ -93,15 +95,23 @@ export abstract class GraphRenderer {
         })
         textLabel.textContent = 'Optimizing node positions...'
 
+        const timerLabel = createSvgElement('text', {
+            class: 'label',
+            x: PROGRESS_BAR_WIDTH / 2,
+            y: PROGRESS_BAR_HEIGHT + 42,
+        })
+        timerLabel.textContent = 'Elapsed time: 0 sec'
+
         const loadingPb = createSvgElement('g',
             {
                 transform: `translate(${centerX}, ${centerY})`,
             },
-            [bg, track, progressFill, textLabel]
+            [bg, track, progressFill, textLabel, timerLabel]
         )
         loadingPb.classList.add('pivotick-loading-progress-bar')
 
         canvas.appendChild(loadingPb)
         this.progressBar = progressFill
+        this.timerLabel = timerLabel
     }
 }

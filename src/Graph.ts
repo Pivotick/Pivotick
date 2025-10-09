@@ -286,8 +286,8 @@ export class Graph {
         this.renderer?.tickUpdate()
     }
 
-    updateLayoutProgress(progress: number): void {
-        this.renderer?.updateLayoutProgress(progress)
+    updateLayoutProgress(progress: number, elapsedTime: number): void {
+        this.renderer?.updateLayoutProgress(progress, elapsedTime)
     }
 
     focusElement(element: Node | Edge): void {

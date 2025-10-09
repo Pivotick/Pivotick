@@ -7,7 +7,7 @@ export const runSimulationInWorker = (
     edges: Edge[],
     options: SimulationOptions,
     canvasBCR: DOMRect,
-    onProgress?: (progress: number) => void
+    onProgress?: (progress: number, elapsedTime: number) => void
 ): Promise<{ nodes: Node[]; edges: Edge[] }> => {
     return new Promise((resolve, reject) => {
         const worker = new Worker(new URL('./SimulationWorker.ts', import.meta.url), { type: 'module' })
@@ -15,10 +15,10 @@ export const runSimulationInWorker = (
         worker.postMessage({ nodes, edges, options, canvasBCR })
 
         worker.onmessage = (e) => {
-            const { type, progress, nodes, edges } = e.data
+            const { type, progress, nodes, edges, elapsedTime } = e.data
 
             if (type === 'tick' && typeof progress === 'number') {
-                onProgress?.(progress)
+                onProgress?.(progress, elapsedTime)
                 return
             }
 
