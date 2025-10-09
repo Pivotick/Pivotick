@@ -48,6 +48,7 @@ export class SidebarMainHeader implements UIElement {
     updateNodeOverview(node: Node, element: unknown): void {
         if (!this.panel) return
 
+        this.panel.innerHTML = ''
         const fixedPreviewSize = 42
         const template = `
 <div class="enter-ready">
@@ -96,6 +97,7 @@ export class SidebarMainHeader implements UIElement {
     updateEdgeOverview(edge: Edge): void {
         if (!this.panel) return
 
+        this.panel.innerHTML = ''
         const fixedPreviewSize = 42
         const template = `<div class="enter-ready">
 <div class="pivotick-mainheader-nodepreview">
@@ -130,6 +132,7 @@ export class SidebarMainHeader implements UIElement {
     public updateNodesOverview(nodes: NodeSelection<unknown>[]): void {
         if (!this.panel) return
 
+        this.panel.innerHTML = ''
         const fixedPreviewSize = 42
         const template = `<div class="enter-ready">
     <div class="pivotick-mainheader-nodepreview">
@@ -169,6 +172,7 @@ export class SidebarMainHeader implements UIElement {
     public updateEdgesOverview(edges: EdgeSelection<unknown>[]): void {
         if (!this.panel) return
 
+        this.panel.innerHTML = ''
         const fixedPreviewSize = 42
         const template = `<div class="enter-ready">
 <div class="pivotick-mainheader-nodepreview">
