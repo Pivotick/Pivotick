@@ -199,7 +199,7 @@ export function createSampleGraph(): Pivotick {
 
     }
 
-    const topo = 'ail'
+    const topo = 'vt'
     const graph = new Pivotick(container, {nodes: topologies[topo].nodes, edges: topologies[topo].edges}, {
         // isDirected: false,
         simulation: {

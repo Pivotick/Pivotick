@@ -27,8 +27,8 @@ export interface WorkerInput {
     options: SimulationOptions
 }
 
-const MAX_EXECUTION_TIME = 2000
-const MAX_EXECUTION_TICKS = 500
+const MAX_EXECUTION_TIME = 10000
+const MAX_EXECUTION_TICKS = 20000
 const REHEAT_TICKS = 0.15 * MAX_EXECUTION_TICKS
 
 self.onmessage = (e: MessageEvent<WorkerInput>) => {
@@ -78,34 +78,42 @@ self.onmessage = (e: MessageEvent<WorkerInput>) => {
     warmupTicks = warmupTicks === 'auto' ? MAX_EXECUTION_TICKS : warmupTicks
     warmupTicks = warmupTicks - REHEAT_TICKS
 
-    simulation.alphaTarget(0.3)
+    let currentAlphaTarget = 0.3
+    simulation.alphaTarget(currentAlphaTarget)
     const startTime = (new Date()).getTime() // Ensure the simulation eventually stops
+    let progress
     for (let i = 0; i < warmupTicks; ++i) {
         if (
             ((new Date()).getTime() - startTime > MAX_EXECUTION_TIME) ||
             ((new Date()).getTime() - startTime > options.cooldownTime) ||
-            options.d3AlphaMin > 0 && simulation.alpha() < options.d3AlphaMin
+            (
+                isSimulationStable(options, simulation, currentAlphaTarget) &&
+                (new Date()).getTime() - startTime > options.cooldownTime * 0.15
+            )
         ) {
             break
         }
 
         if (i % 5 === 0) {
-            postMessage({ type: 'tick', progress: i / MAX_EXECUTION_TICKS, elapsedTime: (new Date()).getTime() - startTime })
+            progress = getProgress(i, (new Date()).getTime() - startTime, options)
+            postMessage({ type: 'tick', progress: progress, elapsedTime: (new Date()).getTime() - startTime })
         }
         simulation.tick()
     }
 
-    simulation.alphaTarget(0)
+    currentAlphaTarget = 0
+    simulation.alphaTarget(currentAlphaTarget)
     simulation.alpha(1) // small bump
     for (let i = 0; i < REHEAT_TICKS; ++i) {
         if (
-            options.d3AlphaMin > 0 && simulation.alpha() < options.d3AlphaMin
+            isSimulationStable(options, simulation, currentAlphaTarget)
         ) {
             break
         }
         simulation.tick()
         if (i % 5 === 0) {
-            postMessage({ type: 'tick', progress: (warmupTicks + i) / MAX_EXECUTION_TICKS, elapsedTime: (new Date()).getTime() - startTime })
+            progress = getProgress(warmupTicks + i, (new Date()).getTime() - startTime, options)
+            postMessage({ type: 'tick', progress: progress, elapsedTime: (new Date()).getTime() - startTime })
         }
     }
 
@@ -124,4 +132,13 @@ self.onmessage = (e: MessageEvent<WorkerInput>) => {
         nodes,
         edges,
     })
+}
+
+function getProgress(tick: number, elapsedTime: number, options: SimulationOptions): number {
+    // return tick / MAX_EXECUTION_TICKS
+    return elapsedTime / options.cooldownTime
+}
+
+function isSimulationStable(options: SimulationOptions, simulation: d3.Simulation<Node, undefined>, currentAlphaTarget: number): boolean {
+    return options.d3AlphaMin > 0 && (simulation.alpha() - currentAlphaTarget) < options.d3AlphaMin   
 }

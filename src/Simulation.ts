@@ -333,12 +333,16 @@ export class Simulation {
         })
     }
 
-    private async runSimulationWorker(optionOverride: Partial<SimulationOptions>) {
+    private async runSimulationWorker(optionOverride: Partial<SimulationOptions> = {}) {
         const canvasBCR = this.canvas?.getBoundingClientRect()
         if (!canvasBCR) return
 
         const nodes = this.graph.getMutableNodes()
-        const nodesCopy = this.graph.getNodes()
+        const nodesCopy = this.graph.getNodes().map((n: Node) => {
+            n.fx = undefined
+            n.fy = undefined
+            return n
+        })
         const edgesCopy = this.graph.getEdges()
 
         const onWorkerProgress = (progress: number, elapsedTime: number) => {
@@ -359,10 +363,16 @@ export class Simulation {
             nodes[i].x = updatedNode.x
             nodes[i].y = updatedNode.y
             
-            if (updatedNode.fx)
+            if (updatedNode.fx) {
                 nodes[i].fx = updatedNode.fx
-            if (updatedNode.fy)
+            } else {
+                nodes[i].fx = undefined
+            }
+            if (updatedNode.fy) {
                 nodes[i].fy = updatedNode.fy
+            } else {
+                nodes[i].fy = undefined
+            }
         })
         this.graph.updateData(nodes)
     }
