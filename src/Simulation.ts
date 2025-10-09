@@ -115,7 +115,7 @@ export class Simulation {
                     : undefined
             )
         } else {
-            this.scaleSimulationOptions()
+            // this.scaleSimulationOptions()
         }
 
         if (this.callbacks.onInit) {
@@ -195,7 +195,7 @@ export class Simulation {
         if (this.layout) {
             this.layout.update()
         } else {
-            this.scaleSimulationOptions()
+            // this.scaleSimulationOptions()
         }
 
         this.simulation
@@ -333,7 +333,7 @@ export class Simulation {
         })
     }
 
-    private async runSimulationWorker() {
+    private async runSimulationWorker(optionOverride: Partial<SimulationOptions>) {
         const canvasBCR = this.canvas?.getBoundingClientRect()
         if (!canvasBCR) return
 
@@ -341,11 +341,13 @@ export class Simulation {
         const nodesCopy = this.graph.getNodes()
         const edgesCopy = this.graph.getEdges()
 
-        const onWorkerProgress = (progress: number) =>  {
-            this.graph.updateLayoutProgress(progress)
+        const onWorkerProgress = (progress: number, elapsedTime: number) => {
+            this.graph.updateLayoutProgress(progress, elapsedTime)
         }
 
         const { callbacks, ...optionsWithoutCBs } = this.options
+        Object.assign(optionsWithoutCBs, optionOverride)
+
         const { nodes: updatedNodes } = await runSimulationInWorker(
             nodesCopy,
             edgesCopy,
@@ -452,7 +454,7 @@ export class Simulation {
         this.options.layout.type = type
         this.update()
         this.pause()
-        await this.runSimulationWorker()
+        await this.runSimulationWorker(layoutOptions)
         this.restart()
 
         await this.waitForSimulationStop()

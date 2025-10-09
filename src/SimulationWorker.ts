@@ -38,9 +38,9 @@ self.onmessage = (e: MessageEvent<WorkerInput>) => {
     const nodeMap = new Map<string, Node>(nodes.map(n => [n.id, n]))
 
     if (options.layout?.type === 'force') {
-        const updatedOptions = Simulation.scaleSimulationOptions(options, canvasBCR, nodeMap.size)
-        options.d3ManyBodyStrength = updatedOptions.d3ManyBodyStrength ?? DEFAULT_SIMULATION_OPTIONS.d3ManyBodyStrength
-        options.d3CollideStrength = updatedOptions.d3ManyBodyStrength ?? DEFAULT_SIMULATION_OPTIONS.d3ManyBodyStrength
+        // const updatedOptions = Simulation.scaleSimulationOptions(options, canvasBCR, nodeMap.size)
+        // options.d3ManyBodyStrength = updatedOptions.d3ManyBodyStrength ?? DEFAULT_SIMULATION_OPTIONS.d3ManyBodyStrength
+        // options.d3CollideStrength = updatedOptions.d3ManyBodyStrength ?? DEFAULT_SIMULATION_OPTIONS.d3ManyBodyStrength
     }
 
     const {simulation, simulationForces} = Simulation
@@ -81,12 +81,16 @@ self.onmessage = (e: MessageEvent<WorkerInput>) => {
     simulation.alphaTarget(0.3)
     const startTime = (new Date()).getTime() // Ensure the simulation eventually stops
     for (let i = 0; i < warmupTicks; ++i) {
-        if ((new Date()).getTime() - startTime > MAX_EXECUTION_TIME) {
+        if (
+            ((new Date()).getTime() - startTime > MAX_EXECUTION_TIME) ||
+            ((new Date()).getTime() - startTime > options.cooldownTime) ||
+            options.d3AlphaMin > 0 && simulation.alpha() < options.d3AlphaMin
+        ) {
             break
         }
 
         if (i % 5 === 0) {
-            postMessage({ type: 'tick', progress: i / MAX_EXECUTION_TICKS })
+            postMessage({ type: 'tick', progress: i / MAX_EXECUTION_TICKS, elapsedTime: (new Date()).getTime() - startTime })
         }
         simulation.tick()
     }
@@ -94,13 +98,18 @@ self.onmessage = (e: MessageEvent<WorkerInput>) => {
     simulation.alphaTarget(0)
     simulation.alpha(1) // small bump
     for (let i = 0; i < REHEAT_TICKS; ++i) {
+        if (
+            options.d3AlphaMin > 0 && simulation.alpha() < options.d3AlphaMin
+        ) {
+            break
+        }
         simulation.tick()
         if (i % 5 === 0) {
-            postMessage({ type: 'tick', progress: (warmupTicks + i) / MAX_EXECUTION_TICKS })
+            postMessage({ type: 'tick', progress: (warmupTicks + i) / MAX_EXECUTION_TICKS, elapsedTime: (new Date()).getTime() - startTime })
         }
     }
 
-    postMessage({ type: 'tick', progress: 1 })
+    postMessage({ type: 'tick', progress: 1, elapsedTime: (new Date()).getTime() - startTime })
     if (options.layout?.type === 'tree') {
         TreeLayout.simulationDone(
             nodes,
