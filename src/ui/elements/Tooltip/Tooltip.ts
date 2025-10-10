@@ -67,6 +67,7 @@ export class Tooltip implements UIElement {
                 this.hide()
             }
         })
+        this.uiManager.graph.renderer.getGraphInteraction().on('canvasZoom', this.canvasZoomed.bind(this))
 
         this.tooltip.addEventListener('mouseenter', () => {
             if (this.hideTimeout) {
@@ -90,32 +91,36 @@ export class Tooltip implements UIElement {
             Math.abs(this.triggerX - this.mouseX) >= 50 &&
             Math.abs(this.triggerY - this.mouseY) >= 50
         ) {
+            console.log('here');
+            
             return false  // Since tooltip display is delayed, make sure the pointer is still close to where it should be
         }
         return true
     }
 
     public nodeHovered(event: MouseEvent, node: Node) {
-        if (!this.tooltipCanBeShown) return
         if (this.hoveredElementID === node.id) return
 
         this.triggerX = event.pageX
         this.triggerY = event.pageY
         this.hoveredElementID = node.id
         this.hoveredElement = node
+
+        if (!this.tooltipCanBeShown()) return
         this.show(() => {
             this.createNodeTooltip(node)
         })
     }
 
     public edgeHovered(event: MouseEvent, edge: Edge) {
-        if (!this.tooltipCanBeShown) return
         if (this.hoveredElementID === edge.id) return
 
         this.triggerX = event.pageX
         this.triggerY = event.pageY
         this.hoveredElementID = edge.id
         this.hoveredElement = edge
+
+        if (!this.tooltipCanBeShown()) return
         this.show(() => {
             if (this.uiManager.graph.simulation.isDragging()) {
                 this.hide()
@@ -124,6 +129,9 @@ export class Tooltip implements UIElement {
 
             this.createEdgeTooltip(edge)
         })
+    }
+
+    private canvasZoomed() {
     }
 
     private createNodeTooltip(node: Node) {
