@@ -209,7 +209,7 @@ export class GraphSvgRenderer extends GraphRenderer {
                         .each((node: Node, i: number, nodes: ArrayLike<SVGGElement>) => {
                             node.clearDirty()
                             const selection = d3Select<SVGGElement, Node>(nodes[i])
-                            selection.attr('id', `node-${node.id}`)
+                            selection.attr('id', `node-${node.domID}`)
                             this.nodeDrawer.render(selection, node)
                         })
                 },
@@ -238,7 +238,7 @@ export class GraphSvgRenderer extends GraphRenderer {
                     .each((edge: Edge, i: number, edges: ArrayLike<SVGGElement>) => {
                         edge.clearDirty()
                         const selection = d3Select<SVGGElement, Edge>(edges[i])
-                        selection.attr('id', `edge-${edge.id}`)
+                        selection.attr('id', `edge-${edge.domID}`)
                         this.edgeDrawer.render(selection, edge)
                     }),
                 update => update

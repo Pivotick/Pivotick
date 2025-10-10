@@ -100,7 +100,8 @@ export class SelectionBox {
         nodes.forEach((node: Node) => {
             if (!node.x || !node.y) return
 
-            const nodeEl = this.svg.querySelector(`#node-${node.id}`)
+            // const nodeEl = this.svg.querySelector(`#node-${node.domID}`)
+            const nodeEl = node.getGraphElement()
             if (!nodeEl || !(nodeEl instanceof SVGGElement)) return
             const nodeBox = nodeEl.getBoundingClientRect()
 

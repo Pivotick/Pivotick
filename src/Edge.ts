@@ -1,5 +1,6 @@
 import type { EdgeFullStyle, EdgeStyle, LabelStyle, StyleUpdate } from './GraphOptions'
 import { Node } from './Node'
+import { generateDomId } from './utils/ElementCreation';
 
 export interface EdgeData {
     [key: string]: any;
@@ -16,6 +17,7 @@ export class Edge<T = EdgeData, U = EdgeFullStyle> {
     private data: T
     private style: U
     private _dirty: boolean
+    public readonly domID: string
 
     /**
      * Create a new Edge instance.
@@ -26,6 +28,7 @@ export class Edge<T = EdgeData, U = EdgeFullStyle> {
      */
     constructor(id: string, from: Node, to: Node, data?: T, style?: U, directed: boolean | null = null) {
         this.id = id
+        this.domID = generateDomId()
         this.from = from
         this.to = to
         this.directed = directed
@@ -113,7 +116,7 @@ export class Edge<T = EdgeData, U = EdgeFullStyle> {
 
     getGraphElement(): SVGGElement | null {
         if (!document) return null
-        return document.getElementById(`edge-${this.id}`) as SVGGElement | null
+        return document.getElementById(`edge-${this.domID}`) as SVGGElement | null
     }
 
     /**

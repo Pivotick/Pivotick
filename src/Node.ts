@@ -1,4 +1,5 @@
 import type { Edge } from "./Edge";
+import { generateDomId } from "./utils/ElementCreation";
 
 export interface NodeData {
     // Define any properties your node data should have,
@@ -25,7 +26,8 @@ export class Node<T = NodeData> {
     fy?: number
     frozen?: boolean
     _circleRadius?: number
-    private _dirty:boolean
+    private _dirty: boolean
+    public readonly domID: string
 
     /**
      * Create a new Node instance.
@@ -34,6 +36,7 @@ export class Node<T = NodeData> {
      */
     constructor(id: string, data?: T, style?: T) {
         this.id = id
+        this.domID = generateDomId()
         this.data = data ?? ({} as T)
         this.style = style ?? ({} as T)
         this._dirty = true
@@ -115,7 +118,7 @@ export class Node<T = NodeData> {
 
     getGraphElement(): SVGGElement | null {
         if (!document) return null
-        return document.getElementById(`node-${this.id}`) as SVGGElement | null
+        return document.getElementById(`node-${this.domID}`) as SVGGElement | null
     }
 
     /**
