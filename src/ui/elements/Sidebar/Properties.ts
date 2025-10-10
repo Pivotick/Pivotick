@@ -10,6 +10,8 @@ import { edgePropertiesGetter, nodePropertiesGetter } from '../../../utils/Graph
 
 
 type aggregatedProperties = Map<string, Map<string, number>>
+const UNIQUE_KEY = '4dfd89de5d25fc9cc4b66c23d84b443af631c7dc' // Value to cheat to aggregate unique properties
+const MERGE_UNIQUE_THRESHOLD = 6
 
 export class SidebarProperties implements UIElement {
     private uiManager: UIManager
@@ -214,7 +216,7 @@ export class SidebarProperties implements UIElement {
                     },
                     [
                         createHtmlElement('span', { class: 'pivotick-aggregated-property-value' }, [
-                            typeof value === 'string' ? value : JSON.stringify(value)
+                            this.wrapValues(this.getDislayableValue(value))
                         ]),
                         createHtmlElement('span', { class: 'pivotick-aggregated-property-count' }, [
                             createInlineBar(count, selectedNodeCount)
@@ -231,6 +233,22 @@ export class SidebarProperties implements UIElement {
         }
     }
 
+    private getDislayableValue(value: string): string {
+        return typeof value === 'string' ? value : JSON.stringify(value)
+    }
+
+    private wrapValues(value: string): HTMLElement | Text {
+        if (value.length === 0) {
+            return createHtmlElement('span', { class: 'pivotick-aggregated-property-value-dim' }, [
+                '- empty -'
+            ])
+        } else if (value === UNIQUE_KEY) {
+            return createHtmlElement('span', { class: 'pivotick-aggregated-property-value-dim' }, [
+                '- Unique Values -'
+            ])
+        }
+        return document.createTextNode(value)
+    }
     /**
      * Aggregates a collection of property entries into a nested map structure.
      *
@@ -290,7 +308,8 @@ export class SidebarProperties implements UIElement {
      * @returns A new Map with the same structure but sorted.
      */
     private sortAggregatedProperties(
-        aggregated: aggregatedProperties
+        aggregated: aggregatedProperties,
+        mergeUniqueProperties: boolean = true
     ): aggregatedProperties {
         // Step 1: sort each inner map by count (descending)
         const sortedInnerMaps = new Map<string, Map<string, number>>()
@@ -306,7 +325,27 @@ export class SidebarProperties implements UIElement {
             (a, b) => a[1].size - b[1].size
         )
 
-        return new Map(sortedOuterEntries)
+        const sortedMap = new Map(sortedOuterEntries)
+        if (!mergeUniqueProperties) {
+            return sortedMap
+        }
+
+        const mergedAggregatedProperties: aggregatedProperties = new Map()
+        for (const [name, innerMap] of sortedMap) {
+            for (const [value, count] of innerMap) {
+                if (!mergedAggregatedProperties.has(name)) {
+                    mergedAggregatedProperties.set(name, new Map())
+                }
+                const valueCountMap = mergedAggregatedProperties.get(name)
+                if (innerMap.size > MERGE_UNIQUE_THRESHOLD && count === 1) {
+                    const currentCount = valueCountMap!.get(UNIQUE_KEY) || 0
+                    valueCountMap!.set(UNIQUE_KEY, currentCount + 1)
+                } else {
+                    valueCountMap!.set(value, count)
+                }
+            }
+        }
+        return mergedAggregatedProperties
     }
 
 }

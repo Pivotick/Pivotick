@@ -3,7 +3,9 @@
     box-shadow: var(--pivotic-sidebar-layout-shadow-right);
 
     .pivotick-sidebar {
-        overflow: hidden;
+        height: 100%;
+        overflow-y: auto;
+        overflow-x: hidden;
         display: flex;
         flex-direction: column;
         gap: 10px;
