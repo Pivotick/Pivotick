@@ -54,7 +54,7 @@ dl.pivotick-property-list {
 
     .pivotick-property-row {
         display: grid;
-        grid-template-columns: minmax(80px, 1fr) 2fr;
+        grid-template-columns: minmax(80px, auto) 2fr;
         gap: 8px 12px;
         padding: 0.5em 0;
         align-items: center;
@@ -62,12 +62,22 @@ dl.pivotick-property-list {
         .pivotick-property-name {
             font-weight: 300;
             color: var(--pivotick-text-color-softer);
+            align-self: start;
+            white-space: wrap;
+            user-select: all
         }
 
         .pivotick-property-value {
             margin-inline-start: 0;
             font-weight: 400;
-            color: var(--pivotick-text-color);
+            padding: 2px 4px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            background-color: #f5f5f5;
+            color: var(--pivotick-text-color-softer);
+            align-self: start;
+            white-space: wrap;
+            user-select: all;
         }
     }
 }

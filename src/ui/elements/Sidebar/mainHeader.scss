@@ -44,11 +44,17 @@
                 font-size: 16px;
                 font-weight: 600;
                 color: var(--pivotick-text-color);
+                text-overflow: ellipsis;
+                overflow: hidden;
+                user-select: all
             }
 
             .pivotick-mainheader-nodeinfo-subtitle {
                 font-size: 12px;
                 color: var(--pivotick-text-color-softer);
+                text-overflow: ellipsis;
+                overflow: hidden;
+                user-select: all
             }
 
             .pivotick-mainheader-nodeinfo-action {
