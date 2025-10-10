@@ -8,15 +8,27 @@ export type UIVariant = 'primary' | 'secondary' | 'info' | 'warning' | 'danger' 
 
 export function createSvgElement<K extends keyof SVGElementTagNameMap>(
     tag: K,
-    attributes: { [key: string]: string | number },
+    attributes: Record<string, string | string[]> = {},
     children: SVGElement[] = []
 ): SVGElementTagNameMap[K] {
-    const el = document.createElementNS('http://www.w3.org/2000/svg', tag)
+    const element = document.createElementNS('http://www.w3.org/2000/svg', tag)
+
     for (const [key, value] of Object.entries(attributes)) {
-        el.setAttribute(key, String(value))
+        if (Array.isArray(value)) {
+            element.setAttribute(key, value.join(' '))
+        } else {
+            element.setAttribute(key, value)
+        }
     }
-    children.forEach(child => el.appendChild(child))
-    return el
+
+    for (const child of children) {
+        if (typeof child === 'string') {
+            element.appendChild(document.createTextNode(child))
+        } else {
+            element.appendChild(child)
+        }
+    }
+    return element
 }
 
 export function createHtmlElement<K extends keyof HTMLElementTagNameMap>(
@@ -183,7 +195,7 @@ export function createIcon(options: iconOptions): HTMLSpanElement {
     return span
 }
 
-export function makeDraggable(draggableEl: HTMLElement, handleEl: HTMLElement) {
+export function makeDraggable(draggableEl: HTMLElement, handleEl: HTMLElement, onDragCb: (e: MouseEvent) => void = () => {}) {
     let isDragging = false
     let startX = 0, startY = 0, initialX = 0, initialY = 0
 
@@ -211,6 +223,7 @@ export function makeDraggable(draggableEl: HTMLElement, handleEl: HTMLElement) {
         const dy = e.clientY - startY
         draggableEl.style.left = initialX + dx + 'px'
         draggableEl.style.top = initialY + dy + 'px'
+        onDragCb(e)
     }
 
     function onMouseUp() {

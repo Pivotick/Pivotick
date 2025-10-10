@@ -1,7 +1,7 @@
 import type { Edge } from '../../../Edge'
 import type { PropertyEntry } from '../../../GraphOptions'
 import type { Node } from '../../../Node'
-import { createHtmlDL, createHtmlElement, createHtmlTemplate, generateDomId, makeDraggable } from '../../../utils/ElementCreation'
+import { createHtmlDL, createHtmlElement, createHtmlTemplate, createSvgElement, generateDomId, makeDraggable } from '../../../utils/ElementCreation'
 import { tryResolveHTMLElement } from '../../../utils/Getters'
 import { edgeDescriptionGetter, edgeNameGetter, edgePropertiesGetter, nodeDescriptionGetter, nodeNameGetter, nodePropertiesGetter } from '../../../utils/GraphGetters'
 import { createButton } from '../../components/Button'
@@ -15,6 +15,7 @@ export class Tooltip implements UIElement {
 
     public tooltip?: HTMLDivElement
     private parentContainer?: HTMLElement
+    private shadowLinkContainer?: SVGSVGElement
 
     private mouseX: number = 0
     private mouseY: number = 0
@@ -29,7 +30,8 @@ export class Tooltip implements UIElement {
     private tooltipTimeout: ReturnType<typeof setTimeout> | null = null
     private hideTimeout: ReturnType<typeof setTimeout> | null = null
 
-    private tooltipDataMap = new WeakMap<HTMLElement, Node | Edge>()
+    private tooltipDataMap = new Map<HTMLElement, Node | Edge>()
+    private shadowlinkMap = new WeakMap<HTMLElement, SVGPathElement>()
 
     constructor(uiManager: UIManager) {
         this.uiManager = uiManager
@@ -43,7 +45,11 @@ export class Tooltip implements UIElement {
         template.innerHTML = '<div class="pivotick-tooltip"></div>'
         this.tooltip = template.content.firstElementChild as HTMLDivElement
 
+        this.shadowLinkContainer = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+        this.shadowLinkContainer.setAttribute('class', 'pivotick-shadowlink-container')
+
         this.parentContainer.appendChild(this.tooltip)
+        this.parentContainer.appendChild(this.shadowLinkContainer)
     }
 
     public destroy() {
@@ -132,6 +138,7 @@ export class Tooltip implements UIElement {
     }
 
     private canvasZoomed() {
+        this.updateShadowLinks()
     }
 
     private createNodeTooltip(node: Node) {
@@ -383,6 +390,8 @@ export class Tooltip implements UIElement {
             class: ['close-button'],
             svgIcon: closeIcon,
             onClick: () => {
+                this.tooltipDataMap.delete(clonedTooltip)
+                this.reomveShadowLink(clonedTooltip)
                 clonedTooltip.remove()
             },
         })
@@ -421,7 +430,39 @@ export class Tooltip implements UIElement {
         clonedTooltip.prepend(topbar)
 
 
-        makeDraggable(clonedTooltip, topbar)
+        makeDraggable(clonedTooltip, topbar, () => {
+            this.updateShadowLinks()
+        })
         this.parentContainer.appendChild(clonedTooltip)
+        this.addShadowLink(clonedTooltip)
+    }
+
+    private addShadowLink(pinnedTt: HTMLElement) {
+        const shadowLink = createSvgElement('path', {
+            class: 'pivotick-shadowlink',
+        })
+        this.shadowlinkMap.set(pinnedTt, shadowLink)
+        this.shadowLinkContainer?.appendChild(shadowLink)
+    }
+
+    private updateShadowLinks(): void {
+        for (const [ pinnedTt, element ] of this.tooltipDataMap.entries()) {
+            this.updateShadowLink(pinnedTt, element)
+        }
+    }
+
+    private updateShadowLink(pinnedTt: HTMLElement, element: Node | Edge) {
+        const { x: ttx, y: tty, width: ttWidth, height: ttHeight } = pinnedTt.getBoundingClientRect()
+        const { x: nx, y: ny, width: nWidth, height: nHeight } = element.getGraphElement()!.getBoundingClientRect()
+        const shadowLink = this.shadowlinkMap.get(pinnedTt)
+
+        if (!shadowLink) return
+        shadowLink.setAttribute('d', `M ${ttx + ttWidth / 2} ${tty + ttHeight / 2} L ${nx + nWidth / 2} ${ny + nHeight / 2}`)
+    }
+
+    private reomveShadowLink(pinnedTt: HTMLElement) {
+        const shadowLink = this.shadowlinkMap.get(pinnedTt)
+        if (!shadowLink) return
+        shadowLink.remove()
     }
 }
