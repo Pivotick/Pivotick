@@ -106,7 +106,8 @@ self.onmessage = (e: MessageEvent<WorkerInput>) => {
     simulation.alpha(1) // small bump
     for (let i = 0; i < REHEAT_TICKS; ++i) {
         if (
-            isSimulationStable(options, simulation, currentAlphaTarget)
+            isSimulationStable(options, simulation, currentAlphaTarget) &&
+            (new Date()).getTime() - startTime > options.cooldownTime * 0.15
         ) {
             break
         }

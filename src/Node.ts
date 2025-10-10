@@ -1,3 +1,5 @@
+import type { Edge } from "./Edge";
+
 export interface NodeData {
     // Define any properties your node data should have,
     // or keep it generic for flexibility.
@@ -11,6 +13,8 @@ export class Node<T = NodeData> {
     public readonly id: string
     private data: T
     private style: T
+    private edgesOut: Set<Edge>
+    private edgesIn: Set<Edge>
 
     // Layout/physics properties
     x?: number
@@ -34,6 +38,8 @@ export class Node<T = NodeData> {
         this.style = style ?? ({} as T)
         this._dirty = true
         this.frozen = false
+        this.edgesOut = new Set()
+        this.edgesIn = new Set()
     }
 
     /**
@@ -60,6 +66,25 @@ export class Node<T = NodeData> {
     updateData(partialData: Partial<T>): void {
         this.data = { ...this.data, ...partialData }
         this.markDirty()
+    }
+
+    registerEdgeOut(edge: Edge): void {
+        this.edgesOut.add(edge)
+    }
+
+    registerEdgeIn(edge: Edge): void {
+        this.edgesIn.add(edge)
+    }
+
+    emptyEdges(): void {
+        this.edgesOut.clear()
+        this.edgesIn.clear()
+    }
+
+    getConnectedNodes(): Node[] {
+        return [...this.edgesOut].map(edge => {
+            return edge.to
+        })
     }
 
     /**
@@ -150,5 +175,9 @@ export class Node<T = NodeData> {
         this.frozen = false
         this.fx = undefined
         this.fy = undefined
+    }
+
+    degree(): number {
+        return this.edgesOut.size + this.edgesIn.size
     }
 }

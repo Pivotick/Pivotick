@@ -123,6 +123,11 @@ export interface EdgeFullStyle {
     label: LabelStyle,
 }
 
+export interface StyleUpdate {
+    edge?: Partial<EdgeStyle>
+    node?: Partial<NodeStyle>
+}
+
 export interface EdgeStyle {
     strokeColor: string
     strokeWidth: number
@@ -199,6 +204,7 @@ export interface SimulationOptions {
     d3CollideStrength: number /** @default 1 */
     d3CollideIterations: number /** @default 1 */
     d3CenterStrength: number /** @default 1 */
+    d3GravityStrength: number /** @default 0.001 */
     cooldownTime: number /** @default 2000 */
     warmupTicks: number | 'auto' /** @default auto */
     freezeNodesOnDrag: boolean /** @default true */

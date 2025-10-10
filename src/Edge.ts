@@ -1,4 +1,4 @@
-import type { EdgeFullStyle, EdgeStyle, LabelStyle } from './GraphOptions'
+import type { EdgeFullStyle, EdgeStyle, LabelStyle, StyleUpdate } from './GraphOptions'
 import { Node } from './Node'
 
 export interface EdgeData {
@@ -32,6 +32,9 @@ export class Edge<T = EdgeData, U = EdgeFullStyle> {
         this.data = data ?? ({} as T)
         this.style = style ?? ({} as U)
         this._dirty = true
+
+        this.from.registerEdgeOut(this)
+        this.to.registerEdgeIn(this)
     }
 
     /** Required by d3-force */
@@ -103,7 +106,7 @@ export class Edge<T = EdgeData, U = EdgeFullStyle> {
      * Useful for updating only parts of the style.
      * @param partialStyle - Partial style object to merge
      */
-    updateStyle(partialStyle: Partial<U>): void {
+    updateStyle(partialStyle: Partial<StyleUpdate>): void {
         this.style = { ...this.style, ...partialStyle }
         this.markDirty()
     }

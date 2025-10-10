@@ -254,7 +254,7 @@ export class Graph {
      * Find edges going out of a given node id.
      */
     getEdgesFromNode(queryNode: string | Node): Edge[] {
-        const node: Node | undefined = this.getNode(queryNode)
+        const node: Node | undefined = this._getNode(queryNode)
         if (!node)
             return []
         return this.getEdges().filter(edge => edge.from.id === node.id)
@@ -264,7 +264,7 @@ export class Graph {
      * Find edges going to a given node id.
      */
     getEdgesToNode(queryNode: string | Node): Edge[] {
-        const node: Node | undefined = this.getNode(queryNode)
+        const node: Node | undefined = this._getNode(queryNode)
         if (!node)
             return []
         return this.getEdges().filter(edge => edge.to.id === node.id)
@@ -274,7 +274,7 @@ export class Graph {
      * Get nodes connected to the given node id
      */
     getConnectedNodes(queryNode: string | Node): Node[] {
-        const node: Node | undefined = this.getNode(queryNode)
+        const node: Node | undefined = this._getNode(queryNode)
         if (!node)
             return []
         const edgesFrom = this.getEdgesFromNode(node.id)

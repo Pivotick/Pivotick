@@ -1,7 +1,7 @@
 import { type Selection, select as d3Select } from 'd3-selection'
 import { Edge, type EdgeData } from '../../Edge'
 import type { EdgeStyle, GraphRendererOptions, LabelStyle } from '../../GraphOptions'
-import { getArcIntersectionWithCircle, type ArcParams, type Circle } from '../../utils/GeometryHelper'
+import { getApproximateArcLengthAndMidpoint, getApproximateCircleArcLengthAndMidpoint, getArcIntersectionWithCircle, getSegmentLengthAndMidpoint, type ArcParams, type Circle } from '../../utils/GeometryHelper'
 import type { Graph } from '../../Graph'
 import type { GraphSvgRenderer } from './GraphSvgRenderer'
 import { tryResolveString } from '../../utils/Getters'
@@ -197,11 +197,29 @@ export class EdgeDrawer {
             }
 
             let midX, midY
-            if (pathEl && pathEl.getTotalLength() > 0) {
-                const length = pathEl.getTotalLength()
-                const point = pathEl.getPointAtLength(length / 2)
-                midX = point.x
-                midY = point.y
+            let midpoint = { x: 0, y: 0 }
+            let pathTotalLength = 0
+            if (from === to) { // self-loop
+                const arcApprox = pathEl ? getApproximateCircleArcLengthAndMidpoint(pathEl) : undefined
+                const { length: arcLength = 0, midpoint: arcMidpoint = { x: 0, y: 0 } } = arcApprox ?? {}
+                pathTotalLength = arcLength
+                midpoint = arcMidpoint
+            } else if (style.curveStyle === 'straight') {
+                // pathTotalLength = getSegmentLengthAndMidpoint(pathEl)
+                const segmentLengthAndMidpoint = pathEl ? getSegmentLengthAndMidpoint(pathEl) : undefined
+                const { length: segmentLength = 0, midpoint: segmentMidpoint = { x: 0, y: 0 } } = segmentLengthAndMidpoint ?? {}
+                pathTotalLength = segmentLength
+                midpoint = segmentMidpoint
+            } else {
+                // pathTotalLength = pathEl ? pathEl.getTotalLength() : 0
+                const arcApprox = pathEl ? getApproximateArcLengthAndMidpoint(pathEl) : undefined
+                const { length: arcLength = 0, midpoint: arcMidpoint = { x: 0, y: 0 } } = arcApprox ?? {}
+                pathTotalLength = arcLength
+                midpoint = arcMidpoint
+            }
+            if (pathEl && pathTotalLength > 0) {
+                midX = midpoint.x
+                midY = midpoint.y
                 if (from === to) { // self-loop
                     midX += 12
                     midY -= 4
@@ -236,7 +254,7 @@ export class EdgeDrawer {
         if (from === to) // self-loop
             return this.linkSelfLoop(edge)
 
-        const connectedNodes = this.graph.getConnectedNodes(to)
+        const connectedNodes = to.getConnectedNodes()
 
         const edgeStyle = this.getEdgeStyle(edge)
 
@@ -246,9 +264,10 @@ export class EdgeDrawer {
             return this.linkArc(edge)
         } else {
             if (connectedNodes.filter((node: { id: string }) => node.id === from.id).length > 0) {
-                // The other node has also an edge to the source node
+                edge.updateStyle({ edge: { curveStyle: 'curved' } })
                 return this.linkArc(edge)
             }
+            edge.updateStyle({ edge: { curveStyle: 'straight' } })
             return this.linkStraight(edge)
         }
 
@@ -358,10 +377,7 @@ export class EdgeDrawer {
         const intersectionTo = getArcIntersectionWithCircle(arcParams, circleTo)
 
         if (intersectionFrom && intersectionTo)
-            return `
-                M${intersectionFrom.x},${intersectionFrom.y}
-                A${r},${r} 0 0,1 ${intersectionTo.x},${intersectionTo.y}
-            `
+            return `M${intersectionFrom.x},${intersectionFrom.y} A${r},${r} 0 0,1 ${intersectionTo.x},${intersectionTo.y}`
 
         return ''
     }

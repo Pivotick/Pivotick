@@ -11,6 +11,7 @@ import {
     type SimulationNodeDatum,
 } from 'd3-force'
 import { type Simulation as d3Simulation } from 'd3-force'
+import { ForceGravity } from "./plugins/d3Forces/ForceGravity"
 import { drag as d3Drag } from 'd3-drag'
 import type { Graph } from './Graph'
 import type { Node } from './Node'
@@ -37,6 +38,7 @@ export const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
     d3CollideStrength: 1,
     d3CollideIterations: 1,
     d3CenterStrength: 1,
+    d3GravityStrength: 0.01,
 
     cooldownTime: 2000,
     warmupTicks: 'auto',
@@ -130,6 +132,7 @@ export class Simulation {
             charge: d3ForceManyBodyType<Node>,
             center: d3ForceCenterType<Node>,
             collide: d3ForceCollideType<Node>,
+            gravity: typeof ForceGravity<Node>,
         }
     } {
         const simulationForces = {
@@ -137,6 +140,7 @@ export class Simulation {
             charge: d3ForceManyBody(),
             center: d3ForceCenter(),
             collide: d3ForceCollide(),
+            gravity: ForceGravity(),
         }
 
         const simulation = d3ForceSimulation<Node>()
@@ -144,10 +148,21 @@ export class Simulation {
             .force('charge', simulationForces.charge)
             .force('center', simulationForces.center)
             .force('collide', simulationForces.collide)
+            .force('gravity', simulationForces.gravity)
 
         simulationForces.center
             .x(canvasBCR.width / 2)
             .y(canvasBCR.height / 2)
+            .strength(options.d3CenterStrength)
+
+        simulationForces.gravity
+            .x(canvasBCR.width / 2)
+            .y(canvasBCR.height / 2)
+            .strength((node: SimulationNodeDatum) => {
+                const n = node as Node
+                const degree = n.degree() ?? 0
+                return degree === 0 ? options.d3GravityStrength : 0
+            })
 
         simulationForces.link.distance((d) => {
             const labelContent = edgeLabelGetter(d)
