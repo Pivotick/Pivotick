@@ -51,6 +51,7 @@ dl.pivotick-property-list {
     margin: 0;
     background: #fff;
     font-size: 0.95em;
+    overflow: hidden;
 
     .pivotick-property-row {
         display: grid;
@@ -63,7 +64,7 @@ dl.pivotick-property-list {
             font-weight: 300;
             color: var(--pivotick-text-color-softer);
             align-self: start;
-            white-space: wrap;
+            white-space: normal;
             user-select: all
         }
 
@@ -76,8 +77,17 @@ dl.pivotick-property-list {
             background-color: #f5f5f5;
             color: var(--pivotick-text-color-softer);
             align-self: start;
-            white-space: wrap;
             user-select: all;
+            min-height: 1em;
+            white-space: normal;
+            overflow: auto;
+            word-break: break-all;
+            display: -webkit-box;
+            /* for multiline ellipsis */
+            -webkit-line-clamp: 3;
+            line-clamp: 3;
+            -webkit-box-orient: vertical;
+            box-orient: vertical;
         }
     }
 }
