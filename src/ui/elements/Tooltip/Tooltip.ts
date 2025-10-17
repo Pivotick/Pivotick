@@ -32,6 +32,7 @@ export class Tooltip implements UIElement {
 
     private tooltipDataMap = new Map<HTMLElement, Node | Edge>()
     private shadowlinkMap = new WeakMap<HTMLElement, SVGPathElement>()
+    private shadowlinkBoundingBoxesMap = new WeakMap<HTMLElement, DOMRect[]>()
 
     constructor(uiManager: UIManager) {
         this.uiManager = uiManager
@@ -97,8 +98,6 @@ export class Tooltip implements UIElement {
             Math.abs(this.triggerX - this.mouseX) >= 50 &&
             Math.abs(this.triggerY - this.mouseY) >= 50
         ) {
-            console.log('here');
-            
             return false  // Since tooltip display is delayed, make sure the pointer is still close to where it should be
         }
         return true
@@ -433,8 +432,16 @@ export class Tooltip implements UIElement {
         clonedTooltip.prepend(topbar)
 
 
-        makeDraggable(clonedTooltip, topbar, () => {
-            this.updateShadowLinks()
+        makeDraggable(clonedTooltip, topbar, {
+            onDragStart: (e: MouseEvent, pinnedTt: HTMLElement) => {
+                this.shadowlinkBoundingBoxesMap.set(pinnedTt, [
+                    pinnedTt.getBoundingClientRect(),
+                    this.tooltipDataMap.get(pinnedTt)!.getGraphElement()!.getBoundingClientRect(),
+                ])
+            },
+            onDrag: (e: MouseEvent, pinnedTt: HTMLElement) => {
+                this.updateShadowLink(pinnedTt, this.tooltipDataMap.get(pinnedTt)!)
+            }
         })
         this.parentContainer.appendChild(clonedTooltip)
         this.addShadowLink(clonedTooltip)
@@ -455,9 +462,13 @@ export class Tooltip implements UIElement {
     }
 
     private updateShadowLink(pinnedTt: HTMLElement, element: Node | Edge) {
-        const { x: ttx, y: tty, width: ttWidth, height: ttHeight } = pinnedTt.getBoundingClientRect()
-        const { x: nx, y: ny, width: nWidth, height: nHeight } = element.getGraphElement()!.getBoundingClientRect()
+        const bboxes = this.shadowlinkBoundingBoxesMap.get(pinnedTt)!
+        const {width: ttWidth, height: ttHeight } = bboxes[0]
+        const { x: nx, y: ny, width: nWidth, height: nHeight } = bboxes[1]
         const shadowLink = this.shadowlinkMap.get(pinnedTt)
+
+        const ttx = parseFloat(pinnedTt.style.left)
+        const tty = parseFloat(pinnedTt.style.top)
 
         if (!shadowLink) return
         shadowLink.setAttribute('d', `M ${ttx + ttWidth / 2} ${tty + ttHeight / 2} L ${nx + nWidth / 2} ${ny + nHeight / 2}`)

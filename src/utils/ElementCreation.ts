@@ -195,11 +195,16 @@ export function createIcon(options: iconOptions): HTMLSpanElement {
     return span
 }
 
-export function makeDraggable(draggableEl: HTMLElement, handleEl: HTMLElement, onDragCb: (e: MouseEvent) => void = () => {}) {
+interface DraggableCallbacks {
+    onDragStart?: (e: MouseEvent, draggableEl: HTMLElement) => void
+    onDrag?: (e: MouseEvent, draggableEl: HTMLElement) => void
+    onDragStop?: (e: MouseEvent, draggableEl: HTMLElement) => void
+}
+export function makeDraggable(draggableEl: HTMLElement, handleEl: HTMLElement, callbacks: DraggableCallbacks = {}) {
     let isDragging = false
     let startX = 0, startY = 0, initialX = 0, initialY = 0
     let bbox: DOMRect | null = null
-    const appBox: DOMRect = document.getElementById('pivotick-app')!.getBoundingClientRect()
+    let appBox: DOMRect | null = null
 
     handleEl.classList.add('draggable')
 
@@ -213,33 +218,36 @@ export function makeDraggable(draggableEl: HTMLElement, handleEl: HTMLElement, o
         initialX = draggableEl.offsetLeft
         initialY = draggableEl.offsetTop
         bbox = draggableEl.getBoundingClientRect()
+        appBox =  document.getElementById('pivotick-app')!.getBoundingClientRect()
+        callbacks.onDragStart?.(e, draggableEl)
         document.addEventListener('mousemove', onMouseMove, { signal })
-        document.addEventListener('mouseup', () => {
+        document.addEventListener('mouseup', (e: MouseEvent) => {
             controller.abort()
-            onMouseUp()
+            onMouseUp(e)
         }, { signal })
     })
 
     function onMouseMove(e: MouseEvent) {
-        if (!isDragging) return
+        if (!isDragging || !appBox || !bbox) return
         const dx = e.clientX - startX
         const dy = e.clientY - startY
         let posX = initialX + dx
         let posY = initialY + dy
 
-        const elWidth = bbox!.width
-        const elHeight = bbox!.height
+        const elWidth = bbox.width
+        const elHeight = bbox.height
 
         posX = Math.max(appBox.left, Math.min(posX, appBox.right - elWidth))
         posY = Math.max(appBox.top, Math.min(posY, appBox.bottom - elHeight))
 
         draggableEl.style.left = posX + 'px'
         draggableEl.style.top = posY + 'px'
-        onDragCb(e)
+        callbacks.onDrag?.(e, draggableEl)
     }
 
-    function onMouseUp() {
+    function onMouseUp(e: MouseEvent) {
         isDragging = false
         draggableEl.style.transition = '' // restore transitions
+        callbacks.onDragStop?.(e, draggableEl)
     }
 }
