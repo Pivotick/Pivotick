@@ -108,6 +108,13 @@ export class Graph {
             this.nodes.set(node.id, node)
         })
         edges.forEach(edge => {
+            if (
+                !this.nodes.has(edge.from.id) ||
+                !this.nodes.has(edge.to.id)
+            ) {
+                console.warn(`Edge is pointing a node that doesn't exist. (${this.nodes.get(edge.from.id)}) -> (${this.nodes.get(edge.to.id)}). It has been skipped`)
+                return
+            }
             this.edges.set(edge.id, edge)
         })
     }
