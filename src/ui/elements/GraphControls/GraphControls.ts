@@ -108,6 +108,20 @@ export class GraphControls implements UIElement {
                     ${graphControlLayoutTreeV}
                 </button>
             </div>
+            <div class="pivotick-graphcontrols-layout-type-options">
+                <button id="pivotick-graphcontrols-layout-tree-v-FirstZeroInDegree" class="with-text" title="Pick first 0 in-degree node">
+                First valid node
+                </button>
+                <button id="pivotick-graphcontrols-layout-tree-v-MaxReachability" class="with-text" title="Max reachable nodes">
+                Most connected node
+                </button>
+                <button id="pivotick-graphcontrols-layout-tree-v-MinMaxDistance" class="with-text" title="Minimize max distance">
+                Balance distances
+                </button>
+                <button id="pivotick-graphcontrols-layout-tree-v-MinHeight" class="with-text" title="Pick node minimizing tree height">
+                Minimize height
+                </button>
+            </div>
         </div>
         <div class="pivotick-divider"></div>
         <div class="pivotick-graphcontrols-layout-type-container">
@@ -145,7 +159,14 @@ export class GraphControls implements UIElement {
         const organicButton5 = this.navigation.querySelector('#pivotick-graphcontrols-layout-organic-5')
         const organicButton10 = this.navigation.querySelector('#pivotick-graphcontrols-layout-organic-10')
         const organicButton15 = this.navigation.querySelector('#pivotick-graphcontrols-layout-organic-15')
+
         const treeVButton = this.navigation.querySelector('#pivotick-graphcontrols-layout-tree-v')
+        const treeVButtonFirstZeroInDegree = this.navigation.querySelector('#pivotick-graphcontrols-layout-tree-v-FirstZeroInDegree')
+        const treeVButtonMaxReachability = this.navigation.querySelector('#pivotick-graphcontrols-layout-tree-v-MaxReachability')
+        const treeVButtonMinMaxDistance = this.navigation.querySelector('#pivotick-graphcontrols-layout-tree-v-MinMaxDistance')
+        const treeVButtonMinHeight = this.navigation.querySelector('#pivotick-graphcontrols-layout-tree-v-MinHeight')
+
+
         const treeHButton = this.navigation.querySelector('#pivotick-graphcontrols-layout-tree-h')
         const radialButton = this.navigation.querySelector('#pivotick-graphcontrols-layout-tree-radial')
         this.selectionMenu = this.navigation.querySelector('.pivotick-graphcontrols-selection')!
@@ -162,9 +183,23 @@ export class GraphControls implements UIElement {
         organicButton15?.addEventListener('click', () => {
             this.uiManager.graph.simulation.changeLayout('force', { cooldownTime: 15000 })
         })
+
         treeVButton?.addEventListener('click', () => {
             this.uiManager.graph.simulation.changeLayout('tree', { horizontal: false })
         })
+        treeVButtonFirstZeroInDegree?.addEventListener('click', () => {
+            this.uiManager.graph.simulation.changeLayout('tree', { horizontal: false, rootIdAlgorithmFinder: 'FirstZeroInDegree' })
+        })
+        treeVButtonMaxReachability?.addEventListener('click', () => {
+            this.uiManager.graph.simulation.changeLayout('tree', { horizontal: false, rootIdAlgorithmFinder: 'MaxReachability' })
+        })
+        treeVButtonMinMaxDistance?.addEventListener('click', () => {
+            this.uiManager.graph.simulation.changeLayout('tree', { horizontal: false, rootIdAlgorithmFinder: 'MinMaxDistance' })
+        })
+        treeVButtonMinHeight?.addEventListener('click', () => {
+            this.uiManager.graph.simulation.changeLayout('tree', { horizontal: false, rootIdAlgorithmFinder: 'MinHeight' })
+        })
+
         treeHButton?.addEventListener('click', () => {
             this.uiManager.graph.simulation.changeLayout('tree', { horizontal: true })
         })

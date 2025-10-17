@@ -35,9 +35,10 @@
                     transition: max-width 0.2s ease-out;
                     overflow: hidden;
                 }
-                &:hover .pivotick-graphcontrols-layout-type-options {
-                    max-width: 200px;
-                }
+            }
+
+            &:hover .pivotick-graphcontrols-layout-type-options {
+                max-width: unset;
             }
 
             button {
@@ -56,6 +57,12 @@
 
                 @media (prefers-color-scheme: dark) {
                     color: #bbb;
+                }
+
+                &.with-text {
+                    font-size: 0.7rem;
+                    width: unset;
+                    max-width: 10em;
                 }
 
 

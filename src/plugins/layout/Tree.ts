@@ -13,9 +13,13 @@ import type { simulationForces } from '../../Simulation'
 import type { Node } from '../../Node'
 import type { Edge } from '../../Edge'
 import hasCycle from '../analytics/cycle'
+import { findFirstZeroInDegreeNode, findMaxReachabilityRoot, findMinHeightDAGRoot, findMinMaxDistanceRoot } from '../analytics/DAGAlgorithms'
+
+export type TreeLayoutAlgorithm = 'FirstZeroInDegree' | 'MaxReachability' | 'MinMaxDistance' | 'MinHeight'
 
 export interface TreeLayoutOptions {
     rootId: string | undefined
+    rootIdAlgorithmFinder: TreeLayoutAlgorithm
     strength: number // Force strength (default 0.1)
     radial: boolean  /** @default: false Use radial tree layout */
     radialGap: number /** @default: 750 */
@@ -24,6 +28,7 @@ export interface TreeLayoutOptions {
 
 const DEFAULT_TREE_LAYOUT_OPTIONS: TreeLayoutOptions = {
     rootId: undefined,
+    rootIdAlgorithmFinder: 'MaxReachability',
     strength: 0.25,
     radial: false,
     radialGap: 750,
@@ -88,7 +93,7 @@ export class TreeLayout {
     public update(): void {
         const nodes = this.graph.getNodes()
         const edges = this.graph.getEdges()
-        const { levels } = TreeLayout.buildLevels(nodes, edges)
+        const { levels } = TreeLayout.buildLevels(nodes, edges, this.options.rootIdAlgorithmFinder)
         const { nodes: positionedNodes, nodeById: positionedNodesByID } = TreeLayout.buildTree(nodes, edges, this.options, this.canvasBCR)
         this.positionedNodesByID = positionedNodesByID
 
@@ -200,7 +205,7 @@ export class TreeLayout {
             return
         }
 
-        const { levels } = TreeLayout.buildLevels(nodes, edges)
+        const { levels } = TreeLayout.buildLevels(nodes, edges, options.rootIdAlgorithmFinder)
         const { nodeById: positionedNodesByID } = TreeLayout.buildTree(nodes, edges, options, canvasBCR)
 
         if (options.radial) {
@@ -312,7 +317,7 @@ export class TreeLayout {
         }
 
         // Find root node
-        const rootId = options.rootId || TreeLayout.findRootId(nodes, edges)
+        const rootId = options.rootId || TreeLayout.findRootId(nodes, edges, options.rootIdAlgorithmFinder)
         const root = nodeMap.get(rootId)
         if (!root) {
             throw new Error(`Root node with id "${rootId}" not found.`)
@@ -327,7 +332,9 @@ export class TreeLayout {
         if (options.radial) {
             treeLayout.size([width, height])
         } else {
-            treeLayout.nodeSize(options.horizontal ? [100, 50] : [50, 100])
+            treeLayout
+                .size([width, height])
+                // .nodeSize(options.horizontal ? [100, 50] : [50, 100])
                 .separation((a, b) => {
                     const siblingsCount = a.parent?.children?.length ?? 1
                     return a.parent === b.parent ? 1.5 / siblingsCount : 1.5
@@ -357,12 +364,14 @@ export class TreeLayout {
      * @param nodes - The list of graph nodes.
      * @param edges - The list of graph edges (assumed to be directed).
      * @param passedRootId - The ID of the node considered as the root.
+     * @param rootIdAlgorithmFinder - The algorithm to use to find the root ID.
      * @returns A mapping of each node's ID to its depth level in the tree and the maximum depth
      */
     static buildLevels(
         nodes: Node[],
         edges: Edge[],
-        passedRootId?: string
+        passedRootId?: string,
+        rootIdAlgorithmFinder?: TreeLayoutAlgorithm
     ): {
         levels: Record<string, number>
         maxDepth: number
@@ -375,7 +384,7 @@ export class TreeLayout {
                 nodeCountPerLevel: {},
             }
         }
-        const rootId = passedRootId || TreeLayout.findRootId(nodes, edges)
+        const rootId = passedRootId || TreeLayout.findRootId(nodes, edges, rootIdAlgorithmFinder)
 
         const levels = { [rootId]: 0 }
         const adj: Record<string, string[]> = {}
@@ -431,12 +440,20 @@ export class TreeLayout {
      */
     private static findRootId(
         nodes: Node[],
-        edges: Edge[]
+        edges: Edge[],
+        algorithm?: TreeLayoutAlgorithm
     ): string {
-        const targets = new Set(edges.map(e => e.target.id))
-        for (const node of nodes) {
-            if (!targets.has(node.id)) return node.id
+        switch (algorithm) {
+            case 'FirstZeroInDegree':
+                return findFirstZeroInDegreeNode(nodes, edges).id
+            case 'MaxReachability':
+                return findMaxReachabilityRoot(nodes, edges).id
+            case 'MinMaxDistance':
+                return findMinMaxDistanceRoot(nodes, edges).id
+            case 'MinHeight':
+                return findMinHeightDAGRoot(nodes, edges).id
+            default:
+                return findFirstZeroInDegreeNode(nodes, edges).id
         }
-        return nodes[0].id
     }
 }
