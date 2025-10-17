@@ -36,15 +36,18 @@
                     flex-grow: 1;
                     font-family: monospace;
                     font-size: 0.8rem;
-                    padding: 2px 4px;
-                    border: 1px solid #eee;
-                    border-radius: 4px;
-                    background-color: #f5f5f5;
-                    color: var(--pivotick-text-color-softer);
-                    margin-right: 8px;
-                    text-overflow: ellipsis;
-                    overflow: hidden;
-                    user-select: all;
+
+                    &.code-container {
+                        padding: 2px 4px;
+                        border: 1px solid #eee;
+                        border-radius: 4px;
+                        background-color: #f5f5f5;
+                        color: var(--pivotick-text-color-softer);
+                        margin-right: 8px;
+                        text-overflow: ellipsis;
+                        overflow: hidden;
+                        user-select: all;
+                    }
                 }
 
                 .pivotick-aggregated-property-count {
@@ -52,8 +55,11 @@
                 }
 
                 .pivotick-aggregated-property-value-dim {
-                    color: var(--pivotick-text-color-softer2);
+                    display: inline-block;
+                    width: 100%;
+                    color: var(--pivotick-text-color-softer3);
                     font-style: italic;
+                    text-align: center;
                 }
             }
         }

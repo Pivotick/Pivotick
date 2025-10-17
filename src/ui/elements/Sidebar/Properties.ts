@@ -215,7 +215,12 @@ export class SidebarProperties implements UIElement {
                         class: 'pivotick-aggregated-property-row',
                     },
                     [
-                        createHtmlElement('span', { class: 'pivotick-aggregated-property-value' }, [
+                        createHtmlElement('span', {
+                            class: [
+                                'pivotick-aggregated-property-value',
+                                !this.hasSpecialHighlighting(value) ? 'code-container' : '',
+                            ]
+                        }, [
                             this.wrapValues(this.getDislayableValue(value))
                         ]),
                         createHtmlElement('span', { class: 'pivotick-aggregated-property-count' }, [
@@ -238,17 +243,33 @@ export class SidebarProperties implements UIElement {
     }
 
     private wrapValues(value: string): HTMLElement | Text {
-        if (value.length === 0) {
+        if (this.hasSpecialHighlighting(value)) {
+            let textNode = ''
+            if (this.isValueEmpty(value)) {
+                textNode = '- empty -'
+            } else if (this.isValueUnique(value)) {
+                textNode = '- Unique Values -'
+            }
             return createHtmlElement('span', { class: 'pivotick-aggregated-property-value-dim' }, [
-                '- empty -'
-            ])
-        } else if (value === UNIQUE_KEY) {
-            return createHtmlElement('span', { class: 'pivotick-aggregated-property-value-dim' }, [
-                '- Unique Values -'
+                textNode
             ])
         }
         return document.createTextNode(value)
     }
+
+    private isValueEmpty(value: string): boolean {
+        return value.length === 0
+    }
+
+    private isValueUnique(value: string): boolean {
+        return value === UNIQUE_KEY
+    }
+
+    private hasSpecialHighlighting(value: string): boolean {
+        return this.isValueEmpty(value) || this.isValueUnique(value)
+    }
+
+
     /**
      * Aggregates a collection of property entries into a nested map structure.
      *
