@@ -151,8 +151,8 @@ export class Simulation {
             .force('gravity', simulationForces.gravity)
 
         simulationForces.center
-            .x(canvasBCR.width / 2)
-            .y(canvasBCR.height / 2)
+            .x(0)
+            .y(0)
             .strength(options.d3CenterStrength)
 
         simulationForces.gravity
