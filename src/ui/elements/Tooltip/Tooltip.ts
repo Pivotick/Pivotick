@@ -26,7 +26,7 @@ export class Tooltip implements UIElement {
     private hoveredElementID: string | null = null
     private hoveredElement: Node | Edge | null = null
     private showDelay: number = 350
-    private hideDelay: number = 1
+    private hideDelay: number = 200
     private tooltipTimeout: ReturnType<typeof setTimeout> | null = null
     private hideTimeout: ReturnType<typeof setTimeout> | null = null
 
@@ -312,10 +312,10 @@ export class Tooltip implements UIElement {
     private setPosition() {
         if (!this.tooltip) return
 
-        const mouseOffset = 10
+        const mouseOffset = 0
         const offset =  mouseOffset + 20 // Extra offset to give more space around the tooltip
-        this.x = this.mouseX
-        this.y = this.mouseY
+        this.x = this.triggerX
+        this.y = this.triggerY
 
         const bbox = this.parentContainer?.getBoundingClientRect()
         if (!bbox) return
@@ -365,6 +365,9 @@ export class Tooltip implements UIElement {
         if (this.uiManager.contextMenu?.visible)
             return
 
+        if (this.tooltipTimeout) {
+            clearTimeout(this.tooltipTimeout)
+        }
         this.tooltipTimeout = setTimeout(() => {
             if (cb) cb()
             this.tooltip?.classList.add('shown')

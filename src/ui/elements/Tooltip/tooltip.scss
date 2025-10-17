@@ -154,8 +154,9 @@
     height: 100%;
 
     path.pivotick-shadowlink {
-        stroke: color-mix(in srgb, var(--pivotick-primary-bg-color) 50%, #ffffff00);
+        stroke: color-mix(in srgb, var(--pivotick-edge-stroke) 100%, #ffffff00);
         stroke-width: 2;
         stroke-opacity: 0.3;
+        stroke-dasharray: var(--pivotick-edge-stroke-dasharray);
     }
 }

@@ -198,6 +198,8 @@ export function createIcon(options: iconOptions): HTMLSpanElement {
 export function makeDraggable(draggableEl: HTMLElement, handleEl: HTMLElement, onDragCb: (e: MouseEvent) => void = () => {}) {
     let isDragging = false
     let startX = 0, startY = 0, initialX = 0, initialY = 0
+    let bbox: DOMRect | null = null
+    const appBox: DOMRect = document.getElementById('pivotick-app')!.getBoundingClientRect()
 
     handleEl.classList.add('draggable')
 
@@ -210,6 +212,7 @@ export function makeDraggable(draggableEl: HTMLElement, handleEl: HTMLElement, o
         startY = e.clientY
         initialX = draggableEl.offsetLeft
         initialY = draggableEl.offsetTop
+        bbox = draggableEl.getBoundingClientRect()
         document.addEventListener('mousemove', onMouseMove, { signal })
         document.addEventListener('mouseup', () => {
             controller.abort()
@@ -221,8 +224,17 @@ export function makeDraggable(draggableEl: HTMLElement, handleEl: HTMLElement, o
         if (!isDragging) return
         const dx = e.clientX - startX
         const dy = e.clientY - startY
-        draggableEl.style.left = initialX + dx + 'px'
-        draggableEl.style.top = initialY + dy + 'px'
+        let posX = initialX + dx
+        let posY = initialY + dy
+
+        const elWidth = bbox!.width
+        const elHeight = bbox!.height
+
+        posX = Math.max(appBox.left, Math.min(posX, appBox.right - elWidth))
+        posY = Math.max(appBox.top, Math.min(posY, appBox.bottom - elHeight))
+
+        draggableEl.style.left = posX + 'px'
+        draggableEl.style.top = posY + 'px'
         onDragCb(e)
     }
 
