@@ -23,3 +23,7 @@ export function deepMerge<T>(target: T, source: Partial<T>): T {
     }
     return source as T
 }
+
+export type DeepPartial<T> = {
+    [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P]
+}

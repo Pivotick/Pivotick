@@ -233,6 +233,8 @@ export class EdgeDrawer {
                 midY = (y1 + y2) / 2
             }
 
+            midX = isFinite(midX) ? midX : 0
+            midY = isFinite(midY) ? midY : 0
             if (style.rotateLabel) {
                 const dx = (edge.target.x ?? 0) - (edge.source.x ?? 0)
                 const dy = (edge.target.y ?? 0) - (edge.source.y ?? 0)

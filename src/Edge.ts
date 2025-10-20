@@ -118,6 +118,14 @@ export class Edge<T = EdgeData, U = EdgeFullStyle> {
         if (!document) return null
         return document.getElementById(`edge-${this.domID}`) as SVGGElement | null
     }
+    
+    setFrom(node: Node): void {
+        this.from = node
+    }
+
+    setTo(node: Node): void {
+        this.to = node
+    }
 
     /**
      * Convert edge to a simple JSON object representation.

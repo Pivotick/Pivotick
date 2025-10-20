@@ -180,6 +180,8 @@ export function createSampleGraph(): Pivotick {
         ail: (() => {
             const nodes = ailGraph.nodes.map(n => new Node(n.id, {
                 label: n.text,
+                custom_field: Math.random() < 0.5 ? 'fusion' : 'fission',
+                useless_field: '',
                 ...n
             }, {
                 ...n.style,
@@ -197,9 +199,31 @@ export function createSampleGraph(): Pivotick {
             return { nodes, edges }
         })(),
 
+        ail_reversed: (() => {
+            const nodes = ailGraph.nodes.map(n => new Node(n.id, {
+                label: n.text,
+                custom_field: Math.random() < 0.5 ? 'fusion' : 'fission',
+                useless_field: '',
+                ...n
+            }, {
+                ...n.style,
+                textColor: '#000',
+                iconClass: n.style.icon_class,
+                iconUnicode: n.style.icon,
+            }))
+            const edges = []
+            for (let i = 0; i < ailGraph.links.length - 1; i++) {
+                const e = ailGraph.links[i]
+                edges.push(new Edge(`e${i}`, nodes.find(n => n.id === e.target)!, nodes.find(n => n.id === e.source)!, {
+                    label: e.relationship || '?'
+                }, {}))
+            }
+            return { nodes, edges }
+        })(),
+
     }
 
-    const topo = 'vt'
+    const topo = 'tree'
     const graph = new Pivotick(container, {nodes: topologies[topo].nodes, edges: topologies[topo].edges}, {
         // isDirected: false,
         simulation: {
@@ -299,6 +323,7 @@ function addRandomNode(counter: number, graph: Pivotick) {
 }
 
 const graph = createSampleGraph()
+window.pivotick = graph
 // let counter = 0
 // setInterval(() => {
 //     addRandomNode(counter, graph)

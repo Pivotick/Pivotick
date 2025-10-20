@@ -14,25 +14,19 @@ import type { Node } from '../../Node'
 import type { Edge } from '../../Edge'
 import hasCycle from '../analytics/cycle'
 import { findFirstZeroInDegreeNode, findMaxReachabilityRoot, findMinHeightDAGRoot, findMinMaxDistanceRoot } from '../analytics/DAGAlgorithms'
+import type { TreeLayoutOptions } from '../../GraphOptions'
 
 export type TreeLayoutAlgorithm = 'FirstZeroInDegree' | 'MaxReachability' | 'MinMaxDistance' | 'MinHeight'
 
-export interface TreeLayoutOptions {
-    rootId: string | undefined
-    rootIdAlgorithmFinder: TreeLayoutAlgorithm
-    strength: number // Force strength (default 0.1)
-    radial: boolean  /** @default: false Use radial tree layout */
-    radialGap: number /** @default: 750 */
-    horizontal: boolean  /** @default: false Make the tree layour horizontal instead of vertical */
-}
-
 const DEFAULT_TREE_LAYOUT_OPTIONS: TreeLayoutOptions = {
+    type: 'tree',
     rootId: undefined,
     rootIdAlgorithmFinder: 'MaxReachability',
     strength: 0.25,
     radial: false,
     radialGap: 750,
     horizontal: false,
+    flipEdgeDirection: false,
 }
 
 export interface TreeNode extends Node {
@@ -71,6 +65,7 @@ export class TreeLayout {
             link: this.simulationForces.link.strength(),
             charge: this.simulationForces.charge.strength(),
             center: this.simulationForces.center.strength(),
+            gravity: this.simulationForces.gravity.strength(),
         }
 
         this.width = 0
@@ -80,7 +75,7 @@ export class TreeLayout {
         this.levels = {}
 
         const nodes = this.graph.getNodes()
-        const edges = this.graph.getEdges()
+        const edges = this.options.flipEdgeDirection ? this.flipEdgeDirection(this.graph.getEdges()) : this.graph.getEdges()
         if (hasCycle(nodes, edges)) {
             this.graph.Notifier.warning('Tree layout unavailable', 'The graph contains a cycle, so it cannot be displayed as a tree.')
             return
@@ -92,8 +87,8 @@ export class TreeLayout {
 
     public update(): void {
         const nodes = this.graph.getNodes()
-        const edges = this.graph.getEdges()
-        const { levels } = TreeLayout.buildLevels(nodes, edges, this.options.rootIdAlgorithmFinder)
+        const edges = this.options.flipEdgeDirection ? this.flipEdgeDirection(this.graph.getEdges()) : this.graph.getEdges()
+        const { levels } = TreeLayout.buildLevels(nodes, edges, undefined, this.options.rootIdAlgorithmFinder)
         const { nodes: positionedNodes, nodeById: positionedNodesByID } = TreeLayout.buildTree(nodes, edges, this.options, this.canvasBCR)
         this.positionedNodesByID = positionedNodesByID
 
@@ -101,6 +96,15 @@ export class TreeLayout {
         if (positionedNodes) {
             this.setNodePositions(positionedNodes, this.options)
         }
+    }
+
+    private flipEdgeDirection(edges: Edge[]): Edge[] {
+        edges.forEach((edge) => {
+            const tmp = edge.from
+            edge.setFrom(edge.to)
+            edge.setTo(tmp)
+        })
+        return edges
     }
 
     private setSizes(): void {
@@ -124,6 +128,10 @@ export class TreeLayout {
 
                     node.x = r * Math.cos(angle - Math.PI / 2)
                     node.y = r * Math.sin(angle - Math.PI / 2)
+                    node.fx = node.x
+                    node.fy = node.y
+                    // delete node.fx
+                    // delete node.fy
                 } else if (options.horizontal) {
                     node.x = positionedNode.y
                     node.fx = positionedNode.y
@@ -151,10 +159,16 @@ export class TreeLayout {
         if (this.options.radial) {
             const radialForce = d3ForceRadial<Node>(
                 (node: Node) => (this.levels[node.id] ?? 1) * 100,
-                this.center[0],
-                this.center[1]
+                0,
+                0
             ).strength(strength)
             this.simulation.force('tree-radial', radialForce)
+            // this.simulation.force('tree-y', d3ForceY((node: Node) => {
+            //     return this.positionedNodesByID.get(node.id)?.y ?? 0
+            // }).strength(strength))
+            // this.simulation.force('tree-x', d3ForceX((node: Node) => {
+            //     return this.positionedNodesByID.get(node.id)?.x ?? 0
+            // }).strength(strength))
         } else {
             this.simulation.force('tree-y', d3ForceY((node: Node) => {
                 if (this.options.horizontal) {
@@ -205,7 +219,7 @@ export class TreeLayout {
             return
         }
 
-        const { levels } = TreeLayout.buildLevels(nodes, edges, options.rootIdAlgorithmFinder)
+        const { levels } = TreeLayout.buildLevels(nodes, edges, undefined, options.rootIdAlgorithmFinder)
         const { nodeById: positionedNodesByID } = TreeLayout.buildTree(nodes, edges, options, canvasBCR)
 
         if (options.radial) {
@@ -215,6 +229,12 @@ export class TreeLayout {
                 center[1]
             ).strength(strength)
             simulation.force('tree-radial', radialForce)
+            // simulation.force('tree-y', d3ForceY((node: Node) => {
+            //     return positionedNodesByID.get(node.id)?.y ?? 0
+            // }).strength(strength))
+            // simulation.force('tree-x', d3ForceX((node: Node) => {
+            //     return positionedNodesByID.get(node.id)?.x ?? 0
+            // }).strength(strength))
         } else {
             simulation.force('tree-y', d3ForceY((node: Node) => {
                 if (options.horizontal) {
@@ -239,18 +259,21 @@ export class TreeLayout {
         if (options?.radial) {
             simulationForces.link.strength(0)
             simulationForces.charge.strength(0)
-            // simulationForces.center.strength(0.00001)
+            simulationForces.center.strength(0)
+            simulationForces.gravity.strength(0)
         } else {
             simulationForces.link.strength(0)
             simulationForces.charge.strength(0)
+            simulationForces.gravity.strength(0.00001)
             simulationForces.center.strength(0.00001)
         }
     }
-
-    static resetOtherSimulationForces(simulationForces: simulationForces, originalForceStrength: { link: any; charge: any; center: any }): void {
+    
+    static resetOtherSimulationForces(simulationForces: simulationForces, originalForceStrength: { link: any; charge: any; center: any, gravity: any }): void {
         simulationForces.link.strength(originalForceStrength.link)
         simulationForces.charge.strength(originalForceStrength.charge)
         simulationForces.center.strength(originalForceStrength.center)
+        simulationForces.gravity.strength(originalForceStrength.gravity)
     }
 
     static simulationDone(
@@ -262,13 +285,18 @@ export class TreeLayout {
     ): void {
         const options = merge({}, DEFAULT_TREE_LAYOUT_OPTIONS, partialOptions)
         for (const node of nodes) {
-            if (options.horizontal) {
+            if (options.radial) {
                 node.fx = node.x
-                delete node.fy
-            } else {
                 node.fy = node.y
-                delete node.fx
-              }
+            } else {
+                if (options.horizontal) {
+                    node.fx = node.x
+                    delete node.fy
+                } else {
+                    node.fy = node.y
+                    delete node.fx
+                }
+            }
         }
     }
 

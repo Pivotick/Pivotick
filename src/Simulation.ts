@@ -16,12 +16,13 @@ import { drag as d3Drag } from 'd3-drag'
 import type { Graph } from './Graph'
 import type { Node } from './Node'
 import type { Edge } from './Edge'
-import type { LayoutType, SimulationCallbacks, SimulationOptions, TreeLayoutOptions } from './GraphOptions'
+import type { LayoutOptions, LayoutType, SimulationCallbacks, SimulationOptions, TreeLayoutOptions } from './GraphOptions'
 import { runSimulationInWorker } from './SimulationWorkerWrapper'
 import merge from 'lodash.merge'
 import { TreeLayout } from './plugins/layout/Tree'
 import { edgeLabelGetter } from './utils/GraphGetters'
 import type { NodeSelection } from './GraphInteractions'
+import type { DeepPartial } from './utils/utils'
 
 
 export const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
@@ -60,6 +61,7 @@ export interface simulationForces {
     charge: d3ForceManyBodyType<Node>,
     center: d3ForceCenterType<Node>,
     collide: d3ForceCollideType<Node>,
+    gravity: d3ForceCenterType<Node>
 }
 
 interface dragSelectionNode {
@@ -132,7 +134,7 @@ export class Simulation {
             charge: d3ForceManyBodyType<Node>,
             center: d3ForceCenterType<Node>,
             collide: d3ForceCollideType<Node>,
-            gravity: typeof ForceGravity<Node>,
+            gravity: d3ForceCenterType<Node>,
         }
     } {
         const simulationForces = {
@@ -377,7 +379,7 @@ export class Simulation {
         updatedNodes.forEach((updatedNode, i) => {
             nodes[i].x = updatedNode.x
             nodes[i].y = updatedNode.y
-            
+
             if (updatedNode.fx) {
                 nodes[i].fx = updatedNode.fx
             } else {
@@ -463,23 +465,25 @@ export class Simulation {
         return this.simulationForces
     }
 
-    public async changeLayout(type: LayoutType, layoutOptions: any = {}) {
+    public async changeLayout(type: LayoutType, simulationOptions: DeepPartial<SimulationOptions> = {}) {
         if (this.layout) {
             this.layout?.unregisterLayout()
             this.layout = undefined
         }
 
+        simulationOptions = simulationOptions ?? {}
+        simulationOptions.layout = simulationOptions.layout ?? {}
+        simulationOptions.layout.type = type
+
         if (type === 'force') {
             this.applyScalledSimulationOptions()
         } else if (type === 'tree') {
-            this.layout = new TreeLayout(this.graph, this.simulation, this.simulationForces, layoutOptions)
-        } else if (type === 'tree-radial') {
-            this.layout = new TreeLayout(this.graph, this.simulation, this.simulationForces, layoutOptions)
+            this.layout = new TreeLayout(this.graph, this.simulation, this.simulationForces, simulationOptions.layout as TreeLayoutOptions)
         }
         this.options.layout.type = type
         this.update()
         this.pause()
-        await this.runSimulationWorker(layoutOptions)
+        await this.runSimulationWorker(simulationOptions as SimulationOptions)
         this.restart()
 
         await this.waitForSimulationStop()

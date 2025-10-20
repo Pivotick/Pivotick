@@ -75,7 +75,11 @@ export class NodeDrawer {
 
     public updatePositions(nodeSelection: Selection<SVGGElement, Node<NodeData>, SVGGElement, unknown>): void {
         nodeSelection
-            .attr('transform', d => `translate(${d.x ?? 0},${d.y ?? 0})`)
+            .attr('transform', d => {
+                const x = isFinite(d.x) ? d.x : 0
+                const y = isFinite(d.y) ? d.y : 0
+                return `translate(${x},${y})`
+            })
     }
 
     private defaultNodeRender(nodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {

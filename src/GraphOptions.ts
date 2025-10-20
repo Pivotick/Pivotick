@@ -3,6 +3,7 @@ import { Node } from './Node'
 import { Edge } from './Edge'
 import type { Simulation } from './Simulation'
 import type { UIVariant } from './utils/ElementCreation'
+import type { TreeLayoutAlgorithm } from './plugins/layout/Tree'
 
 export interface InterractionCallbacks<TElement = unknown> {
     /**
@@ -237,7 +238,7 @@ export interface graphData {
     edges: Array<Edge>,
 }
 
-export type LayoutType = 'force' | 'tree' | 'tree-radial'
+export type LayoutType = 'force' | 'tree'
 
 
 export interface BaseLayoutOptions {
@@ -250,10 +251,14 @@ export interface ForceLayoutOptions extends BaseLayoutOptions {
     type: 'force'
 }
 export interface TreeLayoutOptions extends BaseLayoutOptions {
-    type: 'tree' | 'tree-radial'
+    type: 'tree'
     rootId?: string /** @default: undefined */
     strength?: number /** @default: 0.1 */
     radial?: boolean /** @default: false */
+    horizontal?: boolean /** @default: false */
+    rootIdAlgorithmFinder: TreeLayoutAlgorithm
+    radialGap: number /** @default: 750 */
+    flipEdgeDirection: boolean /** @default: false */
 }
 
 /**
