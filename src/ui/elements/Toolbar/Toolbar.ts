@@ -29,8 +29,8 @@ export class Toolbar implements UIElement {
         <div class="icon-container">
             ${magnifyingGlass}
         </div>
-        <input type="search" id="pivotick-search" class="" placeholder="Search" required />
-        <button type="submit" class="">Search</button>
+        <input type="search" id="pivotick-search" class="" placeholder="Search" required disabled />
+        <button type="submit" class="" disabled>Search</button>
     </div>
   </div>
 `
@@ -42,15 +42,15 @@ export class Toolbar implements UIElement {
         const templateFilter = document.createElement('template')
         templateFilter.innerHTML = `
   <div class="pivotick-filter">
-    <button id="pivotick-filter-button" class="pivotick-button-filter">
+    <button id="pivotick-filter-button" class="pivotick-button-filter" disabled>
         ${funel}
     </button>
     <div style="border-left: 1px solid color-mix(in srgb, var(--pivotick-border-color) 80%, transparent);"></div>
     <div class="pivotick-undoredo-group">
-        <button id="pivotick-undo-button" class="pivotick-button-undo">
+        <button id="pivotick-undo-button" class="pivotick-button-undo" disabled>
             ${undo}
         </button>
-        <button id="pivotick-redo-button" class="pivotick-button-redo">
+        <button id="pivotick-redo-button" class="pivotick-button-redo" disabled>
             ${redo}
         </button>
     </div>

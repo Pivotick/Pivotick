@@ -1,5 +1,6 @@
 .pivotick-graphcontrols-container {
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    pointer-events: none;
 
     .pivotick-graphcontrols {
         display: flex;
@@ -22,6 +23,7 @@
         }
 
         .pivotick-graphcontrols-layout {
+            pointer-events: all;
 
             .pivotick-graphcontrols-layout-type-container {
                 display: flex;
@@ -91,6 +93,7 @@
             &.shown {
                 opacity: 100;
                 transform: translateX(0px);
+                pointer-events: all;
             }
 
             .pivotick-graphcontrols-selection-title {
