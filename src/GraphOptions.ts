@@ -101,6 +101,16 @@ export interface InterractionCallbacks<TElement = unknown> {
      * Called when the mouse move over the canvas.
      */
     onCanvasMousemove?: (event: MouseEvent) => void
+
+    /**
+     * Called when the simulation ticks.
+     */
+    onSimulationTick?: () => void
+
+    /**
+     * Called when the every tenth of simulation ticks.
+     */
+    onSimulationSlowTick?: () => void
 }
 
 export interface NodeStyle {

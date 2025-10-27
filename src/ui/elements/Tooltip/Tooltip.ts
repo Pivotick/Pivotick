@@ -75,6 +75,7 @@ export class Tooltip implements UIElement {
             }
         })
         this.uiManager.graph.renderer.getGraphInteraction().on('canvasZoom', this.canvasZoomed.bind(this))
+        this.uiManager.graph.renderer.getGraphInteraction().on('simulationSlowTick', this.simulationSlowTick.bind(this))
 
         this.tooltip.addEventListener('mouseenter', () => {
             if (this.hideTimeout) {
@@ -137,7 +138,11 @@ export class Tooltip implements UIElement {
     }
 
     private canvasZoomed() {
-        this.updateShadowLinks()
+        this.updateShadowLinks(true)
+    }
+
+    private simulationSlowTick() {
+        this.updateShadowLinks(true)
     }
 
     private createNodeTooltip(node: Node) {
@@ -455,14 +460,22 @@ export class Tooltip implements UIElement {
         this.shadowLinkContainer?.appendChild(shadowLink)
     }
 
-    private updateShadowLinks(): void {
+    private updateShadowLinks(recalculateBBoxes = false): void {
         for (const [ pinnedTt, element ] of this.tooltipDataMap.entries()) {
-            this.updateShadowLink(pinnedTt, element)
+            this.updateShadowLink(pinnedTt, element, recalculateBBoxes)
         }
     }
 
-    private updateShadowLink(pinnedTt: HTMLElement, element: Node | Edge) {
-        const bboxes = this.shadowlinkBoundingBoxesMap.get(pinnedTt)!
+    private updateShadowLink(pinnedTt: HTMLElement, element: Node | Edge, recalculateBBoxes = false) {
+        let bboxes
+        if (recalculateBBoxes) {
+            bboxes = [
+                pinnedTt.getBoundingClientRect(),
+                element.getGraphElement()!.getBoundingClientRect(),
+            ]
+        } else {
+            bboxes = this.shadowlinkBoundingBoxesMap.get(pinnedTt)!
+        }
         const {width: ttWidth, height: ttHeight } = bboxes[0]
         const { x: nx, y: ny, width: nWidth, height: nHeight } = bboxes[1]
         const shadowLink = this.shadowlinkMap.get(pinnedTt)

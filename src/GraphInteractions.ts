@@ -36,6 +36,8 @@ type GraphInteractionEvents<TElement> = {
     canvasZoom: (event: unknown) => void;
     canvasMousemove: (event: MouseEvent) => void;
     canvasContextmenu: (event: PointerEvent) => void;
+    simulationTick: () => void;
+    simulationSlowTick: () => void;
 
     selectNode: (node: Node, element: TElement) => void;
     unselectNode: (node: Node, element: TElement) => void;
@@ -68,6 +70,7 @@ export class GraphInteractions<TElement = unknown> {
             edgeClick: [], edgeDbclick: [], edgeHoverIn: [], edgeHoverOut: [],
             edgeSelect: [], edgeBlur: [], edgeContextmenu: [],
             canvasClick: [], canvasMousemove: [], canvasContextmenu: [], canvasZoom: [],
+            simulationTick: [], simulationSlowTick: [],
             selectNode: [], unselectNode: [], selectEdge: [], unselectEdge: [],
             selectNodes: [], unselectNodes: [], selectEdges: [], unselectEdges: [],
         }
@@ -205,6 +208,20 @@ export class GraphInteractions<TElement = unknown> {
         this.emit('canvasMousemove', event)
         if (this.callbacks.onCanvasMousemove && typeof this.callbacks.onCanvasMousemove === 'function') {
             this.callbacks.onCanvasMousemove(event)
+        }
+    }
+
+    public simulationTick(): void {
+        this.emit('simulationTick')
+        if (this.callbacks.onSimulationTick && typeof this.callbacks.onSimulationTick === 'function') {
+            this.callbacks.onSimulationTick()
+        }
+    }
+
+    public simulationSlowTick(): void {
+        this.emit('simulationSlowTick')
+        if (this.callbacks.onSimulationSlowTick && typeof this.callbacks.onSimulationSlowTick === 'function') {
+            this.callbacks.onSimulationSlowTick()
         }
     }
 

@@ -158,5 +158,6 @@
         stroke-width: 2;
         stroke-opacity: 0.3;
         stroke-dasharray: var(--pivotick-edge-stroke-dasharray);
+        animation: var(--pivotick-edge-animation);
     }
 }

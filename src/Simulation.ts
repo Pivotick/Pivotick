@@ -82,6 +82,7 @@ export class Simulation {
     private engineRunning: boolean = false
     private dragInProgress: boolean = false
     private dragSelection: dragSelectionNode[] = []
+    private totalTickCount: number = 0
 
     private options: SimulationOptions
     private callbacks: Partial<SimulationCallbacks>
@@ -324,10 +325,15 @@ export class Simulation {
                     this.callbacks.onStop(this)
                 }
             }
+            this.totalTickCount++
             this.simulation.tick()
             this.graph.tickUpdate()
             if (this.callbacks.onTick) {
                 this.callbacks.onTick(this)
+            }
+            this.graph.renderer.getGraphInteraction().simulationTick()
+            if (this.totalTickCount % 10 === 0) {
+                this.graph.renderer.getGraphInteraction().simulationSlowTick()
             }
         }
     }
