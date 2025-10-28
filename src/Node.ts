@@ -90,6 +90,12 @@ export class Node<T = NodeData> {
         })
     }
 
+    getConnectingNodes(): Node[] {
+        return [...this.edgesIn].map(edge => {
+            return edge.from
+        })
+    }
+
     /**
      * Get the node's data.
      */

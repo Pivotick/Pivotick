@@ -5,7 +5,7 @@ import type { Node } from '../../../Node'
 import { createHtmlElement, createIcon } from '../../../utils/ElementCreation'
 import { tryResolveValue } from '../../../utils/Getters'
 import { createButton } from '../../components/Button'
-import { expand, focusElement, hide, inspect, pin, selectElement, selectNeighbor, unpin } from '../../icons'
+import { expand, focusElement, hide, inspect, pin, selectNeighbor, unpin } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import './contextmenu.scss'
 import { deepMerge } from '../../../utils/utils'
@@ -40,12 +40,18 @@ const defaultMenuNode = {
             title: 'Focus Node',
             svgIcon: focusElement,
             variant: 'outline-primary',
+            cb(evt: PointerEvent, node: Node) {
+                this.uiManager.graph.focusElement(node)
+            },
         },
         {
             title: 'Hide Node',
             svgIcon: hide,
             variant: 'outline-danger',
             flushRight: true,
+            visible: (node: Node) => {
+                return false // FIXME: Implement feature
+            },
         },
     ] as MenuQuickActionItemOptions[],
     menu: [
@@ -54,18 +60,40 @@ const defaultMenuNode = {
             title: 'Select Neighbors',
             svgIcon: selectNeighbor,
             variant: 'outline-primary',
+            cb(evt: PointerEvent, node: Node) {
+                const neighbors = [
+                    ...node.getConnectedNodes(),
+                    ...node.getConnectingNodes()
+                ].map((node) => {
+                    return [
+                        node,
+                        node.getGraphElement()
+                    ]
+                })
+                this.uiManager.graph.renderer.getGraphInteraction().selectNodes(neighbors)
+            },
         },
         {
             text: 'Hide Children',
             title: 'Hide Children',
             svgIcon: hide,
             variant: 'outline-primary',
+            visible: (node: Node) => {
+                return false // FIXME: Implement feature
+            },
+            cb(evt: PointerEvent, node: Node) {
+            },
         },
         {
             text: 'Expand Node',
             title: 'Expand Node',
             svgIcon: expand,
             variant: 'outline-primary',
+            visible: (node: Node) => {
+                return false // FIXME: Implement feature
+            },
+            cb(evt: PointerEvent, node: Node) {
+            },
         },
         {
             text: 'Inspect Properties',
@@ -300,7 +328,7 @@ export class ContextMenu implements UIElement {
         )
         if (typeof cb === 'function') {
             span.addEventListener('click', (event: PointerEvent) => {
-                cb(event, this.element)
+                cb.call(this, event, this.element)
                 this.hide()
             })
         }
@@ -322,7 +350,7 @@ export class ContextMenu implements UIElement {
         )
         if (typeof action.cb === 'function') {
             div.addEventListener('click', (event: PointerEvent) => {
-                action.cb(event, this.element)
+                action.cb.call(this, event, this.element)
                 this.hide()
             })
         }
