@@ -298,7 +298,7 @@ export class Graph {
     }
 
     focusElement(element: Node | Edge): void {
-        console.log(element)
+        this.renderer.focusElement(element.getGraphElement())
     }
 
     selectElement(element: Node | Edge): void {

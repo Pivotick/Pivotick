@@ -32,6 +32,7 @@ export abstract class GraphRenderer {
     abstract zoomIn(): void
     abstract zoomOut(): void
     abstract fitAndCenter(): void
+    abstract focusElement(element: any): void
 
     public getCanvasContainer(): HTMLElement {
         return this.container.querySelector('.pivotick-canvas-container') as HTMLElement

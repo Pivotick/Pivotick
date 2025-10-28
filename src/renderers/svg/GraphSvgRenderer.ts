@@ -318,6 +318,44 @@ export class GraphSvgRenderer extends GraphRenderer {
         canvas.transition().duration(300).call(zoomBehavior.transform, transform)
     }
 
+    public focusElement(targetEl: SVGGElement): void {
+        const zoomBehavior = this.getZoomBehavior()
+        const canvas = this.getCanvasSelection()
+        const svgEl = canvas.node() as SVGSVGElement
+        const zoomLayerEl = canvas.select('.zoom-layer').node() as SVGGElement
+
+        if (!zoomBehavior || !svgEl || !zoomLayerEl || !targetEl) return
+        const svgBounds = zoomLayerEl.getBBox()
+
+        const fullWidth = svgEl.clientWidth
+        const fullHeight = svgEl.clientHeight
+        const width = svgBounds.width
+        const height = svgBounds.height
+
+        const transformList = targetEl.transform.baseVal
+
+        let dx = 0, dy = 0
+        if (transformList.numberOfItems > 0) {
+            const t = transformList.getItem(0) // assumes only one transform (translate/scale)
+
+            dx = t.matrix.e
+            dy = t.matrix.f
+        }
+
+        const scale = Math.min(
+            fullWidth / width,
+            fullHeight / height
+        ) * 1.5
+        const translateX = fullWidth / 2 - scale * dx
+        const translateY = fullHeight / 2 - scale * dy
+
+        const transform = d3ZoomIdentity
+            .translate(translateX, translateY)
+            .scale(scale)
+
+        canvas.transition().duration(300).call(zoomBehavior.transform, transform)
+    }
+
     private updateNodePositions(): void {
         this.nodeDrawer.updatePositions(this.nodeSelection)
     }
