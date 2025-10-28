@@ -100,6 +100,12 @@ const defaultMenuNode = {
             title: 'Inspect Properties',
             svgIcon: inspect,
             variant: 'outline-primary',
+            visible: (node: Node) => {
+                return true
+            },
+            cb(evt: PointerEvent, node: Node) {
+                this.uiManager.graph.renderer.getGraphInteraction().selectNode(node.getGraphElement(), node)
+            },
         },
     ] as MenuActionItemOptions[],
 }
