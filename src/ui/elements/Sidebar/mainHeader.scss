@@ -5,8 +5,9 @@
     align-items: center;
     box-sizing: border-box;
 
+    margin: 10px 8px;
     padding: 10px 12px;
-    background-color: var(--pivotick-sidebar-panelheader-bg);
+    background-color: var(--pivotick-sidebar-mainpanelheader-bg);
     border: var(--pivotick-sidebar-panel-border);
     box-shadow: var(--pivotic-sidebar-layout-shadow-bottom);
 
@@ -43,18 +44,35 @@
             .pivotick-mainheader-nodeinfo-name {
                 font-size: 16px;
                 font-weight: 600;
-                color: var(--pivotick-text-color);
-                text-overflow: ellipsis;
-                overflow: hidden;
-                user-select: all
+                color: var(--pivotick-text-color-6);
+                /* for multiline ellipsis */
+                white-space: normal;
+                overflow: auto;
+                word-break: break-all;
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                line-clamp: 2;
+                -webkit-box-orient: vertical;
+                box-orient: vertical;
+                user-select: all;
             }
 
             .pivotick-mainheader-nodeinfo-subtitle {
                 font-size: 12px;
-                color: var(--pivotick-text-color-softer);
+                color: var(--pivotick-text-color-5);
                 text-overflow: ellipsis;
                 overflow: hidden;
-                user-select: all
+                user-select: all;
+                /* for multiline ellipsis */
+                white-space: normal;
+                overflow: auto;
+                word-break: break-all;
+                display: -webkit-box;
+                -webkit-line-clamp: 3;
+                line-clamp: 3;
+                -webkit-box-orient: vertical;
+                box-orient: vertical;
+                user-select: all;
             }
 
             .pivotick-mainheader-nodeinfo-action {

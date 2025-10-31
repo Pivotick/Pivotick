@@ -1,5 +1,5 @@
 .pivotick-layout {
-    color: var(--pivotick-text-color)
+    color: var(--pivotick-text-color-6)
 }
 
 .hidden {
@@ -36,7 +36,7 @@
     }
     rect.fill {
         height: 8px;
-        fill: var(--pivotick-primary-bg-color);
+        fill: var(--pivotick-bg-color-primary);
         rx: 4;
         ry: 4;
     }
@@ -55,27 +55,32 @@ dl.pivotick-property-list {
 
     .pivotick-property-row {
         display: grid;
-        grid-template-columns: minmax(80px, auto) 2fr;
+        grid-template-columns: minmax(30px, 90px) 2fr;
         gap: 8px 12px;
-        padding: 0.5em 0;
+        padding: 0.25em 0;
         align-items: center;
 
         .pivotick-property-name {
+            font-size: 0.9rem;
             font-weight: 300;
-            color: var(--pivotick-text-color-softer);
+            color: var(--pivotick-text-color-5);
+            text-align: end;
             align-self: start;
             white-space: normal;
-            user-select: all
+            user-select: all;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .pivotick-property-value {
             margin-inline-start: 0;
+            font-size: 0.875rem;
             font-weight: 400;
             padding: 2px 4px;
-            border: 1px solid #eee;
+            border: 1px solid var(--pivotick-text-color-1);
             border-radius: 4px;
-            background-color: #f5f5f5;
-            color: var(--pivotick-text-color-softer);
+            background-color: var(--pivotick-bg-color-0);
+            color: var(--pivotick-text-color-primary);
             align-self: start;
             user-select: all;
             min-height: 1em;
@@ -88,6 +93,7 @@ dl.pivotick-property-list {
             line-clamp: 3;
             -webkit-box-orient: vertical;
             box-orient: vertical;
+            box-shadow: color-mix(in srgb, var(--pivotick-text-color-6) 6%, transparent) 0px 2px 4px 0px inset;
         }
     }
 }

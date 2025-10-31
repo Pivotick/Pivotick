@@ -47,7 +47,7 @@ const defaultMenuNode = {
             title: 'Hide Nodes',
             svgIcon: hide,
             variant: 'outline-danger',
-            visible: true,
+            visible: false,
             flushRight: true,
             cb: function(_evt: PointerEvent, nodes: Node[]) {
                 nodes.forEach((node: Node) => {

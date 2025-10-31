@@ -201,7 +201,7 @@ export class SidebarProperties implements UIElement {
                         {},
                         [
                             createHtmlElement('div', {
-                                style: 'text-align: center; font-weight: 300; font-size: 0.9rem; color: var(--pivotick-text-color-softer);'
+                                style: 'text-align: center; font-weight: 300; font-size: 0.9rem; color: var(--pivotick-text-color-5);'
                             }, [
                                 `... ${valueCountMap.size - i} more`
                             ]),

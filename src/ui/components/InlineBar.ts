@@ -34,10 +34,7 @@ export function createInlineBar(
     // Percentage text
     const percentSpan = document.createElement('span')
     percentSpan.textContent = `${percentage.toFixed(0)}%`
-    percentSpan.style.whiteSpace = 'nowrap'
-    percentSpan.style.width = '36px'
-    percentSpan.style.textAlign = 'left'
-    percentSpan.style.color = 'var(--pivotick-text-color-softer2)'
+    percentSpan.classList.add('pivotick-inline-bar-percent')
     root.appendChild(percentSpan)
 
     return root

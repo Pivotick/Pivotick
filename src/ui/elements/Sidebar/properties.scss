@@ -2,21 +2,14 @@
 
     .pivotick-aggregated-property-section {
         margin-bottom: 14px;
-        border: var(--pivotick-sidebar-panel-border);
-        border-radius: 4px;
-        box-shadow: var(--pivotic-sidebar-layout-shadow-right);
 
         .pivotick-aggregated-property-title {
             display: block;
             padding: 8px;
-            border-top-left-radius: 4px;
-            border-top-right-radius: 4px;
-            border-bottom: var(--pivotick-sidebar-panel-border);
-            background-color: var(--pivotick-sidebar-subpanelheader-bg);
             text-align: left;
             font-size: .9rem;
             font-weight: 500;
-            color: color-mix(in srgb, var(--pivotick-primary-bg-color) 70%, #000);
+            color: color-mix(in srgb, var(--pivotick-bg-color-primary) 70%, var(--pivotick-text-color-6));
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             text-transform: uppercase;
         }
@@ -38,15 +31,18 @@
                     font-size: 0.8rem;
 
                     &.code-container {
-                        padding: 2px 4px;
-                        border: 1px solid #eee;
-                        border-radius: 4px;
-                        background-color: #f5f5f5;
-                        color: var(--pivotick-text-color-softer);
                         margin-right: 8px;
                         text-overflow: ellipsis;
                         overflow: hidden;
                         user-select: all;
+
+                        font-size: 0.875rem;
+                        font-weight: 400;
+                        padding: 2px 4px;
+                        border: 1px solid var(--pivotick-text-color-1);
+                        border-radius: 4px;
+                        background-color: var(--pivotick-bg-color-0);
+                        color: var(--pivotick-text-color-primary);
                     }
                 }
 
@@ -57,7 +53,7 @@
                 .pivotick-aggregated-property-value-dim {
                     display: inline-block;
                     width: 100%;
-                    color: var(--pivotick-text-color-softer3);
+                    color: var(--pivotick-text-color-3);
                     font-style: italic;
                     text-align: center;
                 }

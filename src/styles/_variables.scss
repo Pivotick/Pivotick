@@ -13,16 +13,33 @@ $toast-text-success: text-color($success);
 :root {
     --pivotick-bg: #ffffff;
     --pivotick-border-color: #ccc;
-    --pivotick-text-color: #000;
-    --pivotick-text-color-softer: #333;
-    --pivotick-text-color-softer2: #666;
-    --pivotick-text-color-softer3: #999;
-    --pivotick-primary-bg-color: #{$primary};
-    --pivotick-secondary-bg-color: #{$secondary};
-    --pivotick-info-bg-color: #{$info};
-    --pivotick-warning-bg-color: #{$warning};
-    --pivotick-danger-bg-color: #{$danger};
-    --pivotick-success-bg-color: #{$success};
+
+    --pivotick-text-color-0: #fff;
+    --pivotick-text-color-1: #e0e0e0;
+    --pivotick-text-color-2: #bbb;
+    --pivotick-text-color-3: #999;
+    --pivotick-text-color-4: #666;
+    --pivotick-text-color-5: #333;
+    --pivotick-text-color-6: #000;
+    --pivotick-text-color-primary: #{$primary};
+    --pivotick-text-color-secondary: #{$secondary};
+    --pivotick-text-color-info: #{$info};
+    --pivotick-text-color-warning: #{$warning};
+    --pivotick-text-color-danger: #{$danger};
+    --pivotick-text-color-success: #{$success};
+
+    --pivotick-bg-color-0: #fff;
+    --pivotick-bg-color-1: #fafafa;
+    --pivotick-bg-color-2: #f3f3f3;
+    --pivotick-bg-color-2: #e6e6e6;
+    --pivotick-bg-color-4: #e0e0e0;
+    --pivotick-bg-color-5: #d6d6d6;
+    --pivotick-bg-color-primary: #{$primary};
+    --pivotick-bg-color-secondary: #{$secondary};
+    --pivotick-bg-color-info: #{$info};
+    --pivotick-bg-color-warning: #{$warning};
+    --pivotick-bg-color-danger: #{$danger};
+    --pivotick-bg-color-success: #{$success};
     --pivotick-text-color-for-primary: #fff;
     --pivotick-text-color-for-secondary: #fff;
     --pivotick-text-color-for-info: #fff;
@@ -38,21 +55,22 @@ $toast-text-success: text-color($success);
 
 
     /* Sidebar */
-    --pivotick-sidebar-panelheader-bg: #fafafa;
-    --pivotick-sidebar-panelbody-bg: #fff;
-    --pivotick-sidebar-panel-border: 1px solid #e0e0e0;
-    --pivotick-sidebar-subpanelheader-bg: #f6f3f4;
-    --pivotick-mainheader-nodepreview-bg: #ffffff;
+    --pivotick-sidebar-mainpanelheader-bg: var(--pivotick-bg-color-1);
+    --pivotick-sidebar-panelheader-bg: var(--pivotick-bg-color-4);
+    --pivotick-sidebar-panelbody-bg: var(--pivotick-bg-color-0);
+    --pivotick-sidebar-panel-border: 1px solid var(--pivotick-text-color-1);
+    --pivotick-sidebar-subpanelheader-bg: var(--pivotick-bg-color-2);
+    --pivotick-mainheader-nodepreview-bg: var(--pivotick-bg-color-0);
     --pivotic-sidebar-layout-shadow-right: rgba(0, 0, 0, 0.07) 2px 0px 3px 0px,
                                            rgba(0, 0, 0, 0.04) 3px 0px 2px 0px;
     --pivotic-sidebar-layout-shadow-bottom: rgba(0, 0, 0, 0.07) 3px 2px 3px 0px,
                                             rgba(0, 0, 0, 0.04) 2px 3px 2px 0px;
     --pivotic-sidebar-collapse-bg: var(--pivotick-bg);
-    --pivotic-sidebar-collapse-color: var(--pivotick-text-color-softer2);
+    --pivotic-sidebar-collapse-color: var(--pivotick-text-color-4);
     --pivotic-sidebar-collapse-shadow: var(--pivotick-box-shadow-strong);
 
     /* Tooltip */
-    --pivotick-tooltip-floating-bg-color: #d6d6d6;
+    --pivotick-tooltip-floating-bg-color: var(--pivotick-bg-color-5);
 
     /* Graph notification */
     --pivotick-toast-bg-color-primary: #{color.mix(white, $primary, 40%)};
@@ -77,8 +95,8 @@ $toast-text-success: text-color($success);
     --pivotic-graph-navigation-control-container-shadow:
         rgba(0, 0, 0, 0.22) 0px 0px 4px,
         rgba(0, 0, 0, 0.30) 0px 1px 2px;
-    --pivotick-selection-rectangle-fill: color-mix(in srgb, var(--pivotick-primary-bg-color) 20%, #ffffff00);
-    --pivotick-selection-rectangle-stroke:color-mix(in srgb, var(--pivotick-primary-bg-color) 80%, #ffffff00);
+    --pivotick-selection-rectangle-fill: color-mix(in srgb, var(--pivotick-bg-color-primary) 20%, #ffffff00);
+    --pivotick-selection-rectangle-stroke: color-mix(in srgb, var(--pivotick-bg-color-primary) 80%, #ffffff00);
 
     /* Node defaults */
     --pivotick-node-color: #007acc;
@@ -121,7 +139,7 @@ $toast-text-success: text-color($success);
 
     /* Component */
     --pivotick-inline-bar-bg: #e5e7eb;
-    --pivotick-inline-bar-fill-bg: var(--pivotick-primary-bg-color);
+    --pivotick-inline-bar-fill-bg: var(--pivotick-bg-color-primary);
     --pivotick-inline-bar-height: 0.5rem;
     --pivotick-inline-bar-width: 80px;
 }

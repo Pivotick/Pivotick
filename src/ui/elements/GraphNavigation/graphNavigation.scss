@@ -9,7 +9,7 @@
         padding: 3px;
         cursor: pointer;
         font-size: 1.0rem;
-        color: color-mix(in srgb, var(--pivotick-text-color-softer) 80%, white);
+        color: color-mix(in srgb, var(--pivotick-text-color-5) 80%, white);
         transition: font-size 0.15s ease;
         @media (prefers-color-scheme: dark) {
             color: #bbb;
@@ -17,7 +17,7 @@
 
         &:hover,
         &:active {
-            color: color-mix(in srgb, var(--pivotick-text-color-softer) 70%, black);
+            color: color-mix(in srgb, var(--pivotick-text-color-5) 70%, black);
             @media (prefers-color-scheme: dark) {
                 color: #fff;
             }

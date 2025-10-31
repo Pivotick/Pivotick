@@ -72,7 +72,7 @@
             gap: 10px;
             padding: 8px;
             border-bottom: var(--pivotick-sidebar-panel-border);
-            background-color: var(--pivotick-sidebar-panelheader-bg);
+            background-color: var(--pivotick-sidebar-mainpanelheader-bg);
 
             .pivotick-mainheader-topright {
                 position: absolute;
@@ -107,14 +107,14 @@
                 .pivotick-mainheader-nodeinfo-name {
                     font-size: 16px;
                     font-weight: 600;
-                    color: var(--pivotick-text-color);
+                    color: var(--pivotick-text-color-6);
                     user-select: all;
                     white-space: wrap;
                 }
 
                 .pivotick-mainheader-nodeinfo-subtitle {
                     font-size: 12px;
-                    color: var(--pivotick-text-color-softer);
+                    color: var(--pivotick-text-color-5);
                     user-select: all;
                     white-space: wrap;
                 }
@@ -126,12 +126,9 @@
         }
     
         .pivotick-properties-container {
-            padding: 8px;
+            padding: 4px;
 
             dl.pivotick-property-list {
-                padding: 4px 2px;
-                box-shadow: var(--pivotick-box-shadow-light);
-                border: var(--pivotick-sidebar-panel-border);
 
                 .pivotick-property-row {
                     padding: 0.2em;

@@ -11,4 +11,12 @@
         height: 100%;
         background-color: var(--pivotick-inline-bar-fill-bg);
     }
+
+}
+
+.pivotick-inline-bar-percent {
+    white-space: 'nowrap';
+    width: 36px;
+    text-align: right;
+    color: 'var(--pivotick-text-color-4)';
 }
