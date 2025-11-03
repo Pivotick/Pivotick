@@ -101,14 +101,22 @@ export class Sidebar implements UIElement {
 
         /* Multi selection */
         this.uiManager.graph.renderer.getGraphInteraction().on('selectNodes', (nodes: NodeSelection<unknown>[]) => {
-            this.sidebarMainHeader.updateNodesOverview(nodes)
-            this.sidebarProperties.updateNodesProperties(nodes)
-            this.extraPanelManager.updateNodes(nodes)
+            const fullSelection = this.uiManager.graph.renderer.getGraphInteraction().getSelectedNodes()
+            this.sidebarMainHeader.updateNodesOverview(fullSelection)
+            this.sidebarProperties.updateNodesProperties(fullSelection)
+            this.extraPanelManager.updateNodes(fullSelection)
         })
         this.uiManager.graph.renderer.getGraphInteraction().on('unselectNodes', () => {
-            this.sidebarMainHeader.clearOverview()
-            this.sidebarProperties.clearProperties()
-            this.extraPanelManager.clear()
+            const fullSelection = this.uiManager.graph.renderer.getGraphInteraction().getSelectedNodes()
+            if (fullSelection.length > 0) {
+                this.sidebarMainHeader.updateNodesOverview(fullSelection)
+                this.sidebarProperties.updateNodesProperties(fullSelection)
+                this.extraPanelManager.updateNodes(fullSelection)
+            } else {
+                this.sidebarMainHeader.clearOverview()
+                this.sidebarProperties.clearProperties()
+                this.extraPanelManager.clear()
+            }
         })
         this.uiManager.graph.renderer.getGraphInteraction().on('selectEdges', (edges: EdgeSelection<unknown>[]) => {
             this.sidebarMainHeader.updateEdgesOverview(edges)

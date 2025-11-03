@@ -52,15 +52,17 @@ dl.pivotick-property-list {
     background: #fff;
     font-size: 0.95em;
     overflow: hidden;
+    display: grid;
+    grid-template-columns: fit-content(90px) 1fr;
+    gap: 8px 12px;
 
     .pivotick-property-row {
-        display: grid;
-        grid-template-columns: minmax(30px, 90px) 2fr;
-        gap: 8px 12px;
+        display: contents;
         padding: 0.25em 0;
         align-items: center;
 
         .pivotick-property-name {
+            padding: 2px 4px;
             font-size: 0.9rem;
             font-weight: 300;
             color: var(--pivotick-text-color-5);

@@ -164,7 +164,7 @@ export class GraphSvgRenderer extends GraphRenderer {
         this.svg.on('dblclick.zoom', null)
         this.zoom
             .filter((event) => {
-                if (event.ctrlKey || event.shiftKey)
+                if (event.ctrlKey || event.shiftKey || event.altKey)
                     return false
                 const target = event.target as HTMLElement
                 return !(target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA')

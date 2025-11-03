@@ -1,6 +1,8 @@
 import type { GraphRenderer } from '../../GraphRenderer'
 import type { Node } from '../../Node'
 
+
+type SelectionMode = 'start' | 'add' | 'remove' // Start clears the selection
 export class SelectionBox {
     private renderer: GraphRenderer
     private svg: SVGSVGElement
@@ -9,6 +11,7 @@ export class SelectionBox {
     private startX = 0
     private startY = 0
     private isSelecting = false
+    private selectionMode: SelectionMode = 'start'
 
     constructor(renderer: GraphRenderer, svg: SVGSVGElement, selectionBoxGroup: SVGGElement | null) {
         this.renderer = renderer
@@ -33,7 +36,16 @@ export class SelectionBox {
 
     private onMouseDown = (e: MouseEvent) => {
         if (!this.selectionBoxGroup) return
-        if (!e.shiftKey) return // only with Shift+Click
+        if (e.shiftKey) {
+            this.selectionMode = 'add'
+        } else if (e.altKey) {
+            this.selectionMode = 'start'
+        } else if (e.ctrlKey) {
+            this.selectionMode = 'remove'
+        } else {
+            this.selectionMode = 'start'
+            return // No matching key
+        }
 
         this.svg.querySelectorAll('.selection-rectangle').forEach(el => el.remove())
 
@@ -79,7 +91,13 @@ export class SelectionBox {
         const bbox = this.rect.getBoundingClientRect()
         const selectedNodes = this.getNodesInRect(bbox)
 
-        this.renderer.getGraphInteraction().selectNodes(selectedNodes)
+        if (this.selectionMode == 'start') {
+            this.renderer.getGraphInteraction().selectNodes(selectedNodes)
+        } else if (this.selectionMode == 'add') {
+            this.renderer.getGraphInteraction().addNodesToSelection(selectedNodes)
+        } else if (this.selectionMode == 'remove') {
+            this.renderer.getGraphInteraction().removeNodesFromSelection(selectedNodes)
+        }
 
         this.selectionBoxGroup.removeChild(this.rect)
         this.rect = null
