@@ -1,5 +1,5 @@
-import { createHtmlDL, createHtmlElement, createHtmlTemplate } from '../../../utils/ElementCreation'
-import type { Node, NodeData } from '../../../Node'
+import { createHtmlDL, createHtmlElement, createHtmlTemplate, createIcon } from '../../../utils/ElementCreation'
+import type { Node } from '../../../Node'
 import type { Edge } from '../../../Edge'
 import type { GraphUI, PropertyEntry } from '../../../GraphOptions'
 import type { EdgeSelection, NodeSelection } from '../../../GraphInteractions'
@@ -7,6 +7,7 @@ import { createInlineBar } from '../../components/InlineBar'
 import type { UIElement, UIManager } from '../../UIManager'
 import './properties.scss'
 import { edgePropertiesGetter, nodePropertiesGetter } from '../../../utils/GraphGetters'
+import { filterAdd, filterRemove } from '../../icons'
 
 
 type aggregatedProperties = Map<string, Map<string, number>>
@@ -214,6 +215,7 @@ export class SidebarProperties implements UIElement {
                     container.append(row)
                     break
                 }
+                const actionButtons = !this.hasSpecialHighlighting(value) ? this.genActionButtons(propName, value) : ''
                 const row = createHtmlElement('div',
                     {
                         class: 'pivotick-aggregated-property-row',
@@ -225,7 +227,10 @@ export class SidebarProperties implements UIElement {
                                 !this.hasSpecialHighlighting(value) ? 'code-container' : '',
                             ]
                         }, [
-                            this.wrapValues(this.getDislayableValue(value))
+                            createHtmlElement('span', {}, [
+                                this.wrapValues(this.getDislayableValue(value)),
+                                actionButtons
+                            ])
                         ]),
                         createHtmlElement('span', { class: 'pivotick-aggregated-property-count' }, [
                             createInlineBar(count, selectedNodeCount)
@@ -273,6 +278,40 @@ export class SidebarProperties implements UIElement {
 
     private hasSpecialHighlighting(value: string): boolean {
         return this.isValueEmpty(value) || this.isValueUnique(value)
+    }
+
+    private genActionButtons(key: string, value: string): HTMLDivElement {
+        const buttonKeep = createHtmlElement('button', {
+            title: 'Select Similar',
+        }, [createIcon({ svgIcon: filterAdd }) ])
+        buttonKeep.addEventListener('click', () => {
+            const matchingNodes = this.uiManager.graph.renderer.getGraphInteraction().getSelectedNodes()
+                .filter((nodeSelection: NodeSelection<SVGGElement>) => {
+                    const node = nodeSelection.node
+                    return node.getData()[key] != value
+                })
+                .map((nodeSelection: NodeSelection<SVGGElement>) => [nodeSelection.node, nodeSelection.element])
+            this.uiManager.graph.renderer.getGraphInteraction().removeNodesFromSelection(matchingNodes)
+        })
+        
+        const buttonExclude = createHtmlElement('button', {
+            title: 'Exclude Similar',
+        }, [createIcon({ svgIcon: filterRemove }) ])
+        buttonExclude.addEventListener('click', () => {
+            const matchingNodes = this.uiManager.graph.renderer.getGraphInteraction().getSelectedNodes()
+                .filter((nodeSelection: NodeSelection<SVGGElement>) => {
+                    const node = nodeSelection.node
+                    return node.getData()[key] == value
+                })
+                .map((nodeSelection: NodeSelection<SVGGElement>) => [nodeSelection.node, nodeSelection.element])
+            this.uiManager.graph.renderer.getGraphInteraction().removeNodesFromSelection(matchingNodes)
+        })
+
+        const container = createHtmlElement('div', { class: 'pivotick-aggregated-property-actions' }, [
+            buttonKeep,
+            buttonExclude
+        ])
+        return container
     }
 
 

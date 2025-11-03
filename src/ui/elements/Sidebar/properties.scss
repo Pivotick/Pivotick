@@ -38,6 +38,7 @@
                     font-size: 0.8rem;
 
                     &.code-container {
+                        position: relative;
                         margin-right: 8px;
                         text-overflow: ellipsis;
                         overflow: hidden;
@@ -50,6 +51,39 @@
                         border-radius: 4px;
                         background-color: var(--pivotick-bg-color-0);
                         color: var(--pivotick-text-color-primary);
+
+                        .pivotick-aggregated-property-actions {
+                            display: none;
+                            position: absolute;
+                            right: 4px;
+                            flex-direction: row;
+                            gap: 4px;
+
+                            button {
+                                border: none;
+                                background: none;
+                                padding: 0;
+                                cursor: pointer;
+                                font-size: 1rem;
+                                color: color-mix(in srgb, var(--pivotick-text-color-5) 80%, white);
+                                transition: font-size 0.15s ease;
+                                max-height: 22px;
+
+                                &:hover:not(:disabled),
+                                &:active:not(:disabled) {
+                                    color: color-mix(in srgb, var(--pivotick-text-color-5) 70%, black);
+                                }
+                            
+                                &:disabled {
+                                    filter: brightness(2);
+                                    cursor: not-allowed;
+                                }
+                            }
+                        }
+                    }
+
+                    &.code-container:hover .pivotick-aggregated-property-actions {
+                        display: inline-flex;
                     }
                 }
 
