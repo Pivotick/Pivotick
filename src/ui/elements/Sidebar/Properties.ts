@@ -253,8 +253,8 @@ export class SidebarProperties implements UIElement {
                 textNode = '- empty -'
                 title = 'The value is empty'
             } else if (this.isValueUnique(value)) {
-                textNode = '- Unique -'
-                title = 'All other unique values'
+                textNode = '- Unique values -'
+                title = 'All other values are unique'
             }
             return createHtmlElement('span', { class: 'pivotick-aggregated-property-value-dim', title: title }, [
                 textNode

@@ -31,7 +31,7 @@ $toast-text-success: text-color($success);
     --pivotick-bg-color-0: #fff;
     --pivotick-bg-color-1: #fafafa;
     --pivotick-bg-color-2: #f3f3f3;
-    --pivotick-bg-color-2: #e6e6e6;
+    --pivotick-bg-color-3: #e6e6e6;
     --pivotick-bg-color-4: #e0e0e0;
     --pivotick-bg-color-5: #d6d6d6;
     --pivotick-bg-color-primary: #{$primary};
@@ -47,7 +47,7 @@ $toast-text-success: text-color($success);
     --pivotick-text-color-for-danger: #fff;
     --pivotick-text-color-for-success: #fff;
 
-    --pivotick-box-shadow-light: rgba(0, 0, 0, 0.05) 0px 1px 2px 0px;
+    --pivotick-box-shadow-light: rgba(0, 0, 0, 0.25) 0px 1px 2px 0px;
     --pivotick-box-shadow-medium: rgba(0, 0, 0, 0.1) 0px 4px 6px -1px,
                                   rgba(0, 0, 0, 0.06) 0px 2px 4px -1px;
     --pivotick-box-shadow-strong: rgba(0, 0, 0, 0.16) 0px 3px 6px,
@@ -138,8 +138,13 @@ $toast-text-success: text-color($success);
     --pivotick-edge-label-selected-bg: #ffffffa0;
 
     /* Component */
-    --pivotick-inline-bar-bg: #e5e7eb;
-    --pivotick-inline-bar-fill-bg: var(--pivotick-bg-color-primary);
+    --pivotick-inline-bar-bg: var(--pivotick-bg-color-2);
+    --pivotick-inline-bar-fill-bg: linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--pivotick-bg-color-primary) 20%, #fff) 0%,
+        var(--pivotick-bg-color-primary) 70%,
+        color-mix(in srgb, var(--pivotick-bg-color-primary) 80%, #000) 100%
+    );
     --pivotick-inline-bar-height: 0.5rem;
     --pivotick-inline-bar-width: 80px;
 }

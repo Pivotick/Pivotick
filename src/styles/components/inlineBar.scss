@@ -1,15 +1,23 @@
 .pivotick-inline-bar-container {
-    display: inline-flex;
+    position: relative;
+    display: inline-block;
     height: var(--pivotick-inline-bar-height);
     width: var(--pivotick-inline-bar-width);
-    background-color: var(--pivotick-inline-bar-bg);
+    background: var(--pivotick-inline-bar-bg);
+    box-shadow: color-mix(in srgb, var(--pivotick-text-color-6) 15%, transparent) 0px 1px 1px 0px,
+                color-mix(in srgb, var(--pivotick-text-color-6) 10%, transparent) 0px 0px 2px 0px,
+                inset 0 1px 2px rgba(0, 0, 0, 0.05);
     border-radius: 4px;
     overflow: hidden;
+    vertical-align: middle;
 
     .pivotick-inline-bar-fill {
         display: block;
         height: 100%;
-        background-color: var(--pivotick-inline-bar-fill-bg);
+        background: var(--pivotick-inline-bar-fill-bg);
+        background-repeat: no-repeat;
+        border-radius: inherit;
+        transition: width 0.4s cubic-bezier(.2, .9, .3, 1), background-size 0.4s cubic-bezier(.2, .9, .3, 1);
     }
 
 }

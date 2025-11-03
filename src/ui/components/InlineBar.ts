@@ -18,7 +18,7 @@ export function createInlineBar(
     root.style.gap = '0.5rem'
     root.style.fontFamily = 'sans-serif'
     root.style.fontSize = '0.85rem'
-    root.title = `${value}`
+    root.title = `${(percentage).toFixed(0)}%`
 
     // Bar container
     const barContainer = document.createElement('span')
@@ -29,13 +29,14 @@ export function createInlineBar(
     const barFill = document.createElement('span')
     barFill.classList.add('pivotick-inline-bar-fill')
     barFill.style.width = `${percentage}%`
+    barFill.style.backgroundSize = `${100 / (percentage / 100)}% 100%`
     barContainer.appendChild(barFill)
 
     // Percentage text
-    const percentSpan = document.createElement('span')
-    percentSpan.textContent = `${percentage.toFixed(0)}%`
-    percentSpan.classList.add('pivotick-inline-bar-percent')
-    root.appendChild(percentSpan)
+    // const percentSpan = document.createElement('span')
+    // percentSpan.textContent = `${percentage.toFixed(0)}%`
+    // percentSpan.classList.add('pivotick-inline-bar-percent')
+    // root.appendChild(percentSpan)
 
     return root
 }
