@@ -98,6 +98,7 @@ export class SidebarProperties implements UIElement {
             dlContainer.append(createHtmlDL(properties, node))
         }
 
+        this.body.innerHTML = ''
         this.body.appendChild(propertiesContainer)
     }
 
@@ -119,6 +120,7 @@ export class SidebarProperties implements UIElement {
             dlContainer.append(createHtmlDL(properties, edge))
         }
 
+        this.body.innerHTML = ''
         this.body.appendChild(propertiesContainer)
     }
 
@@ -149,6 +151,7 @@ export class SidebarProperties implements UIElement {
             this.injectTableForAggregatedProperties(div, aggregatedProperties, nodes.length)
         }
 
+        this.body.innerHTML = ''
         this.body.appendChild(propertiesContainer)
     }
 
@@ -177,6 +180,7 @@ export class SidebarProperties implements UIElement {
             this.injectTableForAggregatedProperties(div, aggregatedProperties, edges.length)
         }
 
+        this.body.innerHTML = ''
         this.body.appendChild(propertiesContainer)
     }
 
@@ -244,13 +248,15 @@ export class SidebarProperties implements UIElement {
 
     private wrapValues(value: string): HTMLElement | Text {
         if (this.hasSpecialHighlighting(value)) {
-            let textNode = ''
+            let textNode = '', title = ''
             if (this.isValueEmpty(value)) {
                 textNode = '- empty -'
+                title = 'The value is empty'
             } else if (this.isValueUnique(value)) {
-                textNode = '- Unique Values -'
+                textNode = '- Unique -'
+                title = 'All other unique values'
             }
-            return createHtmlElement('span', { class: 'pivotick-aggregated-property-value-dim' }, [
+            return createHtmlElement('span', { class: 'pivotick-aggregated-property-value-dim', title: title }, [
                 textNode
             ])
         }

@@ -25,7 +25,7 @@ export class Tooltip implements UIElement {
     private triggerY: number = 0
     private hoveredElementID: string | null = null
     private hoveredElement: Node | Edge | null = null
-    private showDelay: number = 350
+    private showDelay: number = 400
     private hideDelay: number = 200
     private tooltipTimeout: ReturnType<typeof setTimeout> | null = null
     private hideTimeout: ReturnType<typeof setTimeout> | null = null
