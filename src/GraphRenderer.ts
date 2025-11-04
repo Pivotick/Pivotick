@@ -1,6 +1,9 @@
+import type { Node } from './Node'
+import type { Edge } from './Edge'
 import type { Graph } from './Graph'
 import type { GraphRendererOptions } from './GraphOptions'
 import { createSvgElement } from './utils/ElementCreation'
+import type { GraphInteractions } from './GraphInteractions'
 
 export type RendererType = 'svg' | 'canvas'
 
@@ -24,15 +27,15 @@ export abstract class GraphRenderer {
     abstract init(): void
     abstract dataUpdate(): void
     abstract tickUpdate(): void
-    abstract getZoomBehavior(): any
-    abstract getSelectionBox(): any
-    abstract getGraphInteraction(): any
-    abstract getCanvasSelection(): any
-    abstract getZoomGroup(): any
+    abstract getZoomBehavior(): undefined
+    abstract getSelectionBox(): undefined
+    abstract getGraphInteraction(): GraphInteractions
+    abstract getCanvasSelection(): undefined
+    abstract getZoomGroup(): HTMLElement
     abstract zoomIn(): void
     abstract zoomOut(): void
     abstract fitAndCenter(): void
-    abstract focusElement(element: any): void
+    abstract focusElement(element: Node | Edge): void
 
     public getCanvasContainer(): HTMLElement {
         return this.container.querySelector('.pivotick-canvas-container') as HTMLElement

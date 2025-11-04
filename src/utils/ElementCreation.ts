@@ -8,7 +8,7 @@ export type UIVariant = 'primary' | 'secondary' | 'info' | 'warning' | 'danger' 
 
 export function createSvgElement<K extends keyof SVGElementTagNameMap>(
     tag: K,
-    attributes: Record<string, string | string[]> = {},
+    attributes: Record<string, string | string[] | number> = {},
     children: SVGElement[] = []
 ): SVGElementTagNameMap[K] {
     const element = document.createElementNS('http://www.w3.org/2000/svg', tag)
@@ -33,7 +33,7 @@ export function createSvgElement<K extends keyof SVGElementTagNameMap>(
 
 export function createHtmlElement<K extends keyof HTMLElementTagNameMap>(
     tag: K,
-    attributes: Record<string, string | string[]> = {},
+    attributes: Record<string, string | string[] | number> = {},
     children: Array<HTMLElement | Text | string> = []
 ): HTMLElementTagNameMap[K] {
     const element = document.createElement(tag)

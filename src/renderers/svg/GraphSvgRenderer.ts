@@ -110,10 +110,10 @@ export class GraphSvgRenderer extends GraphRenderer {
     protected options: GraphRendererOptions
 
     private zoom: ZoomBehavior<SVGSVGElement, unknown>
-    private graphInteraction: GraphInteractions<SVGGElement | SVGPathElement>
     private eventHandler: EventHandler
     private selectionBox: SelectionBox
-
+    
+    public graphInteraction: GraphInteractions<SVGGElement | SVGPathElement>
     public nodeDrawer: NodeDrawer
     public edgeDrawer: EdgeDrawer
 
