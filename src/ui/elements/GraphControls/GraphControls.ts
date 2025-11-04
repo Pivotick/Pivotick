@@ -62,7 +62,19 @@ const defaultMenuNode = {
             title: 'Expand Node',
             svgIcon: expand,
             variant: 'outline-primary',
+            visible: false,
+        },
+        {
+            text: 'Pin Nodes',
+            title: 'Pin Nodes',
+            svgIcon: pin,
+            variant: 'outline-primary',
             visible: true,
+            cb: (_evt: PointerEvent, nodes: Node[]) => {
+                nodes.forEach((node: Node) => {
+                    node.freeze()
+                })
+            }
         },
     ] as MenuActionItemOptions[]
 }
