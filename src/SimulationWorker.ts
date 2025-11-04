@@ -126,8 +126,7 @@ self.onmessage = (e: MessageEvent<WorkerInput>) => {
             nodes,
             edges,
             simulation,
-            options.layout,
-            canvasBCR
+            options.layout
         )
     }
     self.postMessage({
