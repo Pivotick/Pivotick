@@ -138,7 +138,7 @@ export class Simulation {
             charge: d3ForceManyBodyType<Node>,
             center: d3ForceCenterType<Node>,
             collide: d3ForceCollideType<Node>,
-            gravity: d3ForceCenterType<Node>,
+            gravity: ForceGravity<Node>,
         }
     } {
         const simulationForces = {
@@ -164,7 +164,7 @@ export class Simulation {
         simulationForces.gravity
             .x(canvasBCR.width / 2)
             .y(canvasBCR.height / 2)
-            .strength((node: SimulationNodeDatum) => {
+            .strength((node) => {
                 const n = node as Node
                 const degree = n.degree() ?? 0
                 return degree === 0 ? options.d3GravityStrength : 0

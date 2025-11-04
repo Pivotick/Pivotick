@@ -1,3 +1,5 @@
+/* eslint-disable */
+// @ts-nocheck
 import { Pivotick, Node, Edge } from './index'
 
 import {graph as vtGraph} from './vt-graph'

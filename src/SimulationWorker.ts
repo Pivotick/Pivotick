@@ -1,5 +1,5 @@
 import type { ForceLink as d3ForceLinkType } from 'd3-force'
-import { DEFAULT_SIMULATION_OPTIONS, Simulation } from './Simulation'
+import { Simulation } from './Simulation'
 import { Node, type NodeData } from './Node'
 import { Edge, type EdgeData } from './Edge'
 import type { SimulationOptions, EdgeFullStyle } from './GraphOptions'
@@ -137,7 +137,7 @@ self.onmessage = (e: MessageEvent<WorkerInput>) => {
     })
 }
 
-function getProgress(tick: number, elapsedTime: number, options: SimulationOptions): number {
+function getProgress(_tick: number, elapsedTime: number, options: SimulationOptions): number {
     // return tick / MAX_EXECUTION_TICKS
     return elapsedTime / options.cooldownTime
 }

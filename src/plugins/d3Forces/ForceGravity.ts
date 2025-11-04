@@ -1,13 +1,57 @@
-import type { Node } from '../../Node'
-import type { Force as d3Force } from 'd3-force'
+import type { Force, SimulationNodeDatum } from 'd3-force'
 
-export function ForceGravity(
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface ForceGravity<NodeDatum extends SimulationNodeDatum> extends Force<NodeDatum, any> {
+    /**
+     * Supplies the array of nodes and random source to this force. This method is called when a force is bound to a simulation via simulation.force
+     * and when the simulation’s nodes change via simulation.nodes.
+     *
+     * A force may perform necessary work during initialization, such as evaluating per-node parameters, to avoid repeatedly performing work during each application of the force.
+     */
+    initialize(nodes: NodeDatum[], random: () => number): void;
+
+    /**
+     * Return the current x-coordinate of the centering position, which defaults to zero.
+     */
+    x(): number;
+    /**
+     * Set the x-coordinate of the centering position.
+     *
+     * @param x x-coordinate.
+     */
+    x(x: number): this;
+
+    /**
+     * Return the current y-coordinate of the centering position, which defaults to zero.
+     */
+    y(): number;
+    /**
+     * Set the y-coordinate of the centering position.
+     *
+     * @param y y-coordinate.
+     */
+    y(y: number): this;
+
+    /**
+     * Returns the force’s current strength, which defaults to 1.
+     */
+    strength(): number;
+
+    /**
+     * Sets the centering force’s strength.
+     * A reduced strength of e.g. 0.05 softens the movements on interactive graphs in which new nodes enter or exit the graph.
+     * @param strength The centering force's strength.
+     */
+    strength(strength: number | ((node: NodeDatum, i: number, nodes: NodeDatum[]) => number)): this;
+}
+
+export function ForceGravity<NodeDatum extends SimulationNodeDatum = SimulationNodeDatum>(
     x = 0,
     y = 0,
-    strength: number | ((node: Node, i: number, nodes: Node[]) => number) = 0.001
-): d3Force<Node> {
-    let nodes: Node[] = []
-    let strengthFn: (node: Node, i: number, nodes: Node[]) => number
+    strength: number | ((node: NodeDatum, i: number, nodes: NodeDatum[]) => number) = 0.001
+): ForceGravity<NodeDatum> {
+    let nodes: NodeDatum[] = []
+    let strengthFn: (node: NodeDatum, i: number, nodes: NodeDatum[]) => number
 
     function initializeStrength() {
         strengthFn = typeof strength === 'function' ? strength : () => strength as number
@@ -24,7 +68,7 @@ export function ForceGravity(
         }
     }
 
-    force.initialize = (_nodes: Node[]) => {
+    force.initialize = (_nodes: NodeDatum[]) => {
         nodes = _nodes
         initializeStrength()
     }
@@ -42,16 +86,12 @@ export function ForceGravity(
         return force
     }
 
-    force.strength = function (_?: number | ((node: Node, i: number, nodes: Node[]) => number)) {
+    force.strength = function (_?: number | ((node: NodeDatum, i: number, nodes: NodeDatum[]) => number)) {
         if (!arguments.length) return strength
         strength = _!
         initializeStrength()
         return force
     }
 
-    return force as d3.Force<Node, undefined> & {
-        x(_: number): typeof force;
-        y(_: number): typeof force;
-        strength(_: number | ((node: Node, i: number, nodes: Node[]) => number)): typeof force;
-    }
+    return force as ForceGravity<NodeDatum>
 }
