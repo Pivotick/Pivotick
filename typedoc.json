@@ -1,0 +1,9 @@
+{
+  "entryPoints": ["src/index.ts"],
+  "out": "docs/api",
+  "exclude": ["**/__tests__/**", "**/*.test.ts"],
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "includeVersion": true,
+  "tsconfig": "tsconfig.json"
+}
