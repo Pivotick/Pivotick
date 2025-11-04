@@ -1,7 +1,7 @@
 import type { Edge } from '../../../Edge'
 import type { PropertyEntry } from '../../../GraphOptions'
 import type { Node } from '../../../Node'
-import { createHtmlDL, createHtmlElement, createHtmlTemplate, createSvgElement, generateDomId, makeDraggable } from '../../../utils/ElementCreation'
+import { createHtmlDL, createHtmlElement, createHtmlTemplate, createSvgElement, makeDraggable } from '../../../utils/ElementCreation'
 import { tryResolveHTMLElement } from '../../../utils/Getters'
 import { edgeDescriptionGetter, edgeNameGetter, edgePropertiesGetter, nodeDescriptionGetter, nodeNameGetter, nodePropertiesGetter } from '../../../utils/GraphGetters'
 import { createButton } from '../../components/Button'

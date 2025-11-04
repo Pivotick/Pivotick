@@ -1,10 +1,8 @@
-import type { Edge } from "./Edge";
-import { generateDomId } from "./utils/ElementCreation";
+import type { Edge } from './Edge'
+import { generateSafeDomId } from './utils/ElementCreation'
 
 export interface NodeData {
-    // Define any properties your node data should have,
-    // or keep it generic for flexibility.
-    [key: string]: any;
+    [key: string]: undefined;
 }
 
 /**
@@ -36,7 +34,7 @@ export class Node<T = NodeData> {
      */
     constructor(id: string, data?: T, style?: T) {
         this.id = id
-        this.domID = generateDomId()
+        this.domID = generateSafeDomId()
         this.data = data ?? ({} as T)
         this.style = style ?? ({} as T)
         this._dirty = true

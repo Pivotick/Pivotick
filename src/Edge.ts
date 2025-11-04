@@ -1,9 +1,9 @@
 import type { EdgeFullStyle, EdgeStyle, LabelStyle, StyleUpdate } from './GraphOptions'
 import { Node } from './Node'
-import { generateDomId } from './utils/ElementCreation';
+import { generateSafeDomId } from './utils/ElementCreation'
 
 export interface EdgeData {
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 /**
@@ -11,8 +11,8 @@ export interface EdgeData {
  */
 export class Edge<T = EdgeData, U = EdgeFullStyle> {
     public readonly id: string
-    public readonly from: Node
-    public readonly to: Node
+    public from: Node
+    public to: Node
     public readonly directed: boolean | null
     private data: T
     private style: U
@@ -28,7 +28,7 @@ export class Edge<T = EdgeData, U = EdgeFullStyle> {
      */
     constructor(id: string, from: Node, to: Node, data?: T, style?: U, directed: boolean | null = null) {
         this.id = id
-        this.domID = generateDomId()
+        this.domID = generateSafeDomId()
         this.from = from
         this.to = to
         this.directed = directed
@@ -36,8 +36,8 @@ export class Edge<T = EdgeData, U = EdgeFullStyle> {
         this.style = style ?? ({} as U)
         this._dirty = true
 
-        this.from.registerEdgeOut(this)
-        this.to.registerEdgeIn(this)
+        this.from.registerEdgeOut(this as Edge)
+        this.to.registerEdgeIn(this as Edge)
     }
 
     /** Required by d3-force */
@@ -84,15 +84,14 @@ export class Edge<T = EdgeData, U = EdgeFullStyle> {
      * Get the edge's style.
      */
     getEdgeStyle(): Partial<EdgeStyle> {
-        return (this.style)?.edge ?? {}
+        return ((this.style as Partial<EdgeFullStyle>)?.edge) ?? {}
     }
 
     /**
      * Get the edge's label style if available.
      */
     getLabelStyle(): Partial<LabelStyle> {
-        // Only return labelStyle if it exists on style
-        return (this.style)?.label ?? {}
+        return ((this.style as Partial<EdgeFullStyle>)?.label) ?? {}
     }
 
     /**
@@ -139,12 +138,12 @@ export class Edge<T = EdgeData, U = EdgeFullStyle> {
         }
     }
 
-    clone(): Edge<T> {
+    clone(): Edge<T, U> {
         // Shallow copies of data and style
-        const clonedData = { ...this.data }
-        const clonedStyle = { ...this.style }
+        const clonedData = { ...this.data } as T
+        const clonedStyle = { ...this.style } as U
 
-        return new Edge<T>(
+        return new Edge<T, U>(
             this.id,
             this.from.clone(),
             this.to.clone(),
