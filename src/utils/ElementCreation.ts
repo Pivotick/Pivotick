@@ -1,7 +1,8 @@
-import type { PropertyEntry } from '../GraphOptions'
-import { faGlyph, tryResolveHTMLElement } from './Getters'
+import type { MenuActionItemOptions, MenuQuickActionItemOptions, PropertyEntry } from '../GraphOptions'
+import { faGlyph, tryResolveBoolean, tryResolveHTMLElement } from './Getters'
 import type { Node } from '../Node'
 import type { Edge } from '../Edge'
+import { createButton } from '../ui/components/Button'
 
 export type UIVariant = 'primary' | 'secondary' | 'info' | 'warning' | 'danger' | 'success' |
 'outline-primary' | 'outline-secondary' | 'outline-info' | 'outline-warning' | 'outline-danger' | 'outline-success'
@@ -84,39 +85,82 @@ export function createHtmlDL(data: Array<PropertyEntry>, element: Node | Edge | 
 }
 
 
-type ActionItemOptions = {
-    iconUnicode?: string,
-    iconClass?: string,
-    svgIcon?: string,
-    imagePath?: string,
-    text: string,
-    title: string,
-    variant: UIVariant,
-    cb: (element: Node | Edge) => void
-}
-export function createActionList(actions: ActionItemOptions[]): HTMLDivElement {
+// type ActionItemOptions = {
+//     iconUnicode?: string,
+//     iconClass?: string,
+//     svgIcon?: string,
+//     imagePath?: string,
+//     text: string,
+//     title: string,
+//     variant: UIVariant,
+//     cb: (element: Node | Edge) => void
+// }
+export function createQuickActionList<TThis>(thisContext: TThis, actions: MenuQuickActionItemOptions[], element: Node[] | Node | Edge | null): HTMLDivElement {
+        const div = createHtmlElement('div', { class: 'pivotick-quickaction-list' })
+        const firstElement = Array.isArray(element) ? element[0] : element
+        actions.forEach(action => {
+            const isVisible = tryResolveBoolean(action.visible, firstElement) ?? true
+            if (isVisible) {
+                const row = createQuickActionItem(thisContext, action, element)
+                div.appendChild(row)
+            }
+        })
+        return div
+    }
+
+export function createActionList<TThis>(thisContext: TThis, actions: MenuActionItemOptions[], element: Node[] | Node | Edge | null): HTMLDivElement {
     const div = createHtmlElement('div', { class: 'pivotick-action-list' })
+    const firstElement = Array.isArray(element) ? element[0] : element
     actions.forEach(action => {
-        const row = createActionItem(action)
-        div.appendChild(row)
+        const isVisible = tryResolveBoolean(action.visible, firstElement) ?? true
+        if (isVisible) {
+            const row = createActionItem(thisContext, action, element)
+            div.appendChild(row)
+        }
     })
     return div
 }
 
-export function createActionItem(action: ActionItemOptions): HTMLDivElement {
+export function createQuickActionItem<TThis>(thisContext: TThis, action: MenuQuickActionItemOptions, element: Node[] | Node | Edge | null): HTMLSpanElement {
+    const { cb, ...actionWithoutCb } = action
+    const span = createHtmlElement('span',
+        {
+            class: ['pivotick-quickaction-item', `pivotick-quickaction-item-${action.variant}`],
+            style: `${action.flushRight ? 'margin-left: auto;' : ''}`
+        },
+        [
+            createButton({
+                size: 'sm',
+                ...actionWithoutCb,
+            })
+        ]
+    )
+    if (typeof cb === 'function') {
+        span.addEventListener('click', (event: MouseEvent) => {
+            cb.call(thisContext, event, element)
+        })
+    }
+    return span
+}
+
+export function createActionItem<TThis>(thisContext: TThis, action: MenuActionItemOptions, element: Node[] | Node | Edge | null): HTMLDivElement {
     const div = createHtmlElement('div',
         {
             class: ['pivotick-action-item', `pivotick-action-item-${action.variant}`]
         },
         [
-            createIcon(action),
+            createIcon({ fixedWidth: true, ...action }),
             createHtmlElement('span', { 
                 class: 'pivotick-action-text',
                 title: action.title,
-            }, [ action.title ]),
+            }, [ action.text ?? '' ])
         ]
     )
-    div.addEventListener('click', action.cb)
+    if (typeof action.cb === 'function') {
+        div.addEventListener('click', (event: MouseEvent) => {
+            action.cb.call(thisContext, event, element)
+        })
+    }
     return div
 }
 

@@ -4,8 +4,6 @@ import { Edge } from './Edge'
 import type { Simulation } from './Simulation'
 import type { UIVariant } from './utils/ElementCreation'
 import type { TreeLayoutAlgorithm } from './plugins/layout/Tree'
-import type { ContextMenu } from './ui/elements/ContextMenu/ContextMenu'
-import type { GraphControls } from './ui/elements/GraphControls/GraphControls'
 
 export interface InterractionCallbacks<TElement = unknown> {
     /**
@@ -369,7 +367,7 @@ export interface GraphUI {
     }
 }
 
-export type MenuActionItemOptions = {
+export type MenuActionItemOptions<TThis = unknown> = {
     iconUnicode?: string,
     iconClass?: string,
     svgIcon?: string,
@@ -378,7 +376,7 @@ export type MenuActionItemOptions = {
     title: string,
     variant: UIVariant,
     visible: boolean | ((element: Node | Edge | null) => boolean)
-    cb: (this: ContextMenu | GraphControls, evt: PointerEvent | MouseEvent, element: Node | Node[] | Edge | Edge[] | null) => void
+    cb: (this: TThis, evt: PointerEvent | MouseEvent, element: Node | Node[] | Edge | Edge[] | null) => void
 }
 export type MenuQuickActionItemOptions = MenuActionItemOptions & {
     flushRight?: boolean;
