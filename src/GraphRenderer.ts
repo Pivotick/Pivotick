@@ -28,7 +28,7 @@ export abstract class GraphRenderer {
     abstract dataUpdate(): void
     abstract tickUpdate(): void
     abstract getZoomBehavior(): unknown
-    abstract getSelectionBox(): unknown
+    abstract getSelectionBox(): AbstractSelectionBox
     abstract getGraphInteraction(): GraphInteractions<unknown>
     abstract getCanvasSelection(): unknown
     abstract getZoomGroup(): HTMLElement | SVGElement | null
@@ -118,4 +118,8 @@ export abstract class GraphRenderer {
         this.progressBar = progressFill
         this.timerLabel = timerLabel
     }
+}
+
+export abstract class AbstractSelectionBox {
+    abstract selectionInProgress(): boolean
 }

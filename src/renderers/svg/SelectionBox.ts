@@ -1,9 +1,10 @@
+import { AbstractSelectionBox } from '../../GraphRenderer'
 import type { Node } from '../../Node'
 import type { GraphSvgRenderer } from './GraphSvgRenderer'
 
 
 type SelectionMode = 'start' | 'add' | 'remove' // Start clears the selection
-export class SelectionBox {
+export class SelectionBox extends AbstractSelectionBox {
     private renderer: GraphSvgRenderer
     private svg: SVGSVGElement
     private selectionBoxGroup: SVGGElement | null
@@ -14,6 +15,8 @@ export class SelectionBox {
     private selectionMode: SelectionMode = 'start'
 
     constructor(renderer: GraphSvgRenderer, svg: SVGSVGElement, selectionBoxGroup: SVGGElement | null) {
+        super()
+
         this.renderer = renderer
         this.svg = svg
         this.selectionBoxGroup = selectionBoxGroup

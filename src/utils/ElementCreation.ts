@@ -17,7 +17,7 @@ export function createSvgElement<K extends keyof SVGElementTagNameMap>(
         if (Array.isArray(value)) {
             element.setAttribute(key, value.join(' '))
         } else {
-            element.setAttribute(key, value)
+            element.setAttribute(key, value.toString())
         }
     }
 
@@ -42,7 +42,7 @@ export function createHtmlElement<K extends keyof HTMLElementTagNameMap>(
         if (Array.isArray(value)) {
             element.setAttribute(key, value.join(' '))
         } else {
-            element.setAttribute(key, value)
+            element.setAttribute(key, value.toString())
         }
     }
 

@@ -100,7 +100,8 @@ export class Sidebar implements UIElement {
         })
 
         /* Multi selection */
-        this.uiManager.graph.renderer.getGraphInteraction().on('selectNodes', (nodes: NodeSelection<unknown>[]) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        this.uiManager.graph.renderer.getGraphInteraction().on('selectNodes', (_nodes: NodeSelection<unknown>[]) => {
             const fullSelection = this.uiManager.graph.renderer.getGraphInteraction().getSelectedNodes()
             this.sidebarMainHeader.updateNodesOverview(fullSelection)
             this.sidebarProperties.updateNodesProperties(fullSelection)
