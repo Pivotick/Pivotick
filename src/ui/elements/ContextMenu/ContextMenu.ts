@@ -230,7 +230,8 @@ export class ContextMenu implements UIElement {
         this.show()
     }
 
-    private createNodeMenu(node: Node): void {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    private createNodeMenu(_node: Node): void {
         if (!this.menu) return
 
         const topbar = this.menu.querySelector('.pivotick-contextmenu-topbar')!
@@ -241,7 +242,8 @@ export class ContextMenu implements UIElement {
         mainMenu.appendChild(this.createActionList(this.menuNode.menu))
     }
 
-    private createEdgeMenu(edge: Edge): void {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    private createEdgeMenu(_edge: Edge): void {
         if (!this.menu) return
 
         const topbar = this.menu.querySelector('.pivotick-contextmenu-topbar')!

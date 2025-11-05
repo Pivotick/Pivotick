@@ -280,8 +280,8 @@ export interface TreeLayoutOptions extends BaseLayoutOptions {
 export type GraphUIMode = 'viewer' | 'full' | 'light' | 'static';
 
 export interface MainHeader {
-    nodeHeaderMap: HeaderMapEntry
-    edgeHeaderMap: HeaderMapEntry
+    nodeHeaderMap: HeaderMapEntry<Node>
+    edgeHeaderMap: HeaderMapEntry<Edge>
 }
 
 /**
@@ -292,9 +292,9 @@ export interface MainHeader {
  * title   = node.getData().label || "Could not resolve title"
  * subtitle= node.getData().description || "Could not resolve subtitle"
  */
-export interface HeaderMapEntry {
-    title: ((element: Node | Edge) => string) | string,
-    subtitle: ((element: Node | Edge) => string) | string,
+export interface HeaderMapEntry<T> {
+    title: ((element: T) => string) | string,
+    subtitle: ((element: T) => string) | string,
 }
 
 export interface PropertyEntry {
@@ -332,8 +332,8 @@ export interface GraphUI {
          */
         node?: (node: Node) => HTMLElement | string,
         edge?: (edge: Edge) => HTMLElement | string,
-        nodeHeaderMap: Partial<HeaderMapEntry>,
-        edgeHeaderMap: Partial<HeaderMapEntry>,
+        nodeHeaderMap: Partial<HeaderMapEntry<Node>>,
+        edgeHeaderMap: Partial<HeaderMapEntry<Edge>>,
         nodePropertiesMap: ((node: Node) => Array<PropertyEntry>),
         edgePropertiesMap: ((edge: Edge) => Array<PropertyEntry>),
         /**
