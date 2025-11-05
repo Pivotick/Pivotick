@@ -1,12 +1,13 @@
 import { type Selection } from 'd3-selection'
 import { Node, type NodeData } from '../../Node'
 import type { Graph } from '../../Graph'
-import type { GraphRendererOptions, NodeStyle, NodeStyleFinal } from '../../GraphOptions'
+import type { GraphRendererOptions, NodeStyle } from '../../GraphOptions'
 import type { GraphSvgRenderer } from './GraphSvgRenderer'
-import { faGlyph, tryResolveString } from '../../utils/Getters'
+import { faGlyph } from '../../utils/Getters'
 
 export class NodeDrawer {
 
+    // @ts-expect-error: graph might be used in future updates
     private graph: Graph
     private rendererOptions: GraphRendererOptions
     private graphSvgRenderer: GraphSvgRenderer
@@ -76,8 +77,8 @@ export class NodeDrawer {
     public updatePositions(nodeSelection: Selection<SVGGElement, Node<NodeData>, SVGGElement, unknown>): void {
         nodeSelection
             .attr('transform', d => {
-                const x = isFinite(d.x) ? d.x : 0
-                const y = isFinite(d.y) ? d.y : 0
+                const x = d.x ? (isFinite(d.x) ? d.x : 0) : 0
+                const y = d.y ? (isFinite(d.y) ? d.y : 0) : 0
                 return `translate(${x},${y})`
             })
     }
@@ -115,23 +116,24 @@ export class NodeDrawer {
             }
         }
 
-        let styleFromNode
-        if (node.getStyle()?.styleCb) {
-            styleFromNode = node.getStyle().styleCb(node)
+        const style = node.getStyle()
+        let styleFromNode: Partial<NodeStyle> = {}
+        if (style.styleCb) {
+            styleFromNode = style.styleCb(node)
         } else {
             styleFromNode = {
-                shape: node.getStyle()?.shape ?? styleFromStyleMap?.shape,
-                strokeColor: node.getStyle()?.strokeColor ?? styleFromStyleMap?.strokeColor,
-                strokeWidth: node.getStyle()?.strokeWidth ?? styleFromStyleMap?.strokeWidth,
-                fontFamily: node.getStyle()?.fontFamily ?? styleFromStyleMap?.fontFamily,
-                size: node.getStyle()?.size ?? styleFromStyleMap?.size,
-                color: node.getStyle()?.color ?? styleFromStyleMap?.color,
-                textColor: node.getStyle()?.textColor ?? styleFromStyleMap?.textColor,
-                iconUnicode: node.getStyle()?.iconUnicode ?? styleFromStyleMap?.iconUnicode,
-                iconClass: node.getStyle()?.iconClass ?? styleFromStyleMap?.iconClass,
-                svgIcon: node.getStyle()?.svgIcon ?? styleFromStyleMap?.svgIcon,
-                imagePath: node.getStyle()?.imagePath ?? styleFromStyleMap?.imagePath,
-                text: node.getStyle()?.text ?? styleFromStyleMap?.text,
+                shape: style?.shape ?? styleFromStyleMap?.shape,
+                strokeColor: style?.strokeColor ?? styleFromStyleMap?.strokeColor,
+                strokeWidth: style?.strokeWidth ?? styleFromStyleMap?.strokeWidth,
+                fontFamily: style?.fontFamily ?? styleFromStyleMap?.fontFamily,
+                size: style?.size ?? styleFromStyleMap?.size,
+                color: style?.color ?? styleFromStyleMap?.color,
+                textColor: style?.textColor ?? styleFromStyleMap?.textColor,
+                iconUnicode: style?.iconUnicode ?? styleFromStyleMap?.iconUnicode,
+                iconClass: style?.iconClass ?? styleFromStyleMap?.iconClass,
+                svgIcon: style?.svgIcon ?? styleFromStyleMap?.svgIcon,
+                imagePath: style?.imagePath ?? styleFromStyleMap?.imagePath,
+                text: style?.text ?? styleFromStyleMap?.text,
             }
         }
         return this.mergeNodeStylingOptions(styleFromNode)
@@ -141,7 +143,8 @@ export class NodeDrawer {
         return this.computeNodeStyle(node)
     }
 
-    private genericNodeRender(nodeSelection: Selection<SVGGElement, Node, null, undefined>, style: NodeStyle, node: Node): void {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    private genericNodeRender(nodeSelection: Selection<SVGGElement, Node, null, undefined>, style: NodeStyle, _node: Node): void {
         let actualShape = style.shape
         if (style.shape == 'square') {
             actualShape = 'rect'

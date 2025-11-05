@@ -1,4 +1,5 @@
 import type { Edge } from './Edge'
+import type { NodeStyle } from './GraphOptions'
 import { generateSafeDomId } from './utils/ElementCreation'
 
 export interface NodeData {
@@ -11,7 +12,7 @@ export interface NodeData {
 export class Node<T = NodeData> {
     public readonly id: string
     private data: T
-    private style: T
+    private style: Partial<NodeStyle>
     private edgesOut: Set<Edge>
     private edgesIn: Set<Edge>
 
@@ -32,11 +33,11 @@ export class Node<T = NodeData> {
      * @param id - Unique identifier for the node
      * @param data - Optional data payload associated with the node
      */
-    constructor(id: string, data?: T, style?: T) {
+    constructor(id: string, data?: T, style?: Partial<NodeStyle>) {
         this.id = id
         this.domID = generateSafeDomId()
         this.data = data ?? ({} as T)
-        this.style = style ?? ({} as T)
+        this.style = style ?? ({} as Partial<NodeStyle>)
         this._dirty = true
         this.frozen = false
         this.edgesOut = new Set()
@@ -97,7 +98,7 @@ export class Node<T = NodeData> {
     /**
      * Get the node's data.
      */
-    getStyle(): T {
+    getStyle(): Partial<NodeStyle> {
         return this.style
     }
 
@@ -105,7 +106,7 @@ export class Node<T = NodeData> {
      * Update the node's data.
      * @param newStyle - New data to set
      */
-    setStyle(newStyle: T): void {
+    setStyle(newStyle: Partial<NodeStyle>): void {
         this.style = newStyle
         this.markDirty()
     }
@@ -115,7 +116,7 @@ export class Node<T = NodeData> {
      * Useful for updating only parts of the data.
      * @param partialData - Partial data object to merge
      */
-    updateStyle(partialStyle: Partial<T>): void {
+    updateStyle(partialStyle: Partial<NodeStyle>): void {
         this.style = { ...this.style, ...partialStyle }
         this.markDirty()
     }
