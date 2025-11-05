@@ -1,4 +1,3 @@
-import merge from 'lodash.merge'
 import type { Edge } from '../../../Edge'
 import type { MenuActionItemOptions, MenuQuickActionItemOptions } from '../../../GraphOptions'
 import type { Node } from '../../../Node'
@@ -21,7 +20,7 @@ const defaultMenuNode = {
             visible: (node: Node) => {
                 return !node.frozen
             },
-            cb: (evt: PointerEvent, node: Node) => {
+            cb: (_evt: PointerEvent, node: Node) => {
                 node.freeze()
             }
         },
@@ -32,7 +31,7 @@ const defaultMenuNode = {
             visible: (node: Node) => {
                 return node.frozen
             },
-            cb: (evt: PointerEvent, node: Node) => {
+            cb: (_evt: PointerEvent, node: Node) => {
                 node.unfreeze()
             }
         },
@@ -40,7 +39,7 @@ const defaultMenuNode = {
             title: 'Focus Node',
             svgIcon: focusElement,
             variant: 'outline-primary',
-            cb(evt: PointerEvent, node: Node) {
+            cb(_evt: PointerEvent, node: Node) {
                 this.uiManager.graph.focusElement(node)
             },
         },
@@ -49,7 +48,8 @@ const defaultMenuNode = {
             svgIcon: hide,
             variant: 'outline-danger',
             flushRight: true,
-            visible: (node: Node) => {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            visible: (_node: Node) => {
                 return false // FIXME: Implement feature
             },
         },
@@ -60,7 +60,7 @@ const defaultMenuNode = {
             title: 'Select Neighbors',
             svgIcon: selectNeighbor,
             variant: 'outline-primary',
-            cb(evt: PointerEvent, node: Node) {
+            cb(_evt: PointerEvent, node: Node) {
                 const neighbors = [
                     ...node.getConnectedNodes(),
                     ...node.getConnectingNodes()
@@ -78,10 +78,12 @@ const defaultMenuNode = {
             title: 'Hide Children',
             svgIcon: hide,
             variant: 'outline-primary',
-            visible: (node: Node) => {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            visible: (_node: Node) => {
                 return false // FIXME: Implement feature
             },
-            cb(evt: PointerEvent, node: Node) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            cb(_evt: PointerEvent, _node: Node) {
             },
         },
         {
@@ -89,10 +91,12 @@ const defaultMenuNode = {
             title: 'Expand Node',
             svgIcon: expand,
             variant: 'outline-primary',
-            visible: (node: Node) => {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            visible: (_node: Node) => {
                 return false // FIXME: Implement feature
             },
-            cb(evt: PointerEvent, node: Node) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            cb(_evt: PointerEvent, _node: Node) {
             },
         },
         {
@@ -100,10 +104,11 @@ const defaultMenuNode = {
             title: 'Inspect Properties',
             svgIcon: inspect,
             variant: 'outline-primary',
-            visible: (node: Node) => {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            visible: (_node: Node) => {
                 return true
             },
-            cb(evt: PointerEvent, node: Node) {
+            cb(_evt: PointerEvent, node: Node) {
                 this.uiManager.graph.renderer.getGraphInteraction().selectNode(node.getGraphElement(), node)
             },
         },
