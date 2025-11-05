@@ -25,7 +25,7 @@ const defaultMenuNode = {
             svgIcon: pin,
             variant: 'outline-primary',
             visible: true,
-            cb: (_evt: PointerEvent, nodes: Node[]) => {
+            cb(_evt: PointerEvent, nodes: Node[]) {
                 nodes.forEach((node: Node) => {
                     node.freeze()
                 })
@@ -36,7 +36,7 @@ const defaultMenuNode = {
             svgIcon: unpin,
             variant: 'outline-primary',
             visible: true,
-            cb: function(_evt: PointerEvent, nodes: Node[]) {
+            cb(_evt: PointerEvent, nodes: Node[]) {
                 nodes.forEach((node: Node) => {
                     node.unfreeze()
                     this.uiManager.graph.simulation.reheat()
@@ -49,7 +49,7 @@ const defaultMenuNode = {
             variant: 'outline-danger',
             visible: false,
             flushRight: true,
-            cb: function(_evt: PointerEvent, nodes: Node[]) {
+            cb(_evt: PointerEvent, nodes: Node[]) {
                 nodes.forEach((node: Node) => {
                     node.unfreeze()
                 })
@@ -70,7 +70,7 @@ const defaultMenuNode = {
             svgIcon: pin,
             variant: 'outline-primary',
             visible: true,
-            cb: (_evt: PointerEvent, nodes: Node[]) => {
+            cb(_evt: PointerEvent, nodes: Node[]) {
                 nodes.forEach((node: Node) => {
                     node.freeze()
                 })
@@ -80,7 +80,7 @@ const defaultMenuNode = {
 }
 
 export class GraphControls implements UIElement {
-    private uiManager: UIManager
+    public uiManager: UIManager
 
     public navigation?: HTMLDivElement
     private selectionMenu?: HTMLDivElement
@@ -467,7 +467,7 @@ export class GraphControls implements UIElement {
             ]
         )
         if (typeof cb === 'function') {
-            span.addEventListener('click', (event: PointerEvent) => {
+            span.addEventListener('click', (event: MouseEvent) => {
                 cb.call(this, event, nodes)
             })
         }
@@ -488,7 +488,7 @@ export class GraphControls implements UIElement {
             ]
         )
         if (typeof action.cb === 'function') {
-            div.addEventListener('click', (event: PointerEvent) => {
+            div.addEventListener('click', (event: MouseEvent) => {
                 action.cb.call(this, event, nodes)
             })
         }

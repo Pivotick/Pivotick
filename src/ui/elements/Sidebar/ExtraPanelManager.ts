@@ -34,22 +34,26 @@ export class ExtraPanelManager implements UIElement {
         this.mountPanels()
     }
 
-    public updateNode(node: Node): void {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public updateNode(_node: Node): void {
         this.show()
         return
     }
 
-    public updateEdge(edge: Edge): void {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public updateEdge(_edge: Edge): void {
         this.show()
         return
     }
 
-    public updateNodes(nodes: NodeSelection<unknown>[]): void {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public updateNodes(_nodes: NodeSelection<unknown>[]): void {
         this.show()
         return
     }
 
-    public updateEdges(edge: EdgeSelection<unknown>[]): void {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public updateEdges(_edge: EdgeSelection<unknown>[]): void {
         this.show()
         return
     }
@@ -104,4 +108,7 @@ export class ExtraPanelManager implements UIElement {
         this.allPanels.push(panelDiv)
         this.panelContainer.appendChild(panelDiv)
     }
+
+    graphReady() { }
+
 }
