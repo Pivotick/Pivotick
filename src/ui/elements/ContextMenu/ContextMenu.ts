@@ -10,7 +10,6 @@ import './contextmenu.scss'
 import { deepMerge } from '../../../utils/utils'
 
 
-
 const defaultMenuNode = {
     topbar: [
         {
@@ -20,7 +19,7 @@ const defaultMenuNode = {
             visible: (node: Node) => {
                 return !node.frozen
             },
-            cb: (_evt: PointerEvent, node: Node) => {
+            cb(_evt: PointerEvent, node: Node) {
                 node.freeze()
             }
         },
@@ -31,7 +30,7 @@ const defaultMenuNode = {
             visible: (node: Node) => {
                 return node.frozen
             },
-            cb: (_evt: PointerEvent, node: Node) => {
+            cb(_evt: PointerEvent, node: Node) {
                 node.unfreeze()
             }
         },
@@ -65,10 +64,10 @@ const defaultMenuNode = {
                     ...node.getConnectedNodes(),
                     ...node.getConnectingNodes()
                 ].map((node) => {
-                    return [
-                        node,
-                        node.getGraphElement()
-                    ]
+                    return {
+                        node: node,
+                        element: node.getGraphElement()
+                    }
                 })
                 this.uiManager.graph.renderer.getGraphInteraction().selectNodes(neighbors)
             },
@@ -127,8 +126,10 @@ const defaultMenuCanvas = {
             svgIcon: pin,
             variant: 'outline-primary',
             visible: true,
-            cb: () => {
-                this.uiManager.graph.getMutableNodes().forEach((node: Node) => {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            cb(_evt: PointerEvent) {
+                const nodes = this.uiManager.graph.getMutableNodes() ?? []
+                nodes.forEach((node: Node) => {
                     node.freeze()
                 })
             }
@@ -138,11 +139,13 @@ const defaultMenuCanvas = {
             svgIcon: unpin,
             variant: 'outline-primary',
             visible: true,
-            cb: () => {
-                this.uiManager.graph.getMutableNodes().forEach((node: Node) => {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            cb(_evt: PointerEvent) {
+                const nodes = this.uiManager.graph.getMutableNodes() ?? []
+                nodes.forEach((node: Node) => {
                     node.unfreeze()
-                    this.uiManager.graph.simulation.reheat()
                 })
+                this.uiManager.graph.simulation?.reheat()
             }
         },
     ] as MenuQuickActionItemOptions[],
@@ -151,13 +154,12 @@ const defaultMenuCanvas = {
 }
 
 export class ContextMenu implements UIElement {
-    private uiManager: UIManager
+    public uiManager: UIManager
 
     public menu?: HTMLDivElement
     public visible: boolean
     private parentContainer?: HTMLElement
 
-    private elementID: string | null = null
     private element: Node | Edge | null = null
 
     private menuNode: { topbar: MenuQuickActionItemOptions[]; menu: MenuActionItemOptions[] }
@@ -208,7 +210,6 @@ export class ContextMenu implements UIElement {
     private nodeClicked(event: PointerEvent, node: Node): void {
         if (!this.menu) return
 
-        this.elementID = node.id
         this.element = node
         this.createNodeMenu(node)
         this.setPosition(event)
@@ -218,7 +219,6 @@ export class ContextMenu implements UIElement {
     private edgeClicked(event: PointerEvent, edge: Edge): void {
         if (!this.menu) return
 
-        this.elementID = edge.id
         this.element = edge
         this.createEdgeMenu(edge)
         this.setPosition(event)
@@ -228,7 +228,6 @@ export class ContextMenu implements UIElement {
     private canvasClicked(event: PointerEvent): void {
         if (!this.menu) return
 
-        this.elementID = null
         this.element = null
         this.createCanvasMenu()
         this.setPosition(event)
@@ -283,7 +282,6 @@ export class ContextMenu implements UIElement {
         if (!this.visible) return
         if (!this.menu) return
 
-        this.elementID = null
         this.element = null
         this.menu.classList.remove('shown')
         this.menu.style.left = '-10000px'
@@ -340,7 +338,7 @@ export class ContextMenu implements UIElement {
             ]
         )
         if (typeof cb === 'function') {
-            span.addEventListener('click', (event: PointerEvent) => {
+            span.addEventListener('click', (event: MouseEvent) => {
                 cb.call(this, event, this.element)
                 this.hide()
             })
@@ -362,7 +360,7 @@ export class ContextMenu implements UIElement {
             ]
         )
         if (typeof action.cb === 'function') {
-            div.addEventListener('click', (event: PointerEvent) => {
+            div.addEventListener('click', (event: MouseEvent) => {
                 action.cb.call(this, event, this.element)
                 this.hide()
             })

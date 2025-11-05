@@ -4,6 +4,7 @@ import { Edge } from './Edge'
 import type { Simulation } from './Simulation'
 import type { UIVariant } from './utils/ElementCreation'
 import type { TreeLayoutAlgorithm } from './plugins/layout/Tree'
+import type { ContextMenu } from './ui/elements/ContextMenu/ContextMenu'
 
 export interface InterractionCallbacks<TElement = unknown> {
     /**
@@ -376,7 +377,7 @@ export type MenuActionItemOptions = {
     title: string,
     variant: UIVariant,
     visible: boolean | ((element: Node | Edge | null) => boolean)
-    cb: (evt: PointerEvent, element: Node | Node[] | Edge | Edge[] | null) => void
+    cb: (this: ContextMenu, evt: PointerEvent | MouseEvent, element: Node | Node[] | Edge | Edge[] | null) => void
 }
 export type MenuQuickActionItemOptions = MenuActionItemOptions & {
     flushRight?: boolean;

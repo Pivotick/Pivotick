@@ -87,7 +87,12 @@ export class SelectionBox {
 
         this.isSelecting = false
         const bbox = this.rect.getBoundingClientRect()
-        const selectedNodes = this.getNodesInRect(bbox)
+        const selectedNodes = this.getNodesInRect(bbox).map((selection) => {
+            return {
+                node: selection[0],
+                element: selection[1],
+            }
+        })
 
         if (this.selectionMode == 'start') {
             this.renderer.getGraphInteraction().selectNodes(selectedNodes)
