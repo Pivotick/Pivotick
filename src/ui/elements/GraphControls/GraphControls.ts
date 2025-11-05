@@ -5,9 +5,7 @@ import hasCycle from '../../../plugins/analytics/cycle'
 import { balancedDistanced, expand, firstValidNode, flipEdgeDirection, graphControlLayoutOrganic, graphControlLayoutTreeH, graphControlLayoutTreeR, graphControlLayoutTreeV, hide, minHeight, mostConnectedNode, pin, timeDuration10, timeDuration15, timeDuration5, unpin } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import './graphControls.scss'
-import { tryResolveBoolean } from '../../../utils/Getters'
-import { createHtmlElement, createIcon } from '../../../utils/ElementCreation'
-import { createButton } from '../../components/Button'
+import { createActionList, createHtmlElement, createIcon, createQuickActionList } from '../../../utils/ElementCreation'
 import { deepMerge } from '../../../utils/utils'
 
 type GraphLayoutOption = {
@@ -25,7 +23,7 @@ const defaultMenuNode = {
             svgIcon: pin,
             variant: 'outline-primary',
             visible: true,
-            cb: (_evt: PointerEvent, nodes: Node[]) => {
+            cb(this: GraphControls, _evt: PointerEvent, nodes: Node[]) {
                 nodes.forEach((node: Node) => {
                     node.freeze()
                 })
@@ -36,7 +34,7 @@ const defaultMenuNode = {
             svgIcon: unpin,
             variant: 'outline-primary',
             visible: true,
-            cb: function(_evt: PointerEvent, nodes: Node[]) {
+            cb(this: GraphControls, _evt: PointerEvent, nodes: Node[]) {
                 nodes.forEach((node: Node) => {
                     node.unfreeze()
                     this.uiManager.graph.simulation.reheat()
@@ -49,7 +47,7 @@ const defaultMenuNode = {
             variant: 'outline-danger',
             visible: false,
             flushRight: true,
-            cb: function(_evt: PointerEvent, nodes: Node[]) {
+            cb(this: GraphControls, _evt: PointerEvent, nodes: Node[]) {
                 nodes.forEach((node: Node) => {
                     node.unfreeze()
                 })
@@ -70,7 +68,7 @@ const defaultMenuNode = {
             svgIcon: pin,
             variant: 'outline-primary',
             visible: true,
-            cb: (_evt: PointerEvent, nodes: Node[]) => {
+            cb(this: GraphControls, _evt: PointerEvent, nodes: Node[]) {
                 nodes.forEach((node: Node) => {
                     node.freeze()
                 })
@@ -80,7 +78,7 @@ const defaultMenuNode = {
 }
 
 export class GraphControls implements UIElement {
-    private uiManager: UIManager
+    public uiManager: UIManager
 
     public navigation?: HTMLDivElement
     private selectionMenu?: HTMLDivElement
@@ -406,8 +404,8 @@ export class GraphControls implements UIElement {
         mainMenu.innerHTML = ''
 
         title.textContent = `${nodes.length} nodes selected`
-        topbar.appendChild(this.createQuickActionList(this.menuNode.topbar, nodes))
-        mainMenu.appendChild(this.createActionList(this.menuNode.menu, nodes))
+        topbar.appendChild(createQuickActionList<GraphControls>(this, this.menuNode.topbar, nodes))
+        mainMenu.appendChild(createActionList<GraphControls>(this, this.menuNode.menu, nodes))
     }
 
     private clearSelectionContainer(): void {
@@ -426,73 +424,6 @@ export class GraphControls implements UIElement {
             const { node } = nodeSelection
             return node
         })
-    }
-
-    private createQuickActionList(actions: MenuQuickActionItemOptions[], nodes: Node[]): HTMLDivElement {
-        const div = createHtmlElement('div', { class: 'pivotick-quickaction-list' })
-        actions.forEach(action => {
-            const isVisible = tryResolveBoolean(action.visible, nodes[0]) ?? true
-            if (isVisible) {
-                const row = this.createQuickActionItem(action, nodes)
-                div.appendChild(row)
-            }
-        })
-        return div
-    }
-
-    private createActionList(actions: MenuActionItemOptions[], nodes: Node[]): HTMLDivElement {
-        const div = createHtmlElement('div', { class: 'pivotick-action-list' })
-        actions.forEach(action => {
-            const isVisible = tryResolveBoolean(action.visible, nodes[0]) ?? true
-            if (isVisible) {
-                const row = this.createActionItem(action, nodes)
-                div.appendChild(row)
-            }
-        })
-        return div
-    }
-
-    private createQuickActionItem(action: MenuQuickActionItemOptions, nodes: Node[]): HTMLSpanElement {
-        const { cb, ...actionWithoutCb } = action
-        const span = createHtmlElement('span',
-            {
-                class: ['pivotick-quickaction-item', `pivotick-quickaction-item-${action.variant}`],
-                style: `${action.flushRight ? 'margin-left: auto;' : ''}`
-            },
-            [
-                createButton({
-                    size: 'sm',
-                    ...actionWithoutCb,
-                })
-            ]
-        )
-        if (typeof cb === 'function') {
-            span.addEventListener('click', (event: PointerEvent) => {
-                cb.call(this, event, nodes)
-            })
-        }
-        return span
-    }
-
-    private createActionItem(action: MenuActionItemOptions, nodes: Node[]): HTMLDivElement {
-        const div = createHtmlElement('div',
-            {
-                class: ['pivotick-action-item', `pivotick-action-item-${action.variant}`]
-            },
-            [
-                createIcon({ fixedWidth: true, ...action }),
-                createHtmlElement('span', { 
-                    class: 'pivotick-action-text',
-                    title: action.title,
-                }, [ action.text ?? '' ])
-            ]
-        )
-        if (typeof action.cb === 'function') {
-            div.addEventListener('click', (event: PointerEvent) => {
-                action.cb.call(this, event, nodes)
-            })
-        }
-        return div
     }
 
     private createLayoutOptionAndBind(allLayouts: { root: GraphLayoutOption, children: GraphLayoutOption[] }[]) {

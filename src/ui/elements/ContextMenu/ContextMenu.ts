@@ -1,16 +1,11 @@
-import merge from 'lodash.merge'
 import type { Edge } from '../../../Edge'
 import type { MenuActionItemOptions, MenuQuickActionItemOptions } from '../../../GraphOptions'
 import type { Node } from '../../../Node'
-import { createHtmlElement, createIcon } from '../../../utils/ElementCreation'
-import { tryResolveValue } from '../../../utils/Getters'
-import { createButton } from '../../components/Button'
+import { createActionList, createQuickActionList } from '../../../utils/ElementCreation'
 import { expand, focusElement, hide, inspect, pin, selectNeighbor, unpin } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import './contextmenu.scss'
 import { deepMerge } from '../../../utils/utils'
-
-
 
 const defaultMenuNode = {
     topbar: [
@@ -21,7 +16,7 @@ const defaultMenuNode = {
             visible: (node: Node) => {
                 return !node.frozen
             },
-            cb: (evt: PointerEvent, node: Node) => {
+            cb(this: ContextMenu, _evt: PointerEvent, node: Node) {
                 node.freeze()
             }
         },
@@ -32,7 +27,7 @@ const defaultMenuNode = {
             visible: (node: Node) => {
                 return node.frozen
             },
-            cb: (evt: PointerEvent, node: Node) => {
+            cb(this: ContextMenu, _evt: PointerEvent, node: Node) {
                 node.unfreeze()
             }
         },
@@ -40,7 +35,7 @@ const defaultMenuNode = {
             title: 'Focus Node',
             svgIcon: focusElement,
             variant: 'outline-primary',
-            cb(evt: PointerEvent, node: Node) {
+            cb(this: ContextMenu, _evt: PointerEvent, node: Node) {
                 this.uiManager.graph.focusElement(node)
             },
         },
@@ -49,7 +44,8 @@ const defaultMenuNode = {
             svgIcon: hide,
             variant: 'outline-danger',
             flushRight: true,
-            visible: (node: Node) => {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            visible: (_node: Node) => {
                 return false // FIXME: Implement feature
             },
         },
@@ -60,15 +56,15 @@ const defaultMenuNode = {
             title: 'Select Neighbors',
             svgIcon: selectNeighbor,
             variant: 'outline-primary',
-            cb(evt: PointerEvent, node: Node) {
+            cb(this: ContextMenu, _evt: PointerEvent, node: Node) {
                 const neighbors = [
                     ...node.getConnectedNodes(),
                     ...node.getConnectingNodes()
                 ].map((node) => {
-                    return [
-                        node,
-                        node.getGraphElement()
-                    ]
+                    return {
+                        node: node,
+                        element: node.getGraphElement()
+                    }
                 })
                 this.uiManager.graph.renderer.getGraphInteraction().selectNodes(neighbors)
             },
@@ -78,10 +74,12 @@ const defaultMenuNode = {
             title: 'Hide Children',
             svgIcon: hide,
             variant: 'outline-primary',
-            visible: (node: Node) => {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            visible: (_node: Node) => {
                 return false // FIXME: Implement feature
             },
-            cb(evt: PointerEvent, node: Node) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            cb(_evt: PointerEvent, _node: Node) {
             },
         },
         {
@@ -89,10 +87,12 @@ const defaultMenuNode = {
             title: 'Expand Node',
             svgIcon: expand,
             variant: 'outline-primary',
-            visible: (node: Node) => {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            visible: (_node: Node) => {
                 return false // FIXME: Implement feature
             },
-            cb(evt: PointerEvent, node: Node) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            cb(_evt: PointerEvent, _node: Node) {
             },
         },
         {
@@ -100,10 +100,11 @@ const defaultMenuNode = {
             title: 'Inspect Properties',
             svgIcon: inspect,
             variant: 'outline-primary',
-            visible: (node: Node) => {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            visible: (_node: Node) => {
                 return true
             },
-            cb(evt: PointerEvent, node: Node) {
+            cb(this: ContextMenu, _evt: PointerEvent, node: Node) {
                 this.uiManager.graph.renderer.getGraphInteraction().selectNode(node.getGraphElement(), node)
             },
         },
@@ -122,8 +123,10 @@ const defaultMenuCanvas = {
             svgIcon: pin,
             variant: 'outline-primary',
             visible: true,
-            cb: () => {
-                this.uiManager.graph.getMutableNodes().forEach((node: Node) => {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            cb(this: ContextMenu, _evt: PointerEvent) {
+                const nodes = this.uiManager.graph.getMutableNodes() ?? []
+                nodes.forEach((node: Node) => {
                     node.freeze()
                 })
             }
@@ -133,11 +136,13 @@ const defaultMenuCanvas = {
             svgIcon: unpin,
             variant: 'outline-primary',
             visible: true,
-            cb: () => {
-                this.uiManager.graph.getMutableNodes().forEach((node: Node) => {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            cb(this: ContextMenu, _evt: PointerEvent) {
+                const nodes = this.uiManager.graph.getMutableNodes() ?? []
+                nodes.forEach((node: Node) => {
                     node.unfreeze()
-                    this.uiManager.graph.simulation.reheat()
                 })
+                this.uiManager.graph.simulation?.reheat()
             }
         },
     ] as MenuQuickActionItemOptions[],
@@ -146,13 +151,12 @@ const defaultMenuCanvas = {
 }
 
 export class ContextMenu implements UIElement {
-    private uiManager: UIManager
+    public uiManager: UIManager
 
     public menu?: HTMLDivElement
     public visible: boolean
     private parentContainer?: HTMLElement
 
-    private elementID: string | null = null
     private element: Node | Edge | null = null
 
     private menuNode: { topbar: MenuQuickActionItemOptions[]; menu: MenuActionItemOptions[] }
@@ -203,7 +207,6 @@ export class ContextMenu implements UIElement {
     private nodeClicked(event: PointerEvent, node: Node): void {
         if (!this.menu) return
 
-        this.elementID = node.id
         this.element = node
         this.createNodeMenu(node)
         this.setPosition(event)
@@ -213,7 +216,6 @@ export class ContextMenu implements UIElement {
     private edgeClicked(event: PointerEvent, edge: Edge): void {
         if (!this.menu) return
 
-        this.elementID = edge.id
         this.element = edge
         this.createEdgeMenu(edge)
         this.setPosition(event)
@@ -223,33 +225,34 @@ export class ContextMenu implements UIElement {
     private canvasClicked(event: PointerEvent): void {
         if (!this.menu) return
 
-        this.elementID = null
         this.element = null
         this.createCanvasMenu()
         this.setPosition(event)
         this.show()
     }
 
-    private createNodeMenu(node: Node): void {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    private createNodeMenu(_node: Node): void {
         if (!this.menu) return
 
         const topbar = this.menu.querySelector('.pivotick-contextmenu-topbar')!
         const mainMenu = this.menu.querySelector('.pivotick-contextmenu-mainmenu')!
         topbar.innerHTML = ''
         mainMenu.innerHTML = ''
-        topbar.appendChild(this.createQuickActionList(this.menuNode.topbar))
-        mainMenu.appendChild(this.createActionList(this.menuNode.menu))
+        topbar.appendChild(createQuickActionList<ContextMenu>(this, this.menuNode.topbar, this.element))
+        mainMenu.appendChild(createActionList<ContextMenu>(this, this.menuNode.menu, this.element))
     }
 
-    private createEdgeMenu(edge: Edge): void {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    private createEdgeMenu(_edge: Edge): void {
         if (!this.menu) return
 
         const topbar = this.menu.querySelector('.pivotick-contextmenu-topbar')!
         const mainMenu = this.menu.querySelector('.pivotick-contextmenu-mainmenu')!
         topbar.innerHTML = ''
         mainMenu.innerHTML = ''
-        topbar.appendChild(this.createQuickActionList(this.menuEdge.topbar))
-        mainMenu.appendChild(this.createActionList(this.menuEdge.menu))
+        topbar.appendChild(createQuickActionList<ContextMenu>(this, this.menuEdge.topbar, this.element))
+        mainMenu.appendChild(createActionList<ContextMenu>(this, this.menuEdge.menu, this.element))
     }
 
     private createCanvasMenu(): void {
@@ -259,8 +262,8 @@ export class ContextMenu implements UIElement {
         const mainMenu = this.menu.querySelector('.pivotick-contextmenu-mainmenu')!
         topbar.innerHTML = ''
         mainMenu.innerHTML = ''
-        topbar.appendChild(this.createQuickActionList(this.menuCanvas.topbar))
-        mainMenu.appendChild(this.createActionList(this.menuCanvas.menu))
+        topbar.appendChild(createQuickActionList<ContextMenu>(this, this.menuCanvas.topbar, this.element))
+        mainMenu.appendChild(createActionList<ContextMenu>(this, this.menuCanvas.menu, this.element))
     }
 
     public show(): void {
@@ -276,7 +279,6 @@ export class ContextMenu implements UIElement {
         if (!this.visible) return
         if (!this.menu) return
 
-        this.elementID = null
         this.element = null
         this.menu.classList.remove('shown')
         this.menu.style.left = '-10000px'
@@ -294,72 +296,72 @@ export class ContextMenu implements UIElement {
         this.menu.style.top = `${y + offset}px`
     }
 
-    private createQuickActionList(actions: MenuQuickActionItemOptions[]): HTMLDivElement {
-        const div = createHtmlElement('div', { class: 'pivotick-quickaction-list' })
-        actions.forEach(action => {
-            const isVisible = tryResolveValue(action.visible, this.element) ?? true
-            if (isVisible) {
-                const row = this.createQuickActionItem(action)
-                div.appendChild(row)
-            }
-        })
-        return div
-    }
+    // private createQuickActionList(actions: MenuQuickActionItemOptions[]): HTMLDivElement {
+    //     const div = createHtmlElement('div', { class: 'pivotick-quickaction-list' })
+    //     actions.forEach(action => {
+    //         const isVisible = tryResolveValue(action.visible, this.element) ?? true
+    //         if (isVisible) {
+    //             const row = this.createQuickActionItem(action)
+    //             div.appendChild(row)
+    //         }
+    //     })
+    //     return div
+    // }
 
-    private createActionList(actions: MenuActionItemOptions[]): HTMLDivElement {
-        const div = createHtmlElement('div', { class: 'pivotick-action-list' })
-        actions.forEach(action => {
-            const isVisible = tryResolveValue(action.visible, this.element) ?? true
-            if (isVisible) {
-                const row = this.createActionItem(action)
-                div.appendChild(row)
-            }
-        })
-        return div
-    }
+    // private createActionList(actions: MenuActionItemOptions[]): HTMLDivElement {
+    //     const div = createHtmlElement('div', { class: 'pivotick-action-list' })
+    //     actions.forEach(action => {
+    //         const isVisible = tryResolveValue(action.visible, this.element) ?? true
+    //         if (isVisible) {
+    //             const row = this.createActionItem(action)
+    //             div.appendChild(row)
+    //         }
+    //     })
+    //     return div
+    // }
 
-    private createQuickActionItem(action: MenuQuickActionItemOptions): HTMLSpanElement {
-        const { cb, ...actionWithoutCb } = action
-        const span = createHtmlElement('span',
-            {
-                class: ['pivotick-quickaction-item', `pivotick-quickaction-item-${action.variant}`],
-                style: `${action.flushRight ? 'margin-left: auto;' : ''}`
-            },
-            [
-                createButton({
-                    size: 'sm',
-                    ...actionWithoutCb,
-                })
-            ]
-        )
-        if (typeof cb === 'function') {
-            span.addEventListener('click', (event: PointerEvent) => {
-                cb.call(this, event, this.element)
-                this.hide()
-            })
-        }
-        return span
-    }
+    // private createQuickActionItem(action: MenuQuickActionItemOptions): HTMLSpanElement {
+    //     const { cb, ...actionWithoutCb } = action
+    //     const span = createHtmlElement('span',
+    //         {
+    //             class: ['pivotick-quickaction-item', `pivotick-quickaction-item-${action.variant}`],
+    //             style: `${action.flushRight ? 'margin-left: auto;' : ''}`
+    //         },
+    //         [
+    //             createButton({
+    //                 size: 'sm',
+    //                 ...actionWithoutCb,
+    //             })
+    //         ]
+    //     )
+    //     if (typeof cb === 'function') {
+    //         span.addEventListener('click', (event: MouseEvent) => {
+    //             cb.call(this, event, this.element)
+    //             this.hide()
+    //         })
+    //     }
+    //     return span
+    // }
 
-    private createActionItem(action: MenuActionItemOptions): HTMLDivElement {
-        const div = createHtmlElement('div',
-            {
-                class: ['pivotick-action-item', `pivotick-action-item-${action.variant}`]
-            },
-            [
-                createIcon({fixedWidth: true, ...action}),
-                createHtmlElement('span', { 
-                    class: 'pivotick-action-text',
-                    title: action.title,
-                }, [ action.text ?? '' ])
-            ]
-        )
-        if (typeof action.cb === 'function') {
-            div.addEventListener('click', (event: PointerEvent) => {
-                action.cb.call(this, event, this.element)
-                this.hide()
-            })
-        }
-        return div
-    }
+    // private createActionItem(action: MenuActionItemOptions): HTMLDivElement {
+    //     const div = createHtmlElement('div',
+    //         {
+    //             class: ['pivotick-action-item', `pivotick-action-item-${action.variant}`]
+    //         },
+    //         [
+    //             createIcon({fixedWidth: true, ...action}),
+    //             createHtmlElement('span', { 
+    //                 class: 'pivotick-action-text',
+    //                 title: action.title,
+    //             }, [ action.text ?? '' ])
+    //         ]
+    //     )
+    //     if (typeof action.cb === 'function') {
+    //         div.addEventListener('click', (event: MouseEvent) => {
+    //             action.cb.call(this, event, this.element)
+    //             this.hide()
+    //         })
+    //     }
+    //     return div
+    // }
 }

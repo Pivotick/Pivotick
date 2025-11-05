@@ -1,5 +1,4 @@
 import type { Edge } from '../../../Edge'
-import type { PropertyEntry } from '../../../GraphOptions'
 import type { Node } from '../../../Node'
 import { createHtmlDL, createHtmlElement, createHtmlTemplate, createSvgElement, makeDraggable } from '../../../utils/ElementCreation'
 import { tryResolveHTMLElement } from '../../../utils/Getters'
@@ -172,7 +171,7 @@ export class Tooltip implements UIElement {
         const nameElem = tooltipContainer.querySelector('.pivotick-mainheader-nodeinfo-name')!
         const subtitleElem = tooltipContainer.querySelector('.pivotick-mainheader-nodeinfo-subtitle')!
         const toprightElem = tooltipContainer.querySelector('.pivotick-mainheader-topright')!
-        const actionElem = tooltipContainer.querySelector('.pivotick-mainheader-nodeinfo-action')!
+        // const actionElem = tooltipContainer.querySelector('.pivotick-mainheader-nodeinfo-action')!
 
         const properties = nodePropertiesGetter(node, this.uiManager.getOptions().propertiesPanel)
 
@@ -198,7 +197,7 @@ export class Tooltip implements UIElement {
             size: 'sm',
             class: 'pin-button',
             svgIcon: pin,
-            onClick: (evt) => {
+            onClick: () => {
                 this.pinTooltip()
             },
         })
@@ -263,7 +262,7 @@ export class Tooltip implements UIElement {
         const nameElem = tooltipContainer.querySelector('.pivotick-mainheader-nodeinfo-name')!
         const subtitleElem = tooltipContainer.querySelector('.pivotick-mainheader-nodeinfo-subtitle')!
         const toprightElem = tooltipContainer.querySelector('.pivotick-mainheader-topright')!
-        const actionElem = tooltipContainer.querySelector('.pivotick-mainheader-nodeinfo-action')!
+        // const actionElem = tooltipContainer.querySelector('.pivotick-mainheader-nodeinfo-action')!
 
         const pinButton = createButton({
             title: 'Pin Tooltip',
@@ -271,7 +270,7 @@ export class Tooltip implements UIElement {
             size: 'sm',
             class: 'pin-button',
             svgIcon: pin,
-            onClick: (evt) => {
+            onClick: () => {
                 this.pinTooltip()
             },
         })
@@ -438,13 +437,13 @@ export class Tooltip implements UIElement {
 
 
         makeDraggable(clonedTooltip, topbar, {
-            onDragStart: (e: MouseEvent, pinnedTt: HTMLElement) => {
+            onDragStart: (_e: MouseEvent, pinnedTt: HTMLElement) => {
                 this.shadowlinkBoundingBoxesMap.set(pinnedTt, [
                     pinnedTt.getBoundingClientRect(),
                     this.tooltipDataMap.get(pinnedTt)!.getGraphElement()!.getBoundingClientRect(),
                 ])
             },
-            onDrag: (e: MouseEvent, pinnedTt: HTMLElement) => {
+            onDrag: (_e: MouseEvent, pinnedTt: HTMLElement) => {
                 this.updateShadowLink(pinnedTt, this.tooltipDataMap.get(pinnedTt)!)
             }
         })

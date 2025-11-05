@@ -2,7 +2,7 @@ import type { UIElement, UIManager } from '../../UIManager'
 import './slidePanel.scss'
 
 export class SlidePanel implements UIElement {
-    private uiManager: UIManager
+    public uiManager: UIManager
 
     public slidePanel?: HTMLDivElement
 
@@ -41,5 +41,7 @@ export class SlidePanel implements UIElement {
             this.slidePanel?.classList.remove('open')
         })
     }
+
+    graphReady(): void { }
 
 }

@@ -1,7 +1,7 @@
 import { Graph } from '../Graph'
 import { Node } from  '../Node'
 import { Edge } from  '../Edge'
-import type { GraphUI } from '../GraphOptions'
+import type { GraphUI, PropertyEntry } from '../GraphOptions'
 import { GraphControls } from './elements/GraphControls/GraphControls'
 import { GraphNavigation } from './elements/GraphNavigation/GraphNavigation'
 import { Layout } from './elements/Layout'
@@ -13,45 +13,46 @@ import merge from 'lodash.merge'
 import { Tooltip } from './elements/Tooltip/Tooltip'
 import { ContextMenu } from './elements/ContextMenu/ContextMenu'
 
-
-const defaultHeaderMapNodeTitle = (node: Node | Edge) => node.getData().label || 'Could not resolve title'
-const defaultHeaderMapNodeSubtitle = (node: Node | Edge) => node.getData().description || null
-const defaultHeaderMapEdgeTitle = (edge: Node | Edge) => edge.getData().label || 'Could not resolve title'
-const defaultHeaderMapEdgeSubtitle = (edge: Node | Edge) => edge.getData().description || null
-
-const defaultPropertiesMapNode = (node: Node) => {
+const basicPropertyGetter = (element: Node | Edge): PropertyEntry[] => {
     const properties = []
-    for (const [key, value] of Object.entries(node.getData())) {
-        properties.push({
-            name: key,
-            value: value,
-        })
+    for (const [key, value] of Object.entries(element.getData())) {
+        if (key && value) {
+            properties.push({
+                name: key,
+                value: value,
+            } as PropertyEntry)
+        }
     }
     return properties
 }
-const defaultPropertiesMapEdge = (edge: Edge) => {
-    const properties = []
-    for (const [key, value] of Object.entries(edge.getData())) {
-        properties.push({
-            name: key,
-            value: value,
-        })
-    }
-    return properties
+
+const basicStringGetter = (element: Node | Edge, key: string, fallbackStr: string = ''): string => {
+    const str = element.getData()?.[key]
+    return typeof str === 'string' ? str : fallbackStr
+}
+
+const defaultHeaderMapNodeTitle = (node: Node): string => basicStringGetter(node, 'label', 'Could not resolve title')
+const defaultHeaderMapNodeSubtitle = (node: Node): string => basicStringGetter(node, 'description')
+const defaultHeaderMapEdgeTitle = (edge: Edge): string => basicStringGetter(edge, 'label', 'Could not resolve title')
+const defaultHeaderMapEdgeSubtitle = (edge: Edge): string => basicStringGetter(edge, 'description')
+
+const defaultPropertiesMapNode = (node: Node): PropertyEntry[] => basicPropertyGetter(node)
+const defaultPropertiesMapEdge = (edge: Edge): PropertyEntry[] => basicPropertyGetter(edge)
+
+const DEFAULT_HEADERS_MAPS = {
+    nodeHeaderMap: {
+        title: defaultHeaderMapNodeTitle,
+        subtitle: defaultHeaderMapNodeSubtitle,
+    },
+    edgeHeaderMap: {
+        title: defaultHeaderMapEdgeTitle,
+        subtitle: defaultHeaderMapEdgeSubtitle,
+    },
 }
 
 export const DEFAULT_UI_OPTIONS: GraphUI = {
     mode: 'viewer',
-    mainHeader: {
-        nodeHeaderMap: {
-            title: defaultHeaderMapNodeTitle,
-            subtitle: defaultHeaderMapNodeSubtitle,
-        },
-        edgeHeaderMap: {
-            title: defaultHeaderMapEdgeTitle,
-            subtitle: defaultHeaderMapEdgeSubtitle,
-        },
-    },
+    mainHeader: DEFAULT_HEADERS_MAPS,
     propertiesPanel: {
         nodePropertiesMap: defaultPropertiesMapNode,
         edgePropertiesMap: defaultPropertiesMapEdge,
@@ -60,14 +61,7 @@ export const DEFAULT_UI_OPTIONS: GraphUI = {
         enable: true,
         nodePropertiesMap: defaultPropertiesMapNode,
         edgePropertiesMap: defaultPropertiesMapEdge,
-        nodeHeaderMap: {
-            title: defaultHeaderMapNodeTitle,
-            subtitle: defaultHeaderMapNodeSubtitle,
-        },
-        edgeHeaderMap: {
-            title: defaultHeaderMapEdgeTitle,
-            subtitle: defaultHeaderMapEdgeSubtitle,
-        },
+        ...DEFAULT_HEADERS_MAPS
     },
     contextMenu: {
         enable: true,

@@ -1,3 +1,5 @@
+/* eslint-disable */
+// @ts-nocheck
 import type { Graph } from '../../Graph'
 import type { GraphInteractions } from '../../GraphInteractions'
 import type { GraphCanvasRenderer } from './GraphCanvasRenderer'

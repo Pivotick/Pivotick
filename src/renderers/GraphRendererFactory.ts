@@ -23,5 +23,5 @@ export function createGraphRenderer(
     } else {
         throw new Error(`\`${type}\` renderer is not implemented yet.`)
     }
-    return renderer
+    return renderer as GraphRenderer
   }

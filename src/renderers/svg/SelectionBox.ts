@@ -1,10 +1,11 @@
-import type { GraphRenderer } from '../../GraphRenderer'
+import { AbstractSelectionBox } from '../../GraphRenderer'
 import type { Node } from '../../Node'
+import type { GraphSvgRenderer } from './GraphSvgRenderer'
 
 
 type SelectionMode = 'start' | 'add' | 'remove' // Start clears the selection
-export class SelectionBox {
-    private renderer: GraphRenderer
+export class SelectionBox extends AbstractSelectionBox {
+    private renderer: GraphSvgRenderer
     private svg: SVGSVGElement
     private selectionBoxGroup: SVGGElement | null
     private rect: SVGRectElement | null = null
@@ -13,7 +14,9 @@ export class SelectionBox {
     private isSelecting = false
     private selectionMode: SelectionMode = 'start'
 
-    constructor(renderer: GraphRenderer, svg: SVGSVGElement, selectionBoxGroup: SVGGElement | null) {
+    constructor(renderer: GraphSvgRenderer, svg: SVGSVGElement, selectionBoxGroup: SVGGElement | null) {
+        super()
+
         this.renderer = renderer
         this.svg = svg
         this.selectionBoxGroup = selectionBoxGroup
@@ -69,8 +72,6 @@ export class SelectionBox {
     private onMouseMove = (e: MouseEvent) => {
         if (!this.isSelecting || !this.rect) return
 
-        if (!this.rect) return
-
         const { x, y } = this.getSvgPoint(e)
         const minX = Math.min(this.startX, x)
         const minY = Math.min(this.startY, y)
@@ -89,7 +90,12 @@ export class SelectionBox {
 
         this.isSelecting = false
         const bbox = this.rect.getBoundingClientRect()
-        const selectedNodes = this.getNodesInRect(bbox)
+        const selectedNodes = this.getNodesInRect(bbox).map((selection) => {
+            return {
+                node: selection[0],
+                element: selection[1],
+            }
+        })
 
         if (this.selectionMode == 'start') {
             this.renderer.getGraphInteraction().selectNodes(selectedNodes)

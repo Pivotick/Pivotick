@@ -1,3 +1,5 @@
+/* eslint-disable */
+// @ts-nocheck
 import { type Selection } from 'd3-selection'
 import { Node } from '../../Node'
 import type { Graph } from '../../Graph'

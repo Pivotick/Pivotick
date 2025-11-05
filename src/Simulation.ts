@@ -11,17 +11,17 @@ import {
     type SimulationNodeDatum,
 } from 'd3-force'
 import { type Simulation as d3Simulation } from 'd3-force'
-import { ForceGravity } from "./plugins/d3Forces/ForceGravity"
+import { ForceGravity } from './plugins/d3Forces/ForceGravity'
 import { drag as d3Drag } from 'd3-drag'
 import type { Graph } from './Graph'
 import type { Node } from './Node'
 import type { Edge } from './Edge'
-import type { LayoutOptions, LayoutType, SimulationCallbacks, SimulationOptions, TreeLayoutOptions } from './GraphOptions'
+import type { LayoutType, SimulationCallbacks, SimulationOptions, TreeLayoutOptions } from './GraphOptions'
 import { runSimulationInWorker } from './SimulationWorkerWrapper'
 import merge from 'lodash.merge'
 import { TreeLayout } from './plugins/layout/Tree'
 import { edgeLabelGetter } from './utils/GraphGetters'
-import type { NodeSelection } from './GraphInteractions'
+import type { GraphInteractions } from './GraphInteractions'
 import type { DeepPartial } from './utils/utils'
 
 
@@ -74,6 +74,7 @@ export class Simulation {
     private simulation: d3Simulation<Node, undefined>
     private graph: Graph
     private canvas: HTMLElement | undefined
+    private graphInteraction: GraphInteractions
     private layout
 
     private canvasBCR: DOMRect
@@ -99,10 +100,12 @@ export class Simulation {
         this.callbacks = this.options.callbacks ?? {}
 
         this.canvas = this.graph.renderer.getCanvas()
-        if (!this.canvas) {
-            throw new Error('Canvas element is not defined in the graph renderer.')
-        }
+        if (!this.canvas) throw new Error('Canvas element is not defined in the graph renderer.')
         this.canvasBCR = this.canvas.getBoundingClientRect()
+
+        this.graphInteraction = this.graph.renderer.getGraphInteraction()
+        if (!this.graphInteraction) throw new Error('Graph interaction is not available.')
+
 
         const simulationForces = Simulation.initSimulationForces(this.options, this.canvasBCR)
         this.simulation = simulationForces.simulation
@@ -135,7 +138,7 @@ export class Simulation {
             charge: d3ForceManyBodyType<Node>,
             center: d3ForceCenterType<Node>,
             collide: d3ForceCollideType<Node>,
-            gravity: d3ForceCenterType<Node>,
+            gravity: ForceGravity<Node>,
         }
     } {
         const simulationForces = {
@@ -161,7 +164,7 @@ export class Simulation {
         simulationForces.gravity
             .x(canvasBCR.width / 2)
             .y(canvasBCR.height / 2)
-            .strength((node: SimulationNodeDatum) => {
+            .strength((node) => {
                 const n = node as Node
                 const degree = n.degree() ?? 0
                 return degree === 0 ? options.d3GravityStrength : 0
@@ -331,9 +334,9 @@ export class Simulation {
             if (this.callbacks.onTick) {
                 this.callbacks.onTick(this)
             }
-            this.graph.renderer.getGraphInteraction().simulationTick()
+            this.graphInteraction.simulationTick()
             if (this.totalTickCount % 10 === 0) {
-                this.graph.renderer.getGraphInteraction().simulationSlowTick()
+                this.graphInteraction.simulationSlowTick()
             }
         }
     }
@@ -372,6 +375,7 @@ export class Simulation {
             this.graph.updateLayoutProgress(progress, elapsedTime)
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { callbacks, ...optionsWithoutCBs } = this.options
         Object.assign(optionsWithoutCBs, optionOverride)
 
@@ -409,9 +413,9 @@ export class Simulation {
 
     public createDragBehavior() {
         return d3Drag<SVGGElement, Node>()
-            .on('start', (event, d) => {
-                if (this.graph.renderer.getGraphInteraction().hasActiveMultiselection()) {
-                    this.dragSelection = this.graph.renderer.getGraphInteraction().getSelectedNodes().map((nodeSelection: NodeSelection<SVGGElement>) => {
+            .on('start', (_event, d) => {
+                if (this.graphInteraction.hasActiveMultiselection()) {
+                    this.dragSelection = this.graphInteraction.getSelectedNodes().map((nodeSelection) => {
                         const { node } = nodeSelection
                         node.freeze()
                         return {
@@ -433,7 +437,7 @@ export class Simulation {
                         .alphaTarget(0.3)
                         .restart()
                 }
-                if (this.graph.renderer.getGraphInteraction().hasActiveMultiselection()) {
+                if (this.graphInteraction.hasActiveMultiselection()) {
                     this.dragSelection.forEach(({ node, dx, dy }) => {
                         node.fx = event.x + dx
                         node.fy = event.y + dy
@@ -442,7 +446,7 @@ export class Simulation {
                     d.fx = event.x
                     d.fy = event.y
                 }
-                this.graph.renderer.getGraphInteraction().dragging(event.sourceEvent, event.subject)
+                this.graphInteraction.dragging(event.sourceEvent, event.subject)
             })
             .on('end', (event, d) => {
                 if (!event.active) {
@@ -453,7 +457,7 @@ export class Simulation {
                         .restart()
                 }
                 if (!this.options.freezeNodesOnDrag) {
-                    if (this.graph.renderer.getGraphInteraction().hasActiveMultiselection()) {
+                    if (this.graphInteraction.hasActiveMultiselection()) {
                         this.dragSelection.forEach(({ node }) => node.unfreeze())
                         this.dragSelection = []
                     } else {

@@ -77,4 +77,6 @@ export class Toolbar implements UIElement {
             this.uiManager.slidePanel?.slidePanel.classList.add('open')
         })
     }
+
+    graphReady(): void { }
 }

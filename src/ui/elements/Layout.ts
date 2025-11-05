@@ -1,4 +1,4 @@
-import type { GraphMode } from '../../GraphOptions'
+import type { GraphUIMode } from '../../GraphOptions'
 import type { UIElement } from '../UIManager'
 
 export class Layout implements UIElement {
@@ -13,7 +13,7 @@ export class Layout implements UIElement {
 
     constructor() { }
 
-    mount(container: HTMLElement, mode: GraphMode = 'full') {
+    mount(container: HTMLElement, mode: GraphUIMode = 'full') {
         this.layout = document.createElement('div')
         this.layout.className = `pivotick-layout mode-${mode}`
 
@@ -56,5 +56,7 @@ export class Layout implements UIElement {
     }
 
     afterMount() { }
+
+    graphReady() { }
 
 }

@@ -1,7 +1,7 @@
 import { createHtmlDL, createHtmlElement, createHtmlTemplate, createIcon } from '../../../utils/ElementCreation'
 import type { Node } from '../../../Node'
 import type { Edge } from '../../../Edge'
-import type { GraphUI, PropertyEntry } from '../../../GraphOptions'
+import type { PropertyEntry } from '../../../GraphOptions'
 import type { EdgeSelection, NodeSelection } from '../../../GraphInteractions'
 import { createInlineBar } from '../../components/InlineBar'
 import type { UIElement, UIManager } from '../../UIManager'
@@ -54,6 +54,8 @@ export class SidebarProperties implements UIElement {
         this.body.innerHTML = ''
         this.hidePanel()
     }
+
+    public graphReady(): void { }
 
     private setHeaderBasicNode() {
         this.header!.textContent = 'Basic Node Properties'
@@ -286,11 +288,10 @@ export class SidebarProperties implements UIElement {
         }, [createIcon({ svgIcon: filterAdd }) ])
         buttonKeep.addEventListener('click', () => {
             const matchingNodes = this.uiManager.graph.renderer.getGraphInteraction().getSelectedNodes()
-                .filter((nodeSelection: NodeSelection<SVGGElement>) => {
+                .filter((nodeSelection: NodeSelection<unknown>) => {
                     const node = nodeSelection.node
                     return node.getData()[key] != value
                 })
-                .map((nodeSelection: NodeSelection<SVGGElement>) => [nodeSelection.node, nodeSelection.element])
             this.uiManager.graph.renderer.getGraphInteraction().removeNodesFromSelection(matchingNodes)
         })
         
@@ -299,11 +300,10 @@ export class SidebarProperties implements UIElement {
         }, [createIcon({ svgIcon: filterRemove }) ])
         buttonExclude.addEventListener('click', () => {
             const matchingNodes = this.uiManager.graph.renderer.getGraphInteraction().getSelectedNodes()
-                .filter((nodeSelection: NodeSelection<SVGGElement>) => {
+                .filter((nodeSelection: NodeSelection<unknown>) => {
                     const node = nodeSelection.node
                     return node.getData()[key] == value
                 })
-                .map((nodeSelection: NodeSelection<SVGGElement>) => [nodeSelection.node, nodeSelection.element])
             this.uiManager.graph.renderer.getGraphInteraction().removeNodesFromSelection(matchingNodes)
         })
 

@@ -3,7 +3,7 @@ import { Node } from './Node'
 import { generateSafeDomId } from './utils/ElementCreation'
 
 export interface EdgeData {
-    [key: string]: unknown;
+    [key: string]: undefined;
 }
 
 /**
@@ -25,6 +25,7 @@ export class Edge<T = EdgeData, U = EdgeFullStyle> {
      * @param from - Source node
      * @param to - Target node
      * @param data - Optional data payload for the edge
+     * @param style - Optional style for the edge
      */
     constructor(id: string, from: Node, to: Node, data?: T, style?: U, directed: boolean | null = null) {
         this.id = id

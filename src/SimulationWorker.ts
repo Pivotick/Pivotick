@@ -1,8 +1,8 @@
 import type { ForceLink as d3ForceLinkType } from 'd3-force'
-import { DEFAULT_SIMULATION_OPTIONS, Simulation } from './Simulation'
-import { Node, type NodeData, type Node as NodeType } from './Node'
-import { Edge, type EdgeData, type Edge as EdgeType } from './Edge'
-import type { SimulationOptions } from './GraphOptions'
+import { Simulation } from './Simulation'
+import { Node, type NodeData } from './Node'
+import { Edge, type EdgeData } from './Edge'
+import type { SimulationOptions, EdgeFullStyle } from './GraphOptions'
 import { TreeLayout } from './plugins/layout/Tree'
 
 export interface PlainNode<T = NodeData> {
@@ -51,14 +51,16 @@ self.onmessage = (e: MessageEvent<WorkerInput>) => {
         const from = nodeMap.get(e.from.id)
         const to = nodeMap.get(e.to.id)
         if (from && to) {
-            edges.push(new Edge(e.id, from, to, e.data, e.style, e.directed))
+            // normalize/cast incoming style to the EdgeFullStyle expected by Edge
+            const edgeStyle = (e.style ?? {}) as unknown as EdgeFullStyle
+            edges.push(new Edge(e.id, from, to, e.data, edgeStyle, e.directed))
         }
     }
     
     simulation.nodes(nodes)
     const linkForce = simulation.force('link')
     if (linkForce) {
-        (linkForce as d3ForceLinkType<NodeType, EdgeType>)
+        (linkForce as d3ForceLinkType<Node, Edge>)
             .id((node) => node.id)
             .links(edges)
     }
@@ -124,8 +126,7 @@ self.onmessage = (e: MessageEvent<WorkerInput>) => {
             nodes,
             edges,
             simulation,
-            options.layout,
-            canvasBCR
+            options.layout
         )
     }
     self.postMessage({
@@ -135,7 +136,7 @@ self.onmessage = (e: MessageEvent<WorkerInput>) => {
     })
 }
 
-function getProgress(tick: number, elapsedTime: number, options: SimulationOptions): number {
+function getProgress(_tick: number, elapsedTime: number, options: SimulationOptions): number {
     // return tick / MAX_EXECUTION_TICKS
     return elapsedTime / options.cooldownTime
 }

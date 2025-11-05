@@ -61,4 +61,6 @@ export class GraphNavigation implements UIElement {
             this.uiManager.graph.renderer.fitAndCenter()
         })
     }
+
+    graphReady() { }
 }

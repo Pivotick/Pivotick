@@ -110,10 +110,10 @@ export class GraphSvgRenderer extends GraphRenderer {
     protected options: GraphRendererOptions
 
     private zoom: ZoomBehavior<SVGSVGElement, unknown>
-    private graphInteraction: GraphInteractions<SVGGElement | SVGPathElement>
     private eventHandler: EventHandler
     private selectionBox: SelectionBox
-
+    
+    public graphInteraction: GraphInteractions<SVGGElement | SVGPathElement>
     public nodeDrawer: NodeDrawer
     public edgeDrawer: EdgeDrawer
 
@@ -318,7 +318,8 @@ export class GraphSvgRenderer extends GraphRenderer {
         canvas.transition().duration(300).call(zoomBehavior.transform, transform)
     }
 
-    public focusElement(targetEl: SVGGElement): void {
+    public focusElement(element: Node | Edge): void {
+        const targetEl: SVGGElement | null = element.getGraphElement()
         const zoomBehavior = this.getZoomBehavior()
         const canvas = this.getCanvasSelection()
         const svgEl = canvas.node() as SVGSVGElement
@@ -372,6 +373,7 @@ export class GraphSvgRenderer extends GraphRenderer {
         return this.edgeSelection
     }
 
+    // @ts-expect-error fixme: Don't really understand the typescript error below
     public getGraphInteraction(): GraphInteractions<SVGGElement | SVGPathElement> {
         return this.graphInteraction
     }

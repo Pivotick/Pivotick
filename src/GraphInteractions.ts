@@ -105,7 +105,7 @@ export class GraphInteractions<TElement = unknown> {
 
     public nodeClick(element: TElement, event: PointerEvent, node: Node): void {
         if (event.shiftKey) {
-            this.addNodesToSelection([[node, element]])
+            this.addNodesToSelection([{node: node, element: element}])
         } else {
             this.selectNode(element, node)
         }
@@ -258,14 +258,9 @@ export class GraphInteractions<TElement = unknown> {
         this.refreshRendering()
     }
 
-    public selectNodes(selection: Array<[Node, TElement]>): void {
+    public selectNodes(selection: NodeSelection<TElement>[]): void {
         this.unselectAll()
-        this.selectedNodes = selection.map((selection) => {
-            return {
-                node: selection[0],
-                element: selection[1],
-            }
-        })
+        this.selectedNodes = selection
         this.emit('selectNodes', this.selectedNodes)
         this.selectedNodes.forEach(({ node, element }) => {
             if (this.callbacks.onNodeSelect && typeof this.callbacks.onNodeSelect === 'function') {
@@ -276,42 +271,30 @@ export class GraphInteractions<TElement = unknown> {
         this.refreshRendering()
     }
 
-    public addNodesToSelection(selection: Array<[Node, TElement]>): void {
-        const newSelection = selection.map((selection) => {
-            return {
-                node: selection[0],
-                element: selection[1],
-            }
-        })
-        newSelection.forEach(({ node, element }) => {
+    public addNodesToSelection(addSelection: NodeSelection<TElement>[]): void {
+        addSelection.forEach(({ node, element }) => {
             if (this.callbacks.onNodeSelect && typeof this.callbacks.onNodeSelect === 'function') {
                 this.callbacks.onNodeSelect(node, element)
             }
             node.markDirty()
         })
-        this.selectedNodes = this.selectedNodes.concat(newSelection)
-        this.emit('selectNodes', newSelection)
+        this.selectedNodes = this.selectedNodes.concat(addSelection)
+        this.emit('selectNodes', addSelection)
         this.refreshRendering()
     }
 
-    public removeNodesFromSelection(selection: Array<[Node, TElement]>): void {
-        const newSelectionIDs = selection.map((selection) => selection[0].id)
-        const newSelection = selection.map((selection) => {
-            return {
-                node: selection[0],
-                element: selection[1],
-            }
-        })
+    public removeNodesFromSelection(removeSelection: NodeSelection<TElement>[]): void {
+        const newSelectionIDs = removeSelection.map((selection) => selection.node.id)
         this.selectedNodes = this.selectedNodes.filter((selectedNode) => {
             return !newSelectionIDs.includes(selectedNode.node.id)
         })
-        newSelection.forEach(({ node, element }) => {
+        removeSelection.forEach(({ node, element }) => {
             if (this.callbacks.onNodeBlur && typeof this.callbacks.onNodeBlur === 'function') {
                 this.callbacks.onNodeBlur(node, element)
             }
             node.markDirty()
         })
-        this.emit('unselectNodes', newSelection)
+        this.emit('unselectNodes', removeSelection)
         this.refreshRendering()
     }
 

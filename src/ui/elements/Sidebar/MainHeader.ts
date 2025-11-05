@@ -2,7 +2,7 @@ import { createHtmlTemplate } from '../../../utils/ElementCreation'
 import type { Node } from '../../../Node'
 import type { Edge } from '../../../Edge'
 import type { EdgeSelection, NodeSelection } from '../../../GraphInteractions'
-import type { UIManager } from '../../UIManager'
+import type { UIElement, UIManager } from '../../UIManager'
 import './mainHeader.scss'
 import { edgeDescriptionGetter, edgeNameGetter, nodeDescriptionGetter, nodeNameGetter } from '../../../utils/GraphGetters'
 import { graphEdgeIcon, graphMultiSelectNode } from '../../icons'
@@ -36,6 +36,8 @@ export class SidebarMainHeader implements UIElement {
         this.clearOverview()
     }
 
+    public graphReady(): void { }
+
 
     public clearOverview(): void {
         if (!this.panel) return
@@ -66,7 +68,7 @@ export class SidebarMainHeader implements UIElement {
         const iconElem = mainheaderContent.querySelector('.pivotick-mainheader-icon')
         const nameElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-name')
         const subtitleElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-subtitle')
-        const actionElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-action')
+        // const _actionElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-action')
 
         if (iconElem) {
             if (element && element instanceof SVGGElement) {
@@ -113,7 +115,7 @@ export class SidebarMainHeader implements UIElement {
         const mainheaderContent = createHtmlTemplate(template) as HTMLDivElement
         const nameElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-name')
         const subtitleElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-subtitle')
-        const actionElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-action')
+        // const actionElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-action')
 
         if (nameElem) {
             nameElem.textContent = edgeNameGetter(edge, this.uiManager.getOptions().mainHeader)
@@ -149,7 +151,7 @@ export class SidebarMainHeader implements UIElement {
         const iconElem = mainheaderContent.querySelector('.pivotick-mainheader-icon')
         const nameElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-name')
         const subtitleElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-subtitle')
-        const actionElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-action')
+        // const actionElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-action')
 
         if (iconElem) {
             const selectionIconTemplate = graphMultiSelectNode(fixedPreviewSize)
@@ -188,7 +190,7 @@ export class SidebarMainHeader implements UIElement {
         const mainheaderContent = createHtmlTemplate(template) as HTMLDivElement
         const nameElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-name')
         const subtitleElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-subtitle')
-        const actionElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-action')
+        // const actionElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-action')
 
         if (nameElem) {
             nameElem.textContent = `${edges.length} edges selected`

@@ -3,36 +3,37 @@ import { tryResolveArray, tryResolveString } from './Getters'
 import type { Node } from '../Node'
 import type { Edge } from '../Edge'
 
+
 export function nodeNameGetter(node: Node, mainHeader: MainHeader): string {
     if (mainHeader.nodeHeaderMap.title) {
         return tryResolveString(mainHeader.nodeHeaderMap.title, node) || 'Could not resolve title'
     }
-    return node.getData().label ?? 'Optional name or label'
+    return node.getData()?.label ?? 'Optional name or label'
 }
 
 export function nodeDescriptionGetter(node: Node, mainHeader: MainHeader): string | null {
     if (mainHeader.nodeHeaderMap.subtitle) {
         return tryResolveString(mainHeader.nodeHeaderMap.subtitle, node) || null
     }
-    return node.getData().description ?? 'Optional subtitle or description'
+    return node.getData()?.description ?? 'Optional subtitle or description'
 }
 
 export function edgeNameGetter(edge: Edge, mainHeader: MainHeader): string {
     if (mainHeader.edgeHeaderMap.title) {
-        return tryResolveString(mainHeader.nodeHeaderMap.title, edge) || 'Could not resolve title'
+        return tryResolveString(mainHeader.edgeHeaderMap.title, edge) || 'Could not resolve title'
     }
-    return edge.getData().label ?? 'Optional name or label'
+    return edge.getData()?.label ?? 'Optional name or label'
 }
 
 export function edgeDescriptionGetter(edge: Edge, mainHeader: MainHeader): string | null {
     if (mainHeader.edgeHeaderMap.subtitle) {
-        return tryResolveString(mainHeader.nodeHeaderMap.subtitle, edge) || null
+        return tryResolveString(mainHeader.edgeHeaderMap.subtitle, edge) || null
     }
-    return edge.getData().description ?? 'Optional subtitle or description'
+    return edge.getData()?.description ?? 'Optional subtitle or description'
 }
 
 export function edgeLabelGetter(edge: Edge): string {
-    return edge.getData().label || ''
+    return edge.getData()?.label ?? ''
 }
 
 export function nodePropertiesGetter(node: Node, propertiesPanel: PropertiesPanel): Array<PropertyEntry> {
@@ -44,10 +45,12 @@ export function nodePropertiesGetter(node: Node, propertiesPanel: PropertiesPane
     }
 
     for (const [key, value] of Object.entries(data)) {
-        properties.push({
-            name: key,
-            value: value,
-        })
+        if (key && value) {
+            properties.push({
+                name: key,
+                value: value,
+            } as PropertyEntry)
+        }
     }
     return properties
 }
@@ -61,10 +64,12 @@ export function edgePropertiesGetter(edge: Edge, propertiesPanel: PropertiesPane
     }
 
     for (const [key, value] of Object.entries(data)) {
-        properties.push({
-            name: key,
-            value: value,
-        })
+        if (key && value) {
+            properties.push({
+                name: key,
+                value: value,
+            } as PropertyEntry)
+        }
     }
     return properties
 }

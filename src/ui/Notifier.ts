@@ -1,12 +1,14 @@
 import type { Graph } from '../Graph'
 import type { UIManager } from './UIManager'
 
-export enum NotificationLevel {
-    Success = 'success',
-    Warning = 'warning',
-    Danger = 'danger',
-    Info = 'info',
-}
+export const NotificationLevel = {
+    Success: 'success',
+    Warning: 'warning',
+    Danger: 'danger',
+    Info: 'info',
+} as const
+
+export type NotificationLevel = (typeof NotificationLevel)[keyof typeof NotificationLevel]
 
 export interface Notification {
     level: NotificationLevel;

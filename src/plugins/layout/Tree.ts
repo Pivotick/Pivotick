@@ -2,8 +2,6 @@ import {
     forceRadial as d3ForceRadial,
     forceX as d3ForceX,
     forceY as d3ForceY,
-    forceCenter as d3ForceCenter,
-    type SimulationNodeDatum,
 } from 'd3-force'
 import { type Simulation as d3Simulation } from 'd3-force'
 import { hierarchy, type HierarchyNode, tree } from 'd3-hierarchy'
@@ -36,17 +34,21 @@ export interface TreeNode extends Node {
     y?: number
 }
 
+interface ForceStrengthArray {
+    link: number | ((edge: Edge, i: number, edges: Edge[]) => number)
+    charge: number | ((node: Node, i: number, nodes: Node[]) => number)
+    center: number
+    gravity: number
+}
+
 export class TreeLayout {
     private graph: Graph
     private simulation: d3Simulation<Node, undefined>
     private simulationForces: simulationForces
     private options: Required<TreeLayoutOptions>
 
-    private originalForceStrength
+    private originalForceStrength: ForceStrengthArray
     private canvasBCR!: DOMRect
-    private width: number
-    private height: number
-    private center: number[]
 
     private levels: Record<string, number>
     private positionedNodesByID: Map<string, HierarchyNode<TreeNode>>
@@ -60,7 +62,7 @@ export class TreeLayout {
         this.graph = graph
         this.simulation = simulation
         this.simulationForces = simulationForces
-        this.options = merge({}, DEFAULT_TREE_LAYOUT_OPTIONS, partialOptions)
+        this.options = merge({}, DEFAULT_TREE_LAYOUT_OPTIONS, partialOptions) as Required<TreeLayoutOptions>
         this.originalForceStrength = {
             link: this.simulationForces.link.strength(),
             charge: this.simulationForces.charge.strength(),
@@ -68,9 +70,6 @@ export class TreeLayout {
             gravity: this.simulationForces.gravity.strength(),
         }
 
-        this.width = 0
-        this.height = 0
-        this.center = [0, 0]
         this.positionedNodesByID = new Map()
         this.levels = {}
 
@@ -113,9 +112,6 @@ export class TreeLayout {
             throw new Error('Canvas element is not defined in the graph renderer.')
         }
         this.canvasBCR = canvas.getBoundingClientRect()
-        this.width = this.canvasBCR.width
-        this.height = this.canvasBCR.height
-        this.center = [this.width / 2, this.height / 2]
     }
 
     private setNodePositions(positionedNodes: HierarchyNode<TreeNode>[], options: TreeLayoutOptions): void {
@@ -269,7 +265,10 @@ export class TreeLayout {
         }
     }
     
-    static resetOtherSimulationForces(simulationForces: simulationForces, originalForceStrength: { link: any; charge: any; center: any, gravity: any }): void {
+    static resetOtherSimulationForces(
+        simulationForces: simulationForces,
+        originalForceStrength: ForceStrengthArray
+    ): void {
         simulationForces.link.strength(originalForceStrength.link)
         simulationForces.charge.strength(originalForceStrength.charge)
         simulationForces.center.strength(originalForceStrength.center)
@@ -278,10 +277,9 @@ export class TreeLayout {
 
     static simulationDone(
         nodes: Node[],
-        edges: Edge[],
-        simulation: d3Simulation<Node, undefined>,
+        _edges: Edge[],
+        _simulation: d3Simulation<Node, undefined>,
         partialOptions: Partial<TreeLayoutOptions>,
-        canvasBCR: DOMRect
     ): void {
         const options = merge({}, DEFAULT_TREE_LAYOUT_OPTIONS, partialOptions)
         for (const node of nodes) {
