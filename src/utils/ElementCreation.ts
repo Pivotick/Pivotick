@@ -130,7 +130,7 @@ export function createActionItem(action: ActionItemOptions): HTMLDivElement {
  * @param {number} length - Length of the random part (default: 8)
  * @returns {string} Random DOM-safe ID
  */
-export function generateDomId(length = 8) {
+export function generateSafeDomId(length = 8) {
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
     const chars = letters + '0123456789-_'
 
