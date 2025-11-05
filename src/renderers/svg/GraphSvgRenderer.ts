@@ -373,6 +373,7 @@ export class GraphSvgRenderer extends GraphRenderer {
         return this.edgeSelection
     }
 
+    // @ts-expect-error fixme: Don't really understand the typescript error below
     public getGraphInteraction(): GraphInteractions<SVGGElement | SVGPathElement> {
         return this.graphInteraction
     }

@@ -27,11 +27,11 @@ export abstract class GraphRenderer {
     abstract init(): void
     abstract dataUpdate(): void
     abstract tickUpdate(): void
-    abstract getZoomBehavior(): undefined
-    abstract getSelectionBox(): undefined
-    abstract getGraphInteraction(): GraphInteractions
-    abstract getCanvasSelection(): undefined
-    abstract getZoomGroup(): HTMLElement
+    abstract getZoomBehavior(): unknown
+    abstract getSelectionBox(): unknown
+    abstract getGraphInteraction(): GraphInteractions<unknown>
+    abstract getCanvasSelection(): unknown
+    abstract getZoomGroup(): HTMLElement | SVGElement | null
     abstract zoomIn(): void
     abstract zoomOut(): void
     abstract fitAndCenter(): void

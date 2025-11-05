@@ -1,10 +1,10 @@
-import type { GraphRenderer } from '../../GraphRenderer'
 import type { Node } from '../../Node'
+import type { GraphSvgRenderer } from './GraphSvgRenderer'
 
 
 type SelectionMode = 'start' | 'add' | 'remove' // Start clears the selection
 export class SelectionBox {
-    private renderer: GraphRenderer
+    private renderer: GraphSvgRenderer
     private svg: SVGSVGElement
     private selectionBoxGroup: SVGGElement | null
     private rect: SVGRectElement | null = null
@@ -13,7 +13,7 @@ export class SelectionBox {
     private isSelecting = false
     private selectionMode: SelectionMode = 'start'
 
-    constructor(renderer: GraphRenderer, svg: SVGSVGElement, selectionBoxGroup: SVGGElement | null) {
+    constructor(renderer: GraphSvgRenderer, svg: SVGSVGElement, selectionBoxGroup: SVGGElement | null) {
         this.renderer = renderer
         this.svg = svg
         this.selectionBoxGroup = selectionBoxGroup
@@ -68,8 +68,6 @@ export class SelectionBox {
 
     private onMouseMove = (e: MouseEvent) => {
         if (!this.isSelecting || !this.rect) return
-
-        if (!this.rect) return
 
         const { x, y } = this.getSvgPoint(e)
         const minX = Math.min(this.startX, x)

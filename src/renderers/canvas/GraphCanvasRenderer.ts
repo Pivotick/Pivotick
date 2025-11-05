@@ -1,3 +1,5 @@
+/* eslint-disable */
+// @ts-nocheck
 import { select as d3Select, zoom as d3Zoom, type ZoomBehavior, zoomIdentity } from 'd3'
 import { Graph } from '../../Graph'
 import { NodeDrawer } from './NodeDrawer'

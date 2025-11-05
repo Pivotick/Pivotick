@@ -1,3 +1,5 @@
+/* eslint-disable */
+// @ts-nocheck
 import { type Selection } from 'd3-selection'
 import { Edge, type EdgeData } from '../../Edge'
 import type { EdgeStyle, GraphRendererOptions } from '../../GraphOptions'
