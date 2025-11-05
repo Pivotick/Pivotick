@@ -3,7 +3,7 @@ import { Node } from './Node'
 import { generateSafeDomId } from './utils/ElementCreation'
 
 export interface EdgeData {
-    [key: string]: unknown;
+    [key: string]: undefined;
 }
 
 /**
