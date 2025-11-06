@@ -1,4 +1,4 @@
-import type { EdgeFullStyle, EdgeStyle, LabelStyle, StyleUpdate } from './GraphOptions'
+import type { EdgeFullStyle, EdgeStyle, LabelStyle, PartialEdgeFullStyle } from './GraphOptions'
 import { Node } from './Node'
 import { generateSafeDomId } from './utils/ElementCreation'
 
@@ -9,13 +9,13 @@ export interface EdgeData {
 /**
  * Represents an edge (connection) between two nodes in a graph.
  */
-export class Edge<T = EdgeData, U = EdgeFullStyle> {
+export class Edge {
     public readonly id: string
     public from: Node
     public to: Node
     public readonly directed: boolean | null
-    private data: T
-    private style: U
+    private data: EdgeData
+    private style: Partial<EdgeFullStyle>
     private _dirty: boolean
     public readonly domID: string
 
@@ -27,14 +27,14 @@ export class Edge<T = EdgeData, U = EdgeFullStyle> {
      * @param data - Optional data payload for the edge
      * @param style - Optional style for the edge
      */
-    constructor(id: string, from: Node, to: Node, data?: T, style?: U, directed: boolean | null = null) {
+    constructor(id: string, from: Node, to: Node, data?: EdgeData, style?: Partial<EdgeFullStyle>, directed: boolean | null = null) {
         this.id = id
         this.domID = generateSafeDomId()
         this.from = from
         this.to = to
         this.directed = directed
-        this.data = data ?? ({} as T)
-        this.style = style ?? ({} as U)
+        this.data = data ?? ({} as EdgeData)
+        this.style = style ?? ({} as EdgeFullStyle)
         this._dirty = true
 
         this.from.registerEdgeOut(this as Edge)
@@ -52,7 +52,7 @@ export class Edge<T = EdgeData, U = EdgeFullStyle> {
     /**
      * Get the edge's data.
      */
-    getData(): T {
+    getData(): EdgeData {
         return this.data
     }
 
@@ -60,7 +60,7 @@ export class Edge<T = EdgeData, U = EdgeFullStyle> {
      * Update the edge's data.
      * @param newData - New data to set
      */
-    setData(newData: T): void {
+    setData(newData: EdgeData): void {
         this.data = newData
         this.markDirty()
     }
@@ -69,7 +69,7 @@ export class Edge<T = EdgeData, U = EdgeFullStyle> {
      * Merge partial data into the current edge data.
      * @param partialData - Partial data object to merge
      */
-    updateData(partialData: Partial<T>): void {
+    updateData(partialData: Partial<EdgeData>): void {
         this.data = { ...this.data, ...partialData }
         this.markDirty()
     }
@@ -77,7 +77,7 @@ export class Edge<T = EdgeData, U = EdgeFullStyle> {
     /**
      * Get the edge's style.
      */
-    getStyle(): U {
+    getStyle(): Partial<EdgeFullStyle> {
         return this.style
     }
 
@@ -99,7 +99,7 @@ export class Edge<T = EdgeData, U = EdgeFullStyle> {
      * Update the edge's style.
      * @param newStyle - New style to set
      */
-    setStyle(newStyle: U): void {
+    setStyle(newStyle: EdgeFullStyle): void {
         this.style = newStyle
         this.markDirty()
     }
@@ -109,8 +109,11 @@ export class Edge<T = EdgeData, U = EdgeFullStyle> {
      * Useful for updating only parts of the style.
      * @param partialStyle - Partial style object to merge
      */
-    updateStyle(partialStyle: Partial<StyleUpdate>): void {
-        this.style = { ...this.style, ...partialStyle }
+    updateStyle(partialStyle: PartialEdgeFullStyle): void {
+        this.style = ({
+            ...(this.style as Partial<EdgeFullStyle>),
+            ...(partialStyle as Partial<EdgeFullStyle>)
+        }) as Partial<EdgeFullStyle>
         this.markDirty()
     }
 
@@ -139,12 +142,12 @@ export class Edge<T = EdgeData, U = EdgeFullStyle> {
         }
     }
 
-    clone(): Edge<T, U> {
+    clone(): Edge {
         // Shallow copies of data and style
-        const clonedData = { ...this.data } as T
-        const clonedStyle = { ...this.style } as U
+        const clonedData = { ...this.data } as EdgeData
+        const clonedStyle = { ...this.style } as EdgeFullStyle
 
-        return new Edge<T, U>(
+        return new Edge(
             this.id,
             this.from.clone(),
             this.to.clone(),

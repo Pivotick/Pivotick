@@ -1,5 +1,5 @@
 import { createIcon } from '../../utils/ElementCreation'
-import type { UIVariant } from '../../utils/ElementCreation.ts'
+import type { IconClass, IconUnicode, ImagePath, SVGIcon, UIVariant } from '../../utils/ElementCreation.ts'
 
 type ButtonVariant = UIVariant
 type ButtonSize = 'sm' | 'xs'
@@ -7,10 +7,10 @@ type ButtonOptions = {
     variant: ButtonVariant,
     size?: ButtonSize,
     onClick?: (event: MouseEvent) => void
-    iconUnicode?: string,
-    iconClass?: string,
-    svgIcon?: string,
-    imagePath?: string,
+    iconUnicode?: IconUnicode,
+    iconClass?: IconClass,
+    svgIcon?: SVGIcon,
+    imagePath?: ImagePath,
     text?: string,
     [key: string]: unknown // allow other attributes like id, className, etc.
 }

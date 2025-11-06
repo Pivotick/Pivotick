@@ -223,7 +223,7 @@ export class Tooltip implements UIElement {
         tooltipContainer.appendChild(mainheaderContent)
         tooltipContainer.appendChild(propertiesContainer)
 
-        const nodeRenderCb = this.uiManager.getOptions().tooltip.node
+        const nodeRenderCb = this.uiManager.getOptions().tooltip.renderNodeExtra
         if (nodeRenderCb && typeof nodeRenderCb === 'function') {
             const extraContent = tryResolveHTMLElement(nodeRenderCb, node)
             if (extraContent) {
@@ -299,7 +299,7 @@ export class Tooltip implements UIElement {
         tooltipContainer.appendChild(mainheaderContent)
         tooltipContainer.appendChild(propertiesContainer)
 
-        const edgeRenderCb = this.uiManager.getOptions().tooltip.edge
+        const edgeRenderCb = this.uiManager.getOptions().tooltip.renderEdgeExtra
         if (edgeRenderCb && typeof edgeRenderCb === 'function') {
             const extraContent = tryResolveHTMLElement(edgeRenderCb, edge)
             if (extraContent) {

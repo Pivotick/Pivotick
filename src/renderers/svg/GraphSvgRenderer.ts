@@ -262,7 +262,7 @@ export class GraphSvgRenderer extends GraphRenderer {
         return this.zoomGroup.node()
     }
 
-    public tickUpdate(): void {
+    public nextTick(): void {
         this.updateEdgePositions() // Render edges first so nodes are drawn on top of them
         this.updateNodePositions()
     }

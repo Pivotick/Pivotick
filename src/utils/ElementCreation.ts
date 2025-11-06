@@ -3,9 +3,31 @@ import { faGlyph, tryResolveBoolean, tryResolveHTMLElement } from './Getters'
 import type { Node } from '../Node'
 import type { Edge } from '../Edge'
 import { createButton } from '../ui/components/Button'
+import type { UIElement } from '../ui/UIManager'
 
+/** Variant defined in the theme */
 export type UIVariant = 'primary' | 'secondary' | 'info' | 'warning' | 'danger' | 'success' |
 'outline-primary' | 'outline-secondary' | 'outline-info' | 'outline-warning' | 'outline-danger' | 'outline-success'
+/**
+ * Raw SVG markup as a string
+ * @example `<svg>...</svg>`
+ */
+export type SVGIcon = string
+/**
+ * Raw unicode to be used in icon libraries such as fontawesome
+ * @example `\uf007`
+ */
+export type IconUnicode = string
+/**
+ * Classe(s) to be added on the element, typically used in icon libraries such as fontawesome
+ * @example 'fa-solid fa-user'
+ */
+export type IconClass = string
+/**
+ * An URL path to access the image content
+ * @example '/icon.svg'
+ */
+export type ImagePath = string
 
 export function createSvgElement<K extends keyof SVGElementTagNameMap>(
     tag: K,
@@ -85,17 +107,7 @@ export function createHtmlDL(data: Array<PropertyEntry>, element: Node | Edge | 
 }
 
 
-// type ActionItemOptions = {
-//     iconUnicode?: string,
-//     iconClass?: string,
-//     svgIcon?: string,
-//     imagePath?: string,
-//     text: string,
-//     title: string,
-//     variant: UIVariant,
-//     cb: (element: Node | Edge) => void
-// }
-export function createQuickActionList<TThis>(thisContext: TThis, actions: MenuQuickActionItemOptions[], element: Node[] | Node | Edge | null): HTMLDivElement {
+export function createQuickActionList<TThis extends UIElement = UIElement>(thisContext: TThis, actions: MenuQuickActionItemOptions[], element: Node[] | Node | Edge | null): HTMLDivElement {
         const div = createHtmlElement('div', { class: 'pivotick-quickaction-list' })
         const firstElement = Array.isArray(element) ? element[0] : element
         actions.forEach(action => {
@@ -108,7 +120,7 @@ export function createQuickActionList<TThis>(thisContext: TThis, actions: MenuQu
         return div
     }
 
-export function createActionList<TThis>(thisContext: TThis, actions: MenuActionItemOptions[], element: Node[] | Node | Edge | null): HTMLDivElement {
+export function createActionList<TThis extends UIElement = UIElement>(thisContext: TThis, actions: MenuActionItemOptions[], element: Node[] | Node | Edge | null): HTMLDivElement {
     const div = createHtmlElement('div', { class: 'pivotick-action-list' })
     const firstElement = Array.isArray(element) ? element[0] : element
     actions.forEach(action => {
@@ -121,8 +133,8 @@ export function createActionList<TThis>(thisContext: TThis, actions: MenuActionI
     return div
 }
 
-export function createQuickActionItem<TThis>(thisContext: TThis, action: MenuQuickActionItemOptions, element: Node[] | Node | Edge | null): HTMLSpanElement {
-    const { cb, ...actionWithoutCb } = action
+export function createQuickActionItem<TThis extends UIElement = UIElement>(thisContext: TThis, action: MenuQuickActionItemOptions, element: Node[] | Node | Edge | null): HTMLSpanElement {
+    const { onclick, ...actionWithoutCb } = action
     const span = createHtmlElement('span',
         {
             class: ['pivotick-quickaction-item', `pivotick-quickaction-item-${action.variant}`],
@@ -135,15 +147,15 @@ export function createQuickActionItem<TThis>(thisContext: TThis, action: MenuQui
             })
         ]
     )
-    if (typeof cb === 'function') {
+    if (typeof onclick === 'function') {
         span.addEventListener('click', (event: MouseEvent) => {
-            cb.call(thisContext, event, element)
+            onclick.call(thisContext, event, element)
         })
     }
     return span
 }
 
-export function createActionItem<TThis>(thisContext: TThis, action: MenuActionItemOptions, element: Node[] | Node | Edge | null): HTMLDivElement {
+export function createActionItem<TThis extends UIElement = UIElement>(thisContext: TThis, action: MenuActionItemOptions, element: Node[] | Node | Edge | null): HTMLDivElement {
     const div = createHtmlElement('div',
         {
             class: ['pivotick-action-item', `pivotick-action-item-${action.variant}`]
@@ -156,9 +168,9 @@ export function createActionItem<TThis>(thisContext: TThis, action: MenuActionIt
             }, [ action.text ?? '' ])
         ]
     )
-    if (typeof action.cb === 'function') {
+    if (typeof action.onclick === 'function') {
         div.addEventListener('click', (event: MouseEvent) => {
-            action.cb.call(thisContext, event, element)
+            action.onclick.call(thisContext, event, element)
         })
     }
     return div
@@ -189,10 +201,10 @@ export function generateSafeDomId(length = 8) {
 
 
 type iconOptions = {
-    iconUnicode?: string,
-    iconClass?: string,
-    svgIcon?: string,
-    imagePath?: string,
+    iconUnicode?: IconUnicode,
+    iconClass?: IconClass,
+    svgIcon?: SVGIcon,
+    imagePath?: ImagePath,
     fixedWidth?: boolean,
 }
 export function createIcon(options: iconOptions): HTMLSpanElement {

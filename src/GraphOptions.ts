@@ -2,8 +2,9 @@ import { type Selection } from 'd3-selection'
 import { Node } from './Node'
 import { Edge } from './Edge'
 import type { Simulation } from './Simulation'
-import type { UIVariant } from './utils/ElementCreation'
+import type { IconClass, IconUnicode, ImagePath, SVGIcon, UIVariant } from './utils/ElementCreation'
 import type { TreeLayoutAlgorithm } from './plugins/layout/Tree'
+import type { UIElement } from './ui/UIManager'
 
 export interface InterractionCallbacks<TElement = unknown> {
     /**
@@ -121,10 +122,10 @@ export interface NodeStyle {
     strokeWidth: number
     fontFamily: string
     textColor: string
-    iconClass?: string,
-    iconUnicode?: string,
-    svgIcon?: string,
-    imagePath?: string,
+    iconClass?: IconClass,
+    iconUnicode?: IconUnicode,
+    svgIcon?: SVGIcon,
+    imagePath?: ImagePath,
     text?: string,
     styleCb?: (node: Node) => Partial<NodeStyle>
 }
@@ -134,7 +135,7 @@ export interface EdgeFullStyle {
     label: LabelStyle,
 }
 
-export interface StyleUpdate {
+export interface PartialEdgeFullStyle {
     edge?: Partial<EdgeStyle>
     node?: Partial<NodeStyle>
 }
@@ -255,7 +256,7 @@ export interface BaseLayoutOptions {
     type: LayoutType /** @default force */
 }
 
-export type LayoutOptions = TreeLayoutOptions | ForceLayoutOptions
+export type LayoutOptions = ForceLayoutOptions | TreeLayoutOptions
 
 export interface ForceLayoutOptions extends BaseLayoutOptions {
     type: 'force'
@@ -325,23 +326,25 @@ export interface GraphUI {
     tooltip: {
         enable?: boolean /** @default true */
         /**
-         * Custom renderer for node/edge tooltips. The new content will be appened after the default tooltip
-         * Can return an HTMLElement, an HTML string, or nothing (to suppress tooltip).
-         *
+         * Custom renderer for node tooltips. This content is added after the default tooltip
          * @default undefined
          */
-        node?: (node: Node) => HTMLElement | string,
-        edge?: (edge: Edge) => HTMLElement | string,
+       renderNodeExtra?: (node: Node) => HTMLElement | string,
+        /**
+        * Custom renderer for edge tooltips. This content is added after the default tooltip
+        * @default undefined
+        */
+        renderEdgeExtra?: (edge: Edge) => HTMLElement | string,
         nodeHeaderMap: Partial<HeaderMapEntry<Node>>,
         edgeHeaderMap: Partial<HeaderMapEntry<Edge>>,
         nodePropertiesMap: ((node: Node) => Array<PropertyEntry>),
         edgePropertiesMap: ((edge: Edge) => Array<PropertyEntry>),
         /**
-         * Custom renderer for node/edge tooltips. The result replaces the entire content of the tooltip
-         * Can return an HTMLElement, an HTML string, or nothing (to suppress tooltip).
-         *
-         * @default undefined
-         */
+        * Custom renderer for the tooltip. This content will override the default tooltip
+        * @default undefined
+        * @example
+        * (element) => `element id: ${element.id}`
+        */
         render?: ((element: Node | Edge) => HTMLElement | string) | HTMLElement | string,
     },
     contextMenu: {
@@ -367,16 +370,21 @@ export interface GraphUI {
     }
 }
 
-export type MenuActionItemOptions<TThis = unknown> = {
-    iconUnicode?: string,
-    iconClass?: string,
-    svgIcon?: string,
-    imagePath?: string,
+/**
+ * Options to define an action item in a menu.
+ * Can be used in contextual menus or multi-select menus.
+ */
+export type MenuActionItemOptions<TThis extends UIElement = UIElement> = {
+    /** Unicode character for the icon (optional) */
+    iconUnicode?: IconUnicode,
+    iconClass?: IconClass,
+    svgIcon?: SVGIcon,
+    imagePath?: ImagePath,
     text?: string,
     title: string,
     variant: UIVariant,
     visible: boolean | ((element: Node | Edge | null) => boolean)
-    cb: (this: TThis, evt: PointerEvent | MouseEvent, element: Node | Node[] | Edge | Edge[] | null) => void
+    onclick: (this: TThis, evt: PointerEvent | MouseEvent, element?: Node | Node[] | Edge | Edge[] | null) => void
 }
 export type MenuQuickActionItemOptions = MenuActionItemOptions & {
     flushRight?: boolean;

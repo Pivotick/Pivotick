@@ -12,7 +12,7 @@ export class Graph {
     private nodes: Map<string, Node> = new Map()
     private edges: Map<string, Edge> = new Map()
     public UIManager: UIManager
-    public Notifier: Notifier
+    public notifier: Notifier
     public renderer: GraphRenderer
     public simulation: Simulation
     private options: GraphOptions
@@ -33,7 +33,7 @@ export class Graph {
         container.appendChild(appContainer)
 
         this.UIManager = new UIManager(this, appContainer, UIManagerOptions)
-        this.Notifier = new Notifier(this)
+        this.notifier = new Notifier(this)
         this.renderer = createGraphRenderer(this, appContainer, rendererOptions)
         this.renderer.setupRendering()
 
@@ -54,24 +54,46 @@ export class Graph {
 
     private async startAndRender() {
         await this.simulation.start()
-        this.renderer.tickUpdate()
+        this.renderer.nextTick()
         this.renderer.fitAndCenter()
         this.UIManager.callGraphReady()
     }
 
+    /**
+     * Returns the current configuration options of the graph.
+     */
     getOptions(): GraphOptions {
         return this.options
     }
 
+    /**
+     * @private
+     * Retrieves the callbacks defined in the options for graph interactions.
+     * 
+     * @returns A partial `InteractionCallbacks` object, or `undefined` if no callbacks are set.
+     */
     getCallbacks(): Partial<InterractionCallbacks> | undefined {
         return this.options?.callbacks
     }
 
+    /**
+     * @private
+     */
     onChange() {
         this.simulation?.update()
         this.renderer?.dataUpdate()
     }
 
+    /**
+     * Updates the graph with new nodes and/or edges.
+     * 
+     * Existing nodes or edges with matching IDs are replaced; new ones are added.
+     * Triggers the `onChange` callback if any updates were applied.
+     * 
+     * @param newNodes Optional array of nodes to update or add.
+     * @param newEdges Optional array of edges to update or add.
+     * Triggers `onChange`
+     */
     updateData(newNodes?: Array<Node>, newEdges?: Array<Edge>): void {
         if (newNodes) {
             newNodes.forEach(newNode => {
@@ -96,6 +118,14 @@ export class Graph {
         }
     }
 
+    /**
+     * Replaces all current nodes and edges in the graph with the provided data.
+     * Clears existing nodes and edges before setting the new ones.
+     * Triggers the `onChange` callback after the update.
+     * 
+     * @param nodes Array of nodes to set. Defaults to an empty array.
+     * @param edges Array of edges to set. Defaults to an empty array.
+     */
     setData(nodes: Array<Node> = [], edges: Array<Edge> = []): void {
         this.nodes.clear()
         this.edges.clear()
@@ -103,6 +133,9 @@ export class Graph {
         this.onChange()
     }
 
+    /** 
+     * @private
+     */
     private _setData(nodes: Array<Node>, edges: Array<Edge>): void {
         nodes.forEach(node => {
             this.nodes.set(node.id, node)
@@ -120,8 +153,10 @@ export class Graph {
     }
 
     /**
-     * Add a node to the graph.
-     * Throws an error if a node with the same id exists.
+     * Adds a node to the graph.
+     * 
+     * @throws Error if a node with the same `id` already exists.
+     * Triggers `onChange` after the node is successfully added.
      */
     addNode(node: Node): void {
         if (this.nodes.has(node.id)) {
@@ -132,7 +167,12 @@ export class Graph {
     }
 
     /**
-     * Get a node by its id.
+     * Retrieves a node from the graph by its ID.
+     * 
+     * Returns a deep clone of the node to prevent external mutations.
+     * 
+     * @param id The ID of the node or a Node object.
+     * @returns A cloned `Node` if found, otherwise `undefined`.
      */
     getNode(id: string | Node): Node | undefined {
         const node = this._getNode(id)
@@ -140,12 +180,19 @@ export class Graph {
     }
 
     /**
-     * Get a node by its id.
+     * Retrieves a node from the graph by its ID.
+     * 
+     * Returns the actual node instance, allowing direct modifications.
+     * 
+     * **Warning:** Directly modifying nodes using this method may lead to unexpected behavior.
+     * It is generally safer to use `getNode` which returns a cloned instance.
+     * 
+     * @param id The ID of the node or a Node object.
+     * @returns The `Node` if found, otherwise `undefined`.
      */
     getMutableNode(id: string | Node): Node | undefined {
         return this._getNode(id)
     }
-
 
     private _getNode(id: string | Node): Node | undefined {
         if (typeof id === 'string') {
@@ -162,7 +209,12 @@ export class Graph {
     }
 
     /**
-     * Remove a node and its associated edges.
+     * Removes a node from the graph by its ID.
+     * 
+     * Also removes any edges connected to the node.
+     * 
+     * @param id The ID of the node to remove.
+     * Triggers `onChange` after the node and its edges are removed.
      */
     removeNode(id: string): void {
         if (!this.nodes.has(id)) return
@@ -178,8 +230,14 @@ export class Graph {
     }
 
     /**
-     * Add an edge to the graph.
-     * Throws if the edge id exists or if nodes don’t exist.
+     * Adds an edge to the graph.
+     * 
+     * Both the source (`from`) and target (`to`) nodes must already exist in the graph.
+     * Throws an error if an edge with the same ID already exists.
+     * 
+     * @param edge The edge to add.
+     * @throws Error if the edge ID already exists or if either node does not exist.
+     * Triggers `onChange` after the edge is successfully added.
      */
     addEdge(edge: Edge): void {
         if (this.edges.has(edge.id)) {
@@ -193,7 +251,12 @@ export class Graph {
     }
 
     /**
-     * Get an edge by id.
+     * Retrieves an edge from the graph by its ID.
+     * 
+     * Returns a deep clone of the edge to prevent external mutations.
+     * 
+     * @param id The ID of the edge.
+     * @returns A cloned `Edge` if found, otherwise `undefined`.
      */
     getEdge(id: string): Edge | undefined {
         const edge = this.edges.get(id)
@@ -201,14 +264,25 @@ export class Graph {
     }
 
     /**
-     * Get an edge by id.
+     * Retrieves an edge from the graph by its ID.
+     * 
+     * Returns the actual edge instance, allowing direct modifications.
+     * 
+     * **Warning:** Directly modifying edges using this method may lead to unexpected behavior.
+     * It is generally safer to use `getEdge` which returns a cloned instance.
+     * 
+     * @param id The ID of the edge.
+     * @returns The `Edge` if found, otherwise `undefined`.
      */
     getMutableEdge(id: string): Edge | undefined {
         return this.edges.get(id)
     }
 
     /**
-     * Remove an edge by id.
+     * Removes an edge from the graph by its ID.
+     * 
+     * @param id The ID of the edge to remove.
+     * Triggers `onChange` after the edge is removed.
      */
     removeEdge(id: string): void {
         this.edges.delete(id)
@@ -216,91 +290,148 @@ export class Graph {
     }
 
     /**
-     * Get all nodes in the graph.
+     * Returns the number of nodes currently in the graph.
+     * 
+     * @returns The total node count.
      */
     getNodeCount(): number {
         return this.nodes.size
     }
 
     /**
-     * Get all nodes in the graph.
+     * Returns the number of edges currently in the graph.
+     * 
+     * @returns The total edge count.
      */
     getEdgeCount(): number {
         return this.edges.size
     }
 
     /**
-     * Get all nodes in the graph.
+     * Retrieves all nodes in the graph.
+     * 
+     * Returns clones of the nodes to prevent external modifications.
+     * 
+     * @returns An array of cloned `Node` objects.
      */
     getNodes(): Node[] {
         return Array.from(this.nodes.values()).map((node: Node) => node.clone())
     }
 
     /**
-     * Get all mutable nodes in the graph.
+     * Retrieves all nodes in the graph.
+     * 
+     * Returns the actual node instances, allowing direct modifications.
+     * 
+     * **Warning:** Modifying nodes directly may lead to unexpected behavior.
+     * It is generally safer to use `getNodes`, which returns cloned instances.
+     * 
+     * @returns An array of `Node` objects.
      */
     getMutableNodes(): Node[] {
         return Array.from(this.nodes.values())
     }
 
     /**
-     * Get all edges in the graph.
+     * Retrieves all edges in the graph.
+     * 
+     * Returns clones of the edges to prevent external modifications.
+     * 
+     * @returns An array of cloned `Edge` objects.
      */
     getEdges(): Edge[] {
         return Array.from(this.edges.values()).map((edge: Edge) => edge.clone())
     }
 
     /**
-     * Get all mutable edges in the graph.
+     * Retrieves all edges in the graph.
+     * 
+     * Returns the actual edge instances, allowing direct modifications.
+     * 
+     * **Warning:** Modifying edges directly may lead to unexpected behavior.
+     * It is generally safer to use `getEdges`, which returns cloned instances.
+     * 
+     * @returns An array of `Edge` objects.
      */
     getMutableEdges(): Edge[] {
         return Array.from(this.edges.values())
     }
 
     /**
-     * Find edges going out of a given node id.
+     * Finds all edges originating from a given node.
+     * 
+     * Returns cloned edges to prevent external modifications.
+     * 
+     * @param node The node or node ID to find outgoing edges from.
+     * @returns An array of `Edge` objects whose `from` node matches the query.
      */
-    getEdgesFromNode(queryNode: string | Node): Edge[] {
-        const node: Node | undefined = this._getNode(queryNode)
-        if (!node)
+    getEdgesFromNode(node: string | Node): Edge[] {
+        const found: Node | undefined = this._getNode(node)
+        if (!found)
             return []
-        return this.getEdges().filter(edge => edge.from.id === node.id)
+        return this.getEdges().filter(edge => edge.from.id === found.id)
     }
 
     /**
-     * Find edges going to a given node id.
+     * Finds all edges pointing to a given node.
+     * 
+     * Returns cloned edges to prevent external modifications.
+     * 
+     * @param node The node or node ID to find incoming edges to.
+     * @returns An array of `Edge` objects whose `to` node matches the query.
      */
-    getEdgesToNode(queryNode: string | Node): Edge[] {
-        const node: Node | undefined = this._getNode(queryNode)
-        if (!node)
+    getEdgesToNode(node: string | Node): Edge[] {
+        const found: Node | undefined = this._getNode(node)
+        if (!found)
             return []
-        return this.getEdges().filter(edge => edge.to.id === node.id)
+        return this.getEdges().filter(edge => edge.to.id === found.id)
     }
 
     /**
-     * Get nodes connected to the given node id
+     * Retrieves all nodes directly connected from the given node.
+     * 
+     * Returns cloned nodes to prevent external modifications.
+     * 
+     * @param node The node or node ID to find connections from.
+     * @returns An array of `Node` objects directly connected from the given node.
      */
-    getConnectedNodes(queryNode: string | Node): Node[] {
-        const node: Node | undefined = this._getNode(queryNode)
-        if (!node)
+    getConnectedNodes(node: string | Node): Node[] {
+        const found: Node | undefined = this._getNode(node)
+        if (!found)
             return []
-        const edgesFrom = this.getEdgesFromNode(node.id)
+        const edgesFrom = this.getEdgesFromNode(found.id)
         const connectedNodes = edgesFrom.map(edge => edge.to)
         return connectedNodes
     }
 
-    tickUpdate(): void {
-        this.renderer?.tickUpdate()
+    /**
+     * Trigger the next render update of the graph.
+     */
+    nextTick(): void {
+        this.renderer?.nextTick()
     }
 
+    /**
+     * @private
+     */
     updateLayoutProgress(progress: number, elapsedTime: number): void {
         this.renderer?.updateLayoutProgress(progress, elapsedTime)
     }
 
+    /**
+     * Brings the specified node or edge into focus within the graph view.
+     * 
+     * @param element The `Node` or `Edge` to focus.
+     */
     focusElement(element: Node | Edge): void {
         this.renderer.focusElement(element)
     }
 
+    /**
+     * Selects a given node or edge in the graph.
+     * 
+     * @param element The `Node` or `Edge` to select.
+     */
     selectElement(element: Node | Edge): void {
         if (element instanceof Edge) {
             this.renderer.getGraphInteraction().selectEdge(element.getGraphElement(), element)

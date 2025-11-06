@@ -1,5 +1,5 @@
 import { type Selection, select as d3Select } from 'd3-selection'
-import { Edge, type EdgeData } from '../../Edge'
+import { Edge } from '../../Edge'
 import type { EdgeStyle, GraphRendererOptions, LabelStyle } from '../../GraphOptions'
 import { getApproximateArcLengthAndMidpoint, getApproximateCircleArcLengthAndMidpoint, getArcIntersectionWithCircle, getSegmentLengthAndMidpoint, type ArcParams, type Circle } from '../../utils/GeometryHelper'
 import type { Graph } from '../../Graph'
@@ -162,7 +162,7 @@ export class EdgeDrawer {
         return pathSelection
     }
 
-    private drawEdgeMarker(edgeSelection: Selection<SVGPathElement, Edge<EdgeData>, null, undefined>, edge: Edge, style: EdgeStyle): void {
+    private drawEdgeMarker(edgeSelection: Selection<SVGPathElement, Edge, null, undefined>, edge: Edge, style: EdgeStyle): void {
         if (!this.rendererOptions.markerStyleMap)
             return
 
@@ -353,8 +353,8 @@ export class EdgeDrawer {
         const drawOffsetStart = 4 + (isEdgeSelected ? 2 : 0) // Distance from which to start the edge
         const drawOffsetEnd = 4 + (isEdgeSelected ? 2 : 0) // Distance from which to end the edge
 
-        const rFrom = edge.source._circleRadius ? edge.source._circleRadius : this.graphSvgRenderer.nodeDrawer.getNodeStyle(from).size
-        const rTo = edge.target._circleRadius ? edge.target._circleRadius : this.graphSvgRenderer.nodeDrawer.getNodeStyle(to).size
+        const rFrom = edge.source.getCircleRadius() ? edge.source.getCircleRadius() : this.graphSvgRenderer.nodeDrawer.getNodeStyle(from).size
+        const rTo = edge.target.getCircleRadius() ? edge.target.getCircleRadius() : this.graphSvgRenderer.nodeDrawer.getNodeStyle(to).size
 
         const arcParams: ArcParams = {
             from: { x: from.x, y: from.y },

@@ -1,5 +1,5 @@
 {
-  "entryPoints": ["src/index.ts"],
+  "entryPoints": ["src/docIndex.ts"],
   "out": "docs/api",
   "exclude": ["**/__tests__/**", "**/*.test.ts"],
   "excludePrivate": true,

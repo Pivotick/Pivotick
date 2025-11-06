@@ -23,7 +23,7 @@ const defaultMenuNode = {
             svgIcon: pin,
             variant: 'outline-primary',
             visible: true,
-            cb(this: GraphControls, _evt: PointerEvent, nodes: Node[]) {
+            onclick(this: GraphControls, _evt: PointerEvent, nodes: Node[]) {
                 nodes.forEach((node: Node) => {
                     node.freeze()
                 })
@@ -34,7 +34,7 @@ const defaultMenuNode = {
             svgIcon: unpin,
             variant: 'outline-primary',
             visible: true,
-            cb(this: GraphControls, _evt: PointerEvent, nodes: Node[]) {
+            onclick(this: GraphControls, _evt: PointerEvent, nodes: Node[]) {
                 nodes.forEach((node: Node) => {
                     node.unfreeze()
                     this.uiManager.graph.simulation.reheat()
@@ -47,7 +47,7 @@ const defaultMenuNode = {
             variant: 'outline-danger',
             visible: false,
             flushRight: true,
-            cb(this: GraphControls, _evt: PointerEvent, nodes: Node[]) {
+            onclick(this: GraphControls, _evt: PointerEvent, nodes: Node[]) {
                 nodes.forEach((node: Node) => {
                     node.unfreeze()
                 })
@@ -68,7 +68,7 @@ const defaultMenuNode = {
             svgIcon: pin,
             variant: 'outline-primary',
             visible: true,
-            cb(this: GraphControls, _evt: PointerEvent, nodes: Node[]) {
+            onclick(this: GraphControls, _evt: PointerEvent, nodes: Node[]) {
                 nodes.forEach((node: Node) => {
                     node.freeze()
                 })

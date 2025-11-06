@@ -76,7 +76,7 @@ export class TreeLayout {
         const nodes = this.graph.getNodes()
         const edges = this.options.flipEdgeDirection ? this.flipEdgeDirection(this.graph.getEdges()) : this.graph.getEdges()
         if (hasCycle(nodes, edges)) {
-            this.graph.Notifier.warning('Tree layout unavailable', 'The graph contains a cycle, so it cannot be displayed as a tree.')
+            this.graph.notifier.warning('Tree layout unavailable', 'The graph contains a cycle, so it cannot be displayed as a tree.')
             return
         }
         this.setSizes()

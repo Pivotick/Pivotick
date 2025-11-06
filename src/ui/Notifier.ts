@@ -18,7 +18,7 @@ export interface Notification {
 
 export class Notifier {
     public graph: Graph
-    public UIManager: UIManager
+    private UIManager: UIManager
 
     constructor(graph: Graph) {
         this.graph = graph

@@ -187,14 +187,14 @@ export class Simulation {
                 const n = node as Node
                 const baseStrength = options.d3ManyBodyStrength
 
-                const radius = n._circleRadius ?? 10
+                const radius = n.getCircleRadius()
                 return baseStrength * (radius * radius) / 100
             })
 
         simulationForces.collide
             .radius((node: SimulationNodeDatum) => {
                 const n = node as Node
-                return n._circleRadius ? 1.2 * n._circleRadius : options.d3CollideRadius
+                return n.getCircleRadius() ? 1.2 * n.getCircleRadius() : options.d3CollideRadius
             })
             .strength(options.d3CollideStrength)
 
@@ -330,7 +330,7 @@ export class Simulation {
             }
             this.totalTickCount++
             this.simulation.tick()
-            this.graph.tickUpdate()
+            this.graph.nextTick()
             if (this.callbacks.onTick) {
                 this.callbacks.onTick(this)
             }

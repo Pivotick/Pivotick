@@ -380,7 +380,7 @@ export class GraphInteractions<TElement = unknown> {
 
     public refreshRendering(): void {
         this.graph.renderer.dataUpdate()
-        this.graph.renderer.tickUpdate()
+        this.graph.renderer.nextTick()
     }
 
     public getSelectedNode(): NodeSelection<TElement> | null {

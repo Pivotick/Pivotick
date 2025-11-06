@@ -1,5 +1,5 @@
 import { type Selection } from 'd3-selection'
-import { Node, type NodeData } from '../../Node'
+import { Node } from '../../Node'
 import type { Graph } from '../../Graph'
 import type { GraphRendererOptions, NodeStyle } from '../../GraphOptions'
 import type { GraphSvgRenderer } from './GraphSvgRenderer'
@@ -26,7 +26,6 @@ export class NodeDrawer {
             const rendered = this?.renderCB?.(node, fo)
             fo.attr('width', 20)
                 .attr('height', 20)
-            node._circleRadius = 10
 
             if (typeof rendered === 'string') {
                 fo.html(rendered)
@@ -54,7 +53,7 @@ export class NodeDrawer {
                 fo.attr('x', -width / 2)
                     .attr('y', -height / 2)
 
-                node._circleRadius = 0.5 * Math.max(width, height)
+                node.setCircleRadius(0.5 * Math.max(width, height))
                 this.highlightSelection(theNodeSelection, node)
               })
 
@@ -68,13 +67,13 @@ export class NodeDrawer {
                 const width = Math.ceil(bbox.width)
                 const height = Math.ceil(bbox.height)
 
-                node._circleRadius = 0.5 * Math.max(width, height)
+                node.setCircleRadius(0.5 * Math.max(width, height))
                 this.highlightSelection(theNodeSelection, node)
             })
         }
     }
 
-    public updatePositions(nodeSelection: Selection<SVGGElement, Node<NodeData>, SVGGElement, unknown>): void {
+    public updatePositions(nodeSelection: Selection<SVGGElement, Node, SVGGElement, unknown>): void {
         nodeSelection
             .attr('transform', d => {
                 const x = d.x ? (isFinite(d.x) ? d.x : 0) : 0
@@ -249,14 +248,14 @@ export class NodeDrawer {
             nodeSelection
                 .append('circle')
                 .attr('class', 'pivotick-node-selected-highlight')
-                .attr('r', node._circleRadius ?? 4) // slightly larger than node
+                .attr('r', node.getCircleRadius()) // slightly larger than node
                 .attr('pointer-events', 'none') // doesn't interfere with interaction
         }
         if (this.graphSvgRenderer.getGraphInteraction().getSelectedNodeIDs()?.includes(node.id)) {
             nodeSelection
                 .append('circle')
                 .attr('class', 'pivotick-node-selected-highlight')
-                .attr('r', node._circleRadius ?? 4) // slightly larger than node
+                .attr('r', node.getCircleRadius()) // slightly larger than node
                 .attr('pointer-events', 'none') // doesn't interfere with interaction
         }
     }

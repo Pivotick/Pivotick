@@ -16,7 +16,7 @@ const defaultMenuNode = {
             visible: (node: Node) => {
                 return !node.frozen
             },
-            cb(this: ContextMenu, _evt: PointerEvent, node: Node) {
+            onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
                 node.freeze()
             }
         },
@@ -27,7 +27,7 @@ const defaultMenuNode = {
             visible: (node: Node) => {
                 return node.frozen
             },
-            cb(this: ContextMenu, _evt: PointerEvent, node: Node) {
+            onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
                 node.unfreeze()
             }
         },
@@ -35,7 +35,7 @@ const defaultMenuNode = {
             title: 'Focus Node',
             svgIcon: focusElement,
             variant: 'outline-primary',
-            cb(this: ContextMenu, _evt: PointerEvent, node: Node) {
+            onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
                 this.uiManager.graph.focusElement(node)
             },
         },
@@ -56,7 +56,7 @@ const defaultMenuNode = {
             title: 'Select Neighbors',
             svgIcon: selectNeighbor,
             variant: 'outline-primary',
-            cb(this: ContextMenu, _evt: PointerEvent, node: Node) {
+            onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
                 const neighbors = [
                     ...node.getConnectedNodes(),
                     ...node.getConnectingNodes()
@@ -79,7 +79,7 @@ const defaultMenuNode = {
                 return false // FIXME: Implement feature
             },
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            cb(_evt: PointerEvent, _node: Node) {
+            onclick(this: ContextMenu, _evt: PointerEvent, _node: Node) {
             },
         },
         {
@@ -92,7 +92,7 @@ const defaultMenuNode = {
                 return false // FIXME: Implement feature
             },
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            cb(_evt: PointerEvent, _node: Node) {
+            onclick(this: ContextMenu, _evt: PointerEvent, _node: Node) {
             },
         },
         {
@@ -104,7 +104,7 @@ const defaultMenuNode = {
             visible: (_node: Node) => {
                 return true
             },
-            cb(this: ContextMenu, _evt: PointerEvent, node: Node) {
+            onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
                 this.uiManager.graph.renderer.getGraphInteraction().selectNode(node.getGraphElement(), node)
             },
         },
@@ -124,7 +124,7 @@ const defaultMenuCanvas = {
             variant: 'outline-primary',
             visible: true,
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            cb(this: ContextMenu, _evt: PointerEvent) {
+            onclick(this: ContextMenu, _evt: PointerEvent) {
                 const nodes = this.uiManager.graph.getMutableNodes() ?? []
                 nodes.forEach((node: Node) => {
                     node.freeze()
@@ -137,7 +137,7 @@ const defaultMenuCanvas = {
             variant: 'outline-primary',
             visible: true,
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            cb(this: ContextMenu, _evt: PointerEvent) {
+            onclick(this: ContextMenu, _evt: PointerEvent) {
                 const nodes = this.uiManager.graph.getMutableNodes() ?? []
                 nodes.forEach((node: Node) => {
                     node.unfreeze()
@@ -295,73 +295,4 @@ export class ContextMenu implements UIElement {
         this.menu.style.left = `${x + offset}px`
         this.menu.style.top = `${y + offset}px`
     }
-
-    // private createQuickActionList(actions: MenuQuickActionItemOptions[]): HTMLDivElement {
-    //     const div = createHtmlElement('div', { class: 'pivotick-quickaction-list' })
-    //     actions.forEach(action => {
-    //         const isVisible = tryResolveValue(action.visible, this.element) ?? true
-    //         if (isVisible) {
-    //             const row = this.createQuickActionItem(action)
-    //             div.appendChild(row)
-    //         }
-    //     })
-    //     return div
-    // }
-
-    // private createActionList(actions: MenuActionItemOptions[]): HTMLDivElement {
-    //     const div = createHtmlElement('div', { class: 'pivotick-action-list' })
-    //     actions.forEach(action => {
-    //         const isVisible = tryResolveValue(action.visible, this.element) ?? true
-    //         if (isVisible) {
-    //             const row = this.createActionItem(action)
-    //             div.appendChild(row)
-    //         }
-    //     })
-    //     return div
-    // }
-
-    // private createQuickActionItem(action: MenuQuickActionItemOptions): HTMLSpanElement {
-    //     const { cb, ...actionWithoutCb } = action
-    //     const span = createHtmlElement('span',
-    //         {
-    //             class: ['pivotick-quickaction-item', `pivotick-quickaction-item-${action.variant}`],
-    //             style: `${action.flushRight ? 'margin-left: auto;' : ''}`
-    //         },
-    //         [
-    //             createButton({
-    //                 size: 'sm',
-    //                 ...actionWithoutCb,
-    //             })
-    //         ]
-    //     )
-    //     if (typeof cb === 'function') {
-    //         span.addEventListener('click', (event: MouseEvent) => {
-    //             cb.call(this, event, this.element)
-    //             this.hide()
-    //         })
-    //     }
-    //     return span
-    // }
-
-    // private createActionItem(action: MenuActionItemOptions): HTMLDivElement {
-    //     const div = createHtmlElement('div',
-    //         {
-    //             class: ['pivotick-action-item', `pivotick-action-item-${action.variant}`]
-    //         },
-    //         [
-    //             createIcon({fixedWidth: true, ...action}),
-    //             createHtmlElement('span', { 
-    //                 class: 'pivotick-action-text',
-    //                 title: action.title,
-    //             }, [ action.text ?? '' ])
-    //         ]
-    //     )
-    //     if (typeof action.cb === 'function') {
-    //         div.addEventListener('click', (event: MouseEvent) => {
-    //             action.cb.call(this, event, this.element)
-    //             this.hide()
-    //         })
-    //     }
-    //     return div
-    // }
 }
