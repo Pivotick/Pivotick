@@ -273,7 +273,7 @@ export function createSampleGraph(): Pivotick {
                     fill: '#44c77f',
                 }
             },
-            // renderNode: (node: Node, nodeSelection: d3.Selection<SVGForeignObjectElement, Node, null, undefined>): HTMLElement | string | void => {
+            // renderNode: (node: Node): HTMLElement | string | void => {
             //     const size = 12
             //     const style = [
             //         'display:block',
@@ -287,7 +287,7 @@ export function createSampleGraph(): Pivotick {
 
             //     return `<span style="${style}"></span>`
             // }
-            // renderLabel: (edge: Edge, edgeSelection: d3.Selection<SVGForeignObjectElement, Edge, null, undefined>): HTMLElement | string | void => {
+            // renderLabel: (edge: Edge): HTMLElement | string | void => {
             //         const style = [
             //             'display:inline-block',
             //             'background-color:#907acc',

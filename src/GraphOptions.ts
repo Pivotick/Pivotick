@@ -1,4 +1,3 @@
-import { type Selection } from 'd3-selection'
 import { Node } from './Node'
 import { Edge } from './Edge'
 import type { Simulation } from './Simulation'
@@ -114,8 +113,24 @@ export interface InterractionCallbacks<TElement = unknown> {
     onSimulationSlowTick?: () => void
 }
 
+/**
+ * Represents one of the predefined, common node shapes.
+ * These can be rendered using basic SVG elements like <circle>, <rect>, or <polygon>.
+ */
+export type StandardShape = 'circle' | 'square' | 'triangle' | 'hexagon'
+
+/**
+ * Represents a node with a custom SVG path.
+ * The `d` property corresponds directly to the `d` attribute of an SVG <path> element,
+ * allowing fully custom shapes.
+ */
+export interface CustomNodeShape {
+    d: string  // represents the `d` attribute of <path>
+}
+export type NodeShape = StandardShape | CustomNodeShape
 export interface NodeStyle {
-    shape: 'circle' | 'square' | 'triangle' | 'hexagon' | string
+    /** The shape of the node, either a standard shape or a custom SVG path */
+    shape: NodeShape
     color: string
     size: number
     strokeColor: string
@@ -127,6 +142,9 @@ export interface NodeStyle {
     svgIcon?: SVGIcon,
     imagePath?: ImagePath,
     text?: string,
+    /**
+     * Callback to dynamically override style properties based on the node.
+     */
     styleCb?: (node: Node) => Partial<NodeStyle>
 }
 
@@ -140,11 +158,17 @@ export interface PartialEdgeFullStyle {
     node?: Partial<NodeStyle>
 }
 
+/**
+ * - 'straight': The edge will go in a straight line from A to B
+ * - 'curved': The edge will always be curved from A to B
+ * - 'bidirectional': The edge will be curved only if there is a birectional relation between A and B. So, from A to B and B to A
+ */
+export type CurveStyle = 'straight' | 'curved' | 'bidirectional'
 export interface EdgeStyle {
     strokeColor: string
     strokeWidth: number
     opacity: number
-    curveStyle: 'straight' | 'curved' | 'bidirectional' /** @default: bidirectional */
+    curveStyle: CurveStyle /** @default: bidirectional */
     dashed?: boolean /** @default: false — whether the stroke is dashed */
     animateDash?: boolean /** @default: true — whether the dash should animate (e.g., move along the path) */
     rotateLabel: boolean /** @default: false */
@@ -175,25 +199,127 @@ export interface MarkerStyle {
     selected?: Partial<MarkerStyle>
 }
 
+/**
+ * - `'svg'` - Uses SVG elements for rendering
+ * - `'canvas'` - Uses the HTML canvas for rendering (barely supported)
+ * @default 'svg'
+ */
 export type RendererType = 'svg' | 'canvas'
 
 export interface GraphRendererOptions {
+    /**
+     * Defines the rendering method used by the graph.
+     *
+     */
     type: RendererType,
     /**
      * Custom renderer for nodes.
-     * Receives node data and selection, and should return HTML or SVG element or string or directly calling d3 methods on the selection.
+     * 
+     * Allows full control over how a node is displayed
+     * The function can return either:
+     * - An `HTMLElement` to be used as the node, or
+     * - A string to render inside the node
+     * 
+     * @example
+     * ```ts
+     * renderNode: (node: Node): HTMLElement | string | void => {
+     *   const size = 12;
+     *   const style = [
+     *     'display:block',
+     *     `width:${size}px`,
+     *     `height:${size}px`,
+     *     'background-color:#907acc',
+     *     'border: 2px solid #fff',
+     *     'border-radius:50%',
+     *     'opacity: 1',
+     *   ].join(';');
+     * 
+     *   return `<span style="${style}"></span>`;
+     * }
+     * ```
      */
-    renderNode?: (node: Node, nodeSelection: Selection<SVGForeignObjectElement, Node, null, undefined>) => HTMLElement | string | void
+    renderNode?: (node: Node) => HTMLElement | string | void
     /**
      * Custom renderer for edge labels.
-     * Receives edge data and selection, and should return HTML or SVG element or string or directly calling d3 methods on the selection.
-    */
-    renderLabel?: (edge: Edge, edgeSelection: Selection<SVGForeignObjectElement, Edge, null, undefined>) => HTMLElement | string | void
+     * 
+     * Allows full control over how edge labels are displayed.
+     * The function can return either:
+     * - An `HTMLElement` to be used as the edge's label, or
+     * - A string to render inside the label
+     * 
+     * @example
+     * ```ts
+     * renderLabel: (edge: Edge): HTMLElement | string | void => {
+     *   const style = [
+     *     'display:inline-block',
+     *     'background-color:#907acc',
+     *     'border: 2px solid #fff',
+     *     'border-radius:50%',
+     *     'opacity: 1',
+     *   ].join(';');
+     * 
+     *   const text = edge.getData().label;
+     *   return `<span style="${style}">${text}</span>`;
+     * }
+     * ```
+     */
+    renderLabel?: (edge: Edge) => HTMLElement | string | void
+    /**
+     * The default node style to be applied on all nodes
+     */
     defaultNodeStyle: NodeStyle
+    /**
+     * The default edge style to be applied on all nodes
+     */
     defaultEdgeStyle: EdgeStyle
+    /**
+     * The default edge's label style to be applied on all nodes
+     */
     defaultLabelStyle: LabelStyle
+    /**
+     * Defines custom styles for marker shapes used in the graph.
+     * 
+     * Each key is a marker type (e.g., `'diamond'`, `'arrow'`) and maps to a `MarkerStyle` object.
+     * 
+     * @example
+     * ```ts
+     * markerStyleMap: {
+     *   'diamond': {
+     *     fill: '#44c77f',
+     *   },
+     * }
+     * ```
+     */
     markerStyleMap?: Record<string, MarkerStyle>
+    /**
+     * Function to access the type of a node. Used in 
+     * 
+     * Used to style nodes based on their type.
+     * @remarks
+     * Used in conjuction with `nodeStyleMap`
+     * 
+     * @example
+     * ```ts
+     * nodeTypeAccessor: (node) => node.getData()?.type
+     * ```
+     */
     nodeTypeAccessor?: (node: Node) => string | undefined
+    /**
+     * Maps node types to their styles.
+     * 
+     * Each key is a node type (as returned by `nodeTypeAccessor`) and maps to a `NodeStyle` object.
+     * 
+     * @remarks
+     * Used in conjuction with `nodeTypeAccessor`
+     * 
+     * @example
+     * ```ts
+     * nodeStyleMap: {
+     *   'hub': { shape: 'hexagon', color: '#aaa', size: 30 },
+     *   'spoke': { shape: 'triangle', color: '#f00' },
+     * }
+     * ```
+     */
     nodeStyleMap?: Record<string, NodeStyle>
     /** @default 0.1 */
     minZoom: number
@@ -245,8 +371,8 @@ export interface SimulationCallbacks {
 }
 
 export interface graphData {
-    nodes: Array<Node>,
-    edges: Array<Edge>,
+    nodes: Node[],
+    edges: Edge[],
 }
 
 export type LayoutType = 'force' | 'tree'
@@ -280,6 +406,9 @@ export interface TreeLayoutOptions extends BaseLayoutOptions {
  */
 export type GraphUIMode = 'viewer' | 'full' | 'light' | 'static';
 
+/**
+ * Define what should be displayed in the sidebar's main header slot for node or edges.
+ */
 export interface MainHeader {
     nodeHeaderMap: HeaderMapEntry<Node>
     edgeHeaderMap: HeaderMapEntry<Edge>
@@ -298,21 +427,45 @@ export interface HeaderMapEntry<T> {
     subtitle: ((element: T) => string) | string,
 }
 
+/**
+ * Represents a single property entry to display in the properties panel.
+ * 
+ * - `name` is the label or key of the property.
+ * - `value` is the value associated to the key for the node or edge.
+ */
 export interface PropertyEntry {
     name: ((element: Node | Edge | null) => HTMLElement | string) | HTMLElement | string,
     value: ((element: Node | Edge | null) => HTMLElement | string) | HTMLElement | string,
 }
 
+/**
+ * Represents the configuration for the properties panel in the graph UI's sidebar
+ * 
+ * Defines how to compute and display properties for nodes and edges.
+ * @default All key/value pairs from node.getData() or edge.getData()
+ */
 export interface PropertiesPanel {
     /**
-     * A function that computes the list of node/edge properties to display
+     * A function that computes the list of node properties to display
      *
-     * @default All key/value pairs from node.getData() or edge.getData()
+     * @default All key/value pairs from node.getData()
      */
     nodePropertiesMap: ((node: Node) => Array<PropertyEntry>)
+    /**
+     * A function that computes the list of edge properties to display
+     *
+     * @default All key/value pairs from edge.getData()
+     */
     edgePropertiesMap: ((edge: Edge) => Array<PropertyEntry>)
 }
 
+/**
+ * Additional panel in the graph UI's sidebar.
+ * 
+ * Both `title` and `content` can be:
+ * - A string or `HTMLElement` for static content, or
+ * - A function returning a string or `HTMLElement` for dynamic content based on the current selected node or edge.
+ */
 export interface ExtraPanel {
     title: ((element: Node | Edge | null) => HTMLElement | string) | HTMLElement | string,
     content: ((element: Node | Edge | null) => HTMLElement | string) | HTMLElement | string,

@@ -38,12 +38,12 @@ export class EdgeDrawer {
             const fo = edgeSelection
                 .append('g').classed('label-container', true)
                 .append('foreignObject')
-            const rendered = this?.renderLabelCB?.(edge, fo)
+            const rendered = this?.renderLabelCB?.(edge)
             fo.attr('width', 200)
                 .attr('height', 100)
 
             if (typeof rendered === 'string') {
-                fo.html(rendered)
+                fo.text(rendered)
             } else if (rendered instanceof HTMLElement) {
                 fo.node()?.append(rendered)
             }

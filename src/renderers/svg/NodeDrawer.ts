@@ -1,7 +1,7 @@
 import { type Selection } from 'd3-selection'
 import { Node } from '../../Node'
 import type { Graph } from '../../Graph'
-import type { GraphRendererOptions, NodeStyle } from '../../GraphOptions'
+import type { CustomNodeShape, GraphRendererOptions, NodeShape, NodeStyle } from '../../GraphOptions'
 import type { GraphSvgRenderer } from './GraphSvgRenderer'
 import { faGlyph } from '../../utils/Getters'
 
@@ -23,12 +23,12 @@ export class NodeDrawer {
     public render(theNodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
         if (this.renderCB) {
             const fo = theNodeSelection.append('foreignObject')
-            const rendered = this?.renderCB?.(node, fo)
+            const rendered = this?.renderCB?.(node)
             fo.attr('width', 20)
                 .attr('height', 20)
 
             if (typeof rendered === 'string') {
-                fo.html(rendered)
+                fo.text(rendered)
             } else if (rendered instanceof HTMLElement) {
                 fo.node()?.append(rendered)
             }
@@ -142,12 +142,17 @@ export class NodeDrawer {
         return this.computeNodeStyle(node)
     }
 
+    private isCustomShape(shape: NodeShape): shape is CustomNodeShape {
+        return typeof shape === 'object' && shape !== null && 'd' in shape
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private genericNodeRender(nodeSelection: Selection<SVGGElement, Node, null, undefined>, style: NodeStyle, _node: Node): void {
-        let actualShape = style.shape
+        // map logical node shapes to SVG element tag names (use string to allow 'rect' which is not part of NodeShape)
+        let actualShape: string = style.shape as string
         if (style.shape == 'square') {
             actualShape = 'rect'
-        } else if (['triangle', 'hexagon',].includes(style.shape)) {
+        } else if (this.isCustomShape(style.shape) || ['triangle', 'hexagon',].includes(style.shape)) {
             actualShape = 'path'
         }
 
@@ -191,7 +196,11 @@ export class NodeDrawer {
                     break
                 }
             default:
-                renderedNode.attr('r', style.size)
+                if (this.isCustomShape(style.shape)) {
+                    renderedNode.attr('d', style.shape.d)
+                } else {
+                    renderedNode.attr('r', style.size)
+                }
                 break
         }
 
