@@ -1,9 +1,32 @@
 {
+  // "entryPoints": ["src/docIndex.ts", "src/Graph.ts"],
   "entryPoints": ["src/docIndex.ts"],
-  "out": "docs/api",
+  "outputs": [
+    {
+      "name": "markdown",
+      "path": "./docs/api/markdown"
+    },
+    {
+      "name": "html",
+      "path": "./docs/api/html",
+      "options": {
+        "navigation": {
+          "includeGroups": true,
+        }
+      }
+    }
+  ],
   "exclude": ["**/__tests__/**", "**/*.test.ts"],
   "excludePrivate": true,
   "excludeProtected": true,
+  "groupOrder": [
+    "Classes",
+    "Namespaces",
+    "*"
+  ],
   "includeVersion": true,
+  "plugin": [
+    "typedoc-plugin-markdown"
+  ],
   "tsconfig": "tsconfig.json"
 }

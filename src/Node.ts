@@ -124,7 +124,7 @@ export class Node {
     /**
      * Merge partial data into the current node data.
      * Useful for updating only parts of the data.
-     * @param partialData - Partial data object to merge
+     * @param partialStyle - Partial data object to merge
      */
     updateStyle(partialStyle: Partial<NodeStyle>): void {
         this.style = { ...this.style, ...partialStyle }

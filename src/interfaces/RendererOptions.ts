@@ -1,6 +1,6 @@
-import type { IconClass, IconUnicode, SVGIcon, ImagePath } from '../utils/ElementCreation'
 import type { Edge } from '../Edge'
 import type { Node } from '../Node'
+import type { IconClass, IconUnicode, ImagePath, SVGIcon } from './GraphUI'
 
 export interface GraphRendererOptions {
     /**

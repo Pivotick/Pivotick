@@ -21,7 +21,7 @@ import merge from 'lodash.merge'
 import { TreeLayout } from './plugins/layout/Tree'
 import { edgeLabelGetter } from './utils/GraphGetters'
 import type { DeepPartial } from './utils/utils'
-import type { SimulationCallbacks, SimulationOptions } from './interfaces/SimulationOptions'
+import type { SimulationCallbacks, SimulationForces, SimulationOptions } from './interfaces/SimulationOptions'
 import type { LayoutType, TreeLayoutOptions } from './interfaces/LayoutOptions'
 import type { GraphInteractions } from './GraphInteractions'
 
@@ -57,14 +57,6 @@ export const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
     },
 }
 
-export interface simulationForces {
-    link: d3ForceLinkType<Node, Edge>,
-    charge: d3ForceManyBodyType<Node>,
-    center: d3ForceCenterType<Node>,
-    collide: d3ForceCollideType<Node>,
-    gravity: d3ForceCenterType<Node>
-}
-
 interface dragSelectionNode {
     node: Node,
     dx: number,
@@ -89,7 +81,7 @@ export class Simulation {
     private options: SimulationOptions
     private callbacks: Partial<SimulationCallbacks>
 
-    private simulationForces: simulationForces
+    private simulationForces: SimulationForces
     private scaledForces: Record<string, number> = {
         d3ManyBodyStrength: DEFAULT_SIMULATION_OPTIONS.d3ManyBodyStrength,
         d3CollideStrength: DEFAULT_SIMULATION_OPTIONS.d3CollideStrength,
@@ -132,6 +124,7 @@ export class Simulation {
         }
     }
 
+    /** @private */
     public static initSimulationForces(options: SimulationOptions, canvasBCR: DOMRect): {
         simulation: d3.Simulation<Node, undefined>,
         simulationForces: {
@@ -233,12 +226,14 @@ export class Simulation {
         this.restart()
     }
 
+    /** @private */
     public scaleSimulationOptions(): void {
         const scaled = Simulation.scaleSimulationOptions(this.options, this.canvasBCR, this.graph.getNodeCount())
         this.scaledForces.d3ManyBodyStrength = scaled.d3ManyBodyStrength ?? DEFAULT_SIMULATION_OPTIONS.d3ManyBodyStrength
         this.scaledForces.d3CollideStrength = scaled.d3CollideStrength ?? DEFAULT_SIMULATION_OPTIONS.d3CollideStrength
     }
 
+    /** @private */
     public static scaleSimulationOptions(options: SimulationOptions, canvasBCR: DOMRect, nodeCount: number): Partial<SimulationOptions> {
         const density = nodeCount / (canvasBCR.width * canvasBCR.height)
         const scale = Math.min(2, 0.000075 / density) // or some other heuristic
@@ -249,6 +244,7 @@ export class Simulation {
         }
     }
 
+    /** @private */
     public applyScalledSimulationOptions(): void {
         this.simulationForces.charge.strength(this.options.d3ManyBodyStrength)
         this.simulationForces.collide.strength(this.options.d3CollideStrength)
@@ -405,6 +401,9 @@ export class Simulation {
         this.graph.updateData(nodes)
     }
 
+    /**
+     * Restart the simulation with a bit of heat
+     */
     public reheat(): void {
         this.restart()
         this.simulation
@@ -479,6 +478,19 @@ export class Simulation {
         return this.simulationForces
     }
 
+    /**
+     * Allows to change the layout of the graph
+     * 
+     * @example
+     * ```ts
+     * changeLayout('tree', {
+     *     layout: {
+     *          horizontal: false,
+     *          rootIdAlgorithmFinder: 'FirstZeroInDegree'
+     *     }
+     * })
+     * ```
+     */
     public async changeLayout(type: LayoutType, simulationOptions: DeepPartial<SimulationOptions> = {}) {
         if (this.layout) {
             this.layout?.unregisterLayout()

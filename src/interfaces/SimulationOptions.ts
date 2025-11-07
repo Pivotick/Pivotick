@@ -1,6 +1,13 @@
+import type { Edge } from '../Edge'
+import type { Node } from '../Node'
 import type { Simulation } from '../Simulation'
 import type { LayoutOptions } from './LayoutOptions'
-
+import {
+    type ForceLink as d3ForceLinkType,
+    type ForceManyBody as d3ForceManyBodyType,
+    type ForceCenter as d3ForceCenterType,
+    type ForceCollide as d3ForceCollideType,
+} from 'd3-force'
 
 export interface SimulationOptions {
     /** Note: These may be scalled based on the amount of node and canvas size */
@@ -43,4 +50,12 @@ export interface SimulationCallbacks {
      * Called when the simulation ticks
      */
     onTick?: (simulation: Simulation) => void
+}
+
+export interface SimulationForces {
+    link: d3ForceLinkType<Node, Edge>,
+    charge: d3ForceManyBodyType<Node>,
+    center: d3ForceCenterType<Node>,
+    collide: d3ForceCollideType<Node>,
+    gravity: d3ForceCenterType<Node>
 }

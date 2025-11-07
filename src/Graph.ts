@@ -14,12 +14,21 @@ import type { LayoutOptions } from './interfaces/LayoutOptions'
 export class Graph {
     private nodes: Map<string, Node> = new Map()
     private edges: Map<string, Edge> = new Map()
+    /** @private */
     public UIManager: UIManager
     public notifier: Notifier
     public renderer: GraphRenderer
     public simulation: Simulation
+    /** @private */
     private options: GraphOptions
 
+    /**
+     * Initializes a graph inside the specified container using the provided data and options.
+     *
+     * @param container - The HTMLElement that will serve as the main container for the graph.
+     * @param data - The graph data, including nodes and edges, to render.
+     * @param options - Optional configuration for the graph's behavior, UI, styling, simulation, etc.
+     */
     constructor(container: HTMLElement, data?: GraphData, options?: GraphOptions) {
         this.options = {
             isDirected: true,
@@ -326,7 +335,8 @@ export class Graph {
      * 
      * Returns the actual node instances, allowing direct modifications.
      * 
-     * **Warning:** Modifying nodes directly may lead to unexpected behavior.
+     * @remarks
+     * ⚠️ **Warning:** Modifying nodes directly may lead to unexpected behavior.
      * It is generally safer to use `getNodes`, which returns cloned instances.
      * 
      * @returns An array of `Node` objects.
@@ -351,10 +361,9 @@ export class Graph {
      * 
      * Returns the actual edge instances, allowing direct modifications.
      * 
-     * ::: warning
-     * Modifying edges directly may lead to unexpected behavior.
+     * @remarks
+     * ⚠️ **Warning:** Modifying edges directly may lead to unexpected behavior.
      * Use {@link getEdges} instead to work with safe clones.
-     * :::
      * 
      * @returns An array of `Edge` objects.
      */

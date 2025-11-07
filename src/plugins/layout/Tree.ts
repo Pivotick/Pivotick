@@ -7,12 +7,12 @@ import { type Simulation as d3Simulation } from 'd3-force'
 import { hierarchy, type HierarchyNode, tree } from 'd3-hierarchy'
 import merge from 'lodash.merge'
 import type { Graph } from '../../Graph'
-import type { simulationForces } from '../../Simulation'
 import type { Node } from '../../Node'
 import type { Edge } from '../../Edge'
 import hasCycle from '../analytics/cycle'
 import { findFirstZeroInDegreeNode, findMaxReachabilityRoot, findMinHeightDAGRoot, findMinMaxDistanceRoot } from '../analytics/DAGAlgorithms'
 import type { TreeLayoutOptions } from '../../interfaces/LayoutOptions'
+import type { SimulationForces } from '../../interfaces/SimulationOptions'
 
 export type TreeLayoutAlgorithm = 'FirstZeroInDegree' | 'MaxReachability' | 'MinMaxDistance' | 'MinHeight'
 
@@ -44,7 +44,7 @@ interface ForceStrengthArray {
 export class TreeLayout {
     private graph: Graph
     private simulation: d3Simulation<Node, undefined>
-    private simulationForces: simulationForces
+    private simulationForces: SimulationForces
     private options: Required<TreeLayoutOptions>
 
     private originalForceStrength: ForceStrengthArray
@@ -201,7 +201,7 @@ export class TreeLayout {
         nodes: Node[],
         edges: Edge[],
         simulation: d3Simulation<Node, undefined>,
-        simulationForces: simulationForces,
+        simulationForces: SimulationForces,
         partialOptions: Partial<TreeLayoutOptions>,
         canvasBCR: DOMRect,
     ): void {
@@ -251,7 +251,7 @@ export class TreeLayout {
         TreeLayout.adjustOtherSimulationForces(simulationForces, options)
     }
 
-    static adjustOtherSimulationForces(simulationForces: simulationForces, options: Partial<TreeLayoutOptions>): void {
+    static adjustOtherSimulationForces(simulationForces: SimulationForces, options: Partial<TreeLayoutOptions>): void {
         if (options?.radial) {
             simulationForces.link.strength(0)
             simulationForces.charge.strength(0)
@@ -266,7 +266,7 @@ export class TreeLayout {
     }
     
     static resetOtherSimulationForces(
-        simulationForces: simulationForces,
+        simulationForces: SimulationForces,
         originalForceStrength: ForceStrengthArray
     ): void {
         simulationForces.link.strength(originalForceStrength.link)

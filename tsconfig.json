@@ -25,11 +25,11 @@
     "src",
     "docs/**/*.ts",
     "docs/**/*.vue",
-    "docs/**/*.md",
+    // "docs/**/*.md",
   ],
-  "vueCompilerOptions": {
-    "vitePressExtensions": [
-      ".md"
-    ],
-  },
+  // "vueCompilerOptions": {
+  //   "vitePressExtensions": [
+  //     ".md"
+  //   ],
+  // },
 }

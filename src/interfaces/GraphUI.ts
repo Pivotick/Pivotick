@@ -1,4 +1,3 @@
-import type { IconClass, IconUnicode, ImagePath, SVGIcon, UIVariant } from '../utils/ElementCreation'
 import type { Edge } from '../Edge'
 import type { Node } from '../Node'
 import type { UIElement } from '../ui/UIManager'
@@ -181,3 +180,27 @@ export type MenuQuickActionItemOptions = MenuActionItemOptions & {
      */
     flushRight?: boolean;
 }
+
+/** Variant defined in the theme */
+export type UIVariant = 'primary' | 'secondary' | 'info' | 'warning' | 'danger' | 'success' |
+    'outline-primary' | 'outline-secondary' | 'outline-info' | 'outline-warning' | 'outline-danger' | 'outline-success'
+/**
+ * Raw SVG markup as a string
+ * @example `<svg>...</svg>`
+ */
+export type SVGIcon = string
+/**
+ * Raw unicode to be used in icon libraries such as fontawesome
+ * @example `\uf007`
+ */
+export type IconUnicode = string
+/**
+ * Classe(s) to be added on the element, typically used in icon libraries such as fontawesome
+ * @example 'fa-solid fa-user'
+ */
+export type IconClass = string
+/**
+ * An URL path to access the image content
+ * @example '/icon.svg'
+ */
+export type ImagePath = string

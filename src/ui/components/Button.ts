@@ -1,5 +1,5 @@
+import type { IconClass, IconUnicode, ImagePath, SVGIcon, UIVariant } from '../../interfaces/GraphUI'
 import { createIcon } from '../../utils/ElementCreation'
-import type { IconClass, IconUnicode, ImagePath, SVGIcon, UIVariant } from '../../utils/ElementCreation.ts'
 
 type ButtonVariant = UIVariant
 type ButtonSize = 'sm' | 'xs'
