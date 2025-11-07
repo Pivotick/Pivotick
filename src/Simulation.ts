@@ -411,6 +411,9 @@ export class Simulation {
             .restart()
     }
 
+    /**
+     * @private
+     */
     public createDragBehavior() {
         return d3Drag<SVGGElement, Node>()
             .on('start', (_event, d) => {

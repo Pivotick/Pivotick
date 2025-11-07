@@ -129,18 +129,33 @@ export interface CustomNodeShape {
 }
 export type NodeShape = StandardShape | CustomNodeShape
 export interface NodeStyle {
-    /** The shape of the node, either a standard shape or a custom SVG path */
+    /**
+     * The shape of the node, either a standard shape or a custom SVG path
+     * @default circle
+     */
     shape: NodeShape
+    /**
+     * The main color of the node
+     * @default 'var(--pivotick-node-color, #007acc)'
+     */
     color: string
+    /** @default 10 */
     size: number
+    /** @default 'var(--pivotick-node-stroke, #fff)' */
     strokeColor: string
+    /** @default 2 */
     strokeWidth: number
+    /** @default 'var(--pivotick-label-font, system-ui, sans-serif)' */
     fontFamily: string
+    /** @default 'var(--pivotick-node-text-color, #fff)' */
     textColor: string
     iconClass?: IconClass,
     iconUnicode?: IconUnicode,
     svgIcon?: SVGIcon,
     imagePath?: ImagePath,
+    /**
+     * The text to be used inside the node as an `SVGText` element
+     */
     text?: string,
     /**
      * Callback to dynamically override style properties based on the node.
@@ -162,30 +177,62 @@ export interface PartialEdgeFullStyle {
  * - 'straight': The edge will go in a straight line from A to B
  * - 'curved': The edge will always be curved from A to B
  * - 'bidirectional': The edge will be curved only if there is a birectional relation between A and B. So, from A to B and B to A
+ * @default 'bidirectional'
  */
 export type CurveStyle = 'straight' | 'curved' | 'bidirectional'
 export interface EdgeStyle {
+    /** @default 'var(--pivotick-edge-color, #999)' */
     strokeColor: string
+    /** @default 2 */
     strokeWidth: number
+    /** @default 1.0 */
     opacity: number
-    curveStyle: CurveStyle /** @default: bidirectional */
-    dashed?: boolean /** @default: false — whether the stroke is dashed */
-    animateDash?: boolean /** @default: true — whether the dash should animate (e.g., move along the path) */
-    rotateLabel: boolean /** @default: false */
-    markerEnd?: ((edge: Edge) => string) | string /** @default: arrow */
-    markerStart?: ((edge: Edge) => string) | string /** @default: undefined */
+    /** @default bidirectional */
+    curveStyle: CurveStyle
+    /**
+     * Whether the stroke is dashed 
+     * @default false
+     */
+    dashed?: boolean
+    /**
+     * Whether the dash should be animated (e.g., animation moving along the path)
+     * @default: true 
+     */
+    animateDash?: boolean
+    /**
+     * Keeps labels horizontally aligned to the viewport
+     * @default false
+     * */
+    rotateLabel: boolean
+    /**
+     * Which end marker should the edge use
+     * @default arrow
+     */
+    markerEnd?: ((edge: Edge) => string) | string
+    /**
+     * Which start marker should the edge use
+     * @default undefined
+     */
+    markerStart?: ((edge: Edge) => string) | string
     styleCb?: (edge: Edge) => Partial<EdgeStyle>
 }
 
 export interface LabelStyle {
-    backgroundColor: string  /** @default: #ffffff90 */
-    fontSize: number  /** @default: 12 */
-    fontFamily: string  /** @default: system-ui, sans-serif */
-    color: string  /** @default: #333 */
+    /** @default #ffffff90 */
+    backgroundColor: string
+    /** @default 12 */
+    fontSize: number
+    /** @default system-ui, sans-serif */
+    fontFamily: string
+    /** @default #333 */
+    color: string
     styleCb?: (edge: Edge) => Partial<LabelStyle>
     labelAccessor?: (edge: Edge) => HTMLElement | string | void
 }
 
+/**
+ * Define the styling of an Edge marker.
+ */
 export interface MarkerStyle {
     fill: string
     pathD: string
@@ -353,7 +400,7 @@ export interface SimulationOptions {
 
 export interface SimulationCallbacks {
     /**
-     * Called when the simulation initialize
+     * Called when the simulation initializes
      */
     onInit?: (simulation: Simulation) => void
     /**
@@ -379,9 +426,13 @@ export type LayoutType = 'force' | 'tree'
 
 
 export interface BaseLayoutOptions {
-    type: LayoutType /** @default force */
+    /** @default 'force' */
+    type: LayoutType
 }
 
+/**
+ * @default ForceLayoutOptions
+ */
 export type LayoutOptions = ForceLayoutOptions | TreeLayoutOptions
 
 export interface ForceLayoutOptions extends BaseLayoutOptions {
@@ -389,20 +440,49 @@ export interface ForceLayoutOptions extends BaseLayoutOptions {
 }
 export interface TreeLayoutOptions extends BaseLayoutOptions {
     type: 'tree'
-    rootId?: string /** @default: undefined */
-    strength?: number /** @default: 0.1 */
-    radial?: boolean /** @default: false */
-    horizontal?: boolean /** @default: false */
+    /**
+     * Specify the ID of the node to be used as the root of the tree.
+     * Keep undefined to let `rooIdAlgorithmFinder` to select it.
+     * @default undefined
+     */
+    rootId?: string
+    /**
+     * The strength of the force keeping the nodes placed to form a tree in place
+     * @default 0.1
+     */
+    strength?: number
+    /**
+     * Should the nodes be placed radially instead of vertically
+     * @default false
+     */
+    radial?: boolean
+    /**
+     * Should the nodes be placed horizontally rather than vertically
+     * @default false
+     */
+    horizontal?: boolean
+    /**
+     * The algorithm to use to find the root of the tree
+     */
     rootIdAlgorithmFinder: TreeLayoutAlgorithm
-    radialGap: number /** @default: 750 */
-    flipEdgeDirection: boolean /** @default: false */
+    /**
+     * The grap between each layers used in the radial mode
+     * @default 750
+     */
+    radialGap: number
+    /**
+     * If the direction of the edges should be flipped. This can lead to other visualization
+     * @default false
+     */
+    flipEdgeDirection: boolean
 }
 
 /**
- * - `"viewer"`: Navigate the graph (pan, zoom, drag), no UI panels.
  * - `"full"`: Full UI and interactions.
  * - `"light"`: Minimal UI, interactions enabled.
+ * - `"viewer"`: Navigate the graph (pan, zoom, drag), no UI panels.
  * - `"static"`: Static graph, no UI, no interactions.
+ * @default 'full'
  */
 export type GraphUIMode = 'viewer' | 'full' | 'light' | 'static';
 
@@ -550,6 +630,10 @@ export type MenuActionItemOptions<TThis extends UIElement = UIElement> = {
     onclick: (this: TThis, evt: PointerEvent | MouseEvent, element?: Node | Node[] | Edge | Edge[] | null) => void
 }
 export type MenuQuickActionItemOptions = MenuActionItemOptions & {
+    /**
+     * Should the quick action item be flushed to the right of the menu
+     * @default false
+     */
     flushRight?: boolean;
 }
 
