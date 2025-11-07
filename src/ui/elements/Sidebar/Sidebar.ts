@@ -71,6 +71,12 @@ export class Sidebar implements UIElement {
         ]) as HTMLSpanElement
         this.sidebar.parentElement!.appendChild(this.collapse)
 
+        if (this.uiManager.getOptions()?.sidebar?.collapsed === true) {
+            this.hideSidebar()
+        } else {
+            this.showSidebar()
+        }
+
         this.sidebarMainHeader.afterMount()
         this.sidebarMainHeader.afterMount()
         this.extraPanelManager.afterMount()

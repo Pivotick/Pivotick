@@ -406,6 +406,15 @@ export interface TreeLayoutOptions extends BaseLayoutOptions {
  */
 export type GraphUIMode = 'viewer' | 'full' | 'light' | 'static';
 
+export interface SidebarOptions {
+    /**
+     * Determines whether the sidebar is collapsed by default.
+     * - `'auto'` Keeps the sidebar open unless there isn't enough screen space, in which case it collapses automatically.
+     * @default 'auto'
+     */
+    collapsed: boolean | 'auto'
+}
+
 /**
  * Define what should be displayed in the sidebar's main header slot for node or edges.
  */
@@ -473,6 +482,7 @@ export interface ExtraPanel {
 
 export interface GraphUI {
     mode: GraphUIMode,
+    sidebar: SidebarOptions,
     mainHeader: MainHeader,
     propertiesPanel: PropertiesPanel,
     extraPanels: ExtraPanel[],

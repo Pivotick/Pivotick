@@ -53,6 +53,9 @@ const DEFAULT_HEADERS_MAPS = {
 export const DEFAULT_UI_OPTIONS: GraphUI = {
     mode: 'viewer',
     mainHeader: DEFAULT_HEADERS_MAPS,
+    sidebar: {
+        collapsed: 'auto'
+    },
     propertiesPanel: {
         nodePropertiesMap: defaultPropertiesMapNode,
         edgePropertiesMap: defaultPropertiesMapEdge,
@@ -164,11 +167,12 @@ export class UIManager {
     }
 
     private setupFullMode() {
-        if (!this.hasEnoughSpaceForFullMode()) {
-            console.warn('Not enough space for full mode UI. Switching to light mode.')
-            this.options.mode = 'light'
-            this.setupLightMode()
-            return
+        if (
+            this.options?.sidebar?.collapsed === 'auto' &&
+            !this.hasEnoughSpaceForFullMode()
+        ) {
+            console.debug('Not enough space for full mode UI. Collapsing sidebar')
+            this.options.sidebar.collapsed = true
         }
 
         this.buildLayout()
