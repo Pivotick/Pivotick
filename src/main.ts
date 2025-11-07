@@ -306,7 +306,17 @@ export function createSampleGraph(): Pivotick {
                 nodeHeaderMap: {
                     subtitle: (node: Node | Edge) => node.getData().type,
                 },
-            }
+            },
+            extraPanels: [
+                {
+                    title: "My extra panel",
+                    content: (node: Node): HTMLElement => {
+                        const div = document.createElement('div')
+                        div.textContent = node?.description ?? 'Empty node description'
+                        return div
+                    },
+                }
+            ]
         }
     })
     return graph

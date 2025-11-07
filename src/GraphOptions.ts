@@ -123,11 +123,20 @@ export type StandardShape = 'circle' | 'square' | 'triangle' | 'hexagon'
  * Represents a node with a custom SVG path.
  * The `d` property corresponds directly to the `d` attribute of an SVG <path> element,
  * allowing fully custom shapes.
+ * 
+ * @example
+ * ```ts
+ * {
+ *   d: "M 0 -10 L 10 10 L -10 10 Z"
+ * }
+ * ```
  */
 export interface CustomNodeShape {
     d: string  // represents the `d` attribute of <path>
 }
+
 export type NodeShape = StandardShape | CustomNodeShape
+
 export interface NodeStyle {
     /**
      * The shape of the node, either a standard shape or a custom SVG path
@@ -343,7 +352,7 @@ export interface GraphRendererOptions {
      * 
      * Used to style nodes based on their type.
      * @remarks
-     * Used in conjuction with `nodeStyleMap`
+     * Used in conjuction with {@link nodeStyleMap}
      * 
      * @example
      * ```ts
@@ -357,7 +366,7 @@ export interface GraphRendererOptions {
      * Each key is a node type (as returned by `nodeTypeAccessor`) and maps to a `NodeStyle` object.
      * 
      * @remarks
-     * Used in conjuction with `nodeTypeAccessor`
+     * Used in conjuction with {@link nodeTypeAccessor}
      * 
      * @example
      * ```ts
@@ -511,7 +520,7 @@ export interface MainHeader {
  * title   = node.getData().label || "Could not resolve title"
  * subtitle= node.getData().description || "Could not resolve subtitle"
  */
-export interface HeaderMapEntry<T> {
+export interface HeaderMapEntry<T extends Node | Edge> {
     title: ((element: T) => string) | string,
     subtitle: ((element: T) => string) | string,
 }
@@ -539,21 +548,34 @@ export interface PropertiesPanel {
      *
      * @default All key/value pairs from node.getData()
      */
-    nodePropertiesMap: ((node: Node) => Array<PropertyEntry>)
+    nodePropertiesMap: ((node: Node) => PropertyEntry[])
     /**
      * A function that computes the list of edge properties to display
      *
      * @default All key/value pairs from edge.getData()
      */
-    edgePropertiesMap: ((edge: Edge) => Array<PropertyEntry>)
+    edgePropertiesMap: ((edge: Edge) => PropertyEntry[])
 }
 
 /**
  * Additional panel in the graph UI's sidebar.
+ * Currently only displayed when an element is selected
  * 
  * Both `title` and `content` can be:
  * - A string or `HTMLElement` for static content, or
  * - A function returning a string or `HTMLElement` for dynamic content based on the current selected node or edge.
+ * 
+ * @example
+ * ```ts
+ * {
+ *     content: (node: Node): HTMLElement => {
+ *         const div = document.createElement('div')
+ *         div.textContent = node?.description ?? 'Empty node description'
+ *         return div
+ *     },
+ *     title: "My extra panel",
+ * }
+ * ```
  */
 export interface ExtraPanel {
     title: ((element: Node | Edge | null) => HTMLElement | string) | HTMLElement | string,
@@ -637,6 +659,12 @@ export type MenuQuickActionItemOptions = MenuActionItemOptions & {
     flushRight?: boolean;
 }
 
+/**
+ * @category Main Options for Pivotick
+ * 
+ * @remarks
+ * This interface should be used as the entry point when configuring the graph.
+ */
 export interface GraphOptions {
     /**
      * Options for the rendering engine
@@ -658,7 +686,7 @@ export interface GraphOptions {
     callbacks?: InterractionCallbacks
 
     /**
-     * Enable wether the graph is directed or not
+     * Enable whether the graph is directed or not
      * @default true
      */
     isDirected?: boolean,
@@ -668,10 +696,4 @@ export interface GraphOptions {
      * @default "viewer"
      */
     UI?: Partial<GraphUI>,
-
-    /**
-     * Whether to allow multi-select (select multiple nodes/edges)
-     * @default false
-     */
-    multiSelect?: boolean
 }
