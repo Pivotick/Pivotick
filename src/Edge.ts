@@ -1,4 +1,4 @@
-import type { EdgeFullStyle, EdgeStyle, LabelStyle, PartialEdgeFullStyle } from './GraphOptions'
+import type { EdgeFullStyle, EdgeStyle, LabelStyle, PartialEdgeFullStyle } from './interfaces/RendererOptions'
 import { Node } from './Node'
 import { generateSafeDomId } from './utils/ElementCreation'
 

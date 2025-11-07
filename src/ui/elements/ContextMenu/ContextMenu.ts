@@ -1,11 +1,11 @@
 import type { Edge } from '../../../Edge'
-import type { MenuActionItemOptions, MenuQuickActionItemOptions } from '../../../GraphOptions'
 import type { Node } from '../../../Node'
 import { createActionList, createQuickActionList } from '../../../utils/ElementCreation'
 import { expand, focusElement, hide, inspect, pin, selectNeighbor, unpin } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import './contextmenu.scss'
 import { deepMerge } from '../../../utils/utils'
+import type { MenuActionItemOptions, MenuQuickActionItemOptions } from '../../../interfaces/GraphUI'
 
 const defaultMenuNode = {
     topbar: [

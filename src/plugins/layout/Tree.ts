@@ -12,7 +12,7 @@ import type { Node } from '../../Node'
 import type { Edge } from '../../Edge'
 import hasCycle from '../analytics/cycle'
 import { findFirstZeroInDegreeNode, findMaxReachabilityRoot, findMinHeightDAGRoot, findMinMaxDistanceRoot } from '../analytics/DAGAlgorithms'
-import type { TreeLayoutOptions } from '../../GraphOptions'
+import type { TreeLayoutOptions } from '../../interfaces/LayoutOptions'
 
 export type TreeLayoutAlgorithm = 'FirstZeroInDegree' | 'MaxReachability' | 'MinMaxDistance' | 'MinHeight'
 

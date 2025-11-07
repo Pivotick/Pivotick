@@ -1,4 +1,4 @@
-import type { GraphUIMode } from '../../GraphOptions'
+import type { GraphUIMode } from '../../interfaces/GraphUI'
 import type { UIElement } from '../UIManager'
 
 export class Layout implements UIElement {

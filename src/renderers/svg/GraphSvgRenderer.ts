@@ -6,11 +6,11 @@ import { NodeDrawer } from './NodeDrawer'
 import { EdgeDrawer } from './EdgeDrawer'
 import { EventHandler } from './EventHandler'
 import type { Graph } from '../../Graph'
-import type { GraphRendererOptions } from '../../GraphOptions'
 import merge from 'lodash.merge'
 import { GraphInteractions } from '../../GraphInteractions'
 import { GraphRenderer } from '../../GraphRenderer'
 import { SelectionBox } from './SelectionBox'
+import type { GraphRendererOptions } from '../../interfaces/RendererOptions'
 
 
 const DEFAULT_RENDERER_OPTIONS = {

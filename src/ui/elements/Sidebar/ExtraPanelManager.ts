@@ -1,10 +1,10 @@
 import type { Node } from '../../../Node'
 import type { Edge } from '../../../Edge'
-import type { ExtraPanel } from '../../../GraphOptions'
 import { createHtmlTemplate } from '../../../utils/ElementCreation'
 import { tryResolveHTMLElement } from '../../../utils/Getters'
 import type { UIElement, UIManager } from '../../UIManager'
-import type { EdgeSelection, NodeSelection } from '../../../GraphInteractions'
+import type { ExtraPanel } from '../../../interfaces/GraphUI'
+import type { EdgeSelection, NodeSelection } from '../../../interfaces/GraphInteractions'
 
 export class ExtraPanelManager implements UIElement {
     private uiManager: UIManager

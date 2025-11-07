@@ -1,12 +1,12 @@
 import type { Node } from '../../../Node'
-import type { NodeSelection } from '../../../GraphInteractions'
-import type { MenuActionItemOptions, MenuQuickActionItemOptions } from '../../../GraphOptions'
 import hasCycle from '../../../plugins/analytics/cycle'
 import { balancedDistanced, expand, firstValidNode, flipEdgeDirection, graphControlLayoutOrganic, graphControlLayoutTreeH, graphControlLayoutTreeR, graphControlLayoutTreeV, hide, minHeight, mostConnectedNode, pin, timeDuration10, timeDuration15, timeDuration5, unpin } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import './graphControls.scss'
 import { createActionList, createHtmlElement, createIcon, createQuickActionList } from '../../../utils/ElementCreation'
 import { deepMerge } from '../../../utils/utils'
+import type { MenuActionItemOptions, MenuQuickActionItemOptions } from '../../../interfaces/GraphUI'
+import type { NodeSelection } from '../../../interfaces/GraphInteractions'
 
 type GraphLayoutOption = {
     id: string

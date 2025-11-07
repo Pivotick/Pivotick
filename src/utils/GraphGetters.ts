@@ -1,7 +1,7 @@
-import type { MainHeader, PropertiesPanel, PropertyEntry } from '../GraphOptions'
 import { tryResolveArray, tryResolveString } from './Getters'
 import type { Node } from '../Node'
 import type { Edge } from '../Edge'
+import type { MainHeader, PropertiesPanel, PropertyEntry } from '../interfaces/GraphUI'
 
 
 export function nodeNameGetter(node: Node, mainHeader: MainHeader): string {
@@ -38,7 +38,7 @@ export function edgeLabelGetter(edge: Edge): string {
 
 export function nodePropertiesGetter(node: Node, propertiesPanel: PropertiesPanel): Array<PropertyEntry> {
     const data = node.getData()
-    const properties: Array<PropertyEntry> = []
+    const properties: PropertyEntry[] = []
 
     if (propertiesPanel.nodePropertiesMap) {
         return tryResolveArray<[Node], PropertyEntry>(propertiesPanel.nodePropertiesMap, node)

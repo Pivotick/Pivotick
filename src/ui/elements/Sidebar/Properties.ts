@@ -1,13 +1,13 @@
 import { createHtmlDL, createHtmlElement, createHtmlTemplate, createIcon } from '../../../utils/ElementCreation'
 import type { Node } from '../../../Node'
 import type { Edge } from '../../../Edge'
-import type { PropertyEntry } from '../../../GraphOptions'
-import type { EdgeSelection, NodeSelection } from '../../../GraphInteractions'
 import { createInlineBar } from '../../components/InlineBar'
 import type { UIElement, UIManager } from '../../UIManager'
 import './properties.scss'
 import { edgePropertiesGetter, nodePropertiesGetter } from '../../../utils/GraphGetters'
 import { filterAdd, filterRemove } from '../../icons'
+import type { PropertyEntry } from '../../../interfaces/GraphUI'
+import type { EdgeSelection, NodeSelection } from '../../../interfaces/GraphInteractions'
 
 
 type aggregatedProperties = Map<string, Map<string, number>>
@@ -144,7 +144,7 @@ export class SidebarProperties implements UIElement {
         const div = propertiesContainer.querySelector('div.pivotick-aggregated-properties') as HTMLDivElement
 
         if (div) {
-            const allProperties: Array<PropertyEntry>[] = []
+            const allProperties: PropertyEntry[][] = []
             nodes.forEach((selectedNode) => {
                 const { node } = selectedNode
                 const properties = nodePropertiesGetter(node, this.uiManager.getOptions().propertiesPanel)
@@ -173,7 +173,7 @@ export class SidebarProperties implements UIElement {
         const div = propertiesContainer.querySelector('div.pivotick-aggregated-properties') as HTMLDivElement
 
         if (div) {
-            const allProperties: Array<PropertyEntry>[] = []
+            const allProperties: PropertyEntry[][] = []
             edges.forEach((selectedEdge) => {
                 const { edge } = selectedEdge
                 const properties = edgePropertiesGetter(edge, this.uiManager.getOptions().propertiesPanel)

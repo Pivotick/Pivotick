@@ -1,28 +1,33 @@
 import type { Graph as Pivotick } from './Graph'
-import type * as GraphOptions from './GraphOptions'
+import type * as GraphOptions from './interfaces/GraphOptions'
+import type * as GraphUI from './interfaces/GraphUI'
+import type * as InterractionCallbacks from './interfaces/InterractionCallbacks'
+import type * as LayoutOptions from './interfaces/LayoutOptions'
+import type * as RendererOptions from './interfaces/RendererOptions'
+import type * as SimulationOptions from './interfaces/SimulationOptions'
+import type * as GraphInteractions from './interfaces/GraphInteractions'
 import type { IconClass, IconUnicode, ImagePath, SVGIcon, UIVariant } from './utils/ElementCreation'
-import type { EdgeSelection, GraphInteractions, NodeSelection } from './GraphInteractions'
-import type { AbstractSelectionBox, GraphRenderer } from './GraphRenderer'
+import type { GraphRenderer } from './GraphRenderer'
 import type { Simulation } from './Simulation'
 import type { Notifier } from './ui/Notifier'
-import type { Node, NodeData } from './Node'
-import type { Edge, EdgeData } from './Edge'
+import type * as NodeI from './Node'
+import type * as EdgeI from './Edge'
 import type { TreeLayoutAlgorithm } from './plugins/layout/Tree'
 
 export type {
     Pivotick,
-    Node,
-    Edge,
+    NodeI as Node,
+    EdgeI as Edge,
     GraphOptions,
+    GraphUI,
+    InterractionCallbacks,
+    LayoutOptions,
+    RendererOptions,
+    SimulationOptions,
     GraphInteractions,
     GraphRenderer,
     Simulation,
     TreeLayoutAlgorithm,
     IconClass, IconUnicode, ImagePath, SVGIcon, UIVariant,
     Notifier,
-    EdgeData,
-    NodeData,
-    EdgeSelection,
-    NodeSelection,
-    AbstractSelectionBox,
 }

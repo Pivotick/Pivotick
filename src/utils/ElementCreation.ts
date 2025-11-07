@@ -1,9 +1,9 @@
-import type { MenuActionItemOptions, MenuQuickActionItemOptions, PropertyEntry } from '../GraphOptions'
 import { faGlyph, tryResolveBoolean, tryResolveHTMLElement } from './Getters'
 import type { Node } from '../Node'
 import type { Edge } from '../Edge'
 import { createButton } from '../ui/components/Button'
 import type { UIElement } from '../ui/UIManager'
+import type { MenuActionItemOptions, MenuQuickActionItemOptions, PropertyEntry } from '../interfaces/GraphUI'
 
 /** Variant defined in the theme */
 export type UIVariant = 'primary' | 'secondary' | 'info' | 'warning' | 'danger' | 'success' |
@@ -86,7 +86,7 @@ export function createHtmlTemplate(template: string): HTMLElement {
     return templateEl.content.firstElementChild as HTMLElement
 }
 
-export function createHtmlDL(data: Array<PropertyEntry>, element: Node | Edge | null): HTMLDListElement {
+export function createHtmlDL(data: PropertyEntry[], element: Node | Edge | null): HTMLDListElement {
     const dl = createHtmlElement('dl', { class: 'pivotick-property-list' })
     for (const entry of data) {
         const resolvedName = tryResolveHTMLElement(entry.name, element) || ''

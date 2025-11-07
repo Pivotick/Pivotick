@@ -1,7 +1,6 @@
 import { Graph } from '../Graph'
 import { Node } from  '../Node'
 import { Edge } from  '../Edge'
-import type { GraphUI, PropertyEntry } from '../GraphOptions'
 import { GraphControls } from './elements/GraphControls/GraphControls'
 import { GraphNavigation } from './elements/GraphNavigation/GraphNavigation'
 import { Layout } from './elements/Layout'
@@ -12,6 +11,7 @@ import type { Notification } from './Notifier'
 import merge from 'lodash.merge'
 import { Tooltip } from './elements/Tooltip/Tooltip'
 import { ContextMenu } from './elements/ContextMenu/ContextMenu'
+import type { GraphUI, PropertyEntry } from '../interfaces/GraphUI'
 
 const basicPropertyGetter = (element: Node | Edge): PropertyEntry[] => {
     const properties = []

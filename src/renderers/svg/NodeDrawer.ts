@@ -1,9 +1,9 @@
 import { type Selection } from 'd3-selection'
 import { Node } from '../../Node'
 import type { Graph } from '../../Graph'
-import type { CustomNodeShape, GraphRendererOptions, NodeShape, NodeStyle } from '../../GraphOptions'
 import type { GraphSvgRenderer } from './GraphSvgRenderer'
 import { faGlyph } from '../../utils/Getters'
+import type { CustomNodeShape, GraphRendererOptions, NodeShape, NodeStyle } from '../../interfaces/RendererOptions'
 
 export class NodeDrawer {
 

@@ -1,11 +1,11 @@
 import { type Selection, select as d3Select } from 'd3-selection'
 import { Edge } from '../../Edge'
-import type { EdgeStyle, GraphRendererOptions, LabelStyle } from '../../GraphOptions'
 import { getApproximateArcLengthAndMidpoint, getApproximateCircleArcLengthAndMidpoint, getArcIntersectionWithCircle, getSegmentLengthAndMidpoint, type ArcParams, type Circle } from '../../utils/GeometryHelper'
 import type { Graph } from '../../Graph'
 import type { GraphSvgRenderer } from './GraphSvgRenderer'
 import { tryResolveString } from '../../utils/Getters'
 import { edgeLabelGetter } from '../../utils/GraphGetters'
+import type { EdgeStyle, GraphRendererOptions, LabelStyle } from '../../interfaces/RendererOptions'
 
 export class EdgeDrawer {
 

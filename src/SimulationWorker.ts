@@ -2,8 +2,9 @@ import type { ForceLink as d3ForceLinkType } from 'd3-force'
 import { Simulation } from './Simulation'
 import { Node, type NodeData } from './Node'
 import { Edge, type EdgeData } from './Edge'
-import type { SimulationOptions, EdgeFullStyle } from './GraphOptions'
 import { TreeLayout } from './plugins/layout/Tree'
+import type { SimulationOptions } from './interfaces/SimulationOptions'
+import type { EdgeFullStyle } from './interfaces/RendererOptions'
 
 export interface PlainNode<T = NodeData> {
     id: string

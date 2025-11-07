@@ -2,10 +2,10 @@ import type { Graph } from '../Graph'
 import type { GraphRenderer } from '../GraphRenderer'
 import { GraphSvgRenderer } from './svg/GraphSvgRenderer'
 import { GraphCanvasRenderer } from './canvas/GraphCanvasRenderer'
+import type { GraphRendererOptions } from '../interfaces/RendererOptions'
 import { GraphInteractions } from '../GraphInteractions'
 
 
-import type { GraphRendererOptions } from '../GraphOptions'
 
 export function createGraphRenderer(
   graph: Graph,

@@ -1,11 +1,11 @@
 import { createHtmlTemplate } from '../../../utils/ElementCreation'
 import type { Node } from '../../../Node'
 import type { Edge } from '../../../Edge'
-import type { EdgeSelection, NodeSelection } from '../../../GraphInteractions'
 import type { UIElement, UIManager } from '../../UIManager'
 import './mainHeader.scss'
 import { edgeDescriptionGetter, edgeNameGetter, nodeDescriptionGetter, nodeNameGetter } from '../../../utils/GraphGetters'
 import { graphEdgeIcon, graphMultiSelectNode } from '../../icons'
+import type { EdgeSelection, NodeSelection } from '../../../interfaces/GraphInteractions'
 
 
 export class SidebarMainHeader implements UIElement {

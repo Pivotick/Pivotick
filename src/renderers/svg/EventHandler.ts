@@ -1,8 +1,8 @@
 import type { Graph } from '../../Graph'
-import type { GraphInteractions } from '../../GraphInteractions'
 import type { GraphSvgRenderer } from './GraphSvgRenderer'
 import type { Node } from '../../Node'
 import type { Edge } from '../../Edge'
+import type { GraphInteractions } from '../../GraphInteractions'
 
 export class EventHandler {
     private graph: Graph

@@ -1,11 +1,9 @@
 import type { Node } from './Node'
 import type { Edge } from './Edge'
 import type { Graph } from './Graph'
-import type { GraphRendererOptions } from './GraphOptions'
 import { createSvgElement } from './utils/ElementCreation'
+import type { GraphRendererOptions } from './interfaces/RendererOptions'
 import type { GraphInteractions } from './GraphInteractions'
-
-export type RendererType = 'svg' | 'canvas'
 
 const PROGRESS_BAR_WIDTH = 200
 const PROGRESS_BAR_HEIGHT = 8

@@ -1,11 +1,14 @@
 import { Node } from './Node'
 import { Edge } from './Edge'
-import type { graphData, GraphOptions, GraphUI, InterractionCallbacks, LayoutOptions } from './GraphOptions'
 import { createGraphRenderer } from './renderers/GraphRendererFactory'
 import type { GraphRenderer } from './GraphRenderer'
 import { Simulation } from './Simulation'
 import { UIManager } from './ui/UIManager'
 import { Notifier } from './ui/Notifier'
+import type { GraphOptions, GraphData } from './interfaces/GraphOptions'
+import type { GraphUI } from './interfaces/GraphUI'
+import type { InterractionCallbacks } from './interfaces/InterractionCallbacks'
+import type { LayoutOptions } from './interfaces/LayoutOptions'
 
 
 export class Graph {
@@ -17,7 +20,7 @@ export class Graph {
     public simulation: Simulation
     private options: GraphOptions
 
-    constructor(container: HTMLElement, data?: graphData, options?: GraphOptions) {
+    constructor(container: HTMLElement, data?: GraphData, options?: GraphOptions) {
         this.options = {
             isDirected: true,
             ...options,
@@ -348,8 +351,10 @@ export class Graph {
      * 
      * Returns the actual edge instances, allowing direct modifications.
      * 
-     * **Warning:** Modifying edges directly may lead to unexpected behavior.
-     * It is generally safer to use `getEdges`, which returns cloned instances.
+     * ::: warning
+     * Modifying edges directly may lead to unexpected behavior.
+     * Use {@link getEdges} instead to work with safe clones.
+     * :::
      * 
      * @returns An array of `Edge` objects.
      */

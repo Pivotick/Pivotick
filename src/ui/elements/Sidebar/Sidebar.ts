@@ -5,9 +5,9 @@ import type { UIElement, UIManager } from '../../UIManager'
 import './sidebar.scss'
 import { SidebarMainHeader } from './MainHeader'
 import { SidebarProperties } from './Properties'
-import type { EdgeSelection, NodeSelection } from '../../../GraphInteractions'
 import { ExtraPanelManager } from './ExtraPanelManager'
 import { sidebarCollapse, sidebarExpand } from '../../icons'
+import type { EdgeSelection, NodeSelection } from '../../../interfaces/GraphInteractions'
 
 export class Sidebar implements UIElement {
     private uiManager: UIManager

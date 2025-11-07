@@ -16,13 +16,14 @@ import { drag as d3Drag } from 'd3-drag'
 import type { Graph } from './Graph'
 import type { Node } from './Node'
 import type { Edge } from './Edge'
-import type { LayoutType, SimulationCallbacks, SimulationOptions, TreeLayoutOptions } from './GraphOptions'
 import { runSimulationInWorker } from './SimulationWorkerWrapper'
 import merge from 'lodash.merge'
 import { TreeLayout } from './plugins/layout/Tree'
 import { edgeLabelGetter } from './utils/GraphGetters'
-import type { GraphInteractions } from './GraphInteractions'
 import type { DeepPartial } from './utils/utils'
+import type { SimulationCallbacks, SimulationOptions } from './interfaces/SimulationOptions'
+import type { LayoutType, TreeLayoutOptions } from './interfaces/LayoutOptions'
+import type { GraphInteractions } from './GraphInteractions'
 
 
 export const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {

@@ -1,6 +1,6 @@
 import type { Node } from './Node'
 import type { Edge } from './Edge'
-import type { SimulationOptions } from './GraphOptions'
+import type { SimulationOptions } from './interfaces/SimulationOptions'
 
 export const runSimulationInWorker = (
     nodes: Node[],
