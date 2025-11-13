@@ -18,9 +18,9 @@ features:
     details: Installation and basic usage
     link: /getting-started
   - title: Configuration
-    details: All options explained
+    details: Most used options explained
     link: /configuration
-  - title: API
+  - title: Generated API
     details: Generated API docs
     link: /api
   - title: Examples

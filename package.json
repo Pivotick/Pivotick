@@ -3,6 +3,17 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/pivotick.umd.cjs",
+  "module": "./dist/pivotick.js",
+  "exports": {
+    ".": {
+      "import": "./dist/pivotick.js",
+      "require": "./dist/pivotick.umd.cjs"
+    }
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
