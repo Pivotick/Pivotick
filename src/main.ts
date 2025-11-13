@@ -40,8 +40,7 @@ export function createSampleGraph(): Pivotick {
 
 
     // const N = 26
-    const N = 0
-    // const N = 6
+    const N = 6
     const createNodes = (): Node[] => {
         return Array.from({ length: N }, (_, i) => new Node(`n${i + 1}`, { label: `Node ${i}`, type: 'node'}))
     }

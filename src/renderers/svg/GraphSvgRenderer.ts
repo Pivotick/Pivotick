@@ -401,10 +401,11 @@ export class GraphSvgRenderer extends GraphRenderer {
         const midY = bounds.y + height / 2
 
         // Scale so that content fits (with some padding)
-        const scale = Math.min(
+        let scale = Math.min(
             fullWidth / width,
             fullHeight / height
         ) * 0.8
+        scale = Math.min(scale, 3)
 
         const translateX = fullWidth / 2 - scale * midX
         const translateY = fullHeight / 2 - scale * midY

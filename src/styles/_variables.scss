@@ -150,7 +150,7 @@ $toast-text-success: text-color($success);
 }
 
 @media (prefers-color-scheme: dark) {
-    :root {
+    .pivotick:not([data-theme="light"]) {
         --pivotick-bg: #031233;
         --pivotick-border-color: #455b8e;
 
@@ -179,6 +179,6 @@ $toast-text-success: text-color($success);
     }
 }
 
-[data-theme="dark"] {
+.pivotick[data-theme="dark"] {
     --pivotick-bg: #031233;
 }
