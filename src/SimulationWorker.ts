@@ -5,7 +5,6 @@ import { Edge, type EdgeData } from './Edge'
 import { TreeLayout } from './plugins/layout/Tree'
 import type { SimulationOptions } from './interfaces/SimulationOptions'
 import type { EdgeFullStyle } from './interfaces/RendererOptions'
-import type { RawEdge, RawNode } from './interfaces/GraphOptions'
 
 export interface PlainNode<T = NodeData> {
     id: string
@@ -138,8 +137,8 @@ self.onmessage = (e: MessageEvent<WorkerInput>) => {
     })
 }
 
-export function runSimulation(plainNodes: PlainNode[], plainEdges: PlainEdge[], options: SimulationOptions, canvasBCR: DOMRect): { nodes: Node[]; edges: Edge[] } {
-    const nodes = plainNodes.map(n => new Node(n.id, n.data, n.style))
+export function runSimulation(plainNodes: Node[], plainEdges: Edge[], options: SimulationOptions, canvasBCR: DOMRect): { nodes: Node[]; edges: Edge[] } {
+    const nodes = plainNodes.map(n => new Node(n.id, n.getData(), n.getStyle()))
     const nodeMap = new Map<string, Node>(nodes.map(n => [n.id, n]))
 
     if (options.layout?.type === 'force') {
@@ -157,8 +156,8 @@ export function runSimulation(plainNodes: PlainNode[], plainEdges: PlainEdge[], 
         const to = nodeMap.get(e.to.id)
         if (from && to) {
             // normalize/cast incoming style to the EdgeFullStyle expected by Edge
-            const edgeStyle = (e.style ?? {}) as unknown as EdgeFullStyle
-            edges.push(new Edge(e.id, from, to, e.data, edgeStyle, e.directed))
+            const edgeStyle = (e.getStyle() ?? {}) as unknown as EdgeFullStyle
+            edges.push(new Edge(e.id, from, to, e.getData(), edgeStyle, e.directed))
         }
     }
 

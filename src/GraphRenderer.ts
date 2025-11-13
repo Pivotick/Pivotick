@@ -23,7 +23,6 @@ export abstract class GraphRenderer {
     }
 
     abstract init(): void
-    abstract destroy(): void
     abstract dataUpdate(): void
     abstract nextTick(): void
     abstract getZoomBehavior(): unknown

@@ -389,6 +389,7 @@ export class GraphSvgRenderer extends GraphRenderer {
         if (!zoomBehavior || !svgEl || !zoomLayerEl) return
 
         const bounds = zoomLayerEl.getBBox()
+        if (bounds.width == 0 || bounds.height == 0) return
 
         const fullWidth = svgEl.clientWidth
         const fullHeight = svgEl.clientHeight

@@ -16,6 +16,7 @@ import { drag as d3Drag } from 'd3-drag'
 import type { Graph } from './Graph'
 import type { Node } from './Node'
 import type { Edge } from './Edge'
+import { runSimulationInWorker } from './SimulationWorkerWrapper'
 import merge from 'lodash.merge'
 import { TreeLayout } from './plugins/layout/Tree'
 import { edgeLabelGetter } from './utils/GraphGetters'
@@ -406,8 +407,6 @@ export class Simulation {
     }
 
     private async runSimulationWorker(optionOverride: Partial<SimulationOptions> = {}) {
-        const { runSimulationInWorker } = await import('./SimulationWorkerWrapper')
-
         const canvasBCR = this.canvas?.getBoundingClientRect()
         if (!canvasBCR) return
 

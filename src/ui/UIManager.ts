@@ -235,9 +235,8 @@ export class UIManager {
         this.sidebar = new Sidebar(this)
         this.sidebar.mount(this.layout?.sidebar)
     }
-    
 
-    private destroy() {
+    public destroy() {
         if (this.layout) {
             this.layout.destroy()
             this.layout = undefined

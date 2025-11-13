@@ -39,7 +39,8 @@ export function createSampleGraph(): Pivotick {
     // edges.push(new Edge('1-0', nodes[1], nodes[0], { relation : 'b'}))
 
 
-    const N = 26
+    // const N = 26
+    const N = 0
     // const N = 6
     const createNodes = (): Node[] => {
         return Array.from({ length: N }, (_, i) => new Node(`n${i + 1}`, { label: `Node ${i}`, type: 'node'}))
@@ -67,6 +68,9 @@ export function createSampleGraph(): Pivotick {
                     const target = nodes[Math.round(Math.random() * (id - 1))]
                     return new Edge(`${id}-${target.id}`, source, target, { label: 'connected-to', mstart: Math.random() < 0.5 ? 'circle' : 'diamond', mend: Math.random() < 0.5 ? 'arrow' : 'circle', data: '' }, { edge: { dashed: Math.random() < 0.5 }})
                 })
+            if (!nodes[0] || !nodes[1] || !nodes[2]) {
+                return { nodes, edges }
+            }
             // edges = []
             edges.push(new Edge('0-0', nodes[0], nodes[0], { label : 'self-loop'}))
             // edges.push(new Edge('a-b', nodes[3], nodes[2], { label : 'a'}))

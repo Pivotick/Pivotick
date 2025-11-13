@@ -459,7 +459,7 @@ export class Graph {
      * Destroy all UI components.
      */
     destroy(): void {
-        this.renderer?.destroy()
+        this.UIManager.destroy()
     }
 
     /**
