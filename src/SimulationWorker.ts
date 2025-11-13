@@ -5,6 +5,7 @@ import { Edge, type EdgeData } from './Edge'
 import { TreeLayout } from './plugins/layout/Tree'
 import type { SimulationOptions } from './interfaces/SimulationOptions'
 import type { EdgeFullStyle } from './interfaces/RendererOptions'
+import type { RawEdge, RawNode } from './interfaces/GraphOptions'
 
 export interface PlainNode<T = NodeData> {
     id: string
@@ -135,6 +136,98 @@ self.onmessage = (e: MessageEvent<WorkerInput>) => {
         nodes,
         edges,
     })
+}
+
+export function runSimulation(plainNodes: PlainNode[], plainEdges: PlainEdge[], options: SimulationOptions, canvasBCR: DOMRect): { nodes: Node[]; edges: Edge[] } {
+    const nodes = plainNodes.map(n => new Node(n.id, n.data, n.style))
+    const nodeMap = new Map<string, Node>(nodes.map(n => [n.id, n]))
+
+    if (options.layout?.type === 'force') {
+        // const updatedOptions = Simulation.scaleSimulationOptions(options, canvasBCR, nodeMap.size)
+        // options.d3ManyBodyStrength = updatedOptions.d3ManyBodyStrength ?? DEFAULT_SIMULATION_OPTIONS.d3ManyBodyStrength
+        // options.d3CollideStrength = updatedOptions.d3ManyBodyStrength ?? DEFAULT_SIMULATION_OPTIONS.d3ManyBodyStrength
+    }
+
+    const { simulation, simulationForces } = Simulation
+        .initSimulationForces(options, canvasBCR)
+
+    const edges: Edge[] = []
+    for (const e of plainEdges) {
+        const from = nodeMap.get(e.from.id)
+        const to = nodeMap.get(e.to.id)
+        if (from && to) {
+            // normalize/cast incoming style to the EdgeFullStyle expected by Edge
+            const edgeStyle = (e.style ?? {}) as unknown as EdgeFullStyle
+            edges.push(new Edge(e.id, from, to, e.data, edgeStyle, e.directed))
+        }
+    }
+
+    simulation.nodes(nodes)
+    const linkForce = simulation.force('link')
+    if (linkForce) {
+        (linkForce as d3ForceLinkType<Node, Edge>)
+            .id((node) => node.id)
+            .links(edges)
+    }
+
+    if (options.layout?.type === 'tree') {
+        TreeLayout.registerForcesOnSimulation(
+            nodes,
+            edges,
+            simulation,
+            simulationForces,
+            options.layout,
+            canvasBCR
+        )
+    }
+
+    let warmupTicks = options.warmupTicks || MAX_EXECUTION_TICKS
+    warmupTicks = warmupTicks === 'auto' ? MAX_EXECUTION_TICKS : warmupTicks
+    warmupTicks = warmupTicks - REHEAT_TICKS
+
+    let currentAlphaTarget = 0.3
+    simulation.alphaTarget(currentAlphaTarget)
+    const startTime = (new Date()).getTime() // Ensure the simulation eventually stops
+    for (let i = 0; i < warmupTicks; ++i) {
+        if (
+            ((new Date()).getTime() - startTime > MAX_EXECUTION_TIME) ||
+            ((new Date()).getTime() - startTime > options.cooldownTime) ||
+            (
+                isSimulationStable(options, simulation, currentAlphaTarget) &&
+                (new Date()).getTime() - startTime > options.cooldownTime * 0.15
+            )
+        ) {
+            break
+        }
+
+        simulation.tick()
+    }
+
+    currentAlphaTarget = 0
+    simulation.alphaTarget(currentAlphaTarget)
+    simulation.alpha(1) // small bump
+    for (let i = 0; i < REHEAT_TICKS; ++i) {
+        if (
+            isSimulationStable(options, simulation, currentAlphaTarget) &&
+            (new Date()).getTime() - startTime > options.cooldownTime * 0.15
+        ) {
+            break
+        }
+        simulation.tick()
+    }
+
+    if (options.layout?.type === 'tree') {
+        TreeLayout.simulationDone(
+            nodes,
+            edges,
+            simulation,
+            options.layout
+        )
+    }
+    return {
+        nodes: nodes,
+        edges: edges,
+    }
 }
 
 function getProgress(_tick: number, elapsedTime: number, options: SimulationOptions): number {

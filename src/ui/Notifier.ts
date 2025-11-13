@@ -16,8 +16,19 @@ export interface Notification {
     message?: string;
 }
 
+/**
+ * Manages and displays notification messages in the graph UI.
+ * 
+ * Use this component to show success, warning, error, or info messages
+ * to the user.
+ * 
+ * @example
+ * ```ts
+ * graph.notifier.warning('This is a warning', 'Content of the message goes here.')
+ * ```
+ */
 export class Notifier {
-    public graph: Graph
+    private graph: Graph
     private UIManager: UIManager
 
     constructor(graph: Graph) {

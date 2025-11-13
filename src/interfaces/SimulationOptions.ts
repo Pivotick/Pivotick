@@ -9,7 +9,10 @@ import {
     type ForceCollide as d3ForceCollideType,
 } from 'd3-force'
 
-/** Note: These may be scalled based on the amount of node and canvas size */
+/**
+ * @remarks These may be scalled based on the amount of node and canvas size
+ * @category Main Options
+ * */
 export interface SimulationOptions {
     /** @default 1.0 */
     d3Alpha: number
@@ -46,6 +49,8 @@ export interface SimulationOptions {
     /** @default true */
     freezeNodesOnDrag: boolean
 
+    /** @default true */
+    useWorker: boolean
     /** @private */
     layout: LayoutOptions
     callbacks?: SimulationCallbacks

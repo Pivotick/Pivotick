@@ -12,6 +12,9 @@ export interface EdgeSelection<TElement> {
     element: TElement,
 }
 
+/**
+ * @category Main Options
+ */
 export type GraphInteractionEvents<TElement> = {
     nodeClick: (event: PointerEvent, node: Node, element: TElement) => void;
     nodeDbclick: (event: PointerEvent, node: Node, element: TElement) => void;

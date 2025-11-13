@@ -16,7 +16,6 @@ import { drag as d3Drag } from 'd3-drag'
 import type { Graph } from './Graph'
 import type { Node } from './Node'
 import type { Edge } from './Edge'
-import { runSimulationInWorker } from './SimulationWorkerWrapper'
 import merge from 'lodash.merge'
 import { TreeLayout } from './plugins/layout/Tree'
 import { edgeLabelGetter } from './utils/GraphGetters'
@@ -43,6 +42,7 @@ export const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
     d3GravityStrength: 0.01,
 
     cooldownTime: 2000,
+    useWorker: true,
     warmupTicks: 'auto',
     freezeNodesOnDrag: true,
     
@@ -269,7 +269,7 @@ export class Simulation {
      * Start the simulation with rendering on each animation frame.
      */
     public async start() {
-        await this.runSimulationWorker()
+        await this.runSimulationWorkerRouter()
         this.engineRunning = true
         if (this.callbacks.onStart) {
             this.callbacks.onStart(this)
@@ -356,7 +356,58 @@ export class Simulation {
         })
     }
 
+    private async computeGraph(optionOverride: Partial<SimulationOptions> = {}) {
+        const { runSimulation } = await import('./SimulationWorker')
+        const canvasBCR = this.canvas?.getBoundingClientRect()
+        if (!canvasBCR) return
+
+        const nodes = this.graph.getMutableNodes()
+        const nodesCopy = this.graph.getNodes().map((n: Node) => {
+            n.fx = undefined
+            n.fy = undefined
+            return n
+        })
+        const edgesCopy = this.graph.getEdges()
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { callbacks, ...optionsWithoutCBs } = this.options
+        Object.assign(optionsWithoutCBs, optionOverride)
+
+        const { nodes: updatedNodes } = runSimulation(nodesCopy,
+            edgesCopy,
+            optionsWithoutCBs,
+            canvasBCR)
+
+        updatedNodes.forEach((updatedNode, i) => {
+            nodes[i].x = updatedNode.x
+            nodes[i].y = updatedNode.y
+
+            if (updatedNode.fx) {
+                nodes[i].fx = updatedNode.fx
+            } else {
+                nodes[i].fx = undefined
+            }
+            if (updatedNode.fy) {
+                nodes[i].fy = updatedNode.fy
+            } else {
+                nodes[i].fy = undefined
+            }
+        })
+        this.graph.updateData(nodes)
+    }
+
+    private async runSimulationWorkerRouter(optionOverride: Partial<SimulationOptions> = {}) {
+        if (this.options.useWorker) {
+            await this.runSimulationWorker(optionOverride)
+        } else {
+            this.graph.updateLayoutProgress(1, 0)
+            await this.computeGraph(optionOverride)
+        }
+    }
+
     private async runSimulationWorker(optionOverride: Partial<SimulationOptions> = {}) {
+        const { runSimulationInWorker } = await import('./SimulationWorkerWrapper')
+
         const canvasBCR = this.canvas?.getBoundingClientRect()
         if (!canvasBCR) return
 
@@ -509,7 +560,7 @@ export class Simulation {
         this.options.layout.type = type
         this.update()
         this.pause()
-        await this.runSimulationWorker(simulationOptions as SimulationOptions)
+        await this.runSimulationWorkerRouter(simulationOptions as SimulationOptions)
         this.restart()
 
         await this.waitForSimulationStop()

@@ -9,6 +9,8 @@ import type { SimulationOptions } from './SimulationOptions'
 /**
  * @remarks
  * This interface should be used as the entry point when configuring the graph.
+ * 
+ * @category Main Options
  */
 export interface GraphOptions {
     /**
@@ -42,6 +44,9 @@ export interface GraphOptions {
     UI?: Partial<GraphUI>,
 }
 
+/**
+ * @category Main Options
+ */
 export interface GraphData {
     nodes: Node[],
     edges: Edge[],

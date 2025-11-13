@@ -456,6 +456,13 @@ export class Graph {
     }
 
     /**
+     * Destroy all UI components.
+     */
+    destroy(): void {
+        this.renderer?.destroy()
+    }
+
+    /**
      * @private
      */
     updateLayoutProgress(progress: number, elapsedTime: number): void {

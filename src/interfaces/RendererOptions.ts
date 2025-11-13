@@ -2,6 +2,9 @@ import type { Edge } from '../Edge'
 import type { Node } from '../Node'
 import type { IconClass, IconUnicode, ImagePath, SVGIcon } from './GraphUI'
 
+/**
+ * @category Main Options
+ */
 export interface GraphRendererOptions {
     /**
      * Defines the rendering method used by the graph.
