@@ -9,26 +9,44 @@ import {
     type ForceCollide as d3ForceCollideType,
 } from 'd3-force'
 
+/** Note: These may be scalled based on the amount of node and canvas size */
 export interface SimulationOptions {
-    /** Note: These may be scalled based on the amount of node and canvas size */
-    d3Alpha: number /** @default 1.0 */
-    d3AlphaMin: number /** @default 0.001 */
-    d3AlphaDecay: number /** @default 0.0228 */
-    d3AlphaTarget: number /** @default 0 */
-    d3VelocityDecay: number /** @default 0.4 */
-    d3LinkDistance: number /** @default 30 */
-    d3LinkStrength: number | null /** @default null */
-    d3ManyBodyStrength: number /** @default -30 */
-    d3ManyBodyTheta: number /** @default 0.9 */
-    d3CollideRadius: number /** @default 12 */
-    d3CollideStrength: number /** @default 1 */
-    d3CollideIterations: number /** @default 1 */
-    d3CenterStrength: number /** @default 1 */
-    d3GravityStrength: number /** @default 0.001 */
-    cooldownTime: number /** @default 2000 */
-    warmupTicks: number | 'auto' /** @default auto */
-    freezeNodesOnDrag: boolean /** @default true */
+    /** @default 1.0 */
+    d3Alpha: number
+    /** @default 0.001 */
+    d3AlphaMin: number
+    /** @default 0.0228 */
+    d3AlphaDecay: number
+    /** @default 0 */
+    d3AlphaTarget: number
+    /** @default 0.4 */
+    d3VelocityDecay: number
+    /** @default 30 */
+    d3LinkDistance: number
+    /** @default null */
+    d3LinkStrength: number | null
+    /** @default -30 */
+    d3ManyBodyStrength: number
+    /** @default 0.9 */
+    d3ManyBodyTheta: number
+    /** @default 12 */
+    d3CollideRadius: number
+    /** @default 1 */
+    d3CollideStrength: number
+    /** @default 1 */
+    d3CollideIterations: number
+    /** @default 1 */
+    d3CenterStrength: number
+    /** @default 0.001 */
+    d3GravityStrength: number
+    /** @default 2000 */
+    cooldownTime: number
+    /** @default auto */
+    warmupTicks: number | 'auto'
+    /** @default true */
+    freezeNodesOnDrag: boolean
 
+    /** @private */
     layout: LayoutOptions
     callbacks?: SimulationCallbacks
 }

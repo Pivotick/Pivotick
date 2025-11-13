@@ -5,7 +5,7 @@ import type { GraphRenderer } from './GraphRenderer'
 import { Simulation } from './Simulation'
 import { UIManager } from './ui/UIManager'
 import { Notifier } from './ui/Notifier'
-import type { GraphOptions, GraphData } from './interfaces/GraphOptions'
+import type { GraphOptions, GraphData, RelaxedGraphData } from './interfaces/GraphOptions'
 import type { GraphUI } from './interfaces/GraphUI'
 import type { InterractionCallbacks } from './interfaces/InterractionCallbacks'
 import type { LayoutOptions } from './interfaces/LayoutOptions'
@@ -29,7 +29,7 @@ export class Graph {
      * @param data - The graph data, including nodes and edges, to render.
      * @param options - Optional configuration for the graph's behavior, UI, styling, simulation, etc.
      */
-    constructor(container: HTMLElement, data?: GraphData, options?: GraphOptions) {
+    constructor(container: HTMLElement, data?: RelaxedGraphData, options?: GraphOptions) {
         this.options = {
             isDirected: true,
             ...options,
@@ -56,7 +56,8 @@ export class Graph {
         this.simulation = new Simulation(this, simulationOptions)
 
         if (data) {
-            this._setData(data?.nodes, data?.edges)
+            const normalisedData = this.normalizeGraphData(data)
+            this._setData(normalisedData?.nodes, normalisedData?.edges)
             this.simulation?.update()
             this.renderer.init()
         }
@@ -69,6 +70,35 @@ export class Graph {
         this.renderer.nextTick()
         this.renderer.fitAndCenter()
         this.UIManager.callGraphReady()
+    }
+
+    private normalizeGraphData(data: GraphData | RelaxedGraphData): GraphData {
+        const normalizedNodes = data.nodes.map(n => n instanceof Node ? n : new Node(n.id.toString(), n.data, n.style))
+        const nodesByID = new Map(normalizedNodes.map(node => [node.id, node]))
+        const normalizedEdges = data.edges
+            .map(e => {
+                if (e instanceof Edge) return e
+
+                const fromNode = nodesByID.get(e.from.toString())
+                const toNode = nodesByID.get(e.to.toString())
+
+                // Skip edges if either node doesn't exist
+                if (!fromNode || !toNode) return null
+
+                return new Edge(
+                    e.id?.toString() ?? `${e.from}-${e.to}`,
+                    fromNode,
+                    toNode,
+                    e.data,
+                    e.style
+                )
+            })
+            .filter((e): e is Edge => e !== null)
+
+        return {
+            nodes: normalizedNodes,
+            edges: normalizedEdges,
+        }
     }
 
     /**

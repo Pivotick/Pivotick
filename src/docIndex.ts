@@ -13,6 +13,7 @@ import type { GraphRenderer } from './GraphRenderer'
 import type { Simulation } from './Simulation'
 import type { Notifier } from './ui/Notifier'
 import type { TreeLayoutAlgorithm } from './plugins/layout/Tree'
+import { defaultNodeStyle, defaultEdgeStyle, defaultLabelStyle, defaultMarkerStyleMap } from './renderers/svg/GraphSvgRenderer'
 
 export type {
     GraphOptions,
@@ -31,5 +32,9 @@ export type {
 export {
     Node,
     Edge,
+    defaultNodeStyle as defaultNodeStyleValue,
+    defaultEdgeStyle as defaultEdgeStyleValue,
+    defaultLabelStyle as defaultLabelStyleValue,
+    defaultMarkerStyleMap,
     Pivotick
 }

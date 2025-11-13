@@ -62,14 +62,17 @@ export interface GraphRendererOptions {
     renderLabel?: (edge: Edge) => HTMLElement | string | void
     /**
      * The default node style to be applied on all nodes
+     * @defaultValue {@link defaultNodeStyleValue}
      */
     defaultNodeStyle: NodeStyle
     /**
      * The default edge style to be applied on all nodes
+     * @defaultValue {@link defaultEdgeStyleValue}
      */
     defaultEdgeStyle: EdgeStyle
     /**
      * The default edge's label style to be applied on all nodes
+     * @defaultValue {@link defaultLabelStyleValue}
      */
     defaultLabelStyle: LabelStyle
     /**
@@ -77,6 +80,7 @@ export interface GraphRendererOptions {
      * 
      * Each key is a marker type (e.g., `'diamond'`, `'arrow'`) and maps to a `MarkerStyle` object.
      * 
+     * @defaultValue {@link defaultMarkerStyleMap}
      * @example
      * ```ts
      * markerStyleMap: {
@@ -86,7 +90,7 @@ export interface GraphRendererOptions {
      * }
      * ```
      */
-    markerStyleMap?: Record<string, MarkerStyle>
+    markerStyleMap?: MarkerStyleMap
     /**
      * Function to access the type of a node. Used in 
      * 
@@ -272,3 +276,13 @@ export interface MarkerStyle {
     orient?: 'auto' | 'auto-start-reverse' | number
     selected?: Partial<MarkerStyle>
 }
+
+/**
+ * A map of all available edge marker styles.
+ *
+ * Custom markers can be added here and referenced by `markerStart` or `markerEnd`
+ * in {@link EdgeStyle}.
+ * 
+ * @defaultValue {@link defaultMarkerStyleMap}
+ */
+export type MarkerStyleMap = Record<string, MarkerStyle>

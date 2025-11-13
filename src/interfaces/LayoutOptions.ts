@@ -41,7 +41,7 @@ export interface TreeLayoutOptions extends BaseLayoutOptions {
     horizontal?: boolean
     /**
      * The algorithm to use to find the root of the tree
-     * 
+     * @default 'MaxReachability'
      */
     rootIdAlgorithmFinder: TreeLayoutAlgorithm
     /**

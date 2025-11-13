@@ -10,99 +10,196 @@ import merge from 'lodash.merge'
 import { GraphInteractions } from '../../GraphInteractions'
 import { GraphRenderer } from '../../GraphRenderer'
 import { SelectionBox } from './SelectionBox'
-import type { GraphRendererOptions } from '../../interfaces/RendererOptions'
+import type { EdgeStyle, GraphRendererOptions, LabelStyle, MarkerStyleMap, NodeStyle } from '../../interfaces/RendererOptions'
 
+/**
+ * @default
+{
+    arrow: {
+        pathD: 'M0,-5L10,0L0,5',
+        viewBox: '0 -5 10 10',
+        refX: 5,
+        refY: 0,
+        markerWidth: 6,
+        markerHeight: 6,
+        markerUnits: 'userSpaceOnUse',
+        orient: 'auto',
+        fill: 'var(--pivotick-edge-stroke, #999)',
+        selected: {
+            fill: 'var(--pivotick-edge-selected-stroke, #007acc)',
+            markerWidth: 12,
+            markerHeight: 12,
+            refX: 6,
+        }
+    },
+    circle: {
+        pathD: 'M5,5m-3,0a3,3 0 1,0 6,0a3,3 0 1,0 -6,0',
+        viewBox: '0 0 10 10',
+        refX: 5,
+        refY: 5,
+        markerWidth: 10,
+        markerHeight: 10,
+        markerUnits: 'userSpaceOnUse',
+        orient: 0,
+        fill: 'var(--pivotick-edge-stroke, #999)',
+        selected: {
+            fill: 'var(--pivotick-edge-selected-stroke, #007acc)',
+            markerWidth: 16,
+            markerHeight: 16,
+        }
+    },
+    diamond: {
+        pathD: 'M0,-4L4,0L0,4L-4,0Z',
+        viewBox: '-5 -5 10 10',
+        refX: 0,
+        refY: 0,
+        markerWidth: 8,
+        markerHeight: 8,
+        markerUnits: 'userSpaceOnUse',
+        orient: 0,
+        fill: 'var(--pivotick-edge-stroke, #999)',
+        selected: {
+            fill: 'var(--pivotick-edge-selected-stroke, #007acc)',
+            markerWidth: 14,
+            markerHeight: 14,
+        }
+    }
+}
+ */
+export const defaultMarkerStyleMap: MarkerStyleMap = {
+    arrow: {
+        pathD: 'M0,-5L10,0L0,5',
+        viewBox: '0 -5 10 10',
+        refX: 5,
+        refY: 0,
+        markerWidth: 6,
+        markerHeight: 6,
+        markerUnits: 'userSpaceOnUse',
+        orient: 'auto',
+        fill: 'var(--pivotick-edge-stroke, #999)',
+        selected: {
+            fill: 'var(--pivotick-edge-selected-stroke, #007acc)',
+            markerWidth: 12,
+            markerHeight: 12,
+            refX: 6,
+        }
+    },
+    circle: {
+        pathD: 'M5,5m-3,0a3,3 0 1,0 6,0a3,3 0 1,0 -6,0',
+        viewBox: '0 0 10 10',
+        refX: 5,
+        refY: 5,
+        markerWidth: 10,
+        markerHeight: 10,
+        markerUnits: 'userSpaceOnUse',
+        orient: 0,
+        fill: 'var(--pivotick-edge-stroke, #999)',
+        selected: {
+            fill: 'var(--pivotick-edge-selected-stroke, #007acc)',
+            markerWidth: 16,
+            markerHeight: 16,
+        }
+    },
+    diamond: {
+        pathD: 'M0,-4L4,0L0,4L-4,0Z',
+        viewBox: '-5 -5 10 10',
+        refX: 0,
+        refY: 0,
+        markerWidth: 8,
+        markerHeight: 8,
+        markerUnits: 'userSpaceOnUse',
+        orient: 0,
+        fill: 'var(--pivotick-edge-stroke, #999)',
+        selected: {
+            fill: 'var(--pivotick-edge-selected-stroke, #007acc)',
+            markerWidth: 14,
+            markerHeight: 14,
+        }
+    }
+}
+
+/**
+ * @default
+{
+    shape: 'circle',
+    size: 10,
+    strokeWidth: 2,
+    color: 'var(--pivotick-node-color, #007acc)',
+    strokeColor: 'var(--pivotick-node-stroke, #fff)',
+    fontFamily: 'var(--pivotick-label-font, system-ui, sans-serif)',
+    textColor: 'var(--pivotick-node-text-color, #fff)',
+    iconUnicode: undefined,
+    iconClass: undefined,
+    svgIcon: undefined,
+    imagePath: undefined,
+    text: undefined,
+}
+ */
+export const defaultNodeStyle: NodeStyle = {
+    shape: 'circle',
+    size: 10,
+    strokeWidth: 2,
+    color: 'var(--pivotick-node-color, #007acc)',
+    strokeColor: 'var(--pivotick-node-stroke, #fff)',
+    fontFamily: 'var(--pivotick-label-font, system-ui, sans-serif)',
+    textColor: 'var(--pivotick-node-text-color, #fff)',
+    iconUnicode: undefined,
+    iconClass: undefined,
+    svgIcon: undefined,
+    imagePath: undefined,
+    text: undefined,
+}
+
+/**
+ * @default
+{
+    strokeWidth: 2,
+    opacity: 1.0,
+    curveStyle: 'bidirectional',
+    dashed: false,
+    animateDash: true,
+    rotateLabel: false,
+    markerEnd: 'arrow',
+    markerStart: undefined,
+    strokeColor: 'var(--pivotick-edge-color, #999)',
+}
+ */
+export const defaultEdgeStyle: EdgeStyle = {
+    strokeWidth: 2,
+    opacity: 1.0,
+    curveStyle: 'bidirectional',
+    dashed: false,
+    animateDash: true,
+    rotateLabel: false,
+    markerEnd: 'arrow',
+    markerStart: undefined,
+    strokeColor: 'var(--pivotick-edge-color, #999)',
+}
+
+/**
+ * @default
+{
+    fontSize: 12,
+    fontFamily: 'var(--pivotick-label-font, system-ui, sans-serif)',
+    color: 'var(--pivotick-edge-label-color, #333)',
+    backgroundColor: 'var(--pivotick-edge-label-bg, #ffffffa0)',
+}
+ */
+export const defaultLabelStyle: LabelStyle = {
+    fontSize: 12,
+    fontFamily: 'var(--pivotick-label-font, system-ui, sans-serif)',
+    color: 'var(--pivotick-edge-label-color, #333)',
+    backgroundColor: 'var(--pivotick-edge-label-bg, #ffffffa0)',
+}
 
 const DEFAULT_RENDERER_OPTIONS = {
     type: 'svg',
     minZoom: 0.1,
     maxZoom: 10,
-
-    defaultNodeStyle: {
-        shape: 'circle',
-        size: 10,
-        strokeWidth: 2,
-        color: 'var(--pivotick-node-color, #007acc)',
-        strokeColor: 'var(--pivotick-node-stroke, #fff)',
-        fontFamily: 'var(--pivotick-label-font, system-ui, sans-serif)',
-        textColor: 'var(--pivotick-node-text-color, #fff)',
-        iconUnicode: undefined,
-        iconClass: undefined,
-        svgIcon: undefined,
-        imagePath: undefined,
-        text: undefined,
-    },
-
-    defaultEdgeStyle: {
-        strokeWidth: 2,
-        opacity: 1.0,
-        curveStyle: 'bidirectional',
-        dashed: false,
-        animateDash: true,
-        rotateLabel: false,
-        markerEnd: 'arrow',
-        markerStart: undefined,
-        strokeColor: 'var(--pivotick-edge-color, #999)',
-    },
-
-    defaultLabelStyle: {
-        fontSize: 12,
-        fontFamily: 'var(--pivotick-label-font, system-ui, sans-serif)',
-        color: 'var(--pivotick-edge-label-color, #333)',
-        backgroundColor: 'var(--pivotick-edge-label-bg, #ffffffa0)',
-    },
-
-    markerStyleMap: {
-        arrow: {
-            pathD: 'M0,-5L10,0L0,5',
-            viewBox: '0 -5 10 10',
-            refX: 5,
-            refY: 0,
-            markerWidth: 6,
-            markerHeight: 6,
-            markerUnits: 'userSpaceOnUse',
-            orient: 'auto',
-            fill: 'var(--pivotick-edge-stroke, #999)',
-            selected: {
-                fill: 'var(--pivotick-edge-selected-stroke, #007acc)',
-                markerWidth: 12,
-                markerHeight: 12,
-                refX: 6,
-            }
-        },
-        circle: {
-            pathD: 'M5,5m-3,0a3,3 0 1,0 6,0a3,3 0 1,0 -6,0',
-            viewBox: '0 0 10 10',
-            refX: 5,
-            refY: 5,
-            markerWidth: 10,
-            markerHeight: 10,
-            markerUnits: 'userSpaceOnUse',
-            orient: 0,
-            fill: 'var(--pivotick-edge-stroke, #999)',
-            selected: {
-                fill: 'var(--pivotick-edge-selected-stroke, #007acc)',
-                markerWidth: 16,
-                markerHeight: 16,
-            }
-        },
-        diamond: {
-            pathD: 'M0,-4L4,0L0,4L-4,0Z',
-            viewBox: '-5 -5 10 10',
-            refX: 0,
-            refY: 0,
-            markerWidth: 8,
-            markerHeight: 8,
-            markerUnits: 'userSpaceOnUse',
-            orient: 0,
-            fill: 'var(--pivotick-edge-stroke, #999)',
-            selected: {
-                fill: 'var(--pivotick-edge-selected-stroke, #007acc)',
-                markerWidth: 14,
-                markerHeight: 14,
-            }
-        }
-    }
+    defaultNodeStyle: defaultNodeStyle,
+    defaultEdgeStyle: defaultEdgeStyle,
+    defaultLabelStyle: defaultLabelStyle,
+    markerStyleMap: defaultMarkerStyleMap
 } satisfies GraphRendererOptions
 
 

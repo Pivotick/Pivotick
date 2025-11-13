@@ -1,9 +1,9 @@
-import type { Edge } from '../Edge'
-import type { Node } from '../Node'
+import type { Edge, EdgeData } from '../Edge'
+import type { Node, NodeData } from '../Node'
 import type { GraphUI } from './GraphUI'
 import type { InterractionCallbacks } from './InterractionCallbacks'
 import type { LayoutOptions } from './LayoutOptions'
-import type { GraphRendererOptions } from './RendererOptions'
+import type { EdgeFullStyle, GraphRendererOptions, NodeStyle } from './RendererOptions'
 import type { SimulationOptions } from './SimulationOptions'
 
 /**
@@ -45,4 +45,12 @@ export interface GraphOptions {
 export interface GraphData {
     nodes: Node[],
     edges: Edge[],
+}
+
+export type RawNode = { id: string | number; data?: NodeData, style?: Partial<NodeStyle> }
+export type RawEdge = { id?: string | number; from: string | number; to: string | number; data?: EdgeData, style?: Partial<EdgeFullStyle> }
+
+export interface RelaxedGraphData {
+    nodes: Array<Node | RawNode>
+    edges: Array<Edge | RawEdge>
 }
