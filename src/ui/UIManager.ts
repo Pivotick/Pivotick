@@ -62,13 +62,13 @@ export const DEFAULT_UI_OPTIONS: GraphUI = {
         edgePropertiesMap: defaultPropertiesMapEdge,
     },
     tooltip: {
-        enable: true,
+        enabled: true,
         nodePropertiesMap: defaultPropertiesMapNode,
         edgePropertiesMap: defaultPropertiesMapEdge,
         ...DEFAULT_HEADERS_MAPS
     },
     contextMenu: {
-        enable: true,
+        enabled: true,
         menuNode: {
             topbar: [],
             menu: [],
@@ -207,11 +207,11 @@ export class UIManager {
     private buildUIGraphNavigation() {
         this.graphNaviation = new GraphNavigation(this)
         this.graphNaviation.mount(this.layout?.graphnavigation)
-        if (this.options.tooltip?.enable) {
+        if (this.options.tooltip?.enabled) {
             this.tooltip = new Tooltip(this)
             this.tooltip.mount(this.layout?.canvas)
         }
-        if (this.options.contextMenu?.enable) {
+        if (this.options.contextMenu?.enabled) {
             this.contextMenu = new ContextMenu(this)
             this.contextMenu.mount(this.layout?.canvas)
         }
@@ -251,10 +251,10 @@ export class UIManager {
         this.sidebar?.afterMount()
         this.graphNaviation?.afterMount()
         this.graphControls?.afterMount()
-        if (this.options.tooltip?.enable) {
+        if (this.options.tooltip?.enabled) {
             this.tooltip?.afterMount()
         }
-        if (this.options.contextMenu?.enable) {
+        if (this.options.contextMenu?.enabled) {
             this.contextMenu?.afterMount()
         }
     }

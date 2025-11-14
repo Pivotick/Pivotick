@@ -37,7 +37,7 @@ export class SidebarMainHeader implements UIElement {
 
     public graphReady(): void { }
 
-    private renderCustomContent(element: Node | Edge | null) {
+    private renderCustomContent(element: Node | Edge | Node[] | Edge[] | null) {
         if (!this.panel || !this.renderCb) return
 
         this.panel.innerHTML = ''
@@ -158,7 +158,7 @@ export class SidebarMainHeader implements UIElement {
         if (!this.panel) return
 
         if (this.renderCb) {
-            this.renderCustomContent(nodes)
+            this.renderCustomContent(nodes.map((nodeS: NodeSelection<unknown>) => nodeS.node))
             return
         }
 
@@ -203,7 +203,7 @@ export class SidebarMainHeader implements UIElement {
         if (!this.panel) return
 
         if (this.renderCb) {
-            this.renderCustomContent(edges)
+            this.renderCustomContent(edges.map((nodeS: EdgeSelection<unknown>) => nodeS.edge))
             return
         }
 

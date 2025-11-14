@@ -100,7 +100,7 @@ export class ExtraPanelManager implements UIElement {
             headerDiv.appendChild(headerHtml)
         }
 
-        const bodyHtml = tryResolveHTMLElement(panel.content, null)
+        const bodyHtml = tryResolveHTMLElement(panel.render, null)
         if (bodyHtml) {
             bodyDiv.appendChild(bodyHtml)
         }

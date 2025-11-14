@@ -14,7 +14,7 @@ export interface GraphUI {
     propertiesPanel: PropertiesPanel,
     extraPanels: ExtraPanel[],
     tooltip: {
-        enable?: boolean /** @default true */
+        enabled?: boolean /** @default true */
         /**
          * Custom renderer for node tooltips. This content is added after the default tooltip
          * @default undefined
@@ -38,7 +38,7 @@ export interface GraphUI {
         render?: ((element: Node | Edge) => HTMLElement | string) | HTMLElement | string,
     },
     contextMenu: {
-        enable?: boolean /** @default true */
+        enabled?: boolean /** @default true */
         menuNode?: {
             topbar?: MenuQuickActionItemOptions[],
             menu?: MenuActionItemOptions[],
@@ -85,6 +85,12 @@ export interface SidebarOptions {
 export interface MainHeader {
     nodeHeaderMap: HeaderMapEntry<Node>
     edgeHeaderMap: HeaderMapEntry<Edge>
+    /**
+    * Custom renderer for the main header. This content will override the default sidebar main header.
+    * @default undefined
+    * @example
+    * (element) => `element id: ${element.id}`
+    */
     render?: ((element: Node | Edge | Node[] | Edge[] | null) => HTMLElement | string) | HTMLElement | string,
 }
 
@@ -131,20 +137,27 @@ export interface PropertiesPanel {
      * @default All key/value pairs from edge.getData()
      */
     edgePropertiesMap: ((edge: Edge) => PropertyEntry[])
+    /**
+    * Custom renderer for the property panel. This content will override the default sidebar property panel.
+    * @default undefined
+    * @example
+    * (element) => `element id: ${element.id}`
+    */
+    render?: ((element: Node | Edge | Node[] | Edge[] | null) => HTMLElement | string) | HTMLElement | string,
 }
 
 /**
  * Additional panel in the graph UI's sidebar.
  * Currently only displayed when an element is selected
  * 
- * Both `title` and `content` can be:
+ * Both `title` and `render` can be:
  * - A string or `HTMLElement` for static content, or
  * - A function returning a string or `HTMLElement` for dynamic content based on the current selected node or edge.
  * 
  * @example
  * ```ts
  * {
- *     content: (node: Node): HTMLElement => {
+ *     render: (node: Node): HTMLElement => {
  *         const div = document.createElement('div')
  *         div.textContent = node?.description ?? 'Empty node description'
  *         return div
@@ -155,7 +168,7 @@ export interface PropertiesPanel {
  */
 export interface ExtraPanel {
     title: ((element: Node | Edge | null) => HTMLElement | string) | HTMLElement | string,
-    content: ((element: Node | Edge | null) => HTMLElement | string) | HTMLElement | string,
+    render: ((element: Node | Edge | null) => HTMLElement | string) | HTMLElement | string,
 }
 
 /**

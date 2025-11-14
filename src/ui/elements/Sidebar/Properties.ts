@@ -8,6 +8,7 @@ import { edgePropertiesGetter, nodePropertiesGetter } from '../../../utils/Graph
 import { filterAdd, filterRemove } from '../../icons'
 import type { PropertyEntry } from '../../../interfaces/GraphUI'
 import type { EdgeSelection, NodeSelection } from '../../../interfaces/GraphInteractions'
+import { tryResolveHTMLElement } from '../../../utils/Getters'
 
 
 type aggregatedProperties = Map<string, Map<string, number>>
@@ -21,8 +22,11 @@ export class SidebarProperties implements UIElement {
     private header?: HTMLDivElement
     private body?: HTMLDivElement
 
+    private renderCb?: ((element: Node | Edge | Node[] | Edge[] | null) => HTMLElement | string) | HTMLElement | string
+
     constructor(uiManager: UIManager) {
         this.uiManager = uiManager
+        this.renderCb = typeof this.uiManager.getOptions().propertiesPanel.render === 'function' ? this.uiManager.getOptions().propertiesPanel.render : undefined
     }
 
     public mount(rootContainer: HTMLElement | undefined) {
@@ -51,11 +55,27 @@ export class SidebarProperties implements UIElement {
 
     public clearProperties(): void {
         if (!this.body) return
+
+        if (this.renderCb) {
+            this.renderCustomContent(null)
+            return
+        }
+
         this.body.innerHTML = ''
         this.hidePanel()
     }
 
     public graphReady(): void { }
+
+    private renderCustomContent(element: Node | Edge | Node[] | Edge[] | null) {
+        if (!this.body || !this.renderCb) return
+
+        this.body.innerHTML = ''
+        const content = tryResolveHTMLElement(this.renderCb, element)
+        if (content) {
+            this.body?.appendChild(content)
+        }
+    }
 
     private setHeaderBasicNode() {
         this.header!.textContent = 'Basic Node Properties'
@@ -88,6 +108,11 @@ export class SidebarProperties implements UIElement {
         this.setHeaderBasicNode()
         this.showPanel()
 
+        if (this.renderCb) {
+            this.renderCustomContent(node)
+            return
+        }
+
         const template = `
 <div class="pivotick-properties-container">
     <div class="dl-container">
@@ -109,6 +134,11 @@ export class SidebarProperties implements UIElement {
         if (!this.body) return
         this.setHeaderBasicEdge()
         this.showPanel()
+
+        if (this.renderCb) {
+            this.renderCustomContent(edge)
+            return
+        }
 
         const template = `
 <div class="pivotick-properties-container">
@@ -133,6 +163,11 @@ export class SidebarProperties implements UIElement {
         if (!this.body) return
         this.setHeaderMultiSelectNode()
         this.showPanel()
+
+        if (this.renderCb) {
+            this.renderCustomContent(nodes.map((nodeS: NodeSelection<unknown>) => nodeS.node))
+            return
+        }
 
         const template = `
 <div class="pivotick-properties-container">
@@ -162,6 +197,11 @@ export class SidebarProperties implements UIElement {
         if (!this.body) return
         this.setHeaderMultiSelectEdge()
         this.showPanel()
+
+        if (this.renderCb) {
+            this.renderCustomContent(edges.map((nodeS: EdgeSelection<unknown>) => nodeS.edge))
+            return
+        }
 
         const template = `
 <div class="pivotick-properties-container">
