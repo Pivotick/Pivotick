@@ -48,6 +48,7 @@ const DEFAULT_HEADERS_MAPS = {
         title: defaultHeaderMapEdgeTitle,
         subtitle: defaultHeaderMapEdgeSubtitle,
     },
+    render: undefined,
 }
 
 export const DEFAULT_UI_OPTIONS: GraphUI = {

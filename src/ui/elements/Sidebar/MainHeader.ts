@@ -6,25 +6,24 @@ import './mainHeader.scss'
 import { edgeDescriptionGetter, edgeNameGetter, nodeDescriptionGetter, nodeNameGetter } from '../../../utils/GraphGetters'
 import { graphEdgeIcon, graphMultiSelectNode } from '../../icons'
 import type { EdgeSelection, NodeSelection } from '../../../interfaces/GraphInteractions'
+import { tryResolveHTMLElement } from '../../../utils/Getters'
 
 
 export class SidebarMainHeader implements UIElement {
     private uiManager: UIManager
 
     private panel?: HTMLDivElement
+    private renderCb?: ((element: Node | Edge | Node[] | Edge[] | null) => HTMLElement | string) | HTMLElement | string
 
     constructor(uiManager: UIManager) {
         this.uiManager = uiManager
+        this.renderCb = typeof this.uiManager.getOptions().mainHeader.render === 'function' ? this.uiManager.getOptions().mainHeader.render : undefined
     }
 
     public mount(rootContainer: HTMLElement | undefined) {
         if (!rootContainer) return
 
         this.panel = rootContainer as HTMLDivElement
-        // const template = '<div></div>'
-        // this.panel = createHtmlTemplate(template) as HTMLDivElement
-
-        // rootContainer.appendChild(this.panel)
     }
 
     public destroy() {
@@ -38,9 +37,23 @@ export class SidebarMainHeader implements UIElement {
 
     public graphReady(): void { }
 
+    private renderCustomContent(element: Node | Edge | null) {
+        if (!this.panel || !this.renderCb) return
+
+        this.panel.innerHTML = ''
+        const content = tryResolveHTMLElement(this.renderCb, element)
+        if (content) {
+            this.panel?.appendChild(content)
+        }
+    }
 
     public clearOverview(): void {
         if (!this.panel) return
+
+        if (this.renderCb) {
+            this.renderCustomContent(null)
+            return
+        }
 
         this.panel.innerHTML = ''
         this.showSelectedNodeCount()
@@ -49,6 +62,11 @@ export class SidebarMainHeader implements UIElement {
     /* Single selection */
     updateNodeOverview(node: Node, element: unknown): void {
         if (!this.panel) return
+
+        if (this.renderCb) {
+            this.renderCustomContent(node)
+            return
+        }
 
         this.panel.innerHTML = ''
         const fixedPreviewSize = 42
@@ -99,6 +117,11 @@ export class SidebarMainHeader implements UIElement {
     updateEdgeOverview(edge: Edge): void {
         if (!this.panel) return
 
+        if (this.renderCb) {
+            this.renderCustomContent(edge)
+            return
+        }
+
         this.panel.innerHTML = ''
         const fixedPreviewSize = 42
         const template = `<div class="enter-ready">
@@ -133,6 +156,11 @@ export class SidebarMainHeader implements UIElement {
     /* Multi selection */
     public updateNodesOverview(nodes: NodeSelection<unknown>[]): void {
         if (!this.panel) return
+
+        if (this.renderCb) {
+            this.renderCustomContent(nodes)
+            return
+        }
 
         this.panel.innerHTML = ''
         const fixedPreviewSize = 42
@@ -173,6 +201,11 @@ export class SidebarMainHeader implements UIElement {
 
     public updateEdgesOverview(edges: EdgeSelection<unknown>[]): void {
         if (!this.panel) return
+
+        if (this.renderCb) {
+            this.renderCustomContent(edges)
+            return
+        }
 
         this.panel.innerHTML = ''
         const fixedPreviewSize = 42

@@ -85,6 +85,7 @@ export interface SidebarOptions {
 export interface MainHeader {
     nodeHeaderMap: HeaderMapEntry<Node>
     edgeHeaderMap: HeaderMapEntry<Edge>
+    render?: ((element: Node | Edge | Node[] | Edge[] | null) => HTMLElement | string) | HTMLElement | string,
 }
 
 /**
