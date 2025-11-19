@@ -29,10 +29,36 @@ export class Graph {
      * @param data - The graph data, including nodes and edges, to render.
      * @param options - Optional configuration for the graph's behavior, UI, styling, simulation, etc.
      */
-    constructor(container: HTMLElement, data?: RelaxedGraphData, options?: GraphOptions) {
+    constructor(container: HTMLElement, data?: RelaxedGraphData, options?: Partial<GraphOptions>) {
         this.options = {
             isDirected: true,
             ...options,
+        }
+
+        if (this.options.UI?.mode === 'static') {
+            if (!this.options.simulation) this.options.simulation = {}
+            this.options.simulation.enabled = false
+            this.options.simulation.useWorker = true
+            
+            if (!this.options.render) this.options.render = {}
+            this.options.render.zoomEnabled = false
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            if (!this.options.render.selectionBox) this.options.render.selectionBox = {}
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            this.options.render.selectionBox.enabled = false
+            
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            if (!this.options.UI.tooltip) this.options.UI.tooltip = {}
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            this.options.UI.tooltip.enabled = false
+            if (!this.options.UI.contextMenu) this.options.UI.contextMenu = {}
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            this.options.UI.contextMenu.enabled = false
         }
 
         const rendererOptions = {

@@ -22,6 +22,7 @@ export interface PlainEdge<T = EdgeData> {
 }
 
 export interface WorkerInput {
+    source: string
     nodes: PlainNode[]
     edges: PlainEdge[]
     canvasBCR: DOMRect
@@ -33,6 +34,8 @@ const MAX_EXECUTION_TICKS = 20000
 const REHEAT_TICKS = 0.15 * MAX_EXECUTION_TICKS
 
 self.onmessage = (e: MessageEvent<WorkerInput>) => {
+
+    if (e.data.source !== 'simulation-worker-wrapper') return
     const { nodes: plainNodes, edges: plainEdges, options, canvasBCR } = e.data
 
     const nodes = plainNodes.map(n => new Node(n.id, n.data, n.style))

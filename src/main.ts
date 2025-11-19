@@ -228,7 +228,7 @@ export function createSampleGraph(): Pivotick {
 
     }
 
-    const topo = 'tree'
+    const topo = 'ail'
     const graph = new Pivotick(container, {nodes: topologies[topo].nodes, edges: topologies[topo].edges}, {
         // isDirected: false,
         simulation: {
@@ -305,21 +305,36 @@ export function createSampleGraph(): Pivotick {
         },
         UI: {
             mode: 'full',
-            mainHeader: {
-                nodeHeaderMap: {
-                    subtitle: (node: Node | Edge) => node.getData().type,
-                },
-            },
-            extraPanels: [
-                {
-                    title: "My extra panel",
-                    content: (node: Node): HTMLElement => {
-                        const div = document.createElement('div')
-                        div.textContent = node?.description ?? 'Empty node description'
-                        return div
-                    },
-                }
-            ]
+            // mainHeader: {
+            //     // nodeHeaderMap: {
+            //     //     subtitle: (node: Node | Edge) => node.getData().type,
+            //     // },
+            //     render: (element) => {
+            //         const div = document.createElement('div')
+            //         div.textContent = 'Main Header Container'
+            //         div.style.fontWeight = 'bold'
+            //         return div 
+            //     }
+            // },
+            // propertiesPanel: {
+            //     render: (element) => {
+            //         const div = document.createElement('div')
+            //         div.textContent = 'Properties Panel Container'
+            //         div.style.fontWeight = 'bold'
+            //         return div
+            //     }
+            // },
+            // extraPanels: [
+            //     {
+            //         title: "Extra panel #1",
+            //         render: (node: Node): HTMLElement => {
+            //             const div = document.createElement('div')
+            //             div.textContent = 'Extra Panel Container'
+            //             div.style.fontWeight = 'bold'
+            //             return div
+            //         },
+            //     }
+            // ]
         }
     })
     return graph

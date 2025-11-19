@@ -10,7 +10,7 @@ import merge from 'lodash.merge'
 import { GraphInteractions } from '../../GraphInteractions'
 import { GraphRenderer } from '../../GraphRenderer'
 import { SelectionBox } from './SelectionBox'
-import type { EdgeStyle, GraphRendererOptions, LabelStyle, MarkerStyleMap, NodeStyle } from '../../interfaces/RendererOptions'
+import type { EdgeStyle, GraphRendererOptions, LabelStyle, MarkerStyleMap, NodeStyle, SelectionBox as SelectionBoxI } from '../../interfaces/RendererOptions'
 
 /**
  * @default
@@ -194,12 +194,16 @@ export const defaultLabelStyle: LabelStyle = {
 
 const DEFAULT_RENDERER_OPTIONS = {
     type: 'svg',
+    zoomEnabled: true,
     minZoom: 0.1,
     maxZoom: 10,
     defaultNodeStyle: defaultNodeStyle,
     defaultEdgeStyle: defaultEdgeStyle,
     defaultLabelStyle: defaultLabelStyle,
-    markerStyleMap: defaultMarkerStyleMap
+    markerStyleMap: defaultMarkerStyleMap,
+    selectionBox: {
+        enabled: true,
+    } as SelectionBoxI
 } satisfies GraphRendererOptions
 
 
@@ -208,7 +212,7 @@ export class GraphSvgRenderer extends GraphRenderer {
 
     private zoom: ZoomBehavior<SVGSVGElement, unknown>
     private eventHandler: EventHandler
-    private selectionBox: SelectionBox
+    private selectionBox: SelectionBox | null = null
     
     public graphInteraction: GraphInteractions<SVGGElement | SVGPathElement>
     public nodeDrawer: NodeDrawer
@@ -257,22 +261,26 @@ export class GraphSvgRenderer extends GraphRenderer {
         this.edgeDrawer.renderDefinitions(this.defs)
 
         this.zoom = d3Zoom<SVGSVGElement, unknown>()
-        this.svg.call(this.zoom)
-        this.svg.on('dblclick.zoom', null)
-        this.zoom
-            .filter((event) => {
-                if (event.ctrlKey || event.shiftKey || event.altKey)
-                    return false
-                const target = event.target as HTMLElement
-                return !(target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA')
-            })
-            .scaleExtent([this.options.minZoom, this.options.maxZoom])
-            .on('zoom', (event) => {
-                this.zoomGroup.attr('transform', event.transform)
-                this.graphInteraction.canvasZoom(event)
-            })
+        if (this.options.zoomEnabled) {
+            this.svg.call(this.zoom)
+            this.svg.on('dblclick.zoom', null)
+            this.zoom
+                .filter((event) => {
+                    if (event.ctrlKey || event.shiftKey || event.altKey)
+                        return false
+                    const target = event.target as HTMLElement
+                    return !(target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA')
+                })
+                .scaleExtent([this.options.minZoom, this.options.maxZoom])
+                .on('zoom', (event) => {
+                    this.zoomGroup.attr('transform', event.transform)
+                    this.graphInteraction.canvasZoom(event)
+                })
+        }
 
-        this.selectionBox = new SelectionBox(this, this.svgCanvas, this.selectionBoxGroup.node())
+        if (this.options.selectionBox.enabled) {
+            this.selectionBox = new SelectionBox(this, this.svgCanvas, this.selectionBoxGroup.node())
+        }
     }
 
     public setupRendering(): void {
@@ -283,7 +291,7 @@ export class GraphSvgRenderer extends GraphRenderer {
         return this.zoom
     }
 
-    public getSelectionBox(): SelectionBox {
+    public getSelectionBox(): SelectionBox | null {
         return this.selectionBox
     }
 

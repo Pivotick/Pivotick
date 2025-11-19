@@ -26,7 +26,7 @@ export abstract class GraphRenderer {
     abstract dataUpdate(): void
     abstract nextTick(): void
     abstract getZoomBehavior(): unknown
-    abstract getSelectionBox(): AbstractSelectionBox
+    abstract getSelectionBox(): AbstractSelectionBox | null
     abstract getGraphInteraction(): GraphInteractions<unknown>
     abstract getCanvasSelection(): unknown
     abstract getZoomGroup(): HTMLElement | SVGElement | null

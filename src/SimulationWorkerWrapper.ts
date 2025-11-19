@@ -15,7 +15,7 @@ export const runSimulationInWorker = (
             type: 'module',
         })
 
-        worker.postMessage({ nodes, edges, options, canvasBCR })
+        worker.postMessage({ source: 'simulation-worker-wrapper', nodes, edges, options, canvasBCR })
 
         worker.onmessage = (e) => {
             const { type, progress, nodes, edges, elapsedTime } = e.data

@@ -42,6 +42,7 @@ export const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
     d3CenterStrength: 1,
     d3GravityStrength: 0.01,
 
+    enabled: true,
     cooldownTime: 2000,
     useWorker: true,
     warmupTicks: 'auto',
@@ -271,6 +272,11 @@ export class Simulation {
      */
     public async start() {
         await this.runSimulationWorkerRouter()
+
+        if (!this.options.enabled) {
+            return
+        }
+
         this.engineRunning = true
         if (this.callbacks.onStart) {
             this.callbacks.onStart(this)

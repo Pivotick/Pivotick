@@ -93,7 +93,8 @@ export class Tooltip implements UIElement {
     private tooltipCanBeShown(): boolean {
         if (!this.tooltip) return false
         if (this.uiManager.graph.simulation.isDragging()) return false
-        if (this.uiManager.graph.renderer.getSelectionBox().selectionInProgress()) return false
+        const selectionBox = this.uiManager.graph.renderer.getSelectionBox()
+        if (selectionBox !== null && selectionBox.selectionInProgress()) return false
         if (
             Math.abs(this.triggerX - this.mouseX) >= 50 &&
             Math.abs(this.triggerY - this.mouseY) >= 50

@@ -124,10 +124,13 @@ export interface GraphRendererOptions {
      * ```
      */
     nodeStyleMap?: Record<string, NodeStyle>
+    /** @default true */
+    zoomEnabled: boolean
     /** @default 0.1 */
     minZoom: number
     /** @default 10 */
     maxZoom: number
+    selectionBox: SelectionBox
 }
 
 /**
@@ -289,3 +292,8 @@ export interface MarkerStyle {
  * @defaultValue {@link defaultMarkerStyleMap}
  */
 export type MarkerStyleMap = Record<string, MarkerStyle>
+
+export interface SelectionBox {
+    /** @default true */
+    enabled: boolean
+}

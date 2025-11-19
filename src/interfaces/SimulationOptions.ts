@@ -50,6 +50,8 @@ export interface SimulationOptions {
     freezeNodesOnDrag: boolean
 
     /** @default true */
+    enabled: boolean
+    /** @default true */
     useWorker: boolean
     /** @private */
     layout: LayoutOptions
