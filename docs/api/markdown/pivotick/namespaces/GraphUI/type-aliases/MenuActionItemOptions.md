@@ -8,7 +8,7 @@
 
 > **MenuActionItemOptions**\<`TThis`\> = `object`
 
-Defined in: [interfaces/GraphUI.ts:164](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/GraphUI.ts#L164)
+Defined in: [interfaces/GraphUI.ts:178](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L178)
 
 Options to define an action item in a menu.
 Can be used in contextual menus or multi-select menus.
@@ -25,7 +25,7 @@ Can be used in contextual menus or multi-select menus.
 
 > `optional` **iconClass**: [`IconClass`](IconClass.md)
 
-Defined in: [interfaces/GraphUI.ts:167](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/GraphUI.ts#L167)
+Defined in: [interfaces/GraphUI.ts:181](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L181)
 
 ***
 
@@ -33,7 +33,7 @@ Defined in: [interfaces/GraphUI.ts:167](https://github.com/mokaddem/Pivotick/blo
 
 > `optional` **iconUnicode**: [`IconUnicode`](IconUnicode.md)
 
-Defined in: [interfaces/GraphUI.ts:166](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/GraphUI.ts#L166)
+Defined in: [interfaces/GraphUI.ts:180](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L180)
 
 Unicode character for the icon (optional)
 
@@ -43,7 +43,7 @@ Unicode character for the icon (optional)
 
 > `optional` **imagePath**: [`ImagePath`](ImagePath.md)
 
-Defined in: [interfaces/GraphUI.ts:169](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/GraphUI.ts#L169)
+Defined in: [interfaces/GraphUI.ts:183](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L183)
 
 ***
 
@@ -51,7 +51,7 @@ Defined in: [interfaces/GraphUI.ts:169](https://github.com/mokaddem/Pivotick/blo
 
 > **onclick**: (`this`, `evt`, `element?`) => `void`
 
-Defined in: [interfaces/GraphUI.ts:174](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/GraphUI.ts#L174)
+Defined in: [interfaces/GraphUI.ts:188](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L188)
 
 #### Parameters
 
@@ -77,7 +77,7 @@ Defined in: [interfaces/GraphUI.ts:174](https://github.com/mokaddem/Pivotick/blo
 
 > `optional` **svgIcon**: [`SVGIcon`](SVGIcon.md)
 
-Defined in: [interfaces/GraphUI.ts:168](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/GraphUI.ts#L168)
+Defined in: [interfaces/GraphUI.ts:182](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L182)
 
 ***
 
@@ -85,7 +85,7 @@ Defined in: [interfaces/GraphUI.ts:168](https://github.com/mokaddem/Pivotick/blo
 
 > `optional` **text**: `string`
 
-Defined in: [interfaces/GraphUI.ts:170](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/GraphUI.ts#L170)
+Defined in: [interfaces/GraphUI.ts:184](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L184)
 
 ***
 
@@ -93,7 +93,7 @@ Defined in: [interfaces/GraphUI.ts:170](https://github.com/mokaddem/Pivotick/blo
 
 > **title**: `string`
 
-Defined in: [interfaces/GraphUI.ts:171](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/GraphUI.ts#L171)
+Defined in: [interfaces/GraphUI.ts:185](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L185)
 
 ***
 
@@ -101,7 +101,7 @@ Defined in: [interfaces/GraphUI.ts:171](https://github.com/mokaddem/Pivotick/blo
 
 > **variant**: [`UIVariant`](UIVariant.md)
 
-Defined in: [interfaces/GraphUI.ts:172](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/GraphUI.ts#L172)
+Defined in: [interfaces/GraphUI.ts:186](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L186)
 
 ***
 
@@ -109,4 +109,4 @@ Defined in: [interfaces/GraphUI.ts:172](https://github.com/mokaddem/Pivotick/blo
 
 > **visible**: `boolean` \| (`element`) => `boolean`
 
-Defined in: [interfaces/GraphUI.ts:173](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/GraphUI.ts#L173)
+Defined in: [interfaces/GraphUI.ts:187](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L187)

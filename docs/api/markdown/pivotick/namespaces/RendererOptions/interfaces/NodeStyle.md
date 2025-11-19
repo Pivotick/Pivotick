@@ -6,7 +6,7 @@
 
 # Interface: NodeStyle
 
-Defined in: [interfaces/RendererOptions.ts:165](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/RendererOptions.ts#L165)
+Defined in: [interfaces/RendererOptions.ts:168](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/RendererOptions.ts#L168)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [interfaces/RendererOptions.ts:165](https://github.com/mokaddem/Pivo
 
 > **color**: `string`
 
-Defined in: [interfaces/RendererOptions.ts:175](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/RendererOptions.ts#L175)
+Defined in: [interfaces/RendererOptions.ts:178](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/RendererOptions.ts#L178)
 
 The main color of the node
 
@@ -30,7 +30,7 @@ The main color of the node
 
 > **fontFamily**: `string`
 
-Defined in: [interfaces/RendererOptions.ts:183](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/RendererOptions.ts#L183)
+Defined in: [interfaces/RendererOptions.ts:186](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/RendererOptions.ts#L186)
 
 #### Default
 
@@ -44,7 +44,7 @@ Defined in: [interfaces/RendererOptions.ts:183](https://github.com/mokaddem/Pivo
 
 > `optional` **iconClass**: `string`
 
-Defined in: [interfaces/RendererOptions.ts:186](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/RendererOptions.ts#L186)
+Defined in: [interfaces/RendererOptions.ts:189](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/RendererOptions.ts#L189)
 
 ***
 
@@ -52,7 +52,7 @@ Defined in: [interfaces/RendererOptions.ts:186](https://github.com/mokaddem/Pivo
 
 > `optional` **iconUnicode**: `string`
 
-Defined in: [interfaces/RendererOptions.ts:187](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/RendererOptions.ts#L187)
+Defined in: [interfaces/RendererOptions.ts:190](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/RendererOptions.ts#L190)
 
 ***
 
@@ -60,7 +60,7 @@ Defined in: [interfaces/RendererOptions.ts:187](https://github.com/mokaddem/Pivo
 
 > `optional` **imagePath**: `string`
 
-Defined in: [interfaces/RendererOptions.ts:189](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/RendererOptions.ts#L189)
+Defined in: [interfaces/RendererOptions.ts:192](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/RendererOptions.ts#L192)
 
 ***
 
@@ -68,7 +68,7 @@ Defined in: [interfaces/RendererOptions.ts:189](https://github.com/mokaddem/Pivo
 
 > **shape**: [`NodeShape`](../type-aliases/NodeShape.md)
 
-Defined in: [interfaces/RendererOptions.ts:170](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/RendererOptions.ts#L170)
+Defined in: [interfaces/RendererOptions.ts:173](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/RendererOptions.ts#L173)
 
 The shape of the node, either a standard shape or a custom SVG path
 
@@ -84,7 +84,7 @@ circle
 
 > **size**: `number`
 
-Defined in: [interfaces/RendererOptions.ts:177](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/RendererOptions.ts#L177)
+Defined in: [interfaces/RendererOptions.ts:180](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/RendererOptions.ts#L180)
 
 #### Default
 
@@ -98,7 +98,7 @@ Defined in: [interfaces/RendererOptions.ts:177](https://github.com/mokaddem/Pivo
 
 > **strokeColor**: `string`
 
-Defined in: [interfaces/RendererOptions.ts:179](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/RendererOptions.ts#L179)
+Defined in: [interfaces/RendererOptions.ts:182](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/RendererOptions.ts#L182)
 
 #### Default
 
@@ -112,7 +112,7 @@ Defined in: [interfaces/RendererOptions.ts:179](https://github.com/mokaddem/Pivo
 
 > **strokeWidth**: `number`
 
-Defined in: [interfaces/RendererOptions.ts:181](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/RendererOptions.ts#L181)
+Defined in: [interfaces/RendererOptions.ts:184](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/RendererOptions.ts#L184)
 
 #### Default
 
@@ -126,7 +126,7 @@ Defined in: [interfaces/RendererOptions.ts:181](https://github.com/mokaddem/Pivo
 
 > `optional` **styleCb**: (`node`) => `Partial`\<`NodeStyle`\>
 
-Defined in: [interfaces/RendererOptions.ts:197](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/RendererOptions.ts#L197)
+Defined in: [interfaces/RendererOptions.ts:200](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/RendererOptions.ts#L200)
 
 Callback to dynamically override style properties based on the node.
 
@@ -146,7 +146,7 @@ Callback to dynamically override style properties based on the node.
 
 > `optional` **svgIcon**: `string`
 
-Defined in: [interfaces/RendererOptions.ts:188](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/RendererOptions.ts#L188)
+Defined in: [interfaces/RendererOptions.ts:191](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/RendererOptions.ts#L191)
 
 ***
 
@@ -154,7 +154,7 @@ Defined in: [interfaces/RendererOptions.ts:188](https://github.com/mokaddem/Pivo
 
 > `optional` **text**: `string`
 
-Defined in: [interfaces/RendererOptions.ts:193](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/RendererOptions.ts#L193)
+Defined in: [interfaces/RendererOptions.ts:196](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/RendererOptions.ts#L196)
 
 The text to be used inside the node as an `SVGText` element
 
@@ -164,7 +164,7 @@ The text to be used inside the node as an `SVGText` element
 
 > **textColor**: `string`
 
-Defined in: [interfaces/RendererOptions.ts:185](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/RendererOptions.ts#L185)
+Defined in: [interfaces/RendererOptions.ts:188](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/RendererOptions.ts#L188)
 
 #### Default
 

@@ -6,7 +6,7 @@
 
 # Interface: PropertiesPanel
 
-Defined in: [interfaces/GraphUI.ts:120](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/GraphUI.ts#L120)
+Defined in: [interfaces/GraphUI.ts:127](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L127)
 
 Represents the configuration for the properties panel in the graph UI's sidebar
 
@@ -24,7 +24,7 @@ All key/value pairs from node.getData() or edge.getData()
 
 > **edgePropertiesMap**: (`edge`) => [`PropertyEntry`](PropertyEntry.md)[]
 
-Defined in: [interfaces/GraphUI.ts:132](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/GraphUI.ts#L132)
+Defined in: [interfaces/GraphUI.ts:139](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L139)
 
 A function that computes the list of edge properties to display
 
@@ -50,7 +50,7 @@ All key/value pairs from edge.getData()
 
 > **nodePropertiesMap**: (`node`) => [`PropertyEntry`](PropertyEntry.md)[]
 
-Defined in: [interfaces/GraphUI.ts:126](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/GraphUI.ts#L126)
+Defined in: [interfaces/GraphUI.ts:133](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L133)
 
 A function that computes the list of node properties to display
 
@@ -68,4 +68,26 @@ A function that computes the list of node properties to display
 
 ```ts
 All key/value pairs from node.getData()
+```
+
+***
+
+### render?
+
+> `optional` **render**: `string` \| `HTMLElement` \| (`element`) => `string` \| `HTMLElement`
+
+Defined in: [interfaces/GraphUI.ts:146](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L146)
+
+Custom renderer for the property panel. This content will override the default sidebar property panel.
+
+#### Default
+
+```ts
+undefined
+```
+
+#### Example
+
+```ts
+(element) => `element id: ${element.id}`
 ```

@@ -19,6 +19,7 @@
 - [MarkerStyle](interfaces/MarkerStyle.md)
 - [NodeStyle](interfaces/NodeStyle.md)
 - [PartialEdgeFullStyle](interfaces/PartialEdgeFullStyle.md)
+- [SelectionBox](interfaces/SelectionBox.md)
 - [CurveStyle](type-aliases/CurveStyle.md)
 - [MarkerStyleMap](type-aliases/MarkerStyleMap.md)
 - [NodeShape](type-aliases/NodeShape.md)

@@ -8,7 +8,7 @@
 
 > `const` **defaultNodeStyleValue**: [`NodeStyle`](../pivotick/namespaces/RendererOptions/interfaces/NodeStyle.md)
 
-Defined in: [renderers/svg/GraphSvgRenderer.ts:138](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/renderers/svg/GraphSvgRenderer.ts#L138)
+Defined in: [renderers/svg/GraphSvgRenderer.ts:138](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/renderers/svg/GraphSvgRenderer.ts#L138)
 
 ## Default
 

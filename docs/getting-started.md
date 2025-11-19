@@ -1,3 +1,6 @@
+---
+outline: [2, 4]
+---
 
 # Getting Started
 
@@ -11,51 +14,10 @@ npm install pivotick  # (Coming soon)
 
 ::: code-group
 
-```js [As a module]
-import { Pivotick } from './pivotick.es.js'
+<<< @/examples/getting-started/simple-bundle.js[As a module]
 
-const container = document.getElementById('graph-container')
-const data = {
-    nodes: [
-        { id: 1, data: { label: 'A' } },
-        { id: 2, data: { label: 'B' } }
-    ],
-    edges: [
-        { from: 1, to: 2 }
-    ]
-}
+<<< @/examples/getting-started/simple-bundle.js[As a bundle]
 
-// Pivotick global is your main Graph class
-const graph = new Pivotick(
-    document.getElementById('graph-container'),
-    data
-)
-
-graph.addNode({ id: 3, data: { label: 'C' } })
-graph.addEdge({ from: 2, to: 3 })
-```
-
-```js [Bundled library]
-const container = document.getElementById('graph-container')
-const data = {
-    nodes: [
-        { id: 1, data: { label: 'A' } },
-        { id: 2, data: { label: 'B' } }
-    ],
-    edges: [
-        { from: 1, to: 2 }
-    ]
-}
-
-// Pivotick global is your main Graph class
-const graph = new Pivotick(
-    document.getElementById('graph-container'),
-    data
-)
-
-graph.addNode({ id: 3, data: { label: 'C' } })
-graph.addEdge({ from: 2, to: 3 })
-```
 :::
 
 
@@ -74,3 +36,21 @@ You can customize the look in two ways:
 </style>
 ```
 
+
+-------------
+
+<Pivotick
+:data="{
+    nodes: [
+        { id: 1, data: { label: 'A' } },
+        { id: 2, data: { label: 'B' } }
+    ],
+    edges: [
+        { from: 1, to: 2 }
+    ]
+}"
+:options="{}"></Pivotick>
+
+
+
+----------

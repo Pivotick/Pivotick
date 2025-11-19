@@ -6,7 +6,7 @@
 
 # Class: Edge
 
-Defined in: [Edge.ts:12](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Edge.ts#L12)
+Defined in: [Edge.ts:12](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Edge.ts#L12)
 
 Represents an edge (connection) between two nodes in a graph.
 
@@ -18,7 +18,7 @@ Represents an edge (connection) between two nodes in a graph.
 
 > **get** **source**(): [`Node`](Node.md)
 
-Defined in: [Edge.ts:45](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Edge.ts#L45)
+Defined in: [Edge.ts:45](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Edge.ts#L45)
 
 Required by d3-force
 
@@ -34,7 +34,7 @@ Required by d3-force
 
 > **get** **target**(): [`Node`](Node.md)
 
-Defined in: [Edge.ts:48](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Edge.ts#L48)
+Defined in: [Edge.ts:48](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Edge.ts#L48)
 
 ##### Returns
 
@@ -46,7 +46,7 @@ Defined in: [Edge.ts:48](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c7
 
 > **new Edge**(`id`, `from`, `to`, `data?`, `style?`, `directed?`): `Edge`
 
-Defined in: [Edge.ts:30](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Edge.ts#L30)
+Defined in: [Edge.ts:30](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Edge.ts#L30)
 
 Create a new Edge instance.
 
@@ -96,7 +96,7 @@ Optional style for the edge
 
 > **clearDirty**(): `void`
 
-Defined in: [Edge.ts:165](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Edge.ts#L165)
+Defined in: [Edge.ts:165](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Edge.ts#L165)
 
 #### Returns
 
@@ -108,7 +108,7 @@ Defined in: [Edge.ts:165](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c
 
 > **clone**(): `Edge`
 
-Defined in: [Edge.ts:145](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Edge.ts#L145)
+Defined in: [Edge.ts:145](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Edge.ts#L145)
 
 #### Returns
 
@@ -120,7 +120,7 @@ Defined in: [Edge.ts:145](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c
 
 > **getData**(): `EdgeData`
 
-Defined in: [Edge.ts:55](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Edge.ts#L55)
+Defined in: [Edge.ts:55](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Edge.ts#L55)
 
 Get the edge's data.
 
@@ -134,7 +134,7 @@ Get the edge's data.
 
 > **getEdgeStyle**(): `Partial`\<[`EdgeStyle`](../pivotick/namespaces/RendererOptions/interfaces/EdgeStyle.md)\>
 
-Defined in: [Edge.ts:87](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Edge.ts#L87)
+Defined in: [Edge.ts:87](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Edge.ts#L87)
 
 Get the edge's style.
 
@@ -148,7 +148,7 @@ Get the edge's style.
 
 > **getGraphElement**(): `SVGGElement` \| `null`
 
-Defined in: [Edge.ts:120](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Edge.ts#L120)
+Defined in: [Edge.ts:120](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Edge.ts#L120)
 
 #### Returns
 
@@ -160,7 +160,7 @@ Defined in: [Edge.ts:120](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c
 
 > **getLabelStyle**(): `Partial`\<[`LabelStyle`](../pivotick/namespaces/RendererOptions/interfaces/LabelStyle.md)\>
 
-Defined in: [Edge.ts:94](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Edge.ts#L94)
+Defined in: [Edge.ts:94](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Edge.ts#L94)
 
 Get the edge's label style if available.
 
@@ -174,7 +174,7 @@ Get the edge's label style if available.
 
 > **getStyle**(): `Partial`\<[`EdgeFullStyle`](../pivotick/namespaces/RendererOptions/interfaces/EdgeFullStyle.md)\>
 
-Defined in: [Edge.ts:80](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Edge.ts#L80)
+Defined in: [Edge.ts:80](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Edge.ts#L80)
 
 Get the edge's style.
 
@@ -188,7 +188,7 @@ Get the edge's style.
 
 > **isDirty**(): `boolean`
 
-Defined in: [Edge.ts:169](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Edge.ts#L169)
+Defined in: [Edge.ts:169](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Edge.ts#L169)
 
 #### Returns
 
@@ -200,7 +200,7 @@ Defined in: [Edge.ts:169](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c
 
 > **markDirty**(): `void`
 
-Defined in: [Edge.ts:161](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Edge.ts#L161)
+Defined in: [Edge.ts:161](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Edge.ts#L161)
 
 #### Returns
 
@@ -212,7 +212,7 @@ Defined in: [Edge.ts:161](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c
 
 > **setData**(`newData`): `void`
 
-Defined in: [Edge.ts:63](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Edge.ts#L63)
+Defined in: [Edge.ts:63](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Edge.ts#L63)
 
 Update the edge's data.
 
@@ -234,7 +234,7 @@ New data to set
 
 > **setFrom**(`node`): `void`
 
-Defined in: [Edge.ts:125](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Edge.ts#L125)
+Defined in: [Edge.ts:125](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Edge.ts#L125)
 
 #### Parameters
 
@@ -252,7 +252,7 @@ Defined in: [Edge.ts:125](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c
 
 > **setStyle**(`newStyle`): `void`
 
-Defined in: [Edge.ts:102](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Edge.ts#L102)
+Defined in: [Edge.ts:102](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Edge.ts#L102)
 
 Update the edge's style.
 
@@ -274,7 +274,7 @@ New style to set
 
 > **setTo**(`node`): `void`
 
-Defined in: [Edge.ts:129](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Edge.ts#L129)
+Defined in: [Edge.ts:129](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Edge.ts#L129)
 
 #### Parameters
 
@@ -292,7 +292,7 @@ Defined in: [Edge.ts:129](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c
 
 > **toJSON**(): `object`
 
-Defined in: [Edge.ts:136](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Edge.ts#L136)
+Defined in: [Edge.ts:136](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Edge.ts#L136)
 
 Convert edge to a simple JSON object representation.
 
@@ -322,7 +322,7 @@ Convert edge to a simple JSON object representation.
 
 > **updateData**(`partialData`): `void`
 
-Defined in: [Edge.ts:72](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Edge.ts#L72)
+Defined in: [Edge.ts:72](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Edge.ts#L72)
 
 Merge partial data into the current edge data.
 
@@ -344,7 +344,7 @@ Partial data object to merge
 
 > **updateStyle**(`partialStyle`): `void`
 
-Defined in: [Edge.ts:112](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Edge.ts#L112)
+Defined in: [Edge.ts:112](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Edge.ts#L112)
 
 Merge partial style into the current edge style.
 Useful for updating only parts of the style.
@@ -367,7 +367,7 @@ Partial style object to merge
 
 > `readonly` **directed**: `boolean` \| `null`
 
-Defined in: [Edge.ts:16](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Edge.ts#L16)
+Defined in: [Edge.ts:16](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Edge.ts#L16)
 
 ***
 
@@ -375,7 +375,7 @@ Defined in: [Edge.ts:16](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c7
 
 > `readonly` **domID**: `string`
 
-Defined in: [Edge.ts:20](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Edge.ts#L20)
+Defined in: [Edge.ts:20](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Edge.ts#L20)
 
 ***
 
@@ -383,7 +383,7 @@ Defined in: [Edge.ts:20](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c7
 
 > **from**: [`Node`](Node.md)
 
-Defined in: [Edge.ts:14](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Edge.ts#L14)
+Defined in: [Edge.ts:14](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Edge.ts#L14)
 
 ***
 
@@ -391,7 +391,7 @@ Defined in: [Edge.ts:14](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c7
 
 > `readonly` **id**: `string`
 
-Defined in: [Edge.ts:13](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Edge.ts#L13)
+Defined in: [Edge.ts:13](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Edge.ts#L13)
 
 ***
 
@@ -399,4 +399,4 @@ Defined in: [Edge.ts:13](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c7
 
 > **to**: [`Node`](Node.md)
 
-Defined in: [Edge.ts:15](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Edge.ts#L15)
+Defined in: [Edge.ts:15](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Edge.ts#L15)

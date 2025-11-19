@@ -6,7 +6,7 @@
 
 # Interface: GraphUI
 
-Defined in: [interfaces/GraphUI.ts:10](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/GraphUI.ts#L10)
+Defined in: [interfaces/GraphUI.ts:10](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L10)
 
 ## Properties
 
@@ -14,11 +14,11 @@ Defined in: [interfaces/GraphUI.ts:10](https://github.com/mokaddem/Pivotick/blob
 
 > **contextMenu**: `object`
 
-Defined in: [interfaces/GraphUI.ts:40](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/GraphUI.ts#L40)
+Defined in: [interfaces/GraphUI.ts:40](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L40)
 
-#### enable?
+#### enabled?
 
-> `optional` **enable**: `boolean`
+> `optional` **enabled**: `boolean`
 
 #### menuCanvas?
 
@@ -62,7 +62,7 @@ Defined in: [interfaces/GraphUI.ts:40](https://github.com/mokaddem/Pivotick/blob
 
 > **extraPanels**: [`ExtraPanel`](ExtraPanel.md)[]
 
-Defined in: [interfaces/GraphUI.ts:15](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/GraphUI.ts#L15)
+Defined in: [interfaces/GraphUI.ts:15](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L15)
 
 ***
 
@@ -70,7 +70,7 @@ Defined in: [interfaces/GraphUI.ts:15](https://github.com/mokaddem/Pivotick/blob
 
 > **mainHeader**: [`MainHeader`](MainHeader.md)
 
-Defined in: [interfaces/GraphUI.ts:13](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/GraphUI.ts#L13)
+Defined in: [interfaces/GraphUI.ts:13](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L13)
 
 ***
 
@@ -78,7 +78,7 @@ Defined in: [interfaces/GraphUI.ts:13](https://github.com/mokaddem/Pivotick/blob
 
 > **mode**: [`GraphUIMode`](../type-aliases/GraphUIMode.md)
 
-Defined in: [interfaces/GraphUI.ts:11](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/GraphUI.ts#L11)
+Defined in: [interfaces/GraphUI.ts:11](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L11)
 
 ***
 
@@ -86,7 +86,7 @@ Defined in: [interfaces/GraphUI.ts:11](https://github.com/mokaddem/Pivotick/blob
 
 > **propertiesPanel**: [`PropertiesPanel`](PropertiesPanel.md)
 
-Defined in: [interfaces/GraphUI.ts:14](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/GraphUI.ts#L14)
+Defined in: [interfaces/GraphUI.ts:14](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L14)
 
 ***
 
@@ -94,7 +94,7 @@ Defined in: [interfaces/GraphUI.ts:14](https://github.com/mokaddem/Pivotick/blob
 
 > **selectionMenu**: `object`
 
-Defined in: [interfaces/GraphUI.ts:55](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/GraphUI.ts#L55)
+Defined in: [interfaces/GraphUI.ts:55](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L55)
 
 #### menuNode?
 
@@ -114,7 +114,7 @@ Defined in: [interfaces/GraphUI.ts:55](https://github.com/mokaddem/Pivotick/blob
 
 > **sidebar**: [`SidebarOptions`](SidebarOptions.md)
 
-Defined in: [interfaces/GraphUI.ts:12](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/GraphUI.ts#L12)
+Defined in: [interfaces/GraphUI.ts:12](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L12)
 
 ***
 
@@ -122,7 +122,7 @@ Defined in: [interfaces/GraphUI.ts:12](https://github.com/mokaddem/Pivotick/blob
 
 > **tooltip**: `object`
 
-Defined in: [interfaces/GraphUI.ts:16](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/GraphUI.ts#L16)
+Defined in: [interfaces/GraphUI.ts:16](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L16)
 
 #### edgeHeaderMap
 
@@ -142,9 +142,9 @@ Defined in: [interfaces/GraphUI.ts:16](https://github.com/mokaddem/Pivotick/blob
 
 [`PropertyEntry`](PropertyEntry.md)[]
 
-#### enable?
+#### enabled?
 
-> `optional` **enable**: `boolean`
+> `optional` **enabled**: `boolean`
 
 #### nodeHeaderMap
 

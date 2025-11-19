@@ -6,7 +6,7 @@
 
 # Interface: LabelStyle
 
-Defined in: [interfaces/RendererOptions.ts:254](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/RendererOptions.ts#L254)
+Defined in: [interfaces/RendererOptions.ts:257](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/RendererOptions.ts#L257)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [interfaces/RendererOptions.ts:254](https://github.com/mokaddem/Pivo
 
 > **backgroundColor**: `string`
 
-Defined in: [interfaces/RendererOptions.ts:256](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/RendererOptions.ts#L256)
+Defined in: [interfaces/RendererOptions.ts:259](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/RendererOptions.ts#L259)
 
 #### Default
 
@@ -28,7 +28,7 @@ Defined in: [interfaces/RendererOptions.ts:256](https://github.com/mokaddem/Pivo
 
 > **color**: `string`
 
-Defined in: [interfaces/RendererOptions.ts:262](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/RendererOptions.ts#L262)
+Defined in: [interfaces/RendererOptions.ts:265](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/RendererOptions.ts#L265)
 
 #### Default
 
@@ -42,7 +42,7 @@ Defined in: [interfaces/RendererOptions.ts:262](https://github.com/mokaddem/Pivo
 
 > **fontFamily**: `string`
 
-Defined in: [interfaces/RendererOptions.ts:260](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/RendererOptions.ts#L260)
+Defined in: [interfaces/RendererOptions.ts:263](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/RendererOptions.ts#L263)
 
 #### Default
 
@@ -56,7 +56,7 @@ system-ui, sans-serif
 
 > **fontSize**: `number`
 
-Defined in: [interfaces/RendererOptions.ts:258](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/RendererOptions.ts#L258)
+Defined in: [interfaces/RendererOptions.ts:261](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/RendererOptions.ts#L261)
 
 #### Default
 
@@ -70,7 +70,7 @@ Defined in: [interfaces/RendererOptions.ts:258](https://github.com/mokaddem/Pivo
 
 > `optional` **labelAccessor**: (`edge`) => `string` \| `void` \| `HTMLElement`
 
-Defined in: [interfaces/RendererOptions.ts:264](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/RendererOptions.ts#L264)
+Defined in: [interfaces/RendererOptions.ts:267](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/RendererOptions.ts#L267)
 
 #### Parameters
 
@@ -88,7 +88,7 @@ Defined in: [interfaces/RendererOptions.ts:264](https://github.com/mokaddem/Pivo
 
 > `optional` **styleCb**: (`edge`) => `Partial`\<`LabelStyle`\>
 
-Defined in: [interfaces/RendererOptions.ts:263](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/RendererOptions.ts#L263)
+Defined in: [interfaces/RendererOptions.ts:266](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/RendererOptions.ts#L266)
 
 #### Parameters
 

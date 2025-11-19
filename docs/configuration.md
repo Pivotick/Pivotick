@@ -1,3 +1,6 @@
+---
+outline: [2, 3]
+---
 
 # Configuration Options
 
@@ -17,30 +20,8 @@ Pivotick supports a wide range of options to customize behavior, layout, renderi
 
 #### Usage
 
-```ts
-const container = document.getElementById('graph-container')
-const options = { // [!code focus:20]
-    isDirected: true,
-    callbacks: {
-        onNodeClick: (e, node) => console.log(`nodeClick: ${node.id}`),
-    },
-    layout: {
-        type: 'force',
-    },
-    render: {
-        defaultNodeStyle: {
-            shape: 'square',
-        },
-    },
-    simulation: {
-        d3ManyBodyStrength: -30
-    },
-    UI: {
-        mode: 'full'
-    },
-}
-const graph = Pivotick(container, options)
-```
+<<< @/examples/configuration/main-usage.js
+
 
 ## Callbacks
 Pivotick allows you to hook into user interactions and simulation events through the [`callbacks`](/docs/api/html/interfaces/InterractionCallbacks.InterractionCallbacks.html) option.
@@ -61,33 +42,8 @@ THe `element` type is `svg` only if the option `render.type == "svg"`.
 
 #### Example
 
-```ts
-import Pivotick from './pivotick.es.js'
+<<< @/examples/configuration/callbacks.js
 
-options = {
-    callbacks: {
-        onCanvasClick: (event) => {
-            console.log('Canvas clicked at', event.clientX, event.clientY)
-        },
-        onNodeClick: (event, node) => {
-            console.log('Node clicked:', node.id)
-        },
-        onNodeHoverIn: (event, node) => {
-            console.log('Mouse entered node:', node.id)
-        },
-        onNodeHoverOut: (event, node) => {
-            console.log('Mouse left node:', node.id)
-        },
-        onEdgeClick: (event, edge) => {
-            console.log('Edge clicked:', edge.from, '→', edge.to)
-        },
-        onSimulationTick: () => {
-            console.log('Simulation tick')
-        }
-    }
-}
-const graph = new Pivotick(container, data, options)
-```
 
 ## Layout Options
 
@@ -113,20 +69,9 @@ When `type: 'tree'` is selected, the following additional options are available:
 
 ### Example
 
-```ts
-import Pivotick from './pivotick.es.js'
+<<< @/examples/configuration/layout.js
 
-const options = {
-    layout: {
-        type: 'tree',
-        radial: true,
-        flipEdgeDirection: false,
-    }
-}
-const graph = new Pivotick(container, data, options)
-```
 
-## Render
 ## Render Options
 
 Pivotick allows you to customize how nodes, edges, and labels are rendered through the `render` option.
@@ -148,6 +93,8 @@ All styles defined here apply only when `render.type` is set to `svg`.
 | `nodeStyleMap`      | `Record<string, NodeStyle>`                                              | `{}`        | Maps node types (from `nodeTypeAccessor`) to styles.              |
 | `minZoom`           | `number`                                                                 | `0.1`       | Minimum zoom level.                                               |
 | `maxZoom`           | `number`                                                                 | `10`        | Maximum zoom level.                                               |
+| `zoomEnabled`       | `boolean`                                                                | `true`      | Enable zoom.                                                      |
+| `selectionBox`      | [SelectionBox](docs/api/interfaces/RendererOptions.SelectionBox.html)    | `undefined` | Control SelectionBox behavior                                     |
 
 #### Type of rendering
 
@@ -174,64 +121,16 @@ const data = {
 
 ::: code-group
 
-```ts [Default rendering]
-const options = {
-    render: {
-        defaultNodeStyle: {
-            shape: 'circle',
-            color: '#007acc',
-            size: 12,
-            strokeColor: '#fff',
-            strokeWidth: 2,
-            fontFamily: 'system-ui',
-            textColor: '#fff'
-        },
-        defaultEdgeStyle: {
-            markerStart: (edge: Edge) => edge.getData().mstart,
-            markerEnd: 'arrow',
-            curveStyle: 'straight',
-        },
-    }
-}
-```
+<<< @/examples/configuration/render-default.js [Default rendering]
 
-```ts [Map-Accessor rendering]
-const options = {
-    render: {
-        nodeTypeAccessor: (node) => node.getData()?.type,
-        nodeStyleMap: {
-            'hub': { shape: 'hexagon', color: '#f90', size: 30 },
-            'spoke': { shape: 'triangle', color: '#09f' }
-        },
-    }
-}
-```
+<<< @/examples/configuration/render-map-accessor.js [Map-Accessor rendering]
 
-```ts [Custom callback rendering]
-const options = {
-    render: {
-        renderNode: (node: Node): HTMLElement | string | void => {
-            const size = 12
-            const color = '#09f'
-            const style = [
-                'display: block',
-                `width: ${size}px`,
-                `height: ${size}px`,
-                `background-color: ${color}`,
-                'border: 2px solid #fff',
-                'border-radius: 50%',
-                'opacity: 1',
-            ].join(';')
+<<< @/examples/configuration/render-callback.js [Custom callback rendering]
 
-            return `<span style="${style}"></span>`
-        }
-    }
-}
-```
 :::
 
 
-## Simulation
+## Simulation Options
 
 The Simulation options control the physics and layout behavior of nodes and edges for the graph simulation engine.
 
@@ -240,6 +139,7 @@ Check [D3-force official documentation](https://d3js.org/d3-force/simulation#for
 | Option              | Type                | Default             | Description                                                                          |
 | ------------------- | ------------------- | ------------------- | ------------------------------------------------------------------------------------ |
 | `userWorker`        | boolean             | `true`              | Should the initial node placement calculation done by a worker                       |
+| `enabled`           | boolean             | `true`              | Should the simulation be running                                                     |
 | `d3Alpha`           | number              | `1.0`               | Initial simulation alpha                                                             |
 | `d3AlphaMin`        | number              | `0.001`             | Minimum alpha value before the simulation stops.                                     |
 | `d3VelocityDecay`   | number              | `0.4`               | Friction applied to node velocities.                                                 |
@@ -259,7 +159,7 @@ Other D3 force parameters like `d3AlphaDecay`, `d3ManyBodyStrength`, `d3CollideR
 - `onTick(sim: Simulation)`: Called on each simulation tick.
 
 
-## UI
+## UI Options
 
 Pivotick provides a flexible UI layer on top of your graph, allowing you to control how users interact with nodes, edges, and the canvas. Using `UI` options, you can:
 
@@ -276,7 +176,7 @@ The `mode` option controls the overall behavior and interaction level of the gra
 - **`viewer`**: Only allows navigating the graph (pan, zoom, drag) without displaying any UI panels.
 - **`static`**: Static graph, no UI panels or interactions; the graph is read-only.
 
-For a light usage of Pivotick, use the following:
+For image-style usage of Pivotick, use the following:
 ```ts
 const container = document.getElementById('graph-container')
 const options = {
@@ -297,21 +197,214 @@ Determines whether the sidebar is collapsed by default.
 - `false` Sidebar starts expanded.
 
 The sidebar displays contextual information for graph elements. It has three customizable components:
-- **Main Header**
-- **Properties Panel**
-- **Extra Panels**
+- <span style="color: darkred;">**Main Header**</span> as `mainHeader`
+- <span style="color: darkred;">**Properties Panel**</span> as `propertiesPanel`
+- <span style="color: darkred;">**Extra Panels**</span> as `extraPanels`
+
+
+<script setup>
+    import { data as dataUISidebarRendering, options as optionUISidebarRendering } from './examples/configuration/ui-sidebar-rendering.js'
+</script>
+
+<Pivotick
+    :data="dataUISidebarRendering"
+    :options="optionUISidebarRendering"
+    :onMountedCallback="(graphContainer) => {
+        graphContainer.querySelector('.pivotick-canvas-container').style.filter = 'blur(0.095rem)'
+        graphContainer.querySelector('.pivotick-canvas-container').style.opacity = '0.2'
+        graphContainer.querySelector('.pivotick-toolbar-container').style.filter = 'blur(0.095rem)'
+        graphContainer.querySelector('.pivotick-toolbar-container').style.opacity = '0.2'
+    }"
+    :onLoadedCallback="(graph) => {
+        graph.selectElement(graph.getNodes()[0])
+    }"
+    style="
+        border: 1px solid var(--vp-c-gray-1);
+        box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 6px -1px, rgba(0, 0, 0, 0.06) 0px 2px 4px -1px;
+        position: relative;
+        height: 400px;"
+></Pivotick>
+
+
+::: details Click to see the code
+<<< @/examples/configuration/ui-sidebar-rendering.js
+:::
 
 #### Main Header
-Shows a concise summary of the selected node or edge, such as title and subtitle. It helps users quickly identify the current element.
+Shows a concise summary of the selected node or edge, such as title and subtitle. It helps users quickly identify the current selected element.
 
+The main header panel can be customized through mapping functions. The default mapping for a node is
+```ts
+{
+    title:    node => node.data.label ?? "Could not resolve title"
+    subtitle: node => node.data.description ?? ""
+}
+```
+
+You can change this mapping by overriding the parts you need:
+
+::: code-group
+
+```ts [Mapping for nodes]
+const options = {
+    UI: {
+        mainHeader: {
+            nodeHeaderMap: {
+                title: node => `Node ${node.id}`,
+                subtitle: node => node.data.type ?? "",
+            }
+        }
+    }
+}
+```
+
+```ts [Mapping for edges]
+const options = {
+    UI: {
+        mainHeader: {
+            edgeHeaderMap: {
+                title: node => `Node ${node.id}`,
+                subtitle: node => node.data.type ?? "",
+            }
+        }
+    }
+}
+```
+
+```ts [Custom rendering]
+const options = {
+    UI: {
+        mainHeader: {
+            render: (element) => {
+                const div = document.createElement('div')
+                div.textContent = 'Main Header'
+                return div 
+            }
+        }
+    }
+}
+```
+
+:::
+
+::: warning
+When `render()` is provided, Pivotick skips all default mapping logic.
+:::
 
 #### Properties Panel
-Lists key-value properties of the selected element. You can customize which properties are displayed and how they are formatted. This panel is useful for inspecting element data without modifying the graph.
+Displays detailed properties of the selected node or edge in the sidebar. Each property has a name and value that can be static or computed dynamically.
+
+The default behavior is to show all key/value pairs from the node or edge’s [`getData()`](docs/api/html/classes/Node.html#getdata).
+
+You can customize which properties are displayed and how they are rendered using mapping functions (`nodePropertiesMap` and `edgePropertiesMap`) or a full custom renderer.
+
+::: code-group
+
+```ts [Mapping for node]
+const options = {
+    UI: {
+        propertiesPanel: {
+            nodePropertiesMap: (node: Node) => {
+                return [
+                    {
+                        name: 'Node ID',
+                        value: node.id,
+                    },
+                    {
+                        name: (node) => `Type of node`,
+                        value: (node) => el ? el.type : 'Unknown'
+                    },
+                    {
+                        name: 'Custom HTML',
+                        value: document.createElement('div')
+                    }
+                ]
+            }
+        }
+    }
+}
+```
+
+```ts [Mapping for edge]
+const options = {
+    UI: {
+        propertiesPanel: {
+            edgePropertiesMap: (node: Node) => {
+                return [
+                    {
+                        name: 'Edge ID',
+                        value: node.id,
+                    },
+                    {
+                        name: (node) => `Type of edge`,
+                        value: (node) => el ? el.type : 'Unknown'
+                    },
+                    {
+                        name: 'Custom HTML',
+                        value: document.createElement('div')
+                    }
+                ]
+            }
+        }
+    }
+}
+```
+
+```ts [Custom rendering for node]
+const options = {
+    UI: {
+        propertiesPanel: {
+            render: (element: Node | Edge | Node[] | Edge[] | null) => {
+                const div = document.createElement('div')
+                div.textContent = `Element ID: ${element?.id}`
+                div.style.fontWeight = 'bold'
+                return div
+            }
+        }
+    }
+}
+```
+
+:::
 
 
 #### Extra Panels
-Allows adding fully custom panels with dynamic or static content. These panels can include HTML, SVG, or computed values, and are ideal for showing additional contextual information, custom controls, or interactive widgets related to the selected element.
+Allows adding fully custom panels with dynamic or static content. These panels are ideal for showing additional contextual information, custom controls, or interactive widgets related to the selected element.
 
+Each extra panel has a `title` and a `render()` function, both of which can be static (string/HTMLElement) or dynamic (function returning string/HTMLElement).
+
+::: code-group
+
+```ts [Static content]
+const options = {
+    UI: {
+        extraPanels: [
+            {
+                title: "Info",
+                render: "This is a static extra panel content"
+            }
+        ]
+    }
+}
+```
+
+```ts [Dynamic content]
+const options = {
+    UI: {
+        extraPanels: [
+            {
+                title: (node) => `Node #${node?.id}`,
+                render: (node) => {
+                    const div = document.createElement('div')
+                    div.textContent = node?.description ?? 'No description'
+                    return div
+                }
+            }
+        ]
+    }
+}
+```
+:::
 
 ### Tooltips {#ui-tooltip}
 Configure default and custom tooltips for nodes and edges.
@@ -324,73 +417,21 @@ Configure right-click menus for nodes, edges, and the canvas.
 ### Selection Menu {#ui-selectionmenu}
 Configure menus shown when elements are selected.
 
+<div ref="graphContainerXX" style="height: 400px; border: 1px solid #ccc;"></div>
 
-----
-<script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+::: code-group
+``` [Demo]
+```
+
+```ts [Code]
+import { ref, onMounted } from 'vue'
 import { Pivotick } from '../dist/pivotick.js'
-import '../dist/pivotick.css'
 
 const graphContainer = ref(null)
 let graph = null
-const data = {
-    nodes: [
-        { id: 1, data: { label: 'A', type: 'hub' } },
-        { id: 2, data: { label: 'B', type: 'spoke' } }
-    ],
-    edges: [{ from: 1, to: 2, data: { label: 'edge1' } }]
-}
-const options = {
-    simulation: {
-        useWorker: false,
-        callbacks: {
-            onStop: (simulation) => {
-                graph.selectElement(graph.getNodes()[0])
-            }
-        }
-    },
-    UI: {  
-        mode: 'full',
-        sidebar: {
-            collapsed: false,
-        },
-        mainHeader: {
-            nodeHeaderMap: {
-                title: "Main Header",
-            },
-        },
-        extraPanels: [
-            {
-                title: "Properties Panel",
-                content: (node) => {
-                    const div = document.createElement('div')
-                    div.textContent = 'Content of Properties Panel'
-                    return div
-                },
-            }
-        ]
-    },
-}
 
 onMounted(() => {
-    if (graphContainer.value)
-        graph = new Pivotick(graphContainer.value, data, options)
+  graph = new Pivotick(graphContainer, data, options)
 })
-
-onBeforeUnmount(() => {
-    if (graph?.destroy)
-        graph.destroy()
-})
-</script>
-
-
-<meta name="color-scheme" content="light">
-<div ref="graphContainer" :class="$style.pivotick" data-theme="light"></div>
-
-<style module>
-.pivotick {
-    border: 1px solid var(--vp-c-gray-soft);
-    position: relative;
-    height: 800px;
-}
-</style>
+```
+:::

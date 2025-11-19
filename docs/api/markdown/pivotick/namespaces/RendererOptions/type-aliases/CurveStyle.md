@@ -8,7 +8,7 @@
 
 > **CurveStyle** = `"straight"` \| `"curved"` \| `"bidirectional"`
 
-Defined in: [interfaces/RendererOptions.ts:216](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/RendererOptions.ts#L216)
+Defined in: [interfaces/RendererOptions.ts:219](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/RendererOptions.ts#L219)
 
 - 'straight': The edge will go in a straight line from A to B
 - 'curved': The edge will always be curved from A to B

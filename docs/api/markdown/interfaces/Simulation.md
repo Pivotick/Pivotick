@@ -6,7 +6,7 @@
 
 # Interface: Simulation
 
-Defined in: [Simulation.ts:67](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Simulation.ts#L67)
+Defined in: [Simulation.ts:68](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Simulation.ts#L68)
 
 ## Methods
 
@@ -14,7 +14,7 @@ Defined in: [Simulation.ts:67](https://github.com/mokaddem/Pivotick/blob/7b5d74b
 
 > **changeLayout**(`type`, `simulationOptions`): `Promise`\<`void`\>
 
-Defined in: [Simulation.ts:544](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Simulation.ts#L544)
+Defined in: [Simulation.ts:550](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Simulation.ts#L550)
 
 Allows to change the layout of the graph
 
@@ -49,7 +49,7 @@ changeLayout('tree', {
 
 > **getForceSimulation**(): [`SimulationForces`](../pivotick/namespaces/SimulationOptions/interfaces/SimulationForces.md)
 
-Defined in: [Simulation.ts:527](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Simulation.ts#L527)
+Defined in: [Simulation.ts:533](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Simulation.ts#L533)
 
 #### Returns
 
@@ -61,7 +61,7 @@ Defined in: [Simulation.ts:527](https://github.com/mokaddem/Pivotick/blob/7b5d74
 
 > **isDragging**(): `boolean`
 
-Defined in: [Simulation.ts:523](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Simulation.ts#L523)
+Defined in: [Simulation.ts:529](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Simulation.ts#L529)
 
 #### Returns
 
@@ -73,7 +73,7 @@ Defined in: [Simulation.ts:523](https://github.com/mokaddem/Pivotick/blob/7b5d74
 
 > **pause**(): `void`
 
-Defined in: [Simulation.ts:257](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Simulation.ts#L257)
+Defined in: [Simulation.ts:258](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Simulation.ts#L258)
 
 Pause the simulation
 
@@ -87,7 +87,7 @@ Pause the simulation
 
 > **reheat**(): `void`
 
-Defined in: [Simulation.ts:457](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Simulation.ts#L457)
+Defined in: [Simulation.ts:463](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Simulation.ts#L463)
 
 Restart the simulation with a bit of heat
 
@@ -101,7 +101,7 @@ Restart the simulation with a bit of heat
 
 > **restart**(): `void`
 
-Defined in: [Simulation.ts:264](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Simulation.ts#L264)
+Defined in: [Simulation.ts:265](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Simulation.ts#L265)
 
 Restart the simulation with rendering on each animation frame.
 
@@ -115,7 +115,7 @@ Restart the simulation with rendering on each animation frame.
 
 > **start**(): `Promise`\<`void`\>
 
-Defined in: [Simulation.ts:272](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Simulation.ts#L272)
+Defined in: [Simulation.ts:273](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Simulation.ts#L273)
 
 Start the simulation with rendering on each animation frame.
 
@@ -129,7 +129,7 @@ Start the simulation with rendering on each animation frame.
 
 > **stop**(): `void`
 
-Defined in: [Simulation.ts:286](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Simulation.ts#L286)
+Defined in: [Simulation.ts:292](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Simulation.ts#L292)
 
 Manually stop the simulation and cancel animation frame.
 
@@ -143,7 +143,7 @@ Manually stop the simulation and cancel animation frame.
 
 > **update**(): `void`
 
-Defined in: [Simulation.ts:208](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Simulation.ts#L208)
+Defined in: [Simulation.ts:209](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Simulation.ts#L209)
 
 #### Returns
 
@@ -155,7 +155,7 @@ Defined in: [Simulation.ts:208](https://github.com/mokaddem/Pivotick/blob/7b5d74
 
 > **waitForSimulationStop**(): `Promise`\<`void`\>
 
-Defined in: [Simulation.ts:346](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/Simulation.ts#L346)
+Defined in: [Simulation.ts:352](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/Simulation.ts#L352)
 
 Returns a promise that resolves when the simulation stops naturally.
 Useful for performing actions (like fitAndCenter) after stabilization.

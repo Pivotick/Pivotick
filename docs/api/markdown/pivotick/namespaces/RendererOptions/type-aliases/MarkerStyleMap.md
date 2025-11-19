@@ -8,7 +8,7 @@
 
 > **MarkerStyleMap** = `Record`\<`string`, [`MarkerStyle`](../interfaces/MarkerStyle.md)\>
 
-Defined in: [interfaces/RendererOptions.ts:291](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/RendererOptions.ts#L291)
+Defined in: [interfaces/RendererOptions.ts:294](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/RendererOptions.ts#L294)
 
 A map of all available edge marker styles.
 

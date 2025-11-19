@@ -6,7 +6,7 @@
 
 # Interface: PartialEdgeFullStyle
 
-Defined in: [interfaces/RendererOptions.ts:205](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/RendererOptions.ts#L205)
+Defined in: [interfaces/RendererOptions.ts:208](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/RendererOptions.ts#L208)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [interfaces/RendererOptions.ts:205](https://github.com/mokaddem/Pivo
 
 > `optional` **edge**: `Partial`\<[`EdgeStyle`](EdgeStyle.md)\>
 
-Defined in: [interfaces/RendererOptions.ts:206](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/RendererOptions.ts#L206)
+Defined in: [interfaces/RendererOptions.ts:209](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/RendererOptions.ts#L209)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [interfaces/RendererOptions.ts:206](https://github.com/mokaddem/Pivo
 
 > `optional` **node**: `Partial`\<[`NodeStyle`](NodeStyle.md)\>
 
-Defined in: [interfaces/RendererOptions.ts:207](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/RendererOptions.ts#L207)
+Defined in: [interfaces/RendererOptions.ts:210](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/RendererOptions.ts#L210)

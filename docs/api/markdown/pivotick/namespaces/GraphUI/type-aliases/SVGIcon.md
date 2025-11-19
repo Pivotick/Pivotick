@@ -8,7 +8,7 @@
 
 > **SVGIcon** = `string`
 
-Defined in: [interfaces/GraphUI.ts:191](https://github.com/mokaddem/Pivotick/blob/7b5d74b6095c72ffb15692a55e9a1e07f2f3854b/src/interfaces/GraphUI.ts#L191)
+Defined in: [interfaces/GraphUI.ts:205](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L205)
 
 Raw SVG markup as a string
 
