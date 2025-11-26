@@ -79,6 +79,67 @@
         }
     }
 
+    .pivotick-action-item-primary {
+        background-color: var(--pivotick-bg-color-primary);
+        color: var(--pivotick-text-color-for-primary);
+
+        &:hover {
+            background-color: color-mix(in srgb, var(--pivotick-bg-color-primary) 80%, #000);
+            color: color-mix(in srgb, var(--pivotick-text-color-for-primary) 80%, #fff);
+        }
+    }
+
+    .pivotick-action-item-secondary {
+        background-color: var(--pivotick-bg-color-secondary);
+        color: var(--pivotick-text-color-for-secondary);
+
+        &:hover {
+            background-color: color-mix(in srgb, var(--pivotick-bg-color-primary)secondary%, #000);
+            color: color-mix(in srgb, var(--pivotick-text-color-for-primary) 80%, secondary);
+        }
+    }
+
+    .pivotick-action-item-info {
+        background-color: var(--pivotick-bg-color-info);
+        color: var(--pivotick-text-color-for-info);
+
+        &:hover {
+            background-color: color-mix(in srgb, var(--pivotick-bg-color-info) 80%, #000);
+            color: color-mix(in srgb, var(--pivotick-text-color-for-info) 80%, #fff);
+        }
+    }
+
+    .pivotick-action-item-warning {
+        background-color: var(--pivotick-bg-color-warning);
+        color: var(--pivotick-text-color-for-warning);
+
+        &:hover {
+            background-color: color-mix(in srgb, var(--pivotick-bg-color-warning) 80%, #000);
+            color: color-mix(in srgb, var(--pivotick-text-color-for-warning) 80%, #fff);
+        }
+    }
+
+    .pivotick-action-item-danger {
+        background-color: var(--pivotick-bg-color-danger);
+        color: var(--pivotick-text-color-for-danger);
+
+        &:hover {
+            background-color: color-mix(in srgb, var(--pivotick-bg-color-danger) 80%, #000);
+            color: color-mix(in srgb, var(--pivotick-text-color-for-danger) 80%, #fff);
+        }
+    }
+
+    .pivotick-action-item-success {
+        background-color: var(--pivotick-bg-color-success);
+        color: var(--pivotick-text-color-for-success);
+
+        &:hover {
+            background-color: color-mix(in srgb, var(--pivotick-bg-color-success) 80%, #000);
+            color: color-mix(in srgb, var(--pivotick-text-color-for-success) 80%, #fff);
+        }
+    }
+
+
     .pivotick-action-item-outline-primary:hover {
         background-color: var(--pivotick-bg-color-primary);
         color: var(--pivotick-text-color-for-primary);

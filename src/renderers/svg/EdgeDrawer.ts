@@ -394,12 +394,12 @@ export class EdgeDrawer {
 
         const text = labelContainer.append('text')
             .text(labelContent)
-            .attr('font-size', style.fontSize)
-            .attr('font-family', style.fontFamily)
             .attr('text-anchor', 'middle')
-            .attr('alignment-baseline', 'central')
-            .attr('pointer-events', 'none')
-            .attr('fill', style.color)
+            .attr('alignment-baseline', 'middle')
+            .style('font-size', style.fontSize)
+            .style('font-family', style.fontFamily)
+            .style('pointer-events', 'none')
+            .style('fill', style.color)
 
         const bbox = text.node()?.getBBox()
         if (bbox) {

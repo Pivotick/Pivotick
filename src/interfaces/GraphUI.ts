@@ -13,51 +13,9 @@ export interface GraphUI {
     mainHeader: MainHeader,
     propertiesPanel: PropertiesPanel,
     extraPanels: ExtraPanel[],
-    tooltip: {
-        enabled?: boolean /** @default true */
-        /**
-         * Custom renderer for node tooltips. This content is added after the default tooltip
-         * @default undefined
-         */
-        renderNodeExtra?: (node: Node) => HTMLElement | string,
-        /**
-        * Custom renderer for edge tooltips. This content is added after the default tooltip
-        * @default undefined
-        */
-        renderEdgeExtra?: (edge: Edge) => HTMLElement | string,
-        nodeHeaderMap: Partial<HeaderMapEntry<Node>>,
-        edgeHeaderMap: Partial<HeaderMapEntry<Edge>>,
-        nodePropertiesMap: ((node: Node) => Array<PropertyEntry>),
-        edgePropertiesMap: ((edge: Edge) => Array<PropertyEntry>),
-        /**
-        * Custom renderer for the tooltip. This content will override the default tooltip
-        * @default undefined
-        * @example
-        * (element) => `element id: ${element.id}`
-        */
-        render?: ((element: Node | Edge) => HTMLElement | string) | HTMLElement | string,
-    },
-    contextMenu: {
-        enabled?: boolean /** @default true */
-        menuNode?: {
-            topbar?: MenuQuickActionItemOptions[],
-            menu?: MenuActionItemOptions[],
-        },
-        menuEdge?: {
-            topbar?: MenuQuickActionItemOptions[],
-            menu?: MenuActionItemOptions[],
-        },
-        menuCanvas?: {
-            topbar?: MenuQuickActionItemOptions[],
-            menu?: MenuActionItemOptions[],
-        },
-    },
-    selectionMenu: {
-        menuNode?: {
-            topbar?: MenuQuickActionItemOptions[],
-            menu?: MenuActionItemOptions[],
-        }
-    }
+    tooltip: Tooltip,
+    contextMenu: ContextMenu,
+    selectionMenu: SelectionMenu
 }
 
 
@@ -171,6 +129,54 @@ export interface ExtraPanel {
     render: ((element: Node | Edge | null) => HTMLElement | string) | HTMLElement | string,
 }
 
+export interface Tooltip {
+    enabled?: boolean /** @default true */
+    /**
+     * Custom renderer for node tooltips. This content is added after the default tooltip
+     * @default undefined
+     */
+    renderNodeExtra?: (node: Node) => HTMLElement | string,
+    /**
+    * Custom renderer for edge tooltips. This content is added after the default tooltip
+    * @default undefined
+    */
+    renderEdgeExtra?: (edge: Edge) => HTMLElement | string,
+    nodeHeaderMap: Partial<HeaderMapEntry<Node>>,
+    edgeHeaderMap: Partial<HeaderMapEntry<Edge>>,
+    nodePropertiesMap: ((node: Node) => Array<PropertyEntry>),
+    edgePropertiesMap: ((edge: Edge) => Array<PropertyEntry>),
+    /**
+    * Custom renderer for the tooltip. This content will override the default tooltip
+    * @default undefined
+    * @example
+    * (element) => `element id: ${element.id}`
+    */
+    render?: ((element: Node | Edge) => HTMLElement | string) | HTMLElement | string,
+}
+
+export interface ContextMenu {
+    enabled?: boolean /** @default true */
+    menuNode?: {
+        topbar?: MenuQuickActionItemOptions[],
+        menu?: MenuActionItemOptions[],
+    },
+    menuEdge?: {
+        topbar?: MenuQuickActionItemOptions[],
+        menu?: MenuActionItemOptions[],
+    },
+    menuCanvas?: {
+        topbar?: MenuQuickActionItemOptions[],
+        menu?: MenuActionItemOptions[],
+    },
+}
+
+export interface SelectionMenu {
+    menuNode?: {
+        topbar?: MenuQuickActionItemOptions[],
+        menu?: MenuActionItemOptions[],
+    }
+}
+
 /**
  * Options to define an action item in a menu.
  * Can be used in contextual menus or multi-select menus.
@@ -181,10 +187,13 @@ export type MenuActionItemOptions<TThis extends UIElement = UIElement> = {
     iconClass?: IconClass,
     svgIcon?: SVGIcon,
     imagePath?: ImagePath,
-    text?: string,
-    title: string,
-    variant: UIVariant,
-    visible: boolean | ((element: Node | Edge | null) => boolean)
+    /** Text of the option. */
+    text: string,
+    /** Title to be shown when hovering over the option. */
+    title?: string,
+    /** @default outline-primary */
+    variant?: UIVariant,
+    visible?: boolean | ((element: Node | Edge | null) => boolean)
     onclick: (this: TThis, evt: PointerEvent | MouseEvent, element?: Node | Node[] | Edge | Edge[] | null) => void
 }
 export type MenuQuickActionItemOptions = MenuActionItemOptions & {

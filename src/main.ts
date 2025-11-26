@@ -39,7 +39,7 @@ export function createSampleGraph(): Pivotick {
     // edges.push(new Edge('1-0', nodes[1], nodes[0], { relation : 'b'}))
 
 
-    // const N = 26
+    // const N = 63
     const N = 6
     const createNodes = (): Node[] => {
         return Array.from({ length: N }, (_, i) => new Node(`n${i + 1}`, { label: `Node ${i}`, type: 'node'}))
@@ -228,7 +228,9 @@ export function createSampleGraph(): Pivotick {
 
     }
 
-    const topo = 'ail'
+    const topo = 'random'
+    console.log({ nodes: topologies[topo].nodes, edges: topologies[topo].edges });
+    
     const graph = new Pivotick(container, {nodes: topologies[topo].nodes, edges: topologies[topo].edges}, {
         // isDirected: false,
         simulation: {

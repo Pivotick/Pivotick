@@ -4,7 +4,7 @@ import { createIcon } from '../../utils/ElementCreation'
 type ButtonVariant = UIVariant
 type ButtonSize = 'sm' | 'xs'
 type ButtonOptions = {
-    variant: ButtonVariant,
+    variant?: ButtonVariant,
     size?: ButtonSize,
     onClick?: (event: MouseEvent) => void
     iconUnicode?: IconUnicode,
@@ -16,6 +16,8 @@ type ButtonOptions = {
 }
 
 export function createButton(options: ButtonOptions): HTMLButtonElement {
+    options.variant = options.variant ?? 'primary'
+
     const { 
         variant,
         size,

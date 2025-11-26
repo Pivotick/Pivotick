@@ -5,6 +5,7 @@ import { createButton } from '../ui/components/Button'
 import type { UIElement } from '../ui/UIManager'
 import type { IconClass, IconUnicode, ImagePath, MenuActionItemOptions, MenuQuickActionItemOptions, PropertyEntry, SVGIcon } from '../interfaces/GraphUI'
 
+const ACTION_DEFAULT_VARIANT = 'outline-primary'
 
 export function createSvgElement<K extends keyof SVGElementTagNameMap>(
     tag: K,
@@ -88,6 +89,8 @@ export function createQuickActionList<TThis extends UIElement = UIElement>(thisC
         const div = createHtmlElement('div', { class: 'pivotick-quickaction-list' })
         const firstElement = Array.isArray(element) ? element[0] : element
         actions.forEach(action => {
+            action.visible = action.visible ?? true
+
             const isVisible = tryResolveBoolean(action.visible, firstElement) ?? true
             if (isVisible) {
                 const row = createQuickActionItem(thisContext, action, element)
@@ -101,6 +104,8 @@ export function createActionList<TThis extends UIElement = UIElement>(thisContex
     const div = createHtmlElement('div', { class: 'pivotick-action-list' })
     const firstElement = Array.isArray(element) ? element[0] : element
     actions.forEach(action => {
+        action.visible = action.visible ?? true
+
         const isVisible = tryResolveBoolean(action.visible, firstElement) ?? true
         if (isVisible) {
             const row = createActionItem(thisContext, action, element)
@@ -111,6 +116,9 @@ export function createActionList<TThis extends UIElement = UIElement>(thisContex
 }
 
 export function createQuickActionItem<TThis extends UIElement = UIElement>(thisContext: TThis, action: MenuQuickActionItemOptions, element: Node[] | Node | Edge | null): HTMLSpanElement {
+
+    action.variant = action.variant ?? ACTION_DEFAULT_VARIANT
+
     const { onclick, ...actionWithoutCb } = action
     const span = createHtmlElement('span',
         {
@@ -141,7 +149,7 @@ export function createActionItem<TThis extends UIElement = UIElement>(thisContex
             createIcon({ fixedWidth: true, ...action }),
             createHtmlElement('span', { 
                 class: 'pivotick-action-text',
-                title: action.title,
+                title: action.title ?? '',
             }, [ action.text ?? '' ])
         ]
     )
