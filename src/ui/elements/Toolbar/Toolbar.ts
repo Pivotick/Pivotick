@@ -19,7 +19,7 @@ export class Toolbar implements UIElement {
         if (!container) return
 
         this.toolbar = document.createElement('div')
-        this.toolbar.className = 'pivotick-toolbar'
+        this.toolbar.className = 'pvt-toolbar'
 
         /** Searchbox */
         const template = document.createElement('template')

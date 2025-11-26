@@ -88,8 +88,8 @@ export class ExtraPanelManager implements UIElement {
 
         const template = `
             <div class="enter-ready">
-                <div class="pivotick-extrapanel-header-panel pivotick-sidebar-header-panel"></div>
-                <div class="pivotick-extrapanel-body-panel pivotick-sidebar-body-panel"></div>
+                <div class="pivotick-extrapanel-header-panel pvt-sidebar-header-panel"></div>
+                <div class="pivotick-extrapanel-body-panel pvt-sidebar-body-panel"></div>
             </div>`
         const panelDiv = createHtmlTemplate(template) as HTMLDivElement
         const headerDiv = panelDiv.querySelector('.pivotick-extrapanel-header-panel') as HTMLDivElement

@@ -36,10 +36,10 @@ export class Sidebar implements UIElement {
         if (!container) return
 
         const template = `
-<div class="pivotick-sidebar-elements">
+<div class="pvt-sidebar-elements">
     <div class="pivotick-mainheader-panel"></div>
-    <div class="pivotick-properties-panel pivotick-sidebar-panel"></div>
-    <div class="pivotick-extra-panel pivotick-sidebar-panel"></div>
+    <div class="pivotick-properties-panel pvt-sidebar-panel"></div>
+    <div class="pivotick-extra-panel pvt-sidebar-panel"></div>
 </div>`
         this.sidebar = createHtmlTemplate(template) as HTMLDivElement
 
@@ -65,9 +65,9 @@ export class Sidebar implements UIElement {
         this.extraPanelContainer = this.sidebar.querySelector('.pivotick-extra-panel') ?? undefined
         this.extraPanelManager.mount(this.extraPanelContainer)
 
-        this.collapse = createHtmlElement('span', { class: 'pivotick-sidebar-collapse-container' }, [
-            createHtmlElement('span', { class: 'pivotick-sidebar-collapse-button pivotick-sidebar-collapse-button-collapse' }, [createIcon({ svgIcon: sidebarCollapse })]) as HTMLSpanElement,
-            createHtmlElement('span', { class: 'pivotick-sidebar-collapse-button pivotick-sidebar-collapse-button-expand' }, [createIcon({ svgIcon: sidebarExpand })]) as HTMLSpanElement,
+        this.collapse = createHtmlElement('span', { class: 'pvt-sidebar-collapse-container' }, [
+            createHtmlElement('span', { class: 'pvt-sidebar-collapse-button pvt-sidebar-collapse-button-collapse' }, [createIcon({ svgIcon: sidebarCollapse })]) as HTMLSpanElement,
+            createHtmlElement('span', { class: 'pvt-sidebar-collapse-button pvt-sidebar-collapse-button-expand' }, [createIcon({ svgIcon: sidebarExpand })]) as HTMLSpanElement,
         ]) as HTMLSpanElement
         this.sidebar.parentElement!.appendChild(this.collapse)
 
@@ -142,20 +142,20 @@ export class Sidebar implements UIElement {
     }
 
     public toggleSidebar(): void {
-        const sidebarContainer = this.sidebar!.closest('.pivotick-sidebar') as HTMLElement
-        sidebarContainer.classList.toggle('pivotick-sidebar-collapsed', this.sidebarOpen)
+        const sidebarContainer = this.sidebar!.closest('.pvt-sidebar') as HTMLElement
+        sidebarContainer.classList.toggle('pvt-sidebar-collapsed', this.sidebarOpen)
         this.sidebarOpen = !this.sidebarOpen
     }
 
     public showSidebar(): void {
-        const sidebarContainer = this.sidebar!.closest('.pivotick-sidebar') as HTMLElement
-        sidebarContainer.classList.remove('pivotick-sidebar-collapsed')
+        const sidebarContainer = this.sidebar!.closest('.pvt-sidebar') as HTMLElement
+        sidebarContainer.classList.remove('pvt-sidebar-collapsed')
         this.sidebarOpen = true
     }
 
     public hideSidebar(): void {
-        const sidebarContainer = this.sidebar!.closest('.pivotick-sidebar') as HTMLElement
-        sidebarContainer.classList.add('pivotick-sidebar-collapsed')
+        const sidebarContainer = this.sidebar!.closest('.pvt-sidebar') as HTMLElement
+        sidebarContainer.classList.add('pvt-sidebar-collapsed')
         this.sidebarOpen = false
     }
 }

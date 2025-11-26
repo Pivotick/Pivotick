@@ -9,7 +9,7 @@
     overflow: hidden;
 }
 
-.pivotick-layout {
+.pvt-layout {
     --pvt-sidebar-width: 340px;
     --pvt-toolbar-height: 48px;
 
@@ -39,27 +39,27 @@
     }
 }
 
-.pivotick-sidebar {
+.pvt-sidebar {
     width: var(--pvt-sidebar-width);
     grid-area: sidebar;
     height: 100%;
     transition: width 0.1s ease-out;
 
-    .pivotick-sidebar-elements {
+    .pvt-sidebar-elements {
         // transition: opacity 0.1s cubic-bezier(0, 0, 1, -0.15);
         opacity: 100%;
     }
 
-    &.pivotick-sidebar-collapsed {
+    &.pvt-sidebar-collapsed {
         width: 0px;
 
-        .pivotick-sidebar-elements {
+        .pvt-sidebar-elements {
             opacity: 0%;
         }
     }
 }
 
-.pivotick-canvas {
+.pvt-canvas {
     grid-area: canvas;
     height: 100%;
     width: 100%;
@@ -76,7 +76,7 @@
         z-index: 1000;
     }
 
-    .pivotick-notification {
+    .pvt-notification {
         position: absolute;
         top: 1em;
         right: 3em;
@@ -87,20 +87,20 @@
     }
 }
 
-.pivotick-toolbar {
+.pvt-toolbar {
     grid-area: toolbar;
     height: 100%;
     width: calc(100%);// - 12px);
     z-index: 10;
 }
 
-.pivotick-graphnavigation {
+.pvt-graphnavigation {
     position: absolute;
     top: 1rem;
     right: 1rem;
 }
 
-.pivotick-graphcontrols {
+.pvt-graphcontrols {
     position: absolute;
     top: 1rem;
     left: 1rem;

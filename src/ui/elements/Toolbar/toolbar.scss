@@ -1,10 +1,10 @@
 @use "../../../styles/components/buttons.scss";
 @use "../../../styles/components/input.scss";
 
-.pivotick-toolbar {
+.pvt-toolbar {
     box-shadow: var(--pvt-sidebar-layout-shadow-bottom);
 
-    .pivotick-toolbar {
+    .pvt-toolbar {
         display: flex;
         flex-direction: row;
         gap: 4px;

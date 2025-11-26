@@ -15,35 +15,35 @@ export class Layout implements UIElement {
 
     mount(container: HTMLElement, mode: GraphUIMode = 'full') {
         this.layout = document.createElement('div')
-        this.layout.className = `pivotick-layout mode-${mode}`
+        this.layout.className = `pvt-layout mode-${mode}`
 
         this.canvas = document.createElement('div')
-        this.canvas.className = 'pivotick-canvas'
+        this.canvas.className = 'pvt-canvas'
         this.layout.appendChild(this.canvas)
 
         this.notification = document.createElement('div')
-        this.notification.className = 'pivotick-notification'
+        this.notification.className = 'pvt-notification'
         this.canvas.appendChild(this.notification)
 
         if (mode === 'full') {
             this.sidebar = document.createElement('div')
-            this.sidebar.className = 'pivotick-sidebar'
+            this.sidebar.className = 'pvt-sidebar'
             this.layout.appendChild(this.sidebar)
         }
 
         if (mode === 'light' || mode === 'full') {
             this.toolbar = document.createElement('div')
-            this.toolbar.className = 'pivotick-toolbar'
+            this.toolbar.className = 'pvt-toolbar'
             this.layout.appendChild(this.toolbar)
         }
 
         if (mode !== 'static') {
             this.graphnavigation = document.createElement('div')
-            this.graphnavigation.className = 'pivotick-graphnavigation'
+            this.graphnavigation.className = 'pvt-graphnavigation'
             this.canvas.appendChild(this.graphnavigation)
 
             this.graphcontrols = document.createElement('div')
-            this.graphcontrols.className = 'pivotick-graphcontrols'
+            this.graphcontrols.className = 'pvt-graphcontrols'
             this.canvas.appendChild(this.graphcontrols)
         }
 

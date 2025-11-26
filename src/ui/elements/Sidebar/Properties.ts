@@ -34,8 +34,8 @@ export class SidebarProperties implements UIElement {
 
         const template = `
 <div class="enter-ready">
-    <div class="pivotick-properties-header-panel pivotick-sidebar-header-panel"></div>
-    <div class="pivotick-properties-body-panel pivotick-sidebar-body-panel"></div>
+    <div class="pivotick-properties-header-panel pvt-sidebar-header-panel"></div>
+    <div class="pivotick-properties-body-panel pvt-sidebar-body-panel"></div>
 </div>`
         this.panel = createHtmlTemplate(template) as HTMLDivElement
         this.header = this.panel.querySelector('.pivotick-properties-header-panel') as HTMLDivElement

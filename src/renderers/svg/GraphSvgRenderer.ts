@@ -248,7 +248,7 @@ export class GraphSvgRenderer extends GraphRenderer {
         this.svgCanvas.setAttribute('width', '100%')
         this.svgCanvas.setAttribute('height', '100%')
         this.svgCanvas.setAttribute('fill', 'none')
-        this.svgCanvas.setAttribute('class', 'pivotick-canvas')
+        this.svgCanvas.setAttribute('class', 'pvt-canvas')
 
         this.getCanvasContainer().appendChild(this.svgCanvas)
         this.svg = d3Select(this.svgCanvas)

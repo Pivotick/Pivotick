@@ -16,18 +16,18 @@ export class GraphNavigation implements UIElement {
 
         const template = document.createElement('template')
         template.innerHTML = `
-  <div class="pivotick-graphnavigation">
-    <div class="pivotick-graphnavigation-zoom-fit">
-        <button id="pivotick-graphnavigation-reset" class="pivotick-graphnavigation-reset-button" title="Fit and center">
+  <div class="pvt-graphnavigation">
+    <div class="pvt-graphnavigation-zoom-fit">
+        <button id="pvt-graphnavigation-reset" class="pvt-graphnavigation-reset-button" title="Fit and center">
             ${graphNavigationReset}
         </button>
     </div>
-    <div class="pivotick-graphnavigation-zoom-controls">
-        <button id="pivotick-graphnavigation-zoom-in" class="pivotick-graphnavigation-zoomin-button" title="Zoom In">
+    <div class="pvt-graphnavigation-zoom-controls">
+        <button id="pvt-graphnavigation-zoom-in" class="pvt-graphnavigation-zoomin-button" title="Zoom In">
            ${graphNavigationZoomIn}
         </button>
         <div class="pivotick-zoom-divider"></div>
-        <button id="pivotick-graphnavigation-zoom-out" class="pivotick-graphnavigation-zoomout-button" title="Zoom Out">
+        <button id="pvt-graphnavigation-zoom-out" class="pvt-graphnavigation-zoomout-button" title="Zoom Out">
             ${graphNavigationZoomOut}
         </button>
     </div>
@@ -45,9 +45,9 @@ export class GraphNavigation implements UIElement {
 
     afterMount() {
         if (!this.navigation) return
-        const zoomInButton = this.navigation.querySelector('#pivotick-graphnavigation-zoom-in')
-        const zoomOutButton = this.navigation.querySelector('#pivotick-graphnavigation-zoom-out')
-        const resetButton = this.navigation.querySelector('#pivotick-graphnavigation-reset')
+        const zoomInButton = this.navigation.querySelector('#pvt-graphnavigation-zoom-in')
+        const zoomOutButton = this.navigation.querySelector('#pvt-graphnavigation-zoom-out')
+        const resetButton = this.navigation.querySelector('#pvt-graphnavigation-reset')
         
         zoomInButton?.addEventListener('click', () => {
             this.uiManager.graph.renderer.zoomIn()

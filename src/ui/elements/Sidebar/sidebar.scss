@@ -1,8 +1,8 @@
-.pivotick-sidebar {
+.pvt-sidebar {
     position: relative;
     box-shadow: var(--pvt-sidebar-layout-shadow-right);
 
-    .pivotick-sidebar-elements {
+    .pvt-sidebar-elements {
         height: 100%;
         overflow-y: auto;
         overflow-x: hidden;
@@ -27,13 +27,13 @@
             gap: 10px;
         }
 
-        .pivotick-sidebar-panel {
+        .pvt-sidebar-panel {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 
             & > .enter-ready {
             }
 
-            .pivotick-sidebar-header-panel {
+            .pvt-sidebar-header-panel {
                 display: flex;
                 min-height: 40px;
                 background-color: var(--pvt-sidebar-panelheader-bg);
@@ -43,14 +43,14 @@
                 color: var(--pvt-text-color-5);
             }
 
-            .pivotick-sidebar-body-panel {
+            .pvt-sidebar-body-panel {
                 min-height: 32px;
                 padding: 6px;
             }
         }
     }
 
-    .pivotick-sidebar-collapse-container {
+    .pvt-sidebar-collapse-container {
         position: absolute;
         right: -40px;
         bottom: 7px;
@@ -78,7 +78,7 @@
             transform: scale(0.95);
         }
 
-        .pivotick-sidebar-collapse-button {
+        .pvt-sidebar-collapse-button {
             display: flex;
             justify-content: center;
             align-items: center;
@@ -86,16 +86,16 @@
             height: 24px;
         }
 
-        .pivotick-sidebar-collapse-button-expand {
+        .pvt-sidebar-collapse-button-expand {
             display: none;
         }
     }
 }
 
-.pivotick-sidebar-collapsed .pivotick-sidebar-collapse-button-collapse {
+.pvt-sidebar-collapsed .pvt-sidebar-collapse-button-collapse {
     display: none !important;
 }
 
-.pivotick-sidebar-collapsed .pivotick-sidebar-collapse-button-expand {
+.pvt-sidebar-collapsed .pvt-sidebar-collapse-button-expand {
     display: flex !important;
 }

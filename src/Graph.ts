@@ -9,6 +9,7 @@ import type { GraphOptions, GraphData, RelaxedGraphData } from './interfaces/Gra
 import type { GraphUI } from './interfaces/GraphUI'
 import type { InterractionCallbacks } from './interfaces/InterractionCallbacks'
 import type { LayoutOptions } from './interfaces/LayoutOptions'
+import { generateSafeDomId } from './utils/ElementCreation'
 
 
 export class Graph {
@@ -21,6 +22,7 @@ export class Graph {
     public simulation: Simulation
     /** @private */
     private options: GraphOptions
+    private app_id: string
 
     /**
      * Initializes a graph inside the specified container using the provided data and options.
@@ -66,7 +68,8 @@ export class Graph {
         }
         const UIManagerOptions = this.options.UI as GraphUI
         const appContainer = document.createElement('div')
-        appContainer.id = 'pivotick-app'
+        this.app_id = generateSafeDomId(8, 'pivotick-app-')
+        appContainer.id = this.app_id
         appContainer.classList.add('pivotick')
         container.appendChild(appContainer)
 

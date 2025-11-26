@@ -91,7 +91,7 @@ export class GraphControls implements UIElement {
     private layoutTypeOptions = [
         {
             root: {
-                id: 'pivotick-graphcontrols-layout-organic',
+                id: 'pvt-graphcontrols-layout-organic',
                 class: '',
                 title: 'Change Graph Layout to Organic',
                 svgIcon: graphControlLayoutOrganic,
@@ -101,7 +101,7 @@ export class GraphControls implements UIElement {
             } as GraphLayoutOption,
             children: [
                 {
-                    id: 'pivotick-graphcontrols-layout-organic-5',
+                    id: 'pvt-graphcontrols-layout-organic-5',
                     class: '',
                     title: 'Run Organic Layout for 5 seconds. Or until it stabilises',
                     svgIcon: timeDuration5,
@@ -110,7 +110,7 @@ export class GraphControls implements UIElement {
                     },
                 },
                 {
-                    id: 'pivotick-graphcontrols-layout-organic-10',
+                    id: 'pvt-graphcontrols-layout-organic-10',
                     class: '',
                     title: 'Run Organic Layout for 10 seconds. Or until it stabilises',
                     svgIcon: timeDuration10,
@@ -119,7 +119,7 @@ export class GraphControls implements UIElement {
                     },
                 },
                 {
-                    id: 'pivotick-graphcontrols-layout-organic-15',
+                    id: 'pvt-graphcontrols-layout-organic-15',
                     class: '',
                     title: 'Run Organic Layout for 15 seconds. Or until it stabilises',
                     svgIcon: timeDuration15,
@@ -131,7 +131,7 @@ export class GraphControls implements UIElement {
         },
         {
             root: {
-                id: 'pivotick-graphcontrols-layout-tree-v',
+                id: 'pvt-graphcontrols-layout-tree-v',
                 class: '',
                 title: 'Change Graph Layout to Vertical Tree',
                 svgIcon: graphControlLayoutTreeV,
@@ -141,7 +141,7 @@ export class GraphControls implements UIElement {
             } as GraphLayoutOption,
             children: [
                 {
-                    id: 'pivotick-graphcontrols-layout-tree-v-FirstZeroInDegree',
+                    id: 'pvt-graphcontrols-layout-tree-v-FirstZeroInDegree',
                     class: '',
                     title: 'Pick the first valid 0 in-degree node',
                     svgIcon: firstValidNode,
@@ -150,7 +150,7 @@ export class GraphControls implements UIElement {
                     },
                 },
                 {
-                    id: 'pivotick-graphcontrols-layout-tree-v-MaxReachability',
+                    id: 'pvt-graphcontrols-layout-tree-v-MaxReachability',
                     class: '',
                     title: 'Pick the most connected node based on the reachability to others',
                     svgIcon: mostConnectedNode,
@@ -159,7 +159,7 @@ export class GraphControls implements UIElement {
                     },
                 },
                 {
-                    id: 'pivotick-graphcontrols-layout-tree-v-MinMaxDistance',
+                    id: 'pvt-graphcontrols-layout-tree-v-MinMaxDistance',
                     class: '',
                     title: 'Minimize max distance by trying to balance subtree',
                     svgIcon: balancedDistanced,
@@ -168,7 +168,7 @@ export class GraphControls implements UIElement {
                     },
                 },
                 {
-                    id: 'pivotick-graphcontrols-layout-tree-v-MinHeight',
+                    id: 'pvt-graphcontrols-layout-tree-v-MinHeight',
                     class: '',
                     title: 'Pick node minimizing tree height',
                     svgIcon: minHeight,
@@ -177,7 +177,7 @@ export class GraphControls implements UIElement {
                     },
                 },
                 {
-                    id: 'pivotick-graphcontrols-layout-tree-v-FlipEdgeDirection',
+                    id: 'pvt-graphcontrols-layout-tree-v-FlipEdgeDirection',
                     class: '',
                     title: 'Flip the direction of all edges, then pick the most connected node based on the reachability to others',
                     svgIcon: flipEdgeDirection,
@@ -189,7 +189,7 @@ export class GraphControls implements UIElement {
         },
         {
             root: {
-                id: 'pivotick-graphcontrols-layout-tree-h',
+                id: 'pvt-graphcontrols-layout-tree-h',
                 class: '',
                 title: 'Change Graph Layout to Horizontal Tree',
                 svgIcon: graphControlLayoutTreeH,
@@ -199,7 +199,7 @@ export class GraphControls implements UIElement {
             } as GraphLayoutOption,
             children: [
                 {
-                    id: 'pivotick-graphcontrols-layout-tree-h-FirstZeroInDegree',
+                    id: 'pvt-graphcontrols-layout-tree-h-FirstZeroInDegree',
                     class: '',
                     title: 'Pick the first valid 0 in-degree node',
                     svgIcon: firstValidNode,
@@ -208,7 +208,7 @@ export class GraphControls implements UIElement {
                     },
                 },
                 {
-                    id: 'pivotick-graphcontrols-layout-tree-h-MaxReachability',
+                    id: 'pvt-graphcontrols-layout-tree-h-MaxReachability',
                     class: '',
                     title: 'Pick the most connected node based on the reachability to others',
                     svgIcon: mostConnectedNode,
@@ -217,7 +217,7 @@ export class GraphControls implements UIElement {
                     },
                 },
                 {
-                    id: 'pivotick-graphcontrols-layout-tree-h-MinMaxDistance',
+                    id: 'pvt-graphcontrols-layout-tree-h-MinMaxDistance',
                     class: '',
                     title: 'Minimize max distance by trying to balance subtree',
                     svgIcon: balancedDistanced,
@@ -226,7 +226,7 @@ export class GraphControls implements UIElement {
                     },
                 },
                 {
-                    id: 'pivotick-graphcontrols-layout-tree-h-MinHeight',
+                    id: 'pvt-graphcontrols-layout-tree-h-MinHeight',
                     class: '',
                     title: 'Pick node minimizing tree height',
                     svgIcon: minHeight,
@@ -235,7 +235,7 @@ export class GraphControls implements UIElement {
                     },
                 },
                 {
-                    id: 'pivotick-graphcontrols-layout-tree-h-FlipEdgeDirection',
+                    id: 'pvt-graphcontrols-layout-tree-h-FlipEdgeDirection',
                     class: '',
                     title: 'Flip the direction of all edges, then pick the most connected node based on the reachability to others',
                     svgIcon: flipEdgeDirection,
@@ -247,7 +247,7 @@ export class GraphControls implements UIElement {
         },
         {
             root: {
-                id: 'pivotick-graphcontrols-layout-tree-r',
+                id: 'pvt-graphcontrols-layout-tree-r',
                 class: '',
                 title: 'Change Graph Layout to Radial Tree',
                 svgIcon: graphControlLayoutTreeR,
@@ -257,7 +257,7 @@ export class GraphControls implements UIElement {
             } as GraphLayoutOption,
             children: [
                 {
-                    id: 'pivotick-graphcontrols-layout-tree-r-FirstZeroInDegree',
+                    id: 'pvt-graphcontrols-layout-tree-r-FirstZeroInDegree',
                     class: '',
                     title: 'Pick the first valid 0 in-degree node',
                     svgIcon: firstValidNode,
@@ -266,7 +266,7 @@ export class GraphControls implements UIElement {
                     },
                 },
                 {
-                    id: 'pivotick-graphcontrols-layout-tree-r-MaxReachability',
+                    id: 'pvt-graphcontrols-layout-tree-r-MaxReachability',
                     class: '',
                     title: 'Pick the most connected node based on the reachability to others',
                     svgIcon: mostConnectedNode,
@@ -275,7 +275,7 @@ export class GraphControls implements UIElement {
                     },
                 },
                 {
-                    id: 'pivotick-graphcontrols-layout-tree-r-MinMaxDistance',
+                    id: 'pvt-graphcontrols-layout-tree-r-MinMaxDistance',
                     class: '',
                     title: 'Minimize max distance by trying to balance subtree',
                     svgIcon: balancedDistanced,
@@ -284,7 +284,7 @@ export class GraphControls implements UIElement {
                     },
                 },
                 {
-                    id: 'pivotick-graphcontrols-layout-tree-r-MinHeight',
+                    id: 'pvt-graphcontrols-layout-tree-r-MinHeight',
                     class: '',
                     title: 'Pick node minimizing tree height',
                     svgIcon: minHeight,
@@ -293,7 +293,7 @@ export class GraphControls implements UIElement {
                     },
                 },
                 {
-                    id: 'pivotick-graphcontrols-layout-tree-r-FlipEdgeDirection',
+                    id: 'pvt-graphcontrols-layout-tree-r-FlipEdgeDirection',
                     class: '',
                     title: 'Flip the direction of all edges, then pick the most connected node based on the reachability to others',
                     svgIcon: flipEdgeDirection,
@@ -317,12 +317,12 @@ export class GraphControls implements UIElement {
 
         const template = document.createElement('template')
         template.innerHTML = `
-  <div class="pivotick-graphcontrols">
-    <div class="pivotick-graphcontrols-panel pivotick-graphcontrols-layout"></div>
-    <div class="pivotick-graphcontrols-panel pivotick-graphcontrols-selection">
-        <div class="pivotick-graphcontrols-selection-title"></div>
-        <div class="pivotick-graphcontrols-selection-topbar"></div>
-        <div class="pivotick-graphcontrols-selection-mainmenu"></div>
+  <div class="pvt-graphcontrols">
+    <div class="pvt-graphcontrols-panel pvt-graphcontrols-layout"></div>
+    <div class="pvt-graphcontrols-panel pvt-graphcontrols-selection">
+        <div class="pvt-graphcontrols-selection-title"></div>
+        <div class="pvt-graphcontrols-selection-topbar"></div>
+        <div class="pvt-graphcontrols-selection-mainmenu"></div>
     </div>
   </div>
 `
@@ -338,17 +338,17 @@ export class GraphControls implements UIElement {
 
     afterMount() {
         if (!this.navigation) return
-        this.selectionMenu = this.navigation.querySelector('.pivotick-graphcontrols-selection')!
-        this.layoutMenu = this.navigation.querySelector('.pivotick-graphcontrols-layout')!
+        this.selectionMenu = this.navigation.querySelector('.pvt-graphcontrols-selection')!
+        this.layoutMenu = this.navigation.querySelector('.pvt-graphcontrols-layout')!
 
         this.createLayoutOptionAndBind(this.layoutTypeOptions)
     }
 
     graphReady() {
         if (!this.navigation) return
-        const treeVButton = this.navigation.querySelector('#pivotick-graphcontrols-layout-tree-v')
-        const treeHButton = this.navigation.querySelector('#pivotick-graphcontrols-layout-tree-h')
-        const radialButton = this.navigation.querySelector('#pivotick-graphcontrols-layout-tree-radial')
+        const treeVButton = this.navigation.querySelector('#pvt-graphcontrols-layout-tree-v')
+        const treeHButton = this.navigation.querySelector('#pvt-graphcontrols-layout-tree-h')
+        const radialButton = this.navigation.querySelector('#pvt-graphcontrols-layout-tree-radial')
 
         const nodes = this.uiManager.graph.getNodes()
         const edges = this.uiManager.graph.getEdges()
@@ -394,9 +394,9 @@ export class GraphControls implements UIElement {
     private populateNodeSelectionContainer(fullNodeSelection: NodeSelection<unknown>[]): void {
         if (!this.navigation || !this.selectionMenu) return
 
-        const title = this.selectionMenu.querySelector('.pivotick-graphcontrols-selection-title')!
-        const topbar = this.selectionMenu.querySelector('.pivotick-graphcontrols-selection-topbar')!
-        const mainMenu = this.selectionMenu.querySelector('.pivotick-graphcontrols-selection-mainmenu')!
+        const title = this.selectionMenu.querySelector('.pvt-graphcontrols-selection-title')!
+        const topbar = this.selectionMenu.querySelector('.pvt-graphcontrols-selection-topbar')!
+        const mainMenu = this.selectionMenu.querySelector('.pvt-graphcontrols-selection-mainmenu')!
 
         const nodes = this.getNodesFromSelection(fullNodeSelection)
         title.innerHTML = ''
@@ -411,9 +411,9 @@ export class GraphControls implements UIElement {
     private clearSelectionContainer(): void {
         if (!this.navigation || !this.selectionMenu) return
 
-        const title = this.selectionMenu.querySelector('.pivotick-graphcontrols-selection-title')!
-        const topbar = this.selectionMenu.querySelector('.pivotick-graphcontrols-selection-topbar')!
-        const mainMenu = this.selectionMenu.querySelector('.pivotick-graphcontrols-selection-mainmenu')!
+        const title = this.selectionMenu.querySelector('.pvt-graphcontrols-selection-title')!
+        const topbar = this.selectionMenu.querySelector('.pvt-graphcontrols-selection-topbar')!
+        const mainMenu = this.selectionMenu.querySelector('.pvt-graphcontrols-selection-mainmenu')!
         title.innerHTML = ''
         topbar.innerHTML = ''
         mainMenu.innerHTML = ''
@@ -444,7 +444,7 @@ export class GraphControls implements UIElement {
             ])
             const layoutTypeMenu = this.createLayoutOptionMenu(subOptions)
             const fullLayoutMenu = createHtmlElement('div', {
-                class: 'pivotick-graphcontrols-layout-type-container',
+                class: 'pvt-graphcontrols-layout-type-container',
             }, [
                 layoutTypeRoot,
                 layoutTypeMenu,
@@ -467,7 +467,7 @@ export class GraphControls implements UIElement {
 
     private createLayoutOptionMenu(options: GraphLayoutOption[]): HTMLDivElement {
         const buttonContainer = createHtmlElement('div', {
-            class: ['pivotick-graphcontrols-layout-type-options']
+            class: ['pvt-graphcontrols-layout-type-options']
         })
 
         options.forEach((option: GraphLayoutOption) => {

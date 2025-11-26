@@ -1,4 +1,4 @@
-.pivotick-graphnavigation {
+.pvt-graphnavigation {
 
     button {
         border: none;
@@ -24,14 +24,14 @@
         }
     }
 
-    .pivotick-graphnavigation-zoom-fit {
+    .pvt-graphnavigation-zoom-fit {
         background-color: color-mix(in srgb, var(--pvt-bg) 80%, white);
         box-shadow: var(--pvt-graph-navigation-control-container-shadow);
         border-radius: 4px;
         margin-bottom: 6px;
     }
 
-    .pivotick-graphnavigation-zoom-controls {
+    .pvt-graphnavigation-zoom-controls {
         display: flex;
         flex-direction: column;
         background-color: color-mix(in srgb, var(--pvt-bg) 80%, white);

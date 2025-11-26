@@ -171,7 +171,7 @@ export function createActionItem<TThis extends UIElement = UIElement>(thisContex
  * @param {number} length - Length of the random part (default: 8)
  * @returns {string} Random DOM-safe ID
  */
-export function generateSafeDomId(length = 8) {
+export function generateSafeDomId(length = 8, prefix = 'id-') {
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
     const chars = letters + '0123456789-_'
 
@@ -181,7 +181,7 @@ export function generateSafeDomId(length = 8) {
         id += chars.charAt(Math.floor(Math.random() * chars.length))
     }
 
-    return `id-${id}`
+    return `${prefix}${id}`
 }
 
 
