@@ -6,6 +6,13 @@
     --pvt-bg: #ffffff;
     --pvt-border-color: #ccc;
 
+    --pvt-theme-primary: #2563EB;
+    --pvt-theme-secondary: #7C3AED;
+    --pvt-theme-info: #25B6EB;
+    --pvt-theme-warning: #F59E0B;
+    --pvt-theme-danger: #DC2626;
+    --pvt-theme-success: #16A34A;
+
     --pvt-text-color-0: #fff;
     --pvt-text-color-1: #e0e0e0;
     --pvt-text-color-2: #bbb;
@@ -13,12 +20,12 @@
     --pvt-text-color-4: #666;
     --pvt-text-color-5: #333;
     --pvt-text-color-6: #000;
-    --pvt-text-color-primary: #2563EB;
-    --pvt-text-color-secondary: #7C3AED;
-    --pvt-text-color-info: #25B6EB;
-    --pvt-text-color-warning: #F59E0B;
-    --pvt-text-color-danger: #DC2626;
-    --pvt-text-color-success: #16A34A;
+    --pvt-text-color-primary: var(--pvt-theme-primary);
+    --pvt-text-color-secondary: var(--pvt-theme-secondary);
+    --pvt-text-color-info: var(--pvt-theme-info);
+    --pvt-text-color-warning: var(--pvt-theme-warning);
+    --pvt-text-color-danger: var(--pvt-theme-danger);
+    --pvt-text-color-success: var(--pvt-theme-success);
 
     --pvt-bg-color-0: #fff;
     --pvt-bg-color-1: #fafafa;
@@ -26,12 +33,12 @@
     --pvt-bg-color-3: #e6e6e6;
     --pvt-bg-color-4: #e0e0e0;
     --pvt-bg-color-5: #d6d6d6;
-    --pvt-bg-color-primary: #2563EB;
-    --pvt-bg-color-secondary: #7C3AED;
-    --pvt-bg-color-info: #25B6EB;
-    --pvt-bg-color-warning: #F59E0B;
-    --pvt-bg-color-danger: #DC2626;
-    --pvt-bg-color-success: #16A34A;
+    --pvt-bg-color-primary: var(--pvt-theme-primary);
+    --pvt-bg-color-secondary: var(--pvt-theme-secondary);
+    --pvt-bg-color-info: var(--pvt-theme-info);
+    --pvt-bg-color-warning: var(--pvt-theme-warning);
+    --pvt-bg-color-danger: var(--pvt-theme-danger);
+    --pvt-bg-color-success: var(--pvt-theme-success);
     --pvt-text-color-for-primary: #fff;
     --pvt-text-color-for-secondary: #fff;
     --pvt-text-color-for-info: #fff;
