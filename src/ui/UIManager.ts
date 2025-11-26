@@ -264,6 +264,11 @@ export class UIManager {
         return this.options
     }
 
+    public getAppContainer(): HTMLElement {
+        const appID = this.graph.getAppID()
+        return document.getElementById(appID)!
+    }
+
     public callGraphReady() { // TODO: Instead, these should register an afterMount callback
         this.graphControls?.graphReady()
         this.sidebar?.graphReady()

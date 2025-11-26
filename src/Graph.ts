@@ -492,6 +492,13 @@ export class Graph {
     }
 
     /**
+     * The ID of the app
+     */
+    getAppID(): string {
+        return this.app_id
+    }
+
+    /**
      * @private
      */
     updateLayoutProgress(progress: number, elapsedTime: number): void {

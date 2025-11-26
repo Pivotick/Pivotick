@@ -437,7 +437,8 @@ export class Tooltip implements UIElement {
         clonedTooltip.prepend(topbar)
 
 
-        makeDraggable(clonedTooltip, topbar, {
+        const appBox = this.uiManager.getAppContainer()
+        makeDraggable(clonedTooltip, topbar, appBox, {
             onDragStart: (_e: MouseEvent, pinnedTt: HTMLElement) => {
                 this.shadowlinkBoundingBoxesMap.set(pinnedTt, [
                     pinnedTt.getBoundingClientRect(),

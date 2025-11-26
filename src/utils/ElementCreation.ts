@@ -241,7 +241,7 @@ interface DraggableCallbacks {
     onDrag?: (e: MouseEvent, draggableEl: HTMLElement) => void
     onDragStop?: (e: MouseEvent, draggableEl: HTMLElement) => void
 }
-export function makeDraggable(draggableEl: HTMLElement, handleEl: HTMLElement, callbacks: DraggableCallbacks = {}) {
+export function makeDraggable(draggableEl: HTMLElement, handleEl: HTMLElement, box: HTMLElement, callbacks: DraggableCallbacks = {}) {
     let isDragging = false
     let startX = 0, startY = 0, initialX = 0, initialY = 0
     let bbox: DOMRect | null = null
@@ -259,7 +259,7 @@ export function makeDraggable(draggableEl: HTMLElement, handleEl: HTMLElement, c
         initialX = draggableEl.offsetLeft
         initialY = draggableEl.offsetTop
         bbox = draggableEl.getBoundingClientRect()
-        appBox =  document.getElementById('pivotick-app')!.getBoundingClientRect()
+        appBox = box.getBoundingClientRect()
         callbacks.onDragStart?.(e, draggableEl)
         document.addEventListener('mousemove', onMouseMove, { signal })
         document.addEventListener('mouseup', (e: MouseEvent) => {
