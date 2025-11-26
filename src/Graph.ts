@@ -67,7 +67,7 @@ export class Graph {
         const UIManagerOptions = this.options.UI as GraphUI
         const appContainer = document.createElement('div')
         appContainer.id = 'pivotick-app'
-        appContainer.classList.add('pivotick-graph-container')
+        appContainer.classList.add('pivotick')
         container.appendChild(appContainer)
 
         this.UIManager = new UIManager(this, appContainer, UIManagerOptions)
