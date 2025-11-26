@@ -4,14 +4,14 @@
 .pvt-toolbar {
     box-shadow: var(--pvt-sidebar-layout-shadow-bottom);
 
-    .pvt-toolbar {
+    .pvt-toolbar-elements {
         display: flex;
         flex-direction: row;
         gap: 4px;
         align-items: center;
         margin: 2px 6px;
 
-        .pivotick-searchbox {
+        .pvt-searchbox {
             flex-grow: 1;
             position: relative;
 
@@ -60,18 +60,18 @@
             }
         }
 
-        .pivotick-filter {
+        .pvt-filter {
             display: flex;
             flex-direction: row;
             flex-wrap: nowrap;
             gap: 4px;
 
-            button.pivotick-button-filter {
+            button.pvt-button-filter {
                 @include buttons.button-outline-secondary;
                 padding: 0.5rem 0.5rem;
             }
 
-            div.pivotick-undoredo-group {
+            div.pvt-undoredo-group {
                 display: inline-flex;
                 flex-direction: row;
                 flex-wrap: nowrap;

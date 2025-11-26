@@ -50,7 +50,7 @@ export class SelectionBox extends AbstractSelectionBox {
             return // No matching key
         }
 
-        this.svg.querySelectorAll('.selection-rectangle').forEach(el => el.remove())
+        this.svg.querySelectorAll('.pvt-selection-rectangle').forEach(el => el.remove())
 
         this.isSelecting = true
         const { x, y } = this.getSvgPoint(e)
@@ -62,7 +62,7 @@ export class SelectionBox extends AbstractSelectionBox {
         this.rect.setAttribute('y', y.toString())
         this.rect.setAttribute('width', '0')
         this.rect.setAttribute('height', '0')
-        this.rect.setAttribute('class', 'selection-rectangle')
+        this.rect.setAttribute('class', 'pvt-selection-rectangle')
 
         this.selectionBoxGroup.appendChild(this.rect)
 

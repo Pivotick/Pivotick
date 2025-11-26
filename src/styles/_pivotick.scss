@@ -14,7 +14,7 @@
 }
 
 
-.pivotick-loading-progress-bar {
+.pvt-loading-progress-bar {
     &.hidden {
         visibility: hidden;
     }
@@ -47,7 +47,7 @@
     }
 }
 
-dl.pivotick-property-list {
+dl.pvt-property-list {
     margin: 0;
     background: #fff;
     font-size: 0.95em;
@@ -56,12 +56,12 @@ dl.pivotick-property-list {
     grid-template-columns: fit-content(90px) 1fr;
     gap: 8px 12px;
 
-    .pivotick-property-row {
+    .pvt-property-row {
         display: contents;
         padding: 0.25em 0;
         align-items: center;
 
-        .pivotick-property-name {
+        .pvt-property-name {
             padding: 2px 4px;
             font-size: 0.9rem;
             font-weight: 300;
@@ -74,7 +74,7 @@ dl.pivotick-property-list {
             text-overflow: ellipsis;
         }
 
-        .pivotick-property-value {
+        .pvt-property-value {
             margin-inline-start: 0;
             font-size: 0.875rem;
             font-weight: 400;
@@ -100,7 +100,7 @@ dl.pivotick-property-list {
     }
 }
 
-.pivotick-node-selected-highlight {
+.pvt-node-selected-highlight {
     stroke: var(--pvt-node-selected-stroke);
     stroke-width: var(--pvt-node-selected-stroke-width);
     stroke-opacity: var(--pvt-edge-selected-stroke-opacity);
@@ -108,7 +108,7 @@ dl.pivotick-property-list {
     animation: var(--pvt-node-selected-animation);
 }
 
-.edge-group {
+.pvt-edge-group {
     path {
         stroke: var(--pvt-edge-stroke);
         stroke-width: var(--pvt-edge-stroke-width);
@@ -159,7 +159,7 @@ dl.pivotick-property-list {
     }
 }
 
-.node-shape {
+.pvt-node {
     // transition: transform 0.3s ease;
 
     text.icon {
@@ -182,12 +182,12 @@ dl.pivotick-property-list {
     }
 }
 
-.selection-rectangle {
-    fill: var(--pvt-selection-rectangle-fill);
-    stroke: var(--pvt-selection-rectangle-stroke);
+.pvt-selection-rectangle {
+    fill: var(--pvt-pvt-selection-rectangle-fill);
+    stroke: var(--pvt-pvt-selection-rectangle-stroke);
     stroke-width: 2px;
 }
 
-.pivotick-icon.fixed-width {
+.pvt-icon.fixed-width {
     width: 1em;
 }

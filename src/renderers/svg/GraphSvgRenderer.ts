@@ -303,14 +303,14 @@ export class GraphSvgRenderer extends GraphRenderer {
     public dataUpdate(): void {
         const nodes = this.graph.getMutableNodes()
         this.nodeGroupSelection = this.nodeGroup
-            .selectAll<SVGGElement, Node>('g.node-shape')
+            .selectAll<SVGGElement, Node>('g.pvt-node')
 
         this.nodeSelection = this.nodeGroupSelection
             .data(nodes, (node: Node) => node.id)
             .join(
                 (enter) => {
                     return enter
-                        .append('g').classed('node-shape', true)
+                        .append('g').classed('pvt-node', true)
                         .each((node: Node, i: number, nodes: ArrayLike<SVGGElement>) => {
                             node.clearDirty()
                             const selection = d3Select<SVGGElement, Node>(nodes[i])
@@ -333,13 +333,13 @@ export class GraphSvgRenderer extends GraphRenderer {
 
         const edges = this.graph.getMutableEdges()
         this.edgeGroupSelection = this.edgeGroup
-            .selectAll<SVGPathElement, Edge>('g.edge-group')
+            .selectAll<SVGPathElement, Edge>('g.pvt-edge-group')
 
         this.edgeSelection = this.edgeGroupSelection
             .data(edges, (edge: Edge) => edge.id)
             .join(
                 (enter) => enter
-                    .append('g').classed('edge-group', true)
+                    .append('g').classed('pvt-edge-group', true)
                     .each((edge: Edge, i: number, edges: ArrayLike<SVGGElement>) => {
                         edge.clearDirty()
                         const selection = d3Select<SVGGElement, Edge>(edges[i])

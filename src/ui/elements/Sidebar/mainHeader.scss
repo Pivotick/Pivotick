@@ -1,4 +1,4 @@
-.pivotick-mainheader-panel {
+.pvt-mainheader-panel {
     min-height: 70px;
     display: flex;
     justify-content: flex-start;
@@ -17,7 +17,7 @@
         align-items: center;
         gap: 10px;
 
-        .pivotick-mainheader-nodepreview {
+        .pvt-mainheader-nodepreview {
             flex-shrink: 0;
             width: 48px;
             height: 48px;
@@ -28,20 +28,20 @@
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), inset 0 0 0 1px hsla(0, 0%, 0%, .05);
 
-            .pivotick-mainheader-icon {
+            .pvt-mainheader-icon {
                 width: 42px;
                 height: 42px;
             }
         }
 
-        .pivotick-mainheader-nodeinfo {
+        .pvt-mainheader-nodeinfo {
             flex-grow: 1;
             display: flex;
             flex-direction: column;
             justify-content: center;
             font-family: 'Segoe UI', sans-serif;
 
-            .pivotick-mainheader-nodeinfo-name {
+            .pvt-mainheader-nodeinfo-name {
                 font-size: 16px;
                 font-weight: 600;
                 color: var(--pvt-text-color-6);
@@ -57,7 +57,7 @@
                 user-select: all;
             }
 
-            .pivotick-mainheader-nodeinfo-subtitle {
+            .pvt-mainheader-nodeinfo-subtitle {
                 font-size: 12px;
                 color: var(--pvt-text-color-5);
                 text-overflow: ellipsis;
@@ -75,7 +75,7 @@
                 user-select: all;
             }
 
-            .pivotick-mainheader-nodeinfo-action {
+            .pvt-mainheader-nodeinfo-action {
                 flex-shrink: 1;
             }
         }

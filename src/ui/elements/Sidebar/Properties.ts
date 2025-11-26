@@ -34,12 +34,12 @@ export class SidebarProperties implements UIElement {
 
         const template = `
 <div class="enter-ready">
-    <div class="pivotick-properties-header-panel pvt-sidebar-header-panel"></div>
-    <div class="pivotick-properties-body-panel pvt-sidebar-body-panel"></div>
+    <div class="pvt-properties-header-panel pvt-sidebar-header-panel"></div>
+    <div class="pvt-properties-body-panel pvt-sidebar-body-panel"></div>
 </div>`
         this.panel = createHtmlTemplate(template) as HTMLDivElement
-        this.header = this.panel.querySelector('.pivotick-properties-header-panel') as HTMLDivElement
-        this.body = this.panel.querySelector('.pivotick-properties-body-panel') as HTMLDivElement
+        this.header = this.panel.querySelector('.pvt-properties-header-panel') as HTMLDivElement
+        this.body = this.panel.querySelector('.pvt-properties-body-panel') as HTMLDivElement
 
         rootContainer.appendChild(this.panel)
     }
@@ -114,7 +114,7 @@ export class SidebarProperties implements UIElement {
         }
 
         const template = `
-<div class="pivotick-properties-container">
+<div class="pvt-properties-container">
     <div class="dl-container">
     </div>
 </div>`
@@ -141,7 +141,7 @@ export class SidebarProperties implements UIElement {
         }
 
         const template = `
-<div class="pivotick-properties-container">
+<div class="pvt-properties-container">
     <div class="dl-container">
     </div>
 </div>`
@@ -170,13 +170,13 @@ export class SidebarProperties implements UIElement {
         }
 
         const template = `
-<div class="pivotick-properties-container">
+<div class="pvt-properties-container">
     <div class="">
-        <div class="pivotick-aggregated-properties"></div>
+        <div class="pvt-aggregated-properties"></div>
     </div>
 </div>`
         const propertiesContainer = createHtmlTemplate(template) as HTMLDivElement
-        const div = propertiesContainer.querySelector('div.pivotick-aggregated-properties') as HTMLDivElement
+        const div = propertiesContainer.querySelector('div.pvt-aggregated-properties') as HTMLDivElement
 
         if (div) {
             const allProperties: PropertyEntry[][] = []
@@ -204,13 +204,13 @@ export class SidebarProperties implements UIElement {
         }
 
         const template = `
-<div class="pivotick-properties-container">
+<div class="pvt-properties-container">
     <div class="">
-        <div class="pivotick-aggregated-properties"></div>
+        <div class="pvt-aggregated-properties"></div>
     </div>
 </div>`
         const propertiesContainer = createHtmlTemplate(template) as HTMLDivElement
-        const div = propertiesContainer.querySelector('div.pivotick-aggregated-properties') as HTMLDivElement
+        const div = propertiesContainer.querySelector('div.pvt-aggregated-properties') as HTMLDivElement
 
         if (div) {
             const allProperties: PropertyEntry[][] = []
@@ -232,13 +232,13 @@ export class SidebarProperties implements UIElement {
 
         for (const [propName, valueCountMap] of sortedAggregatedProperties) {
             const section = createHtmlElement('div', {
-                class: 'pivotick-aggregated-property-section'
+                class: 'pvt-aggregated-property-section'
             })
             const sectionTitle = createHtmlElement('span', {
-                class: 'pivotick-aggregated-property-title'
+                class: 'pvt-aggregated-property-title'
             }, [`.${propName}`])
             const container = createHtmlElement('div', {
-                class: 'pivotick-aggregated-property-container',
+                class: 'pvt-aggregated-property-container',
             })
 
             let i = 0
@@ -260,12 +260,12 @@ export class SidebarProperties implements UIElement {
                 const actionButtons = !this.hasSpecialHighlighting(value) ? this.genActionButtons(propName, value) : ''
                 const row = createHtmlElement('div',
                     {
-                        class: 'pivotick-aggregated-property-row',
+                        class: 'pvt-aggregated-property-row',
                     },
                     [
                         createHtmlElement('span', {
                             class: [
-                                'pivotick-aggregated-property-value',
+                                'pvt-aggregated-property-value',
                                 !this.hasSpecialHighlighting(value) ? 'code-container' : '',
                             ]
                         }, [
@@ -274,7 +274,7 @@ export class SidebarProperties implements UIElement {
                                 actionButtons
                             ])
                         ]),
-                        createHtmlElement('span', { class: 'pivotick-aggregated-property-count' }, [
+                        createHtmlElement('span', { class: 'pvt-aggregated-property-count' }, [
                             createInlineBar(count, selectedNodeCount)
                         ]),
                     ]
@@ -303,7 +303,7 @@ export class SidebarProperties implements UIElement {
                 textNode = '- Unique values -'
                 title = 'All other values are unique'
             }
-            return createHtmlElement('span', { class: 'pivotick-aggregated-property-value-dim', title: title }, [
+            return createHtmlElement('span', { class: 'pvt-aggregated-property-value-dim', title: title }, [
                 textNode
             ])
         }
@@ -347,7 +347,7 @@ export class SidebarProperties implements UIElement {
             this.uiManager.graph.renderer.getGraphInteraction().removeNodesFromSelection(matchingNodes)
         })
 
-        const container = createHtmlElement('div', { class: 'pivotick-aggregated-property-actions' }, [
+        const container = createHtmlElement('div', { class: 'pvt-aggregated-property-actions' }, [
             buttonKeep,
             buttonExclude
         ])

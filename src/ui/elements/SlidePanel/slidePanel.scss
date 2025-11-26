@@ -19,7 +19,7 @@
         flex-wrap: nowrap;
         align-items: center;
 
-        button.pivotick-close-button {
+        button.pvt-close-button {
             @include buttons.button-outline-danger;
             padding: 0.25rem 0.5rem;
             align-self: flex-start;

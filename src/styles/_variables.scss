@@ -95,8 +95,8 @@ $toast-text-success: text-color($success);
     --pvt-graph-navigation-control-container-shadow:
         rgba(0, 0, 0, 0.22) 0px 0px 4px,
         rgba(0, 0, 0, 0.30) 0px 1px 2px;
-    --pvt-selection-rectangle-fill: color-mix(in srgb, var(--pvt-bg-color-primary) 20%, #ffffff00);
-    --pvt-selection-rectangle-stroke: color-mix(in srgb, var(--pvt-bg-color-primary) 80%, #ffffff00);
+    --pvt-pvt-selection-rectangle-fill: color-mix(in srgb, var(--pvt-bg-color-primary) 20%, #ffffff00);
+    --pvt-pvt-selection-rectangle-stroke: color-mix(in srgb, var(--pvt-bg-color-primary) 80%, #ffffff00);
 
     /* Node defaults */
     --pvt-node-color: #007acc;

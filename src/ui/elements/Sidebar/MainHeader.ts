@@ -72,21 +72,21 @@ export class SidebarMainHeader implements UIElement {
         const fixedPreviewSize = 42
         const template = `
 <div class="enter-ready">
-    <div class="pivotick-mainheader-nodepreview">
-        <svg class="pivotick-mainheader-icon" width="${fixedPreviewSize}" height="${fixedPreviewSize}" viewBox="0 0 ${fixedPreviewSize} ${fixedPreviewSize}" preserveAspectRatio="xMidYMid meet"></svg>
+    <div class="pvt-mainheader-nodepreview">
+        <svg class="pvt-mainheader-icon" width="${fixedPreviewSize}" height="${fixedPreviewSize}" viewBox="0 0 ${fixedPreviewSize} ${fixedPreviewSize}" preserveAspectRatio="xMidYMid meet"></svg>
     </div>
-    <div class="pivotick-mainheader-nodeinfo">
-        <div class="pivotick-mainheader-nodeinfo-name"></div>
-        <div class="pivotick-mainheader-nodeinfo-subtitle"></div>
+    <div class="pvt-mainheader-nodeinfo">
+        <div class="pvt-mainheader-nodeinfo-name"></div>
+        <div class="pvt-mainheader-nodeinfo-subtitle"></div>
     </div>
-    <div class="pivotick-mainheader-nodeinfo-action">
+    <div class="pvt-mainheader-nodeinfo-action">
     </div>
 </div>`
         const mainheaderContent = createHtmlTemplate(template) as HTMLDivElement
-        const iconElem = mainheaderContent.querySelector('.pivotick-mainheader-icon')
-        const nameElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-name')
-        const subtitleElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-subtitle')
-        // const _actionElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-action')
+        const iconElem = mainheaderContent.querySelector('.pvt-mainheader-icon')
+        const nameElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-name')
+        const subtitleElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-subtitle')
+        // const _actionElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-action')
 
         if (iconElem) {
             if (element && element instanceof SVGGElement) {
@@ -125,20 +125,20 @@ export class SidebarMainHeader implements UIElement {
         this.panel.innerHTML = ''
         const fixedPreviewSize = 42
         const template = `<div class="enter-ready">
-<div class="pivotick-mainheader-nodepreview">
+<div class="pvt-mainheader-nodepreview">
     ${graphEdgeIcon(fixedPreviewSize)}
 </div>
-<div class="pivotick-mainheader-nodeinfo">
-    <div class="pivotick-mainheader-nodeinfo-name"></div>
-    <div class="pivotick-mainheader-nodeinfo-subtitle"></div>
+<div class="pvt-mainheader-nodeinfo">
+    <div class="pvt-mainheader-nodeinfo-name"></div>
+    <div class="pvt-mainheader-nodeinfo-subtitle"></div>
 </div>
-<div class="pivotick-mainheader-nodeinfo-action">
+<div class="pvt-mainheader-nodeinfo-action">
 </div>
 </div>`
         const mainheaderContent = createHtmlTemplate(template) as HTMLDivElement
-        const nameElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-name')
-        const subtitleElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-subtitle')
-        // const actionElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-action')
+        const nameElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-name')
+        const subtitleElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-subtitle')
+        // const actionElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-action')
 
         if (nameElem) {
             nameElem.textContent = edgeNameGetter(edge, this.uiManager.getOptions().mainHeader)
@@ -165,21 +165,21 @@ export class SidebarMainHeader implements UIElement {
         this.panel.innerHTML = ''
         const fixedPreviewSize = 42
         const template = `<div class="enter-ready">
-    <div class="pivotick-mainheader-nodepreview">
-        <svg class="pivotick-mainheader-icon" width="${fixedPreviewSize}" height="${fixedPreviewSize}" viewBox="0 0 ${fixedPreviewSize} ${fixedPreviewSize}" preserveAspectRatio="xMidYMid meet"></svg>
+    <div class="pvt-mainheader-nodepreview">
+        <svg class="pvt-mainheader-icon" width="${fixedPreviewSize}" height="${fixedPreviewSize}" viewBox="0 0 ${fixedPreviewSize} ${fixedPreviewSize}" preserveAspectRatio="xMidYMid meet"></svg>
     </div>
-    <div class="pivotick-mainheader-nodeinfo">
-        <div class="pivotick-mainheader-nodeinfo-name"></div>
-        <div class="pivotick-mainheader-nodeinfo-subtitle"></div>
+    <div class="pvt-mainheader-nodeinfo">
+        <div class="pvt-mainheader-nodeinfo-name"></div>
+        <div class="pvt-mainheader-nodeinfo-subtitle"></div>
     </div>
-    <div class="pivotick-mainheader-nodeinfo-action">
+    <div class="pvt-mainheader-nodeinfo-action">
     </div>
 </div>`
         const mainheaderContent = createHtmlTemplate(template) as HTMLDivElement
-        const iconElem = mainheaderContent.querySelector('.pivotick-mainheader-icon')
-        const nameElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-name')
-        const subtitleElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-subtitle')
-        // const actionElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-action')
+        const iconElem = mainheaderContent.querySelector('.pvt-mainheader-icon')
+        const nameElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-name')
+        const subtitleElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-subtitle')
+        // const actionElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-action')
 
         if (iconElem) {
             const selectionIconTemplate = graphMultiSelectNode(fixedPreviewSize)
@@ -210,20 +210,20 @@ export class SidebarMainHeader implements UIElement {
         this.panel.innerHTML = ''
         const fixedPreviewSize = 42
         const template = `<div class="enter-ready">
-<div class="pivotick-mainheader-nodepreview">
+<div class="pvt-mainheader-nodepreview">
     ${graphEdgeIcon(fixedPreviewSize)}
 </div>
-<div class="pivotick-mainheader-nodeinfo">
-    <div class="pivotick-mainheader-nodeinfo-name"></div>
-    <div class="pivotick-mainheader-nodeinfo-subtitle"></div>
+<div class="pvt-mainheader-nodeinfo">
+    <div class="pvt-mainheader-nodeinfo-name"></div>
+    <div class="pvt-mainheader-nodeinfo-subtitle"></div>
 </div>
-<div class="pivotick-mainheader-nodeinfo-action">
+<div class="pvt-mainheader-nodeinfo-action">
 </div>
 </div>`
         const mainheaderContent = createHtmlTemplate(template) as HTMLDivElement
-        const nameElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-name')
-        const subtitleElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-subtitle')
-        // const actionElem = mainheaderContent.querySelector('.pivotick-mainheader-nodeinfo-action')
+        const nameElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-name')
+        const subtitleElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-subtitle')
+        // const actionElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-action')
 
         if (nameElem) {
             nameElem.textContent = `${edges.length} edges selected`

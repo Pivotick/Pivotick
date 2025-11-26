@@ -19,17 +19,17 @@ export class Toolbar implements UIElement {
         if (!container) return
 
         this.toolbar = document.createElement('div')
-        this.toolbar.className = 'pvt-toolbar'
+        this.toolbar.className = 'pvt-toolbar-elements'
 
         /** Searchbox */
         const template = document.createElement('template')
         template.innerHTML = `
-  <div class="pivotick-searchbox">
+  <div class="pvt-searchbox">
     <div class="input-container">
         <div class="icon-container">
             ${magnifyingGlass}
         </div>
-        <input type="search" id="pivotick-search" class="" placeholder="Search" required disabled />
+        <input type="search" id="pvt-search" class="" placeholder="Search" required disabled />
         <button type="submit" class="" disabled>Search</button>
     </div>
   </div>
@@ -41,25 +41,25 @@ export class Toolbar implements UIElement {
         /** Filter */
         const templateFilter = document.createElement('template')
         templateFilter.innerHTML = `
-  <div class="pivotick-filter">
-    <button id="pivotick-filter-button" class="pivotick-button-filter" disabled>
+  <div class="pvt-filter">
+    <button id="pvt-filter-button" class="pvt-button-filter" disabled>
         ${funel}
     </button>
     <div style="border-left: 1px solid color-mix(in srgb, var(--pvt-border-color) 80%, transparent);"></div>
-    <div class="pivotick-undoredo-group">
-        <button id="pivotick-undo-button" class="pivotick-button-undo" disabled>
+    <div class="pvt-undoredo-group">
+        <button id="pvt-undo-button" class="pvt-button-undo" disabled>
             ${undo}
         </button>
-        <button id="pivotick-redo-button" class="pivotick-button-redo" disabled>
+        <button id="pvt-redo-button" class="pvt-button-redo" disabled>
             ${redo}
         </button>
     </div>
   </div>
 `
         const filterContainer = templateFilter.content.firstElementChild as HTMLDivElement
-        this.filterButton = filterContainer.querySelector('#pivotick-filter-button') ?? undefined
-        this.undoButton = filterContainer.querySelector('#pivotick-undo-button') ?? undefined
-        this.redoButton = filterContainer.querySelector('#pivotick-redo-button') ?? undefined
+        this.filterButton = filterContainer.querySelector('#pvt-filter-button') ?? undefined
+        this.undoButton = filterContainer.querySelector('#pvt-undo-button') ?? undefined
+        this.redoButton = filterContainer.querySelector('#pvt-redo-button') ?? undefined
         this.toolbar.appendChild(filterContainer)
 
         container.appendChild(this.toolbar)

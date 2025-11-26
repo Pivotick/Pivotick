@@ -1,12 +1,12 @@
-.pivotick-properties-body-panel {
+.pvt-properties-body-panel {
 
-    .pivotick-aggregated-property-section {
+    .pvt-aggregated-property-section {
         margin-bottom: 14px;
         border: 1px solid var(--pvt-bg-color-4);
         border-radius: 2px;
         box-shadow: var(--pvt-box-shadow-medium);
 
-        .pivotick-aggregated-property-title {
+        .pvt-aggregated-property-title {
             display: inline-block;
             padding: 4px 8px;
             margin-bottom: 2px;
@@ -21,18 +21,18 @@
             text-transform: uppercase;
         }
 
-        .pivotick-aggregated-property-container {
+        .pvt-aggregated-property-container {
             padding: 4px;
             display: flex;
             flex-direction: column;
             gap: 2px;
 
-            .pivotick-aggregated-property-row {
+            .pvt-aggregated-property-row {
                 display: flex;
                 flex-direction: row;
                 align-items: center;
 
-                .pivotick-aggregated-property-value {
+                .pvt-aggregated-property-value {
                     flex-grow: 1;
                     font-family: monospace;
                     font-size: 0.8rem;
@@ -52,7 +52,7 @@
                         background-color: var(--pvt-bg-color-0);
                         color: var(--pvt-text-color-primary);
 
-                        .pivotick-aggregated-property-actions {
+                        .pvt-aggregated-property-actions {
                             display: none;
                             position: absolute;
                             right: 4px;
@@ -82,16 +82,16 @@
                         }
                     }
 
-                    &.code-container:hover .pivotick-aggregated-property-actions {
+                    &.code-container:hover .pvt-aggregated-property-actions {
                         display: inline-flex;
                     }
                 }
 
-                .pivotick-aggregated-property-count {
+                .pvt-aggregated-property-count {
                     --pvt-inline-bar-width: 60px;
                 }
 
-                .pivotick-aggregated-property-value-dim {
+                .pvt-aggregated-property-value-dim {
                     display: inline-block;
                     width: 100%;
                     color: var(--pvt-text-color-3);

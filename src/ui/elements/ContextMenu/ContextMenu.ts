@@ -178,9 +178,9 @@ export class ContextMenu implements UIElement {
         this.parentContainer = document.querySelector('body')!
         const template = document.createElement('template')
         template.innerHTML = `
-        <div class="pivotick-contextmenu">
-            <div class="pivotick-contextmenu-topbar"></div>
-            <div class="pivotick-contextmenu-mainmenu"></div>
+        <div class="pvt-contextmenu">
+            <div class="pvt-contextmenu-topbar"></div>
+            <div class="pvt-contextmenu-mainmenu"></div>
         </div>
         `
         this.menu = template.content.firstElementChild as HTMLDivElement
@@ -235,8 +235,8 @@ export class ContextMenu implements UIElement {
     private createNodeMenu(_node: Node): void {
         if (!this.menu) return
 
-        const topbar = this.menu.querySelector('.pivotick-contextmenu-topbar')!
-        const mainMenu = this.menu.querySelector('.pivotick-contextmenu-mainmenu')!
+        const topbar = this.menu.querySelector('.pvt-contextmenu-topbar')!
+        const mainMenu = this.menu.querySelector('.pvt-contextmenu-mainmenu')!
         topbar.innerHTML = ''
         mainMenu.innerHTML = ''
         topbar.appendChild(createQuickActionList<ContextMenu>(this, this.menuNode.topbar, this.element))
@@ -247,8 +247,8 @@ export class ContextMenu implements UIElement {
     private createEdgeMenu(_edge: Edge): void {
         if (!this.menu) return
 
-        const topbar = this.menu.querySelector('.pivotick-contextmenu-topbar')!
-        const mainMenu = this.menu.querySelector('.pivotick-contextmenu-mainmenu')!
+        const topbar = this.menu.querySelector('.pvt-contextmenu-topbar')!
+        const mainMenu = this.menu.querySelector('.pvt-contextmenu-mainmenu')!
         topbar.innerHTML = ''
         mainMenu.innerHTML = ''
         topbar.appendChild(createQuickActionList<ContextMenu>(this, this.menuEdge.topbar, this.element))
@@ -258,8 +258,8 @@ export class ContextMenu implements UIElement {
     private createCanvasMenu(): void {
         if (!this.menu) return
 
-        const topbar = this.menu.querySelector('.pivotick-contextmenu-topbar')!
-        const mainMenu = this.menu.querySelector('.pivotick-contextmenu-mainmenu')!
+        const topbar = this.menu.querySelector('.pvt-contextmenu-topbar')!
+        const mainMenu = this.menu.querySelector('.pvt-contextmenu-mainmenu')!
         topbar.innerHTML = ''
         mainMenu.innerHTML = ''
         topbar.appendChild(createQuickActionList<ContextMenu>(this, this.menuCanvas.topbar, this.element))

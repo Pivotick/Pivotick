@@ -26,7 +26,7 @@ export class GraphNavigation implements UIElement {
         <button id="pvt-graphnavigation-zoom-in" class="pvt-graphnavigation-zoomin-button" title="Zoom In">
            ${graphNavigationZoomIn}
         </button>
-        <div class="pivotick-zoom-divider"></div>
+        <div class="pvt-zoom-divider"></div>
         <button id="pvt-graphnavigation-zoom-out" class="pvt-graphnavigation-zoomout-button" title="Zoom Out">
             ${graphNavigationZoomOut}
         </button>

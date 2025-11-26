@@ -65,18 +65,18 @@ export function createHtmlTemplate(template: string): HTMLElement {
 }
 
 export function createHtmlDL(data: PropertyEntry[], element: Node | Edge | null): HTMLDListElement {
-    const dl = createHtmlElement('dl', { class: 'pivotick-property-list' })
+    const dl = createHtmlElement('dl', { class: 'pvt-property-list' })
     for (const entry of data) {
         const resolvedName = tryResolveHTMLElement(entry.name, element) || ''
         const resolvedValue = tryResolveHTMLElement(entry.value, element) || ''
 
         const row = createHtmlElement('dl',
             {
-                'class': 'pivotick-property-row',
+                'class': 'pvt-property-row',
             },
             [
-                createHtmlElement('dt', { class: 'pivotick-property-name' }, [resolvedName]),
-                createHtmlElement('dd', { class: 'pivotick-property-value' }, [resolvedValue]),
+                createHtmlElement('dt', { class: 'pvt-property-name' }, [resolvedName]),
+                createHtmlElement('dd', { class: 'pvt-property-value' }, [resolvedValue]),
             ]
         )
         dl.append(row)
@@ -86,7 +86,7 @@ export function createHtmlDL(data: PropertyEntry[], element: Node | Edge | null)
 
 
 export function createQuickActionList<TThis extends UIElement = UIElement>(thisContext: TThis, actions: MenuQuickActionItemOptions[], element: Node[] | Node | Edge | null): HTMLDivElement {
-        const div = createHtmlElement('div', { class: 'pivotick-quickaction-list' })
+        const div = createHtmlElement('div', { class: 'pvt-action-list' })
         const firstElement = Array.isArray(element) ? element[0] : element
         actions.forEach(action => {
             action.visible = action.visible ?? true
@@ -101,7 +101,7 @@ export function createQuickActionList<TThis extends UIElement = UIElement>(thisC
     }
 
 export function createActionList<TThis extends UIElement = UIElement>(thisContext: TThis, actions: MenuActionItemOptions[], element: Node[] | Node | Edge | null): HTMLDivElement {
-    const div = createHtmlElement('div', { class: 'pivotick-action-list' })
+    const div = createHtmlElement('div', { class: 'pvt-action-list' })
     const firstElement = Array.isArray(element) ? element[0] : element
     actions.forEach(action => {
         action.visible = action.visible ?? true
@@ -122,7 +122,7 @@ export function createQuickActionItem<TThis extends UIElement = UIElement>(thisC
     const { onclick, ...actionWithoutCb } = action
     const span = createHtmlElement('span',
         {
-            class: ['pivotick-quickaction-item', `pivotick-quickaction-item-${action.variant}`],
+            class: ['pvt-action-item', `pvt-action-item-${action.variant}`],
             style: `${action.flushRight ? 'margin-left: auto;' : ''}`
         },
         [
@@ -143,12 +143,12 @@ export function createQuickActionItem<TThis extends UIElement = UIElement>(thisC
 export function createActionItem<TThis extends UIElement = UIElement>(thisContext: TThis, action: MenuActionItemOptions, element: Node[] | Node | Edge | null): HTMLDivElement {
     const div = createHtmlElement('div',
         {
-            class: ['pivotick-action-item', `pivotick-action-item-${action.variant}`]
+            class: ['pvt-action-item', `pvt-action-item-${action.variant}`]
         },
         [
             createIcon({ fixedWidth: true, ...action }),
             createHtmlElement('span', { 
-                class: 'pivotick-action-text',
+                class: 'pvt-action-text',
                 title: action.title ?? '',
             }, [ action.text ?? '' ])
         ]
@@ -194,7 +194,7 @@ type iconOptions = {
 }
 export function createIcon(options: iconOptions): HTMLSpanElement {
     const span = document.createElement('span')
-    span.classList.add('pivotick-icon')
+    span.classList.add('pvt-icon')
     if (options.fixedWidth) {
         span.classList.add('fixed-width')
     }

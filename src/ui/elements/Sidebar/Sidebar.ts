@@ -37,9 +37,9 @@ export class Sidebar implements UIElement {
 
         const template = `
 <div class="pvt-sidebar-elements">
-    <div class="pivotick-mainheader-panel"></div>
-    <div class="pivotick-properties-panel pvt-sidebar-panel"></div>
-    <div class="pivotick-extra-panel pvt-sidebar-panel"></div>
+    <div class="pvt-mainheader-panel"></div>
+    <div class="pvt-properties-panel pvt-sidebar-panel"></div>
+    <div class="pvt-extra-panel pvt-sidebar-panel"></div>
 </div>`
         this.sidebar = createHtmlTemplate(template) as HTMLDivElement
 
@@ -58,11 +58,11 @@ export class Sidebar implements UIElement {
 
     public afterMount() {
         if (!this.sidebar) return
-        this.mainHeaderPanel = this.sidebar.querySelector('.pivotick-mainheader-panel') ?? undefined
+        this.mainHeaderPanel = this.sidebar.querySelector('.pvt-mainheader-panel') ?? undefined
         this.sidebarMainHeader.mount(this.mainHeaderPanel)
-        this.mainBodyPanel = this.sidebar.querySelector('.pivotick-properties-panel') ?? undefined
+        this.mainBodyPanel = this.sidebar.querySelector('.pvt-properties-panel') ?? undefined
         this.sidebarProperties.mount(this.mainBodyPanel)
-        this.extraPanelContainer = this.sidebar.querySelector('.pivotick-extra-panel') ?? undefined
+        this.extraPanelContainer = this.sidebar.querySelector('.pvt-extra-panel') ?? undefined
         this.extraPanelManager.mount(this.extraPanelContainer)
 
         this.collapse = createHtmlElement('span', { class: 'pvt-sidebar-collapse-container' }, [

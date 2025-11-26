@@ -117,7 +117,7 @@
                 border-top-right-radius: 4px;
                 border-top-left-radius: 4px;
     
-                .pivotick-quickaction-list {
+                .pvt-action-list {
                     width: 100%;
                     display: flex;
                     align-items: center;
@@ -127,7 +127,7 @@
                     .pivotick-button {
                         border-radius: 4px;
     
-                        .pivotick-icon {
+                        .pvt-icon {
                             font-size: 20px;
                         }
                     }
@@ -139,7 +139,7 @@
                 border-bottom-right-radius: 4px;
                 border-bottom-left-radius: 4px;
 
-                .pivotick-action-item {
+                .pvt-action-item {
                     padding: 6px 8px;
                     cursor: pointer;
                     user-select: none;
@@ -147,43 +147,43 @@
                     flex-direction: row;
                     align-items: center;
     
-                    .pivotick-icon {
+                    .pvt-icon {
                         font-size: 20px;
                     }
     
-                    .pivotick-action-text {
+                    .pvt-action-text {
                         margin-left: 1em;
                         text-align: end;
                     }
                 }
             }
     
-            .pivotick-action-item-outline-primary:hover {
+            .pvt-action-item-outline-primary:hover {
                 background-color: var(--pvt-bg-color-primary);
                 color: var(--pvt-text-color-for-primary);
             }
     
-            .pivotick-action-item-outline-secondary:hover {
+            .pvt-action-item-outline-secondary:hover {
                 background-color: var(--pvt-bg-color-secondary);
                 color: var(--pvt-text-color-for-secondary);
             }
     
-            .pivotick-action-item-outline-info:hover {
+            .pvt-action-item-outline-info:hover {
                 background-color: var(--pvt-bg-color-info);
                 color: var(--pvt-text-color-for-info);
             }
     
-            .pivotick-action-item-outline-warning:hover {
+            .pvt-action-item-outline-warning:hover {
                 background-color: var(--pvt-bg-color-warning);
                 color: var(--pvt-text-color-for-warning);
             }
     
-            .pivotick-action-item-outline-danger:hover {
+            .pvt-action-item-outline-danger:hover {
                 background-color: var(--pvt-bg-color-danger);
                 color: var(--pvt-text-color-for-danger);
             }
     
-            .pivotick-action-item-outline-success:hover {
+            .pvt-action-item-outline-success:hover {
                 background-color: var(--pvt-bg-color-success);
                 color: var(--pvt-text-color-for-success);
             }

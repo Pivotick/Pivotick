@@ -42,7 +42,7 @@ export class Tooltip implements UIElement {
 
         this.parentContainer = document.querySelector('body')!
         const template = document.createElement('template')
-        template.innerHTML = '<div class="pivotick-tooltip"></div>'
+        template.innerHTML = '<div class="pvt-tooltip"></div>'
         this.tooltip = template.content.firstElementChild as HTMLDivElement
 
         this.shadowLinkContainer = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
@@ -152,34 +152,34 @@ export class Tooltip implements UIElement {
 
         const fixedPreviewSize = 32
         const template = `
-<div class="pivotick-tooltip-container">
-    <div class="pivotick-mainheader-container">
-        <div class="pivotick-mainheader-nodepreview">
-            <svg class="pivotick-mainheader-icon" width="${fixedPreviewSize}" height="${fixedPreviewSize}" viewBox="0 0 ${fixedPreviewSize} ${fixedPreviewSize}" preserveAspectRatio="xMidYMid meet"></svg>
-            <span class="pivotick-mainheader-topright"></span>
+<div class="pvt-tooltip-container">
+    <div class="pvt-mainheader-container">
+        <div class="pvt-mainheader-nodepreview">
+            <svg class="pvt-mainheader-icon" width="${fixedPreviewSize}" height="${fixedPreviewSize}" viewBox="0 0 ${fixedPreviewSize} ${fixedPreviewSize}" preserveAspectRatio="xMidYMid meet"></svg>
+            <span class="pvt-mainheader-topright"></span>
         </div>
-        <div class="pivotick-mainheader-nodeinfo">
-            <div class="pivotick-mainheader-nodeinfo-name"></div>
-            <div class="pivotick-mainheader-nodeinfo-subtitle"></div>
+        <div class="pvt-mainheader-nodeinfo">
+            <div class="pvt-mainheader-nodeinfo-name"></div>
+            <div class="pvt-mainheader-nodeinfo-subtitle"></div>
         </div>
-        <div class="pivotick-mainheader-nodeinfo-action">
+        <div class="pvt-mainheader-nodeinfo-action">
         </div>
     </div>
 </div>`
         const tooltipContainer = createHtmlTemplate(template) as HTMLDivElement
-        const mainheaderContent = tooltipContainer.querySelector('.pivotick-mainheader-container')!
-        const iconElem = tooltipContainer.querySelector('.pivotick-mainheader-icon')!
-        const nameElem = tooltipContainer.querySelector('.pivotick-mainheader-nodeinfo-name')!
-        const subtitleElem = tooltipContainer.querySelector('.pivotick-mainheader-nodeinfo-subtitle')!
-        const toprightElem = tooltipContainer.querySelector('.pivotick-mainheader-topright')!
-        // const actionElem = tooltipContainer.querySelector('.pivotick-mainheader-nodeinfo-action')!
+        const mainheaderContent = tooltipContainer.querySelector('.pvt-mainheader-container')!
+        const iconElem = tooltipContainer.querySelector('.pvt-mainheader-icon')!
+        const nameElem = tooltipContainer.querySelector('.pvt-mainheader-nodeinfo-name')!
+        const subtitleElem = tooltipContainer.querySelector('.pvt-mainheader-nodeinfo-subtitle')!
+        const toprightElem = tooltipContainer.querySelector('.pvt-mainheader-topright')!
+        // const actionElem = tooltipContainer.querySelector('.pvt-mainheader-nodeinfo-action')!
 
         const properties = nodePropertiesGetter(node, this.uiManager.getOptions().propertiesPanel)
 
         const element = node.getGraphElement()
         if (element && element instanceof SVGGElement) {
             const clonedGroup = element.cloneNode(true) as SVGGElement
-            clonedGroup.querySelector('circle.pivotick-node-selected-highlight')?.remove()
+            clonedGroup.querySelector('circle.pvt-node-selected-highlight')?.remove()
             const bbox = element.getBBox()
             const scale = fixedPreviewSize / Math.max(bbox.width, bbox.height)
             clonedGroup.setAttribute(
@@ -217,7 +217,7 @@ export class Tooltip implements UIElement {
             return
         }
 
-        const propertiesContainer = createHtmlElement('div', { class: 'pivotick-properties-container'}, [
+        const propertiesContainer = createHtmlElement('div', { class: 'pvt-properties-container'}, [
             createHtmlDL(properties, node)
         ]) as HTMLDivElement
 
@@ -244,26 +244,26 @@ export class Tooltip implements UIElement {
 
         const fixedPreviewSize = 32
         const template = `
-<div class="pivotick-tooltip-container">
-    <div class="pivotick-mainheader-container">
-        <div class="pivotick-mainheader-nodepreview">
+<div class="pvt-tooltip-container">
+    <div class="pvt-mainheader-container">
+        <div class="pvt-mainheader-nodepreview">
             ${graphEdgeIcon(fixedPreviewSize)}
-            <span class="pivotick-mainheader-topright"></span>
+            <span class="pvt-mainheader-topright"></span>
         </div>
-        <div class="pivotick-mainheader-nodeinfo">
-            <div class="pivotick-mainheader-nodeinfo-name"></div>
-            <div class="pivotick-mainheader-nodeinfo-subtitle"></div>
+        <div class="pvt-mainheader-nodeinfo">
+            <div class="pvt-mainheader-nodeinfo-name"></div>
+            <div class="pvt-mainheader-nodeinfo-subtitle"></div>
         </div>
-        <div class="pivotick-mainheader-nodeinfo-action">
+        <div class="pvt-mainheader-nodeinfo-action">
         </div>
     </div>
 </div>`
         const tooltipContainer = createHtmlTemplate(template) as HTMLDivElement
-        const mainheaderContent = tooltipContainer.querySelector('.pivotick-mainheader-container')!
-        const nameElem = tooltipContainer.querySelector('.pivotick-mainheader-nodeinfo-name')!
-        const subtitleElem = tooltipContainer.querySelector('.pivotick-mainheader-nodeinfo-subtitle')!
-        const toprightElem = tooltipContainer.querySelector('.pivotick-mainheader-topright')!
-        // const actionElem = tooltipContainer.querySelector('.pivotick-mainheader-nodeinfo-action')!
+        const mainheaderContent = tooltipContainer.querySelector('.pvt-mainheader-container')!
+        const nameElem = tooltipContainer.querySelector('.pvt-mainheader-nodeinfo-name')!
+        const subtitleElem = tooltipContainer.querySelector('.pvt-mainheader-nodeinfo-subtitle')!
+        const toprightElem = tooltipContainer.querySelector('.pvt-mainheader-topright')!
+        // const actionElem = tooltipContainer.querySelector('.pvt-mainheader-nodeinfo-action')!
 
         const pinButton = createButton({
             title: 'Pin Tooltip',
@@ -295,7 +295,7 @@ export class Tooltip implements UIElement {
         nameElem.textContent = edgeNameGetter(edge, this.uiManager.getOptions().mainHeader)
         subtitleElem.textContent = edgeDescriptionGetter(edge, this.uiManager.getOptions().mainHeader)
 
-        const propertiesContainer = createHtmlElement('div', { class: 'pivotick-properties-container' }, [createHtmlDL(properties, edge)]) as HTMLDivElement
+        const propertiesContainer = createHtmlElement('div', { class: 'pvt-properties-container' }, [createHtmlDL(properties, edge)]) as HTMLDivElement
 
         tooltipContainer.appendChild(mainheaderContent)
         tooltipContainer.appendChild(propertiesContainer)
@@ -387,7 +387,7 @@ export class Tooltip implements UIElement {
         const clonedTooltip = this.tooltip.cloneNode(true) as HTMLDivElement
         this.tooltipDataMap.set(clonedTooltip, this.hoveredElement)
 
-        clonedTooltip.classList.add('pivotick-tooltip-floating')
+        clonedTooltip.classList.add('pvt-tooltip-floating')
 
         clonedTooltip.querySelector('.pin-button')?.remove()
         const closeButton = createButton({
@@ -428,7 +428,7 @@ export class Tooltip implements UIElement {
         })
 
         const topbar = createHtmlElement('div', {
-            class: 'pivotick-tooltip-topbar'
+            class: 'pvt-tooltip-topbar'
         }, [
             focusElementButton,
             selectElementButton,

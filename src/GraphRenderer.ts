@@ -110,7 +110,7 @@ export abstract class GraphRenderer {
             },
             [bg, track, progressFill, textLabel, timerLabel]
         )
-        loadingPb.classList.add('pivotick-loading-progress-bar')
+        loadingPb.classList.add('pvt-loading-progress-bar')
 
         canvas.appendChild(loadingPb)
         this.progressBar = progressFill

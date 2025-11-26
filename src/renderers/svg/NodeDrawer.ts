@@ -252,18 +252,18 @@ export class NodeDrawer {
     }
 
     private highlightSelection(nodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
-        nodeSelection.selectAll('.pivotick-node-selected-highlight').remove() // remove old overlay if exists
+        nodeSelection.selectAll('.pvt-node-selected-highlight').remove() // remove old overlay if exists
         if (this.graphSvgRenderer.getGraphInteraction().getSelectedNode()?.node.id === node.id) {
             nodeSelection
                 .append('circle')
-                .attr('class', 'pivotick-node-selected-highlight')
+                .attr('class', 'pvt-node-selected-highlight')
                 .attr('r', node.getCircleRadius()) // slightly larger than node
                 .attr('pointer-events', 'none') // doesn't interfere with interaction
         }
         if (this.graphSvgRenderer.getGraphInteraction().getSelectedNodeIDs()?.includes(node.id)) {
             nodeSelection
                 .append('circle')
-                .attr('class', 'pivotick-node-selected-highlight')
+                .attr('class', 'pvt-node-selected-highlight')
                 .attr('r', node.getCircleRadius()) // slightly larger than node
                 .attr('pointer-events', 'none') // doesn't interfere with interaction
         }
