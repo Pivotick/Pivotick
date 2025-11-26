@@ -45,7 +45,7 @@ export class Toolbar implements UIElement {
     <button id="pivotick-filter-button" class="pivotick-button-filter" disabled>
         ${funel}
     </button>
-    <div style="border-left: 1px solid color-mix(in srgb, var(--pivotick-border-color) 80%, transparent);"></div>
+    <div style="border-left: 1px solid color-mix(in srgb, var(--pvt-border-color) 80%, transparent);"></div>
     <div class="pivotick-undoredo-group">
         <button id="pivotick-undo-button" class="pivotick-button-undo" disabled>
             ${undo}

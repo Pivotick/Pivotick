@@ -1,9 +1,9 @@
 .pivotick-contextmenu {
     position: absolute;
     pointer-events: auto;
-    background-color: var(--pivotick-sidebar-panelbody-bg);
-    border: var(--pivotick-sidebar-panel-border);
-    box-shadow: var(--pivotick-box-shadow-strong);
+    background-color: var(--pvt-sidebar-panelbody-bg);
+    border: var(--pvt-sidebar-panel-border);
+    box-shadow: var(--pvt-box-shadow-strong);
     font-size: 13px;
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     line-height: 1.4;
@@ -24,8 +24,8 @@
     .pivotick-contextmenu-topbar {
         display: flex;
         align-items: center;
-        background-color: var(--pivotick-sidebar-mainpanelheader-bg);
-        border-bottom: 1px solid var(--pivotick-tooltip-floating-bg-color);
+        background-color: var(--pvt-sidebar-mainpanelheader-bg);
+        border-bottom: 1px solid var(--pvt-tooltip-floating-bg-color);
         padding: 2px;
         margin-bottom: 4px;
         border-top-right-radius: 4px;
@@ -53,7 +53,7 @@
         flex-direction: row;
         align-items: center;
         gap: 10px;
-        background-color: var(--pivotick-sidebar-mainpanelheader-bg);
+        background-color: var(--pvt-sidebar-mainpanelheader-bg);
         border-bottom-right-radius: 4px;
         border-bottom-left-radius: 4px;
 
@@ -80,93 +80,93 @@
     }
 
     .pivotick-action-item-primary {
-        background-color: var(--pivotick-bg-color-primary);
-        color: var(--pivotick-text-color-for-primary);
+        background-color: var(--pvt-bg-color-primary);
+        color: var(--pvt-text-color-for-primary);
 
         &:hover {
-            background-color: color-mix(in srgb, var(--pivotick-bg-color-primary) 80%, #000);
-            color: color-mix(in srgb, var(--pivotick-text-color-for-primary) 80%, #fff);
+            background-color: color-mix(in srgb, var(--pvt-bg-color-primary) 80%, #000);
+            color: color-mix(in srgb, var(--pvt-text-color-for-primary) 80%, #fff);
         }
     }
 
     .pivotick-action-item-secondary {
-        background-color: var(--pivotick-bg-color-secondary);
-        color: var(--pivotick-text-color-for-secondary);
+        background-color: var(--pvt-bg-color-secondary);
+        color: var(--pvt-text-color-for-secondary);
 
         &:hover {
-            background-color: color-mix(in srgb, var(--pivotick-bg-color-primary)secondary%, #000);
-            color: color-mix(in srgb, var(--pivotick-text-color-for-primary) 80%, secondary);
+            background-color: color-mix(in srgb, var(--pvt-bg-color-primary)secondary%, #000);
+            color: color-mix(in srgb, var(--pvt-text-color-for-primary) 80%, secondary);
         }
     }
 
     .pivotick-action-item-info {
-        background-color: var(--pivotick-bg-color-info);
-        color: var(--pivotick-text-color-for-info);
+        background-color: var(--pvt-bg-color-info);
+        color: var(--pvt-text-color-for-info);
 
         &:hover {
-            background-color: color-mix(in srgb, var(--pivotick-bg-color-info) 80%, #000);
-            color: color-mix(in srgb, var(--pivotick-text-color-for-info) 80%, #fff);
+            background-color: color-mix(in srgb, var(--pvt-bg-color-info) 80%, #000);
+            color: color-mix(in srgb, var(--pvt-text-color-for-info) 80%, #fff);
         }
     }
 
     .pivotick-action-item-warning {
-        background-color: var(--pivotick-bg-color-warning);
-        color: var(--pivotick-text-color-for-warning);
+        background-color: var(--pvt-bg-color-warning);
+        color: var(--pvt-text-color-for-warning);
 
         &:hover {
-            background-color: color-mix(in srgb, var(--pivotick-bg-color-warning) 80%, #000);
-            color: color-mix(in srgb, var(--pivotick-text-color-for-warning) 80%, #fff);
+            background-color: color-mix(in srgb, var(--pvt-bg-color-warning) 80%, #000);
+            color: color-mix(in srgb, var(--pvt-text-color-for-warning) 80%, #fff);
         }
     }
 
     .pivotick-action-item-danger {
-        background-color: var(--pivotick-bg-color-danger);
-        color: var(--pivotick-text-color-for-danger);
+        background-color: var(--pvt-bg-color-danger);
+        color: var(--pvt-text-color-for-danger);
 
         &:hover {
-            background-color: color-mix(in srgb, var(--pivotick-bg-color-danger) 80%, #000);
-            color: color-mix(in srgb, var(--pivotick-text-color-for-danger) 80%, #fff);
+            background-color: color-mix(in srgb, var(--pvt-bg-color-danger) 80%, #000);
+            color: color-mix(in srgb, var(--pvt-text-color-for-danger) 80%, #fff);
         }
     }
 
     .pivotick-action-item-success {
-        background-color: var(--pivotick-bg-color-success);
-        color: var(--pivotick-text-color-for-success);
+        background-color: var(--pvt-bg-color-success);
+        color: var(--pvt-text-color-for-success);
 
         &:hover {
-            background-color: color-mix(in srgb, var(--pivotick-bg-color-success) 80%, #000);
-            color: color-mix(in srgb, var(--pivotick-text-color-for-success) 80%, #fff);
+            background-color: color-mix(in srgb, var(--pvt-bg-color-success) 80%, #000);
+            color: color-mix(in srgb, var(--pvt-text-color-for-success) 80%, #fff);
         }
     }
 
 
     .pivotick-action-item-outline-primary:hover {
-        background-color: var(--pivotick-bg-color-primary);
-        color: var(--pivotick-text-color-for-primary);
+        background-color: var(--pvt-bg-color-primary);
+        color: var(--pvt-text-color-for-primary);
     }
 
     .pivotick-action-item-outline-secondary:hover {
-        background-color: var(--pivotick-bg-color-secondary);
-        color: var(--pivotick-text-color-for-secondary);
+        background-color: var(--pvt-bg-color-secondary);
+        color: var(--pvt-text-color-for-secondary);
     }
 
     .pivotick-action-item-outline-info:hover {
-        background-color: var(--pivotick-bg-color-info);
-        color: var(--pivotick-text-color-for-info);
+        background-color: var(--pvt-bg-color-info);
+        color: var(--pvt-text-color-for-info);
     }
 
     .pivotick-action-item-outline-warning:hover {
-        background-color: var(--pivotick-bg-color-warning);
-        color: var(--pivotick-text-color-for-warning);
+        background-color: var(--pvt-bg-color-warning);
+        color: var(--pvt-text-color-for-warning);
     }
 
     .pivotick-action-item-outline-danger:hover {
-        background-color: var(--pivotick-bg-color-danger);
-        color: var(--pivotick-text-color-for-danger);
+        background-color: var(--pvt-bg-color-danger);
+        color: var(--pvt-text-color-for-danger);
     }
 
     .pivotick-action-item-outline-success:hover {
-        background-color: var(--pivotick-bg-color-success);
-        color: var(--pivotick-text-color-for-success);
+        background-color: var(--pvt-bg-color-success);
+        color: var(--pvt-text-color-for-success);
     }
 }

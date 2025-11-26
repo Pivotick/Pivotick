@@ -1,8 +1,8 @@
 @use "../../../styles/components/buttons.scss";
 @use "../../../styles/components/input.scss";
 
-.pivotick-toolbar-container {
-    box-shadow: var(--pivotic-sidebar-layout-shadow-bottom);
+.pivotick-toolbar {
+    box-shadow: var(--pvt-sidebar-layout-shadow-bottom);
 
     .pivotick-toolbar {
         display: flex;
@@ -35,7 +35,7 @@
                     svg {
                         width: 1rem;
                         height: 1rem;
-                        color: var(--pivotick-text-color-6);
+                        color: var(--pvt-text-color-6);
                         opacity: 0.7;
                     }
                 }

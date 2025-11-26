@@ -23,11 +23,11 @@
 @mixin input-variant($bg-color) {
     @include input;
     background-color: transparent;
-    color: var(--pivotick-text-color-6);
-    border: 1px solid var(--pivotick-border-color);
+    color: var(--pvt-text-color-6);
+    border: 1px solid var(--pvt-border-color);
 
     &::placeholder {
-        color: var(--pivotick-text-color-6);
+        color: var(--pvt-text-color-6);
         opacity: 0.7;
     }
 
@@ -42,5 +42,5 @@
 }
 
 @mixin input-primary {
-    @include input-variant(--pivotick-bg-color-primary);
+    @include input-variant(--pvt-bg-color-primary);
 }

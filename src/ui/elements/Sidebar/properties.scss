@@ -2,9 +2,9 @@
 
     .pivotick-aggregated-property-section {
         margin-bottom: 14px;
-        border: 1px solid var(--pivotick-bg-color-4);
+        border: 1px solid var(--pvt-bg-color-4);
         border-radius: 2px;
-        box-shadow: var(--pivotick-box-shadow-medium);
+        box-shadow: var(--pvt-box-shadow-medium);
 
         .pivotick-aggregated-property-title {
             display: inline-block;
@@ -13,8 +13,8 @@
             text-align: left;
             font-size: .9rem;
             font-weight: 500;
-            color: var(--pivotick-text-color-5);
-            background-color: var(--pivotick-bg-color-4);
+            color: var(--pvt-text-color-5);
+            background-color: var(--pvt-bg-color-4);
             border-top-left-radius: 0px;
             border-bottom-right-radius: 2px;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -47,10 +47,10 @@
                         font-size: 0.875rem;
                         font-weight: 400;
                         padding: 2px 4px;
-                        border: 1px solid var(--pivotick-text-color-1);
+                        border: 1px solid var(--pvt-text-color-1);
                         border-radius: 4px;
-                        background-color: var(--pivotick-bg-color-0);
-                        color: var(--pivotick-text-color-primary);
+                        background-color: var(--pvt-bg-color-0);
+                        color: var(--pvt-text-color-primary);
 
                         .pivotick-aggregated-property-actions {
                             display: none;
@@ -65,13 +65,13 @@
                                 padding: 0;
                                 cursor: pointer;
                                 font-size: 1rem;
-                                color: color-mix(in srgb, var(--pivotick-text-color-5) 80%, white);
+                                color: color-mix(in srgb, var(--pvt-text-color-5) 80%, white);
                                 transition: font-size 0.15s ease;
                                 max-height: 22px;
 
                                 &:hover:not(:disabled),
                                 &:active:not(:disabled) {
-                                    color: color-mix(in srgb, var(--pivotick-text-color-5) 70%, black);
+                                    color: color-mix(in srgb, var(--pvt-text-color-5) 70%, black);
                                 }
                             
                                 &:disabled {
@@ -88,13 +88,13 @@
                 }
 
                 .pivotick-aggregated-property-count {
-                    --pivotick-inline-bar-width: 60px;
+                    --pvt-inline-bar-width: 60px;
                 }
 
                 .pivotick-aggregated-property-value-dim {
                     display: inline-block;
                     width: 100%;
-                    color: var(--pivotick-text-color-3);
+                    color: var(--pvt-text-color-3);
                     font-style: italic;
                     text-align: center;
                 }

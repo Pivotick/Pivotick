@@ -11,174 +11,174 @@ $success: #16A34A;
 $toast-text-success: text-color($success);
 
 :root {
-    --pivotick-bg: #ffffff;
-    --pivotick-border-color: #ccc;
+    --pvt-bg: #ffffff;
+    --pvt-border-color: #ccc;
 
-    --pivotick-text-color-0: #fff;
-    --pivotick-text-color-1: #e0e0e0;
-    --pivotick-text-color-2: #bbb;
-    --pivotick-text-color-3: #999;
-    --pivotick-text-color-4: #666;
-    --pivotick-text-color-5: #333;
-    --pivotick-text-color-6: #000;
-    --pivotick-text-color-primary: #{$primary};
-    --pivotick-text-color-secondary: #{$secondary};
-    --pivotick-text-color-info: #{$info};
-    --pivotick-text-color-warning: #{$warning};
-    --pivotick-text-color-danger: #{$danger};
-    --pivotick-text-color-success: #{$success};
+    --pvt-text-color-0: #fff;
+    --pvt-text-color-1: #e0e0e0;
+    --pvt-text-color-2: #bbb;
+    --pvt-text-color-3: #999;
+    --pvt-text-color-4: #666;
+    --pvt-text-color-5: #333;
+    --pvt-text-color-6: #000;
+    --pvt-text-color-primary: #{$primary};
+    --pvt-text-color-secondary: #{$secondary};
+    --pvt-text-color-info: #{$info};
+    --pvt-text-color-warning: #{$warning};
+    --pvt-text-color-danger: #{$danger};
+    --pvt-text-color-success: #{$success};
 
-    --pivotick-bg-color-0: #fff;
-    --pivotick-bg-color-1: #fafafa;
-    --pivotick-bg-color-2: #f3f3f3;
-    --pivotick-bg-color-3: #e6e6e6;
-    --pivotick-bg-color-4: #e0e0e0;
-    --pivotick-bg-color-5: #d6d6d6;
-    --pivotick-bg-color-primary: #{$primary};
-    --pivotick-bg-color-secondary: #{$secondary};
-    --pivotick-bg-color-info: #{$info};
-    --pivotick-bg-color-warning: #{$warning};
-    --pivotick-bg-color-danger: #{$danger};
-    --pivotick-bg-color-success: #{$success};
-    --pivotick-text-color-for-primary: #fff;
-    --pivotick-text-color-for-secondary: #fff;
-    --pivotick-text-color-for-info: #fff;
-    --pivotick-text-color-for-warning: #fff;
-    --pivotick-text-color-for-danger: #fff;
-    --pivotick-text-color-for-success: #fff;
+    --pvt-bg-color-0: #fff;
+    --pvt-bg-color-1: #fafafa;
+    --pvt-bg-color-2: #f3f3f3;
+    --pvt-bg-color-3: #e6e6e6;
+    --pvt-bg-color-4: #e0e0e0;
+    --pvt-bg-color-5: #d6d6d6;
+    --pvt-bg-color-primary: #{$primary};
+    --pvt-bg-color-secondary: #{$secondary};
+    --pvt-bg-color-info: #{$info};
+    --pvt-bg-color-warning: #{$warning};
+    --pvt-bg-color-danger: #{$danger};
+    --pvt-bg-color-success: #{$success};
+    --pvt-text-color-for-primary: #fff;
+    --pvt-text-color-for-secondary: #fff;
+    --pvt-text-color-for-info: #fff;
+    --pvt-text-color-for-warning: #fff;
+    --pvt-text-color-for-danger: #fff;
+    --pvt-text-color-for-success: #fff;
 
-    --pivotick-box-shadow-light: rgba(0, 0, 0, 0.25) 0px 1px 2px 0px;
-    --pivotick-box-shadow-medium: rgba(0, 0, 0, 0.1) 0px 4px 6px -1px,
+    --pvt-box-shadow-light: rgba(0, 0, 0, 0.25) 0px 1px 2px 0px;
+    --pvt-box-shadow-medium: rgba(0, 0, 0, 0.1) 0px 4px 6px -1px,
                                   rgba(0, 0, 0, 0.06) 0px 2px 4px -1px;
-    --pivotick-box-shadow-strong: rgba(0, 0, 0, 0.16) 0px 3px 6px,
+    --pvt-box-shadow-strong: rgba(0, 0, 0, 0.16) 0px 3px 6px,
                                   rgba(0, 0, 0, 0.23) 0px 3px 6px;
 
 
     /* Sidebar */
-    --pivotick-sidebar-mainpanelheader-bg: var(--pivotick-bg-color-1);
-    --pivotick-sidebar-panelheader-bg: var(--pivotick-bg-color-4);
-    --pivotick-sidebar-panelbody-bg: var(--pivotick-bg-color-0);
-    --pivotick-sidebar-panel-border: 1px solid var(--pivotick-text-color-1);
-    --pivotick-sidebar-subpanelheader-bg: var(--pivotick-bg-color-2);
-    --pivotick-mainheader-nodepreview-bg: var(--pivotick-bg-color-0);
-    --pivotic-sidebar-layout-shadow-right: rgba(0, 0, 0, 0.07) 2px 0px 3px 0px,
+    --pvt-sidebar-mainpanelheader-bg: var(--pvt-bg-color-1);
+    --pvt-sidebar-panelheader-bg: var(--pvt-bg-color-4);
+    --pvt-sidebar-panelbody-bg: var(--pvt-bg-color-0);
+    --pvt-sidebar-panel-border: 1px solid var(--pvt-text-color-1);
+    --pvt-sidebar-subpanelheader-bg: var(--pvt-bg-color-2);
+    --pvt-mainheader-nodepreview-bg: var(--pvt-bg-color-0);
+    --pvt-sidebar-layout-shadow-right: rgba(0, 0, 0, 0.07) 2px 0px 3px 0px,
                                            rgba(0, 0, 0, 0.04) 3px 0px 2px 0px;
-    --pivotic-sidebar-layout-shadow-bottom: rgba(0, 0, 0, 0.07) 3px 2px 3px 0px,
+    --pvt-sidebar-layout-shadow-bottom: rgba(0, 0, 0, 0.07) 3px 2px 3px 0px,
                                             rgba(0, 0, 0, 0.04) 2px 3px 2px 0px;
-    --pivotic-sidebar-collapse-bg: var(--pivotick-bg);
-    --pivotic-sidebar-collapse-color: var(--pivotick-text-color-4);
-    --pivotic-sidebar-collapse-shadow: var(--pivotick-box-shadow-strong);
+    --pvt-sidebar-collapse-bg: var(--pvt-bg);
+    --pvt-sidebar-collapse-color: var(--pvt-text-color-4);
+    --pvt-sidebar-collapse-shadow: var(--pvt-box-shadow-strong);
 
     /* Tooltip */
-    --pivotick-tooltip-floating-bg-color: var(--pivotick-bg-color-5);
+    --pvt-tooltip-floating-bg-color: var(--pvt-bg-color-5);
 
     /* Graph notification */
-    --pivotick-toast-bg-color-primary: #{color.mix(white, $primary, 40%)};
-    --pivotick-toast-bg-color-secondary: #{color.mix(white, $secondary, 40%)};
-    --pivotick-toast-bg-color-info: #{color.mix(white, $info, 40%)};
-    --pivotick-toast-bg-color-warning: #{color.mix(white, $warning, 40%)};
-    --pivotick-toast-bg-color-danger: #{color.mix(white, $danger, 40%)};
-    --pivotick-toast-bg-color-success: #{color.mix(white, $success, 40%)};
+    --pvt-toast-bg-color-primary: #{color.mix(white, $primary, 40%)};
+    --pvt-toast-bg-color-secondary: #{color.mix(white, $secondary, 40%)};
+    --pvt-toast-bg-color-info: #{color.mix(white, $info, 40%)};
+    --pvt-toast-bg-color-warning: #{color.mix(white, $warning, 40%)};
+    --pvt-toast-bg-color-danger: #{color.mix(white, $danger, 40%)};
+    --pvt-toast-bg-color-success: #{color.mix(white, $success, 40%)};
 
-    --pivotick-toast-text-color-primary: #{color.mix(black, $primary, 70%)};
-    --pivotick-toast-text-color-secondary: #{color.mix(black, $secondary, 70%)};
-    --pivotick-toast-text-color-info: #{color.mix(black, $info, 70%)};
-    --pivotick-toast-text-color-warning: #{color.mix(black, $warning, 70%)};
-    --pivotick-toast-text-color-danger: #{color.mix(black, $danger, 70%)};
-    --pivotick-toast-text-color-success: #{color.mix(black, $success, 70%)};
+    --pvt-toast-text-color-primary: #{color.mix(black, $primary, 70%)};
+    --pvt-toast-text-color-secondary: #{color.mix(black, $secondary, 70%)};
+    --pvt-toast-text-color-info: #{color.mix(black, $info, 70%)};
+    --pvt-toast-text-color-warning: #{color.mix(black, $warning, 70%)};
+    --pvt-toast-text-color-danger: #{color.mix(black, $danger, 70%)};
+    --pvt-toast-text-color-success: #{color.mix(black, $success, 70%)};
 
     /* Graph canvas */
-    --pivotick-graph-grid-color: #f5f5f5;
-    --pivotick-graph-background-image:
-        repeating-linear-gradient(0deg, var(--pivotick-graph-grid-color) 0px, var(--pivotick-graph-grid-color) 1px, transparent 1px, transparent 20px),
-        repeating-linear-gradient(90deg, var(--pivotick-graph-grid-color) 0px, var(--pivotick-graph-grid-color) 1px, transparent 1px, transparent 20px);
-    --pivotic-graph-navigation-control-container-shadow:
+    --pvt-graph-grid-color: #f5f5f5;
+    --pvt-graph-background-image:
+        repeating-linear-gradient(0deg, var(--pvt-graph-grid-color) 0px, var(--pvt-graph-grid-color) 1px, transparent 1px, transparent 20px),
+        repeating-linear-gradient(90deg, var(--pvt-graph-grid-color) 0px, var(--pvt-graph-grid-color) 1px, transparent 1px, transparent 20px);
+    --pvt-graph-navigation-control-container-shadow:
         rgba(0, 0, 0, 0.22) 0px 0px 4px,
         rgba(0, 0, 0, 0.30) 0px 1px 2px;
-    --pivotick-selection-rectangle-fill: color-mix(in srgb, var(--pivotick-bg-color-primary) 20%, #ffffff00);
-    --pivotick-selection-rectangle-stroke: color-mix(in srgb, var(--pivotick-bg-color-primary) 80%, #ffffff00);
+    --pvt-selection-rectangle-fill: color-mix(in srgb, var(--pvt-bg-color-primary) 20%, #ffffff00);
+    --pvt-selection-rectangle-stroke: color-mix(in srgb, var(--pvt-bg-color-primary) 80%, #ffffff00);
 
     /* Node defaults */
-    --pivotick-node-color: #007acc;
-    --pivotick-node-stroke: #fff;
-    --pivotick-node-text-color: #fff;
-    --pivotick-node-icon-font-family: 'Font Awesome 7 Free';
-    --pivotick-node-icon-font-weight: 900;
+    --pvt-node-color: #007acc;
+    --pvt-node-stroke: #fff;
+    --pvt-node-text-color: #fff;
+    --pvt-node-icon-font-family: 'Font Awesome 7 Free';
+    --pvt-node-icon-font-weight: 900;
 
     /* Node selected state */
-    --pivotick-node-selected-color: orange;
-    --pivotick-node-selected-stroke: var(--pivotick-node-selected-color);
-    --pivotick-node-selected-stroke-width: 3;
-    --pivotick-node-selected-filter: drop-shadow(0 0 2px var(--pivotick-node-selected-color));
-    --pivotick-node-selected-animation: glowPulse 1.5s infinite;
+    --pvt-node-selected-color: orange;
+    --pvt-node-selected-stroke: var(--pvt-node-selected-color);
+    --pvt-node-selected-stroke-width: 3;
+    --pvt-node-selected-filter: drop-shadow(0 0 2px var(--pvt-node-selected-color));
+    --pvt-node-selected-animation: glowPulse 1.5s infinite;
 
     /* Edge defaults */
-    --pivotick-edge-stroke: #999;
-    --pivotick-edge-stroke-width: 2;
-    --pivotick-edge-stroke-opacity: 1;
-    --pivotick-edge-stroke-dasharray: 6, 4;
-    --pivotick-edge-animation: dashmove 1s linear infinite;
-    --pivotick-edge-filter: none;
-    --pivotick-edge-label-bg: #ffffffa0;
-    --pivotick-edge-label-font-family: system-ui, sans-serif;
-    --pivotick-edge-label-font-size: 12px;
-    --pivotick-edge-label-color: #333;
-    --pivotick-edge-label-stroke: none;
-    --pivotick-edge-label-stroke-width: 1;
+    --pvt-edge-stroke: #999;
+    --pvt-edge-stroke-width: 2;
+    --pvt-edge-stroke-opacity: 1;
+    --pvt-edge-stroke-dasharray: 6, 4;
+    --pvt-edge-animation: dashmove 1s linear infinite;
+    --pvt-edge-filter: none;
+    --pvt-edge-label-bg: #ffffffa0;
+    --pvt-edge-label-font-family: system-ui, sans-serif;
+    --pvt-edge-label-font-size: 12px;
+    --pvt-edge-label-color: #333;
+    --pvt-edge-label-stroke: none;
+    --pvt-edge-label-stroke-width: 1;
 
     /* Edge selected state */
-    --pivotick-edge-selected-stroke: orange;
-    --pivotick-edge-selected-stroke-width: 5;
-    --pivotick-edge-selected-stroke-opacity: 0.8;
-    --pivotick-edge-selected-filter: drop-shadow(0 0 1px orange);
-    --pivotick-edge-label-selected-stroke: orange;
-    --pivotick-edge-label-selected-stroke-width: 2;
-    --pivotick-edge-label-selected-color: var(--pivotick-edge-label-color);
-    --pivotick-edge-label-selected-font-size: var(--pivotick-edge-label-font-size);
-    --pivotick-edge-label-selected-bg: #ffffffa0;
+    --pvt-edge-selected-stroke: orange;
+    --pvt-edge-selected-stroke-width: 5;
+    --pvt-edge-selected-stroke-opacity: 0.8;
+    --pvt-edge-selected-filter: drop-shadow(0 0 1px orange);
+    --pvt-edge-label-selected-stroke: orange;
+    --pvt-edge-label-selected-stroke-width: 2;
+    --pvt-edge-label-selected-color: var(--pvt-edge-label-color);
+    --pvt-edge-label-selected-font-size: var(--pvt-edge-label-font-size);
+    --pvt-edge-label-selected-bg: #ffffffa0;
 
     /* Component */
-    --pivotick-inline-bar-bg: var(--pivotick-bg-color-2);
-    --pivotick-inline-bar-fill-bg: linear-gradient(
+    --pvt-inline-bar-bg: var(--pvt-bg-color-2);
+    --pvt-inline-bar-fill-bg: linear-gradient(
         90deg,
-        color-mix(in srgb, var(--pivotick-bg-color-primary) 20%, #fff) 0%,
-        var(--pivotick-bg-color-primary) 70%,
-        color-mix(in srgb, var(--pivotick-bg-color-primary) 80%, #000) 100%
+        color-mix(in srgb, var(--pvt-bg-color-primary) 20%, #fff) 0%,
+        var(--pvt-bg-color-primary) 70%,
+        color-mix(in srgb, var(--pvt-bg-color-primary) 80%, #000) 100%
     );
-    --pivotick-inline-bar-height: 0.5rem;
-    --pivotick-inline-bar-width: 80px;
+    --pvt-inline-bar-height: 0.5rem;
+    --pvt-inline-bar-width: 80px;
 }
 
 @media (prefers-color-scheme: dark) {
     .pivotick:not([data-theme="light"]) {
-        --pivotick-bg: #031233;
-        --pivotick-border-color: #455b8e;
+        --pvt-bg: #031233;
+        --pvt-border-color: #455b8e;
 
-        --pivotick-text-color: #fff;
-        --pivotick-text-color-softer: #ccc;
-        --pivotick-text-color-softer2: #aaa;
+        --pvt-text-color: #fff;
+        --pvt-text-color-softer: #ccc;
+        --pvt-text-color-softer2: #aaa;
     
         /* Sidebar */
-        --pivotick-sidebar-panelheader-bg: #2a457f;
-        --pivotick-sidebar-panelbody-bg: #112d6a;
-        --pivotic-sidebar-layout-shadow-right:
+        --pvt-sidebar-panelheader-bg: #2a457f;
+        --pvt-sidebar-panelbody-bg: #112d6a;
+        --pvt-sidebar-layout-shadow-right:
             rgba(255, 255, 255, 0.08) 2px 0px 3px 0px,
             rgba(255, 255, 255, 0.04) 3px 0px 2px 0px;
-        --pivotic-sidebar-layout-shadow-bottom:
+        --pvt-sidebar-layout-shadow-bottom:
             rgba(255, 255, 255, 0.08) 3px 2px 3px 0px,
             rgba(255, 255, 255, 0.04) 2px 3px 2px 0px;
     
         /* Graph canvas */
-        --pivotick-graph-grid-color: #3d3d3d99;
-        --pivotick-graph-background-image:
-            repeating-linear-gradient(0deg, var(--pivotick-graph-grid-color) 0px, var(--pivotick-graph-grid-color) 1px, transparent 1px, transparent 20px),
-            repeating-linear-gradient(90deg, var(--pivotick-graph-grid-color) 0px, var(--pivotick-graph-grid-color) 1px, transparent 1px, transparent 20px);
-        --pivotic-graph-navigation-control-container-shadow:
+        --pvt-graph-grid-color: #3d3d3d99;
+        --pvt-graph-background-image:
+            repeating-linear-gradient(0deg, var(--pvt-graph-grid-color) 0px, var(--pvt-graph-grid-color) 1px, transparent 1px, transparent 20px),
+            repeating-linear-gradient(90deg, var(--pvt-graph-grid-color) 0px, var(--pvt-graph-grid-color) 1px, transparent 1px, transparent 20px);
+        --pvt-graph-navigation-control-container-shadow:
             rgba(255, 255, 255, 0.15) 0px 0px 4px,
             rgba(255, 255, 255, 0.10) 0px 1px 2px;
     }
 }
 
 .pivotick[data-theme="dark"] {
-    --pivotick-bg: #031233;
+    --pvt-bg: #031233;
 }

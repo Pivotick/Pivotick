@@ -1,16 +1,16 @@
 .pivotick-layout {
-    color: var(--pivotick-text-color-6)
+    color: var(--pvt-text-color-6)
 }
 
 .hidden {
     display: none;
 }
 
-.pivotick-canvas-container {
+.pivotick-canvas {
     width: 100%;
     height: 100%;
-    background-color: var(--pivotick-bg);
-    background-image: var(--pivotick-graph-background-image);
+    background-color: var(--pvt-bg);
+    background-image: var(--pvt-graph-background-image);
 }
 
 
@@ -36,7 +36,7 @@
     }
     rect.fill {
         height: 8px;
-        fill: var(--pivotick-bg-color-primary);
+        fill: var(--pvt-bg-color-primary);
         rx: 4;
         ry: 4;
     }
@@ -65,7 +65,7 @@ dl.pivotick-property-list {
             padding: 2px 4px;
             font-size: 0.9rem;
             font-weight: 300;
-            color: var(--pivotick-text-color-5);
+            color: var(--pvt-text-color-5);
             text-align: end;
             align-self: start;
             white-space: normal;
@@ -79,10 +79,10 @@ dl.pivotick-property-list {
             font-size: 0.875rem;
             font-weight: 400;
             padding: 2px 4px;
-            border: 1px solid var(--pivotick-text-color-1);
+            border: 1px solid var(--pvt-text-color-1);
             border-radius: 4px;
-            background-color: var(--pivotick-bg-color-0);
-            color: var(--pivotick-text-color-primary);
+            background-color: var(--pvt-bg-color-0);
+            color: var(--pvt-text-color-primary);
             align-self: start;
             user-select: all;
             min-height: 1em;
@@ -95,65 +95,65 @@ dl.pivotick-property-list {
             line-clamp: 3;
             -webkit-box-orient: vertical;
             box-orient: vertical;
-            box-shadow: color-mix(in srgb, var(--pivotick-text-color-6) 6%, transparent) 0px 2px 4px 0px inset;
+            box-shadow: color-mix(in srgb, var(--pvt-text-color-6) 6%, transparent) 0px 2px 4px 0px inset;
         }
     }
 }
 
 .pivotick-node-selected-highlight {
-    stroke: var(--pivotick-node-selected-stroke);
-    stroke-width: var(--pivotick-node-selected-stroke-width);
-    stroke-opacity: var(--pivotick-edge-selected-stroke-opacity);
-    filter: var(--pivotick-node-selected-filter);
-    animation: var(--pivotick-node-selected-animation);
+    stroke: var(--pvt-node-selected-stroke);
+    stroke-width: var(--pvt-node-selected-stroke-width);
+    stroke-opacity: var(--pvt-edge-selected-stroke-opacity);
+    filter: var(--pvt-node-selected-filter);
+    animation: var(--pvt-node-selected-animation);
 }
 
 .edge-group {
     path {
-        stroke: var(--pivotick-edge-stroke);
-        stroke-width: var(--pivotick-edge-stroke-width);
-        filter: var(--pivotick-edge-filter);
+        stroke: var(--pvt-edge-stroke);
+        stroke-width: var(--pvt-edge-stroke-width);
+        filter: var(--pvt-edge-filter);
 
         &.dashed {
-            stroke-dasharray: var(--pivotick-edge-stroke-dasharray);
+            stroke-dasharray: var(--pvt-edge-stroke-dasharray);
 
             &.animated {
                 stroke-dashoffset: 0;
-                animation: var(--pivotick-edge-animation);
+                animation: var(--pvt-edge-animation);
             }
         }
     }
 
     .label-container {
         rect {
-            stroke: var(--pivotick-edge-label-stroke);
-            stroke-width: var(--pivotick-edge-label-stroke-width);
-            background-color: var(--pivotick-edge-label-bg);
+            stroke: var(--pvt-edge-label-stroke);
+            stroke-width: var(--pvt-edge-label-stroke-width);
+            background-color: var(--pvt-edge-label-bg);
         }
         text {
-            color: var(--pivotick-edge-label-color);
-            font-family: var(--pivotick-edge-label-font-family);
-            font-size: var(--pivotick-edge-label-font-size);
+            color: var(--pvt-edge-label-color);
+            font-family: var(--pvt-edge-label-font-family);
+            font-size: var(--pvt-edge-label-font-size);
             user-select: none;
         }
     }
 
     &.selected {
         path {
-            stroke: var(--pivotick-edge-selected-stroke);
-            stroke-width: var(--pivotick-edge-selected-stroke-width);
-            filter: var(--pivotick-edge-selected-filter);
+            stroke: var(--pvt-edge-selected-stroke);
+            stroke-width: var(--pvt-edge-selected-stroke-width);
+            filter: var(--pvt-edge-selected-filter);
         }
     
         .label-container {
             rect {
-                stroke: var(--pivotick-edge-label-selected-stroke);
-                stroke-width: var(--pivotick-edge-label-selected-stroke-width);
-                background-color: var(--pivotick-edge-label-selected-bg);
+                stroke: var(--pvt-edge-label-selected-stroke);
+                stroke-width: var(--pvt-edge-label-selected-stroke-width);
+                background-color: var(--pvt-edge-label-selected-bg);
             }
             text {
-                color: var(--pivotick-edge-label-selected-color);
-                font-size: var(--pivotick-edge-label-selected-font-size);
+                color: var(--pvt-edge-label-selected-color);
+                font-size: var(--pvt-edge-label-selected-font-size);
             }
         }
     }
@@ -169,12 +169,12 @@ dl.pivotick-property-list {
         &.icon-unicode {
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
-            font-family: var(--pivotick-node-icon-font-family, "Font Awesome 7 Free");
+            font-family: var(--pvt-node-icon-font-family, "Font Awesome 7 Free");
             font-feature-settings: normal;
             font-style: normal;
             font-synthesis: none;
             font-variant: normal;
-            font-weight: var(--pivotick-node-icon-font-weight, 900);
+            font-weight: var(--pvt-node-icon-font-weight, 900);
             line-height: 1;
             text-align: center;
             text-rendering: auto;
@@ -183,8 +183,8 @@ dl.pivotick-property-list {
 }
 
 .selection-rectangle {
-    fill: var(--pivotick-selection-rectangle-fill);
-    stroke: var(--pivotick-selection-rectangle-stroke);
+    fill: var(--pvt-selection-rectangle-fill);
+    stroke: var(--pvt-selection-rectangle-stroke);
     stroke-width: 2px;
 }
 

@@ -1,9 +1,9 @@
 .pivotick-tooltip {
     position: absolute;
     pointer-events: auto;
-    background-color: var(--pivotick-sidebar-panelbody-bg);
-    border: var(--pivotick-sidebar-panel-border);
-    box-shadow: var(--pivotick-box-shadow-strong);
+    background-color: var(--pvt-sidebar-panelbody-bg);
+    border: var(--pvt-sidebar-panel-border);
+    box-shadow: var(--pvt-box-shadow-strong);
     font-size: 13px;
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     line-height: 1.4;
@@ -18,13 +18,13 @@
     }
 
     &.pivotick-tooltip-floating {
-        border-color: var(--pivotick-tooltip-floating-bg-color);
+        border-color: var(--pvt-tooltip-floating-bg-color);
     }
 
     .pivotick-tooltip-topbar {
         display: flex;
         align-items: center;
-        background-color: var(--pivotick-tooltip-floating-bg-color);
+        background-color: var(--pvt-tooltip-floating-bg-color);
         padding: 2px;
 
         &.draggable {
@@ -71,8 +71,8 @@
             align-items: center;
             gap: 10px;
             padding: 8px;
-            border-bottom: var(--pivotick-sidebar-panel-border);
-            background-color: var(--pivotick-sidebar-mainpanelheader-bg);
+            border-bottom: var(--pvt-sidebar-panel-border);
+            background-color: var(--pvt-sidebar-mainpanelheader-bg);
 
             .pivotick-mainheader-topright {
                 position: absolute;
@@ -87,7 +87,7 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                background: var(--pivotick-mainheader-nodepreview-bg);
+                background: var(--pvt-mainheader-nodepreview-bg);
                 border-radius: 8px;
                 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), inset 0 0 0 1px hsla(0, 0%, 0%, .05);
     
@@ -107,14 +107,14 @@
                 .pivotick-mainheader-nodeinfo-name {
                     font-size: 16px;
                     font-weight: 600;
-                    color: var(--pivotick-text-color-6);
+                    color: var(--pvt-text-color-6);
                     user-select: all;
                     white-space: wrap;
                 }
 
                 .pivotick-mainheader-nodeinfo-subtitle {
                     font-size: 12px;
-                    color: var(--pivotick-text-color-5);
+                    color: var(--pvt-text-color-5);
                     user-select: all;
                     white-space: wrap;
                 }
@@ -151,10 +151,10 @@
     height: 100%;
 
     path.pivotick-shadowlink {
-        stroke: color-mix(in srgb, var(--pivotick-edge-stroke) 100%, #ffffff00);
+        stroke: color-mix(in srgb, var(--pvt-edge-stroke) 100%, #ffffff00);
         stroke-width: 2;
         stroke-opacity: 0.3;
-        stroke-dasharray: var(--pivotick-edge-stroke-dasharray);
-        animation: var(--pivotick-edge-animation);
+        stroke-dasharray: var(--pvt-edge-stroke-dasharray);
+        animation: var(--pvt-edge-animation);
     }
 }

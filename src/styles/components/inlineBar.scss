@@ -1,11 +1,11 @@
 .pivotick-inline-bar-container {
     position: relative;
     display: inline-block;
-    height: var(--pivotick-inline-bar-height);
-    width: var(--pivotick-inline-bar-width);
-    background: var(--pivotick-inline-bar-bg);
-    box-shadow: color-mix(in srgb, var(--pivotick-text-color-6) 15%, transparent) 0px 1px 1px 0px,
-                color-mix(in srgb, var(--pivotick-text-color-6) 10%, transparent) 0px 0px 2px 0px,
+    height: var(--pvt-inline-bar-height);
+    width: var(--pvt-inline-bar-width);
+    background: var(--pvt-inline-bar-bg);
+    box-shadow: color-mix(in srgb, var(--pvt-text-color-6) 15%, transparent) 0px 1px 1px 0px,
+                color-mix(in srgb, var(--pvt-text-color-6) 10%, transparent) 0px 0px 2px 0px,
                 inset 0 1px 2px rgba(0, 0, 0, 0.05);
     border-radius: 4px;
     overflow: hidden;
@@ -14,7 +14,7 @@
     .pivotick-inline-bar-fill {
         display: block;
         height: 100%;
-        background: var(--pivotick-inline-bar-fill-bg);
+        background: var(--pvt-inline-bar-fill-bg);
         background-repeat: no-repeat;
         border-radius: inherit;
         transition: width 0.4s cubic-bezier(.2, .9, .3, 1), background-size 0.4s cubic-bezier(.2, .9, .3, 1);
@@ -26,5 +26,5 @@
     white-space: 'nowrap';
     width: 36px;
     text-align: right;
-    color: 'var(--pivotick-text-color-4)';
+    color: 'var(--pvt-text-color-4)';
 }

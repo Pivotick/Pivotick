@@ -142,19 +142,19 @@ export class Sidebar implements UIElement {
     }
 
     public toggleSidebar(): void {
-        const sidebarContainer = this.sidebar!.closest('.pivotick-sidebar-container') as HTMLElement
+        const sidebarContainer = this.sidebar!.closest('.pivotick-sidebar') as HTMLElement
         sidebarContainer.classList.toggle('pivotick-sidebar-collapsed', this.sidebarOpen)
         this.sidebarOpen = !this.sidebarOpen
     }
 
     public showSidebar(): void {
-        const sidebarContainer = this.sidebar!.closest('.pivotick-sidebar-container') as HTMLElement
+        const sidebarContainer = this.sidebar!.closest('.pivotick-sidebar') as HTMLElement
         sidebarContainer.classList.remove('pivotick-sidebar-collapsed')
         this.sidebarOpen = true
     }
 
     public hideSidebar(): void {
-        const sidebarContainer = this.sidebar!.closest('.pivotick-sidebar-container') as HTMLElement
+        const sidebarContainer = this.sidebar!.closest('.pivotick-sidebar') as HTMLElement
         sidebarContainer.classList.add('pivotick-sidebar-collapsed')
         this.sidebarOpen = false
     }

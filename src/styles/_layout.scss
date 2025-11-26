@@ -3,22 +3,22 @@
 .pivotick {
     width: 100%;
     height: 100%;
-    color: var(--pivotick-text-color-6);
-    background-color: var(--pivotick-bg);
+    color: var(--pvt-text-color-6);
+    background-color: var(--pvt-bg);
     position: relative;
     overflow: hidden;
 }
 
 .pivotick-layout {
-    --pivotick-sidebar-width: 340px;
-    --pivotick-toolbar-height: 48px;
+    --pvt-sidebar-width: 340px;
+    --pvt-toolbar-height: 48px;
 
     position: relative;
     width: 100%;
     height: 100%;
     display: grid;
     grid-template-columns: auto 1fr;
-    grid-template-rows: var(--pivotick-toolbar-height) 1fr;
+    grid-template-rows: var(--pvt-toolbar-height) 1fr;
     grid-template-areas: 
         "sidebar toolbar"
         "sidebar canvas";
@@ -31,7 +31,7 @@
 
     &.mode-light {
         grid-template-columns: 0px 1fr;
-        grid-template-rows: var(--pivotick-toolbar-height) 1fr;
+        grid-template-rows: var(--pvt-toolbar-height) 1fr;
     }
 
     &.mode-full.sidebar-collapsed {
@@ -39,8 +39,8 @@
     }
 }
 
-.pivotick-sidebar-container {
-    width: var(--pivotick-sidebar-width);
+.pivotick-sidebar {
+    width: var(--pvt-sidebar-width);
     grid-area: sidebar;
     height: 100%;
     transition: width 0.1s ease-out;
@@ -59,7 +59,7 @@
     }
 }
 
-.pivotick-canvas-container {
+.pivotick-canvas {
     grid-area: canvas;
     height: 100%;
     width: 100%;
@@ -76,7 +76,7 @@
         z-index: 1000;
     }
 
-    .pivotick-notification-container {
+    .pivotick-notification {
         position: absolute;
         top: 1em;
         right: 3em;
@@ -87,20 +87,20 @@
     }
 }
 
-.pivotick-toolbar-container {
+.pivotick-toolbar {
     grid-area: toolbar;
     height: 100%;
     width: calc(100%);// - 12px);
     z-index: 10;
 }
 
-.pivotick-graphnavigation-container {
+.pivotick-graphnavigation {
     position: absolute;
     top: 1rem;
     right: 1rem;
 }
 
-.pivotick-graphcontrols-container {
+.pivotick-graphcontrols {
     position: absolute;
     top: 1rem;
     left: 1rem;

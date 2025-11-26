@@ -1,10 +1,10 @@
 .pivotick-toast {
     min-width: 250px;
-    background-color: var(--pivotick-toast-bg);
+    background-color: var(--pvt-toast-bg);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
-    border: 1px solid color-mix(in srgb, var(--pivotick-toast-bg) 85%, black);
+    border: 1px solid color-mix(in srgb, var(--pvt-toast-bg) 85%, black);
     border-radius: 4px;
-    color: var(--pivotick-toast-color);
+    color: var(--pvt-toast-color);
     opacity: 0;
     transform: translateX(20px);
     transition: opacity 0.3s ease, transform 0.3s ease;
@@ -17,7 +17,7 @@
 
     .pivotick-toast-body {
         padding: 0.5em 0.75em;
-        border-top: 1px solid color-mix(in srgb, var(--pivotick-toast-bg) 85%, black);
+        border-top: 1px solid color-mix(in srgb, var(--pvt-toast-bg) 85%, black);
     }
 
     &.show {
@@ -26,32 +26,32 @@
     }
 
     &.pivotick-toast-primary {
-        --pivotick-toast-bg: var(--pivotick-toast-bg-color-primary);
-        --pivotick-toast-color: var(--pivotick-toast-text-color-primary);
+        --pvt-toast-bg: var(--pvt-toast-bg-color-primary);
+        --pvt-toast-color: var(--pvt-toast-text-color-primary);
     }
 
     &.pivotick-toast-secondary {
-        --pivotick-toast-bg: var(--pivotick-toast-bg-color-secondary);
-        --pivotick-toast-color: var(--pivotick-toast-text-color-secondary);
+        --pvt-toast-bg: var(--pvt-toast-bg-color-secondary);
+        --pvt-toast-color: var(--pvt-toast-text-color-secondary);
     }
 
     &.pivotick-toast-info {
-        --pivotick-toast-bg: var(--pivotick-toast-bg-color-info);
-        --pivotick-toast-color: var(--pivotick-toast-text-color-info);
+        --pvt-toast-bg: var(--pvt-toast-bg-color-info);
+        --pvt-toast-color: var(--pvt-toast-text-color-info);
     }
 
     &.pivotick-toast-warning {
-        --pivotick-toast-bg: var(--pivotick-toast-bg-color-warning);
-        --pivotick-toast-color: var(--pivotick-toast-text-color-warning);
+        --pvt-toast-bg: var(--pvt-toast-bg-color-warning);
+        --pvt-toast-color: var(--pvt-toast-text-color-warning);
     }
 
     &.pivotick-toast-danger {
-        --pivotick-toast-bg: var(--pivotick-toast-bg-color-danger);
-        --pivotick-toast-color: var(--pivotick-toast-text-color-danger);
+        --pvt-toast-bg: var(--pvt-toast-bg-color-danger);
+        --pvt-toast-color: var(--pvt-toast-text-color-danger);
     }
 
     &.pivotick-toast-success {
-        --pivotick-toast-bg: var(--pivotick-toast-bg-color-success);
-        --pivotick-toast-color: var(--pivotick-toast-text-color-success);
+        --pvt-toast-bg: var(--pvt-toast-bg-color-success);
+        --pvt-toast-color: var(--pvt-toast-text-color-success);
     }
 }

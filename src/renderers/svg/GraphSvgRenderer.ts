@@ -24,9 +24,9 @@ import type { EdgeStyle, GraphRendererOptions, LabelStyle, MarkerStyleMap, NodeS
         markerHeight: 6,
         markerUnits: 'userSpaceOnUse',
         orient: 'auto',
-        fill: 'var(--pivotick-edge-stroke, #999)',
+        fill: 'var(--pvt-edge-stroke, #999)',
         selected: {
-            fill: 'var(--pivotick-edge-selected-stroke, #007acc)',
+            fill: 'var(--pvt-edge-selected-stroke, #007acc)',
             markerWidth: 12,
             markerHeight: 12,
             refX: 6,
@@ -41,9 +41,9 @@ import type { EdgeStyle, GraphRendererOptions, LabelStyle, MarkerStyleMap, NodeS
         markerHeight: 10,
         markerUnits: 'userSpaceOnUse',
         orient: 0,
-        fill: 'var(--pivotick-edge-stroke, #999)',
+        fill: 'var(--pvt-edge-stroke, #999)',
         selected: {
-            fill: 'var(--pivotick-edge-selected-stroke, #007acc)',
+            fill: 'var(--pvt-edge-selected-stroke, #007acc)',
             markerWidth: 16,
             markerHeight: 16,
         }
@@ -57,9 +57,9 @@ import type { EdgeStyle, GraphRendererOptions, LabelStyle, MarkerStyleMap, NodeS
         markerHeight: 8,
         markerUnits: 'userSpaceOnUse',
         orient: 0,
-        fill: 'var(--pivotick-edge-stroke, #999)',
+        fill: 'var(--pvt-edge-stroke, #999)',
         selected: {
-            fill: 'var(--pivotick-edge-selected-stroke, #007acc)',
+            fill: 'var(--pvt-edge-selected-stroke, #007acc)',
             markerWidth: 14,
             markerHeight: 14,
         }
@@ -76,9 +76,9 @@ export const defaultMarkerStyleMap: MarkerStyleMap = {
         markerHeight: 6,
         markerUnits: 'userSpaceOnUse',
         orient: 'auto',
-        fill: 'var(--pivotick-edge-stroke, #999)',
+        fill: 'var(--pvt-edge-stroke, #999)',
         selected: {
-            fill: 'var(--pivotick-edge-selected-stroke, #007acc)',
+            fill: 'var(--pvt-edge-selected-stroke, #007acc)',
             markerWidth: 12,
             markerHeight: 12,
             refX: 6,
@@ -93,9 +93,9 @@ export const defaultMarkerStyleMap: MarkerStyleMap = {
         markerHeight: 10,
         markerUnits: 'userSpaceOnUse',
         orient: 0,
-        fill: 'var(--pivotick-edge-stroke, #999)',
+        fill: 'var(--pvt-edge-stroke, #999)',
         selected: {
-            fill: 'var(--pivotick-edge-selected-stroke, #007acc)',
+            fill: 'var(--pvt-edge-selected-stroke, #007acc)',
             markerWidth: 16,
             markerHeight: 16,
         }
@@ -109,9 +109,9 @@ export const defaultMarkerStyleMap: MarkerStyleMap = {
         markerHeight: 8,
         markerUnits: 'userSpaceOnUse',
         orient: 0,
-        fill: 'var(--pivotick-edge-stroke, #999)',
+        fill: 'var(--pvt-edge-stroke, #999)',
         selected: {
-            fill: 'var(--pivotick-edge-selected-stroke, #007acc)',
+            fill: 'var(--pvt-edge-selected-stroke, #007acc)',
             markerWidth: 14,
             markerHeight: 14,
         }
@@ -124,10 +124,10 @@ export const defaultMarkerStyleMap: MarkerStyleMap = {
     shape: 'circle',
     size: 10,
     strokeWidth: 2,
-    color: 'var(--pivotick-node-color, #007acc)',
-    strokeColor: 'var(--pivotick-node-stroke, #fff)',
-    fontFamily: 'var(--pivotick-label-font, system-ui, sans-serif)',
-    textColor: 'var(--pivotick-node-text-color, #fff)',
+    color: 'var(--pvt-node-color, #007acc)',
+    strokeColor: 'var(--pvt-node-stroke, #fff)',
+    fontFamily: 'var(--pvt-label-font, system-ui, sans-serif)',
+    textColor: 'var(--pvt-node-text-color, #fff)',
     iconUnicode: undefined,
     iconClass: undefined,
     svgIcon: undefined,
@@ -139,10 +139,10 @@ export const defaultNodeStyle: NodeStyle = {
     shape: 'circle',
     size: 10,
     strokeWidth: 2,
-    color: 'var(--pivotick-node-color, #007acc)',
-    strokeColor: 'var(--pivotick-node-stroke, #fff)',
-    fontFamily: 'var(--pivotick-label-font, system-ui, sans-serif)',
-    textColor: 'var(--pivotick-node-text-color, #fff)',
+    color: 'var(--pvt-node-color, #007acc)',
+    strokeColor: 'var(--pvt-node-stroke, #fff)',
+    fontFamily: 'var(--pvt-label-font, system-ui, sans-serif)',
+    textColor: 'var(--pvt-node-text-color, #fff)',
     iconUnicode: undefined,
     iconClass: undefined,
     svgIcon: undefined,
@@ -161,7 +161,7 @@ export const defaultNodeStyle: NodeStyle = {
     rotateLabel: false,
     markerEnd: 'arrow',
     markerStart: undefined,
-    strokeColor: 'var(--pivotick-edge-color, #999)',
+    strokeColor: 'var(--pvt-edge-color, #999)',
 }
  */
 export const defaultEdgeStyle: EdgeStyle = {
@@ -173,23 +173,23 @@ export const defaultEdgeStyle: EdgeStyle = {
     rotateLabel: false,
     markerEnd: 'arrow',
     markerStart: undefined,
-    strokeColor: 'var(--pivotick-edge-color, #999)',
+    strokeColor: 'var(--pvt-edge-color, #999)',
 }
 
 /**
  * @default
 {
     fontSize: 12,
-    fontFamily: 'var(--pivotick-label-font, system-ui, sans-serif)',
-    color: 'var(--pivotick-edge-label-color, #333)',
-    backgroundColor: 'var(--pivotick-edge-label-bg, #ffffffa0)',
+    fontFamily: 'var(--pvt-label-font, system-ui, sans-serif)',
+    color: 'var(--pvt-edge-label-color, #333)',
+    backgroundColor: 'var(--pvt-edge-label-bg, #ffffffa0)',
 }
  */
 export const defaultLabelStyle: LabelStyle = {
     fontSize: 12,
-    fontFamily: 'var(--pivotick-label-font, system-ui, sans-serif)',
-    color: 'var(--pivotick-edge-label-color, #333)',
-    backgroundColor: 'var(--pivotick-edge-label-bg, #ffffffa0)',
+    fontFamily: 'var(--pvt-label-font, system-ui, sans-serif)',
+    color: 'var(--pvt-edge-label-color, #333)',
+    backgroundColor: 'var(--pvt-edge-label-bg, #ffffffa0)',
 }
 
 const DEFAULT_RENDERER_OPTIONS = {

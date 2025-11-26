@@ -1,6 +1,6 @@
-.pivotick-sidebar-container {
+.pivotick-sidebar {
     position: relative;
-    box-shadow: var(--pivotic-sidebar-layout-shadow-right);
+    box-shadow: var(--pvt-sidebar-layout-shadow-right);
 
     .pivotick-sidebar {
         height: 100%;
@@ -36,11 +36,11 @@
             .pivotick-sidebar-header-panel {
                 display: flex;
                 min-height: 40px;
-                background-color: var(--pivotick-sidebar-panelheader-bg);
+                background-color: var(--pvt-sidebar-panelheader-bg);
                 align-items: center;
                 padding: 2px 6px;
                 font-weight: 300;
-                color: var(--pivotick-text-color-5);
+                color: var(--pvt-text-color-5);
             }
 
             .pivotick-sidebar-body-panel {
@@ -54,10 +54,10 @@
         position: absolute;
         right: -40px;
         bottom: 7px;
-        background-color: var(--pivotic-sidebar-collapse-bg);
-        color: var(--pivotic-sidebar-collapse-color);
-        box-shadow: var(--pivotic-sidebar-collapse-shadow);
-        border: 1px solid var(--pivotic-sidebar-collapse-border-color);
+        background-color: var(--pvt-sidebar-collapse-bg);
+        color: var(--pvt-sidebar-collapse-color);
+        box-shadow: var(--pvt-sidebar-collapse-shadow);
+        border: 1px solid var(--pvt-sidebar-collapse-border-color);
         padding: 4px;
         font-size: 20px;
         border-radius: 50%;
@@ -69,11 +69,11 @@
         cursor: pointer;
 
         &:hover {
-            color: color-mix(in srgb, var(--pivotic-sidebar-collapse-color) 70%, black);
+            color: color-mix(in srgb, var(--pvt-sidebar-collapse-color) 70%, black);
         }
 
         &:active {
-            color: color-mix(in srgb, var(--pivotic-sidebar-collapse-color) 85%, black);
+            color: color-mix(in srgb, var(--pvt-sidebar-collapse-color) 85%, black);
             transition: transform 0.05s ease-out;
             transform: scale(0.95);
         }

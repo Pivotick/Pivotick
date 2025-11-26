@@ -173,18 +173,18 @@ export interface NodeStyle {
     shape: NodeShape
     /**
      * The main color of the node
-     * @default 'var(--pivotick-node-color, #007acc)'
+     * @default 'var(--pvt-node-color, #007acc)'
      */
     color: string
     /** @default 10 */
     size: number
-    /** @default 'var(--pivotick-node-stroke, #fff)' */
+    /** @default 'var(--pvt-node-stroke, #fff)' */
     strokeColor: string
     /** @default 2 */
     strokeWidth: number
-    /** @default 'var(--pivotick-label-font, system-ui, sans-serif)' */
+    /** @default 'var(--pvt-label-font, system-ui, sans-serif)' */
     fontFamily: string
-    /** @default 'var(--pivotick-node-text-color, #fff)' */
+    /** @default 'var(--pvt-node-text-color, #fff)' */
     textColor: string
     iconClass?: IconClass,
     iconUnicode?: IconUnicode,
@@ -218,7 +218,7 @@ export interface PartialEdgeFullStyle {
  */
 export type CurveStyle = 'straight' | 'curved' | 'bidirectional'
 export interface EdgeStyle {
-    /** @default 'var(--pivotick-edge-color, #999)' */
+    /** @default 'var(--pvt-edge-color, #999)' */
     strokeColor: string
     /** @default 2 */
     strokeWidth: number

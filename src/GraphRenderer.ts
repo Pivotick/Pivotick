@@ -36,7 +36,7 @@ export abstract class GraphRenderer {
     abstract focusElement(element: Node | Edge): void
 
     public getCanvasContainer(): HTMLElement {
-        return this.container.querySelector('.pivotick-canvas-container') as HTMLElement
+        return this.container.querySelector('.pivotick-canvas') as HTMLElement
     }
 
     public getCanvas(): HTMLElement {

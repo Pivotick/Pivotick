@@ -18,32 +18,32 @@ export class Layout implements UIElement {
         this.layout.className = `pivotick-layout mode-${mode}`
 
         this.canvas = document.createElement('div')
-        this.canvas.className = 'pivotick-canvas-container'
+        this.canvas.className = 'pivotick-canvas'
         this.layout.appendChild(this.canvas)
 
         this.notification = document.createElement('div')
-        this.notification.className = 'pivotick-notification-container'
+        this.notification.className = 'pivotick-notification'
         this.canvas.appendChild(this.notification)
 
         if (mode === 'full') {
             this.sidebar = document.createElement('div')
-            this.sidebar.className = 'pivotick-sidebar-container'
+            this.sidebar.className = 'pivotick-sidebar'
             this.layout.appendChild(this.sidebar)
         }
 
         if (mode === 'light' || mode === 'full') {
             this.toolbar = document.createElement('div')
-            this.toolbar.className = 'pivotick-toolbar-container'
+            this.toolbar.className = 'pivotick-toolbar'
             this.layout.appendChild(this.toolbar)
         }
 
         if (mode !== 'static') {
             this.graphnavigation = document.createElement('div')
-            this.graphnavigation.className = 'pivotick-graphnavigation-container'
+            this.graphnavigation.className = 'pivotick-graphnavigation'
             this.canvas.appendChild(this.graphnavigation)
 
             this.graphcontrols = document.createElement('div')
-            this.graphcontrols.className = 'pivotick-graphcontrols-container'
+            this.graphcontrols.className = 'pivotick-graphcontrols'
             this.canvas.appendChild(this.graphcontrols)
         }
 
