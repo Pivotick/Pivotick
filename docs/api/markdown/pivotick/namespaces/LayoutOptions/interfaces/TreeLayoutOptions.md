@@ -6,7 +6,7 @@
 
 # Interface: TreeLayoutOptions
 
-Defined in: [interfaces/LayoutOptions.ts:19](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/LayoutOptions.ts#L19)
+Defined in: [interfaces/LayoutOptions.ts:19](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/LayoutOptions.ts#L19)
 
 ## Extends
 
@@ -18,7 +18,7 @@ Defined in: [interfaces/LayoutOptions.ts:19](https://github.com/mokaddem/Pivotic
 
 > **flipEdgeDirection**: `boolean`
 
-Defined in: [interfaces/LayoutOptions.ts:56](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/LayoutOptions.ts#L56)
+Defined in: [interfaces/LayoutOptions.ts:56](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/LayoutOptions.ts#L56)
 
 If the direction of the edges should be flipped. This can lead to other visualization
 
@@ -34,7 +34,7 @@ false
 
 > `optional` **horizontal**: `boolean`
 
-Defined in: [interfaces/LayoutOptions.ts:41](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/LayoutOptions.ts#L41)
+Defined in: [interfaces/LayoutOptions.ts:41](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/LayoutOptions.ts#L41)
 
 Should the nodes be placed horizontally rather than vertically
 
@@ -50,7 +50,7 @@ false
 
 > `optional` **radial**: `boolean`
 
-Defined in: [interfaces/LayoutOptions.ts:36](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/LayoutOptions.ts#L36)
+Defined in: [interfaces/LayoutOptions.ts:36](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/LayoutOptions.ts#L36)
 
 Should the nodes be placed radially instead of vertically
 
@@ -66,7 +66,7 @@ false
 
 > **radialGap**: `number`
 
-Defined in: [interfaces/LayoutOptions.ts:51](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/LayoutOptions.ts#L51)
+Defined in: [interfaces/LayoutOptions.ts:51](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/LayoutOptions.ts#L51)
 
 The grap between each layers used in the radial mode
 
@@ -82,7 +82,7 @@ The grap between each layers used in the radial mode
 
 > `optional` **rootId**: `string`
 
-Defined in: [interfaces/LayoutOptions.ts:26](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/LayoutOptions.ts#L26)
+Defined in: [interfaces/LayoutOptions.ts:26](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/LayoutOptions.ts#L26)
 
 Specify the ID of the node to be used as the root of the tree.
 Keep undefined to let `rooIdAlgorithmFinder` to select it.
@@ -99,7 +99,7 @@ undefined
 
 > **rootIdAlgorithmFinder**: [`TreeLayoutAlgorithm`](../../../../type-aliases/TreeLayoutAlgorithm.md)
 
-Defined in: [interfaces/LayoutOptions.ts:46](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/LayoutOptions.ts#L46)
+Defined in: [interfaces/LayoutOptions.ts:46](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/LayoutOptions.ts#L46)
 
 The algorithm to use to find the root of the tree
 
@@ -115,7 +115,7 @@ The algorithm to use to find the root of the tree
 
 > `optional` **strength**: `number`
 
-Defined in: [interfaces/LayoutOptions.ts:31](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/LayoutOptions.ts#L31)
+Defined in: [interfaces/LayoutOptions.ts:31](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/LayoutOptions.ts#L31)
 
 The strength of the force keeping the nodes placed to form a tree in place
 
@@ -131,7 +131,7 @@ The strength of the force keeping the nodes placed to form a tree in place
 
 > **type**: `"tree"`
 
-Defined in: [interfaces/LayoutOptions.ts:20](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/LayoutOptions.ts#L20)
+Defined in: [interfaces/LayoutOptions.ts:20](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/LayoutOptions.ts#L20)
 
 #### Default
 

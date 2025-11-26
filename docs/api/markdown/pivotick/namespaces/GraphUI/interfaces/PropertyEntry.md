@@ -6,7 +6,7 @@
 
 # Interface: PropertyEntry
 
-Defined in: [interfaces/GraphUI.ts:116](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L116)
+Defined in: [interfaces/GraphUI.ts:74](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/GraphUI.ts#L74)
 
 Represents a single property entry to display in the properties panel.
 
@@ -19,7 +19,7 @@ Represents a single property entry to display in the properties panel.
 
 > **name**: `string` \| `HTMLElement` \| (`element`) => `string` \| `HTMLElement`
 
-Defined in: [interfaces/GraphUI.ts:117](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L117)
+Defined in: [interfaces/GraphUI.ts:75](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/GraphUI.ts#L75)
 
 ***
 
@@ -27,4 +27,4 @@ Defined in: [interfaces/GraphUI.ts:117](https://github.com/mokaddem/Pivotick/blo
 
 > **value**: `string` \| `HTMLElement` \| (`element`) => `string` \| `HTMLElement`
 
-Defined in: [interfaces/GraphUI.ts:118](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L118)
+Defined in: [interfaces/GraphUI.ts:76](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/GraphUI.ts#L76)

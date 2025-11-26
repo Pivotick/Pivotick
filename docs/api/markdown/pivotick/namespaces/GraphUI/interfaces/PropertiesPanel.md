@@ -6,7 +6,7 @@
 
 # Interface: PropertiesPanel
 
-Defined in: [interfaces/GraphUI.ts:127](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L127)
+Defined in: [interfaces/GraphUI.ts:85](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/GraphUI.ts#L85)
 
 Represents the configuration for the properties panel in the graph UI's sidebar
 
@@ -24,7 +24,7 @@ All key/value pairs from node.getData() or edge.getData()
 
 > **edgePropertiesMap**: (`edge`) => [`PropertyEntry`](PropertyEntry.md)[]
 
-Defined in: [interfaces/GraphUI.ts:139](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L139)
+Defined in: [interfaces/GraphUI.ts:97](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/GraphUI.ts#L97)
 
 A function that computes the list of edge properties to display
 
@@ -50,7 +50,7 @@ All key/value pairs from edge.getData()
 
 > **nodePropertiesMap**: (`node`) => [`PropertyEntry`](PropertyEntry.md)[]
 
-Defined in: [interfaces/GraphUI.ts:133](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L133)
+Defined in: [interfaces/GraphUI.ts:91](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/GraphUI.ts#L91)
 
 A function that computes the list of node properties to display
 
@@ -76,7 +76,7 @@ All key/value pairs from node.getData()
 
 > `optional` **render**: `string` \| `HTMLElement` \| (`element`) => `string` \| `HTMLElement`
 
-Defined in: [interfaces/GraphUI.ts:146](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L146)
+Defined in: [interfaces/GraphUI.ts:104](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/GraphUI.ts#L104)
 
 Custom renderer for the property panel. This content will override the default sidebar property panel.
 

@@ -8,7 +8,7 @@
 
 > **MenuActionItemOptions**\<`TThis`\> = `object`
 
-Defined in: [interfaces/GraphUI.ts:178](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L178)
+Defined in: [interfaces/GraphUI.ts:184](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/GraphUI.ts#L184)
 
 Options to define an action item in a menu.
 Can be used in contextual menus or multi-select menus.
@@ -25,7 +25,7 @@ Can be used in contextual menus or multi-select menus.
 
 > `optional` **iconClass**: [`IconClass`](IconClass.md)
 
-Defined in: [interfaces/GraphUI.ts:181](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L181)
+Defined in: [interfaces/GraphUI.ts:187](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/GraphUI.ts#L187)
 
 ***
 
@@ -33,7 +33,7 @@ Defined in: [interfaces/GraphUI.ts:181](https://github.com/mokaddem/Pivotick/blo
 
 > `optional` **iconUnicode**: [`IconUnicode`](IconUnicode.md)
 
-Defined in: [interfaces/GraphUI.ts:180](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L180)
+Defined in: [interfaces/GraphUI.ts:186](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/GraphUI.ts#L186)
 
 Unicode character for the icon (optional)
 
@@ -43,7 +43,7 @@ Unicode character for the icon (optional)
 
 > `optional` **imagePath**: [`ImagePath`](ImagePath.md)
 
-Defined in: [interfaces/GraphUI.ts:183](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L183)
+Defined in: [interfaces/GraphUI.ts:189](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/GraphUI.ts#L189)
 
 ***
 
@@ -51,7 +51,7 @@ Defined in: [interfaces/GraphUI.ts:183](https://github.com/mokaddem/Pivotick/blo
 
 > **onclick**: (`this`, `evt`, `element?`) => `void`
 
-Defined in: [interfaces/GraphUI.ts:188](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L188)
+Defined in: [interfaces/GraphUI.ts:197](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/GraphUI.ts#L197)
 
 #### Parameters
 
@@ -77,36 +77,46 @@ Defined in: [interfaces/GraphUI.ts:188](https://github.com/mokaddem/Pivotick/blo
 
 > `optional` **svgIcon**: [`SVGIcon`](SVGIcon.md)
 
-Defined in: [interfaces/GraphUI.ts:182](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L182)
+Defined in: [interfaces/GraphUI.ts:188](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/GraphUI.ts#L188)
 
 ***
 
-### text?
+### text
 
-> `optional` **text**: `string`
+> **text**: `string`
 
-Defined in: [interfaces/GraphUI.ts:184](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L184)
+Defined in: [interfaces/GraphUI.ts:191](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/GraphUI.ts#L191)
 
-***
-
-### title
-
-> **title**: `string`
-
-Defined in: [interfaces/GraphUI.ts:185](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L185)
+Text of the option.
 
 ***
 
-### variant
+### title?
 
-> **variant**: [`UIVariant`](UIVariant.md)
+> `optional` **title**: `string`
 
-Defined in: [interfaces/GraphUI.ts:186](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L186)
+Defined in: [interfaces/GraphUI.ts:193](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/GraphUI.ts#L193)
+
+Title to be shown when hovering over the option.
 
 ***
 
-### visible
+### variant?
 
-> **visible**: `boolean` \| (`element`) => `boolean`
+> `optional` **variant**: [`UIVariant`](UIVariant.md)
 
-Defined in: [interfaces/GraphUI.ts:187](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L187)
+Defined in: [interfaces/GraphUI.ts:195](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/GraphUI.ts#L195)
+
+#### Default
+
+```ts
+outline-primary
+```
+
+***
+
+### visible?
+
+> `optional` **visible**: `boolean` \| (`element`) => `boolean`
+
+Defined in: [interfaces/GraphUI.ts:196](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/GraphUI.ts#L196)

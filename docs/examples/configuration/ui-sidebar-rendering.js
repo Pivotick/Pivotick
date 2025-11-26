@@ -1,4 +1,4 @@
-export const data = {
+const data = {
     nodes: [
         { id: 1, data: { label: 'A', type: 'hub' } },
         { id: 2, data: { label: 'B', type: 'spoke' } }
@@ -6,7 +6,8 @@ export const data = {
     edges: [{ from: 1, to: 2, data: { label: 'edge1' } }]
 }
 
-export const options = {
+// #region options
+const options = {
     simulation: {
         enabled: false,
         useWorker: false,
@@ -17,8 +18,9 @@ export const options = {
             enabled: false,
         },
     },
+    // #region uioptions
     UI: {
-        mode: 'full',  // [!code focus:44]
+        mode: 'full',
         sidebar: {
             collapsed: false,
         },
@@ -69,4 +71,8 @@ export const options = {
             enabled: false,
         },
     },
+    // endregion uioptions
 }
+// endregion options
+
+export { options, data }

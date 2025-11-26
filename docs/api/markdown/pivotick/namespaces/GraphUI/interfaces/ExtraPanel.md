@@ -6,7 +6,7 @@
 
 # Interface: ExtraPanel
 
-Defined in: [interfaces/GraphUI.ts:169](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L169)
+Defined in: [interfaces/GraphUI.ts:127](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/GraphUI.ts#L127)
 
 Additional panel in the graph UI's sidebar.
 Currently only displayed when an element is selected
@@ -34,7 +34,7 @@ Both `title` and `render` can be:
 
 > **render**: `string` \| `HTMLElement` \| (`element`) => `string` \| `HTMLElement`
 
-Defined in: [interfaces/GraphUI.ts:171](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L171)
+Defined in: [interfaces/GraphUI.ts:129](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/GraphUI.ts#L129)
 
 ***
 
@@ -42,4 +42,4 @@ Defined in: [interfaces/GraphUI.ts:171](https://github.com/mokaddem/Pivotick/blo
 
 > **title**: `string` \| `HTMLElement` \| (`element`) => `string` \| `HTMLElement`
 
-Defined in: [interfaces/GraphUI.ts:170](https://github.com/mokaddem/Pivotick/blob/2116a2cd38cc1d9ebc97e43ba16acb534cbb4251/src/interfaces/GraphUI.ts#L170)
+Defined in: [interfaces/GraphUI.ts:128](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/GraphUI.ts#L128)

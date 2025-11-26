@@ -14,12 +14,15 @@ Options for the UI
 
 ## Other
 
+- [ContextMenu](interfaces/ContextMenu.md)
 - [ExtraPanel](interfaces/ExtraPanel.md)
 - [HeaderMapEntry](interfaces/HeaderMapEntry.md)
 - [MainHeader](interfaces/MainHeader.md)
 - [PropertiesPanel](interfaces/PropertiesPanel.md)
 - [PropertyEntry](interfaces/PropertyEntry.md)
+- [SelectionMenu](interfaces/SelectionMenu.md)
 - [SidebarOptions](interfaces/SidebarOptions.md)
+- [Tooltip](interfaces/Tooltip.md)
 - [GraphUIMode](type-aliases/GraphUIMode.md)
 - [IconClass](type-aliases/IconClass.md)
 - [IconUnicode](type-aliases/IconUnicode.md)
