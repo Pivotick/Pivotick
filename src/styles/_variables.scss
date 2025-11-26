@@ -3,6 +3,7 @@
 
 
 :root {
+    // #region core-variables
     --pvt-bg: #ffffff;
     --pvt-border-color: #ccc;
 
@@ -12,6 +13,8 @@
     --pvt-theme-warning: #F59E0B;
     --pvt-theme-danger: #DC2626;
     --pvt-theme-success: #16A34A;
+    --pvt-font-family: system-ui, sans-serif;
+    // #endregion core-variables
 
     --pvt-text-color-0: #fff;
     --pvt-text-color-1: #e0e0e0;
@@ -87,6 +90,7 @@
     --pvt-toast-text-color-success: color-mix(in srgb, var(--pvt-bg-color-success) 70%, black);
 
     /* Graph canvas */
+    // #region canvas
     --pvt-graph-grid-color: #f5f5f5;
     --pvt-graph-background-image:
         repeating-linear-gradient(0deg, var(--pvt-graph-grid-color) 0px, var(--pvt-graph-grid-color) 1px, transparent 1px, transparent 20px),
@@ -94,9 +98,11 @@
     --pvt-graph-navigation-control-container-shadow:
         rgba(0, 0, 0, 0.22) 0px 0px 4px,
         rgba(0, 0, 0, 0.30) 0px 1px 2px;
+    // #endregion canvas
     --pvt-pvt-selection-rectangle-fill: color-mix(in srgb, var(--pvt-bg-color-primary) 20%, #ffffff00);
     --pvt-pvt-selection-rectangle-stroke: color-mix(in srgb, var(--pvt-bg-color-primary) 80%, #ffffff00);
 
+    // #region node
     /* Node defaults */
     --pvt-node-color: #007acc;
     --pvt-node-stroke: #fff;
@@ -110,7 +116,9 @@
     --pvt-node-selected-stroke-width: 3;
     --pvt-node-selected-filter: drop-shadow(0 0 2px var(--pvt-node-selected-color));
     --pvt-node-selected-animation: glowPulse 1.5s infinite;
+    // #endregion node
 
+    // #region edge
     /* Edge defaults */
     --pvt-edge-stroke: #999;
     --pvt-edge-stroke-width: 2;
@@ -135,6 +143,7 @@
     --pvt-edge-label-selected-color: var(--pvt-edge-label-color);
     --pvt-edge-label-selected-font-size: var(--pvt-edge-label-font-size);
     --pvt-edge-label-selected-bg: #ffffffa0;
+    // #endregion edge
 
     /* Component */
     --pvt-inline-bar-bg: var(--pvt-bg-color-2);
