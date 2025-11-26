@@ -44,16 +44,16 @@
     grid-area: sidebar;
     height: 100%;
     transition: width 0.1s ease-out;
-    
-    .pivotick-sidebar {
-        transition: opacity 0.1s cubic-bezier(0, 0, 1, -0.15);
+
+    .pivotick-sidebar-elements {
+        // transition: opacity 0.1s cubic-bezier(0, 0, 1, -0.15);
         opacity: 100%;
     }
 
     &.pivotick-sidebar-collapsed {
         width: 0px;
 
-        .pivotick-sidebar {
+        .pivotick-sidebar-elements {
             opacity: 0%;
         }
     }

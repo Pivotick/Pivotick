@@ -36,7 +36,7 @@ export class Sidebar implements UIElement {
         if (!container) return
 
         const template = `
-<div class="pivotick-sidebar">
+<div class="pivotick-sidebar-elements">
     <div class="pivotick-mainheader-panel"></div>
     <div class="pivotick-properties-panel pivotick-sidebar-panel"></div>
     <div class="pivotick-extra-panel pivotick-sidebar-panel"></div>
