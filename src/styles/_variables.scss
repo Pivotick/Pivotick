@@ -1,14 +1,6 @@
 @use 'sass:color';
 @use 'utils';
 
-$primary: #2563EB;
-$secondary: #7C3AED;
-$info: #25B6EB;
-$warning: #F59E0B;
-$danger: #DC2626;
-$success: #16A34A;
-
-$toast-text-success: text-color($success);
 
 :root {
     --pvt-bg: #ffffff;
@@ -21,12 +13,12 @@ $toast-text-success: text-color($success);
     --pvt-text-color-4: #666;
     --pvt-text-color-5: #333;
     --pvt-text-color-6: #000;
-    --pvt-text-color-primary: #{$primary};
-    --pvt-text-color-secondary: #{$secondary};
-    --pvt-text-color-info: #{$info};
-    --pvt-text-color-warning: #{$warning};
-    --pvt-text-color-danger: #{$danger};
-    --pvt-text-color-success: #{$success};
+    --pvt-text-color-primary: #2563EB;
+    --pvt-text-color-secondary: #7C3AED;
+    --pvt-text-color-info: #25B6EB;
+    --pvt-text-color-warning: #F59E0B;
+    --pvt-text-color-danger: #DC2626;
+    --pvt-text-color-success: #16A34A;
 
     --pvt-bg-color-0: #fff;
     --pvt-bg-color-1: #fafafa;
@@ -34,12 +26,12 @@ $toast-text-success: text-color($success);
     --pvt-bg-color-3: #e6e6e6;
     --pvt-bg-color-4: #e0e0e0;
     --pvt-bg-color-5: #d6d6d6;
-    --pvt-bg-color-primary: #{$primary};
-    --pvt-bg-color-secondary: #{$secondary};
-    --pvt-bg-color-info: #{$info};
-    --pvt-bg-color-warning: #{$warning};
-    --pvt-bg-color-danger: #{$danger};
-    --pvt-bg-color-success: #{$success};
+    --pvt-bg-color-primary: #2563EB;
+    --pvt-bg-color-secondary: #7C3AED;
+    --pvt-bg-color-info: #25B6EB;
+    --pvt-bg-color-warning: #F59E0B;
+    --pvt-bg-color-danger: #DC2626;
+    --pvt-bg-color-success: #16A34A;
     --pvt-text-color-for-primary: #fff;
     --pvt-text-color-for-secondary: #fff;
     --pvt-text-color-for-info: #fff;
@@ -73,19 +65,19 @@ $toast-text-success: text-color($success);
     --pvt-tooltip-floating-bg-color: var(--pvt-bg-color-5);
 
     /* Graph notification */
-    --pvt-toast-bg-color-primary: #{color.mix(white, $primary, 40%)};
-    --pvt-toast-bg-color-secondary: #{color.mix(white, $secondary, 40%)};
-    --pvt-toast-bg-color-info: #{color.mix(white, $info, 40%)};
-    --pvt-toast-bg-color-warning: #{color.mix(white, $warning, 40%)};
-    --pvt-toast-bg-color-danger: #{color.mix(white, $danger, 40%)};
-    --pvt-toast-bg-color-success: #{color.mix(white, $success, 40%)};
+    --pvt-toast-bg-color-primary: color-mix(in srgb, var(--pvt-bg-color-primary) 40%, white);
+    --pvt-toast-bg-color-secondary: color-mix(in srgb, var(--pvt-bg-color-secondary) 40%, white);
+    --pvt-toast-bg-color-info: color-mix(in srgb, var(--pvt-bg-color-info) 40%, white);
+    --pvt-toast-bg-color-warning: color-mix(in srgb, var(--pvt-bg-color-warning) 40%, white);
+    --pvt-toast-bg-color-danger: color-mix(in srgb, var(--pvt-bg-color-danger) 40%, white);
+    --pvt-toast-bg-color-success: color-mix(in srgb, var(--pvt-bg-color-success) 40%, white);
 
-    --pvt-toast-text-color-primary: #{color.mix(black, $primary, 70%)};
-    --pvt-toast-text-color-secondary: #{color.mix(black, $secondary, 70%)};
-    --pvt-toast-text-color-info: #{color.mix(black, $info, 70%)};
-    --pvt-toast-text-color-warning: #{color.mix(black, $warning, 70%)};
-    --pvt-toast-text-color-danger: #{color.mix(black, $danger, 70%)};
-    --pvt-toast-text-color-success: #{color.mix(black, $success, 70%)};
+    --pvt-toast-text-color-primary: color-mix(in srgb, var(--pvt-bg-color-primary) 70%, black);
+    --pvt-toast-text-color-secondary: color-mix(in srgb, var(--pvt-bg-color-secondary) 70%, black);
+    --pvt-toast-text-color-info: color-mix(in srgb, var(--pvt-bg-color-info) 70%, black);
+    --pvt-toast-text-color-warning: color-mix(in srgb, var(--pvt-bg-color-warning) 70%, black);
+    --pvt-toast-text-color-danger: color-mix(in srgb, var(--pvt-bg-color-danger) 70%, black);
+    --pvt-toast-text-color-success: color-mix(in srgb, var(--pvt-bg-color-success) 70%, black);
 
     /* Graph canvas */
     --pvt-graph-grid-color: #f5f5f5;
