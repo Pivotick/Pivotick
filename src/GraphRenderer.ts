@@ -35,10 +35,6 @@ export abstract class GraphRenderer {
     abstract fitAndCenter(): void
     abstract focusElement(element: Node | Edge): void
 
-    public getCanvasContainer(): HTMLElement {
-        return this.container.querySelector('.pvt-canvas') as HTMLElement
-    }
-
     public getCanvas(): HTMLElement {
         return this.container.querySelector('.pvt-canvas') as HTMLElement
     }

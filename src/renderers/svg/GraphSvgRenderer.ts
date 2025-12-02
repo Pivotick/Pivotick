@@ -248,9 +248,9 @@ export class GraphSvgRenderer extends GraphRenderer {
         this.svgCanvas.setAttribute('width', '100%')
         this.svgCanvas.setAttribute('height', '100%')
         this.svgCanvas.setAttribute('fill', 'none')
-        this.svgCanvas.setAttribute('class', 'pvt-canvas')
+        this.svgCanvas.setAttribute('class', 'pvt-canvas-element')
 
-        this.getCanvasContainer().appendChild(this.svgCanvas)
+        this.getCanvas().appendChild(this.svgCanvas)
         this.svg = d3Select(this.svgCanvas)
 
         this.zoomGroup = this.svg.append('g').attr('class', 'zoom-layer hidden')

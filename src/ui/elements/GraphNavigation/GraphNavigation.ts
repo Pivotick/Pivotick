@@ -16,7 +16,7 @@ export class GraphNavigation implements UIElement {
 
         const template = document.createElement('template')
         template.innerHTML = `
-  <div class="pvt-graphnavigation">
+  <div class="pvt-graphnavigation-elements">
     <div class="pvt-graphnavigation-zoom-fit">
         <button id="pvt-graphnavigation-reset" class="pvt-graphnavigation-reset-button" title="Fit and center">
             ${graphNavigationReset}

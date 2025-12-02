@@ -317,7 +317,7 @@ export class GraphControls implements UIElement {
 
         const template = document.createElement('template')
         template.innerHTML = `
-  <div class="pvt-graphcontrols">
+  <div class="pvt-graphcontrols-elements">
     <div class="pvt-graphcontrols-panel pvt-graphcontrols-layout"></div>
     <div class="pvt-graphcontrols-panel pvt-graphcontrols-selection">
         <div class="pvt-graphcontrols-selection-title"></div>

@@ -1,0 +1,26 @@
+
+@use 'variables' as vars;
+
+@mixin theme-vars($theme-map) {
+    @each $name, $value in $theme-map {
+        --#{$name}: #{$value};
+    }
+}
+
+:root {
+    @include theme-vars(vars.$light-theme);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) {
+        @include theme-vars(vars.$dark-theme);
+    }
+}
+
+.pivotick[data-theme="light"] {
+    @include theme-vars(vars.$light-theme);
+}
+
+.pivotick[data-theme="dark"] {
+    @include theme-vars(vars.$dark-theme);
+}
