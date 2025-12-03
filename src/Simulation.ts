@@ -460,10 +460,10 @@ export class Simulation {
     /**
      * Restart the simulation with a bit of heat
      */
-    public reheat(): void {
+    public reheat(alpha = 0.7): void {
         this.restart()
         this.simulation
-            .alpha(0.7)
+            .alpha(alpha)
             .restart()
     }
 
@@ -532,6 +532,10 @@ export class Simulation {
 
     public getForceSimulation(): typeof this.simulationForces {
         return this.simulationForces
+    }
+
+    public getSimulation(): typeof this.simulation {
+        return this.simulation
     }
 
     /**
