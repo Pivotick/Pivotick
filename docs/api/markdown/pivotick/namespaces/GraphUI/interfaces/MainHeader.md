@@ -6,7 +6,7 @@
 
 # Interface: MainHeader
 
-Defined in: [interfaces/GraphUI.ts:43](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/GraphUI.ts#L43)
+Defined in: [interfaces/GraphUI.ts:43](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/GraphUI.ts#L43)
 
 Define what should be displayed in the sidebar's main header slot for node or edges.
 
@@ -16,7 +16,7 @@ Define what should be displayed in the sidebar's main header slot for node or ed
 
 > **edgeHeaderMap**: [`HeaderMapEntry`](HeaderMapEntry.md)\<[`Edge`](../../../../classes/Edge.md)\>
 
-Defined in: [interfaces/GraphUI.ts:45](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/GraphUI.ts#L45)
+Defined in: [interfaces/GraphUI.ts:45](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/GraphUI.ts#L45)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [interfaces/GraphUI.ts:45](https://github.com/mokaddem/Pivotick/blob
 
 > **nodeHeaderMap**: [`HeaderMapEntry`](HeaderMapEntry.md)\<[`Node`](../../../../classes/Node.md)\>
 
-Defined in: [interfaces/GraphUI.ts:44](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/GraphUI.ts#L44)
+Defined in: [interfaces/GraphUI.ts:44](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/GraphUI.ts#L44)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [interfaces/GraphUI.ts:44](https://github.com/mokaddem/Pivotick/blob
 
 > `optional` **render**: `string` \| `HTMLElement` \| (`element`) => `string` \| `HTMLElement`
 
-Defined in: [interfaces/GraphUI.ts:52](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/GraphUI.ts#L52)
+Defined in: [interfaces/GraphUI.ts:52](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/GraphUI.ts#L52)
 
 Custom renderer for the main header. This content will override the default sidebar main header.
 

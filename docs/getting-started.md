@@ -31,11 +31,9 @@ You can customize the look in two ways:
 ```html
 <style>
   :root {
-    --pivotick-bg: #f0f0f0;
-    --pivotick-graph-background-image: unset;
-    --pivotick-node-color: #2fa1db;
-    --pivotick-node-stroke: #b8babbff;
-    --pivotick-edge-stroke: #4eafdfff;
+    --pvt-node-color: #FDDA24;
+    --pvt-node-stroke: #000000;
+    --pvt-edge-stroke: #EF3340;
   }
 </style>
 ```
@@ -50,13 +48,11 @@ You can customize the look in two ways:
           { from: 1, to: 2 }
       ]
   }"
-  :options="{}"
+  :options="{ UI: { mode: 'viewer' }}"
   :style="{
-    '--pivotick-bg': '#f0f0f0',
-    '--pivotick-graph-background-image': 'transparent',
-    '--pivotick-node-color': '#2fa1db',
-    '--pivotick-node-stroke': '#b8babbff',
-    '--pivotick-edge-stroke': '#7c4edfff',
+    '--pvt-node-color': '#FDDA24',
+    '--pvt-node-stroke': '#000000',
+    '--pvt-edge-stroke': '#EF3340',
   }"
 ></Pivotick>
 

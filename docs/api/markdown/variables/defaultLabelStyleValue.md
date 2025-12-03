@@ -8,15 +8,15 @@
 
 > `const` **defaultLabelStyleValue**: [`LabelStyle`](../pivotick/namespaces/RendererOptions/interfaces/LabelStyle.md)
 
-Defined in: [renderers/svg/GraphSvgRenderer.ts:188](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/renderers/svg/GraphSvgRenderer.ts#L188)
+Defined in: [renderers/svg/GraphSvgRenderer.ts:188](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/renderers/svg/GraphSvgRenderer.ts#L188)
 
 ## Default
 
 ```ts
 {
     fontSize: 12,
-    fontFamily: 'var(--pivotick-label-font, system-ui, sans-serif)',
-    color: 'var(--pivotick-edge-label-color, #333)',
-    backgroundColor: 'var(--pivotick-edge-label-bg, #ffffffa0)',
+    fontFamily: 'var(--pvt-label-font, system-ui, sans-serif)',
+    color: 'var(--pvt-edge-label-color, #333)',
+    backgroundColor: 'var(--pvt-edge-label-bg, #ffffffa0)',
 }
 ```

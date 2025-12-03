@@ -71,3 +71,23 @@ const data = {
     :data="dataR"
     :options="optionsR"
 ></Pivotick>
+
+
+## API
+
+Pivotick exposes a renderer controller that lets you interact directly with the rendering engine.
+All methods are [available online](docs/api/html/interfaces/GraphRenderer.html)
+
+### Fit and Zoom
+
+::: code-group
+```ts [Fit and center]
+graph.renderer.fitAndCenter()
+```
+
+```ts [Zomm in / out]
+graph.renderer.zoomIn()
+graph.renderer.zoomOut()
+```
+:::
+

@@ -81,10 +81,10 @@ export default defineComponent({
 
         onMounted(() => {
             graph = new Pivotick(graphContainer.value, data, options)
-            graphContainer.value.querySelector('.pivotick-canvas-container').style.filter = 'blur(0.095rem)'
-            graphContainer.value.querySelector('.pivotick-canvas-container').style.opacity = '0.2'
-            graphContainer.value.querySelector('.pivotick-toolbar-container').style.filter = 'blur(0.095rem)'
-            graphContainer.value.querySelector('.pivotick-toolbar-container').style.opacity = '0.2'
+            graphContainer.value.querySelector('.pvt-canvas').style.filter = 'blur(0.095rem)'
+            graphContainer.value.querySelector('.pvt-canvas').style.opacity = '0.2'
+            graphContainer.value.querySelector('.pvt-toolbar').style.filter = 'blur(0.095rem)'
+            graphContainer.value.querySelector('.pvt-toolbar').style.opacity = '0.2'
             setTimeout(() => { // FIXME: Add callback for graph fully loaded
                 graph.selectElement(graph.getNodes()[0])
             }, 200)

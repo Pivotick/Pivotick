@@ -8,7 +8,7 @@
 
 > **IconClass** = `string`
 
-Defined in: [interfaces/GraphUI.ts:224](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/GraphUI.ts#L224)
+Defined in: [interfaces/GraphUI.ts:224](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/GraphUI.ts#L224)
 
 Classe(s) to be added on the element, typically used in icon libraries such as fontawesome
 

@@ -6,7 +6,7 @@
 
 # Interface: MarkerStyle
 
-Defined in: [interfaces/RendererOptions.ts:273](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/RendererOptions.ts#L273)
+Defined in: [interfaces/RendererOptions.ts:273](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/RendererOptions.ts#L273)
 
 Define the styling of an Edge marker.
 
@@ -16,7 +16,7 @@ Define the styling of an Edge marker.
 
 > **fill**: `string`
 
-Defined in: [interfaces/RendererOptions.ts:274](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/RendererOptions.ts#L274)
+Defined in: [interfaces/RendererOptions.ts:274](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/RendererOptions.ts#L274)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [interfaces/RendererOptions.ts:274](https://github.com/mokaddem/Pivo
 
 > **markerHeight**: `number`
 
-Defined in: [interfaces/RendererOptions.ts:280](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/RendererOptions.ts#L280)
+Defined in: [interfaces/RendererOptions.ts:280](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/RendererOptions.ts#L280)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [interfaces/RendererOptions.ts:280](https://github.com/mokaddem/Pivo
 
 > `optional` **markerUnits**: `"strokeWidth"` \| `"userSpaceOnUse"`
 
-Defined in: [interfaces/RendererOptions.ts:281](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/RendererOptions.ts#L281)
+Defined in: [interfaces/RendererOptions.ts:281](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/RendererOptions.ts#L281)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [interfaces/RendererOptions.ts:281](https://github.com/mokaddem/Pivo
 
 > **markerWidth**: `number`
 
-Defined in: [interfaces/RendererOptions.ts:279](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/RendererOptions.ts#L279)
+Defined in: [interfaces/RendererOptions.ts:279](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/RendererOptions.ts#L279)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [interfaces/RendererOptions.ts:279](https://github.com/mokaddem/Pivo
 
 > `optional` **orient**: `number` \| `"auto"` \| `"auto-start-reverse"`
 
-Defined in: [interfaces/RendererOptions.ts:282](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/RendererOptions.ts#L282)
+Defined in: [interfaces/RendererOptions.ts:282](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/RendererOptions.ts#L282)
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: [interfaces/RendererOptions.ts:282](https://github.com/mokaddem/Pivo
 
 > **pathD**: `string`
 
-Defined in: [interfaces/RendererOptions.ts:275](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/RendererOptions.ts#L275)
+Defined in: [interfaces/RendererOptions.ts:275](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/RendererOptions.ts#L275)
 
 ***
 
@@ -64,7 +64,7 @@ Defined in: [interfaces/RendererOptions.ts:275](https://github.com/mokaddem/Pivo
 
 > **refX**: `number`
 
-Defined in: [interfaces/RendererOptions.ts:277](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/RendererOptions.ts#L277)
+Defined in: [interfaces/RendererOptions.ts:277](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/RendererOptions.ts#L277)
 
 ***
 
@@ -72,7 +72,7 @@ Defined in: [interfaces/RendererOptions.ts:277](https://github.com/mokaddem/Pivo
 
 > **refY**: `number`
 
-Defined in: [interfaces/RendererOptions.ts:278](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/RendererOptions.ts#L278)
+Defined in: [interfaces/RendererOptions.ts:278](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/RendererOptions.ts#L278)
 
 ***
 
@@ -80,7 +80,7 @@ Defined in: [interfaces/RendererOptions.ts:278](https://github.com/mokaddem/Pivo
 
 > `optional` **selected**: `Partial`\<`MarkerStyle`\>
 
-Defined in: [interfaces/RendererOptions.ts:283](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/RendererOptions.ts#L283)
+Defined in: [interfaces/RendererOptions.ts:283](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/RendererOptions.ts#L283)
 
 ***
 
@@ -88,4 +88,4 @@ Defined in: [interfaces/RendererOptions.ts:283](https://github.com/mokaddem/Pivo
 
 > **viewBox**: `string`
 
-Defined in: [interfaces/RendererOptions.ts:276](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/RendererOptions.ts#L276)
+Defined in: [interfaces/RendererOptions.ts:276](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/RendererOptions.ts#L276)

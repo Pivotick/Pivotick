@@ -6,7 +6,7 @@
 
 # Interface: GraphRendererOptions
 
-Defined in: [interfaces/RendererOptions.ts:8](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/RendererOptions.ts#L8)
+Defined in: [interfaces/RendererOptions.ts:8](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/RendererOptions.ts#L8)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [interfaces/RendererOptions.ts:8](https://github.com/mokaddem/Pivoti
 
 > **defaultEdgeStyle**: [`EdgeStyle`](EdgeStyle.md)
 
-Defined in: [interfaces/RendererOptions.ts:75](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/RendererOptions.ts#L75)
+Defined in: [interfaces/RendererOptions.ts:75](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/RendererOptions.ts#L75)
 
 The default edge style to be applied on all nodes
 
@@ -28,7 +28,7 @@ The default edge style to be applied on all nodes
 
 > **defaultLabelStyle**: [`LabelStyle`](LabelStyle.md)
 
-Defined in: [interfaces/RendererOptions.ts:80](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/RendererOptions.ts#L80)
+Defined in: [interfaces/RendererOptions.ts:80](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/RendererOptions.ts#L80)
 
 The default edge's label style to be applied on all nodes
 
@@ -42,7 +42,7 @@ The default edge's label style to be applied on all nodes
 
 > **defaultNodeStyle**: [`NodeStyle`](NodeStyle.md)
 
-Defined in: [interfaces/RendererOptions.ts:70](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/RendererOptions.ts#L70)
+Defined in: [interfaces/RendererOptions.ts:70](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/RendererOptions.ts#L70)
 
 The default node style to be applied on all nodes
 
@@ -56,7 +56,7 @@ The default node style to be applied on all nodes
 
 > `optional` **markerStyleMap**: [`MarkerStyleMap`](../type-aliases/MarkerStyleMap.md)
 
-Defined in: [interfaces/RendererOptions.ts:96](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/RendererOptions.ts#L96)
+Defined in: [interfaces/RendererOptions.ts:96](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/RendererOptions.ts#L96)
 
 Defines custom styles for marker shapes used in the graph.
 
@@ -82,7 +82,7 @@ markerStyleMap: {
 
 > **maxZoom**: `number`
 
-Defined in: [interfaces/RendererOptions.ts:132](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/RendererOptions.ts#L132)
+Defined in: [interfaces/RendererOptions.ts:132](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/RendererOptions.ts#L132)
 
 #### Default
 
@@ -96,7 +96,7 @@ Defined in: [interfaces/RendererOptions.ts:132](https://github.com/mokaddem/Pivo
 
 > **minZoom**: `number`
 
-Defined in: [interfaces/RendererOptions.ts:130](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/RendererOptions.ts#L130)
+Defined in: [interfaces/RendererOptions.ts:130](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/RendererOptions.ts#L130)
 
 #### Default
 
@@ -110,7 +110,7 @@ Defined in: [interfaces/RendererOptions.ts:130](https://github.com/mokaddem/Pivo
 
 > `optional` **nodeStyleMap**: `Record`\<`string`, [`NodeStyle`](NodeStyle.md)\>
 
-Defined in: [interfaces/RendererOptions.ts:126](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/RendererOptions.ts#L126)
+Defined in: [interfaces/RendererOptions.ts:126](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/RendererOptions.ts#L126)
 
 Maps node types to their styles.
 
@@ -135,7 +135,7 @@ nodeStyleMap: {
 
 > `optional` **nodeTypeAccessor**: (`node`) => `string` \| `undefined`
 
-Defined in: [interfaces/RendererOptions.ts:109](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/RendererOptions.ts#L109)
+Defined in: [interfaces/RendererOptions.ts:109](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/RendererOptions.ts#L109)
 
 Function to access the type of a node. Used in 
 
@@ -167,7 +167,7 @@ nodeTypeAccessor: (node) => node.getData()?.type
 
 > `optional` **renderLabel**: (`edge`) => `string` \| `void` \| `HTMLElement`
 
-Defined in: [interfaces/RendererOptions.ts:65](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/RendererOptions.ts#L65)
+Defined in: [interfaces/RendererOptions.ts:65](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/RendererOptions.ts#L65)
 
 Custom renderer for edge labels.
 
@@ -209,7 +209,7 @@ renderLabel: (edge: Edge): HTMLElement | string | void => {
 
 > `optional` **renderNode**: (`node`) => `string` \| `void` \| `HTMLElement`
 
-Defined in: [interfaces/RendererOptions.ts:40](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/RendererOptions.ts#L40)
+Defined in: [interfaces/RendererOptions.ts:40](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/RendererOptions.ts#L40)
 
 Custom renderer for nodes.
 
@@ -253,7 +253,7 @@ renderNode: (node: Node): HTMLElement | string | void => {
 
 > **selectionBox**: [`SelectionBox`](SelectionBox.md)
 
-Defined in: [interfaces/RendererOptions.ts:133](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/RendererOptions.ts#L133)
+Defined in: [interfaces/RendererOptions.ts:133](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/RendererOptions.ts#L133)
 
 ***
 
@@ -261,7 +261,7 @@ Defined in: [interfaces/RendererOptions.ts:133](https://github.com/mokaddem/Pivo
 
 > **type**: [`RendererType`](../type-aliases/RendererType.md)
 
-Defined in: [interfaces/RendererOptions.ts:13](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/RendererOptions.ts#L13)
+Defined in: [interfaces/RendererOptions.ts:13](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/RendererOptions.ts#L13)
 
 Defines the rendering method used by the graph.
 
@@ -271,7 +271,7 @@ Defines the rendering method used by the graph.
 
 > **zoomEnabled**: `boolean`
 
-Defined in: [interfaces/RendererOptions.ts:128](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/RendererOptions.ts#L128)
+Defined in: [interfaces/RendererOptions.ts:128](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/RendererOptions.ts#L128)
 
 #### Default
 

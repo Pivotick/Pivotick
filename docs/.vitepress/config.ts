@@ -38,10 +38,10 @@ export default defineConfig({
               { text: 'Styling UI', link: '/ui-styling' },
             ]
           },
-          { text: 'Pivotick API', link: '/basic-api' },
+          { text: 'Pivotick API', link: '/api' },
         ]
       },
-      { text: 'Generated API docs', link: '/api' },
+      { text: 'Generated API docs', link: '/generated-api' },
       {
         text: 'Examples',
         link: '/examples',

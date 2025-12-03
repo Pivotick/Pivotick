@@ -8,7 +8,7 @@
 
 > `const` **defaultMarkerStyleMap**: [`MarkerStyleMap`](../pivotick/namespaces/RendererOptions/type-aliases/MarkerStyleMap.md)
 
-Defined in: [renderers/svg/GraphSvgRenderer.ts:69](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/renderers/svg/GraphSvgRenderer.ts#L69)
+Defined in: [renderers/svg/GraphSvgRenderer.ts:69](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/renderers/svg/GraphSvgRenderer.ts#L69)
 
 ## Default
 
@@ -23,9 +23,9 @@ Defined in: [renderers/svg/GraphSvgRenderer.ts:69](https://github.com/mokaddem/P
         markerHeight: 6,
         markerUnits: 'userSpaceOnUse',
         orient: 'auto',
-        fill: 'var(--pivotick-edge-stroke, #999)',
+        fill: 'var(--pvt-edge-stroke, #999)',
         selected: {
-            fill: 'var(--pivotick-edge-selected-stroke, #007acc)',
+            fill: 'var(--pvt-edge-selected-stroke, #007acc)',
             markerWidth: 12,
             markerHeight: 12,
             refX: 6,
@@ -40,9 +40,9 @@ Defined in: [renderers/svg/GraphSvgRenderer.ts:69](https://github.com/mokaddem/P
         markerHeight: 10,
         markerUnits: 'userSpaceOnUse',
         orient: 0,
-        fill: 'var(--pivotick-edge-stroke, #999)',
+        fill: 'var(--pvt-edge-stroke, #999)',
         selected: {
-            fill: 'var(--pivotick-edge-selected-stroke, #007acc)',
+            fill: 'var(--pvt-edge-selected-stroke, #007acc)',
             markerWidth: 16,
             markerHeight: 16,
         }
@@ -56,9 +56,9 @@ Defined in: [renderers/svg/GraphSvgRenderer.ts:69](https://github.com/mokaddem/P
         markerHeight: 8,
         markerUnits: 'userSpaceOnUse',
         orient: 0,
-        fill: 'var(--pivotick-edge-stroke, #999)',
+        fill: 'var(--pvt-edge-stroke, #999)',
         selected: {
-            fill: 'var(--pivotick-edge-selected-stroke, #007acc)',
+            fill: 'var(--pvt-edge-selected-stroke, #007acc)',
             markerWidth: 14,
             markerHeight: 14,
         }

@@ -8,7 +8,7 @@
 
 > `const` **defaultEdgeStyleValue**: [`EdgeStyle`](../pivotick/namespaces/RendererOptions/interfaces/EdgeStyle.md)
 
-Defined in: [renderers/svg/GraphSvgRenderer.ts:167](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/renderers/svg/GraphSvgRenderer.ts#L167)
+Defined in: [renderers/svg/GraphSvgRenderer.ts:167](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/renderers/svg/GraphSvgRenderer.ts#L167)
 
 ## Default
 
@@ -22,6 +22,6 @@ Defined in: [renderers/svg/GraphSvgRenderer.ts:167](https://github.com/mokaddem/
     rotateLabel: false,
     markerEnd: 'arrow',
     markerStart: undefined,
-    strokeColor: 'var(--pivotick-edge-color, #999)',
+    strokeColor: 'var(--pvt-edge-color, #999)',
 }
 ```

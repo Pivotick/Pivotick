@@ -39,6 +39,18 @@ You can configure these menus for these scopes:
 
 :::
 
+
+<script setup>
+    import { data as data, options as options } from './examples/configuration/ui-context-menu.js'
+</script>
+
+
+<Pivotick
+    :data="data"
+    :options="options"
+></Pivotick>
+
+
 ### Options or action items
 
 The interface for action items are defined [here](docs/api/html/types/GraphUI.MenuActionItemOptions.html).
@@ -55,13 +67,3 @@ The interface for action items are defined [here](docs/api/html/types/GraphUI.Me
 | `visible`     | `boolean \| (element: Node \| Edge \| null) => boolean`                                         | `true`       | Controls whether the item is visible. Can be dynamic. |
 | `onclick`     | `(evt: PointerEvent \| MouseEvent, element?: Node \| Node[] \| Edge \| Edge[] \| null) => void` | **required** | Triggered when the user activates the menu item.      |
 
-
-<script setup>
-    import { data as data, options as options } from './examples/configuration/ui-context-menu.js'
-</script>
-
-
-<Pivotick
-    :data="data"
-    :options="options"
-></Pivotick>

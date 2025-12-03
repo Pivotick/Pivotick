@@ -8,6 +8,6 @@
 
 > **UIVariant** = `"primary"` \| `"secondary"` \| `"info"` \| `"warning"` \| `"danger"` \| `"success"` \| `"outline-primary"` \| `"outline-secondary"` \| `"outline-info"` \| `"outline-warning"` \| `"outline-danger"` \| `"outline-success"`
 
-Defined in: [interfaces/GraphUI.ts:208](https://github.com/mokaddem/Pivotick/blob/53114f6e22d5e6b41c897cd60c97c81156aff45a/src/interfaces/GraphUI.ts#L208)
+Defined in: [interfaces/GraphUI.ts:208](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/GraphUI.ts#L208)
 
 Variant defined in the theme
