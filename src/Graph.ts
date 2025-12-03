@@ -5,7 +5,7 @@ import type { GraphRenderer } from './GraphRenderer'
 import { Simulation } from './Simulation'
 import { UIManager } from './ui/UIManager'
 import { Notifier } from './ui/Notifier'
-import type { GraphOptions, GraphData, RelaxedGraphData } from './interfaces/GraphOptions'
+import type { GraphOptions, GraphData, RelaxedGraphData, RawNode, RawEdge } from './interfaces/GraphOptions'
 import type { GraphUI } from './interfaces/GraphUI'
 import type { InterractionCallbacks } from './interfaces/InterractionCallbacks'
 import type { LayoutOptions } from './interfaces/LayoutOptions'
@@ -102,7 +102,7 @@ export class Graph {
     }
 
     private normalizeGraphData(data: GraphData | RelaxedGraphData): GraphData {
-        const normalizedNodes = data.nodes.map(n => n instanceof Node ? n : new Node(n.id.toString(), n.data, n.style))
+        const normalizedNodes = data.nodes.map(this.normalizeNode)
         const nodesByID = new Map(normalizedNodes.map(node => [node.id, node]))
         const normalizedEdges = data.edges
             .map(e => {
@@ -130,6 +130,28 @@ export class Graph {
         }
     }
 
+    private normalizeNode(n: RawNode | Node): Node {
+        return n instanceof Node ? n : new Node(n.id.toString(), n.data, n.style)
+    }
+
+    private normalizeEdge(e: RawEdge | Edge): Edge | null {
+        if (e instanceof Edge) return e
+
+        const fromNode = this.nodes.get(e.from.toString())
+        const toNode = this.nodes.get(e.to.toString())
+
+        // Skip edges if either node doesn't exist
+        if (!fromNode || !toNode) return null
+
+        return new Edge(
+            e.id?.toString() ?? `${e.from}-${e.to}`,
+            fromNode,
+            toNode,
+            e.data,
+            e.style
+        )
+    }
+
     /**
      * Returns the current configuration options of the graph.
      */
@@ -152,7 +174,7 @@ export class Graph {
      */
     onChange() {
         this.simulation?.update()
-        this.renderer?.dataUpdate()
+        this.renderer?.update(true)
     }
 
     /**
@@ -229,12 +251,14 @@ export class Graph {
      * @throws Error if a node with the same `id` already exists.
      * Triggers `onChange` after the node is successfully added.
      */
-    addNode(node: Node): void {
+    addNode(n: RawNode | Node): Node {
+        const node = this.normalizeNode(n)
         if (this.nodes.has(node.id)) {
             throw new Error(`Node with id ${node.id} already exists.`)
         }
         this.nodes.set(node.id, node)
         this.onChange()
+        return node
     }
 
     /**
@@ -310,7 +334,12 @@ export class Graph {
      * @throws Error if the edge ID already exists or if either node does not exist.
      * Triggers `onChange` after the edge is successfully added.
      */
-    addEdge(edge: Edge): void {
+    addEdge(e: RawEdge | Edge): Edge {
+        const edge = this.normalizeEdge(e)
+
+        if (!edge) {
+            throw new Error('Either of the from or to nodes do not exist')
+        }
         if (this.edges.has(edge.id)) {
             throw new Error(`Edge with id ${edge.id} already exists.`)
         }
@@ -319,6 +348,7 @@ export class Graph {
         }
         this.edges.set(edge.id, edge)
         this.onChange()
+        return edge
     }
 
     /**

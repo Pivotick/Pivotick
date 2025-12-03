@@ -23,7 +23,7 @@ export abstract class GraphRenderer {
     }
 
     abstract init(): void
-    abstract dataUpdate(): void
+    abstract update(dataChanged: boolean): void
     abstract nextTick(): void
     abstract getZoomBehavior(): unknown
     abstract getSelectionBox(): AbstractSelectionBox | null

@@ -472,7 +472,7 @@ export class Simulation {
      */
     public createDragBehavior() {
         return d3Drag<SVGGElement, Node>()
-            .on('start', (_event, d) => {
+            .on('start.draggedelement', (_event, d) => {
                 if (this.graphInteraction.hasActiveMultiselection()) {
                     this.dragSelection = this.graphInteraction.getSelectedNodes().map((nodeSelection) => {
                         const { node } = nodeSelection
@@ -488,7 +488,7 @@ export class Simulation {
                     d.freeze()
                 }
             })
-            .on('drag', (event, d) => {
+            .on('drag.draggedelement', (event, d) => {
                 if (!this.dragInProgress) {
                     this.dragInProgress = true
                     this.restart()
@@ -507,7 +507,7 @@ export class Simulation {
                 }
                 this.graphInteraction.dragging(event.sourceEvent, event.subject)
             })
-            .on('end', (event, d) => {
+            .on('end.draggedelement', (event, d) => {
                 if (!event.active) {
                     this.dragInProgress = false
                     this.restart()

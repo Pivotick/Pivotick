@@ -300,6 +300,13 @@ export class GraphSvgRenderer extends GraphRenderer {
         this.eventHandler.init(this, this.graphInteraction)
     }
 
+    public update(dataChanged = false): void {
+        this.dataUpdate()
+        if (dataChanged) {
+            this.eventHandler.update()
+        }
+    }
+
     public dataUpdate(): void {
         const nodes = this.graph.getMutableNodes()
         this.nodeGroupSelection = this.nodeGroup

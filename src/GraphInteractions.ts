@@ -334,7 +334,7 @@ export class GraphInteractions<TElement = unknown> {
     }
 
     public refreshRendering(): void {
-        this.graph.renderer.dataUpdate()
+        this.graph.renderer.update(false)
         this.graph.renderer.nextTick()
     }
 
