@@ -170,6 +170,7 @@ export class ContextMenu implements UIElement {
         this.menuNode = deepMerge(defaultMenuNode, this.uiManager.getOptions().contextMenu.menuNode ?? {})
         this.menuEdge = deepMerge(defaultMenuEdge, this.uiManager.getOptions().contextMenu.menuEdge ?? {})
         this.menuCanvas = deepMerge(defaultMenuCanvas, this.uiManager.getOptions().contextMenu.menuCanvas ?? {})
+        this.wrapOnclickActions()
     }
 
     public mount(container: HTMLElement | undefined) {
@@ -229,6 +230,32 @@ export class ContextMenu implements UIElement {
         this.createCanvasMenu()
         this.setPosition(event)
         this.show()
+    }
+
+    private wrapOnclickActions() {
+        [
+            this.menuNode.menu,
+            this.menuNode.topbar,
+            this.menuEdge.menu,
+            this.menuEdge.topbar,
+            this.menuCanvas.menu,
+            this.menuCanvas.topbar,
+
+        ].forEach(menuList => {
+            menuList.forEach((entry) => {
+                this.wrapOnclikAction(entry)
+            })
+        })
+    }
+
+    private wrapOnclikAction(entry: MenuQuickActionItemOptions | MenuActionItemOptions) {
+        if (entry.onclick) {
+            const originalOnClick = entry.onclick
+            entry.onclick = (evt: PointerEvent | MouseEvent, element?: Node | Edge | Node[] | Edge[] | null | undefined) => {
+                originalOnClick.apply(this, [evt, element]) // Call the original onclick with the expected arguments and correct `this`
+                this.hide?.() // Close the menu after the click
+            }
+        }
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

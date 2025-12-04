@@ -305,7 +305,7 @@ export function createSampleGraph(): Pivotick {
             // },
         },
         UI: {
-            mode: 'static',
+            mode: 'full',
             // mainHeader: {
             //     // nodeHeaderMap: {
             //     //     subtitle: (node: Node | Edge) => node.getData().type,
