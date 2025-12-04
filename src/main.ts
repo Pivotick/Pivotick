@@ -269,7 +269,7 @@ export function createSampleGraph(): Pivotick {
             // }
             defaultEdgeStyle: {
                 markerStart: (edge: Edge) => edge.getData().mstart,
-                markerEnd: (edge: Edge) => edge.getData().mend,
+                // markerEnd: (edge: Edge) => edge.getData().mend,
                 // curveStyle: 'bidirectional',
             },
             markerStyleMap: {

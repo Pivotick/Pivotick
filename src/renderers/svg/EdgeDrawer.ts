@@ -124,7 +124,11 @@ export class EdgeDrawer {
                 markerStart: edgeStyle?.markerStart,
             }
         }
-        return this.mergeEdgeStylingOptions(styleFromEdge)
+        const mergedStyle = this.mergeEdgeStylingOptions(styleFromEdge)
+
+        mergedStyle.markerEnd = mergedStyle.markerEnd !== undefined ? tryResolveString(mergedStyle.markerEnd, edge) : undefined
+        mergedStyle.markerStart = mergedStyle.markerStart !== undefined ? tryResolveString(mergedStyle.markerStart, edge) : undefined
+        return mergedStyle
     }
 
     private mergeEdgeStylingOptions(style: Partial<EdgeStyle>): EdgeStyle {
@@ -166,13 +170,11 @@ export class EdgeDrawer {
         if (!this.rendererOptions.markerStyleMap)
             return
 
-        const markerEnd = style.markerEnd !== undefined ? tryResolveString(style.markerEnd, edge) : undefined
-        const markerStart = style.markerStart !== undefined ? tryResolveString(style.markerStart, edge) : undefined
+        const markerEnd = style.markerEnd as string | undefined
+        const markerStart = style.markerStart as string | undefined
 
         if (markerEnd && this.rendererOptions.markerStyleMap[markerEnd]) {
             edgeSelection.attr('marker-end', `url(#${markerEnd})`)
-        } else {
-            edgeSelection.attr('marker-end', 'url(#arrow)')
         }
         if (markerStart && this.rendererOptions.markerStyleMap[markerStart])
             edgeSelection.attr('marker-start', `url(#${markerStart})`)
@@ -318,8 +320,10 @@ export class EdgeDrawer {
         if (from.x === undefined || from.y === undefined || to.x === undefined || to.y === undefined)
             return null
 
-        const drawOffsetStart = 4 + (isEdgeSelected ? 2 : 0) // Distance from which to start the edge
-        const drawOffsetEnd = 4 + (isEdgeSelected ? 2 : 0) // Distance from which to end the edge
+        const edgeStyle = this.graphSvgRenderer.edgeDrawer.getEdgeStyle(edge)
+
+        const drawOffsetStart = 4 + (edgeStyle.markerStart !== undefined ? 0 : 0) + (isEdgeSelected ? 2 : 0) // Distance from which to start the edge
+        const drawOffsetEnd = 4 + (edgeStyle.markerEnd !== undefined ? 2 : 0) + (isEdgeSelected ? 2 : 0) // Distance from which to end the edge
 
         // Direction angle from source to target
         const dx = to.x - from.x
@@ -350,8 +354,10 @@ export class EdgeDrawer {
 
         const r = Math.hypot(to.x - from.x, to.y - from.y)
 
-        const drawOffsetStart = 4 + (isEdgeSelected ? 2 : 0) // Distance from which to start the edge
-        const drawOffsetEnd = 4 + (isEdgeSelected ? 2 : 0) // Distance from which to end the edge
+        const edgeStyle = this.graphSvgRenderer.edgeDrawer.getEdgeStyle(edge)
+
+        const drawOffsetStart = 4 + (edgeStyle.markerStart !== undefined ? 0 : 0) + (isEdgeSelected ? 2 : 0) // Distance from which to start the edge
+        const drawOffsetEnd = 4 + (edgeStyle.markerStart !== undefined ? 2 : 0) + (isEdgeSelected ? 2 : 0) // Distance from which to end the edge
 
         const rFrom = edge.source.getCircleRadius() ? edge.source.getCircleRadius() : this.graphSvgRenderer.nodeDrawer.getNodeStyle(from).size
         const rTo = edge.target.getCircleRadius() ? edge.target.getCircleRadius() : this.graphSvgRenderer.nodeDrawer.getNodeStyle(to).size
