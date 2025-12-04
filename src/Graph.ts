@@ -23,6 +23,9 @@ export class Graph {
     /** @private */
     private options: GraphOptions
     private app_id: string
+    
+    private _readyResolve!: () => void
+    public ready: Promise<void>
 
     /**
      * Initializes a graph inside the specified container using the provided data and options.
@@ -32,6 +35,8 @@ export class Graph {
      * @param options - Optional configuration for the graph's behavior, UI, styling, simulation, etc.
      */
     constructor(container: HTMLElement, data?: RelaxedGraphData, options?: Partial<GraphOptions>) {
+        this.ready = new Promise(res => (this._readyResolve = res))
+
         this.options = {
             isDirected: true,
             ...options,
@@ -45,6 +50,7 @@ export class Graph {
             if (!this.options.render) this.options.render = {}
             this.options.render.zoomEnabled = false
             this.options.render.zoomAnimation = false
+            this.options.render.dragEnabled = false
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
             if (!this.options.render.selectionBox) this.options.render.selectionBox = {}
@@ -101,6 +107,11 @@ export class Graph {
         this.renderer.nextTick()
         this.renderer.fitAndCenter()
         this.UIManager.callGraphReady()
+        this.signalReady()
+    }
+
+    private signalReady() {
+        this._readyResolve()
     }
 
     private normalizeGraphData(data: GraphData | RelaxedGraphData): GraphData {

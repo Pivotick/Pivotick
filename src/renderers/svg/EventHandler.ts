@@ -26,8 +26,10 @@ export class EventHandler {
     }
 
     public registerListeners(): void {
-        this.renderer.getNodeSelection()
-            .call(this.graph.simulation.createDragBehavior())
+        if (this.renderer.getOptions().dragEnabled) {
+            this.renderer.getNodeSelection()
+                .call(this.graph.simulation.createDragBehavior())
+        }
 
         this.renderer.getNodeSelection()
             .on('dblclick.node', (event: PointerEvent, node: Node) => {

@@ -132,6 +132,8 @@ export interface GraphRendererOptions {
     minZoom: number
     /** @default 10 */
     maxZoom: number
+    /** @default true */
+    dragEnabled: boolean
     selectionBox: SelectionBox
 }
 

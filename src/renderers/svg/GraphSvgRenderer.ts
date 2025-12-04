@@ -195,6 +195,7 @@ export const defaultLabelStyle: LabelStyle = {
 const DEFAULT_RENDERER_OPTIONS = {
     type: 'svg',
     zoomEnabled: true,
+    dragEnabled: true,
     minZoom: 0.1,
     maxZoom: 10,
     zoomAnimation: true,
@@ -299,6 +300,10 @@ export class GraphSvgRenderer extends GraphRenderer {
 
     public getSelectionBox(): SelectionBox | null {
         return this.selectionBox
+    }
+
+    public getOptions(): GraphRendererOptions {
+        return this.options
     }
 
     public init(): void {
