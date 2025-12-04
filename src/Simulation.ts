@@ -350,18 +350,15 @@ export class Simulation {
      * Returns a promise that resolves when the simulation stops naturally.
      * Useful for performing actions (like fitAndCenter) after stabilization.
      */
-    public waitForSimulationStop(): Promise<void> {
+    public async waitForSimulationStop(): Promise<void> {
+
+        if (!this.engineRunning) return
+
         return new Promise(resolve => {
-            if (!this.engineRunning) {
-                return resolve()
-            }
             const originalOnStop = this.callbacks.onStop
             this.callbacks.onStop = (sim: Simulation) => {
-                // Call original callback if it exists
-                if (originalOnStop) originalOnStop(sim)
-                // Restore original callback
+                originalOnStop?.(sim)
                 this.callbacks.onStop = originalOnStop
-                // Resolve the promise
                 resolve()
             }
         })

@@ -229,8 +229,7 @@ export function createSampleGraph(): Pivotick {
     }
 
     const topo = 'random'
-    console.log({ nodes: topologies[topo].nodes, edges: topologies[topo].edges });
-    
+
     const graph = new Pivotick(container, {nodes: topologies[topo].nodes, edges: topologies[topo].edges}, {
         // isDirected: false,
         simulation: {
