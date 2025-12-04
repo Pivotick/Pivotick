@@ -8,4 +8,4 @@
 
 > **LayoutType** = `"force"` \| `"tree"`
 
-Defined in: [interfaces/LayoutOptions.ts:3](https://github.com/mokaddem/Pivotick/blob/3aa20c1688c1c8b84622ae4b90902629f36acbd7/src/interfaces/LayoutOptions.ts#L3)
+Defined in: [interfaces/LayoutOptions.ts:3](https://github.com/mokaddem/Pivotick/blob/84c67603cf50dc0f96efd867f2d2a3762ebfc09a/src/interfaces/LayoutOptions.ts#L3)

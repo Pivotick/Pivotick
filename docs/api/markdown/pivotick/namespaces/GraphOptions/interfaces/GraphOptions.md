@@ -6,7 +6,7 @@
 
 # Interface: GraphOptions
 
-Defined in: [interfaces/GraphOptions.ts:15](https://github.com/mokaddem/Pivotick/blob/3aa20c1688c1c8b84622ae4b90902629f36acbd7/src/interfaces/GraphOptions.ts#L15)
+Defined in: [interfaces/GraphOptions.ts:15](https://github.com/mokaddem/Pivotick/blob/84c67603cf50dc0f96efd867f2d2a3762ebfc09a/src/interfaces/GraphOptions.ts#L15)
 
 ## Remarks
 
@@ -18,7 +18,7 @@ This interface should be used as the entry point when configuring the graph.
 
 > `optional` **callbacks**: [`InterractionCallbacks`](../../InterractionCallbacks/interfaces/InterractionCallbacks.md)\<`unknown`\>
 
-Defined in: [interfaces/GraphOptions.ts:33](https://github.com/mokaddem/Pivotick/blob/3aa20c1688c1c8b84622ae4b90902629f36acbd7/src/interfaces/GraphOptions.ts#L33)
+Defined in: [interfaces/GraphOptions.ts:33](https://github.com/mokaddem/Pivotick/blob/84c67603cf50dc0f96efd867f2d2a3762ebfc09a/src/interfaces/GraphOptions.ts#L33)
 
 Callbacks to handle various graph events and render hooks.
 
@@ -28,7 +28,7 @@ Callbacks to handle various graph events and render hooks.
 
 > `optional` **isDirected**: `boolean`
 
-Defined in: [interfaces/GraphOptions.ts:39](https://github.com/mokaddem/Pivotick/blob/3aa20c1688c1c8b84622ae4b90902629f36acbd7/src/interfaces/GraphOptions.ts#L39)
+Defined in: [interfaces/GraphOptions.ts:39](https://github.com/mokaddem/Pivotick/blob/84c67603cf50dc0f96efd867f2d2a3762ebfc09a/src/interfaces/GraphOptions.ts#L39)
 
 Enable whether the graph is directed or not
 
@@ -44,7 +44,7 @@ true
 
 > `optional` **layout**: `Partial`\<[`LayoutOptions`](../../LayoutOptions/type-aliases/LayoutOptions.md)\>
 
-Defined in: [interfaces/GraphOptions.ts:28](https://github.com/mokaddem/Pivotick/blob/3aa20c1688c1c8b84622ae4b90902629f36acbd7/src/interfaces/GraphOptions.ts#L28)
+Defined in: [interfaces/GraphOptions.ts:28](https://github.com/mokaddem/Pivotick/blob/84c67603cf50dc0f96efd867f2d2a3762ebfc09a/src/interfaces/GraphOptions.ts#L28)
 
 Layout-specific configuration (e.g. tree, radial, etc.)
 
@@ -54,7 +54,7 @@ Layout-specific configuration (e.g. tree, radial, etc.)
 
 > `optional` **render**: `Partial`\<[`GraphRendererOptions`](../../RendererOptions/interfaces/GraphRendererOptions.md)\>
 
-Defined in: [interfaces/GraphOptions.ts:19](https://github.com/mokaddem/Pivotick/blob/3aa20c1688c1c8b84622ae4b90902629f36acbd7/src/interfaces/GraphOptions.ts#L19)
+Defined in: [interfaces/GraphOptions.ts:19](https://github.com/mokaddem/Pivotick/blob/84c67603cf50dc0f96efd867f2d2a3762ebfc09a/src/interfaces/GraphOptions.ts#L19)
 
 Options for the rendering engine
 
@@ -64,7 +64,7 @@ Options for the rendering engine
 
 > `optional` **simulation**: `Partial`\<[`SimulationOptions`](../../SimulationOptions/interfaces/SimulationOptions.md)\>
 
-Defined in: [interfaces/GraphOptions.ts:23](https://github.com/mokaddem/Pivotick/blob/3aa20c1688c1c8b84622ae4b90902629f36acbd7/src/interfaces/GraphOptions.ts#L23)
+Defined in: [interfaces/GraphOptions.ts:23](https://github.com/mokaddem/Pivotick/blob/84c67603cf50dc0f96efd867f2d2a3762ebfc09a/src/interfaces/GraphOptions.ts#L23)
 
 Options for the simultion engine
 
@@ -74,6 +74,6 @@ Options for the simultion engine
 
 > `optional` **UI**: `Partial`\<[`GraphUI`](../../GraphUI/interfaces/GraphUI.md)\>
 
-Defined in: [interfaces/GraphOptions.ts:44](https://github.com/mokaddem/Pivotick/blob/3aa20c1688c1c8b84622ae4b90902629f36acbd7/src/interfaces/GraphOptions.ts#L44)
+Defined in: [interfaces/GraphOptions.ts:44](https://github.com/mokaddem/Pivotick/blob/84c67603cf50dc0f96efd867f2d2a3762ebfc09a/src/interfaces/GraphOptions.ts#L44)
 
 Options for the UI

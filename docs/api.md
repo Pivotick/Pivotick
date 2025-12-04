@@ -58,7 +58,7 @@ import { loaded } from './examples/api/add-node-edge.js'
             d3AlphaMin: 0.3,
         }
     }"
-    :onMountedCallback="(graphContainer) => {
+    :onMountedCallback="() => {
     }"
     :onLoadedCallback="loaded"
     style="

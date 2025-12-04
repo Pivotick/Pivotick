@@ -6,7 +6,7 @@
 
 # Interface: CustomNodeShape
 
-Defined in: [interfaces/RendererOptions.ts:166](https://github.com/mokaddem/Pivotick/blob/3aa20c1688c1c8b84622ae4b90902629f36acbd7/src/interfaces/RendererOptions.ts#L166)
+Defined in: [interfaces/RendererOptions.ts:166](https://github.com/mokaddem/Pivotick/blob/84c67603cf50dc0f96efd867f2d2a3762ebfc09a/src/interfaces/RendererOptions.ts#L166)
 
 Represents a node with a custom SVG path.
 The `d` property corresponds directly to the `d` attribute of an SVG <path> element,
@@ -26,4 +26,4 @@ allowing fully custom shapes.
 
 > **d**: `string`
 
-Defined in: [interfaces/RendererOptions.ts:167](https://github.com/mokaddem/Pivotick/blob/3aa20c1688c1c8b84622ae4b90902629f36acbd7/src/interfaces/RendererOptions.ts#L167)
+Defined in: [interfaces/RendererOptions.ts:167](https://github.com/mokaddem/Pivotick/blob/84c67603cf50dc0f96efd867f2d2a3762ebfc09a/src/interfaces/RendererOptions.ts#L167)

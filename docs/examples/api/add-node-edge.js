@@ -20,12 +20,12 @@ async function addNode(counter, graph) {
     const existingNodes = graph.getMutableNodes()
     const randomIndex = Math.floor(Math.random() * existingNodes.length)
     const randomNode = existingNodes[randomIndex]
-    
+
     const newEdge = new Edge(`e-${counter}`, randomNode, newNode)
     
     graph.addNode(newNode)
     graph.addEdge(newEdge)
-    
+
     // Restart physics by nudging the graph a bit
     graph.simulation.reheat(0.7)
     await graph.simulation.waitForSimulationStop()

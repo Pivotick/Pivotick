@@ -8,7 +8,7 @@
 
 > **MenuQuickActionItemOptions** = [`MenuActionItemOptions`](MenuActionItemOptions.md) & `object`
 
-Defined in: [interfaces/GraphUI.ts:199](https://github.com/mokaddem/Pivotick/blob/3aa20c1688c1c8b84622ae4b90902629f36acbd7/src/interfaces/GraphUI.ts#L199)
+Defined in: [interfaces/GraphUI.ts:199](https://github.com/mokaddem/Pivotick/blob/84c67603cf50dc0f96efd867f2d2a3762ebfc09a/src/interfaces/GraphUI.ts#L199)
 
 ## Type Declaration
 
