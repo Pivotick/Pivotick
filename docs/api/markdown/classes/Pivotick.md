@@ -6,7 +6,7 @@
 
 # Class: Pivotick
 
-Defined in: [Graph.ts:15](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/Graph.ts#L15)
+Defined in: [Graph.ts:15](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/Graph.ts#L15)
 
 ## Constructors
 
@@ -14,7 +14,7 @@ Defined in: [Graph.ts:15](https://github.com/mokaddem/Pivotick/blob/bd0d03b58882
 
 > **new Pivotick**(`container`, `data?`, `options?`): `Graph`
 
-Defined in: [Graph.ts:34](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/Graph.ts#L34)
+Defined in: [Graph.ts:34](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/Graph.ts#L34)
 
 Initializes a graph inside the specified container using the provided data and options.
 
@@ -48,7 +48,7 @@ Optional configuration for the graph's behavior, UI, styling, simulation, etc.
 
 > **addEdge**(`e`): [`Edge`](Edge.md)
 
-Defined in: [Graph.ts:337](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/Graph.ts#L337)
+Defined in: [Graph.ts:337](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/Graph.ts#L337)
 
 Adds an edge to the graph.
 
@@ -76,7 +76,7 @@ Triggers `onChange` after the edge is successfully added.
 
 > **addNode**(`n`): [`Node`](Node.md)
 
-Defined in: [Graph.ts:254](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/Graph.ts#L254)
+Defined in: [Graph.ts:254](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/Graph.ts#L254)
 
 Adds a node to the graph.
 
@@ -101,7 +101,7 @@ Triggers `onChange` after the node is successfully added.
 
 > **destroy**(): `void`
 
-Defined in: [Graph.ts:520](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/Graph.ts#L520)
+Defined in: [Graph.ts:520](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/Graph.ts#L520)
 
 Destroy all UI components.
 
@@ -115,7 +115,7 @@ Destroy all UI components.
 
 > **focusElement**(`element`): `void`
 
-Defined in: [Graph.ts:543](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/Graph.ts#L543)
+Defined in: [Graph.ts:543](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/Graph.ts#L543)
 
 Brings the specified node or edge into focus within the graph view.
 
@@ -137,7 +137,7 @@ The `Node` or `Edge` to focus.
 
 > **getAppID**(): `string`
 
-Defined in: [Graph.ts:527](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/Graph.ts#L527)
+Defined in: [Graph.ts:527](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/Graph.ts#L527)
 
 The ID of the app
 
@@ -151,7 +151,7 @@ The ID of the app
 
 > **getConnectedNodes**(`node`): [`Node`](Node.md)[]
 
-Defined in: [Graph.ts:501](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/Graph.ts#L501)
+Defined in: [Graph.ts:501](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/Graph.ts#L501)
 
 Retrieves all nodes directly connected from the given node.
 
@@ -177,7 +177,7 @@ An array of `Node` objects directly connected from the given node.
 
 > **getEdge**(`id`): [`Edge`](Edge.md) \| `undefined`
 
-Defined in: [Graph.ts:362](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/Graph.ts#L362)
+Defined in: [Graph.ts:362](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/Graph.ts#L362)
 
 Retrieves an edge from the graph by its ID.
 
@@ -203,7 +203,7 @@ A cloned `Edge` if found, otherwise `undefined`.
 
 > **getEdgeCount**(): `number`
 
-Defined in: [Graph.ts:407](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/Graph.ts#L407)
+Defined in: [Graph.ts:407](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/Graph.ts#L407)
 
 Returns the number of edges currently in the graph.
 
@@ -219,7 +219,7 @@ The total edge count.
 
 > **getEdges**(): [`Edge`](Edge.md)[]
 
-Defined in: [Graph.ts:444](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/Graph.ts#L444)
+Defined in: [Graph.ts:444](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/Graph.ts#L444)
 
 Retrieves all edges in the graph.
 
@@ -237,7 +237,7 @@ An array of cloned `Edge` objects.
 
 > **getEdgesFromNode**(`node`): [`Edge`](Edge.md)[]
 
-Defined in: [Graph.ts:471](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/Graph.ts#L471)
+Defined in: [Graph.ts:471](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/Graph.ts#L471)
 
 Finds all edges originating from a given node.
 
@@ -263,7 +263,7 @@ An array of `Edge` objects whose `from` node matches the query.
 
 > **getEdgesToNode**(`node`): [`Edge`](Edge.md)[]
 
-Defined in: [Graph.ts:486](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/Graph.ts#L486)
+Defined in: [Graph.ts:486](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/Graph.ts#L486)
 
 Finds all edges pointing to a given node.
 
@@ -289,7 +289,7 @@ An array of `Edge` objects whose `to` node matches the query.
 
 > **getMutableEdge**(`id`): [`Edge`](Edge.md) \| `undefined`
 
-Defined in: [Graph.ts:378](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/Graph.ts#L378)
+Defined in: [Graph.ts:378](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/Graph.ts#L378)
 
 Retrieves an edge from the graph by its ID.
 
@@ -318,7 +318,7 @@ The `Edge` if found, otherwise `undefined`.
 
 > **getMutableEdges**(): [`Edge`](Edge.md)[]
 
-Defined in: [Graph.ts:459](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/Graph.ts#L459)
+Defined in: [Graph.ts:459](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/Graph.ts#L459)
 
 Retrieves all edges in the graph.
 
@@ -341,7 +341,7 @@ Use [getEdges](#getedges) instead to work with safe clones.
 
 > **getMutableNode**(`id`): [`Node`](Node.md) \| `undefined`
 
-Defined in: [Graph.ts:288](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/Graph.ts#L288)
+Defined in: [Graph.ts:288](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/Graph.ts#L288)
 
 Retrieves a node from the graph by its ID.
 
@@ -370,7 +370,7 @@ The `Node` if found, otherwise `undefined`.
 
 > **getMutableNodes**(): [`Node`](Node.md)[]
 
-Defined in: [Graph.ts:433](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/Graph.ts#L433)
+Defined in: [Graph.ts:433](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/Graph.ts#L433)
 
 Retrieves all nodes in the graph.
 
@@ -393,7 +393,7 @@ It is generally safer to use `getNodes`, which returns cloned instances.
 
 > **getNode**(`id`): [`Node`](Node.md) \| `undefined`
 
-Defined in: [Graph.ts:272](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/Graph.ts#L272)
+Defined in: [Graph.ts:272](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/Graph.ts#L272)
 
 Retrieves a node from the graph by its ID.
 
@@ -419,7 +419,7 @@ A cloned `Node` if found, otherwise `undefined`.
 
 > **getNodeCount**(): `number`
 
-Defined in: [Graph.ts:398](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/Graph.ts#L398)
+Defined in: [Graph.ts:398](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/Graph.ts#L398)
 
 Returns the number of nodes currently in the graph.
 
@@ -435,7 +435,7 @@ The total node count.
 
 > **getNodes**(): [`Node`](Node.md)[]
 
-Defined in: [Graph.ts:418](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/Graph.ts#L418)
+Defined in: [Graph.ts:418](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/Graph.ts#L418)
 
 Retrieves all nodes in the graph.
 
@@ -453,7 +453,7 @@ An array of cloned `Node` objects.
 
 > **getOptions**(): [`GraphOptions`](../pivotick/namespaces/GraphOptions/interfaces/GraphOptions.md)
 
-Defined in: [Graph.ts:158](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/Graph.ts#L158)
+Defined in: [Graph.ts:158](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/Graph.ts#L158)
 
 Returns the current configuration options of the graph.
 
@@ -467,7 +467,7 @@ Returns the current configuration options of the graph.
 
 > **nextTick**(): `void`
 
-Defined in: [Graph.ts:513](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/Graph.ts#L513)
+Defined in: [Graph.ts:513](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/Graph.ts#L513)
 
 Trigger the next render update of the graph.
 
@@ -481,7 +481,7 @@ Trigger the next render update of the graph.
 
 > **removeEdge**(`id`): `void`
 
-Defined in: [Graph.ts:388](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/Graph.ts#L388)
+Defined in: [Graph.ts:388](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/Graph.ts#L388)
 
 Removes an edge from the graph by its ID.
 
@@ -504,7 +504,7 @@ Triggers `onChange` after the edge is removed.
 
 > **removeNode**(`id`): `void`
 
-Defined in: [Graph.ts:314](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/Graph.ts#L314)
+Defined in: [Graph.ts:314](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/Graph.ts#L314)
 
 Removes a node from the graph by its ID.
 
@@ -529,7 +529,7 @@ Triggers `onChange` after the node and its edges are removed.
 
 > **selectElement**(`element`): `void`
 
-Defined in: [Graph.ts:552](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/Graph.ts#L552)
+Defined in: [Graph.ts:552](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/Graph.ts#L552)
 
 Selects a given node or edge in the graph.
 
@@ -551,7 +551,7 @@ The `Node` or `Edge` to select.
 
 > **setData**(`nodes`, `edges`): `void`
 
-Defined in: [Graph.ts:222](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/Graph.ts#L222)
+Defined in: [Graph.ts:222](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/Graph.ts#L222)
 
 Replaces all current nodes and edges in the graph with the provided data.
 Clears existing nodes and edges before setting the new ones.
@@ -581,7 +581,7 @@ Array of edges to set. Defaults to an empty array.
 
 > **updateData**(`newNodes?`, `newEdges?`): `void`
 
-Defined in: [Graph.ts:190](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/Graph.ts#L190)
+Defined in: [Graph.ts:190](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/Graph.ts#L190)
 
 Updates the graph with new nodes and/or edges.
 
@@ -613,7 +613,7 @@ Triggers `onChange`
 
 > **notifier**: [`Notifier`](../interfaces/Notifier.md)
 
-Defined in: [Graph.ts:20](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/Graph.ts#L20)
+Defined in: [Graph.ts:20](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/Graph.ts#L20)
 
 ***
 
@@ -621,7 +621,7 @@ Defined in: [Graph.ts:20](https://github.com/mokaddem/Pivotick/blob/bd0d03b58882
 
 > **renderer**: [`GraphRenderer`](../interfaces/GraphRenderer.md)
 
-Defined in: [Graph.ts:21](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/Graph.ts#L21)
+Defined in: [Graph.ts:21](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/Graph.ts#L21)
 
 ***
 
@@ -629,4 +629,4 @@ Defined in: [Graph.ts:21](https://github.com/mokaddem/Pivotick/blob/bd0d03b58882
 
 > **simulation**: [`Simulation`](../interfaces/Simulation.md)
 
-Defined in: [Graph.ts:22](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/Graph.ts#L22)
+Defined in: [Graph.ts:22](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/Graph.ts#L22)

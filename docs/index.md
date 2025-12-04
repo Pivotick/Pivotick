@@ -9,9 +9,10 @@ hero:
   actions:
     - theme: brand
       text: Getting Started
-      link: /markdown-examples
+      link: /getting-started
     - theme: alt
       text: Examples
+      link: /gallery
 
 features:
   - title: Getting Started
@@ -23,7 +24,7 @@ features:
   - title: Generated API
     details: Generated API docs
     link: /api
-  - title: Examples
-    details: Explore many examples
-    link: /examples
+  - title: Gallery
+    details: Explore the gallery
+    link: /gallery
 ---

@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitepress'
+import { galleryExamples } from './gallery-files'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
@@ -43,12 +44,9 @@ export default defineConfig({
       },
       { text: 'Generated API docs', link: '/generated-api' },
       {
-        text: 'Examples',
-        link: '/examples',
-        items: [
-          { text: 'Example 1', link: '/examples/example1' },
-          { text: 'Example 2', link: '/examples/example2' }
-        ]
+        text: 'Gallery',
+        link: '/gallery',
+        items: galleryExamples(),
       }
     ],
 

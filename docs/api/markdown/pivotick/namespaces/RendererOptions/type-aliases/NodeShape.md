@@ -8,4 +8,4 @@
 
 > **NodeShape** = [`StandardShape`](StandardShape.md) \| [`CustomNodeShape`](../interfaces/CustomNodeShape.md)
 
-Defined in: [interfaces/RendererOptions.ts:166](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/RendererOptions.ts#L166)
+Defined in: [interfaces/RendererOptions.ts:166](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/interfaces/RendererOptions.ts#L166)

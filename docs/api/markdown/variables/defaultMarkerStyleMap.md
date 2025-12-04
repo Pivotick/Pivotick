@@ -8,7 +8,7 @@
 
 > `const` **defaultMarkerStyleMap**: [`MarkerStyleMap`](../pivotick/namespaces/RendererOptions/type-aliases/MarkerStyleMap.md)
 
-Defined in: [renderers/svg/GraphSvgRenderer.ts:69](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/renderers/svg/GraphSvgRenderer.ts#L69)
+Defined in: [renderers/svg/GraphSvgRenderer.ts:69](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/renderers/svg/GraphSvgRenderer.ts#L69)
 
 ## Default
 

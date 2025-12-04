@@ -6,7 +6,7 @@
 
 # Interface: GraphUI
 
-Defined in: [interfaces/GraphUI.ts:10](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/GraphUI.ts#L10)
+Defined in: [interfaces/GraphUI.ts:10](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/interfaces/GraphUI.ts#L10)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [interfaces/GraphUI.ts:10](https://github.com/mokaddem/Pivotick/blob
 
 > **contextMenu**: [`ContextMenu`](ContextMenu.md)
 
-Defined in: [interfaces/GraphUI.ts:17](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/GraphUI.ts#L17)
+Defined in: [interfaces/GraphUI.ts:17](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/interfaces/GraphUI.ts#L17)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [interfaces/GraphUI.ts:17](https://github.com/mokaddem/Pivotick/blob
 
 > **extraPanels**: [`ExtraPanel`](ExtraPanel.md)[]
 
-Defined in: [interfaces/GraphUI.ts:15](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/GraphUI.ts#L15)
+Defined in: [interfaces/GraphUI.ts:15](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/interfaces/GraphUI.ts#L15)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [interfaces/GraphUI.ts:15](https://github.com/mokaddem/Pivotick/blob
 
 > **mainHeader**: [`MainHeader`](MainHeader.md)
 
-Defined in: [interfaces/GraphUI.ts:13](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/GraphUI.ts#L13)
+Defined in: [interfaces/GraphUI.ts:13](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/interfaces/GraphUI.ts#L13)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [interfaces/GraphUI.ts:13](https://github.com/mokaddem/Pivotick/blob
 
 > **mode**: [`GraphUIMode`](../type-aliases/GraphUIMode.md)
 
-Defined in: [interfaces/GraphUI.ts:11](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/GraphUI.ts#L11)
+Defined in: [interfaces/GraphUI.ts:11](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/interfaces/GraphUI.ts#L11)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [interfaces/GraphUI.ts:11](https://github.com/mokaddem/Pivotick/blob
 
 > **propertiesPanel**: [`PropertiesPanel`](PropertiesPanel.md)
 
-Defined in: [interfaces/GraphUI.ts:14](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/GraphUI.ts#L14)
+Defined in: [interfaces/GraphUI.ts:14](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/interfaces/GraphUI.ts#L14)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [interfaces/GraphUI.ts:14](https://github.com/mokaddem/Pivotick/blob
 
 > **selectionMenu**: [`SelectionMenu`](SelectionMenu.md)
 
-Defined in: [interfaces/GraphUI.ts:18](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/GraphUI.ts#L18)
+Defined in: [interfaces/GraphUI.ts:18](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/interfaces/GraphUI.ts#L18)
 
 ***
 
@@ -62,7 +62,7 @@ Defined in: [interfaces/GraphUI.ts:18](https://github.com/mokaddem/Pivotick/blob
 
 > **sidebar**: [`SidebarOptions`](SidebarOptions.md)
 
-Defined in: [interfaces/GraphUI.ts:12](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/GraphUI.ts#L12)
+Defined in: [interfaces/GraphUI.ts:12](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/interfaces/GraphUI.ts#L12)
 
 ***
 
@@ -70,4 +70,4 @@ Defined in: [interfaces/GraphUI.ts:12](https://github.com/mokaddem/Pivotick/blob
 
 > **tooltip**: [`Tooltip`](Tooltip.md)
 
-Defined in: [interfaces/GraphUI.ts:16](https://github.com/mokaddem/Pivotick/blob/bd0d03b5888228a0656611fab36e6ab7811762a1/src/interfaces/GraphUI.ts#L16)
+Defined in: [interfaces/GraphUI.ts:16](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/interfaces/GraphUI.ts#L16)
