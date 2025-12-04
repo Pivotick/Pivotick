@@ -6,7 +6,7 @@
 
 # Interface: SidebarOptions
 
-Defined in: [interfaces/GraphUI.ts:31](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/interfaces/GraphUI.ts#L31)
+Defined in: [interfaces/GraphUI.ts:31](https://github.com/mokaddem/Pivotick/blob/3aa20c1688c1c8b84622ae4b90902629f36acbd7/src/interfaces/GraphUI.ts#L31)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [interfaces/GraphUI.ts:31](https://github.com/mokaddem/Pivotick/blob
 
 > **collapsed**: `boolean` \| `"auto"`
 
-Defined in: [interfaces/GraphUI.ts:37](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/interfaces/GraphUI.ts#L37)
+Defined in: [interfaces/GraphUI.ts:37](https://github.com/mokaddem/Pivotick/blob/3aa20c1688c1c8b84622ae4b90902629f36acbd7/src/interfaces/GraphUI.ts#L37)
 
 Determines whether the sidebar is collapsed by default.
 - `'auto'` Keeps the sidebar open unless there isn't enough screen space, in which case it collapses automatically.

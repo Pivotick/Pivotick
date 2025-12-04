@@ -45,7 +45,10 @@ const options = {
                     }
                 ]
             }
-        }
+        },
+        tooltip: {
+            enabled: false,
+        },
     }
 }
 // #endregion options

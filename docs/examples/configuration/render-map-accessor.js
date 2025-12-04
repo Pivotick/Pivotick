@@ -15,6 +15,9 @@ const options = {
             'hub': { shape: 'hexagon', color: '#f90', size: 25 },
             'spoke': { shape: 'triangle', color: '#09f' }
         },
+    },
+    UI: {
+        mode: 'static'
     }
 }
 // #endregion options

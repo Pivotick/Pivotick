@@ -86,6 +86,7 @@ Pivotick allows you to customize how nodes, edges, and labels are displayed, and
 | `nodeTypeAccessor`  | `(node: Node) => string \| undefined`                                    | `undefined` | Function to access the type of a node, used with `nodeStyleMap`.  |
 | `nodeStyleMap`      | `Record<string, NodeStyle>`                                              | `{}`        | Maps node types (from `nodeTypeAccessor`) to styles.              |
 | `zoomEnabled`       | `boolean`                                                                | `true`      | Enable zoom.                                                      |
+| `dragEnabled`       | `boolean`                                                                | `true`      | Enable dragging nodes.                                            |
 
 #### Type of rendering
 

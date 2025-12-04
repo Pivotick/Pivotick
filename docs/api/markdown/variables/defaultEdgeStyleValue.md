@@ -8,7 +8,7 @@
 
 > `const` **defaultEdgeStyleValue**: [`EdgeStyle`](../pivotick/namespaces/RendererOptions/interfaces/EdgeStyle.md)
 
-Defined in: [renderers/svg/GraphSvgRenderer.ts:167](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/renderers/svg/GraphSvgRenderer.ts#L167)
+Defined in: [renderers/svg/GraphSvgRenderer.ts:167](https://github.com/mokaddem/Pivotick/blob/3aa20c1688c1c8b84622ae4b90902629f36acbd7/src/renderers/svg/GraphSvgRenderer.ts#L167)
 
 ## Default
 

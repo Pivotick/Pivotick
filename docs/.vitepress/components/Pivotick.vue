@@ -44,9 +44,9 @@ let graph = null
 onMounted(() => {
     graph = new Pivotick(container.value, localData.value, localOptions.value)
     props.onMountedCallback?.(container.value)
-    setTimeout(() => { // FIXME: Add callback for graph fully loaded
+    graph.ready.then(() => {
         props.onLoadedCallback?.(graph)
-    }, 200)
+    })
 })
 
 onBeforeUnmount(() => {

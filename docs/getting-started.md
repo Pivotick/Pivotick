@@ -48,7 +48,7 @@ You can customize the look in two ways:
           { from: 1, to: 2 }
       ]
   }"
-  :options="{ UI: { mode: 'viewer' }}"
+  :options="{ UI: { mode: 'static' }}"
   :style="{
     '--pvt-node-color': '#FDDA24',
     '--pvt-node-stroke': '#000000',

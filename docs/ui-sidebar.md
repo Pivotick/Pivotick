@@ -25,10 +25,15 @@ The sidebar displays contextual information for graph elements. It has three cus
     :data="dataUISidebarRendering"
     :options="optionUISidebarRendering"
     :onMountedCallback="(graphContainer) => {
-        graphContainer.querySelector('.pvt-canvas').style.filter = 'blur(0.095rem)'
-        graphContainer.querySelector('.pvt-canvas').style.opacity = '0.2'
-        graphContainer.querySelector('.pvt-toolbar').style.filter = 'blur(0.095rem)'
-        graphContainer.querySelector('.pvt-toolbar').style.opacity = '0.2'
+        const canvas = graphContainer.querySelector('.pvt-canvas')
+        canvas.style.filter = 'blur(0.095rem)'
+        canvas.style.opacity = '0.2'
+        canvas.style.pointerEvents = 'none'
+        const toolbar = graphContainer.querySelector('.pvt-toolbar')
+        toolbar.style.filter = 'blur(0.095rem)'
+        toolbar.style.opacity = '0.2'
+        toolbar.style.pointerEvents = 'none'
+        graphContainer.querySelector('.pvt-graphcontrols-layout').style.pointerEvents = 'none'
     }"
     :onLoadedCallback="(graph) => {
         graph.selectElement(graph.getNodes()[0])

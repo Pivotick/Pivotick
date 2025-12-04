@@ -50,7 +50,7 @@ export default defineComponent({
                 },
                 extraPanels: [
                     {
-                        title: "Extra panel #1",
+                        title: 'Extra panel #1',
                         render: (node) => {
                             const div = document.createElement('div')
                             div.textContent = 'Extra Panel #1'
@@ -60,7 +60,7 @@ export default defineComponent({
                         },
                     },
                     {
-                        title: "Extra panel #2",
+                        title: 'Extra panel #2',
                         render: (node) => {
                             const div = document.createElement('div')
                             div.textContent = 'Extra Panel #2'
@@ -97,5 +97,5 @@ export default defineComponent({
 
         return { graphContainer }
     },
-    template: `<div ref="graphContainer" :class="$style.pivotick" data-theme="light"></div>`
+    template: '<div ref="graphContainer" :class="$style.pivotick" data-theme="light"></div>'
 })

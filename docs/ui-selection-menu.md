@@ -50,7 +50,14 @@ Try it out!
             contextMenu: {
                 enabled: false,
             },
-        }
+        },
+        render: {
+            zoomAnimation: false
+        },
+    }"
+    :onLoadedCallback="(graph) => {
+        graph.renderer.zoomOut()
+        graph.renderer.zoomOut()
     }"
 ></Pivotick>
 

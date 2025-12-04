@@ -8,7 +8,7 @@
 
 > **RendererType** = `"svg"` \| `"canvas"`
 
-Defined in: [interfaces/RendererOptions.ts:141](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/interfaces/RendererOptions.ts#L141)
+Defined in: [interfaces/RendererOptions.ts:145](https://github.com/mokaddem/Pivotick/blob/3aa20c1688c1c8b84622ae4b90902629f36acbd7/src/interfaces/RendererOptions.ts#L145)
 
 - `'svg'` - Uses SVG elements for rendering
 - `'canvas'` - Uses the HTML canvas for rendering (barely supported)

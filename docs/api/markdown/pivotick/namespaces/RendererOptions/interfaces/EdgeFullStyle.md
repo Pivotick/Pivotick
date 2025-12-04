@@ -6,7 +6,7 @@
 
 # Interface: EdgeFullStyle
 
-Defined in: [interfaces/RendererOptions.ts:203](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/interfaces/RendererOptions.ts#L203)
+Defined in: [interfaces/RendererOptions.ts:207](https://github.com/mokaddem/Pivotick/blob/3aa20c1688c1c8b84622ae4b90902629f36acbd7/src/interfaces/RendererOptions.ts#L207)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [interfaces/RendererOptions.ts:203](https://github.com/mokaddem/Pivo
 
 > **edge**: [`EdgeStyle`](EdgeStyle.md)
 
-Defined in: [interfaces/RendererOptions.ts:204](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/interfaces/RendererOptions.ts#L204)
+Defined in: [interfaces/RendererOptions.ts:208](https://github.com/mokaddem/Pivotick/blob/3aa20c1688c1c8b84622ae4b90902629f36acbd7/src/interfaces/RendererOptions.ts#L208)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [interfaces/RendererOptions.ts:204](https://github.com/mokaddem/Pivo
 
 > **label**: [`LabelStyle`](LabelStyle.md)
 
-Defined in: [interfaces/RendererOptions.ts:205](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/interfaces/RendererOptions.ts#L205)
+Defined in: [interfaces/RendererOptions.ts:209](https://github.com/mokaddem/Pivotick/blob/3aa20c1688c1c8b84622ae4b90902629f36acbd7/src/interfaces/RendererOptions.ts#L209)

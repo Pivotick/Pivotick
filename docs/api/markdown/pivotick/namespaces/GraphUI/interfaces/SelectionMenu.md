@@ -6,7 +6,7 @@
 
 # Interface: SelectionMenu
 
-Defined in: [interfaces/GraphUI.ts:173](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/interfaces/GraphUI.ts#L173)
+Defined in: [interfaces/GraphUI.ts:173](https://github.com/mokaddem/Pivotick/blob/3aa20c1688c1c8b84622ae4b90902629f36acbd7/src/interfaces/GraphUI.ts#L173)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [interfaces/GraphUI.ts:173](https://github.com/mokaddem/Pivotick/blo
 
 > `optional` **menuNode**: `object`
 
-Defined in: [interfaces/GraphUI.ts:174](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/interfaces/GraphUI.ts#L174)
+Defined in: [interfaces/GraphUI.ts:174](https://github.com/mokaddem/Pivotick/blob/3aa20c1688c1c8b84622ae4b90902629f36acbd7/src/interfaces/GraphUI.ts#L174)
 
 #### menu?
 

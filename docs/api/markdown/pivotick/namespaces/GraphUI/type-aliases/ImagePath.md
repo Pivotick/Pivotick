@@ -8,7 +8,7 @@
 
 > **ImagePath** = `string`
 
-Defined in: [interfaces/GraphUI.ts:229](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/interfaces/GraphUI.ts#L229)
+Defined in: [interfaces/GraphUI.ts:229](https://github.com/mokaddem/Pivotick/blob/3aa20c1688c1c8b84622ae4b90902629f36acbd7/src/interfaces/GraphUI.ts#L229)
 
 An URL path to access the image content
 

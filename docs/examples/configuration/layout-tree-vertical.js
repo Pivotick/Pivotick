@@ -4,6 +4,9 @@ const data = { 'nodes': [{ 'id': 'n1', 'data': { 'label': 'Node 0', 'type': 'nod
 const options = {
     layout: {
         type: 'tree'
+    },
+    UI: {
+        mode: 'static'
     }
 }
 // #endregion options

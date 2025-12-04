@@ -8,4 +8,4 @@
 
 > **TreeLayoutAlgorithm** = `"FirstZeroInDegree"` \| `"MaxReachability"` \| `"MinMaxDistance"` \| `"MinHeight"`
 
-Defined in: [plugins/layout/Tree.ts:17](https://github.com/mokaddem/Pivotick/blob/08b3201af551806e821218a23b09b3df243be1a9/src/plugins/layout/Tree.ts#L17)
+Defined in: [plugins/layout/Tree.ts:17](https://github.com/mokaddem/Pivotick/blob/3aa20c1688c1c8b84622ae4b90902629f36acbd7/src/plugins/layout/Tree.ts#L17)

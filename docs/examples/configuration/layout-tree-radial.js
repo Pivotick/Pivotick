@@ -6,6 +6,9 @@ const options = {
         type: 'tree',
         radial: true,
         radialGap: 300,
+    },
+    UI: {
+        mode: 'static'
     }
 }
 // #endregion options

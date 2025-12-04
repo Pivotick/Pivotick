@@ -4,6 +4,9 @@ const options = {
     layout: {
         type: 'tree',
         radial: true,
+    // },
+    // UI: {
+    //     mode: 'static'
     }
 }
 const graph = new Pivotick(container, data, options)
