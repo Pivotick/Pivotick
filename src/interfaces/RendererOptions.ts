@@ -126,6 +126,8 @@ export interface GraphRendererOptions {
     nodeStyleMap?: Record<string, NodeStyle>
     /** @default true */
     zoomEnabled: boolean
+    /** @default true */
+    zoomAnimation: boolean
     /** @default 0.1 */
     minZoom: number
     /** @default 10 */

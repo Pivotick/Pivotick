@@ -274,6 +274,7 @@ export class Simulation {
         await this.runSimulationWorkerRouter()
 
         if (!this.options.enabled) {
+            this.engineRunning = false
             return
         }
 
@@ -351,6 +352,9 @@ export class Simulation {
      */
     public waitForSimulationStop(): Promise<void> {
         return new Promise(resolve => {
+            if (!this.engineRunning) {
+                return resolve()
+            }
             const originalOnStop = this.callbacks.onStop
             this.callbacks.onStop = (sim: Simulation) => {
                 // Call original callback if it exists

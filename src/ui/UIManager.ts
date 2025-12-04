@@ -165,7 +165,7 @@ export class UIManager {
 
     private setupStaticMode() {
         this.buildLayout()
-        this.buildUIGraphNavigation()
+        // this.buildUIGraphNavigation()
     }
 
     private setupFullMode() {

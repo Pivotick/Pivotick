@@ -40,10 +40,11 @@ export class Graph {
         if (this.options.UI?.mode === 'static') {
             if (!this.options.simulation) this.options.simulation = {}
             this.options.simulation.enabled = false
-            this.options.simulation.useWorker = true
+            this.options.simulation.useWorker = false
             
             if (!this.options.render) this.options.render = {}
             this.options.render.zoomEnabled = false
+            this.options.render.zoomAnimation = false
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
             if (!this.options.render.selectionBox) this.options.render.selectionBox = {}
@@ -96,6 +97,7 @@ export class Graph {
 
     private async startAndRender() {
         await this.simulation.start()
+        await this.simulation.waitForSimulationStop()
         this.renderer.nextTick()
         this.renderer.fitAndCenter()
         this.UIManager.callGraphReady()

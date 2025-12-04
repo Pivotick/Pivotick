@@ -197,6 +197,7 @@ const DEFAULT_RENDERER_OPTIONS = {
     zoomEnabled: true,
     minZoom: 0.1,
     maxZoom: 10,
+    zoomAnimation: true,
     defaultNodeStyle: defaultNodeStyle,
     defaultEdgeStyle: defaultEdgeStyle,
     defaultLabelStyle: defaultLabelStyle,
@@ -261,22 +262,27 @@ export class GraphSvgRenderer extends GraphRenderer {
         this.edgeDrawer.renderDefinitions(this.defs)
 
         this.zoom = d3Zoom<SVGSVGElement, unknown>()
-        if (this.options.zoomEnabled) {
-            this.svg.call(this.zoom)
-            this.svg.on('dblclick.zoom', null)
-            this.zoom
-                .filter((event) => {
-                    if (event.ctrlKey || event.shiftKey || event.altKey)
-                        return false
-                    const target = event.target as HTMLElement
-                    return !(target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA')
-                })
-                .scaleExtent([this.options.minZoom, this.options.maxZoom])
-                .on('zoom', (event) => {
-                    this.zoomGroup.attr('transform', event.transform)
-                    this.graphInteraction.canvasZoom(event)
-                })
-        }
+        this.zoom = this.zoom
+            .filter((event) => {
+                
+                if (!this.options.zoomEnabled)
+                    return false
+
+                if (event.ctrlKey || event.shiftKey || event.altKey)
+                    return false
+
+                const target = event.target as HTMLElement
+                return !(target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA')
+            })
+            .scaleExtent([this.options.minZoom, this.options.maxZoom])
+            .on('zoom', (event) => {
+                this.zoomGroup.attr('transform', event.transform)
+                this.graphInteraction.canvasZoom(event)
+            })
+
+        this.svg.call(this.zoom)
+        this.svg.on('dblclick.zoom', null)
+
 
         if (this.options.selectionBox.enabled) {
             this.selectionBox = new SelectionBox(this, this.svgCanvas, this.selectionBoxGroup.node())
@@ -384,7 +390,12 @@ export class GraphSvgRenderer extends GraphRenderer {
         const canvas = this.getCanvasSelection()
 
         if (!zoomBehavior || !canvas) return
-        canvas.transition().duration(300).call(zoomBehavior.scaleBy, 1.5)
+
+        if (this.options.zoomAnimation) {
+            canvas.transition().duration(300).call(zoomBehavior.scaleBy, 1.5)
+        } else {
+            canvas.call(zoomBehavior.scaleBy, 1.5)
+        }
     }
 
     public zoomOut(): void {
@@ -392,7 +403,12 @@ export class GraphSvgRenderer extends GraphRenderer {
         const canvas = this.getCanvasSelection()
 
         if (!zoomBehavior || !canvas) return
-        canvas.transition().duration(300).call(zoomBehavior.scaleBy, 0.667)
+
+        if (this.options.zoomAnimation) {
+            canvas.transition().duration(300).call(zoomBehavior.scaleBy, 0.667)
+        } else {
+            canvas.call(zoomBehavior.scaleBy, 0.667)
+        }
     }
 
     public fitAndCenter(): void {
@@ -429,7 +445,11 @@ export class GraphSvgRenderer extends GraphRenderer {
             .translate(translateX, translateY)
             .scale(scale)
 
-        canvas.transition().duration(300).call(zoomBehavior.transform, transform)
+        if (this.options.zoomAnimation) {
+            canvas.transition().duration(300).call(zoomBehavior.transform, transform)
+        } else {
+            canvas.call(zoomBehavior.transform, transform)
+        }
     }
 
     public focusElement(element: Node | Edge): void {
