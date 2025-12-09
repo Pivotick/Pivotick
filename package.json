@@ -25,7 +25,7 @@
     "vitepress:preview": "vitepress preview docs",
     "typdoc:dev": "typedoc --watch",
     "typdoc:build": "typedoc",
-    "docs:build": "npm run typedoc:build && npm run vitepress::build",
+    "docs:build": "npm run typedoc:build && npm run vitepress::build"
   },
   "devDependencies": {
     "@eslint/js": "^9.29.0",
