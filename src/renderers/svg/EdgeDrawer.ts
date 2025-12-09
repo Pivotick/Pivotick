@@ -31,7 +31,7 @@ export class EdgeDrawer {
 
         if (this.graph.getOptions().isDirected || edge.directed) {
             const pathSelection = this.genericEdgeRender(edgeSelection, style)
-            this.drawEdgeMarker(pathSelection, edge, style)
+            this.drawEdgeMarker(pathSelection, style, edge)
         }
 
         if (this.renderLabelCB) {
@@ -166,7 +166,8 @@ export class EdgeDrawer {
         return pathSelection
     }
 
-    private drawEdgeMarker(edgeSelection: Selection<SVGPathElement, Edge, null, undefined>, edge: Edge, style: EdgeStyle): void {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    private drawEdgeMarker(edgeSelection: Selection<SVGPathElement, Edge, null, undefined>, style: EdgeStyle, _edge: Edge): void {
         if (!this.rendererOptions.markerStyleMap)
             return
 

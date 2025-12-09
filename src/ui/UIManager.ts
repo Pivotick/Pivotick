@@ -159,7 +159,7 @@ export class UIManager {
 
     private setupViewerMode() {
         this.buildLayout()
-        this.buildUIGraphControls()
+        // this.buildUIGraphControls()
         this.buildUIGraphNavigation()
     }
 
