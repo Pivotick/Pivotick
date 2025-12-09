@@ -13,7 +13,7 @@ export default defineConfig({
       { text: 'Getting Started', link: '/getting-started' },
       { text: 'Configuration', link: '/configuration' },
       { text: 'Generated API docs', link: '/api' },
-      { text: 'Examples', link: '/examples' },
+      { text: 'Gallery', link: '/gallery' },
     ],
 
     sidebar: [
@@ -46,7 +46,7 @@ export default defineConfig({
       {
         text: 'Gallery',
         link: '/gallery',
-        items: galleryExamples(),
+        // items: galleryExamples(),
       }
     ],
 

@@ -6,7 +6,7 @@
 
 # Interface: InterractionCallbacks\<TElement\>
 
-Defined in: [interfaces/InterractionCallbacks.ts:4](https://github.com/mokaddem/Pivotick/blob/84c67603cf50dc0f96efd867f2d2a3762ebfc09a/src/interfaces/InterractionCallbacks.ts#L4)
+Defined in: [interfaces/InterractionCallbacks.ts:4](https://github.com/mokaddem/Pivotick/blob/0336443c93a545ff6caf624fe05a1bb272c4ec31/src/interfaces/InterractionCallbacks.ts#L4)
 
 ## Type Parameters
 
@@ -20,7 +20,7 @@ Defined in: [interfaces/InterractionCallbacks.ts:4](https://github.com/mokaddem/
 
 > `optional` **onCanvasClick**: (`event`) => `void`
 
-Defined in: [interfaces/InterractionCallbacks.ts:84](https://github.com/mokaddem/Pivotick/blob/84c67603cf50dc0f96efd867f2d2a3762ebfc09a/src/interfaces/InterractionCallbacks.ts#L84)
+Defined in: [interfaces/InterractionCallbacks.ts:84](https://github.com/mokaddem/Pivotick/blob/0336443c93a545ff6caf624fe05a1bb272c4ec31/src/interfaces/InterractionCallbacks.ts#L84)
 
 Called when the canvas is clicked.
 
@@ -40,7 +40,7 @@ Called when the canvas is clicked.
 
 > `optional` **onCanvasContextmenu**: (`event`) => `void`
 
-Defined in: [interfaces/InterractionCallbacks.ts:94](https://github.com/mokaddem/Pivotick/blob/84c67603cf50dc0f96efd867f2d2a3762ebfc09a/src/interfaces/InterractionCallbacks.ts#L94)
+Defined in: [interfaces/InterractionCallbacks.ts:94](https://github.com/mokaddem/Pivotick/blob/0336443c93a545ff6caf624fe05a1bb272c4ec31/src/interfaces/InterractionCallbacks.ts#L94)
 
 Called when the canvas is right clicked.
 
@@ -60,7 +60,7 @@ Called when the canvas is right clicked.
 
 > `optional` **onCanvasMousemove**: (`event`) => `void`
 
-Defined in: [interfaces/InterractionCallbacks.ts:99](https://github.com/mokaddem/Pivotick/blob/84c67603cf50dc0f96efd867f2d2a3762ebfc09a/src/interfaces/InterractionCallbacks.ts#L99)
+Defined in: [interfaces/InterractionCallbacks.ts:99](https://github.com/mokaddem/Pivotick/blob/0336443c93a545ff6caf624fe05a1bb272c4ec31/src/interfaces/InterractionCallbacks.ts#L99)
 
 Called when the mouse move over the canvas.
 
@@ -80,7 +80,7 @@ Called when the mouse move over the canvas.
 
 > `optional` **onCanvasZoom**: (`event`) => `void`
 
-Defined in: [interfaces/InterractionCallbacks.ts:89](https://github.com/mokaddem/Pivotick/blob/84c67603cf50dc0f96efd867f2d2a3762ebfc09a/src/interfaces/InterractionCallbacks.ts#L89)
+Defined in: [interfaces/InterractionCallbacks.ts:89](https://github.com/mokaddem/Pivotick/blob/0336443c93a545ff6caf624fe05a1bb272c4ec31/src/interfaces/InterractionCallbacks.ts#L89)
 
 Called when the canvas is zoomed.
 
@@ -100,7 +100,7 @@ Called when the canvas is zoomed.
 
 > `optional` **onEdgeBlur**: (`edge`, `element`) => `void`
 
-Defined in: [interfaces/InterractionCallbacks.ts:70](https://github.com/mokaddem/Pivotick/blob/84c67603cf50dc0f96efd867f2d2a3762ebfc09a/src/interfaces/InterractionCallbacks.ts#L70)
+Defined in: [interfaces/InterractionCallbacks.ts:70](https://github.com/mokaddem/Pivotick/blob/0336443c93a545ff6caf624fe05a1bb272c4ec31/src/interfaces/InterractionCallbacks.ts#L70)
 
 Called when an edge is unselected by the user.
 
@@ -124,7 +124,7 @@ Called when an edge is unselected by the user.
 
 > `optional` **onEdgeClick**: (`event`, `edge`, `element`) => `void`
 
-Defined in: [interfaces/InterractionCallbacks.ts:52](https://github.com/mokaddem/Pivotick/blob/84c67603cf50dc0f96efd867f2d2a3762ebfc09a/src/interfaces/InterractionCallbacks.ts#L52)
+Defined in: [interfaces/InterractionCallbacks.ts:52](https://github.com/mokaddem/Pivotick/blob/0336443c93a545ff6caf624fe05a1bb272c4ec31/src/interfaces/InterractionCallbacks.ts#L52)
 
 Called when an edge is selected by the user.
 
@@ -152,7 +152,7 @@ Called when an edge is selected by the user.
 
 > `optional` **onEdgeContextmenu**: (`event`, `edge`, `element`) => `void`
 
-Defined in: [interfaces/InterractionCallbacks.ts:60](https://github.com/mokaddem/Pivotick/blob/84c67603cf50dc0f96efd867f2d2a3762ebfc09a/src/interfaces/InterractionCallbacks.ts#L60)
+Defined in: [interfaces/InterractionCallbacks.ts:60](https://github.com/mokaddem/Pivotick/blob/0336443c93a545ff6caf624fe05a1bb272c4ec31/src/interfaces/InterractionCallbacks.ts#L60)
 
 Called when an edge is right clicked.
 
@@ -180,7 +180,7 @@ Called when an edge is right clicked.
 
 > `optional` **onEdgeDbclick**: (`event`, `edge`, `element`) => `void`
 
-Defined in: [interfaces/InterractionCallbacks.ts:56](https://github.com/mokaddem/Pivotick/blob/84c67603cf50dc0f96efd867f2d2a3762ebfc09a/src/interfaces/InterractionCallbacks.ts#L56)
+Defined in: [interfaces/InterractionCallbacks.ts:56](https://github.com/mokaddem/Pivotick/blob/0336443c93a545ff6caf624fe05a1bb272c4ec31/src/interfaces/InterractionCallbacks.ts#L56)
 
 Called when an edge is selected by the user.
 
@@ -208,7 +208,7 @@ Called when an edge is selected by the user.
 
 > `optional` **onEdgeHoverIn**: (`event`, `edge`, `element`) => `void`
 
-Defined in: [interfaces/InterractionCallbacks.ts:75](https://github.com/mokaddem/Pivotick/blob/84c67603cf50dc0f96efd867f2d2a3762ebfc09a/src/interfaces/InterractionCallbacks.ts#L75)
+Defined in: [interfaces/InterractionCallbacks.ts:75](https://github.com/mokaddem/Pivotick/blob/0336443c93a545ff6caf624fe05a1bb272c4ec31/src/interfaces/InterractionCallbacks.ts#L75)
 
 Called when a user hovers over an edge.
 
@@ -236,7 +236,7 @@ Called when a user hovers over an edge.
 
 > `optional` **onEdgeHoverOut**: (`event`, `edge`, `element`) => `void`
 
-Defined in: [interfaces/InterractionCallbacks.ts:79](https://github.com/mokaddem/Pivotick/blob/84c67603cf50dc0f96efd867f2d2a3762ebfc09a/src/interfaces/InterractionCallbacks.ts#L79)
+Defined in: [interfaces/InterractionCallbacks.ts:79](https://github.com/mokaddem/Pivotick/blob/0336443c93a545ff6caf624fe05a1bb272c4ec31/src/interfaces/InterractionCallbacks.ts#L79)
 
 Called when a user hovers over an edge.
 
@@ -264,7 +264,7 @@ Called when a user hovers over an edge.
 
 > `optional` **onEdgeSelect**: (`edge`, `element`) => `void`
 
-Defined in: [interfaces/InterractionCallbacks.ts:65](https://github.com/mokaddem/Pivotick/blob/84c67603cf50dc0f96efd867f2d2a3762ebfc09a/src/interfaces/InterractionCallbacks.ts#L65)
+Defined in: [interfaces/InterractionCallbacks.ts:65](https://github.com/mokaddem/Pivotick/blob/0336443c93a545ff6caf624fe05a1bb272c4ec31/src/interfaces/InterractionCallbacks.ts#L65)
 
 Called when an edge is selected by the user.
 
@@ -288,7 +288,7 @@ Called when an edge is selected by the user.
 
 > `optional` **onNodeBlur**: (`node`, `element`) => `void`
 
-Defined in: [interfaces/InterractionCallbacks.ts:37](https://github.com/mokaddem/Pivotick/blob/84c67603cf50dc0f96efd867f2d2a3762ebfc09a/src/interfaces/InterractionCallbacks.ts#L37)
+Defined in: [interfaces/InterractionCallbacks.ts:37](https://github.com/mokaddem/Pivotick/blob/0336443c93a545ff6caf624fe05a1bb272c4ec31/src/interfaces/InterractionCallbacks.ts#L37)
 
 Called when a node is unselected by the user.
 
@@ -312,7 +312,7 @@ Called when a node is unselected by the user.
 
 > `optional` **onNodeClick**: (`event`, `node`, `element`) => `void`
 
-Defined in: [interfaces/InterractionCallbacks.ts:8](https://github.com/mokaddem/Pivotick/blob/84c67603cf50dc0f96efd867f2d2a3762ebfc09a/src/interfaces/InterractionCallbacks.ts#L8)
+Defined in: [interfaces/InterractionCallbacks.ts:8](https://github.com/mokaddem/Pivotick/blob/0336443c93a545ff6caf624fe05a1bb272c4ec31/src/interfaces/InterractionCallbacks.ts#L8)
 
 Called when a node is clicked.
 
@@ -340,7 +340,7 @@ Called when a node is clicked.
 
 > `optional` **onNodeContextmenu**: (`event`, `node`, `element`) => `void`
 
-Defined in: [interfaces/InterractionCallbacks.ts:18](https://github.com/mokaddem/Pivotick/blob/84c67603cf50dc0f96efd867f2d2a3762ebfc09a/src/interfaces/InterractionCallbacks.ts#L18)
+Defined in: [interfaces/InterractionCallbacks.ts:18](https://github.com/mokaddem/Pivotick/blob/0336443c93a545ff6caf624fe05a1bb272c4ec31/src/interfaces/InterractionCallbacks.ts#L18)
 
 Called when a node is right clicked.
 
@@ -368,7 +368,7 @@ Called when a node is right clicked.
 
 > `optional` **onNodeDbclick**: (`event`, `node`, `element`) => `void`
 
-Defined in: [interfaces/InterractionCallbacks.ts:13](https://github.com/mokaddem/Pivotick/blob/84c67603cf50dc0f96efd867f2d2a3762ebfc09a/src/interfaces/InterractionCallbacks.ts#L13)
+Defined in: [interfaces/InterractionCallbacks.ts:13](https://github.com/mokaddem/Pivotick/blob/0336443c93a545ff6caf624fe05a1bb272c4ec31/src/interfaces/InterractionCallbacks.ts#L13)
 
 Called when a node is double clicked.
 
@@ -396,7 +396,7 @@ Called when a node is double clicked.
 
 > `optional` **onNodeDragging**: (`event`, `node`) => `void`
 
-Defined in: [interfaces/InterractionCallbacks.ts:47](https://github.com/mokaddem/Pivotick/blob/84c67603cf50dc0f96efd867f2d2a3762ebfc09a/src/interfaces/InterractionCallbacks.ts#L47)
+Defined in: [interfaces/InterractionCallbacks.ts:47](https://github.com/mokaddem/Pivotick/blob/0336443c93a545ff6caf624fe05a1bb272c4ec31/src/interfaces/InterractionCallbacks.ts#L47)
 
 Called when a node is dragged.
 
@@ -420,7 +420,7 @@ Called when a node is dragged.
 
 > `optional` **onNodeExpansion**: (`event`, `edge`, `element`) => `void`
 
-Defined in: [interfaces/InterractionCallbacks.ts:42](https://github.com/mokaddem/Pivotick/blob/84c67603cf50dc0f96efd867f2d2a3762ebfc09a/src/interfaces/InterractionCallbacks.ts#L42)
+Defined in: [interfaces/InterractionCallbacks.ts:42](https://github.com/mokaddem/Pivotick/blob/0336443c93a545ff6caf624fe05a1bb272c4ec31/src/interfaces/InterractionCallbacks.ts#L42)
 
 Called when a node is expanded (e.g., drilled down or pivoted).
 
@@ -448,7 +448,7 @@ Called when a node is expanded (e.g., drilled down or pivoted).
 
 > `optional` **onNodeHoverIn**: (`event`, `node`, `element`) => `void`
 
-Defined in: [interfaces/InterractionCallbacks.ts:23](https://github.com/mokaddem/Pivotick/blob/84c67603cf50dc0f96efd867f2d2a3762ebfc09a/src/interfaces/InterractionCallbacks.ts#L23)
+Defined in: [interfaces/InterractionCallbacks.ts:23](https://github.com/mokaddem/Pivotick/blob/0336443c93a545ff6caf624fe05a1bb272c4ec31/src/interfaces/InterractionCallbacks.ts#L23)
 
 Called when a user hovers over a node.
 
@@ -476,7 +476,7 @@ Called when a user hovers over a node.
 
 > `optional` **onNodeHoverOut**: (`event`, `node`, `element`) => `void`
 
-Defined in: [interfaces/InterractionCallbacks.ts:27](https://github.com/mokaddem/Pivotick/blob/84c67603cf50dc0f96efd867f2d2a3762ebfc09a/src/interfaces/InterractionCallbacks.ts#L27)
+Defined in: [interfaces/InterractionCallbacks.ts:27](https://github.com/mokaddem/Pivotick/blob/0336443c93a545ff6caf624fe05a1bb272c4ec31/src/interfaces/InterractionCallbacks.ts#L27)
 
 Called when a user hovers out of a node.
 
@@ -504,7 +504,7 @@ Called when a user hovers out of a node.
 
 > `optional` **onNodeSelect**: (`node`, `element`) => `void`
 
-Defined in: [interfaces/InterractionCallbacks.ts:32](https://github.com/mokaddem/Pivotick/blob/84c67603cf50dc0f96efd867f2d2a3762ebfc09a/src/interfaces/InterractionCallbacks.ts#L32)
+Defined in: [interfaces/InterractionCallbacks.ts:32](https://github.com/mokaddem/Pivotick/blob/0336443c93a545ff6caf624fe05a1bb272c4ec31/src/interfaces/InterractionCallbacks.ts#L32)
 
 Called when a node is selected by the user.
 
@@ -528,7 +528,7 @@ Called when a node is selected by the user.
 
 > `optional` **onSimulationSlowTick**: () => `void`
 
-Defined in: [interfaces/InterractionCallbacks.ts:109](https://github.com/mokaddem/Pivotick/blob/84c67603cf50dc0f96efd867f2d2a3762ebfc09a/src/interfaces/InterractionCallbacks.ts#L109)
+Defined in: [interfaces/InterractionCallbacks.ts:109](https://github.com/mokaddem/Pivotick/blob/0336443c93a545ff6caf624fe05a1bb272c4ec31/src/interfaces/InterractionCallbacks.ts#L109)
 
 Called when the every tenth of simulation ticks.
 
@@ -542,7 +542,7 @@ Called when the every tenth of simulation ticks.
 
 > `optional` **onSimulationTick**: () => `void`
 
-Defined in: [interfaces/InterractionCallbacks.ts:104](https://github.com/mokaddem/Pivotick/blob/84c67603cf50dc0f96efd867f2d2a3762ebfc09a/src/interfaces/InterractionCallbacks.ts#L104)
+Defined in: [interfaces/InterractionCallbacks.ts:104](https://github.com/mokaddem/Pivotick/blob/0336443c93a545ff6caf624fe05a1bb272c4ec31/src/interfaces/InterractionCallbacks.ts#L104)
 
 Called when the simulation ticks.
 

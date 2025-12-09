@@ -39,8 +39,8 @@ export function createSampleGraph(): Pivotick {
     // edges.push(new Edge('1-0', nodes[1], nodes[0], { relation : 'b'}))
 
 
-    // const N = 63
-    const N = 6
+    const N = 63
+    // const N = 1000
     const createNodes = (): Node[] => {
         return Array.from({ length: N }, (_, i) => new Node(`n${i + 1}`, { label: `Node ${i}`, type: 'node'}))
     }
@@ -152,6 +152,7 @@ export function createSampleGraph(): Pivotick {
             const getEdgeKey = (a: number, b: number) => `${Math.min(a, b)}-${Math.max(a, b)}`
 
             while (edges.length < nodes.length*2) {
+            // while (edges.length < nodes.length/2) {
                 const from = Math.floor(Math.random() * nodes.length)
                 const to = Math.floor(Math.random() * nodes.length)
                 if (from === to) continue

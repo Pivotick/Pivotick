@@ -196,7 +196,7 @@ const DEFAULT_RENDERER_OPTIONS = {
     type: 'svg',
     zoomEnabled: true,
     dragEnabled: true,
-    minZoom: 0.1,
+    minZoom: 0.05,
     maxZoom: 10,
     zoomAnimation: true,
     defaultNodeStyle: defaultNodeStyle,

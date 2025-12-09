@@ -128,7 +128,7 @@ export interface GraphRendererOptions {
     zoomEnabled: boolean
     /** @default true */
     zoomAnimation: boolean
-    /** @default 0.1 */
+    /** @default 0.05 */
     minZoom: number
     /** @default 10 */
     maxZoom: number

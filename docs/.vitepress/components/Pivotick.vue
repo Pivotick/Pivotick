@@ -1,5 +1,5 @@
 <template>
-    <div ref="container" style="height: 400px; border: 1px solid #cccccc99"></div>
+    <div ref="container" style="margin: 1em 0 1em 0; height: 400px; border: 1px solid #cccccc99"></div>
 </template>
 
 <script setup>
