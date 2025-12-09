@@ -6,7 +6,7 @@
 
 # Interface: EdgeStyle
 
-Defined in: [interfaces/RendererOptions.ts:224](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/RendererOptions.ts#L224)
+Defined in: [interfaces/RendererOptions.ts:224](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/RendererOptions.ts#L224)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [interfaces/RendererOptions.ts:224](https://github.com/mokaddem/Pivo
 
 > `optional` **animateDash**: `boolean`
 
-Defined in: [interfaces/RendererOptions.ts:242](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/RendererOptions.ts#L242)
+Defined in: [interfaces/RendererOptions.ts:242](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/RendererOptions.ts#L242)
 
 Whether the dash should be animated (e.g., animation moving along the path)
 @default: true
@@ -25,7 +25,7 @@ Whether the dash should be animated (e.g., animation moving along the path)
 
 > **curveStyle**: [`CurveStyle`](../type-aliases/CurveStyle.md)
 
-Defined in: [interfaces/RendererOptions.ts:232](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/RendererOptions.ts#L232)
+Defined in: [interfaces/RendererOptions.ts:232](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/RendererOptions.ts#L232)
 
 #### Default
 
@@ -39,7 +39,7 @@ bidirectional
 
 > `optional` **dashed**: `boolean`
 
-Defined in: [interfaces/RendererOptions.ts:237](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/RendererOptions.ts#L237)
+Defined in: [interfaces/RendererOptions.ts:237](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/RendererOptions.ts#L237)
 
 Whether the stroke is dashed
 
@@ -55,7 +55,7 @@ false
 
 > `optional` **markerEnd**: `string` \| (`edge`) => `string`
 
-Defined in: [interfaces/RendererOptions.ts:252](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/RendererOptions.ts#L252)
+Defined in: [interfaces/RendererOptions.ts:252](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/RendererOptions.ts#L252)
 
 Which end marker should the edge use
 
@@ -71,7 +71,7 @@ arrow
 
 > `optional` **markerStart**: `string` \| (`edge`) => `string`
 
-Defined in: [interfaces/RendererOptions.ts:257](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/RendererOptions.ts#L257)
+Defined in: [interfaces/RendererOptions.ts:257](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/RendererOptions.ts#L257)
 
 Which start marker should the edge use
 
@@ -87,7 +87,7 @@ undefined
 
 > **opacity**: `number`
 
-Defined in: [interfaces/RendererOptions.ts:230](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/RendererOptions.ts#L230)
+Defined in: [interfaces/RendererOptions.ts:230](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/RendererOptions.ts#L230)
 
 #### Default
 
@@ -101,7 +101,7 @@ Defined in: [interfaces/RendererOptions.ts:230](https://github.com/mokaddem/Pivo
 
 > **rotateLabel**: `boolean`
 
-Defined in: [interfaces/RendererOptions.ts:247](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/RendererOptions.ts#L247)
+Defined in: [interfaces/RendererOptions.ts:247](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/RendererOptions.ts#L247)
 
 Keeps labels horizontally aligned to the viewport
 
@@ -117,7 +117,7 @@ false
 
 > **strokeColor**: `string`
 
-Defined in: [interfaces/RendererOptions.ts:226](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/RendererOptions.ts#L226)
+Defined in: [interfaces/RendererOptions.ts:226](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/RendererOptions.ts#L226)
 
 #### Default
 
@@ -131,7 +131,7 @@ Defined in: [interfaces/RendererOptions.ts:226](https://github.com/mokaddem/Pivo
 
 > **strokeWidth**: `number`
 
-Defined in: [interfaces/RendererOptions.ts:228](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/RendererOptions.ts#L228)
+Defined in: [interfaces/RendererOptions.ts:228](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/RendererOptions.ts#L228)
 
 #### Default
 
@@ -145,7 +145,7 @@ Defined in: [interfaces/RendererOptions.ts:228](https://github.com/mokaddem/Pivo
 
 > `optional` **styleCb**: (`edge`) => `Partial`\<`EdgeStyle`\>
 
-Defined in: [interfaces/RendererOptions.ts:258](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/RendererOptions.ts#L258)
+Defined in: [interfaces/RendererOptions.ts:258](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/RendererOptions.ts#L258)
 
 #### Parameters
 

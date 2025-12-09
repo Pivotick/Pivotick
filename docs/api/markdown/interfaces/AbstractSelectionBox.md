@@ -6,7 +6,7 @@
 
 # Abstract Interface: AbstractSelectionBox
 
-Defined in: [GraphRenderer.ts:118](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/GraphRenderer.ts#L118)
+Defined in: [GraphRenderer.ts:118](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/GraphRenderer.ts#L118)
 
 ## Methods
 
@@ -14,7 +14,7 @@ Defined in: [GraphRenderer.ts:118](https://github.com/mokaddem/Pivotick/blob/89f
 
 > `abstract` **selectionInProgress**(): `boolean`
 
-Defined in: [GraphRenderer.ts:119](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/GraphRenderer.ts#L119)
+Defined in: [GraphRenderer.ts:119](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/GraphRenderer.ts#L119)
 
 #### Returns
 

@@ -6,7 +6,7 @@
 
 # Interface: Notifier
 
-Defined in: [ui/Notifier.ts:31](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/ui/Notifier.ts#L31)
+Defined in: [ui/Notifier.ts:31](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/ui/Notifier.ts#L31)
 
 Manages and displays notification messages in the graph UI.
 
@@ -25,7 +25,7 @@ graph.notifier.warning('This is a warning', 'Content of the message goes here.')
 
 > **error**(`title`, `message?`): `void`
 
-Defined in: [ui/Notifier.ts:60](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/ui/Notifier.ts#L60)
+Defined in: [ui/Notifier.ts:60](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/ui/Notifier.ts#L60)
 
 #### Parameters
 
@@ -47,7 +47,7 @@ Defined in: [ui/Notifier.ts:60](https://github.com/mokaddem/Pivotick/blob/89f179
 
 > **info**(`title`, `message?`): `void`
 
-Defined in: [ui/Notifier.ts:64](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/ui/Notifier.ts#L64)
+Defined in: [ui/Notifier.ts:64](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/ui/Notifier.ts#L64)
 
 #### Parameters
 
@@ -69,7 +69,7 @@ Defined in: [ui/Notifier.ts:64](https://github.com/mokaddem/Pivotick/blob/89f179
 
 > **notify**(`level`, `title`, `message?`): `void`
 
-Defined in: [ui/Notifier.ts:47](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/ui/Notifier.ts#L47)
+Defined in: [ui/Notifier.ts:47](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/ui/Notifier.ts#L47)
 
 Dispatch a notification to the UIManager.
 
@@ -103,7 +103,7 @@ Optional detailed message for the notification.
 
 > **success**(`title`, `message?`): `void`
 
-Defined in: [ui/Notifier.ts:52](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/ui/Notifier.ts#L52)
+Defined in: [ui/Notifier.ts:52](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/ui/Notifier.ts#L52)
 
 #### Parameters
 
@@ -125,7 +125,7 @@ Defined in: [ui/Notifier.ts:52](https://github.com/mokaddem/Pivotick/blob/89f179
 
 > **warning**(`title`, `message?`): `void`
 
-Defined in: [ui/Notifier.ts:56](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/ui/Notifier.ts#L56)
+Defined in: [ui/Notifier.ts:56](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/ui/Notifier.ts#L56)
 
 #### Parameters
 

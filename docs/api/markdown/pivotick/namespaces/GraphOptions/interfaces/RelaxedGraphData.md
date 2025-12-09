@@ -6,7 +6,7 @@
 
 # Interface: RelaxedGraphData
 
-Defined in: [interfaces/GraphOptions.ts:58](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/GraphOptions.ts#L58)
+Defined in: [interfaces/GraphOptions.ts:58](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/GraphOptions.ts#L58)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [interfaces/GraphOptions.ts:58](https://github.com/mokaddem/Pivotick
 
 > **edges**: ([`Edge`](../../../../classes/Edge.md) \| [`RawEdge`](../type-aliases/RawEdge.md))[]
 
-Defined in: [interfaces/GraphOptions.ts:60](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/GraphOptions.ts#L60)
+Defined in: [interfaces/GraphOptions.ts:60](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/GraphOptions.ts#L60)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [interfaces/GraphOptions.ts:60](https://github.com/mokaddem/Pivotick
 
 > **nodes**: ([`Node`](../../../../classes/Node.md) \| [`RawNode`](../type-aliases/RawNode.md))[]
 
-Defined in: [interfaces/GraphOptions.ts:59](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/GraphOptions.ts#L59)
+Defined in: [interfaces/GraphOptions.ts:59](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/GraphOptions.ts#L59)

@@ -8,7 +8,7 @@
 
 > **GraphUIMode** = `"viewer"` \| `"full"` \| `"light"` \| `"static"`
 
-Defined in: [interfaces/GraphUI.ts:29](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/GraphUI.ts#L29)
+Defined in: [interfaces/GraphUI.ts:29](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/GraphUI.ts#L29)
 
 - `"full"`: Full UI and interactions.
 - `"light"`: Minimal UI, interactions enabled.

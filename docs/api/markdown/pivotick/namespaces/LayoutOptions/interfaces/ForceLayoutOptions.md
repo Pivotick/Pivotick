@@ -6,7 +6,7 @@
 
 # Interface: ForceLayoutOptions
 
-Defined in: [interfaces/LayoutOptions.ts:16](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/LayoutOptions.ts#L16)
+Defined in: [interfaces/LayoutOptions.ts:16](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/LayoutOptions.ts#L16)
 
 ## Extends
 
@@ -18,7 +18,7 @@ Defined in: [interfaces/LayoutOptions.ts:16](https://github.com/mokaddem/Pivotic
 
 > **type**: `"force"`
 
-Defined in: [interfaces/LayoutOptions.ts:17](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/LayoutOptions.ts#L17)
+Defined in: [interfaces/LayoutOptions.ts:17](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/LayoutOptions.ts#L17)
 
 #### Default
 

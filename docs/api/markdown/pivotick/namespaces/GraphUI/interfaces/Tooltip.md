@@ -6,7 +6,7 @@
 
 # Interface: Tooltip
 
-Defined in: [interfaces/GraphUI.ts:132](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/GraphUI.ts#L132)
+Defined in: [interfaces/GraphUI.ts:132](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/GraphUI.ts#L132)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [interfaces/GraphUI.ts:132](https://github.com/mokaddem/Pivotick/blo
 
 > **edgeHeaderMap**: `Partial`\<[`HeaderMapEntry`](HeaderMapEntry.md)\<[`Edge`](../../../../classes/Edge.md)\>\>
 
-Defined in: [interfaces/GraphUI.ts:145](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/GraphUI.ts#L145)
+Defined in: [interfaces/GraphUI.ts:145](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/GraphUI.ts#L145)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [interfaces/GraphUI.ts:145](https://github.com/mokaddem/Pivotick/blo
 
 > **edgePropertiesMap**: (`edge`) => [`PropertyEntry`](PropertyEntry.md)[]
 
-Defined in: [interfaces/GraphUI.ts:147](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/GraphUI.ts#L147)
+Defined in: [interfaces/GraphUI.ts:147](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/GraphUI.ts#L147)
 
 #### Parameters
 
@@ -40,7 +40,7 @@ Defined in: [interfaces/GraphUI.ts:147](https://github.com/mokaddem/Pivotick/blo
 
 > `optional` **enabled**: `boolean`
 
-Defined in: [interfaces/GraphUI.ts:133](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/GraphUI.ts#L133)
+Defined in: [interfaces/GraphUI.ts:133](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/GraphUI.ts#L133)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [interfaces/GraphUI.ts:133](https://github.com/mokaddem/Pivotick/blo
 
 > **nodeHeaderMap**: `Partial`\<[`HeaderMapEntry`](HeaderMapEntry.md)\<[`Node`](../../../../classes/Node.md)\>\>
 
-Defined in: [interfaces/GraphUI.ts:144](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/GraphUI.ts#L144)
+Defined in: [interfaces/GraphUI.ts:144](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/GraphUI.ts#L144)
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: [interfaces/GraphUI.ts:144](https://github.com/mokaddem/Pivotick/blo
 
 > **nodePropertiesMap**: (`node`) => [`PropertyEntry`](PropertyEntry.md)[]
 
-Defined in: [interfaces/GraphUI.ts:146](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/GraphUI.ts#L146)
+Defined in: [interfaces/GraphUI.ts:146](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/GraphUI.ts#L146)
 
 #### Parameters
 
@@ -74,7 +74,7 @@ Defined in: [interfaces/GraphUI.ts:146](https://github.com/mokaddem/Pivotick/blo
 
 > `optional` **render**: `string` \| `HTMLElement` \| (`element`) => `string` \| `HTMLElement`
 
-Defined in: [interfaces/GraphUI.ts:154](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/GraphUI.ts#L154)
+Defined in: [interfaces/GraphUI.ts:154](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/GraphUI.ts#L154)
 
 Custom renderer for the tooltip. This content will override the default tooltip
 
@@ -96,7 +96,7 @@ undefined
 
 > `optional` **renderEdgeExtra**: (`edge`) => `string` \| `HTMLElement`
 
-Defined in: [interfaces/GraphUI.ts:143](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/GraphUI.ts#L143)
+Defined in: [interfaces/GraphUI.ts:143](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/GraphUI.ts#L143)
 
 Custom renderer for edge tooltips. This content is added after the default tooltip
 
@@ -122,7 +122,7 @@ undefined
 
 > `optional` **renderNodeExtra**: (`node`) => `string` \| `HTMLElement`
 
-Defined in: [interfaces/GraphUI.ts:138](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/GraphUI.ts#L138)
+Defined in: [interfaces/GraphUI.ts:138](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/GraphUI.ts#L138)
 
 Custom renderer for node tooltips. This content is added after the default tooltip
 

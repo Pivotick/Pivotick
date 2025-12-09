@@ -6,7 +6,7 @@
 
 # Interface: NodeData
 
-Defined in: [Node.ts:5](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/Node.ts#L5)
+Defined in: [Node.ts:5](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/Node.ts#L5)
 
 ## Indexable
 

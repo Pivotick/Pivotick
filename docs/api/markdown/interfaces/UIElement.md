@@ -6,7 +6,7 @@
 
 # Interface: UIElement
 
-Defined in: [ui/UIManager.ts:94](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/ui/UIManager.ts#L94)
+Defined in: [ui/UIManager.ts:94](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/ui/UIManager.ts#L94)
 
 ## Methods
 
@@ -14,7 +14,7 @@ Defined in: [ui/UIManager.ts:94](https://github.com/mokaddem/Pivotick/blob/89f17
 
 > **afterMount**(): `void`
 
-Defined in: [ui/UIManager.ts:97](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/ui/UIManager.ts#L97)
+Defined in: [ui/UIManager.ts:97](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/ui/UIManager.ts#L97)
 
 #### Returns
 
@@ -26,7 +26,7 @@ Defined in: [ui/UIManager.ts:97](https://github.com/mokaddem/Pivotick/blob/89f17
 
 > **destroy**(): `void`
 
-Defined in: [ui/UIManager.ts:96](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/ui/UIManager.ts#L96)
+Defined in: [ui/UIManager.ts:96](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/ui/UIManager.ts#L96)
 
 #### Returns
 
@@ -38,7 +38,7 @@ Defined in: [ui/UIManager.ts:96](https://github.com/mokaddem/Pivotick/blob/89f17
 
 > **graphReady**(): `void`
 
-Defined in: [ui/UIManager.ts:98](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/ui/UIManager.ts#L98)
+Defined in: [ui/UIManager.ts:98](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/ui/UIManager.ts#L98)
 
 #### Returns
 
@@ -50,7 +50,7 @@ Defined in: [ui/UIManager.ts:98](https://github.com/mokaddem/Pivotick/blob/89f17
 
 > **mount**(`container`): `void`
 
-Defined in: [ui/UIManager.ts:95](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/ui/UIManager.ts#L95)
+Defined in: [ui/UIManager.ts:95](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/ui/UIManager.ts#L95)
 
 #### Parameters
 

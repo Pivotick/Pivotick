@@ -6,7 +6,7 @@
 
 # Interface: SelectionBox
 
-Defined in: [interfaces/RendererOptions.ts:300](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/RendererOptions.ts#L300)
+Defined in: [interfaces/RendererOptions.ts:300](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/RendererOptions.ts#L300)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [interfaces/RendererOptions.ts:300](https://github.com/mokaddem/Pivo
 
 > **enabled**: `boolean`
 
-Defined in: [interfaces/RendererOptions.ts:302](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/RendererOptions.ts#L302)
+Defined in: [interfaces/RendererOptions.ts:302](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/RendererOptions.ts#L302)
 
 #### Default
 

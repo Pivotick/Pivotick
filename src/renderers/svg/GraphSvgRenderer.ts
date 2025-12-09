@@ -1,4 +1,7 @@
 import { select as d3Select, type Selection } from 'd3-selection'
+// import 'd3-transition'
+import { transition as d3Transition } from 'd3-transition'
+d3Select.prototype.transition = d3Transition
 import { zoom as d3Zoom, type ZoomBehavior, zoomIdentity as d3ZoomIdentity } from 'd3-zoom'
 import { Edge } from '../../Edge'
 import { Node } from '../../Node'

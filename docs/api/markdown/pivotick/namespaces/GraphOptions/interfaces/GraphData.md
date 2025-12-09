@@ -6,7 +6,7 @@
 
 # Interface: GraphData
 
-Defined in: [interfaces/GraphOptions.ts:50](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/GraphOptions.ts#L50)
+Defined in: [interfaces/GraphOptions.ts:50](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/GraphOptions.ts#L50)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [interfaces/GraphOptions.ts:50](https://github.com/mokaddem/Pivotick
 
 > **edges**: [`Edge`](../../../../classes/Edge.md)[]
 
-Defined in: [interfaces/GraphOptions.ts:52](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/GraphOptions.ts#L52)
+Defined in: [interfaces/GraphOptions.ts:52](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/GraphOptions.ts#L52)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [interfaces/GraphOptions.ts:52](https://github.com/mokaddem/Pivotick
 
 > **nodes**: [`Node`](../../../../classes/Node.md)[]
 
-Defined in: [interfaces/GraphOptions.ts:51](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/GraphOptions.ts#L51)
+Defined in: [interfaces/GraphOptions.ts:51](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/GraphOptions.ts#L51)

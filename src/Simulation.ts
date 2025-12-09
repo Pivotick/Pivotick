@@ -128,7 +128,7 @@ export class Simulation {
 
     /** @private */
     public static initSimulationForces(options: SimulationOptions, canvasBCR: DOMRect): {
-        simulation: d3.Simulation<Node, undefined>,
+        simulation: d3Simulation<Node, undefined>,
         simulationForces: {
             link: d3ForceLinkType<Node, Edge>,
             charge: d3ForceManyBodyType<Node>,

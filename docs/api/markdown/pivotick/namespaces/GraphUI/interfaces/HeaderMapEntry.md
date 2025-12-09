@@ -6,7 +6,7 @@
 
 # Interface: HeaderMapEntry\<T\>
 
-Defined in: [interfaces/GraphUI.ts:63](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/GraphUI.ts#L63)
+Defined in: [interfaces/GraphUI.ts:63](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/GraphUI.ts#L63)
 
 Mapping functions to extract a node/edge's title and subtitle.
 
@@ -31,7 +31,7 @@ subtitle= node.getData().description || "Could not resolve subtitle"
 
 > **subtitle**: `string` \| (`element`) => `string`
 
-Defined in: [interfaces/GraphUI.ts:65](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/GraphUI.ts#L65)
+Defined in: [interfaces/GraphUI.ts:65](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/GraphUI.ts#L65)
 
 ***
 
@@ -39,4 +39,4 @@ Defined in: [interfaces/GraphUI.ts:65](https://github.com/mokaddem/Pivotick/blob
 
 > **title**: `string` \| (`element`) => `string`
 
-Defined in: [interfaces/GraphUI.ts:64](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/GraphUI.ts#L64)
+Defined in: [interfaces/GraphUI.ts:64](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/GraphUI.ts#L64)

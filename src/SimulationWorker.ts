@@ -1,4 +1,5 @@
 import type { ForceLink as d3ForceLinkType } from 'd3-force'
+import { type Simulation as d3Simulation } from 'd3-force'
 import { Simulation } from './Simulation'
 import { Node, type NodeData } from './Node'
 import { Edge, type EdgeData } from './Edge'
@@ -237,6 +238,6 @@ function getProgress(_tick: number, elapsedTime: number, options: SimulationOpti
     return elapsedTime / options.cooldownTime
 }
 
-function isSimulationStable(options: SimulationOptions, simulation: d3.Simulation<Node, undefined>, currentAlphaTarget: number): boolean {
+function isSimulationStable(options: SimulationOptions, simulation: d3Simulation<Node, undefined>, currentAlphaTarget: number): boolean {
     return options.d3AlphaMin > 0 && (simulation.alpha() - currentAlphaTarget) < options.d3AlphaMin   
 }

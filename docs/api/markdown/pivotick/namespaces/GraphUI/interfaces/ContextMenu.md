@@ -6,7 +6,7 @@
 
 # Interface: ContextMenu
 
-Defined in: [interfaces/GraphUI.ts:157](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/GraphUI.ts#L157)
+Defined in: [interfaces/GraphUI.ts:157](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/GraphUI.ts#L157)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [interfaces/GraphUI.ts:157](https://github.com/mokaddem/Pivotick/blo
 
 > `optional` **enabled**: `boolean`
 
-Defined in: [interfaces/GraphUI.ts:158](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/GraphUI.ts#L158)
+Defined in: [interfaces/GraphUI.ts:158](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/GraphUI.ts#L158)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [interfaces/GraphUI.ts:158](https://github.com/mokaddem/Pivotick/blo
 
 > `optional` **menuCanvas**: `object`
 
-Defined in: [interfaces/GraphUI.ts:167](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/GraphUI.ts#L167)
+Defined in: [interfaces/GraphUI.ts:167](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/GraphUI.ts#L167)
 
 #### menu?
 
@@ -38,7 +38,7 @@ Defined in: [interfaces/GraphUI.ts:167](https://github.com/mokaddem/Pivotick/blo
 
 > `optional` **menuEdge**: `object`
 
-Defined in: [interfaces/GraphUI.ts:163](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/GraphUI.ts#L163)
+Defined in: [interfaces/GraphUI.ts:163](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/GraphUI.ts#L163)
 
 #### menu?
 
@@ -54,7 +54,7 @@ Defined in: [interfaces/GraphUI.ts:163](https://github.com/mokaddem/Pivotick/blo
 
 > `optional` **menuNode**: `object`
 
-Defined in: [interfaces/GraphUI.ts:159](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/GraphUI.ts#L159)
+Defined in: [interfaces/GraphUI.ts:159](https://github.com/mokaddem/Pivotick/blob/3401bef29564a77584895fe60983b72eea9ffb59/src/interfaces/GraphUI.ts#L159)
 
 #### menu?
 
