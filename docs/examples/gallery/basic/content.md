@@ -6,7 +6,7 @@ title: "Basic example"
 
 
 <script setup>
-    import { data as data_e, options as options_e } from './basic.js'
+    import { data as data_e, options as options_e } from './options.js'
 </script>
 
 <Pivotick
@@ -17,8 +17,8 @@ title: "Basic example"
 
 ::: code-group
 
-<<< ./basic.js#options [Options]
-<<< ./basic.js#data [Data]
+<<< ./options.js#options [Options]
+<<< ./options.js#data [Data]
 
 :::
 

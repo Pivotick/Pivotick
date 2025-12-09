@@ -6,7 +6,7 @@
 
 # Interface: NodeSelection\<TElement\>
 
-Defined in: [interfaces/GraphInteractions.ts:5](https://github.com/mokaddem/Pivotick/blob/0336443c93a545ff6caf624fe05a1bb272c4ec31/src/interfaces/GraphInteractions.ts#L5)
+Defined in: [interfaces/GraphInteractions.ts:5](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/interfaces/GraphInteractions.ts#L5)
 
 ## Type Parameters
 
@@ -20,7 +20,7 @@ Defined in: [interfaces/GraphInteractions.ts:5](https://github.com/mokaddem/Pivo
 
 > **element**: `TElement`
 
-Defined in: [interfaces/GraphInteractions.ts:7](https://github.com/mokaddem/Pivotick/blob/0336443c93a545ff6caf624fe05a1bb272c4ec31/src/interfaces/GraphInteractions.ts#L7)
+Defined in: [interfaces/GraphInteractions.ts:7](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/interfaces/GraphInteractions.ts#L7)
 
 ***
 
@@ -28,4 +28,4 @@ Defined in: [interfaces/GraphInteractions.ts:7](https://github.com/mokaddem/Pivo
 
 > **node**: [`Node`](../../../../classes/Node.md)
 
-Defined in: [interfaces/GraphInteractions.ts:6](https://github.com/mokaddem/Pivotick/blob/0336443c93a545ff6caf624fe05a1bb272c4ec31/src/interfaces/GraphInteractions.ts#L6)
+Defined in: [interfaces/GraphInteractions.ts:6](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/interfaces/GraphInteractions.ts#L6)

@@ -47,6 +47,17 @@ export default defineConfig({
         text: 'Gallery',
         link: '/gallery',
         // items: galleryExamples(),
+        items: [
+          {
+            items: [
+              { text: 'Node Styles', link: '/gallery#node-styles' },
+              { text: 'Edge Styles', link: '/gallery#edge-styles' },
+              { text: 'Layouts', link: '/gallery#layouts' },
+              { text: 'Events', link: '/gallery#events' },
+              { text: 'UI', link: '/gallery#ui' },
+            ]
+          },
+        ]
       }
     ],
 
