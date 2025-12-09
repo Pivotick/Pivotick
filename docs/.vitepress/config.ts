@@ -5,6 +5,7 @@ import { galleryExamples } from './gallery-files'
 export default defineConfig({
   title: 'Pivotick',
   description: 'Pivotick documentation',
+  base: '/Pivotick/',
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     logo: '/logo.svg',

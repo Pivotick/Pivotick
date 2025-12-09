@@ -20,9 +20,12 @@
     "preview": "vite preview",
     "lint": "eslint 'src/**/*.{ts,tsx}'",
     "lint_fix": "eslint --fix 'src/**/*.{ts,tsx}'",
-    "docs:dev": "vitepress dev docs",
-    "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs"
+    "vitepress:dev": "vitepress dev docs",
+    "vitepress:build": "vitepress build docs",
+    "vitepress:preview": "vitepress preview docs",
+    "typdoc:dev": "typedoc --watch",
+    "typdoc:build": "typedoc",
+    "docs:build": "npm run typedoc:build && npm run vitepress::build",
   },
   "devDependencies": {
     "@eslint/js": "^9.29.0",
