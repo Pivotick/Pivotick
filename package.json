@@ -23,8 +23,8 @@
     "vitepress:dev": "vitepress dev docs",
     "vitepress:build": "vitepress build docs",
     "vitepress:preview": "vitepress preview docs",
-    "typdoc:dev": "typedoc --watch",
-    "typdoc:build": "typedoc",
+    "typedoc:dev": "typedoc --watch",
+    "typedoc:build": "typedoc",
     "docs:build": "npm run typedoc:build && npm run vitepress::build"
   },
   "devDependencies": {
