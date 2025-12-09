@@ -19,6 +19,7 @@
   "exclude": ["**/__tests__/**", "**/*.test.ts"],
   "excludePrivate": true,
   "excludeProtected": true,
+  "excludeInternal": true,
   "groupOrder": [
     "Classes",
     "Namespaces",

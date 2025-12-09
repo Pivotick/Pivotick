@@ -6,7 +6,7 @@
 
 # Class: Node
 
-Defined in: [Node.ts:12](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/Node.ts#L12)
+Defined in: [Node.ts:12](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/Node.ts#L12)
 
 Represents a single node (vertex) in a graph.
 
@@ -16,7 +16,7 @@ Represents a single node (vertex) in a graph.
 
 > **new Node**(`id`, `data?`, `style?`): `Node`
 
-Defined in: [Node.ts:37](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/Node.ts#L37)
+Defined in: [Node.ts:37](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/Node.ts#L37)
 
 Create a new Node instance.
 
@@ -30,7 +30,7 @@ Unique identifier for the node
 
 ##### data?
 
-`NodeData`
+[`NodeData`](../interfaces/NodeData.md)
 
 Optional data payload associated with the node
 
@@ -48,7 +48,7 @@ Optional data payload associated with the node
 
 > **clone**(): `Node`
 
-Defined in: [Node.ts:156](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/Node.ts#L156)
+Defined in: [Node.ts:156](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/Node.ts#L156)
 
 #### Returns
 
@@ -60,7 +60,7 @@ Defined in: [Node.ts:156](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d2
 
 > **degree**(): `number`
 
-Defined in: [Node.ts:206](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/Node.ts#L206)
+Defined in: [Node.ts:206](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/Node.ts#L206)
 
 #### Returns
 
@@ -72,7 +72,7 @@ Defined in: [Node.ts:206](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d2
 
 > **freeze**(): `void`
 
-Defined in: [Node.ts:194](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/Node.ts#L194)
+Defined in: [Node.ts:194](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/Node.ts#L194)
 
 #### Returns
 
@@ -84,7 +84,7 @@ Defined in: [Node.ts:194](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d2
 
 > **getCircleRadius**(): `number`
 
-Defined in: [Node.ts:214](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/Node.ts#L214)
+Defined in: [Node.ts:214](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/Node.ts#L214)
 
 #### Returns
 
@@ -96,7 +96,7 @@ Defined in: [Node.ts:214](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d2
 
 > **getConnectedNodes**(): `Node`[]
 
-Defined in: [Node.ts:96](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/Node.ts#L96)
+Defined in: [Node.ts:96](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/Node.ts#L96)
 
 #### Returns
 
@@ -108,7 +108,7 @@ Defined in: [Node.ts:96](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d28
 
 > **getConnectingNodes**(): `Node`[]
 
-Defined in: [Node.ts:102](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/Node.ts#L102)
+Defined in: [Node.ts:102](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/Node.ts#L102)
 
 #### Returns
 
@@ -118,15 +118,15 @@ Defined in: [Node.ts:102](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d2
 
 ### getData()
 
-> **getData**(): `NodeData`
+> **getData**(): [`NodeData`](../interfaces/NodeData.md)
 
-Defined in: [Node.ts:51](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/Node.ts#L51)
+Defined in: [Node.ts:51](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/Node.ts#L51)
 
 Get the node's data.
 
 #### Returns
 
-`NodeData`
+[`NodeData`](../interfaces/NodeData.md)
 
 ***
 
@@ -134,7 +134,7 @@ Get the node's data.
 
 > **getGraphElement**(): `SVGGElement` \| `null`
 
-Defined in: [Node.ts:134](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/Node.ts#L134)
+Defined in: [Node.ts:134](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/Node.ts#L134)
 
 #### Returns
 
@@ -146,7 +146,7 @@ Defined in: [Node.ts:134](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d2
 
 > **getStyle**(): `Partial`\<[`NodeStyle`](../pivotick/namespaces/RendererOptions/interfaces/NodeStyle.md)\>
 
-Defined in: [Node.ts:111](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/Node.ts#L111)
+Defined in: [Node.ts:111](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/Node.ts#L111)
 
 Get the node's data.
 
@@ -160,7 +160,7 @@ Get the node's data.
 
 > **setCircleRadius**(`radius`): `void`
 
-Defined in: [Node.ts:210](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/Node.ts#L210)
+Defined in: [Node.ts:210](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/Node.ts#L210)
 
 #### Parameters
 
@@ -178,7 +178,7 @@ Defined in: [Node.ts:210](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d2
 
 > **setData**(`newData`): `void`
 
-Defined in: [Node.ts:59](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/Node.ts#L59)
+Defined in: [Node.ts:59](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/Node.ts#L59)
 
 Update the node's data.
 
@@ -186,7 +186,7 @@ Update the node's data.
 
 ##### newData
 
-`NodeData`
+[`NodeData`](../interfaces/NodeData.md)
 
 New data to set
 
@@ -200,7 +200,7 @@ New data to set
 
 > **setStyle**(`newStyle`): `void`
 
-Defined in: [Node.ts:119](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/Node.ts#L119)
+Defined in: [Node.ts:119](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/Node.ts#L119)
 
 Update the node's data.
 
@@ -222,7 +222,7 @@ New data to set
 
 > **toJSON**(): `object`
 
-Defined in: [Node.ts:142](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/Node.ts#L142)
+Defined in: [Node.ts:142](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/Node.ts#L142)
 
 Convert node to a simple JSON object representation.
 
@@ -236,7 +236,7 @@ Convert node to a simple JSON object representation.
 
 > **unfreeze**(): `void`
 
-Defined in: [Node.ts:200](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/Node.ts#L200)
+Defined in: [Node.ts:200](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/Node.ts#L200)
 
 #### Returns
 
@@ -248,7 +248,7 @@ Defined in: [Node.ts:200](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d2
 
 > **updateData**(`partialData`): `void`
 
-Defined in: [Node.ts:69](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/Node.ts#L69)
+Defined in: [Node.ts:69](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/Node.ts#L69)
 
 Merge partial data into the current node data.
 Useful for updating only parts of the data.
@@ -257,7 +257,7 @@ Useful for updating only parts of the data.
 
 ##### partialData
 
-`Partial`\<`NodeData`\>
+`Partial`\<[`NodeData`](../interfaces/NodeData.md)\>
 
 Partial data object to merge
 
@@ -271,7 +271,7 @@ Partial data object to merge
 
 > **updateStyle**(`partialStyle`): `void`
 
-Defined in: [Node.ts:129](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/Node.ts#L129)
+Defined in: [Node.ts:129](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/Node.ts#L129)
 
 Merge partial data into the current node data.
 Useful for updating only parts of the data.
@@ -294,7 +294,7 @@ Partial data object to merge
 
 > **defaultCircleRadius**: `number` = `10`
 
-Defined in: [Node.ts:18](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/Node.ts#L18)
+Defined in: [Node.ts:18](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/Node.ts#L18)
 
 ***
 
@@ -302,7 +302,7 @@ Defined in: [Node.ts:18](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d28
 
 > `readonly` **domID**: `string`
 
-Defined in: [Node.ts:30](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/Node.ts#L30)
+Defined in: [Node.ts:30](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/Node.ts#L30)
 
 ***
 
@@ -310,7 +310,7 @@ Defined in: [Node.ts:30](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d28
 
 > `optional` **frozen**: `boolean`
 
-Defined in: [Node.ts:27](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/Node.ts#L27)
+Defined in: [Node.ts:27](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/Node.ts#L27)
 
 ***
 
@@ -318,7 +318,7 @@ Defined in: [Node.ts:27](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d28
 
 > `optional` **fx**: `number`
 
-Defined in: [Node.ts:25](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/Node.ts#L25)
+Defined in: [Node.ts:25](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/Node.ts#L25)
 
 ***
 
@@ -326,7 +326,7 @@ Defined in: [Node.ts:25](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d28
 
 > `optional` **fy**: `number`
 
-Defined in: [Node.ts:26](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/Node.ts#L26)
+Defined in: [Node.ts:26](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/Node.ts#L26)
 
 ***
 
@@ -334,7 +334,7 @@ Defined in: [Node.ts:26](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d28
 
 > `readonly` **id**: `string`
 
-Defined in: [Node.ts:13](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/Node.ts#L13)
+Defined in: [Node.ts:13](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/Node.ts#L13)
 
 ***
 
@@ -342,7 +342,7 @@ Defined in: [Node.ts:13](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d28
 
 > `optional` **vx**: `number`
 
-Defined in: [Node.ts:23](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/Node.ts#L23)
+Defined in: [Node.ts:23](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/Node.ts#L23)
 
 ***
 
@@ -350,7 +350,7 @@ Defined in: [Node.ts:23](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d28
 
 > `optional` **vy**: `number`
 
-Defined in: [Node.ts:24](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/Node.ts#L24)
+Defined in: [Node.ts:24](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/Node.ts#L24)
 
 ***
 
@@ -358,7 +358,7 @@ Defined in: [Node.ts:24](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d28
 
 > `optional` **x**: `number`
 
-Defined in: [Node.ts:21](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/Node.ts#L21)
+Defined in: [Node.ts:21](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/Node.ts#L21)
 
 ***
 
@@ -366,4 +366,4 @@ Defined in: [Node.ts:21](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d28
 
 > `optional` **y**: `number`
 
-Defined in: [Node.ts:22](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/Node.ts#L22)
+Defined in: [Node.ts:22](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/Node.ts#L22)

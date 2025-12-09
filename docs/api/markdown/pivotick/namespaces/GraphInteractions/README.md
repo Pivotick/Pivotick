@@ -6,11 +6,6 @@
 
 # GraphInteractions
 
-## Main Options
+## Classes
 
-- [GraphInteractionEvents](type-aliases/GraphInteractionEvents.md)
-
-## Other
-
-- [EdgeSelection](interfaces/EdgeSelection.md)
-- [NodeSelection](interfaces/NodeSelection.md)
+- [GraphInteractions](classes/GraphInteractions.md)

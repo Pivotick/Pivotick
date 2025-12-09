@@ -343,7 +343,7 @@ export class Graph {
      * Both the source (`from`) and target (`to`) nodes must already exist in the graph.
      * Throws an error if an edge with the same ID already exists.
      * 
-     * @param edge The edge to add.
+     * @param e The edge to add.
      * @throws Error if the edge ID already exists or if either node does not exist.
      * Triggers `onChange` after the edge is successfully added.
      */

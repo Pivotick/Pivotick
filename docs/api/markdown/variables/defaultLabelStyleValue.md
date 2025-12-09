@@ -8,7 +8,7 @@
 
 > `const` **defaultLabelStyleValue**: [`LabelStyle`](../pivotick/namespaces/RendererOptions/interfaces/LabelStyle.md)
 
-Defined in: [renderers/svg/GraphSvgRenderer.ts:188](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/renderers/svg/GraphSvgRenderer.ts#L188)
+Defined in: [renderers/svg/GraphSvgRenderer.ts:188](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/renderers/svg/GraphSvgRenderer.ts#L188)
 
 ## Default
 

@@ -13,6 +13,7 @@
 ## Namespaces
 
 - [GraphInteractions](pivotick/namespaces/GraphInteractions/README.md)
+- [GraphInteractionsI](pivotick/namespaces/GraphInteractionsI/README.md)
 - [GraphOptions](pivotick/namespaces/GraphOptions/README.md)
 - [GraphUI](pivotick/namespaces/GraphUI/README.md)
 - [InterractionCallbacks](pivotick/namespaces/InterractionCallbacks/README.md)
@@ -22,12 +23,18 @@
 
 ## Interfaces
 
+- [AbstractSelectionBox](interfaces/AbstractSelectionBox.md)
+- [EdgeData](interfaces/EdgeData.md)
 - [GraphRenderer](interfaces/GraphRenderer.md)
+- [NodeData](interfaces/NodeData.md)
 - [Notifier](interfaces/Notifier.md)
 - [Simulation](interfaces/Simulation.md)
+- [UIElement](interfaces/UIElement.md)
 
 ## Type Aliases
 
+- [DeepPartial](type-aliases/DeepPartial.md)
+- [NotificationLevel](type-aliases/NotificationLevel.md)
 - [TreeLayoutAlgorithm](type-aliases/TreeLayoutAlgorithm.md)
 
 ## Variables

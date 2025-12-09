@@ -114,6 +114,7 @@ export abstract class GraphRenderer {
     }
 }
 
+
 export abstract class AbstractSelectionBox {
     abstract selectionInProgress(): boolean
 }

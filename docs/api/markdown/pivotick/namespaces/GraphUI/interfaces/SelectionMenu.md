@@ -6,7 +6,7 @@
 
 # Interface: SelectionMenu
 
-Defined in: [interfaces/GraphUI.ts:173](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/interfaces/GraphUI.ts#L173)
+Defined in: [interfaces/GraphUI.ts:173](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/GraphUI.ts#L173)
 
 ## Properties
 
@@ -14,11 +14,11 @@ Defined in: [interfaces/GraphUI.ts:173](https://github.com/mokaddem/Pivotick/blo
 
 > `optional` **menuNode**: `object`
 
-Defined in: [interfaces/GraphUI.ts:174](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/interfaces/GraphUI.ts#L174)
+Defined in: [interfaces/GraphUI.ts:174](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/GraphUI.ts#L174)
 
 #### menu?
 
-> `optional` **menu**: [`MenuActionItemOptions`](../type-aliases/MenuActionItemOptions.md)\<`UIElement`\>[]
+> `optional` **menu**: [`MenuActionItemOptions`](../type-aliases/MenuActionItemOptions.md)\<[`UIElement`](../../../../interfaces/UIElement.md)\>[]
 
 #### topbar?
 

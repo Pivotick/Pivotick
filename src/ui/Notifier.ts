@@ -1,6 +1,7 @@
 import type { Graph } from '../Graph'
 import type { UIManager } from './UIManager'
 
+/** @internal */
 export const NotificationLevel = {
     Success: 'success',
     Warning: 'warning',

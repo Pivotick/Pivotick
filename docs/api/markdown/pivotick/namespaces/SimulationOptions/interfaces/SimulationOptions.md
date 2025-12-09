@@ -6,7 +6,7 @@
 
 # Interface: SimulationOptions
 
-Defined in: [interfaces/SimulationOptions.ts:16](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/interfaces/SimulationOptions.ts#L16)
+Defined in: [interfaces/SimulationOptions.ts:16](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/SimulationOptions.ts#L16)
 
 ## Remarks
 
@@ -18,7 +18,7 @@ These may be scalled based on the amount of node and canvas size
 
 > `optional` **callbacks**: [`SimulationCallbacks`](SimulationCallbacks.md)
 
-Defined in: [interfaces/SimulationOptions.ts:58](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/interfaces/SimulationOptions.ts#L58)
+Defined in: [interfaces/SimulationOptions.ts:58](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/SimulationOptions.ts#L58)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [interfaces/SimulationOptions.ts:58](https://github.com/mokaddem/Piv
 
 > **cooldownTime**: `number`
 
-Defined in: [interfaces/SimulationOptions.ts:46](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/interfaces/SimulationOptions.ts#L46)
+Defined in: [interfaces/SimulationOptions.ts:46](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/SimulationOptions.ts#L46)
 
 #### Default
 
@@ -40,7 +40,7 @@ Defined in: [interfaces/SimulationOptions.ts:46](https://github.com/mokaddem/Piv
 
 > **d3Alpha**: `number`
 
-Defined in: [interfaces/SimulationOptions.ts:18](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/interfaces/SimulationOptions.ts#L18)
+Defined in: [interfaces/SimulationOptions.ts:18](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/SimulationOptions.ts#L18)
 
 #### Default
 
@@ -54,7 +54,7 @@ Defined in: [interfaces/SimulationOptions.ts:18](https://github.com/mokaddem/Piv
 
 > **d3AlphaDecay**: `number`
 
-Defined in: [interfaces/SimulationOptions.ts:22](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/interfaces/SimulationOptions.ts#L22)
+Defined in: [interfaces/SimulationOptions.ts:22](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/SimulationOptions.ts#L22)
 
 #### Default
 
@@ -68,7 +68,7 @@ Defined in: [interfaces/SimulationOptions.ts:22](https://github.com/mokaddem/Piv
 
 > **d3AlphaMin**: `number`
 
-Defined in: [interfaces/SimulationOptions.ts:20](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/interfaces/SimulationOptions.ts#L20)
+Defined in: [interfaces/SimulationOptions.ts:20](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/SimulationOptions.ts#L20)
 
 #### Default
 
@@ -82,7 +82,7 @@ Defined in: [interfaces/SimulationOptions.ts:20](https://github.com/mokaddem/Piv
 
 > **d3AlphaTarget**: `number`
 
-Defined in: [interfaces/SimulationOptions.ts:24](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/interfaces/SimulationOptions.ts#L24)
+Defined in: [interfaces/SimulationOptions.ts:24](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/SimulationOptions.ts#L24)
 
 #### Default
 
@@ -96,7 +96,7 @@ Defined in: [interfaces/SimulationOptions.ts:24](https://github.com/mokaddem/Piv
 
 > **d3CenterStrength**: `number`
 
-Defined in: [interfaces/SimulationOptions.ts:42](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/interfaces/SimulationOptions.ts#L42)
+Defined in: [interfaces/SimulationOptions.ts:42](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/SimulationOptions.ts#L42)
 
 #### Default
 
@@ -110,7 +110,7 @@ Defined in: [interfaces/SimulationOptions.ts:42](https://github.com/mokaddem/Piv
 
 > **d3CollideIterations**: `number`
 
-Defined in: [interfaces/SimulationOptions.ts:40](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/interfaces/SimulationOptions.ts#L40)
+Defined in: [interfaces/SimulationOptions.ts:40](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/SimulationOptions.ts#L40)
 
 #### Default
 
@@ -124,7 +124,7 @@ Defined in: [interfaces/SimulationOptions.ts:40](https://github.com/mokaddem/Piv
 
 > **d3CollideRadius**: `number`
 
-Defined in: [interfaces/SimulationOptions.ts:36](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/interfaces/SimulationOptions.ts#L36)
+Defined in: [interfaces/SimulationOptions.ts:36](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/SimulationOptions.ts#L36)
 
 #### Default
 
@@ -138,7 +138,7 @@ Defined in: [interfaces/SimulationOptions.ts:36](https://github.com/mokaddem/Piv
 
 > **d3CollideStrength**: `number`
 
-Defined in: [interfaces/SimulationOptions.ts:38](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/interfaces/SimulationOptions.ts#L38)
+Defined in: [interfaces/SimulationOptions.ts:38](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/SimulationOptions.ts#L38)
 
 #### Default
 
@@ -152,7 +152,7 @@ Defined in: [interfaces/SimulationOptions.ts:38](https://github.com/mokaddem/Piv
 
 > **d3GravityStrength**: `number`
 
-Defined in: [interfaces/SimulationOptions.ts:44](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/interfaces/SimulationOptions.ts#L44)
+Defined in: [interfaces/SimulationOptions.ts:44](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/SimulationOptions.ts#L44)
 
 #### Default
 
@@ -166,7 +166,7 @@ Defined in: [interfaces/SimulationOptions.ts:44](https://github.com/mokaddem/Piv
 
 > **d3LinkDistance**: `number`
 
-Defined in: [interfaces/SimulationOptions.ts:28](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/interfaces/SimulationOptions.ts#L28)
+Defined in: [interfaces/SimulationOptions.ts:28](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/SimulationOptions.ts#L28)
 
 #### Default
 
@@ -180,7 +180,7 @@ Defined in: [interfaces/SimulationOptions.ts:28](https://github.com/mokaddem/Piv
 
 > **d3LinkStrength**: `number` \| `null`
 
-Defined in: [interfaces/SimulationOptions.ts:30](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/interfaces/SimulationOptions.ts#L30)
+Defined in: [interfaces/SimulationOptions.ts:30](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/SimulationOptions.ts#L30)
 
 #### Default
 
@@ -194,7 +194,7 @@ null
 
 > **d3ManyBodyStrength**: `number`
 
-Defined in: [interfaces/SimulationOptions.ts:32](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/interfaces/SimulationOptions.ts#L32)
+Defined in: [interfaces/SimulationOptions.ts:32](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/SimulationOptions.ts#L32)
 
 #### Default
 
@@ -208,7 +208,7 @@ Defined in: [interfaces/SimulationOptions.ts:32](https://github.com/mokaddem/Piv
 
 > **d3ManyBodyTheta**: `number`
 
-Defined in: [interfaces/SimulationOptions.ts:34](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/interfaces/SimulationOptions.ts#L34)
+Defined in: [interfaces/SimulationOptions.ts:34](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/SimulationOptions.ts#L34)
 
 #### Default
 
@@ -222,7 +222,7 @@ Defined in: [interfaces/SimulationOptions.ts:34](https://github.com/mokaddem/Piv
 
 > **d3VelocityDecay**: `number`
 
-Defined in: [interfaces/SimulationOptions.ts:26](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/interfaces/SimulationOptions.ts#L26)
+Defined in: [interfaces/SimulationOptions.ts:26](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/SimulationOptions.ts#L26)
 
 #### Default
 
@@ -236,7 +236,7 @@ Defined in: [interfaces/SimulationOptions.ts:26](https://github.com/mokaddem/Piv
 
 > **enabled**: `boolean`
 
-Defined in: [interfaces/SimulationOptions.ts:53](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/interfaces/SimulationOptions.ts#L53)
+Defined in: [interfaces/SimulationOptions.ts:53](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/SimulationOptions.ts#L53)
 
 #### Default
 
@@ -250,7 +250,7 @@ true
 
 > **freezeNodesOnDrag**: `boolean`
 
-Defined in: [interfaces/SimulationOptions.ts:50](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/interfaces/SimulationOptions.ts#L50)
+Defined in: [interfaces/SimulationOptions.ts:50](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/SimulationOptions.ts#L50)
 
 #### Default
 
@@ -264,7 +264,7 @@ true
 
 > **useWorker**: `boolean`
 
-Defined in: [interfaces/SimulationOptions.ts:55](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/interfaces/SimulationOptions.ts#L55)
+Defined in: [interfaces/SimulationOptions.ts:55](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/SimulationOptions.ts#L55)
 
 #### Default
 
@@ -278,7 +278,7 @@ true
 
 > **warmupTicks**: `number` \| `"auto"`
 
-Defined in: [interfaces/SimulationOptions.ts:48](https://github.com/mokaddem/Pivotick/blob/8a6dcc09c8d281588660877bc0e3fee3e7df74c6/src/interfaces/SimulationOptions.ts#L48)
+Defined in: [interfaces/SimulationOptions.ts:48](https://github.com/mokaddem/Pivotick/blob/89f1790aaeb5f0539811e3c09a6577d9f9258d15/src/interfaces/SimulationOptions.ts#L48)
 
 #### Default
 
