@@ -17,6 +17,10 @@
     }
 }
 
+:root:not([data-theme]):not(html.dark) {
+    @include theme-vars(vars.$light-theme);
+}
+
 .pivotick[data-theme="light"] {
     @include theme-vars(vars.$light-theme);
 }
