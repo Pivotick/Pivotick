@@ -1,11 +1,14 @@
 import { defineConfig } from 'vitepress'
 import { galleryExamples } from './gallery-files'
 
+const baseurl = '/Pivotick/'
+const joinUrl = (base: string, path: string) => `${base?.replace(/\/$/, '') || ''}/${path?.replace(/^\//, '') || ''}`
+
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
   title: 'Pivotick',
   description: 'Pivotick documentation',
-  base: '/Pivotick/',
+  base: baseurl,
   ignoreDeadLinks: true,
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
@@ -71,5 +74,24 @@ export default defineConfig({
     }
   },
   markdown: {
+    config(md) {
+      const defaultRender = md.renderer.rules.link_open || function (tokens, idx, options, env, self) {
+        return self.renderToken(tokens, idx, options)
+      }
+
+      md.renderer.rules.link_open = (tokens, idx, options, env, self) => {
+        const hrefIndex = tokens[idx].attrIndex('href')
+        if (hrefIndex >= 0) {
+          const href = tokens[idx].attrs![hrefIndex][1]
+          
+          if (href.startsWith('/api/html/')) {
+            tokens[idx].attrs![hrefIndex][1] = joinUrl(baseurl, href)
+            tokens[idx].attrPush(['target', '_blank'])
+            tokens[idx].attrPush(['rel', 'noopener noreferrer'])
+          }
+        }
+        return defaultRender(tokens, idx, options, env, self)
+      }
+    }
   }
 })
