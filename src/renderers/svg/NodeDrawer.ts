@@ -2,7 +2,7 @@ import { type Selection } from 'd3-selection'
 import { Node } from '../../Node'
 import type { Graph } from '../../Graph'
 import type { GraphSvgRenderer } from './GraphSvgRenderer'
-import { faGlyph } from '../../utils/Getters'
+import { faGlyph, tryResolveValue } from '../../utils/Getters'
 import type { CustomNodeShape, GraphRendererOptions, NodeShape, NodeStyle } from '../../interfaces/RendererOptions'
 
 export class NodeDrawer {
@@ -83,7 +83,7 @@ export class NodeDrawer {
     }
 
     private defaultNodeRender(nodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
-        const style = this.computeNodeStyle(node)
+        const style = this.getNodeStyle(node)
         this.genericNodeRender(nodeSelection, style, node)
     }
 
@@ -139,7 +139,18 @@ export class NodeDrawer {
     }
 
     public getNodeStyle(node: Node): NodeStyle {
-        return this.computeNodeStyle(node)
+        const nodeStyle = this.computeNodeStyle(node)
+        for (const key of Object.keys(nodeStyle) as (keyof NodeStyle)[]) {
+            const k = key as keyof NodeStyle
+            if (nodeStyle[k] !== undefined) {
+                const resolved = tryResolveValue(nodeStyle[k], node)
+                if (resolved !== undefined) {
+                    nodeStyle[k] = resolved as NodeStyle[typeof k]
+                }
+            }
+        }
+
+        return nodeStyle
     }
 
     private isCustomShape(shape: NodeShape): shape is CustomNodeShape {
@@ -244,7 +255,7 @@ export class NodeDrawer {
                 .append('text')
                 .attr('text-anchor', 'middle')
                 .attr('dominant-baseline', 'central')
-                .attr('font-size', style.size * 0.8)
+                .attr('font-size', this.computeFontSize(style.text, style.size))
                 .attr('font-family', style.fontFamily)
                 .attr('fill', style.textColor)
                 .text(style.text)
@@ -269,4 +280,18 @@ export class NodeDrawer {
         }
     }
 
+    private computeFontSize(label: string, nodeSize: number) {
+        const base = nodeSize * 0.8
+        const maxWidth = nodeSize * 1.6
+
+        // approximate width: ~0.6em per character
+        const estWidth = label.length * base * 0.6
+
+        if (estWidth > maxWidth) {
+            const scale = maxWidth / estWidth
+            return base * scale
+        }
+
+        return base
+    }
 }

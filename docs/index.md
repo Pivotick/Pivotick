@@ -28,3 +28,16 @@ features:
     details: Explore the gallery
     link: /gallery
 ---
+
+
+<script setup>
+    import { data as data_e, options as options_e } from './examples/gallery/social-network/options.js'
+</script>
+
+<Pivotick
+    :data="data_e"
+    :options="options_e"
+    :style="{
+      'margin-top': '64px',
+    }"
+></Pivotick>

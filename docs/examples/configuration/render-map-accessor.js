@@ -12,8 +12,16 @@ const options = {
     render: {
         nodeTypeAccessor: (node) => node.getData()?.type,
         nodeStyleMap: {
-            'hub': { shape: 'hexagon', color: '#f90', size: 25 },
-            'spoke': { shape: 'triangle', color: '#09f' }
+            'hub': {
+                shape: 'hexagon',
+                color: '#f90',
+                size: 25,
+                text: (node) => node.getData()?.label
+            },
+            'spoke': {
+                shape: 'triangle',
+                color: '#09f'
+            }
         },
     },
     UI: {
