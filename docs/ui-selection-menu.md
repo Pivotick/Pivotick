@@ -1,6 +1,6 @@
 
 # Selection Menu {#ui-selectionmenu}
-The [selection menu options](docs/api/html/interfaces/GraphUI.SelectionMenu.html) configure the menu shown when elements are selected.
+The [selection menu options](/api/html/interfaces/GraphUI.SelectionMenu.html) configure the menu shown when elements are selected.
 
 **By default:**
 - Selection menu is enabled.
@@ -78,7 +78,7 @@ const options = {
 
 You can configure additional actions to be displayed when multiple nodes are selected.
 
-The interface for action items are defined [here](docs/api/html/types/GraphUI.MenuActionItemOptions.html).
+The interface for action items are defined [here](/api/html/types/GraphUI.MenuActionItemOptions.html).
 
 ```ts [Additional actions]
 const options = {

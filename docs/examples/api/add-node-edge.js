@@ -1,5 +1,5 @@
 
-import { Node, Edge } from '../../../dist/pivotick.js'
+import { Node, Edge } from './../../../src/index'
 
 // #region loaded
 function loaded(graph) {

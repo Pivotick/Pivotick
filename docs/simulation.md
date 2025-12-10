@@ -30,10 +30,10 @@ Check [D3-force official documentation](https://d3js.org/d3-force/simulation#for
 | `d3VelocityDecay`   | number              | `0.4`               | Friction applied to node velocities.                                                 |
 | `d3LinkDistance`    | number              | `30`                | Default distance between connected nodes.                                            |
 | `freezeNodesOnDrag` | boolean             | `true`              | Whether nodes are frozen once they are release from a drag operation.                |
-| `callbacks`         | [SimulationCallbacks](docs/api/html/interfaces/SimulationOptions.SimulationCallbacks.html) | `undefined`         | Hooks for responding to simulation events. |
+| `callbacks`         | [SimulationCallbacks](/api/html/interfaces/SimulationOptions.SimulationCallbacks.html) | `undefined`         | Hooks for responding to simulation events. |
 
 ::: info
-Other D3 force parameters like `d3AlphaDecay`, `d3ManyBodyStrength`, `d3CollideRadius` are available and [documented in the API reference](docs/api/html/interfaces/SimulationOptions.SimulationOptions.html).
+Other D3 force parameters like `d3AlphaDecay`, `d3ManyBodyStrength`, `d3CollideRadius` are available and [documented in the API reference](/api/html/interfaces/SimulationOptions.SimulationOptions.html).
 :::
 
 ## Callbacks
@@ -47,7 +47,7 @@ Other D3 force parameters like `d3AlphaDecay`, `d3ManyBodyStrength`, `d3CollideR
 ## API
 
 Pivotick exposes a simulation controller that lets you interact directly with the physics engine.
-All methods are [available online](docs/api/html/interfaces/Simulation.html)
+All methods are [available online](/api/html/interfaces/Simulation.html)
 
 ### Stop / Start
 ```ts

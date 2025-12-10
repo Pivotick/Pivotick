@@ -16,9 +16,9 @@ Determines whether the sidebar is collapsed by default.
 - `false` Sidebar starts expanded.
 
 The sidebar displays contextual information for graph elements. It has three customizable components:
-- <span style="color: darkred;">**Main Header**</span> as [`mainHeader`](docs/api/html/interfaces/GraphUI.MainHeader.html)
-- <span style="color: darkred;">**Properties Panel**</span> as [`propertiesPanel`](docs/api/html/interfaces/GraphUI.PropertiesPanel.html)
-- <span style="color: darkred;">**Extra Panels**</span> as [`extraPanels`](docs/api/html/interfaces/GraphUI.ExtraPanel.html)
+- <span style="color: darkred;">**Main Header**</span> as [`mainHeader`](/api/html/interfaces/GraphUI.MainHeader.html)
+- <span style="color: darkred;">**Properties Panel**</span> as [`propertiesPanel`](/api/html/interfaces/GraphUI.PropertiesPanel.html)
+- <span style="color: darkred;">**Extra Panels**</span> as [`extraPanels`](/api/html/interfaces/GraphUI.ExtraPanel.html)
 
 
 <Pivotick
@@ -50,7 +50,7 @@ The sidebar displays contextual information for graph elements. It has three cus
 <<< @/examples/configuration/ui-sidebar-rendering.js#uioptions
 :::
 
-## Main Header <sup>[interface](docs/api/html/interfaces/GraphUI.MainHeader.html)</sup>
+## Main Header <sup>[interface](/api/html/interfaces/GraphUI.MainHeader.html)</sup>
 Shows a concise summary of the selected node or edge, such as title and subtitle. It helps users quickly identify the current selected element.
 
 The main header panel can be customized through mapping functions. The default mapping for a node is
@@ -111,10 +111,10 @@ const options = {
 When `render()` is provided, Pivotick skips all default mapping logic.
 :::
 
-## Properties Panel <sup>[interface](docs/api/html/interfaces/GraphUI.PropertiesPanel.html)</sup>
+## Properties Panel <sup>[interface](/api/html/interfaces/GraphUI.PropertiesPanel.html)</sup>
 Displays detailed properties of the selected node or edge in the sidebar. Each property has a name and value that can be static or computed dynamically.
 
-The default behavior is to show all key/value pairs from the node or edge's [`getData()`](docs/api/html/classes/Node.html#getdata).
+The default behavior is to show all key/value pairs from the node or edge's [`getData()`](/api/html/classes/Node.html#getdata).
 
 You can customize which properties are displayed and how they are rendered using mapping functions (`nodePropertiesMap` and `edgePropertiesMap`) or a full custom renderer.
 
@@ -202,7 +202,7 @@ const options = {
 :::
 
 
-## Extra Panels <sup>[interface](docs/api/html/interfaces/GraphUI.ExtraPanel.html)</sup>
+## Extra Panels <sup>[interface](/api/html/interfaces/GraphUI.ExtraPanel.html)</sup>
 Allows adding fully custom panels with dynamic or static content. These panels are ideal for showing additional contextual information, custom controls, or interactive widgets related to the selected element.
 
 Each extra panel has a `title` and a `render()` function, both of which can be static (string/HTMLElement) or dynamic (function returning string/HTMLElement).

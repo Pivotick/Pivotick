@@ -15,16 +15,16 @@ All styles defined here apply only when `render.type` is set to `svg`.
 | `type`             | `'svg' \| 'canvas'`                                                    | `'svg'`                                                                  | The rendering method. `'svg'` uses SVG elements, `'canvas'` uses the HTML canvas (experimental - not fully implemented).                 |
 | `renderNode`       | `(node: Node) => HTMLElement \| string \| void`                        | `undefined`                                                              | Custom renderer for nodes.                                                                                                               |
 | `renderLabel`      | `(edge: Edge) => HTMLElement \| string \| void`                        | `undefined`                                                              | Custom renderer for edge labels.                                                                                                         |
-| `defaultNodeStyle` | [NodeStyle](docs/api/html/interfaces/RendererOptions.NodeStyle.html)   | [defaultNodeStyle](docs/api/html/variables/defaultNodeStyleValue.html)   | Default styling applied to all nodes.                                                                                                    |
-| `defaultEdgeStyle` | [EdgeStyle](docs/api/html/interfaces/RendererOptions.EdgeStyle.html)   | [defaultEdgeStyle](docs/api/html/variables/defaultEdgeStyleValue.html)   | Default styling applied to all edges.                                                                                                    |
-| `defaultLabelStyle` | [LabelStyle](docs/api/html/interfaces/RendererOptions.LabelStyle.html) | [defaultLabelStyle](docs/api/html/variables/defaultLabelStyleValue.html) | Default styling applied to all edge labels.                                                                                              |
-| `markerStyleMap`   | `Record<string, MarkerStyle>`                                          | [defaultMarkerStyle](docs/api/html/variables/defaultMarkerStyleMap.html) | Custom styles for edge markers (`'arrow'`, `'diamond'`, etc.). See [`MarkerStyle`](docs/api/interfaces/RendererOptions.MarkerStyle.html) |
+| `defaultNodeStyle` | [NodeStyle](/api/html/interfaces/RendererOptions.NodeStyle.html)   | [defaultNodeStyle](/api/html/variables/defaultNodeStyleValue.html)   | Default styling applied to all nodes.                                                                                                    |
+| `defaultEdgeStyle` | [EdgeStyle](/api/html/interfaces/RendererOptions.EdgeStyle.html)   | [defaultEdgeStyle](/api/html/variables/defaultEdgeStyleValue.html)   | Default styling applied to all edges.                                                                                                    |
+| `defaultLabelStyle` | [LabelStyle](/api/html/interfaces/RendererOptions.LabelStyle.html) | [defaultLabelStyle](/api/html/variables/defaultLabelStyleValue.html) | Default styling applied to all edge labels.                                                                                              |
+| `markerStyleMap`   | `Record<string, MarkerStyle>`                                          | [defaultMarkerStyle](/api/html/variables/defaultMarkerStyleMap.html) | Custom styles for edge markers (`'arrow'`, `'diamond'`, etc.). See [`MarkerStyle`](/api/html/interfaces/RendererOptions.MarkerStyle.html) |
 | `nodeTypeAccessor` | `(node: Node) => string \| undefined`                                  | `undefined`                                                              | Function to access the type of a node, used with `nodeStyleMap`.                                                                         |
 | `nodeStyleMap`     | `Record<string, NodeStyle>`                                            | `{}`                                                                     | Maps node types (from `nodeTypeAccessor`) to styles.                                                                                     |
 | `minZoom`          | `number`                                                               | `0.1`                                                                    | Minimum zoom level.                                                                                                                      |
 | `maxZoom`          | `number`                                                               | `10`                                                                     | Maximum zoom level.                                                                                                                      |
 | `zoomEnabled`      | `boolean`                                                              | `true`                                                                   | Enable zoom.                                                                                                                             |
-| `selectionBox`     | [SelectionBox](docs/api/interfaces/RendererOptions.SelectionBox.html)  | `undefined`                                                              | Control SelectionBox behavior                                                                                                            |
+| `selectionBox`     | [SelectionBox](/api/html/interfaces/RendererOptions.SelectionBox.html)  | `undefined`                                                              | Control SelectionBox behavior                                                                                                            |
 
 ## Type of rendering
 
@@ -76,7 +76,7 @@ const data = {
 ## API
 
 Pivotick exposes a renderer controller that lets you interact directly with the rendering engine.
-All methods are [available online](docs/api/html/interfaces/GraphRenderer.html)
+All methods are [available online](/api/html/interfaces/GraphRenderer.html)
 
 ### Fit and Zoom
 

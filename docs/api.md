@@ -4,7 +4,7 @@ outline: [2, 4]
 
 # Pivotick API
 
-The list of methods is available [online](docs/api/html/classes/Pivotick.html).
+The list of methods is available [online](/api/html/classes/Pivotick.html).
 
 ## Getting nodes and edges
 Pivotick provides multiple ways to access nodes and edges. The methods for nodes are listed below (edges work the same way):

@@ -1,5 +1,5 @@
 # Context Menu {#ui-contextmenu}
-The [context menu options](docs/api/html/interfaces/GraphUI.ContextMenu.html) configure right-click menus for nodes, edges, and the canvas.
+The [context menu options](/api/html/interfaces/GraphUI.ContextMenu.html) configure right-click menus for nodes, edges, and the canvas.
 
 **By default:**
 - Context menus are enabled.
@@ -25,8 +25,8 @@ You can customize the actions that appear when right-clicking a node, an edge, o
 
 Each context menu is split into two sections:
 
-- `topbar` for quick actions (compact icons). Accept a [MenuQuickActionItemOptions](docs/api/html/types/GraphUI.MenuQuickActionItemOptions.html).
-- `menu` for full menu actions. Accepts a [MenuActionItemOptions](docs/api/html/types/GraphUI.MenuActionItemOptions.html).
+- `topbar` for quick actions (compact icons). Accept a [MenuQuickActionItemOptions](/api/html/types/GraphUI.MenuQuickActionItemOptions.html).
+- `menu` for full menu actions. Accepts a [MenuActionItemOptions](/api/html/types/GraphUI.MenuActionItemOptions.html).
 
 You can configure these menus for these scopes:
 - `menuNode`
@@ -53,7 +53,7 @@ You can configure these menus for these scopes:
 
 ### Options or action items
 
-The interface for action items are defined [here](docs/api/html/types/GraphUI.MenuActionItemOptions.html).
+The interface for action items are defined [here](/api/html/types/GraphUI.MenuActionItemOptions.html).
 
 | Option        | Type                                                                                            | Default      | Description                                           |
 | ------------- | ----------------------------------------------------------------------------------------------- | ------------ | ----------------------------------------------------- |

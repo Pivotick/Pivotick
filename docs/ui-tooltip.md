@@ -1,6 +1,6 @@
 
 # Tooltips {#ui-tooltip}
-The [tooltip menu options](docs/api/html/interfaces/GraphUI.Tooltip.html) configure default and custom tooltips for nodes and edges.
+The [tooltip menu options](/api/html/interfaces/GraphUI.Tooltip.html) configure default and custom tooltips for nodes and edges.
 
 **By default:**
 - Tooltips are enabled.

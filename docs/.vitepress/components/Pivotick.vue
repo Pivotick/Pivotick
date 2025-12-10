@@ -4,8 +4,8 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import { Pivotick } from '../../../dist/pivotick.js'
-import '../../../dist/pivotick.css'
+import { Pivotick } from './../../../src/index'
+import './../../../src/styles/style.scss'
 
 defineOptions({
     name: 'Pivotick'

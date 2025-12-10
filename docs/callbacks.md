@@ -4,7 +4,7 @@ outline: [2, 3]
 
 # Callbacks
 
-Pivotick allows you to hook into user interactions and simulation events through the [`callbacks`](/docs/api/html/interfaces/InterractionCallbacks.InterractionCallbacks.html) option.
+Pivotick allows you to hook into user interactions and simulation events through the [`callbacks`](/api/html/interfaces/InterractionCallbacks.InterractionCallbacks.html) option.
 You can provide functions for various events on the canvas, nodes, and edges.
 
 ## Canvas Callbacks

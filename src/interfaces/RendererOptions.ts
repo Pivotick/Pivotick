@@ -147,13 +147,13 @@ export type RendererType = 'svg' | 'canvas'
 
 /**
  * Represents one of the predefined, common node shapes.
- * These can be rendered using basic SVG elements like <circle>, <rect>, or <polygon>.
+ * These can be rendered using basic SVG elements like `<circle>`, `<rect>`, or `<polygon>`.
  */
 export type StandardShape = 'circle' | 'square' | 'triangle' | 'hexagon'
 
 /**
  * Represents a node with a custom SVG path.
- * The `d` property corresponds directly to the `d` attribute of an SVG <path> element,
+ * The `d` property corresponds directly to the `d` attribute of an SVG `<path>` element,
  * allowing fully custom shapes.
  * 
  * @example
@@ -164,7 +164,7 @@ export type StandardShape = 'circle' | 'square' | 'triangle' | 'hexagon'
  * ```
  */
 export interface CustomNodeShape {
-    d: string  // represents the `d` attribute of <path>
+    d: string  // represents the `d` attribute of `<path>`
 }
 
 export type NodeShape = StandardShape | CustomNodeShape

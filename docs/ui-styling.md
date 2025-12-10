@@ -12,7 +12,7 @@ outline: [2, 3]
   - `.pvt-canvas` – The area where the graph is rendered.
     - `.pvt-graphnavigation` – Navigation controls for the graph.
     - `.pvt-graphcontrols` – Graph-specific control buttons such as changing the layout.
-    - `svg` – Inner canvas area (for [Render's type](http://localhost:5173/render.html#render-options) `SVG`).
+    - `svg` – Inner canvas area (for [Render's type](./render#render-options) `SVG`).
   - `.pvt-sidebar` – Sidebar panel for graph selection details or additional tools.
   - `.pvt-toolbar` – Toolbar for actions related to filering and sorting.
 
