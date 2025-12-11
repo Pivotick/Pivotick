@@ -1,5 +1,31 @@
+@use "sass:map";
 @use 'utils';
 
+
+$vibrant-color-palette: (
+    vibrant-blue: #749BFB,
+    vibrant-indigo: #A666F4,
+    vibrant-lobster: #F2545B,
+    vibrant-green: #85CB33,
+);
+
+$dark-bg-color-palette-1: (
+    pvt-bg-color-0: #050e15,
+    pvt-bg-color-1: #05141f,
+    pvt-bg-color-2: #071d2d,
+    pvt-bg-color-3: #082032,
+    pvt-bg-color-4: #2c394b,
+    pvt-bg-color-5: #334756,
+);
+
+$dark-bg-color-palette-2: (
+    pvt-bg-color-0: #0F0F10,
+    pvt-bg-color-1: #131314,
+    pvt-bg-color-2: #171719,
+    pvt-bg-color-3: #1A1A1D,
+    pvt-bg-color-4: #1D1D20,
+    pvt-bg-color-5: #202023,
+);
 
 $light-theme: (
     // #region core-variables
@@ -12,6 +38,7 @@ $light-theme: (
     pvt-theme-warning: #F59E0B,
     pvt-theme-danger: #DC2626,
     pvt-theme-success: #16A34A,
+
     pvt-font-family: "system-ui, sans-serif",
     // #endregion core-variables
 
@@ -94,13 +121,16 @@ $light-theme: (
         "rgba(0, 0, 0, 0.22) 0px 0px 4px,"
         "rgba(0, 0, 0, 0.30) 0px 1px 2px",
     // #endregion canvas
-    pvt-pvt-selection-rectangle-fill: color-mix(in srgb, var(--pvt-bg-color-primary) 20%, #ffffff00),
-    pvt-pvt-selection-rectangle-stroke: color-mix(in srgb, var(--pvt-bg-color-primary) 80%, #ffffff00),
+
+    pvt-selection-color: orange,
+    pvt-selection-rectangle-fill: color-mix(in srgb, var(--pvt-selection-color) 20%, #ffffff00),
+    pvt-selection-rectangle-stroke: color-mix(in srgb, var(--pvt-selection-color) 80%, #ffffff00),
 
     // #region node
     /* Node defaults */
     pvt-node-color: #007acc,
     pvt-node-stroke: #fff,
+    pvt-node-stroke-width: 2,
     pvt-node-text-color: #fff,
     pvt-node-icon-font-family: 'Font Awesome 7 Free',
     pvt-node-icon-font-weight: 900,
@@ -153,25 +183,159 @@ $light-theme: (
 );
 
 $dark-theme: (
-    pvt-bg: #031233,
-    pvt-border-color: #455b8e,
+    pvt-bg: var(--pvt-bg-color-2),
+    pvt-border-color: var(--pvt-bg-color-3),
 
-    pvt-text-color: #fff,
-    pvt-text-color-softer: #ccc,
-    pvt-text-color-softer2: #aaa,
+    // SW Color palette
+    // pvt-theme-primary: #730FF0,
+    // pvt-theme-secondary: #666666,
+    // pvt-theme-info: #2E67F8,
+    // pvt-theme-warning: #FF3C00,
+    // pvt-theme-danger: #EB212E,
+    // pvt-theme-success: #2FF924,
+
+    pvt-theme-primary: #730ff0,
+    pvt-theme-secondary: #AB89FA,
+    pvt-theme-info: #2E67F8,
+    pvt-theme-warning: #FF3C00,
+    pvt-theme-danger: #EB212E,
+    pvt-theme-success: #2FF924,
+
+    pvt-font-family: "system-ui, sans-serif",
+
+    pvt-text-color-0: #000,
+    pvt-text-color-1: #333,
+    pvt-text-color-2: #666,
+    pvt-text-color-3: #999,
+    pvt-text-color-4: #bbb,
+    pvt-text-color-5: #e0e0e0,
+    pvt-text-color-6: #fff,
+    pvt-text-color-primary: var(--pvt-theme-primary),
+    pvt-text-color-secondary: var(--pvt-theme-secondary),
+    pvt-text-color-info: var(--pvt-theme-info),
+    pvt-text-color-warning: var(--pvt-theme-warning),
+    pvt-text-color-danger: var(--pvt-theme-danger),
+    pvt-text-color-success: var(--pvt-theme-success),
+
+    // pvt-bg-color-0: #050e15,
+    // pvt-bg-color-1: #05141f,
+    // pvt-bg-color-2: #071d2d,
+    // pvt-bg-color-3: #082032,
+    // pvt-bg-color-4: #2c394b,
+    // pvt-bg-color-5: #334756,
+    pvt-bg-color-primary: var(--pvt-theme-primary),
+    pvt-bg-color-secondary: var(--pvt-theme-secondary),
+    pvt-bg-color-info: var(--pvt-theme-info),
+    pvt-bg-color-warning: var(--pvt-theme-warning),
+    pvt-bg-color-danger: var(--pvt-theme-danger),
+    pvt-bg-color-success: var(--pvt-theme-success),
+    pvt-text-color-for-primary: #fff,
+    pvt-text-color-for-secondary: #fff,
+    pvt-text-color-for-info: #fff,
+    pvt-text-color-for-warning: #fff,
+    pvt-text-color-for-danger: #fff,
+    pvt-text-color-for-success: #000,
+
+    pvt-box-shadow-light: "rgba(0, 0, 0, 0.25) 0px 1px 2px 0px",
+    pvt-box-shadow-medium: "rgba(0, 0, 0, 0.1) 0px 4px 6px -1px, rgba(0, 0, 0, 0.06) 0px 2px 4px -1px",
+    pvt-box-shadow-strong: "rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px",
+
 
     /* Sidebar */
-    pvt-sidebar-panelheader-bg: #2a457f,
-    pvt-sidebar-panelbody-bg: #112d6a,
-    pvt-sidebar-layout-shadow-right: "rgba(255, 255, 255, 0.08) 2px 0px 3px 0px"
-    "rgba(255, 255, 255, 0.04) 3px 0px 2px 0px",
-    pvt-sidebar-layout-shadow-bottom: "rgba(255, 255, 255, 0.08) 3px 2px 3px 0px"
-    "rgba(255, 255, 255, 0.04) 2px 3px 2px 0px",
+    pvt-sidebar-mainpanelheader-bg: var(--pvt-bg-color-1),
+    pvt-sidebar-panelheader-bg: var(--pvt-bg-color-4),
+    pvt-sidebar-panelbody-bg: var(--pvt-bg-color-0),
+    pvt-sidebar-panel-border: 1px solid var(--pvt-text-color-1),
+    pvt-sidebar-subpanelheader-bg: var(--pvt-bg-color-2),
+    pvt-mainheader-nodepreview-bg: var(--pvt-bg-color-0),
+    pvt-sidebar-layout-shadow-right: "rgba(0, 0, 0, 0.07) 2px 0px 3px 0px, rgba(0, 0, 0, 0.04) 3px 0px 2px 0px",
+    pvt-sidebar-layout-shadow-bottom: "rgba(0, 0, 0, 0.07) 3px 2px 3px 0px, rgba(0, 0, 0, 0.04) 2px 3px 2px 0px",
+    pvt-sidebar-collapse-bg: var(--pvt-bg),
+    pvt-sidebar-collapse-color: var(--pvt-text-color-4),
+    pvt-sidebar-collapse-shadow: var(--pvt-box-shadow-strong),
+
+    /* Tooltip */
+    pvt-tooltip-floating-bg-color: var(--pvt-bg-color-5),
+
+    /* Graph notification */
+    pvt-toast-bg-color-primary: color-mix(in srgb, var(--pvt-bg-color-primary) 40%, white),
+    pvt-toast-bg-color-secondary: color-mix(in srgb, var(--pvt-bg-color-secondary) 40%, white),
+    pvt-toast-bg-color-info: color-mix(in srgb, var(--pvt-bg-color-info) 40%, white),
+    pvt-toast-bg-color-warning: color-mix(in srgb, var(--pvt-bg-color-warning) 40%, white),
+    pvt-toast-bg-color-danger: color-mix(in srgb, var(--pvt-bg-color-danger) 40%, white),
+    pvt-toast-bg-color-success: color-mix(in srgb, var(--pvt-bg-color-success) 40%, white),
+
+    pvt-toast-text-color-primary: color-mix(in srgb, var(--pvt-bg-color-primary) 70%, black),
+    pvt-toast-text-color-secondary: color-mix(in srgb, var(--pvt-bg-color-secondary) 70%, black),
+    pvt-toast-text-color-info: color-mix(in srgb, var(--pvt-bg-color-info) 70%, black),
+    pvt-toast-text-color-warning: color-mix(in srgb, var(--pvt-bg-color-warning) 70%, black),
+    pvt-toast-text-color-danger: color-mix(in srgb, var(--pvt-bg-color-danger) 70%, black),
+    pvt-toast-text-color-success: color-mix(in srgb, var(--pvt-bg-color-success) 70%, black),
 
     /* Graph canvas */
-    pvt-graph-grid-color: #3d3d3d99,
+    pvt-graph-grid-color: var(--pvt-bg-color-3),
     pvt-graph-background-image: "repeating-linear-gradient(0deg, var(--pvt-graph-grid-color) 0px, var(--pvt-graph-grid-color) 1px, transparent 1px, transparent 20px),"
     "repeating-linear-gradient(90deg, var(--pvt-graph-grid-color) 0px, var(--pvt-graph-grid-color) 1px, transparent 1px, transparent 20px)",
     pvt-graph-navigation-control-container-shadow: "rgba(255, 255, 255, 0.15) 0px 0px 4px"
     "rgba(255, 255, 255, 0.10) 0px 1px 2px",
+    pvt-selection-color: var(--pvt-theme-warning),
+    pvt-pvt-selection-rectangle-fill: color-mix(in srgb, var(--pvt-selection-color) 20%, #ffffff00),
+    pvt-pvt-selection-rectangle-stroke: color-mix(in srgb, var(--pvt-selection-color) 80%, #ffffff00),
+
+
+    /* Node defaults */
+    pvt-node-color: map.get($vibrant-color-palette, vibrant-blue),
+    pvt-node-stroke: #fff,
+    pvt-node-stroke-width: 0,
+    pvt-node-text-color: #fff,
+    pvt-node-icon-font-family: 'Font Awesome 7 Free',
+    pvt-node-icon-font-weight: 900,
+
+    /* Node selected state */
+    // pvt-node-selected-color: map.get($vibrant-color-palette, vibrant-lobster),
+    pvt-node-selected-color: var(--pvt-selection-color),
+    pvt-node-selected-stroke: var(--pvt-node-selected-color),
+    pvt-node-selected-stroke-width: 3,
+    pvt-node-selected-filter: drop-shadow(0 0 2px var(--pvt-node-selected-color)),
+    pvt-node-selected-animation: glowPulse 1.5s infinite,
+
+    /* Edge defaults */
+    pvt-edge-stroke: #2c394b,
+    pvt-edge-stroke-width: 2,
+    pvt-edge-stroke-opacity: 1,
+    pvt-edge-stroke-dasharray: "6, 4",
+    pvt-edge-animation: dashmove 1s linear infinite,
+    pvt-edge-filter: none,
+    pvt-edge-label-bg: #ffffffa0,
+    pvt-edge-label-font-family: "system-ui, sans-serif",
+    pvt-edge-label-font-size: 12px,
+    pvt-edge-label-color: #333,
+    pvt-edge-label-stroke: none,
+    pvt-edge-label-stroke-width: 1,
+
+    /* Edge selected state */
+    pvt-edge-selected-stroke: var(--pvt-selection-color),
+    pvt-edge-selected-stroke-width: 5,
+    pvt-edge-selected-stroke-opacity: 0.8,
+    pvt-edge-selected-filter: drop-shadow(0 0 1px var(--pvt-selection-color)),
+    pvt-edge-label-selected-stroke: var(--pvt-selection-color),
+    pvt-edge-label-selected-stroke-width: 2,
+    pvt-edge-label-selected-color: var(--pvt-edge-label-color),
+    pvt-edge-label-selected-font-size: var(--pvt-edge-label-font-size),
+    pvt-edge-label-selected-bg: #ffffffa0,
+
+    /* Component */
+    pvt-inline-bar-bg: var(--pvt-bg-color-2),
+    pvt-inline-bar-fill-bg: "linear-gradient("
+    "90deg,"
+    "color-mix(in srgb, var(--pvt-bg-color-primary) 20%, #fff) 0%,"
+    "var(--pvt-bg-color-primary) 70%,"
+    "color-mix(in srgb, var(--pvt-bg-color-primary) 80%, #000) 100%"
+    ")",
+    pvt-inline-bar-height: 0.5rem,
+    pvt-inline-bar-width: 80px,
 );
+
+
+$dark-theme: map.merge($dark-theme,
+        $dark-bg-color-palette-2);

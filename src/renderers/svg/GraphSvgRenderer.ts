@@ -126,7 +126,7 @@ export const defaultMarkerStyleMap: MarkerStyleMap = {
 {
     shape: 'circle',
     size: 10,
-    strokeWidth: 2,
+    strokeWidth: var(--pvt-node-stroke-width, 2),
     color: 'var(--pvt-node-color, #007acc)',
     strokeColor: 'var(--pvt-node-stroke, #fff)',
     fontFamily: 'var(--pvt-label-font, system-ui, sans-serif)',
@@ -141,7 +141,7 @@ export const defaultMarkerStyleMap: MarkerStyleMap = {
 export const defaultNodeStyle: NodeStyle = {
     shape: 'circle',
     size: 10,
-    strokeWidth: 2,
+    strokeWidth: 'var(--pvt-node-stroke-width, 2)',
     color: 'var(--pvt-node-color, #007acc)',
     strokeColor: 'var(--pvt-node-stroke, #fff)',
     fontFamily: 'var(--pvt-label-font, system-ui, sans-serif)',

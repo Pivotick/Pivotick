@@ -229,7 +229,7 @@ export function createSampleGraph(): Pivotick {
 
     }
 
-    const topo = 'random'
+    const topo = 'vt'
 
     const graph = new Pivotick(container, {nodes: topologies[topo].nodes, edges: topologies[topo].edges}, {
         // isDirected: false,
@@ -304,9 +304,10 @@ export function createSampleGraph(): Pivotick {
 
             //         // return `<span style="${style}">${text}</span>`
             // },
+            renderLabel: () => {},
         },
         UI: {
-            mode: 'viewer',
+            mode: 'full',
             // mainHeader: {
             //     // nodeHeaderMap: {
             //     //     subtitle: (node: Node | Edge) => node.getData().type,

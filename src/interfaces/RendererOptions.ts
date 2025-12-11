@@ -184,8 +184,8 @@ export interface NodeStyle {
     size: number
     /** @default 'var(--pvt-node-stroke, #fff)' */
     strokeColor: string
-    /** @default 2 */
-    strokeWidth: number
+    /** @default 'var(--pvt-node-stroke-width, 2)' */
+    strokeWidth: number | string
     /** @default 'var(--pvt-label-font, system-ui, sans-serif)' */
     fontFamily: string
     /** @default 'var(--pvt-node-text-color, #fff)' */
