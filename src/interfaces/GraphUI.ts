@@ -127,6 +127,11 @@ export interface PropertiesPanel {
 export interface ExtraPanel {
     title: ((element: Node | Edge | null) => HTMLElement | string) | HTMLElement | string,
     render: ((element: Node | Edge | null) => HTMLElement | string) | HTMLElement | string,
+    /**
+     * should the panel be always visible
+     * @default false
+     */
+    alwaysVisible?: boolean
 }
 
 export interface Tooltip {

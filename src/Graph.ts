@@ -235,8 +235,10 @@ export class Graph {
     setData(nodes: Array<Node> = [], edges: Array<Edge> = []): void {
         this.nodes.clear()
         this.edges.clear()
-        this._setData(nodes, edges)
+        const normalisedData = this.normalizeGraphData({ nodes: nodes, edges: edges})
+        this._setData(normalisedData?.nodes, normalisedData?.edges)
         this.onChange()
+        this.startAndRender()
     }
 
     /** 

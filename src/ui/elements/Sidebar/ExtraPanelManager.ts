@@ -32,47 +32,63 @@ export class ExtraPanelManager implements UIElement {
 
     public afterMount() {
         this.mountPanels()
+        this.panels.forEach((panel, i) => {
+            if (panel.alwaysVisible === true) {
+                this.showPanel(this.allPanels[i])
+            }
+        })
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public updateNode(_node: Node): void {
-        this.show()
+        this.showAll()
         return
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public updateEdge(_edge: Edge): void {
-        this.show()
+        this.showAll()
         return
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public updateNodes(_nodes: NodeSelection<unknown>[]): void {
-        this.show()
+        this.showAll()
         return
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public updateEdges(_edge: EdgeSelection<unknown>[]): void {
-        this.show()
+        this.showAll()
         return
     }
 
     public clear(): void {
-        this.hide()
+        this.hideAll()
         return
     }
 
-    private show() {
+    private showAll() {
         this.allPanels.forEach((panelDiv) => {
-            panelDiv!.classList.add('enter-active')
+            this.showPanel(panelDiv)
         })
     }
 
-    private hide() {
-        this.allPanels.forEach((panelDiv) => {
-            panelDiv!.classList.remove('enter-active')
+    private hideAll() {
+        this.allPanels.forEach((panelDiv, i) => {
+            const panel = this.panels[i]
+            if (panel.alwaysVisible !== true) {
+                this.hidePanel(panelDiv)
+            }
         })
+    }
+
+    private showPanel(panelDiv: HTMLDivElement) {
+        panelDiv!.classList.add('enter-active')
+    }
+
+    private hidePanel(panelDiv: HTMLDivElement) {
+        panelDiv!.classList.remove('enter-active')
     }
 
     private mountPanels(): void {
