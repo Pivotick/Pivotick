@@ -11,8 +11,8 @@ hero:
       text: Getting Started
       link: /getting-started
     - theme: alt
-      text: Examples
-      link: /gallery
+      text: Try it out
+      link: /tool
   image:
     src: /pivotick.svg
     alt: Pivotick
@@ -44,7 +44,4 @@ features:
 <Pivotick
     :data="data_e"
     :options="options_e"
-    :style="{
-      'margin-top': '64px',
-    }"
 ></Pivotick>

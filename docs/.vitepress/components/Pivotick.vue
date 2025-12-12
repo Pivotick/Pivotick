@@ -1,5 +1,5 @@
 <template>
-    <div ref="container" style="margin: 1em 0 1em 0; height: 400px; border: 1px solid #cccccc99"></div>
+    <div ref="container" :style="props.useInlineStyle"></div>
 </template>
 
 <script setup>
@@ -28,6 +28,11 @@ const props = defineProps({
         type: Function,
         required: false,
     },
+    useInlineStyle: {
+        type: String,
+        required: false,
+        default: 'margin: 1em 0 1em 0; height: 400px; border: 1px solid #cccccc99',
+    }
 })
 
 const localData = computed(() => ({ ...props.data }))

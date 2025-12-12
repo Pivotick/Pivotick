@@ -55,6 +55,7 @@ export default defineComponent({
                             div.textContent = 'Extra Panel #1'
                             div.style.fontWeight = 'bold'
                             div.style.color = 'darkred'
+                            div.style.background = 'var(--pvt-bg-color-1)'
                             return div
                         },
                     },
@@ -65,6 +66,7 @@ export default defineComponent({
                             div.textContent = 'Extra Panel #2'
                             div.style.fontWeight = 'bold'
                             div.style.color = 'darkred'
+                            div.style.background = 'var(--pvt-bg-color-1)'
                             return div
                         },
                     },

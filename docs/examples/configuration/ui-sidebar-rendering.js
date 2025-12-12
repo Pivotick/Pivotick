@@ -30,6 +30,9 @@ const options = {
                 div.textContent = 'Main Header'
                 div.style.fontWeight = 'bold'
                 div.style.color = 'darkred'
+                div.style.background = 'var(--pvt-bg-color-8)'
+                div.style.padding = '4px 8px'
+                div.style.borderRadius = '4px'
                 return div
             }
         },
@@ -39,6 +42,9 @@ const options = {
                 div.textContent = 'Properties Panel'
                 div.style.fontWeight = 'bold'
                 div.style.color = 'darkred'
+                div.style.background = 'var(--pvt-bg-color-8)'
+                div.style.padding = '4px 8px'
+                div.style.borderRadius = '4px'
                 return div
             }
         },
@@ -50,6 +56,9 @@ const options = {
                     div.textContent = 'Extra Panel #1'
                     div.style.fontWeight = 'bold'
                     div.style.color = 'darkred'
+                    div.style.background = 'var(--pvt-bg-color-8)'
+                    div.style.padding = '4px 8px'
+                    div.style.borderRadius = '4px'
                     return div
                 },
             },
@@ -60,6 +69,9 @@ const options = {
                     div.textContent = 'Extra Panel #2'
                     div.style.fontWeight = 'bold'
                     div.style.color = 'darkred'
+                    div.style.background = 'var(--pvt-bg-color-8)'
+                    div.style.padding = '4px 8px'
+                    div.style.borderRadius = '4px'
                     return div
                 },
             },

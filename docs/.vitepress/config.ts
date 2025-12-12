@@ -19,6 +19,7 @@ export default defineConfig({
       { text: 'Getting Started', link: '/getting-started' },
       { text: 'Configuration', link: '/configuration' },
       { text: 'Gallery', link: '/gallery' },
+      { text: 'Try it out', link: '/tool' },
       { text: 'Generated API docs', link: '/api/html/classes/Pivotick.html', target: '_blank', },
     ],
 
