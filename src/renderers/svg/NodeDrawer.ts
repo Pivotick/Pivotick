@@ -2,7 +2,7 @@ import { type Selection } from 'd3-selection'
 import { Node } from '../../Node'
 import type { Graph } from '../../Graph'
 import type { GraphSvgRenderer } from './GraphSvgRenderer'
-import { faGlyph, tryResolveValue } from '../../utils/Getters'
+import { faGlyph, tryResolveNumber, tryResolveString } from '../../utils/Getters'
 import type { CustomNodeShape, GraphRendererOptions, NodeShape, NodeStyle } from '../../interfaces/RendererOptions'
 
 export class NodeDrawer {
@@ -140,18 +140,29 @@ export class NodeDrawer {
 
     public getNodeStyle(node: Node): NodeStyle {
         const nodeStyle = this.computeNodeStyle(node)
-        for (const key of Object.keys(nodeStyle) as (keyof NodeStyle)[]) {
-            const k = key as keyof NodeStyle
-            if (nodeStyle[k] !== undefined) {
-                const resolved = tryResolveValue(nodeStyle[k], node)
-                if (resolved !== undefined) {
-                    nodeStyle[k] = resolved as NodeStyle[typeof k]
-                }
-            }
+
+        if (typeof nodeStyle.shape === 'function') {
+            nodeStyle.shape = nodeStyle.shape(node) as NodeShape
         }
+
+        nodeStyle.strokeWidth = nodeStyle.strokeWidth !== undefined ? (tryResolveString(nodeStyle.strokeWidth.toString(), node) ?? 'var(--pvt-node-stroke-width, 2)') : 'var(--pvt-node-stroke-width, 2)'
+        nodeStyle.strokeColor = nodeStyle.strokeColor !== undefined ? (tryResolveString(nodeStyle.strokeColor, node) ?? 'var(--pvt-node-stroke, #fff)') : 'var(--pvt-node-stroke, #fff)'
+        nodeStyle.size = nodeStyle.size !== undefined ? (tryResolveNumber(nodeStyle.size, node) ?? 10) : 10
+        nodeStyle.color = nodeStyle.color !== undefined ? (tryResolveString(nodeStyle.color, node) ?? 'var(--pvt-node-color, #007acc)') : 'var(--pvt-node-color, #007acc)'
+        nodeStyle.textColor = nodeStyle.textColor !== undefined ? (tryResolveString(nodeStyle.textColor, node) ?? 'var(--pvt-node-text-color, #fff)') : 'var(--pvt-node-text-color, #fff)'
+        nodeStyle.text = nodeStyle.text !== undefined ? tryResolveString(nodeStyle.text, node) : undefined
+
+        nodeStyle.iconUnicode = nodeStyle.iconUnicode !== undefined ? tryResolveString(nodeStyle.iconUnicode, node) : undefined
+        nodeStyle.iconClass = nodeStyle.iconClass !== undefined ? tryResolveString(nodeStyle.iconClass, node) : undefined
+        nodeStyle.svgIcon = nodeStyle.svgIcon !== undefined ? tryResolveString(nodeStyle.svgIcon, node) : undefined
+        nodeStyle.imagePath = nodeStyle.imagePath !== undefined ? tryResolveString(nodeStyle.imagePath, node) : undefined
 
         return nodeStyle
     }
+
+    // private isCustomShape(shape: unknown): shape is CustomNodeShape {
+    //     return typeof shape === 'object' && shape !== null && 'd' in (shape as any)
+    // }
 
     private isCustomShape(shape: NodeShape): shape is CustomNodeShape {
         return typeof shape === 'object' && shape !== null && 'd' in shape
@@ -159,6 +170,10 @@ export class NodeDrawer {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private genericNodeRender(nodeSelection: Selection<SVGGElement, Node, null, undefined>, style: NodeStyle, _node: Node): void {
+        style.size = style.size as number
+        style.shape = style.shape as NodeShape
+        style.text = style.text as string
+        
         // map logical node shapes to SVG element tag names (use string to allow 'rect' which is not part of NodeShape)
         let actualShape: string = style.shape as string
         if (style.shape == 'square') {
@@ -200,7 +215,7 @@ export class NodeDrawer {
                     const angle = Math.PI / 3 // 60°
                     const hexPoints = Array.from({ length: 6 }, (_, i) => {
                         const a = angle * i
-                        return [Math.cos(a) * style.size, Math.sin(a) * style.size]
+                        return [Math.cos(a) * (style.size as number), Math.sin(a) * (style.size as number)]
                     }).map(p => p.join(',')).join(' ')
                     renderedNode
                         .attr('d', `M${hexPoints}Z`)
@@ -281,11 +296,13 @@ export class NodeDrawer {
         return matchSingle || matchMultiple
     }
 
-    private deHighlightSelection(nodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    private deHighlightSelection(nodeSelection: Selection<SVGGElement, Node, null, undefined>, _node: Node): void {
         nodeSelection.classed('pvt-node-selected-highlight', false)
     }
 
-    private highlightSelection(nodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    private highlightSelection(nodeSelection: Selection<SVGGElement, Node, null, undefined>, _node: Node): void {
         nodeSelection.classed('pvt-node-selected-highlight', true)
     }
 

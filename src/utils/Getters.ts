@@ -34,7 +34,27 @@ export function tryResolveBoolean<T extends unknown[]>(
         return input
     } else if (typeof input === 'function') {
         const result = input(...args)
-        return (typeof typeof result === 'boolean') ? result : undefined
+        return (typeof result === 'boolean') ? result : undefined
+    }
+    return undefined
+}
+
+/**
+ * Resolves the input to a number. If it's a function, it is invoked with the given arguments.
+ *
+ * @param input - A number or a function that returns a number.
+ * @param args - Arguments to pass to the function, if applicable.
+ * @returns A number if resolved successfully, otherwise undefined.
+ */
+export function tryResolveNumber<T extends unknown[]>(
+    input: number | ((...args: T) => number),
+    ...args: T
+): number | undefined {
+    if (typeof input === 'number') {
+        return input
+    } else if (typeof input === 'function') {
+        const result = input(...args)
+        return (typeof result === 'number') ? result : undefined
     }
     return undefined
 }
@@ -58,6 +78,24 @@ export function tryResolveValue<T extends unknown[]>(
     }
     return undefined
 }
+
+// /**
+//  * Resolves the input to a string, boolean or number. If it's a function, it is invoked with the given arguments.
+//  *
+//  * @param input - A string or a function that returns a string.
+//  * @param args - Arguments to pass to the function, if applicable.
+//  * @returns A string if resolved successfully, otherwise undefined.
+//  */
+// export function tryResolveValue<T extends unknown[], R>(
+//     input: R | ((...args: T) => R),
+//     ...args: T
+// ): R | undefined {
+//     if (typeof input === 'function') {
+//         const result = (input as (...a: T) => R)(...args)
+//         return result === undefined ? undefined : result
+//     }
+//     return input === undefined ? undefined : input
+// }
 
 /**
  * Resolves the input to an Array. If it's a function, it is invoked with the given arguments.

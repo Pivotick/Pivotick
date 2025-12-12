@@ -34,26 +34,26 @@ const data = {
     { 'from': 'A5', 'to': 'A6' },
     { 'from': 'A6', 'to': 'A1' },
 
-    { 'from': 'B1', 'to': 'B2' },
-    { 'from': 'B2', 'to': 'B3' },
-    { 'from': 'B3', 'to': 'B4' },
-    { 'from': 'B4', 'to': 'B5' },
-    { 'from': 'B5', 'to': 'B6' },
-    { 'from': 'B6', 'to': 'B1' },
+    { 'from': 'B1', 'to': 'B2', 'data': { 'cool': true } },
+    { 'from': 'B2', 'to': 'B3', 'data': { 'cool': true } },
+    { 'from': 'B3', 'to': 'B4', 'data': { 'cool': true } },
+    { 'from': 'B4', 'to': 'B5', 'data': { 'cool': true } },
+    { 'from': 'B5', 'to': 'B6', 'data': { 'cool': true } },
+    { 'from': 'B6', 'to': 'B1', 'data': { 'cool': true } },
 
-    { 'from': 'C1', 'to': 'C2' },
+    { 'from': 'C1', 'to': 'C2', 'data': { 'label': 'Connected' } },
     { 'from': 'C2', 'to': 'C3' },
     { 'from': 'C3', 'to': 'C4' },
     { 'from': 'C4', 'to': 'C5' },
     { 'from': 'C5', 'to': 'C6' },
     { 'from': 'C6', 'to': 'C1' },
 
-    { 'from': 'D1', 'to': 'D2' },
-    { 'from': 'D2', 'to': 'D3' },
-    { 'from': 'D3', 'to': 'D4' },
-    { 'from': 'D4', 'to': 'D5' },
-    { 'from': 'D5', 'to': 'D6' },
-    { 'from': 'D6', 'to': 'D1' },
+    { 'from': 'D1', 'to': 'D2', 'data': { 'score': 12 } },
+    { 'from': 'D2', 'to': 'D3', 'data': { 'score': 12 } },
+    { 'from': 'D3', 'to': 'D4', 'data': { 'score': 12 } },
+    { 'from': 'D4', 'to': 'D5', 'data': { 'score': 12 } },
+    { 'from': 'D5', 'to': 'D6', 'data': { 'score': 12 } },
+    { 'from': 'D6', 'to': 'D1', 'data': { 'score': 12 } },
 
     { 'from': 'A2', 'to': 'B3' },
     { 'from': 'A4', 'to': 'C1' },
@@ -70,11 +70,16 @@ const options = {
     render: {
         nodeTypeAccessor: (node) => node.getData()?.group,
         nodeStyleMap: {
-            'A': { shape: 'hexagon', color: '#f90', size: 38, text: (node) => node.getData()?.label },
-            'B': { shape: 'circle', color: '#09f' },
-            'C': { shape: 'triangle', color: '#f00', size: 18 },
-            'D': { shape: 'square', color: '#73ff00', size: 22 },
+            'A': { shape: 'hexagon', color: 'var(--pvt-vibrant-lobster)', size: 38, text: (node) => node.getData()?.label },
+            'B': { shape: 'circle', color: 'var(--pvt-vibrant-blue)' },
+            'C': { shape: 'triangle', color: 'var(--pvt-vibrant-indigo)', size: 18 },
+            'D': { color: 'var(--pvt-vibrant-green)', size: 22 },
         },
+        defaultEdgeStyle: {
+            dashed: (e) => { return e.getData().cool },
+            strokeWidth: (e) => { return e.getData().score ?? 2 },
+            markerEnd: (e) => { return e.getData().score ? undefined : 'arrow' },
+        }
     },
 }
 // #endregion options

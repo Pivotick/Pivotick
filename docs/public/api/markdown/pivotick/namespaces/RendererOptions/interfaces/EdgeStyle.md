@@ -122,7 +122,7 @@ Defined in: [interfaces/RendererOptions.ts:226](https://github.com/mokaddem/Pivo
 #### Default
 
 ```ts
-'var(--pvt-edge-color, #999)'
+'var(--pvt-edge-stroke, #999)'
 ```
 
 ***

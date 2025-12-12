@@ -174,22 +174,22 @@ export interface NodeStyle {
      * The shape of the node, either a standard shape or a custom SVG path
      * @default circle
      */
-    shape: NodeShape
+    shape: ((node: Node) => NodeShape) | NodeShape
     /**
      * The main color of the node
      * @default 'var(--pvt-node-color, #007acc)'
      */
-    color: string
+    color: ((node: Node) => string) | string
     /** @default 10 */
-    size: number
+    size: ((node: Node) => number) | number
     /** @default 'var(--pvt-node-stroke, #fff)' */
-    strokeColor: string
+    strokeColor: ((node: Node) => string) | string
     /** @default 'var(--pvt-node-stroke-width, 2)' */
     strokeWidth: number | string
     /** @default 'var(--pvt-label-font, system-ui, sans-serif)' */
     fontFamily: string
     /** @default 'var(--pvt-node-text-color, #fff)' */
-    textColor: string
+    textColor: ((node: Node) => string) | string
     iconClass?: IconClass,
     iconUnicode?: IconUnicode,
     svgIcon?: SVGIcon,
@@ -197,7 +197,7 @@ export interface NodeStyle {
     /**
      * The text to be used inside the node as an `SVGText` element
      */
-    text?: string,
+    text?: ((node: Node) => string) | string,
     /**
      * Callback to dynamically override style properties based on the node.
      */
@@ -222,7 +222,7 @@ export interface PartialEdgeFullStyle {
  */
 export type CurveStyle = 'straight' | 'curved' | 'bidirectional'
 export interface EdgeStyle {
-    /** @default 'var(--pvt-edge-color, #999)' */
+    /** @default 'var(--pvt-edge-stroke, #999)' */
     strokeColor: string
     /** @default 2 */
     strokeWidth: number
@@ -234,7 +234,7 @@ export interface EdgeStyle {
      * Whether the stroke is dashed 
      * @default false
      */
-    dashed?: boolean
+    dashed?: ((edge: Edge) => boolean) | boolean
     /**
      * Whether the dash should be animated (e.g., animation moving along the path)
      * @default: true 

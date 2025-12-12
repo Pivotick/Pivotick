@@ -145,21 +145,21 @@ $light-theme: (
 
     // #region edge
     /* Edge defaults */
-    pvt-edge-stroke: #999,
+    pvt-edge-stroke: color-mix(in srgb, map.get($light-vibrant-color-palette, vibrant-blue) 50%, #fff),
     pvt-edge-stroke-width: 2,
     pvt-edge-stroke-opacity: 1,
     pvt-edge-stroke-dasharray: "6, 4",
     pvt-edge-animation: dashmove 1s linear infinite,
     pvt-edge-filter: none,
-    pvt-edge-label-bg: #ffffffa0,
+    pvt-edge-label-bg: var(--pvt-bg-color-4),
     pvt-edge-label-font-family: "system-ui, sans-serif",
     pvt-edge-label-font-size: 12px,
-    pvt-edge-label-color: #333,
+    pvt-edge-label-color: var(--pvt-text-color-6),
     pvt-edge-label-stroke: none,
     pvt-edge-label-stroke-width: 1,
 
     /* Edge selected state */
-    pvt-edge-selected-stroke: orange,
+    pvt-edge-selected-stroke: var(--pvt-selection-color),
     pvt-edge-selected-stroke-width: 5,
     pvt-edge-selected-stroke-opacity: 0.8,
     pvt-edge-selected-filter: drop-shadow(0 0 1px orange),
@@ -167,7 +167,7 @@ $light-theme: (
     pvt-edge-label-selected-stroke-width: 2,
     pvt-edge-label-selected-color: var(--pvt-edge-label-color),
     pvt-edge-label-selected-font-size: var(--pvt-edge-label-font-size),
-    pvt-edge-label-selected-bg: #ffffffa0,
+    pvt-edge-label-selected-bg: var(--pvt-bg-color-4),
     // #endregion edge
 
     /* Component */
@@ -345,16 +345,16 @@ $dark-theme: (
     pvt-node-selected-animation: glowPulse 1.5s infinite,
 
     /* Edge defaults */
-    pvt-edge-stroke: #2c394b,
+    pvt-edge-stroke: color-mix(in srgb, map.get($dark-vibrant-color-palette, vibrant-blue) 50%, #000),
     pvt-edge-stroke-width: 2,
     pvt-edge-stroke-opacity: 1,
     pvt-edge-stroke-dasharray: "6, 4",
     pvt-edge-animation: dashmove 1s linear infinite,
     pvt-edge-filter: none,
-    pvt-edge-label-bg: #ffffffa0,
+    pvt-edge-label-bg: var(--pvt-bg-color-5),
     pvt-edge-label-font-family: "system-ui, sans-serif",
     pvt-edge-label-font-size: 12px,
-    pvt-edge-label-color: #333,
+    pvt-edge-label-color: var(--pvt-text-color-5),
     pvt-edge-label-stroke: none,
     pvt-edge-label-stroke-width: 1,
 
@@ -365,9 +365,9 @@ $dark-theme: (
     pvt-edge-selected-filter: drop-shadow(0 0 1px var(--pvt-selection-color)),
     pvt-edge-label-selected-stroke: var(--pvt-selection-color),
     pvt-edge-label-selected-stroke-width: 2,
-    pvt-edge-label-selected-color: var(--pvt-edge-label-color),
+    pvt-edge-label-selected-color:  var(--pvt-text-color-5),
     pvt-edge-label-selected-font-size: var(--pvt-edge-label-font-size),
-    pvt-edge-label-selected-bg: #ffffffa0,
+    pvt-edge-label-selected-bg: var(--pvt-bg-color-5),
 
     /* Component */
     pvt-inline-bar-bg: var(--pvt-bg-color-6),
@@ -387,5 +387,16 @@ $dark-theme: (
 $dark-theme: map.merge($dark-theme,
         $dark-bg-color-palette-2);
 
+@each $name, $value in $dark-vibrant-color-palette {
+    $dark-theme: map.merge($dark-theme,
+            (pvt-#{$name}: $value));
+}
+
+
 $light-theme: map.merge($light-theme,
         $light-bg-color-palette-1);
+
+@each $name, $value in $light-vibrant-color-palette {
+    $light-theme: map.merge($light-theme,
+            (pvt-#{$name}: $value));
+}

@@ -164,7 +164,7 @@ export const defaultNodeStyle: NodeStyle = {
     rotateLabel: false,
     markerEnd: 'arrow',
     markerStart: undefined,
-    strokeColor: 'var(--pvt-edge-color, #999)',
+    strokeColor: 'var(--pvt-edge-stroke, #999)',
 }
  */
 export const defaultEdgeStyle: EdgeStyle = {
@@ -176,7 +176,7 @@ export const defaultEdgeStyle: EdgeStyle = {
     rotateLabel: false,
     markerEnd: 'arrow',
     markerStart: undefined,
-    strokeColor: 'var(--pvt-edge-color, #999)',
+    strokeColor: 'var(--pvt-edge-stroke, #999)',
 }
 
 /**

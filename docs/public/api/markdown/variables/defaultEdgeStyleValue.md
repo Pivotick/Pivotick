@@ -22,6 +22,6 @@ Defined in: [renderers/svg/GraphSvgRenderer.ts:170](https://github.com/mokaddem/
     rotateLabel: false,
     markerEnd: 'arrow',
     markerStart: undefined,
-    strokeColor: 'var(--pvt-edge-color, #999)',
+    strokeColor: 'var(--pvt-edge-stroke, #999)',
 }
 ```

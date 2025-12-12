@@ -8,6 +8,7 @@ const joinUrl = (base: string, path: string) => `${base?.replace(/\/$/, '') || '
 export default defineConfig({
   title: 'Pivotick',
   description: 'Pivotick documentation',
+  lastUpdated: true,
   base: baseurl,
   ignoreDeadLinks: true,
   themeConfig: {
@@ -17,12 +18,11 @@ export default defineConfig({
       { text: 'Home', link: '/' },
       { text: 'Getting Started', link: '/getting-started' },
       { text: 'Configuration', link: '/configuration' },
-      { text: 'Generated API docs', link: '/api' },
       { text: 'Gallery', link: '/gallery' },
+      { text: 'Generated API docs', link: '/api/html/classes/Pivotick.html', target: '_blank', },
     ],
 
     sidebar: [
-      { text: 'Home', link: '/' },
       { text: 'Getting Started', link: '/getting-started' },
       {
         text: 'Configuration',
@@ -47,7 +47,7 @@ export default defineConfig({
           { text: 'Pivotick API', link: '/api' },
         ]
       },
-      { text: 'Generated API docs', link: '/generated-api' },
+      { text: 'API docs', link: '/generated-api' },
       {
         text: 'Gallery',
         link: '/gallery',

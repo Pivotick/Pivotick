@@ -3,9 +3,9 @@ import { Edge } from '../../Edge'
 import { getApproximateArcLengthAndMidpoint, getApproximateCircleArcLengthAndMidpoint, getArcIntersectionWithCircle, getSegmentLengthAndMidpoint, type ArcParams, type Circle } from '../../utils/GeometryHelper'
 import type { Graph } from '../../Graph'
 import type { GraphSvgRenderer } from './GraphSvgRenderer'
-import { tryResolveString } from '../../utils/Getters'
+import { tryResolveBoolean, tryResolveNumber, tryResolveString } from '../../utils/Getters'
 import { edgeLabelGetter } from '../../utils/GraphGetters'
-import type { EdgeStyle, GraphRendererOptions, LabelStyle } from '../../interfaces/RendererOptions'
+import type { CurveStyle, EdgeStyle, GraphRendererOptions, LabelStyle } from '../../interfaces/RendererOptions'
 
 export class EdgeDrawer {
 
@@ -126,8 +126,14 @@ export class EdgeDrawer {
         }
         const mergedStyle = this.mergeEdgeStylingOptions(styleFromEdge)
 
+        mergedStyle.strokeColor = mergedStyle.strokeColor !== undefined ? (tryResolveString(mergedStyle.strokeColor, edge) ?? 'var(--pvt-edge-stroke, #999)') : 'var(--pvt-edge-stroke, #999)'
+        mergedStyle.strokeWidth = mergedStyle.strokeWidth !== undefined ? (tryResolveNumber(mergedStyle.strokeWidth, edge) ?? 2) : 2
+        mergedStyle.opacity = mergedStyle.opacity !== undefined ? (tryResolveNumber(mergedStyle.opacity, edge) ?? 1.0) : 1.0
+        mergedStyle.curveStyle = mergedStyle.curveStyle !== undefined ? tryResolveString(mergedStyle.curveStyle, edge) as CurveStyle : 'bidirectional'
         mergedStyle.markerEnd = mergedStyle.markerEnd !== undefined ? tryResolveString(mergedStyle.markerEnd, edge) : undefined
         mergedStyle.markerStart = mergedStyle.markerStart !== undefined ? tryResolveString(mergedStyle.markerStart, edge) : undefined
+        mergedStyle.dashed = mergedStyle.dashed !== undefined ? tryResolveBoolean(mergedStyle.dashed, edge) : undefined
+        mergedStyle.animateDash = mergedStyle.animateDash !== undefined ? tryResolveBoolean(mergedStyle.animateDash, edge) : undefined
         return mergedStyle
     }
 
@@ -149,8 +155,8 @@ export class EdgeDrawer {
     private genericEdgeRender(edgeSelection: Selection<SVGGElement, Edge, null, undefined>, style: EdgeStyle): Selection<SVGPathElement, Edge, null, undefined> {
         const pathSelection = edgeSelection
             .append('path')
-            .attr('stroke', style.strokeColor)
-            .attr('stroke-width', style.strokeWidth)
+            .attr('stroke', style.strokeColor ?? 'var(--pvt-edge-stroke)')
+            .attr('stroke-width', style.strokeWidth ?? 'var(--pvt-edge-stroke-width)')
             .attr('stroke-opacity', style.opacity)
 
         if (style.dashed) {
@@ -290,7 +296,7 @@ export class EdgeDrawer {
 
         const x = from.x ?? 0
         const y = from.y ?? 0
-        const nodeRadius = this.graphSvgRenderer.nodeDrawer.getNodeStyle(from).size
+        const nodeRadius = this.graphSvgRenderer.nodeDrawer.getNodeStyle(from).size as number
         const control_point_radius = 6 * nodeRadius
 
         // 80° NE
@@ -334,8 +340,8 @@ export class EdgeDrawer {
         const normY = dy / distance
 
         // Compute source/target node radius
-        const rFrom = this.graphSvgRenderer.nodeDrawer.getNodeStyle(from).size
-        const rTo = this.graphSvgRenderer.nodeDrawer.getNodeStyle(to).size
+        const rFrom = this.graphSvgRenderer.nodeDrawer.getNodeStyle(from).size as number
+        const rTo = this.graphSvgRenderer.nodeDrawer.getNodeStyle(to).size as number
 
         // Offset both ends of the line
         const startX = from.x + (rFrom + drawOffsetStart) * normX
@@ -360,8 +366,8 @@ export class EdgeDrawer {
         const drawOffsetStart = 4 + (edgeStyle.markerStart !== undefined ? 0 : 0) + (isEdgeSelected ? 2 : 0) // Distance from which to start the edge
         const drawOffsetEnd = 4 + (edgeStyle.markerStart !== undefined ? 2 : 0) + (isEdgeSelected ? 2 : 0) // Distance from which to end the edge
 
-        const rFrom = edge.source.getCircleRadius() ? edge.source.getCircleRadius() : this.graphSvgRenderer.nodeDrawer.getNodeStyle(from).size
-        const rTo = edge.target.getCircleRadius() ? edge.target.getCircleRadius() : this.graphSvgRenderer.nodeDrawer.getNodeStyle(to).size
+        const rFrom = edge.source.getCircleRadius() ? edge.source.getCircleRadius() : this.graphSvgRenderer.nodeDrawer.getNodeStyle(from).size as number
+        const rTo = edge.target.getCircleRadius() ? edge.target.getCircleRadius() : this.graphSvgRenderer.nodeDrawer.getNodeStyle(to).size as number
 
         const arcParams: ArcParams = {
             from: { x: from.x, y: from.y },

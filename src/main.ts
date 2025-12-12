@@ -87,8 +87,8 @@ export function createSampleGraph(): Pivotick {
             for (let i = 0; i < nodes.length/2; i++) {
                 const left = 2 * i + 1
                 const right = 2 * i + 2
-                if (left < nodes.length) edges.push(new Edge(`e${edges.length}`, nodes[i], nodes[left], {}, {}, true))
-                if (right < nodes.length) edges.push(new Edge(`e${edges.length}`, nodes[i], nodes[right], {}, {}, true))
+                if (left < nodes.length) edges.push(new Edge(`e${edges.length}`, nodes[i], nodes[left], { label: 'foobaz' }, {}, true))
+                if (right < nodes.length) edges.push(new Edge(`e${edges.length}`, nodes[i], nodes[right], {label: 'foobar'}, {}, true))
             }
 
             return { nodes, edges }
@@ -229,7 +229,7 @@ export function createSampleGraph(): Pivotick {
 
     }
 
-    const topo = 'vt'
+    const topo = 'tree'
 
     const graph = new Pivotick(container, {nodes: topologies[topo].nodes, edges: topologies[topo].edges}, {
         // isDirected: false,
@@ -268,11 +268,13 @@ export function createSampleGraph(): Pivotick {
             //     strokeColor: '#ffffff33',
             //     size: 20,
             // }
-            defaultEdgeStyle: {
-                markerStart: (edge: Edge) => edge.getData().mstart,
-                // markerEnd: (edge: Edge) => edge.getData().mend,
-                // curveStyle: 'bidirectional',
-            },
+            // defaultEdgeStyle: {
+            //     markerStart: (edge: Edge) => edge.getData().mstart,
+            //     // markerEnd: (edge: Edge) => edge.getData().mend,
+            //     // curveStyle: 'bidirectional',
+            //     dashed: (e) => { return e.getData().cool },
+            //     strokeWidth: (e) => { return Math.floor(Math.random() * 10) },
+            // },
             markerStyleMap: {
                 'diamond': {
                     fill: '#44c77f',
@@ -304,7 +306,7 @@ export function createSampleGraph(): Pivotick {
 
             //         // return `<span style="${style}">${text}</span>`
             // },
-            renderLabel: () => {},
+            // renderLabel: () => {},
         },
         UI: {
             mode: 'full',
@@ -357,6 +359,94 @@ function addRandomNode(counter: number, graph: Pivotick) {
 
 const graph = createSampleGraph()
 window.pivotick = graph
+
+// const data2 = {
+//   'nodes': [
+//     { 'id': 'A1', 'data': {'label': 'Alice', 'group': 'A' }},
+//     { 'id': 'A2', 'data': {'label': 'Bob', 'group': 'A' }},
+//     { 'id': 'A3', 'data': {'label': 'Charlie', 'group': 'A' }},
+//     { 'id': 'A4', 'data': {'label': 'Diana', 'group': 'A' }},
+//     { 'id': 'A5', 'data': {'label': 'Eve', 'group': 'A' }},
+//     { 'id': 'A6', 'data': {'label': 'Frank', 'group': 'A' }},
+//     { 'id': 'B1', 'data': {'label': 'Grace', 'group': 'B' }},
+//     { 'id': 'B2', 'data': {'label': 'Heidi', 'group': 'B' }},
+//     { 'id': 'B3', 'data': {'label': 'Ivan', 'group': 'B' }},
+//     { 'id': 'B4', 'data': {'label': 'Judy', 'group': 'B' }},
+//     { 'id': 'B5', 'data': {'label': 'Karl', 'group': 'B' }},
+//     { 'id': 'B6', 'data': {'label': 'Leo', 'group': 'B' }},
+//     { 'id': 'C1', 'data': {'label': 'Mallory', 'group': 'C' }},
+//     { 'id': 'C2', 'data': {'label': 'Niaj', 'group': 'C' }},
+//     { 'id': 'C3', 'data': {'label': 'Olivia', 'group': 'C' }},
+//     { 'id': 'C4', 'data': {'label': 'Peggy', 'group': 'C' }},
+//     { 'id': 'C5', 'data': {'label': 'Quentin', 'group': 'C' }},
+//     { 'id': 'C6', 'data': {'label': 'Ruth', 'group': 'C' }},
+//     { 'id': 'D1', 'data': {'label': 'Sybil', 'group': 'D' }},
+//     { 'id': 'D2', 'data': {'label': 'Trent', 'group': 'D' }},
+//     { 'id': 'D3', 'data': {'label': 'Uma', 'group': 'D' }},
+//     { 'id': 'D4', 'data': {'label': 'Victor', 'group': 'D' }},
+//     { 'id': 'D5', 'data': {'label': 'Walter', 'group': 'D' }},
+//     { 'id': 'D6', 'data': {'label': 'Xavier', 'group': 'D' }}
+//   ],
+//   'edges': [
+//     { 'from': 'A1', 'to': 'A2' },
+//     { 'from': 'A2', 'to': 'A3' },
+//     { 'from': 'A3', 'to': 'A4' },
+//     { 'from': 'A4', 'to': 'A5' },
+//     { 'from': 'A5', 'to': 'A6' },
+//     { 'from': 'A6', 'to': 'A1' },
+
+//     { 'from': 'B1', 'to': 'B2', 'data': { 'cool': true } },
+//     { 'from': 'B2', 'to': 'B3', 'data': { 'cool': true } },
+//     { 'from': 'B3', 'to': 'B4', 'data': { 'cool': true } },
+//     { 'from': 'B4', 'to': 'B5', 'data': { 'cool': true } },
+//     { 'from': 'B5', 'to': 'B6', 'data': { 'cool': true } },
+//     { 'from': 'B6', 'to': 'B1', 'data': { 'cool': true } },
+
+//     { 'from': 'C1', 'to': 'C2' },
+//     { 'from': 'C2', 'to': 'C3' },
+//     { 'from': 'C3', 'to': 'C4' },
+//     { 'from': 'C4', 'to': 'C5' },
+//     { 'from': 'C5', 'to': 'C6' },
+//     { 'from': 'C6', 'to': 'C1' },
+
+//     { 'from': 'D1', 'to': 'D2', 'data': { 'score': 12 } },
+//     { 'from': 'D2', 'to': 'D3', 'data': { 'score': 12 } },
+//     { 'from': 'D3', 'to': 'D4', 'data': { 'score': 12 } },
+//     { 'from': 'D4', 'to': 'D5', 'data': { 'score': 12 } },
+//     { 'from': 'D5', 'to': 'D6', 'data': { 'score': 12 } },
+//     { 'from': 'D6', 'to': 'D1', 'data': { 'score': 12 } },
+
+//     { 'from': 'A2', 'to': 'B3' },
+//     { 'from': 'A4', 'to': 'C1' },
+//     { 'from': 'B5', 'to': 'C4' },
+//     { 'from': 'C3', 'to': 'D2' },
+//     { 'from': 'D4', 'to': 'A6' }
+//   ]
+// }
+
+// // #endregion data
+
+// // #region options
+// const options2 = {
+//     render: {
+//         nodeTypeAccessor: (node) => node.getData()?.group,
+//         nodeStyleMap: {
+//             'A': { shape: 'hexagon', color: 'var(--pvt-vibrant-lobster)', size: 38, text: (node) => node.getData()?.label },
+//             'B': { shape: 'circle', color: 'var(--pvt-vibrant-blue)' },
+//             'C': { shape: 'triangle', color: 'var(--pvt-vibrant-indigo)', size: 18 },
+//             'D': { color: 'var(--pvt-vibrant-green)', size: 22 },
+//         },
+//         defaultEdgeStyle: {
+//             dashed: (e) => { return e.getData().cool },
+//             strokeWidth: (e) => { return e.getData().score ?? 2 },
+//             markerEnd: (e) => { return e.getData().score ? undefined : 'arrow' },
+//         }
+//     },
+// }
+
+// new Pivotick(document.getElementById('app')!, data2, options2)
+
+
 // let counter = 0
 // setInterval(() => {
 //     addRandomNode(counter, graph)

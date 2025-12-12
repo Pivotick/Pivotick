@@ -105,8 +105,6 @@ dl.pvt-property-list {
 
 .pvt-edge-group {
     path {
-        stroke: var(--pvt-edge-stroke);
-        stroke-width: var(--pvt-edge-stroke-width);
         filter: var(--pvt-edge-filter);
 
         &.dashed {
