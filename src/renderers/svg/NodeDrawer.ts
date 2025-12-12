@@ -54,7 +54,7 @@ export class NodeDrawer {
                     .attr('y', -height / 2)
 
                 node.setCircleRadius(0.5 * Math.max(width, height))
-                this.highlightSelection(theNodeSelection, node)
+                this.checkForHighlight(theNodeSelection, node)
               })
 
         } else {
@@ -68,7 +68,7 @@ export class NodeDrawer {
                 const height = Math.ceil(bbox.height)
 
                 node.setCircleRadius(0.5 * Math.max(width, height))
-                this.highlightSelection(theNodeSelection, node)
+                this.checkForHighlight(theNodeSelection, node)
             })
         }
     }
@@ -262,22 +262,31 @@ export class NodeDrawer {
         }
     }
 
+    private checkForHighlight(nodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
+        if (this.isNodeSelected(node)) {
+            this.highlightSelection(nodeSelection, node)
+        } else {
+            this.deHighlightSelection(nodeSelection, node)
+        }
+    }
+
+    private isNodeSelected(node: Node): boolean {
+        const gi = this.graphSvgRenderer.getGraphInteraction()
+        const selected = gi.getSelectedNode()
+        const selectedIds = gi.getSelectedNodeIDs()
+
+        const matchSingle = selected?.node?.id === node.id
+        const matchMultiple = Array.isArray(selectedIds) ? selectedIds.includes(node.id) : false
+
+        return matchSingle || matchMultiple
+    }
+
+    private deHighlightSelection(nodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
+        nodeSelection.classed('pvt-node-selected-highlight', false)
+    }
+
     private highlightSelection(nodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
-        nodeSelection.selectAll('.pvt-node-selected-highlight').remove() // remove old overlay if exists
-        if (this.graphSvgRenderer.getGraphInteraction().getSelectedNode()?.node.id === node.id) {
-            nodeSelection
-                .append('circle')
-                .attr('class', 'pvt-node-selected-highlight')
-                .attr('r', node.getCircleRadius()) // slightly larger than node
-                .attr('pointer-events', 'none') // doesn't interfere with interaction
-        }
-        if (this.graphSvgRenderer.getGraphInteraction().getSelectedNodeIDs()?.includes(node.id)) {
-            nodeSelection
-                .append('circle')
-                .attr('class', 'pvt-node-selected-highlight')
-                .attr('r', node.getCircleRadius()) // slightly larger than node
-                .attr('pointer-events', 'none') // doesn't interfere with interaction
-        }
+        nodeSelection.classed('pvt-node-selected-highlight', true)
     }
 
     private computeFontSize(label: string, nodeSize: number) {

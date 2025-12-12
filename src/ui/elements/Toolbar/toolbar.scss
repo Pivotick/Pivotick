@@ -67,7 +67,7 @@
             gap: 4px;
 
             button.pvt-button-filter {
-                @include buttons.button-outline-secondary;
+                @include buttons.button-outline-info;
                 padding: 0.5rem 0.5rem;
             }
 
@@ -77,7 +77,7 @@
                 flex-wrap: nowrap;
 
                 button {
-                    @include buttons.button-outline-info;
+                    @include buttons.button-outline-secondary;
                     padding: 0.5rem 0.5rem;
                 }
             }

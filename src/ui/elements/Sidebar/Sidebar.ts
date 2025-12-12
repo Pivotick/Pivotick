@@ -38,7 +38,9 @@ export class Sidebar implements UIElement {
         const template = `
 <div class="pvt-sidebar-elements">
     <div class="pvt-mainheader-panel"></div>
+    <div class="pvt-sidebar-separator"></div>
     <div class="pvt-properties-panel pvt-sidebar-panel"></div>
+    <div class="pvt-sidebar-separator"></div>
     <div class="pvt-extra-panel pvt-sidebar-panel"></div>
 </div>`
         this.sidebar = createHtmlTemplate(template) as HTMLDivElement

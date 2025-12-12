@@ -3,29 +3,24 @@
 
 
 $vibrant-color-palette: (
-    vibrant-blue: #749BFB,
+    // vibrant-blue: #749BFB,
+    vibrant-blue: #7EA2FB,
     vibrant-indigo: #A666F4,
     vibrant-lobster: #F2545B,
     vibrant-green: #85CB33,
 );
 
-$dark-bg-color-palette-1: (
-    pvt-bg-color-0: #050e15,
-    pvt-bg-color-1: #05141f,
-    pvt-bg-color-2: #071d2d,
-    pvt-bg-color-3: #082032,
-    pvt-bg-color-4: #2c394b,
-    pvt-bg-color-5: #334756,
+$light-bg-color-palette-1: (
+    pvt-bg-color-0: #fff,
+    pvt-bg-color-1: #fafafa,
+    pvt-bg-color-2: #f3f3f3,
+    pvt-bg-color-3: #e6e6e6,
+    pvt-bg-color-4: #e0e0e0,
+    pvt-bg-color-5: #d6d6d6,
+    pvt-bg-color-6: #cccccc,
+    pvt-bg-color-7: #c2c2c2,
 );
 
-$dark-bg-color-palette-2: (
-    pvt-bg-color-0: #0F0F10,
-    pvt-bg-color-1: #131314,
-    pvt-bg-color-2: #171719,
-    pvt-bg-color-3: #1A1A1D,
-    pvt-bg-color-4: #1D1D20,
-    pvt-bg-color-5: #202023,
-);
 
 $light-theme: (
     // #region core-variables
@@ -56,12 +51,6 @@ $light-theme: (
     pvt-text-color-danger: var(--pvt-theme-danger),
     pvt-text-color-success: var(--pvt-theme-success),
 
-    pvt-bg-color-0: #fff,
-    pvt-bg-color-1: #fafafa,
-    pvt-bg-color-2: #f3f3f3,
-    pvt-bg-color-3: #e6e6e6,
-    pvt-bg-color-4: #e0e0e0,
-    pvt-bg-color-5: #d6d6d6,
     pvt-bg-color-primary: var(--pvt-theme-primary),
     pvt-bg-color-secondary: var(--pvt-theme-secondary),
     pvt-bg-color-info: var(--pvt-theme-info),
@@ -81,6 +70,7 @@ $light-theme: (
 
 
     /* Sidebar */
+    pvt-sidebar-bg: #00000000,
     pvt-sidebar-mainpanelheader-bg: var(--pvt-bg-color-1),
     pvt-sidebar-panelheader-bg: var(--pvt-bg-color-4),
     pvt-sidebar-panelbody-bg: var(--pvt-bg-color-0),
@@ -95,6 +85,11 @@ $light-theme: (
 
     /* Tooltip */
     pvt-tooltip-floating-bg-color: var(--pvt-bg-color-5),
+
+    /* Menu */
+    pvt-menu-bg-color: var(--pvt-bg-color-1),
+    pvt-menu-border-color: var(--pvt-text-color-1),
+    pvt-menu-shadow: var(--pvt-sidebar-layout-shadow-right),
 
     /* Graph notification */
     pvt-toast-bg-color-primary: color-mix(in srgb, var(--pvt-bg-color-primary) 40%, white),
@@ -138,7 +133,8 @@ $light-theme: (
     /* Node selected state */
     pvt-node-selected-color: orange,
     pvt-node-selected-stroke: var(--pvt-node-selected-color),
-    pvt-node-selected-stroke-width: 3,
+    pvt-node-selected-stroke-width: 0,
+    pvt-node-selected-stroke-opacity: 0,
     pvt-node-selected-filter: drop-shadow(0 0 2px var(--pvt-node-selected-color)),
     pvt-node-selected-animation: glowPulse 1.5s infinite,
     // #endregion node
@@ -180,22 +176,53 @@ $light-theme: (
     ")",
     pvt-inline-bar-height: 0.5rem,
     pvt-inline-bar-width: 80px,
+    pvt-inline-bar-shadow: "color-mix(in srgb, var(--pvt-text-color-6) 15%, transparent) 0px 1px 1px 0px,"
+        "color-mix(in srgb, var(--pvt-text-color-6) 10%, transparent) 0px 0px 2px 0px,"
+        "inset 0 1px 2px rgba(0, 0, 0, 0.05)",
+);
+
+
+$dark-bg-color-palette-1: (
+    pvt-bg-color-0: #050e15,
+    pvt-bg-color-1: #05141f,
+    pvt-bg-color-2: #071d2d,
+    pvt-bg-color-3: #082032,
+    pvt-bg-color-4: #2c394b,
+    pvt-bg-color-5: #334756,
+    pvt-bg-color-6: #465865,
+    pvt-bg-color-7: #576773,
+);
+
+$dark-bg-color-palette-2: (
+    pvt-bg-color-0: #0F0F10,
+    pvt-bg-color-1: #131314,
+    pvt-bg-color-2: #171719,
+    pvt-bg-color-3: #1A1A1D,
+    pvt-bg-color-4: #1D1D20,
+    pvt-bg-color-5: #202023,
+    pvt-bg-color-6: #252528,
+    pvt-bg-color-7: #343437,
+    pvt-bg-color-8: #464649,
+);
+
+$dark-bg-color-palette-3: (
+    pvt-bg-color-0: hsl(240, 0%, 6%),
+    pvt-bg-color-1: hsl(240, 0%, 8%),
+    pvt-bg-color-2: hsl(240, 0%, 9%),
+    pvt-bg-color-3: hsl(240, 0%, 11%),
+    pvt-bg-color-4: hsl(240, 0%, 12%),
+    pvt-bg-color-5: hsl(240, 0%, 13%),
+    pvt-bg-color-6: hsl(240, 0%, 15%),
+    pvt-bg-color-7: hsl(240, 0%, 21%),
+    pvt-bg-color-8: hsl(240, 0%, 28%),
 );
 
 $dark-theme: (
     pvt-bg: var(--pvt-bg-color-2),
     pvt-border-color: var(--pvt-bg-color-3),
 
-    // SW Color palette
-    // pvt-theme-primary: #730FF0,
-    // pvt-theme-secondary: #666666,
-    // pvt-theme-info: #2E67F8,
-    // pvt-theme-warning: #FF3C00,
-    // pvt-theme-danger: #EB212E,
-    // pvt-theme-success: #2FF924,
-
     pvt-theme-primary: #730ff0,
-    pvt-theme-secondary: #AB89FA,
+    pvt-theme-secondary: #666666,
     pvt-theme-info: #2E67F8,
     pvt-theme-warning: #FF3C00,
     pvt-theme-danger: #EB212E,
@@ -210,19 +237,13 @@ $dark-theme: (
     pvt-text-color-4: #bbb,
     pvt-text-color-5: #e0e0e0,
     pvt-text-color-6: #fff,
-    pvt-text-color-primary: var(--pvt-theme-primary),
-    pvt-text-color-secondary: var(--pvt-theme-secondary),
-    pvt-text-color-info: var(--pvt-theme-info),
-    pvt-text-color-warning: var(--pvt-theme-warning),
-    pvt-text-color-danger: var(--pvt-theme-danger),
-    pvt-text-color-success: var(--pvt-theme-success),
+    pvt-text-color-primary: color-mix(in srgb, var(--pvt-bg-color-primary), white 50%),
+    pvt-text-color-secondary: color-mix(in srgb, var(--pvt-bg-color-secondary), white 50%),
+    pvt-text-color-info: color-mix(in srgb, var(--pvt-bg-color-info), white 50%),
+    pvt-text-color-warning: color-mix(in srgb, var(--pvt-bg-color-warning), white 50%),
+    pvt-text-color-danger: color-mix(in srgb, var(--pvt-bg-color-danger), white 50%),
+    pvt-text-color-success: color-mix(in srgb, var(--pvt-bg-color-success), white 50%),
 
-    // pvt-bg-color-0: #050e15,
-    // pvt-bg-color-1: #05141f,
-    // pvt-bg-color-2: #071d2d,
-    // pvt-bg-color-3: #082032,
-    // pvt-bg-color-4: #2c394b,
-    // pvt-bg-color-5: #334756,
     pvt-bg-color-primary: var(--pvt-theme-primary),
     pvt-bg-color-secondary: var(--pvt-theme-secondary),
     pvt-bg-color-info: var(--pvt-theme-info),
@@ -242,12 +263,13 @@ $dark-theme: (
 
 
     /* Sidebar */
-    pvt-sidebar-mainpanelheader-bg: var(--pvt-bg-color-1),
+    pvt-sidebar-bg: var(--pvt-bg-color-3),
+    pvt-sidebar-mainpanelheader-bg: unset,
     pvt-sidebar-panelheader-bg: var(--pvt-bg-color-4),
     pvt-sidebar-panelbody-bg: var(--pvt-bg-color-0),
     pvt-sidebar-panel-border: 1px solid var(--pvt-text-color-1),
     pvt-sidebar-subpanelheader-bg: var(--pvt-bg-color-2),
-    pvt-mainheader-nodepreview-bg: var(--pvt-bg-color-0),
+    pvt-mainheader-nodepreview-bg: var(--pvt-bg-color-6),
     pvt-sidebar-layout-shadow-right: "rgba(0, 0, 0, 0.07) 2px 0px 3px 0px, rgba(0, 0, 0, 0.04) 3px 0px 2px 0px",
     pvt-sidebar-layout-shadow-bottom: "rgba(0, 0, 0, 0.07) 3px 2px 3px 0px, rgba(0, 0, 0, 0.04) 2px 3px 2px 0px",
     pvt-sidebar-collapse-bg: var(--pvt-bg),
@@ -255,7 +277,12 @@ $dark-theme: (
     pvt-sidebar-collapse-shadow: var(--pvt-box-shadow-strong),
 
     /* Tooltip */
-    pvt-tooltip-floating-bg-color: var(--pvt-bg-color-5),
+    pvt-tooltip-floating-bg-color: var(--pvt-bg-color-8),
+
+    /* Menu */
+    pvt-menu-bg-color: var(--pvt-bg-color-7),
+    pvt-menu-border-color: var(--pvt-bg-color-2),
+    pvt-menu-shadow: var(--pvt-sidebar-layout-shadow-right),
 
     /* Graph notification */
     pvt-toast-bg-color-primary: color-mix(in srgb, var(--pvt-bg-color-primary) 40%, white),
@@ -278,7 +305,8 @@ $dark-theme: (
     "repeating-linear-gradient(90deg, var(--pvt-graph-grid-color) 0px, var(--pvt-graph-grid-color) 1px, transparent 1px, transparent 20px)",
     pvt-graph-navigation-control-container-shadow: "rgba(255, 255, 255, 0.15) 0px 0px 4px"
     "rgba(255, 255, 255, 0.10) 0px 1px 2px",
-    pvt-selection-color: var(--pvt-theme-warning),
+
+    pvt-selection-color: map.get($vibrant-color-palette, vibrant-lobster),
     pvt-pvt-selection-rectangle-fill: color-mix(in srgb, var(--pvt-selection-color) 20%, #ffffff00),
     pvt-pvt-selection-rectangle-stroke: color-mix(in srgb, var(--pvt-selection-color) 80%, #ffffff00),
 
@@ -292,10 +320,10 @@ $dark-theme: (
     pvt-node-icon-font-weight: 900,
 
     /* Node selected state */
-    // pvt-node-selected-color: map.get($vibrant-color-palette, vibrant-lobster),
     pvt-node-selected-color: var(--pvt-selection-color),
     pvt-node-selected-stroke: var(--pvt-node-selected-color),
-    pvt-node-selected-stroke-width: 3,
+    pvt-node-selected-stroke-width: 0,
+    pvt-node-selected-stroke-opacity: 0,
     pvt-node-selected-filter: drop-shadow(0 0 2px var(--pvt-node-selected-color)),
     pvt-node-selected-animation: glowPulse 1.5s infinite,
 
@@ -325,17 +353,22 @@ $dark-theme: (
     pvt-edge-label-selected-bg: #ffffffa0,
 
     /* Component */
-    pvt-inline-bar-bg: var(--pvt-bg-color-2),
+    pvt-inline-bar-bg: var(--pvt-bg-color-6),
     pvt-inline-bar-fill-bg: "linear-gradient("
     "90deg,"
-    "color-mix(in srgb, var(--pvt-bg-color-primary) 20%, #fff) 0%,"
-    "var(--pvt-bg-color-primary) 70%,"
-    "color-mix(in srgb, var(--pvt-bg-color-primary) 80%, #000) 100%"
+    "color-mix(in srgb, var(--pvt-bg-color-primary) 90%, #000) 0%,"
+    "var(--pvt-bg-color-primary) 60%,"
+    "color-mix(in srgb, var(--pvt-bg-color-primary) 60%, #fff) 80%,"
+    "color-mix(in srgb, var(--pvt-bg-color-primary) 20%, #fff) 100%"
     ")",
     pvt-inline-bar-height: 0.5rem,
     pvt-inline-bar-width: 80px,
+    pvt-inline-bar-shadow: inset 0 1px 2px var(--pvt-bg-color-0),
 );
 
 
 $dark-theme: map.merge($dark-theme,
         $dark-bg-color-palette-2);
+
+$light-theme: map.merge($light-theme,
+        $light-bg-color-palette-1);

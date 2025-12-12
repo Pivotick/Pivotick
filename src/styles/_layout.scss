@@ -49,6 +49,10 @@
     .pvt-sidebar-elements {
         // transition: opacity 0.1s cubic-bezier(0, 0, 1, -0.15);
         opacity: 100%;
+        
+        .pvt-sidebar-separator {
+            border-bottom: var(--pvt-sidebar-panel-border);
+        }
     }
 
     &.pvt-sidebar-collapsed {

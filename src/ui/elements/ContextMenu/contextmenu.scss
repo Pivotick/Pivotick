@@ -1,9 +1,9 @@
 .pvt-contextmenu {
     position: absolute;
     pointer-events: auto;
-    background-color: var(--pvt-sidebar-panelbody-bg);
-    border: var(--pvt-sidebar-panel-border);
-    box-shadow: var(--pvt-box-shadow-strong);
+    background-color: var(--pvt-menu-bg-color);
+    border: var(--pvt-menu-border-color);
+        box-shadow: var(--pvt-menu-shadow);
     font-size: 13px;
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     line-height: 1.4;

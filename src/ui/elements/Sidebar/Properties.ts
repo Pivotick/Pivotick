@@ -270,7 +270,7 @@ export class SidebarProperties implements UIElement {
                             ]
                         }, [
                             createHtmlElement('span', {}, [
-                                this.wrapValues(this.getDislayableValue(value)),
+                                this.wrapValues(this.getDislayableValue(value), count),
                                 actionButtons
                             ])
                         ]),
@@ -293,14 +293,14 @@ export class SidebarProperties implements UIElement {
         return typeof value === 'string' ? value : JSON.stringify(value)
     }
 
-    private wrapValues(value: string): HTMLElement | Text {
+    private wrapValues(value: string, count: number): HTMLElement | Text {
         if (this.hasSpecialHighlighting(value)) {
             let textNode = '', title = ''
             if (this.isValueEmpty(value)) {
                 textNode = '- empty -'
                 title = 'The value is empty'
             } else if (this.isValueUnique(value)) {
-                textNode = '- Unique values -'
+                textNode = `- ${count} other unique values -`
                 title = 'All other values are unique'
             }
             return createHtmlElement('span', { class: 'pvt-aggregated-property-value-dim', title: title }, [

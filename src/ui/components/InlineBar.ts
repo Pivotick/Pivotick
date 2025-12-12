@@ -18,7 +18,7 @@ export function createInlineBar(
     root.style.gap = '0.5rem'
     root.style.fontFamily = 'sans-serif'
     root.style.fontSize = '0.85rem'
-    root.title = `${(percentage).toFixed(0)}%`
+    root.title = `${value} - ${(percentage).toFixed(0)}%`
 
     // Bar container
     const barContainer = document.createElement('span')

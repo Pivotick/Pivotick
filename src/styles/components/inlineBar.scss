@@ -4,9 +4,7 @@
     height: var(--pvt-inline-bar-height);
     width: var(--pvt-inline-bar-width);
     background: var(--pvt-inline-bar-bg);
-    box-shadow: color-mix(in srgb, var(--pvt-text-color-6) 15%, transparent) 0px 1px 1px 0px,
-                color-mix(in srgb, var(--pvt-text-color-6) 10%, transparent) 0px 0px 2px 0px,
-                inset 0 1px 2px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--pvt-inline-bar-shadow);
     border-radius: 4px;
     overflow: hidden;
     vertical-align: middle;
