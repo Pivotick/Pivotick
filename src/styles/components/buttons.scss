@@ -11,10 +11,10 @@
     transition: background-color 0.1s ease;
 }
 
-@mixin button-variant($bg-color) {
+@mixin button-variant($bg-color, $bg-text-color) {
     @include button;
     background-color: var($bg-color);
-    color: #fff;
+    color: var($bg-text-color);
 
     &:hover {
         background-color: color-mix(in srgb, var($bg-color) 90%, black);
@@ -34,22 +34,22 @@
 }
 
 @mixin button-primary {
-    @include button-variant(--pvt-bg-color-primary);
+    @include button-variant(--pvt-bg-color-primary, --pvt-text-color-for-primary);
 }
 @mixin button-secondary {
-    @include button-variant(--pvt-bg-color-secondary);
+    @include button-variant(--pvt-bg-color-secondary, --pvt-text-color-for-secondary);
 }
 @mixin button-info {
-    @include button-variant(--pvt-bg-color-info);
+    @include button-variant(--pvt-bg-color-info, --pvt-text-color-for-info);
 }
 @mixin button-warning {
-    @include button-variant(--pvt-bg-color-warning);
+    @include button-variant(--pvt-bg-color-warning, --pvt-text-color-for-warning);
 }
 @mixin button-danger {
-    @include button-variant(--pvt-bg-color-danger);
+    @include button-variant(--pvt-bg-color-danger, --pvt-text-color-for-danger);
 }
 @mixin button-success {
-    @include button-variant(--pvt-bg-color-success);
+    @include button-variant(--pvt-bg-color-success, --pvt-text-color-for-success);
 }
 @mixin button-link {
     @include button;
@@ -88,7 +88,7 @@
     transition: background-color 0.1s ease;
 }
 
-@mixin button-outline-variant($bg-color) {
+@mixin button-outline-variant($bg-color, $bg-text-color) {
     @include button-outline;
     background-color: transparent;
     color: var(--pvt-text-color);
@@ -96,7 +96,7 @@
 
     &:hover {
         background-color: color-mix(in srgb, var($bg-color) 80%, white);
-        color: #fff;
+        color: var($bg-text-color);
     }
 
     &:active {
@@ -115,22 +115,22 @@
 }
 
 @mixin button-outline-primary {
-    @include button-outline-variant(--pvt-bg-color-primary);
+    @include button-outline-variant(--pvt-bg-color-primary, --pvt-text-color-for-primary);
 }
 @mixin button-outline-secondary {
-    @include button-outline-variant(--pvt-bg-color-secondary);
+    @include button-outline-variant(--pvt-bg-color-secondary, --pvt-text-color-for-secondary);
 }
 @mixin button-outline-info {
-    @include button-outline-variant(--pvt-bg-color-info);
+    @include button-outline-variant(--pvt-bg-color-info, --pvt-text-color-for-info);
 }
 @mixin button-outline-warning {
-    @include button-outline-variant(--pvt-bg-color-warning);
+    @include button-outline-variant(--pvt-bg-color-warning, --pvt-text-color-for-warning);
 }
 @mixin button-outline-danger {
-    @include button-outline-variant(--pvt-bg-color-danger);
+    @include button-outline-variant(--pvt-bg-color-danger, --pvt-text-color-for-danger);
 }
 @mixin button-outline-success {
-    @include button-outline-variant(--pvt-bg-color-success);
+    @include button-outline-variant(--pvt-bg-color-success, --pvt-text-color-for-success);
 }
 
 button.pivotick-button-primary {

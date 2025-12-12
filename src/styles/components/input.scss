@@ -36,8 +36,8 @@
     }
 
     &:disabled {
-        background-color: #f8f9fa; // subtle gray
-        border-color: color-mix(in srgb, var($bg-color) 70%, white);
+        background-color: var(--pvt-bg-color-3);
+        cursor: not-allowed;
     }
 }
 
