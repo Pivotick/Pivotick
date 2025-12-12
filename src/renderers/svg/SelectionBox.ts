@@ -49,6 +49,7 @@ export class SelectionBox extends AbstractSelectionBox {
             this.selectionMode = 'start'
             return // No matching key
         }
+        e.preventDefault()
 
         this.svg.querySelectorAll('.pvt-selection-rectangle').forEach(el => el.remove())
 
