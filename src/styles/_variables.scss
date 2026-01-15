@@ -195,6 +195,7 @@ $dark-vibrant-color-palette: (
     vibrant-indigo: #A666F4,
     vibrant-lobster: #F2545B,
     vibrant-green: #85CB33,
+    vibrant-amaranth: #eb2e53,
 );
 
 $dark-bg-color-palette-1: (
@@ -237,7 +238,8 @@ $dark-theme: (
     pvt-bg: var(--pvt-bg-color-2),
     pvt-border-color: var(--pvt-bg-color-3),
 
-    pvt-theme-primary: #730ff0,
+    // pvt-theme-primary: #730ff0,
+    pvt-theme-primary: map.get($dark-vibrant-color-palette, vibrant-amaranth),
     pvt-theme-secondary: #666666,
     pvt-theme-info: #2E67F8,
     pvt-theme-warning: #FF3C00,
