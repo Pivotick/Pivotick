@@ -329,8 +329,8 @@ export class EdgeDrawer {
 
         const edgeStyle = this.graphSvgRenderer.edgeDrawer.getEdgeStyle(edge)
 
-        const drawOffsetStart = 4 + (edgeStyle.markerStart !== undefined ? 0 : 0) + (isEdgeSelected ? 2 : 0) // Distance from which to start the edge
-        const drawOffsetEnd = 4 + (edgeStyle.markerEnd !== undefined ? 2 : 0) + (isEdgeSelected ? 2 : 0) // Distance from which to end the edge
+        const drawOffsetStart = 4 + (edgeStyle.markerStart !== undefined ? 0 : 0) + (isEdgeSelected ? 0 : 0) // Distance from which to start the edge
+        const drawOffsetEnd = 4 + (edgeStyle.markerEnd !== undefined ? 2 : 0) + (isEdgeSelected ? 2 : 2) // Distance from which to end the edge
 
         // Direction angle from source to target
         const dx = to.x - from.x

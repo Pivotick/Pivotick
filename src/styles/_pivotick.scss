@@ -173,6 +173,10 @@ dl.pvt-property-list {
             text-rendering: auto;
         }
     }
+
+    &:hover {
+        cursor: grab;
+    }
 }
 
 .pvt-selection-rectangle {

@@ -21,18 +21,15 @@ import type { EdgeStyle, GraphRendererOptions, LabelStyle, MarkerStyleMap, NodeS
     arrow: {
         pathD: 'M0,-5L10,0L0,5',
         viewBox: '0 -5 10 10',
-        refX: 5,
+        refX: 6,
         refY: 0,
-        markerWidth: 6,
-        markerHeight: 6,
+        markerWidth: 12,
+        markerHeight: 12,
         markerUnits: 'userSpaceOnUse',
         orient: 'auto',
         fill: 'var(--pvt-edge-stroke, #999)',
         selected: {
             fill: 'var(--pvt-edge-selected-stroke, #007acc)',
-            markerWidth: 12,
-            markerHeight: 12,
-            refX: 6,
         }
     },
     circle: {
@@ -73,18 +70,15 @@ export const defaultMarkerStyleMap: MarkerStyleMap = {
     arrow: {
         pathD: 'M0,-5L10,0L0,5',
         viewBox: '0 -5 10 10',
-        refX: 5,
+        refX: 6,
         refY: 0,
-        markerWidth: 6,
-        markerHeight: 6,
+        markerWidth: 12,
+        markerHeight: 12,
         markerUnits: 'userSpaceOnUse',
         orient: 'auto',
         fill: 'var(--pvt-edge-stroke, #999)',
         selected: {
             fill: 'var(--pvt-edge-selected-stroke, #007acc)',
-            markerWidth: 12,
-            markerHeight: 12,
-            refX: 6,
         }
     },
     circle: {
