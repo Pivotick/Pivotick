@@ -227,6 +227,7 @@ export function runSimulation(plainNodes: Node[], plainEdges: Edge[], options: S
             options.layout
         )
     }
+
     return {
         nodes: nodes,
         edges: edges,

@@ -184,7 +184,9 @@ export class Simulation {
                 const baseStrength = options.d3ManyBodyStrength
 
                 const radius = n.getCircleRadius()
-                return baseStrength * (radius * radius) / 100
+                const dampedRadius = 10 + Math.sqrt(radius - 10) // Slowly push other nodes if radius increases
+
+                return baseStrength * (dampedRadius * dampedRadius) / 100
             })
 
         simulationForces.collide

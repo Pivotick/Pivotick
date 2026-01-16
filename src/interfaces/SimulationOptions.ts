@@ -28,7 +28,7 @@ export interface SimulationOptions {
     d3LinkDistance: number
     /** @default null */
     d3LinkStrength: number | null
-    /** @default -30 */
+    /** @default -150 */
     d3ManyBodyStrength: number
     /** @default 0.9 */
     d3ManyBodyTheta: number
