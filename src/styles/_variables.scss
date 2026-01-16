@@ -11,6 +11,7 @@ $light-vibrant-color-palette: (
     vibrant-indigo: #7000cc,
     vibrant-lobster: #f0636a,
     vibrant-green: #81dd18,
+    vibrant-amaranth: #eb2e53,
 );
 
 $light-bg-color-palette-1: (
@@ -27,10 +28,10 @@ $light-bg-color-palette-1: (
 
 $light-theme: (
     // #region core-variables
-    pvt-bg: #ffffff,
-    pvt-border-color: #ccc,
+    pvt-bg: var(--pvt-bg-color-0),
+    pvt-border-color: var(--pvt-bg-color-7),
 
-    pvt-theme-primary: #730ff0,
+    pvt-theme-primary: map.get($light-vibrant-color-palette, vibrant-amaranth),
     pvt-theme-secondary: #f2f2f2,
     pvt-theme-info: #25B6EB,
     pvt-theme-warning: #F59E0B,
