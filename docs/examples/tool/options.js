@@ -88,11 +88,11 @@ function handleJsonFile(pivotick, file) {
         try {
             const jsonData = JSON.parse(e.target.result)
             if (!jsonData.nodes) {
-                console.error('Invalid JSON file. Most contain the key `nodes`', err)
+                console.error('Invalid JSON file. Most contain the key `nodes`')
                 return
             }
             if (!jsonData.edges) {
-                console.error('Invalid JSON file. Most contain the key `edges`', err)
+                console.error('Invalid JSON file. Most contain the key `edges`')
                 return
             }
             loadGraphData(pivotick, jsonData)
