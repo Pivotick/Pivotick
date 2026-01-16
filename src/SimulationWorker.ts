@@ -149,8 +149,6 @@ self.onmessage = (e: MessageEvent<WorkerInput>) => {
 export function runSimulation(plainNodes: Node[], plainEdges: Edge[], options: SimulationOptions, canvasBCR: DOMRect): { nodes: Node[]; edges: Edge[] } {
     const nodes = plainNodes.map(n => {
         const node = new Node(n.id, n.getData(), n.getStyle())
-        console.log(n.getCircleRadius());
-        
         node.setCircleRadius(n.getCircleRadius())
         return node
     })

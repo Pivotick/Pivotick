@@ -152,50 +152,11 @@ export class Simulation {
             .force('collide', simulationForces.collide)
             .force('gravity', simulationForces.gravity)
 
-        simulationForces.center
-            .x(0)
-            .y(0)
-            .strength(options.d3CenterStrength)
-
-        simulationForces.gravity
-            .x(canvasBCR.width / 2)
-            .y(canvasBCR.height / 2)
-            .strength((node) => {
-                const n = node as Node
-                const degree = n.degree() ?? 0
-                return degree === 0 ? options.d3GravityStrength : 0
-            })
-
-        simulationForces.link.distance((d) => {
-            const labelContent = edgeLabelGetter(d)
-            if (!labelContent || labelContent === '') {
-                return options.d3LinkDistance
-            }
-            const labelGuessedSize = labelContent.length * 10
-            return Math.max(options.d3LinkDistance, labelGuessedSize)
-        })
-        if (options.d3LinkStrength) {
-            simulationForces.link.strength(options.d3LinkStrength)
-        }
-        simulationForces.charge
-            .theta(options.d3ManyBodyTheta)
-            .strength((node: SimulationNodeDatum) => {
-                const n = node as Node
-                const baseStrength = options.d3ManyBodyStrength
-
-                const radius = n.getCircleRadius()
-                const dampedRadius = 10 + Math.sqrt(radius - 10) // Slowly push other nodes if radius increases
-
-                return baseStrength * (dampedRadius * dampedRadius) / 100
-            })
-
-        simulationForces.collide
-            .radius((node: SimulationNodeDatum) => {
-                const n = node as Node
-                return n.getCircleRadius() ? 1.2 * n.getCircleRadius() : options.d3CollideRadius
-            })
-            .strength(options.d3CollideStrength)
-
+        this.initSimulationForceCenter(simulationForces.center, options)
+        this.initSimulationForceGravity(simulationForces.gravity, options, canvasBCR)
+        this.initSimulationForceLink(simulationForces.link, options)
+        this.initSimulationForceCharge(simulationForces.charge, options)
+        this.initSimulationForceCollide(simulationForces.collide, options)
 
         simulation.alphaMin(options.d3AlphaMin)
         simulation.alphaDecay(options.d3AlphaDecay)
@@ -206,6 +167,57 @@ export class Simulation {
             simulation: simulation,
             simulationForces: simulationForces,
         }
+    }
+
+    private static initSimulationForceCenter(force: d3ForceCenterType<Node>, options: SimulationOptions) {
+        force.x(0)
+            .y(0)
+            .strength(options.d3CenterStrength)
+    }
+
+    private static initSimulationForceGravity(force: ForceGravity<Node>, options: SimulationOptions, canvasBCR: DOMRect) {
+        force.x(canvasBCR.width / 2)
+            .y(canvasBCR.height / 2)
+            .strength((node) => {
+                const n = node as Node
+                const degree = n.degree() ?? 0
+                return degree === 0 ? options.d3GravityStrength : 0
+            })
+    }
+
+    private static initSimulationForceLink(force: d3ForceLinkType<Node, Edge>, options: SimulationOptions) {
+        force.distance((d) => {
+            const labelContent = edgeLabelGetter(d)
+            if (!labelContent || labelContent === '') {
+                return options.d3LinkDistance
+            }
+            const labelGuessedSize = labelContent.length * 10
+            return Math.max(options.d3LinkDistance, labelGuessedSize)
+        })
+        if (options.d3LinkStrength) {
+            force.strength(options.d3LinkStrength)
+        }
+    }
+
+    private static initSimulationForceCharge(force: d3ForceManyBodyType<Node>, options: SimulationOptions) {
+        force.theta(options.d3ManyBodyTheta)
+            .strength((node: SimulationNodeDatum) => {
+                const n = node as Node
+                const baseStrength = options.d3ManyBodyStrength
+
+                const radius = n.getCircleRadius()
+                const dampedRadius = 10 + Math.sqrt(radius - 10) // Slowly push other nodes if radius increases
+
+                return baseStrength * (dampedRadius * dampedRadius) / 100
+            })
+    }
+
+    private static initSimulationForceCollide(force: d3ForceCollideType<Node>, options: SimulationOptions) {
+        force.radius((node: SimulationNodeDatum) => {
+            const n = node as Node
+            return n.getCircleRadius() ? 1.2 * n.getCircleRadius() : options.d3CollideRadius
+        })
+            .strength(options.d3CollideStrength)
     }
 
     public update() {
@@ -250,8 +262,8 @@ export class Simulation {
 
     /** @private */
     public applyScalledSimulationOptions(): void {
-        this.simulationForces.charge.strength(this.options.d3ManyBodyStrength)
-        this.simulationForces.collide.strength(this.options.d3CollideStrength)
+        Simulation.initSimulationForceCharge(this.simulationForces.charge, this.options)
+        Simulation.initSimulationForceCollide(this.simulationForces.collide, this.options)
     }
 
     /**
