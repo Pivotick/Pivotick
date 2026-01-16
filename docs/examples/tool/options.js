@@ -4,7 +4,7 @@ import { createIcon } from './../../../src/utils/ElementCreation'
 function renderDropper() {
     const div = document.createElement('div')
     div.id = 'json-dropper'
-    div.style.background = 'var(--pvt-bg-color-8)'
+    div.style.background = 'var(--pvt-bg-color-6)'
     div.style.padding = '4px 8px'
     div.style.borderRadius = '4px'
     div.style.height = '200px'
@@ -47,16 +47,16 @@ function loadedCb(pivotick) {
 
     parent.addEventListener('dragover', (event) => {
         event.preventDefault() // Necessary to allow drop
-        container.style.backgroundColor = 'color-mix(in srgb, var(--pvt-bg-color-8) 70%, #fff)'
+        container.style.backgroundColor = 'color-mix(in srgb, var(--pvt-bg-color-8) 80%, #fff)'
     })
 
     parent.addEventListener('dragleave', () => {
-        container.style.backgroundColor = ''
+        container.style.backgroundColor = 'var(--pvt-bg-color-6)'
     })
 
     parent.addEventListener('drop', (event) => {
         event.preventDefault()
-        container.style.backgroundColor = ''
+        container.style.backgroundColor = 'var(--pvt-bg-color-6)'
 
         const files = event.dataTransfer?.files
         if (!files || files.length === 0) return
