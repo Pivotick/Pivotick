@@ -1,20 +1,18 @@
 import type { Node } from './Node'
 import type { Edge } from './Edge'
 import type { Graph } from './Graph'
-import { createSvgElement } from './utils/ElementCreation'
 import type { GraphRendererOptions } from './interfaces/RendererOptions'
 import type { GraphInteractions } from './GraphInteractions'
 
-const PROGRESS_BAR_WIDTH = 200
-const PROGRESS_BAR_HEIGHT = 8
 
 export abstract class GraphRenderer {
     protected graph: Graph
     protected container: HTMLElement
     protected options: Partial<GraphRendererOptions>
     protected layoutProgress = 0
-    protected progressBar: SVGRectElement | null = null
-    protected timerLabel: SVGTextElement | null = null
+    protected progressBar: HTMLDivElement | null = null
+    protected timerLabel: HTMLSpanElement | null = null
+    protected loadingPb: HTMLDivElement | null = null
 
     constructor(graph: Graph, container: HTMLElement, options: Partial<GraphRendererOptions>) {
         this.graph = graph
@@ -42,7 +40,7 @@ export abstract class GraphRenderer {
     public updateLayoutProgress(progress: number, elapsedTime: number): void {
         this.layoutProgress = progress
         if (this.progressBar && this.timerLabel) {
-            this.progressBar.setAttribute('width', `${progress * PROGRESS_BAR_WIDTH}`)
+            this.progressBar.style.width = `${progress * 100}%`
             this.timerLabel.textContent = `Elapsed time: ${(elapsedTime / 1000).toFixed(1)} sec`
             this.toggleLayoutProgressVisibility()
         }
@@ -53,64 +51,55 @@ export abstract class GraphRenderer {
         if (zoomGroup) {
             zoomGroup.classList.toggle('hidden', this.layoutProgress < 1)
         }
-        if (this.progressBar && this.progressBar.parentNode) {
-            (this.progressBar.parentNode as SVGGElement).classList.toggle('hidden', this.layoutProgress >= 1)
+        if (this.loadingPb) {
+            this.loadingPb.classList.toggle('hidden', this.layoutProgress >= 1)
         }
     }
 
     public setupRendering(): void {
-        this.createSvgProgressBar()
+        this.createHtmlProgressBar()
     }
 
-    protected createSvgProgressBar(): void {
+    protected createHtmlProgressBar(): void {
         const canvas = this.getCanvas()
         if (!canvas)
             throw new Error('Canvas element is not defined in the graph renderer.')
 
-        const bbox = canvas.getBoundingClientRect()
-        const centerX = bbox.width / 2 - PROGRESS_BAR_WIDTH / 2
-        const centerY = bbox.height / 2 - PROGRESS_BAR_HEIGHT / 2
+        const loadingPb = document.createElement('div')
+        loadingPb.classList.add('pvt-loading-progress-bar')
+        loadingPb.style.position = 'absolute'
+        loadingPb.style.left = '50%'
+        loadingPb.style.top = '50%'
+        loadingPb.style.transform = 'translate(-50%, -50%)'
 
-        const bg = createSvgElement('rect', {
-            class: 'background',
-            width: PROGRESS_BAR_WIDTH + 2 * 10,
-        })
+        const bg = document.createElement('div')
+        bg.classList.add('background')
+        bg.style.width = '100%'
 
-        const track = createSvgElement('rect', {
-            class: 'track',
-            width: PROGRESS_BAR_WIDTH,
-        })
+        const track = document.createElement('div')
+        track.classList.add('track')
+        bg.style.width = '100%'
 
-        const progressFill = createSvgElement('rect', {
-            class: 'fill',
-            width: 0,
-        })
+        const progressFill = document.createElement('div')
+        progressFill.classList.add('fill')
+        progressFill.style.width = '0px'
 
-        const textLabel = createSvgElement('text', {
-            class: 'label',
-            x: PROGRESS_BAR_WIDTH / 2,
-            y: PROGRESS_BAR_HEIGHT + 20,
-        })
+        const textLabel = document.createElement('span')
+        textLabel.classList.add('label')
         textLabel.textContent = 'Optimizing node positions...'
 
-        const timerLabel = createSvgElement('text', {
-            class: 'label',
-            x: PROGRESS_BAR_WIDTH / 2,
-            y: PROGRESS_BAR_HEIGHT + 42,
-        })
+        const timerLabel = document.createElement('span')
+        timerLabel.classList.add('label')
         timerLabel.textContent = 'Elapsed time: 0 sec'
 
-        const loadingPb = createSvgElement('g',
-            {
-                transform: `translate(${centerX}, ${centerY})`,
-            },
-            [bg, track, progressFill, textLabel, timerLabel]
-        )
-        loadingPb.classList.add('pvt-loading-progress-bar')
-
+        track.appendChild(progressFill)
+        bg.appendChild(track)
+        loadingPb.append(bg, textLabel, timerLabel)
         canvas.appendChild(loadingPb)
+
         this.progressBar = progressFill
         this.timerLabel = timerLabel
+        this.loadingPb = loadingPb
     }
 }
 

@@ -13,32 +13,39 @@
 
 
 .pvt-loading-progress-bar {
+    padding: 0.75em;
+    background: var(--pvt-menu-bg-color);
+    border: 1px solid var(--pvt-menu-border-color);
+    box-shadow: var(--pvt-box-shadow-strong);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
     &.hidden {
         visibility: hidden;
     }
 
-    rect.background {
-        fill: #fafafa;
-        rx: 4;
-        ry: 4;
-        x: -10px;
-        y: -10px;
-        height: 70px;
-        filter: drop-shadow(0px 4px 4px rgba(0, 0, 0, 0.3));
+    div.background {
+        padding: 10px;
+        box-sizing: border-box;
+        margin-bottom: 0.5em;
+
+        .track {
+            position: relative;
+            background: #e0e0e0;
+            border-radius: 4px;
+            height: 8px;
+            rx: 4;
+            ry: 4;
+            overflow: hidden;
+        }
+
+        .fill {
+            height: 100%;
+            background: var(--pvt-bg-color-primary);
+        }
     }
-    rect.track {
-        fill: #e0e0e0;
-        height: 8px;
-        rx: 4;
-        ry: 4;
-    }
-    rect.fill {
-        height: 8px;
-        fill: var(--pvt-bg-color-primary);
-        rx: 4;
-        ry: 4;
-    }
-    text.label {
+    span.label {
         text-anchor: middle;
         font-size: 16px;
         fill: #555;

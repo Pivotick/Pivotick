@@ -288,7 +288,7 @@ export class GraphSvgRenderer extends GraphRenderer {
     }
 
     public setupRendering(): void {
-        this.createSvgProgressBar()
+        this.createHtmlProgressBar()
     }
 
     public getZoomBehavior(): ZoomBehavior<SVGSVGElement, unknown> {
