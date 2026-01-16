@@ -167,6 +167,7 @@ export class Node {
         clone.vy = this.vy
         clone.fx = this.fx
         clone.fy = this.fy
+        clone._circleRadius = this._circleRadius
 
         return clone
     }

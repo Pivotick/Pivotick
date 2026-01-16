@@ -168,8 +168,7 @@ export class NodeDrawer {
         return typeof shape === 'object' && shape !== null && 'd' in shape
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    private genericNodeRender(nodeSelection: Selection<SVGGElement, Node, null, undefined>, style: NodeStyle, _node: Node): void {
+    private genericNodeRender(nodeSelection: Selection<SVGGElement, Node, null, undefined>, style: NodeStyle, node: Node): void {
         style.size = style.size as number
         style.shape = style.shape as NodeShape
         style.text = style.text as string
@@ -191,6 +190,7 @@ export class NodeDrawer {
         switch (style.shape) {
             case 'circle':
                 renderedNode.attr('r', style.size)
+                node.setCircleRadius(style.size)
                 break
             case 'square':
                 renderedNode
@@ -198,6 +198,7 @@ export class NodeDrawer {
                     .attr('height', style.size * 2)
                     .attr('x', -style.size)
                     .attr('y', -style.size)
+                node.setCircleRadius(style.size)
                 break
             case 'triangle':
                 {
@@ -208,6 +209,7 @@ export class NodeDrawer {
                     ].map(p => p.join(',')).join(' ')
                     renderedNode
                         .attr('d', `M${trianglePath}Z`)
+                    node.setCircleRadius(style.size)
                     break
                 }
             case 'hexagon':
@@ -219,13 +221,16 @@ export class NodeDrawer {
                     }).map(p => p.join(',')).join(' ')
                     renderedNode
                         .attr('d', `M${hexPoints}Z`)
+                    node.setCircleRadius(style.size)
                     break
                 }
             default:
                 if (this.isCustomShape(style.shape)) {
                     renderedNode.attr('d', style.shape.d)
+                    node.setCircleRadius(15) // Just guessing for now. Actual size is assigned on next frame
                 } else {
                     renderedNode.attr('r', style.size)
+                    node.setCircleRadius(style.size)
                 }
                 break
         }

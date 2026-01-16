@@ -8,6 +8,7 @@ import type { SimulationOptions } from './interfaces/SimulationOptions'
 import type { EdgeFullStyle } from './interfaces/RendererOptions'
 
 export interface PlainNode<T = NodeData> {
+    _circleRadius: number
     id: string
     data?: T
     style?: T
@@ -39,7 +40,11 @@ self.onmessage = (e: MessageEvent<WorkerInput>) => {
     if (e.data.source !== 'simulation-worker-wrapper') return
     const { nodes: plainNodes, edges: plainEdges, options, canvasBCR } = e.data
 
-    const nodes = plainNodes.map(n => new Node(n.id, n.data, n.style))
+    const nodes = plainNodes.map(n => {
+        const node = new Node(n.id, n.data, n.style)
+        node.setCircleRadius(n._circleRadius ?? 10)
+        return node
+    })
     const nodeMap = new Map<string, Node>(nodes.map(n => [n.id, n]))
 
     if (options.layout?.type === 'force') {
@@ -142,7 +147,13 @@ self.onmessage = (e: MessageEvent<WorkerInput>) => {
 }
 
 export function runSimulation(plainNodes: Node[], plainEdges: Edge[], options: SimulationOptions, canvasBCR: DOMRect): { nodes: Node[]; edges: Edge[] } {
-    const nodes = plainNodes.map(n => new Node(n.id, n.getData(), n.getStyle()))
+    const nodes = plainNodes.map(n => {
+        const node = new Node(n.id, n.getData(), n.getStyle())
+        console.log(n.getCircleRadius());
+        
+        node.setCircleRadius(n.getCircleRadius())
+        return node
+    })
     const nodeMap = new Map<string, Node>(nodes.map(n => [n.id, n]))
 
     if (options.layout?.type === 'force') {
