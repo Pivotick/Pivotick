@@ -1,4 +1,4 @@
-[**pivotick v0.0.0**](../../../../README.md)
+[**pivotick v0.0.1**](../../../../README.md)
 
 ***
 
@@ -8,7 +8,7 @@
 
 > **RawNode** = `object`
 
-Defined in: [interfaces/GraphOptions.ts:55](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/interfaces/GraphOptions.ts#L55)
+Defined in: [interfaces/GraphOptions.ts:55](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/interfaces/GraphOptions.ts#L55)
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [interfaces/GraphOptions.ts:55](https://github.com/mokaddem/Pivotick
 
 > `optional` **data**: [`NodeData`](../../../../interfaces/NodeData.md)
 
-Defined in: [interfaces/GraphOptions.ts:55](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/interfaces/GraphOptions.ts#L55)
+Defined in: [interfaces/GraphOptions.ts:55](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/interfaces/GraphOptions.ts#L55)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [interfaces/GraphOptions.ts:55](https://github.com/mokaddem/Pivotick
 
 > **id**: `string` \| `number`
 
-Defined in: [interfaces/GraphOptions.ts:55](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/interfaces/GraphOptions.ts#L55)
+Defined in: [interfaces/GraphOptions.ts:55](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/interfaces/GraphOptions.ts#L55)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [interfaces/GraphOptions.ts:55](https://github.com/mokaddem/Pivotick
 
 > `optional` **style**: `Partial`\<[`NodeStyle`](../../RendererOptions/interfaces/NodeStyle.md)\>
 
-Defined in: [interfaces/GraphOptions.ts:55](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/interfaces/GraphOptions.ts#L55)
+Defined in: [interfaces/GraphOptions.ts:55](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/interfaces/GraphOptions.ts#L55)

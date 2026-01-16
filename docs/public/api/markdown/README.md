@@ -1,8 +1,8 @@
-**pivotick v0.0.0**
+**pivotick v0.0.1**
 
 ***
 
-# pivotick v0.0.0
+# pivotick v0.0.1
 
 ## Classes
 

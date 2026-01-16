@@ -1,4 +1,4 @@
-[**pivotick v0.0.0**](../README.md)
+[**pivotick v0.0.1**](../README.md)
 
 ***
 
@@ -6,15 +6,21 @@
 
 # Abstract Interface: GraphRenderer
 
-Defined in: [GraphRenderer.ts:11](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphRenderer.ts#L11)
+Defined in: [GraphRenderer.ts:8](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphRenderer.ts#L8)
 
 ## Methods
 
 ### fitAndCenter()
 
-> `abstract` **fitAndCenter**(): `void`
+> `abstract` **fitAndCenter**(`fitAndCenter?`): `void`
 
-Defined in: [GraphRenderer.ts:35](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphRenderer.ts#L35)
+Defined in: [GraphRenderer.ts:33](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphRenderer.ts#L33)
+
+#### Parameters
+
+##### fitAndCenter?
+
+`number`
 
 #### Returns
 
@@ -26,7 +32,7 @@ Defined in: [GraphRenderer.ts:35](https://github.com/mokaddem/Pivotick/blob/efd3
 
 > `abstract` **focusElement**(`element`): `void`
 
-Defined in: [GraphRenderer.ts:36](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphRenderer.ts#L36)
+Defined in: [GraphRenderer.ts:34](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphRenderer.ts#L34)
 
 #### Parameters
 
@@ -44,7 +50,7 @@ Defined in: [GraphRenderer.ts:36](https://github.com/mokaddem/Pivotick/blob/efd3
 
 > **getCanvas**(): `HTMLElement`
 
-Defined in: [GraphRenderer.ts:38](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphRenderer.ts#L38)
+Defined in: [GraphRenderer.ts:36](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphRenderer.ts#L36)
 
 #### Returns
 
@@ -56,7 +62,7 @@ Defined in: [GraphRenderer.ts:38](https://github.com/mokaddem/Pivotick/blob/efd3
 
 > `abstract` **getCanvasSelection**(): `unknown`
 
-Defined in: [GraphRenderer.ts:31](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphRenderer.ts#L31)
+Defined in: [GraphRenderer.ts:29](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphRenderer.ts#L29)
 
 #### Returns
 
@@ -68,7 +74,7 @@ Defined in: [GraphRenderer.ts:31](https://github.com/mokaddem/Pivotick/blob/efd3
 
 > `abstract` **getGraphInteraction**(): [`GraphInteractions`](../pivotick/namespaces/GraphInteractions/classes/GraphInteractions.md)\<`unknown`\>
 
-Defined in: [GraphRenderer.ts:30](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphRenderer.ts#L30)
+Defined in: [GraphRenderer.ts:28](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphRenderer.ts#L28)
 
 #### Returns
 
@@ -80,7 +86,7 @@ Defined in: [GraphRenderer.ts:30](https://github.com/mokaddem/Pivotick/blob/efd3
 
 > `abstract` **getSelectionBox**(): [`AbstractSelectionBox`](AbstractSelectionBox.md) \| `null`
 
-Defined in: [GraphRenderer.ts:29](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphRenderer.ts#L29)
+Defined in: [GraphRenderer.ts:27](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphRenderer.ts#L27)
 
 #### Returns
 
@@ -92,7 +98,7 @@ Defined in: [GraphRenderer.ts:29](https://github.com/mokaddem/Pivotick/blob/efd3
 
 > `abstract` **getZoomBehavior**(): `unknown`
 
-Defined in: [GraphRenderer.ts:28](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphRenderer.ts#L28)
+Defined in: [GraphRenderer.ts:26](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphRenderer.ts#L26)
 
 #### Returns
 
@@ -104,7 +110,7 @@ Defined in: [GraphRenderer.ts:28](https://github.com/mokaddem/Pivotick/blob/efd3
 
 > `abstract` **getZoomGroup**(): `HTMLElement` \| `SVGElement` \| `null`
 
-Defined in: [GraphRenderer.ts:32](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphRenderer.ts#L32)
+Defined in: [GraphRenderer.ts:30](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphRenderer.ts#L30)
 
 #### Returns
 
@@ -116,7 +122,7 @@ Defined in: [GraphRenderer.ts:32](https://github.com/mokaddem/Pivotick/blob/efd3
 
 > `abstract` **init**(): `void`
 
-Defined in: [GraphRenderer.ts:25](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphRenderer.ts#L25)
+Defined in: [GraphRenderer.ts:23](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphRenderer.ts#L23)
 
 #### Returns
 
@@ -128,7 +134,7 @@ Defined in: [GraphRenderer.ts:25](https://github.com/mokaddem/Pivotick/blob/efd3
 
 > `abstract` **nextTick**(): `void`
 
-Defined in: [GraphRenderer.ts:27](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphRenderer.ts#L27)
+Defined in: [GraphRenderer.ts:25](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphRenderer.ts#L25)
 
 #### Returns
 
@@ -140,7 +146,7 @@ Defined in: [GraphRenderer.ts:27](https://github.com/mokaddem/Pivotick/blob/efd3
 
 > **setupRendering**(): `void`
 
-Defined in: [GraphRenderer.ts:61](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphRenderer.ts#L61)
+Defined in: [GraphRenderer.ts:59](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphRenderer.ts#L59)
 
 #### Returns
 
@@ -152,7 +158,7 @@ Defined in: [GraphRenderer.ts:61](https://github.com/mokaddem/Pivotick/blob/efd3
 
 > `abstract` **update**(`dataChanged`): `void`
 
-Defined in: [GraphRenderer.ts:26](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphRenderer.ts#L26)
+Defined in: [GraphRenderer.ts:24](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphRenderer.ts#L24)
 
 #### Parameters
 
@@ -170,7 +176,7 @@ Defined in: [GraphRenderer.ts:26](https://github.com/mokaddem/Pivotick/blob/efd3
 
 > **updateLayoutProgress**(`progress`, `elapsedTime`): `void`
 
-Defined in: [GraphRenderer.ts:42](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphRenderer.ts#L42)
+Defined in: [GraphRenderer.ts:40](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphRenderer.ts#L40)
 
 #### Parameters
 
@@ -192,7 +198,7 @@ Defined in: [GraphRenderer.ts:42](https://github.com/mokaddem/Pivotick/blob/efd3
 
 > `abstract` **zoomIn**(): `void`
 
-Defined in: [GraphRenderer.ts:33](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphRenderer.ts#L33)
+Defined in: [GraphRenderer.ts:31](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphRenderer.ts#L31)
 
 #### Returns
 
@@ -204,7 +210,7 @@ Defined in: [GraphRenderer.ts:33](https://github.com/mokaddem/Pivotick/blob/efd3
 
 > `abstract` **zoomOut**(): `void`
 
-Defined in: [GraphRenderer.ts:34](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphRenderer.ts#L34)
+Defined in: [GraphRenderer.ts:32](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphRenderer.ts#L32)
 
 #### Returns
 

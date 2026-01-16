@@ -1,4 +1,4 @@
-[**pivotick v0.0.0**](../README.md)
+[**pivotick v0.0.1**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: NodeData
 
-Defined in: [Node.ts:5](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/Node.ts#L5)
+Defined in: [Node.ts:5](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/Node.ts#L5)
 
 ## Indexable
 

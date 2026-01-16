@@ -1,4 +1,4 @@
-[**pivotick v0.0.0**](../README.md)
+[**pivotick v0.0.1**](../README.md)
 
 ***
 
@@ -8,7 +8,7 @@
 
 > `const` **defaultMarkerStyleMap**: [`MarkerStyleMap`](../pivotick/namespaces/RendererOptions/type-aliases/MarkerStyleMap.md)
 
-Defined in: [renderers/svg/GraphSvgRenderer.ts:72](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/renderers/svg/GraphSvgRenderer.ts#L72)
+Defined in: [renderers/svg/GraphSvgRenderer.ts:69](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/renderers/svg/GraphSvgRenderer.ts#L69)
 
 ## Default
 
@@ -17,18 +17,15 @@ Defined in: [renderers/svg/GraphSvgRenderer.ts:72](https://github.com/mokaddem/P
     arrow: {
         pathD: 'M0,-5L10,0L0,5',
         viewBox: '0 -5 10 10',
-        refX: 5,
+        refX: 6,
         refY: 0,
-        markerWidth: 6,
-        markerHeight: 6,
+        markerWidth: 12,
+        markerHeight: 12,
         markerUnits: 'userSpaceOnUse',
         orient: 'auto',
         fill: 'var(--pvt-edge-stroke, #999)',
         selected: {
             fill: 'var(--pvt-edge-selected-stroke, #007acc)',
-            markerWidth: 12,
-            markerHeight: 12,
-            refX: 6,
         }
     },
     circle: {

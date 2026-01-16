@@ -1,4 +1,4 @@
-[**pivotick v0.0.0**](../../../../README.md)
+[**pivotick v0.0.1**](../../../../README.md)
 
 ***
 
@@ -8,7 +8,7 @@
 
 > **GraphUIMode** = `"viewer"` \| `"full"` \| `"light"` \| `"static"`
 
-Defined in: [interfaces/GraphUI.ts:29](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/interfaces/GraphUI.ts#L29)
+Defined in: [interfaces/GraphUI.ts:29](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/interfaces/GraphUI.ts#L29)
 
 - `"full"`: Full UI and interactions.
 - `"light"`: Minimal UI, interactions enabled.

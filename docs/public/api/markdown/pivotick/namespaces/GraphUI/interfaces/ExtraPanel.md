@@ -1,4 +1,4 @@
-[**pivotick v0.0.0**](../../../../README.md)
+[**pivotick v0.0.1**](../../../../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: ExtraPanel
 
-Defined in: [interfaces/GraphUI.ts:127](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/interfaces/GraphUI.ts#L127)
+Defined in: [interfaces/GraphUI.ts:127](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/interfaces/GraphUI.ts#L127)
 
 Additional panel in the graph UI's sidebar.
 Currently only displayed when an element is selected
@@ -30,11 +30,27 @@ Both `title` and `render` can be:
 
 ## Properties
 
+### alwaysVisible?
+
+> `optional` **alwaysVisible**: `boolean`
+
+Defined in: [interfaces/GraphUI.ts:134](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/interfaces/GraphUI.ts#L134)
+
+should the panel be always visible
+
+#### Default
+
+```ts
+false
+```
+
+***
+
 ### render
 
 > **render**: `string` \| `HTMLElement` \| (`element`) => `string` \| `HTMLElement`
 
-Defined in: [interfaces/GraphUI.ts:129](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/interfaces/GraphUI.ts#L129)
+Defined in: [interfaces/GraphUI.ts:129](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/interfaces/GraphUI.ts#L129)
 
 ***
 
@@ -42,4 +58,4 @@ Defined in: [interfaces/GraphUI.ts:129](https://github.com/mokaddem/Pivotick/blo
 
 > **title**: `string` \| `HTMLElement` \| (`element`) => `string` \| `HTMLElement`
 
-Defined in: [interfaces/GraphUI.ts:128](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/interfaces/GraphUI.ts#L128)
+Defined in: [interfaces/GraphUI.ts:128](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/interfaces/GraphUI.ts#L128)

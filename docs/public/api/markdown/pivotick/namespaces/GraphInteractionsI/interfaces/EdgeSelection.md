@@ -1,4 +1,4 @@
-[**pivotick v0.0.0**](../../../../README.md)
+[**pivotick v0.0.1**](../../../../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: EdgeSelection\<TElement\>
 
-Defined in: [interfaces/GraphInteractions.ts:10](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/interfaces/GraphInteractions.ts#L10)
+Defined in: [interfaces/GraphInteractions.ts:10](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/interfaces/GraphInteractions.ts#L10)
 
 ## Type Parameters
 
@@ -20,7 +20,7 @@ Defined in: [interfaces/GraphInteractions.ts:10](https://github.com/mokaddem/Piv
 
 > **edge**: [`Edge`](../../../../classes/Edge.md)
 
-Defined in: [interfaces/GraphInteractions.ts:11](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/interfaces/GraphInteractions.ts#L11)
+Defined in: [interfaces/GraphInteractions.ts:11](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/interfaces/GraphInteractions.ts#L11)
 
 ***
 
@@ -28,4 +28,4 @@ Defined in: [interfaces/GraphInteractions.ts:11](https://github.com/mokaddem/Piv
 
 > **element**: `TElement`
 
-Defined in: [interfaces/GraphInteractions.ts:12](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/interfaces/GraphInteractions.ts#L12)
+Defined in: [interfaces/GraphInteractions.ts:12](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/interfaces/GraphInteractions.ts#L12)

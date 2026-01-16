@@ -1,4 +1,4 @@
-[**pivotick v0.0.0**](../../../../README.md)
+[**pivotick v0.0.1**](../../../../README.md)
 
 ***
 
@@ -8,7 +8,7 @@
 
 > **RendererType** = `"svg"` \| `"canvas"`
 
-Defined in: [interfaces/RendererOptions.ts:145](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/interfaces/RendererOptions.ts#L145)
+Defined in: [interfaces/RendererOptions.ts:145](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/interfaces/RendererOptions.ts#L145)
 
 - `'svg'` - Uses SVG elements for rendering
 - `'canvas'` - Uses the HTML canvas for rendering (barely supported)

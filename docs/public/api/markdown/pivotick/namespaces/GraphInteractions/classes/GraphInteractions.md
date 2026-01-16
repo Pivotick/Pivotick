@@ -1,4 +1,4 @@
-[**pivotick v0.0.0**](../../../../README.md)
+[**pivotick v0.0.1**](../../../../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Class: GraphInteractions\<TElement\>
 
-Defined in: [GraphInteractions.ts:8](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L8)
+Defined in: [GraphInteractions.ts:8](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L8)
 
 ## Type Parameters
 
@@ -20,7 +20,7 @@ Defined in: [GraphInteractions.ts:8](https://github.com/mokaddem/Pivotick/blob/e
 
 > **new GraphInteractions**\<`TElement`\>(`graph`): `GraphInteractions`\<`TElement`\>
 
-Defined in: [GraphInteractions.ts:19](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L19)
+Defined in: [GraphInteractions.ts:19](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L19)
 
 #### Parameters
 
@@ -38,7 +38,7 @@ Defined in: [GraphInteractions.ts:19](https://github.com/mokaddem/Pivotick/blob/
 
 > **addNodesToSelection**(`addSelection`): `void`
 
-Defined in: [GraphInteractions.ts:229](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L229)
+Defined in: [GraphInteractions.ts:229](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L229)
 
 #### Parameters
 
@@ -56,7 +56,7 @@ Defined in: [GraphInteractions.ts:229](https://github.com/mokaddem/Pivotick/blob
 
 > **canvasClick**(`event`): `void`
 
-Defined in: [GraphInteractions.ts:144](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L144)
+Defined in: [GraphInteractions.ts:144](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L144)
 
 #### Parameters
 
@@ -74,7 +74,7 @@ Defined in: [GraphInteractions.ts:144](https://github.com/mokaddem/Pivotick/blob
 
 > **canvasContextmenu**(`event`): `void`
 
-Defined in: [GraphInteractions.ts:159](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L159)
+Defined in: [GraphInteractions.ts:159](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L159)
 
 #### Parameters
 
@@ -92,7 +92,7 @@ Defined in: [GraphInteractions.ts:159](https://github.com/mokaddem/Pivotick/blob
 
 > **canvasMousemove**(`event`): `void`
 
-Defined in: [GraphInteractions.ts:166](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L166)
+Defined in: [GraphInteractions.ts:166](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L166)
 
 #### Parameters
 
@@ -110,7 +110,7 @@ Defined in: [GraphInteractions.ts:166](https://github.com/mokaddem/Pivotick/blob
 
 > **canvasZoom**(`event`): `void`
 
-Defined in: [GraphInteractions.ts:152](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L152)
+Defined in: [GraphInteractions.ts:152](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L152)
 
 #### Parameters
 
@@ -128,7 +128,7 @@ Defined in: [GraphInteractions.ts:152](https://github.com/mokaddem/Pivotick/blob
 
 > **clearEdgeSelectionList**(): `void`
 
-Defined in: [GraphInteractions.ts:321](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L321)
+Defined in: [GraphInteractions.ts:321](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L321)
 
 #### Returns
 
@@ -140,7 +140,7 @@ Defined in: [GraphInteractions.ts:321](https://github.com/mokaddem/Pivotick/blob
 
 > **clearNodeSelectionList**(): `void`
 
-Defined in: [GraphInteractions.ts:310](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L310)
+Defined in: [GraphInteractions.ts:310](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L310)
 
 #### Returns
 
@@ -152,7 +152,7 @@ Defined in: [GraphInteractions.ts:310](https://github.com/mokaddem/Pivotick/blob
 
 > **dragging**(`event`, `node`): `void`
 
-Defined in: [GraphInteractions.ts:101](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L101)
+Defined in: [GraphInteractions.ts:101](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L101)
 
 #### Parameters
 
@@ -174,7 +174,7 @@ Defined in: [GraphInteractions.ts:101](https://github.com/mokaddem/Pivotick/blob
 
 > **edgeClick**(`element`, `event`, `edge`): `void`
 
-Defined in: [GraphInteractions.ts:108](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L108)
+Defined in: [GraphInteractions.ts:108](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L108)
 
 #### Parameters
 
@@ -200,7 +200,7 @@ Defined in: [GraphInteractions.ts:108](https://github.com/mokaddem/Pivotick/blob
 
 > **edgeContextmenu**(`element`, `event`, `edge`): `void`
 
-Defined in: [GraphInteractions.ts:123](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L123)
+Defined in: [GraphInteractions.ts:123](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L123)
 
 #### Parameters
 
@@ -226,7 +226,7 @@ Defined in: [GraphInteractions.ts:123](https://github.com/mokaddem/Pivotick/blob
 
 > **edgeDbclick**(`element`, `event`, `edge`): `void`
 
-Defined in: [GraphInteractions.ts:116](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L116)
+Defined in: [GraphInteractions.ts:116](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L116)
 
 #### Parameters
 
@@ -252,7 +252,7 @@ Defined in: [GraphInteractions.ts:116](https://github.com/mokaddem/Pivotick/blob
 
 > **edgeHoverIn**(`element`, `event`, `edge`): `void`
 
-Defined in: [GraphInteractions.ts:130](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L130)
+Defined in: [GraphInteractions.ts:130](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L130)
 
 #### Parameters
 
@@ -278,7 +278,7 @@ Defined in: [GraphInteractions.ts:130](https://github.com/mokaddem/Pivotick/blob
 
 > **edgeHoverOut**(`element`, `event`, `edge`): `void`
 
-Defined in: [GraphInteractions.ts:137](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L137)
+Defined in: [GraphInteractions.ts:137](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L137)
 
 #### Parameters
 
@@ -304,7 +304,7 @@ Defined in: [GraphInteractions.ts:137](https://github.com/mokaddem/Pivotick/blob
 
 > **getGraph**(): [`Pivotick`](../../../../classes/Pivotick.md)
 
-Defined in: [GraphInteractions.ts:48](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L48)
+Defined in: [GraphInteractions.ts:48](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L48)
 
 #### Returns
 
@@ -316,7 +316,7 @@ Defined in: [GraphInteractions.ts:48](https://github.com/mokaddem/Pivotick/blob/
 
 > **getSelectedEdge**(): [`EdgeSelection`](../../GraphInteractionsI/interfaces/EdgeSelection.md)\<`TElement`\> \| `null`
 
-Defined in: [GraphInteractions.ts:345](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L345)
+Defined in: [GraphInteractions.ts:345](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L345)
 
 #### Returns
 
@@ -328,7 +328,7 @@ Defined in: [GraphInteractions.ts:345](https://github.com/mokaddem/Pivotick/blob
 
 > **getSelectedEdgeIDs**(): `string`[] \| `null`
 
-Defined in: [GraphInteractions.ts:357](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L357)
+Defined in: [GraphInteractions.ts:357](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L357)
 
 #### Returns
 
@@ -340,7 +340,7 @@ Defined in: [GraphInteractions.ts:357](https://github.com/mokaddem/Pivotick/blob
 
 > **getSelectedEdges**(): [`EdgeSelection`](../../GraphInteractionsI/interfaces/EdgeSelection.md)\<`TElement`\>[]
 
-Defined in: [GraphInteractions.ts:361](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L361)
+Defined in: [GraphInteractions.ts:361](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L361)
 
 #### Returns
 
@@ -352,7 +352,7 @@ Defined in: [GraphInteractions.ts:361](https://github.com/mokaddem/Pivotick/blob
 
 > **getSelectedNode**(): [`NodeSelection`](../../GraphInteractionsI/interfaces/NodeSelection.md)\<`TElement`\> \| `null`
 
-Defined in: [GraphInteractions.ts:341](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L341)
+Defined in: [GraphInteractions.ts:341](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L341)
 
 #### Returns
 
@@ -364,7 +364,7 @@ Defined in: [GraphInteractions.ts:341](https://github.com/mokaddem/Pivotick/blob
 
 > **getSelectedNodeIDs**(): `string`[] \| `null`
 
-Defined in: [GraphInteractions.ts:349](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L349)
+Defined in: [GraphInteractions.ts:349](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L349)
 
 #### Returns
 
@@ -376,7 +376,7 @@ Defined in: [GraphInteractions.ts:349](https://github.com/mokaddem/Pivotick/blob
 
 > **getSelectedNodes**(): [`NodeSelection`](../../GraphInteractionsI/interfaces/NodeSelection.md)\<`TElement`\>[]
 
-Defined in: [GraphInteractions.ts:353](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L353)
+Defined in: [GraphInteractions.ts:353](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L353)
 
 #### Returns
 
@@ -388,7 +388,7 @@ Defined in: [GraphInteractions.ts:353](https://github.com/mokaddem/Pivotick/blob
 
 > **hasActiveMultiselection**(): `boolean`
 
-Defined in: [GraphInteractions.ts:332](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L332)
+Defined in: [GraphInteractions.ts:332](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L332)
 
 #### Returns
 
@@ -400,7 +400,7 @@ Defined in: [GraphInteractions.ts:332](https://github.com/mokaddem/Pivotick/blob
 
 > **nodeClick**(`element`, `event`, `node`): `void`
 
-Defined in: [GraphInteractions.ts:61](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L61)
+Defined in: [GraphInteractions.ts:61](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L61)
 
 #### Parameters
 
@@ -426,7 +426,7 @@ Defined in: [GraphInteractions.ts:61](https://github.com/mokaddem/Pivotick/blob/
 
 > **nodeContextmenu**(`element`, `event`, `node`): `void`
 
-Defined in: [GraphInteractions.ts:80](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L80)
+Defined in: [GraphInteractions.ts:80](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L80)
 
 #### Parameters
 
@@ -452,7 +452,7 @@ Defined in: [GraphInteractions.ts:80](https://github.com/mokaddem/Pivotick/blob/
 
 > **nodeDbclick**(`element`, `event`, `node`): `void`
 
-Defined in: [GraphInteractions.ts:73](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L73)
+Defined in: [GraphInteractions.ts:73](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L73)
 
 #### Parameters
 
@@ -478,7 +478,7 @@ Defined in: [GraphInteractions.ts:73](https://github.com/mokaddem/Pivotick/blob/
 
 > **nodeHoverIn**(`element`, `event`, `node`): `void`
 
-Defined in: [GraphInteractions.ts:87](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L87)
+Defined in: [GraphInteractions.ts:87](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L87)
 
 #### Parameters
 
@@ -504,7 +504,7 @@ Defined in: [GraphInteractions.ts:87](https://github.com/mokaddem/Pivotick/blob/
 
 > **nodeHoverOut**(`element`, `event`, `node`): `void`
 
-Defined in: [GraphInteractions.ts:94](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L94)
+Defined in: [GraphInteractions.ts:94](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L94)
 
 #### Parameters
 
@@ -530,7 +530,7 @@ Defined in: [GraphInteractions.ts:94](https://github.com/mokaddem/Pivotick/blob/
 
 > **off**\<`K`\>(`event`, `handler`): `void`
 
-Defined in: [GraphInteractions.ts:41](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L41)
+Defined in: [GraphInteractions.ts:41](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L41)
 
 #### Type Parameters
 
@@ -558,7 +558,7 @@ Defined in: [GraphInteractions.ts:41](https://github.com/mokaddem/Pivotick/blob/
 
 > **on**\<`K`\>(`event`, `handler`): `void`
 
-Defined in: [GraphInteractions.ts:34](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L34)
+Defined in: [GraphInteractions.ts:34](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L34)
 
 #### Type Parameters
 
@@ -586,7 +586,7 @@ Defined in: [GraphInteractions.ts:34](https://github.com/mokaddem/Pivotick/blob/
 
 > **refreshRendering**(): `void`
 
-Defined in: [GraphInteractions.ts:336](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L336)
+Defined in: [GraphInteractions.ts:336](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L336)
 
 #### Returns
 
@@ -598,7 +598,7 @@ Defined in: [GraphInteractions.ts:336](https://github.com/mokaddem/Pivotick/blob
 
 > **removeNodesFromSelection**(`removeSelection`): `void`
 
-Defined in: [GraphInteractions.ts:241](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L241)
+Defined in: [GraphInteractions.ts:241](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L241)
 
 #### Parameters
 
@@ -616,7 +616,7 @@ Defined in: [GraphInteractions.ts:241](https://github.com/mokaddem/Pivotick/blob
 
 > **selectEdge**(`element`, `edge`): `void`
 
-Defined in: [GraphInteractions.ts:256](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L256)
+Defined in: [GraphInteractions.ts:256](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L256)
 
 #### Parameters
 
@@ -638,7 +638,7 @@ Defined in: [GraphInteractions.ts:256](https://github.com/mokaddem/Pivotick/blob
 
 > **selectEdges**(`selection`): `void`
 
-Defined in: [GraphInteractions.ts:270](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L270)
+Defined in: [GraphInteractions.ts:270](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L270)
 
 #### Parameters
 
@@ -656,7 +656,7 @@ Defined in: [GraphInteractions.ts:270](https://github.com/mokaddem/Pivotick/blob
 
 > **selectNode**(`element`, `node`): `void`
 
-Defined in: [GraphInteractions.ts:187](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L187)
+Defined in: [GraphInteractions.ts:187](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L187)
 
 #### Parameters
 
@@ -678,7 +678,7 @@ Defined in: [GraphInteractions.ts:187](https://github.com/mokaddem/Pivotick/blob
 
 > **selectNodes**(`selection`): `void`
 
-Defined in: [GraphInteractions.ts:216](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L216)
+Defined in: [GraphInteractions.ts:216](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L216)
 
 #### Parameters
 
@@ -696,7 +696,7 @@ Defined in: [GraphInteractions.ts:216](https://github.com/mokaddem/Pivotick/blob
 
 > **simulationSlowTick**(): `void`
 
-Defined in: [GraphInteractions.ts:180](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L180)
+Defined in: [GraphInteractions.ts:180](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L180)
 
 #### Returns
 
@@ -708,7 +708,7 @@ Defined in: [GraphInteractions.ts:180](https://github.com/mokaddem/Pivotick/blob
 
 > **simulationTick**(): `void`
 
-Defined in: [GraphInteractions.ts:173](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L173)
+Defined in: [GraphInteractions.ts:173](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L173)
 
 #### Returns
 
@@ -720,7 +720,7 @@ Defined in: [GraphInteractions.ts:173](https://github.com/mokaddem/Pivotick/blob
 
 > **unselectAll**(): `void`
 
-Defined in: [GraphInteractions.ts:302](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L302)
+Defined in: [GraphInteractions.ts:302](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L302)
 
 #### Returns
 
@@ -732,7 +732,7 @@ Defined in: [GraphInteractions.ts:302](https://github.com/mokaddem/Pivotick/blob
 
 > **unselectEdge**(): `void`
 
-Defined in: [GraphInteractions.ts:288](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L288)
+Defined in: [GraphInteractions.ts:288](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L288)
 
 #### Returns
 
@@ -744,7 +744,7 @@ Defined in: [GraphInteractions.ts:288](https://github.com/mokaddem/Pivotick/blob
 
 > **unselectNode**(): `void`
 
-Defined in: [GraphInteractions.ts:202](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/GraphInteractions.ts#L202)
+Defined in: [GraphInteractions.ts:202](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/GraphInteractions.ts#L202)
 
 #### Returns
 

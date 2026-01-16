@@ -1,4 +1,4 @@
-[**pivotick v0.0.0**](../README.md)
+[**pivotick v0.0.1**](../README.md)
 
 ***
 
@@ -8,4 +8,4 @@
 
 > **TreeLayoutAlgorithm** = `"FirstZeroInDegree"` \| `"MaxReachability"` \| `"MinMaxDistance"` \| `"MinHeight"`
 
-Defined in: [plugins/layout/Tree.ts:17](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/plugins/layout/Tree.ts#L17)
+Defined in: [plugins/layout/Tree.ts:17](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/plugins/layout/Tree.ts#L17)

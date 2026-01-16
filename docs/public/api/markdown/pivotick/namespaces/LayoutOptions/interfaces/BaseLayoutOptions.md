@@ -1,4 +1,4 @@
-[**pivotick v0.0.0**](../../../../README.md)
+[**pivotick v0.0.1**](../../../../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: BaseLayoutOptions
 
-Defined in: [interfaces/LayoutOptions.ts:6](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/interfaces/LayoutOptions.ts#L6)
+Defined in: [interfaces/LayoutOptions.ts:6](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/interfaces/LayoutOptions.ts#L6)
 
 ## Extended by
 
@@ -19,7 +19,7 @@ Defined in: [interfaces/LayoutOptions.ts:6](https://github.com/mokaddem/Pivotick
 
 > **type**: [`LayoutType`](../type-aliases/LayoutType.md)
 
-Defined in: [interfaces/LayoutOptions.ts:8](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/interfaces/LayoutOptions.ts#L8)
+Defined in: [interfaces/LayoutOptions.ts:8](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/interfaces/LayoutOptions.ts#L8)
 
 #### Default
 

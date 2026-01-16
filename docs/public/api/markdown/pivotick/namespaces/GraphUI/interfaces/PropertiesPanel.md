@@ -1,4 +1,4 @@
-[**pivotick v0.0.0**](../../../../README.md)
+[**pivotick v0.0.1**](../../../../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: PropertiesPanel
 
-Defined in: [interfaces/GraphUI.ts:85](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/interfaces/GraphUI.ts#L85)
+Defined in: [interfaces/GraphUI.ts:85](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/interfaces/GraphUI.ts#L85)
 
 Represents the configuration for the properties panel in the graph UI's sidebar
 
@@ -24,7 +24,7 @@ All key/value pairs from node.getData() or edge.getData()
 
 > **edgePropertiesMap**: (`edge`) => [`PropertyEntry`](PropertyEntry.md)[]
 
-Defined in: [interfaces/GraphUI.ts:97](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/interfaces/GraphUI.ts#L97)
+Defined in: [interfaces/GraphUI.ts:97](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/interfaces/GraphUI.ts#L97)
 
 A function that computes the list of edge properties to display
 
@@ -50,7 +50,7 @@ All key/value pairs from edge.getData()
 
 > **nodePropertiesMap**: (`node`) => [`PropertyEntry`](PropertyEntry.md)[]
 
-Defined in: [interfaces/GraphUI.ts:91](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/interfaces/GraphUI.ts#L91)
+Defined in: [interfaces/GraphUI.ts:91](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/interfaces/GraphUI.ts#L91)
 
 A function that computes the list of node properties to display
 
@@ -76,7 +76,7 @@ All key/value pairs from node.getData()
 
 > `optional` **render**: `string` \| `HTMLElement` \| (`element`) => `string` \| `HTMLElement`
 
-Defined in: [interfaces/GraphUI.ts:104](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/interfaces/GraphUI.ts#L104)
+Defined in: [interfaces/GraphUI.ts:104](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/interfaces/GraphUI.ts#L104)
 
 Custom renderer for the property panel. This content will override the default sidebar property panel.
 

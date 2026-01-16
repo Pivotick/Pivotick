@@ -1,4 +1,4 @@
-[**pivotick v0.0.0**](../README.md)
+[**pivotick v0.0.1**](../README.md)
 
 ***
 
@@ -8,7 +8,7 @@
 
 > `const` **defaultNodeStyleValue**: [`NodeStyle`](../pivotick/namespaces/RendererOptions/interfaces/NodeStyle.md)
 
-Defined in: [renderers/svg/GraphSvgRenderer.ts:141](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/renderers/svg/GraphSvgRenderer.ts#L141)
+Defined in: [renderers/svg/GraphSvgRenderer.ts:135](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/renderers/svg/GraphSvgRenderer.ts#L135)
 
 ## Default
 
@@ -16,7 +16,7 @@ Defined in: [renderers/svg/GraphSvgRenderer.ts:141](https://github.com/mokaddem/
 {
     shape: 'circle',
     size: 10,
-    strokeWidth: 2,
+    strokeWidth: var(--pvt-node-stroke-width, 2),
     color: 'var(--pvt-node-color, #007acc)',
     strokeColor: 'var(--pvt-node-stroke, #fff)',
     fontFamily: 'var(--pvt-label-font, system-ui, sans-serif)',

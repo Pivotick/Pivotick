@@ -1,4 +1,4 @@
-[**pivotick v0.0.0**](../../../../README.md)
+[**pivotick v0.0.1**](../../../../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: SimulationForces
 
-Defined in: [interfaces/SimulationOptions.ts:80](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/interfaces/SimulationOptions.ts#L80)
+Defined in: [interfaces/SimulationOptions.ts:80](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/interfaces/SimulationOptions.ts#L80)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [interfaces/SimulationOptions.ts:80](https://github.com/mokaddem/Piv
 
 > **center**: `ForceCenter`\<[`Node`](../../../../classes/Node.md)\>
 
-Defined in: [interfaces/SimulationOptions.ts:83](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/interfaces/SimulationOptions.ts#L83)
+Defined in: [interfaces/SimulationOptions.ts:83](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/interfaces/SimulationOptions.ts#L83)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [interfaces/SimulationOptions.ts:83](https://github.com/mokaddem/Piv
 
 > **charge**: `ForceManyBody`\<[`Node`](../../../../classes/Node.md)\>
 
-Defined in: [interfaces/SimulationOptions.ts:82](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/interfaces/SimulationOptions.ts#L82)
+Defined in: [interfaces/SimulationOptions.ts:82](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/interfaces/SimulationOptions.ts#L82)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [interfaces/SimulationOptions.ts:82](https://github.com/mokaddem/Piv
 
 > **collide**: `ForceCollide`\<[`Node`](../../../../classes/Node.md)\>
 
-Defined in: [interfaces/SimulationOptions.ts:84](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/interfaces/SimulationOptions.ts#L84)
+Defined in: [interfaces/SimulationOptions.ts:84](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/interfaces/SimulationOptions.ts#L84)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [interfaces/SimulationOptions.ts:84](https://github.com/mokaddem/Piv
 
 > **gravity**: `ForceCenter`\<[`Node`](../../../../classes/Node.md)\>
 
-Defined in: [interfaces/SimulationOptions.ts:85](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/interfaces/SimulationOptions.ts#L85)
+Defined in: [interfaces/SimulationOptions.ts:85](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/interfaces/SimulationOptions.ts#L85)
 
 ***
 
@@ -46,4 +46,4 @@ Defined in: [interfaces/SimulationOptions.ts:85](https://github.com/mokaddem/Piv
 
 > **link**: `ForceLink`\<[`Node`](../../../../classes/Node.md), [`Edge`](../../../../classes/Edge.md)\>
 
-Defined in: [interfaces/SimulationOptions.ts:81](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/interfaces/SimulationOptions.ts#L81)
+Defined in: [interfaces/SimulationOptions.ts:81](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/interfaces/SimulationOptions.ts#L81)

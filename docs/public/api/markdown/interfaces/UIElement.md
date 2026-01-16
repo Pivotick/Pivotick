@@ -1,4 +1,4 @@
-[**pivotick v0.0.0**](../README.md)
+[**pivotick v0.0.1**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: UIElement
 
-Defined in: [ui/UIManager.ts:94](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/ui/UIManager.ts#L94)
+Defined in: [ui/UIManager.ts:94](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/ui/UIManager.ts#L94)
 
 ## Methods
 
@@ -14,7 +14,7 @@ Defined in: [ui/UIManager.ts:94](https://github.com/mokaddem/Pivotick/blob/efd37
 
 > **afterMount**(): `void`
 
-Defined in: [ui/UIManager.ts:97](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/ui/UIManager.ts#L97)
+Defined in: [ui/UIManager.ts:97](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/ui/UIManager.ts#L97)
 
 #### Returns
 
@@ -26,7 +26,7 @@ Defined in: [ui/UIManager.ts:97](https://github.com/mokaddem/Pivotick/blob/efd37
 
 > **destroy**(): `void`
 
-Defined in: [ui/UIManager.ts:96](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/ui/UIManager.ts#L96)
+Defined in: [ui/UIManager.ts:96](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/ui/UIManager.ts#L96)
 
 #### Returns
 
@@ -38,7 +38,7 @@ Defined in: [ui/UIManager.ts:96](https://github.com/mokaddem/Pivotick/blob/efd37
 
 > **graphReady**(): `void`
 
-Defined in: [ui/UIManager.ts:98](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/ui/UIManager.ts#L98)
+Defined in: [ui/UIManager.ts:98](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/ui/UIManager.ts#L98)
 
 #### Returns
 
@@ -50,7 +50,7 @@ Defined in: [ui/UIManager.ts:98](https://github.com/mokaddem/Pivotick/blob/efd37
 
 > **mount**(`container`): `void`
 
-Defined in: [ui/UIManager.ts:95](https://github.com/mokaddem/Pivotick/blob/efd37e8952b64b4cfc6926802d22342685cc549b/src/ui/UIManager.ts#L95)
+Defined in: [ui/UIManager.ts:95](https://github.com/mokaddem/Pivotick/blob/cf191d84f3964cc1388baf8ac05c46697d3f2b21/src/ui/UIManager.ts#L95)
 
 #### Parameters
 
