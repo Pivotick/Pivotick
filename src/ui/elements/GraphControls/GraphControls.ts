@@ -132,7 +132,7 @@ export class GraphControls implements UIElement {
         {
             root: {
                 id: 'pvt-graphcontrols-layout-tree-v',
-                class: '',
+                class: 'pvt-graphcontrols-layout-tree-v-options',
                 title: 'Change Graph Layout to Vertical Tree',
                 svgIcon: graphControlLayoutTreeV,
                 onClick: () => {
@@ -142,7 +142,7 @@ export class GraphControls implements UIElement {
             children: [
                 {
                     id: 'pvt-graphcontrols-layout-tree-v-FirstZeroInDegree',
-                    class: '',
+                    class: 'pvt-graphcontrols-layout-tree-v-options',
                     title: 'Pick the first valid 0 in-degree node',
                     svgIcon: firstValidNode,
                     onClick: () => {
@@ -151,7 +151,7 @@ export class GraphControls implements UIElement {
                 },
                 {
                     id: 'pvt-graphcontrols-layout-tree-v-MaxReachability',
-                    class: '',
+                    class: 'pvt-graphcontrols-layout-tree-v-options',
                     title: 'Pick the most connected node based on the reachability to others',
                     svgIcon: mostConnectedNode,
                     onClick: () => {
@@ -160,7 +160,7 @@ export class GraphControls implements UIElement {
                 },
                 {
                     id: 'pvt-graphcontrols-layout-tree-v-MinMaxDistance',
-                    class: '',
+                    class: 'pvt-graphcontrols-layout-tree-v-options',
                     title: 'Minimize max distance by trying to balance subtree',
                     svgIcon: balancedDistanced,
                     onClick: () => {
@@ -169,7 +169,7 @@ export class GraphControls implements UIElement {
                 },
                 {
                     id: 'pvt-graphcontrols-layout-tree-v-MinHeight',
-                    class: '',
+                    class: 'pvt-graphcontrols-layout-tree-v-options',
                     title: 'Pick node minimizing tree height',
                     svgIcon: minHeight,
                     onClick: () => {
@@ -178,7 +178,7 @@ export class GraphControls implements UIElement {
                 },
                 {
                     id: 'pvt-graphcontrols-layout-tree-v-FlipEdgeDirection',
-                    class: '',
+                    class: 'pvt-graphcontrols-layout-tree-v-options',
                     title: 'Flip the direction of all edges, then pick the most connected node based on the reachability to others',
                     svgIcon: flipEdgeDirection,
                     onClick: () => {
@@ -190,7 +190,7 @@ export class GraphControls implements UIElement {
         {
             root: {
                 id: 'pvt-graphcontrols-layout-tree-h',
-                class: '',
+                class: 'pvt-graphcontrols-layout-tree-h-options',
                 title: 'Change Graph Layout to Horizontal Tree',
                 svgIcon: graphControlLayoutTreeH,
                 onClick: () => {
@@ -200,7 +200,7 @@ export class GraphControls implements UIElement {
             children: [
                 {
                     id: 'pvt-graphcontrols-layout-tree-h-FirstZeroInDegree',
-                    class: '',
+                    class: 'pvt-graphcontrols-layout-tree-h-options',
                     title: 'Pick the first valid 0 in-degree node',
                     svgIcon: firstValidNode,
                     onClick: () => {
@@ -209,7 +209,7 @@ export class GraphControls implements UIElement {
                 },
                 {
                     id: 'pvt-graphcontrols-layout-tree-h-MaxReachability',
-                    class: '',
+                    class: 'pvt-graphcontrols-layout-tree-h-options',
                     title: 'Pick the most connected node based on the reachability to others',
                     svgIcon: mostConnectedNode,
                     onClick: () => {
@@ -218,7 +218,7 @@ export class GraphControls implements UIElement {
                 },
                 {
                     id: 'pvt-graphcontrols-layout-tree-h-MinMaxDistance',
-                    class: '',
+                    class: 'pvt-graphcontrols-layout-tree-h-options',
                     title: 'Minimize max distance by trying to balance subtree',
                     svgIcon: balancedDistanced,
                     onClick: () => {
@@ -227,7 +227,7 @@ export class GraphControls implements UIElement {
                 },
                 {
                     id: 'pvt-graphcontrols-layout-tree-h-MinHeight',
-                    class: '',
+                    class: 'pvt-graphcontrols-layout-tree-h-options',
                     title: 'Pick node minimizing tree height',
                     svgIcon: minHeight,
                     onClick: () => {
@@ -236,7 +236,7 @@ export class GraphControls implements UIElement {
                 },
                 {
                     id: 'pvt-graphcontrols-layout-tree-h-FlipEdgeDirection',
-                    class: '',
+                    class: 'pvt-graphcontrols-layout-tree-h-options',
                     title: 'Flip the direction of all edges, then pick the most connected node based on the reachability to others',
                     svgIcon: flipEdgeDirection,
                     onClick: () => {
@@ -248,7 +248,7 @@ export class GraphControls implements UIElement {
         {
             root: {
                 id: 'pvt-graphcontrols-layout-tree-r',
-                class: '',
+                class: 'pvt-graphcontrols-layout-tree-r-options',
                 title: 'Change Graph Layout to Radial Tree',
                 svgIcon: graphControlLayoutTreeR,
                 onClick: () => {
@@ -258,7 +258,7 @@ export class GraphControls implements UIElement {
             children: [
                 {
                     id: 'pvt-graphcontrols-layout-tree-r-FirstZeroInDegree',
-                    class: '',
+                    class: 'pvt-graphcontrols-layout-tree-r-options',
                     title: 'Pick the first valid 0 in-degree node',
                     svgIcon: firstValidNode,
                     onClick: () => {
@@ -267,7 +267,7 @@ export class GraphControls implements UIElement {
                 },
                 {
                     id: 'pvt-graphcontrols-layout-tree-r-MaxReachability',
-                    class: '',
+                    class: 'pvt-graphcontrols-layout-tree-r-options',
                     title: 'Pick the most connected node based on the reachability to others',
                     svgIcon: mostConnectedNode,
                     onClick: () => {
@@ -276,7 +276,7 @@ export class GraphControls implements UIElement {
                 },
                 {
                     id: 'pvt-graphcontrols-layout-tree-r-MinMaxDistance',
-                    class: '',
+                    class: 'pvt-graphcontrols-layout-tree-r-options',
                     title: 'Minimize max distance by trying to balance subtree',
                     svgIcon: balancedDistanced,
                     onClick: () => {
@@ -285,7 +285,7 @@ export class GraphControls implements UIElement {
                 },
                 {
                     id: 'pvt-graphcontrols-layout-tree-r-MinHeight',
-                    class: '',
+                    class: 'pvt-graphcontrols-layout-tree-r-options',
                     title: 'Pick node minimizing tree height',
                     svgIcon: minHeight,
                     onClick: () => {
@@ -294,7 +294,7 @@ export class GraphControls implements UIElement {
                 },
                 {
                     id: 'pvt-graphcontrols-layout-tree-r-FlipEdgeDirection',
-                    class: '',
+                    class: 'pvt-graphcontrols-layout-tree-r-options',
                     title: 'Flip the direction of all edges, then pick the most connected node based on the reachability to others',
                     svgIcon: flipEdgeDirection,
                     onClick: () => {
@@ -346,23 +346,38 @@ export class GraphControls implements UIElement {
 
     graphReady() {
         if (!this.navigation) return
-        const treeVButton = this.navigation.querySelector('#pvt-graphcontrols-layout-tree-v')
-        const treeHButton = this.navigation.querySelector('#pvt-graphcontrols-layout-tree-h')
-        const radialButton = this.navigation.querySelector('#pvt-graphcontrols-layout-tree-radial')
 
         const nodes = this.uiManager.graph.getNodes()
         const edges = this.uiManager.graph.getEdges()
         if (hasCycle(nodes, edges)) {
-            treeVButton?.setAttribute('disabled', 'disabled')
-            treeVButton?.setAttribute('title', 'The graph contains a cycle, so it cannot be displayed as a tree.')
-            treeHButton?.setAttribute('disabled', 'disabled')
-            treeHButton?.setAttribute('title', 'The graph contains a cycle, so it cannot be displayed as a tree.')
-            radialButton?.setAttribute('disabled', 'disabled')
-            radialButton?.setAttribute('title', 'The graph contains a cycle, so it cannot be displayed as a tree.')
+            this.navigation.querySelectorAll('.pvt-graphcontrols-layout-tree-v-options').forEach((el) => {
+                el.setAttribute('disabled', 'disabled')
+                el.setAttribute('data-old-title', el.getAttribute('title') ?? '')
+                el.setAttribute('title', 'The graph contains a cycle, so it cannot be displayed as a tree.')
+            })
+            this.navigation.querySelectorAll('.pvt-graphcontrols-layout-tree-h-options').forEach((el) => {
+                el.setAttribute('disabled', 'disabled')
+                el.setAttribute('data-old-title', el.getAttribute('title') ?? '')
+                el.setAttribute('title', 'The graph contains a cycle, so it cannot be displayed as a tree.')
+            })
+            this.navigation.querySelectorAll('.pvt-graphcontrols-layout-tree-r-options').forEach((el) => {
+                el.setAttribute('disabled', 'disabled')
+                el.setAttribute('data-old-title', el.getAttribute('title') ?? '')
+                el.setAttribute('title', 'The graph contains a cycle, so it cannot be displayed as a tree.')
+            })
         } else {
-            treeVButton?.removeAttribute('disabled')
-            treeHButton?.removeAttribute('disabled')
-            radialButton?.removeAttribute('disabled')
+            this.navigation.querySelectorAll('.pvt-graphcontrols-layout-tree-v-options').forEach((el) => {
+                el.removeAttribute('disabled')
+                el.setAttribute('title', el.getAttribute('data-old-title') ?? '')
+            })
+            this.navigation.querySelectorAll('.pvt-graphcontrols-layout-tree-h-options').forEach((el) => {
+                el.removeAttribute('disabled')
+                el.setAttribute('title', el.getAttribute('data-old-title') ?? '')
+            })
+            this.navigation.querySelectorAll('.pvt-graphcontrols-layout-tree-r-options').forEach((el) => {
+                el.removeAttribute('disabled')
+                el.setAttribute('title', el.getAttribute('data-old-title') ?? '')
+            })
         }
 
         this.uiManager.graph.renderer.getGraphInteraction().on('selectNodes', (nodes: NodeSelection<unknown>[]) => {

@@ -78,7 +78,12 @@
                 }
 
                 &:disabled {
-                    filter: brightness(2);
+                    @media (prefers-color-scheme: dark) {
+                        filter: brightness(0.6);
+                    }
+                    @media (prefers-color-scheme: light) {
+                        filter: brightness(2);
+                    }
                     cursor: not-allowed;
                 }
             }
