@@ -413,7 +413,7 @@ export class GraphSvgRenderer extends GraphRenderer {
         }
     }
 
-    public fitAndCenter(): void {
+    public fitAndCenter(forceScale?: number): void {
         const zoomBehavior = this.getZoomBehavior()
         const canvas = this.getCanvasSelection()
         const svgEl = canvas.node() as SVGSVGElement
@@ -433,12 +433,17 @@ export class GraphSvgRenderer extends GraphRenderer {
         const midX = bounds.x + width / 2
         const midY = bounds.y + height / 2
 
-        // Scale so that content fits (with some padding)
-        let scale = Math.min(
-            fullWidth / width,
-            fullHeight / height
-        ) * 0.8
-        scale = Math.min(scale, 3)
+        let scale
+        if (forceScale) {
+            scale = forceScale
+        } else {
+            // Scale so that content fits (with some padding)
+            scale = Math.min(
+                fullWidth / width,
+                fullHeight / height
+            ) * 0.8
+            scale = Math.min(scale, 3)
+        }
 
         const translateX = fullWidth / 2 - scale * midX
         const translateY = fullHeight / 2 - scale * midY

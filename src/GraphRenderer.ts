@@ -30,7 +30,7 @@ export abstract class GraphRenderer {
     abstract getZoomGroup(): HTMLElement | SVGElement | null
     abstract zoomIn(): void
     abstract zoomOut(): void
-    abstract fitAndCenter(): void
+    abstract fitAndCenter(fitAndCenter?: number): void
     abstract focusElement(element: Node | Edge): void
 
     public getCanvas(): HTMLElement {

@@ -96,6 +96,7 @@ export class Graph {
             this._setData(normalisedData?.nodes, normalisedData?.edges)
             this.simulation?.update()
             this.renderer.init()
+            this.renderer.fitAndCenter(1)
         }
 
         this.startAndRender()
