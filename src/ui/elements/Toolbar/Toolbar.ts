@@ -74,7 +74,7 @@ export class Toolbar implements UIElement {
         if (!this.filterButton || !this.uiManager.slidePanel?.slidePanel) return
         this.filterButton.addEventListener('click', () => {
             if (!this.uiManager.slidePanel?.slidePanel) return
-            this.uiManager.slidePanel?.slidePanel.classList.add('open')
+            this.uiManager.slidePanel.open()
         })
     }
 

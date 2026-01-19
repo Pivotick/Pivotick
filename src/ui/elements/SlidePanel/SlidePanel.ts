@@ -15,12 +15,12 @@ export class SlidePanel implements UIElement {
 
         const templateSlidePanel = document.createElement('template')
         templateSlidePanel.innerHTML = `
-  <div class="slide-panel" id="side-panel">
-    <div class="slide-panel__header">
+  <div class="pvt-slide-panel" id="pvt-side-panel">
+    <div class="pvt-slide-panel__header">
         Panel Title
         <button id="pvt-sidePanel-close" class="pvt-close-button">×</button>
     </div>
-    <div class="slide-panel__content">
+    <div class="pvt-slide-panel__content">
         <p>This is the content of the panel.</p>
     </div>
     </div>
@@ -43,5 +43,13 @@ export class SlidePanel implements UIElement {
     }
 
     graphReady(): void { }
+
+    open(): void {
+        this.slidePanel?.classList.add('open')
+    }
+
+    close(): void {
+        this.slidePanel?.classList.remove('open')
+    }
 
 }

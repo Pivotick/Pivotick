@@ -22,7 +22,7 @@
 
 @mixin input-variant($bg-color) {
     @include input;
-    background-color: transparent;
+    background-color: var(--pvt-ui-bg);
     color: var(--pvt-text-color-6);
     border: 1px solid var(--pvt-border-color);
 
