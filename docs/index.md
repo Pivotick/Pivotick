@@ -11,7 +11,7 @@ hero:
       text: Getting Started
       link: /getting-started
     - theme: alt
-      text: Try it out
+      text: Try it out!
       link: /tool
   image:
     src: /pivotick.svg
