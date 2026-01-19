@@ -101,7 +101,7 @@ dl.pvt-property-list {
     }
 }
 
-.pvt-node-selected-highlight > * {
+.pvt-node-selected-highlight > *:first-child {
     fill: var(--pvt-node-selected-stroke);
     stroke: var(--pvt-node-selected-stroke);
     stroke-width: var(--pvt-node-selected-stroke-width);
