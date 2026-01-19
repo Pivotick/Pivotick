@@ -27,7 +27,7 @@
     }
 
     &:disabled {
-        background-color: color-mix(in srgb, var($bg-color) 80%, white);
+        background-color: color-mix(in srgb, var($bg-color) 75%, black);
         cursor: not-allowed;
         transform: none;
     }
@@ -95,7 +95,7 @@
     border: none;
 
     &:hover {
-        background-color: color-mix(in srgb, var($bg-color) 80%, white);
+        background-color: var($bg-color);
         color: var($bg-text-color);
     }
 
