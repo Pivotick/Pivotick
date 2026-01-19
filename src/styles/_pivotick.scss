@@ -101,6 +101,15 @@ dl.pvt-property-list {
     }
 }
 
+.pvt-keyboard-shortcut {
+    padding: 4px 6px;
+    font-size: 0.8em;
+    border-radius: 4px;
+    background: transparent;
+    border: 1px solid var(--pvt-bg-color-7);
+    user-select: none;
+}
+
 .pvt-node-selected-highlight > *:first-child {
     fill: var(--pvt-node-selected-stroke);
     stroke: var(--pvt-node-selected-stroke);

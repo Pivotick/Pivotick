@@ -6,7 +6,6 @@ export class Toolbar implements UIElement {
     private uiManager: UIManager
 
     public toolbar?: HTMLDivElement
-    public searchInput?: HTMLInputElement
     public filterButton?: HTMLButtonElement
     public undoButton?: HTMLButtonElement
     public redoButton?: HTMLButtonElement
@@ -25,17 +24,14 @@ export class Toolbar implements UIElement {
         const template = document.createElement('template')
         template.innerHTML = `
   <div class="pvt-searchbox">
-    <div class="input-container">
-        <div class="icon-container">
-            ${magnifyingGlass}
-        </div>
-        <input type="search" id="pvt-search" class="" placeholder="Search" required disabled />
-        <button type="submit" class="" disabled>Search</button>
+    <div class="search-container">
+        <span class="icon-container">${magnifyingGlass}</span>
+        <span class="search-text">Search</span>
+        <span class="pvt-keyboard-shortcut">Ctrl K</span>
     </div>
   </div>
 `
         const searchbox = template.content.firstElementChild as HTMLDivElement
-        this.searchInput = searchbox.querySelector('input') ?? undefined
         this.toolbar.appendChild(searchbox)
 
         /** Filter */
