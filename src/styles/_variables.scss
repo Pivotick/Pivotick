@@ -99,6 +99,13 @@ $light-theme: (
     pvt-menu-border-color: var(--pvt-text-color-1),
     pvt-menu-shadow: var(--pvt-sidebar-layout-shadow-right),
 
+    /* Modal */
+    pvt-modal-bg: var(--pvt-bg-color-0),
+    pvt-modal-text-color: var(--pvt-text-color-5),
+    pvt-modal-overlay-bg: rgba(0, 0, 0, 0.45),
+    pvt-modal-shadow: "0 20px 40px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.15)",
+
+
     /* Graph notification */
     pvt-toast-bg-color-primary: color-mix(in srgb, var(--pvt-bg-color-primary) 40%, white),
     pvt-toast-bg-color-secondary: color-mix(in srgb, var(--pvt-bg-color-secondary) 40%, white),
@@ -307,6 +314,12 @@ $dark-theme: (
     pvt-menu-bg-color: var(--pvt-bg-color-7),
     pvt-menu-border-color: var(--pvt-bg-color-2),
     pvt-menu-shadow: var(--pvt-sidebar-layout-shadow-right),
+
+    /* Modal */
+    pvt-modal-bg: var(--pvt-bg-color-7),
+    pvt-modal-text-color: var(--pvt-text-color-5),
+    pvt-modal-overlay-bg: rgba(0, 0, 0, 0.45),
+    pvt-modal-shadow: "0 20px 40px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.15)",
 
     /* Graph notification */
     pvt-toast-bg-color-primary: color-mix(in srgb, var(--pvt-bg-color-primary) 40%, white),

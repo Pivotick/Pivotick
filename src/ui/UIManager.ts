@@ -7,6 +7,7 @@ import { Layout } from './elements/Layout'
 import { Sidebar } from './elements/Sidebar/Sidebar'
 import { SlidePanel } from './elements/SlidePanel/SlidePanel'
 import { Toolbar } from './elements/Toolbar/Toolbar'
+import { Modal, type ModalOptions } from './elements/Modal/Modal'
 import type { Notification } from './Notifier'
 import merge from 'lodash.merge'
 import { Tooltip } from './elements/Tooltip/Tooltip'
@@ -111,6 +112,7 @@ export class UIManager {
     public slidePanel?: SlidePanel
     public sidebar?: Sidebar
     public toolbar?: Toolbar
+    public modal?: Modal
     public graphNaviation?: GraphNavigation
     public graphControls?: GraphControls
     public tooltip?: Tooltip
@@ -182,6 +184,7 @@ export class UIManager {
         this.buildUIGraphControls()
         this.buildSlidePanel()
         this.buildToolbar()
+        this.buildModal()
         this.buildSidebar()
     }
 
@@ -198,6 +201,7 @@ export class UIManager {
         this.buildUIGraphControls()
         this.buildSlidePanel()
         this.buildToolbar()
+        this.buildModal()
     }
 
     private buildLayout() {
@@ -231,6 +235,11 @@ export class UIManager {
     private buildToolbar() {
         this.toolbar = new Toolbar(this)
         this.toolbar.mount(this.layout?.toolbar)
+    }
+
+    private buildModal() {
+        // this.modal = new Modal(this)
+        // this.modal.mount(this.layout?.modal)
     }
 
     private buildSidebar() {
@@ -276,7 +285,7 @@ export class UIManager {
         this.contextMenu?.graphReady()
     }
 
-    /**
+   /**
    * Show a notification in the UI.
    * 
    * @param notification - The notification to display
@@ -313,5 +322,22 @@ export class UIManager {
                 toast.remove()
             }, { once: true })
         }, 4000)
+    }
+
+   /**
+   * Show a modal in the UI.
+   * 
+   * @param modalOption - The notification to display
+   */
+    public createModal(modalOptions: ModalOptions): void {
+        const container = this.layout?.modal
+        if (!container) return
+
+        const modal = new Modal(this, modalOptions)
+        modal.mount(this.layout?.modal)
+
+        requestAnimationFrame(() => {
+            modal.show()
+        })
     }
 }

@@ -7,6 +7,7 @@ export class Layout implements UIElement {
     public sidebar?: HTMLDivElement
     public toolbar?: HTMLDivElement
     public notification?: HTMLDivElement
+    public modal?: HTMLDivElement
     // public slidePanel?: HTMLDivElement;
     public graphnavigation?: HTMLDivElement
     public graphcontrols?: HTMLDivElement
@@ -35,6 +36,10 @@ export class Layout implements UIElement {
             this.toolbar = document.createElement('div')
             this.toolbar.className = 'pvt-toolbar'
             this.layout.appendChild(this.toolbar)
+
+            this.modal = document.createElement('div')
+            this.modal.className = 'pvt-modal'
+            container.appendChild(this.modal)
         }
 
         if (mode !== 'static') {

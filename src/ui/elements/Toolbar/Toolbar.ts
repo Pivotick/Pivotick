@@ -6,6 +6,7 @@ export class Toolbar implements UIElement {
     private uiManager: UIManager
 
     public toolbar?: HTMLDivElement
+    public searchBox?: HTMLDivElement
     public filterButton?: HTMLButtonElement
     public undoButton?: HTMLButtonElement
     public redoButton?: HTMLButtonElement
@@ -23,7 +24,7 @@ export class Toolbar implements UIElement {
         /** Searchbox */
         const template = document.createElement('template')
         template.innerHTML = `
-  <div class="pvt-searchbox">
+  <div id="pvt-searchbox" class="pvt-searchbox">
     <div class="search-container">
         <span class="icon-container">${magnifyingGlass}</span>
         <span class="search-text">Search</span>
@@ -31,8 +32,8 @@ export class Toolbar implements UIElement {
     </div>
   </div>
 `
-        const searchbox = template.content.firstElementChild as HTMLDivElement
-        this.toolbar.appendChild(searchbox)
+        this.searchBox = template.content.firstElementChild as HTMLDivElement
+        this.toolbar.appendChild(this.searchBox)
 
         /** Filter */
         const templateFilter = document.createElement('template')
@@ -71,6 +72,14 @@ export class Toolbar implements UIElement {
         this.filterButton.addEventListener('click', () => {
             if (!this.uiManager.slidePanel?.slidePanel) return
             this.uiManager.slidePanel.open()
+        })
+
+        this.searchBox?.addEventListener('click', () => {
+            this.uiManager.createModal({
+                header: 'Test header',
+                body: 'Test body',
+                position: 'top',
+            })
         })
     }
 

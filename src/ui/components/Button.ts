@@ -3,10 +3,12 @@ import { createIcon } from '../../utils/ElementCreation'
 
 type ButtonVariant = UIVariant
 type ButtonSize = 'sm' | 'xs'
-type ButtonOptions = {
+export type ButtonOptions<TArgs extends unknown[] = []> = {
     variant?: ButtonVariant,
     size?: ButtonSize,
-    onClick?: (event: MouseEvent) => void
+    /** closeModal can be used to close the modal */
+    onClick?: (event: MouseEvent, ...args: TArgs) => void
+    onClickArgs?: TArgs
     iconUnicode?: IconUnicode,
     iconClass?: IconClass,
     svgIcon?: SVGIcon,
@@ -15,13 +17,14 @@ type ButtonOptions = {
     [key: string]: unknown // allow other attributes like id, className, etc.
 }
 
-export function createButton(options: ButtonOptions): HTMLButtonElement {
+export function createButton<TArgs extends unknown[] = []>(options: ButtonOptions<TArgs>): HTMLButtonElement {
     options.variant = options.variant ?? 'primary'
 
     const { 
         variant,
         size,
         onClick,
+        onClickArgs,
         iconUnicode,
         iconClass,
         svgIcon,
@@ -77,7 +80,8 @@ export function createButton(options: ButtonOptions): HTMLButtonElement {
     btn.append(textEl)
 
     if (typeof onClick === 'function') {
-        btn.addEventListener('click', (evt) => { onClick(evt) })
+        const args = (onClickArgs ?? []) as TArgs
+        btn.addEventListener('click', (evt) => { onClick(evt, ...args) })
     }
 
     return btn

@@ -1,0 +1,67 @@
+.pvt-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--pvt-modal-overlay-bg);
+    display: grid;
+    z-index: 1000;
+
+    &.pvt-modal-overlay-center {
+        place-items: center;
+    }
+
+    &.pvt-modal-overlay-top {
+        align-items: start;
+        justify-items: center;
+        padding-top: 4rem;
+    }
+}
+
+.pvt-modal {
+    display: hidden;
+    background: var(--pvt-modal-bg);
+    color: var(--pvt-modal-text);
+    width: min(90vw, 520px);
+    max-height: 85vh;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: var(--pvt-modal-shadow);
+    animation: pvt-modal-in 180ms ease-out;
+
+    &.pvt-modal-open {
+        display: block;
+    }
+
+    .pvt-modal__header {
+        padding: 1.0rem 1.0rem;
+        display: flex;
+        align-items: center;
+        font-weight: 600;
+        border-bottom: 1px solid var(--pvt-border-color);
+    }
+    
+    .pvt-modal__body {
+        padding: 1.5rem;
+        overflow-y: auto;
+    }
+
+    .pvt-modal__footer {
+        padding: 0.75rem 0.75rem;
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+        border-top: 1px solid var(--pvt-border-color);
+    }
+}
+
+
+@keyframes pvt-modal-in {
+    from {
+        opacity: 0;
+        transform: translateY(6px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
