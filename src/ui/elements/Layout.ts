@@ -38,7 +38,7 @@ export class Layout implements UIElement {
             this.layout.appendChild(this.toolbar)
 
             this.modal = document.createElement('div')
-            this.modal.className = 'pvt-modal'
+            this.modal.className = 'pvt-modalcontainer'
             container.appendChild(this.modal)
         }
 

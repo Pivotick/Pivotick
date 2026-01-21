@@ -76,9 +76,10 @@ export class Toolbar implements UIElement {
 
         this.searchBox?.addEventListener('click', () => {
             this.uiManager.createModal({
-                header: 'Test header',
-                body: 'Test body',
+                body: '',
+                buttons: null,
                 position: 'top',
+                size: 'xl'
             })
         })
     }

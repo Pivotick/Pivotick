@@ -14,7 +14,7 @@ export interface ModalOptions extends Partial<ModalEvents> {
     /**
      * Title or header of the modal. Encode passed string by default
      */
-    header?: string;
+    header?: string | HTMLElement | null;
     /**
      * Skip the encoding of the header to allow raw html.
      * @default false
@@ -23,15 +23,16 @@ export interface ModalOptions extends Partial<ModalEvents> {
     /**
      * Content or body of the modal. Encode passed string by default
      */
-    body?: string;
+    body?: string | HTMLElement | null;
     /**
      * Skip the encoding of the body to allow raw html.
      * @default false
      */
     rawBody?: boolean;
-    buttons?: ButtonOptions<[() => void]>[];
+    buttons?: ButtonOptions<[() => void]>[] | null;
     /** @default 'center' */
     position?: 'center' | 'top';
+    size?: 'sm' | 'md' | 'lg' | 'xl' | 'fluid';
 }
 
 export class Modal implements UIElement {
@@ -45,7 +46,7 @@ export class Modal implements UIElement {
     private footer: HTMLDivElement | undefined
     private modalOpen = true
 
-    private DEFAULT_HEADER = ''
+    private DEFAULT_HEADER = null
     private DEFAULT_BODY = ''
     private DEFAULT_BUTTON_CONFIG = {
         text: 'Ok',
@@ -67,7 +68,7 @@ export class Modal implements UIElement {
             this.options.body = this.DEFAULT_BODY
         }
 
-        if (!this.options.buttons) {
+        if (!this.options.buttons && this.options.buttons !== null) {
             this.options.buttons = [this.DEFAULT_BUTTON_CONFIG]
         }
 
@@ -91,41 +92,51 @@ export class Modal implements UIElement {
         this.modal = document.createElement('div')
         this.modal.className = 'pvt-modal'
 
-        this.header = document.createElement('div')
-        this.header.className = 'pvt-modal__header'
-        if (this.options.rawHeader) {
-            this.header.innerHTML = this.options.header!
-        } else {
-            this.header.textContent = this.options.header!
-        }
+        const size = this.options.size ?? 'md'
+        this.modal.classList.add(`pvt-modal-${size}`)
 
-        const closeBtn = createButton({
-            text: '×',
-            variant: 'outline-primary',
-            size: 'sm',
-            onClick: () => {
-                this.hide()
-            },
-            style: 'margin-left: auto;',
-        })
-        this.header.appendChild(closeBtn)
+        if (this.options.header != null) {
+            this.header = document.createElement('div')
+            this.header.className = 'pvt-modal__header'
+            if (this.options.header instanceof HTMLElement) {
+                this.header.appendChild(this.options.header)
+            } else if (this.options.rawHeader) {
+                this.header.innerHTML = this.options.header!
+            } else {
+                this.header.textContent = this.options.header!
+            }
+            this.modal.appendChild(this.header)
+
+            const closeBtn = createButton({
+                text: '×',
+                variant: 'outline-primary',
+                size: 'sm',
+                onClick: () => {
+                    this.hide()
+                },
+                style: 'margin-left: auto;',
+            })
+            this.header.appendChild(closeBtn)
+        }
 
         this.body = document.createElement('div')
         this.body.className = 'pvt-modal__body'
-        if (this.options.rawBody) {
+        if (this.options.body instanceof HTMLElement) {
+            this.body.appendChild(this.options.body)
+        } else if (this.options.rawBody) {
             this.body.innerHTML = this.options.body!
         } else {
             this.body.textContent = this.options.body!
         }
-
-        this.footer = document.createElement('div')
-        this.footer.className = 'pvt-modal__footer'
-
-        this.setButtons(this.options.buttons!)
-
-        this.modal.appendChild(this.header)
         this.modal.appendChild(this.body)
-        this.modal.appendChild(this.footer)
+
+        if (this.options.buttons != null) {
+            this.footer = document.createElement('div')
+            this.footer.className = 'pvt-modal__footer'
+
+            this.setButtons(this.options.buttons!)
+            this.modal.appendChild(this.footer)
+        }
 
         this.overlay.appendChild(this.modal)
         rootContainer.appendChild(this.overlay)
