@@ -13,6 +13,7 @@ import merge from 'lodash.merge'
 import { Tooltip } from './elements/Tooltip/Tooltip'
 import { ContextMenu } from './elements/ContextMenu/ContextMenu'
 import type { GraphUI, PropertyEntry } from '../interfaces/GraphUI'
+import { KeybindingManager } from './KeybindingManager'
 
 const basicPropertyGetter = (element: Node | Edge): PropertyEntry[] => {
     const properties = []
@@ -117,11 +118,15 @@ export class UIManager {
     public graphControls?: GraphControls
     public tooltip?: Tooltip
     public contextMenu?: ContextMenu
+    public keyManager: KeybindingManager
 
     constructor(graph: Graph, container: HTMLElement, options: GraphUI) {
         this.graph = graph
         this.container = container
         this.options = merge({}, DEFAULT_UI_OPTIONS, options)
+
+        this.keyManager = new KeybindingManager()
+
         this.setup()
     }
 
@@ -267,6 +272,10 @@ export class UIManager {
         if (this.options.contextMenu?.enabled) {
             this.contextMenu?.afterMount()
         }
+
+        this.container.addEventListener('keydown', (event) => this.keyManager.handleKeyPress(event))
+        this.container.setAttribute('tabindex', '0') // make it focusable
+
     }
 
     public getOptions() {
@@ -329,7 +338,7 @@ export class UIManager {
    * 
    * @param modalOption - The notification to display
    */
-    public createModal(modalOptions: ModalOptions): void {
+    public createModal(modalOptions: ModalOptions): Modal | undefined {
         const container = this.layout?.modal
         if (!container) return
 
@@ -339,5 +348,7 @@ export class UIManager {
         requestAnimationFrame(() => {
             modal.show()
         })
+
+        return modal
     }
 }

@@ -34,9 +34,9 @@ export class Node {
      * @param id - Unique identifier for the node
      * @param data - Optional data payload associated with the node
      */
-    constructor(id: string, data?: NodeData, style?: Partial<NodeStyle>) {
+    constructor(id: string, data?: NodeData, style?: Partial<NodeStyle>, domID: string = generateSafeDomId()) {
         this.id = id
-        this.domID = generateSafeDomId()
+        this.domID = domID
         this.data = data ?? ({} as NodeData)
         this.style = style ?? ({} as Partial<NodeStyle>)
         this._dirty = true
@@ -158,7 +158,7 @@ export class Node {
         const clonedData = { ...this.data }
         const clonedStyle = { ...this.style }
 
-        const clone = new Node(this.id, clonedData, clonedStyle)
+        const clone = new Node(this.id, clonedData, clonedStyle, this.domID)
 
         // Copy layout/physics properties
         clone.x = this.x
