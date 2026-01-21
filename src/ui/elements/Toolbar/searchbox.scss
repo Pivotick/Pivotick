@@ -1,0 +1,173 @@
+@use "../../../styles/components/input.scss";
+
+.pvt-searchbox {
+
+    div.search-container {
+        position: relative;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        padding: 6px 12px;
+        border-radius: 4px;
+        color: var(--pvt-text-color-4);
+
+        div.input-container {
+            position: relative;
+            display: flex;
+            width: 100%;
+
+            span.icon-container {
+                position: absolute;
+                inset-block: 0;
+                inset-inline-start: 0;
+                display: flex;
+                align-items: center;
+                padding-inline-start: 0.75rem;
+                pointer-events: none;
+    
+                svg {
+                    width: 1.0em;
+                    height: 1.0em;
+                    color: var(--pvt-text-color-6);
+                    opacity: 0.7;
+                }
+            }
+    
+            input {
+                @include input.input-primary;
+                display: block;
+                width: 100%;
+                padding: 0.8rem;
+                padding-inline-start: 2.5rem;
+                padding-inline-end: 5rem;
+            }
+        }
+
+    }
+
+    div.pvt-search-results {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5em;
+        padding: 6px 12px;
+
+        .pvt-search-result {
+            border: 1px solid var(--pvt-bg-color-8);
+            padding: 4px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+
+            &:hover, &.active {
+                background-color: var(--pvt-bg-color-8);
+            }
+
+            div {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                flex-wrap: nowrap;
+                gap: 8px;
+
+                .pvt-search-result__nodepreview {
+                    flex-shrink: 0;
+                    width: 36px;
+                    height: 36px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: var(--pvt-mainheader-nodepreview-bg);
+                    border-radius: 8px;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), inset 0 0 0 1px hsla(0, 0%, 0%, .05);
+                
+                    .pvt-mainheader-icon {
+                        width: 30px;
+                        height: 30px;
+                    }
+                }
+    
+                .pvt-search-result__name {
+                    font-weight: 600;
+                    color: var(--pvt-text-color-6);
+                    /* for multiline ellipsis */
+                    white-space: normal;
+                    overflow: auto;
+                    word-break: break-all;
+                    display: -webkit-box;
+                    -webkit-line-clamp: 2;
+                    line-clamp: 2;
+                    -webkit-box-orient: vertical;
+                    box-orient: vertical;
+                    user-select: all;
+                }
+            }
+
+            .pvt-search-result__info {
+                display: flex;
+                gap: 0.5em;
+                flex-direction: row;
+                padding-left: 42px;
+
+                .pvt-search-result__info_key {
+                    font-weight: 300;
+                    color: var(--pvt-text-color-5);
+                    white-space: normal;
+                    user-select: all;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+
+                .pvt-search-result__info_value {
+                    color: var(--pvt-text-color-primary);
+                    user-select: all;
+                    min-height: 1em;
+                    white-space: normal;
+                    overflow: auto;
+                    word-break: break-all;
+                    display: -webkit-box;
+                    /* for multiline ellipsis */
+                    -webkit-line-clamp: 3;
+                    line-clamp: 3;
+                    -webkit-box-orient: vertical;
+                    box-orient: vertical;
+                }
+            }
+        }
+    }
+
+    .pvt-search-hints {
+        padding: 6px 12px;
+        display: flex;
+        flex-direction: row;
+        gap: 1em;
+        font-size: 0.9em;
+
+        span {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25em;
+
+            .pvt-search-text {
+                line-height: 1; // optional, tighter alignment
+            }
+    
+            .pvt-search-icon {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                padding: 4px;
+                border-radius: 4px;
+                background: var(--pvt-bg-color-8);
+                line-height: 0.9em;
+    
+                svg {
+                    width: 1em;
+                    height: 1em;
+                    color: var(--pvt-text-color-6);
+                    opacity: 0.7;
+                }
+            }
+        }
+    }
+}

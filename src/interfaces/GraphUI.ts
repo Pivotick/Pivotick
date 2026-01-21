@@ -15,9 +15,16 @@ export interface GraphUI {
     extraPanels: ExtraPanel[],
     tooltip: Tooltip,
     contextMenu: ContextMenu,
-    selectionMenu: SelectionMenu
+    selectionMenu: SelectionMenu,
+    keybindings?: Keybinding[];
 }
 
+export type Key = string; // e.g. 'Ctrl+C', 'Ctrl+F', 'ArrowUp'
+export interface Keybinding {
+    key: Key;
+    callback: (event: KeyboardEvent) => void;
+    description?: string;
+}
 
 /**
  * - `"full"`: Full UI and interactions.

@@ -33,6 +33,7 @@ export interface ModalOptions extends Partial<ModalEvents> {
     /** @default 'center' */
     position?: 'center' | 'top';
     size?: 'sm' | 'md' | 'lg' | 'xl' | 'fluid';
+    noBodyPadding?: boolean
 }
 
 export class Modal implements UIElement {
@@ -40,7 +41,7 @@ export class Modal implements UIElement {
     private options: ModalOptions
 
     private overlay: HTMLDivElement | undefined
-    private modal: HTMLDivElement | undefined
+    public modal: HTMLDivElement | undefined
     private header: HTMLDivElement | undefined
     private body: HTMLDivElement | undefined
     private footer: HTMLDivElement | undefined
@@ -121,12 +122,11 @@ export class Modal implements UIElement {
 
         this.body = document.createElement('div')
         this.body.className = 'pvt-modal__body'
-        if (this.options.body instanceof HTMLElement) {
-            this.body.appendChild(this.options.body)
-        } else if (this.options.rawBody) {
-            this.body.innerHTML = this.options.body!
+        this.setBody(this.options.body)
+        if (this.options.noBodyPadding) {
+            this.body.style.padding = '0'
         } else {
-            this.body.textContent = this.options.body!
+            this.body.style.padding = '' // fallback to CSS default
         }
         this.modal.appendChild(this.body)
 
@@ -143,6 +143,11 @@ export class Modal implements UIElement {
     }
 
     public destroy() {
+        this.hide()
+        requestAnimationFrame(() => {
+            this.overlay?.remove()
+            this.overlay = undefined
+        })
     }
 
     public afterMount() {
@@ -167,6 +172,21 @@ export class Modal implements UIElement {
             const btn = createButton<[() => void]>(config)
             this.footer!.appendChild(btn)
         })
+    }
+
+    public setBody(body: string | HTMLElement | null | undefined): void {
+        if (!this.body) return
+
+        this.body.innerHTML = ''
+        if (!body) return
+
+        if (body instanceof HTMLElement) {
+            this.body.appendChild(body)
+        } else if (this.options.rawBody) {
+            this.body.innerHTML = body
+        } else {
+            this.body.textContent = body
+        }
     }
 
     public show(): void {
@@ -199,7 +219,8 @@ export class Modal implements UIElement {
     private dispatchEvent(name: string): void {
         if (!this.modal) return
 
-        const evt = new CustomEvent(name, { bubbles: true, cancelable: true })
+        const customName = `pvt-modal-${name}`
+        const evt = new CustomEvent(customName, { bubbles: true, cancelable: true })
         this.modal.dispatchEvent(evt)
 
         const callbackName = `on${name.charAt(0).toUpperCase()}${name.slice(1)}` as keyof ModalEvents

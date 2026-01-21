@@ -1,12 +1,14 @@
 import { funel, magnifyingGlass, redo, undo } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
+import { SearchBox } from './SearchBox'
 import './toolbar.scss'
+import { Node } from '../../../Node'
 
 export class Toolbar implements UIElement {
     private uiManager: UIManager
 
     public toolbar?: HTMLDivElement
-    public searchBox?: HTMLDivElement
+    public searchBoxButton?: HTMLDivElement
     public filterButton?: HTMLButtonElement
     public undoButton?: HTMLButtonElement
     public redoButton?: HTMLButtonElement
@@ -24,16 +26,16 @@ export class Toolbar implements UIElement {
         /** Searchbox */
         const template = document.createElement('template')
         template.innerHTML = `
-  <div id="pvt-searchbox" class="pvt-searchbox">
+  <div id="pvt-searchbox-button" class="pvt-searchbox-button">
     <div class="search-container">
         <span class="icon-container">${magnifyingGlass}</span>
         <span class="search-text">Search</span>
-        <span class="pvt-keyboard-shortcut">Ctrl K</span>
+        <span class="pvt-keyboard-shortcut">Ctrl F</span>
     </div>
   </div>
 `
-        this.searchBox = template.content.firstElementChild as HTMLDivElement
-        this.toolbar.appendChild(this.searchBox)
+        this.searchBoxButton = template.content.firstElementChild as HTMLDivElement
+        this.toolbar.appendChild(this.searchBoxButton)
 
         /** Filter */
         const templateFilter = document.createElement('template')
@@ -69,18 +71,40 @@ export class Toolbar implements UIElement {
 
     afterMount() {
         if (!this.filterButton || !this.uiManager.slidePanel?.slidePanel) return
+
+        this.uiManager.keyManager.register({ key: 'Ctrl+f', callback: () => this.searchBoxButton?.click() })
+
         this.filterButton.addEventListener('click', () => {
             if (!this.uiManager.slidePanel?.slidePanel) return
             this.uiManager.slidePanel.open()
         })
 
-        this.searchBox?.addEventListener('click', () => {
-            this.uiManager.createModal({
+        this.searchBoxButton?.addEventListener('click', () => {
+            const modal = this.uiManager.createModal({
                 body: '',
                 buttons: null,
                 position: 'top',
-                size: 'xl'
+                size: 'xl',
+                noBodyPadding: true,
             })
+
+            if (modal) {
+                modal.modal?.addEventListener('pvt-modal-show', () => {
+                    const searchBox = new SearchBox(this.uiManager)
+                    modal.setBody(searchBox.build())
+                    searchBox.searchInput?.focus()
+
+                    searchBox.searchBox?.addEventListener('pvt-searchbox-select', (evt: Event) => {
+                        const custom = evt as CustomEvent<Node>
+                        const node = custom.detail as Node
+                        this.uiManager.graph.selectElement(node)
+                        modal.destroy()
+                    })
+                    searchBox.searchBox?.addEventListener('pvt-searchbox-close', () => {
+                        modal.destroy()
+                    })
+                })
+            }
         })
     }
 
