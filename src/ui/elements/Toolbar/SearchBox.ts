@@ -16,10 +16,11 @@ export class SearchBox implements UIElement {
     public searchBox?: HTMLDivElement
     public searchInput?: HTMLInputElement
     private searchResultsContainer?: HTMLDivElement
+    private searchSummaryContainer?: HTMLDivElement
     private results: [Node, Match][] | undefined
     private highlightedIndex = 0
 
-    private MAX_RESULT_COUNT = 20
+    private MAX_RESULT_COUNT = 12
 
     constructor(uiManager: UIManager) {
         this.uiManager = uiManager
@@ -44,6 +45,7 @@ export class SearchBox implements UIElement {
         </div>
     </div>
     <div class="pvt-search-results"></div>
+    <div class="pvt-search-summary"></div>
     <div class="pvt-search-hints">
         <span>
             <span class="pvt-search-icon">${arrowUp}</span>
@@ -64,6 +66,7 @@ export class SearchBox implements UIElement {
         this.searchBox = template.content.firstElementChild as HTMLDivElement
         this.searchInput = this.searchBox.querySelector('#pvt-search-input') ?? undefined
         this.searchResultsContainer = this.searchBox.querySelector('.pvt-search-results') ?? undefined
+        this.searchSummaryContainer = this.searchBox.querySelector('.pvt-search-summary') ?? undefined
 
         this.searchInput?.addEventListener('input', () => {
             this.searchAndShowResults(this.searchInput!.value)
@@ -77,15 +80,16 @@ export class SearchBox implements UIElement {
             }
             if (!this.results || this.results.length < 1) return
 
+            const resultDisplayed = Math.min(this.MAX_RESULT_COUNT, this.results.length)
             switch (event.key) {
                 case 'ArrowDown':
                     event.preventDefault() // prevent cursor move
-                    this.highlightedIndex = (this.highlightedIndex + 1) % this.results.length
+                    this.highlightedIndex = (this.highlightedIndex + 1) % resultDisplayed
                     this.updateHighlight()
                     break
                 case 'ArrowUp':
                     event.preventDefault()
-                    this.highlightedIndex = (this.highlightedIndex - 1 + this.results.length) % this.results.length
+                    this.highlightedIndex = (this.highlightedIndex - 1 + resultDisplayed) % resultDisplayed
                     this.updateHighlight()
                     break
                 case 'Enter':
@@ -180,7 +184,6 @@ export class SearchBox implements UIElement {
         if (!query || query.length < 2) return
 
         for (const node of this.uiManager.graph.getMutableNodes()) {
-            if (result.length >= this.MAX_RESULT_COUNT) break
 
             const data = node.getData()
             for (const key in data) {
@@ -214,28 +217,58 @@ export class SearchBox implements UIElement {
     }
 
     private searchAndShowResults(needle: string): void {
-        if (!this.searchResultsContainer) return
+        if (!this.searchResultsContainer || !this.searchSummaryContainer) return
 
         this.results = undefined
         this.searchResultsContainer.innerHTML = ''
+        this.searchSummaryContainer.innerHTML = ''
+
         this.results = this.search(needle)
         if (this.results) {
-            const resultsHtml = this.results.map((result: [Node, Match]) => this.buildResult(result))
+            const resultsHtml = []
+            for (const result of this.results) {
+                if (resultsHtml.length >= this.MAX_RESULT_COUNT) break
+                resultsHtml.push(this.buildResult(result))
+            }
             resultsHtml.forEach((result: HTMLDivElement) => {
                 this.searchResultsContainer?.appendChild(result)
             })
+
+            this.searchSummaryContainer.appendChild(this.createSummary())
         }
     }
 
+    private createSummary(): HTMLDivElement {
+        if (!this.results) return document.createElement('div')
 
-        private dispatchEvent(name: string, node?: Node): void {
-            if (!this.searchBox) return
-
-            const evt = new CustomEvent(name, {
-                detail: node,
-                bubbles: true,
-                cancelable: true,
-            })
-            this.searchBox.dispatchEvent(evt)
+        let text = ''
+        if (this.results.length === 0) {
+            text = 'No results found'
+        } else if (this.results.length > this.MAX_RESULT_COUNT) {
+            text = `Showing top ${this.MAX_RESULT_COUNT} of ${this.results.length} results`
+        } else {
+            text = `${this.results.length} results`
         }
+
+        const template = document.createElement('template')
+        template.innerHTML = `
+  <div>
+    ${text}
+  </div>
+`
+        const summary = template.content.firstElementChild as HTMLDivElement
+        return summary
+    }
+
+
+    private dispatchEvent(name: string, node?: Node): void {
+        if (!this.searchBox) return
+
+        const evt = new CustomEvent(name, {
+            detail: node,
+            bubbles: true,
+            cancelable: true,
+        })
+        this.searchBox.dispatchEvent(evt)
+    }
 }

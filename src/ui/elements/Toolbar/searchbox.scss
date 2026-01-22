@@ -136,6 +136,13 @@
         }
     }
 
+    .pvt-search-summary {
+        padding: 6px 12px;
+        font-weight: 300;
+        font-size: 0.9em;
+        color: var(--pvt-text-color-4)
+    }
+
     .pvt-search-hints {
         padding: 6px 12px;
         display: flex;
