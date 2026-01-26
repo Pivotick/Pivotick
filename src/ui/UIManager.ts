@@ -5,7 +5,7 @@ import { GraphControls } from './elements/GraphControls/GraphControls'
 import { GraphNavigation } from './elements/GraphNavigation/GraphNavigation'
 import { Layout } from './elements/Layout'
 import { Sidebar } from './elements/Sidebar/Sidebar'
-import { SlidePanel } from './elements/SlidePanel/SlidePanel'
+import { SlidePanel, type SlidepanelOptions } from './elements/SlidePanel/SlidePanel'
 import { Toolbar } from './elements/Toolbar/Toolbar'
 import { Modal, type ModalOptions } from './elements/Modal/Modal'
 import type { Notification } from './Notifier'
@@ -187,9 +187,7 @@ export class UIManager {
         this.buildLayout()
         this.buildUIGraphNavigation()
         this.buildUIGraphControls()
-        this.buildSlidePanel()
         this.buildToolbar()
-        this.buildModal()
         this.buildSidebar()
     }
 
@@ -204,9 +202,7 @@ export class UIManager {
         this.buildLayout()
         this.buildUIGraphNavigation()
         this.buildUIGraphControls()
-        this.buildSlidePanel()
         this.buildToolbar()
-        this.buildModal()
     }
 
     private buildLayout() {
@@ -232,19 +228,9 @@ export class UIManager {
         this.graphControls.mount(this.layout?.graphcontrols)
     }
 
-    private buildSlidePanel() {
-        this.slidePanel = new SlidePanel(this)
-        this.slidePanel.mount(this.layout?.canvas)
-    }
-
     private buildToolbar() {
         this.toolbar = new Toolbar(this)
         this.toolbar.mount(this.layout?.toolbar)
-    }
-
-    private buildModal() {
-        // this.modal = new Modal(this)
-        // this.modal.mount(this.layout?.modal)
     }
 
     private buildSidebar() {
@@ -261,7 +247,6 @@ export class UIManager {
 
     private callAfterMount() { // TODO: Instead, these should register an afterMount callback
         this.layout?.afterMount()
-        this.slidePanel?.afterMount()
         this.toolbar?.afterMount()
         this.sidebar?.afterMount()
         this.graphNaviation?.afterMount()
@@ -336,7 +321,7 @@ export class UIManager {
    /**
    * Show a modal in the UI.
    * 
-   * @param modalOption - The notification to display
+   * @param modalOption - The option for the modal
    */
     public createModal(modalOptions: ModalOptions): Modal | undefined {
         const container = this.layout?.modal
@@ -350,5 +335,20 @@ export class UIManager {
         })
 
         return modal
+    }
+
+   /**
+   * Show a sidepanel in the UI.
+   * 
+   * @param slidepanelOption - The notification to display
+   */
+    public createSlidepanel(slidepanelOptions: SlidepanelOptions): SlidePanel | undefined {
+        const container = this.layout?.slidePanel
+        if (!container) return
+
+        const slidePanel = new SlidePanel(this, slidepanelOptions)
+        slidePanel.mount(this.layout?.slidePanel)
+
+        return slidePanel
     }
 }

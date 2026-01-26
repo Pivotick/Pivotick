@@ -59,3 +59,36 @@ export interface RelaxedGraphData {
     nodes: Array<Node | RawNode>
     edges: Array<Edge | RawEdge>
 }
+
+
+/**
+ * @category Main Options
+ */
+export type GraphEvents = {
+    ready: () => void,
+    nodeAdd: (node: Node) => void;
+    nodeRemove: (node: Node) => void;
+    nodeChange: (node: Node, previousData: NodeData, nextData: NodeData) => void;
+    edgeAdd: (edge: Edge) => void;
+    edgeRemove: (edge: Edge) => void;
+    edgeChange: (edge: Edge, previousData: EdgeData, nextData: EdgeData) => void;
+    dataBatchChanged: (changes: GraphDataChange[]) => void; // Batch of data changes(transactions, imports, undo / redo)
+}
+
+export type GraphDataChange =
+    | { type: 'node:add'; node: Node }
+    | { type: 'node:remove'; node: Node }
+    | {
+        type: 'node:change';
+        node: Node;
+        previousData: NodeData;
+        nextData: NodeData;
+    }
+    | { type: 'edge:add'; edge: Edge }
+    | { type: 'edge:remove'; edge: Edge }
+    | {
+        type: 'edge:change';
+        edge: Edge;
+        previousData: EdgeData;
+        nextData: EdgeData;
+    }

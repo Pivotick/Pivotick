@@ -1,11 +1,11 @@
-import { Node } from './Node'
-import { Edge } from './Edge'
+import { Node, type NodeData } from './Node'
+import { Edge, type EdgeData } from './Edge'
 import { createGraphRenderer } from './renderers/GraphRendererFactory'
 import type { GraphRenderer } from './GraphRenderer'
 import { Simulation } from './Simulation'
 import { UIManager } from './ui/UIManager'
 import { Notifier } from './ui/Notifier'
-import type { GraphOptions, GraphData, RelaxedGraphData, RawNode, RawEdge } from './interfaces/GraphOptions'
+import type { GraphOptions, GraphData, RelaxedGraphData, RawNode, RawEdge, GraphEvents, GraphDataChange } from './interfaces/GraphOptions'
 import type { GraphUI } from './interfaces/GraphUI'
 import type { InterractionCallbacks } from './interfaces/InterractionCallbacks'
 import type { LayoutOptions } from './interfaces/LayoutOptions'
@@ -24,8 +24,7 @@ export class Graph {
     private options: GraphOptions
     private app_id: string
     
-    private _readyResolve!: () => void
-    public ready: Promise<void>
+    private listeners: Record<keyof GraphEvents, Array<GraphEvents[keyof GraphEvents]>>
 
     /**
      * Initializes a graph inside the specified container using the provided data and options.
@@ -35,7 +34,10 @@ export class Graph {
      * @param options - Optional configuration for the graph's behavior, UI, styling, simulation, etc.
      */
     constructor(container: HTMLElement, data?: RelaxedGraphData, options?: Partial<GraphOptions>) {
-        this.ready = new Promise(res => (this._readyResolve = res))
+        this.listeners = {
+            ready: [],
+            nodeAdd: [], nodeRemove: [], nodeChange: [], edgeAdd: [], edgeRemove: [], edgeChange: [], dataBatchChanged: [],
+        }
 
         this.options = {
             isDirected: true,
@@ -102,17 +104,36 @@ export class Graph {
         this.startAndRender()
     }
 
+    public on<K extends keyof GraphEvents>(
+        event: K,
+        handler: GraphEvents[K]
+    ): void {
+        this.listeners[event].push(handler)
+    }
+
+    public off<K extends keyof GraphEvents>(
+        event: K,
+        handler: GraphEvents[K]
+    ): void {
+        this.listeners[event] = this.listeners[event].filter(h => h !== handler)
+    }
+
+    private emit<K extends keyof GraphEvents>(
+        event: K,
+        ...args: Parameters<GraphEvents[K]>
+    ): void {
+        for (const handler of this.listeners[event]) {
+            (handler as (...args: Parameters<GraphEvents[K]>) => void)(...args)
+        }
+    }
+
     private async startAndRender() {
         await this.simulation.start()
         await this.simulation.waitForSimulationStop()
         this.renderer.nextTick()
         this.renderer.fitAndCenter()
         this.UIManager.callGraphReady()
-        this.signalReady()
-    }
-
-    private signalReady() {
-        this._readyResolve()
+        this.ready()
     }
 
     private normalizeGraphData(data: GraphData | RelaxedGraphData): GraphData {
@@ -166,6 +187,66 @@ export class Graph {
         )
     }
 
+
+    private ready() {
+        this.emit('ready')
+    }
+
+    private nodeAdd(node: Node): void {
+        this.emit('nodeAdd', node)
+    }
+
+    private nodeRemove(node: Node): void {
+        this.emit('nodeRemove', node)
+    }
+
+    private nodeChange(node: Node, previousData: NodeData, nextData: NodeData): void {
+        this.emit('nodeChange', node, previousData, nextData)
+    }
+
+    private edgeAdd(edge: Edge): void {
+        this.emit('edgeAdd', edge)
+    }
+
+    private edgeRemove(edge: Edge): void {
+        this.emit('edgeRemove', edge)
+    }
+
+    private edgeChange(edge: Edge, previousData: EdgeData, nextData: EdgeData): void {
+        this.emit('edgeChange', edge, previousData, nextData)
+    }
+
+    private dataBatchChanged(changes: GraphDataChange[]): void {
+        if (changes) {
+            this.emit('dataBatchChanged', changes)
+            changes.forEach(c => {
+                switch (c.type) {
+                    case 'node:add':
+                        this.nodeAdd(c.node)
+                        break
+                    case 'node:change':
+                        this.nodeChange(c.node, c.previousData, c.nextData)
+                        break
+                    case 'node:remove':
+                        this.nodeRemove(c.node)
+                        break
+                    case 'edge:add':
+                        this.edgeAdd(c.edge)
+                        break
+                    case 'edge:change':
+                        this.edgeChange(c.edge, c.previousData, c.nextData)
+                        break
+                    case 'edge:remove':
+                        this.edgeRemove(c.edge)
+                        break
+                
+                    default:
+                        break
+                }
+            })
+        }
+    }
+
     /**
      * Returns the current configuration options of the graph.
      */
@@ -201,27 +282,53 @@ export class Graph {
      * @param newEdges Optional array of edges to update or add.
      * Triggers `onChange`
      */
-    updateData(newNodes?: Array<Node>, newEdges?: Array<Edge>): void {
+    updateData(newNodes?: Array<Node>, newEdges?: Array<Edge>, triggerChangeEvent=true): void {
+        const changes: GraphDataChange[] = []
+
         if (newNodes) {
             newNodes.forEach(newNode => {
                 if (this.nodes.has(newNode.id)) {
+                    changes.push({
+                        type: 'node:change',
+                        node: newNode,
+                        previousData: this.nodes.get(newNode.id)?.getData(),
+                        nextData: newNode.getData(),
+                    } as GraphDataChange)
                     this.nodes.set(newNode.id, newNode)
                 } else {
                     this.addNode(newNode)
+                    changes.push({
+                        type: 'node:add',
+                        node: newNode
+                    } as GraphDataChange)
                 }
             })
         }
         if (newEdges) {
             newEdges.forEach(newEdge => {
                 if (this.edges.has(newEdge.id)) {
+                    changes.push({
+                        type: 'edge:change',
+                        edge: newEdge,
+                        previousData: this.nodes.get(newEdge.id)?.getData(),
+                        nextData: newEdge.getData(),
+                    } as GraphDataChange)
                     this.edges.set(newEdge.id, newEdge)
                 } else {
                     this.addEdge(newEdge)
+                    changes.push({
+                        type: 'edge:add',
+                        edge: newEdge
+                    } as GraphDataChange)
                 }
             })
         }
         if (newNodes || newEdges) {
             this.onChange()
+        }
+
+        if (triggerChangeEvent) {
+            this.dataBatchChanged(changes)
         }
     }
 
@@ -246,8 +353,13 @@ export class Graph {
      * @private
      */
     private _setData(nodes: Array<Node>, edges: Array<Edge>): void {
+        const changes: GraphDataChange[] = []
         nodes.forEach(node => {
             this.nodes.set(node.id, node)
+            changes.push({
+                type: 'node:add',
+                node: node
+            } as GraphDataChange)
         })
         edges.forEach(edge => {
             if (
@@ -258,7 +370,12 @@ export class Graph {
                 return
             }
             this.edges.set(edge.id, edge)
+            changes.push({
+                type: 'edge:add',
+                edge: edge
+            } as GraphDataChange)
         })
+        this.dataBatchChanged(changes)
     }
 
     /**
@@ -273,6 +390,10 @@ export class Graph {
             throw new Error(`Node with id ${node.id} already exists.`)
         }
         this.nodes.set(node.id, node)
+        this.dataBatchChanged([{
+            type: 'node:add',
+            node: node
+        } as GraphDataChange])
         this.onChange()
         return node
     }
@@ -329,11 +450,19 @@ export class Graph {
      */
     removeNode(id: string): void {
         if (!this.nodes.has(id)) return
+        this.dataBatchChanged([{
+            type: 'node:remove',
+            node: this.nodes.get(id)
+        } as GraphDataChange])
         this.nodes.delete(id)
 
         // Remove edges connected to this node
         for (const [edgeId, edge] of this.edges) {
             if (edge.from.id === id || edge.to.id === id) {
+                this.dataBatchChanged([{
+                    type: 'edge:remove',
+                    edge: this.edges.get(edgeId)
+                } as GraphDataChange])
                 this.edges.delete(edgeId)
             }
         }
@@ -363,6 +492,10 @@ export class Graph {
             throw new Error('Both nodes must exist in the graph before adding an edge.')
         }
         this.edges.set(edge.id, edge)
+        this.dataBatchChanged([{
+            type: 'edge:add',
+            edge: edge
+        } as GraphDataChange])
         this.onChange()
         return edge
     }
@@ -402,6 +535,11 @@ export class Graph {
      * Triggers `onChange` after the edge is removed.
      */
     removeEdge(id: string): void {
+        if (!this.edges.has(id)) return
+        this.dataBatchChanged([{
+            type: 'edge:remove',
+            edge: this.edges.get(id)
+        } as GraphDataChange])
         this.edges.delete(id)
         this.onChange()
     }

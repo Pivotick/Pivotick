@@ -45,7 +45,6 @@ export class Modal implements UIElement {
     private header: HTMLDivElement | undefined
     private body: HTMLDivElement | undefined
     private footer: HTMLDivElement | undefined
-    private modalOpen = true
 
     private DEFAULT_HEADER = null
     private DEFAULT_BODY = ''
@@ -99,13 +98,7 @@ export class Modal implements UIElement {
         if (this.options.header != null) {
             this.header = document.createElement('div')
             this.header.className = 'pvt-modal__header'
-            if (this.options.header instanceof HTMLElement) {
-                this.header.appendChild(this.options.header)
-            } else if (this.options.rawHeader) {
-                this.header.innerHTML = this.options.header!
-            } else {
-                this.header.textContent = this.options.header!
-            }
+            this.setHeader(this.options.header)
             this.modal.appendChild(this.header)
 
             const closeBtn = createButton({
@@ -174,6 +167,21 @@ export class Modal implements UIElement {
         })
     }
 
+    public setHeader(header: string | HTMLElement | null | undefined): void {
+        if (!this.header) return
+
+        this.header.innerHTML = ''
+        if (!header) return
+
+        if (this.options.header instanceof HTMLElement) {
+            this.header.appendChild(this.options.header)
+        } else if (this.options.rawHeader) {
+            this.header.innerHTML = this.options.header!
+        } else {
+            this.header.textContent = this.options.header!
+        }
+    }
+
     public setBody(body: string | HTMLElement | null | undefined): void {
         if (!this.body) return
 
@@ -194,7 +202,6 @@ export class Modal implements UIElement {
 
         this.dispatchEvent('show')
         this.modal.classList.add('pvt-modal-open')
-        this.modalOpen = true
         const onAnimationEnd = (evt: AnimationEvent) => {
             if (evt.target === this.modal) {
                 this.modal?.removeEventListener('animationend', onAnimationEnd)
@@ -208,7 +215,6 @@ export class Modal implements UIElement {
         if (!this.modal || !this.overlay) return
 
         this.dispatchEvent('hide')
-        this.modalOpen = false
         this.modal.classList.remove('pvt-modal-open')
         this.overlay?.remove()
         requestAnimationFrame(() => {

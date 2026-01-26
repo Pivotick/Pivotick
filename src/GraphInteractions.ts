@@ -361,5 +361,4 @@ export class GraphInteractions<TElement = unknown> {
     public getSelectedEdges(): EdgeSelection<TElement>[] {
         return this.selectedEdges
     }
-
 }

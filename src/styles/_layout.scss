@@ -76,7 +76,10 @@
         top: 0;
         bottom: 0;
         right: 0;
-        width: 300px;
+        // width: 300px;
+        max-width: 30%;
+        min-width: 220px;
+        overflow-y: auto;
         height: 100%;
         z-index: 1000;
     }

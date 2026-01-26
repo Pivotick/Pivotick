@@ -8,7 +8,7 @@ export class Layout implements UIElement {
     public toolbar?: HTMLDivElement
     public notification?: HTMLDivElement
     public modal?: HTMLDivElement
-    // public slidePanel?: HTMLDivElement;
+    public slidePanel?: HTMLDivElement
     public graphnavigation?: HTMLDivElement
     public graphcontrols?: HTMLDivElement
 
@@ -40,6 +40,10 @@ export class Layout implements UIElement {
             this.modal = document.createElement('div')
             this.modal.className = 'pvt-modalcontainer'
             container.appendChild(this.modal)
+
+            this.slidePanel = document.createElement('div')
+            this.slidePanel.className = 'pvt-slidepanel-container'
+            this.canvas.appendChild(this.slidePanel)
         }
 
         if (mode !== 'static') {

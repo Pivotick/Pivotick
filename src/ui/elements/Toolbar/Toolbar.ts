@@ -3,6 +3,9 @@ import type { UIElement, UIManager } from '../../UIManager'
 import { SearchBox } from './SearchBox'
 import './toolbar.scss'
 import { Node } from '../../../Node'
+import type { SlidePanel } from '../SlidePanel/SlidePanel'
+import { GraphFilter } from '../GraphFilter/GraphFilter'
+import { graph } from '../../../ail-graph'
 
 export class Toolbar implements UIElement {
     private uiManager: UIManager
@@ -12,6 +15,7 @@ export class Toolbar implements UIElement {
     public filterButton?: HTMLButtonElement
     public undoButton?: HTMLButtonElement
     public redoButton?: HTMLButtonElement
+    public filteringSlidepanel?: SlidePanel
 
     constructor(uiManager: UIManager) {
         this.uiManager = uiManager
@@ -41,7 +45,7 @@ export class Toolbar implements UIElement {
         const templateFilter = document.createElement('template')
         templateFilter.innerHTML = `
   <div class="pvt-filter">
-    <button id="pvt-filter-button" class="pvt-button-filter" disabled>
+    <button id="pvt-filter-button" class="pvt-button-filter">
         ${funel}
     </button>
     <div style="border-left: 1px solid color-mix(in srgb, var(--pvt-border-color) 80%, transparent);"></div>
@@ -70,14 +74,20 @@ export class Toolbar implements UIElement {
     }
 
     afterMount() {
-        if (!this.filterButton || !this.uiManager.slidePanel?.slidePanel) return
+        if (!this.filterButton) return
 
         this.uiManager.keyManager.register({ key: 'Ctrl+f', callback: () => this.searchBoxButton?.click() })
 
-        this.filterButton.addEventListener('click', () => {
-            if (!this.uiManager.slidePanel?.slidePanel) return
-            this.uiManager.slidePanel.open()
+        const graphFilter = new GraphFilter(this.uiManager, {})
+        this.filteringSlidepanel = this.uiManager.createSlidepanel({
+            header: 'Node Filters',
+            body: graphFilter.build()
         })
+
+        this.filterButton.addEventListener('click', () => {
+            this.filteringSlidepanel!.toggle()
+        })
+
 
         this.searchBoxButton?.addEventListener('click', () => {
             const modal = this.uiManager.createModal({

@@ -415,7 +415,7 @@ export class Simulation {
                 nodes[i].fy = undefined
             }
         })
-        this.graph.updateData(nodes)
+        this.graph.updateData(nodes, undefined, false)
     }
 
     private async runSimulationWorkerRouter(optionOverride: Partial<SimulationOptions> = {}) {
@@ -469,7 +469,7 @@ export class Simulation {
                 nodes[i].fy = undefined
             }
         })
-        this.graph.updateData(nodes)
+        this.graph.updateData(nodes, undefined, false)
     }
 
     /**
