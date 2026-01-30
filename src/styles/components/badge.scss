@@ -1,0 +1,72 @@
+@mixin badge {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 16px;
+    transition: background-color 0.1s ease;
+}
+
+@mixin badge-variant($bg-color, $bg-text-color) {
+    @include badge;
+    background-color: var($bg-color);
+    color: var($bg-text-color);
+}
+
+@mixin badge-primary {
+    @include badge-variant(--pvt-bg-color-primary, --pvt-text-color-for-primary);
+}
+
+@mixin badge-secondary {
+    @include badge-variant(--pvt-bg-color-secondary, --pvt-text-color-for-secondary);
+}
+
+@mixin badge-info {
+    @include badge-variant(--pvt-bg-color-info, --pvt-text-color-for-info);
+}
+
+@mixin badge-warning {
+    @include badge-variant(--pvt-bg-color-warning, --pvt-text-color-for-warning);
+}
+
+@mixin badge-danger {
+    @include badge-variant(--pvt-bg-color-danger, --pvt-text-color-for-danger);
+}
+
+@mixin badge-success {
+    @include badge-variant(--pvt-bg-color-success, --pvt-text-color-for-success);
+}
+
+span.pivotick-badge-primary {
+    @include badge-primary;
+}
+
+span.pivotick-badge-secondary {
+    @include badge-secondary;
+}
+
+span.pivotick-badge-info {
+    @include badge-info;
+}
+
+span.pivotick-badge-warning {
+    @include badge-warning;
+}
+
+span.pivotick-badge-danger {
+    @include badge-danger;
+}
+
+span.pivotick-badge-success {
+    @include badge-success;
+}
+
+span.pivotick-badge-sm {
+    padding: 0.15rem 0.25rem;
+    font-size: 0.8rem;
+}
+
+badge.pivotick-badge-xs {
+    padding: 0.05rem 0.15rem;
+    font-size: 0.75rem;
+}

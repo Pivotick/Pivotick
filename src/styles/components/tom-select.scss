@@ -2,40 +2,10 @@
 @use '../variables' as vars;
 @use "./input.scss";
 
-// // Override Tom Select variables BEFORE importing source
-// $ts-border-radius: 6px;
-// $ts-background: var(--pvt-bg-color-2);
-// $ts-border-color: var(--pvt-bg-color-8);
-// $ts-text-color: var(--pvt-text-color-7);
-// $ts-hover-bg: var(--pvt-bg-color-6);
-// $ts-highlight-color: var(--pvt-accent-color);
-// // $select-color-text: map.get(vars.$dark-vibrant-color-palette, vibrant-amaranth);
-// $select-color-text: var(--pvt-text-color-primary);
-
 // Override Tom Select variables
 
 // Import Tom Select SCSS source
 @import "tom-select/src/scss/tom-select.scss";
-
-// .pvt-ts-control {
-//     background: var(--pvt-bg-color-2);
-//     border-color: var(--pvt-bg-color-8);
-//     color: var(--pvt-text-color-primary); // placeholder text
-// }
-
-// .pvt-ts-dropdown {
-//     background: var(--pvt-bg-color-1);
-// }
-
-// .pvt-ts-option {
-//     color: var(--pvt-text-color-secondary);
-// }
-
-// .pvt-ts-option.highlight {
-//     background: var(--pvt-bg-color-6);
-//     color: var(--pvt-accent-color);
-// }
-
 
 $ts-colortext: var(--pvt-text-color-4);
 $ts-bgcolor: var(--pvt-bg-color-7);

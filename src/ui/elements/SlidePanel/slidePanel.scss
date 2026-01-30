@@ -38,5 +38,11 @@
         padding: 16px;
         overflow-y: auto;
         overflow-x: hidden;
+
+        .pvt-graph-filter-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0px;
+        }
     }
 }

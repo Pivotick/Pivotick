@@ -85,7 +85,7 @@ export class Modal implements UIElement {
         )
 
         this.overlay.addEventListener('click', (e) => {
-            if (e.target === this.overlay) this.overlay.remove()
+            if (e.target === this.overlay) this.destroy()
         })
 
 

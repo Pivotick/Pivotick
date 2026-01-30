@@ -1,7 +1,8 @@
-import type { GraphFilters } from '../../../interfaces/GraphQueryEngine'
+import type { FilterFieldConfig, GraphFilters } from '../../../interfaces/GraphQueryEngine'
 import { FormFactory, type FieldConfig, type FieldType, type FormValue, type FormValues } from '../../../utils/FormFactory'
+import { createBadge } from '../../components/Badge'
 import { createButton } from '../../components/Button'
-import { funel } from '../../icons'
+import { funnel, funnelClear } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import './graphFilter.scss'
 
@@ -11,19 +12,18 @@ interface AttributeFilter {
     range?: [number, number];        // range for numeric attributes
 }
 
-export interface GraphFilterOptions {
-}
+const DEFAULT_FILTER_BUTTON_TEXT = 'Filter Graph'
 
 
 export class GraphFilter implements UIElement {
     public uiManager: UIManager
-    private options: GraphFilterOptions
 
     public graphFilter?: HTMLDivElement
+    private formOptions: FieldConfig[]
 
-    constructor(uiManager: UIManager, options: GraphFilterOptions = {}) {
+    constructor(uiManager: UIManager) {
         this.uiManager = uiManager
-        this.options = options
+        this.formOptions = []
     }
 
     mount(container: HTMLElement | undefined) {
@@ -47,9 +47,14 @@ export class GraphFilter implements UIElement {
 
     build(): HTMLDivElement {
         this.graphFilter = document.createElement('div')
+        this.graphFilter.classList.add('pvt-graph-filter-container')
 
         this.uiManager.graph.on('dataBatchChanged', () => {
             this.rebuild()
+        })
+
+        this.uiManager.graph.queryEngine.on('filterChange', (filters: GraphFilters) => {
+            this.updateUIFilterButtonContent(filters)
         })
         return this.graphFilter
     }
@@ -57,26 +62,45 @@ export class GraphFilter implements UIElement {
     private rebuild(): void {
         if (!this.graphFilter) return
 
+        const resetButton = createButton({
+            variant: 'secondary',
+            text: 'Reset',
+            size: 'sm',
+            style: 'align-self: end;',
+            svgIcon: funnelClear,
+            onClick: () => {
+                FormFactory.clear(filteringForm)
+                const filters: FormValues = {}
+                this.filterGraph(filters)
+            }
+        })
+
         const attributeFilters = this.getAvailableNodeAttributes()
-        const formOptions: FieldConfig[] = Object.entries(attributeFilters).map(([key, filter]) => {
+        this.formOptions = Object.entries(attributeFilters).map(([key, filter]) => {
             let filterType: FieldType = 'text'
+            let matchMode = 'exact'
+            let valuesAreBoolean = false
             if (!filter.values) {
                 filterType = 'numberRange'
             } else if (filter.values && filter.values.every((v) => v.length < 64)) {
                 if (filter.values.length > 2) {
                     filterType = 'multiselect'
+                    matchMode = 'partial'
                 } else {
                     filterType = 'select'
                 }
             } else if (filter.values.every((v) => typeof v === 'boolean')) {
                 filterType = 'select'
                 filter.values = ['true', 'false']
+                valuesAreBoolean = true
             }
             
             const option: FieldConfig = {
                 key,
                 label: key,
-                type: filterType
+                type: filterType,
+                matchMode: matchMode,
+                valuesAreBoolean: valuesAreBoolean,
             }
 
             if ((option.type == 'select' || option.type == 'multiselect') && filter.values) {
@@ -91,23 +115,44 @@ export class GraphFilter implements UIElement {
             return option
         })
         const filteringForm = FormFactory.createForm({
-            fields: formOptions
+            fields: this.formOptions
         })
 
         const filterButton = createButton({
             variant: 'primary',
             text: 'Filter Graph',
             size: 'block',
-            svgIcon: funel,
             style: 'margin-top: 16px;',
+            svgIcon: funnel,
             onClick: () => {
                 const filters: FormValues = FormFactory.getValues(filteringForm)
                 this.filterGraph(filters)
             }
         })
 
+        this.graphFilter.appendChild(resetButton)
         this.graphFilter.appendChild(filteringForm)
         this.graphFilter.appendChild(filterButton)
+    }
+
+    private updateUIFilterButtonContent(filters: GraphFilters) {
+        const filterButton = this.uiManager.toolbar?.filterButton
+        const filterButtonElement = filterButton?.querySelector('.action-text')
+        if (!filterButtonElement) return
+
+        filterButtonElement.innerHTML = ''
+        const filterCount = Object.keys(filters).length
+        if (filterCount > 0) {
+            const activeFilterText = filterCount > 1 ? `${filterCount} active filters` : '1 active filter'
+            const filterBadge = createBadge({
+                text: activeFilterText,
+                variant: 'primary',
+                size: 'sm'
+            })
+            filterButtonElement.appendChild(filterBadge)
+        } else {
+            filterButtonElement.textContent = DEFAULT_FILTER_BUTTON_TEXT
+        }
     }
 
     private getAvailableNodeAttributes(): Record<string, AttributeFilter> {
@@ -149,11 +194,14 @@ export class GraphFilter implements UIElement {
     private filterGraph(filters: FormValues): void {
         const activeFilters: FormValues = this.getActiveFilters(filters)
         const graphFilter: GraphFilters = {}
+        const formOptionMap = Object.fromEntries(this.formOptions.map(option => [option.key, option]))
         for (const [key, value] of Object.entries(activeFilters)) {
+            const fieldCondig: FilterFieldConfig = {
+                value: value,
+                matchMode: formOptionMap[key].matchMode
+            }
             if (value !== undefined) {
-                graphFilter[key] = value
-            } else {
-                graphFilter[key] = undefined
+                graphFilter[key] = fieldCondig
             }
         }
 

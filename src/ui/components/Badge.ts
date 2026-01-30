@@ -1,14 +1,12 @@
-import type { IconClass, IconUnicode, ImagePath, SVGIcon, UIOutlineVariant, UIBaseVariant } from '../../interfaces/GraphUI'
+import type { IconClass, IconUnicode, ImagePath, SVGIcon, UIBaseVariant } from '../../interfaces/GraphUI'
 import { createIcon } from '../../utils/ElementCreation'
 
-type ButtonVariant = UIBaseVariant | UIOutlineVariant
-type ButtonSize = 'sm' | 'xs' | 'block'
-export type ButtonOptions<TArgs extends unknown[] = []> = {
-    variant?: ButtonVariant,
-    size?: ButtonSize,
+type BadgeVariant = UIBaseVariant
+type BadgeSize = 'sm' | 'xs'
+export type BadgeOptions = {
+    variant?: BadgeVariant,
+    size?: BadgeSize,
     /** closeModal can be used to close the modal */
-    onClick?: (event: MouseEvent, ...args: TArgs) => void
-    onClickArgs?: TArgs
     iconUnicode?: IconUnicode,
     iconClass?: IconClass,
     svgIcon?: SVGIcon,
@@ -17,14 +15,12 @@ export type ButtonOptions<TArgs extends unknown[] = []> = {
     [key: string]: unknown // allow other attributes like id, className, etc.
 }
 
-export function createButton<TArgs extends unknown[] = []>(options: ButtonOptions<TArgs>): HTMLButtonElement {
+export function createBadge(options: BadgeOptions): HTMLSpanElement {
     options.variant = options.variant ?? 'primary'
 
     const { 
         variant,
         size,
-        onClick,
-        onClickArgs,
         iconUnicode,
         iconClass,
         svgIcon,
@@ -32,25 +28,25 @@ export function createButton<TArgs extends unknown[] = []>(options: ButtonOption
         text,
         ...attrs
     } = options
-    const btn = document.createElement('button')
+    const badge = document.createElement('span')
 
-    btn.classList.add('pivotick-button')
-    btn.classList.add(`pivotick-button-${variant}`)
+    badge.classList.add('pivotick-badge')
+    badge.classList.add(`pivotick-badge-${variant}`)
     if (size)
-        btn.classList.add(`pivotick-button-${size}`)
+        badge.classList.add(`pivotick-badge-${size}`)
 
 
     for (const [key, value] of Object.entries(attrs)) {
         if (key === 'class') {
             if (Array.isArray(value)) {
-                btn.classList.add(...value)
+                badge.classList.add(...value)
             } else {
-                btn.classList.add(String(value))
+                badge.classList.add(String(value))
             }
-        } else if (key in btn) {
-            (btn as HTMLButtonElement & Record<string, unknown>)[key] = value
+        } else if (key in badge) {
+            (badge as HTMLSpanElement & Record<string, unknown>)[key] = value
         } else {
-            btn.setAttribute(key, String(value))
+            badge.setAttribute(key, String(value))
         }
     }
 
@@ -68,7 +64,7 @@ export function createButton<TArgs extends unknown[] = []>(options: ButtonOption
         iconEl = createIcon({ imagePath: imagePath })
     }
     if (iconEl) {
-        btn.append(iconEl)
+        badge.append(iconEl)
     }
     const textEl = document.createElement('text')
     if (text) {
@@ -77,12 +73,7 @@ export function createButton<TArgs extends unknown[] = []>(options: ButtonOption
 
         textEl.textContent = text
     }
-    btn.append(textEl)
+    badge.append(textEl)
 
-    if (typeof onClick === 'function') {
-        const args = (onClickArgs ?? []) as TArgs
-        btn.addEventListener('click', (evt) => { onClick(evt, ...args) })
-    }
-
-    return btn
+    return badge
 }

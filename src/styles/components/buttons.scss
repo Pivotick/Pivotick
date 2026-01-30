@@ -1,5 +1,5 @@
 @mixin button {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     border: none;
@@ -9,6 +9,10 @@
     border-radius: 0.25rem;
     cursor: pointer;
     transition: background-color 0.1s ease;
+
+    .pvt-icon {
+        margin-right: 0.2em !important;
+    }
 }
 
 @mixin button-variant($bg-color, $bg-text-color) {

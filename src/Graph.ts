@@ -84,6 +84,7 @@ export class Graph {
         appContainer.classList.add('pivotick')
         container.appendChild(appContainer)
 
+        this.queryEngine = new GraphQueryEngine(this)
         this.UIManager = new UIManager(this, appContainer, UIManagerOptions)
         this.notifier = new Notifier(this)
         this.renderer = createGraphRenderer(this, appContainer, rendererOptions)
@@ -94,7 +95,6 @@ export class Graph {
             layout: this.options?.layout as LayoutOptions
         }
         this.simulation = new Simulation(this, simulationOptions)
-        this.queryEngine = new GraphQueryEngine(this)
 
         if (data) {
             const normalisedData = this.normalizeGraphData(data)

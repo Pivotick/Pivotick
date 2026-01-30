@@ -1,4 +1,5 @@
 import TomSelect from 'tom-select'
+import type { filterMatchMode } from '../interfaces/GraphQueryEngine';
 
 export type FieldType =
     | 'select'
@@ -20,6 +21,8 @@ export interface FieldConfig {
     placeholder?: string
     defaultValue?: FormValue
     allowEmpty?: boolean
+    matchMode: filterMatchMode
+    valuesAreBoolean: boolean
 }
 
 export interface FormConfig {
@@ -57,14 +60,26 @@ export class FormFactory {
                     break
 
                 case 'select':
-                    values[key] = (el as HTMLSelectElement).value || undefined
-                    break
+                    { const select = el as HTMLSelectElement
+                    values[key] = select.value || undefined
+                    if (select.dataset.fieldValuesAreBoolean === 'yes') {
+                        if (values[key] !== undefined && values[key] === 'true') {
+                            values[key] = true
+                        }
+                    }
+
+                    break }
 
                 case 'multiselect':
+                    { const select = el as HTMLSelectElement
                     values[key] = Array.from(
-                        (el as HTMLSelectElement).selectedOptions
+                        select.selectedOptions
                     ).map(o => o.value)
-                    break
+                    if (select.dataset.fieldValuesAreBoolean === 'yes') {
+                        values[key].map(v => v !== undefined && v === 'true' ? true : v)
+                    }
+
+                    break }
 
                 case 'checkbox':
                     values[key] = (el as HTMLInputElement).checked
@@ -86,6 +101,9 @@ export class FormFactory {
 
     static clear(form: HTMLFormElement) {
         form.reset()
+        form.querySelectorAll('select').forEach(select => {
+            (select as HTMLSelectElement & { tomselect?: TomSelect }).tomselect?.sync()
+        })
     }
 
     static createField(field: FieldConfig): HTMLElement {
@@ -138,6 +156,10 @@ export class FormFactory {
             placeholder.textContent = ''
             placeholder.selected = true
             select.appendChild(placeholder)
+        }
+
+        if (field.valuesAreBoolean) {
+            select.setAttribute('data-field-values-are-boolean', 'yes')
         }
 
         field.options?.forEach(opt => {

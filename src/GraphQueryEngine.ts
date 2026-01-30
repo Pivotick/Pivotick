@@ -1,6 +1,6 @@
 import type { Node } from './Node'
 import type { Graph } from './Graph'
-import type { GraphQueryEvents, GraphFilters, FilterValue } from './interfaces/GraphQueryEngine'
+import type { GraphQueryEvents, GraphFilters, FilterFieldConfig } from './interfaces/GraphQueryEngine'
 
 
 export class GraphQueryEngine {
@@ -49,7 +49,7 @@ export class GraphQueryEngine {
         }
     }
 
-    setFilter(key: string, value: FilterValue) {
+    setFilter(key: string, value: FilterFieldConfig) {
         if (value === undefined) {
             this.removeFilter(key)
             return
@@ -97,12 +97,15 @@ export class GraphQueryEngine {
         return true
     }
 
-    private matches(nodeValue: undefined, filterValue: FilterValue): boolean {
-        if (filterValue === undefined) return true
+    private matches(nodeValue: undefined, filterConfig: FilterFieldConfig): boolean {
+        if (filterConfig === undefined) return true
         if (nodeValue === undefined) return false
 
+        const filterValue = filterConfig.value
+        const matchMode = filterConfig?.matchMode ?? 'partial'
+
         if (typeof filterValue === 'string') {
-            return String(nodeValue).includes(filterValue)
+            return matchMode === 'partial' ? String(nodeValue).includes(filterValue) : nodeValue === filterValue
         }
 
         if (typeof filterValue === 'number') {
@@ -114,7 +117,7 @@ export class GraphQueryEngine {
         }
 
         if (Array.isArray(filterValue)) {
-            return filterValue.includes(nodeValue)
+            return matchMode === 'partial' ? filterValue.includes(nodeValue) : nodeValue === filterValue
         }
 
         if (typeof filterValue === 'object' && filterValue !== null) {
