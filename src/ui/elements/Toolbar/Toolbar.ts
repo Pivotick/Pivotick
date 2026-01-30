@@ -57,7 +57,6 @@ export class Toolbar implements UIElement {
         const templateRight = document.createElement('template')
         templateRight.innerHTML = `
   <div class="pvt-right">
-    <div style="border-left: 1px solid color-mix(in srgb, var(--pvt-border-color) 80%, transparent);"></div>
     <div class="pvt-undoredo-group">
         <button id="pvt-undo-button" class="pvt-button-undo" disabled>
             ${undo}

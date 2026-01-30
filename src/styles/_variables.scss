@@ -98,6 +98,7 @@ $light-theme: (
     pvt-menu-bg-color: var(--pvt-bg-color-1),
     pvt-menu-border-color: var(--pvt-text-color-1),
     pvt-menu-shadow: var(--pvt-sidebar-layout-shadow-right),
+    pvt-action-container-shadow: "inset 0 1px 2px rgba(255, 255, 255, 0.12), inset 0 -1px 2px rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.09) 0 -1px 2px",
 
     /* Modal */
     pvt-modal-bg: var(--pvt-bg-color-0),
@@ -300,7 +301,7 @@ $dark-theme: (
     pvt-sidebar-subpanelheader-bg: var(--pvt-bg-color-2),
     pvt-mainheader-nodepreview-bg: var(--pvt-bg-color-6),
     pvt-sidebar-layout-shadow-right: "rgba(0, 0, 0, 0.07) 2px 0px 3px 0px, rgba(0, 0, 0, 0.04) 3px 0px 2px 0px",
-    pvt-sidebar-layout-shadow-left: "rgba(0, 0, 0, 0.07) -2px 0px 3px 0px, rgba(0, 0, 0, 0.04) 3px 0px 2px 0px",
+    pvt-sidebar-layout-shadow-left: "rgba(0, 0, 0, 0.07) -2px 0px 3px 0px, rgba(0, 0, 0, 0.04) -3px 0px 2px 0px",
     pvt-sidebar-layout-shadow-bottom: "rgba(0, 0, 0, 0.07) 3px 2px 3px 0px, rgba(0, 0, 0, 0.04) 2px 3px 2px 0px",
     pvt-sidebar-collapse-bg: var(--pvt-bg),
     pvt-sidebar-collapse-color: var(--pvt-text-color-4),
@@ -314,6 +315,7 @@ $dark-theme: (
     pvt-menu-bg-color: var(--pvt-bg-color-7),
     pvt-menu-border-color: var(--pvt-bg-color-2),
     pvt-menu-shadow: var(--pvt-sidebar-layout-shadow-right),
+    pvt-action-container-shadow: "inset 0 1px 2px rgba(255, 255, 255, 0.12), inset 0 -1px 2px rgba(0, 0, 0, 0.18)",
 
     /* Modal */
     pvt-modal-bg: var(--pvt-bg-color-7),
