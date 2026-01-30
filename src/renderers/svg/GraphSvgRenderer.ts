@@ -316,7 +316,7 @@ export class GraphSvgRenderer extends GraphRenderer {
     }
 
     public dataUpdate(): void {
-        const nodes = this.graph.getMutableNodes()
+        const nodes = this.graph.getMutableNodes().filter(node => node.visible)
         this.nodeGroupSelection = this.nodeGroup
             .selectAll<SVGGElement, Node>('g.pvt-node')
 
@@ -346,7 +346,7 @@ export class GraphSvgRenderer extends GraphRenderer {
                 exit => exit.remove()
             )
 
-        const edges = this.graph.getMutableEdges()
+        const edges = this.graph.getMutableEdges().filter(edge => edge.visible)
         this.edgeGroupSelection = this.edgeGroup
             .selectAll<SVGPathElement, Edge>('g.pvt-edge-group')
 

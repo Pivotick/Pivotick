@@ -173,6 +173,10 @@ button.pivotick-button-outline-success {
     @include button-outline-success;
 }
 
+button.pivotick-button-block {
+    width: 100%;
+}
+
 button.pivotick-button-sm {
     padding: 0.25rem 0.4rem;
     font-size: 0.8rem;

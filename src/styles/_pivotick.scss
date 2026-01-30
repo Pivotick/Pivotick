@@ -1,3 +1,5 @@
+@use "./components/input.scss";
+
 .pvt-layout {
     color: var(--pvt-text-color-6)
 }
@@ -98,6 +100,36 @@ dl.pvt-property-list {
             box-orient: vertical;
         }
     }
+}
+
+.pvt-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    .pvt-form-element {
+        label {
+            display: block;
+            font-size: 0.9em;
+            font-weight: 300;
+            color: var(--pvt-text-color-5);
+            text-align: start;
+            align-self: start;
+            white-space: normal;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 2px;
+        }
+
+        input {
+            @include input.input-primary;
+            width: unset;
+            background: var(--pvt-bg-color-7);
+            color: var(--pvt-text-color-4);
+            border-color: var(--pvt-menu-border-color);
+        }
+    }
+
 }
 
 .pvt-keyboard-shortcut {

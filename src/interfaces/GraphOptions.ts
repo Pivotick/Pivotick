@@ -65,14 +65,14 @@ export interface RelaxedGraphData {
  * @category Main Options
  */
 export type GraphEvents = {
-    ready: () => void,
-    nodeAdd: (node: Node) => void;
-    nodeRemove: (node: Node) => void;
-    nodeChange: (node: Node, previousData: NodeData, nextData: NodeData) => void;
-    edgeAdd: (edge: Edge) => void;
-    edgeRemove: (edge: Edge) => void;
-    edgeChange: (edge: Edge, previousData: EdgeData, nextData: EdgeData) => void;
-    dataBatchChanged: (changes: GraphDataChange[]) => void; // Batch of data changes(transactions, imports, undo / redo)
+    ready: () => void
+    nodeAdd: (node: Node) => void
+    nodeRemove: (node: Node) => void
+    nodeChange: (node: Node, previousData: NodeData, nextData: NodeData) => void
+    edgeAdd: (edge: Edge) => void
+    edgeRemove: (edge: Edge) => void
+    edgeChange: (edge: Edge, previousData: EdgeData, nextData: EdgeData) => void
+    dataBatchChanged: (changes: GraphDataChange[]) => void // Batch of data changes(transactions, imports, undo / redo)
 }
 
 export type GraphDataChange =

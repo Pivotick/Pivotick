@@ -1,4 +1,4 @@
-// formFactory.ts
+import TomSelect from 'tom-select'
 
 export type FieldType =
     | 'select'
@@ -128,14 +128,14 @@ export class FormFactory {
         el.setAttribute('data-field-type', field.type)
     }
 
-    private static createSelect(field: FieldConfig): HTMLSelectElement {
+    private static buildSelect(field: FieldConfig): HTMLSelectElement {
         const select = document.createElement('select')
         this.baseAttrs(select, field)
 
         if (field.allowEmpty) {
             const placeholder = document.createElement('option')
             placeholder.value = ''
-            placeholder.textContent = 'Any'
+            placeholder.textContent = ''
             placeholder.selected = true
             select.appendChild(placeholder)
         }
@@ -160,9 +160,44 @@ export class FormFactory {
         return select
     }
 
+    private static createSelect(field: FieldConfig): HTMLSelectElement {
+        const select = this.buildSelect(field)
+
+        requestAnimationFrame(() => {
+            const tomSelectSettings = {
+                plugins: {
+                    clear_button: {
+                        title: 'Remove all selected options',
+                    },
+                },
+            }
+            new TomSelect(select, tomSelectSettings)
+        })
+        return select
+    }
+
     private static createMultiSelect(field: FieldConfig): HTMLSelectElement {
-        const select = this.createSelect(field)
+        const select = this.buildSelect(field)
         select.multiple = true
+
+        requestAnimationFrame(() => {
+            const tomSelectSettings = {
+                plugins: {
+                    checkbox_options: {
+                        checkedClassNames: ['pvt-ts-checked'],
+                        uncheckedClassNames: ['pvt-ts-unchecked'],
+                    },
+                    clear_button: {
+                        title: 'Remove all selected options',
+                    },
+                    remove_button: {
+                        title: 'Remove this item',
+                    }
+                },
+            }
+            new TomSelect(select, tomSelectSettings)
+        })
+
         return select
     }
 

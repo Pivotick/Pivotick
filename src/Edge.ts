@@ -16,6 +16,9 @@ export class Edge {
     public readonly directed: boolean | null
     private data: EdgeData
     private style: Partial<EdgeFullStyle>
+
+    visible: boolean
+
     private _dirty: boolean
     public readonly domID: string
 
@@ -35,6 +38,7 @@ export class Edge {
         this.directed = directed
         this.data = data ?? ({} as EdgeData)
         this.style = style ?? ({} as EdgeFullStyle)
+        this.visible = true
         this._dirty = true
 
         this.from.registerEdgeOut(this as Edge)
@@ -168,5 +172,22 @@ export class Edge {
 
     isDirty(): boolean {
         return this._dirty
+    }
+
+    toggleVisibility(visible: boolean): void {
+        if (visible) {
+            this.show()
+        } else {
+            this.hide()
+        }
+        this.markDirty()
+    }
+
+    show(): void {
+        this.visible = true
+    }
+
+    hide(): void {
+        this.visible = false
     }
 }

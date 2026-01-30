@@ -25,6 +25,7 @@ export class Node {
     fx?: number
     fy?: number
     frozen?: boolean
+    visible: boolean
     private _circleRadius = this.defaultCircleRadius
     private _dirty: boolean
     public readonly domID: string
@@ -41,6 +42,7 @@ export class Node {
         this.style = style ?? ({} as Partial<NodeStyle>)
         this._dirty = true
         this.frozen = false
+        this.visible = true
         this.edgesOut = new Set()
         this.edgesIn = new Set()
     }
@@ -202,6 +204,23 @@ export class Node {
         this.frozen = false
         this.fx = undefined
         this.fy = undefined
+    }
+
+    toggleVisibility(visible: boolean): void {
+        if (visible) {
+            this.show()
+        } else {
+            this.hide()
+        }
+        this.markDirty()
+    }
+
+    show(): void {
+        this.visible = true
+    }
+
+    hide(): void {
+        this.visible = false
     }
 
     degree(): number {

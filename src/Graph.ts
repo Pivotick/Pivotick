@@ -10,6 +10,7 @@ import type { GraphUI } from './interfaces/GraphUI'
 import type { InterractionCallbacks } from './interfaces/InterractionCallbacks'
 import type { LayoutOptions } from './interfaces/LayoutOptions'
 import { generateSafeDomId } from './utils/ElementCreation'
+import { GraphQueryEngine } from './GraphQueryEngine'
 
 
 export class Graph {
@@ -20,6 +21,7 @@ export class Graph {
     public notifier: Notifier
     public renderer: GraphRenderer
     public simulation: Simulation
+    public queryEngine: GraphQueryEngine
     /** @private */
     private options: GraphOptions
     private app_id: string
@@ -92,6 +94,7 @@ export class Graph {
             layout: this.options?.layout as LayoutOptions
         }
         this.simulation = new Simulation(this, simulationOptions)
+        this.queryEngine = new GraphQueryEngine(this)
 
         if (data) {
             const normalisedData = this.normalizeGraphData(data)
@@ -659,6 +662,28 @@ export class Graph {
         const edgesFrom = this.getEdgesFromNode(found.id)
         const connectedNodes = edgesFrom.map(edge => edge.to)
         return connectedNodes
+    }
+
+    setVisibleNodes(nodes: Node[]) {
+        const visibleSet = new Set(nodes.map(n => n.id))
+
+        let changed = false
+        this.nodes.forEach(n => {
+            const shouldBeVisible = visibleSet.has(n.id)
+            if (n.visible !== shouldBeVisible) {
+                n.toggleVisibility(shouldBeVisible)
+                changed = true
+            }
+        })
+
+        this.edges.forEach(edge => {
+            const shouldBeVisible = edge.from.visible && edge.to.visible
+            if (edge.visible !== shouldBeVisible) {
+                edge.toggleVisibility(shouldBeVisible)
+            }
+        })
+
+        if (changed) this.onChange()
     }
 
     /**

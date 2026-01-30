@@ -80,7 +80,7 @@ export class Toolbar implements UIElement {
 
         const graphFilter = new GraphFilter(this.uiManager, {})
         this.filteringSlidepanel = this.uiManager.createSlidepanel({
-            header: 'Node Filters',
+            header: 'Graph Filters',
             body: graphFilter.build()
         })
 

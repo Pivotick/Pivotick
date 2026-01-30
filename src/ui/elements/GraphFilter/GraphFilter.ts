@@ -1,5 +1,7 @@
-import type { GraphDataChange } from '../../../interfaces/GraphInteractions'
-import { FormFactory, type FieldConfig, type FieldType } from '../../../utils/FormFactory'
+import type { GraphFilters } from '../../../interfaces/GraphQueryEngine'
+import { FormFactory, type FieldConfig, type FieldType, type FormValue, type FormValues } from '../../../utils/FormFactory'
+import { createButton } from '../../components/Button'
+import { funel } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import './graphFilter.scss'
 
@@ -91,7 +93,21 @@ export class GraphFilter implements UIElement {
         const filteringForm = FormFactory.createForm({
             fields: formOptions
         })
+
+        const filterButton = createButton({
+            variant: 'primary',
+            text: 'Filter Graph',
+            size: 'block',
+            svgIcon: funel,
+            style: 'margin-top: 16px;',
+            onClick: () => {
+                const filters: FormValues = FormFactory.getValues(filteringForm)
+                this.filterGraph(filters)
+            }
+        })
+
         this.graphFilter.appendChild(filteringForm)
+        this.graphFilter.appendChild(filterButton)
     }
 
     private getAvailableNodeAttributes(): Record<string, AttributeFilter> {
@@ -129,5 +145,53 @@ export class GraphFilter implements UIElement {
         })
         return Object.fromEntries(attributeFilters)
     }
+
+    private filterGraph(filters: FormValues): void {
+        const activeFilters: FormValues = this.getActiveFilters(filters)
+        const graphFilter: GraphFilters = {}
+        for (const [key, value] of Object.entries(activeFilters)) {
+            if (value !== undefined) {
+                graphFilter[key] = value
+            } else {
+                graphFilter[key] = undefined
+            }
+        }
+
+        this.uiManager.graph.queryEngine.resetFilters()
+        this.uiManager.graph.queryEngine.setFilters(graphFilter)
+    }
+
+    private getActiveFilters(filters: FormValues): FormValues {
+        const activeFilters: FormValues = {}
+
+        for (const [key, value] of Object.entries(filters)) {
+            if (this.isFilterActive(value)) {
+                activeFilters[key] = value
+            } else {
+                activeFilters[key] = undefined
+            }
+        }
+
+        return activeFilters
+    }
+
+    private isFilterActive(value: FormValue): boolean {
+        if (value === undefined) return false
+
+        if (typeof value === 'string') return value.trim() !== ''
+
+        if (typeof value === 'number') return true
+
+        if (typeof value === 'boolean') return true
+
+        if (Array.isArray(value)) return value.length > 0
+
+        if (typeof value === 'object') {
+            return value.min !== undefined || value.max !== undefined
+        }
+
+        return false
+    }
+
 
 }

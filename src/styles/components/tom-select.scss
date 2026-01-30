@@ -1,0 +1,152 @@
+@use "sass:map";
+@use '../variables' as vars;
+@use "./input.scss";
+
+// // Override Tom Select variables BEFORE importing source
+// $ts-border-radius: 6px;
+// $ts-background: var(--pvt-bg-color-2);
+// $ts-border-color: var(--pvt-bg-color-8);
+// $ts-text-color: var(--pvt-text-color-7);
+// $ts-hover-bg: var(--pvt-bg-color-6);
+// $ts-highlight-color: var(--pvt-accent-color);
+// // $select-color-text: map.get(vars.$dark-vibrant-color-palette, vibrant-amaranth);
+// $select-color-text: var(--pvt-text-color-primary);
+
+// Override Tom Select variables
+
+// Import Tom Select SCSS source
+@import "tom-select/src/scss/tom-select.scss";
+
+// .pvt-ts-control {
+//     background: var(--pvt-bg-color-2);
+//     border-color: var(--pvt-bg-color-8);
+//     color: var(--pvt-text-color-primary); // placeholder text
+// }
+
+// .pvt-ts-dropdown {
+//     background: var(--pvt-bg-color-1);
+// }
+
+// .pvt-ts-option {
+//     color: var(--pvt-text-color-secondary);
+// }
+
+// .pvt-ts-option.highlight {
+//     background: var(--pvt-bg-color-6);
+//     color: var(--pvt-accent-color);
+// }
+
+
+$ts-colortext: var(--pvt-text-color-4);
+$ts-bgcolor: var(--pvt-bg-color-7);
+$ts-bordercolor: var(--pvt-menu-border-color);
+
+// $ts-item-colortext: var(--pvt-text-color-4);
+$ts-item-colortext: var(--pvt-text-color-primary);
+$ts-item-bgcolor: var(--pvt-bg-color-5);
+$ts-item-bordercolor: var(--pvt-bg-color-7);
+
+$ts-bgcolor-active: var(--pvt-bg-color-8);
+$ts-colortext-active: var(--pvt-text-color-6);
+$ts-bordercolor-active: var(--pvt-text-color-6);
+
+$ts-bgcolor-disabled: var(--pvt-bg-color-7);
+
+.ts-control {
+    background: $ts-bgcolor;
+    border-color: $ts-bordercolor;
+    color: $ts-colortext;
+
+    .full & {
+        background-color: $ts-bgcolor;
+    }
+
+    .focus & {
+        box-shadow: var(--pvt-menu-shadow);
+    }
+
+    .ts-wrapper.multi & > div {
+        background: $ts-item-bgcolor;
+        color: $ts-item-colortext;
+        border: none;
+
+        &.active, &:hover {
+            background: $ts-bgcolor-active;
+            border-color: $ts-bordercolor-active;
+        }
+
+        .clear-button {
+
+        }
+    }
+
+    .ts-wrapper.multi.disabled & > div {
+        &,
+        &.active {
+            color:var(--pvt-text-color-6);
+            background: var(--pvt-bg-color-8);
+            border-color: var(--pvt-bg-color-2);
+        }
+    }
+
+    .disabled & {
+        background-color: $ts-bgcolor-disabled;
+    }
+
+    > input {
+        @include input.input-primary;
+        width: unset;
+    }
+}
+
+.ts-wrapper.single.input-active .ts-control {
+    background: $ts-bgcolor;
+}
+
+.ts-dropdown {
+    border-color: $ts-bordercolor;
+    background: $ts-bgcolor;
+    box-shadow: var(--pvt-sidebar-layout-shadow-right);
+
+    [data-selectable] {
+        cursor: pointer;
+        overflow: hidden;
+
+        .highlight {
+            background: $ts-bgcolor-active;
+        }
+    }
+
+    .optgroup-header {
+        color: $ts-colortext;
+        background: $ts-bgcolor;
+    }
+
+    .active {
+        background-color: $ts-bgcolor-active;
+        color: $ts-colortext-active;
+
+        &.create {
+            color: $ts-colortext;
+        }
+    }
+
+    .create {
+        color: $ts-colortext;
+    }
+
+    input[type="checkbox"].tomselect-checkbox {
+        accent-color: $ts-item-colortext;
+    }
+}
+
+.ts-dropdown,
+.ts-control,
+.ts-control input {
+    color: $ts-colortext;
+}
+
+.ts-wrapper.plugin-remove_button:not(.rtl) .item .remove {
+    border-color: $ts-item-bordercolor;
+    color: $ts-colortext;
+}

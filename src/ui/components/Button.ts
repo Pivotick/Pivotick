@@ -2,7 +2,7 @@ import type { IconClass, IconUnicode, ImagePath, SVGIcon, UIVariant } from '../.
 import { createIcon } from '../../utils/ElementCreation'
 
 type ButtonVariant = UIVariant
-type ButtonSize = 'sm' | 'xs'
+type ButtonSize = 'sm' | 'xs' | 'block'
 export type ButtonOptions<TArgs extends unknown[] = []> = {
     variant?: ButtonVariant,
     size?: ButtonSize,
