@@ -44,10 +44,12 @@ const defaultMenuNode = {
             svgIcon: hide,
             variant: 'outline-danger',
             flushRight: true,
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            visible: (_node: Node) => {
-                return false // FIXME: Implement feature
+            visible: (node: Node) => {
+                return node.visible
             },
+            onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
+                this.uiManager.graph.queryEngine.excludeNode(node)
+            }
         },
     ] as MenuQuickActionItemOptions[],
     menu: [
@@ -74,13 +76,12 @@ const defaultMenuNode = {
             title: 'Hide Children',
             svgIcon: hide,
             variant: 'outline-primary',
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            visible: (_node: Node) => {
-                return false // FIXME: Implement feature
+            visible: (node: Node) => {
+                return node.visible
             },
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            onclick(this: ContextMenu, _evt: PointerEvent, _node: Node) {
-            },
+            onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
+                node.hide()
+            }
         },
         {
             text: 'Expand Node',

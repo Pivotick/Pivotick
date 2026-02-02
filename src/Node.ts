@@ -107,6 +107,14 @@ export class Node {
         })
     }
 
+    getEdgesOut(): Edge[] {
+        return [...this.edgesOut]
+    }
+
+    getEdgesIn(): Edge[] {
+        return [...this.edgesIn]
+    }
+
     /**
      * Get the node's data.
      */

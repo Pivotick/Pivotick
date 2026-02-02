@@ -34,6 +34,16 @@
                     font-size: 0.8em;
                     margin: 0 0.25em;
                     user-select: none;
+
+                    .active-filter-subtext {
+                        font-weight: 400;
+                        font-size: 0.9em;
+                        display: inline-flex;
+                        flex-direction: row;
+                        flex-wrap: nowrap;
+                        gap: 4px;
+                        margin-left: 4px;
+                    }
                 }
 
                 span.icon-container {

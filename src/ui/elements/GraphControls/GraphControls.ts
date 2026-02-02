@@ -45,11 +45,11 @@ const defaultMenuNode = {
             title: 'Hide Nodes',
             svgIcon: hide,
             variant: 'outline-danger',
-            visible: false,
+            visible: true,
             flushRight: true,
             onclick(this: GraphControls, _evt: PointerEvent, nodes: Node[]) {
                 nodes.forEach((node: Node) => {
-                    node.unfreeze()
+                    this.uiManager.graph.queryEngine.excludeNode(node)
                 })
             }
         },

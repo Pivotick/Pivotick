@@ -12,6 +12,7 @@ export type BadgeOptions = {
     svgIcon?: SVGIcon,
     imagePath?: ImagePath,
     text?: string,
+    html?: HTMLElement,
     [key: string]: unknown // allow other attributes like id, className, etc.
 }
 
@@ -26,6 +27,7 @@ export function createBadge(options: BadgeOptions): HTMLSpanElement {
         svgIcon,
         imagePath,
         text,
+        html,
         ...attrs
     } = options
     const badge = document.createElement('span')
@@ -74,6 +76,10 @@ export function createBadge(options: BadgeOptions): HTMLSpanElement {
         textEl.textContent = text
     }
     badge.append(textEl)
+
+    if (html) {
+        badge.appendChild(html)
+    }
 
     return badge
 }

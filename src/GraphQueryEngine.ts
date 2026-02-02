@@ -1,13 +1,16 @@
-import type { Node } from './Node'
+import { Node } from './Node'
 import type { Graph } from './Graph'
 import type { GraphQueryEvents, GraphFilters, FilterFieldConfig } from './interfaces/GraphQueryEngine'
 
 
+const MANUALLY_HIDDEN_FILTER_KEY = 'manually_hidden'
 export class GraphQueryEngine {
     private graph: Graph
     private listeners: Record<keyof GraphQueryEvents, Array<GraphQueryEvents[keyof GraphQueryEvents]>>
 
     private filters: GraphFilters = {}
+    private excludedNodeIds = new Set<string>()
+    private hiddenNodeCount: number = 0
 
     constructor(graph: Graph) {
         this.graph = graph
@@ -40,7 +43,11 @@ export class GraphQueryEngine {
     }
 
     getFilters(): GraphFilters {
-        return { ...this.filters }
+        const manuallyHidenFilter: FilterFieldConfig = {
+            value: [...this.excludedNodeIds],
+            matchMode: 'exact'
+        }
+        return { ...this.filters, manuallyHidden: manuallyHidenFilter }
     }
 
     setFilters(filters: GraphFilters) {
@@ -56,40 +63,91 @@ export class GraphQueryEngine {
         }
 
         this.filters[key] = value
+        this.apply()
 
         this.emit('filterAdd', key, value)
         this.emit('filterChange', this.getFilters())
-
-        this.apply()
     }
 
     removeFilter(key: string) {
         if (!(key in this.filters)) return
 
         delete this.filters[key]
+        this.apply()
 
         this.emit('filterRemove', key)
         this.emit('filterChange', this.getFilters())
-
-        this.apply()
     }
 
     resetFilters() {
         this.filters = {}
+        this.apply()
 
         this.emit('filterReset')
-        this.emit('filterChange', {})
+        this.emit('filterChange', this.getFilters())
 
-        this.apply()
+    }
+
+    excludeNode(nodeOrId: string | Node) {
+        let node
+        if (nodeOrId instanceof Node) {
+            node = nodeOrId
+        } else {
+            node = this.graph.getNode(nodeOrId)
+        }
+        if (node === undefined) return
+
+        this.excludedNodeIds.add(node.id)
+        this.hiddenNodeCount++
+        const manuallyHidenFilter: FilterFieldConfig = {
+            value: node.id,
+            matchMode: 'exact'
+        }
+        this.graph.hideNode(node)
+
+        this.emit('filterAdd', MANUALLY_HIDDEN_FILTER_KEY, manuallyHidenFilter)
+        this.emit('filterChange', this.getFilters())
+    }
+
+    includeNode(nodeOrId: string | Node) {
+        let node
+        if (nodeOrId instanceof Node) {
+            node = nodeOrId
+        } else {
+            node = this.graph.getNode(nodeOrId)
+        }
+        if (node === undefined) return
+        this.excludedNodeIds.delete(node.id)
+        this.hiddenNodeCount--
+        this.graph.showNode(node)
+
+        this.emit('filterRemove', MANUALLY_HIDDEN_FILTER_KEY)
+        this.emit('filterChange', this.getFilters())
+    }
+
+    clearNodeExclusions() {
+        this.emit('filterRemove', MANUALLY_HIDDEN_FILTER_KEY)
+        this.emit('filterChange', this.getFilters())
+
+        this.hiddenNodeCount += this.excludedNodeIds.size
+        this.excludedNodeIds.clear()
+    }
+
+    getHiddenNodeCount() {
+        return this.hiddenNodeCount
     }
 
     private apply() {
         const nodes = this.graph.getMutableNodes()
         const visibleNodes = nodes.filter(node => this.nodeMatchesFilters(node))
+        this.hiddenNodeCount = nodes.length - visibleNodes.length
         this.graph.setVisibleNodes(visibleNodes)
     }
 
     private nodeMatchesFilters(node: Node): boolean {
+        if (this.excludedNodeIds.has(node.id)) {
+            return false
+        }
         for (const [key, value] of Object.entries(this.filters)) {
             const nodeValue = node.getData()[key]
             if (!this.matches(nodeValue, value)) return false

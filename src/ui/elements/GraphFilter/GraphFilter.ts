@@ -1,4 +1,5 @@
 import type { FilterFieldConfig, GraphFilters } from '../../../interfaces/GraphQueryEngine'
+import { createHtmlElement } from '../../../utils/ElementCreation'
 import { FormFactory, type FieldConfig, type FieldType, type FormValue, type FormValues } from '../../../utils/FormFactory'
 import { createBadge } from '../../components/Badge'
 import { createButton } from '../../components/Button'
@@ -144,8 +145,19 @@ export class GraphFilter implements UIElement {
         const filterCount = Object.keys(filters).length
         if (filterCount > 0) {
             const activeFilterText = filterCount > 1 ? `${filterCount} active filters` : '1 active filter'
+            const hiddenCount = this.uiManager.graph.queryEngine.getHiddenNodeCount()
+            const hiddenNodeHtml = createHtmlElement('span',
+                {
+                    'class': 'active-filter-subtext',
+                },
+                [
+                    createHtmlElement('span', {}, ['·']),
+                    createHtmlElement('span', {}, [`${hiddenCount} hidden`]),
+                ]
+            )
             const filterBadge = createBadge({
                 text: activeFilterText,
+                html: hiddenNodeHtml,
                 variant: 'primary',
                 size: 'sm'
             })

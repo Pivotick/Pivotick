@@ -686,6 +686,28 @@ export class Graph {
         if (changed) this.onChange()
     }
 
+    hideNode(node: Node) {
+        node.hide()
+        node.getEdgesOut().forEach(e => {
+            e.hide()
+        })
+        node.getEdgesIn().forEach(e => {
+            e.hide()
+        })
+        this.onChange()
+    }
+
+    showNode(node: Node) {
+        node.show()
+        node.getEdgesOut().forEach(e => {
+            e.show()
+        })
+        node.getEdgesIn().forEach(e => {
+            e.show()
+        })
+        this.onChange()
+    }
+
     /**
      * Trigger the next render update of the graph.
      */

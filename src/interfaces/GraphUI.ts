@@ -204,7 +204,7 @@ export type MenuActionItemOptions<TThis extends UIElement = UIElement> = {
     /** Title to be shown when hovering over the option. */
     title?: string,
     /** @default outline-primary */
-    variant?: UIBaseVariant,
+    variant?: UIBaseVariant | UIOutlineVariant,
     visible?: boolean | ((element: Node | Edge | null) => boolean)
     onclick: (this: TThis, evt: PointerEvent | MouseEvent, element?: Node | Node[] | Edge | Edge[] | null) => void
 }
