@@ -50,6 +50,7 @@ const defaultMenuNode = {
             onclick(this: GraphControls, _evt: PointerEvent, nodes: Node[]) {
                 nodes.forEach((node: Node) => {
                     this.uiManager.graph.queryEngine.excludeNode(node)
+                    this.uiManager.graph.renderer.getGraphInteraction().unselectAll()
                 })
             }
         },

@@ -104,6 +104,19 @@ export class Tooltip implements UIElement {
         return true
     }
 
+    public openForNodeOnElement(event: MouseEvent, node: Node) {
+        this.triggerX = event.pageX
+        this.triggerY = event.pageY
+
+        this.mouseY = event.pageY // Mouse X might not be over the canvas
+        this.mouseX = event.pageX
+
+        if (!this.tooltipCanBeShown()) return
+        this.show(() => {
+            this.createNodeTooltip(node)
+        })
+    }
+
     public nodeHovered(event: MouseEvent, node: Node) {
         if (this.hoveredElementID === node.id) return
 
@@ -145,11 +158,7 @@ export class Tooltip implements UIElement {
         this.updateShadowLinks(true)
     }
 
-    private createNodeTooltip(node: Node) {
-        if (!this.tooltip) return false
-
-        this.tooltip.innerHTML = ''
-
+    public buildNodeTooltip(node: Node): HTMLDivElement {
         const fixedPreviewSize = 32
         const template = `
 <div class="pvt-tooltip-container">
@@ -213,11 +222,10 @@ export class Tooltip implements UIElement {
                 ]) as HTMLDivElement
                 tooltipContainer.appendChild(tooltipContentWrapped)
             }
-            this.tooltip.appendChild(tooltipContainer)
-            return
+            return tooltipContainer
         }
 
-        const propertiesContainer = createHtmlElement('div', { class: 'pvt-properties-container'}, [
+        const propertiesContainer = createHtmlElement('div', { class: 'pvt-properties-container' }, [
             createHtmlDL(properties, node)
         ]) as HTMLDivElement
 
@@ -234,6 +242,15 @@ export class Tooltip implements UIElement {
                 tooltipContainer.appendChild(extraContentWrapped)
             }
         }
+        return tooltipContainer
+    }
+
+    private createNodeTooltip(node: Node) {
+        if (!this.tooltip) return false
+
+        this.tooltip.innerHTML = ''
+
+        const tooltipContainer = this.buildNodeTooltip(node)
         this.tooltip.appendChild(tooltipContainer)
     }
 
@@ -365,7 +382,7 @@ export class Tooltip implements UIElement {
         this.tooltip.style.left = '-10000px'
     }
 
-    public show(cb: { (): void; (): void } | undefined) {
+    private show(cb: { (): void; (): void } | undefined) {
         if (this.uiManager.contextMenu?.visible)
             return
 

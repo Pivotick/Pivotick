@@ -1,0 +1,39 @@
+@use '../../../styles/pivotick' as pvt;
+
+.pvt-slide-panel {
+
+    .pvt-hidden-nodes-container {
+        // margin-top: 24px;
+        // border-top: var(--pvt-sidebar-panel-border);
+        
+        h4 {
+            margin: 0;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .pvt-hidden-nodes-container-list {
+            margin-top: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+
+            .hidden-node {
+                @include pvt.node-main-text-element;
+                user-select: auto;
+                display: flex;
+                flex-direction: row;
+                align-items: baseline;
+
+                .subtext {
+                    margin-left: 1em;
+                    font-size: 12px;
+                    color: var(--pvt-text-color-5);
+                    cursor: help;
+                }
+            }
+        }
+    }
+}

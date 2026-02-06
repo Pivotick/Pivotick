@@ -126,11 +126,23 @@ export class GraphQueryEngine {
     }
 
     clearNodeExclusions() {
-        this.emit('filterRemove', MANUALLY_HIDDEN_FILTER_KEY)
-        this.emit('filterChange', this.getFilters())
-
         this.hiddenNodeCount += this.excludedNodeIds.size
         this.excludedNodeIds.clear()
+        this.apply()
+        this.emit('filterRemove', MANUALLY_HIDDEN_FILTER_KEY)
+        this.emit('filterChange', this.getFilters())
+    }
+
+    getExcludedNodeCount(): number {
+        return this.excludedNodeIds.size
+    }
+
+    getExcludedNodes(): Node[] {
+        return [...this.excludedNodeIds]
+            .map((id) => this.graph.getMutableNode(id))
+            .filter((node: undefined | Node) => {
+                return node !== undefined
+            })
     }
 
     getHiddenNodeCount() {

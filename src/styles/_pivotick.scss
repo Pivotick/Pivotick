@@ -13,7 +13,6 @@
     background-image: var(--pvt-graph-background-image);
 }
 
-
 .pvt-loading-progress-bar {
     padding: 0.75em;
     background: var(--pvt-menu-bg-color);
@@ -54,6 +53,67 @@
     }
 }
 
+@mixin node-main-text-element {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--pvt-text-color-6);
+    /* for multiline ellipsis */
+    white-space: normal;
+    overflow: auto;
+    word-break: break-all;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    box-orient: vertical;
+    user-select: all;
+}
+
+@mixin node-sub-text-element {
+    font-size: 12px;
+    color: var(--pvt-text-color-5);
+    text-overflow: ellipsis;
+    overflow: hidden;
+    user-select: all;
+    /* for multiline ellipsis */
+    white-space: normal;
+    overflow: auto;
+    word-break: break-all;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    box-orient: vertical;
+    user-select: all;
+}
+
+@mixin node-text-value {
+    color: var(--pvt-text-color-primary);
+    user-select: all;
+    min-height: 1em;
+    white-space: normal;
+    overflow: auto;
+    word-break: break-all;
+    display: -webkit-box;
+    /* for multiline ellipsis */
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    box-orient: vertical;
+}
+
+@mixin node-preview-container {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--pvt-mainheader-nodepreview-bg);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), inset 0 0 0 1px hsla(0, 0%, 0%, .05);
+}
+
 dl.pvt-property-list {
     margin: 0;
     font-size: 0.95em;
@@ -85,19 +145,8 @@ dl.pvt-property-list {
             font-size: 0.875rem;
             font-weight: 400;
             padding: 2px 4px;
-            color: var(--pvt-text-color-primary);
             align-self: start;
-            user-select: all;
-            min-height: 1em;
-            white-space: normal;
-            overflow: auto;
-            word-break: break-all;
-            display: -webkit-box;
-            /* for multiline ellipsis */
-            -webkit-line-clamp: 3;
-            line-clamp: 3;
-            -webkit-box-orient: vertical;
-            box-orient: vertical;
+            @include node-text-value
         }
     }
 }

@@ -1,9 +1,11 @@
 import type { FilterFieldConfig, GraphFilters } from '../../../interfaces/GraphQueryEngine'
-import { createHtmlElement } from '../../../utils/ElementCreation'
+import { createHtmlElement, createHtmlTemplate } from '../../../utils/ElementCreation'
+import { Node } from '../../../Node'
 import { FormFactory, type FieldConfig, type FieldType, type FormValue, type FormValues } from '../../../utils/FormFactory'
+import { nodeNameGetter } from '../../../utils/GraphGetters'
 import { createBadge } from '../../components/Badge'
 import { createButton } from '../../components/Button'
-import { funnel, funnelClear } from '../../icons'
+import { funnel, funnelClear, show } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import './graphFilter.scss'
 
@@ -21,6 +23,7 @@ export class GraphFilter implements UIElement {
 
     public graphFilter?: HTMLDivElement
     private formOptions: FieldConfig[]
+    private manuallyFilteredContainer?: HTMLDivElement
 
     constructor(uiManager: UIManager) {
         this.uiManager = uiManager
@@ -56,6 +59,12 @@ export class GraphFilter implements UIElement {
 
         this.uiManager.graph.queryEngine.on('filterChange', (filters: GraphFilters) => {
             this.updateUIFilterButtonContent(filters)
+            this.updateUIFilterHiddenNodes()
+        })
+
+        requestAnimationFrame(() => {
+            this.updateUIFilterButtonContent({})
+            this.updateUIFilterHiddenNodes()
         })
         return this.graphFilter
     }
@@ -131,9 +140,31 @@ export class GraphFilter implements UIElement {
             }
         })
 
+        const separator = createHtmlElement('div', { class: 'pvt-sidebar-separator' })
+
+        this.manuallyFilteredContainer = createHtmlTemplate(`<div class="pvt-hidden-nodes-container">
+                <h4>Hidden nodes</h4>
+                <div class="pvt-hidden-nodes-container-list"></div>
+            </div>`) as HTMLDivElement
+
+        const resetHiddenButton = createButton({
+            variant: 'secondary',
+            text: 'Show all nodes',
+            size: 'sm',
+            style: 'align-self: end;',
+            svgIcon: show,
+            onClick: () => {
+                this.uiManager.graph.queryEngine.clearNodeExclusions()
+            },
+            title: 'Restore manually hidden nodes',
+        })
+        this.manuallyFilteredContainer.querySelector('h4')?.appendChild(resetHiddenButton)
+
         this.graphFilter.appendChild(resetButton)
         this.graphFilter.appendChild(filteringForm)
         this.graphFilter.appendChild(filterButton)
+        this.graphFilter.appendChild(separator)
+        this.graphFilter.appendChild(this.manuallyFilteredContainer)
     }
 
     private updateUIFilterButtonContent(filters: GraphFilters) {
@@ -142,7 +173,12 @@ export class GraphFilter implements UIElement {
         if (!filterButtonElement) return
 
         filterButtonElement.innerHTML = ''
-        const filterCount = Object.keys(filters).length
+        let filterCount = Object.keys(filters).length
+        const hidden = filters.manuallyHidden?.value
+        if (Array.isArray(hidden) && hidden.length == 0) {
+            filterCount--
+        }
+
         if (filterCount > 0) {
             const activeFilterText = filterCount > 1 ? `${filterCount} active filters` : '1 active filter'
             const hiddenCount = this.uiManager.graph.queryEngine.getHiddenNodeCount()
@@ -164,6 +200,62 @@ export class GraphFilter implements UIElement {
             filterButtonElement.appendChild(filterBadge)
         } else {
             filterButtonElement.textContent = DEFAULT_FILTER_BUTTON_TEXT
+        }
+    }
+
+    private updateUIFilterHiddenNodes() {
+        if (!this.manuallyFilteredContainer) return
+        const hiddenNodeContainer = this.manuallyFilteredContainer.querySelector('.pvt-hidden-nodes-container-list')
+        if (!hiddenNodeContainer) return
+
+        if (this.uiManager.graph.queryEngine.getExcludedNodeCount() > 0) {
+            this.manuallyFilteredContainer.classList.remove('hidden')
+            hiddenNodeContainer.innerHTML = ''
+            this.uiManager.graph.queryEngine.getExcludedNodes().forEach((node: Node) => {
+                const nodePropertyCount = Object.keys(node.getData()).length
+                const showNodeButton = createButton({
+                    variant: 'secondary',
+                    text: 'Show node',
+                    size: 'sm',
+                    style: 'margin-left: auto;',
+                    title: 'Restore manually hidden node',
+                    svgIcon: show,
+                    onClick: () => {
+                        this.uiManager.graph.queryEngine.includeNode(node)
+                    }
+                })
+
+                const propertyTextElement = createHtmlElement('span',
+                    {
+                        'class': 'subtext'
+                    },
+                    [
+                        nodePropertyCount != 1 ? `${nodePropertyCount} properties` : '1 properties',
+                    ]
+                )
+                propertyTextElement
+                    .addEventListener('mouseenter', (event: MouseEvent) => {
+                        this.uiManager.tooltip?.openForNodeOnElement(event, node)
+                    })
+                propertyTextElement
+                    .addEventListener('mouseleave', () => {
+                        this.uiManager.tooltip?.hide()
+                    })
+
+                const nodeElement = createHtmlElement('div',
+                    {
+                        'class': 'hidden-node'
+                    },
+                    [
+                        nodeNameGetter(node, this.uiManager.getOptions().mainHeader),
+                        propertyTextElement,
+                        showNodeButton,
+                    ]
+                )
+                hiddenNodeContainer?.appendChild(nodeElement)
+            })
+        } else {
+            this.manuallyFilteredContainer.classList.add('hidden')
         }
     }
 

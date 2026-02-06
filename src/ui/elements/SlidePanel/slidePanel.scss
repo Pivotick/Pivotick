@@ -40,6 +40,11 @@
         overflow-y: auto;
         overflow-x: hidden;
 
+        .pvt-sidebar-separator {
+            border-bottom: var(--pvt-sidebar-panel-border);
+            margin: 24px -16px 24px -16px;
+        }
+
         .pvt-graph-filter-container {
             display: flex;
             flex-direction: column;
