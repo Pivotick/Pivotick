@@ -4,6 +4,8 @@ import { Pivotick, Node, Edge } from './index'
 
 import {graph as vtGraph} from './vt-graph'
 import { graph as ailGraph } from './ail-graph'
+import { Simulation } from './Simulation'
+import type { SimulationOptions } from './interfaces/SimulationOptions'
 
 
 /**
@@ -357,8 +359,8 @@ function addRandomNode(counter: number, graph: Pivotick) {
     graph.addEdge(newEdge)
 }
 
-const graph = createSampleGraph()
-window.pivotick = graph
+// const graph = createSampleGraph()
+// window.pivotick = graph
 
 const data = {
   'nodes': [

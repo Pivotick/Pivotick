@@ -193,9 +193,11 @@ const DEFAULT_RENDERER_OPTIONS = {
     type: 'svg',
     zoomEnabled: true,
     dragEnabled: true,
+    interactionEnabled: true,
     minZoom: 0.05,
     maxZoom: 10,
     zoomAnimation: true,
+    zoomAnimationDuration: 300,
     defaultNodeStyle: defaultNodeStyle,
     defaultEdgeStyle: defaultEdgeStyle,
     defaultLabelStyle: defaultLabelStyle,
@@ -453,7 +455,7 @@ export class GraphSvgRenderer extends GraphRenderer {
             .scale(scale)
 
         if (this.options.zoomAnimation) {
-            canvas.transition().duration(300).call(zoomBehavior.transform, transform)
+            canvas.transition().duration(this.options.zoomAnimationDuration).call(zoomBehavior.transform, transform)
         } else {
             canvas.call(zoomBehavior.transform, transform)
         }

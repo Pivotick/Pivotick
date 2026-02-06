@@ -128,12 +128,16 @@ export interface GraphRendererOptions {
     zoomEnabled: boolean
     /** @default true */
     zoomAnimation: boolean
+    /** @default 300 */
+    zoomAnimationDuration: number
     /** @default 0.05 */
     minZoom: number
     /** @default 10 */
     maxZoom: number
     /** @default true */
     dragEnabled: boolean
+    /** @default true */
+    interactionEnabled: boolean
     selectionBox: SelectionBox
 }
 

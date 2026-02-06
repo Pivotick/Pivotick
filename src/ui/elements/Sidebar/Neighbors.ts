@@ -133,35 +133,7 @@ export class SidebarNeighbors implements UIElement {
             return
         }
 
-        // const egoGraphData: GraphData = {
-        //     nodes: [
-        //         node.clone(),
-        //         ...node.getConnectedNodes().map((node) => {
-        //             const n = node.clone()
-        //             delete n.fx
-        //             delete n.fy
-        //             delete n.x
-        //             delete n.y
-        //             delete n.vx
-        //             delete n.vy
-        //             return n
-        //         }),
-        //         ...node.getConnectingNodes().map((node) => {
-        //             const n = node.clone()
-        //             delete n.fx
-        //             delete n.fy
-        //             delete n.x
-        //             delete n.y
-        //             delete n.vx
-        //             delete n.vy
-        //             return n
-        //         }),
-        //     ],
-        //     edges: [
-        //         ...node.getEdgesOut().map((e) => e.clone()),
-        //         ...node.getEdgesIn().map((e) => e.clone()),
-        //     ]
-        // }
+        this.egographContainer.style.visibility = 'hidden'
         const egoGraphData: RelaxedGraphData = {
             nodes: [
                 node.toDict(true) as RawNode,
@@ -189,21 +161,30 @@ export class SidebarNeighbors implements UIElement {
             layout: {
                 type: 'egoTree',
                 radial: true,
-                radialGap: 100,
+                radialGap: 120,
                 rootId: node.id,
             },
             render: {
                 ...this.uiManager.graph.getOptions().render,
                 dragEnabled: false,
+                interactionEnabled: false,
                 zoomEnabled: false,
+                zoomAnimationDuration: 100,
             },
             simulation: {
                 useWorker: false,
+                warmupTicks: 0,
+                cooldownTime: 0,
             },
         }
 
         const egoGraph = new Graph(this.egographContainer, egoGraphData, egoGraphOptions)
-        // egoGraph.selectElement(egoGraphData.nodes[0])
+        egoGraph.on('ready', () => {
+            setTimeout(() => {
+                this.egographContainer!.style.visibility = 'visible'
+            }, 20)
+            egoGraph.selectElement(egoGraph.getMutableNode(node.id)!)
+        })
     }
 
     public updateEdgeNeighbors(edge: Edge): void {

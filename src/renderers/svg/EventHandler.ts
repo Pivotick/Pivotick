@@ -31,6 +31,10 @@ export class EventHandler {
                 .call(this.graph.simulation.createDragBehavior())
         }
 
+        if (!this.renderer.getOptions().interactionEnabled) {
+            return
+        }
+
         this.renderer.getNodeSelection()
             .on('dblclick.node', (event: PointerEvent, node: Node) => {
                 event.stopPropagation()

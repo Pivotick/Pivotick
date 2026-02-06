@@ -758,6 +758,5 @@ export class Graph {
             this.renderer.getGraphInteraction().selectNode(element.getGraphElement(), element)
             return
         }
-        console.log(element)
     }
 }
