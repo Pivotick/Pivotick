@@ -63,11 +63,16 @@ export const DEFAULT_UI_OPTIONS: GraphUI = {
         nodePropertiesMap: defaultPropertiesMapNode,
         edgePropertiesMap: defaultPropertiesMapEdge,
     },
+    neighborsPanel: {
+    },
     tooltip: {
         enabled: true,
         nodePropertiesMap: defaultPropertiesMapNode,
         edgePropertiesMap: defaultPropertiesMapEdge,
         ...DEFAULT_HEADERS_MAPS
+    },
+    navigation: {
+        enabled: true,
     },
     contextMenu: {
         enabled: true,
@@ -211,8 +216,10 @@ export class UIManager {
     }
 
     private buildUIGraphNavigation() {
-        this.graphNaviation = new GraphNavigation(this)
-        this.graphNaviation.mount(this.layout?.graphnavigation)
+        if (this.options.navigation.enabled) {
+            this.graphNaviation = new GraphNavigation(this)
+            this.graphNaviation.mount(this.layout?.graphnavigation)
+        }
         if (this.options.tooltip?.enabled) {
             this.tooltip = new Tooltip(this)
             this.tooltip.mount(this.layout?.canvas)

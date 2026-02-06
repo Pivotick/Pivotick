@@ -42,16 +42,16 @@ interface ForceStrengthArray {
 }
 
 export class TreeLayout {
-    private graph: Graph
-    private simulation: d3Simulation<Node, undefined>
-    private simulationForces: SimulationForces
-    private options: Required<TreeLayoutOptions>
+    protected graph: Graph
+    protected simulation: d3Simulation<Node, undefined>
+    protected simulationForces: SimulationForces
+    protected options: Required<TreeLayoutOptions>
 
-    private originalForceStrength: ForceStrengthArray
-    private canvasBCR!: DOMRect
+    protected originalForceStrength: ForceStrengthArray
+    protected canvasBCR!: DOMRect
 
-    private levels: Record<string, number>
-    private positionedNodesByID: Map<string, HierarchyNode<TreeNode>>
+    protected levels: Record<string, number>
+    protected positionedNodesByID: Map<string, HierarchyNode<TreeNode>>
 
     constructor (
         graph: Graph,
@@ -88,7 +88,7 @@ export class TreeLayout {
         const nodes = this.graph.getNodes()
         const edges = this.options.flipEdgeDirection ? this.flipEdgeDirection(this.graph.getEdges()) : this.graph.getEdges()
         const { levels } = TreeLayout.buildLevels(nodes, edges, undefined, this.options.rootIdAlgorithmFinder)
-        const { nodes: positionedNodes, nodeById: positionedNodesByID } = TreeLayout.buildTree(nodes, edges, this.options, this.canvasBCR)
+        const { nodes: positionedNodes, nodeById: positionedNodesByID } = this.buildTree(nodes, edges, this.options, this.canvasBCR)
         this.positionedNodesByID = positionedNodesByID
 
         this.levels = levels
@@ -97,7 +97,7 @@ export class TreeLayout {
         }
     }
 
-    private flipEdgeDirection(edges: Edge[]): Edge[] {
+    protected flipEdgeDirection(edges: Edge[]): Edge[] {
         edges.forEach((edge) => {
             const tmp = edge.from
             edge.setFrom(edge.to)
@@ -114,7 +114,7 @@ export class TreeLayout {
         this.canvasBCR = canvas.getBoundingClientRect()
     }
 
-    private setNodePositions(positionedNodes: HierarchyNode<TreeNode>[], options: TreeLayoutOptions): void {
+    protected setNodePositions(positionedNodes: HierarchyNode<TreeNode>[], options: TreeLayoutOptions): void {
         for (const positionedNode of positionedNodes) {
             const node = this.graph.getMutableNode(positionedNode.data.id)
             if (node) {
@@ -143,14 +143,14 @@ export class TreeLayout {
         }
     }
 
-    private unsetNodePositions(): void {
+    protected unsetNodePositions(): void {
         this.graph.getMutableNodes().forEach(mutableNode => {
             delete mutableNode.fy
             delete mutableNode.fx
         })
     }
 
-    private registerForces(): void {
+    protected registerForces(): void {
         const strength = this.options.strength ?? 0.1
         if (this.options.radial) {
             const radialForce = d3ForceRadial<Node>(
@@ -190,7 +190,7 @@ export class TreeLayout {
         this.unsetNodePositions()
     }
 
-    private unregisterForces(): void {
+    protected unregisterForces(): void {
         this.simulation.force('tree-radial', null)
         this.simulation.force('tree-y', null)
         this.simulation.force('tree-x', null)
@@ -204,6 +204,7 @@ export class TreeLayout {
         simulationForces: SimulationForces,
         partialOptions: Partial<TreeLayoutOptions>,
         canvasBCR: DOMRect,
+        cls: typeof TreeLayout = this,
     ): void {
         const options = merge({}, DEFAULT_TREE_LAYOUT_OPTIONS, partialOptions)
         const strength = options.strength ?? 0.1
@@ -215,8 +216,8 @@ export class TreeLayout {
             return
         }
 
-        const { levels } = TreeLayout.buildLevels(nodes, edges, undefined, options.rootIdAlgorithmFinder)
-        const { nodeById: positionedNodesByID } = TreeLayout.buildTree(nodes, edges, options, canvasBCR)
+        const { levels } = cls.buildLevels(nodes, edges, undefined, options.rootIdAlgorithmFinder)
+        const { nodeById: positionedNodesByID } = cls.buildTree(nodes, edges, options, canvasBCR)
 
         if (options.radial) {
             const radialForce = d3ForceRadial<Node>(
@@ -248,7 +249,7 @@ export class TreeLayout {
             }).strength(strength))
         }
 
-        TreeLayout.adjustOtherSimulationForces(simulationForces, options)
+        cls.adjustOtherSimulationForces(simulationForces, options)
     }
 
     static adjustOtherSimulationForces(simulationForces: SimulationForces, options: Partial<TreeLayoutOptions>): void {
@@ -464,7 +465,7 @@ export class TreeLayout {
      * @param edges - The list of graph edges (assumed to be directed).
      * @returns The ID of the inferred root node.
      */
-    private static findRootId(
+    protected static findRootId(
         nodes: Node[],
         edges: Edge[],
         algorithm?: TreeLayoutAlgorithm

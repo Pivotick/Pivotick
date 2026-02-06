@@ -357,8 +357,8 @@ function addRandomNode(counter: number, graph: Pivotick) {
     graph.addEdge(newEdge)
 }
 
-// const graph = createSampleGraph()
-// window.pivotick = graph
+const graph = createSampleGraph()
+window.pivotick = graph
 
 const data = {
   'nodes': [
@@ -450,6 +450,7 @@ const options = {
     }
 }
 
+if (!window.pivotick)
 window.pivotick = new Pivotick(document.getElementById('app')!, data, options)
 
 

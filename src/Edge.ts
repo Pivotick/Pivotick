@@ -137,13 +137,13 @@ export class Edge {
     /**
      * Convert edge to a simple JSON object representation.
      */
-    toJSON() {
+    toDict(): Record<string, unknown> {
         return {
             id: this.id,
             from: this.from.id,
             to: this.to.id,
             data: this.data,
-        }
+        } as Record<string, unknown> 
     }
 
     clone(): Edge {
@@ -151,7 +151,7 @@ export class Edge {
         const clonedData = { ...this.data } as EdgeData
         const clonedStyle = { ...this.style } as EdgeFullStyle
 
-        return new Edge(
+        const clone = new Edge(
             this.id,
             this.from.clone(),
             this.to.clone(),
@@ -159,6 +159,10 @@ export class Edge {
             clonedStyle,
             this.directed
         )
+
+        clone.visible = this.visible
+
+        return clone
     }
 
 

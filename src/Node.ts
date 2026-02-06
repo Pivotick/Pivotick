@@ -149,18 +149,21 @@ export class Node {
     /**
      * Convert node to a simple JSON object representation.
      */
-    toJSON(): object {
-        return {
+    toDict(dataOnly = false): Record<string, unknown> {
+        const obj: Record<string, unknown> = {
             id: this.id,
-            x: this.x,
-            y: this.y,
-            vx: this.vx,
-            vy: this.vy,
-            fx: this.fx,
-            fy: this.fy,
             data: this.data,
             style: this.style,
         }
+        if (!dataOnly) {
+            obj.x = this.x
+            obj.y = this.y
+            obj.vx = this.vx
+            obj.vy = this.vy
+            obj.fx = this.fx
+            obj.fy = this.fy
+        }
+        return obj
     }
 
     clone(): Node {
@@ -177,6 +180,8 @@ export class Node {
         clone.vy = this.vy
         clone.fx = this.fx
         clone.fy = this.fy
+        clone.frozen = this.frozen
+        clone.visible = this.visible
         clone._circleRadius = this._circleRadius
 
         return clone

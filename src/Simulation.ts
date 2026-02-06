@@ -19,6 +19,7 @@ import type { Edge } from './Edge'
 import { runSimulationInWorker } from './SimulationWorkerWrapper'
 import merge from 'lodash.merge'
 import { TreeLayout } from './plugins/layout/Tree'
+import { EgoTreeLayout } from './plugins/layout/EgoTree'
 import { edgeLabelGetter } from './utils/GraphGetters'
 import type { DeepPartial } from './utils/utils'
 import type { SimulationCallbacks, SimulationForces, SimulationOptions } from './interfaces/SimulationOptions'
@@ -113,9 +114,14 @@ export class Simulation {
                 this.graph,
                 this.simulation,
                 this.simulationForces,
-                this.options.layout.type === 'tree'
-                    ? (this.options.layout as TreeLayoutOptions)
-                    : undefined
+                this.options.layout
+            )
+        } else if (this.options.layout.type === 'egoTree') {
+            this.layout = new EgoTreeLayout(
+                this.graph,
+                this.simulation,
+                this.simulationForces,
+                this.options.layout
             )
         } else {
             // this.scaleSimulationOptions()

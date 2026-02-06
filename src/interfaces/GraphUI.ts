@@ -12,9 +12,11 @@ export interface GraphUI {
     sidebar: SidebarOptions,
     mainHeader: MainHeader,
     propertiesPanel: PropertiesPanel,
+    neighborsPanel: NeighborsPanel,
     extraPanels: ExtraPanel[],
     tooltip: Tooltip,
     contextMenu: ContextMenu,
+    navigation: Navigation,
     selectionMenu: SelectionMenu,
     keybindings?: Keybinding[];
 }
@@ -112,6 +114,16 @@ export interface PropertiesPanel {
 }
 
 /**
+ * Represents the configuration for the neighbors panel in the graph UI's sidebar
+ * 
+ * Defines how to compute and display neighbors for nodes and edges.
+ * @default All neighbor for the chosen entity
+ */
+export interface NeighborsPanel {
+    render?: ((element: Node | Edge | Node[] | Edge[] | null) => HTMLElement | string) | HTMLElement | string,
+}
+
+/**
  * Additional panel in the graph UI's sidebar.
  * Currently only displayed when an element is selected
  * 
@@ -164,6 +176,10 @@ export interface Tooltip {
     * (element) => `element id: ${element.id}`
     */
     render?: ((element: Node | Edge) => HTMLElement | string) | HTMLElement | string,
+}
+
+export interface Navigation {
+    enabled?: boolean /** @default true */
 }
 
 export interface ContextMenu {

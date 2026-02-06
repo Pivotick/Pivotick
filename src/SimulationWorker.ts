@@ -6,6 +6,7 @@ import { Edge, type EdgeData } from './Edge'
 import { TreeLayout } from './plugins/layout/Tree'
 import type { SimulationOptions } from './interfaces/SimulationOptions'
 import type { EdgeFullStyle } from './interfaces/RendererOptions'
+import type { TreeLayoutOptions } from './interfaces/LayoutOptions'
 
 export interface PlainNode<T = NodeData> {
     _circleRadius: number
@@ -75,14 +76,15 @@ self.onmessage = (e: MessageEvent<WorkerInput>) => {
             .links(edges)
     }
 
-    if (options.layout?.type === 'tree') {
+    if (options.layout?.type === 'tree' || options.layout?.type === 'egoTree') {
         TreeLayout.registerForcesOnSimulation(
             nodes,
             edges,
             simulation,
             simulationForces,
-            options.layout,
-            canvasBCR
+            options.layout as Partial<TreeLayoutOptions>,
+            canvasBCR,
+            TreeLayout
         )
     }
 
@@ -182,14 +184,15 @@ export function runSimulation(plainNodes: Node[], plainEdges: Edge[], options: S
             .links(edges)
     }
 
-    if (options.layout?.type === 'tree') {
+    if (options.layout?.type === 'tree' || options.layout?.type === 'egoTree') {
         TreeLayout.registerForcesOnSimulation(
             nodes,
             edges,
             simulation,
             simulationForces,
-            options.layout,
-            canvasBCR
+            options.layout as Partial<TreeLayoutOptions>,
+            canvasBCR,
+            TreeLayout
         )
     }
 

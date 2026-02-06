@@ -8,6 +8,7 @@ import { SidebarProperties } from './Properties'
 import { ExtraPanelManager } from './ExtraPanelManager'
 import { sidebarCollapse, sidebarExpand } from '../../icons'
 import type { EdgeSelection, NodeSelection } from '../../../interfaces/GraphInteractions'
+import { SidebarNeighbors } from './Neighbors'
 
 export class Sidebar implements UIElement {
     private uiManager: UIManager
@@ -18,10 +19,12 @@ export class Sidebar implements UIElement {
 
     private sidebarMainHeader: SidebarMainHeader
     private sidebarProperties: SidebarProperties
+    private sidebarNeighbors: SidebarNeighbors
     private extraPanelManager: ExtraPanelManager
     
     private mainHeaderPanel?: HTMLDivElement
     private mainBodyPanel?: HTMLDivElement
+    private neighborPanel?: HTMLDivElement
     private extraPanelContainer?: HTMLDivElement
     private collapse?: HTMLSpanElement
 
@@ -29,6 +32,7 @@ export class Sidebar implements UIElement {
         this.uiManager = uiManager
         this.sidebarMainHeader = new SidebarMainHeader(this.uiManager)
         this.sidebarProperties = new SidebarProperties(this.uiManager)
+        this.sidebarNeighbors = new SidebarNeighbors(this.uiManager)
         this.extraPanelManager = new ExtraPanelManager(this.uiManager)
     }
 
@@ -40,6 +44,8 @@ export class Sidebar implements UIElement {
     <div class="pvt-mainheader-panel"></div>
     <div class="pvt-sidebar-separator"></div>
     <div class="pvt-properties-panel pvt-sidebar-panel"></div>
+    <div class="pvt-sidebar-separator"></div>
+    <div class="pvt-neighbor-panel pvt-sidebar-panel"></div>
     <div class="pvt-sidebar-separator"></div>
     <div class="pvt-extra-panel pvt-sidebar-panel"></div>
 </div>`
@@ -64,6 +70,8 @@ export class Sidebar implements UIElement {
         this.sidebarMainHeader.mount(this.mainHeaderPanel)
         this.mainBodyPanel = this.sidebar.querySelector('.pvt-properties-panel') ?? undefined
         this.sidebarProperties.mount(this.mainBodyPanel)
+        this.neighborPanel = this.sidebar.querySelector('.pvt-neighbor-panel') ?? undefined
+        this.sidebarNeighbors.mount(this.neighborPanel)
         this.extraPanelContainer = this.sidebar.querySelector('.pvt-extra-panel') ?? undefined
         this.extraPanelManager.mount(this.extraPanelContainer)
 
@@ -80,7 +88,8 @@ export class Sidebar implements UIElement {
         }
 
         this.sidebarMainHeader.afterMount()
-        this.sidebarMainHeader.afterMount()
+        this.sidebarProperties.afterMount()
+        this.sidebarNeighbors.afterMount()
         this.extraPanelManager.afterMount()
     }
 
@@ -89,21 +98,25 @@ export class Sidebar implements UIElement {
         this.uiManager.graph.renderer.getGraphInteraction().on('selectNode', (node: Node, element: unknown) => {
             this.sidebarMainHeader.updateNodeOverview(node, element)
             this.sidebarProperties.updateNodeProperties(node)
+            this.sidebarNeighbors.updateNodeNeighbors(node)
             this.extraPanelManager.updateNode(node)
         })
         this.uiManager.graph.renderer.getGraphInteraction().on('unselectNode', () => {
             this.sidebarMainHeader.clearOverview()
             this.sidebarProperties.clearProperties()
+            this.sidebarNeighbors.clearNeighbors()
             this.extraPanelManager.clear()
         })
         this.uiManager.graph.renderer.getGraphInteraction().on('selectEdge', (edge: Edge) => {
             this.sidebarMainHeader.updateEdgeOverview(edge)
             this.sidebarProperties.updateEdgeProperties(edge)
+            this.sidebarNeighbors.updateEdgeNeighbors(edge)
             this.extraPanelManager.updateEdge(edge)
         })
         this.uiManager.graph.renderer.getGraphInteraction().on('unselectEdge', () => {
             this.sidebarMainHeader.clearOverview()
             this.sidebarProperties.clearProperties()
+            this.sidebarNeighbors.clearNeighbors()
             this.extraPanelManager.clear()
         })
 
@@ -113,6 +126,7 @@ export class Sidebar implements UIElement {
             const fullSelection = this.uiManager.graph.renderer.getGraphInteraction().getSelectedNodes()
             this.sidebarMainHeader.updateNodesOverview(fullSelection)
             this.sidebarProperties.updateNodesProperties(fullSelection)
+            this.sidebarNeighbors.updateNodesNeighbors(fullSelection)
             this.extraPanelManager.updateNodes(fullSelection)
         })
         this.uiManager.graph.renderer.getGraphInteraction().on('unselectNodes', () => {
@@ -120,6 +134,7 @@ export class Sidebar implements UIElement {
             if (fullSelection.length > 0) {
                 this.sidebarMainHeader.updateNodesOverview(fullSelection)
                 this.sidebarProperties.updateNodesProperties(fullSelection)
+                this.sidebarNeighbors.updateNodesNeighbors(fullSelection)
                 this.extraPanelManager.updateNodes(fullSelection)
             } else {
                 this.sidebarMainHeader.clearOverview()
@@ -130,11 +145,13 @@ export class Sidebar implements UIElement {
         this.uiManager.graph.renderer.getGraphInteraction().on('selectEdges', (edges: EdgeSelection<unknown>[]) => {
             this.sidebarMainHeader.updateEdgesOverview(edges)
             this.sidebarProperties.updateEdgesProperties(edges)
+            this.sidebarNeighbors.updateEdgesNeighbors(edges)
             this.extraPanelManager.updateEdges(edges)
         })
         this.uiManager.graph.renderer.getGraphInteraction().on('unselectEdges', () => {
             this.sidebarMainHeader.clearOverview()
             this.sidebarProperties.clearProperties()
+            this.sidebarNeighbors.clearNeighbors()
             this.extraPanelManager.clear()
         })
 

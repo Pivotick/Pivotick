@@ -1,6 +1,6 @@
 import type { TreeLayoutAlgorithm } from '../plugins/layout/Tree'
 
-export type LayoutType = 'force' | 'tree'
+export type LayoutType = 'force' | 'tree' | 'egoTree'
 
 
 export interface BaseLayoutOptions {
@@ -11,7 +11,7 @@ export interface BaseLayoutOptions {
 /**
  * @default ForceLayoutOptions
  */
-export type LayoutOptions = ForceLayoutOptions | TreeLayoutOptions
+export type LayoutOptions = ForceLayoutOptions | TreeLayoutOptions | EgoTreeLayoutOptions
 
 export interface ForceLayoutOptions extends BaseLayoutOptions {
     type: 'force'
@@ -54,4 +54,10 @@ export interface TreeLayoutOptions extends BaseLayoutOptions {
      * @default false
      */
     flipEdgeDirection: boolean
+}
+
+export interface EgoTreeLayoutOptions
+    extends Omit<TreeLayoutOptions, 'rootId' | 'type'> {
+    type: 'egoTree'
+    rootId: string
 }

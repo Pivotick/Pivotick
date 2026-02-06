@@ -1,5 +1,6 @@
 import type { Edge, EdgeData } from '../Edge'
 import type { Node, NodeData } from '../Node'
+import type { DeepPartial } from '../utils/utils'
 import type { GraphUI } from './GraphUI'
 import type { InterractionCallbacks } from './InterractionCallbacks'
 import type { LayoutOptions } from './LayoutOptions'
@@ -16,16 +17,16 @@ export interface GraphOptions {
     /**
      * Options for the rendering engine
      */
-    render?: Partial<GraphRendererOptions>
+    render?: DeepPartial<GraphRendererOptions>
     /**
      * Options for the simultion engine
      */
-    simulation?: Partial<SimulationOptions>
+    simulation?: DeepPartial<SimulationOptions>
 
     /**
     * Layout-specific configuration (e.g. tree, radial, etc.)
     */
-    layout?: Partial<LayoutOptions>
+    layout?: DeepPartial<LayoutOptions>
 
     /**
      * Callbacks to handle various graph events and render hooks.
@@ -41,7 +42,7 @@ export interface GraphOptions {
     /**
      * Options for the UI
      */
-    UI?: Partial<GraphUI>,
+    UI?: DeepPartial<GraphUI>,
 }
 
 /**

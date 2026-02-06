@@ -44,6 +44,21 @@
             .pvt-sidebar-body-panel {
                 min-height: 32px;
                 padding: 6px;
+
+                &.pvt-neighbors-body-panel {
+                    position: relative;
+                    width: 100%;
+                    height: var(--pvt-sidebar-width);
+                    box-sizing: border-box;
+
+                    .pivotick-tab-panels {
+                        height: 100%;
+                        
+                        div {
+                            height: 100%;
+                        }
+                    }
+                }
             }
         }
     }
