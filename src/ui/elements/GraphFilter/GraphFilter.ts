@@ -1,11 +1,11 @@
 import type { FilterFieldConfig, GraphFilters } from '../../../interfaces/GraphQueryEngine'
-import { createHtmlElement, createHtmlTemplate } from '../../../utils/ElementCreation'
+import { createHtmlElement, createHtmlTemplate, createIcon } from '../../../utils/ElementCreation'
 import { Node } from '../../../Node'
 import { FormFactory, type FieldConfig, type FieldType, type FormValue, type FormValues } from '../../../utils/FormFactory'
 import { nodeNameGetter } from '../../../utils/GraphGetters'
 import { createBadge } from '../../components/Badge'
 import { createButton } from '../../components/Button'
-import { funnel, funnelClear, show } from '../../icons'
+import { funnel, funnelClear, graphEdgeIcon, nodeProperty, show } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import './graphFilter.scss'
 
@@ -213,11 +213,11 @@ export class GraphFilter implements UIElement {
             hiddenNodeContainer.innerHTML = ''
             this.uiManager.graph.queryEngine.getExcludedNodes().forEach((node: Node) => {
                 const nodePropertyCount = Object.keys(node.getData()).length
+                const nodeEdgesCount = node.getEdgesIn().length + node.getEdgesOut().length
                 const showNodeButton = createButton({
                     variant: 'secondary',
                     text: 'Show node',
                     size: 'sm',
-                    style: 'margin-left: auto;',
                     title: 'Restore manually hidden node',
                     svgIcon: show,
                     onClick: () => {
@@ -230,17 +230,11 @@ export class GraphFilter implements UIElement {
                         'class': 'subtext'
                     },
                     [
-                        nodePropertyCount != 1 ? `${nodePropertyCount} properties` : '1 properties',
+                        createHtmlElement('span', { 'class': 'nodeinfo'}, [nodePropertyCount.toString(), createIcon({svgIcon :nodeProperty})]),
+                        '·',
+                        createHtmlElement('span', { 'class': 'nodeinfo'}, [nodeEdgesCount.toString(), createIcon({svgIcon: graphEdgeIcon(24)})]),
                     ]
                 )
-                propertyTextElement
-                    .addEventListener('mouseenter', (event: MouseEvent) => {
-                        this.uiManager.tooltip?.openForNodeOnElement(event, node)
-                    })
-                propertyTextElement
-                    .addEventListener('mouseleave', () => {
-                        this.uiManager.tooltip?.hide()
-                    })
 
                 const nodeElement = createHtmlElement('div',
                     {
@@ -252,6 +246,15 @@ export class GraphFilter implements UIElement {
                         showNodeButton,
                     ]
                 )
+                nodeElement
+                    .addEventListener('mouseenter', (event: MouseEvent) => {
+                        this.uiManager.tooltip?.openForNodeOnElement(event, node)
+                    })
+                nodeElement
+                    .addEventListener('mouseleave', () => {
+                        this.uiManager.tooltip?.hide()
+                    })
+
                 hiddenNodeContainer?.appendChild(nodeElement)
             })
         } else {

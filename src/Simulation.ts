@@ -230,13 +230,13 @@ export class Simulation {
         }
 
         this.simulation
-            .nodes(this.graph.getMutableNodes())
+            .nodes(this.graph.getMutableNodes().filter(node => node.visible))
 
         const linkForce = this.simulation.force('link')
         if (linkForce) {
             (linkForce as d3ForceLinkType<Node, Edge>)
                 .id((node: Node) => node.id)
-                .links(this.graph.getMutableEdges())
+                .links(this.graph.getMutableEdges().filter(edge => edge.visible))
         }
 
         this.restart()

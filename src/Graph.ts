@@ -700,10 +700,10 @@ export class Graph {
     showNode(node: Node) {
         node.show()
         node.getEdgesOut().forEach(e => {
-            e.show()
+            if (e.target.visible) e.show()
         })
         node.getEdgesIn().forEach(e => {
-            e.show()
+            if (e.from.visible) e.show()
         })
         this.onChange()
     }
