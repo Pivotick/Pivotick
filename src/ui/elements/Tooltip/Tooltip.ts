@@ -332,33 +332,40 @@ export class Tooltip implements UIElement {
 
     private setPosition() {
         if (!this.tooltip) return
+        const hoveredBCR = this.hoveredElement?.getGraphElement()?.getBoundingClientRect()
+        if (!hoveredBCR) return
+        const canvasBbox = this.uiManager.layout?.canvas?.getBoundingClientRect()
+        if (!canvasBbox) return
 
-        const mouseOffset = 0
-        const offset =  mouseOffset + 20 // Extra offset to give more space around the tooltip
-        this.x = this.triggerX
-        this.y = this.triggerY
+        const offset = 20 // Extra offset to give more space around the tooltip
+        const offsetX = 15 // Offset between the tooltip and the hovered element on the X axis
 
-        const bbox = this.parentContainer?.getBoundingClientRect()
-        if (!bbox) return
-        const parentX = bbox.left + window.scrollX
-        const parentY = bbox.top + window.scrollY
-        const parentWidth = bbox.width
-        const parentHeight = bbox.height
+        const parentX = canvasBbox.left + window.scrollX
+        const parentY = canvasBbox.top + window.scrollY
+        const parentWidth = canvasBbox.width
+        const parentHeight = canvasBbox.height
         const tooltipWidth = this.tooltip.offsetWidth
         const tooltipHeight = this.tooltip.offsetHeight
 
+        this.x = hoveredBCR.x + hoveredBCR.width + offsetX
+        this.y = hoveredBCR.y
+
         // Adjust horizontal position if overflowing
         if (this.x + tooltipWidth + offset > parentX + parentWidth) {
-            this.x -= tooltipWidth + mouseOffset
+            this.x = hoveredBCR.x - tooltipWidth - offsetX
         }
 
         // Adjust vertical position if overflowing
         if (this.y + tooltipHeight + offset > parentY + parentHeight) {
-            this.y -= tooltipHeight + mouseOffset
+            this.y -= tooltipHeight
+        }
+        // Adjust vertical position if overflowing top
+        if (this.y < parentY + offset) {
+            this.y = parentY + offset
         }
 
-        this.tooltip.style.left = `${this.x + mouseOffset}px`
-        this.tooltip.style.top = `${this.y + mouseOffset}px`
+        this.tooltip.style.left = `${this.x}px`
+        this.tooltip.style.top = `${this.y}px`
     }
 
     private delayedHide() {

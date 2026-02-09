@@ -42,8 +42,6 @@ export class SidebarNeighbors implements UIElement {
 
         rootContainer.appendChild(this.panel)
 
-        // this.header.style.display = 'flex'
-
         this.egographContainer = createHtmlElement('div', {}, ['Egograph here'])
         this.statContainer = createHtmlElement('div', {}, ['Stats here'])
         this.listContainer = createHtmlElement('div', {}, ['List here'])
