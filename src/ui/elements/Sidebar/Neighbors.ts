@@ -21,6 +21,8 @@ export class SidebarNeighbors implements UIElement {
     private statContainer?: HTMLDivElement
     private listContainer?: HTMLDivElement
 
+    private egoGraph?: Graph
+
     private renderCb?: ((element: Node | Edge | Node[] | Edge[] | null) => HTMLElement | string) | HTMLElement | string
 
     constructor(uiManager: UIManager) {
@@ -51,6 +53,9 @@ export class SidebarNeighbors implements UIElement {
                     id: 'egograph',
                     label: 'Graph',
                     content: this.egographContainer,
+                    onShown: () => {
+                        if (this.egoGraph) this.egoGraph.renderer.fitAndCenter()
+                    }
                 },
                 {
                     id: 'stats',
@@ -200,12 +205,12 @@ export class SidebarNeighbors implements UIElement {
             },
         }
 
-        const egoGraph = new Graph(this.egographContainer, egoGraphData, egoGraphOptions)
-        egoGraph.on('ready', () => {
+        this.egoGraph = new Graph(this.egographContainer, egoGraphData, egoGraphOptions)
+        this.egoGraph.on('ready', () => {
             setTimeout(() => {
                 this.egographContainer!.style.visibility = 'visible'
             }, 20)
-            egoGraph.selectElement(egoGraph.getMutableNode(egoNode.id)!)
+            this.egoGraph!.selectElement(this.egoGraph!.getMutableNode(egoNode.id)!)
         })
     }
 

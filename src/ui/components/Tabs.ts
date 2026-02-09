@@ -5,6 +5,7 @@ type TabItem = {
     id: string
     label: string
     content: HTMLElement
+    onShown?: () => void
 }
 
 export function createTabs(items: TabItem[], activeId?: string, container?: HTMLDivElement, controlContainer?: HTMLDivElement) {
@@ -27,7 +28,8 @@ export function createTabs(items: TabItem[], activeId?: string, container?: HTML
         tabsRoot.append(controls, panels)
     }
 
-    function activate(tabId: string) {
+    function activate(item: TabItem) {
+        const tabId = item.id
         panels.querySelectorAll<HTMLElement>('[data-tab-panel]')
             .forEach(p => p.style.display = 'none')
 
@@ -45,6 +47,12 @@ export function createTabs(items: TabItem[], activeId?: string, container?: HTML
             activeControl.classList.remove('pivotick-button-outline-secondary')
             activeControl.classList.add('pivotick-button-primary')
         }
+
+        requestAnimationFrame(() => {
+            if (item.onShown) {
+                item?.onShown()
+            }
+        })
     }
 
     items.forEach(item => {
@@ -52,7 +60,7 @@ export function createTabs(items: TabItem[], activeId?: string, container?: HTML
             text: item.label,
             variant: 'outline-secondary',
             'data-tab-control': item.id,
-            onclick: () => activate(item.id)
+            onclick: () => activate(item)
         })
 
         controls.appendChild(tabBtn)
@@ -65,7 +73,7 @@ export function createTabs(items: TabItem[], activeId?: string, container?: HTML
         panels.appendChild(panel)
     })
 
-    activate(activeId ?? items[0].id)
+    activate(activeId ?? items[0])
 
     if (controlContainer && container) {
         return panels
