@@ -7,10 +7,18 @@ import { createButton } from '../../components/Button'
 import { graphEdgeIcon, pin, closeIcon, selectElement, focusElement } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import './tooltip.scss'
+import type { Tooltip as TooltipOptions } from '../../../interfaces/GraphUI'
+import { deepMerge } from '../../../utils/utils'
 
+
+const defaultTooltipOptions = {
+    enabled: true,
+    allowPinning: true,
+} as Partial<TooltipOptions>
 
 export class Tooltip implements UIElement {
     private uiManager: UIManager
+    private options: TooltipOptions
 
     public tooltip?: HTMLDivElement
     private parentContainer?: HTMLElement
@@ -35,6 +43,7 @@ export class Tooltip implements UIElement {
 
     constructor(uiManager: UIManager) {
         this.uiManager = uiManager
+        this.options = deepMerge(defaultTooltipOptions, this.uiManager.getOptions().tooltip) as TooltipOptions
     }
 
     public mount(container: HTMLElement | undefined) {
@@ -64,13 +73,14 @@ export class Tooltip implements UIElement {
         if (!this.tooltip) return
 
         this.uiManager.graph.renderer.getGraphInteraction().on('nodeHoverIn', this.nodeHovered.bind(this))
-        this.uiManager.graph.renderer.getGraphInteraction().on('nodeHoverOut', () => { this.delayedHide() })
+        this.uiManager.graph.renderer.getGraphInteraction().on('nodeHoverOut', this.delayedHide.bind(this))
+        // this.uiManager.graph.renderer.getGraphInteraction().on('nodeHoverOut', () => { this.delayedHide() })
         // this.uiManager.graph.renderer.getGraphInteraction().on('edgeHoverIn', this.edgeHovered.bind(this))
         // this.uiManager.graph.renderer.getGraphInteraction().on('edgeHoverOut', () => { this.delayedHide() })
         this.uiManager.graph.renderer.getGraphInteraction().on('canvasMousemove', this.updateMousePosition.bind(this))
         this.uiManager.graph.renderer.getGraphInteraction().on('dragging', (_event: MouseEvent, node: Node) => {
             if (this.hoveredElementID === node.id) {
-                this.hide()
+                this.hide(node)
             }
         })
         this.uiManager.graph.renderer.getGraphInteraction().on('canvasZoom', this.canvasZoomed.bind(this))
@@ -96,7 +106,7 @@ export class Tooltip implements UIElement {
         const selectionBox = this.uiManager.graph.renderer.getSelectionBox()
         if (selectionBox !== null && selectionBox.selectionInProgress()) return false
         if (
-            Math.abs(this.triggerX - this.mouseX) >= 50 &&
+            Math.abs(this.triggerX - this.mouseX) >= 50 ||
             Math.abs(this.triggerY - this.mouseY) >= 50
         ) {
             return false  // Since tooltip display is delayed, make sure the pointer is still close to where it should be
@@ -201,17 +211,19 @@ export class Tooltip implements UIElement {
         nameElem.textContent = nodeNameGetter(node, this.uiManager.getOptions().mainHeader)
         subtitleElem.textContent = nodeDescriptionGetter(node, this.uiManager.getOptions().mainHeader)
 
-        const pinButton = createButton({
-            title: 'Pin Tooltip',
-            variant: 'outline-primary',
-            size: 'sm',
-            class: 'pin-button',
-            svgIcon: pin,
-            onClick: () => {
-                this.pinTooltip()
-            },
-        })
-        toprightElem.appendChild(pinButton)
+        if (this.options.allowPinning) {
+            const pinButton = createButton({
+                title: 'Pin Tooltip',
+                variant: 'outline-primary',
+                size: 'sm',
+                class: 'pin-button',
+                svgIcon: pin,
+                onClick: () => {
+                    this.pinTooltip()
+                },
+            })
+            toprightElem.appendChild(pinButton)
+        }
 
         const renderCb = this.uiManager.getOptions().tooltip.render
         if (renderCb && typeof renderCb === 'function') {
@@ -355,6 +367,12 @@ export class Tooltip implements UIElement {
             this.x = hoveredBCR.x - tooltipWidth - offsetX
         }
 
+        // Left overflow
+        if (this.x < parentX + offsetX) {
+            this.x = parentX + offsetX
+        }
+
+
         // Adjust vertical position if overflowing
         if (this.y + tooltipHeight + offset > parentY + parentHeight) {
             this.y -= tooltipHeight
@@ -368,25 +386,28 @@ export class Tooltip implements UIElement {
         this.tooltip.style.top = `${this.y}px`
     }
 
-    private delayedHide() {
+    private delayedHide(_event: MouseEvent, node: Node) {
         if (this.hideTimeout) clearTimeout(this.hideTimeout)
-        this.hideTimeout = setTimeout(() => this.hide(), this.hideDelay)
+        this.hideTimeout = setTimeout(() => this.hide(node), this.hideDelay)
     }
 
-    public hide() {
+    public hide(node?: Node) {
         if (!this.tooltip) return
 
         if (this.hideTimeout) clearTimeout(this.hideTimeout)
-        if (this.tooltipTimeout) {
-            clearTimeout(this.tooltipTimeout)
-            this.tooltipTimeout = null
+
+        if (this.hoveredElement === node || node === undefined) {
+            if (this.tooltipTimeout) {
+                clearTimeout(this.tooltipTimeout)
+                this.tooltipTimeout = null
+            }
+            this.hoveredElementID = null
+            this.hoveredElement = null
+            this.triggerX = -2000
+            this.triggerY = -2000
+            this.tooltip.classList.remove('shown')
+            this.tooltip.style.left = '-10000px'
         }
-        this.hoveredElementID = null
-        this.hoveredElement = null
-        this.triggerX = -2000
-        this.triggerY = -2000
-        this.tooltip.classList.remove('shown')
-        this.tooltip.style.left = '-10000px'
     }
 
     private show(cb: { (): void; (): void } | undefined) {

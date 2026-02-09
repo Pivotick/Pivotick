@@ -171,6 +171,7 @@ export class SidebarNeighbors implements UIElement {
                 mode: 'viewer',
                 tooltip: {
                     enabled: true,
+                    allowPinning: false,
                 },
                 contextMenu: {
                     enabled: false,

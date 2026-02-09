@@ -155,6 +155,7 @@ export interface ExtraPanel {
 
 export interface Tooltip {
     enabled?: boolean /** @default true */
+    allowPinning?: boolean /** @default true */
     /**
      * Custom renderer for node tooltips. This content is added after the default tooltip
      * @default undefined

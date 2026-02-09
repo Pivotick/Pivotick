@@ -67,6 +67,7 @@ export const DEFAULT_UI_OPTIONS: GraphUI = {
     },
     tooltip: {
         enabled: true,
+        allowPinning: true,
         nodePropertiesMap: defaultPropertiesMapNode,
         edgePropertiesMap: defaultPropertiesMapEdge,
         ...DEFAULT_HEADERS_MAPS
