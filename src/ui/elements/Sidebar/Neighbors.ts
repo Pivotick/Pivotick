@@ -6,7 +6,7 @@ import './properties.scss'
 import type { EdgeSelection, NodeSelection } from '../../../interfaces/GraphInteractions'
 import { tryResolveHTMLElement } from '../../../utils/Getters'
 import { createTabs } from '../../components/Tabs'
-import type { GraphData, GraphOptions, RawEdge, RawNode, RelaxedGraphData } from '../../../interfaces/GraphOptions'
+import type { GraphOptions, RawEdge, RawNode, RelaxedGraphData } from '../../../interfaces/GraphOptions'
 import { Graph } from '../../../Graph'
 
 
@@ -42,7 +42,7 @@ export class SidebarNeighbors implements UIElement {
 
         rootContainer.appendChild(this.panel)
 
-        this.header.style.display = 'block'
+        // this.header.style.display = 'flex'
 
         this.egographContainer = createHtmlElement('div', {}, ['Egograph here'])
         this.statContainer = createHtmlElement('div', {}, ['Stats here'])
@@ -123,33 +123,56 @@ export class SidebarNeighbors implements UIElement {
     }
 
     /* Single selection */
-    public updateNodeNeighbors(node: Node): void {
+    public updateNodeNeighbors(egoNode: Node): void {
         if (!this.egographContainer) return
 
         this.showPanel()
 
         if (this.renderCb) {
-            this.renderCustomContent(node)
+            this.renderCustomContent(egoNode)
             return
         }
 
         this.egographContainer.style.visibility = 'hidden'
+
+        // Might contain duplicates
+        const connectedNodes = new Map<string, Node>()
+        for (const node of [
+            egoNode,
+            ...egoNode.getConnectedNodes(),
+            ...egoNode.getConnectingNodes(),
+        ]) {
+            connectedNodes.set(node.id.toString(), node)
+        }
+
+        const connectedEdges = [
+            ...egoNode.getEdgesOut(),
+            ...egoNode.getEdgesIn(),
+        ]
+        const egoEdges = new Map<string, Edge>()
+        connectedEdges.forEach((edge) => {
+            if (!edge || edge.id == null) return
+            egoEdges.set(edge.id.toString(), edge)
+        })
+        connectedNodes.forEach((cNode) => {
+            cNode.getEdgesOut().forEach((edge) => {
+                const targetNode: Node = edge.to
+                if (connectedNodes.has(targetNode.id.toString()) && targetNode.id !== egoNode.id) {
+                    egoEdges.set(edge.id.toString(), edge)
+                }
+            })
+        })
+
+
         const egoGraphData: RelaxedGraphData = {
-            nodes: [
-                node.toDict(true) as RawNode,
-                ...node.getConnectedNodes().map((node) => node.toDict(true) as RawNode),
-                ...node.getConnectingNodes().map((node) => node.toDict(true) as RawNode),
-            ],
-            edges: [
-                ...node.getEdgesOut().map((e) => e.toDict() as RawEdge),
-                ...node.getEdgesIn().map((e) => e.toDict() as RawEdge),
-            ]
+            nodes: [...connectedNodes.values()].map((n) => n.toDict(true) as RawNode),
+            edges: [...egoEdges.values()].map(e => e.toDict() as RawEdge)
         }
         const egoGraphOptions: GraphOptions = {
             UI: {
                 mode: 'viewer',
                 tooltip: {
-                    enabled: false,
+                    enabled: true,
                 },
                 contextMenu: {
                     enabled: false,
@@ -162,12 +185,12 @@ export class SidebarNeighbors implements UIElement {
                 type: 'egoTree',
                 radial: true,
                 radialGap: 120,
-                rootId: node.id,
+                rootId: egoNode.id,
             },
             render: {
                 ...this.uiManager.graph.getOptions().render,
                 dragEnabled: false,
-                interactionEnabled: false,
+                interactionEnabled: true,
                 zoomEnabled: false,
                 zoomAnimationDuration: 100,
             },
@@ -183,7 +206,7 @@ export class SidebarNeighbors implements UIElement {
             setTimeout(() => {
                 this.egographContainer!.style.visibility = 'visible'
             }, 20)
-            egoGraph.selectElement(egoGraph.getMutableNode(node.id)!)
+            egoGraph.selectElement(egoGraph.getMutableNode(egoNode.id)!)
         })
     }
 

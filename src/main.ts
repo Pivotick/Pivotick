@@ -410,6 +410,7 @@ const data = {
     { 'from': 'C4', 'to': 'C5' },
     { 'from': 'C5', 'to': 'C6' },
     { 'from': 'C6', 'to': 'C1' },
+    { 'from': 'C1', 'to': 'A5' }, // makes uly
 
     { 'from': 'D1', 'to': 'D2', 'data': { 'score': 12 } },
     { 'from': 'D2', 'to': 'D3', 'data': { 'score': 12 } },

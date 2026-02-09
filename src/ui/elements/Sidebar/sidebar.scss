@@ -34,11 +34,15 @@
             .pvt-sidebar-header-panel {
                 display: none;
                 min-height: 40px;
-                background-color: var(--pvt-sidebar-panelheader-bg);
                 align-items: center;
                 padding: 2px 6px;
                 font-weight: 300;
                 color: var(--pvt-text-color-5);
+
+                &.pvt-neighbors-header-panel {
+                    display: flex;
+                    align-items: center;
+                }
             }
 
             .pvt-sidebar-body-panel {
@@ -53,15 +57,20 @@
 
                     .pivotick-tab-panels {
                         height: 100%;
-                        
+
                         div {
                             height: 100%;
                         }
+
+                        div[data-tab-panel="egograph"] {
+                            border: var(--pvt-sidebar-panel-border);
+
+                            .pivotick .pvt-canvas  {
+                                background-image: none;
+                            }
+                        }
                     }
 
-                    .pivotick .pvt-canvas  {
-                        background-image: none;
-                    }
                 }
             }
         }

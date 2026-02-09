@@ -250,6 +250,7 @@ export class GraphSvgRenderer extends GraphRenderer {
         this.svgCanvas.setAttribute('height', '100%')
         this.svgCanvas.setAttribute('fill', 'none')
         this.svgCanvas.setAttribute('class', 'pvt-canvas-element')
+        this.svgCanvas.setAttribute('data-renderer-drag-enabled', this.options.dragEnabled ? '1' : '0')
 
         this.getCanvas().appendChild(this.svgCanvas)
         this.svg = d3Select(this.svgCanvas)
