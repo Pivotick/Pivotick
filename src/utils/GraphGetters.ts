@@ -20,7 +20,7 @@ export function nodeDescriptionGetter(node: Node, mainHeader: MainHeader): strin
 
 export function edgeNameGetter(edge: Edge, mainHeader: MainHeader): string {
     if (mainHeader.edgeHeaderMap.title) {
-        return tryResolveString(mainHeader.edgeHeaderMap.title, edge) || 'Could not resolve title'
+        return tryResolveString(mainHeader.edgeHeaderMap.title, edge) || ''
     }
     return edge.getData()?.label ?? 'Optional name or label'
 }

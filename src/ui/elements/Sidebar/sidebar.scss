@@ -1,3 +1,5 @@
+@use '../../../styles/pivotick' as pvt;
+
 .pvt-sidebar {
     position: relative;
     background: var(--pvt-ui-bg);
@@ -55,22 +57,85 @@
                     height: var(--pvt-sidebar-width);
                     box-sizing: border-box;
 
+                    .pvt-neighbors-count {
+                        position: absolute;
+                        right: 10px;
+                        bottom: 5px;
+                        font-size: 14px;
+                        font-weight: 300;
+                        color: var(--pvt-text-color-5);
+                    }
+
                     .pivotick-tab-panels {
                         height: 100%;
 
-                        div {
-                            height: 100%;
-                        }
-
                         div[data-tab-panel="egograph"] {
                             border: var(--pvt-sidebar-panel-border);
+                            height: 100%;
+                            div {
+                                height: 100%;
+                            }
 
                             .pivotick .pvt-canvas  {
                                 background-image: none;
                             }
                         }
-                    }
 
+                        div[data-tab-panel="list"] {
+
+                            .edge-details {
+                                margin-bottom: 4px;
+                                display: flex;
+                                flex-direction: row;
+                                align-items: center;
+                                flex-wrap: nowrap;
+    
+                                .edge {
+                                    margin-right: 4px;
+    
+                                    &.edge-out {
+                                        color: var(--pvt-text-color-primary);
+                                        width: 2em !important;
+                                    }
+                                    &.edge-in {
+                                        color: var(--pvt-text-color-secondary);
+                                        width: 2em !important;
+                                    }
+                                }
+    
+                                .pvt-neighbors-list__nodecontainer {
+                                    display: flex;
+                                    flex-direction: row;
+                                    align-items: center;
+                                    gap: 5px;
+    
+                                    .pvt-neighbors-list__nodepreview {
+                                        @include pvt.node-preview-container;
+                                        width: 30px;
+                                        height: 30px;
+                                    
+                                        .pvt-mainheader-icon {
+                                            width: 26px;
+                                            height: 26px;
+                                        }
+                                    }
+                                }
+    
+                                .pvt-neighbor-edge-description {
+                                    margin-left: auto;
+                                    border-radius: 2px;
+                                }
+                            }
+                        }
+
+                        div[data-tab-panel="stats"] {
+                            .main-stats-container {
+                                display: flex;
+                                flex-direction: column;
+                                gap: 10px;
+                            }
+                        }
+                    }
                 }
             }
         }

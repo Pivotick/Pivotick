@@ -35,7 +35,7 @@ const basicStringGetter = (element: Node | Edge, key: string, fallbackStr: strin
 
 const defaultHeaderMapNodeTitle = (node: Node): string => basicStringGetter(node, 'label', 'Could not resolve title')
 const defaultHeaderMapNodeSubtitle = (node: Node): string => basicStringGetter(node, 'description')
-const defaultHeaderMapEdgeTitle = (edge: Edge): string => basicStringGetter(edge, 'label', 'Could not resolve title')
+const defaultHeaderMapEdgeTitle = (edge: Edge): string => basicStringGetter(edge, 'label', '')
 const defaultHeaderMapEdgeSubtitle = (edge: Edge): string => basicStringGetter(edge, 'description')
 
 const defaultPropertiesMapNode = (node: Node): PropertyEntry[] => basicPropertyGetter(node)

@@ -1,0 +1,211 @@
+import type { PropertyEntry } from '../interfaces/GraphUI'
+import { createInlineBar } from '../ui/components/InlineBar'
+import { createHtmlElement } from './ElementCreation'
+
+
+const UNIQUE_PROPERTY_KEY = '4dfd89de5d25fc9cc4b66c23d84b443af631c7dc' // Value to cheat to aggregate unique properties
+const MERGE_UNIQUE_THRESHOLD = 6
+
+export type AggregatedProperties = Map<string, Map<string, number>>
+export type actionButtonCallback = (key: string, value: string) => HTMLDivElement
+
+export function createTableForAggregatedProperties(aggregatedProperties: AggregatedProperties, selectedNodeCount: number, actionButtonCallback?: actionButtonCallback): HTMLDivElement {
+    const sortedAggregatedProperties = sortAggregatedProperties(aggregatedProperties)
+    const root = document.createElement('div')
+
+    for(const [propName, valueCountMap] of sortedAggregatedProperties) {
+        const section = createHtmlElement('div', {
+            class: 'pvt-aggregated-property-section'
+        })
+        const sectionTitle = createHtmlElement('span', {
+            class: 'pvt-aggregated-property-title'
+        }, [`.${propName}`])
+        const container = createHtmlElement('div', {
+            class: 'pvt-aggregated-property-container',
+        })
+
+        let i = 0
+        for (const [value, count] of valueCountMap) {
+            if (i >= 10) {
+                const row = createHtmlElement('div',
+                    {},
+                    [
+                        createHtmlElement('div', {
+                            style: 'text-align: center; font-weight: 300; font-size: 0.9rem; color: var(--pvt-text-color-5);'
+                        }, [
+                            `... ${valueCountMap.size - i} more`
+                        ]),
+                    ]
+                )
+                container.append(row)
+                break
+            }
+            let actionButtons: string | HTMLDivElement  = ''
+            if (actionButtonCallback) {
+                actionButtons = !hasSpecialHighlighting(value) ? actionButtonCallback(propName, value) : ''
+            }
+            const row = createHtmlElement('div',
+                {
+                    class: 'pvt-aggregated-property-row',
+                },
+                [
+                    createHtmlElement('span', {
+                        class: [
+                            'pvt-aggregated-property-value',
+                            !hasSpecialHighlighting(value) ? 'code-container' : '',
+                        ]
+                    }, [
+                        createHtmlElement('span', {}, [
+                            wrapValues(getDislayableValue(value), count),
+                            actionButtons
+                        ])
+                    ]),
+                    createHtmlElement('span', { class: 'pvt-aggregated-property-count' }, [
+                        createInlineBar(count, selectedNodeCount)
+                    ]),
+                ]
+            )
+            container.append(row)
+            i++
+        }
+
+        section.appendChild(sectionTitle)
+        section.appendChild(container)
+        root.appendChild(section)
+    }
+    return root
+}
+
+
+export function getDislayableValue(value: string): string {
+    return typeof value === 'string' ? value : JSON.stringify(value)
+}
+
+export function wrapValues(value: string, count: number): HTMLElement | Text {
+    if (hasSpecialHighlighting(value)) {
+        let textNode = '', title = ''
+        if (isValueEmpty(value)) {
+            textNode = '- empty -'
+            title = 'The value is empty'
+        } else if (isValueUnique(value)) {
+            textNode = `- ${count} other unique values -`
+            title = 'All other values are unique'
+        }
+        return createHtmlElement('span', { class: 'pvt-aggregated-property-value-dim', title: title }, [
+            textNode
+        ])
+    }
+    return document.createTextNode(value)
+}
+
+export function isValueEmpty(value: string): boolean {
+    return value.length === 0
+}
+
+export function isValueUnique(value: string): boolean {
+    return value === UNIQUE_PROPERTY_KEY
+}
+
+export function hasSpecialHighlighting(value: string): boolean {
+    return isValueEmpty(value) || isValueUnique(value)
+}
+
+
+/**
+ * Aggregates a collection of property entries into a nested map structure.
+ *
+ * For each property name, this function counts the occurrences of each
+ * property value across all provided entries. The result is a map where:
+ *
+ * - Keys are property names (e.g. "label", "type").
+ * - Values are maps of property values to their occurrence counts.
+ *
+ * Example:
+ * ```ts
+ * [
+ *   [ { name: "type", value: "node" }, { name: "label", value: "Node 1" } ],
+ *   [ { name: "type", value: "node" }, { name: "label", value: "Node 2" } ],
+ *   [ { name: "type", value: "node" }, { name: "label", value: "Node 1" } ]
+ * ]
+ *
+ * => Map {
+ *   "type"  => Map { "node" => 3 },
+ *   "label" => Map { "Node 1" => 2, "Node 2" => 1 }
+ * }
+ * ```
+ *
+ * @param allProperties Array of property entry arrays, where each inner array
+ * represents the properties of a node.
+ * @returns A nested map of property name → (property value → count).
+ */
+export function aggregateProperties(allProperties: Array<PropertyEntry>[]): AggregatedProperties {
+    const aggregatedProperties: AggregatedProperties = new Map()
+
+    allProperties.forEach(properties => {
+        properties.forEach(prop => {
+            if (
+                (typeof prop.name === 'string' || typeof prop.name === 'number' || typeof prop.name === 'boolean') &&
+                (typeof prop.value === 'string' || typeof prop.value === 'number' || typeof prop.value === 'boolean')
+            ) {
+                if (!aggregatedProperties.has(prop.name)) {
+                    aggregatedProperties.set(prop.name, new Map())
+                }
+                const valueCountMap = aggregatedProperties.get(prop.name)
+                const currentCount = valueCountMap!.get(prop.value) || 0
+                valueCountMap!.set(prop.value, currentCount + 1)
+            }
+        })
+    })
+
+    return aggregatedProperties
+}
+
+/**
+ * Sorts an aggregated properties map.
+ * 
+ * 1. Inner maps (value -> count) are sorted by count (descending).
+ * 2. Outer map (property -> Map) is sorted by inner map size (ascending).
+ *
+ * @param aggregated Map of property -> Map of value -> count
+ * @returns A new Map with the same structure but sorted.
+ */
+export function sortAggregatedProperties(
+    aggregated: AggregatedProperties,
+    mergeUniqueProperties: boolean = true
+): AggregatedProperties {
+    // Step 1: sort each inner map by count (descending)
+    const sortedInnerMaps = new Map<string, Map<string, number>>()
+    for (const [prop, valuesMap] of aggregated.entries()) {
+        const sortedEntries = Array.from(valuesMap.entries()).sort(
+            (a, b) => b[1] - a[1] // high count first
+        )
+        sortedInnerMaps.set(prop, new Map(sortedEntries))
+    }
+
+    // Step 2: sort outer map by inner map size (ascending)
+    const sortedOuterEntries = Array.from(sortedInnerMaps.entries()).sort(
+        (a, b) => a[1].size - b[1].size
+    )
+
+    const sortedMap = new Map(sortedOuterEntries)
+    if (!mergeUniqueProperties) {
+        return sortedMap
+    }
+
+    const mergedAggregatedProperties: AggregatedProperties = new Map()
+    for (const [name, innerMap] of sortedMap) {
+        for (const [value, count] of innerMap) {
+            if (!mergedAggregatedProperties.has(name)) {
+                mergedAggregatedProperties.set(name, new Map())
+            }
+            const valueCountMap = mergedAggregatedProperties.get(name)
+            if (innerMap.size > MERGE_UNIQUE_THRESHOLD && count === 1) {
+                const currentCount = valueCountMap!.get(UNIQUE_PROPERTY_KEY) || 0
+                valueCountMap!.set(UNIQUE_PROPERTY_KEY, currentCount + 1)
+            } else {
+                valueCountMap!.set(value, count)
+            }
+        }
+    }
+    return mergedAggregatedProperties
+}

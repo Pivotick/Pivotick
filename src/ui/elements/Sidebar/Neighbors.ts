@@ -1,4 +1,4 @@
-import { createHtmlElement, createHtmlTemplate } from '../../../utils/ElementCreation'
+import { createHtmlElement, createHtmlTemplate, createIcon } from '../../../utils/ElementCreation'
 import type { Node } from '../../../Node'
 import type { Edge } from '../../../Edge'
 import type { UIElement, UIManager } from '../../UIManager'
@@ -8,6 +8,10 @@ import { tryResolveHTMLElement } from '../../../utils/Getters'
 import { createTabs } from '../../components/Tabs'
 import type { GraphOptions, RawEdge, RawNode, RelaxedGraphData } from '../../../interfaces/GraphOptions'
 import { Graph } from '../../../Graph'
+import { edgeNameGetter, nodeNameGetter } from '../../../utils/GraphGetters'
+import { arrowLeft, arrowRight, edgeIncoming, edgeOutgoing, filterAdd, filterRemove } from '../../icons'
+import { createBadge } from '../../components/Badge'
+import { createTableForAggregatedProperties } from '../../../utils/ElementCreationAggregatedProperties'
 
 
 export class SidebarNeighbors implements UIElement {
@@ -16,6 +20,7 @@ export class SidebarNeighbors implements UIElement {
     private panel?: HTMLDivElement
     private header?: HTMLDivElement
     private body?: HTMLDivElement
+    private neighborCount?: HTMLDivElement
 
     private egographContainer?: HTMLDivElement
     private statContainer?: HTMLDivElement
@@ -41,12 +46,13 @@ export class SidebarNeighbors implements UIElement {
         this.panel = createHtmlTemplate(template) as HTMLDivElement
         this.header = this.panel.querySelector('.pvt-neighbors-header-panel') as HTMLDivElement
         this.body = this.panel.querySelector('.pvt-neighbors-body-panel') as HTMLDivElement
+        this.neighborCount = createHtmlElement('div', { class: 'pvt-neighbors-count' })
 
         rootContainer.appendChild(this.panel)
 
-        this.egographContainer = createHtmlElement('div', {}, ['Egograph here'])
-        this.statContainer = createHtmlElement('div', {}, ['Stats here'])
-        this.listContainer = createHtmlElement('div', {}, ['List here'])
+        this.egographContainer = createHtmlElement('div', {class: 'main-egograph-container'}, ['Egograph here'])
+        this.statContainer = createHtmlElement('div', {class: 'main-stats-container'}, ['Stats here'])
+        this.listContainer = createHtmlElement('div', {class: 'main-list-container'}, ['List here'])
 
         const tabContainer: HTMLDivElement = createTabs([
                 {
@@ -74,6 +80,8 @@ export class SidebarNeighbors implements UIElement {
         )
 
         tabContainer.style.height = '100%'
+
+        this.body.appendChild(this.neighborCount)
     }
 
     public destroy() {
@@ -127,14 +135,58 @@ export class SidebarNeighbors implements UIElement {
 
     /* Single selection */
     public updateNodeNeighbors(egoNode: Node): void {
-        if (!this.egographContainer) return
-
         this.showPanel()
+
+        if (!this.neighborCount) return
 
         if (this.renderCb) {
             this.renderCustomContent(egoNode)
             return
         }
+
+        this.buildEgoGraph(egoNode)
+        this.buildList(egoNode)
+        this.buildStats(egoNode)
+
+        const connectionCount = egoNode.degree()
+        const connectionCountText = connectionCount > 1 ? `${connectionCount} connections` : '1 connection'
+        this.neighborCount.textContent = connectionCountText
+    }
+
+    public updateEdgeNeighbors(edge: Edge): void {
+        this.showPanel()
+
+        if (this.renderCb) {
+            this.renderCustomContent(edge)
+            return
+        }
+    }
+
+
+    /* Multiple selection */
+    public updateNodesNeighbors(nodes: NodeSelection<unknown>[]): void {
+        this.showPanel()
+
+        if (this.renderCb) {
+            this.renderCustomContent(nodes.map((nodeS: NodeSelection<unknown>) => nodeS.node))
+            return
+        }
+    }
+
+    public updateEdgesNeighbors(edges: EdgeSelection<unknown>[]): void {
+        this.showPanel()
+
+        if (this.renderCb) {
+            this.renderCustomContent(edges.map((nodeS: EdgeSelection<unknown>) => nodeS.edge))
+            return
+        }
+    }
+
+    private buildEgoGraph(egoNode: Node): void {
+        if (!this.egographContainer) return
+
+        this.egographContainer.innerHTML = ''
+        if (this.egoGraph) this.egoGraph.destroy()
 
         this.egographContainer.style.visibility = 'hidden'
 
@@ -214,33 +266,186 @@ export class SidebarNeighbors implements UIElement {
         })
     }
 
-    public updateEdgeNeighbors(edge: Edge): void {
-        this.showPanel()
+    private buildList(node: Node) {
+        if (!this.listContainer) return
 
-        if (this.renderCb) {
-            this.renderCustomContent(edge)
-            return
+        this.listContainer.innerHTML = ''
+
+        const fixedPreviewSize = 26
+
+        const connectedEdges = [
+            ...node.getEdgesOut(),
+            ...node.getEdgesIn(),
+        ]
+
+
+        const container = createHtmlElement('div', { class: '' })
+        for (const edge of connectedEdges) {
+            const isEdgeOut = edge.from.id === node.id
+            const targetNode = isEdgeOut ? edge.to : edge.from
+            const edgeName = edgeNameGetter(edge, this.uiManager.getOptions().mainHeader) || '' 
+
+            const edgeIcon = isEdgeOut ? createIcon({svgIcon: arrowRight}) : createIcon({svgIcon: arrowLeft})
+            edgeIcon.classList.add('edge')
+            edgeIcon.classList.add(isEdgeOut ? 'edge-out' : 'edge-in')
+            edgeIcon.setAttribute('title', isEdgeOut ? 'Outgoing edge' : 'Incoming edge')
+            
+            const targetNodeName = nodeNameGetter(targetNode, this.uiManager.getOptions().mainHeader)
+            const targetNodeTemplate = document.createElement('template')
+            targetNodeTemplate.innerHTML = `
+            <div class="pvt-neighbors-list__nodecontainer">
+                <span class="pvt-neighbors-list__nodepreview">
+                    <svg class="pvt-mainheader-icon" width="${fixedPreviewSize}" height="${fixedPreviewSize}" viewBox="0 0 ${fixedPreviewSize} ${fixedPreviewSize}" preserveAspectRatio="xMidYMid meet"></svg>
+                </span>
+                ${targetNodeName}
+            </div>`
+
+            const targetNodeDiv = targetNodeTemplate.content.firstElementChild as HTMLDivElement
+            const targetNodePreview = targetNodeDiv.querySelector('.pvt-neighbors-list__nodepreview .pvt-mainheader-icon') ?? undefined
+            const nodeElement = targetNode.getGraphElement()
+            if (targetNodePreview && nodeElement && nodeElement instanceof SVGGElement) {
+                const clonedGroup = nodeElement.cloneNode(true) as SVGGElement
+                const bbox = nodeElement.getBBox()
+                const scale = fixedPreviewSize / Math.max(bbox.width, bbox.height)
+                clonedGroup.setAttribute(
+                    'transform',
+                    `translate(${(fixedPreviewSize - bbox.width * scale) / 2 - bbox.x * scale}, ${(fixedPreviewSize - bbox.height * scale) / 2 - bbox.y * scale}) scale(${scale})`
+                )
+                targetNodePreview.appendChild(clonedGroup)
+            }
+
+            const fullEdgeDesc = createBadge({
+                text: edgeName,
+                size: 'sm',
+                variant: 'secondary',
+                class: 'pvt-neighbor-edge-description',
+            })
+
+            const elements = [
+                edgeIcon,
+                targetNodeDiv,
+                edgeName ? fullEdgeDesc : '',
+            ]
+
+            const row = createHtmlElement('div',
+                {
+                    'class': 'edge-details',
+                },
+                elements
+            )
+            container.appendChild(row)
         }
+
+        this.listContainer.appendChild(container)
+    }
+
+    private buildStats(node: Node) {
+        if (!this.statContainer) return
+
+        this.statContainer.innerHTML = ''
+
+        const dl = createHtmlElement('dl', { class: 'pvt-property-list' })
+        const row = createHtmlElement('dl',
+            {
+                'class': 'pvt-property-row',
+            },
+            [
+                createHtmlElement('dt', { class: 'pvt-property-name', title: 'Total connections' }, ['Degree']),
+                createHtmlElement('dd', { class: 'pvt-property-value' }, [
+                    createHtmlElement('span', { style: 'margin-right: 8px; font-size: 1em;' }, [node.degree().toString()]),
+                    createHtmlElement('span', {
+                        style: 'margin-right: 8px; color: var(--pvt-text-color-secondary)',
+                        title: 'Outgoing edges',
+                    }, [createIcon({ svgIcon: edgeOutgoing }), node.getEdgesOut().length.toString()]),
+                    createHtmlElement('span', {
+                        style: 'color: var(--pvt-text-color-secondary)',
+                        title: 'Incoming edges',
+                    }, [createIcon({ svgIcon: edgeIncoming }), node.getEdgesIn().length.toString()]),
+                ]),
+            ]
+        )
+        dl.append(row)
+        const coreStatContainer = createHtmlElement('div', {class: 'core-stats'}, [dl])
+
+        const edgeNames: Map<string, number> = new Map()
+        const connectedEdges = [
+            ...node.getEdgesOut(),
+            ...node.getEdgesIn(),
+        ]
+        connectedEdges.forEach((edge) => {
+            const edgeName = edgeNameGetter(edge, this.uiManager.getOptions().mainHeader) || '' 
+            const count = edgeNames.get(edgeName) || 0
+            edgeNames.set(edgeName, count+1)
+        })
+        const aggregatedProperties: Map<string, Map<string, number>> = new Map()
+        aggregatedProperties.set('Label', edgeNames)
+        const aggregatedPropertiesDiv = createTableForAggregatedProperties(aggregatedProperties, node.degree(), this.genActionButtonsSingleSelection.bind(this))
+        const aggregatedLabelContainer = createHtmlElement('div', { class: 'aggregated-labels' }, [aggregatedPropertiesDiv])
+
+        this.statContainer.appendChild(coreStatContainer)
+        this.statContainer.appendChild(aggregatedLabelContainer)
     }
 
 
-    /* Multiple selection */
-    public updateNodesNeighbors(nodes: NodeSelection<unknown>[]): void {
-        this.showPanel()
+    private genActionButtonsSingleSelection(_key: string, value: string): HTMLDivElement {
+        const buttonKeep = createHtmlElement('button', {
+            title: 'Select nodes linked with this label',
+        }, [createIcon({ svgIcon: filterAdd }) ])
+        buttonKeep.addEventListener('click', () => {
+            const matchingNodeSelection = this.getNodesMatchingFilteredEdgeName(value)
+            if (!matchingNodeSelection) return
 
-        if (this.renderCb) {
-            this.renderCustomContent(nodes.map((nodeS: NodeSelection<unknown>) => nodeS.node))
-            return
-        }
+            this.uiManager.graph.renderer.getGraphInteraction().clearNodeSelectionList()
+            if (matchingNodeSelection.length > 1) {
+                this.uiManager.graph.renderer.getGraphInteraction().selectNodes(matchingNodeSelection)
+            } else {
+                this.uiManager.graph.renderer.getGraphInteraction().selectNode(matchingNodeSelection[0].element, matchingNodeSelection[0].node)
+            }
+        })
+        
+        const buttonExclude = createHtmlElement('button', {
+            title: 'Exclude nodes linked with this label',
+        }, [createIcon({ svgIcon: filterRemove }) ])
+        buttonExclude.addEventListener('click', () => {
+            const matchingNodeSelection = this.getNodesMatchingFilteredEdgeName(value, true)
+            if (!matchingNodeSelection) return
+
+            this.uiManager.graph.renderer.getGraphInteraction().clearNodeSelectionList()
+            if (matchingNodeSelection.length > 1) {
+                this.uiManager.graph.renderer.getGraphInteraction().selectNodes(matchingNodeSelection)
+            } else {
+                this.uiManager.graph.renderer.getGraphInteraction().selectNode(matchingNodeSelection[0].element, matchingNodeSelection[0].node)
+            }
+        })
+
+        const container = createHtmlElement('div', { class: 'pvt-aggregated-property-actions' }, [
+            buttonKeep,
+            buttonExclude
+        ])
+        return container
     }
 
-    public updateEdgesNeighbors(edges: EdgeSelection<unknown>[]): void {
-        this.showPanel()
+    private getNodesMatchingFilteredEdgeName(edgeName: string, reversed: boolean = false): NodeSelection<unknown>[] | void {
+        const egoSelection = this.uiManager.graph.renderer.getGraphInteraction().getSelectedNode()
+        if (!egoSelection) return
 
-        if (this.renderCb) {
-            this.renderCustomContent(edges.map((nodeS: EdgeSelection<unknown>) => nodeS.edge))
-            return
-        }
+        const egoNode = egoSelection.node
+        const edges: Edge[] = [...egoNode.getEdgesOut(), ...egoNode.getEdgesIn()]
+        const matchingNodes = new Map<string, Node>()
+        edges
+            .filter((edge) => {
+                const currentEdgeName = edgeNameGetter(edge, this.uiManager.getOptions().mainHeader)
+                return reversed ? currentEdgeName !== edgeName : currentEdgeName === edgeName
+            })
+            .forEach((edge) => {
+                const otherNode = egoNode === edge.from ? edge.to : edge.from
+                matchingNodes.set(otherNode.id.toString(), otherNode)
+            })
+
+        return [...matchingNodes.values()].map((n) => ({
+            node: n,
+            element: n.getGraphElement(),
+        }))
     }
 
 }
