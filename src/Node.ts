@@ -3,7 +3,7 @@ import type { NodeStyle } from './interfaces/RendererOptions'
 import { generateSafeDomId } from './utils/ElementCreation'
 
 export interface NodeData {
-    [key: string]: undefined;
+    [key: string]: unknown;
 }
 
 /**

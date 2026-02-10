@@ -145,6 +145,7 @@ export const defaultNodeStyle: NodeStyle = {
     svgIcon: undefined,
     imagePath: undefined,
     text: undefined,
+    html: undefined,
 }
 
 /**

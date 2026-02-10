@@ -2,7 +2,7 @@ import { type Selection } from 'd3-selection'
 import { Node } from '../../Node'
 import type { Graph } from '../../Graph'
 import type { GraphSvgRenderer } from './GraphSvgRenderer'
-import { faGlyph, tryResolveNumber, tryResolveString } from '../../utils/Getters'
+import { faGlyph, tryResolveHTMLElement, tryResolveNumber, tryResolveString } from '../../utils/Getters'
 import type { CustomNodeShape, GraphRendererOptions, NodeShape, NodeStyle } from '../../interfaces/RendererOptions'
 
 export class NodeDrawer {
@@ -101,6 +101,7 @@ export class NodeDrawer {
             svgIcon: style?.svgIcon ?? this.rendererOptions.defaultNodeStyle.svgIcon,
             imagePath: style?.imagePath ?? this.rendererOptions.defaultNodeStyle.imagePath,
             text: style?.text ?? this.rendererOptions.defaultNodeStyle.text,
+            html: style?.html ?? this.rendererOptions.defaultNodeStyle.html,
         }
         
         return mergedStyle
@@ -133,6 +134,7 @@ export class NodeDrawer {
                 svgIcon: style?.svgIcon ?? styleFromStyleMap?.svgIcon,
                 imagePath: style?.imagePath ?? styleFromStyleMap?.imagePath,
                 text: style?.text ?? styleFromStyleMap?.text,
+                html: style?.html ?? styleFromStyleMap?.html,
             }
         }
         return this.mergeNodeStylingOptions(styleFromNode)
@@ -279,6 +281,19 @@ export class NodeDrawer {
                 .attr('font-family', style.fontFamily)
                 .attr('fill', style.textColor)
                 .text(style.text)
+        } else if (style.html) {
+            const fo = nodeSelection.append('foreignObject')
+            const rendered = style.html(node)
+            fo.attr('width', style.size * 2)
+                .attr('height', style.size * 2)
+                .attr('x', -style.size)
+                .attr('y', -style.size)
+
+            if (typeof rendered === 'string') {
+                fo.text(rendered)
+            } else if (rendered instanceof HTMLElement) {
+                fo.node()?.append(rendered)
+            }
         }
     }
 

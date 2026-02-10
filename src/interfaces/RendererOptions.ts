@@ -203,6 +203,10 @@ export interface NodeStyle {
      */
     text?: ((node: Node) => string) | string,
     /**
+     * The html to be used inside the node as an `SVGForeignObject` element
+     */
+    html?: (node: Node) => HTMLElement | string | void
+    /**
      * Callback to dynamically override style properties based on the node.
      */
     styleCb?: (node: Node) => Partial<NodeStyle>

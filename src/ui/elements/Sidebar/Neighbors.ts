@@ -1,6 +1,6 @@
 import { createHtmlElement, createHtmlTemplate, createIcon } from '../../../utils/ElementCreation'
-import type { Node } from '../../../Node'
-import type { Edge } from '../../../Edge'
+import { Node, type NodeData } from '../../../Node'
+import { Edge } from '../../../Edge'
 import type { UIElement, UIManager } from '../../UIManager'
 import './properties.scss'
 import type { EdgeSelection, NodeSelection } from '../../../interfaces/GraphInteractions'
@@ -9,9 +9,10 @@ import { createTabs } from '../../components/Tabs'
 import type { GraphOptions, RawEdge, RawNode, RelaxedGraphData } from '../../../interfaces/GraphOptions'
 import { Graph } from '../../../Graph'
 import { edgeNameGetter, nodeNameGetter } from '../../../utils/GraphGetters'
-import { arrowLeft, arrowRight, edgeIncoming, edgeOutgoing, filterAdd, filterRemove } from '../../icons'
+import { arrowLeft, arrowRight, edgeIncoming, edgeOutgoing, filterAdd, filterRemove, graphMultiSelectNode } from '../../icons'
 import { createBadge } from '../../components/Badge'
 import { createTableForAggregatedProperties } from '../../../utils/ElementCreationAggregatedProperties'
+import type { NodeStyle } from '../../../interfaces/RendererOptions'
 
 
 export class SidebarNeighbors implements UIElement {
@@ -167,10 +168,23 @@ export class SidebarNeighbors implements UIElement {
     public updateNodesNeighbors(nodes: NodeSelection<unknown>[]): void {
         this.showPanel()
 
+        if (!this.neighborCount) return
+
         if (this.renderCb) {
             this.renderCustomContent(nodes.map((nodeS: NodeSelection<unknown>) => nodeS.node))
             return
         }
+
+        if (nodes.length <= 1) return
+
+        const egoNode = this.mergeNodesIntoNode(nodes.map(n => n.node))
+        this.buildEgoGraph(egoNode, false)
+        this.buildList(egoNode)
+        this.buildStats(egoNode)
+
+        const connectionCount = egoNode.degree()
+        const connectionCountText = connectionCount > 1 ? `${connectionCount} connections` : '1 connection'
+        this.neighborCount.textContent = connectionCountText
     }
 
     public updateEdgesNeighbors(edges: EdgeSelection<unknown>[]): void {
@@ -182,7 +196,7 @@ export class SidebarNeighbors implements UIElement {
         }
     }
 
-    private buildEgoGraph(egoNode: Node): void {
+    private buildEgoGraph(egoNode: Node, selectEgoNode: boolean = true): void {
         if (!this.egographContainer) return
 
         this.egographContainer.innerHTML = ''
@@ -262,7 +276,9 @@ export class SidebarNeighbors implements UIElement {
             setTimeout(() => {
                 this.egographContainer!.style.visibility = 'visible'
             }, 20)
-            this.egoGraph!.selectElement(this.egoGraph!.getMutableNode(egoNode.id)!)
+            if (selectEgoNode) {
+                this.egoGraph!.selectElement(this.egoGraph!.getMutableNode(egoNode.id)!)
+            }
         })
     }
 
@@ -446,6 +462,72 @@ export class SidebarNeighbors implements UIElement {
             node: n,
             element: n.getGraphElement(),
         }))
+    }
+
+    private mergeNodesIntoNode(nodes: Node[]): Node {
+        const aggregatedNodeStyle: Partial<NodeStyle> = {
+            size: 50,
+            shape: 'square',
+            color: 'transparent',
+            strokeColor: 'transparent',
+            html: (node: Node) => {
+                const nodeData = node.getData() as { aggregated_node_count: number }
+                const aggregatedCount = nodeData!.aggregated_node_count
+                const icon = createIcon({ svgIcon: graphMultiSelectNode(28) })
+                icon.style = 'position: absolute;'
+                return createHtmlTemplate(`<div style="display: flex; flex-direction: column; position: relative; align-items: center;">
+                    ${icon.outerHTML}
+                    <div style="
+    height: 65%;
+    width: 65%;
+    margin-top: 18%;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    justify-content: center;
+    background-color: var(--pvt-bg-color-5);">
+                        <div style="height: auto; font-weight: 600; font-size: 1.5em;">+${aggregatedCount}</div>
+                        <div style="height: auto;">Group</div>
+                    </div>
+                </div>`)
+            }
+        }
+        const aggregatedData: NodeData = { label: `${nodes.length} nodes`, aggregated_node_count: nodes.length }
+        const aggregatedNodes = new Node('aggregated-node', aggregatedData, aggregatedNodeStyle)
+
+        const nodeIds = new Set(nodes.map((n) => n.id.toString()))
+        const edges: Edge[] = nodes.flatMap((node) => [
+            ...node.getEdgesOut(),
+            ...node.getEdgesIn(),
+        ])
+
+        const outgoing = []
+        const incoming = []
+
+        for (const edge of edges) {
+            const fromIn = nodeIds.has(edge.from.id)
+            const toIn = nodeIds.has(edge.to.id)
+
+            if (fromIn !== toIn) {
+                if (fromIn) {
+                    outgoing.push(edge)
+                } else {
+                    incoming.push(edge)
+                }
+            }
+        }
+
+        outgoing.forEach((e, i) => {
+            const edge = new Edge(`outgoing-${i}`, aggregatedNodes, e.to, e.getData(), e.getStyle())
+            aggregatedNodes.registerEdgeOut(edge)
+        })
+
+        incoming.forEach((e, i) => {
+            const edge = new Edge(`incoming-${i}`, e.from, aggregatedNodes, e.getData(), e.getStyle())
+            aggregatedNodes.registerEdgeIn(edge)
+        })
+
+        return aggregatedNodes
     }
 
 }
