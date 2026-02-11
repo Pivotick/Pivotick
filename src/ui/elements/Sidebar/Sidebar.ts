@@ -134,11 +134,12 @@ export class Sidebar implements UIElement {
             if (fullSelection.length > 0) {
                 this.sidebarMainHeader.updateNodesOverview(fullSelection)
                 this.sidebarProperties.updateNodesProperties(fullSelection)
-                this.sidebarNeighbors.updateNodesNeighbors(fullSelection)
+                this.sidebarNeighbors.clearNeighbors()
                 this.extraPanelManager.updateNodes(fullSelection)
             } else {
                 this.sidebarMainHeader.clearOverview()
                 this.sidebarProperties.clearProperties()
+                this.sidebarNeighbors.clearNeighbors()
                 this.extraPanelManager.clear()
             }
         })

@@ -13,6 +13,8 @@ import { arrowLeft, arrowRight, edgeIncoming, edgeOutgoing, filterAdd, filterRem
 import { createBadge } from '../../components/Badge'
 import { createTableForAggregatedProperties } from '../../../utils/ElementCreationAggregatedProperties'
 import type { NodeStyle } from '../../../interfaces/RendererOptions'
+import type { LayoutOptions } from '../../../interfaces/LayoutOptions'
+import hasCycle from '../../../plugins/analytics/cycle'
 
 
 export class SidebarNeighbors implements UIElement {
@@ -331,16 +333,16 @@ export class SidebarNeighbors implements UIElement {
             }
 
             const fullEdgeDesc = createBadge({
-                text: edgeName,
+                text: edgeName ? edgeName : '- empty -',
                 size: 'sm',
                 variant: 'secondary',
-                class: 'pvt-neighbor-edge-description',
+                class: ['pvt-neighbor-edge-description', edgeName ? edgeName : 'empty-label'],
             })
 
             const elements = [
                 edgeIcon,
                 targetNodeDiv,
-                edgeName ? fullEdgeDesc : '',
+                fullEdgeDesc,
             ]
 
             const row = createHtmlElement('div',
@@ -366,15 +368,15 @@ export class SidebarNeighbors implements UIElement {
                 'class': 'pvt-property-row',
             },
             [
-                createHtmlElement('dt', { class: 'pvt-property-name', title: 'Total connections' }, ['Degree']),
-                createHtmlElement('dd', { class: 'pvt-property-value' }, [
-                    createHtmlElement('span', { style: 'margin-right: 8px; font-size: 1em;' }, [node.degree().toString()]),
+                createHtmlElement('dt', { class: 'pvt-property-name', title: 'Total connections', style: 'font-size: 1em;' }, ['Degree']),
+                createHtmlElement('dd', { class: 'pvt-property-value', style: 'display: flex; align-items: center; font-size: 1em;' }, [
+                    createHtmlElement('span', { style: 'margin-right: 8px;' }, [node.degree().toString()]),
                     createHtmlElement('span', {
-                        style: 'margin-right: 8px; color: var(--pvt-text-color-secondary)',
+                        style: 'display: inline-flex; align-items: center; margin-right: 8px; color: var(--pvt-text-color-secondary)',
                         title: 'Outgoing edges',
                     }, [createIcon({ svgIcon: edgeOutgoing }), node.getEdgesOut().length.toString()]),
                     createHtmlElement('span', {
-                        style: 'color: var(--pvt-text-color-secondary)',
+                        style: 'display: inline-flex; align-items: center; color: var(--pvt-text-color-secondary)',
                         title: 'Incoming edges',
                     }, [createIcon({ svgIcon: edgeIncoming }), node.getEdgesIn().length.toString()]),
                 ]),
@@ -518,13 +520,13 @@ export class SidebarNeighbors implements UIElement {
         }
 
         outgoing.forEach((e, i) => {
-            const edge = new Edge(`outgoing-${i}`, aggregatedNodes, e.to, e.getData(), e.getStyle())
-            aggregatedNodes.registerEdgeOut(edge)
+            const toNode = e.to.clone()
+            new Edge(`outgoing-${i}`, aggregatedNodes, toNode, e.getData(), e.getStyle())
         })
 
         incoming.forEach((e, i) => {
-            const edge = new Edge(`incoming-${i}`, e.from, aggregatedNodes, e.getData(), e.getStyle())
-            aggregatedNodes.registerEdgeIn(edge)
+            const fromNode = e.from.clone()
+            new Edge(`incoming-${i}`, fromNode, aggregatedNodes, e.getData(), e.getStyle())
         })
 
         return aggregatedNodes

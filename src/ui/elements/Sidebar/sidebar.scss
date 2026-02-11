@@ -124,6 +124,11 @@
                                 .pvt-neighbor-edge-description {
                                     margin-left: auto;
                                     border-radius: 2px;
+
+                                    &.empty-label {
+                                        color: var(--pvt-text-color-3);
+                                        font-style: italic;
+                                    }
                                 }
                             }
                         }

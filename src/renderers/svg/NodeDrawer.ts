@@ -2,7 +2,7 @@ import { type Selection } from 'd3-selection'
 import { Node } from '../../Node'
 import type { Graph } from '../../Graph'
 import type { GraphSvgRenderer } from './GraphSvgRenderer'
-import { faGlyph, tryResolveHTMLElement, tryResolveNumber, tryResolveString } from '../../utils/Getters'
+import { faGlyph, tryResolveNumber, tryResolveString } from '../../utils/Getters'
 import type { CustomNodeShape, GraphRendererOptions, NodeShape, NodeStyle } from '../../interfaces/RendererOptions'
 
 export class NodeDrawer {
