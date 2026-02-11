@@ -1,7 +1,6 @@
 import { select as d3Select, type Selection } from 'd3-selection'
 // import 'd3-transition'
 import { transition as d3Transition } from 'd3-transition'
-d3Select.prototype.transition = d3Transition
 import { zoom as d3Zoom, type ZoomBehavior, zoomIdentity as d3ZoomIdentity } from 'd3-zoom'
 import { Edge } from '../../Edge'
 import { Node } from '../../Node'
@@ -14,6 +13,7 @@ import { GraphInteractions } from '../../GraphInteractions'
 import { GraphRenderer } from '../../GraphRenderer'
 import { SelectionBox } from './SelectionBox'
 import type { EdgeStyle, GraphRendererOptions, LabelStyle, MarkerStyleMap, NodeStyle, SelectionBox as SelectionBoxI } from '../../interfaces/RendererOptions'
+d3Select.prototype.transition = d3Transition
 
 /**
  * @default
@@ -289,6 +289,23 @@ export class GraphSvgRenderer extends GraphRenderer {
         if (this.options.selectionBox.enabled) {
             this.selectionBox = new SelectionBox(this, this.svgCanvas, this.selectionBoxGroup.node())
         }
+
+        // Watches changes on the canvas (like sizing and visibility)
+        // and recompute actual node size only when visibility changes
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    // Canvas is visible on screen
+                    this.nodeSelection.each((node: Node, i: number, nodes: ArrayLike<SVGGElement>) => {
+                        if (node.getCircleRadius() !== 25) return // 50 is the default assigned width/height that might be innacurate
+
+                        const bbox = nodes[i].getBBox()
+                        node.setCircleRadius(0.5 * Math.max(bbox.width, bbox.height))
+                    })
+                }
+            })
+        }, { threshold: 0 })
+        observer.observe(this.svgCanvas)
     }
 
     public setupRendering(): void {

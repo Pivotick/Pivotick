@@ -63,9 +63,12 @@ export class NodeDrawer {
                 const nodeElement = theNodeSelection.node()
                 if (!nodeElement) return
 
+                let width = 50, height = 50 // default fallback size of a node
                 const bbox = nodeElement.getBBox()
-                const width = Math.ceil(bbox.width)
-                const height = Math.ceil(bbox.height)
+                if (bbox.width > 0 && bbox.height > 0) {
+                    width = Math.ceil(bbox.width)
+                    height = Math.ceil(bbox.height)
+                }
 
                 node.setCircleRadius(0.5 * Math.max(width, height))
                 this.checkForHighlight(theNodeSelection, node)
@@ -162,10 +165,6 @@ export class NodeDrawer {
         return nodeStyle
     }
 
-    // private isCustomShape(shape: unknown): shape is CustomNodeShape {
-    //     return typeof shape === 'object' && shape !== null && 'd' in (shape as any)
-    // }
-
     private isCustomShape(shape: NodeShape): shape is CustomNodeShape {
         return typeof shape === 'object' && shape !== null && 'd' in shape
     }
@@ -229,7 +228,7 @@ export class NodeDrawer {
             default:
                 if (this.isCustomShape(style.shape)) {
                     renderedNode.attr('d', style.shape.d)
-                    node.setCircleRadius(15) // Just guessing for now. Actual size is assigned on next frame
+                    node.setCircleRadius(15) // Just guessing for now. Actual size is assigned on the next frame
                 } else {
                     renderedNode.attr('r', style.size)
                     node.setCircleRadius(style.size)

@@ -13,8 +13,6 @@ import { arrowLeft, arrowRight, edgeIncoming, edgeOutgoing, filterAdd, filterRem
 import { createBadge } from '../../components/Badge'
 import { createTableForAggregatedProperties } from '../../../utils/ElementCreationAggregatedProperties'
 import type { NodeStyle } from '../../../interfaces/RendererOptions'
-import type { LayoutOptions } from '../../../interfaces/LayoutOptions'
-import hasCycle from '../../../plugins/analytics/cycle'
 
 
 export class SidebarNeighbors implements UIElement {
@@ -63,7 +61,13 @@ export class SidebarNeighbors implements UIElement {
                     label: 'Graph',
                     content: this.egographContainer,
                     onShown: () => {
-                        if (this.egoGraph) this.egoGraph.renderer.fitAndCenter()
+                        requestAnimationFrame(async () => {
+                            if (this.egoGraph) {
+                                await this.egoGraph.simulation.start()
+                                await this.egoGraph.simulation.waitForSimulationStop()
+                                this.egoGraph.renderer.fitAndCenter()
+                            }
+                        })
                     }
                 },
                 {
@@ -233,7 +237,6 @@ export class SidebarNeighbors implements UIElement {
                 }
             })
         })
-
 
         const egoGraphData: RelaxedGraphData = {
             nodes: [...connectedNodes.values()].map((n) => n.toDict(true) as RawNode),
@@ -496,6 +499,7 @@ export class SidebarNeighbors implements UIElement {
         }
         const aggregatedData: NodeData = { label: `${nodes.length} nodes`, aggregated_node_count: nodes.length }
         const aggregatedNodes = new Node('aggregated-node', aggregatedData, aggregatedNodeStyle)
+        aggregatedNodes.weight = 10
 
         const nodeIds = new Set(nodes.map((n) => n.id.toString()))
         const edges: Edge[] = nodes.flatMap((node) => [

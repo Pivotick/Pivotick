@@ -169,7 +169,9 @@ export class Graph {
     }
 
     private normalizeNode(n: RawNode | Node): Node {
-        return n instanceof Node ? n : new Node(n.id.toString(), n.data, n.style)
+        const normNode = n instanceof Node ? n : new Node(n.id.toString(), n.data, n.style)
+        normNode.weight = n.weight
+        return normNode
     }
 
     private normalizeEdge(e: RawEdge | Edge): Edge | null {

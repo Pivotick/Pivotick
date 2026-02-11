@@ -214,6 +214,9 @@ export class GraphInteractions<TElement = unknown> {
     }
 
     public selectNodes(selection: NodeSelection<TElement>[]): void {
+        if (selection.length === 1) {
+            return this.selectNode(selection[0].element, selection[0].node)
+        }
         this.unselectAll()
         this.selectedNodes = selection
         this.emit('selectNodes', this.selectedNodes)
@@ -227,6 +230,9 @@ export class GraphInteractions<TElement = unknown> {
     }
 
     public addNodesToSelection(addSelection: NodeSelection<TElement>[]): void {
+        if (this.selectedNodes.length === 0 && addSelection.length === 1) {
+            return this.selectNode(addSelection[0].element, addSelection[0].node)
+        }
         addSelection.forEach(({ node, element }) => {
             if (this.callbacks.onNodeSelect && typeof this.callbacks.onNodeSelect === 'function') {
                 this.callbacks.onNodeSelect(node, element)

@@ -24,6 +24,7 @@ export class Node {
     vy?: number
     fx?: number
     fy?: number
+    weight?: number
     frozen?: boolean
     visible: boolean
     private _circleRadius = this.defaultCircleRadius
@@ -154,6 +155,7 @@ export class Node {
             id: this.id,
             data: this.data,
             style: this.style,
+            weight: this.weight,
         }
         if (!dataOnly) {
             obj.x = this.x
@@ -180,6 +182,7 @@ export class Node {
         clone.vy = this.vy
         clone.fx = this.fx
         clone.fy = this.fy
+        clone.weight = this.weight
         clone.frozen = this.frozen
         clone.visible = this.visible
         clone._circleRadius = this._circleRadius

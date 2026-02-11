@@ -151,6 +151,7 @@ self.onmessage = (e: MessageEvent<WorkerInput>) => {
 export function runSimulation(plainNodes: Node[], plainEdges: Edge[], options: SimulationOptions, canvasBCR: DOMRect): { nodes: Node[]; edges: Edge[] } {
     const nodes = plainNodes.map(n => {
         const node = new Node(n.id, n.getData(), n.getStyle())
+        node.weight = n.weight || 1
         node.setCircleRadius(n.getCircleRadius())
         return node
     })
@@ -196,8 +197,12 @@ export function runSimulation(plainNodes: Node[], plainEdges: Edge[], options: S
         )
     }
 
-    let warmupTicks = options.warmupTicks || MAX_EXECUTION_TICKS
-    warmupTicks = warmupTicks === 'auto' ? MAX_EXECUTION_TICKS : warmupTicks
+    let warmupTicks: number
+    if (options.warmupTicks === 'auto' || options.warmupTicks == null) {
+        warmupTicks = MAX_EXECUTION_TICKS
+    } else {
+        warmupTicks = options.warmupTicks
+    }
     warmupTicks = warmupTicks - REHEAT_TICKS
 
     let currentAlphaTarget = 0.3

@@ -214,7 +214,9 @@ export class Simulation {
                 const radius = n.getCircleRadius()
                 const dampedRadius = 10 + Math.sqrt(radius - 10) // Slowly push other nodes if radius increases
 
-                return baseStrength * (dampedRadius * dampedRadius) / 100
+                const weight = n.weight ?? 1
+
+                return baseStrength * (dampedRadius * dampedRadius) / 100 * weight
             })
     }
 
