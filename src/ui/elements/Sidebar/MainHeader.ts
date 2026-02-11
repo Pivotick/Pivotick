@@ -35,7 +35,9 @@ export class SidebarMainHeader implements UIElement {
         this.clearOverview()
     }
 
-    public graphReady(): void { }
+    public graphReady() {
+        this.clearOverview()
+    }
 
     private renderCustomContent(element: Node | Edge | Node[] | Edge[] | null) {
         if (!this.panel || !this.renderCb) return
@@ -56,7 +58,7 @@ export class SidebarMainHeader implements UIElement {
         }
 
         this.panel.innerHTML = ''
-        this.showSelectedNodeCount()
+        this.showTotalNodeCount()
     }
 
     /* Single selection */
@@ -244,6 +246,11 @@ export class SidebarMainHeader implements UIElement {
         if (!this.panel) return
         const selectedNodeCount = 0
         this.panel.textContent = `Total selected nodes ${selectedNodeCount}`
+    }
+    private showTotalNodeCount(): void {
+        if (!this.panel) return
+        const totalNodeCount = this.uiManager.graph.getNodeCount()
+        this.panel.textContent = `Showing ${totalNodeCount} nodes`
     }
 
 }

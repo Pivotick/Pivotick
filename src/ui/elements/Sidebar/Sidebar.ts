@@ -94,6 +94,11 @@ export class Sidebar implements UIElement {
     }
 
     public graphReady() {
+        this.sidebarMainHeader.graphReady()
+        this.sidebarProperties.graphReady()
+        this.sidebarNeighbors.graphReady()
+        this.extraPanelManager.graphReady()
+
         /* Single selection */
         this.uiManager.graph.renderer.getGraphInteraction().on('selectNode', (node: Node, element: unknown) => {
             this.sidebarMainHeader.updateNodeOverview(node, element)

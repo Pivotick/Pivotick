@@ -141,10 +141,10 @@ self.onmessage = (e: MessageEvent<WorkerInput>) => {
             options.layout
         )
     }
-    self.postMessage({
+    postMessage({
         type: 'done',
-        nodes,
-        edges,
+        nodes: nodes.map((n) => n.toDict()),
+        edges: edges.map((e) => e.toDict()),
     })
 }
 
@@ -257,5 +257,5 @@ function getProgress(_tick: number, elapsedTime: number, options: SimulationOpti
 }
 
 function isSimulationStable(options: SimulationOptions, simulation: d3Simulation<Node, undefined>, currentAlphaTarget: number): boolean {
-    return options.d3AlphaMin > 0 && (simulation.alpha() - currentAlphaTarget) < options.d3AlphaMin   
+    return options.d3AlphaMin > 0 && (simulation.alpha() - currentAlphaTarget) < options.d3AlphaMin
 }

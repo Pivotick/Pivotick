@@ -58,7 +58,7 @@ export class SidebarNeighbors implements UIElement {
         const tabContainer: HTMLDivElement = createTabs([
                 {
                     id: 'egograph',
-                    label: 'Graph',
+                    label: 'Neighbor Graph',
                     content: this.egographContainer,
                     onShown: () => {
                         requestAnimationFrame(async () => {

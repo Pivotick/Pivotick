@@ -430,7 +430,7 @@ export class Simulation {
         if (this.options.useWorker) {
             await this.runSimulationWorker(optionOverride)
         } else {
-            this.graph.updateLayoutProgress(1, 0)
+            this.graph.updateLayoutProgress(1, 0, 'simulation')
             await this.computeGraph(optionOverride)
         }
     }
@@ -448,7 +448,7 @@ export class Simulation {
         const edgesCopy = this.graph.getEdges()
 
         const onWorkerProgress = (progress: number, elapsedTime: number) => {
-            this.graph.updateLayoutProgress(progress, elapsedTime)
+            this.graph.updateLayoutProgress(progress, elapsedTime, 'simulation')
         }
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -462,6 +462,7 @@ export class Simulation {
             canvasBCR,
             onWorkerProgress
         )
+        this.graph.updateLayoutProgress(100, 0, 'rendering')
         updatedNodes.forEach((updatedNode, i) => {
             nodes[i].x = updatedNode.x
             nodes[i].y = updatedNode.y
@@ -478,6 +479,7 @@ export class Simulation {
             }
         })
         this.graph.updateData(nodes, undefined, false)
+        this.graph.updateLayoutProgress(100, 0, 'done')
     }
 
     /**
@@ -531,7 +533,7 @@ export class Simulation {
                 this.graphInteraction.dragging(event.sourceEvent, event.subject)
             })
             .on('end.draggedelement', (event, d) => {
-                if (!event.active) {
+                if (!event.active && this.dragInProgress) {
                     this.dragInProgress = false
                     this.restart()
                     this.simulation

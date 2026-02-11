@@ -1,7 +1,7 @@
 import { Node, type NodeData } from './Node'
 import { Edge, type EdgeData } from './Edge'
 import { createGraphRenderer } from './renderers/GraphRendererFactory'
-import type { GraphRenderer } from './GraphRenderer'
+import type { GraphRenderer, ProgressType } from './GraphRenderer'
 import { Simulation } from './Simulation'
 import { UIManager } from './ui/UIManager'
 import { Notifier } from './ui/Notifier'
@@ -11,6 +11,7 @@ import type { InterractionCallbacks } from './interfaces/InterractionCallbacks'
 import type { LayoutOptions } from './interfaces/LayoutOptions'
 import { generateSafeDomId } from './utils/ElementCreation'
 import { GraphQueryEngine } from './GraphQueryEngine'
+import type { GraphRendererOptions } from './interfaces/RendererOptions'
 
 
 export class Graph {
@@ -76,7 +77,7 @@ export class Graph {
 
         const rendererOptions = {
             ...this.options.render
-        }
+        } as Partial<GraphRendererOptions> 
         const UIManagerOptions = this.options.UI as GraphUI
         const appContainer = document.createElement('div')
         this.app_id = generateSafeDomId(8, 'pivotick-app-')
@@ -734,8 +735,8 @@ export class Graph {
     /**
      * @private
      */
-    updateLayoutProgress(progress: number, elapsedTime: number): void {
-        this.renderer?.updateLayoutProgress(progress, elapsedTime)
+    updateLayoutProgress(progress: number, elapsedTime: number, progressType: ProgressType): void {
+        this.renderer?.updateLayoutProgress(progress, elapsedTime, progressType)
     }
 
     /**

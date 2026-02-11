@@ -5,13 +5,16 @@ import type { GraphRendererOptions } from './interfaces/RendererOptions'
 import type { GraphInteractions } from './GraphInteractions'
 
 
+export type ProgressType = 'simulation' | 'rendering' | 'done'
 export abstract class GraphRenderer {
     protected graph: Graph
     protected container: HTMLElement
     protected options: Partial<GraphRendererOptions>
     protected layoutProgress = 0
+    protected layoutProgressType: ProgressType = 'done'
     protected progressBar: HTMLDivElement | null = null
     protected timerLabel: HTMLSpanElement | null = null
+    protected textLabel: HTMLSpanElement | null = null
     protected loadingPb: HTMLDivElement | null = null
 
     constructor(graph: Graph, container: HTMLElement, options: Partial<GraphRendererOptions>) {
@@ -37,22 +40,32 @@ export abstract class GraphRenderer {
         return this.container.querySelector('.pvt-canvas') as HTMLElement
     }
 
-    public updateLayoutProgress(progress: number, elapsedTime: number): void {
+    public updateLayoutProgress(progress: number, elapsedTime: number, progressType: ProgressType): void {
         this.layoutProgress = progress
-        if (this.progressBar && this.timerLabel) {
-            this.progressBar.style.width = `${progress * 100}%`
-            this.timerLabel.textContent = `Elapsed time: ${(elapsedTime / 1000).toFixed(1)} sec`
-            this.toggleLayoutProgressVisibility()
+        this.layoutProgressType = progressType
+        if (!this.progressBar || !this.timerLabel || !this.textLabel) return
+
+        this.progressBar.style.width = `${progress * 100}%`
+        this.timerLabel.textContent = `Elapsed time: ${(elapsedTime / 1000).toFixed(1)} sec`
+        if (this.layoutProgressType === 'simulation') {
+            this.textLabel.textContent = 'Optimizing node positions...'
+        } else if (this.layoutProgressType === 'rendering') {
+            this.progressBar.style.width = '100%'
+            this.textLabel.textContent = 'Rendering in progress'
+        } else if (this.layoutProgressType === 'done') {
+            this.progressBar.style.width = '100%'
+            this.timerLabel.textContent = 'All done'
         }
+        this.toggleLayoutProgressVisibility()
     }
 
     protected toggleLayoutProgressVisibility(): void {
         const zoomGroup = this.getZoomGroup()
         if (zoomGroup) {
-            zoomGroup.classList.toggle('hidden', this.layoutProgress < 1)
+            zoomGroup.classList.toggle('hidden', this.layoutProgressType !== 'done')
         }
         if (this.loadingPb) {
-            this.loadingPb.classList.toggle('hidden', this.layoutProgress >= 1)
+            this.loadingPb.classList.toggle('hidden', this.layoutProgressType === 'done')
         }
     }
 
@@ -99,6 +112,7 @@ export abstract class GraphRenderer {
 
         this.progressBar = progressFill
         this.timerLabel = timerLabel
+        this.textLabel = textLabel
         this.loadingPb = loadingPb
     }
 }

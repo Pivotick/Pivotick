@@ -43,8 +43,8 @@ export function createSampleGraph(): Pivotick {
 
     const N = 63
     // const N = 1000
-    const createNodes = (): Node[] => {
-        return Array.from({ length: N }, (_, i) => new Node(`n${i + 1}`, { label: `Node ${i}`, type: 'node'}))
+    const createNodes = (n=N): Node[] => {
+        return Array.from({ length: n }, (_, i) => new Node(`n${i + 1}`, { label: `Node ${i}`, type: 'node'}))
     }
     const topologies = {
         custom: (() => {
@@ -169,6 +169,28 @@ export function createSampleGraph(): Pivotick {
             return { nodes, edges }
         })(),
 
+        bigrandom: (() => {
+            const nodes = createNodes(4000)
+            const edges: Edge[] = []
+            const edgeSet = new Set<string>()
+
+            const getEdgeKey = (a: number, b: number) => `${Math.min(a, b)}-${Math.max(a, b)}`
+
+            while (edges.length < nodes.length) {
+                const from = Math.floor(Math.random() * nodes.length)
+                const to = Math.floor(Math.random() * nodes.length)
+                if (from === to) continue
+
+                const key = getEdgeKey(from, to)
+                if (!edgeSet.has(key)) {
+                    edgeSet.add(key)
+                    edges.push(new Edge(`e${edges.length}`, nodes[from], nodes[to], {}, {}, true))
+                }
+            }
+
+            return { nodes, edges }
+        })(),
+
         vt: (() => {
             const nodes = vtGraph.nodes.map(n => new Node(n.entity_id, {
                 label: n.text,
@@ -231,7 +253,7 @@ export function createSampleGraph(): Pivotick {
 
     }
 
-    const topo = 'tree'
+    const topo = 'bigrandom'
 
     const graph = new Pivotick(container, {nodes: topologies[topo].nodes, edges: topologies[topo].edges}, {
         // isDirected: false,
@@ -359,8 +381,8 @@ function addRandomNode(counter: number, graph: Pivotick) {
     graph.addEdge(newEdge)
 }
 
-// const graph = createSampleGraph()
-// window.pivotick = graph
+const graph = createSampleGraph()
+window.pivotick = graph
 
 const data = {
   'nodes': [
