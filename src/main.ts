@@ -171,6 +171,7 @@ export function createSampleGraph(): Pivotick {
 
         bigrandom: (() => {
             const nodes = createNodes(4000)
+            // const nodes = createNodes(3)
             const edges: Edge[] = []
             const edgeSet = new Set<string>()
 
@@ -381,8 +382,8 @@ function addRandomNode(counter: number, graph: Pivotick) {
     graph.addEdge(newEdge)
 }
 
-const graph = createSampleGraph()
-window.pivotick = graph
+// const graph = createSampleGraph()
+// window.pivotick = graph
 
 const data = {
   'nodes': [

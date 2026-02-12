@@ -719,6 +719,13 @@ export class Graph {
     }
 
     /**
+     * Trigger the next render update of the graph for the passed subjects.
+     */
+    nextTickFor(nodes: Node[]): void {
+        this.renderer?.nextTickFor(nodes)
+    }
+
+    /**
      * Destroy all UI components.
      */
     destroy(): void {

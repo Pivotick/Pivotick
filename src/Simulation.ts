@@ -583,7 +583,8 @@ export class Simulation {
                 this.graphInteraction.dragging(event.sourceEvent, event.subject)
                 
                 if (!this.engineRunning || !this.isEnabled()) {
-                    this.graph.nextTick() // force node updates since simulation won't do on next tick
+                    const subjects = this.graphInteraction.hasActiveMultiselection() ? this.dragSelection.map(d => d.node) : [d]
+                    this.graph.nextTickFor(subjects) // force node updates since simulation won't do on next tick
                 }
             })
             .on('end.draggedelement', (event, d) => {

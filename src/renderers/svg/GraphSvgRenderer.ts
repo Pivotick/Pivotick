@@ -408,6 +408,11 @@ export class GraphSvgRenderer extends GraphRenderer {
         this.updateNodePositions()
     }
 
+    public nextTickFor(nodes: Node[]): void {
+        this.updateEdgePositions(nodes) // Render edges first so nodes are drawn on top of them
+        this.updateNodePositions(nodes)
+    }
+
     public zoomIn(): void {
         const zoomBehavior = this.getZoomBehavior()
         const canvas = this.getCanvasSelection()
@@ -519,12 +524,25 @@ export class GraphSvgRenderer extends GraphRenderer {
         canvas.transition().duration(300).call(zoomBehavior.transform, transform)
     }
 
-    private updateNodePositions(): void {
-        this.nodeDrawer.updatePositions(this.nodeSelection)
+    private updateNodePositions(nodes?: Node[]): void {
+        if (nodes) {
+            const nodeIds = new Set(nodes?.map(n => n.id))
+            const selectedNodes = this.nodeSelection.filter(d => nodeIds.has(d.id))
+            this.nodeDrawer.updatePositions(selectedNodes)
+        } else {
+            this.nodeDrawer.updatePositions(this.nodeSelection)
+        }
     }
 
-    private updateEdgePositions(): void {
-        this.edgeDrawer.updatePositions(this.edgeSelection)
+    private updateEdgePositions(nodes?: Node[]): void {
+        if (nodes) {
+            const edges = nodes.flatMap(n => [...n.getEdgesOut(), ...n.getEdgesIn()])
+            const edgeIds = new Set(edges?.map(e => e.id))
+            const selectedEdges = this.edgeSelection.filter(d => edgeIds.has(d.id))
+            this.edgeDrawer.updatePositions(selectedEdges)
+        } else {
+            this.edgeDrawer.updatePositions(this.edgeSelection)
+        }
     }
 
     public getNodeSelection(): Selection<SVGGElement, Node, SVGGElement, unknown> {

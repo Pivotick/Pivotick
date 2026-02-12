@@ -26,6 +26,7 @@ export abstract class GraphRenderer {
     abstract init(): void
     abstract update(dataChanged: boolean): void
     abstract nextTick(): void
+    abstract nextTickFor(nodes: Node[]): void
     abstract getZoomBehavior(): unknown
     abstract getSelectionBox(): AbstractSelectionBox | null
     abstract getGraphInteraction(): GraphInteractions<unknown>
