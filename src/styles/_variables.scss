@@ -134,6 +134,7 @@ $light-theme: (
     // #endregion canvas
 
     pvt-selection-color: map.get($light-vibrant-color-palette, vibrant-lobster),
+    pvt-selection-stroke-color: map.get($light-vibrant-color-palette, vibrant-lobster),
     pvt-selection-rectangle-fill: color-mix(in srgb, var(--pvt-selection-color) 20%, #ffffff00),
     pvt-selection-rectangle-stroke: color-mix(in srgb, var(--pvt-selection-color) 80%, #ffffff00),
 
@@ -148,7 +149,7 @@ $light-theme: (
 
     /* Node selected state */
     pvt-node-selected-color: map.get($light-vibrant-color-palette, vibrant-lobster),
-    pvt-node-selected-stroke: var(--pvt-node-selected-color),
+    pvt-node-selected-stroke: var(--pvt-selection-stroke-color),
     pvt-node-selected-stroke-width: 0,
     pvt-node-selected-stroke-opacity: 0,
     pvt-node-selected-filter: drop-shadow(0 0 2px var(--pvt-node-selected-color)),
@@ -346,6 +347,7 @@ $dark-theme: (
     "rgba(255, 255, 255, 0.10) 0px 1px 2px",
 
     pvt-selection-color: map.get($dark-vibrant-color-palette, vibrant-lobster),
+    pvt-selection-stroke-color: map.get($dark-vibrant-color-palette, vibrant-lobster),
     pvt-selection-rectangle-fill: color-mix(in srgb, var(--pvt-selection-color) 20%, #ffffff00),
     pvt-selection-rectangle-stroke: color-mix(in srgb, var(--pvt-selection-color) 80%, #ffffff00),
 
@@ -360,7 +362,7 @@ $dark-theme: (
 
     /* Node selected state */
     pvt-node-selected-color: var(--pvt-selection-color),
-    pvt-node-selected-stroke: var(--pvt-node-selected-color),
+    pvt-node-selected-stroke: var(--pvt-selection-stroke-color),
     pvt-node-selected-stroke-width: 0,
     pvt-node-selected-stroke-opacity: 0,
     pvt-node-selected-filter: drop-shadow(0 0 2px var(--pvt-node-selected-color)),
