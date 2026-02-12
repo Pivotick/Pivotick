@@ -299,6 +299,15 @@ export class SidebarNeighbors implements UIElement {
             ...node.getEdgesIn(),
         ]
 
+        connectedEdges.sort((a, b) => {
+            const aTarget = a.from.id === node.id ? a.to : a.from
+            const bTarget = b.from.id === node.id ? b.to : b.from
+
+            const aName = nodeNameGetter(aTarget, this.uiManager.getOptions().mainHeader)
+            const bName = nodeNameGetter(bTarget, this.uiManager.getOptions().mainHeader)
+
+            return aName.localeCompare(bName)
+        })
 
         const container = createHtmlElement('div', { class: '' })
         for (const edge of connectedEdges) {
@@ -310,7 +319,7 @@ export class SidebarNeighbors implements UIElement {
             edgeIcon.classList.add('edge')
             edgeIcon.classList.add(isEdgeOut ? 'edge-out' : 'edge-in')
             edgeIcon.setAttribute('title', isEdgeOut ? 'Outgoing edge' : 'Incoming edge')
-            
+
             const targetNodeName = nodeNameGetter(targetNode, this.uiManager.getOptions().mainHeader)
             const targetNodeTemplate = document.createElement('template')
             targetNodeTemplate.innerHTML = `
