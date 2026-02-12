@@ -476,8 +476,8 @@ export class Simulation {
         if (this.options.useWorker) {
             await this.runSimulationWorker(optionOverride)
         } else {
-            this.graph.updateLayoutProgress(1, 0, 'simulation')
             await this.computeGraph(optionOverride)
+            this.graph.updateLayoutProgress(100, 0, 'done')
         }
     }
 
