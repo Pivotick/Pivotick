@@ -72,11 +72,16 @@ export class Simulation {
     private canvas: HTMLElement | undefined
     private graphInteraction: GraphInteractions
     private layout
-
     private canvasBCR: DOMRect
+
     private animationFrameId: number | null = null
     private startSimulationTime: number = 0
     private engineRunning: boolean = false
+    private slowTickThresholdReached: boolean = false
+    private lastTickTime: number = 0
+    private avgTickDuration = 0
+    private readonly SLOW_TICK_THRESHOLD = 50 // ms (20fps budget)
+
     private dragInProgress: boolean = false
     private dragSelection: dragSelectionNode[] = []
     private totalTickCount: number = 0
@@ -274,11 +279,22 @@ export class Simulation {
         Simulation.initSimulationForceCollide(this.simulationForces.collide, this.options)
     }
 
+    public enable() {
+        this.options.enabled = true
+        this.start(false)
+    }
+
+    public disable() {
+        this.options.enabled = false
+        this.stop()
+    }
+
     /**
      * Pause the simulation
      */
     public pause() {
         this.engineRunning = false
+        this.slowTickThresholdReached = false
     }
 
     /**
@@ -286,21 +302,25 @@ export class Simulation {
      */
     public restart() {
         this.startSimulationTime = (new Date()).getTime()
+        this.lastTickTime = performance.now()
         this.engineRunning = true
+        this.slowTickThresholdReached = false
     }
 
     /**
      * Start the simulation with rendering on each animation frame.
      */
-    public async start() {
-        await this.runSimulationWorkerRouter()
+    public async start(recomputeLayout:boolean=true) {
+        if (recomputeLayout) await this.runSimulationWorkerRouter()
 
         if (!this.options.enabled) {
             this.engineRunning = false
             return
         }
 
+        this.lastTickTime = performance.now()
         this.engineRunning = true
+        this.slowTickThresholdReached = false
         if (this.callbacks.onStart) {
             this.callbacks.onStart(this)
         }
@@ -313,6 +333,7 @@ export class Simulation {
      * Manually stop the simulation and cancel animation frame.
      */
     public stop() {
+        this.engineRunning = false
         if (this.animationFrameId !== null) {
             cancelAnimationFrame(this.animationFrameId)
             this.animationFrameId = null
@@ -356,6 +377,7 @@ export class Simulation {
                 }
             }
             this.totalTickCount++
+            this.updateTickMetrics()
             this.simulation.tick()
             this.graph.nextTick()
             if (this.callbacks.onTick) {
@@ -365,6 +387,26 @@ export class Simulation {
             if (this.totalTickCount % 10 === 0) {
                 this.graphInteraction.simulationSlowTick()
             }
+        }
+    }
+
+    private updateTickMetrics() {
+        const now = performance.now()
+        const tickDuration = now - this.lastTickTime
+        this.lastTickTime = now
+
+        // Exponential moving average
+        this.avgTickDuration = this.avgTickDuration * 0.9 + tickDuration * 0.1
+
+        if (this.avgTickDuration > this.SLOW_TICK_THRESHOLD) {
+            this.slowTickThresholdReached = true
+            this.disable()
+            this.graph.UIManager.graphControls?.updatePhysicSimulationIndicator(false)
+            this.graph.UIManager.showNotification({
+                level: 'warning',
+                title: 'Physics engine running slow',
+                message: 'The physic has been disabled.'
+            })
         }
     }
 
@@ -384,6 +426,10 @@ export class Simulation {
                 resolve()
             }
         })
+    }
+
+    public isEnabled(): boolean {
+        return this.options.enabled
     }
 
     private async computeGraph(optionOverride: Partial<SimulationOptions> = {}) {
@@ -514,7 +560,7 @@ export class Simulation {
                 }
             })
             .on('drag.draggedelement', (event, d) => {
-                if (!this.dragInProgress) {
+                if (!this.dragInProgress && this.isEnabled()) {
                     this.dragInProgress = true
                     this.restart()
                     this.simulation
@@ -525,12 +571,20 @@ export class Simulation {
                     this.dragSelection.forEach(({ node, dx, dy }) => {
                         node.fx = event.x + dx
                         node.fy = event.y + dy
+                        node.x = event.x + dx
+                        node.y = event.y + dy
                     })
                 } else {
                     d.fx = event.x
                     d.fy = event.y
+                    d.x = event.x
+                    d.y = event.y
                 }
                 this.graphInteraction.dragging(event.sourceEvent, event.subject)
+                
+                if (!this.engineRunning || !this.isEnabled()) {
+                    this.graph.nextTick() // force node updates since simulation won't do on next tick
+                }
             })
             .on('end.draggedelement', (event, d) => {
                 if (!event.active && this.dragInProgress) {

@@ -149,6 +149,7 @@ export class Node {
 
     /**
      * Convert node to a simple JSON object representation.
+     * @param dataOnly - default: false
      */
     toDict(dataOnly = false): Record<string, unknown> {
         const obj: Record<string, unknown> = {

@@ -2,7 +2,7 @@ import type { IconClass, IconUnicode, ImagePath, SVGIcon, UIBaseVariant } from '
 import { createIcon } from '../../utils/ElementCreation'
 
 type BadgeVariant = UIBaseVariant
-type BadgeSize = 'sm' | 'xs'
+type BadgeSize = 'sm' | 'xs' | 'xxs'
 export type BadgeOptions = {
     variant?: BadgeVariant,
     size?: BadgeSize,

@@ -1,6 +1,6 @@
 import type { Node } from '../../../Node'
 import hasCycle from '../../../plugins/analytics/cycle'
-import { balancedDistanced, expand, firstValidNode, flipEdgeDirection, graphControlLayoutOrganic, graphControlLayoutTreeH, graphControlLayoutTreeR, graphControlLayoutTreeV, hide, minHeight, mostConnectedNode, pin, timeDuration10, timeDuration15, timeDuration5, unpin } from '../../icons'
+import { atom, atomSlashed, balancedDistanced, expand, firstValidNode, flipEdgeDirection, graphControlLayoutOrganic, graphControlLayoutTreeH, graphControlLayoutTreeR, graphControlLayoutTreeV, hide, minHeight, mostConnectedNode, pin, timeDuration10, timeDuration15, timeDuration5, unpin } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import './graphControls.scss'
 import { createActionList, createHtmlElement, createIcon, createQuickActionList } from '../../../utils/ElementCreation'
@@ -13,6 +13,7 @@ type GraphLayoutOption = {
     class: string | string[]
     title: string
     svgIcon: string
+    html?: () => HTMLElement
     onClick?: (e: MouseEvent) => void
 }
 
@@ -90,6 +91,38 @@ export class GraphControls implements UIElement {
     private menuNode: { topbar: MenuQuickActionItemOptions[]; menu: MenuActionItemOptions[] }
 
     private layoutTypeOptions = [
+        {
+            root: {
+                id: 'pvt-graphcontrols-simulation-toggle',
+                class: '',
+                title: 'Toggle graph physic simulation',
+                svgIcon: atom,
+                onClick: () => {
+                    this.togglePhysicSimulation()
+
+                },
+            } as GraphLayoutOption,
+            children: [
+                {
+                    id: 'pvt-graphcontrols-simulation-stop',
+                    class: '',
+                    title: 'Stop graph physic simulation',
+                    svgIcon: atomSlashed,
+                    onClick: () => {
+                        this.togglePhysicSimulation(false)
+                    },
+                },
+                {
+                    id: 'pvt-graphcontrols-simulation-start',
+                    class: '',
+                    title: 'Start graph physic simulation',
+                    svgIcon: atom,
+                    onClick: () => {
+                        this.togglePhysicSimulation(true)
+                    },
+                },
+            ] as GraphLayoutOption[]
+        },
         {
             root: {
                 id: 'pvt-graphcontrols-layout-organic',
@@ -500,6 +533,35 @@ export class GraphControls implements UIElement {
             id: option.id,
             class: option.class,
             title: option.title,
-        }, [createIcon({ svgIcon: option.svgIcon }) ])
+        }, [
+            option.html ? option.html() : createIcon({ svgIcon: option.svgIcon })
+        ])
+    }
+
+    private togglePhysicSimulation(forceActive?: boolean) {
+        const simulation = this.uiManager.graph.simulation
+        if (!simulation) return
+
+        const shouldEnable = forceActive ?? !simulation.isEnabled()
+
+        if (shouldEnable) {
+            simulation.enable()
+            this.updatePhysicSimulationIndicator(true)
+        } else {
+            this.updatePhysicSimulationIndicator(false)
+            simulation.disable()
+        }
+    }
+
+    public updatePhysicSimulationIndicator(active: boolean) {
+        const toggleElement = this.layoutMenu!.querySelector('#pvt-graphcontrols-simulation-toggle')
+        const icon = toggleElement!.querySelector('.pvt-icon')
+        if (!toggleElement || !icon) return
+
+        if (active) {
+            icon.outerHTML = createIcon({ svgIcon: atom }).outerHTML
+        } else {
+            icon.outerHTML = createIcon({ svgIcon: atomSlashed }).outerHTML
+        }
     }
 }
