@@ -1,6 +1,6 @@
 /* eslint-disable */
 // @ts-nocheck
-import { Pivotick, Node, Edge } from './index'
+import { Pivotick, Node, Edge, ColorPaletteMapper } from './index'
 
 import {graph as vtGraph} from './vt-graph'
 import { graph as ailGraph } from './ail-graph'
@@ -44,7 +44,7 @@ export function createSampleGraph(): Pivotick {
     const N = 63
     // const N = 1000
     const createNodes = (n=N): Node[] => {
-        return Array.from({ length: n }, (_, i) => new Node(`n${i + 1}`, { label: `Node ${i}`, type: 'node'}))
+        return Array.from({ length: n }, (_, i) => new Node(`n${i + 1}`, { label: `Node ${i}`, type: `${i % Math.floor(n / 10) }`}))
     }
     const topologies = {
         custom: (() => {
@@ -254,8 +254,9 @@ export function createSampleGraph(): Pivotick {
 
     }
 
-    const topo = 'bigrandom'
+    const topo = 'random'
 
+    const colorPaletteMapper = new ColorPaletteMapper('pivotick')
     const graph = new Pivotick(container, {nodes: topologies[topo].nodes, edges: topologies[topo].edges}, {
         // isDirected: false,
         simulation: {
@@ -287,12 +288,13 @@ export function createSampleGraph(): Pivotick {
                 'hub': { shape: 'hexagon', color: '#aaa', size: 30 },
                 // 'leaf': { shape: 'triangle', color: '#f00' },
             },
-            // defaultNodeStyle: {
-            //     shape: 'hexagon',
-            //     color: '#aa33aa33',
-            //     strokeColor: '#ffffff33',
-            //     size: 20,
-            // }
+            defaultNodeStyle: {
+                // shape: 'hexagon',
+                // color: '#aa33aa33',
+                color: (node: Node) => { return colorPaletteMapper.getColor(node.getData()?.type) }
+                // strokeColor: '#ffffff33',
+                // size: 20,
+            },
             // defaultEdgeStyle: {
             //     markerStart: (edge: Edge) => edge.getData().mstart,
             //     // markerEnd: (edge: Edge) => edge.getData().mend,
@@ -382,8 +384,8 @@ function addRandomNode(counter: number, graph: Pivotick) {
     graph.addEdge(newEdge)
 }
 
-// const graph = createSampleGraph()
-// window.pivotick = graph
+const graph = createSampleGraph()
+window.pivotick = graph
 
 const data = {
   'nodes': [
