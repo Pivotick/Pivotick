@@ -4,6 +4,7 @@ import type { Graph } from '../../Graph'
 import type { GraphSvgRenderer } from './GraphSvgRenderer'
 import { faGlyph, tryResolveNumber, tryResolveString } from '../../utils/Getters'
 import type { CustomNodeShape, GraphRendererOptions, NodeShape, NodeStyle } from '../../interfaces/RendererOptions'
+import type { Edge } from '../../Edge'
 
 export class NodeDrawer {
 
@@ -316,13 +317,45 @@ export class NodeDrawer {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    private deHighlightSelection(nodeSelection: Selection<SVGGElement, Node, null, undefined>, _node: Node): void {
+    private deHighlightSelection(nodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
         nodeSelection.classed('pvt-node-selected-highlight', false)
+        if (this.rendererOptions.enableFocusMode) {
+            this.graph.getMutableNodes().forEach((node) => {
+                const nodeElem = node.getGraphElement()
+                nodeElem?.classList.toggle('pvt-node-selected-highlight-shadow', false)
+            })
+            this.graph.getMutableEdges().forEach((edge) => {
+                const edgeElem = edge.getGraphElement()
+                edgeElem?.classList.toggle('pvt-edge-selected-highlight-shadow', false)
+            })
+        }
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    private highlightSelection(nodeSelection: Selection<SVGGElement, Node, null, undefined>, _node: Node): void {
-        nodeSelection.classed('pvt-node-selected-highlight', true)
+    private highlightSelection(nodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
+        if (this.rendererOptions.enableFocusMode) {
+            this.graph.getMutableNodes().forEach((node) => {
+                const nodeElem = node.getGraphElement()
+                nodeElem?.classList.toggle('pvt-node-selected-highlight-shadow', true)
+            })
+            this.graph.getMutableEdges().forEach((edge) => {
+                const edgeElem = edge.getGraphElement()
+                edgeElem?.classList.toggle('pvt-edge-selected-highlight-shadow', true)
+            })
+            nodeSelection
+                .classed('pvt-node-selected-highlight-shadow', false)
+        }
+
+        nodeSelection
+            .classed('pvt-node-selected-highlight', true)
+
+        if (this.rendererOptions.enableFocusMode) {
+            const edges: Edge[] = [...node.getEdgesOut(), ...node.getEdgesIn()]
+            edges.forEach((edge) => {
+                const edgeElem = edge.getGraphElement()
+                edgeElem?.classList.toggle('pvt-edge-selected-highlight-shadow', false)
+            })
+        }
     }
 
     private computeFontSize(label: string, nodeSize: number) {

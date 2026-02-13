@@ -192,6 +192,7 @@ export const defaultLabelStyle: LabelStyle = {
 
 const DEFAULT_RENDERER_OPTIONS = {
     type: 'svg',
+    enableFocusMode: true,
     zoomEnabled: true,
     dragEnabled: true,
     interactionEnabled: true,
@@ -522,6 +523,31 @@ export class GraphSvgRenderer extends GraphRenderer {
             .scale(scale)
 
         canvas.transition().duration(300).call(zoomBehavior.transform, transform)
+    }
+
+    public highlightElement(element: Node | Edge): void {
+        const targetEl: SVGGElement | null = element.getGraphElement()
+        if (element instanceof Edge) {
+            this.edgeSelection.classed('pvt-edge-highlighted', false)
+            targetEl?.classList.add('pvt-edge-highlighted')
+        } else if (element instanceof Node) {
+            this.nodeSelection.classed('pvt-node-highlighted', false)
+            targetEl?.classList.add('pvt-node-highlighted')
+        }
+    }
+
+    public unHighlightElement(element: Node | Edge): void {
+        const targetEl: SVGGElement | null = element.getGraphElement()
+        if (element instanceof Edge) {
+            targetEl?.classList.remove('pvt-edge-highlighted')
+        } else if (element instanceof Node) {
+            targetEl?.classList.remove('pvt-node-highlighted')
+        }
+    }
+
+    private clearHighlightedElements(): void {
+        this.edgeSelection.classed('pvt-edge-highlighted', false)
+        this.nodeSelection.classed('pvt-node-highlighted', false)
     }
 
     private updateNodePositions(nodes?: Node[]): void {

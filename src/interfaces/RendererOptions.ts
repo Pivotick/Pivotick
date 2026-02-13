@@ -124,6 +124,11 @@ export interface GraphRendererOptions {
      * ```
      */
     nodeStyleMap?: Record<string, NodeStyle>
+    /**
+     * Controls whether non-connected nodes and edges are grayed out when a node is selected
+     * @default true
+     */
+    enableFocusMode: boolean,
     /** @default true */
     zoomEnabled: boolean
     /** @default true */

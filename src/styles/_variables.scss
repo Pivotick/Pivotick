@@ -153,7 +153,14 @@ $light-theme: (
     pvt-node-selected-stroke-width: 0,
     pvt-node-selected-stroke-opacity: 0,
     pvt-node-selected-filter: drop-shadow(0 0 2px var(--pvt-node-selected-color)),
-    pvt-node-selected-animation: glowPulse 1.5s infinite,
+    pvt-node-selected-animation: glowPulseSelected 1.5s infinite,
+
+    /* Node highlighted state */
+    pvt-node-highlighted-stroke: map.get($light-vibrant-color-palette, vibrant-blue),
+    pvt-node-highlighted-stroke-width: 2,
+    pvt-node-highlighted-filter: drop-shadow(0 0 2px var(--pvt-node-highlighted-stroke)),
+    pvt-node-highlighted-opacity: 1,
+    pvt-node-highlighted-animation: glowPulseHighlighted 1.5s infinite,
     // #endregion node
 
     // #region edge
@@ -366,7 +373,14 @@ $dark-theme: (
     pvt-node-selected-stroke-width: 0,
     pvt-node-selected-stroke-opacity: 0,
     pvt-node-selected-filter: drop-shadow(0 0 2px var(--pvt-node-selected-color)),
-    pvt-node-selected-animation: glowPulse 1.5s infinite,
+    pvt-node-selected-animation: glowPulseSelected 1.5s infinite,
+
+    /* Node highlighted state */
+    pvt-node-highlighted-stroke: map.get($dark-vibrant-color-palette, vibrant-blue),
+    pvt-node-highlighted-stroke-width: 0,
+    pvt-node-highlighted-filter: drop-shadow(0 0 2px var(--pvt-node-highlighted-stroke)),
+    pvt-node-highlighted-opacity: 1,
+    pvt-node-highlighted-animation: glowPulseHighlighted 1.5s infinite,
 
     /* Edge defaults */
     pvt-edge-stroke: color-mix(in srgb, map.get($dark-vibrant-color-palette, vibrant-blue) 50%, #000),

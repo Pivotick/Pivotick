@@ -36,6 +36,9 @@ export abstract class GraphRenderer {
     abstract zoomOut(): void
     abstract fitAndCenter(fitAndCenter?: number): void
     abstract focusElement(element: Node | Edge): void
+    abstract highlightElement(element: Node | Edge): void
+    abstract unHighlightElement(element: Node | Edge): void
+    abstract clearHighlightedElements(): void
 
     public getCanvas(): HTMLElement {
         return this.container.querySelector('.pvt-canvas') as HTMLElement

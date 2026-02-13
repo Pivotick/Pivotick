@@ -769,4 +769,22 @@ export class Graph {
             return
         }
     }
+
+    /**
+     * Add a highligh class to the given node or edge
+     * 
+     * @param element The `Node` or `Edge` to highligh.
+     */
+    highlightElement(element: Node | Edge): void {
+        this.renderer.highlightElement(element)
+    }
+
+    /**
+     * Remove a highligh class to the given node or edge
+     * 
+     * @param element The `Node` or `Edge` to select.
+     */
+    unHighlightElement(element: Node | Edge): void {
+        this.renderer.unHighlightElement(element)
+    }
 }

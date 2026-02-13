@@ -246,7 +246,7 @@ export class SidebarNeighbors implements UIElement {
             UI: {
                 mode: 'viewer',
                 tooltip: {
-                    enabled: true,
+                    enabled: false,
                     allowPinning: false,
                 },
                 contextMenu: {
@@ -265,6 +265,7 @@ export class SidebarNeighbors implements UIElement {
             render: {
                 ...this.uiManager.graph.getOptions().render,
                 dragEnabled: false,
+                enableFocusMode: false,
                 interactionEnabled: true,
                 zoomEnabled: false,
                 zoomAnimationDuration: 100,
@@ -274,6 +275,20 @@ export class SidebarNeighbors implements UIElement {
                 warmupTicks: 0,
                 cooldownTime: 0,
             },
+            callbacks: {
+                onNodeHoverIn: (_evt, node) => {
+                    const mainGraphNode = this.uiManager.graph.getMutableNode(node.id)
+                    if (mainGraphNode) {
+                        this.uiManager.graph.highlightElement(mainGraphNode)
+                    }
+                },
+                onNodeHoverOut: (_evt, node) => {
+                    const mainGraphNode = this.uiManager.graph.getMutableNode(node.id)
+                    if (mainGraphNode) {
+                        this.uiManager.graph.unHighlightElement(mainGraphNode)
+                    }
+                },
+            }
         }
 
         this.egoGraph = new Graph(this.egographContainer, egoGraphData, egoGraphOptions)

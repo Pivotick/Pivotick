@@ -1,4 +1,4 @@
-@keyframes glowPulse {
+@keyframes glowPulseSelected {
     0% {
         stroke-width: 3;
         filter: drop-shadow(0 0 1px var(--pvt-node-selected-color));
@@ -12,6 +12,23 @@
     100% {
         stroke-width: 3;
         filter: drop-shadow(0 0 1px var(--pvt-node-selected-color));
+    }
+}
+
+@keyframes glowPulseHighlighted {
+    0% {
+        stroke-width: 3;
+        filter: drop-shadow(0 0 1px var(--pvt-node-highlighted-stroke));
+    }
+
+    50% {
+        stroke-width: 5;
+        filter: drop-shadow(0 0 3px var(--pvt-node-highlighted-stroke));
+    }
+
+    100% {
+        stroke-width: 3;
+        filter: drop-shadow(0 0 1px var(--pvt-node-highlighted-stroke));
     }
 }
 
