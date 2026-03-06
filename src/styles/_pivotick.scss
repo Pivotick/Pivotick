@@ -190,7 +190,7 @@ dl.pvt-property-list {
     user-select: none;
 }
 
-.pvt-node-selected-highlight > *:first-child {
+.pvt-node-selected-highlight > .node {
     fill: var(--pvt-node-selected-color);
     stroke: var(--pvt-node-selected-stroke);
     stroke-width: var(--pvt-node-selected-stroke-width);
@@ -199,17 +199,17 @@ dl.pvt-property-list {
     animation: var(--pvt-node-selected-animation);
 }
 
-.pvt-node-selected-highlight-shadow > *:first-child {
+.pvt-node-selected-highlight-shadow > * {
     filter: grayscale(0.5);
     opacity: 0.5;
 }
 
-.pvt-edge-selected-highlight-shadow > *:first-child {
+.pvt-edge-selected-highlight-shadow > * {
     filter: grayscale(0.5);
     opacity: 0.5;
 }
 
-.pvt-node-highlighted > *:first-child {
+.pvt-node-highlighted > .node {
     stroke: var(--pvt-node-highlighted-stroke);
     stroke-width: var(--pvt-node-highlighted-stroke-width);
     opacity: var(--pvt-node-highlighted-opacity);
@@ -217,7 +217,7 @@ dl.pvt-property-list {
     animation: var(--pvt-node-highlighted-animation);
 }
 
-.pvt-edge-highlighted > *:first-child {
+.pvt-edge-highlighted > * {
 }
 
 .pvt-edge-group {
@@ -290,6 +290,79 @@ dl.pvt-property-list {
             text-rendering: auto;
         }
     }
+
+    &.pvt-node-has-children {
+
+        .node-icon {
+
+            &.expand-icon {
+                fill: var(--pvt-bg-color-info);
+                text {
+                    stroke: var(--pvt-text-color-for-info);
+                }
+                &:hover {
+                    fill: color-mix(in srgb, var(--pvt-bg-color-info) 90%, black);
+                }
+
+                &:active {
+                    fill: color-mix(in srgb, var(--pvt-bg-color-info) 85%, black);
+                }
+            }
+
+            &.collapse-icon {
+                fill: var(--pvt-bg-color-secondary);
+                text {
+                    stroke: var(--pvt-text-color-for-secondary);
+                }
+                &:hover {
+                    fill: color-mix(in srgb, var(--pvt-bg-color-secondary) 90%, black);
+                }
+
+                &:active {
+                    fill: color-mix(in srgb, var(--pvt-bg-color-secondary) 85%, black);
+                }
+            }
+
+            stroke: var(--pvt-bg);
+            stroke-width: 1.5;
+            cursor: pointer;
+
+            text {
+                text-anchor: middle;
+                dominant-baseline: central;
+                pointer-events: none;
+            }
+        }
+
+        &.pvt-node-expanded {
+            & > .node {
+                filter: drop-shadow(2px 2px 3px rgba(0, 0, 0, 0.2));
+            }
+        }
+
+        &:not(.pvt-node-expanded) {
+            & > .node {
+                stroke-width: 1;
+                stroke-linecap: round;
+                stroke: var(--pvt-node-stroke);
+                stroke-dasharray: 3.141592653589793;
+
+                &:hover {
+                    animation: dashmove-cluster 1s linear infinite;
+                }
+            }
+        }
+    }
+}
+
+.pvt-cluster-area {
+    fill: rgba(0, 0, 0, 0.05);
+    stroke: #aaa;
+    stroke-dasharray: 4 2;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke: color-mix(in srgb, var(--pvt-node-stroke) 60%, #000);
+    stroke-dasharray: 3 3.16;
 }
 
 svg[data-renderer-drag-enabled="1"] {

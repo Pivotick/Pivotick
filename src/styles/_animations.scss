@@ -32,8 +32,14 @@
     }
 }
 
-@keyframes dashmove {
+@keyframes dashmove-edge {
     to {
         stroke-dashoffset: -10;
+    }
+}
+
+@keyframes dashmove-cluster {
+    to {
+        stroke-dashoffset: -6.283185307179586;
     }
 }

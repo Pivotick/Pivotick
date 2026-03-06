@@ -1,17 +1,20 @@
-import { type Selection } from 'd3-selection'
+import { select as d3Select, type Selection } from 'd3-selection'
+import { transition as d3Transition } from 'd3-transition'
 import { Node } from '../../Node'
 import type { Graph } from '../../Graph'
 import type { GraphSvgRenderer } from './GraphSvgRenderer'
 import { faGlyph, tryResolveNumber, tryResolveString } from '../../utils/Getters'
 import type { CustomNodeShape, GraphRendererOptions, NodeShape, NodeStyle } from '../../interfaces/RendererOptions'
-import type { Edge } from '../../Edge'
+import { ClusterDrawer } from './ClusterDrawer'
+d3Select.prototype.transition = d3Transition
 
 export class NodeDrawer {
 
     // @ts-expect-error: graph might be used in future updates
     private graph: Graph
-    private rendererOptions: GraphRendererOptions
+    public rendererOptions: GraphRendererOptions
     private graphSvgRenderer: GraphSvgRenderer
+    public clusterDrawer: ClusterDrawer
     private renderCB?: GraphRendererOptions['renderNode']
 
     public constructor(rendererOptions: GraphRendererOptions, graph: Graph, graphSvgRenderer: GraphSvgRenderer) {
@@ -19,9 +22,11 @@ export class NodeDrawer {
         this.graph = graph
         this.rendererOptions = rendererOptions
         this.renderCB = this.rendererOptions?.renderNode
+        this.clusterDrawer = new ClusterDrawer(this)
     }
 
     public render(theNodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
+
         if (this.renderCB) {
             const fo = theNodeSelection.append('foreignObject')
             const rendered = this?.renderCB?.(node)
@@ -55,7 +60,7 @@ export class NodeDrawer {
                     .attr('y', -height / 2)
 
                 node.setCircleRadius(0.5 * Math.max(width, height))
-                this.checkForHighlight(theNodeSelection, node)
+                // this.checkForHighlight(theNodeSelection, node)
               })
 
         } else {
@@ -71,9 +76,34 @@ export class NodeDrawer {
                     height = Math.ceil(bbox.height)
                 }
 
-                node.setCircleRadius(0.5 * Math.max(width, height))
-                this.checkForHighlight(theNodeSelection, node)
+                if (!node.hasChildren() || !node.expanded) {
+                    node.setCircleRadius(0.5 * Math.max(width, height))
+                }
+                // this.checkForHighlight(theNodeSelection, node)
             })
+        }
+
+        if (node.hasChildren()) {
+            if (node.expanded) {
+                const cluster = this.clusterDrawer.render(theNodeSelection, node, () => {
+                    // Adapt position if children are expanded
+                    const origNode = node.getGraphElement()?.querySelector('& > circle.node')
+                    const clusterRadius = cluster.attr('_final_r') // 'r' attribute is being transitioned, get the final value
+                    if (origNode) {
+                        d3Select(origNode).attr('cx', 0).attr('cy', 0)
+                            .transition()
+                            .duration(200)
+                            .on('end', () => {
+                                this.graph.simulation.reheat(0.05)
+                                this.graph.renderer.fitAndCenter()
+                            })
+                            .attr('cx', (-clusterRadius * 0.8).toString())
+                            .attr('cy', (-clusterRadius * 0.8).toString())
+                    }
+                })
+            }
+
+            this.addExpandCollapseIcons(theNodeSelection, node)
         }
     }
 
@@ -174,7 +204,7 @@ export class NodeDrawer {
         style.size = style.size as number
         style.shape = style.shape as NodeShape
         style.text = style.text as string
-        
+
         // map logical node shapes to SVG element tag names (use string to allow 'rect' which is not part of NodeShape)
         let actualShape: string = style.shape as string
         if (style.shape == 'square') {
@@ -188,6 +218,7 @@ export class NodeDrawer {
             .attr('stroke', style.strokeColor)
             .attr('stroke-width', style.strokeWidth)
             .attr('fill', style.color)
+            .classed('node', true)
 
         switch (style.shape) {
             case 'circle':
@@ -297,7 +328,7 @@ export class NodeDrawer {
         }
     }
 
-    private checkForHighlight(nodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
+    public checkForHighlight(nodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
         if (this.isNodeSelected(node)) {
             this.highlightSelection(nodeSelection, node)
         } else {
@@ -350,10 +381,17 @@ export class NodeDrawer {
             .classed('pvt-node-selected-highlight', true)
 
         if (this.rendererOptions.enableFocusMode) {
-            const edges: Edge[] = [...node.getEdgesOut(), ...node.getEdgesIn()]
-            edges.forEach((edge) => {
+            node.getEdgesOut().forEach((edge) => {
                 const edgeElem = edge.getGraphElement()
                 edgeElem?.classList.toggle('pvt-edge-selected-highlight-shadow', false)
+                const nodeElem = edge.to.getGraphElement()
+                nodeElem?.classList.toggle('pvt-node-selected-highlight-shadow', false)
+            })
+            node.getEdgesIn().forEach((edge) => {
+                const edgeElem = edge.getGraphElement()
+                edgeElem?.classList.toggle('pvt-edge-selected-highlight-shadow', false)
+                const nodeElem = edge.from.getGraphElement()
+                nodeElem?.classList.toggle('pvt-node-selected-highlight-shadow', false)
             })
         }
     }
@@ -371,5 +409,46 @@ export class NodeDrawer {
         }
 
         return base
+    }
+
+    private addExpandCollapseIcons(theNodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
+        const iconRadius = 8      // radius of the small circle
+        const padding = 2         // distance from node bounds
+
+        const toggleExpand = (node: Node, expand: boolean) => {
+            if (this.graph.UIManager.tooltip) this.graph.UIManager.tooltip.hide(node)
+            this.graph.toggleExpandNode(node)
+            if (!expand) { // reheating the simulation is done after the opnening transition completes
+                this.graph.simulation.reheat(0.05)
+                this.graph.renderer.fitAndCenter()
+            }
+        }
+
+        // Ensure we have a group to contain icons
+        theNodeSelection.each((node, i, nodes) => {
+            const group = d3Select<SVGGElement, Node>(nodes[i])
+
+            // Remove existing icons if any
+            group.selectAll<SVGGElement, unknown>('.node-icon').remove()
+
+            const offset = (node.getCircleRadius() + padding) / Math.sqrt(2)
+
+            group.append('g')
+                .classed('node-icon', true)
+                .classed(!node.expanded ? 'expand-icon' : 'collapse-icon', true)
+                .attr('transform', !node.expanded ? `translate(${offset}, ${-(offset)})` : `translate(${offset}, ${offset})`)
+                .append('circle')
+                .attr('r', iconRadius)
+                .style('cursor', 'pointer')
+                .on('click', (evt: PointerEvent) => {
+                    evt.stopPropagation()
+                    toggleExpand(node, !node.expanded)
+                })
+
+            group.select(!node.expanded ? '.expand-icon' : '.collapse-icon')
+                .append('text')
+                .text(!node.expanded ? '+' : '-')
+
+        })
     }
 }

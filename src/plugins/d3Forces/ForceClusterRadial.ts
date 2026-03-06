@@ -1,14 +1,16 @@
 import type { Force, SimulationNodeDatum } from 'd3-force'
+import type { Node } from '../../Node'
+
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface ForceGravity<Node extends SimulationNodeDatum> extends Force<Node, any> {
+export interface ForceClusterRadial<TNode extends Node & SimulationNodeDatum> extends Force<TNode, any> {
     /**
      * Supplies the array of nodes and random source to this force. This method is called when a force is bound to a simulation via simulation.force
      * and when the simulation’s nodes change via simulation.nodes.
      *
      * A force may perform necessary work during initialization, such as evaluating per-node parameters, to avoid repeatedly performing work during each application of the force.
      */
-    initialize(nodes: Node[], random: () => number): void;
+    initialize(nodes: TNode[], random: () => number): void;
 
     /**
      * Return the current x-coordinate of the centering position, which defaults to zero.
@@ -42,35 +44,55 @@ export interface ForceGravity<Node extends SimulationNodeDatum> extends Force<No
      * A reduced strength of e.g. 0.05 softens the movements on interactive graphs in which new nodes enter or exit the graph.
      * @param strength The centering force's strength.
      */
-    strength(strength: number | ((node: Node, i: number, nodes: Node[]) => number)): this;
+    strength(strength: number | ((node: TNode, i: number, nodes: TNode[]) => number)): this;
 }
 
-export function ForceGravity<Node extends SimulationNodeDatum = SimulationNodeDatum>(
+export function ForceClusterRadial<TNode extends Node & SimulationNodeDatum = Node & SimulationNodeDatum>(
     x = 0,
     y = 0,
-    strength: number | ((node: Node, i: number, nodes: Node[]) => number) = 0.001
-): ForceGravity<Node> {
-    let nodes: Node[] = []
-    let strengthFn: (node: Node, i: number, nodes: Node[]) => number
+    strength: number | ((node: TNode, i: number, nodes: TNode[]) => number) = 0.001
+): ForceClusterRadial<TNode> {
+    let nodes: TNode[] = []
 
-    function initializeStrength() {
-        strengthFn = typeof strength === 'function' ? strength : () => strength as number
+    function force() {
+
+        const MAX_RADIUS = 300
+
+        nodes.forEach(node => {
+            const n = node as Node
+
+            if (!n.expanded || !n.children) return
+
+            const expand_radius = n.getCircleRadius()
+
+            n.children.forEach((child: Node) => {
+                n.x = n.x ?? 0
+                n.y = n.y ?? 0
+                child.x = child.x ?? n.x
+                child.y = child.y ?? n.y
+                if (!child.vx) child.vx = 0
+                if (!child.vy) child.vy = 0
+
+                const dx = child.x - n.x
+                const dy = child.y - n.y
+                const distance = Math.sqrt(dx * dx + dy * dy)
+
+                if (distance > MAX_RADIUS) {
+                    child.x = node.x
+                    child.y = node.y
+                }
+
+                if (distance > expand_radius) {
+                    const k = 0.2 * (distance - expand_radius) / distance
+                    child.vx -= dx * k
+                    child.vy -= dy * k
+                }
+            })
+        })
     }
 
-    function force(alpha: number) {
-        for (let i = 0, n = nodes.length; i < n; ++i) {
-            const node = nodes[i]
-            const s = strengthFn(node, i, nodes)
-            if (node.vx && node.x)
-                node.vx -= (node.x - x) * s * alpha
-            if (node.vy && node.y)
-                node.vy -= (node.y - y) * s * alpha
-        }
-    }
-
-    force.initialize = (_nodes: Node[]) => {
+    force.initialize = (_nodes: TNode[]) => {
         nodes = _nodes
-        initializeStrength()
     }
 
 
@@ -86,12 +108,11 @@ export function ForceGravity<Node extends SimulationNodeDatum = SimulationNodeDa
         return force
     }
 
-    force.strength = function (_?: number | ((node: Node, i: number, nodes: Node[]) => number)) {
+    force.strength = function (_?: number | ((node: TNode, i: number, nodes: TNode[]) => number)) {
         if (!arguments.length) return strength
         strength = _!
-        initializeStrength()
         return force
     }
 
-    return force as ForceGravity<Node>
+    return force as ForceClusterRadial<TNode>
 }

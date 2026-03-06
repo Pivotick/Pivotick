@@ -296,7 +296,7 @@ export class EdgeDrawer {
 
         const x = from.x ?? 0
         const y = from.y ?? 0
-        const nodeRadius = this.graphSvgRenderer.nodeDrawer.getNodeStyle(from).size as number
+        const nodeRadius = from.getCircleRadius() ? from.getCircleRadius() : this.graphSvgRenderer.nodeDrawer.getNodeStyle(from).size as number
         const control_point_radius = 6 * nodeRadius
 
         // 80° NE
@@ -340,8 +340,8 @@ export class EdgeDrawer {
         const normY = dy / distance
 
         // Compute source/target node radius
-        const rFrom = this.graphSvgRenderer.nodeDrawer.getNodeStyle(from).size as number
-        const rTo = this.graphSvgRenderer.nodeDrawer.getNodeStyle(to).size as number
+        const rFrom = from.getCircleRadius() ? from.getCircleRadius() : this.graphSvgRenderer.nodeDrawer.getNodeStyle(from).size as number
+        const rTo = to.getCircleRadius() ? to.getCircleRadius() : this.graphSvgRenderer.nodeDrawer.getNodeStyle(to).size as number
 
         // Offset both ends of the line
         const startX = from.x + (rFrom + drawOffsetStart) * normX

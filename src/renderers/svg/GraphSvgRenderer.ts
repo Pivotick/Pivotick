@@ -338,7 +338,9 @@ export class GraphSvgRenderer extends GraphRenderer {
     }
 
     public dataUpdate(): void {
-        const nodes = this.graph.getMutableNodes().filter(node => node.visible)
+        // const nodes: Node[] = this.graph.getMutableVisibleNodes()
+        const nodes: Node[] = this.graph.getMutableNodes().filter(node => node.visible)
+
         this.nodeGroupSelection = this.nodeGroup
             .selectAll<SVGGElement, Node>('g.pvt-node')
 
@@ -347,8 +349,11 @@ export class GraphSvgRenderer extends GraphRenderer {
             .join(
                 (enter) => {
                     return enter
-                        .append('g').classed('pvt-node', true)
-                        .each((node: Node, i: number, nodes: ArrayLike<SVGGElement>) => {
+                    .append('g')
+                    .classed('pvt-node', true)
+                    .classed('pvt-node-has-children', (node) => node.hasChildren())
+                    .classed('pvt-node-expanded', (node) => node.expanded === true)
+                    .each((node: Node, i: number, nodes: ArrayLike<SVGGElement>) => {
                             node.clearDirty()
                             const selection = d3Select<SVGGElement, Node>(nodes[i])
                             selection.attr('id', `node-${node.domID}`)
@@ -356,14 +361,17 @@ export class GraphSvgRenderer extends GraphRenderer {
                         })
                 },
                 (update) => {
-                    return update.each((node: Node, i: number, nodes: ArrayLike<SVGGElement>) => {
-                        if (node.isDirty()) {
-                            node.clearDirty()
+                    return update
+                        .classed('pvt-node-expanded', (node) => node.expanded === true)
+                        .each((node: Node, i: number, nodes: ArrayLike<SVGGElement>) => {
                             const selection = d3Select<SVGGElement, Node>(nodes[i])
-                            selection.selectChildren().remove()
-                            this.nodeDrawer.render(selection, node)
-                        }
-                    })
+                            if (node.isDirty()) {
+                                node.clearDirty()
+                                selection.selectChildren().remove()
+                                this.nodeDrawer.render(selection, node)
+                            }
+                            this.nodeDrawer.checkForHighlight(selection, node)
+                        })
                 },
                 exit => exit.remove()
             )

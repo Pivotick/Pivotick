@@ -64,6 +64,33 @@ export interface GraphRendererOptions {
      */
     renderLabel?: (edge: Edge) => HTMLElement | string | void
     /**
+     * Custom renderer for clusters.
+     * 
+     * Allows full control over how a cluster is displayed
+     * The function can return either:
+     * - An `HTMLElement` to be used as the cluster, or
+     * - A string to render inside the cluster
+     * 
+     * @example
+     * ```ts
+     * renderCluster: (cluster: Node): HTMLElement | string | void => {
+     *   const size = 12;
+     *   const style = [
+     *     'display:block',
+     *     `width:${size}px`,
+     *     `height:${size}px`,
+     *     'background-color:#907acc',
+     *     'border: 2px solid #fff',
+     *     'border-radius:50%',
+     *     'opacity: 1',
+     *   ].join(';');
+     * 
+     *   return `<span style="${style}"></span>`;
+     * }
+     * ```
+     */
+    renderCluster?: (cluster: Node) => HTMLElement | string | void
+    /**
      * The default node style to be applied on all nodes
      * @defaultValue {@link defaultNodeStyleValue}
      */

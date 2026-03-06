@@ -141,7 +141,7 @@ export class Graph {
     }
 
     private normalizeGraphData(data: GraphData | RelaxedGraphData): GraphData {
-        const normalizedNodes = data.nodes.map(this.normalizeNode)
+        const normalizedNodes = data.nodes.map((n) => this.normalizeNode(n))
         const nodesByID = new Map(normalizedNodes.map(node => [node.id, node]))
         const normalizedEdges = data.edges
             .map(e => {
@@ -170,7 +170,15 @@ export class Graph {
     }
 
     private normalizeNode(n: RawNode | Node): Node {
-        const normNode = n instanceof Node ? n : new Node(n.id.toString(), n.data, n.style)
+        let children: Node[] = []
+        if (!(n instanceof Node) && n.children) {
+            children = n.children.map((n) => {
+                const nNode = this.normalizeNode(n)
+                nNode.markAsChild()
+                return nNode
+            })
+        }
+        const normNode = n instanceof Node ? n : new Node(n.id.toString(), n.data, n.style, n.domID, children)
         normNode.weight = n.weight
         return normNode
     }
@@ -274,8 +282,9 @@ export class Graph {
      * @private
      */
     onChange() {
-        this.simulation?.update()
         this.renderer?.update(true)
+        this.simulation?.update()
+        this.renderer?.nextTick()
     }
 
     /**
@@ -359,6 +368,12 @@ export class Graph {
      * @private
      */
     private _setData(nodes: Array<Node>, edges: Array<Edge>): void {
+        // const recurseAddChildren = (node: Node) => {
+        //     node.children.forEach((child: Node) => {
+        //         this.nodes.set(child.id, child)
+        //     })
+        // }
+
         const changes: GraphDataChange[] = []
         nodes.forEach(node => {
             this.nodes.set(node.id, node)
@@ -366,6 +381,7 @@ export class Graph {
                 type: 'node:add',
                 node: node
             } as GraphDataChange)
+            // recurseAddChildren(node)
         })
         edges.forEach(edge => {
             if (
@@ -595,6 +611,47 @@ export class Graph {
     }
 
     /**
+     * Retrieves all visible nodes in the graph. Recursively adding visible children
+     * 
+     * Returns the actual node instances, allowing direct modifications.
+     * 
+     * @remarks
+     * ⚠️ **Warning:** Modifying nodes directly may lead to unexpected behavior.
+     * It is generally safer to use `getNodes`, which returns cloned instances.
+     * 
+     * @returns An array of `Node` objects.
+     */
+    getMutableVisibleNodes(): Node[] {
+        function flattenNodes(nodes: Node[], parentNode: Node): Node[] {
+            const flat: Node[] = []
+            nodes.forEach((node, i) => {
+                if (!node.x || !node.y) {
+                    const r = 24
+                    const count = parentNode.children.length
+                    const angle = (i / count) * 2 * Math.PI
+                    node.x = (parentNode.x ?? 0) + r * Math.cos(angle - Math.PI / 2)
+                    node.y = (parentNode.y ?? 0) + r * Math.sin(angle - Math.PI / 2)
+                }
+                flat.push(node)
+                if (node.expanded && node.children.length) {
+                    flat.push(...flattenNodes(node.children, node))
+                }
+            })
+            return flat
+        }
+
+        return this.getMutableNodes().filter(node => node.visible)
+        const nodes: Node[] = []
+        this.getMutableNodes().filter(node => node.visible).forEach(node => {
+            nodes.push(node)
+            if (node.expanded && node.hasChildren()) {
+                nodes.push(...flattenNodes(node.children, node))
+            }
+        })
+        return nodes
+    }
+
+    /**
      * Retrieves all edges in the graph.
      * 
      * Returns clones of the edges to prevent external modifications.
@@ -707,6 +764,18 @@ export class Graph {
         })
         node.getEdgesIn().forEach(e => {
             if (e.from.visible) e.show()
+        })
+        this.onChange()
+    }
+
+    toggleExpandNode(node: Node) {
+        node.toggleExpand()
+        this.onChange()
+    }
+
+    toggleExpandNodes(nodes: Node[]) {
+        nodes.forEach(node => {
+            node.toggleExpand()
         })
         this.onChange()
     }

@@ -18,6 +18,7 @@ export class Edge {
     private style: Partial<EdgeFullStyle>
 
     visible: boolean
+    // isSyntheticEdge?: boolean
 
     private _dirty: boolean
     public readonly domID: string

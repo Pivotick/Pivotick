@@ -12,6 +12,7 @@ export interface NodeData {
 export class Node {
     public readonly id: string
     private data: NodeData
+    public children: Node[]
     private style: Partial<NodeStyle>
     private edgesOut: Set<Edge>
     private edgesIn: Set<Edge>
@@ -27,6 +28,9 @@ export class Node {
     weight?: number
     frozen?: boolean
     visible: boolean
+    expanded?: boolean
+    isChild: boolean
+    isParent: boolean
     private _circleRadius = this.defaultCircleRadius
     private _dirty: boolean
     public readonly domID: string
@@ -36,14 +40,22 @@ export class Node {
      * @param id - Unique identifier for the node
      * @param data - Optional data payload associated with the node
      */
-    constructor(id: string, data?: NodeData, style?: Partial<NodeStyle>, domID: string = generateSafeDomId()) {
+    constructor(id: string, data?: NodeData, style?: Partial<NodeStyle>, domID: string = generateSafeDomId(), children: Node[] = []) {
         this.id = id
         this.domID = domID
         this.data = data ?? ({} as NodeData)
         this.style = style ?? ({} as Partial<NodeStyle>)
+        this.children = children
+        if (this.hasChildren()) {
+            this.isParent = true
+        } else {
+            this.isParent = false
+        }
         this._dirty = true
         this.frozen = false
         this.visible = true
+        this.expanded = false
+        this.isChild = false
         this.edgesOut = new Set()
         this.edgesIn = new Set()
     }
@@ -186,6 +198,7 @@ export class Node {
         clone.weight = this.weight
         clone.frozen = this.frozen
         clone.visible = this.visible
+        clone.expanded = this.expanded
         clone._circleRadius = this._circleRadius
 
         return clone
@@ -240,6 +253,31 @@ export class Node {
         this.visible = false
     }
 
+    toggleExpand(expanded?: boolean): void {
+        if (expanded === undefined) {
+            if (this.expanded) {
+                this.collapse()
+            } else {
+                this.expand()
+            }
+        } else {
+            if (expanded) {
+                this.expand()
+            } else {
+                this.collapse()
+            }
+        }
+        this.markDirty()
+    }
+
+    expand(): void {
+        this.expanded = true
+    }
+
+    collapse(): void {
+        this.expanded = false
+    }
+
     degree(): number {
         return this.edgesOut.size + this.edgesIn.size
     }
@@ -250,5 +288,17 @@ export class Node {
 
     getCircleRadius(): number {
         return this._circleRadius
+    }
+
+    hasChildren(): boolean {
+        return this.children.length > 0
+    }
+
+    markAsChild(): void {
+        this.isChild = true
+    }
+
+    markAsParent(): void {
+        this.isParent = true
     }
 }

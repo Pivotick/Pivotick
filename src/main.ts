@@ -384,8 +384,8 @@ function addRandomNode(counter: number, graph: Pivotick) {
     graph.addEdge(newEdge)
 }
 
-const graph = createSampleGraph()
-window.pivotick = graph
+// const graph = createSampleGraph()
+// window.pivotick = graph
 
 const data = {
   'nodes': [
@@ -412,7 +412,11 @@ const data = {
     { 'id': 'D3', 'data': {'label': 'Uma', 'group': 'D', 'gender': 'female'}},
     { 'id': 'D4', 'data': {'label': 'Victor', 'group': 'D', 'gender': 'male'}},
     { 'id': 'D5', 'data': {'label': 'Walter', 'group': 'D', 'gender': 'male'}},
-    { 'id': 'D6', 'data': {'label': 'Xavier', 'group': 'D', 'gender': 'male'}}
+    { 'id': 'D6', 'data': {'label': 'Xavier', 'group': 'D', 'gender': 'male'}, children: [
+        { 'id': 'children-1', 'data': { 'label': 'Children 1' } },
+        { 'id': 'children-2', 'data': { 'label': 'Children 2' } },
+        { 'id': 'children-3', 'data': { 'label': 'Children 3' } },
+    ]}
    ],
   'edges': [
     { 'from': 'A1', 'to': 'A2' },
@@ -448,7 +452,12 @@ const data = {
     { 'from': 'A4', 'to': 'C1' },
     { 'from': 'B5', 'to': 'C4' },
     { 'from': 'C3', 'to': 'D2' },
-    { 'from': 'D4', 'to': 'A6' }
+    { 'from': 'D4', 'to': 'A6' },
+
+    { 'from': 'children-1', 'to': 'children-2' },
+    { 'from': 'children-2', 'to': 'children-3' },
+    { 'from': 'children-3', 'to': 'children-1' },
+    { 'from': 'A1', 'to': 'children-2' },
   ]
 }
 

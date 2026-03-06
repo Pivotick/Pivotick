@@ -2,11 +2,9 @@ import {
     forceSimulation as d3ForceSimulation,
     forceLink as d3ForceLink,
     forceManyBody as d3ForceManyBody,
-    forceCenter as d3ForceCenter,
     forceCollide as d3ForceCollide,
     type ForceLink as d3ForceLinkType,
     type ForceManyBody as d3ForceManyBodyType,
-    type ForceCenter as d3ForceCenterType,
     type ForceCollide as d3ForceCollideType,
     type SimulationNodeDatum,
 } from 'd3-force'
@@ -15,7 +13,7 @@ import { ForceGravity } from './plugins/d3Forces/ForceGravity'
 import { drag as d3Drag } from 'd3-drag'
 import type { Graph } from './Graph'
 import type { Node } from './Node'
-import type { Edge } from './Edge'
+import { Edge } from './Edge'
 import { runSimulationInWorker } from './SimulationWorkerWrapper'
 import merge from 'lodash.merge'
 import { TreeLayout } from './plugins/layout/Tree'
@@ -25,6 +23,8 @@ import type { DeepPartial } from './utils/utils'
 import type { SimulationCallbacks, SimulationForces, SimulationOptions } from './interfaces/SimulationOptions'
 import type { LayoutType, TreeLayoutOptions } from './interfaces/LayoutOptions'
 import type { GraphInteractions } from './GraphInteractions'
+import { ForceClusterRadial } from './plugins/d3Forces/ForceClusterRadial'
+import { ForceCenter } from './plugins/d3Forces/ForceCenter'
 
 
 export const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
@@ -143,17 +143,19 @@ export class Simulation {
         simulationForces: {
             link: d3ForceLinkType<Node, Edge>,
             charge: d3ForceManyBodyType<Node>,
-            center: d3ForceCenterType<Node>,
+            center: ForceCenter<Node>,
             collide: d3ForceCollideType<Node>,
             gravity: ForceGravity<Node>,
+            // clusterRadialConstraint: ForceClusterRadial<Node>,
         }
     } {
         const simulationForces = {
             link: d3ForceLink() as d3ForceLinkType<Node, Edge>,
             charge: d3ForceManyBody(),
-            center: d3ForceCenter(),
+            center: ForceCenter<Node>(),
             collide: d3ForceCollide(),
             gravity: ForceGravity(),
+            // clusterRadialConstraint: ForceClusterRadial(),
         }
 
         const simulation = d3ForceSimulation<Node>()
@@ -162,12 +164,14 @@ export class Simulation {
             .force('center', simulationForces.center)
             .force('collide', simulationForces.collide)
             .force('gravity', simulationForces.gravity)
+            // .force('clusterRadialConstraint', simulationForces.clusterRadialConstraint)
 
         this.initSimulationForceCenter(simulationForces.center, options)
         this.initSimulationForceGravity(simulationForces.gravity, options, canvasBCR)
         this.initSimulationForceLink(simulationForces.link, options)
         this.initSimulationForceCharge(simulationForces.charge, options)
         this.initSimulationForceCollide(simulationForces.collide, options)
+        // this.initSimulationForceClusterRadialConstraint(simulationForces.clusterRadialConstraint, options)
 
         simulation.alphaMin(options.d3AlphaMin)
         simulation.alphaDecay(options.d3AlphaDecay)
@@ -180,10 +184,11 @@ export class Simulation {
         }
     }
 
-    private static initSimulationForceCenter(force: d3ForceCenterType<Node>, options: SimulationOptions) {
+    private static initSimulationForceCenter(force: ForceCenter<Node>, options: SimulationOptions) {
         force.x(0)
             .y(0)
-            .strength(options.d3CenterStrength)
+            .strength(0.05)
+            .filter(node => !node.isChild)
     }
 
     private static initSimulationForceGravity(force: ForceGravity<Node>, options: SimulationOptions, canvasBCR: DOMRect) {
@@ -191,14 +196,20 @@ export class Simulation {
             .y(canvasBCR.height / 2)
             .strength((node) => {
                 const n = node as Node
+                // if (n.isChild) return 0
                 const degree = n.degree() ?? 0
                 return degree === 0 ? options.d3GravityStrength : 0
             })
     }
 
     private static initSimulationForceLink(force: d3ForceLinkType<Node, Edge>, options: SimulationOptions) {
-        force.distance((d) => {
-            const labelContent = edgeLabelGetter(d)
+        force.distance((edge) => {
+            // if (edge.isSyntheticEdge) {
+            //     const parent = edge.source as Node
+            //     return parent.getCircleRadius() * 0.6
+            // }
+
+            const labelContent = edgeLabelGetter(edge)
             if (!labelContent || labelContent === '') {
                 return options.d3LinkDistance
             }
@@ -214,12 +225,14 @@ export class Simulation {
         force.theta(options.d3ManyBodyTheta)
             .strength((node: SimulationNodeDatum) => {
                 const n = node as Node
+                // if (n.isChild) return 0
                 const baseStrength = options.d3ManyBodyStrength
 
                 const radius = n.getCircleRadius()
                 const dampedRadius = 10 + Math.sqrt(radius - 10) // Slowly push other nodes if radius increases
 
-                const weight = n.weight ?? 1
+                let weight = n.weight ?? 1
+                weight *= n.isParent ? 10 : 1
 
                 return baseStrength * (dampedRadius * dampedRadius) / 100 * weight
             })
@@ -228,8 +241,16 @@ export class Simulation {
     private static initSimulationForceCollide(force: d3ForceCollideType<Node>, options: SimulationOptions) {
         force.radius((node: SimulationNodeDatum) => {
             const n = node as Node
+            if (n.expanded) {
+                return 1.2 * n.getCircleRadius() + 20
+            }
             return n.getCircleRadius() ? 1.2 * n.getCircleRadius() : options.d3CollideRadius
         })
+            .strength(options.d3CollideStrength)
+    }
+
+    private static initSimulationForceClusterRadialConstraint(force: ForceClusterRadial<Node>, options: SimulationOptions) {
+        force
             .strength(options.d3CollideStrength)
     }
 
@@ -242,17 +263,62 @@ export class Simulation {
             // this.scaleSimulationOptions()
         }
 
+        // const visibleNodes = this.graph.getMutableVisibleNodes()
+        const visibleNodes = this.graph.getMutableNodes().filter(node => node.visible)
+
         this.simulation
-            .nodes(this.graph.getMutableNodes().filter(node => node.visible))
+            .nodes(visibleNodes)
 
         const linkForce = this.simulation.force('link')
         if (linkForce) {
             (linkForce as d3ForceLinkType<Node, Edge>)
                 .id((node: Node) => node.id)
-                .links(this.graph.getMutableEdges().filter(edge => edge.visible))
+                .links(this.getActiveEdges())
         }
 
         this.restart()
+    }
+
+    /** @private */
+    public getActiveEdges(): Edge[] {
+        const realEdges = this.graph
+            .getMutableEdges()
+            .filter(edge => {
+                if (!edge.visible) return false
+
+                const source = edge.source as Node
+                const target = edge.target as Node
+
+                // If either endpoint is currently a child inside a cluster,
+                // disable that external link
+                if (source.isChild || target.isChild) {
+                    return false
+                }
+
+                return true
+            })
+
+        const clusterLinks = this.getClusterLinks()
+        return [...realEdges, ...clusterLinks]
+    }
+
+    /** @private */
+    public getClusterLinks(): Edge[] {
+        const clusterLinks = this.graph.getMutableEdges().filter(edge => edge.visible)
+        // const visibleNodes = this.graph.getMutableVisibleNodes()
+
+        // visibleNodes.forEach(parent => {
+        //     if (!parent.expanded || !parent.hasChildren()) return
+
+        //     parent.children.forEach(child => {
+        //         const syntheticEdge = new Edge(`cluster-${parent.id}-${child.id}`, parent, child, {}, {}, false)
+        //         syntheticEdge.isSyntheticEdge = true
+        //         syntheticEdge.visible = false
+        //         clusterLinks.push(syntheticEdge)
+        //     })
+        // })
+
+        return clusterLinks
     }
 
     /** @private */

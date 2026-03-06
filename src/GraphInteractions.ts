@@ -29,6 +29,10 @@ export class GraphInteractions<TElement = unknown> {
             selectNode: [], unselectNode: [], selectEdge: [], unselectEdge: [],
             selectNodes: [], unselectNodes: [], selectEdges: [], unselectEdges: [],
         }
+
+        this.graph.UIManager.keyManager.register({ key: 'Enter', callback: () => {
+            this.expandNodeSelection()
+        } })
     }
 
     public on<K extends keyof GraphInteractionEvents<TElement>>(
@@ -62,7 +66,9 @@ export class GraphInteractions<TElement = unknown> {
         if (event.shiftKey) {
             this.addNodesToSelection([{node: node, element: element}])
         } else {
-            this.selectNode(element, node)
+            if (this.getSelectedNode()?.node !== node) {
+                this.selectNode(element, node)
+            }
         }
         this.emit('nodeClick', event, node, element)
         if (this.callbacks.onNodeClick && typeof this.callbacks.onNodeClick === 'function') {
@@ -75,6 +81,7 @@ export class GraphInteractions<TElement = unknown> {
         if (this.callbacks.onNodeDbclick && typeof this.callbacks.onNodeDbclick === 'function') {
             this.callbacks.onNodeDbclick(event, node, element)
         }
+        // this.graph.toggleExpandNode(node)
     }
 
     public nodeContextmenu(element: TElement, event: PointerEvent, node: Node): void {
@@ -195,14 +202,14 @@ export class GraphInteractions<TElement = unknown> {
         if (this.callbacks.onNodeSelect && typeof this.callbacks.onNodeSelect === 'function') {
             this.callbacks.onNodeSelect(node, element)
         }
-        node.markDirty()
+        // node.markDirty()
         this.refreshRendering()
     }
 
     public unselectNode(): void {
         if (this.selectedNode === null)
             return
-        this.selectedNode.node.markDirty()
+        // this.selectedNode.node.markDirty()
         const oldSelectionNode = this.selectedNode.node
         const oldSelectionElement = this.selectedNode.element
         this.selectedNode = null
@@ -224,7 +231,7 @@ export class GraphInteractions<TElement = unknown> {
             if (this.callbacks.onNodeSelect && typeof this.callbacks.onNodeSelect === 'function') {
                 this.callbacks.onNodeSelect(node, element)
             }
-            node.markDirty()
+            // node.markDirty()
         })
         this.refreshRendering()
     }
@@ -237,7 +244,7 @@ export class GraphInteractions<TElement = unknown> {
             if (this.callbacks.onNodeSelect && typeof this.callbacks.onNodeSelect === 'function') {
                 this.callbacks.onNodeSelect(node, element)
             }
-            node.markDirty()
+            // node.markDirty()
         })
         this.selectedNodes = this.selectedNodes.concat(addSelection)
         this.emit('selectNodes', addSelection)
@@ -253,7 +260,7 @@ export class GraphInteractions<TElement = unknown> {
             if (this.callbacks.onNodeBlur && typeof this.callbacks.onNodeBlur === 'function') {
                 this.callbacks.onNodeBlur(node, element)
             }
-            node.markDirty()
+            // node.markDirty()
         })
         this.emit('unselectNodes', removeSelection)
         this.refreshRendering()
@@ -269,7 +276,7 @@ export class GraphInteractions<TElement = unknown> {
         if (this.callbacks.onEdgeSelect && typeof this.callbacks.onEdgeSelect === 'function') {
             this.callbacks.onEdgeSelect(edge, element)
         }
-        edge.markDirty()
+        // edge.markDirty()
         this.refreshRendering()
     }
 
@@ -286,7 +293,7 @@ export class GraphInteractions<TElement = unknown> {
             if (this.callbacks.onEdgeSelect && typeof this.callbacks.onEdgeSelect === 'function') {
                 this.callbacks.onEdgeSelect(edge, element)
             }
-            edge.markDirty()
+            // edge.markDirty()
         })
         this.refreshRendering()
     }
@@ -294,7 +301,7 @@ export class GraphInteractions<TElement = unknown> {
     public unselectEdge(): void {
         if (this.selectedEdge === null)
             return
-        this.selectedEdge.edge.markDirty()
+        // this.selectedEdge.edge.markDirty()
         const oldSelectionEdge = this.selectedEdge.edge
         const oldSelectionElement = this.selectedEdge.element
         this.selectedEdge = null
@@ -318,7 +325,7 @@ export class GraphInteractions<TElement = unknown> {
             if (this.callbacks.onNodeBlur && typeof this.callbacks.onNodeBlur === 'function') {
                 this.callbacks.onNodeBlur(node, element)
             }
-            node.markDirty()
+            // node.markDirty()
         })
         this.selectedNodes = []
         this.emit('unselectNodes', this.selectedNodes)
@@ -330,7 +337,7 @@ export class GraphInteractions<TElement = unknown> {
             if (this.callbacks.onEdgeBlur && typeof this.callbacks.onEdgeBlur === 'function') {
                 this.callbacks.onEdgeBlur(edge, element)
             }
-            edge.markDirty()
+            // edge.markDirty()
         })
         this.selectedEdges = []
     }
@@ -366,5 +373,15 @@ export class GraphInteractions<TElement = unknown> {
 
     public getSelectedEdges(): EdgeSelection<TElement>[] {
         return this.selectedEdges
+    }
+
+    public expandNodeSelection() {
+        if (this.selectedNodes.length > 1) {
+            this.graph.toggleExpandNodes(this.selectedNodes.map((n) => n.node))
+        } else {
+            if (this.selectedNode) {
+                this.graph.toggleExpandNode(this.selectedNode.node)
+            }
+        }
     }
 }

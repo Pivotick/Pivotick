@@ -1,7 +1,7 @@
 import type { Force, SimulationNodeDatum } from 'd3-force'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface ForceGravity<Node extends SimulationNodeDatum> extends Force<Node, any> {
+export interface ForceCenter<Node extends SimulationNodeDatum> extends Force<Node, any> {
     /**
      * Supplies the array of nodes and random source to this force. This method is called when a force is bound to a simulation via simulation.force
      * and when the simulation’s nodes change via simulation.nodes.
@@ -42,35 +42,61 @@ export interface ForceGravity<Node extends SimulationNodeDatum> extends Force<No
      * A reduced strength of e.g. 0.05 softens the movements on interactive graphs in which new nodes enter or exit the graph.
      * @param strength The centering force's strength.
      */
-    strength(strength: number | ((node: Node, i: number, nodes: Node[]) => number)): this;
+    strength(strength: number): this;
+
+    /**
+     * Sets the centering force’s strength.
+     * A reduced strength of e.g. 0.05 softens the movements on interactive graphs in which new nodes enter or exit the graph.
+     * @param strength The centering force's strength.
+     */
+    filter(): (node: Node, i: number, nodes: Node[]) => boolean;
+    filter(filter: (node: Node, i: number, nodes: Node[]) => boolean): this;
 }
 
-export function ForceGravity<Node extends SimulationNodeDatum = SimulationNodeDatum>(
+export function ForceCenter<Node extends SimulationNodeDatum = SimulationNodeDatum>(
     x = 0,
     y = 0,
-    strength: number | ((node: Node, i: number, nodes: Node[]) => number) = 0.001
-): ForceGravity<Node> {
+    strength: number = 0.001,
+    filter: (node: Node, i: number, nodes: Node[]) => boolean = () => true
+): ForceCenter<Node> {
+
     let nodes: Node[] = []
-    let strengthFn: (node: Node, i: number, nodes: Node[]) => number
 
-    function initializeStrength() {
-        strengthFn = typeof strength === 'function' ? strength : () => strength as number
-    }
+    function force() {
+        if (!nodes.length) return
 
-    function force(alpha: number) {
-        for (let i = 0, n = nodes.length; i < n; ++i) {
-            const node = nodes[i]
-            const s = strengthFn(node, i, nodes)
-            if (node.vx && node.x)
-                node.vx -= (node.x - x) * s * alpha
-            if (node.vy && node.y)
-                node.vy -= (node.y - y) * s * alpha
-        }
+        let sx = 0
+        let sy = 0
+        let count = 0
+
+        // First pass: compute center of filtered nodes
+        nodes.forEach((node, i) => {
+            if (!filter(node, i, nodes)) return
+            if (node.x == null || node.y == null) return
+
+            sx += node.x
+            sy += node.y
+            count++
+        })
+
+        if (!count) return
+
+        // Compute shift
+        sx = ((sx / count) - x) * strength
+        sy = ((sy / count) - y) * strength
+
+        // Second pass: apply shift only to filtered nodes
+        nodes.forEach((node, i) => {
+            if (!filter(node, i, nodes)) return
+            if (node.x == null || node.y == null) return
+
+            node.x -= sx
+            node.y -= sy
+        })
     }
 
     force.initialize = (_nodes: Node[]) => {
         nodes = _nodes
-        initializeStrength()
     }
 
 
@@ -86,12 +112,17 @@ export function ForceGravity<Node extends SimulationNodeDatum = SimulationNodeDa
         return force
     }
 
-    force.strength = function (_?: number | ((node: Node, i: number, nodes: Node[]) => number)) {
+    force.strength = function (_?: number) {
         if (!arguments.length) return strength
         strength = _!
-        initializeStrength()
         return force
     }
 
-    return force as ForceGravity<Node>
+    force.filter = function (_?: (node: Node, i: number, nodes: Node[]) => boolean) {
+        if (!arguments.length) return filter
+        filter = _!
+        return force
+    }
+
+    return force as ForceCenter<Node>
 }
