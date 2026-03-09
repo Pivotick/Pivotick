@@ -31,6 +31,7 @@ export class Node {
     expanded?: boolean
     isChild: boolean
     isParent: boolean
+    parentNode?: Node
     private _circleRadius = this.defaultCircleRadius
     private _dirty: boolean
     public readonly domID: string
@@ -186,7 +187,7 @@ export class Node {
         const clonedData = { ...this.data }
         const clonedStyle = { ...this.style }
 
-        const clone = new Node(this.id, clonedData, clonedStyle, this.domID)
+        const clone = new Node(this.id, clonedData, clonedStyle)
 
         // Copy layout/physics properties
         clone.x = this.x
@@ -199,6 +200,9 @@ export class Node {
         clone.frozen = this.frozen
         clone.visible = this.visible
         clone.expanded = this.expanded
+        clone.isChild = this.isChild
+        clone.isParent = this.isParent
+        clone.parentNode = this.parentNode
         clone._circleRadius = this._circleRadius
 
         return clone
@@ -294,8 +298,9 @@ export class Node {
         return this.children.length > 0
     }
 
-    markAsChild(): void {
+    markAsChild(parentNode: Node): void {
         this.isChild = true
+        this.parentNode = parentNode
     }
 
     markAsParent(): void {

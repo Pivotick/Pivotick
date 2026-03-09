@@ -13,6 +13,7 @@ import { GraphInteractions } from '../../GraphInteractions'
 import { GraphRenderer } from '../../GraphRenderer'
 import { SelectionBox } from './SelectionBox'
 import type { EdgeStyle, GraphRendererOptions, LabelStyle, MarkerStyleMap, NodeStyle, SelectionBox as SelectionBoxI } from '../../interfaces/RendererOptions'
+import { ClusterDrawer } from './ClusterDrawer'
 d3Select.prototype.transition = d3Transition
 
 /**
@@ -367,6 +368,9 @@ export class GraphSvgRenderer extends GraphRenderer {
                             const selection = d3Select<SVGGElement, Node>(nodes[i])
                             if (node.isDirty()) {
                                 node.clearDirty()
+                                if (!node.expanded) { // teardown any created clusters.
+                                    ClusterDrawer.toggleSyntheticEdges(node)
+                                }
                                 selection.selectChildren().remove()
                                 this.nodeDrawer.render(selection, node)
                             }
@@ -376,7 +380,10 @@ export class GraphSvgRenderer extends GraphRenderer {
                 exit => exit.remove()
             )
 
-        const edges = this.graph.getMutableEdges().filter(edge => edge.visible)
+        const edges = this.graph.getMutableEdges()
+            .filter(edge => {
+                return edge.visible
+            })
         this.edgeGroupSelection = this.edgeGroup
             .selectAll<SVGPathElement, Edge>('g.pvt-edge-group')
 
@@ -384,7 +391,9 @@ export class GraphSvgRenderer extends GraphRenderer {
             .data(edges, (edge: Edge) => edge.id)
             .join(
                 (enter) => enter
-                    .append('g').classed('pvt-edge-group', true)
+                    .append('g')
+                    .classed('pvt-edge-group', true)
+                    .classed('pvt-edge-synthetic', (edge) => edge.isSynthetic === true)
                     .each((edge: Edge, i: number, edges: ArrayLike<SVGGElement>) => {
                         edge.clearDirty()
                         const selection = d3Select<SVGGElement, Edge>(edges[i])

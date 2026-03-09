@@ -11,9 +11,9 @@ d3Select.prototype.transition = d3Transition
 export class NodeDrawer {
 
     // @ts-expect-error: graph might be used in future updates
-    private graph: Graph
+    public graph: Graph
     public rendererOptions: GraphRendererOptions
-    private graphSvgRenderer: GraphSvgRenderer
+    public graphSvgRenderer: GraphSvgRenderer
     public clusterDrawer: ClusterDrawer
     private renderCB?: GraphRendererOptions['renderNode']
 

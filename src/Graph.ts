@@ -142,26 +142,31 @@ export class Graph {
 
     private normalizeGraphData(data: GraphData | RelaxedGraphData): GraphData {
         const normalizedNodes = data.nodes.map((n) => this.normalizeNode(n))
-        const nodesByID = new Map(normalizedNodes.map(node => [node.id, node]))
-        const normalizedEdges = data.edges
-            .map(e => {
-                if (e instanceof Edge) return e
-
-                const fromNode = nodesByID.get(e.from.toString())
-                const toNode = nodesByID.get(e.to.toString())
-
-                // Skip edges if either node doesn't exist
-                if (!fromNode || !toNode) return null
-
-                return new Edge(
-                    e.id?.toString() ?? `${e.from}-${e.to}`,
-                    fromNode,
-                    toNode,
-                    e.data,
-                    e.style
-                )
+        const childrenNodesByID = new Map()
+        const recurseAddChildren = (node: Node) => {
+            node.children.forEach((child: Node) => {
+                childrenNodesByID.set(child.id, child)
+                if (child.hasChildren()) {
+                    recurseAddChildren(child)
+                }
             })
+        }
+        normalizedNodes.forEach((node: Node) => {
+            recurseAddChildren(node)
+        })
+        const baseNodesByID = new Map(normalizedNodes.map(node => [node.id, node]))
+        const nodesByID = new Map([...baseNodesByID, ...childrenNodesByID])
+
+        const normalizedEdges: Edge[] = data.edges.map((e) => this.normalizeEdge(e, nodesByID))
             .filter((e): e is Edge => e !== null)
+
+        normalizedEdges.forEach((edge: Edge) => {
+            if (!edge.from.isChild && edge.to.isChild && edge.to.parentNode) { // child edges are handled in their own sub graph
+                const syntheticEdge = new Edge(
+                    `synthetic-${edge.from.id}-${edge.to.parentNode.id}`, edge.from, edge.to.parentNode, {}, {}, null, true)
+                normalizedEdges.push(syntheticEdge)
+            }
+        })
 
         return {
             nodes: normalizedNodes,
@@ -174,31 +179,41 @@ export class Graph {
         if (!(n instanceof Node) && n.children) {
             children = n.children.map((n) => {
                 const nNode = this.normalizeNode(n)
-                nNode.markAsChild()
                 return nNode
             })
         }
         const normNode = n instanceof Node ? n : new Node(n.id.toString(), n.data, n.style, n.domID, children)
+        normNode.children.forEach((child: Node) => {
+            child.markAsChild(normNode)
+            child.hide()
+        })
         normNode.weight = n.weight
         return normNode
     }
 
-    private normalizeEdge(e: RawEdge | Edge): Edge | null {
+    private normalizeEdge(e: RawEdge | Edge, allNodes?: Map<string, Node>): Edge | null {
         if (e instanceof Edge) return e
 
-        const fromNode = this.nodes.get(e.from.toString())
-        const toNode = this.nodes.get(e.to.toString())
+        const nodeMap = allNodes ? allNodes : this.nodes
+        
+        const fromNode = nodeMap.get(e.from.toString())
+        const toNode = nodeMap.get(e.to.toString())
 
         // Skip edges if either node doesn't exist
         if (!fromNode || !toNode) return null
 
-        return new Edge(
+        const normEdge = new Edge(
             e.id?.toString() ?? `${e.from}-${e.to}`,
             fromNode,
             toNode,
             e.data,
             e.style
         )
+
+        if (fromNode.isChild || toNode.isChild) {
+            normEdge.hide()
+        }
+        return normEdge
     }
 
 
@@ -368,11 +383,14 @@ export class Graph {
      * @private
      */
     private _setData(nodes: Array<Node>, edges: Array<Edge>): void {
-        // const recurseAddChildren = (node: Node) => {
-        //     node.children.forEach((child: Node) => {
-        //         this.nodes.set(child.id, child)
-        //     })
-        // }
+        const recurseAddChildren = (node: Node) => {
+            node.children.forEach((child: Node) => {
+                this.nodes.set(child.id, child)
+                if (child.hasChildren()) {
+                    recurseAddChildren(child)
+                }
+            })
+        }
 
         const changes: GraphDataChange[] = []
         nodes.forEach(node => {
@@ -381,7 +399,7 @@ export class Graph {
                 type: 'node:add',
                 node: node
             } as GraphDataChange)
-            // recurseAddChildren(node)
+            recurseAddChildren(node)
         })
         edges.forEach(edge => {
             if (
@@ -592,7 +610,9 @@ export class Graph {
      * @returns An array of cloned `Node` objects.
      */
     getNodes(): Node[] {
-        return Array.from(this.nodes.values()).map((node: Node) => node.clone())
+        return Array.from(this.nodes.values())
+            .filter((node: Node) => !node.isChild)
+            .map((node: Node) => node.clone())
     }
 
     /**
@@ -608,6 +628,7 @@ export class Graph {
      */
     getMutableNodes(): Node[] {
         return Array.from(this.nodes.values())
+            // .filter((node: Node) => !node.isChild)
     }
 
     /**
@@ -622,6 +643,8 @@ export class Graph {
      * @returns An array of `Node` objects.
      */
     getMutableVisibleNodes(): Node[] {
+        return this.getMutableNodes().filter(node => node.visible)
+
         function flattenNodes(nodes: Node[], parentNode: Node): Node[] {
             const flat: Node[] = []
             nodes.forEach((node, i) => {
@@ -640,7 +663,6 @@ export class Graph {
             return flat
         }
 
-        return this.getMutableNodes().filter(node => node.visible)
         const nodes: Node[] = []
         this.getMutableNodes().filter(node => node.visible).forEach(node => {
             nodes.push(node)
@@ -659,7 +681,8 @@ export class Graph {
      * @returns An array of cloned `Edge` objects.
      */
     getEdges(): Edge[] {
-        return Array.from(this.edges.values()).map((edge: Edge) => edge.clone())
+        return Array.from(this.edges.values())
+            .map((edge: Edge) => edge.clone())
     }
 
     /**

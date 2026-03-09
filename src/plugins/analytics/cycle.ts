@@ -16,6 +16,8 @@ export default function hasCycle(nodes: Node[], edges: Edge[]): boolean {
         adj[node.id] = []
     }
     for (const { source, target } of edges) {
+        if (!adj[source.id]) 
+            adj[source.id] = []
         adj[source.id].push(target.id)
     }
 

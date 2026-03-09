@@ -122,11 +122,15 @@
 //     return force
 // }
 
-import { drag as d3Drag } from 'd3-drag'
+import { drag as d3Drag, type D3DragEvent } from 'd3-drag'
 import { type Selection } from 'd3-selection'
-import { forceSimulation, forceManyBody, forceCollide, forceCenter } from 'd3-force'
-import type { SimulationNodeDatum } from 'd3-force'
+import { forceSimulation, forceManyBody, forceCollide, forceCenter, forceLink } from 'd3-force'
+import { type Simulation as d3Simulation } from 'd3-force'
+import type { Force, SimulationNodeDatum } from 'd3-force'
 import type { Node } from '../../Node'
+import type { Edge } from '../../Edge'
+import type { EdgeDrawer } from '../../renderers/svg/EdgeDrawer'
+import type { Graph } from '../../Graph'
 
 interface MicroForceOptions {
     repulsion?: number        // Negative for repelling children
@@ -141,11 +145,12 @@ interface MicroForceOptions {
  */
 export function simulateChildrenInsideParent(
     nodeSelection: Selection<SVGGElement, Node, SVGGElement, Node>,
+    edgeSelection: Selection<SVGGElement, Edge, SVGGElement, Node>,
     children: Node[],
-    parentX: number,
-    parentY: number,
     parentRadius: number,
-    options: MicroForceOptions = {}
+    options: MicroForceOptions = {},
+    edgeDrawer: EdgeDrawer,
+    graph: Graph,
 ) {
     const {
         repulsion = -10,
@@ -156,10 +161,12 @@ export function simulateChildrenInsideParent(
 
     if (!children?.length) return
 
-    // 1️⃣ Initialize positions relative to parent center
+    const childrenProxy = new Map<string, Node>()
+
+    // Initialize positions relative to parent center
     children.forEach((child, i) => {
-        // child.x = child.x ?? 0
-        // child.y = child.y ?? 0
+        childrenProxy.set(child.id, child)
+
         child.vx = child.vx ?? 0
         child.vy = child.vy ?? 0
         const r = 24
@@ -169,73 +176,116 @@ export function simulateChildrenInsideParent(
         child.y = r * Math.sin(angle - Math.PI / 2)
     })
 
-    // 2️⃣ Create micro simulation
-    const simulation = forceSimulation(children)
+    // Create micro simulation
+    const simulation: d3Simulation<Node, undefined> = forceSimulation(children)
         .alphaDecay(0.1)
         .velocityDecay(0.3)
         .force('charge', forceManyBody().strength(repulsion))
         .force('collide', forceCollide<Node>().radius(d => (d.getCircleRadius?.() ?? 10) + collidePadding))
-        .force('center', forceCenter(0, 0)) // Micro simulation: parent at origin
-        .force('constrainParent', constrainParent(parentRadius, parentPadding))
+        .force('center', forceCenter(0, 0))
+        .force('link', forceLink<Node, Edge>())
+        .force('constrainParent', forceConstrainParent<Node>(parentRadius, parentPadding))
         .on('tick', ticked)
 
-    // 3️⃣ Pre-tick simulation for stabilization
+    // Pre-tick simulation for stabilization
     for (let i = 0; i < iterations; i++) simulation.tick()
 
-    // 4️⃣ Enable drag on children
+    // Enable drag on children
     nodeSelection.call(setupDrag(simulation))
 
-    // 5️⃣ Tick handler: position children relative to parent position
+    // Tick handler: position children relative to parent position
     function ticked() {
         nodeSelection
             .attr('transform', d => {
                 const x = d.x ?? 0
                 const y = d.y ?? 0
+
+                // Keep real nodes and subgraph nodes in sync
+                updatePositionOnRealChild(x, y, d.id)
+
                 return `translate(${x},${y})`
             })
+        edgeDrawer.updatePositions(edgeSelection)
     }
 
-    // 6️⃣ Drag handler for children
-    function setupDrag(simulation: typeof simulation) {
-        function dragstarted(event: any) {
+    graph.renderer.getGraphInteraction().on('dragging', () => {
+        graph.getMutableNodes().filter((node) => node.isParent && node.expanded).forEach((node: Node) => {
+            const children = node.children
+            children.forEach((child: Node) => {
+                const childInSubgraph: Node | undefined = childrenProxy.get(child.id)
+                if (!childInSubgraph || !childInSubgraph.x || !childInSubgraph.y) return
+                updatePositionOnRealChild(childInSubgraph.x, childInSubgraph.y, child.id)
+            })
+        })
+    })
+
+    function updatePositionOnRealChild(x: number, y: number, id: string): void {
+        const realChild = graph.getMutableNode(id)
+        const clusterNode = realChild?.parentNode
+        if (realChild && clusterNode) {
+            realChild.x = x + (clusterNode.x ?? 0)
+            realChild.y = y + (clusterNode.y ?? 0)
+            graph.renderer.nextTickFor([realChild])
+        }
+    }
+
+    // Drag handler for children
+    function setupDrag(simulation: d3Simulation<Node, undefined>) {
+        function dragstarted(event: D3DragEvent<SVGGElement, Node, Node>) {
             if (!event.active) simulation.alphaTarget(0.3).restart()
             event.subject.fx = event.subject.x
             event.subject.fy = event.subject.y
         }
 
-        function dragged(event: any) {
+        function dragged(event: D3DragEvent<SVGGElement, Node, Node>) {
             // Convert drag coordinates to parent-local frame
             event.subject.fx = event.x
             event.subject.fy = event.y
             simulation.alphaTarget(0.3).restart()
         }
 
-        function dragended(event: any) {
+        function dragended(event: D3DragEvent<SVGGElement, Node, Node>) {
             if (!event.active) simulation.alphaTarget(0)
-            event.subject.fx = null
-            event.subject.fy = null
+            event.subject.fx = undefined
+            event.subject.fy = undefined
             simulation.alphaTarget(0).restart()
         }
 
         return d3Drag<SVGGElement, Node>()
-            .on('start', dragstarted)
-            .on('drag', dragged)
-            .on('end', dragended)
+            .on('start.draggedelement', dragstarted)
+            .on('drag.draggedelement', dragged)
+            .on('end.draggedelement', dragended)
     }
 
     return simulation
 }
 
+
 /**
  * Custom force to constrain nodes inside a circle of given radius
  * relative to (0,0) = parent center
  */
-function constrainParent(parentRadius: number, padding: number) {
-    const force: any = function (alpha: number) {
-        if (!force.nodes) return
-        const maxDistance = parentRadius - padding
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+interface ForceConstrainParent<TNode extends Node & SimulationNodeDatum> extends Force<TNode, any> {
+    /**
+     * Supplies the array of nodes and random source to this force. This method is called when a force is bound to a simulation via simulation.force
+     * and when the simulation’s nodes change via simulation.nodes.
+     *
+     * A force may perform necessary work during initialization, such as evaluating per-node parameters, to avoid repeatedly performing work during each application of the force.
+     */
+    initialize(nodes: TNode[], random: () => number): void;
+}
 
-        for (const node of force.nodes) {
+function forceConstrainParent<TNode extends Node & SimulationNodeDatum = Node & SimulationNodeDatum>(
+    parentRadius: number, padding: number
+): ForceConstrainParent<TNode> {
+    let nodes: TNode[] = []
+
+    function force() {
+        if (!nodes) return
+        const maxDistance = (parentRadius - padding) * 0.9
+
+        for (const node of nodes) {
             if (node.x == null || node.y == null) continue
 
             const dx = node.x
@@ -257,9 +307,9 @@ function constrainParent(parentRadius: number, padding: number) {
         }
     }
 
-    force.initialize = function (nodes: Node[] & SimulationNodeDatum[]) {
-        force.nodes = nodes
+    force.initialize = (_nodes: TNode[]) => {
+        nodes = _nodes
     }
 
-    return force
+    return force as ForceConstrainParent<TNode>
 }

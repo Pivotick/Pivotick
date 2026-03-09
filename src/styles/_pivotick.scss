@@ -267,6 +267,12 @@ dl.pvt-property-list {
             }
         }
     }
+
+    &.pvt-edge-synthetic {
+        path {
+            stroke-dasharray: 3;
+        }
+    }
 }
 
 .pvt-node {

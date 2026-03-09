@@ -194,7 +194,7 @@ export class EdgeDrawer {
         edgePathSelection.attr('d', (edge: Edge): string | null => {
             return this.linkPathRouter(edge)
         })
-        
+
         edgeLabelSelection.attr('transform', (edge: Edge, i, labels) => {
             const { from, to } = edge
             const style = this.getEdgeStyle(edge)

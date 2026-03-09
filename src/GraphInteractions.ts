@@ -67,6 +67,10 @@ export class GraphInteractions<TElement = unknown> {
             this.addNodesToSelection([{node: node, element: element}])
         } else {
             if (this.getSelectedNode()?.node !== node) {
+                const clickedElement = element as HTMLElement
+                if (clickedElement.classList.contains('pvt-node-expanded')) {
+                    // do nothing
+                }
                 this.selectNode(element, node)
             }
         }

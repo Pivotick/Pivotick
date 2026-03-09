@@ -3,12 +3,15 @@ import { Node } from '../../Node'
 import type { GraphRendererOptions } from '../../interfaces/RendererOptions'
 import { NodeDrawer } from './NodeDrawer'
 import { simulateChildrenInsideParent } from '../../plugins/layout/MicroForce'
+import { Edge } from '../../Edge'
+import type { EdgeDrawer } from './EdgeDrawer'
 
 export class ClusterDrawer {
 
     private renderCB?: GraphRendererOptions['renderCluster']
 
     public nodeDrawer: NodeDrawer
+    public edgeDrawer?: EdgeDrawer
 
     public constructor(nodeDrawer: NodeDrawer) {
         this.nodeDrawer = nodeDrawer
@@ -16,12 +19,22 @@ export class ClusterDrawer {
     }
 
     public render(theClusterSelection: Selection<SVGGElement, Node, null, undefined>, node: Node, cb: () => void): Selection<SVGCircleElement, Node, null, undefined> {
+        if (!this.edgeDrawer) {
+            this.edgeDrawer = this.nodeDrawer.graphSvgRenderer.edgeDrawer
+        }
+
         let cluster = theClusterSelection.select<SVGCircleElement>('.parent-bubble')
+        let childrenNodeGroup = theClusterSelection.select<SVGGElement>('g.children-node-group')
+        let childrenEdgeGroup = theClusterSelection.select<SVGGElement>('g.children-edge-group')
 
         if (cluster.empty()) {
             cluster = theClusterSelection.append('circle')
                 .classed('parent-bubble', true)
                 .lower()
+            childrenNodeGroup = theClusterSelection.append('g')
+                .classed('children-node-group', true)
+            childrenEdgeGroup = theClusterSelection.append('g')
+                .classed('children-edge-group', true)
         }
 
         let r
@@ -49,8 +62,22 @@ export class ClusterDrawer {
         if (node.expanded) {
             cluster.transition().duration(200).attr('r', r)
 
-            const childGroup = theClusterSelection.selectAll<SVGGElement, Node>('.pvt-child-node')
-                .data(node.children, d => d.id)
+            const clonedChildren = node.children.map((n) => n.clone())
+
+            const childrenEdges: Edge[] =
+                node.children.flatMap(child => child.getEdgesOut() ?? [])
+                .map((e) => new Edge(
+                    e.id,
+                    clonedChildren.filter(n => n.id === e.from.id)[0],
+                    clonedChildren.filter(n => n.id === e.to.id)[0],
+                    e.getData(),
+                    e.getStyle(),
+                    e.directed,
+                    e.isSynthetic
+                ))
+
+            const childGroup = childrenNodeGroup.selectAll<SVGGElement, Node>('.pvt-child-node')
+                .data(clonedChildren, d => d.id)
                 .join(
                     enter => enter.append('g')
                         .classed('pvt-child-node', true)
@@ -68,21 +95,50 @@ export class ClusterDrawer {
                     exit => exit.remove()
                 )
 
+            const edgeGroup = childrenEdgeGroup.selectAll<SVGPathElement, Edge>('g.pvt-child-edge')
+                    .data(childrenEdges, (edge: Edge) => edge.id)
+                    .join(
+                        (enter) => enter
+                            .append('g').classed('pvt-edge-group', true)
+                            .each((edge: Edge, i: number, edges: ArrayLike<SVGGElement>) => {
+                                edge.clearDirty()
+                                const selection = d3Select<SVGGElement, Edge>(edges[i])
+                                selection.attr('id', `edge-${edge.domID}`)
+                                this.edgeDrawer!.render(selection, edge)
+                            }),
+                        update => update
+                            .each((edge: Edge, i: number, edges: ArrayLike<SVGPathElement>) => {
+                                if (edge.isDirty()) {
+                                    edge.clearDirty()
+                                    const selection = d3Select<SVGGElement, Edge>(edges[i])
+                                    selection.selectChildren().remove()
+                                    this.edgeDrawer!.render(selection, edge)
+                                }
+                            }),
+                        exit => exit.remove()
+                    )
+
             childGroup.style('opacity', 0)
-                .transition().duration(200).style('opacity', 1)
+                .transition().delay(50).duration(200).style('opacity', 1)
+            edgeGroup.style('opacity', 0)
+                .transition().delay(50).duration(200).style('opacity', 1)
 
             simulateChildrenInsideParent(
                 childGroup,
-                node.children,
-                node.x ?? 0,
-                node.y ?? 0,
+                edgeGroup,
+                clonedChildren,
                 node.getCircleRadius(),
                 {
                     repulsion: -15,
                     iterations: 8,
                     parentPadding: 8
-                }
+                },
+                this.edgeDrawer,
+                this.nodeDrawer.graph
             )
+
+            ClusterDrawer.toggleSyntheticEdges(node)
+
         }
 
         if (cb) {
@@ -93,5 +149,35 @@ export class ClusterDrawer {
 
         return cluster
 
+    }
+
+    public static toggleSyntheticEdges(node: Node): void {
+        if (node.expanded) {
+            // Hide synthetic edges that point to the parent node of this subgraph
+            node.getEdgesIn().filter((e: Edge) => e.isSynthetic === true).forEach((e: Edge) => {
+                e.hide()
+            })
+            // Then show actual edges
+            node.children.forEach((child: Node) => {
+                child.getEdgesIn()
+                    .filter((e: Edge) => !node.children.includes(e.from)) // Edges are already drawn in the subgraph
+                    .forEach((e: Edge) => {
+                        e.show()
+                    })
+            })
+        } else {
+            // Show synthetic edges that point to the parent node of this subgraph
+            node.getEdgesIn().filter((e: Edge) => e.isSynthetic === true).forEach((e: Edge) => {
+                e.show()
+            })
+            // Then hide actual edges
+            node.children.forEach((child: Node) => {
+                child.getEdgesIn()
+                    .filter((e: Edge) => !node.children.includes(e.from)) // Edges are already drawn in the subgraph
+                    .forEach((e: Edge) => {
+                        e.hide()
+                    })
+            })
+        }
     }
 }
