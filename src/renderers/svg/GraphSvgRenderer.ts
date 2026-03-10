@@ -342,8 +342,12 @@ export class GraphSvgRenderer extends GraphRenderer {
         // const nodes: Node[] = this.graph.getMutableVisibleNodes()
         const nodes: Node[] = this.graph.getMutableNodes().filter(node => node.visible)
 
+        const nodeGroupNode: SVGGElement = this.nodeGroup.node() as SVGGElement
         this.nodeGroupSelection = this.nodeGroup
             .selectAll<SVGGElement, Node>('g.pvt-node')
+            .filter(function () {
+                return this.parentNode === nodeGroupNode
+            })
 
         this.nodeSelection = this.nodeGroupSelection
             .data(nodes, (node: Node) => node.id)

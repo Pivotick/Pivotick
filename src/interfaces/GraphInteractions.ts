@@ -24,6 +24,7 @@ export type GraphInteractionEvents<TElement> = {
     nodeSelect: (node: Node, element: TElement) => void;
     nodeBlur: (node: Node, element: TElement) => void;
     dragging: (event: MouseEvent, node: Node) => void;
+    dragended: (event: MouseEvent, node: Node) => void;
 
     edgeClick: (event: PointerEvent, edge: Edge, element: TElement) => void;
     edgeDbclick: (event: PointerEvent, edge: Edge, element: TElement) => void;

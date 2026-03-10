@@ -346,6 +346,7 @@ export class Simulation {
     }
 
     public enable() {
+        this.avgTickDuration = 0
         this.options.enabled = true
         this.start(false)
     }
@@ -669,6 +670,7 @@ export class Simulation {
                         d.unfreeze()
                     }
                 }
+                this.graphInteraction.dragended(event.sourceEvent, event.subject)
             })
     }
 

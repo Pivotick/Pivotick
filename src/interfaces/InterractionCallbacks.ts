@@ -47,6 +47,11 @@ export interface InterractionCallbacks<TElement = unknown> {
     onNodeDragging?: (event: MouseEvent, node: Node) => void
 
     /**
+     * Called when a node drag ends.
+     */
+    onNodeDragended?: (event: MouseEvent, node: Node) => void
+
+    /**
      * Called when an edge is selected by the user.
      */
     onEdgeClick?: (event: PointerEvent, edge: Edge, element: TElement) => void

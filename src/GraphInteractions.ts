@@ -21,7 +21,7 @@ export class GraphInteractions<TElement = unknown> {
         this.callbacks = this.graph.getCallbacks() ?? {}
         this.listeners = {
             nodeClick: [], nodeDbclick: [], nodeHoverIn: [], nodeHoverOut: [],
-            nodeSelect: [], nodeBlur: [], dragging: [], nodeContextmenu: [],
+            nodeSelect: [], nodeBlur: [], dragging: [], dragended: [], nodeContextmenu: [],
             edgeClick: [], edgeDbclick: [], edgeHoverIn: [], edgeHoverOut: [],
             edgeSelect: [], edgeBlur: [], edgeContextmenu: [],
             canvasClick: [], canvasMousemove: [], canvasContextmenu: [], canvasZoom: [],
@@ -113,6 +113,13 @@ export class GraphInteractions<TElement = unknown> {
         this.emit('dragging', event, node)
         if (this.callbacks.onNodeDragging && typeof this.callbacks.onNodeDragging === 'function') {
             this.callbacks.onNodeDragging(event, node)
+        }
+    }
+
+    public dragended = (event: PointerEvent, node: Node): void => {
+        this.emit('dragended', event, node)
+        if (this.callbacks.onNodeDragended && typeof this.callbacks.onNodeDragended === 'function') {
+            this.callbacks.onNodeDragended(event, node)
         }
     }
 

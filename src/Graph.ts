@@ -863,6 +863,13 @@ export class Graph {
     }
 
     /**
+     * Deselect all
+     */
+    deselectAll(): void {
+        this.renderer.getGraphInteraction().unselectAll()
+    }
+
+    /**
      * Add a highligh class to the given node or edge
      * 
      * @param element The `Node` or `Edge` to highligh.

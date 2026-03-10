@@ -2,9 +2,12 @@ import { select as d3Select, type Selection } from 'd3-selection'
 import { Node } from '../../Node'
 import type { GraphRendererOptions } from '../../interfaces/RendererOptions'
 import { NodeDrawer } from './NodeDrawer'
-import { simulateChildrenInsideParent } from '../../plugins/layout/MicroForce'
+import { forceConstrainParent, simulateChildrenInsideParent } from '../../plugins/layout/MicroForce'
 import { Edge } from '../../Edge'
 import type { EdgeDrawer } from './EdgeDrawer'
+import { Graph } from '../../Graph'
+import type { GraphOptions, RawEdge, RawNode, RelaxedGraphData } from '../../interfaces/GraphOptions'
+import { forceCenter, forceCollide, forceLink, forceManyBody } from 'd3-force'
 
 export class ClusterDrawer {
 
@@ -24,17 +27,17 @@ export class ClusterDrawer {
         }
 
         let cluster = theClusterSelection.select<SVGCircleElement>('.parent-bubble')
-        let childrenNodeGroup = theClusterSelection.select<SVGGElement>('g.children-node-group')
-        let childrenEdgeGroup = theClusterSelection.select<SVGGElement>('g.children-edge-group')
+        // let childrenNodeGroup = theClusterSelection.select<SVGGElement>('g.children-node-group')
+        // let childrenEdgeGroup = theClusterSelection.select<SVGGElement>('g.children-edge-group')
 
         if (cluster.empty()) {
             cluster = theClusterSelection.append('circle')
                 .classed('parent-bubble', true)
                 .lower()
-            childrenNodeGroup = theClusterSelection.append('g')
-                .classed('children-node-group', true)
-            childrenEdgeGroup = theClusterSelection.append('g')
-                .classed('children-edge-group', true)
+            // childrenNodeGroup = theClusterSelection.append('g')
+            //     .classed('children-node-group', true)
+            // childrenEdgeGroup = theClusterSelection.append('g')
+            //     .classed('children-edge-group', true)
         }
 
         let r
@@ -76,66 +79,9 @@ export class ClusterDrawer {
                     e.isSynthetic
                 ))
 
-            const childGroup = childrenNodeGroup.selectAll<SVGGElement, Node>('.pvt-child-node')
-                .data(clonedChildren, d => d.id)
-                .join(
-                    enter => enter.append('g')
-                        .classed('pvt-child-node', true)
-                        .each((childNode: Node, i: number, nodes: ArrayLike<SVGGElement>) => {
-                            childNode.clearDirty()
-                            const selection = d3Select<SVGGElement, Node>(nodes[i])
-                            selection.attr('id', `node-${childNode.domID}`)
-                            this.nodeDrawer.render(selection, childNode)
-                        }),
-                    update => update.each((child: Node, j: number, elems) => {
-                        const s = d3Select<SVGGElement, Node>(elems[j])
-                        s.selectChildren().remove()
-                        this.nodeDrawer.render(s, child)
-                    }),
-                    exit => exit.remove()
-                )
-
-            const edgeGroup = childrenEdgeGroup.selectAll<SVGPathElement, Edge>('g.pvt-child-edge')
-                    .data(childrenEdges, (edge: Edge) => edge.id)
-                    .join(
-                        (enter) => enter
-                            .append('g').classed('pvt-edge-group', true)
-                            .each((edge: Edge, i: number, edges: ArrayLike<SVGGElement>) => {
-                                edge.clearDirty()
-                                const selection = d3Select<SVGGElement, Edge>(edges[i])
-                                selection.attr('id', `edge-${edge.domID}`)
-                                this.edgeDrawer!.render(selection, edge)
-                            }),
-                        update => update
-                            .each((edge: Edge, i: number, edges: ArrayLike<SVGPathElement>) => {
-                                if (edge.isDirty()) {
-                                    edge.clearDirty()
-                                    const selection = d3Select<SVGGElement, Edge>(edges[i])
-                                    selection.selectChildren().remove()
-                                    this.edgeDrawer!.render(selection, edge)
-                                }
-                            }),
-                        exit => exit.remove()
-                    )
-
-            childGroup.style('opacity', 0)
-                .transition().delay(50).duration(200).style('opacity', 1)
-            edgeGroup.style('opacity', 0)
-                .transition().delay(50).duration(200).style('opacity', 1)
-
-            simulateChildrenInsideParent(
-                childGroup,
-                edgeGroup,
-                clonedChildren,
-                node.getCircleRadius(),
-                {
-                    repulsion: -15,
-                    iterations: 8,
-                    parentPadding: 8
-                },
-                this.edgeDrawer,
-                this.nodeDrawer.graph
-            )
+            const subgraphContainer: SVGGElement = theClusterSelection.node() as SVGGElement
+            const subgraph = this.createSubgraph(clonedChildren, childrenEdges, subgraphContainer, node, this.nodeDrawer.graph)
+            node._subgraph = subgraph
 
             ClusterDrawer.toggleSyntheticEdges(node)
 
@@ -178,6 +124,117 @@ export class ClusterDrawer {
                         e.hide()
                     })
             })
+        }
+    }
+
+    private createSubgraph(nodes: Node[], edges: Edge[], container: SVGGElement, parentNode: Node, mainGraph: Graph): Graph {
+
+        const options: GraphOptions = {
+            UI: {
+                mode: 'viewer',
+                tooltip: {
+                    enabled: false,
+                },
+                contextMenu: {
+                    enabled: false,
+                },
+                navigation: {
+                    enabled: false,
+                }
+            },
+            render: {
+                ...this.nodeDrawer.graph.getOptions().render,
+                zoomEnabled: false,
+                zoomAnimationDuration: 100,
+            },
+            simulation: {
+                useWorker: false,
+                warmupTicks: 0,
+                cooldownTime: 0,
+                freezeNodesOnDrag: false,
+            },
+            callbacks: {
+                onNodeSelect: (node) => {
+                    const mainGraphNode = mainGraph.getMutableNode(node.id)
+                    if (mainGraphNode) {
+                        mainGraph.selectElement(mainGraphNode)
+                    }
+                },
+                onEdgeSelect: (edge) => {
+                    const mainGraphEdge = mainGraph.getMutableEdge(edge.id)
+                    if (mainGraphEdge) {
+                        mainGraph.selectElement(mainGraphEdge)
+                    }
+                },
+                onNodeHoverIn: (event, node) => {
+                    mainGraph.UIManager.tooltip?.openForNodeOnElement(event, node)
+                },
+            }
+        }
+
+        const subgraphData: RelaxedGraphData = {
+            nodes: [...nodes.values()].map((n) => n.toDict(true) as RawNode),
+            edges: [...edges.values()].map(e => e.toDict() as RawEdge)
+        }
+
+        const childrenProxy = new Map<string, Node>()
+
+        const tmpHtml = document.createElement('div')
+        const subgraph = new Graph(tmpHtml, subgraphData, options)
+        const zoomLayer = tmpHtml.querySelector('.zoom-layer') as SVGGElement
+        container.appendChild(zoomLayer)
+
+        subgraph.getMutableNodes().forEach((n: Node) => {
+            childrenProxy.set(n.id, n)
+        })
+
+        subgraph.on('ready', () => {
+            subgraph.simulation.getSimulation()
+                .force('link', null)
+                .force('charge', null)
+                .force('center', null)
+                .force('collide', null)
+                .force('gravity', null)
+                .force('charge', forceManyBody().strength(-10))
+                .force('collide', forceCollide<Node>().radius(d => (d.getCircleRadius?.() ?? 10) + 2))
+                .force('center', forceCenter(0, 0))
+                .force('link', forceLink<Node, Edge>())
+                .force('constrainParent', forceConstrainParent<Node>(parentNode.getCircleRadius(), 10))
+        })
+        subgraph.renderer.getGraphInteraction().on('dragended', () => {
+        })
+        subgraph.renderer.getGraphInteraction().on('simulationTick', () => {
+            subgraph.getMutableNodes().forEach((node: Node) => {
+                const x = node.x ?? 0
+                const y = node.y ?? 0
+                this.updatePositionOnRealChild(x, y, node.id)
+            })
+        })
+
+        mainGraph.renderer.getGraphInteraction().on('dragging', () => {
+            mainGraph.getMutableNodes().filter((node) => node.isParent && node.expanded).forEach((node: Node) => {
+                const children = node.children
+                children.forEach((child: Node) => {
+                    const childInSubgraph: Node | undefined = childrenProxy.get(child.id)
+                    if (!childInSubgraph || !childInSubgraph.x || !childInSubgraph.y) return
+                    this.updatePositionOnRealChild(childInSubgraph.x, childInSubgraph.y, child.id)
+                })
+            })
+        })
+        mainGraph.renderer.getGraphInteraction().on('canvasClick', () => {
+            subgraph.deselectAll()
+        })
+
+        return subgraph
+    }
+
+    private updatePositionOnRealChild(x: number, y: number, id: string) {
+        const realChild = this.nodeDrawer.graph.getMutableNode(id)
+        const clusterNode = realChild?.parentNode
+        if (realChild && clusterNode) {
+            realChild.x = x + (clusterNode.x ?? 0)
+            realChild.y = y + (clusterNode.y ?? 0)
+            this.nodeDrawer.graph.renderer.nextTickFor([realChild])
         }
     }
 }

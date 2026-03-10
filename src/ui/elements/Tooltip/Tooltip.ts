@@ -50,6 +50,13 @@ export class Tooltip implements UIElement {
         if (!container) return
 
         this.parentContainer = document.querySelector('body')!
+        const tooltipContainer: HTMLDivElement | null = this.parentContainer.querySelector('.pvt-tooltip')
+        const shadowlinkContainer: SVGSVGElement | null = this.parentContainer.querySelector('.pivotick-shadowlink-container')
+        if (tooltipContainer && shadowlinkContainer) {
+            this.tooltip = tooltipContainer
+            this.shadowLinkContainer = shadowlinkContainer
+            return
+        }
         const template = document.createElement('template')
         template.innerHTML = '<div class="pvt-tooltip"></div>'
         this.tooltip = template.content.firstElementChild as HTMLDivElement
@@ -120,6 +127,9 @@ export class Tooltip implements UIElement {
 
         this.mouseY = event.pageY // Mouse X might not be over the canvas
         this.mouseX = event.pageX
+
+        this.hoveredElementID = node.id
+        this.hoveredElement = node
 
         if (!this.tooltipCanBeShown()) return
         this.show(() => {

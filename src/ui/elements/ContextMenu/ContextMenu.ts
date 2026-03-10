@@ -178,6 +178,11 @@ export class ContextMenu implements UIElement {
         if (!container) return
 
         this.parentContainer = document.querySelector('body')!
+        const menuContainer: HTMLDivElement | null = this.parentContainer.querySelector('.pvt-contextmenu')
+        if (menuContainer) {
+            this.menu = menuContainer
+            return
+        }
         const template = document.createElement('template')
         template.innerHTML = `
         <div class="pvt-contextmenu">
@@ -244,17 +249,23 @@ export class ContextMenu implements UIElement {
 
         ].forEach(menuList => {
             menuList.forEach((entry) => {
-                this.wrapOnclikAction(entry)
+                this.wrapOnclickAction(entry)
             })
         })
     }
 
-    private wrapOnclikAction(entry: MenuQuickActionItemOptions | MenuActionItemOptions) {
+    private wrapOnclickAction(entry: MenuQuickActionItemOptions | MenuActionItemOptions) {
         if (entry.onclick) {
             const originalOnClick = entry.onclick
-            entry.onclick = (evt: PointerEvent | MouseEvent, element?: Node | Edge | Node[] | Edge[] | null | undefined) => {
-                originalOnClick.apply(this, [evt, element]) // Call the original onclick with the expected arguments and correct `this`
-                this.hide?.() // Close the menu after the click
+            // eslint-disable-next-line @typescript-eslint/no-this-alias
+            const menu = this
+            entry.onclick = function (
+                this: UIElement,
+                evt: PointerEvent | MouseEvent,
+                element?: Node | Edge | Node[] | Edge[] | null
+            ) {
+                originalOnClick.apply(this, [evt, element])
+                menu.hide?.()
             }
         }
     }

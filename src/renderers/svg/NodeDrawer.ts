@@ -343,6 +343,7 @@ export class NodeDrawer {
 
         const matchSingle = selected?.node?.id === node.id
         const matchMultiple = Array.isArray(selectedIds) ? selectedIds.includes(node.id) : false
+        
 
         return matchSingle || matchMultiple
     }

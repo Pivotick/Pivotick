@@ -276,7 +276,7 @@ interface ForceConstrainParent<TNode extends Node & SimulationNodeDatum> extends
     initialize(nodes: TNode[], random: () => number): void;
 }
 
-function forceConstrainParent<TNode extends Node & SimulationNodeDatum = Node & SimulationNodeDatum>(
+export function forceConstrainParent<TNode extends Node & SimulationNodeDatum = Node & SimulationNodeDatum>(
     parentRadius: number, padding: number
 ): ForceConstrainParent<TNode> {
     let nodes: TNode[] = []
