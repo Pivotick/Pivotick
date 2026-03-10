@@ -26,6 +26,7 @@ export class Graph {
     /** @private */
     private options: GraphOptions
     private app_id: string
+    private parentGraph?: Graph
     
     private listeners: Record<keyof GraphEvents, Array<GraphEvents[keyof GraphEvents]>>
 
@@ -829,6 +830,22 @@ export class Graph {
      */
     getAppID(): string {
         return this.app_id
+    }
+
+    /**
+     * @private
+     * Set the parent graph instance if this instance is nested as a subgraph
+     */
+    public setParentGraph(parentGraph: Graph): void {
+        this.parentGraph = parentGraph
+    }
+
+    /**
+     * @private
+     * Set the parent graph instance if this instance is nested as a subgraph
+     */
+    public getParentGraph(): Graph | undefined {
+        return this.parentGraph
     }
 
     /**

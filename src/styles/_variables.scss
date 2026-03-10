@@ -72,6 +72,7 @@ $light-theme: (
     pvt-box-shadow-light: "rgba(0, 0, 0, 0.25) 0px 1px 2px 0px",
     pvt-box-shadow-medium: "rgba(0, 0, 0, 0.1) 0px 4px 6px -1px, rgba(0, 0, 0, 0.06) 0px 2px 4px -1px",
     pvt-box-shadow-strong: "rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px",
+    pvt-box-shadow-color-strong: "#aaaaaa55",
 
 
     /* Sidebar */
@@ -162,6 +163,10 @@ $light-theme: (
     pvt-node-highlighted-opacity: 1,
     pvt-node-highlighted-animation: glowPulseHighlighted 1.5s infinite,
     // #endregion node
+
+    /* Node cluster */
+    pvt-node-cluster-fill: #00000010,
+    pvt-node-cluster-stroke: color-mix(in srgb, var(--pvt-node-stroke) 60%, #000),
 
     // #region edge
     /* Edge defaults */
@@ -299,6 +304,7 @@ $dark-theme: (
     pvt-box-shadow-light: "rgba(0, 0, 0, 0.25) 0px 1px 2px 0px",
     pvt-box-shadow-medium: "rgba(0, 0, 0, 0.1) 0px 4px 6px -1px, rgba(0, 0, 0, 0.06) 0px 2px 4px -1px",
     pvt-box-shadow-strong: "rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px",
+    pvt-box-shadow-color-strong: "#00000055",
 
 
     /* Sidebar */
@@ -381,6 +387,10 @@ $dark-theme: (
     pvt-node-highlighted-filter: drop-shadow(0 0 2px var(--pvt-node-highlighted-stroke)),
     pvt-node-highlighted-opacity: 1,
     pvt-node-highlighted-animation: glowPulseHighlighted 1.5s infinite,
+
+    /* Node cluster */
+    pvt-node-cluster-fill: #ffffff06,
+    pvt-node-cluster-stroke: color-mix(in srgb, var(--pvt-node-stroke) 60%, #000),
 
     /* Edge defaults */
     pvt-edge-stroke: color-mix(in srgb, map.get($dark-vibrant-color-palette, vibrant-blue) 50%, #000),

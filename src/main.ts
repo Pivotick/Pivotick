@@ -413,7 +413,15 @@ const data = {
     { 'id': 'D4', 'data': {'label': 'Victor', 'group': 'D', 'gender': 'male'}},
     { 'id': 'D5', 'data': {'label': 'Walter', 'group': 'D', 'gender': 'male'}},
     { 'id': 'D6', 'data': {'label': 'Xavier', 'group': 'D', 'gender': 'male'}, children: [
-        { 'id': 'children-1', 'data': { 'label': 'Children 1' } },
+        {
+            'id': 'children-1',
+            'data': { 'label': 'Children 1' },
+            children: [
+                { 'id': 'children-A', 'data': { 'label': 'Children A' } },
+                { 'id': 'children-B', 'data': { 'label': 'Children B' } },
+                { 'id': 'children-C', 'data': { 'label': 'Children C' } },
+            ]
+        },
         { 'id': 'children-2', 'data': { 'label': 'Children 2' } },
         { 'id': 'children-3', 'data': { 'label': 'Children 3' } },
     ]}

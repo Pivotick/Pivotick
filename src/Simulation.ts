@@ -244,6 +244,8 @@ export class Simulation {
             if (n.expanded) {
                 return 1.2 * n.getCircleRadius() + 20
             }
+            // console.log(n.getCircleRadius() ? 1.2 * n.getCircleRadius() : options.d3CollideRadius);
+            
             return n.getCircleRadius() ? 1.2 * n.getCircleRadius() : options.d3CollideRadius
         })
             .strength(options.d3CollideStrength)

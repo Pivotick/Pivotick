@@ -21,75 +21,71 @@ export class ClusterDrawer {
         this.renderCB = this.nodeDrawer.rendererOptions?.renderNode
     }
 
-    public render(theClusterSelection: Selection<SVGGElement, Node, null, undefined>, node: Node, cb: () => void): Selection<SVGCircleElement, Node, null, undefined> {
+    public render(theClusterSelection: Selection<SVGGElement, Node, null, undefined>, node: Node, cb: (newRadius: number) => void): Selection<SVGCircleElement, Node, null, undefined> {
         if (!this.edgeDrawer) {
             this.edgeDrawer = this.nodeDrawer.graphSvgRenderer.edgeDrawer
         }
 
-        let cluster = theClusterSelection.select<SVGCircleElement>('.parent-bubble')
-        // let childrenNodeGroup = theClusterSelection.select<SVGGElement>('g.children-node-group')
-        // let childrenEdgeGroup = theClusterSelection.select<SVGGElement>('g.children-edge-group')
+        let cluster = theClusterSelection.select<SVGCircleElement>('.pvt-cluster-area')
 
         if (cluster.empty()) {
             cluster = theClusterSelection.append('circle')
-                .classed('parent-bubble', true)
+                .classed('pvt-cluster-area', true)
                 .lower()
-            // childrenNodeGroup = theClusterSelection.append('g')
-            //     .classed('children-node-group', true)
-            // childrenEdgeGroup = theClusterSelection.append('g')
-            //     .classed('children-edge-group', true)
         }
 
-        let r
-        if (!node.expanded) {
-            r = node.getCircleRadius() + 4
-        } else {
-            const padding = 20
-            const childPadding = 8
-            const totalRadius = node.children.reduce((sum, child) => sum + child.getCircleRadius() + childPadding, 0)
-            const avgRadius = totalRadius / node.children.length
-            const estimatedRadius = Math.sqrt(node.children.length) * (2 * avgRadius) + padding
-    
-            r = Math.max(50, estimatedRadius)
-        }
+        const r = ClusterDrawer.getRadiusForClusterNode(node)
+        node.setCircleRadiusCollapsed(node.getCircleRadius())
         node.setCircleRadius(r)
 
+        const parentGraph = this.nodeDrawer.graph.getParentGraph()
+        if (parentGraph) { // We're in a subgraph, propagate change to upper graph
+            const newParentRadius = ClusterDrawer.updateParentGraph(parentGraph, node, r)
+            if (newParentRadius) {
+                this.nodeDrawer.graph.simulation.getSimulation()
+                    .force('link', null)
+                    .force('constrainParent', forceConstrainParent<Node>(newParentRadius, 10))
+            }
+        }
 
         cluster
             .attr('r', 0)
             .attr('_final_r', r)
             .attr('cx', 0)
             .attr('cy', 0)
-            .classed('pvt-cluster-area', true)
 
-        if (node.expanded) {
-            cluster.transition().duration(200).attr('r', r)
+            cluster.transition().duration(250).attr('r', r)
 
-            const clonedChildren = node.children.map((n) => n.clone())
 
-            const childrenEdges: Edge[] =
-                node.children.flatMap(child => child.getEdgesOut() ?? [])
-                .map((e) => new Edge(
-                    e.id,
-                    clonedChildren.filter(n => n.id === e.from.id)[0],
-                    clonedChildren.filter(n => n.id === e.to.id)[0],
-                    e.getData(),
-                    e.getStyle(),
-                    e.directed,
-                    e.isSynthetic
-                ))
+        const childrenEdges: Edge[] =
+            node.children.flatMap(child => child.getEdgesOut() ?? [])
+            .map((e) => new Edge(
+                e.id,
+                node.children.filter(n => n.id === e.from.id)[0],
+                node.children.filter(n => n.id === e.to.id)[0],
+                e.getData(),
+                e.getStyle(),
+                e.directed,
+                e.isSynthetic
+            ))
 
-            const subgraphContainer: SVGGElement = theClusterSelection.node() as SVGGElement
-            const subgraph = this.createSubgraph(clonedChildren, childrenEdges, subgraphContainer, node, this.nodeDrawer.graph)
-            node._subgraph = subgraph
+        const subgraphContainer: SVGGElement = theClusterSelection.node() as SVGGElement
+        // const subgraph = this.createSubgraph(clonedChildren, childrenEdges, subgraphContainer, node, this.nodeDrawer.graph)
+        const subgraph = this.createSubgraph(node.children, childrenEdges, subgraphContainer, node, this.nodeDrawer.graph)
+        node._subgraph = subgraph
 
-            ClusterDrawer.toggleSyntheticEdges(node)
+        theClusterSelection.select<SVGGElement>(':scope > .zoom-layer')
+            .attr('opacity', 0)
+            .transition()
+            .duration(250)
+            .attr('opacity', 1)
 
-        }
+        ClusterDrawer.toggleSyntheticEdges(node)
+
 
         if (cb) {
             requestAnimationFrame(() => {
-                cb()
+                cb(r)
             })
         }
 
@@ -149,8 +145,8 @@ export class ClusterDrawer {
             },
             simulation: {
                 useWorker: false,
-                warmupTicks: 0,
-                cooldownTime: 0,
+                warmupTicks: 10,
+                cooldownTime: 50,
                 freezeNodesOnDrag: false,
             },
             callbacks: {
@@ -181,25 +177,22 @@ export class ClusterDrawer {
 
         const tmpHtml = document.createElement('div')
         const subgraph = new Graph(tmpHtml, subgraphData, options)
+        subgraph.setParentGraph(this.nodeDrawer.graph)
         const zoomLayer = tmpHtml.querySelector('.zoom-layer') as SVGGElement
         container.appendChild(zoomLayer)
 
         subgraph.getMutableNodes().forEach((n: Node) => {
             childrenProxy.set(n.id, n)
+            n.isChild = true
+            n.parentNode = parentNode
         })
 
         subgraph.on('ready', () => {
             subgraph.simulation.getSimulation()
-                .force('link', null)
-                .force('charge', null)
-                .force('center', null)
-                .force('collide', null)
-                .force('gravity', null)
-                .force('charge', forceManyBody().strength(-10))
-                .force('collide', forceCollide<Node>().radius(d => (d.getCircleRadius?.() ?? 10) + 2))
                 .force('center', forceCenter(0, 0))
-                .force('link', forceLink<Node, Edge>())
                 .force('constrainParent', forceConstrainParent<Node>(parentNode.getCircleRadius(), 10))
+
+            subgraph.simulation.restart()
         })
         subgraph.renderer.getGraphInteraction().on('dragended', () => {
         })
@@ -235,6 +228,45 @@ export class ClusterDrawer {
             realChild.x = x + (clusterNode.x ?? 0)
             realChild.y = y + (clusterNode.y ?? 0)
             this.nodeDrawer.graph.renderer.nextTickFor([realChild])
+        }
+    }
+
+    public static getRadiusForClusterNode(node: Node): number {
+        let r: number = 0
+        if (!node.expanded) {
+            r = node.getCircleRadius() + 4
+        } else {
+            const padding = 50
+            const childPadding = 16
+            const totalRadius = node.children.reduce((sum, child) => sum + child.getCircleRadius() + childPadding, 0)
+            const avgRadius = totalRadius / node.children.length
+            const estimatedRadius = Math.sqrt(node.children.length) * (2 * avgRadius) + padding
+
+            r = Math.max(50, estimatedRadius)
+        }
+        return r
+    }
+
+    public static updateParentGraph(parentGraph: Graph, node: Node, r: number): number | undefined {
+        const realChild = parentGraph.getMutableNode(node.id)
+        realChild?.setCircleRadius(r)
+
+        const parentNode = node.parentNode
+        if (parentNode) {
+            const parentR = ClusterDrawer.getRadiusForClusterNode(parentNode)
+            parentNode.setCircleRadius(parentR)
+            parentGraph.onChange()
+            parentGraph.simulation.reheat(0.1)
+
+            const parentCluster: SVGCircleElement | undefined | null = parentNode.getGraphElement()?.querySelector('& > .pvt-cluster-area')
+            if (parentCluster) {
+                const parentClusterSelection: Selection<SVGCircleElement, Node, null, undefined> = d3Select<SVGCircleElement, Node>(parentCluster)
+                parentClusterSelection
+                    .attr('_final_r', parentR)
+                    .transition().duration(250).attr('r', parentR)
+                NodeDrawer.handleChildrenExpanded(parentGraph, parentNode, parentClusterSelection)
+            }
+            return parentR
         }
     }
 }

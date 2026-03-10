@@ -6,6 +6,7 @@ import type { GraphSvgRenderer } from './GraphSvgRenderer'
 import { faGlyph, tryResolveNumber, tryResolveString } from '../../utils/Getters'
 import type { CustomNodeShape, GraphRendererOptions, NodeShape, NodeStyle } from '../../interfaces/RendererOptions'
 import { ClusterDrawer } from './ClusterDrawer'
+import { forceConstrainParent } from '../../plugins/layout/MicroForce'
 d3Select.prototype.transition = d3Transition
 
 export class NodeDrawer {
@@ -59,8 +60,9 @@ export class NodeDrawer {
                 fo.attr('x', -width / 2)
                     .attr('y', -height / 2)
 
-                node.setCircleRadius(0.5 * Math.max(width, height))
-                // this.checkForHighlight(theNodeSelection, node)
+                if (this.rendererOptions.enableNodeExpansion && (!node.hasChildren() || !node.expanded)) {
+                    node.setCircleRadius(0.5 * Math.max(width, height))
+                }
               })
 
         } else {
@@ -76,34 +78,22 @@ export class NodeDrawer {
                     height = Math.ceil(bbox.height)
                 }
 
-                if (!node.hasChildren() || !node.expanded) {
+                if (this.rendererOptions.enableNodeExpansion && (!node.hasChildren() || !node.expanded)) {
                     node.setCircleRadius(0.5 * Math.max(width, height))
                 }
-                // this.checkForHighlight(theNodeSelection, node)
             })
         }
 
-        if (node.hasChildren()) {
+        if (this.rendererOptions.enableNodeExpansion && node.hasChildren()) {
             if (node.expanded) {
                 const cluster = this.clusterDrawer.render(theNodeSelection, node, () => {
-                    // Adapt position if children are expanded
-                    const origNode = node.getGraphElement()?.querySelector('& > circle.node')
-                    const clusterRadius = cluster.attr('_final_r') // 'r' attribute is being transitioned, get the final value
-                    if (origNode) {
-                        d3Select(origNode).attr('cx', 0).attr('cy', 0)
-                            .transition()
-                            .duration(200)
-                            .on('end', () => {
-                                this.graph.simulation.reheat(0.05)
-                                this.graph.renderer.fitAndCenter()
-                            })
-                            .attr('cx', (-clusterRadius * 0.8).toString())
-                            .attr('cy', (-clusterRadius * 0.8).toString())
-                    }
+                    NodeDrawer.handleChildrenExpanded(this.graph, node, cluster)
                 })
             }
 
-            this.addExpandCollapseIcons(theNodeSelection, node)
+            requestAnimationFrame(() => {
+                this.addExpandCollapseIcons(theNodeSelection, node)
+            })
         }
     }
 
@@ -363,7 +353,7 @@ export class NodeDrawer {
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     private highlightSelection(nodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
         if (this.rendererOptions.enableFocusMode) {
             this.graph.getMutableNodes().forEach((node) => {
@@ -419,7 +409,7 @@ export class NodeDrawer {
         const toggleExpand = (node: Node, expand: boolean) => {
             if (this.graph.UIManager.tooltip) this.graph.UIManager.tooltip.hide(node)
             this.graph.toggleExpandNode(node)
-            if (!expand) { // reheating the simulation is done after the opnening transition completes
+            if (!expand) { // reheating the simulation is done after the opening transition completes
                 this.graph.simulation.reheat(0.05)
                 this.graph.renderer.fitAndCenter()
             }
@@ -430,14 +420,18 @@ export class NodeDrawer {
             const group = d3Select<SVGGElement, Node>(nodes[i])
 
             // Remove existing icons if any
-            group.selectAll<SVGGElement, unknown>('.node-icon').remove()
+            group.selectAll<SVGGElement, unknown>(':scope > .node-icon').remove()
 
             const offset = (node.getCircleRadius() + padding) / Math.sqrt(2)
 
-            group.append('g')
+            const svgG = group.append('g')
                 .classed('node-icon', true)
                 .classed(!node.expanded ? 'expand-icon' : 'collapse-icon', true)
                 .attr('transform', !node.expanded ? `translate(${offset}, ${-(offset)})` : `translate(${offset}, ${offset})`)
+            svgG
+                .append('title')
+                .text(!node.expanded ? 'Expand node' : 'Collapse nodes')
+            svgG
                 .append('circle')
                 .attr('r', iconRadius)
                 .style('cursor', 'pointer')
@@ -451,5 +445,40 @@ export class NodeDrawer {
                 .text(!node.expanded ? '+' : '-')
 
         })
+    }
+
+    public static handleChildrenExpanded(graph: Graph, node: Node, cluster: Selection<SVGCircleElement, Node, null, undefined>): void {
+        // Adapt position if children are expanded
+        graph.simulation.reheat(0.1)
+        const origNode = node.getGraphElement()?.querySelector('& > circle.node')
+        origNode?.setAttribute('cx', origNode.getAttribute('cx') ?? '0')
+        origNode?.setAttribute('cy', origNode.getAttribute('cy') ?? '0')
+        const clusterRadius = Number(cluster.attr('_final_r')) // 'r' attribute is being transitioned, get the final value
+
+        if (origNode) {
+            d3Select(origNode)
+                .transition()
+                .duration(250)
+                .on('end', () => {
+                    graph.renderer.fitAndCenter()
+                })
+                .attr('cx', (-clusterRadius/Math.sqrt(2)).toString())
+                .attr('cy', (-clusterRadius/Math.sqrt(2)).toString())
+        }
+
+        const padding = 2         // distance from node bounds
+        const offset = (clusterRadius + padding) / Math.sqrt(2)
+        const origIcons: SVGGElement | undefined | null = node.getGraphElement()?.querySelector('& > .node-icon')
+        if (origIcons) {
+            d3Select(origIcons)
+                .attr('transform', !node.expanded ? `translate(${offset}, ${-(offset)})` : `translate(${offset}, ${offset})`)
+        }
+
+        const childSubgraph = node._subgraph
+        if (childSubgraph) {
+            childSubgraph.simulation.getSimulation()
+                // .force('constrainParent', null)
+                // .force('constrainParent', forceConstrainParent<Node>(Number(clusterRadius), 10))
+        }
     }
 }

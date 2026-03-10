@@ -33,6 +33,7 @@ export class Node {
     isParent: boolean
     parentNode?: Node
     private _circleRadius = this.defaultCircleRadius
+    private _circleRadiusCollapsed = this.defaultCircleRadius
     private _dirty: boolean
     public readonly domID: string
 
@@ -46,12 +47,7 @@ export class Node {
         this.domID = domID
         this.data = data ?? ({} as NodeData)
         this.style = style ?? ({} as Partial<NodeStyle>)
-        this.children = children
-        if (this.hasChildren()) {
-            this.isParent = true
-        } else {
-            this.isParent = false
-        }
+        this.setChildren(children)
         this._dirty = true
         this.frozen = false
         this.visible = true
@@ -179,6 +175,10 @@ export class Node {
             obj.fx = this.fx
             obj.fy = this.fy
         }
+
+        if (this.hasChildren()) {
+            obj.children = this.children.map((n) => n.toDict(dataOnly))
+        }
         return obj
     }
 
@@ -204,6 +204,7 @@ export class Node {
         clone.isParent = this.isParent
         clone.parentNode = this.parentNode
         clone._circleRadius = this._circleRadius
+        clone.children = this.children.map((n) => n.clone())
 
         return clone
     }
@@ -292,6 +293,23 @@ export class Node {
 
     getCircleRadius(): number {
         return this._circleRadius
+    }
+
+    setCircleRadiusCollapsed(radius: number): void {
+        this._circleRadiusCollapsed = radius
+    }
+
+    getCircleRadiusCollapsed(): number {
+        return this._circleRadiusCollapsed
+    }
+
+    setChildren(children: Node[]): void {
+        this.children = children
+        if (this.hasChildren()) {
+            this.isParent = true
+        } else {
+            this.isParent = false
+        }
     }
 
     hasChildren(): boolean {

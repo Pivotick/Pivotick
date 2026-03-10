@@ -266,6 +266,7 @@ export class SidebarNeighbors implements UIElement {
                 ...this.uiManager.graph.getOptions().render,
                 dragEnabled: false,
                 enableFocusMode: false,
+                enableNodeExpansion: false,
                 interactionEnabled: true,
                 zoomEnabled: false,
                 zoomAnimationDuration: 100,

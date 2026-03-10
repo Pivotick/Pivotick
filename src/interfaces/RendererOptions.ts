@@ -156,6 +156,11 @@ export interface GraphRendererOptions {
      * @default true
      */
     enableFocusMode: boolean,
+    /**
+     * Controls whether nodes can be expanded or collapsed to show their children
+     * @default true
+     */
+    enableNodeExpansion: boolean,
     /** @default true */
     zoomEnabled: boolean
     /** @default true */

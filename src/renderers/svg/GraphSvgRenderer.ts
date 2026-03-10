@@ -194,6 +194,7 @@ export const defaultLabelStyle: LabelStyle = {
 const DEFAULT_RENDERER_OPTIONS = {
     type: 'svg',
     enableFocusMode: true,
+    enableNodeExpansion: true,
     zoomEnabled: true,
     dragEnabled: true,
     interactionEnabled: true,
@@ -374,6 +375,12 @@ export class GraphSvgRenderer extends GraphRenderer {
                                 node.clearDirty()
                                 if (!node.expanded) { // teardown any created clusters.
                                     ClusterDrawer.toggleSyntheticEdges(node)
+                                    const parentGraph = this.nodeDrawer.graph.getParentGraph()
+                                    if (parentGraph) { // We're in a subgraph, propagate change to upper graph
+                                        const newR = node.getCircleRadiusCollapsed() // Restore original radius before expansion
+                                        node.setCircleRadius(newR)
+                                        ClusterDrawer.updateParentGraph(parentGraph, node, newR)
+                                    }
                                 }
                                 selection.selectChildren().remove()
                                 this.nodeDrawer.render(selection, node)
