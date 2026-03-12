@@ -477,8 +477,7 @@ export class NodeDrawer {
         const childSubgraph = node._subgraph
         if (childSubgraph) {
             childSubgraph.simulation.getSimulation()
-                // .force('constrainParent', null)
-                // .force('constrainParent', forceConstrainParent<Node>(Number(clusterRadius), 10))
+                .force('constrainParent', forceConstrainParent<Node>(Number(clusterRadius), 10))
         }
     }
 }

@@ -2,12 +2,12 @@ import { select as d3Select, type Selection } from 'd3-selection'
 import { Node } from '../../Node'
 import type { GraphRendererOptions } from '../../interfaces/RendererOptions'
 import { NodeDrawer } from './NodeDrawer'
-import { forceConstrainParent, simulateChildrenInsideParent } from '../../plugins/layout/MicroForce'
+import { forceConstrainParent } from '../../plugins/layout/MicroForce'
 import { Edge } from '../../Edge'
 import type { EdgeDrawer } from './EdgeDrawer'
 import { Graph } from '../../Graph'
 import type { GraphOptions, RawEdge, RawNode, RelaxedGraphData } from '../../interfaces/GraphOptions'
-import { forceCenter, forceCollide, forceLink, forceManyBody } from 'd3-force'
+import { forceCenter } from 'd3-force'
 
 export class ClusterDrawer {
 
@@ -32,6 +32,9 @@ export class ClusterDrawer {
             cluster = theClusterSelection.append('circle')
                 .classed('pvt-cluster-area', true)
                 .lower()
+            const parentColor = ClusterDrawer.buildGradientForNode(theClusterSelection.node()!.querySelector('circle.node') as SVGCircleElement, cluster, node)
+            if (parentColor)
+                cluster.style('stroke', `color-mix(in srgb, ${parentColor} 70%, transparent)`)
         }
 
         const r = ClusterDrawer.getRadiusForClusterNode(node)
@@ -259,6 +262,7 @@ export class ClusterDrawer {
             parentGraph.simulation.reheat(0.1)
 
             const parentCluster: SVGCircleElement | undefined | null = parentNode.getGraphElement()?.querySelector('& > .pvt-cluster-area')
+
             if (parentCluster) {
                 const parentClusterSelection: Selection<SVGCircleElement, Node, null, undefined> = d3Select<SVGCircleElement, Node>(parentCluster)
                 parentClusterSelection
@@ -267,6 +271,34 @@ export class ClusterDrawer {
                 NodeDrawer.handleChildrenExpanded(parentGraph, parentNode, parentClusterSelection)
             }
             return parentR
+        }
+    }
+
+    public static buildGradientForNode(parentCircleElement: SVGCircleElement, clusterSelection: Selection<SVGCircleElement, Node, null, undefined>, node: Node): string | undefined {
+        if (parentCircleElement) {
+            const parentNodeFillColor = getComputedStyle(parentCircleElement).fill
+            const outerColor = `color-mix(in srgb, ${parentNodeFillColor} 40%, transparent)`
+            const id = `pvt-cluster-area-${node.id}`
+
+            const rootSvg = parentCircleElement.closest('.pvt-canvas-element')
+            const defs = rootSvg?.querySelector('defs')
+            if (!defs) return
+
+            const gradient = defs.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'radialGradient'))
+            gradient.setAttribute('id', id)
+
+            const stop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop')
+            stop1.setAttribute('offset', '90%')
+            stop1.setAttribute('stop-color', '#ffffff00')
+            gradient.appendChild(stop1)
+
+            const stop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop')
+            stop2.setAttribute('offset', '100%')
+            stop2.setAttribute('stop-color', outerColor)
+            gradient.appendChild(stop2)
+
+            clusterSelection.style('fill', `url(#${id})`)
+            return parentNodeFillColor
         }
     }
 }

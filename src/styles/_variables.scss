@@ -165,8 +165,9 @@ $light-theme: (
     // #endregion node
 
     /* Node cluster */
+    pvt-node-dash-stroke: #333,
     pvt-node-cluster-fill: #00000010,
-    pvt-node-cluster-stroke: color-mix(in srgb, var(--pvt-node-stroke) 60%, #000),
+    pvt-node-cluster-stroke: color-mix(in srgb, var(--pvt-node-dash-stroke) 60%, #fff),
 
     // #region edge
     /* Edge defaults */
@@ -389,8 +390,9 @@ $dark-theme: (
     pvt-node-highlighted-animation: glowPulseHighlighted 1.5s infinite,
 
     /* Node cluster */
+    pvt-node-dash-stroke: #fff,
     pvt-node-cluster-fill: #ffffff06,
-    pvt-node-cluster-stroke: color-mix(in srgb, var(--pvt-node-stroke) 60%, #000),
+    pvt-node-cluster-stroke: color-mix(in srgb, var(--pvt-node-dash-stroke) 60%, #000),
 
     /* Edge defaults */
     pvt-edge-stroke: color-mix(in srgb, map.get($dark-vibrant-color-palette, vibrant-blue) 50%, #000),
