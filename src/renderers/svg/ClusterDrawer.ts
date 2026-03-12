@@ -60,17 +60,22 @@ export class ClusterDrawer {
             cluster.transition().duration(250).attr('r', r)
 
 
-        const childrenEdges: Edge[] =
+            const childrenEdges: Edge[] =
             node.children.flatMap(child => child.getEdgesOut() ?? [])
-            .map((e) => new Edge(
-                e.id,
-                node.children.filter(n => n.id === e.from.id)[0],
-                node.children.filter(n => n.id === e.to.id)[0],
-                e.getData(),
-                e.getStyle(),
-                e.directed,
-                e.isSynthetic
-            ))
+            .map((e) => {
+                const from = this.nodeDrawer.graph.getMutableNode(e.from.id) as Node
+                const to = this.nodeDrawer.graph.getMutableNode(e.to.id) as Node
+
+                return new Edge(
+                    e.id,
+                    from,
+                    to,
+                    e.getData(),
+                    e.getStyle(),
+                    e.directed,
+                    e.isSynthetic
+                )
+            })
 
         const subgraphContainer: SVGGElement = theClusterSelection.node() as SVGGElement
         // const subgraph = this.createSubgraph(clonedChildren, childrenEdges, subgraphContainer, node, this.nodeDrawer.graph)
