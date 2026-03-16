@@ -145,6 +145,7 @@ export class Edge {
             from: this.from.id,
             to: this.to.id,
             data: this.data,
+            style: this.style,
         } as Record<string, unknown> 
     }
 

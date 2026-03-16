@@ -343,11 +343,22 @@ export class EdgeDrawer {
         const rFrom = from.getCircleRadius() ? from.getCircleRadius() : this.graphSvgRenderer.nodeDrawer.getNodeStyle(from).size as number
         const rTo = to.getCircleRadius() ? to.getCircleRadius() : this.graphSvgRenderer.nodeDrawer.getNodeStyle(to).size as number
 
+        const isInsideParent = distance < rFrom
+
         // Offset both ends of the line
-        const startX = from.x + (rFrom + drawOffsetStart) * normX
-        const startY = from.y + (rFrom + drawOffsetStart) * normY
-        const endX = to.x - (rTo + drawOffsetEnd) * normX
-        const endY = to.y - (rTo + drawOffsetEnd) * normY
+        let startX, startY
+        let endX, endY
+        if (isInsideParent) {
+            startX = from.x + (rFrom) * normX
+            startY = from.y + (rFrom) * normY
+            endX = to.x + (rTo + drawOffsetEnd) * normX
+            endY = to.y + (rTo + drawOffsetEnd) * normY
+        } else {
+            startX = from.x + (rFrom + drawOffsetStart) * normX
+            startY = from.y + (rFrom + drawOffsetStart) * normY
+            endX = to.x - (rTo + drawOffsetEnd) * normX
+            endY = to.y - (rTo + drawOffsetEnd) * normY
+        }
 
         return `M ${startX},${startY} L ${endX},${endY}`
     }

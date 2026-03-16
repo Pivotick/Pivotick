@@ -838,6 +838,7 @@ export class Graph {
      */
     public setParentGraph(parentGraph: Graph): void {
         this.parentGraph = parentGraph
+        this.parentGraphDepth = this.parentGraph.parentGraph ? 2 : 1
     }
 
     /**

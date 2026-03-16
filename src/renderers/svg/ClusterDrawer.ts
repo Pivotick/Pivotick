@@ -192,7 +192,14 @@ export class ClusterDrawer {
         subgraph.getMutableNodes().forEach((n: Node) => {
             childrenProxy.set(n.id, n)
             n.isChild = true
-            n.parentNode = parentNode
+        })
+        nodes.forEach((n: Node) => { // remap original parent to outer graph's node
+            if (n.parentNode?.id === parentNode.id) {
+                const subgraphNode = subgraph.getMutableNode(n.id)
+                if (subgraphNode) {
+                    subgraphNode.parentNode = parentNode
+                }
+            }
         })
 
         subgraph.on('ready', () => {
@@ -205,7 +212,8 @@ export class ClusterDrawer {
         subgraph.renderer.getGraphInteraction().on('dragended', () => {
         })
         subgraph.renderer.getGraphInteraction().on('simulationTick', () => {
-            subgraph.getMutableNodes().forEach((node: Node) => {
+            const visibleNodes = subgraph.getMutableNodes().filter(node => node.visible)
+            visibleNodes.forEach((node: Node) => {
                 const x = node.x ?? 0
                 const y = node.y ?? 0
                 this.updatePositionOnRealChild(x, y, node.id)
@@ -213,14 +221,10 @@ export class ClusterDrawer {
         })
 
         mainGraph.renderer.getGraphInteraction().on('dragging', () => {
-            mainGraph.getMutableNodes().filter((node) => node.isParent && node.expanded).forEach((node: Node) => {
-                const children = node.children
-                children.forEach((child: Node) => {
-                    const childInSubgraph: Node | undefined = childrenProxy.get(child.id)
-                    if (!childInSubgraph || !childInSubgraph.x || !childInSubgraph.y) return
-                    this.updatePositionOnRealChild(childInSubgraph.x, childInSubgraph.y, child.id)
-                })
-            })
+            this.updatePositionOnAllRealChildren(mainGraph, childrenProxy)
+        })
+        mainGraph.renderer.getGraphInteraction().on('simulationTick', () => {
+            this.updatePositionOnAllRealChildren(mainGraph, childrenProxy)
         })
         mainGraph.renderer.getGraphInteraction().on('canvasClick', () => {
             subgraph.deselectAll()
@@ -229,6 +233,24 @@ export class ClusterDrawer {
         return subgraph
     }
 
+    private updatePositionOnAllRealChildren(graph: Graph, nodeProxy: Map<string, Node>) {
+        graph.getMutableNodes().filter((node) => node.isParent && node.expanded).forEach((node: Node) => {
+            const children = node.children
+            children.forEach((child: Node) => {
+                const childInSubgraph: Node | undefined = nodeProxy.get(child.id)
+                if (!childInSubgraph || !childInSubgraph.x || !childInSubgraph.y) return
+                this.updatePositionOnRealChild(childInSubgraph.x, childInSubgraph.y, child.id)
+            })
+        })
+    }
+
+    /**
+     * Bublle up the position on the real child
+     * @param x Position of the child element in the subgraph
+     * @param y Position of the child element in the subgraph
+     * @param id ID of the child node
+     * @returns 
+     */
     private updatePositionOnRealChild(x: number, y: number, id: string) {
         const realChild = this.nodeDrawer.graph.getMutableNode(id)
         const clusterNode = realChild?.parentNode

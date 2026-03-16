@@ -113,7 +113,23 @@ export const defaultMarkerStyleMap: MarkerStyleMap = {
             markerWidth: 14,
             markerHeight: 14,
         }
-    }
+    },
+    // bigcircle: {
+    //     pathD: 'M5,5m-3,0a3,3 0 1,0 6,0a3,3 0 1,0 -6,0',
+    //     viewBox: '0 0 10 10',
+    //     refX: 5,
+    //     refY: 5,
+    //     markerWidth: 16,
+    //     markerHeight: 16,
+    //     markerUnits: 'userSpaceOnUse',
+    //     orient: 0,
+    //     fill: 'var(--pvt-edge-stroke, #999)',
+    //     selected: {
+    //         fill: 'var(--pvt-edge-selected-stroke, #007acc)',
+    //         markerWidth: 24,
+    //         markerHeight: 24,
+    //     }
+    // },
 }
 
 /**

@@ -465,7 +465,11 @@ const data = {
     { 'from': 'children-1', 'to': 'children-2' },
     { 'from': 'children-2', 'to': 'children-3' },
     { 'from': 'children-3', 'to': 'children-1' },
-    { 'from': 'A1', 'to': 'children-2' },
+    // { 'from': 'A1', 'to': 'children-2' },
+    // { 'from': 'children-2', 'to': 'children-A' },
+    { 'from': 'children-1', 'to': 'children-A' },
+    { 'from': 'D6', 'to': 'children-3' },
+    // { 'from': 'A2', 'to': 'children-B' },
   ]
 }
 
@@ -497,7 +501,6 @@ const options = {
 
 if (!window.pivotick)
 window.pivotick = new Pivotick(document.getElementById('app')!, data, options)
-
 
 // let counter = 0
 // setInterval(() => {
