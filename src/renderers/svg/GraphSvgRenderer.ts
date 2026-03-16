@@ -77,7 +77,6 @@ export const defaultMarkerStyleMap: MarkerStyleMap = {
         markerHeight: 12,
         markerUnits: 'userSpaceOnUse',
         orient: 'auto',
-        fill: 'var(--pvt-edge-stroke, #999)',
         selected: {
             fill: 'var(--pvt-edge-selected-stroke, #007acc)',
         }
@@ -91,7 +90,6 @@ export const defaultMarkerStyleMap: MarkerStyleMap = {
         markerHeight: 10,
         markerUnits: 'userSpaceOnUse',
         orient: 0,
-        fill: 'var(--pvt-edge-stroke, #999)',
         selected: {
             fill: 'var(--pvt-edge-selected-stroke, #007acc)',
             markerWidth: 16,
@@ -107,29 +105,27 @@ export const defaultMarkerStyleMap: MarkerStyleMap = {
         markerHeight: 8,
         markerUnits: 'userSpaceOnUse',
         orient: 0,
-        fill: 'var(--pvt-edge-stroke, #999)',
         selected: {
             fill: 'var(--pvt-edge-selected-stroke, #007acc)',
             markerWidth: 14,
             markerHeight: 14,
         }
     },
-    // bigcircle: {
-    //     pathD: 'M5,5m-3,0a3,3 0 1,0 6,0a3,3 0 1,0 -6,0',
-    //     viewBox: '0 0 10 10',
-    //     refX: 5,
-    //     refY: 5,
-    //     markerWidth: 16,
-    //     markerHeight: 16,
-    //     markerUnits: 'userSpaceOnUse',
-    //     orient: 0,
-    //     fill: 'var(--pvt-edge-stroke, #999)',
-    //     selected: {
-    //         fill: 'var(--pvt-edge-selected-stroke, #007acc)',
-    //         markerWidth: 24,
-    //         markerHeight: 24,
-    //     }
-    // },
+    bigcircle: {
+        pathD: 'M5,5m-3,0a3,3 0 1,0 6,0a3,3 0 1,0 -6,0',
+        viewBox: '0 0 10 10',
+        refX: 5,
+        refY: 5,
+        markerWidth: 16,
+        markerHeight: 16,
+        markerUnits: 'userSpaceOnUse',
+        orient: 0,
+        selected: {
+            fill: 'var(--pvt-edge-selected-stroke, #007acc)',
+            markerWidth: 24,
+            markerHeight: 24,
+        }
+    },
 }
 
 /**
@@ -247,7 +243,7 @@ export class GraphSvgRenderer extends GraphRenderer {
     private edgeGroup: Selection<SVGGElement, unknown, null, undefined>
     private nodeGroup: Selection<SVGGElement, unknown, null, undefined>
     private selectionBoxGroup: Selection<SVGGElement, unknown, null, undefined>
-    private defs: Selection<SVGDefsElement, unknown, null, undefined>
+    public defs: Selection<SVGDefsElement, unknown, null, undefined>
 
     private nodeGroupSelection!: Selection<SVGGElement, Node, SVGGElement, unknown>
     private edgeGroupSelection!: Selection<SVGPathElement, Edge, SVGGElement, unknown>
@@ -280,7 +276,7 @@ export class GraphSvgRenderer extends GraphRenderer {
         this.selectionBoxGroup = this.svg.append('g').attr('class', 'selection-box')
         this.nodeGroup = this.zoomGroup.append('g').attr('class', 'nodes')
         this.defs = this.svg.append('defs')
-        this.edgeDrawer.renderDefinitions(this.defs)
+        this.edgeDrawer.renderDefinitions()
 
         this.zoom = d3Zoom<SVGSVGElement, unknown>()
         this.zoom = this.zoom

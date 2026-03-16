@@ -468,7 +468,7 @@ const data = {
     // { 'from': 'A1', 'to': 'children-2' },
     // { 'from': 'children-2', 'to': 'children-A' },
     { 'from': 'children-1', 'to': 'children-A' },
-    { 'from': 'D6', 'to': 'children-3' },
+      { 'from': 'D6', 'to': 'children-3', 'style': { 'edge': { 'curveStyle': 'curved' } } },
     // { 'from': 'A2', 'to': 'children-B' },
   ]
 }

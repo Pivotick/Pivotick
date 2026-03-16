@@ -32,7 +32,7 @@ export class ClusterDrawer {
             cluster = theClusterSelection.append('circle')
                 .classed('pvt-cluster-area', true)
                 .lower()
-            const parentColor = ClusterDrawer.buildGradientForNode(theClusterSelection.node()!.querySelector('circle.node') as SVGCircleElement, cluster, node)
+            const parentColor = ClusterDrawer.buildGradientForNode(theClusterSelection.node()!.querySelector('.node') as SVGCircleElement, cluster, node)
             if (parentColor)
                 cluster.style('stroke', `color-mix(in srgb, ${parentColor} 70%, transparent)`)
         }

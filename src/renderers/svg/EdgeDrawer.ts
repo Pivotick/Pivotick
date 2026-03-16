@@ -5,7 +5,7 @@ import type { Graph } from '../../Graph'
 import type { GraphSvgRenderer } from './GraphSvgRenderer'
 import { tryResolveBoolean, tryResolveNumber, tryResolveString } from '../../utils/Getters'
 import { edgeLabelGetter } from '../../utils/GraphGetters'
-import type { CurveStyle, EdgeStyle, GraphRendererOptions, LabelStyle } from '../../interfaces/RendererOptions'
+import type { CurveStyle, EdgeStyle, GraphRendererOptions, LabelStyle, MarkerStyle, MarkerStyleMap } from '../../interfaces/RendererOptions'
 
 export class EdgeDrawer {
 
@@ -134,6 +134,17 @@ export class EdgeDrawer {
         mergedStyle.markerStart = mergedStyle.markerStart !== undefined ? tryResolveString(mergedStyle.markerStart, edge) : undefined
         mergedStyle.dashed = mergedStyle.dashed !== undefined ? tryResolveBoolean(mergedStyle.dashed, edge) : undefined
         mergedStyle.animateDash = mergedStyle.animateDash !== undefined ? tryResolveBoolean(mergedStyle.animateDash, edge) : undefined
+
+        if (edge.to.parentNode && edge.to.parentNode === edge.from) {
+            mergedStyle.curveStyle = 'straight'
+            const nodeElement = edge.from.getGraphElement()?.querySelector('.node')
+            if (nodeElement) {
+                mergedStyle.strokeColor = getComputedStyle(nodeElement).fill
+                mergedStyle.markerStart = 'bigcircle'
+                mergedStyle.markerEnd = 'arrow'
+            }
+        }
+
         return mergedStyle
     }
 
@@ -439,43 +450,54 @@ export class EdgeDrawer {
                 .attr('ry', 2)
         }
     }
-    public renderDefinitions(defsContainer: Selection<SVGDefsElement, unknown, null, undefined>): void {
-        this.renderMarkers(defsContainer)
+    public renderDefinitions(): void {
+        this.renderMarkers()
     }
 
-    private renderMarkers(defsContainer: Selection<SVGDefsElement, unknown, null, undefined>): void {
+    private renderMarkers(): void {
         if (this.rendererOptions.markerStyleMap) {
             for (const markerId in this.rendererOptions.markerStyleMap) {
-                const config = this.rendererOptions.markerStyleMap[markerId]
-                const marker = defsContainer.append('marker')
-                    .attr('id', markerId)
-                    .attr('viewBox', config.viewBox)
-                    .attr('refX', config.refX)
-                    .attr('refY', config.refY)
-                    .attr('markerWidth', config.markerWidth)
-                    .attr('markerHeight', config.markerHeight)
-                    .attr('markerUnits', config.markerUnits || 'userSpaceOnUse')
-                    .attr('orient', config.orient ?? 'auto')
-
-                marker.append('path')
-                    .attr('d', config.pathD)
-                    .attr('fill', config.fill)
-
-                const selectedMarker = defsContainer.append('marker')
-                    .attr('id', markerId + '_selected')
-                    .attr('viewBox', config.selected?.viewBox ?? config.viewBox)
-                    .attr('refX', config.selected?.refX ?? config.refX)
-                    .attr('refY', config.selected?.refY ?? config.refY)
-                    .attr('markerWidth', config.selected?.markerWidth ?? config.markerWidth)
-                    .attr('markerHeight', config.selected?.markerHeight ?? config.markerHeight)
-                    .attr('markerUnits', (config.selected?.markerUnits ?? config.markerUnits) || 'userSpaceOnUse')
-                    .attr('orient', (config.selected?.orient ?? config.orient) ?? 'auto')
-
-                selectedMarker.append('path')
-                    .attr('d', config.selected?.pathD ?? config.pathD)
-                    .attr('fill', config.selected?.fill ?? config.fill)
+                this.renderMarker(this.rendererOptions.markerStyleMap[markerId], markerId)
             }
         }
+    }
+
+    private renderMarker(config: MarkerStyle, markerId: string) {
+        const defsContainer: Selection<SVGDefsElement, unknown, null, undefined> = this.graphSvgRenderer.defs
+
+        // If marker already exists, do nothing
+        if (!defsContainer.select(`#${markerId}`).empty()) return
+
+        const marker = defsContainer.append('marker')
+            .attr('id', markerId)
+            .attr('viewBox', config.viewBox)
+            .attr('refX', config.refX)
+            .attr('refY', config.refY)
+            .attr('markerWidth', config.markerWidth)
+            .attr('markerHeight', config.markerHeight)
+            .attr('markerUnits', config.markerUnits || 'userSpaceOnUse')
+            .attr('orient', config.orient ?? 'auto')
+
+        marker.append('path')
+            .attr('d', config.pathD)
+            .attr('fill', config.fill ?? 'context-stroke')
+
+        const selectedId = markerId + '_selected'
+        if (!defsContainer.select(`#${selectedId}`).empty()) return
+
+        const selectedMarker = defsContainer.append('marker')
+            .attr('id', selectedId)
+            .attr('viewBox', config.selected?.viewBox ?? config.viewBox)
+            .attr('refX', config.selected?.refX ?? config.refX)
+            .attr('refY', config.selected?.refY ?? config.refY)
+            .attr('markerWidth', config.selected?.markerWidth ?? config.markerWidth)
+            .attr('markerHeight', config.selected?.markerHeight ?? config.markerHeight)
+            .attr('markerUnits', (config.selected?.markerUnits ?? config.markerUnits) || 'userSpaceOnUse')
+            .attr('orient', (config.selected?.orient ?? config.orient) ?? 'auto')
+
+        selectedMarker.append('path')
+            .attr('d', config.selected?.pathD ?? config.pathD)
+            .attr('fill', config.selected?.fill ?? (config.fill ?? 'context-stroke'))
     }
 
     private highlightSelection(edgeSelection: Selection<SVGGElement, Edge, null, undefined>, edge: Edge): void {

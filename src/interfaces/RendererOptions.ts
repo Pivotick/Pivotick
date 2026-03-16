@@ -320,7 +320,7 @@ export interface LabelStyle {
  * Define the styling of an Edge marker.
  */
 export interface MarkerStyle {
-    fill: string
+    fill?: string
     pathD: string
     viewBox: string
     refX: number
