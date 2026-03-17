@@ -60,7 +60,7 @@ export class ClusterDrawer {
             cluster.transition().duration(250).attr('r', r)
 
 
-            const childrenEdges: Edge[] =
+        const childrenEdges: Edge[] =
             node.children.flatMap(child => child.getEdgesOut() ?? [])
             .map((e) => {
                 const from = this.nodeDrawer.graph.getMutableNode(e.from.id) as Node
@@ -73,12 +73,11 @@ export class ClusterDrawer {
                     e.getData(),
                     e.getStyle(),
                     e.directed,
-                    e.isSynthetic
+                    e.syntheticTerminalNode
                 )
             })
 
         const subgraphContainer: SVGGElement = theClusterSelection.node() as SVGGElement
-        // const subgraph = this.createSubgraph(clonedChildren, childrenEdges, subgraphContainer, node, this.nodeDrawer.graph)
         const subgraph = this.createSubgraph(node.children, childrenEdges, subgraphContainer, node, this.nodeDrawer.graph)
         node._subgraph = subgraph
 
@@ -88,7 +87,10 @@ export class ClusterDrawer {
             .duration(250)
             .attr('opacity', 1)
 
-        ClusterDrawer.toggleSyntheticEdges(node)
+        const shouldUpdateParentGraph = ClusterDrawer.toggleSyntheticEdges(node)
+        if (shouldUpdateParentGraph) {
+            parentGraph?.renderer.update(false)
+        }
 
 
         if (cb) {
@@ -101,20 +103,54 @@ export class ClusterDrawer {
 
     }
 
-    public static toggleSyntheticEdges(node: Node): void {
+    /**
+     * Show/Hide synthetic edges based on collapse state
+     * @param node The expanding/collapsing cluster node
+     * @returns true if parent graph should be updated
+     */
+    public static toggleSyntheticEdges(node: Node): boolean {
+        let shouldUpdateParentGraph = false
+        const childrenSet = new Set(node.children.map(n => n.id))
         if (node.expanded) {
             // Hide synthetic edges that point to the parent node of this subgraph
             node.getEdgesIn().filter((e: Edge) => e.isSynthetic === true).forEach((e: Edge) => {
                 e.hide()
             })
+            
             // Then show actual edges
             node.children.forEach((child: Node) => {
                 child.getEdgesIn()
-                    .filter((e: Edge) => !node.children.includes(e.from)) // Edges are already drawn in the subgraph
-                    .forEach((e: Edge) => {
-                        e.show()
-                    })
+                .filter((e: Edge) => !node.children.includes(e.from)) // Edges are already drawn in the subgraph
+                .forEach((e: Edge) => {
+                    e.show()
+                })
             })
+
+            // Current cluster might not know of other inbound edges from outer graph
+            // check in parent if there's a synthetic edge toward it's parent node with terminal node as children
+            // if yes, check the origin of the edge and loop over them
+                // if one edge is pointing to a children of the cluster, show it
+            if (node.parentNode) {
+                const syntheticEdgesToParentNode = node.parentNode.getEdgesIn()
+                    .filter((e) => e.isSynthetic && childrenSet.has(e.syntheticTerminalNode?.id ?? ''))
+                syntheticEdgesToParentNode.forEach((synthEdgeWithTerminalNode) => {
+                    shouldUpdateParentGraph = true
+                    synthEdgeWithTerminalNode.hide()
+                    const outerParent: Node = synthEdgeWithTerminalNode.from
+                    const outerEdges = outerParent.getEdgesOut()
+                    outerEdges
+                        .filter((e) => childrenSet.has(e.syntheticTerminalNode?.id ?? ''))
+                        .forEach((e) => {
+                            e.hide()
+                        })
+                    outerEdges
+                        .filter((e) => childrenSet.has(e.to.id))
+                        .forEach((e) => {
+                            e.show()
+                        })
+                })
+
+            }
         } else {
             // Show synthetic edges that point to the parent node of this subgraph
             node.getEdgesIn().filter((e: Edge) => e.isSynthetic === true).forEach((e: Edge) => {
@@ -128,7 +164,30 @@ export class ClusterDrawer {
                         e.hide()
                     })
             })
+
+            // Hide outer edges that were shown in expanded state
+            if (node.parentNode) {
+                const syntheticEdgesToParentNode = node.parentNode.getEdgesIn()
+                    .filter(e => e.isSynthetic && childrenSet.has(e.syntheticTerminalNode?.id ?? ''))
+
+                syntheticEdgesToParentNode.forEach(synthEdgeWithTerminalNode => {
+                    const outerParent = synthEdgeWithTerminalNode.from
+                    const outerEdges = outerParent.getEdgesOut()
+                    shouldUpdateParentGraph = true
+
+                    // hide edges that point to any of this cluster's children
+                    outerEdges
+                        .filter(e => childrenSet.has(e.to.id))
+                        .forEach(e => e.hide())
+                    // show synthetic edges that point to the cluster
+                    outerEdges
+                        .filter(e => e.isSynthetic && e.to.id === node.id)
+                        .forEach(e => e.show())
+                })
+            }
         }
+
+        return shouldUpdateParentGraph
     }
 
     private createSubgraph(nodes: Node[], edges: Edge[], container: SVGGElement, parentNode: Node, mainGraph: Graph): Graph {
@@ -251,13 +310,17 @@ export class ClusterDrawer {
      * @param id ID of the child node
      * @returns 
      */
-    private updatePositionOnRealChild(x: number, y: number, id: string) {
+    updatePositionOnRealChild(x: number, y: number, id: string) {
         const realChild = this.nodeDrawer.graph.getMutableNode(id)
         const clusterNode = realChild?.parentNode
         if (realChild && clusterNode) {
             realChild.x = x + (clusterNode.x ?? 0)
             realChild.y = y + (clusterNode.y ?? 0)
             this.nodeDrawer.graph.renderer.nextTickFor([realChild])
+            const parentGraph = this.nodeDrawer.graph.getParentGraph()
+            if (parentGraph) {
+                parentGraph.renderer.nodeDrawer.clusterDrawer.updatePositionOnRealChild(x, y, id)
+            }
         }
     }
 

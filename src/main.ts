@@ -462,14 +462,14 @@ const data = {
     { 'from': 'C3', 'to': 'D2' },
     { 'from': 'D4', 'to': 'A6' },
 
-    { 'from': 'children-1', 'to': 'children-2' },
-    { 'from': 'children-2', 'to': 'children-3' },
-    { 'from': 'children-3', 'to': 'children-1' },
+    // { 'from': 'children-1', 'to': 'children-2' },
+    // { 'from': 'children-2', 'to': 'children-3' },
+    // { 'from': 'children-3', 'to': 'children-1' },
     // { 'from': 'A1', 'to': 'children-2' },
     // { 'from': 'children-2', 'to': 'children-A' },
-    { 'from': 'children-1', 'to': 'children-A' },
-      { 'from': 'D6', 'to': 'children-3', 'style': { 'edge': { 'curveStyle': 'curved' } } },
-    // { 'from': 'A2', 'to': 'children-B' },
+    // { 'from': 'children-1', 'to': 'children-A' },
+    // { 'from': 'D6', 'to': 'children-3' },
+    { 'from': 'A2', 'to': 'children-B' },
   ]
 }
 

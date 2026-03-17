@@ -19,6 +19,7 @@ export class Edge {
 
     visible: boolean
     isSynthetic?: boolean
+    syntheticTerminalNode?: Node
 
     private _dirty: boolean
     public readonly domID: string
@@ -31,7 +32,7 @@ export class Edge {
      * @param data - Optional data payload for the edge
      * @param style - Optional style for the edge
      */
-    constructor(id: string, from: Node, to: Node, data?: EdgeData, style?: Partial<EdgeFullStyle>, directed: boolean | null = null, isSynthetic =false) {
+    constructor(id: string, from: Node, to: Node, data?: EdgeData, style?: Partial<EdgeFullStyle>, directed: boolean | null = null, syntheticTerminalNode?: Node) {
         this.id = id
         this.domID = generateSafeDomId()
         this.from = from
@@ -41,7 +42,8 @@ export class Edge {
         this.style = style ?? ({} as EdgeFullStyle)
         this.visible = true
         this._dirty = true
-        this.isSynthetic = isSynthetic
+        this.isSynthetic = syntheticTerminalNode !== undefined
+        this.syntheticTerminalNode = syntheticTerminalNode
 
         this.from.registerEdgeOut(this as Edge)
         this.to.registerEdgeIn(this as Edge)

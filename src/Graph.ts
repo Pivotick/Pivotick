@@ -161,13 +161,39 @@ export class Graph {
         const normalizedEdges: Edge[] = data.edges.map((e) => this.normalizeEdge(e, nodesByID))
             .filter((e): e is Edge => e !== null)
 
-        normalizedEdges.forEach((edge: Edge) => {
-            if (!edge.from.isChild && edge.to.isChild && edge.to.parentNode) { // child edges are handled in their own sub graph
-                const syntheticEdge = new Edge(
-                    `synthetic-${edge.from.id}-${edge.to.parentNode.id}`, edge.from, edge.to.parentNode, {}, {}, null, true)
-                normalizedEdges.push(syntheticEdge)
+        // Generate synthetic edges for edges pointing to child in collapsed nodes
+        const newEdges: Edge[] = []
+        for (const edge of normalizedEdges) {
+            if (!edge.from.isChild && edge.to.isChild && edge.to.parentNode) {
+
+                let currentParent = edge.to.parentNode
+                const visited = new Set<string>()
+
+                while (currentParent && !visited.has(currentParent.id)) {
+                    visited.add(currentParent.id)
+
+                    const syntheticId = `synthetic-${edge.from.id}-${currentParent.id}`
+                    const newEdge = new Edge(
+                        syntheticId,
+                        edge.from,
+                        currentParent,
+                        {},
+                        {},
+                        null,
+                        edge.to
+                    )
+                    if (newEdge.to.isChild) {
+                        newEdge.hide()
+                    }
+                    newEdges.push(newEdge)
+
+                    if (!currentParent.parentNode) break
+                    currentParent = currentParent.parentNode
+                }
             }
-        })
+        }
+
+        normalizedEdges.push(...newEdges)
 
         return {
             nodes: normalizedNodes,
