@@ -32,6 +32,7 @@ export class Node {
     isChild: boolean
     isParent: boolean
     parentNode?: Node
+    _original_object?: Node
     private _circleRadius = this.defaultCircleRadius
     private _circleRadiusCollapsed = this.defaultCircleRadius
     private _dirty: boolean
@@ -47,6 +48,8 @@ export class Node {
         this.domID = domID
         this.data = data ?? ({} as NodeData)
         this.style = style ?? ({} as Partial<NodeStyle>)
+        this.children = []
+        this.isParent = false
         this.setChildren(children)
         this._dirty = true
         this.frozen = false

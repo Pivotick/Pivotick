@@ -418,7 +418,7 @@ const data = {
             'data': { 'label': 'Children 1' },
             children: [
                 { 'id': 'children-A', 'data': { 'label': 'Children A' } },
-                { 'id': 'children-B', 'data': { 'label': 'Children B' } },
+                { 'id': 'children-B', 'data': { 'label': 'Children B' }, children: [{ 'id': 'children-X', 'data': { 'label': 'Children X' } }] },
                 { 'id': 'children-C', 'data': { 'label': 'Children C' } },
             ]
         },
@@ -470,6 +470,7 @@ const data = {
     // { 'from': 'children-1', 'to': 'children-A' },
     // { 'from': 'D6', 'to': 'children-3' },
     { 'from': 'A2', 'to': 'children-B' },
+    //   { 'from': 'A2', 'to': 'children-X' }
   ]
 }
 
