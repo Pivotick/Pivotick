@@ -418,7 +418,10 @@ const data = {
             'data': { 'label': 'Children 1' },
             children: [
                 { 'id': 'children-A', 'data': { 'label': 'Children A' } },
-                { 'id': 'children-B', 'data': { 'label': 'Children B' }, children: [{ 'id': 'children-X', 'data': { 'label': 'Children X' } }] },
+                { 'id': 'children-B', 'data': { 'label': 'Children B' }, children: [
+                    { 'id': 'children-X', 'data': { 'label': 'Children X' } },
+                    { 'id': 'children-Z', 'data': { 'label': 'Children Z' } },
+                ]},
                 { 'id': 'children-C', 'data': { 'label': 'Children C' } },
             ]
         },

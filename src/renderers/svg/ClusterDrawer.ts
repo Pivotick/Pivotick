@@ -70,22 +70,6 @@ export class ClusterDrawer {
                 seen.add(edge.id)
                 return true
             })
-        // const childrenEdges: Edge[] =
-        //     node.children.flatMap(child => child.getEdgesOut() ?? [])
-        //     .map((e) => {
-        //         const from = this.nodeDrawer.graph.getMutableNode(e.from.id) as Node
-        //         const to = this.nodeDrawer.graph.getMutableNode(e.to.id) as Node
-
-        //         return new Edge(
-        //             e.id,
-        //             from,
-        //             to,
-        //             e.getData(),
-        //             e.getStyle(),
-        //             e.directed,
-        //             e.syntheticTerminalNode
-        //         )
-        //     })
 
         const subgraphContainer: SVGGElement = theClusterSelection.node() as SVGGElement
         const subgraph = this.createSubgraph(node.children, childrenEdges, subgraphContainer, node, this.nodeDrawer.graph)
@@ -125,7 +109,6 @@ export class ClusterDrawer {
         if (node.expanded) {
             const currentNode = node._original_object ?? node 
             // Hide synthetic edges that point to the parent node of this subgraph
-            // debugger
             currentNode.getEdgesIn().filter((e: Edge) => e.isSynthetic === true).forEach((e: Edge) => {
                 const currentEdge = e._original_object ?? e
                 currentEdge.hide()
@@ -140,32 +123,6 @@ export class ClusterDrawer {
                         currentEdge.show()
                     })
             })
-
-            // Current cluster might not know of other inbound edges from outer graph
-            // check in parent if there's a synthetic edge toward it's parent node with terminal node as children
-            // if yes, check the origin of the edge and loop over them
-                // if one edge is pointing to a children of the cluster, show it
-            // if (node.parentNode) {
-            //     const parentNode = node.parentNode._original_object ?? node.parentNode
-            //     const syntheticEdgesToParentNode = parentNode.getEdgesIn()
-            //         .filter((e) => e.isSynthetic && childrenSet.has(e.syntheticTerminalNode?.id ?? ''))
-            //     syntheticEdgesToParentNode.forEach((synthEdgeWithTerminalNode) => {
-            //         shouldUpdateParentGraph = true
-            //         synthEdgeWithTerminalNode.hide()
-            //         const outerParent: Node = synthEdgeWithTerminalNode.from
-            //         const outerEdges = outerParent.getEdgesOut()
-            //         outerEdges
-            //             .filter((e) => childrenSet.has(e.syntheticTerminalNode?.id ?? ''))
-            //             .forEach((e) => {
-            //                 e.hide()
-            //             })
-            //         outerEdges
-            //             .filter((e) => childrenSet.has(e.to.id))
-            //             .forEach((e) => {
-            //                 e.show()
-            //             })
-            //     })
-            // }
         } else {
             const currentNode = node._original_object ?? node 
             // Show synthetic edges that point to the parent node of this subgraph
@@ -180,27 +137,6 @@ export class ClusterDrawer {
                         e.hide()
                     })
             })
-
-            // Hide outer edges that were shown in expanded state
-            if (node.parentNode) {
-                const parentNode = node.parentNode._original_object ?? node.parentNode
-                const syntheticEdgesToParentNode = parentNode.getEdgesIn()
-                    .filter(e => e.isSynthetic && childrenSet.has(e.syntheticTerminalNode?.id ?? ''))
-
-                syntheticEdgesToParentNode.forEach(synthEdgeWithTerminalNode => {
-                    const outerParent = synthEdgeWithTerminalNode.from
-                    const outerEdges = outerParent.getEdgesOut()
-
-                    // hide edges that point to any of this cluster's children
-                    outerEdges
-                        .filter(e => childrenSet.has(e.to.id))
-                        .forEach(e => e.hide())
-                    // show synthetic edges that point to the cluster
-                    outerEdges
-                        .filter(e => e.isSynthetic && e.to.id === node.id)
-                        .forEach(e => e.show())
-                })
-            }
         }
     }
 
@@ -257,19 +193,12 @@ export class ClusterDrawer {
                 return e.toDict() as RawEdge
             })
         }
-        // const subgraphData: GraphData = {
-        //     nodes: nodes,
-        //     edges: edges,
-        // }
-
-        // debugger
+    
         const childrenProxy = new Map<string, Node>()
 
         const tmpHtml = document.createElement('div')
-        // const subgraph = new Graph(tmpHtml, {nodes: [], edges: []}, options)
         const subgraph = new Graph(tmpHtml, subgraphData, options)
         subgraph.setParentGraph(this.nodeDrawer.graph)
-        // subgraph.setData(subgraphData.nodes, subgraphData.edges)
         const zoomLayer = tmpHtml.querySelector('.zoom-layer') as SVGGElement
         container.appendChild(zoomLayer)
 
@@ -315,10 +244,10 @@ export class ClusterDrawer {
         })
 
         mainGraph.renderer.getGraphInteraction().on('dragging', () => {
-            this.updatePositionOnAllRealChildren(mainGraph, childrenProxy)
+            this.updatePositionOnAllRealChildren(mainGraph)
         })
         mainGraph.renderer.getGraphInteraction().on('simulationTick', () => {
-            this.updatePositionOnAllRealChildren(mainGraph, childrenProxy)
+            this.updatePositionOnAllRealChildren(mainGraph)
         })
         mainGraph.renderer.getGraphInteraction().on('canvasClick', () => {
             subgraph.deselectAll()
@@ -327,9 +256,18 @@ export class ClusterDrawer {
         return subgraph
     }
 
-    private updatePositionOnAllRealChildren(graph: Graph, nodeProxy: Map<string, Node>) {
+    private updatePositionOnAllRealChildren(graph: Graph,) {
         graph.getMutableNodes().filter((node) => node.isParent && node.expanded).forEach((node: Node) => {
             const children = node.children
+            const subgraph = node._subgraph
+            const nodeProxy = new Map<string, Node>()
+            if (subgraph) {
+                subgraph.getMutableNodes().forEach((n: Node) => {
+                    nodeProxy.set(n.id, n)
+                })
+                this.updatePositionOnAllRealChildren(subgraph)
+            }
+
             children.forEach((child: Node) => {
                 const childInSubgraph: Node | undefined = nodeProxy.get(child.id)
                 if (!childInSubgraph || !childInSubgraph.x || !childInSubgraph.y) return
