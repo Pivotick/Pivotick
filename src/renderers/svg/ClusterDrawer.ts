@@ -37,19 +37,7 @@ export class ClusterDrawer {
                 cluster.style('stroke', `color-mix(in srgb, ${parentColor} 70%, transparent)`)
         }
 
-        const r = ClusterDrawer.getRadiusForClusterNode(node)
-        node.setCircleRadiusCollapsed(node.getCircleRadius())
-        node.setCircleRadius(r)
-
-        const parentGraph = this.nodeDrawer.graph.getParentGraph()
-        if (parentGraph) { // We're in a subgraph, propagate change to upper graph
-            const newParentRadius = ClusterDrawer.updateParentGraph(parentGraph, node, r)
-            if (newParentRadius) {
-                this.nodeDrawer.graph.simulation.getSimulation()
-                    .force('link', null)
-                    .force('constrainParent', forceConstrainParent<Node>(newParentRadius, 10))
-            }
-        }
+        const r = ClusterDrawer.updateToNewRadiusExpanded(this.nodeDrawer.graph, node)
 
         cluster
             .attr('r', 0)
@@ -82,7 +70,7 @@ export class ClusterDrawer {
             .attr('opacity', 1)
 
         ClusterDrawer.toggleSyntheticEdges(node)
-        let currParentGraph =  parentGraph
+        let currParentGraph = this.nodeDrawer.graph.getParentGraph()
         while (currParentGraph) {
             currParentGraph.renderer.update(false)
             currParentGraph = currParentGraph.getParentGraph()
@@ -97,47 +85,6 @@ export class ClusterDrawer {
 
         return cluster
 
-    }
-
-    /**
-     * Show/Hide synthetic edges based on collapse state
-     * @param node The expanding/collapsing cluster node
-     * @returns true if parent graph should be updated
-     */
-    public static toggleSyntheticEdges(node: Node) {
-        const childrenSet = new Set(node.children.map(n => n.id))
-        if (node.expanded) {
-            const currentNode = node._original_object ?? node 
-            // Hide synthetic edges that point to the parent node of this subgraph
-            currentNode.getEdgesIn().filter((e: Edge) => e.isSynthetic === true).forEach((e: Edge) => {
-                const currentEdge = e._original_object ?? e
-                currentEdge.hide()
-            })
-            
-            // Then show actual edges
-            currentNode.children.forEach((child: Node) => {
-                child.getEdgesIn()
-                    .filter((e: Edge) => !currentNode.children.includes(e.from)) // Edges are already drawn in the subgraph
-                    .forEach((e: Edge) => {
-                        const currentEdge = e._original_object ?? e
-                        currentEdge.show()
-                    })
-            })
-        } else {
-            const currentNode = node._original_object ?? node 
-            // Show synthetic edges that point to the parent node of this subgraph
-            currentNode.getEdgesIn().filter((e: Edge) => e.isSynthetic === true).forEach((e: Edge) => {
-                e.show()
-            })
-            // Then hide actual edges
-            currentNode.children.forEach((child: Node) => {
-                child.getEdgesIn()
-                    .filter((e: Edge) => !currentNode.children.includes(e.from)) // Edges are already drawn in the subgraph
-                    .forEach((e: Edge) => {
-                        e.hide()
-                    })
-            })
-        }
     }
 
     private createSubgraph(nodes: Node[], edges: Edge[], container: SVGGElement, parentNode: Node, mainGraph: Graph): Graph {
@@ -256,7 +203,7 @@ export class ClusterDrawer {
         return subgraph
     }
 
-    private updatePositionOnAllRealChildren(graph: Graph,) {
+    private updatePositionOnAllRealChildren(graph: Graph) {
         graph.getMutableNodes().filter((node) => node.isParent && node.expanded).forEach((node: Node) => {
             const children = node.children
             const subgraph = node._subgraph
@@ -277,7 +224,7 @@ export class ClusterDrawer {
     }
 
     /**
-     * Bublle up the position on the real child
+     * Bubble up the position on the real child
      * @param x Position of the child element in the subgraph
      * @param y Position of the child element in the subgraph
      * @param id ID of the child node
@@ -297,6 +244,102 @@ export class ClusterDrawer {
         }
     }
 
+    /**
+     * Show/Hide synthetic edges based on collapse state
+     * @param node The expanding/collapsing cluster node
+     * @returns true if parent graph should be updated
+     */
+    public static toggleSyntheticEdges(node: Node) {
+        if (node.expanded) {
+            const currentNode = node._original_object ?? node
+            // Hide synthetic edges that point to the parent node of this subgraph
+            currentNode.getEdgesIn().filter((e: Edge) => e.isSynthetic === true).forEach((e: Edge) => {
+                const currentEdge = e._original_object ?? e
+                currentEdge.hide()
+            })
+
+            // Show actual edges
+            currentNode.children.forEach((child: Node) => {
+                child.getEdgesIn()
+                    .filter((e: Edge) => !currentNode.children.includes(e.from)) // Edges are already drawn in the subgraph
+                    .forEach((e: Edge) => {
+                        const currentEdge = e._original_object ?? e
+                        currentEdge.show()
+                    })
+            })
+        } else {
+            const currentNode = node._original_object ?? node
+            // Show synthetic edges that point to the parent node of this subgraph
+            currentNode.getEdgesIn().filter((e: Edge) => e.isSynthetic === true).forEach((e: Edge) => {
+                e.show()
+            })
+
+            // Hide nested edges
+            ClusterDrawer.hideNestedEdges(currentNode)
+        }
+    }
+
+    private static hideNestedEdges(node: Node) {
+        node.children.forEach((child: Node) => {
+            ClusterDrawer.hideNestedEdges(child)
+
+            child.getEdgesIn()
+                .filter((e: Edge) => !node.children.includes(e.from)) // Edges are already drawn in the subgraph
+                .forEach((e: Edge) => {
+                    e.hide()
+                })
+        })
+    }
+
+    /**
+     * 
+     * @param graph 
+     * @param node 
+     * @returns The calculated radius of the first node that expanded
+     */
+    private static updateToNewRadiusExpanded(graph: Graph, node: Node): number {
+        const r = ClusterDrawer.getRadiusForClusterNode(node)
+        if (!node.expanded) {
+            node.setCircleRadiusCollapsed(node.getCircleRadius())
+        }
+        node.setCircleRadius(r)
+
+        const parentGraph = graph.getParentGraph()
+        if (parentGraph) { // We're in a subgraph, propagate change to upper graph
+            const newParentRadius = ClusterDrawer.updateParentGraph(parentGraph, node, r)
+            if (newParentRadius) {
+                graph.simulation.getSimulation()
+                    .force('link', null)
+                    .force('constrainParent', forceConstrainParent<Node>(newParentRadius, 10))
+            }
+
+            if (parentGraph.getParentGraph() && node.parentNode) {
+                ClusterDrawer.updateToNewRadiusExpanded(parentGraph, node.parentNode)
+            }
+        }
+
+        return r
+    }
+
+    /**
+     * 
+     * @param graph 
+     * @param node 
+     * @returns The calculated radius of the first node that expanded
+     */
+    public static updateToNewRadiusCollapsed(node: Node, restoreR: boolean, graph?: Graph) {
+        const newR = restoreR ? node.getCircleRadiusCollapsed() // Restore original radius before expansion
+            : ClusterDrawer.getRadiusForClusterNode(node) 
+        node.setCircleRadius(newR)
+        if (graph) {
+            ClusterDrawer.updateParentGraph(graph, node, newR)
+            const parentGraph = graph.getParentGraph()
+            if (node.parentNode) {
+                ClusterDrawer.updateToNewRadiusCollapsed(node.parentNode, false, parentGraph)
+            }
+        }
+    }
+
     public static getRadiusForClusterNode(node: Node): number {
         let r: number = 0
         if (!node.expanded) {
@@ -304,7 +347,11 @@ export class ClusterDrawer {
         } else {
             const padding = 50
             const childPadding = 16
-            const totalRadius = node.children.reduce((sum, child) => sum + child.getCircleRadius() + childPadding, 0)
+            // const totalRadius = node.children.reduce((sum, child) => sum + child.getCircleRadius() + childPadding, 0)
+            const totalRadius = node.children.reduce((sum, child) => {
+                const childRadius = child.getCircleRadius()
+                return sum + childRadius + childPadding
+            }, 0)
             const avgRadius = totalRadius / node.children.length
             const estimatedRadius = Math.sqrt(node.children.length) * (2 * avgRadius) + padding
 

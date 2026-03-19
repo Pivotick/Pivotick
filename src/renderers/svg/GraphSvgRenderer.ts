@@ -403,9 +403,7 @@ export class GraphSvgRenderer extends GraphRenderer {
                                         currParentGraph = currParentGraph.getParentGraph()
                                     }
                                     if (parentGraph) { // We're in a subgraph, propagate change to upper graph
-                                        const newR = node.getCircleRadiusCollapsed() // Restore original radius before expansion
-                                        node.setCircleRadius(newR)
-                                        ClusterDrawer.updateParentGraph(parentGraph, node, newR)
+                                        ClusterDrawer.updateToNewRadiusCollapsed(node, true, parentGraph)
                                     }
                                 }
                                 selection.selectChildren().remove()

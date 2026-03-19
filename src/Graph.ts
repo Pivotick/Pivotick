@@ -215,6 +215,7 @@ export class Graph {
             child.hide()
         })
         normNode.weight = n.weight
+        normNode.expanded = n.expanded
         return normNode
     }
 

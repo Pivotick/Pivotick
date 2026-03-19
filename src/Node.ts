@@ -169,6 +169,7 @@ export class Node {
             data: this.data,
             style: this.style,
             weight: this.weight,
+            expanded: this.expanded,
         }
         if (!dataOnly) {
             obj.x = this.x
@@ -280,10 +281,16 @@ export class Node {
 
     expand(): void {
         this.expanded = true
+        if (this._original_object) {
+            this._original_object.expanded = true
+        }
     }
 
     collapse(): void {
         this.expanded = false
+        if (this._original_object) {
+            this._original_object.expanded = false
+        }
     }
 
     degree(): number {

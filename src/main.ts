@@ -472,8 +472,8 @@ const data = {
     // { 'from': 'children-2', 'to': 'children-A' },
     // { 'from': 'children-1', 'to': 'children-A' },
     // { 'from': 'D6', 'to': 'children-3' },
-    { 'from': 'A2', 'to': 'children-B' },
-    //   { 'from': 'A2', 'to': 'children-X' }
+    // { 'from': 'A2', 'to': 'children-B' },
+      { 'from': 'A2', 'to': 'children-X' }
   ]
 }
 
