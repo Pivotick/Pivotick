@@ -308,15 +308,18 @@ export class EdgeDrawer {
         const x = from.x ?? 0
         const y = from.y ?? 0
         const nodeRadius = from.getCircleRadius() ? from.getCircleRadius() : this.graphSvgRenderer.nodeDrawer.getNodeStyle(from).size as number
-        const control_point_radius = 6 * nodeRadius
+        const control_point_radius = nodeRadius + 16 * Math.log(nodeRadius + 1)
+        const spread = Math.max(10, 110 / Math.sqrt(nodeRadius)) // degrees, shrinks with size
 
-        // 80° NE
-        const angle1 = (80 * Math.PI) / 180
+        const angleMid = 45 // center direction, e.g. NE
+        
+        // NNE
+        const angle1 = ((angleMid + spread) * Math.PI) / 180
         const cx1 = x + control_point_radius * Math.cos(angle1)
         const cy1 = y - control_point_radius * Math.sin(angle1)
-
-        // 10° NE
-        const angle2 = (10 * Math.PI) / 180
+        
+        // NEE
+        const angle2 = ((angleMid - spread) * Math.PI) / 180
         const cx2 = x + control_point_radius * Math.cos(angle2)
         const cy2 = y - control_point_radius * Math.sin(angle2)
 
