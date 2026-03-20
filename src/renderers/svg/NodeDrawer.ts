@@ -478,7 +478,7 @@ export class NodeDrawer {
                 .attr('transform', !node.expanded ? `translate(${offset}, ${-(offset)})` : `translate(${offset}, ${offset})`)
         }
 
-        const childSubgraph = node._subgraph
+        const childSubgraph = node.getSubgraph()
         if (childSubgraph) {
             childSubgraph.simulation.getSimulation()
                 .force('constrainParent', forceConstrainParent<Node>(Number(clusterRadius), 10))

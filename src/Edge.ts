@@ -20,7 +20,6 @@ export class Edge {
     visible: boolean
     isSynthetic?: boolean
     syntheticTerminalNode?: Node
-    _original_object?: Edge
 
     private _dirty: boolean
     public readonly domID: string

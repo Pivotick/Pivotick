@@ -61,7 +61,7 @@ export class ClusterDrawer {
 
         const subgraphContainer: SVGGElement = theClusterSelection.node() as SVGGElement
         const subgraph = this.createSubgraph(node.children, childrenEdges, subgraphContainer, node, this.nodeDrawer.graph)
-        node._subgraph = subgraph
+        node.setSubgraph(subgraph)
 
         theClusterSelection.select<SVGGElement>(':scope > .zoom-layer')
             .attr('opacity', 0)
@@ -92,8 +92,8 @@ export class ClusterDrawer {
         const beforeRender = (graph: Graph) => {
             graph.getMutableNodes().forEach((n: Node) => { // Link original object to the newly created node
                 let origObject = mainGraph.getMutableNode(n.id) as Node
-                origObject = origObject._original_object ?? origObject
-                n._original_object = origObject
+                origObject = origObject.getOriginalObject() ?? origObject
+                n.setOriginalObject(origObject)
 
                 n.isChild = true
             })
@@ -204,7 +204,7 @@ export class ClusterDrawer {
     private updatePositionOnAllRealChildren(graph: Graph) {
         graph.getMutableNodes().filter((node) => node.isParent && node.expanded).forEach((node: Node) => {
             const children = node.children
-            const subgraph = node._subgraph
+            const subgraph = node.getSubgraph()
             const nodeProxy = new Map<string, Node>()
             if (subgraph) {
                 subgraph.getMutableNodes().forEach((n: Node) => {
@@ -249,7 +249,7 @@ export class ClusterDrawer {
      */
     public static toggleSyntheticEdges(node: Node) {
         if (node.expanded) {
-            const currentNode = node._original_object ?? node
+            const currentNode = node.getOriginalObject() ?? node
             // Hide synthetic edges that point to the parent node of this subgraph
             currentNode.getEdgesIn().filter((e: Edge) => e.isSynthetic === true).forEach((e: Edge) => {
                 e.hide()
@@ -264,7 +264,7 @@ export class ClusterDrawer {
                     })
             })
         } else {
-            const currentNode = node._original_object ?? node
+            const currentNode = node.getOriginalObject() ?? node
             currentNode.getEdgesIn().filter((e: Edge) => e.isSynthetic === true).forEach((e: Edge) => {
                 if (node.visible) {
                     e.show()

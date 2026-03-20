@@ -389,7 +389,7 @@ export class GraphSvgRenderer extends GraphRenderer {
                             if (node.isDirty()) {
                                 node.clearDirty()
                                 if (!node.expanded) { // teardown any created clusters.
-                                    ClusterDrawer.collapseAllOpenedClusters(node) // OK for depth 1, for depth2, the graph is not initialize fully
+                                    ClusterDrawer.collapseAllOpenedClusters(node)
                                     ClusterDrawer.toggleSyntheticEdges(node)
                                     const parentGraph = this.nodeDrawer.graph.getParentGraph()
                                     let currParentGraph = parentGraph

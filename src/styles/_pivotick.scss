@@ -356,7 +356,7 @@ dl.pvt-property-list {
             & > .node {
                 stroke-width: 1;
                 stroke-linecap: round;
-                stroke: var(pvt-node-dash-stroke);
+                stroke: var(--pvt-node-dash-stroke);
                 stroke-dasharray: 3.141592653589793;
 
                 &:hover {

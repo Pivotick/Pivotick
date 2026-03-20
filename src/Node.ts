@@ -1,4 +1,5 @@
 import type { Edge } from './Edge'
+import type { Graph } from './Graph';
 import type { NodeStyle } from './interfaces/RendererOptions'
 import { generateSafeDomId } from './utils/ElementCreation'
 
@@ -32,7 +33,8 @@ export class Node {
     isChild: boolean
     isParent: boolean
     parentNode?: Node
-    _original_object?: Node
+    private _original_object?: Node
+    private _subgraph?: Graph
     private _circleRadius = this.defaultCircleRadius
     private _circleRadiusCollapsed = this.defaultCircleRadius
     private _dirty: boolean
@@ -333,5 +335,31 @@ export class Node {
 
     markAsParent(): void {
         this.isParent = true
+    }
+
+    /**
+     * @private
+     */
+    setSubgraph(subgraph: Graph) {
+        this._subgraph = subgraph
+    }
+    /**
+     * @private
+     */
+    getSubgraph(): Graph | undefined {
+        return this._subgraph
+    }
+
+    /**
+     * @private
+     */
+    setOriginalObject(obj: Node) {
+        this._original_object = obj
+    }
+    /**
+     * @private
+     */
+    getOriginalObject(): Node | undefined {
+        return this._original_object
     }
 }
