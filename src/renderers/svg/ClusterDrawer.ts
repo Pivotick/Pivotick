@@ -371,6 +371,10 @@ export class ClusterDrawer {
     public static updateParentGraph(parentGraph: Graph, node: Node, r: number): number | undefined {
         const realChild = parentGraph.getMutableNode(node.id)
         realChild?.setCircleRadius(r)
+        const originalElement = node.getOriginalObject()
+        if (originalElement) {
+            originalElement.setCircleRadius(r)
+        }
 
         const parentNode = node.parentNode
         if (parentNode) {
