@@ -181,7 +181,7 @@ export class Graph {
                         syntheticId,
                         edge.from,
                         currentParent,
-                        { 'label': `${edge.from.id}-${currentParent.id}` },
+                        {},
                         {},
                         null,
                         edge.to

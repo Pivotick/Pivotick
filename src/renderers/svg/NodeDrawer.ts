@@ -404,7 +404,8 @@ export class NodeDrawer {
         return base
     }
 
-    private addExpandCollapseIcons(theNodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    private addExpandCollapseIcons(theNodeSelection: Selection<SVGGElement, Node, null, undefined>, _node: Node): void {
         const iconRadius = 8      // radius of the small circle
         const padding = 2         // distance from node bounds
 

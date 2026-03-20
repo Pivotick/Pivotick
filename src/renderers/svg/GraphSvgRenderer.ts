@@ -207,6 +207,7 @@ const DEFAULT_RENDERER_OPTIONS = {
     type: 'svg',
     enableFocusMode: true,
     enableNodeExpansion: true,
+    beforeRender: () => {},
     zoomEnabled: true,
     dragEnabled: true,
     interactionEnabled: true,

@@ -1,5 +1,5 @@
 import type { Edge } from './Edge'
-import type { Graph } from './Graph';
+import type { Graph } from './Graph'
 import type { NodeStyle } from './interfaces/RendererOptions'
 import { generateSafeDomId } from './utils/ElementCreation'
 

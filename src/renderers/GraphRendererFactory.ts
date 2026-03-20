@@ -7,21 +7,46 @@ import { GraphInteractions } from '../GraphInteractions'
 
 
 
+// export function createGraphRenderer(
+//   graph: Graph,
+//   container: HTMLElement,
+//   options: Partial<GraphRendererOptions>
+// ): GraphRenderer {
+//     const type = options.type ?? 'svg'
+//     let renderer
+//     if (type === 'svg') {
+//         const graphInteraction = new GraphInteractions<SVGGElement | SVGPathElement>(graph)
+//         renderer = new GraphSvgRenderer(graph, container, graphInteraction, options)
+//     } else if (type === 'canvas') {
+//         // const graphInteraction = new GraphInteractions<CanvasRenderingContext2D>(graph)
+//         // renderer = new GraphCanvasRenderer(graph, container, graphInteraction, options)
+//     } else {
+//         throw new Error(`\`${type}\` renderer is not implemented yet.`)
+//     }
+//     return renderer as GraphRenderer
+//   }
+
 export function createGraphRenderer(
-  graph: Graph,
-  container: HTMLElement,
-  options: Partial<GraphRendererOptions>
-): GraphRenderer {
+    graph: Graph,
+    container: HTMLElement,
+    options: Partial<GraphRendererOptions> & { type: 'svg' }
+): GraphSvgRenderer
+
+export function createGraphRenderer(
+    graph: Graph,
+    container: HTMLElement,
+    options: Partial<GraphRendererOptions> & { type?: string }
+): GraphRenderer
+
+export function createGraphRenderer(
+    graph: Graph,
+    container: HTMLElement,
+    options: Partial<GraphRendererOptions> & { type?: string }
+): GraphSvgRenderer | GraphRenderer {
     const type = options.type ?? 'svg'
-    let renderer
     if (type === 'svg') {
         const graphInteraction = new GraphInteractions<SVGGElement | SVGPathElement>(graph)
-        renderer = new GraphSvgRenderer(graph, container, graphInteraction, options)
-    } else if (type === 'canvas') {
-        // const graphInteraction = new GraphInteractions<CanvasRenderingContext2D>(graph)
-        // renderer = new GraphCanvasRenderer(graph, container, graphInteraction, options)
-    } else {
-        throw new Error(`\`${type}\` renderer is not implemented yet.`)
+        return new GraphSvgRenderer(graph, container, graphInteraction, options)
     }
-    return renderer as GraphRenderer
-  }
+    throw new Error(`\`${type}\` renderer is not implemented yet.`)
+}

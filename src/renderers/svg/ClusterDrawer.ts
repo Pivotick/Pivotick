@@ -6,8 +6,9 @@ import { forceConstrainParent } from '../../plugins/layout/MicroForce'
 import { Edge } from '../../Edge'
 import type { EdgeDrawer } from './EdgeDrawer'
 import { Graph } from '../../Graph'
-import type { GraphData, GraphOptions, RawEdge, RawNode, RelaxedGraphData } from '../../interfaces/GraphOptions'
+import type { GraphOptions, RawEdge, RawNode, RelaxedGraphData } from '../../interfaces/GraphOptions'
 import { forceCenter } from 'd3-force'
+import type { GraphSvgRenderer } from './GraphSvgRenderer'
 
 export class ClusterDrawer {
 
@@ -237,7 +238,8 @@ export class ClusterDrawer {
             this.nodeDrawer.graph.renderer.nextTickFor([realChild])
             const parentGraph = this.nodeDrawer.graph.getParentGraph()
             if (parentGraph) {
-                parentGraph.renderer.nodeDrawer.clusterDrawer.updatePositionOnRealChild(x, y, id)
+                const svgRenderer = parentGraph.renderer as unknown as GraphSvgRenderer // dirty
+                svgRenderer.nodeDrawer.clusterDrawer.updatePositionOnRealChild(x, y, id)
             }
         }
     }

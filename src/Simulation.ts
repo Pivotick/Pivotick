@@ -184,7 +184,8 @@ export class Simulation {
         }
     }
 
-    private static initSimulationForceCenter(force: ForceCenter<Node>, options: SimulationOptions) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    private static initSimulationForceCenter(force: ForceCenter<Node>, _options: SimulationOptions) {
         force.x(0)
             .y(0)
             .strength(0.05)
