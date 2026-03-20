@@ -169,7 +169,7 @@ export class Node {
             data: this.data,
             style: this.style,
             weight: this.weight,
-            expanded: this.expanded,
+            // expanded: this.expanded,
         }
         if (!dataOnly) {
             obj.x = this.x

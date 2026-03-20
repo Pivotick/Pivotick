@@ -11,7 +11,6 @@ d3Select.prototype.transition = d3Transition
 
 export class NodeDrawer {
 
-    // @ts-expect-error: graph might be used in future updates
     public graph: Graph
     public rendererOptions: GraphRendererOptions
     public graphSvgRenderer: GraphSvgRenderer
@@ -88,6 +87,9 @@ export class NodeDrawer {
             if (node.expanded) {
                 const cluster = this.clusterDrawer.render(theNodeSelection, node, () => {
                     NodeDrawer.handleChildrenExpanded(this.graph, node, cluster)
+                })
+                requestAnimationFrame(() => {
+                    ClusterDrawer.updateToNewRadiusExpanded(this.graph, node)
                 })
             }
 
@@ -440,7 +442,7 @@ export class NodeDrawer {
                     toggleExpand(node, !node.expanded)
                 })
 
-            group.select(!node.expanded ? '.expand-icon' : '.collapse-icon')
+            group.select(!node.expanded ? ':scope > .expand-icon' : ':scope > .collapse-icon')
                 .append('text')
                 .text(!node.expanded ? '+' : '-')
 
@@ -471,6 +473,8 @@ export class NodeDrawer {
         const origIcons: SVGGElement | undefined | null = node.getGraphElement()?.querySelector('& > .node-icon')
         if (origIcons) {
             d3Select(origIcons)
+                .transition()
+                .duration(250)
                 .attr('transform', !node.expanded ? `translate(${offset}, ${-(offset)})` : `translate(${offset}, ${offset})`)
         }
 

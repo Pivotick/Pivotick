@@ -76,6 +76,13 @@ export class Graph {
             this.options.UI.contextMenu.enabled = false
         }
 
+        if (options.parentGraph) {
+            this.setParentGraph(options.parentGraph)
+        }
+        if (options.beforeDraw) {
+            this.options.beforeDraw = options.beforeDraw
+        }
+
         const rendererOptions = {
             ...this.options.render
         } as Partial<GraphRendererOptions> 
@@ -99,8 +106,12 @@ export class Graph {
         this.simulation = new Simulation(this, simulationOptions)
 
         if (data) {
-            const normalisedData = this.normalizeGraphData(data)
+            const normalisedData = Graph.normalizeGraphData(data)
             this._setData(normalisedData?.nodes, normalisedData?.edges)
+            if (this.options.beforeDraw) {
+                
+                this.options.beforeDraw(this)
+            }
             this.simulation?.update()
             this.renderer.init()
             this.renderer.fitAndCenter(1)
@@ -141,8 +152,8 @@ export class Graph {
         this.ready()
     }
 
-    private normalizeGraphData(data: GraphData | RelaxedGraphData): GraphData {
-        const normalizedNodes = data.nodes.map((n) => this.normalizeNode(n))
+    public static normalizeGraphData(data: GraphData | RelaxedGraphData): GraphData {
+        const normalizedNodes = data.nodes.map((n) => Graph.normalizeNode(n))
         const childrenNodesByID = new Map()
         const recurseAddChildren = (node: Node) => {
             node.children.forEach((child: Node) => {
@@ -158,7 +169,7 @@ export class Graph {
         const baseNodesByID = new Map(normalizedNodes.map(node => [node.id, node]))
         const nodesByID = new Map([...baseNodesByID, ...childrenNodesByID])
 
-        const normalizedEdges: Edge[] = data.edges.map((e) => this.normalizeEdge(e, nodesByID))
+        const normalizedEdges: Edge[] = data.edges.map((e) => Graph.normalizeEdge(e, nodesByID))
             .filter((e): e is Edge => e !== null)
 
         // Generate synthetic edges for edges pointing to child in collapsed nodes
@@ -201,11 +212,11 @@ export class Graph {
         }
     }
 
-    private normalizeNode(n: RawNode | Node): Node {
+    private static normalizeNode(n: RawNode | Node): Node {
         let children: Node[] = []
         if (!(n instanceof Node) && n.children) {
             children = n.children.map((n) => {
-                const nNode = this.normalizeNode(n)
+                const nNode = Graph.normalizeNode(n)
                 return nNode
             })
         }
@@ -219,10 +230,10 @@ export class Graph {
         return normNode
     }
 
-    private normalizeEdge(e: RawEdge | Edge, allNodes?: Map<string, Node>): Edge | null {
+    private static normalizeEdge(e: RawEdge | Edge, allNodes: Map<string, Node>): Edge | null {
         if (e instanceof Edge) return e
 
-        const nodeMap = allNodes ? allNodes : this.nodes
+        const nodeMap = allNodes
         
         const fromNode = nodeMap.get(e.from.toString())
         const toNode = nodeMap.get(e.to.toString())
@@ -401,7 +412,7 @@ export class Graph {
     setData(nodes: Array<Node> = [], edges: Array<Edge> = []): void {
         this.nodes.clear()
         this.edges.clear()
-        const normalisedData = this.normalizeGraphData({ nodes: nodes, edges: edges})
+        const normalisedData = Graph.normalizeGraphData({ nodes: nodes, edges: edges})
         this._setData(normalisedData?.nodes, normalisedData?.edges)
         this.onChange()
         this.startAndRender()
@@ -453,7 +464,7 @@ export class Graph {
      * Triggers `onChange` after the node is successfully added.
      */
     addNode(n: RawNode | Node): Node {
-        const node = this.normalizeNode(n)
+        const node = Graph.normalizeNode(n)
         if (this.nodes.has(node.id)) {
             throw new Error(`Node with id ${node.id} already exists.`)
         }
@@ -548,7 +559,7 @@ export class Graph {
      * Triggers `onChange` after the edge is successfully added.
      */
     addEdge(e: RawEdge | Edge): Edge {
-        const edge = this.normalizeEdge(e)
+        const edge = Graph.normalizeEdge(e, this.nodes)
 
         if (!edge) {
             throw new Error('Either of the from or to nodes do not exist')

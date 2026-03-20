@@ -352,17 +352,8 @@ export class GraphSvgRenderer extends GraphRenderer {
     }
 
     public dataUpdate(): void {
-        // const nodes: Node[] = this.graph.getMutableVisibleNodes()
         const nodes: Node[] = this.graph.getMutableNodes()
             .filter(node => node.visible)
-        // filter out nodes that are shown in a subgraph. They should not be visible on this graph, even if the visible flag is on
-        // both graph share the same node object
-            // .filter(node => {
-            //     if (node.parentNode) {
-            //         return node.parentNode.expanded && node.parentNode._subgraph === this.graph
-            //     }
-            //     return true
-            // })
 
         const nodeGroupNode: SVGGElement = this.nodeGroup.node() as SVGGElement
         this.nodeGroupSelection = this.nodeGroup
@@ -395,6 +386,7 @@ export class GraphSvgRenderer extends GraphRenderer {
                             if (node.isDirty()) {
                                 node.clearDirty()
                                 if (!node.expanded) { // teardown any created clusters.
+                                    ClusterDrawer.collapseAllOpenedClusters(node) // OK for depth 1, for depth2, the graph is not initialize fully
                                     ClusterDrawer.toggleSyntheticEdges(node)
                                     const parentGraph = this.nodeDrawer.graph.getParentGraph()
                                     let currParentGraph = parentGraph

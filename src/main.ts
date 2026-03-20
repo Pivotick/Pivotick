@@ -420,7 +420,11 @@ const data = {
                 { 'id': 'children-A', 'data': { 'label': 'Children A' } },
                 { 'id': 'children-B', 'data': { 'label': 'Children B' }, children: [
                     { 'id': 'children-X', 'data': { 'label': 'Children X' } },
-                    { 'id': 'children-Z', 'data': { 'label': 'Children Z' } },
+                    {
+                        'id': 'children-Z', 'data': { 'label': 'Children Z' }, children: [
+                            { 'id': '11111', 'data': { 'label': '11111' } },
+                            { 'id': '22222', 'data': { 'label': '22222' } },
+                        ] },
                 ]},
                 { 'id': 'children-C', 'data': { 'label': 'Children C' } },
             ]
@@ -473,7 +477,8 @@ const data = {
     // { 'from': 'children-1', 'to': 'children-A' },
     // { 'from': 'D6', 'to': 'children-3' },
     // { 'from': 'A2', 'to': 'children-B' },
-      { 'from': 'A2', 'to': 'children-X' }
+    //   { 'from': 'A2', 'to': 'children-X' }
+      { 'from': 'A2', 'to': '11111' }
   ]
 }
 

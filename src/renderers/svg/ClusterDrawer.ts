@@ -140,36 +140,57 @@ export class ClusterDrawer {
                 return e.toDict() as RawEdge
             })
         }
-    
+
         const childrenProxy = new Map<string, Node>()
+        const beforeDraw = (graph: Graph) => {
+            graph.getMutableNodes().forEach((n: Node) => {
+                childrenProxy.set(n.id, n)
+
+                let origObject = mainGraph.getMutableNode(n.id) as Node
+                origObject = origObject._original_object ?? origObject
+                n._original_object = origObject
+
+                n.isChild = true
+            })
+            nodes.forEach((n: Node) => { // remap original parent to outer graph's node
+                if (n.parentNode?.id === parentNode.id) {
+                    const subgraphNode = graph.getMutableNode(n.id)
+                    if (subgraphNode) {
+                        subgraphNode.parentNode = parentNode
+                    }
+                }
+            })
+        }
+        options.beforeDraw = beforeDraw
+        options.parentGraph = this.nodeDrawer.graph
 
         const tmpHtml = document.createElement('div')
         const subgraph = new Graph(tmpHtml, subgraphData, options)
-        subgraph.setParentGraph(this.nodeDrawer.graph)
+        // const normalisedData = Graph.normalizeGraphData(subgraphData)
+        // const subgraph = new Graph(tmpHtml, normalisedData, options)
+        // subgraph.setParentGraph(this.nodeDrawer.graph)
         const zoomLayer = tmpHtml.querySelector('.zoom-layer') as SVGGElement
         container.appendChild(zoomLayer)
 
-        subgraph.getMutableNodes().forEach((n: Node) => {
-            childrenProxy.set(n.id, n)
+        // subgraph.getMutableNodes().forEach((n: Node) => {
+        //     childrenProxy.set(n.id, n)
 
-            let origObject = mainGraph.getMutableNode(n.id) as Node
-            origObject = origObject._original_object ?? origObject
-            n._original_object = origObject
+        //     let origObject = mainGraph.getMutableNode(n.id) as Node
+        //     origObject = origObject._original_object ?? origObject
+        //     n._original_object = origObject
 
-            n.isChild = true
-        })
-        subgraph.getMutableEdges().forEach((e: Edge) => {
-            let origObject = mainGraph.getMutableEdge(e.id) as Edge
-            origObject = origObject._original_object ?? origObject
-            e._original_object = origObject
-        })
-        nodes.forEach((n: Node) => { // remap original parent to outer graph's node
-            if (n.parentNode?.id === parentNode.id) {
-                const subgraphNode = subgraph.getMutableNode(n.id)
-                if (subgraphNode) {
-                    subgraphNode.parentNode = parentNode
-                }
-            }
+        //     n.isChild = true
+        // })
+        // nodes.forEach((n: Node) => { // remap original parent to outer graph's node
+        //     if (n.parentNode?.id === parentNode.id) {
+        //         const subgraphNode = subgraph.getMutableNode(n.id)
+        //         if (subgraphNode) {
+        //             subgraphNode.parentNode = parentNode
+        //         }
+        //     }
+        // })
+        subgraph.getMutableNodes().forEach((node) => {
+            ClusterDrawer.toggleSyntheticEdges(node)
         })
 
         subgraph.on('ready', () => {
@@ -254,24 +275,24 @@ export class ClusterDrawer {
             const currentNode = node._original_object ?? node
             // Hide synthetic edges that point to the parent node of this subgraph
             currentNode.getEdgesIn().filter((e: Edge) => e.isSynthetic === true).forEach((e: Edge) => {
-                const currentEdge = e._original_object ?? e
-                currentEdge.hide()
+                e.hide()
             })
 
             // Show actual edges
             currentNode.children.forEach((child: Node) => {
+                console.log(child.getEdgesIn());
                 child.getEdgesIn()
                     .filter((e: Edge) => !currentNode.children.includes(e.from)) // Edges are already drawn in the subgraph
                     .forEach((e: Edge) => {
-                        const currentEdge = e._original_object ?? e
-                        currentEdge.show()
+                        e.show()
                     })
             })
         } else {
             const currentNode = node._original_object ?? node
-            // Show synthetic edges that point to the parent node of this subgraph
             currentNode.getEdgesIn().filter((e: Edge) => e.isSynthetic === true).forEach((e: Edge) => {
-                e.show()
+                if (node.visible) {
+                    e.show()
+                }
             })
 
             // Hide nested edges
@@ -291,13 +312,22 @@ export class ClusterDrawer {
         })
     }
 
+    public static collapseAllOpenedClusters(node: Node) {
+        node.children.forEach((child: Node) => {
+            ClusterDrawer.collapseAllOpenedClusters(child)
+            child.collapse()
+            // At that point, all children should also be collapsed
+            child.setCircleRadius(child.getCircleRadiusCollapsed()) 
+        })
+    }
+
     /**
      * 
      * @param graph 
      * @param node 
      * @returns The calculated radius of the first node that expanded
      */
-    private static updateToNewRadiusExpanded(graph: Graph, node: Node): number {
+    public static updateToNewRadiusExpanded(graph: Graph, node: Node): number {
         const r = ClusterDrawer.getRadiusForClusterNode(node)
         if (!node.expanded) {
             node.setCircleRadiusCollapsed(node.getCircleRadius())
