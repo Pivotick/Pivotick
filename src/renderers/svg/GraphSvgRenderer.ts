@@ -340,6 +340,9 @@ export class GraphSvgRenderer extends GraphRenderer {
     }
 
     public init(): void {
+        if (this.options.beforeRender) {
+            this.options.beforeRender(this.graph)
+        }
         this.dataUpdate()
         this.eventHandler.init(this, this.graphInteraction)
     }

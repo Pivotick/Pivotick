@@ -1,4 +1,5 @@
 import type { Edge } from '../Edge'
+import type { Graph } from '../Graph'
 import type { Node } from '../Node'
 import type { IconClass, IconUnicode, ImagePath, SVGIcon } from './GraphUI'
 
@@ -161,6 +162,11 @@ export interface GraphRendererOptions {
      * @default true
      */
     enableNodeExpansion: boolean,
+    /**
+     * Callback executed during the init phase, before the first rendering
+     * @param graph The Graph instance
+     */
+    beforeRender: (graph: Graph) => void
     /** @default true */
     zoomEnabled: boolean
     /** @default true */

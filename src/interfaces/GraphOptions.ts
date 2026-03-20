@@ -1,4 +1,5 @@
 import type { Edge, EdgeData } from '../Edge'
+import type { Graph } from '../Graph'
 import type { Node, NodeData } from '../Node'
 import type { DeepPartial } from '../utils/utils'
 import type { GraphUI } from './GraphUI'
@@ -43,6 +44,12 @@ export interface GraphOptions {
      * Options for the UI
      */
     UI?: DeepPartial<GraphUI>,
+
+    /**
+     * @private
+     * Instance of a parent graph used in the context of collapsible nodes
+     */
+    parentGraph?: Graph
 }
 
 /**

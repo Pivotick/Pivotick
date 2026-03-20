@@ -76,11 +76,8 @@ export class Graph {
             this.options.UI.contextMenu.enabled = false
         }
 
-        if (options.parentGraph) {
-            this.setParentGraph(options.parentGraph)
-        }
-        if (options.beforeDraw) {
-            this.options.beforeDraw = options.beforeDraw
+        if (this.options.parentGraph) {
+            this.setParentGraph(this.options.parentGraph)
         }
 
         const rendererOptions = {
@@ -108,10 +105,6 @@ export class Graph {
         if (data) {
             const normalisedData = Graph.normalizeGraphData(data)
             this._setData(normalisedData?.nodes, normalisedData?.edges)
-            if (this.options.beforeDraw) {
-                
-                this.options.beforeDraw(this)
-            }
             this.simulation?.update()
             this.renderer.init()
             this.renderer.fitAndCenter(1)
