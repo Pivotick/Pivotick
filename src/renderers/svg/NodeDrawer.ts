@@ -453,11 +453,14 @@ export class NodeDrawer {
     public static handleChildrenExpanded(graph: Graph, node: Node, cluster: Selection<SVGCircleElement, Node, null, undefined>): void {
         // Adapt position if children are expanded
         graph.simulation.reheat(0.1)
-        const origNode = node.getGraphElement()?.querySelector('& > circle.node')
-        origNode?.setAttribute('cx', origNode.getAttribute('cx') ?? '0')
-        origNode?.setAttribute('cy', origNode.getAttribute('cy') ?? '0')
         const clusterRadius = Number(cluster.attr('_final_r')) // 'r' attribute is being transitioned, get the final value
 
+        // Compute the offset for the north-west position (45° angle, distance = clusterRadius + padding)
+        const padding = 2         // distance from node bounds
+        const offset = (clusterRadius + padding) / Math.sqrt(2)
+
+        // Get the main node element (whatever shape it is: circle, rect, path, etc.)
+        const origNode = node.getGraphElement()?.querySelector('& > .node')
         if (origNode) {
             d3Select(origNode)
                 .transition()
@@ -465,12 +468,10 @@ export class NodeDrawer {
                 .on('end', () => {
                     graph.renderer.fitAndCenter()
                 })
-                .attr('cx', (-clusterRadius/Math.sqrt(2)).toString())
-                .attr('cy', (-clusterRadius/Math.sqrt(2)).toString())
+                .attr('transform', `translate(${-offset}, ${-offset})`)
         }
 
-        const padding = 2         // distance from node bounds
-        const offset = (clusterRadius + padding) / Math.sqrt(2)
+        // Reposition the expand/collapse icon
         const origIcons: SVGGElement | undefined | null = node.getGraphElement()?.querySelector('& > .node-icon')
         if (origIcons) {
             d3Select(origIcons)
