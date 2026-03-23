@@ -135,9 +135,12 @@ export class EdgeDrawer {
         mergedStyle.dashed = mergedStyle.dashed !== undefined ? tryResolveBoolean(mergedStyle.dashed, edge) : undefined
         mergedStyle.animateDash = mergedStyle.animateDash !== undefined ? tryResolveBoolean(mergedStyle.animateDash, edge) : undefined
 
+        // Edge going from the cluster's parent bubble to a child
         if (edge.to.parentNode && edge.to.parentNode === edge.from) {
             mergedStyle.curveStyle = 'straight'
-            const nodeElement = edge.from.getGraphElement()?.querySelector('.node')
+            // FROM node rendering might be done in a subgraph
+            const fromNode = edge.getSubgraphFromNode() ?? edge.from
+            const nodeElement = fromNode.getGraphElement()?.querySelector('.node')
             if (nodeElement) {
                 mergedStyle.strokeColor = getComputedStyle(nodeElement).fill
                 mergedStyle.markerStart = 'bigcircle'

@@ -22,6 +22,8 @@ export class Edge {
     isSynthetic?: boolean
     /** The actual child node this synthetic edge points to (for expansion logic) */
     syntheticTerminalNode?: Node
+    private _subgraphFromNode?: Node
+    private _subgraphToNode?: Node
 
     private _dirty: boolean
     public readonly domID: string
@@ -200,5 +202,36 @@ export class Edge {
 
     hide(): void {
         this.visible = false
+    }
+
+    /**
+     * Sets a reference to the subgraph node from the main graph.
+     * Used when the FROM node has a clone in a subgraph
+     * @private
+     */
+    setSubgraphFromNode(obj: Node) {
+        this._subgraphFromNode = obj
+    }
+    /**
+     * Sets a reference to the subgraph node from the main graph.
+     * Used when the TO node has a clone in a subgraph
+     * @private
+     */
+    setSubgraphToNode(obj: Node) {
+        this._subgraphToNode = obj
+    }
+    /**
+     * Gets the reference to the subgraph node from the main graph.
+     * @private
+     */
+    getSubgraphFromNode(): Node | undefined {
+        return this._subgraphFromNode
+    }
+    /**
+     * Gets the reference to the subgraph node from the main graph.
+     * @private
+     */
+    getSubgraphToNode(): Node | undefined {
+        return this._subgraphToNode
     }
 }

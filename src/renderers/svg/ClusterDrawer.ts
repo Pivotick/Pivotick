@@ -194,6 +194,17 @@ export class ClusterDrawer {
                     }
                 }
             })
+            // Link each maingraph edge's nodes to its subgraph counterpart
+            mainGraph.getMutableEdges().forEach((e: Edge) => {
+                const subgraphFromNode = graph.getMutableNode(e.from.id)
+                const subgraphToNode = graph.getMutableNode(e.to.id)
+                if (subgraphFromNode) {
+                    e.setSubgraphFromNode(subgraphFromNode)
+                }
+                if (subgraphToNode) {
+                    e.setSubgraphToNode(subgraphToNode)
+                }
+            })
         }
 
         const options: GraphOptions = {
