@@ -374,8 +374,12 @@ export class ClusterDrawer {
      */
     public static toggleSyntheticEdges(node: Node) {
         if (node.expanded) {
+            // Hide self-referencing synthetic edges
+            node.getEdgesIn().filter((e: Edge) => e.isSynthetic === true).forEach((e: Edge) => {
+                e.hide()
+            })
             const currentNode = node.getOriginalObject() ?? node
-            // Hide synthetic edges that point to the parent node of this subgraph
+            // Hide synthetic edges that point to the node of this subgraph coming from outer graph
             currentNode.getEdgesIn().filter((e: Edge) => e.isSynthetic === true).forEach((e: Edge) => {
                 e.hide()
             })
