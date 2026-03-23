@@ -475,7 +475,7 @@ const data = {
     { 'from': 'A1', 'to': 'children-2' },
     { 'from': 'children-2', 'to': 'children-A' },
     { 'from': 'children-1', 'to': 'children-A' },
-    { 'from': 'D6', 'to': 'children-3' },
+    { 'from': 'D6', 'to': 'children-3' }, // D6 -.-.-> D6 makes sense. c1 -.-.-> c1 doesn't. It should be D6 -.-.-> c1 instead
     { 'from': 'A2', 'to': 'children-B' },
     { 'from': 'A2', 'to': 'children-X' },
     { 'from': 'A2', 'to': '11111' },

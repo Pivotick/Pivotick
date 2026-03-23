@@ -30,10 +30,18 @@ export class Node {
     frozen?: boolean
     visible: boolean
     expanded?: boolean
+    /** True if this node is a child within a collapsed cluster */
     isChild: boolean
+    /** True if this node has child nodes */
     isParent: boolean
+    /** Reference to the parent cluster node (if this node is a child) */
     parentNode?: Node
+    /**
+     * Reference to the main graph node when this node is a clone in a subgraph.
+     * Used for syncing position updates from subgraph back to main graph.
+     */
     private _original_object?: Node
+    /** The subgraph graph instance created when expanding this node */
     private _subgraph?: Graph
     private _circleRadius = this.defaultCircleRadius
     private _circleRadiusCollapsed = this.defaultCircleRadius
@@ -338,12 +346,15 @@ export class Node {
     }
 
     /**
+     * Sets the subgraph instance (when opening a cluster).
      * @private
      */
     setSubgraph(subgraph: Graph) {
         this._subgraph = subgraph
     }
     /**
+     * Gets the subgraph instance created from this node.
+     * Returns undefined if this node didn't created a subgraph.
      * @private
      */
     getSubgraph(): Graph | undefined {
@@ -351,12 +362,16 @@ export class Node {
     }
 
     /**
+     * Sets a reference to the original node from the main graph.
+     * Used when this node is a clone in a subgraph to enable position syncing.
      * @private
      */
     setOriginalObject(obj: Node) {
         this._original_object = obj
     }
     /**
+     * Gets the reference to the original node from the main graph.
+     * Returns undefined if this is not a subgraph clone.
      * @private
      */
     getOriginalObject(): Node | undefined {

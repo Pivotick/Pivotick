@@ -3,7 +3,7 @@ import { Node } from './Node'
 import { generateSafeDomId } from './utils/ElementCreation'
 
 export interface EdgeData {
-    [key: string]: undefined;
+    [key: string]: unknown;
 }
 
 /**
@@ -18,7 +18,9 @@ export class Edge {
     private style: Partial<EdgeFullStyle>
 
     visible: boolean
+    /** True if this is a synthetic edge (placeholder for collapsed cluster child) */
     isSynthetic?: boolean
+    /** The actual child node this synthetic edge points to (for expansion logic) */
     syntheticTerminalNode?: Node
 
     private _dirty: boolean

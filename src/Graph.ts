@@ -145,6 +145,21 @@ export class Graph {
         this.ready()
     }
 
+    /**
+     * Normalizes graph data by:
+     * 1. Building a hierarchy of nodes (including nested children)
+     * 2. Creating synthetic edges for edges that point to collapsed children
+     * 3. Hiding edges that connect to invisible child nodes
+     *
+     * Synthetic edges are placeholder edges created when an edge would point to a
+     * node inside a collapsed cluster. Instead of pointing to the invisible child,
+     * a synthetic edge is created pointing to the parent cluster node. When the
+     * cluster is expanded, synthetic edges are hidden and actual edges are shown.
+     *
+     * @param data - The raw graph data to normalize
+     * @returns Normalized graph data with synthetic edges added
+     * @private
+     */
     public static normalizeGraphData(data: GraphData | RelaxedGraphData): GraphData {
         const normalizedNodes = data.nodes.map((n) => Graph.normalizeNode(n))
         const childrenNodesByID = new Map()
@@ -205,6 +220,10 @@ export class Graph {
         }
     }
 
+    /**
+     * Normalizes a node, marking its children and hiding them.
+     * @private
+     */
     private static normalizeNode(n: RawNode | Node): Node {
         let children: Node[] = []
         if (!(n instanceof Node) && n.children) {
@@ -223,6 +242,10 @@ export class Graph {
         return normNode
     }
 
+    /**
+     * Normalizes an edge, hiding it if it connects to a child node in a collapsed cluster.
+     * @private
+     */
     private static normalizeEdge(e: RawEdge | Edge, allNodes: Map<string, Node>): Edge | null {
         if (e instanceof Edge) return e
 
