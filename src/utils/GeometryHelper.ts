@@ -474,8 +474,8 @@ export function linePathParser(d: string): Line | null {
     if (parts.length !== 6 || parts[0] !== 'M' || parts[3] !== 'L') return null
 
     const lineParam: Line = {
-        x0: parseFloat(parts[0]),
-        y0: parseFloat(parts[1]),
+        x0: parseFloat(parts[1]),
+        y0: parseFloat(parts[2]),
         x1: parseFloat(parts[4]),
         y1: parseFloat(parts[5]),
     }

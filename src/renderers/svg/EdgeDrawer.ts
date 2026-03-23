@@ -225,13 +225,11 @@ export class EdgeDrawer {
                 pathTotalLength = arcLength
                 midpoint = arcMidpoint
             } else if (style.curveStyle === 'straight') {
-                // pathTotalLength = getSegmentLengthAndMidpoint(pathEl)
                 const segmentLengthAndMidpoint = pathEl ? getSegmentLengthAndMidpoint(pathEl) : undefined
                 const { length: segmentLength = 0, midpoint: segmentMidpoint = { x: 0, y: 0 } } = segmentLengthAndMidpoint ?? {}
                 pathTotalLength = segmentLength
                 midpoint = segmentMidpoint
             } else {
-                // pathTotalLength = pathEl ? pathEl.getTotalLength() : 0
                 const arcApprox = pathEl ? getApproximateArcLengthAndMidpoint(pathEl) : undefined
                 const { length: arcLength = 0, midpoint: arcMidpoint = { x: 0, y: 0 } } = arcApprox ?? {}
                 pathTotalLength = arcLength
