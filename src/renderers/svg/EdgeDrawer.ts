@@ -348,17 +348,29 @@ export class EdgeDrawer {
         const drawOffsetEnd = 4 + (edgeStyle.markerEnd !== undefined ? 2 : 0) + (isEdgeSelected ? 2 : 2) // Distance from which to end the edge
 
         // Direction angle from source to target
-        const dx = to.x - from.x
-        const dy = to.y - from.y
-        const distance = Math.sqrt(dx * dx + dy * dy)
-        const normX = dx / distance
-        const normY = dy / distance
+        let dx = to.x - from.x
+        let dy = to.y - from.y
+        let distance = Math.sqrt(dx * dx + dy * dy)
+
+        let normX = dx / distance
+        let normY = dy / distance
 
         // Compute source/target node radius
         const rFrom = from.getCircleRadius() ? from.getCircleRadius() : this.graphSvgRenderer.nodeDrawer.getNodeStyle(from).size as number
-        const rTo = to.getCircleRadius() ? to.getCircleRadius() : this.graphSvgRenderer.nodeDrawer.getNodeStyle(to).size as number
+        const toNode = edge.getSubgraphToNode() ?? edge.to
+        const rTo = toNode.getCircleRadius() ? toNode.getCircleRadius() : this.graphSvgRenderer.nodeDrawer.getNodeStyle(toNode).size as number
 
-        const isInsideParent = distance < rFrom
+        // From coordinate are taken from the center of the cluster node
+        // If from and to overlap, take the translated node as origin
+        if (distance === 0) {
+            normX = -Math.SQRT1_2
+            normY = -Math.SQRT1_2
+            dx = normX * rFrom
+            dy = normY * rFrom
+            distance = rFrom
+        }
+
+        const isInsideParent = distance <= rFrom
 
         // Offset both ends of the line
         let startX, startY

@@ -417,8 +417,9 @@ const data = {
             'id': 'children-1',
             'data': { 'label': 'Children 1' },
             children: [
-                { 'id': 'children-A', 'data': { 'label': 'Children A' } },
-                { 'id': 'children-B', 'data': { 'label': 'Children B' }, children: [
+                { 'id': 'children-A', 'data': { 'label': 'Children A', 'group': 'C' } },
+                {
+                    'id': 'children-B', 'data': { 'label': 'Children B', 'group': 'C' }, children: [
                     { 'id': 'children-X', 'data': { 'label': 'Children X' } },
                     {
                         'id': 'children-Z', 'data': { 'label': 'Children Z' }, children: [
@@ -426,7 +427,7 @@ const data = {
                             { 'id': '22222', 'data': { 'label': '22222' } },
                         ] },
                 ]},
-                { 'id': 'children-C', 'data': { 'label': 'Children C' } },
+                { 'id': 'children-C', 'data': { 'label': 'Children C', 'group': 'C' } },
             ]
         },
         { 'id': 'children-2', 'data': { 'label': 'Children 2' } },
@@ -469,16 +470,16 @@ const data = {
     { 'from': 'C3', 'to': 'D2' },
     { 'from': 'D4', 'to': 'A6' },
 
-    { 'from': 'children-1', 'to': 'children-2' },
-    { 'from': 'children-2', 'to': 'children-3' },
-    { 'from': 'children-3', 'to': 'children-1' },
-    { 'from': 'A1', 'to': 'children-2' },
-    { 'from': 'children-2', 'to': 'children-A' },
-    { 'from': 'children-1', 'to': 'children-A' },
-    { 'from': 'D6', 'to': 'children-3' }, // D6 -.-.-> D6 makes sense. c1 -.-.-> c1 doesn't. It should be D6 -.-.-> c1 instead
-    { 'from': 'A2', 'to': 'children-B' },
-    { 'from': 'A2', 'to': 'children-X' },
-    { 'from': 'A2', 'to': '11111' },
+    // { 'from': 'children-1', 'to': 'children-2', 'data': { 'label': 'c1-c2' } },
+    //   { 'from': 'children-2', 'to': 'children-3', 'data': { 'label': 'c2-c3' } },
+    //   { 'from': 'children-3', 'to': 'children-1', 'data': { 'label': 'c3-c1' } },
+    //   { 'from': 'A1', 'to': 'children-2', 'data': { 'label': 'a1-c2' } },
+    //   { 'from': 'children-2', 'to': 'children-A', 'data': { 'label': 'c2-ca' } },
+      { 'from': 'children-1', 'to': 'children-A', 'data': { 'label': 'c1-ca' } },
+    //   { 'from': 'D6', 'to': 'children-3', 'data': { 'label': 'd6-c3' } }, // D6 -.-.-> D6 makes sense. c1 -.-.-> c1 doesn't. It should be D6 -.-.-> c1 instead
+    //   { 'from': 'A2', 'to': 'children-B', 'data': { 'label': 'a2-cb' } },
+    //   { 'from': 'A2', 'to': 'children-X', 'data': { 'label': 'a2-cx' } },
+    //   { 'from': 'A2', 'to': '11111', 'data': { 'label': 'a2-111' } },
   ]
 }
 
@@ -491,7 +492,7 @@ const options = {
         nodeStyleMap: {
             'A': { shape: 'hexagon', color: 'var(--pvt-theme-secondary)', size: 38, text: (node) => node.getData()?.label },
             'B': { shape: 'circle', color: 'var(--pvt-vibrant-blue)', svgIcon: (node) => node.getData()?.icon },
-            'C': { shape: 'triangle', color: 'var(--pvt-vibrant-indigo)', size: 18 },
+            'C': { shape: 'square', color: 'var(--pvt-vibrant-indigo)', size: 18 },
             'D': { color: 'var(--pvt-vibrant-green)', size: 22 },
         },
         defaultEdgeStyle: {

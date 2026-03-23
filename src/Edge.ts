@@ -22,6 +22,7 @@ export class Edge {
     isSynthetic?: boolean
     /** The actual child node this synthetic edge points to (for expansion logic) */
     syntheticTerminalNode?: Node
+    private _original_object?: Edge
     private _subgraphFromNode?: Node
     private _subgraphToNode?: Node
 
@@ -202,6 +203,23 @@ export class Edge {
 
     hide(): void {
         this.visible = false
+    }
+
+    /**
+     * Sets a reference to the original node from the main graph.
+     * Used when this node is a clone in a subgraph to enable position syncing.
+     * @private
+     */
+    setOriginalObject(obj: Edge) {
+        this._original_object = obj
+    }
+    /**
+     * Gets the reference to the original node from the main graph.
+     * Returns undefined if this is not a subgraph clone.
+     * @private
+     */
+    getOriginalObject(): Edge | undefined {
+        return this._original_object
     }
 
     /**

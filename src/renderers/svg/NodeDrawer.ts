@@ -78,7 +78,11 @@ export class NodeDrawer {
                 }
 
                 if (this.rendererOptions.enableNodeExpansion && (!node.hasChildren() || !node.expanded)) {
-                    node.setCircleRadius(0.5 * Math.max(width, height))
+                    if (this.getNodeStyle(node).shape == 'square') {
+                        node.setCircleRadius(Math.SQRT1_2 * Math.max(width, height)) // Is the only shape that has a coord. shift
+                    } else {
+                        node.setCircleRadius(0.5 * Math.max(width, height))
+                    }
                 }
             })
         }
@@ -223,7 +227,7 @@ export class NodeDrawer {
                     .attr('height', style.size * 2)
                     .attr('x', -style.size)
                     .attr('y', -style.size)
-                node.setCircleRadius(style.size)
+                node.setCircleRadius(Math.SQRT1_2 * style.size)
                 break
             case 'triangle':
                 {

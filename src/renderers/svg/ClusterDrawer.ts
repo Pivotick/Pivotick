@@ -185,6 +185,14 @@ export class ClusterDrawer {
                 n.setOriginalObject(origObject)
                 n.isChild = true
             })
+            // Link each subgraph edges to its main graph counterpart
+            graph.getMutableEdges().forEach((e: Edge) => {
+                let origObject = mainGraph.getMutableEdge(e.id)
+                if (origObject) {
+                    origObject = origObject.getOriginalObject() ?? origObject
+                    e.setOriginalObject(origObject)
+                }
+            })
             // Fix parent references: ensure children point to the correct cluster node
             nodes.forEach((n: Node) => {
                 if (n.parentNode?.id === parentNode.id) {
@@ -196,13 +204,14 @@ export class ClusterDrawer {
             })
             // Link each maingraph edge's nodes to its subgraph counterpart
             mainGraph.getMutableEdges().forEach((e: Edge) => {
+                const origEdge = e.getOriginalObject() ?? e
                 const subgraphFromNode = graph.getMutableNode(e.from.id)
                 const subgraphToNode = graph.getMutableNode(e.to.id)
                 if (subgraphFromNode) {
-                    e.setSubgraphFromNode(subgraphFromNode)
+                    origEdge.setSubgraphFromNode(subgraphFromNode)
                 }
                 if (subgraphToNode) {
-                    e.setSubgraphToNode(subgraphToNode)
+                    origEdge.setSubgraphToNode(subgraphToNode)
                 }
             })
         }
