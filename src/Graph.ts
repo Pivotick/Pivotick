@@ -27,6 +27,7 @@ export class Graph {
     private options: GraphOptions
     private app_id: string
     private parentGraph?: Graph
+    private graphDepth: number
     
     private listeners: Record<keyof GraphEvents, Array<GraphEvents[keyof GraphEvents]>>
 
@@ -76,8 +77,14 @@ export class Graph {
             this.options.UI.contextMenu.enabled = false
         }
 
+        this.graphDepth = 0
         if (this.options.parentGraph) {
             this.setParentGraph(this.options.parentGraph)
+            let pg = this.parentGraph
+            while (pg) {
+                pg = pg.parentGraph
+                this.graphDepth++
+            }
         }
 
         const rendererOptions = {
@@ -224,7 +231,7 @@ export class Graph {
      * Normalizes a node, marking its children and hiding them.
      * @private
      */
-    private static normalizeNode(n: RawNode | Node): Node {
+    private static normalizeNode(n: RawNode | Node, depth=0): Node {
         let children: Node[] = []
         if (!(n instanceof Node) && n.children) {
             children = n.children.map((n) => {
@@ -234,7 +241,7 @@ export class Graph {
         }
         const normNode = n instanceof Node ? n : new Node(n.id.toString(), n.data, n.style, n.domID, children)
         normNode.children.forEach((child: Node) => {
-            child.markAsChild(normNode)
+            child.markAsChild(normNode, depth+1)
             child.hide()
         })
         normNode.weight = n.weight
@@ -900,6 +907,10 @@ export class Graph {
      */
     public getParentGraph(): Graph | undefined {
         return this.parentGraph
+    }
+
+    public getGraphDepth(): number {
+        return this.graphDepth
     }
 
     /**

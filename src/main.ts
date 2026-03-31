@@ -415,7 +415,7 @@ const data = {
     { 'id': 'D6', 'data': {'label': 'Xavier', 'group': 'D', 'gender': 'male'}, children: [
         {
             'id': 'children-1',
-            'data': { 'label': 'Children 1' },
+            'data': { 'label': 'Children 1', 'gender': 'male' },
             children: [
                 { 'id': 'children-A', 'data': { 'label': 'Children A', 'group': 'C' } },
                 {
@@ -430,8 +430,8 @@ const data = {
                 { 'id': 'children-C', 'data': { 'label': 'Children C', 'group': 'C' } },
             ]
         },
-        { 'id': 'children-2', 'data': { 'label': 'Children 2' } },
-        { 'id': 'children-3', 'data': { 'label': 'Children 3' } },
+        { 'id': 'children-2', 'data': { 'label': 'Children 2', 'gender': 'female' } },
+        { 'id': 'children-3', 'data': { 'label': 'Children 3', 'gender': 'male' } },
     ]}
    ],
   'edges': [

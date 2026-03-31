@@ -32,6 +32,7 @@ export class Node {
     expanded?: boolean
     /** True if this node is a child within a collapsed cluster */
     isChild: boolean
+    childrenDepth: number
     /** True if this node has child nodes */
     isParent: boolean
     /** Reference to the parent cluster node (if this node is a child) */
@@ -66,6 +67,7 @@ export class Node {
         this.visible = true
         this.expanded = false
         this.isChild = false
+        this.childrenDepth = 0
         this.edgesOut = new Set()
         this.edgesIn = new Set()
     }
@@ -215,6 +217,7 @@ export class Node {
         clone.visible = this.visible
         clone.expanded = this.expanded
         clone.isChild = this.isChild
+        clone.childrenDepth = this.childrenDepth
         clone.isParent = this.isParent
         clone.parentNode = this.parentNode
         clone._circleRadius = this._circleRadius
@@ -336,8 +339,9 @@ export class Node {
         return this.children.length > 0
     }
 
-    markAsChild(parentNode: Node): void {
+    markAsChild(parentNode: Node, childrenDepth: number): void {
         this.isChild = true
+        this.childrenDepth = childrenDepth
         this.parentNode = parentNode
     }
 

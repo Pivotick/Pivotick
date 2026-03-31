@@ -52,8 +52,15 @@ export class GraphQueryEngine {
 
     setFilters(filters: GraphFilters) {
         for (const [key, value] of Object.entries(filters)) {
-            this.setFilter(key, value)
+            if (value === undefined) {
+                this.removeFilter(key)
+                return
+            }
+
+            this.filters[key] = value
         }
+        this.apply()
+        this.emit('filterChange', this.getFilters())
     }
 
     setFilter(key: string, value: FilterFieldConfig) {
@@ -152,10 +159,29 @@ export class GraphQueryEngine {
     private apply() {
         const nodes = this.graph.getMutableNodes()
         const visibleNodes = nodes
-            .filter(node => this.nodeMatchesFilters(node)) // nodes that match the filter 
-            .filter(node => !node.isChild || (node.parentNode?.expanded ?? false)) // still keep hidden children node hidden
-        this.hiddenNodeCount = nodes.length - visibleNodes.length
-        this.graph.setVisibleNodes(visibleNodes)
+            .filter(node => this.nodeMatchesFilters(node)) // nodes that match the filter
+
+        const visibleNodesInCurrentGraph = visibleNodes
+            .filter(node => node.childrenDepth === 0) // children filtering is done in their own graph
+
+        this.hiddenNodeCount = nodes.length - visibleNodesInCurrentGraph.length
+        this.graph.setVisibleNodes(visibleNodesInCurrentGraph)
+
+        this.applyFiltersOnSubgraph()
+    }
+
+    public applyFiltersOnSubgraph() {
+        const mainFilters = this.getFilters()
+        this.graph.getMutableNodes()
+            .filter(node => node.childrenDepth === this.graph.getGraphDepth())
+            .forEach((node) => {
+                const subgraph = node.getSubgraph()
+                if (node.isParent && subgraph) {
+                    subgraph.queryEngine.resetFilters()
+                    subgraph.queryEngine.setFilters(mainFilters)
+                    subgraph.queryEngine.applyFiltersOnSubgraph()
+                }
+            })
     }
 
     private nodeMatchesFilters(node: Node): boolean {
@@ -163,6 +189,8 @@ export class GraphQueryEngine {
             return false
         }
         for (const [key, value] of Object.entries(this.filters)) {
+            if (key === 'manuallyHidden') continue
+
             const nodeValue = node.getData()[key]
             if (!this.matches(nodeValue, value)) return false
         }
