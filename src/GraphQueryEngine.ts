@@ -151,7 +151,9 @@ export class GraphQueryEngine {
 
     private apply() {
         const nodes = this.graph.getMutableNodes()
-        const visibleNodes = nodes.filter(node => this.nodeMatchesFilters(node))
+        const visibleNodes = nodes
+            .filter(node => this.nodeMatchesFilters(node)) // nodes that match the filter 
+            .filter(node => !node.isChild || (node.parentNode?.expanded ?? false)) // still keep hidden children node hidden
         this.hiddenNodeCount = nodes.length - visibleNodes.length
         this.graph.setVisibleNodes(visibleNodes)
     }
@@ -167,7 +169,7 @@ export class GraphQueryEngine {
         return true
     }
 
-    private matches(nodeValue: undefined, filterConfig: FilterFieldConfig): boolean {
+    private matches(nodeValue: unknown, filterConfig: FilterFieldConfig): boolean {
         if (filterConfig === undefined) return true
         if (nodeValue === undefined) return false
 
@@ -187,7 +189,7 @@ export class GraphQueryEngine {
         }
 
         if (Array.isArray(filterValue)) {
-            return matchMode === 'partial' ? filterValue.includes(nodeValue) : nodeValue === filterValue
+            return matchMode === 'partial' ? filterValue.includes(nodeValue as never) : nodeValue === filterValue
         }
 
         if (typeof filterValue === 'object' && filterValue !== null) {
