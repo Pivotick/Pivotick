@@ -29,9 +29,11 @@ export default function hasCycle(nodes: Node[], edges: Edge[]): boolean {
             visited.add(nodeId)
             recStack.add(nodeId)
 
-            for (const neighbor of adj[nodeId]) {
-                if (!visited.has(neighbor) && dfs(neighbor)) return true
-                else if (recStack.has(neighbor)) return true
+            if (adj[nodeId]) {
+                for (const neighbor of adj[nodeId]) {
+                    if (!visited.has(neighbor) && dfs(neighbor)) return true
+                    else if (recStack.has(neighbor)) return true
+                }
             }
         }
         recStack.delete(nodeId)
