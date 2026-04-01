@@ -229,55 +229,71 @@ export class GraphInteractions<TElement = unknown> {
         if (this.callbacks.onNodeBlur && typeof this.callbacks.onNodeBlur === 'function') {
             this.callbacks.onNodeBlur(oldSelectionNode, oldSelectionElement)
         }
-        // const subGraph = oldSelectionNode.parentNode?.getSubgraph()
-        // if (subGraph) {
-        //     const subgraphInteraction = subGraph.renderer.getGraphInteraction()
-        //     const subgraphSelectedNodeID = subgraphInteraction.getSelectedNode()?.node.id
-        //     // Avoid unselecting a node that has just been selected in the subgraph
-        //     if (subgraphSelectedNodeID === oldSelectionNode.id) {
-        //         subgraphInteraction.unselectNode()
-        //     }
-        // }
-        const ancestorStack = []
-        let subgraph = undefined
-        let parentNode = oldSelectionNode.parentNode
-        // We start from the outer most node
-        // Get the most outer graph
-        while(subgraph === undefined && parentNode !== undefined) {
-            ancestorStack.push(parentNode)
-            subgraph = parentNode?.getSubgraph()
-            parentNode = parentNode?.parentNode
-        }
-        if (subgraph) {
-            let previousSubgraph
-            // traverse the graph to get to the inner most subgraph
-            while (ancestorStack.length > 0) {
-                const ancestorNode = ancestorStack.pop()
-                if (ancestorNode && subgraph) {
-                    previousSubgraph = subgraph
-                    subgraph = subgraph.getMutableNode(ancestorNode.id)?.getSubgraph()
-                }
-            }
-            if (previousSubgraph) {
-                const subgraphInteraction = previousSubgraph.renderer.getGraphInteraction()
-                const subgraphSelectedNodeID = subgraphInteraction.getSelectedNode()?.node.id
-                // Avoid unselecting a node that has just been selected in the subgraph
-                if (subgraphSelectedNodeID === oldSelectionNode.id) {
-                    subgraphInteraction.unselectNode()
-                }
+
+        this.unselectFromAncestorSubgraphs(oldSelectionNode)
+        this.unselectFromDirectSubgraph(oldSelectionNode)
+
+        this.refreshRendering()
+    }
+
+    private unselectFromAncestorSubgraphs(node: Node): void {
+        const ancestorStack = this.buildAncestorStack(node)
+
+        let subgraph = this.findOutermostSubgraph(ancestorStack)
+        if (!subgraph) return
+
+        let previousSubgraph
+
+        while (ancestorStack.length > 0 && subgraph) {
+            const ancestor = ancestorStack.pop()
+            previousSubgraph = subgraph
+            if (ancestor) {
+                subgraph = subgraph.getMutableNode(ancestor.id)?.getSubgraph()
             }
         }
-        
-        const subGraph = oldSelectionNode.parentNode?.getSubgraph()
+
+        if (!previousSubgraph) return
+
+        const interaction = previousSubgraph.renderer.getGraphInteraction()
+        const selectedId = interaction.getSelectedNode()?.node.id
+
+        if (selectedId === node.id) {
+            interaction.unselectNode()
+        }
+    }
+
+    private unselectFromDirectSubgraph(node: Node): void {
+        const subGraph = node.parentNode?.getSubgraph()
         if (subGraph) {
             const subgraphInteraction = subGraph.renderer.getGraphInteraction()
             const subgraphSelectedNodeID = subgraphInteraction.getSelectedNode()?.node.id
             // Avoid unselecting a node that has just been selected in the subgraph
-            if (subgraphSelectedNodeID === oldSelectionNode.id) {
+            if (subgraphSelectedNodeID === node.id) {
                 subgraphInteraction.unselectNode()
             }
         }
+
         this.refreshRendering()
+    }
+
+    private buildAncestorStack(node: Node): Node[] {
+        const stack = []
+        let current = node.parentNode
+
+        while (current) {
+            stack.push(current)
+            current = current.parentNode
+        }
+
+        return stack
+    }
+
+    private findOutermostSubgraph(stack: Node[]): Graph | undefined {
+        for (let i = stack.length - 1; i >= 0; i--) {
+            const subgraph = stack[i]?.getSubgraph()
+            if (subgraph) return subgraph
+        }
+        return undefined
     }
 
     public selectNodes(selection: NodeSelection<TElement>[]): void {
