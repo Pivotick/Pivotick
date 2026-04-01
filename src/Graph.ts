@@ -235,7 +235,7 @@ export class Graph {
         let children: Node[] = []
         if (!(n instanceof Node) && n.children) {
             children = n.children.map((n) => {
-                const nNode = Graph.normalizeNode(n)
+                const nNode = Graph.normalizeNode(n, depth+1)
                 return nNode
             })
         }
@@ -822,9 +822,14 @@ export class Graph {
         })
 
         this.edges.forEach(edge => {
-            const shouldBeVisible = edge.from.visible && edge.to.visible
+            const bothEndVisible = (edge.getSubgraphFromNode()?.visible ?? edge.from.visible) &&
+                (edge.getSubgraphToNode()?.visible ?? edge.to.visible)
+            const isValidSynthetic = !edge.isSynthetic || !edge.to.expanded
+
+            const shouldBeVisible = bothEndVisible && isValidSynthetic
             if (edge.visible !== shouldBeVisible) {
                 edge.toggleVisibility(shouldBeVisible)
+                changed = true
             }
         })
 

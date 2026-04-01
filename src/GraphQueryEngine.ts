@@ -165,21 +165,21 @@ export class GraphQueryEngine {
             .filter(node => node.childrenDepth === 0) // children filtering is done in their own graph
 
         this.hiddenNodeCount = nodes.length - visibleNodesInCurrentGraph.length
-        this.graph.setVisibleNodes(visibleNodesInCurrentGraph)
-
         this.applyFiltersOnSubgraph()
+
+        this.graph.setVisibleNodes(visibleNodesInCurrentGraph)
     }
 
     public applyFiltersOnSubgraph() {
         const mainFilters = this.getFilters()
+
         this.graph.getMutableNodes()
-            .filter(node => node.childrenDepth === this.graph.getGraphDepth())
+            .filter(node => node.childrenDepth === 0)
             .forEach((node) => {
                 const subgraph = node.getSubgraph()
                 if (node.isParent && subgraph) {
                     subgraph.queryEngine.resetFilters()
                     subgraph.queryEngine.setFilters(mainFilters)
-                    subgraph.queryEngine.applyFiltersOnSubgraph()
                 }
             })
     }
