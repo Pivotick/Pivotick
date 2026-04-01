@@ -413,6 +413,11 @@ export class ClusterDrawer {
                     })
             })
         } else {
+            // Hide self-referencing synthetic edges
+            node.getEdgesIn().filter((e: Edge) => e.isSynthetic === true).forEach((e: Edge) => {
+                e.show()
+            })
+
             const currentNode = node.getOriginalObject() ?? node
             currentNode.getEdgesIn().filter((e: Edge) => e.isSynthetic === true).forEach((e: Edge) => {
                 if (node.visible) {
