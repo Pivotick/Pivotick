@@ -1,5 +1,6 @@
 import type { Edge } from '../Edge'
 import type { Node } from '../Node'
+import type { NodeSelection } from './GraphInteractions'
 
 export interface InterractionCallbacks<TElement = unknown> {
     /**
@@ -30,6 +31,11 @@ export interface InterractionCallbacks<TElement = unknown> {
     * Called when a node is selected by the user.
     */
     onNodeSelect?: (node: Node, element: TElement) => void
+
+    /**
+    * Called when nodes are selected by the user.
+    */
+    onNodesSelect?: (selection: NodeSelection<TElement>[]) => void
 
     /**
     * Called when a node is unselected by the user.

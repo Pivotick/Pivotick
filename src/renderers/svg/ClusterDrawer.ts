@@ -9,6 +9,7 @@ import type { GraphOptions, RawEdge, RawNode, RelaxedGraphData } from '../../int
 import { forceCenter } from 'd3-force'
 import type { GraphSvgRenderer } from './GraphSvgRenderer'
 import { CoordinateTransform } from '../../utils/CoordinateTransform'
+import type { NodeSelection } from '../../interfaces/GraphInteractions'
 
 /**
  * ClusterDrawer manages the rendering of nested subgraphs when a cluster node is expanded.
@@ -247,6 +248,21 @@ export class ClusterDrawer {
                     if (mainGraphNode) {
                         mainGraph.selectElement(mainGraphNode)
                     }
+                },
+                onNodesSelect: (selection: NodeSelection<unknown>[]) => {
+                    const selectedNodeIDs = subgraph.renderer.getGraphInteraction().getSelectedNodeIDs()
+                    console.log(selectedNodeIDs);
+                    
+                    if (selectedNodeIDs === null) return
+
+                    const mainGraphNodes: NodeSelection<unknown>[] = selectedNodeIDs.map((nodeId) => {
+                        const mainGraphNode = mainGraph.getMutableNode(nodeId) as Node
+                        return {
+                            node: mainGraphNode,
+                            element: mainGraphNode?.getGraphElement()
+                        }
+                    })
+                    mainGraph.renderer.getGraphInteraction().addNodesToSelection(mainGraphNodes)
                 },
                 onEdgeSelect: (edge) => {
                     const mainGraphEdge = mainGraph.getMutableEdge(edge.id)

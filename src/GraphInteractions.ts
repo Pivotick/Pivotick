@@ -208,12 +208,12 @@ export class GraphInteractions<TElement = unknown> {
             node: node,
             element: element,
         }
+
         this.selectedNodes = [this.selectedNode]
         this.emit('selectNode', node, element)
         if (this.callbacks.onNodeSelect && typeof this.callbacks.onNodeSelect === 'function') {
             this.callbacks.onNodeSelect(node, element)
         }
-        // node.markDirty()
         this.refreshRendering()
     }
 
@@ -229,9 +229,53 @@ export class GraphInteractions<TElement = unknown> {
         if (this.callbacks.onNodeBlur && typeof this.callbacks.onNodeBlur === 'function') {
             this.callbacks.onNodeBlur(oldSelectionNode, oldSelectionElement)
         }
-        const outerGraph = oldSelectionNode.parentNode?.getSubgraph()
-        if (outerGraph) {
-            outerGraph.renderer.getGraphInteraction().unselectNode()
+        // const subGraph = oldSelectionNode.parentNode?.getSubgraph()
+        // if (subGraph) {
+        //     const subgraphInteraction = subGraph.renderer.getGraphInteraction()
+        //     const subgraphSelectedNodeID = subgraphInteraction.getSelectedNode()?.node.id
+        //     // Avoid unselecting a node that has just been selected in the subgraph
+        //     if (subgraphSelectedNodeID === oldSelectionNode.id) {
+        //         subgraphInteraction.unselectNode()
+        //     }
+        // }
+        const ancestorStack = []
+        let subgraph = undefined
+        let parentNode = oldSelectionNode.parentNode
+        // We start from the outer most node
+        // Get the most outer graph
+        while(subgraph === undefined && parentNode !== undefined) {
+            ancestorStack.push(parentNode)
+            subgraph = parentNode?.getSubgraph()
+            parentNode = parentNode?.parentNode
+        }
+        if (subgraph) {
+            let previousSubgraph
+            // traverse the graph to get to the inner most subgraph
+            while (ancestorStack.length > 0) {
+                const ancestorNode = ancestorStack.pop()
+                if (ancestorNode && subgraph) {
+                    previousSubgraph = subgraph
+                    subgraph = subgraph.getMutableNode(ancestorNode.id)?.getSubgraph()
+                }
+            }
+            if (previousSubgraph) {
+                const subgraphInteraction = previousSubgraph.renderer.getGraphInteraction()
+                const subgraphSelectedNodeID = subgraphInteraction.getSelectedNode()?.node.id
+                // Avoid unselecting a node that has just been selected in the subgraph
+                if (subgraphSelectedNodeID === oldSelectionNode.id) {
+                    subgraphInteraction.unselectNode()
+                }
+            }
+        }
+        
+        const subGraph = oldSelectionNode.parentNode?.getSubgraph()
+        if (subGraph) {
+            const subgraphInteraction = subGraph.renderer.getGraphInteraction()
+            const subgraphSelectedNodeID = subgraphInteraction.getSelectedNode()?.node.id
+            // Avoid unselecting a node that has just been selected in the subgraph
+            if (subgraphSelectedNodeID === oldSelectionNode.id) {
+                subgraphInteraction.unselectNode()
+            }
         }
         this.refreshRendering()
     }
@@ -243,12 +287,9 @@ export class GraphInteractions<TElement = unknown> {
         this.unselectAll()
         this.selectedNodes = selection
         this.emit('selectNodes', this.selectedNodes)
-        this.selectedNodes.forEach(({ node, element }) => {
-            if (this.callbacks.onNodeSelect && typeof this.callbacks.onNodeSelect === 'function') {
-                this.callbacks.onNodeSelect(node, element)
-            }
-            // node.markDirty()
-        })
+        if (this.callbacks.onNodesSelect && typeof this.callbacks.onNodesSelect === 'function') {
+            this.callbacks.onNodesSelect(selection)
+        }
         this.refreshRendering()
     }
 
@@ -258,12 +299,16 @@ export class GraphInteractions<TElement = unknown> {
         if (this.selectedNodes.length === 0 && addSelection.length === 1) {
             return this.selectNode(addSelection[0].element, addSelection[0].node)
         }
-        addSelection.forEach(({ node, element }) => {
-            if (this.callbacks.onNodeSelect && typeof this.callbacks.onNodeSelect === 'function') {
-                this.callbacks.onNodeSelect(node, element)
-            }
+        // remove already selected nodes
+        const selectedIDs = this.getSelectedNodeIDs() ?? []
+        addSelection = addSelection.filter((addS) => {
+            return !selectedIDs.includes(addS.node.id)
         })
+
         this.selectedNodes = this.selectedNodes.concat(addSelection)
+        if (this.callbacks.onNodesSelect && typeof this.callbacks.onNodesSelect === 'function') {
+            this.callbacks.onNodesSelect(addSelection)
+        }
         this.emit('selectNodes', addSelection)
         this.refreshRendering()
     }
@@ -277,7 +322,6 @@ export class GraphInteractions<TElement = unknown> {
             if (this.callbacks.onNodeBlur && typeof this.callbacks.onNodeBlur === 'function') {
                 this.callbacks.onNodeBlur(node, element)
             }
-            // node.markDirty()
         })
         this.emit('unselectNodes', removeSelection)
         this.refreshRendering()
