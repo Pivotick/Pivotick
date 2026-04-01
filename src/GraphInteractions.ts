@@ -220,13 +220,18 @@ export class GraphInteractions<TElement = unknown> {
     public unselectNode(): void {
         if (this.selectedNode === null)
             return
-        // this.selectedNode.node.markDirty()
+
         const oldSelectionNode = this.selectedNode.node
         const oldSelectionElement = this.selectedNode.element
         this.selectedNode = null
+        this.selectedNodes = []
         this.emit('unselectNode', oldSelectionNode, oldSelectionElement)
         if (this.callbacks.onNodeBlur && typeof this.callbacks.onNodeBlur === 'function') {
             this.callbacks.onNodeBlur(oldSelectionNode, oldSelectionElement)
+        }
+        const outerGraph = oldSelectionNode.parentNode?.getSubgraph()
+        if (outerGraph) {
+            outerGraph.renderer.getGraphInteraction().unselectNode()
         }
         this.refreshRendering()
     }
@@ -248,6 +253,8 @@ export class GraphInteractions<TElement = unknown> {
     }
 
     public addNodesToSelection(addSelection: NodeSelection<TElement>[]): void {
+        if (addSelection.length == 0) return
+
         if (this.selectedNodes.length === 0 && addSelection.length === 1) {
             return this.selectNode(addSelection[0].element, addSelection[0].node)
         }
@@ -255,7 +262,6 @@ export class GraphInteractions<TElement = unknown> {
             if (this.callbacks.onNodeSelect && typeof this.callbacks.onNodeSelect === 'function') {
                 this.callbacks.onNodeSelect(node, element)
             }
-            // node.markDirty()
         })
         this.selectedNodes = this.selectedNodes.concat(addSelection)
         this.emit('selectNodes', addSelection)

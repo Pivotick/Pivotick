@@ -942,10 +942,8 @@ export class Graph {
     selectElement(element: Node | Edge): void {
         if (element instanceof Edge) {
             this.renderer.getGraphInteraction().selectEdge(element.getGraphElement(), element)
-            return
         } else if (element instanceof Node) {
             this.renderer.getGraphInteraction().selectNode(element.getGraphElement(), element)
-            return
         }
     }
 
