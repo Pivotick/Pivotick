@@ -167,7 +167,7 @@ export class ClusterDrawer {
      * @param edges - Edges connecting the child nodes
      * @param container - SVG group element to contain the subgraph
      * @param parentNode - The parent cluster node (defines the local coordinate origin)
-     * @param mainGraph - Reference to the parent graph for coordinate conversion
+     * @param parentGraph - Reference to the parent graph for coordinate conversion
      * @returns The created subgraph instance
      */
     private createSubgraph(
@@ -175,20 +175,21 @@ export class ClusterDrawer {
         edges: Edge[],
         container: SVGGElement,
         parentNode: Node,
-        mainGraph: Graph
+        parentGraph: Graph
     ): Graph {
         // Callback invoked before subgraph rendering
         const beforeRender = (graph: Graph) => {
             // Link each subgraph node to its main graph counterpart
             graph.getMutableNodes().forEach((n: Node) => {
-                let origObject = mainGraph.getMutableNode(n.id) as Node
+                let origObject = parentGraph.getMutableNode(n.id) as Node
                 origObject = origObject.getOriginalObject() ?? origObject
                 n.setOriginalObject(origObject)
+                origObject.setDeepestNodeClone(n)
                 n.isChild = true
             })
             // Link each subgraph edges to its main graph counterpart
             graph.getMutableEdges().forEach((e: Edge) => {
-                let origObject = mainGraph.getMutableEdge(e.id)
+                let origObject = parentGraph.getMutableEdge(e.id)
                 if (origObject) {
                     origObject = origObject.getOriginalObject() ?? origObject
                     e.setOriginalObject(origObject)
@@ -204,7 +205,7 @@ export class ClusterDrawer {
                 }
             })
             // Link each maingraph edge's nodes to its subgraph counterpart
-            mainGraph.getMutableEdges().forEach((e: Edge) => {
+            parentGraph.getMutableEdges().forEach((e: Edge) => {
                 const origEdge = e.getOriginalObject() ?? e
                 const subgraphFromNode = graph.getMutableNode(e.from.id)
                 const subgraphToNode = graph.getMutableNode(e.to.id)
@@ -244,34 +245,32 @@ export class ClusterDrawer {
             },
             callbacks: {
                 onNodeSelect: (node) => {
-                    const mainGraphNode = mainGraph.getMutableNode(node.id)
+                    const mainGraphNode = parentGraph.getMutableNode(node.id)
                     if (mainGraphNode) {
-                        mainGraph.selectElement(mainGraphNode)
+                        parentGraph.selectElement(mainGraphNode)
                     }
                 },
                 onNodesSelect: (selection: NodeSelection<unknown>[]) => {
                     const selectedNodeIDs = subgraph.renderer.getGraphInteraction().getSelectedNodeIDs()
-                    console.log(selectedNodeIDs);
-                    
                     if (selectedNodeIDs === null) return
 
                     const mainGraphNodes: NodeSelection<unknown>[] = selectedNodeIDs.map((nodeId) => {
-                        const mainGraphNode = mainGraph.getMutableNode(nodeId) as Node
+                        const mainGraphNode = parentGraph.getMutableNode(nodeId) as Node
                         return {
                             node: mainGraphNode,
                             element: mainGraphNode?.getGraphElement()
                         }
                     })
-                    mainGraph.renderer.getGraphInteraction().addNodesToSelection(mainGraphNodes)
+                    parentGraph.renderer.getGraphInteraction().addNodesToSelection(mainGraphNodes)
                 },
                 onEdgeSelect: (edge) => {
-                    const mainGraphEdge = mainGraph.getMutableEdge(edge.id)
+                    const mainGraphEdge = parentGraph.getMutableEdge(edge.id)
                     if (mainGraphEdge) {
-                        mainGraph.selectElement(mainGraphEdge)
+                        parentGraph.selectElement(mainGraphEdge)
                     }
                 },
                 onNodeHoverIn: (event, node) => {
-                    mainGraph.UIManager.tooltip?.openForNodeOnElement(event, node)
+                    parentGraph.UIManager.tooltip?.openForNodeOnElement(event, node)
                 },
             },
             parentGraph: this.nodeDrawer.graph
@@ -313,13 +312,13 @@ export class ClusterDrawer {
             })
         })
 
-        mainGraph.renderer.getGraphInteraction().on('dragging', () => {
-            this.updatePositionOnAllRealChildren(mainGraph)
+        parentGraph.renderer.getGraphInteraction().on('dragging', () => {
+            this.updatePositionOnAllRealChildren(parentGraph)
         })
-        mainGraph.renderer.getGraphInteraction().on('simulationTick', () => {
-            this.updatePositionOnAllRealChildren(mainGraph)
+        parentGraph.renderer.getGraphInteraction().on('simulationTick', () => {
+            this.updatePositionOnAllRealChildren(parentGraph)
         })
-        mainGraph.renderer.getGraphInteraction().on('canvasClick', () => {
+        parentGraph.renderer.getGraphInteraction().on('canvasClick', () => {
             subgraph.deselectAll()
         })
 

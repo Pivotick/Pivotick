@@ -42,6 +42,11 @@ export class Node {
      * Used for syncing position updates from subgraph back to main graph.
      */
     private _original_object?: Node
+    /**
+     * Reference to the deepest sub graph node.
+     * Used for checking state of this node in its subgraph
+     */
+    private _deepest_node_clone?: Node
     /** The subgraph graph instance created when expanding this node */
     private _subgraph?: Graph
     private _circleRadius = this.defaultCircleRadius
@@ -380,5 +385,22 @@ export class Node {
      */
     getOriginalObject(): Node | undefined {
         return this._original_object
+    }
+
+    /**
+     * Sets a reference to the original node from the main graph.
+     * Used when this node is a clone in a subgraph to enable position syncing.
+     * @private
+     */
+    setDeepestNodeClone(obj: Node) {
+        this._deepest_node_clone = obj
+    }
+    /**
+     * Gets the reference to the original node from the main graph.
+     * Returns undefined if this is not a subgraph clone.
+     * @private
+     */
+    getDeepestNodeClone(): Node | undefined {
+        return this._deepest_node_clone
     }
 }

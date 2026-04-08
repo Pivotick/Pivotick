@@ -217,6 +217,9 @@ export class SidebarNeighbors implements UIElement {
             ...egoNode.getConnectedNodes(),
             ...egoNode.getConnectingNodes(),
         ]) {
+            // if (node.parentNode && node.parentNode.id === egoNode.id) { // Ignore nested children
+            //     continue
+            // }
             connectedNodes.set(node.id.toString(), node)
         }
 
@@ -238,10 +241,20 @@ export class SidebarNeighbors implements UIElement {
             })
         })
 
+        const test = [...connectedNodes.values()].filter((n) => {
+            // n is always the orginialObject thanks to event propagation in cluster nodes
+            if (n.getDeepestNodeClone() === undefined) { // not in a cluster
+                return true
+            }
+            return n.getDeepestNodeClone()?.visible ?? false
+        })
+
+        // TODO: If cluster node is expanded, also expand it in the ego graph
         const egoGraphData: RelaxedGraphData = {
-            nodes: [...connectedNodes.values()].map((n) => n.toDict(true) as RawNode),
+            nodes: test.map((n) => n.toDict(true) as RawNode),
             edges: [...egoEdges.values()].map(e => e.toDict() as RawEdge)
         }
+        
         const egoGraphOptions: GraphOptions = {
             UI: {
                 mode: 'viewer',
