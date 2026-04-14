@@ -5,7 +5,7 @@ import './toolbar.scss'
 import { Node } from '../../../Node'
 import type { SlidePanel } from '../SlidePanel/SlidePanel'
 import { GraphFilter } from '../GraphFilter/GraphFilter'
-import { graph } from '../../../ail-graph'
+import type { Modal } from '../Modal/Modal'
 
 export class Toolbar implements UIElement {
     private uiManager: UIManager
@@ -86,7 +86,7 @@ export class Toolbar implements UIElement {
         this.uiManager.keyManager.register({ key: 'Ctrl+j', callback: () => this.searchBoxButton?.click() })
         this.uiManager.keyManager.register({ key: 'Ctrl+k', callback: () => this.filterButton?.click() })
 
-        const graphFilter = new GraphFilter(this.uiManager, {})
+        const graphFilter = new GraphFilter(this.uiManager)
         this.filteringSlidepanel = this.uiManager.createSlidepanel({
             header: 'Graph Filters',
             body: graphFilter.build()
@@ -111,21 +111,21 @@ export class Toolbar implements UIElement {
             if (this.searchModal) {
                 this.searchModal.modal?.addEventListener('pvt-modal-show', () => {
                     const searchBox = new SearchBox(this.uiManager)
-                    this.searchModal.setBody(searchBox.build())
+                    this.searchModal?.setBody(searchBox.build())
                     searchBox.searchInput?.focus()
 
                     searchBox.searchBox?.addEventListener('pvt-searchbox-select', (evt: Event) => {
                         const custom = evt as CustomEvent<Node>
                         const node = custom.detail as Node
                         this.uiManager.graph.selectElement(node)
-                        this.searchModal.destroy()
+                        this.searchModal?.destroy()
                     })
                     searchBox.searchBox?.addEventListener('pvt-searchbox-close', () => {
-                        this.searchModal.destroy()
+                        this.searchModal?.destroy()
                     })
                 })
                 this.searchModal.modal?.addEventListener('pvt-modal-hidden', () => {
-                    this.searchModal = null
+                    this.searchModal = undefined
                 })
             }
         })

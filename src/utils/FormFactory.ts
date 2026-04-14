@@ -1,5 +1,5 @@
 import TomSelect from 'tom-select'
-import type { filterMatchMode } from '../interfaces/GraphQueryEngine';
+import type { FilterMatchMode } from '../interfaces/GraphQueryEngine'
 
 export type FieldType =
     | 'select'
@@ -21,7 +21,7 @@ export interface FieldConfig {
     placeholder?: string
     defaultValue?: FormValue
     allowEmpty?: boolean
-    matchMode: filterMatchMode
+    matchMode: FilterMatchMode
     valuesAreBoolean: boolean
 }
 

@@ -28,7 +28,7 @@ const DEFAULT_TREE_LAYOUT_OPTIONS: TreeLayoutOptions = {
 }
 
 export interface TreeNode extends Node {
-    children?: TreeNode[]
+    children: TreeNode[]
     parent?: TreeNode
     x?: number
     y?: number

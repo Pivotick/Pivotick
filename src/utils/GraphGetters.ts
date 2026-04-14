@@ -8,32 +8,37 @@ export function nodeNameGetter(node: Node, mainHeader: MainHeader): string {
     if (mainHeader.nodeHeaderMap.title) {
         return tryResolveString(mainHeader.nodeHeaderMap.title, node) || 'Could not resolve title'
     }
-    return node.getData()?.label ?? 'Optional name or label'
+    const text = node.getData()?.label
+    return typeof text === 'string' ? text : 'Optional name or label'
 }
 
 export function nodeDescriptionGetter(node: Node, mainHeader: MainHeader): string | null {
     if (mainHeader.nodeHeaderMap.subtitle) {
         return tryResolveString(mainHeader.nodeHeaderMap.subtitle, node) || null
     }
-    return node.getData()?.description ?? 'Optional subtitle or description'
+    const text = node.getData()?.description
+    return typeof text === 'string' ? text : 'Optional subtitle or description'
 }
 
 export function edgeNameGetter(edge: Edge, mainHeader: MainHeader): string {
     if (mainHeader.edgeHeaderMap.title) {
         return tryResolveString(mainHeader.edgeHeaderMap.title, edge) || ''
     }
-    return edge.getData()?.label ?? 'Optional name or label'
+    const text = edge.getData()?.label
+    return typeof text === 'string' ? text : 'Optional name or label'
 }
 
 export function edgeDescriptionGetter(edge: Edge, mainHeader: MainHeader): string | null {
     if (mainHeader.edgeHeaderMap.subtitle) {
         return tryResolveString(mainHeader.edgeHeaderMap.subtitle, edge) || null
     }
-    return edge.getData()?.description ?? 'Optional subtitle or description'
+    const text = edge.getData()?.label
+    return typeof text === 'string' ? text : 'Optional subtitle or description'
 }
 
 export function edgeLabelGetter(edge: Edge): string {
-    return edge.getData()?.label ?? ''
+    const text = edge.getData()?.label
+    return typeof text === 'string' ? text : ''
 }
 
 export function nodePropertiesGetter(node: Node, propertiesPanel: PropertiesPanel): Array<PropertyEntry> {

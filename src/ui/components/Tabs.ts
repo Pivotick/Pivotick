@@ -73,7 +73,8 @@ export function createTabs(items: TabItem[], activeId?: string, container?: HTML
         panels.appendChild(panel)
     })
 
-    activate(activeId ?? items[0])
+    const activeItem = activeId ? items.find(item => item.id === activeId) ?? items[0] : items[0]
+    activate(activeItem)
 
     if (controlContainer && container) {
         return panels

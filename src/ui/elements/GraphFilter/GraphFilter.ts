@@ -1,4 +1,4 @@
-import type { FilterFieldConfig, GraphFilters } from '../../../interfaces/GraphQueryEngine'
+import type { FilterFieldConfig, FilterMatchMode, GraphFilters } from '../../../interfaces/GraphQueryEngine'
 import { createHtmlElement, createHtmlTemplate, createIcon } from '../../../utils/ElementCreation'
 import { Node } from '../../../Node'
 import { FormFactory, type FieldConfig, type FieldType, type FormValue, type FormValues } from '../../../utils/FormFactory'
@@ -88,7 +88,7 @@ export class GraphFilter implements UIElement {
         const attributeFilters = this.getAvailableNodeAttributes()
         this.formOptions = Object.entries(attributeFilters).map(([key, filter]) => {
             let filterType: FieldType = 'text'
-            let matchMode = 'exact'
+            let matchMode: FilterMatchMode = 'exact'
             let valuesAreBoolean = false
             if (!filter.values) {
                 filterType = 'numberRange'
