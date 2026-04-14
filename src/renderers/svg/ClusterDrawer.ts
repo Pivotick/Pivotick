@@ -34,7 +34,7 @@ import type { NodeSelection } from '../../interfaces/GraphInteractions'
  * ## Node Identity
  *
  * - Subgraph nodes are created from dicts (clones) of the original nodes
- * - Each subgraph node has `_original_object` (mainGraphNode) pointing to the real node
+ * - Each subgraph node has `_mainGraphNode` pointing to the real node in the root graph
  * - Position updates flow: subgraph node → real node → parent graph hierarchy
  *
  * ## Synthetic Edges
@@ -179,20 +179,21 @@ export class ClusterDrawer {
     ): Graph {
         // Callback invoked before subgraph rendering
         const beforeRender = (graph: Graph) => {
-            // Link each subgraph node to its main graph counterpart
+            // Link each subgraph node clone to its main graph counterpart (bidirectional)
             graph.getMutableNodes().forEach((n: Node) => {
-                let origObject = parentGraph.getMutableNode(n.id) as Node
-                origObject = origObject.getOriginalObject() ?? origObject
-                n.setOriginalObject(origObject)
-                origObject.setDeepestNodeClone(n)
+                let mainNode = parentGraph.getMutableNode(n.id) as Node
+                // Walk up to the root graph node if this is already a clone
+                mainNode = mainNode.getMainGraphNode() ?? mainNode
+                n.setMainGraphNode(mainNode)
+                mainNode.setSubgraphClone(n)
                 n.isChild = true
             })
-            // Link each subgraph edges to its main graph counterpart
+            // Link each subgraph edge clone to its main graph counterpart
             graph.getMutableEdges().forEach((e: Edge) => {
-                let origObject = parentGraph.getMutableEdge(e.id)
-                if (origObject) {
-                    origObject = origObject.getOriginalObject() ?? origObject
-                    e.setOriginalObject(origObject)
+                let mainEdge = parentGraph.getMutableEdge(e.id)
+                if (mainEdge) {
+                    mainEdge = mainEdge.getMainGraphEdge() ?? mainEdge
+                    e.setMainGraphEdge(mainEdge)
                 }
             })
             // Fix parent references: ensure children point to the correct cluster node
@@ -204,16 +205,16 @@ export class ClusterDrawer {
                     }
                 }
             })
-            // Link each maingraph edge's nodes to its subgraph counterpart
+            // Link main graph edges to their subgraph node clones (for edge rendering)
             parentGraph.getMutableEdges().forEach((e: Edge) => {
-                const origEdge = e.getOriginalObject() ?? e
+                const mainEdge = e.getMainGraphEdge() ?? e
                 const subgraphFromNode = graph.getMutableNode(e.from.id)
                 const subgraphToNode = graph.getMutableNode(e.to.id)
                 if (subgraphFromNode) {
-                    origEdge.setSubgraphFromNode(subgraphFromNode)
+                    mainEdge.setSubgraphFromNode(subgraphFromNode)
                 }
                 if (subgraphToNode) {
-                    origEdge.setSubgraphToNode(subgraphToNode)
+                    mainEdge.setSubgraphToNode(subgraphToNode)
                 }
             })
         }
@@ -399,72 +400,68 @@ export class ClusterDrawer {
      *
      * Synthetic edges are placeholder edges created during graph normalization that point
      * from external nodes to collapsed cluster children. When a cluster is expanded:
-     * - Synthetic edges pointing to children are hidden
-     * - Actual edges within the subgraph are shown
+     * - Synthetic edges pointing to this node are hidden (real edges become visible instead)
+     * - Actual edges from outside to children are shown
      * When collapsed:
-     * - Synthetic edges are shown again
-     * - Actual nested edges are hidden
+     * - Synthetic edges are restored
+     * - Actual edges to nested children are hidden
+     *
+     * Handles both the subgraph clone and the main graph node to cover edges at all levels.
      *
      * @param node - The cluster node being expanded/collapsed
      */
     public static toggleSyntheticEdges(node: Node) {
-        if (node.expanded) {
-            // Hide self-referencing synthetic edges
-            node.getEdgesIn().filter((e: Edge) => e.isSynthetic === true).forEach((e: Edge) => {
-                e.hide()
-            })
-            const currentNode = node.getOriginalObject() ?? node
-            // Hide synthetic edges that point to the node of this subgraph coming from outer graph
-            currentNode.getEdgesIn().filter((e: Edge) => e.isSynthetic === true).forEach((e: Edge) => {
-                e.hide()
-            })
+        const mainNode = node.getMainGraphNode() ?? node
+        const childSet = new Set(mainNode.children.map(c => c.id))
 
-            // Show actual edges
-            currentNode.children.forEach((child: Node) => {
+        if (node.expanded) {
+            // Hide synthetic edges at both levels (subgraph clone + main graph node)
+            ClusterDrawer.setSyntheticEdgeVisibility(node, false)
+            if (mainNode !== node) {
+                ClusterDrawer.setSyntheticEdgeVisibility(mainNode, false)
+            }
+
+            // Show actual edges from outside nodes to children (edges between siblings are drawn in the subgraph)
+            mainNode.children.forEach((child: Node) => {
                 child.getEdgesIn()
-                    .filter((e: Edge) => !currentNode.children.includes(e.from)) // Edges are already drawn in the subgraph
-                    .forEach((e: Edge) => {
-                        e.show()
-                    })
+                    .filter((e: Edge) => !childSet.has(e.from.id))
+                    .forEach((e: Edge) => e.show())
             })
         } else {
-            // Hide self-referencing synthetic edges
-            node.getEdgesIn().filter((e: Edge) => e.isSynthetic === true).forEach((e: Edge) => {
-                e.show()
-            })
+            // Restore synthetic edges (only if the node itself is visible)
+            ClusterDrawer.setSyntheticEdgeVisibility(node, true)
+            if (mainNode !== node && node.visible) {
+                ClusterDrawer.setSyntheticEdgeVisibility(mainNode, true)
+            }
 
-            const currentNode = node.getOriginalObject() ?? node
-            currentNode.getEdgesIn().filter((e: Edge) => e.isSynthetic === true).forEach((e: Edge) => {
-                if (node.visible) {
-                    e.show()
-                }
-            })
-
-            // Hide nested edges
-            ClusterDrawer.hideNestedEdges(currentNode)
+            // Hide all edges pointing to nested children (recursively)
+            ClusterDrawer.hideNestedEdges(mainNode, childSet)
         }
     }
 
     /**
-     * Recursively hides edges that point to nested children of a collapsed cluster.
-     *
-     * When a cluster is collapsed, edges that would point to its nested children
-     * need to be hidden since those children are not visible. This method traverses
-     * the entire child hierarchy.
+     * Shows or hides all synthetic edges pointing to a node.
+     */
+    private static setSyntheticEdgeVisibility(node: Node, visible: boolean) {
+        node.getEdgesIn()
+            .filter((e: Edge) => e.isSynthetic === true)
+            .forEach((e: Edge) => visible ? e.show() : e.hide())
+    }
+
+    /**
+     * Recursively hides edges from outside nodes that point to nested children
+     * of a collapsed cluster.
      *
      * @param node - The cluster node whose nested edges should be hidden
+     * @param siblingIds - Set of sibling node IDs (edges between siblings are skipped)
      */
-    private static hideNestedEdges(node: Node) {
+    private static hideNestedEdges(node: Node, siblingIds?: Set<string>) {
         node.children.forEach((child: Node) => {
-            // Recurse into nested children first
-            ClusterDrawer.hideNestedEdges(child)
+            ClusterDrawer.hideNestedEdges(child, new Set(node.children.map(c => c.id)))
 
-            // Hide edges that don't originate from siblings (i.e., edges from outside)
             child.getEdgesIn()
-                .filter((e: Edge) => !node.children.includes(e.from))
-                .forEach((e: Edge) => {
-                    e.hide()
-                })
+                .filter((e: Edge) => !siblingIds || !siblingIds.has(e.from.id))
+                .forEach((e: Edge) => e.hide())
         })
     }
 
@@ -480,9 +477,39 @@ export class ClusterDrawer {
         node.children.forEach((child: Node) => {
             ClusterDrawer.collapseAllOpenedClusters(child)
             child.collapse()
-            // At that point, all children should also be collapsed
             child.setCircleRadius(child.getCircleRadiusCollapsed())
         })
+        ClusterDrawer.cleanupSubgraphReferences(node)
+    }
+
+    /**
+     * Cleans up all references between the main graph and a destroyed subgraph.
+     * Clears _subgraphClone on main graph nodes, _subgraphFromNode/_subgraphToNode
+     * on main graph edges, and destroys the subgraph instance.
+     *
+     * @param node - The cluster node whose subgraph is being destroyed
+     */
+    private static cleanupSubgraphReferences(node: Node) {
+        const subgraph = node.getSubgraph()
+        if (!subgraph) return
+
+        // Clear subgraph clone references on main graph nodes
+        subgraph.getMutableNodes().forEach((subgraphNode: Node) => {
+            const mainNode = subgraphNode.getMainGraphNode()
+            if (mainNode) {
+                mainNode.clearSubgraphClone()
+            }
+        })
+
+        // Clear subgraph node references on main graph edges
+        subgraph.getMutableEdges().forEach((subgraphEdge: Edge) => {
+            const mainEdge = subgraphEdge.getMainGraphEdge()
+            if (mainEdge) {
+                mainEdge.clearSubgraphNodes()
+            }
+        })
+
+        node.destroySubgraph()
     }
 
     /**
@@ -592,9 +619,9 @@ export class ClusterDrawer {
         // Update the node's radius in the parent graph
         const realChild = parentGraph.getMutableNode(node.id)
         realChild?.setCircleRadius(r)
-        const originalElement = node.getOriginalObject()
-        if (originalElement) {
-            originalElement.setCircleRadius(r)
+        const mainGraphNode = node.getMainGraphNode()
+        if (mainGraphNode) {
+            mainGraphNode.setCircleRadius(r)
         }
 
         const parentNode = node.parentNode

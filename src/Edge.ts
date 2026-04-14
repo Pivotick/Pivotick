@@ -22,8 +22,11 @@ export class Edge {
     isSynthetic?: boolean
     /** The actual child node this synthetic edge points to (for expansion logic) */
     syntheticTerminalNode?: Node
-    private _original_object?: Edge
+    /** Reference to the main graph edge when this edge is a clone in a subgraph */
+    private _mainGraphEdge?: Edge
+    /** Subgraph clone of the 'from' node, used for rendering edges to nested nodes */
     private _subgraphFromNode?: Node
+    /** Subgraph clone of the 'to' node, used for rendering edges to nested nodes */
     private _subgraphToNode?: Node
 
     private _dirty: boolean
@@ -206,20 +209,19 @@ export class Edge {
     }
 
     /**
-     * Sets a reference to the original node from the main graph.
-     * Used when this node is a clone in a subgraph to enable position syncing.
+     * Sets the main graph edge that this subgraph clone was created from.
      * @private
      */
-    setOriginalObject(obj: Edge) {
-        this._original_object = obj
+    setMainGraphEdge(edge: Edge) {
+        this._mainGraphEdge = edge
     }
     /**
-     * Gets the reference to the original node from the main graph.
-     * Returns undefined if this is not a subgraph clone.
+     * Gets the main graph edge this clone was created from.
+     * Returns undefined if this edge is not a subgraph clone.
      * @private
      */
-    getOriginalObject(): Edge | undefined {
-        return this._original_object
+    getMainGraphEdge(): Edge | undefined {
+        return this._mainGraphEdge
     }
 
     /**
@@ -251,5 +253,13 @@ export class Edge {
      */
     getSubgraphToNode(): Node | undefined {
         return this._subgraphToNode
+    }
+    /**
+     * Clears both subgraph node references. Called when the subgraph is destroyed.
+     * @private
+     */
+    clearSubgraphNodes(): void {
+        this._subgraphFromNode = undefined
+        this._subgraphToNode = undefined
     }
 }

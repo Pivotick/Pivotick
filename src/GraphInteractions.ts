@@ -230,9 +230,7 @@ export class GraphInteractions<TElement = unknown> {
             this.callbacks.onNodeBlur(oldSelectionNode, oldSelectionElement)
         }
 
-        // Instead of doing all of this, maybe try to use a new property
-        // _deepest_node_clone :  that link outer nodes to their deepest clone in the subgraph
-        // or maybe the ancestor subgraph was exessive?
+        // _subgraphClone links outer nodes to their deepest clone in the subgraph
         // this.unselectFromAncestorSubgraphs(oldSelectionNode)
         this.unselectFromDirectSubgraph(oldSelectionNode)
 

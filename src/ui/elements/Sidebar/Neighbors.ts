@@ -242,11 +242,11 @@ export class SidebarNeighbors implements UIElement {
         })
 
         const test = [...connectedNodes.values()].filter((n) => {
-            // n is always the orginialObject thanks to event propagation in cluster nodes
-            if (n.getDeepestNodeClone() === undefined) { // not in a cluster
+            // n is always the main graph node thanks to event propagation in cluster nodes
+            if (n.getSubgraphClone() === undefined) { // not in a cluster
                 return true
             }
-            return n.getDeepestNodeClone()?.visible ?? false
+            return n.getSubgraphClone()?.visible ?? false
         })
 
         // TODO: If cluster node is expanded, also expand it in the ego graph

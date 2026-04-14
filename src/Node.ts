@@ -39,14 +39,16 @@ export class Node {
     parentNode?: Node
     /**
      * Reference to the main graph node when this node is a clone in a subgraph.
-     * Used for syncing position updates from subgraph back to main graph.
+     * Points UP the hierarchy: subgraph clone → root graph node.
+     * Used for syncing position/state updates from subgraph back to main graph.
      */
-    private _original_object?: Node
+    private _mainGraphNode?: Node
     /**
-     * Reference to the deepest sub graph node.
-     * Used for checking state of this node in its subgraph
+     * Reference to this node's clone in the deepest active subgraph.
+     * Points DOWN the hierarchy: root graph node → deepest subgraph clone.
+     * Used for checking visibility/state of nested nodes.
      */
-    private _deepest_node_clone?: Node
+    private _subgraphClone?: Node
     /** The subgraph graph instance created when expanding this node */
     private _subgraph?: Graph
     private _circleRadius = this.defaultCircleRadius
@@ -299,15 +301,15 @@ export class Node {
 
     expand(): void {
         this.expanded = true
-        if (this._original_object) {
-            this._original_object.expanded = true
+        if (this._mainGraphNode) {
+            this._mainGraphNode.expanded = true
         }
     }
 
     collapse(): void {
         this.expanded = false
-        if (this._original_object) {
-            this._original_object.expanded = false
+        if (this._mainGraphNode) {
+            this._mainGraphNode.expanded = false
         }
     }
 
@@ -363,7 +365,7 @@ export class Node {
     }
     /**
      * Gets the subgraph instance created from this node.
-     * Returns undefined if this node didn't created a subgraph.
+     * Returns undefined if this node didn't create a subgraph.
      * @private
      */
     getSubgraph(): Graph | undefined {
@@ -371,36 +373,50 @@ export class Node {
     }
 
     /**
-     * Sets a reference to the original node from the main graph.
-     * Used when this node is a clone in a subgraph to enable position syncing.
+     * Destroys the subgraph and clears all related references.
+     * Called when collapsing a cluster to prevent stale references.
      * @private
      */
-    setOriginalObject(obj: Node) {
-        this._original_object = obj
-    }
-    /**
-     * Gets the reference to the original node from the main graph.
-     * Returns undefined if this is not a subgraph clone.
-     * @private
-     */
-    getOriginalObject(): Node | undefined {
-        return this._original_object
+    destroySubgraph(): void {
+        this._subgraph = undefined
     }
 
     /**
-     * Sets a reference to the original node from the main graph.
-     * Used when this node is a clone in a subgraph to enable position syncing.
+     * Sets the main graph node that this subgraph clone was created from.
      * @private
      */
-    setDeepestNodeClone(obj: Node) {
-        this._deepest_node_clone = obj
+    setMainGraphNode(node: Node) {
+        this._mainGraphNode = node
     }
     /**
-     * Gets the reference to the original node from the main graph.
-     * Returns undefined if this is not a subgraph clone.
+     * Gets the main graph node this clone was created from.
+     * Returns undefined if this node is not a subgraph clone.
      * @private
      */
-    getDeepestNodeClone(): Node | undefined {
-        return this._deepest_node_clone
+    getMainGraphNode(): Node | undefined {
+        return this._mainGraphNode
+    }
+
+    /**
+     * Sets the reference to this node's clone in the deepest active subgraph.
+     * @private
+     */
+    setSubgraphClone(clone: Node) {
+        this._subgraphClone = clone
+    }
+    /**
+     * Gets this node's clone in the deepest active subgraph.
+     * Returns undefined if this node has no active subgraph clone.
+     * @private
+     */
+    getSubgraphClone(): Node | undefined {
+        return this._subgraphClone
+    }
+    /**
+     * Clears the subgraph clone reference. Called when the subgraph is destroyed.
+     * @private
+     */
+    clearSubgraphClone(): void {
+        this._subgraphClone = undefined
     }
 }
