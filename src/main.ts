@@ -384,15 +384,15 @@ function addRandomNode(counter: number, graph: Pivotick) {
     graph.addEdge(newEdge)
 }
 
-const graph = createSampleGraph()
-window.pivotick = graph
+// const graph = createSampleGraph()
+// window.pivotick = graph
 
 const data = {
   'nodes': [
     { 'id': 'A1', 'data': {'label': 'Alice', 'group': 'A', 'gender': 'female', 'is_active': true}},
     { 'id': 'A2', 'data': {'label': 'Bob', 'group': 'A', 'gender': 'male', 'is_active': true}},
-    { 'id': 'A3', 'data': {'label': 'Charlie', 'group': 'A', 'gender': 'male', 'is_active': true}},
-    { 'id': 'A4', 'data': {'label': 'Diana', 'group': 'A', 'gender': 'female', 'is_active': true}},
+    { 'id': 'A3', 'data': {'label': 'CharlieCharlieCharlie', 'group': 'A', 'gender': 'male', 'is_active': true}},
+    { 'id': 'A4', 'data': {'label': 'Diananananaaaa', 'group': 'A', 'gender': 'female', 'is_active': true}},
     { 'id': 'A5', 'data': {'label': 'Eve', 'group': 'A', 'gender': 'female', 'is_active': true}},
     { 'id': 'A6', 'data': {'label': 'Frank', 'group': 'A', 'gender': 'male'}},
     { 'id': 'B1', 'data': {'label': 'Grace', 'group': 'B', 'gender': 'female', 'icon': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#fff" d="M7 4h2v2h6V4h2V2h2v4h-2v2h2v2h4v6h-2v-4h-1v6h-3v2h2v2h-4v-4H9v4H5v-2h2v-2H4v-6H3v4H1v-6h4V8h2V6H5V2h2zm2 6H7v2H6v4h12v-4h-1v-2h-2V8H9zm2 4H9v-3h2zm4 0h-2v-3h2z"/></svg>' }},
@@ -497,7 +497,7 @@ const options = {
     render: {
         nodeTypeAccessor: (node) => node.getData()?.group,
         nodeStyleMap: {
-            'A': { shape: 'hexagon', color: 'var(--pvt-theme-secondary)', size: 38, text: (node) => node.getData()?.label },
+            'A': { shape: 'hexagon', color: 'var(--pvt-theme-secondary)', size: 38, text: (node) => node.getData()?.label, textVerticalShift: -1 },
             'B': { shape: 'circle', color: 'var(--pvt-vibrant-blue)', svgIcon: (node) => node.getData()?.icon },
             'C': { shape: 'square', color: 'var(--pvt-vibrant-indigo)', size: 18 },
             'D': { color: 'var(--pvt-vibrant-green)', size: 22 },

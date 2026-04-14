@@ -237,6 +237,13 @@ export interface NodeStyle {
     fontFamily: string
     /** @default 'var(--pvt-node-text-color, #fff)' */
     textColor: ((node: Node) => string) | string
+    /** 
+     * The vertical shift applied to the node's label position.
+     * A value of 0 means it is centered to the node, a value of 1 is north of the node, -1 is south of the node.
+     * Other values are also accepted, e.g., 0.5 would be halfway between the center and the north of the node.
+     * @default 0
+     */
+    textVerticalShift: ((node: Node) => number) | number
     iconClass?: IconClass,
     iconUnicode?: IconUnicode,
     svgIcon?: SVGIcon,

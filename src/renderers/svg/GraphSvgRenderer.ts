@@ -153,6 +153,7 @@ export const defaultNodeStyle: NodeStyle = {
     strokeColor: 'var(--pvt-node-stroke, #fff)',
     fontFamily: 'var(--pvt-label-font, system-ui, sans-serif)',
     textColor: 'var(--pvt-node-text-color, #fff)',
+    textVerticalShift: 0,
     iconUnicode: undefined,
     iconClass: undefined,
     svgIcon: undefined,

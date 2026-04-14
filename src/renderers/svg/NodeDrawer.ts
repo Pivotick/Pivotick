@@ -126,6 +126,7 @@ export class NodeDrawer {
             size: style?.size ?? this.rendererOptions.defaultNodeStyle.size,
             color: style?.color ?? this.rendererOptions.defaultNodeStyle.color,
             textColor: style?.textColor ?? this.rendererOptions.defaultNodeStyle.textColor,
+            textVerticalShift: style?.textVerticalShift ?? this.rendererOptions.defaultNodeStyle.textVerticalShift,
             iconUnicode: style?.iconUnicode ?? this.rendererOptions.defaultNodeStyle.iconUnicode,
             iconClass: style?.iconClass ?? this.rendererOptions.defaultNodeStyle.iconClass,
             svgIcon: style?.svgIcon ?? this.rendererOptions.defaultNodeStyle.svgIcon,
@@ -159,6 +160,7 @@ export class NodeDrawer {
                 size: style?.size ?? styleFromStyleMap?.size,
                 color: style?.color ?? styleFromStyleMap?.color,
                 textColor: style?.textColor ?? styleFromStyleMap?.textColor,
+                textVerticalShift: style?.textVerticalShift ?? styleFromStyleMap?.textVerticalShift,
                 iconUnicode: style?.iconUnicode ?? styleFromStyleMap?.iconUnicode,
                 iconClass: style?.iconClass ?? styleFromStyleMap?.iconClass,
                 svgIcon: style?.svgIcon ?? styleFromStyleMap?.svgIcon,
@@ -182,6 +184,7 @@ export class NodeDrawer {
         nodeStyle.size = nodeStyle.size !== undefined ? (tryResolveNumber(nodeStyle.size, node) ?? 10) : 10
         nodeStyle.color = nodeStyle.color !== undefined ? (tryResolveString(nodeStyle.color, node) ?? 'var(--pvt-node-color, #007acc)') : 'var(--pvt-node-color, #007acc)'
         nodeStyle.textColor = nodeStyle.textColor !== undefined ? (tryResolveString(nodeStyle.textColor, node) ?? 'var(--pvt-node-text-color, #fff)') : 'var(--pvt-node-text-color, #fff)'
+        nodeStyle.textVerticalShift = nodeStyle.textVerticalShift !== undefined ? (tryResolveNumber(nodeStyle.textVerticalShift, node) ?? 0) : 0
         nodeStyle.text = nodeStyle.text !== undefined ? tryResolveString(nodeStyle.text, node) : undefined
 
         nodeStyle.iconUnicode = nodeStyle.iconUnicode !== undefined ? tryResolveString(nodeStyle.iconUnicode, node) : undefined
@@ -200,6 +203,7 @@ export class NodeDrawer {
         style.size = style.size as number
         style.shape = style.shape as NodeShape
         style.text = style.text as string
+        style.textVerticalShift = style.textVerticalShift as number
 
         // map logical node shapes to SVG element tag names (use string to allow 'rect' which is not part of NodeShape)
         let actualShape: string = style.shape as string
@@ -303,8 +307,9 @@ export class NodeDrawer {
             nodeSelection
                 .append('text')
                 .attr('text-anchor', 'middle')
+                .attr('y', - style.textVerticalShift * (style.size + 5))
                 .attr('dominant-baseline', 'central')
-                .attr('font-size', this.computeFontSize(style.text, style.size))
+                .attr('font-size', this.computeFontSize(style.text, style.size, style.textVerticalShift))
                 .attr('font-family', style.fontFamily)
                 .attr('fill', style.textColor)
                 .text(style.text)
@@ -393,19 +398,22 @@ export class NodeDrawer {
         }
     }
 
-    private computeFontSize(label: string, nodeSize: number) {
+    private computeFontSize(label: string, nodeSize: number, textVerticalShift: number = 0) {
         const base = nodeSize * 0.8
-        const maxWidth = nodeSize * 1.6
-
+        // Allow wider strings when text is outside the node
+        const maxWidth = Math.abs(textVerticalShift) >= 1 ? nodeSize * 3.8 : nodeSize * 1.6
+        // Limit the font size for short text
+        const maxFontSize = nodeSize * 0.5
+ 
         // approximate width: ~0.6em per character
         const estWidth = label.length * base * 0.6
+        var scale = 1
 
         if (estWidth > maxWidth) {
-            const scale = maxWidth / estWidth
-            return base * scale
+            scale = maxWidth / estWidth
         }
 
-        return base
+        return Math.min(base * scale, maxFontSize)
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
