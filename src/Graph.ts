@@ -203,7 +203,8 @@ export class Graph {
                         syntheticId,
                         edge.from,
                         currentParent,
-                        { 'label': `${edge.from.id}-${currentParent.id}` },
+                        // { 'label': `${edge.from.id}-${currentParent.id}` },
+                        {},
                         {},
                         null,
                         edge.to
@@ -760,6 +761,21 @@ export class Graph {
      */
     getMutableEdges(): Edge[] {
         return Array.from(this.edges.values())
+    }
+
+    /**
+     * Retrieves all visible edges in the graph.
+     * 
+     * Returns the actual edge instances, allowing direct modifications.
+     * 
+     * @remarks
+     * ⚠️ **Warning:** Modifying edges directly may lead to unexpected behavior.
+     * Use {@link getEdges} instead to work with safe clones.
+     * 
+     * @returns An array of `Edge` objects.
+     */
+    getMutableVisibleEdges(): Edge[] {
+        return this.getMutableEdges().filter(edge => edge.visible)
     }
 
     /**

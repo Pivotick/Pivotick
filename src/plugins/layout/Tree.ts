@@ -88,7 +88,7 @@ export class TreeLayout {
         const nodes = this.graph.getNodes()
         const edges = this.options.flipEdgeDirection ? this.flipEdgeDirection(this.graph.getEdges()) : this.graph.getEdges()
         const { levels } = TreeLayout.buildLevels(nodes, edges, undefined, this.options.rootIdAlgorithmFinder)
-        const { nodes: positionedNodes, nodeById: positionedNodesByID } = this.buildTree(nodes, edges, this.options, this.canvasBCR)
+        const { nodes: positionedNodes, nodeById: positionedNodesByID } = TreeLayout.buildTree(nodes, edges, this.options, this.canvasBCR)
         this.positionedNodesByID = positionedNodesByID
 
         this.levels = levels

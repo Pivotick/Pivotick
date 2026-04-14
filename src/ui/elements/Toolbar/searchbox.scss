@@ -101,10 +101,14 @@
                     user-select: all;
                     overflow: hidden;
                     text-overflow: ellipsis;
+                    flex-shrink: 0;
                 }
 
                 .pvt-search-result__info_value {
-                    @include pvt.node-text-value
+                    @include pvt.node-text-value;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
                 }
             }
         }

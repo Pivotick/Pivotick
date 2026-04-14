@@ -254,7 +254,7 @@ export function createSampleGraph(): Pivotick {
 
     }
 
-    const topo = 'random'
+    const topo = 'ail'
 
     const colorPaletteMapper = new ColorPaletteMapper('pivotick')
     const graph = new Pivotick(container, {nodes: topologies[topo].nodes, edges: topologies[topo].edges}, {
@@ -384,8 +384,8 @@ function addRandomNode(counter: number, graph: Pivotick) {
     graph.addEdge(newEdge)
 }
 
-// const graph = createSampleGraph()
-// window.pivotick = graph
+const graph = createSampleGraph()
+window.pivotick = graph
 
 const data = {
   'nodes': [
@@ -417,17 +417,21 @@ const data = {
             'id': 'children-1',
             'data': { 'label': 'Children 1', 'gender': 'male' },
             children: [
-                { 'id': 'children-A', 'data': { 'label': 'Children A', 'group': 'C' } },
+                { 'id': 'children-A', 'data': { 'label': 'Children A', 'group': 'C', 'gender': 'female' } },
                 {
-                    'id': 'children-B', 'data': { 'label': 'Children B', 'group': 'C' }, children: [
-                    { 'id': 'children-X', 'data': { 'label': 'Children X' } },
-                    {
-                        'id': 'children-Z', 'data': { 'label': 'Children Z' }, children: [
-                            { 'id': '11111', 'data': { 'label': '11111' } },
-                            { 'id': '22222', 'data': { 'label': '22222' } },
-                        ] },
-                ]},
-                { 'id': 'children-C', 'data': { 'label': 'Children C', 'group': 'C' } },
+                    'id': 'children-B', 'data': { 'label': 'Children B', 'group': 'C', 'gender': 'male' },
+                    // children: [
+                    //     { 'id': 'children-X', 'data': { 'label': 'Children X' } },
+                    //     {
+                    //         'id': 'children-Z', 'data': { 'label': 'Children Z' },
+                    //         children: [
+                    //             { 'id': '11111', 'data': { 'label': '11111' } },
+                    //             { 'id': '22222', 'data': { 'label': '22222' } },
+                    //         ]
+                    //     },
+                    // ]
+                },
+                { 'id': 'children-C', 'data': { 'label': 'Children C', 'group': 'C', 'gender': 'female' } },
             ]
         },
         { 'id': 'children-2', 'data': { 'label': 'Children 2', 'gender': 'female' } },
@@ -475,11 +479,14 @@ const data = {
     //   { 'from': 'children-3', 'to': 'children-1', 'data': { 'label': 'c3-c1' } },
     //   { 'from': 'A1', 'to': 'children-2', 'data': { 'label': 'a1-c2' } },
     //   { 'from': 'children-2', 'to': 'children-A', 'data': { 'label': 'c2-ca' } },
-      { 'from': 'children-1', 'to': 'children-A', 'data': { 'label': 'c1-ca' } },
-    //   { 'from': 'D6', 'to': 'children-3', 'data': { 'label': 'd6-c3' } }, // D6 -.-.-> D6 makes sense. c1 -.-.-> c1 doesn't. It should be D6 -.-.-> c1 instead
+    //   { 'from': 'children-1', 'to': 'children-A', 'data': { 'label': 'c1-ca' } },
+    //   { 'from': 'children-1', 'to': 'children-X', 'data': { 'label': 'c1-cx' } }, // This doesn't work. A refactor or simplification is needed before trying to fix it. The node copy, subgraphes references, .. is a mess. This should either be totally redone or abstracted somehow.
+      { 'from': 'D6', 'to': 'children-3', 'data': { 'label': 'd6-c3' } },
+    //   { 'from': 'D6', 'to': 'children-A', 'data': { 'label': 'd6-ca' } },
     //   { 'from': 'A2', 'to': 'children-B', 'data': { 'label': 'a2-cb' } },
     //   { 'from': 'A2', 'to': 'children-X', 'data': { 'label': 'a2-cx' } },
     //   { 'from': 'A2', 'to': '11111', 'data': { 'label': 'a2-111' } },
+    //   { 'from': 'children-B', 'to': 'children-X', 'data': { 'label': 'cb-cx' } },
   ]
 }
 

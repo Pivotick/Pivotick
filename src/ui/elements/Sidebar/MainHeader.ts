@@ -245,7 +245,7 @@ export class SidebarMainHeader implements UIElement {
     private showTotalNodeCount(): void {
         if (!this.panel) return
         const totalNodeCount = this.uiManager.graph.getMutableVisibleNodes().length
-        const totalEdgeCount = this.uiManager.graph.getMutableVisibleNodes().length
+        const totalEdgeCount = this.uiManager.graph.getMutableVisibleEdges().length
         this.panel.textContent = `Showing ${totalNodeCount} nodes and ${totalEdgeCount} edges`
     }
 
