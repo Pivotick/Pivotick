@@ -359,6 +359,12 @@ export class Tooltip implements UIElement {
         const canvasBbox = this.uiManager.layout?.canvas?.getBoundingClientRect()
         if (!canvasBbox) return
 
+        const setPositionCb = this.uiManager.getOptions().tooltip.setPosition
+        if (setPositionCb && typeof setPositionCb === 'function') {
+            setPositionCb(this.tooltip, hoveredBCR, canvasBbox)
+            return
+        }
+
         const offset = 20 // Extra offset to give more space around the tooltip
         const offsetX = 15 // Offset between the tooltip and the hovered element on the X axis
 
