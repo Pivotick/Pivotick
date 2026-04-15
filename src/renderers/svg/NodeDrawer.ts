@@ -303,16 +303,6 @@ export class NodeDrawer {
                 .attr('y', -style.size * (scale/2))
                 .attr('width', style.size * scale)
                 .attr('height', style.size * scale)
-        } else if (style.text) {
-            nodeSelection
-                .append('text')
-                .attr('text-anchor', 'middle')
-                .attr('y', - style.textVerticalShift * (style.size + 5))
-                .attr('dominant-baseline', 'central')
-                .attr('font-size', this.computeFontSize(style.text, style.size, style.textVerticalShift))
-                .attr('font-family', style.fontFamily)
-                .attr('fill', style.textColor)
-                .text(style.text)
         } else if (style.html) {
             const fo = nodeSelection.append('foreignObject')
             const rendered = style.html(node)
@@ -326,6 +316,18 @@ export class NodeDrawer {
             } else if (rendered instanceof HTMLElement) {
                 fo.node()?.append(rendered)
             }
+        }
+        // Do not have text dislay be mutually exclusive with icons
+        if (style.text) {
+            nodeSelection
+                .append('text')
+                .attr('text-anchor', 'middle')
+                .attr('y', - style.textVerticalShift * (style.size + 5))
+                .attr('dominant-baseline', 'central')
+                .attr('font-size', this.computeFontSize(style.text, style.size, style.textVerticalShift))
+                .attr('font-family', style.fontFamily)
+                .attr('fill', style.textColor)
+                .text(style.text)
         }
     }
 
