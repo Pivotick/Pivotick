@@ -303,16 +303,6 @@ export class NodeDrawer {
                 .attr('y', -style.size * (scale/2))
                 .attr('width', style.size * scale)
                 .attr('height', style.size * scale)
-        } else if (style.text) {
-            nodeSelection
-                .append('text')
-                .attr('text-anchor', 'middle')
-                .attr('y', - style.textVerticalShift * (style.size + 5))
-                .attr('dominant-baseline', 'central')
-                .attr('font-size', this.computeFontSize(style.text, style.size, style.textVerticalShift))
-                .attr('font-family', style.fontFamily)
-                .attr('fill', style.textColor)
-                .text(style.text)
         } else if (style.html) {
             const fo = nodeSelection.append('foreignObject')
             const rendered = style.html(node)
@@ -326,6 +316,19 @@ export class NodeDrawer {
             } else if (rendered instanceof HTMLElement) {
                 fo.node()?.append(rendered)
             }
+        }
+        // Do not have text dislay be mutually exclusive with icons
+        if (style.text) {
+            const [fontSize, text] = this.computeTextLayout(style.text, style.size, style.textVerticalShift)
+            nodeSelection
+                .append('text')
+                .attr('text-anchor', 'middle')
+                .attr('y', - style.textVerticalShift * (style.size + fontSize/2*1.2))
+                .attr('dominant-baseline', 'central')
+                .attr('font-size', fontSize)
+                .attr('font-family', style.fontFamily)
+                .attr('fill', style.textColor)
+                .text(text)
         }
     }
 
@@ -398,22 +401,28 @@ export class NodeDrawer {
         }
     }
 
-    private computeFontSize(label: string, nodeSize: number, textVerticalShift: number = 0) {
-        const base = nodeSize * 0.8
+    private computeTextLayout(label: string, nodeSize: number, textVerticalShift: number = 0): [number, string] {
+        const base = nodeSize * 0.9
         // Allow wider strings when text is outside the node
-        const maxWidth = Math.abs(textVerticalShift) >= 1 ? nodeSize * 3.8 : nodeSize * 1.6
-        // Limit the font size for short text
-        const maxFontSize = nodeSize * 0.5
+        const maxWidth = Math.abs(textVerticalShift) >= 1 ? base * 6 : base * 2
+        // Scale font to node size
+        const fontSize = base * 0.5
  
-        // approximate width: ~0.6em per character
-        const estWidth = label.length * base * 0.6
-        var scale = 1
+        // Approximate width: ~0.5em per character
+        // On average this should render nicely but not all characters are equal width
+        const charWidth = base * 0.5
+        const maxChars = Math.floor(maxWidth / charWidth)
 
-        if (estWidth > maxWidth) {
-            scale = maxWidth / estWidth
+        if (label.length > maxChars && label.length > 7) {
+            // Since text is too long, add ellipsis
+            const charsToKeep = Math.max(6, maxWidth / charWidth) - 1 // Reserve 1 space for "..."
+
+            const tailChars = Math.min(3, Math.floor(charsToKeep / 2))
+            const headChars = charsToKeep - tailChars
+            label = label.slice(0, headChars) + '...' + label.slice(label.length - tailChars)
         }
 
-        return Math.min(base * scale, maxFontSize)
+        return [fontSize, label]
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

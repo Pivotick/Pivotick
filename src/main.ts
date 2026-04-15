@@ -391,7 +391,7 @@ const data = {
   'nodes': [
     { 'id': 'A1', 'data': {'label': 'Alice', 'group': 'A', 'gender': 'female', 'is_active': true}},
     { 'id': 'A2', 'data': {'label': 'Bob', 'group': 'A', 'gender': 'male', 'is_active': true}},
-    { 'id': 'A3', 'data': {'label': 'Charlie', 'group': 'A', 'gender': 'male', 'is_active': true}},
+    { 'id': 'A3', 'data': {'label': 'CharlieCharlieCharlie', 'group': 'A', 'gender': 'male', 'is_active': true}},
     { 'id': 'A4', 'data': {'label': 'Diana', 'group': 'A', 'gender': 'female', 'is_active': true}},
     { 'id': 'A5', 'data': {'label': 'Eve', 'group': 'A', 'gender': 'female', 'is_active': true}},
     { 'id': 'A6', 'data': {'label': 'Frank', 'group': 'A', 'gender': 'male'}},
@@ -498,7 +498,7 @@ const options = {
         nodeTypeAccessor: (node) => node.getData()?.group,
         nodeStyleMap: {
             'A': { shape: 'hexagon', color: 'var(--pvt-theme-secondary)', size: 38, text: (node) => node.getData()?.label, textVerticalShift: -1 },
-            'B': { shape: 'circle', color: 'var(--pvt-vibrant-blue)', svgIcon: (node) => node.getData()?.icon },
+            'B': { shape: 'circle', color: 'var(--pvt-vibrant-blue)', svgIcon: (node) => node.getData()?.icon, text: (node) => node.getData()?.label, textVerticalShift: 1 },
             'C': { shape: 'square', color: 'var(--pvt-vibrant-indigo)', size: 18 },
             'D': { color: 'var(--pvt-vibrant-green)', size: 22 },
         },
