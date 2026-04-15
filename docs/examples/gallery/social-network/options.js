@@ -85,6 +85,9 @@ const options = {
       tooltip: {
         enabled: false
       }
+    },
+    simulation: {
+      useWorker: false,
     }
 }
 // #endregion options
