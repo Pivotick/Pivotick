@@ -331,7 +331,8 @@ export class NodeDrawer {
                 .text(text)
 
             const bbox = textSelection.node()?.getBBox()
-            if (bbox) {
+            const isOusideNode = Math.abs(style.textVerticalShift) >= 1
+            if (isOusideNode && bbox) {
                 const paddingX = 4
                 const paddingY = 2
                 nodeSelection.insert('rect', 'text')
