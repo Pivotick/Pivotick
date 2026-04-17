@@ -428,11 +428,11 @@ export class NodeDrawer {
 
         if (label.length > maxChars && label.length > 7) {
             // Since text is too long, add ellipsis
-            const charsToKeep = Math.max(6, maxWidth / charWidth) - 1 // Reserve 1 space for "..."
+            const charsToKeep = Math.max(6, maxWidth / charWidth) - 1 // Reserve 1 space for "…"
 
-            const tailChars = Math.min(3, Math.floor(charsToKeep / 2))
+            const tailChars = 3
             const headChars = charsToKeep - tailChars
-            label = label.slice(0, headChars) + '...' + label.slice(label.length - tailChars)
+            label = label.slice(0, headChars) + '…' + label.slice(label.length - tailChars)
         }
 
         return [fontSize, label]

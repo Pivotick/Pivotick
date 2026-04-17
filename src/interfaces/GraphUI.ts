@@ -177,6 +177,7 @@ export interface Tooltip {
     * (element) => `element id: ${element.id}`
     */
     render?: ((element: Node | Edge) => HTMLElement | string) | HTMLElement | string,
+    setPosition?: (tooltip: HTMLElement, hoveredBCR: DOMRect, canvasBbox: DOMRect) => void, 
 }
 
 export interface Navigation {

@@ -259,8 +259,12 @@ export class SidebarNeighbors implements UIElement {
             UI: {
                 mode: 'viewer',
                 tooltip: {
-                    enabled: false,
+                    enabled: true,
                     allowPinning: false,
+                    setPosition: (tooltip: HTMLElement, hoveredBCR: DOMRect, canvasBbox: DOMRect) => {
+                        tooltip.style.left = `${canvasBbox.x+canvasBbox.width + 15}px`
+                        tooltip.style.top = `${canvasBbox.y}px`
+                    }
                 },
                 contextMenu: {
                     enabled: false,
@@ -290,16 +294,30 @@ export class SidebarNeighbors implements UIElement {
                 cooldownTime: 0,
             },
             callbacks: {
+                onNodeClick: (_evt, node) => {
+                    const mainGraphNode = this.uiManager.graph.getMutableNode(node.id)
+                    if (mainGraphNode){
+                        if (this.uiManager.graph.renderer.getGraphInteraction().getSelectedNode()?.node != mainGraphNode) {
+                            this.uiManager.graph.unHighlightElement(mainGraphNode)
+                            this.egoGraph?.unHighlightElement(node)
+                            this.uiManager.graph.selectElement(mainGraphNode)
+                        }
+                    }
+                },
                 onNodeHoverIn: (_evt, node) => {
                     const mainGraphNode = this.uiManager.graph.getMutableNode(node.id)
                     if (mainGraphNode) {
                         this.uiManager.graph.highlightElement(mainGraphNode)
+                        this.egoGraph?.highlightElement(node)
+                        this.egoGraph?.UIManager.tooltip?.nodeHovered(_evt, node)
+                        
                     }
                 },
                 onNodeHoverOut: (_evt, node) => {
                     const mainGraphNode = this.uiManager.graph.getMutableNode(node.id)
                     if (mainGraphNode) {
                         this.uiManager.graph.unHighlightElement(mainGraphNode)
+                        this.egoGraph?.unHighlightElement(node)
                     }
                 },
             }
@@ -314,6 +332,9 @@ export class SidebarNeighbors implements UIElement {
                 this.egoGraph!.selectElement(this.egoGraph!.getMutableNode(egoNode.id)!)
             }
         })
+
+        // Overwrite the canvasclick so that clicking on the small canvas doesn't deselect the node 
+        this.egoGraph.renderer.getGraphInteraction().canvasClick = () => {}
     }
 
     private buildList(node: Node) {
