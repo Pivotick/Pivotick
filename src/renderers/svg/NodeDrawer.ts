@@ -2,7 +2,7 @@ import { select as d3Select, type Selection } from 'd3-selection'
 import { transition as d3Transition } from 'd3-transition'
 import { Node } from '../../Node'
 import type { Graph } from '../../Graph'
-import type { GraphSvgRenderer } from './GraphSvgRenderer'
+import { GraphSvgRenderer, defaultLabelStyle } from './GraphSvgRenderer'
 import { faGlyph, tryResolveNumber, tryResolveString } from '../../utils/Getters'
 import type { CustomNodeShape, GraphRendererOptions, NodeShape, NodeStyle } from '../../interfaces/RendererOptions'
 import { ClusterDrawer } from './ClusterDrawer'
@@ -320,7 +320,7 @@ export class NodeDrawer {
         // Do not have text dislay be mutually exclusive with icons
         if (style.text) {
             const [fontSize, text] = this.computeTextLayout(style.text, style.size, style.textVerticalShift)
-            nodeSelection
+            const textSelection = nodeSelection
                 .append('text')
                 .attr('text-anchor', 'middle')
                 .attr('y', - style.textVerticalShift * (style.size + fontSize/2*1.2))
@@ -329,6 +329,20 @@ export class NodeDrawer {
                 .attr('font-family', style.fontFamily)
                 .attr('fill', style.textColor)
                 .text(text)
+
+            const bbox = textSelection.node()?.getBBox()
+            if (bbox) {
+                const paddingX = 4
+                const paddingY = 2
+                nodeSelection.insert('rect', 'text')
+                    .attr('x', bbox.x - paddingX)
+                    .attr('y', bbox.y - paddingY)
+                    .attr('width', bbox.width + 2 * paddingX)
+                    .attr('height', bbox.height + 2 * paddingY)
+                    .attr('fill', defaultLabelStyle.backgroundColor)
+                    .attr('rx', 2)
+                    .attr('ry', 2)
+            }
         }
     }
 
