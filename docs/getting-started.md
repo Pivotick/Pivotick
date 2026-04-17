@@ -14,7 +14,7 @@ npm install pivotick  # (Coming soon)
 
 ::: code-group
 
-<<< @/examples/getting-started/simple-bundle.js[As a module]
+<<< @/examples/getting-started/simple-module.js[As a module]
 
 <<< @/examples/getting-started/simple-bundle.js[As a bundle]
 
