@@ -404,14 +404,13 @@ export class NodeDrawer {
     private computeTextLayout(label: string, nodeSize: number, textVerticalShift: number = 0): [number, string] {
         const base = nodeSize * 0.9
         // Allow wider strings when text is outside the node
-        const maxWidth = Math.abs(textVerticalShift) >= 1 ? base * 6 : base * 2
-        // Scale font to node size
-        const fontSize = base * 0.5
+        const maxWidth = Math.abs(textVerticalShift) >= 1 ? base * 5 : base * 2
+        // Scale font to node size, ensuring readability with 12px
+        const fontSize = Math.max(12, base * 0.5)
  
-        // Approximate width: ~0.5em per character
-        // On average this should render nicely but not all characters are equal width
-        const charWidth = base * 0.5
-        const maxChars = Math.floor(maxWidth / charWidth)
+        // Approximate width: ~0.55em per character
+        const charWidth = fontSize * 0.55
+        const maxChars = Math.floor(maxWidth / charWidth) - 1
 
         if (label.length > maxChars && label.length > 7) {
             // Since text is too long, add ellipsis
