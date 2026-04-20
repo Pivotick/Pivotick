@@ -237,6 +237,15 @@ export interface NodeStyle {
     fontFamily: string
     /** @default 'var(--pvt-node-text-color, #fff)' */
     textColor: ((node: Node) => string) | string
+    /** @default 'middle' */
+    textAnchorPosition: 'start' | 'middle' | 'end'
+    /** 
+     * The horizontal shift applied to the node's label position.
+     * A value of 0 means it is centered to the node, a value of 1 is east of the node, -1 is west of the node.
+     * Other values are also accepted, e.g., 0.5 would be halfway between the center and the east of the node.
+     * @default 0
+     */
+    textHorizontalShift: ((node: Node) => number) | number
     /** 
      * The vertical shift applied to the node's label position.
      * A value of 0 means it is centered to the node, a value of 1 is north of the node, -1 is south of the node.
@@ -244,6 +253,12 @@ export interface NodeStyle {
      * @default 0
      */
     textVerticalShift: ((node: Node) => number) | number
+    /**
+     * Rotation degree applied to the node's label.
+     * Positive values rotate clockwise, negative values rotate counter-clockwise.
+     * @default 0
+     */
+    textRotateDegree: ((node: Node) => number) | number
     iconClass?: IconClass,
     iconUnicode?: IconUnicode,
     svgIcon?: SVGIcon,
