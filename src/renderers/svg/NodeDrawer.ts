@@ -331,18 +331,20 @@ export class NodeDrawer {
         }
         // Do not have text dislay be mutually exclusive with icons
         if (style.text) {
+            // label and background group to allow for rotating together
+            const labelG = nodeSelection.append('g')
+
             const isOusideNode = Math.abs(style.textVerticalShift) >= 1 || Math.abs(style.textHorizontalShift) >= 1
             const [fontSize, text] = this.computeTextLayout(style.text, style.size, isOusideNode)
 
             const x_pos = style.textHorizontalShift * (style.size + fontSize/2*1.2)
             const y_pos = - style.textVerticalShift * (style.size + fontSize/2*1.2)
 
-            const textSelection = nodeSelection
+            const textSelection = labelG
                 .append('text')
                 .attr('text-anchor', style.textAnchorPosition)
                 .attr('x', x_pos)
                 .attr('y', y_pos)
-                .attr('transform', `rotate(${style.textRotateDegree}, ${x_pos}, ${y_pos})`)
                 .attr('dominant-baseline', 'central')
                 .attr('font-size', fontSize)
                 .attr('font-family', style.fontFamily)
@@ -353,7 +355,7 @@ export class NodeDrawer {
             if (isOusideNode && bbox) {
                 const paddingX = 4
                 const paddingY = 2
-                nodeSelection.insert('rect', 'text')
+                labelG.insert('rect', 'text')
                     .attr('x', bbox.x - paddingX)
                     .attr('y', bbox.y - paddingY)
                     .attr('width', bbox.width + 2 * paddingX)
@@ -362,6 +364,9 @@ export class NodeDrawer {
                     .attr('rx', 2)
                     .attr('ry', 2)
             }
+            
+            labelG.attr('transform', `rotate(${style.textRotateDegree}, ${x_pos}, ${y_pos})`)
+
         }
     }
 
