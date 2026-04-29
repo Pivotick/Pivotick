@@ -384,8 +384,8 @@ function addRandomNode(counter: number, graph: Pivotick) {
     graph.addEdge(newEdge)
 }
 
-const graph = createSampleGraph()
-window.pivotick = graph
+// const graph = createSampleGraph()
+// window.pivotick = graph
 
 const data = {
   'nodes': [

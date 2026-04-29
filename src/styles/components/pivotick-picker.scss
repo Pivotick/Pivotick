@@ -1,0 +1,145 @@
+@use './input.scss' as *;
+
+// ========================
+// Picker
+// ========================
+.pvt-picker {
+    position: relative;
+    width: 100%;
+    font-family: var(--pvt-font-family);
+
+    &__control {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        min-height: 2.5rem;
+        cursor: text;
+    }
+
+    &__input {
+        border: none;
+        outline: none;
+        flex: 1;
+        min-width: 80px;
+        background: transparent;
+        color: var(--pvt-text-color-6);
+    }
+
+    // ========================
+    // Chips (multi-select pills)
+    // ========================
+    &__chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+
+    &__chip {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+
+        background: var(--pvt-bg-color-7);
+        color: var(--pvt-text-color-4);
+
+        border: 1px solid var(--pvt-menu-border-color);
+        border-radius: 0.35rem;
+
+        padding: 0.2rem 0.5rem;
+        font-size: 0.85rem;
+
+        transition: background 0.15s ease, border-color 0.15s ease;
+
+        &:hover {
+            background: var(--pvt-bg-color-7)-active;
+            color: var(--pvt-text-color-6);
+            border-color: var(--pvt-text-color-6);
+        }
+    }
+
+    &__chip-remove {
+        background: transparent;
+        border: none;
+        color: inherit;
+        cursor: pointer;
+        font-size: 1rem;
+        line-height: 1;
+
+        opacity: 0.7;
+        transition: opacity 0.15s ease;
+
+        &:hover {
+            opacity: 1;
+        }
+    }
+
+    // ========================
+    // Clear button
+    // ========================
+    &__clear {
+        margin-left: auto;
+        background: none;
+        border: none;
+        color: var(--pvt-text-color-4);
+        cursor: pointer;
+        font-size: 0.8rem;
+
+        &:hover {
+            color: var(--pvt-text-color-6);
+        }
+    }
+
+    // ========================
+    // Dropdown
+    // ========================
+    &__dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+
+        background: var(--pvt-ui-bg);
+        border: 1px solid var(--pvt-menu-border-color);
+
+        box-shadow: var(--pvt-box-shadow-medium);
+        max-height: 250px;
+        overflow-y: auto;
+
+        display: none;
+        z-index: 1000;
+
+        &.open {
+            display: block;
+        }
+    }
+
+    // ========================
+    // Options
+    // ========================
+    &__option {
+        padding: 0.5rem 0.75rem;
+        cursor: pointer;
+
+        color: var(--pvt-text-color-primary);
+        background: transparent;
+
+        border-bottom: 1px solid var(--pvt-bg-color-7);
+
+        transition: background 0.15s ease, color 0.15s ease;
+
+        &:hover {
+            background: var(--pvt-bg-color-5);
+        }
+
+        &.selected {
+            background: var(--pvt-bg-color-7)-active;
+            color: var(--pvt-text-color-6);
+        }
+
+        &.disabled {
+            background: var(--pvt-bg-color-7);
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+    }
+}

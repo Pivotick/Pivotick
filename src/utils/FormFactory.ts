@@ -1,5 +1,6 @@
-import TomSelect from 'tom-select'
+// import TomSelect from 'tom-select'
 import type { FilterMatchMode } from '../interfaces/GraphQueryEngine'
+import { PivotickPicker } from './PivotickPicker'
 
 export type FieldType =
     | 'select'
@@ -101,9 +102,9 @@ export class FormFactory {
 
     static clear(form: HTMLFormElement) {
         form.reset()
-        form.querySelectorAll('select').forEach(select => {
-            (select as HTMLSelectElement & { tomselect?: TomSelect }).tomselect?.sync()
-        })
+        // form.querySelectorAll('select').forEach(select => {
+        //     (select as HTMLSelectElement & { tomselect?: TomSelect }).tomselect?.sync()
+        // })
     }
 
     static createField(field: FieldConfig): HTMLElement {
@@ -186,14 +187,15 @@ export class FormFactory {
         const select = this.buildSelect(field)
 
         requestAnimationFrame(() => {
-            const tomSelectSettings = {
-                plugins: {
-                    clear_button: {
-                        title: 'Remove all selected options',
-                    },
-                },
-            }
-            new TomSelect(select, tomSelectSettings)
+            // const tomSelectSettings = {
+            //     plugins: {
+            //         clear_button: {
+            //             title: 'Remove all selected options',
+            //         },
+            //     },
+            // }
+            // new TomSelect(select, tomSelectSettings)
+            new PivotickPicker(select, {})
         })
         return select
     }
@@ -203,21 +205,22 @@ export class FormFactory {
         select.multiple = true
 
         requestAnimationFrame(() => {
-            const tomSelectSettings = {
-                plugins: {
-                    checkbox_options: {
-                        checkedClassNames: ['pvt-ts-checked'],
-                        uncheckedClassNames: ['pvt-ts-unchecked'],
-                    },
-                    clear_button: {
-                        title: 'Remove all selected options',
-                    },
-                    remove_button: {
-                        title: 'Remove this item',
-                    }
-                },
-            }
-            new TomSelect(select, tomSelectSettings)
+            // const tomSelectSettings = {
+            //     plugins: {
+            //         checkbox_options: {
+            //             checkedClassNames: ['pvt-ts-checked'],
+            //             uncheckedClassNames: ['pvt-ts-unchecked'],
+            //         },
+            //         clear_button: {
+            //             title: 'Remove all selected options',
+            //         },
+            //         remove_button: {
+            //             title: 'Remove this item',
+            //         }
+            //     },
+            // }
+            // new TomSelect(select, tomSelectSettings)
+            new PivotickPicker(select, {})
         })
 
         return select
