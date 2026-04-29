@@ -1,12 +1,12 @@
 import type { ForceLink as d3ForceLinkType } from 'd3-force'
 import { type Simulation as d3Simulation } from 'd3-force'
-import { Simulation } from './Simulation'
-import { Node, type NodeData } from './Node'
-import { Edge, type EdgeData } from './Edge'
-import { TreeLayout } from './plugins/layout/Tree'
-import type { SimulationOptions } from './interfaces/SimulationOptions'
-import type { EdgeFullStyle } from './interfaces/RendererOptions'
-import type { TreeLayoutOptions } from './interfaces/LayoutOptions'
+import { Simulation } from '../Simulation'
+import { Node, type NodeData } from '../Node'
+import { Edge, type EdgeData } from '../Edge'
+import { TreeLayout } from '../plugins/layout/Tree'
+import type { SimulationOptions } from '../interfaces/SimulationOptions'
+import type { EdgeFullStyle } from '../interfaces/RendererOptions'
+import type { TreeLayoutOptions } from '../interfaces/LayoutOptions'
 
 export interface PlainNode<T = NodeData> {
     _circleRadius: number

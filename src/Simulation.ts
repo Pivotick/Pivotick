@@ -503,7 +503,7 @@ export class Simulation {
     }
 
     private async computeGraph(optionOverride: Partial<SimulationOptions> = {}) {
-        const { runSimulation } = await import('./SimulationWorker')
+        const { runSimulation } = await import('./workers/SimulationWorker')
         const canvasBCR = this.canvas?.getBoundingClientRect()
         if (!canvasBCR) return
 

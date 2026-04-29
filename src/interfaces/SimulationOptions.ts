@@ -53,6 +53,13 @@ export interface SimulationOptions {
     enabled: boolean
     /** @default true */
     useWorker: boolean
+    /** 
+     * Manually provide the worker path. Examples:
+     * - '/node_modules/pivotick/dist/workers/simulation.worker.js'
+     * - 'https://cdn.jsdelivr.net/npm/pivotick/dist/workers/simulation.worker.js'
+     * @default null
+     * */
+    workerPath?: string
     /** @private */
     layout: LayoutOptions
     callbacks?: SimulationCallbacks
