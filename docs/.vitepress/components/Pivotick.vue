@@ -49,7 +49,7 @@ let graph = null
 onMounted(() => {
     graph = new Pivotick(container.value, localData.value, localOptions.value)
     props.onMountedCallback?.(container.value)
-    graph.ready.then(() => {
+    graph.on('ready', () => {
         props.onLoadedCallback?.(graph)
     })
 })

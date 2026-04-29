@@ -1,18 +1,11 @@
 import type { Node } from './Node'
 import type { Edge } from './Edge'
 import type { SimulationOptions } from './interfaces/SimulationOptions'
-import { resolveWorkerUrl } from './utils/workerUrl'
-// import SimulationWorker from './SimulationWorker.ts?worker'
-import SimulationWorker from './workers/SimulationWorker.ts?worker'
+import SimulationWorker from './workers/SimulationWorker.ts?worker&inline'
 
 
-export function createSimulationWorker(options: Partial<SimulationOptions> = {}) {
-    if (import.meta.env.DEV) {
-        return new SimulationWorker()
-    }
-
-    const workerUrl = resolveWorkerUrl(options.workerPath)
-    return new Worker(workerUrl, { type: 'module' })
+export function createSimulationWorker() {
+    return new SimulationWorker()
 }
 
 export const runSimulationInWorker = (
@@ -23,7 +16,7 @@ export const runSimulationInWorker = (
     onProgress?: (progress: number, elapsedTime: number) => void
 ): Promise<{ nodes: Node[]; edges: Edge[] }> => {
     return new Promise((resolve, reject) => {
-        const worker = createSimulationWorker(options)
+        const worker = createSimulationWorker()
 
         worker.postMessage({ source: 'simulation-worker-wrapper', nodes, edges, options, canvasBCR })
 

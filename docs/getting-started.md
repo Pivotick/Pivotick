@@ -4,19 +4,14 @@ outline: [2, 4]
 
 # Getting Started
 
-## Installation
-
-```bash
-npm install pivotick  # (Coming soon)
-```
-
 ## Basic Usage
+Pivotick can be used either as a modern JavaScript module or directly in the browser via a script tag.
 
 ::: code-group
 
-<<< @/examples/getting-started/simple-module.js[As a module]
+<<< @/examples/getting-started/simple-module.js[As a module (ESM)]
 
-<<< @/examples/getting-started/simple-bundle.js[As a bundle]
+<<< @/examples/getting-started/simple-bundle.html[As a bundle]
 
 :::
 
@@ -28,14 +23,16 @@ You can customize the look in two ways:
 - Use Pivotick's [built-in classes](/ui-styling#classes).
 - Override styles using [CSS variables](/ui-styling#css-vars).
 
-```html
-<style>
-  :root {
-    --pvt-node-color: #FDDA24;
-    --pvt-node-stroke: #000000;
-    --pvt-edge-stroke: #EF3340;
-  }
-</style>
+```css
+:root {
+  --pvt-node-color: #FDDA24;
+  --pvt-node-stroke: #000000;
+  --pvt-edge-stroke: #EF3340;
+}
+
+.pvt-node circle {
+  fill: cyan;
+}
 ```
 
 <Pivotick
@@ -55,9 +52,3 @@ You can customize the look in two ways:
     '--pvt-edge-stroke': '#EF3340',
   }"
 ></Pivotick>
-
-
-## API
-- Add node
-- Add edge
-- 
