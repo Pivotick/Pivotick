@@ -76,6 +76,7 @@ export class FormFactory {
                     values[key] = Array.from(
                         select.selectedOptions
                     ).map(o => o.value)
+                    .filter(v => v.length > 0) // Filter out  empty placeholders
                     if (select.dataset.fieldValuesAreBoolean === 'yes') {
                         values[key].map(v => v !== undefined && v === 'true' ? true : v)
                     }
@@ -97,6 +98,7 @@ export class FormFactory {
             }
         })
 
+        console.log(values)
         return values
     }
 

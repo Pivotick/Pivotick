@@ -12,17 +12,66 @@
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        min-height: 2.5rem;
         cursor: text;
     }
 
     &__input {
-        border: none;
-        outline: none;
         flex: 1;
         min-width: 80px;
+        border: none;
+        outline: none;
         background: transparent;
         color: var(--pvt-text-color-6);
+        font-size: 0.9rem;
+        padding: 0.5rem 0.75rem;
+    }
+
+    &__input:disabled {
+        cursor: default;
+        opacity: 0.7;
+    }
+
+    &__input-wrap {
+        flex: 1;
+        position: relative;
+        display: flex;
+        align-items: center;
+        min-width: 80px;
+        border-radius: 0.35rem;
+        cursor: text;
+
+        &:focus-within {
+            border-color: var(--pvt-text-color-6, #888);
+            box-shadow: 0 0 0 2px var(--pvt-bg-color-7, rgba(0,0,0,0.1));
+        }
+    }
+
+    &__single-close {
+        position: absolute;
+        right: 0.35rem;
+        width: 1.4rem;
+        height: 1.4rem;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: none;
+        border: none;
+        color: var(--pvt-text-color-4, #999);
+        cursor: pointer;
+        font-size: 0.95rem;
+        line-height: 1;
+        transition: opacity 0.15s ease;
+
+        &:hover {
+            opacity: 1;
+        }
+    }
+
+    &__placeholder {
+        color: var(--pvt-text-color-6);
+        opacity: 0.7;
+        user-select: none;
     }
 
     // ========================
@@ -32,60 +81,77 @@
         display: flex;
         flex-wrap: wrap;
         gap: 0.25rem;
+        flex: 1;
+        min-width: 80px;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--pvt-menu-border-color, #ccc);
+        border-radius: 0.35rem;
+        background: var(--pvt-bg, #fff);
+        cursor: text;
     }
 
     &__chip {
         display: flex;
         align-items: center;
-        gap: 0.35rem;
+        gap: 0.3rem;
 
-        background: var(--pvt-bg-color-7);
-        color: var(--pvt-text-color-4);
-
-        border: 1px solid var(--pvt-menu-border-color);
+        background: var(--pvt-bg-color-8, #e8edf2);
+        border: 1px solid var(--pvt-menu-border-color, #bbb);
         border-radius: 0.35rem;
+        padding: 0.15rem 0;
+        font-size: 0.82rem;
+        user-select: none;
+    }
 
-        padding: 0.2rem 0.5rem;
-        font-size: 0.85rem;
-
-        transition: background 0.15s ease, border-color 0.15s ease;
-
-        &:hover {
-            background: var(--pvt-bg-color-7)-active;
-            color: var(--pvt-text-color-6);
-            border-color: var(--pvt-text-color-6);
-        }
+    &__chip-label {
+        padding: 0.15rem 0.35rem;
+        white-space: nowrap;
     }
 
     &__chip-remove {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.2rem;
+        height: 1.2rem;
+        margin-right: 0.2rem;
         background: transparent;
         border: none;
-        color: inherit;
+        color: var(--pvt-text-color-4, #888);
         cursor: pointer;
         font-size: 1rem;
         line-height: 1;
-
         opacity: 0.7;
         transition: opacity 0.15s ease;
 
         &:hover {
             opacity: 1;
+            color: var(--pvt-text-color-6, #555);
         }
     }
 
     // ========================
-    // Clear button
+    // Clear button (multi-select)
     // ========================
     &__clear {
-        margin-left: auto;
+        position: absolute;
+        right: 0;
+        width: 1.6rem;
+        height: 1.6rem;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         background: none;
         border: none;
-        color: var(--pvt-text-color-4);
+        color: var(--pvt-text-color-4, #999);
         cursor: pointer;
-        font-size: 0.8rem;
+        font-size: 0.95rem;
+        line-height: 1;
+        transition: opacity 0.15s ease;
 
         &:hover {
-            color: var(--pvt-text-color-6);
+            opacity: 1;
         }
     }
 
@@ -98,10 +164,9 @@
         left: 0;
         right: 0;
 
-        background: var(--pvt-ui-bg);
-        border: 1px solid var(--pvt-menu-border-color);
-
-        box-shadow: var(--pvt-box-shadow-medium);
+        background: var(--pvt-ui-bg, #fff);
+        border: 1px solid var(--pvt-menu-border-color, #ccc);
+        box-shadow: var(--pvt-box-shadow-medium, 0 4px 12px rgba(0,0,0,0.1));
         max-height: 250px;
         overflow-y: auto;
 
@@ -114,32 +179,67 @@
     }
 
     // ========================
+    // Search box (multi-select dropdown)
+    // ========================
+    &__search {
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid var(--pvt-bg-color-7, #eee);
+    }
+
+    &__search-input {
+        width: 100%;
+        border: none;
+        outline: none;
+        background: transparent;
+        font-size: 0.9rem;
+        color: var(--pvt-text-color-6);
+
+        &::placeholder {
+            color: var(--pvt-text-color-6);
+            opacity: 0.7;
+        }
+    }
+
+    // ========================
     // Options
     // ========================
     &__option {
         padding: 0.5rem 0.75rem;
         cursor: pointer;
-
-        color: var(--pvt-text-color-primary);
+        color: var(--pvt-text-color-primary, #333);
         background: transparent;
-
-        border-bottom: 1px solid var(--pvt-bg-color-7);
-
+        border-bottom: 1px solid var(--pvt-bg-color-7, #eee);
         transition: background 0.15s ease, color 0.15s ease;
+        font-size: 0.9rem;
 
         &:hover {
-            background: var(--pvt-bg-color-5);
+            background: var(--pvt-bg-color-5, #f5f5f5);
         }
 
         &.selected {
-            background: var(--pvt-bg-color-7)-active;
-            color: var(--pvt-text-color-6);
+            background: var(--pvt-bg-color-7, #e8edf2);
+            color: var(--pvt-text-color-6, #555);
+            font-weight: 500;
+        }
+
+        &.selected::after {
+            content: ' \2713';
+            float: right;
+            font-weight: 600;
         }
 
         &.disabled {
-            background: var(--pvt-bg-color-7);
+            background: var(--pvt-bg-color-7, #eee);
             cursor: not-allowed;
             opacity: 0.6;
         }
+    }
+
+    // no options message
+    .pvt-picker__list:empty::after {
+        content: 'No options available';
+        color: var(--pvt-text-color-4, #999);
+        padding: 0.75rem;
+        text-align: center;
     }
 }
