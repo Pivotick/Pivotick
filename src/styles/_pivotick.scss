@@ -172,7 +172,7 @@ dl.pvt-property-list {
 
         input {
             @include input.input-primary;
-            width: unset;
+            box-sizing: border-box;
             background: var(--pvt-bg-color-7);
             color: var(--pvt-text-color-4);
             border-color: var(--pvt-menu-border-color);

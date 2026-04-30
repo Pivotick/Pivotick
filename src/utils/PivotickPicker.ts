@@ -115,7 +115,7 @@ export class PivotickPicker {
             this.searchWrap.className = 'pvt-picker__search'
             this.searchInput = document.createElement('input')
             this.searchInput.className = 'pvt-picker__search-input'
-            this.searchInput.placeholder = this.select.getAttribute('placeholder') || 'Select...'
+            this.searchInput.placeholder = this.select.getAttribute('placeholder') || 'Search...'
             this.searchWrap.appendChild(this.searchInput)
             this.dropdown.insertBefore(this.searchWrap, this.listContainer)
         }
@@ -212,6 +212,13 @@ export class PivotickPicker {
                 filter ? o.label.toLowerCase().includes(filter.toLowerCase()) : true
             )
             : this.options
+
+        if (filtered.length === 0) {
+            const msg = document.createElement('div')
+            msg.className = 'pvt-picker__no-options'
+            msg.textContent = 'No options available'
+            this.listContainer.appendChild(msg)
+        }
 
         filtered.forEach((opt) => {
             const item = document.createElement('div')

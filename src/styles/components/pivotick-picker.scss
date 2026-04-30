@@ -164,9 +164,9 @@
         left: 0;
         right: 0;
 
-        background: var(--pvt-ui-bg, #fff);
-        border: 1px solid var(--pvt-menu-border-color, #ccc);
-        box-shadow: var(--pvt-box-shadow-medium, 0 4px 12px rgba(0,0,0,0.1));
+        background: var(--pvt-bg-color-7);
+        border: 1px solid var(--pvt-menu-border-color);
+        box-shadow: var(--pvt-sidebar-layout-shadow-bottom);
         max-height: 250px;
         overflow-y: auto;
 
@@ -182,22 +182,33 @@
     // Search box (multi-select dropdown)
     // ========================
     &__search {
-        padding: 0.5rem 0.75rem;
-        border-bottom: 1px solid var(--pvt-bg-color-7, #eee);
+        padding: 1px;
     }
 
-    &__search-input {
+    &__search-input,
+    .pvt-form .pvt-form-element &__search-input {
         width: 100%;
-        border: none;
-        outline: none;
-        background: transparent;
         font-size: 0.9rem;
         color: var(--pvt-text-color-6);
+        box-sizing: border-box;
+        border-radius: 0;
+        border-color: var(--pvt-menu-border-color);
+        background: var(--pvt-bg-color-6);
 
         &::placeholder {
             color: var(--pvt-text-color-6);
             opacity: 0.7;
         }
+    }
+
+    // ========================
+    // No options message
+    // ========================
+    &__no-options {
+        padding: 0.75rem;
+        text-align: center;
+        color: var(--pvt-text-color-4, #999);
+        font-size: 0.9rem;
     }
 
     // ========================
@@ -209,7 +220,6 @@
         color: var(--pvt-text-color-primary, #333);
         background: transparent;
         border-bottom: 1px solid var(--pvt-bg-color-7, #eee);
-        transition: background 0.15s ease, color 0.15s ease;
         font-size: 0.9rem;
 
         &:hover {
@@ -233,13 +243,5 @@
             cursor: not-allowed;
             opacity: 0.6;
         }
-    }
-
-    // no options message
-    .pvt-picker__list:empty::after {
-        content: 'No options available';
-        color: var(--pvt-text-color-4, #999);
-        padding: 0.75rem;
-        text-align: center;
     }
 }
