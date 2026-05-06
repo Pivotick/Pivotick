@@ -29,6 +29,7 @@ export class PivotickPicker {
     private inputWrap!: HTMLDivElement
     private searchWrap!: HTMLDivElement
     private searchInput!: HTMLInputElement
+    private focusedIndex = -1
 
     constructor(select: HTMLSelectElement, options: PickerOptions = {}) {
         this.select = select
@@ -72,6 +73,7 @@ export class PivotickPicker {
         this.clearButton.textContent = '×'
         this.clearButton.tabIndex = -1
         this.clearButton.style.display = 'none'
+        this.clearButton.type = 'button'
 
         // input wrapper (for positioning close button)
         this.inputWrap = document.createElement('div')
@@ -134,6 +136,7 @@ export class PivotickPicker {
         control?.addEventListener('click', (e) => {
             if (this.mode === 'single') {
                 this.dropdown.classList.toggle('open')
+                this.focusedIndex = -1
                 if (this.dropdown.classList.contains('open')) {
                     // Preserve current selection display
                     if (this.selected.size === 0) {
@@ -142,6 +145,11 @@ export class PivotickPicker {
                         this.input.value = ''
                     }
                     this.renderList()
+                    // Auto-focus first option for keyboard nav
+                    if (this.focusedIndex === -1) {
+                        this.focusedIndex = 0
+                        this.updateFocusedOption()
+                    }
                 }
                 return
             }
@@ -149,15 +157,26 @@ export class PivotickPicker {
             if ((e.target as HTMLElement).tagName !== 'BUTTON' &&
                 !(e.target as HTMLElement).classList.contains('pvt-picker__chip-remove')) {
                 this.dropdown.classList.toggle('open')
+                this.focusedIndex = -1
                 if (this.dropdown.classList.contains('open')) {
                     this.searchInput.focus()
+                    // Auto-focus first option for keyboard nav
+                    if (this.focusedIndex === -1) {
+                        this.focusedIndex = 0
+                        this.updateFocusedOption()
+                    }
                 }
             }
         })
 
-        // search input events (multi-select only)
+        // keyboard events for both single and multi select
+        const onKeyDown = (e: KeyboardEvent) => this.handleKeyDown(e)
+
+        this.input.addEventListener('keydown', onKeyDown)
+
         if (this.searchInput) {
             this.searchInput.addEventListener('input', () => {
+                this.focusedIndex = -1
                 this.renderList(this.searchInput.value)
             })
 
@@ -165,10 +184,12 @@ export class PivotickPicker {
                 e.stopPropagation()
                 this.dropdown.classList.add('open')
             })
+
+            this.searchInput.addEventListener('keydown', (e) => e.stopPropagation())
         }
 
         // close on outside click
-        document.addEventListener('click', (e) => {
+        document.addEventListener('pointerdown', (e) => {
             if (!this.root.contains(e.target as Node)) {
                 this.dropdown.classList.remove('open')
             }
@@ -220,11 +241,12 @@ export class PivotickPicker {
             this.listContainer.appendChild(msg)
         }
 
-        filtered.forEach((opt) => {
+        filtered.forEach((opt, idx) => {
             const item = document.createElement('div')
             item.className = 'pvt-picker__option'
             if (opt.disabled) item.classList.add('disabled')
             if (this.selected.has(opt.value)) item.classList.add('selected')
+            if (idx === this.focusedIndex) item.classList.add('focused')
             item.textContent = opt.label
 
             item.addEventListener('click', (e) => {
@@ -236,6 +258,7 @@ export class PivotickPicker {
                     const selectedOpt = this.options.find((o) => o.value === opt.value)
                     this.input.value = selectedOpt ? selectedOpt.label : ''
                     this.input.placeholder = ''
+                    this.focusedIndex = -1
                     this.dropdown.classList.remove('open')
                     this.syncToSelect()
                     this.syncFromSelect()
@@ -247,6 +270,7 @@ export class PivotickPicker {
                         this.selected.add(opt.value)
                     }
                 }
+                this.focusedIndex = idx
                 this.syncToSelect()
                 this.renderList(this.mode === 'multi' ? this.searchInput.value : this.input.value)
                 this.renderChips()
@@ -254,6 +278,79 @@ export class PivotickPicker {
 
             this.listContainer.appendChild(item)
         })
+    }
+
+    private handleKeyDown(e: KeyboardEvent) {
+        if (!this.dropdown.classList.contains('open')) return
+
+        const filtered = this.searchable
+            ? this.options.filter((o) =>
+                this.searchInput?.value
+                    ? o.label.toLowerCase().includes(this.searchInput.value.toLowerCase())
+                    : true
+            )
+            : this.options
+
+        const visibleCount = filtered.length
+
+        switch (e.key) {
+            case 'ArrowDown':
+                e.preventDefault()
+                this.focusedIndex = (this.focusedIndex + 1) % visibleCount
+                this.updateFocusedOption()
+                break
+            case 'ArrowUp':
+                e.preventDefault()
+                this.focusedIndex = this.focusedIndex <= 0 ? visibleCount - 1 : this.focusedIndex - 1
+                this.updateFocusedOption()
+                break
+            case 'Enter':
+                if (this.focusedIndex >= 0 && this.focusedIndex < visibleCount) {
+                    e.preventDefault()
+                    const opt = filtered[this.focusedIndex]
+                    if (!opt.disabled) {
+                        if (this.mode === 'single') {
+                            this.selected.clear()
+                            this.selected.add(opt.value)
+                            const selectedOpt = this.options.find((o) => o.value === opt.value)
+                            this.input.value = selectedOpt ? selectedOpt.label : ''
+                            this.input.placeholder = ''
+                            this.focusedIndex = -1
+                            this.dropdown.classList.remove('open')
+                            this.syncToSelect()
+                            this.syncFromSelect()
+                        } else {
+                            if (this.selected.has(opt.value)) {
+                                this.selected.delete(opt.value)
+                            } else {
+                                this.selected.add(opt.value)
+                            }
+                            this.focusedIndex = -1
+                            this.syncToSelect()
+                            this.renderList(this.searchInput?.value || '')
+                            this.renderChips()
+                        }
+                    }
+                }
+                break
+            case 'Escape':
+                e.preventDefault()
+                this.dropdown.classList.remove('open')
+                break
+        }
+    }
+
+    private updateFocusedOption() {
+        const items = this.listContainer.querySelectorAll('.pvt-picker__option')
+        items.forEach((el, idx) => {
+            el.classList.toggle('focused', idx === this.focusedIndex)
+        })
+
+        // Scroll focused item into view
+        if (this.focusedIndex >= 0) {
+            const focusedEl = this.listContainer.children[this.focusedIndex] as HTMLElement
+            focusedEl?.scrollIntoView({ block: 'nearest' })
+        }
     }
 
     private renderChips() {
