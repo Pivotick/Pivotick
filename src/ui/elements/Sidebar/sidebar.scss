@@ -53,14 +53,14 @@
 
                 &.pvt-neighbors-body-panel {
                     position: relative;
+                    display: flex;
+                    flex-direction: column;
                     width: 100%;
                     height: var(--pvt-sidebar-width);
                     box-sizing: border-box;
 
                     .pvt-neighbors-count {
-                        position: absolute;
-                        right: 10px;
-                        bottom: 5px;
+                        padding: 4px 10px;
                         font-size: 14px;
                         font-weight: 300;
                         color: var(--pvt-text-color-5);
@@ -82,6 +82,12 @@
                         }
 
                         div[data-tab-panel="list"] {
+                            height: 100%;
+
+                            .main-list-container {
+                                height: 100%;
+                                overflow-y: auto;
+                            }
 
                             .edge-details {
                                 margin-bottom: 4px;

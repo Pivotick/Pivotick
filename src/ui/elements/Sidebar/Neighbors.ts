@@ -86,9 +86,7 @@ export class SidebarNeighbors implements UIElement {
             this.header
         )
 
-        tabContainer.style.height = '100%'
-
-        this.body.appendChild(this.neighborCount)
+        this.body.insertBefore(this.neighborCount, this.body.firstChild)
     }
 
     public destroy() {
