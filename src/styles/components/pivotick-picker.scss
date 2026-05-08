@@ -175,14 +175,12 @@
         opacity: 0;
         transform: translateY(-6px);
         pointer-events: none;
-        transition: opacity 0.1s ease, transform 0.1s ease;
-        transition-delay: 0.1s;
 
         &.open {
             opacity: 1;
             transform: translateY(0);
             pointer-events: auto;
-            transition-delay: 0s;
+            transition: opacity 0.1s ease, transform 0.1s ease;
         }
     }
 
