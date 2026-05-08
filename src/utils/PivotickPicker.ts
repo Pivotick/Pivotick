@@ -172,11 +172,8 @@ export class PivotickPicker {
         // keyboard events for both single and multi select
         const onKeyDown = (e: KeyboardEvent) => this.handleKeyDown(e)
 
-        this.input.addEventListener('keydown', onKeyDown)
-
         if (this.searchInput) {
             this.searchInput.addEventListener('input', () => {
-                this.focusedIndex = -1
                 this.renderList(this.searchInput.value)
             })
 
@@ -185,7 +182,10 @@ export class PivotickPicker {
                 this.dropdown.classList.add('open')
             })
 
-            this.searchInput.addEventListener('keydown', (e) => e.stopPropagation())
+            this.searchInput.addEventListener('keydown', onKeyDown)
+        } else {
+            // Single-select: keyboard nav on the main input
+            this.input.addEventListener('keydown', onKeyDown)
         }
 
         // close on outside click
@@ -345,6 +345,12 @@ export class PivotickPicker {
         items.forEach((el, idx) => {
             el.classList.toggle('focused', idx === this.focusedIndex)
         })
+
+        // Clamp to visible range
+        if (this.focusedIndex >= items.length) {
+            this.focusedIndex = -1
+            return
+        }
 
         // Scroll focused item into view
         if (this.focusedIndex >= 0) {

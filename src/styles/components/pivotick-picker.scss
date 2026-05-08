@@ -236,7 +236,7 @@
 
         &.focused {
             background: var(--pvt-bg-color-5, #f0f0f0);
-            outline: 1px solid var(--pvt-text-color-6, #888);
+            // outline: 1px solid var(--pvt-text-color-6, #888);
         }
 
         &.selected {
