@@ -9,6 +9,13 @@ import type { UIElement } from '../ui/UIManager'
  */
 export interface GraphUI {
     mode: GraphUIMode,
+    /**
+     * The classname of the theme to force the UI to ignore user's prefered color scheme.
+     * Available by default: `light` and `dark`.
+     * Keep it `undefined` to use user's prefered color scheme.
+     * @default undefined
+     */
+    theme?: string,
     sidebar: SidebarOptions,
     mainHeader: MainHeader,
     propertiesPanel: PropertiesPanel,
