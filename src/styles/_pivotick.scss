@@ -9,6 +9,10 @@
 }
 
 .pvt-canvas {
+    min-height: 300px;
+    display: block;
+    aspect-ratio: 16 / 10;
+
     background-color: var(--pvt-bg);
     background-image: var(--pvt-graph-background-image);
 }
