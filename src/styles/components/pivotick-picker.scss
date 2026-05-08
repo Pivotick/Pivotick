@@ -239,6 +239,11 @@
             // outline: 1px solid var(--pvt-text-color-6, #888);
         }
 
+        &.focused-selected {
+            font-weight: 600;
+            color: var(--pvt-text-color-6, #444);
+        }
+
         &.selected {
             background: var(--pvt-bg-color-7, #e8edf2);
             color: var(--pvt-text-color-6, #555);

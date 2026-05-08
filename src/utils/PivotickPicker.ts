@@ -174,6 +174,7 @@ export class PivotickPicker {
 
         if (this.searchInput) {
             this.searchInput.addEventListener('input', () => {
+                this.focusedIndex = -1
                 this.renderList(this.searchInput.value)
             })
 
@@ -186,6 +187,19 @@ export class PivotickPicker {
         } else {
             // Single-select: keyboard nav on the main input
             this.input.addEventListener('keydown', onKeyDown)
+            this.input.addEventListener('input', () => {
+                this.focusedIndex = -1
+                this.renderList(this.input.value)
+            })
+            this.input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && this.input.value && this.selected.size === 1) {
+                    e.preventDefault()
+                    this.selected.clear()
+                    this.input.value = ''
+                    this.syncToSelect()
+                    this.syncFromSelect()
+                }
+            })
         }
 
         // close on outside click
@@ -246,7 +260,10 @@ export class PivotickPicker {
             item.className = 'pvt-picker__option'
             if (opt.disabled) item.classList.add('disabled')
             if (this.selected.has(opt.value)) item.classList.add('selected')
-            if (idx === this.focusedIndex) item.classList.add('focused')
+            if (idx === this.focusedIndex) {
+                item.classList.add('focused')
+                if (this.selected.has(opt.value)) item.classList.add('focused-selected')
+            }
             item.textContent = opt.label
 
             item.addEventListener('click', (e) => {
@@ -296,19 +313,51 @@ export class PivotickPicker {
         switch (e.key) {
             case 'ArrowDown':
                 e.preventDefault()
-                this.focusedIndex = (this.focusedIndex + 1) % visibleCount
-                this.updateFocusedOption()
+                if (this.mode === 'multi') {
+                    for (let i = 0; i < visibleCount; i++) {
+                        const next = (this.focusedIndex + 1 + i) % visibleCount
+                        if (!this.selected.has(filtered[next].value)) {
+                            this.focusedIndex = next
+                            this.updateFocusedOption()
+                            break
+                        }
+                    }
+                } else {
+                    this.focusedIndex = (this.focusedIndex + 1) % visibleCount
+                    this.updateFocusedOption()
+                }
                 break
             case 'ArrowUp':
                 e.preventDefault()
-                this.focusedIndex = this.focusedIndex <= 0 ? visibleCount - 1 : this.focusedIndex - 1
-                this.updateFocusedOption()
+                if (this.mode === 'multi') {
+                    for (let i = 0; i < visibleCount; i++) {
+                        const next = this.focusedIndex - 1 - i < 0
+                            ? visibleCount + this.focusedIndex - 1 - i
+                            : this.focusedIndex - 1 - i
+                        if (!this.selected.has(filtered[next].value)) {
+                            this.focusedIndex = next
+                            this.updateFocusedOption()
+                            break
+                        }
+                    }
+                } else {
+                    this.focusedIndex = this.focusedIndex <= 0 ? visibleCount - 1 : this.focusedIndex - 1
+                    this.updateFocusedOption()
+                }
                 break
             case 'Enter':
                 if (this.focusedIndex >= 0 && this.focusedIndex < visibleCount) {
                     e.preventDefault()
                     const opt = filtered[this.focusedIndex]
                     if (!opt.disabled) {
+                        // Prevent re-selecting same option in multi-select mode
+                        if (this.mode === 'multi' && this.selected.has(opt.value)) return
+                        // In single-select, if already selected just close
+                        if (this.mode === 'single' && this.selected.has(opt.value)) {
+                            this.focusedIndex = -1
+                            this.dropdown.classList.remove('open')
+                            return
+                        }
                         if (this.mode === 'single') {
                             this.selected.clear()
                             this.selected.add(opt.value)
@@ -343,7 +392,9 @@ export class PivotickPicker {
     private updateFocusedOption() {
         const items = this.listContainer.querySelectorAll('.pvt-picker__option')
         items.forEach((el, idx) => {
-            el.classList.toggle('focused', idx === this.focusedIndex)
+            const isFocused = idx === this.focusedIndex
+            el.classList.toggle('focused', isFocused)
+            el.classList.toggle('focused-selected', isFocused && el.classList.contains('selected'))
         })
 
         // Clamp to visible range
