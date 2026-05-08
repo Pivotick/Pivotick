@@ -10,13 +10,14 @@ export default defineConfig({
             entry,
             name: 'Pivotick',
             formats: ['umd', 'iife'],
-            fileName: (format) => `pivotick.${format}.js`
+            fileName: (format) => `pivotick.${format}.js`,
         },
         rollupOptions: {
             external: [], // bundle everything
             output: {
                 ...base.build.rollupOptions.output,
                 globals: {},
+                footer: 'if(typeof window!="undefined"){var C=window.Pivotick;window.Pivotick=C.Pivotick;window.Pivotick.Node=C.Node;window.Pivotick.Edge=C.Edge;window.Pivotick.ColorPaletteMapper=C.ColorPaletteMapper}'
             }
         }
     }
