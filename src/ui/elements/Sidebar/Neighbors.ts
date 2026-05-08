@@ -377,7 +377,7 @@ export class SidebarNeighbors implements UIElement {
                 <span class="pvt-neighbors-list__nodepreview">
                     <svg class="pvt-mainheader-icon" width="${fixedPreviewSize}" height="${fixedPreviewSize}" viewBox="0 0 ${fixedPreviewSize} ${fixedPreviewSize}" preserveAspectRatio="xMidYMid meet"></svg>
                 </span>
-                ${targetNodeName}
+                <span class="pvt-neighbors-list__nodename">${targetNodeName}</span>
             </div>`
 
             const targetNodeDiv = targetNodeTemplate.content.firstElementChild as HTMLDivElement

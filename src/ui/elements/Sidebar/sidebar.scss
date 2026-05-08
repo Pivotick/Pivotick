@@ -108,22 +108,31 @@
                                     flex-direction: row;
                                     align-items: center;
                                     gap: 5px;
-    
+                                    min-width: 0;
+
+                                    .pvt-neighbors-list__nodename {
+                                        overflow: hidden;
+                                        text-overflow: ellipsis;
+                                        white-space: nowrap;
+                                        min-width: 0;
+                                    }
+
                                     .pvt-neighbors-list__nodepreview {
                                         @include pvt.node-preview-container;
                                         width: 30px;
                                         height: 30px;
-                                    
+
                                         .pvt-mainheader-icon {
                                             width: 26px;
                                             height: 26px;
                                         }
                                     }
                                 }
-    
+
                                 .pvt-neighbor-edge-description {
                                     margin-left: auto;
                                     border-radius: 2px;
+                                    white-space: nowrap;
 
                                     &.empty-label {
                                         color: var(--pvt-text-color-3);
