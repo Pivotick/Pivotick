@@ -155,6 +155,7 @@ $light-theme: (
     pvt-node-selected-stroke-opacity: 0,
     pvt-node-selected-filter: drop-shadow(0 0 2px var(--pvt-node-selected-color)),
     pvt-node-selected-animation: glowPulseSelected 1.5s infinite,
+    pvt-node-selected-big-animation: glowPulseBigSelected 1.5s infinite,
 
     /* Node highlighted state */
     pvt-node-highlighted-stroke: map.get($light-vibrant-color-palette, vibrant-blue),

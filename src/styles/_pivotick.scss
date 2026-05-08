@@ -207,6 +207,10 @@ dl.pvt-property-list {
     & > .pvt-cluster-area {
         stroke: var(--pvt-node-selected-stroke);
     }
+
+    &.pvt-node-highlighted {
+        animation: var(--pvt-node-selected-big-animation);
+    }
 }
 
 .pvt-node-selected-highlight-shadow > * {
