@@ -65,6 +65,10 @@ export class GraphInteractions<TElement = unknown> {
     public nodeClick(element: TElement, event: PointerEvent, node: Node): void {
         if (event.shiftKey) {
             this.addNodesToSelection([{node: node, element: element}])
+        } else if (event.altKey) {
+            this.selectNodes([{ node: node, element: element }])
+        } else if (event.ctrlKey) {
+            this.removeNodesFromSelection([{ node: node, element: element }])
         } else {
             if (this.getSelectedNode()?.node !== node) {
                 const clickedElement = element as HTMLElement
