@@ -24,7 +24,6 @@ import type { SimulationCallbacks, SimulationForces, SimulationOptions } from '.
 import type { LayoutType, TreeLayoutOptions } from './interfaces/LayoutOptions'
 import type { GraphInteractions } from './GraphInteractions'
 import { ForceClusterRadial } from './plugins/d3Forces/ForceClusterRadial'
-import { ForceCenter } from './plugins/d3Forces/ForceCenter'
 
 
 export const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
@@ -40,8 +39,7 @@ export const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
     d3CollideRadius: 12,
     d3CollideStrength: 1,
     d3CollideIterations: 1,
-    d3CenterStrength: 1,
-    d3GravityStrength: 0.01,
+    d3GravityStrength: 0.1,
 
     enabled: true,
     cooldownTime: 2000,
@@ -143,16 +141,13 @@ export class Simulation {
         simulationForces: {
             link: d3ForceLinkType<Node, Edge>,
             charge: d3ForceManyBodyType<Node>,
-            center: ForceCenter<Node>,
             collide: d3ForceCollideType<Node>,
             gravity: ForceGravity<Node>,
-            // clusterRadialConstraint: ForceClusterRadial<Node>,
         }
     } {
         const simulationForces = {
             link: d3ForceLink() as d3ForceLinkType<Node, Edge>,
             charge: d3ForceManyBody(),
-            center: ForceCenter<Node>(),
             collide: d3ForceCollide(),
             gravity: ForceGravity(),
             // clusterRadialConstraint: ForceClusterRadial(),
@@ -161,12 +156,11 @@ export class Simulation {
         const simulation = d3ForceSimulation<Node>()
             .force('link', simulationForces.link)
             .force('charge', simulationForces.charge)
-            .force('center', simulationForces.center)
             .force('collide', simulationForces.collide)
             .force('gravity', simulationForces.gravity)
             // .force('clusterRadialConstraint', simulationForces.clusterRadialConstraint)
 
-        this.initSimulationForceCenter(simulationForces.center, options)
+        // this.initSimulationForceCenter(simulationForces.center, options)
         this.initSimulationForceGravity(simulationForces.gravity, options, canvasBCR)
         this.initSimulationForceLink(simulationForces.link, options)
         this.initSimulationForceCharge(simulationForces.charge, options)
@@ -184,22 +178,13 @@ export class Simulation {
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    private static initSimulationForceCenter(force: ForceCenter<Node>, _options: SimulationOptions) {
-        force.x(0)
-            .y(0)
-            .strength(0.05)
-            .filter(node => !node.isChild)
-    }
-
     private static initSimulationForceGravity(force: ForceGravity<Node>, options: SimulationOptions, canvasBCR: DOMRect) {
         force.x(canvasBCR.width / 2)
             .y(canvasBCR.height / 2)
             .strength((node) => {
-                const n = node as Node
-                // if (n.isChild) return 0
-                const degree = n.degree() ?? 0
-                return degree === 0 ? options.d3GravityStrength : 0
+                const degree = (node as Node).degree() ?? 0
+                // Connected nodes get negligible gravity so link forces + charge repulsion find equilibrium; isolated nodes get full pull to counter charge repulsion
+                return degree === 0 ? options.d3GravityStrength : 0.001
             })
     }
 

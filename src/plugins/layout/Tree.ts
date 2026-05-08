@@ -37,7 +37,6 @@ export interface TreeNode extends Node {
 interface ForceStrengthArray {
     link: number | ((edge: Edge, i: number, edges: Edge[]) => number)
     charge: number | ((node: Node, i: number, nodes: Node[]) => number)
-    center: number
     gravity: number
 }
 
@@ -66,7 +65,6 @@ export class TreeLayout {
         this.originalForceStrength = {
             link: this.simulationForces.link.strength(),
             charge: this.simulationForces.charge.strength(),
-            center: this.simulationForces.center.strength(),
             gravity: this.simulationForces.gravity.strength(),
         }
 
@@ -256,13 +254,11 @@ export class TreeLayout {
         if (options?.radial) {
             simulationForces.link.strength(0)
             simulationForces.charge.strength(0)
-            simulationForces.center.strength(0)
             simulationForces.gravity.strength(0)
         } else {
             simulationForces.link.strength(0)
             simulationForces.charge.strength(0)
             simulationForces.gravity.strength(0.00001)
-            simulationForces.center.strength(0.00001)
         }
     }
     
