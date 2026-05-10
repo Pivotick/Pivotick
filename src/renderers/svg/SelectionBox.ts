@@ -13,6 +13,7 @@ export class SelectionBox extends AbstractSelectionBox {
     private startY = 0
     private isSelecting = false
     private selectionMode: SelectionMode = 'start'
+    private suppressNextClick = false
 
     constructor(renderer: GraphSvgRenderer, svg: SVGSVGElement, selectionBoxGroup: SVGGElement | null) {
         super()
@@ -31,6 +32,7 @@ export class SelectionBox extends AbstractSelectionBox {
         this.svg.addEventListener('mousedown', this.onMouseDown)
         this.svg.addEventListener('mousemove', this.onMouseMove)
         this.svg.addEventListener('mouseup', this.onMouseUp)
+        this.svg.addEventListener('click', this.onSvgClick, true)
     }
 
     private onSvgMouseLeave = () => {
@@ -108,7 +110,17 @@ export class SelectionBox extends AbstractSelectionBox {
 
         this.selectionBoxGroup.removeChild(this.rect)
         this.rect = null
+        this.suppressNextClick = true
         this.svg.removeEventListener('mouseleave', this.onSvgMouseLeave)
+    }
+
+    private onSvgClick = (e: MouseEvent) => {
+        // Prevent click events fired immediately after selection box is used
+        // This would cause unwanted deselection of nodes
+        if (!this.suppressNextClick) return
+        e.preventDefault()
+        e.stopPropagation()
+        this.suppressNextClick = false
     }
 
     private getSvgPoint(evt: MouseEvent) {
