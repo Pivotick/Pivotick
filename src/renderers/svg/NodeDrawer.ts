@@ -1,6 +1,7 @@
 import { select as d3Select, type Selection } from 'd3-selection'
 import { transition as d3Transition } from 'd3-transition'
 import { Node } from '../../Node'
+import { Edge } from '../../Edge'
 import type { Graph } from '../../Graph'
 import { GraphSvgRenderer, defaultLabelStyle } from './GraphSvgRenderer'
 import { faGlyph, tryResolveNumber, tryResolveString } from '../../utils/Getters'
@@ -348,72 +349,50 @@ export class NodeDrawer {
     }
 
     public checkForHighlight(nodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
-        if (this.isNodeSelected(node)) {
-            this.highlightSelection(nodeSelection, node)
+        // This method is called on every node
+        // Each node can take care of its own state, otherwise each node gets set multiple times
+        // Each node takes care only of edges out, to avoid setting twice the same edge (for from and to nodes)
+        const nodeSelected = this.isNodeSelected(node)
+        const nodeAdjacentToSelection = this.isNodeAdjacentToSelection(node)
+        const applyShadow = this.getSelectedNodeIDs().length !== 0
+        
+        // Manage node
+        node.getGraphElement()?.classList.toggle('pvt-node-selected-highlight', nodeSelected)
+        if (this.rendererOptions.enableFocusMode && applyShadow) {
+            node.getGraphElement()?.classList.toggle('pvt-node-selected-highlight-shadow', !nodeSelected && !nodeAdjacentToSelection)
         } else {
-            this.deHighlightSelection(nodeSelection, node)
+            node.getGraphElement()?.classList.toggle('pvt-node-selected-highlight-shadow', false)
         }
+
+        // Manage edges out
+        node.getEdgesOut().forEach((edge) => {
+            const edgeAdjacentToSelection = this.isEdgeAdjacentToSelection(edge)
+            if (this.rendererOptions.enableFocusMode && applyShadow) {
+                edge.getGraphElement()?.classList.toggle('pvt-edge-selected-highlight-shadow', !edgeAdjacentToSelection)
+            } else {
+                edge.getGraphElement()?.classList.toggle('pvt-edge-selected-highlight-shadow', false)
+            }
+        })
+
+    }
+
+    private getSelectedNodeIDs(): string[] {
+        const gi = this.graphSvgRenderer.getGraphInteraction()
+        const selectedIds = gi.getSelectedNodeIDs()
+        return Array.isArray(selectedIds) ? selectedIds : []
     }
 
     private isNodeSelected(node: Node): boolean {
-        const gi = this.graphSvgRenderer.getGraphInteraction()
-        const selected = gi.getSelectedNode()
-        const selectedIds = gi.getSelectedNodeIDs()
-
-        const matchSingle = selected?.node?.id === node.id
-        const matchMultiple = Array.isArray(selectedIds) ? selectedIds.includes(node.id) : false
-        
-
-        return matchSingle || matchMultiple
+        return this.getSelectedNodeIDs().includes(node.id)
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    private deHighlightSelection(nodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
-        nodeSelection.classed('pvt-node-selected-highlight', false)
-        if (this.rendererOptions.enableFocusMode) {
-            this.graph.getMutableNodes().forEach((node) => {
-                const nodeElem = node.getGraphElement()
-                nodeElem?.classList.toggle('pvt-node-selected-highlight-shadow', false)
-            })
-            this.graph.getMutableEdges().forEach((edge) => {
-                const edgeElem = edge.getGraphElement()
-                edgeElem?.classList.toggle('pvt-edge-selected-highlight-shadow', false)
-            })
-        }
+    private isNodeAdjacentToSelection(node: Node): boolean {
+        return node.getEdgesOut().some((edge) => this.isNodeSelected(edge.to))
+            || node.getEdgesIn().some((edge) => this.isNodeSelected(edge.from))
     }
 
-     
-    private highlightSelection(nodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
-        if (this.rendererOptions.enableFocusMode) {
-            this.graph.getMutableNodes().forEach((node) => {
-                const nodeElem = node.getGraphElement()
-                nodeElem?.classList.toggle('pvt-node-selected-highlight-shadow', true)
-            })
-            this.graph.getMutableEdges().forEach((edge) => {
-                const edgeElem = edge.getGraphElement()
-                edgeElem?.classList.toggle('pvt-edge-selected-highlight-shadow', true)
-            })
-            nodeSelection
-                .classed('pvt-node-selected-highlight-shadow', false)
-        }
-
-        nodeSelection
-            .classed('pvt-node-selected-highlight', true)
-
-        if (this.rendererOptions.enableFocusMode) {
-            node.getEdgesOut().forEach((edge) => {
-                const edgeElem = edge.getGraphElement()
-                edgeElem?.classList.toggle('pvt-edge-selected-highlight-shadow', false)
-                const nodeElem = edge.to.getGraphElement()
-                nodeElem?.classList.toggle('pvt-node-selected-highlight-shadow', false)
-            })
-            node.getEdgesIn().forEach((edge) => {
-                const edgeElem = edge.getGraphElement()
-                edgeElem?.classList.toggle('pvt-edge-selected-highlight-shadow', false)
-                const nodeElem = edge.from.getGraphElement()
-                nodeElem?.classList.toggle('pvt-node-selected-highlight-shadow', false)
-            })
-        }
+    private isEdgeAdjacentToSelection(edge: Edge): boolean {
+        return this.isNodeSelected(edge.from) || this.isNodeSelected(edge.to)
     }
 
     private computeTextLayout(label: string, nodeSize: number, textVerticalShift: number = 0): [number, string] {
