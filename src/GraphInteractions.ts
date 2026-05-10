@@ -373,6 +373,7 @@ export class GraphInteractions<TElement = unknown> {
                 element: selection[1],
             }
         })
+        this.selectedEdge = this.selectedEdges.length === 1 ? this.selectedEdges[0] : null
         this.emit('selectEdges', this.selectedEdges)
         this.selectedEdges.forEach(({ edge, element }) => {
             if (this.callbacks.onEdgeSelect && typeof this.callbacks.onEdgeSelect === 'function') {
@@ -426,6 +427,7 @@ export class GraphInteractions<TElement = unknown> {
             // edge.markDirty()
         })
         this.selectedEdges = []
+        this.selectedEdge = null
     }
 
     public hasActiveMultiselection(): boolean {
