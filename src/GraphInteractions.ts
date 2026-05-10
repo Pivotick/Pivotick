@@ -65,6 +65,8 @@ export class GraphInteractions<TElement = unknown> {
     public nodeClick(element: TElement, event: PointerEvent, node: Node): void {
         if (event.shiftKey) {
             this.addNodesToSelection([{node: node, element: element}])
+        } else if (event.ctrlKey ) {
+            this.removeNodesFromSelection([{node: node, element: element}])
         } else {
             if (this.getSelectedNode()?.node !== node) {
                 const clickedElement = element as HTMLElement
@@ -305,6 +307,7 @@ export class GraphInteractions<TElement = unknown> {
         }
         this.unselectAll()
         this.selectedNodes = selection
+        this.selectedNode = this.selectedNodes.length === 1 ? this.selectedNodes[0] : null
         this.emit('selectNodes', this.selectedNodes)
         if (this.callbacks.onNodesSelect && typeof this.callbacks.onNodesSelect === 'function') {
             this.callbacks.onNodesSelect(selection)
@@ -325,6 +328,7 @@ export class GraphInteractions<TElement = unknown> {
         })
 
         this.selectedNodes = this.selectedNodes.concat(addSelection)
+        this.selectedNode = this.selectedNodes.length === 1 ? this.selectedNodes[0] : null
         if (this.callbacks.onNodesSelect && typeof this.callbacks.onNodesSelect === 'function') {
             this.callbacks.onNodesSelect(addSelection)
         }
@@ -337,6 +341,7 @@ export class GraphInteractions<TElement = unknown> {
         this.selectedNodes = this.selectedNodes.filter((selectedNode) => {
             return !newSelectionIDs.includes(selectedNode.node.id)
         })
+        this.selectedNode = this.selectedNodes.length === 1 ? this.selectedNodes[0] : null
         removeSelection.forEach(({ node, element }) => {
             if (this.callbacks.onNodeBlur && typeof this.callbacks.onNodeBlur === 'function') {
                 this.callbacks.onNodeBlur(node, element)
@@ -401,6 +406,7 @@ export class GraphInteractions<TElement = unknown> {
     }
 
     public clearNodeSelectionList(): void {
+        this.emit('unselectNodes', this.selectedNodes)
         this.selectedNodes.forEach(({ node, element }) => {
             if (this.callbacks.onNodeBlur && typeof this.callbacks.onNodeBlur === 'function') {
                 this.callbacks.onNodeBlur(node, element)
@@ -408,7 +414,7 @@ export class GraphInteractions<TElement = unknown> {
             // node.markDirty()
         })
         this.selectedNodes = []
-        this.emit('unselectNodes', this.selectedNodes)
+        this.selectedNode = null
     }
 
     public clearEdgeSelectionList(): void {
