@@ -26,6 +26,7 @@ export class SidebarNeighbors implements UIElement {
     private egographContainer?: HTMLDivElement
     private statContainer?: HTMLDivElement
     private listContainer?: HTMLDivElement
+    private tabContainer?: HTMLDivElement
 
     private egoGraph?: Graph
 
@@ -55,7 +56,7 @@ export class SidebarNeighbors implements UIElement {
         this.statContainer = createHtmlElement('div', {class: 'main-stats-container'}, ['Stats here'])
         this.listContainer = createHtmlElement('div', {class: 'main-list-container'}, ['List here'])
 
-        const tabContainer: HTMLDivElement = createTabs([
+        this.tabContainer = createTabs([
                 {
                     id: 'egograph',
                     label: 'Neighbor Graph',
