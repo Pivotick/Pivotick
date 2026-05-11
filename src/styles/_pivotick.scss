@@ -9,9 +9,8 @@
 }
 
 .pvt-canvas {
-    min-height: 300px;
     display: block;
-    aspect-ratio: 16 / 10;
+    min-height: 300px;
     max-height: 100%;
 
     background-color: var(--pvt-bg);
