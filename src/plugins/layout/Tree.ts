@@ -11,7 +11,7 @@ import type { Node } from '../../Node'
 import type { Edge } from '../../Edge'
 import hasCycle from '../analytics/cycle'
 import { findFirstZeroInDegreeNode, findMaxReachabilityRoot, findMinHeightDAGRoot, findMinMaxDistanceRoot } from '../analytics/DAGAlgorithms'
-import type { TreeLayoutOptions } from '../../interfaces/LayoutOptions'
+import type { AnyTreeLayoutOptions, TreeLayoutOptions } from '../../interfaces/LayoutOptions'
 import type { SimulationForces } from '../../interfaces/SimulationOptions'
 
 export type TreeLayoutAlgorithm = 'FirstZeroInDegree' | 'MaxReachability' | 'MinMaxDistance' | 'MinHeight'
@@ -56,7 +56,7 @@ export class TreeLayout {
         graph: Graph,
         simulation: d3Simulation<Node, undefined>,
         simulationForces: typeof this.simulationForces,
-        partialOptions: Partial<TreeLayoutOptions> = {},
+        partialOptions: Partial<AnyTreeLayoutOptions> = {},
     ) {
         this.graph = graph
         this.simulation = simulation
