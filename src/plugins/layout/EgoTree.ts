@@ -23,7 +23,39 @@ export class EgoTreeLayout extends TreeLayout {
         })
     }
 
+    static registerForcesOnSimulation(
+        nodes: Node[],
+        edges: Edge[],
+        simulation: d3Simulation<Node, undefined>,
+        simulationForces: SimulationForces,
+        partialOptions: Partial<TreeLayoutOptions>,
+        canvasBCR: DOMRect,
+    ): void {
+        TreeLayout.registerForcesOnSimulation(
+            nodes,
+            edges,
+            simulation,
+            simulationForces,
+            partialOptions,
+            canvasBCR,
+            EgoTreeLayout
+        )
+    }
+
     protected buildTree(
+        nodes: Node[],
+        edges: Edge[],
+        options: TreeLayoutOptions,
+        canvasBCR: DOMRect,
+    ): {
+        root: HierarchyNode<TreeNode> | null
+        nodes: HierarchyNode<TreeNode>[]
+        nodeById: Map<string, HierarchyNode<TreeNode>>
+    } {
+        return EgoTreeLayout.buildTreeStatic(nodes, edges, options, canvasBCR)
+    }
+
+    static buildTreeStatic(
             nodes: Node[],
             edges: Edge[],
             options: TreeLayoutOptions,

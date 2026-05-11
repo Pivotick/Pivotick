@@ -85,8 +85,8 @@ export class TreeLayout {
     public update(): void {
         const nodes = this.graph.getNodes()
         const edges = this.options.flipEdgeDirection ? this.flipEdgeDirection(this.graph.getEdges()) : this.graph.getEdges()
-        const { levels } = TreeLayout.buildLevels(nodes, edges, undefined, this.options.rootIdAlgorithmFinder)
-        const { nodes: positionedNodes, nodeById: positionedNodesByID } = TreeLayout.buildTree(nodes, edges, this.options, this.canvasBCR)
+        const { levels } = this.buildLevels(nodes, edges, undefined, this.options.rootIdAlgorithmFinder)
+        const { nodes: positionedNodes, nodeById: positionedNodesByID } = this.buildTree(nodes, edges, this.options, this.canvasBCR)
         this.positionedNodesByID = positionedNodesByID
 
         this.levels = levels
@@ -214,8 +214,8 @@ export class TreeLayout {
             return
         }
 
-        const { levels } = cls.buildLevels(nodes, edges, undefined, options.rootIdAlgorithmFinder)
-        const { nodeById: positionedNodesByID } = cls.buildTree(nodes, edges, options, canvasBCR)
+        const { levels } = cls.buildLevelsStatic(nodes, edges, undefined, options.rootIdAlgorithmFinder)
+        const { nodeById: positionedNodesByID } = cls.buildTreeStatic(nodes, edges, options, canvasBCR)
 
         if (options.radial) {
             const radialForce = d3ForceRadial<Node>(
@@ -268,7 +268,6 @@ export class TreeLayout {
     ): void {
         simulationForces.link.strength(originalForceStrength.link)
         simulationForces.charge.strength(originalForceStrength.charge)
-        simulationForces.center.strength(originalForceStrength.center)
         simulationForces.gravity.strength(originalForceStrength.gravity)
     }
 
@@ -295,7 +294,20 @@ export class TreeLayout {
         }
     }
 
-    static buildTree(
+    protected buildTree(
+        nodes: Node[],
+        edges: Edge[],
+        options: TreeLayoutOptions,
+        canvasBCR: DOMRect,
+    ): {
+        root: HierarchyNode<TreeNode> | null
+        nodes: HierarchyNode<TreeNode>[]
+        nodeById: Map<string, HierarchyNode<TreeNode>>
+    } {
+        return TreeLayout.buildTreeStatic(nodes, edges, options, canvasBCR)
+    }
+
+    static buildTreeStatic(
         nodes: Node[],
         edges: Edge[],
         options: TreeLayoutOptions,
@@ -377,7 +389,20 @@ export class TreeLayout {
             nodes: treeRoot.descendants(),
             nodeById: nodeById,
         }
-      }
+    }
+
+    protected buildLevels(
+        nodes: Node[],
+        edges: Edge[],
+        passedRootId?: string,
+        rootIdAlgorithmFinder?: TreeLayoutAlgorithm
+    ): {
+        levels: Record<string, number>
+        maxDepth: number
+        nodeCountPerLevel: Record<string, number>
+    } {
+        return TreeLayout.buildLevelsStatic(nodes, edges, passedRootId, rootIdAlgorithmFinder)
+    }
 
     /**
      * Builds a mapping from node ID to its level (distance from the root),
@@ -390,7 +415,7 @@ export class TreeLayout {
      * @param rootIdAlgorithmFinder - The algorithm to use to find the root ID.
      * @returns A mapping of each node's ID to its depth level in the tree and the maximum depth
      */
-    static buildLevels(
+    static buildLevelsStatic(
         nodes: Node[],
         edges: Edge[],
         passedRootId?: string,

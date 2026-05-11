@@ -7,6 +7,7 @@ import { TreeLayout } from '../plugins/layout/Tree'
 import type { SimulationOptions } from '../interfaces/SimulationOptions'
 import type { EdgeFullStyle } from '../interfaces/RendererOptions'
 import type { TreeLayoutOptions } from '../interfaces/LayoutOptions'
+import { EgoTreeLayout } from '../plugins/layout/EgoTree'
 
 export interface PlainNode<T = NodeData> {
     _circleRadius: number
@@ -76,7 +77,7 @@ self.onmessage = (e: MessageEvent<WorkerInput>) => {
             .links(edges)
     }
 
-    if (options.layout?.type === 'tree' || options.layout?.type === 'egoTree') {
+    if (options.layout?.type === 'tree') {
         TreeLayout.registerForcesOnSimulation(
             nodes,
             edges,
@@ -85,6 +86,16 @@ self.onmessage = (e: MessageEvent<WorkerInput>) => {
             options.layout as Partial<TreeLayoutOptions>,
             canvasBCR,
             TreeLayout
+        )
+    } else if (options.layout?.type === 'egoTree') {
+        TreeLayout.registerForcesOnSimulation(
+            nodes,
+            edges,
+            simulation,
+            simulationForces,
+            options.layout as unknown as Partial<TreeLayoutOptions>,
+            canvasBCR,
+            EgoTreeLayout
         )
     }
 
