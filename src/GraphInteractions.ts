@@ -64,7 +64,7 @@ export class GraphInteractions<TElement = unknown> {
 
     public nodeClick(element: TElement, event: PointerEvent, node: Node): void {
         if (event.shiftKey) {
-            this.addNodesToSelection([{node: node, element: element}])
+            this.addNodesToSelection([{ node: node, element: element }])
         } else if (event.altKey) {
             this.selectNodes([{ node: node, element: element }])
         } else if (event.ctrlKey) {
