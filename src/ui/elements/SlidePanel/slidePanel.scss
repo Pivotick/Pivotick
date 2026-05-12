@@ -8,6 +8,7 @@
     transition: transform 0.1s ease-in-out;
     border-top: 1px solid var(--pvt-border-color);
     box-shadow: var(--pvt-sidebar-layout-shadow-left);
+    width: clamp(280px, 25vw, 400px);
 
     &.open {
         display: flex;

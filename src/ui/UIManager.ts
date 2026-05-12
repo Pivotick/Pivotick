@@ -139,6 +139,10 @@ export class UIManager {
     private setup() {
         this.destroy()
 
+        if (this.options.theme) {
+            this.container.setAttribute('data-theme', this.options.theme.toString())
+        }
+
         switch (this.options.mode) {
             case 'viewer':
                 this.setupViewerMode()

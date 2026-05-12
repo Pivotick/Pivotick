@@ -11,7 +11,8 @@ export interface BaseLayoutOptions {
 /**
  * @default ForceLayoutOptions
  */
-export type LayoutOptions = ForceLayoutOptions | TreeLayoutOptions | EgoTreeLayoutOptions
+export type LayoutOptions = ForceLayoutOptions | AnyTreeLayoutOptions
+export type AnyTreeLayoutOptions = TreeLayoutOptions | EgoTreeLayoutOptions
 
 export interface ForceLayoutOptions extends BaseLayoutOptions {
     type: 'force'

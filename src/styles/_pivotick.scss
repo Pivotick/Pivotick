@@ -9,6 +9,10 @@
 }
 
 .pvt-canvas {
+    display: block;
+    min-height: 300px;
+    max-height: 100%;
+
     background-color: var(--pvt-bg);
     background-image: var(--pvt-graph-background-image);
 }
@@ -172,7 +176,7 @@ dl.pvt-property-list {
 
         input {
             @include input.input-primary;
-            width: unset;
+            box-sizing: border-box;
             background: var(--pvt-bg-color-7);
             color: var(--pvt-text-color-4);
             border-color: var(--pvt-menu-border-color);
@@ -202,6 +206,10 @@ dl.pvt-property-list {
 
     & > .pvt-cluster-area {
         stroke: var(--pvt-node-selected-stroke);
+    }
+
+    &.pvt-node-highlighted {
+        animation: var(--pvt-node-selected-big-animation);
     }
 }
 

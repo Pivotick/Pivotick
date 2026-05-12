@@ -4,6 +4,7 @@ import { Pivotick, Node, Edge, ColorPaletteMapper } from './index'
 
 import {graph as vtGraph} from './vt-graph'
 import { graph as ailGraph } from './ail-graph'
+import { graph as ail2Graph } from './ail-graph2'
 import { Simulation } from './Simulation'
 import type { SimulationOptions } from './interfaces/SimulationOptions'
 
@@ -252,9 +253,29 @@ export function createSampleGraph(): Pivotick {
             return { nodes, edges }
         })(),
 
+        ail2: (() => {
+            const nodes = ail2Graph.nodes.map(n => new Node(n.id, {
+                label: n.text,
+                ...n
+            }, {
+                ...n.style,
+                textColor: '#000',
+                iconClass: n.style.icon_class,
+                iconUnicode: n.style.icon,
+            }))
+            const edges = []
+            for (let i = 0; i < ail2Graph.links.length - 1; i++) {
+                const e = ail2Graph.links[i]
+                edges.push(new Edge(`e${i}`, nodes.find(n => n.id === e.source)!, nodes.find(n => n.id === e.target)!, {
+                    // label: e.relationship || '?'
+                }, {}))
+            }
+            return { nodes, edges }
+        })(),
+
     }
 
-    const topo = 'ail'
+    const topo = 'ail2'
 
     const colorPaletteMapper = new ColorPaletteMapper('pivotick')
     const graph = new Pivotick(container, {nodes: topologies[topo].nodes, edges: topologies[topo].edges}, {

@@ -71,7 +71,7 @@ export class NodeDrawer {
                 if (!nodeElement) return
 
                 let width = 50, height = 50 // default fallback size of a node
-                const bbox = nodeElement.getBBox()
+                const bbox = (nodeElement.querySelector('.node') as SVGGraphicsElement).getBBox()
                 if (bbox.width > 0 && bbox.height > 0) {
                     width = Math.ceil(bbox.width)
                     height = Math.ceil(bbox.height)

@@ -402,15 +402,15 @@ export class GraphControls implements UIElement {
         } else {
             this.navigation.querySelectorAll('.pvt-graphcontrols-layout-tree-v-options').forEach((el) => {
                 el.removeAttribute('disabled')
-                el.setAttribute('title', el.getAttribute('data-old-title') ?? '')
+                el.setAttribute('title', el.getAttribute('data-old-title') ?? (el.getAttribute('title') ?? ''))
             })
             this.navigation.querySelectorAll('.pvt-graphcontrols-layout-tree-h-options').forEach((el) => {
                 el.removeAttribute('disabled')
-                el.setAttribute('title', el.getAttribute('data-old-title') ?? '')
+                el.setAttribute('title', el.getAttribute('data-old-title') ?? (el.getAttribute('title') ?? ''))
             })
             this.navigation.querySelectorAll('.pvt-graphcontrols-layout-tree-r-options').forEach((el) => {
                 el.removeAttribute('disabled')
-                el.setAttribute('title', el.getAttribute('data-old-title') ?? '')
+                el.setAttribute('title', el.getAttribute('data-old-title') ?? (el.getAttribute('title') ?? ''))
             })
         }
 

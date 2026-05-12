@@ -319,7 +319,7 @@ export class GraphSvgRenderer extends GraphRenderer {
                     this.nodeSelection.each((node: Node, i: number, nodes: ArrayLike<SVGGElement>) => {
                         if (node.getCircleRadius() !== 25) return // 50 is the default assigned width/height that might be innacurate
 
-                        const bbox = nodes[i].getBBox()
+                        const bbox = (nodes[i].querySelector('.node') as SVGGraphicsElement).getBBox()
                         node.setCircleRadius(0.5 * Math.max(bbox.width, bbox.height))
                     })
                 }

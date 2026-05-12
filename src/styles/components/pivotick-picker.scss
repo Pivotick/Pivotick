@@ -1,0 +1,263 @@
+@use './input.scss' as *;
+
+// ========================
+// Picker
+// ========================
+.pvt-picker {
+    position: relative;
+    width: 100%;
+    font-family: var(--pvt-font-family);
+
+    &__control {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        cursor: text;
+    }
+
+    &__input {
+        flex: 1;
+        min-width: 80px;
+        border: none;
+        outline: none;
+        background: transparent;
+        color: var(--pvt-text-color-6);
+        font-size: 0.9rem;
+        padding: 0.5rem 0.75rem;
+    }
+
+    &__input:disabled {
+        cursor: default;
+        opacity: 0.7;
+    }
+
+    &__input-wrap {
+        flex: 1;
+        position: relative;
+        display: flex;
+        align-items: center;
+        min-width: 80px;
+        border-radius: 0.35rem;
+        cursor: text;
+
+        &:focus-within {
+            border-color: var(--pvt-text-color-6, #888);
+            box-shadow: 0 0 0 2px var(--pvt-bg-color-7, rgba(0,0,0,0.1));
+        }
+    }
+
+    &__single-close {
+        position: absolute;
+        right: 0.35rem;
+        width: 1.4rem;
+        height: 1.4rem;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: none;
+        border: none;
+        color: var(--pvt-text-color-4, #999);
+        cursor: pointer;
+        font-size: 0.95rem;
+        line-height: 1;
+        transition: opacity 0.15s ease;
+
+        &:hover {
+            opacity: 1;
+        }
+    }
+
+    &__placeholder {
+        color: var(--pvt-text-color-6);
+        opacity: 0.7;
+        user-select: none;
+    }
+
+    // ========================
+    // Chips (multi-select pills)
+    // ========================
+    &__chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        flex: 1;
+        min-width: 80px;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--pvt-menu-border-color, #ccc);
+        border-radius: 0.35rem;
+        background: var(--pvt-bg, #fff);
+        cursor: text;
+    }
+
+    &__chip {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+
+        background: var(--pvt-bg-color-8, #e8edf2);
+        border: 1px solid var(--pvt-menu-border-color, #bbb);
+        border-radius: 0.35rem;
+        padding: 0.15rem 0;
+        font-size: 0.82rem;
+        user-select: none;
+    }
+
+    &__chip-label {
+        padding: 0.15rem 0.35rem;
+        white-space: nowrap;
+    }
+
+    &__chip-remove {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.2rem;
+        height: 1.2rem;
+        margin-right: 0.2rem;
+        background: transparent;
+        border: none;
+        color: var(--pvt-text-color-4, #888);
+        cursor: pointer;
+        font-size: 1rem;
+        line-height: 1;
+        opacity: 0.7;
+        transition: opacity 0.15s ease;
+
+        &:hover {
+            opacity: 1;
+            color: var(--pvt-text-color-6, #555);
+        }
+    }
+
+    // ========================
+    // Clear button (multi-select)
+    // ========================
+    &__clear {
+        position: absolute;
+        right: 0;
+        width: 1.6rem;
+        height: 1.6rem;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: none;
+        border: none;
+        color: var(--pvt-text-color-4, #999);
+        cursor: pointer;
+        font-size: 0.95rem;
+        line-height: 1;
+        transition: opacity 0.15s ease;
+
+        &:hover {
+            opacity: 1;
+        }
+    }
+
+    // ========================
+    // Dropdown
+    // ========================
+    &__dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+
+        background: var(--pvt-bg-color-7);
+        border: 1px solid var(--pvt-menu-border-color);
+        box-shadow: var(--pvt-sidebar-layout-shadow-bottom);
+        max-height: 250px;
+        overflow-y: auto;
+
+        z-index: 1000;
+
+        opacity: 0;
+        transform: translateY(-6px);
+        pointer-events: none;
+
+        &.open {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+            transition: opacity 0.1s ease, transform 0.1s ease;
+        }
+    }
+
+    // ========================
+    // Search box (multi-select dropdown)
+    // ========================
+    &__search {
+        padding: 1px;
+    }
+
+    &__search-input,
+    .pvt-form .pvt-form-element &__search-input {
+        width: 100%;
+        font-size: 0.9rem;
+        color: var(--pvt-text-color-6);
+        box-sizing: border-box;
+        border-radius: 0;
+        border-color: var(--pvt-menu-border-color);
+        background: var(--pvt-bg-color-6);
+
+        &::placeholder {
+            color: var(--pvt-text-color-6);
+            opacity: 0.7;
+        }
+    }
+
+    // ========================
+    // No options message
+    // ========================
+    &__no-options {
+        padding: 0.75rem;
+        text-align: center;
+        color: var(--pvt-text-color-4, #999);
+        font-size: 0.9rem;
+    }
+
+    // ========================
+    // Options
+    // ========================
+    &__option {
+        padding: 0.5rem 0.75rem;
+        cursor: pointer;
+        color: var(--pvt-text-color-primary, #333);
+        background: transparent;
+        border-bottom: 1px solid var(--pvt-bg-color-7, #eee);
+        font-size: 0.9rem;
+
+        &:hover {
+            background: var(--pvt-bg-color-5, #f5f5f5);
+        }
+
+        &.focused {
+            background: var(--pvt-bg-color-5, #f0f0f0);
+            // outline: 1px solid var(--pvt-text-color-6, #888);
+        }
+
+        &.focused-selected {
+            font-weight: 600;
+            color: var(--pvt-text-color-6, #444);
+        }
+
+        &.selected {
+            background: var(--pvt-bg-color-7, #e8edf2);
+            color: var(--pvt-text-color-6, #555);
+            font-weight: 500;
+        }
+
+        &.selected::after {
+            content: ' \2713';
+            float: right;
+            font-weight: 600;
+        }
+
+        &.disabled {
+            background: var(--pvt-bg-color-7, #eee);
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+    }
+}
