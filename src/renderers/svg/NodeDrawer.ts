@@ -348,10 +348,12 @@ export class NodeDrawer {
         }
     }
 
+    /**
+     * This method is called on every node
+     * Each node takes care of its own state, otherwise each node gets set multiple times
+     * Each node takes care only of edges out, to avoid setting twice the same edge (for from and to nodes)
+     */
     public checkForHighlight(nodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
-        // This method is called on every node
-        // Each node can take care of its own state, otherwise each node gets set multiple times
-        // Each node takes care only of edges out, to avoid setting twice the same edge (for from and to nodes)
         const nodeSelected = this.isNodeSelected(node)
         const nodeAdjacentToSelection = this.isNodeAdjacentToSelection(node)
         const applyShadow = this.getSelectedNodeIDs().length !== 0
