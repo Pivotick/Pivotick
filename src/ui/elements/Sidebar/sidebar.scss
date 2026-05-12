@@ -98,14 +98,14 @@
     
                                 .edge {
                                     margin-right: 4px;
+                                    width: 20px !important;
+                                    flex-shrink: 0;
     
                                     &.edge-out {
                                         color: var(--pvt-text-color-primary);
-                                        width: 2em !important;
                                     }
                                     &.edge-in {
                                         color: var(--pvt-text-color-secondary);
-                                        width: 2em !important;
                                     }
                                 }
     
