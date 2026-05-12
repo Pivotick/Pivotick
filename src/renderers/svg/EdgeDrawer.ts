@@ -29,8 +29,8 @@ export class EdgeDrawer {
         const style = this.getEdgeStyle(edge)
         const labelStyle = this.getLabelStyle(edge)
 
+        const pathSelection = this.genericEdgeRender(edgeSelection, style)
         if (this.graph.getOptions().isDirected || edge.directed) {
-            const pathSelection = this.genericEdgeRender(edgeSelection, style)
             this.drawEdgeMarker(pathSelection, style, edge)
         }
 
@@ -344,8 +344,12 @@ export class EdgeDrawer {
 
         const edgeStyle = this.graphSvgRenderer.edgeDrawer.getEdgeStyle(edge)
 
-        const drawOffsetStart = 4 + (edgeStyle.markerStart !== undefined ? 0 : 0) + (isEdgeSelected ? 0 : 0) // Distance from which to start the edge
-        const drawOffsetEnd = 4 + (edgeStyle.markerEnd !== undefined ? 2 : 0) + (isEdgeSelected ? 2 : 2) // Distance from which to end the edge
+        const isDirected = this.graph.getOptions().isDirected || edge.directed
+        const shouldOffsetEndMarker = isDirected && edgeStyle.markerEnd !== undefined 
+        const shouldOffsetStartMarker = isDirected && edgeStyle.markerStart !== undefined 
+
+        const drawOffsetStart = 4 + (shouldOffsetStartMarker ? 0 : 0) + (isEdgeSelected ? 0 : 0) // Distance from which to start the edge
+        const drawOffsetEnd = 4 + (shouldOffsetEndMarker ? 4 : 0) + (isEdgeSelected ? 2 : 0) // Distance from which to end the edge
 
         // Direction angle from source to target
         let dx = to.x - from.x
