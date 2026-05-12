@@ -153,7 +153,10 @@ export const defaultNodeStyle: NodeStyle = {
     strokeColor: 'var(--pvt-node-stroke, #fff)',
     fontFamily: 'var(--pvt-label-font, system-ui, sans-serif)',
     textColor: 'var(--pvt-node-text-color, #fff)',
+    textAnchorPosition: 'middle',
+    textHorizontalShift: 0,
     textVerticalShift: 0,
+    textRotateDegree: 0,
     iconUnicode: undefined,
     iconClass: undefined,
     svgIcon: undefined,
@@ -316,7 +319,7 @@ export class GraphSvgRenderer extends GraphRenderer {
                     this.nodeSelection.each((node: Node, i: number, nodes: ArrayLike<SVGGElement>) => {
                         if (node.getCircleRadius() !== 25) return // 50 is the default assigned width/height that might be innacurate
 
-                        const bbox = nodes[i].getBBox()
+                        const bbox = (nodes[i].querySelector('.node') as SVGGraphicsElement).getBBox()
                         node.setCircleRadius(0.5 * Math.max(bbox.width, bbox.height))
                     })
                 }

@@ -71,7 +71,7 @@ export class NodeDrawer {
                 if (!nodeElement) return
 
                 let width = 50, height = 50 // default fallback size of a node
-                const bbox = nodeElement.getBBox()
+                const bbox = (nodeElement.querySelector('.node') as SVGGraphicsElement).getBBox()
                 if (bbox.width > 0 && bbox.height > 0) {
                     width = Math.ceil(bbox.width)
                     height = Math.ceil(bbox.height)
@@ -126,7 +126,10 @@ export class NodeDrawer {
             size: style?.size ?? this.rendererOptions.defaultNodeStyle.size,
             color: style?.color ?? this.rendererOptions.defaultNodeStyle.color,
             textColor: style?.textColor ?? this.rendererOptions.defaultNodeStyle.textColor,
+            textAnchorPosition: style?.textAnchorPosition ?? this.rendererOptions.defaultNodeStyle.textAnchorPosition,
+            textHorizontalShift: style?.textHorizontalShift ?? this.rendererOptions.defaultNodeStyle.textHorizontalShift,
             textVerticalShift: style?.textVerticalShift ?? this.rendererOptions.defaultNodeStyle.textVerticalShift,
+            textRotateDegree: style?.textRotateDegree ?? this.rendererOptions.defaultNodeStyle.textRotateDegree,
             iconUnicode: style?.iconUnicode ?? this.rendererOptions.defaultNodeStyle.iconUnicode,
             iconClass: style?.iconClass ?? this.rendererOptions.defaultNodeStyle.iconClass,
             svgIcon: style?.svgIcon ?? this.rendererOptions.defaultNodeStyle.svgIcon,
@@ -160,7 +163,10 @@ export class NodeDrawer {
                 size: style?.size ?? styleFromStyleMap?.size,
                 color: style?.color ?? styleFromStyleMap?.color,
                 textColor: style?.textColor ?? styleFromStyleMap?.textColor,
+                textAnchorPosition: style?.textAnchorPosition ?? styleFromStyleMap?.textAnchorPosition,
+                textHorizontalShift: style?.textHorizontalShift ?? styleFromStyleMap?.textHorizontalShift,
                 textVerticalShift: style?.textVerticalShift ?? styleFromStyleMap?.textVerticalShift,
+                textRotateDegree: style?.textRotateDegree ?? styleFromStyleMap?.textRotateDegree,
                 iconUnicode: style?.iconUnicode ?? styleFromStyleMap?.iconUnicode,
                 iconClass: style?.iconClass ?? styleFromStyleMap?.iconClass,
                 svgIcon: style?.svgIcon ?? styleFromStyleMap?.svgIcon,
@@ -184,7 +190,10 @@ export class NodeDrawer {
         nodeStyle.size = nodeStyle.size !== undefined ? (tryResolveNumber(nodeStyle.size, node) ?? 10) : 10
         nodeStyle.color = nodeStyle.color !== undefined ? (tryResolveString(nodeStyle.color, node) ?? 'var(--pvt-node-color, #007acc)') : 'var(--pvt-node-color, #007acc)'
         nodeStyle.textColor = nodeStyle.textColor !== undefined ? (tryResolveString(nodeStyle.textColor, node) ?? 'var(--pvt-node-text-color, #fff)') : 'var(--pvt-node-text-color, #fff)'
+        nodeStyle.textAnchorPosition = nodeStyle.textAnchorPosition !== undefined ? tryResolveString(nodeStyle.textAnchorPosition, node) as ('start' | 'middle' | 'end') : 'middle'
+        nodeStyle.textHorizontalShift = nodeStyle.textHorizontalShift !== undefined ? (tryResolveNumber(nodeStyle.textHorizontalShift, node) ?? 0) : 0
         nodeStyle.textVerticalShift = nodeStyle.textVerticalShift !== undefined ? (tryResolveNumber(nodeStyle.textVerticalShift, node) ?? 0) : 0
+        nodeStyle.textRotateDegree = nodeStyle.textRotateDegree !== undefined ? (tryResolveNumber(nodeStyle.textRotateDegree, node) ?? 0) : 0
         nodeStyle.text = nodeStyle.text !== undefined ? tryResolveString(nodeStyle.text, node) : undefined
 
         nodeStyle.iconUnicode = nodeStyle.iconUnicode !== undefined ? tryResolveString(nodeStyle.iconUnicode, node) : undefined
@@ -203,7 +212,10 @@ export class NodeDrawer {
         style.size = style.size as number
         style.shape = style.shape as NodeShape
         style.text = style.text as string
+        style.textAnchorPosition = style.textAnchorPosition as 'start' | 'middle' | 'end'
+        style.textHorizontalShift = style.textHorizontalShift as number
         style.textVerticalShift = style.textVerticalShift as number
+        style.textRotateDegree = style.textRotateDegree as number
 
         // map logical node shapes to SVG element tag names (use string to allow 'rect' which is not part of NodeShape)
         let actualShape: string = style.shape as string
@@ -319,11 +331,20 @@ export class NodeDrawer {
         }
         // Do not have text dislay be mutually exclusive with icons
         if (style.text) {
-            const [fontSize, text] = this.computeTextLayout(style.text, style.size, style.textVerticalShift)
-            const textSelection = nodeSelection
+            // label and background group to allow for rotating together
+            const labelG = nodeSelection.append('g')
+
+            const isOusideNode = Math.abs(style.textVerticalShift) >= 1 || Math.abs(style.textHorizontalShift) >= 1
+            const [fontSize, text] = this.computeTextLayout(style.text, style.size, isOusideNode)
+
+            const x_pos = style.textHorizontalShift * (style.size + fontSize/2*1.2)
+            const y_pos = - style.textVerticalShift * (style.size + fontSize/2*1.2)
+
+            const textSelection = labelG
                 .append('text')
-                .attr('text-anchor', 'middle')
-                .attr('y', - style.textVerticalShift * (style.size + fontSize/2*1.2))
+                .attr('text-anchor', style.textAnchorPosition)
+                .attr('x', x_pos)
+                .attr('y', y_pos)
                 .attr('dominant-baseline', 'central')
                 .attr('font-size', fontSize)
                 .attr('font-family', style.fontFamily)
@@ -331,11 +352,10 @@ export class NodeDrawer {
                 .text(text)
 
             const bbox = textSelection.node()?.getBBox()
-            const isOusideNode = Math.abs(style.textVerticalShift) >= 1
             if (isOusideNode && bbox) {
                 const paddingX = 4
                 const paddingY = 2
-                nodeSelection.insert('rect', 'text')
+                labelG.insert('rect', 'text')
                     .attr('x', bbox.x - paddingX)
                     .attr('y', bbox.y - paddingY)
                     .attr('width', bbox.width + 2 * paddingX)
@@ -344,6 +364,9 @@ export class NodeDrawer {
                     .attr('rx', 2)
                     .attr('ry', 2)
             }
+            
+            labelG.attr('transform', `rotate(${style.textRotateDegree}, ${x_pos}, ${y_pos})`)
+
         }
     }
 
@@ -416,10 +439,10 @@ export class NodeDrawer {
         }
     }
 
-    private computeTextLayout(label: string, nodeSize: number, textVerticalShift: number = 0): [number, string] {
+    private computeTextLayout(label: string, nodeSize: number, isOusideNode: boolean = false): [number, string] {
         const base = nodeSize * 0.9
         // Allow wider strings when text is outside the node
-        const maxWidth = Math.abs(textVerticalShift) >= 1 ? base * 5 : base * 2
+        const maxWidth = isOusideNode ? base * 5 : base * 2
         // Scale font to node size, ensuring readability with 12px
         const fontSize = Math.max(12, base * 0.5)
  
