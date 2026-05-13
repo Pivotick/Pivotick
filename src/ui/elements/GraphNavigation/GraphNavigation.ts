@@ -1,4 +1,4 @@
-import { graphNavigationReset, graphNavigationZoomIn, graphNavigationZoomOut } from '../../icons'
+import { fullscreen, fullscreenExit, graphNavigationReset, graphNavigationZoomIn, graphNavigationZoomOut } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import './graphNavigation.scss'
 
@@ -31,6 +31,12 @@ export class GraphNavigation implements UIElement {
             ${graphNavigationZoomOut}
         </button>
     </div>
+    <div class="pvt-graphnavigation-fullscreen">
+        <button id="pvt-graphnavigation-fullscreen" class="pvt-graphnavigation-fullscreen-button" title="Zoom In">
+           <span>${fullscreen}</span>
+           <span style="display: none">${fullscreenExit}</span>
+        </button>
+    </div>
   </div>
 `
         this.navigation = template.content.firstElementChild as HTMLDivElement
@@ -48,6 +54,7 @@ export class GraphNavigation implements UIElement {
         const zoomInButton = this.navigation.querySelector('#pvt-graphnavigation-zoom-in')
         const zoomOutButton = this.navigation.querySelector('#pvt-graphnavigation-zoom-out')
         const resetButton = this.navigation.querySelector('#pvt-graphnavigation-reset')
+        const fullscreenButton: HTMLButtonElement | null = this.navigation.querySelector('#pvt-graphnavigation-fullscreen')
         
         zoomInButton?.addEventListener('click', () => {
             this.uiManager.graph.renderer.zoomIn()
@@ -60,6 +67,23 @@ export class GraphNavigation implements UIElement {
         resetButton?.addEventListener('click', () => {
             this.uiManager.graph.renderer.fitAndCenter()
         })
+
+        fullscreenButton?.addEventListener('click', () => {
+            this.uiManager.toggleFullscreen()
+            this.updateFullscreenIcon(fullscreenButton)
+        })
+    }
+
+    private updateFullscreenIcon(button: HTMLElement) {
+        const spans = button.querySelectorAll('span')
+
+        const enterIcon = spans[0] as HTMLElement
+        const exitIcon = spans[1] as HTMLElement
+
+        const isFullscreen = this.uiManager.isFullscreenOn()
+
+        enterIcon.style.display = isFullscreen ? 'none' : ''
+        exitIcon.style.display = isFullscreen ? '' : 'none'
     }
 
     graphReady() { }

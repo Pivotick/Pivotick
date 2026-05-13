@@ -126,12 +126,16 @@ export class UIManager {
     public contextMenu?: ContextMenu
     public keyManager: KeybindingManager
 
+    private fullscreenOn: boolean
+
     constructor(graph: Graph, container: HTMLElement, options: GraphUI) {
         this.graph = graph
         this.container = container
         this.options = merge({}, DEFAULT_UI_OPTIONS, options)
 
         this.keyManager = new KeybindingManager()
+
+        this.fullscreenOn = false
 
         this.setup()
     }
@@ -273,6 +277,33 @@ export class UIManager {
         this.container.addEventListener('keydown', (event) => this.keyManager.handleKeyPress(event))
         this.container.setAttribute('tabindex', '0') // make it focusable
 
+    }
+
+    public toggleFullscreen(forcedState?: boolean) {
+        const shouldEnable =
+            forcedState !== undefined ? forcedState : !this.fullscreenOn
+
+        if (shouldEnable) {
+            if (!document.fullscreenElement) {
+                this.container.requestFullscreen()
+            }
+
+            this.fullscreenOn = true
+        } else {
+            if (document.fullscreenElement) {
+                document.exitFullscreen()
+            }
+
+            this.fullscreenOn = false
+        }
+
+        document.addEventListener('fullscreenchange', () => {
+            this.fullscreenOn = !!document.fullscreenElement
+        })
+    }
+
+    public isFullscreenOn() {
+        return this.fullscreenOn
     }
 
     public getOptions() {

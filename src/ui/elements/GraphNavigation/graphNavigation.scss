@@ -36,11 +36,26 @@
         flex-direction: column;
         background-color: color-mix(in srgb, var(--pvt-bg) 80%, white);
         box-shadow: var(--pvt-graph-navigation-control-container-shadow);
+        margin-bottom: 6px;
         border-radius: 4px;
 
         .pvt-zoom-divider {
             border-top: 1px solid color-mix(in srgb, var(--pvt-border-color) 40%, transparent);
             margin: 0 5px;
+        }
+    }
+
+    .pvt-graphnavigation-fullscreen {
+        background-color: color-mix(in srgb, var(--pvt-bg) 80%, white);
+        box-shadow: var(--pvt-graph-navigation-control-container-shadow);
+        border-radius: 4px;
+        margin-bottom: 6px;
+
+        span {
+            height: 18px;
+            flex-direction: column;
+            justify-content: center;
+            display: flex;
         }
     }
 }
