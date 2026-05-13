@@ -38,9 +38,7 @@ export interface SimulationOptions {
     d3CollideStrength: number
     /** @default 1 */
     d3CollideIterations: number
-    /** @default 1 */
-    d3CenterStrength: number
-    /** @default 0.001 */
+    /** @default 0.1 */
     d3GravityStrength: number
     /** @default 2000 */
     cooldownTime: number
@@ -80,7 +78,6 @@ export interface SimulationCallbacks {
 export interface SimulationForces {
     link: d3ForceLinkType<Node, Edge>,
     charge: d3ForceManyBodyType<Node>,
-    center: d3ForceCenterType<Node>,
     collide: d3ForceCollideType<Node>,
     gravity: d3ForceCenterType<Node>
 }

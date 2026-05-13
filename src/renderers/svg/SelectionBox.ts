@@ -45,6 +45,9 @@ export class SelectionBox extends AbstractSelectionBox {
             this.selectionMode = 'start'
         } else if (e.ctrlKey) {
             this.selectionMode = 'remove'
+            if (!this.renderer.getGraphInteraction().hasActiveMultiselection()) {
+                return // No active selection, nothing the remove.
+            }
         } else {
             this.selectionMode = 'start'
             return // No matching key

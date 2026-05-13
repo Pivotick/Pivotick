@@ -9,7 +9,7 @@ import { createTabs } from '../../components/Tabs'
 import type { GraphOptions, RawEdge, RawNode, RelaxedGraphData } from '../../../interfaces/GraphOptions'
 import { Graph } from '../../../Graph'
 import { edgeNameGetter, nodeNameGetter } from '../../../utils/GraphGetters'
-import { arrowLeft, arrowRight, edgeIncoming, edgeOutgoing, filterAdd, filterRemove, graphMultiSelectNode } from '../../icons'
+import { arrowLeft, arrowRight, dash, edgeIncoming, edgeOutgoing, filterAdd, filterRemove, graphMultiSelectNode } from '../../icons'
 import { createBadge } from '../../components/Badge'
 import { createTableForAggregatedProperties } from '../../../utils/ElementCreationAggregatedProperties'
 import type { NodeStyle } from '../../../interfaces/RendererOptions'
@@ -26,6 +26,7 @@ export class SidebarNeighbors implements UIElement {
     private egographContainer?: HTMLDivElement
     private statContainer?: HTMLDivElement
     private listContainer?: HTMLDivElement
+    private tabContainer?: HTMLDivElement
 
     private egoGraph?: Graph
 
@@ -55,7 +56,7 @@ export class SidebarNeighbors implements UIElement {
         this.statContainer = createHtmlElement('div', {class: 'main-stats-container'}, ['Stats here'])
         this.listContainer = createHtmlElement('div', {class: 'main-list-container'}, ['List here'])
 
-        const tabContainer: HTMLDivElement = createTabs([
+        this.tabContainer = createTabs([
                 {
                     id: 'egograph',
                     label: 'Neighbor Graph',
@@ -86,9 +87,7 @@ export class SidebarNeighbors implements UIElement {
             this.header
         )
 
-        tabContainer.style.height = '100%'
-
-        this.body.appendChild(this.neighborCount)
+        this.body.insertBefore(this.neighborCount, this.body.firstChild)
     }
 
     public destroy() {
@@ -256,6 +255,7 @@ export class SidebarNeighbors implements UIElement {
         }
         
         const egoGraphOptions: GraphOptions = {
+            isDirected: this.uiManager.graph.getOptions().isDirected,
             UI: {
                 mode: 'viewer',
                 tooltip: {
@@ -363,12 +363,22 @@ export class SidebarNeighbors implements UIElement {
         for (const edge of connectedEdges) {
             const isEdgeOut = edge.from.id === node.id
             const targetNode = isEdgeOut ? edge.to : edge.from
-            const edgeName = edgeNameGetter(edge, this.uiManager.getOptions().mainHeader) || '' 
+            const edgeName = edgeNameGetter(edge, this.uiManager.getOptions().mainHeader) || ''
+            const isDirected = this.uiManager.graph.getOptions().isDirected || edge.directed
 
-            const edgeIcon = isEdgeOut ? createIcon({svgIcon: arrowRight}) : createIcon({svgIcon: arrowLeft})
+            let edgeIcon
+            if (isDirected) {
+                edgeIcon = isEdgeOut ? createIcon({svgIcon: arrowRight}) : createIcon({svgIcon: arrowLeft})
+            } else {
+                edgeIcon = createIcon({svgIcon: dash})
+            }
             edgeIcon.classList.add('edge')
-            edgeIcon.classList.add(isEdgeOut ? 'edge-out' : 'edge-in')
-            edgeIcon.setAttribute('title', isEdgeOut ? 'Outgoing edge' : 'Incoming edge')
+            if (isDirected) {
+                edgeIcon.classList.add(isEdgeOut ? 'edge-out' : 'edge-in')
+                edgeIcon.setAttribute('title', isEdgeOut ? 'Outgoing edge' : 'Incoming edge')
+            } else {
+                edgeIcon.setAttribute('title', 'Non-directed edge')
+            }
 
             const targetNodeName = nodeNameGetter(targetNode, this.uiManager.getOptions().mainHeader)
             const targetNodeTemplate = document.createElement('template')
@@ -377,7 +387,7 @@ export class SidebarNeighbors implements UIElement {
                 <span class="pvt-neighbors-list__nodepreview">
                     <svg class="pvt-mainheader-icon" width="${fixedPreviewSize}" height="${fixedPreviewSize}" viewBox="0 0 ${fixedPreviewSize} ${fixedPreviewSize}" preserveAspectRatio="xMidYMid meet"></svg>
                 </span>
-                ${targetNodeName}
+                <span class="pvt-neighbors-list__nodename">${targetNodeName}</span>
             </div>`
 
             const targetNodeDiv = targetNodeTemplate.content.firstElementChild as HTMLDivElement

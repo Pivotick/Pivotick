@@ -11,7 +11,7 @@ Graph.Edge = Edge
 // @ts-expect-error Make usage of browser build easier
 Graph.ColorPaletteMapper = ColorPaletteMapper
 
-export default Graph
+// export default Graph
 
 // Named exports (still available for modular imports)
 export { Graph as Pivotick, Node, Edge, ColorPaletteMapper }

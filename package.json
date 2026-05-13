@@ -6,17 +6,21 @@
   "files": [
     "dist"
   ],
-  "main": "./dist/pivotick.umd.cjs",
-  "module": "./dist/pivotick.js",
+  "main": "./dist/pivotick.umd.js",
+  "module": "./dist/pivotick.es.js",
   "exports": {
     ".": {
-      "import": "./dist/pivotick.js",
-      "require": "./dist/pivotick.umd.cjs"
+      "import": "./dist/pivotick.es.js",
+      "require": "./dist/pivotick.umd.js",
+      "default": "./dist/pivotick.umd.js"
     }
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && npm run build:es && npm run build:browser && npm run build:worker",
+    "build:es": "vite build --config vite.config.es.js",
+    "build:browser": "vite build --config vite.config.browser.js",
+    "build:worker": "vite build --config vite.config.worker.js",
     "preview": "vite preview",
     "lint": "eslint 'src/**/*.{ts,tsx}'",
     "lint_fix": "eslint --fix 'src/**/*.{ts,tsx}'",

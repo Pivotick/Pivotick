@@ -1,6 +1,6 @@
 import type { Node } from '../../Node'
 import type { Edge } from '../../Edge'
-import type { EgoTreeLayoutOptions, TreeLayoutOptions } from '../../interfaces/LayoutOptions'
+import type { AnyTreeLayoutOptions, TreeLayoutOptions } from '../../interfaces/LayoutOptions'
 import { TreeLayout, type TreeNode } from './Tree'
 import { hierarchy, tree, type HierarchyNode } from 'd3-hierarchy'
 import { type Simulation as d3Simulation } from 'd3-force'
@@ -15,7 +15,7 @@ export class EgoTreeLayout extends TreeLayout {
             graph: Graph,
             simulation: d3Simulation<Node, undefined>,
             simulationForces: SimulationForces,
-            partialOptions: Partial<EgoTreeLayoutOptions> & { rootId: string },
+            partialOptions: Partial<AnyTreeLayoutOptions>,
         ) {
         super(graph, simulation, simulationForces, {
             ...partialOptions,
@@ -23,7 +23,39 @@ export class EgoTreeLayout extends TreeLayout {
         })
     }
 
+    static registerForcesOnSimulation(
+        nodes: Node[],
+        edges: Edge[],
+        simulation: d3Simulation<Node, undefined>,
+        simulationForces: SimulationForces,
+        partialOptions: Partial<TreeLayoutOptions>,
+        canvasBCR: DOMRect,
+    ): void {
+        TreeLayout.registerForcesOnSimulation(
+            nodes,
+            edges,
+            simulation,
+            simulationForces,
+            partialOptions,
+            canvasBCR,
+            EgoTreeLayout
+        )
+    }
+
     protected buildTree(
+        nodes: Node[],
+        edges: Edge[],
+        options: TreeLayoutOptions,
+        canvasBCR: DOMRect,
+    ): {
+        root: HierarchyNode<TreeNode> | null
+        nodes: HierarchyNode<TreeNode>[]
+        nodeById: Map<string, HierarchyNode<TreeNode>>
+    } {
+        return EgoTreeLayout.buildTreeStatic(nodes, edges, options, canvasBCR)
+    }
+
+    static buildTreeStatic(
             nodes: Node[],
             edges: Edge[],
             options: TreeLayoutOptions,

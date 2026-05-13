@@ -21,6 +21,7 @@
 
     &.pvt-tooltip-floating {
         border-color: var(--pvt-tooltip-floating-bg-color);
+        z-index: 900;
     }
 
     .pvt-tooltip-topbar {
@@ -152,7 +153,7 @@
     path.pivotick-shadowlink {
         stroke: color-mix(in srgb, var(--pvt-edge-stroke) 100%, #ffffff00);
         stroke-width: 2;
-        stroke-opacity: 0.3;
+        stroke-opacity: 0.6;
         stroke-dasharray: var(--pvt-edge-stroke-dasharray);
         animation: var(--pvt-edge-animation);
     }
