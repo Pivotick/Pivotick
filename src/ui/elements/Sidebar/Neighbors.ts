@@ -420,9 +420,33 @@ export class SidebarNeighbors implements UIElement {
             const row = createHtmlElement('div',
                 {
                     'class': 'edge-details',
+                    'data-node-id': targetNode.id
                 },
                 elements
             )
+
+            row.addEventListener('mouseenter', (evt) => {
+                const nodeId = (evt.target as HTMLElement).getAttribute('data-node-id')
+                if (!nodeId) return
+
+                const mainGraphNode = this.uiManager.graph.getMutableNode(nodeId)
+                if (mainGraphNode) {
+                    this.uiManager.graph.highlightElement(mainGraphNode)
+                    this.egoGraph?.highlightElement(node)
+                    this.egoGraph?.UIManager.tooltip?.nodeHovered(evt, node)
+                }
+            })
+            row.addEventListener('mouseleave', (evt) => {
+                const nodeId = (evt.target as HTMLElement).getAttribute('data-node-id')
+                if (!nodeId) return
+
+                const mainGraphNode = this.uiManager.graph.getMutableNode(nodeId)
+                if (mainGraphNode) {
+                    this.uiManager.graph.unHighlightElement(mainGraphNode)
+                    this.egoGraph?.unHighlightElement(node)
+                }
+            })
+
             container.appendChild(row)
         }
 
