@@ -11,6 +11,17 @@ export class GraphNavigation implements UIElement {
         this.uiManager = uiManager
     }
 
+    private handleFullscreenChange = () => {
+        const fullscreenButton =
+            this.navigation?.querySelector(
+                '#pvt-graphnavigation-fullscreen'
+            ) as HTMLButtonElement | null
+
+        if (fullscreenButton) {
+            this.updateFullscreenIcon(fullscreenButton)
+        }
+    }
+
     mount(container: HTMLElement | undefined) {
         if (!container) return
 
@@ -47,6 +58,11 @@ export class GraphNavigation implements UIElement {
     destroy() {
         this.navigation?.remove()
         this.navigation = undefined
+
+        document.removeEventListener(
+            'fullscreenchange',
+            this.handleFullscreenChange
+        )
     }
 
     afterMount() {
@@ -70,11 +86,20 @@ export class GraphNavigation implements UIElement {
 
         fullscreenButton?.addEventListener('click', () => {
             this.uiManager.toggleFullscreen()
-            this.updateFullscreenIcon(fullscreenButton)
         })
+
+        if (fullscreenButton) {
+            this.updateFullscreenIcon(fullscreenButton)
+        }
+
+        document.addEventListener('fullscreenchange', this.handleFullscreenChange)
+
+        if (fullscreenButton) {
+            this.updateFullscreenIcon(fullscreenButton)
+        }
     }
 
-    private updateFullscreenIcon(button: HTMLElement) {
+    updateFullscreenIcon(button: HTMLElement) {
         const spans = button.querySelectorAll('span')
 
         const enterIcon = spans[0] as HTMLElement
