@@ -1,12 +1,12 @@
 @use "../../../styles/components/buttons.scss";
 @use "../../../styles/components/input.scss";
 
-.pvt-toolbar {
+.pvt-searchbar {
     background: var(--pvt-ui-bg);
     box-shadow: var(--pvt-sidebar-layout-shadow-bottom);
     border-left: var(--pvt-sidebar-panel-border);
 
-    .pvt-toolbar-elements {
+    .pvt-searchbar-elements {
         display: flex;
         flex-direction: row;
         gap: 4px;

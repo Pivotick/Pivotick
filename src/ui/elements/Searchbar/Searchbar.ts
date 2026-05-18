@@ -1,16 +1,16 @@
 import { funnel, magnifyingGlass, redo, undo } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import { SearchBox } from './SearchBox'
-import './toolbar.scss'
+import './searchbar.scss'
 import { Node } from '../../../Node'
 import type { SlidePanel } from '../SlidePanel/SlidePanel'
 import { GraphFilter } from '../GraphFilter/GraphFilter'
 import type { Modal } from '../Modal/Modal'
 
-export class Toolbar implements UIElement {
+export class Searchbar implements UIElement {
     private uiManager: UIManager
 
-    public toolbar?: HTMLDivElement
+    public searchbar?: HTMLDivElement
     public searchBoxButton?: HTMLDivElement
     public filterButton?: HTMLDivElement
     public undoButton?: HTMLButtonElement
@@ -25,8 +25,8 @@ export class Toolbar implements UIElement {
     mount(container: HTMLElement | undefined) {
         if (!container) return
 
-        this.toolbar = document.createElement('div')
-        this.toolbar.className = 'pvt-toolbar-elements'
+        this.searchbar = document.createElement('div')
+        this.searchbar.className = 'pvt-searchbar-elements'
 
         /** Searchbox */
         const templateSearch = document.createElement('template')
@@ -39,7 +39,7 @@ export class Toolbar implements UIElement {
     </div>
   </div>`
         this.searchBoxButton = templateSearch.content.firstElementChild as HTMLDivElement
-        this.toolbar.appendChild(this.searchBoxButton)
+        this.searchbar.appendChild(this.searchBoxButton)
 
         /** SearcFilterbox */
         const templateFilter = document.createElement('template')
@@ -70,14 +70,14 @@ export class Toolbar implements UIElement {
         filterContainer.prepend(this.filterButton)
         this.undoButton = filterContainer.querySelector('#pvt-undo-button') ?? undefined
         this.redoButton = filterContainer.querySelector('#pvt-redo-button') ?? undefined
-        this.toolbar.appendChild(filterContainer)
+        this.searchbar.appendChild(filterContainer)
 
-        container.appendChild(this.toolbar)
+        container.appendChild(this.searchbar)
     }
 
     destroy() {
-        this.toolbar?.remove()
-        this.toolbar = undefined
+        this.searchbar?.remove()
+        this.searchbar = undefined
     }
 
     afterMount() {

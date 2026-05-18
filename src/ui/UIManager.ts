@@ -6,7 +6,7 @@ import { GraphNavigation } from './elements/GraphNavigation/GraphNavigation'
 import { Layout } from './elements/Layout'
 import { Sidebar } from './elements/Sidebar/Sidebar'
 import { SlidePanel, type SlidepanelOptions } from './elements/SlidePanel/SlidePanel'
-import { Toolbar } from './elements/Toolbar/Toolbar'
+import { Searchbar } from './elements/Searchbar/Searchbar'
 import { Modal, type ModalOptions } from './elements/Modal/Modal'
 import type { Notification } from './Notifier'
 import merge from 'lodash.merge'
@@ -118,7 +118,7 @@ export class UIManager {
     public layout?: Layout
     public slidePanel?: SlidePanel
     public sidebar?: Sidebar
-    public toolbar?: Toolbar
+    public searchbar?: Searchbar
     public modal?: Modal
     public graphNaviation?: GraphNavigation
     public graphControls?: GraphControls
@@ -197,7 +197,7 @@ export class UIManager {
         this.buildLayout()
         this.buildUIGraphNavigation()
         this.buildUIGraphControls()
-        this.buildToolbar()
+        this.buildSearchbar()
         this.buildSidebar()
     }
 
@@ -212,7 +212,7 @@ export class UIManager {
         this.buildLayout()
         this.buildUIGraphNavigation()
         this.buildUIGraphControls()
-        this.buildToolbar()
+        this.buildSearchbar()
     }
 
     private buildLayout() {
@@ -240,9 +240,9 @@ export class UIManager {
         this.graphControls.mount(this.layout?.graphcontrols)
     }
 
-    private buildToolbar() {
-        this.toolbar = new Toolbar(this)
-        this.toolbar.mount(this.layout?.toolbar)
+    private buildSearchbar() {
+        this.searchbar = new Searchbar(this)
+        this.searchbar.mount(this.layout?.searchbar)
     }
 
     private buildSidebar() {
@@ -259,7 +259,7 @@ export class UIManager {
 
     private callAfterMount() { // TODO: Instead, these should register an afterMount callback
         this.layout?.afterMount()
-        this.toolbar?.afterMount()
+        this.searchbar?.afterMount()
         this.sidebar?.afterMount()
         this.graphNaviation?.afterMount()
         this.graphControls?.afterMount()

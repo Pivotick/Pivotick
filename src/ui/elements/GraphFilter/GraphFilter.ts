@@ -168,7 +168,7 @@ export class GraphFilter implements UIElement {
     }
 
     private updateUIFilterButtonContent(filters: GraphFilters) {
-        const filterButton = this.uiManager.toolbar?.filterButton
+        const filterButton = this.uiManager.searchbar?.filterButton
         const filterButtonElement = filterButton?.querySelector('.action-text')
         if (!filterButtonElement) return
 
