@@ -71,7 +71,7 @@ export function createButton<TArgs extends unknown[] = []>(options: ButtonOption
     }
     if (iconEl) {
         btn.append(iconEl)
-        iconEl.style.marginRight = '0.1em'
+        iconEl.style.marginRight = '0.3em'
     }
 
     if (text) {

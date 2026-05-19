@@ -1,4 +1,5 @@
 .pvt-graphtoolbar {
+    display: flex;
     position: relative;
     background-color: color-mix(in srgb, var(--pvt-bg) 80%, white);
     box-shadow: var(--pvt-graph-navigation-control-container-shadow);
@@ -10,10 +11,16 @@
         transform 180ms ease,
         border-color 180ms ease;
 
+    .edit-mode-button-container {
+        margin-left: auto;
+    }
+
     &.edit-mode-active {
-        button svg .edit-icon-underline {
-            stroke-dashoffset: 0;
-            opacity: 1;
+        .edit-mode-button-container {
+            button svg .edit-icon-underline {
+                stroke-dashoffset: 0;
+                opacity: 1;
+            }
         }
     }
 
@@ -28,62 +35,46 @@
 
     .pvt-graphtoolbar-elements {
         display: flex;
+        flex-shrink: 1;
         flex-direction: row;
+        flex-wrap: wrap;
         align-items: center;
+        box-sizing: border-box;
         width: 100%;
-        padding: 4px 6px;
+        padding: 2px 8px;
         overflow: hidden;
 
         .pvt-toolbar-group {
-            display: inline-flex;
+            display: none;
             align-items: center;
             flex-shrink: 0;
             flex-direction: row;
             gap: 4px;
-            padding: 0;
-            margin-left: 0;
-
+            padding: 2px 0 2px 0;
+            border-right: 0px solid transparent;
+            opacity: 0;
+            pointer-events: none;
+            // max-width: 0;
+            overflow: hidden;
+            white-space: nowrap;
             transition:
                 opacity 90ms ease,
                 transform 180ms ease,
                 max-width 180ms ease,
-                margin 180ms ease;
-            transform: translateX(-6px);
-            opacity: 0;
-            pointer-events: none;
-            max-width: 0;
-            overflow: hidden;
-            white-space: nowrap;
-
-            &.visible {
-                opacity: 1;
-                transform: translateX(0);
-                max-width: 500px;
-                padding: 4px;
-                margin: 0 6px;
-                pointer-events: auto;
-
-                &:nth-child(2) {
-                    border-left: 1px solid var(--pvt-bg-color-9);
-                    padding-left: 10px;
-                }
-            }
-        }
-
-        .pvt-toolbar-group + .pvt-toolbar-group {
-            padding-left: 0;
-            margin-left: 0;
-            border-left: 0px solid transparent;
-            transition:
-                border-color 180ms ease,
                 padding 180ms ease,
                 margin 180ms ease;
 
             &.visible {
-                border-left-width: 1px;
-                padding-left: 10px;
-                margin-left: 2px;
-                border-left-color: var(--pvt-bg-color-9);
+                display: inline-flex;
+                opacity: 1;
+                // max-width: 500px;
+                pointer-events: auto;
+
+                border-right-width: 1px;
+                padding-right: 10px;
+                margin-right: 10px;
+                border-right-color: var(--pvt-bg-color-9);
+
             }
         }
     }

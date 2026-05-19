@@ -111,8 +111,10 @@
     .pvt-graphtoolbar {
         position: absolute;
         top: 1rem;
-        left: 180px;
+        right: 60px;
         z-index: 5;
+        // max-width: calc(100% - 60px - 310px);
+        max-width: calc(100% - 60px - 190px);
     }
 }
 

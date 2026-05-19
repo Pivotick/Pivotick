@@ -1,5 +1,5 @@
 
-import { createHtmlTemplate } from '../../../utils/ElementCreation'
+import { createHtmlElement, createHtmlTemplate } from '../../../utils/ElementCreation'
 import { createButton } from '../../components/Button'
 import { editMode } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
@@ -37,6 +37,7 @@ export class GraphToolbar implements UIElement {
 
         const shortcutButton = createHtmlTemplate('<span class="pvt-keyboard-shortcut pvt-ms-1">e</span>')
         this.enableEditModeButton = createButton({
+            id: 'pvt-edit-mode-button',
             variant: 'outline-primary',
             text: 'Edit Graph',
             childElement: shortcutButton,
@@ -47,12 +48,13 @@ export class GraphToolbar implements UIElement {
             }
         })
 
-        this.toolbar.appendChild(this.enableEditModeButton)
-
         this.toolbar.appendChild(this.buildNoSelectionContainer())
         this.toolbar.appendChild(this.buildWithSelectionContainer())
         this.toolbar.appendChild(this.buildCursorSelectionContainer())
         this.toolbar.appendChild(this.buildCanvasToolsContainer())
+
+        const buttonContainer = createHtmlElement('span', { 'class': 'edit-mode-button-container' }, [this.enableEditModeButton])
+        this.toolbar.appendChild(buttonContainer)
 
         this.container.appendChild(this.toolbar)
     }
@@ -75,7 +77,7 @@ export class GraphToolbar implements UIElement {
 
         if (textElement) {
             textElement.textContent = this.editModeEnabled
-                ? 'Editing…'
+                ? 'Editing'
                 : 'Edit Graph'
         }
 
@@ -132,8 +134,6 @@ export class GraphToolbar implements UIElement {
     }
 
     private updateToolbarVisibility() {
-        console.log(this.editModeEnabled)
-        
         if (!this.editModeEnabled) {
             this.hideGroup(this.noSelectionContainer)
             this.hideGroup(this.withSelectionContainer)
