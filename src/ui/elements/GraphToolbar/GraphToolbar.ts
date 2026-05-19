@@ -12,9 +12,11 @@ export class GraphToolbar implements UIElement {
     public toolbar?: HTMLDivElement
     private container?: HTMLElement
     private enableEditModeButton?: HTMLButtonElement
+    private editModeButtonText?: SVGTextElement
 
     private noSelectionContainer?: HTMLDivElement
-    private withSelectionContainer?: HTMLDivElement
+    private withNodeSelectionContainer?: HTMLDivElement
+    private withEdgeSelectionContainer?: HTMLDivElement
     private cursorSelectionContainer?: HTMLDivElement
     private canvasToolsContainer?: HTMLDivElement
 
@@ -47,9 +49,11 @@ export class GraphToolbar implements UIElement {
                 this.toggleEditMode()
             }
         })
+        this.editModeButtonText = this.enableEditModeButton?.querySelector('text') as SVGTextElement
 
         this.toolbar.appendChild(this.buildNoSelectionContainer())
-        this.toolbar.appendChild(this.buildWithSelectionContainer())
+        this.toolbar.appendChild(this.buildWithNodeSelectionContainer())
+        this.toolbar.appendChild(this.buildWithEdgeSelectionContainer())
         this.toolbar.appendChild(this.buildCursorSelectionContainer())
         this.toolbar.appendChild(this.buildCanvasToolsContainer())
 
@@ -136,29 +140,39 @@ export class GraphToolbar implements UIElement {
     private updateToolbarVisibility() {
         if (!this.editModeEnabled) {
             this.hideGroup(this.noSelectionContainer)
-            this.hideGroup(this.withSelectionContainer)
+            this.hideGroup(this.withEdgeSelectionContainer)
+            this.hideGroup(this.withNodeSelectionContainer)
             this.hideGroup(this.cursorSelectionContainer)
             this.hideGroup(this.canvasToolsContainer)
 
             return
         }
 
-        // always visible in edit mode
-        this.showGroup(this.cursorSelectionContainer)
-        this.showGroup(this.canvasToolsContainer)
-
         const interaction = this.uiManager.graph.renderer.getGraphInteraction()
 
-        const hasSelection =
-            (interaction.getSelectedNodeIDs() ?? []).length > 0 ||
-            (interaction.getSelectedEdgeIDs() ?? []).length > 0
+        const nodeSelectionCount = (interaction.getSelectedNodeIDs() ?? []).length
+        const edgeSelectionCount = (interaction.getSelectedEdgeIDs() ?? []).length
+        const hasSelection = nodeSelectionCount > 0 || edgeSelectionCount > 0
 
         if (hasSelection) {
-            this.showGroup(this.withSelectionContainer)
+            if (nodeSelectionCount > 0) {
+                this.editModeButtonText!.textContent = `Editing node${nodeSelectionCount > 1 ? 's' : ''}`
+                this.showGroup(this.withNodeSelectionContainer)
+                this.hideGroup(this.withEdgeSelectionContainer)
+            } else {
+                this.editModeButtonText!.textContent = `Editing edge${edgeSelectionCount > 1 ? 's' : ''}`
+                this.hideGroup(this.withNodeSelectionContainer)
+                this.showGroup(this.withEdgeSelectionContainer)
+            }
             this.hideGroup(this.noSelectionContainer)
+            this.hideGroup(this.cursorSelectionContainer)
+            this.hideGroup(this.canvasToolsContainer)
         } else {
-            this.hideGroup(this.withSelectionContainer)
+            this.hideGroup(this.withNodeSelectionContainer)
+            this.hideGroup(this.withEdgeSelectionContainer)
             this.showGroup(this.noSelectionContainer)
+            this.showGroup(this.cursorSelectionContainer)
+            this.showGroup(this.canvasToolsContainer)
         }
     }
 
@@ -200,9 +214,9 @@ export class GraphToolbar implements UIElement {
 
         return this.noSelectionContainer
     }
-    
-    private buildWithSelectionContainer(): HTMLDivElement {
-        this.withSelectionContainer = createHtmlTemplate(`
+
+    private buildWithNodeSelectionContainer(): HTMLDivElement {
+        this.withNodeSelectionContainer = createHtmlTemplate(`
         <div class="pvt-toolbar-group"></div>
     `) as HTMLDivElement
 
@@ -246,6 +260,19 @@ export class GraphToolbar implements UIElement {
             }
         })
 
+        this.withNodeSelectionContainer.appendChild(editNodeButton)
+        this.withNodeSelectionContainer.appendChild(bulkEditButton)
+        this.withNodeSelectionContainer.appendChild(groupNodesButton)
+        this.withNodeSelectionContainer.appendChild(ungroupNodesButton)
+
+        return this.withNodeSelectionContainer
+    }
+
+    private buildWithEdgeSelectionContainer(): HTMLDivElement {
+        this.withEdgeSelectionContainer = createHtmlTemplate(`
+        <div class="pvt-toolbar-group"></div>
+    `) as HTMLDivElement
+
         const editEdgeButton = createButton({
             variant: 'secondary',
             text: 'Edit Edge',
@@ -286,17 +313,12 @@ export class GraphToolbar implements UIElement {
             }
         })
 
-        this.withSelectionContainer.appendChild(editNodeButton)
-        this.withSelectionContainer.appendChild(bulkEditButton)
-        this.withSelectionContainer.appendChild(groupNodesButton)
-        this.withSelectionContainer.appendChild(ungroupNodesButton)
+        this.withEdgeSelectionContainer.appendChild(editEdgeButton)
+        this.withEdgeSelectionContainer.appendChild(deleteEdgeButton)
+        this.withEdgeSelectionContainer.appendChild(reverseEdgeButton)
+        this.withEdgeSelectionContainer.appendChild(bidirectionalEdgeButton)
 
-        this.withSelectionContainer.appendChild(editEdgeButton)
-        this.withSelectionContainer.appendChild(deleteEdgeButton)
-        this.withSelectionContainer.appendChild(reverseEdgeButton)
-        this.withSelectionContainer.appendChild(bidirectionalEdgeButton)
-
-        return this.withSelectionContainer
+        return this.withEdgeSelectionContainer
     }
 
     private buildCursorSelectionContainer(): HTMLDivElement {
