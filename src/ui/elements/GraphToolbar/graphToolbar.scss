@@ -1,7 +1,7 @@
 .pvt-graphtoolbar {
     display: flex;
     position: relative;
-    background-color: color-mix(in srgb, var(--pvt-bg) 80%, white);
+    background-color: color-mix(in srgb, var(--pvt-bg) 85%, white);
     box-shadow: var(--pvt-graph-navigation-control-container-shadow);
     border-radius: 4px;
 
@@ -13,6 +13,10 @@
 
     .edit-mode-button-container {
         margin-left: auto;
+
+        .pvt-keyboard-shortcut {
+            border-color: var(--pvt-bg-color-9);
+        }
     }
 
     &.edit-mode-active {

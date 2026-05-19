@@ -1,7 +1,7 @@
 
 import { createHtmlElement, createHtmlTemplate } from '../../../utils/ElementCreation'
 import { createButton } from '../../components/Button'
-import { editMode } from '../../icons'
+import { addCircle, bidirectional, bulkEdit, edit, editMode, grid, groupNodes, lassoTool, pathSelection, reverseEdge, selectionInverse, snapGrid, stickyNote, trash, ungroupNodes } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import './graphToolbar.scss'
 
@@ -179,7 +179,7 @@ export class GraphToolbar implements UIElement {
             variant: 'secondary',
             text: 'Add Node',
             size: 'sm',
-            // svgIcon: addNode,
+            svgIcon: addCircle,
             onClick: () => {
                 //
             }
@@ -189,7 +189,7 @@ export class GraphToolbar implements UIElement {
             variant: 'secondary',
             text: 'Sticky Note',
             size: 'sm',
-            // svgIcon: stickyNote,
+            svgIcon: stickyNote,
             onClick: () => {
                 //
             }
@@ -210,7 +210,7 @@ export class GraphToolbar implements UIElement {
             variant: 'secondary',
             text: 'Edit',
             size: 'sm',
-            // svgIcon: edit,
+            svgIcon: edit,
             onClick: () => {
                 //
             }
@@ -220,7 +220,7 @@ export class GraphToolbar implements UIElement {
             variant: 'secondary',
             text: 'Bulk Edit',
             size: 'sm',
-            // svgIcon: bulkEdit,
+            svgIcon: bulkEdit,
             onClick: () => {
                 //
             }
@@ -230,7 +230,7 @@ export class GraphToolbar implements UIElement {
             variant: 'secondary',
             text: 'Group',
             size: 'sm',
-            // svgIcon: group,
+            svgIcon: groupNodes,
             onClick: () => {
                 //
             }
@@ -240,7 +240,7 @@ export class GraphToolbar implements UIElement {
             variant: 'secondary',
             text: 'Ungroup',
             size: 'sm',
-            // svgIcon: ungroup,
+            svgIcon: ungroupNodes,
             onClick: () => {
                 //
             }
@@ -250,7 +250,7 @@ export class GraphToolbar implements UIElement {
             variant: 'secondary',
             text: 'Edit Edge',
             size: 'sm',
-            // svgIcon: edgeEdit,
+            svgIcon: edit,
             onClick: () => {
                 //
             }
@@ -260,7 +260,7 @@ export class GraphToolbar implements UIElement {
             variant: 'danger',
             text: 'Delete Edge',
             size: 'sm',
-            // svgIcon: trash,
+            svgIcon: trash,
             onClick: () => {
                 //
             }
@@ -270,7 +270,7 @@ export class GraphToolbar implements UIElement {
             variant: 'secondary',
             text: 'Reverse',
             size: 'sm',
-            // svgIcon: reverseEdge,
+            svgIcon: reverseEdge,
             onClick: () => {
                 //
             }
@@ -280,7 +280,7 @@ export class GraphToolbar implements UIElement {
             variant: 'secondary',
             text: 'Bidirectional',
             size: 'sm',
-            // svgIcon: bidirectional,
+            svgIcon: bidirectional,
             onClick: () => {
                 //
             }
@@ -307,8 +307,9 @@ export class GraphToolbar implements UIElement {
         const lassoSelectionButton = createButton({
             variant: 'secondary',
             text: 'Lasso',
+            tooltip: 'Select nodes using a lasso tool',
             size: 'sm',
-            // svgIcon: lasso,
+            svgIcon: lassoTool,
             onClick: () => {
                 //
             }
@@ -317,8 +318,9 @@ export class GraphToolbar implements UIElement {
         const inverseSelectionButton = createButton({
             variant: 'secondary',
             text: 'Invert',
+            tooltip: 'Inverse the selection of selected nodes',
             size: 'sm',
-            // svgIcon: inverseSelection,
+            svgIcon: selectionInverse,
             onClick: () => {
                 //
             }
@@ -327,8 +329,9 @@ export class GraphToolbar implements UIElement {
         const pathSelectionButton = createButton({
             variant: 'secondary',
             text: 'Path Select',
+            tooltip: 'Select all nodes traversed by the shortest path between 2 selected nodes',
             size: 'sm',
-            // svgIcon: pathSelection,
+            svgIcon: pathSelection,
             onClick: () => {
                 //
             }
@@ -349,8 +352,9 @@ export class GraphToolbar implements UIElement {
         const highlightGridButton = createButton({
             variant: 'secondary',
             text: 'Grid',
+            tooltip: 'Highlight the grid',
             size: 'sm',
-            // svgIcon: grid,
+            svgIcon: grid,
             onClick: () => {
                 //
             }
@@ -359,8 +363,9 @@ export class GraphToolbar implements UIElement {
         const snapToGridButton = createButton({
             variant: 'secondary',
             text: 'Snap',
+            tooltip: 'Snap nodes to grid',
             size: 'sm',
-            // svgIcon: magnet,
+            svgIcon: snapGrid,
             onClick: () => {
                 //
             }
