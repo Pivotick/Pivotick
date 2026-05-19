@@ -14,6 +14,7 @@ import { Tooltip } from './elements/Tooltip/Tooltip'
 import { ContextMenu } from './elements/ContextMenu/ContextMenu'
 import type { GraphUI, PropertyEntry } from '../interfaces/GraphUI'
 import { KeybindingManager } from './KeybindingManager'
+import { GraphToolbar } from './elements/GraphToolbar/GraphToolbar'
 
 const basicPropertyGetter = (element: Node | Edge): PropertyEntry[] => {
     const properties = []
@@ -122,6 +123,7 @@ export class UIManager {
     public modal?: Modal
     public graphNaviation?: GraphNavigation
     public graphControls?: GraphControls
+    public graphToolbar?: GraphToolbar
     public tooltip?: Tooltip
     public contextMenu?: ContextMenu
     public keyManager: KeybindingManager
@@ -197,6 +199,7 @@ export class UIManager {
         this.buildLayout()
         this.buildUIGraphNavigation()
         this.buildUIGraphControls()
+        this.buildUIGraphToolbar()
         this.buildSearchbar()
         this.buildSidebar()
     }
@@ -212,6 +215,7 @@ export class UIManager {
         this.buildLayout()
         this.buildUIGraphNavigation()
         this.buildUIGraphControls()
+        this.buildUIGraphToolbar()
         this.buildSearchbar()
     }
 
@@ -240,6 +244,11 @@ export class UIManager {
         this.graphControls.mount(this.layout?.graphcontrols)
     }
 
+    private buildUIGraphToolbar() {
+        this.graphToolbar = new GraphToolbar(this)
+        this.graphToolbar.mount(this.layout?.graphtoolbar)
+    }
+
     private buildSearchbar() {
         this.searchbar = new Searchbar(this)
         this.searchbar.mount(this.layout?.searchbar)
@@ -263,6 +272,7 @@ export class UIManager {
         this.sidebar?.afterMount()
         this.graphNaviation?.afterMount()
         this.graphControls?.afterMount()
+        this.graphToolbar?.afterMount()
         if (this.options.tooltip?.enabled) {
             this.tooltip?.afterMount()
         }
@@ -309,6 +319,7 @@ export class UIManager {
         this.sidebar?.graphReady()
         this.tooltip?.graphReady()
         this.contextMenu?.graphReady()
+        this.graphToolbar?.graphReady()
     }
 
    /**

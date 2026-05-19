@@ -229,7 +229,7 @@ export type MenuActionItemOptions<TThis extends UIElement = UIElement> = {
     /** Title to be shown when hovering over the option. */
     title?: string,
     /** @default outline-primary */
-    variant?: UIBaseVariant | UIOutlineVariant,
+    variant?: UIBaseVariant | UIOutlineVariant | UIOutlineSoftVariant,
     visible?: boolean | ((element: Node | Edge | null) => boolean)
     onclick: (this: TThis, evt: PointerEvent | MouseEvent, element?: Node | Node[] | Edge | Edge[] | null) => void
 }
@@ -244,6 +244,7 @@ export type MenuQuickActionItemOptions = MenuActionItemOptions & {
 /** Variant defined in the theme */
 export type UIBaseVariant = 'primary' | 'secondary' | 'info' | 'warning' | 'danger' | 'success'
 export type UIOutlineVariant = 'outline-primary' | 'outline-secondary' | 'outline-info' | 'outline-warning' | 'outline-danger' | 'outline-success'
+export type UIOutlineSoftVariant = 'outline-soft-primary' | 'outline-soft-secondary' | 'outline-soft-info' | 'outline-soft-warning' | 'outline-soft-danger' | 'outline-soft-success'
 
 /**
  * Raw SVG markup as a string

@@ -188,10 +188,15 @@ dl.pvt-property-list {
 .pvt-keyboard-shortcut {
     padding: 4px 6px;
     font-size: 0.8em;
+    font-weight: 500;
     border-radius: 4px;
     background: transparent;
+    white-space: nowrap;
     border: 1px solid var(--pvt-bg-color-7);
+    color: var(--pvt-text-color-4);
     user-select: none;
+    font-family: "Roboto", sans-serif;
+    letter-spacing: -0.01em;
 }
 
 .pvt-node-selected-highlight {

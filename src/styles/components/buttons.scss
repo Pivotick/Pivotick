@@ -2,6 +2,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 4px;
     border: none;
     padding: 0.5rem 1rem;
     font-size: 0.9rem;
@@ -118,6 +119,23 @@
     }
 }
 
+@mixin button-outline-variant-soft($bg-color, $bg-text-color) {
+    @include button-outline-variant($bg-color, $bg-text-color);
+    border: 1px solid color-mix(in srgb, var($bg-color) 80%, black);
+
+    &:hover {
+        border: 1px solid var($bg-color);
+    }
+
+    &:active {
+        border: 1px solid var($bg-color);
+    }
+
+    &:disabled {
+        border: 1px solid color-mix(in srgb, var($bg-color) 85%, black);
+    }
+}
+
 @mixin button-outline-primary {
     @include button-outline-variant(--pvt-bg-color-primary, --pvt-text-color-for-primary);
 }
@@ -135,6 +153,25 @@
 }
 @mixin button-outline-success {
     @include button-outline-variant(--pvt-bg-color-success, --pvt-text-color-for-success);
+}
+
+@mixin button-outline-soft-primary {
+    @include button-outline-variant-soft(--pvt-bg-color-primary, --pvt-text-color-for-primary);
+}
+@mixin button-outline-soft-secondary {
+    @include button-outline-variant-soft(--pvt-bg-color-secondary, --pvt-text-color-for-secondary);
+}
+@mixin button-outline-soft-info {
+    @include button-outline-variant-soft(--pvt-bg-color-info, --pvt-text-color-for-info);
+}
+@mixin button-outline-soft-warning {
+    @include button-outline-variant-soft(--pvt-bg-color-warning, --pvt-text-color-for-warning);
+}
+@mixin button-outline-soft-danger {
+    @include button-outline-variant-soft(--pvt-bg-color-danger, --pvt-text-color-for-danger);
+}
+@mixin button-outline-soft-success {
+    @include button-outline-variant-soft(--pvt-bg-color-success, --pvt-text-color-for-success);
 }
 
 button.pivotick-button-primary {
@@ -175,6 +212,24 @@ button.pivotick-button-outline-danger {
 }
 button.pivotick-button-outline-success {
     @include button-outline-success;
+}
+button.pivotick-button-outline-soft-primary {
+    @include button-outline-soft-primary;
+}
+button.pivotick-button-outline-soft-secondary {
+    @include button-outline-soft-secondary;
+}
+button.pivotick-button-outline-soft-info {
+    @include button-outline-soft-info;
+}
+button.pivotick-button-outline-soft-warning {
+    @include button-outline-soft-warning;
+}
+button.pivotick-button-outline-soft-danger {
+    @include button-outline-soft-danger;
+}
+button.pivotick-button-outline-soft-success {
+    @include button-outline-soft-success;
 }
 
 button.pivotick-button-block {

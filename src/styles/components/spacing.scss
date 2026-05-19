@@ -1,0 +1,48 @@
+// Spacing scale
+$spacing: (
+    0: 0,
+    1: 0.25rem,
+    2: 0.5rem,
+    3: 0.75rem,
+    4: 1rem,
+    5: 1.5rem,
+    6: 2rem,
+);
+
+// Property aliases
+$spacing-properties: (
+    m: margin,
+    p: padding,
+);
+
+// Direction aliases
+$spacing-directions: (
+    "": (),
+    t: (top),
+    b: (bottom),
+    s: (inline-start),
+    e: (inline-end),
+    x: (inline-start, inline-end),
+    y: (top, bottom),
+);
+
+// Generate utilities
+@each $prefix, $property in $spacing-properties {
+    @each $dir, $positions in $spacing-directions {
+        @each $key, $value in $spacing {
+
+            .pvt-#{$prefix}#{$dir}-#{$key} {
+
+                @if length($positions)==0 {
+                    #{$property}: $value;
+                }
+
+                @else {
+                    @each $position in $positions {
+                        #{$property}-#{$position}: $value;
+                    }
+                }
+            }
+        }
+    }
+}

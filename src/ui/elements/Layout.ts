@@ -11,6 +11,7 @@ export class Layout implements UIElement {
     public slidePanel?: HTMLDivElement
     public graphnavigation?: HTMLDivElement
     public graphcontrols?: HTMLDivElement
+    public graphtoolbar?: HTMLDivElement
 
     constructor() { }
 
@@ -54,6 +55,10 @@ export class Layout implements UIElement {
             this.graphcontrols = document.createElement('div')
             this.graphcontrols.className = 'pvt-graphcontrols'
             this.canvas.appendChild(this.graphcontrols)
+
+            this.graphtoolbar = document.createElement('div')
+            this.graphtoolbar.className = 'pvt-graphtoolbar'
+            this.canvas.appendChild(this.graphtoolbar)
         }
 
         container.appendChild(this.layout)

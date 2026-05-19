@@ -1,0 +1,90 @@
+.pvt-graphtoolbar {
+    position: relative;
+    background-color: color-mix(in srgb, var(--pvt-bg) 80%, white);
+    box-shadow: var(--pvt-graph-navigation-control-container-shadow);
+    border-radius: 4px;
+
+    transition:
+        background-color 180ms ease,
+        box-shadow 180ms ease,
+        transform 180ms ease,
+        border-color 180ms ease;
+
+    &.edit-mode-active {
+        button svg .edit-icon-underline {
+            stroke-dashoffset: 0;
+            opacity: 1;
+        }
+    }
+
+    button svg .edit-icon-underline {
+        stroke-dasharray: 8;
+        stroke-dashoffset: 8;
+        opacity: 0;
+        transition:
+            stroke-dashoffset 180ms ease,
+            opacity 90ms ease;
+    }
+
+    .pvt-graphtoolbar-elements {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        width: 100%;
+        padding: 4px 6px;
+        overflow: hidden;
+
+        .pvt-toolbar-group {
+            display: inline-flex;
+            align-items: center;
+            flex-shrink: 0;
+            flex-direction: row;
+            gap: 4px;
+            padding: 0;
+            margin-left: 0;
+
+            transition:
+                opacity 90ms ease,
+                transform 180ms ease,
+                max-width 180ms ease,
+                margin 180ms ease;
+            transform: translateX(-6px);
+            opacity: 0;
+            pointer-events: none;
+            max-width: 0;
+            overflow: hidden;
+            white-space: nowrap;
+
+            &.visible {
+                opacity: 1;
+                transform: translateX(0);
+                max-width: 500px;
+                padding: 4px;
+                margin: 0 6px;
+                pointer-events: auto;
+
+                &:nth-child(2) {
+                    border-left: 1px solid var(--pvt-bg-color-9);
+                    padding-left: 10px;
+                }
+            }
+        }
+
+        .pvt-toolbar-group + .pvt-toolbar-group {
+            padding-left: 0;
+            margin-left: 0;
+            border-left: 0px solid transparent;
+            transition:
+                border-color 180ms ease,
+                padding 180ms ease,
+                margin 180ms ease;
+
+            &.visible {
+                border-left-width: 1px;
+                padding-left: 10px;
+                margin-left: 2px;
+                border-left-color: var(--pvt-bg-color-9);
+            }
+        }
+    }
+}

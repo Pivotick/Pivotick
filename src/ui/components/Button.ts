@@ -1,7 +1,7 @@
-import type { IconClass, IconUnicode, ImagePath, SVGIcon, UIOutlineVariant, UIBaseVariant } from '../../interfaces/GraphUI'
+import type { IconClass, IconUnicode, ImagePath, SVGIcon, UIOutlineVariant, UIBaseVariant, UIOutlineSoftVariant } from '../../interfaces/GraphUI'
 import { createIcon } from '../../utils/ElementCreation'
 
-type ButtonVariant = UIBaseVariant | UIOutlineVariant
+type ButtonVariant = UIBaseVariant | UIOutlineVariant | UIOutlineSoftVariant
 type ButtonSize = 'sm' | 'xs' | 'block'
 export type ButtonOptions<TArgs extends unknown[] = []> = {
     variant?: ButtonVariant,
@@ -14,6 +14,7 @@ export type ButtonOptions<TArgs extends unknown[] = []> = {
     svgIcon?: SVGIcon,
     imagePath?: ImagePath,
     text?: string,
+    childElement?: HTMLElement,
     [key: string]: unknown // allow other attributes like id, className, etc.
 }
 
@@ -30,6 +31,7 @@ export function createButton<TArgs extends unknown[] = []>(options: ButtonOption
         svgIcon,
         imagePath,
         text,
+        childElement,
         ...attrs
     } = options
     const btn = document.createElement('button')
@@ -69,15 +71,18 @@ export function createButton<TArgs extends unknown[] = []>(options: ButtonOption
     }
     if (iconEl) {
         btn.append(iconEl)
+        iconEl.style.marginRight = '0.1em'
     }
-    const textEl = document.createElement('text')
-    if (text) {
-        if (iconEl)
-            iconEl.style.marginRight = '0.1em'
 
+    if (text) {
+        const textEl = document.createElement('text')
         textEl.textContent = text
+        btn.append(textEl)
     }
-    btn.append(textEl)
+
+    if (childElement) {
+        btn.append(childElement)
+    } 
 
     if (typeof onClick === 'function') {
         const args = (onClickArgs ?? []) as TArgs
