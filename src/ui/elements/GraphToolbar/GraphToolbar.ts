@@ -1,7 +1,7 @@
 
 import { createHtmlElement, createHtmlTemplate } from '../../../utils/ElementCreation'
 import { createButton } from '../../components/Button'
-import { addCircle, bidirectional, bulkEdit, edit, editMode, grid, groupNodes, lassoTool, pathSelection, reverseEdge, selectionInverse, snapGrid, stickyNote, trash, ungroupNodes } from '../../icons'
+import { addCircle, bidirectional, bulkEdit, edit, editMode, grid, groupNodes, lassoTool, pathSelection, reverseEdge, selectionInverse, stickyNote, trash, ungroupNodes } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import './graphToolbar.scss'
 
@@ -18,7 +18,6 @@ export class GraphToolbar implements UIElement {
     private withNodeSelectionContainer?: HTMLDivElement
     private withEdgeSelectionContainer?: HTMLDivElement
     private cursorSelectionContainer?: HTMLDivElement
-    private canvasToolsContainer?: HTMLDivElement
 
     private editModeEnabled = false
 
@@ -55,7 +54,6 @@ export class GraphToolbar implements UIElement {
         this.toolbar.appendChild(this.buildWithNodeSelectionContainer())
         this.toolbar.appendChild(this.buildWithEdgeSelectionContainer())
         this.toolbar.appendChild(this.buildCursorSelectionContainer())
-        this.toolbar.appendChild(this.buildCanvasToolsContainer())
 
         const buttonContainer = createHtmlElement('span', { 'class': 'edit-mode-button-container' }, [this.enableEditModeButton])
         this.toolbar.appendChild(buttonContainer)
@@ -95,6 +93,12 @@ export class GraphToolbar implements UIElement {
 
     afterMount() {
         if (!this.toolbar) return
+
+        this.uiManager.keyManager.register({
+            key: 'e', callback: () => {
+                this.toggleEditMode()
+            }
+        })
     }
 
     graphReady() {
@@ -143,7 +147,6 @@ export class GraphToolbar implements UIElement {
             this.hideGroup(this.withEdgeSelectionContainer)
             this.hideGroup(this.withNodeSelectionContainer)
             this.hideGroup(this.cursorSelectionContainer)
-            this.hideGroup(this.canvasToolsContainer)
 
             return
         }
@@ -166,13 +169,11 @@ export class GraphToolbar implements UIElement {
             }
             this.hideGroup(this.noSelectionContainer)
             this.hideGroup(this.cursorSelectionContainer)
-            this.hideGroup(this.canvasToolsContainer)
         } else {
             this.hideGroup(this.withNodeSelectionContainer)
             this.hideGroup(this.withEdgeSelectionContainer)
             this.showGroup(this.noSelectionContainer)
             this.showGroup(this.cursorSelectionContainer)
-            this.showGroup(this.canvasToolsContainer)
         }
     }
 
@@ -364,39 +365,6 @@ export class GraphToolbar implements UIElement {
         this.cursorSelectionContainer.appendChild(pathSelectionButton)
 
         return this.cursorSelectionContainer
-    }
-
-    private buildCanvasToolsContainer(): HTMLDivElement {
-        this.canvasToolsContainer = createHtmlTemplate(`
-        <div class="pvt-toolbar-group"></div>
-    `) as HTMLDivElement
-
-        const highlightGridButton = createButton({
-            variant: 'secondary',
-            text: 'Grid',
-            tooltip: 'Highlight the grid',
-            size: 'sm',
-            svgIcon: grid,
-            onClick: () => {
-                //
-            }
-        })
-
-        const snapToGridButton = createButton({
-            variant: 'secondary',
-            text: 'Snap',
-            tooltip: 'Snap nodes to grid',
-            size: 'sm',
-            svgIcon: snapGrid,
-            onClick: () => {
-                //
-            }
-        })
-
-        this.canvasToolsContainer.appendChild(highlightGridButton)
-        this.canvasToolsContainer.appendChild(snapToGridButton)
-
-        return this.canvasToolsContainer
     }
 }
 

@@ -1,4 +1,5 @@
-import { fullscreen, fullscreenExit, graphNavigationReset, graphNavigationZoomIn, graphNavigationZoomOut } from '../../icons'
+import { PivotickDropdown } from '../../components/Dropdown'
+import { fullscreen, fullscreenExit, graphNavigationReset, graphNavigationZoomIn, graphNavigationZoomOut, grid, sliderTune, snapGrid } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import './graphNavigation.scss'
 
@@ -48,6 +49,11 @@ export class GraphNavigation implements UIElement {
            <span style="display: none">${fullscreenExit}</span>
         </button>
     </div>
+    <div class="pvt-graphnavigation-options">
+        <button id="pvt-graphnavigation-options" class="pvt-graphnavigation-options-button" title="Open options">
+           ${sliderTune}
+        </button>
+    </div>
   </div>
 `
         this.navigation = template.content.firstElementChild as HTMLDivElement
@@ -71,6 +77,7 @@ export class GraphNavigation implements UIElement {
         const zoomOutButton = this.navigation.querySelector('#pvt-graphnavigation-zoom-out')
         const resetButton = this.navigation.querySelector('#pvt-graphnavigation-reset')
         const fullscreenButton: HTMLButtonElement | null = this.navigation.querySelector('#pvt-graphnavigation-fullscreen')
+        const optionsButton: HTMLButtonElement | null = this.navigation.querySelector('#pvt-graphnavigation-options')
         
         zoomInButton?.addEventListener('click', () => {
             this.uiManager.graph.renderer.zoomIn()
@@ -87,6 +94,30 @@ export class GraphNavigation implements UIElement {
         fullscreenButton?.addEventListener('click', () => {
             this.uiManager.toggleFullscreen()
         })
+
+        if (optionsButton) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const dropdown = new PivotickDropdown(optionsButton, [
+                {
+                    id: 'highligh-grid',
+                    svgIcon: grid,
+                    text: 'Highlight grid',
+                    disabled: true,
+                    onClick: () => {
+                        // FIXME: Implement grid highlighting
+                    }
+                },
+                {
+                    id: 'snap-to-grid',
+                    svgIcon: snapGrid,
+                    text: 'Snap to grid',
+                    disabled: true,
+                    onClick: () => {
+                        // FIXME: Implement grid snapping
+                    }
+                },
+            ])
+        }
 
         if (fullscreenButton) {
             this.updateFullscreenIcon(fullscreenButton)

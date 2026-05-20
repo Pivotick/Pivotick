@@ -14,6 +14,10 @@
     .edit-mode-button-container {
         margin-left: auto;
 
+        button {
+            margin: 0 2px;
+        }
+
         .pvt-keyboard-shortcut {
             border-color: var(--pvt-bg-color-9);
         }
@@ -45,7 +49,7 @@
         align-items: center;
         box-sizing: border-box;
         width: 100%;
-        padding: 2px 8px;
+        padding: 0;
         overflow: hidden;
 
         .pvt-toolbar-group {
@@ -54,7 +58,6 @@
             flex-shrink: 0;
             flex-direction: row;
             gap: 4px;
-            padding: 2px 0 2px 0;
             border-right: 0px solid transparent;
             opacity: 0;
             pointer-events: none;
@@ -79,6 +82,15 @@
                 margin-right: 10px;
                 border-right-color: var(--pvt-bg-color-9);
 
+            }
+
+            &:first-child {
+                margin-left: 6px;
+            }
+
+            button {
+                padding: 3px 6px;
+                font-size: 0.9rem;
             }
         }
     }
