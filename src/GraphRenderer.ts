@@ -28,6 +28,7 @@ export abstract class GraphRenderer {
     abstract nextTick(): void
     abstract nextTickFor(nodes: Node[]): void
     abstract getZoomBehavior(): unknown
+    abstract toggleLassoMode(enabled: boolean): unknown
     abstract getSelectionBox(): AbstractSelectionBox | null
     abstract getGraphInteraction(): GraphInteractions<unknown>
     abstract getCanvasSelection(): unknown

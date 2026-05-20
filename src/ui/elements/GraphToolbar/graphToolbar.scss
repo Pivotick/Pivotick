@@ -49,7 +49,7 @@
         align-items: center;
         box-sizing: border-box;
         width: 100%;
-        padding: 0;
+        padding: 0 6px;
         overflow: hidden;
 
         .pvt-toolbar-group {
@@ -61,7 +61,6 @@
             border-right: 0px solid transparent;
             opacity: 0;
             pointer-events: none;
-            // max-width: 0;
             overflow: hidden;
             white-space: nowrap;
             transition:
@@ -84,14 +83,23 @@
 
             }
 
-            &:first-child {
-                margin-left: 6px;
-            }
-
             button {
                 padding: 3px 6px;
                 font-size: 0.9rem;
             }
         }
     }
+}
+
+.canvas--lasso-mode {
+    cursor: crosshair;
+}
+
+.canvas--lasso-mode.is-dragging {
+    cursor: grabbing;
+}
+
+button.is-active {
+    background: var(--color-primary);
+    color: white;
 }

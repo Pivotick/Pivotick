@@ -33,6 +33,7 @@
 
     &:disabled {
         background-color: color-mix(in srgb, var($bg-color) 75%, black);
+        color: color-mix(in srgb, var($bg-text-color) 75%, black);
         cursor: not-allowed;
         transform: none;
     }

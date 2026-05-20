@@ -15,6 +15,7 @@ export type ButtonOptions<TArgs extends unknown[] = []> = {
     imagePath?: ImagePath,
     text?: string,
     childElement?: HTMLElement,
+    disabled?: boolean,
     [key: string]: unknown // allow other attributes like id, className, etc.
 }
 
@@ -30,6 +31,7 @@ export function createButton<TArgs extends unknown[] = []>(options: ButtonOption
         iconClass,
         svgIcon,
         imagePath,
+        disabled,
         text,
         childElement,
         ...attrs
@@ -72,6 +74,10 @@ export function createButton<TArgs extends unknown[] = []>(options: ButtonOption
     if (iconEl) {
         btn.append(iconEl)
         iconEl.style.marginRight = '0.3em'
+    }
+
+    if(disabled !== undefined) {
+        btn.disabled = disabled
     }
 
     if (text) {

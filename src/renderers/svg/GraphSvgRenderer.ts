@@ -256,6 +256,8 @@ export class GraphSvgRenderer extends GraphRenderer {
 
     private edgeSelection!: Selection<SVGGElement, Edge, SVGGElement, unknown>
 
+    private lassoModeActive = false
+
     constructor(graph: Graph, container: HTMLElement, graphInteraction: GraphInteractions<SVGGElement | SVGPathElement>, options: Partial<GraphRendererOptions>) {
         super(graph, container, options)
 
@@ -294,7 +296,25 @@ export class GraphSvgRenderer extends GraphRenderer {
                     return false
 
                 const target = event.target as HTMLElement
-                return !(target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA')
+                if (
+                    target.tagName === 'INPUT' ||
+                    target.tagName === 'SELECT' ||
+                    target.tagName === 'TEXTAREA'
+                ) {
+                    return false
+                }
+
+                // In lasso mode:
+                // block LEFT mouse drag panning only
+                // but still allow: wheel zoom, middle mouse pan, touchpad gestures
+                if (this.lassoModeActive) {
+                    if (event.type === 'wheel') return true
+                    if (event.button === 1) return true
+
+                    return false // block left click drag
+                }
+
+                return true
             })
             .scaleExtent([this.options.minZoom, this.options.maxZoom])
             .on('zoom', (event) => {
@@ -638,5 +658,9 @@ export class GraphSvgRenderer extends GraphRenderer {
 
     public getEventHandler(): EventHandler {
         return this.eventHandler
+    }
+
+    public toggleLassoMode(enabled: boolean) {
+        this.lassoModeActive = enabled
     }
 }

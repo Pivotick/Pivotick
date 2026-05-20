@@ -1,7 +1,7 @@
 
 import { createHtmlElement, createHtmlTemplate } from '../../../utils/ElementCreation'
 import { createButton } from '../../components/Button'
-import { addCircle, bidirectional, bulkEdit, edit, editMode, grid, groupNodes, lassoTool, pathSelection, reverseEdge, selectionInverse, stickyNote, trash, ungroupNodes } from '../../icons'
+import { addCircle, bidirectional, bulkEdit, edit, editMode, groupNodes, lassoTool, pathSelection, reverseEdge, selectionInverse, stickyNote, trash, ungroupNodes } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import './graphToolbar.scss'
 
@@ -11,8 +11,6 @@ export class GraphToolbar implements UIElement {
 
     public toolbar?: HTMLDivElement
     private container?: HTMLElement
-    private enableEditModeButton?: HTMLButtonElement
-    private editModeButtonText?: SVGTextElement
 
     private noSelectionContainer?: HTMLDivElement
     private withNodeSelectionContainer?: HTMLDivElement
@@ -20,6 +18,11 @@ export class GraphToolbar implements UIElement {
     private cursorSelectionContainer?: HTMLDivElement
 
     private editModeEnabled = false
+    private lassoModeEnabled = false
+
+    private enableEditModeButton?: HTMLButtonElement
+    private editModeButtonText?: SVGTextElement
+    private enableLassoModeButton?: HTMLButtonElement
 
     constructor(uiManager: UIManager) {
         this.uiManager = uiManager
@@ -170,6 +173,7 @@ export class GraphToolbar implements UIElement {
             this.hideGroup(this.noSelectionContainer)
             this.hideGroup(this.cursorSelectionContainer)
         } else {
+            this.editModeButtonText!.textContent = 'Editing'
             this.hideGroup(this.withNodeSelectionContainer)
             this.hideGroup(this.withEdgeSelectionContainer)
             this.showGroup(this.noSelectionContainer)
@@ -195,8 +199,8 @@ export class GraphToolbar implements UIElement {
             text: 'Add Node',
             size: 'sm',
             svgIcon: addCircle,
+            disabled: true,
             onClick: () => {
-                //
             }
         })
 
@@ -205,8 +209,8 @@ export class GraphToolbar implements UIElement {
             text: 'Sticky Note',
             size: 'sm',
             svgIcon: stickyNote,
+            disabled: true,
             onClick: () => {
-                //
             }
         })
 
@@ -327,14 +331,14 @@ export class GraphToolbar implements UIElement {
         <div class="pvt-toolbar-group"></div>
     `) as HTMLDivElement
 
-        const lassoSelectionButton = createButton({
+        this.enableLassoModeButton = createButton({
             variant: 'secondary',
             text: 'Lasso',
             tooltip: 'Select nodes using a lasso tool',
             size: 'sm',
             svgIcon: lassoTool,
             onClick: () => {
-                //
+                this.toggleLassoMode()
             }
         })
 
@@ -360,11 +364,30 @@ export class GraphToolbar implements UIElement {
             }
         })
 
-        this.cursorSelectionContainer.appendChild(lassoSelectionButton)
+        this.cursorSelectionContainer.appendChild(this.enableLassoModeButton)
         this.cursorSelectionContainer.appendChild(inverseSelectionButton)
         this.cursorSelectionContainer.appendChild(pathSelectionButton)
 
         return this.cursorSelectionContainer
+    }
+
+    public toggleLassoMode() {
+        if (!this.enableLassoModeButton) return
+        const canvas: HTMLDivElement | undefined = this.uiManager.layout?.canvas
+        if (!canvas) return
+
+        this.lassoModeEnabled = !this.lassoModeEnabled
+
+
+        // active state
+        this.enableLassoModeButton.classList.toggle('pivotick-button-secondary', !this.lassoModeEnabled)
+        this.enableLassoModeButton.classList.toggle('pivotick-button-primary', this.lassoModeEnabled)
+
+        // update canvas cursor
+        canvas.classList.toggle('canvas--lasso-mode', this.lassoModeEnabled)
+
+        // disable panning while lasso mode is active
+        this.uiManager.graph.renderer.toggleLassoMode(this.lassoModeEnabled)
     }
 }
 
