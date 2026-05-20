@@ -2,10 +2,14 @@
     position: fixed;
     min-width: 120px;
     display: none;
+
+    transform: translateY(-6px);
+    opacity: 0;
 }
 
 .pvt-dropdown.open {
     display: block;
+    animation: pvt-dropdown-open 120ms ease-out forwards;
 }
 
 .pvt-dropdown__menu {
@@ -69,4 +73,16 @@
 
 .pvt-dropdown__label {
     flex: 1;
+}
+
+@keyframes pvt-dropdown-open {
+    from {
+        transform: translateY(-6px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
