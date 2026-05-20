@@ -1,11 +1,12 @@
 import { select as d3Select, type Selection } from 'd3-selection'
 // import 'd3-transition'
 import { transition as d3Transition } from 'd3-transition'
-import { zoom as d3Zoom, type ZoomBehavior, zoomIdentity as d3ZoomIdentity } from 'd3-zoom'
+import { zoom as d3Zoom, type ZoomBehavior, zoomIdentity as d3ZoomIdentity, zoomTransform, ZoomTransform } from 'd3-zoom'
 import { Edge } from '../../Edge'
 import { Node } from '../../Node'
 import { NodeDrawer } from './NodeDrawer'
 import { EdgeDrawer } from './EdgeDrawer'
+import { LassoOverlay } from './LassoOverlay'
 import { EventHandler } from './EventHandler'
 import type { Graph } from '../../Graph'
 import merge from 'lodash.merge'
@@ -239,12 +240,13 @@ export class GraphSvgRenderer extends GraphRenderer {
     public graphInteraction: GraphInteractions<SVGGElement | SVGPathElement>
     public nodeDrawer: NodeDrawer
     public edgeDrawer: EdgeDrawer
+    public lassoOverlay: LassoOverlay
 
     private svgCanvas: SVGSVGElement
     // private progressBar: SVGRectElement
 
-    private svg: Selection<SVGSVGElement, unknown, null, undefined>
-    private zoomGroup: Selection<SVGGElement, unknown, null, undefined>
+    public svg: Selection<SVGSVGElement, unknown, null, undefined>
+    public zoomGroup: Selection<SVGGElement, unknown, null, undefined>
     private edgeGroup: Selection<SVGGElement, unknown, null, undefined>
     private nodeGroup: Selection<SVGGElement, unknown, null, undefined>
     private selectionBoxGroup: Selection<SVGGElement, unknown, null, undefined>
@@ -284,6 +286,8 @@ export class GraphSvgRenderer extends GraphRenderer {
         this.nodeGroup = this.zoomGroup.append('g').attr('class', 'nodes')
         this.defs = this.svg.append('defs')
         this.edgeDrawer.renderDefinitions()
+
+        this.lassoOverlay = new LassoOverlay(this.options, this.graph, this)
 
         this.zoom = d3Zoom<SVGSVGElement, unknown>()
         this.zoom = this.zoom
@@ -354,6 +358,10 @@ export class GraphSvgRenderer extends GraphRenderer {
 
     public getZoomBehavior(): ZoomBehavior<SVGSVGElement, unknown> {
         return this.zoom
+    }
+
+    public getZoomTransform(): ZoomTransform {
+        return zoomTransform(this.svgCanvas)
     }
 
     public getSelectionBox(): SelectionBox | null {
@@ -662,5 +670,10 @@ export class GraphSvgRenderer extends GraphRenderer {
 
     public toggleLassoMode(enabled: boolean) {
         this.lassoModeActive = enabled
+        this.lassoOverlay.setEnabled(enabled)
+    }
+
+    public isLassoModeActive(): boolean {
+        return this.lassoModeActive
     }
 }

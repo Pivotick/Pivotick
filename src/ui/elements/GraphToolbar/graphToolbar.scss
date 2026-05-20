@@ -91,7 +91,7 @@
     }
 }
 
-.canvas--lasso-mode {
+.pvt-canvas.canvas--lasso-mode {
     cursor: crosshair;
 }
 
@@ -99,7 +99,10 @@
     cursor: grabbing;
 }
 
-button.is-active {
-    background: var(--color-primary);
-    color: white;
+.pvt-lasso-overlay polyline {
+    fill: var(--pvt-selection-rectangle-fill);
+    stroke: var(--pvt-selection-rectangle-stroke);
+    stroke-width: 2;
+    stroke-dasharray: 4 4;
+    pointer-events: none;
 }

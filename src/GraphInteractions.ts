@@ -164,6 +164,8 @@ export class GraphInteractions<TElement = unknown> {
     }
 
     public canvasClick(event: PointerEvent): void {
+        if (this.graph.renderer.isLassoModeActive()) return
+
         this.unselectAll()
         this.emit('canvasClick', event)
         if (this.callbacks.onCanvasClick && typeof this.callbacks.onCanvasClick === 'function') {

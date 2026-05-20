@@ -102,6 +102,15 @@ export class GraphToolbar implements UIElement {
                 this.toggleEditMode()
             }
         })
+
+        this.uiManager.keyManager.register({
+            key: 'Escape',
+            callback: () => {
+                if (this.lassoModeEnabled) {
+                    this.toggleLassoMode()
+                }
+            }
+        })
     }
 
     graphReady() {
