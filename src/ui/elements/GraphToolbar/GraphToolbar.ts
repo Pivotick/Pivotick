@@ -163,6 +163,8 @@ export class GraphToolbar implements UIElement {
             return
         }
 
+        this.showGroup(this.cursorSelectionContainer)
+
         const interaction = this.uiManager.graph.renderer.getGraphInteraction()
 
         const nodeSelectionCount = (interaction.getSelectedNodeIDs() ?? []).length
@@ -180,13 +182,11 @@ export class GraphToolbar implements UIElement {
                 this.showGroup(this.withEdgeSelectionContainer)
             }
             this.hideGroup(this.noSelectionContainer)
-            this.hideGroup(this.cursorSelectionContainer)
         } else {
             this.editModeButtonText!.textContent = 'Editing'
             this.hideGroup(this.withNodeSelectionContainer)
             this.hideGroup(this.withEdgeSelectionContainer)
             this.showGroup(this.noSelectionContainer)
-            this.showGroup(this.cursorSelectionContainer)
         }
     }
 
@@ -358,7 +358,7 @@ export class GraphToolbar implements UIElement {
             size: 'sm',
             svgIcon: selectionInverse,
             onClick: () => {
-                //
+                this.inverseSelection()
             }
         })
 
@@ -368,8 +368,8 @@ export class GraphToolbar implements UIElement {
             tooltip: 'Select all nodes traversed by the shortest path between 2 selected nodes',
             size: 'sm',
             svgIcon: pathSelection,
+            disabled: true,
             onClick: () => {
-                //
             }
         })
 
@@ -397,6 +397,24 @@ export class GraphToolbar implements UIElement {
 
         // disable panning while lasso mode is active
         this.uiManager.graph.renderer.toggleLassoMode(this.lassoModeEnabled)
+    }
+
+    private inverseSelection() {
+        const interaction = this.uiManager.graph.renderer.getGraphInteraction()
+
+        const selectedNodeIDs = new Set(
+            interaction.getSelectedNodeIDs()
+        )
+
+        const invertedSelection = this.uiManager.graph
+            .getMutableNodes()
+            .filter(node => !selectedNodeIDs.has(node.id))
+            .map(node => ({
+                node,
+                element: node.getGraphElement() as SVGGElement
+            }))
+
+        interaction.selectNodes(invertedSelection)
     }
 }
 
