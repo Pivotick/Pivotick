@@ -77,6 +77,10 @@ export class GraphToolbar implements UIElement {
             this.editModeEnabled
         )
 
+        if (!this.editModeEnabled) {
+            this.toggleLassoMode(false)
+        }
+
         const textElement =
             this.enableEditModeButton?.querySelector('text')
 
@@ -191,11 +195,27 @@ export class GraphToolbar implements UIElement {
     }
 
     private showGroup(element?: HTMLElement) {
-        element?.classList.add('visible')
+        if (!element || element.classList.contains('visible')) return
+
+        const width = element.scrollWidth
+        element.style.setProperty('--group-width', `${width}px`)
+        element.classList.remove('hiding')
+        requestAnimationFrame(() => {
+            element.classList.add('visible')
+        })
+        element.addEventListener('transitionend', (e) => {
+            if (
+                e.propertyName === 'width' &&
+                element.classList.contains('hiding')
+            ) {
+                element.classList.remove('hiding')
+            }
+        })
     }
 
     private hideGroup(element?: HTMLElement) {
         element?.classList.remove('visible')
+        element?.classList.add('hiding')
     }
 
     private buildNoSelectionContainer(): HTMLDivElement {
@@ -380,12 +400,16 @@ export class GraphToolbar implements UIElement {
         return this.cursorSelectionContainer
     }
 
-    public toggleLassoMode() {
+    public toggleLassoMode(enabled?: boolean) {
         if (!this.enableLassoModeButton) return
         const canvas: HTMLDivElement | undefined = this.uiManager.layout?.canvas
         if (!canvas) return
 
-        this.lassoModeEnabled = !this.lassoModeEnabled
+        if (enabled !== undefined) {
+            this.lassoModeEnabled = enabled
+        } else {
+            this.lassoModeEnabled = !this.lassoModeEnabled
+        }
 
 
         // active state

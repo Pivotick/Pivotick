@@ -53,34 +53,49 @@
         overflow: hidden;
 
         .pvt-toolbar-group {
-            display: none;
+            display: inline-flex;
             align-items: center;
             flex-shrink: 0;
             flex-direction: row;
             gap: 4px;
             border-right: 0px solid transparent;
             opacity: 0;
+            width: 0;
+            margin-right: 0;
+            padding-right: 0;
             pointer-events: none;
             overflow: hidden;
             white-space: nowrap;
             transition:
                 opacity 90ms ease,
-                transform 180ms ease,
-                max-width 180ms ease,
-                padding 180ms ease,
-                margin 180ms ease;
+                transform 180ms cubic-bezier(.2, .8, .2, 1),
+                width 180ms cubic-bezier(.2, .8, .2, 1),
+                margin 180ms cubic-bezier(.2, .8, .2, 1),
+                padding 180ms cubic-bezier(.2, .8, .2, 1);
 
             &.visible {
                 display: inline-flex;
                 opacity: 1;
-                // max-width: 500px;
+                max-width: 999px;
                 pointer-events: auto;
+                width: var(--group-width);
 
                 border-right-width: 1px;
                 padding-right: 10px;
                 margin-right: 10px;
                 border-right-color: var(--pvt-bg-color-9);
 
+            }
+
+            &.hiding {
+                opacity: 0;
+                pointer-events: none;
+            
+                width: 0;
+                padding-right: 0;
+                margin-right: 0;
+            
+                border-right-width: 0;
             }
 
             button {
