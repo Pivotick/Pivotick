@@ -142,6 +142,14 @@ export function tryResolveHTMLElement<T extends unknown[]>(
         const span = document.createElement('span')
         span.textContent = trimmed
         return span
+    } else if (typeof input === 'boolean') {
+        const span = document.createElement('span')
+        span.textContent = input
+        return span
+    } else if (typeof input === 'object') {
+        const span = document.createElement('span')
+        span.textContent = JSON.stringify(input, undefined, 2)
+        return span
     } else if (typeof input === 'function') {
         const result = input(...args)
         if (typeof result === 'string') {
