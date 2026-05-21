@@ -1,0 +1,56 @@
+
+#inspect-node-modal.pvt-modal {
+
+    .pvt-modal__header {
+        .main-container {
+            display: flex;
+            flex-direction: row;
+            gap: 8px;
+
+            .icon-container {
+                margin-right: 8px;
+            }
+        
+            .nodeinfo-container {
+                display: flex;
+                align-items: center;
+
+                .nodeinfo-name {
+        
+                }
+                .nodeinfo-name {
+        
+                }
+            }
+        }
+    }
+
+    .pvt-modal__body {
+        font-family: monospace;
+        height: 100%;
+    }
+}
+
+.inspect-node-modal-body {
+    height: 100%;
+    padding: 12px;
+
+    .pivotick-tabs {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+
+        .pivotick-tab-panels {
+            padding: 1em;
+        }
+    }
+
+    .inspect-node-json-pre {
+        margin: 0;
+        overflow: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-family: monospace;
+        font-size: 0.9rem;
+    }
+}

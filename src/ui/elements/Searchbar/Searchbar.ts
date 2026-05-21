@@ -5,7 +5,7 @@ import './searchbar.scss'
 import { Node } from '../../../Node'
 import type { SlidePanel } from '../SlidePanel/SlidePanel'
 import { GraphFilter } from '../GraphFilter/GraphFilter'
-import type { Modal } from '../Modal/Modal'
+import type { Modal } from '../../components/Modal'
 
 export class Searchbar implements UIElement {
     private uiManager: UIManager

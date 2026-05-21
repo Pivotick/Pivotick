@@ -7,7 +7,7 @@ import { Layout } from './elements/Layout'
 import { Sidebar } from './elements/Sidebar/Sidebar'
 import { SlidePanel, type SlidepanelOptions } from './elements/SlidePanel/SlidePanel'
 import { Searchbar } from './elements/Searchbar/Searchbar'
-import { Modal, type ModalOptions } from './elements/Modal/Modal'
+import { Modal, type ModalOptions } from './components/Modal'
 import type { Notification } from './Notifier'
 import merge from 'lodash.merge'
 import { Tooltip } from './elements/Tooltip/Tooltip'
@@ -15,6 +15,8 @@ import { ContextMenu } from './elements/ContextMenu/ContextMenu'
 import type { GraphUI, PropertyEntry } from '../interfaces/GraphUI'
 import { KeybindingManager } from './KeybindingManager'
 import { GraphToolbar } from './elements/GraphToolbar/GraphToolbar'
+import { nodeDescriptionGetter, nodeNameGetter } from '../utils/GraphGetters'
+import { createHtmlTemplate } from '../utils/ElementCreation'
 
 const basicPropertyGetter = (element: Node | Edge): PropertyEntry[] => {
     const properties = []

@@ -1,6 +1,6 @@
-import { createButton, type ButtonOptions } from '../../components/Button'
-import type { UIElement, UIManager } from '../../UIManager'
-import './modal.scss'
+import { createButton, type ButtonOptions } from './Button'
+import type { UIElement, UIManager } from '../UIManager'
+import './../../styles/components/modal.scss'
 
 
 export interface ModalEvents {
@@ -11,6 +11,7 @@ export interface ModalEvents {
 }
 
 export interface ModalOptions extends Partial<ModalEvents> {
+    id?: string
     /**
      * Title or header of the modal. Encode passed string by default
      */
@@ -91,6 +92,9 @@ export class Modal implements UIElement {
 
         this.modal = document.createElement('div')
         this.modal.className = 'pvt-modal'
+        if (this.options.id) {
+            this.modal.id = this.options.id
+        }
 
         const size = this.options.size ?? 'md'
         this.modal.classList.add(`pvt-modal-${size}`)

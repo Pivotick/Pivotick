@@ -6,6 +6,8 @@ import type { UIElement, UIManager } from '../../UIManager'
 import './contextmenu.scss'
 import { deepMerge } from '../../../utils/utils'
 import type { MenuActionItemOptions, MenuQuickActionItemOptions } from '../../../interfaces/GraphUI'
+import { nodeNameGetter } from '../../../utils/GraphGetters'
+import { createInspectModal } from '../modals/InspectNodeModal/InspectNodeModal'
 
 const defaultMenuNode = {
     topbar: [
@@ -106,7 +108,7 @@ const defaultMenuNode = {
                 return true
             },
             onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
-                this.uiManager.graph.renderer.getGraphInteraction().selectNode(node.getGraphElement(), node)
+                createInspectModal(node, this.uiManager)
             },
         },
     ] as MenuActionItemOptions[],
