@@ -145,10 +145,6 @@ export class Modal implements UIElement {
 
     public destroy() {
         this.hide()
-        requestAnimationFrame(() => {
-            this.overlay?.remove()
-            this.overlay = undefined
-        })
     }
 
     public afterMount() {
