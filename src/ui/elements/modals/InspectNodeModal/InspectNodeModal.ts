@@ -1,6 +1,7 @@
 import { Node } from '../../../../Node'
-import { createHtmlTemplate } from '../../../../utils/ElementCreation'
-import { nodeDescriptionGetter, nodeNameGetter } from '../../../../utils/GraphGetters'
+import { createHtmlDL, createHtmlTemplate } from '../../../../utils/ElementCreation'
+import { nodeDescriptionGetter, nodeNameGetter, nodePropertiesGetter } from '../../../../utils/GraphGetters'
+import { createJsonViewer } from '../../../components/JsonViewer'
 import type { ModalHTMLElement } from '../../../components/Modal'
 import { createTabs } from '../../../components/Tabs'
 import type { UIManager } from '../../../UIManager'
@@ -52,28 +53,22 @@ export function createInspectModal(node: Node, uiManager: UIManager): void {
 }
 
 function createNodePropertiesTab(node: Node, uiManager: UIManager): HTMLDivElement {
-    // Placeholder implementation.
-    // You'll replace this with a richer inspector later.
-    return createHtmlTemplate(`
-        <div class="inspect-node-properties-tab">
-            Properties view coming soon.
-        </div>
-    `) as HTMLDivElement
+    const container = createHtmlTemplate('<div class="inspect-node-properties-tab"></div>') as HTMLDivElement
+    const dlContainer = createHtmlTemplate('<div class="dl-container"></div>') as HTMLDivElement
+    if (dlContainer) {
+        const properties = nodePropertiesGetter(node, uiManager.getOptions().propertiesPanel)
+        dlContainer.append(createHtmlDL(properties, node))
+    }
+
+    container.appendChild(dlContainer)
+    return container
 }
 
 function createNodeJsonTab(node: Node): HTMLDivElement {
     const container = document.createElement('div')
     container.classList.add('inspect-node-json-tab')
-
-    const pre = document.createElement('pre')
-    pre.classList.add('inspect-node-json-pre')
-
-    const code = document.createElement('code')
-    code.classList.add('inspect-node-json-code')
-    code.textContent = JSON.stringify(node.getData(), null, 2)
-
-    pre.appendChild(code)
-    container.appendChild(pre)
+    const jsonViewer = createJsonViewer(JSON.parse(JSON.stringify(node.getData())))
+    container.appendChild(jsonViewer)
 
     return container
 }

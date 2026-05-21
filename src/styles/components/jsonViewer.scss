@@ -1,0 +1,92 @@
+.pvt-json-viewer {
+    height: 100%;
+    overflow: auto;
+    background: var(--pvt-json-background);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.875rem;
+}
+
+.pvt-json-viewer__toolbar {
+    position: sticky;
+    top: 0;
+    display: flex;
+    justify-content: flex-end;
+    padding: 0.5rem;
+    border-bottom: 1px solid var(--pvt-json-border);
+    background: inherit;
+    z-index: 1;
+}
+
+.pvt-json-viewer__copy-btn {
+    cursor: pointer;
+}
+
+.pvt-json-viewer__body {
+    padding: 0.5rem 0;
+}
+
+.pvt-json-viewer__line {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+}
+
+.pvt-json-viewer__line-number {
+    text-align: right;
+    padding-right: 12px;
+    color: var(--pvt-text-color-2);
+    user-select: none;
+    border-right: 1px solid var(--pvt-json-border);
+}
+
+.pvt-json-viewer__line-content {
+    white-space: nowrap;
+}
+
+.pvt-json-viewer__details {
+    display: block;
+}
+
+.pvt-json-viewer__summary {
+    cursor: pointer;
+    list-style: none;
+}
+
+.pvt-json-viewer__summary::-webkit-details-marker {
+    display: none;
+}
+
+.pvt-json-viewer__children {
+    display: block;
+}
+
+.pvt-json-viewer__meta {
+    color: var(--pvt-text-color-2);
+    user-select: none;
+    margin-left: 8px;
+    font-size: 0.75rem;
+}
+
+.json-key {
+    color: var(--pvt-json-key);
+}
+
+.json-string {
+    color: var(--pvt-json-string);
+}
+
+.json-number {
+    color: var(--pvt-json-number);
+}
+
+.json-boolean {
+    color: var(--pvt-json-boolean);
+}
+
+.json-null {
+    color: var(--pvt-json-null);
+    font-style: italic;
+}
+
+.json-bracket {
+    color: var(--pvt-json-bracket);
+}

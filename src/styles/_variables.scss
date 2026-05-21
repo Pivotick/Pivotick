@@ -210,6 +210,15 @@ $light-theme: (
     pvt-inline-bar-shadow: "color-mix(in srgb, var(--pvt-text-color-6) 15%, transparent) 0px 1px 1px 0px,"
         "color-mix(in srgb, var(--pvt-text-color-6) 10%, transparent) 0px 0px 2px 0px,"
         "inset 0 1px 2px rgba(0, 0, 0, 0.05)",
+
+    pvt-json-background: var(--pvt-bg-color-3),
+    pvt-json-border: var(--pvt-bg-color-7),
+    pvt-json-key: #b54708,
+    pvt-json-string: #067647,
+    pvt-json-number: #175cd3,
+    pvt-json-boolean: #7a3e9d,
+    pvt-json-null: #98a2b3,
+    pvt-json-bracket: var(--pvt-text-color-3),
 );
 
 
@@ -435,6 +444,15 @@ $dark-theme: (
     pvt-inline-bar-height: 0.5rem,
     pvt-inline-bar-width: 80px,
     pvt-inline-bar-shadow: inset 0 1px 2px var(--pvt-bg-color-0),
+
+    pvt-json-background: var(--pvt-bg-color-5),
+    pvt-json-border: var(--pvt-bg-color-7),
+    pvt-json-key: #b5602e,
+    pvt-json-string: #239867,
+    pvt-json-number: #3975de,
+    pvt-json-boolean: #9564b2,
+    pvt-json-null: #98a2b3,
+    pvt-json-bracket: var(--pvt-text-color-3),
 );
 
 
