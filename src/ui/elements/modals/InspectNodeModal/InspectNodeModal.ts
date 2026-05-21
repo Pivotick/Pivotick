@@ -1,6 +1,7 @@
 import { Node } from '../../../../Node'
 import { createHtmlTemplate } from '../../../../utils/ElementCreation'
 import { nodeDescriptionGetter, nodeNameGetter } from '../../../../utils/GraphGetters'
+import type { ModalHTMLElement } from '../../../components/Modal'
 import { createTabs } from '../../../components/Tabs'
 import type { UIManager } from '../../../UIManager'
 import './inspectNodeModal.scss'
@@ -32,6 +33,11 @@ export function createInspectModal(node: Node, uiManager: UIManager): void {
 
     const body = createInspectModalBody(node, uiManager)
 
+    const previousInstance = document.querySelector('#inspect-node-modal') as ModalHTMLElement | null
+    if (previousInstance) {
+        previousInstance.__modalInstance?.destroy()
+    }
+    
     uiManager.createModal({
         id: 'inspect-node-modal',
         rawHeader: true,

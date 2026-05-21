@@ -2,6 +2,9 @@ import { createButton, type ButtonOptions } from './Button'
 import type { UIElement, UIManager } from '../UIManager'
 import './../../styles/components/modal.scss'
 
+export interface ModalHTMLElement extends HTMLDivElement {
+    __modalInstance?: Modal
+}
 
 export interface ModalEvents {
     onShow?: () => void
@@ -42,7 +45,7 @@ export class Modal implements UIElement {
     private options: ModalOptions
 
     private overlay: HTMLDivElement | undefined
-    public modal: HTMLDivElement | undefined
+    public modal: ModalHTMLElement | undefined
     private header: HTMLDivElement | undefined
     private body: HTMLDivElement | undefined
     private footer: HTMLDivElement | undefined
@@ -92,6 +95,7 @@ export class Modal implements UIElement {
 
         this.modal = document.createElement('div')
         this.modal.className = 'pvt-modal'
+        this.modal.__modalInstance = this
         if (this.options.id) {
             this.modal.id = this.options.id
         }
