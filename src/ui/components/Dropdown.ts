@@ -15,7 +15,7 @@ export type DropdownOption = {
     text?: string
     html?: HTMLElement
     disabled?: boolean
-    onClick?: (option: DropdownOption, dropdown: PivotickDropdown) => void
+    onClick?: (option: DropdownOption, dropdown: PivotickDropdown, target: HTMLButtonElement) => void
 }
 
 export interface DropdownOptions {
@@ -68,10 +68,12 @@ export class PivotickDropdown {
 
         this.options.forEach((option) => {
             const item = document.createElement('button')
+            const variant = option.variant ?? 'outline-primary'
 
             item.type = 'button'
             item.className = 'pvt-dropdown__item'
 
+            item.classList.add(`${variant}`)
             if (option.disabled) {
                 item.disabled = true
                 item.classList.add('disabled')
@@ -117,7 +119,7 @@ export class PivotickDropdown {
 
                 if (option.disabled) return
 
-                option.onClick?.(option, this)
+                option.onClick?.(option, this, item)
 
                 if (this.config.closeOnSelect) {
                     this.close()

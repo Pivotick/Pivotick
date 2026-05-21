@@ -13,49 +13,93 @@
 }
 
 .pvt-dropdown__menu {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
     background-color: color-mix(in srgb, var(--pvt-bg) 80%, white);
     box-shadow: var(--pvt-graph-navigation-control-container-shadow);
     border-radius: 4px;
     padding: 6px;
 }
 
-.pvt-dropdown__item {
+@mixin dropdown-item {
     width: 100%;
-    border: 0;
+    border: none;
     display: flex;
     align-items: center;
     gap: 6px;
     text-align: left;
-    border: none;
     background: none;
-    padding: 3px;
+    padding: 4px 6px;
     cursor: pointer;
-    font-size: 0.95rem;
-    color: color-mix(in srgb, var(--pvt-text-color-5) 80%, white);
+    font-size: 0.95em;
     border-radius: 4px;
-    transition: font-size 0.15s ease;
+    transition: background-color 0.1s ease;
+}
 
-    @media (prefers-color-scheme: dark) {
-        color: #bbb;
+@mixin dropdown-item-variant($bg-color, $bg-text-color) {
+    @include dropdown-item;
+
+    background-color: var($bg-color);
+    color: var($bg-text-color);
+
+    &:hover {
+        background-color: color-mix(in srgb, var($bg-color) 90%, black);
     }
 
-    &:hover,
     &:active {
-        color: color-mix(in srgb, var(--pvt-text-color-5) 70%, black);
+        background-color: color-mix(in srgb, var($bg-color) 85%, black);
+        transition: transform 0.05s ease-out;
+        transform: scale(0.95);
+    }
 
-        @media (prefers-color-scheme: dark) {
-            color: #fff;
+    &:disabled {
+        background-color: color-mix(in srgb, var($bg-color) 75%, black);
+        color: color-mix(in srgb, var($bg-text-color) 75%, black);
+        cursor: not-allowed;
+        transform: none;
+    }
+}
+
+@mixin dropdown-item-outline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: nowrap;
+    padding: 0.25em 0.5em;
+    font-size: 0.9em;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.1s ease;
+}
+
+@mixin dropdown-item-outline-variant($bg-color, $bg-text-color) {
+    @include dropdown-item-outline;
+
+    background-color: transparent;
+    color: var(--pvt-text-color-5);
+    border: none;
+
+    &:hover {
+        background-color: var($bg-color);
+        color: var($bg-text-color);
+    }
+
+    &:active {
+        background-color: color-mix(in srgb, var($bg-color) 85%, black);
+        transition: transform 0.05s ease-out;
+        transform: scale(0.95);
+    }
+
+    &:disabled {
+        cursor: not-allowed;
+        transform: none;
+
+        &:hover {
+            background-color: color-mix(in srgb, var($bg-color) 85%, black);
         }
     }
-}
-
-.pvt-dropdown__item:hover {
-    background-color: color-mix(in srgb, var(--pvt-bg) 70%, white);
-}
-
-.pvt-dropdown__item.disabled {
-    opacity: .5;
-    cursor: not-allowed;
 }
 
 .pvt-dropdown__icon {
@@ -85,4 +129,110 @@
         transform: translateY(0);
         opacity: 1;
     }
+}
+
+@mixin dropdown-item-default {
+    @include dropdown-item-variant(#00000000, --pvt-text-color-5);
+}
+
+@mixin dropdown-item-primary {
+    @include dropdown-item-variant(--pvt-bg-color-primary, --pvt-text-color-for-primary);
+}
+
+@mixin dropdown-item-secondary {
+    @include dropdown-item-variant(--pvt-bg-color-secondary, --pvt-text-color-for-secondary);
+}
+
+@mixin dropdown-item-info {
+    @include dropdown-item-variant(--pvt-bg-color-info, --pvt-text-color-for-info);
+}
+
+@mixin dropdown-item-warning {
+    @include dropdown-item-variant(--pvt-bg-color-warning, --pvt-text-color-for-warning);
+}
+
+@mixin dropdown-item-danger {
+    @include dropdown-item-variant(--pvt-bg-color-danger, --pvt-text-color-for-danger);
+}
+
+@mixin dropdown-item-success {
+    @include dropdown-item-variant(--pvt-bg-color-success, --pvt-text-color-for-success);
+}
+
+@mixin dropdown-item-outline-primary {
+    @include dropdown-item-outline-variant(--pvt-bg-color-primary, --pvt-text-color-for-primary);
+}
+
+@mixin dropdown-item-outline-secondary {
+    @include dropdown-item-outline-variant(--pvt-bg-color-secondary, --pvt-text-color-for-secondary);
+}
+
+@mixin dropdown-item-outline-info {
+    @include dropdown-item-outline-variant(--pvt-bg-color-info, --pvt-text-color-for-info);
+}
+
+@mixin dropdown-item-outline-warning {
+    @include dropdown-item-outline-variant(--pvt-bg-color-warning, --pvt-text-color-for-warning);
+}
+
+@mixin dropdown-item-outline-danger {
+    @include dropdown-item-outline-variant(--pvt-bg-color-danger, --pvt-text-color-for-danger);
+}
+
+@mixin dropdown-item-outline-success {
+    @include dropdown-item-outline-variant(--pvt-bg-color-success, --pvt-text-color-for-success);
+}
+
+
+
+.pvt-dropdown__item {
+    @include dropdown-item-default;
+}
+
+.pvt-dropdown__item.primary {
+    @include dropdown-item-primary;
+}
+
+.pvt-dropdown__item.secondary {
+    @include dropdown-item-secondary;
+}
+
+.pvt-dropdown__item.info {
+    @include dropdown-item-info;
+}
+
+.pvt-dropdown__item.warning {
+    @include dropdown-item-warning;
+}
+
+.pvt-dropdown__item.danger {
+    @include dropdown-item-danger;
+}
+
+.pvt-dropdown__item.success {
+    @include dropdown-item-success;
+}
+
+.pvt-dropdown__item.outline-primary {
+    @include dropdown-item-outline-primary;
+}
+
+.pvt-dropdown__item.outline-secondary {
+    @include dropdown-item-outline-secondary;
+}
+
+.pvt-dropdown__item.outline-info {
+    @include dropdown-item-outline-info;
+}
+
+.pvt-dropdown__item.outline-warning {
+    @include dropdown-item-outline-warning;
+}
+
+.pvt-dropdown__item.outline-danger {
+    @include dropdown-item-outline-danger;
+}
+
+.pvt-dropdown__item.outline-success {
+    @include dropdown-item-outline-success;
 }

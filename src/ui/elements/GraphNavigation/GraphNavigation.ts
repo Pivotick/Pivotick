@@ -101,17 +101,21 @@ export class GraphNavigation implements UIElement {
                 {
                     id: 'highligh-grid',
                     svgIcon: grid,
-                    text: 'Toggle Grid Highlight',
-                    onClick: () => {
+                    text: 'Highlight Grid',
+                    onClick: (_option, _dropdown, btn) => {
                         this.uiManager.layout?.canvas?.classList.toggle('grid-highlighted')
+                        btn.classList.toggle('primary')
+                        btn.classList.toggle('outline-primary')
                     }
                 },
                 {
                     id: 'snap-to-grid',
                     svgIcon: snapGrid,
-                    text: 'Toggle Snap to grid',
-                    onClick: () => {
+                    text: 'Snap to grid',
+                    onClick: (_option, _dropdown, btn) => {
                         this.uiManager.graph.simulation.toggleGridSnapping()
+                        btn.classList.toggle('primary')
+                        btn.classList.toggle('outline-primary')
                     }
                 },
             ])
