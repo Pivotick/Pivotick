@@ -141,6 +141,11 @@ export function createQuickActionItem<TThis extends UIElement = UIElement>(thisC
 }
 
 export function createActionItem<TThis extends UIElement = UIElement>(thisContext: TThis, action: MenuActionItemOptions, element: Node[] | Node | Edge | null): HTMLDivElement {
+    const shortcut = createShortcut(action.shortcut)
+    if (shortcut instanceof HTMLSpanElement) {
+        shortcut.classList.add('pvt-ms-auto')
+        shortcut.style.borderColor = 'var(--pvt-bg-color-8)'
+    }
     const div = createHtmlElement('div',
         {
             class: ['pvt-action-item', `pvt-action-item-${action.variant}`]
@@ -150,7 +155,8 @@ export function createActionItem<TThis extends UIElement = UIElement>(thisContex
             createHtmlElement('span', { 
                 class: 'pvt-action-text',
                 title: action.title ?? '',
-            }, [ action.text ?? '' ])
+            }, [ action.text ?? '' ]),
+            shortcut,
         ]
     )
     if (typeof action.onclick === 'function') {
@@ -233,6 +239,15 @@ export function createIcon(options: iconOptions): HTMLSpanElement {
         span.style.width = '1em'
         span.append(imgEl)
     }
+    return span
+}
+
+export function createShortcut(key?: string): HTMLSpanElement | '' {
+    if (!key) return ''
+
+    const span = document.createElement('span')
+    span.classList.add('pvt-keyboard-shortcut')
+    span.textContent = key
     return span
 }
 

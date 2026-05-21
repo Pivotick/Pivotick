@@ -676,4 +676,43 @@ export class GraphSvgRenderer extends GraphRenderer {
     public isLassoModeActive(): boolean {
         return this.lassoModeActive
     }
+
+    public getNodeClosestToCursor(maxDistance?: number): Node | null {
+        maxDistance = maxDistance ?? Infinity
+        const pointerEvent = this.graphInteraction.getLastPointerEvent()
+
+        if (!pointerEvent) {
+            return null
+        }
+
+        const svgRect = this.svgCanvas.getBoundingClientRect()
+
+        // Cursor position in SVG viewport coordinates
+        const screenX = pointerEvent.clientX - svgRect.left
+        const screenY = pointerEvent.clientY - svgRect.top
+
+        // Convert screen coordinates into graph/world coordinates
+        const transform = this.getZoomTransform()
+
+        const graphX = transform.invertX(screenX)
+        const graphY = transform.invertY(screenY)
+
+        let closestNode: Node | null = null
+        let closestDistance = Infinity
+
+        const nodes: Node[] = this.graph.getMutableNodes().filter(node => node.visible)
+        for (const node of nodes) {
+            const dx = node.x ?? 0 - graphX
+            const dy = node.y ?? 0 - graphY
+
+            const distance = Math.sqrt(dx * dx + dy * dy)
+
+            if (distance < closestDistance && distance <= maxDistance) {
+                closestDistance = distance
+                closestNode = node
+            }
+        }
+
+        return closestNode
+    }
 }

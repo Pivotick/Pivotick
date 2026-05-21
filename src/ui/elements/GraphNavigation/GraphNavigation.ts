@@ -44,7 +44,7 @@ export class GraphNavigation implements UIElement {
         </button>
     </div>
     <div class="pvt-graphnavigation-fullscreen">
-        <button id="pvt-graphnavigation-fullscreen" class="pvt-graphnavigation-fullscreen-button" title="Zoom In">
+        <button id="pvt-graphnavigation-fullscreen" class="pvt-graphnavigation-fullscreen-button" title="Toggle Fullscreen">
            <span>${fullscreen}</span>
            <span style="display: none">${fullscreenExit}</span>
         </button>

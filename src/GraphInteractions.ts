@@ -11,6 +11,8 @@ export class GraphInteractions<TElement = unknown> {
     private callbacks: Partial<InterractionCallbacks>
     private listeners: Record<keyof GraphInteractionEvents<TElement>, Array<GraphInteractionEvents<TElement>[keyof GraphInteractionEvents<TElement>]>>
 
+    private lastPointerEvent: MouseEvent | null = null
+
     private selectedNode: NodeSelection<TElement> | null = null
     private selectedEdge: EdgeSelection<TElement> | null = null
     private selectedNodes: NodeSelection<TElement>[] = []
@@ -188,6 +190,7 @@ export class GraphInteractions<TElement = unknown> {
     }
 
     public canvasMousemove(event: MouseEvent): void {
+        this.lastPointerEvent = event
         this.emit('canvasMousemove', event)
         if (this.callbacks.onCanvasMousemove && typeof this.callbacks.onCanvasMousemove === 'function') {
             this.callbacks.onCanvasMousemove(event)
@@ -475,5 +478,9 @@ export class GraphInteractions<TElement = unknown> {
                 this.graph.toggleExpandNode(this.selectedNode.node)
             }
         }
+    }
+
+    public getLastPointerEvent(): MouseEvent | null {
+        return this.lastPointerEvent
     }
 }

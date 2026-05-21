@@ -44,5 +44,11 @@ $spacing-directions: (
                 }
             }
         }
+
+        @each $position in $positions {
+            .pvt-#{$prefix}#{$dir}-auto {
+                #{$property}-#{$position}: auto;
+            }
+        }
     }
 }

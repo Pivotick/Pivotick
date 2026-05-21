@@ -110,6 +110,7 @@ const defaultMenuNode = {
             onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
                 createInspectModal(node, this.uiManager)
             },
+            shortcut: 'I'
         },
     ] as MenuActionItemOptions[],
 }
@@ -211,6 +212,14 @@ export class ContextMenu implements UIElement {
         this.uiManager.graph.renderer.getGraphInteraction().on('canvasContextmenu', this.canvasClicked.bind(this))
         this.uiManager.graph.renderer.getGraphInteraction().on('canvasClick', () => { this.hide() })
         this.uiManager.graph.renderer.getGraphInteraction().on('canvasZoom', () => { this.hide() })
+
+        this.uiManager.keyManager.register({
+            key: 'i',
+            callback: () => {
+                const node = this.uiManager.graph.renderer.getNodeClosestToCursor()
+                if (node) createInspectModal(node, this.uiManager)
+            }
+        })
     }
 
     private nodeClicked(event: PointerEvent, node: Node): void {

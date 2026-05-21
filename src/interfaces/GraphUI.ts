@@ -231,7 +231,9 @@ export type MenuActionItemOptions<TThis extends UIElement = UIElement> = {
     /** @default outline-primary */
     variant?: UIBaseVariant | UIOutlineVariant | UIOutlineSoftVariant,
     visible?: boolean | ((element: Node | Edge | null) => boolean)
-    onclick: (this: TThis, evt: PointerEvent | MouseEvent, element?: Node | Node[] | Edge | Edge[] | null) => void
+    onclick: (this: TThis, evt: PointerEvent | MouseEvent, element?: Node | Node[] | Edge | Edge[] | null) => void,
+    /** The keybinding activates this function. This is just visual. The actual binding is defined in UIManager */
+    shortcut?: string
 }
 export type MenuQuickActionItemOptions = MenuActionItemOptions & {
     /**

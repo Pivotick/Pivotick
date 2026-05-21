@@ -30,6 +30,7 @@ export abstract class GraphRenderer {
     abstract getZoomBehavior(): unknown
     abstract toggleLassoMode(enabled: boolean): void
     abstract isLassoModeActive(): boolean
+    abstract getNodeClosestToCursor(maxDistance?: number): Node | null
     abstract getSelectionBox(): AbstractSelectionBox | null
     abstract getGraphInteraction(): GraphInteractions<unknown>
     abstract getCanvasSelection(): unknown
