@@ -110,9 +110,8 @@ export class GraphNavigation implements UIElement {
                     id: 'snap-to-grid',
                     svgIcon: snapGrid,
                     text: 'Toggle Snap to grid',
-                    disabled: true,
                     onClick: () => {
-                        // FIXME: Implement grid snapping
+                        this.uiManager.graph.simulation.toggleGridSnapping()
                     }
                 },
             ])

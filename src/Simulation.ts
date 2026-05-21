@@ -46,7 +46,9 @@ export const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
     useWorker: true,
     warmupTicks: 'auto',
     freezeNodesOnDrag: true,
-    
+    gridSnappingEnabled: false,
+    gridSize: 50,
+
     layout: {
         type: 'force',
     },
@@ -624,16 +626,22 @@ export class Simulation {
                 }
                 if (this.graphInteraction.hasActiveMultiselection()) {
                     this.dragSelection.forEach(({ node, dx, dy }) => {
-                        node.fx = event.x + dx
-                        node.fy = event.y + dy
-                        node.x = event.x + dx
-                        node.y = event.y + dy
+                        const nx = this.applySnap(event.x + dx)
+                        const ny = this.applySnap(event.y + dy)
+
+                        node.fx = nx
+                        node.fy = ny
+                        node.x = nx
+                        node.y = ny
                     })
                 } else {
-                    d.fx = event.x
-                    d.fy = event.y
-                    d.x = event.x
-                    d.y = event.y
+                    const gx = this.applySnap(event.x)
+                    const gy = this.applySnap(event.y)
+
+                    d.fx = gx
+                    d.fy = gy
+                    d.x = gx
+                    d.y = gy
                 }
                 this.graphInteraction.dragging(event.sourceEvent, event.subject)
                 
@@ -664,6 +672,16 @@ export class Simulation {
 
     public isDragging(): boolean {
         return this.dragInProgress
+    }
+
+    public toggleGridSnapping() {
+        this.options.gridSnappingEnabled = !this.options.gridSnappingEnabled
+    }
+
+    private applySnap(value: number): number {
+        if (!this.options.gridSnappingEnabled) return value
+
+        return Math.round(value / this.options.gridSize) * this.options.gridSize
     }
 
     public getForceSimulation(): typeof this.simulationForces {

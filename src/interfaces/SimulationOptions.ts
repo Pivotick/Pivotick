@@ -46,6 +46,10 @@ export interface SimulationOptions {
     warmupTicks: number | 'auto'
     /** @default true */
     freezeNodesOnDrag: boolean
+    /** @default false */
+    gridSnappingEnabled: boolean
+    /** @default 50 */
+    gridSize: number
 
     /** @default true */
     enabled: boolean
