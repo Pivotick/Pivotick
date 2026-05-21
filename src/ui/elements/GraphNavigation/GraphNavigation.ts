@@ -101,16 +101,15 @@ export class GraphNavigation implements UIElement {
                 {
                     id: 'highligh-grid',
                     svgIcon: grid,
-                    text: 'Highlight grid',
-                    disabled: true,
+                    text: 'Toggle Grid Highlight',
                     onClick: () => {
-                        // FIXME: Implement grid highlighting
+                        this.uiManager.layout?.canvas?.classList.toggle('grid-highlighted')
                     }
                 },
                 {
                     id: 'snap-to-grid',
                     svgIcon: snapGrid,
-                    text: 'Snap to grid',
+                    text: 'Toggle Snap to grid',
                     disabled: true,
                     onClick: () => {
                         // FIXME: Implement grid snapping

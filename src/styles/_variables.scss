@@ -125,10 +125,8 @@ $light-theme: (
 
     /* Graph canvas */
     // #region canvas
-    pvt-graph-grid-color: #f5f5f5,
-    pvt-graph-background-image:
-        "repeating-linear-gradient(0deg, var(--pvt-graph-grid-color) 0px, var(--pvt-graph-grid-color) 1px, transparent 1px, transparent 20px),"
-        "repeating-linear-gradient(90deg, var(--pvt-graph-grid-color) 0px, var(--pvt-graph-grid-color) 1px, transparent 1px, transparent 20px)",
+    pvt-graph-grid-color: var(--pvt-bg-color-2),
+    pvt-graph-grid-color-highlighted: var(--pvt-bg-color-5),
     pvt-graph-navigation-control-container-shadow:
         "rgba(0, 0, 0, 0.22) 0px 0px 4px,"
         "rgba(0, 0, 0, 0.30) 0px 1px 2px",
@@ -368,8 +366,7 @@ $dark-theme: (
 
     /* Graph canvas */
     pvt-graph-grid-color: var(--pvt-bg-color-4),
-    pvt-graph-background-image: "repeating-linear-gradient(0deg, var(--pvt-graph-grid-color) 0px, var(--pvt-graph-grid-color) 1px, transparent 1px, transparent 20px),"
-    "repeating-linear-gradient(90deg, var(--pvt-graph-grid-color) 0px, var(--pvt-graph-grid-color) 1px, transparent 1px, transparent 20px)",
+    pvt-graph-grid-color-highlighted: var(--pvt-bg-color-7),
     pvt-graph-navigation-control-container-shadow: "rgba(255, 255, 255, 0.15) 0px 0px 4px"
     "rgba(255, 255, 255, 0.10) 0px 1px 2px",
 
