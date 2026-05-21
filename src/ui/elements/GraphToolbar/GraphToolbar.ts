@@ -260,7 +260,10 @@ export class GraphToolbar implements UIElement {
             size: 'sm',
             svgIcon: edit,
             onClick: () => {
-                //
+                const nodeSelection = this.uiManager.graph.renderer.getGraphInteraction().getSelectedNode()
+                if (nodeSelection) {
+                    this.uiManager.graph.editing.openNodeSession(nodeSelection.node)
+                }
             }
         })
 

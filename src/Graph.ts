@@ -12,7 +12,7 @@ import type { LayoutOptions } from './interfaces/LayoutOptions'
 import { generateSafeDomId } from './utils/ElementCreation'
 import { GraphQueryEngine } from './GraphQueryEngine'
 import type { GraphRendererOptions } from './interfaces/RendererOptions'
-
+import { GraphEditingManager } from './editing/GraphEditingManager'
 
 export class Graph {
     private nodes: Map<string, Node> = new Map()
@@ -28,6 +28,7 @@ export class Graph {
     private app_id: string
     private parentGraph?: Graph
     private graphDepth: number
+    public readonly editing: GraphEditingManager
     
     private listeners: Record<keyof GraphEvents, Array<GraphEvents[keyof GraphEvents]>>
 
@@ -98,6 +99,7 @@ export class Graph {
         container.appendChild(appContainer)
 
         this.queryEngine = new GraphQueryEngine(this)
+        this.editing = new GraphEditingManager(this)
         this.UIManager = new UIManager(this, appContainer, UIManagerOptions)
         this.notifier = new Notifier(this)
         this.renderer = createGraphRenderer(this, appContainer, rendererOptions)

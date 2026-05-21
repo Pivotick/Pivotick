@@ -1,0 +1,41 @@
+#edit-node-modal.pvt-modal {
+
+    .pvt-modal__header {
+        .main-container {
+            display: flex;
+            flex-direction: row;
+            gap: 8px;
+
+            .icon-container {
+                margin-right: 8px;
+            }
+
+            .nodeinfo-container {
+                display: inline-flex;
+                align-items: center;
+                gap: 10px;
+
+                .nodeinfo-name {
+                    color: var(--pvt-text-color-primary);
+                    min-height: 1em;
+                    white-space: normal;
+                }
+            }
+        }
+    }
+
+    .pvt-modal__body {
+        height: 100%;
+
+        .edit-node-modal-body {
+            height: 100%;
+            padding: 24px;
+            margin-bottom: 24px;
+
+            .pvt-form-element label {
+                font-weight: 500;
+            }
+        }
+    }
+
+}

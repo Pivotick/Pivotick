@@ -1,6 +1,7 @@
 import type { Edge } from '../Edge'
 import type { Node } from '../Node'
 import type { NodeSelection } from './GraphInteractions'
+import type { NodeEditSession } from '../editing/NodeEditSession'
 
 export interface InterractionCallbacks<TElement = unknown> {
     /**
@@ -118,4 +119,10 @@ export interface InterractionCallbacks<TElement = unknown> {
      * Called when the every tenth of simulation ticks.
      */
     onSimulationSlowTick?: () => void
+
+    /**
+     * called when a node edit session starts.
+     * @param session The node edit session
+     */
+    onNodeEdit?: (session: NodeEditSession) => void
 }

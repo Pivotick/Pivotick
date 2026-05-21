@@ -22,8 +22,8 @@ export interface FieldConfig {
     placeholder?: string
     defaultValue?: FormValue
     allowEmpty?: boolean
-    matchMode: FilterMatchMode
-    valuesAreBoolean: boolean
+    matchMode?: FilterMatchMode
+    valuesAreBoolean?: boolean
 }
 
 export interface FormConfig {
@@ -98,7 +98,6 @@ export class FormFactory {
             }
         })
 
-        console.log(values)
         return values
     }
 

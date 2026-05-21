@@ -100,6 +100,11 @@ export const DEFAULT_UI_OPTIONS: GraphUI = {
         },
     },
     extraPanels: [],
+    editors: {
+        nodeEditor: {
+            enabled: true
+        }
+    }
 }
 
 export interface UIElement {

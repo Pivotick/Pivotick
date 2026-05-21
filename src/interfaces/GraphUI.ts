@@ -1,4 +1,5 @@
 import type { Edge } from '../Edge'
+import type { NodeEditSession } from '../editing/NodeEditSession'
 import type { Node } from '../Node'
 import type { UIElement } from '../ui/UIManager'
 
@@ -25,6 +26,7 @@ export interface GraphUI {
     contextMenu: ContextMenu,
     navigation: Navigation,
     selectionMenu: SelectionMenu,
+    editors: Editors,
     keybindings?: Keybinding[];
 }
 
@@ -241,6 +243,24 @@ export type MenuQuickActionItemOptions = MenuActionItemOptions & {
      * @default false
      */
     flushRight?: boolean;
+}
+
+export interface Editors {
+    nodeEditor?: {
+        enabled?: boolean
+
+        /**
+         * Optional custom field generator. Inferred if undefined
+         * @default undefined
+         */
+        fields?: NodeEditorField[]
+
+        /**
+         * Optional custom modal renderer. Leave undefined for default edition modal
+         * @default undefined
+         */
+        render?: (session: NodeEditSession) => void
+    }
 }
 
 /** Variant defined in the theme */
