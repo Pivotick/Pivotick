@@ -693,7 +693,7 @@ export class GraphSvgRenderer extends GraphRenderer {
 
         // Convert screen coordinates into graph/world coordinates
         const transform = this.getZoomTransform()
-
+        
         const graphX = transform.invertX(screenX)
         const graphY = transform.invertY(screenY)
 
@@ -702,8 +702,8 @@ export class GraphSvgRenderer extends GraphRenderer {
 
         const nodes: Node[] = this.graph.getMutableNodes().filter(node => node.visible)
         for (const node of nodes) {
-            const dx = node.x ?? 0 - graphX
-            const dy = node.y ?? 0 - graphY
+            const dx = (node.x ?? 0) - graphX
+            const dy = (node.y ?? 0) - graphY
 
             const distance = Math.sqrt(dx * dx + dy * dy)
 
