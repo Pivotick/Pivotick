@@ -63,14 +63,49 @@ export class NodeEditSession {
     /**
      * Commits the draft data to the node.
      */
-    public commit(): void {
+    public async commit(): Promise<boolean> {
         this.ensureActive()
 
-        this.node.setData(this.draft)
+        const previousData = this.node.getData()
+        const nextData = this.draft
 
+        const callback = this.manager.graph.getOptions().callbacks?.onBeforeNodeEditCommit
+
+        /**
+         * No callback:
+         * default automatic commit behavior
+         */
+        if (!callback) {
+            this.node.setData(nextData)
+            this.active = false
+            this.manager.closeSession(this.node.id)
+            return true
+        }
+
+        /**
+         * Userland controls validation/persistence.
+         */
+        const result = await callback({
+            node: this.node,
+            previousData,
+            nextData,
+            session: this,
+        })
+
+        /**
+         * Commit rejected by userland.
+         */
+        if (result === false) {
+            return false
+        }
+
+        /**
+         * Finalize commit.
+         */
+        this.node.setData(nextData)
         this.active = false
-
         this.manager.closeSession(this.node.id)
+        return true
     }
 
     /**
@@ -81,6 +116,7 @@ export class NodeEditSession {
     public cancel(): void {
         this.ensureActive()
 
+        this.manager.graph.getOptions().callbacks?.onNodeEditCancel?.(this.node)
         this.active = false
 
         this.manager.closeSession(this.node.id)

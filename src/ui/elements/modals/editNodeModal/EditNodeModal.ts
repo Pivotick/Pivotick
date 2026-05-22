@@ -7,9 +7,9 @@ import type { ModalHTMLElement } from '../../../components/Modal'
 import { FormFactory, type FieldConfig, type FormValues } from '../../../../utils/FormFactory'
 import type { NodeEditSession } from '../../../../editing/NodeEditSession'
 import { edit } from '../../../icons'
-import { createButton } from '../../../components/Button'
 
-export function createNodeEditModal(node: Node, session: NodeEditSession, uiManager: UIManager): void {
+
+export function createNodeEditModal(node: Node, session: NodeEditSession, uiManager: UIManager, customHandler?: ((session: NodeEditSession) => HTMLDivElement)): void {
     const fixedPreviewSize = 42
     const element = node.getGraphElement()
     let clonedGroup
@@ -34,13 +34,21 @@ export function createNodeEditModal(node: Node, session: NodeEditSession, uiMana
         </div>
     `) as HTMLDivElement
 
-    const { body, form } = createEditModalBody(node, session, uiManager)
-
-    const previousInstance = document.querySelector('#inspect-node-modal') as ModalHTMLElement | null
-    if (previousInstance) {
-        previousInstance.__modalInstance?.destroy()
-    }
+    let body, form: HTMLFormElement
+    if (customHandler) {
+        body = customHandler(session)
+    } else {
+        const result = createEditModalBody(node)
+        body = result.body
+        form = result.form
     
+        const previousInstance = document.querySelector('#inspect-node-modal') as ModalHTMLElement | null
+        if (previousInstance) {
+            previousInstance.__modalInstance?.destroy()
+        }
+    }
+
+    // ALSO, CHANGE SHORTCUTS TO ACTUALLY NOT TRIGGER WHEN IN A MODAL OR IN AN INPUT BOX
     uiManager.createModal({
         id: 'edit-node-modal',
         rawHeader: true,
@@ -60,22 +68,23 @@ export function createNodeEditModal(node: Node, session: NodeEditSession, uiMana
                 variant: 'primary',
                 text: 'Edit Node',
                 svgIcon: edit,
-                onClick: () => {
+                onClick: async (evt, hideModal) => {
                     const nodeData: FormValues = FormFactory.getValues(form)
-                    console.log(nodeData)
+                    session.setDraft(nodeData)
+                    const committed = await session.commit()
+                    if (committed) {
+                        hideModal()
+                    }
                 }
             }
         ],
         position: 'top',
         size: 'xl',
         noBodyPadding: true,
-        onHidden: () => {
-            session.cancel()
-        }
     })
 }
 
-function createEditModalBody(node: Node, session: NodeEditSession, uiManager: UIManager): { body: HTMLDivElement, form: HTMLFormElement } {
+function createEditModalBody(node: Node): { body: HTMLDivElement, form: HTMLFormElement } {
     const body = document.createElement('div')
     body.classList.add('edit-node-modal-body')
 

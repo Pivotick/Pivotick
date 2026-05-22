@@ -1,5 +1,5 @@
 import type { Edge } from '../Edge'
-import type { Node } from '../Node'
+import type { Node, NodeData } from '../Node'
 import type { NodeSelection } from './GraphInteractions'
 import type { NodeEditSession } from '../editing/NodeEditSession'
 

@@ -12,7 +12,7 @@ import { NodeEditSession } from './NodeEditSession'
  * - preventing duplicate sessions
  */
 export class GraphEditingManager {
-    private readonly graph: Graph
+    public readonly graph: Graph
 
     /**
      * Active node edit sessions indexed by node id.
@@ -45,11 +45,7 @@ export class GraphEditingManager {
         const customHandler = this.graph.getOptions().callbacks?.onNodeEdit
 
         this.graph.getOptions().callbacks?.onNodeEdit?.(session)
-        if (customHandler) {
-            customHandler(session)
-        } else {
-            createNodeEditModal(node, session, this.graph.UIManager)
-        }
+        createNodeEditModal(node, session, this.graph.UIManager, customHandler)
 
         return session
     }
