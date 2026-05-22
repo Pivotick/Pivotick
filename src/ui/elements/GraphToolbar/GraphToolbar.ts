@@ -1,5 +1,5 @@
 
-import { createHtmlElement, createHtmlTemplate } from '../../../utils/ElementCreation'
+import { createHtmlElement, createHtmlTemplate, createShortcutBadge } from '../../../utils/ElementCreation'
 import { createButton } from '../../components/Button'
 import { addCircle, bidirectional, bulkEdit, edit, editMode, groupNodes, lassoTool, pathSelection, reverseEdge, selectionInverse, stickyNote, trash, ungroupNodes } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
@@ -39,7 +39,7 @@ export class GraphToolbar implements UIElement {
 `
         this.toolbar = template.content.firstElementChild as HTMLDivElement
 
-        const shortcutButton = createHtmlTemplate('<span class="pvt-keyboard-shortcut pvt-ms-1">e</span>')
+        const shortcutButton = createShortcutBadge('e', 'pvt-ms-1 pvt-py-1 pvt-px-2')
         this.enableEditModeButton = createButton({
             id: 'pvt-edit-mode-button',
             variant: 'outline-primary',
@@ -259,6 +259,7 @@ export class GraphToolbar implements UIElement {
             text: 'Edit',
             size: 'sm',
             svgIcon: edit,
+            childElement: createShortcutBadge('Shift+E', 'pvt-ms-1 pvt-px-1 pvt-py-0'),
             onClick: () => {
                 const nodeSelection = this.uiManager.graph.renderer.getGraphInteraction().getSelectedNode()
                 if (nodeSelection) {

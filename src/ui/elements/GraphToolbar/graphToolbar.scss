@@ -11,15 +11,15 @@
         transform 180ms ease,
         border-color 180ms ease;
 
+    .pvt-keyboard-shortcut {
+        border-color: var(--pvt-bg-color-9);
+    }
+
     .edit-mode-button-container {
         margin-left: auto;
 
         button {
             margin: 0 2px;
-        }
-
-        .pvt-keyboard-shortcut {
-            border-color: var(--pvt-bg-color-9);
         }
     }
 

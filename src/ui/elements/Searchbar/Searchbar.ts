@@ -6,6 +6,7 @@ import { Node } from '../../../Node'
 import type { SlidePanel } from '../SlidePanel/SlidePanel'
 import { GraphFilter } from '../GraphFilter/GraphFilter'
 import type { Modal } from '../../components/Modal'
+import { createShortcutBadge } from '../../../utils/ElementCreation'
 
 export class Searchbar implements UIElement {
     private uiManager: UIManager
@@ -35,7 +36,7 @@ export class Searchbar implements UIElement {
     <div class="action-container">
         <span class="icon-container">${magnifyingGlass}</span>
         <span class="action-text">Search</span>
-        <span class="pvt-keyboard-shortcut">Ctrl J</span>
+        ${createShortcutBadge('Ctrl+J').outerHTML}
     </div>
   </div>`
         this.searchBoxButton = templateSearch.content.firstElementChild as HTMLDivElement
@@ -48,7 +49,7 @@ export class Searchbar implements UIElement {
     <div class="action-container">
         <span class="icon-container">${funnel}</span>
         <span class="action-text">Filter Graph</span>
-        <span class="pvt-keyboard-shortcut">Ctrl K</span>
+        ${createShortcutBadge('Ctrl+K').outerHTML}
     </div>
   </div>`
         this.filterButton = templateFilter.content.firstElementChild as HTMLDivElement

@@ -64,6 +64,41 @@ export function createHtmlTemplate(template: string): HTMLElement {
     return templateEl.content.firstElementChild as HTMLElement
 }
 
+
+export function createShortcutBadge(keyCombo: string, classString?: string | string[]): HTMLElement {
+    const MODIFIER_ICONS: Record<string, string> = {
+        ctrl: '⌃',
+        shift: '⇧',
+        alt: '⌥',
+        cmd: '⌘',
+    }
+
+    const badge = document.createElement('span')
+
+    badge.classList.add('pvt-keyboard-shortcut')
+
+    if (classString) {
+        if (!Array.isArray(classString)) {
+            classString = classString.split(' ')
+        }
+        badge.classList.add(...(Array.isArray(classString) ? classString : [classString]))
+    }
+
+    const formatted = keyCombo
+        .split('+')
+        .map(part => part.trim())
+        .filter(Boolean)
+        .map(part => {
+            const normalized = part.toLowerCase()
+            return MODIFIER_ICONS[normalized] ?? part.toUpperCase()
+        })
+        .join(' ')
+
+    badge.textContent = formatted
+
+    return badge
+}
+
 export function createHtmlDL(data: PropertyEntry[], element: Node | Edge | null): HTMLDListElement {
     const dl = createHtmlElement('dl', { class: 'pvt-property-list' })
     for (const entry of data) {

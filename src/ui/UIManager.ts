@@ -15,6 +15,7 @@ import { ContextMenu } from './elements/ContextMenu/ContextMenu'
 import type { GraphUI, PropertyEntry } from '../interfaces/GraphUI'
 import { KeybindingManager } from './KeybindingManager'
 import { GraphToolbar } from './elements/GraphToolbar/GraphToolbar'
+import { createInspectModal } from './elements/modals/InspectNodeModal/InspectNodeModal'
 
 
 const basicPropertyGetter = (element: Node | Edge): PropertyEntry[] => {
@@ -288,6 +289,23 @@ export class UIManager {
 
         this.container.addEventListener('keydown', (event) => this.keyManager.handleKeyPress(event))
         this.container.setAttribute('tabindex', '0') // make it focusable
+
+        this.keyManager.register({
+            key: 'i',
+            callback: () => {
+                const node = this.graph.renderer.getNodeClosestToCursor(100)
+                if (node) createInspectModal(node, this)
+            }
+        })
+        this.keyManager.register({
+            key: 'Shift+E',
+            callback: () => {
+                const node = this.graph.renderer.getNodeClosestToCursor(100)
+                if (!node) return
+                this.graph.renderer.getGraphInteraction().selectNode(node.getGraphElement(), node)
+                this.graph.editing.openNodeSession(node)
+            }
+        })
     }
 
     public async toggleFullscreen(forcedState?: boolean) {
