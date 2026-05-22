@@ -15,8 +15,7 @@ import { ContextMenu } from './elements/ContextMenu/ContextMenu'
 import type { GraphUI, PropertyEntry } from '../interfaces/GraphUI'
 import { KeybindingManager } from './KeybindingManager'
 import { GraphToolbar } from './elements/GraphToolbar/GraphToolbar'
-import { nodeDescriptionGetter, nodeNameGetter } from '../utils/GraphGetters'
-import { createHtmlTemplate } from '../utils/ElementCreation'
+
 
 const basicPropertyGetter = (element: Node | Edge): PropertyEntry[] => {
     const properties = []
@@ -140,7 +139,7 @@ export class UIManager {
         this.container = container
         this.options = merge({}, DEFAULT_UI_OPTIONS, options)
 
-        this.keyManager = new KeybindingManager()
+        this.keyManager = new KeybindingManager(this.container)
 
         this.setup()
     }

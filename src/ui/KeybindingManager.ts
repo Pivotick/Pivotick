@@ -2,18 +2,47 @@ import type { Keybinding } from '../interfaces/GraphUI'
 
 export class KeybindingManager {
     private bindings = new Map<string, (evt: KeyboardEvent) => void>()
+    private container: HTMLElement
+
+    constructor(container: HTMLElement) {
+        this.container = container
+    }
 
     register(binding: Keybinding) {
         this.bindings.set(binding.key, binding.callback)
     }
 
     handleKeyPress(event: KeyboardEvent) {
+        // Ignore typing targets
+        const target = event.target as HTMLElement | null
+
+        // Only run when container owns focus
+        const active = document.activeElement
+        if (!this.container.contains(active)) {
+            return
+        }
+
+        if (this.isEditableTarget(target)) {
+            return
+        }
+
         const keyCombo = this.getKeyCombo(event)
         const callback = this.bindings.get(keyCombo)
         if (callback) {
             event.preventDefault()
             callback(event)
         }
+    }
+
+    private isEditableTarget(target: HTMLElement | null): boolean {
+        if (!target) return false
+
+        return (
+            target instanceof HTMLInputElement ||
+            target instanceof HTMLTextAreaElement ||
+            target instanceof HTMLSelectElement ||
+            target.isContentEditable
+        )
     }
 
     private getKeyCombo(event: KeyboardEvent): string {
