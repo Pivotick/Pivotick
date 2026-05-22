@@ -15,6 +15,9 @@ import { GraphRenderer } from '../../GraphRenderer'
 import { SelectionBox } from './SelectionBox'
 import type { EdgeStyle, GraphRendererOptions, LabelStyle, MarkerStyleMap, NodeStyle, SelectionBox as SelectionBoxI } from '../../interfaces/RendererOptions'
 import { ClusterDrawer } from './ClusterDrawer'
+import { NoteDrawer } from './NoteDrawer'
+import type { Note } from '../../Note'
+import type { Point } from '../../utils/GeometryHelper'
 d3Select.prototype.transition = d3Transition
 
 /**
@@ -240,6 +243,7 @@ export class GraphSvgRenderer extends GraphRenderer {
     public graphInteraction: GraphInteractions<SVGGElement | SVGPathElement>
     public nodeDrawer: NodeDrawer
     public edgeDrawer: EdgeDrawer
+    public noteDrawer: NoteDrawer
     public lassoOverlay: LassoOverlay
 
     private svgCanvas: SVGSVGElement
@@ -249,14 +253,16 @@ export class GraphSvgRenderer extends GraphRenderer {
     public zoomGroup: Selection<SVGGElement, unknown, null, undefined>
     private edgeGroup: Selection<SVGGElement, unknown, null, undefined>
     private nodeGroup: Selection<SVGGElement, unknown, null, undefined>
+    private noteGroup: Selection<SVGGElement, unknown, null, undefined>
     private selectionBoxGroup: Selection<SVGGElement, unknown, null, undefined>
     public defs: Selection<SVGDefsElement, unknown, null, undefined>
 
     private nodeGroupSelection!: Selection<SVGGElement, Node, SVGGElement, unknown>
     private edgeGroupSelection!: Selection<SVGPathElement, Edge, SVGGElement, unknown>
+    private noteGroupSelection!: Selection<SVGGElement, Note, SVGGElement, unknown>
     private nodeSelection!: Selection<SVGGElement, Node, SVGGElement, unknown>
-
     private edgeSelection!: Selection<SVGGElement, Edge, SVGGElement, unknown>
+    private noteSelection!: Selection<SVGGElement, Note, SVGGElement, unknown>
 
     private lassoModeActive = false
 
@@ -269,6 +275,7 @@ export class GraphSvgRenderer extends GraphRenderer {
         this.eventHandler = new EventHandler(this.graph)
         this.nodeDrawer = new NodeDrawer(this.options, this.graph, this)
         this.edgeDrawer = new EdgeDrawer(this.options, this.graph, this)
+        this.noteDrawer = new NoteDrawer(this.options, this.graph, this)
 
         this.svgCanvas = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
         this.svgCanvas.setAttribute('width', '100%')
@@ -282,6 +289,7 @@ export class GraphSvgRenderer extends GraphRenderer {
 
         this.zoomGroup = this.svg.append('g').attr('class', 'zoom-layer hidden')
         this.edgeGroup = this.zoomGroup.append('g').attr('class', 'edges')
+        this.noteGroup = this.zoomGroup.append('g').attr('class', 'notes')
         this.selectionBoxGroup = this.svg.append('g').attr('class', 'selection-box')
         this.nodeGroup = this.zoomGroup.append('g').attr('class', 'nodes')
         this.defs = this.svg.append('defs')
@@ -362,6 +370,35 @@ export class GraphSvgRenderer extends GraphRenderer {
 
     public getZoomTransform(): ZoomTransform {
         return zoomTransform(this.svgCanvas)
+    }
+
+    public screenToGraphCoordinates(screenX: number, screenY: number): Point {
+
+        const svgRect = this.svgCanvas.getBoundingClientRect()
+
+        const localX = screenX - svgRect.left
+        const localY = screenY - svgRect.top
+
+        const transform = this.getZoomTransform()
+
+        return {
+            x: transform.invertX(localX),
+            y: transform.invertY(localY),
+        } as Point
+    }
+
+    public graphToScreenCoordinates(graphX: number, graphY: number): Point {
+
+        const svgRect = this.svgCanvas.getBoundingClientRect()
+        const transform = this.getZoomTransform()
+
+        const localX = transform.applyX(graphX)
+        const localY = transform.applyY(graphY)
+
+        return {
+            x: localX + svgRect.left,
+            y: localY + svgRect.top,
+        } as Point
     }
 
     public getSelectionBox(): SelectionBox | null {
@@ -474,6 +511,27 @@ export class GraphSvgRenderer extends GraphRenderer {
                     }),
                 exit => exit.remove()
             )
+
+        const notes = this.graph.noteManager.getNotes()
+        this.noteGroupSelection = this.noteGroup
+            .selectAll<SVGGElement, Note>('g.pvt-note')
+
+        this.noteSelection = this.noteGroupSelection
+            .data(notes, (note: Note) => note.id)
+            .join(
+                enter => enter
+                    .append('g')
+                    .classed('pvt-note', true)
+                    .each((note, i, notes) => {
+                        const selection = d3Select<SVGGElement, Note>(notes[i])
+                        selection.attr('id', `note-${note.id}`)
+                        this.noteDrawer.render(selection, note)
+                    }),
+
+                update => update,
+
+                exit => exit.remove()
+            )
     }
 
     public getCanvasSelection(): Selection<SVGSVGElement, unknown, null, undefined> {
@@ -486,6 +544,7 @@ export class GraphSvgRenderer extends GraphRenderer {
 
     public nextTick(): void {
         this.updateEdgePositions() // Render edges first so nodes are drawn on top of them
+        this.updateNotePositions()
         this.updateNodePositions()
     }
 
@@ -649,6 +708,10 @@ export class GraphSvgRenderer extends GraphRenderer {
         } else {
             this.edgeDrawer.updatePositions(this.edgeSelection)
         }
+    }
+
+    private updateNotePositions(): void {
+        this.noteDrawer.updatePositions(this.noteSelection)
     }
 
     public getNodeSelection(): Selection<SVGGElement, Node, SVGGElement, unknown> {

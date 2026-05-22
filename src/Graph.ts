@@ -13,12 +13,15 @@ import { generateSafeDomId } from './utils/ElementCreation'
 import { GraphQueryEngine } from './GraphQueryEngine'
 import type { GraphRendererOptions } from './interfaces/RendererOptions'
 import { GraphEditingManager } from './editing/GraphEditingManager'
+import { NoteManager } from './NoteManager'
+import type { Note } from './Note'
 
 export class Graph {
     private nodes: Map<string, Node> = new Map()
     private edges: Map<string, Edge> = new Map()
     /** @private */
     public UIManager: UIManager
+    public noteManager: NoteManager
     public notifier: Notifier
     public renderer: GraphRenderer
     public simulation: Simulation
@@ -42,7 +45,9 @@ export class Graph {
     constructor(container: HTMLElement, data?: RelaxedGraphData, options?: Partial<GraphOptions>) {
         this.listeners = {
             ready: [],
-            nodeAdd: [], nodeRemove: [], nodeChange: [], edgeAdd: [], edgeRemove: [], edgeChange: [], dataBatchChanged: [],
+            nodeAdd: [], nodeRemove: [], nodeChange: [], edgeAdd: [], edgeRemove: [], edgeChange: [],
+            noteAdd: [], noteRemove: [], noteChange: [],
+            dataBatchChanged: [],
         }
 
         this.options = {
@@ -98,6 +103,7 @@ export class Graph {
         appContainer.classList.add('pivotick')
         container.appendChild(appContainer)
 
+        this.noteManager = new NoteManager(this)
         this.queryEngine = new GraphQueryEngine(this)
         this.editing = new GraphEditingManager(this)
         this.UIManager = new UIManager(this, appContainer, UIManagerOptions)
@@ -310,6 +316,16 @@ export class Graph {
         this.emit('edgeChange', edge, previousData, nextData)
     }
 
+    public noteAdd(note: Note): void {
+        this.emit('noteAdd', note)
+    }
+    public noteChange(note: Note): void {
+        this.emit('noteAdd', note)
+    }
+    public noteRemove(note: Note): void {
+        this.emit('noteAdd', note)
+    }
+
     private dataBatchChanged(changes: GraphDataChange[]): void {
         if (changes) {
             this.emit('dataBatchChanged', changes)
@@ -333,7 +349,16 @@ export class Graph {
                     case 'edge:remove':
                         this.edgeRemove(c.edge)
                         break
-                
+                    case 'note:add':
+                        this.noteAdd(c.note)
+                        break
+                    case 'note:change':
+                        this.noteChange(c.note)
+                        break
+                    case 'note:remove':
+                        this.noteRemove(c.note)
+                        break
+
                     default:
                         break
                 }

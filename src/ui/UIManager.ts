@@ -16,6 +16,7 @@ import type { GraphUI, PropertyEntry } from '../interfaces/GraphUI'
 import { KeybindingManager } from './KeybindingManager'
 import { GraphToolbar } from './elements/GraphToolbar/GraphToolbar'
 import { createInspectModal } from './elements/modals/InspectNodeModal/InspectNodeModal'
+import { Note } from '../Note'
 
 
 const basicPropertyGetter = (element: Node | Edge): PropertyEntry[] => {
@@ -304,6 +305,27 @@ export class UIManager {
                 if (!node) return
                 this.graph.renderer.getGraphInteraction().selectNode(node.getGraphElement(), node)
                 this.graph.editing.openNodeSession(node)
+            }
+        })
+        this.keyManager.register({
+            key: 'n',
+            callback: () => {
+                const node = this.graph.renderer.getNodeClosestToCursor(100)
+                const renderer = this.graph.renderer
+                const pointerEvent = this.graph.renderer.getGraphInteraction().getLastPointerEvent()
+                if (!node) return
+                if (!pointerEvent) return
+
+                const { x, y } = renderer.screenToGraphCoordinates(
+                    pointerEvent.clientX,
+                    pointerEvent.clientY
+                )
+                const note: Note = new Note({
+                    content: 'This is not a note.',
+                    x,
+                    y
+                })
+                this.graph.noteManager.addNote(note)
             }
         })
     }

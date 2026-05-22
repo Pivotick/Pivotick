@@ -235,7 +235,7 @@ export class GraphToolbar implements UIElement {
 
         const addStickyNoteButton = createButton({
             variant: 'secondary',
-            text: 'Sticky Note',
+            text: 'Add Note',
             size: 'sm',
             svgIcon: stickyNote,
             disabled: true,

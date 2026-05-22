@@ -1,13 +1,14 @@
 import type { Edge } from '../../../Edge'
 import type { Node } from '../../../Node'
 import { createActionList, createQuickActionList } from '../../../utils/ElementCreation'
-import { expand, focusElement, hide, inspect, pin, selectNeighbor, unpin } from '../../icons'
+import { expand, focusElement, hide, inspect, pin, selectNeighbor, stickyNote, unpin } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import './contextmenu.scss'
 import { deepMerge } from '../../../utils/utils'
 import type { MenuActionItemOptions, MenuQuickActionItemOptions } from '../../../interfaces/GraphUI'
 import { nodeNameGetter } from '../../../utils/GraphGetters'
 import { createInspectModal } from '../modals/InspectNodeModal/InspectNodeModal'
+import { Note } from '../../../Note'
 
 const defaultMenuNode = {
     topbar: [
@@ -151,6 +152,27 @@ const defaultMenuCanvas = {
         },
     ] as MenuQuickActionItemOptions[],
     menu: [
+        {
+            title: 'Add Note',
+            text: 'Add Note',
+            svgIcon: stickyNote,
+            variant: 'outline-primary',
+            visible: true,
+            onclick(this: ContextMenu, evt: PointerEvent) {
+                const renderer = this.uiManager.graph.renderer
+                const { x, y } = renderer.screenToGraphCoordinates(
+                    evt.clientX,
+                    evt.clientY
+                )
+                const note: Note = new Note({
+                    content: 'This is not a note.',
+                    x,
+                    y
+                })
+                this.uiManager.graph.noteManager.addNote(note)
+            },
+            shortcut: 'n'
+        }
     ] as MenuActionItemOptions[],
 }
 

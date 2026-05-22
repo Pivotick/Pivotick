@@ -1,6 +1,7 @@
 import type { Edge, EdgeData } from '../Edge'
 import type { Graph } from '../Graph'
 import type { Node, NodeData } from '../Node'
+import type { Note } from '../Note'
 import type { DeepPartial } from '../utils/utils'
 import type { GraphUI } from './GraphUI'
 import type { InterractionCallbacks } from './InterractionCallbacks'
@@ -80,6 +81,9 @@ export type GraphEvents = {
     edgeAdd: (edge: Edge) => void
     edgeRemove: (edge: Edge) => void
     edgeChange: (edge: Edge, previousData: EdgeData, nextData: EdgeData) => void
+    noteAdd: (note: Note) => void
+    noteRemove: (note: Note) => void
+    noteChange: (note: Note) => void
     dataBatchChanged: (changes: GraphDataChange[]) => void // Batch of data changes(transactions, imports, undo / redo)
 }
 
@@ -99,4 +103,12 @@ export type GraphDataChange =
         edge: Edge;
         previousData: EdgeData;
         nextData: EdgeData;
+    }
+    | { type: 'note:add'; note: Note }
+    | { type: 'note:remove'; note: Note }
+    | {
+        type: 'note:change';
+        note: Note;
+        previousData: Note;
+        nextData: Note;
     }

@@ -3,6 +3,7 @@ import type { Edge } from './Edge'
 import type { Graph } from './Graph'
 import type { GraphRendererOptions } from './interfaces/RendererOptions'
 import type { GraphInteractions } from './GraphInteractions'
+import type { Point } from './utils/GeometryHelper'
 
 
 export type ProgressType = 'simulation' | 'rendering' | 'done'
@@ -28,6 +29,8 @@ export abstract class GraphRenderer {
     abstract nextTick(): void
     abstract nextTickFor(nodes: Node[]): void
     abstract getZoomBehavior(): unknown
+    abstract screenToGraphCoordinates(screenX: number, screenY: number): Point
+    abstract graphToScreenCoordinates(graphX: number, graphY: number): Point
     abstract toggleLassoMode(enabled: boolean): void
     abstract isLassoModeActive(): boolean
     abstract getNodeClosestToCursor(maxDistance?: number): Node | null
