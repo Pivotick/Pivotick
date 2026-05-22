@@ -230,6 +230,7 @@ export class Tooltip implements UIElement {
                 svgIcon: pin,
                 onClick: () => {
                     this.pinTooltip()
+                    this.hide()
                 },
             })
             toprightElem.appendChild(pinButton)
