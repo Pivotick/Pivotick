@@ -449,6 +449,7 @@ export class EdgeDrawer {
 
         const text = labelContainer.append('text')
             .text(labelContent)
+            .attr('class', 'pvt-edge-label')
             .attr('text-anchor', 'middle')
             .attr('alignment-baseline', 'middle')
             .style('font-size', style.fontSize)

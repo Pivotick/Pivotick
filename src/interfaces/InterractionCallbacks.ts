@@ -121,8 +121,26 @@ export interface InterractionCallbacks<TElement = unknown> {
     onSimulationSlowTick?: () => void
 
     /**
-     * called when a node edit session starts.
+     * Called when a node edit session starts. Act as a UI hook.
+     * @returns A HTML Div that will be injected in the modal's body
      * @param session The node edit session
      */
-    onNodeEdit?: (session: NodeEditSession) => void
+    onNodeEdit?: (session: NodeEditSession) => HTMLDivElement
+    /**
+     * Called when an node edit session is about to be commited
+     * Act as a validation/interception hook.
+     * @returns boolean indicating if the commit should proceed or not
+     */
+    onBeforeNodeEditCommit?: (context: NodeEditCommitContext) => boolean | Promise<boolean>
+    /**
+     * Called when an node edit session gets cancelled
+     */
+    onNodeEditCancel?: (node: Node) => void
+}
+
+export interface NodeEditCommitContext {
+    node: Node
+    previousData: NodeData
+    nextData: NodeData
+    session: NodeEditSession
 }

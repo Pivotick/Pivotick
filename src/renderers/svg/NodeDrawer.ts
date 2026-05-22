@@ -343,6 +343,7 @@ export class NodeDrawer {
 
             const textSelection = labelG
                 .append('text')
+                .attr('class', 'pvt-node-label')
                 .attr('text-anchor', style.textAnchorPosition)
                 .attr('x', x_pos)
                 .attr('y', y_pos)

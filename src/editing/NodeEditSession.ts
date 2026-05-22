@@ -77,6 +77,9 @@ export class NodeEditSession {
          */
         if (!callback) {
             this.node.setData(nextData)
+            this.manager.graph.renderer.update(true)
+            this.manager.graph.nextTickFor([this.node])
+            this.manager.graph.renderer.getGraphInteraction().selectNode(this.node.getGraphElement(), this.node)
             this.active = false
             this.manager.closeSession(this.node.id)
             return true
@@ -103,6 +106,9 @@ export class NodeEditSession {
          * Finalize commit.
          */
         this.node.setData(nextData)
+        this.manager.graph.renderer.update(true)
+        this.manager.graph.nextTickFor([this.node])
+        this.manager.graph.renderer.getGraphInteraction().selectNode(this.node.getGraphElement(), this.node)
         this.active = false
         this.manager.closeSession(this.node.id)
         return true

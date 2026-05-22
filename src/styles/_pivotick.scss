@@ -310,6 +310,10 @@ dl.pvt-property-list {
 .pvt-node {
     // transition: transform 0.3s ease;
 
+    .pvt-node-label {
+        user-select: none;
+    }
+
     text.icon {
         user-select: none;
         pointer-events: none;
