@@ -51,10 +51,11 @@
                 fill: rgba(0, 0, 0, 0.28);
             }
 
-            text {
+            text, svg {
                 font-size: 12px;
                 font-family: sans-serif;
                 fill: #222;
+                color: var(--pvt-text-color-1);
 
                 user-select: none;
                 pointer-events: none;

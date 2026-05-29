@@ -6,7 +6,8 @@ import { GraphSvgRenderer } from './GraphSvgRenderer'
 
 import { Note } from '../../Note'
 import type { GraphRendererOptions } from '../../interfaces/RendererOptions'
-import { createSvgElement } from '../../utils/ElementCreation'
+import { createHtmlTemplate, createSvgElement } from '../../utils/ElementCreation'
+import { checkmark, closeIcon, edit } from '../../ui/icons'
 
 d3Select.prototype.transition = d3Transition
 
@@ -21,7 +22,11 @@ const colors = [
 const buttonSize = 18
 const buttonSpacing = 6
 const buttonMargin = 8
+const iconSize = 14
 const buttonTotalWidth = buttonSize * 2 + buttonSpacing
+
+const svgEdit = createHtmlTemplate(edit) as unknown as SVGSVGElement
+const svgClose = createHtmlTemplate(closeIcon) as unknown as SVGSVGElement
 
 export class NoteDrawer {
 
@@ -184,7 +189,7 @@ export class NoteDrawer {
 
         const createButton = (
             className: string,
-            label: string,
+            label: string | SVGSVGElement,
             offsetX: number,
             onClick: () => void
         ) => {
@@ -200,31 +205,44 @@ export class NoteDrawer {
                 rx: 5,
                 ry: 5,
             })
-
-            const text = createSvgElement('text', {
-                x: buttonSize / 2,
-                y: buttonSize / 2,
-                'text-anchor': 'middle',
-                'dominant-baseline': 'central',
-            })
-
-            text.textContent = label
-
             group.appendChild(bg)
-            group.appendChild(text)
+
+            if (label instanceof SVGSVGElement) {
+                const iconContainer = createSvgElement('g', {
+                    class: 'pvt-note-icon-container',
+                    transform: `
+                        translate(
+                            ${(buttonSize - iconSize) / 2},
+                            ${(buttonSize - iconSize) / 2}
+                        )`
+                })
+
+                const icon = label
+                icon.setAttribute('width', iconSize.toString())
+                icon.setAttribute('height', iconSize.toString())
+                iconContainer.appendChild(icon)
+                group.appendChild(iconContainer)
+            } else {
+                const text = createSvgElement('text', {
+                    x: buttonSize / 2,
+                    y: buttonSize / 2,
+                    'text-anchor': 'middle',
+                    'dominant-baseline': 'central',
+                })
+                text.textContent = label
+                group.appendChild(text)
+            }
+
 
             group.addEventListener('click', (evt) => {
                 evt.stopPropagation()
                 onClick()
             })
 
-            return {
-                group,
-                text,
-            }
+            return group
         }
 
-        const editButton = createButton('pvt-note-edit-button', '✎', 0,
+        const editButton = createButton('pvt-note-edit-button', svgEdit, 0,
             () => {
 
                 const root = noteSelection.node()
@@ -243,30 +261,39 @@ export class NoteDrawer {
             }
         )
 
-        const closeButton = createButton('pvt-note-close-button', '×', buttonSize + buttonSpacing,
+        const closeButton = createButton('pvt-note-close-button', svgClose, buttonSize + buttonSpacing,
             () => {
                 this.graph.noteManager.removeNote(note)
             }
         )
 
-        container.appendChild(editButton.group)
-        container.appendChild(closeButton.group)
+        container.appendChild(editButton)
+        container.appendChild(closeButton)
 
         return container
     }
 
     private updateEditButtonState(root: SVGGElement, isEditing: boolean): void {
 
-        const editButtonText =
-            root.querySelector<SVGTextElement>(
-                '.pvt-note-edit-button text'
+        const container =
+            root.querySelector<SVGGElement>(
+                '.pvt-note-edit-button .pvt-note-icon-container'
             )
 
-        if (!editButtonText) return
+        if (!container) return
 
-        editButtonText.textContent = isEditing
-            ? '✓'
-            : '✎'
+        container.replaceChildren()
+
+        const icon = createHtmlTemplate(
+            isEditing
+                ? checkmark
+                : edit
+        ) as unknown as SVGSVGElement
+
+        icon.setAttribute('width', iconSize.toString())
+        icon.setAttribute('height', iconSize.toString())
+
+        container.appendChild(icon)
     }
 
 
