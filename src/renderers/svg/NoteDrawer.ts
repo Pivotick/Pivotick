@@ -10,6 +10,14 @@ import { createSvgElement } from '../../utils/ElementCreation'
 
 d3Select.prototype.transition = d3Transition
 
+
+const colors = [
+    '#FDE68A',
+    '#FCA5A5',
+    '#93C5FD',
+    '#86EFAC',
+    '#C4B5FD'
+]
 export class NoteDrawer {
 
     public graph: Graph
@@ -38,15 +46,7 @@ export class NoteDrawer {
         root.appendChild(this.createResizeHandle(note))
 
         this.makeDraggable(noteSelection, note)
-    }
-
-    public updatePositions(noteSelection: Selection<SVGGElement, Note, SVGGElement, unknown>): void {
-
-        noteSelection.attr('transform', d => {
-            const x = isFinite(d.x) ? d.x : 0
-            const y = isFinite(d.y) ? d.y : 0
-            return `translate(${x},${y})`
-        })
+        this.makeResizable(noteSelection, note)
     }
 
     private createBackground(note: Note): SVGRectElement {
@@ -57,9 +57,7 @@ export class NoteDrawer {
             height: note.height,
             rx: 10,
             ry: 10,
-            fill: note.color,
-            stroke: 'rgba(0,0,0,0.15)',
-            'stroke-width': 1,
+            fill: note.color
         })
     }
 
@@ -85,6 +83,7 @@ export class NoteDrawer {
         })
 
         const div = document.createElement('div')
+        div.classList.add('pvt-note-content')
 
         div.style.width = '100%'
         div.style.height = '100%'
@@ -104,14 +103,6 @@ export class NoteDrawer {
 
     private createColorPills(noteSelection: Selection<SVGGElement, Note, null, undefined>, note: Note): SVGGElement {
 
-        const colors = [
-            '#FDE68A',
-            '#FCA5A5',
-            '#93C5FD',
-            '#86EFAC',
-            '#C4B5FD'
-        ]
-
         const group = createSvgElement('g', {
             class: 'pvt-note-color-pills',
         })
@@ -126,11 +117,9 @@ export class NoteDrawer {
                 cy: 14,
                 r: radius,
                 fill: color,
-                stroke: 'rgba(0,0,0,0.2)',
-                'stroke-width': 1,
+                class: 'pvt-note-color-pill'
             })
-
-            circle.style.cursor = 'pointer'
+            
 
             circle.addEventListener('click', () => {
 
@@ -159,12 +148,9 @@ export class NoteDrawer {
             y: note.height - size,
             width: size,
             height: size,
-            fill: 'rgba(0,0,0,0.2)',
             rx: 3,
             ry: 3,
         })
-
-        rect.style.cursor = 'nwse-resize'
 
         return rect
     }
@@ -207,14 +193,6 @@ export class NoteDrawer {
         group.appendChild(bg)
         group.appendChild(text)
 
-        group.addEventListener('mouseenter', () => {
-            bg.setAttribute('fill', 'rgba(0,0,0,0.28)')
-        })
-
-        group.addEventListener('mouseleave', () => {
-            bg.setAttribute('fill', 'rgba(0,0,0,0.15)')
-        })
-
         group.addEventListener('click', (evt) => {
 
             evt.stopPropagation()
@@ -223,6 +201,48 @@ export class NoteDrawer {
         })
 
         return group
+    }
+
+
+    public updatePositions(noteSelection: Selection<SVGGElement, Note, SVGGElement, unknown>): void {
+
+        noteSelection.attr('transform', d => {
+            const x = isFinite(d.x) ? d.x : 0
+            const y = isFinite(d.y) ? d.y : 0
+            return `translate(${x},${y})`
+        })
+    }
+
+    private updateNoteSize(
+        noteSelection: Selection<SVGGElement, Note, null, undefined>,
+        note: Note
+    ): void {
+
+        noteSelection
+            .select('.pvt-note-background')
+            .attr('width', note.width)
+            .attr('height', note.height)
+
+        noteSelection
+            .select('.pvt-note-header')
+            .attr('width', note.width)
+
+        noteSelection
+            .select('foreignObject')
+            .attr('width', note.width - 24)
+            .attr('height', note.height - 52)
+
+        noteSelection
+            .select('.pvt-note-resize-handle')
+            .attr('x', note.width - 12)
+            .attr('y', note.height - 12)
+
+        noteSelection
+            .select('.pvt-note-close-button')
+            .attr(
+                'transform',
+                `translate(${note.width - 26}, 5)`
+            )
     }
 
     private makeDraggable(noteSelection: Selection<SVGGElement, Note, null, undefined>, note: Note): void {
@@ -264,6 +284,7 @@ export class NoteDrawer {
                     note.setPosition(startNoteX + dx, startNoteY + dy)
                     noteSelection.attr('transform', `translate(${note.x},${note.y})`)
                     noteSelection.style('user-select', 'none')
+                    noteSelection.classed('dragging', true)
                 }
 
                 const onMouseUp = () => {
@@ -273,11 +294,83 @@ export class NoteDrawer {
                     document.removeEventListener('mouseup', onMouseUp)
 
                     noteSelection.style('user-select', 'all')
+                    noteSelection.classed('dragging', false)
                 }
 
                 document.addEventListener('mousemove', onMouseMove)
 
                 document.addEventListener('mouseup', onMouseUp)
             })
+    }
+
+    private makeResizable(
+        noteSelection: Selection<SVGGElement, Note, null, undefined>,
+        note: Note
+    ): void {
+
+        const handle =
+            noteSelection.node()
+                ?.querySelector<SVGRectElement>('.pvt-note-resize-handle')
+
+        if (!handle) return
+
+        let isResizing = false
+
+        let startMouseX = 0
+        let startMouseY = 0
+
+        let startWidth = 0
+        let startHeight = 0
+
+        handle.addEventListener('mousedown', (evt: MouseEvent) => {
+
+            evt.stopPropagation()
+
+            isResizing = true
+
+            startMouseX = evt.clientX
+            startMouseY = evt.clientY
+
+            startWidth = note.width
+            startHeight = note.height
+
+            const onMouseMove = (moveEvt: MouseEvent) => {
+
+                if (!isResizing) return
+
+                const renderer = this.graphSvgRenderer
+
+                const startGraph =
+                    renderer.screenToGraphCoordinates(
+                        startMouseX,
+                        startMouseY
+                    )
+
+                const currentGraph =
+                    renderer.screenToGraphCoordinates(
+                        moveEvt.clientX,
+                        moveEvt.clientY
+                    )
+
+                const dx = currentGraph.x - startGraph.x
+                const dy = currentGraph.y - startGraph.y
+
+                note.width = Math.max(120, startWidth + dx)
+                note.height = Math.max(80, startHeight + dy)
+
+                this.updateNoteSize(noteSelection, note)
+            }
+
+            const onMouseUp = () => {
+
+                isResizing = false
+
+                document.removeEventListener('mousemove', onMouseMove)
+                document.removeEventListener('mouseup', onMouseUp)
+            }
+
+            document.addEventListener('mousemove', onMouseMove)
+            document.addEventListener('mouseup', onMouseUp)
+        })
     }
 }
