@@ -1,0 +1,128 @@
+.pvt-note {
+    transition:
+        opacity 120ms ease,
+        filter 120ms ease;
+
+    .pvt-note-background {
+        stroke: rgba(0, 0, 0, 0.15);
+        stroke-width: 1;
+
+        transition:
+            stroke 120ms ease,
+            stroke-width 120ms ease,
+            filter 120ms ease;
+    }
+
+    .pvt-note-header {
+        fill: rgba(255, 255, 255, 0.25);
+        cursor: move;
+    }
+
+    .pvt-note-content {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+
+        font-size: 14px;
+        font-family: sans-serif;
+        color: #222;
+
+        outline: none;
+        background: transparent;
+
+        cursor: text;
+
+        &:focus {
+            outline: none;
+        }
+    }
+
+    .pvt-note-actions {
+
+        .pvt-note-action-button {
+            cursor: pointer;
+
+            rect {
+                fill: rgba(0, 0, 0, 0.15);
+                transition: fill 120ms ease;
+            }
+
+            &:hover rect {
+                fill: rgba(0, 0, 0, 0.28);
+            }
+
+            text {
+                font-size: 12px;
+                font-family: sans-serif;
+                fill: #222;
+
+                user-select: none;
+                pointer-events: none;
+            }
+        }
+    }
+
+    .pvt-note-resize-handle {
+        fill: rgba(0, 0, 0, 0.2);
+        cursor: nwse-resize;
+        pointer-events: all;
+    }
+
+    .pvt-note-color-pills {
+
+        .pvt-note-color-pill {
+            stroke: rgba(0, 0, 0, 0.2);
+            stroke-width: 1;
+
+            cursor: pointer;
+            transform-box: fill-box;
+            transform-origin: center;
+
+            transition:
+                transform 120ms ease;
+
+            &:hover {
+                transform: scale(1.15);
+            }
+        }
+    }
+
+    &.selected {
+
+        .pvt-note-background {
+            stroke: #2563eb;
+            stroke-width: 2;
+            filter: drop-shadow(0 0 6px rgba(37, 99, 235, 0.35));
+        }
+    }
+
+    &.dragging {
+        opacity: 0.9;
+
+        .pvt-note-background {
+            filter: drop-shadow(4px 4px 6px var(--pvt-box-shadow-color-strong));
+        }
+
+        .pvt-note-header {
+            cursor: grabbing;
+        }
+    }
+
+    &.editing {
+
+        filter:
+            brightness(1.07) drop-shadow(8px 8px 8px var(--pvt-box-shadow-color-strong));
+
+        .pvt-note-background {
+
+        }
+
+        .pvt-note-header {
+            filter: brightness(0.75);
+        }
+
+        .pvt-note-content {
+            cursor: text;
+        }
+    }
+}

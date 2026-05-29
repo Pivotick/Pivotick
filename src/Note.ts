@@ -22,6 +22,7 @@ export class Note {
     public color: string
 
     private graphElement?: SVGGElement
+    private editing: boolean
 
     public constructor(options: NoteOptions = {}) {
         this.id = options.id ?? crypto.randomUUID()
@@ -34,6 +35,8 @@ export class Note {
 
         this.content = options.content ?? ''
         this.color = options.color ?? '#FDE68A'
+
+        this.editing = false
     }
 
     public setPosition(x: number, y: number): void {
@@ -60,5 +63,13 @@ export class Note {
 
     public getGraphElement(): SVGGElement | undefined {
         return this.graphElement
+    }
+
+    public isEditing(): boolean {
+        return this.editing
+    }
+
+    public setEditing(editing: boolean): void {
+        this.editing = editing
     }
 }

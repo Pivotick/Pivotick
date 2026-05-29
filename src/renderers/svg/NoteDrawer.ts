@@ -24,6 +24,8 @@ export class NoteDrawer {
     public graphSvgRenderer: GraphSvgRenderer
     public rendererOptions: GraphRendererOptions
 
+    private originalContentMap = new WeakMap<Note, string>()
+
     public constructor(rendererOptions: GraphRendererOptions, graph: Graph, graphSvgRenderer: GraphSvgRenderer, ) {
         this.rendererOptions = rendererOptions
         this.graph = graph
@@ -40,13 +42,16 @@ export class NoteDrawer {
 
         root.appendChild(this.createBackground(note))
         root.appendChild(this.createHeader(note))
-        root.appendChild(this.createCloseButton(noteSelection, note))
+        root.appendChild(this.createActionButtons(noteSelection, note))
         root.appendChild(this.createContent(note))
         root.appendChild(this.createColorPills(noteSelection, note))
         root.appendChild(this.createResizeHandle(note))
 
         this.makeDraggable(noteSelection, note)
         this.makeResizable(noteSelection, note)
+
+        const contentDiv: HTMLDivElement = root.querySelector('.pvt-note-content')!
+        this.bindEditing(root, note, contentDiv)
     }
 
     private createBackground(note: Note): SVGRectElement {
@@ -93,6 +98,7 @@ export class NoteDrawer {
         div.style.color = '#222'
         div.style.outline = 'none'
         div.style.background = 'transparent'
+        div.contentEditable = 'false'
 
         div.innerHTML = note.content
 
@@ -155,52 +161,111 @@ export class NoteDrawer {
         return rect
     }
 
-    private createCloseButton(
+    private createActionButtons(
         noteSelection: Selection<SVGGElement, Note, null, undefined>,
         note: Note
     ): SVGGElement {
 
+        const container = createSvgElement('g', {
+            class: 'pvt-note-actions',
+        })
+
         const buttonSize = 18
+        const spacing = 6
         const margin = 8
 
-        const group = createSvgElement('g', {
-            class: 'pvt-note-close-button',
-            transform: `translate(${note.width - buttonSize - margin}, 5)`,
-        })
+        const totalWidth = buttonSize * 2 + spacing
 
-        group.style.cursor = 'pointer'
+        container.setAttribute(
+            'transform',
+            `translate(${note.width - totalWidth - margin}, 5)`
+        )
 
-        const bg = createSvgElement('rect', {
-            width: buttonSize,
-            height: buttonSize,
-            rx: 5,
-            ry: 5,
-            fill: 'rgba(0,0,0,0.15)',
-        })
+        const createButton = (
+            className: string,
+            label: string,
+            offsetX: number,
+            onClick: () => void
+        ) => {
 
-        const text = createSvgElement('text', {
-            x: buttonSize / 2,
-            y: buttonSize / 2,
-            'text-anchor': 'middle',
-            'dominant-baseline': 'central',
-            'font-size': 12,
-            'font-family': 'sans-serif',
-            fill: '#222',
-        })
+            const group = createSvgElement('g', {
+                class: className + ' pvt-note-action-button',
+                transform: `translate(${offsetX}, 0)`
+            })
 
-        text.textContent = '×'
+            const bg = createSvgElement('rect', {
+                width: buttonSize,
+                height: buttonSize,
+                rx: 5,
+                ry: 5,
+            })
 
-        group.appendChild(bg)
-        group.appendChild(text)
+            const text = createSvgElement('text', {
+                x: buttonSize / 2,
+                y: buttonSize / 2,
+                'text-anchor': 'middle',
+                'dominant-baseline': 'central',
+            })
 
-        group.addEventListener('click', (evt) => {
+            text.textContent = label
 
-            evt.stopPropagation()
+            group.appendChild(bg)
+            group.appendChild(text)
 
-            this.graph.noteManager.removeNote(note)
-        })
+            group.addEventListener('click', (evt) => {
+                evt.stopPropagation()
+                onClick()
+            })
 
-        return group
+            return {
+                group,
+                text,
+            }
+        }
+
+        const editButton = createButton('pvt-note-edit-button', '✎', 0,
+            () => {
+
+                const root = noteSelection.node()
+                if (!root) return
+
+                const contentDiv =
+                    root.querySelector<HTMLDivElement>('.pvt-note-content')
+
+                if (!contentDiv) return
+
+                if (note.isEditing()) {
+                    this.saveEditMode(root, note, contentDiv)
+                } else {
+                    this.enterEditMode(root, note, contentDiv)
+                }
+            }
+        )
+
+        const closeButton = createButton('pvt-note-close-button', '×', buttonSize + spacing,
+            () => {
+                this.graph.noteManager.removeNote(note)
+            }
+        )
+
+        container.appendChild(editButton.group)
+        container.appendChild(closeButton.group)
+
+        return container
+    }
+
+    private updateEditButtonState(root: SVGGElement, isEditing: boolean): void {
+
+        const editButtonText =
+            root.querySelector<SVGTextElement>(
+                '.pvt-note-edit-button text'
+            )
+
+        if (!editButtonText) return
+
+        editButtonText.textContent = isEditing
+            ? '✓'
+            : '✎'
     }
 
 
@@ -243,6 +308,53 @@ export class NoteDrawer {
                 'transform',
                 `translate(${note.width - 26}, 5)`
             )
+    }
+
+    private enterEditMode(root: SVGGElement, note: Note, contentDiv: HTMLDivElement): void {
+
+        this.originalContentMap.set(note, note.content)
+        note.setEditing(true)
+        root.classList.add('editing')
+        contentDiv.contentEditable = 'true'
+        this.updateEditButtonState(root, true)
+        contentDiv.focus()
+    }
+
+    private saveEditMode(root: SVGGElement, note: Note, contentDiv: HTMLDivElement): void {
+        note.setEditing(false)
+        root.classList.remove('editing')
+        contentDiv.contentEditable = 'false'
+        this.updateEditButtonState(root, false)
+        note.setContent(contentDiv.innerHTML)
+        this.graph.noteManager.editNote(note)
+    }
+
+    private cancelEditMode(root: SVGGElement, note: Note, contentDiv: HTMLDivElement): void {
+        note.setEditing(false)
+        root.classList.remove('editing')
+        contentDiv.contentEditable = 'false'
+        const original = this.originalContentMap.get(note)
+        if (original !== undefined) {
+            contentDiv.innerHTML = original
+        }
+    }
+
+    private bindEditing(root: SVGGElement, note: Note, contentDiv: HTMLDivElement): void {
+
+        root.addEventListener('dblclick', () => {
+            this.enterEditMode(root, note, contentDiv)
+        })
+
+        contentDiv.addEventListener('keydown', (evt) => {
+
+            if (evt.key === 'Escape') {
+                this.cancelEditMode(root, note, contentDiv)
+            }
+
+            if ((evt.metaKey || evt.ctrlKey) && evt.key === 'Enter') {
+                this.saveEditMode(root, note, contentDiv)
+            }
+        })
     }
 
     private makeDraggable(noteSelection: Selection<SVGGElement, Note, null, undefined>, note: Note): void {
