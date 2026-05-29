@@ -311,6 +311,7 @@ export function makeDraggable(draggableEl: HTMLElement, handleEl: HTMLElement, b
         bbox = draggableEl.getBoundingClientRect()
         appBox = box.getBoundingClientRect()
         callbacks.onDragStart?.(e, draggableEl)
+        window.getSelection()?.removeAllRanges()
         document.addEventListener('mousemove', onMouseMove, { signal })
         document.addEventListener('mouseup', (e: MouseEvent) => {
             controller.abort()

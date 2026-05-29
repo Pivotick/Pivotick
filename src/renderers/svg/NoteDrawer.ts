@@ -373,6 +373,7 @@ export class NoteDrawer {
             .style('cursor', 'move')
             .on('mousedown', (evt: MouseEvent) => {
 
+                evt.preventDefault()
                 evt.stopPropagation()
 
                 isDragging = true
@@ -395,8 +396,9 @@ export class NoteDrawer {
 
                     note.setPosition(startNoteX + dx, startNoteY + dy)
                     noteSelection.attr('transform', `translate(${note.x},${note.y})`)
-                    noteSelection.style('user-select', 'none')
                     noteSelection.classed('dragging', true)
+                    window.getSelection()?.removeAllRanges()
+                    document.body.classList.add('pvt-disable-selection') // disable selection globally
                 }
 
                 const onMouseUp = () => {
@@ -407,10 +409,10 @@ export class NoteDrawer {
 
                     noteSelection.style('user-select', 'all')
                     noteSelection.classed('dragging', false)
+                    document.body.classList.remove('pvt-disable-selection') // restore selection globally
                 }
 
                 document.addEventListener('mousemove', onMouseMove)
-
                 document.addEventListener('mouseup', onMouseUp)
             })
     }
@@ -436,6 +438,7 @@ export class NoteDrawer {
 
         handle.addEventListener('mousedown', (evt: MouseEvent) => {
 
+            evt.preventDefault()
             evt.stopPropagation()
 
             isResizing = true
