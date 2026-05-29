@@ -18,6 +18,11 @@ const colors = [
     '#86EFAC',
     '#C4B5FD'
 ]
+const buttonSize = 18
+const buttonSpacing = 6
+const buttonMargin = 8
+const buttonTotalWidth = buttonSize * 2 + buttonSpacing
+
 export class NoteDrawer {
 
     public graph: Graph
@@ -172,15 +177,9 @@ export class NoteDrawer {
             class: 'pvt-note-actions',
         })
 
-        const buttonSize = 18
-        const spacing = 6
-        const margin = 8
-
-        const totalWidth = buttonSize * 2 + spacing
-
         container.setAttribute(
             'transform',
-            `translate(${note.width - totalWidth - margin}, 5)`
+            this.getActionButtonsTransform(note)
         )
 
         const createButton = (
@@ -244,7 +243,7 @@ export class NoteDrawer {
             }
         )
 
-        const closeButton = createButton('pvt-note-close-button', '×', buttonSize + spacing,
+        const closeButton = createButton('pvt-note-close-button', '×', buttonSize + buttonSpacing,
             () => {
                 this.graph.noteManager.removeNote(note)
             }
@@ -280,6 +279,10 @@ export class NoteDrawer {
         })
     }
 
+    private getActionButtonsTransform(note: Note): string {
+        return `translate(${note.width - buttonTotalWidth - buttonMargin}, 5)`
+    }
+
     private updateNoteSize(
         noteSelection: Selection<SVGGElement, Note, null, undefined>,
         note: Note
@@ -305,10 +308,10 @@ export class NoteDrawer {
             .attr('y', note.height - 12)
 
         noteSelection
-            .select('.pvt-note-close-button')
+            .select('.pvt-note-actions')
             .attr(
                 'transform',
-                `translate(${note.width - 26}, 5)`
+                this.getActionButtonsTransform(note)
             )
     }
 
