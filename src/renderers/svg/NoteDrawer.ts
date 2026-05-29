@@ -62,7 +62,8 @@ export class NoteDrawer {
             height: note.height,
             rx: 10,
             ry: 10,
-            fill: note.color
+            fill: note.color,
+            color: note.color,
         })
     }
 
@@ -136,6 +137,7 @@ export class NoteDrawer {
                         ?.querySelector('.pvt-note-background')
 
                 bg?.setAttribute('fill', color)
+                bg?.setAttribute('color', color)
             })
 
             group.appendChild(circle)

@@ -113,16 +113,40 @@
         filter:
             brightness(1.07) drop-shadow(8px 8px 8px var(--pvt-box-shadow-color-strong));
 
-        .pvt-note-background {
-
-        }
-
         .pvt-note-header {
             filter: brightness(0.75);
+            opacity: 0.65;
+
+            .pvt-note-actions,
+            .pvt-note-color-pills,
+            .pvt-note-resize-handle {
+                transition: opacity 120ms ease;
+            }
+        }
+
+        .pvt-note-background {
+            stroke: color-mix(in srgb,
+                        var(--note-color, currentColor)82%,
+                        #1f2937);
+            stroke-width: 2;
+            stroke-dasharray: 6 4;
+
+            filter:
+                drop-shadow(0 10px 20px rgba(0, 0, 0, 0.18));
+            animation:
+                pvt-note-edit-dash 10s linear infinite;
         }
 
         .pvt-note-content {
             cursor: text;
+            caret-color: #111;
+            backdrop-filter: blur(2px);
         }
+    }
+}
+
+@keyframes pvt-note-edit-dash {
+    to {
+        stroke-dashoffset: -40;
     }
 }
