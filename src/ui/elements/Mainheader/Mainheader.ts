@@ -158,6 +158,4 @@ export class Mainheader implements UIElement {
             }
         })
     }
-
-    graphReady(): void { }
 }

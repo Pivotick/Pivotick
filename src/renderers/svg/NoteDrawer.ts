@@ -7,7 +7,7 @@ import { GraphSvgRenderer } from './GraphSvgRenderer'
 import { Note } from '../../Note'
 import type { GraphRendererOptions } from '../../interfaces/RendererOptions'
 import { createHtmlTemplate, createSvgElement } from '../../utils/ElementCreation'
-import { checkmark, closeIcon, edit, trash } from '../../ui/icons'
+import { checkmark, edit, trash } from '../../ui/icons'
 
 d3Select.prototype.transition = d3Transition
 
