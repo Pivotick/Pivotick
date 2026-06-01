@@ -59,6 +59,7 @@ export interface GraphOptions {
 export interface GraphData {
     nodes: Node[],
     edges: Edge[],
+    notes: Note[],
 }
 
 export type RawNode = { id: string | number; data?: NodeData, style?: Partial<NodeStyle>, weight?: number, expanded: boolean, domID?: string, children?: RawNode[] }
@@ -67,6 +68,7 @@ export type RawEdge = { id?: string | number; from: string | number; to: string 
 export interface RelaxedGraphData {
     nodes: Array<Node | RawNode>
     edges: Array<Edge | RawEdge>
+    notes: Array<Note>
 }
 
 

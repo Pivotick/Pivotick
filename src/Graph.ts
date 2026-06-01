@@ -14,7 +14,7 @@ import { GraphQueryEngine } from './GraphQueryEngine'
 import type { GraphRendererOptions } from './interfaces/RendererOptions'
 import { GraphEditingManager } from './editing/GraphEditingManager'
 import { NoteManager } from './NoteManager'
-import type { Note } from './Note'
+import { Note, type NoteOptions } from './Note'
 
 export class Graph {
     private nodes: Map<string, Node> = new Map()
@@ -119,7 +119,7 @@ export class Graph {
 
         if (data) {
             const normalisedData = Graph.normalizeGraphData(data)
-            this._setData(normalisedData?.nodes, normalisedData?.edges)
+            this._setData(normalisedData?.nodes, normalisedData?.edges, normalisedData?.notes)
             this.simulation?.update()
             this.renderer.init()
             this.renderer.fitAndCenter(1)
@@ -230,9 +230,13 @@ export class Graph {
 
         normalizedEdges.push(...newEdges)
 
+        const normalisedNotes: Note[] = data.notes.map((n) => Graph.normalizeNote(n))
+            .filter((n): n is Note => n !== null)
+
         return {
             nodes: normalizedNodes,
             edges: normalizedEdges,
+            notes: normalisedNotes,
         }
     }
 
@@ -285,6 +289,13 @@ export class Graph {
             normEdge.hide()
         }
         return normEdge
+    }
+
+    private static normalizeNote(n: NoteOptions | Note): Note | null {
+        if (n instanceof Note) return n
+        
+        const normNote = new Note(n)
+        return normNote
     }
 
 
@@ -460,11 +471,12 @@ export class Graph {
      * @param nodes Array of nodes to set. Defaults to an empty array.
      * @param edges Array of edges to set. Defaults to an empty array.
      */
-    setData(nodes: Array<Node> = [], edges: Array<Edge> = []): void {
+    setData(nodes: Array<Node> = [], edges: Array<Edge> = [], notes: Array<Note> = []): void {
         this.nodes.clear()
         this.edges.clear()
-        const normalisedData = Graph.normalizeGraphData({ nodes: nodes, edges: edges})
-        this._setData(normalisedData?.nodes, normalisedData?.edges)
+        this.noteManager.clear()
+        const normalisedData = Graph.normalizeGraphData({ nodes: nodes, edges: edges, notes: notes})
+        this._setData(normalisedData?.nodes, normalisedData?.edges, normalisedData?.notes)
         this.onChange()
         this.startAndRender()
     }
@@ -472,7 +484,7 @@ export class Graph {
     /** 
      * @private
      */
-    private _setData(nodes: Array<Node>, edges: Array<Edge>): void {
+    private _setData(nodes: Array<Node>, edges: Array<Edge>, notes: Array<Note>): void {
         const recurseAddChildren = (node: Node) => {
             node.children.forEach((child: Node) => {
                 this.nodes.set(child.id, child)
@@ -506,6 +518,10 @@ export class Graph {
             } as GraphDataChange)
         })
         this.dataBatchChanged(changes)
+
+        notes.forEach(note => {
+            this.noteManager.addNote(note, true)
+        })
     }
 
     /**

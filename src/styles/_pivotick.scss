@@ -345,6 +345,7 @@ dl.pvt-property-list {
     &.pvt-node-has-children {
 
         .node-icon {
+            user-select: none;
 
             &.expand-icon {
                 fill: var(--pvt-bg-color-info);

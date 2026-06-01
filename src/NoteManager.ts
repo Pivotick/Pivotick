@@ -11,10 +11,12 @@ export class NoteManager {
         this.graph = graph
     }
 
-    public addNote(note: Note): void {
+    public addNote(note: Note, noEmit=false): void {
         this.notes.set(note.id, note)
-        this.graph.noteAdd(note)
-        this.graph.onChange()
+        if (!noEmit) {
+            this.graph.noteAdd(note)
+            this.graph.onChange()
+        }
     }
 
     public removeNote(noteOrId: Note | string): void {
