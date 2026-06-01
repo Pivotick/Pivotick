@@ -59,7 +59,7 @@ export class NoteDrawer {
         this.makeResizable(noteSelection, note)
 
         const contentDiv: HTMLDivElement = root.querySelector('.pvt-note-content')!
-        this.bindEditing(root, note, contentDiv)
+        this.bindEditing(contentDiv, note)
     }
 
     private createBackground(note: Note): SVGRectElement {
@@ -232,17 +232,10 @@ export class NoteDrawer {
 
         const svgEdit = createHtmlTemplate(edit) as unknown as SVGSVGElement
         const editButton = createButton('pvt-note-edit-button', svgEdit, 0, () => {
-                const noteContainer = note.getGraphElement()
-                if (!noteContainer) return
-
-                const contentDiv = noteContainer.querySelector<HTMLDivElement>('.pvt-note-content')
-
-                if (!contentDiv) return
-
                 if (note.isEditing()) {
-                    this.saveEditMode(contentDiv, note)
+                    this.saveEditMode(note)
                 } else {
-                    this.enterEditMode(contentDiv, note)
+                    this.enterEditMode(note)
                 }
             }
         )
@@ -328,27 +321,44 @@ export class NoteDrawer {
             )
     }
 
-    private enterEditMode(contentDiv: HTMLDivElement, note: Note): void {
+    private enterEditMode(note: Note): void {
+        const noteContainer = note.getGraphElement()
+        if (!noteContainer) return
+        const contentDiv = noteContainer.querySelector<HTMLDivElement>('.pvt-note-content')
+        if (!contentDiv) return
+
         this.originalContentMap.set(note, note.content)
         note.setEditing(true)
-        contentDiv.classList.add('editing')
+        noteContainer.classList.add('editing')
         contentDiv.contentEditable = 'true'
         this.updateEditButtonState(true, note)
-        contentDiv.focus()
+        requestAnimationFrame(() => {
+            contentDiv.focus()
+        })
     }
 
-    private saveEditMode(contentDiv: HTMLDivElement, note: Note): void {
+    private saveEditMode(note: Note): void {
+        const noteContainer = note.getGraphElement()
+        if (!noteContainer) return
+        const contentDiv = noteContainer.querySelector<HTMLDivElement>('.pvt-note-content')
+        if (!contentDiv) return
+
         note.setEditing(false)
-        contentDiv.classList.remove('editing')
+        noteContainer.classList.remove('editing')
         contentDiv.contentEditable = 'false'
         this.updateEditButtonState(false, note)
         note.setContent(contentDiv.innerHTML)
         this.graph.noteManager.editNote(note)
     }
 
-    private cancelEditMode(contentDiv: HTMLDivElement, note: Note): void {
+    private cancelEditMode(note: Note): void {
+        const noteContainer = note.getGraphElement()
+        if (!noteContainer) return
+        const contentDiv = noteContainer.querySelector<HTMLDivElement>('.pvt-note-content')
+        if (!contentDiv) return
+
         note.setEditing(false)
-        contentDiv.classList.remove('editing')
+        noteContainer.classList.remove('editing')
         contentDiv.contentEditable = 'false'
         const original = this.originalContentMap.get(note)
         if (original !== undefined) {
@@ -359,17 +369,17 @@ export class NoteDrawer {
     private bindEditing(contentDiv: HTMLDivElement, note: Note): void {
 
         contentDiv.addEventListener('dblclick', () => {
-            this.enterEditMode(contentDiv, note)
+            this.enterEditMode(note)
         })
 
         contentDiv.addEventListener('keydown', (evt) => {
 
             if (evt.key === 'Escape') {
-                this.cancelEditMode(contentDiv, note)
+                this.cancelEditMode(note)
             }
 
             if ((evt.metaKey || evt.ctrlKey) && evt.key === 'Enter') {
-                this.saveEditMode(contentDiv, note)
+                this.saveEditMode(note)
             }
         })
     }

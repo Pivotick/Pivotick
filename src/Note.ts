@@ -1,3 +1,5 @@
+import { generateSafeDomId } from './utils/ElementCreation'
+
 export interface NoteOptions {
     id?: string
     x?: number

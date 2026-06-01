@@ -311,7 +311,8 @@ export class GraphSvgRenderer extends GraphRenderer {
                 if (
                     target.tagName === 'INPUT' ||
                     target.tagName === 'SELECT' ||
-                    target.tagName === 'TEXTAREA'
+                    target.tagName === 'TEXTAREA' ||
+                    target.closest('[contenteditable="true"]')
                 ) {
                     return false
                 }
