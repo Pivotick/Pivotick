@@ -24,8 +24,11 @@ export class Note {
     private graphElement?: SVGGElement
     private editing: boolean
 
-    public constructor(options: NoteOptions = {}) {
+    public readonly domID: string
+
+    public constructor(options: NoteOptions = {}, domID: string = generateSafeDomId()) {
         this.id = options.id ?? crypto.randomUUID()
+        this.domID = domID
 
         this.x = options.x ?? 0
         this.y = options.y ?? 0
@@ -61,7 +64,11 @@ export class Note {
         this.graphElement = el
     }
 
-    public getGraphElement(): SVGGElement | undefined {
+    public getGraphElement(): SVGGElement | null {
+        if (!document) return null
+        if (!this.graphElement) {
+            this.graphElement = document.getElementById(`note-${this.domID}`) as unknown as SVGGElement
+        }
         return this.graphElement
     }
 

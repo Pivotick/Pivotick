@@ -25,8 +25,6 @@ const buttonMargin = 8
 const iconSize = 14
 const buttonTotalWidth = buttonSize * 2 + buttonSpacing
 
-const svgEdit = createHtmlTemplate(edit) as unknown as SVGSVGElement
-const svgClose = createHtmlTemplate(closeIcon) as unknown as SVGSVGElement
 
 export class NoteDrawer {
 
@@ -173,26 +171,15 @@ export class NoteDrawer {
         return rect
     }
 
-    private createActionButtons(
-        noteSelection: Selection<SVGGElement, Note, null, undefined>,
-        note: Note
-    ): SVGGElement {
+    private createActionButtons(noteSelection: Selection<SVGGElement, Note, null, undefined>, note: Note): SVGGElement {
 
         const container = createSvgElement('g', {
             class: 'pvt-note-actions',
         })
 
-        container.setAttribute(
-            'transform',
-            this.getActionButtonsTransform(note)
-        )
+        container.setAttribute('transform', this.getActionButtonsTransform(note))
 
-        const createButton = (
-            className: string,
-            label: string | SVGSVGElement,
-            offsetX: number,
-            onClick: () => void
-        ) => {
+        const createButton = (className: string, label: string | SVGSVGElement, offsetX: number, onClick: () => void) => {
 
             const group = createSvgElement('g', {
                 class: className + ' pvt-note-action-button',
@@ -242,25 +229,25 @@ export class NoteDrawer {
             return group
         }
 
-        const editButton = createButton('pvt-note-edit-button', svgEdit, 0,
-            () => {
 
-                const root = noteSelection.node()
-                if (!root) return
+        const svgEdit = createHtmlTemplate(edit) as unknown as SVGSVGElement
+        const editButton = createButton('pvt-note-edit-button', svgEdit, 0, () => {
+                const noteContainer = note.getGraphElement()
+                if (!noteContainer) return
 
-                const contentDiv =
-                    root.querySelector<HTMLDivElement>('.pvt-note-content')
+                const contentDiv = noteContainer.querySelector<HTMLDivElement>('.pvt-note-content')
 
                 if (!contentDiv) return
 
                 if (note.isEditing()) {
-                    this.saveEditMode(root, note, contentDiv)
+                    this.saveEditMode(contentDiv, note)
                 } else {
-                    this.enterEditMode(root, note, contentDiv)
+                    this.enterEditMode(contentDiv, note)
                 }
             }
         )
 
+        const svgClose = createHtmlTemplate(closeIcon) as unknown as SVGSVGElement
         const closeButton = createButton('pvt-note-close-button', svgClose, buttonSize + buttonSpacing,
             () => {
                 this.graph.noteManager.removeNote(note)
@@ -273,16 +260,15 @@ export class NoteDrawer {
         return container
     }
 
-    private updateEditButtonState(root: SVGGElement, isEditing: boolean): void {
+    private updateEditButtonState(isEditing: boolean, note: Note): void {
 
-        const container =
-            root.querySelector<SVGGElement>(
-                '.pvt-note-edit-button .pvt-note-icon-container'
-            )
+        const noteContainer = note.getGraphElement()
+        if (!noteContainer) return
+        const editIconContainer = noteContainer.querySelector<SVGGElement>('.pvt-note-edit-button .pvt-note-icon-container')
 
-        if (!container) return
+        if (!editIconContainer) return
 
-        container.replaceChildren()
+        editIconContainer.replaceChildren()
 
         const icon = createHtmlTemplate(
             isEditing
@@ -293,7 +279,7 @@ export class NoteDrawer {
         icon.setAttribute('width', iconSize.toString())
         icon.setAttribute('height', iconSize.toString())
 
-        container.appendChild(icon)
+        editIconContainer.appendChild(icon)
     }
 
 
@@ -342,28 +328,27 @@ export class NoteDrawer {
             )
     }
 
-    private enterEditMode(root: SVGGElement, note: Note, contentDiv: HTMLDivElement): void {
-
+    private enterEditMode(contentDiv: HTMLDivElement, note: Note): void {
         this.originalContentMap.set(note, note.content)
         note.setEditing(true)
-        root.classList.add('editing')
+        contentDiv.classList.add('editing')
         contentDiv.contentEditable = 'true'
-        this.updateEditButtonState(root, true)
+        this.updateEditButtonState(true, note)
         contentDiv.focus()
     }
 
-    private saveEditMode(root: SVGGElement, note: Note, contentDiv: HTMLDivElement): void {
+    private saveEditMode(contentDiv: HTMLDivElement, note: Note): void {
         note.setEditing(false)
-        root.classList.remove('editing')
+        contentDiv.classList.remove('editing')
         contentDiv.contentEditable = 'false'
-        this.updateEditButtonState(root, false)
+        this.updateEditButtonState(false, note)
         note.setContent(contentDiv.innerHTML)
         this.graph.noteManager.editNote(note)
     }
 
-    private cancelEditMode(root: SVGGElement, note: Note, contentDiv: HTMLDivElement): void {
+    private cancelEditMode(contentDiv: HTMLDivElement, note: Note): void {
         note.setEditing(false)
-        root.classList.remove('editing')
+        contentDiv.classList.remove('editing')
         contentDiv.contentEditable = 'false'
         const original = this.originalContentMap.get(note)
         if (original !== undefined) {
@@ -371,20 +356,20 @@ export class NoteDrawer {
         }
     }
 
-    private bindEditing(root: SVGGElement, note: Note, contentDiv: HTMLDivElement): void {
+    private bindEditing(contentDiv: HTMLDivElement, note: Note): void {
 
-        root.addEventListener('dblclick', () => {
-            this.enterEditMode(root, note, contentDiv)
+        contentDiv.addEventListener('dblclick', () => {
+            this.enterEditMode(contentDiv, note)
         })
 
         contentDiv.addEventListener('keydown', (evt) => {
 
             if (evt.key === 'Escape') {
-                this.cancelEditMode(root, note, contentDiv)
+                this.cancelEditMode(contentDiv, note)
             }
 
             if ((evt.metaKey || evt.ctrlKey) && evt.key === 'Enter') {
-                this.saveEditMode(root, note, contentDiv)
+                this.saveEditMode(contentDiv, note)
             }
         })
     }

@@ -524,7 +524,7 @@ export class GraphSvgRenderer extends GraphRenderer {
                     .classed('pvt-note', true)
                     .each((note, i, notes) => {
                         const selection = d3Select<SVGGElement, Note>(notes[i])
-                        selection.attr('id', `note-${note.id}`)
+                        selection.attr('id', `note-${note.domID}`)
                         this.noteDrawer.render(selection, note)
                     }),
 
