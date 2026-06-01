@@ -7,7 +7,7 @@ import { GraphSvgRenderer } from './GraphSvgRenderer'
 import { Note } from '../../Note'
 import type { GraphRendererOptions } from '../../interfaces/RendererOptions'
 import { createHtmlTemplate, createSvgElement } from '../../utils/ElementCreation'
-import { checkmark, closeIcon, edit } from '../../ui/icons'
+import { checkmark, closeIcon, edit, trash } from '../../ui/icons'
 
 d3Select.prototype.transition = d3Transition
 
@@ -179,11 +179,12 @@ export class NoteDrawer {
 
         container.setAttribute('transform', this.getActionButtonsTransform(note))
 
-        const createButton = (className: string, label: string | SVGSVGElement, offsetX: number, onClick: () => void) => {
+        const createButton = (className: string, label: string | SVGSVGElement, tooltip: string, offsetX: number, onClick: () => void) => {
 
             const group = createSvgElement('g', {
                 class: className + ' pvt-note-action-button',
-                transform: `translate(${offsetX}, 0)`
+                transform: `translate(${offsetX}, 0)`,
+                title: tooltip
             })
 
             const bg = createSvgElement('rect', {
@@ -231,7 +232,7 @@ export class NoteDrawer {
 
 
         const svgEdit = createHtmlTemplate(edit) as unknown as SVGSVGElement
-        const editButton = createButton('pvt-note-edit-button', svgEdit, 0, () => {
+        const editButton = createButton('pvt-note-edit-button', svgEdit, 'Edit the note', 0, () => {
                 if (note.isEditing()) {
                     this.saveEditMode(note)
                 } else {
@@ -240,8 +241,8 @@ export class NoteDrawer {
             }
         )
 
-        const svgClose = createHtmlTemplate(closeIcon) as unknown as SVGSVGElement
-        const closeButton = createButton('pvt-note-close-button', svgClose, buttonSize + buttonSpacing,
+        const svgClose = createHtmlTemplate(trash) as unknown as SVGSVGElement
+        const closeButton = createButton('pvt-note-remove-button', svgClose, 'Remove the note', buttonSize + buttonSpacing,
             () => {
                 this.graph.noteManager.removeNote(note)
             }
