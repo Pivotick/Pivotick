@@ -64,6 +64,24 @@ export class NoteManager {
         this.graph.onChange()
     }
 
+    public hideAll(): void {
+        this.getNotes().forEach((note) => {
+            note.visible = false
+            this.hiddenNotes.add(note)
+            this.graph.noteChange(note)
+        }) 
+        this.graph.onChange()
+    }
+
+    public showAll(): void {
+        this.hiddenNotes.forEach((note) => {
+            note.visible = true
+            this.hiddenNotes.delete(note)
+            this.graph.noteChange(note)
+        }) 
+        this.graph.onChange()
+    }
+
     public hasNote(id: string): boolean {
         return this.notes.has(id)
     }

@@ -8,6 +8,9 @@
         .pvt-note-sidebar-header {
             margin-bottom: 16px;
             padding: 4px 8px;
+            display: flex;
+            flex-direction: row;
+            gap: 4px;
         }
 
         .pvt-note-sidebar-list {

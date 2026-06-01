@@ -1,9 +1,9 @@
 import './noteSidebar.scss'
 import { createButton } from '../../components/Button'
-import { show } from '../../icons'
+import { hide, show, stickyNote } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import type { NoteManager } from '../../../NoteManager'
-import type { Note } from '../../../Note'
+import { Note } from '../../../Note'
 import { createHtmlElement, createHtmlTemplate } from '../../../utils/ElementCreation'
 import type { Graph } from '../../../Graph'
 
@@ -118,7 +118,7 @@ export class NoteSidebar implements UIElement {
                 text: 'Hide',
                 size: 'sm',
                 title: 'Hide note',
-                svgIcon: show,
+                svgIcon: hide,
                 onClick: () => {
                     this.noteManager.hideNote(note)
                 }
@@ -184,7 +184,38 @@ export class NoteSidebar implements UIElement {
         const header = document.createElement('div')
 
         header.classList.add('pvt-note-sidebar-header')
-        header.textContent = '[Buttons go here]'
+
+        header.appendChild(createButton({
+            variant: 'secondary',
+            text: 'Add Note',
+            size: 'sm',
+            svgIcon: stickyNote,
+            onClick: (evt: MouseEvent) => {
+                const renderer = this.uiManager.graph.renderer
+                const bcr = this.uiManager.layout!.canvas!.getBoundingClientRect()
+                const { x, y } = renderer.screenToGraphCoordinates(
+                    bcr.x + bcr.width / 2 - 200,
+                    bcr.y + bcr.height / 2 - 170,
+                )
+                const note: Note = new Note({
+                    content: 'This is not a note.',
+                    x,
+                    y
+                })
+                this.uiManager.graph.noteManager.addNote(note)
+            }
+        }))
+
+        header.appendChild(createButton({
+            variant: 'secondary',
+            text: 'Hide all',
+            size: 'sm',
+            title: 'Hide all notes',
+            svgIcon: hide,
+            onClick: () => {
+                this.noteManager.hideAll()
+            }
+        }))
 
         return header
     }
@@ -211,7 +242,7 @@ export class NoteSidebar implements UIElement {
             style: 'align-self: end;',
             svgIcon: show,
             onClick: () => {
-                this.noteManager.clear()
+                this.noteManager.showAll()
             },
             title: 'Restore hidden notes',
         })
