@@ -8,6 +8,7 @@ export interface NoteOptions {
     height?: number
     content?: string
     color?: string
+    visible?: boolean
 }
 
 export class Note {
@@ -22,6 +23,7 @@ export class Note {
 
     public content: string
     public color: string
+    public visible: boolean
 
     private graphElement?: SVGGElement
     private editing: boolean
@@ -40,6 +42,7 @@ export class Note {
 
         this.content = options.content ?? ''
         this.color = options.color ?? '#FDE68A'
+        this.visible = true
 
         this.editing = false
     }

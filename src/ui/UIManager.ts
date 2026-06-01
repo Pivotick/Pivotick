@@ -319,7 +319,7 @@ export class UIManager {
                     pointerEvent.clientY
                 )
                 const note: Note = new Note({
-                    content: 'This is not a note.\n\n Yoo',
+                    content: 'This is not a note.',
                     x,
                     y
                 })

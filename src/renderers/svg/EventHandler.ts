@@ -3,6 +3,7 @@ import type { GraphSvgRenderer } from './GraphSvgRenderer'
 import type { Node } from '../../Node'
 import type { Edge } from '../../Edge'
 import type { GraphInteractions } from '../../GraphInteractions'
+import type { Note } from '../../Note'
 
 export class EventHandler {
     private graph: Graph
@@ -88,6 +89,35 @@ export class EventHandler {
             .on('mouseleave.edge', (event: PointerEvent, edge: Edge) => {
                 const svgNode = event.currentTarget as SVGPathElement
                 this.graphInteraction?.edgeHoverOut(svgNode, event, edge)
+            })
+
+        this.renderer.getNoteSelection()
+            .on('dblclick.note', (event: PointerEvent, note: Note) => {
+                event.stopPropagation()
+                const svgNote = event.currentTarget as SVGGElement
+                this.graphInteraction?.noteDbclick(svgNote, event, note)
+            })
+            .on('click.note', (event: PointerEvent, note: Note) => {
+                event.stopPropagation()
+                const svgNote = event.currentTarget as SVGGElement
+                this.graphInteraction?.noteClick(svgNote, event, note)
+            })
+            .on('contextmenu.note', (event: PointerEvent, note: Note) => {
+                event.preventDefault()
+                event.stopPropagation()
+                const svgNote = event.currentTarget as SVGGElement
+                this.graphInteraction?.noteContextmenu(svgNote, event, note)
+            })
+            .on('mouseenter.note', (event: PointerEvent, note: Note) => {
+                const svgNote = event.currentTarget as SVGGElement
+                this.graphInteraction?.noteHoverIn(svgNote, event, note)
+            })
+            .on('mouseleave.note', (event: PointerEvent, note: Note) => {
+                const svgNote = event.currentTarget as SVGGElement
+                this.graphInteraction?.noteHoverOut(svgNote, event, note)
+            })
+            .on('dragging.note', (event: PointerEvent, note: Note) => {
+                this.graphInteraction?.dragging(event, note)
             })
 
         this.renderer.getCanvasSelection()

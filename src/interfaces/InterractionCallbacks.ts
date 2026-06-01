@@ -2,6 +2,7 @@ import type { Edge } from '../Edge'
 import type { Node, NodeData } from '../Node'
 import type { NodeSelection } from './GraphInteractions'
 import type { NodeEditSession } from '../editing/NodeEditSession'
+import type { Note } from '../Note'
 
 export interface InterractionCallbacks<TElement = unknown> {
     /**
@@ -89,6 +90,30 @@ export interface InterractionCallbacks<TElement = unknown> {
      * Called when a user hovers over an edge.
      */
     onEdgeHoverOut?: (event: PointerEvent, edge: Edge, element: TElement) => void
+
+    /**
+     * Called when a note is clicked.
+     */
+    onNoteClick?: (event: PointerEvent, note: Note, element: TElement) => void
+
+    /**
+     * Called when a note is double clicked.
+     */
+    onNoteDbclick?: (event: PointerEvent, note: Note, element: TElement) => void
+
+    /**
+     * Called when a note is right clicked.
+     */
+    onNoteContextmenu?: (event: PointerEvent, note: Note, element: TElement) => void
+
+    /**
+     * Called when a user hovers over a note.
+    */
+    onNoteHoverIn?: (event: PointerEvent, note: Note, element: TElement) => void
+    /**
+     * Called when a user hovers out of a note.
+    */
+    onNoteHoverOut?: (event: PointerEvent, note: Note, element: TElement) => void
 
     /**
      * Called when the canvas is clicked.

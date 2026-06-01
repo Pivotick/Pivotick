@@ -322,7 +322,7 @@ export class NoteDrawer {
             )
     }
 
-    private enterEditMode(note: Note): void {
+    public enterEditMode(note: Note): void {
         const noteContainer = note.getGraphElement()
         if (!noteContainer) return
         const contentDiv = noteContainer.querySelector<HTMLDivElement>('.pvt-note-content')

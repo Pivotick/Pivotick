@@ -3,6 +3,7 @@ import type { Node } from './Node'
 import type { Edge } from './Edge'
 import type { InterractionCallbacks } from './interfaces/InterractionCallbacks'
 import type { EdgeSelection, GraphInteractionEvents, NodeSelection } from './interfaces/GraphInteractions'
+import type { Note } from './Note'
 
 
 export class GraphInteractions<TElement = unknown> {
@@ -26,6 +27,7 @@ export class GraphInteractions<TElement = unknown> {
             nodeSelect: [], nodeBlur: [], dragging: [], dragended: [], nodeContextmenu: [],
             edgeClick: [], edgeDbclick: [], edgeHoverIn: [], edgeHoverOut: [],
             edgeSelect: [], edgeBlur: [], edgeContextmenu: [],
+            noteClick: [], noteDbclick: [], noteContextmenu: [], noteHoverIn: [], noteHoverOut: [],
             canvasClick: [], canvasMousemove: [], canvasContextmenu: [], canvasZoom: [],
             simulationTick: [], simulationSlowTick: [],
             selectNode: [], unselectNode: [], selectEdge: [], unselectEdge: [],
@@ -162,6 +164,41 @@ export class GraphInteractions<TElement = unknown> {
         this.emit('edgeHoverOut', event, edge, element)
         if (this.callbacks.onEdgeHoverOut && typeof this.callbacks.onNodeHoverOut === 'function') {
             this.callbacks.onEdgeHoverOut(event, edge, element)
+        }
+    }
+
+    public noteClick(element: TElement, event: PointerEvent, note: Note): void {
+        this.emit('noteClick', event, note, element)
+        if (this.callbacks.onNoteClick && typeof this.callbacks.onNoteClick === 'function') {
+            this.callbacks.onNoteClick(event, note, element)
+        }
+    }
+
+    public noteDbclick(element: TElement, event: PointerEvent, note: Note): void {
+        this.emit('noteDbclick', event, note, element)
+        if (this.callbacks.onNoteDbclick && typeof this.callbacks.onNoteDbclick === 'function') {
+            this.callbacks.onNoteDbclick(event, note, element)
+        }
+    }
+
+    public noteContextmenu(element: TElement, event: PointerEvent, note: Note): void {
+        this.emit('noteContextmenu', event, note, element)
+        if (this.callbacks.onNoteContextmenu && typeof this.callbacks.onNoteContextmenu === 'function') {
+            this.callbacks.onNoteContextmenu(event, note, element)
+        }
+    }
+
+    public noteHoverIn = (element: TElement, event: PointerEvent, note: Note): void => {
+        this.emit('noteHoverIn', event, note, element)
+        if (this.callbacks.onNoteHoverIn && typeof this.callbacks.onNoteHoverIn === 'function') {
+            this.callbacks.onNoteHoverIn(event, note, element)
+        }
+    }
+
+    public noteHoverOut = (element: TElement, event: PointerEvent, note: Note): void => {
+        this.emit('noteHoverOut', event, note, element)
+        if (this.callbacks.onNoteHoverOut && typeof this.callbacks.onNoteHoverOut === 'function') {
+            this.callbacks.onNoteHoverOut(event, note, element)
         }
     }
 

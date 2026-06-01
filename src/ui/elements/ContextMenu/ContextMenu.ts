@@ -1,7 +1,7 @@
 import type { Edge } from '../../../Edge'
 import type { Node } from '../../../Node'
 import { createActionList, createQuickActionList } from '../../../utils/ElementCreation'
-import { expand, focusElement, hide, inspect, pin, selectNeighbor, stickyNote, unpin } from '../../icons'
+import { edit, expand, focusElement, hide, inspect, pin, selectNeighbor, stickyNote, trash, unpin } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import './contextmenu.scss'
 import { deepMerge } from '../../../utils/utils'
@@ -176,6 +176,36 @@ const defaultMenuCanvas = {
     ] as MenuActionItemOptions[],
 }
 
+const defaultMenuNote = {
+    topbar: [
+        {
+            title: 'Hide Note',
+            svgIcon: hide,
+            variant: 'outline-danger',
+            flushRight: true,
+            visible: (note: Node) => {
+                return note.visible
+            },
+            onclick(this: ContextMenu, _evt: PointerEvent, note: Note) {
+                this.uiManager.graph.noteManager.hideNote(note)
+            }
+        },
+    ] as MenuQuickActionItemOptions[],
+    menu: [
+        {
+            title: 'Remove Note',
+            text: 'Remove Note',
+            svgIcon: trash,
+            variant: 'outline-danger',
+            visible: true,
+            onclick(this: ContextMenu, _evt: PointerEvent, note: Note) {
+                this.uiManager.graph.noteManager.removeNote(note)
+            },
+            shortcut: 'n'
+        }
+    ] as MenuActionItemOptions[],
+}
+
 export class ContextMenu implements UIElement {
     public uiManager: UIManager
 
@@ -183,10 +213,11 @@ export class ContextMenu implements UIElement {
     public visible: boolean
     private parentContainer?: HTMLElement
 
-    private element: Node | Edge | null = null
+    private element: Node | Edge | Note | null = null
 
     private menuNode: { topbar: MenuQuickActionItemOptions[]; menu: MenuActionItemOptions[] }
     private menuEdge: { topbar: MenuQuickActionItemOptions[]; menu: MenuActionItemOptions[] }
+    private menuNote: { topbar: MenuQuickActionItemOptions[]; menu: MenuActionItemOptions[] }
     private menuCanvas: { topbar: MenuQuickActionItemOptions[]; menu: MenuActionItemOptions[] }
 
     constructor(uiManager: UIManager) {
@@ -195,6 +226,7 @@ export class ContextMenu implements UIElement {
 
         this.menuNode = deepMerge(defaultMenuNode, this.uiManager.getOptions().contextMenu.menuNode ?? {})
         this.menuEdge = deepMerge(defaultMenuEdge, this.uiManager.getOptions().contextMenu.menuEdge ?? {})
+        this.menuNote = deepMerge(defaultMenuNote, this.uiManager.getOptions().contextMenu.menuCanvas ?? {})
         this.menuCanvas = deepMerge(defaultMenuCanvas, this.uiManager.getOptions().contextMenu.menuCanvas ?? {})
         this.wrapOnclickActions()
     }
@@ -231,6 +263,7 @@ export class ContextMenu implements UIElement {
     public graphReady() {
         this.uiManager.graph.renderer.getGraphInteraction().on('nodeContextmenu', this.nodeClicked.bind(this))
         this.uiManager.graph.renderer.getGraphInteraction().on('edgeContextmenu', this.edgeClicked.bind(this))
+        this.uiManager.graph.renderer.getGraphInteraction().on('noteContextmenu', this.noteClicked.bind(this))
         this.uiManager.graph.renderer.getGraphInteraction().on('canvasContextmenu', this.canvasClicked.bind(this))
         this.uiManager.graph.renderer.getGraphInteraction().on('canvasClick', () => { this.hide() })
         this.uiManager.graph.renderer.getGraphInteraction().on('canvasZoom', () => { this.hide() })
@@ -254,6 +287,15 @@ export class ContextMenu implements UIElement {
         this.show()
     }
 
+    private noteClicked(event: PointerEvent, note: Note): void {
+        if (!this.menu) return
+
+        this.element = note
+        this.createNoteMenu(note)
+        this.setPosition(event)
+        this.show()
+    }
+
     private canvasClicked(event: PointerEvent): void {
         if (!this.menu) return
 
@@ -269,6 +311,8 @@ export class ContextMenu implements UIElement {
             this.menuNode.topbar,
             this.menuEdge.menu,
             this.menuEdge.topbar,
+            this.menuNote.menu,
+            this.menuNote.topbar,
             this.menuCanvas.menu,
             this.menuCanvas.topbar,
 
@@ -317,6 +361,18 @@ export class ContextMenu implements UIElement {
         mainMenu.innerHTML = ''
         topbar.appendChild(createQuickActionList<ContextMenu>(this, this.menuEdge.topbar, this.element))
         mainMenu.appendChild(createActionList<ContextMenu>(this, this.menuEdge.menu, this.element))
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    private createNoteMenu(_note: Note): void {
+        if (!this.menu) return
+
+        const topbar = this.menu.querySelector('.pvt-contextmenu-topbar')!
+        const mainMenu = this.menu.querySelector('.pvt-contextmenu-mainmenu')!
+        topbar.innerHTML = ''
+        mainMenu.innerHTML = ''
+        topbar.appendChild(createQuickActionList<ContextMenu>(this, this.menuNote.topbar, this.element))
+        mainMenu.appendChild(createActionList<ContextMenu>(this, this.menuNote.menu, this.element))
     }
 
     private createCanvasMenu(): void {

@@ -82,12 +82,14 @@ export class NoteManager {
 
     public hideNote(note: Note): void {
         this.hiddenNotes.add(note)
+        note.visible = false
         this.graph.noteChange(note)
         this.graph.onChange()
     }
 
     public showNote(note: Note): void {
         this.hiddenNotes.delete(note)
+        note.visible = true
         this.graph.noteChange(note)
         this.graph.onChange()
     }

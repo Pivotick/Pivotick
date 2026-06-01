@@ -1,5 +1,6 @@
 import type { Edge } from '../Edge'
 import type { Node } from '../Node'
+import type { Note } from '../Note';
 
 
 export interface NodeSelection<TElement> {
@@ -33,6 +34,12 @@ export type GraphInteractionEvents<TElement> = {
     edgeHoverOut: (event: PointerEvent, edge: Edge, element: TElement) => void;
     edgeSelect: (edge: Edge, element: TElement) => void;
     edgeBlur: (edge: Edge, element: TElement) => void;
+
+    noteClick: (event: PointerEvent, note: Note, element: TElement) => void;
+    noteDbclick: (event: PointerEvent, note: Note, element: TElement) => void;
+    noteContextmenu: (event: PointerEvent, note: Note, element: TElement) => void;
+    noteHoverIn: (event: PointerEvent, note: Note, element: TElement) => void;
+    noteHoverOut: (event: PointerEvent, note: Note, element: TElement) => void;
 
     canvasClick: (event: PointerEvent) => void;
     canvasZoom: (event: unknown) => void;
