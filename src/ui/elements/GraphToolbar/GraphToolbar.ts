@@ -1,4 +1,5 @@
 
+import { Note } from '../../../Note'
 import { createHtmlElement, createHtmlTemplate, createShortcutBadge } from '../../../utils/ElementCreation'
 import { createButton } from '../../components/Button'
 import { addCircle, bidirectional, bulkEdit, edit, editMode, groupNodes, lassoTool, pathSelection, reverseEdge, selectionInverse, stickyNote, trash, ungroupNodes } from '../../icons'
@@ -238,8 +239,19 @@ export class GraphToolbar implements UIElement {
             text: 'Add Note',
             size: 'sm',
             svgIcon: stickyNote,
-            disabled: true,
-            onClick: () => {
+            onClick: (evt: MouseEvent) => {
+                const renderer = this.uiManager.graph.renderer
+                const bcr = (evt.currentTarget as HTMLButtonElement).getBoundingClientRect()
+                const { x, y } = renderer.screenToGraphCoordinates(
+                    bcr.x,
+                    bcr.y + 50,
+                )
+                const note: Note = new Note({
+                    content: 'This is not a note.',
+                    x,
+                    y
+                })
+                this.uiManager.graph.noteManager.addNote(note)
             }
         })
 
