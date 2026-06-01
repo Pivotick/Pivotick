@@ -513,7 +513,7 @@ export class GraphSvgRenderer extends GraphRenderer {
                 exit => exit.remove()
             )
 
-        const notes = this.graph.noteManager.getNotes()
+        const notes = this.graph.noteManager.getVisibleNotes()
         this.noteGroupSelection = this.noteGroup
             .selectAll<SVGGElement, Note>('g.pvt-note')
 
@@ -626,7 +626,7 @@ export class GraphSvgRenderer extends GraphRenderer {
         }
     }
 
-    public focusElement(element: Node | Edge): void {
+    public focusElement(element: Node | Edge | Note): void {
         const targetEl: SVGGElement | null = element.getGraphElement()
         const zoomBehavior = this.getZoomBehavior()
         const canvas = this.getCanvasSelection()

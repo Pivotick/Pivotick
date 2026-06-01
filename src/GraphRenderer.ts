@@ -4,6 +4,7 @@ import type { Graph } from './Graph'
 import type { GraphRendererOptions } from './interfaces/RendererOptions'
 import type { GraphInteractions } from './GraphInteractions'
 import type { Point } from './utils/GeometryHelper'
+import type { Note } from './Note'
 
 
 export type ProgressType = 'simulation' | 'rendering' | 'done'
@@ -41,7 +42,7 @@ export abstract class GraphRenderer {
     abstract zoomIn(): void
     abstract zoomOut(): void
     abstract fitAndCenter(fitAndCenter?: number): void
-    abstract focusElement(element: Node | Edge): void
+    abstract focusElement(element: Node | Edge | Note): void
     abstract highlightElement(element: Node | Edge): void
     abstract unHighlightElement(element: Node | Edge): void
     abstract clearHighlightedElements(): void

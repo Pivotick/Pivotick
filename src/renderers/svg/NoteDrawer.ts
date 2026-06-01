@@ -68,8 +68,8 @@ export class NoteDrawer {
             class: 'pvt-note-background',
             width: note.width,
             height: note.height,
-            rx: 10,
-            ry: 10,
+            rx: 6,
+            ry: 6,
             fill: note.color,
             color: note.color,
         })
@@ -81,8 +81,8 @@ export class NoteDrawer {
             class: 'pvt-note-header',
             width: note.width,
             height: 28,
-            rx: 10,
-            ry: 10,
+            rx: 6,
+            ry: 6,
             fill: 'rgba(255,255,255,0.18)',
         })
     }
@@ -140,12 +140,12 @@ export class NoteDrawer {
 
                 note.setColor(color)
 
-                const bg =
-                    noteSelection.node()
-                        ?.querySelector('.pvt-note-background')
+                const bg = noteSelection.node()?.querySelector('.pvt-note-background')
 
                 bg?.setAttribute('fill', color)
                 bg?.setAttribute('color', color)
+                this.graph.noteManager.editNote(note)
+
             })
 
             group.appendChild(circle)

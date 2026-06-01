@@ -1,0 +1,58 @@
+.pvt-slide-panel__content {
+
+    .pvt-note-sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 0px;
+
+        .pvt-note-sidebar-header {
+            margin-bottom: 16px;
+            padding: 4px 8px;
+        }
+
+        .pvt-note-sidebar-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .pvt-note-sidebar-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+
+            .pvt-note-sidebar-content {
+                display: flex;
+                align-items: center;
+                gap: 0.3em;
+                min-width: 0;
+                flex: 1;
+
+                .pvt-note-color-pill {
+                    width: 0.75rem;
+                    height: 0.75rem;
+                    border-radius: 999px;
+                    flex-shrink: 0;
+                }
+
+                .pvt-note-sidebar-text {
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                    font-size: 0.92rem;
+                    line-height: 1.3;
+                    color: var(--pvt-text-muted);
+                    min-width: 0;
+                    flex: 1;
+                    user-select: none;
+                }
+            }
+
+            .pvt-note-sidebar-button-wrapper {
+                display: inline-flex;
+                gap: 0.25rem;
+            }
+        }
+    }
+}

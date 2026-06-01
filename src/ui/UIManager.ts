@@ -6,7 +6,7 @@ import { GraphNavigation } from './elements/GraphNavigation/GraphNavigation'
 import { Layout } from './elements/Layout'
 import { Sidebar } from './elements/Sidebar/Sidebar'
 import { SlidePanel, type SlidepanelOptions } from './elements/SlidePanel/SlidePanel'
-import { Searchbar } from './elements/Searchbar/Searchbar'
+import { Mainheader } from './elements/Searchbar/Mainheader'
 import { Modal, type ModalOptions } from './components/Modal'
 import type { Notification } from './Notifier'
 import merge from 'lodash.merge'
@@ -127,7 +127,7 @@ export class UIManager {
     public layout?: Layout
     public slidePanel?: SlidePanel
     public sidebar?: Sidebar
-    public searchbar?: Searchbar
+    public mainHeader?: Mainheader
     public modal?: Modal
     public graphNaviation?: GraphNavigation
     public graphControls?: GraphControls
@@ -208,7 +208,7 @@ export class UIManager {
         this.buildUIGraphNavigation()
         this.buildUIGraphControls()
         this.buildUIGraphToolbar()
-        this.buildSearchbar()
+        this.buildMainheader()
         this.buildSidebar()
     }
 
@@ -224,7 +224,7 @@ export class UIManager {
         this.buildUIGraphNavigation()
         this.buildUIGraphControls()
         this.buildUIGraphToolbar()
-        this.buildSearchbar()
+        this.buildMainheader()
     }
 
     private buildLayout() {
@@ -257,9 +257,9 @@ export class UIManager {
         this.graphToolbar.mount(this.layout?.graphtoolbar)
     }
 
-    private buildSearchbar() {
-        this.searchbar = new Searchbar(this)
-        this.searchbar.mount(this.layout?.searchbar)
+    private buildMainheader() {
+        this.mainHeader = new Mainheader(this)
+        this.mainHeader.mount(this.layout?.mainheader)
     }
 
     private buildSidebar() {
@@ -276,7 +276,7 @@ export class UIManager {
 
     private callAfterMount() { // TODO: Instead, these should register an afterMount callback
         this.layout?.afterMount()
-        this.searchbar?.afterMount()
+        this.mainHeader?.afterMount()
         this.sidebar?.afterMount()
         this.graphNaviation?.afterMount()
         this.graphControls?.afterMount()
@@ -319,7 +319,7 @@ export class UIManager {
                     pointerEvent.clientY
                 )
                 const note: Note = new Note({
-                    content: 'This is not a note.',
+                    content: 'This is not a note.\n\n Yoo',
                     x,
                     y
                 })

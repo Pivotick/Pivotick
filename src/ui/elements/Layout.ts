@@ -5,7 +5,7 @@ export class Layout implements UIElement {
     public layout?: HTMLDivElement
     public canvas?: HTMLDivElement
     public sidebar?: HTMLDivElement
-    public searchbar?: HTMLDivElement
+    public mainheader?: HTMLDivElement
     public notification?: HTMLDivElement
     public modal?: HTMLDivElement
     public slidePanel?: HTMLDivElement
@@ -34,9 +34,9 @@ export class Layout implements UIElement {
         }
 
         if (mode === 'light' || mode === 'full') {
-            this.searchbar = document.createElement('div')
-            this.searchbar.className = 'pvt-searchbar'
-            this.layout.appendChild(this.searchbar)
+            this.mainheader = document.createElement('div')
+            this.mainheader.className = 'pvt-mainheader'
+            this.layout.appendChild(this.mainheader)
 
             this.modal = document.createElement('div')
             this.modal.className = 'pvt-modalcontainer'

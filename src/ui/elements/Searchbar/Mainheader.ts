@@ -1,22 +1,25 @@
-import { funnel, magnifyingGlass, redo, undo } from '../../icons'
+import { funnel, magnifyingGlass, redo, stickyNote, undo } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import { SearchBox } from './SearchBox'
-import './searchbar.scss'
+import './mainheader.scss'
 import { Node } from '../../../Node'
 import type { SlidePanel } from '../SlidePanel/SlidePanel'
 import { GraphFilter } from '../GraphFilter/GraphFilter'
 import type { Modal } from '../../components/Modal'
 import { createShortcutBadge } from '../../../utils/ElementCreation'
+import { NoteSidebar } from '../NoteSidebar/NoteSidebar'
 
-export class Searchbar implements UIElement {
+export class Mainheader implements UIElement {
     private uiManager: UIManager
 
-    public searchbar?: HTMLDivElement
+    public mainheader?: HTMLDivElement
     public searchBoxButton?: HTMLDivElement
     public filterButton?: HTMLDivElement
+    public noteButton?: HTMLDivElement
     public undoButton?: HTMLButtonElement
     public redoButton?: HTMLButtonElement
     public filteringSlidepanel?: SlidePanel
+    public noteSlidepanel?: SlidePanel
     private searchModal?: Modal
 
     constructor(uiManager: UIManager) {
@@ -26,8 +29,8 @@ export class Searchbar implements UIElement {
     mount(container: HTMLElement | undefined) {
         if (!container) return
 
-        this.searchbar = document.createElement('div')
-        this.searchbar.className = 'pvt-searchbar-elements'
+        this.mainheader = document.createElement('div')
+        this.mainheader.className = 'pvt-mainheader-elements'
 
         /** Searchbox */
         const templateSearch = document.createElement('template')
@@ -36,25 +39,39 @@ export class Searchbar implements UIElement {
     <div class="action-container">
         <span class="icon-container">${magnifyingGlass}</span>
         <span class="action-text">Search</span>
-        ${createShortcutBadge('Ctrl+J').outerHTML}
+        ${createShortcutBadge('Shift+J').outerHTML}
     </div>
   </div>`
         this.searchBoxButton = templateSearch.content.firstElementChild as HTMLDivElement
-        this.searchbar.appendChild(this.searchBoxButton)
+        this.mainheader.appendChild(this.searchBoxButton)
 
-        /** SearcFilterbox */
+        /** Filterbox */
         const templateFilter = document.createElement('template')
         templateFilter.innerHTML = `
   <div id="pvt-filter-button" class="pvt-action-button">
     <div class="action-container">
         <span class="icon-container">${funnel}</span>
         <span class="action-text">Filter Graph</span>
-        ${createShortcutBadge('Ctrl+K').outerHTML}
+        ${createShortcutBadge('Shift+K').outerHTML}
     </div>
   </div>`
         this.filterButton = templateFilter.content.firstElementChild as HTMLDivElement
+        this.mainheader.appendChild(this.filterButton)
 
-        /** Filter */
+        /** Notebox */
+        const templateNoteSidebar = document.createElement('template')
+        templateNoteSidebar.innerHTML = `
+  <div id="pvt-filter-button" class="pvt-action-button">
+    <div class="action-container">
+        <span class="icon-container">${stickyNote}</span>
+        <span class="action-text">Notes</span>
+        ${createShortcutBadge('Shift+N').outerHTML}
+    </div>
+  </div>`
+        this.noteButton = templateNoteSidebar.content.firstElementChild as HTMLDivElement
+        this.mainheader.appendChild(this.noteButton)
+
+        /** Undo/Redo */
         const templateRight = document.createElement('template')
         templateRight.innerHTML = `
   <div class="pvt-right">
@@ -68,34 +85,44 @@ export class Searchbar implements UIElement {
     </div>
   </div>`
         const filterContainer = templateRight.content.firstElementChild as HTMLDivElement
-        filterContainer.prepend(this.filterButton)
+        filterContainer.prepend(this.noteButton)
         this.undoButton = filterContainer.querySelector('#pvt-undo-button') ?? undefined
         this.redoButton = filterContainer.querySelector('#pvt-redo-button') ?? undefined
-        this.searchbar.appendChild(filterContainer)
+        this.mainheader.appendChild(filterContainer)
 
-        container.appendChild(this.searchbar)
+        container.appendChild(this.mainheader)
     }
 
     destroy() {
-        this.searchbar?.remove()
-        this.searchbar = undefined
+        this.mainheader?.remove()
+        this.mainheader = undefined
     }
 
     afterMount() {
-        if (!this.filterButton) return
+        if (!this.filterButton || !this.noteButton) return
 
-        this.uiManager.keyManager.register({ key: 'Ctrl+j', callback: () => this.searchBoxButton?.click() })
-        this.uiManager.keyManager.register({ key: 'Ctrl+k', callback: () => this.filterButton?.click() })
+        this.uiManager.keyManager.register({ key: 'Shift+J', callback: () => this.searchBoxButton?.click() })
+        this.uiManager.keyManager.register({ key: 'Shift+K', callback: () => this.filterButton?.click() })
+        this.uiManager.keyManager.register({ key: 'Shift+N', callback: () => this.noteButton?.click() })
 
         const graphFilter = new GraphFilter(this.uiManager)
         this.filteringSlidepanel = this.uiManager.createSlidepanel({
             header: 'Graph Filters',
             body: graphFilter.build()
         })
-
         this.filterButton.addEventListener('click', () => {
             this.filteringSlidepanel!.toggle()
         })
+
+        const noteSidebar = new NoteSidebar(this.uiManager)
+        this.noteSlidepanel = this.uiManager.createSlidepanel({
+            header: 'Notes',
+            body: noteSidebar.build()
+        })
+        this.noteButton.addEventListener('click', () => {
+            this.noteSlidepanel!.toggle()
+        })
+        noteSidebar.afterMount()
 
 
         this.searchBoxButton?.addEventListener('click', () => {

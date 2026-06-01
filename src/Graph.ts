@@ -320,10 +320,10 @@ export class Graph {
         this.emit('noteAdd', note)
     }
     public noteChange(note: Note): void {
-        this.emit('noteAdd', note)
+        this.emit('noteChange', note)
     }
     public noteRemove(note: Note): void {
-        this.emit('noteAdd', note)
+        this.emit('noteRemove', note)
     }
 
     private dataBatchChanged(changes: GraphDataChange[]): void {
@@ -973,7 +973,7 @@ export class Graph {
      * 
      * @param element The `Node` or `Edge` to focus.
      */
-    focusElement(element: Node | Edge): void {
+    focusElement(element: Node | Edge | Note): void {
         this.renderer.focusElement(element)
     }
 
