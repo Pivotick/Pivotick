@@ -497,7 +497,7 @@ export class NoteDrawer {
                 const dx = currentGraph.x - startGraph.x
                 const dy = currentGraph.y - startGraph.y
 
-                note.width = Math.max(120, startWidth + dx)
+                note.width = Math.max(160, startWidth + dx)
                 note.height = Math.max(80, startHeight + dy)
 
                 this.updateNoteSize(noteSelection, note)
