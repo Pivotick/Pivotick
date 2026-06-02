@@ -106,8 +106,8 @@ export class NoteDrawer {
         const fo = createSvgElement('foreignObject', {
             x: NOTE_PADDING,
             y: NOTE_HEADER_HEIGHT + NOTE_PADDING,
-            width: note.width - NOTE_PADDING,
-            height: note.height - NOTE_HEADER_HEIGHT + 2*NOTE_PADDING,
+            width: note.width - 2*NOTE_PADDING,
+            height: note.height - NOTE_HEADER_HEIGHT - 2*NOTE_PADDING,
         })
 
         const div = document.createElement('div')
@@ -344,7 +344,7 @@ export class NoteDrawer {
         noteSelection
             .select('foreignObject')
             .attr('width', note.width - 2 * NOTE_PADDING)
-            .attr('height', note.height - NOTE_HEADER_HEIGHT + 2*NOTE_PADDING)
+            .attr('height', note.height - NOTE_HEADER_HEIGHT - 2*NOTE_PADDING)
 
         noteSelection
             .select('.pvt-note-resize-handle')
