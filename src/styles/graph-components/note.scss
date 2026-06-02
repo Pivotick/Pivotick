@@ -21,7 +21,7 @@
     .pvt-note-content {
         width: 100%;
         height: 100%;
-        overflow: hidden;
+        overflow: auto;
         font-size: 14px;
         font-family: sans-serif;
         color: var(--pvt-text-color-1);
@@ -34,14 +34,24 @@
         .pvt-note-content-rendered {
             width: 100%;
             height: 100%;
-            overflow: hidden;
+            overflow: auto;
             white-space: pre-wrap;
             word-break: break-word;
+
+            p:first-child {
+                margin-top: 0;
+            }
+        
+            p:last-child {
+                margin-bottom: 0;
+            }
         }
 
         .pvt-note-editor {
             width: 100%;
             height: 100%;
+            box-sizing: border-box;
+            padding: 0;
 
             resize: none;
             border: none;

@@ -3,7 +3,7 @@ import { transition as d3Transition } from 'd3-transition'
 
 import type { Graph } from '../../Graph'
 import { GraphSvgRenderer } from './GraphSvgRenderer'
-
+import { NoteContentRenderer } from '../../plugins/noteContentRenderers/NoteContentRenderer'
 import { Note } from '../../Note'
 import type { GraphRendererOptions } from '../../interfaces/RendererOptions'
 import { createHtmlTemplate, createSvgElement } from '../../utils/ElementCreation'
@@ -31,6 +31,7 @@ export class NoteDrawer {
     public graph: Graph
     public graphSvgRenderer: GraphSvgRenderer
     public rendererOptions: GraphRendererOptions
+    private noteContentRenderer: NoteContentRenderer
 
     private originalContentMap = new WeakMap<Note, string>()
 
@@ -38,6 +39,7 @@ export class NoteDrawer {
         this.rendererOptions = rendererOptions
         this.graph = graph
         this.graphSvgRenderer = graphSvgRenderer
+        this.noteContentRenderer = new NoteContentRenderer()
     }
 
     public render(noteSelection: Selection<SVGGElement, Note, null, undefined>, note: Note): void {
@@ -101,7 +103,7 @@ export class NoteDrawer {
 
         const rendered = document.createElement('div')
         rendered.classList.add('pvt-note-content-rendered')
-        rendered.innerHTML = note.content
+        this.noteContentRenderer.render(note, rendered)
 
         const textarea = document.createElement('textarea')
         textarea.classList.add('pvt-note-editor')
@@ -361,7 +363,7 @@ export class NoteDrawer {
         noteContainer.classList.remove('editing')
         note.setContent(editor.value)
 
-        rendered.innerHTML = editor.value
+        this.noteContentRenderer.render(note, rendered)
 
         rendered.style.display = 'block'
         editor.style.display = 'none'
@@ -391,13 +393,16 @@ export class NoteDrawer {
         editor.style.display = 'none'
     }
 
-    private bindEditing(editor: HTMLDivElement, note: Note): void {
+    private bindEditing(contentContainer: HTMLDivElement, note: Note): void {
+        const rendered = contentContainer.querySelector('.pvt-note-content-rendered')
+        const textarea = contentContainer.querySelector<HTMLTextAreaElement>('.pvt-note-editor')
+        if (!rendered || !textarea) return
 
-        editor.addEventListener('dblclick', () => {
+        rendered.addEventListener('dblclick', () => {
             this.enterEditMode(note)
         })
 
-        editor.addEventListener('keydown', (evt) => {
+        textarea.addEventListener('keydown', (evt) => {
 
             if (evt.key === 'Escape') {
                 this.cancelEditMode(note)
