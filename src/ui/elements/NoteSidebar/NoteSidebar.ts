@@ -1,6 +1,6 @@
 import './noteSidebar.scss'
 import { createButton } from '../../components/Button'
-import { hide, show, stickyNote } from '../../icons'
+import { hide, show, stickyNote, trash } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import type { NoteManager } from '../../../NoteManager'
 import { Note } from '../../../Note'
@@ -119,8 +119,7 @@ export class NoteSidebar implements UIElement {
         let showHideButton
         if (this.noteManager.isVisible(note)) {
             showHideButton = createButton({
-                variant: 'secondary',
-                text: 'Hide',
+                variant: 'outline-secondary',
                 size: 'sm',
                 title: 'Hide note',
                 svgIcon: hide,
@@ -130,8 +129,7 @@ export class NoteSidebar implements UIElement {
             })
         } else {
             showHideButton = createButton({
-                variant: 'secondary',
-                text: 'Show',
+                variant: 'outline-secondary',
                 size: 'sm',
                 title: 'Restore hidden note',
                 svgIcon: show,
@@ -141,11 +139,10 @@ export class NoteSidebar implements UIElement {
             })
         }
         const removeButton = createButton({
-            variant: 'danger',
-            text: 'Remove',
+            variant: 'outline-danger',
             size: 'sm',
             title: 'Remove note',
-            svgIcon: show,
+            svgIcon: trash,
             onClick: () => {
                 this.noteManager.removeNote(note)
             }

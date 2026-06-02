@@ -47,6 +47,10 @@
                 }
 
                 span.icon-container {
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+
                     svg {
                         width: 0.8rem;
                         height: 0.8rem;
