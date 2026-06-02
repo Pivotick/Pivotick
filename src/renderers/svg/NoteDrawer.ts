@@ -99,17 +99,16 @@ export class NoteDrawer {
         const div = document.createElement('div')
         div.classList.add('pvt-note-content')
 
-        div.style.width = '100%'
-        div.style.height = '100%'
-        div.style.overflow = 'hidden'
-        div.style.fontSize = '14px'
-        div.style.fontFamily = 'sans-serif'
-        div.style.color = '#222'
-        div.style.outline = 'none'
-        div.style.background = 'transparent'
-        div.contentEditable = 'false'
+        const rendered = document.createElement('div')
+        rendered.classList.add('pvt-note-content-rendered')
+        rendered.innerHTML = note.content
 
-        div.innerHTML = note.content
+        const textarea = document.createElement('textarea')
+        textarea.classList.add('pvt-note-editor')
+        textarea.value = note.content
+
+        div.appendChild(rendered)
+        div.appendChild(textarea)
 
         fo.appendChild(div)
 
@@ -325,55 +324,80 @@ export class NoteDrawer {
     public enterEditMode(note: Note): void {
         const noteContainer = note.getGraphElement()
         if (!noteContainer) return
-        const contentDiv = noteContainer.querySelector<HTMLDivElement>('.pvt-note-content')
-        if (!contentDiv) return
+        
+        const rendered = noteContainer.querySelector<HTMLDivElement>('.pvt-note-content-rendered')
+        const editor = noteContainer.querySelector<HTMLTextAreaElement>('.pvt-note-editor')
+        if (!rendered || !editor) return
 
         this.originalContentMap.set(note, note.content)
         note.setEditing(true)
         noteContainer.classList.add('editing')
-        contentDiv.contentEditable = 'true'
+
+        editor.value = note.content
+
+        rendered.style.display = 'none'
+        editor.style.display = 'block'
+
         this.updateEditButtonState(true, note)
+
         requestAnimationFrame(() => {
-            contentDiv.focus()
+            editor.focus()
+            editor.setSelectionRange(
+                editor.value.length,
+                editor.value.length
+            )
         })
     }
 
     private saveEditMode(note: Note): void {
         const noteContainer = note.getGraphElement()
         if (!noteContainer) return
-        const contentDiv = noteContainer.querySelector<HTMLDivElement>('.pvt-note-content')
-        if (!contentDiv) return
+
+        const rendered = noteContainer.querySelector<HTMLDivElement>('.pvt-note-content-rendered')
+        const editor = noteContainer.querySelector<HTMLTextAreaElement>('.pvt-note-editor')
+        if (!rendered || !editor) return
 
         note.setEditing(false)
         noteContainer.classList.remove('editing')
-        contentDiv.contentEditable = 'false'
+        note.setContent(editor.value)
+
+        rendered.innerHTML = editor.value
+
+        rendered.style.display = 'block'
+        editor.style.display = 'none'
+
         this.updateEditButtonState(false, note)
-        note.setContent(contentDiv.innerHTML)
+
         this.graph.noteManager.editNote(note)
     }
 
     private cancelEditMode(note: Note): void {
         const noteContainer = note.getGraphElement()
         if (!noteContainer) return
-        const contentDiv = noteContainer.querySelector<HTMLDivElement>('.pvt-note-content')
-        if (!contentDiv) return
+
+        const rendered = noteContainer.querySelector<HTMLDivElement>('.pvt-note-content-rendered')
+        const editor = noteContainer.querySelector<HTMLTextAreaElement>('.pvt-note-editor')
+        if (!rendered || !editor) return
 
         note.setEditing(false)
         noteContainer.classList.remove('editing')
-        contentDiv.contentEditable = 'false'
+
         const original = this.originalContentMap.get(note)
         if (original !== undefined) {
-            contentDiv.innerHTML = original
+            editor.value = original
         }
+
+        rendered.style.display = 'block'
+        editor.style.display = 'none'
     }
 
-    private bindEditing(contentDiv: HTMLDivElement, note: Note): void {
+    private bindEditing(editor: HTMLDivElement, note: Note): void {
 
-        contentDiv.addEventListener('dblclick', () => {
+        editor.addEventListener('dblclick', () => {
             this.enterEditMode(note)
         })
 
-        contentDiv.addEventListener('keydown', (evt) => {
+        editor.addEventListener('keydown', (evt) => {
 
             if (evt.key === 'Escape') {
                 this.cancelEditMode(note)

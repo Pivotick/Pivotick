@@ -22,7 +22,6 @@
         width: 100%;
         height: 100%;
         overflow: hidden;
-
         font-size: 14px;
         font-family: sans-serif;
         color: var(--pvt-text-color-1);
@@ -32,8 +31,29 @@
 
         cursor: text;
 
-        &:focus {
+        .pvt-note-content-rendered {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .pvt-note-editor {
+            width: 100%;
+            height: 100%;
+
+            resize: none;
+            border: none;
             outline: none;
+            background: transparent;
+
+            font: inherit;
+            color: inherit;
+
+            display: none;
+
+            overflow: auto;
         }
     }
 
