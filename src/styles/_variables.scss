@@ -195,6 +195,11 @@ $light-theme: (
     pvt-edge-label-selected-bg: var(--pvt-bg-color-4),
     // #endregion edge
 
+    /* Note */
+    pvt-note-node-reference-bg: #afc5d4,
+    pvt-note-node-reference-text-color: #333,
+    pvt-note-node-reference-dot: #007acc,
+
     /* Component */
     pvt-inline-bar-bg: var(--pvt-bg-color-2),
     pvt-inline-bar-fill-bg: "linear-gradient("
@@ -428,6 +433,12 @@ $dark-theme: (
     pvt-edge-label-selected-color:  var(--pvt-text-color-5),
     pvt-edge-label-selected-font-size: var(--pvt-edge-label-font-size),
     pvt-edge-label-selected-bg: var(--pvt-bg-color-5),
+
+    /* Note */
+    pvt-note-node-reference-bg: #afc5d4,
+    pvt-note-node-reference-text-color: #333,
+    pvt-note-node-reference-dot: #007acc,
+
 
     /* Component */
     pvt-inline-bar-bg: var(--pvt-bg-color-6),

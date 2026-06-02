@@ -39,7 +39,7 @@ export class NoteDrawer {
         this.rendererOptions = rendererOptions
         this.graph = graph
         this.graphSvgRenderer = graphSvgRenderer
-        this.noteContentRenderer = new NoteContentRenderer()
+        this.noteContentRenderer = new NoteContentRenderer(this.graph)
     }
 
     public render(noteSelection: Selection<SVGGElement, Note, null, undefined>, note: Note): void {

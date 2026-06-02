@@ -48,6 +48,10 @@ export function nodePropertiesGetter(node: Node, propertiesPanel: PropertiesPane
     if (propertiesPanel.nodePropertiesMap) {
         return tryResolveArray<[Node], PropertyEntry>(propertiesPanel.nodePropertiesMap, node)
     }
+    properties.push({
+        name: 'id',
+        value: node.id,
+    } as PropertyEntry)
 
     for (const [key, value] of Object.entries(data)) {
         if (key && value) {
@@ -67,6 +71,10 @@ export function edgePropertiesGetter(edge: Edge, propertiesPanel: PropertiesPane
     if (propertiesPanel.edgePropertiesMap) {
         return tryResolveArray<[Edge], PropertyEntry>(propertiesPanel.edgePropertiesMap, edge)
     }
+    properties.push({
+        name: 'id',
+        value: edge.id,
+    } as PropertyEntry)
 
     for (const [key, value] of Object.entries(data)) {
         if (key && value) {

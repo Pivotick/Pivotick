@@ -1,6 +1,10 @@
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 
+import { nodeReferenceExtension } from './extensions/nodeReferenceExtension'
+
+marked.use(nodeReferenceExtension)
+
 /**
  * Render and sanitize the passed markdown text
  * @param text The markdown text to be renderer

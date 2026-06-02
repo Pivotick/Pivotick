@@ -21,6 +21,10 @@ import { Note } from '../Note'
 
 const basicPropertyGetter = (element: Node | Edge): PropertyEntry[] => {
     const properties = []
+    properties.push({
+        name: 'id',
+        value: element.id,
+    } as PropertyEntry)
     for (const [key, value] of Object.entries(element.getData())) {
         if (key && value) {
             properties.push({

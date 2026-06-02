@@ -6,7 +6,7 @@ import type { NoteManager } from '../../../NoteManager'
 import { Note } from '../../../Note'
 import { createHtmlElement, createHtmlTemplate } from '../../../utils/ElementCreation'
 import type { Graph } from '../../../Graph'
-import { renderMarkdown, renderMarkdownInline } from '../../../utils/MarkdownRenderer'
+import { renderMarkdown, renderMarkdownInline } from '../../../plugins/noteContentRenderers/markdown/markdown'
 
 export class NoteSidebar implements UIElement {
 

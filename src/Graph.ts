@@ -230,7 +230,7 @@ export class Graph {
 
         normalizedEdges.push(...newEdges)
 
-        const normalisedNotes: Note[] = data.notes.map((n) => Graph.normalizeNote(n))
+        const normalisedNotes: Note[] = (data.notes ?? []).map((n) => Graph.normalizeNote(n))
             .filter((n): n is Note => n !== null)
 
         return {
