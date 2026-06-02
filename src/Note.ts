@@ -11,6 +11,11 @@ export interface NoteOptions {
     visible?: boolean
 }
 
+interface AttachedElement {
+    type: 'node' | 'edge'
+    id: string
+}
+
 export class Note {
 
     public id: string
@@ -26,6 +31,7 @@ export class Note {
     public visible: boolean
 
     private graphElement?: SVGGElement
+    private attachedElement?: AttachedElement
     private editing: boolean
 
     public readonly domID: string
@@ -83,5 +89,13 @@ export class Note {
 
     public setEditing(editing: boolean): void {
         this.editing = editing
+    }
+
+    public getAttachedElement(): AttachedElement | undefined {
+        return this.attachedElement
+    }
+
+    public setAttachedElement(attachedElement: AttachedElement): void {
+        this.attachedElement = attachedElement
     }
 }

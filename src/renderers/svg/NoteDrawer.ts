@@ -7,7 +7,7 @@ import { NoteContentRenderer } from '../../plugins/noteContentRenderers/NoteCont
 import { Note } from '../../Note'
 import type { GraphRendererOptions } from '../../interfaces/RendererOptions'
 import { createHtmlTemplate, createSvgElement } from '../../utils/ElementCreation'
-import { checkmark, edit, trash } from '../../ui/icons'
+import { checkmark, edit, link, trash } from '../../ui/icons'
 
 d3Select.prototype.transition = d3Transition
 
@@ -19,11 +19,20 @@ const colors = [
     '#86EFAC',
     '#C4B5FD'
 ]
+const NOTE_HEADER_HEIGHT = 28
+const NOTE_PADDING = 12
 const buttonSize = 18
 const buttonSpacing = 4
 const buttonMargin = 8
 const iconSize = 14
-const buttonTotalWidth = buttonSize * 2 + buttonSpacing
+const getButtonsWidth = (count: number): number => {
+    if (count <= 0) return 0
+
+    return (
+        count * buttonSize +
+        (count - 1) * buttonSpacing
+    )
+}
 
 
 export class NoteDrawer {
@@ -57,6 +66,7 @@ export class NoteDrawer {
         root.appendChild(this.createColorPills(noteSelection, note))
         root.appendChild(this.createResizeHandle(note))
 
+        this.positionActionButtons(noteSelection, note)
         this.makeDraggable(noteSelection, note)
         this.makeResizable(noteSelection, note)
 
@@ -82,7 +92,7 @@ export class NoteDrawer {
         return createSvgElement('rect', {
             class: 'pvt-note-header',
             width: note.width,
-            height: 28,
+            height: NOTE_HEADER_HEIGHT,
             rx: 6,
             ry: 6,
             fill: 'rgba(255,255,255,0.18)',
@@ -92,10 +102,10 @@ export class NoteDrawer {
     private createContent(note: Note): SVGForeignObjectElement {
 
         const fo = createSvgElement('foreignObject', {
-            x: 12,
-            y: 40,
-            width: note.width - 24,
-            height: note.height - 52,
+            x: NOTE_PADDING,
+            y: NOTE_HEADER_HEIGHT + NOTE_PADDING,
+            width: note.width - NOTE_PADDING,
+            height: note.height - NOTE_HEADER_HEIGHT + 2*NOTE_PADDING,
         })
 
         const div = document.createElement('div')
@@ -179,13 +189,10 @@ export class NoteDrawer {
             class: 'pvt-note-actions',
         })
 
-        container.setAttribute('transform', this.getActionButtonsTransform(note))
-
-        const createButton = (className: string, label: string | SVGSVGElement, tooltip: string, offsetX: number, onClick: () => void) => {
+        const createButton = (className: string, label: string | SVGSVGElement, tooltip: string, onClick: () => void) => {
 
             const group = createSvgElement('g', {
                 class: className + ' pvt-note-action-button',
-                transform: `translate(${offsetX}, 0)`,
                 title: tooltip
             })
 
@@ -232,26 +239,41 @@ export class NoteDrawer {
             return group
         }
 
+        const buttons: SVGGElement[] = []
+
+        const svgLink = createHtmlTemplate(link) as unknown as SVGSVGElement
+        buttons.push(createButton('pvt-note-link-button', svgLink, 'Link the note to an element', () => {
+                console.log('start link process')
+            }
+        ))
+
 
         const svgEdit = createHtmlTemplate(edit) as unknown as SVGSVGElement
-        const editButton = createButton('pvt-note-edit-button', svgEdit, 'Edit the note', 0, () => {
+        buttons.push(createButton('pvt-note-edit-button', svgEdit, 'Edit the note', () => {
                 if (note.isEditing()) {
                     this.saveEditMode(note)
                 } else {
                     this.enterEditMode(note)
                 }
             }
-        )
+        ))
 
         const svgClose = createHtmlTemplate(trash) as unknown as SVGSVGElement
-        const closeButton = createButton('pvt-note-remove-button', svgClose, 'Remove the note', buttonSize + buttonSpacing,
-            () => {
+        buttons.push(createButton('pvt-note-remove-button', svgClose, 'Remove the note', () => {
                 this.graph.noteManager.removeNote(note)
             }
-        )
+        ))
 
-        container.appendChild(editButton)
-        container.appendChild(closeButton)
+        buttons.forEach((button, index) => {
+            const offset = index * (buttonSize + buttonSpacing)
+
+            button.setAttribute(
+                'transform',
+                `translate(${offset}, 0)`
+            )
+
+            container.appendChild(button)
+        })
 
         return container
     }
@@ -288,8 +310,16 @@ export class NoteDrawer {
         })
     }
 
-    private getActionButtonsTransform(note: Note): string {
-        return `translate(${note.width - buttonTotalWidth - buttonMargin}, 5)`
+    private positionActionButtons(noteSelection: Selection<SVGGElement, Note, null, undefined>, note: Note): void {
+        const actions = noteSelection.node()?.querySelector<SVGGElement>('.pvt-note-actions')
+        if (!actions) return
+
+        const buttonCount = actions.children.length
+        const width = getButtonsWidth(buttonCount)
+        actions.setAttribute(
+            'transform',
+            `translate(${note.width - width - buttonMargin}, 5)`
+        )
     }
 
     private updateNoteSize(
@@ -308,20 +338,15 @@ export class NoteDrawer {
 
         noteSelection
             .select('foreignObject')
-            .attr('width', note.width - 24)
-            .attr('height', note.height - 52)
+            .attr('width', note.width - 2 * NOTE_PADDING)
+            .attr('height', note.height - NOTE_HEADER_HEIGHT + 2*NOTE_PADDING)
 
         noteSelection
             .select('.pvt-note-resize-handle')
-            .attr('x', note.width - 12)
-            .attr('y', note.height - 12)
+            .attr('x', note.width - NOTE_PADDING)
+            .attr('y', note.height - NOTE_PADDING)
 
-        noteSelection
-            .select('.pvt-note-actions')
-            .attr(
-                'transform',
-                this.getActionButtonsTransform(note)
-            )
+        this.positionActionButtons(noteSelection, note)
     }
 
     public enterEditMode(note: Note): void {
@@ -528,7 +553,7 @@ export class NoteDrawer {
                 const dx = currentGraph.x - startGraph.x
                 const dy = currentGraph.y - startGraph.y
 
-                note.width = Math.max(160, startWidth + dx)
+                note.width = Math.max(180, startWidth + dx)
                 note.height = Math.max(80, startHeight + dy)
 
                 this.updateNoteSize(noteSelection, note)
