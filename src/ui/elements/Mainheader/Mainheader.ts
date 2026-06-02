@@ -1,6 +1,6 @@
 import { funnel, magnifyingGlass, redo, stickyNote, undo } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
-import { SearchBox } from './SearchBox'
+// import { SearchBox } from './SearchBox'
 import './mainheader.scss'
 import { Node } from '../../../Node'
 import type { SlidePanel } from '../SlidePanel/SlidePanel'
@@ -8,6 +8,7 @@ import { GraphFilter } from '../GraphFilter/GraphFilter'
 import type { Modal } from '../../components/Modal'
 import { createShortcutBadge } from '../../../utils/ElementCreation'
 import { NoteSidebar } from '../NoteSidebar/NoteSidebar'
+import { pickNode } from '../../components/NodePickers'
 
 export class Mainheader implements UIElement {
     private uiManager: UIManager
@@ -124,38 +125,14 @@ export class Mainheader implements UIElement {
         })
         noteSidebar.afterMount()
 
+        this.searchBoxButton?.addEventListener('click', async () => {
 
-        this.searchBoxButton?.addEventListener('click', () => {
-            if (this.searchModal) return
+            const node = await pickNode(this.uiManager)
+            if (!node) return
 
-            this.searchModal = this.uiManager.createModal({
-                body: '',
-                buttons: null,
-                position: 'top',
-                size: 'xl',
-                noBodyPadding: true,
-            })
-
-            if (this.searchModal) {
-                this.searchModal.modal?.addEventListener('pvt-modal-show', () => {
-                    const searchBox = new SearchBox(this.uiManager)
-                    this.searchModal?.setBody(searchBox.build())
-                    searchBox.searchInput?.focus()
-
-                    searchBox.searchBox?.addEventListener('pvt-searchbox-select', (evt: Event) => {
-                        const custom = evt as CustomEvent<Node>
-                        const node = custom.detail as Node
-                        this.uiManager.graph.selectElement(node)
-                        this.searchModal?.destroy()
-                    })
-                    searchBox.searchBox?.addEventListener('pvt-searchbox-close', () => {
-                        this.searchModal?.destroy()
-                    })
-                })
-                this.searchModal.modal?.addEventListener('pvt-modal-hidden', () => {
-                    this.searchModal = undefined
-                })
-            }
+            this.uiManager.graph.selectElement(node as unknown as Node)
         })
     }
+
+    graphReady() {}
 }

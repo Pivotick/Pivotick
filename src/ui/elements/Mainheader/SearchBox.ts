@@ -12,6 +12,7 @@ interface Match {
 
 export class SearchBox implements UIElement {
     private uiManager: UIManager
+    private title?: string 
 
     public searchBox?: HTMLDivElement
     public searchInput?: HTMLInputElement
@@ -22,8 +23,9 @@ export class SearchBox implements UIElement {
 
     private MAX_RESULT_COUNT = 12
 
-    constructor(uiManager: UIManager) {
+    constructor(uiManager: UIManager, title?: string) {
         this.uiManager = uiManager
+        this.title = title
     }
 
     mount(container: HTMLElement | undefined) {
@@ -39,6 +41,7 @@ export class SearchBox implements UIElement {
         template.innerHTML = `
   <div id="pvt-searchbox" class="pvt-searchbox">
     <div class="search-container">
+        <div class="title-container"></div>
         <div class="input-container">
             <span class="icon-container">${magnifyingGlass}</span>
             <input id="pvt-search-input" type="text" name="pvt-search" placeholder="Search" class="search-text" autocomplete="off" />
@@ -67,6 +70,11 @@ export class SearchBox implements UIElement {
         this.searchInput = this.searchBox.querySelector('#pvt-search-input') ?? undefined
         this.searchResultsContainer = this.searchBox.querySelector('.pvt-search-results') ?? undefined
         this.searchSummaryContainer = this.searchBox.querySelector('.pvt-search-summary') ?? undefined
+
+        const titleContainer = this.searchBox.querySelector('.pvt-title-container')
+        if (this.title && titleContainer) {
+            titleContainer.textContent = this.title
+        }
 
         this.searchInput?.addEventListener('input', () => {
             this.searchAndShowResults(this.searchInput!.value)

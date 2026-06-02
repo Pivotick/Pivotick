@@ -5,9 +5,11 @@ import type { Graph } from '../../Graph'
 import { GraphSvgRenderer } from './GraphSvgRenderer'
 import { NoteContentRenderer } from '../../plugins/noteContentRenderers/NoteContentRenderer'
 import { Note } from '../../Note'
+import { Node } from '../../Node'
 import type { GraphRendererOptions } from '../../interfaces/RendererOptions'
 import { createHtmlTemplate, createSvgElement } from '../../utils/ElementCreation'
 import { checkmark, edit, link, trash } from '../../ui/icons'
+import { pickNode } from '../../ui/components/NodePickers'
 
 d3Select.prototype.transition = d3Transition
 
@@ -242,10 +244,13 @@ export class NoteDrawer {
         const buttons: SVGGElement[] = []
 
         const svgLink = createHtmlTemplate(link) as unknown as SVGSVGElement
-        buttons.push(createButton('pvt-note-link-button', svgLink, 'Link the note to an element', () => {
-                console.log('start link process')
-            }
-        ))
+        buttons.push(createButton('pvt-note-link-button', svgLink, 'Link the note to an element', async () => {
+            const node = await pickNode(this.graph.UIManager, 'Select a node to link to this note')
+            if (!node) return
+
+            note.setAttachedElement({ type: 'node', 'id': ((node as unknown) as Node).id })
+            this.graph.noteManager.editNote(note)
+        }))
 
 
         const svgEdit = createHtmlTemplate(edit) as unknown as SVGSVGElement
