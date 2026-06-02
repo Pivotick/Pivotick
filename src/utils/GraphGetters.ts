@@ -86,3 +86,22 @@ export function edgePropertiesGetter(edge: Edge, propertiesPanel: PropertiesPane
     }
     return properties
 }
+
+export function resolveNodeByName(nodeName: string, nodes: Node[], mainHeaderOptions: MainHeader): Node | undefined {
+    const normalizedSearch = nodeName.trim().toLowerCase()
+    return nodes.find(n => {
+
+        // Match by ID
+        if (n.id.toLowerCase() === normalizedSearch) {
+            return true
+        }
+
+        // Match by main label
+        const mainLabel = nodeNameGetter(n, mainHeaderOptions)
+
+        return (
+            typeof mainLabel === 'string'
+            && mainLabel.trim().toLowerCase() === normalizedSearch
+        )
+    })
+}

@@ -685,7 +685,7 @@ export class GraphSvgRenderer extends GraphRenderer {
         }
     }
 
-    private clearHighlightedElements(): void {
+    public clearHighlightedElements(): void {
         this.edgeSelection.classed('pvt-edge-highlighted', false)
         this.nodeSelection.classed('pvt-node-highlighted', false)
     }

@@ -1,6 +1,6 @@
 import type { Graph } from '../../../Graph'
 import type { Node } from '../../../Node'
-import { nodeNameGetter } from '../../../utils/GraphGetters'
+import { nodeNameGetter, resolveNodeByName } from '../../../utils/GraphGetters'
 
 export function resolveReferences(container: HTMLElement, graph: Graph): void {
 
@@ -11,23 +11,7 @@ export function resolveReferences(container: HTMLElement, graph: Graph): void {
             const nodeName = ref.dataset.nodeName
             if (!nodeName) return
 
-            const normalizedSearch = nodeName.trim().toLowerCase()
-            const node: Node | undefined = graph.getNodes().find(n => {
-
-                // Match by ID
-                if (n.id.toLowerCase() === normalizedSearch) {
-                    return true
-                }
-
-                // Match by main label
-                const mainLabel = nodeNameGetter(n, graph.UIManager.getOptions().mainHeader)
-
-                return (
-                    typeof mainLabel === 'string'
-                    && mainLabel.trim().toLowerCase() === normalizedSearch
-                )
-            })
-
+            const node: Node | undefined = resolveNodeByName(nodeName, graph.getMutableNodes(), graph.UIManager.getOptions().mainHeader)
             if (!node) {
                 ref.classList.add('unresolved')
                 ref.title = 'Could not resolve node'

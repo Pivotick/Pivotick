@@ -1030,4 +1030,12 @@ export class Graph {
     unHighlightElement(element: Node | Edge): void {
         this.renderer.unHighlightElement(element)
     }
+
+    /**
+     * Remove any highligh class from any nodes or edges
+     * 
+     */
+    clearHighlightedElements(): void {
+        this.renderer.clearHighlightedElements()
+    }
 }
