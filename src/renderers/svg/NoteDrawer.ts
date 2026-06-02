@@ -103,6 +103,7 @@ export class NoteDrawer {
 
         const rendered = document.createElement('div')
         rendered.classList.add('pvt-note-content-rendered')
+        rendered.classList.add('pvt-markdown')
         this.noteContentRenderer.render(note, rendered)
 
         const textarea = document.createElement('textarea')
