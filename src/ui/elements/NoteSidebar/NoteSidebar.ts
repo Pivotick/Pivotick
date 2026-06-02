@@ -6,6 +6,7 @@ import type { NoteManager } from '../../../NoteManager'
 import { Note } from '../../../Note'
 import { createHtmlElement, createHtmlTemplate } from '../../../utils/ElementCreation'
 import type { Graph } from '../../../Graph'
+import { renderMarkdown, renderMarkdownInline } from '../../../utils/MarkdownRenderer'
 
 export class NoteSidebar implements UIElement {
 
@@ -101,9 +102,13 @@ export class NoteSidebar implements UIElement {
         colorPill.classList.add('pvt-note-color-pill')
         colorPill.style.backgroundColor = note.color
 
+        // Render the first line as markdown
         const textEl = document.createElement('span')
         textEl.classList.add('pvt-note-sidebar-text')
-        textEl.textContent = note.content || 'Untitled note'
+        textEl.classList.add('pvt-markdown')
+        const firstLine = note.content?.split('\n').find(line => line.trim().length > 0) ?? 'Untitled note'
+        const safeHtml = renderMarkdownInline(firstLine)
+        textEl.innerHTML = safeHtml
 
         const buttonWrapper = document.createElement('div')
         buttonWrapper.classList.add('pvt-note-sidebar-button-wrapper')

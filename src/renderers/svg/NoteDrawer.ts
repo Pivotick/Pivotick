@@ -20,7 +20,7 @@ const colors = [
     '#C4B5FD'
 ]
 const buttonSize = 18
-const buttonSpacing = 6
+const buttonSpacing = 4
 const buttonMargin = 8
 const iconSize = 14
 const buttonTotalWidth = buttonSize * 2 + buttonSpacing

@@ -410,10 +410,10 @@ function addRandomNode(counter: number, graph: Pivotick) {
 
 const data = {
   'notes': [
-        { 'id': 'note-1', content: 'Note #1', color: '#FDE68A', x: -325, y: 712},
-        { 'id': 'note-2', content: 'Note #2', color: '#FCA5A5', x: 131, y: 842},
-        { 'id': 'note-3', content: 'Note #3', color: '#93C5FD', x: -217, y: 1050},
-        { 'id': 'note-x', content: 'Note #X', color: '#f247f1', x: 245, y: 1230},
+        { 'id': 'note-1', content: 'Note _#1_', color: '#FDE68A', x: -325, y: 712},
+        { 'id': 'note-2', content: 'Note **#2**', color: '#FCA5A5', x: 131, y: 842},
+        { 'id': 'note-3', content: '# Note #3', color: '#93C5FD', x: -217, y: 1050},
+        { 'id': 'note-x', content: '[Note #X](.)', color: '#f247f1', x: 245, y: 1230},
   ],
   'nodes': [
     { 'id': 'A1', 'data': {'label': 'Alice', 'group': 'A', 'gender': 'female', 'is_active': true, 'nested1': {'nested2': [1,2,3]}}},
