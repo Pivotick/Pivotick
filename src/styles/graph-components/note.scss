@@ -18,6 +18,54 @@
         cursor: move;
     }
 
+    .pvt-note-link-container {
+
+        .pvt-note-link-content {
+            display: flex;
+            align-items: center;
+            height: 100%;
+            padding: 0 6px;
+            gap: 4px;
+            cursor: pointer;
+            box-sizing: border-box;
+    
+            color: var(--pvt-text-color-2);
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow:
+                    inset 0 1px 2px rgba(0, 0, 0, 0.12),
+                    inset 0 -1px 2px rgba(0, 0, 0, 0.12);
+            font-size: 0.8rem;
+    
+            .pvt-note-link-placeholder {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                font-style: italic;
+                opacity: 0.6;
+            }
+        
+            .pvt-note-link-placeholder-icon {
+                width: 12px !important;
+                height: 12px !important;
+                opacity: 0.7;
+            }
+    
+            .pvt-note-link-row {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 8px;
+    
+                width: 100%;
+            }
+    
+            .pvt-note-unlink-button {
+                flex-shrink: 0;
+            }
+        }
+    }
+
+
     .pvt-note-content {
         width: 100%;
         height: 100%;

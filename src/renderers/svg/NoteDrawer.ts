@@ -7,9 +7,11 @@ import { NoteContentRenderer } from '../../plugins/noteContentRenderers/NoteCont
 import { Note } from '../../Note'
 import { Node } from '../../Node'
 import type { GraphRendererOptions } from '../../interfaces/RendererOptions'
-import { createHtmlTemplate, createSvgElement } from '../../utils/ElementCreation'
-import { checkmark, edit, link, trash } from '../../ui/icons'
+import { createHtmlTemplate, createIcon, createSvgElement } from '../../utils/ElementCreation'
+import { checkmark, closeIcon, edit, link, trash } from '../../ui/icons'
 import { pickNode } from '../../ui/components/NodePickers'
+import { nodeNameGetter } from '../../utils/GraphGetters'
+import { createButton } from '../../ui/components/Button'
 
 d3Select.prototype.transition = d3Transition
 
@@ -21,6 +23,7 @@ const colors = [
     '#86EFAC',
     '#C4B5FD'
 ]
+const NOTE_LINK_HEIGHT = 24
 const NOTE_HEADER_HEIGHT = 28
 const NOTE_PADDING = 12
 const buttonSize = 18
@@ -64,6 +67,7 @@ export class NoteDrawer {
         root.appendChild(this.createBackground(note))
         root.appendChild(this.createHeader(note))
         root.appendChild(this.createActionButtons(noteSelection, note))
+        root.appendChild(this.createLink(note))
         root.appendChild(this.createContent(note))
         root.appendChild(this.createColorPills(noteSelection, note))
         root.appendChild(this.createResizeHandle(note))
@@ -101,13 +105,123 @@ export class NoteDrawer {
         })
     }
 
+    private createLink(note: Note): SVGForeignObjectElement {
+
+        const fo = createSvgElement('foreignObject', {
+            class: 'pvt-note-link-container',
+            x: 0,
+            y: NOTE_HEADER_HEIGHT,
+            width: note.width,
+            height: NOTE_LINK_HEIGHT,
+        })
+
+        const div = document.createElement('div')
+        div.classList.add('pvt-note-link-content')
+
+
+        const linkIcon = createIcon({ svgIcon: link })
+        linkIcon.classList.add('pvt-note-link-placeholder-icon')
+        div.appendChild(linkIcon)
+
+        const attached = note.getAttachedElement()
+
+        if (attached && attached.type === 'node') {
+            const node = this.graph.getMutableNode(attached.id)
+            if (node) {
+                const row = document.createElement('div')
+                row.classList.add('pvt-note-link-row')
+
+                const ref = document.createElement('span')
+                ref.classList.add(
+                    'pvt-node-reference',
+                    'resolved'
+                )
+                ref.dataset.nodeId = node.id
+                const mainLabel = nodeNameGetter(node, this.graph.UIManager.getOptions().mainHeader).trim()
+                ref.textContent = mainLabel
+                row.appendChild(ref)
+
+                const unlinkButton = createButton({
+                    variant: 'outline-danger',
+                    svgIcon: closeIcon,
+                    size: 'xs',
+                    class: ['ms-auto', 'unlink-note'],
+                    onClick: () => {
+                        note.setAttachedElement(undefined)
+                        this.graph.noteManager.editNote(note)
+                        this.refreshLink(note)
+                    },
+                })
+
+                row.appendChild(unlinkButton)
+
+                div.appendChild(row)
+            } else {
+                const unresolved = document.createElement('span')
+                unresolved.classList.add(
+                    'pvt-node-reference',
+                    'unresolved'
+                )
+                unresolved.textContent =
+                    `Missing node: ${attached.id}`
+                div.appendChild(unresolved)
+            }
+        } else {
+            const empty = document.createElement('div')
+            empty.classList.add('pvt-note-link-placeholder')
+
+            const text = document.createElement('span')
+            text.textContent = 'Link this note to a node'
+
+            empty.appendChild(text)
+
+            div.appendChild(empty)
+        }
+
+        div.addEventListener('click', async (evt) => {
+            const target = evt.target as HTMLElement
+
+            if (target.closest('.unlink-note')) {
+                return
+            }
+
+            evt.stopPropagation()
+            const node = await pickNode(
+                this.graph.UIManager,
+                'Select a node to link to this note'
+            )
+            if (!node) return
+            note.setAttachedElement({ type: 'node', 'id': ((node as unknown) as Node).id })
+            this.graph.noteManager.editNote(note)
+            this.refreshLink(note)
+        })
+        fo.appendChild(div)
+
+        return fo
+    }
+
+    private refreshLink(note: Note): void {
+        const root = note.getGraphElement()
+        if (!root) return
+
+        const old = root.querySelector('.pvt-note-link-container')
+        if (old) {
+            old.remove()
+        }
+
+        root.appendChild(this.createLink(note))
+    }
+
     private createContent(note: Note): SVGForeignObjectElement {
 
         const fo = createSvgElement('foreignObject', {
             x: NOTE_PADDING,
-            y: NOTE_HEADER_HEIGHT + NOTE_PADDING,
+            y: NOTE_HEADER_HEIGHT + NOTE_LINK_HEIGHT + NOTE_PADDING,
             width: note.width - 2*NOTE_PADDING,
-            height: note.height - NOTE_HEADER_HEIGHT - 2*NOTE_PADDING,
+            height: note.height
+                - NOTE_HEADER_HEIGHT
+                - NOTE_LINK_HEIGHT
+                - 2 * NOTE_PADDING,
         })
 
         const div = document.createElement('div')
@@ -243,16 +357,6 @@ export class NoteDrawer {
 
         const buttons: SVGGElement[] = []
 
-        const svgLink = createHtmlTemplate(link) as unknown as SVGSVGElement
-        buttons.push(createButton('pvt-note-link-button', svgLink, 'Link the note to an element', async () => {
-            const node = await pickNode(this.graph.UIManager, 'Select a node to link to this note')
-            if (!node) return
-
-            note.setAttachedElement({ type: 'node', 'id': ((node as unknown) as Node).id })
-            this.graph.noteManager.editNote(note)
-        }))
-
-
         const svgEdit = createHtmlTemplate(edit) as unknown as SVGSVGElement
         buttons.push(createButton('pvt-note-edit-button', svgEdit, 'Edit the note', () => {
                 if (note.isEditing()) {
@@ -299,6 +403,12 @@ export class NoteDrawer {
                 : edit
         ) as unknown as SVGSVGElement
 
+        if (isEditing) {
+            editIconContainer.setAttribute('title', 'Edit the note')
+        } else {
+            editIconContainer.setAttribute('title', 'Save changes')
+        }
+
         icon.setAttribute('width', iconSize.toString())
         icon.setAttribute('height', iconSize.toString())
 
@@ -339,6 +449,10 @@ export class NoteDrawer {
 
         noteSelection
             .select('.pvt-note-header')
+            .attr('width', note.width)
+
+        noteSelection
+            .select('.pvt-note-link-container')
             .attr('width', note.width)
 
         noteSelection

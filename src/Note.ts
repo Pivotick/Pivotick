@@ -95,7 +95,7 @@ export class Note {
         return this.attachedElement
     }
 
-    public setAttachedElement(attachedElement: AttachedElement): void {
+    public setAttachedElement(attachedElement: AttachedElement | undefined): void {
         this.attachedElement = attachedElement
     }
 }

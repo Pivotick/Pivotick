@@ -432,3 +432,56 @@ svg[data-renderer-drag-enabled="1"] {
 .pvt-icon.fixed-width {
     width: 1em;
 }
+
+.pvt-node-reference {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 6px;
+    border-radius: 4px;
+    background: var(--pvt-note-node-reference-bg);
+    border: 1px solid color-mix(in srgb,
+            var(--pvt-node-color) 45%,
+            transparent);
+    font-weight: 600;
+    font-size: 0.95em;
+    color: var(--pvt-note-node-reference-text-color);
+    cursor: pointer;
+
+    transition:
+        background-color 120ms ease,
+        border-color 120ms ease,
+        box-shadow 120ms ease;
+
+    &:hover:not(.unresolved) {
+        background:
+            color-mix(in srgb,
+                var(--pvt-note-node-reference-bg) 85%,
+                black);
+
+        box-shadow:
+            0 0 0 1px color-mix(in srgb,
+                var(--pvt-node-color) 22%,
+                transparent);
+    }
+
+    &::before {
+        content: '';
+        width: 0.45rem;
+        height: 0.45rem;
+        border-radius: 999px;
+        background: var(--pvt-note-node-reference-dot);
+        flex-shrink: 0;
+        margin-right: 0.35rem;
+        box-shadow:
+            0 0 4px color-mix(in srgb,
+                var(--pvt-node-color) 60%,
+                transparent);
+    }
+
+    &.unresolved {
+        opacity: 0.6;
+        border-style: dashed;
+        color: var(--pvt-text-color-3);
+        cursor: default;
+    }
+}
