@@ -1,8 +1,9 @@
 
+import type { GraphInteractionContext } from '../../../interfaces/GraphInteractions'
 import { Note } from '../../../Note'
 import { createHtmlElement, createHtmlTemplate, createShortcutBadge } from '../../../utils/ElementCreation'
 import { createButton } from '../../components/Button'
-import { addCircle, bidirectional, bulkEdit, edit, editMode, groupNodes, lassoTool, pathSelection, reverseEdge, selectionInverse, stickyNote, trash, ungroupNodes } from '../../icons'
+import { addCircle, bidirectional, bulkEdit, edit, editMode, graphEdgeIcon, groupNodes, lassoTool, pathSelection, reverseEdge, selectionInverse, stickyNote, trash, ungroupNodes } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import './graphToolbar.scss'
 
@@ -20,10 +21,12 @@ export class GraphToolbar implements UIElement {
 
     private editModeEnabled = false
     private lassoModeEnabled = false
+    private addEdgeModeEnabled = false
 
     private enableEditModeButton?: HTMLButtonElement
     private editModeButtonText?: SVGTextElement
     private enableLassoModeButton?: HTMLButtonElement
+    private enableAddEdgeModeButton?: HTMLButtonElement
 
     constructor(uiManager: UIManager) {
         this.uiManager = uiManager
@@ -80,6 +83,7 @@ export class GraphToolbar implements UIElement {
 
         if (!this.editModeEnabled) {
             this.toggleLassoMode(false)
+            this.toggleAddEdgeMode(false)
         }
 
         const textElement =
@@ -113,6 +117,9 @@ export class GraphToolbar implements UIElement {
             callback: () => {
                 if (this.lassoModeEnabled) {
                     this.toggleLassoMode()
+                }
+                if (this.addEdgeModeEnabled) {
+                    this.toggleAddEdgeMode()
                 }
             }
         })
@@ -224,6 +231,16 @@ export class GraphToolbar implements UIElement {
         <div class="pvt-toolbar-group"></div>
     `) as HTMLDivElement
 
+        this.enableAddEdgeModeButton = createButton({
+            variant: 'secondary',
+            text: 'Add Edge',
+            size: 'sm',
+            svgIcon: graphEdgeIcon(24),
+            onClick: () => {
+                this.toggleAddEdgeMode()
+            }
+        })
+
         const addNodeButton = createButton({
             variant: 'secondary',
             text: 'Add Node',
@@ -256,6 +273,7 @@ export class GraphToolbar implements UIElement {
         })
 
         this.noSelectionContainer.appendChild(addNodeButton)
+        this.noSelectionContainer.appendChild(this.enableAddEdgeModeButton)
         this.noSelectionContainer.appendChild(addStickyNoteButton)
 
         return this.noSelectionContainer
@@ -427,7 +445,6 @@ export class GraphToolbar implements UIElement {
             this.lassoModeEnabled = !this.lassoModeEnabled
         }
 
-
         // active state
         this.enableLassoModeButton.classList.toggle('pivotick-button-secondary', !this.lassoModeEnabled)
         this.enableLassoModeButton.classList.toggle('pivotick-button-primary', this.lassoModeEnabled)
@@ -437,6 +454,49 @@ export class GraphToolbar implements UIElement {
 
         // disable panning while lasso mode is active
         this.uiManager.graph.renderer.toggleLassoMode(this.lassoModeEnabled)
+        if (this.lassoModeEnabled) {
+            this.uiManager.graph.renderer.getGraphInteraction().on('canvasBeforeZoom', this.canvasBeforeZoomCb)
+            this.uiManager.graph.renderer.getGraphInteraction().on('canvasClick', this.canvasClickCb)
+        } else {
+            this.uiManager.graph.renderer.getGraphInteraction().off('canvasBeforeZoom', this.canvasBeforeZoomCb)
+            this.uiManager.graph.renderer.getGraphInteraction().off('canvasClick', this.canvasClickCb)
+        }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private canvasBeforeZoomCb = (event: any, context: GraphInteractionContext) => {
+        if (event.type === 'wheel') return true
+        if (event.button === 1) return true
+
+        context.cancel()
+    }
+
+    private canvasClickCb = (event: PointerEvent, context: GraphInteractionContext) => {
+        context.cancel()
+    }
+
+    public toggleAddEdgeMode(enabled?: boolean) {
+        if (!this.enableAddEdgeModeButton) return
+        const canvas: HTMLDivElement | undefined = this.uiManager.layout?.canvas
+        if (!canvas) return
+
+        if (enabled !== undefined) {
+            this.addEdgeModeEnabled = enabled
+        } else {
+            this.addEdgeModeEnabled = !this.addEdgeModeEnabled
+        }
+
+        // active state
+        this.enableAddEdgeModeButton.classList.toggle('pivotick-button-secondary', !this.addEdgeModeEnabled)
+        this.enableAddEdgeModeButton.classList.toggle('pivotick-button-primary', this.addEdgeModeEnabled)
+
+        if (this.addEdgeModeEnabled) {
+            this.uiManager.graph.editing.connectManager.startClickConnection()
+        } else {
+            this.uiManager.graph.editing.connectManager.cancel()
+            this.enableAddEdgeModeButton.blur()
+        }
+
     }
 
     private inverseSelection() {

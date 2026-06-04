@@ -156,16 +156,20 @@ export class NoteSidebar implements UIElement {
         return noteEl
     }
 
+    private refreshCb = () => {
+        this.refresh()
+    }
+
     private bindEvents(): void {
-        this.graph.on('noteAdd', () => { this.refresh() })
-        this.graph.on('noteRemove', () => { this.refresh() })
-        this.graph.on('noteChange', () => { this.refresh() })
+        this.graph.on('noteAdd', this.refreshCb)
+        this.graph.on('noteRemove', this.refreshCb)
+        this.graph.on('noteChange', this.refreshCb)
     }
 
     private unbindEvents(): void {
-        this.graph.off('noteAdd', () => {})
-        this.graph.off('noteRemove', () => {})
-        this.graph.off('noteChange', () => {})
+        this.graph.off('noteAdd', this.refreshCb)
+        this.graph.off('noteRemove', this.refreshCb)
+        this.graph.off('noteChange', this.refreshCb)
     }
 
     // -------------------------------------------------------------------------

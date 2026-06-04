@@ -2,7 +2,7 @@ import type { Graph } from './Graph'
 import type { Node } from './Node'
 import type { Edge } from './Edge'
 import type { InterractionCallbacks } from './interfaces/InterractionCallbacks'
-import type { EdgeSelection, GraphInteractionEvents, NodeSelection } from './interfaces/GraphInteractions'
+import type { EdgeSelection, GraphInteractionContext, GraphInteractionEvents, NodeSelection } from './interfaces/GraphInteractions'
 import type { Note } from './Note'
 
 
@@ -28,7 +28,7 @@ export class GraphInteractions<TElement = unknown> {
             edgeClick: [], edgeDbclick: [], edgeHoverIn: [], edgeHoverOut: [],
             edgeSelect: [], edgeBlur: [], edgeContextmenu: [],
             noteClick: [], noteDbclick: [], noteContextmenu: [], noteHoverIn: [], noteHoverOut: [],
-            canvasClick: [], canvasMousemove: [], canvasContextmenu: [], canvasZoom: [],
+            canvasClick: [], canvasMousemove: [], canvasContextmenu: [], canvasBeforeZoom: [], canvasZoom: [],
             simulationTick: [], simulationSlowTick: [],
             selectNode: [], unselectNode: [], selectEdge: [], unselectEdge: [],
             selectNodes: [], unselectNodes: [], selectEdges: [], unselectEdges: [],
@@ -67,6 +67,20 @@ export class GraphInteractions<TElement = unknown> {
     }
 
     public nodeClick(element: TElement, event: PointerEvent, node: Node): void {
+
+        const interaction: GraphInteractionContext = {
+            cancelled: false,
+            cancel() {
+                this.cancelled = true
+            }
+        }
+
+        this.emit('nodeClick', event, node, element, interaction)
+
+        if (interaction.cancelled) {
+            return
+        }
+
         if (event.shiftKey) {
             this.addNodesToSelection([{ node: node, element: element }])
         } else if (event.altKey) {
@@ -82,14 +96,24 @@ export class GraphInteractions<TElement = unknown> {
                 this.selectNode(element, node)
             }
         }
-        this.emit('nodeClick', event, node, element)
         if (this.callbacks.onNodeClick && typeof this.callbacks.onNodeClick === 'function') {
             this.callbacks.onNodeClick(event, node, element)
         }
     }
 
     public nodeDbclick(element: TElement, event: PointerEvent, node: Node): void {
-        this.emit('nodeDbclick', event, node, element)
+        const interaction: GraphInteractionContext = {
+            cancelled: false,
+            cancel() {
+                this.cancelled = true
+            }
+        }
+
+        this.emit('nodeDbclick', event, node, element, interaction)
+        if (interaction.cancelled) {
+            return
+        }
+
         if (this.callbacks.onNodeDbclick && typeof this.callbacks.onNodeDbclick === 'function') {
             this.callbacks.onNodeDbclick(event, node, element)
         }
@@ -97,7 +121,18 @@ export class GraphInteractions<TElement = unknown> {
     }
 
     public nodeContextmenu(element: TElement, event: PointerEvent, node: Node): void {
-        this.emit('nodeContextmenu', event, node, element)
+        const interaction: GraphInteractionContext = {
+            cancelled: false,
+            cancel() {
+                this.cancelled = true
+            }
+        }
+
+        this.emit('nodeContextmenu', event, node, element, interaction)
+        if (interaction.cancelled) {
+            return
+        }
+
         if (this.callbacks.onNodeContextmenu && typeof this.callbacks.onNodeContextmenu === 'function') {
             this.callbacks.onNodeContextmenu(event, node, element)
         }
@@ -132,22 +167,55 @@ export class GraphInteractions<TElement = unknown> {
     }
 
     public edgeClick(element: TElement, event: PointerEvent, edge: Edge): void {
+        const interaction: GraphInteractionContext = {
+            cancelled: false,
+            cancel() {
+                this.cancelled = true
+            }
+        }
+
+        this.emit('edgeClick', event, edge, element, interaction)
+        if (interaction.cancelled) {
+            return
+        }
+
         this.selectEdge(element, edge)
-        this.emit('edgeClick', event, edge, element)
         if (this.callbacks.onEdgeClick && typeof this.callbacks.onEdgeClick === 'function') {
             this.callbacks.onEdgeClick(event, edge, element)
         }
     }
 
     public edgeDbclick(element: TElement, event: PointerEvent, edge: Edge): void {
-        this.emit('edgeDbclick', event, edge, element)
+        const interaction: GraphInteractionContext = {
+            cancelled: false,
+            cancel() {
+                this.cancelled = true
+            }
+        }
+
+        this.emit('edgeDbclick', event, edge, element, interaction)
+        if (interaction.cancelled) {
+            return
+        }
+
         if (this.callbacks.onEdgeDbclick && typeof this.callbacks.onEdgeDbclick === 'function') {
             this.callbacks.onEdgeDbclick(event, edge, element)
         }
     }
 
     public edgeContextmenu(element: TElement, event: PointerEvent, edge: Edge): void {
-        this.emit('edgeContextmenu', event, edge, element)
+        const interaction: GraphInteractionContext = {
+            cancelled: false,
+            cancel() {
+                this.cancelled = true
+            }
+        }
+
+        this.emit('edgeContextmenu', event, edge, element, interaction)
+        if (interaction.cancelled) {
+            return
+        }
+
         if (this.callbacks.onEdgeContextmenu && typeof this.callbacks.onEdgeContextmenu === 'function') {
             this.callbacks.onEdgeContextmenu(event, edge, element)
         }
@@ -168,21 +236,54 @@ export class GraphInteractions<TElement = unknown> {
     }
 
     public noteClick(element: TElement, event: PointerEvent, note: Note): void {
-        this.emit('noteClick', event, note, element)
+        const interaction: GraphInteractionContext = {
+            cancelled: false,
+            cancel() {
+                this.cancelled = true
+            }
+        }
+
+        this.emit('noteClick', event, note, element, interaction)
+        if (interaction.cancelled) {
+            return
+        }
+
         if (this.callbacks.onNoteClick && typeof this.callbacks.onNoteClick === 'function') {
             this.callbacks.onNoteClick(event, note, element)
         }
     }
 
     public noteDbclick(element: TElement, event: PointerEvent, note: Note): void {
-        this.emit('noteDbclick', event, note, element)
+        const interaction: GraphInteractionContext = {
+            cancelled: false,
+            cancel() {
+                this.cancelled = true
+            }
+        }
+
+        this.emit('noteDbclick', event, note, element, interaction)
+        if (interaction.cancelled) {
+            return
+        }
+
         if (this.callbacks.onNoteDbclick && typeof this.callbacks.onNoteDbclick === 'function') {
             this.callbacks.onNoteDbclick(event, note, element)
         }
     }
 
     public noteContextmenu(element: TElement, event: PointerEvent, note: Note): void {
-        this.emit('noteContextmenu', event, note, element)
+        const interaction: GraphInteractionContext = {
+            cancelled: false,
+            cancel() {
+                this.cancelled = true
+            }
+        }
+
+        this.emit('noteContextmenu', event, note, element, interaction)
+        if (interaction.cancelled) {
+            return
+        }
+
         if (this.callbacks.onNoteContextmenu && typeof this.callbacks.onNoteContextmenu === 'function') {
             this.callbacks.onNoteContextmenu(event, note, element)
         }
@@ -203,24 +304,62 @@ export class GraphInteractions<TElement = unknown> {
     }
 
     public canvasClick(event: PointerEvent): void {
-        if (this.graph.renderer.isLassoModeActive()) return
+        const interaction: GraphInteractionContext = {
+            cancelled: false,
+            cancel() {
+                this.cancelled = true
+            }
+        }
+
+        this.emit('canvasClick', event, interaction)
+        if (interaction.cancelled) {
+            return
+        }
 
         this.unselectAll()
-        this.emit('canvasClick', event)
         if (this.callbacks.onCanvasClick && typeof this.callbacks.onCanvasClick === 'function') {
             this.callbacks.onCanvasClick(event)
         }
     }
 
+    public canvasBeforeZoom(event: unknown): boolean {
+        const interaction: GraphInteractionContext = {
+            cancelled: false,
+            cancel() {
+                this.cancelled = true
+            }
+        }
+
+        this.emit('canvasBeforeZoom', event, interaction)
+        if (interaction.cancelled) {
+            return false
+        }
+
+        if (this.callbacks.onCanvasBeforeZoom && typeof this.callbacks.onCanvasBeforeZoom === 'function') {
+            this.callbacks.onCanvasBeforeZoom(event)
+        }
+        return true
+    }
+
     public canvasZoom(event: unknown): void {
-        this.emit('canvasZoom', event)
         if (this.callbacks.onCanvasZoom && typeof this.callbacks.onCanvasZoom === 'function') {
             this.callbacks.onCanvasZoom(event)
         }
     }
 
     public canvasContextmenu(event: PointerEvent): void {
-        this.emit('canvasContextmenu', event)
+        const interaction: GraphInteractionContext = {
+            cancelled: false,
+            cancel() {
+                this.cancelled = true
+            }
+        }
+
+        this.emit('canvasContextmenu', event, interaction)
+        if (interaction.cancelled) {
+            return
+        }
+
         if (this.callbacks.onCanvasContextmenu && typeof this.callbacks.onCanvasContextmenu === 'function') {
             this.callbacks.onCanvasContextmenu(event)
         }

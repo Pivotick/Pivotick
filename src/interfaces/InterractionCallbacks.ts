@@ -121,6 +121,11 @@ export interface InterractionCallbacks<TElement = unknown> {
     onCanvasClick?: (event: PointerEvent) => void
 
     /**
+     * Called when the canvas is about to be zoomed.
+     */
+    onCanvasBeforeZoom?: (event: unknown) => void
+
+    /**
      * Called when the canvas is zoomed.
      */
     onCanvasZoom?: (event: unknown) => void

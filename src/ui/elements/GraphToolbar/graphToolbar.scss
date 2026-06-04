@@ -114,6 +114,15 @@
     cursor: grabbing;
 }
 
+.pvt-canvas.pvt-connect-mode-active {
+    &.select-first {
+        cursor: pointer;
+    }
+    &.link-second {
+        cursor: copy;
+    }
+}
+
 .pvt-lasso-overlay polyline {
     fill: var(--pvt-selection-rectangle-fill);
     stroke: var(--pvt-selection-rectangle-stroke);

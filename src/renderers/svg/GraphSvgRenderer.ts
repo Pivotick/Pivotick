@@ -317,14 +317,9 @@ export class GraphSvgRenderer extends GraphRenderer {
                     return false
                 }
 
-                // In lasso mode:
-                // block LEFT mouse drag panning only
-                // but still allow: wheel zoom, middle mouse pan, touchpad gestures
-                if (this.lassoModeActive) {
-                    if (event.type === 'wheel') return true
-                    if (event.button === 1) return true
-
-                    return false // block left click drag
+                const shouldProceed = this.graphInteraction.canvasBeforeZoom(event)
+                if (!shouldProceed) {
+                    return false
                 }
 
                 return true
@@ -739,10 +734,6 @@ export class GraphSvgRenderer extends GraphRenderer {
     public toggleLassoMode(enabled: boolean) {
         this.lassoModeActive = enabled
         this.lassoOverlay.setEnabled(enabled)
-    }
-
-    public isLassoModeActive(): boolean {
-        return this.lassoModeActive
     }
 
     public getNodeClosestToCursor(maxDistance?: number): Node | null {
