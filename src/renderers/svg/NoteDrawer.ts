@@ -121,7 +121,7 @@ export class NoteDrawer {
         div.addEventListener('click', async (evt) => {
             const target = evt.target as HTMLElement
 
-            if (target.closest('.unlink-note')) {
+            if (!target.closest('.editing') || target.closest('.unlink-note') || target.closest('.pvt-node-reference')) {
                 return
             }
 

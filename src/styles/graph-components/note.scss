@@ -79,7 +79,7 @@
             height: 24px;
             padding: 0 6px;
             gap: 4px;
-            cursor: pointer;
+            cursor: default;
             box-sizing: border-box;
         
             background: rgba(255, 255, 255, 0.1);
@@ -200,6 +200,10 @@
 
         .pvt-note-link-container {
             display: block;
+
+            .pvt-note-link-subcontainer {
+                cursor: pointer;
+            }
         }
 
         .pvt-note-content {
