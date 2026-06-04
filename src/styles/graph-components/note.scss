@@ -1,3 +1,8 @@
+.pvt-note-fo {
+    box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+}
+
 .pvt-note {
     width: 100%;
     height: 100%;
@@ -9,8 +14,7 @@
     overflow: hidden;
 
     background: var(--note-color);
-    color: var(--pvt-text-color-1);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    color: #333;
 
     transition:
         opacity 120ms ease,
@@ -45,9 +49,19 @@
                 transition:
                     transform 120ms ease;
 
-                &:hover {
-                    transform: scale(1.15);
+                &:hover, &.pill-active {
+                    transform: scale(1.25);
                 }
+            }
+        }
+
+        .pvt-note-actions {
+            display: inline-flex;
+            flex-direction: row-reverse;
+            color: #666;
+
+            .pvt-node-remove-button {
+                display: none;
             }
         }
     }
@@ -68,7 +82,6 @@
             cursor: pointer;
             box-sizing: border-box;
         
-            color: var(--pvt-text-color-2);
             background: rgba(255, 255, 255, 0.1);
             box-shadow:
                 inset 0 1px 2px rgba(0, 0, 0, 0.12),
@@ -120,7 +133,6 @@
         margin: 4px;
         font-size: 14px;
         font-family: sans-serif;
-        color: var(--pvt-text-color-1);
 
         outline: none;
         background: transparent;
@@ -133,6 +145,10 @@
             overflow: auto;
             white-space: normal;
             word-break: break-word;
+
+            &.pvt-markdown {
+                color: #333;
+            }
         }
 
         .pvt-note-editor {
@@ -155,36 +171,21 @@
         }
     }
 
-    .pvt-note-actions {
-        display: inline-flex;
-        flex-direction: row-reverse;
-
-        .pvt-node-remove-button {
-            display: none;
-        }
-    }
-
     .pvt-note-resize-handle {
-        fill: rgba(0, 0, 0, 0.2);
+        background: rgba(0, 0, 0, 0.2);
         cursor: nwse-resize;
         pointer-events: all;
-    }
-
-    &.selected {
-
-        .pvt-note-background {
-            stroke: #2563eb;
-            stroke-width: 2;
-            filter: drop-shadow(0 0 6px rgba(37, 99, 235, 0.35));
-        }
+        border-radius: 3px 0 0 0;
+        width: 12px;
+        height: 12px;
+        position: absolute;
+        bottom: 0;
+        right: 0;
     }
 
     &.dragging {
         opacity: 0.9;
-
-        .pvt-note-background {
-            filter: drop-shadow(4px 4px 6px var(--pvt-box-shadow-color-strong));
-        }
+        filter: drop-shadow(4px 4px 6px var(--pvt-box-shadow-color-strong));
 
         .pvt-note-header {
             cursor: grabbing;
@@ -193,27 +194,12 @@
 
     &.editing {
 
-        .pvt-note-header {
-            .pvt-note-actions .pvt-node-remove-button {
-                display: inline-flex;
-            }
+        .pvt-note-header .pvt-note-actions .pvt-node-remove-button {
+            display: inline-flex;
         }
 
         .pvt-note-link-container {
             display: block;
-        }
-
-        .pvt-note-background {
-            stroke: color-mix(in srgb,
-                var(--note-color, currentColor)82%,
-                #1f2937);
-            stroke-width: 2;
-            stroke-dasharray: 6 4;
-
-            filter:
-                drop-shadow(0 10px 20px rgba(0, 0, 0, 0.18));
-            animation:
-                pvt-note-edit-dash 10s linear infinite;
         }
 
         .pvt-note-content {
@@ -237,8 +223,3 @@
     }
 }
 
-@keyframes pvt-note-edit-dash {
-    to {
-        stroke-dashoffset: -40;
-    }
-}

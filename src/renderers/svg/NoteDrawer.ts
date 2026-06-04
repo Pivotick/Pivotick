@@ -23,20 +23,6 @@ const colors = [
     '#86EFAC',
     '#C4B5FD'
 ]
-const NOTE_HEADER_HEIGHT = 28
-const NOTE_PADDING = 12
-const buttonSize = 18
-const buttonSpacing = 4
-const buttonMargin = 8
-const getButtonsWidth = (count: number): number => {
-    if (count <= 0) return 0
-
-    return (
-        count * buttonSize +
-        (count - 1) * buttonSpacing
-    )
-}
-
 
 export class NoteDrawer {
 
@@ -66,7 +52,6 @@ export class NoteDrawer {
 
         root.appendChild(fo)
 
-        this.positionActionButtons(noteSelection, note)
         this.makeDraggable(noteSelection, note)
         this.makeResizable(noteSelection, note)
 
@@ -93,7 +78,7 @@ export class NoteDrawer {
         container.appendChild(this.createHeader(container, note))
         container.appendChild(this.createLink(note))
         container.appendChild(this.createContent(note))
-        container.appendChild(this.createResizeHandle(note))
+        container.appendChild(this.createResizeHandle())
 
         fo.appendChild(container)
 
@@ -247,17 +232,15 @@ export class NoteDrawer {
 
             const pill = createHtmlElement('span', {
                 style: `background: ${color}`,
-                class: 'pvt-note-color-pill'
+                class: ['pvt-note-color-pill', note.color === color ? 'pill-active' : '']
             })
 
             pill.addEventListener('click', () => {
-
+                const pills = nodeContainer.querySelectorAll('.pvt-note-color-pill')
+                pills.forEach((p) => p.classList.remove('pill-active'))
+                pill.classList.add('pill-active')
+                nodeContainer.style.setProperty('--note-color', color)
                 note.setColor(color)
-
-                const bg = nodeContainer.querySelector('.pvt-note-background')
-
-                bg?.setAttribute('fill', color)
-                bg?.setAttribute('color', color)
                 this.graph.noteManager.editNote(note)
 
             })
@@ -268,21 +251,13 @@ export class NoteDrawer {
         return group
     }
 
-    private createResizeHandle(note: Note): SVGRectElement {
+    private createResizeHandle(): HTMLSpanElement {
 
-        const size = 12
-
-        const rect = createSvgElement('rect', {
+        const handle = createHtmlElement('span', {
             class: 'pvt-note-resize-handle',
-            x: note.width - size,
-            y: note.height - size,
-            width: size,
-            height: size,
-            rx: 3,
-            ry: 3,
         })
 
-        return rect
+        return handle
     }
 
     private createActionButtons(note: Note): HTMLDivElement {
@@ -363,47 +338,16 @@ export class NoteDrawer {
         })
     }
 
-    private positionActionButtons(noteSelection: Selection<SVGGElement, Note, null, undefined>, note: Note): void {
-        const actions = noteSelection.node()?.querySelector<SVGGElement>('.pvt-note-actions')
-        if (!actions) return
-
-        const buttonCount = actions.children.length
-        const width = getButtonsWidth(buttonCount)
-        actions.setAttribute(
-            'transform',
-            `translate(${note.width - width - buttonMargin}, 5)`
-        )
-    }
-
     private updateNoteSize(
         noteSelection: Selection<SVGGElement, Note, null, undefined>,
         note: Note
     ): void {
 
         noteSelection
-            .select('.pvt-note-background')
+            .select('foreignObject')
             .attr('width', note.width)
             .attr('height', note.height)
 
-        noteSelection
-            .select('.pvt-note-header')
-            .attr('width', note.width)
-
-        noteSelection
-            .select('.pvt-note-link-container')
-            .attr('width', note.width)
-
-        noteSelection
-            .select('foreignObject')
-            .attr('width', note.width - 2 * NOTE_PADDING)
-            .attr('height', note.height - NOTE_HEADER_HEIGHT - 2*NOTE_PADDING)
-
-        noteSelection
-            .select('.pvt-note-resize-handle')
-            .attr('x', note.width - NOTE_PADDING)
-            .attr('y', note.height - NOTE_PADDING)
-
-        this.positionActionButtons(noteSelection, note)
     }
 
     public enterEditMode(note: Note): void {
