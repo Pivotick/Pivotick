@@ -56,9 +56,8 @@
         }
 
         .pvt-note-actions {
-            display: inline-flex;
+            display: none;
             flex-direction: row-reverse;
-            color: #666;
 
             .pvt-node-remove-button {
                 display: none;
@@ -194,8 +193,12 @@
 
     &.editing {
 
-        .pvt-note-header .pvt-note-actions .pvt-node-remove-button {
+        .pvt-note-header .pvt-note-actions {
             display: inline-flex;
+
+            .pvt-node-remove-button {
+                display: inline-flex;
+            }
         }
 
         .pvt-note-link-container {
@@ -223,6 +226,12 @@
             .unlink-note {
                 display: block !important;
             }
+        }
+    }
+
+    &:hover {
+        .pvt-note-header .pvt-note-actions {
+            display: inline-flex;
         }
     }
 }
