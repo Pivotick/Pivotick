@@ -32,7 +32,7 @@
         cursor: move;
 
         .pvt-note-color-pills {
-            display: inline-flex;
+            display: none;
             gap: 2px;
 
             .pvt-note-color-pill {
@@ -58,6 +58,10 @@
         .pvt-note-actions {
             display: none;
             flex-direction: row-reverse;
+
+            .pvt-node-edit-button {
+                margin-left: auto;
+            }
 
             .pvt-node-remove-button {
                 display: none;
@@ -193,11 +197,18 @@
 
     &.editing {
 
-        .pvt-note-header .pvt-note-actions {
-            display: inline-flex;
+        .pvt-note-header {
 
-            .pvt-node-remove-button {
+            .pvt-note-color-pills {
                 display: inline-flex;
+            }
+
+            .pvt-note-actions {
+                display: inline-flex;
+
+                .pvt-node-remove-button {
+                    display: inline-flex;
+                }
             }
         }
 
@@ -232,6 +243,7 @@
     &:hover {
         .pvt-note-header .pvt-note-actions {
             display: inline-flex;
+            width: 100%;
         }
     }
 }

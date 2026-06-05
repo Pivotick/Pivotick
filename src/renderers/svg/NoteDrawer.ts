@@ -454,7 +454,6 @@ export class NoteDrawer {
         let startNoteY = 0
 
         header
-            .style('cursor', 'move')
             .on('mousedown', (evt: MouseEvent) => {
 
                 evt.preventDefault()
