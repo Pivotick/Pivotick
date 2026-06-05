@@ -600,6 +600,16 @@ export class Simulation {
      */
     public createDragBehavior() {
         return d3Drag<SVGGElement, Node>()
+            .filter(() => {
+
+                // Disable node dragging while connect mode is active
+                if (this.graph.editing.connectManager.isActive()) {
+                    return false
+                }
+
+                return true
+            })
+
             .on('start.draggedelement', (_event, d) => {
                 if (this.graphInteraction.hasActiveMultiselection()) {
                     this.dragSelection = this.graphInteraction.getSelectedNodes().map((nodeSelection) => {

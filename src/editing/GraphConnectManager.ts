@@ -5,16 +5,16 @@ import { Node } from '../Node'
 import { generateSafeDomId } from '../utils/ElementCreation'
 import { EdgeCreationSession } from './EdgeCreationSession'
 
-type Events = 'start_click_connection' | 'start' | 'stop'
+type Events = 'start' | 'stop'
 
 export class GraphConnectManager {
 
     private graph: Graph
 
     private activeSession: EdgeCreationSession | null = null
+    private modeActive = false
 
     private listeners = {
-        start_click_connection: new Set<() => void>(),
         start: new Set<() => void>(),
         stop: new Set<() => void>(),
     }
@@ -37,22 +37,60 @@ export class GraphConnectManager {
 
     public startClickConnection(): void {
 
-        this.cancel()
+        if (this.modeActive) return
+
+        this.modeActive = true
+
         this.activeSession = new EdgeCreationSession(this.graph, this)
         this.activeSession.start()
 
+        this.graph.simulation.disable()
+
         this.listeners.start.forEach(cb => cb())
-        this.listeners.start_click_connection.forEach(cb => cb())
 
         this.graph.renderer.getGraphInteraction().on('nodeClick', this.nodeClickCB)
+        this.graph.renderer.getGraphInteraction().on('nodePointerDown', this.nodePointerDownCB)
     }
 
     public cancel(): void {
+        this.exitClickConnectionMode()
+    }
+
+    public restart(): void {
+
+        if (!this.modeActive) {
+            this.startClickConnection()
+            return
+        }
+
+        this.finishInteraction()
+    }
+
+    public finishInteraction(): void {
+        this.activeSession?.cancel()
+        this.activeSession = new EdgeCreationSession(this.graph, this)
+        this.activeSession.start()
+    }
+
+    public exitClickConnectionMode(): void {
+
+        this.modeActive = false
+
+        this.graph.simulation.enable()
 
         this.activeSession?.cancel()
-        this.listeners.stop.forEach(cb => cb())
-        this.graph.renderer.getGraphInteraction().off('nodeClick', this.nodeClickCB)
         this.activeSession = null
+
+        this.listeners.stop.forEach(cb => cb())
+
+        this.graph.renderer.getGraphInteraction().off('nodeClick', this.nodeClickCB)
+        this.graph.renderer.getGraphInteraction().off('nodePointerDown', this.nodePointerDownCB)
+    }
+
+    private resetSession(): void {
+        this.activeSession?.cancel()
+        this.activeSession = new EdgeCreationSession(this.graph, this)
+        this.activeSession.start()
     }
 
     public isActive(): boolean {
@@ -95,5 +133,14 @@ export class GraphConnectManager {
         context.cancel()
 
         this.handleNodeClick(node)
+    }
+
+    private nodePointerDownCB = (event: PointerEvent, node: Node) => {
+
+        if (!this.activeSession) {
+            return
+        }
+
+        this.activeSession.beginDragConnection(node, event)
     }
 }

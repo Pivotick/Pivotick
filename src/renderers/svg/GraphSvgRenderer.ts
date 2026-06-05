@@ -260,6 +260,10 @@ export class GraphSvgRenderer extends GraphRenderer {
     private shadowEdgeGroup: Selection<SVGGElement, unknown, null, undefined>
     private shadowEdgePath: Selection<SVGPathElement, unknown, null, undefined>
 
+    private handleLayer: Selection<SVGGElement, unknown, null, undefined>
+    private connectionHandle: Selection<SVGGElement, unknown, null, undefined> | null = null
+    private connectionHandleNode: Node | null = null
+
     private nodeGroupSelection!: Selection<SVGGElement, Node, SVGGElement, unknown>
     private edgeGroupSelection!: Selection<SVGPathElement, Edge, SVGGElement, unknown>
     private noteGroupSelection!: Selection<SVGGElement, Note, SVGGElement, unknown>
@@ -295,10 +299,13 @@ export class GraphSvgRenderer extends GraphRenderer {
 
         this.shadowEdgeGroup = this.zoomGroup.append('g').attr('class', 'shadow-edges').style('pointer-events', 'none')
         this.shadowEdgePath = this.shadowEdgeGroup.append('path').attr('class', 'pvt-shadow-edge').style('display', 'none')
-
+        
         this.noteGroup = this.zoomGroup.append('g').attr('class', 'notes')
         this.selectionBoxGroup = this.svg.append('g').attr('class', 'selection-box')
         this.nodeGroup = this.zoomGroup.append('g').attr('class', 'nodes')
+
+        this.handleLayer = this.zoomGroup.append('g').attr('class', 'connection-handle-layer')
+
         this.defs = this.svg.append('defs')
         this.edgeDrawer.renderDefinitions()
 
@@ -321,6 +328,13 @@ export class GraphSvgRenderer extends GraphRenderer {
                     target.tagName === 'TEXTAREA' ||
                     target.closest('[contenteditable="true"]')
                 ) {
+                    return false
+                }
+
+                // Disable panning while connect mode is active
+                if (this.graph.editing.connectManager.isActive()) {
+                    if (event.type === 'wheel') return true
+                    if (event.button === 1) return true
                     return false
                 }
 

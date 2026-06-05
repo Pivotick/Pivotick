@@ -426,10 +426,12 @@ dl.pvt-property-list {
     stroke-dasharray: 3 3.16;
 }
 
-svg[data-renderer-drag-enabled="1"] {
-    .pvt-node {
-        &:hover {
-            cursor: grab;
+.pvt-canvas:not(.pvt-connect-mode-active) {
+    svg[data-renderer-drag-enabled="1"] {
+        .pvt-node {
+            &:hover {
+                cursor: grab;
+            }
         }
     }
 }

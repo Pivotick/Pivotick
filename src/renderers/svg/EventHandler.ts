@@ -47,6 +47,14 @@ export class EventHandler {
                 const svgNode = event.currentTarget as SVGGElement
                 this.graphInteraction?.nodeClick(svgNode, event, node)
             })
+            .on('pointerdown.node', (event: PointerEvent, node: Node) => {
+                const svgNode = event.currentTarget as SVGGElement
+                this.graphInteraction?.nodePointerDown(svgNode, event, node)
+            })
+            .on('pointerup.node', (event: PointerEvent, node: Node) => {
+                const svgNode = event.currentTarget as SVGGElement
+                this.graphInteraction?.nodePointerUp(svgNode, event, node)
+            })
             .on('contextmenu.node', (event: PointerEvent, node: Node) => {
                 event.preventDefault()
                 event.stopPropagation()
@@ -102,6 +110,14 @@ export class EventHandler {
                 const svgNote = event.currentTarget as SVGGElement
                 this.graphInteraction?.noteClick(svgNote, event, note)
             })
+            .on('pointerdown.note', (event: PointerEvent, note: Note) => {
+                const svgNote = event.currentTarget as SVGGElement
+                this.graphInteraction?.notePointerDown(svgNote, event, note)
+            })
+            .on('pointerup.note', (event: PointerEvent, note: Note) => {
+                const svgNote = event.currentTarget as SVGGElement
+                this.graphInteraction?.notePointerUp(svgNote, event, note)
+            })
             .on('contextmenu.note', (event: PointerEvent, note: Note) => {
                 event.preventDefault()
                 event.stopPropagation()
@@ -123,6 +139,12 @@ export class EventHandler {
         this.renderer.getCanvasSelection()
             .on('click.canvas', (event: PointerEvent) => {
                 this.graphInteraction?.canvasClick(event)
+            })
+            .on('pointerdown.canvas', (event: PointerEvent) => {
+                this.graphInteraction?.canvasPointerDown(event)
+            })
+            .on('pointerup.canvas', (event: PointerEvent) => {
+                this.graphInteraction?.canvasPointerUp(event)
             })
             .on('contextmenu.canvas', (event: PointerEvent) => {
                 event.preventDefault()

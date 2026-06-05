@@ -30,6 +30,15 @@ export interface InterractionCallbacks<TElement = unknown> {
     onNodeHoverOut?: (event: PointerEvent, node: Node, element: TElement) => void
 
     /**
+     * Called when a user pointer down a node.
+    */
+    onNodePointerDown?: (event: PointerEvent, node: Node, element: TElement) => void
+    /**
+     * Called when a user pointer up a node.
+    */
+    onNodePointerUp?: (event: PointerEvent, node: Node, element: TElement) => void
+
+    /**
     * Called when a node is selected by the user.
     */
     onNodeSelect?: (node: Node, element: TElement) => void
@@ -116,9 +125,27 @@ export interface InterractionCallbacks<TElement = unknown> {
     onNoteHoverOut?: (event: PointerEvent, note: Note, element: TElement) => void
 
     /**
+     * Called when a user pointer down a node.
+    */
+    onNotePointerDown?: (event: PointerEvent, note: Note, element: TElement) => void
+    /**
+     * Called when a user pointer up a node.
+    */
+    onNotePointerUp?: (event: PointerEvent, note: Note, element: TElement) => void
+
+    /**
      * Called when the canvas is clicked.
      */
     onCanvasClick?: (event: PointerEvent) => void
+
+    /**
+     * Called when a user pointer down the canvas.
+    */
+    onCanvasPointerDown?: (event: PointerEvent) => void
+    /**
+     * Called when a user pointer up the canvas.
+    */
+    onCanvasPointerUp?: (event: PointerEvent) => void
 
     /**
      * Called when the canvas is about to be zoomed.

@@ -23,12 +23,12 @@ export class GraphInteractions<TElement = unknown> {
         this.graph = graph
         this.callbacks = this.graph.getCallbacks() ?? {}
         this.listeners = {
-            nodeClick: [], nodeDbclick: [], nodeHoverIn: [], nodeHoverOut: [],
+            nodeClick: [], nodeDbclick: [], nodeHoverIn: [], nodeHoverOut: [], nodePointerDown: [], nodePointerUp: [],
             nodeSelect: [], nodeBlur: [], dragging: [], dragended: [], nodeContextmenu: [],
             edgeClick: [], edgeDbclick: [], edgeHoverIn: [], edgeHoverOut: [],
             edgeSelect: [], edgeBlur: [], edgeContextmenu: [],
-            noteClick: [], noteDbclick: [], noteContextmenu: [], noteHoverIn: [], noteHoverOut: [],
-            canvasClick: [], canvasMousemove: [], canvasContextmenu: [], canvasBeforeZoom: [], canvasZoom: [],
+            noteClick: [], noteDbclick: [], notePointerDown: [], notePointerUp: [], noteContextmenu: [], noteHoverIn: [], noteHoverOut: [],
+            canvasClick: [], canvasMousemove: [], canvasPointerDown: [], canvasPointerUp: [], canvasContextmenu: [], canvasBeforeZoom: [], canvasZoom: [],
             simulationTick: [], simulationSlowTick: [],
             selectNode: [], unselectNode: [], selectEdge: [], unselectEdge: [],
             selectNodes: [], unselectNodes: [], selectEdges: [], unselectEdges: [],
@@ -135,6 +135,31 @@ export class GraphInteractions<TElement = unknown> {
 
         if (this.callbacks.onNodeContextmenu && typeof this.callbacks.onNodeContextmenu === 'function') {
             this.callbacks.onNodeContextmenu(event, node, element)
+        }
+    }
+
+    public nodePointerDown = (element: TElement, event: PointerEvent, node: Node): void => {
+        const interaction: GraphInteractionContext = {
+            cancelled: false,
+            cancel() {
+                this.cancelled = true
+            }
+        }
+
+        this.emit('nodePointerDown', event, node, element, interaction)
+        if (interaction.cancelled) {
+            return
+        }
+
+        if (this.callbacks.onNodePointerDown && typeof this.callbacks.onNodePointerDown === 'function') {
+            this.callbacks.onNodePointerDown(event, node, element)
+        }
+    }
+
+    public nodePointerUp = (element: TElement, event: PointerEvent, node: Node): void => {
+        this.emit('nodePointerUp', event, node, element)
+        if (this.callbacks.onNodePointerUp && typeof this.callbacks.onNodePointerUp === 'function') {
+            this.callbacks.onNodePointerUp(event, node, element)
         }
     }
 
@@ -303,6 +328,20 @@ export class GraphInteractions<TElement = unknown> {
         }
     }
 
+    public notePointerDown = (element: TElement, event: PointerEvent, note: Note): void => {
+        this.emit('notePointerDown', event, note, element)
+        if (this.callbacks.onNotePointerDown && typeof this.callbacks.onNotePointerDown === 'function') {
+            this.callbacks.onNotePointerDown(event, note, element)
+        }
+    }
+
+    public notePointerUp = (element: TElement, event: PointerEvent, note: Note): void => {
+        this.emit('notePointerUp', event, note, element)
+        if (this.callbacks.onNotePointerUp && typeof this.callbacks.onNotePointerUp === 'function') {
+            this.callbacks.onNotePointerUp(event, note, element)
+        }
+    }
+
     public canvasClick(event: PointerEvent): void {
         const interaction: GraphInteractionContext = {
             cancelled: false,
@@ -319,6 +358,21 @@ export class GraphInteractions<TElement = unknown> {
         this.unselectAll()
         if (this.callbacks.onCanvasClick && typeof this.callbacks.onCanvasClick === 'function') {
             this.callbacks.onCanvasClick(event)
+        }
+    }
+
+
+    public canvasPointerDown = (event: PointerEvent): void => {
+        this.emit('canvasPointerDown', event)
+        if (this.callbacks.onCanvasPointerDown && typeof this.callbacks.onCanvasPointerDown === 'function') {
+            this.callbacks.onCanvasPointerDown(event)
+        }
+    }
+
+    public canvasPointerUp = (event: PointerEvent): void => {
+        this.emit('canvasPointerUp', event)
+        if (this.callbacks.onCanvasPointerUp && typeof this.callbacks.onCanvasPointerUp === 'function') {
+            this.callbacks.onCanvasPointerUp(event)
         }
     }
 

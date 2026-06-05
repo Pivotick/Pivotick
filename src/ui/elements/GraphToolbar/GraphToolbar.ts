@@ -124,7 +124,7 @@ export class GraphToolbar implements UIElement {
 
                 const connectManager = this.uiManager.graph.editing.connectManager
                 if (connectManager.isActive()) {
-                    connectManager.cancel()
+                    connectManager.exitClickConnectionMode()
                 }
             }
         })
@@ -495,7 +495,7 @@ export class GraphToolbar implements UIElement {
         const manager = this.uiManager.graph.editing.connectManager
 
         if (manager.isActive()) {
-            manager.cancel()
+            manager.exitClickConnectionMode()
         } else {
             manager.startClickConnection()
         }
