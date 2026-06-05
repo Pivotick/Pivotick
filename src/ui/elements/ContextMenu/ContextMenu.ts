@@ -1,14 +1,15 @@
-import type { Edge } from '../../../Edge'
+import { Edge } from '../../../Edge'
 import type { Node } from '../../../Node'
-import { createActionList, createQuickActionList } from '../../../utils/ElementCreation'
-import { edit, expand, focusElement, hide, inspect, pin, selectNeighbor, stickyNote, trash, unpin } from '../../icons'
+import { createActionList, createHtmlElement, createQuickActionList, generateSafeDomId } from '../../../utils/ElementCreation'
+import { expand, focusElement, graphEdgeIcon, hide, inspect, pin, selectNeighbor, stickyNote, trash, unpin } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import './contextmenu.scss'
 import { deepMerge } from '../../../utils/utils'
 import type { MenuActionItemOptions, MenuQuickActionItemOptions } from '../../../interfaces/GraphUI'
-import { nodeNameGetter } from '../../../utils/GraphGetters'
 import { createInspectModal } from '../modals/InspectNodeModal/InspectNodeModal'
 import { Note } from '../../../Note'
+import { pickNode } from '../../components/NodePickers'
+import { nodeNameGetter } from '../../../utils/GraphGetters'
 
 const defaultMenuNode = {
     topbar: [
@@ -84,6 +85,30 @@ const defaultMenuNode = {
             },
             onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
                 node.hide()
+            }
+        },
+        {
+            text: 'Connect to...',
+            title: 'Connect to...',
+            svgIcon: graphEdgeIcon(24),
+            variant: 'outline-primary',
+            visible: (node: Node) => {
+                return node.visible
+            },
+            async onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
+                const mainLabel = nodeNameGetter(node, this.uiManager.graph.UIManager.getOptions().mainHeader).trim()
+                const title = document.createElement('div')
+                title.textContent = 'Select the target node to link with'
+                const pre = document.createElement('b')
+                pre.textContent = `"${mainLabel}"`
+                pre.classList.add('pvt-ms-1')
+                title.appendChild(pre)
+                const targetNode = await pickNode(this.uiManager.graph.UIManager, title)
+                if (!targetNode) return
+
+                const edgeID = generateSafeDomId(8, 'edge-')
+                const edge = new Edge(edgeID, node, targetNode, {})
+                this.uiManager.graph.addEdge(edge)
             }
         },
         {

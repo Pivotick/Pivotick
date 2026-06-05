@@ -12,7 +12,7 @@ interface Match {
 
 export class SearchBox implements UIElement {
     private uiManager: UIManager
-    private title?: string 
+    private title?: string | HTMLElement
 
     public searchBox?: HTMLDivElement
     public searchInput?: HTMLInputElement
@@ -23,7 +23,7 @@ export class SearchBox implements UIElement {
 
     private MAX_RESULT_COUNT = 12
 
-    constructor(uiManager: UIManager, title?: string) {
+    constructor(uiManager: UIManager, title?: string | HTMLElement) {
         this.uiManager = uiManager
         this.title = title
     }
@@ -41,7 +41,7 @@ export class SearchBox implements UIElement {
         template.innerHTML = `
   <div id="pvt-searchbox" class="pvt-searchbox">
     <div class="search-container">
-        <div class="title-container"></div>
+        <div class="pvt-title-container"></div>
         <div class="input-container">
             <span class="icon-container">${magnifyingGlass}</span>
             <input id="pvt-search-input" type="text" name="pvt-search" placeholder="Search" class="search-text" autocomplete="off" />
@@ -73,7 +73,11 @@ export class SearchBox implements UIElement {
 
         const titleContainer = this.searchBox.querySelector('.pvt-title-container')
         if (this.title && titleContainer) {
-            titleContainer.textContent = this.title
+            if (this.title instanceof HTMLElement) {
+                titleContainer.appendChild(this.title)
+            } else {
+                titleContainer.textContent = this.title
+            }
         }
 
         this.searchInput?.addEventListener('input', () => {
