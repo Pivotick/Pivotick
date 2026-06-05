@@ -2,7 +2,7 @@ import { SearchBox } from '../elements/Mainheader/SearchBox'
 import type { UIManager } from '../UIManager'
 import { Node } from '../../Node'
 
-export function pickNode(uiManager: UIManager, title?: string): Promise<Node | null> {
+export function pickNode(uiManager: UIManager, title?: string | HTMLElement): Promise<Node | null> {
 
     return new Promise(resolve => {
 
