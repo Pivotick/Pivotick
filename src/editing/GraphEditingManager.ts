@@ -1,6 +1,7 @@
 import type { Graph } from '../Graph'
 import type { Node } from '../Node'
 import { createNodeEditModal } from '../ui/elements/modals/editNodeModal/EditNodeModal'
+import { GraphConnectManager } from './GraphConnectManager'
 import { NodeEditSession } from './NodeEditSession'
 
 /**
@@ -13,6 +14,7 @@ import { NodeEditSession } from './NodeEditSession'
  */
 export class GraphEditingManager {
     public readonly graph: Graph
+    public readonly connectManager: GraphConnectManager
 
     /**
      * Active node edit sessions indexed by node id.
@@ -21,6 +23,7 @@ export class GraphEditingManager {
 
     constructor(graph: Graph) {
         this.graph = graph
+        this.connectManager = new GraphConnectManager(this.graph)
     }
 
     /**

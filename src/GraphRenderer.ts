@@ -46,6 +46,8 @@ export abstract class GraphRenderer {
     abstract highlightElement(element: Node | Edge): void
     abstract unHighlightElement(element: Node | Edge): void
     abstract clearHighlightedElements(): void
+    abstract showShadowEdge(params: { source: Node, targetNode?: Node, targetPosition?: { x: number, y: number } }): void
+    abstract hideShadowEdge(): void
 
     public getCanvas(): HTMLElement {
         return this.container.querySelector('.pvt-canvas') as HTMLElement

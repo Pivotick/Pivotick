@@ -21,7 +21,6 @@ export class GraphToolbar implements UIElement {
 
     private editModeEnabled = false
     private lassoModeEnabled = false
-    private addEdgeModeEnabled = false
 
     private enableEditModeButton?: HTMLButtonElement
     private editModeButtonText?: SVGTextElement
@@ -83,7 +82,11 @@ export class GraphToolbar implements UIElement {
 
         if (!this.editModeEnabled) {
             this.toggleLassoMode(false)
-            this.toggleAddEdgeMode(false)
+
+            const connectManager = this.uiManager.graph.editing.connectManager
+            if (connectManager.isActive()) {
+                connectManager.cancel()
+            }
         }
 
         const textElement =
@@ -118,8 +121,10 @@ export class GraphToolbar implements UIElement {
                 if (this.lassoModeEnabled) {
                     this.toggleLassoMode()
                 }
-                if (this.addEdgeModeEnabled) {
-                    this.toggleAddEdgeMode()
+
+                const connectManager = this.uiManager.graph.editing.connectManager
+                if (connectManager.isActive()) {
+                    connectManager.cancel()
                 }
             }
         })
@@ -162,6 +167,16 @@ export class GraphToolbar implements UIElement {
 
         interaction.on('canvasClick', () => {
             this.updateToolbarVisibility()
+        })
+
+        const connectManager = this.uiManager.graph.editing.connectManager
+
+        connectManager.on('start', () => {
+            this.refreshAddEdgeButtonState(true)
+        })
+
+        connectManager.on('stop', () => {
+            this.refreshAddEdgeButtonState(false)
         })
     }
 
@@ -475,28 +490,25 @@ export class GraphToolbar implements UIElement {
         context.cancel()
     }
 
-    public toggleAddEdgeMode(enabled?: boolean) {
-        if (!this.enableAddEdgeModeButton) return
-        const canvas: HTMLDivElement | undefined = this.uiManager.layout?.canvas
-        if (!canvas) return
+    public toggleAddEdgeMode() {
 
-        if (enabled !== undefined) {
-            this.addEdgeModeEnabled = enabled
+        const manager = this.uiManager.graph.editing.connectManager
+
+        if (manager.isActive()) {
+            manager.cancel()
         } else {
-            this.addEdgeModeEnabled = !this.addEdgeModeEnabled
+            manager.startClickConnection()
         }
+    }
 
-        // active state
-        this.enableAddEdgeModeButton.classList.toggle('pivotick-button-secondary', !this.addEdgeModeEnabled)
-        this.enableAddEdgeModeButton.classList.toggle('pivotick-button-primary', this.addEdgeModeEnabled)
+    private refreshAddEdgeButtonState(active: boolean): void {
 
-        if (this.addEdgeModeEnabled) {
-            this.uiManager.graph.editing.connectManager.startClickConnection()
-        } else {
-            this.uiManager.graph.editing.connectManager.cancel()
-            this.enableAddEdgeModeButton.blur()
+        this.enableAddEdgeModeButton?.classList.toggle('pivotick-button-secondary', !active)
+        this.enableAddEdgeModeButton?.classList.toggle('pivotick-button-primary', active)
+
+        if (!active) {
+            this.enableAddEdgeModeButton?.blur()
         }
-
     }
 
     private inverseSelection() {

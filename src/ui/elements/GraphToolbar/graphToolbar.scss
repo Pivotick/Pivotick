@@ -116,9 +116,9 @@
 
 .pvt-canvas.pvt-connect-mode-active {
     &.select-first {
-        cursor: pointer;
+        cursor: crosshair;
     }
-    &.link-second {
+    &.pick-second {
         cursor: copy;
     }
 }

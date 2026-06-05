@@ -411,32 +411,80 @@ export class EdgeDrawer {
         const rFrom = edge.source.getCircleRadius() ? edge.source.getCircleRadius() : this.graphSvgRenderer.nodeDrawer.getNodeStyle(from).size as number
         const rTo = edge.target.getCircleRadius() ? edge.target.getCircleRadius() : this.graphSvgRenderer.nodeDrawer.getNodeStyle(to).size as number
 
+        return this.buildArcPath({
+            fromX: from.x,
+            fromY: from.y,
+            toX: to.x,
+            toY: to.y,
+            fromRadius: rFrom,
+            toRadius: rTo,
+            drawOffsetStart,
+            drawOffsetEnd,
+        })
+    }
+
+    public buildArcPath(params: {
+        fromX: number
+        fromY: number
+        toX: number
+        toY: number
+        fromRadius: number
+        toRadius: number
+        drawOffsetStart?: number
+        drawOffsetEnd?: number
+    }): string | null {
+
+        const {
+            fromX,
+            fromY,
+            toX,
+            toY,
+            fromRadius,
+            toRadius,
+            drawOffsetStart = 4,
+            drawOffsetEnd = 8,
+        } = params
+
+        const r = Math.hypot(toX - fromX, toY - fromY)
+
         const arcParams: ArcParams = {
-            from: { x: from.x, y: from.y },
-            to: { x: to.x, y: to.y },
+            from: { x: fromX, y: fromY },
+            to: { x: toX, y: toY },
             rx: r,
             ry: r,
             xAxisRotation: 0,
             largeArcFlag: false,
             sweepFlag: true,
         }
+
         const circleFrom: Circle = {
-            cx: from.x,
-            cy: from.y,
-            r: rFrom + drawOffsetStart,
+            cx: fromX,
+            cy: fromY,
+            r: fromRadius + drawOffsetStart,
         }
+
         const circleTo: Circle = {
-            cx: to.x,
-            cy: to.y,
-            r: rTo + drawOffsetEnd,
+            cx: toX,
+            cy: toY,
+            r: toRadius + drawOffsetEnd,
         }
-        const intersectionFrom = getArcIntersectionWithCircle(arcParams, circleFrom)
-        const intersectionTo = getArcIntersectionWithCircle(arcParams, circleTo)
 
-        if (intersectionFrom && intersectionTo)
-            return `M${intersectionFrom.x},${intersectionFrom.y} A${r},${r} 0 0,1 ${intersectionTo.x},${intersectionTo.y}`
+        const intersectionFrom =
+            getArcIntersectionWithCircle(arcParams, circleFrom)
 
-        return ''
+        const intersectionTo =
+            getArcIntersectionWithCircle(arcParams, circleTo)
+
+        if (intersectionFrom && intersectionTo) {
+
+            return `
+            M${intersectionFrom.x},${intersectionFrom.y}
+            A${r},${r} 0 0,1
+            ${intersectionTo.x},${intersectionTo.y}
+        `
+        }
+
+        return null
     }
 
     private defaultLabelRender(edgeSelection: Selection<SVGGElement, Edge, null, undefined>, edge: Edge, style: LabelStyle): void {

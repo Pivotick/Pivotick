@@ -406,6 +406,17 @@ dl.pvt-property-list {
     }
 }
 
+.pvt-shadow-edge {
+    pointer-events: none;
+    animation: pvt-shadow-dash 0.5s linear infinite;
+}
+
+@keyframes pvt-shadow-dash {
+    to {
+        stroke-dashoffset: -10;
+    }
+}
+
 .pvt-cluster-area {
     fill: var(--pvt-node-cluster-fill);
     stroke-dasharray: 4 2;

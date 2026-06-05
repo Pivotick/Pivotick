@@ -257,6 +257,9 @@ export class GraphSvgRenderer extends GraphRenderer {
     private selectionBoxGroup: Selection<SVGGElement, unknown, null, undefined>
     public defs: Selection<SVGDefsElement, unknown, null, undefined>
 
+    private shadowEdgeGroup: Selection<SVGGElement, unknown, null, undefined>
+    private shadowEdgePath: Selection<SVGPathElement, unknown, null, undefined>
+
     private nodeGroupSelection!: Selection<SVGGElement, Node, SVGGElement, unknown>
     private edgeGroupSelection!: Selection<SVGPathElement, Edge, SVGGElement, unknown>
     private noteGroupSelection!: Selection<SVGGElement, Note, SVGGElement, unknown>
@@ -289,6 +292,10 @@ export class GraphSvgRenderer extends GraphRenderer {
 
         this.zoomGroup = this.svg.append('g').attr('class', 'zoom-layer hidden')
         this.edgeGroup = this.zoomGroup.append('g').attr('class', 'edges')
+
+        this.shadowEdgeGroup = this.zoomGroup.append('g').attr('class', 'shadow-edges').style('pointer-events', 'none')
+        this.shadowEdgePath = this.shadowEdgeGroup.append('path').attr('class', 'pvt-shadow-edge').style('display', 'none')
+
         this.noteGroup = this.zoomGroup.append('g').attr('class', 'notes')
         this.selectionBoxGroup = this.svg.append('g').attr('class', 'selection-box')
         this.nodeGroup = this.zoomGroup.append('g').attr('class', 'nodes')
@@ -773,5 +780,95 @@ export class GraphSvgRenderer extends GraphRenderer {
         }
 
         return closestNode
+    }
+
+    public showShadowEdge(params: {
+        source: Node,
+        targetNode?: Node,
+        targetPosition?: { x: number, y: number }
+    }): void {
+
+        const { source, targetNode, targetPosition } = params
+
+        if (source.x == null || source.y == null) {
+            return
+        }
+
+        let targetX: number
+        let targetY: number
+        let targetRadius = 0
+
+        if (targetNode) {
+
+            if (targetNode.x == null || targetNode.y == null) {
+                return
+            }
+
+            targetX = targetNode.x
+            targetY = targetNode.y
+            targetRadius = targetNode.getCircleRadius() || this.nodeDrawer.getNodeStyle(targetNode).size as number
+
+        } else if (targetPosition) {
+
+            targetX = targetPosition.x
+            targetY = targetPosition.y
+
+        } else {
+            return
+        }
+
+        const sourceRadius = source.getCircleRadius() || this.nodeDrawer.getNodeStyle(source).size as number
+
+        const dx = targetX - source.x
+        const dy = targetY - source.y
+
+        const distance = Math.sqrt(dx * dx + dy * dy)
+
+        if (distance === 0) {
+            return
+        }
+
+        const nx = dx / distance
+        const ny = dy / distance
+
+        const startX = source.x + nx * (sourceRadius + 4)
+        const startY = source.y + ny * (sourceRadius + 4)
+
+        const endX = targetX - nx * (targetRadius + 8)
+        const endY = targetY - ny * (targetRadius + 8)
+
+        let path: string | null
+
+        if (targetNode) {
+
+            path = this.edgeDrawer.buildArcPath({
+                fromX: source.x,
+                fromY: source.y,
+                toX: targetX,
+                toY: targetY,
+                fromRadius: sourceRadius,
+                toRadius: targetRadius,
+                drawOffsetStart: 4,
+                drawOffsetEnd: 8,
+            })
+
+        } else {
+
+            path = `M ${startX},${startY} L ${endX},${endY}`
+        }
+
+        this.shadowEdgePath
+            .attr('d', path)
+            .attr('stroke', 'var(--pvt-edge-stroke, #999)')
+            .attr('stroke-width', 2)
+            .attr('stroke-dasharray', '6 4')
+            .attr('fill', 'none')
+            .attr('opacity', 0.7)
+            .attr('marker-end', 'url(#arrow)')
+            .style('display', null)
+    }
+
+    public hideShadowEdge(): void {
+        this.shadowEdgePath.style('display', 'none')
     }
 }
