@@ -197,6 +197,6 @@ export class GraphConnectManager {
             return
         }
 
-        this.activeSession.beginDragConnectionFromNote(note, event)
+        this.activeSession.beginDragConnection(note, event)
     }
 }

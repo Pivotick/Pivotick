@@ -10,6 +10,7 @@ type InteractionState =
     | 'pending-drag'
     | 'dragging'
 
+type Connectable = Node | Note
 
 export class EdgeCreationSession {
 
@@ -18,7 +19,7 @@ export class EdgeCreationSession {
 
     private canvas: HTMLDivElement
 
-    private sourceElement: Node | Note | null = null
+    private sourceElement: Connectable | null = null
     private hoveredNode: Node | null = null
     private pointerPosition: { x: number, y: number } | null = null
 
@@ -204,7 +205,7 @@ export class EdgeCreationSession {
         this.connectManager.finishInteraction()
     }
 
-    public beginDragConnection(node: Node, event: PointerEvent): void {
+    public beginDragConnection(source: Connectable, event: PointerEvent): void {
 
         // Don't interrupt existing click-connect flow
         if (this.state === 'dragging' || this.state === 'click-connect') {
@@ -212,33 +213,12 @@ export class EdgeCreationSession {
         }
 
         this.state = 'pending-drag'
-        this.sourceElement = node
+        this.sourceElement = source
 
         this.dragStartPosition = {
             x: event.clientX,
             y: event.clientY
         }
-
-
-        this.beginPreview()
-
-        this.canvas.addEventListener('pointerup', this.handlePointerUp)
-    }
-
-    public beginDragConnectionFromNote(note: Note, event: PointerEvent): void {
-
-        if (this.state === 'dragging') {
-            return
-        }
-
-        this.sourceElement = note
-
-        this.dragStartPosition = {
-            x: event.clientX,
-            y: event.clientY
-        }
-
-        this.state = 'pending-drag'
 
         this.beginPreview()
 
