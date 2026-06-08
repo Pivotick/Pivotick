@@ -797,7 +797,7 @@ export class GraphSvgRenderer extends GraphRenderer {
     }
 
     public showShadowEdge(params: {
-        source: Node,
+        source: Node | Note,
         targetNode?: Node,
         targetPosition?: { x: number, y: number }
     }): void {

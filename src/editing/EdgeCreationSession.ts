@@ -1,5 +1,6 @@
 import type { Graph } from '../Graph'
 import { Node } from '../Node'
+import { Note } from '../Note'
 import { GraphConnectManager } from './GraphConnectManager'
 
 export class EdgeCreationSession {
@@ -9,15 +10,17 @@ export class EdgeCreationSession {
 
     private canvas: HTMLDivElement
 
-    private sourceNode: Node | null = null
+    private sourceElement: Node | Note | null = null
     private hoveredNode: Node | null = null
     private pointerPosition: { x: number, y: number } | null = null
 
     private isDraggingConnection = false
     private dragStartPosition: { x: number, y: number } | null = null
     private didMove = false
+    private pointerIsDown = false
+    private inClickState = false
 
-    private pendingDragNode: Node | null = null
+    private pendingDragSource: Node | Note | null = null
 
     private static readonly DRAG_THRESHOLD = 4
 
@@ -35,22 +38,23 @@ export class EdgeCreationSession {
 
     public cancel(): void {
 
-        if (this.sourceNode) {
-            this.graph.unHighlightElement?.(this.sourceNode)
+        if (this.sourceElement && this.sourceElement instanceof Node) {
+            this.graph.unHighlightElement?.(this.sourceElement)
         }
 
-        this.sourceNode = null
+        this.sourceElement = null
         this.hoveredNode = null
         this.pointerPosition = null
-        this.pendingDragNode = null
+        this.pendingDragSource = null
         this.dragStartPosition = null
         this.didMove = false
+        this.inClickState = false
 
         this.canvas.classList.remove('pvt-connect-mode-active', 'select-first', 'pick-second')
 
         this.canvas.removeEventListener('pointermove', this.handlePointerMove)
         this.canvas.removeEventListener('contextmenu', this.handleContextMenu)
-        window.removeEventListener('pointerup', this.handlePointerUp)
+        this.canvas.removeEventListener('pointerup', this.handlePointerUp)
 
         this.isDraggingConnection = false
         this.graph.renderer.hideShadowEdge()
@@ -58,10 +62,51 @@ export class EdgeCreationSession {
 
     public handleNodeClick(node: Node): boolean {
 
-        if (!this.sourceNode) {
+        if (!this.sourceElement) {
 
-            this.sourceNode = node
+            this.sourceElement = node as Node
             this.graph.highlightElement(node)
+            this.canvas.classList.remove('select-first')
+            this.canvas.classList.add('pick-second')
+
+            this.inClickState = true
+
+            this.beginPreview()
+
+            return true
+        }
+
+        if (
+            this.sourceElement instanceof Node &&
+            this.sourceElement.id === node.id
+        ) {
+
+            this.connectManager.finishInteraction()
+
+            return true
+        }
+
+
+        if (this.sourceElement instanceof Node) {
+            this.connectManager.createEdge(this.sourceElement, node)
+        }
+
+        if (this.sourceElement instanceof Note) {
+            
+            this.connectManager.createNoteLink(this.sourceElement, node)
+        }
+
+        this.connectManager.finishInteraction()
+
+        return true
+    }
+
+    public handleNoteClick(note: Note): boolean {
+
+        if (!this.sourceElement) {
+
+            this.sourceElement = note
+
             this.canvas.classList.remove('select-first')
             this.canvas.classList.add('pick-second')
 
@@ -70,17 +115,7 @@ export class EdgeCreationSession {
             return true
         }
 
-        if (this.sourceNode.id === node.id) {
-
-            this.connectManager.finishInteraction()
-
-            return true
-        }
-
-        this.connectManager.createEdge(this.sourceNode, node)
-        this.connectManager.finishInteraction()
-
-        return true
+        return false
     }
 
     private beginPreview(): void {
@@ -90,27 +125,31 @@ export class EdgeCreationSession {
 
     private handlePointerMove = (event: PointerEvent): void => {
 
-        if (
-            this.dragStartPosition &&
-            !this.didMove
-        ) {
+        if (this.dragStartPosition && !this.didMove) {
 
             const dx = event.clientX - this.dragStartPosition.x
             const dy = event.clientY - this.dragStartPosition.y
 
             if (
-                Math.hypot(dx, dy) >
-                EdgeCreationSession.DRAG_THRESHOLD
+                this.pointerIsDown &&
+                Math.hypot(dx, dy) > EdgeCreationSession.DRAG_THRESHOLD
             ) {
 
                 this.didMove = true
-                this.isDraggingConnection = true
+                if (!this.isDraggingConnection) {
+
+                    this.isDraggingConnection = true
+                    this.canvas.addEventListener('pointerup', this.handlePointerUp)
+                }
 
                 // Begin connection drag
-                this.sourceNode = this.pendingDragNode
+                this.sourceElement = this.pendingDragSource
 
-                if (this.sourceNode) {
-                    this.graph.highlightElement(this.sourceNode)
+                if (
+                    this.sourceElement instanceof Node &&
+                    this.sourceElement
+                ) {
+                    this.graph.highlightElement(this.sourceElement)
                 }
 
                 this.canvas.classList.remove('select-first')
@@ -118,8 +157,10 @@ export class EdgeCreationSession {
             }
         }
 
-        // Ignore tiny movements
-        if (!this.isDraggingConnection) {
+        if (
+            !this.isDraggingConnection && // Ignore tiny movements
+            !(this.sourceElement && this.inClickState)
+        ) {
             return
         }
 
@@ -139,10 +180,10 @@ export class EdgeCreationSession {
 
     private updateShadowEdge(): void {
 
-        if (!this.sourceNode || !this.pointerPosition) return
+        if (!this.sourceElement || !this.pointerPosition) return
 
         this.graph.renderer.showShadowEdge({
-            source: this.sourceNode,
+            source: this.sourceElement,
             targetNode: this.hoveredNode ?? undefined,
             targetPosition: this.hoveredNode ? undefined : this.pointerPosition
         })
@@ -153,11 +194,13 @@ export class EdgeCreationSession {
         event.preventDefault()
         event.stopPropagation()
 
-        if (this.sourceNode) {
+        if (this.sourceElement) {
 
-            this.graph.unHighlightElement?.(this.sourceNode)
+            if (this.sourceElement instanceof Node) {
+                this.graph.unHighlightElement?.(this.sourceElement)
+            }
 
-            this.sourceNode = null
+            this.sourceElement = null
             this.hoveredNode = null
 
             this.canvas.classList.remove('pick-second')
@@ -178,7 +221,8 @@ export class EdgeCreationSession {
             return
         }
 
-        this.pendingDragNode = node
+        this.pointerIsDown = true
+        this.pendingDragSource = node
 
         this.dragStartPosition = {
             x: event.clientX,
@@ -189,38 +233,64 @@ export class EdgeCreationSession {
 
         this.beginPreview()
 
-        window.addEventListener('pointerup', this.handlePointerUp)
+        this.canvas.addEventListener('pointerup', this.handlePointerUp)
+    }
+
+    public beginDragConnectionFromNote(note: Note, event: PointerEvent): void {
+
+        if (this.isDraggingConnection) {
+            return
+        }
+
+        this.pendingDragSource = note
+
+        this.sourceElement = note
+
+        this.dragStartPosition = {
+            x: event.clientX,
+            y: event.clientY
+        }
+
+        this.didMove = false
+        this.pointerIsDown = true
+
+        this.beginPreview()
+
+        this.canvas.addEventListener('pointerup', this.handlePointerUp)
     }
 
     private handlePointerUp = (): void => {
 
-        if (!this.isDraggingConnection) {
-            return
-        }
-
         // If user didn't actually drag, let normal click behavior happen.
-        if (!this.didMove) {
+        if (!this.isDraggingConnection || !this.didMove) {
 
-            window.removeEventListener('pointerup', this.handlePointerUp)
+            this.canvas.removeEventListener('pointerup', this.handlePointerUp)
 
             this.isDraggingConnection = false
             this.dragStartPosition = null
-            this.pendingDragNode = null
+            this.pendingDragSource = null
 
             return
         }
 
         const target = this.graph.renderer.getNodeClosestToCursor(30)
 
-        if (
-            target &&
-            this.sourceNode &&
-            target.id !== this.sourceNode.id
-        ) {
-            this.connectManager.createEdge(this.sourceNode, target)
+        if (target && this.sourceElement) {
+
+            if (this.sourceElement instanceof Node) {
+                if (this.sourceElement.id !== target.id) {
+                    this.connectManager.createEdge(this.sourceElement, target)
+                }
+            }
+
+            if (this.sourceElement instanceof Note) {
+
+                this.connectManager.createNoteLink(this.sourceElement, target)
+            }
             this.connectManager.restart()
-        } {
-            this.connectManager.finishInteraction()
+            return
         }
+
+        this.connectManager.finishInteraction()
     }
 }

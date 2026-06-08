@@ -28,6 +28,7 @@ export class GraphInteractions<TElement = unknown> {
             edgeClick: [], edgeDbclick: [], edgeHoverIn: [], edgeHoverOut: [],
             edgeSelect: [], edgeBlur: [], edgeContextmenu: [],
             noteClick: [], noteDbclick: [], notePointerDown: [], notePointerUp: [], noteContextmenu: [], noteHoverIn: [], noteHoverOut: [],
+            noteHandleClick: [], noteHandlePointerDown: [],
             canvasClick: [], canvasMousemove: [], canvasPointerDown: [], canvasPointerUp: [], canvasContextmenu: [], canvasBeforeZoom: [], canvasZoom: [],
             simulationTick: [], simulationSlowTick: [],
             selectNode: [], unselectNode: [], selectEdge: [], unselectEdge: [],
@@ -339,6 +340,31 @@ export class GraphInteractions<TElement = unknown> {
         this.emit('notePointerUp', event, note, element)
         if (this.callbacks.onNotePointerUp && typeof this.callbacks.onNotePointerUp === 'function') {
             this.callbacks.onNotePointerUp(event, note, element)
+        }
+    }
+
+    public noteHandleClick(handle: HTMLElement, event: PointerEvent, note: Note): void {
+        const interaction: GraphInteractionContext = {
+            cancelled: false,
+            cancel() {
+                this.cancelled = true
+            }
+        }
+
+        this.emit('noteHandleClick', event, note, handle, interaction)
+        if (interaction.cancelled) {
+            return
+        }
+
+        if (this.callbacks.onNoteHandleClick && typeof this.callbacks.onNoteHandleClick === 'function') {
+            this.callbacks.onNoteHandleClick(event, note, handle)
+        }
+    }
+
+    public noteHandlePointerDown = (handle: HTMLElement, event: PointerEvent, note: Note): void => {
+        this.emit('noteHandlePointerDown', event, note, handle)
+        if (this.callbacks.onNoteHandlePointerDown && typeof this.callbacks.onNoteHandlePointerDown === 'function') {
+            this.callbacks.onNoteHandlePointerDown(event, note, handle)
         }
     }
 

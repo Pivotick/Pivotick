@@ -2,6 +2,7 @@ import { Edge } from '../Edge'
 import type { Graph } from '../Graph'
 import type { GraphInteractionContext } from '../interfaces/GraphInteractions'
 import { Node } from '../Node'
+import { Note } from '../Note'
 import { generateSafeDomId } from '../utils/ElementCreation'
 import { EdgeCreationSession } from './EdgeCreationSession'
 
@@ -47,9 +48,24 @@ export class GraphConnectManager {
         this.graph.simulation.disable()
 
         this.listeners.start.forEach(cb => cb())
+    }
+
+    public startNodeClickConnection(): void {
+
+        this.exitClickConnectionMode()
+        this.startClickConnection()
 
         this.graph.renderer.getGraphInteraction().on('nodeClick', this.nodeClickCB)
         this.graph.renderer.getGraphInteraction().on('nodePointerDown', this.nodePointerDownCB)
+    }
+
+    public startNoteClickConnection(): void {
+
+        this.exitClickConnectionMode()
+        this.startClickConnection()
+
+        this.graph.renderer.getGraphInteraction().on('noteHandleClick', this.noteClickCB)
+        this.graph.renderer.getGraphInteraction().on('noteHandlePointerDown', this.notePointerDownCB)
     }
 
     public cancel(): void {
@@ -85,6 +101,9 @@ export class GraphConnectManager {
 
         this.graph.renderer.getGraphInteraction().off('nodeClick', this.nodeClickCB)
         this.graph.renderer.getGraphInteraction().off('nodePointerDown', this.nodePointerDownCB)
+
+        this.graph.renderer.getGraphInteraction().off('noteHandleClick', this.noteClickCB)
+        this.graph.renderer.getGraphInteraction().off('noteHandlePointerDown', this.notePointerDownCB)
     }
 
     private resetSession(): void {
@@ -104,8 +123,7 @@ export class GraphConnectManager {
             return false
         }
 
-        return this.activeSession
-            .handleNodeClick(node)
+        return this.activeSession.handleNodeClick(node)
     }
 
     public createEdge(source: Node, target: Node): void {
@@ -122,6 +140,10 @@ export class GraphConnectManager {
         const edgeID = generateSafeDomId(8, 'edge-')
         const edge = new Edge(edgeID, source, target, {})
         this.graph.addEdge(edge)
+    }
+
+    public createNoteLink(source: Note, target: Node): void {
+        source.setAttachedElement({ type: 'node', 'id': target.id })
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -142,5 +164,39 @@ export class GraphConnectManager {
         }
 
         this.activeSession.beginDragConnection(node, event)
+    }
+
+    private noteClick(note: Note): boolean {
+
+        if (!this.activeSession) {
+            return false
+        }
+
+        return this.activeSession.handleNoteClick(note)
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private noteClickCB = (_event: any, note: Note, _element: any, context: GraphInteractionContext) => {
+
+        if (!this.activeSession) {
+            return false
+        }
+
+        context.cancel()
+
+        this.noteClick(note)
+    }
+
+    private notePointerDownCB = (
+        event: PointerEvent,
+        note: Note
+    ) => {
+
+
+        if (!this.activeSession) {
+            return
+        }
+
+        this.activeSession.beginDragConnectionFromNote(note, event)
     }
 }

@@ -49,6 +49,8 @@ export type GraphInteractionEvents<TElement> = {
     noteHoverOut: (event: PointerEvent, note: Note, element: TElement) => void;
     notePointerDown: (event: PointerEvent, note: Note, element: TElement) => void;
     notePointerUp: (event: PointerEvent, note: Note, element: TElement) => void;
+    noteHandleClick: (event: PointerEvent, note: Note, element: HTMLElement, context: GraphInteractionContext) => void;
+    noteHandlePointerDown: (event: PointerEvent, note: Note, element: HTMLElement) => void;
 
     canvasClick: (event: PointerEvent, context: GraphInteractionContext) => void;
     canvasPointerDown: (event: PointerEvent) => void;

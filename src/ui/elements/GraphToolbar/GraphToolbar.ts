@@ -497,7 +497,7 @@ export class GraphToolbar implements UIElement {
         if (manager.isActive()) {
             manager.exitClickConnectionMode()
         } else {
-            manager.startClickConnection()
+            manager.startNodeClickConnection()
         }
     }
 

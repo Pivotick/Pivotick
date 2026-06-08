@@ -369,6 +369,8 @@ export class NoteDrawer {
 
         this.updateEditButtonState(true, note)
 
+        this.graph.editing.connectManager.startNoteClickConnection()
+
         requestAnimationFrame(() => {
             editor.focus()
             editor.setSelectionRange(

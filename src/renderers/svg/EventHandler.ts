@@ -136,6 +136,19 @@ export class EventHandler {
                 this.graphInteraction?.dragging(event, note)
             })
 
+        this.renderer.getNoteSelection()
+            .selectAll<HTMLElement, Note>('.pvt-note-link-placeholder-icon')
+            .on('click.note-handle', (event: PointerEvent, note: Note) => {
+                event.stopPropagation()
+                const handle = event.currentTarget as HTMLElement
+                this.graphInteraction?.noteHandleClick(handle, event, note)
+            })
+            .on('pointerdown.note-handle', (event: PointerEvent, note: Note) => {
+                event.stopPropagation()
+                const handle = event.currentTarget as HTMLElement
+                this.graphInteraction?.noteHandlePointerDown(handle, event, note)
+            })
+
         this.renderer.getCanvasSelection()
             .on('click.canvas', (event: PointerEvent) => {
                 this.graphInteraction?.canvasClick(event)

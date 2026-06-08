@@ -79,8 +79,9 @@
         .pvt-note-link-subcontainer {
             display: flex;
             flex-direction: row;
+            align-items: center;
             height: 24px;
-            padding: 0 6px;
+            padding: 0 4px;
             gap: 4px;
             cursor: default;
             box-sizing: border-box;
@@ -90,6 +91,13 @@
                 inset 0 1px 2px rgba(0, 0, 0, 0.12),
                 inset 0 -1px 2px rgba(0, 0, 0, 0.12);
             font-size: 0.8rem;
+
+            .pvt-note-link-placeholder-icon {
+                width: 12px !important;
+                height: 12px !important;
+                padding: 2px;
+                border-radius: 9999px;
+            }
 
             .pvt-note-link-content {
                 width: 100%;
@@ -102,12 +110,6 @@
                     gap: 6px;
                     font-style: italic;
                     opacity: 0.6;
-                }
-
-                .pvt-note-link-placeholder-icon {
-                    width: 12px !important;
-                    height: 12px !important;
-                    opacity: 0.7;
                 }
 
                 .pvt-note-link-row {
@@ -217,6 +219,11 @@
 
             .pvt-note-link-subcontainer {
                 cursor: pointer;
+
+                .pvt-note-link-placeholder-icon:hover {
+                    background-color: var(--pvt-bg-color-info);
+                    color: var(--pvt-text-color-for-info);
+                }
             }
         }
 
