@@ -39,7 +39,10 @@ export class EdgeCreationSession {
     public start(): void {
         this.canvas.classList.add('pvt-connect-mode-active')
         this.updateCanvasState()
+
         this.canvas.addEventListener('contextmenu', this.handleContextMenu)
+        this.canvas.addEventListener('pointermove', this.handlePointerMove)
+        this.canvas.addEventListener('pointerup', this.handlePointerUp)
     }
 
     public cancel(): void {
@@ -72,8 +75,6 @@ export class EdgeCreationSession {
             this.state = 'click-connect'
             this.updateCanvasState()
 
-            this.beginPreview()
-
             return true
         }
 
@@ -102,17 +103,10 @@ export class EdgeCreationSession {
 
             this.updateCanvasState()
 
-            this.beginPreview()
-
             return true
         }
 
         return false
-    }
-
-    private beginPreview(): void {
-
-        this.canvas.addEventListener('pointermove', this.handlePointerMove)
     }
 
     private handlePointerMove = (event: PointerEvent): void => {
@@ -233,24 +227,21 @@ export class EdgeCreationSession {
             y: event.clientY
         }
 
-        this.beginPreview()
-
-        this.canvas.addEventListener('pointerup', this.handlePointerUp)
     }
 
     private handlePointerUp = (): void => {
 
-        if (this.state !== 'dragging') {
+        if (this.state === 'pending-drag') {
 
-            this.canvas.removeEventListener('pointerup', this.handlePointerUp)
-            
-            if (this.state === 'pending-drag') {
-                this.clearSource()
-            }
+            this.clearSource()
 
             this.state = 'idle'
             this.dragStartPosition = null
 
+            return
+        }
+
+        if (this.state !== 'dragging') {
             return
         }
 
