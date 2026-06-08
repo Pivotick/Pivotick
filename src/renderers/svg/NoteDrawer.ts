@@ -8,7 +8,7 @@ import { Note } from '../../Note'
 import { Node } from '../../Node'
 import type { GraphRendererOptions } from '../../interfaces/RendererOptions'
 import { createHtmlElement, createHtmlTemplate, createIcon, createSvgElement } from '../../utils/ElementCreation'
-import { checkmark, closeIcon, edit, link, trash } from '../../ui/icons'
+import { checkmark, closeIcon, edit, link, magnifyingGlass, trash } from '../../ui/icons'
 import { pickNode } from '../../ui/components/NodePickers'
 import { nodeNameGetter } from '../../utils/GraphGetters'
 import { createButton } from '../../ui/components/Button'
@@ -113,28 +113,37 @@ export class NoteDrawer {
         linkIcon.classList.add('pvt-note-link-placeholder-icon')
         div.appendChild(linkIcon)
 
+        const searchBtn = createButton({
+            title: 'Search for a note',
+            svgIcon: magnifyingGlass,
+            class: ['pvt-node-search-button'],
+            variant: 'outline-secondary',
+            size: 'xs',
+            onClick: async (evt: MouseEvent) => {
+                const target = evt.target as HTMLElement
+
+                if (!target.closest('.editing') || target.closest('.unlink-note') || target.closest('.pvt-node-reference')) {
+                    return
+                }
+
+                evt.stopPropagation()
+                const node = await pickNode(
+                    this.graph.UIManager,
+                    'Select a node to link to this note'
+                )
+                if (!node) return
+                note.setAttachedElement({ type: 'node', 'id': ((node as unknown) as Node).id })
+                this.graph.noteManager.editNote(note)
+                this.refreshLink(note)
+            }
+        })
+        div.appendChild(searchBtn)
+
         const content = document.createElement('div')
         content.classList.add('pvt-note-link-content')
 
         div.appendChild(content)
 
-        div.addEventListener('click', async (evt) => {
-            const target = evt.target as HTMLElement
-
-            if (!target.closest('.editing') || target.closest('.unlink-note') || target.closest('.pvt-node-reference')) {
-                return
-            }
-
-            evt.stopPropagation()
-            const node = await pickNode(
-                this.graph.UIManager,
-                'Select a node to link to this note'
-            )
-            if (!node) return
-            note.setAttachedElement({ type: 'node', 'id': ((node as unknown) as Node).id })
-            this.graph.noteManager.editNote(note)
-            this.refreshLink(note)
-        })
         container.appendChild(div)
 
         return container

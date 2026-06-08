@@ -71,6 +71,7 @@
 
     .pvt-note-link-container {
         display: none;
+        user-select: none;
 
         &.has-link {
             display: block;
@@ -125,6 +126,10 @@
                     }
                 }
 
+            }
+
+            .pvt-node-search-button {
+                display: none;
             }
         }
     }
@@ -219,7 +224,6 @@
             display: block;
 
             .pvt-note-link-subcontainer {
-                cursor: pointer;
 
                 .pvt-note-link-placeholder-icon:hover {
                     background-color: var(--pvt-bg-color-info);
@@ -245,6 +249,10 @@
             .unlink-note {
                 display: block !important;
             }
+        }
+
+        .pvt-node-search-button {
+            display: inline-flex !important;
         }
     }
 

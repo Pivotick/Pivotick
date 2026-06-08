@@ -863,7 +863,7 @@ export class GraphSvgRenderer extends GraphRenderer {
         } else if (source instanceof Note) {
             wantedSourceX += source.width / 2
             wantedSourceY += source.height / 2
-            sourceRadius = Math.max(source.width, source.height) / 2
+            sourceRadius = 0
         } else {
             sourceRadius = 12
         }

@@ -12,6 +12,8 @@ type InteractionState =
 
 type Connectable = Node | Note
 
+export type ConnectionMode = 'node-edge' | 'note-link'
+
 export class EdgeCreationSession {
 
     private graph: Graph
@@ -21,6 +23,7 @@ export class EdgeCreationSession {
 
     private activateImmediately: boolean
 
+    private mode: ConnectionMode
     private sourceElement: Connectable | null = null
     private hoveredNode: Node | null = null
     private pointerPosition: { x: number, y: number } | null = null
@@ -31,11 +34,17 @@ export class EdgeCreationSession {
 
     private static readonly DRAG_THRESHOLD = 4
 
-    public constructor(graph: Graph, connectManager: GraphConnectManager, activateImmediately = true) {
+    public constructor(
+        graph: Graph,
+        connectManager: GraphConnectManager,
+        mode: ConnectionMode,
+        activateImmediately = true
+    ) {
 
         this.graph = graph
         this.connectManager = connectManager
         this.canvas = this.graph.UIManager.layout!.canvas!
+        this.mode = mode
         this.activateImmediately = activateImmediately
     }
 
@@ -44,9 +53,9 @@ export class EdgeCreationSession {
             this.activateInteractionUI()
         }
 
-        this.canvas.addEventListener('contextmenu', this.handleContextMenu)
-        this.canvas.addEventListener('pointermove', this.handlePointerMove)
-        this.canvas.addEventListener('pointerup', this.handlePointerUp)
+        window.addEventListener('contextmenu', this.handleContextMenu)
+        window.addEventListener('pointermove', this.handlePointerMove)
+        window.addEventListener('pointerup', this.handlePointerUp)
     }
 
     private activateInteractionUI(): void {
@@ -74,9 +83,9 @@ export class EdgeCreationSession {
 
         this.deactivateInteractionUI()
 
-        this.canvas.removeEventListener('pointermove', this.handlePointerMove)
-        this.canvas.removeEventListener('contextmenu', this.handleContextMenu)
-        this.canvas.removeEventListener('pointerup', this.handlePointerUp)
+        window.removeEventListener('pointermove', this.handlePointerMove)
+        window.removeEventListener('contextmenu', this.handleContextMenu)
+        window.removeEventListener('pointerup', this.handlePointerUp)
 
         this.graph.renderer.hideShadowEdge()
     }
@@ -90,7 +99,6 @@ export class EdgeCreationSession {
 
             this.state = 'click-connect'
             this.activateInteractionUI()
-            this.updateCanvasState()
 
             return true
         }
@@ -106,11 +114,7 @@ export class EdgeCreationSession {
             this.createConnection(this.sourceElement, node)
         }
 
-        if (this.sourceElement instanceof Node) {
-            this.connectManager.finishInteraction(true)
-        } else {
-            this.connectManager.cancel()
-        }
+        this.connectManager.finishInteraction(true)
 
         return true
     }
@@ -122,6 +126,7 @@ export class EdgeCreationSession {
             this.sourceElement = note
 
             this.state = 'click-connect'
+            this.activateInteractionUI()
             this.updateCanvasState()
 
             return true
@@ -164,6 +169,7 @@ export class EdgeCreationSession {
         ) {
 
             this.state = 'dragging'
+            this.activateInteractionUI()
 
             if (this.sourceElement instanceof Node) {
                 this.graph.highlightElement(this.sourceElement)

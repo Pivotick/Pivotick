@@ -4,7 +4,7 @@ import type { GraphInteractionContext } from '../interfaces/GraphInteractions'
 import { Node } from '../Node'
 import { Note } from '../Note'
 import { generateSafeDomId } from '../utils/ElementCreation'
-import { EdgeCreationSession } from './EdgeCreationSession'
+import { EdgeCreationSession, type ConnectionMode } from './EdgeCreationSession'
 
 type Events = 'start' | 'stop'
 
@@ -14,6 +14,8 @@ export class GraphConnectManager {
 
     private activeSession: EdgeCreationSession | null = null
     private modeActive = false
+    private deferUIActivation = false
+    private currentMode: ConnectionMode | null = null
 
     private listeners = {
         start: new Set<() => void>(),
@@ -38,11 +40,17 @@ export class GraphConnectManager {
 
     public startClickConnection(deferUI = false): void {
 
+        this.deferUIActivation = deferUI
         if (this.modeActive) return
 
         this.modeActive = true
 
-        this.activeSession = new EdgeCreationSession(this.graph, this, !deferUI)
+        this.activeSession = new EdgeCreationSession(
+            this.graph,
+            this,
+            this.currentMode!,
+            !this.deferUIActivation
+        )
         this.activeSession.start()
 
         this.graph.simulation.disable()
@@ -52,6 +60,7 @@ export class GraphConnectManager {
 
     public startNodeClickConnection(): void {
 
+        this.currentMode = 'node-edge'
         this.exitClickConnectionMode()
         this.startClickConnection()
 
@@ -61,13 +70,14 @@ export class GraphConnectManager {
 
     public startNoteClickConnection(): void {
 
+        this.currentMode = 'note-link'
         this.exitClickConnectionMode()
         this.startClickConnection(true)
 
         this.graph.renderer.getGraphInteraction().on('nodeClick', this.nodeClickCB)
 
-        this.graph.renderer.getGraphInteraction().on('noteHandleClick', this.noteClickCB)
-        this.graph.renderer.getGraphInteraction().on('noteHandlePointerDown', this.notePointerDownCB)
+        this.graph.renderer.getGraphInteraction().on('noteHandleClick', this.noteHandleClickCB)
+        this.graph.renderer.getGraphInteraction().on('noteHandlePointerDown', this.noteHandlePointerDownCB)
     }
 
     public cancel(): void {
@@ -88,7 +98,12 @@ export class GraphConnectManager {
         this.activeSession?.cancel()
         if (!continueInteraction) return
 
-        this.activeSession = new EdgeCreationSession(this.graph, this)
+        this.activeSession = new EdgeCreationSession(
+            this.graph,
+            this,
+            this.currentMode!,
+            !this.deferUIActivation
+        )
         this.activeSession.start()
     }
 
@@ -106,13 +121,18 @@ export class GraphConnectManager {
         this.graph.renderer.getGraphInteraction().off('nodeClick', this.nodeClickCB)
         this.graph.renderer.getGraphInteraction().off('nodePointerDown', this.nodePointerDownCB)
 
-        this.graph.renderer.getGraphInteraction().off('noteHandleClick', this.noteClickCB)
-        this.graph.renderer.getGraphInteraction().off('noteHandlePointerDown', this.notePointerDownCB)
+        this.graph.renderer.getGraphInteraction().off('noteHandleClick', this.noteHandleClickCB)
+        this.graph.renderer.getGraphInteraction().off('noteHandlePointerDown', this.noteHandlePointerDownCB)
     }
 
     private resetSession(): void {
         this.activeSession?.cancel()
-        this.activeSession = new EdgeCreationSession(this.graph, this)
+        this.activeSession = new EdgeCreationSession(
+            this.graph,
+            this,
+            this.currentMode!,
+            !this.deferUIActivation
+        )
         this.activeSession.start()
     }
 
@@ -158,7 +178,6 @@ export class GraphConnectManager {
         }
 
         context.cancel()
-
         this.selectOrConnectNode(node)
     }
 
@@ -181,7 +200,7 @@ export class GraphConnectManager {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private noteClickCB = (_event: any, note: Note, _element: any, context: GraphInteractionContext) => {
+    private noteHandleClickCB = (_event: any, note: Note, _element: any, context: GraphInteractionContext) => {
 
         if (!this.activeSession) {
             return false
@@ -192,11 +211,10 @@ export class GraphConnectManager {
         this.noteClick(note)
     }
 
-    private notePointerDownCB = (
+    private noteHandlePointerDownCB = (
         event: PointerEvent,
         note: Note
     ) => {
-
 
         if (!this.activeSession) {
             return
