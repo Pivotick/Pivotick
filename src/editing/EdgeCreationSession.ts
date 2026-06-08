@@ -87,16 +87,8 @@ export class EdgeCreationSession {
             
             return true
         }
-        
-        
-        if (this.sourceElement instanceof Node) {
-            this.connectManager.createEdge(this.sourceElement, node)
-        }
 
-        if (this.sourceElement instanceof Note) {
-            
-            this.connectManager.createNoteLink(this.sourceElement, node)
-        }
+        this.createConnection(this.sourceElement, node)
 
         this.connectManager.finishInteraction()
 
@@ -180,6 +172,20 @@ export class EdgeCreationSession {
         })
     }
 
+    private createConnection(source: Connectable, target: Node): void {
+
+        if (source instanceof Node) {
+            this.connectManager.createEdge(source, target)
+            return
+        }
+
+        if (source instanceof Note) {
+            this.connectManager.createNoteLink(source, target)
+            return
+        }
+
+    }
+
     private handleContextMenu = (event: MouseEvent): void => {
 
         event.preventDefault()
@@ -245,16 +251,16 @@ export class EdgeCreationSession {
 
         if (target && this.sourceElement) {
 
-            if (this.sourceElement instanceof Node) {
-                if (this.sourceElement.id !== target.id) {
-                    this.connectManager.createEdge(this.sourceElement, target)
-                }
+
+            if (
+                this.sourceElement instanceof Node &&
+                this.sourceElement.id === target.id
+            ) {
+                return
             }
 
-            if (this.sourceElement instanceof Note) {
+            this.createConnection(this.sourceElement, target)
 
-                this.connectManager.createNoteLink(this.sourceElement, target)
-            }
             this.connectManager.restart()
             return
         }
