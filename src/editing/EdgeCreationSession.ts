@@ -117,26 +117,7 @@ export class EdgeCreationSession {
 
     private handlePointerMove = (event: PointerEvent): void => {
 
-        if (this.dragStartPosition) {
-
-            const dx = event.clientX - this.dragStartPosition.x
-            const dy = event.clientY - this.dragStartPosition.y
-
-            if (
-                this.state === 'pending-drag' &&
-                Math.hypot(dx, dy) > EdgeCreationSession.DRAG_THRESHOLD
-            ) {
-
-                this.state = 'dragging'
-
-                if (this.sourceElement instanceof Node) {
-                    this.graph.highlightElement(this.sourceElement)
-                }
-
-                this.updateCanvasState()
-
-            }
-        }
+        this.updateDragState(event)
 
         if (
             this.state !== 'dragging' &&
@@ -145,18 +126,50 @@ export class EdgeCreationSession {
             return
         }
 
-        const pos = this.graph.renderer.screenToGraphCoordinates(
+        this.updatePointerPosition(event)
+
+        this.updateHoveredNode()
+
+        this.updateShadowEdge()
+    }
+
+
+    private updateDragState(event: PointerEvent): void {
+
+        if (!this.dragStartPosition) {
+            return
+        }
+
+        const dx = event.clientX - this.dragStartPosition.x
+        const dy = event.clientY - this.dragStartPosition.y
+
+        if (
+            this.state === 'pending-drag' &&
+            Math.hypot(dx, dy) > EdgeCreationSession.DRAG_THRESHOLD
+        ) {
+
+            this.state = 'dragging'
+
+            if (this.sourceElement instanceof Node) {
+                this.graph.highlightElement(this.sourceElement)
+            }
+
+            this.updateCanvasState()
+        }
+    }
+
+    private updatePointerPosition(event: PointerEvent): void {
+
+        this.pointerPosition = this.graph.renderer.screenToGraphCoordinates(
             event.clientX,
             event.clientY
         )
+    }
 
-        this.pointerPosition = pos
+    private updateHoveredNode(): void {
 
-        const hovered = this.graph.renderer.getNodeClosestToCursor(30)
-
-        this.hoveredNode = hovered
-
-        this.updateShadowEdge()
+        this.hoveredNode =
+            this.graph.renderer.getNodeClosestToCursor(30)
     }
 
     private updateShadowEdge(): void {
