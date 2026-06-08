@@ -3,6 +3,14 @@ import { Node } from '../Node'
 import { Note } from '../Note'
 import { GraphConnectManager } from './GraphConnectManager'
 
+
+type InteractionState =
+    | 'idle'
+    | 'click-connect'
+    | 'pending-drag'
+    | 'dragging'
+
+
 export class EdgeCreationSession {
 
     private graph: Graph
@@ -14,11 +22,9 @@ export class EdgeCreationSession {
     private hoveredNode: Node | null = null
     private pointerPosition: { x: number, y: number } | null = null
 
-    private isDraggingConnection = false
     private dragStartPosition: { x: number, y: number } | null = null
-    private didMove = false
-    private pointerIsDown = false
-    private inClickState = false
+
+    private state: InteractionState = 'idle'
 
     private pendingDragSource: Node | Note | null = null
 
@@ -47,8 +53,7 @@ export class EdgeCreationSession {
         this.pointerPosition = null
         this.pendingDragSource = null
         this.dragStartPosition = null
-        this.didMove = false
-        this.inClickState = false
+        this.state = 'idle'
 
         this.canvas.classList.remove('pvt-connect-mode-active', 'select-first', 'pick-second')
 
@@ -56,7 +61,6 @@ export class EdgeCreationSession {
         this.canvas.removeEventListener('contextmenu', this.handleContextMenu)
         this.canvas.removeEventListener('pointerup', this.handlePointerUp)
 
-        this.isDraggingConnection = false
         this.graph.renderer.hideShadowEdge()
     }
 
@@ -69,7 +73,7 @@ export class EdgeCreationSession {
             this.canvas.classList.remove('select-first')
             this.canvas.classList.add('pick-second')
 
-            this.inClickState = true
+            this.state = 'click-connect'
 
             this.beginPreview()
 
@@ -125,22 +129,17 @@ export class EdgeCreationSession {
 
     private handlePointerMove = (event: PointerEvent): void => {
 
-        if (this.dragStartPosition && !this.didMove) {
+        if (this.dragStartPosition) {
 
             const dx = event.clientX - this.dragStartPosition.x
             const dy = event.clientY - this.dragStartPosition.y
 
             if (
-                this.pointerIsDown &&
+                this.state === 'pending-drag' &&
                 Math.hypot(dx, dy) > EdgeCreationSession.DRAG_THRESHOLD
             ) {
 
-                this.didMove = true
-                if (!this.isDraggingConnection) {
-
-                    this.isDraggingConnection = true
-                    this.canvas.addEventListener('pointerup', this.handlePointerUp)
-                }
+                this.state = 'dragging'
 
                 // Begin connection drag
                 this.sourceElement = this.pendingDragSource
@@ -158,8 +157,8 @@ export class EdgeCreationSession {
         }
 
         if (
-            !this.isDraggingConnection && // Ignore tiny movements
-            !(this.sourceElement && this.inClickState)
+            this.state !== 'dragging' &&
+            this.state !== 'click-connect'
         ) {
             return
         }
@@ -217,11 +216,11 @@ export class EdgeCreationSession {
     public beginDragConnection(node: Node, event: PointerEvent): void {
 
         // Don't interrupt existing click-connect flow
-        if (this.isDraggingConnection) {
+        if (this.state === 'dragging') {
             return
         }
 
-        this.pointerIsDown = true
+        this.state = 'pending-drag'
         this.pendingDragSource = node
 
         this.dragStartPosition = {
@@ -229,7 +228,6 @@ export class EdgeCreationSession {
             y: event.clientY
         }
 
-        this.didMove = false
 
         this.beginPreview()
 
@@ -238,7 +236,7 @@ export class EdgeCreationSession {
 
     public beginDragConnectionFromNote(note: Note, event: PointerEvent): void {
 
-        if (this.isDraggingConnection) {
+        if (this.state === 'dragging') {
             return
         }
 
@@ -251,8 +249,7 @@ export class EdgeCreationSession {
             y: event.clientY
         }
 
-        this.didMove = false
-        this.pointerIsDown = true
+        this.state = 'pending-drag'
 
         this.beginPreview()
 
@@ -261,12 +258,11 @@ export class EdgeCreationSession {
 
     private handlePointerUp = (): void => {
 
-        // If user didn't actually drag, let normal click behavior happen.
-        if (!this.isDraggingConnection || !this.didMove) {
+        if (this.state !== 'dragging') {
 
             this.canvas.removeEventListener('pointerup', this.handlePointerUp)
 
-            this.isDraggingConnection = false
+            this.state = 'idle'
             this.dragStartPosition = null
             this.pendingDragSource = null
 
