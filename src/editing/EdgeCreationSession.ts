@@ -37,7 +37,8 @@ export class EdgeCreationSession {
     }
 
     public start(): void {
-        this.canvas.classList.add('pvt-connect-mode-active', 'select-first')
+        this.canvas.classList.add('pvt-connect-mode-active')
+        this.updateCanvasState()
         this.canvas.addEventListener('contextmenu', this.handleContextMenu)
     }
 
@@ -49,6 +50,8 @@ export class EdgeCreationSession {
         this.pointerPosition = null
         this.dragStartPosition = null
         this.state = 'idle'
+
+        this.updateCanvasState()
 
         this.canvas.classList.remove('pvt-connect-mode-active', 'select-first', 'pick-second')
 
@@ -65,10 +68,9 @@ export class EdgeCreationSession {
 
             this.sourceElement = node as Node
             this.graph.highlightElement(node)
-            this.canvas.classList.remove('select-first')
-            this.canvas.classList.add('pick-second')
 
             this.state = 'click-connect'
+            this.updateCanvasState()
 
             this.beginPreview()
 
@@ -98,8 +100,7 @@ export class EdgeCreationSession {
 
             this.sourceElement = note
 
-            this.canvas.classList.remove('select-first')
-            this.canvas.classList.add('pick-second')
+            this.updateCanvasState()
 
             this.beginPreview()
 
@@ -132,8 +133,8 @@ export class EdgeCreationSession {
                     this.graph.highlightElement(this.sourceElement)
                 }
 
-                this.canvas.classList.remove('select-first')
-                this.canvas.classList.add('pick-second')
+                this.updateCanvasState()
+
             }
         }
 
@@ -194,8 +195,7 @@ export class EdgeCreationSession {
 
             this.hoveredNode = null
 
-            this.canvas.classList.remove('pick-second')
-            this.canvas.classList.add('select-first')
+            this.updateCanvasState()
 
             this.graph.renderer.hideShadowEdge()
 
@@ -269,5 +269,17 @@ export class EdgeCreationSession {
         }
 
         this.sourceElement = null
+    }
+
+    private updateCanvasState(): void {
+
+        this.canvas.classList.remove('select-first', 'pick-second')
+
+        if (this.state === 'idle') {
+            this.canvas.classList.add('select-first')
+            return
+        }
+
+        this.canvas.classList.add('pick-second')
     }
 }
