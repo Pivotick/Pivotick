@@ -69,7 +69,7 @@ export class EdgeCreationSession {
 
         if (!this.sourceElement) {
 
-            this.sourceElement = node as Node
+            this.sourceElement = node
             this.graph.highlightElement(node)
 
             this.state = 'click-connect'
@@ -78,10 +78,7 @@ export class EdgeCreationSession {
             return true
         }
 
-        if (
-            this.sourceElement instanceof Node &&
-            this.sourceElement.id === node.id
-        ) {
+        if (this.sourceElement === node) {
             
             this.connectManager.finishInteraction()
             
@@ -250,10 +247,7 @@ export class EdgeCreationSession {
         if (target && this.sourceElement) {
 
 
-            if (
-                this.sourceElement instanceof Node &&
-                this.sourceElement.id === target.id
-            ) {
+            if (this.sourceElement === target) {
                 return
             }
 
