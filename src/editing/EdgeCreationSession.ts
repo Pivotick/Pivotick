@@ -43,11 +43,8 @@ export class EdgeCreationSession {
 
     public cancel(): void {
 
-        if (this.sourceElement && this.sourceElement instanceof Node) {
-            this.graph.unHighlightElement?.(this.sourceElement)
-        }
+        this.clearSource()
 
-        this.sourceElement = null
         this.hoveredNode = null
         this.pointerPosition = null
         this.dragStartPosition = null
@@ -193,11 +190,8 @@ export class EdgeCreationSession {
 
         if (this.sourceElement) {
 
-            if (this.sourceElement instanceof Node) {
-                this.graph.unHighlightElement?.(this.sourceElement)
-            }
+            this.clearSource()
 
-            this.sourceElement = null
             this.hoveredNode = null
 
             this.canvas.classList.remove('pick-second')
@@ -238,7 +232,7 @@ export class EdgeCreationSession {
             this.canvas.removeEventListener('pointerup', this.handlePointerUp)
             
             if (this.state === 'pending-drag') {
-                this.sourceElement = null
+                this.clearSource()
             }
 
             this.state = 'idle'
@@ -266,5 +260,14 @@ export class EdgeCreationSession {
         }
 
         this.connectManager.finishInteraction()
+    }
+
+    private clearSource(): void {
+
+        if (this.sourceElement instanceof Node) {
+            this.graph.unHighlightElement?.(this.sourceElement)
+        }
+
+        this.sourceElement = null
     }
 }
