@@ -19,6 +19,8 @@ export class EdgeCreationSession {
 
     private canvas: HTMLDivElement
 
+    private activateImmediately: boolean
+
     private sourceElement: Connectable | null = null
     private hoveredNode: Node | null = null
     private pointerPosition: { x: number, y: number } | null = null
@@ -29,20 +31,34 @@ export class EdgeCreationSession {
 
     private static readonly DRAG_THRESHOLD = 4
 
-    public constructor(graph: Graph, connectManager: GraphConnectManager) {
+    public constructor(graph: Graph, connectManager: GraphConnectManager, activateImmediately = true) {
 
         this.graph = graph
         this.connectManager = connectManager
         this.canvas = this.graph.UIManager.layout!.canvas!
+        this.activateImmediately = activateImmediately
     }
 
     public start(): void {
-        this.canvas.classList.add('pvt-connect-mode-active')
-        this.updateCanvasState()
+        if (this.activateImmediately) {
+            this.activateInteractionUI()
+        }
 
         this.canvas.addEventListener('contextmenu', this.handleContextMenu)
         this.canvas.addEventListener('pointermove', this.handlePointerMove)
         this.canvas.addEventListener('pointerup', this.handlePointerUp)
+    }
+
+    private activateInteractionUI(): void {
+
+        this.canvas.classList.add('pvt-connect-mode-active')
+
+        this.updateCanvasState()
+    }
+
+    private deactivateInteractionUI(): void {
+
+        this.canvas.classList.remove('pvt-connect-mode-active', 'select-first', 'pick-second')
     }
 
     public cancel(): void {
@@ -56,7 +72,7 @@ export class EdgeCreationSession {
 
         this.updateCanvasState()
 
-        this.canvas.classList.remove('pvt-connect-mode-active', 'select-first', 'pick-second')
+        this.deactivateInteractionUI()
 
         this.canvas.removeEventListener('pointermove', this.handlePointerMove)
         this.canvas.removeEventListener('contextmenu', this.handleContextMenu)
@@ -65,14 +81,15 @@ export class EdgeCreationSession {
         this.graph.renderer.hideShadowEdge()
     }
 
-    public handleNodeClick(node: Node): boolean {
+    public selectOrConnectNode(node: Node): boolean {
 
-        if (!this.sourceElement) {
+        if (this.state === 'idle') {
 
             this.sourceElement = node
             this.graph.highlightElement(node)
 
             this.state = 'click-connect'
+            this.activateInteractionUI()
             this.updateCanvasState()
 
             return true
@@ -85,19 +102,26 @@ export class EdgeCreationSession {
             return true
         }
 
-        this.createConnection(this.sourceElement, node)
+        if (this.sourceElement) {
+            this.createConnection(this.sourceElement, node)
+        }
 
-        this.connectManager.finishInteraction()
+        if (this.sourceElement instanceof Node) {
+            this.connectManager.finishInteraction(true)
+        } else {
+            this.connectManager.cancel()
+        }
 
         return true
     }
 
     public handleNoteClick(note: Note): boolean {
 
-        if (!this.sourceElement) {
+        if (this.state === 'idle') {
 
             this.sourceElement = note
 
+            this.state = 'click-connect'
             this.updateCanvasState()
 
             return true
@@ -248,6 +272,7 @@ export class EdgeCreationSession {
 
 
             if (this.sourceElement === target) {
+                this.connectManager.finishInteraction()
                 return
             }
 
@@ -257,7 +282,8 @@ export class EdgeCreationSession {
             return
         }
 
-        this.connectManager.finishInteraction()
+        const continueInteraction = this.sourceElement instanceof Node
+        this.connectManager.finishInteraction(continueInteraction)
     }
 
     private clearSource(): void {

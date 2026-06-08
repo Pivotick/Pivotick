@@ -459,6 +459,7 @@ dl.pvt-property-list {
     font-size: 0.95em;
     color: var(--pvt-note-node-reference-text-color);
     cursor: pointer;
+    user-select: none;
 
     transition:
         background-color 120ms ease,

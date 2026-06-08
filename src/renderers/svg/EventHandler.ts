@@ -1,3 +1,4 @@
+import { select as d3Select } from 'd3-selection'
 import type { Graph } from '../../Graph'
 import type { GraphSvgRenderer } from './GraphSvgRenderer'
 import type { Node } from '../../Node'
@@ -138,14 +139,22 @@ export class EventHandler {
 
         this.renderer.getNoteSelection()
             .selectAll<HTMLElement, Note>('.pvt-note-link-placeholder-icon')
-            .on('click.note-handle', (event: PointerEvent, note: Note) => {
-                event.stopPropagation()
+            .on('click.note-handle', (event: PointerEvent) => {
                 const handle = event.currentTarget as HTMLElement
+                const parentNode = handle.closest('g.pvt-note')
+                if (!parentNode) return
+                const note = d3Select(parentNode as SVGGElement).datum() as Note
+
+                event.stopPropagation()
                 this.graphInteraction?.noteHandleClick(handle, event, note)
             })
-            .on('pointerdown.note-handle', (event: PointerEvent, note: Note) => {
-                event.stopPropagation()
+            .on('pointerdown.note-handle', (event: PointerEvent) => {
                 const handle = event.currentTarget as HTMLElement
+                const parentNode = handle.closest('g.pvt-note')
+                if (!parentNode) return
+                const note = d3Select(parentNode as SVGGElement).datum() as Note
+                
+                event.stopPropagation()
                 this.graphInteraction?.noteHandlePointerDown(handle, event, note)
             })
 

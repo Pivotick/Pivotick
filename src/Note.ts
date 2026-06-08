@@ -34,6 +34,9 @@ export class Note {
     private attachedElement?: AttachedElement
     private editing: boolean
 
+    private dirty = false
+    private attachmentDirty = false
+
     public readonly domID: string
 
     public constructor(options: NoteOptions = {}, domID: string = generateSafeDomId()) {
@@ -56,19 +59,23 @@ export class Note {
     public setPosition(x: number, y: number): void {
         this.x = x
         this.y = y
+        this.markDirty()
     }
 
     public setSize(width: number, height: number): void {
         this.width = width
         this.height = height
+        this.markDirty()
     }
 
     public setContent(content: string): void {
         this.content = content
+        this.markDirty()
     }
 
     public setColor(color: string): void {
         this.color = color
+        this.markDirty()
     }
 
     public setGraphElement(el: SVGGElement): void {
@@ -97,5 +104,30 @@ export class Note {
 
     public setAttachedElement(attachedElement: AttachedElement | undefined): void {
         this.attachedElement = attachedElement
+        this.markAttachmentDirty()
+    }
+
+    public markDirty(): void {
+        this.dirty = true
+    }
+
+    public clearDirty(): void {
+        this.dirty = false
+    }
+
+    public isDirty(): boolean {
+        return this.dirty
+    }
+
+    public markAttachmentDirty(): void {
+        this.attachmentDirty = true
+    }
+
+    public clearAttachmentDirty(): void {
+        this.attachmentDirty = false
+    }
+
+    public isAttachmentDirty(): boolean {
+        return this.attachmentDirty
     }
 }

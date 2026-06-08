@@ -140,7 +140,7 @@ export class NoteDrawer {
         return container
     }
 
-    private refreshLink(note: Note): void {
+    public refreshLink(note: Note): void {
         const root = note.getGraphElement()
         if (!root) return
         const linkContainer = root.querySelector('.pvt-note-link-container')

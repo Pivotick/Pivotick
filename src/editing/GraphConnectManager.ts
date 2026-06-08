@@ -36,13 +36,13 @@ export class GraphConnectManager {
         this.listeners[event].delete(callback)
     }
 
-    public startClickConnection(): void {
+    public startClickConnection(deferUI = false): void {
 
         if (this.modeActive) return
 
         this.modeActive = true
 
-        this.activeSession = new EdgeCreationSession(this.graph, this)
+        this.activeSession = new EdgeCreationSession(this.graph, this, !deferUI)
         this.activeSession.start()
 
         this.graph.simulation.disable()
@@ -62,7 +62,9 @@ export class GraphConnectManager {
     public startNoteClickConnection(): void {
 
         this.exitClickConnectionMode()
-        this.startClickConnection()
+        this.startClickConnection(true)
+
+        this.graph.renderer.getGraphInteraction().on('nodeClick', this.nodeClickCB)
 
         this.graph.renderer.getGraphInteraction().on('noteHandleClick', this.noteClickCB)
         this.graph.renderer.getGraphInteraction().on('noteHandlePointerDown', this.notePointerDownCB)
@@ -79,11 +81,13 @@ export class GraphConnectManager {
             return
         }
 
-        this.finishInteraction()
+        this.finishInteraction(true)
     }
 
-    public finishInteraction(): void {
+    public finishInteraction(continueInteraction = false): void {
         this.activeSession?.cancel()
+        if (!continueInteraction) return
+
         this.activeSession = new EdgeCreationSession(this.graph, this)
         this.activeSession.start()
     }
@@ -117,13 +121,13 @@ export class GraphConnectManager {
         return this.activeSession !== null
     }
 
-    public handleNodeClick(node: Node): boolean {
+    public selectOrConnectNode(node: Node): boolean {
 
         if (!this.activeSession) {
             return false
         }
 
-        return this.activeSession.handleNodeClick(node)
+        return this.activeSession.selectOrConnectNode(node)
     }
 
     public createEdge(source: Node, target: Node): void {
@@ -144,6 +148,7 @@ export class GraphConnectManager {
 
     public createNoteLink(source: Note, target: Node): void {
         source.setAttachedElement({ type: 'node', 'id': target.id })
+        this.graph.renderer.update(true)
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -154,7 +159,7 @@ export class GraphConnectManager {
 
         context.cancel()
 
-        this.handleNodeClick(node)
+        this.selectOrConnectNode(node)
     }
 
     private nodePointerDownCB = (event: PointerEvent, node: Node) => {

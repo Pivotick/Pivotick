@@ -16,7 +16,7 @@ import { SelectionBox } from './SelectionBox'
 import type { EdgeStyle, GraphRendererOptions, LabelStyle, MarkerStyleMap, NodeStyle, SelectionBox as SelectionBoxI } from '../../interfaces/RendererOptions'
 import { ClusterDrawer } from './ClusterDrawer'
 import { NoteDrawer } from './NoteDrawer'
-import type { Note } from '../../Note'
+import { Note } from '../../Note'
 import type { Point } from '../../utils/GeometryHelper'
 d3Select.prototype.transition = d3Transition
 
@@ -545,7 +545,30 @@ export class GraphSvgRenderer extends GraphRenderer {
                         this.noteDrawer.render(selection, note)
                     }),
 
-                update => update,
+                update => update
+                    .each((note, i, notes) => {
+
+                        if (!note.isDirty() && !note.isAttachmentDirty()) {
+                            return
+                        }
+
+                        note.clearDirty()
+
+                        const selection = d3Select<SVGGElement, Note>(notes[i])
+
+                        if (note.isAttachmentDirty()) {
+
+                            this.noteDrawer.refreshLink(note)
+
+                            note.clearAttachmentDirty()
+                        } else {
+
+                            selection.selectChildren().remove()
+    
+                            this.noteDrawer.render(selection, note)
+                        }
+
+                    }),
 
                 exit => exit.remove()
             )
@@ -831,10 +854,22 @@ export class GraphSvgRenderer extends GraphRenderer {
             return
         }
 
-        const sourceRadius = source.getCircleRadius() || this.nodeDrawer.getNodeStyle(source).size as number
+        let sourceRadius
+        let wantedSourceX = source.x
+        let wantedSourceY = source.y
 
-        const dx = targetX - source.x
-        const dy = targetY - source.y
+        if (source instanceof Node) {
+            sourceRadius = source.getCircleRadius() || this.nodeDrawer.getNodeStyle(source).size as number
+        } else if (source instanceof Note) {
+            wantedSourceX += source.width / 2
+            wantedSourceY += source.height / 2
+            sourceRadius = Math.max(source.width, source.height) / 2
+        } else {
+            sourceRadius = 12
+        }
+
+        const dx = targetX - wantedSourceX
+        const dy = targetY - wantedSourceY
 
         const distance = Math.sqrt(dx * dx + dy * dy)
 
@@ -845,8 +880,8 @@ export class GraphSvgRenderer extends GraphRenderer {
         const nx = dx / distance
         const ny = dy / distance
 
-        const startX = source.x + nx * (sourceRadius + 4)
-        const startY = source.y + ny * (sourceRadius + 4)
+        const startX = wantedSourceX + nx * (sourceRadius + 4)
+        const startY = wantedSourceY + ny * (sourceRadius + 4)
 
         const endX = targetX - nx * (targetRadius + 8)
         const endY = targetY - ny * (targetRadius + 8)
@@ -856,8 +891,8 @@ export class GraphSvgRenderer extends GraphRenderer {
         if (targetNode) {
 
             path = this.edgeDrawer.buildArcPath({
-                fromX: source.x,
-                fromY: source.y,
+                fromX: wantedSourceX,
+                fromY: wantedSourceY,
                 toX: targetX,
                 toY: targetY,
                 fromRadius: sourceRadius,
