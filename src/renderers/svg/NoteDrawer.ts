@@ -6,7 +6,7 @@ import { GraphSvgRenderer } from './GraphSvgRenderer'
 import { NoteContentRenderer } from '../../plugins/noteContentRenderers/NoteContentRenderer'
 import { Note } from '../../Note'
 import { Node } from '../../Node'
-import type { GraphRendererOptions } from '../../interfaces/RendererOptions'
+import type { GraphRendererOptions, NodeStyle } from '../../interfaces/RendererOptions'
 import { createHtmlElement, createHtmlTemplate, createIcon, createSvgElement } from '../../utils/ElementCreation'
 import { checkmark, closeIcon, edit, link, magnifyingGlass, trash } from '../../ui/icons'
 import { pickNode } from '../../ui/components/NodePickers'
@@ -173,6 +173,11 @@ export class NoteDrawer {
                     'resolved'
                 )
                 ref.dataset.nodeId = node.id
+                const nodeStyle: NodeStyle = this.graphSvgRenderer.nodeDrawer.getNodeStyle(node)
+                const color: string = nodeStyle.color as string
+                ref.style.setProperty('--pvt-note-node-reference-dot', color)
+                ref.style.setProperty('--pvt-note-node-reference-bg', `color-mix(in oklab, ${color} 30%, white)`)
+                ref.style.setProperty('border-color', `color-mix(in srgb, ${color} 45%, transparent)`)
                 const mainLabel = nodeNameGetter(node, this.graph.UIManager.getOptions().mainHeader).trim()
                 ref.textContent = mainLabel
                 row.appendChild(ref)
