@@ -1,4 +1,5 @@
 
+import type { GraphConnectManager } from '../../../editing/GraphConnectManager'
 import type { GraphInteractionContext } from '../../../interfaces/GraphInteractions'
 import { Note } from '../../../Note'
 import { createHtmlElement, createHtmlTemplate, createShortcutBadge } from '../../../utils/ElementCreation'
@@ -171,12 +172,16 @@ export class GraphToolbar implements UIElement {
 
         const connectManager = this.uiManager.graph.editing.connectManager
 
-        connectManager.on('start', () => {
-            this.refreshAddEdgeButtonState(true)
+        connectManager.on('start', (connectManager: GraphConnectManager) => {
+            if (connectManager.getMode() === 'node-edge') {
+                this.refreshAddEdgeButtonState(true)
+            }
         })
 
-        connectManager.on('stop', () => {
-            this.refreshAddEdgeButtonState(false)
+        connectManager.on('stop', (connectManager: GraphConnectManager) => {
+            if (connectManager.getMode() === 'node-edge') {
+                this.refreshAddEdgeButtonState(false)
+            }
         })
     }
 

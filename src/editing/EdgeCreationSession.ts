@@ -312,4 +312,8 @@ export class EdgeCreationSession {
 
         this.canvas.classList.add('pick-second')
     }
+
+    public getState(): InteractionState {
+        return this.state
+    }
 }

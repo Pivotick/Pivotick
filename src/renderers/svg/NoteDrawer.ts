@@ -406,6 +406,8 @@ export class NoteDrawer {
         rendered.style.display = 'block'
         editor.style.display = 'none'
 
+        this.graph.editing.connectManager.cancel()
+
         this.updateEditButtonState(false, note)
 
         this.graph.noteManager.editNote(note)
@@ -429,6 +431,8 @@ export class NoteDrawer {
 
         rendered.style.display = 'block'
         editor.style.display = 'none'
+
+        this.graph.editing.connectManager.cancel()
     }
 
     private bindEditing(contentContainer: HTMLDivElement, note: Note): void {

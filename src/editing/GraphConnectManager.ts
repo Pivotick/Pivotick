@@ -18,8 +18,8 @@ export class GraphConnectManager {
     private currentMode: ConnectionMode | null = null
 
     private listeners = {
-        start: new Set<() => void>(),
-        stop: new Set<() => void>(),
+        start: new Set<(connectManager: GraphConnectManager) => void>(),
+        stop: new Set<(connectManager: GraphConnectManager) => void>(),
     }
     
 
@@ -28,12 +28,12 @@ export class GraphConnectManager {
         this.graph = graph
     }
 
-    public on(event: Events, callback: () => void): void {
+    public on(event: Events, callback: (connectManager: GraphConnectManager) => void): void {
 
         this.listeners[event].add(callback)
     }
 
-    public off(event: Events, callback: () => void): void {
+    public off(event: Events, callback: (connectManager: GraphConnectManager) => void): void {
 
         this.listeners[event].delete(callback)
     }
@@ -53,9 +53,11 @@ export class GraphConnectManager {
         )
         this.activeSession.start()
 
-        this.graph.simulation.disable()
+        if (this.currentMode === 'node-edge') {
+            this.graph.simulation.disable()
+        }
 
-        this.listeners.start.forEach(cb => cb())
+        this.listeners.start.forEach(cb => cb(this))
     }
 
     public startNodeClickConnection(): void {
@@ -111,12 +113,14 @@ export class GraphConnectManager {
 
         this.modeActive = false
 
-        this.graph.simulation.enable()
+        if (this.currentMode === 'node-edge') {
+            this.graph.simulation.enable()
+        }
 
         this.activeSession?.cancel()
         this.activeSession = null
 
-        this.listeners.stop.forEach(cb => cb())
+        this.listeners.stop.forEach(cb => cb(this))
 
         this.graph.renderer.getGraphInteraction().off('nodeClick', this.nodeClickCB)
         this.graph.renderer.getGraphInteraction().off('nodePointerDown', this.nodePointerDownCB)
@@ -139,6 +143,16 @@ export class GraphConnectManager {
     public isActive(): boolean {
 
         return this.activeSession !== null
+    }
+
+    public isActiveAndIdle(): boolean {
+
+        return this.activeSession !== null && this.activeSession.getState() !== 'idle'
+    }
+
+    public getMode(): ConnectionMode | null {
+
+        return this.currentMode
     }
 
     public selectOrConnectNode(node: Node): boolean {
@@ -177,6 +191,10 @@ export class GraphConnectManager {
             return false
         }
 
+        if (this.currentMode === 'note-link' && this.activeSession.getState() === 'idle') {
+            return false
+        }
+
         context.cancel()
         this.selectOrConnectNode(node)
     }
@@ -184,6 +202,10 @@ export class GraphConnectManager {
     private nodePointerDownCB = (event: PointerEvent, node: Node) => {
 
         if (!this.activeSession) {
+            return
+        }
+
+        if (this.currentMode === 'note-link' && this.activeSession.getState() === 'idle') {
             return
         }
 
