@@ -1,6 +1,6 @@
 import type { Edge } from '../../../Edge'
 import type { Node } from '../../../Node'
-import { createHtmlDL, createHtmlElement, createHtmlTemplate, createSvgElement, makeDraggable } from '../../../utils/ElementCreation'
+import { createHtmlDL, createHtmlElement, createHtmlTemplate, makeDraggable } from '../../../utils/ElementCreation'
 import { tryResolveHTMLElement } from '../../../utils/Getters'
 import { edgeDescriptionGetter, edgeNameGetter, edgePropertiesGetter, nodeDescriptionGetter, nodeNameGetter, nodePropertiesGetter } from '../../../utils/GraphGetters'
 import { createButton } from '../../components/Button'
@@ -9,6 +9,7 @@ import type { UIElement, UIManager } from '../../UIManager'
 import './tooltip.scss'
 import type { Tooltip as TooltipOptions } from '../../../interfaces/GraphUI'
 import { deepMerge } from '../../../utils/utils'
+import { ShadowLinkManager } from '../ShadowLinkManager'
 
 
 const defaultTooltipOptions = {
@@ -19,6 +20,7 @@ const defaultTooltipOptions = {
 export class Tooltip implements UIElement {
     private uiManager: UIManager
     private options: TooltipOptions
+    public shadowLinkManager: ShadowLinkManager | null = null
 
     public tooltip?: HTMLDivElement
     private parentContainer?: HTMLElement
@@ -38,8 +40,6 @@ export class Tooltip implements UIElement {
     private hideTimeout: ReturnType<typeof setTimeout> | null = null
 
     private tooltipDataMap = new Map<HTMLElement, Node | Edge>()
-    private shadowlinkMap = new WeakMap<HTMLElement, SVGPathElement>()
-    private shadowlinkBoundingBoxesMap = new WeakMap<HTMLElement, DOMRect[]>()
 
     constructor(uiManager: UIManager) {
         this.uiManager = uiManager
@@ -66,6 +66,8 @@ export class Tooltip implements UIElement {
 
         this.parentContainer.appendChild(this.tooltip)
         this.parentContainer.appendChild(this.shadowLinkContainer)
+
+        this.shadowLinkManager = new ShadowLinkManager(this.shadowLinkContainer)
     }
 
     public destroy() {
@@ -460,7 +462,8 @@ export class Tooltip implements UIElement {
             svgIcon: closeIcon,
             onClick: () => {
                 this.tooltipDataMap.delete(clonedTooltip)
-                this.removeShadowLink(clonedTooltip)
+                // this.removeShadowLink(clonedTooltip)
+                this.shadowLinkManager?.removeShadowLink(clonedTooltip)
                 clonedTooltip.remove()
             },
         })
@@ -502,57 +505,29 @@ export class Tooltip implements UIElement {
         const appBox = this.uiManager.getAppContainer()
         makeDraggable(clonedTooltip, topbar, appBox, {
             onDragStart: (_e: MouseEvent, pinnedTt: HTMLElement) => {
-                this.shadowlinkBoundingBoxesMap.set(pinnedTt, [
-                    pinnedTt.getBoundingClientRect(),
-                    this.tooltipDataMap.get(pinnedTt)!.getGraphElement()!.getBoundingClientRect(),
-                ])
+                this.shadowLinkManager?.setBoundingBox(pinnedTt, {
+                    source: pinnedTt.getBoundingClientRect(),
+                    target: this.tooltipDataMap.get(pinnedTt)!.getGraphElement()!.getBoundingClientRect(),
+                })
             },
             onDrag: (_e: MouseEvent, pinnedTt: HTMLElement) => {
-                this.updateShadowLink(pinnedTt, this.tooltipDataMap.get(pinnedTt)!)
+                this.shadowLinkManager?.updateShadowLink(pinnedTt,)
             }
         })
         this.parentContainer.appendChild(clonedTooltip)
-        this.addShadowLink(clonedTooltip)
-    }
-
-    private addShadowLink(pinnedTt: HTMLElement) {
-        const shadowLink = createSvgElement('path', {
-            class: 'pivotick-shadowlink',
-        })
-        this.shadowlinkMap.set(pinnedTt, shadowLink)
-        this.shadowLinkContainer?.appendChild(shadowLink)
+        this.shadowLinkManager?.addShadowLink(clonedTooltip)
     }
 
     private updateShadowLinks(recalculateBBoxes = false): void {
         for (const [ pinnedTt, element ] of this.tooltipDataMap.entries()) {
-            this.updateShadowLink(pinnedTt, element, recalculateBBoxes)
+            if (recalculateBBoxes) {
+                this.shadowLinkManager?.setBoundingBox(pinnedTt, {
+                    source: pinnedTt.getBoundingClientRect(),
+                    target: element.getGraphElement()!.getBoundingClientRect(),
+                })
+            }
+            this.shadowLinkManager?.updateShadowLink(pinnedTt)
         }
     }
 
-    private updateShadowLink(pinnedTt: HTMLElement, element: Node | Edge, recalculateBBoxes = false) {
-        let bboxes
-        if (recalculateBBoxes) {
-            bboxes = [
-                pinnedTt.getBoundingClientRect(),
-                element.getGraphElement()!.getBoundingClientRect(),
-            ]
-        } else {
-            bboxes = this.shadowlinkBoundingBoxesMap.get(pinnedTt)!
-        }
-        const {width: ttWidth, height: ttHeight } = bboxes[0]
-        const { x: nx, y: ny, width: nWidth, height: nHeight } = bboxes[1]
-        const shadowLink = this.shadowlinkMap.get(pinnedTt)
-
-        const ttx = parseFloat(pinnedTt.style.left)
-        const tty = parseFloat(pinnedTt.style.top)
-
-        if (!shadowLink) return
-        shadowLink.setAttribute('d', `M ${ttx + ttWidth / 2} ${tty + ttHeight / 2} L ${nx + nWidth / 2} ${ny + nHeight / 2}`)
-    }
-
-    private removeShadowLink(pinnedTt: HTMLElement) {
-        const shadowLink = this.shadowlinkMap.get(pinnedTt)
-        if (!shadowLink) return
-        shadowLink.remove()
-    }
 }
