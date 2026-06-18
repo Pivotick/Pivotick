@@ -288,8 +288,8 @@ export class EdgeCreationSession {
             return
         }
 
-        const continueInteraction = this.sourceElement instanceof Node
-        this.connectManager.finishInteraction(continueInteraction)
+        this.connectManager.restart()
+
     }
 
     private clearSource(): void {

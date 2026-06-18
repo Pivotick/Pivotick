@@ -332,7 +332,7 @@ export class GraphSvgRenderer extends GraphRenderer {
                 }
 
                 // Disable panning while connect mode is active
-                if (this.graph.editing.connectManager.isActive()) {
+                if (this.graph.editing.connectManager.isActiveAndIdle()) {
                     if (event.type === 'wheel') return true
                     if (event.button === 1) return true
                     return false
