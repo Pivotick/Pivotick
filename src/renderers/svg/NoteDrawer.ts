@@ -208,12 +208,17 @@ export class NoteDrawer {
                         note.setAttachedElement(undefined)
                         this.graph.noteManager.editNote(note)
                         this.refreshLink(note)
+                        const rootHtml = root as unknown as HTMLElement
+                        this.graph.UIManager.tooltip?.shadowLinkManager?.removeShadowLink(rootHtml)
                     },
                 })
 
                 row.appendChild(unlinkButton)
 
                 linkContent.appendChild(row)
+
+                const rootHtml = root as unknown as HTMLElement
+                this.graph.UIManager.tooltip?.shadowLinkManager?.removeShadowLink(rootHtml)
 
                 const handle: HTMLElement | null = linkContainer.querySelector('.pvt-note-link-placeholder-icon')
                 if (handle) {
@@ -256,6 +261,8 @@ export class NoteDrawer {
             linkContent.appendChild(empty)
         }
     }
+
+    // Move shadowlink start point on note depending on target direction
 
     private createContent(note: Note): HTMLDivElement {
         const div = document.createElement('div')
@@ -341,6 +348,11 @@ export class NoteDrawer {
             size: 'xs',
             onClick: () => {
                 this.graph.noteManager.removeNote(note)
+                const root = note.getGraphElement()
+                if (root) {
+                    const rootHtml = root as unknown as HTMLElement
+                    this.graph.UIManager.tooltip?.shadowLinkManager?.removeShadowLink(rootHtml)
+                }
             }
         })
 
