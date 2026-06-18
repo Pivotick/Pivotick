@@ -460,7 +460,7 @@ export class Tooltip implements UIElement {
             svgIcon: closeIcon,
             onClick: () => {
                 this.tooltipDataMap.delete(clonedTooltip)
-                this.reomveShadowLink(clonedTooltip)
+                this.removeShadowLink(clonedTooltip)
                 clonedTooltip.remove()
             },
         })
@@ -550,7 +550,7 @@ export class Tooltip implements UIElement {
         shadowLink.setAttribute('d', `M ${ttx + ttWidth / 2} ${tty + ttHeight / 2} L ${nx + nWidth / 2} ${ny + nHeight / 2}`)
     }
 
-    private reomveShadowLink(pinnedTt: HTMLElement) {
+    private removeShadowLink(pinnedTt: HTMLElement) {
         const shadowLink = this.shadowlinkMap.get(pinnedTt)
         if (!shadowLink) return
         shadowLink.remove()
