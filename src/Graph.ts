@@ -868,6 +868,14 @@ export class Graph {
         return connectedNodes
     }
 
+    getNotes(): Note[] {
+        return this.noteManager.getNotes()
+    }
+
+    getNote(id: string): Note | undefined {
+        return this.noteManager.getNote(id)
+    }
+
     setVisibleNodes(nodes: Node[]) {
         const visibleSet = new Set(nodes.map(n => n.id))
 

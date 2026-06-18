@@ -780,6 +780,10 @@ export class GraphSvgRenderer extends GraphRenderer {
         this.lassoOverlay.setEnabled(enabled)
     }
 
+    public enterNoteEditMode(note: Note): void {
+        this.noteDrawer.enterEditMode(note)
+    }
+
     public getNodeClosestToCursor(maxDistance?: number): Node | null {
         maxDistance = maxDistance ?? Infinity
         const pointerEvent = this.graphInteraction.getLastPointerEvent()
@@ -817,6 +821,85 @@ export class GraphSvgRenderer extends GraphRenderer {
         }
 
         return closestNode
+    }
+
+    public getClosestElementToCursor(maxDistance?: number): Node | Edge | Note | null {
+
+        maxDistance = maxDistance ?? Infinity
+        const pointerEvent = this.graphInteraction.getLastPointerEvent()
+
+        if (!pointerEvent) {
+            return null
+        }
+
+        const svgRect = this.svgCanvas.getBoundingClientRect()
+
+        // Cursor position in SVG viewport coordinates
+        const screenX = pointerEvent.clientX - svgRect.left
+        const screenY = pointerEvent.clientY - svgRect.top
+
+        // Convert screen coordinates into graph/world coordinates
+        const transform = this.getZoomTransform()
+
+        const graphX = transform.invertX(screenX)
+        const graphY = transform.invertY(screenY)
+
+        let closestElement: Node | Edge | Note | null = null
+        let closestDistance = Infinity
+
+        const checkElement = (element: Node | Edge | Note, x: number, y: number) => {
+            const dx = x - graphX
+            const dy = y - graphY
+
+            // const distance = Math.sqrt(dx * dx + dy * dy)
+            const distance = element instanceof Note
+                ? this.getDistanceToNote(element, graphX, graphY)
+                : Math.sqrt(dx * dx + dy * dy)
+
+            if (distance < closestDistance && distance <= maxDistance) {
+                closestDistance = distance
+                closestElement = element
+            }
+        }
+
+        for (const node of this.graph.getMutableNodes()) {
+            if (!node.visible) continue
+
+            checkElement(node, node.x ?? 0, node.y ?? 0)
+        }
+
+        for (const note of this.graph.getNotes()) {
+            if (!note.visible) continue
+
+            checkElement(note, note.x ?? 0, note.y ?? 0)
+        }
+
+        return closestElement
+    }
+
+    private getDistanceToNote(note: Note, x: number, y: number): number {
+
+        const left = note.x
+        const right = note.x + note.width
+        const top = note.y
+        const bottom = note.y + note.height
+
+        // Cursor is inside note
+        if (
+            x >= left &&
+            x <= right &&
+            y >= top &&
+            y <= bottom
+        ) {
+            return 0
+        }
+
+        // Distance to closest point on rectangle
+        const closestX = Math.max(left, Math.min(x, right))
+
+        const closestY = Math.max(top, Math.min(y, bottom))
+
+        return Math.hypot(x - closestX, y - closestY)
     }
 
     public showShadowEdge(params: {

@@ -305,10 +305,17 @@ export class UIManager {
         this.keyManager.register({
             key: 'Shift+E',
             callback: () => {
-                const node = this.graph.renderer.getNodeClosestToCursor(100)
-                if (!node) return
-                this.graph.renderer.getGraphInteraction().selectNode(node.getGraphElement(), node)
-                this.graph.editing.openNodeSession(node)
+                const element = this.graph.renderer.getClosestElementToCursor(100)
+                if (!element) return
+
+                if (element instanceof Node) {
+                    this.graph.renderer.getGraphInteraction().selectNode(element.getGraphElement(), element)
+                    requestAnimationFrame(() => {
+                        this.graph.editing.openNodeSession(element)
+                    })
+                } else if (element instanceof Note) {
+                    this.graph.renderer.enterNoteEditMode(element)
+                }
             }
         })
         this.keyManager.register({

@@ -34,6 +34,7 @@ export abstract class GraphRenderer {
     abstract screenToGraphCoordinates(screenX: number, screenY: number): Point
     abstract graphToScreenCoordinates(graphX: number, graphY: number): Point
     abstract toggleLassoMode(enabled: boolean): void
+    abstract getClosestElementToCursor(maxDistance?: number): Node | Edge | Note | null
     abstract getNodeClosestToCursor(maxDistance?: number): Node | null
     abstract getSelectionBox(): AbstractSelectionBox | null
     abstract getGraphInteraction(): GraphInteractions<unknown>
@@ -48,6 +49,7 @@ export abstract class GraphRenderer {
     abstract clearHighlightedElements(): void
     abstract showShadowEdge(params: { source: Node | Note, targetNode?: Node, targetPosition?: { x: number, y: number } }): void
     abstract hideShadowEdge(): void
+    abstract enterNoteEditMode(note: Note): void
 
     public getCanvas(): HTMLElement {
         return this.container.querySelector('.pvt-canvas') as HTMLElement
