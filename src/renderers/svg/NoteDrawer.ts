@@ -33,11 +33,28 @@ export class NoteDrawer {
 
     private originalContentMap = new WeakMap<Note, string>()
 
+    private handleOffsets = {x: 0, y: 0}
+
     public constructor(rendererOptions: GraphRendererOptions, graph: Graph, graphSvgRenderer: GraphSvgRenderer, ) {
         this.rendererOptions = rendererOptions
         this.graph = graph
         this.graphSvgRenderer = graphSvgRenderer
         this.noteContentRenderer = new NoteContentRenderer(this.graph)
+
+        this.graph.on('ready', () => {
+            this.graphSvgRenderer.getGraphInteraction().on('canvasZoom', this.canvasZoomed.bind(this))
+            this.graphSvgRenderer.getGraphInteraction().on('simulationSlowTick', this.simulationSlowTick.bind(this))
+        })
+    }
+
+    private canvasZoomed() {
+        this.updateShadowLinkBoundBoxes()
+        this.updateShadowLinks()
+    }
+
+    private simulationSlowTick() {
+        this.updateShadowLinkBoundBoxes()
+        this.updateShadowLinks()
     }
 
     public render(noteSelection: Selection<SVGGElement, Note, null, undefined>, note: Note): void {
@@ -197,6 +214,28 @@ export class NoteDrawer {
                 row.appendChild(unlinkButton)
 
                 linkContent.appendChild(row)
+
+                const handle: HTMLElement | null = linkContainer.querySelector('.pvt-note-link-placeholder-icon')
+                if (handle) {
+                    if (this.handleOffsets.x === 0 && this.handleOffsets.y === 0) {
+                        const rootBCR = root.getBoundingClientRect()
+                        const handleBCR = handle.getBoundingClientRect()
+                        // this.handleOffsets.x = handleBCR.x - rootBCR.x // No overlap with the note
+                        this.handleOffsets.y = handleBCR.y + handleBCR.height / 2 - rootBCR.y - 5 // -5 for slightly better ui
+                    }
+                    requestAnimationFrame(() => {
+                        const rootHtml = root as unknown as HTMLElement
+                        const shadowLinkManager = this.graph.UIManager.tooltip?.shadowLinkManager
+                        const sourceBCR = rootHtml.getBoundingClientRect()
+                        shadowLinkManager?.setBoundingBox(rootHtml, {
+                            source: sourceBCR,
+                            target: node.getGraphElement()!.getBoundingClientRect(),
+                        })
+                        shadowLinkManager?.addShadowLink(rootHtml)
+                        const sourcePoint = this.graphSvgRenderer.graphToScreenCoordinates(note.x + this.handleOffsets.x, note.y + this.handleOffsets.y)
+                        shadowLinkManager?.updateShadowLink(rootHtml, sourcePoint, false)
+                    })
+                }
             } else {
                 const unresolved = document.createElement('span')
                 unresolved.classList.add('pvt-node-reference', 'unresolved')
@@ -461,6 +500,38 @@ export class NoteDrawer {
         })
     }
 
+    private updateShadowLinkBoundBoxes(): void {
+        const shadowLinkManager = this.graph.UIManager.tooltip?.shadowLinkManager
+
+        this.graph.getNotes().forEach(note => {
+
+            const attached = note.getAttachedElement()
+            if (attached && attached.type === 'node') {
+                const node = this.graph.getMutableNode(attached.id)
+                if (node) {
+                    const root = note.getGraphElement()
+                    const rootHtml = root as unknown as HTMLElement
+                    shadowLinkManager?.setBoundingBox(rootHtml, {
+                        source: rootHtml.getBoundingClientRect(),
+                        target: node.getGraphElement()!.getBoundingClientRect(),
+                    })
+                }
+            }
+        })
+    }
+
+    private updateShadowLinks(): void {
+        const shadowLinkManager = this.graph.UIManager.tooltip?.shadowLinkManager
+        const notes = this.graph.getNotes()
+        for (const note of notes) {
+            const noteEl: HTMLElement = note.getGraphElement() as unknown as HTMLElement
+            if (noteEl) {
+                const sourcePoint = this.graphSvgRenderer.graphToScreenCoordinates(note.x + this.handleOffsets.x, note.y + this.handleOffsets.y)
+                shadowLinkManager?.updateShadowLink(noteEl, sourcePoint, false)
+            }
+        }
+    }
+
     private makeDraggable(noteSelection: Selection<SVGGElement, Note, null, undefined>, note: Note): void {
 
         const header = noteSelection.select<SVGRectElement>('.pvt-note-header')
@@ -502,6 +573,8 @@ export class NoteDrawer {
                     noteSelection.classed('dragging', true)
                     window.getSelection()?.removeAllRanges()
                     document.body.classList.add('pvt-disable-selection') // disable selection globally
+
+                    this.updateShadowLinks()
                 }
 
                 const onMouseUp = () => {

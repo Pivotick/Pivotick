@@ -511,7 +511,7 @@ export class Tooltip implements UIElement {
                 })
             },
             onDrag: (_e: MouseEvent, pinnedTt: HTMLElement) => {
-                this.shadowLinkManager?.updateShadowLink(pinnedTt,)
+                this.shadowLinkManager?.updateShadowLink(pinnedTt)
             }
         })
         this.parentContainer.appendChild(clonedTooltip)
