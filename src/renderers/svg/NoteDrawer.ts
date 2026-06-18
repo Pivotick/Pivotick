@@ -88,7 +88,7 @@ export class NoteDrawer {
 
         return fo
     }
-    
+
     private createHeader(container: HTMLDivElement, note: Note): HTMLDivElement {
         const header = createHtmlElement('div', {
             class: 'pvt-note-header',

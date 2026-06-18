@@ -284,11 +284,14 @@ export class EdgeCreationSession {
 
             this.createConnection(this.sourceElement, target)
 
+            this.dragStartPosition = null
             this.connectManager.restart()
             return
         }
 
+        this.dragStartPosition = null
         this.connectManager.restart()
+        return
 
     }
 

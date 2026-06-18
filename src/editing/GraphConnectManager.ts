@@ -98,7 +98,10 @@ export class GraphConnectManager {
 
     public finishInteraction(continueInteraction = false): void {
         this.activeSession?.cancel()
-        if (!continueInteraction) return
+        if (!continueInteraction) {
+            this.activeSession = null
+            return
+        }
 
         this.activeSession = new EdgeCreationSession(
             this.graph,
@@ -145,7 +148,7 @@ export class GraphConnectManager {
         return this.activeSession !== null
     }
 
-    public isActiveAndIdle(): boolean {
+    public isActiveAndNotIdle(): boolean {
 
         return this.activeSession !== null && this.activeSession.getState() !== 'idle'
     }

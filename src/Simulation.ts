@@ -603,7 +603,7 @@ export class Simulation {
             .filter(() => {
 
                 // Disable node dragging while connect mode is active
-                if (this.graph.editing.connectManager.isActiveAndIdle()) {
+                if (this.graph.editing.connectManager.isActiveAndNotIdle()) {
                     return false
                 }
 

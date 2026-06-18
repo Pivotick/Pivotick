@@ -59,13 +59,11 @@ export class Note {
     public setPosition(x: number, y: number): void {
         this.x = x
         this.y = y
-        this.markDirty()
     }
 
     public setSize(width: number, height: number): void {
         this.width = width
         this.height = height
-        this.markDirty()
     }
 
     public setContent(content: string): void {

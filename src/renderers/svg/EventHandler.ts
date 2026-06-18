@@ -145,6 +145,7 @@ export class EventHandler {
                 if (!parentNode) return
                 const note = d3Select(parentNode as SVGGElement).datum() as Note
 
+                event.preventDefault()
                 event.stopPropagation()
                 this.graphInteraction?.noteHandleClick(handle, event, note)
             })
@@ -153,7 +154,8 @@ export class EventHandler {
                 const parentNode = handle.closest('g.pvt-note')
                 if (!parentNode) return
                 const note = d3Select(parentNode as SVGGElement).datum() as Note
-                
+
+                event.preventDefault()
                 event.stopPropagation()
                 this.graphInteraction?.noteHandlePointerDown(handle, event, note)
             })

@@ -675,7 +675,6 @@ export class GraphInteractions<TElement = unknown> {
             if (this.callbacks.onNodeBlur && typeof this.callbacks.onNodeBlur === 'function') {
                 this.callbacks.onNodeBlur(node, element)
             }
-            // node.markDirty()
         })
         this.selectedNodes = []
         this.selectedNode = null
@@ -687,7 +686,6 @@ export class GraphInteractions<TElement = unknown> {
             if (this.callbacks.onEdgeBlur && typeof this.callbacks.onEdgeBlur === 'function') {
                 this.callbacks.onEdgeBlur(edge, element)
             }
-            // edge.markDirty()
         })
         this.selectedEdges = []
         this.selectedEdge = null

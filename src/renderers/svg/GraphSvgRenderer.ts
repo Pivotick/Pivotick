@@ -332,7 +332,7 @@ export class GraphSvgRenderer extends GraphRenderer {
                 }
 
                 // Disable panning while connect mode is active
-                if (this.graph.editing.connectManager.isActiveAndIdle()) {
+                if (this.graph.editing.connectManager.isActiveAndNotIdle()) {
                     if (event.type === 'wheel') return true
                     if (event.button === 1) return true
                     return false
@@ -564,7 +564,7 @@ export class GraphSvgRenderer extends GraphRenderer {
                         } else {
 
                             selection.selectChildren().remove()
-    
+
                             this.noteDrawer.render(selection, note)
                         }
 

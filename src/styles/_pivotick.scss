@@ -452,9 +452,8 @@ dl.pvt-property-list {
     padding: 0 6px;
     border-radius: 4px;
     background: var(--pvt-note-node-reference-bg);
-    border: 1px solid color-mix(in srgb,
-            var(--pvt-node-color) 45%,
-            transparent);
+    border-width: 1px;
+    border-style: solid;
     font-weight: 600;
     font-size: 0.95em;
     color: var(--pvt-note-node-reference-text-color);
