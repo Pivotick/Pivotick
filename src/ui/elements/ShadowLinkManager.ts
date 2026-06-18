@@ -46,7 +46,20 @@ export class ShadowLinkManager {
         if (offsetSourceToCenter) {
             shadowLink.setAttribute('d', `M ${sourceX + ttWidth / 2} ${sourceY + ttHeight / 2} L ${nx + nWidth / 2} ${ny + nHeight / 2}`)
         } else {
-            shadowLink.setAttribute('d', `M ${sourceX} ${sourceY} L ${nx + nWidth / 2} ${ny + nHeight / 2}`)
+            let startX = sourceX
+            const startY = sourceY
+
+            const targetCenterX = nx + nWidth / 2
+
+            // Mirror the source point horizontally when the target is on the right.
+            if (targetCenterX > sourceX + ttWidth / 2) {
+                startX = sourceX + (ttWidth - (startX - sourceX))
+            }
+
+            shadowLink.setAttribute(
+                'd',
+                `M ${startX} ${startY} L ${targetCenterX} ${ny + nHeight / 2}`
+            )
         }
     }
 
