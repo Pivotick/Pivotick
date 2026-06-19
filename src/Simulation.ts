@@ -688,6 +688,14 @@ export class Simulation {
         this.options.gridSnappingEnabled = !this.options.gridSnappingEnabled
     }
 
+    public toggleFreezeNodesOnDrag() {
+        this.options.freezeNodesOnDrag = !this.options.freezeNodesOnDrag
+    }
+
+    public isFreezeNodesOnDrag(): boolean {
+        return this.options.freezeNodesOnDrag
+    }
+
     private applySnap(value: number): number {
         if (!this.options.gridSnappingEnabled) return value
 

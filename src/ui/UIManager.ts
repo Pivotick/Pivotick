@@ -375,6 +375,7 @@ export class UIManager {
         this.tooltip?.graphReady()
         this.contextMenu?.graphReady()
         this.graphToolbar?.graphReady()
+        this.graphNaviation?.graphReady()
     }
 
    /**

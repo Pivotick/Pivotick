@@ -1,7 +1,7 @@
-import type { IconClass, IconUnicode, ImagePath, SVGIcon, UIBaseVariant } from '../../interfaces/GraphUI'
+import type { IconClass, IconUnicode, ImagePath, SVGIcon, UIBaseVariant, UIOutlineVariant } from '../../interfaces/GraphUI'
 import { createIcon } from '../../utils/ElementCreation'
 
-type OptionVariant = UIBaseVariant
+type OptionVariant = UIBaseVariant | UIOutlineVariant
 type OptionSize = 'sm' | 'xs' | 'xxs'
 
 export type DropdownOption = {
