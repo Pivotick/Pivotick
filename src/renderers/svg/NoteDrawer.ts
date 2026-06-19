@@ -666,6 +666,13 @@ export class NoteDrawer {
                 note.height = Math.max(80, startHeight + dy)
 
                 this.updateNoteSize(noteSelection, note)
+
+                // Resizing changes the note's width/height, so refresh both the
+                // cached source bounding box (used to anchor the link to the
+                // note's edge) and the link itself, rather than waiting for the
+                // next tick or pan.
+                this.updateShadowLinkBoundBoxes()
+                this.updateShadowLinks()
             }
 
             const onMouseUp = () => {
