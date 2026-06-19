@@ -1,5 +1,10 @@
 import { generateSafeDomId } from './utils/ElementCreation'
 
+export interface AttachedElement {
+    type: 'node' | 'edge'
+    id: string
+}
+
 export interface NoteOptions {
     id?: string
     x?: number
@@ -9,11 +14,7 @@ export interface NoteOptions {
     content?: string
     color?: string
     visible?: boolean
-}
-
-interface AttachedElement {
-    type: 'node' | 'edge'
-    id: string
+    attachedElement?: AttachedElement
 }
 
 export class Note {
@@ -52,6 +53,8 @@ export class Note {
         this.content = options.content ?? ''
         this.color = options.color ?? '#FDE68A'
         this.visible = true
+
+        this.attachedElement = options.attachedElement
 
         this.editing = false
     }

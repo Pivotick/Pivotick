@@ -34,8 +34,6 @@ export class NoteDrawer {
 
     private originalContentMap = new WeakMap<Note, string>()
 
-    private handleOffsets = {x: 0, y: 0}
-
     public constructor(rendererOptions: GraphRendererOptions, graph: Graph, graphSvgRenderer: GraphSvgRenderer, ) {
         this.rendererOptions = rendererOptions
         this.graph = graph
@@ -218,27 +216,16 @@ export class NoteDrawer {
                 const rootHtml = root as unknown as HTMLElement
                 this.graph.UIManager.tooltip?.shadowLinkManager?.removeShadowLink(rootHtml)
 
-                const handle: HTMLElement | null = linkContainer.querySelector('.pvt-note-link-placeholder-icon')
-                if (handle) {
-                    if (this.handleOffsets.x === 0 && this.handleOffsets.y === 0) {
-                        const rootBCR = root.getBoundingClientRect()
-                        const handleBCR = handle.getBoundingClientRect()
-                        // this.handleOffsets.x = handleBCR.x - rootBCR.x // No overlap with the note
-                        this.handleOffsets.y = handleBCR.y + handleBCR.height / 2 - rootBCR.y - 5 // -5 for slightly better ui
-                    }
-                    requestAnimationFrame(() => {
-                        const rootHtml = root as unknown as HTMLElement
-                        const shadowLinkManager = this.graph.UIManager.tooltip?.shadowLinkManager
-                        const sourceBCR = rootHtml.getBoundingClientRect()
-                        shadowLinkManager?.setBoundingBox(rootHtml, {
-                            source: sourceBCR,
-                            target: node.getGraphElement()!.getBoundingClientRect(),
-                        })
-                        shadowLinkManager?.addShadowLink(rootHtml)
-                        const sourcePoint = this.graphSvgRenderer.graphToScreenCoordinates(note.x + this.handleOffsets.x, note.y + this.handleOffsets.y)
-                        shadowLinkManager?.updateShadowLink(rootHtml, sourcePoint, false)
+                requestAnimationFrame(() => {
+                    const rootHtml = root as unknown as HTMLElement
+                    const shadowLinkManager = this.graph.UIManager.tooltip?.shadowLinkManager
+                    shadowLinkManager?.setBoundingBox(rootHtml, {
+                        source: rootHtml.getBoundingClientRect(),
+                        target: node.getGraphElement()!.getBoundingClientRect(),
                     })
-                }
+                    shadowLinkManager?.addShadowLink(rootHtml)
+                    shadowLinkManager?.updateShadowLink(rootHtml, this.getShadowLinkSourcePoint(rootHtml), false)
+                })
             } else {
                 const unresolved = document.createElement('span')
                 unresolved.classList.add('pvt-node-reference', 'unresolved')
@@ -258,6 +245,26 @@ export class NoteDrawer {
 
             linkContent.appendChild(empty)
         }
+    }
+
+    /**
+     * Screen-space start point for a note's shadow link: the note's left edge at
+     * the vertical centre of its link handle. Measured live from the rendered DOM
+     * every draw, so it stays correct across zoom, drag and the note's initial
+     * layout settling. The shadow link path is drawn in screen coordinates (see
+     * ShadowLinkManager), matching how the target point is taken from the node's
+     * bounding box. Falls back to the note's top edge if the handle isn't laid
+     * out yet (e.g. the first frame after a note is linked at construction time).
+     */
+    private getShadowLinkSourcePoint(noteEl: HTMLElement): { x: number, y: number } {
+        const noteBCR = noteEl.getBoundingClientRect()
+        const handle = noteEl.querySelector('.pvt-note-link-placeholder-icon') as HTMLElement | null
+        const handleBCR = handle?.getBoundingClientRect()
+
+        const y = handleBCR && handleBCR.height > 0
+            ? handleBCR.top + handleBCR.height / 2 - 5 // -5 for slightly better ui
+            : noteBCR.top
+        return { x: noteBCR.left, y }
     }
 
     // Move shadowlink start point on note depending on target direction
@@ -532,12 +539,11 @@ export class NoteDrawer {
 
     private updateShadowLinks(): void {
         const shadowLinkManager = this.graph.UIManager.tooltip?.shadowLinkManager
-        const notes = this.graph.getNotes()
-        for (const note of notes) {
-            const noteEl: HTMLElement = note.getGraphElement() as unknown as HTMLElement
+        for (const note of this.graph.getNotes()) {
+            if (!note.getAttachedElement()) continue
+            const noteEl = note.getGraphElement() as unknown as HTMLElement | null
             if (noteEl) {
-                const sourcePoint = this.graphSvgRenderer.graphToScreenCoordinates(note.x + this.handleOffsets.x, note.y + this.handleOffsets.y)
-                shadowLinkManager?.updateShadowLink(noteEl, sourcePoint, false)
+                shadowLinkManager?.updateShadowLink(noteEl, this.getShadowLinkSourcePoint(noteEl), false)
             }
         }
     }

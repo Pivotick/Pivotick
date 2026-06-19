@@ -410,7 +410,7 @@ function addRandomNode(counter: number, graph: Pivotick) {
 
 const data = {
   'notes': [
-        { 'id': 'note-1', content: 'Note _#1_', color: '#FDE68A', x: -325, y: 712},
+        { 'id': 'note-1', content: 'Note _#1_', color: '#FDE68A', x: -325, y: 712, attachedElement: { type: 'node', id: 'C3' }},
         { 'id': 'note-2', content: 'Note **#2**', color: '#FCA5A5', x: 131, y: 842},
         { 'id': 'note-3', content: '# Note #3', color: '#93C5FD', x: -217, y: 1050},
         { 'id': 'note-x', content: '[[Victor]] [[A1]] and [[Jane]]', color: '#FDE68A', x: 245, y: 1230},
