@@ -426,6 +426,10 @@ export class GraphSvgRenderer extends GraphRenderer {
         return this.options
     }
 
+    public getNodeStyle(node: Node): NodeStyle {
+        return this.nodeDrawer.getNodeStyle(node)
+    }
+
     public init(): void {
         if (this.options.beforeRender) {
             this.options.beforeRender(this.graph)

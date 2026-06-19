@@ -1,7 +1,7 @@
 import type { Node } from './Node'
 import type { Edge } from './Edge'
 import type { Graph } from './Graph'
-import type { GraphRendererOptions } from './interfaces/RendererOptions'
+import type { GraphRendererOptions, NodeStyle } from './interfaces/RendererOptions'
 import type { GraphInteractions } from './GraphInteractions'
 import type { Point } from './utils/GeometryHelper'
 import type { Note } from './Note'
@@ -27,6 +27,7 @@ export abstract class GraphRenderer {
 
     abstract init(): void
     abstract update(dataChanged: boolean): void
+    abstract getNodeStyle(node: Node): NodeStyle
     abstract getOptions(): GraphRendererOptions
     abstract nextTick(): void
     abstract nextTickFor(nodes: Node[]): void

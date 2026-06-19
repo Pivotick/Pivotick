@@ -11,6 +11,7 @@ import { createHtmlElement, createHtmlTemplate, createIcon, createSvgElement } f
 import { checkmark, closeIcon, edit, link, magnifyingGlass, trash } from '../../ui/icons'
 import { pickNode } from '../../ui/components/NodePickers'
 import { nodeNameGetter } from '../../utils/GraphGetters'
+import { applyNodeReferenceColor } from '../../utils/NoteReferenceStyle'
 import { createButton } from '../../ui/components/Button'
 
 d3Select.prototype.transition = d3Transition
@@ -191,10 +192,7 @@ export class NoteDrawer {
                 )
                 ref.dataset.nodeId = node.id
                 const nodeStyle: NodeStyle = this.graphSvgRenderer.nodeDrawer.getNodeStyle(node)
-                const color: string = nodeStyle.color as string
-                ref.style.setProperty('--pvt-note-node-reference-dot', color)
-                ref.style.setProperty('--pvt-note-node-reference-bg', `color-mix(in oklab, ${color} 30%, white)`)
-                ref.style.setProperty('border-color', `color-mix(in srgb, ${color} 45%, transparent)`)
+                applyNodeReferenceColor(ref, nodeStyle.color as string)
                 const mainLabel = nodeNameGetter(node, this.graph.UIManager.getOptions().mainHeader).trim()
                 ref.textContent = mainLabel
                 row.appendChild(ref)

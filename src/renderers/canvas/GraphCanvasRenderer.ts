@@ -2,11 +2,12 @@
 // @ts-nocheck
 import { select as d3Select, zoom as d3Zoom, type ZoomBehavior, zoomIdentity } from 'd3'
 import { Graph } from '../../Graph'
+import { Node } from '../../Node'
 import { NodeDrawer } from './NodeDrawer'
 import { EdgeDrawer } from './EdgeDrawer'
 import { GraphRenderer } from '../../GraphRenderer'
 import { GraphInteractions } from '../../GraphInteractions'
-import type { GraphRendererOptions } from '../../GraphOptions'
+import type { GraphRendererOptions, NodeStyle } from '../../GraphOptions'
 import merge from 'lodash.merge'
 import { EventHandler } from './EventHandler'
 
@@ -73,6 +74,10 @@ export class GraphCanvasRenderer extends GraphRenderer {
 
     public init(): void {
         this.eventHandler.init(this, this.graphInteraction)
+    }
+
+    public getNodeStyle(node: Node): NodeStyle {
+        return this.nodeDrawer.getNodeStyle(node)
     }
 
     public dataUpdate(): void {
