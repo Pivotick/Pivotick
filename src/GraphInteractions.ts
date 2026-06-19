@@ -28,7 +28,7 @@ export class GraphInteractions<TElement = unknown> {
             edgeClick: [], edgeDbclick: [], edgeHoverIn: [], edgeHoverOut: [],
             edgeSelect: [], edgeBlur: [], edgeContextmenu: [],
             noteClick: [], noteDbclick: [], notePointerDown: [], notePointerUp: [], noteContextmenu: [], noteHoverIn: [], noteHoverOut: [],
-            noteHandleClick: [], noteHandlePointerDown: [],
+            noteHandleClick: [], noteHandlePointerDown: [], noteDragging: [],
             canvasClick: [], canvasMousemove: [], canvasPointerDown: [], canvasPointerUp: [], canvasContextmenu: [], canvasBeforeZoom: [], canvasZoom: [],
             simulationTick: [], simulationSlowTick: [],
             selectNode: [], unselectNode: [], selectEdge: [], unselectEdge: [],
@@ -365,6 +365,13 @@ export class GraphInteractions<TElement = unknown> {
         this.emit('noteHandlePointerDown', event, note, handle)
         if (this.callbacks.onNoteHandlePointerDown && typeof this.callbacks.onNoteHandlePointerDown === 'function') {
             this.callbacks.onNoteHandlePointerDown(event, note, handle)
+        }
+    }
+
+    public noteDragging = (event: PointerEvent, note: Note): void => {
+        this.emit('noteDragging', event, note)
+        if (this.callbacks.onNoteDragging && typeof this.callbacks.onNoteDragging === 'function') {
+            this.callbacks.onNoteDragging(event, note)
         }
     }
 

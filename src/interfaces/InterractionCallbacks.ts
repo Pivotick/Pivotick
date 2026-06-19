@@ -141,6 +141,10 @@ export interface InterractionCallbacks<TElement = unknown> {
      * Called when a user pointer up a node.
     */
     onNoteHandlePointerDown?: (event: PointerEvent, note: Note, handle: HTMLElement) => void
+    /**
+     * Called when a user pointer up a node.
+    */
+    onNoteDragging?: (event: PointerEvent, note: Note) => void
 
     /**
      * Called when the canvas is clicked.

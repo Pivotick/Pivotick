@@ -134,7 +134,7 @@ export class EventHandler {
                 this.graphInteraction?.noteHoverOut(svgNote, event, note)
             })
             .on('dragging.note', (event: PointerEvent, note: Note) => {
-                this.graphInteraction?.dragging(event, note)
+                this.graphInteraction?.noteDragging(event, note)
             })
 
         this.renderer.getNoteSelection()
