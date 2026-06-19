@@ -49,7 +49,13 @@ All three share `vite.config.base.js`. Note: the entry is declared as `src/index
 - `editing` (`editing/GraphEditingManager.ts`) — interactive editing sessions
 - `notifier` (`ui/Notifier.ts`) — user notifications
 
-`Graph` maintains nodes/edges as `Map`s and emits a typed event bus (`.on(event, handler)`) for: `ready`, `nodeAdd/Remove/Change`, `edgeAdd/Remove/Change`, `noteAdd/Remove/Change`, and `dataBatchChanged`. The `GraphUI.mode` option (`'full' | 'light' | 'viewer' | 'static'`) drives capability defaults — e.g. `'static'` force-disables simulation, zoom, drag, selection box, tooltips, and context menus in the constructor.
+`Graph` maintains nodes/edges as `Map`s and emits a typed **data** event bus (`.on(event, handler)`) for: `ready`, `nodeAdd/Remove/Change`, `edgeAdd/Remove/Change`, `noteAdd/Remove/Change`, and `dataBatchChanged`. The `GraphUI.mode` option (`'full' | 'light' | 'viewer' | 'static'`) drives capability defaults — e.g. `'static'` force-disables simulation, zoom, drag, selection box, tooltips, and context menus in the constructor.
+
+There are **two distinct event systems**: this high-level data event bus (`graph.on(...)`), and the lower-level pointer/selection **interaction** event system in `GraphInteractions` (see next section).
+
+### Interaction & event layer (`src/GraphInteractions.ts`)
+
+`GraphInteractions` is the low-level interaction layer that translates DOM/pointer events into a typed interaction-event bus (`GraphInteractionEvents`, defined in `interfaces/GraphInteractions.ts`): node/edge/note `click`/`dbclick`/`hoverIn`/`hoverOut`/`pointerDown`/`pointerUp`/`contextmenu`, drag events (incl. `noteDragging`), canvas events (`canvasClick`, `canvasMousemove`, `canvasZoom`, `canvasBeforeZoom`, …), `simulationTick`/`simulationSlowTick`, and selection events (`selectNode(s)`/`selectEdge(s)` plus their `unselect`/`blur` counterparts). It owns selection state (selected node/edge plus multi-selection arrays) and registers keyboard shortcuts via `UIManager.keyManager`. It is owned by the renderer rather than `Graph` directly — reach it via `graph.renderer.getGraphInteraction()`. The user-facing `InterractionCallbacks` (note the two-r spelling) are dispatched from here.
 
 ### Editing layer (`src/editing/`)
 
@@ -63,10 +69,10 @@ Notes are free-floating annotations on the canvas, rendered as HTML. Note conten
 
 ### Renderers (`src/renderers/`)
 
-- `svg/` — primary, production renderer (e.g. `NoteDrawer.ts` renders notes)
-- `canvas/` — experimental
+- `svg/` — primary, production renderer. Split into per-concern drawers: `GraphSvgRenderer.ts` (orchestrator + default node/edge/label/marker styles), `NodeDrawer.ts`, `EdgeDrawer.ts`, `NoteDrawer.ts`, `ClusterDrawer.ts`, `EventHandler.ts`, plus selection visuals (`SelectionBox.ts`, `LassoOverlay.ts`).
+- `canvas/` — experimental (`GraphCanvasRenderer.ts`, `NodeDrawer.ts`, `EdgeDrawer.ts`, `EventHandler.ts`).
 
-`renderers/GraphRendererFactory.ts` selects the renderer; `GraphRenderer.ts` is the abstract interface.
+`renderers/GraphRendererFactory.ts` selects the renderer; `GraphRenderer.ts` is the abstract interface (and owns the `getGraphInteraction()` accessor returning the `GraphInteractions` instance).
 
 ### Simulation & Worker (`src/Simulation.ts`, `src/workers/`, `src/SimulationWorkerWrapper.ts`)
 
@@ -74,24 +80,25 @@ Notes are free-floating annotations on the canvas, rendered as HTML. Note conten
 
 ### Configuration interfaces (`src/interfaces/`)
 
-`GraphOptions` is the root config, composed of nested option groups: `RendererOptions`, `SimulationOptions`, `LayoutOptions`, `GraphUI`, `InterractionCallbacks`, and `GraphQueryEngine` filter types. Note the intentional/legacy spelling **"Interraction"** (two r's) — keep it consistent when touching callbacks.
+`GraphOptions` is the root config, composed of nested option groups: `RendererOptions`, `SimulationOptions`, `LayoutOptions`, `GraphUI` (incl. the `Keybinding` type), `InterractionCallbacks`, and `GraphQueryEngine` filter types. `GraphInteractions.ts` here holds the interaction-layer types (`GraphInteractionEvents`, `GraphInteractionContext`, node/edge selection types) consumed by `src/GraphInteractions.ts`. Note the intentional/legacy spelling **"Interraction"** (two r's) on the callbacks interface — keep it consistent when touching callbacks.
 
 ### Plugins (`src/plugins/`)
 
-- `layout/` — tree/hierarchical layout
-- `d3Forces/` — custom D3 force implementations
-- `analytics/` — DAG / cycle detection
+- `layout/` — tree/hierarchical layout (`Tree.ts`, `EgoTree.ts`) plus `MicroForce.ts`
+- `d3Forces/` — custom D3 force implementations (`ForceCenter.ts`, `ForceGravity.ts`, `ForceClusterRadial.ts`)
+- `analytics/` — DAG / cycle detection (`DAGAlgorithms.ts`, `cycle.ts`)
 - `colors/` — `ColorPaletteMapper` + palettes (public export)
 - `noteContentRenderers/` — note content rendering (see Notes above)
 
 ### UI (`src/ui/`)
 
-- `components/` — reusable primitives (`Button`, `Dropdown`, `Modal`, `Tabs`, `Badge`, `NodePickers`, `JsonViewer`, …); `tom-select` backs select/picker widgets
-- `elements/` — feature areas: `Sidebar`, `NoteSidebar`, `GraphToolbar`, `GraphControls`, `GraphFilter`, `GraphNavigation`, `Mainheader`, `ContextMenu`, `Tooltip`, `SlidePanel`, `modals/` (incl. `editNodeModal`, `InspectNodeModal`)
+- Top level: `UIManager.ts` (coordinates all UI elements; `UIElement` interface; exposes `keyManager`), `KeybindingManager.ts` (keyboard-shortcut registry, gated on container focus / editable targets), `Notifier.ts` (user notifications), `icons.ts` (icon set)
+- `components/` — reusable primitives (`Button`, `Dropdown`, `Modal`, `Tabs`, `Badge`, `InlineBar`, `NodePickers`, `JsonViewer`, …); `tom-select` backs select/picker widgets
+- `elements/` — feature areas: `Layout` (root DOM scaffold), `Sidebar`, `NoteSidebar`, `GraphToolbar`, `GraphControls`, `GraphFilter`, `GraphNavigation`, `Mainheader`, `ContextMenu`, `Tooltip`, `SlidePanel`, `ShadowLinkManager` (edge-creation preview, see Editing layer), `modals/` (incl. `editNodeModal`, `InspectNodeModal`)
 
 ### Utilities (`src/utils/`)
 
-`ElementCreation.ts` (DOM creation + `generateSafeDomId`), `GeometryHelper.ts`, and the `Getters.ts` / `GraphGetters.ts` accessor helpers.
+`ElementCreation.ts` (DOM creation + `generateSafeDomId`; see also `ElementCreationAggregatedProperties.ts`), `FormFactory.ts` (form-building helper), `CoordinateTransform.ts` and `GeometryHelper.ts` (screen/graph coordinate + geometry math), `NoteReferenceStyle.ts`, `PivotickPicker.ts`, `workerUrl.ts` (worker URL resolution), `utils.ts` (incl. `deepMerge` and the `DeepPartial` type), and the `Getters.ts` / `GraphGetters.ts` accessor helpers.
 
 ### Styling (`src/styles/`)
 
@@ -103,4 +110,4 @@ SCSS (modern compiler API) with CSS custom properties for theming; split into `c
 
 ## Documentation
 
-VitePress docs in `docs/`; API docs auto-generated by TypeDoc (markdown plugin) into the docs tree. Deploys to GitHub Pages via GitHub Actions.
+VitePress docs in `docs/`; API docs auto-generated by TypeDoc (markdown plugin) into the docs tree. TypeDoc's entry point is `src/docIndex.ts` (config in `typedoc.json`) — a dedicated module that re-exports the public classes and type groups for documentation, kept separate from the runtime entry `src/index.ts`. Deploys to GitHub Pages via GitHub Actions.
