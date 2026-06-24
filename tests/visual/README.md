@@ -90,6 +90,18 @@ e.g. the side-by-side styling scenes — call `harness(page, 'pin')` right after
 `loadFixture`. It re-applies the fixture's declared positions, then redraws and re-fits.
 Tests that are happy with the settled layout (most of the originals) simply don't call it.
 
+#### Pinning a computed layout (`harness.applyLayout()`)
+
+For tree / ego-tree layouts the *designed* positions aren't the fixture seeds — they're
+whatever the layout algorithm computes. On load those positions come from a **force
+relaxation toward the d3-hierarchy targets**: converged, but timing-dependent (and shakier
+under parallel-run CPU contention), so brittle as a pixel baseline. `harness(page,
+'applyLayout')` re-runs the active layout's *exact* d3-hierarchy computation, writes the
+target positions straight onto the nodes, pins them, and re-fits — making tree baselines a
+pure function of (graph, layout options). It's a no-op for `force` (which has no exact
+target; the layout spec pins the seeds there instead). The `layout` spec also asserts the
+computed *ordering* via `harness(page, 'nodePositions')` as a robust complement.
+
 ## Coverage
 
 | Spec                    | What it checks                                                       |
@@ -97,6 +109,7 @@ Tests that are happy with the settled layout (most of the originals) simply don'
 | `load-render`           | Basic graph, graph with a Markdown note, note linked to a node      |
 | `styling`               | Node shapes / size / colour / icons / labels; edge curves / self-loop / markers / dashed / labels; undirected graph |
 | `theme`                 | Dark theme — basic graph, markdown note, selected node              |
+| `layout`                | Force, tree (vertical / horizontal / radial), ego tree; + position-ordering assertions |
 | `selection`             | Node selected, edge selected, selection cleared                     |
 | `edge-creation`         | Edge created via the editing layer; click-to-connect shadow preview + commit |
 | `notes`                 | Adding a note at runtime; dragging a note by its header             |

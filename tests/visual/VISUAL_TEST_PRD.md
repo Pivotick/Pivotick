@@ -1,6 +1,6 @@
 # PRD — Visual regression test coverage
 
-**Status:** In progress (P1 batch — Areas 1 & 2 done)
+**Status:** In progress (Areas 1, 2 & 3 done)
 **Owner:** _unassigned_
 **Last updated:** 2026-06-24
 
@@ -37,10 +37,10 @@ _Update these counts as items complete._
 
 | Area | Done / Total |
 | ---- | ------------ |
-| P0 — Harness prerequisites | 1 / 7 |
+| P0 — Harness prerequisites | 2 / 7 |
 | 1 — Node & edge styling | 10 / 10 |
 | 2 — Themes | 3 / 3 |
-| 3 — Layouts | 0 / 6 |
+| 3 — Layouts | 6 / 6 |
 | 4 — Clustering | 0 / 4 |
 | 5 — Filtering | 0 / 4 |
 | 6 — Multi-selection & tools | 0 / 5 |
@@ -48,7 +48,7 @@ _Update these counts as items complete._
 | 8 — UI chrome | 0 / 5 |
 | 9 — Notes (deepen) | 0 / 6 |
 | 10 — Edge creation (extend) | 0 / 3 |
-| **Total** | **14 / 58** |
+| **Total** | **20 / 58** |
 
 ---
 
@@ -156,9 +156,11 @@ it depends on), or knock them all out up front.
   > the fixture's declared positions after `ready` (redraw + re-fit). Styling specs load
   > pinned; existing specs/baselines are untouched. **Future fixed-position areas (P0.2
   > tree, P0.3 cluster, Area 3 layouts) should `pin()` too.**
-- [ ] **P0.2 ☐ Fixture `tree`** — 7–10 node **acyclic** directed graph with an obvious
-  root. Drives Area 3 (layouts). Tree-layout buttons disable on cyclic graphs, so this
-  must be a DAG.
+- [x] **P0.2 ✅ Fixture `tree`** — 8-node **acyclic** directed graph (`root` → `a/b/c`,
+  with `a` → `d/e` and `c` → `f/g`); `MaxReachability` resolves the root to `root`.
+  Drives Area 3. Also added a sister fixture **`egoNet`** (a star: a central `ego` linked
+  to every other node) for the ego-tree case — the ego layout only positions the root's
+  *direct* neighbours, so a star guarantees all nodes get deterministic positions.
 - [ ] **P0.3 ☐ Fixture `clustered`** — a parent node with `children` (and one nested
   child-of-child for the nested case) plus a couple of external nodes with edges into the
   cluster. Drives Area 4.
@@ -230,14 +232,31 @@ Depends on **P0.2**. Layout output is the area the README flags as brittle for p
 **pair each screenshot with a position assertion** (T3.6) and/or run the sim to settle.
 Decide per-layout whether to keep sim off (assert the computed transform) or settle it.
 
-- [ ] **T3.1 ☐ Force layout** → `layout-force.png`
-- [ ] **T3.2 ☐ Tree — vertical** (`layout: { type:'tree' }`) → `layout-tree-vertical.png`
-- [ ] **T3.3 ☐ Tree — horizontal** (`horizontal: true`) → `layout-tree-horizontal.png`
-- [ ] **T3.4 ☐ Tree — radial** (`radial: true`) → `layout-tree-radial.png`
-- [ ] **T3.5 ☐ Ego tree** (`type:'egoTree', rootId`) → `layout-ego-tree.png`
-- [ ] **T3.6 ☐ Position assertions (non-screenshot)** — read `node.x/y` from the API and
-  assert relative ordering (root above/left of children, radial ring radii) for each
-  layout. Robust complement to the pixel diffs. _Add an API accessor if needed._
+> **Done.** Spec: `specs/layout.spec.ts`. **Determinism decision (the open question):**
+> a tree layout's *on-load* positions come from a force relaxation toward the d3-hierarchy
+> targets — converged but timing-dependent, so brittle for pixels (and worse under
+> parallel-run CPU contention). So:
+> - **Force (T3.1):** no exact target exists → keep sim off and `pin()` the fixture's seed
+>   positions (deterministic stand-in for a settled force scene; clean contrast to trees).
+> - **Tree / egoTree (T3.2–T3.5):** new harness verb **`applyLayout`** re-runs the layout's
+>   *exact* d3-hierarchy computation, writes the target positions straight onto the nodes,
+>   then pins (`fx/fy`) + re-fits. Baselines are a pure function of (graph, layout options),
+>   independent of tick count / machine speed. `applyLayout` is a no-op for `force`.
+>
+> New verbs in `harness.ts`: `applyLayout()` and `nodePositions()` (reads `node.x/y` for
+> T3.6). Baselines reviewed (root placement, ring radii, ego fan) and stable over repeated
+> runs (incl. single-worker full-suite). Each pixel baseline is backed by a T3.6 assertion.
+
+- [x] **T3.1 ✅ Force layout** (sim off, seeds pinned) → `layout-force.png`
+- [x] **T3.2 ✅ Tree — vertical** (`layout: { type:'tree' }`) → `layout-tree-vertical.png`
+- [x] **T3.3 ✅ Tree — horizontal** (`horizontal: true`) → `layout-tree-horizontal.png`
+- [x] **T3.4 ✅ Tree — radial** (`radial: true`) → `layout-tree-radial.png`
+- [x] **T3.5 ✅ Ego tree** (`type:'egoTree', rootId`, on the `egoNet` star) → `layout-ego-tree.png`
+- [x] **T3.6 ✅ Position assertions (non-screenshot)** — `nodePositions()` reads `node.x/y`;
+  one assertion test per layout checks relative ordering: vertical (root above, equal-depth
+  siblings level, children ordered L→R), horizontal (root left, deeper levels right), radial
+  (root at centre, equal-depth ring radii, outer levels larger), ego (neighbours one level
+  below the root and sharing a row, root centred in their spread).
 
 ---
 
@@ -339,7 +358,10 @@ Real pointer gestures from a node. The `pair` fixture already exists.
 
 - **Full-mode strategy (P0.7):** one parametrised harness vs a second harness page? Pick
   one and document it in `README.md`.
-- **Layout determinism (Area 3):** settle the sim with a fixed tick count, or keep sim off
-  and assert the computed layout transform? Decide per layout; note the choice in the spec.
+- **Layout determinism (Area 3):** _Resolved._ Neither "settle the sim" nor "assert the
+  transform" alone — instead **recompute the layout's exact d3-hierarchy positions and pin
+  them** (the `applyLayout` verb), so trees are pixel-deterministic without any tick-count
+  dependence; force (no exact target) pins the fixture seeds. Position assertions (T3.6)
+  back every pixel baseline. See the Area 3 done-block.
 - **CI:** README notes no GitHub Actions workflow is wired yet. Out of scope here, but the
   baselines this PRD produces assume a Linux CI runner (Playwright Docker image).

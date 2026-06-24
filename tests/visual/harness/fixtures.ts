@@ -288,6 +288,69 @@ export const fixtures = {
         return { nodes: [a, b], edges: [edge], notes: [] }
     },
 
+    // ── Area 3 (layouts) fixtures ──────────────────────────────────────────────
+
+    /**
+     * A small **acyclic directed** graph with an obvious root — drives the layout
+     * specs (force / tree-vertical / tree-horizontal / tree-radial) and the
+     * position assertions. Edges point parent→child so the default root finder
+     * (`MaxReachability`) resolves to `root`; tree layouts disable on cyclic
+     * graphs, so this must stay a DAG. The seed positions double as a clean,
+     * deterministic arrangement for the *pinned* force-layout baseline.
+     *
+     *            root
+     *          /  |  \
+     *         a   b   c
+     *        / \     / \
+     *       d   e   f   g
+     */
+    tree(): BuiltFixture {
+        const pos: Record<string, [number, number]> = {
+            root: [0, -120],
+            a: [-170, -30],
+            b: [-20, 20],
+            c: [180, -50],
+            d: [-260, 120],
+            e: [-90, 170],
+            f: [110, 150],
+            g: [250, 90],
+        }
+        const n = Object.fromEntries(
+            Object.entries(pos).map(([id, [x, y]]) => [id, mkNode(id, x, y)])
+        ) as Record<string, Node>
+        const edges = [
+            new Edge('root-a', n.root, n.a),
+            new Edge('root-b', n.root, n.b),
+            new Edge('root-c', n.root, n.c),
+            new Edge('a-d', n.a, n.d),
+            new Edge('a-e', n.a, n.e),
+            new Edge('c-f', n.c, n.f),
+            new Edge('c-g', n.c, n.g),
+        ]
+        return { nodes: Object.values(n), edges, notes: [] }
+    },
+
+    /**
+     * An ego network: a central node directly connected to every other node.
+     * The ego-tree layout only positions the root's *direct* neighbours, so a
+     * star guarantees **all** nodes get deterministic positions (a deeper tree
+     * would leave non-neighbours unplaced). A couple of neighbour-to-neighbour
+     * edges keep it a real graph rather than a pure star (they're ignored by the
+     * ego hierarchy but still rendered).
+     */
+    egoNet(): BuiltFixture {
+        const ego = mkNode('ego', 0, 0)
+        const count = 6
+        const neighbours = Array.from({ length: count }, (_, i) => {
+            const angle = (i / count) * 2 * Math.PI - Math.PI / 2
+            return mkNode(`n${i + 1}`, Math.round(Math.cos(angle) * 180), Math.round(Math.sin(angle) * 180))
+        })
+        const edges = neighbours.map((nb) => new Edge(`ego-${nb.id}`, ego, nb))
+        edges.push(new Edge('n1-n2', neighbours[0], neighbours[1]))
+        edges.push(new Edge('n4-n5', neighbours[3], neighbours[4]))
+        return { nodes: [ego, ...neighbours], edges, notes: [] }
+    },
+
     /** A horizontal label (with background box) and a label rotated to follow its edge. */
     edgeLabels(): BuiltFixture {
         const color = '#0369a1'

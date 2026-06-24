@@ -11,6 +11,8 @@
  */
 import { Pivotick, Node, Edge } from '../../../src/index'
 import { Note } from '../../../src/Note'
+import { TreeLayout } from '../../../src/plugins/layout/Tree'
+import { EgoTreeLayout } from '../../../src/plugins/layout/EgoTree'
 import { fixtures, type FixtureName, type RawNote } from './fixtures'
 
 /**
@@ -81,10 +83,24 @@ export interface HarnessApi {
      * test needs the exact layout it designed (e.g. side-by-side styling scenes).
      */
     pin(): void
+    /**
+     * Re-apply the **exact** positions of the currently-loaded tree / egoTree
+     * layout and pin them (no-op for `force`).
+     *
+     * On `load`, a tree layout's positions are produced by a *force relaxation*
+     * toward the computed tree targets — converged, but timing-dependent and so
+     * brittle for pixel baselines (see the README). This re-runs the layout's
+     * deterministic d3-hierarchy computation, writing the exact target positions
+     * onto the nodes, then pins (`fx/fy`) and re-fits. The baseline becomes a
+     * pure function of (graph, layout options) — independent of tick count.
+     */
+    applyLayout(): void
     /** Re-fit and centre all content (including notes) into the viewport. */
     fit(scale?: number): void
     /** Current element counts — handy for non-visual assertions. */
     counts(): { nodes: number; edges: number; notes: number }
+    /** Every node's current `(x, y)` (graph coordinates) — for layout assertions. */
+    nodePositions(): Record<string, { x: number; y: number }>
 }
 
 class Harness implements HarnessApi {
@@ -210,6 +226,26 @@ class Harness implements HarnessApi {
         }
     }
 
+    applyLayout(): void {
+        const layout = this.g.getOptions().layout
+        if (!layout || layout.type === 'force') return // force has no exact target
+        const d3sim = this.g.simulation.getSimulation()
+        const forces = this.g.simulation.getForceSimulation()
+        const LayoutClass = layout.type === 'egoTree' ? EgoTreeLayout : TreeLayout
+        // Constructing the layout recomputes the d3-hierarchy positions and writes
+        // them straight onto the live nodes (via getMutableNode), bypassing the
+        // load-time force relaxation entirely.
+        new LayoutClass(this.g as never, d3sim, forces as never, layout as never)
+        for (const node of this.g.getMutableNodes()) {
+            if (typeof node.x === 'number' && typeof node.y === 'number') {
+                node.fx = node.x
+                node.fy = node.y
+            }
+        }
+        this.g.renderer.nextTick()
+        this.g.renderer.fitAndCenter()
+    }
+
     fit(scale?: number): void {
         this.g.renderer.fitAndCenter(scale)
     }
@@ -220,6 +256,14 @@ class Harness implements HarnessApi {
             edges: this.g.getEdgeCount(),
             notes: this.g.getNotes().length,
         }
+    }
+
+    nodePositions(): Record<string, { x: number; y: number }> {
+        const out: Record<string, { x: number; y: number }> = {}
+        for (const node of this.g.getMutableNodes()) {
+            out[node.id] = { x: node.x ?? 0, y: node.y ?? 0 }
+        }
+        return out
     }
 }
 
