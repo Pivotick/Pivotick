@@ -29,10 +29,15 @@
     "vitepress:preview": "vitepress preview docs",
     "typedoc:dev": "typedoc --watch",
     "typedoc:build": "typedoc",
-    "docs:build": "npm run typedoc:build && npm run vitepress:build"
+    "docs:build": "npm run typedoc:build && npm run vitepress:build",
+    "test:visual": "playwright test",
+    "test:visual:update": "playwright test --update-snapshots",
+    "test:visual:ui": "playwright test --ui",
+    "test:visual:report": "playwright show-report tests/visual/.report"
   },
   "devDependencies": {
     "@eslint/js": "^9.29.0",
+    "@playwright/test": "^1.61.1",
     "@types/d3-drag": "^3.0.7",
     "@types/d3-force": "^3.0.10",
     "@types/d3-hierarchy": "^3.1.7",

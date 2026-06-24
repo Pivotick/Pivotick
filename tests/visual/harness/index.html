@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pivotick — Visual Test Harness</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+
+        /* Fixed-size mount so fitAndCenter produces a deterministic transform.
+           The viewport is also pinned in playwright.config.ts; this guards against
+           any future change to the default viewport. */
+        #app {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: stretch;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app"></div>
+    <script type="module" src="./harness.ts"></script>
+</body>
+
+</html>
