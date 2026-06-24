@@ -1,6 +1,6 @@
 # PRD — Visual regression test coverage
 
-**Status:** In progress (P1 batch — Area 1 done)
+**Status:** In progress (P1 batch — Areas 1 & 2 done)
 **Owner:** _unassigned_
 **Last updated:** 2026-06-24
 
@@ -39,7 +39,7 @@ _Update these counts as items complete._
 | ---- | ------------ |
 | P0 — Harness prerequisites | 1 / 7 |
 | 1 — Node & edge styling | 10 / 10 |
-| 2 — Themes | 0 / 3 |
+| 2 — Themes | 3 / 3 |
 | 3 — Layouts | 0 / 6 |
 | 4 — Clustering | 0 / 4 |
 | 5 — Filtering | 0 / 4 |
@@ -48,7 +48,7 @@ _Update these counts as items complete._
 | 8 — UI chrome | 0 / 5 |
 | 9 — Notes (deepen) | 0 / 6 |
 | 10 — Edge creation (extend) | 0 / 3 |
-| **Total** | **11 / 58** |
+| **Total** | **14 / 58** |
 
 ---
 
@@ -211,9 +211,16 @@ depend on **P0.1**.
 
 Cheap, high value: today everything is pinned to light. Uses `load(..., { UI: { theme: 'dark' } })`.
 
-- [ ] **T2.1 ☐ Dark theme — basic graph** → `dark-basic-graph.png`
-- [ ] **T2.2 ☐ Dark theme — note** (markdown note in dark) → `dark-note.png`
-- [ ] **T2.3 ☐ Dark theme — selected node** (theme × selection colours) → `dark-node-selected.png`
+> **Done.** Spec: `specs/theme.spec.ts`. No new verb/fixture needed — `UIManager` sets
+> `data-theme="dark"` on the `.pivotick` container, and the existing `load(name, overrides)`
+> deep-merges `{ UI: { theme: 'dark' } }`. T2.1/T2.3 reuse the `basic` fixture and T2.2 the
+> `withNote` fixture (no `pin()`, matching the light `load-render`/`selection` baselines —
+> the well-connected `basic` graph settles deterministically). Baselines reviewed (dark
+> canvas/grid/chrome; selection glow + focus-dim over dark) and stable over repeated runs.
+
+- [x] **T2.1 ✅ Dark theme — basic graph** → `dark-basic-graph.png`
+- [x] **T2.2 ✅ Dark theme — note** (markdown note in dark) → `dark-note.png`
+- [x] **T2.3 ✅ Dark theme — selected node** (theme × selection colours) → `dark-node-selected.png`
 
 ---
 

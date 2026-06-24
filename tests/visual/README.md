@@ -96,6 +96,7 @@ Tests that are happy with the settled layout (most of the originals) simply don'
 | ----------------------- | ------------------------------------------------------------------- |
 | `load-render`           | Basic graph, graph with a Markdown note, note linked to a node      |
 | `styling`               | Node shapes / size / colour / icons / labels; edge curves / self-loop / markers / dashed / labels; undirected graph |
+| `theme`                 | Dark theme — basic graph, markdown note, selected node              |
 | `selection`             | Node selected, edge selected, selection cleared                     |
 | `edge-creation`         | Edge created via the editing layer; click-to-connect shadow preview + commit |
 | `notes`                 | Adding a note at runtime; dragging a note by its header             |
