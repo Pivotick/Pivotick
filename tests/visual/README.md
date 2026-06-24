@@ -20,6 +20,25 @@ npm run test:visual:report   # open the HTML report (expected / actual / diff ga
 Playwright boots the Vite dev server automatically (`npm run dev`), so you don't need
 to start it yourself.
 
+## Watching the tests run
+
+Two ways to see what a test does in real time (both need a desktop/display):
+
+```bash
+npm run test:visual:ui              # interactive runner — best for inspecting
+SLOWMO=600 npm run test:visual:headed   # watch a real browser drive the app live
+```
+
+- **UI mode** (`:ui`) opens a runner where you pick a test, watch it execute, then
+  time-travel through every action with before/after DOM snapshots, console and network.
+  It re-runs automatically when you edit a spec (watch mode). This is the best way to
+  understand or debug a test.
+- **Headed mode** (`:headed`) opens an actual Chromium window and performs the actions
+  in front of you. Tests finish in ~1s, so set `SLOWMO=<ms>` to slow each action down
+  enough to follow; it runs single-worker so there's only one window to watch.
+- After any run, `npm run test:visual:report` opens the HTML report with the
+  expected / actual / diff images for every test.
+
 ## How it works
 
 ```

@@ -35,6 +35,11 @@ export default defineConfig({
         deviceScaleFactor: 1,
         colorScheme: 'light',
         trace: 'on-first-retry',
+        // Watch it happen: `SLOWMO=600 npm run test:visual:headed` delays each
+        // action so the interactions are visible. No effect on normal/CI runs.
+        launchOptions: {
+            slowMo: process.env.SLOWMO ? Number(process.env.SLOWMO) : 0,
+        },
     },
 
     expect: {

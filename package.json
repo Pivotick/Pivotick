@@ -33,6 +33,7 @@
     "test:visual": "playwright test",
     "test:visual:update": "playwright test --update-snapshots",
     "test:visual:ui": "playwright test --ui",
+    "test:visual:headed": "playwright test --headed --workers=1",
     "test:visual:report": "playwright show-report tests/visual/.report"
   },
   "devDependencies": {
