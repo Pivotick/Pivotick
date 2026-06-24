@@ -1,4 +1,4 @@
-import { test, gotoHarness, loadFixture, harness, expectCanvas } from '../helpers'
+import { test, gotoHarness, loadFixture, canvas, centerOf, expectCanvas } from '../helpers'
 
 test.describe('zoom & pan', () => {
     test.beforeEach(async ({ page }) => {
@@ -6,14 +6,20 @@ test.describe('zoom & pan', () => {
         await loadFixture(page, 'basic')
     })
 
-    test('applies a centered 2x zoom', async ({ page }) => {
-        // Place the graph origin at the viewport centre (1280x800) scaled 2x.
-        await harness(page, 'setTransform', 2, 640, 400)
-        await expectCanvas(page, 'zoom-2x.png')
+    test('zooms in on a wheel scroll over the graph centre', async ({ page }) => {
+        // The graph is fit-centred in the canvas, so the canvas centre ≈ graph centre.
+        const center = await centerOf(canvas(page))
+        await page.mouse.move(center.x, center.y)
+        await page.mouse.wheel(0, -120) // one notch up — d3-zoom zooms in toward the cursor
+        await expectCanvas(page, 'zoom-wheel-in.png')
     })
 
-    test('pans the view', async ({ page }) => {
-        await harness(page, 'setTransform', 1, 900, 250)
-        await expectCanvas(page, 'panned.png')
+    test('pans with a middle-button drag', async ({ page }) => {
+        const center = await centerOf(canvas(page))
+        await page.mouse.move(center.x, center.y)
+        await page.mouse.down({ button: 'middle' })
+        await page.mouse.move(center.x + 160, center.y + 100, { steps: 10 })
+        await page.mouse.up({ button: 'middle' })
+        await expectCanvas(page, 'pan-drag.png')
     })
 })

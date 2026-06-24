@@ -11,7 +11,6 @@
  */
 import { Pivotick, Node, Edge } from '../../../src/index'
 import { Note } from '../../../src/Note'
-import { zoomIdentity } from 'd3-zoom'
 import { fixtures, type FixtureName, type RawNote } from './fixtures'
 
 /**
@@ -73,8 +72,6 @@ export interface HarnessApi {
     openNodeEditor(id: string): void
     /** Add a note; returns its domID for `#note-<id>` lookups. */
     addNote(note: RawNote): string
-    /** Apply an absolute zoom/pan transform deterministically. */
-    setTransform(scale: number, translateX?: number, translateY?: number): void
     /** Re-fit and centre all content (including notes) into the viewport. */
     fit(scale?: number): void
     /** Current element counts — handy for non-visual assertions. */
@@ -176,20 +173,6 @@ class Harness implements HarnessApi {
         const instance = new Note(note, note.id)
         this.g.noteManager.addNote(instance)
         return instance.domID
-    }
-
-    setTransform(scale: number, translateX = 0, translateY = 0): void {
-        // Reach into the SVG renderer's public zoom accessors for a pixel-exact,
-        // reproducible transform (avoids wheel/drag rounding differences).
-        const renderer = this.g.renderer as unknown as {
-            getCanvasSelection?: () => { call: (fn: unknown, t: unknown) => void }
-            getZoomBehavior?: () => { transform: unknown }
-        }
-        const selection = renderer.getCanvasSelection?.()
-        const behavior = renderer.getZoomBehavior?.()
-        if (!selection || !behavior) return
-        const transform = zoomIdentity.translate(translateX, translateY).scale(scale)
-        selection.call(behavior.transform, transform)
     }
 
     fit(scale?: number): void {
