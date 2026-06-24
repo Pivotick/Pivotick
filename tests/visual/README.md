@@ -67,7 +67,7 @@ of run-to-run variance:
 
 | Source of variance        | How it's pinned                                              |
 | ------------------------- | ------------------------------------------------------------ |
-| Force layout / animation  | `simulation.enabled = false`; nodes carry fixed `x/y` (+`fx/fy`) |
+| Force layout / animation  | `simulation.enabled = false`; fixtures seed fixed `x/y`, and `harness.pin()` re-applies them after load (see note below) |
 | Node positions            | Hard-coded in `fixtures.ts`                                   |
 | Colour scheme             | `theme: 'light'` (otherwise follows OS `prefers-color-scheme`) |
 | Zoom/pan transitions      | `render.zoomAnimation = false`                               |
@@ -80,11 +80,22 @@ The graph is only screenshotted after the `ready` event fires (layout done, zoom
 revealed). Most snapshots target the `.pvt-canvas` viewport (grid + SVG + on-canvas
 chrome) so they stay focused; UI-specific tests (e.g. the edit modal) target that element.
 
+#### Pinning exact positions (`harness.pin()`)
+
+A fixture's `x/y` are a **deterministic seed**, not a hard layout: the graph's initial
+layout pass clears `fx/fy` and settles nodes from those seeds with the force sim (even
+with the sim "off"). Well-connected fixtures stay compact; sparse/disconnected scenes get
+scattered apart by the charge force. When a test needs the layout it actually designed —
+e.g. the side-by-side styling scenes — call `harness(page, 'pin')` right after
+`loadFixture`. It re-applies the fixture's declared positions, then redraws and re-fits.
+Tests that are happy with the settled layout (most of the originals) simply don't call it.
+
 ## Coverage
 
 | Spec                    | What it checks                                                       |
 | ----------------------- | ------------------------------------------------------------------- |
 | `load-render`           | Basic graph, graph with a Markdown note, note linked to a node      |
+| `styling`               | Node shapes / size / colour / icons / labels; edge curves / self-loop / markers / dashed / labels; undirected graph |
 | `selection`             | Node selected, edge selected, selection cleared                     |
 | `edge-creation`         | Edge created via the editing layer; click-to-connect shadow preview + commit |
 | `notes`                 | Adding a note at runtime; dragging a note by its header             |

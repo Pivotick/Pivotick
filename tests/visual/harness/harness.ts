@@ -72,6 +72,15 @@ export interface HarnessApi {
     openNodeEditor(id: string): void
     /** Add a note; returns its domID for `#note-<id>` lookups. */
     addNote(note: RawNote): string
+    /**
+     * Re-pin every node to the position its fixture declared, then redraw + re-fit.
+     *
+     * The initial layout pass clears `fx/fy` and settles nodes from their seed
+     * positions (deterministic, but sim-driven), so a fixture's coordinates are
+     * only a starting point — not a fixed layout. Call this after `load()` when a
+     * test needs the exact layout it designed (e.g. side-by-side styling scenes).
+     */
+    pin(): void
     /** Re-fit and centre all content (including notes) into the viewport. */
     fit(scale?: number): void
     /** Current element counts — handy for non-visual assertions. */
@@ -81,6 +90,8 @@ export interface HarnessApi {
 class Harness implements HarnessApi {
     public graph?: Pivotick
     private readonly container: HTMLElement
+    /** Fixture-declared positions, captured before the graph mutates the nodes. */
+    private intended = new Map<string, { x: number; y: number }>()
 
     constructor(container: HTMLElement) {
         this.container = container
@@ -117,6 +128,13 @@ class Harness implements HarnessApi {
     async load(name: FixtureName, overrides: PlainObject = {}): Promise<void> {
         this.destroy()
         const data = fixtures[name]()
+        // Snapshot the fixture's positions now — the graph mutates these Node
+        // instances during its initial layout pass (see `pin()`).
+        this.intended = new Map(
+            data.nodes
+                .filter((n) => typeof n.x === 'number' && typeof n.y === 'number')
+                .map((n) => [n.id, { x: n.x as number, y: n.y as number }])
+        )
         const options = mergeOptions(BASE_OPTIONS, overrides)
         // `data.notes` carries raw note options; the graph normalises them to Notes.
         const graph = new Pivotick(this.container, data as never, options as never)
@@ -173,6 +191,23 @@ class Harness implements HarnessApi {
         const instance = new Note(note, note.id)
         this.g.noteManager.addNote(instance)
         return instance.domID
+    }
+
+    pin(): void {
+        let changed = false
+        for (const node of this.g.getMutableNodes()) {
+            const p = this.intended.get(node.id)
+            if (!p) continue
+            node.x = p.x
+            node.y = p.y
+            node.fx = p.x
+            node.fy = p.y
+            changed = true
+        }
+        if (changed) {
+            this.g.renderer.nextTick() // redraw edges + nodes at the pinned positions
+            this.g.renderer.fitAndCenter() // reframe to the pinned layout
+        }
     }
 
     fit(scale?: number): void {
