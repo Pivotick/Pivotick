@@ -1,8 +1,8 @@
 # PRD — Visual regression test coverage
 
-**Status:** In progress (Areas 1, 2 & 3 done)
+**Status:** In progress (Areas 1, 2, 3 & 4 done)
 **Owner:** _unassigned_
-**Last updated:** 2026-06-24
+**Last updated:** 2026-06-25
 
 This is a living planning + tracking document for expanding the Playwright visual
 regression suite under `tests/visual/`. It is meant to be **picked up incrementally by
@@ -37,18 +37,18 @@ _Update these counts as items complete._
 
 | Area | Done / Total |
 | ---- | ------------ |
-| P0 — Harness prerequisites | 2 / 7 |
+| P0 — Harness prerequisites | 3 / 7 |
 | 1 — Node & edge styling | 10 / 10 |
 | 2 — Themes | 3 / 3 |
 | 3 — Layouts | 6 / 6 |
-| 4 — Clustering | 0 / 4 |
+| 4 — Clustering | 3 / 3 |
 | 5 — Filtering | 0 / 4 |
 | 6 — Multi-selection & tools | 0 / 5 |
 | 7 — Hover / tooltip / context menu | 0 / 5 |
 | 8 — UI chrome | 0 / 5 |
 | 9 — Notes (deepen) | 0 / 6 |
 | 10 — Edge creation (extend) | 0 / 3 |
-| **Total** | **20 / 58** |
+| **Total** | **24 / 57** |
 
 ---
 
@@ -161,15 +161,22 @@ it depends on), or knock them all out up front.
   Drives Area 3. Also added a sister fixture **`egoNet`** (a star: a central `ego` linked
   to every other node) for the ego-tree case — the ego layout only positions the root's
   *direct* neighbours, so a star guarantees all nodes get deterministic positions.
-- [ ] **P0.3 ☐ Fixture `clustered`** — a parent node with `children` (and one nested
-  child-of-child for the nested case) plus a couple of external nodes with edges into the
-  cluster. Drives Area 4.
+- [x] **P0.3 ✅ Fixture `clustered`** — parent `group` with children `[c1, c2, c3]` where
+  `c1` is itself a nested cluster `[c1a, c1b]`, plus two external nodes (`ext1`, `ext2`)
+  whose edges point into the cluster (yielding visible *synthetic* edges to `group` when
+  collapsed). Drives Area 4. Two fixture mechanics worth knowing: (1) the graph's
+  normaliser only marks the **first** level of children when handed `Node` instances (the
+  form fixtures use), so a `markCluster` helper marks deeper descendants; (2) edges to
+  children must be `hide()`d in the fixture (the normaliser only auto-hides them for *raw*
+  edge data).
 - [ ] **P0.4 ☐ Fixture `filterable`** — ~8 nodes carrying filterable data fields
   (a categorical `type` and a numeric field) so query filters have something to match.
   Drives Area 5.
-- [ ] **P0.5 ☐ Control verbs — clustering & data:** `expand(id)` / `collapse(id)` (wrap
-  `graph.toggleExpandNode`), `setFilter(key, config)` / `resetFilters()` / `excludeNode(id)`
-  (wrap `graph.queryEngine.*`), `hideNode(id)` / `showNode(id)`. Drives Areas 4 & 5.
+- [ ] **P0.5 🔄 Control verbs — clustering & data:** _Clustering half done (Area 4)._
+  `expand(path)` / `collapse(id)` are implemented — `expand` accepts a single id or a path
+  (`['group','c1']`) to open nested clusters, and **deterministically re-pins** the children
+  (see the Area 4 done-block). Still TODO for Area 5: `setFilter` / `resetFilters` /
+  `excludeNode` (wrap `graph.queryEngine.*`) and `hideNode` / `showNode`.
 - [ ] **P0.6 ☐ Control verbs — interaction triggers:** `hoverNode(id)` (or do it with raw
   pointer events in-spec), `openContextMenu(kind, id?)`, `openInspect(id)`, `toggleEditMode()`,
   `enableLasso()`, `multiSelect(ids)`. Several of these may be better done as real pointer
@@ -262,13 +269,37 @@ Decide per-layout whether to keep sim off (assert the computed transform) or set
 
 ## Area 4 — Clustering / expand-collapse  ·  `specs/cluster.spec.ts`  ·  Priority P2
 
-Depends on **P0.3** and **P0.5** (`expand`/`collapse`). Watch for expand/collapse
-*animations* — wait for the cluster area to reach final radius before snapshotting.
+Depends on **P0.3** and **P0.5** (`expand`/`collapse`).
 
-- [ ] **T4.1 ☐ Collapsed cluster** — dashed parent circle, synthetic edges visible. → `cluster-collapsed.png`
-- [ ] **T4.2 ☐ Expanded cluster** — hull/area circle with children rendered inside. → `cluster-expanded.png`
-- [ ] **T4.3 ☐ Nested cluster** — cluster within a cluster, both expanded. → `cluster-nested.png`
-- [ ] **T4.4 ☐ Type-grouped colours** — `nodeTypeAccessor` + `nodeStyleMap` colour nodes by type. → `cluster-type-colors.png`
+> **Done.** Spec: `specs/cluster.spec.ts`.
+>
+> **Determinism decision (the open question for this area).** Expand/collapse isn't just
+> animated — a cluster's *child layout* is produced by a throw-away **subgraph running its
+> own force pass** (`cooldownTime` is wall-clock, so the child positions are timing-
+> dependent, exactly the brittleness the README flags). Waiting "for the final radius"
+> isn't enough; the children themselves won't land in the same place twice. So `expand`:
+> 1. expands the node, waits for its subgraph to exist, then **`disable()`s that subgraph's
+>    simulation** so nothing drifts;
+> 2. re-pins the children onto a fixed **ring** (parent-local coords), mirroring each onto
+>    the owner graph's real child so boundary-crossing edges track them;
+> 3. **tightens** the cluster-area circle to snugly fit the children — the library's auto
+>    radius is oversized for small children, leaving the area mostly empty. For nested
+>    clusters this runs **innermost→outermost**, so each parent grows to contain its
+>    already-tightened sub-cluster (the nested subgraph renders *inside* the parent's `<g>`,
+>    so moving the parent moves its children — no re-sync needed).
+>
+> The d3 *attribute* transitions (circle radius, glyph/icon re-seat) are JS-driven, so
+> Playwright's `animations:'disabled'` doesn't freeze them — `expand` settles them to their
+> end-state explicitly (a short `sleep` for the transition + a direct attribute write).
+> New verbs: `expand(path)` (single id or nested path) and `collapse(id)`. Baselines
+> reviewed (dashed parent circle + synthetic edges; snug area circle with children inside;
+> concentric circles for nesting) and stable over repeated runs (single-worker and parallel).
+
+- [x] **T4.1 ✅ Collapsed cluster** — dashed parent circle, synthetic edges visible. → `cluster-collapsed.png`
+- [x] **T4.2 ✅ Expanded cluster** — area circle with children rendered inside (`c1` shown as a collapsed sub-cluster). → `cluster-expanded.png`
+- [x] **T4.3 ✅ Nested cluster** — cluster within a cluster, both expanded (concentric dashed circles). → `cluster-nested.png`
+- ⏭️ **T4.4 — Type-grouped colours** — _descoped._ Type-based styling (`nodeTypeAccessor` +
+  `nodeStyleMap`) is a node-styling concern, not clustering; removed from this area.
 
 ---
 

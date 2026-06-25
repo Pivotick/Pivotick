@@ -102,6 +102,19 @@ pure function of (graph, layout options). It's a no-op for `force` (which has no
 target; the layout spec pins the seeds there instead). The `layout` spec also asserts the
 computed *ordering* via `harness(page, 'nodePositions')` as a robust complement.
 
+#### Pinning a cluster's children (`harness.expand()`)
+
+Expanding a cluster is doubly non-deterministic: the cluster-area circle animates, *and*
+the children inside are laid out by a throw-away **subgraph running its own force pass**
+whose cooldown is wall-clock (so the child positions vary run to run). `harness(page,
+'expand', 'group')` (or a nested path like `['group', 'c1']`) handles both: it disables
+that subgraph's simulation, re-pins the children onto a fixed **ring** in parent-local
+coordinates (mirroring each onto the real child so boundary-crossing edges track it), and
+**tightens** the area circle to snugly fit them — innermost cluster first, so each parent
+grows to contain its already-tightened sub-cluster. The result is a pure function of the
+fixture. (Playwright only freezes CSS animations, so the JS-driven d3 attribute
+transitions are settled to their end-state explicitly.)
+
 ## Coverage
 
 | Spec                    | What it checks                                                       |
@@ -110,6 +123,7 @@ computed *ordering* via `harness(page, 'nodePositions')` as a robust complement.
 | `styling`               | Node shapes / size / colour / icons / labels; edge curves / self-loop / markers / dashed / labels; undirected graph |
 | `theme`                 | Dark theme — basic graph, markdown note, selected node              |
 | `layout`                | Force, tree (vertical / horizontal / radial), ego tree; + position-ordering assertions |
+| `cluster`               | Collapsed cluster (synthetic edges), expanded cluster, nested cluster |
 | `selection`             | Node selected, edge selected, selection cleared                     |
 | `edge-creation`         | Edge created via the editing layer; click-to-connect shadow preview + commit |
 | `notes`                 | Adding a note at runtime; dragging a note by its header             |

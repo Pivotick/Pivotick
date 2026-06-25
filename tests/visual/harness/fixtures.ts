@@ -45,6 +45,42 @@ function mkNode(id: string, x: number, y: number, data: Record<string, unknown> 
     return node
 }
 
+/**
+ * Create a pinned parent (cluster) node from a set of `children` (themselves
+ * leaves or nested clusters). Passing the children to the constructor flags the
+ * node `isParent`; {@link markCluster} then completes the wiring for deeper levels.
+ */
+function mkCluster(
+    id: string,
+    x: number,
+    y: number,
+    children: Node[],
+    data: Record<string, unknown> = {}
+): Node {
+    const node = new Node(id, { label: id.toUpperCase(), ...data }, {}, id, children)
+    node.x = x
+    node.y = y
+    node.fx = x
+    node.fy = y
+    return node
+}
+
+/**
+ * Recursively mark every descendant of a cluster as a hidden child.
+ *
+ * The graph's normaliser only marks the *first* level of children when handed
+ * `Node` instances (the form these fixtures use) — deeper descendants are left
+ * unmarked, which breaks nested clusters. `_setData` still adds every descendant
+ * to the node map, so once they're marked here the whole hierarchy behaves.
+ */
+function markCluster(parent: Node, depth = 1): void {
+    parent.children.forEach((child) => {
+        child.markAsChild(parent, depth)
+        child.hide()
+        markCluster(child, depth + 1)
+    })
+}
+
 /** Create a node with a fixed position, baked-in style, and a stable id-equals-domID. */
 function mkStyledNode(
     id: string,
@@ -349,6 +385,49 @@ export const fixtures = {
         edges.push(new Edge('n1-n2', neighbours[0], neighbours[1]))
         edges.push(new Edge('n4-n5', neighbours[3], neighbours[4]))
         return { nodes: [ego, ...neighbours], edges, notes: [] }
+    },
+
+    // ── Area 4 (clustering) fixtures ────────────────────────────────────────────
+
+    /**
+     * A cluster scene: a parent `group` holding three children — one of which
+     * (`c1`) is itself a nested cluster of two leaves — plus two external nodes
+     * whose edges point *into* the cluster. Drives the whole of Area 4:
+     *
+     *  - **collapsed** (default): `group` renders as a dashed parent circle and
+     *    the external edges show up as **synthetic** edges pointing at `group`
+     *    (the edges to the hidden children are themselves hidden).
+     *  - **expanded** (`harness.expand('group')`): the children render inside the
+     *    cluster area; `c1` shows as a collapsed sub-cluster.
+     *  - **nested** (`harness.expand(['group','c1'])`): `c1` opens too, revealing
+     *    its leaves inside a cluster-within-a-cluster.
+     *
+     * Children carry placeholder positions only — when a cluster is expanded its
+     * subgraph lays children out with a (non-deterministic) force pass, so
+     * `harness.expand` re-pins them into a deterministic ring instead.
+     */
+    clustered(): BuiltFixture {
+        const c1a = mkNode('c1a', -40, 60)
+        const c1b = mkNode('c1b', 40, 60)
+        const c1 = mkCluster('c1', -60, 0, [c1a, c1b])
+        const c2 = mkNode('c2', 60, -40)
+        const c3 = mkNode('c3', 60, 50)
+        const group = mkCluster('group', 0, 0, [c1, c2, c3])
+        markCluster(group)
+
+        const ext1 = mkNode('ext1', -250, 0)
+        const ext2 = mkNode('ext2', 250, 20)
+
+        // Edges into the cluster's children. Hidden while collapsed (mirroring the
+        // normaliser's handling of raw edges to children); the normaliser adds the
+        // *synthetic* ext→group edges that are visible in the collapsed state.
+        const intoCluster = [
+            new Edge('ext1-c2', ext1, c2),
+            new Edge('ext2-c1', ext2, c1),
+        ]
+        intoCluster.forEach((e) => e.hide())
+
+        return { nodes: [group, ext1, ext2], edges: intoCluster, notes: [] }
     },
 
     /** A horizontal label (with background box) and a label rotated to follow its edge. */

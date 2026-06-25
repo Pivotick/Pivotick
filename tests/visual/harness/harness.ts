@@ -9,7 +9,7 @@
  * This file is internal test code, so it imports internal modules directly
  * (`../../../src/...`). Importing from `index` also pulls in the stylesheet.
  */
-import { Pivotick, Node, Edge } from '../../../src/index'
+import { Pivotick, Node } from '../../../src/index'
 import { Note } from '../../../src/Note'
 import { TreeLayout } from '../../../src/plugins/layout/Tree'
 import { EgoTreeLayout } from '../../../src/plugins/layout/EgoTree'
@@ -70,6 +70,21 @@ export interface HarnessApi {
     startClickConnect(): void
     /** Pick a node as source/target while in click-to-connect mode. */
     pickConnectNode(id: string): void
+    /**
+     * Expand one or more clusters and **deterministically** lay out their
+     * children. Pass a single id (`'group'`) to expand a top-level cluster, or a
+     * path (`['group', 'c1']`) to expand a cluster and then a nested cluster
+     * inside it. Resolves once every level has settled.
+     *
+     * A cluster's children are normally placed by a per-cluster force pass (in a
+     * throw-away subgraph) — non-deterministic and timing-dependent. This freezes
+     * that pass and re-pins the children onto a fixed ring inside the cluster
+     * area, so the rendered cluster is a pure function of the fixture (the same
+     * trick `pin`/`applyLayout` use for the top-level layout).
+     */
+    expand(path: string | string[]): Promise<void>
+    /** Collapse a previously-expanded cluster by id. */
+    collapse(id: string): Promise<void>
     /** Open the in-place node edit session (surfaces the edit-node modal). */
     openNodeEditor(id: string): void
     /** Add a note; returns its domID for `#note-<id>` lookups. */
@@ -201,6 +216,132 @@ class Harness implements HarnessApi {
     openNodeEditor(id: string): void {
         const node = this.g.getMutableNode(id)
         if (node) this.g.editing.openNodeSession(node)
+    }
+
+    async expand(path: string | string[]): Promise<void> {
+        const ids = Array.isArray(path) ? path : [path]
+        const opened: Array<{ owner: Pivotick; node: Node; subgraph: Pivotick }> = []
+        let graph: Pivotick = this.g
+        for (const id of ids) {
+            const node = graph.getMutableNode(id)
+            if (!node || !node.hasChildren()) break
+            if (!node.expanded) graph.toggleExpandNode(node)
+            const subgraph = await this.awaitSubgraph(node)
+            if (!subgraph) break
+            // Stop the subgraph's force pass so the children stay where we put them,
+            // and give them provisional spots so a nested expand has stable anchors.
+            subgraph.simulation.disable()
+            this.placeChildren(graph, node, this.visibleChildren(subgraph), node.getCircleRadius() * 0.55)
+            subgraph.renderer.nextTick()
+            graph.renderer.nextTick()
+            // Let the cluster-area circle (+ any parent resize) finish their 250ms d3
+            // transitions before we read radii. (Playwright freezes CSS, not d3.)
+            await this.sleep(350)
+            opened.push({ owner: graph, node, subgraph })
+            graph = subgraph // descend for the next id in the path
+        }
+        // The library's auto cluster radius is oversized for small children, so the
+        // area circle reads as mostly empty. Tighten each cluster to snugly fit its
+        // children — innermost first, so every parent then grows to contain its
+        // already-tightened sub-clusters.
+        for (let i = opened.length - 1; i >= 0; i--) {
+            const { owner, node, subgraph } = opened[i]
+            this.tightenCluster(owner, node, subgraph)
+        }
+        await this.frames(2)
+    }
+
+    async collapse(id: string): Promise<void> {
+        const node = this.g.getMutableNode(id)
+        if (node && node.expanded) this.g.toggleExpandNode(node)
+        await this.frames(2)
+    }
+
+    private raf(): Promise<void> {
+        return new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
+    }
+
+    private async frames(n: number): Promise<void> {
+        for (let i = 0; i < n; i++) await this.raf()
+    }
+
+    private sleep(ms: number): Promise<void> {
+        return new Promise<void>((resolve) => setTimeout(resolve, ms))
+    }
+
+    /** Wait for the subgraph a cluster creates on expand to exist and be populated. */
+    private async awaitSubgraph(node: Node): Promise<Pivotick | undefined> {
+        for (let i = 0; i < 120; i++) {
+            const sub = node.getSubgraph() as Pivotick | undefined
+            if (sub && sub.getMutableNodes().length > 0) return sub
+            await this.raf()
+        }
+        return undefined
+    }
+
+    private visibleChildren(subgraph: Pivotick): Node[] {
+        return subgraph.getMutableNodes().filter((n) => n.visible)
+    }
+
+    /**
+     * Lay a cluster's children on a deterministic ring (parent-local coords) and
+     * mirror each position onto the owner graph's real child (global = parent +
+     * local) so edges crossing the cluster boundary track them.
+     */
+    private placeChildren(owner: Pivotick, node: Node, children: Node[], ring: number): void {
+        const count = children.length
+        children.forEach((child, i) => {
+            const single = count === 1
+            const angle = (i / count) * 2 * Math.PI - Math.PI / 2
+            const lx = single ? 0 : Math.round(Math.cos(angle) * ring)
+            const ly = single ? 0 : Math.round(Math.sin(angle) * ring)
+            child.x = lx
+            child.y = ly
+            child.fx = lx
+            child.fy = ly
+            const real = owner.getMutableNode(child.id)
+            if (real) {
+                real.x = (node.x ?? 0) + lx
+                real.y = (node.y ?? 0) + ly
+                real.fx = real.x
+                real.fy = real.y
+            }
+        })
+    }
+
+    /**
+     * Shrink an expanded cluster's area circle to snugly enclose its children
+     * (sized to fit the largest child, which for nested clusters is an already-
+     * tightened sub-cluster), and re-seat the children + the parent's own
+     * glyph/collapse-icon to the new radius.
+     */
+    private tightenCluster(owner: Pivotick, node: Node, subgraph: Pivotick): void {
+        const children = this.visibleChildren(subgraph)
+        const count = children.length
+        const childR = Math.max(14, ...children.map((c) => c.getCircleRadius() || 0))
+        const gap = 18
+        // Spread children far enough apart that neighbours on the ring don't touch.
+        const ring = count <= 1 ? 0 : Math.max((childR + gap) / Math.sin(Math.PI / count), childR * 1.6)
+        const radius = (count <= 1 ? childR : ring + childR) + 16
+
+        this.placeChildren(owner, node, children, ring)
+        node.setCircleRadius(radius)
+
+        const el = node.getGraphElement()
+        if (el) {
+            const area = el.querySelector(':scope > .pvt-cluster-area')
+            if (area) {
+                area.setAttribute('_final_r', String(radius))
+                area.setAttribute('r', String(radius))
+            }
+            // Match the library's expanded layout: parent glyph at the NW rim, its
+            // collapse icon at the SE rim (both at distance (r+2)/√2 along the 45°).
+            const offset = (radius + 2) / Math.SQRT2
+            el.querySelector(':scope > .node')?.setAttribute('transform', `translate(${-offset}, ${-offset})`)
+            el.querySelector(':scope > .node-icon')?.setAttribute('transform', `translate(${offset}, ${offset})`)
+        }
+        subgraph.renderer.nextTick()
+        owner.renderer.nextTick()
     }
 
     addNote(note: RawNote): string {
