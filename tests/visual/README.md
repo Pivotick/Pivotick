@@ -142,7 +142,7 @@ whole page.
 | `filter`                | Query filter removes nodes+edges; filter reset; manually excluded node; the filter slide-panel form |
 | `selection`             | Node selected, edge selected, selection cleared; multi-selection + focus dim; selection-box & lasso (mid-drag); multi-node group drag |
 | `edge-creation`         | Edge created via the editing layer; click-to-connect shadow preview + commit |
-| `notes`                 | Adding a note at runtime; dragging a note by its header             |
+| `notes`                 | Adding a note at runtime; dragging a note by its header; rich Markdown (heading/list/bold/italic/code/blockquote/table/link); `[[node]]` reference chips (resolved + unresolved); the colour palette; corner-handle resize; an empty note |
 | `node-editing`          | The node edit modal                                                 |
 | `interactions`          | Node hover tooltip; node / canvas / note context menus (right-click) |
 | `ui-chrome`             | Sidebar (node selected); toolbar in edit mode; navigation + layout/physics controls; inspect-node modal; search / node-picker modal |

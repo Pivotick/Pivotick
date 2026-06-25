@@ -1,6 +1,6 @@
 # PRD — Visual regression test coverage
 
-**Status:** In progress (Areas 1–8 done)
+**Status:** In progress (Areas 1–9 done)
 **Owner:** _unassigned_
 **Last updated:** 2026-06-25
 
@@ -46,9 +46,9 @@ _Update these counts as items complete._
 | 6 — Multi-selection & tools | 5 / 5 |
 | 7 — Hover / tooltip / context menu | 4 / 4 |
 | 8 — UI chrome | 5 / 5 |
-| 9 — Notes (deepen) | 0 / 6 |
+| 9 — Notes (deepen) | 5 / 5 |
 | 10 — Edge creation (extend) | 0 / 3 |
-| **Total** | **47 / 56** |
+| **Total** | **52 / 55** |
 
 ---
 
@@ -529,12 +529,40 @@ pixels are more volatile. Each snapshots its own element locator.
 T9.1–T9.2 are pure-render P1 (catch `marked`/`dompurify`/extension regressions). Add note
 content via the existing `addNote` verb + `fit`.
 
-- [ ] **T9.1 ☐ Rich markdown** — one note with heading, list, **bold**/*italic*, `code`, blockquote, table, link. **(P1)** → `note-markdown-rich.png`
-- [ ] **T9.2 ☐ Node reference** — `[[NodeName]]` renders the custom reference span (distinct from a plain linked note). **(P1)** → `note-node-reference.png`
-- [ ] **T9.3 ☐ Note colour variants** — the 5-colour palette. → `note-colors.png`
-- [ ] **T9.4 ☐ Note resize** — drag the corner handle (or `setSize`); snapshot resized. → `note-resized.png`
-- [ ] **T9.5 ☐ Note attached to an edge** — `attachedElement: { type:'edge', id }` connector (only node-attach is tested today). → `note-attached-edge.png`
-- [ ] **T9.6 ☐ Empty note** — `content: ''`; header + handle, no body. → `note-empty.png`
+> **Done.** Spec: `specs/notes.spec.ts` (extends the existing add/drag tests with a new
+> `notes — content, colours & sizing` block). **No new verb or fixture:** `addNote`
+> already carries `content` / `color` / `width` / `height`, so every scene is set up
+> in-spec on the existing `basic` and `nodeStyles` fixtures.
+>
+> **Snapshot target (the determinism call for this area).** A note is an SVG
+> `<g id="note-<domID>">` inside the `<g class="notes">` layer. The four single-note
+> tests snapshot that note **element** directly (`expectElement`) — the markdown render is
+> then the whole frame, crisp and *independent of where the force layout settled* (the
+> note carries a fixed position/size and the graph never enters the crop). The palette
+> (T9.3) snapshots the whole `.notes` group (five notes in one shot), positioned in a row
+> **above** the graph so the crop is over empty grid (no nodes showing through the gaps).
+> Every test loads at **1:1** (`harness('fit', 1)`) so note text is crisp and the resize
+> drag maps screen pixels straight to note units, and `pin()`s the fixture so the
+> combined-bounds fit framing is exact. Per the async-render caveat, the rendered markdown
+> is awaited explicitly (a child of `.pvt-note-content-rendered`) before snapshotting, and
+> each test asserts the *real outcome* first (markdown elements present / refs resolved /
+> note grew). Baselines reviewed (rendered PNGs read back directly) and stable over
+> repeated runs (incl. `--repeat-each 4` single-worker).
+
+- [x] **T9.1 ✅ Rich markdown** — one note with heading, list, **bold**/*italic*, `code`, blockquote, GFM table, link; the test asserts each element rendered (marked + dompurify) before snapshotting the note element. **(P1)** → `note-markdown-rich.png`
+- [x] **T9.2 ✅ Node reference** — `[[name]]` resolves by id/label to a node and renders the colour-tinted reference chip; an unknown name renders the dashed `unresolved` variant. Uses `nodeStyles` so the three resolved chips pick up three distinct node colours; asserts 3 resolved + 1 unresolved. **(P1)** → `note-node-reference.png`
+- [x] **T9.3 ✅ Note colour variants** — one note per built-in palette colour (`#FDE68A`/`#FCA5A5`/`#93C5FD`/`#86EFAC`/`#C4B5FD`); the swatch is the note background (`--note-color`) — the in-header colour pills are edit-only. Snapshots the `.notes` group. → `note-colors.png`
+- [x] **T9.4 ✅ Note resize** — real drag of the bottom-right `.pvt-note-resize-handle`; asserts the note's `foreignObject` width/height grew by the dragged delta (1:1 at this zoom), then snapshots the resized note. → `note-resized.png`
+- ⏭️ **T9.5 — Note attached to an edge** — _descoped: feature not implemented._ The library
+  only renders **node** attachment — `NoteDrawer.refreshLink` / `updateShadowLinks` /
+  `updateShadowLinkBoundBoxes` all branch on `attached.type === 'node'` with no edge case,
+  so an `{ type:'edge', id }` attachment draws **no connector** (it falls through to the
+  unlinked placeholder state). There is nothing to screenshot that differs from an
+  unattached note; a baseline would silently lock in a misleading "looks unattached" frame.
+  The PRD's parenthetical ("only node-attach is tested today") assumed edge-attach was a
+  working-but-untested path; it isn't a path at all yet. Re-scope when the renderer grows
+  an edge-attachment branch (it would anchor the shadow link to the edge midpoint).
+- [x] **T9.6 ✅ Empty note** — `content: ''` renders no markdown body; the test asserts the rendered container is empty and the resize handle is present, leaving just the (bare) header bar + handle. → `note-empty.png`
 
 ---
 
