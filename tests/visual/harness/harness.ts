@@ -13,6 +13,7 @@ import { Pivotick, Node } from '../../../src/index'
 import { Note } from '../../../src/Note'
 import { TreeLayout } from '../../../src/plugins/layout/Tree'
 import { EgoTreeLayout } from '../../../src/plugins/layout/EgoTree'
+import { createInspectModal } from '../../../src/ui/elements/modals/InspectNodeModal/InspectNodeModal'
 import type { FilterFieldConfig, GraphFilters } from '../../../src/interfaces/GraphQueryEngine'
 import type { GraphInteractionContext } from '../../../src/interfaces/GraphInteractions'
 import { fixtures, type FixtureName, type RawNote } from './fixtures'
@@ -98,6 +99,13 @@ export interface HarnessApi {
     collapse(id: string): Promise<void>
     /** Open the in-place node edit session (surfaces the edit-node modal). */
     openNodeEditor(id: string): void
+    /**
+     * Open the inspect-node modal for a node (Properties + JSON tabs). Calls the
+     * same `createInspectModal` the `i` shortcut and the context-menu "Inspect
+     * Properties" item use — only reachable in light/full mode (the modal
+     * container is built there).
+     */
+    openInspect(id: string): void
     /** Add a note; returns its domID for `#note-<id>` lookups. */
     addNote(note: RawNote): string
     /**
@@ -270,6 +278,11 @@ class Harness implements HarnessApi {
     openNodeEditor(id: string): void {
         const node = this.g.getMutableNode(id)
         if (node) this.g.editing.openNodeSession(node)
+    }
+
+    openInspect(id: string): void {
+        const node = this.g.getMutableNode(id)
+        if (node) createInspectModal(node, this.g.UIManager)
     }
 
     async expand(path: string | string[]): Promise<void> {

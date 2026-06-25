@@ -1,6 +1,6 @@
 # PRD — Visual regression test coverage
 
-**Status:** In progress (Areas 1, 2, 3, 4, 5, 6 & 7 done)
+**Status:** In progress (Areas 1–8 done)
 **Owner:** _unassigned_
 **Last updated:** 2026-06-25
 
@@ -37,7 +37,7 @@ _Update these counts as items complete._
 
 | Area | Done / Total |
 | ---- | ------------ |
-| P0 — Harness prerequisites | 5 / 7 |
+| P0 — Harness prerequisites | 7 / 7 |
 | 1 — Node & edge styling | 10 / 10 |
 | 2 — Themes | 3 / 3 |
 | 3 — Layouts | 6 / 6 |
@@ -45,10 +45,10 @@ _Update these counts as items complete._
 | 5 — Filtering | 4 / 4 |
 | 6 — Multi-selection & tools | 5 / 5 |
 | 7 — Hover / tooltip / context menu | 4 / 4 |
-| 8 — UI chrome | 0 / 5 |
+| 8 — UI chrome | 5 / 5 |
 | 9 — Notes (deepen) | 0 / 6 |
 | 10 — Edge creation (extend) | 0 / 3 |
-| **Total** | **40 / 56** |
+| **Total** | **47 / 56** |
 
 ---
 
@@ -184,7 +184,7 @@ it depends on), or knock them all out up front.
   library's `queryEngine.excludeNode(string)` resolves the id via `getNode`, which returns a
   method-less `structuredClone`, so the subsequent `node.hide()` throws — a `Node` instance
   takes the working `instanceof` branch instead.
-- [ ] **P0.6 🔄 Control verbs — interaction triggers:** `hoverNode(id)` (or do it with raw
+- [x] **P0.6 ✅ Control verbs — interaction triggers:** `hoverNode(id)` (or do it with raw
   pointer events in-spec), `openContextMenu(kind, id?)`, `openInspect(id)`, `toggleEditMode()`,
   `enableLasso()`, `multiSelect(ids)`. Several of these may be better done as real pointer
   gestures in the spec — pick per test and note the choice. Drives Areas 6, 7, 10.
@@ -201,14 +201,26 @@ it depends on), or knock them all out up front.
   > the thing under test, and the harness's light mode already mounts the Tooltip and
   > ContextMenu (`buildUIGraphNavigation` wires both whenever their default-on `enabled`
   > flag is set). So `hoverNode` / `openContextMenu` were resolved by choosing the pointer
-  > path P0.6 explicitly allows, not by adding verbs. The remaining verbs (`openInspect`,
-  > `toggleEditMode`) are still owed by Areas 8 / 10.
-- [ ] **P0.7 ☐ Full-mode harness support** — today the harness runs `UI.mode:'light'` with
+  > path P0.6 explicitly allows, not by adding verbs.
+  > **Area 8 closed this out:** added **`openInspect(id)`** (calls the same `createInspectModal`
+  > the `i` shortcut / context-menu "Inspect Properties" item use). `toggleEditMode` was
+  > resolved by driving the real `e` shortcut in-spec (the P0.6 pointer/keyboard path), and
+  > the search picker by clicking its real button — so no further verbs were owed.
+- [x] **P0.7 ✅ Full-mode harness support** — today the harness runs `UI.mode:'light'` with
   the sidebar collapsed, so sidebar/toolbar/controls never render. Allow loading in
   `'full'` mode (either a `load()` override that un-collapses the sidebar, or a second
   loader). Drives Area 8. _Note: full-mode chrome is more pixel-volatile; expect to
   target specific elements (`.pvt-sidebar`, `.pvt-graphtoolbar-elements`) rather than the
   whole page._
+  > **Resolved (Area 8): the `load()` override, no second loader.** `load` already deep-merges
+  > options, so T8.1 loads full mode with `{ UI: { mode: 'full', sidebar: { collapsed: false } } }`.
+  > The 1280×800 viewport sits just under the `hasEnoughSpaceForFullMode` height check, but that
+  > only governs the `collapsed:'auto'` branch — an explicit `false` builds the sidebar anyway.
+  > Per the P0.7 correction below, only the **sidebar** actually needs full mode: the toolbar,
+  > navigation, controls and modal/mainheader containers are built in **light** mode too and are
+  > positioned as canvas overlays / a top bar regardless of grid mode, so they look identical in
+  > both. So T8.2–T8.5 stay on the default light-mode harness and only T8.1 goes full. Every
+  > Area 8 baseline targets a specific element (chrome is volatile), as advised.
   > **Correction (found in Area 5):** light mode *does* build the **mainheader** (and thus
   > its filter / note slide panels) — `setupLightMode` calls `buildMainheader()`, and the
   > harness viewport (1280×800) clears the light-mode space check. So mainheader-hosted
@@ -467,11 +479,48 @@ wait for it. Context menu is `.pvt-contextmenu`. Needs a UI mode that enables th
 Depends on **P0.7** (full mode). Target specific elements, not the whole page — chrome
 pixels are more volatile. Each snapshots its own element locator.
 
-- [ ] **T8.1 ☐ Sidebar with a node selected** — properties + neighbours panels populated (`.pvt-sidebar`). → `sidebar-node-selected.png`
-- [ ] **T8.2 ☐ Toolbar in edit mode** — press `e`, snapshot toolbar groups (`.pvt-graphtoolbar-elements`). → `toolbar-edit-mode.png`
-- [ ] **T8.3 ☐ Navigation + controls** — zoom/fit/fullscreen buttons + layout/physics controls. → `nav-controls.png`
-- [ ] **T8.4 ☐ Inspect-node modal** — open via `I` / context menu; snapshot `#inspect-node-modal` (Properties + JSON tabs). → `inspect-modal.png`
-- [ ] **T8.5 ☐ Search / node-picker modal** — Shift+J; snapshot the picker. → `search-modal.png`
+> **Done.** Spec: `specs/ui-chrome.spec.ts`. Each test targets a specific element locator.
+>
+> **Mode (the P0.7 question, resolved — see P0.7 above).** Only the **sidebar** needs full
+> mode; it's the one piece built solely in `'full'` mode. T8.1 loads full mode via a plain
+> `load()` override (`UI.mode:'full'`, `sidebar.collapsed:false`). The toolbar, navigation,
+> controls and modal/mainheader containers are already built by the existing **light** mode
+> and positioned as overlays / a top bar independent of grid mode, so T8.2–T8.5 stay on the
+> default light-mode harness (they render identically either way).
+>
+> **Entry mechanism (the P0.6 "pick per test" call).** Edit mode (T8.2) and the search modal
+> (T8.5) are driven by their real entry points — the `e` shortcut (after focusing the
+> container, which the keybinding gates on; keyboard rather than a click keeps the button
+> unfocused, so no focus ring leaks into the baseline) and a click on the real search button.
+> The inspect modal (T8.4) uses the new **`openInspect(id)`** verb — the same `createInspectModal`
+> the `i` shortcut / context-menu "Inspect Properties" item call (mirroring how T5.4 opens the
+> filter panel by verb).
+>
+> **Determinism.** The one risk was T8.1's **"Neighbor Graph" tab**, which renders a *separate
+> internal sub-graph* (`new Graph(...)` with an `egoTree` radial layout) — exactly the
+> tree-layout brittleness the README flags. Two things make it safe: (1) the sub-graph sets
+> `cooldownTime:0` / `warmupTicks:0`, so its nodes land **directly on the deterministic
+> d3-hierarchy radial targets** with no force relaxation to drift (unlike the main-graph trees);
+> and (2) it renders **asynchronously** and keeps its container `visibility:hidden` until drawn,
+> so the test **waits explicitly** for that flip and for the four node shapes before
+> snapshotting — relying on `toHaveScreenshot`'s stability heuristic alone races the async
+> render and can lock in the *empty* container. Verified stable over 30+ repeats (single-worker
+> and parallel, incl. `--repeat-each 20` under heavy CPU contention). The other baselines are
+> modal/overlay/list chrome — pure functions of the node/edge data, layout-independent (the node
+> previews are bbox-scaled clones), so no `pin()` is needed anywhere in this area.
+>
+> **T8.3 is split into two baselines.** The navigation (top-right) and the layout/physics
+> controls (top-left) sit in opposite canvas corners with no tight common wrapper, so rather
+> than one whole-canvas shot (which the README steers away from for chrome), each is snapshotted
+> as its own element: `nav-controls-navigation.png` + `nav-controls-controls.png`. Loaded on the
+> acyclic `tree` fixture so the tree-layout buttons render enabled (a cyclic graph disables them);
+> the controls' fly-out sub-options are `:hover`-only, so they stay collapsed in the screenshot.
+
+- [x] **T8.1 ✅ Sidebar with a node selected** — overview + properties + neighbours panels populated for node `a` (`.pvt-sidebar`, full mode). → `sidebar-node-selected.png`
+- [x] **T8.2 ✅ Toolbar in edit mode** — `e` toggles edit mode; tool groups (Add Node/Edge/Note + selection tools) reveal and the button reads "Editing" (`.pvt-graphtoolbar`). → `toolbar-edit-mode.png`
+- [x] **T8.3 ✅ Navigation + controls** — zoom/fit/fullscreen/options (`.pvt-graphnavigation-elements`) + layout/physics buttons (`.pvt-graphcontrols-layout`); two baselines (see above). → `nav-controls-navigation.png`, `nav-controls-controls.png`
+- [x] **T8.4 ✅ Inspect-node modal** — `openInspect('a')` (same as the `i` shortcut / context menu); snapshot `#inspect-node-modal` (preview + name + Properties / JSON tabs). → `inspect-modal.png`
+- [x] **T8.5 ✅ Search / node-picker modal** — click the search button (Shift+J equivalent), type `router` on `filterable` (matches the 3 routers); snapshot the picker with its results. → `search-modal.png`
 
 ---
 
@@ -508,8 +557,10 @@ Real pointer gestures from a node. The `pair` fixture already exists.
 
 ## Open questions / decisions for the implementer
 
-- **Full-mode strategy (P0.7):** one parametrised harness vs a second harness page? Pick
-  one and document it in `README.md`.
+- **Full-mode strategy (P0.7):** _Resolved (Area 8)._ Neither a parametrised harness nor a
+  second page — just a **`load()` override** (`UI.mode:'full'`, `sidebar.collapsed:false`),
+  since `load` already deep-merges options and only the sidebar actually needs full mode (the
+  rest of the chrome renders in light mode). Documented in `README.md` and the P0.7 block.
 - **Layout determinism (Area 3):** _Resolved._ Neither "settle the sim" nor "assert the
   transform" alone — instead **recompute the layout's exact d3-hierarchy positions and pin
   them** (the `applyLayout` verb), so trees are pixel-deterministic without any tick-count

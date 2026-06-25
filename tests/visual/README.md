@@ -116,6 +116,20 @@ grows to contain its already-tightened sub-cluster. The result is a pure functio
 fixture. (Playwright only freezes CSS animations, so the JS-driven d3 attribute
 transitions are settled to their end-state explicitly.)
 
+#### Loading full mode for the sidebar
+
+The harness defaults to `UI.mode:'light'`, which already builds the toolbar, navigation,
+controls and the modal/mainheader containers — they're positioned as canvas overlays / a top
+bar regardless of grid mode, so the `ui-chrome` specs snapshot them straight from the default
+harness. The one exception is the **sidebar**, which the library only mounts in `'full'` mode.
+There's no separate full-mode loader: because `load(name, overrides)` deep-merges options, a
+test just passes `{ UI: { mode: 'full', sidebar: { collapsed: false } } }`. (The pinned
+1280×800 viewport is a hair under the library's full-mode auto-collapse threshold, but that
+only applies when `sidebar.collapsed` is `'auto'` — an explicit `false` always builds it.)
+Chrome is more pixel-volatile than the canvas, so every `ui-chrome` baseline targets a
+specific element locator (`.pvt-sidebar`, `.pvt-graphtoolbar`, the modal, …) rather than the
+whole page.
+
 ## Coverage
 
 | Spec                    | What it checks                                                       |
@@ -131,6 +145,7 @@ transitions are settled to their end-state explicitly.)
 | `notes`                 | Adding a note at runtime; dragging a note by its header             |
 | `node-editing`          | The node edit modal                                                 |
 | `interactions`          | Node hover tooltip; node / canvas / note context menus (right-click) |
+| `ui-chrome`             | Sidebar (node selected); toolbar in edit mode; navigation + layout/physics controls; inspect-node modal; search / node-picker modal |
 | `zoom`                  | A centered 2× zoom and a pan, applied deterministically             |
 
 ## Writing a new test
