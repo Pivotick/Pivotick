@@ -83,6 +83,16 @@ export interface HarnessApi {
     /** Pick a node as source/target while in click-to-connect mode. */
     pickConnectNode(id: string): void
     /**
+     * Enter the node→edge connection mode (the toolbar's "Add Edge"): wires the
+     * node pointer-down handler so a real *drag* from a node begins a connection
+     * (pending-drag → dragging → shadow-edge preview), plus the node-click handler
+     * for click-to-connect. Unlike {@link startClickConnect} — which starts a bare
+     * click-connect session without the pointer-down hook — this is the full mode
+     * the drag-to-connect gesture needs. Escape-to-cancel is already wired by the
+     * toolbar the harness mounts in light mode.
+     */
+    startEdgeConnect(): void
+    /**
      * Expand one or more clusters and **deterministically** lay out their
      * children. Pass a single id (`'group'`) to expand a top-level cluster, or a
      * path (`['group', 'c1']`) to expand a cluster and then a nested cluster
@@ -273,6 +283,18 @@ class Harness implements HarnessApi {
     pickConnectNode(id: string): void {
         const node = this.g.getMutableNode(id)
         if (node) this.g.editing.connectManager.selectOrConnectNode(node)
+    }
+
+    startEdgeConnect(): void {
+        this.g.editing.connectManager.startNodeClickConnection()
+        // The renderer disables canvas panning while a connection is in progress
+        // (it gates on `connectManager.isActiveAndNotIdle()`). A real pointer-down
+        // on a node flips the session out of 'idle' before the zoom filter runs, so
+        // that guard already covers the drag — but registering the same
+        // canvasBeforeZoom cancel `enableLasso` uses makes "no pan while connecting"
+        // hold regardless of listener ordering. (Node-drag is disabled per-test via
+        // `render.dragEnabled:false`, so the source node stays anchored.)
+        this.g.renderer.getGraphInteraction().on('canvasBeforeZoom', this.cancelPan)
     }
 
     openNodeEditor(id: string): void {

@@ -1,6 +1,6 @@
 # PRD — Visual regression test coverage
 
-**Status:** In progress (Areas 1–9 done)
+**Status:** Complete (Areas 1–10 done)
 **Owner:** _unassigned_
 **Last updated:** 2026-06-25
 
@@ -47,8 +47,8 @@ _Update these counts as items complete._
 | 7 — Hover / tooltip / context menu | 4 / 4 |
 | 8 — UI chrome | 5 / 5 |
 | 9 — Notes (deepen) | 5 / 5 |
-| 10 — Edge creation (extend) | 0 / 3 |
-| **Total** | **52 / 55** |
+| 10 — Edge creation (extend) | 3 / 3 |
+| **Total** | **55 / 55** |
 
 ---
 
@@ -570,9 +570,41 @@ content via the existing `addNote` verb + `fit`.
 
 Real pointer gestures from a node. The `pair` fixture already exists.
 
-- [ ] **T10.1 ☐ Drag-to-connect** — pointer-down on A, drag past the 4px threshold toward B, snapshot the shadow edge **mid-drag** (`.pvt-shadow-edge`). → `drag-connect-preview.png`
-- [ ] **T10.2 ☐ Valid vs invalid drop target** — shadow edge snaps to a node centre within 30px vs tracking the bare cursor; two snapshots. → `drag-target-valid.png`, `drag-target-empty.png`
-- [ ] **T10.3 ☐ Cancel via Escape** — start a connection, press Escape; shadow edge gone, canvas classes cleared. → `connect-cancelled.png`
+> **Done.** Spec: `specs/edge-creation.spec.ts` (a new `edge creation — drag gestures`
+> block extending the existing editing-layer / click-connect tests). One new verb:
+> **`startEdgeConnect`** (`connectManager.startNodeClickConnection`) — unlike
+> `startClickConnect` it wires the node *pointer-down* handler that begins a drag
+> connection. All four tests drive **real pointer events** (the in-progress shadow edge
+> *is* the thing under test), on the existing `pair` fixture, `pin()`ned.
+>
+> **Anchoring the source (the determinism call for this area).** A real pointer-down on a
+> node races two gesture handlers: d3-drag (which would *move* the node) and the connect
+> session's `beginDragConnection`. The app gates node-drag off during connect mode, but
+> only once the session is *non-idle* — i.e. *after* the press. So each test loads with
+> **`render.dragEnabled:false`**, which removes d3-drag entirely; the source node then
+> stays put while the session's own window-`pointermove` draws the shadow edge. Panning is
+> a non-issue: the press flips the session to `pending-drag` before the zoom filter runs,
+> so the renderer's existing connect-mode pan guard rejects it (and `startEdgeConnect` also
+> registers the same `canvasBeforeZoom` cancel `enableLasso` uses, belt-and-suspenders).
+>
+> **Outcomes asserted, not just pixels.** Valid-target releases and asserts an edge was
+> committed (`counts().edges === 1`); empty-canvas and Escape release and assert *none* —
+> so the valid/invalid-target distinction and the cancel are verified behaviourally, not
+> only by the snapshot. The shadow edge's infinite dash animation is frozen to its first
+> frame by `animations:'disabled'` (as the existing `shadow-link-preview` relies on).
+>
+> **One Playwright gotcha:** a *horizontal* shadow line has a zero-height bounding box,
+> which `toBeVisible()` reports as hidden — so the helper `expectShadowShown` checks the
+> path's `d` is drawn and it isn't `display:none` instead. **Escape** is the toolbar's own
+> keybinding (the toolbar mounts in the harness's light mode); the KeybindingManager only
+> fires while the container owns focus, so the test focuses `.pivotick` first. Baselines
+> reviewed (horizontal preview + source highlight / target dim; arc snapped to the target
+> rim; diagonal cursor-tracking line; cleared canvas) and stable over repeated runs (incl.
+> `--repeat-each 4` parallel + the full single-worker suite).
+
+- [x] **T10.1 ✅ Drag-to-connect** — pointer-down on A, drag past the 4px threshold toward B (stopping in the empty gap), snapshot the shadow edge **mid-drag** (`.pvt-shadow-edge`). → `drag-connect-preview.png`
+- [x] **T10.2 ✅ Valid vs invalid drop target** — split into two tests: dragging onto B (within the 30px snap radius) anchors the shadow edge to B's centre **and** commits the edge on release; over empty canvas it tracks the bare cursor and commits nothing. → `drag-target-valid.png`, `drag-target-empty.png`
+- [x] **T10.3 ✅ Cancel via Escape** — start a drag connection, press Escape (the toolbar's keybinding); shadow edge gone, `pvt-connect-mode-active` cleared, no edge committed. → `connect-cancelled.png`
 
 ---
 
