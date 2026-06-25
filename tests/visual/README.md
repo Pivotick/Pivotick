@@ -130,6 +130,7 @@ transitions are settled to their end-state explicitly.)
 | `edge-creation`         | Edge created via the editing layer; click-to-connect shadow preview + commit |
 | `notes`                 | Adding a note at runtime; dragging a note by its header             |
 | `node-editing`          | The node edit modal                                                 |
+| `interactions`          | Node hover tooltip; node / canvas / note context menus (right-click) |
 | `zoom`                  | A centered 2× zoom and a pan, applied deterministically             |
 
 ## Writing a new test

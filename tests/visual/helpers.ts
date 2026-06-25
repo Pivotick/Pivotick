@@ -72,6 +72,15 @@ export async function expectCanvas(page: Page, name: string): Promise<void> {
     await expect(canvas(page)).toHaveScreenshot(name)
 }
 
+/**
+ * Screenshot an arbitrary locator against the named baseline. For body-attached
+ * chrome (the tooltip / context menu) that lives outside `.pvt-canvas`, so its
+ * baseline captures the element itself rather than the whole viewport.
+ */
+export async function expectElement(locator: Locator, name: string): Promise<void> {
+    await expect(locator).toHaveScreenshot(name)
+}
+
 /** Centre point of a located element, in page coordinates. */
 export async function centerOf(locator: Locator): Promise<{ x: number; y: number }> {
     const box = await locator.boundingBox()

@@ -1,6 +1,6 @@
 # PRD — Visual regression test coverage
 
-**Status:** In progress (Areas 1, 2, 3, 4, 5 & 6 done)
+**Status:** In progress (Areas 1, 2, 3, 4, 5, 6 & 7 done)
 **Owner:** _unassigned_
 **Last updated:** 2026-06-25
 
@@ -44,11 +44,11 @@ _Update these counts as items complete._
 | 4 — Clustering | 3 / 3 |
 | 5 — Filtering | 4 / 4 |
 | 6 — Multi-selection & tools | 5 / 5 |
-| 7 — Hover / tooltip / context menu | 0 / 5 |
+| 7 — Hover / tooltip / context menu | 4 / 4 |
 | 8 — UI chrome | 0 / 5 |
 | 9 — Notes (deepen) | 0 / 6 |
 | 10 — Edge creation (extend) | 0 / 3 |
-| **Total** | **35 / 57** |
+| **Total** | **40 / 56** |
 
 ---
 
@@ -195,8 +195,14 @@ it depends on), or knock them all out up front.
   > panning and the release-deselect while lasso is active, and the harness doesn't mount the
   > toolbar. `selectedNodeIds` reads the committed selection (to verify the box/lasso). The
   > selection box, lasso and group-drag use **real pointer events** in-spec (their visual
-  > *is* the gesture). The remaining verbs (`hoverNode`, `openContextMenu`, `openInspect`,
-  > `toggleEditMode`) are still owed by Areas 7 / 8 / 10.
+  > *is* the gesture).
+  > **Area 7 added no verbs:** the tooltip (hover) and the node/canvas/note context menus
+  > (right-click) are all driven with **real pointer gestures** in-spec — the gesture *is*
+  > the thing under test, and the harness's light mode already mounts the Tooltip and
+  > ContextMenu (`buildUIGraphNavigation` wires both whenever their default-on `enabled`
+  > flag is set). So `hoverNode` / `openContextMenu` were resolved by choosing the pointer
+  > path P0.6 explicitly allows, not by adding verbs. The remaining verbs (`openInspect`,
+  > `toggleEditMode`) are still owed by Areas 8 / 10.
 - [ ] **P0.7 ☐ Full-mode harness support** — today the harness runs `UI.mode:'light'` with
   the sidebar collapsed, so sidebar/toolbar/controls never render. Allow loading in
   `'full'` mode (either a `load()` override that un-collapses the sidebar, or a second
@@ -420,11 +426,39 @@ draws the selection box**, middle-button pans.
 Interaction states. Tooltips are body-attached (`.pvt-tooltip`) with a ~400ms show delay —
 wait for it. Context menu is `.pvt-contextmenu`. Needs a UI mode that enables these.
 
-- [ ] **T7.1 ☐ Node tooltip** — hover a node, wait, snapshot `.pvt-tooltip`. → `tooltip-node.png`
-- [ ] **T7.2 ☐ Node hover highlight** — built-in hover effect on the node/neighbours (if any). → `hover-node.png`
-- [ ] **T7.3 ☐ Node context menu** — right-click node, snapshot `.pvt-contextmenu`. → `contextmenu-node.png`
-- [ ] **T7.4 ☐ Canvas context menu** — right-click empty canvas. → `contextmenu-canvas.png`
-- [ ] **T7.5 ☐ Note context menu** — right-click a note. → `contextmenu-note.png`
+> **Done.** Spec: `specs/interactions.spec.ts`. **No new verb or fixture, and no P0.7
+> work needed:** the harness's existing light mode already mounts both the Tooltip and the
+> ContextMenu (`UIManager.buildUIGraphNavigation` wires them whenever their `enabled` flag
+> is set, which it is by default — `setupLightMode` calls it). All four tests use **real
+> pointer gestures** (the P0.6 "pick per test" call — the gesture *is* the thing under
+> test): T7.1 hovers a node (a primed pointer move so the tooltip's proximity guard passes,
+> then waits out the show delay); T7.3/T7.4/T7.5 right-click the node / an empty canvas
+> corner / the note.
+>
+> **Snapshot target.** The tooltip and context menu are appended to `document.body`,
+> *outside* `.pvt-canvas`, so each baseline screenshots that element directly (new
+> `expectElement(locator, name)` helper) rather than the canvas. Their content is a pure
+> function of the node/edge/note data.
+>
+> **Determinism (the flake this surfaced).** These body elements are auto-sized and
+> positioned at the gesture point, so the screenshot crop's pixel-snapped height depends on
+> the *fractional* screen position of the hovered/clicked element. Under the settled force
+> layout that position drifts a touch run-to-run (the README's known caveat), which flipped
+> the tooltip's captured height by a pixel (112↔113 → a hard dimension-mismatch failure,
+> caught under `--repeat-each`). Fix: every test `pin()`s the fixture's designed positions
+> first, anchoring the gesture deterministically (the same fix Area 6 used). Baselines
+> reviewed (node preview + name + properties; the three menus' quick-actions + items) and
+> stable over repeated runs (incl. `--repeat-each 4` and the single-worker full suite).
+
+- [x] **T7.1 ✅ Node tooltip** — hover node `a`, wait out the show delay, snapshot `.pvt-tooltip` (node preview + name + id/label properties). → `tooltip-node.png`
+- ⏭️ **T7.2 — Node hover highlight** — _descoped._ There is **no built-in hover effect** on
+  graph nodes/neighbours: `nodeHoverIn` only emits the event and opens the tooltip (no
+  `:hover` styling, no highlight class on the node `<g>`). Hover's only visual is the
+  tooltip, already covered by T7.1 — a separate baseline would be a duplicate of the
+  non-hovered canvas.
+- [x] **T7.3 ✅ Node context menu** — right-click node `a`; topbar Pin/Focus/Hide + menu Select Neighbors / Hide Children / Connect to… / Inspect Properties. → `contextmenu-node.png`
+- [x] **T7.4 ✅ Canvas context menu** — right-click an empty canvas corner; Pin All / Unpin All + Add Note. → `contextmenu-canvas.png`
+- [x] **T7.5 ✅ Note context menu** — right-click the note (`withNote`); Hide Note + Remove Note. → `contextmenu-note.png`
 
 ---
 
