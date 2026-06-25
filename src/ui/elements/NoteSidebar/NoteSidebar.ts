@@ -7,6 +7,7 @@ import { Note } from '../../../Note'
 import { createHtmlElement, createHtmlTemplate } from '../../../utils/ElementCreation'
 import type { Graph } from '../../../Graph'
 import { renderMarkdown, renderMarkdownInline } from '../../../plugins/noteContentRenderers/markdown/markdown'
+import { resolveReferences } from '../../../plugins/noteContentRenderers/markdown/markdownResolvers'
 
 export class NoteSidebar implements UIElement {
 
@@ -109,6 +110,9 @@ export class NoteSidebar implements UIElement {
         const firstLine = note.content?.split('\n').find(line => line.trim().length > 0) ?? 'Untitled note'
         const safeHtml = renderMarkdownInline(firstLine)
         textEl.innerHTML = safeHtml
+        // Resolve `[[node]]` references so they pick up their node color, matching the
+        // main canvas rendering (NoteContentRenderer.render also calls resolveReferences).
+        resolveReferences(textEl, this.graph)
 
         const buttonWrapper = document.createElement('div')
         buttonWrapper.classList.add('pvt-note-sidebar-button-wrapper')
