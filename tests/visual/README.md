@@ -58,7 +58,8 @@ load a **dedicated harness** with deterministic fixtures, then either:
 - call the control API (`window.__pivotick`) for setup and non-visual triggers, or
 - dispatch **real pointer events** (mouse move/down/up) for interactions whose
   *intermediate* visual state matters — e.g. the shadow-link preview while connecting,
-  or dragging a note.
+  dragging a note, the rubber-band selection box or lasso polygon mid-drag (snapshotted
+  before mouseup, which would clear them), or a multi-node group drag.
 
 ### Why it's deterministic
 
@@ -125,7 +126,7 @@ transitions are settled to their end-state explicitly.)
 | `layout`                | Force, tree (vertical / horizontal / radial), ego tree; + position-ordering assertions |
 | `cluster`               | Collapsed cluster (synthetic edges), expanded cluster, nested cluster |
 | `filter`                | Query filter removes nodes+edges; filter reset; manually excluded node; the filter slide-panel form |
-| `selection`             | Node selected, edge selected, selection cleared                     |
+| `selection`             | Node selected, edge selected, selection cleared; multi-selection + focus dim; selection-box & lasso (mid-drag); multi-node group drag |
 | `edge-creation`         | Edge created via the editing layer; click-to-connect shadow preview + commit |
 | `notes`                 | Adding a note at runtime; dragging a note by its header             |
 | `node-editing`          | The node edit modal                                                 |

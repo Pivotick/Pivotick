@@ -14,6 +14,7 @@ import { Note } from '../../../src/Note'
 import { TreeLayout } from '../../../src/plugins/layout/Tree'
 import { EgoTreeLayout } from '../../../src/plugins/layout/EgoTree'
 import type { FilterFieldConfig, GraphFilters } from '../../../src/interfaces/GraphQueryEngine'
+import type { GraphInteractionContext } from '../../../src/interfaces/GraphInteractions'
 import { fixtures, type FixtureName, type RawNote } from './fixtures'
 
 /**
@@ -61,6 +62,15 @@ export interface HarnessApi {
     selectNode(id: string): void
     /** Select an edge by id. */
     selectEdge(id: string): void
+    /**
+     * Select several nodes at once (multi-selection). Renders every node's
+     * selection highlight and — with focus mode on — dims the nodes/edges adjacent
+     * to none of them. This is the deterministic stand-in for shift+clicking nodes:
+     * it drives the same `selectNodes` path the pointer gesture ends up calling.
+     */
+    multiSelect(ids: string[]): void
+    /** Ids of the currently selected nodes — for verifying box / lasso selection. */
+    selectedNodeIds(): string[]
     /** Clear all selection. */
     deselectAll(): void
     /** Add a node with a fixed position and stable domID (`#node-<id>`). */
@@ -140,6 +150,13 @@ export interface HarnessApi {
      * loaded graph's node-data fields. Returns once the panel has the `open` class.
      */
     openFilterPanel(): void
+    /**
+     * Turn on lasso-selection mode so a left-drag on the canvas draws a polygon
+     * (`.pvt-lasso-overlay > polyline`) instead of panning. In the real app the
+     * toolbar both enables the overlay *and* cancels canvas panning while it's
+     * active; the harness doesn't mount the toolbar, so this does both.
+     */
+    enableLasso(): void
 }
 
 class Harness implements HarnessApi {
@@ -207,6 +224,19 @@ class Harness implements HarnessApi {
     selectEdge(id: string): void {
         const edge = this.g.getMutableEdge(id)
         if (edge) this.g.selectElement(edge)
+    }
+
+    multiSelect(ids: string[]): void {
+        const selection = ids
+            .map((id) => this.g.getMutableNode(id))
+            .filter((node): node is Node => Boolean(node))
+            .map((node) => ({ node, element: node.getGraphElement() }))
+            .filter((sel) => Boolean(sel.element))
+        this.g.renderer.getGraphInteraction().selectNodes(selection as never)
+    }
+
+    selectedNodeIds(): string[] {
+        return this.g.renderer.getGraphInteraction().getSelectedNodeIDs() ?? []
     }
 
     deselectAll(): void {
@@ -463,6 +493,30 @@ class Harness implements HarnessApi {
 
     openFilterPanel(): void {
         this.g.UIManager.mainHeader?.filteringSlidepanel?.open()
+    }
+
+    enableLasso(): void {
+        this.g.renderer.toggleLassoMode(true)
+        // Mirror the toolbar's two guards while the lasso is active:
+        //  - cancel canvas panning, so a plain left-drag draws the polygon, and
+        //  - cancel the canvas click that fires on release (it would otherwise
+        //    `unselectAll`, wiping the nodes the lasso just selected — the selection
+        //    box escapes this because it `preventDefault()`s its mousedown).
+        const interaction = this.g.renderer.getGraphInteraction()
+        interaction.on('canvasBeforeZoom', this.cancelPan)
+        interaction.on('canvasClick', this.cancelClick)
+    }
+
+    /** Cancels canvas pan/zoom for drag gestures (kept for wheel + middle-button). */
+    private cancelPan = (event: unknown, context: GraphInteractionContext): void => {
+        const e = event as { type?: string; button?: number }
+        if (e.type === 'wheel' || e.button === 1) return
+        context.cancel()
+    }
+
+    /** Cancels the canvas click (so a lasso/box release doesn't deselect). */
+    private cancelClick = (_event: unknown, context: GraphInteractionContext): void => {
+        context.cancel()
     }
 }
 

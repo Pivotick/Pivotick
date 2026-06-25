@@ -1,6 +1,6 @@
 # PRD — Visual regression test coverage
 
-**Status:** In progress (Areas 1, 2, 3, 4 & 5 done)
+**Status:** In progress (Areas 1, 2, 3, 4, 5 & 6 done)
 **Owner:** _unassigned_
 **Last updated:** 2026-06-25
 
@@ -43,12 +43,12 @@ _Update these counts as items complete._
 | 3 — Layouts | 6 / 6 |
 | 4 — Clustering | 3 / 3 |
 | 5 — Filtering | 4 / 4 |
-| 6 — Multi-selection & tools | 0 / 5 |
+| 6 — Multi-selection & tools | 5 / 5 |
 | 7 — Hover / tooltip / context menu | 0 / 5 |
 | 8 — UI chrome | 0 / 5 |
 | 9 — Notes (deepen) | 0 / 6 |
 | 10 — Edge creation (extend) | 0 / 3 |
-| **Total** | **30 / 57** |
+| **Total** | **35 / 57** |
 
 ---
 
@@ -184,10 +184,19 @@ it depends on), or knock them all out up front.
   library's `queryEngine.excludeNode(string)` resolves the id via `getNode`, which returns a
   method-less `structuredClone`, so the subsequent `node.hide()` throws — a `Node` instance
   takes the working `instanceof` branch instead.
-- [ ] **P0.6 ☐ Control verbs — interaction triggers:** `hoverNode(id)` (or do it with raw
+- [ ] **P0.6 🔄 Control verbs — interaction triggers:** `hoverNode(id)` (or do it with raw
   pointer events in-spec), `openContextMenu(kind, id?)`, `openInspect(id)`, `toggleEditMode()`,
   `enableLasso()`, `multiSelect(ids)`. Several of these may be better done as real pointer
   gestures in the spec — pick per test and note the choice. Drives Areas 6, 7, 10.
+  > **Area 6 added `multiSelect(ids)`, `enableLasso()` and `selectedNodeIds()`.**
+  > `multiSelect` drives the library's `selectNodes` directly (the deterministic equivalent
+  > of shift-clicking). `enableLasso` calls `renderer.toggleLassoMode(true)` *and* registers
+  > `canvasBeforeZoom` + `canvasClick` cancellers — in the real app the toolbar disables
+  > panning and the release-deselect while lasso is active, and the harness doesn't mount the
+  > toolbar. `selectedNodeIds` reads the committed selection (to verify the box/lasso). The
+  > selection box, lasso and group-drag use **real pointer events** in-spec (their visual
+  > *is* the gesture). The remaining verbs (`hoverNode`, `openContextMenu`, `openInspect`,
+  > `toggleEditMode`) are still owed by Areas 7 / 8 / 10.
 - [ ] **P0.7 ☐ Full-mode harness support** — today the harness runs `UI.mode:'light'` with
   the sidebar collapsed, so sidebar/toolbar/controls never render. Allow loading in
   `'full'` mode (either a `load()` override that un-collapses the sidebar, or a second
@@ -354,11 +363,55 @@ nodes are **removed** from render (not dimmed), along with their edges.
 Real pointer events; depends on **P0.6** for some. Note the zoom-filter quirk: **left-drag
 draws the selection box**, middle-button pans.
 
-- [ ] **T6.1 ☐ Multi-select** — shift+click two nodes; both highlighted, neighbours dimmed (`-highlight-shadow`). → `multi-select.png`
-- [ ] **T6.2 ☐ Selection box** — left-drag rubber-band; snapshot **mid-drag** (before mouseup) showing `.pvt-selection-rectangle`. → `selection-box.png`
-- [ ] **T6.3 ☐ Lasso** — enable lasso mode, draw polygon, snapshot mid-drag (`.pvt-lasso-overlay > polyline`). → `lasso.png`
-- [ ] **T6.4 ☐ Focus-mode dimming** — selecting a node dims non-adjacent nodes/edges; assert the focus visual explicitly. → `focus-mode-dim.png`
-- [ ] **T6.5 ☐ Multi-node group drag** — select 2+ nodes (shift/ctrl+click, or a rubber-band/lasso selection), then drag any one selected node; the **whole selection moves together** (`Simulation` drags all subjects when `hasActiveMultiselection()`). Snapshot after the drag; optionally assert each selected node's `x/y` shifted by the same delta. → `multi-node-drag.png`
+> **Done.** Spec: `specs/selection.spec.ts` (extends the existing three selection tests).
+> Two new harness verbs (see the P0.6 note): `multiSelect(ids)` and `enableLasso()`.
+>
+> **Split of mechanism (the P0.6 "pick per test" call):** state-only tests set selection
+> through the harness — `multiSelect` (T6.1, T6.5) drives the same `selectNodes` path a
+> shift-click ends up calling, and the existing `selectNode` verb covers T6.4 — exactly how
+> the original single-selection tests work. The *gesture* tests use **real pointer events**,
+> because the thing under test is the live interaction overlay, not the resulting state:
+> T6.2 Shift+left-drags the rubber-band and snapshots `.pvt-selection-rectangle` **before**
+> mouseup; T6.3 enables lasso and traces an open polygon, snapshotting `.pvt-lasso-overlay >
+> polyline` **before** pointerup (the loop only closes + selects on release); T6.5 drags a
+> selected node with the mouse.
+>
+> **Source quirks worth knowing:**
+> - **The selection box needs a modifier.** `SelectionBox.onMouseDown` only starts on Shift
+>   (add) / Alt (start) / Ctrl (remove); a plain left-drag returns (it would pan). Holding
+>   Shift both selects "add" mode *and* makes the zoom filter ignore the drag — so a
+>   Shift+left-drag cleanly draws the box. (The box lives in screen space, outside the zoom
+>   layer, so it's deterministic regardless of pan/zoom.)
+> - **The box skips nodes at x=0 or y=0.** `getNodesInRect` early-returns on `!node.x ||
+>   !node.y`, so a node sitting on either axis (here `a` and `hub`, both at graph x=0) can
+>   never be box-selected. T6.2 therefore frames two off-axis nodes (`b`, `c`) — and asserts
+>   ≥2 selected on release so the box provably encloses them.
+> - **Lasso fights the pan, and the release click deselects.** `renderer.toggleLassoMode(true)`
+>   only toggles the overlay; in the app the *toolbar* both cancels canvas panning (a
+>   `canvasBeforeZoom` handler) *and* cancels the `canvasClick` that fires on pointer-up —
+>   which otherwise `unselectAll`s the nodes the lasso just selected. The harness has no
+>   toolbar, so `enableLasso` registers both cancellers. (The selection box dodges the
+>   deselect on its own: `SelectionBox` `preventDefault()`s its mousedown, so no click
+>   fires.) T6.3 verifies the release selects the enclosed node and adds a second baseline,
+>   `lasso-selected.png`, that actually shows it highlighted.
+>
+> **Determinism:** all five Area 6 tests `pin()` the fixture's designed positions first.
+> The original selection tests ride the *settled* force layout, which drifts a couple of
+> percent under heavy parallel-run CPU contention (the README's known caveat) — tolerable at
+> their pixel budget, but the group-drag (T6.5) is much more sensitive: dragging a node
+> restarts the force pass, so without pinning the *un*selected nodes drift and the dragged
+> ones pick up force noise. Pinned, only the dragged selection moves, by an exact, equal
+> delta (asserted in T6.5), and every baseline is a pure function of the fixture. Baselines
+> reviewed (multi-highlight + focus dim; rubber-band; dashed lasso polygon; single-selection
+> dim with class assertions; group drag with position assertions) and stable over repeated
+> runs (incl. a 4× `--repeat-each` stress). The bulk-action toolbar flyout that multi-
+> selection surfaces ("Pin Nodes") is captured as-is in T6.1/T6.5 — it's deterministic.
+
+- [x] **T6.1 ✅ Multi-select** — `multiSelect(['b','hub'])` (deterministic stand-in for shift+click); both highlighted, the non-adjacent `d`/`e` and their edges dim (`-highlight-shadow`). → `multi-select.png`
+- [x] **T6.2 ✅ Selection box** — Shift+left-drag rubber-band over two off-axis nodes; snapshot **mid-drag** (before mouseup) showing `.pvt-selection-rectangle`, then release and assert ≥2 nodes selected. → `selection-box.png`
+- [x] **T6.3 ✅ Lasso** — `enableLasso()`, trace a polygon around hub, snapshot mid-drag (`.pvt-lasso-overlay > polyline`, open until pointerup), then release and assert hub got selected (+ a result snapshot). → `lasso.png`, `lasso-selected.png`
+- [x] **T6.4 ✅ Focus-mode dimming** — `selectNode('b')`; asserts `a`/`c` (adjacent) stay lit and `d`/`e`/`hub` carry `-highlight-shadow`, plus a snapshot. → `focus-mode-dim.png`
+- [x] **T6.5 ✅ Multi-node group drag** — `multiSelect(['a','b'])` then a real drag of `b`; the **whole selection moves together** (`Simulation` drags all subjects when `hasActiveMultiselection()`). Asserts `a` and `b` shift by the same delta and `hub` stays put, plus a snapshot. → `multi-node-drag.png`
 
 ---
 
