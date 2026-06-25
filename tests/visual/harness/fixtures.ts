@@ -430,6 +430,58 @@ export const fixtures = {
         return { nodes: [group, ext1, ext2], edges: intoCluster, notes: [] }
     },
 
+    // ── Area 5 (filtering) fixture ──────────────────────────────────────────────
+
+    /**
+     * A small network whose nodes carry **filterable data fields** — a categorical
+     * `type` (`'router' | 'switch' | 'host'`) and a numeric `ports` — so the query
+     * engine has something to match. Drives the whole of Area 5:
+     *
+     *  - **filter** (`setFilter('type', { value:'router', matchMode:'exact' })`): only
+     *    the routers remain; the switches/hosts and their edges are *removed* (not
+     *    dimmed), leaving the routers' interconnect triangle.
+     *  - **reset** (`resetFilters()`): the full graph returns.
+     *  - **excludeNode** (`excludeNode('h2')`): one node is removed by hand.
+     *  - **panel** (`openFilterPanel()`): the generated filter form lists the data
+     *    fields as form controls.
+     *
+     * Three routers form an interconnected triangle (so the filtered-down graph still
+     * shows edges); two switches hang off the triangle, and three hosts off the
+     * switches. Layered top→bottom for a legible scene.
+     *
+     * Note: `ports` is intentionally a **non-integer** number. The filter form's field
+     * discovery throws on integer-valued data (it routes integers to a `range` bucket
+     * that isn't initialised), and the harness builds that form for every fixture in
+     * light mode — so an integer here would crash every load. A fractional value still
+     * matches a `{ min, max }` range filter (the query engine only checks `typeof
+     * === 'number'`) and renders harmlessly as a categorical option in the form.
+     */
+    filterable(): BuiltFixture {
+        const node = (id: string, x: number, y: number, type: string, ports: number) =>
+            mkNode(id, x, y, { type, ports })
+        const n = {
+            r1: node('r1', 0, -120, 'router', 48.5),
+            r2: node('r2', -110, -40, 'router', 48.5),
+            r3: node('r3', 110, -40, 'router', 48.5),
+            sw1: node('sw1', -150, 70, 'switch', 24.5),
+            sw2: node('sw2', 150, 70, 'switch', 24.5),
+            h1: node('h1', -220, 175, 'host', 4.5),
+            h2: node('h2', -80, 175, 'host', 4.5),
+            h3: node('h3', 150, 175, 'host', 4.5),
+        }
+        const edges = [
+            new Edge('r1-r2', n.r1, n.r2),
+            new Edge('r2-r3', n.r2, n.r3),
+            new Edge('r3-r1', n.r3, n.r1),
+            new Edge('r2-sw1', n.r2, n.sw1),
+            new Edge('r3-sw2', n.r3, n.sw2),
+            new Edge('sw1-h1', n.sw1, n.h1),
+            new Edge('sw1-h2', n.sw1, n.h2),
+            new Edge('sw2-h3', n.sw2, n.h3),
+        ]
+        return { nodes: Object.values(n), edges, notes: [] }
+    },
+
     /** A horizontal label (with background box) and a label rotated to follow its edge. */
     edgeLabels(): BuiltFixture {
         const color = '#0369a1'

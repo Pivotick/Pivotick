@@ -1,6 +1,6 @@
 # PRD — Visual regression test coverage
 
-**Status:** In progress (Areas 1, 2, 3 & 4 done)
+**Status:** In progress (Areas 1, 2, 3, 4 & 5 done)
 **Owner:** _unassigned_
 **Last updated:** 2026-06-25
 
@@ -37,18 +37,18 @@ _Update these counts as items complete._
 
 | Area | Done / Total |
 | ---- | ------------ |
-| P0 — Harness prerequisites | 3 / 7 |
+| P0 — Harness prerequisites | 5 / 7 |
 | 1 — Node & edge styling | 10 / 10 |
 | 2 — Themes | 3 / 3 |
 | 3 — Layouts | 6 / 6 |
 | 4 — Clustering | 3 / 3 |
-| 5 — Filtering | 0 / 4 |
+| 5 — Filtering | 4 / 4 |
 | 6 — Multi-selection & tools | 0 / 5 |
 | 7 — Hover / tooltip / context menu | 0 / 5 |
 | 8 — UI chrome | 0 / 5 |
 | 9 — Notes (deepen) | 0 / 6 |
 | 10 — Edge creation (extend) | 0 / 3 |
-| **Total** | **24 / 57** |
+| **Total** | **30 / 57** |
 
 ---
 
@@ -169,14 +169,21 @@ it depends on), or knock them all out up front.
   form fixtures use), so a `markCluster` helper marks deeper descendants; (2) edges to
   children must be `hide()`d in the fixture (the normaliser only auto-hides them for *raw*
   edge data).
-- [ ] **P0.4 ☐ Fixture `filterable`** — ~8 nodes carrying filterable data fields
-  (a categorical `type` and a numeric field) so query filters have something to match.
-  Drives Area 5.
-- [ ] **P0.5 🔄 Control verbs — clustering & data:** _Clustering half done (Area 4)._
-  `expand(path)` / `collapse(id)` are implemented — `expand` accepts a single id or a path
-  (`['group','c1']`) to open nested clusters, and **deterministically re-pins** the children
-  (see the Area 4 done-block). Still TODO for Area 5: `setFilter` / `resetFilters` /
-  `excludeNode` (wrap `graph.queryEngine.*`) and `hideNode` / `showNode`.
+- [x] **P0.4 ✅ Fixture `filterable`** — an 8-node network (3 `router`s in an interconnected
+  triangle, 2 `switch`es, 3 `host`s) carrying a categorical `type` and a numeric `ports`
+  field. Drives Area 5. **⚠️ `ports` is intentionally a *non-integer* number:** the filter
+  form's field discovery (`GraphFilter.getAvailableNodeAttributes`) throws on integer-valued
+  data — it routes integers to a `range` bucket it never initialises — and the harness builds
+  that form for *every* fixture in light mode (the mainheader renders there; see the Area 5
+  done-block), so an integer field would crash every load. A fractional value still matches a
+  `{ min, max }` range filter and renders harmlessly in the form.
+- [x] **P0.5 ✅ Control verbs — clustering & data:** Clustering done in Area 4 (`expand(path)` /
+  `collapse(id)`, deterministically re-pinning children). Data verbs added for Area 5:
+  `setFilter` / `setFilters` / `resetFilters` (wrap `graph.queryEngine.*`), `excludeNode`,
+  and `hideNode` / `showNode`. **⚠️ `excludeNode` passes the live `Node`, not the id:** the
+  library's `queryEngine.excludeNode(string)` resolves the id via `getNode`, which returns a
+  method-less `structuredClone`, so the subsequent `node.hide()` throws — a `Node` instance
+  takes the working `instanceof` branch instead.
 - [ ] **P0.6 ☐ Control verbs — interaction triggers:** `hoverNode(id)` (or do it with raw
   pointer events in-spec), `openContextMenu(kind, id?)`, `openInspect(id)`, `toggleEditMode()`,
   `enableLasso()`, `multiSelect(ids)`. Several of these may be better done as real pointer
@@ -187,6 +194,13 @@ it depends on), or knock them all out up front.
   loader). Drives Area 8. _Note: full-mode chrome is more pixel-volatile; expect to
   target specific elements (`.pvt-sidebar`, `.pvt-graphtoolbar-elements`) rather than the
   whole page._
+  > **Correction (found in Area 5):** light mode *does* build the **mainheader** (and thus
+  > its filter / note slide panels) — `setupLightMode` calls `buildMainheader()`, and the
+  > harness viewport (1280×800) clears the light-mode space check. So mainheader-hosted
+  > chrome is already reachable: T5.4 opens the filter slide panel in the existing light-mode
+  > harness with no full-mode work. P0.7 is only still needed for the **sidebar** (collapsed
+  > here) and for snapshotting toolbar/controls, which light mode builds but positions as
+  > overlay chrome rather than docking.
 
 > **Note on themes/layouts/direction:** these need **no new verb** — the existing
 > `load(name, overrides)` already deep-merges options, so `UI.theme`, `layout.*`, and
@@ -308,10 +322,30 @@ Depends on **P0.3** and **P0.5** (`expand`/`collapse`).
 Depends on **P0.4** and **P0.5** (`setFilter`/`resetFilters`/`excludeNode`). Filtered-out
 nodes are **removed** from render (not dimmed), along with their edges.
 
-- [ ] **T5.1 ☐ Filter hides nodes** — `setFilter('type', { value, matchMode })` removes non-matching nodes + edges. → `filter-applied.png`
-- [ ] **T5.2 ☐ Filter then reset** — `resetFilters()` restores the full graph. → `filter-reset.png`
-- [ ] **T5.3 ☐ Manually excluded node** — `excludeNode(id)`. → `filter-node-excluded.png`
-- [ ] **T5.4 ☐ Filter panel UI** — open slide panel (Shift+K) and snapshot the generated form. _Needs full/light UI with mainheader; depends on P0.7-ish._ → `filter-panel.png`
+> **Done.** Spec: `specs/filter.spec.ts`.
+>
+> **Determinism.** No new mechanism needed — applying a filter calls `graph.onChange()`,
+> which re-renders *synchronously* (`renderer.update(true)` + `nextTick`), so there's nothing
+> to wait on and no animation. T5.1–T5.3 pin positions (`harness.pin`, like the other static
+> scenes) and **do not re-fit** after filtering — matching the real app, where filtering
+> doesn't reframe. The full graph's viewport therefore frames all three canvas baselines, so
+> removed nodes simply leave gaps and `filter-applied` / `filter-reset` are directly
+> comparable. T5.4 screenshots the slide-panel element, so positions are irrelevant (no pin).
+>
+> **T5.4 needed no full-mode work** (the PRD guessed P0.7): light mode already builds the
+> mainheader and its filter slide panel (see the P0.7 correction). The new `openFilterPanel`
+> verb opens it via `mainHeader.filteringSlidepanel.open()`; the form is generated from the
+> fixture's node-data fields (`label` / `type` → selects, `ports` → text). New verbs in
+> `harness.ts`: `setFilter` / `setFilters` / `resetFilters` / `excludeNode` / `hideNode` /
+> `showNode` / `openFilterPanel`. Two library quirks worked around in the fixture/verbs (see
+> the ⚠️ notes on P0.4 and P0.5). Baselines reviewed (routers-only triangle; full restore;
+> single node removed; generated filter form) and stable over repeated runs (parallel + the
+> full single-worker suite).
+
+- [x] **T5.1 ✅ Filter hides nodes** — `setFilter('type', { value:'router', matchMode:'exact' })` removes non-matching nodes + edges (only the router triangle remains). → `filter-applied.png`
+- [x] **T5.2 ✅ Filter then reset** — `resetFilters()` restores the full graph. → `filter-reset.png`
+- [x] **T5.3 ✅ Manually excluded node** — `excludeNode('h2')`. → `filter-node-excluded.png`
+- [x] **T5.4 ✅ Filter panel UI** — `openFilterPanel()` (same panel as the Shift+K shortcut); snapshot the generated form. Reachable in the existing light-mode harness — no P0.7 needed. → `filter-panel.png`
 
 ---
 

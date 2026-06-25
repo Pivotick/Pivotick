@@ -13,6 +13,7 @@ import { Pivotick, Node } from '../../../src/index'
 import { Note } from '../../../src/Note'
 import { TreeLayout } from '../../../src/plugins/layout/Tree'
 import { EgoTreeLayout } from '../../../src/plugins/layout/EgoTree'
+import type { FilterFieldConfig, GraphFilters } from '../../../src/interfaces/GraphQueryEngine'
 import { fixtures, type FixtureName, type RawNote } from './fixtures'
 
 /**
@@ -116,6 +117,29 @@ export interface HarnessApi {
     counts(): { nodes: number; edges: number; notes: number }
     /** Every node's current `(x, y)` (graph coordinates) — for layout assertions. */
     nodePositions(): Record<string, { x: number; y: number }>
+    /**
+     * Apply a single query filter on a node-data field. Non-matching nodes (and
+     * their edges) are **removed** from the render, not dimmed. `value` follows the
+     * library's {@link FilterFieldConfig} shape (a scalar/array + `matchMode`, or a
+     * `{ min, max }` range for numeric fields).
+     */
+    setFilter(key: string, value: FilterFieldConfig): void
+    /** Apply several filters at once (each keyed by node-data field). */
+    setFilters(filters: GraphFilters): void
+    /** Clear every active query filter, restoring the full graph. */
+    resetFilters(): void
+    /** Manually hide a single node by id (`queryEngine.excludeNode`). */
+    excludeNode(id: string): void
+    /** Hide a node and its incident edges directly (`graph.hideNode`). */
+    hideNode(id: string): void
+    /** Re-show a previously hidden node (`graph.showNode`). */
+    showNode(id: string): void
+    /**
+     * Open the Graph-Filters slide panel programmatically (same panel as the
+     * `Shift+K` shortcut / filter button). The panel's form is generated from the
+     * loaded graph's node-data fields. Returns once the panel has the `open` class.
+     */
+    openFilterPanel(): void
 }
 
 class Harness implements HarnessApi {
@@ -405,6 +429,40 @@ class Harness implements HarnessApi {
             out[node.id] = { x: node.x ?? 0, y: node.y ?? 0 }
         }
         return out
+    }
+
+    setFilter(key: string, value: FilterFieldConfig): void {
+        this.g.queryEngine.setFilter(key, value)
+    }
+
+    setFilters(filters: GraphFilters): void {
+        this.g.queryEngine.setFilters(filters)
+    }
+
+    resetFilters(): void {
+        this.g.queryEngine.resetFilters()
+    }
+
+    excludeNode(id: string): void {
+        // Pass the live Node, not the id: `excludeNode(string)` resolves it via
+        // `getNode`, which returns a method-less `structuredClone`, so the later
+        // `node.hide()` throws. A Node instance is used directly.
+        const node = this.g.getMutableNode(id)
+        if (node) this.g.queryEngine.excludeNode(node)
+    }
+
+    hideNode(id: string): void {
+        const node = this.g.getMutableNode(id)
+        if (node) this.g.hideNode(node)
+    }
+
+    showNode(id: string): void {
+        const node = this.g.getMutableNode(id)
+        if (node) this.g.showNode(node)
+    }
+
+    openFilterPanel(): void {
+        this.g.UIManager.mainHeader?.filteringSlidepanel?.open()
     }
 }
 

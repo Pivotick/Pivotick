@@ -124,6 +124,7 @@ transitions are settled to their end-state explicitly.)
 | `theme`                 | Dark theme — basic graph, markdown note, selected node              |
 | `layout`                | Force, tree (vertical / horizontal / radial), ego tree; + position-ordering assertions |
 | `cluster`               | Collapsed cluster (synthetic edges), expanded cluster, nested cluster |
+| `filter`                | Query filter removes nodes+edges; filter reset; manually excluded node; the filter slide-panel form |
 | `selection`             | Node selected, edge selected, selection cleared                     |
 | `edge-creation`         | Edge created via the editing layer; click-to-connect shadow preview + commit |
 | `notes`                 | Adding a note at runtime; dragging a note by its header             |
