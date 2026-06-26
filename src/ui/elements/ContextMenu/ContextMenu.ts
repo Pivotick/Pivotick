@@ -356,7 +356,7 @@ export class ContextMenu implements UIElement {
             entry.onclick = function (
                 this: UIElement,
                 evt: PointerEvent | MouseEvent,
-                element?: Node | Edge | Node[] | Edge[] | null
+                element?: Node | Edge | Node[] | Edge[] | Note | Note[] | null
             ) {
                 originalOnClick.apply(this, [evt, element])
                 menu.hide?.()

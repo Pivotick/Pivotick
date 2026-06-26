@@ -1,6 +1,7 @@
 import { faGlyph, tryResolveBoolean, tryResolveHTMLElement } from './Getters'
 import type { Node } from '../Node'
 import type { Edge } from '../Edge'
+import type { Note } from '../Note'
 import { createButton } from '../ui/components/Button'
 import type { UIElement } from '../ui/UIManager'
 import type { IconClass, IconUnicode, ImagePath, MenuActionItemOptions, MenuQuickActionItemOptions, PropertyEntry, SVGIcon } from '../interfaces/GraphUI'
@@ -120,7 +121,7 @@ export function createHtmlDL(data: PropertyEntry[], element: Node | Edge | null)
 }
 
 
-export function createQuickActionList<TThis extends UIElement = UIElement>(thisContext: TThis, actions: MenuQuickActionItemOptions[], element: Node[] | Node | Edge | null): HTMLDivElement {
+export function createQuickActionList<TThis extends UIElement = UIElement>(thisContext: TThis, actions: MenuQuickActionItemOptions[], element: Node[] | Node | Edge | Note | null): HTMLDivElement {
         const div = createHtmlElement('div', { class: 'pvt-action-list' })
         const firstElement = Array.isArray(element) ? element[0] : element
         actions.forEach(action => {
@@ -135,7 +136,7 @@ export function createQuickActionList<TThis extends UIElement = UIElement>(thisC
         return div
     }
 
-export function createActionList<TThis extends UIElement = UIElement>(thisContext: TThis, actions: MenuActionItemOptions[], element: Node[] | Node | Edge | null): HTMLDivElement {
+export function createActionList<TThis extends UIElement = UIElement>(thisContext: TThis, actions: MenuActionItemOptions[], element: Node[] | Node | Edge | Note | null): HTMLDivElement {
     const div = createHtmlElement('div', { class: 'pvt-action-list' })
     const firstElement = Array.isArray(element) ? element[0] : element
     actions.forEach(action => {
@@ -150,7 +151,7 @@ export function createActionList<TThis extends UIElement = UIElement>(thisContex
     return div
 }
 
-export function createQuickActionItem<TThis extends UIElement = UIElement>(thisContext: TThis, action: MenuQuickActionItemOptions, element: Node[] | Node | Edge | null): HTMLSpanElement {
+export function createQuickActionItem<TThis extends UIElement = UIElement>(thisContext: TThis, action: MenuQuickActionItemOptions, element: Node[] | Node | Edge | Note | null): HTMLSpanElement {
 
     action.variant = action.variant ?? ACTION_DEFAULT_VARIANT
 
@@ -175,7 +176,7 @@ export function createQuickActionItem<TThis extends UIElement = UIElement>(thisC
     return span
 }
 
-export function createActionItem<TThis extends UIElement = UIElement>(thisContext: TThis, action: MenuActionItemOptions, element: Node[] | Node | Edge | null): HTMLDivElement {
+export function createActionItem<TThis extends UIElement = UIElement>(thisContext: TThis, action: MenuActionItemOptions, element: Node[] | Node | Edge | Note | null): HTMLDivElement {
     const shortcut = createShortcut(action.shortcut)
     if (shortcut instanceof HTMLSpanElement) {
         shortcut.classList.add('pvt-ms-auto')

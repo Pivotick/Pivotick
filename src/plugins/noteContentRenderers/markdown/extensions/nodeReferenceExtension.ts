@@ -29,14 +29,15 @@ export const nodeReferenceExtension: MarkedExtension = {
                 }
             },
 
-            renderer(token: NodeReferenceToken) {
+            renderer(token: Tokens.Generic) {
 
+                const { nodeName } = token as NodeReferenceToken
                 return `
                     <span
                         class="pvt-node-reference"
-                        data-node-name="${token.nodeName}"
+                        data-node-name="${nodeName}"
                     >
-                        ${token.nodeName}
+                        ${nodeName}
                     </span>
                 `
             }

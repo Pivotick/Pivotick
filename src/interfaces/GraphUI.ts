@@ -3,6 +3,7 @@ import type { NodeEditSession } from '../editing/NodeEditSession'
 import type { Node } from '../Node'
 import type { Note } from '../Note';
 import type { UIElement } from '../ui/UIManager'
+import type { FieldConfig } from '../utils/FormFactory'
 
 /**
  * @category Main Options
@@ -233,7 +234,7 @@ export type MenuActionItemOptions<TThis extends UIElement = UIElement> = {
     title?: string,
     /** @default outline-primary */
     variant?: UIBaseVariant | UIOutlineVariant | UIOutlineSoftVariant,
-    visible?: boolean | ((element: Node | Edge | null) => boolean)
+    visible?: boolean | ((element: Node | Edge | Note | null) => boolean)
     onclick: (this: TThis, evt: PointerEvent | MouseEvent, element?: Node | Node[] | Edge | Edge[] | Note | Note[] | null) => void,
     /** The keybinding activates this function. This is just visual. The actual binding is defined in UIManager */
     shortcut?: string
@@ -254,7 +255,7 @@ export interface Editors {
          * Optional custom field generator. Inferred if undefined
          * @default undefined
          */
-        fields?: NodeEditorField[]
+        fields?: FieldConfig[]
 
         /**
          * Optional custom modal renderer. Leave undefined for default edition modal

@@ -68,7 +68,7 @@ export type RawEdge = { id?: string | number; from: string | number; to: string 
 export interface RelaxedGraphData {
     nodes: Array<Node | RawNode>
     edges: Array<Edge | RawEdge>
-    notes: Array<Note>
+    notes?: Array<Note>
 }
 
 

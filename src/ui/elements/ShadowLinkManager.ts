@@ -22,7 +22,7 @@ export class ShadowLinkManager {
         this.shadowLinkContainer?.appendChild(shadowLink)
     }
 
-    public updateShadowLink(pinnedTt: HTMLElement, sourcePoint: {x: number, y: number}, offsetSourceToCenter = true) {
+    public updateShadowLink(pinnedTt: HTMLElement, sourcePoint?: {x: number, y: number}, offsetSourceToCenter = true) {
 
         const bboxes = this.shadowlinkBoundingBoxesMap.get(pinnedTt)
         if (!bboxes) return
