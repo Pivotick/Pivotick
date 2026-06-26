@@ -9,6 +9,12 @@ const DEFAULT_NODE_PREVIEW_CLASS = 'pvt-node-preview-icon'
 /** The selection-highlight ring drawn around a selected node's rendered group. */
 const SELECTION_HIGHLIGHT_SELECTOR = 'circle.pvt-node-selected-highlight'
 
+/**
+ * The node's label text. The renderer wraps the label (text + optional background) in a
+ * dedicated `<g>`, so its parent group is what we drop to frame the node graphic only.
+ */
+const NODE_LABEL_SELECTOR = 'text.pvt-node-label'
+
 export interface NodePreviewOptions {
     /** Side length (px) of the square preview. Defaults to {@link DEFAULT_NODE_PREVIEW_SIZE}. */
     size?: number
@@ -19,9 +25,27 @@ export interface NodePreviewOptions {
 }
 
 /**
+ * Measure a not-yet-attached clone's bounding box. `getBBox()` only reports real geometry for
+ * elements living in a rendered SVG tree, so the clone is briefly attached to the source's
+ * owning `<svg>`, measured, then detached again — all synchronously, so it never paints.
+ *
+ * Falls back to measuring the (detached) clone directly when the source has no owning `<svg>`.
+ */
+function measureBBox(clone: SVGGElement, source: SVGGElement): DOMRect {
+    const svg = source.ownerSVGElement
+    if (!svg) return clone.getBBox()
+    svg.appendChild(clone)
+    const bbox = clone.getBBox()
+    svg.removeChild(clone)
+    return bbox
+}
+
+/**
  * Clone a node's rendered <g> group and scale/center it to fit a `size`×`size` box.
  *
- * The bounding box is read from the live `element` (which is laid out in the DOM); the
+ * The label (text + its optional background) is stripped so the preview frames only the node
+ * graphic. Because the clone — not the live `element` — is what gets measured, the centering
+ * reflects the de-labeled graphic rather than reserving space for the removed label. The
  * returned clone carries the centering transform and is not yet attached anywhere.
  */
 function buildScaledClone(element: SVGGElement, size: number, removeSelectionHighlight: boolean): SVGGElement {
@@ -29,7 +53,9 @@ function buildScaledClone(element: SVGGElement, size: number, removeSelectionHig
     if (removeSelectionHighlight) {
         clonedGroup.querySelector(SELECTION_HIGHLIGHT_SELECTOR)?.remove()
     }
-    const bbox = element.getBBox()
+    clonedGroup.querySelector(NODE_LABEL_SELECTOR)?.parentElement?.remove()
+
+    const bbox = measureBBox(clonedGroup, element)
     const scale = size / Math.max(bbox.width, bbox.height)
     clonedGroup.setAttribute(
         'transform',
