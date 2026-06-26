@@ -3,6 +3,7 @@ import type { Node } from '../../../../Node'
 import './editNodeModal.scss'
 import { createHtmlTemplate } from '../../../../utils/ElementCreation'
 import { nodeNameGetter } from '../../../../utils/GraphGetters'
+import { createNodePreview } from '../../../../utils/NodePreview'
 import type { ModalHTMLElement } from '../../../components/Modal'
 import { FormFactory, type FieldConfig, type FormValues } from '../../../../utils/FormFactory'
 import type { NodeEditSession } from '../../../../editing/NodeEditSession'
@@ -11,28 +12,16 @@ import { edit } from '../../../icons'
 
 export function createNodeEditModal(node: Node, session: NodeEditSession, uiManager: UIManager, customHandler?: ((session: NodeEditSession) => HTMLDivElement)): void {
     const fixedPreviewSize = 42
-    const element = node.getGraphElement()
-    let clonedGroup
-    if (element && element instanceof SVGGElement) {
-        clonedGroup = element.cloneNode(true) as SVGGElement
-        const bbox = element.getBBox()
-        const scale = fixedPreviewSize / Math.max(bbox.width, bbox.height)
-        clonedGroup.setAttribute(
-            'transform',
-            `translate(${(fixedPreviewSize - bbox.width * scale) / 2 - bbox.x * scale}, ${(fixedPreviewSize - bbox.height * scale) / 2 - bbox.y * scale}) scale(${scale})`
-        )
-    }
     const header = createHtmlTemplate(`
         <div class="main-container">
-            <div class="icon-container">
-                <svg class="icon" width="${fixedPreviewSize}" height="${fixedPreviewSize}" viewBox="0 0 ${fixedPreviewSize} ${fixedPreviewSize}" preserveAspectRatio="xMidYMid meet">${clonedGroup?.outerHTML}</svg>
-            </div>
+            <div class="icon-container"></div>
             <div class="nodeinfo-container">
                 <div>Editing node: </div>
                 <div class="nodeinfo-name">${nodeNameGetter(node, uiManager.getOptions().mainHeader)}</div>
             </div>
         </div>
     `) as HTMLDivElement
+    header.querySelector('.icon-container')?.appendChild(createNodePreview(node, { size: fixedPreviewSize, className: 'icon' }))
 
     let body, form: HTMLFormElement
     if (customHandler) {

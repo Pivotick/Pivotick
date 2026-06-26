@@ -4,6 +4,7 @@ import type { UIElement, UIManager } from '../../UIManager'
 import type { Node } from '../../../Node'
 import './searchbox.scss'
 import { nodeNameGetter } from '../../../utils/GraphGetters'
+import { createNodePreview } from '../../../utils/NodePreview'
 
 interface Match {
     key: string,
@@ -134,9 +135,7 @@ export class SearchBox implements UIElement {
         template.innerHTML = `
   <div class="pvt-search-result">
     <div>
-        <div class="pvt-search-result__nodepreview">
-            <svg class="pvt-mainheader-icon" width="${fixedPreviewSize}" height="${fixedPreviewSize}" viewBox="0 0 ${fixedPreviewSize} ${fixedPreviewSize}" preserveAspectRatio="xMidYMid meet"></svg>
-        </div>
+        <div class="pvt-search-result__nodepreview"></div>
         <div class="pvt-search-result__name"></div>
     </div>
     <div class="pvt-search-result__info">
@@ -149,25 +148,14 @@ export class SearchBox implements UIElement {
         const match = result[1]
 
         const container = template.content.firstElementChild as HTMLDivElement
-        const preview = container.querySelector('.pvt-search-result__nodepreview .pvt-mainheader-icon') ?? undefined
+        const preview = container.querySelector('.pvt-search-result__nodepreview') ?? undefined
         const name = container.querySelector('.pvt-search-result__name') ?? undefined
         const infoKey = container.querySelector('.pvt-search-result__info_key') ?? undefined
         const infoValue = container.querySelector('.pvt-search-result__info_value') ?? undefined
 
         container.addEventListener('click', () => { this.clickHandler(node) })
 
-        // preview!.textContent = node.id
-        const element = node.getGraphElement()
-        if (element && element instanceof SVGGElement) {
-            const clonedGroup = element.cloneNode(true) as SVGGElement
-            const bbox = element.getBBox()
-            const scale = fixedPreviewSize / Math.max(bbox.width, bbox.height)
-            clonedGroup.setAttribute(
-                'transform',
-                `translate(${(fixedPreviewSize - bbox.width * scale) / 2 - bbox.x * scale}, ${(fixedPreviewSize - bbox.height * scale) / 2 - bbox.y * scale}) scale(${scale})`
-            )
-            preview!.appendChild(clonedGroup)
-        }
+        preview?.appendChild(createNodePreview(node, { size: fixedPreviewSize }))
         name!.textContent = nodeNameGetter(node, this.uiManager.getOptions().mainHeader)
         infoKey!.textContent = `.${match.key}: `
         infoValue!.textContent = match.value

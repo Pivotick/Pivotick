@@ -7,6 +7,7 @@ import { edgeDescriptionGetter, edgeNameGetter, nodeDescriptionGetter, nodeNameG
 import { graphEdgeIcon, graphMultiSelectNode } from '../../icons'
 import type { EdgeSelection, NodeSelection } from '../../../interfaces/GraphInteractions'
 import { tryResolveHTMLElement } from '../../../utils/Getters'
+import { createNodePreview } from '../../../utils/NodePreview'
 
 
 export class SidebarMainHeader implements UIElement {
@@ -74,9 +75,7 @@ export class SidebarMainHeader implements UIElement {
         const fixedPreviewSize = 42
         const template = `
 <div class="enter-ready">
-    <div class="pvt-mainheader-nodepreview">
-        <svg class="pvt-mainheader-icon" width="${fixedPreviewSize}" height="${fixedPreviewSize}" viewBox="0 0 ${fixedPreviewSize} ${fixedPreviewSize}" preserveAspectRatio="xMidYMid meet"></svg>
-    </div>
+    <div class="pvt-mainheader-nodepreview"></div>
     <div class="pvt-mainheader-nodeinfo">
         <div class="pvt-mainheader-nodeinfo-name"></div>
         <div class="pvt-mainheader-nodeinfo-subtitle"></div>
@@ -85,23 +84,12 @@ export class SidebarMainHeader implements UIElement {
     </div>
 </div>`
         const mainheaderContent = createHtmlTemplate(template) as HTMLDivElement
-        const iconElem = mainheaderContent.querySelector('.pvt-mainheader-icon')
+        const previewElem = mainheaderContent.querySelector('.pvt-mainheader-nodepreview')
         const nameElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-name')
         const subtitleElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-subtitle')
         // const _actionElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-action')
 
-        if (iconElem) {
-            if (element && element instanceof SVGGElement) {
-                const clonedGroup = element.cloneNode(true) as SVGGElement
-                const bbox = element.getBBox()
-                const scale = fixedPreviewSize / Math.max(bbox.width, bbox.height)
-                clonedGroup.setAttribute(
-                    'transform',
-                    `translate(${(fixedPreviewSize - bbox.width * scale) / 2 - bbox.x * scale}, ${(fixedPreviewSize - bbox.height * scale) / 2 - bbox.y * scale}) scale(${scale})`
-                )
-                iconElem.appendChild(clonedGroup)
-            }
-        }
+        previewElem?.appendChild(createNodePreview(element instanceof SVGGElement ? element : node, { size: fixedPreviewSize }))
         if (nameElem) {
             nameElem.textContent = nodeNameGetter(node, this.uiManager.getOptions().mainHeader)
         }
@@ -168,7 +156,7 @@ export class SidebarMainHeader implements UIElement {
         const fixedPreviewSize = 42
         const template = `<div class="enter-ready">
     <div class="pvt-mainheader-nodepreview">
-        <svg class="pvt-mainheader-icon" width="${fixedPreviewSize}" height="${fixedPreviewSize}" viewBox="0 0 ${fixedPreviewSize} ${fixedPreviewSize}" preserveAspectRatio="xMidYMid meet"></svg>
+        <svg class="pvt-node-preview-icon" width="${fixedPreviewSize}" height="${fixedPreviewSize}" viewBox="0 0 ${fixedPreviewSize} ${fixedPreviewSize}" preserveAspectRatio="xMidYMid meet"></svg>
     </div>
     <div class="pvt-mainheader-nodeinfo">
         <div class="pvt-mainheader-nodeinfo-name"></div>
@@ -178,7 +166,7 @@ export class SidebarMainHeader implements UIElement {
     </div>
 </div>`
         const mainheaderContent = createHtmlTemplate(template) as HTMLDivElement
-        const iconElem = mainheaderContent.querySelector('.pvt-mainheader-icon')
+        const iconElem = mainheaderContent.querySelector('.pvt-node-preview-icon')
         const nameElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-name')
         const subtitleElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-subtitle')
         // const actionElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-action')

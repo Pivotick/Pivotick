@@ -10,6 +10,7 @@ import './tooltip.scss'
 import type { Tooltip as TooltipOptions } from '../../../interfaces/GraphUI'
 import { deepMerge } from '../../../utils/utils'
 import { ShadowLinkManager } from '../ShadowLinkManager'
+import { createNodePreview } from '../../../utils/NodePreview'
 
 
 const defaultTooltipOptions = {
@@ -186,7 +187,6 @@ export class Tooltip implements UIElement {
 <div class="pvt-tooltip-container">
     <div class="pvt-mainheader-container">
         <div class="pvt-mainheader-nodepreview">
-            <svg class="pvt-mainheader-icon" width="${fixedPreviewSize}" height="${fixedPreviewSize}" viewBox="0 0 ${fixedPreviewSize} ${fixedPreviewSize}" preserveAspectRatio="xMidYMid meet"></svg>
             <span class="pvt-mainheader-topright"></span>
         </div>
         <div class="pvt-mainheader-nodeinfo">
@@ -199,7 +199,7 @@ export class Tooltip implements UIElement {
 </div>`
         const tooltipContainer = createHtmlTemplate(template) as HTMLDivElement
         const mainheaderContent = tooltipContainer.querySelector('.pvt-mainheader-container')!
-        const iconElem = tooltipContainer.querySelector('.pvt-mainheader-icon')!
+        const previewElem = tooltipContainer.querySelector('.pvt-mainheader-nodepreview')!
         const nameElem = tooltipContainer.querySelector('.pvt-mainheader-nodeinfo-name')!
         const subtitleElem = tooltipContainer.querySelector('.pvt-mainheader-nodeinfo-subtitle')!
         const toprightElem = tooltipContainer.querySelector('.pvt-mainheader-topright')!
@@ -207,18 +207,7 @@ export class Tooltip implements UIElement {
 
         const properties = nodePropertiesGetter(node, this.uiManager.getOptions().propertiesPanel)
 
-        const element = node.getGraphElement()
-        if (element && element instanceof SVGGElement) {
-            const clonedGroup = element.cloneNode(true) as SVGGElement
-            clonedGroup.querySelector('circle.pvt-node-selected-highlight')?.remove()
-            const bbox = element.getBBox()
-            const scale = fixedPreviewSize / Math.max(bbox.width, bbox.height)
-            clonedGroup.setAttribute(
-                'transform',
-                `translate(${(fixedPreviewSize - bbox.width * scale) / 2 - bbox.x * scale}, ${(fixedPreviewSize - bbox.height * scale) / 2 - bbox.y * scale}) scale(${scale})`
-            )
-            iconElem.appendChild(clonedGroup)
-        }
+        previewElem.prepend(createNodePreview(node, { size: fixedPreviewSize, removeSelectionHighlight: true }))
 
         nameElem.textContent = nodeNameGetter(node, this.uiManager.getOptions().mainHeader)
         subtitleElem.textContent = nodeDescriptionGetter(node, this.uiManager.getOptions().mainHeader)

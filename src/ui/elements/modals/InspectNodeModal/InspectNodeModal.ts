@@ -1,6 +1,7 @@
 import { Node } from '../../../../Node'
 import { createHtmlDL, createHtmlTemplate } from '../../../../utils/ElementCreation'
 import { nodeDescriptionGetter, nodeNameGetter, nodePropertiesGetter } from '../../../../utils/GraphGetters'
+import { createNodePreview } from '../../../../utils/NodePreview'
 import { createJsonViewer } from '../../../components/JsonViewer'
 import type { ModalHTMLElement } from '../../../components/Modal'
 import { createTabs } from '../../../components/Tabs'
@@ -9,28 +10,16 @@ import './inspectNodeModal.scss'
 
 export function createInspectModal(node: Node, uiManager: UIManager): void {
     const fixedPreviewSize = 42
-    const element = node.getGraphElement()
-    let clonedGroup
-    if (element && element instanceof SVGGElement) {
-        clonedGroup = element.cloneNode(true) as SVGGElement
-        const bbox = element.getBBox()
-        const scale = fixedPreviewSize / Math.max(bbox.width, bbox.height)
-        clonedGroup.setAttribute(
-            'transform',
-            `translate(${(fixedPreviewSize - bbox.width * scale) / 2 - bbox.x * scale}, ${(fixedPreviewSize - bbox.height * scale) / 2 - bbox.y * scale}) scale(${scale})`
-        )
-    }
     const header = createHtmlTemplate(`
         <div class="main-container">
-            <div class="icon-container">
-                <svg class="icon" width="${fixedPreviewSize}" height="${fixedPreviewSize}" viewBox="0 0 ${fixedPreviewSize} ${fixedPreviewSize}" preserveAspectRatio="xMidYMid meet">${clonedGroup?.outerHTML}</svg>
-            </div>
+            <div class="icon-container"></div>
             <div class="nodeinfo-container">
                 <div class="nodeinfo-name">${nodeNameGetter(node, uiManager.getOptions().mainHeader)}</div>
                 <div class="nodeinfo-subtitle">${nodeDescriptionGetter(node, uiManager.getOptions().mainHeader) ?? ''}</div>
             </div>
         </div>
     `) as HTMLDivElement
+    header.querySelector('.icon-container')?.appendChild(createNodePreview(node, { size: fixedPreviewSize, className: 'icon' }))
 
     const body = createInspectModalBody(node, uiManager)
 

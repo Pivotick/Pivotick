@@ -13,6 +13,7 @@ import { arrowLeft, arrowRight, dash, edgeIncoming, edgeOutgoing, filterAdd, fil
 import { createBadge } from '../../components/Badge'
 import { createTableForAggregatedProperties } from '../../../utils/ElementCreationAggregatedProperties'
 import type { NodeStyle } from '../../../interfaces/RendererOptions'
+import { createNodePreview } from '../../../utils/NodePreview'
 
 
 export class SidebarNeighbors implements UIElement {
@@ -384,25 +385,13 @@ export class SidebarNeighbors implements UIElement {
             const targetNodeTemplate = document.createElement('template')
             targetNodeTemplate.innerHTML = `
             <div class="pvt-neighbors-list__nodecontainer">
-                <span class="pvt-neighbors-list__nodepreview">
-                    <svg class="pvt-mainheader-icon" width="${fixedPreviewSize}" height="${fixedPreviewSize}" viewBox="0 0 ${fixedPreviewSize} ${fixedPreviewSize}" preserveAspectRatio="xMidYMid meet"></svg>
-                </span>
+                <span class="pvt-neighbors-list__nodepreview"></span>
                 <span class="pvt-neighbors-list__nodename">${targetNodeName}</span>
             </div>`
 
             const targetNodeDiv = targetNodeTemplate.content.firstElementChild as HTMLDivElement
-            const targetNodePreview = targetNodeDiv.querySelector('.pvt-neighbors-list__nodepreview .pvt-mainheader-icon') ?? undefined
-            const nodeElement = targetNode.getGraphElement()
-            if (targetNodePreview && nodeElement && nodeElement instanceof SVGGElement) {
-                const clonedGroup = nodeElement.cloneNode(true) as SVGGElement
-                const bbox = nodeElement.getBBox()
-                const scale = fixedPreviewSize / Math.max(bbox.width, bbox.height)
-                clonedGroup.setAttribute(
-                    'transform',
-                    `translate(${(fixedPreviewSize - bbox.width * scale) / 2 - bbox.x * scale}, ${(fixedPreviewSize - bbox.height * scale) / 2 - bbox.y * scale}) scale(${scale})`
-                )
-                targetNodePreview.appendChild(clonedGroup)
-            }
+            const targetNodePreview = targetNodeDiv.querySelector('.pvt-neighbors-list__nodepreview') ?? undefined
+            targetNodePreview?.appendChild(createNodePreview(targetNode, { size: fixedPreviewSize }))
 
             const fullEdgeDesc = createBadge({
                 text: edgeName ? edgeName : '- empty -',
