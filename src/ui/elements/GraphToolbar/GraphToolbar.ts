@@ -322,6 +322,7 @@ export class GraphToolbar implements UIElement {
             variant: 'secondary',
             text: 'Bulk Edit',
             size: 'sm',
+            disabled: true,
             svgIcon: bulkEdit,
             onClick: () => {
                 //
