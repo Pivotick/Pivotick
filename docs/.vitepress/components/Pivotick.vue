@@ -43,6 +43,9 @@ const localData = computed(() => ({ ...props.data }))
 const localOptions = computed(() => ({
     ...props.options,
     simulation: {
+        // Keep any simulation tuning a card sets (e.g. force knobs) and only
+        // force the worker off — inline docs can't resolve the worker URL.
+        ...props.options.simulation,
         useWorker: false,
     },
 }))
