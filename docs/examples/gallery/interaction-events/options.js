@@ -1,41 +1,30 @@
 // #region data
 const data = {
     nodes: [
-        { id: 'alice', data: { label: 'Alice' } },
-        { id: 'bob', data: { label: 'Bob' } },
-        { id: 'carol', data: { label: 'Carol' } },
-        { id: 'dave', data: { label: 'Dave' } },
-        { id: 'erin', data: { label: 'Erin' } },
-        { id: 'frank', data: { label: 'Frank' } }
+        { id: 'alice' },
+        { id: 'bob' },
+        { id: 'carol' },
+        { id: 'dave' },
+        { id: 'erin' },
+        { id: 'frank' }
     ],
     edges: [
-        { id: 'e1', from: 'alice', to: 'bob' },
-        { id: 'e2', from: 'alice', to: 'carol' },
-        { id: 'e3', from: 'bob', to: 'dave' },
-        { id: 'e4', from: 'carol', to: 'dave' },
-        { id: 'e5', from: 'dave', to: 'erin' },
-        { id: 'e6', from: 'erin', to: 'frank' }
+        { from: 'alice', to: 'bob' },
+        { from: 'alice', to: 'carol' },
+        { from: 'bob', to: 'dave' },
+        { from: 'carol', to: 'dave' },
+        { from: 'dave', to: 'erin' },
+        { from: 'erin', to: 'frank' }
     ]
 }
 // #endregion data
 
 // #region options
 // Every interaction callback receives the relevant Node/Edge (and the DOM event).
-// In a real app you'd act on these directly; here each one is handed to `onEvent`
-// so the page can list them as they fire.
+// In a real app you'd act on these directly; here each one is forwarded to the
+// page's event log.
 function createOptions(onEvent) {
     return {
-        render: {
-            defaultNodeStyle: {
-                size: 15,
-                color: '#6366f1',
-                strokeColor: '#ffffff',
-                strokeWidth: 2,
-                textColor: '#334155',
-                text: (node) => node.getData()?.label,
-                textVerticalShift: -1.6
-            }
-        },
         callbacks: {
             onNodeClick: (event, node) => onEvent('click', `node ${node.id}`),
             onNodeHoverIn: (event, node) => onEvent('hover in', `node ${node.id}`),

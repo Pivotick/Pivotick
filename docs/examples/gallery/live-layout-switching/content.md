@@ -19,12 +19,17 @@ never fire after the graph is gone.
 import { ref } from 'vue'
 import { data, options, startCycling, stopCycling } from './options.js'
 
-const current = ref('Vertical tree')
-const onLoaded = (graph) => startCycling(graph, (label) => { current.value = label })
+// The label updates ~every 2s. We write it straight to the DOM (not a reactive
+// binding) so the page never re-renders — a re-render would reset the selected
+// code-group tab below.
+const label = ref(null)
+const onLoaded = (graph) => startCycling(graph, (name) => {
+    if (label.value) label.value.textContent = name
+})
 const onUnmounted = () => stopCycling()
 </script>
 
-<p>Current layout: <strong>{{ current }}</strong></p>
+<p>Current layout: <strong ref="label">Vertical tree</strong></p>
 
 <Pivotick
     :data="data"

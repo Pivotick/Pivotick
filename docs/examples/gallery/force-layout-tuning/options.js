@@ -1,20 +1,20 @@
 // #region data
 const data = {
     nodes: [
-        { id: 'core', data: { label: 'Core' } },
-        { id: 'api', data: { label: 'API' } },
-        { id: 'web', data: { label: 'Web' } },
-        { id: 'mobile', data: { label: 'Mobile' } },
-        { id: 'auth', data: { label: 'Auth' } },
-        { id: 'billing', data: { label: 'Billing' } },
-        { id: 'search', data: { label: 'Search' } },
-        { id: 'index', data: { label: 'Index' } },
-        { id: 'queue', data: { label: 'Queue' } },
-        { id: 'worker', data: { label: 'Worker' } },
-        { id: 'db', data: { label: 'Database' } },
-        { id: 'cache', data: { label: 'Cache' } },
-        { id: 'cdn', data: { label: 'CDN' } },
-        { id: 'logs', data: { label: 'Logs' } }
+        { id: 'core' },
+        { id: 'api' },
+        { id: 'web' },
+        { id: 'mobile' },
+        { id: 'auth' },
+        { id: 'billing' },
+        { id: 'search' },
+        { id: 'index' },
+        { id: 'queue' },
+        { id: 'worker' },
+        { id: 'db' },
+        { id: 'cache' },
+        { id: 'cdn' },
+        { id: 'logs' }
     ],
     edges: [
         { from: 'web', to: 'api' },
@@ -51,17 +51,6 @@ const options = {
         // Centering pull that stops disconnected parts from drifting off-screen.
         // Default 0.1. Lower = looser and airier; higher = a tighter ball.
         d3GravityStrength: 0.05
-    },
-    render: {
-        defaultNodeStyle: {
-            size: 14,
-            color: '#6366f1',
-            strokeColor: '#ffffff',
-            strokeWidth: 2,
-            textColor: '#334155',
-            text: (node) => node.getData()?.label,
-            textVerticalShift: -1.6
-        }
     }
 }
 // #endregion options

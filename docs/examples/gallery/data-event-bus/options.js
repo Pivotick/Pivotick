@@ -1,34 +1,18 @@
 // #region data
 const data = {
     nodes: [
-        { id: 'hub', data: { label: 'Hub' } },
-        { id: 'a', data: { label: 'A' } },
-        { id: 'b', data: { label: 'B' } },
-        { id: 'c', data: { label: 'C' } }
+        { id: 'hub' },
+        { id: 'a' },
+        { id: 'b' },
+        { id: 'c' }
     ],
     edges: [
-        { id: 'hub-a', from: 'hub', to: 'a' },
-        { id: 'hub-b', from: 'hub', to: 'b' },
-        { id: 'hub-c', from: 'hub', to: 'c' }
+        { from: 'hub', to: 'a' },
+        { from: 'hub', to: 'b' },
+        { from: 'hub', to: 'c' }
     ]
 }
 // #endregion data
-
-// #region options
-const options = {
-    render: {
-        defaultNodeStyle: {
-            size: 14,
-            color: '#10b981',
-            strokeColor: '#ffffff',
-            strokeWidth: 2,
-            textColor: '#334155',
-            text: (node) => node.getData()?.label,
-            textVerticalShift: -1.6
-        }
-    }
-}
-// #endregion options
 
 // #region events
 // The data event bus fires whenever the graph's data changes — whether the
@@ -65,8 +49,8 @@ const added = []
 // Adding a node + its edge fires nodeAdd, edgeAdd and dataBatchChanged.
 function addNode(graph) {
     const id = `node-${++seq}`
-    graph.addNode({ id, data: { label: id } })
-    graph.addEdge({ id: `edge-${seq}`, from: 'hub', to: id })
+    graph.addNode({ id })
+    graph.addEdge({ from: 'hub', to: id })
     added.push(id)
     graph.simulation.reheat(0.6)
 }
@@ -82,4 +66,4 @@ function removeNode(graph) {
 }
 // #endregion mutate
 
-export { data, options, registerEvents, addNode, removeNode }
+export { data, registerEvents, addNode, removeNode }

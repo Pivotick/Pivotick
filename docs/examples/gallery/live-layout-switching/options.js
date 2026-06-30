@@ -1,19 +1,19 @@
 // #region data
 const data = {
     nodes: [
-        { id: 'ceo', data: { label: 'CEO' } },
-        { id: 'cto', data: { label: 'CTO' } },
-        { id: 'cfo', data: { label: 'CFO' } },
-        { id: 'coo', data: { label: 'COO' } },
-        { id: 'eng', data: { label: 'Engineering' } },
-        { id: 'platform', data: { label: 'Platform' } },
-        { id: 'infra', data: { label: 'Infra' } },
-        { id: 'data', data: { label: 'Data' } },
-        { id: 'finance', data: { label: 'Finance' } },
-        { id: 'billing', data: { label: 'Billing' } },
-        { id: 'ops', data: { label: 'Operations' } },
-        { id: 'support', data: { label: 'Support' } },
-        { id: 'qa', data: { label: 'QA' } }
+        { id: 'ceo' },
+        { id: 'cto' },
+        { id: 'cfo' },
+        { id: 'coo' },
+        { id: 'eng' },
+        { id: 'platform' },
+        { id: 'infra' },
+        { id: 'data' },
+        { id: 'finance' },
+        { id: 'billing' },
+        { id: 'ops' },
+        { id: 'support' },
+        { id: 'qa' }
     ],
     edges: [
         { from: 'ceo', to: 'cto' },
@@ -35,22 +35,7 @@ const data = {
 // #region options
 // Start on a vertical tree; the cycle below switches it at runtime.
 const options = {
-    layout: { type: 'tree', rootId: 'ceo' },
-    render: {
-        defaultNodeStyle: {
-            size: 13,
-            color: '#0ea5e9',
-            strokeColor: '#ffffff',
-            strokeWidth: 2,
-            textColor: '#334155',
-            text: (node) => node.getData()?.label,
-            textVerticalShift: -1.6
-        },
-        defaultEdgeStyle: {
-            markerEnd: 'arrow',
-            curveStyle: 'straight'
-        }
-    }
+    layout: { type: 'tree', rootId: 'ceo' }
 }
 // #endregion options
 
