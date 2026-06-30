@@ -81,7 +81,7 @@ Each demo lives in `docs/examples/gallery/<slug>/`:
   :::
   ```
 - **`options.js`** — exports `data` and `options`, each wrapped in `// #region data` / `// #region options` markers so the `<<<` snippets render. Cards that need runtime behaviour also export a callback (see 4.3).
-- **`pic.png`** — thumbnail for the index grid.
+- **`pic.png`** — thumbnail for the index grid. Captured per theme (light + dark) so the index can show the one matching the reader's selected theme — see 4.4.
 
 ### 4.2 The `<Pivotick>` component (`docs/.vitepress/components/Pivotick.vue`)
 - Instantiates `new Pivotick(container, data, options)` from `src/index`.
@@ -98,6 +98,7 @@ Cards D2+D4 and J4 run timers (`changeLayout` / `updateData`) started in `onLoad
 - **Web worker disabled in docs** — `Pivotick.vue` hard-sets `useWorker: false`. A genuine *worker* demo isn't possible inline without resolving the worker URL in the VitePress build. **Impact: K3** is scoped as a main-thread "scale" demo; the worker is described in prose. (Optional follow-up: enable the worker for K3 only — feasibility TBD.)
 - **Nested cluster simulations in a 400px canvas** — clustering spins up nested subgraph layouts. Must lay out cleanly without jitter in a small iframe. **Impact: I3, L4.** Validate the mechanism in I3 first; build L4 (bigger dataset) only after.
 - **Thumbnail generation** — repo already has a Playwright visual-test setup (`npm run test:visual`). Prefer automating `pic.png` capture; **wait explicitly for async render before screenshotting** (notes/markdown/clusters render asynchronously). Manual capture is the fallback.
+- **Theme-aware thumbnails** — the docs site has a light/dark toggle (VitePress adds `.dark` to `<html>`, persisted in `localStorage['vitepress-theme-appearance']`; reactive via `useData().isDark`). The graph itself recolors from CSS variables, so a single light `pic.png` looks wrong for dark-theme readers. **Capture one thumbnail per theme** — e.g. `pic-light.png` + `pic-dark.png` — by toggling the `.dark` class (or seeding localStorage) before each screenshot in `scripts/capture-thumbnails.mjs`, and have `GalleryIndex.vue` show the file matching the active theme. Touches the thumbnail glob/selection in `GalleryIndex.vue` and the `hasThumb` check in `gallery-files.js`. **Impact: all cards (re-capture on the theme split).**
 
 ### 4.5 Index & navigation
 - **`docs/gallery.md`** — rewrite the index grid to the new 12-category structure (thumbnail + title per card, grouped by category heading).
@@ -107,7 +108,7 @@ Cards D2+D4 and J4 run timers (`changeLayout` / `updateData`) started in `onLoad
 ### 4.6 Definition of done (per card)
 1. Live `<Pivotick>` demo renders correctly and is interactive where relevant.
 2. `code-group` shows `data` + `options` (+ callback) via region snippets.
-3. `pic.png` thumbnail present.
+3. Thumbnails present for both light and dark themes, shown to match the active theme (see 4.4).
 4. Linked from `docs/gallery.md` under the right category.
 5. Code is lint-clean (no semicolons, single quotes) and self-contained.
 
