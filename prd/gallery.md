@@ -131,7 +131,7 @@ Throughline: *default → data-driven map → automatic palette → icons → fu
 | --- | --- | --- | --- | --- |
 | B1 | Default node style | Base appearance for all nodes; **shape reference baked in** | `render.defaultNodeStyle` (shape/size/color/textColor/strokeWidth); shapes `circle\|square\|triangle\|hexagon` | Show a row of all built-in shapes as the visual. Reuse old `node-style`. |
 | B2 | Style by type | Declarative per-type styling | `render.nodeTypeAccessor` + `render.nodeStyleMap` | The most important styling pattern. Reuse old `node-accessor`. |
-| B3 | Custom HTML node ★ | Return arbitrary HTML per node | `render.renderNode(node) => HTMLElement\|string` | The "hackable" proof. Reuse old `node-rendering-callback`. |
+| B3 | Custom HTML node ★ | Return arbitrary HTML per node | `render.renderNode(node) => HTMLElement\|string` | The "hackable" proof. Reuse old `node-rendering-callback`. **Deferred to Phase 8** — `render.renderNode` has a measurement bug (see §6). |
 | B4 | Icons per type ★ | Icons inside nodes | `nodeStyleMap` with `svgIcon: (node)=>…` (verify icon-class/unicode support on `NodeStyle`) | Very common real-world need; demo-friendly. |
 | B5 | Color by category ★ | Auto-assign colors, colorblind-safe palettes | `new ColorPaletteMapper('okabe-ito')`; `defaultNodeStyle.color: (node)=>mapper.getColor(node.getData().group)` | Palettes incl. `okabe-ito`, `tol-bright`, `kelly-22`, `d3-category10`. Confirm `color` accepts an accessor. |
 
@@ -221,15 +221,16 @@ Combine features into believable scenarios; richer data, more "wow" than how-to.
 Build infra first, then ascend complexity. Each phase is shippable.
 
 - **Phase 0 — Infra.** Wipe old gallery; rewrite `gallery.md` index + sidebar nav; add `onUnmountedCallback` to `Pivotick.vue` (4.3); decide/auto-wire `gallery-files.js`; set up thumbnail capture (Playwright, async-safe).
-- **Phase 1 — Styling foundations** (static, low-risk, high-value): A1, B1–B5, C1, C2, C4. Establishes the visual language.
+- **Phase 1 — Styling foundations** (static, low-risk, high-value): A1, B1, B2, B4, B5, C1, C2, C4. Establishes the visual language. (B3 split out — depends on a `renderNode` fix; sequenced last, see Phase 8.)
 - **Phase 2 — Layouts & events:** D1, D2+D4 (uses timer infra), E1, E4.
 - **Phase 3 — UI customization:** F1–F4.
 - **Phase 4 — Editing & notes:** G1, G2, H1, H2.
 - **Phase 5 — Filtering, hierarchy & programmatic:** I1, I3 (validate clustering), I4, J1, J4.
 - **Phase 6 — Theming & scale:** K1, K3.
 - **Phase 7 — Showpieces:** L1, L2, L3, then L4 (depends on I3).
+- **Phase 8 — `renderNode` fix + B3 (last).** `render.renderNode` (custom HTML nodes) is broken: the renderer measures the returned element with `getBoundingClientRect()` in a one-shot `requestAnimationFrame` that fires while the graph's `.zoom-layer` is still `display:none` (`_pivotick.scss`), so it locks the `foreignObject` at `0×0` and never retries — invisible for every user, not just docs. Fix the measurement (retry on later frames until visible, bounded), then build B3 and capture its thumbnail. Sequenced **last** by decision (`NodeStyle.html` is a working stopgap — fixed-size `foreignObject`, no measurement).
 
-**Dependencies:** D2+D4 & J4 depend on Phase 0 (`onUnmountedCallback`). L4 depends on I3. K3 depends on the worker decision (or ships as scale-only).
+**Dependencies:** D2+D4 & J4 depend on Phase 0 (`onUnmountedCallback`). L4 depends on I3. K3 depends on the worker decision (or ships as scale-only). B3 depends on the `renderNode` fix (Phase 8, sequenced last).
 
 ---
 
