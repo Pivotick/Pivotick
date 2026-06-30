@@ -28,6 +28,10 @@ const props = defineProps({
         type: Function,
         required: false,
     },
+    onUnmountedCallback: {
+        type: Function,
+        required: false,
+    },
     useInlineStyle: {
         type: String,
         required: false,
@@ -55,6 +59,9 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+    // Let the demo clean up first (e.g. clear its own interval) while the graph
+    // still exists — see cards that run timers in onLoadedCallback.
+    props.onUnmountedCallback?.(container.value)
     if (graph?.destroy)
         graph.destroy()
     graph = null

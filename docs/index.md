@@ -38,7 +38,7 @@ features:
 
 
 <script setup>
-    import { data as data_e, options as options_e } from './examples/gallery/social-network/options.js'
+    import { data as data_e, options as options_e } from './home-graph.js'
 </script>
 
 <Pivotick
