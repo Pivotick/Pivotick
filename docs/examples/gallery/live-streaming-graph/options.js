@@ -41,6 +41,8 @@ function startStreaming(graph) {
         const events = nodes.map((n) => n.id).filter((x) => x !== 'src')
         if (events.length > 13) graph.removeNode(events[0])
 
+        // reheat so the newcomer and its neighbours settle into place, then re-fit
+        graph.simulation.reheat(0.5)
         graph.renderer.fitAndCenter()
     }, 1400)
 }

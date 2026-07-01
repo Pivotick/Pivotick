@@ -252,3 +252,13 @@ Build infra first, then ascend complexity. Each phase is shippable.
 **32 cards / 12 categories:** A(1) · B(5) · C(3) · D(2) · E(2) · F(4) · G(2) · H(2) · I(3) · J(2) · K(2) · L(4).
 
 Dropped during scoping: A2, A3, B6 (folded), C3 (folded into C2), D3 (ego-tree), E2/E3/E5 (folded into E1), F5, G3, H3 (folded), I2 (folded), J2/J3 (folded), K2 (folded into K1), and the original L4 (reborn as the clustered infra map).
+
+---
+
+## 9. Known library issues surfaced by the gallery (deferred)
+
+Building the cards exposed genuine library bugs. They are **out of scope for the gallery** (the affected cards were built around them) but should be fixed in a dedicated library pass. Discovered during Phase 5.
+
+1. **`queryEngine.excludeNode()` doesn't hide the node** (`src/GraphQueryEngine.ts:98-117`). It resolves the node via `graph.getNode(id)` — which returns a `structuredClone` — then calls `graph.hideNode(clone)`, so the *real* rendered node is untouched. It also never calls `this.apply()` (unlike `clearNodeExclusions()`), so the `excludedNodeIds` set is updated but visibility is never recomputed. Fix: resolve with `getMutableNode` and/or route through `apply()`. (I1 shipped without a "hide node" button because of this.)
+2. **The built-in filter panel doesn't reflect programmatic `setFilter()`** (`src/ui/elements/GraphFilter/GraphFilter.ts:60-63`). On `filterChange` it only refreshes the button summary and the hidden-node list; it never repopulates the form controls (the form is rebuilt only on `dataBatchChanged`). So a filter set from code applies to the graph but the panel's dropdowns/sliders stay empty. Fix: sync `formOptions`/form values from the active filters on `filterChange`.
+3. **Expanded cluster nodes over-repel and the simulation never settles** (`src/Simulation.ts:~225` charge scaling + parent weight ×, with the expanded-cluster radius from `src/renderers/svg/ClusterDrawer.ts:~573`). Many-body charge scales with node radius while a parent node also gets a large weight multiplier, so an expanded cluster (large radius) exerts a disproportionately strong repulsive force — dragging a node re-heats the sim and neighbours are pushed away indefinitely instead of cooling. Fix: cap/normalise the charge (and collision radius) for cluster nodes rather than scaling straight off the expanded radius. (Affects I3, and will affect L4.)

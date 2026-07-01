@@ -57,18 +57,10 @@ function filterByLoad(graph, min) {
     graph.queryEngine.setFilter('load', { value: { min, max: undefined } })
 }
 
-// excludeNode hides one node (and its edges) regardless of any filter — the panel's
-// per-node "hide" uses this. includeNode / clearNodeExclusions bring them back.
-function hideNode(graph, id) {
-    graph.queryEngine.excludeNode(id)
-}
-
-// resetFilters clears the query filters; clearNodeExclusions un-hides any excluded
-// node — together they restore the full graph.
-function clearAll(graph) {
+// resetFilters clears every active filter and restores the full graph.
+function clearFilters(graph) {
     graph.queryEngine.resetFilters()
-    graph.queryEngine.clearNodeExclusions()
 }
 // #endregion filters
 
-export { data, options, filterByType, filterByLoad, hideNode, clearAll }
+export { data, options, filterByType, filterByLoad, clearFilters }

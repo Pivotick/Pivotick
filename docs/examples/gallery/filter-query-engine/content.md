@@ -9,16 +9,16 @@ order: 1
 Real datasets are too big to show all at once. `graph.queryEngine` filters the graph
 by node attributes: `setFilter(key, spec)` keeps nodes whose `data[key]` matches —
 an exact value, a list, or a numeric `{ min, max }` range — and multiple filters
-**AND** together. `excludeNode` hides individual nodes on top of that.
+**AND** together. `resetFilters()` clears them.
 
-The buttons below drive the engine directly. Everything they do is also available
+The buttons below drive the engine directly. The same filtering is available
 without code: in **full mode** the header carries a **Graph Filters** panel (the
 funnel icon, or press **Shift+K**) that auto-builds a control per attribute — a
 dropdown for `type`/`zone`, a slider for `load`.
 
 <script setup>
-import { ref, shallowRef } from 'vue'
-import { data, options, filterByType, filterByLoad, hideNode, clearAll } from './options.js'
+import { shallowRef } from 'vue'
+import { data, options, filterByType, filterByLoad, clearFilters } from './options.js'
 
 const graph = shallowRef(null)
 const onLoaded = (g) => { graph.value = g }
@@ -28,8 +28,7 @@ const onUnmounted = () => { graph.value = null }
 <div class="flt-toolbar">
     <button :disabled="!graph" @click="filterByType(graph, 'api')">type = api</button>
     <button :disabled="!graph" @click="filterByLoad(graph, 70)">load ≥ 70</button>
-    <button :disabled="!graph" @click="hideNode(graph, 'db-2')">hide db-2</button>
-    <button :disabled="!graph" @click="clearAll(graph)">reset</button>
+    <button :disabled="!graph" @click="clearFilters(graph)">reset</button>
 </div>
 
 <Pivotick
