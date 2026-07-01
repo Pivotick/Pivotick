@@ -78,9 +78,8 @@ export class Simulation {
     private startSimulationTime: number = 0
     private engineRunning: boolean = false
     private slowTickThresholdReached: boolean = false
-    private lastTickTime: number = 0
     private avgTickDuration = 0
-    private readonly SLOW_TICK_THRESHOLD = 50 // ms (20fps budget)
+    private readonly SLOW_TICK_THRESHOLD = 33 // ms of tick compute+render (≈30fps budget)
 
     private dragInProgress: boolean = false
     private dragSelection: dragSelectionNode[] = []
@@ -359,7 +358,6 @@ export class Simulation {
      */
     public restart() {
         this.startSimulationTime = (new Date()).getTime()
-        this.lastTickTime = performance.now()
         this.engineRunning = true
         this.slowTickThresholdReached = false
     }
@@ -375,7 +373,6 @@ export class Simulation {
             return
         }
 
-        this.lastTickTime = performance.now()
         this.engineRunning = true
         this.slowTickThresholdReached = false
         if (this.callbacks.onStart) {
@@ -434,9 +431,10 @@ export class Simulation {
                 }
             }
             this.totalTickCount++
-            this.updateTickMetrics()
+            const tickStart = performance.now()
             this.simulation.tick()
             this.graph.nextTick()
+            this.updateTickMetrics(performance.now() - tickStart)
             if (this.callbacks.onTick) {
                 this.callbacks.onTick(this)
             }
@@ -447,12 +445,8 @@ export class Simulation {
         }
     }
 
-    private updateTickMetrics() {
-        const now = performance.now()
-        const tickDuration = now - this.lastTickTime
-        this.lastTickTime = now
-
-        // Exponential moving average
+    private updateTickMetrics(tickDuration: number) {
+        // tickDuration is compute+render time, not frame gap: immune to rAF throttling on hidden tabs.
         this.avgTickDuration = this.avgTickDuration * 0.9 + tickDuration * 0.1
 
         if (this.avgTickDuration > this.SLOW_TICK_THRESHOLD) {
