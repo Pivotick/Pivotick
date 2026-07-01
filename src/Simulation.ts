@@ -548,12 +548,16 @@ export class Simulation {
         if (!canvasBCR) return
 
         const nodes = this.graph.getMutableNodes()
+        // Send serialization-safe DTOs, not live Node/Edge clones: a clone's
+        // parentNode/from/to can transitively reach an expanded cluster's
+        // subgraph DOM, which postMessage cannot structured-clone (DataCloneError).
         const nodesCopy = this.graph.getNodes().map((n: Node) => {
-            n.fx = undefined
-            n.fy = undefined
-            return n
+            const dto = n.toSimulationDTO()
+            dto.fx = undefined
+            dto.fy = undefined
+            return dto
         })
-        const edgesCopy = this.graph.getEdges()
+        const edgesCopy = this.graph.getEdges().map((e: Edge) => e.toSimulationDTO())
 
         const onWorkerProgress = (progress: number, elapsedTime: number) => {
             this.graph.updateLayoutProgress(progress, elapsedTime, 'simulation')
