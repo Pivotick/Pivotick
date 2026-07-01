@@ -6,7 +6,7 @@ import type { NoteManager } from '../../../NoteManager'
 import { Note } from '../../../Note'
 import { createHtmlElement, createHtmlTemplate } from '../../../utils/ElementCreation'
 import type { Graph } from '../../../Graph'
-import { renderMarkdown, renderMarkdownInline } from '../../../plugins/noteContentRenderers/markdown/markdown'
+import { renderMarkdownInline } from '../../../plugins/noteContentRenderers/markdown/markdown'
 import { resolveReferences } from '../../../plugins/noteContentRenderers/markdown/markdownResolvers'
 
 export class NoteSidebar implements UIElement {
@@ -200,7 +200,7 @@ export class NoteSidebar implements UIElement {
             text: 'Add Note',
             size: 'sm',
             svgIcon: stickyNote,
-            onClick: (evt: MouseEvent) => {
+            onClick: () => {
                 const renderer = this.uiManager.graph.renderer
                 const bcr = this.uiManager.layout!.canvas!.getBoundingClientRect()
                 const { x, y } = renderer.screenToGraphCoordinates(

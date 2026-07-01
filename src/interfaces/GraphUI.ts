@@ -1,7 +1,7 @@
 import type { Edge } from '../Edge'
 import type { NodeEditSession } from '../editing/NodeEditSession'
 import type { Node } from '../Node'
-import type { Note } from '../Note';
+import type { Note } from '../Note'
 import type { UIElement } from '../ui/UIManager'
 import type { FieldConfig } from '../utils/FormFactory'
 
