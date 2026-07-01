@@ -531,11 +531,22 @@ export class Simulation {
 
     private async runSimulationWorkerRouter(optionOverride: Partial<SimulationOptions> = {}) {
         if (this.options.useWorker) {
-            await this.runSimulationWorker(optionOverride)
-        } else {
-            await this.computeGraph(optionOverride)
-            this.graph.updateLayoutProgress(100, 0, 'done')
+            try {
+                await this.runSimulationWorker(optionOverride)
+                return
+            } catch (error) {
+                // Worker may be blocked (e.g. CSP `worker-src 'none'`). Fall back
+                // to the main thread and stop retrying on later layout passes.
+                this.options.useWorker = false
+                console.warn(
+                    '[Pivotick] Simulation Web Worker unavailable (often a CSP blocking blob workers); ' +
+                    'falling back to the main thread. Set `simulation.useWorker: false` to silence this.',
+                    error
+                )
+            }
         }
+        await this.computeGraph(optionOverride)
+        this.graph.updateLayoutProgress(100, 0, 'done')
     }
 
     private async runSimulationWorker(optionOverride: Partial<SimulationOptions> = {}) {
