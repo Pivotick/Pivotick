@@ -6,16 +6,19 @@ order: 2
 
 # Large-graph scale
 
-Real datasets get big. This graph is **1,500 nodes** and roughly as many edges,
-generated on the fly and laid out with the default force simulation — no special
-rendering path, just Pivotick's defaults with smaller nodes so a dense network
-stays legible.
+The force simulation is what turns a pile of nodes into readable structure. This
+graph is **~1,500 nodes** in a layered, organic network: a central **root**, **8
+communities** hanging off it, each split into **2 clusters**, and each cluster a hub
+with dozens of leaves — plus a couple of links that jump between communities. The
+nodes carry initial positions that arrange the communities around a ring, so the
+force simulation settles quickly into cleanly separated groups instead of spending
+its budget untangling a random start. Each node is coloured by its community.
 
-The expensive part of a large graph is computing the layout. Pivotick offloads
-it to a **Web Worker** (`simulation.useWorker: true`): the force simulation runs
-off the main thread, so the page never freezes while the graph settles, and the
-final positions are rendered in a single pass. The worker ships with the library
-— no build wiring needed.
+At this scale the layout is computed in a **Web Worker** (`simulation.useWorker:
+true`) so the page never freezes while ~1,500 nodes settle, then rendered static —
+a continuous physics loop on thousands of nodes isn't practical on the main thread,
+so you lay the graph out once and render the result. The worker ships with the
+library — no build wiring needed.
 
 <script setup>
 import { data, options } from './options.js'
