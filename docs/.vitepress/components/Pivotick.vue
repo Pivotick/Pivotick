@@ -43,10 +43,12 @@ const localData = computed(() => ({ ...props.data }))
 const localOptions = computed(() => ({
     ...props.options,
     simulation: {
-        // Keep any simulation tuning a card sets (e.g. force knobs) and only
-        // force the worker off — inline docs can't resolve the worker URL.
+        // Keep any simulation tuning a card sets (e.g. force knobs). The worker
+        // is bundled inline (Vite ?worker&inline) so it works in the docs bundle;
+        // default it off, but let a card opt in with simulation.useWorker: true
+        // (see the large-graph "scale" card, which offloads its layout).
         ...props.options.simulation,
-        useWorker: false,
+        useWorker: props.options.simulation?.useWorker ?? false,
     },
 }))
 

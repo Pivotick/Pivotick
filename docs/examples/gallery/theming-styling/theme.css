@@ -1,0 +1,23 @@
+/* #region variables */
+/* A custom "brand" theme. Set data-theme="brand" on the graph root (.pivotick)
+   and these variables cascade into the canvas — nodes, edges, labels, background
+   and grid all recolour, with no re-render. ('light' and 'dark' ship with
+   Pivotick and need none of this — they are just other data-theme values.) */
+.pivotick[data-theme='brand'] {
+    --pvt-bg: #faf5ff;                 /* canvas background */
+    --pvt-graph-grid-color: #efe3ff;   /* dotted grid */
+    --pvt-node-color: #7c3aed;         /* node fill */
+    --pvt-node-stroke: #ede9fe;        /* node border */
+    --pvt-node-text-color: #ffffff;    /* label (rendered inside the node) */
+    --pvt-edge-stroke: #c4b5fd;        /* edge lines */
+}
+/* #endregion variables */
+
+/* #region hooks */
+/* Variables cover the common cases. For anything they don't expose, reach the
+   rendered SVG directly through its classes — here every edge path is dashed,
+   which no variable can do. */
+.pivotick[data-theme='brand'] .pvt-edge-group path {
+    stroke-dasharray: 5 4;
+}
+/* #endregion hooks */
