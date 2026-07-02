@@ -4,20 +4,29 @@
    and grid all recolour, with no re-render. ('light' and 'dark' ship with
    Pivotick and need none of this — they are just other data-theme values.) */
 .pivotick[data-theme='brand'] {
-    --pvt-bg: #faf5ff;                 /* canvas background */
-    --pvt-graph-grid-color: #efe3ff;   /* dotted grid */
-    --pvt-node-color: #7c3aed;         /* node fill */
-    --pvt-node-stroke: #ede9fe;        /* node border */
+    --pvt-bg: #141038;                 /* deep indigo canvas */
+    --pvt-graph-grid-color: #241d5c;   /* dotted grid */
+    --pvt-node-color: #ff5d8f;         /* vivid pink node fill */
+    --pvt-node-stroke: #ffd166;        /* gold ring */
+    --pvt-node-stroke-width: 2.5;      /* thicker ring */
     --pvt-node-text-color: #ffffff;    /* label (rendered inside the node) */
-    --pvt-edge-stroke: #c4b5fd;        /* edge lines */
+    --pvt-edge-stroke: #8b7dff;        /* lavender edges */
 }
 /* #endregion variables */
 
 /* #region hooks */
-/* Variables cover the common cases. For anything they don't expose, reach the
-   rendered SVG directly through its classes — here every edge path is dashed,
-   which no variable can do. */
+/* Variables cover colours; for effects they don't expose, reach the rendered SVG
+   through its classes. Here the brand gets a neon glow on nodes and edges, dashed
+   links, and bolder labels — none of which is a variable. */
+.pivotick[data-theme='brand'] .pvt-node .node {
+    filter: drop-shadow(0 0 5px rgba(255, 93, 143, 0.75));
+}
+.pivotick[data-theme='brand'] .pvt-node-label {
+    font-weight: 800;
+    letter-spacing: 0.6px;
+}
 .pivotick[data-theme='brand'] .pvt-edge-group path {
-    stroke-dasharray: 5 4;
+    stroke-dasharray: 6 5;
+    filter: drop-shadow(0 0 2px rgba(139, 125, 255, 0.9));
 }
 /* #endregion hooks */

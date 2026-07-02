@@ -14,8 +14,9 @@ doesn't cover something, the rendered SVG is plain, classed elements
 (`.pvt-node`, `.pvt-edge-group path`) you can style directly.
 
 Switch the theme below. **Light** and **Dark** are built in; **Brand** is a custom
-theme defined entirely in CSS — a handful of variables plus one class hook that
-dashes the edges.
+theme defined entirely in CSS — a handful of variables for the palette, plus a few
+class hooks for effects the variables don't expose (a neon glow on nodes and
+edges, dashed links, bolder labels).
 
 <script setup>
 import { ref } from 'vue'
