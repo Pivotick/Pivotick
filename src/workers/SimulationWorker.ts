@@ -29,6 +29,9 @@ self.onmessage = (e: MessageEvent<WorkerInput>) => {
     const nodes = plainNodes.map(n => {
         const node = new Node(n.id, n.data, n.style)
         node.setCircleRadius(n._circleRadius ?? 10)
+        // Preserve caller-supplied initial positions so the layout can be seeded.
+        if (typeof n.x === 'number') node.x = n.x
+        if (typeof n.y === 'number') node.y = n.y
         return node
     })
     const nodeMap = new Map<string, Node>(nodes.map(n => [n.id, n]))

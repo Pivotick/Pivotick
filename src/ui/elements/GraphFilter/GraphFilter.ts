@@ -277,7 +277,7 @@ export class GraphFilter implements UIElement {
                     }
                 }
                 if (Number.isInteger(value)) {
-                    attributeFilter.range.add(value)
+                    attributeFilter.numbers.add(value)
                 } else {
                     attributeFilter.values.add(value)
                 }

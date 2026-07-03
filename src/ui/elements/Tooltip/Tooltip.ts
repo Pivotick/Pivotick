@@ -7,7 +7,7 @@ import { createButton } from '../../components/Button'
 import { graphEdgeIcon, pin, closeIcon, selectElement, focusElement } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import './tooltip.scss'
-import type { Tooltip as TooltipOptions } from '../../../interfaces/GraphUI'
+import type { Tooltip as TooltipOptions, MainHeader, PropertiesPanel } from '../../../interfaces/GraphUI'
 import { deepMerge } from '../../../utils/utils'
 import { ShadowLinkManager } from '../ShadowLinkManager'
 import { createNodePreview } from '../../../utils/NodePreview'
@@ -45,6 +45,26 @@ export class Tooltip implements UIElement {
     constructor(uiManager: UIManager) {
         this.uiManager = uiManager
         this.options = deepMerge(defaultTooltipOptions, this.uiManager.getOptions().tooltip) as TooltipOptions
+    }
+
+    // The tooltip honours its own header/property maps, falling back to the
+    // sidebar's mainHeader / propertiesPanel (and then to data defaults).
+    private headerOptions(): MainHeader {
+        const mainHeader = this.uiManager.getOptions().mainHeader
+        return {
+            ...mainHeader,
+            nodeHeaderMap: { ...mainHeader.nodeHeaderMap, ...this.options.nodeHeaderMap },
+            edgeHeaderMap: { ...mainHeader.edgeHeaderMap, ...this.options.edgeHeaderMap },
+        }
+    }
+
+    private propertiesOptions(): PropertiesPanel {
+        const propertiesPanel = this.uiManager.getOptions().propertiesPanel
+        return {
+            ...propertiesPanel,
+            nodePropertiesMap: this.options.nodePropertiesMap ?? propertiesPanel.nodePropertiesMap,
+            edgePropertiesMap: this.options.edgePropertiesMap ?? propertiesPanel.edgePropertiesMap,
+        }
     }
 
     public mount(container: HTMLElement | undefined) {
@@ -205,12 +225,12 @@ export class Tooltip implements UIElement {
         const toprightElem = tooltipContainer.querySelector('.pvt-mainheader-topright')!
         // const actionElem = tooltipContainer.querySelector('.pvt-mainheader-nodeinfo-action')!
 
-        const properties = nodePropertiesGetter(node, this.uiManager.getOptions().propertiesPanel)
+        const properties = nodePropertiesGetter(node, this.propertiesOptions())
 
         previewElem.prepend(createNodePreview(node, { size: fixedPreviewSize, removeSelectionHighlight: true }))
 
-        nameElem.textContent = nodeNameGetter(node, this.uiManager.getOptions().mainHeader)
-        subtitleElem.textContent = nodeDescriptionGetter(node, this.uiManager.getOptions().mainHeader)
+        nameElem.textContent = nodeNameGetter(node, this.headerOptions())
+        subtitleElem.textContent = nodeDescriptionGetter(node, this.headerOptions())
 
         if (this.options.allowPinning) {
             const pinButton = createButton({
@@ -321,10 +341,10 @@ export class Tooltip implements UIElement {
             return
         }
 
-        const properties = edgePropertiesGetter(edge, this.uiManager.getOptions().propertiesPanel)
+        const properties = edgePropertiesGetter(edge, this.propertiesOptions())
 
-        nameElem.textContent = edgeNameGetter(edge, this.uiManager.getOptions().mainHeader)
-        subtitleElem.textContent = edgeDescriptionGetter(edge, this.uiManager.getOptions().mainHeader)
+        nameElem.textContent = edgeNameGetter(edge, this.headerOptions())
+        subtitleElem.textContent = edgeDescriptionGetter(edge, this.headerOptions())
 
         const propertiesContainer = createHtmlElement('div', { class: 'pvt-properties-container' }, [createHtmlDL(properties, edge)]) as HTMLDivElement
 
