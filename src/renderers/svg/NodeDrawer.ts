@@ -4,7 +4,7 @@ import { Node } from '../../Node'
 import { Edge } from '../../Edge'
 import type { Graph } from '../../Graph'
 import { GraphSvgRenderer, defaultLabelStyle } from './GraphSvgRenderer'
-import { faGlyph, tryResolveNumber, tryResolveString } from '../../utils/Getters'
+import { resolveIcon, tryResolveNumber, tryResolveString } from '../../utils/Getters'
 import type { CustomNodeShape, GraphRendererOptions, NodeShape, NodeStyle } from '../../interfaces/RendererOptions'
 import { ClusterDrawer } from './ClusterDrawer'
 import { forceConstrainParent } from '../../plugins/layout/MicroForce'
@@ -295,14 +295,30 @@ export class NodeDrawer {
 
         // ---- Content ----
         if (style.iconUnicode || style.iconClass) {
-            nodeSelection
-                .append('text')
-                .attr('fill', style.textColor)
-                .attr('text-anchor', 'middle')
-                .attr('dominant-baseline', 'central')
-                .attr('font-size', style.size * 1.2)
-                .attr('class', 'node-content icon ' + (style.iconUnicode ? 'icon-unicode' : (style.iconClass ?? '')))
-                .text(style.iconUnicode ?? (faGlyph(style.iconClass ?? '') ?? '☐'))
+            // Resolve the glyph + font from the class font-agnostically (FA, misp-iconify, …).
+            // iconUnicode is a direct-character override; when both are given the class supplies the font.
+            const resolved = style.iconClass ? resolveIcon(style.iconClass) : undefined
+            const useResolvedFont = !!resolved && resolved.glyph !== ''
+            const glyph = style.iconUnicode ?? resolved?.glyph
+            // Skip unknown/unresolvable classes rather than rendering a ☐ placeholder.
+            if (glyph) {
+                const iconText = nodeSelection
+                    .append('text')
+                    .attr('fill', style.textColor)
+                    .attr('text-anchor', 'middle')
+                    .attr('dominant-baseline', 'central')
+                    .attr('font-size', style.size * 1.2)
+                    .attr('class', 'node-content icon icon-unicode')
+                    .text(glyph)
+                // Trust the probed font only when the class actually resolved; otherwise fall
+                // back to the --pvt-node-icon-font-family default carried by .icon-unicode.
+                if (useResolvedFont) {
+                    iconText
+                        .style('font-family', resolved.fontFamily)
+                        .style('font-weight', resolved.fontWeight)
+                        .style('font-style', resolved.fontStyle)
+                }
+            }
         } else if (style.svgIcon) {
             const svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
             svgEl.innerHTML = style.svgIcon
