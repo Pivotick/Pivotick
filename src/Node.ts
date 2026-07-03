@@ -7,6 +7,21 @@ export interface NodeData {
     [key: string]: unknown;
 }
 
+/** Serialization-safe, layout-only projection of a Node for the simulation worker — no parentNode/children/_subgraph, so postMessage can always clone it. */
+export interface SimulationNodeDTO {
+    id: string
+    data: NodeData
+    style: Partial<NodeStyle>
+    weight?: number
+    _circleRadius: number
+    x?: number
+    y?: number
+    vx?: number
+    vy?: number
+    fx?: number
+    fy?: number
+}
+
 /**
  * Represents a single node (vertex) in a graph.
  */
@@ -201,6 +216,23 @@ export class Node {
             obj.children = this.children.map((n) => n.toDict(dataOnly))
         }
         return obj
+    }
+
+    /** Structured-cloneable payload for the simulation worker (no live parent/children/_subgraph refs, unlike `clone()`). */
+    toSimulationDTO(): SimulationNodeDTO {
+        return {
+            id: this.id,
+            data: this.data,
+            style: this.style,
+            weight: this.weight,
+            _circleRadius: this._circleRadius,
+            x: this.x,
+            y: this.y,
+            vx: this.vx,
+            vy: this.vy,
+            fx: this.fx,
+            fy: this.fy,
+        }
     }
 
     clone(): Node {

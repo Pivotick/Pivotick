@@ -1,8 +1,8 @@
-import type { Graph } from '../../Graph';
+import type { Graph } from '../../Graph'
 import { Note } from '../../Note'
 import { renderMarkdown } from './markdown/markdown'
-import { bindInteractions } from './markdown/markdownInteractions';
-import { resolveReferences } from './markdown/markdownResolvers';
+import { bindInteractions } from './markdown/markdownInteractions'
+import { resolveReferences } from './markdown/markdownResolvers'
 
 
 export class NoteContentRenderer {

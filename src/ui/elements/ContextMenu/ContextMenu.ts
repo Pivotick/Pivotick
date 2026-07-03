@@ -1,6 +1,6 @@
 import { Edge } from '../../../Edge'
 import type { Node } from '../../../Node'
-import { createActionList, createHtmlElement, createQuickActionList, generateSafeDomId } from '../../../utils/ElementCreation'
+import { createActionList, createQuickActionList, generateSafeDomId } from '../../../utils/ElementCreation'
 import { expand, focusElement, graphEdgeIcon, hide, inspect, pin, selectNeighbor, stickyNote, trash, unpin } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import './contextmenu.scss'

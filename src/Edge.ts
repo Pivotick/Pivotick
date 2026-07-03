@@ -6,6 +6,16 @@ export interface EdgeData {
     [key: string]: unknown;
 }
 
+/** Serialization-safe projection of an Edge for the simulation worker — endpoints reduced to ids, so no live Node/DOM refs leak into postMessage. */
+export interface SimulationEdgeDTO {
+    id: string
+    from: { id: string }
+    to: { id: string }
+    data?: EdgeData
+    style?: Partial<EdgeFullStyle>
+    directed: boolean | null
+}
+
 /**
  * Represents an edge (connection) between two nodes in a graph.
  */
@@ -153,7 +163,19 @@ export class Edge {
             to: this.to.id,
             data: this.data,
             style: this.style,
-        } as Record<string, unknown> 
+        } as Record<string, unknown>
+    }
+
+    /** Structured-cloneable payload for the simulation worker; endpoints reduced to ids, keeps `directed`. */
+    toSimulationDTO(): SimulationEdgeDTO {
+        return {
+            id: this.id,
+            from: { id: this.from.id },
+            to: { id: this.to.id },
+            data: this.data,
+            style: this.style,
+            directed: this.directed,
+        }
     }
 
     clone(): Edge {

@@ -1,3 +1,5 @@
+@use "sass:list";
+
 // Spacing scale
 $spacing: (
     0: 0,
@@ -33,7 +35,7 @@ $spacing-directions: (
 
             .pvt-#{$prefix}#{$dir}-#{$key} {
 
-                @if length($positions)==0 {
+                @if list.length($positions)==0 {
                     #{$property}: $value;
                 }
 

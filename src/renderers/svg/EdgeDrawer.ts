@@ -5,7 +5,7 @@ import type { Graph } from '../../Graph'
 import type { GraphSvgRenderer } from './GraphSvgRenderer'
 import { tryResolveBoolean, tryResolveNumber, tryResolveString } from '../../utils/Getters'
 import { edgeLabelGetter } from '../../utils/GraphGetters'
-import type { CurveStyle, EdgeStyle, GraphRendererOptions, LabelStyle, MarkerStyle, MarkerStyleMap } from '../../interfaces/RendererOptions'
+import type { CurveStyle, EdgeStyle, GraphRendererOptions, LabelStyle, MarkerStyle } from '../../interfaces/RendererOptions'
 
 export class EdgeDrawer {
 
@@ -400,8 +400,6 @@ export class EdgeDrawer {
 
         if (from.x === undefined || from.y === undefined || to.x === undefined || to.y === undefined)
             return null
-
-        const r = Math.hypot(to.x - from.x, to.y - from.y)
 
         const edgeStyle = this.graphSvgRenderer.edgeDrawer.getEdgeStyle(edge)
 

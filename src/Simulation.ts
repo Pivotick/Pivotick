@@ -78,9 +78,8 @@ export class Simulation {
     private startSimulationTime: number = 0
     private engineRunning: boolean = false
     private slowTickThresholdReached: boolean = false
-    private lastTickTime: number = 0
     private avgTickDuration = 0
-    private readonly SLOW_TICK_THRESHOLD = 50 // ms (20fps budget)
+    private readonly SLOW_TICK_THRESHOLD = 33 // ms of tick compute+render (≈30fps budget)
 
     private dragInProgress: boolean = false
     private dragSelection: dragSelectionNode[] = []
@@ -359,7 +358,6 @@ export class Simulation {
      */
     public restart() {
         this.startSimulationTime = (new Date()).getTime()
-        this.lastTickTime = performance.now()
         this.engineRunning = true
         this.slowTickThresholdReached = false
     }
@@ -375,7 +373,6 @@ export class Simulation {
             return
         }
 
-        this.lastTickTime = performance.now()
         this.engineRunning = true
         this.slowTickThresholdReached = false
         if (this.callbacks.onStart) {
@@ -434,9 +431,10 @@ export class Simulation {
                 }
             }
             this.totalTickCount++
-            this.updateTickMetrics()
+            const tickStart = performance.now()
             this.simulation.tick()
             this.graph.nextTick()
+            this.updateTickMetrics(performance.now() - tickStart)
             if (this.callbacks.onTick) {
                 this.callbacks.onTick(this)
             }
@@ -447,12 +445,8 @@ export class Simulation {
         }
     }
 
-    private updateTickMetrics() {
-        const now = performance.now()
-        const tickDuration = now - this.lastTickTime
-        this.lastTickTime = now
-
-        // Exponential moving average
+    private updateTickMetrics(tickDuration: number) {
+        // tickDuration is compute+render time, not frame gap: immune to rAF throttling on hidden tabs.
         this.avgTickDuration = this.avgTickDuration * 0.9 + tickDuration * 0.1
 
         if (this.avgTickDuration > this.SLOW_TICK_THRESHOLD) {
@@ -531,11 +525,22 @@ export class Simulation {
 
     private async runSimulationWorkerRouter(optionOverride: Partial<SimulationOptions> = {}) {
         if (this.options.useWorker) {
-            await this.runSimulationWorker(optionOverride)
-        } else {
-            await this.computeGraph(optionOverride)
-            this.graph.updateLayoutProgress(100, 0, 'done')
+            try {
+                await this.runSimulationWorker(optionOverride)
+                return
+            } catch (error) {
+                // Worker may be blocked (e.g. CSP `worker-src 'none'`). Fall back
+                // to the main thread and stop retrying on later layout passes.
+                this.options.useWorker = false
+                console.warn(
+                    '[Pivotick] Simulation Web Worker unavailable (often a CSP blocking blob workers); ' +
+                    'falling back to the main thread. Set `simulation.useWorker: false` to silence this.',
+                    error
+                )
+            }
         }
+        await this.computeGraph(optionOverride)
+        this.graph.updateLayoutProgress(100, 0, 'done')
     }
 
     private async runSimulationWorker(optionOverride: Partial<SimulationOptions> = {}) {
@@ -543,12 +548,16 @@ export class Simulation {
         if (!canvasBCR) return
 
         const nodes = this.graph.getMutableNodes()
+        // Send serialization-safe DTOs, not live Node/Edge clones: a clone's
+        // parentNode/from/to can transitively reach an expanded cluster's
+        // subgraph DOM, which postMessage cannot structured-clone (DataCloneError).
         const nodesCopy = this.graph.getNodes().map((n: Node) => {
-            n.fx = undefined
-            n.fy = undefined
-            return n
+            const dto = n.toSimulationDTO()
+            dto.fx = undefined
+            dto.fy = undefined
+            return dto
         })
-        const edgesCopy = this.graph.getEdges()
+        const edgesCopy = this.graph.getEdges().map((e: Edge) => e.toSimulationDTO())
 
         const onWorkerProgress = (progress: number, elapsedTime: number) => {
             this.graph.updateLayoutProgress(progress, elapsedTime, 'simulation')

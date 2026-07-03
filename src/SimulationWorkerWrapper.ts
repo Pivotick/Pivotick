@@ -1,5 +1,5 @@
-import type { Node } from './Node'
-import type { Edge } from './Edge'
+import type { Node, SimulationNodeDTO } from './Node'
+import type { Edge, SimulationEdgeDTO } from './Edge'
 import type { SimulationOptions } from './interfaces/SimulationOptions'
 import SimulationWorker from './workers/SimulationWorker.ts?worker&inline'
 
@@ -9,8 +9,8 @@ export function createSimulationWorker() {
 }
 
 export const runSimulationInWorker = (
-    nodes: Node[],
-    edges: Edge[],
+    nodes: SimulationNodeDTO[],
+    edges: SimulationEdgeDTO[],
     options: SimulationOptions,
     canvasBCR: DOMRect,
     onProgress?: (progress: number, elapsedTime: number) => void

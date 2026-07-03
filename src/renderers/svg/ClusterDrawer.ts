@@ -250,7 +250,7 @@ export class ClusterDrawer {
                         parentGraph.selectElement(mainGraphNode)
                     }
                 },
-                onNodesSelect: (selection: NodeSelection<unknown>[]) => {
+                onNodesSelect: () => {
                     const selectedNodeIDs = subgraph.renderer.getGraphInteraction().getSelectedNodeIDs()
                     if (selectedNodeIDs === null) return
 
