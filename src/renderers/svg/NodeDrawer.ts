@@ -42,16 +42,27 @@ export class NodeDrawer {
 
             // In here, we could add support of other lightweight framework such as jQuery, Vue.js, ..
 
-            requestAnimationFrame(() => {
+            // The custom content must be measured to size the foreignObject. During the
+            // initial layout the graph's .zoom-layer is display:none, so getBoundingClientRect
+            // reports 0×0 — retry on later frames until it has real dimensions (bounded), else
+            // the node would stay locked at 0×0 and be invisible.
+            const maxMeasureAttempts = 300
+            const measureAndSize = (attempt: number): void => {
                 const foNode = fo.node() as SVGForeignObjectElement
-                if (!foNode) return
+                if (!foNode || !foNode.isConnected) return
 
                 const content = foNode.firstElementChild as HTMLElement | null
                 if (!content) return
 
                 const bcr = content.getBoundingClientRect()
+                if ((bcr.width === 0 || bcr.height === 0) && attempt < maxMeasureAttempts) {
+                    requestAnimationFrame(() => measureAndSize(attempt + 1))
+                    return
+                }
+
                 const width = Math.ceil(bcr.width)
                 const height = Math.ceil(bcr.height)
+                if (width === 0 || height === 0) return // never measurable: keep the fallback size
 
                 fo.attr('width', width)
                     .attr('height', height)
@@ -63,7 +74,8 @@ export class NodeDrawer {
                 if (this.rendererOptions.enableNodeExpansion && (!node.hasChildren() || !node.expanded)) {
                     node.setCircleRadius(0.5 * Math.max(width, height))
                 }
-              })
+            }
+            requestAnimationFrame(() => measureAndSize(0))
 
         } else {
             this.defaultNodeRender(theNodeSelection, node)
