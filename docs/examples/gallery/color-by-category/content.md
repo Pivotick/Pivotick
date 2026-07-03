@@ -1,7 +1,7 @@
 ---
 title: "Color by category"
 category: B
-order: 5
+order: 6
 ---
 
 # Color by category

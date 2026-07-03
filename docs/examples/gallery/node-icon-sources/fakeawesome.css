@@ -1,0 +1,29 @@
+/* A tiny "fake FontAwesome" webfont, generated for this demo (no real FA vendored).
+   It deliberately mirrors FontAwesome's class shape: the font lives on the base
+   `.fa-solid` class and each glyph is exposed as `--fa` + `::before { content }`.
+   pivotick reads BOTH the glyph and the font off the computed ::before, so it works
+   with this font exactly as it would with real FontAwesome — nothing FA-specific. */
+
+@font-face {
+    font-family: "Fake Awesome";
+    src: url("./fakeawesome.woff2") format("woff2");
+    font-weight: 900;
+    font-style: normal;
+    font-display: block;
+}
+
+.fa-solid {
+    font-family: "Fake Awesome";
+    font-weight: 900;
+    font-style: normal;
+    display: inline-block;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+}
+.fa-solid::before { content: var(--fa); }
+
+.fa-star   { --fa: "\f005"; }
+.fa-bolt   { --fa: "\f0e7"; }
+.fa-circle { --fa: "\f111"; }
+.fa-square { --fa: "\f0c8"; }
+.fa-play   { --fa: "\f04b"; }
