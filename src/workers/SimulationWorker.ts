@@ -29,9 +29,11 @@ self.onmessage = (e: MessageEvent<WorkerInput>) => {
     const nodes = plainNodes.map(n => {
         const node = new Node(n.id, n.data, n.style)
         node.setCircleRadius(n._circleRadius ?? 10)
-        // Preserve caller-supplied initial positions so the layout can be seeded.
+        // Preserve caller-supplied initial positions (seed) and fixed positions (pin).
         if (typeof n.x === 'number') node.x = n.x
         if (typeof n.y === 'number') node.y = n.y
+        if (typeof n.fx === 'number') node.fx = n.fx
+        if (typeof n.fy === 'number') node.fy = n.fy
         return node
     })
     const nodeMap = new Map<string, Node>(nodes.map(n => [n.id, n]))
@@ -151,6 +153,11 @@ export function runSimulation(plainNodes: Node[], plainEdges: Edge[], options: S
         const node = new Node(n.id, n.getData(), n.getStyle())
         node.weight = n.weight || 1
         node.setCircleRadius(n.getCircleRadius())
+        // Preserve caller-supplied initial positions (seed) and fixed positions (pin).
+        if (typeof n.x === 'number') node.x = n.x
+        if (typeof n.y === 'number') node.y = n.y
+        if (typeof n.fx === 'number') node.fx = n.fx
+        if (typeof n.fy === 'number') node.fy = n.fy
         return node
     })
     const nodeMap = new Map<string, Node>(nodes.map(n => [n.id, n]))
