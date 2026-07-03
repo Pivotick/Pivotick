@@ -350,7 +350,9 @@ export class NodeDrawer {
                 .attr('dominant-baseline', 'central')
                 .attr('font-size', fontSize)
                 .attr('font-family', style.fontFamily)
-                .attr('fill', style.textColor)
+                // Labels floated outside sit on the edge-label pill (rect below),
+                // so pair them with its themed colour to stay readable in any theme.
+                .attr('fill', isOusideNode ? defaultLabelStyle.color : style.textColor)
                 .text(text)
 
             const bbox = textSelection.node()?.getBBox()
