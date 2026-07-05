@@ -169,28 +169,78 @@ export function tryResolveHTMLElement<T extends unknown[]>(
 }
 
 /**
- * Returns the Font Awesome glyph character for a given icon class (e.g. "fa-solid fa-user").
- * 
- * This function reads the CSS custom property `--fa` defined by Font Awesome for the icon class.
- * 
- * @param className - The full Font Awesome class string for the icon (e.g. "fa-solid fa-user").
- * @returns The Unicode glyph character corresponding to the icon, which can be used in SVG <text>.
- * 
- * @example
- * const glyph = faGlyph("fa-solid fa-user");
- * nodeSelection.append("text").text(glyph);
+ * The pieces needed to render a class-based icon font glyph inside an SVG `<text>`:
+ * the glyph character plus the font properties that make it render.
  */
-export function faGlyph(className: string): string {
+export interface ResolvedIcon {
+    /** The glyph character, or '' when nothing resolvable from the class. */
+    glyph: string
+    /** Computed font-family that renders the glyph (e.g. `"Font Awesome 7 Free"`, `"MISP Icons"`). */
+    fontFamily: string
+    /** Computed font-weight (FA distinguishes solid/regular by weight). */
+    fontWeight: string
+    /** Computed font-style. */
+    fontStyle: string
+}
+
+const iconResolveCache = new Map<string, ResolvedIcon>()
+
+/**
+ * Resolves a class-based icon font (FontAwesome, misp-iconify, Fontello, icomoon, …) into
+ * everything needed to render it inside an SVG `<text>` — which, unlike HTML, cannot render
+ * `::before` generated content.
+ *
+ * It probes the computed `::before` of a throwaway element, reading both the `content` (the
+ * glyph) and the inherited `font-family`/`font-weight`/`font-style`. This makes no
+ * font-specific assumptions (no `--fa` / `--misp-icon`): it works for any icon font that
+ * declares its glyph via `::before { content }`. Results are cached by class string to avoid
+ * per-node layout thrash.
+ *
+ * @param className - The full icon class string, e.g. `"fa-solid fa-user"` or
+ *                    `"misp-icon misp-icon-event misp-hexagone"`.
+ * @returns The resolved glyph + font properties. `glyph` is '' when the class resolves to nothing.
+ *
+ * @example
+ * const { glyph, fontFamily } = resolveIcon("fa-solid fa-user");
+ * text.text(glyph).style("font-family", fontFamily);
+ */
+export function resolveIcon(className: string): ResolvedIcon {
+    const key = className.trim()
+    if (!key) return { glyph: '', fontFamily: '', fontWeight: '', fontStyle: '' }
+
+    const cached = iconResolveCache.get(key)
+    if (cached) return cached
+
     const el = document.createElement('i')
-    el.className = className
+    el.className = key
+    // The probe must be laid out (not display:none) for ::before to compute; keep it off-screen.
+    el.style.position = 'absolute'
+    el.style.left = '-9999px'
+    el.style.top = '-9999px'
+    el.style.visibility = 'hidden'
     document.body.appendChild(el)
 
-    const style = getComputedStyle(el)
-    const propertyValue = style.getPropertyValue('--fa')
-    let glyph = propertyValue.replace(/["']/g, '')
-    const codePoint = parseInt(glyph.slice(1), 16)
-    glyph = String.fromCharCode(codePoint)
+    const before = getComputedStyle(el, '::before')
+    const resolved: ResolvedIcon = {
+        glyph: parseIconContent(before.content),
+        fontFamily: before.fontFamily,
+        fontWeight: before.fontWeight,
+        fontStyle: before.fontStyle,
+    }
 
     document.body.removeChild(el)
-    return glyph
+    iconResolveCache.set(key, resolved)
+    return resolved
+}
+
+/**
+ * Extracts the glyph from a computed CSS `content` value. Grabs the first quoted string —
+ * which handles FontAwesome's alt-text syntax (`"\f007" / ""`) — and rejects `none`/`normal`
+ * and function values (`counter()`/`attr()`/`url()`) that aren't renderable glyphs.
+ */
+function parseIconContent(content: string): string {
+    if (!content || content === 'none' || content === 'normal') return ''
+    if (/counter\(|counters\(|attr\(|url\(/.test(content)) return ''
+    const match = content.match(/(['"])((?:\\.|(?!\1).)*)\1/)
+    return match ? match[2] : ''
 }

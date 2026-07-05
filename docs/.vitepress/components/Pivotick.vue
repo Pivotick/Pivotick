@@ -28,6 +28,10 @@ const props = defineProps({
         type: Function,
         required: false,
     },
+    onUnmountedCallback: {
+        type: Function,
+        required: false,
+    },
     useInlineStyle: {
         type: String,
         required: false,
@@ -39,7 +43,12 @@ const localData = computed(() => ({ ...props.data }))
 const localOptions = computed(() => ({
     ...props.options,
     simulation: {
-        useWorker: false,
+        // Keep any simulation tuning a card sets (e.g. force knobs). The worker
+        // is bundled inline (Vite ?worker&inline) so it works in the docs bundle;
+        // default it off, but let a card opt in with simulation.useWorker: true
+        // (see the large-graph "scale" card, which offloads its layout).
+        ...props.options.simulation,
+        useWorker: props.options.simulation?.useWorker ?? false,
     },
 }))
 
@@ -55,6 +64,9 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+    // Let the demo clean up first (e.g. clear its own interval) while the graph
+    // still exists — see cards that run timers in onLoadedCallback.
+    props.onUnmountedCallback?.(container.value)
     if (graph?.destroy)
         graph.destroy()
     graph = null

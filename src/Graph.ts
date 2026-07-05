@@ -253,6 +253,13 @@ export class Graph {
             })
         }
         const normNode = n instanceof Node ? n : new Node(n.id.toString(), n.data, n.style, n.domID, children)
+        // Honour caller-supplied initial positions so a layout can be seeded
+        if (!(n instanceof Node)) {
+            if (typeof n.x === 'number') normNode.x = n.x
+            if (typeof n.y === 'number') normNode.y = n.y
+            if (typeof n.fx === 'number') normNode.fx = n.fx
+            if (typeof n.fy === 'number') normNode.fy = n.fy
+        }
         normNode.children.forEach((child: Node) => {
             child.markAsChild(normNode, depth+1)
             child.hide()

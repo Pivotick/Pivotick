@@ -4,7 +4,7 @@ import { Node } from '../../Node'
 import { Edge } from '../../Edge'
 import type { Graph } from '../../Graph'
 import { GraphSvgRenderer, defaultLabelStyle } from './GraphSvgRenderer'
-import { faGlyph, tryResolveNumber, tryResolveString } from '../../utils/Getters'
+import { resolveIcon, tryResolveNumber, tryResolveString } from '../../utils/Getters'
 import type { CustomNodeShape, GraphRendererOptions, NodeShape, NodeStyle } from '../../interfaces/RendererOptions'
 import { ClusterDrawer } from './ClusterDrawer'
 import { forceConstrainParent } from '../../plugins/layout/MicroForce'
@@ -42,16 +42,27 @@ export class NodeDrawer {
 
             // In here, we could add support of other lightweight framework such as jQuery, Vue.js, ..
 
-            requestAnimationFrame(() => {
+            // The custom content must be measured to size the foreignObject. During the
+            // initial layout the graph's .zoom-layer is display:none, so getBoundingClientRect
+            // reports 0×0 — retry on later frames until it has real dimensions (bounded), else
+            // the node would stay locked at 0×0 and be invisible.
+            const maxMeasureAttempts = 300
+            const measureAndSize = (attempt: number): void => {
                 const foNode = fo.node() as SVGForeignObjectElement
-                if (!foNode) return
+                if (!foNode || !foNode.isConnected) return
 
                 const content = foNode.firstElementChild as HTMLElement | null
                 if (!content) return
 
                 const bcr = content.getBoundingClientRect()
+                if ((bcr.width === 0 || bcr.height === 0) && attempt < maxMeasureAttempts) {
+                    requestAnimationFrame(() => measureAndSize(attempt + 1))
+                    return
+                }
+
                 const width = Math.ceil(bcr.width)
                 const height = Math.ceil(bcr.height)
+                if (width === 0 || height === 0) return // never measurable: keep the fallback size
 
                 fo.attr('width', width)
                     .attr('height', height)
@@ -63,7 +74,8 @@ export class NodeDrawer {
                 if (this.rendererOptions.enableNodeExpansion && (!node.hasChildren() || !node.expanded)) {
                     node.setCircleRadius(0.5 * Math.max(width, height))
                 }
-              })
+            }
+            requestAnimationFrame(() => measureAndSize(0))
 
         } else {
             this.defaultNodeRender(theNodeSelection, node)
@@ -283,14 +295,30 @@ export class NodeDrawer {
 
         // ---- Content ----
         if (style.iconUnicode || style.iconClass) {
-            nodeSelection
-                .append('text')
-                .attr('fill', style.textColor)
-                .attr('text-anchor', 'middle')
-                .attr('dominant-baseline', 'central')
-                .attr('font-size', style.size * 1.2)
-                .attr('class', 'node-content icon ' + (style.iconUnicode ? 'icon-unicode' : (style.iconClass ?? '')))
-                .text(style.iconUnicode ?? (faGlyph(style.iconClass ?? '') ?? '☐'))
+            // Resolve the glyph + font from the class font-agnostically (FA, misp-iconify, …).
+            // iconUnicode is a direct-character override; when both are given the class supplies the font.
+            const resolved = style.iconClass ? resolveIcon(style.iconClass) : undefined
+            const useResolvedFont = !!resolved && resolved.glyph !== ''
+            const glyph = style.iconUnicode ?? resolved?.glyph
+            // Skip unknown/unresolvable classes rather than rendering a ☐ placeholder.
+            if (glyph) {
+                const iconText = nodeSelection
+                    .append('text')
+                    .attr('fill', style.textColor)
+                    .attr('text-anchor', 'middle')
+                    .attr('dominant-baseline', 'central')
+                    .attr('font-size', style.size * 1.2)
+                    .attr('class', 'node-content icon icon-unicode')
+                    .text(glyph)
+                // Trust the probed font only when the class actually resolved; otherwise fall
+                // back to the --pvt-node-icon-font-family default carried by .icon-unicode.
+                if (useResolvedFont) {
+                    iconText
+                        .style('font-family', resolved.fontFamily)
+                        .style('font-weight', resolved.fontWeight)
+                        .style('font-style', resolved.fontStyle)
+                }
+            }
         } else if (style.svgIcon) {
             const svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
             svgEl.innerHTML = style.svgIcon
@@ -350,7 +378,9 @@ export class NodeDrawer {
                 .attr('dominant-baseline', 'central')
                 .attr('font-size', fontSize)
                 .attr('font-family', style.fontFamily)
-                .attr('fill', style.textColor)
+                // Labels floated outside sit on the edge-label pill (rect below),
+                // so pair them with its themed colour to stay readable in any theme.
+                .attr('fill', isOusideNode ? defaultLabelStyle.color : style.textColor)
                 .text(text)
 
             const bbox = textSelection.node()?.getBBox()

@@ -1,4 +1,4 @@
-import { faGlyph, tryResolveBoolean, tryResolveHTMLElement } from './Getters'
+import { tryResolveBoolean, tryResolveHTMLElement } from './Getters'
 import type { Node } from '../Node'
 import type { Edge } from '../Edge'
 import type { Note } from '../Note'
@@ -250,7 +250,9 @@ export function createIcon(options: iconOptions): HTMLSpanElement {
             textEl.className = `icon ${options.iconClass ?? ''}`
         }
         if (options.iconUnicode) {
-            textEl.textContent = options.iconUnicode ?? (faGlyph(options.iconClass ?? '') ?? '☐')
+            // UI icons render as HTML, where ::before generated content works; the iconClass
+            // path is handled purely by CSS. Only the explicit-unicode override needs text.
+            textEl.textContent = options.iconUnicode
         }
         span.append(textEl)
     } else if (options.svgIcon) {

@@ -1,93 +1,123 @@
+import { ColorPaletteMapper } from '../../../../src/index'
+
 // #region data
+// A small social graph: people connected by friendships, plus the three
+// communities (a gym, a company, a college) they belong to. A few people bridge
+// two communities — that's what makes the shape interesting.
+//   kind:      'person' | 'venue'  → drives shape + icon
+//   community: which crowd they belong to → drives colour
+//   icon:      which glyph to draw inside the node
 const data = {
-  'nodes': [
-    { 'id': 'A1', 'data': {'label': 'Alice', 'group': 'A' }},
-    { 'id': 'A2', 'data': {'label': 'Bob', 'group': 'A' }},
-    { 'id': 'A3', 'data': {'label': 'Charlie', 'group': 'A' }},
-    { 'id': 'A4', 'data': {'label': 'Diana', 'group': 'A' }},
-    { 'id': 'A5', 'data': {'label': 'Eve', 'group': 'A' }},
-    { 'id': 'A6', 'data': {'label': 'Frank', 'group': 'A' }},
-    { 'id': 'B1', 'data': {'label': 'Grace', 'group': 'B', 'icon': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#fff" d="M7 4h2v2h6V4h2V2h2v4h-2v2h2v2h4v6h-2v-4h-1v6h-3v2h2v2h-4v-4H9v4H5v-2h2v-2H4v-6H3v4H1v-6h4V8h2V6H5V2h2zm2 6H7v2H6v4h12v-4h-1v-2h-2V8H9zm2 4H9v-3h2zm4 0h-2v-3h2z"/></svg>' }},
-    { 'id': 'B2', 'data': {'label': 'Heidi', 'group': 'B', 'icon': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#fff" d="M7 4h2v2h6V4h2V2h2v4h-2v2h2v2h4v6h-2v-4h-1v6h-3v2h2v2h-4v-4H9v4H5v-2h2v-2H4v-6H3v4H1v-6h4V8h2V6H5V2h2zm2 6H7v2H6v4h12v-4h-1v-2h-2V8H9zm2 4H9v-3h2zm4 0h-2v-3h2z"/></svg>' }},
-    { 'id': 'B3', 'data': {'label': 'Ivan', 'group': 'B', 'icon': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#fff" d="M7 4h2v2h6V4h2V2h2v4h-2v2h2v2h4v6h-2v-4h-1v6h-3v2h2v2h-4v-4H9v4H5v-2h2v-2H4v-6H3v4H1v-6h4V8h2V6H5V2h2zm2 6H7v2H6v4h12v-4h-1v-2h-2V8H9zm2 4H9v-3h2zm4 0h-2v-3h2z"/></svg>' }},
-    { 'id': 'B4', 'data': {'label': 'Judy', 'group': 'B', 'icon': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#fff" d="M7 4h2v2h6V4h2V2h2v4h-2v2h2v2h4v6h-2v-4h-1v6h-3v2h2v2h-4v-4H9v4H5v-2h2v-2H4v-6H3v4H1v-6h4V8h2V6H5V2h2zm2 6H7v2H6v4h12v-4h-1v-2h-2V8H9zm2 4H9v-3h2zm4 0h-2v-3h2z"/></svg>' }},
-    { 'id': 'B5', 'data': {'label': 'Karl', 'group': 'B', 'icon': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#fff" d="M7 4h2v2h6V4h2V2h2v4h-2v2h2v2h4v6h-2v-4h-1v6h-3v2h2v2h-4v-4H9v4H5v-2h2v-2H4v-6H3v4H1v-6h4V8h2V6H5V2h2zm2 6H7v2H6v4h12v-4h-1v-2h-2V8H9zm2 4H9v-3h2zm4 0h-2v-3h2z"/></svg>' }},
-    { 'id': 'B6', 'data': {'label': 'Leo', 'group': 'B', 'icon': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#fff" d="M7 4h2v2h6V4h2V2h2v4h-2v2h2v2h4v6h-2v-4h-1v6h-3v2h2v2h-4v-4H9v4H5v-2h2v-2H4v-6H3v4H1v-6h4V8h2V6H5V2h2zm2 6H7v2H6v4h12v-4h-1v-2h-2V8H9zm2 4H9v-3h2zm4 0h-2v-3h2z"/></svg>' }},
-    { 'id': 'C1', 'data': {'label': 'Mallory', 'group': 'C' }},
-    { 'id': 'C2', 'data': {'label': 'Niaj', 'group': 'C' }},
-    { 'id': 'C3', 'data': {'label': 'Olivia', 'group': 'C' }},
-    { 'id': 'C4', 'data': {'label': 'Peggy', 'group': 'C' }},
-    { 'id': 'C5', 'data': {'label': 'Quentin', 'group': 'C' }},
-    { 'id': 'C6', 'data': {'label': 'Ruth', 'group': 'C' }},
-    { 'id': 'D1', 'data': {'label': 'Sybil', 'group': 'D' }},
-    { 'id': 'D2', 'data': {'label': 'Trent', 'group': 'D' }},
-    { 'id': 'D3', 'data': {'label': 'Uma', 'group': 'D' }},
-    { 'id': 'D4', 'data': {'label': 'Victor', 'group': 'D' }},
-    { 'id': 'D5', 'data': {'label': 'Walter', 'group': 'D' }},
-    { 'id': 'D6', 'data': {'label': 'Xavier', 'group': 'D' }}
-  ],
-  'edges': [
-    { 'from': 'A1', 'to': 'A2' },
-    { 'from': 'A2', 'to': 'A3' },
-    { 'from': 'A3', 'to': 'A4' },
-    { 'from': 'A4', 'to': 'A5' },
-    { 'from': 'A5', 'to': 'A6' },
-    { 'from': 'A6', 'to': 'A1' },
+    nodes: [
+        // The three communities, drawn as larger hexagons.
+        { id: 'gym', data: { name: 'Boulder Gym', kind: 'venue', community: 'Climbing', icon: 'mountain' } },
+        { id: 'acme', data: { name: 'Acme Inc', kind: 'venue', community: 'Work', icon: 'building' } },
+        { id: 'college', data: { name: 'Riverside', kind: 'venue', community: 'College', icon: 'school' } },
 
-    { 'from': 'B1', 'to': 'B2', 'data': { 'cool': true } },
-    { 'from': 'B2', 'to': 'B3', 'data': { 'cool': true } },
-    { 'from': 'B3', 'to': 'B4', 'data': { 'cool': true } },
-    { 'from': 'B4', 'to': 'B5', 'data': { 'cool': true } },
-    { 'from': 'B5', 'to': 'B6', 'data': { 'cool': true } },
-    { 'from': 'B6', 'to': 'B1', 'data': { 'cool': true } },
+        // Climbers.
+        { id: 'maya', data: { name: 'Maya', kind: 'person', community: 'Climbing', icon: 'person' } },
+        { id: 'leo', data: { name: 'Leo', kind: 'person', community: 'Climbing', icon: 'person' } },
+        { id: 'priya', data: { name: 'Priya', kind: 'person', community: 'Climbing', icon: 'person' } },
 
-    { 'from': 'C1', 'to': 'C2', 'data': { 'label': 'Connected' } },
-    { 'from': 'C2', 'to': 'C3' },
-    { 'from': 'C3', 'to': 'C4' },
-    { 'from': 'C4', 'to': 'C5' },
-    { 'from': 'C5', 'to': 'C6' },
-    { 'from': 'C6', 'to': 'C1' },
+        // Colleagues.
+        { id: 'sam', data: { name: 'Sam', kind: 'person', community: 'Work', icon: 'person' } },
+        { id: 'dana', data: { name: 'Dana', kind: 'person', community: 'Work', icon: 'person' } },
+        { id: 'raj', data: { name: 'Raj', kind: 'person', community: 'Work', icon: 'person' } },
+        { id: 'nora', data: { name: 'Nora', kind: 'person', community: 'Work', icon: 'person' } },
 
-    { 'from': 'D1', 'to': 'D2', 'data': { 'score': 12 } },
-    { 'from': 'D2', 'to': 'D3', 'data': { 'score': 12 } },
-    { 'from': 'D3', 'to': 'D4', 'data': { 'score': 12 } },
-    { 'from': 'D4', 'to': 'D5', 'data': { 'score': 12 } },
-    { 'from': 'D5', 'to': 'D6', 'data': { 'score': 12 } },
-    { 'from': 'D6', 'to': 'D1', 'data': { 'score': 12 } },
+        // Classmates.
+        { id: 'kai', data: { name: 'Kai', kind: 'person', community: 'College', icon: 'person' } },
+        { id: 'zoe', data: { name: 'Zoe', kind: 'person', community: 'College', icon: 'person' } },
+        { id: 'ivy', data: { name: 'Ivy', kind: 'person', community: 'College', icon: 'person' } },
+        { id: 'theo', data: { name: 'Theo', kind: 'person', community: 'College', icon: 'person' } }
+    ],
+    edges: [
+        // Membership: who belongs where (dashed, faint). Maya, Kai and Dana each
+        // belong to two communities — the bridges in the network.
+        { from: 'maya', to: 'gym', data: { rel: 'member' } },
+        { from: 'leo', to: 'gym', data: { rel: 'member' } },
+        { from: 'priya', to: 'gym', data: { rel: 'member' } },
+        { from: 'kai', to: 'gym', data: { rel: 'member' } },
+        { from: 'sam', to: 'acme', data: { rel: 'member' } },
+        { from: 'dana', to: 'acme', data: { rel: 'member' } },
+        { from: 'raj', to: 'acme', data: { rel: 'member' } },
+        { from: 'nora', to: 'acme', data: { rel: 'member' } },
+        { from: 'maya', to: 'acme', data: { rel: 'member' } },
+        { from: 'kai', to: 'college', data: { rel: 'member' } },
+        { from: 'zoe', to: 'college', data: { rel: 'member' } },
+        { from: 'ivy', to: 'college', data: { rel: 'member' } },
+        { from: 'theo', to: 'college', data: { rel: 'member' } },
+        { from: 'dana', to: 'college', data: { rel: 'member' } },
 
-    { 'from': 'A2', 'to': 'B3' },
-    { 'from': 'A4', 'to': 'C1' },
-    { 'from': 'B5', 'to': 'C4' },
-    { 'from': 'C3', 'to': 'D2' },
-    { 'from': 'D4', 'to': 'A6' }
-  ]
+        // Friendships (solid); `strength` 1–3 thickens the tie.
+        { from: 'maya', to: 'leo', data: { rel: 'friend', strength: 3 } },
+        { from: 'leo', to: 'priya', data: { rel: 'friend', strength: 2 } },
+        { from: 'maya', to: 'priya', data: { rel: 'friend', strength: 1 } },
+        { from: 'sam', to: 'dana', data: { rel: 'friend', strength: 3 } },
+        { from: 'dana', to: 'raj', data: { rel: 'friend', strength: 2 } },
+        { from: 'raj', to: 'nora', data: { rel: 'friend', strength: 2 } },
+        { from: 'sam', to: 'nora', data: { rel: 'friend', strength: 1 } },
+        { from: 'kai', to: 'zoe', data: { rel: 'friend', strength: 3 } },
+        { from: 'zoe', to: 'ivy', data: { rel: 'friend', strength: 2 } },
+        { from: 'ivy', to: 'theo', data: { rel: 'friend', strength: 2 } },
+        // Cross-community friendships — the ties that span the crowds.
+        { from: 'maya', to: 'sam', data: { rel: 'friend', strength: 2 } },
+        { from: 'kai', to: 'priya', data: { rel: 'friend', strength: 1 } }
+    ]
 }
-
 // #endregion data
 
 // #region options
+// import { ColorPaletteMapper } from 'pivotick'
+
+// Colourblind-safe palette; getColor() assigns and remembers a colour per crowd.
+const palette = new ColorPaletteMapper('okabe-ito')
+
+// White glyphs (fill="currentColor" resolves to the node's strokeColor).
+const icons = {
+    person: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5z"/></svg>',
+    mountain: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 6l-3.75 5 2.85 3.8-1.6 1.2C9.81 13.75 7 10 7 10l-6 8h22L14 6z"/></svg>',
+    building: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v3h4a2 2 0 0 1 2 2v11H4zm4-4h2v2H8v-2zm0-4h2v2H8v-2zm0-4h2v2H8V9zm4 8h2v2h-2v-2zm0-4h2v2h-2v-2z"/></svg>',
+    school: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3 1 9l11 6 9-4.91V17h2V9L12 3zM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/></svg>'
+}
+
 const options = {
     render: {
-        nodeTypeAccessor: (node) => node.getData()?.group,
+        // Shape + size come from the kind; colour comes from the community.
+        nodeTypeAccessor: (node) => node.getData()?.kind,
         nodeStyleMap: {
-            'A': { shape: 'hexagon', color: 'var(--pvt-vibrant-lobster)', size: 38, text: (node) => node.getData()?.label },
-            'B': { shape: 'circle', color: 'var(--pvt-vibrant-blue)', svgIcon: (node) => node.getData()?.icon },
-            'C': { shape: 'triangle', color: 'var(--pvt-vibrant-indigo)', size: 18 },
-            'D': { color: 'var(--pvt-vibrant-green)', size: 22 },
+            venue: { shape: 'hexagon', size: 24 },
+            person: { shape: 'circle', size: 15 }
+        },
+        defaultNodeStyle: {
+            strokeColor: '#ffffff',
+            strokeWidth: 2,
+            textColor: '#1e293b',
+            // No colour in the map above, so this fallback drives every node —
+            // one hue per community, straight from the palette.
+            color: (node) => palette.getColor(node.getData()?.community),
+            svgIcon: (node) => icons[node.getData()?.icon],
+            text: (node) => node.getData()?.name,
+            // A shift ≥ 1 floats the name in a pill below the node.
+            textVerticalShift: -1.9
         },
         defaultEdgeStyle: {
-            dashed: (e) => { return e.getData().cool },
-            strokeWidth: (e) => { return e.getData().score ?? 2 },
-            markerEnd: (e) => { return e.getData().score ? undefined : 'arrow' },
+            curveStyle: 'straight',
+            // Friendships and memberships are mutual, so drop the arrowheads.
+            markerEnd: 'none',
+            // Membership links are faint and dashed; friendships are solid and
+            // thicken with the strength of the tie.
+            strokeColor: (edge) => (edge.getData()?.rel === 'member' ? '#cbd5e1' : '#64748b'),
+            strokeWidth: (edge) =>
+                edge.getData()?.rel === 'member' ? 1.2 : 1 + (edge.getData()?.strength ?? 1),
+            opacity: (edge) => (edge.getData()?.rel === 'member' ? 0.7 : 0.9),
+            dashed: (edge) => edge.getData()?.rel === 'member'
         }
     },
-    UI: {
-      tooltip: {
-        enabled: false
-      }
-    },
     simulation: {
-      useWorker: false,
+        // A touch more repulsion so the three crowds breathe apart.
+        d3ManyBodyStrength: -320,
+        d3LinkDistance: 60
     }
 }
 // #endregion options

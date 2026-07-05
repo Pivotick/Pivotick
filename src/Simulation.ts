@@ -489,11 +489,8 @@ export class Simulation {
         if (!canvasBCR) return
 
         const nodes = this.graph.getMutableNodes()
-        const nodesCopy = this.graph.getNodes().map((n: Node) => {
-            n.fx = undefined
-            n.fy = undefined
-            return n
-        })
+        // Keep caller-set fixed positions (fx/fy) so pinned nodes stay put through the layout.
+        const nodesCopy = this.graph.getNodes()
         const edgesCopy = this.graph.getEdges()
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -551,12 +548,8 @@ export class Simulation {
         // Send serialization-safe DTOs, not live Node/Edge clones: a clone's
         // parentNode/from/to can transitively reach an expanded cluster's
         // subgraph DOM, which postMessage cannot structured-clone (DataCloneError).
-        const nodesCopy = this.graph.getNodes().map((n: Node) => {
-            const dto = n.toSimulationDTO()
-            dto.fx = undefined
-            dto.fy = undefined
-            return dto
-        })
+        // Keep caller-set fixed positions (fx/fy) so pinned nodes stay put through the layout.
+        const nodesCopy = this.graph.getNodes().map((n: Node) => n.toSimulationDTO())
         const edgesCopy = this.graph.getEdges().map((e: Edge) => e.toSimulationDTO())
 
         const onWorkerProgress = (progress: number, elapsedTime: number) => {
