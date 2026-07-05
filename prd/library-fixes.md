@@ -13,8 +13,8 @@ Grouped by subsystem. Status legend: ⬜ Todo · 🟨 In progress · ✅ Done.
 
 | Topic | # | Issue | Primary location | Status |
 |-------|---|-------|------------------|--------|
-| Filtering | 1 | `queryEngine.excludeNode()` doesn't hide the node | `GraphQueryEngine.ts:98-117` | ⬜ Todo |
-| Filtering | 2 | Filter panel ignores programmatic `setFilter()` | `GraphFilter.ts:60-63` | ⬜ Todo |
+| Filtering | 1 | `queryEngine.excludeNode()` doesn't hide the node | `GraphQueryEngine.ts:98-117` | ✅ Done |
+| Filtering | 2 | Filter panel ignores programmatic `setFilter()` | `GraphFilter.ts:60-63` | ✅ Done |
 | Rendering | 8 | `renderNode` measured size doesn't feed collision radius | `NodeDrawer.ts` renderNode branch | ⬜ Todo |
 | Clustering | 6 | No synthetic cluster→cluster edge for child→child | `Graph.ts:201` `normalizeGraphData` | ⬜ Todo |
 | Clustering | 7 | `fitAndCenter()` races the cluster render | `GraphSvgRenderer.ts:626` | ⬜ Todo |
