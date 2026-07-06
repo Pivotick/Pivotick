@@ -19,7 +19,7 @@ Grouped by subsystem. Status legend: ⬜ Todo · 🟨 In progress · ✅ Done.
 | Clustering | 6 | No synthetic cluster→cluster edge for child→child | `Graph.ts:201` `normalizeGraphData` | ⬜ Todo |
 | Clustering | 7 | `fitAndCenter()` races the cluster render | `GraphSvgRenderer.ts:626` | ⬜ Todo |
 | Simulation | 3 | Expanded cluster over-repels, sim never settles | `Simulation.ts:~225`, `ClusterDrawer.ts:~573` | ⬜ Todo |
-| Simulation | 4 | Charge force is `NaN` for node radius < 10 | `Simulation.ts` `initSimulationForceCharge` | ⬜ Todo |
+| Simulation | 4 | Charge force is `NaN` for node radius < 10 | `Simulation.ts` `initSimulationForceCharge` | ✅ Done |
 | Simulation | 5 | `d3GravityStrength` ignored for any connected node | `Simulation.ts` `initSimulationForceGravity` | ⬜ Todo |
 
 ---

@@ -216,7 +216,7 @@ export class Simulation {
                 const baseStrength = options.d3ManyBodyStrength
 
                 const radius = n.getCircleRadius()
-                const dampedRadius = 10 + Math.sqrt(radius - 10) // Slowly push other nodes if radius increases
+                const dampedRadius = 10 + Math.sqrt(Math.max(0, radius - 10)) // Slowly push other nodes if radius increases; clamp so radius < 10 doesn't yield NaN
 
                 let weight = n.weight ?? 1
                 weight *= n.isParent ? 10 : 1
