@@ -40,6 +40,7 @@ export const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
     d3CollideStrength: 1,
     d3CollideIterations: 1,
     d3GravityStrength: 0.1,
+    d3GravityStrengthConnected: 0.001,
 
     enabled: true,
     cooldownTime: 2000,
@@ -184,8 +185,8 @@ export class Simulation {
             .y(canvasBCR.height / 2)
             .strength((node) => {
                 const degree = (node as Node).degree() ?? 0
-                // Connected nodes get negligible gravity so link forces + charge repulsion find equilibrium; isolated nodes get full pull to counter charge repulsion
-                return degree === 0 ? options.d3GravityStrength : 0.001
+                // Isolated nodes get full pull to counter charge repulsion; connected nodes get a low (configurable) floor so link forces + charge find equilibrium
+                return degree === 0 ? options.d3GravityStrength : options.d3GravityStrengthConnected
             })
     }
 
