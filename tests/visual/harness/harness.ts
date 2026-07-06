@@ -509,11 +509,7 @@ class Harness implements HarnessApi {
     }
 
     excludeNode(id: string): void {
-        // Pass the live Node, not the id: `excludeNode(string)` resolves it via
-        // `getNode`, which returns a method-less `structuredClone`, so the later
-        // `node.hide()` throws. A Node instance is used directly.
-        const node = this.g.getMutableNode(id)
-        if (node) this.g.queryEngine.excludeNode(node)
+        this.g.queryEngine.excludeNode(id)
     }
 
     hideNode(id: string): void {

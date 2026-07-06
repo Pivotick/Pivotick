@@ -40,6 +40,7 @@ export const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
     d3CollideStrength: 1,
     d3CollideIterations: 1,
     d3GravityStrength: 0.1,
+    d3GravityStrengthConnected: 0.001,
 
     enabled: true,
     cooldownTime: 2000,
@@ -184,17 +185,17 @@ export class Simulation {
             .y(canvasBCR.height / 2)
             .strength((node) => {
                 const degree = (node as Node).degree() ?? 0
-                // Connected nodes get negligible gravity so link forces + charge repulsion find equilibrium; isolated nodes get full pull to counter charge repulsion
-                return degree === 0 ? options.d3GravityStrength : 0.001
+                // Isolated nodes get full pull to counter charge repulsion; connected nodes get a low (configurable) floor so link forces + charge find equilibrium
+                return degree === 0 ? options.d3GravityStrength : options.d3GravityStrengthConnected
             })
     }
 
     private static initSimulationForceLink(force: d3ForceLinkType<Node, Edge>, options: SimulationOptions) {
         force.distance((edge) => {
-            // if (edge.isSyntheticEdge) {
-            //     const parent = edge.source as Node
-            //     return parent.getCircleRadius() * 0.6
-            // }
+            // Cluster-anchor links (external node → expanded cluster) rest outside the
+            // bubble; their distance is precomputed off the cluster radius (see getActiveEdges).
+            const anchorDistance = (edge as unknown as { __clusterAnchorDistance?: number }).__clusterAnchorDistance
+            if (anchorDistance != null) return anchorDistance
 
             const labelContent = edgeLabelGetter(edge)
             if (!labelContent || labelContent === '') {
@@ -215,8 +216,10 @@ export class Simulation {
                 // if (n.isChild) return 0
                 const baseStrength = options.d3ManyBodyStrength
 
-                const radius = n.getCircleRadius()
-                const dampedRadius = 10 + Math.sqrt(radius - 10) // Slowly push other nodes if radius increases
+                // Charge off the collapsed radius for expanded clusters: their large bubble radius
+                // would over-repel (×parent weight below) and the sim never settles.
+                const radius = n.expanded ? n.getCircleRadiusCollapsed() : n.getCircleRadius()
+                const dampedRadius = 10 + Math.sqrt(Math.max(0, radius - 10)) // Slowly push other nodes if radius increases; clamp so radius < 10 doesn't yield NaN
 
                 let weight = n.weight ?? 1
                 weight *= n.isParent ? 10 : 1
@@ -270,44 +273,65 @@ export class Simulation {
 
     /** @private */
     public getActiveEdges(): Edge[] {
-        const realEdges = this.graph
-            .getMutableEdges()
-            .filter(edge => {
-                if (!edge.visible) return false
+        const inSim = new Set(
+            this.graph.getMutableNodes().filter(node => node.visible).map(node => node.id)
+        )
+        // Walk up until we hit a node the sim actually holds (a hidden child resolves
+        // to its nearest visible ancestor — the expanded cluster it lives in).
+        const ancestorInSim = (node: Node): Node | undefined => {
+            let cur: Node | undefined = node
+            while (cur && !inSim.has(cur.id)) cur = cur.parentNode
+            return cur
+        }
+        const pairKey = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`)
 
-                const source = edge.source as Node
-                const target = edge.target as Node
+        const edges: Edge[] = []
+        const seenPairs = new Set<string>()
 
-                // If either endpoint is currently a child inside a cluster,
-                // disable that external link
-                if (source.isChild || target.isChild) {
-                    return false
-                }
+        for (const edge of this.graph.getMutableEdges()) {
+            if (!edge.visible) continue
+            const source = edge.source as Node
+            const target = edge.target as Node
 
-                return true
-            })
+            // Fully in-sim edge (top-level, or a collapsed-cluster synthetic edge): keep as-is.
+            if (!source.isChild && !target.isChild) {
+                edges.push(edge)
+                seenPairs.add(pairKey(source.id, target.id))
+                continue
+            }
 
-        const clusterLinks = this.getClusterLinks()
-        return [...realEdges, ...clusterLinks]
+            // One endpoint is a hidden child of an expanded cluster. Re-anchor the child
+            // side to its in-sim ancestor so the external node stays tied to the cluster —
+            // without this, expanding drops the anchor and the node drifts off on drag.
+            // A real child↔child link across two clusters is punted here: whenever either
+            // cluster is collapsed a visible cross-cluster stand-in edge carries the link
+            // (kept above, or re-anchored just below when its child end is folded).
+            if (source.isChild && target.isChild) continue
+            const external = source.isChild ? target : source
+            const cluster = ancestorInSim(source.isChild ? source : target)
+            if (!cluster || cluster.id === external.id) continue
+            const key = pairKey(external.id, cluster.id)
+            if (seenPairs.has(key)) continue
+            seenPairs.add(key)
+            edges.push(this.clusterAnchorLink(external, cluster))
+        }
+        return edges
     }
 
-    /** @private */
-    public getClusterLinks(): Edge[] {
-        const clusterLinks = this.graph.getMutableEdges().filter(edge => edge.visible)
-        // const visibleNodes = this.graph.getMutableVisibleNodes()
-
-        // visibleNodes.forEach(parent => {
-        //     if (!parent.expanded || !parent.hasChildren()) return
-
-        //     parent.children.forEach(child => {
-        //         const syntheticEdge = new Edge(`cluster-${parent.id}-${child.id}`, parent, child, {}, {}, false)
-        //         syntheticEdge.isSyntheticEdge = true
-        //         syntheticEdge.visible = false
-        //         clusterLinks.push(syntheticEdge)
-        //     })
-        // })
-
-        return clusterLinks
+    /**
+     * A force-only link tying an external node to an expanded cluster it connects
+     * into. Not a real Edge — never rendered, never registered on the nodes — just
+     * the `{source, target, distance}` the link force needs. Its distance is the
+     * cluster radius (plus the base link distance) so the node rests outside the bubble.
+     * @private
+     */
+    private clusterAnchorLink(external: Node, cluster: Node): Edge {
+        return {
+            id: `cluster-anchor-${external.id}-${cluster.id}`,
+            source: external,
+            target: cluster,
+            __clusterAnchorDistance: cluster.getCircleRadius() + this.options.d3LinkDistance,
+        } as unknown as Edge
     }
 
     /** @private */

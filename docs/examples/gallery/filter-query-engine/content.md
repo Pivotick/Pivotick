@@ -11,14 +11,19 @@ by node attributes: `setFilter(key, spec)` keeps nodes whose `data[key]` matches
 an exact value, a list, or a numeric `{ min, max }` range — and multiple filters
 **AND** together. `resetFilters()` clears them.
 
+Attribute rules aside, `excludeNode(id)` hides one node by hand; `includeNode(id)`
+brings it back and `clearNodeExclusions()` restores every manually hidden node.
+
 The buttons below drive the engine directly. The same filtering is available
 without code: in **full mode** the header carries a **Graph Filters** panel (the
 funnel icon, or press **Shift+K**) that auto-builds a control per attribute — a
-dropdown for `type`/`zone`, a slider for `load`.
+dropdown for `type`/`zone`, a slider for `load`. Code and panel stay in sync —
+filter from a button, open the panel, and its controls already reflect the active
+filter, while hidden nodes appear in its **Hidden nodes** list.
 
 <script setup>
 import { shallowRef } from 'vue'
-import { data, options, filterByType, filterByLoad, clearFilters } from './options.js'
+import { data, options, filterByType, filterByLoad, clearFilters, excludeNode, clearExclusions } from './options.js'
 
 const graph = shallowRef(null)
 const onLoaded = (g) => { graph.value = g }
@@ -29,6 +34,8 @@ const onUnmounted = () => { graph.value = null }
     <button :disabled="!graph" @click="filterByType(graph, 'api')">type = api</button>
     <button :disabled="!graph" @click="filterByLoad(graph, 70)">load ≥ 70</button>
     <button :disabled="!graph" @click="clearFilters(graph)">reset</button>
+    <button :disabled="!graph" @click="excludeNode(graph, 'db-2')">hide db-2</button>
+    <button :disabled="!graph" @click="clearExclusions(graph)">show hidden</button>
 </div>
 
 <Pivotick

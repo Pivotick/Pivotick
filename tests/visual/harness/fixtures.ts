@@ -430,6 +430,38 @@ export const fixtures = {
         return { nodes: [group, ext1, ext2], edges: intoCluster, notes: [] }
     },
 
+    /**
+     * Two clusters (`group-a`, `group-b`) plus a `core` node that links to a child
+     * of each. Used by the cluster-drag settle test — expanding `group-a` and
+     * holding a drag must keep `core` anchored to the cluster.
+     */
+    linkedClusters(): BuiltFixture {
+        const a1 = mkNode('a1', -60, -40)
+        const a2 = mkNode('a2', -20, -40)
+        const a3 = mkNode('a3', -40, -80)
+        const groupA = mkCluster('group-a', -120, 0, [a1, a2, a3])
+        markCluster(groupA)
+        const b1 = mkNode('b1', 60, -40)
+        const b2 = mkNode('b2', 100, -40)
+        const b3 = mkNode('b3', 80, -80)
+        const groupB = mkCluster('group-b', 120, 0, [b1, b2, b3])
+        markCluster(groupB)
+        const core = mkNode('core', 0, 120)
+        const edges = [
+            new Edge('core-a1', core, a1),
+            new Edge('a1-a2', a1, a2),
+            new Edge('a2-a3', a2, a3),
+            new Edge('core-b1', core, b1),
+            new Edge('b1-b2', b1, b2),
+            new Edge('b2-b3', b2, b3),
+            new Edge('a3-b1', a3, b1),
+        ]
+        // Mirror the normaliser: any edge touching a hidden child starts hidden (the
+        // synthetic external→cluster / cross-cluster edges are what show while collapsed).
+        edges.forEach((e) => { if (e.from.isChild || e.to.isChild) e.hide() })
+        return { nodes: [core, groupA, groupB], edges, notes: [] }
+    },
+
     // ── Area 5 (filtering) fixture ──────────────────────────────────────────────
 
     /**

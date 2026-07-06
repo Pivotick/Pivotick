@@ -56,4 +56,19 @@ test.describe('filtering', () => {
         await panel.waitFor({ state: 'visible' })
         await expect(panel).toHaveScreenshot('filter-panel.png')
     })
+
+    // T5.5 — a filter set from code is reflected in the panel form controls.
+    // Regression: the form only rebuilt on dataBatchChanged, so a programmatic
+    // setFilter applied to the graph but left the panel's controls blank.
+    test('filter panel reflects programmatic filter', async ({ page }) => {
+        await loadFixture(page, 'filterable')
+        await harness(page, 'setFilter', 'type', { value: 'router', matchMode: 'exact' })
+        await harness(page, 'openFilterPanel')
+        const panel = page.locator('.pvt-slide-panel.open')
+        await panel.waitFor({ state: 'visible' })
+        // the `type` control now shows the active value (as a picker chip)
+        const chip = panel.locator('.pvt-picker__chip-label')
+        await expect(chip).toHaveText('router')
+        await expect(panel).toHaveScreenshot('filter-panel-reflects-filter.png')
+    })
 })

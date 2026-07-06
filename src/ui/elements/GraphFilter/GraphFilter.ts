@@ -23,6 +23,7 @@ export class GraphFilter implements UIElement {
 
     public graphFilter?: HTMLDivElement
     private formOptions: FieldConfig[]
+    private filteringForm?: HTMLFormElement
     private manuallyFilteredContainer?: HTMLDivElement
 
     constructor(uiManager: UIManager) {
@@ -60,6 +61,7 @@ export class GraphFilter implements UIElement {
         this.uiManager.graph.queryEngine.on('filterChange', (filters: GraphFilters) => {
             this.updateUIFilterButtonContent(filters)
             this.updateUIFilterHiddenNodes()
+            this.syncFormFromActiveFilters(filters)
         })
 
         requestAnimationFrame(() => {
@@ -127,6 +129,7 @@ export class GraphFilter implements UIElement {
         const filteringForm = FormFactory.createForm({
             fields: this.formOptions
         })
+        this.filteringForm = filteringForm
 
         const filterButton = createButton({
             variant: 'primary',
@@ -165,6 +168,18 @@ export class GraphFilter implements UIElement {
         this.graphFilter.appendChild(filterButton)
         this.graphFilter.appendChild(separator)
         this.graphFilter.appendChild(this.manuallyFilteredContainer)
+    }
+
+    // Reflect the active filters (e.g. set via queryEngine.setFilter from code) back into the
+    // form controls; without this the panel only updates on dataBatchChanged and stays empty.
+    private syncFormFromActiveFilters(filters: GraphFilters): void {
+        if (!this.filteringForm) return
+        const values: FormValues = {}
+        for (const [key, config] of Object.entries(filters)) {
+            if (key === 'manuallyHidden' || config === undefined) continue
+            values[key] = config.value
+        }
+        FormFactory.setValues(this.filteringForm, values)
     }
 
     private updateUIFilterButtonContent(filters: GraphFilters) {

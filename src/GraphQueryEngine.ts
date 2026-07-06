@@ -96,37 +96,27 @@ export class GraphQueryEngine {
     }
 
     excludeNode(nodeOrId: string | Node) {
-        let node
-        if (nodeOrId instanceof Node) {
-            node = nodeOrId
-        } else {
-            node = this.graph.getNode(nodeOrId)
-        }
+        // getMutableNode (not getNode, which returns a clone) so apply() hides the real node
+        const node = this.graph.getMutableNode(nodeOrId)
         if (node === undefined) return
 
         this.excludedNodeIds.add(node.id)
-        this.hiddenNodeCount++
         const manuallyHidenFilter: FilterFieldConfig = {
             value: node.id,
             matchMode: 'exact'
         }
-        this.graph.hideNode(node)
+        this.apply()
 
         this.emit('filterAdd', MANUALLY_HIDDEN_FILTER_KEY, manuallyHidenFilter)
         this.emit('filterChange', this.getFilters())
     }
 
     includeNode(nodeOrId: string | Node) {
-        let node
-        if (nodeOrId instanceof Node) {
-            node = nodeOrId
-        } else {
-            node = this.graph.getNode(nodeOrId)
-        }
+        const node = this.graph.getMutableNode(nodeOrId)
         if (node === undefined) return
+
         this.excludedNodeIds.delete(node.id)
-        this.hiddenNodeCount--
-        this.graph.showNode(node)
+        this.apply()
 
         this.emit('filterRemove', MANUALLY_HIDDEN_FILTER_KEY)
         this.emit('filterChange', this.getFilters())

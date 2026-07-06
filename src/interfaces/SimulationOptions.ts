@@ -38,8 +38,19 @@ export interface SimulationOptions {
     d3CollideStrength: number
     /** @default 1 */
     d3CollideIterations: number
-    /** @default 0.1 */
+    /**
+     * Centring pull toward the canvas centre, applied only to isolated (degree-0)
+     * nodes so they don't fly off; connected nodes use {@link d3GravityStrengthConnected}.
+     * @default 0.1
+     */
     d3GravityStrength: number
+    /**
+     * Centring pull for connected nodes. Kept low by default so link + charge forces
+     * find their own equilibrium; raise it to stop a sparsely-linked graph from
+     * drifting apart.
+     * @default 0.001
+     */
+    d3GravityStrengthConnected: number
     /** @default 2000 */
     cooldownTime: number
     /** @default auto */

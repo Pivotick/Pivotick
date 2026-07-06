@@ -61,6 +61,17 @@ function filterByLoad(graph, min) {
 function clearFilters(graph) {
     graph.queryEngine.resetFilters()
 }
+
+// Attribute rules aside, excludeNode(id) hides a single node by hand. It's tracked
+// separately from setFilter rules and listed in the panel's "Hidden nodes" section;
+// includeNode(id) restores one, clearNodeExclusions() restores them all.
+function excludeNode(graph, id) {
+    graph.queryEngine.excludeNode(id)
+}
+
+function clearExclusions(graph) {
+    graph.queryEngine.clearNodeExclusions()
+}
 // #endregion filters
 
-export { data, options, filterByType, filterByLoad, clearFilters }
+export { data, options, filterByType, filterByLoad, clearFilters, excludeNode, clearExclusions }

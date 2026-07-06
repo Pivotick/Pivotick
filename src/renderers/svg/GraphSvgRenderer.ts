@@ -482,6 +482,7 @@ export class GraphSvgRenderer extends GraphRenderer {
                                 if (!node.expanded) { // teardown any created clusters.
                                     ClusterDrawer.collapseAllOpenedClusters(node)
                                     ClusterDrawer.toggleSyntheticEdges(node)
+                                    ClusterDrawer.resolveCrossClusterEdges(this.nodeDrawer.graph)
                                     const parentGraph = this.nodeDrawer.graph.getParentGraph()
                                     let currParentGraph = parentGraph
                                     while (currParentGraph) {

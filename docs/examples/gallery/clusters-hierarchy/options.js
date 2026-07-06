@@ -34,6 +34,8 @@ const data = {
         { from: 'core', to: 'b1' },
         { from: 'b1', to: 'b2' },
         { from: 'b2', to: 'b3' },
+        // Crosses two cluster boundaries: re-targets to whatever's on screen
+        // (group-a → group-b collapsed, a3 → group-b once A opens, and so on).
         { from: 'a3', to: 'b1' }
     ]
 }
