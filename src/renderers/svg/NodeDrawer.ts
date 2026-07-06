@@ -346,6 +346,7 @@ export class NodeDrawer {
                 .attr('height', style.size * scale)
         } else if (style.html) {
             const fo = nodeSelection.append('foreignObject')
+                .attr('class', 'node-content')
             const rendered = style.html(node)
             fo.attr('width', style.size * 2)
                 .attr('height', style.size * 2)
@@ -362,6 +363,7 @@ export class NodeDrawer {
         if (style.text) {
             // label and background group to allow for rotating together
             const labelG = nodeSelection.append('g')
+                .classed('pvt-node-label-group', true)
 
             const isOusideNode = Math.abs(style.textVerticalShift) >= 1 || Math.abs(style.textHorizontalShift) >= 1
             const [fontSize, text] = this.computeTextLayout(style.text, style.size, isOusideNode)
@@ -397,7 +399,15 @@ export class NodeDrawer {
                     .attr('ry', 2)
             }
             
-            labelG.attr('transform', `rotate(${style.textRotateDegree}, ${x_pos}, ${y_pos})`)
+            // Remember the label's own placement so an expanding cluster can pull it
+            // along with the node (and steer an outside label clear of the dashed
+            // boundary) without re-deriving the style. See handleChildrenExpanded.
+            labelG
+                .attr('data-pvt-label-outside', isOusideNode ? '1' : '0')
+                .attr('data-pvt-label-x', x_pos)
+                .attr('data-pvt-label-y', y_pos)
+                .attr('data-pvt-label-rotate', style.textRotateDegree)
+                .attr('transform', `rotate(${style.textRotateDegree}, ${x_pos}, ${y_pos})`)
 
         }
     }
@@ -529,8 +539,10 @@ export class NodeDrawer {
         const padding = 2         // distance from node bounds
         const offset = (clusterRadius + padding) / Math.sqrt(2)
 
+        const nodeGroup = node.getGraphElement()
+
         // Get the main node element (whatever shape it is: circle, rect, path, etc.)
-        const origNode = node.getGraphElement()?.querySelector('& > .node')
+        const origNode = nodeGroup?.querySelector('& > .node')
         if (origNode) {
             d3Select(origNode)
                 .transition()
@@ -541,8 +553,43 @@ export class NodeDrawer {
                 .attr('transform', `translate(${-offset}, ${-offset})`)
         }
 
+        // Pull the node's icon/content (glyph, svg, image, html) to the same NW rim
+        // so it keeps sitting on the shape instead of being left at the cluster centre.
+        nodeGroup?.querySelectorAll<SVGGraphicsElement>(':scope > .node-content').forEach((content) => {
+            d3Select(content)
+                .transition()
+                .duration(250)
+                .attr('transform', `translate(${-offset}, ${-offset})`)
+        })
+
+        // Move the label with the node. An inner label rides along centred on the
+        // shape; a label floating outside the node is steered into the top-left
+        // quadrant so it never overlaps the dashed cluster boundary (e.g. a
+        // bottom-right label becomes top-left, a right label becomes left, etc.).
+        const labelGroup = nodeGroup?.querySelector<SVGGElement>(':scope > .pvt-node-label-group')
+        if (labelGroup) {
+            const outside = labelGroup.getAttribute('data-pvt-label-outside') === '1'
+            const xPos = Number(labelGroup.getAttribute('data-pvt-label-x')) || 0
+            const yPos = Number(labelGroup.getAttribute('data-pvt-label-y')) || 0
+            const rotate = Number(labelGroup.getAttribute('data-pvt-label-rotate')) || 0
+
+            let translate: string
+            if (outside) {
+                // Keep the label's original reach but force it up-and-left of the node.
+                const targetX = -offset - Math.abs(xPos)
+                const targetY = -offset - Math.abs(yPos)
+                translate = `translate(${targetX - xPos}, ${targetY - yPos})`
+            } else {
+                translate = `translate(${-offset}, ${-offset})`
+            }
+            d3Select(labelGroup)
+                .transition()
+                .duration(250)
+                .attr('transform', `${translate} rotate(${rotate}, ${xPos}, ${yPos})`)
+        }
+
         // Reposition the expand/collapse icon
-        const origIcons: SVGGElement | undefined | null = node.getGraphElement()?.querySelector('& > .node-icon')
+        const origIcons: SVGGElement | undefined | null = nodeGroup?.querySelector('& > .node-icon')
         if (origIcons) {
             d3Select(origIcons)
                 .transition()
