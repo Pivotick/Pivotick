@@ -484,7 +484,7 @@ export class NodeDrawer {
             this.graph.toggleExpandNode(node)
             if (!expand) { // reheating the simulation is done after the opening transition completes
                 this.graph.simulation.reheat(0.05)
-                this.graph.renderer.fitAndCenter()
+                this.graph.renderer.fitAndCenterWhenSettled()
             }
         }
 
@@ -536,7 +536,7 @@ export class NodeDrawer {
                 .transition()
                 .duration(250)
                 .on('end', () => {
-                    graph.renderer.fitAndCenter()
+                    graph.renderer.fitAndCenterWhenSettled()
                 })
                 .attr('transform', `translate(${-offset}, ${-offset})`)
         }

@@ -771,6 +771,6 @@ export class Simulation {
         this.restart()
 
         await this.waitForSimulationStop()
-        this.graph.renderer.fitAndCenter()
+        this.graph.renderer.fitAndCenterWhenSettled()
     }
 }

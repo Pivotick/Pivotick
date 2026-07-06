@@ -17,7 +17,7 @@ Grouped by subsystem. Status legend: ⬜ Todo · 🟨 In progress · ✅ Done.
 | Filtering | 2 | Filter panel ignores programmatic `setFilter()` | `GraphFilter.ts:60-63` | ✅ Done |
 | Rendering | 8 | `renderNode` measured size doesn't feed collision radius | `NodeDrawer.ts` renderNode branch | ⬜ Todo |
 | Clustering | 6 | No synthetic cluster→cluster edge for child→child | `Graph.ts:201` `normalizeGraphData` | ✅ Done |
-| Clustering | 7 | `fitAndCenter()` races the cluster render | `GraphSvgRenderer.ts:626` | ⬜ Todo |
+| Clustering | 7 | `fitAndCenter()` races the cluster render | `GraphSvgRenderer.ts:626` | ✅ Done |
 | Simulation | 3 | Expanded cluster over-repels, sim never settles | `Simulation.ts:~225`, `ClusterDrawer.ts:~573` | ✅ Done |
 | Simulation | 4 | Charge force is `NaN` for node radius < 10 | `Simulation.ts` `initSimulationForceCharge` | ✅ Done |
 | Simulation | 5 | `d3GravityStrength` ignored for any connected node | `Simulation.ts` `initSimulationForceGravity` | ✅ Done |
@@ -142,6 +142,19 @@ button.
 completed.
 **Surfaced by:** L4 (clustered infra/dependency map) — worked around with an
 ~800 ms settle before the final `fitAndCenter()`.
+**Resolved:** new public `GraphRenderer.fitAndCenterWhenSettled()` — when a cluster
+is expanded it polls the zoom-layer `getBBox()` each frame and only fits once the
+box holds steady for a few frames (hard-capped at ~3 s so it can never hang);
+with nothing expanded it fits immediately, so non-cluster graphs are unchanged.
+The load fit (`Graph.startAndRender`), the expand/collapse fits
+(`NodeDrawer.handleChildrenExpanded` + the collapse toggle) and the layout-switch
+fit (`Simulation.switchLayout`) now route through it. Measured on `linkedClusters`
+with both clusters expanded: an immediate fit locks in scale k≈2.86 off a transient
+370×165 bbox, whereas `fitAndCenterWhenSettled()` lands on k≈0.94 (matching a
+reference fit taken after a full 1.5 s settle) once the real 520×571 layout exists.
+Regression test: `tests/visual/specs/cluster-fit-settle.spec.ts`. The two gallery
+cards that hit this (`clusters-hierarchy`, `infra-dependency-map`) now call
+`fitAndCenterWhenSettled()`, dropping the ~800 ms `setTimeout` workaround.
 
 ### 8. A `renderNode` node's measured size never feeds its collision radius
 `src/renderers/svg/NodeDrawer.ts`, renderNode branch. The measured width/height

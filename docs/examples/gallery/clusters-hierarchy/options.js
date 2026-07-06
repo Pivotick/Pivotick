@@ -73,7 +73,9 @@ async function onLoaded(graph) {
     const a = graph.getMutableNode('group-a')
     if (a) graph.toggleExpandNode(a)
     await graph.simulation.waitForSimulationStop()
-    graph.renderer.fitAndCenter()
+    // Fit once the expanded cluster's bubble/subgraph has settled, not off the
+    // transient bbox that exists for a few frames right after the sim stops.
+    graph.renderer.fitAndCenterWhenSettled()
 }
 
 export { data, options, toggleCluster, setAllExpanded, onLoaded }

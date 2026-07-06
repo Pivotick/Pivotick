@@ -52,6 +52,15 @@ export abstract class GraphRenderer {
     abstract hideShadowEdge(): void
     abstract enterNoteEditMode(note: Note): void
 
+    /**
+     * Fit-and-centre once the content has stopped resizing. Renderers that lay
+     * out over several frames after the sim stops (e.g. expanded clusters)
+     * override this to wait for a stable bbox; the default fits immediately.
+     */
+    public fitAndCenterWhenSettled(forceScale?: number): void {
+        this.fitAndCenter(forceScale)
+    }
+
     public getCanvas(): HTMLElement {
         return this.container.querySelector('.pvt-canvas') as HTMLElement
     }

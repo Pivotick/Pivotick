@@ -134,10 +134,9 @@ async function onLoaded(graph) {
     })
     graph.simulation.reheat()
     await graph.simulation.waitForSimulationStop()
-    // Cluster nodes draw their badges/radius over the next few frames; wait for
-    // that to settle before framing so fitAndCenter measures the final layout.
-    await new Promise((resolve) => setTimeout(resolve, 800))
-    graph.renderer.fitAndCenter()
+    // Cluster nodes draw their badges/radius over the next few frames; fitAndCenterWhenSettled
+    // waits for that layout to stabilise so it frames the final map, not a transient bbox.
+    graph.renderer.fitAndCenterWhenSettled()
 }
 
 export { data, options, setAllExpanded, onLoaded }

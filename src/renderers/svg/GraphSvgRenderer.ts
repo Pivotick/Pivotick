@@ -670,6 +670,51 @@ export class GraphSvgRenderer extends GraphRenderer {
         }
     }
 
+    /**
+     * Fit-and-centre once the zoom layer has stopped resizing.
+     *
+     * Some content lays out over several animation frames + d3 transitions
+     * *after* the main sim stops (i.e. after `waitForSimulationStop()`
+     * resolves) — e.g. an expanded cluster drawing its bubble/badges and its
+     * nested subgraph. Fitting right then measures a transient bbox and locks in
+     * a wrong, off-centre transform that is never corrected. So poll `getBBox()`
+     * until it holds steady for a few frames (hard-capped so it can never hang),
+     * then fit. This is cause-agnostic: a static layout is already steady and
+     * resolves in a few frames; anything still moving is waited out.
+     */
+    public fitAndCenterWhenSettled(forceScale?: number): void {
+        const zoomLayerEl = this.zoomGroup.node()
+        if (!zoomLayerEl) {
+            this.fitAndCenter(forceScale)
+            return
+        }
+
+        const maxFrames = 180    // ~3s @60fps: a hard cap, not the usual path
+        const stableTarget = 3   // consecutive steady frames before we commit
+        const epsilon = 0.5      // px: ignore sub-pixel jitter from late layout
+        let prev: DOMRect | null = null
+        let stableFrames = 0
+        let frame = 0
+
+        const step = (): void => {
+            const b = zoomLayerEl.getBBox()
+            const steady = prev !== null
+                && Math.abs(b.width - prev.width) < epsilon
+                && Math.abs(b.height - prev.height) < epsilon
+                && Math.abs(b.x - prev.x) < epsilon
+                && Math.abs(b.y - prev.y) < epsilon
+            stableFrames = steady ? stableFrames + 1 : 0
+            prev = b
+            frame++
+            if (stableFrames >= stableTarget || frame >= maxFrames) {
+                this.fitAndCenter(forceScale)
+                return
+            }
+            requestAnimationFrame(step)
+        }
+        requestAnimationFrame(step)
+    }
+
     public focusElement(element: Node | Edge | Note): void {
         const targetEl: SVGGElement | null = element.getGraphElement()
         const zoomBehavior = this.getZoomBehavior()

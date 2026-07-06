@@ -155,7 +155,7 @@ export class Graph {
         await this.simulation.start()
         await this.simulation.waitForSimulationStop()
         this.renderer.nextTick()
-        this.renderer.fitAndCenter()
+        this.renderer.fitAndCenterWhenSettled()
         this.UIManager.callGraphReady()
         this.ready()
     }
