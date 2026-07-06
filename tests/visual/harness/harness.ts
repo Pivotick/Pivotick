@@ -59,6 +59,14 @@ function mergeOptions(base: PlainObject, override: PlainObject): PlainObject {
 export interface HarnessApi {
     /** Build a graph from a named fixture; resolves once it has finished rendering. */
     load(name: FixtureName, overrides?: PlainObject): Promise<void>
+    /**
+     * Build a graph of custom `renderNode` HTML cards (fixed-size boxes) packed
+     * tightly around the origin with no edges — for exercising library-fixes #8
+     * (a custom node's measured size must feed its collision radius). A
+     * `renderNode` is a function, so it can't be passed through `load`'s
+     * serialisable overrides; this bakes it in on the page side.
+     */
+    loadCustomNodes(overrides?: PlainObject): Promise<void>
     /** Select a node by id (renders the selection visuals). */
     selectNode(id: string): void
     /** Select an edge by id. */
@@ -231,6 +239,36 @@ class Harness implements HarnessApi {
         this.graph = graph
         await this.whenReady(graph)
         // Wait for web fonts so text metrics (and thus layout/labels) are stable.
+        if (document.fonts?.ready) await document.fonts.ready
+    }
+
+    async loadCustomNodes(overrides: PlainObject = {}): Promise<void> {
+        this.destroy()
+        // Fixed-size card so the measured size (and thus the radius) is
+        // deterministic and font-independent: box-sizing:border-box pins the
+        // outer box to exactly CARD_W×CARD_H, inline-flex shrink-wraps to it.
+        const CARD_W = 140
+        const CARD_H = 44
+        const renderNode = (node: Node): HTMLElement => {
+            const el = document.createElement('div')
+            el.style.cssText = `display:inline-flex;box-sizing:border-box;width:${CARD_W}px;height:${CARD_H}px;border:1px solid #334155;background:#fff`
+            el.textContent = String(node.getData().label ?? node.id)
+            return el
+        }
+        // Five cards seeded tightly around the origin (all inside one card's
+        // radius) with no edges, so only collision — driven by the measured card
+        // size — can spread them apart.
+        const seeds: Array<[number, number]> = [[0, 0], [10, 6], [-8, 9], [6, -10], [-12, -4]]
+        const nodes = seeds.map(([x, y], i) => {
+            const n = new Node(`card-${i}`, { label: `Card ${i}` }, {}, `card-${i}`)
+            n.x = x
+            n.y = y
+            return n
+        })
+        const options = mergeOptions(BASE_OPTIONS, mergeOptions(overrides, { render: { renderNode } }))
+        const graph = new Pivotick(this.container, { nodes, edges: [] } as never, options as never)
+        this.graph = graph
+        await this.whenReady(graph)
         if (document.fonts?.ready) await document.fonts.ready
     }
 

@@ -15,7 +15,7 @@ Grouped by subsystem. Status legend: ⬜ Todo · 🟨 In progress · ✅ Done.
 |-------|---|-------|------------------|--------|
 | Filtering | 1 | `queryEngine.excludeNode()` doesn't hide the node | `GraphQueryEngine.ts:98-117` | ✅ Done |
 | Filtering | 2 | Filter panel ignores programmatic `setFilter()` | `GraphFilter.ts:60-63` | ✅ Done |
-| Rendering | 8 | `renderNode` measured size doesn't feed collision radius | `NodeDrawer.ts` renderNode branch | ⬜ Todo |
+| Rendering | 8 | `renderNode` measured size doesn't feed collision radius | `NodeDrawer.ts` renderNode branch | ✅ Done |
 | Clustering | 6 | No synthetic cluster→cluster edge for child→child | `Graph.ts:201` `normalizeGraphData` | ✅ Done |
 | Clustering | 7 | `fitAndCenter()` races the cluster render | `GraphSvgRenderer.ts:626` | ✅ Done |
 | Simulation | 3 | Expanded cluster over-repels, sim never settles | `Simulation.ts:~225`, `ClusterDrawer.ts:~573` | ✅ Done |
@@ -172,6 +172,24 @@ measured `foreignObject`.
 `d3ManyBodyStrength`/`d3LinkDistance` to spread the cards.
 **Note:** the *measurement* half of this area (custom HTML nodes rendering at 0×0)
 was already fixed during the gallery pass; only the collision-radius half remains.
+**Resolved:** the `renderNode` branch of `NodeDrawer.render` now feeds the measured
+half-size into `node.setCircleRadius()` for every custom node (not just when
+`enableNodeExpansion` is on), so the sim's collision + charge see the real card
+instead of the default r=10. Because the measurement lands in a post-reveal `rAF`
+after the sim has cooled — and because d3-force *caches* per-node radii when a
+force is initialised, not per tick — a plain reheat wouldn't pick up the new size.
+So a new `Simulation.refreshForcesAndReheat()` re-sets the sim's nodes (re-running
+every force's `initialize` → re-reading the radii) and then reheats once;
+`NodeDrawer` calls it, debounced to one reheat after the last card measures.
+Expanded clusters are skipped (their bubble radius stays owned by `ClusterDrawer`).
+The `renderNode` self-sizing contract (`inline-flex`/`inline-block`) is now
+documented in `docs/render.md`. Regression test:
+`tests/visual/specs/custom-node-collision.spec.ts` (drives the real main-thread
+sim; asserts each card's radius = ½·max(w,h), the collision force sizes each card
+at 1.2·r, and cards seeded on top of each other spread to ~2·r apart — vs the
+r=10 / ~24px pile-up before the fix). The gallery workaround
+(`d3ManyBodyStrength`/`d3LinkDistance` tuning in the *custom HTML node* card) can
+now be simplified — tracked separately per §2.
 
 ---
 

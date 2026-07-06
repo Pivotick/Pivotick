@@ -71,8 +71,20 @@ export class NodeDrawer {
                 fo.attr('x', -width / 2)
                     .attr('y', -height / 2)
 
-                if (this.rendererOptions.enableNodeExpansion && (!node.hasChildren() || !node.expanded)) {
-                    node.setCircleRadius(0.5 * Math.max(width, height))
+                // Feed the measured size into the node radius so the force sim's
+                // collision + charge see the real card, not the default r=10 (else
+                // large HTML cards get packed until they overlap). Expanded clusters
+                // are skipped — their bubble radius is owned by the cluster drawer.
+                if (!node.hasChildren() || !node.expanded) {
+                    const measuredRadius = 0.5 * Math.max(width, height)
+                    if (node.getCircleRadius() !== measuredRadius) {
+                        node.setCircleRadius(measuredRadius)
+                        // Measurement only lands once the card is on-screen — the zoom
+                        // layer is display:none during the initial layout, so this runs
+                        // after the sim has cooled. Nudge it once so collision re-spaces
+                        // the freshly-sized cards.
+                        this.scheduleCollisionReheat()
+                    }
                 }
             }
             requestAnimationFrame(() => measureAndSize(0))
@@ -114,6 +126,27 @@ export class NodeDrawer {
                 this.addExpandCollapseIcons(theNodeSelection, node)
             })
         }
+    }
+
+    /** Pending frame for the debounced collision reheat, if any. */
+    private collisionReheatFrame: number | null = null
+
+    /**
+     * Reheat the sim once so collision re-spaces custom nodes whose radius was
+     * just set from their measured size. Custom nodes measure asynchronously (and
+     * on different frames), so this is debounced to one reheat after the last
+     * measurement lands, and is a no-op when the simulation is disabled.
+     */
+    private scheduleCollisionReheat(): void {
+        if (this.collisionReheatFrame !== null) {
+            cancelAnimationFrame(this.collisionReheatFrame)
+        }
+        this.collisionReheatFrame = requestAnimationFrame(() => {
+            this.collisionReheatFrame = null
+            // d3-force caches node radii at init, so a plain reheat wouldn't pick
+            // up the size we just set — re-initialise the forces first.
+            this.graph.simulation?.refreshForcesAndReheat()
+        })
     }
 
     public updatePositions(nodeSelection: Selection<SVGGElement, Node, SVGGElement, unknown>): void {

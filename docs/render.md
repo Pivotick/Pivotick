@@ -37,6 +37,13 @@ Here's a quick rundown:
 - **`defaultNodeStyle`**, **`defaultEdgeStyle`**, and **`defaultLabelStyle`** define the base appearance for all elements.
 :::
 
+::: warning `renderNode` content must be self-sizing
+Pivotick measures your element to size its `<foreignObject>` and to feed the
+force layout's collision radius, so its root must shrink-wrap its content — use
+`display: inline-flex`/`inline-block`. A block-level root has no intrinsic width
+and stretches to fill the measured box (which then grows unbounded).
+:::
+
 The next three rendering examples are using the following data:
 
 ```ts

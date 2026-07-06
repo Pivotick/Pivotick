@@ -622,6 +622,23 @@ export class Simulation {
     }
 
     /**
+     * Re-read the node-dependent force accessors and reheat.
+     *
+     * d3-force caches per-node radius/strength when a force is initialised (i.e.
+     * when nodes are set), not on every tick — so mutating a node's radius after
+     * the sim is running has no effect until the forces are re-initialised.
+     * Re-setting the nodes does that; the reheat then lets collision/charge
+     * re-lay-out with the new sizes. Used when a custom node measures its size
+     * after the initial layout has already cooled. No-op when disabled.
+     */
+    public refreshForcesAndReheat(alpha = 0.5): void {
+        if (!this.options.enabled) return
+        const visibleNodes = this.graph.getMutableNodes().filter(node => node.visible)
+        this.simulation.nodes(visibleNodes) // re-initialises every force → re-reads node radii
+        this.reheat(alpha)
+    }
+
+    /**
      * @private
      */
     public createDragBehavior() {
