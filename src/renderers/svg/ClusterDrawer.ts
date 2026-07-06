@@ -136,6 +136,7 @@ export class ClusterDrawer {
 
         // Update edge visibility: hide synthetic edges, show actual edges
         ClusterDrawer.toggleSyntheticEdges(node)
+        ClusterDrawer.resolveCrossClusterEdges(this.nodeDrawer.graph)
 
         // Propagate layout updates up the parent graph hierarchy
         let currParentGraph = this.nodeDrawer.graph.getParentGraph()
@@ -408,33 +409,38 @@ export class ClusterDrawer {
      * @param node - The cluster node being expanded/collapsed
      */
     public static toggleSyntheticEdges(node: Node) {
+        // external→cluster synthetic edges only; cross-cluster (child↔child) stand-ins
+        // are resolved as a set by resolveCrossClusterEdges, not per-node here.
+        const synthetic = (e: Edge) => e.isSynthetic === true && e.isCrossCluster !== true
         if (node.expanded) {
             // Hide self-referencing synthetic edges
-            node.getEdgesIn().filter((e: Edge) => e.isSynthetic === true).forEach((e: Edge) => {
+            node.getEdgesIn().filter(synthetic).forEach((e: Edge) => {
                 e.hide()
             })
             const currentNode = node.getOriginalObject() ?? node
             // Hide synthetic edges that point to the node of this subgraph coming from outer graph
-            currentNode.getEdgesIn().filter((e: Edge) => e.isSynthetic === true).forEach((e: Edge) => {
+            currentNode.getEdgesIn().filter(synthetic).forEach((e: Edge) => {
                 e.hide()
             })
 
-            // Show actual edges
+            // Show actual edges (but not cross-cluster ones — those are owned by
+            // resolveCrossClusterEdges, since their other endpoint may be a hidden child).
             currentNode.children.forEach((child: Node) => {
                 child.getEdgesIn()
                     .filter((e: Edge) => !currentNode.children.includes(e.from)) // Edges are already drawn in the subgraph
+                    .filter((e: Edge) => e.isCrossCluster !== true)
                     .forEach((e: Edge) => {
                         e.show()
                     })
             })
         } else {
             // Hide self-referencing synthetic edges
-            node.getEdgesIn().filter((e: Edge) => e.isSynthetic === true).forEach((e: Edge) => {
+            node.getEdgesIn().filter(synthetic).forEach((e: Edge) => {
                 e.show()
             })
 
             const currentNode = node.getOriginalObject() ?? node
-            currentNode.getEdgesIn().filter((e: Edge) => e.isSynthetic === true).forEach((e: Edge) => {
+            currentNode.getEdgesIn().filter(synthetic).forEach((e: Edge) => {
                 if (node.visible) {
                     e.show()
                 }
@@ -443,6 +449,20 @@ export class ClusterDrawer {
             // Hide nested edges
             ClusterDrawer.hideNestedEdges(currentNode)
         }
+    }
+
+    /**
+     * Re-resolve which cross-cluster (child↔child) stand-in edges are visible after an
+     * expand/collapse, walking to the root graph so a nested toggle updates the whole
+     * set. Delegates the per-edge decision to {@link Graph.resolveCrossClusterEdges}.
+     *
+     * @param graph - Any graph in the hierarchy that just changed expansion state
+     */
+    public static resolveCrossClusterEdges(graph: Graph) {
+        let root = graph
+        let parent = root.getParentGraph()
+        while (parent) { root = parent; parent = root.getParentGraph() }
+        Graph.resolveCrossClusterEdges(root.getMutableEdges())
     }
 
     /**

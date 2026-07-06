@@ -303,7 +303,9 @@ export class Simulation {
             // One endpoint is a hidden child of an expanded cluster. Re-anchor the child
             // side to its in-sim ancestor so the external node stays tied to the cluster —
             // without this, expanding drops the anchor and the node drifts off on drag.
-            // Child↔child links across two different clusters are not handled here.
+            // A real child↔child link across two clusters is punted here: whenever either
+            // cluster is collapsed a visible cross-cluster stand-in edge carries the link
+            // (kept above, or re-anchored just below when its child end is folded).
             if (source.isChild && target.isChild) continue
             const external = source.isChild ? target : source
             const cluster = ancestorInSim(source.isChild ? source : target)

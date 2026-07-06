@@ -30,8 +30,17 @@ export class Edge {
     visible: boolean
     /** True if this is a synthetic edge (placeholder for collapsed cluster child) */
     isSynthetic?: boolean
+    /**
+     * True for the subclass of synthetic edges that stand in for a real edge whose
+     * *both* endpoints are children of different clusters. Unlike the external→cluster
+     * synthetic edges, these are resolved as a set (one per collapse state) by
+     * {@link ClusterDrawer.resolveCrossClusterEdges} rather than the per-node toggle.
+     */
+    isCrossCluster?: boolean
     /** The actual child node this synthetic edge points to (for expansion logic) */
     syntheticTerminalNode?: Node
+    /** For a cross-cluster synthetic edge: the real child the `from` side stands in for. */
+    syntheticSourceNode?: Node
     private _original_object?: Edge
     private _subgraphFromNode?: Node
     private _subgraphToNode?: Node

@@ -16,7 +16,7 @@ Grouped by subsystem. Status legend: ⬜ Todo · 🟨 In progress · ✅ Done.
 | Filtering | 1 | `queryEngine.excludeNode()` doesn't hide the node | `GraphQueryEngine.ts:98-117` | ✅ Done |
 | Filtering | 2 | Filter panel ignores programmatic `setFilter()` | `GraphFilter.ts:60-63` | ✅ Done |
 | Rendering | 8 | `renderNode` measured size doesn't feed collision radius | `NodeDrawer.ts` renderNode branch | ⬜ Todo |
-| Clustering | 6 | No synthetic cluster→cluster edge for child→child | `Graph.ts:201` `normalizeGraphData` | ⬜ Todo |
+| Clustering | 6 | No synthetic cluster→cluster edge for child→child | `Graph.ts:201` `normalizeGraphData` | ✅ Done |
 | Clustering | 7 | `fitAndCenter()` races the cluster render | `GraphSvgRenderer.ts:626` | ⬜ Todo |
 | Simulation | 3 | Expanded cluster over-repels, sim never settles | `Simulation.ts:~225`, `ClusterDrawer.ts:~573` | ✅ Done |
 | Simulation | 4 | Charge force is `NaN` for node radius < 10 | `Simulation.ts` `initSimulationForceCharge` | ✅ Done |
@@ -113,6 +113,21 @@ edge.to.isChild` and the two ancestors differ.
 **Surfaced by:** L4 (clustered infra/dependency map) — worked around by keeping
 the app tier as flat top-level services and making only the backend subsystems
 clusters that services depend *into* (top-level → cluster folds correctly).
+**Resolved:** for a child→child link across two clusters, `normalizeGraphData` now
+pre-creates the whole cross-product of ancestor pairs (`from-ancestor →
+to-ancestor`, deduped) and tags them — plus the real edge — as *cross-cluster*
+stand-ins. `Graph.resolveCrossClusterEdges` then shows exactly the one whose
+endpoints are the nodes actually on screen (each side's deepest visible ancestor),
+so the dependency re-targets through every collapse state: `group-a → group-b`
+(both collapsed) → `a3 → group-b` (A open) → `group-a → b1` (B open) → real
+`a3 → b1` (both open). It's rerun on load and on every expand/collapse (walking to
+the root graph). Because each visible stand-in is either top-level→top-level or has
+one child endpoint, `Simulation.getActiveEdges` turns it into a real (or
+re-anchored) link, so the clusters stay pulled together in every state.
+`toggleSyntheticEdges` and `setVisibleNodes` leave cross-cluster edges to the
+resolver. Regression test:
+`tests/visual/specs/cluster-cross-cluster-edge.spec.ts` (asserts the shown edge in
+all four states + round-trip); demoed in the *Clusters & hierarchy* gallery card.
 
 ### 7. `fitAndCenter()` right after load/expand races the cluster render
 `src/renderers/svg/GraphSvgRenderer.ts:626` (`fitAndCenter` reads

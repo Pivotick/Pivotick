@@ -456,6 +456,9 @@ export const fixtures = {
             new Edge('b2-b3', b2, b3),
             new Edge('a3-b1', a3, b1),
         ]
+        // Mirror the normaliser: any edge touching a hidden child starts hidden (the
+        // synthetic external→cluster / cross-cluster edges are what show while collapsed).
+        edges.forEach((e) => { if (e.from.isChild || e.to.isChild) e.hide() })
         return { nodes: [core, groupA, groupB], edges, notes: [] }
     },
 

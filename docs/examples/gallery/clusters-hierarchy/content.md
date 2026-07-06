@@ -9,11 +9,15 @@ order: 2
 Give a node `children` and it becomes a **cluster**: collapse it to a single node
 to tame a busy graph, expand it to reveal its members laid out in a bubble. Edges
 that cross a collapsed boundary fold into a synthetic edge on the cluster, so the
-topology always stays readable.
+topology always stays readable. That holds even when *both* ends are hidden: the
+`a3 → b1` link between the two groups re-targets to whichever nodes are on screen —
+`group-a → group-b` when both are boxes, `a3 → group-b` once Group A opens — so the
+dependency never disappears just because you collapsed a box.
 
 Click the **+ / −** badge on a cluster to toggle it, or drive it from code with
-`graph.toggleExpandNode(node)`. **Group A** starts open so you can see both states
-side by side.
+`graph.toggleExpandNode(node)`. **Group A** starts open so you can see the link
+re-target across states; hit **collapse all** to fold the graph down to two boxes
+joined by that cross-cluster arrow.
 
 <script setup>
 import { shallowRef } from 'vue'
