@@ -2,10 +2,10 @@ import { test, expect, gotoHarness, loadFixture } from '../helpers'
 import type { Page } from '@playwright/test'
 
 /**
- * Behavioural (non-screenshot) test for library-fixes #3 — an expanded cluster
- * over-repels and the sim never settles when its node is dragged.
+ * Behavioural (non-screenshot) test: an expanded cluster over-repels and the sim
+ * never settles when its node is dragged.
  *
- * Repro (I3 "clusters & hierarchy"): expand a cluster, then drag its node. Its
+ * Repro (clusters & hierarchy): expand a cluster, then drag its node. Its
  * charge is scaled off the large containment-bubble radius (×the parent weight),
  * so it shoves its neighbours far away instead of cooling. The fix bases an
  * expanded cluster's charge on its *collapsed* radius, so it repels no harder
@@ -80,7 +80,7 @@ async function dragExpandedClusterAndSettle(page: Page): Promise<SettleResult> {
     })
 }
 
-test.describe('cluster drag settle (#3)', () => {
+test.describe('cluster drag settle', () => {
     test.beforeEach(async ({ page }) => {
         await gotoHarness(page)
     })
@@ -93,7 +93,7 @@ test.describe('cluster drag settle (#3)', () => {
 
         const r = await dragExpandedClusterAndSettle(page)
         // Surface the live numbers so the outcome is inspectable, not just pass/fail.
-        console.log('[#3] settle result:', JSON.stringify(r))
+        console.log('[cluster-drag] settle result:', JSON.stringify(r))
 
         // Sanity: we actually expanded and the sim held the graph's nodes.
         expect(r.expanded).toBe(true)
@@ -107,5 +107,52 @@ test.describe('cluster drag settle (#3)', () => {
         // Secondary sanity bound: with the weaker charge, neighbours settle nearer
         // (measured ~673px fixed vs ~988px buggy) — guard against a blow-up.
         expect(r.spread).toBeLessThan(1500)
+    })
+
+    // A node linked to a child of an expanded cluster must stay anchored while the
+    // drag is *held* (alphaTarget kept warm). Before the fix, expanding dropped the
+    // synthetic external→cluster anchor (the child endpoint left the sim), so the
+    // other cluster's charge pushed the node off indefinitely.
+    test('held drag keeps a linked node anchored', async ({ page }) => {
+        await loadFixture(page, 'linkedClusters', {
+            simulation: { enabled: true, useWorker: false },
+            render: { enableNodeExpansion: true },
+        })
+
+        const r = await page.evaluate(async () => {
+            const g = window.__pivotick.graph!
+            const simMgr = g.simulation
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const d3sim = simMgr.getSimulation() as any
+            const groupA = g.getMutableNode('group-a')!
+            if (!groupA.expanded) g.toggleExpandNode(groupA)  // mirrors gallery onLoaded
+            await simMgr.waitForSimulationStop()
+            await new Promise((res) => setTimeout(res, 400))
+
+            // core links to a child of each group; it must remain anchored to group-a.
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const links = (d3sim.force('link').links() as any[]).map((l) => `${l.source.id}->${l.target.id}`)
+            const core = g.getMutableNode('core')!
+            for (const n of d3sim.nodes()) { if (n.id !== 'group-a') { n.fx = undefined; n.fy = undefined } }
+            const sx = core.x ?? 0, sy = core.y ?? 0
+
+            // Hold the drag: pin group-a, keep the sim warm, and tick (never release).
+            groupA.freeze()
+            d3sim.alphaTarget(0.3).alpha(0.3)
+            let maxDrift = 0
+            for (let step = 0; step < 10; step++) {
+                for (let i = 0; i < 60; i++) d3sim.tick()
+                maxDrift = Math.max(maxDrift, Math.hypot((core.x ?? 0) - sx, (core.y ?? 0) - sy))
+            }
+            return { links, maxDrift: Math.round(maxDrift) }
+        })
+        console.log('[cluster-drag] held-drag anchoring:', JSON.stringify(r))
+
+        // core is anchored to the expanded cluster, not its now-out-of-sim child.
+        expect(r.links).toContain('core->group-a')
+        expect(r.links).not.toContain('core->a1')
+        // Bounded wobble that settles (~415px), not the unbounded runaway (>3000px)
+        // the missing anchor produced.
+        expect(r.maxDrift).toBeLessThan(800)
     })
 })
