@@ -216,7 +216,9 @@ export class Simulation {
                 // if (n.isChild) return 0
                 const baseStrength = options.d3ManyBodyStrength
 
-                const radius = n.getCircleRadius()
+                // Charge off the collapsed radius for expanded clusters: their large bubble radius
+                // would over-repel (×parent weight below) and the sim never settles.
+                const radius = n.expanded ? n.getCircleRadiusCollapsed() : n.getCircleRadius()
                 const dampedRadius = 10 + Math.sqrt(Math.max(0, radius - 10)) // Slowly push other nodes if radius increases; clamp so radius < 10 doesn't yield NaN
 
                 let weight = n.weight ?? 1
