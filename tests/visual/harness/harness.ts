@@ -67,6 +67,16 @@ export interface HarnessApi {
      * serialisable overrides; this bakes it in on the page side.
      */
     loadCustomNodes(overrides?: PlainObject): Promise<void>
+    /**
+     * Construct a graph with NO data so `init()` is skipped and the renderer's
+     * `nodeSelection` is never assigned — the precondition for the canvas
+     * visibility-observer null-deref (see
+     * prd/bug-intersection-observer-nodeselection-undefined.md). Invokes the
+     * exact re-measure callback the `IntersectionObserver` fires and reports
+     * whether `nodeSelection` was unset and whether the callback threw. Pre-fix
+     * it throws `Cannot read properties of undefined (reading 'each')`.
+     */
+    probeUnrenderedVisibility(): { nodeSelectionUnset: boolean; remeasureThrew: boolean }
     /** Select a node by id (renders the selection visuals). */
     selectNode(id: string): void
     /** Select an edge by id. */
@@ -270,6 +280,29 @@ class Harness implements HarnessApi {
         this.graph = graph
         await this.whenReady(graph)
         if (document.fonts?.ready) await document.fonts.ready
+    }
+
+    probeUnrenderedVisibility(): { nodeSelectionUnset: boolean; remeasureThrew: boolean } {
+        this.destroy()
+        // No data → the Graph constructor skips renderer.init(), so nodeSelection
+        // is never assigned; the visibility observer is nonetheless already live.
+        const graph = new Pivotick(this.container, undefined as never, mergeOptions(BASE_OPTIONS, {}) as never)
+        this.graph = graph
+        // Reach the renderer internals the observer callback touches. These are
+        // `private`, but that's compile-time only — at runtime this is exactly the
+        // code the IntersectionObserver would run when the canvas becomes visible.
+        const renderer = graph.renderer as unknown as {
+            nodeSelection: unknown
+            remeasureVisibleNodes: () => void
+        }
+        const nodeSelectionUnset = renderer.nodeSelection === undefined
+        let remeasureThrew = false
+        try {
+            renderer.remeasureVisibleNodes()
+        } catch {
+            remeasureThrew = true
+        }
+        return { nodeSelectionUnset, remeasureThrew }
     }
 
     selectNode(id: string): void {
