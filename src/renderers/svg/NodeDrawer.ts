@@ -266,6 +266,14 @@ export class NodeDrawer {
         style.textVerticalShift = style.textVerticalShift as number
         style.textRotateDegree = style.textRotateDegree as number
 
+        // A 'frame' image node IS the picture: it renders as a rectangle sized to
+        // the image's aspect ratio (resized async in the imagePath branch), so it
+        // rides the square/rect path regardless of the requested shape.
+        const framed = !!style.imagePath && style.imageFit === 'frame'
+        if (framed) {
+            style.shape = 'square'
+        }
+
         // map logical node shapes to SVG element tag names (use string to allow 'rect' which is not part of NodeShape)
         let actualShape: string = style.shape as string
         if (style.shape == 'square') {
@@ -375,18 +383,47 @@ export class NodeDrawer {
             //   'icon'    – small picture centred on the shape (default; legacy look)
             //   'cover'   – picture fills the shape, cropped to preserve aspect ratio
             //   'contain' – whole picture fits inside the shape (letterboxed)
+            //   'frame'   – node becomes a rectangle the size of the picture, so the
+            //               stroke hugs it: whole picture, no crop, no letterbox bars
             const fit = style.imageFit ?? 'icon'
-            const extent = fit === 'icon' ? style.size * 1.2 : style.size * 2
-            const par = fit === 'cover' ? 'xMidYMid slice' : 'xMidYMid meet'
-            nodeSelection
-                .append('image')
-                .attr('class', 'node-content')
-                .attr('xlink:href', style.imagePath)
-                .attr('x', -extent / 2)
-                .attr('y', -extent / 2)
-                .attr('width', extent)
-                .attr('height', extent)
-                .attr('preserveAspectRatio', par)
+            if (fit === 'frame') {
+                const box = style.size * 2
+                const image = nodeSelection
+                    .append('image')
+                    .attr('class', 'node-content')
+                    .attr('xlink:href', style.imagePath)
+                    .attr('preserveAspectRatio', 'xMidYMid meet')
+                    .attr('x', -style.size)
+                    .attr('y', -style.size)
+                    .attr('width', box)
+                    .attr('height', box)
+                // The image's aspect ratio is only known once it loads. Fit the box's
+                // longest side to `2 × size` and shrink the frame + image to match, so
+                // the whole picture shows with the stroke wrapping it tightly.
+                const probe = new Image()
+                probe.onload = () => {
+                    if (!probe.naturalWidth || !probe.naturalHeight) return
+                    const aspect = probe.naturalWidth / probe.naturalHeight
+                    const w = aspect >= 1 ? box : box * aspect
+                    const h = aspect >= 1 ? box / aspect : box
+                    image.attr('x', -w / 2).attr('y', -h / 2).attr('width', w).attr('height', h)
+                    renderedNode.attr('x', -w / 2).attr('y', -h / 2).attr('width', w).attr('height', h)
+                    node.setCircleRadius(0.5 * Math.max(w, h))
+                }
+                probe.src = style.imagePath
+            } else {
+                const extent = fit === 'icon' ? style.size * 1.2 : style.size * 2
+                const par = fit === 'cover' ? 'xMidYMid slice' : 'xMidYMid meet'
+                nodeSelection
+                    .append('image')
+                    .attr('class', 'node-content')
+                    .attr('xlink:href', style.imagePath)
+                    .attr('x', -extent / 2)
+                    .attr('y', -extent / 2)
+                    .attr('width', extent)
+                    .attr('height', extent)
+                    .attr('preserveAspectRatio', par)
+            }
         } else if (style.html) {
             const fo = nodeSelection.append('foreignObject')
                 .attr('class', 'node-content')

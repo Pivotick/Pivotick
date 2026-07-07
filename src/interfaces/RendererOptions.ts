@@ -221,8 +221,11 @@ export type NodeShape = StandardShape | CustomNodeShape
  * - `'icon'` — small picture centred on the shape (~1.2× size); the legacy default look.
  * - `'cover'` — picture fills the shape's box (2× size), cropped to preserve aspect ratio.
  * - `'contain'` — whole picture fits inside the shape's box (2× size), letterboxed with the shape `color`.
+ * - `'frame'` — the node becomes a rectangle sized to the picture's own aspect ratio
+ *   (longest side = 2× size), so the stroke hugs it: whole picture, no crop, no letterbox
+ *   bars. The requested `shape` is ignored (always a rectangle) since the picture is the node.
  */
-export type ImageFit = 'icon' | 'cover' | 'contain'
+export type ImageFit = 'icon' | 'cover' | 'contain' | 'frame'
 
 export interface NodeStyle {
     /**
