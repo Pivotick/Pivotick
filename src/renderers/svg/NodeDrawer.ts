@@ -5,7 +5,7 @@ import { Edge } from '../../Edge'
 import type { Graph } from '../../Graph'
 import { GraphSvgRenderer, defaultLabelStyle } from './GraphSvgRenderer'
 import { resolveIcon, tryResolveNumber, tryResolveString } from '../../utils/Getters'
-import type { CustomNodeShape, GraphRendererOptions, NodeShape, NodeStyle } from '../../interfaces/RendererOptions'
+import type { CustomNodeShape, GraphRendererOptions, ImageFit, NodeShape, NodeStyle } from '../../interfaces/RendererOptions'
 import { ClusterDrawer } from './ClusterDrawer'
 import { forceConstrainParent } from '../../plugins/layout/MicroForce'
 d3Select.prototype.transition = d3Transition
@@ -180,6 +180,7 @@ export class NodeDrawer {
             iconClass: style?.iconClass ?? this.rendererOptions.defaultNodeStyle.iconClass,
             svgIcon: style?.svgIcon ?? this.rendererOptions.defaultNodeStyle.svgIcon,
             imagePath: style?.imagePath ?? this.rendererOptions.defaultNodeStyle.imagePath,
+            imageFit: style?.imageFit ?? this.rendererOptions.defaultNodeStyle.imageFit,
             text: style?.text ?? this.rendererOptions.defaultNodeStyle.text,
             html: style?.html ?? this.rendererOptions.defaultNodeStyle.html,
         }
@@ -217,6 +218,7 @@ export class NodeDrawer {
                 iconClass: style?.iconClass ?? styleFromStyleMap?.iconClass,
                 svgIcon: style?.svgIcon ?? styleFromStyleMap?.svgIcon,
                 imagePath: style?.imagePath ?? styleFromStyleMap?.imagePath,
+                imageFit: style?.imageFit ?? styleFromStyleMap?.imageFit,
                 text: style?.text ?? styleFromStyleMap?.text,
                 html: style?.html ?? styleFromStyleMap?.html,
             }
@@ -246,6 +248,7 @@ export class NodeDrawer {
         nodeStyle.iconClass = nodeStyle.iconClass !== undefined ? tryResolveString(nodeStyle.iconClass, node) : undefined
         nodeStyle.svgIcon = nodeStyle.svgIcon !== undefined ? tryResolveString(nodeStyle.svgIcon, node) : undefined
         nodeStyle.imagePath = nodeStyle.imagePath !== undefined ? tryResolveString(nodeStyle.imagePath, node) : undefined
+        nodeStyle.imageFit = nodeStyle.imageFit !== undefined ? (tryResolveString(nodeStyle.imageFit, node) as ImageFit) : undefined
 
         return nodeStyle
     }
@@ -368,15 +371,22 @@ export class NodeDrawer {
                 .attr('height', style.size * 1.4)
                 .attr('color', style.strokeColor)
         } else if (style.imagePath) {
-            const scale = 1.2
+            // How the picture sits on the node:
+            //   'icon'    – small picture centred on the shape (default; legacy look)
+            //   'cover'   – picture fills the shape, cropped to preserve aspect ratio
+            //   'contain' – whole picture fits inside the shape (letterboxed)
+            const fit = style.imageFit ?? 'icon'
+            const extent = fit === 'icon' ? style.size * 1.2 : style.size * 2
+            const par = fit === 'cover' ? 'xMidYMid slice' : 'xMidYMid meet'
             nodeSelection
                 .append('image')
                 .attr('class', 'node-content')
                 .attr('xlink:href', style.imagePath)
-                .attr('x', -style.size * (scale/2))
-                .attr('y', -style.size * (scale/2))
-                .attr('width', style.size * scale)
-                .attr('height', style.size * scale)
+                .attr('x', -extent / 2)
+                .attr('y', -extent / 2)
+                .attr('width', extent)
+                .attr('height', extent)
+                .attr('preserveAspectRatio', par)
         } else if (style.html) {
             const fo = nodeSelection.append('foreignObject')
                 .attr('class', 'node-content')
