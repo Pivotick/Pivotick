@@ -19,16 +19,11 @@ const data = {
 
 // #region options
 const options = {
-    // Custom nodes are large HTML cards, so spread them out (strong repulsion +
-    // a long link distance) to keep the cards from overlapping.
-    simulation: {
-        d3ManyBodyStrength: -2200,
-        d3LinkDistance: 260
-    },
     render: {
         // The ultimate escape hatch: return any HTML element (or string) per node.
-        // Pivotick measures it and centres it on the node — edges, dragging and the
-        // force layout keep working around whatever markup you build.
+        // Pivotick measures the card and feeds its real size into the collision
+        // force, so the layout spaces the cards without any spacing tweaks — edges,
+        // dragging and the force layout all keep working around your markup.
         renderNode: (node) => {
             const d = node.getData()
             const card = document.createElement('div')

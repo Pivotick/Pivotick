@@ -7,11 +7,12 @@ order: 4
 # Infra dependency map
 
 The clustering payoff at scale. A service architecture is grouped into **tiers**,
-each a collapsible cluster — so the map opens as four boxes and their high-level
-dependencies instead of a hairball. Expand a tier to drill into its services;
-collapse it to zoom back out. Directed edges show which service calls which
-(thickness tracks traffic, dashed amber marks async queue links), and colour
-tracks the tier.
+each a collapsible cluster — so the map opens as five boxes and the high-level
+dependencies **between** them instead of a hairball. A link between two services in
+different tiers folds into a single arrow between their boxes; expand a tier to drill
+into its services and watch those edges re-target as the boxes open. Directed edges
+show which service calls which (thickness tracks traffic, dashed amber marks async
+queue links), and colour tracks the tier.
 
 Click a cluster's **+ / −** badge to toggle it, or use the buttons.
 

@@ -51,10 +51,10 @@ async function captureCard(page, slug) {
         .waitFor({ state: 'attached', timeout: 30_000 })
 
     // Stable text metrics + a settle window for async note/markdown/cluster draw.
-    // Cluster cards re-fit ~1s after load (they wait for badges/radius to settle),
-    // so give the window enough room to capture the final framing.
+    // Cluster cards re-fit ~1s after load via fitAndCenterWhenSettled (it waits for
+    // badges/radius to settle), so leave a little room past that for the final framing.
     await page.evaluate(() => document.fonts?.ready)
-    await page.waitForTimeout(1800)
+    await page.waitForTimeout(1300)
 
     const canvas = page.locator('.pvt-canvas').first()
     await canvas.waitFor({ state: 'visible', timeout: 10_000 })

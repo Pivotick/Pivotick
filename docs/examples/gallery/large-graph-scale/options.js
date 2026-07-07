@@ -1,7 +1,7 @@
 // #region data
 // A layered, organic network: one central root; 8 communities hanging off it; each
 // community split into 2 clusters; and each cluster a hub with a varying number of
-// leaves, loosely cross-linked. A couple of links also jump between communities.
+// densely cross-linked leaves. A couple of links also jump between communities.
 //
 // The nodes carry initial x/y positions that lay the communities out around a ring
 // up front. Seeding the layout like this lets the force simulation settle quickly
@@ -48,10 +48,15 @@ function generateGraph(communityCount = 8, clustersPerCommunity = 2) {
                 leaves.push(leaf)
                 leavesByCommunity[c].push(leaf)
                 edges.push({ from: clusterHub, to: leaf, id: `e${leaf}` }) // leaf → its hub
-                // occasional leaf-to-leaf link inside the cluster → organic tangle
-                if (i > 1 && Math.random() < 0.15) {
-                    const other = leaves[rnd(leaves.length)]
-                    if (other !== leaf) edges.push({ from: leaf, to: other, id: `x${leaf}` })
+                // Mesh each leaf to a couple of earlier siblings — a densely
+                // interconnected community fills out as an organic blob (rather than
+                // a thin spoke-ring around the hub).
+                if (i > 1) {
+                    const linkCount = 1 + rnd(2) // 1–2 sibling links
+                    for (let l = 0; l < linkCount; l++) {
+                        const other = leaves[rnd(leaves.length - 1)]
+                        if (other !== leaf) edges.push({ from: leaf, to: other, id: `x${leaf}-${l}` })
+                    }
                 }
             }
         }
@@ -86,7 +91,10 @@ const options = {
         enabled: false,
         // Moderate repulsion keeps clusters from overlapping; the seeded ring does
         // the separating, so nothing needs to be pushed hard.
-        d3ManyBodyStrength: -55
+        d3ManyBodyStrength: -55,
+        // Leaves rest this far apart — long enough that each meshed community reads
+        // as a full, rounded blob rather than a tight knot.
+        d3LinkDistance: 75
     },
     render: {
         // Colour each node by its community; the root is neutral. Nodes stay small
@@ -95,10 +103,10 @@ const options = {
             strokeWidth: 0.5,
             size: (node) => {
                 const d = node.getData()
-                if (d?.root) return 12
-                if (d?.commHub) return 8
-                if (d?.hub) return 6
-                return 4
+                if (d?.root) return 13
+                if (d?.commHub) return 9
+                if (d?.hub) return 7
+                return 5
             },
             color: (node) => {
                 const d = node.getData()

@@ -48,9 +48,14 @@ const options = {
         // Resting length of each link. Default 30. Longer links give connected
         // nodes more breathing room.
         d3LinkDistance: 70,
-        // Centering pull that stops disconnected parts from drifting off-screen.
-        // Default 0.1. Lower = looser and airier; higher = a tighter ball.
-        d3GravityStrength: 0.05
+        // Centering pull for connected nodes (the ones with edges). Defaults to a
+        // tiny 0.001 so links + repulsion find their own balance; raise it to gather
+        // the graph toward the middle instead of letting it sprawl. Lower = looser
+        // and airier; higher = a tighter ball.
+        d3GravityStrengthConnected: 0.05,
+        // The pull for isolated, edge-less nodes (default 0.1) is a separate knob —
+        // d3GravityStrength — so a lone node still can't drift off on its own.
+        d3GravityStrength: 0.1
     }
 }
 // #endregion options
