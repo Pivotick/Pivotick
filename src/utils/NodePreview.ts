@@ -1,10 +1,16 @@
 import type { Node } from '../Node'
 
+const SVG_NS = 'http://www.w3.org/2000/svg'
+const XLINK_NS = 'http://www.w3.org/1999/xlink'
+
 /** Default side length (px) of the square node-preview viewport. */
 export const DEFAULT_NODE_PREVIEW_SIZE = 32
 
 /** Class applied to the wrapping <svg> when none is supplied. */
 const DEFAULT_NODE_PREVIEW_CLASS = 'pvt-node-preview-icon'
+
+/** The rendered `<image>` an `imagePath` node carries (regardless of `imageFit`). */
+const NODE_IMAGE_SELECTOR = 'image.node-content'
 
 /** The selection-highlight ring drawn around a selected node's rendered group. */
 const SELECTION_HIGHLIGHT_SELECTOR = 'circle.pvt-node-selected-highlight'
@@ -65,9 +71,43 @@ function buildScaledClone(element: SVGGElement, size: number, removeSelectionHig
 }
 
 /**
+ * Resolve the picture URL an `imagePath` node is showing, read straight off its rendered
+ * `<image>` (so it reflects the *resolved* path — whatever a per-node function, style map or
+ * default produced — without re-running style resolution). Returns `null` for non-image
+ * nodes and for nodes not yet rendered.
+ *
+ * @param source A node, or its rendered group directly.
+ */
+export function getNodeImageHref(source: Node | SVGGElement | null | undefined): string | null {
+    const element = source instanceof SVGGElement ? source : (source?.getGraphElement() ?? null)
+    if (!(element instanceof SVGGElement)) return null
+    const image = element.querySelector<SVGImageElement>(NODE_IMAGE_SELECTOR)
+    if (!image) return null
+    // d3 writes the src as a namespaced `xlink:href`; fall back to the plain attr / property.
+    return image.getAttributeNS(XLINK_NS, 'href') ?? image.getAttribute('href') ?? image.href?.baseVal ?? null
+}
+
+/** An `<image>` of the source picture, fit (aspect-preserved, letterboxed) into the preview box. */
+function buildImagePreview(href: string, size: number): SVGImageElement {
+    const image = document.createElementNS(SVG_NS, 'image') as SVGImageElement
+    image.setAttribute('class', 'pvt-node-preview-image')
+    image.setAttribute('x', '0')
+    image.setAttribute('y', '0')
+    image.setAttribute('width', size.toString())
+    image.setAttribute('height', size.toString())
+    image.setAttribute('preserveAspectRatio', 'xMidYMid meet')
+    image.setAttributeNS(XLINK_NS, 'href', href)
+    image.setAttribute('href', href)
+    return image
+}
+
+/**
  * Build the standard node-preview "vignette": a square <svg> viewport containing the node's
  * rendered graphic, scaled to fit. Shared by the sidebar header, tooltip, search box,
  * neighbors list and node modals so the cloning/scaling logic lives in one place.
+ *
+ * For an `imagePath` node the actual picture is shown (fit to the box, aspect preserved),
+ * rather than a shrunk clone of the framed node graphic. Every other node keeps the clone.
  *
  * The wrapping <svg> is always returned (so callers get a stable element to attach), even
  * when the node has not been rendered yet — in that case it is simply empty.
@@ -79,7 +119,7 @@ export function createNodePreview(source: Node | SVGGElement | null | undefined,
     const className = options.className ?? DEFAULT_NODE_PREVIEW_CLASS
     const removeSelectionHighlight = options.removeSelectionHighlight ?? false
 
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    const svg = document.createElementNS(SVG_NS, 'svg')
     svg.setAttribute('class', className)
     svg.setAttribute('width', size.toString())
     svg.setAttribute('height', size.toString())
@@ -88,7 +128,8 @@ export function createNodePreview(source: Node | SVGGElement | null | undefined,
 
     const element = source instanceof SVGGElement ? source : (source?.getGraphElement() ?? null)
     if (element instanceof SVGGElement) {
-        svg.appendChild(buildScaledClone(element, size, removeSelectionHighlight))
+        const imageHref = getNodeImageHref(element)
+        svg.appendChild(imageHref ? buildImagePreview(imageHref, size) : buildScaledClone(element, size, removeSelectionHighlight))
     }
 
     return svg

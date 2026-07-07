@@ -135,6 +135,20 @@ function checkBadgeDataUri(): string {
     return `data:image/svg+xml;base64,${btoa(svg)}`
 }
 
+/**
+ * A self-contained 2:1 **landscape** data-URI image for the picture-node preview test.
+ * The landscape aspect is the point: on the canvas a `cover` node crops it to a square,
+ * while the hover preview / lightbox must show the whole picture (aspect preserved).
+ */
+function landscapeImageDataUri(): string {
+    const svg =
+        '<svg xmlns="http://www.w3.org/2000/svg" width="320" height="160">' +
+        '<rect width="320" height="160" fill="#1e3a8a"/>' +
+        '<rect width="160" height="160" fill="#f97316"/>' +
+        '<circle cx="240" cy="80" r="45" fill="#fde047"/></svg>'
+    return `data:image/svg+xml;base64,${btoa(svg)}`
+}
+
 /** Pentagon of 5 nodes around a central hub — centred on the origin. */
 const BASIC_POSITIONS: Record<string, [number, number]> = {
     a: [0, -130],
@@ -256,6 +270,25 @@ export const fixtures = {
             mkStyledNode('image', 230, 0, { ...base, imagePath: checkBadgeDataUri() }),
         ]
         return { nodes, edges: [], notes: [] }
+    },
+
+    /**
+     * A picture node (`shot`) flanked by two plain nodes. `imageFit: 'cover'` keeps the
+     * node compact on the canvas (the 2:1 landscape is cropped to the square); the siblings
+     * keep the fit zoom sane so the node stays small on screen. Drives the hover preview,
+     * the large in-tooltip picture and the full-resolution lightbox.
+     */
+    imageNode(): BuiltFixture {
+        const shot = mkStyledNode(
+            'shot',
+            0,
+            0,
+            { shape: 'square', size: 36, imagePath: landscapeImageDataUri(), imageFit: 'cover', strokeColor: '#94a3b8', strokeWidth: 2 },
+            { name: 'Screenshot capture' }
+        )
+        const left = mkNode('left', -220, 0)
+        const right = mkNode('right', 220, 0)
+        return { nodes: [shot, left, right], edges: [new Edge('left-shot', left, shot), new Edge('shot-right', shot, right)], notes: [] }
     },
 
     /**

@@ -123,6 +123,23 @@
             }
         }
     
+        .pvt-tooltip-image-container {
+            display: flex;
+            justify-content: center;
+            padding: 6px 8px;
+            background-color: var(--pvt-sidebar-mainpanelheader-bg);
+
+            .pvt-tooltip-image {
+                display: block;
+                width: auto;
+                height: auto;
+                max-width: 100%;
+                max-height: 260px;
+                object-fit: contain;
+                cursor: zoom-in;
+            }
+        }
+
         .pvt-properties-container {
             margin-bottom: 4px;
 
