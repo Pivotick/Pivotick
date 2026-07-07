@@ -8,6 +8,7 @@ import {
     centerOf,
     canvas,
     expectElement,
+    expectCanvas,
 } from '../helpers'
 import type { Locator, Page } from '@playwright/test'
 
@@ -148,5 +149,19 @@ test.describe('image-node-preview', () => {
         const modal = page.locator('#pvt-image-lightbox-modal')
         await expect(modal.locator('.pvt-image-unavailable')).toBeVisible()
         await expect(modal.locator('.pvt-image-lightbox__img')).toHaveCount(0)
+    })
+
+    // The canvas node degrades too: the broken picture is hidden and a crossed-out-picture
+    // glyph is drawn on the node shape, instead of the browser's broken-image placeholder.
+    test('a broken canvas image shows the fallback glyph on the node', async ({ page }) => {
+        await loadFixture(page, 'imageNodeBroken')
+        await harness(page, 'pin')
+
+        const node = canvasNode(page, 'shot')
+        await expect(node.locator('.pvt-node-image-fallback')).toHaveCount(1)
+        // the broken <image> is kept (for detection) but hidden, so no broken picture shows
+        await expect(node.locator('image.node-content')).toHaveCSS('display', 'none')
+
+        await expectCanvas(page, 'canvas-image-fallback.png')
     })
 })

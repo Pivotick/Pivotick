@@ -8,6 +8,7 @@ import { resolveIcon, tryResolveNumber, tryResolveString } from '../../utils/Get
 import type { CustomNodeShape, GraphRendererOptions, ImageFit, NodeShape, NodeStyle } from '../../interfaces/RendererOptions'
 import { ClusterDrawer } from './ClusterDrawer'
 import { forceConstrainParent } from '../../plugins/layout/MicroForce'
+import { imageOff } from '../../ui/icons'
 d3Select.prototype.transition = d3Transition
 
 export class NodeDrawer {
@@ -257,6 +258,34 @@ export class NodeDrawer {
         return typeof shape === 'object' && shape !== null && 'd' in shape
     }
 
+    // Draw the "image unavailable" glyph for a picture whose source failed to load, so the
+    // node shows its shape + a crossed-out-picture icon rather than the browser's broken-image
+    // placeholder. The broken `<image>` is hidden (not removed) so it still carries the src for
+    // getNodeImageHref — keeping the preview / tooltip / lightbox fallbacks consistent.
+    private renderImageFallback(
+        nodeSelection: Selection<SVGGElement, Node, null, undefined>,
+        imageSelection: Selection<SVGImageElement, Node, null, undefined>,
+        style: NodeStyle
+    ): void {
+        imageSelection.style('display', 'none')
+        const size = style.size as number
+        const svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+        svgEl.innerHTML = imageOff
+        if (svgEl.children[0]?.nodeName === 'svg') { // let the glyph fill the box we size below
+            svgEl.children[0].removeAttribute('width')
+            svgEl.children[0].removeAttribute('height')
+        }
+        const extent = size * 1.1
+        nodeSelection
+            .append(() => svgEl)
+            .attr('class', 'node-content pvt-node-image-fallback')
+            .attr('x', -extent / 2)
+            .attr('y', -extent / 2)
+            .attr('width', extent)
+            .attr('height', extent)
+            .attr('color', style.textColor)
+    }
+
     private genericNodeRender(nodeSelection: Selection<SVGGElement, Node, null, undefined>, style: NodeStyle, node: Node): void {
         style.size = style.size as number
         style.shape = style.shape as NodeShape
@@ -397,6 +426,7 @@ export class NodeDrawer {
                     .attr('y', -style.size)
                     .attr('width', box)
                     .attr('height', box)
+                image.on('error', () => this.renderImageFallback(nodeSelection, image, style))
                 // The image's aspect ratio is only known once it loads. Fit the box's
                 // longest side to `2 × size` and shrink the frame + image to match, so
                 // the whole picture shows with the stroke wrapping it tightly.
@@ -414,7 +444,7 @@ export class NodeDrawer {
             } else {
                 const extent = fit === 'icon' ? style.size * 1.2 : style.size * 2
                 const par = fit === 'cover' ? 'xMidYMid slice' : 'xMidYMid meet'
-                nodeSelection
+                const image = nodeSelection
                     .append('image')
                     .attr('class', 'node-content')
                     .attr('xlink:href', style.imagePath)
@@ -423,6 +453,7 @@ export class NodeDrawer {
                     .attr('width', extent)
                     .attr('height', extent)
                     .attr('preserveAspectRatio', par)
+                image.on('error', () => this.renderImageFallback(nodeSelection, image, style))
             }
         } else if (style.html) {
             const fo = nodeSelection.append('foreignObject')
