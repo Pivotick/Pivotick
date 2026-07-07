@@ -514,6 +514,25 @@ export const fixtures = {
         return { nodes: Object.values(n), edges, notes: [] }
     },
 
+    /**
+     * Regression fixture for prd/bug-graphfilter-null-value-crash.md: node-data
+     * fields whose value is `null`/`undefined`. MISP (and most real datasets)
+     * serialise an absent optional attribute as `null`; a single such value used
+     * to crash the Graph-Filter facet builder (`v.length` on `null`) during
+     * construction — the form is (re)built on every `dataBatchChanged`, which
+     * fires synchronously inside `new Graph()`. Here `object_relation` carries a
+     * real value on one node, `null` on another, and an explicit `undefined` on a
+     * third, so the built facet must list only the real value.
+     */
+    nullableFields(): BuiltFixture {
+        const nodes = [
+            mkNode('a', -90, 0, { type: 'attribute', object_relation: null }),
+            mkNode('b', 90, 0, { type: 'attribute', object_relation: 'rel' }),
+            mkNode('c', 0, 120, { type: 'attribute', object_relation: undefined }),
+        ]
+        return { nodes, edges: [], notes: [] }
+    },
+
     /** A horizontal label (with background box) and a label rotated to follow its edge. */
     edgeLabels(): BuiltFixture {
         const color = '#0369a1'
