@@ -1,4 +1,6 @@
 import type { Node } from '../Node'
+import { imageOff } from '../ui/icons'
+import { createHtmlElement } from './ElementCreation'
 
 const SVG_NS = 'http://www.w3.org/2000/svg'
 const XLINK_NS = 'http://www.w3.org/1999/xlink'
@@ -87,6 +89,47 @@ export function getNodeImageHref(source: Node | SVGGElement | null | undefined):
     return image.getAttributeNS(XLINK_NS, 'href') ?? image.getAttribute('href') ?? image.href?.baseVal ?? null
 }
 
+/** Parse an inline icon markup string (from `ui/icons`) into a fresh `<svg>` element. */
+function parseIconSvg(markup: string): SVGSVGElement | null {
+    const holder = document.createElement('div')
+    holder.innerHTML = markup
+    return holder.querySelector('svg')
+}
+
+/**
+ * An HTML "image unavailable" placeholder (crossed-out picture + caption), shown in place of a
+ * picture whose source failed to load. Shared by the tooltip preview and the lightbox so a
+ * missing image degrades gracefully rather than showing the browser's broken-image glyph.
+ */
+export function createImageUnavailablePlaceholder(): HTMLDivElement {
+    const icon = createHtmlElement('div', { class: 'pvt-image-unavailable__icon' })
+    icon.innerHTML = imageOff
+    const label = createHtmlElement('div', { class: 'pvt-image-unavailable__label' }, ['Image unavailable'])
+    return createHtmlElement('div', { class: 'pvt-image-unavailable' }, [icon, label]) as HTMLDivElement
+}
+
+/** Swap a broken `<img>` for the {@link createImageUnavailablePlaceholder} placeholder on load error. */
+export function attachHtmlImageFallback(image: HTMLImageElement): void {
+    image.addEventListener('error', () => image.replaceWith(createImageUnavailablePlaceholder()), { once: true })
+}
+
+/** The SVG-native fallback for a broken preview `<image>`: the crossed-out picture icon, centred. */
+function buildSvgImageFallback(size: number): SVGGElement {
+    const group = document.createElementNS(SVG_NS, 'g')
+    group.setAttribute('class', 'pvt-node-preview-image-fallback')
+    const icon = parseIconSvg(imageOff)
+    if (icon) {
+        const glyphSize = size * 0.6
+        const offset = (size - glyphSize) / 2
+        icon.setAttribute('x', offset.toString())
+        icon.setAttribute('y', offset.toString())
+        icon.setAttribute('width', glyphSize.toString())
+        icon.setAttribute('height', glyphSize.toString())
+        group.appendChild(icon)
+    }
+    return group
+}
+
 /** An `<image>` of the source picture, fit (aspect-preserved, letterboxed) into the preview box. */
 function buildImagePreview(href: string, size: number): SVGImageElement {
     const image = document.createElementNS(SVG_NS, 'image') as SVGImageElement
@@ -98,6 +141,8 @@ function buildImagePreview(href: string, size: number): SVGImageElement {
     image.setAttribute('preserveAspectRatio', 'xMidYMid meet')
     image.setAttributeNS(XLINK_NS, 'href', href)
     image.setAttribute('href', href)
+    // Degrade to the placeholder glyph if the source can't be loaded.
+    image.addEventListener('error', () => image.replaceWith(buildSvgImageFallback(size)), { once: true })
     return image
 }
 

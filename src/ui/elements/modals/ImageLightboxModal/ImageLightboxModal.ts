@@ -1,4 +1,5 @@
 import { createHtmlElement } from '../../../../utils/ElementCreation'
+import { attachHtmlImageFallback } from '../../../../utils/NodePreview'
 import type { ModalHTMLElement } from '../../../components/Modal'
 import type { UIManager } from '../../../UIManager'
 import './imageLightboxModal.scss'
@@ -20,6 +21,7 @@ export function openImageLightbox(uiManager: UIManager, src: string, title?: str
     previousInstance?.__modalInstance?.destroy()
 
     const image = createHtmlElement('img', { class: 'pvt-image-lightbox__img', src, alt: title ?? '' }) as HTMLImageElement
+    attachHtmlImageFallback(image)
     const body = createHtmlElement('div', { class: 'pvt-image-lightbox' }, [image]) as HTMLDivElement
 
     // No explicit `size`: the CSS below lets the modal shrink-wrap the picture (capped to

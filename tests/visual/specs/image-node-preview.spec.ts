@@ -123,4 +123,30 @@ test.describe('image-node-preview', () => {
             page.locator('.pvt-contextmenu .pvt-action-item', { hasText: 'View Image' })
         ).toHaveCount(0)
     })
+
+    // When the picture's source can't be loaded, every surface degrades to a tidy
+    // "image unavailable" placeholder instead of the browser's broken-image glyph.
+    test('a missing picture degrades to an "image unavailable" fallback', async ({ page }) => {
+        await loadFixture(page, 'imageNodeBroken')
+        await harness(page, 'pin')
+
+        const tip = await openNodeTooltip(page, 'shot')
+
+        // Large tooltip picture: the broken <img> is swapped for the placeholder.
+        await expect(tip.locator('.pvt-image-unavailable')).toBeVisible()
+        await expect(tip.locator('.pvt-tooltip-image')).toHaveCount(0)
+        // Small header preview: the broken <image> is swapped for the SVG fallback glyph.
+        const headerPreview = tip.locator('.pvt-mainheader-nodepreview .pvt-node-preview-icon')
+        await expect(headerPreview.locator('.pvt-node-preview-image-fallback')).toHaveCount(1)
+        await expect(headerPreview.locator('.pvt-node-preview-image')).toHaveCount(0)
+
+        await expectElement(tip, 'tooltip-image-node-broken.png')
+
+        // The lightbox also shows the placeholder rather than a broken image.
+        await canvasNode(page, 'shot').click({ button: 'right' })
+        await page.locator('.pvt-contextmenu .pvt-action-item', { hasText: 'View Image' }).click()
+        const modal = page.locator('#pvt-image-lightbox-modal')
+        await expect(modal.locator('.pvt-image-unavailable')).toBeVisible()
+        await expect(modal.locator('.pvt-image-lightbox__img')).toHaveCount(0)
+    })
 })

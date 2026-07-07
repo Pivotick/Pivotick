@@ -10,7 +10,7 @@ import './tooltip.scss'
 import type { Tooltip as TooltipOptions, MainHeader, PropertiesPanel } from '../../../interfaces/GraphUI'
 import { deepMerge } from '../../../utils/utils'
 import { ShadowLinkManager } from '../ShadowLinkManager'
-import { createNodePreview, getNodeImageHref } from '../../../utils/NodePreview'
+import { attachHtmlImageFallback, createNodePreview, getNodeImageHref } from '../../../utils/NodePreview'
 import { openImageLightbox } from '../modals/ImageLightboxModal/ImageLightboxModal'
 
 
@@ -299,6 +299,7 @@ export class Tooltip implements UIElement {
             title: 'Click to view full size',
             'data-pvt-lightbox-src': src,
         }) as HTMLImageElement
+        attachHtmlImageFallback(image)
         return createHtmlElement('div', { class: 'pvt-tooltip-image-container' }, [image]) as HTMLDivElement
     }
 

@@ -149,6 +149,20 @@ function landscapeImageDataUri(): string {
     return `data:image/svg+xml;base64,${btoa(svg)}`
 }
 
+/** A `cover` picture node (`shot`) flanked by two plain nodes, used by the image-preview tests. */
+function imageScene(imagePath: string, name: string): BuiltFixture {
+    const shot = mkStyledNode(
+        'shot',
+        0,
+        0,
+        { shape: 'square', size: 36, imagePath, imageFit: 'cover', strokeColor: '#94a3b8', strokeWidth: 2 },
+        { name }
+    )
+    const left = mkNode('left', -220, 0)
+    const right = mkNode('right', 220, 0)
+    return { nodes: [shot, left, right], edges: [new Edge('left-shot', left, shot), new Edge('shot-right', shot, right)], notes: [] }
+}
+
 /** Pentagon of 5 nodes around a central hub — centred on the origin. */
 const BASIC_POSITIONS: Record<string, [number, number]> = {
     a: [0, -130],
@@ -279,16 +293,15 @@ export const fixtures = {
      * the large in-tooltip picture and the full-resolution lightbox.
      */
     imageNode(): BuiltFixture {
-        const shot = mkStyledNode(
-            'shot',
-            0,
-            0,
-            { shape: 'square', size: 36, imagePath: landscapeImageDataUri(), imageFit: 'cover', strokeColor: '#94a3b8', strokeWidth: 2 },
-            { name: 'Screenshot capture' }
-        )
-        const left = mkNode('left', -220, 0)
-        const right = mkNode('right', 220, 0)
-        return { nodes: [shot, left, right], edges: [new Edge('left-shot', left, shot), new Edge('shot-right', shot, right)], notes: [] }
+        return imageScene(landscapeImageDataUri(), 'Screenshot capture')
+    },
+
+    /**
+     * Same scene, but the picture's source is a URL that 404s — drives the graceful
+     * "image unavailable" fallback in the preview, tooltip and lightbox.
+     */
+    imageNodeBroken(): BuiltFixture {
+        return imageScene('/__pivotick_missing_image__.png', 'Missing screenshot')
     },
 
     /**
