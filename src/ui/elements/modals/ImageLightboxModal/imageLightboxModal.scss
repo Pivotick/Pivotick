@@ -1,0 +1,27 @@
+// Full-resolution picture "lightbox". The modal shrink-wraps the image (capped to the
+// viewport, aspect preserved) instead of sitting in a fixed-width box.
+#pvt-image-lightbox-modal.pvt-modal {
+    width: auto;
+    max-width: 95vw;
+
+    .pvt-modal__body {
+        display: flex;
+    }
+
+    .pvt-image-lightbox {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        max-width: 95vw;
+        max-height: 88vh;
+    }
+
+    .pvt-image-lightbox__img {
+        display: block;
+        width: auto;
+        height: auto;
+        max-width: 95vw;
+        max-height: 88vh;
+        object-fit: contain;
+    }
+}

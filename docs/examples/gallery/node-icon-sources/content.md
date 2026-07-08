@@ -16,7 +16,8 @@ positions pinned so it reads like a legend:
   glyph is an SVG data-URI applied as a `mask` over `background-color: currentColor`.
   No webfont — just drop the `misp-icon` classes into a custom HTML node.
 - **`svgIcon`** — a raw inline `<svg>`; `fill="currentColor"` picks up the node's `strokeColor`.
-- **`imagePath`** — any image URL, drawn straight into the node.
+- **`imagePath`** — any image URL, drawn straight into the node (small by default;
+  see *Image fit modes* to make it fill the shape).
 - **`iconUnicode`** — a literal character (here an emoji), handy for one-off glyphs.
 
 Mix and match freely: FontAwesome and misp-iconify nodes happily coexist in the

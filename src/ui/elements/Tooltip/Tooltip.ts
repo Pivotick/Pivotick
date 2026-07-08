@@ -10,7 +10,8 @@ import './tooltip.scss'
 import type { Tooltip as TooltipOptions, MainHeader, PropertiesPanel } from '../../../interfaces/GraphUI'
 import { deepMerge } from '../../../utils/utils'
 import { ShadowLinkManager } from '../ShadowLinkManager'
-import { createNodePreview } from '../../../utils/NodePreview'
+import { attachHtmlImageFallback, createNodePreview, getNodeImageHref } from '../../../utils/NodePreview'
+import { openImageLightbox } from '../modals/ImageLightboxModal/ImageLightboxModal'
 
 
 const defaultTooltipOptions = {
@@ -123,6 +124,7 @@ export class Tooltip implements UIElement {
             }
         })
         this.tooltip.addEventListener('mouseleave', () => this.hide())
+        this.tooltip.addEventListener('click', (event) => this.handleLightboxClick(event))
     }
 
     private updateMousePosition(event: MouseEvent) {
@@ -264,6 +266,13 @@ export class Tooltip implements UIElement {
         ]) as HTMLDivElement
 
         tooltipContainer.appendChild(mainheaderContent)
+        // Image nodes: show the actual picture large (before the properties), so a compact
+        // node on the canvas still reveals its full content on hover. Clicking it (here or in
+        // a pinned copy) opens the full-resolution lightbox — see the delegated handler below.
+        const imageHref = getNodeImageHref(node)
+        if (imageHref) {
+            tooltipContainer.appendChild(this.buildTooltipImage(imageHref, nodeNameGetter(node, this.headerOptions())))
+        }
         tooltipContainer.appendChild(propertiesContainer)
 
         const nodeRenderCb = this.uiManager.getOptions().tooltip.renderNodeExtra
@@ -277,6 +286,30 @@ export class Tooltip implements UIElement {
             }
         }
         return tooltipContainer
+    }
+
+    // The large in-tooltip picture for an image node. The `data-pvt-lightbox-src` marker lets
+    // the delegated click handler open the full-resolution lightbox — and survives the
+    // `cloneNode` a pinned tooltip goes through (a direct listener would not).
+    private buildTooltipImage(src: string, title: string): HTMLDivElement {
+        const image = createHtmlElement('img', {
+            class: 'pvt-tooltip-image',
+            src,
+            alt: title ?? '',
+            title: 'Click to view full size',
+            'data-pvt-lightbox-src': src,
+        }) as HTMLImageElement
+        attachHtmlImageFallback(image)
+        return createHtmlElement('div', { class: 'pvt-tooltip-image-container' }, [image]) as HTMLDivElement
+    }
+
+    // Open the lightbox when a picture carrying `data-pvt-lightbox-src` is clicked, in the live
+    // tooltip or a pinned copy (both route here — the copy is wired in `pinTooltip`).
+    private handleLightboxClick(event: MouseEvent): void {
+        const target = (event.target as HTMLElement | null)?.closest('[data-pvt-lightbox-src]') as HTMLElement | null
+        if (!target) return
+        const src = target.getAttribute('data-pvt-lightbox-src')
+        if (src) openImageLightbox(this.uiManager, src, target.getAttribute('alt') || undefined)
     }
 
     private createNodeTooltip(node: Node) {
@@ -461,6 +494,9 @@ export class Tooltip implements UIElement {
         this.tooltipDataMap.set(clonedTooltip, this.hoveredElement)
 
         clonedTooltip.classList.add('pvt-tooltip-floating')
+
+        // The clone lost the live tooltip's listeners; re-wire the picture → lightbox click.
+        clonedTooltip.addEventListener('click', (event) => this.handleLightboxClick(event))
 
         clonedTooltip.querySelector('.pin-button')?.remove()
         const closeButton = createButton({

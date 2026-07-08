@@ -94,7 +94,7 @@ export class GraphFilter implements UIElement {
             let valuesAreBoolean = false
             if (!filter.values) {
                 filterType = 'numberRange'
-            } else if (filter.values && filter.values.every((v) => v.length < 64)) {
+            } else if (filter.values && filter.values.every((v) => typeof v === 'string' && v.length < 64)) {
                 if (filter.values.length > 2) {
                     filterType = 'multiselect'
                     matchMode = 'partial'
@@ -283,8 +283,9 @@ export class GraphFilter implements UIElement {
 
         nodes.forEach(node => {
             Object.entries(node.getData()).forEach(([key, value]) => {
+                if (value === null || value === undefined) return // not a filterable facet value
                 let attributeFilter = attributeMap.get(key)
-                
+
                 if (!attributeFilter) {
                     attributeFilter = {
                         numbers: new Set(),

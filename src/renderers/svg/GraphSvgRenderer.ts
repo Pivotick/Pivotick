@@ -273,6 +273,9 @@ export class GraphSvgRenderer extends GraphRenderer {
 
     private lassoModeActive = false
 
+    /** Fires when the canvas becomes visible, to re-measure node sizes. */
+    private sizeObserver: IntersectionObserver | null = null
+
     constructor(graph: Graph, container: HTMLElement, graphInteraction: GraphInteractions<SVGGElement | SVGPathElement>, options: Partial<GraphRendererOptions>) {
         super(graph, container, options)
 
@@ -361,24 +364,43 @@ export class GraphSvgRenderer extends GraphRenderer {
 
         // Watches changes on the canvas (like sizing and visibility)
         // and recompute actual node size only when visibility changes
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    // Canvas is visible on screen
-                    this.nodeSelection.each((node: Node, i: number, nodes: ArrayLike<SVGGElement>) => {
-                        if (node.getCircleRadius() !== 25) return // 50 is the default assigned width/height that might be innacurate
-
-                        const bbox = (nodes[i].querySelector('.node') as SVGGraphicsElement).getBBox()
-                        node.setCircleRadius(0.5 * Math.max(bbox.width, bbox.height))
-                    })
-                }
-            })
+        this.sizeObserver = new IntersectionObserver((entries) => {
+            if (entries.some(entry => entry.isIntersecting)) {
+                this.remeasureVisibleNodes()
+            }
         }, { threshold: 0 })
-        observer.observe(this.svgCanvas)
+        this.sizeObserver.observe(this.svgCanvas)
+    }
+
+    /**
+     * Re-measure nodes still at the placeholder radius now the canvas is visible.
+     * A node rendered while the canvas was hidden has no layout box, so it keeps
+     * the default radius (25); once visible we can read its real bbox.
+     *
+     * No-op until the first render has assigned `nodeSelection` — the visibility
+     * observer can fire before any data has been rendered (data-less construction
+     * or a failed `init()`), where dereferencing `nodeSelection` would throw.
+     */
+    private remeasureVisibleNodes(): void {
+        if (!this.nodeSelection) return
+        this.nodeSelection.each((node: Node, i: number, nodes: ArrayLike<SVGGElement>) => {
+            if (node.getCircleRadius() !== 25) return // default width/height that might be innacurate
+
+            const shape = nodes[i].querySelector('.node') as SVGGraphicsElement | null
+            if (!shape) return
+            const bbox = shape.getBBox()
+            node.setCircleRadius(0.5 * Math.max(bbox.width, bbox.height))
+        })
     }
 
     public setupRendering(): void {
         this.createHtmlProgressBar()
+    }
+
+    /** Release renderer-owned resources so observers can't fire on a removed canvas. */
+    public override destroy(): void {
+        this.sizeObserver?.disconnect()
+        this.sizeObserver = null
     }
 
     public getZoomBehavior(): ZoomBehavior<SVGSVGElement, unknown> {

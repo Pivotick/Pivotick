@@ -5,9 +5,10 @@ import { Edge } from '../../Edge'
 import type { Graph } from '../../Graph'
 import { GraphSvgRenderer, defaultLabelStyle } from './GraphSvgRenderer'
 import { resolveIcon, tryResolveNumber, tryResolveString } from '../../utils/Getters'
-import type { CustomNodeShape, GraphRendererOptions, NodeShape, NodeStyle } from '../../interfaces/RendererOptions'
+import type { CustomNodeShape, GraphRendererOptions, ImageFit, NodeShape, NodeStyle } from '../../interfaces/RendererOptions'
 import { ClusterDrawer } from './ClusterDrawer'
 import { forceConstrainParent } from '../../plugins/layout/MicroForce'
+import { imageOff } from '../../ui/icons'
 d3Select.prototype.transition = d3Transition
 
 export class NodeDrawer {
@@ -180,6 +181,7 @@ export class NodeDrawer {
             iconClass: style?.iconClass ?? this.rendererOptions.defaultNodeStyle.iconClass,
             svgIcon: style?.svgIcon ?? this.rendererOptions.defaultNodeStyle.svgIcon,
             imagePath: style?.imagePath ?? this.rendererOptions.defaultNodeStyle.imagePath,
+            imageFit: style?.imageFit ?? this.rendererOptions.defaultNodeStyle.imageFit,
             text: style?.text ?? this.rendererOptions.defaultNodeStyle.text,
             html: style?.html ?? this.rendererOptions.defaultNodeStyle.html,
         }
@@ -217,6 +219,7 @@ export class NodeDrawer {
                 iconClass: style?.iconClass ?? styleFromStyleMap?.iconClass,
                 svgIcon: style?.svgIcon ?? styleFromStyleMap?.svgIcon,
                 imagePath: style?.imagePath ?? styleFromStyleMap?.imagePath,
+                imageFit: style?.imageFit ?? styleFromStyleMap?.imageFit,
                 text: style?.text ?? styleFromStyleMap?.text,
                 html: style?.html ?? styleFromStyleMap?.html,
             }
@@ -246,12 +249,41 @@ export class NodeDrawer {
         nodeStyle.iconClass = nodeStyle.iconClass !== undefined ? tryResolveString(nodeStyle.iconClass, node) : undefined
         nodeStyle.svgIcon = nodeStyle.svgIcon !== undefined ? tryResolveString(nodeStyle.svgIcon, node) : undefined
         nodeStyle.imagePath = nodeStyle.imagePath !== undefined ? tryResolveString(nodeStyle.imagePath, node) : undefined
+        nodeStyle.imageFit = nodeStyle.imageFit !== undefined ? (tryResolveString(nodeStyle.imageFit, node) as ImageFit) : undefined
 
         return nodeStyle
     }
 
     private isCustomShape(shape: NodeShape): shape is CustomNodeShape {
         return typeof shape === 'object' && shape !== null && 'd' in shape
+    }
+
+    // Draw the "image unavailable" glyph for a picture whose source failed to load, so the
+    // node shows its shape + a crossed-out-picture icon rather than the browser's broken-image
+    // placeholder. The broken `<image>` is hidden (not removed) so it still carries the src for
+    // getNodeImageHref — keeping the preview / tooltip / lightbox fallbacks consistent.
+    private renderImageFallback(
+        nodeSelection: Selection<SVGGElement, Node, null, undefined>,
+        imageSelection: Selection<SVGImageElement, Node, null, undefined>,
+        style: NodeStyle
+    ): void {
+        imageSelection.style('display', 'none')
+        const size = style.size as number
+        const svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+        svgEl.innerHTML = imageOff
+        if (svgEl.children[0]?.nodeName === 'svg') { // let the glyph fill the box we size below
+            svgEl.children[0].removeAttribute('width')
+            svgEl.children[0].removeAttribute('height')
+        }
+        const extent = size * 1.1
+        nodeSelection
+            .append(() => svgEl)
+            .attr('class', 'node-content pvt-node-image-fallback')
+            .attr('x', -extent / 2)
+            .attr('y', -extent / 2)
+            .attr('width', extent)
+            .attr('height', extent)
+            .attr('color', style.textColor)
     }
 
     private genericNodeRender(nodeSelection: Selection<SVGGElement, Node, null, undefined>, style: NodeStyle, node: Node): void {
@@ -262,6 +294,14 @@ export class NodeDrawer {
         style.textHorizontalShift = style.textHorizontalShift as number
         style.textVerticalShift = style.textVerticalShift as number
         style.textRotateDegree = style.textRotateDegree as number
+
+        // A 'frame' image node IS the picture: it renders as a rectangle sized to
+        // the image's aspect ratio (resized async in the imagePath branch), so it
+        // rides the square/rect path regardless of the requested shape.
+        const framed = !!style.imagePath && style.imageFit === 'frame'
+        if (framed) {
+            style.shape = 'square'
+        }
 
         // map logical node shapes to SVG element tag names (use string to allow 'rect' which is not part of NodeShape)
         let actualShape: string = style.shape as string
@@ -368,15 +408,53 @@ export class NodeDrawer {
                 .attr('height', style.size * 1.4)
                 .attr('color', style.strokeColor)
         } else if (style.imagePath) {
-            const scale = 1.2
-            nodeSelection
-                .append('image')
-                .attr('class', 'node-content')
-                .attr('xlink:href', style.imagePath)
-                .attr('x', -style.size * (scale/2))
-                .attr('y', -style.size * (scale/2))
-                .attr('width', style.size * scale)
-                .attr('height', style.size * scale)
+            // How the picture sits on the node:
+            //   'icon'    – small picture centred on the shape (default; legacy look)
+            //   'cover'   – picture fills the shape, cropped to preserve aspect ratio
+            //   'contain' – whole picture fits inside the shape (letterboxed)
+            //   'frame'   – node becomes a rectangle the size of the picture, so the
+            //               stroke hugs it: whole picture, no crop, no letterbox bars
+            const fit = style.imageFit ?? 'icon'
+            if (fit === 'frame') {
+                const box = style.size * 2
+                const image = nodeSelection
+                    .append('image')
+                    .attr('class', 'node-content')
+                    .attr('xlink:href', style.imagePath)
+                    .attr('preserveAspectRatio', 'xMidYMid meet')
+                    .attr('x', -style.size)
+                    .attr('y', -style.size)
+                    .attr('width', box)
+                    .attr('height', box)
+                image.on('error', () => this.renderImageFallback(nodeSelection, image, style))
+                // The image's aspect ratio is only known once it loads. Fit the box's
+                // longest side to `2 × size` and shrink the frame + image to match, so
+                // the whole picture shows with the stroke wrapping it tightly.
+                const probe = new Image()
+                probe.onload = () => {
+                    if (!probe.naturalWidth || !probe.naturalHeight) return
+                    const aspect = probe.naturalWidth / probe.naturalHeight
+                    const w = aspect >= 1 ? box : box * aspect
+                    const h = aspect >= 1 ? box / aspect : box
+                    image.attr('x', -w / 2).attr('y', -h / 2).attr('width', w).attr('height', h)
+                    renderedNode.attr('x', -w / 2).attr('y', -h / 2).attr('width', w).attr('height', h)
+                    node.setCircleRadius(0.5 * Math.max(w, h))
+                }
+                probe.src = style.imagePath
+            } else {
+                const extent = fit === 'icon' ? style.size * 1.2 : style.size * 2
+                const par = fit === 'cover' ? 'xMidYMid slice' : 'xMidYMid meet'
+                const image = nodeSelection
+                    .append('image')
+                    .attr('class', 'node-content')
+                    .attr('xlink:href', style.imagePath)
+                    .attr('x', -extent / 2)
+                    .attr('y', -extent / 2)
+                    .attr('width', extent)
+                    .attr('height', extent)
+                    .attr('preserveAspectRatio', par)
+                image.on('error', () => this.renderImageFallback(nodeSelection, image, style))
+            }
         } else if (style.html) {
             const fo = nodeSelection.append('foreignObject')
                 .attr('class', 'node-content')

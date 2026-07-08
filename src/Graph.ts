@@ -1054,6 +1054,7 @@ export class Graph {
      */
     destroy(): void {
         this.UIManager.destroy()
+        this.renderer.destroy()
     }
 
     /**

@@ -135,6 +135,34 @@ function checkBadgeDataUri(): string {
     return `data:image/svg+xml;base64,${btoa(svg)}`
 }
 
+/**
+ * A self-contained 2:1 **landscape** data-URI image for the picture-node preview test.
+ * The landscape aspect is the point: on the canvas a `cover` node crops it to a square,
+ * while the hover preview / lightbox must show the whole picture (aspect preserved).
+ */
+function landscapeImageDataUri(): string {
+    const svg =
+        '<svg xmlns="http://www.w3.org/2000/svg" width="320" height="160">' +
+        '<rect width="320" height="160" fill="#1e3a8a"/>' +
+        '<rect width="160" height="160" fill="#f97316"/>' +
+        '<circle cx="240" cy="80" r="45" fill="#fde047"/></svg>'
+    return `data:image/svg+xml;base64,${btoa(svg)}`
+}
+
+/** A `cover` picture node (`shot`) flanked by two plain nodes, used by the image-preview tests. */
+function imageScene(imagePath: string, name: string): BuiltFixture {
+    const shot = mkStyledNode(
+        'shot',
+        0,
+        0,
+        { shape: 'square', size: 36, imagePath, imageFit: 'cover', strokeColor: '#94a3b8', strokeWidth: 2 },
+        { name }
+    )
+    const left = mkNode('left', -220, 0)
+    const right = mkNode('right', 220, 0)
+    return { nodes: [shot, left, right], edges: [new Edge('left-shot', left, shot), new Edge('shot-right', shot, right)], notes: [] }
+}
+
 /** Pentagon of 5 nodes around a central hub — centred on the origin. */
 const BASIC_POSITIONS: Record<string, [number, number]> = {
     a: [0, -130],
@@ -256,6 +284,24 @@ export const fixtures = {
             mkStyledNode('image', 230, 0, { ...base, imagePath: checkBadgeDataUri() }),
         ]
         return { nodes, edges: [], notes: [] }
+    },
+
+    /**
+     * A picture node (`shot`) flanked by two plain nodes. `imageFit: 'cover'` keeps the
+     * node compact on the canvas (the 2:1 landscape is cropped to the square); the siblings
+     * keep the fit zoom sane so the node stays small on screen. Drives the hover preview,
+     * the large in-tooltip picture and the full-resolution lightbox.
+     */
+    imageNode(): BuiltFixture {
+        return imageScene(landscapeImageDataUri(), 'Screenshot capture')
+    },
+
+    /**
+     * Same scene, but the picture's source is a URL that 404s — drives the graceful
+     * "image unavailable" fallback in the preview, tooltip and lightbox.
+     */
+    imageNodeBroken(): BuiltFixture {
+        return imageScene('/__pivotick_missing_image__.png', 'Missing screenshot')
     },
 
     /**
@@ -512,6 +558,25 @@ export const fixtures = {
             new Edge('sw2-h3', n.sw2, n.h3),
         ]
         return { nodes: Object.values(n), edges, notes: [] }
+    },
+
+    /**
+     * Regression fixture for prd/bug-graphfilter-null-value-crash.md: node-data
+     * fields whose value is `null`/`undefined`. MISP (and most real datasets)
+     * serialise an absent optional attribute as `null`; a single such value used
+     * to crash the Graph-Filter facet builder (`v.length` on `null`) during
+     * construction — the form is (re)built on every `dataBatchChanged`, which
+     * fires synchronously inside `new Graph()`. Here `object_relation` carries a
+     * real value on one node, `null` on another, and an explicit `undefined` on a
+     * third, so the built facet must list only the real value.
+     */
+    nullableFields(): BuiltFixture {
+        const nodes = [
+            mkNode('a', -90, 0, { type: 'attribute', object_relation: null }),
+            mkNode('b', 90, 0, { type: 'attribute', object_relation: 'rel' }),
+            mkNode('c', 0, 120, { type: 'attribute', object_relation: undefined }),
+        ]
+        return { nodes, edges: [], notes: [] }
     },
 
     /** A horizontal label (with background box) and a label rotated to follow its edge. */

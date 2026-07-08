@@ -61,6 +61,12 @@ export abstract class GraphRenderer {
         this.fitAndCenter(forceScale)
     }
 
+    /**
+     * Release renderer-owned resources (observers, listeners) on teardown.
+     * No-op by default; renderers that hold such resources override this.
+     */
+    public destroy(): void {}
+
     public getCanvas(): HTMLElement {
         return this.container.querySelector('.pvt-canvas') as HTMLElement
     }
