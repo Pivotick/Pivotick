@@ -8,8 +8,9 @@ order: 7
 
 An `imagePath` node draws a picture, but how the picture sits on the shape is up
 to you — set `imageFit` (a value, or a `(node) => …` so different nodes can differ).
-Here one landscape screenshot is rendered four ways — three on identical squares,
-plus a `'frame'` node below that takes the picture's own shape:
+Here one landscape screenshot is rendered three ways on identical squares, a fourth
+square whose source is missing (to show the fallback), and a `'frame'` node below
+that takes the picture's own shape:
 
 - **`'icon'`** *(default)* — a small picture (~1.2× `size`) centred on the shape,
   aspect preserved. This is the legacy look; the coloured shape shows around it, so
@@ -23,6 +24,11 @@ plus a `'frame'` node below that takes the picture's own shape:
   ratio (longest side = 2× `size`), so the whole screenshot shows at full resolution
   with the stroke hugging it — no crop, no letterbox bars. `shape` is ignored (the
   picture is the node). Ideal for screenshot/attachment previews.
+
+When a picture's source can't be loaded, the node degrades to a crossed-out-picture
+placeholder instead of the browser's broken-image glyph — see the fourth square, whose
+`imagePath` points nowhere. The same graceful fallback appears everywhere the picture
+would otherwise show: the hover preview, the tooltip, and the full-resolution lightbox.
 
 Because it resolves per node, one graph can mix modes — screenshots `'frame'` or
 `'cover'`, other attachments `'icon'` — straight off the node's data. Growing `size`
