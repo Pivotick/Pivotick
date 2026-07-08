@@ -6,6 +6,16 @@ export interface EdgeData {
     [key: string]: unknown;
 }
 
+/** Serialization-safe projection of an Edge for the simulation worker — endpoints reduced to ids, so no live Node/DOM refs leak into postMessage. */
+export interface SimulationEdgeDTO {
+    id: string
+    from: { id: string }
+    to: { id: string }
+    data?: EdgeData
+    style?: Partial<EdgeFullStyle>
+    directed: boolean | null
+}
+
 /**
  * Represents an edge (connection) between two nodes in a graph.
  */
@@ -20,8 +30,17 @@ export class Edge {
     visible: boolean
     /** True if this is a synthetic edge (placeholder for collapsed cluster child) */
     isSynthetic?: boolean
+    /**
+     * True for the subclass of synthetic edges that stand in for a real edge whose
+     * *both* endpoints are children of different clusters. Unlike the external→cluster
+     * synthetic edges, these are resolved as a set (one per collapse state) by
+     * {@link ClusterDrawer.resolveCrossClusterEdges} rather than the per-node toggle.
+     */
+    isCrossCluster?: boolean
     /** The actual child node this synthetic edge points to (for expansion logic) */
     syntheticTerminalNode?: Node
+    /** For a cross-cluster synthetic edge: the real child the `from` side stands in for. */
+    syntheticSourceNode?: Node
     private _original_object?: Edge
     private _subgraphFromNode?: Node
     private _subgraphToNode?: Node
@@ -123,9 +142,13 @@ export class Edge {
      * @param partialStyle - Partial style object to merge
      */
     updateStyle(partialStyle: PartialEdgeFullStyle): void {
+        const cur = this.style as Partial<EdgeFullStyle>
+        const inc = partialStyle as Partial<EdgeFullStyle>
         this.style = ({
-            ...(this.style as Partial<EdgeFullStyle>),
-            ...(partialStyle as Partial<EdgeFullStyle>)
+            ...cur,
+            ...inc,
+            edge: { ...cur.edge, ...inc.edge },
+            label: { ...cur.label, ...inc.label }
         }) as Partial<EdgeFullStyle>
         this.markDirty()
     }
@@ -153,7 +176,19 @@ export class Edge {
             to: this.to.id,
             data: this.data,
             style: this.style,
-        } as Record<string, unknown> 
+        } as Record<string, unknown>
+    }
+
+    /** Structured-cloneable payload for the simulation worker; endpoints reduced to ids, keeps `directed`. */
+    toSimulationDTO(): SimulationEdgeDTO {
+        return {
+            id: this.id,
+            from: { id: this.from.id },
+            to: { id: this.to.id },
+            data: this.data,
+            style: this.style,
+            directed: this.directed,
+        }
     }
 
     clone(): Edge {

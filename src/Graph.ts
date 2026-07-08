@@ -155,7 +155,7 @@ export class Graph {
         await this.simulation.start()
         await this.simulation.waitForSimulationStop()
         this.renderer.nextTick()
-        this.renderer.fitAndCenter()
+        this.renderer.fitAndCenterWhenSettled()
         this.UIManager.callGraphReady()
         this.ready()
     }
@@ -170,6 +170,17 @@ export class Graph {
      * node inside a collapsed cluster. Instead of pointing to the invisible child,
      * a synthetic edge is created pointing to the parent cluster node. When the
      * cluster is expanded, synthetic edges are hidden and actual edges are shown.
+     *
+     * Two shapes are synthesised:
+     * - **external → collapsed child:** a synthetic edge to each ancestor cluster
+     *   of the child (so it re-anchors as clusters expand).
+     * - **collapsed child → collapsed child in a *different* cluster:** a single
+     *   synthetic edge between the two outermost clusters, so a "collapse every
+     *   group into a box" view still shows (and force-links) the box→box
+     *   dependency instead of the edge vanishing. It is only shown while both
+     *   clusters are collapsed; expanding either hides it (see
+     *   {@link ClusterDrawer.toggleSyntheticEdges}). The re-anchored per-child edge
+     *   for the partially-expanded case is not synthesised.
      *
      * @param data - The raw graph data to normalize
      * @returns Normalized graph data with synthetic edges added
@@ -195,8 +206,18 @@ export class Graph {
         const normalizedEdges: Edge[] = data.edges.map((e) => Graph.normalizeEdge(e, nodesByID))
             .filter((e): e is Edge => e !== null)
 
+        // Ancestor chain of a node from its immediate parent up to the outermost cluster.
+        const ancestorChain = (node: Node): Node[] => {
+            const chain: Node[] = []
+            let cur = node.parentNode
+            while (cur) { chain.push(cur); cur = cur.parentNode }
+            return chain
+        }
+
         // Generate synthetic edges for edges pointing to child in collapsed nodes
         const newEdges: Edge[] = []
+        // Dedup cross-cluster stand-ins by their (representative-from, representative-to) pair.
+        const crossClusterEdgeIds = new Set<string>()
         for (const edge of normalizedEdges) {
             if (!edge.from.isChild && edge.to.isChild && edge.to.parentNode) {
 
@@ -225,10 +246,42 @@ export class Graph {
                     if (!currentParent.parentNode) break
                     currentParent = currentParent.parentNode
                 }
+            } else if (edge.from.isChild && edge.to.isChild) {
+                // Both endpoints live inside clusters. If those clusters differ, the real
+                // edge is only drawable when *both* are expanded; for every other collapse
+                // state we synthesise a stand-in between the pair of nodes actually shown
+                // (each endpoint's deepest visible ancestor). We pre-create the whole
+                // cross-product of ancestors — one per collapse state — and let
+                // ClusterDrawer.resolveCrossClusterEdges pick the visible one on toggle.
+                const fromChain = [edge.from, ...ancestorChain(edge.from)]
+                const toChain = [edge.to, ...ancestorChain(edge.to)]
+                const fromTop = fromChain[fromChain.length - 1]
+                const toTop = toChain[toChain.length - 1]
+                if (fromTop.id === toTop.id) continue // same outermost cluster — intra-cluster
+                // The real edge joins the family: it's the stand-in shown once both expand.
+                // Tagging it hands its visibility to resolveCrossClusterEdges too (the same
+                // `rep` test naturally yields "shown only when both fully expanded").
+                edge.isCrossCluster = true
+                edge.syntheticSourceNode = edge.from
+                edge.syntheticTerminalNode = edge.to
+                for (const f of fromChain) {
+                    for (const t of toChain) {
+                        if (f === edge.from && t === edge.to) continue // that's the real edge, tagged above
+                        const syntheticId = `synthetic-${f.id}-${t.id}`
+                        if (crossClusterEdgeIds.has(syntheticId)) continue
+                        crossClusterEdgeIds.add(syntheticId)
+                        const newEdge = new Edge(syntheticId, f, t, {}, {}, edge.directed, edge.to)
+                        newEdge.isCrossCluster = true
+                        newEdge.syntheticSourceNode = edge.from
+                        newEdges.push(newEdge)
+                    }
+                }
             }
         }
 
         normalizedEdges.push(...newEdges)
+        // Pick which stand-in (or the real edge) is shown for the current collapse state.
+        Graph.resolveCrossClusterEdges(normalizedEdges)
 
         const normalisedNotes: Note[] = (data.notes ?? []).map((n) => Graph.normalizeNote(n))
             .filter((n): n is Note => n !== null)
@@ -237,6 +290,41 @@ export class Graph {
             nodes: normalizedNodes,
             edges: normalizedEdges,
             notes: normalisedNotes,
+        }
+    }
+
+    /**
+     * Shows exactly the cross-cluster stand-in edge that matches the current collapse
+     * state, and hides the rest. For a real child→child edge across two clusters we
+     * pre-create one synthetic edge per (from-representative, to-representative) pair
+     * (see {@link normalizeGraphData}); this picks the one whose endpoints are the
+     * nodes actually rendered right now — each endpoint's *deepest visible ancestor*
+     * (itself if every ancestor is expanded, otherwise the outermost collapsed box).
+     * When both clusters are fully expanded no stand-in matches and the real edge is
+     * drawn by the subgraphs instead. Called on load and on every expand/collapse.
+     * @private
+     */
+    public static resolveCrossClusterEdges(edges: Edge[]): void {
+        // The node currently shown for `node`: walk ancestors from the top down and
+        // return the first collapsed one (it hides everything below it), else `node`.
+        const representative = (node: Node): Node => {
+            const chain: Node[] = []
+            let cur = node.parentNode
+            while (cur) { chain.push(cur); cur = cur.parentNode }
+            for (let i = chain.length - 1; i >= 0; i--) {
+                if (!chain[i].expanded) return chain[i]
+            }
+            return node
+        }
+        for (const edge of edges) {
+            if (!edge.isCrossCluster || !edge.syntheticSourceNode || !edge.syntheticTerminalNode) continue
+            const shouldShow =
+                edge.from === representative(edge.syntheticSourceNode) &&
+                edge.to === representative(edge.syntheticTerminalNode)
+            if (edge.visible !== shouldShow) {
+                if (shouldShow) edge.show()
+                else edge.hide()
+            }
         }
     }
 
@@ -253,6 +341,13 @@ export class Graph {
             })
         }
         const normNode = n instanceof Node ? n : new Node(n.id.toString(), n.data, n.style, n.domID, children)
+        // Honour caller-supplied initial positions so a layout can be seeded
+        if (!(n instanceof Node)) {
+            if (typeof n.x === 'number') normNode.x = n.x
+            if (typeof n.y === 'number') normNode.y = n.y
+            if (typeof n.fx === 'number') normNode.fx = n.fx
+            if (typeof n.fy === 'number') normNode.fy = n.fy
+        }
         normNode.children.forEach((child: Node) => {
             child.markAsChild(normNode, depth+1)
             child.hide()
@@ -889,6 +984,9 @@ export class Graph {
         })
 
         this.edges.forEach(edge => {
+            // Cross-cluster stand-ins are owned by resolveCrossClusterEdges (expansion
+            // state), not by node visibility — leave their visibility as it set it.
+            if (edge.isCrossCluster) return
             const bothEndVisible = (edge.getSubgraphFromNode()?.visible ?? edge.from.visible) &&
                 (edge.getSubgraphToNode()?.visible ?? edge.to.visible)
             const isValidSynthetic = !edge.isSynthetic || !edge.to.expanded
@@ -956,6 +1054,7 @@ export class Graph {
      */
     destroy(): void {
         this.UIManager.destroy()
+        this.renderer.destroy()
     }
 
     /**

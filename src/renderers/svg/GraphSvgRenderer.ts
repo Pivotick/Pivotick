@@ -273,6 +273,9 @@ export class GraphSvgRenderer extends GraphRenderer {
 
     private lassoModeActive = false
 
+    /** Fires when the canvas becomes visible, to re-measure node sizes. */
+    private sizeObserver: IntersectionObserver | null = null
+
     constructor(graph: Graph, container: HTMLElement, graphInteraction: GraphInteractions<SVGGElement | SVGPathElement>, options: Partial<GraphRendererOptions>) {
         super(graph, container, options)
 
@@ -361,24 +364,43 @@ export class GraphSvgRenderer extends GraphRenderer {
 
         // Watches changes on the canvas (like sizing and visibility)
         // and recompute actual node size only when visibility changes
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    // Canvas is visible on screen
-                    this.nodeSelection.each((node: Node, i: number, nodes: ArrayLike<SVGGElement>) => {
-                        if (node.getCircleRadius() !== 25) return // 50 is the default assigned width/height that might be innacurate
-
-                        const bbox = (nodes[i].querySelector('.node') as SVGGraphicsElement).getBBox()
-                        node.setCircleRadius(0.5 * Math.max(bbox.width, bbox.height))
-                    })
-                }
-            })
+        this.sizeObserver = new IntersectionObserver((entries) => {
+            if (entries.some(entry => entry.isIntersecting)) {
+                this.remeasureVisibleNodes()
+            }
         }, { threshold: 0 })
-        observer.observe(this.svgCanvas)
+        this.sizeObserver.observe(this.svgCanvas)
+    }
+
+    /**
+     * Re-measure nodes still at the placeholder radius now the canvas is visible.
+     * A node rendered while the canvas was hidden has no layout box, so it keeps
+     * the default radius (25); once visible we can read its real bbox.
+     *
+     * No-op until the first render has assigned `nodeSelection` — the visibility
+     * observer can fire before any data has been rendered (data-less construction
+     * or a failed `init()`), where dereferencing `nodeSelection` would throw.
+     */
+    private remeasureVisibleNodes(): void {
+        if (!this.nodeSelection) return
+        this.nodeSelection.each((node: Node, i: number, nodes: ArrayLike<SVGGElement>) => {
+            if (node.getCircleRadius() !== 25) return // default width/height that might be innacurate
+
+            const shape = nodes[i].querySelector('.node') as SVGGraphicsElement | null
+            if (!shape) return
+            const bbox = shape.getBBox()
+            node.setCircleRadius(0.5 * Math.max(bbox.width, bbox.height))
+        })
     }
 
     public setupRendering(): void {
         this.createHtmlProgressBar()
+    }
+
+    /** Release renderer-owned resources so observers can't fire on a removed canvas. */
+    public override destroy(): void {
+        this.sizeObserver?.disconnect()
+        this.sizeObserver = null
     }
 
     public getZoomBehavior(): ZoomBehavior<SVGSVGElement, unknown> {
@@ -482,6 +504,7 @@ export class GraphSvgRenderer extends GraphRenderer {
                                 if (!node.expanded) { // teardown any created clusters.
                                     ClusterDrawer.collapseAllOpenedClusters(node)
                                     ClusterDrawer.toggleSyntheticEdges(node)
+                                    ClusterDrawer.resolveCrossClusterEdges(this.nodeDrawer.graph)
                                     const parentGraph = this.nodeDrawer.graph.getParentGraph()
                                     let currParentGraph = parentGraph
                                     while (currParentGraph) {
@@ -667,6 +690,51 @@ export class GraphSvgRenderer extends GraphRenderer {
         } else {
             canvas.call(zoomBehavior.transform, transform)
         }
+    }
+
+    /**
+     * Fit-and-centre once the zoom layer has stopped resizing.
+     *
+     * Some content lays out over several animation frames + d3 transitions
+     * *after* the main sim stops (i.e. after `waitForSimulationStop()`
+     * resolves) — e.g. an expanded cluster drawing its bubble/badges and its
+     * nested subgraph. Fitting right then measures a transient bbox and locks in
+     * a wrong, off-centre transform that is never corrected. So poll `getBBox()`
+     * until it holds steady for a few frames (hard-capped so it can never hang),
+     * then fit. This is cause-agnostic: a static layout is already steady and
+     * resolves in a few frames; anything still moving is waited out.
+     */
+    public fitAndCenterWhenSettled(forceScale?: number): void {
+        const zoomLayerEl = this.zoomGroup.node()
+        if (!zoomLayerEl) {
+            this.fitAndCenter(forceScale)
+            return
+        }
+
+        const maxFrames = 180    // ~3s @60fps: a hard cap, not the usual path
+        const stableTarget = 3   // consecutive steady frames before we commit
+        const epsilon = 0.5      // px: ignore sub-pixel jitter from late layout
+        let prev: DOMRect | null = null
+        let stableFrames = 0
+        let frame = 0
+
+        const step = (): void => {
+            const b = zoomLayerEl.getBBox()
+            const steady = prev !== null
+                && Math.abs(b.width - prev.width) < epsilon
+                && Math.abs(b.height - prev.height) < epsilon
+                && Math.abs(b.x - prev.x) < epsilon
+                && Math.abs(b.y - prev.y) < epsilon
+            stableFrames = steady ? stableFrames + 1 : 0
+            prev = b
+            frame++
+            if (stableFrames >= stableTarget || frame >= maxFrames) {
+                this.fitAndCenter(forceScale)
+                return
+            }
+            requestAnimationFrame(step)
+        }
+        requestAnimationFrame(step)
     }
 
     public focusElement(element: Node | Edge | Note): void {

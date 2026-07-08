@@ -139,6 +139,37 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), inset 0 0 0 1px hsla(0, 0%, 0%, .05);
 }
 
+// Muted colour for the small preview's crossed-out-picture fallback (currentColor glyph).
+.pvt-node-preview-image-fallback {
+    color: var(--pvt-text-color-4);
+}
+
+// "Image unavailable" placeholder shown when a picture's source fails to load
+// (tooltip preview + lightbox). Sizes to its container; degrades gracefully.
+.pvt-image-unavailable {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 24px;
+    min-width: 160px;
+    min-height: 90px;
+    color: var(--pvt-text-color-4);
+    background: var(--pvt-mainheader-nodepreview-bg);
+
+    .pvt-image-unavailable__icon svg {
+        width: 40px;
+        height: 40px;
+        opacity: 0.75;
+    }
+
+    .pvt-image-unavailable__label {
+        font-size: 12px;
+        color: var(--pvt-text-color-5);
+    }
+}
+
 dl.pvt-property-list {
     margin: 0;
     font-size: 0.95em;

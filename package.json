@@ -1,7 +1,7 @@
 {
   "name": "pivotick",
   "private": true,
-  "version": "1.1.0",
+  "version": "1.2.0",
   "type": "module",
   "files": [
     "dist"
@@ -24,6 +24,7 @@
     "preview": "vite preview",
     "lint": "eslint 'src/**/*.{ts,tsx}'",
     "lint_fix": "eslint --fix 'src/**/*.{ts,tsx}'",
+    "gallery:thumbs": "node scripts/capture-thumbnails.mjs",
     "vitepress:dev": "vitepress dev docs",
     "vitepress:build": "vitepress build docs",
     "vitepress:preview": "vitepress preview docs",
@@ -65,7 +66,6 @@
     "d3-zoom": "^3.0.0",
     "dompurify": "^3.4.7",
     "lodash.merge": "^4.6.2",
-    "marked": "^18.0.4",
-    "tom-select": "^2.4.3"
+    "marked": "^18.0.4"
   }
 }

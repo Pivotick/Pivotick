@@ -59,6 +59,24 @@ function mergeOptions(base: PlainObject, override: PlainObject): PlainObject {
 export interface HarnessApi {
     /** Build a graph from a named fixture; resolves once it has finished rendering. */
     load(name: FixtureName, overrides?: PlainObject): Promise<void>
+    /**
+     * Build a graph of custom `renderNode` HTML cards (fixed-size boxes) packed
+     * tightly around the origin with no edges — for exercising library-fixes #8
+     * (a custom node's measured size must feed its collision radius). A
+     * `renderNode` is a function, so it can't be passed through `load`'s
+     * serialisable overrides; this bakes it in on the page side.
+     */
+    loadCustomNodes(overrides?: PlainObject): Promise<void>
+    /**
+     * Construct a graph with NO data so `init()` is skipped and the renderer's
+     * `nodeSelection` is never assigned — the precondition for the canvas
+     * visibility-observer null-deref (see
+     * prd/bug-intersection-observer-nodeselection-undefined.md). Invokes the
+     * exact re-measure callback the `IntersectionObserver` fires and reports
+     * whether `nodeSelection` was unset and whether the callback threw. Pre-fix
+     * it throws `Cannot read properties of undefined (reading 'each')`.
+     */
+    probeUnrenderedVisibility(): { nodeSelectionUnset: boolean; remeasureThrew: boolean }
     /** Select a node by id (renders the selection visuals). */
     selectNode(id: string): void
     /** Select an edge by id. */
@@ -232,6 +250,59 @@ class Harness implements HarnessApi {
         await this.whenReady(graph)
         // Wait for web fonts so text metrics (and thus layout/labels) are stable.
         if (document.fonts?.ready) await document.fonts.ready
+    }
+
+    async loadCustomNodes(overrides: PlainObject = {}): Promise<void> {
+        this.destroy()
+        // Fixed-size card so the measured size (and thus the radius) is
+        // deterministic and font-independent: box-sizing:border-box pins the
+        // outer box to exactly CARD_W×CARD_H, inline-flex shrink-wraps to it.
+        const CARD_W = 140
+        const CARD_H = 44
+        const renderNode = (node: Node): HTMLElement => {
+            const el = document.createElement('div')
+            el.style.cssText = `display:inline-flex;box-sizing:border-box;width:${CARD_W}px;height:${CARD_H}px;border:1px solid #334155;background:#fff`
+            el.textContent = String(node.getData().label ?? node.id)
+            return el
+        }
+        // Five cards seeded tightly around the origin (all inside one card's
+        // radius) with no edges, so only collision — driven by the measured card
+        // size — can spread them apart.
+        const seeds: Array<[number, number]> = [[0, 0], [10, 6], [-8, 9], [6, -10], [-12, -4]]
+        const nodes = seeds.map(([x, y], i) => {
+            const n = new Node(`card-${i}`, { label: `Card ${i}` }, {}, `card-${i}`)
+            n.x = x
+            n.y = y
+            return n
+        })
+        const options = mergeOptions(BASE_OPTIONS, mergeOptions(overrides, { render: { renderNode } }))
+        const graph = new Pivotick(this.container, { nodes, edges: [] } as never, options as never)
+        this.graph = graph
+        await this.whenReady(graph)
+        if (document.fonts?.ready) await document.fonts.ready
+    }
+
+    probeUnrenderedVisibility(): { nodeSelectionUnset: boolean; remeasureThrew: boolean } {
+        this.destroy()
+        // No data → the Graph constructor skips renderer.init(), so nodeSelection
+        // is never assigned; the visibility observer is nonetheless already live.
+        const graph = new Pivotick(this.container, undefined as never, mergeOptions(BASE_OPTIONS, {}) as never)
+        this.graph = graph
+        // Reach the renderer internals the observer callback touches. These are
+        // `private`, but that's compile-time only — at runtime this is exactly the
+        // code the IntersectionObserver would run when the canvas becomes visible.
+        const renderer = graph.renderer as unknown as {
+            nodeSelection: unknown
+            remeasureVisibleNodes: () => void
+        }
+        const nodeSelectionUnset = renderer.nodeSelection === undefined
+        let remeasureThrew = false
+        try {
+            renderer.remeasureVisibleNodes()
+        } catch {
+            remeasureThrew = true
+        }
+        return { nodeSelectionUnset, remeasureThrew }
     }
 
     selectNode(id: string): void {
@@ -509,11 +580,7 @@ class Harness implements HarnessApi {
     }
 
     excludeNode(id: string): void {
-        // Pass the live Node, not the id: `excludeNode(string)` resolves it via
-        // `getNode`, which returns a method-less `structuredClone`, so the later
-        // `node.hide()` throws. A Node instance is used directly.
-        const node = this.g.getMutableNode(id)
-        if (node) this.g.queryEngine.excludeNode(node)
+        this.g.queryEngine.excludeNode(id)
     }
 
     hideNode(id: string): void {

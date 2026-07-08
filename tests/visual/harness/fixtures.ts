@@ -135,6 +135,34 @@ function checkBadgeDataUri(): string {
     return `data:image/svg+xml;base64,${btoa(svg)}`
 }
 
+/**
+ * A self-contained 2:1 **landscape** data-URI image for the picture-node preview test.
+ * The landscape aspect is the point: on the canvas a `cover` node crops it to a square,
+ * while the hover preview / lightbox must show the whole picture (aspect preserved).
+ */
+function landscapeImageDataUri(): string {
+    const svg =
+        '<svg xmlns="http://www.w3.org/2000/svg" width="320" height="160">' +
+        '<rect width="320" height="160" fill="#1e3a8a"/>' +
+        '<rect width="160" height="160" fill="#f97316"/>' +
+        '<circle cx="240" cy="80" r="45" fill="#fde047"/></svg>'
+    return `data:image/svg+xml;base64,${btoa(svg)}`
+}
+
+/** A `cover` picture node (`shot`) flanked by two plain nodes, used by the image-preview tests. */
+function imageScene(imagePath: string, name: string): BuiltFixture {
+    const shot = mkStyledNode(
+        'shot',
+        0,
+        0,
+        { shape: 'square', size: 36, imagePath, imageFit: 'cover', strokeColor: '#94a3b8', strokeWidth: 2 },
+        { name }
+    )
+    const left = mkNode('left', -220, 0)
+    const right = mkNode('right', 220, 0)
+    return { nodes: [shot, left, right], edges: [new Edge('left-shot', left, shot), new Edge('shot-right', shot, right)], notes: [] }
+}
+
 /** Pentagon of 5 nodes around a central hub — centred on the origin. */
 const BASIC_POSITIONS: Record<string, [number, number]> = {
     a: [0, -130],
@@ -256,6 +284,24 @@ export const fixtures = {
             mkStyledNode('image', 230, 0, { ...base, imagePath: checkBadgeDataUri() }),
         ]
         return { nodes, edges: [], notes: [] }
+    },
+
+    /**
+     * A picture node (`shot`) flanked by two plain nodes. `imageFit: 'cover'` keeps the
+     * node compact on the canvas (the 2:1 landscape is cropped to the square); the siblings
+     * keep the fit zoom sane so the node stays small on screen. Drives the hover preview,
+     * the large in-tooltip picture and the full-resolution lightbox.
+     */
+    imageNode(): BuiltFixture {
+        return imageScene(landscapeImageDataUri(), 'Screenshot capture')
+    },
+
+    /**
+     * Same scene, but the picture's source is a URL that 404s — drives the graceful
+     * "image unavailable" fallback in the preview, tooltip and lightbox.
+     */
+    imageNodeBroken(): BuiltFixture {
+        return imageScene('/__pivotick_missing_image__.png', 'Missing screenshot')
     },
 
     /**
@@ -430,6 +476,38 @@ export const fixtures = {
         return { nodes: [group, ext1, ext2], edges: intoCluster, notes: [] }
     },
 
+    /**
+     * Two clusters (`group-a`, `group-b`) plus a `core` node that links to a child
+     * of each. Used by the cluster-drag settle test — expanding `group-a` and
+     * holding a drag must keep `core` anchored to the cluster.
+     */
+    linkedClusters(): BuiltFixture {
+        const a1 = mkNode('a1', -60, -40)
+        const a2 = mkNode('a2', -20, -40)
+        const a3 = mkNode('a3', -40, -80)
+        const groupA = mkCluster('group-a', -120, 0, [a1, a2, a3])
+        markCluster(groupA)
+        const b1 = mkNode('b1', 60, -40)
+        const b2 = mkNode('b2', 100, -40)
+        const b3 = mkNode('b3', 80, -80)
+        const groupB = mkCluster('group-b', 120, 0, [b1, b2, b3])
+        markCluster(groupB)
+        const core = mkNode('core', 0, 120)
+        const edges = [
+            new Edge('core-a1', core, a1),
+            new Edge('a1-a2', a1, a2),
+            new Edge('a2-a3', a2, a3),
+            new Edge('core-b1', core, b1),
+            new Edge('b1-b2', b1, b2),
+            new Edge('b2-b3', b2, b3),
+            new Edge('a3-b1', a3, b1),
+        ]
+        // Mirror the normaliser: any edge touching a hidden child starts hidden (the
+        // synthetic external→cluster / cross-cluster edges are what show while collapsed).
+        edges.forEach((e) => { if (e.from.isChild || e.to.isChild) e.hide() })
+        return { nodes: [core, groupA, groupB], edges, notes: [] }
+    },
+
     // ── Area 5 (filtering) fixture ──────────────────────────────────────────────
 
     /**
@@ -480,6 +558,25 @@ export const fixtures = {
             new Edge('sw2-h3', n.sw2, n.h3),
         ]
         return { nodes: Object.values(n), edges, notes: [] }
+    },
+
+    /**
+     * Regression fixture for prd/bug-graphfilter-null-value-crash.md: node-data
+     * fields whose value is `null`/`undefined`. MISP (and most real datasets)
+     * serialise an absent optional attribute as `null`; a single such value used
+     * to crash the Graph-Filter facet builder (`v.length` on `null`) during
+     * construction — the form is (re)built on every `dataBatchChanged`, which
+     * fires synchronously inside `new Graph()`. Here `object_relation` carries a
+     * real value on one node, `null` on another, and an explicit `undefined` on a
+     * third, so the built facet must list only the real value.
+     */
+    nullableFields(): BuiltFixture {
+        const nodes = [
+            mkNode('a', -90, 0, { type: 'attribute', object_relation: null }),
+            mkNode('b', 90, 0, { type: 'attribute', object_relation: 'rel' }),
+            mkNode('c', 0, 120, { type: 'attribute', object_relation: undefined }),
+        ]
+        return { nodes, edges: [], notes: [] }
     },
 
     /** A horizontal label (with background box) and a label rotated to follow its edge. */

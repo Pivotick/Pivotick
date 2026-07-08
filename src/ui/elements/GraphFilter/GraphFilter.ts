@@ -23,6 +23,7 @@ export class GraphFilter implements UIElement {
 
     public graphFilter?: HTMLDivElement
     private formOptions: FieldConfig[]
+    private filteringForm?: HTMLFormElement
     private manuallyFilteredContainer?: HTMLDivElement
 
     constructor(uiManager: UIManager) {
@@ -60,6 +61,7 @@ export class GraphFilter implements UIElement {
         this.uiManager.graph.queryEngine.on('filterChange', (filters: GraphFilters) => {
             this.updateUIFilterButtonContent(filters)
             this.updateUIFilterHiddenNodes()
+            this.syncFormFromActiveFilters(filters)
         })
 
         requestAnimationFrame(() => {
@@ -92,7 +94,7 @@ export class GraphFilter implements UIElement {
             let valuesAreBoolean = false
             if (!filter.values) {
                 filterType = 'numberRange'
-            } else if (filter.values && filter.values.every((v) => v.length < 64)) {
+            } else if (filter.values && filter.values.every((v) => typeof v === 'string' && v.length < 64)) {
                 if (filter.values.length > 2) {
                     filterType = 'multiselect'
                     matchMode = 'partial'
@@ -127,6 +129,7 @@ export class GraphFilter implements UIElement {
         const filteringForm = FormFactory.createForm({
             fields: this.formOptions
         })
+        this.filteringForm = filteringForm
 
         const filterButton = createButton({
             variant: 'primary',
@@ -165,6 +168,18 @@ export class GraphFilter implements UIElement {
         this.graphFilter.appendChild(filterButton)
         this.graphFilter.appendChild(separator)
         this.graphFilter.appendChild(this.manuallyFilteredContainer)
+    }
+
+    // Reflect the active filters (e.g. set via queryEngine.setFilter from code) back into the
+    // form controls; without this the panel only updates on dataBatchChanged and stays empty.
+    private syncFormFromActiveFilters(filters: GraphFilters): void {
+        if (!this.filteringForm) return
+        const values: FormValues = {}
+        for (const [key, config] of Object.entries(filters)) {
+            if (key === 'manuallyHidden' || config === undefined) continue
+            values[key] = config.value
+        }
+        FormFactory.setValues(this.filteringForm, values)
     }
 
     private updateUIFilterButtonContent(filters: GraphFilters) {
@@ -268,8 +283,9 @@ export class GraphFilter implements UIElement {
 
         nodes.forEach(node => {
             Object.entries(node.getData()).forEach(([key, value]) => {
+                if (value === null || value === undefined) return // not a filterable facet value
                 let attributeFilter = attributeMap.get(key)
-                
+
                 if (!attributeFilter) {
                     attributeFilter = {
                         numbers: new Set(),
@@ -277,7 +293,7 @@ export class GraphFilter implements UIElement {
                     }
                 }
                 if (Number.isInteger(value)) {
-                    attributeFilter.range.add(value)
+                    attributeFilter.numbers.add(value)
                 } else {
                     attributeFilter.values.add(value)
                 }

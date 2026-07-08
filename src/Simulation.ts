@@ -40,6 +40,7 @@ export const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
     d3CollideStrength: 1,
     d3CollideIterations: 1,
     d3GravityStrength: 0.1,
+    d3GravityStrengthConnected: 0.001,
 
     enabled: true,
     cooldownTime: 2000,
@@ -78,9 +79,8 @@ export class Simulation {
     private startSimulationTime: number = 0
     private engineRunning: boolean = false
     private slowTickThresholdReached: boolean = false
-    private lastTickTime: number = 0
     private avgTickDuration = 0
-    private readonly SLOW_TICK_THRESHOLD = 50 // ms (20fps budget)
+    private readonly SLOW_TICK_THRESHOLD = 33 // ms of tick compute+render (≈30fps budget)
 
     private dragInProgress: boolean = false
     private dragSelection: dragSelectionNode[] = []
@@ -185,17 +185,17 @@ export class Simulation {
             .y(canvasBCR.height / 2)
             .strength((node) => {
                 const degree = (node as Node).degree() ?? 0
-                // Connected nodes get negligible gravity so link forces + charge repulsion find equilibrium; isolated nodes get full pull to counter charge repulsion
-                return degree === 0 ? options.d3GravityStrength : 0.001
+                // Isolated nodes get full pull to counter charge repulsion; connected nodes get a low (configurable) floor so link forces + charge find equilibrium
+                return degree === 0 ? options.d3GravityStrength : options.d3GravityStrengthConnected
             })
     }
 
     private static initSimulationForceLink(force: d3ForceLinkType<Node, Edge>, options: SimulationOptions) {
         force.distance((edge) => {
-            // if (edge.isSyntheticEdge) {
-            //     const parent = edge.source as Node
-            //     return parent.getCircleRadius() * 0.6
-            // }
+            // Cluster-anchor links (external node → expanded cluster) rest outside the
+            // bubble; their distance is precomputed off the cluster radius (see getActiveEdges).
+            const anchorDistance = (edge as unknown as { __clusterAnchorDistance?: number }).__clusterAnchorDistance
+            if (anchorDistance != null) return anchorDistance
 
             const labelContent = edgeLabelGetter(edge)
             if (!labelContent || labelContent === '') {
@@ -216,8 +216,10 @@ export class Simulation {
                 // if (n.isChild) return 0
                 const baseStrength = options.d3ManyBodyStrength
 
-                const radius = n.getCircleRadius()
-                const dampedRadius = 10 + Math.sqrt(radius - 10) // Slowly push other nodes if radius increases
+                // Charge off the collapsed radius for expanded clusters: their large bubble radius
+                // would over-repel (×parent weight below) and the sim never settles.
+                const radius = n.expanded ? n.getCircleRadiusCollapsed() : n.getCircleRadius()
+                const dampedRadius = 10 + Math.sqrt(Math.max(0, radius - 10)) // Slowly push other nodes if radius increases; clamp so radius < 10 doesn't yield NaN
 
                 let weight = n.weight ?? 1
                 weight *= n.isParent ? 10 : 1
@@ -271,44 +273,65 @@ export class Simulation {
 
     /** @private */
     public getActiveEdges(): Edge[] {
-        const realEdges = this.graph
-            .getMutableEdges()
-            .filter(edge => {
-                if (!edge.visible) return false
+        const inSim = new Set(
+            this.graph.getMutableNodes().filter(node => node.visible).map(node => node.id)
+        )
+        // Walk up until we hit a node the sim actually holds (a hidden child resolves
+        // to its nearest visible ancestor — the expanded cluster it lives in).
+        const ancestorInSim = (node: Node): Node | undefined => {
+            let cur: Node | undefined = node
+            while (cur && !inSim.has(cur.id)) cur = cur.parentNode
+            return cur
+        }
+        const pairKey = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`)
 
-                const source = edge.source as Node
-                const target = edge.target as Node
+        const edges: Edge[] = []
+        const seenPairs = new Set<string>()
 
-                // If either endpoint is currently a child inside a cluster,
-                // disable that external link
-                if (source.isChild || target.isChild) {
-                    return false
-                }
+        for (const edge of this.graph.getMutableEdges()) {
+            if (!edge.visible) continue
+            const source = edge.source as Node
+            const target = edge.target as Node
 
-                return true
-            })
+            // Fully in-sim edge (top-level, or a collapsed-cluster synthetic edge): keep as-is.
+            if (!source.isChild && !target.isChild) {
+                edges.push(edge)
+                seenPairs.add(pairKey(source.id, target.id))
+                continue
+            }
 
-        const clusterLinks = this.getClusterLinks()
-        return [...realEdges, ...clusterLinks]
+            // One endpoint is a hidden child of an expanded cluster. Re-anchor the child
+            // side to its in-sim ancestor so the external node stays tied to the cluster —
+            // without this, expanding drops the anchor and the node drifts off on drag.
+            // A real child↔child link across two clusters is punted here: whenever either
+            // cluster is collapsed a visible cross-cluster stand-in edge carries the link
+            // (kept above, or re-anchored just below when its child end is folded).
+            if (source.isChild && target.isChild) continue
+            const external = source.isChild ? target : source
+            const cluster = ancestorInSim(source.isChild ? source : target)
+            if (!cluster || cluster.id === external.id) continue
+            const key = pairKey(external.id, cluster.id)
+            if (seenPairs.has(key)) continue
+            seenPairs.add(key)
+            edges.push(this.clusterAnchorLink(external, cluster))
+        }
+        return edges
     }
 
-    /** @private */
-    public getClusterLinks(): Edge[] {
-        const clusterLinks = this.graph.getMutableEdges().filter(edge => edge.visible)
-        // const visibleNodes = this.graph.getMutableVisibleNodes()
-
-        // visibleNodes.forEach(parent => {
-        //     if (!parent.expanded || !parent.hasChildren()) return
-
-        //     parent.children.forEach(child => {
-        //         const syntheticEdge = new Edge(`cluster-${parent.id}-${child.id}`, parent, child, {}, {}, false)
-        //         syntheticEdge.isSyntheticEdge = true
-        //         syntheticEdge.visible = false
-        //         clusterLinks.push(syntheticEdge)
-        //     })
-        // })
-
-        return clusterLinks
+    /**
+     * A force-only link tying an external node to an expanded cluster it connects
+     * into. Not a real Edge — never rendered, never registered on the nodes — just
+     * the `{source, target, distance}` the link force needs. Its distance is the
+     * cluster radius (plus the base link distance) so the node rests outside the bubble.
+     * @private
+     */
+    private clusterAnchorLink(external: Node, cluster: Node): Edge {
+        return {
+            id: `cluster-anchor-${external.id}-${cluster.id}`,
+            source: external,
+            target: cluster,
+            __clusterAnchorDistance: cluster.getCircleRadius() + this.options.d3LinkDistance,
+        } as unknown as Edge
     }
 
     /** @private */
@@ -359,7 +382,6 @@ export class Simulation {
      */
     public restart() {
         this.startSimulationTime = (new Date()).getTime()
-        this.lastTickTime = performance.now()
         this.engineRunning = true
         this.slowTickThresholdReached = false
     }
@@ -375,7 +397,6 @@ export class Simulation {
             return
         }
 
-        this.lastTickTime = performance.now()
         this.engineRunning = true
         this.slowTickThresholdReached = false
         if (this.callbacks.onStart) {
@@ -434,9 +455,10 @@ export class Simulation {
                 }
             }
             this.totalTickCount++
-            this.updateTickMetrics()
+            const tickStart = performance.now()
             this.simulation.tick()
             this.graph.nextTick()
+            this.updateTickMetrics(performance.now() - tickStart)
             if (this.callbacks.onTick) {
                 this.callbacks.onTick(this)
             }
@@ -447,12 +469,8 @@ export class Simulation {
         }
     }
 
-    private updateTickMetrics() {
-        const now = performance.now()
-        const tickDuration = now - this.lastTickTime
-        this.lastTickTime = now
-
-        // Exponential moving average
+    private updateTickMetrics(tickDuration: number) {
+        // tickDuration is compute+render time, not frame gap: immune to rAF throttling on hidden tabs.
         this.avgTickDuration = this.avgTickDuration * 0.9 + tickDuration * 0.1
 
         if (this.avgTickDuration > this.SLOW_TICK_THRESHOLD) {
@@ -489,17 +507,29 @@ export class Simulation {
         return this.options.enabled
     }
 
+    // Match computed positions to live nodes by id: the layout is handed a
+    // different (and differently ordered) node set than the full node map, so
+    // they can't be aligned by array index.
+    private applyComputedPositions(updatedNodes: Node[]): void {
+        const byId = new Map(updatedNodes.map(n => [n.id, n]))
+        for (const node of this.graph.getMutableNodes()) {
+            const updated = byId.get(node.id)
+            if (!updated) continue
+            node.x = updated.x
+            node.y = updated.y
+            node.fx = typeof updated.fx === 'number' ? updated.fx : undefined
+            node.fy = typeof updated.fy === 'number' ? updated.fy : undefined
+        }
+    }
+
     private async computeGraph(optionOverride: Partial<SimulationOptions> = {}) {
         const { runSimulation } = await import('./workers/SimulationWorker')
         const canvasBCR = this.canvas?.getBoundingClientRect()
         if (!canvasBCR) return
 
         const nodes = this.graph.getMutableNodes()
-        const nodesCopy = this.graph.getNodes().map((n: Node) => {
-            n.fx = undefined
-            n.fy = undefined
-            return n
-        })
+        // Keep caller-set fixed positions (fx/fy) so pinned nodes stay put through the layout.
+        const nodesCopy = this.graph.getNodes()
         const edgesCopy = this.graph.getEdges()
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -511,31 +541,28 @@ export class Simulation {
             optionsWithoutCBs,
             canvasBCR)
 
-        updatedNodes.forEach((updatedNode, i) => {
-            nodes[i].x = updatedNode.x
-            nodes[i].y = updatedNode.y
-
-            if (updatedNode.fx) {
-                nodes[i].fx = updatedNode.fx
-            } else {
-                nodes[i].fx = undefined
-            }
-            if (updatedNode.fy) {
-                nodes[i].fy = updatedNode.fy
-            } else {
-                nodes[i].fy = undefined
-            }
-        })
+        this.applyComputedPositions(updatedNodes)
         this.graph.updateData(nodes, undefined, false)
     }
 
     private async runSimulationWorkerRouter(optionOverride: Partial<SimulationOptions> = {}) {
         if (this.options.useWorker) {
-            await this.runSimulationWorker(optionOverride)
-        } else {
-            await this.computeGraph(optionOverride)
-            this.graph.updateLayoutProgress(100, 0, 'done')
+            try {
+                await this.runSimulationWorker(optionOverride)
+                return
+            } catch (error) {
+                // Worker may be blocked (e.g. CSP `worker-src 'none'`). Fall back
+                // to the main thread and stop retrying on later layout passes.
+                this.options.useWorker = false
+                console.warn(
+                    '[Pivotick] Simulation Web Worker unavailable (often a CSP blocking blob workers); ' +
+                    'falling back to the main thread. Set `simulation.useWorker: false` to silence this.',
+                    error
+                )
+            }
         }
+        await this.computeGraph(optionOverride)
+        this.graph.updateLayoutProgress(100, 0, 'done')
     }
 
     private async runSimulationWorker(optionOverride: Partial<SimulationOptions> = {}) {
@@ -543,12 +570,12 @@ export class Simulation {
         if (!canvasBCR) return
 
         const nodes = this.graph.getMutableNodes()
-        const nodesCopy = this.graph.getNodes().map((n: Node) => {
-            n.fx = undefined
-            n.fy = undefined
-            return n
-        })
-        const edgesCopy = this.graph.getEdges()
+        // Send serialization-safe DTOs, not live Node/Edge clones: a clone's
+        // parentNode/from/to can transitively reach an expanded cluster's
+        // subgraph DOM, which postMessage cannot structured-clone (DataCloneError).
+        // Keep caller-set fixed positions (fx/fy) so pinned nodes stay put through the layout.
+        const nodesCopy = this.graph.getNodes().map((n: Node) => n.toSimulationDTO())
+        const edgesCopy = this.graph.getEdges().map((e: Edge) => e.toSimulationDTO())
 
         const onWorkerProgress = (progress: number, elapsedTime: number) => {
             this.graph.updateLayoutProgress(progress, elapsedTime, 'simulation')
@@ -566,21 +593,7 @@ export class Simulation {
             onWorkerProgress
         )
         this.graph.updateLayoutProgress(100, 0, 'rendering')
-        updatedNodes.forEach((updatedNode, i) => {
-            nodes[i].x = updatedNode.x
-            nodes[i].y = updatedNode.y
-
-            if (updatedNode.fx) {
-                nodes[i].fx = updatedNode.fx
-            } else {
-                nodes[i].fx = undefined
-            }
-            if (updatedNode.fy) {
-                nodes[i].fy = updatedNode.fy
-            } else {
-                nodes[i].fy = undefined
-            }
-        })
+        this.applyComputedPositions(updatedNodes)
         this.graph.updateData(nodes, undefined, false)
         this.graph.updateLayoutProgress(100, 0, 'done')
     }
@@ -593,6 +606,23 @@ export class Simulation {
         this.simulation
             .alpha(alpha)
             .restart()
+    }
+
+    /**
+     * Re-read the node-dependent force accessors and reheat.
+     *
+     * d3-force caches per-node radius/strength when a force is initialised (i.e.
+     * when nodes are set), not on every tick — so mutating a node's radius after
+     * the sim is running has no effect until the forces are re-initialised.
+     * Re-setting the nodes does that; the reheat then lets collision/charge
+     * re-lay-out with the new sizes. Used when a custom node measures its size
+     * after the initial layout has already cooled. No-op when disabled.
+     */
+    public refreshForcesAndReheat(alpha = 0.5): void {
+        if (!this.options.enabled) return
+        const visibleNodes = this.graph.getMutableNodes().filter(node => node.visible)
+        this.simulation.nodes(visibleNodes) // re-initialises every force → re-reads node radii
+        this.reheat(alpha)
     }
 
     /**
@@ -745,6 +775,6 @@ export class Simulation {
         this.restart()
 
         await this.waitForSimulationStop()
-        this.graph.renderer.fitAndCenter()
+        this.graph.renderer.fitAndCenterWhenSettled()
     }
 }

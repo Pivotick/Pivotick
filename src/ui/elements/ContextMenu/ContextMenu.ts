@@ -1,15 +1,17 @@
 import { Edge } from '../../../Edge'
 import type { Node } from '../../../Node'
-import { createActionList, createHtmlElement, createQuickActionList, generateSafeDomId } from '../../../utils/ElementCreation'
-import { expand, focusElement, graphEdgeIcon, hide, inspect, pin, selectNeighbor, stickyNote, trash, unpin } from '../../icons'
+import { createActionList, createQuickActionList, generateSafeDomId } from '../../../utils/ElementCreation'
+import { expand, focusElement, fullscreen, graphEdgeIcon, hide, inspect, pin, selectNeighbor, stickyNote, trash, unpin } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import './contextmenu.scss'
 import { deepMerge } from '../../../utils/utils'
 import type { MenuActionItemOptions, MenuQuickActionItemOptions } from '../../../interfaces/GraphUI'
 import { createInspectModal } from '../modals/InspectNodeModal/InspectNodeModal'
+import { openImageLightbox } from '../modals/ImageLightboxModal/ImageLightboxModal'
 import { Note } from '../../../Note'
 import { pickNode } from '../../components/NodePickers'
 import { nodeNameGetter } from '../../../utils/GraphGetters'
+import { getNodeImageHref } from '../../../utils/NodePreview'
 
 const defaultMenuNode = {
     topbar: [
@@ -57,6 +59,18 @@ const defaultMenuNode = {
         },
     ] as MenuQuickActionItemOptions[],
     menu: [
+        {
+            text: 'View Image',
+            title: 'View Image',
+            svgIcon: fullscreen,
+            variant: 'outline-primary',
+            // Only for picture nodes: read the resolved src straight off the rendered node.
+            visible: (node: Node) => !!getNodeImageHref(node),
+            onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
+                const src = getNodeImageHref(node)
+                if (src) openImageLightbox(this.uiManager, src, nodeNameGetter(node, this.uiManager.getOptions().mainHeader))
+            },
+        },
         {
             text: 'Select Neighbors',
             title: 'Select Neighbors',

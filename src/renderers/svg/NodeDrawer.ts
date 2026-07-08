@@ -4,10 +4,11 @@ import { Node } from '../../Node'
 import { Edge } from '../../Edge'
 import type { Graph } from '../../Graph'
 import { GraphSvgRenderer, defaultLabelStyle } from './GraphSvgRenderer'
-import { faGlyph, tryResolveNumber, tryResolveString } from '../../utils/Getters'
-import type { CustomNodeShape, GraphRendererOptions, NodeShape, NodeStyle } from '../../interfaces/RendererOptions'
+import { resolveIcon, tryResolveNumber, tryResolveString } from '../../utils/Getters'
+import type { CustomNodeShape, GraphRendererOptions, ImageFit, NodeShape, NodeStyle } from '../../interfaces/RendererOptions'
 import { ClusterDrawer } from './ClusterDrawer'
 import { forceConstrainParent } from '../../plugins/layout/MicroForce'
+import { imageOff } from '../../ui/icons'
 d3Select.prototype.transition = d3Transition
 
 export class NodeDrawer {
@@ -42,16 +43,27 @@ export class NodeDrawer {
 
             // In here, we could add support of other lightweight framework such as jQuery, Vue.js, ..
 
-            requestAnimationFrame(() => {
+            // The custom content must be measured to size the foreignObject. During the
+            // initial layout the graph's .zoom-layer is display:none, so getBoundingClientRect
+            // reports 0×0 — retry on later frames until it has real dimensions (bounded), else
+            // the node would stay locked at 0×0 and be invisible.
+            const maxMeasureAttempts = 300
+            const measureAndSize = (attempt: number): void => {
                 const foNode = fo.node() as SVGForeignObjectElement
-                if (!foNode) return
+                if (!foNode || !foNode.isConnected) return
 
                 const content = foNode.firstElementChild as HTMLElement | null
                 if (!content) return
 
                 const bcr = content.getBoundingClientRect()
+                if ((bcr.width === 0 || bcr.height === 0) && attempt < maxMeasureAttempts) {
+                    requestAnimationFrame(() => measureAndSize(attempt + 1))
+                    return
+                }
+
                 const width = Math.ceil(bcr.width)
                 const height = Math.ceil(bcr.height)
+                if (width === 0 || height === 0) return // never measurable: keep the fallback size
 
                 fo.attr('width', width)
                     .attr('height', height)
@@ -60,10 +72,23 @@ export class NodeDrawer {
                 fo.attr('x', -width / 2)
                     .attr('y', -height / 2)
 
-                if (this.rendererOptions.enableNodeExpansion && (!node.hasChildren() || !node.expanded)) {
-                    node.setCircleRadius(0.5 * Math.max(width, height))
+                // Feed the measured size into the node radius so the force sim's
+                // collision + charge see the real card, not the default r=10 (else
+                // large HTML cards get packed until they overlap). Expanded clusters
+                // are skipped — their bubble radius is owned by the cluster drawer.
+                if (!node.hasChildren() || !node.expanded) {
+                    const measuredRadius = 0.5 * Math.max(width, height)
+                    if (node.getCircleRadius() !== measuredRadius) {
+                        node.setCircleRadius(measuredRadius)
+                        // Measurement only lands once the card is on-screen — the zoom
+                        // layer is display:none during the initial layout, so this runs
+                        // after the sim has cooled. Nudge it once so collision re-spaces
+                        // the freshly-sized cards.
+                        this.scheduleCollisionReheat()
+                    }
                 }
-              })
+            }
+            requestAnimationFrame(() => measureAndSize(0))
 
         } else {
             this.defaultNodeRender(theNodeSelection, node)
@@ -104,6 +129,27 @@ export class NodeDrawer {
         }
     }
 
+    /** Pending frame for the debounced collision reheat, if any. */
+    private collisionReheatFrame: number | null = null
+
+    /**
+     * Reheat the sim once so collision re-spaces custom nodes whose radius was
+     * just set from their measured size. Custom nodes measure asynchronously (and
+     * on different frames), so this is debounced to one reheat after the last
+     * measurement lands, and is a no-op when the simulation is disabled.
+     */
+    private scheduleCollisionReheat(): void {
+        if (this.collisionReheatFrame !== null) {
+            cancelAnimationFrame(this.collisionReheatFrame)
+        }
+        this.collisionReheatFrame = requestAnimationFrame(() => {
+            this.collisionReheatFrame = null
+            // d3-force caches node radii at init, so a plain reheat wouldn't pick
+            // up the size we just set — re-initialise the forces first.
+            this.graph.simulation?.refreshForcesAndReheat()
+        })
+    }
+
     public updatePositions(nodeSelection: Selection<SVGGElement, Node, SVGGElement, unknown>): void {
         nodeSelection
             .attr('transform', d => {
@@ -135,6 +181,7 @@ export class NodeDrawer {
             iconClass: style?.iconClass ?? this.rendererOptions.defaultNodeStyle.iconClass,
             svgIcon: style?.svgIcon ?? this.rendererOptions.defaultNodeStyle.svgIcon,
             imagePath: style?.imagePath ?? this.rendererOptions.defaultNodeStyle.imagePath,
+            imageFit: style?.imageFit ?? this.rendererOptions.defaultNodeStyle.imageFit,
             text: style?.text ?? this.rendererOptions.defaultNodeStyle.text,
             html: style?.html ?? this.rendererOptions.defaultNodeStyle.html,
         }
@@ -172,6 +219,7 @@ export class NodeDrawer {
                 iconClass: style?.iconClass ?? styleFromStyleMap?.iconClass,
                 svgIcon: style?.svgIcon ?? styleFromStyleMap?.svgIcon,
                 imagePath: style?.imagePath ?? styleFromStyleMap?.imagePath,
+                imageFit: style?.imageFit ?? styleFromStyleMap?.imageFit,
                 text: style?.text ?? styleFromStyleMap?.text,
                 html: style?.html ?? styleFromStyleMap?.html,
             }
@@ -201,12 +249,41 @@ export class NodeDrawer {
         nodeStyle.iconClass = nodeStyle.iconClass !== undefined ? tryResolveString(nodeStyle.iconClass, node) : undefined
         nodeStyle.svgIcon = nodeStyle.svgIcon !== undefined ? tryResolveString(nodeStyle.svgIcon, node) : undefined
         nodeStyle.imagePath = nodeStyle.imagePath !== undefined ? tryResolveString(nodeStyle.imagePath, node) : undefined
+        nodeStyle.imageFit = nodeStyle.imageFit !== undefined ? (tryResolveString(nodeStyle.imageFit, node) as ImageFit) : undefined
 
         return nodeStyle
     }
 
     private isCustomShape(shape: NodeShape): shape is CustomNodeShape {
         return typeof shape === 'object' && shape !== null && 'd' in shape
+    }
+
+    // Draw the "image unavailable" glyph for a picture whose source failed to load, so the
+    // node shows its shape + a crossed-out-picture icon rather than the browser's broken-image
+    // placeholder. The broken `<image>` is hidden (not removed) so it still carries the src for
+    // getNodeImageHref — keeping the preview / tooltip / lightbox fallbacks consistent.
+    private renderImageFallback(
+        nodeSelection: Selection<SVGGElement, Node, null, undefined>,
+        imageSelection: Selection<SVGImageElement, Node, null, undefined>,
+        style: NodeStyle
+    ): void {
+        imageSelection.style('display', 'none')
+        const size = style.size as number
+        const svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+        svgEl.innerHTML = imageOff
+        if (svgEl.children[0]?.nodeName === 'svg') { // let the glyph fill the box we size below
+            svgEl.children[0].removeAttribute('width')
+            svgEl.children[0].removeAttribute('height')
+        }
+        const extent = size * 1.1
+        nodeSelection
+            .append(() => svgEl)
+            .attr('class', 'node-content pvt-node-image-fallback')
+            .attr('x', -extent / 2)
+            .attr('y', -extent / 2)
+            .attr('width', extent)
+            .attr('height', extent)
+            .attr('color', style.textColor)
     }
 
     private genericNodeRender(nodeSelection: Selection<SVGGElement, Node, null, undefined>, style: NodeStyle, node: Node): void {
@@ -217,6 +294,14 @@ export class NodeDrawer {
         style.textHorizontalShift = style.textHorizontalShift as number
         style.textVerticalShift = style.textVerticalShift as number
         style.textRotateDegree = style.textRotateDegree as number
+
+        // A 'frame' image node IS the picture: it renders as a rectangle sized to
+        // the image's aspect ratio (resized async in the imagePath branch), so it
+        // rides the square/rect path regardless of the requested shape.
+        const framed = !!style.imagePath && style.imageFit === 'frame'
+        if (framed) {
+            style.shape = 'square'
+        }
 
         // map logical node shapes to SVG element tag names (use string to allow 'rect' which is not part of NodeShape)
         let actualShape: string = style.shape as string
@@ -283,14 +368,30 @@ export class NodeDrawer {
 
         // ---- Content ----
         if (style.iconUnicode || style.iconClass) {
-            nodeSelection
-                .append('text')
-                .attr('fill', style.textColor)
-                .attr('text-anchor', 'middle')
-                .attr('dominant-baseline', 'central')
-                .attr('font-size', style.size * 1.2)
-                .attr('class', 'node-content icon ' + (style.iconUnicode ? 'icon-unicode' : (style.iconClass ?? '')))
-                .text(style.iconUnicode ?? (faGlyph(style.iconClass ?? '') ?? '☐'))
+            // Resolve the glyph + font from the class font-agnostically (FA, misp-iconify, …).
+            // iconUnicode is a direct-character override; when both are given the class supplies the font.
+            const resolved = style.iconClass ? resolveIcon(style.iconClass) : undefined
+            const useResolvedFont = !!resolved && resolved.glyph !== ''
+            const glyph = style.iconUnicode ?? resolved?.glyph
+            // Skip unknown/unresolvable classes rather than rendering a ☐ placeholder.
+            if (glyph) {
+                const iconText = nodeSelection
+                    .append('text')
+                    .attr('fill', style.textColor)
+                    .attr('text-anchor', 'middle')
+                    .attr('dominant-baseline', 'central')
+                    .attr('font-size', style.size * 1.2)
+                    .attr('class', 'node-content icon icon-unicode')
+                    .text(glyph)
+                // Trust the probed font only when the class actually resolved; otherwise fall
+                // back to the --pvt-node-icon-font-family default carried by .icon-unicode.
+                if (useResolvedFont) {
+                    iconText
+                        .style('font-family', resolved.fontFamily)
+                        .style('font-weight', resolved.fontWeight)
+                        .style('font-style', resolved.fontStyle)
+                }
+            }
         } else if (style.svgIcon) {
             const svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
             svgEl.innerHTML = style.svgIcon
@@ -307,17 +408,56 @@ export class NodeDrawer {
                 .attr('height', style.size * 1.4)
                 .attr('color', style.strokeColor)
         } else if (style.imagePath) {
-            const scale = 1.2
-            nodeSelection
-                .append('image')
-                .attr('class', 'node-content')
-                .attr('xlink:href', style.imagePath)
-                .attr('x', -style.size * (scale/2))
-                .attr('y', -style.size * (scale/2))
-                .attr('width', style.size * scale)
-                .attr('height', style.size * scale)
+            // How the picture sits on the node:
+            //   'icon'    – small picture centred on the shape (default; legacy look)
+            //   'cover'   – picture fills the shape, cropped to preserve aspect ratio
+            //   'contain' – whole picture fits inside the shape (letterboxed)
+            //   'frame'   – node becomes a rectangle the size of the picture, so the
+            //               stroke hugs it: whole picture, no crop, no letterbox bars
+            const fit = style.imageFit ?? 'icon'
+            if (fit === 'frame') {
+                const box = style.size * 2
+                const image = nodeSelection
+                    .append('image')
+                    .attr('class', 'node-content')
+                    .attr('xlink:href', style.imagePath)
+                    .attr('preserveAspectRatio', 'xMidYMid meet')
+                    .attr('x', -style.size)
+                    .attr('y', -style.size)
+                    .attr('width', box)
+                    .attr('height', box)
+                image.on('error', () => this.renderImageFallback(nodeSelection, image, style))
+                // The image's aspect ratio is only known once it loads. Fit the box's
+                // longest side to `2 × size` and shrink the frame + image to match, so
+                // the whole picture shows with the stroke wrapping it tightly.
+                const probe = new Image()
+                probe.onload = () => {
+                    if (!probe.naturalWidth || !probe.naturalHeight) return
+                    const aspect = probe.naturalWidth / probe.naturalHeight
+                    const w = aspect >= 1 ? box : box * aspect
+                    const h = aspect >= 1 ? box / aspect : box
+                    image.attr('x', -w / 2).attr('y', -h / 2).attr('width', w).attr('height', h)
+                    renderedNode.attr('x', -w / 2).attr('y', -h / 2).attr('width', w).attr('height', h)
+                    node.setCircleRadius(0.5 * Math.max(w, h))
+                }
+                probe.src = style.imagePath
+            } else {
+                const extent = fit === 'icon' ? style.size * 1.2 : style.size * 2
+                const par = fit === 'cover' ? 'xMidYMid slice' : 'xMidYMid meet'
+                const image = nodeSelection
+                    .append('image')
+                    .attr('class', 'node-content')
+                    .attr('xlink:href', style.imagePath)
+                    .attr('x', -extent / 2)
+                    .attr('y', -extent / 2)
+                    .attr('width', extent)
+                    .attr('height', extent)
+                    .attr('preserveAspectRatio', par)
+                image.on('error', () => this.renderImageFallback(nodeSelection, image, style))
+            }
         } else if (style.html) {
             const fo = nodeSelection.append('foreignObject')
+                .attr('class', 'node-content')
             const rendered = style.html(node)
             fo.attr('width', style.size * 2)
                 .attr('height', style.size * 2)
@@ -334,6 +474,7 @@ export class NodeDrawer {
         if (style.text) {
             // label and background group to allow for rotating together
             const labelG = nodeSelection.append('g')
+                .classed('pvt-node-label-group', true)
 
             const isOusideNode = Math.abs(style.textVerticalShift) >= 1 || Math.abs(style.textHorizontalShift) >= 1
             const [fontSize, text] = this.computeTextLayout(style.text, style.size, isOusideNode)
@@ -350,7 +491,9 @@ export class NodeDrawer {
                 .attr('dominant-baseline', 'central')
                 .attr('font-size', fontSize)
                 .attr('font-family', style.fontFamily)
-                .attr('fill', style.textColor)
+                // Labels floated outside sit on the edge-label pill (rect below),
+                // so pair them with its themed colour to stay readable in any theme.
+                .attr('fill', isOusideNode ? defaultLabelStyle.color : style.textColor)
                 .text(text)
 
             const bbox = textSelection.node()?.getBBox()
@@ -367,7 +510,15 @@ export class NodeDrawer {
                     .attr('ry', 2)
             }
             
-            labelG.attr('transform', `rotate(${style.textRotateDegree}, ${x_pos}, ${y_pos})`)
+            // Remember the label's own placement so an expanding cluster can pull it
+            // along with the node (and steer an outside label clear of the dashed
+            // boundary) without re-deriving the style. See handleChildrenExpanded.
+            labelG
+                .attr('data-pvt-label-outside', isOusideNode ? '1' : '0')
+                .attr('data-pvt-label-x', x_pos)
+                .attr('data-pvt-label-y', y_pos)
+                .attr('data-pvt-label-rotate', style.textRotateDegree)
+                .attr('transform', `rotate(${style.textRotateDegree}, ${x_pos}, ${y_pos})`)
 
         }
     }
@@ -454,7 +605,7 @@ export class NodeDrawer {
             this.graph.toggleExpandNode(node)
             if (!expand) { // reheating the simulation is done after the opening transition completes
                 this.graph.simulation.reheat(0.05)
-                this.graph.renderer.fitAndCenter()
+                this.graph.renderer.fitAndCenterWhenSettled()
             }
         }
 
@@ -499,20 +650,57 @@ export class NodeDrawer {
         const padding = 2         // distance from node bounds
         const offset = (clusterRadius + padding) / Math.sqrt(2)
 
+        const nodeGroup = node.getGraphElement()
+
         // Get the main node element (whatever shape it is: circle, rect, path, etc.)
-        const origNode = node.getGraphElement()?.querySelector('& > .node')
+        const origNode = nodeGroup?.querySelector('& > .node')
         if (origNode) {
             d3Select(origNode)
                 .transition()
                 .duration(250)
                 .on('end', () => {
-                    graph.renderer.fitAndCenter()
+                    graph.renderer.fitAndCenterWhenSettled()
                 })
                 .attr('transform', `translate(${-offset}, ${-offset})`)
         }
 
+        // Pull the node's icon/content (glyph, svg, image, html) to the same NW rim
+        // so it keeps sitting on the shape instead of being left at the cluster centre.
+        nodeGroup?.querySelectorAll<SVGGraphicsElement>(':scope > .node-content').forEach((content) => {
+            d3Select(content)
+                .transition()
+                .duration(250)
+                .attr('transform', `translate(${-offset}, ${-offset})`)
+        })
+
+        // Move the label with the node. An inner label rides along centred on the
+        // shape; a label floating outside the node is steered into the top-left
+        // quadrant so it never overlaps the dashed cluster boundary (e.g. a
+        // bottom-right label becomes top-left, a right label becomes left, etc.).
+        const labelGroup = nodeGroup?.querySelector<SVGGElement>(':scope > .pvt-node-label-group')
+        if (labelGroup) {
+            const outside = labelGroup.getAttribute('data-pvt-label-outside') === '1'
+            const xPos = Number(labelGroup.getAttribute('data-pvt-label-x')) || 0
+            const yPos = Number(labelGroup.getAttribute('data-pvt-label-y')) || 0
+            const rotate = Number(labelGroup.getAttribute('data-pvt-label-rotate')) || 0
+
+            let translate: string
+            if (outside) {
+                // Keep the label's original reach but force it up-and-left of the node.
+                const targetX = -offset - Math.abs(xPos)
+                const targetY = -offset - Math.abs(yPos)
+                translate = `translate(${targetX - xPos}, ${targetY - yPos})`
+            } else {
+                translate = `translate(${-offset}, ${-offset})`
+            }
+            d3Select(labelGroup)
+                .transition()
+                .duration(250)
+                .attr('transform', `${translate} rotate(${rotate}, ${xPos}, ${yPos})`)
+        }
+
         // Reposition the expand/collapse icon
-        const origIcons: SVGGElement | undefined | null = node.getGraphElement()?.querySelector('& > .node-icon')
+        const origIcons: SVGGElement | undefined | null = nodeGroup?.querySelector('& > .node-icon')
         if (origIcons) {
             d3Select(origIcons)
                 .transition()

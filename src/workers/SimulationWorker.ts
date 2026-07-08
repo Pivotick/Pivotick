@@ -1,34 +1,18 @@
 import type { ForceLink as d3ForceLinkType } from 'd3-force'
 import { type Simulation as d3Simulation } from 'd3-force'
 import { Simulation } from '../Simulation'
-import { Node, type NodeData } from '../Node'
-import { Edge, type EdgeData } from '../Edge'
+import { Node, type SimulationNodeDTO } from '../Node'
+import { Edge, type SimulationEdgeDTO } from '../Edge'
 import { TreeLayout } from '../plugins/layout/Tree'
 import type { SimulationOptions } from '../interfaces/SimulationOptions'
 import type { EdgeFullStyle } from '../interfaces/RendererOptions'
 import type { TreeLayoutOptions } from '../interfaces/LayoutOptions'
 import { EgoTreeLayout } from '../plugins/layout/EgoTree'
 
-export interface PlainNode<T = NodeData> {
-    _circleRadius: number
-    id: string
-    data?: T
-    style?: T
-}
-
-export interface PlainEdge<T = EdgeData> {
-    id: string
-    from: PlainNode
-    to: PlainNode
-    data?: T
-    style?: T
-    directed: boolean | null
-}
-
 export interface WorkerInput {
     source: string
-    nodes: PlainNode[]
-    edges: PlainEdge[]
+    nodes: SimulationNodeDTO[]
+    edges: SimulationEdgeDTO[]
     canvasBCR: DOMRect
     options: SimulationOptions
 }
@@ -45,6 +29,11 @@ self.onmessage = (e: MessageEvent<WorkerInput>) => {
     const nodes = plainNodes.map(n => {
         const node = new Node(n.id, n.data, n.style)
         node.setCircleRadius(n._circleRadius ?? 10)
+        // Preserve caller-supplied initial positions (seed) and fixed positions (pin).
+        if (typeof n.x === 'number') node.x = n.x
+        if (typeof n.y === 'number') node.y = n.y
+        if (typeof n.fx === 'number') node.fx = n.fx
+        if (typeof n.fy === 'number') node.fy = n.fy
         return node
     })
     const nodeMap = new Map<string, Node>(nodes.map(n => [n.id, n]))
@@ -164,6 +153,11 @@ export function runSimulation(plainNodes: Node[], plainEdges: Edge[], options: S
         const node = new Node(n.id, n.getData(), n.getStyle())
         node.weight = n.weight || 1
         node.setCircleRadius(n.getCircleRadius())
+        // Preserve caller-supplied initial positions (seed) and fixed positions (pin).
+        if (typeof n.x === 'number') node.x = n.x
+        if (typeof n.y === 'number') node.y = n.y
+        if (typeof n.fx === 'number') node.fx = n.fx
+        if (typeof n.fy === 'number') node.fy = n.fy
         return node
     })
     const nodeMap = new Map<string, Node>(nodes.map(n => [n.id, n]))

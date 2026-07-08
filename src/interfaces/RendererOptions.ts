@@ -216,6 +216,17 @@ export interface CustomNodeShape {
 
 export type NodeShape = StandardShape | CustomNodeShape
 
+/**
+ * How an `imagePath` picture sits on the node's shape.
+ * - `'icon'` — small picture centred on the shape (~1.2× size); the legacy default look.
+ * - `'cover'` — picture fills the shape's box (2× size), cropped to preserve aspect ratio.
+ * - `'contain'` — whole picture fits inside the shape's box (2× size), letterboxed with the shape `color`.
+ * - `'frame'` — the node becomes a rectangle sized to the picture's own aspect ratio
+ *   (longest side = 2× size), so the stroke hugs it: whole picture, no crop, no letterbox
+ *   bars. The requested `shape` is ignored (always a rectangle) since the picture is the node.
+ */
+export type ImageFit = 'icon' | 'cover' | 'contain' | 'frame'
+
 export interface NodeStyle {
     /**
      * The shape of the node, either a standard shape or a custom SVG path
@@ -263,6 +274,12 @@ export interface NodeStyle {
     iconUnicode?: IconUnicode,
     svgIcon?: SVGIcon,
     imagePath?: ImagePath,
+    /**
+     * How an `imagePath` picture sits on the node's shape. Resolvable per node so
+     * different nodes can mix modes (e.g. screenshots `'cover'`, other attachments `'icon'`).
+     * @default 'icon'
+     */
+    imageFit?: ((node: Node) => ImageFit) | ImageFit,
     /**
      * The text to be used inside the node as an `SVGText` element
      */

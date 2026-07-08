@@ -1,4 +1,3 @@
-// import TomSelect from 'tom-select'
 import type { FilterMatchMode } from '../interfaces/GraphQueryEngine'
 import { PivotickPicker } from './PivotickPicker'
 
@@ -32,6 +31,8 @@ export interface FormConfig {
 
 export type FormValue = string | string[] | number | number[] | boolean | undefined | {min: number | undefined, max: number | undefined}
 export type FormValues = Record<string, FormValue>
+
+type SelectWithPicker = HTMLSelectElement & { _picker?: PivotickPicker }
 
 export class FormFactory {
 
@@ -103,9 +104,58 @@ export class FormFactory {
 
     static clear(form: HTMLFormElement) {
         form.reset()
-        // form.querySelectorAll('select').forEach(select => {
-        //     (select as HTMLSelectElement & { tomselect?: TomSelect }).tomselect?.sync()
-        // })
+    }
+
+    // Push values back into the form controls (inverse of getValues). Used to reflect
+    // filters set programmatically. Fields absent from `values` are cleared/deselected.
+    static setValues(form: HTMLFormElement, values: FormValues) {
+        const fields = form.querySelectorAll('[data-field-key]')
+
+        fields.forEach(el => {
+            const key = el.getAttribute('data-field-key')!
+            const type = el.getAttribute('data-field-type')!
+            const value = values[key]
+
+            switch (type) {
+                case 'text': {
+                    const input = el as HTMLInputElement
+                    input.value = value != null ? String(value) : ''
+                    break
+                }
+
+                case 'select':
+                case 'multiselect': {
+                    const select = el as SelectWithPicker
+                    const wanted = new Set(
+                        (Array.isArray(value) ? value : value != null ? [value] : []).map(String)
+                    )
+                    Array.from(select.options).forEach(o => {
+                        o.selected = o.value !== '' && wanted.has(o.value)
+                    })
+                    // picker is built in a rAF and syncs from the <select> on construction,
+                    // so if it isn't ready yet the .selected flags above already suffice
+                    select._picker?.sync()
+                    break
+                }
+
+                case 'checkbox': {
+                    const input = el as HTMLInputElement
+                    input.checked = value === true
+                    break
+                }
+
+                case 'numberRange': {
+                    const range = (value && typeof value === 'object' && !Array.isArray(value))
+                        ? value as { min?: number, max?: number }
+                        : {}
+                    const min = el.querySelector('.min') as HTMLInputElement
+                    const max = el.querySelector('.max') as HTMLInputElement
+                    min.value = range.min != null ? String(range.min) : ''
+                    max.value = range.max != null ? String(range.max) : ''
+                    break
+                }
+            }
+        })
     }
 
     static createField(field: FieldConfig): HTMLElement {
@@ -185,43 +235,20 @@ export class FormFactory {
     }
 
     private static createSelect(field: FieldConfig): HTMLSelectElement {
-        const select = this.buildSelect(field)
+        const select = this.buildSelect(field) as SelectWithPicker
 
         requestAnimationFrame(() => {
-            // const tomSelectSettings = {
-            //     plugins: {
-            //         clear_button: {
-            //             title: 'Remove all selected options',
-            //         },
-            //     },
-            // }
-            // new TomSelect(select, tomSelectSettings)
-            new PivotickPicker(select, {})
+            select._picker = new PivotickPicker(select, {})
         })
         return select
     }
 
     private static createMultiSelect(field: FieldConfig): HTMLSelectElement {
-        const select = this.buildSelect(field)
+        const select = this.buildSelect(field) as SelectWithPicker
         select.multiple = true
 
         requestAnimationFrame(() => {
-            // const tomSelectSettings = {
-            //     plugins: {
-            //         checkbox_options: {
-            //             checkedClassNames: ['pvt-ts-checked'],
-            //             uncheckedClassNames: ['pvt-ts-unchecked'],
-            //         },
-            //         clear_button: {
-            //             title: 'Remove all selected options',
-            //         },
-            //         remove_button: {
-            //             title: 'Remove this item',
-            //         }
-            //     },
-            // }
-            // new TomSelect(select, tomSelectSettings)
-            new PivotickPicker(select, {})
+            select._picker = new PivotickPicker(select, {})
         })
 
         return select
