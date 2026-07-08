@@ -8,10 +8,12 @@ const data = {
         { id: 'design', data: { label: 'Design' } }
     ],
     edges: [
-        { from: 'lead', to: 'cto', data: { label: 'reports to' } },
+        // rotateLabel can be set per edge: true rotates the label to follow the
+        // edge's angle, false keeps it upright. Both are shown here.
+        { from: 'lead', to: 'cto', data: { label: 'rotates with edge' }, style: { edge: { rotateLabel: true } } },
         { from: 'dev1', to: 'lead', data: { label: 'reports to' } },
         { from: 'dev2', to: 'lead', data: { label: 'reports to' } },
-        { from: 'design', to: 'lead', data: { label: 'pairs with' } }
+        { from: 'design', to: 'lead', data: { label: 'stays upright' }, style: { edge: { rotateLabel: false } } }
     ]
 }
 // #endregion data
@@ -22,7 +24,7 @@ const options = {
         defaultEdgeStyle: {
             strokeColor: '#cbd5e1',
             strokeWidth: 1.5,
-            rotateLabel: false, // set true to make labels follow each edge's angle
+            rotateLabel: false, // default; overridden per edge above to show both
             markerEnd: 'arrow'
         },
         // Styling shared by every built-in edge label.
