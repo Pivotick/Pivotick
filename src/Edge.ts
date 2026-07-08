@@ -142,9 +142,13 @@ export class Edge {
      * @param partialStyle - Partial style object to merge
      */
     updateStyle(partialStyle: PartialEdgeFullStyle): void {
+        const cur = this.style as Partial<EdgeFullStyle>
+        const inc = partialStyle as Partial<EdgeFullStyle>
         this.style = ({
-            ...(this.style as Partial<EdgeFullStyle>),
-            ...(partialStyle as Partial<EdgeFullStyle>)
+            ...cur,
+            ...inc,
+            edge: { ...cur.edge, ...inc.edge },
+            label: { ...cur.label, ...inc.label }
         }) as Partial<EdgeFullStyle>
         this.markDirty()
     }
