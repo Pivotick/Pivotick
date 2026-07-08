@@ -507,6 +507,21 @@ export class Simulation {
         return this.options.enabled
     }
 
+    // Match computed positions to live nodes by id: the layout is handed a
+    // different (and differently ordered) node set than the full node map, so
+    // they can't be aligned by array index.
+    private applyComputedPositions(updatedNodes: Node[]): void {
+        const byId = new Map(updatedNodes.map(n => [n.id, n]))
+        for (const node of this.graph.getMutableNodes()) {
+            const updated = byId.get(node.id)
+            if (!updated) continue
+            node.x = updated.x
+            node.y = updated.y
+            node.fx = typeof updated.fx === 'number' ? updated.fx : undefined
+            node.fy = typeof updated.fy === 'number' ? updated.fy : undefined
+        }
+    }
+
     private async computeGraph(optionOverride: Partial<SimulationOptions> = {}) {
         const { runSimulation } = await import('./workers/SimulationWorker')
         const canvasBCR = this.canvas?.getBoundingClientRect()
@@ -526,21 +541,7 @@ export class Simulation {
             optionsWithoutCBs,
             canvasBCR)
 
-        updatedNodes.forEach((updatedNode, i) => {
-            nodes[i].x = updatedNode.x
-            nodes[i].y = updatedNode.y
-
-            if (updatedNode.fx) {
-                nodes[i].fx = updatedNode.fx
-            } else {
-                nodes[i].fx = undefined
-            }
-            if (updatedNode.fy) {
-                nodes[i].fy = updatedNode.fy
-            } else {
-                nodes[i].fy = undefined
-            }
-        })
+        this.applyComputedPositions(updatedNodes)
         this.graph.updateData(nodes, undefined, false)
     }
 
@@ -592,21 +593,7 @@ export class Simulation {
             onWorkerProgress
         )
         this.graph.updateLayoutProgress(100, 0, 'rendering')
-        updatedNodes.forEach((updatedNode, i) => {
-            nodes[i].x = updatedNode.x
-            nodes[i].y = updatedNode.y
-
-            if (updatedNode.fx) {
-                nodes[i].fx = updatedNode.fx
-            } else {
-                nodes[i].fx = undefined
-            }
-            if (updatedNode.fy) {
-                nodes[i].fy = updatedNode.fy
-            } else {
-                nodes[i].fy = undefined
-            }
-        })
+        this.applyComputedPositions(updatedNodes)
         this.graph.updateData(nodes, undefined, false)
         this.graph.updateLayoutProgress(100, 0, 'done')
     }
