@@ -40,6 +40,8 @@ export type EdgeHookBehavior =
     // cancel) — `-fields` uses a declarative FormFactory form, `-render` custom HTML.
     | 'prompt-data-fields'
     | 'prompt-data-render'
+    // Mirrors the gallery card: drag → inline free-text label, click → modal dropdown.
+    | 'prompt-by-origin'
 
 /** Named `isValidConnection` live-predicate behaviours. */
 export type ValidConnBehavior = 'reject-all' | 'reject-target-b'
@@ -731,6 +733,29 @@ class Harness implements HarnessApi {
                     })
                     if (data === null) return false
                     return { accept: true, data }
+                }
+                if (behavior === 'prompt-by-origin') {
+                    // Drag → inline free-text; click-click → modal dropdown of labels.
+                    if (ctx.origin === 'drag') {
+                        const label = await ctx.promptLabel({ mode: 'inline' })
+                        if (label === null) return false
+                        return { accept: true, data: { label } }
+                    }
+                    const values = await ctx.promptData({
+                        fields: [{
+                            key: 'label',
+                            label: 'Relationship',
+                            type: 'select',
+                            defaultValue: 'mentors',
+                            options: [
+                                { value: 'mentors', label: 'mentors' },
+                                { value: 'reports to', label: 'reports to' },
+                                { value: 'manages', label: 'manages' },
+                            ],
+                        }],
+                    })
+                    if (values === null) return false
+                    return { accept: true, data: values }
                 }
                 return true
             }

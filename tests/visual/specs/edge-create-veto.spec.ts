@@ -401,3 +401,57 @@ test.describe('edge creation — label prompt (ctx.promptLabel + static option)'
         expect(await recordedEdges(page)).toHaveLength(0)
     })
 })
+
+// Mirrors the `label-edge-on-create` gallery card: the before-create hook chooses the
+// UI by gesture — a drag gets the inline free-text field, a click-click connect gets a
+// modal with a dropdown of predefined labels. Uses the real drag setup (dragEnabled
+// off + pin) so both gesture kinds drive the actual session, à la edge-creation.spec.
+test.describe('edge creation — label prompt chosen per gesture origin', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoHarness(page)
+        await loadFixture(page, 'pair', { render: { dragEnabled: false } })
+        await harness(page, 'configureConnect', { edgeHook: 'prompt-by-origin' })
+        await harness(page, 'pin')
+        await harness(page, 'startEdgeConnect')
+    })
+
+    test('click-click connect opens the modal dropdown and picks a predefined label', async ({ page }) => {
+        await clickConnect(page, 'a', 'b')
+
+        // The dropdown is the custom PivotickPicker (.pvt-picker) inside the modal:
+        // open the control, then click the option row.
+        await page.locator('.pvt-edge-prompt-modal-body .pvt-picker__control').click()
+        await page.locator('.pvt-edge-prompt-modal-body .pvt-picker__option', { hasText: 'manages' }).click()
+        await page.locator('.pvt-modal__footer button', { hasText: 'Add' }).click()
+
+        await expect.poll(() => edgeCount(page)).toBe(1)
+        expect((await recordedEdges(page))[0].data.label).toBe('manages')
+    })
+
+    test('click-click connect: the preselected default label is used when untouched', async ({ page }) => {
+        await clickConnect(page, 'a', 'b')
+
+        await page.locator('.pvt-edge-prompt-modal-body .pvt-picker__control').waitFor({ state: 'visible' })
+        await page.locator('.pvt-modal__footer button', { hasText: 'Add' }).click()
+
+        await expect.poll(() => edgeCount(page)).toBe(1)
+        expect((await recordedEdges(page))[0].data.label).toBe('mentors')
+    })
+
+    test('drag-to-connect opens the inline free-text field instead', async ({ page }) => {
+        const a = await centerOf(nodeEl(page, 'a'))
+        const b = await centerOf(nodeEl(page, 'b'))
+
+        await page.mouse.move(a.x, a.y)
+        await page.mouse.down()
+        await page.mouse.move(b.x, b.y, { steps: 12 })
+        await page.mouse.up()
+
+        // No modal — the inline field appears at the edge midpoint.
+        await expect(page.locator('.pvt-edge-prompt-modal-body')).toHaveCount(0)
+        await commitInlineLabel(page, 'pairs with')
+
+        await expect.poll(() => edgeCount(page)).toBe(1)
+        expect((await recordedEdges(page))[0].data.label).toBe('pairs with')
+    })
+})
