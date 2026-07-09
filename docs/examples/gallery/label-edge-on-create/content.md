@@ -20,6 +20,10 @@ cancel to create nothing.
 For the simplest case — prompt on *every* edge with no callback — set the static
 option instead: `UI: { editors: { edgeEditor: { labelPrompt: 'inline' } } }`.
 
+Need more than a label? **`ctx.promptData({ fields })`** opens a modal form (the same
+field system as the node editor) and resolves the whole payload; pass `render` +
+`getValues` instead for fully custom HTML.
+
 <script setup>
 import { data, options, onLoaded } from './options.js'
 </script>
