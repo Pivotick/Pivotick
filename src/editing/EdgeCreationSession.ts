@@ -10,7 +10,7 @@ import type {
 import type { PartialEdgeFullStyle } from '../interfaces/RendererOptions'
 import { Node } from '../Node'
 import { Note } from '../Note'
-import { promptEdgeLabel } from './EdgeLabelPrompt'
+import { promptEdgeData, promptEdgeLabel } from './EdgeLabelPrompt'
 import { GraphConnectManager } from './GraphConnectManager'
 
 /** Normalised form of an {@link InterractionCallbacks.onBeforeEdgeCreate} return value. */
@@ -292,7 +292,8 @@ export class EdgeCreationSession {
             target,
             origin,
             kind,
-            promptLabel: (options?: EdgeLabelPromptOptions) => this.promptEdgeLabel(source, target, options)
+            promptLabel: (options?: EdgeLabelPromptOptions) => this.promptEdgeLabel(source, target, options),
+            promptData: (options) => promptEdgeData(this.graph, options)
         }
         const decision = await hook(context)
 

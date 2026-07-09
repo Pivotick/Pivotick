@@ -36,6 +36,10 @@ export type EdgeHookBehavior =
     // `data.label` (or veto if the user cancelled) — exercises the hook-driven prompt.
     | 'prompt-inline'
     | 'prompt-modal'
+    // Call `ctx.promptData(...)` and accept with the collected payload (or veto on
+    // cancel) — `-fields` uses a declarative FormFactory form, `-render` custom HTML.
+    | 'prompt-data-fields'
+    | 'prompt-data-render'
 
 /** Named `isValidConnection` live-predicate behaviours. */
 export type ValidConnBehavior = 'reject-all' | 'reject-target-b'
@@ -697,12 +701,36 @@ class Harness implements HarnessApi {
                 if (behavior.startsWith('accept-data')) {
                     return { accept: true, data: { label: 'linked-to', kind: ctx.kind }, directed: true }
                 }
-                if (behavior.startsWith('prompt-')) {
+                if (behavior === 'prompt-inline' || behavior === 'prompt-modal') {
                     const mode = behavior === 'prompt-modal' ? 'modal' : 'inline'
                     const label = await ctx.promptLabel({ mode })
                     // Cancel (null) vetoes; otherwise accept carrying the entered label.
                     if (label === null) return false
                     return { accept: true, data: { label } }
+                }
+                if (behavior === 'prompt-data-fields') {
+                    const values = await ctx.promptData({
+                        fields: [
+                            { key: 'label', label: 'Label', type: 'text' },
+                            { key: 'note', label: 'Note', type: 'text' },
+                        ],
+                    })
+                    if (values === null) return false
+                    return { accept: true, data: values }
+                }
+                if (behavior === 'prompt-data-render') {
+                    let labelEl: HTMLInputElement | null = null
+                    let noteEl: HTMLInputElement | null = null
+                    const data = await ctx.promptData({
+                        render: (body) => {
+                            body.innerHTML = '<input class="test-label"><input class="test-note">'
+                            labelEl = body.querySelector('.test-label')
+                            noteEl = body.querySelector('.test-note')
+                        },
+                        getValues: () => ({ label: labelEl?.value, note: noteEl?.value }),
+                    })
+                    if (data === null) return false
+                    return { accept: true, data }
                 }
                 return true
             }

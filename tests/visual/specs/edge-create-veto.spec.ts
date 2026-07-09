@@ -270,7 +270,7 @@ test.describe('edge creation — note-link before-create hook', () => {
 /** The floating inline label input (0 count when it isn't open). */
 const inlineLabelInput = (page: Page) => page.locator('.pvt-edge-label-input')
 /** The label input rendered inside the modal skin. */
-const modalLabelInput = (page: Page) => page.locator('.pvt-edge-label-modal-body .pvt-edge-label-input')
+const modalLabelInput = (page: Page) => page.locator('.pvt-edge-prompt-modal-body .pvt-edge-label-input')
 
 /** Type into the (already-open) inline input and commit with Enter. */
 async function commitInlineLabel(page: Page, text: string): Promise<void> {
@@ -356,6 +356,48 @@ test.describe('edge creation — label prompt (ctx.promptLabel + static option)'
 
         // Give the (microtask) decision a beat, then confirm nothing was created.
         await expect.poll(() => edgeCount(page)).toBe(0)
+        expect(await recordedEdges(page)).toHaveLength(0)
+    })
+
+    test('hook: promptData with a declarative form collects a whole payload', async ({ page }) => {
+        await harness(page, 'configureConnect', { edgeHook: 'prompt-data-fields' })
+        await harness(page, 'startClickConnect')
+        await clickConnect(page, 'a', 'b')
+
+        // FormFactory renders each field as #pvt-form-element-<key>.
+        await page.locator('.pvt-edge-prompt-modal-body #pvt-form-element-label').fill('reports-to')
+        await page.locator('.pvt-edge-prompt-modal-body #pvt-form-element-note').fill('since Q3')
+        await page.locator('.pvt-modal__footer button', { hasText: 'Add' }).click()
+
+        await expect.poll(() => edgeCount(page)).toBe(1)
+        const events = await recordedEdges(page)
+        expect(events[0].data).toMatchObject({ label: 'reports-to', note: 'since Q3' })
+    })
+
+    test('hook: promptData with custom HTML collects via getValues', async ({ page }) => {
+        await harness(page, 'configureConnect', { edgeHook: 'prompt-data-render' })
+        await harness(page, 'startClickConnect')
+        await clickConnect(page, 'a', 'b')
+
+        await page.locator('.pvt-edge-prompt-modal-body .test-label').fill('owns')
+        await page.locator('.pvt-edge-prompt-modal-body .test-note').fill('custom-html')
+        await page.locator('.pvt-modal__footer button', { hasText: 'Add' }).click()
+
+        await expect.poll(() => edgeCount(page)).toBe(1)
+        const events = await recordedEdges(page)
+        expect(events[0].data).toMatchObject({ label: 'owns', note: 'custom-html' })
+    })
+
+    test('hook: cancelling promptData (Cancel button) vetoes — no edge', async ({ page }) => {
+        await harness(page, 'configureConnect', { edgeHook: 'prompt-data-render' })
+        await harness(page, 'startClickConnect')
+        await clickConnect(page, 'a', 'b')
+
+        await page.locator('.pvt-edge-prompt-modal-body .test-label').waitFor({ state: 'visible' })
+        await page.locator('.pvt-modal__footer button', { hasText: 'Cancel' }).click()
+
+        await expect.poll(() => edgeHookCalls(page)).toBe(1)
+        expect(await edgeCount(page)).toBe(0)
         expect(await recordedEdges(page)).toHaveLength(0)
     })
 })

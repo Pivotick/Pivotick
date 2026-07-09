@@ -4,6 +4,7 @@ import type { NodeSelection } from './GraphInteractions'
 import type { NodeEditSession } from '../editing/NodeEditSession'
 import type { Note } from '../Note'
 import type { PartialEdgeFullStyle } from './RendererOptions'
+import type { FieldConfig } from '../utils/FormFactory'
 
 export interface InterractionCallbacks<TElement = unknown> {
     /**
@@ -258,6 +259,28 @@ export interface EdgeLabelPromptOptions {
     title?: string
 }
 
+/**
+ * Options for {@link EdgeCreateContext.promptData} — a modal that collects a whole
+ * data payload for the new edge (not just a label). Supply **either** `fields`
+ * (a declarative form, built with the same field system as the node editor) **or**
+ * `render` + `getValues` (arbitrary HTML you populate and read yourself). If both are
+ * given, `render` wins.
+ */
+export interface EdgePromptDataOptions {
+    /** Modal header. @default 'Edge details' */
+    title?: string
+    /** Submit button label. @default 'Add' */
+    submitLabel?: string
+    /** Cancel button label. @default 'Cancel' */
+    cancelLabel?: string
+    /** Declarative form fields; the resolved object is keyed by each field's `key`. */
+    fields?: FieldConfig[]
+    /** Populate the modal body with your own HTML (ignored if fed no `getValues`). */
+    render?: (body: HTMLElement) => void
+    /** Read the collected values out of your custom `render`ed body on submit. */
+    getValues?: () => EdgeData
+}
+
 /** Context passed to {@link InterractionCallbacks.onBeforeEdgeCreate}. */
 export interface EdgeCreateContext {
     /** The source of the connection — a {@link Node} for an edge, a {@link Note} for a note-link. */
@@ -276,6 +299,14 @@ export interface EdgeCreateContext {
      * returned decision's `data` — e.g. `return { accept: true, data: { label } }`.
      */
     promptLabel: (options?: EdgeLabelPromptOptions) => Promise<string | null>
+    /**
+     * Prompt the user for a whole data payload via a modal — a declarative form
+     * ({@link EdgePromptDataOptions.fields}) or custom HTML
+     * ({@link EdgePromptDataOptions.render} + `getValues`). Resolves to the collected
+     * object, or `null` if the user cancelled. Feed it straight into the decision —
+     * e.g. `return { accept: true, data: values }`. Modal only (no inline variant).
+     */
+    promptData: (options: EdgePromptDataOptions) => Promise<EdgeData | null>
 }
 
 /**
