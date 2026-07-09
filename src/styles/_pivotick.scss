@@ -440,6 +440,11 @@ dl.pvt-property-list {
 .pvt-shadow-edge {
     pointer-events: none;
     animation: pvt-shadow-dash 0.5s linear infinite;
+
+    // Live-predicate feedback: an invalid hovered target (isValidConnection → false).
+    &--invalid {
+        opacity: 0.85;
+    }
 }
 
 @keyframes pvt-shadow-dash {

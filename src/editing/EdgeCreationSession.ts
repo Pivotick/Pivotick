@@ -1,7 +1,19 @@
+import type { EdgeData } from '../Edge'
 import type { Graph } from '../Graph'
+import type { EdgeCreateOrigin, InterractionCallbacks } from '../interfaces/InterractionCallbacks'
+import type { PartialEdgeFullStyle } from '../interfaces/RendererOptions'
 import { Node } from '../Node'
 import { Note } from '../Note'
 import { GraphConnectManager } from './GraphConnectManager'
+
+/** Normalised form of an {@link InterractionCallbacks.onBeforeEdgeCreate} return value. */
+type ResolvedDecision = {
+    accept: boolean
+    data?: EdgeData
+    style?: PartialEdgeFullStyle
+    id?: string
+    directed?: boolean | null
+}
 
 
 type InteractionState =
@@ -31,6 +43,9 @@ export class EdgeCreationSession {
     private dragStartPosition: { x: number, y: number } | null = null
 
     private state: InteractionState = 'idle'
+
+    /** True while an async `onBeforeEdgeCreate` decision is in flight — locks out new gestures. */
+    private deciding = false
 
     private static readonly DRAG_THRESHOLD = 4
 
@@ -92,6 +107,8 @@ export class EdgeCreationSession {
 
     public selectOrConnectNode(node: Node): boolean {
 
+        if (this.deciding) return true
+
         if (this.state === 'idle') {
 
             this.sourceElement = node
@@ -104,14 +121,19 @@ export class EdgeCreationSession {
         }
 
         if (this.sourceElement === node) {
-            
+
             this.connectManager.finishInteraction()
-            
+
             return true
         }
 
         if (this.sourceElement) {
-            this.createConnection(this.sourceElement, node)
+            const source = this.sourceElement
+            // Run the (possibly async) decision while the preview stays up, then
+            // re-arm connect mode. `deciding` ignores gestures until it settles.
+            void this.runDecision(() => this.attemptConnection(source, node, 'click'))
+                .then(() => this.connectManager.finishInteraction(true))
+            return true
         }
 
         this.connectManager.finishInteraction(true)
@@ -120,6 +142,8 @@ export class EdgeCreationSession {
     }
 
     public handleNoteClick(note: Note): boolean {
+
+        if (this.deciding) return false
 
         if (this.state === 'idle') {
 
@@ -136,6 +160,8 @@ export class EdgeCreationSession {
     }
 
     private handlePointerMove = (event: PointerEvent): void => {
+
+        if (this.deciding) return
 
         this.updateDragState(event)
 
@@ -197,31 +223,98 @@ export class EdgeCreationSession {
 
         if (!this.sourceElement || !this.pointerPosition) return
 
+        const invalid = this.isTargetInvalid(this.sourceElement, this.hoveredNode)
+
         this.graph.renderer.showShadowEdge({
             source: this.sourceElement,
             targetNode: this.hoveredNode ?? undefined,
-            targetPosition: this.hoveredNode ? undefined : this.pointerPosition
+            targetPosition: this.hoveredNode ? undefined : this.pointerPosition,
+            invalid
         })
     }
 
-    private createConnection(source: Connectable, target: Node): void {
+    /**
+     * Attempt to turn a resolved source→target gesture into an edge (or note-link).
+     *
+     * Order: the live {@link InterractionCallbacks.isValidConnection} predicate is
+     * enforced first (an invalid target is refused outright, without consulting the
+     * before-create hook); then the async {@link InterractionCallbacks.onBeforeEdgeCreate}
+     * decision is awaited; only on acceptance is the edge/note-link created.
+     */
+    private async attemptConnection(source: Connectable, target: Node, origin: EdgeCreateOrigin): Promise<void> {
+
+        if (this.isTargetInvalid(source, target)) return
+
+        const hook = this.graph.getOptions().callbacks?.onBeforeEdgeCreate
+        const decision = await this.resolveDecision(hook, source, target, origin)
+
+        if (!decision.accept) return
 
         if (source instanceof Node) {
-            this.connectManager.createEdge(source, target)
+            // With a hook present the consumer owns duplicate policy (edges may
+            // carry distinct data), so bypass the built-in same-pair dedup.
+            this.connectManager.createEdge(source, target, decision, { allowDuplicate: Boolean(hook) })
             return
         }
 
         if (source instanceof Note) {
             this.connectManager.createNoteLink(source, target)
-            return
         }
+    }
 
+    /** Invoke the before-create hook (if any) and normalise its return value. */
+    private async resolveDecision(
+        hook: InterractionCallbacks['onBeforeEdgeCreate'],
+        source: Connectable,
+        target: Node,
+        origin: EdgeCreateOrigin
+    ): Promise<ResolvedDecision> {
+
+        if (!hook) return { accept: true }
+
+        const kind = source instanceof Note ? 'note-link' : 'edge'
+        const decision = await hook({ source, target, origin, kind })
+
+        if (decision === true) return { accept: true }
+        if (!decision) return { accept: false }
+
+        return {
+            accept: decision.accept,
+            data: decision.data,
+            style: decision.style,
+            id: decision.id,
+            directed: decision.directed
+        }
+    }
+
+    /** True when a live `isValidConnection` predicate rejects the hovered target. */
+    private isTargetInvalid(source: Connectable, target: Node | null): boolean {
+
+        if (!target || source === target) return false
+
+        const isValid = this.graph.getOptions().callbacks?.isValidConnection
+        if (!isValid) return false
+
+        return !isValid(source, target)
+    }
+
+    /** Run an async decision under the `deciding` lock (keeps the preview up, blocks new gestures). */
+    private async runDecision(fn: () => Promise<void>): Promise<void> {
+
+        this.deciding = true
+        try {
+            await fn()
+        } finally {
+            this.deciding = false
+        }
     }
 
     private handleContextMenu = (event: MouseEvent): void => {
 
         event.preventDefault()
         event.stopPropagation()
+
+        if (this.deciding) return
 
         if (this.sourceElement) {
 
@@ -241,6 +334,8 @@ export class EdgeCreationSession {
 
     public beginDragConnection(source: Connectable, event: PointerEvent): void {
 
+        if (this.deciding) return
+
         // Don't interrupt existing click-connect flow
         if (this.state === 'dragging' || this.state === 'click-connect') {
             return
@@ -257,6 +352,8 @@ export class EdgeCreationSession {
     }
 
     private handlePointerUp = (): void => {
+
+        if (this.deciding) return
 
         if (this.state === 'pending-drag') {
 
@@ -282,10 +379,12 @@ export class EdgeCreationSession {
                 return
             }
 
-            this.createConnection(this.sourceElement, target)
-
+            const source = this.sourceElement
             this.dragStartPosition = null
-            this.connectManager.restart()
+
+            // Await the decision (preview persists) before re-arming the next drag.
+            void this.runDecision(() => this.attemptConnection(source, target, 'drag'))
+                .then(() => this.connectManager.restart())
             return
         }
 

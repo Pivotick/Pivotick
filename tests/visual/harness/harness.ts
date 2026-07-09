@@ -16,7 +16,39 @@ import { EgoTreeLayout } from '../../../src/plugins/layout/EgoTree'
 import { createInspectModal } from '../../../src/ui/elements/modals/InspectNodeModal/InspectNodeModal'
 import type { FilterFieldConfig, GraphFilters } from '../../../src/interfaces/GraphQueryEngine'
 import type { GraphInteractionContext } from '../../../src/interfaces/GraphInteractions'
+import type {
+    EdgeCreateContext,
+    EdgeCreateDecision,
+    InterractionCallbacks,
+} from '../../../src/interfaces/InterractionCallbacks'
 import { fixtures, type FixtureName, type RawNote } from './fixtures'
+
+/** Named `onBeforeEdgeCreate` behaviours the harness can install (functions can't cross `page.evaluate`). */
+export type EdgeHookBehavior =
+    | 'accept'
+    | 'accept-async'
+    | 'veto'
+    | 'veto-async'
+    | 'veto-once'
+    | 'accept-data'
+    | 'accept-data-async'
+
+/** Named `isValidConnection` live-predicate behaviours. */
+export type ValidConnBehavior = 'reject-all' | 'reject-target-b'
+
+export interface ConnectConfig {
+    edgeHook?: EdgeHookBehavior
+    validConnection?: ValidConnBehavior
+    /** Delay (ms) for the `*-async` behaviours, so a test can observe the pending window. */
+    asyncDelayMs?: number
+}
+
+/** An edge that actually entered the model, captured from the `edgeAdd` event. */
+export interface RecordedEdge {
+    id: string
+    data: Record<string, unknown>
+    directed: boolean | null
+}
 
 /**
  * Deterministic baseline options shared by every fixture:
@@ -193,6 +225,25 @@ export interface HarnessApi {
      * active; the harness doesn't mount the toolbar, so this does both.
      */
     enableLasso(): void
+    /**
+     * Install `onBeforeEdgeCreate` / `isValidConnection` callbacks by name (real
+     * functions can't cross `page.evaluate`, so tests pass a serialisable config)
+     * and start recording `edgeAdd` events + hook invocations. Call after `load`.
+     */
+    configureConnect(config?: ConnectConfig): void
+    /** Edges that entered the model since {@link configureConnect} (for veto / accept-with-data assertions). */
+    edgeEvents(): RecordedEdge[]
+    /** How many times each connect callback was invoked (proves the pending lock blocks re-entry). */
+    hookCalls(): { edge: number; validConnection: number }
+    /** The `{ origin, kind }` of every `onBeforeEdgeCreate` context seen (verifies note-link vs edge). */
+    hookContexts(): Array<{ origin: string; kind: string }>
+    /**
+     * Drive a note→node link through the connect session (note-link mode, note as
+     * source, node as target) so `onBeforeEdgeCreate` fires with kind `'note-link'`.
+     */
+    linkNote(noteId: string, nodeId: string): void
+    /** The element a note is attached to, or null — for asserting a note-link was (not) made. */
+    noteAttachment(noteId: string): { type: string; id: string } | null
 }
 
 class Harness implements HarnessApi {
@@ -200,6 +251,11 @@ class Harness implements HarnessApi {
     private readonly container: HTMLElement
     /** Fixture-declared positions, captured before the graph mutates the nodes. */
     private intended = new Map<string, { x: number; y: number }>()
+    /** Connect-callback observation state (reset by {@link configureConnect}). */
+    private recordedEdges: RecordedEdge[] = []
+    private edgeHookCalls = 0
+    private validConnCalls = 0
+    private seenHookContexts: Array<{ origin: string; kind: string }> = []
 
     constructor(container: HTMLElement) {
         this.container = container
@@ -595,6 +651,85 @@ class Harness implements HarnessApi {
 
     openFilterPanel(): void {
         this.g.UIManager.mainHeader?.filteringSlidepanel?.open()
+    }
+
+    configureConnect(config: ConnectConfig = {}): void {
+        const delay = config.asyncDelayMs ?? 60
+        const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms))
+
+        this.recordedEdges = []
+        this.edgeHookCalls = 0
+        this.validConnCalls = 0
+        this.seenHookContexts = []
+
+        // Record every edge that actually enters the model (post-decision).
+        this.g.on('edgeAdd', (edge) => {
+            this.recordedEdges.push({
+                id: edge.id,
+                data: edge.getData() as Record<string, unknown>,
+                directed: edge.directed,
+            })
+        })
+
+        const opts = this.g.getOptions() as { callbacks?: InterractionCallbacks }
+        const callbacks: InterractionCallbacks = opts.callbacks ?? (opts.callbacks = {})
+
+        if (config.edgeHook) {
+            const behavior = config.edgeHook
+            callbacks.onBeforeEdgeCreate = async (ctx: EdgeCreateContext): Promise<EdgeCreateDecision> => {
+                this.edgeHookCalls++
+                this.seenHookContexts.push({ origin: ctx.origin, kind: ctx.kind })
+                if (behavior.endsWith('-async')) await sleep(delay)
+                // Veto the first attempt only, so a test can prove connect mode
+                // stays usable and a retry succeeds.
+                if (behavior === 'veto-once') return this.edgeHookCalls > 1
+                if (behavior.startsWith('veto')) return false
+                if (behavior.startsWith('accept-data')) {
+                    return { accept: true, data: { label: 'linked-to', kind: ctx.kind }, directed: true }
+                }
+                return true
+            }
+        }
+
+        if (config.validConnection) {
+            const vc = config.validConnection
+            callbacks.isValidConnection = (_source, target): boolean => {
+                this.validConnCalls++
+                if (vc === 'reject-all') return false
+                if (vc === 'reject-target-b') return target.id !== 'b'
+                return true
+            }
+        }
+    }
+
+    edgeEvents(): RecordedEdge[] {
+        return this.recordedEdges
+    }
+
+    hookCalls(): { edge: number; validConnection: number } {
+        return { edge: this.edgeHookCalls, validConnection: this.validConnCalls }
+    }
+
+    hookContexts(): Array<{ origin: string; kind: string }> {
+        return this.seenHookContexts
+    }
+
+    linkNote(noteId: string, nodeId: string): void {
+        const cm = this.g.editing.connectManager
+        cm.startNoteClickConnection()
+        const note = this.g.noteManager.getNote(noteId)
+        const node = this.g.getMutableNode(nodeId)
+        if (!note || !node) return
+        // Set the note as the connection source (the note-handle click the real UI
+        // fires), then pick the node as target — driving the same session path.
+        const internal = cm as unknown as { activeSession: { handleNoteClick(n: Note): boolean } | null }
+        internal.activeSession?.handleNoteClick(note)
+        cm.selectOrConnectNode(node)
+    }
+
+    noteAttachment(noteId: string): { type: string; id: string } | null {
+        const attached = this.g.noteManager.getNote(noteId)?.getAttachedElement()
+        return attached ? { type: attached.type, id: attached.id } : null
     }
 
     enableLasso(): void {
