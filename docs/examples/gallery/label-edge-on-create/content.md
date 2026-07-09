@@ -6,23 +6,22 @@ order: 4
 
 # Label an edge as you draw it
 
-Collect an edge's label from the user mid-gesture — no custom modal wiring. The
-before-create hook's context carries **`ctx.promptLabel({ mode })`**: it resolves to
-the typed string (or `null` if cancelled), and `mode` picks the UI per event —
-`'inline'` drops a small field at the edge's midpoint, `'modal'` opens a dialog.
-Feed the result into the new edge's `data` and you've enriched it before it exists.
+Collect an edge's label from the user the moment it's drawn — no custom modal
+wiring — and pick the UI to fit the gesture. The before-create hook's context offers
+two helpers: **`ctx.promptLabel({ mode })`** drops a single free-text field (inline at
+the edge's midpoint, or in a modal), and **`ctx.promptData({ fields })`** opens a
+modal form built from the same field system as the node editor. Whatever is entered
+becomes the new edge's `data.label`; cancelling (resolving `null`) creates nothing.
 
-Click **Edit Graph** (top-right) → **Add Edge**, then connect two people. A
-**drag** prompts inline; a **click-click** connect opens a modal. Type a relationship
-and press **Enter** (or **Add**) to create the labeled edge, or press **Esc** /
-cancel to create nothing.
+Click **Edit Graph** (top-right) → **Add Edge**, then connect two people:
 
-For the simplest case — prompt on *every* edge with no callback — set the static
-option instead: `UI: { editors: { edgeEditor: { labelPrompt: 'inline' } } }`.
+- **Drag** from one node to another → a quick inline field to type any label.
+- **Click** one node then another → a modal with a **dropdown of predefined
+  relationship labels**; choose one and **Create edge**.
 
-Need more than a label? **`ctx.promptData({ fields })`** opens a modal form (the same
-field system as the node editor) and resolves the whole payload; pass `render` +
-`getValues` instead for fully custom HTML.
+For the zero-code case, the static option
+`UI: { editors: { edgeEditor: { labelPrompt: 'inline' } } }` prompts for a free-text
+label on every edge with no callback at all.
 
 <script setup>
 import { data, options, onLoaded } from './options.js'

@@ -14,30 +14,52 @@ const data = {
 // #endregion data
 
 // #region options
-// `ctx.promptLabel(...)` (handed to the before-create hook) asks the user for a
-// label while the connect gesture is still pending, then feeds it into the new
-// edge's data. Pick the UI per event: `mode: 'modal'` opens a dialog, `'inline'`
-// drops a small field at the edge's midpoint. A cancel resolves to `null` — return
-// `false` to create nothing.
+// The before-create hook picks the UI per gesture. A quick **drag** gets a free-text
+// field inline at the edge midpoint (`ctx.promptLabel`); a deliberate **click-click**
+// connect gets a modal with a dropdown of predefined labels (`ctx.promptData`). Both
+// feed the chosen text into the new edge's `data.label`; a cancel (`null`) creates
+// nothing.
+const RELATIONSHIP_LABELS = [
+    { value: 'mentors', label: 'mentors' },
+    { value: 'reports to', label: 'reports to' },
+    { value: 'collaborates with', label: 'collaborates with' },
+    { value: 'manages', label: 'manages' }
+]
+
 const options = {
     UI: { mode: 'full' },
     callbacks: {
         onBeforeEdgeCreate: async (ctx) => {
-            // Drag-to-connect is quick and mouse-driven → inline; a deliberate
-            // click-click connect → a modal. Any per-event rule works here.
-            const mode = ctx.origin === 'drag' ? 'inline' : 'modal'
+            if (ctx.origin === 'drag') {
+                // Drag → quick inline free-text field.
+                const label = await ctx.promptLabel({ mode: 'inline', placeholder: 'Relationship…' })
+                if (label === null) return false
+                return { accept: true, data: { label }, directed: true }
+            }
 
-            const label = await ctx.promptLabel({ mode, placeholder: 'Relationship…' })
-            if (label === null) return false // user cancelled — nothing is created
-
-            return { accept: true, data: { label }, directed: true }
+            // Click-click → modal with a dropdown of predefined labels.
+            const values = await ctx.promptData({
+                title: 'Label the connection',
+                submitLabel: 'Create edge',
+                fields: [
+                    {
+                        key: 'label',
+                        label: 'Relationship',
+                        type: 'select',
+                        defaultValue: 'mentors',
+                        options: RELATIONSHIP_LABELS
+                    }
+                ]
+            })
+            if (values === null) return false
+            return { accept: true, data: { label: values.label }, directed: true }
         }
     }
 }
 // #endregion options
 
-// Or, with no callback at all, let every new edge prompt for its label:
-//   UI: { editors: { edgeEditor: { labelPrompt: 'inline' } } }   // or 'modal'
+// With no callback at all, the static option prompts for a free-text label on every
+// edge:  UI: { editors: { edgeEditor: { labelPrompt: 'inline' } } }   // or 'modal'
 
 // Demo plumbing (not part of the API you copy): pin the nodes into a compact layout
 // so there's room to connect. In your app the force layout positions nodes for you.
