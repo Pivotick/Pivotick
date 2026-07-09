@@ -91,3 +91,12 @@
     color: var(--vp-c-text-3);
     font-style: italic;
 }
+
+/* ── Wide gallery cards ──────────────────────────────────────────────────── */
+/* Full-mode demos carry a 340px sidebar + 48px header of their own chrome, so
+   inside VitePress's default 688px column the canvas is squeezed to a sliver.
+   Cards opt in with `aside: false` (drops the TOC, un-caps .content-container)
+   plus `pageClass: gallery-wide`, which lifts the column to a roomier width. */
+.gallery-wide .content-container {
+    max-width: 1104px;
+}

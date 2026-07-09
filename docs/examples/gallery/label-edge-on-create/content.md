@@ -2,6 +2,8 @@
 title: "Label an edge as you draw it"
 category: G
 order: 4
+aside: false
+pageClass: gallery-wide
 ---
 
 # Label an edge as you draw it
@@ -27,7 +29,7 @@ label on every edge with no callback at all.
 import { data, options, onLoaded } from './options.js'
 </script>
 
-<Pivotick :data="data" :options="options" :onLoadedCallback="onLoaded"></Pivotick>
+<Pivotick :data="data" :options="options" :onLoadedCallback="onLoaded" useInlineStyle="margin: 1em 0; height: 560px; border: 1px solid #cccccc99; border-radius: 8px"></Pivotick>
 
 ::: code-group
 <<< ./options.js#options [Options]
