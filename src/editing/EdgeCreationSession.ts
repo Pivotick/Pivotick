@@ -1,9 +1,16 @@
 import type { EdgeData } from '../Edge'
 import type { Graph } from '../Graph'
-import type { EdgeCreateOrigin, InterractionCallbacks } from '../interfaces/InterractionCallbacks'
+import type {
+    EdgeCreateContext,
+    EdgeCreateOrigin,
+    EdgeLabelPromptMode,
+    EdgeLabelPromptOptions,
+    InterractionCallbacks,
+} from '../interfaces/InterractionCallbacks'
 import type { PartialEdgeFullStyle } from '../interfaces/RendererOptions'
 import { Node } from '../Node'
 import { Note } from '../Note'
+import { promptEdgeLabel } from './EdgeLabelPrompt'
 import { GraphConnectManager } from './GraphConnectManager'
 
 /** Normalised form of an {@link InterractionCallbacks.onBeforeEdgeCreate} return value. */
@@ -246,14 +253,21 @@ export class EdgeCreationSession {
         if (this.isTargetInvalid(source, target)) return
 
         const hook = this.graph.getOptions().callbacks?.onBeforeEdgeCreate
-        const decision = await this.resolveDecision(hook, source, target, origin)
+        const staticPromptMode = this.getStaticLabelPromptMode()
+
+        // The hook owns the decision when present; otherwise the static label-prompt
+        // option (if set) collects a label and stamps it onto the new edge's data.
+        const decision = hook
+            ? await this.resolveDecision(hook, source, target, origin)
+            : await this.resolveStaticDecision(source, target, staticPromptMode)
 
         if (!decision.accept) return
 
         if (source instanceof Node) {
-            // With a hook present the consumer owns duplicate policy (edges may
-            // carry distinct data), so bypass the built-in same-pair dedup.
-            this.connectManager.createEdge(source, target, decision, { allowDuplicate: Boolean(hook) })
+            // Once an edge is enriched (by a hook or a collected label) it can
+            // legitimately duplicate an existing pair, so bypass the same-pair dedup.
+            const allowDuplicate = Boolean(hook) || Boolean(staticPromptMode)
+            this.connectManager.createEdge(source, target, decision, { allowDuplicate })
             return
         }
 
@@ -273,7 +287,14 @@ export class EdgeCreationSession {
         if (!hook) return { accept: true }
 
         const kind = source instanceof Note ? 'note-link' : 'edge'
-        const decision = await hook({ source, target, origin, kind })
+        const context: EdgeCreateContext = {
+            source,
+            target,
+            origin,
+            kind,
+            promptLabel: (options?: EdgeLabelPromptOptions) => this.promptEdgeLabel(source, target, options)
+        }
+        const decision = await hook(context)
 
         if (decision === true) return { accept: true }
         if (!decision) return { accept: false }
@@ -285,6 +306,45 @@ export class EdgeCreationSession {
             id: decision.id,
             directed: decision.directed
         }
+    }
+
+    /**
+     * Hook-less path for the static `editors.edgeEditor.labelPrompt` option: prompt
+     * for a label and stamp it onto the edge's data. A cancel vetoes the create.
+     * Note-links carry no data, so they always accept with defaults here.
+     */
+    private async resolveStaticDecision(
+        source: Connectable,
+        target: Node,
+        mode: EdgeLabelPromptMode | undefined
+    ): Promise<ResolvedDecision> {
+
+        if (!mode || !(source instanceof Node)) return { accept: true }
+
+        const label = await this.promptEdgeLabel(source, target, { mode })
+        if (label === null) return { accept: false }
+
+        return { accept: true, data: { label } }
+    }
+
+    private getStaticLabelPromptMode(): EdgeLabelPromptMode | undefined {
+        return this.graph.UIManager.getOptions().editors?.edgeEditor?.labelPrompt
+    }
+
+    /** Open the label prompt anchored at the (source→target) edge midpoint. */
+    private promptEdgeLabel(source: Connectable, target: Node, options?: EdgeLabelPromptOptions): Promise<string | null> {
+
+        const tx = target.x ?? 0
+        const ty = target.y ?? 0
+        let gx = tx
+        let gy = ty
+        if (source instanceof Node && source.x != null && source.y != null) {
+            gx = (source.x + tx) / 2
+            gy = (source.y + ty) / 2
+        }
+
+        const anchor = this.graph.renderer.graphToScreenCoordinates(gx, gy)
+        return promptEdgeLabel(this.graph, anchor, options)
     }
 
     /** True when a live `isValidConnection` predicate rejects the hovered target. */

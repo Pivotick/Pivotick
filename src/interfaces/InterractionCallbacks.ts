@@ -243,6 +243,21 @@ export interface InterractionCallbacks<TElement = unknown> {
 /** Whether a connection was drawn by click-to-connect or drag-to-connect. */
 export type EdgeCreateOrigin = 'click' | 'drag'
 
+/** Which UI the label prompt uses. */
+export type EdgeLabelPromptMode = 'inline' | 'modal'
+
+/** Options for {@link EdgeCreateContext.promptLabel} (and the static `edgeEditor.labelPrompt`). */
+export interface EdgeLabelPromptOptions {
+    /** `'inline'` = floating input at the edge midpoint, `'modal'` = a modal field. @default 'inline' */
+    mode?: EdgeLabelPromptMode
+    /** Value the field is pre-filled with. */
+    initial?: string
+    /** Placeholder shown while empty. */
+    placeholder?: string
+    /** Modal header (modal mode only). */
+    title?: string
+}
+
 /** Context passed to {@link InterractionCallbacks.onBeforeEdgeCreate}. */
 export interface EdgeCreateContext {
     /** The source of the connection — a {@link Node} for an edge, a {@link Note} for a note-link. */
@@ -253,6 +268,14 @@ export interface EdgeCreateContext {
     origin: EdgeCreateOrigin
     /** `'edge'` for a node→node edge, `'note-link'` for a note→node attachment. */
     kind: 'edge' | 'note-link'
+    /**
+     * Prompt the user for a label while the connect gesture is still pending, using
+     * either a floating inline input or a modal (per {@link EdgeLabelPromptOptions.mode}).
+     * Resolves to the entered string, or `null` if the user cancelled (Esc / closed).
+     * The shadow-edge preview stays up while it is open. Typically fed back into the
+     * returned decision's `data` — e.g. `return { accept: true, data: { label } }`.
+     */
+    promptLabel: (options?: EdgeLabelPromptOptions) => Promise<string | null>
 }
 
 /**

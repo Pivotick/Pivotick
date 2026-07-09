@@ -261,3 +261,101 @@ test.describe('edge creation — note-link before-create hook', () => {
         expect(await harness(page, 'noteAttachment', 'note1')).toEqual({ type: 'node', id: 'e' })
     })
 })
+
+// The label prompt: an interactive way to enter an edge's label mid-gesture, via
+// either `ctx.promptLabel({ mode })` inside `onBeforeEdgeCreate` (per-event choice
+// of inline vs modal) or the hook-less static `editors.edgeEditor.labelPrompt`
+// option. Both drive the same prompt primitive and stamp `data.label`.
+
+/** The floating inline label input (0 count when it isn't open). */
+const inlineLabelInput = (page: Page) => page.locator('.pvt-edge-label-input')
+/** The label input rendered inside the modal skin. */
+const modalLabelInput = (page: Page) => page.locator('.pvt-edge-label-modal-body .pvt-edge-label-input')
+
+/** Type into the (already-open) inline input and commit with Enter. */
+async function commitInlineLabel(page: Page, text: string): Promise<void> {
+    const input = inlineLabelInput(page)
+    await input.waitFor({ state: 'visible' })
+    await input.fill(text)
+    await input.press('Enter')
+}
+
+test.describe('edge creation — label prompt (ctx.promptLabel + static option)', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoHarness(page)
+        await loadFixture(page, 'pair')
+    })
+
+    test('hook: the inline prompt commits the typed label onto the new edge', async ({ page }) => {
+        await harness(page, 'configureConnect', { edgeHook: 'prompt-inline' })
+        await harness(page, 'startClickConnect')
+        await clickConnect(page, 'a', 'b')
+
+        await commitInlineLabel(page, 'knows')
+
+        await expect.poll(() => edgeCount(page)).toBe(1)
+        const events = await recordedEdges(page)
+        expect(events).toHaveLength(1)
+        expect(events[0].data.label).toBe('knows')
+        expect(await edgeHookCalls(page)).toBe(1)
+        // The floating input is torn down once the decision settles.
+        await expect(inlineLabelInput(page)).toHaveCount(0)
+    })
+
+    test('hook: cancelling the inline prompt (Esc) vetoes — no edge is created', async ({ page }) => {
+        await harness(page, 'configureConnect', { edgeHook: 'prompt-inline' })
+        await harness(page, 'startClickConnect')
+        await clickConnect(page, 'a', 'b')
+
+        await inlineLabelInput(page).waitFor({ state: 'visible' })
+        await inlineLabelInput(page).press('Escape')
+
+        // Hook ran (once) but the cancel resolved to a veto: nothing lands.
+        await expect.poll(() => edgeHookCalls(page)).toBe(1)
+        expect(await edgeCount(page)).toBe(0)
+        expect(await recordedEdges(page)).toHaveLength(0)
+        await expect(inlineLabelInput(page)).toHaveCount(0)
+    })
+
+    test('hook: the modal prompt commits the typed label via the Add button', async ({ page }) => {
+        await harness(page, 'configureConnect', { edgeHook: 'prompt-modal' })
+        await harness(page, 'startClickConnect')
+        await clickConnect(page, 'a', 'b')
+
+        await modalLabelInput(page).waitFor({ state: 'visible' })
+        await modalLabelInput(page).fill('reports-to')
+        await page.locator('.pvt-modal__footer button', { hasText: 'Add' }).click()
+
+        await expect.poll(() => edgeCount(page)).toBe(1)
+        const events = await recordedEdges(page)
+        expect(events[0].data.label).toBe('reports-to')
+    })
+
+    test('static option (no hook): the inline prompt stamps data.label with no callback', async ({ page }) => {
+        await harness(page, 'configureConnect', {}) // record edgeAdd, install no hook
+        await harness(page, 'setEdgeLabelPrompt', 'inline')
+        await harness(page, 'startClickConnect')
+        await clickConnect(page, 'a', 'b')
+
+        await commitInlineLabel(page, 'friend')
+
+        await expect.poll(() => edgeCount(page)).toBe(1)
+        const events = await recordedEdges(page)
+        expect(events[0].data.label).toBe('friend')
+        expect(await edgeHookCalls(page)).toBe(0) // proves the static path, not a hook
+    })
+
+    test('static option (no hook): cancelling the prompt vetoes the create', async ({ page }) => {
+        await harness(page, 'configureConnect', {})
+        await harness(page, 'setEdgeLabelPrompt', 'inline')
+        await harness(page, 'startClickConnect')
+        await clickConnect(page, 'a', 'b')
+
+        await inlineLabelInput(page).waitFor({ state: 'visible' })
+        await inlineLabelInput(page).press('Escape')
+
+        // Give the (microtask) decision a beat, then confirm nothing was created.
+        await expect.poll(() => edgeCount(page)).toBe(0)
+        expect(await recordedEdges(page)).toHaveLength(0)
+    })
+})

@@ -453,6 +453,37 @@ dl.pvt-property-list {
     }
 }
 
+// Inline edge-label prompt: a small floating input anchored at the edge midpoint.
+.pvt-edge-label-input {
+    position: absolute;
+    z-index: 30;
+    transform: translate(-50%, -50%);
+    min-width: 90px;
+    max-width: 220px;
+    padding: 3px 8px;
+    font-size: 12px;
+    color: var(--pvt-text-color);
+    background: var(--pvt-bg-color-0);
+    border: 1px solid var(--pvt-border-color);
+    border-radius: 4px;
+    box-shadow: var(--pvt-box-shadow-strong);
+    outline: none;
+
+    &:focus {
+        border-color: var(--pvt-bg-color-primary);
+    }
+}
+
+// The same field inside the modal spans the body — drop the floating layout.
+.pvt-edge-label-modal-body .pvt-edge-label-input {
+    position: static;
+    transform: none;
+    display: block;
+    width: 100%;
+    max-width: none;
+    box-shadow: none;
+}
+
 .pvt-cluster-area {
     fill: var(--pvt-node-cluster-fill);
     stroke-dasharray: 4 2;

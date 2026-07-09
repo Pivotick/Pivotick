@@ -32,6 +32,10 @@ export type EdgeHookBehavior =
     | 'veto-once'
     | 'accept-data'
     | 'accept-data-async'
+    // Call `ctx.promptLabel({ mode })`, then accept with the entered label as
+    // `data.label` (or veto if the user cancelled) — exercises the hook-driven prompt.
+    | 'prompt-inline'
+    | 'prompt-modal'
 
 /** Named `isValidConnection` live-predicate behaviours. */
 export type ValidConnBehavior = 'reject-all' | 'reject-target-b'
@@ -231,6 +235,12 @@ export interface HarnessApi {
      * and start recording `edgeAdd` events + hook invocations. Call after `load`.
      */
     configureConnect(config?: ConnectConfig): void
+    /**
+     * Set (or clear with `null`) the static `editors.edgeEditor.labelPrompt` option
+     * on the live graph — the hook-less path that auto-prompts for a label on every
+     * interactive edge create. Read fresh at connect time, so it can be flipped here.
+     */
+    setEdgeLabelPrompt(mode: 'inline' | 'modal' | null): void
     /** Edges that entered the model since {@link configureConnect} (for veto / accept-with-data assertions). */
     edgeEvents(): RecordedEdge[]
     /** How many times each connect callback was invoked (proves the pending lock blocks re-entry). */
@@ -687,6 +697,13 @@ class Harness implements HarnessApi {
                 if (behavior.startsWith('accept-data')) {
                     return { accept: true, data: { label: 'linked-to', kind: ctx.kind }, directed: true }
                 }
+                if (behavior.startsWith('prompt-')) {
+                    const mode = behavior === 'prompt-modal' ? 'modal' : 'inline'
+                    const label = await ctx.promptLabel({ mode })
+                    // Cancel (null) vetoes; otherwise accept carrying the entered label.
+                    if (label === null) return false
+                    return { accept: true, data: { label } }
+                }
                 return true
             }
         }
@@ -700,6 +717,12 @@ class Harness implements HarnessApi {
                 return true
             }
         }
+    }
+
+    setEdgeLabelPrompt(mode: 'inline' | 'modal' | null): void {
+        const ui = this.g.UIManager.getOptions() as { editors?: { edgeEditor?: { labelPrompt?: 'inline' | 'modal' } } }
+        ui.editors = ui.editors ?? {}
+        ui.editors.edgeEditor = mode ? { labelPrompt: mode } : {}
     }
 
     edgeEvents(): RecordedEdge[] {

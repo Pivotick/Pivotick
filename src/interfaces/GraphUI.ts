@@ -1,5 +1,6 @@
 import type { Edge } from '../Edge'
 import type { NodeEditSession } from '../editing/NodeEditSession'
+import type { EdgeLabelPromptMode } from './InterractionCallbacks'
 import type { Node } from '../Node'
 import type { Note } from '../Note'
 import type { UIElement } from '../ui/UIManager'
@@ -262,6 +263,16 @@ export interface Editors {
          * @default undefined
          */
         render?: (session: NodeEditSession) => void
+    }
+    edgeEditor?: {
+        /**
+         * When set, every interactive edge create prompts the end-user for a label
+         * (stored on the new edge's `data.label`) using the chosen UI — no callback
+         * needed. An `onBeforeEdgeCreate` hook, if present, takes over and this is
+         * ignored (the hook can prompt itself via `ctx.promptLabel`).
+         * @default undefined
+         */
+        labelPrompt?: EdgeLabelPromptMode
     }
 }
 
