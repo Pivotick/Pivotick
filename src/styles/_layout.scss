@@ -44,6 +44,8 @@
     width: var(--pvt-sidebar-width);
     grid-area: sidebar;
     height: 100%;
+    position: relative;
+    z-index: 1;
     transition: width 0.1s ease-out;
 
     .pvt-sidebar-elements {
