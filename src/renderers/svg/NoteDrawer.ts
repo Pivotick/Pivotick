@@ -213,12 +213,10 @@ export class NoteDrawer {
 
                 linkContent.appendChild(row)
 
-                const rootHtml = root as unknown as HTMLElement
-                this.graph.UIManager.tooltip?.shadowLinkManager?.removeShadowLink(rootHtml)
-
                 requestAnimationFrame(() => {
                     const rootHtml = root as unknown as HTMLElement
                     const shadowLinkManager = this.graph.UIManager.tooltip?.shadowLinkManager
+                    shadowLinkManager?.removeShadowLink(rootHtml)
                     shadowLinkManager?.setBoundingBox(rootHtml, {
                         source: rootHtml.getBoundingClientRect(),
                         target: node.getGraphElement()!.getBoundingClientRect(),
