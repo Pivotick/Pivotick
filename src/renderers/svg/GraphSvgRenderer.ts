@@ -254,6 +254,7 @@ export class GraphSvgRenderer extends GraphRenderer {
     private edgeGroup: Selection<SVGGElement, unknown, null, undefined>
     private nodeGroup: Selection<SVGGElement, unknown, null, undefined>
     private noteGroup: Selection<SVGGElement, unknown, null, undefined>
+    private noteEdgeGroup: Selection<SVGGElement, unknown, null, undefined>
     private selectionBoxGroup: Selection<SVGGElement, unknown, null, undefined>
     public defs: Selection<SVGDefsElement, unknown, null, undefined>
 
@@ -267,6 +268,7 @@ export class GraphSvgRenderer extends GraphRenderer {
     private nodeGroupSelection!: Selection<SVGGElement, Node, SVGGElement, unknown>
     private edgeGroupSelection!: Selection<SVGPathElement, Edge, SVGGElement, unknown>
     private noteGroupSelection!: Selection<SVGGElement, Note, SVGGElement, unknown>
+    private noteEdgeSelection!: Selection<SVGPathElement, { note: Note; target: Node }, SVGGElement, unknown>
     private nodeSelection!: Selection<SVGGElement, Node, SVGGElement, unknown>
     private edgeSelection!: Selection<SVGGElement, Edge, SVGGElement, unknown>
     private noteSelection!: Selection<SVGGElement, Note, SVGGElement, unknown>
@@ -302,6 +304,8 @@ export class GraphSvgRenderer extends GraphRenderer {
 
         this.shadowEdgeGroup = this.zoomGroup.append('g').attr('class', 'shadow-edges').style('pointer-events', 'none')
         this.shadowEdgePath = this.shadowEdgeGroup.append('path').attr('class', 'pvt-shadow-edge').style('display', 'none')
+
+        this.noteEdgeGroup = this.zoomGroup.append('g').attr('class', 'note-edges')
         
         this.noteGroup = this.zoomGroup.append('g').attr('class', 'notes')
         this.selectionBoxGroup = this.svg.append('g').attr('class', 'selection-box')
@@ -599,6 +603,34 @@ export class GraphSvgRenderer extends GraphRenderer {
 
                 exit => exit.remove()
             )
+
+        // Builds array of note target pairs
+        const noteEdges: { note: Note; target: Node }[] = []
+        for (const note of this.graph.noteManager.getVisibleNotes()) {
+            const attached = note.getAttachedElement()
+            if (!attached || attached.type !== 'node') continue
+            const target = this.graph.getMutableNode(attached.id)
+            if (!target || !target.visible) continue
+            noteEdges.push({ note, target })
+        }
+
+        this.noteEdgeSelection = this.noteEdgeGroup
+            .selectAll<SVGPathElement, { note: Note; target: Node }>('path')
+            .data(noteEdges, d => d.note.id)
+            .join(
+                enter => enter
+                    .append('path')
+                    .attr('class', 'pvt-note-edge')
+                    .attr('stroke', 'var(--pvt-edge-stroke, #999)')
+                    .attr('stroke-width', 2)
+                    .attr('stroke-dasharray', '6 4')
+                    .attr('fill', 'none')
+                    .attr('opacity', 0.7)
+                    .attr('d', d => this.noteEdgePath(d.note, d.target)),
+                update => update
+                    .attr('d', d => this.noteEdgePath(d.note, d.target)),
+                exit => exit.remove()
+            )
     }
 
     public getCanvasSelection(): Selection<SVGSVGElement, unknown, null, undefined> {
@@ -611,6 +643,7 @@ export class GraphSvgRenderer extends GraphRenderer {
 
     public nextTick(): void {
         this.updateEdgePositions() // Render edges first so nodes are drawn on top of them
+        this.updateNoteEdgePositions()
         this.updateNotePositions()
         this.updateNodePositions()
     }
@@ -820,6 +853,44 @@ export class GraphSvgRenderer extends GraphRenderer {
         } else {
             this.edgeDrawer.updatePositions(this.edgeSelection)
         }
+    }
+
+    private updateNoteEdgePositions(): void {
+        if (!this.noteEdgeSelection) return
+        this.noteEdgeSelection.attr('d', d => this.noteEdgePath(d.note, d.target))
+    }
+
+    private noteEdgePath(note: Note, target: Node): string | null {
+        const left = note.x
+        const right = note.x + note.width
+        const top = note.y
+        const bottom = note.y + note.height
+
+        const targetX = target.x ?? 0
+        const targetY = target.y ?? 0
+
+        const closestX = Math.max(left, Math.min(targetX, right))
+        const closestY = Math.max(top, Math.min(targetY, bottom))
+
+        const dx = targetX - closestX
+        const dy = targetY - closestY
+        const dist = Math.hypot(dx, dy)
+
+        if (dist === 0) return null
+
+        const nx = dx / dist
+        const ny = dy / dist
+
+        const drawOffsetStart = 4
+        const startX = closestX + nx * drawOffsetStart
+        const startY = closestY + ny * drawOffsetStart
+
+        const rTo = target.getCircleRadius() || this.nodeDrawer.getNodeStyle(target).size as number
+        const drawOffsetEnd = 8
+        const endX = targetX - nx * (rTo + drawOffsetEnd)
+        const endY = targetY - ny * (rTo + drawOffsetEnd)
+
+        return `M ${startX},${startY} L ${endX},${endY}`
     }
 
     private updateNotePositions(): void {
