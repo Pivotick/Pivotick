@@ -2,6 +2,8 @@
 title: "Search & focus"
 category: I
 order: 3
+aside: false
+pageClass: gallery-wide
 ---
 
 # Search & focus
@@ -34,6 +36,7 @@ const onUnmounted = () => { graph.value = null }
     :options="options"
     :onLoadedCallback="onLoaded"
     :onUnmountedCallback="onUnmounted"
+    useInlineStyle="margin: 1em 0; height: 560px; border: 1px solid #cccccc99; border-radius: 8px"
 ></Pivotick>
 
 <style>

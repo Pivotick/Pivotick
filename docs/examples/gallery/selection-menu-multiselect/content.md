@@ -2,6 +2,8 @@
 title: "Selection menu + multi-select"
 category: F
 order: 3
+aside: false
+pageClass: gallery-wide
 ---
 
 # Selection menu + multi-select
@@ -17,7 +19,7 @@ and the selection menu appears. Try its actions.
 import { data, options, onLoaded } from './options.js'
 </script>
 
-<Pivotick :data="data" :options="options" :onLoadedCallback="onLoaded"></Pivotick>
+<Pivotick :data="data" :options="options" :onLoadedCallback="onLoaded" useInlineStyle="margin: 1em 0; height: 560px; border: 1px solid #cccccc99; border-radius: 8px"></Pivotick>
 
 ::: code-group
 <<< ./options.js#options [Options]

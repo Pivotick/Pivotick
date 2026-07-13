@@ -1048,10 +1048,11 @@ export class GraphSvgRenderer extends GraphRenderer {
     public showShadowEdge(params: {
         source: Node | Note,
         targetNode?: Node,
-        targetPosition?: { x: number, y: number }
+        targetPosition?: { x: number, y: number },
+        invalid?: boolean
     }): void {
 
-        const { source, targetNode, targetPosition } = params
+        const { source, targetNode, targetPosition, invalid = false } = params
 
         if (source.x == null || source.y == null) {
             return
@@ -1134,12 +1135,13 @@ export class GraphSvgRenderer extends GraphRenderer {
 
         this.shadowEdgePath
             .attr('d', path)
-            .attr('stroke', 'var(--pvt-edge-stroke, #999)')
+            .attr('stroke', invalid ? 'var(--pvt-danger, #e5484d)' : 'var(--pvt-edge-stroke, #999)')
             .attr('stroke-width', 2)
             .attr('stroke-dasharray', '6 4')
             .attr('fill', 'none')
             .attr('opacity', 0.7)
-            .attr('marker-end', 'url(#arrow)')
+            .attr('marker-end', invalid ? null : 'url(#arrow)')
+            .classed('pvt-shadow-edge--invalid', invalid)
             .style('display', null)
     }
 
