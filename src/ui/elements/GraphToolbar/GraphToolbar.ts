@@ -5,12 +5,12 @@ import { Note } from '../../../Note'
 import { createHtmlElement, createHtmlTemplate, createShortcutBadge } from '../../../utils/ElementCreation'
 import { createButton } from '../../components/Button'
 import { addCircle, bidirectional, bulkEdit, edit, editMode, graphEdgeIcon, groupNodes, lassoTool, pathSelection, reverseEdge, selectionInverse, stickyNote, trash, ungroupNodes } from '../../icons'
-import type { UIElement, UIManager } from '../../UIManager'
+import type { UIManager } from '../../UIManager'
+import { UIComponent } from '../../UIComponent'
 import './graphToolbar.scss'
 
 
-export class GraphToolbar implements UIElement {
-    private uiManager: UIManager
+export class GraphToolbar extends UIComponent {
 
     public toolbar?: HTMLDivElement
     private container?: HTMLElement
@@ -29,10 +29,10 @@ export class GraphToolbar implements UIElement {
     private enableAddEdgeModeButton?: HTMLButtonElement
 
     constructor(uiManager: UIManager) {
-        this.uiManager = uiManager
+        super(uiManager)
     }
 
-    mount(container: HTMLElement | undefined) {
+    protected onMount(container: HTMLElement | undefined) {
         if (!container) return
         this.container = container
 
@@ -102,12 +102,12 @@ export class GraphToolbar implements UIElement {
         this.updateToolbarVisibility()
     }
 
-    destroy() {
+    protected onDestroy() {
         this.toolbar?.remove()
         this.toolbar = undefined
     }
 
-    afterMount() {
+    protected onAfterMount() {
         if (!this.toolbar) return
 
         this.uiManager.keyManager.register({
@@ -131,7 +131,7 @@ export class GraphToolbar implements UIElement {
         })
     }
 
-    graphReady() {
+    protected onGraphReady() {
         const interaction = this.uiManager.graph.renderer.getGraphInteraction()
 
         interaction.on('selectNode', () => {

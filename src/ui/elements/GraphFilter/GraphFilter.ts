@@ -6,7 +6,8 @@ import { nodeNameGetter } from '../../../utils/GraphGetters'
 import { createBadge } from '../../components/Badge'
 import { createButton } from '../../components/Button'
 import { funnel, funnelClear, graphEdgeIcon, nodeProperty, show } from '../../icons'
-import type { UIElement, UIManager } from '../../UIManager'
+import type { UIManager } from '../../UIManager'
+import { UIComponent } from '../../UIComponent'
 import './graphFilter.scss'
 
 
@@ -18,8 +19,7 @@ interface AttributeFilter {
 const DEFAULT_FILTER_BUTTON_TEXT = 'Filter Graph'
 
 
-export class GraphFilter implements UIElement {
-    public uiManager: UIManager
+export class GraphFilter extends UIComponent {
 
     public graphFilter?: HTMLDivElement
     private formOptions: FieldConfig[]
@@ -27,11 +27,11 @@ export class GraphFilter implements UIElement {
     private manuallyFilteredContainer?: HTMLDivElement
 
     constructor(uiManager: UIManager) {
-        this.uiManager = uiManager
+        super(uiManager)
         this.formOptions = []
     }
 
-    mount(container: HTMLElement | undefined) {
+    protected onMount(container: HTMLElement | undefined) {
         if (!container) return
 
         this.build()
@@ -40,15 +40,15 @@ export class GraphFilter implements UIElement {
         }
     }
 
-    destroy() {
+    protected onDestroy() {
         this.graphFilter?.remove()
         this.graphFilter = undefined
     }
 
-    afterMount() {
+    protected onAfterMount() {
     }
 
-    graphReady(): void { }
+    protected onGraphReady(): void { }
 
     build(): HTMLDivElement {
         this.graphFilter = document.createElement('div')

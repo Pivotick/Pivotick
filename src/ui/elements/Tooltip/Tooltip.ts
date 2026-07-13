@@ -5,7 +5,8 @@ import { tryResolveHTMLElement } from '../../../utils/Getters'
 import { edgeDescriptionGetter, edgeNameGetter, edgePropertiesGetter, nodeDescriptionGetter, nodeNameGetter, nodePropertiesGetter } from '../../../utils/GraphGetters'
 import { createButton } from '../../components/Button'
 import { graphEdgeIcon, pin, closeIcon, selectElement, focusElement } from '../../icons'
-import type { UIElement, UIManager } from '../../UIManager'
+import type { UIManager } from '../../UIManager'
+import { UIComponent } from '../../UIComponent'
 import './tooltip.scss'
 import type { Tooltip as TooltipOptions, MainHeader, PropertiesPanel } from '../../../interfaces/GraphUI'
 import { deepMerge } from '../../../utils/utils'
@@ -19,8 +20,7 @@ const defaultTooltipOptions = {
     allowPinning: true,
 } as Partial<TooltipOptions>
 
-export class Tooltip implements UIElement {
-    private uiManager: UIManager
+export class Tooltip extends UIComponent {
     private options: TooltipOptions
     public shadowLinkManager: ShadowLinkManager | null = null
 
@@ -44,7 +44,7 @@ export class Tooltip implements UIElement {
     private tooltipDataMap = new Map<HTMLElement, Node | Edge>()
 
     constructor(uiManager: UIManager) {
-        this.uiManager = uiManager
+        super(uiManager)
         this.options = deepMerge(defaultTooltipOptions, this.uiManager.getOptions().tooltip) as TooltipOptions
     }
 
@@ -68,7 +68,7 @@ export class Tooltip implements UIElement {
         }
     }
 
-    public mount(container: HTMLElement | undefined) {
+    protected onMount(container: HTMLElement | undefined) {
         if (!container) return
 
         this.parentContainer = document.querySelector('body')!
@@ -92,15 +92,15 @@ export class Tooltip implements UIElement {
         this.shadowLinkManager = new ShadowLinkManager(this.shadowLinkContainer)
     }
 
-    public destroy() {
+    protected onDestroy() {
         this.tooltip?.remove()
         this.tooltip = undefined
     }
 
-    public afterMount() {
+    protected onAfterMount() {
     }
 
-    public graphReady() {
+    protected onGraphReady() {
         if (!this.tooltip) return
 
         this.uiManager.graph.renderer.getGraphInteraction().on('nodeHoverIn', this.nodeHovered.bind(this))

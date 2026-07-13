@@ -2,35 +2,35 @@ import type { Node } from '../../../Node'
 import type { Edge } from '../../../Edge'
 import { createHtmlTemplate } from '../../../utils/ElementCreation'
 import { tryResolveHTMLElement } from '../../../utils/Getters'
-import type { UIElement, UIManager } from '../../UIManager'
+import type { UIManager } from '../../UIManager'
+import { UIComponent } from '../../UIComponent'
 import type { ExtraPanel } from '../../../interfaces/GraphUI'
 import type { EdgeSelection, NodeSelection } from '../../../interfaces/GraphInteractions'
 
-export class ExtraPanelManager implements UIElement {
-    private uiManager: UIManager
+export class ExtraPanelManager extends UIComponent {
     
     private panelContainer?: HTMLDivElement
     private panels: ExtraPanel[]
     private allPanels: HTMLDivElement[] = []
 
     constructor(uiManager: UIManager) {
-        this.uiManager = uiManager
+        super(uiManager)
         this.panels = this.uiManager.getOptions().extraPanels
     }
 
-    public mount(rootContainer: HTMLElement | undefined) {
+    protected onMount(rootContainer: HTMLElement | undefined) {
         if (!rootContainer) return
 
         this.panelContainer = rootContainer as HTMLDivElement
     }
 
-    public destroy() {
+    protected onDestroy() {
         this.panelContainer?.remove()
         this.panelContainer = undefined
         this.allPanels = []
     }
 
-    public afterMount() {
+    protected onAfterMount() {
         this.mountPanels()
         this.panels.forEach((panel, i) => {
             if (panel.alwaysVisible === true) {
@@ -125,6 +125,6 @@ export class ExtraPanelManager implements UIElement {
         this.panelContainer.appendChild(panelDiv)
     }
 
-    graphReady() { }
+    protected onGraphReady() { }
 
 }

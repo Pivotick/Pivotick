@@ -1,7 +1,8 @@
 import { createHtmlTemplate } from '../../../utils/ElementCreation'
 import type { Node } from '../../../Node'
 import type { Edge } from '../../../Edge'
-import type { UIElement, UIManager } from '../../UIManager'
+import type { UIManager } from '../../UIManager'
+import { UIComponent } from '../../UIComponent'
 import './mainHeader.scss'
 import { edgeDescriptionGetter, edgeNameGetter, nodeDescriptionGetter, nodeNameGetter } from '../../../utils/GraphGetters'
 import { graphEdgeIcon, graphMultiSelectNode } from '../../icons'
@@ -10,33 +11,32 @@ import { tryResolveHTMLElement } from '../../../utils/Getters'
 import { createNodePreview } from '../../../utils/NodePreview'
 
 
-export class SidebarMainHeader implements UIElement {
-    private uiManager: UIManager
+export class SidebarMainHeader extends UIComponent {
 
     private panel?: HTMLDivElement
     private renderCb?: ((element: Node | Edge | Node[] | Edge[] | null) => HTMLElement | string) | HTMLElement | string
 
     constructor(uiManager: UIManager) {
-        this.uiManager = uiManager
+        super(uiManager)
         this.renderCb = typeof this.uiManager.getOptions().mainHeader.render === 'function' ? this.uiManager.getOptions().mainHeader.render : undefined
     }
 
-    public mount(rootContainer: HTMLElement | undefined) {
+    protected onMount(rootContainer: HTMLElement | undefined) {
         if (!rootContainer) return
 
         this.panel = rootContainer as HTMLDivElement
     }
 
-    public destroy() {
+    protected onDestroy() {
         this.panel?.remove()
         this.panel = undefined
     }
 
-    public afterMount() {
+    protected onAfterMount() {
         this.clearOverview()
     }
 
-    public graphReady() {
+    protected onGraphReady() {
         this.clearOverview()
     }
 

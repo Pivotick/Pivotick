@@ -1,7 +1,8 @@
 import type { Node } from '../../../Node'
 import hasCycle from '../../../plugins/analytics/cycle'
 import { atom, atomSlashed, balancedDistanced, expand, firstValidNode, flipEdgeDirection, graphControlLayoutOrganic, graphControlLayoutTreeH, graphControlLayoutTreeR, graphControlLayoutTreeV, hide, minHeight, mostConnectedNode, pin, timeDuration10, timeDuration15, timeDuration5, unpin } from '../../icons'
-import type { UIElement, UIManager } from '../../UIManager'
+import type { UIManager } from '../../UIManager'
+import { UIComponent } from '../../UIComponent'
 import './graphControls.scss'
 import { createActionList, createHtmlElement, createIcon, createQuickActionList } from '../../../utils/ElementCreation'
 import { deepMerge } from '../../../utils/utils'
@@ -79,8 +80,8 @@ const defaultMenuNode = {
     ] as MenuActionItemOptions[]
 }
 
-export class GraphControls implements UIElement {
-    public uiManager: UIManager
+export class GraphControls extends UIComponent {
+    declare public uiManager: UIManager
 
     public navigation?: HTMLDivElement
     private selectionMenu?: HTMLDivElement
@@ -341,12 +342,12 @@ export class GraphControls implements UIElement {
 
 
     constructor(uiManager: UIManager) {
-        this.uiManager = uiManager
+        super(uiManager)
 
         this.menuNode = deepMerge(defaultMenuNode, this.uiManager.getOptions().selectionMenu.menuNode ?? {})
     }
 
-    mount(container: HTMLElement | undefined) {
+    protected onMount(container: HTMLElement | undefined) {
         if (!container) return
 
         const template = document.createElement('template')
@@ -365,12 +366,12 @@ export class GraphControls implements UIElement {
         container.appendChild(this.navigation)
     }
 
-    destroy() {
+    protected onDestroy() {
         this.navigation?.remove()
         this.navigation = undefined
     }
 
-    afterMount() {
+    protected onAfterMount() {
         if (!this.navigation) return
         this.selectionMenu = this.navigation.querySelector('.pvt-graphcontrols-selection')!
         this.layoutMenu = this.navigation.querySelector('.pvt-graphcontrols-layout')!
@@ -378,7 +379,7 @@ export class GraphControls implements UIElement {
         this.createLayoutOptionAndBind(this.layoutTypeOptions)
     }
 
-    graphReady() {
+    protected onGraphReady() {
         if (!this.navigation) return
 
         const nodes = this.uiManager.graph.getNodes()

@@ -1,7 +1,6 @@
-import type { GraphUIMode } from '../../interfaces/GraphUI'
-import type { UIElement } from '../UIManager'
+import { UIComponent } from '../UIComponent'
 
-export class Layout implements UIElement {
+export class Layout extends UIComponent {
     public layout?: HTMLDivElement
     public canvas?: HTMLDivElement
     public sidebar?: HTMLDivElement
@@ -13,9 +12,10 @@ export class Layout implements UIElement {
     public graphcontrols?: HTMLDivElement
     public graphtoolbar?: HTMLDivElement
 
-    constructor() { }
+    protected onMount(container?: HTMLElement) {
+        if (!container) return
+        const mode = this.uiManager.getOptions().mode ?? 'full'
 
-    mount(container: HTMLElement, mode: GraphUIMode = 'full') {
         this.layout = document.createElement('div')
         this.layout.className = `pvt-layout mode-${mode}`
 
@@ -64,13 +64,10 @@ export class Layout implements UIElement {
         container.appendChild(this.layout)
     }
 
-    destroy() {
+    protected onDestroy() {
         this.layout?.remove()
         this.layout = undefined
+        this.modal?.remove()
+        this.modal = undefined
     }
-
-    afterMount() { }
-
-    graphReady() { }
-
 }
