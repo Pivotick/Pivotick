@@ -861,19 +861,14 @@ export class GraphSvgRenderer extends GraphRenderer {
     }
 
     private noteEdgePath(note: Note, target: Node): string | null {
-        const left = note.x
-        const right = note.x + note.width
-        const top = note.y
-        const bottom = note.y + note.height
+        const centerX = note.x + note.width / 2
+        const centerY = note.y + note.height / 2
 
         const targetX = target.x ?? 0
         const targetY = target.y ?? 0
 
-        const closestX = Math.max(left, Math.min(targetX, right))
-        const closestY = Math.max(top, Math.min(targetY, bottom))
-
-        const dx = targetX - closestX
-        const dy = targetY - closestY
+        const dx = targetX - centerX
+        const dy = targetY - centerY
         const dist = Math.hypot(dx, dy)
 
         if (dist === 0) return null
@@ -882,8 +877,8 @@ export class GraphSvgRenderer extends GraphRenderer {
         const ny = dy / dist
 
         const drawOffsetStart = 4
-        const startX = closestX + nx * drawOffsetStart
-        const startY = closestY + ny * drawOffsetStart
+        const startX = centerX + nx * drawOffsetStart
+        const startY = centerY + ny * drawOffsetStart
 
         const rTo = target.getCircleRadius() || this.nodeDrawer.getNodeStyle(target).size as number
         const drawOffsetEnd = 8
