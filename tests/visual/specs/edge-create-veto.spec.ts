@@ -54,6 +54,28 @@ async function expectShadowShown(page: Page): Promise<void> {
     await expect(shadow).not.toHaveCSS('display', 'none')
 }
 
+/**
+ * Assert the open label-picker dropdown shows every option at once: each row's box
+ * lies fully within the modal body's visible bounds, not clipped past its bottom
+ * into a one-row scroll. Regression guard for the prompt-modal dropdown-overflow fix
+ * (a short body used to clip the absolutely-positioned dropdown; it now grows to fit).
+ */
+async function expectAllOptionsVisible(page: Page): Promise<void> {
+    const bodyBox = await page.locator('.pvt-modal__body').boundingBox()
+    const options = page.locator('.pvt-edge-prompt-modal-body .pvt-picker__option')
+    const count = await options.count()
+    expect(count, 'a real option list, so "all visible" is meaningful').toBeGreaterThan(1)
+    for (let i = 0; i < count; i++) {
+        const box = await options.nth(i).boundingBox()
+        expect(box, `option ${i} has a layout box`).not.toBeNull()
+        expect(box!.y, `option ${i} top not clipped above the body`).toBeGreaterThanOrEqual(bodyBox!.y - 1)
+        expect(
+            box!.y + box!.height,
+            `option ${i} bottom not clipped below the body`
+        ).toBeLessThanOrEqual(bodyBox!.y + bodyBox!.height + 1)
+    }
+}
+
 test.describe('edge creation — before-create hook (onBeforeEdgeCreate)', () => {
     test.beforeEach(async ({ page }) => {
         await gotoHarness(page)
@@ -421,6 +443,8 @@ test.describe('edge creation — label prompt chosen per gesture origin', () => 
         // The dropdown is the custom PivotickPicker (.pvt-picker) inside the modal:
         // open the control, then click the option row.
         await page.locator('.pvt-edge-prompt-modal-body .pvt-picker__control').click()
+        // The whole predefined-label list is readable at once — not clipped into a scroll.
+        await expectAllOptionsVisible(page)
         await page.locator('.pvt-edge-prompt-modal-body .pvt-picker__option', { hasText: 'manages' }).click()
         await page.locator('.pvt-modal__footer button', { hasText: 'Add' }).click()
 
