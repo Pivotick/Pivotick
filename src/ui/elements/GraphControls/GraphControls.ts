@@ -415,11 +415,11 @@ export class GraphControls extends UIComponent {
             })
         }
 
-        this.uiManager.graph.renderer.getGraphInteraction().on('selectNodes', (nodes: NodeSelection<unknown>[]) => {
+        this.trackInteraction('selectNodes', (nodes: NodeSelection<unknown>[]) => {
             this.populateNodeSelectionContainer(nodes)
             this.showSelectionMenu()
         })
-        this.uiManager.graph.renderer.getGraphInteraction().on('unselectNodes', () => {
+        this.trackInteraction('unselectNodes', () => {
             this.hideSelectionMenu()
             setTimeout(this.clearSelectionContainer, 200)
         })

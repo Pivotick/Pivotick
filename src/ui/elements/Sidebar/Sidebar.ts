@@ -90,25 +90,25 @@ export class Sidebar extends UIComponent {
 
     protected onGraphReady() {
         /* Single selection */
-        this.uiManager.graph.renderer.getGraphInteraction().on('selectNode', (node: Node, element: unknown) => {
+        this.trackInteraction('selectNode', (node: Node, element: unknown) => {
             this.sidebarMainHeader.updateNodeOverview(node, element)
             this.sidebarProperties.updateNodeProperties(node)
             this.sidebarNeighbors.updateNodeNeighbors(node)
             this.extraPanelManager.updateNode(node)
         })
-        this.uiManager.graph.renderer.getGraphInteraction().on('unselectNode', () => {
+        this.trackInteraction('unselectNode', () => {
             this.sidebarMainHeader.clearOverview()
             this.sidebarProperties.clearProperties()
             this.sidebarNeighbors.clearNeighbors()
             this.extraPanelManager.clear()
         })
-        this.uiManager.graph.renderer.getGraphInteraction().on('selectEdge', (edge: Edge) => {
+        this.trackInteraction('selectEdge', (edge: Edge) => {
             this.sidebarMainHeader.updateEdgeOverview(edge)
             this.sidebarProperties.updateEdgeProperties(edge)
             this.sidebarNeighbors.updateEdgeNeighbors(edge)
             this.extraPanelManager.updateEdge(edge)
         })
-        this.uiManager.graph.renderer.getGraphInteraction().on('unselectEdge', () => {
+        this.trackInteraction('unselectEdge', () => {
             this.sidebarMainHeader.clearOverview()
             this.sidebarProperties.clearProperties()
             this.sidebarNeighbors.clearNeighbors()
@@ -117,14 +117,14 @@ export class Sidebar extends UIComponent {
 
         /* Multi selection */
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        this.uiManager.graph.renderer.getGraphInteraction().on('selectNodes', (_nodes: NodeSelection<unknown>[]) => {
+        this.trackInteraction('selectNodes', (_nodes: NodeSelection<unknown>[]) => {
             const fullSelection = this.uiManager.graph.renderer.getGraphInteraction().getSelectedNodes()
             this.sidebarMainHeader.updateNodesOverview(fullSelection)
             this.sidebarProperties.updateNodesProperties(fullSelection)
             this.sidebarNeighbors.updateNodesNeighbors(fullSelection)
             this.extraPanelManager.updateNodes(fullSelection)
         })
-        this.uiManager.graph.renderer.getGraphInteraction().on('unselectNodes', () => {
+        this.trackInteraction('unselectNodes', () => {
             const fullSelection = this.uiManager.graph.renderer.getGraphInteraction().getSelectedNodes()
             if (fullSelection.length > 0) {
                 this.sidebarMainHeader.updateNodesOverview(fullSelection)
@@ -138,13 +138,13 @@ export class Sidebar extends UIComponent {
                 this.extraPanelManager.clear()
             }
         })
-        this.uiManager.graph.renderer.getGraphInteraction().on('selectEdges', (edges: EdgeSelection<unknown>[]) => {
+        this.trackInteraction('selectEdges', (edges: EdgeSelection<unknown>[]) => {
             this.sidebarMainHeader.updateEdgesOverview(edges)
             this.sidebarProperties.updateEdgesProperties(edges)
             this.sidebarNeighbors.updateEdgesNeighbors(edges)
             this.extraPanelManager.updateEdges(edges)
         })
-        this.uiManager.graph.renderer.getGraphInteraction().on('unselectEdges', () => {
+        this.trackInteraction('unselectEdges', () => {
             this.sidebarMainHeader.clearOverview()
             this.sidebarProperties.clearProperties()
             this.sidebarNeighbors.clearNeighbors()

@@ -1,4 +1,5 @@
 import type { UIManager } from './UIManager'
+import type { GraphInteractionEvents } from '../interfaces/GraphInteractions'
 
 /**
  * The lifecycle phases every UI element participates in, in order. `mount`
@@ -83,6 +84,20 @@ export abstract class UIComponent {
     /** Register a teardown fn run (LIFO) on {@link destroy}. */
     protected track(dispose: () => void): void {
         this.disposables.push(dispose)
+    }
+
+    /**
+     * Subscribe to the graph interaction bus and auto-unsubscribe on
+     * {@link destroy}. Use instead of `getGraphInteraction().on(...)` so the
+     * handler doesn't outlive the component.
+     */
+    protected trackInteraction<K extends keyof GraphInteractionEvents<unknown>>(
+        event: K,
+        handler: GraphInteractionEvents<unknown>[K]
+    ): void {
+        const interaction = this.uiManager.graph.renderer.getGraphInteraction()
+        interaction.on(event, handler)
+        this.track(() => interaction.off(event, handler))
     }
 
     /** Add a DOM listener that is automatically removed on {@link destroy}. */

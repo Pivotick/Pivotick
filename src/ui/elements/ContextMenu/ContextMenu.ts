@@ -301,12 +301,12 @@ export class ContextMenu extends UIComponent {
     }
 
     protected onGraphReady() {
-        this.uiManager.graph.renderer.getGraphInteraction().on('nodeContextmenu', this.nodeClicked.bind(this))
-        this.uiManager.graph.renderer.getGraphInteraction().on('edgeContextmenu', this.edgeClicked.bind(this))
-        this.uiManager.graph.renderer.getGraphInteraction().on('noteContextmenu', this.noteClicked.bind(this))
-        this.uiManager.graph.renderer.getGraphInteraction().on('canvasContextmenu', this.canvasClicked.bind(this))
-        this.uiManager.graph.renderer.getGraphInteraction().on('canvasClick', () => { this.hide() })
-        this.uiManager.graph.renderer.getGraphInteraction().on('canvasZoom', () => { this.hide() })
+        this.trackInteraction('nodeContextmenu', this.nodeClicked.bind(this))
+        this.trackInteraction('edgeContextmenu', this.edgeClicked.bind(this))
+        this.trackInteraction('noteContextmenu', this.noteClicked.bind(this))
+        this.trackInteraction('canvasContextmenu', this.canvasClicked.bind(this))
+        this.trackInteraction('canvasClick', () => { this.hide() })
+        this.trackInteraction('canvasZoom', () => { this.hide() })
     }
 
     private nodeClicked(event: PointerEvent, node: Node): void {

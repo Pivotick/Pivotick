@@ -132,56 +132,59 @@ export class GraphToolbar extends UIComponent {
     }
 
     protected onGraphReady() {
-        const interaction = this.uiManager.graph.renderer.getGraphInteraction()
-
-        interaction.on('selectNode', () => {
+        this.trackInteraction('selectNode', () => {
             this.updateToolbarVisibility()
         })
 
-        interaction.on('unselectNode', () => {
+        this.trackInteraction('unselectNode', () => {
             this.updateToolbarVisibility()
         })
 
-        interaction.on('selectNodes', () => {
+        this.trackInteraction('selectNodes', () => {
             this.updateToolbarVisibility()
         })
 
-        interaction.on('unselectNodes', () => {
+        this.trackInteraction('unselectNodes', () => {
             this.updateToolbarVisibility()
         })
 
-        interaction.on('selectEdge', () => {
+        this.trackInteraction('selectEdge', () => {
             this.updateToolbarVisibility()
         })
 
-        interaction.on('unselectEdge', () => {
+        this.trackInteraction('unselectEdge', () => {
             this.updateToolbarVisibility()
         })
 
-        interaction.on('selectEdges', () => {
+        this.trackInteraction('selectEdges', () => {
             this.updateToolbarVisibility()
         })
 
-        interaction.on('unselectEdges', () => {
+        this.trackInteraction('unselectEdges', () => {
             this.updateToolbarVisibility()
         })
 
-        interaction.on('canvasClick', () => {
+        this.trackInteraction('canvasClick', () => {
             this.updateToolbarVisibility()
         })
 
         const connectManager = this.uiManager.graph.editing.connectManager
 
-        connectManager.on('start', (connectManager: GraphConnectManager) => {
-            if (connectManager.getMode() === 'node-edge') {
+        const onConnectStart = (cm: GraphConnectManager) => {
+            if (cm.getMode() === 'node-edge') {
                 this.refreshAddEdgeButtonState(true)
             }
-        })
-
-        connectManager.on('stop', (connectManager: GraphConnectManager) => {
-            if (connectManager.getMode() === 'node-edge') {
+        }
+        const onConnectStop = (cm: GraphConnectManager) => {
+            if (cm.getMode() === 'node-edge') {
                 this.refreshAddEdgeButtonState(false)
             }
+        }
+        connectManager.on('start', onConnectStart)
+        connectManager.on('stop', onConnectStop)
+        this.track(() => {
+            connectManager.off('start', onConnectStart)
+            connectManager.off('stop', onConnectStop)
         })
     }
 

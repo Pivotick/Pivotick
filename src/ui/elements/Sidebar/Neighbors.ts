@@ -92,6 +92,9 @@ export class SidebarNeighbors extends UIComponent {
     }
 
     protected onDestroy() {
+        // Tear down the nested ego graph (its own UIManager/renderer) too.
+        this.egoGraph?.destroy()
+        this.egoGraph = undefined
         this.panel?.remove()
         this.panel = undefined
     }

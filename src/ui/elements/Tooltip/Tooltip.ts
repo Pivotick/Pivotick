@@ -103,19 +103,19 @@ export class Tooltip extends UIComponent {
     protected onGraphReady() {
         if (!this.tooltip) return
 
-        this.uiManager.graph.renderer.getGraphInteraction().on('nodeHoverIn', this.nodeHovered.bind(this))
-        this.uiManager.graph.renderer.getGraphInteraction().on('nodeHoverOut', this.delayedHide.bind(this))
-        // this.uiManager.graph.renderer.getGraphInteraction().on('nodeHoverOut', () => { this.delayedHide() })
-        // this.uiManager.graph.renderer.getGraphInteraction().on('edgeHoverIn', this.edgeHovered.bind(this))
-        // this.uiManager.graph.renderer.getGraphInteraction().on('edgeHoverOut', () => { this.delayedHide() })
-        this.uiManager.graph.renderer.getGraphInteraction().on('canvasMousemove', this.updateMousePosition.bind(this))
-        this.uiManager.graph.renderer.getGraphInteraction().on('dragging', (_event: MouseEvent, node: Node) => {
+        this.trackInteraction('nodeHoverIn', this.nodeHovered.bind(this))
+        this.trackInteraction('nodeHoverOut', this.delayedHide.bind(this))
+        // this.trackInteraction('nodeHoverOut', () => { this.delayedHide() })
+        // this.trackInteraction('edgeHoverIn', this.edgeHovered.bind(this))
+        // this.trackInteraction('edgeHoverOut', () => { this.delayedHide() })
+        this.trackInteraction('canvasMousemove', this.updateMousePosition.bind(this))
+        this.trackInteraction('dragging', (_event: MouseEvent, node: Node) => {
             if (this.hoveredElementID === node.id) {
                 this.hide(node)
             }
         })
-        this.uiManager.graph.renderer.getGraphInteraction().on('canvasZoom', this.canvasZoomed.bind(this))
-        this.uiManager.graph.renderer.getGraphInteraction().on('simulationSlowTick', this.simulationSlowTick.bind(this))
+        this.trackInteraction('canvasZoom', this.canvasZoomed.bind(this))
+        this.trackInteraction('simulationSlowTick', this.simulationSlowTick.bind(this))
 
         this.tooltip.addEventListener('mouseenter', () => {
             if (this.hideTimeout) {
