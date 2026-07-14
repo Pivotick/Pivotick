@@ -3,7 +3,7 @@ import type { UIManager } from './UIManager'
 /**
  * The lifecycle phases every UI element participates in, in order. `mount`
  * is handled separately (it needs a container / slot); these three are the
- * argument-less phases the {@link UIManager} broadcasts.
+ * argument-less phases the `UIManager` broadcasts.
  */
 export type UIPhase = 'afterMount' | 'graphReady' | 'destroy'
 
@@ -12,12 +12,12 @@ export type UIPhase = 'afterMount' | 'graphReady' | 'destroy'
  *
  * It provides two things the old hand-wired pattern lacked:
  *
- * 1. **A composite tree.** A component owns {@link children}; the four
+ * 1. **A composite tree.** A component owns `children`; the four
  *    lifecycle phases recurse into them automatically. Nested components no
  *    longer re-implement (and occasionally forget) the recursion by hand — a
- *    parent just declares its children via {@link addChild}.
- * 2. **A disposable registry.** Anything registered via {@link track} /
- *    {@link listen} (event unsubscribes, DOM listeners, timers) is torn down
+ *    parent just declares its children via `addChild`.
+ * 2. **A disposable registry.** Anything registered via `track` /
+ *    `listen` (event unsubscribes, DOM listeners, timers) is torn down
  *    on {@link destroy}, so components stop leaking interaction subscriptions.
  *
  * Subclasses override the `on*` hooks rather than the lifecycle methods
