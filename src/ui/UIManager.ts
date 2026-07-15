@@ -125,7 +125,7 @@ export interface UIElement {
  * Declarative catalog of the built-in UI elements. Each entry says which
  * modes it appears in, an optional `enabled` gate, how to construct it, and
  * which layout slot it mounts into. Adding a new built-in element is a single
- * row here — no `buildXxx` method and no edits to the lifecycle plumbing.
+ * row here.
  *
  * Order matters: `layout` is first because every other slot getter reads from
  * it.

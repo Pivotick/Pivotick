@@ -69,7 +69,7 @@ const statsPlugin = {
     name: 'stats-overlay',
     install(ctx) {
         const overlay = new StatsOverlay(ctx.ui)
-        // Mount the element into the canvas slot; its lifecycle is now managed.
+        // Mount the element into the canvas slot; its lifecycle is then managed.
         ctx.addElement(overlay, ctx.layout?.canvas)
         // Bonus: click the graph, then press "B" to toggle the overlay.
         ctx.addKeybinding({ key: 'b', callback: () => overlay.toggle() })

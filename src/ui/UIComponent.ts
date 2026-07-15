@@ -9,17 +9,14 @@ import type { GraphInteractionEvents } from '../interfaces/GraphInteractions'
 export type UIPhase = 'afterMount' | 'graphReady' | 'destroy'
 
 /**
- * Base class for every UI element.
+ * Base class for every UI element. It provides:
  *
- * It provides two things the old hand-wired pattern lacked:
- *
- * 1. **A composite tree.** A component owns `children`; the four
- *    lifecycle phases recurse into them automatically. Nested components no
- *    longer re-implement (and occasionally forget) the recursion by hand — a
- *    parent just declares its children via `addChild`.
- * 2. **A disposable registry.** Anything registered via `track` /
- *    `listen` (event unsubscribes, DOM listeners, timers) is torn down
- *    on {@link destroy}, so components stop leaking interaction subscriptions.
+ * 1. **A composite tree.** A component owns `children`; the four lifecycle
+ *    phases recurse into them automatically. A parent declares its children
+ *    via `addChild` and their lifecycle is driven for it.
+ * 2. **A disposable registry.** Anything registered via `track` / `listen`
+ *    (event unsubscribes, DOM listeners, timers) is torn down on
+ *    {@link destroy}.
  *
  * Subclasses override the `on*` hooks rather than the lifecycle methods
  * themselves, so the recursion and teardown always run.
