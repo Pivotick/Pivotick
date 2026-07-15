@@ -17,6 +17,24 @@
     }
   ],
   "exclude": ["**/__tests__/**", "**/*.test.ts"],
+  // Internal support classes reachable via public fields (e.g. graph.editing,
+  // and the PluginContext's ui/layout/keyManager) but intentionally not their
+  // own doc pages. Listing them here silences "referenced but not included".
+  "intentionallyNotExported": [
+    "GraphEditingManager",
+    "NoteManager",
+    "GraphQueryEngine",
+    "KeybindingManager",
+    "Layout",
+    "UIManager",
+    "Note",
+    "FieldConfig",
+    "NodeEditSession",
+    "SimulationEdgeDTO",
+    "SimulationNodeDTO",
+    "Point",
+    "ProgressType"
+  ],
   "excludePrivate": true,
   "excludeProtected": true,
   "excludeInternal": true,
