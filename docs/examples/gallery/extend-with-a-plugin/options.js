@@ -45,7 +45,12 @@ class StatsOverlay extends UIComponent {
     // Runs once the graph data is ready — read live counts off the graph.
     onGraphReady() {
         this.render()
-        this.uiManager.graph.on('dataBatchChanged', () => this.render())
+        const graph = this.uiManager.graph
+        const cb = () => this.render()
+        graph.on('dataBatchChanged', cb)
+        // graph.on lives on the Graph, which outlives the UI — so track the
+        // unsubscribe and destroy() tears it down with everything else.
+        this.track(() => graph.off('dataBatchChanged', cb))
     }
 
     render() {
@@ -59,7 +64,9 @@ class StatsOverlay extends UIComponent {
         this.el.style.display = this.el.style.display === 'none' ? '' : 'none'
     }
 
-    // Only DOM cleanup needed; children + tracked listeners are torn down by UIComponent.
+    // Only DOM cleanup needed here; children and everything registered via
+    // track() (including the dataBatchChanged unsubscribe above) are torn down
+    // by UIComponent.
     onDestroy() {
         this.el?.remove()
     }

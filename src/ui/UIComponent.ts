@@ -11,9 +11,11 @@ export type UIPhase = 'afterMount' | 'graphReady' | 'destroy'
 /**
  * Base class for every UI element. It provides:
  *
- * 1. **A composite tree.** A component owns `children`; the four lifecycle
- *    phases recurse into them automatically. A parent declares its children
- *    via `addChild` and their lifecycle is driven for it.
+ * 1. **A composite tree.** A component owns `children`; three of the four
+ *    lifecycle phases (`afterMount` / `graphReady` / `destroy`) recurse into
+ *    them automatically. `mount` is the exception — it needs a per-child slot,
+ *    so `addChild` mounts each child explicitly instead. A parent declares its
+ *    children via `addChild` and their lifecycle is driven for it.
  * 2. **A disposable registry.** Anything registered via `track` / `listen`
  *    (event unsubscribes, DOM listeners, timers) is torn down on
  *    {@link destroy}.

@@ -201,6 +201,8 @@ export class UIManager {
     private uiDisposables: Array<() => void> = []
     /** True after `destroy()`; late registrations are refused until `setup()` reruns. */
     private destroyed = false
+    /** Names of installed plugins, for de-duplication. Reset on `destroy()`. */
+    private installedPlugins = new Set<string>()
 
     constructor(graph: Graph, container: HTMLElement, options: GraphUI) {
         this.graph = graph
@@ -385,10 +387,18 @@ export class UIManager {
             console.warn(`Cannot install plugin "${plugin.name}" after the UI is destroyed.`)
             return
         }
+        if (this.installedPlugins.has(plugin.name)) {
+            console.warn(`Plugin "${plugin.name}" is already installed; skipping the duplicate.`)
+            return
+        }
+        this.installedPlugins.add(plugin.name)
+
         const ctx: PluginContext = {
             graph: this.graph,
             ui: this,
-            layout: this.layout,
+            // Live view, not an install-time snapshot: the layout is rebuilt on
+            // setup() and its slots vary by mode, so read it on access.
+            get layout() { return this.ui.layout },
             keyManager: this.keyManager,
             addElement: (element, slot) => this.addElement(element, slot),
             onPhase: (phase, callback) => this.onPhase(phase, callback),
@@ -420,6 +430,7 @@ export class UIManager {
         this.byKey.clear()
         this.phaseHandlers = { afterMount: [], graphReady: [], destroy: [] }
         this.emittedPhases.clear()
+        this.installedPlugins.clear()
         for (const dispose of this.uiDisposables.splice(0)) dispose()
     }
 
