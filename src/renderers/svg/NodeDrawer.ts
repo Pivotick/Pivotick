@@ -589,7 +589,10 @@ export class NodeDrawer {
 
             const tailChars = 3
             const headChars = charsToKeep - tailChars
-            label = label.slice(0, headChars) + '…' + label.slice(label.length - tailChars)
+            const truncated = label.slice(0, headChars) + '…' + label.slice(label.length - tailChars)
+            // Near the threshold head+…+tail can be as long as (or longer than) the raw
+            // label — only ellipsize when it actually shortens the string.
+            if (truncated.length < label.length) label = truncated
         }
 
         return [fontSize, label]
