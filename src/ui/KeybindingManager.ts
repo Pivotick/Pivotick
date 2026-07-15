@@ -18,10 +18,6 @@ export class KeybindingManager {
         }
     }
 
-    unregister(key: string) {
-        this.bindings.delete(key)
-    }
-
     handleKeyPress(event: KeyboardEvent) {
         // Ignore typing targets
         const target = event.target as HTMLElement | null

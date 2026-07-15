@@ -199,6 +199,8 @@ export class UIManager {
     private emittedPhases = new Set<UIPhase>()
     /** UIManager-level teardown (global keybindings, container listeners). */
     private uiDisposables: Array<() => void> = []
+    /** True after `destroy()`; late registrations are refused until `setup()` reruns. */
+    private destroyed = false
 
     constructor(graph: Graph, container: HTMLElement, options: GraphUI) {
         this.graph = graph
@@ -227,6 +229,7 @@ export class UIManager {
 
     private setup() {
         this.destroy()
+        this.destroyed = false
 
         if (this.options.theme) {
             this.container.setAttribute('data-theme', this.options.theme.toString())
@@ -300,8 +303,10 @@ export class UIManager {
             for (const callback of [...this.phaseHandlers.destroy].reverse()) callback()
             for (const element of [...this.elements].reverse()) element.destroy()
         } else {
-            for (const element of this.elements) element[phase]()
-            for (const callback of this.phaseHandlers[phase]) callback()
+            // Snapshot: a reentrant addElement/onPhase during the broadcast is
+            // caught up by emittedPhases; the copy stops the live loop firing it again.
+            for (const element of [...this.elements]) element[phase]()
+            for (const callback of [...this.phaseHandlers[phase]]) callback()
         }
     }
 
@@ -376,6 +381,10 @@ export class UIManager {
      * `GraphOptions.plugins` and by {@link Graph.use}.
      */
     public installPlugin(plugin: PivotickPlugin) {
+        if (this.destroyed) {
+            console.warn(`Cannot install plugin "${plugin.name}" after the UI is destroyed.`)
+            return
+        }
         const ctx: PluginContext = {
             graph: this.graph,
             ui: this,
@@ -394,6 +403,10 @@ export class UIManager {
      * has already reached.
      */
     public addElement(element: UIComponent, slot?: HTMLElement) {
+        if (this.destroyed) {
+            console.warn('Cannot add a UI element after the UI is destroyed.')
+            return
+        }
         this.elements.push(element)
         element.mount(slot)
         if (this.emittedPhases.has('afterMount')) element.afterMount()
@@ -401,6 +414,7 @@ export class UIManager {
     }
 
     public destroy() {
+        this.destroyed = true
         this.emitPhase('destroy')
         this.elements = []
         this.byKey.clear()

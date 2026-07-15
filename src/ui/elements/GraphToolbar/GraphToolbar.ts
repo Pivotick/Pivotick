@@ -110,13 +110,13 @@ export class GraphToolbar extends UIComponent {
     protected onAfterMount() {
         if (!this.toolbar) return
 
-        this.uiManager.keyManager.register({
+        this.track(this.uiManager.keyManager.register({
             key: 'e', callback: () => {
                 this.toggleEditMode()
             }
-        })
+        }))
 
-        this.uiManager.keyManager.register({
+        this.track(this.uiManager.keyManager.register({
             key: 'Escape',
             callback: () => {
                 if (this.lassoModeEnabled) {
@@ -128,7 +128,7 @@ export class GraphToolbar extends UIComponent {
                     connectManager.exitClickConnectionMode()
                 }
             }
-        })
+        }))
     }
 
     protected onGraphReady() {
