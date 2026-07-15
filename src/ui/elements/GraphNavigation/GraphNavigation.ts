@@ -143,6 +143,17 @@ export class GraphNavigation implements UIElement {
                     btn.classList.toggle('outline-primary')
                 }
             },
+            {
+                id: 'fit-view-on-expand-collapse',
+                svgIcon: graphNavigationReset,
+                text: 'Fit view on expand/collapse',
+                variant: this.uiManager.graph.simulation.isFitViewOnExpandCollapse() ? 'primary' : 'outline-primary',
+                onClick: (_option, _dropdown, btn) => {
+                    this.uiManager.graph.simulation.toggleFitViewOnExpandCollapse()
+                    btn.classList.toggle('primary')
+                    btn.classList.toggle('outline-primary')
+                }
+            },
         ])
     }
 

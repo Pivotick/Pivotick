@@ -605,7 +605,9 @@ export class NodeDrawer {
             this.graph.toggleExpandNode(node)
             if (!expand) { // reheating the simulation is done after the opening transition completes
                 this.graph.simulation.reheat(0.05)
-                this.graph.renderer.fitAndCenterWhenSettled()
+                if (this.graph.simulation.isFitViewOnExpandCollapse()) {
+                    this.graph.renderer.fitAndCenterWhenSettled()
+                }
             }
         }
 
@@ -659,7 +661,9 @@ export class NodeDrawer {
                 .transition()
                 .duration(250)
                 .on('end', () => {
-                    graph.renderer.fitAndCenterWhenSettled()
+                    if (graph.simulation.isFitViewOnExpandCollapse()) {
+                        graph.renderer.fitAndCenterWhenSettled()
+                    }
                 })
                 .attr('transform', `translate(${-offset}, ${-offset})`)
         }

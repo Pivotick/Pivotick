@@ -49,6 +49,7 @@ export const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
     freezeNodesOnDrag: true,
     gridSnappingEnabled: false,
     gridSize: 50,
+    fitViewOnExpandCollapse: false,
 
     layout: {
         type: 'force',
@@ -724,6 +725,14 @@ export class Simulation {
 
     public isFreezeNodesOnDrag(): boolean {
         return this.options.freezeNodesOnDrag
+    }
+
+    public toggleFitViewOnExpandCollapse() {
+        this.options.fitViewOnExpandCollapse = !this.options.fitViewOnExpandCollapse
+    }
+
+    public isFitViewOnExpandCollapse(): boolean {
+        return this.options.fitViewOnExpandCollapse
     }
 
     private applySnap(value: number): number {
