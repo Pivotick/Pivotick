@@ -76,7 +76,6 @@ export class NoteDrawer {
             container.classList.add('editing')
         }
 
-        container.appendChild(this.createAccentBar())
         container.appendChild(this.createHeader(container, note))
         container.appendChild(this.createLink(note))
         container.appendChild(this.createContent(note))
@@ -89,11 +88,6 @@ export class NoteDrawer {
         })
 
         return fo
-    }
-
-    /** A thin colour stripe along the top of the note, tinted by its colour. */
-    private createAccentBar(): HTMLDivElement {
-        return createHtmlElement('div', { class: 'pvt-note-accent' })
     }
 
     private createHeader(container: HTMLDivElement, note: Note): HTMLDivElement {

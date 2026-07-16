@@ -198,16 +198,6 @@ $light-theme: (
     /* Note */
     pvt-note-node-reference-dot-default: #007acc,
     pvt-note-node-reference-text-color: #333,
-    // Note surface — a soft tint of the note's colour with dark text (light theme).
-    // Only the mix weight/base live here; the color-mix() itself runs in
-    // note.scss where each note's inline `--note-color` is in scope.
-    pvt-note-surface-weight: 62%,
-    pvt-note-surface-base: #ffffff,
-    pvt-note-border-weight: 55%,
-    pvt-note-border-base: #ffffff,
-    pvt-note-text: #2b2b2b,
-    pvt-note-header-bg: rgba(0, 0, 0, 0.05),
-    pvt-note-chrome-bg: rgba(0, 0, 0, 0.05),
 
     /* Component */
     pvt-inline-bar-bg: var(--pvt-bg-color-2),
@@ -446,16 +436,6 @@ $dark-theme: (
     /* Note */
     pvt-note-node-reference-dot-default: #007acc,
     pvt-note-node-reference-text-color: #333,
-    // Note surface — a dark tinted card with light text (dark theme).
-    // Only the mix weight/base live here; the color-mix() itself runs in
-    // note.scss where each note's inline `--note-color` is in scope.
-    pvt-note-surface-weight: 16%,
-    pvt-note-surface-base: #151517,
-    pvt-note-border-weight: 30%,
-    pvt-note-border-base: #2a2a2e,
-    pvt-note-text: #e8e8ea,
-    pvt-note-header-bg: rgba(255, 255, 255, 0.05),
-    pvt-note-chrome-bg: rgba(255, 255, 255, 0.045),
 
     /* Component */
     pvt-inline-bar-bg: var(--pvt-bg-color-6),
