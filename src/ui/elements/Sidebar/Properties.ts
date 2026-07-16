@@ -1,7 +1,8 @@
 import { createHtmlDL, createHtmlElement, createHtmlTemplate, createIcon } from '../../../utils/ElementCreation'
 import type { Node } from '../../../Node'
 import type { Edge } from '../../../Edge'
-import type { UIElement, UIManager } from '../../UIManager'
+import type { UIManager } from '../../UIManager'
+import { UIComponent } from '../../UIComponent'
 import './properties.scss'
 import { edgePropertiesGetter, nodePropertiesGetter } from '../../../utils/GraphGetters'
 import { filterAdd, filterRemove } from '../../icons'
@@ -12,8 +13,7 @@ import { aggregateProperties, createTableForAggregatedProperties } from '../../.
 
 
 
-export class SidebarProperties implements UIElement {
-    private uiManager: UIManager
+export class SidebarProperties extends UIComponent {
 
     private panel?: HTMLDivElement
     private header?: HTMLDivElement
@@ -22,11 +22,11 @@ export class SidebarProperties implements UIElement {
     private renderCb?: ((element: Node | Edge | Node[] | Edge[] | null) => HTMLElement | string) | HTMLElement | string
 
     constructor(uiManager: UIManager) {
-        this.uiManager = uiManager
+        super(uiManager)
         this.renderCb = typeof this.uiManager.getOptions().propertiesPanel.render === 'function' ? this.uiManager.getOptions().propertiesPanel.render : undefined
     }
 
-    public mount(rootContainer: HTMLElement | undefined) {
+    protected onMount(rootContainer: HTMLElement | undefined) {
         if (!rootContainer) return
 
         const template = `
@@ -41,12 +41,12 @@ export class SidebarProperties implements UIElement {
         rootContainer.appendChild(this.panel)
     }
 
-    public destroy() {
+    protected onDestroy() {
         this.panel?.remove()
         this.panel = undefined
     }
 
-    public afterMount() {
+    protected onAfterMount() {
         this.clearProperties()
     }
 
@@ -62,7 +62,7 @@ export class SidebarProperties implements UIElement {
         this.hidePanel()
     }
 
-    public graphReady(): void { }
+    protected onGraphReady(): void { }
 
     private renderCustomContent(element: Node | Edge | Node[] | Edge[] | null) {
         if (!this.body || !this.renderCb) return

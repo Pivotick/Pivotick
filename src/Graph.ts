@@ -15,6 +15,7 @@ import type { GraphRendererOptions } from './interfaces/RendererOptions'
 import { GraphEditingManager } from './editing/GraphEditingManager'
 import { NoteManager } from './NoteManager'
 import { Note, type NoteOptions } from './Note'
+import type { PivotickPlugin } from './interfaces/Plugin'
 
 export class Graph {
     private nodes: Map<string, Node> = new Map()
@@ -125,7 +126,19 @@ export class Graph {
             this.renderer.fitAndCenter(1)
         }
 
+        this.options.plugins?.forEach(plugin => this.use(plugin))
+
         this.startAndRender()
+    }
+
+    /**
+     * Install a {@link PivotickPlugin}. Can be called at any time — the plugin's
+     * UI elements are caught up to the current lifecycle phase. Returns `this`
+     * for chaining.
+     */
+    public use(plugin: PivotickPlugin): this {
+        this.UIManager.installPlugin(plugin)
+        return this
     }
 
     public on<K extends keyof GraphEvents>(

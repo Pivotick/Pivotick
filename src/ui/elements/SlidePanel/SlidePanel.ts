@@ -1,5 +1,6 @@
 import { createButton } from '../../components/Button'
-import type { UIElement, UIManager } from '../../UIManager'
+import type { UIManager } from '../../UIManager'
+import { UIComponent } from '../../UIComponent'
 import './slidePanel.scss'
 
 
@@ -32,8 +33,7 @@ export interface SlidepanelOptions extends Partial<SlidepanelEvents> {
     noBodyPadding?: boolean
 }
 
-export class SlidePanel implements UIElement {
-    public uiManager: UIManager
+export class SlidePanel extends UIComponent {
     private options: SlidepanelOptions
 
 
@@ -47,7 +47,7 @@ export class SlidePanel implements UIElement {
     private DEFAULT_BODY = '- empty panel -'
 
     constructor(uiManager: UIManager, options: SlidepanelOptions = {}) {
-        this.uiManager = uiManager
+        super(uiManager)
         this.options = options
 
         if (!this.options.header) {
@@ -59,7 +59,7 @@ export class SlidePanel implements UIElement {
         }
     }
 
-    mount(container: HTMLElement | undefined) {
+    protected onMount(container: HTMLElement | undefined) {
         if (!container) return
 
         const templateSlidePanel = document.createElement('template')
@@ -101,15 +101,15 @@ export class SlidePanel implements UIElement {
         container.appendChild(this.slidePanel)
     }
 
-    destroy() {
+    protected onDestroy() {
         this.slidePanel?.remove()
         this.slidePanel = undefined
     }
 
-    afterMount() {
+    protected onAfterMount() {
     }
 
-    graphReady(): void { }
+    protected onGraphReady(): void { }
 
     open(): void {
         this.isOpen = true

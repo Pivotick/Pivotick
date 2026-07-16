@@ -1,7 +1,8 @@
 import { createHtmlElement, createHtmlTemplate, createIcon } from '../../../utils/ElementCreation'
 import { Node, type NodeData } from '../../../Node'
 import { Edge } from '../../../Edge'
-import type { UIElement, UIManager } from '../../UIManager'
+import type { UIManager } from '../../UIManager'
+import { UIComponent } from '../../UIComponent'
 import './properties.scss'
 import type { EdgeSelection, NodeSelection } from '../../../interfaces/GraphInteractions'
 import { tryResolveHTMLElement } from '../../../utils/Getters'
@@ -16,8 +17,7 @@ import type { NodeStyle } from '../../../interfaces/RendererOptions'
 import { createNodePreview } from '../../../utils/NodePreview'
 
 
-export class SidebarNeighbors implements UIElement {
-    private uiManager: UIManager
+export class SidebarNeighbors extends UIComponent {
 
     private panel?: HTMLDivElement
     private header?: HTMLDivElement
@@ -34,11 +34,11 @@ export class SidebarNeighbors implements UIElement {
     private renderCb?: ((element: Node | Edge | Node[] | Edge[] | null) => HTMLElement | string) | HTMLElement | string
 
     constructor(uiManager: UIManager) {
-        this.uiManager = uiManager
+        super(uiManager)
         this.renderCb = typeof this.uiManager.getOptions().neighborsPanel.render === 'function' ? this.uiManager.getOptions().neighborsPanel.render : undefined
     }
 
-    public mount(rootContainer: HTMLElement | undefined) {
+    protected onMount(rootContainer: HTMLElement | undefined) {
         if (!rootContainer) return
 
         const template = `
@@ -91,12 +91,15 @@ export class SidebarNeighbors implements UIElement {
         this.body.insertBefore(this.neighborCount, this.body.firstChild)
     }
 
-    public destroy() {
+    protected onDestroy() {
+        // Tear down the nested ego graph (its own UIManager/renderer) too.
+        this.egoGraph?.destroy()
+        this.egoGraph = undefined
         this.panel?.remove()
         this.panel = undefined
     }
 
-    public afterMount() {
+    protected onAfterMount() {
         this.clearNeighbors()
     }
 
@@ -120,7 +123,7 @@ export class SidebarNeighbors implements UIElement {
         this.hidePanel()
     }
 
-    public graphReady(): void { }
+    protected onGraphReady(): void { }
 
     private renderCustomContent(element: Node | Edge | Node[] | Edge[] | null) {
         if (!this.body || !this.renderCb) return

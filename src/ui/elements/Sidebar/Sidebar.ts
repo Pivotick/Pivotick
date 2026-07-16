@@ -1,7 +1,8 @@
 import type { Node } from '../../../Node'
 import type { Edge } from '../../../Edge'
 import { createHtmlElement, createHtmlTemplate, createIcon } from '../../../utils/ElementCreation'
-import type { UIElement, UIManager } from '../../UIManager'
+import type { UIManager } from '../../UIManager'
+import { UIComponent } from '../../UIComponent'
 import './sidebar.scss'
 import { SidebarMainHeader } from './MainHeader'
 import { SidebarProperties } from './Properties'
@@ -10,9 +11,7 @@ import { sidebarCollapse, sidebarExpand } from '../../icons'
 import type { EdgeSelection, NodeSelection } from '../../../interfaces/GraphInteractions'
 import { SidebarNeighbors } from './Neighbors'
 
-export class Sidebar implements UIElement {
-    private uiManager: UIManager
-
+export class Sidebar extends UIComponent {
     public sidebar?: HTMLDivElement
 
     private sidebarOpen: boolean = true
@@ -29,14 +28,14 @@ export class Sidebar implements UIElement {
     private collapse?: HTMLSpanElement
 
     constructor(uiManager: UIManager) {
-        this.uiManager = uiManager
+        super(uiManager)
         this.sidebarMainHeader = new SidebarMainHeader(this.uiManager)
         this.sidebarProperties = new SidebarProperties(this.uiManager)
         this.sidebarNeighbors = new SidebarNeighbors(this.uiManager)
         this.extraPanelManager = new ExtraPanelManager(this.uiManager)
     }
 
-    public mount(container: HTMLElement | undefined) {
+    protected onMount(container: HTMLElement | undefined) {
         if (!container) return
 
         const template = `
@@ -56,24 +55,24 @@ export class Sidebar implements UIElement {
         container.appendChild(this.sidebar)
     }
 
-    public destroy() {
-        this.sidebarMainHeader.destroy()
-        this.sidebarProperties.destroy()
-
+    protected onDestroy() {
+        // child panels are torn down automatically by UIComponent.destroy()
+        this.collapse?.remove()
+        this.collapse = undefined
         this.sidebar?.remove()
         this.sidebar = undefined
     }
 
-    public afterMount() {
+    protected onAfterMount() {
         if (!this.sidebar) return
         this.mainHeaderPanel = this.sidebar.querySelector('.pvt-mainheader-panel') ?? undefined
-        this.sidebarMainHeader.mount(this.mainHeaderPanel)
+        this.addChild(this.sidebarMainHeader, this.mainHeaderPanel)
         this.mainBodyPanel = this.sidebar.querySelector('.pvt-properties-panel') ?? undefined
-        this.sidebarProperties.mount(this.mainBodyPanel)
+        this.addChild(this.sidebarProperties, this.mainBodyPanel)
         this.neighborPanel = this.sidebar.querySelector('.pvt-neighbor-panel') ?? undefined
-        this.sidebarNeighbors.mount(this.neighborPanel)
+        this.addChild(this.sidebarNeighbors, this.neighborPanel)
         this.extraPanelContainer = this.sidebar.querySelector('.pvt-extra-panel') ?? undefined
-        this.extraPanelManager.mount(this.extraPanelContainer)
+        this.addChild(this.extraPanelManager, this.extraPanelContainer)
 
         this.collapse = createHtmlElement('span', { class: 'pvt-sidebar-collapse-container' }, [
             createHtmlElement('span', { class: 'pvt-sidebar-collapse-button pvt-sidebar-collapse-button-collapse' }, [createIcon({ svgIcon: sidebarCollapse })]) as HTMLSpanElement,
@@ -86,39 +85,30 @@ export class Sidebar implements UIElement {
         } else {
             this.showSidebar()
         }
-
-        this.sidebarMainHeader.afterMount()
-        this.sidebarProperties.afterMount()
-        this.sidebarNeighbors.afterMount()
-        this.extraPanelManager.afterMount()
+        // child panels' afterMount() is driven by UIComponent
     }
 
-    public graphReady() {
-        this.sidebarMainHeader.graphReady()
-        this.sidebarProperties.graphReady()
-        this.sidebarNeighbors.graphReady()
-        this.extraPanelManager.graphReady()
-
+    protected onGraphReady() {
         /* Single selection */
-        this.uiManager.graph.renderer.getGraphInteraction().on('selectNode', (node: Node, element: unknown) => {
+        this.trackInteraction('selectNode', (node: Node, element: unknown) => {
             this.sidebarMainHeader.updateNodeOverview(node, element)
             this.sidebarProperties.updateNodeProperties(node)
             this.sidebarNeighbors.updateNodeNeighbors(node)
             this.extraPanelManager.updateNode(node)
         })
-        this.uiManager.graph.renderer.getGraphInteraction().on('unselectNode', () => {
+        this.trackInteraction('unselectNode', () => {
             this.sidebarMainHeader.clearOverview()
             this.sidebarProperties.clearProperties()
             this.sidebarNeighbors.clearNeighbors()
             this.extraPanelManager.clear()
         })
-        this.uiManager.graph.renderer.getGraphInteraction().on('selectEdge', (edge: Edge) => {
+        this.trackInteraction('selectEdge', (edge: Edge) => {
             this.sidebarMainHeader.updateEdgeOverview(edge)
             this.sidebarProperties.updateEdgeProperties(edge)
             this.sidebarNeighbors.updateEdgeNeighbors(edge)
             this.extraPanelManager.updateEdge(edge)
         })
-        this.uiManager.graph.renderer.getGraphInteraction().on('unselectEdge', () => {
+        this.trackInteraction('unselectEdge', () => {
             this.sidebarMainHeader.clearOverview()
             this.sidebarProperties.clearProperties()
             this.sidebarNeighbors.clearNeighbors()
@@ -127,14 +117,14 @@ export class Sidebar implements UIElement {
 
         /* Multi selection */
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        this.uiManager.graph.renderer.getGraphInteraction().on('selectNodes', (_nodes: NodeSelection<unknown>[]) => {
+        this.trackInteraction('selectNodes', (_nodes: NodeSelection<unknown>[]) => {
             const fullSelection = this.uiManager.graph.renderer.getGraphInteraction().getSelectedNodes()
             this.sidebarMainHeader.updateNodesOverview(fullSelection)
             this.sidebarProperties.updateNodesProperties(fullSelection)
             this.sidebarNeighbors.updateNodesNeighbors(fullSelection)
             this.extraPanelManager.updateNodes(fullSelection)
         })
-        this.uiManager.graph.renderer.getGraphInteraction().on('unselectNodes', () => {
+        this.trackInteraction('unselectNodes', () => {
             const fullSelection = this.uiManager.graph.renderer.getGraphInteraction().getSelectedNodes()
             if (fullSelection.length > 0) {
                 this.sidebarMainHeader.updateNodesOverview(fullSelection)
@@ -148,22 +138,22 @@ export class Sidebar implements UIElement {
                 this.extraPanelManager.clear()
             }
         })
-        this.uiManager.graph.renderer.getGraphInteraction().on('selectEdges', (edges: EdgeSelection<unknown>[]) => {
+        this.trackInteraction('selectEdges', (edges: EdgeSelection<unknown>[]) => {
             this.sidebarMainHeader.updateEdgesOverview(edges)
             this.sidebarProperties.updateEdgesProperties(edges)
             this.sidebarNeighbors.updateEdgesNeighbors(edges)
             this.extraPanelManager.updateEdges(edges)
         })
-        this.uiManager.graph.renderer.getGraphInteraction().on('unselectEdges', () => {
+        this.trackInteraction('unselectEdges', () => {
             this.sidebarMainHeader.clearOverview()
             this.sidebarProperties.clearProperties()
             this.sidebarNeighbors.clearNeighbors()
             this.extraPanelManager.clear()
         })
 
-        this.collapse?.addEventListener('click', () => {
-            this.toggleSidebar()
-        })
+        if (this.collapse) {
+            this.listen(this.collapse, 'click', () => this.toggleSidebar())
+        }
     }
 
     public toggleSidebar(): void {

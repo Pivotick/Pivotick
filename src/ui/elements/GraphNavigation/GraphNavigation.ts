@@ -1,15 +1,15 @@
 import { PivotickDropdown } from '../../components/Dropdown'
 import { fullscreen, fullscreenExit, graphNavigationReset, graphNavigationZoomIn, graphNavigationZoomOut, grid, pin, sliderTune, snapGrid } from '../../icons'
-import type { UIElement, UIManager } from '../../UIManager'
+import type { UIManager } from '../../UIManager'
+import { UIComponent } from '../../UIComponent'
 import './graphNavigation.scss'
 
-export class GraphNavigation implements UIElement {
-    private uiManager: UIManager
+export class GraphNavigation extends UIComponent {
 
     public navigation?: HTMLDivElement
 
     constructor(uiManager: UIManager) {
-        this.uiManager = uiManager
+        super(uiManager)
     }
 
     private handleFullscreenChange = () => {
@@ -23,7 +23,7 @@ export class GraphNavigation implements UIElement {
         }
     }
 
-    mount(container: HTMLElement | undefined) {
+    protected onMount(container: HTMLElement | undefined) {
         if (!container) return
 
         const template = document.createElement('template')
@@ -61,7 +61,7 @@ export class GraphNavigation implements UIElement {
         container.appendChild(this.navigation)
     }
 
-    destroy() {
+    protected onDestroy() {
         this.navigation?.remove()
         this.navigation = undefined
 
@@ -71,7 +71,7 @@ export class GraphNavigation implements UIElement {
         )
     }
 
-    afterMount() {
+    protected onAfterMount() {
         if (!this.navigation) return
         const zoomInButton = this.navigation.querySelector('#pvt-graphnavigation-zoom-in')
         const zoomOutButton = this.navigation.querySelector('#pvt-graphnavigation-zoom-out')
@@ -169,7 +169,7 @@ export class GraphNavigation implements UIElement {
         exitIcon.style.display = isFullscreen ? '' : 'none'
     }
 
-    graphReady() {
+    protected onGraphReady() {
         this.buildOptionsDropdown()
     }
 }

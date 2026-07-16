@@ -1,5 +1,6 @@
 import { funnel, magnifyingGlass, redo, stickyNote, undo } from '../../icons'
-import type { UIElement, UIManager } from '../../UIManager'
+import type { UIManager } from '../../UIManager'
+import { UIComponent } from '../../UIComponent'
 // import { SearchBox } from './SearchBox'
 import './mainheader.scss'
 import { Node } from '../../../Node'
@@ -10,9 +11,7 @@ import { createShortcutBadge } from '../../../utils/ElementCreation'
 import { NoteSidebar } from '../NoteSidebar/NoteSidebar'
 import { pickNode } from '../../components/NodePickers'
 
-export class Mainheader implements UIElement {
-    private uiManager: UIManager
-
+export class Mainheader extends UIComponent {
     public mainheader?: HTMLDivElement
     public searchBoxButton?: HTMLDivElement
     public filterButton?: HTMLDivElement
@@ -22,12 +21,13 @@ export class Mainheader implements UIElement {
     public filteringSlidepanel?: SlidePanel
     public noteSlidepanel?: SlidePanel
     private searchModal?: Modal
+    private noteSidebar?: NoteSidebar
 
     constructor(uiManager: UIManager) {
-        this.uiManager = uiManager
+        super(uiManager)
     }
 
-    mount(container: HTMLElement | undefined) {
+    protected onMount(container: HTMLElement | undefined) {
         if (!container) return
 
         this.mainheader = document.createElement('div')
@@ -94,45 +94,41 @@ export class Mainheader implements UIElement {
         container.appendChild(this.mainheader)
     }
 
-    destroy() {
+    protected onDestroy() {
         this.mainheader?.remove()
         this.mainheader = undefined
     }
 
-    afterMount() {
-        if (!this.filterButton || !this.noteButton) return
+    protected onAfterMount() {
+        const { filterButton, noteButton, searchBoxButton } = this
+        if (!filterButton || !noteButton) return
 
-        this.uiManager.keyManager.register({ key: 'Shift+J', callback: () => this.searchBoxButton?.click() })
-        this.uiManager.keyManager.register({ key: 'Shift+K', callback: () => this.filterButton?.click() })
-        this.uiManager.keyManager.register({ key: 'Shift+N', callback: () => this.noteButton?.click() })
+        this.track(this.uiManager.keyManager.register({ key: 'Shift+J', callback: () => this.searchBoxButton?.click() }))
+        this.track(this.uiManager.keyManager.register({ key: 'Shift+K', callback: () => this.filterButton?.click() }))
+        this.track(this.uiManager.keyManager.register({ key: 'Shift+N', callback: () => this.noteButton?.click() }))
 
         const graphFilter = new GraphFilter(this.uiManager)
         this.filteringSlidepanel = this.uiManager.createSlidepanel({
             header: 'Graph Filters',
             body: graphFilter.build()
         })
-        this.filterButton.addEventListener('click', () => {
-            this.filteringSlidepanel!.toggle()
-        })
+        this.listen(filterButton, 'click', () => this.filteringSlidepanel!.toggle())
 
-        const noteSidebar = new NoteSidebar(this.uiManager)
+        this.noteSidebar = new NoteSidebar(this.uiManager)
         this.noteSlidepanel = this.uiManager.createSlidepanel({
             header: 'Notes',
-            body: noteSidebar.build()
+            body: this.noteSidebar.build()
         })
-        this.noteButton.addEventListener('click', () => {
-            this.noteSlidepanel!.toggle()
-        })
-        noteSidebar.afterMount()
+        this.listen(noteButton, 'click', () => this.noteSlidepanel!.toggle())
+        // NoteSidebar's afterMount (bind) / destroy (unbind) are driven by UIComponent
+        this.addChild(this.noteSidebar)
 
-        this.searchBoxButton?.addEventListener('click', async () => {
-
-            const node = await pickNode(this.uiManager)
-            if (!node) return
-
-            this.uiManager.graph.selectElement(node as unknown as Node)
-        })
+        if (searchBoxButton) {
+            this.listen(searchBoxButton, 'click', async () => {
+                const node = await pickNode(this.uiManager)
+                if (!node) return
+                this.uiManager.graph.selectElement(node as unknown as Node)
+            })
+        }
     }
-
-    graphReady() {}
 }

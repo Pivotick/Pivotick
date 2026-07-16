@@ -5,12 +5,12 @@ import { Note } from '../../../Note'
 import { createHtmlElement, createHtmlTemplate, createShortcutBadge } from '../../../utils/ElementCreation'
 import { createButton } from '../../components/Button'
 import { addCircle, bidirectional, bulkEdit, edit, editMode, graphEdgeIcon, groupNodes, lassoTool, pathSelection, reverseEdge, selectionInverse, stickyNote, trash, ungroupNodes } from '../../icons'
-import type { UIElement, UIManager } from '../../UIManager'
+import type { UIManager } from '../../UIManager'
+import { UIComponent } from '../../UIComponent'
 import './graphToolbar.scss'
 
 
-export class GraphToolbar implements UIElement {
-    private uiManager: UIManager
+export class GraphToolbar extends UIComponent {
 
     public toolbar?: HTMLDivElement
     private container?: HTMLElement
@@ -29,10 +29,10 @@ export class GraphToolbar implements UIElement {
     private enableAddEdgeModeButton?: HTMLButtonElement
 
     constructor(uiManager: UIManager) {
-        this.uiManager = uiManager
+        super(uiManager)
     }
 
-    mount(container: HTMLElement | undefined) {
+    protected onMount(container: HTMLElement | undefined) {
         if (!container) return
         this.container = container
 
@@ -102,21 +102,21 @@ export class GraphToolbar implements UIElement {
         this.updateToolbarVisibility()
     }
 
-    destroy() {
+    protected onDestroy() {
         this.toolbar?.remove()
         this.toolbar = undefined
     }
 
-    afterMount() {
+    protected onAfterMount() {
         if (!this.toolbar) return
 
-        this.uiManager.keyManager.register({
+        this.track(this.uiManager.keyManager.register({
             key: 'e', callback: () => {
                 this.toggleEditMode()
             }
-        })
+        }))
 
-        this.uiManager.keyManager.register({
+        this.track(this.uiManager.keyManager.register({
             key: 'Escape',
             callback: () => {
                 if (this.lassoModeEnabled) {
@@ -128,60 +128,63 @@ export class GraphToolbar implements UIElement {
                     connectManager.exitClickConnectionMode()
                 }
             }
-        })
+        }))
     }
 
-    graphReady() {
-        const interaction = this.uiManager.graph.renderer.getGraphInteraction()
-
-        interaction.on('selectNode', () => {
+    protected onGraphReady() {
+        this.trackInteraction('selectNode', () => {
             this.updateToolbarVisibility()
         })
 
-        interaction.on('unselectNode', () => {
+        this.trackInteraction('unselectNode', () => {
             this.updateToolbarVisibility()
         })
 
-        interaction.on('selectNodes', () => {
+        this.trackInteraction('selectNodes', () => {
             this.updateToolbarVisibility()
         })
 
-        interaction.on('unselectNodes', () => {
+        this.trackInteraction('unselectNodes', () => {
             this.updateToolbarVisibility()
         })
 
-        interaction.on('selectEdge', () => {
+        this.trackInteraction('selectEdge', () => {
             this.updateToolbarVisibility()
         })
 
-        interaction.on('unselectEdge', () => {
+        this.trackInteraction('unselectEdge', () => {
             this.updateToolbarVisibility()
         })
 
-        interaction.on('selectEdges', () => {
+        this.trackInteraction('selectEdges', () => {
             this.updateToolbarVisibility()
         })
 
-        interaction.on('unselectEdges', () => {
+        this.trackInteraction('unselectEdges', () => {
             this.updateToolbarVisibility()
         })
 
-        interaction.on('canvasClick', () => {
+        this.trackInteraction('canvasClick', () => {
             this.updateToolbarVisibility()
         })
 
         const connectManager = this.uiManager.graph.editing.connectManager
 
-        connectManager.on('start', (connectManager: GraphConnectManager) => {
-            if (connectManager.getMode() === 'node-edge') {
+        const onConnectStart = (cm: GraphConnectManager) => {
+            if (cm.getMode() === 'node-edge') {
                 this.refreshAddEdgeButtonState(true)
             }
-        })
-
-        connectManager.on('stop', (connectManager: GraphConnectManager) => {
-            if (connectManager.getMode() === 'node-edge') {
+        }
+        const onConnectStop = (cm: GraphConnectManager) => {
+            if (cm.getMode() === 'node-edge') {
                 this.refreshAddEdgeButtonState(false)
             }
+        }
+        connectManager.on('start', onConnectStart)
+        connectManager.on('stop', onConnectStop)
+        this.track(() => {
+            connectManager.off('start', onConnectStart)
+            connectManager.off('stop', onConnectStop)
         })
     }
 

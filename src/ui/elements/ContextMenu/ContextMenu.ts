@@ -3,6 +3,7 @@ import type { Node } from '../../../Node'
 import { createActionList, createQuickActionList, generateSafeDomId } from '../../../utils/ElementCreation'
 import { expand, focusElement, fullscreen, graphEdgeIcon, hide, inspect, pin, selectNeighbor, stickyNote, trash, unpin } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
+import { UIComponent } from '../../UIComponent'
 import './contextmenu.scss'
 import { deepMerge } from '../../../utils/utils'
 import type { MenuActionItemOptions, MenuQuickActionItemOptions } from '../../../interfaces/GraphUI'
@@ -245,8 +246,8 @@ const defaultMenuNote = {
     ] as MenuActionItemOptions[],
 }
 
-export class ContextMenu implements UIElement {
-    public uiManager: UIManager
+export class ContextMenu extends UIComponent {
+    declare public uiManager: UIManager
 
     public menu?: HTMLDivElement
     public visible: boolean
@@ -260,7 +261,7 @@ export class ContextMenu implements UIElement {
     private menuCanvas: { topbar: MenuQuickActionItemOptions[]; menu: MenuActionItemOptions[] }
 
     constructor(uiManager: UIManager) {
-        this.uiManager = uiManager
+        super(uiManager)
         this.visible = false
 
         this.menuNode = deepMerge(defaultMenuNode, this.uiManager.getOptions().contextMenu.menuNode ?? {})
@@ -270,7 +271,7 @@ export class ContextMenu implements UIElement {
         this.wrapOnclickActions()
     }
 
-    public mount(container: HTMLElement | undefined) {
+    protected onMount(container: HTMLElement | undefined) {
         if (!container) return
 
         this.parentContainer = document.querySelector('body')!
@@ -291,21 +292,21 @@ export class ContextMenu implements UIElement {
         this.parentContainer.appendChild(this.menu)
     }
 
-    public destroy() {
+    protected onDestroy() {
         this.menu?.remove()
         this.menu = undefined
     }
 
-    public afterMount() {
+    protected onAfterMount() {
     }
 
-    public graphReady() {
-        this.uiManager.graph.renderer.getGraphInteraction().on('nodeContextmenu', this.nodeClicked.bind(this))
-        this.uiManager.graph.renderer.getGraphInteraction().on('edgeContextmenu', this.edgeClicked.bind(this))
-        this.uiManager.graph.renderer.getGraphInteraction().on('noteContextmenu', this.noteClicked.bind(this))
-        this.uiManager.graph.renderer.getGraphInteraction().on('canvasContextmenu', this.canvasClicked.bind(this))
-        this.uiManager.graph.renderer.getGraphInteraction().on('canvasClick', () => { this.hide() })
-        this.uiManager.graph.renderer.getGraphInteraction().on('canvasZoom', () => { this.hide() })
+    protected onGraphReady() {
+        this.trackInteraction('nodeContextmenu', this.nodeClicked.bind(this))
+        this.trackInteraction('edgeContextmenu', this.edgeClicked.bind(this))
+        this.trackInteraction('noteContextmenu', this.noteClicked.bind(this))
+        this.trackInteraction('canvasContextmenu', this.canvasClicked.bind(this))
+        this.trackInteraction('canvasClick', () => { this.hide() })
+        this.trackInteraction('canvasZoom', () => { this.hide() })
     }
 
     private nodeClicked(event: PointerEvent, node: Node): void {

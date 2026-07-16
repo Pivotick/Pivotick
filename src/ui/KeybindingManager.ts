@@ -8,8 +8,14 @@ export class KeybindingManager {
         this.container = container
     }
 
-    register(binding: Keybinding) {
+    /** Register a keybinding. Returns a disposer that removes it again. */
+    register(binding: Keybinding): () => void {
         this.bindings.set(binding.key, binding.callback)
+        return () => {
+            if (this.bindings.get(binding.key) === binding.callback) {
+                this.bindings.delete(binding.key)
+            }
+        }
     }
 
     handleKeyPress(event: KeyboardEvent) {

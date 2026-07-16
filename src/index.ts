@@ -15,3 +15,6 @@ Graph.ColorPaletteMapper = ColorPaletteMapper
 
 // Named exports (still available for modular imports)
 export { Graph as Pivotick, Node, Edge, ColorPaletteMapper }
+export { UIComponent } from './ui/UIComponent'
+export type { UIPhase } from './ui/UIComponent'
+export type { PivotickPlugin, PluginContext } from './interfaces/Plugin'
