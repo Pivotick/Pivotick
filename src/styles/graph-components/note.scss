@@ -1,6 +1,6 @@
 .pvt-note-fo {
-    box-shadow: 0 8px 22px -6px rgba(0, 0, 0, 0.5);
-    border-radius: 12px;
+    box-shadow: 0 16px 34px -10px rgba(0, 0, 0, 0.5);
+    border-radius: 13px;
 }
 
 .pvt-note {
@@ -11,7 +11,7 @@
     display: flex;
     flex-direction: column;
 
-    border-radius: 12px;
+    border-radius: 13px;
     overflow: hidden;
     box-sizing: border-box;
 
@@ -23,7 +23,7 @@
         color-mix(in srgb, var(--note-color), #26203a 36%),
         color-mix(in srgb, var(--note-color), #1b1530 52%)
     );
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(255, 255, 255, 0.95);
     border: 1px solid color-mix(in srgb, var(--note-color), #000 24%);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
 
@@ -38,10 +38,10 @@
         position: absolute;
         top: 0;
         right: 0;
-        width: 22px;
-        height: 22px;
+        width: 24px;
+        height: 24px;
         clip-path: polygon(100% 0, 0 0, 100% 100%);
-        background: color-mix(in srgb, var(--note-color), #fff 16%);
+        background: color-mix(in srgb, var(--note-color), #fff 15%);
         z-index: 4;
         pointer-events: none;
     }
@@ -50,10 +50,10 @@
         position: absolute;
         top: 0;
         right: 0;
-        width: 22px;
-        height: 22px;
+        width: 24px;
+        height: 24px;
         clip-path: polygon(100% 0, 0 0, 100% 100%);
-        background: linear-gradient(225deg, rgba(0, 0, 0, 0.34), transparent 55%);
+        background: linear-gradient(225deg, rgba(0, 0, 0, 0.32), transparent 55%);
         z-index: 5;
         pointer-events: none;
     }
@@ -63,10 +63,11 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0 26px 0 9px; // extra right padding clears the folded corner
-        // Deeper same-hue band with a bright hairline underneath.
-        background: rgba(0, 0, 0, 0.2);
-        border-bottom: 1px solid color-mix(in srgb, var(--note-color), transparent 55%);
+        padding: 0 28px 0 13px; // extra right padding clears the folded corner
+        // Deeper same-hue band (not a flat black wash) with a bright same-hue
+        // hairline underneath — the header shares the note's colour.
+        background: color-mix(in srgb, var(--note-color), #000 22%);
+        border-bottom: 1px solid color-mix(in srgb, var(--note-color), #fff 20%);
         cursor: move;
 
         .pvt-note-color-pills {
