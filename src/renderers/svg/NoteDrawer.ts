@@ -145,20 +145,6 @@ export class NoteDrawer {
 
         div.appendChild(content)
 
-        // Explicit cancel affordance (mirrors the Escape shortcut), shown only
-        // while editing. Sits at the right end of the insert toolbar.
-        const cancelBtn = createButton({
-            title: 'Cancel editing',
-            svgIcon: closeIcon,
-            class: ['pvt-note-cancel-button', 'ms-auto'],
-            variant: 'outline-secondary',
-            size: 'xs',
-            onClick: () => {
-                this.cancelEditMode(note)
-            }
-        })
-        div.appendChild(cancelBtn)
-
         container.appendChild(div)
 
         return container

@@ -107,9 +107,11 @@
     }
 
     // Chrome buttons sit on a deep surface — force the outline variants light so
-    // the icons read regardless of the viewer's theme. The solid "done" (success)
-    // button keeps its own colour.
-    .pivotick-button-outline-secondary {
+    // the icons read regardless of the viewer's theme. Delete/unlink share the
+    // same neutral treatment (not a red tint) so they read as plain chrome; the
+    // solid "done" (success) button keeps its own colour.
+    .pivotick-button-outline-secondary,
+    .pivotick-button-outline-danger {
         color: rgba(255, 255, 255, 0.82);
         border-color: rgba(255, 255, 255, 0.26);
 
@@ -117,17 +119,6 @@
             color: #fff;
             background-color: rgba(255, 255, 255, 0.16);
             border-color: rgba(255, 255, 255, 0.4);
-        }
-    }
-
-    .pivotick-button-outline-danger {
-        color: #ffb0b0;
-        border-color: rgba(255, 130, 130, 0.42);
-
-        &:hover:not(:disabled) {
-            color: #fff;
-            background-color: rgba(220, 70, 70, 0.85);
-            border-color: rgba(255, 130, 130, 0.6);
         }
     }
 
@@ -207,11 +198,6 @@
 
             .pvt-node-search-button {
                 display: none;
-            }
-
-            .pvt-note-cancel-button {
-                display: none;
-                flex: none;
             }
         }
     }
@@ -329,10 +315,6 @@
         }
 
         .pvt-node-search-button {
-            display: inline-flex !important;
-        }
-
-        .pvt-note-cancel-button {
             display: inline-flex !important;
         }
     }
