@@ -138,11 +138,6 @@ function createFacetRow(
         class: ['pvt-facet-value', empty ? 'pvt-facet-value--empty' : 'code-container'],
     }, [empty ? '— empty —' : displayValue(value)])
 
-    // Preserve the "Select / Exclude Similar" affordances on real repeated values.
-    if (kind === 'values' && !empty && actionButtonCallback) {
-        valueEl.appendChild(actionButtonCallback(propName, value))
-    }
-
     const children: Array<HTMLElement | string> = [dot, valueEl]
     if (kind === 'shared') {
         const caption = count === selectedNodeCount ? `all ${count} nodes` : `${count} of ${selectedNodeCount}`
@@ -152,7 +147,14 @@ function createFacetRow(
     }
     children.push(createHtmlElement('span', { class: 'pvt-facet-percent' }, [`${pct}%`]))
 
-    return createHtmlElement('div', { class: 'pvt-facet-row' }, children)
+    const row = createHtmlElement('div', { class: 'pvt-facet-row' }, children)
+
+    // "Select / Exclude Similar" affordances (real repeated values only): appended
+    // to the row so they can fade in as a cluster over the stats on row hover.
+    if (kind === 'values' && !empty && actionButtonCallback) {
+        row.appendChild(actionButtonCallback(propName, value))
+    }
+    return row
 }
 
 function createUniqueFacetBody(valueCountMap: Map<string, number>): HTMLElement {

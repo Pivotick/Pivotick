@@ -496,6 +496,7 @@ export class SidebarNeighbors extends UIComponent {
     private genActionButtonsSingleSelection(_key: string, value: string): HTMLDivElement {
         const buttonKeep = createHtmlElement('button', {
             title: 'Select nodes linked with this label',
+            class: 'pvt-facet-action-select',
         }, [createIcon({ svgIcon: filterAdd }) ])
         buttonKeep.addEventListener('click', () => {
             const matchingNodeSelection = this.getNodesMatchingFilteredEdgeName(value)
@@ -511,6 +512,7 @@ export class SidebarNeighbors extends UIComponent {
         
         const buttonExclude = createHtmlElement('button', {
             title: 'Exclude nodes linked with this label',
+            class: 'pvt-facet-action-exclude',
         }, [createIcon({ svgIcon: filterRemove }) ])
         buttonExclude.addEventListener('click', () => {
             const matchingNodeSelection = this.getNodesMatchingFilteredEdgeName(value, true)

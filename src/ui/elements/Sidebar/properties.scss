@@ -89,6 +89,7 @@
         gap: 6px;
 
         .pvt-facet-row {
+            position: relative;
             display: flex;
             align-items: center;
             gap: 9px;
@@ -144,42 +145,70 @@
                 color: var(--pvt-text-color-3);
             }
 
-            // "Select / Exclude Similar" affordances, revealed on row hover.
+            // "Keep only" / "Exclude" affordances — a cluster that fades in over
+            // the count/percent on row hover, on a clean gradient backdrop so it
+            // never collides with the value text.
             .pvt-aggregated-property-actions {
                 display: none;
                 position: absolute;
-                right: 0;
-                top: 50%;
-                transform: translateY(-50%);
-                flex-direction: row;
-                gap: 4px;
-                padding-left: 8px;
-                background: var(--pvt-sidebar-panelbody-bg);
+                inset: 0 0 0 auto;
+                align-items: center;
+                gap: 2px;
+                padding: 0 1px 0 26px;
+                background: linear-gradient(
+                    to right,
+                    transparent 0,
+                    var(--pvt-sidebar-panelbody-bg) 42%
+                );
 
                 button {
-                    border: none;
-                    background: none;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 24px;
+                    height: 24px;
                     padding: 0;
+                    border: none;
+                    border-radius: 7px;
+                    background: none;
+                    color: var(--pvt-text-color-3);
                     cursor: pointer;
-                    font-size: 1rem;
-                    max-height: 22px;
-                    color: color-mix(in srgb, var(--pvt-text-color-4) 80%, var(--pvt-text-color-6));
-                    transition: color 0.15s ease;
+                    transition: background 0.12s ease, color 0.12s ease;
 
-                    &:hover:not(:disabled),
-                    &:active:not(:disabled) {
+                    .pvt-icon {
+                        display: inline-flex;
+                    }
+
+                    svg {
+                        display: block;
+                        width: 15px;
+                        height: 15px;
+                    }
+
+                    &:hover:not(:disabled) {
+                        background: color-mix(in srgb, var(--pvt-text-color-3) 20%, transparent);
                         color: var(--pvt-text-color-6);
                     }
 
+                    &.pvt-facet-action-select:hover:not(:disabled) {
+                        background: color-mix(in srgb, hsl(210 65% 55%) 22%, transparent);
+                        color: hsl(210 72% 60%);
+                    }
+
+                    &.pvt-facet-action-exclude:hover:not(:disabled) {
+                        background: color-mix(in srgb, hsl(2 72% 55%) 22%, transparent);
+                        color: hsl(2 78% 64%);
+                    }
+
                     &:disabled {
-                        filter: brightness(2);
+                        opacity: 0.4;
                         cursor: not-allowed;
                     }
                 }
             }
 
-            .pvt-facet-value.code-container:hover .pvt-aggregated-property-actions {
-                display: inline-flex;
+            &:hover .pvt-aggregated-property-actions {
+                display: flex;
             }
         }
     }

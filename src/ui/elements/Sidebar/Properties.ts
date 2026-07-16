@@ -228,7 +228,8 @@ export class SidebarProperties extends UIComponent {
 
     private genActionButtons(key: string, value: string): HTMLDivElement {
         const buttonKeep = createHtmlElement('button', {
-            title: 'Select Similar',
+            title: 'Keep only nodes with this value',
+            class: 'pvt-facet-action-select',
         }, [createIcon({ svgIcon: filterAdd }) ])
         buttonKeep.addEventListener('click', () => {
             const matchingNodes = this.uiManager.graph.renderer.getGraphInteraction().getSelectedNodes()
@@ -240,7 +241,8 @@ export class SidebarProperties extends UIComponent {
         })
         
         const buttonExclude = createHtmlElement('button', {
-            title: 'Exclude Similar',
+            title: 'Exclude nodes with this value',
+            class: 'pvt-facet-action-exclude',
         }, [createIcon({ svgIcon: filterRemove }) ])
         buttonExclude.addEventListener('click', () => {
             const matchingNodes = this.uiManager.graph.renderer.getGraphInteraction().getSelectedNodes()
