@@ -534,6 +534,29 @@ export const fixtures = {
      * matches a `{ min, max }` range filter (the query engine only checks `typeof
      * === 'number'`) and renders harmlessly as a categorical option in the form.
      */
+    /**
+     * Six nodes carrying a mix of attributes that exercise all three facet
+     * kinds in the multi-selection sidebar: `group` is shared by every node,
+     * `gender`/`is_active` split into small distributions, and `label` is
+     * unique per node. Booleans are stored as strings so the falsy-skip in
+     * `nodePropertiesGetter` keeps every node's value visible.
+     */
+    facetSample(): BuiltFixture {
+        const person = (
+            id: string, x: number, y: number,
+            label: string, gender: string, isActive: string
+        ) => mkNode(id, x, y, { label, group: 'C', gender, is_active: isActive })
+        const nodes = [
+            person('C1', -150, -90, 'Mallory', 'female', 'true'),
+            person('C2', 150, -90, 'Niaj', 'male', 'true'),
+            person('C3', -150, 0, 'Olivia', 'female', 'true'),
+            person('C4', 150, 0, 'Peggy', 'female', 'true'),
+            person('C5', -150, 90, 'Quentin', 'male', 'false'),
+            person('C6', 150, 90, 'Ruth', 'female', 'true'),
+        ]
+        return { nodes, edges: [], notes: [] }
+    },
+
     filterable(): BuiltFixture {
         const node = (id: string, x: number, y: number, type: string, ports: number) =>
             mkNode(id, x, y, { type, ports })

@@ -1,89 +1,217 @@
-.pvt-aggregated-property-section {
-    margin-bottom: 14px;
+// Faceted breakdown of aggregated node/edge properties (multi-selection) and
+// of neighbour stats. One "facet card" per property, classified as a single
+// shared value, a small distribution, or an all-unique list of chips.
+.pvt-facets {
+    display: flex;
+    flex-direction: column;
+}
 
-    .pvt-aggregated-property-title {
-        display: inline-block;
-        padding: 4px 8px;
-        text-align: left;
-        font-size: .9rem;
-        font-weight: 500;
-        color: var(--pvt-text-color-5);
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        text-transform: uppercase;
+.pvt-facet-card {
+    padding: 13px 4px;
+    border-bottom: 1px solid color-mix(in srgb, var(--pvt-text-color-3) 20%, transparent);
+
+    &:last-child {
+        border-bottom: none;
     }
 
-    .pvt-aggregated-property-container {
-        margin: 0 4px 4px 4px;
+    .pvt-facet-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 9px;
+
+        .pvt-facet-label {
+            font-family: monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+
+            .pvt-facet-label-dot {
+                color: var(--pvt-text-color-3);
+            }
+
+            .pvt-facet-label-name {
+                color: var(--pvt-text-color-5);
+            }
+        }
+
+        .pvt-facet-badge {
+            flex: none;
+            font-family: monospace;
+            font-size: 0.62rem;
+            line-height: 1;
+            padding: 3px 8px;
+            border-radius: 5px;
+            border: 1px solid transparent;
+            white-space: nowrap;
+
+            // Neutral (a handful of repeated values).
+            color: var(--pvt-text-color-3);
+            background: color-mix(in srgb, var(--pvt-text-color-3) 12%, transparent);
+            border-color: color-mix(in srgb, var(--pvt-text-color-3) 24%, transparent);
+
+            &.pvt-facet-badge--shared {
+                color: hsl(165 45% 52%);
+                background: hsl(165 45% 52% / 0.13);
+                border-color: hsl(165 45% 52% / 0.28);
+            }
+
+            &.pvt-facet-badge--unique {
+                color: hsl(38 58% 56%);
+                background: hsl(38 58% 56% / 0.12);
+                border-color: hsl(38 58% 56% / 0.26);
+            }
+        }
+    }
+
+    .pvt-facet-bar {
+        display: flex;
+        gap: 2px;
+        height: 10px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        overflow: hidden;
+
+        .pvt-facet-bar-seg {
+            height: 100%;
+            border-radius: 3px;
+            min-width: 2px;
+        }
+    }
+
+    .pvt-facet-rows {
         display: flex;
         flex-direction: column;
-        gap: 2px;
+        gap: 6px;
 
-        .pvt-aggregated-property-row {
+        .pvt-facet-row {
             display: flex;
-            flex-direction: row;
             align-items: center;
+            gap: 9px;
+            font-size: 0.82rem;
 
-            .pvt-aggregated-property-value {
-                flex-grow: 1;
+            .pvt-facet-dot {
+                flex: none;
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+            }
+
+            .pvt-facet-value {
                 font-family: monospace;
-                font-size: 0.8rem;
+                color: var(--pvt-text-color-5);
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
 
                 &.code-container {
+                    flex: 1 1 auto;
                     position: relative;
-                    margin-right: 8px;
-                    text-overflow: ellipsis;
-                    overflow: hidden;
+                    min-width: 0;
                     user-select: all;
+                }
 
-                    font-size: 0.875rem;
-                    font-weight: 400;
-                    color: var(--pvt-text-color-primary);
+                &.pvt-facet-value--empty {
+                    flex: 1 1 auto;
+                    color: var(--pvt-text-color-3);
+                    font-style: italic;
+                }
+            }
 
-                    .pvt-aggregated-property-actions {
-                        display: none;
-                        position: absolute;
-                        right: 4px;
-                        flex-direction: row;
-                        gap: 4px;
+            .pvt-facet-caption {
+                flex: 1 1 auto;
+                color: var(--pvt-text-color-3);
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
 
-                        button {
-                            border: none;
-                            background: none;
-                            padding: 0;
-                            cursor: pointer;
-                            font-size: 1rem;
-                            color: color-mix(in srgb, var(--pvt-text-color-5) 80%, white);
-                            transition: font-size 0.15s ease;
-                            max-height: 22px;
+            .pvt-facet-count {
+                margin-left: auto;
+                font-weight: 600;
+                color: var(--pvt-text-color-6);
+            }
 
-                            &:hover:not(:disabled),
-                            &:active:not(:disabled) {
-                                color: color-mix(in srgb, var(--pvt-text-color-5) 70%, black);
-                            }
-                        
-                            &:disabled {
-                                filter: brightness(2);
-                                cursor: not-allowed;
-                            }
-                        }
+            .pvt-facet-percent {
+                flex: none;
+                width: 34px;
+                text-align: right;
+                color: var(--pvt-text-color-3);
+            }
+
+            // "Select / Exclude Similar" affordances, revealed on row hover.
+            .pvt-aggregated-property-actions {
+                display: none;
+                position: absolute;
+                right: 0;
+                top: 50%;
+                transform: translateY(-50%);
+                flex-direction: row;
+                gap: 4px;
+                padding-left: 8px;
+                background: var(--pvt-sidebar-panelbody-bg);
+
+                button {
+                    border: none;
+                    background: none;
+                    padding: 0;
+                    cursor: pointer;
+                    font-size: 1rem;
+                    max-height: 22px;
+                    color: color-mix(in srgb, var(--pvt-text-color-4) 80%, var(--pvt-text-color-6));
+                    transition: color 0.15s ease;
+
+                    &:hover:not(:disabled),
+                    &:active:not(:disabled) {
+                        color: var(--pvt-text-color-6);
+                    }
+
+                    &:disabled {
+                        filter: brightness(2);
+                        cursor: not-allowed;
                     }
                 }
-
-                &.code-container:hover .pvt-aggregated-property-actions {
-                    display: inline-flex;
-                }
             }
 
-            .pvt-aggregated-property-count {
-                --pvt-inline-bar-width: 60px;
+            .pvt-facet-value.code-container:hover .pvt-aggregated-property-actions {
+                display: inline-flex;
             }
+        }
+    }
 
-            .pvt-aggregated-property-value-dim {
-                display: inline-block;
-                width: 100%;
+    // All-unique facet: a wrapped list of value chips.
+    .pvt-facet-caption--block {
+        color: var(--pvt-text-color-3);
+        font-size: 0.72rem;
+        margin-bottom: 9px;
+    }
+
+    .pvt-facet-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+
+        .pvt-facet-chip {
+            font-family: monospace;
+            font-size: 0.72rem;
+            color: var(--pvt-text-color-5);
+            background: color-mix(in srgb, var(--pvt-text-color-3) 12%, transparent);
+            border: 1px solid color-mix(in srgb, var(--pvt-text-color-3) 22%, transparent);
+            border-radius: 5px;
+            padding: 3px 8px;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+
+            &.pvt-facet-chip--more {
                 color: var(--pvt-text-color-3);
                 font-style: italic;
-                text-align: start;
             }
         }
     }

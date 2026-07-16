@@ -12,9 +12,21 @@
 
     border-radius: 8px;
     overflow: hidden;
+    box-sizing: border-box;
 
-    background: var(--note-color);
-    color: #333;
+    // The tint is mixed here, where the per-note `--note-color` is in scope;
+    // the weight/base come from the theme so light stays soft, dark goes deep.
+    background: color-mix(
+        in srgb,
+        var(--note-color) var(--pvt-note-surface-weight, 100%),
+        var(--pvt-note-surface-base, transparent)
+    );
+    color: var(--pvt-note-text, #333);
+    border: 1px solid color-mix(
+        in srgb,
+        var(--note-color) var(--pvt-note-border-weight, 100%),
+        var(--pvt-note-border-base, transparent)
+    );
 
     transition:
         opacity 120ms ease,
@@ -22,13 +34,20 @@
         stroke-width 120ms ease,
         filter 120ms ease;
 
+    // A thin colour stripe tinted by the note's colour, along its top edge.
+    .pvt-note-accent {
+        flex: none;
+        height: 4px;
+        background: var(--note-color);
+    }
+
     .pvt-note-header {
         height: 28px;
         display: flex;
         align-items: center;
         justify-content: space-between;
         padding: 0 8px;
-        background: rgba(255, 255, 255, 0.25);
+        background: var(--pvt-note-header-bg, rgba(255, 255, 255, 0.25));
         cursor: move;
 
         .pvt-note-color-pills {
@@ -87,7 +106,7 @@
             cursor: default;
             box-sizing: border-box;
         
-            background: rgba(255, 255, 255, 0.1);
+            background: var(--pvt-note-chrome-bg, rgba(255, 255, 255, 0.1));
             box-shadow:
                 inset 0 1px 2px rgba(0, 0, 0, 0.12),
                 inset 0 -1px 2px rgba(0, 0, 0, 0.12);
@@ -101,7 +120,8 @@
             }
 
             .pvt-note-link-content {
-                width: 100%;
+                flex: 1 1 auto;
+                min-width: 0;
                 display: flex;
                 align-items: center;
 
@@ -131,6 +151,11 @@
             .pvt-node-search-button {
                 display: none;
             }
+
+            .pvt-note-cancel-button {
+                display: none;
+                flex: none;
+            }
         }
     }
 
@@ -158,7 +183,7 @@
             word-break: break-word;
 
             &.pvt-markdown {
-                color: #333;
+                color: var(--pvt-note-text, #333);
             }
         }
 
@@ -183,7 +208,7 @@
     }
 
     .pvt-note-resize-handle {
-        background: rgba(0, 0, 0, 0.2);
+        background: color-mix(in srgb, var(--pvt-note-text, #000) 25%, transparent);
         cursor: nwse-resize;
         pointer-events: all;
         border-radius: 3px 0 0 0;
@@ -234,7 +259,7 @@
 
         .pvt-note-content {
             cursor: text;
-            caret-color: #111;
+            caret-color: var(--pvt-note-text, #111);
             backdrop-filter: blur(2px);
 
             filter:
@@ -252,6 +277,10 @@
         }
 
         .pvt-node-search-button {
+            display: inline-flex !important;
+        }
+
+        .pvt-note-cancel-button {
             display: inline-flex !important;
         }
     }

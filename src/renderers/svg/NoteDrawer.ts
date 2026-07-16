@@ -76,6 +76,7 @@ export class NoteDrawer {
             container.classList.add('editing')
         }
 
+        container.appendChild(this.createAccentBar())
         container.appendChild(this.createHeader(container, note))
         container.appendChild(this.createLink(note))
         container.appendChild(this.createContent(note))
@@ -88,6 +89,11 @@ export class NoteDrawer {
         })
 
         return fo
+    }
+
+    /** A thin colour stripe along the top of the note, tinted by its colour. */
+    private createAccentBar(): HTMLDivElement {
+        return createHtmlElement('div', { class: 'pvt-note-accent' })
     }
 
     private createHeader(container: HTMLDivElement, note: Note): HTMLDivElement {
@@ -144,6 +150,20 @@ export class NoteDrawer {
         content.classList.add('pvt-note-link-content')
 
         div.appendChild(content)
+
+        // Explicit cancel affordance (mirrors the Escape shortcut), shown only
+        // while editing. Sits at the right end of the insert toolbar.
+        const cancelBtn = createButton({
+            title: 'Cancel editing',
+            svgIcon: closeIcon,
+            class: ['pvt-note-cancel-button', 'ms-auto'],
+            variant: 'outline-secondary',
+            size: 'xs',
+            onClick: () => {
+                this.cancelEditMode(note)
+            }
+        })
+        div.appendChild(cancelBtn)
 
         container.appendChild(div)
 
