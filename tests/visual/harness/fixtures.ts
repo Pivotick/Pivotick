@@ -26,6 +26,7 @@ export interface RawNote {
     height?: number
     content?: string
     color?: string
+    surface?: 'jewel' | 'terminal'
     attachedElement?: { type: 'node' | 'edge'; id: string }
 }
 

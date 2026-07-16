@@ -198,6 +198,13 @@ $light-theme: (
     /* Note */
     pvt-note-node-reference-dot-default: #007acc,
     pvt-note-node-reference-text-color: #333,
+    // Terminal note surface — a neutral, theme-aware panel (light canvas: white
+    // card, dark ink). The colour is only an accent (top hairline + prompt); the
+    // jewel surface needs no vars (it is always a deep card).
+    pvt-note-term-bg: #ffffff,
+    pvt-note-term-border: #e6e8ec,
+    pvt-note-term-text: #1c2026,
+    pvt-note-term-text-dim: #61666e,
 
     /* Component */
     pvt-inline-bar-bg: var(--pvt-bg-color-2),
@@ -436,6 +443,13 @@ $dark-theme: (
     /* Note */
     pvt-note-node-reference-dot-default: #007acc,
     pvt-note-node-reference-text-color: #333,
+    // Terminal note surface — a neutral, theme-aware panel (dark canvas: near-
+    // black card, light ink). The colour is only an accent (top hairline +
+    // prompt); the jewel surface needs no vars (it is always a deep card).
+    pvt-note-term-bg: #1a1a1e,
+    pvt-note-term-border: #2a2b31,
+    pvt-note-term-text: #e8eaed,
+    pvt-note-term-text-dim: #a7abb2,
 
     /* Component */
     pvt-inline-bar-bg: var(--pvt-bg-color-6),

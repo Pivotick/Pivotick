@@ -70,6 +70,23 @@
         border-bottom: 1px solid color-mix(in srgb, var(--note-color), #fff 20%);
         cursor: move;
 
+        .pvt-note-head-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        // Surface toggle (jewel ↔ terminal) — edit-only, beside the colour pills.
+        .pvt-note-surface-toggle {
+            display: none;
+
+            &.is-active {
+                color: #fff;
+                background-color: rgba(255, 255, 255, 0.18);
+                border-color: rgba(255, 255, 255, 0.42);
+            }
+        }
+
         .pvt-note-color-pills {
             display: none;
             gap: 3px;
@@ -279,6 +296,10 @@
                 display: inline-flex;
             }
 
+            .pvt-note-surface-toggle {
+                display: inline-flex;
+            }
+
             .pvt-note-actions {
                 display: inline-flex;
 
@@ -324,6 +345,104 @@
         .pvt-note-header .pvt-note-actions {
             display: inline-flex;
             width: 100%;
+        }
+    }
+
+    // ── Terminal surface (opt-in via the surface toggle) ─────────────────────
+    // A neutral, theme-aware panel — the picker colour is only an accent (a 2px
+    // top hairline + a mono "›" prompt), not a fill — so the note reads as a
+    // hackable console card. Values mirror the "terminal" design direction; ink
+    // and chrome follow the theme-aware terminal text so it stays legible on a
+    // white or near-black panel.
+    &.pvt-note--terminal {
+        $mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+        background: var(--pvt-note-term-bg);
+        color: var(--pvt-note-term-text);
+        border-color: var(--pvt-note-term-border);
+        box-shadow: none;
+
+        // Replace the folded corner with a full-width colour top hairline.
+        &::after {
+            top: 0;
+            left: 0;
+            right: 0;
+            width: auto;
+            height: 2px;
+            clip-path: none;
+            background: var(--note-color);
+        }
+        &::before {
+            display: none;
+        }
+
+        .pvt-note-header {
+            background: transparent;
+            border-bottom-color: var(--pvt-note-term-border);
+        }
+
+        // A mono colour "›" prompt marks the header — the terminal signature,
+        // present even at rest (the pills/toggle only appear while editing).
+        .pvt-note-head-left::before {
+            content: "›";
+            font-family: $mono;
+            font-weight: 700;
+            font-size: 14px;
+            line-height: 1;
+            color: var(--note-color);
+        }
+
+        .pivotick-button-outline-secondary,
+        .pivotick-button-outline-danger {
+            color: var(--pvt-note-term-text);
+            border-color: color-mix(in srgb, var(--pvt-note-term-text) 24%, transparent);
+
+            &:hover:not(:disabled) {
+                color: var(--pvt-note-term-text);
+                background-color: color-mix(in srgb, var(--pvt-note-term-text) 12%, transparent);
+                border-color: color-mix(in srgb, var(--pvt-note-term-text) 38%, transparent);
+            }
+        }
+
+        // The active toggle glows in the note's own accent colour.
+        .pvt-note-surface-toggle.is-active {
+            color: var(--pvt-note-term-text);
+            background-color: color-mix(in srgb, var(--note-color) 22%, transparent);
+            border-color: color-mix(in srgb, var(--note-color) 55%, transparent);
+        }
+
+        // Monospace body + editor — the console voice.
+        .pvt-note-content-rendered.pvt-markdown {
+            font-family: $mono;
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--pvt-note-term-text-dim);
+        }
+
+        .pvt-markdown a {
+            color: color-mix(in srgb, #3b82f6, var(--pvt-note-term-text) 12%);
+        }
+
+        .pvt-node-reference.unresolved {
+            color: var(--pvt-note-term-text-dim);
+            border-color: color-mix(in srgb, var(--pvt-note-term-text) 30%, transparent);
+        }
+
+        .pvt-note-link-subcontainer {
+            color: var(--pvt-note-term-text);
+            background: color-mix(in srgb, var(--pvt-note-term-text) 6%, transparent);
+        }
+
+        .pvt-note-editor {
+            font-family: $mono;
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--pvt-note-term-text);
+            caret-color: var(--note-color);
+        }
+
+        .pvt-note-resize-handle {
+            background: color-mix(in srgb, var(--pvt-note-term-text) 26%, transparent);
         }
     }
 }

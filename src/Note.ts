@@ -5,6 +5,9 @@ export interface AttachedElement {
     id: string
 }
 
+/** Note surface finish: a deep full-colour card, or a neutral terminal panel. */
+export type NoteSurface = 'jewel' | 'terminal'
+
 export interface NoteOptions {
     id?: string
     x?: number
@@ -13,6 +16,7 @@ export interface NoteOptions {
     height?: number
     content?: string
     color?: string
+    surface?: NoteSurface
     visible?: boolean
     attachedElement?: AttachedElement
 }
@@ -29,6 +33,7 @@ export class Note {
 
     public content: string
     public color: string
+    public surface: NoteSurface
     public visible: boolean
 
     private graphElement?: SVGGElement
@@ -52,6 +57,7 @@ export class Note {
 
         this.content = options.content ?? ''
         this.color = options.color ?? '#FDE68A'
+        this.surface = options.surface ?? 'jewel'
         this.visible = true
 
         this.attachedElement = options.attachedElement
@@ -76,6 +82,11 @@ export class Note {
 
     public setColor(color: string): void {
         this.color = color
+        this.markDirty()
+    }
+
+    public setSurface(surface: NoteSurface): void {
+        this.surface = surface
         this.markDirty()
     }
 

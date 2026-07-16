@@ -8,7 +8,7 @@ import { Note } from '../../Note'
 import { Node } from '../../Node'
 import type { GraphRendererOptions, NodeStyle } from '../../interfaces/RendererOptions'
 import { createHtmlElement, createHtmlTemplate, createIcon, createSvgElement } from '../../utils/ElementCreation'
-import { checkmark, closeIcon, edit, link, magnifyingGlass, trash } from '../../ui/icons'
+import { checkmark, closeIcon, contrast, edit, link, magnifyingGlass, trash } from '../../ui/icons'
 import { pickNode } from '../../ui/components/NodePickers'
 import { nodeNameGetter } from '../../utils/GraphGetters'
 import { applyNodeReferenceColor } from '../../utils/NoteReferenceStyle'
@@ -71,6 +71,7 @@ export class NoteDrawer {
         const container = document.createElement('div')
         container.classList.add('pvt-note')
         container.style.setProperty('--note-color', note.color)
+        container.classList.toggle('pvt-note--terminal', note.surface === 'terminal')
 
         if (note.isEditing()) {
             container.classList.add('editing')
@@ -95,10 +96,38 @@ export class NoteDrawer {
             class: 'pvt-note-header',
         })
 
-        header.appendChild(this.createColorPills(container, note))
+        // Left cluster: colour pills + the surface toggle (both edit-only), so
+        // the restyle affordances stay grouped away from the right-hand actions.
+        const left = createHtmlElement('div', { class: 'pvt-note-head-left' })
+        left.appendChild(this.createColorPills(container, note))
+        left.appendChild(this.createSurfaceToggle(container, note))
+
+        header.appendChild(left)
         header.appendChild(this.createActionButtons(note))
 
         return header
+    }
+
+    /** Small toggle beside the colour pills: switches jewel ↔ terminal surface. */
+    private createSurfaceToggle(container: HTMLDivElement, note: Note): HTMLButtonElement {
+        const toggle = createButton({
+            title: 'Toggle terminal look',
+            svgIcon: contrast,
+            class: ['pvt-note-surface-toggle'],
+            variant: 'outline-secondary',
+            size: 'xs',
+            onClick: () => {
+                const next = note.surface === 'terminal' ? 'jewel' : 'terminal'
+                note.setSurface(next)
+                container.classList.toggle('pvt-note--terminal', next === 'terminal')
+                toggle.classList.toggle('is-active', next === 'terminal')
+                this.graph.noteManager.editNote(note)
+            }
+        })
+
+        toggle.classList.toggle('is-active', note.surface === 'terminal')
+
+        return toggle
     }
 
     private createLink(note: Note): HTMLDivElement {
