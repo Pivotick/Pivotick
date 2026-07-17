@@ -80,6 +80,15 @@
             height: 100%;
             border-radius: 3px;
             min-width: 2px;
+
+            &.pvt-facet-filterable {
+                cursor: pointer;
+                transition: filter 0.12s ease;
+
+                &:hover {
+                    filter: brightness(1.2);
+                }
+            }
         }
     }
 
@@ -241,6 +250,18 @@
             &.pvt-facet-chip--more {
                 color: var(--pvt-text-color-3);
                 font-style: italic;
+            }
+
+            &.pvt-facet-filterable {
+                cursor: pointer;
+                user-select: none;
+                transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+
+                &:hover {
+                    color: var(--pvt-text-color-6);
+                    background: color-mix(in srgb, var(--pvt-text-color-3) 20%, transparent);
+                    border-color: color-mix(in srgb, var(--pvt-text-color-3) 40%, transparent);
+                }
             }
         }
     }

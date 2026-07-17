@@ -9,6 +9,10 @@ const MAX_UNIQUE_CHIPS = 16
 export type AggregatedProperties = Map<string, Map<string, number>>
 export type actionButtonCallback = (key: string, value: string) => HTMLDivElement
 
+export type FacetFilterMode = 'keep' | 'exclude'
+/** Applies a keep-only / exclude filter for a single facet value — backs the clickable bars & chips. */
+export type facetFilterCallback = (key: string, value: string, mode: FacetFilterMode) => void
+
 type FacetKind = 'shared' | 'unique' | 'values'
 
 // Distinct, theme-agnostic hues used to colour the value swatches / bar segments.
@@ -31,6 +35,27 @@ function classifyFacet(valueCountMap: Map<string, number>): FacetKind {
     return 'unique'
 }
 
+// Tooltip hint shared by clickable bar segments and value chips.
+const FILTER_HINT = 'Click to keep only · Alt-click to exclude'
+
+/**
+ * Wires a distribution-bar segment or a value chip so a plain click keeps only
+ * nodes carrying that value and Alt/Ctrl/Cmd-click excludes them — the same
+ * filter as the row icons, reached faster by clicking the bar or the pills.
+ */
+function makeFacetValueFilterable(
+    el: HTMLElement,
+    key: string,
+    value: string,
+    filter: facetFilterCallback
+): void {
+    el.classList.add('pvt-facet-filterable')
+    el.addEventListener('click', (ev: MouseEvent) => {
+        const mode: FacetFilterMode = ev.altKey || ev.ctrlKey || ev.metaKey ? 'exclude' : 'keep'
+        filter(key, value, mode)
+    })
+}
+
 /**
  * Renders an aggregated property map as a stack of "facet" cards — one per
  * property. Each card is classified as:
@@ -41,14 +66,15 @@ function classifyFacet(valueCountMap: Map<string, number>): FacetKind {
 export function createTableForAggregatedProperties(
     aggregatedProperties: AggregatedProperties,
     selectedNodeCount: number,
-    actionButtonCallback?: actionButtonCallback
+    actionButtonCallback?: actionButtonCallback,
+    facetFilterCallback?: facetFilterCallback
 ): HTMLDivElement {
     const sortedAggregatedProperties = sortAggregatedProperties(aggregatedProperties, false)
     const root = createHtmlElement('div', { class: 'pvt-facets' })
 
     for (const [propName, valueCountMap] of sortedAggregatedProperties) {
         root.appendChild(
-            createFacetCard(propName, valueCountMap, selectedNodeCount, actionButtonCallback)
+            createFacetCard(propName, valueCountMap, selectedNodeCount, actionButtonCallback, facetFilterCallback)
         )
     }
     return root
@@ -58,7 +84,8 @@ function createFacetCard(
     propName: string,
     valueCountMap: Map<string, number>,
     selectedNodeCount: number,
-    actionButtonCallback?: actionButtonCallback
+    actionButtonCallback?: actionButtonCallback,
+    facetFilterCallback?: facetFilterCallback
 ): HTMLDivElement {
     const kind = classifyFacet(valueCountMap)
     const distinct = valueCountMap.size
@@ -82,8 +109,8 @@ function createFacetCard(
     ])
 
     const body = kind === 'unique'
-        ? createUniqueFacetBody(valueCountMap)
-        : createDistributionFacetBody(propName, valueCountMap, selectedNodeCount, kind, actionButtonCallback)
+        ? createUniqueFacetBody(propName, valueCountMap, facetFilterCallback)
+        : createDistributionFacetBody(propName, valueCountMap, selectedNodeCount, kind, actionButtonCallback, facetFilterCallback)
 
     return createHtmlElement('div', { class: 'pvt-facet-card' }, [header, body])
 }
@@ -94,7 +121,8 @@ function createDistributionFacetBody(
     valueCountMap: Map<string, number>,
     selectedNodeCount: number,
     kind: FacetKind,
-    actionButtonCallback?: actionButtonCallback
+    actionButtonCallback?: actionButtonCallback,
+    facetFilterCallback?: facetFilterCallback
 ): HTMLElement {
     const entries = Array.from(valueCountMap.entries())
 
@@ -106,6 +134,10 @@ function createDistributionFacetBody(
         seg.style.width = `${pct}%`
         seg.style.background = valueSwatchColor(value, i, kind)
         seg.title = `${displayValue(value)} — ${count} (${Math.round(pct)}%)`
+        if (facetFilterCallback && !isValueEmpty(value)) {
+            seg.title += `\n${FILTER_HINT}`
+            makeFacetValueFilterable(seg, propName, value, facetFilterCallback)
+        }
         bar.appendChild(seg)
     })
 
@@ -157,7 +189,11 @@ function createFacetRow(
     return row
 }
 
-function createUniqueFacetBody(valueCountMap: Map<string, number>): HTMLElement {
+function createUniqueFacetBody(
+    propName: string,
+    valueCountMap: Map<string, number>,
+    facetFilterCallback?: facetFilterCallback
+): HTMLElement {
     const caption = createHtmlElement('div', { class: 'pvt-facet-caption pvt-facet-caption--block' }, [
         'no repeated values',
     ])
@@ -166,11 +202,14 @@ function createUniqueFacetBody(valueCountMap: Map<string, number>): HTMLElement 
     const values = Array.from(valueCountMap.keys())
     values.slice(0, MAX_UNIQUE_CHIPS).forEach(value => {
         const empty = isValueEmpty(value)
-        chipsWrap.appendChild(
-            createHtmlElement('span', {
-                class: ['pvt-facet-chip', empty ? 'pvt-facet-value--empty' : ''],
-            }, [empty ? '— empty —' : displayValue(value)])
-        )
+        const chip = createHtmlElement('span', {
+            class: ['pvt-facet-chip', empty ? 'pvt-facet-value--empty' : ''],
+        }, [empty ? '— empty —' : displayValue(value)])
+        if (facetFilterCallback && !empty) {
+            chip.title = `${displayValue(value)}\n${FILTER_HINT}`
+            makeFacetValueFilterable(chip, propName, value, facetFilterCallback)
+        }
+        chipsWrap.appendChild(chip)
     })
     if (values.length > MAX_UNIQUE_CHIPS) {
         chipsWrap.appendChild(

@@ -183,7 +183,12 @@ export class SidebarProperties extends UIComponent {
                 allProperties.push(properties)
             })
             const aggregatedProperties = aggregateProperties(allProperties)
-            const aggregatedPropertiesDiv = createTableForAggregatedProperties(aggregatedProperties, nodes.length, this.genActionButtons.bind(this))
+            const aggregatedPropertiesDiv = createTableForAggregatedProperties(
+                aggregatedProperties,
+                nodes.length,
+                this.genActionButtons.bind(this),
+                this.applyNodeFacetFilter.bind(this)
+            )
             div.appendChild(aggregatedPropertiesDiv)
         }
 
@@ -218,6 +223,7 @@ export class SidebarProperties extends UIComponent {
                 allProperties.push(properties)
             })
             const aggregatedProperties = aggregateProperties(allProperties)
+            // No facet-filter callback here: edge selection filtering runs on nodes, so bars/chips stay non-clickable.
             const aggregatedPropertiesDiv = createTableForAggregatedProperties(aggregatedProperties, edges.length, this.genActionButtons.bind(this))
             div.appendChild(aggregatedPropertiesDiv)
         }
@@ -226,32 +232,33 @@ export class SidebarProperties extends UIComponent {
         this.body.appendChild(propertiesContainer)
     }
 
+    /**
+     * Narrows the current node selection by a single facet value: `keep` drops
+     * every node that does not carry the value, `exclude` drops those that do.
+     * Shared by the row icons and by clicking a distribution bar / value chip.
+     */
+    private applyNodeFacetFilter(key: string, value: string, mode: 'keep' | 'exclude'): void {
+        const interaction = this.uiManager.graph.renderer.getGraphInteraction()
+        const toRemove = interaction.getSelectedNodes()
+            .filter((nodeSelection: NodeSelection<unknown>) => {
+                const nodeValue = nodeSelection.node.getData()[key]
+                return mode === 'keep' ? nodeValue != value : nodeValue == value
+            })
+        interaction.removeNodesFromSelection(toRemove)
+    }
+
     private genActionButtons(key: string, value: string): HTMLDivElement {
         const buttonKeep = createHtmlElement('button', {
             title: 'Keep only nodes with this value',
             class: 'pvt-facet-action-select',
         }, [createIcon({ svgIcon: filterAdd }) ])
-        buttonKeep.addEventListener('click', () => {
-            const matchingNodes = this.uiManager.graph.renderer.getGraphInteraction().getSelectedNodes()
-                .filter((nodeSelection: NodeSelection<unknown>) => {
-                    const node = nodeSelection.node
-                    return node.getData()[key] != value
-                })
-            this.uiManager.graph.renderer.getGraphInteraction().removeNodesFromSelection(matchingNodes)
-        })
-        
+        buttonKeep.addEventListener('click', () => this.applyNodeFacetFilter(key, value, 'keep'))
+
         const buttonExclude = createHtmlElement('button', {
             title: 'Exclude nodes with this value',
             class: 'pvt-facet-action-exclude',
         }, [createIcon({ svgIcon: filterRemove }) ])
-        buttonExclude.addEventListener('click', () => {
-            const matchingNodes = this.uiManager.graph.renderer.getGraphInteraction().getSelectedNodes()
-                .filter((nodeSelection: NodeSelection<unknown>) => {
-                    const node = nodeSelection.node
-                    return node.getData()[key] == value
-                })
-            this.uiManager.graph.renderer.getGraphInteraction().removeNodesFromSelection(matchingNodes)
-        })
+        buttonExclude.addEventListener('click', () => this.applyNodeFacetFilter(key, value, 'exclude'))
 
         const container = createHtmlElement('div', { class: 'pvt-aggregated-property-actions' }, [
             buttonKeep,
