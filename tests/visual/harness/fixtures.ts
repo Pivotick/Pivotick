@@ -594,6 +594,39 @@ export const fixtures = {
         return { nodes, edges: [], notes: [] }
     },
 
+    /**
+     * A hub node ("API Gateway") wired to a mix of neighbours — used for the
+     * Neighbors sidebar: the "List" tab (directions, previews, label chips,
+     * long-name truncation) and the "Stats" tab facet (repeated edge labels
+     * `requests`×3 / `queries`×2, plus an unlabeled edge, give a clickable
+     * distribution). Directions are mixed: the hub calls its services (out) and
+     * is called by its clients (in).
+     */
+    neighbors(): BuiltFixture {
+        const hub = mkNode('hub', 0, 0, { label: 'API Gateway' })
+        const pg = mkNode('pg', 200, -120, { label: 'Postgres' })
+        const redis = mkNode('redis', 200, 0, { label: 'Redis' })
+        const auth = mkNode('auth', 200, 120, { label: 'Auth Service' })
+        const web = mkNode('web', -200, -120, { label: 'Web Frontend' })
+        const mobile = mkNode('mobile', -200, 0, { label: 'Mobile App' })
+        const admin = mkNode('admin', -200, 120, { label: 'Administration Console Dashboard' })
+        const health = mkNode('health', 0, 180, { label: 'Health Probe' })
+
+        const edges = [
+            // Outgoing: the gateway calls its backing services.
+            mkEdge('hub-pg', hub, pg, { label: 'queries' }),
+            mkEdge('hub-redis', hub, redis, { label: 'queries' }),
+            mkEdge('hub-auth', hub, auth, { label: 'authenticates' }),
+            // Incoming: clients call the gateway.
+            mkEdge('web-hub', web, hub, { label: 'requests' }),
+            mkEdge('mobile-hub', mobile, hub, { label: 'requests' }),
+            mkEdge('admin-hub', admin, hub, { label: 'requests' }),
+            // An unlabeled connection stays quiet (no chip / not filterable).
+            mkEdge('health-hub', health, hub),
+        ]
+        return { nodes: [hub, pg, redis, auth, web, mobile, admin, health], edges, notes: [] }
+    },
+
     filterable(): BuiltFixture {
         const node = (id: string, x: number, y: number, type: string, ports: number) =>
             mkNode(id, x, y, { type, ports })
