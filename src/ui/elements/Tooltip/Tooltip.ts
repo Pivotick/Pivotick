@@ -1,6 +1,7 @@
 import type { Edge } from '../../../Edge'
 import type { Node } from '../../../Node'
-import { createHtmlDL, createHtmlElement, createHtmlTemplate, makeDraggable } from '../../../utils/ElementCreation'
+import { createHtmlElement, createHtmlTemplate, makeDraggable } from '../../../utils/ElementCreation'
+import { createPropertyList } from '../Sidebar/PropertyList'
 import { tryResolveHTMLElement } from '../../../utils/Getters'
 import { edgeDescriptionGetter, edgeNameGetter, edgePropertiesGetter, nodeDescriptionGetter, nodeNameGetter, nodePropertiesGetter } from '../../../utils/GraphGetters'
 import { createButton } from '../../components/Button'
@@ -262,7 +263,7 @@ export class Tooltip extends UIComponent {
         }
 
         const propertiesContainer = createHtmlElement('div', { class: 'pvt-properties-container' }, [
-            createHtmlDL(properties, node)
+            createPropertyList(properties, node)
         ]) as HTMLDivElement
 
         tooltipContainer.appendChild(mainheaderContent)
@@ -379,7 +380,7 @@ export class Tooltip extends UIComponent {
         nameElem.textContent = edgeNameGetter(edge, this.headerOptions())
         subtitleElem.textContent = edgeDescriptionGetter(edge, this.headerOptions())
 
-        const propertiesContainer = createHtmlElement('div', { class: 'pvt-properties-container' }, [createHtmlDL(properties, edge)]) as HTMLDivElement
+        const propertiesContainer = createHtmlElement('div', { class: 'pvt-properties-container' }, [createPropertyList(properties, edge)]) as HTMLDivElement
 
         tooltipContainer.appendChild(mainheaderContent)
         tooltipContainer.appendChild(propertiesContainer)

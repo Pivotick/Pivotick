@@ -142,18 +142,16 @@
 
         .pvt-properties-container {
             margin-bottom: 4px;
+            // Same type-aware PropertyList as the sidebar, with the inspector-style
+            // gutter (matches .pvt-properties-body-panel) so long ids / JSON blocks
+            // don't hug the tooltip edges.
+            padding: 12px 14px;
 
-            dl.pvt-property-list {
-                background: var(--pvt-tooltip-property-list);
-                gap: 0px 12px;
-                // Inspector-style gutter (matches the sidebar properties panel) so
-                // names/values don't hug the tooltip edges; the tint band stays
-                // full-width with the content inset.
-                padding: 8px 14px;
-
-                .pvt-property-row {
-                    padding: 0.2em;
-                }
+            // The tooltip root sets `white-space: nowrap`; the sidebar relies on the
+            // default `normal` for values to wrap. Keys / JSON / links keep their own
+            // white-space rules (they're more specific), so only the base needs this.
+            .pvt-node-props {
+                white-space: normal;
             }
         }
 
