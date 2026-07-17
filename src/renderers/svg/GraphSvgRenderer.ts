@@ -306,10 +306,14 @@ export class GraphSvgRenderer extends GraphRenderer {
         this.shadowEdgePath = this.shadowEdgeGroup.append('path').attr('class', 'pvt-shadow-edge').style('display', 'none')
 
         this.noteEdgeGroup = this.zoomGroup.append('g').attr('class', 'note-edges')
-        
-        this.noteGroup = this.zoomGroup.append('g').attr('class', 'notes')
+
         this.selectionBoxGroup = this.svg.append('g').attr('class', 'selection-box')
         this.nodeGroup = this.zoomGroup.append('g').attr('class', 'nodes')
+
+        // Notes sit above the graph — they are annotations meant to stay readable,
+        // never obscured by a node. Their connectors stay in the note-edges layer
+        // (below the nodes) so a link line doesn't float across unrelated nodes.
+        this.noteGroup = this.zoomGroup.append('g').attr('class', 'notes')
 
         this.handleLayer = this.zoomGroup.append('g').attr('class', 'connection-handle-layer')
 
