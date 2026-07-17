@@ -28,7 +28,10 @@
         color-mix(in srgb, var(--note-color), #1b1530 52%)
     );
     color: rgba(255, 255, 255, 0.95);
-    border: 1px solid color-mix(in srgb, var(--note-color), #000 24%);
+    // Darker than the (dark-purple-mixed) fill so the edge recedes. At 24% the
+    // border was a *lighter* shade than the fill and read as a pale rim over a
+    // dark canvas / when zoomed.
+    border: 1px solid color-mix(in srgb, var(--note-color), #14101f 55%);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
 
     transition:
