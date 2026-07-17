@@ -112,6 +112,41 @@
     user-select: all;
 }
 
+// Entity header title (node/edge). Shared by the sidebar main header and the
+// tooltip so both auto-fit identically: `fitEntityTitle` shrinks the font to
+// fit two lines, then falls back to a prose clamp (.is-clamp) or a monospace,
+// middle-elided identifier form (.is-identifier) with a copy button.
+@mixin entity-title-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--pvt-text-color-6);
+    line-height: 1.3;
+    user-select: all;
+    // Auto-fit base: wrap normally, breaking a long token only when forced.
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: normal;
+
+    // Fallback A — prose too long to fit: clean two-line clamp.
+    &.is-clamp {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    // Fallback B — identifier too long to fit: monospace, one line, middle-elided
+    // by JS (both ends kept); the copy button carries the full value.
+    &.is-identifier {
+        font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+        font-size: 13.5px;
+        letter-spacing: -0.01em;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+}
+
 @mixin node-text-value {
     color: var(--pvt-text-color-primary);
     user-select: all;

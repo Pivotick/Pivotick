@@ -2,6 +2,7 @@ import type { Edge } from '../../../Edge'
 import type { Node } from '../../../Node'
 import { createHtmlElement, createHtmlTemplate, makeDraggable } from '../../../utils/ElementCreation'
 import { createPropertyList } from '../Sidebar/PropertyList'
+import { fitEntityTitle } from '../Sidebar/titleFit'
 import { tryResolveHTMLElement } from '../../../utils/Getters'
 import { edgeDescriptionGetter, edgeNameGetter, edgePropertiesGetter, nodeDescriptionGetter, nodeNameGetter, nodePropertiesGetter } from '../../../utils/GraphGetters'
 import { createButton } from '../../components/Button'
@@ -43,6 +44,13 @@ export class Tooltip extends UIComponent {
     private hideTimeout: ReturnType<typeof setTimeout> | null = null
 
     private tooltipDataMap = new Map<HTMLElement, Node | Edge>()
+
+    // Auto-fit title state (mirrors the sidebar main header): the current fit
+    // closure, a width guard to avoid refit loops, and an observer that refits
+    // when the tooltip is resized.
+    private fitCurrentTitle?: () => void
+    private titleObserver?: ResizeObserver
+    private titleLastWidth = -1
 
     constructor(uiManager: UIManager) {
         super(uiManager)
@@ -94,11 +102,36 @@ export class Tooltip extends UIComponent {
     }
 
     protected onDestroy() {
+        this.titleObserver?.disconnect()
+        this.titleObserver = undefined
         this.tooltip?.remove()
         this.tooltip = undefined
     }
 
     protected onAfterMount() {
+        // Refit the current title whenever the tooltip is resized (content change
+        // or the user drag-resizing a pinned copy).
+        if (this.tooltip) {
+            this.titleObserver = new ResizeObserver(() => this.refitTitle())
+            this.titleObserver.observe(this.tooltip)
+        }
+    }
+
+    // Render an entity title into the header name slot with the sidebar's
+    // auto-fit / type-aware treatment. The actual fit runs once the slot has a
+    // width (rAF + the resize observer), guarded on width to avoid loops.
+    private renderTitle(nameElem: HTMLElement, actionElem: HTMLElement | null, text: string): void {
+        this.fitCurrentTitle = () => fitEntityTitle(nameElem, actionElem, text)
+        this.titleLastWidth = -1
+        requestAnimationFrame(() => this.refitTitle())
+    }
+
+    private refitTitle(): void {
+        if (!this.tooltip || !this.fitCurrentTitle) return
+        const width = this.tooltip.clientWidth
+        if (width === this.titleLastWidth) return
+        this.titleLastWidth = width
+        this.fitCurrentTitle()
     }
 
     protected onGraphReady() {
@@ -226,13 +259,13 @@ export class Tooltip extends UIComponent {
         const nameElem = tooltipContainer.querySelector('.pvt-mainheader-nodeinfo-name')!
         const subtitleElem = tooltipContainer.querySelector('.pvt-mainheader-nodeinfo-subtitle')!
         const toprightElem = tooltipContainer.querySelector('.pvt-mainheader-topright')!
-        // const actionElem = tooltipContainer.querySelector('.pvt-mainheader-nodeinfo-action')!
+        const actionElem = tooltipContainer.querySelector('.pvt-mainheader-nodeinfo-action') as HTMLElement | null
 
         const properties = nodePropertiesGetter(node, this.propertiesOptions())
 
         previewElem.prepend(createNodePreview(node, { size: fixedPreviewSize, removeSelectionHighlight: true }))
 
-        nameElem.textContent = nodeNameGetter(node, this.headerOptions())
+        this.renderTitle(nameElem as HTMLElement, actionElem, nodeNameGetter(node, this.headerOptions()))
         subtitleElem.textContent = nodeDescriptionGetter(node, this.headerOptions())
 
         if (this.options.allowPinning) {
@@ -348,7 +381,7 @@ export class Tooltip extends UIComponent {
         const nameElem = tooltipContainer.querySelector('.pvt-mainheader-nodeinfo-name')!
         const subtitleElem = tooltipContainer.querySelector('.pvt-mainheader-nodeinfo-subtitle')!
         const toprightElem = tooltipContainer.querySelector('.pvt-mainheader-topright')!
-        // const actionElem = tooltipContainer.querySelector('.pvt-mainheader-nodeinfo-action')!
+        const actionElem = tooltipContainer.querySelector('.pvt-mainheader-nodeinfo-action') as HTMLElement | null
 
         const pinButton = createButton({
             title: 'Pin Tooltip',
@@ -377,7 +410,7 @@ export class Tooltip extends UIComponent {
 
         const properties = edgePropertiesGetter(edge, this.propertiesOptions())
 
-        nameElem.textContent = edgeNameGetter(edge, this.headerOptions())
+        this.renderTitle(nameElem as HTMLElement, actionElem, edgeNameGetter(edge, this.headerOptions()))
         subtitleElem.textContent = edgeDescriptionGetter(edge, this.headerOptions())
 
         const propertiesContainer = createHtmlElement('div', { class: 'pvt-properties-container' }, [createPropertyList(properties, edge)]) as HTMLDivElement
