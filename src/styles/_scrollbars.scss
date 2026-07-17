@@ -1,0 +1,50 @@
+// Theme-aware scrollbars.
+//
+// Scoped to `.pivotick` so we only restyle the widget's own scrollable areas
+// (sidebar, slide panel, modals, json viewer, …) and never touch the host
+// page's scrollbars. Colours come from theme variables that track the ink
+// colour, so the scrollbar follows light/dark automatically.
+//
+// Firefox (and the spec) use `scrollbar-width` / `scrollbar-color`; Chromium
+// and Safari use the `::-webkit-scrollbar` pseudo-elements. We set both.
+
+.pivotick {
+    // Standard properties — inherited by every descendant.
+    scrollbar-width: thin;
+    scrollbar-color: var(--pvt-scrollbar-thumb) var(--pvt-scrollbar-track);
+
+    // WebKit / Blink pseudo-elements. Applies to the container and, via the
+    // descendant selector below, to any scrollable child.
+    &::-webkit-scrollbar,
+    *::-webkit-scrollbar {
+        width: var(--pvt-scrollbar-size);
+        height: var(--pvt-scrollbar-size);
+    }
+
+    &::-webkit-scrollbar-track,
+    *::-webkit-scrollbar-track {
+        background: var(--pvt-scrollbar-track);
+    }
+
+    &::-webkit-scrollbar-thumb,
+    *::-webkit-scrollbar-thumb {
+        background: var(--pvt-scrollbar-thumb);
+        border-radius: 999px;
+        // Inset the thumb with a transparent border so it reads as a slim pill
+        // with breathing room, rather than filling the whole gutter edge-to-edge.
+        border: 2px solid transparent;
+        background-clip: padding-box;
+    }
+
+    &::-webkit-scrollbar-thumb:hover,
+    *::-webkit-scrollbar-thumb:hover {
+        background: var(--pvt-scrollbar-thumb-hover);
+        background-clip: padding-box;
+    }
+
+    // Hide the little corner square where two scrollbars meet.
+    &::-webkit-scrollbar-corner,
+    *::-webkit-scrollbar-corner {
+        background: transparent;
+    }
+}

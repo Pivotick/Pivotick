@@ -74,6 +74,12 @@ $light-theme: (
     pvt-box-shadow-strong: "rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px",
     pvt-box-shadow-color-strong: "#aaaaaa55",
 
+    /* Scrollbar (thumb tracks the ink colour so it adapts to the theme) */
+    pvt-scrollbar-size: 10px,
+    pvt-scrollbar-track: transparent,
+    pvt-scrollbar-thumb: color-mix(in srgb, var(--pvt-text-color-6) 22%, transparent),
+    pvt-scrollbar-thumb-hover: color-mix(in srgb, var(--pvt-text-color-6) 40%, transparent),
+
 
     /* Sidebar */
     pvt-sidebar-bg: var(--pvt-bg-color-0),
@@ -328,6 +334,12 @@ $dark-theme: (
     pvt-box-shadow-medium: "rgba(0, 0, 0, 0.1) 0px 4px 6px -1px, rgba(0, 0, 0, 0.06) 0px 2px 4px -1px",
     pvt-box-shadow-strong: "rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px",
     pvt-box-shadow-color-strong: "#00000055",
+
+    /* Scrollbar (thumb tracks the ink colour so it adapts to the theme) */
+    pvt-scrollbar-size: 10px,
+    pvt-scrollbar-track: transparent,
+    pvt-scrollbar-thumb: color-mix(in srgb, var(--pvt-text-color-6) 18%, transparent),
+    pvt-scrollbar-thumb-hover: color-mix(in srgb, var(--pvt-text-color-6) 34%, transparent),
 
 
     /* Sidebar */
