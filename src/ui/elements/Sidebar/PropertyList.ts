@@ -65,7 +65,7 @@ function objectBadgeText(value: object): string {
     return `{ } ${n} ${n === 1 ? 'key' : 'keys'}`
 }
 
-function createCopyButton(text: string): HTMLElement {
+export function createCopyButton(text: string): HTMLElement {
     const btn = createHtmlElement('span', { class: 'pvt-prop-copy', title: 'Copy', role: 'button', tabindex: '0' }, [
         createIcon({ svgIcon: copyIcon }),
     ])

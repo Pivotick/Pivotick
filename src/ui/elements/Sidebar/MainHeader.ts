@@ -9,12 +9,61 @@ import { graphEdgeIcon, graphMultiSelectNode } from '../../icons'
 import type { EdgeSelection, NodeSelection } from '../../../interfaces/GraphInteractions'
 import { tryResolveHTMLElement } from '../../../utils/Getters'
 import { createNodePreview } from '../../../utils/NodePreview'
+import { createCopyButton } from './PropertyList'
+
+// Title auto-fit bounds: shrink a long title from MAX down to MIN px, wrapped
+// over at most MAX_LINES lines, before giving up and switching to the
+// type-aware fallback.
+const TITLE_MAX_PX = 16
+const TITLE_MIN_PX = 12
+const TITLE_LINE_HEIGHT = 1.3
+const TITLE_MAX_LINES = 2
+
+// A single hidden canvas reused to measure text width for middle-truncation.
+let textMeasurer: CanvasRenderingContext2D | null = null
+function measureTextWidth(text: string, font: string): number {
+    if (!textMeasurer) textMeasurer = document.createElement('canvas').getContext('2d')
+    if (!textMeasurer) return text.length * 8
+    textMeasurer.font = font
+    return textMeasurer.measureText(text).width
+}
+
+function elementFont(el: HTMLElement): string {
+    const s = getComputedStyle(el)
+    return `${s.fontWeight} ${s.fontSize} ${s.fontFamily}`
+}
+
+/** A title with no whitespace reads as an identifier (id, URL, hash, onion…). */
+function looksLikeIdentifier(text: string): boolean {
+    return !/\s/.test(text.trim())
+}
+
+/** Keep the head and tail of a too-long string, eliding the middle: `abcd…wxyz`. */
+function middleTruncate(text: string, availPx: number, font: string): string {
+    if (availPx <= 0 || measureTextWidth(text, font) <= availPx) return text
+    const ellipsis = '…'
+    let lo = 1, hi = text.length - 1, best = ellipsis
+    while (lo <= hi) {
+        const keep = (lo + hi) >> 1
+        const head = Math.ceil(keep / 2)
+        const tail = Math.floor(keep / 2)
+        const candidate = text.slice(0, head) + ellipsis + text.slice(text.length - tail)
+        if (measureTextWidth(candidate, font) <= availPx) { best = candidate; lo = keep + 1 }
+        else hi = keep - 1
+    }
+    return best
+}
 
 
 export class SidebarMainHeader extends UIComponent {
 
     private panel?: HTMLDivElement
     private renderCb?: ((element: Node | Edge | Node[] | Edge[] | null) => HTMLElement | string) | HTMLElement | string
+
+    // Re-fit the current title whenever the sidebar width changes.
+    private titleObserver?: ResizeObserver
+    private fitCurrentTitle?: () => void
+    private titleLastWidth = -1
 
     constructor(uiManager: UIManager) {
         super(uiManager)
@@ -25,6 +74,14 @@ export class SidebarMainHeader extends UIComponent {
         if (!rootContainer) return
 
         this.panel = rootContainer as HTMLDivElement
+
+        // The title fit depends on the panel width; recompute it on resize
+        // (sidebar collapse/expand, responsive layout) rather than only on select.
+        if (typeof ResizeObserver !== 'undefined') {
+            this.titleObserver = new ResizeObserver(() => this.refitTitle())
+            this.titleObserver.observe(this.panel)
+            this.track(() => this.titleObserver?.disconnect())
+        }
     }
 
     protected onDestroy() {
@@ -52,6 +109,8 @@ export class SidebarMainHeader extends UIComponent {
 
     public clearOverview(): void {
         if (!this.panel) return
+
+        this.fitCurrentTitle = undefined
 
         if (this.renderCb) {
             this.renderCustomContent(null)
@@ -87,11 +146,15 @@ export class SidebarMainHeader extends UIComponent {
         const previewElem = mainheaderContent.querySelector('.pvt-mainheader-nodepreview')
         const nameElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-name')
         const subtitleElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-subtitle')
-        // const _actionElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-action')
+        const actionElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-action')
 
         previewElem?.appendChild(createNodePreview(element instanceof SVGGElement ? element : node, { size: fixedPreviewSize }))
         if (nameElem) {
-            nameElem.textContent = nodeNameGetter(node, this.uiManager.getOptions().mainHeader)
+            this.renderTitle(
+                nameElem as HTMLElement,
+                actionElem as HTMLElement | null,
+                nodeNameGetter(node, this.uiManager.getOptions().mainHeader)
+            )
         }
         if (subtitleElem) {
             const description = nodeDescriptionGetter(node, this.uiManager.getOptions().mainHeader)
@@ -128,10 +191,14 @@ export class SidebarMainHeader extends UIComponent {
         const mainheaderContent = createHtmlTemplate(template) as HTMLDivElement
         const nameElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-name')
         const subtitleElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-subtitle')
-        // const actionElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-action')
+        const actionElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-action')
 
         if (nameElem) {
-            nameElem.textContent = edgeNameGetter(edge, this.uiManager.getOptions().mainHeader)
+            this.renderTitle(
+                nameElem as HTMLElement,
+                actionElem as HTMLElement | null,
+                edgeNameGetter(edge, this.uiManager.getOptions().mainHeader)
+            )
         }
         if (subtitleElem) {
             subtitleElem.textContent = edgeDescriptionGetter(edge, this.uiManager.getOptions().mainHeader)
@@ -146,6 +213,8 @@ export class SidebarMainHeader extends UIComponent {
     /* Multi selection */
     public updateNodesOverview(nodes: NodeSelection<unknown>[]): void {
         if (!this.panel) return
+
+        this.fitCurrentTitle = undefined
 
         if (this.renderCb) {
             this.renderCustomContent(nodes.map((nodeS: NodeSelection<unknown>) => nodeS.node))
@@ -192,6 +261,8 @@ export class SidebarMainHeader extends UIComponent {
     public updateEdgesOverview(edges: EdgeSelection<unknown>[]): void {
         if (!this.panel) return
 
+        this.fitCurrentTitle = undefined
+
         if (this.renderCb) {
             this.renderCustomContent(edges.map((nodeS: EdgeSelection<unknown>) => nodeS.edge))
             return
@@ -228,6 +299,63 @@ export class SidebarMainHeader extends UIComponent {
         })
     }
 
+
+    /* Title rendering */
+
+    /**
+     * Render a (possibly long) entity title into the header name slot.
+     *
+     * Strategy: first try to **auto-fit** — shrink the font from 16px down to
+     * 12px so the whole title fits across up to two lines. If it still doesn't
+     * fit at the floor size, fall back to a **type-aware** treatment: prose
+     * titles get a clean two-line clamp with an ellipsis; identifier-like titles
+     * (ids, URLs, hashes) get a monospace, middle-elided form (`abc…xyz`, both
+     * ends kept) plus a copy button, since middle-elision replaces the text.
+     */
+    private renderTitle(nameElem: HTMLElement, actionElem: HTMLElement | null, text: string): void {
+        this.fitCurrentTitle = () => this.fitTitle(nameElem, actionElem, text)
+        this.titleLastWidth = -1
+        requestAnimationFrame(() => this.refitTitle())
+    }
+
+    private refitTitle(): void {
+        if (!this.panel || !this.fitCurrentTitle) return
+        // Guard on width only: fitting changes the title's height, so reacting to
+        // height too would loop. Width is driven solely by the sidebar.
+        const width = this.panel.clientWidth
+        if (width === this.titleLastWidth) return
+        this.titleLastWidth = width
+        this.fitCurrentTitle()
+    }
+
+    private fitTitle(nameElem: HTMLElement, actionElem: HTMLElement | null, text: string): void {
+        // Reset to the auto-fit base state (normal wrap, no clamp, full text).
+        nameElem.className = 'pvt-mainheader-nodeinfo-name'
+        nameElem.style.fontSize = ''
+        nameElem.removeAttribute('title')
+        nameElem.textContent = text
+        actionElem?.replaceChildren()
+
+        const avail = nameElem.clientWidth
+        if (avail <= 0) return // collapsed / not yet laid out — the observer refits later
+
+        // 1) Auto-fit: the whole title, shrunk just enough to fit two lines.
+        for (let size = TITLE_MAX_PX; size >= TITLE_MIN_PX; size--) {
+            nameElem.style.fontSize = `${size}px`
+            if (nameElem.scrollHeight <= Math.ceil(size * TITLE_LINE_HEIGHT * TITLE_MAX_LINES) + 1) return
+        }
+
+        // 2) Too large even at the floor size → type-aware fallback.
+        nameElem.style.fontSize = ''
+        nameElem.title = text
+        if (looksLikeIdentifier(text)) {
+            nameElem.classList.add('is-identifier')
+            nameElem.textContent = middleTruncate(text, avail, elementFont(nameElem))
+            actionElem?.appendChild(createCopyButton(text))
+        } else {
+            nameElem.classList.add('is-clamp')
+        }
+    }
 
     /* Private methods */
     private showTotalNodeCount(): void {

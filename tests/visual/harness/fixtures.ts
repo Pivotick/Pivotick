@@ -240,6 +240,25 @@ export const fixtures = {
         return { nodes: [domain, eve, frank, diana], edges, notes: [] }
     },
 
+    /**
+     * Nodes whose titles exercise the header's long-title handling:
+     *  - `short`  fits at the full 16px,
+     *  - `mid`    auto-fits by shrinking the font,
+     *  - `onion`  a long identifier (no spaces),
+     *  - `hugeId` an identifier too long to fit → monospace middle-ellipsis + copy,
+     *  - `prose`  a sentence too long to fit → clean two-line clamp.
+     */
+    longTitles(): BuiltFixture {
+        const short = mkNode('short', -200, 0, { label: 'Web Frontend' })
+        const mid = mkNode('mid', 0, -140, { label: 'Administration Console Dashboard — Service Instance 04' })
+        const onion = mkNode('onion', 0, 0, { label: 'torsiqlecptj74i5rksxunffxb3it5pitd5lbyemvadmzrxeih7vjuad.onion' })
+        const hugeId = mkNode('hugeId', 0, 140, { label: 'a3f9c1e8b7d64f20'.repeat(8) })
+        const prose = mkNode('prose', 200, 0, {
+            label: 'This is an unusually long human-readable node title that runs well past what the header can show in two lines even at the smallest font size',
+        })
+        return { nodes: [short, mid, onion, hugeId, prose], edges: [], notes: [] }
+    },
+
     /** The basic graph plus a free-floating Markdown note. */
     withNote(): BuiltFixture {
         const base = fixtures.basic()
