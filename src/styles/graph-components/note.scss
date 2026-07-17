@@ -288,6 +288,11 @@
 
         .pvt-note-header {
             display: flex;
+            // In edit mode the header returns as a draggable toolbar band (the
+            // body is the textarea then, so it can't double as the drag surface).
+            pointer-events: auto;
+            cursor: move;
+            background: rgba(0, 0, 0, 0.22);
 
             .pvt-note-color-pills {
                 display: inline-flex;
@@ -371,10 +376,15 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 4px;
+            height: 5px;
             background: var(--note-color);
             z-index: 4;
             pointer-events: none;
+        }
+
+        // Edit-mode header band, theme-aware so it reads on a white or dark panel.
+        &.editing .pvt-note-header {
+            background: color-mix(in srgb, var(--pvt-note-term-text) 8%, transparent);
         }
 
         .pivotick-button-outline-secondary,

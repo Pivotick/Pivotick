@@ -504,11 +504,12 @@ export class NoteDrawer {
         card
             .on('mousedown', (evt: MouseEvent) => {
 
-                // Don't drag from the chrome, links, node references or the editor,
-                // and never while editing (the textarea owns interaction then).
+                // Never drag from interactive chrome, the editor, links or refs.
                 const target = evt.target as HTMLElement
-                if (note.isEditing()) return
-                if (target.closest('button, a, .pvt-note-resize-handle, .pvt-node-reference, .pvt-note-editor')) return
+                if (target.closest('button, a, .pvt-note-resize-handle, .pvt-node-reference, .pvt-note-color-pill, .pvt-note-editor')) return
+                // At rest the whole card is the drag surface; while editing only
+                // the header band drags (the body is the textarea then).
+                if (note.isEditing() && !target.closest('.pvt-note-header')) return
 
                 evt.preventDefault()
                 evt.stopPropagation()

@@ -592,8 +592,12 @@ export class GraphSvgRenderer extends GraphRenderer {
                             this.noteDrawer.refreshLink(note)
 
                             note.clearAttachmentDirty()
-                        } else {
+                        } else if (!note.isEditing()) {
 
+                            // While editing, the colour/surface pills apply their
+                            // change to the live DOM directly — rebuilding here
+                            // would blow away the editor state and reset the save
+                            // button back to the edit icon.
                             selection.selectChildren().remove()
 
                             this.noteDrawer.render(selection, note)
