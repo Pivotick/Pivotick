@@ -245,6 +245,18 @@
             &.pvt-markdown {
                 color: rgba(255, 255, 255, 0.88);
             }
+
+            // The first rendered block is promoted to the note's title — a single
+            // consistent size regardless of the markdown the author used for it.
+            // Empty notes have no first child, so no title shows.
+            > :first-child {
+                margin-top: 0;
+                margin-bottom: 8px;
+                font-size: 15px;
+                font-weight: 600;
+                line-height: 1.3;
+                color: rgba(255, 255, 255, 0.96);
+            }
         }
 
         .pvt-note-editor {
@@ -381,17 +393,6 @@
             border-bottom-color: var(--pvt-note-term-border);
         }
 
-        // A mono colour "›" prompt marks the header — the terminal signature,
-        // present even at rest (the pills/toggle only appear while editing).
-        .pvt-note-head-left::before {
-            content: "›";
-            font-family: $mono;
-            font-weight: 700;
-            font-size: 14px;
-            line-height: 1;
-            color: var(--note-color);
-        }
-
         .pivotick-button-outline-secondary,
         .pivotick-button-outline-danger {
             color: var(--pvt-note-term-text);
@@ -417,6 +418,18 @@
             font-size: 13px;
             line-height: 1.6;
             color: var(--pvt-note-term-text-dim);
+        }
+
+        // Terminal title: theme-aware ink, prefixed by the mono colour "›" prompt.
+        .pvt-note-content-rendered > :first-child {
+            color: var(--pvt-note-term-text);
+
+            &::before {
+                content: "›";
+                margin-right: 7px;
+                font-weight: 700;
+                color: var(--note-color);
+            }
         }
 
         .pvt-markdown a {
