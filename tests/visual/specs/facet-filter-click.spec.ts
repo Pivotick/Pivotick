@@ -65,4 +65,24 @@ test.describe('facet filter clicks', () => {
         // Only Mallory (C1) drops out.
         expect(await selectedIds(page)).toEqual(['C2', 'C3', 'C4', 'C5', 'C6'])
     })
+
+    // Regression: `id` is surfaced from `node.id`, not `getData()`, so filtering
+    // on it must read the displayed property value — otherwise "keep only"
+    // matched nothing and wiped the whole selection.
+    test('clicking an id pill keeps only that node (id lives on node.id)', async ({ page }) => {
+        await harness(page, 'multiSelect', ALL)
+        const props = page.locator('.pvt-properties-body-panel')
+
+        // `id` is all-unique → chips; C3's id chip is exactly "C3".
+        await props.locator('.pvt-facet-chip', { hasText: /^C3$/ }).click()
+        expect(await selectedIds(page)).toEqual(['C3'])
+    })
+
+    test('Alt-clicking an id pill excludes that node', async ({ page }) => {
+        await harness(page, 'multiSelect', ALL)
+        const props = page.locator('.pvt-properties-body-panel')
+
+        await props.locator('.pvt-facet-chip', { hasText: /^C3$/ }).click({ modifiers: ['Alt'] })
+        expect(await selectedIds(page)).toEqual(['C1', 'C2', 'C4', 'C5', 'C6'])
+    })
 })

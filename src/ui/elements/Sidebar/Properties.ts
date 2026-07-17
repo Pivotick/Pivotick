@@ -236,12 +236,18 @@ export class SidebarProperties extends UIComponent {
      * Narrows the current node selection by a single facet value: `keep` drops
      * every node that does not carry the value, `exclude` drops those that do.
      * Shared by the row icons and by clicking a distribution bar / value chip.
+     *
+     * The value is read through `nodePropertiesGetter` — the same source the
+     * facet was built from — rather than raw `getData()`, so getter-derived
+     * fields (e.g. `id`, which lives on `node.id`) match instead of missing.
      */
     private applyNodeFacetFilter(key: string, value: string, mode: 'keep' | 'exclude'): void {
+        const propertiesPanel = this.uiManager.getOptions().propertiesPanel
         const interaction = this.uiManager.graph.renderer.getGraphInteraction()
         const toRemove = interaction.getSelectedNodes()
             .filter((nodeSelection: NodeSelection<unknown>) => {
-                const nodeValue = nodeSelection.node.getData()[key]
+                const nodeValue = nodePropertiesGetter(nodeSelection.node, propertiesPanel)
+                    .find((prop) => prop.name === key)?.value
                 return mode === 'keep' ? nodeValue != value : nodeValue == value
             })
         interaction.removeNodesFromSelection(toRemove)
