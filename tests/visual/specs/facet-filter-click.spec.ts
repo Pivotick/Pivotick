@@ -85,4 +85,27 @@ test.describe('facet filter clicks', () => {
         await props.locator('.pvt-facet-chip', { hasText: /^C3$/ }).click({ modifiers: ['Alt'] })
         expect(await selectedIds(page)).toEqual(['C1', 'C2', 'C4', 'C5', 'C6'])
     })
+
+    // When a filter narrows the selection down to a single node, the panel drops
+    // the aggregated facet view for the plain single-node view — the same thing a
+    // fresh one-node click shows, rather than a stack of degenerate "shared" bars.
+    test('narrowing the selection to one node shows the single-node view', async ({ page }) => {
+        await harness(page, 'multiSelect', ALL)
+        const sidebar = page.locator('.pvt-sidebar')
+        const header = sidebar.locator('.pvt-properties-header-panel')
+        const body = sidebar.locator('.pvt-properties-body-panel')
+
+        // Six nodes → aggregated facets.
+        await expect(header).toHaveText('Aggregated Node Properties')
+        await expect(body.locator('.pvt-facet-card').first()).toBeVisible()
+
+        // is_active=false is carried by C5 alone → "keep only" leaves one node.
+        await body.locator('.pvt-facet-bar-seg[title^="false"]').click()
+        expect(await selectedIds(page)).toEqual(['C5'])
+
+        // Panel has flipped to the single-node definition list, no facet cards.
+        await expect(header).toHaveText('Basic Node Properties')
+        await expect(body.locator('.dl-container')).toBeVisible()
+        await expect(body.locator('.pvt-facet-card')).toHaveCount(0)
+    })
 })

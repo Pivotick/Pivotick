@@ -91,16 +91,10 @@ export class Sidebar extends UIComponent {
     protected onGraphReady() {
         /* Single selection */
         this.trackInteraction('selectNode', (node: Node, element: unknown) => {
-            this.sidebarMainHeader.updateNodeOverview(node, element)
-            this.sidebarProperties.updateNodeProperties(node)
-            this.sidebarNeighbors.updateNodeNeighbors(node)
-            this.extraPanelManager.updateNode(node)
+            this.renderSingleNodeSelection(node, element)
         })
         this.trackInteraction('unselectNode', () => {
-            this.sidebarMainHeader.clearOverview()
-            this.sidebarProperties.clearProperties()
-            this.sidebarNeighbors.clearNeighbors()
-            this.extraPanelManager.clear()
+            this.clearSelection()
         })
         this.trackInteraction('selectEdge', (edge: Edge) => {
             this.sidebarMainHeader.updateEdgeOverview(edge)
@@ -109,34 +103,18 @@ export class Sidebar extends UIComponent {
             this.extraPanelManager.updateEdge(edge)
         })
         this.trackInteraction('unselectEdge', () => {
-            this.sidebarMainHeader.clearOverview()
-            this.sidebarProperties.clearProperties()
-            this.sidebarNeighbors.clearNeighbors()
-            this.extraPanelManager.clear()
+            this.clearSelection()
         })
 
         /* Multi selection */
+        // A multi-selection narrowed (e.g. via the facet filters) down to a
+        // single node is rendered as a single selection, matching a fresh click.
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         this.trackInteraction('selectNodes', (_nodes: NodeSelection<unknown>[]) => {
-            const fullSelection = this.uiManager.graph.renderer.getGraphInteraction().getSelectedNodes()
-            this.sidebarMainHeader.updateNodesOverview(fullSelection)
-            this.sidebarProperties.updateNodesProperties(fullSelection)
-            this.sidebarNeighbors.updateNodesNeighbors(fullSelection)
-            this.extraPanelManager.updateNodes(fullSelection)
+            this.renderNodeSelection()
         })
         this.trackInteraction('unselectNodes', () => {
-            const fullSelection = this.uiManager.graph.renderer.getGraphInteraction().getSelectedNodes()
-            if (fullSelection.length > 0) {
-                this.sidebarMainHeader.updateNodesOverview(fullSelection)
-                this.sidebarProperties.updateNodesProperties(fullSelection)
-                this.sidebarNeighbors.updateNodesNeighbors(fullSelection)
-                this.extraPanelManager.updateNodes(fullSelection)
-            } else {
-                this.sidebarMainHeader.clearOverview()
-                this.sidebarProperties.clearProperties()
-                this.sidebarNeighbors.clearNeighbors()
-                this.extraPanelManager.clear()
-            }
+            this.renderNodeSelection()
         })
         this.trackInteraction('selectEdges', (edges: EdgeSelection<unknown>[]) => {
             this.sidebarMainHeader.updateEdgesOverview(edges)
@@ -145,15 +123,50 @@ export class Sidebar extends UIComponent {
             this.extraPanelManager.updateEdges(edges)
         })
         this.trackInteraction('unselectEdges', () => {
-            this.sidebarMainHeader.clearOverview()
-            this.sidebarProperties.clearProperties()
-            this.sidebarNeighbors.clearNeighbors()
-            this.extraPanelManager.clear()
+            this.clearSelection()
         })
 
         if (this.collapse) {
             this.listen(this.collapse, 'click', () => this.toggleSidebar())
         }
+    }
+
+    /**
+     * Renders the sidebar for the current node selection, dispatching by size:
+     * 0 → cleared, 1 → the single-node view (so a filtered-down selection reads
+     * like a fresh click), 2+ → the aggregated multi-selection view.
+     */
+    private renderNodeSelection(): void {
+        const fullSelection = this.uiManager.graph.renderer.getGraphInteraction().getSelectedNodes()
+        if (fullSelection.length === 0) {
+            this.clearSelection()
+        } else if (fullSelection.length === 1) {
+            const { node, element } = fullSelection[0]
+            this.renderSingleNodeSelection(node, element)
+        } else {
+            this.renderMultiNodeSelection(fullSelection)
+        }
+    }
+
+    private renderSingleNodeSelection(node: Node, element: unknown): void {
+        this.sidebarMainHeader.updateNodeOverview(node, element)
+        this.sidebarProperties.updateNodeProperties(node)
+        this.sidebarNeighbors.updateNodeNeighbors(node)
+        this.extraPanelManager.updateNode(node)
+    }
+
+    private renderMultiNodeSelection(fullSelection: NodeSelection<unknown>[]): void {
+        this.sidebarMainHeader.updateNodesOverview(fullSelection)
+        this.sidebarProperties.updateNodesProperties(fullSelection)
+        this.sidebarNeighbors.updateNodesNeighbors(fullSelection)
+        this.extraPanelManager.updateNodes(fullSelection)
+    }
+
+    private clearSelection(): void {
+        this.sidebarMainHeader.clearOverview()
+        this.sidebarProperties.clearProperties()
+        this.sidebarNeighbors.clearNeighbors()
+        this.extraPanelManager.clear()
     }
 
     public toggleSidebar(): void {
