@@ -146,6 +146,10 @@
             dl.pvt-property-list {
                 background: var(--pvt-tooltip-property-list);
                 gap: 0px 12px;
+                // Inspector-style gutter (matches the sidebar properties panel) so
+                // names/values don't hug the tooltip edges; the tint band stays
+                // full-width with the content inset.
+                padding: 8px 14px;
 
                 .pvt-property-row {
                     padding: 0.2em;
