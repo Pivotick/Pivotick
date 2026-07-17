@@ -11,6 +11,10 @@
     box-shadow: var(--pvt-sidebar-layout-shadow-bottom);
 
     & > div {
+        // Fill (never exceed) the panel so the info block shrinks to make room
+        // for the copy button instead of pushing it off the sidebar edge.
+        flex: 1 1 auto;
+        min-width: 0;
         display: flex;
         flex-direction: row;
         align-items: center;

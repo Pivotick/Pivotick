@@ -350,8 +350,11 @@ export class SidebarMainHeader extends UIComponent {
         nameElem.title = text
         if (looksLikeIdentifier(text)) {
             nameElem.classList.add('is-identifier')
-            nameElem.textContent = middleTruncate(text, avail, elementFont(nameElem))
+            // Add the copy button first so it claims its cell, then middle-elide
+            // to the width that's actually left — otherwise the elided text is a
+            // touch too wide and the button spills past the sidebar edge.
             actionElem?.appendChild(createCopyButton(text))
+            nameElem.textContent = middleTruncate(text, nameElem.clientWidth, elementFont(nameElem))
         } else {
             nameElem.classList.add('is-clamp')
         }

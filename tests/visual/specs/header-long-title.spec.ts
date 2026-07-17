@@ -85,6 +85,19 @@ test.describe('main header long titles', () => {
         expect(family.toLowerCase()).toContain('mono')
     })
 
+    test('the copy button stays within the sidebar, even when narrow', async ({ page }) => {
+        await select(page, 'hugeId')
+        const notClipped = async () => page.evaluate(() => {
+            const panel = document.querySelector('.pvt-mainheader-panel') as HTMLElement
+            const btn = panel.querySelector('.pvt-prop-copy') as HTMLElement
+            // The button's right edge must not spill past the panel's content edge.
+            return Math.round(btn.getBoundingClientRect().right) <= Math.round(panel.getBoundingClientRect().right)
+        })
+        expect(await notClipped()).toBe(true)
+        await setSidebarWidth(page, 240)
+        expect(await notClipped()).toBe(true)
+    })
+
     test('the copy button puts the full identifier on the clipboard', async ({ page, context }) => {
         await context.grantPermissions(['clipboard-read', 'clipboard-write'])
         await select(page, 'hugeId')
