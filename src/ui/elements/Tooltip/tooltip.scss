@@ -58,6 +58,17 @@
         // last item) — otherwise the overflow was clipped and unreachable.
         overflow: hidden auto;
 
+        // The native resize grip draws light diagonal lines that ignore the theme
+        // (they read as white on the dark tooltip). Replace them with muted, theme-
+        // aware lines. Chromium/Safari only — Firefox uses its own OS-drawn grip.
+        &::-webkit-resizer {
+            background: repeating-linear-gradient(
+                -45deg,
+                transparent 0 3px,
+                color-mix(in srgb, var(--pvt-text-color-3) 50%, transparent) 3px 4px
+            );
+        }
+
         &::before {
             --oversize-container-size: 10px;
             content: '';
