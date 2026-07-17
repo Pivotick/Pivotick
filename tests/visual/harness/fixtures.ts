@@ -204,6 +204,42 @@ export const fixtures = {
         return { nodes: [a, b], edges: [], notes: [] }
     },
 
+    /**
+     * A single rich node for the single-selection PROPERTIES panel: a long id,
+     * a plain string `label`/`text`, a nested `style` **object** (rendered as a
+     * JSON block) and a `url` (rendered as a link) — one value per renderer.
+     */
+    nodePanel(): BuiltFixture {
+        const domain = mkNode(
+            'domain::torsiqlecptj74i5rksxunffxb3it5pitd5lbyemvadmzrxeih7vjuad.onion',
+            0,
+            0,
+            {
+                label: 'torsiqlecptj74i5rksxunffxb3it5pitd5lbyemvadmzrxeih7vjuad.onion',
+                text: 'torsiqlecptj74i5rksxunffxb3it5pitd5lbyemvadmzrxeih7vjuad.onion',
+                style: {
+                    color: '#3DA760',
+                    icon_class: 'fas',
+                    node_color: '#3DA760',
+                    node_radius: 5,
+                    radius: 5,
+                    stroke: '#ffffff',
+                    stroke_width: 1.5,
+                },
+                url: '/crawlers/showDomain?domain=torsiqlecptj74i5rksxunffxb3it5pitd5lbyemvadmzrxeih7vjuad.onion',
+            }
+        )
+        const eve = mkNode('Eve', 180, -60, { label: 'Eve' })
+        const frank = mkNode('Frank', 180, 60, { label: 'Frank' })
+        const diana = mkNode('Diana', 0, 170, { label: 'Diana' })
+        const edges = [
+            new Edge('d-eve', domain, eve),
+            new Edge('d-frank', domain, frank),
+            new Edge('d-diana', domain, diana),
+        ]
+        return { nodes: [domain, eve, frank, diana], edges, notes: [] }
+    },
+
     /** The basic graph plus a free-floating Markdown note. */
     withNote(): BuiltFixture {
         const base = fixtures.basic()

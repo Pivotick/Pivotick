@@ -1,6 +1,7 @@
 import { Node } from '../../../../Node'
-import { createHtmlDL, createHtmlTemplate } from '../../../../utils/ElementCreation'
+import { createHtmlTemplate } from '../../../../utils/ElementCreation'
 import { nodeDescriptionGetter, nodeNameGetter, nodePropertiesGetter } from '../../../../utils/GraphGetters'
+import { createPropertyList } from '../../Sidebar/PropertyList'
 import { createNodePreview } from '../../../../utils/NodePreview'
 import { createJsonViewer } from '../../../components/JsonViewer'
 import type { ModalHTMLElement } from '../../../components/Modal'
@@ -43,13 +44,8 @@ export function createInspectModal(node: Node, uiManager: UIManager): void {
 
 function createNodePropertiesTab(node: Node, uiManager: UIManager): HTMLDivElement {
     const container = createHtmlTemplate('<div class="inspect-node-properties-tab"></div>') as HTMLDivElement
-    const dlContainer = createHtmlTemplate('<div class="dl-container"></div>') as HTMLDivElement
-    if (dlContainer) {
-        const properties = nodePropertiesGetter(node, uiManager.getOptions().propertiesPanel)
-        dlContainer.append(createHtmlDL(properties, node))
-    }
-
-    container.appendChild(dlContainer)
+    const properties = nodePropertiesGetter(node, uiManager.getOptions().propertiesPanel)
+    container.appendChild(createPropertyList(properties, node, { layout: 'columns' }))
     return container
 }
 

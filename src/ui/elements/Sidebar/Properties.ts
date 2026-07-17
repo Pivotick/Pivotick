@@ -1,4 +1,5 @@
-import { createHtmlDL, createHtmlElement, createHtmlTemplate, createIcon } from '../../../utils/ElementCreation'
+import { createHtmlElement, createHtmlTemplate, createIcon } from '../../../utils/ElementCreation'
+import { createPropertyList } from './PropertyList'
 import type { Node } from '../../../Node'
 import type { Edge } from '../../../Edge'
 import type { UIManager } from '../../UIManager'
@@ -110,18 +111,10 @@ export class SidebarProperties extends UIComponent {
             return
         }
 
-        const template = `
-<div class="pvt-properties-container">
-    <div class="dl-container">
-    </div>
-</div>`
-        const propertiesContainer = createHtmlTemplate(template) as HTMLDivElement
-        const dlContainer = propertiesContainer.querySelector('.dl-container')
-
-        if (dlContainer) {
-            const properties = nodePropertiesGetter(node, this.uiManager.getOptions().propertiesPanel)
-            dlContainer.append(createHtmlDL(properties, node))
-        }
+        const properties = nodePropertiesGetter(node, this.uiManager.getOptions().propertiesPanel)
+        const propertiesContainer = createHtmlElement('div', { class: 'pvt-properties-container' }, [
+            createPropertyList(properties, node),
+        ])
 
         this.body.innerHTML = ''
         this.body.appendChild(propertiesContainer)
@@ -137,18 +130,10 @@ export class SidebarProperties extends UIComponent {
             return
         }
 
-        const template = `
-<div class="pvt-properties-container">
-    <div class="dl-container">
-    </div>
-</div>`
-        const propertiesContainer = createHtmlTemplate(template) as HTMLDivElement
-        const dlContainer = propertiesContainer.querySelector('.dl-container')
-
-        if (dlContainer) {
-            const properties = edgePropertiesGetter(edge, this.uiManager.getOptions().propertiesPanel)
-            dlContainer.append(createHtmlDL(properties, edge))
-        }
+        const properties = edgePropertiesGetter(edge, this.uiManager.getOptions().propertiesPanel)
+        const propertiesContainer = createHtmlElement('div', { class: 'pvt-properties-container' }, [
+            createPropertyList(properties, edge),
+        ])
 
         this.body.innerHTML = ''
         this.body.appendChild(propertiesContainer)

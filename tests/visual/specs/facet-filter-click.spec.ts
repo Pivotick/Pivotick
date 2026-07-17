@@ -103,9 +103,9 @@ test.describe('facet filter clicks', () => {
         await body.locator('.pvt-facet-bar-seg[title^="false"]').click()
         expect(await selectedIds(page)).toEqual(['C5'])
 
-        // Panel has flipped to the single-node definition list, no facet cards.
+        // Panel has flipped to the single-node PROPERTIES view, no facet cards.
         await expect(header).toHaveText('Basic Node Properties')
-        await expect(body.locator('.dl-container')).toBeVisible()
+        await expect(body.locator('.pvt-node-props')).toBeVisible()
         await expect(body.locator('.pvt-facet-card')).toHaveCount(0)
     })
 })

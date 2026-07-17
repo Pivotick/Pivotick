@@ -266,3 +266,183 @@
         }
     }
 }
+
+// Single-selection PROPERTIES panel: one type-aware row per property, stacked
+// vertically so long values (ids, JSON blobs, URLs) get the full column width.
+.pvt-node-props {
+    display: flex;
+    flex-direction: column;
+
+    .pvt-node-props-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 2px;
+
+        .pvt-node-props-label {
+            font-family: monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.5px;
+
+            .pvt-node-props-label-dot {
+                color: var(--pvt-text-color-3);
+            }
+
+            .pvt-node-props-label-name {
+                color: var(--pvt-text-color-5);
+            }
+        }
+
+        .pvt-node-props-count {
+            font-family: monospace;
+            font-size: 0.62rem;
+            color: var(--pvt-text-color-3);
+        }
+    }
+
+    .pvt-prop {
+        // Grid areas let the same markup render two ways: a stacked card in the
+        // narrow sidebar (name+affordance over a full-width value) and a scannable
+        // name│value│affordance table in the roomy modal (see the --columns variant).
+        display: grid;
+        grid-template-columns: 1fr auto;
+        grid-template-areas:
+            "key affordance"
+            "value value";
+        align-items: center;
+        column-gap: 8px;
+        row-gap: 5px;
+        padding: 11px 0;
+        border-bottom: 1px solid color-mix(in srgb, var(--pvt-text-color-3) 18%, transparent);
+
+        &:last-child {
+            border-bottom: none;
+        }
+
+        .pvt-prop-key {
+            grid-area: key;
+            font-family: monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.3px;
+            color: var(--pvt-text-color-4);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .pvt-prop-affordance {
+            grid-area: affordance;
+            justify-self: end;
+        }
+
+        .pvt-prop-badge {
+            font-family: monospace;
+            font-size: 0.62rem;
+            color: var(--pvt-text-color-3);
+            white-space: nowrap;
+        }
+
+        .pvt-prop-copy {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--pvt-text-color-3);
+            cursor: pointer;
+            transition: color 0.12s ease;
+
+            svg {
+                display: block;
+                width: 12px;
+                height: 12px;
+            }
+
+            &:hover {
+                color: var(--pvt-text-color-6);
+            }
+
+            &.pvt-prop-copy--done {
+                color: var(--pvt-text-color-success);
+            }
+        }
+
+        .pvt-prop-value {
+            grid-area: value;
+            min-width: 0;
+            font-size: 0.78rem;
+            line-height: 1.5;
+            // Scalar values are string literals, coloured like a JSON string
+            // (the artifact's coral hue). Links and the JSON block override below.
+            color: var(--pvt-json-string);
+            word-break: break-all;
+            user-select: text;
+
+            &.pvt-prop-value--mono {
+                font-family: monospace;
+                font-size: 0.75rem;
+            }
+
+            &.pvt-prop-value--link {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                max-width: 100%;
+                color: var(--pvt-text-color-info);
+                text-decoration: none;
+                word-break: normal;
+
+                .pvt-prop-link-text {
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                    min-width: 0;
+                }
+
+                svg {
+                    flex: none;
+                    display: block;
+                    width: 12px;
+                    height: 12px;
+                }
+
+                &:hover {
+                    text-decoration: underline;
+                }
+            }
+
+            &.pvt-prop-value--json {
+                border: 1px solid var(--pvt-json-border);
+                border-radius: 8px;
+                background: var(--pvt-json-background);
+                overflow: hidden;
+
+                .pvt-prop-json {
+                    margin: 0;
+                    max-height: 160px;
+                    overflow: auto;
+                    padding: 9px 11px;
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+                    font-size: 0.72rem;
+                    line-height: 1.6;
+                    white-space: pre;
+                    color: var(--pvt-text-color-5);
+                }
+            }
+        }
+    }
+
+    // Roomy two-column layout (the inspect modal): the name sits in a fixed
+    // left column so names scan straight down, with the value to its right and
+    // the copy/badge affordance trailing on the far right.
+    &.pvt-node-props--columns .pvt-prop {
+        grid-template-columns: minmax(110px, 200px) 1fr auto;
+        grid-template-areas: "key value affordance";
+        align-items: start;
+        column-gap: 16px;
+        row-gap: 0;
+
+        .pvt-prop-key {
+            padding-top: 1px;
+        }
+    }
+}
