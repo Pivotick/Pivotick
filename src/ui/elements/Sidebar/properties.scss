@@ -369,7 +369,7 @@
         .pvt-prop-value {
             grid-area: value;
             min-width: 0;
-            font-size: 0.78rem;
+            font-size: 0.8125rem;
             line-height: 1.5;
             // Scalar values are string literals, coloured like a JSON string
             // (the artifact's coral hue). Links and the JSON block override below.
@@ -379,7 +379,7 @@
 
             &.pvt-prop-value--mono {
                 font-family: monospace;
-                font-size: 0.75rem;
+                font-size: 0.8125rem;
             }
 
             &.pvt-prop-value--link {

@@ -49,6 +49,14 @@
                 min-height: 32px;
                 padding: 6px;
 
+                // Properties get a roomier horizontal gutter than the shared 6px
+                // so long ids / JSON blocks don't hug the sidebar edge — matches
+                // how inspector panels are spaced (generous sides, compact rows).
+                // Neighbours / extra panels keep the tighter default.
+                &.pvt-properties-body-panel {
+                    padding: 12px 14px;
+                }
+
                 &.pvt-neighbors-body-panel {
                     position: relative;
                     display: flex;
