@@ -1,20 +1,22 @@
 // Theme-aware scrollbars.
 //
-// Scoped to `.pivotick` so we only restyle the widget's own scrollable areas
-// (sidebar, slide panel, modals, json viewer, …) and never touch the host
-// page's scrollbars. Colours come from theme variables that track the ink
-// colour, so the scrollbar follows light/dark automatically.
+// Applied to the widget root (`.pivotick`) AND the tooltip (`.pvt-tooltip`),
+// which is portaled to <body> — outside `.pivotick` — so it would otherwise fall
+// back to the browser default. Scoped to these roots (not the whole document) so
+// the host page's own scrollbars are left untouched. The theme variables resolve
+// from `:root` as well as `.pivotick`, so the body-level tooltip gets the right
+// colours, and they track the ink colour so the scrollbar follows light/dark.
 //
-// Firefox (and the spec) use `scrollbar-width` / `scrollbar-color`; Chromium
-// and Safari use the `::-webkit-scrollbar` pseudo-elements. We set both.
+// Firefox (and the spec) use `scrollbar-width` / `scrollbar-color`; Chromium and
+// Safari use the `::-webkit-scrollbar` pseudo-elements. We set both.
 
-.pivotick {
+@mixin themed-scrollbars {
     // Standard properties — inherited by every descendant.
     scrollbar-width: thin;
     scrollbar-color: var(--pvt-scrollbar-thumb) var(--pvt-scrollbar-track);
 
-    // WebKit / Blink pseudo-elements. Applies to the container and, via the
-    // descendant selector below, to any scrollable child.
+    // WebKit / Blink pseudo-elements. Applies to the root and, via the descendant
+    // selector below, to any scrollable child.
     &::-webkit-scrollbar,
     *::-webkit-scrollbar {
         width: var(--pvt-scrollbar-size);
@@ -47,4 +49,14 @@
     *::-webkit-scrollbar-corner {
         background: transparent;
     }
+}
+
+.pivotick {
+    @include themed-scrollbars;
+}
+
+// The tooltip renders at <body> level (see Tooltip.ts), outside `.pivotick`, so
+// it needs the treatment applied directly rather than inherited by scope.
+.pvt-tooltip {
+    @include themed-scrollbars;
 }
