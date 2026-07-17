@@ -15,6 +15,10 @@
     overflow: hidden;
     box-sizing: border-box;
 
+    // The whole card is the drag surface (chrome / editor / links opt out in JS),
+    // so there is no dedicated header band to drag by.
+    cursor: move;
+
     // "Jewel" surface — the picked `--note-color` driven deep, so a note is a
     // rich full-colour card that reads the same on a light or dark canvas.
     // color-mix() resolves here, where the per-note `--note-color` is in scope.
@@ -31,44 +35,29 @@
         opacity 120ms ease,
         filter 120ms ease;
 
-    // Folded bright corner (top-right): a tactile accent tinted by the colour.
-    // Sits above the header; the header reserves space for it (padding-right).
-    &::after {
-        content: "";
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 24px;
-        height: 24px;
-        clip-path: polygon(100% 0, 0 0, 100% 100%);
-        background: color-mix(in srgb, var(--note-color), #fff 15%);
-        z-index: 4;
-        pointer-events: none;
-    }
-    &::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 24px;
-        height: 24px;
-        clip-path: polygon(100% 0, 0 0, 100% 100%);
-        background: linear-gradient(225deg, rgba(0, 0, 0, 0.32), transparent 55%);
-        z-index: 5;
-        pointer-events: none;
-    }
-
+    // Chrome overlay — the colour pills, surface toggle and edit/delete actions
+    // float over the top of the card, shown only on hover / while editing. At
+    // rest there is no band: the note's title owns the top (like the reference).
     .pvt-note-header {
-        height: 28px;
-        display: flex;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 6;
+
+        display: none;
         align-items: center;
         justify-content: space-between;
-        padding: 0 28px 0 13px; // extra right padding clears the folded corner
-        // Deeper same-hue band (not a flat black wash) with a bright same-hue
-        // hairline underneath — the header shares the note's colour.
-        background: color-mix(in srgb, var(--note-color), #000 22%);
-        border-bottom: 1px solid color-mix(in srgb, var(--note-color), #fff 20%);
-        cursor: move;
+        gap: 8px;
+        padding: 7px 9px;
+
+        // Empty overlay areas pass pointer events through to the card so it stays
+        // draggable; only the actual controls capture clicks.
+        pointer-events: none;
+        button,
+        .pvt-note-color-pill {
+            pointer-events: auto;
+        }
 
         .pvt-note-head-left {
             display: flex;
@@ -113,10 +102,7 @@
         .pvt-note-actions {
             display: none;
             flex-direction: row-reverse;
-
-            .pvt-node-edit-button {
-                margin-left: auto;
-            }
+            gap: 4px;
 
             .pvt-node-remove-button {
                 display: none;
@@ -124,10 +110,10 @@
         }
     }
 
-    // Chrome buttons sit on a deep surface — force the outline variants light so
-    // the icons read regardless of the viewer's theme. Delete/unlink share the
-    // same neutral treatment (not a red tint) so they read as plain chrome; the
-    // solid "done" (success) button keeps its own colour.
+    // Chrome buttons sit on the surface — force the outline variants light so the
+    // icons read regardless of the viewer's theme. Delete/unlink share the same
+    // neutral treatment (not a red tint) so they read as plain chrome; the solid
+    // "done" (success) button keeps its own colour.
     .pivotick-button-outline-secondary,
     .pivotick-button-outline-danger {
         color: rgba(255, 255, 255, 0.82);
@@ -155,6 +141,7 @@
     }
 
     .pvt-note-link-container {
+        order: 1; // a footer below the content, so the title keeps the top
         display: none;
         user-select: none;
 
@@ -224,15 +211,13 @@
         flex: 1;
         min-height: 0;
         overflow: auto;
-        padding: 8px;
-        margin: 4px;
+        padding: 11px 12px 12px;
         font-size: 14px;
         font-family: sans-serif;
 
         outline: none;
         background: transparent;
 
-        cursor: text;
         user-select: none;
 
         .pvt-note-content-rendered {
@@ -289,20 +274,20 @@
         position: absolute;
         bottom: 0;
         right: 0;
+        z-index: 6;
     }
 
     &.dragging {
         opacity: 0.92;
+        cursor: grabbing;
         filter: drop-shadow(4px 4px 6px var(--pvt-box-shadow-color-strong));
-
-        .pvt-note-header {
-            cursor: grabbing;
-        }
     }
 
     &.editing {
+        cursor: default;
 
         .pvt-note-header {
+            display: flex;
 
             .pvt-note-color-pills {
                 display: inline-flex;
@@ -334,6 +319,8 @@
         }
 
         .pvt-note-content {
+            // Clear the chrome overlay so the first line (the title) is editable.
+            padding-top: 38px;
             cursor: text;
             caret-color: #fff;
 
@@ -354,18 +341,21 @@
     }
 
     &:hover {
-        .pvt-note-header .pvt-note-actions {
-            display: inline-flex;
-            width: 100%;
+        .pvt-note-header {
+            display: flex;
+
+            .pvt-note-actions {
+                display: inline-flex;
+            }
         }
     }
 
     // ── Terminal surface (opt-in via the surface toggle) ─────────────────────
-    // A neutral, theme-aware panel — the picker colour is only an accent (a 2px
-    // top hairline + a mono "›" prompt), not a fill — so the note reads as a
-    // hackable console card. Values mirror the "terminal" design direction; ink
-    // and chrome follow the theme-aware terminal text so it stays legible on a
-    // white or near-black panel.
+    // A neutral, theme-aware panel — the picker colour is only an accent (a thick
+    // top hairline + a mono "›" prompt on the title), not a fill — so the note
+    // reads as a hackable console card. Values mirror the "terminal" design
+    // direction; ink and chrome follow the theme-aware terminal text so it stays
+    // legible on a white or near-black panel.
     &.pvt-note--terminal {
         $mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
 
@@ -374,23 +364,17 @@
         border-color: var(--pvt-note-term-border);
         box-shadow: none;
 
-        // Replace the folded corner with a full-width colour top hairline.
+        // A colour bar across the top edge — the terminal accent.
         &::after {
+            content: "";
+            position: absolute;
             top: 0;
             left: 0;
             right: 0;
-            width: auto;
-            height: 2px;
-            clip-path: none;
+            height: 4px;
             background: var(--note-color);
-        }
-        &::before {
-            display: none;
-        }
-
-        .pvt-note-header {
-            background: transparent;
-            border-bottom-color: var(--pvt-note-term-border);
+            z-index: 4;
+            pointer-events: none;
         }
 
         .pivotick-button-outline-secondary,

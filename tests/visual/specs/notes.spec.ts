@@ -53,14 +53,15 @@ test.describe('notes', () => {
             y: -40,
             width: 200,
             height: 110,
-            content: 'Drag me by the header.',
+            content: 'Drag me\n\nfrom anywhere on the card.',
         })
         await harness(page, 'fit')
         const note = noteEl(page, 'draggable')
         await note.waitFor({ state: 'visible' })
 
-        const header = note.locator('.pvt-note-header')
-        const start = await centerOf(header)
+        // There is no header band any more — the whole card body is the drag
+        // surface. Grab the centre (clear of the hover chrome / resize handle).
+        const start = await centerOf(note)
         await page.mouse.move(start.x, start.y)
         await page.mouse.down()
         await page.mouse.move(start.x + 180, start.y + 90, { steps: 8 })

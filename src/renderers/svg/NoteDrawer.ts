@@ -490,7 +490,8 @@ export class NoteDrawer {
 
     private makeDraggable(noteSelection: Selection<SVGGElement, Note, null, undefined>, note: Note): void {
 
-        const header = noteSelection.select<SVGRectElement>('.pvt-note-header')
+        // The whole card is the drag surface now (there is no header band).
+        const card = noteSelection.select<HTMLElement>('.pvt-note')
 
         let isDragging = false
 
@@ -500,8 +501,14 @@ export class NoteDrawer {
         let startNoteX = 0
         let startNoteY = 0
 
-        header
+        card
             .on('mousedown', (evt: MouseEvent) => {
+
+                // Don't drag from the chrome, links, node references or the editor,
+                // and never while editing (the textarea owns interaction then).
+                const target = evt.target as HTMLElement
+                if (note.isEditing()) return
+                if (target.closest('button, a, .pvt-note-resize-handle, .pvt-node-reference, .pvt-note-editor')) return
 
                 evt.preventDefault()
                 evt.stopPropagation()
