@@ -21,7 +21,7 @@ Pickup notes for the fixing agent/session:
   `createHtmlDL` rendered these as plain text, so the diff introduces the vector. Fix: allowlist schemes (the existing
   `ABSOLUTE_URL` regex `/^(https?:|mailto:|ftp:|tel:)/i` is a good gate) and render everything else as text.
 
-- [ ] **2. `graphReady` re-broadcast on every `setData()` duplicates plugin handlers** — `src/ui/UIManager.ts:468`
+- [x] **2. `graphReady` re-broadcast on every `setData()` duplicates plugin handlers** — `src/ui/UIManager.ts:468`
   `callGraphReady()` re-emits the `graphReady` phase each time `Graph.setData()` runs (`setData → startAndRender →
   callGraphReady → emitPhase('graphReady')`), so `UIComponent.onGraphReady` (documented "run once the graph data is ready") and
   plugin `ctx.onPhase('graphReady', cb)` hooks re-run on every data refresh.

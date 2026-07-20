@@ -300,6 +300,8 @@ export class UIManager {
      * reversed for `destroy`) and every phase hook.
      */
     private emitPhase(phase: UIPhase) {
+        // Each non-destroy phase fires once; late subscribers catch up via emittedPhases in onPhase()/addElement().
+        if (phase !== 'destroy' && this.emittedPhases.has(phase)) return
         this.emittedPhases.add(phase)
         if (phase === 'destroy') {
             for (const callback of [...this.phaseHandlers.destroy].reverse()) callback()
