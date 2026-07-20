@@ -117,7 +117,7 @@ Pickup notes for the fixing agent/session:
   numeric row keeps all 6 nodes (`'80' == 80`), contradicting the count the user clicked; "exclude" likewise drops both groups.
   Use strict equality (values come raw from `Object.entries(data)` via `GraphGetters.ts:60`).
 
-- [ ] **15. Plugin keybindings silently clobber built-ins** — `src/ui/KeybindingManager.ts:13`
+- [x] **15. Plugin keybindings silently clobber built-ins** — `src/ui/KeybindingManager.ts:13`
   `register()` is `this.bindings.set(binding.key, binding.callback)` — one callback per key, silent overwrite. The new
   `PluginContext.addKeybinding` (`UIManager.ts:405`) makes this third-party-reachable, and the identity-guarded disposer can't
   restore a displaced original.

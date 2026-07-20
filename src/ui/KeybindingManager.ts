@@ -1,20 +1,30 @@
 import type { Keybinding } from '../interfaces/GraphUI'
 
 export class KeybindingManager {
-    private bindings = new Map<string, (evt: KeyboardEvent) => void>()
+    // A stack per key: the most recent binding wins, and disposing it restores the
+    // one underneath — so a plugin binding e.g. Escape shadows the built-in only
+    // while it's alive, instead of clobbering it for the lifetime of the UI.
+    private bindings = new Map<string, Array<(evt: KeyboardEvent) => void>>()
     private container: HTMLElement
 
     constructor(container: HTMLElement) {
         this.container = container
     }
 
-    /** Register a keybinding. Returns a disposer that removes it again. */
+    /** Register a keybinding (most recent wins). Returns a disposer that restores the previous binding. */
     register(binding: Keybinding): () => void {
-        this.bindings.set(binding.key, binding.callback)
+        const stack = this.bindings.get(binding.key) ?? []
+        if (stack.length > 0) {
+            console.warn(`Pivotick: keybinding "${binding.key}" is already bound; the new handler shadows it until disposed.`)
+        }
+        stack.push(binding.callback)
+        this.bindings.set(binding.key, stack)
         return () => {
-            if (this.bindings.get(binding.key) === binding.callback) {
-                this.bindings.delete(binding.key)
-            }
+            const current = this.bindings.get(binding.key)
+            if (!current) return
+            const idx = current.lastIndexOf(binding.callback)
+            if (idx !== -1) current.splice(idx, 1)
+            if (current.length === 0) this.bindings.delete(binding.key)
         }
     }
 
@@ -33,7 +43,8 @@ export class KeybindingManager {
         }
 
         const keyCombo = this.getKeyCombo(event)
-        const callback = this.bindings.get(keyCombo)
+        const stack = this.bindings.get(keyCombo)
+        const callback = stack?.[stack.length - 1]
         if (callback) {
             event.preventDefault()
             callback(event)
