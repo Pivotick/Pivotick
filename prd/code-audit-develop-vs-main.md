@@ -111,7 +111,7 @@ Pickup notes for the fixing agent/session:
   timestamps): the sidebar builds hundreds of DOM rows and sliver-width bar segments per such facet — unusably long, janky panel
   where main showed at most 10 rows + summary line.
 
-- [ ] **14. Loose equality in facet filtering** — `src/ui/elements/Sidebar/Properties.ts:236`
+- [x] **14. Loose equality in facet filtering** — `src/ui/elements/Sidebar/Properties.ts:236`
   `applyNodeFacetFilter` compares with `==`/`!=` while the facet aggregation Map is type-sensitive.
   *Failure:* `{ port: 80 }` and `{ port: '80' }` display as two facet rows with separate counts, but "keep only" on the 3-node
   numeric row keeps all 6 nodes (`'80' == 80`), contradicting the count the user clicked; "exclude" likewise drops both groups.

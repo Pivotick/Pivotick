@@ -233,7 +233,8 @@ export class SidebarProperties extends UIComponent {
             .filter((nodeSelection: NodeSelection<unknown>) => {
                 const nodeValue = nodePropertiesGetter(nodeSelection.node, propertiesPanel)
                     .find((prop) => prop.name === key)?.value
-                return mode === 'keep' ? nodeValue != value : nodeValue == value
+                // Strict: the facet is type-sensitive, so 80 and '80' are distinct rows.
+                return mode === 'keep' ? nodeValue !== value : nodeValue === value
             })
         interaction.removeNodesFromSelection(toRemove)
     }
