@@ -13,7 +13,7 @@ Pickup notes for the fixing agent/session:
 
 ## Critical
 
-- [ ] **1. XSS via `javascript:` URLs in property links** — `src/ui/elements/Sidebar/PropertyList.ts:101`
+- [x] **1. XSS via `javascript:` URLs in property links** — `src/ui/elements/Sidebar/PropertyList.ts:101`
   Link-like values are rendered as `<a href>` with no scheme validation: `looksLikeLink()` accepts any non-empty string under a
   link-named key (`url`/`uri`/`href`/`link`/`website`/`homepage`), and `createLinkValue` sets `href` verbatim.
   *Failure:* a node with `{ url: 'javascript:alert(document.cookie)' }` (the demo domain is crawled threat-intel data, i.e.
