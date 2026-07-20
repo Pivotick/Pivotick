@@ -34,12 +34,15 @@ function looksLikeIdentifier(text: string): boolean {
 function middleTruncate(text: string, availPx: number, font: string): string {
     if (availPx <= 0 || measureTextWidth(text, font) <= availPx) return text
     const ellipsis = '…'
-    let lo = 1, hi = text.length - 1, best = ellipsis
+    // Slice by code points, not UTF-16 units, so surrogate pairs / emoji aren't cut
+    // mid-character (which renders as U+FFFD).
+    const chars = Array.from(text)
+    let lo = 1, hi = chars.length - 1, best = ellipsis
     while (lo <= hi) {
         const keep = (lo + hi) >> 1
         const head = Math.ceil(keep / 2)
         const tail = Math.floor(keep / 2)
-        const candidate = text.slice(0, head) + ellipsis + text.slice(text.length - tail)
+        const candidate = chars.slice(0, head).join('') + ellipsis + chars.slice(chars.length - tail).join('')
         if (measureTextWidth(candidate, font) <= availPx) { best = candidate; lo = keep + 1 }
         else hi = keep - 1
     }

@@ -137,7 +137,7 @@ Pickup notes for the fixing agent/session:
   embedder. Possibly intentional; if so, flip the default or call it out in release notes. (Related unverified candidate: the
   option lives in `SimulationOptions.ts:68` but nothing in the simulation reads it — it only gates the renderer.)
 
-- [ ] **18. `middleTruncate` can split surrogate pairs** — `src/ui/elements/Sidebar/titleFit.ts:42`
+- [x] **18. `middleTruncate` can split surrogate pairs** — `src/ui/elements/Sidebar/titleFit.ts:42`
   `text.slice(0, head) + ellipsis + text.slice(text.length - tail)` slices UTF-16 code units, so astral chars / ZWJ emoji
   sequences can be cut mid-pair at either end (a long identifier-like title of emoji reaches this path), rendering U+FFFD
   garbage in the fitted title.
