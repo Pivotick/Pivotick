@@ -43,7 +43,7 @@ export abstract class GraphRenderer {
     abstract getZoomGroup(): HTMLElement | SVGElement | null
     abstract zoomIn(): void
     abstract zoomOut(): void
-    abstract fitAndCenter(fitAndCenter?: number): void
+    abstract fitAndCenter(forceScale?: number): void
     abstract focusElement(element: Node | Edge | Note): void
     abstract highlightElement(element: Node | Edge): void
     abstract unHighlightElement(element: Node | Edge): void
