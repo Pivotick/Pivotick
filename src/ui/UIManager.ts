@@ -320,6 +320,10 @@ export class UIManager {
      * callback runs immediately to catch up. Returns an unsubscribe function.
      */
     public onPhase(phase: UIPhase, callback: () => void): () => void {
+        if (this.destroyed) {
+            console.warn('Cannot register a phase handler after the UI is destroyed.')
+            return () => {}
+        }
         this.phaseHandlers[phase].push(callback)
         if (phase !== 'destroy' && this.emittedPhases.has(phase)) callback()
         return () => {

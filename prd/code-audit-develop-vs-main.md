@@ -181,7 +181,8 @@ Pickup notes for the fixing agent/session:
   *Verdict (2026-07-20): REAL (dead), fixed* — no external code reads `.uiManager` on those instances; removed both widenings (tsc/lint clean).
 - [x] `PropertyList.ts:125` — `createPropertyRow` typed `HTMLElement | null` but no path returns null; caller guard is dead.
   *Verdict (2026-07-20): REAL, fixed* — all four returns return the row; tightened the return type to `HTMLElement` and dropped the dead `if (row)` guard.
-- `UIManager.ts:320` — `onPhase()` lacks the `destroyed` guard its siblings `installPlugin` (`:397`) and `addElement` (`:427`) have.
+- [x] `UIManager.ts:320` — `onPhase()` lacks the `destroyed` guard its siblings `installPlugin` (`:397`) and `addElement` (`:427`) have.
+  *Verdict (2026-07-20): REAL, fixed* — added the `destroyed` guard (warn + no-op disposer), matching its siblings.
 - `Tooltip.ts:124` — `fitCurrentTitle` closure retained after `hide()` (see finding 19).
 
 ## Caveats
