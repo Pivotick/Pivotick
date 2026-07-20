@@ -79,7 +79,9 @@ function objectBadgeText(value: object): string {
 }
 
 export function createCopyButton(text: string): HTMLElement {
-    const btn = createHtmlElement('span', { class: 'pvt-prop-copy', title: 'Copy', role: 'button', tabindex: '0' }, [
+    // Stash the copy text as an attribute (not just the closure) so a cloneNode()'d
+    // copy — e.g. a pinned tooltip — can be re-wired from it (see Tooltip.pinTooltip).
+    const btn = createHtmlElement('span', { class: 'pvt-prop-copy', title: 'Copy', role: 'button', tabindex: '0', 'data-copy-text': text }, [
         createIcon({ svgIcon: copyIcon }),
     ])
     const doCopy = async () => {

@@ -1,7 +1,7 @@
 import type { Edge } from '../../../Edge'
 import type { Node } from '../../../Node'
 import { createHtmlElement, createHtmlTemplate, makeDraggable } from '../../../utils/ElementCreation'
-import { createPropertyList } from '../Sidebar/PropertyList'
+import { createCopyButton, createPropertyList } from '../Sidebar/PropertyList'
 import { fitEntityTitle } from '../Sidebar/titleFit'
 import { tryResolveHTMLElement } from '../../../utils/Getters'
 import { edgeDescriptionGetter, edgeNameGetter, edgePropertiesGetter, nodeDescriptionGetter, nodeNameGetter, nodePropertiesGetter } from '../../../utils/GraphGetters'
@@ -531,6 +531,14 @@ export class Tooltip extends UIComponent {
 
         // The clone lost the live tooltip's listeners; re-wire the picture → lightbox click.
         clonedTooltip.addEventListener('click', (event) => this.handleLightboxClick(event))
+
+        // cloneNode() also dropped the copy buttons' listeners (property values and the
+        // fitted title). Rebuild each from its stashed text, keeping its layout classes.
+        clonedTooltip.querySelectorAll<HTMLElement>('.pvt-prop-copy').forEach((dead) => {
+            const fresh = createCopyButton(dead.dataset.copyText ?? '')
+            fresh.className = dead.className
+            dead.replaceWith(fresh)
+        })
 
         clonedTooltip.querySelector('.pin-button')?.remove()
         const closeButton = createButton({

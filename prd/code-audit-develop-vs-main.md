@@ -84,7 +84,7 @@ Pickup notes for the fixing agent/session:
   constructor` in both browser bundles — the headline plugin feature is unusable there. Fix: `Graph.UIComponent = UIComponent`
   alongside the existing attachments.
 
-- [ ] **10. Dead copy buttons in pinned tooltips** — `src/ui/elements/Tooltip/Tooltip.ts:527`
+- [x] **10. Dead copy buttons in pinned tooltips** — `src/ui/elements/Tooltip/Tooltip.ts:527`
   `pinTooltip()` clones with `cloneNode(true)`, which drops the listeners of the new PropertyList copy buttons and the auto-fit
   title's copy button; line 533 re-wires only the lightbox click.
   *Failure:* every copy affordance in a pinned tooltip silently does nothing — precisely the workflow pinning exists for (the
