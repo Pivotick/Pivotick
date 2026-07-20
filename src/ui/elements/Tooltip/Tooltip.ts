@@ -488,6 +488,8 @@ export class Tooltip extends UIComponent {
             this.triggerY = -2000
             this.tooltip.classList.remove('shown')
             this.tooltip.style.left = '-10000px'
+            // Release the last hover's title-fit closure; the next show re-renders it.
+            this.titleFit?.clear()
         }
     }
 

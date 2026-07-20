@@ -183,7 +183,8 @@ Pickup notes for the fixing agent/session:
   *Verdict (2026-07-20): REAL, fixed* — all four returns return the row; tightened the return type to `HTMLElement` and dropped the dead `if (row)` guard.
 - [x] `UIManager.ts:320` — `onPhase()` lacks the `destroyed` guard its siblings `installPlugin` (`:397`) and `addElement` (`:427`) have.
   *Verdict (2026-07-20): REAL, fixed* — added the `destroyed` guard (warn + no-op disposer), matching its siblings.
-- `Tooltip.ts:124` — `fitCurrentTitle` closure retained after `hide()` (see finding 19).
+- [x] `Tooltip.ts:124` — `fitCurrentTitle` closure retained after `hide()` (see finding 19).
+  *Verdict (2026-07-20): mostly mitigated by the finding-19 refactor* — the closure now lives in TitleFitController and is released on the next render() or destroy() (bounded, not a growing leak). Added an explicit `clear()` on hide for promptness.
 
 ## Caveats
 
