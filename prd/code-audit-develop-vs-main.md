@@ -38,7 +38,7 @@ Pickup notes for the fixing agent/session:
 
 ## Async `onBeforeEdgeCreate` lifecycle cluster (`src/editing/`)
 
-- [ ] **4. Zombie connect mode resurrected after cancelling during a pending decision** — `EdgeCreationSession.ts:448` (drag), `:141` (click)
+- [x] **4. Zombie connect mode resurrected after cancelling during a pending decision** — `EdgeCreationSession.ts:448` (drag), `:141` (click)
   `.then(() => this.connectManager.restart())` / `.then(() => finishInteraction(true))` run unconditionally when the async hook
   decision settles, with no check that connect mode is still active. Escape (GraphToolbar → `exitClickConnectionMode()`) is not
   blocked by the `deciding` lock.
@@ -48,20 +48,20 @@ Pickup notes for the fixing agent/session:
   until edit mode is toggled. (Related unverified candidate: `finishInteraction(true)` at :142 re-enters the manager's global
   `activeSession` slot without checking the session still owns it.)
 
-- [ ] **5. A rejecting hook wedges the session (no `.catch`)** — `EdgeCreationSession.ts:448` / `:141`
+- [x] **5. A rejecting hook wedges the session (no `.catch`)** — `EdgeCreationSession.ts:448` / `:141`
   On main, `restart()`/`finishInteraction(true)` ran unconditionally right after `createConnection`; the replacement chains them
   with `.then()` and no rejection handler. `runDecision`'s `finally` only clears the `deciding` flag, then rethrows.
   *Failure:* a consumer's async `onBeforeEdgeCreate` rejects (validation fetch fails): drag path leaves state `'dragging'` with
   the shadow-edge preview stuck on the cursor; click path leaves the source highlighted; unhandled promise rejection in console.
   Edge creation stays wedged until the user right-clicks to abort.
 
-- [ ] **6. Duplicate-edge guard bypassed by static `labelPrompt`** — `EdgeCreationSession.ts:269`
+- [x] **6. Duplicate-edge guard bypassed by static `labelPrompt`** — `EdgeCreationSession.ts:269`
   `const allowDuplicate = Boolean(hook) || Boolean(staticPromptMode)` — but with only `editors.edgeEditor.labelPrompt` set there
   is no `onBeforeEdgeCreate` consumer to own a duplicate policy.
   *Failure:* connect A→B twice with `labelPrompt` enabled and no hook: a second identical edge stacks on the first and enters the
   data model, where main's `if (exists) return` silently refused it. Only the hook should imply `allowDuplicate`.
 
-- [ ] **7. Modal prompts silently veto everything outside full/light modes** — `EdgeLabelPrompt.ts:164`
+- [x] **7. Modal prompts silently veto everything outside full/light modes** — `EdgeLabelPrompt.ts:164`
   `runModal()` resolves `null` (indistinguishable from user cancel) when `UIManager.createModal` returns undefined — which it
   always does in `viewer`/`static` modes because `Layout.ts` only creates the modal slot for `full`/`light`
   (`UIManager.ts:516-517`).
@@ -69,7 +69,7 @@ Pickup notes for the fixing agent/session:
   `ctx.promptData`/`ctx.promptLabel({ mode: 'modal' })`) never creates any edge: no modal appears, every gesture resolves as
   cancelled, no error or notification explains why.
 
-- [ ] **8. Enter/Escape dead in the modal label prompt** — `EdgeLabelPrompt.ts:67`
+- [x] **8. Enter/Escape dead in the modal label prompt** — `EdgeLabelPrompt.ts:67`
   `makeInput` attaches `keydown → e.stopPropagation()` (needed for the inline variant), which stops events before they bubble to
   `runModal`'s body-level keydown handler (line 166: Escape cancel, Enter submit). `Modal.ts` has no key handling of its own.
   *Failure:* in the modal prompt, Enter doesn't submit and Escape doesn't cancel — only the mouse buttons work, despite the code

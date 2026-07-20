@@ -21,9 +21,17 @@ export function promptEdgeLabel(
     options: EdgeLabelPromptOptions = {}
 ): Promise<string | null> {
 
-    return options.mode === 'modal'
-        ? promptLabelModal(graph, options)
-        : promptInline(graph, anchor, options)
+    if (options.mode === 'modal') {
+        // viewer/static modes have no modal slot (createModal returns undefined),
+        // which would make the modal prompt resolve as a silent cancel. Fall back
+        // to the inline input — it works in every mode — so the edge is still created.
+        if (!graph.UIManager.layout?.modal) {
+            console.warn('Pivotick: modal label prompt unavailable in this UI mode; using the inline prompt instead.')
+            return promptInline(graph, anchor, options)
+        }
+        return promptLabelModal(graph, options)
+    }
+    return promptInline(graph, anchor, options)
 }
 
 /**
@@ -63,8 +71,9 @@ function makeInput(options: EdgeLabelPromptOptions): HTMLInputElement {
     input.className = 'pvt-edge-label-input'
     input.value = options.initial ?? ''
     input.placeholder = options.placeholder ?? 'Label…'
-    // Keep typing (incl. shortcuts like backspace) from reaching the graph key handlers.
-    input.addEventListener('keydown', (e) => e.stopPropagation())
+    // Shielding graph key handlers is done by each caller: the inline prompt in its
+    // own keydown handler, the modal in its body-level handler. A blanket
+    // stopPropagation here would also stop the modal's Enter/Escape from bubbling.
     return input
 }
 
@@ -94,6 +103,7 @@ function promptInline(graph: Graph, anchor: PromptAnchor | null, options: EdgeLa
             resolve(value)
         }
         const onKeyDown = (e: KeyboardEvent): void => {
+            e.stopPropagation() // keep typing (incl. shortcuts) from reaching the graph key handlers
             if (e.key === 'Enter') { e.preventDefault(); finish(input.value) }
             else if (e.key === 'Escape') { e.preventDefault(); finish(null) }
         }
@@ -161,7 +171,12 @@ function runModal<T>(
             onHidden: () => finish(null),
         })
 
-        if (!modal) return resolve(null)
+        if (!modal) {
+            // No modal slot in this UI mode (viewer/static). A data/form prompt can't
+            // render inline, so cancel — but warn rather than veto silently.
+            console.warn('Pivotick: modal prompt unavailable in this UI mode; the prompt was cancelled.')
+            return resolve(null)
+        }
 
         body.addEventListener('keydown', (e) => {
             e.stopPropagation() // shield the graph key handlers while typing

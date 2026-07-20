@@ -149,6 +149,16 @@ export class GraphConnectManager {
         return this.activeSession !== null
     }
 
+    /**
+     * True while `session` is still the live session of an active connect mode.
+     * Async settle callbacks guard on this so a mode exited (Escape) or re-entered
+     * while an `onBeforeEdgeCreate` decision was in flight isn't resurrected/disturbed.
+     */
+    public ownsSession(session: EdgeCreationSession): boolean {
+
+        return this.modeActive && this.activeSession === session
+    }
+
     public isActiveAndNotIdle(): boolean {
 
         return this.activeSession !== null && this.activeSession.getState() !== 'idle'

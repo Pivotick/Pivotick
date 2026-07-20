@@ -138,8 +138,10 @@ export class EdgeCreationSession {
             const source = this.sourceElement
             // Run the (possibly async) decision while the preview stays up, then
             // re-arm connect mode. `deciding` ignores gestures until it settles.
-            void this.runDecision(() => this.attemptConnection(source, node, 'click'))
-                .then(() => this.connectManager.finishInteraction(true))
+            void this.settleDecision(
+                () => this.attemptConnection(source, node, 'click'),
+                () => this.connectManager.finishInteraction(true)
+            )
             return true
         }
 
@@ -264,9 +266,10 @@ export class EdgeCreationSession {
         if (!decision.accept) return
 
         if (source instanceof Node) {
-            // Once an edge is enriched (by a hook or a collected label) it can
-            // legitimately duplicate an existing pair, so bypass the same-pair dedup.
-            const allowDuplicate = Boolean(hook) || Boolean(staticPromptMode)
+            // A hook owns its own duplicate policy (it can call edgeExists), so only
+            // a hook bypasses the same-pair dedup. The static labelPrompt has no such
+            // owner, so the library keeps the default: a second identical A→B is refused.
+            const allowDuplicate = Boolean(hook)
             this.connectManager.createEdge(source, target, decision, { allowDuplicate })
             return
         }
@@ -370,6 +373,25 @@ export class EdgeCreationSession {
         }
     }
 
+    /**
+     * Await a connect decision, then re-arm for the next gesture — but only if this
+     * session still owns the active connect mode. If the user exited (Escape) or
+     * re-entered the mode while the decision was in flight, re-arming would
+     * resurrect a handler-less zombie mode / disturb the new session, so skip it.
+     * A rejecting hook is logged (not left unhandled with a wedged preview); either
+     * way the re-arm — which cancels this session — clears any stuck preview.
+     */
+    private async settleDecision(attempt: () => Promise<void>, reArm: () => void): Promise<void> {
+
+        try {
+            await this.runDecision(attempt)
+        } catch (error) {
+            console.warn('Pivotick: onBeforeEdgeCreate decision failed', error)
+        }
+
+        if (this.connectManager.ownsSession(this)) reArm()
+    }
+
     private handleContextMenu = (event: MouseEvent): void => {
 
         event.preventDefault()
@@ -444,8 +466,10 @@ export class EdgeCreationSession {
             this.dragStartPosition = null
 
             // Await the decision (preview persists) before re-arming the next drag.
-            void this.runDecision(() => this.attemptConnection(source, target, 'drag'))
-                .then(() => this.connectManager.restart())
+            void this.settleDecision(
+                () => this.attemptConnection(source, target, 'drag'),
+                () => this.connectManager.restart()
+            )
             return
         }
 
