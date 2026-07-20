@@ -130,7 +130,8 @@ Pickup notes for the fixing agent/session:
   Both handlers end their per-mousemove closure with `this.graphSvgRenderer.nextTick()`, rewriting every node/edge/note position
   when only the dragged note and its single connector moved. O(N+E) DOM writes per move — janky on large graphs.
 
-- [ ] **17. Cluster expand/collapse no longer re-fits the view by default** — `src/renderers/svg/NodeDrawer.ts:611` (collapse), `:667` (expand)
+- [x] **17. Cluster expand/collapse no longer re-fits the view by default** — `src/renderers/svg/NodeDrawer.ts:611` (collapse), `:667` (expand)
+  *Resolution (2026-07-20):* intentional — kept `fitViewOnExpandCollapse` default false; it's a documented opt-in with a GraphNavigation toggle. No code change.
   Main called `fitAndCenterWhenSettled()` unconditionally on both paths; develop gates them behind
   `simulation.isFitViewOnExpandCollapse()`, whose new option defaults to **false** — a silent behavior change for every existing
   embedder. Possibly intentional; if so, flip the default or call it out in release notes. (Related unverified candidate: the
