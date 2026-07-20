@@ -148,7 +148,7 @@ Pickup notes for the fixing agent/session:
   handle, is never refit. (Related unverified candidate: `fitCurrentTitle` is never cleared on `hide()`, retaining the last
   hover's replaced DOM subtree — minor leak, `:124`.)
 
-- [ ] **20. Visual-test harness leaks `edgeAdd` listeners** — `tests/visual/harness/harness.ts:682`
+- [x] **20. Visual-test harness leaks `edgeAdd` listeners** — `tests/visual/harness/harness.ts:682`
   `configureConnect()` registers a new `graph.on('edgeAdd')` listener on every call without removing the previous one while
   resetting `recordedEdges` — multiple `configureConnect` calls in one spec double-count recorded edges.
 

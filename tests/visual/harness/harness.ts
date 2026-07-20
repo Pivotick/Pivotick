@@ -269,6 +269,7 @@ class Harness implements HarnessApi {
     private intended = new Map<string, { x: number; y: number }>()
     /** Connect-callback observation state (reset by {@link configureConnect}). */
     private recordedEdges: RecordedEdge[] = []
+    private edgeAddHooked = false
     private edgeHookCalls = 0
     private validConnCalls = 0
     private seenHookContexts: Array<{ origin: string; kind: string }> = []
@@ -678,14 +679,20 @@ class Harness implements HarnessApi {
         this.validConnCalls = 0
         this.seenHookContexts = []
 
-        // Record every edge that actually enters the model (post-decision).
-        this.g.on('edgeAdd', (edge) => {
-            this.recordedEdges.push({
-                id: edge.id,
-                data: edge.getData() as Record<string, unknown>,
-                directed: edge.directed,
+        // Record every edge that actually enters the model (post-decision). Register
+        // once — the graph bus has no `off`, so re-registering per call would stack
+        // listeners and double-count. The single listener always reads the latest
+        // `recordedEdges` (reset above), so re-configuring still starts from empty.
+        if (!this.edgeAddHooked) {
+            this.edgeAddHooked = true
+            this.g.on('edgeAdd', (edge) => {
+                this.recordedEdges.push({
+                    id: edge.id,
+                    data: edge.getData() as Record<string, unknown>,
+                    directed: edge.directed,
+                })
             })
-        })
+        }
 
         const opts = this.g.getOptions() as { callbacks?: InterractionCallbacks }
         const callbacks: InterractionCallbacks = opts.callbacks ?? (opts.callbacks = {})
