@@ -7,7 +7,7 @@ import { GraphSvgRenderer, defaultLabelStyle } from './GraphSvgRenderer'
 import { resolveIcon, tryResolveNumber, tryResolveString } from '../../utils/Getters'
 import type { CustomNodeShape, GraphRendererOptions, ImageFit, NodeShape, NodeStyle } from '../../interfaces/RendererOptions'
 import { ClusterDrawer } from './ClusterDrawer'
-import { forceConstrainParent } from '../../plugins/layout/MicroForce'
+import { forceConstrainParent } from '../../plugins/d3Forces/ForceConstrainParent'
 import { imageOff } from '../../ui/icons'
 d3Select.prototype.transition = d3Transition
 

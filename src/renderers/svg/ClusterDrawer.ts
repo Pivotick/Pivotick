@@ -1,7 +1,7 @@
 import { select as d3Select, type Selection } from 'd3-selection'
 import { Node } from '../../Node'
 import { NodeDrawer } from './NodeDrawer'
-import { forceConstrainParent } from '../../plugins/layout/MicroForce'
+import { forceConstrainParent } from '../../plugins/d3Forces/ForceConstrainParent'
 import { Edge } from '../../Edge'
 import type { EdgeDrawer } from './EdgeDrawer'
 import { Graph } from '../../Graph'
