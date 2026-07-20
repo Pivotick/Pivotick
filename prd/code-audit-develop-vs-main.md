@@ -174,8 +174,9 @@ Pickup notes for the fixing agent/session:
 - [x] `GraphSvgRenderer.ts:632` and `~:1141` — dashed-connector styling hardcoded as inline attrs in two places despite
   `.pvt-note-edge`/`.pvt-shadow-edge` classes existing.
   *Verdict (2026-07-20): REAL, fixed* — moved the shared dashed look into a `.pvt-note-edge, .pvt-shadow-edge` CSS rule (invalid stroke via `--invalid`); only the dynamic `marker-end` toggle stays inline. Verified by notes + edge-create-veto specs (incl. reject-all invalid preview).
-- `GraphSvgRenderer.ts:891` — `noteEdgePath` radius fallback `getNodeStyle(target).size as number` hides that `size` can be a
+- [x] `GraphSvgRenderer.ts:891` — `noteEdgePath` radius fallback `getNodeStyle(target).size as number` hides that `size` can be a
   function, which then flows into arithmetic as NaN.
+  *Verdict (2026-07-20): REFUTED (false positive)* — `getNodeStyle()` resolves size via `tryResolveNumber(size, node) ?? 10` (NodeDrawer.ts:239) before returning, so `.size` is always a finite number at runtime. The `as number` cast is redundant, not a NaN source. No change.
 - `ContextMenu.ts:250` / `GraphControls.ts:84` — `declare public uiManager` re-declarations exist only to widen a protected field.
 - `PropertyList.ts:125` — `createPropertyRow` typed `HTMLElement | null` but no path returns null; caller guard is dead.
 - `UIManager.ts:320` — `onPhase()` lacks the `destroyed` guard its siblings `installPlugin` (`:397`) and `addElement` (`:427`) have.
