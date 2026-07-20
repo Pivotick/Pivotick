@@ -443,6 +443,10 @@ export class NoteDrawer {
         this.updateEditButtonState(false, note)
 
         this.graph.noteManager.editNote(note)
+
+        // Catch up any content change made programmatically while the editor was
+        // open — its rebuild was deferred (see GraphSvgRenderer note branch).
+        this.graphSvgRenderer.dataUpdate()
     }
 
     private cancelEditMode(note: Note): void {
@@ -465,6 +469,10 @@ export class NoteDrawer {
         editor.style.display = 'none'
 
         this.graph.editing.connectManager.cancel()
+
+        // Cancel discards the user's in-progress edit; a content change made
+        // programmatically mid-edit was deferred, so rebuild to surface it.
+        this.graphSvgRenderer.dataUpdate()
     }
 
     private bindEditing(contentContainer: HTMLDivElement, note: Note): void {

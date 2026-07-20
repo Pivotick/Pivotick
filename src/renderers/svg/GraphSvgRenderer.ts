@@ -587,8 +587,6 @@ export class GraphSvgRenderer extends GraphRenderer {
                             return
                         }
 
-                        note.clearDirty()
-
                         const selection = d3Select<SVGGElement, Note>(notes[i])
 
                         if (note.isAttachmentDirty()) {
@@ -601,7 +599,12 @@ export class GraphSvgRenderer extends GraphRenderer {
                             // While editing, the colour/surface pills apply their
                             // change to the live DOM directly — rebuilding here
                             // would blow away the editor state and reset the save
-                            // button back to the edit icon.
+                            // button back to the edit icon. Clear the dirty flag
+                            // only when we actually rebuild, so a programmatic
+                            // setContent() made mid-edit is kept and applied when
+                            // the session ends (save/cancelEditMode → dataUpdate()).
+                            note.clearDirty()
+
                             selection.selectChildren().remove()
 
                             this.noteDrawer.render(selection, note)

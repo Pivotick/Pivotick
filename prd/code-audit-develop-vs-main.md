@@ -29,7 +29,7 @@ Pickup notes for the fixing agent/session:
   `setData()` — after N refreshes the plugin's click action fires N+1 times, and the disposables list grows unboundedly until
   destroy.
 
-- [ ] **3. Silent note-content loss while an editor is open** — `src/renderers/svg/GraphSvgRenderer.ts:599`
+- [x] **3. Silent note-content loss while an editor is open** — `src/renderers/svg/GraphSvgRenderer.ts:599`
   The note dirty-rebuild branch changed from `} else {` to `} else if (!note.isEditing()) {`, but `note.clearDirty()` above it
   runs unconditionally and there is no catch-up render when the edit session ends.
   *Failure:* app code calls `note.setContent()` while the user has that note's editor open (sync from another tab, API refresh):
