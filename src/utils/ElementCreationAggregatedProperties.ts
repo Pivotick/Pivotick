@@ -5,6 +5,8 @@ import { createHtmlElement } from './ElementCreation'
 const UNIQUE_PROPERTY_KEY = '4dfd89de5d25fc9cc4b66c23d84b443af631c7dc' // Value to cheat to aggregate unique properties
 const MERGE_UNIQUE_THRESHOLD = 6
 const MAX_UNIQUE_CHIPS = 16
+// Cap distribution rows/segments; the tail collapses into one "other" segment + row.
+const MAX_FACET_ROWS = 10
 
 export type AggregatedProperties = Map<string, Map<string, number>>
 export type actionButtonCallback = (key: string, value: string) => HTMLDivElement
@@ -124,11 +126,15 @@ function createDistributionFacetBody(
     actionButtonCallback?: actionButtonCallback,
     facetFilterCallback?: facetFilterCallback
 ): HTMLElement {
+    // Entries arrive sorted by count (desc); keep the top values, collapse the rest.
     const entries = Array.from(valueCountMap.entries())
+    const shown = entries.slice(0, MAX_FACET_ROWS)
+    const overflow = entries.slice(MAX_FACET_ROWS)
+    const overflowCount = overflow.reduce((sum, [, count]) => sum + count, 0)
 
     // Segmented proportion bar — one coloured segment per value.
     const bar = createHtmlElement('div', { class: 'pvt-facet-bar' })
-    entries.forEach(([value, count], i) => {
+    shown.forEach(([value, count], i) => {
         const pct = selectedNodeCount > 0 ? (count / selectedNodeCount) * 100 : 0
         const seg = createHtmlElement('div', { class: 'pvt-facet-bar-seg' })
         seg.style.width = `${pct}%`
@@ -140,14 +146,26 @@ function createDistributionFacetBody(
         }
         bar.appendChild(seg)
     })
+    if (overflow.length > 0) {
+        const pct = selectedNodeCount > 0 ? (overflowCount / selectedNodeCount) * 100 : 0
+        const seg = createHtmlElement('div', { class: 'pvt-facet-bar-seg pvt-facet-bar-seg--other' })
+        seg.style.width = `${pct}%`
+        seg.style.background = 'var(--pvt-text-color-3)'
+        seg.title = `${overflow.length} other values — ${overflowCount} (${Math.round(pct)}%)`
+        bar.appendChild(seg)
+    }
 
     const rows = createHtmlElement('div', { class: 'pvt-facet-rows' })
-    entries.forEach(([value, count], i) => {
+    shown.forEach(([value, count], i) => {
         const pct = selectedNodeCount > 0 ? Math.round((count / selectedNodeCount) * 100) : 0
         rows.appendChild(
             createFacetRow(propName, value, count, pct, i, selectedNodeCount, kind, actionButtonCallback)
         )
     })
+    if (overflow.length > 0) {
+        const pct = selectedNodeCount > 0 ? Math.round((overflowCount / selectedNodeCount) * 100) : 0
+        rows.appendChild(createFacetMoreRow(overflow.length, overflowCount, pct))
+    }
 
     return createHtmlElement('div', { class: 'pvt-facet-body' }, [bar, rows])
 }
@@ -187,6 +205,18 @@ function createFacetRow(
         row.appendChild(actionButtonCallback(propName, value))
     }
     return row
+}
+
+/** Summary row standing in for the collapsed long tail of a distribution facet. */
+function createFacetMoreRow(otherCount: number, nodeCount: number, pct: number): HTMLElement {
+    const dot = createHtmlElement('span', { class: 'pvt-facet-dot' })
+    dot.style.background = 'var(--pvt-text-color-3)'
+    return createHtmlElement('div', { class: 'pvt-facet-row pvt-facet-row--more' }, [
+        dot,
+        createHtmlElement('span', { class: 'pvt-facet-value' }, [`+${otherCount} more values`]),
+        createHtmlElement('span', { class: 'pvt-facet-count' }, [String(nodeCount)]),
+        createHtmlElement('span', { class: 'pvt-facet-percent' }, [`${pct}%`]),
+    ])
 }
 
 function createUniqueFacetBody(

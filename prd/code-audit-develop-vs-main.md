@@ -104,7 +104,7 @@ Pickup notes for the fixing agent/session:
   stack size exceeded` inside the select/hover handler on every interaction with that node; the panel/tooltip renders empty or
   half-built.
 
-- [ ] **13. Uncapped facet rows freeze the properties panel** — `src/utils/ElementCreationAggregatedProperties.ts:127`
+- [x] **13. Uncapped facet rows freeze the properties panel** — `src/utils/ElementCreationAggregatedProperties.ts:127`
   The 10-row cap ("… N more") and the "- N other unique values -" merge were both removed; line 72 now passes
   `sortAggregatedProperties(aggregatedProperties, false)`, explicitly disabling the `MERGE_UNIQUE_THRESHOLD` collapse.
   *Failure:* multi-select a few hundred nodes with a high-cardinality property where at least two share a value (hostnames,
