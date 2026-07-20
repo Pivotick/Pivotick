@@ -247,7 +247,6 @@ const defaultMenuNote = {
 }
 
 export class ContextMenu extends UIComponent {
-    declare public uiManager: UIManager
 
     public menu?: HTMLDivElement
     public visible: boolean

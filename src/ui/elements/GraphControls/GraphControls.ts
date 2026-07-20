@@ -81,7 +81,6 @@ const defaultMenuNode = {
 }
 
 export class GraphControls extends UIComponent {
-    declare public uiManager: UIManager
 
     public navigation?: HTMLDivElement
     private selectionMenu?: HTMLDivElement

@@ -177,7 +177,8 @@ Pickup notes for the fixing agent/session:
 - [x] `GraphSvgRenderer.ts:891` — `noteEdgePath` radius fallback `getNodeStyle(target).size as number` hides that `size` can be a
   function, which then flows into arithmetic as NaN.
   *Verdict (2026-07-20): REFUTED (false positive)* — `getNodeStyle()` resolves size via `tryResolveNumber(size, node) ?? 10` (NodeDrawer.ts:239) before returning, so `.size` is always a finite number at runtime. The `as number` cast is redundant, not a NaN source. No change.
-- `ContextMenu.ts:250` / `GraphControls.ts:84` — `declare public uiManager` re-declarations exist only to widen a protected field.
+- [x] `ContextMenu.ts:250` / `GraphControls.ts:84` — `declare public uiManager` re-declarations exist only to widen a protected field.
+  *Verdict (2026-07-20): REAL (dead), fixed* — no external code reads `.uiManager` on those instances; removed both widenings (tsc/lint clean).
 - `PropertyList.ts:125` — `createPropertyRow` typed `HTMLElement | null` but no path returns null; caller guard is dead.
 - `UIManager.ts:320` — `onPhase()` lacks the `destroyed` guard its siblings `installPlugin` (`:397`) and `addElement` (`:427`) have.
 - `Tooltip.ts:124` — `fitCurrentTitle` closure retained after `hide()` (see finding 19).
