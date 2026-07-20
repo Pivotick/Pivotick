@@ -546,7 +546,8 @@ export class NoteDrawer {
                     window.getSelection()?.removeAllRanges()
                     document.body.classList.add('pvt-disable-selection') // disable selection globally
 
-                    this.graphSvgRenderer.nextTick()
+                    // Only the note moved: re-anchor its connector, not every node/edge.
+                    this.graphSvgRenderer.updateNoteEdgePositions()
                 }
 
                 const onMouseUp = () => {
@@ -623,7 +624,8 @@ export class NoteDrawer {
 
                 this.updateNoteSize(noteSelection, note)
 
-                this.graphSvgRenderer.nextTick()
+                // Only this note's box changed: re-anchor its connector, not everything.
+                this.graphSvgRenderer.updateNoteEdgePositions()
             }
 
             const onMouseUp = () => {

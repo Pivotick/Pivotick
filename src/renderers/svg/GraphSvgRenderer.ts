@@ -866,7 +866,7 @@ export class GraphSvgRenderer extends GraphRenderer {
         }
     }
 
-    private updateNoteEdgePositions(): void {
+    public updateNoteEdgePositions(): void {
         if (!this.noteEdgeSelection) return
         this.noteEdgeSelection.attr('d', d => this.noteEdgePath(d.note, d.target))
     }

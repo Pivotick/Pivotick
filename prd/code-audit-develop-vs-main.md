@@ -126,7 +126,7 @@ Pickup notes for the fixing agent/session:
 
 ## Confirmed but below the severity cap
 
-- [ ] **16. Note drag/resize triggers a full renderer tick per mousemove** — `src/renderers/svg/NoteDrawer.ts:541` (drag), `:618` (resize)
+- [x] **16. Note drag/resize triggers a full renderer tick per mousemove** — `src/renderers/svg/NoteDrawer.ts:541` (drag), `:618` (resize)
   Both handlers end their per-mousemove closure with `this.graphSvgRenderer.nextTick()`, rewriting every node/edge/note position
   when only the dragged note and its single connector moved. O(N+E) DOM writes per move — janky on large graphs.
 
