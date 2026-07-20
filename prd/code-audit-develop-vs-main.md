@@ -159,7 +159,7 @@ Pickup notes for the fixing agent/session:
 - [x] **22. `escapeHtml`/`jsonPrimitiveHtml` re-implement JsonViewer helpers** — `src/ui/elements/Sidebar/PropertyList.ts:24`
   Identical to `JsonViewer.ts`'s `escapeHtml` and `createPrimitive`. Import instead.
 
-- [ ] **23. Dead export `getDislayableValue`** — `src/utils/ElementCreationAggregatedProperties.ts:239`
+- [x] **23. Dead export `getDislayableValue`** — `src/utils/ElementCreationAggregatedProperties.ts:239`
   A typo-named (`Dislayable`) exported alias of `displayValue()` with zero callers in src/, tests/, or docs/. Delete.
 
 ## Unverified candidates (finder output; verifier lost to rate limits — re-verify before acting)

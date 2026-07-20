@@ -266,10 +266,6 @@ export function displayValue(value: unknown): string {
     return typeof value === 'string' ? value : JSON.stringify(value)
 }
 
-export function getDislayableValue(value: string): string {
-    return displayValue(value)
-}
-
 export function isValueEmpty(value: string): boolean {
     return value.length === 0
 }
