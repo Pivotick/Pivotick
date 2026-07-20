@@ -632,11 +632,6 @@ export class GraphSvgRenderer extends GraphRenderer {
                 enter => enter
                     .append('path')
                     .attr('class', 'pvt-note-edge')
-                    .attr('stroke', 'var(--pvt-edge-stroke, #999)')
-                    .attr('stroke-width', 2)
-                    .attr('stroke-dasharray', '6 4')
-                    .attr('fill', 'none')
-                    .attr('opacity', 0.7)
                     .attr('d', d => this.noteEdgePath(d.note, d.target)),
                 update => update
                     .attr('d', d => this.noteEdgePath(d.note, d.target)),
@@ -1141,11 +1136,6 @@ export class GraphSvgRenderer extends GraphRenderer {
 
         this.shadowEdgePath
             .attr('d', path)
-            .attr('stroke', invalid ? 'var(--pvt-danger, #e5484d)' : 'var(--pvt-edge-stroke, #999)')
-            .attr('stroke-width', 2)
-            .attr('stroke-dasharray', '6 4')
-            .attr('fill', 'none')
-            .attr('opacity', 0.7)
             .attr('marker-end', invalid ? null : 'url(#arrow)')
             .classed('pvt-shadow-edge--invalid', invalid)
             .style('display', null)

@@ -472,12 +472,24 @@ dl.pvt-property-list {
     }
 }
 
+// Dashed grey connector look, shared by the note→node link and the edge-create
+// preview (was duplicated as inline presentation attributes on both paths).
+.pvt-note-edge,
+.pvt-shadow-edge {
+    fill: none;
+    stroke: var(--pvt-edge-stroke, #999);
+    stroke-width: 2;
+    stroke-dasharray: 6 4;
+    opacity: 0.7;
+}
+
 .pvt-shadow-edge {
     pointer-events: none;
     animation: pvt-shadow-dash 0.5s linear infinite;
 
     // Live-predicate feedback: an invalid hovered target (isValidConnection → false).
     &--invalid {
+        stroke: var(--pvt-danger, #e5484d);
         opacity: 0.85;
     }
 }

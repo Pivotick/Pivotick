@@ -169,9 +169,11 @@ Pickup notes for the fixing agent/session:
 - [x] `EdgeCreationSession.ts:153` — the `deciding` lock returns inconsistent "handled" values: `handleNoteClick` returns false
   while a decision pends, `selectOrConnectNode` (`:117`) returns true.
   *Verdict (2026-07-20): REAL but inert* (both returns are ignored at every call site) — made handleNoteClick return true for consistency.
-- `SimulationOptions.ts:68` — `fitViewOnExpandCollapse` misplaced in SimulationOptions (see finding 17).
-- `GraphSvgRenderer.ts:632` and `~:1141` — dashed-connector styling hardcoded as inline attrs in two places despite
+- [x] `SimulationOptions.ts:68` — `fitViewOnExpandCollapse` misplaced in SimulationOptions (see finding 17).
+  *Verdict (2026-07-20): REAL but WON'T FIX* — it's public API (`GraphOptions.simulation.fitViewOnExpandCollapse` + the `isFitViewOnExpandCollapse`/`toggle` accessors on Simulation); relocating it breaks embedders for a cosmetic gain.
+- [x] `GraphSvgRenderer.ts:632` and `~:1141` — dashed-connector styling hardcoded as inline attrs in two places despite
   `.pvt-note-edge`/`.pvt-shadow-edge` classes existing.
+  *Verdict (2026-07-20): REAL, fixed* — moved the shared dashed look into a `.pvt-note-edge, .pvt-shadow-edge` CSS rule (invalid stroke via `--invalid`); only the dynamic `marker-end` toggle stays inline. Verified by notes + edge-create-veto specs (incl. reject-all invalid preview).
 - `GraphSvgRenderer.ts:891` — `noteEdgePath` radius fallback `getNodeStyle(target).size as number` hides that `size` can be a
   function, which then flows into arithmetic as NaN.
 - `ContextMenu.ts:250` / `GraphControls.ts:84` — `declare public uiManager` re-declarations exist only to widen a protected field.
