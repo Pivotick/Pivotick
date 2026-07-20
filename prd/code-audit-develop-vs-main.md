@@ -166,8 +166,9 @@ Pickup notes for the fixing agent/session:
 
 - [x] `CLAUDE.md:20` still says "There is no test framework configured" while the diff adds the Playwright visual suite (doc drift).
   *Verdict (2026-07-20): REAL, fixed* — CLAUDE.md now documents the `tests/visual/` Playwright suite.
-- `EdgeCreationSession.ts:153` — the `deciding` lock returns inconsistent "handled" values: `handleNoteClick` returns false
+- [x] `EdgeCreationSession.ts:153` — the `deciding` lock returns inconsistent "handled" values: `handleNoteClick` returns false
   while a decision pends, `selectOrConnectNode` (`:117`) returns true.
+  *Verdict (2026-07-20): REAL but inert* (both returns are ignored at every call site) — made handleNoteClick return true for consistency.
 - `SimulationOptions.ts:68` — `fitViewOnExpandCollapse` misplaced in SimulationOptions (see finding 17).
 - `GraphSvgRenderer.ts:632` and `~:1141` — dashed-connector styling hardcoded as inline attrs in two places despite
   `.pvt-note-edge`/`.pvt-shadow-edge` classes existing.

@@ -152,7 +152,7 @@ export class EdgeCreationSession {
 
     public handleNoteClick(note: Note): boolean {
 
-        if (this.deciding) return false
+        if (this.deciding) return true // lock swallows the gesture, like selectOrConnectNode
 
         if (this.state === 'idle') {
 
