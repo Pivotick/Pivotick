@@ -88,9 +88,13 @@ export interface HeaderMapEntry<T extends Node | Edge> {
 
 /**
  * Represents a single property entry to display in the properties panel.
- * 
+ *
  * - `name` is the label or key of the property.
  * - `value` is the value associated to the key for the node or edge.
+ *
+ * A `string` (for either field) renders as plain text; to render HTML, pass an
+ * `HTMLElement` (or a function returning one). Since 1.4.0 string values are no
+ * longer parsed as markup — wrap HTML in an element instead.
  */
 export interface PropertyEntry {
     name: ((element: Node | Edge | null) => HTMLElement | string) | HTMLElement | string,

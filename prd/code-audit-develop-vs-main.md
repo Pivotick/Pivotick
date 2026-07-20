@@ -90,7 +90,7 @@ Pickup notes for the fixing agent/session:
   *Failure:* every copy affordance in a pinned tooltip silently does nothing — precisely the workflow pinning exists for (the
   unpinned tooltip disappears on mouse-out before the button can be reached).
 
-- [ ] **11. HTML string property values now render as literal text** — `src/ui/elements/Sidebar/PropertyList.ts:169`
+- [x] **11. HTML string property values now render as literal text** — `src/ui/elements/Sidebar/PropertyList.ts:169`
   `createPropertyList` replaced `createHtmlDL` in the sidebar Properties panel, the Tooltip, and the InspectNodeModal, dropping
   `tryResolveHTMLElement` (which parsed string values/names as HTML via `template.innerHTML`).
   *Failure:* a consumer whose `nodePropertiesMap` returns `{ name: 'status', value: '<span class="badge">active</span>' }` —
