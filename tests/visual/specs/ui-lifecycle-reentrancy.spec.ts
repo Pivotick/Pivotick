@@ -11,9 +11,10 @@ import { test, expect, gotoHarness, loadFixture } from '../helpers'
  * A "probe element" is a minimal duck-typed UIComponent: `emitPhase` only ever
  * calls mount / afterMount / graphReady / destroy on the entries in `elements`,
  * so a plain object with those four methods drives the real lifecycle without
- * needing the (in-page-only) UIComponent class. `callGraphReady()` re-runs the
- * `graphReady` broadcast — the only public way to re-enter an `emitPhase` loop
- * on an already-live UIManager, which is exactly where the double-fire lived.
+ * needing the (in-page-only) UIComponent class. `graphReady` is a once-only phase
+ * (it fires at load; `setData()` no longer re-broadcasts it), so a later
+ * `callGraphReady()` is a no-op — these tests lock in that fire-once contract and
+ * the addElement/onPhase catch-up that replaces re-broadcasting.
  *
  * The graph is booted in `light` mode (the harness default), so the GraphToolbar
  * is mounted and its `e` / `Escape` keybindings exist to assert on.
@@ -24,63 +25,58 @@ test.beforeEach(async ({ page }) => {
     await loadFixture(page, 'basic')
 })
 
-test('an element added during a graphReady broadcast receives each phase exactly once', async ({ page }) => {
+test('graphReady is fire-once: callGraphReady() does not re-fire it, and a late-added element is caught up exactly once', async ({ page }) => {
     const counts = await page.evaluate(() => {
         const um = (window as unknown as { __pivotick: { graph: { UIManager: {
             addElement: (el: unknown) => void
             callGraphReady: () => void
         } } } }).__pivotick.graph.UIManager
 
-        const c = { parentGraphReady: 0, childAfterMount: 0, childGraphReady: 0 }
-        const child = {
-            mount() {}, afterMount() { c.childAfterMount++ },
-            graphReady() { c.childGraphReady++ }, destroy() {},
-        }
-        // Only add the child on a broadcast we explicitly arm, so the catch-up
-        // that `addElement(parent)` triggers doesn't add it early.
-        let armed = false
-        const parent = {
-            mount() {}, afterMount() {},
-            graphReady() { c.parentGraphReady++; if (armed) { armed = false; um.addElement(child) } },
-            destroy() {},
-        }
+        const c = { existingGraphReady: 0, lateAfterMount: 0, lateGraphReady: 0 }
 
-        // graphReady already fired at load, so this catches `parent` up once (armed=false → no child yet).
-        um.addElement(parent)
-        // Arm, then re-broadcast. During the loop `parent.graphReady` adds `child`
-        // mid-flight: addElement catches it up once; the snapshotted loop must not
-        // then visit the freshly-pushed entry a second time.
-        armed = true
+        // graphReady already fired at load, so addElement catches this element up once.
+        const existing = {
+            mount() {}, afterMount() {},
+            graphReady() { c.existingGraphReady++ }, destroy() {},
+        }
+        um.addElement(existing)
+
+        // Fire-once: a further callGraphReady() must NOT re-broadcast, so
+        // existing.graphReady does not run a second time.
         um.callGraphReady()
+
+        // A later addition is still caught up exactly once (afterMount + graphReady already emitted).
+        const late = {
+            mount() {}, afterMount() { c.lateAfterMount++ },
+            graphReady() { c.lateGraphReady++ }, destroy() {},
+        }
+        um.addElement(late)
+        um.callGraphReady() // still a no-op
+
         return c
     })
 
-    expect(counts.parentGraphReady).toBe(2) // once on catch-up, once in the re-broadcast
-    expect(counts.childAfterMount).toBe(1)  // caught up on add, never double-fired
-    expect(counts.childGraphReady).toBe(1)  // the fix: caught up once, not re-visited by the live loop
+    expect(counts.existingGraphReady).toBe(1) // caught up on add; callGraphReady did not re-fire
+    expect(counts.lateAfterMount).toBe(1)     // caught up once
+    expect(counts.lateGraphReady).toBe(1)     // caught up once, never re-broadcast
 })
 
-test('an onPhase(graphReady) handler registered during a graphReady broadcast runs exactly once', async ({ page }) => {
+test('onPhase(graphReady) registered after the broadcast runs once (catch-up) and is not re-run by callGraphReady()', async ({ page }) => {
     const counts = await page.evaluate(() => {
         const um = (window as unknown as { __pivotick: { graph: { UIManager: {
             onPhase: (phase: string, cb: () => void) => () => void
             callGraphReady: () => void
         } } } }).__pivotick.graph.UIManager
 
-        const c = { outer: 0, inner: 0 }
-        const inner = () => { c.inner++ }
-        let armed = false
-        const outer = () => { c.outer++; if (armed) { armed = false; um.onPhase('graphReady', inner) } }
-
-        um.onPhase('graphReady', outer) // catch-up runs `outer` once (armed=false → no inner registered)
-        armed = true
-        um.callGraphReady()             // `outer` registers `inner` mid-loop; onPhase catches it up once,
-                                        // and the snapshotted handler loop must not re-run it
+        const c = { handler: 0 }
+        // graphReady already emitted, so onPhase runs the handler once immediately (catch-up).
+        um.onPhase('graphReady', () => { c.handler++ })
+        // Fire-once: callGraphReady() does not re-broadcast, so the handler is not re-run.
+        um.callGraphReady()
         return c
     })
 
-    expect(counts.outer).toBe(2)
-    expect(counts.inner).toBe(1) // the fix: caught up once, not re-run by the live loop
+    expect(counts.handler).toBe(1) // caught up once on registration; no re-broadcast
 })
 
 test('addElement and installPlugin after destroy() warn once each and are true no-ops', async ({ page }) => {
