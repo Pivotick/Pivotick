@@ -156,7 +156,7 @@ Pickup notes for the fixing agent/session:
   The whole controller (fitCurrentTitle closure, titleLastWidth guard, renderTitle/refitTitle, ResizeObserver wiring) plus its
   strategy doc-comment is duplicated character-identically. Extract into `titleFit.ts`.
 
-- [ ] **22. `escapeHtml`/`jsonPrimitiveHtml` re-implement JsonViewer helpers** — `src/ui/elements/Sidebar/PropertyList.ts:24`
+- [x] **22. `escapeHtml`/`jsonPrimitiveHtml` re-implement JsonViewer helpers** — `src/ui/elements/Sidebar/PropertyList.ts:24`
   Identical to `JsonViewer.ts`'s `escapeHtml` and `createPrimitive`. Import instead.
 
 - [ ] **23. Dead export `getDislayableValue`** — `src/utils/ElementCreationAggregatedProperties.ts:239`

@@ -4,6 +4,7 @@ import type { PropertyEntry } from '../../../interfaces/GraphUI'
 import { createHtmlElement, createIcon } from '../../../utils/ElementCreation'
 import { tryResolveHTMLElement } from '../../../utils/Getters'
 import { checkmark, copy as copyIcon, externalLink } from '../../icons'
+import { createPrimitive, escapeHtml } from '../../components/JsonViewer'
 import './properties.scss'
 
 // Keys whose value we render as a link even when the value isn't an absolute URL
@@ -34,17 +35,6 @@ function looksLikeLink(key: string, value: string): boolean {
     return LINK_KEYS.has(key.toLowerCase()) && value.length > 0
 }
 
-function escapeHtml(value: string): string {
-    return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-}
-
-function jsonPrimitiveHtml(value: unknown): string {
-    if (typeof value === 'string') return `<span class="json-string">"${escapeHtml(value)}"</span>`
-    if (typeof value === 'number') return `<span class="json-number">${value}</span>`
-    if (typeof value === 'boolean') return `<span class="json-boolean">${value}</span>`
-    return '<span class="json-null">null</span>'
-}
-
 // Guards against cyclic / pathologically deep data, which would otherwise blow
 // the call stack on every hover/select of the offending node.
 const MAX_JSON_DEPTH = 12
@@ -55,7 +45,7 @@ const MAX_JSON_DEPTH = 12
 // `seen` tracks the current ancestor path so a self-reference renders `[Circular]`
 // while a shared-but-acyclic object (a DAG) still renders in full.
 function jsonToHtml(value: unknown, depth: number, seen: WeakSet<object> = new WeakSet()): string {
-    if (value === null || typeof value !== 'object') return jsonPrimitiveHtml(value)
+    if (value === null || typeof value !== 'object') return createPrimitive(value)
 
     if (seen.has(value)) return '<span class="json-null">[Circular]</span>'
     if (depth >= MAX_JSON_DEPTH) return '<span class="json-null">[…]</span>'

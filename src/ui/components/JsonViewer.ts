@@ -9,14 +9,14 @@ type JsonValue =
     | JsonValue[]
     | { [key: string]: JsonValue }
 
-function escapeHtml(value: string): string {
+export function escapeHtml(value: string): string {
     return value
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
 }
 
-function createPrimitive(value: JsonValue): string {
+export function createPrimitive(value: unknown): string {
     if (typeof value === 'string') {
         return `<span class="json-string">"${escapeHtml(value)}"</span>`
     }
