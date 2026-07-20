@@ -90,10 +90,6 @@ export class GraphInteractions<TElement = unknown> {
             this.removeNodesFromSelection([{ node: node, element: element }])
         } else {
             if (this.getSelectedNode()?.node !== node) {
-                const clickedElement = element as HTMLElement
-                if (clickedElement.classList.contains('pvt-node-expanded')) {
-                    // do nothing
-                }
                 this.selectNode(element, node)
             }
         }
@@ -256,7 +252,7 @@ export class GraphInteractions<TElement = unknown> {
 
     public edgeHoverOut(element: TElement, event: PointerEvent, edge: Edge): void {
         this.emit('edgeHoverOut', event, edge, element)
-        if (this.callbacks.onEdgeHoverOut && typeof this.callbacks.onNodeHoverOut === 'function') {
+        if (this.callbacks.onEdgeHoverOut && typeof this.callbacks.onEdgeHoverOut === 'function') {
             this.callbacks.onEdgeHoverOut(event, edge, element)
         }
     }

@@ -791,14 +791,14 @@ export class GraphSvgRenderer extends GraphRenderer {
         const width = svgBounds.width
         const height = svgBounds.height
 
-        const transformList = targetEl.transform.baseVal
-
+        // Model coords are authoritative; the SVG transform is stale after a move and undefined for notes.
         let dx = 0, dy = 0
-        if (transformList.numberOfItems > 0) {
-            const t = transformList.getItem(0) // assumes only one transform (translate/scale)
-
-            dx = t.matrix.e
-            dy = t.matrix.f
+        if (element instanceof Edge) {
+            dx = ((element.from.x ?? 0) + (element.to.x ?? 0)) / 2
+            dy = ((element.from.y ?? 0) + (element.to.y ?? 0)) / 2
+        } else {
+            dx = element.x ?? 0
+            dy = element.y ?? 0
         }
 
         const scale = Math.min(
