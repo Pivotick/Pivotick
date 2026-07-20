@@ -179,7 +179,8 @@ Pickup notes for the fixing agent/session:
   *Verdict (2026-07-20): REFUTED (false positive)* — `getNodeStyle()` resolves size via `tryResolveNumber(size, node) ?? 10` (NodeDrawer.ts:239) before returning, so `.size` is always a finite number at runtime. The `as number` cast is redundant, not a NaN source. No change.
 - [x] `ContextMenu.ts:250` / `GraphControls.ts:84` — `declare public uiManager` re-declarations exist only to widen a protected field.
   *Verdict (2026-07-20): REAL (dead), fixed* — no external code reads `.uiManager` on those instances; removed both widenings (tsc/lint clean).
-- `PropertyList.ts:125` — `createPropertyRow` typed `HTMLElement | null` but no path returns null; caller guard is dead.
+- [x] `PropertyList.ts:125` — `createPropertyRow` typed `HTMLElement | null` but no path returns null; caller guard is dead.
+  *Verdict (2026-07-20): REAL, fixed* — all four returns return the row; tightened the return type to `HTMLElement` and dropped the dead `if (row)` guard.
 - `UIManager.ts:320` — `onPhase()` lacks the `destroyed` guard its siblings `installPlugin` (`:397`) and `addElement` (`:427`) have.
 - `Tooltip.ts:124` — `fitCurrentTitle` closure retained after `hide()` (see finding 19).
 

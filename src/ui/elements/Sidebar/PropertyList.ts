@@ -138,7 +138,7 @@ function createScalarValue(text: string, mono: boolean): HTMLElement {
  * A custom `nodePropertiesMap` may hand us a pre-built `HTMLElement` (or a
  * function returning one); those are rendered verbatim, with no copy affordance.
  */
-function createPropertyRow(entry: PropertyEntry, element: Node | Edge | null): HTMLElement | null {
+function createPropertyRow(entry: PropertyEntry, element: Node | Edge | null): HTMLElement {
     const key = keyToText(entry.name, element)
 
     // Resolve a function value to its string/HTMLElement result; leave everything
@@ -215,8 +215,7 @@ export function createPropertyList(
     container.appendChild(header)
 
     for (const entry of properties) {
-        const row = createPropertyRow(entry, element)
-        if (row) container.appendChild(row)
+        container.appendChild(createPropertyRow(entry, element))
     }
 
     return container
