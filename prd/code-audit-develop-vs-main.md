@@ -77,7 +77,7 @@ Pickup notes for the fixing agent/session:
 
 ## Consumer-facing regressions
 
-- [ ] **9. `UIComponent` missing from UMD/IIFE bundles** — `src/index.ts:18`
+- [x] **9. `UIComponent` missing from UMD/IIFE bundles** — `src/index.ts:18`
   `UIComponent` is exported from the ES entry but never attached to the `Graph` class; the `vite.config.browser.js` footer
   replaces the global with `Graph` and copies over only `Node`/`Edge`/`ColorPaletteMapper`.
   *Failure:* `class StatsOverlay extends Pivotick.UIComponent` throws `TypeError: Class extends value undefined is not a
