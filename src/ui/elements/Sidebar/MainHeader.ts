@@ -9,7 +9,7 @@ import { graphEdgeIcon, graphMultiSelectNode } from '../../icons'
 import type { EdgeSelection, NodeSelection } from '../../../interfaces/GraphInteractions'
 import { tryResolveHTMLElement } from '../../../utils/Getters'
 import { createNodePreview } from '../../../utils/NodePreview'
-import { fitEntityTitle } from './titleFit'
+import { TitleFitController } from './titleFit'
 
 
 export class SidebarMainHeader extends UIComponent {
@@ -17,10 +17,8 @@ export class SidebarMainHeader extends UIComponent {
     private panel?: HTMLDivElement
     private renderCb?: ((element: Node | Edge | Node[] | Edge[] | null) => HTMLElement | string) | HTMLElement | string
 
-    // Re-fit the current title whenever the sidebar width changes.
-    private titleObserver?: ResizeObserver
-    private fitCurrentTitle?: () => void
-    private titleLastWidth = -1
+    // Re-fits the current title whenever the sidebar width changes.
+    private titleFit?: TitleFitController
 
     constructor(uiManager: UIManager) {
         super(uiManager)
@@ -34,11 +32,8 @@ export class SidebarMainHeader extends UIComponent {
 
         // The title fit depends on the panel width; recompute it on resize
         // (sidebar collapse/expand, responsive layout) rather than only on select.
-        if (typeof ResizeObserver !== 'undefined') {
-            this.titleObserver = new ResizeObserver(() => this.refitTitle())
-            this.titleObserver.observe(this.panel)
-            this.track(() => this.titleObserver?.disconnect())
-        }
+        this.titleFit = new TitleFitController(this.panel)
+        this.track(() => this.titleFit?.destroy())
     }
 
     protected onDestroy() {
@@ -67,7 +62,7 @@ export class SidebarMainHeader extends UIComponent {
     public clearOverview(): void {
         if (!this.panel) return
 
-        this.fitCurrentTitle = undefined
+        this.titleFit?.clear()
 
         if (this.renderCb) {
             this.renderCustomContent(null)
@@ -171,7 +166,7 @@ export class SidebarMainHeader extends UIComponent {
     public updateNodesOverview(nodes: NodeSelection<unknown>[]): void {
         if (!this.panel) return
 
-        this.fitCurrentTitle = undefined
+        this.titleFit?.clear()
 
         if (this.renderCb) {
             this.renderCustomContent(nodes.map((nodeS: NodeSelection<unknown>) => nodeS.node))
@@ -218,7 +213,7 @@ export class SidebarMainHeader extends UIComponent {
     public updateEdgesOverview(edges: EdgeSelection<unknown>[]): void {
         if (!this.panel) return
 
-        this.fitCurrentTitle = undefined
+        this.titleFit?.clear()
 
         if (this.renderCb) {
             this.renderCustomContent(edges.map((nodeS: EdgeSelection<unknown>) => nodeS.edge))
@@ -270,19 +265,7 @@ export class SidebarMainHeader extends UIComponent {
      * ends kept) plus a copy button, since middle-elision replaces the text.
      */
     private renderTitle(nameElem: HTMLElement, actionElem: HTMLElement | null, text: string): void {
-        this.fitCurrentTitle = () => fitEntityTitle(nameElem, actionElem, text)
-        this.titleLastWidth = -1
-        requestAnimationFrame(() => this.refitTitle())
-    }
-
-    private refitTitle(): void {
-        if (!this.panel || !this.fitCurrentTitle) return
-        // Guard on width only: fitting changes the title's height, so reacting to
-        // height too would loop. Width is driven solely by the sidebar.
-        const width = this.panel.clientWidth
-        if (width === this.titleLastWidth) return
-        this.titleLastWidth = width
-        this.fitCurrentTitle()
+        this.titleFit?.render(nameElem, actionElem, text)
     }
 
     /* Private methods */

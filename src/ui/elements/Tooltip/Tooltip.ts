@@ -2,7 +2,7 @@ import type { Edge } from '../../../Edge'
 import type { Node } from '../../../Node'
 import { createHtmlElement, createHtmlTemplate, makeDraggable } from '../../../utils/ElementCreation'
 import { createCopyButton, createPropertyList } from '../Sidebar/PropertyList'
-import { fitEntityTitle } from '../Sidebar/titleFit'
+import { TitleFitController } from '../Sidebar/titleFit'
 import { tryResolveHTMLElement } from '../../../utils/Getters'
 import { edgeDescriptionGetter, edgeNameGetter, edgePropertiesGetter, nodeDescriptionGetter, nodeNameGetter, nodePropertiesGetter } from '../../../utils/GraphGetters'
 import { createButton } from '../../components/Button'
@@ -45,12 +45,9 @@ export class Tooltip extends UIComponent {
 
     private tooltipDataMap = new Map<HTMLElement, Node | Edge>()
 
-    // Auto-fit title state (mirrors the sidebar main header): the current fit
-    // closure, a width guard to avoid refit loops, and an observer that refits
-    // when the tooltip is resized.
-    private fitCurrentTitle?: () => void
-    private titleObserver?: ResizeObserver
-    private titleLastWidth = -1
+    // Auto-fits the live tooltip's title on resize; each pinned copy gets its own.
+    private titleFit?: TitleFitController
+    private pinnedTitleFits = new Set<TitleFitController>()
 
     constructor(uiManager: UIManager) {
         super(uiManager)
@@ -102,36 +99,25 @@ export class Tooltip extends UIComponent {
     }
 
     protected onDestroy() {
-        this.titleObserver?.disconnect()
-        this.titleObserver = undefined
+        this.titleFit?.destroy()
+        this.titleFit = undefined
+        this.pinnedTitleFits.forEach(c => c.destroy())
+        this.pinnedTitleFits.clear()
         this.tooltip?.remove()
         this.tooltip = undefined
     }
 
     protected onAfterMount() {
-        // Refit the current title whenever the tooltip is resized (content change
-        // or the user drag-resizing a pinned copy).
+        // Refit the live tooltip's title whenever it's resized (content change).
         if (this.tooltip) {
-            this.titleObserver = new ResizeObserver(() => this.refitTitle())
-            this.titleObserver.observe(this.tooltip)
+            this.titleFit = new TitleFitController(this.tooltip)
         }
     }
 
     // Render an entity title into the header name slot with the sidebar's
-    // auto-fit / type-aware treatment. The actual fit runs once the slot has a
-    // width (rAF + the resize observer), guarded on width to avoid loops.
+    // auto-fit / type-aware treatment (fit runs once the slot has a width).
     private renderTitle(nameElem: HTMLElement, actionElem: HTMLElement | null, text: string): void {
-        this.fitCurrentTitle = () => fitEntityTitle(nameElem, actionElem, text)
-        this.titleLastWidth = -1
-        requestAnimationFrame(() => this.refitTitle())
-    }
-
-    private refitTitle(): void {
-        if (!this.tooltip || !this.fitCurrentTitle) return
-        const width = this.tooltip.clientWidth
-        if (width === this.titleLastWidth) return
-        this.titleLastWidth = width
-        this.fitCurrentTitle()
+        this.titleFit?.render(nameElem, actionElem, text)
     }
 
     protected onGraphReady() {
@@ -527,6 +513,11 @@ export class Tooltip extends UIComponent {
         const clonedTooltip = this.tooltip.cloneNode(true) as HTMLDivElement
         this.tooltipDataMap.set(clonedTooltip, this.hoveredElement)
 
+        // Its own title-fit controller, so resizing this copy refits its title
+        // (the live tooltip's controller only tracks the current hover). Created
+        // once the copy is in the DOM (below), disposed when it closes.
+        let pinnedTitleFit: TitleFitController | undefined
+
         clonedTooltip.classList.add('pvt-tooltip-floating')
 
         // The clone lost the live tooltip's listeners; re-wire the picture → lightbox click.
@@ -551,6 +542,10 @@ export class Tooltip extends UIComponent {
                 this.tooltipDataMap.delete(clonedTooltip)
                 // this.removeShadowLink(clonedTooltip)
                 this.shadowLinkManager?.removeShadowLink(clonedTooltip)
+                if (pinnedTitleFit) {
+                    pinnedTitleFit.destroy()
+                    this.pinnedTitleFits.delete(pinnedTitleFit)
+                }
                 clonedTooltip.remove()
             },
         })
@@ -603,6 +598,16 @@ export class Tooltip extends UIComponent {
         })
         this.parentContainer.appendChild(clonedTooltip)
         this.shadowLinkManager?.addShadowLink(clonedTooltip)
+
+        // Refit this copy's title to its own width, now and on every resize.
+        const pinnedName = clonedTooltip.querySelector<HTMLElement>('.pvt-mainheader-nodeinfo-name')
+        const pinnedAction = clonedTooltip.querySelector<HTMLElement>('.pvt-mainheader-nodeinfo-action')
+        const titleText = pinnedName?.dataset.titleText
+        if (pinnedName && titleText !== undefined) {
+            pinnedTitleFit = new TitleFitController(clonedTooltip)
+            this.pinnedTitleFits.add(pinnedTitleFit)
+            pinnedTitleFit.render(pinnedName, pinnedAction, titleText)
+        }
     }
 
     private updateShadowLinks(recalculateBBoxes = false): void {

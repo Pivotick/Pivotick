@@ -142,7 +142,7 @@ Pickup notes for the fixing agent/session:
   sequences can be cut mid-pair at either end (a long identifier-like title of emoji reaches this path), rendering U+FFFD
   garbage in the fitted title.
 
-- [ ] **19. Resizing a pinned tooltip never refits its title** — `src/ui/elements/Tooltip/Tooltip.ts:115`
+- [x] **19. Resizing a pinned tooltip never refits its title** — `src/ui/elements/Tooltip/Tooltip.ts:115`
   The title-refit ResizeObserver only observes the live tooltip element, and `refitTitle()` routes through the singleton
   `fitCurrentTitle` closure (the most recent hover's name element) — so the pinned copy, the case the comment at :112 claims to
   handle, is never refit. (Related unverified candidate: `fitCurrentTitle` is never cleared on `hide()`, retaining the last
@@ -152,7 +152,7 @@ Pickup notes for the fixing agent/session:
   `configureConnect()` registers a new `graph.on('edgeAdd')` listener on every call without removing the previous one while
   resetting `recordedEdges` — multiple `configureConnect` calls in one spec double-count recorded edges.
 
-- [ ] **21. Title-fit controller copy-pasted** — `src/ui/elements/Tooltip/Tooltip.ts:123-134` vs `src/ui/elements/Sidebar/MainHeader.ts:272-285`
+- [x] **21. Title-fit controller copy-pasted** — `src/ui/elements/Tooltip/Tooltip.ts:123-134` vs `src/ui/elements/Sidebar/MainHeader.ts:272-285`
   The whole controller (fitCurrentTitle closure, titleLastWidth guard, renderTitle/refitTitle, ResizeObserver wiring) plus its
   strategy doc-comment is duplicated character-identically. Extract into `titleFit.ts`.
 

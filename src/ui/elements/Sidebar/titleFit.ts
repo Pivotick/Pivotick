@@ -94,3 +94,53 @@ export function fitEntityTitle(nameElem: HTMLElement, actionElem: HTMLElement | 
         nameElem.classList.add('is-clamp')
     }
 }
+
+/**
+ * Fits an entity title into a fixed-width slot and re-fits it whenever the slot's
+ * width changes. Own one per title surface — the sidebar header, the live tooltip,
+ * and each pinned tooltip copy — so resizing a surface re-fits its own title.
+ * Width-guarded (fitting changes height, not width) to avoid re-fit loops.
+ */
+export class TitleFitController {
+    private slot: HTMLElement
+    private fit?: () => void
+    private lastWidth = -1
+    private observer?: ResizeObserver
+
+    constructor(slot: HTMLElement) {
+        this.slot = slot
+        if (typeof ResizeObserver !== 'undefined') {
+            this.observer = new ResizeObserver(() => this.refit())
+            this.observer.observe(slot)
+        }
+    }
+
+    /** Render `text` into `nameElem` and fit it to the slot's current width. */
+    render(nameElem: HTMLElement, actionElem: HTMLElement | null, text: string): void {
+        // Stash the untruncated text so a cloned copy (pinned tooltip) can re-fit.
+        nameElem.dataset.titleText = text
+        this.fit = () => fitEntityTitle(nameElem, actionElem, text)
+        this.lastWidth = -1
+        requestAnimationFrame(() => this.refit())
+    }
+
+    /** Forget the current title (e.g. the header switched to a count overview). */
+    clear(): void {
+        this.fit = undefined
+        this.lastWidth = -1
+    }
+
+    destroy(): void {
+        this.observer?.disconnect()
+        this.observer = undefined
+        this.fit = undefined
+    }
+
+    private refit(): void {
+        if (!this.fit) return
+        const width = this.slot.clientWidth
+        if (width === this.lastWidth) return
+        this.lastWidth = width
+        this.fit()
+    }
+}
