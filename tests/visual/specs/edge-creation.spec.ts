@@ -11,6 +11,20 @@ import {
     canvas,
 } from '../helpers'
 
+const SHADOW_EDGE = '.pvt-shadow-edge'
+
+/**
+ * Assert the shadow-edge preview is drawn and on-screen. `toBeVisible()` is
+ * unreliable here: a horizontal preview line has a zero-height bounding box, which
+ * Playwright treats as hidden — so instead check the path data is set (showShadowEdge
+ * ran) and the element isn't `display:none` (not cleared).
+ */
+async function expectShadowShown(page: Page): Promise<void> {
+    const shadow = canvas(page).locator(SHADOW_EDGE)
+    await expect(shadow).toHaveAttribute('d', /^\s*M/)
+    await expect(shadow).not.toHaveCSS('display', 'none')
+}
+
 test.describe('edge creation', () => {
     test.beforeEach(async ({ page }) => {
         await gotoHarness(page)
@@ -31,7 +45,7 @@ test.describe('edge creation', () => {
         // Move the real cursor across the canvas: the shadow edge tracks the pointer.
         const target = await centerOf(nodeEl(page, 'b'))
         await page.mouse.move(target.x, target.y)
-        await expect(canvas(page).locator('.pvt-shadow-edge')).toBeVisible()
+        await expectShadowShown(page)
         await expectCanvas(page, 'shadow-link-preview.png')
 
         // Picking the second node commits the edge.
@@ -65,19 +79,6 @@ test.describe('edge creation', () => {
 // The shadow edge carries an infinite dash animation (`pvt-shadow-dash`);
 // Playwright's `animations:'disabled'` freezes it to its initial frame, so it's
 // deterministic (the `shadow-link-preview` baseline above relies on the same).
-const SHADOW_EDGE = '.pvt-shadow-edge'
-
-/**
- * Assert the shadow-edge preview is drawn and on-screen before snapshotting.
- * `toBeVisible()` is unreliable here: a horizontal preview line has a zero-height
- * bounding box, which Playwright treats as hidden — so instead check the path data
- * is set (showShadowEdge ran) and the element isn't `display:none` (not cleared).
- */
-async function expectShadowShown(page: Page): Promise<void> {
-    const shadow = canvas(page).locator(SHADOW_EDGE)
-    await expect(shadow).toHaveAttribute('d', /^\s*M/)
-    await expect(shadow).not.toHaveCSS('display', 'none')
-}
 
 test.describe('edge creation — drag gestures', () => {
     test.beforeEach(async ({ page }) => {
