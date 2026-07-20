@@ -45,11 +45,20 @@ function jsonPrimitiveHtml(value: unknown): string {
     return '<span class="json-null">null</span>'
 }
 
+// Guards against cyclic / pathologically deep data, which would otherwise blow
+// the call stack on every hover/select of the offending node.
+const MAX_JSON_DEPTH = 12
+
 // Compact, syntax-highlighted pretty-print of a JSON-ish value. Reuses the same
 // `.json-*` colour classes as the full JsonViewer so it stays theme-aware, but
 // without the line numbers / toolbar chrome — it lives inside a property cell.
-function jsonToHtml(value: unknown, depth: number): string {
+// `seen` tracks the current ancestor path so a self-reference renders `[Circular]`
+// while a shared-but-acyclic object (a DAG) still renders in full.
+function jsonToHtml(value: unknown, depth: number, seen: WeakSet<object> = new WeakSet()): string {
     if (value === null || typeof value !== 'object') return jsonPrimitiveHtml(value)
+
+    if (seen.has(value)) return '<span class="json-null">[Circular]</span>'
+    if (depth >= MAX_JSON_DEPTH) return '<span class="json-null">[…]</span>'
 
     const isArray = Array.isArray(value)
     const open = isArray ? '[' : '{'
@@ -60,13 +69,15 @@ function jsonToHtml(value: unknown, depth: number): string {
 
     if (entries.length === 0) return `<span class="json-bracket">${open}${close}</span>`
 
+    seen.add(value)
     const pad = '  '.repeat(depth + 1)
     const closePad = '  '.repeat(depth)
     const lines = entries.map(([k, v], i) => {
         const comma = i < entries.length - 1 ? '<span class="json-bracket">,</span>' : ''
         const keyHtml = isArray ? '' : `<span class="json-key">"${escapeHtml(k)}"</span><span class="json-bracket">: </span>`
-        return `${pad}${keyHtml}${jsonToHtml(v, depth + 1)}${comma}`
+        return `${pad}${keyHtml}${jsonToHtml(v, depth + 1, seen)}${comma}`
     })
+    seen.delete(value) // leave the path so the same object in a sibling branch isn't a false cycle
     return `<span class="json-bracket">${open}</span>\n${lines.join('\n')}\n${closePad}<span class="json-bracket">${close}</span>`
 }
 

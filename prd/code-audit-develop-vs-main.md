@@ -98,7 +98,7 @@ Pickup notes for the fixing agent/session:
   verbatim in all three surfaces after upgrading, with no code change on their side. Decide: restore HTML resolution (mind
   finding 1 — sanitize) or document the break.
 
-- [ ] **12. Stack overflow on cyclic node data** — `src/ui/elements/Sidebar/PropertyList.ts:38`
+- [x] **12. Stack overflow on cyclic node data** — `src/ui/elements/Sidebar/PropertyList.ts:38`
   `jsonToHtml` recurses (`:55`) with no cycle guard or depth limit — `depth` is only used for indentation.
   *Failure:* a node whose data contains a self-reference (`data.meta.parent === data.meta`) throws `RangeError: Maximum call
   stack size exceeded` inside the select/hover handler on every interaction with that node; the panel/tooltip renders empty or
