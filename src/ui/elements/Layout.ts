@@ -12,9 +12,10 @@ export class Layout extends UIComponent {
     public graphnavigation?: HTMLDivElement
     public graphcontrols?: HTMLDivElement
     public graphtoolbar?: HTMLDivElement
-    /** B3 mode rail + contextual tool panel slots (only when experimentalB3Chrome is on). */
+    /** B3 mode rail + contextual tool panel + View flyout slots (only when experimentalB3Chrome is on). */
     public moderail?: HTMLDivElement
     public toolpanel?: HTMLDivElement
+    public viewflyout?: HTMLDivElement
 
     protected onMount(container?: HTMLElement) {
         if (!container) return
@@ -76,6 +77,10 @@ export class Layout extends UIComponent {
             this.toolpanel = document.createElement('div')
             this.toolpanel.className = 'pvt-toolpanel'
             this.canvas.appendChild(this.toolpanel)
+
+            this.viewflyout = document.createElement('div')
+            this.viewflyout.className = 'pvt-viewflyout'
+            this.canvas.appendChild(this.viewflyout)
         }
 
         container.appendChild(this.layout)

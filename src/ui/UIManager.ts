@@ -21,6 +21,7 @@ import { UIComponent, type UIPhase } from './UIComponent'
 import { ModeStore, isB3ChromeEnabled } from './ModeStore'
 import { ModeRail } from './elements/ModeRail/ModeRail'
 import { ToolPanel } from './elements/ToolPanel/ToolPanel'
+import { ViewFlyout } from './elements/ViewFlyout/ViewFlyout'
 import type { PivotickPlugin, PluginContext } from '../interfaces/Plugin'
 
 
@@ -184,6 +185,12 @@ const UI_ELEMENTS: UIElementSpec[] = [
         make: ui => new ToolPanel(ui), slot: ui => ui.layout?.toolpanel
     },
     {
+        // viewer-mode View flyout is an open question (§9.4); full/light for now.
+        key: 'viewFlyout', modes: ['full', 'light'],
+        enabled: o => isB3ChromeEnabled(o),
+        make: ui => new ViewFlyout(ui), slot: ui => ui.layout?.viewflyout
+    },
+    {
         key: 'mainHeader', modes: ['full', 'light'],
         make: ui => new Mainheader(ui), slot: ui => ui.layout?.mainheader
     },
@@ -249,6 +256,7 @@ export class UIManager {
     public get graphToolbar(): GraphToolbar | undefined { return this.byKey.get('graphToolbar') as GraphToolbar | undefined }
     public get modeRail(): ModeRail | undefined { return this.byKey.get('modeRail') as ModeRail | undefined }
     public get toolPanel(): ToolPanel | undefined { return this.byKey.get('toolPanel') as ToolPanel | undefined }
+    public get viewFlyout(): ViewFlyout | undefined { return this.byKey.get('viewFlyout') as ViewFlyout | undefined }
     public get tooltip(): Tooltip | undefined { return this.byKey.get('tooltip') as Tooltip | undefined }
     public get contextMenu(): ContextMenu | undefined { return this.byKey.get('contextMenu') as ContextMenu | undefined }
 

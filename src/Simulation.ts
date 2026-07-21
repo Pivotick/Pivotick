@@ -868,6 +868,10 @@ export class Simulation {
         return this.options.freezeNodesOnDrag
     }
 
+    public isGridSnappingEnabled(): boolean {
+        return this.options.gridSnappingEnabled
+    }
+
     public toggleFitViewOnExpandCollapse() {
         this.options.fitViewOnExpandCollapse = !this.options.fitViewOnExpandCollapse
     }
