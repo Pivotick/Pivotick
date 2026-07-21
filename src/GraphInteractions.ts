@@ -676,25 +676,30 @@ export class GraphInteractions<TElement = unknown> {
     }
 
     public clearNodeSelectionList(): void {
-        this.emit('unselectNodes', this.selectedNodes)
-        this.selectedNodes.forEach(({ node, element }) => {
+        // Clear the list *before* emitting so a handler that re-reads the live
+        // selection (e.g. the sidebar's `unselectNodes` → renderNodeSelection)
+        // sees the empty state — matching `removeNodesFromSelection`'s ordering.
+        const cleared = this.selectedNodes
+        this.selectedNodes = []
+        this.selectedNode = null
+        this.emit('unselectNodes', cleared)
+        cleared.forEach(({ node, element }) => {
             if (this.callbacks.onNodeBlur && typeof this.callbacks.onNodeBlur === 'function') {
                 this.callbacks.onNodeBlur(node, element)
             }
         })
-        this.selectedNodes = []
-        this.selectedNode = null
     }
 
     public clearEdgeSelectionList(): void {
-        this.emit('unselectEdges', this.selectedEdges)
-        this.selectedEdges.forEach(({ edge, element }) => {
+        const cleared = this.selectedEdges
+        this.selectedEdges = []
+        this.selectedEdge = null
+        this.emit('unselectEdges', cleared)
+        cleared.forEach(({ edge, element }) => {
             if (this.callbacks.onEdgeBlur && typeof this.callbacks.onEdgeBlur === 'function') {
                 this.callbacks.onEdgeBlur(edge, element)
             }
         })
-        this.selectedEdges = []
-        this.selectedEdge = null
     }
 
     public hasActiveMultiselection(): boolean {
