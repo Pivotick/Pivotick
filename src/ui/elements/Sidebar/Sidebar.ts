@@ -3,11 +3,13 @@ import type { Edge } from '../../../Edge'
 import { createHtmlElement, createHtmlTemplate, createIcon } from '../../../utils/ElementCreation'
 import type { UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
+import { isB3ChromeEnabled } from '../../ModeStore'
 import './sidebar.scss'
 import { SidebarMainHeader } from './MainHeader'
 import { SidebarProperties } from './Properties'
+import { SidebarBulkActions } from './BulkActions'
 import { ExtraPanelManager } from './ExtraPanelManager'
-import { sidebarCollapse, sidebarExpand } from '../../icons'
+import { closeIcon, sidebarCollapse, sidebarExpand } from '../../icons'
 import type { EdgeSelection, NodeSelection } from '../../../interfaces/GraphInteractions'
 import { SidebarNeighbors } from './Neighbors'
 
@@ -19,28 +21,38 @@ export class Sidebar extends UIComponent {
     private sidebarMainHeader: SidebarMainHeader
     private sidebarProperties: SidebarProperties
     private sidebarNeighbors: SidebarNeighbors
+    private bulkActions: SidebarBulkActions
     private extraPanelManager: ExtraPanelManager
-    
+
+    // The B3 chrome adds a clear-selection X (header) + a bulk-action row; both
+    // are gated on the migration flag so classic-chrome baselines stay green.
+    private readonly b3Chrome: boolean
+
     private mainHeaderPanel?: HTMLDivElement
     private mainBodyPanel?: HTMLDivElement
     private neighborPanel?: HTMLDivElement
     private extraPanelContainer?: HTMLDivElement
     private collapse?: HTMLSpanElement
+    private clearSelectionButton?: HTMLButtonElement
 
     constructor(uiManager: UIManager) {
         super(uiManager)
+        this.b3Chrome = isB3ChromeEnabled(this.uiManager.getOptions())
         this.sidebarMainHeader = new SidebarMainHeader(this.uiManager)
         this.sidebarProperties = new SidebarProperties(this.uiManager)
         this.sidebarNeighbors = new SidebarNeighbors(this.uiManager)
+        this.bulkActions = new SidebarBulkActions(this.uiManager)
         this.extraPanelManager = new ExtraPanelManager(this.uiManager)
     }
 
     protected onMount(container: HTMLElement | undefined) {
         if (!container) return
 
+        const bulkActionsSlot = this.b3Chrome ? '<div class="pvt-sidebar-bulkactions-slot"></div>' : ''
         const template = `
 <div class="pvt-sidebar-elements">
     <div class="pvt-mainheader-panel"></div>
+    ${bulkActionsSlot}
     <div class="pvt-sidebar-separator"></div>
     <div class="pvt-properties-panel pvt-sidebar-panel"></div>
     <div class="pvt-sidebar-separator"></div>
@@ -67,6 +79,10 @@ export class Sidebar extends UIComponent {
         if (!this.sidebar) return
         this.mainHeaderPanel = this.sidebar.querySelector('.pvt-mainheader-panel') ?? undefined
         this.addChild(this.sidebarMainHeader, this.mainHeaderPanel)
+        if (this.b3Chrome) {
+            const bulkActionsSlot = this.sidebar.querySelector<HTMLDivElement>('.pvt-sidebar-bulkactions-slot') ?? undefined
+            this.addChild(this.bulkActions, bulkActionsSlot)
+        }
         this.mainBodyPanel = this.sidebar.querySelector('.pvt-properties-panel') ?? undefined
         this.addChild(this.sidebarProperties, this.mainBodyPanel)
         this.neighborPanel = this.sidebar.querySelector('.pvt-neighbor-panel') ?? undefined
@@ -79,6 +95,18 @@ export class Sidebar extends UIComponent {
             createHtmlElement('span', { class: 'pvt-sidebar-collapse-button pvt-sidebar-collapse-button-expand' }, [createIcon({ svgIcon: sidebarExpand })]) as HTMLSpanElement,
         ]) as HTMLSpanElement
         this.sidebar.parentElement!.appendChild(this.collapse)
+
+        if (this.b3Chrome) {
+            // Header clear-selection X — overlays the header (which the MainHeader
+            // rewrites on every selection), so it lives on the sidebar root instead.
+            this.clearSelectionButton = createHtmlElement('button', {
+                class: 'pvt-sidebar-clear',
+                type: 'button',
+                title: 'Clear selection',
+                'aria-label': 'Clear selection',
+            }, [createIcon({ svgIcon: closeIcon })]) as HTMLButtonElement
+            this.sidebar.appendChild(this.clearSelectionButton)
+        }
 
         if (this.uiManager.getOptions()?.sidebar?.collapsed === true) {
             this.hideSidebar()
@@ -101,6 +129,7 @@ export class Sidebar extends UIComponent {
             this.sidebarProperties.updateEdgeProperties(edge)
             this.sidebarNeighbors.updateEdgeNeighbors(edge)
             this.extraPanelManager.updateEdge(edge)
+            this.showSelectionActions('edge')
         })
         this.trackInteraction('unselectEdge', () => {
             this.clearSelection()
@@ -121,6 +150,7 @@ export class Sidebar extends UIComponent {
             this.sidebarProperties.updateEdgesProperties(edges)
             this.sidebarNeighbors.updateEdgesNeighbors(edges)
             this.extraPanelManager.updateEdges(edges)
+            this.showSelectionActions('edge')
         })
         this.trackInteraction('unselectEdges', () => {
             this.clearSelection()
@@ -128,6 +158,9 @@ export class Sidebar extends UIComponent {
 
         if (this.collapse) {
             this.listen(this.collapse, 'click', () => this.toggleSidebar())
+        }
+        if (this.clearSelectionButton) {
+            this.listen(this.clearSelectionButton, 'click', () => this.clearActiveSelection())
         }
     }
 
@@ -153,6 +186,7 @@ export class Sidebar extends UIComponent {
         this.sidebarProperties.updateNodeProperties(node)
         this.sidebarNeighbors.updateNodeNeighbors(node)
         this.extraPanelManager.updateNode(node)
+        this.showSelectionActions('node')
     }
 
     private renderMultiNodeSelection(fullSelection: NodeSelection<unknown>[]): void {
@@ -160,6 +194,7 @@ export class Sidebar extends UIComponent {
         this.sidebarProperties.updateNodesProperties(fullSelection)
         this.sidebarNeighbors.updateNodesNeighbors(fullSelection)
         this.extraPanelManager.updateNodes(fullSelection)
+        this.showSelectionActions('node')
     }
 
     private clearSelection(): void {
@@ -167,6 +202,32 @@ export class Sidebar extends UIComponent {
         this.sidebarProperties.clearProperties()
         this.sidebarNeighbors.clearNeighbors()
         this.extraPanelManager.clear()
+        this.hideSelectionActions()
+    }
+
+    /**
+     * Reveal the B3 clear-selection X (and, for node selections, the bulk-action
+     * row). No-op unless the B3 chrome is enabled. The bulk row is node-only, so
+     * an edge selection shows only the X.
+     */
+    private showSelectionActions(kind: 'node' | 'edge'): void {
+        if (!this.b3Chrome) return
+        this.clearSelectionButton?.classList.add('pvt-visible')
+        if (kind === 'node') this.bulkActions.show()
+        else this.bulkActions.hide()
+    }
+
+    private hideSelectionActions(): void {
+        if (!this.b3Chrome) return
+        this.clearSelectionButton?.classList.remove('pvt-visible')
+        this.bulkActions.hide()
+    }
+
+    /** Clear whatever is currently selected (nodes and/or edges). */
+    private clearActiveSelection(): void {
+        const interaction = this.uiManager.graph.renderer.getGraphInteraction()
+        interaction.clearNodeSelectionList()
+        interaction.clearEdgeSelectionList()
     }
 
     public toggleSidebar(): void {
