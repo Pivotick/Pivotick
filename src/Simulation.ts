@@ -524,7 +524,6 @@ export class Simulation {
         if (this.avgTickDuration > this.SLOW_TICK_THRESHOLD) {
             this.slowTickThresholdReached = true
             this.disable()
-            this.graph.UIManager.graphControls?.updatePhysicSimulationIndicator(false)
             this.graph.UIManager.showNotification({
                 level: 'warning',
                 title: 'Physics engine running slow',

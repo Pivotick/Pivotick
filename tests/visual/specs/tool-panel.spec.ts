@@ -8,10 +8,10 @@ import {
 } from '../helpers'
 
 // ── B3 contextual tool panel ─────────────────────────────────────────────────
-// Opt into the experimental B3 chrome; assert the panel swaps its tool-set with
-// the active mode and that each tool drives the real underlying logic.
+// Assert the panel swaps its tool-set with the active mode and that each tool
+// drives the real underlying logic.
 
-const B3 = { UI: { experimentalB3Chrome: true } }
+const B3 = {}
 
 const setMode = (page: import('@playwright/test').Page, mode: string) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

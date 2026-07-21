@@ -7,14 +7,13 @@ import {
 } from '../helpers'
 
 // ── B3 mode rail ─────────────────────────────────────────────────────────────
-// The experimental B3 chrome (mode rail + contextual panels + View flyout) is
-// gated behind `UI.experimentalB3Chrome` while the migration lands in small PRs.
-// These tests opt in via that flag; the classic-chrome baselines are unaffected.
+// The B3 chrome (mode rail + contextual panels + View flyout) is the default
+// full/light chrome.
 //
 // The rail is a canvas overlay, so each visual assertion targets the
 // `.pvt-moderail` element (per the chrome-test convention), not the whole page.
 
-const B3 = { UI: { experimentalB3Chrome: true } }
+const B3 = {}
 
 /** Current mode-store state, read from the live graph. */
 async function modeState(page: import('@playwright/test').Page) {

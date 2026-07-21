@@ -1,5 +1,4 @@
 import { UIComponent } from '../UIComponent'
-import { isB3ChromeEnabled } from '../ModeStore'
 
 export class Layout extends UIComponent {
     public layout?: HTMLDivElement
@@ -10,9 +9,7 @@ export class Layout extends UIComponent {
     public modal?: HTMLDivElement
     public slidePanel?: HTMLDivElement
     public graphnavigation?: HTMLDivElement
-    public graphcontrols?: HTMLDivElement
-    public graphtoolbar?: HTMLDivElement
-    /** B3 mode rail + contextual tool panel + View flyout slots (only when experimentalB3Chrome is on). */
+    /** B3 mode rail + contextual tool panel + View flyout slots. */
     public moderail?: HTMLDivElement
     public toolpanel?: HTMLDivElement
     public viewflyout?: HTMLDivElement
@@ -56,20 +53,11 @@ export class Layout extends UIComponent {
             this.graphnavigation = document.createElement('div')
             this.graphnavigation.className = 'pvt-graphnavigation'
             this.canvas.appendChild(this.graphnavigation)
-
-            this.graphcontrols = document.createElement('div')
-            this.graphcontrols.className = 'pvt-graphcontrols'
-            this.canvas.appendChild(this.graphcontrols)
-
-            this.graphtoolbar = document.createElement('div')
-            this.graphtoolbar.className = 'pvt-graphtoolbar'
-            this.canvas.appendChild(this.graphtoolbar)
         }
 
         // B3 chrome slots: the mode rail and its contextual panel overlay the
-        // canvas (left edge). Only created when the experimental flag is on so the
-        // classic-chrome layout — and its visual baselines — stay untouched.
-        if ((mode === 'full' || mode === 'light') && isB3ChromeEnabled(this.uiManager.getOptions())) {
+        // canvas (left edge), positioned right of the sidebar.
+        if (mode === 'full' || mode === 'light') {
             this.moderail = document.createElement('div')
             this.moderail.className = 'pvt-moderail'
             this.canvas.appendChild(this.moderail)

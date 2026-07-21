@@ -74,43 +74,20 @@ test.describe('ui-chrome', () => {
         await expectElement(sidebar, 'sidebar-node-selected.png')
     })
 
-    // T8.2 — the toolbar in edit mode. Pressing `e` (the toolbar's own shortcut)
-    // toggles edit mode, revealing the tool groups (Add Node/Edge/Note + the
-    // selection tools) and renaming the button to "Editing". Focus the container
-    // first so the keybinding — gated on container focus — fires; using the
-    // keyboard rather than clicking the button keeps the button unfocused, so no
-    // focus ring bleeds into the baseline.
-    test('shows the toolbar in edit mode', async ({ page }) => {
-        await loadFixture(page, 'basic')
-        await page.locator('.pivotick').focus()
-        await page.keyboard.press('e')
+    // T8.2 — the B3 mode-driven chrome (mode rail + contextual tool panel) is
+    // covered by mode-rail.spec.ts / tool-panel.spec.ts; the classic edit-mode
+    // toolbar it replaced has been retired.
 
-        const toolbar = page.locator('.pvt-graphtoolbar')
-        await expect(toolbar).toHaveClass(/edit-mode-active/)
-        // The tool groups animate in (a width transition plus a rAF-added
-        // `visible` class); wait for one to be shown before snapshotting.
-        // Playwright freezes the transition itself to its end-state.
-        await expect(toolbar.locator('.pvt-toolbar-group.visible').first()).toBeVisible()
-        await expectElement(toolbar, 'toolbar-edit-mode.png')
-    })
-
-    // T8.3 — the navigation (fit / zoom in-out / fullscreen / options) and the
-    // layout + physics controls. They live in opposite top corners of the canvas,
-    // so each is snapshotted as its own element (two baselines) per the README's
-    // "target specific elements" guidance. Loaded on the acyclic `tree` fixture
-    // so the tree-layout buttons render enabled (a cyclic graph disables them).
-    // The controls' fly-out sub-options are `:hover`-only, so they stay collapsed
-    // in a no-hover screenshot — deterministic.
-    test('shows the navigation and layout controls', async ({ page }) => {
+    // T8.3 — the viewport navigation rail (fit / zoom in-out / fullscreen /
+    // options). Snapshotted as its own element per the README's "target specific
+    // elements" guidance. The layout + physics controls now live in the View
+    // flyout (see view-flyout.spec.ts), not a separate corner element.
+    test('shows the navigation rail', async ({ page }) => {
         await loadFixture(page, 'tree')
 
         await expectElement(
             page.locator('.pvt-graphnavigation-elements'),
             'nav-controls-navigation.png'
-        )
-        await expectElement(
-            page.locator('.pvt-graphcontrols-layout'),
-            'nav-controls-controls.png'
         )
     })
 

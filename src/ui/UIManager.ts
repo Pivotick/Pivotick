@@ -1,7 +1,6 @@
 import { Graph } from '../Graph'
 import { Node } from  '../Node'
 import { Edge } from  '../Edge'
-import { GraphControls } from './elements/GraphControls/GraphControls'
 import { GraphNavigation } from './elements/GraphNavigation/GraphNavigation'
 import { Layout } from './elements/Layout'
 import { Sidebar } from './elements/Sidebar/Sidebar'
@@ -14,11 +13,10 @@ import { Tooltip } from './elements/Tooltip/Tooltip'
 import { ContextMenu } from './elements/ContextMenu/ContextMenu'
 import type { GraphUI, GraphUIMode, PropertyEntry } from '../interfaces/GraphUI'
 import { KeybindingManager } from './KeybindingManager'
-import { GraphToolbar } from './elements/GraphToolbar/GraphToolbar'
 import { createInspectModal } from './elements/modals/InspectNodeModal/InspectNodeModal'
 import { Note } from '../Note'
 import { UIComponent, type UIPhase } from './UIComponent'
-import { ModeStore, isB3ChromeEnabled } from './ModeStore'
+import { ModeStore } from './ModeStore'
 import { ModeRail } from './elements/ModeRail/ModeRail'
 import { ToolPanel } from './elements/ToolPanel/ToolPanel'
 import { ViewFlyout } from './elements/ViewFlyout/ViewFlyout'
@@ -104,12 +102,6 @@ export const DEFAULT_UI_OPTIONS: GraphUI = {
             menu: [],
         },
     },
-    selectionMenu: {
-        menuNode: {
-            topbar: [],
-            menu: [],
-        },
-    },
     extraPanels: [],
     editors: {
         nodeEditor: {
@@ -163,31 +155,16 @@ const UI_ELEMENTS: UIElementSpec[] = [
         make: ui => new ContextMenu(ui), slot: ui => ui.layout?.canvas
     },
     {
-        // Classic left controls — replaced by the B3 mode rail + View flyout.
-        key: 'graphControls', modes: ['full', 'light'],
-        enabled: o => !isB3ChromeEnabled(o),
-        make: ui => new GraphControls(ui), slot: ui => ui.layout?.graphcontrols
-    },
-    {
-        // Classic top toolbar — replaced by the B3 mode rail + contextual panels.
-        key: 'graphToolbar', modes: ['full', 'light'],
-        enabled: o => !isB3ChromeEnabled(o),
-        make: ui => new GraphToolbar(ui), slot: ui => ui.layout?.graphtoolbar
-    },
-    {
         key: 'modeRail', modes: ['full', 'light'],
-        enabled: o => isB3ChromeEnabled(o),
         make: ui => new ModeRail(ui), slot: ui => ui.layout?.moderail
     },
     {
         key: 'toolPanel', modes: ['full', 'light'],
-        enabled: o => isB3ChromeEnabled(o),
         make: ui => new ToolPanel(ui), slot: ui => ui.layout?.toolpanel
     },
     {
         // viewer-mode View flyout is an open question (§9.4); full/light for now.
         key: 'viewFlyout', modes: ['full', 'light'],
-        enabled: o => isB3ChromeEnabled(o),
         make: ui => new ViewFlyout(ui), slot: ui => ui.layout?.viewflyout
     },
     {
@@ -251,9 +228,7 @@ export class UIManager {
     public get layout(): Layout | undefined { return this.byKey.get('layout') as Layout | undefined }
     public get sidebar(): Sidebar | undefined { return this.byKey.get('sidebar') as Sidebar | undefined }
     public get mainHeader(): Mainheader | undefined { return this.byKey.get('mainHeader') as Mainheader | undefined }
-    public get graphNaviation(): GraphNavigation | undefined { return this.byKey.get('navigation') as GraphNavigation | undefined }
-    public get graphControls(): GraphControls | undefined { return this.byKey.get('graphControls') as GraphControls | undefined }
-    public get graphToolbar(): GraphToolbar | undefined { return this.byKey.get('graphToolbar') as GraphToolbar | undefined }
+    public get graphNavigation(): GraphNavigation | undefined { return this.byKey.get('navigation') as GraphNavigation | undefined }
     public get modeRail(): ModeRail | undefined { return this.byKey.get('modeRail') as ModeRail | undefined }
     public get toolPanel(): ToolPanel | undefined { return this.byKey.get('toolPanel') as ToolPanel | undefined }
     public get viewFlyout(): ViewFlyout | undefined { return this.byKey.get('viewFlyout') as ViewFlyout | undefined }

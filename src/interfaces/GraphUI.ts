@@ -28,19 +28,8 @@ export interface GraphUI {
     tooltip: Tooltip,
     contextMenu: ContextMenu,
     navigation: Navigation,
-    selectionMenu: SelectionMenu,
     editors: Editors,
     keybindings?: Keybinding[];
-    /**
-     * **Experimental / temporary.** Render the B3 mode-driven chrome (mode rail +
-     * contextual panels + View flyout) instead of the classic corner controls
-     * (`GraphControls` / `GraphToolbar`). This flag exists only to land the B3
-     * migration in small, green-keeping PRs; it will be **removed** once B3
-     * becomes the sole `full`/`light` chrome. Do not depend on it.
-     * @default false
-     * @internal
-     */
-    experimentalB3Chrome?: boolean,
 }
 
 export type Key = string; // e.g. 'Ctrl+C', 'Ctrl+F', 'ArrowUp'
@@ -224,13 +213,6 @@ export interface ContextMenu {
         topbar?: MenuQuickActionItemOptions[],
         menu?: MenuActionItemOptions[],
     },
-}
-
-export interface SelectionMenu {
-    menuNode?: {
-        topbar?: MenuQuickActionItemOptions[],
-        menu?: MenuActionItemOptions[],
-    }
 }
 
 /**

@@ -3,7 +3,6 @@ import type { Edge } from '../../../Edge'
 import { createHtmlElement, createHtmlTemplate, createIcon } from '../../../utils/ElementCreation'
 import type { UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
-import { isB3ChromeEnabled } from '../../ModeStore'
 import './sidebar.scss'
 import { SidebarMainHeader } from './MainHeader'
 import { SidebarProperties } from './Properties'
@@ -24,10 +23,6 @@ export class Sidebar extends UIComponent {
     private bulkActions: SidebarBulkActions
     private extraPanelManager: ExtraPanelManager
 
-    // The B3 chrome adds a clear-selection X (header) + a bulk-action row; both
-    // are gated on the migration flag so classic-chrome baselines stay green.
-    private readonly b3Chrome: boolean
-
     private mainHeaderPanel?: HTMLDivElement
     private mainBodyPanel?: HTMLDivElement
     private neighborPanel?: HTMLDivElement
@@ -37,7 +32,6 @@ export class Sidebar extends UIComponent {
 
     constructor(uiManager: UIManager) {
         super(uiManager)
-        this.b3Chrome = isB3ChromeEnabled(this.uiManager.getOptions())
         this.sidebarMainHeader = new SidebarMainHeader(this.uiManager)
         this.sidebarProperties = new SidebarProperties(this.uiManager)
         this.sidebarNeighbors = new SidebarNeighbors(this.uiManager)
@@ -48,11 +42,10 @@ export class Sidebar extends UIComponent {
     protected onMount(container: HTMLElement | undefined) {
         if (!container) return
 
-        const bulkActionsSlot = this.b3Chrome ? '<div class="pvt-sidebar-bulkactions-slot"></div>' : ''
         const template = `
 <div class="pvt-sidebar-elements">
     <div class="pvt-mainheader-panel"></div>
-    ${bulkActionsSlot}
+    <div class="pvt-sidebar-bulkactions-slot"></div>
     <div class="pvt-sidebar-separator"></div>
     <div class="pvt-properties-panel pvt-sidebar-panel"></div>
     <div class="pvt-sidebar-separator"></div>
@@ -79,10 +72,8 @@ export class Sidebar extends UIComponent {
         if (!this.sidebar) return
         this.mainHeaderPanel = this.sidebar.querySelector('.pvt-mainheader-panel') ?? undefined
         this.addChild(this.sidebarMainHeader, this.mainHeaderPanel)
-        if (this.b3Chrome) {
-            const bulkActionsSlot = this.sidebar.querySelector<HTMLDivElement>('.pvt-sidebar-bulkactions-slot') ?? undefined
-            this.addChild(this.bulkActions, bulkActionsSlot)
-        }
+        const bulkActionsSlot = this.sidebar.querySelector<HTMLDivElement>('.pvt-sidebar-bulkactions-slot') ?? undefined
+        this.addChild(this.bulkActions, bulkActionsSlot)
         this.mainBodyPanel = this.sidebar.querySelector('.pvt-properties-panel') ?? undefined
         this.addChild(this.sidebarProperties, this.mainBodyPanel)
         this.neighborPanel = this.sidebar.querySelector('.pvt-neighbor-panel') ?? undefined
@@ -96,17 +87,15 @@ export class Sidebar extends UIComponent {
         ]) as HTMLSpanElement
         this.sidebar.parentElement!.appendChild(this.collapse)
 
-        if (this.b3Chrome) {
-            // Header clear-selection X — overlays the header (which the MainHeader
-            // rewrites on every selection), so it lives on the sidebar root instead.
-            this.clearSelectionButton = createHtmlElement('button', {
-                class: 'pvt-sidebar-clear',
-                type: 'button',
-                title: 'Clear selection',
-                'aria-label': 'Clear selection',
-            }, [createIcon({ svgIcon: closeIcon })]) as HTMLButtonElement
-            this.sidebar.appendChild(this.clearSelectionButton)
-        }
+        // Header clear-selection X — overlays the header (which the MainHeader
+        // rewrites on every selection), so it lives on the sidebar root instead.
+        this.clearSelectionButton = createHtmlElement('button', {
+            class: 'pvt-sidebar-clear',
+            type: 'button',
+            title: 'Clear selection',
+            'aria-label': 'Clear selection',
+        }, [createIcon({ svgIcon: closeIcon })]) as HTMLButtonElement
+        this.sidebar.appendChild(this.clearSelectionButton)
 
         if (this.uiManager.getOptions()?.sidebar?.collapsed === true) {
             this.hideSidebar()
@@ -186,7 +175,9 @@ export class Sidebar extends UIComponent {
         this.sidebarProperties.updateNodeProperties(node)
         this.sidebarNeighbors.updateNodeNeighbors(node)
         this.extraPanelManager.updateNode(node)
-        this.showSelectionActions('node')
+        // Per-node actions live in the header + right-click ContextMenu; the
+        // clear-X and bulk-row are for multi-selection (see showSelectionActions).
+        this.hideSelectionActions()
     }
 
     private renderMultiNodeSelection(fullSelection: NodeSelection<unknown>[]): void {
@@ -206,19 +197,18 @@ export class Sidebar extends UIComponent {
     }
 
     /**
-     * Reveal the B3 clear-selection X (and, for node selections, the bulk-action
-     * row). No-op unless the B3 chrome is enabled. The bulk row is node-only, so
-     * an edge selection shows only the X.
+     * Reveal the clear-selection X (and, for a multi-node selection, the
+     * bulk-action row). Called for 2+ nodes and for edge selections; the bulk row
+     * is node-only, so an edge selection shows only the X. Single-node selections
+     * show neither (handled by {@link hideSelectionActions}).
      */
     private showSelectionActions(kind: 'node' | 'edge'): void {
-        if (!this.b3Chrome) return
         this.clearSelectionButton?.classList.add('pvt-visible')
         if (kind === 'node') this.bulkActions.show()
         else this.bulkActions.hide()
     }
 
     private hideSelectionActions(): void {
-        if (!this.b3Chrome) return
         this.clearSelectionButton?.classList.remove('pvt-visible')
         this.bulkActions.hide()
     }

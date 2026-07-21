@@ -10,12 +10,12 @@ import {
 import type { Page } from '@playwright/test'
 
 // ── B3 sidebar clear-X + bulk-action row ─────────────────────────────────────
-// Opt into the experimental B3 chrome in full mode (the sidebar is full-only).
+// Runs in full mode (the sidebar is full-only).
 // A node selection reveals a clear-selection X plus a bulk-action row whose four
 // functional actions (Pin / Unpin / Hide / Delete) apply to the whole selection;
 // Isolate / Group / Ungroup / Bulk-edit render disabled with a "SOON" affordance.
 
-const B3_FULL = { UI: { mode: 'full', experimentalB3Chrome: true, sidebar: { collapsed: false } } }
+const B3_FULL = { UI: { mode: 'full', sidebar: { collapsed: false } } }
 
 const FUNCTIONAL = ['pin', 'unpin', 'hide', 'delete']
 const SOON = ['isolate', 'group', 'ungroup', 'bulk-edit']

@@ -32,9 +32,8 @@ const LAYOUTS: Array<{ id: string; label: string; tree: boolean }> = [
  * The B3 View flyout: an overlay toggled by the mode rail's View button (via
  * {@link UIManager.modeStore}). Consolidates the layout control, the physics
  * card (presets + sliders driving the {@link Simulation} setter API + a run
- * toggle) and the grid / freeze toggles — everything that used to live scattered
- * across the classic GraphControls / GraphNavigation. Physics presets + sliders
- * grey out under non-`force` layouts (D6/D7).
+ * toggle) and the grid / freeze toggles — the graph's view/layout settings in one
+ * place. Physics presets + sliders grey out under non-`force` layouts (D6/D7).
  */
 export class ViewFlyout extends UIComponent {
     private flyout?: HTMLDivElement

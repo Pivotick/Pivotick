@@ -7,11 +7,11 @@ import {
 } from '../helpers'
 
 // ── B3 View flyout ───────────────────────────────────────────────────────────
-// Opt into the experimental B3 chrome; verify the flyout toggles with the mode
-// rail's View button and that its controls drive the real Simulation API
-// (layout change, physics presets/sliders/run, grid + freeze toggles).
+// Verify the flyout toggles with the mode rail's View button and that its
+// controls drive the real Simulation API (layout change, physics
+// presets/sliders/run, grid + freeze toggles).
 
-const B3 = { UI: { experimentalB3Chrome: true } }
+const B3 = {}
 type Page = import('@playwright/test').Page
 
 const openFlyout = (page: Page) =>

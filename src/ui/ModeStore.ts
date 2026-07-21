@@ -7,15 +7,6 @@
  */
 export type PointerMode = 'select' | 'create'
 
-/**
- * Whether the experimental B3 mode-driven chrome is enabled (see
- * {@link GraphUI.experimentalB3Chrome}). Temporary migration helper — removed
- * once B3 is the default chrome.
- */
-export function isB3ChromeEnabled(options: { experimentalB3Chrome?: boolean }): boolean {
-    return options.experimentalB3Chrome === true
-}
-
 /** Observable state of the mode rail + View flyout. */
 export interface ModeState {
     /** Active pointer-mode. Defaults to `'select'`. */

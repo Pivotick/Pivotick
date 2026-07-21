@@ -55,6 +55,21 @@ export class ToolPanel extends UIComponent {
         connectManager.on('start', onConnectStart)
         connectManager.on('stop', onConnectStop)
         this.track(() => { connectManager.off('start', onConnectStart); connectManager.off('stop', onConnectStop) })
+
+        // Escape cancels the active armed tool — a running edge-connect session or
+        // an armed lasso (previously owned by the classic toolbar).
+        this.track(this.uiManager.keyManager.register({
+            key: 'Escape',
+            callback: () => this.cancelActive(),
+        }))
+    }
+
+    /** Cancel whatever tool is currently armed (edge-connect / lasso). */
+    private cancelActive() {
+        const cm = this.uiManager.graph.editing.connectManager
+        if (cm.isActive()) cm.exitClickConnectionMode()
+        this.disarmLasso()
+        this.reflectArmed(this.uiManager.modeStore.getMode())
     }
 
     protected onDestroy() {
