@@ -501,6 +501,11 @@ export class GraphSvgRenderer extends GraphRenderer {
 
         if (!zoomBehavior || !svgEl || !zoomLayerEl) return
 
+        // d3-zoom resolves the SVG's relative 100% width/height against its
+        // viewport; a detached or unrendered (0-size) SVG throws "Could not
+        // resolve relative length". Bail before touching the zoom behaviour.
+        if (!svgEl.isConnected || svgEl.clientWidth === 0 || svgEl.clientHeight === 0) return
+
         const bounds = zoomLayerEl.getBBox()
         if (bounds.width == 0 || bounds.height == 0) return
 
