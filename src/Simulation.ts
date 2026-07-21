@@ -37,6 +37,7 @@ export const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
     d3ManyBodyStrength: -150,
     d3ManyBodyTheta: 0.9,
     d3CollideRadius: 12,
+    d3CollideRadiusMultiplier: 1.2,
     d3CollideStrength: 1,
     d3CollideIterations: 1,
     d3GravityStrength: 0.1,
@@ -60,6 +61,40 @@ export const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
         onStop: () => {},
         onTick: () => {},
     },
+}
+
+/**
+ * The four abstract physics knobs surfaced by the View flyout. Each is a plain
+ * number in its own {@link PHYSICS_KNOB_RANGES | range}; the {@link Simulation}
+ * setters map them onto the underlying d3-force domains.
+ */
+export interface PhysicsKnobs {
+    /** Push-apart force. Higher spreads the graph out. */
+    repulsion: number
+    /** Preferred edge length, in px. */
+    linkDistance: number
+    /** Node spacing (collision radius). Higher keeps nodes further apart. */
+    collisionRadius: number
+    /** Motion damping. Higher settles the layout faster (calmer). */
+    friction: number
+}
+
+/** Inclusive `[min, max]` slider range for each {@link PhysicsKnobs} value. */
+export const PHYSICS_KNOB_RANGES: Record<keyof PhysicsKnobs, readonly [number, number]> = {
+    repulsion: [0, 100],
+    linkDistance: [40, 260],
+    collisionRadius: [4, 60],
+    friction: [0, 100],
+}
+
+/** Named physics presets. `default` is an alias of `loose` (see PRD D6). */
+export type PhysicsPresetName = 'tight' | 'loose' | 'default'
+
+/** Knob bundles applied by {@link Simulation.applyPhysicsPreset}. */
+export const PHYSICS_PRESETS: Record<PhysicsPresetName, PhysicsKnobs> = {
+    tight: { repulsion: 32, linkDistance: 70, collisionRadius: 16, friction: 58 },
+    loose: { repulsion: 70, linkDistance: 150, collisionRadius: 26, friction: 28 },
+    default: { repulsion: 70, linkDistance: 150, collisionRadius: 26, friction: 28 },
 }
 
 interface dragSelectionNode {
@@ -96,10 +131,20 @@ export class Simulation {
         d3CollideStrength: DEFAULT_SIMULATION_OPTIONS.d3CollideStrength,
     }
 
+    /** Current abstract physics-knob values (what the View flyout renders). */
+    private physicsKnobs: PhysicsKnobs
+
+    // d3-force domains each knob maps onto; the knob's own range is in PHYSICS_KNOB_RANGES.
+    private static readonly REPULSION_STRENGTH_RANGE = [0, -400] as const   // repulsion 0..100 (more negative = stronger)
+    private static readonly LINK_DISTANCE_RANGE = [40, 260] as const        // linkDistance 40..260 (identity, px)
+    private static readonly COLLIDE_MULTIPLIER_RANGE = [0.6, 2.4] as const  // collisionRadius 4..60
+    private static readonly FRICTION_DECAY_RANGE = [0, 1] as const          // friction 0..100 → velocityDecay
+
     constructor(graph: Graph, options: Partial<SimulationOptions> = {}) {
         this.graph = graph
         this.options = merge({}, DEFAULT_SIMULATION_OPTIONS, options)
         this.callbacks = this.options.callbacks ?? {}
+        this.physicsKnobs = Simulation.knobsFromOptions(this.options)
 
         this.canvas = this.graph.renderer.getCanvas()
         if (!this.canvas) throw new Error('Canvas element is not defined in the graph renderer.')
@@ -230,14 +275,16 @@ export class Simulation {
     }
 
     private static initSimulationForceCollide(force: d3ForceCollideType<Node>, options: SimulationOptions) {
+        // The collision radius is the node's circle radius scaled by d3CollideRadiusMultiplier
+        // (the "collision radius" knob). Previously this multiplier was hard-coded to 1.2, so
+        // the knob only reached radius-less nodes via d3CollideRadius and never scaled the layout.
+        const mult = options.d3CollideRadiusMultiplier
         force.radius((node: SimulationNodeDatum) => {
             const n = node as Node
             if (n.expanded) {
-                return 1.2 * n.getCircleRadius() + 20
+                return mult * n.getCircleRadius() + 20
             }
-            // console.log(n.getCircleRadius() ? 1.2 * n.getCircleRadius() : options.d3CollideRadius);
-            
-            return n.getCircleRadius() ? 1.2 * n.getCircleRadius() : options.d3CollideRadius
+            return n.getCircleRadius() ? mult * n.getCircleRadius() : options.d3CollideRadius
         })
             .strength(options.d3CollideStrength)
     }
@@ -624,6 +671,100 @@ export class Simulation {
         const visibleNodes = this.graph.getMutableNodes().filter(node => node.visible)
         this.simulation.nodes(visibleNodes) // re-initialises every force → re-reads node radii
         this.reheat(alpha)
+    }
+
+    // ─── Physics knobs (View flyout) ────────────────────────────────────────────
+    // Each setter takes an abstract knob value (range in PHYSICS_KNOB_RANGES), maps
+    // it onto a d3-force domain, re-initialises the affected force so d3 re-reads its
+    // cached per-node array, then reheats. Reheat is skipped while physics is disabled;
+    // the value is still stored so it takes effect once physics is re-enabled.
+
+    /** Push-apart strength. Knob 0–100 → d3ManyBodyStrength. */
+    public setRepulsion(knob: number): void {
+        const v = Simulation.clamp(knob, PHYSICS_KNOB_RANGES.repulsion)
+        this.physicsKnobs.repulsion = v
+        this.options.d3ManyBodyStrength = Simulation.mapLinear(v, PHYSICS_KNOB_RANGES.repulsion, Simulation.REPULSION_STRENGTH_RANGE)
+        this.scaledForces.d3ManyBodyStrength = this.options.d3ManyBodyStrength
+        Simulation.initSimulationForceCharge(this.simulationForces.charge, this.options)
+        this.reheatIfEnabled()
+    }
+
+    /** Preferred edge length. Knob 40–260 (px) → d3LinkDistance. */
+    public setLinkDistance(knob: number): void {
+        const v = Simulation.clamp(knob, PHYSICS_KNOB_RANGES.linkDistance)
+        this.physicsKnobs.linkDistance = v
+        this.options.d3LinkDistance = Simulation.mapLinear(v, PHYSICS_KNOB_RANGES.linkDistance, Simulation.LINK_DISTANCE_RANGE)
+        Simulation.initSimulationForceLink(this.simulationForces.link, this.options)
+        this.reheatIfEnabled()
+    }
+
+    /** Node spacing. Knob 4–60 → d3CollideRadiusMultiplier (scales each node's collision radius). */
+    public setCollisionRadius(knob: number): void {
+        const v = Simulation.clamp(knob, PHYSICS_KNOB_RANGES.collisionRadius)
+        this.physicsKnobs.collisionRadius = v
+        this.options.d3CollideRadiusMultiplier = Simulation.mapLinear(v, PHYSICS_KNOB_RANGES.collisionRadius, Simulation.COLLIDE_MULTIPLIER_RANGE)
+        Simulation.initSimulationForceCollide(this.simulationForces.collide, this.options)
+        this.reheatIfEnabled()
+    }
+
+    /** Motion damping. Knob 0–100 → d3VelocityDecay (÷100). Applied live each tick — no reheat. */
+    public setFriction(knob: number): void {
+        const v = Simulation.clamp(knob, PHYSICS_KNOB_RANGES.friction)
+        this.physicsKnobs.friction = v
+        this.options.d3VelocityDecay = Simulation.mapLinear(v, PHYSICS_KNOB_RANGES.friction, Simulation.FRICTION_DECAY_RANGE)
+        this.simulation.velocityDecay(this.options.d3VelocityDecay)
+    }
+
+    /** Apply a named preset ({@link PHYSICS_PRESETS}): sets all four knobs and reheats once. */
+    public applyPhysicsPreset(name: PhysicsPresetName): void {
+        const preset = PHYSICS_PRESETS[name]
+        this.physicsKnobs = { ...preset }
+        this.options.d3ManyBodyStrength = Simulation.mapLinear(preset.repulsion, PHYSICS_KNOB_RANGES.repulsion, Simulation.REPULSION_STRENGTH_RANGE)
+        this.scaledForces.d3ManyBodyStrength = this.options.d3ManyBodyStrength
+        this.options.d3LinkDistance = Simulation.mapLinear(preset.linkDistance, PHYSICS_KNOB_RANGES.linkDistance, Simulation.LINK_DISTANCE_RANGE)
+        this.options.d3CollideRadiusMultiplier = Simulation.mapLinear(preset.collisionRadius, PHYSICS_KNOB_RANGES.collisionRadius, Simulation.COLLIDE_MULTIPLIER_RANGE)
+        this.options.d3VelocityDecay = Simulation.mapLinear(preset.friction, PHYSICS_KNOB_RANGES.friction, Simulation.FRICTION_DECAY_RANGE)
+
+        Simulation.initSimulationForceCharge(this.simulationForces.charge, this.options)
+        Simulation.initSimulationForceLink(this.simulationForces.link, this.options)
+        Simulation.initSimulationForceCollide(this.simulationForces.collide, this.options)
+        this.simulation.velocityDecay(this.options.d3VelocityDecay)
+        this.reheatIfEnabled()
+    }
+
+    /** Current knob values, for seeding the View-flyout sliders. */
+    public getPhysicsKnobs(): PhysicsKnobs {
+        return { ...this.physicsKnobs }
+    }
+
+    /** The active layout type — the View flyout greys out physics under non-`force` layouts. */
+    public getLayoutType(): LayoutType {
+        return this.options.layout.type
+    }
+
+    private reheatIfEnabled(alpha = 0.5): void {
+        if (this.options.enabled) this.reheat(alpha)
+    }
+
+    private static clamp(value: number, [lo, hi]: readonly [number, number]): number {
+        return Math.max(lo, Math.min(hi, value))
+    }
+
+    private static mapLinear(value: number, from: readonly [number, number], to: readonly [number, number]): number {
+        const t = (value - from[0]) / (from[1] - from[0])
+        return to[0] + t * (to[1] - to[0])
+    }
+
+    /** Recover the abstract knob values from a set of d3-force options (inverse of the setters). */
+    private static knobsFromOptions(options: SimulationOptions): PhysicsKnobs {
+        const knob = (value: number, from: readonly [number, number], key: keyof PhysicsKnobs) =>
+            Math.round(Simulation.clamp(Simulation.mapLinear(value, from, PHYSICS_KNOB_RANGES[key]), PHYSICS_KNOB_RANGES[key]))
+        return {
+            repulsion: knob(options.d3ManyBodyStrength, Simulation.REPULSION_STRENGTH_RANGE, 'repulsion'),
+            linkDistance: knob(options.d3LinkDistance, Simulation.LINK_DISTANCE_RANGE, 'linkDistance'),
+            collisionRadius: knob(options.d3CollideRadiusMultiplier, Simulation.COLLIDE_MULTIPLIER_RANGE, 'collisionRadius'),
+            friction: knob(options.d3VelocityDecay, Simulation.FRICTION_DECAY_RANGE, 'friction'),
+        }
     }
 
     /**

@@ -13,7 +13,8 @@ import type * as SimulationOptions from './interfaces/SimulationOptions'
 import type * as GraphInteractionsI from './interfaces/GraphInteractions'
 import * as GraphInteractions from './GraphInteractions'
 import type { GraphRenderer, AbstractSelectionBox } from './GraphRenderer'
-import type { Simulation } from './Simulation'
+import type { Simulation, PhysicsKnobs, PhysicsPresetName } from './Simulation'
+import { PHYSICS_KNOB_RANGES, PHYSICS_PRESETS } from './Simulation'
 import type { Notifier, NotificationLevel } from './ui/Notifier'
 import type { TreeLayoutAlgorithm } from './plugins/layout/Tree'
 import { defaultNodeStyle, defaultEdgeStyle, defaultLabelStyle, defaultMarkerStyleMap } from './styles/defaults'
@@ -36,6 +37,8 @@ export type {
     AbstractSelectionBox,
     GraphRenderer,
     Simulation,
+    PhysicsKnobs,
+    PhysicsPresetName,
     TreeLayoutAlgorithm,
     Notifier,
     NotificationLevel,
@@ -55,5 +58,7 @@ export {
     defaultLabelStyle as defaultLabelStyleValue,
     GraphInteractions,
     defaultMarkerStyleMap,
+    PHYSICS_KNOB_RANGES,
+    PHYSICS_PRESETS,
     Pivotick
 }
