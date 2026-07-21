@@ -20,6 +20,7 @@ import { Note } from '../Note'
 import { UIComponent, type UIPhase } from './UIComponent'
 import { ModeStore, isB3ChromeEnabled } from './ModeStore'
 import { ModeRail } from './elements/ModeRail/ModeRail'
+import { ToolPanel } from './elements/ToolPanel/ToolPanel'
 import type { PivotickPlugin, PluginContext } from '../interfaces/Plugin'
 
 
@@ -178,6 +179,11 @@ const UI_ELEMENTS: UIElementSpec[] = [
         make: ui => new ModeRail(ui), slot: ui => ui.layout?.moderail
     },
     {
+        key: 'toolPanel', modes: ['full', 'light'],
+        enabled: o => isB3ChromeEnabled(o),
+        make: ui => new ToolPanel(ui), slot: ui => ui.layout?.toolpanel
+    },
+    {
         key: 'mainHeader', modes: ['full', 'light'],
         make: ui => new Mainheader(ui), slot: ui => ui.layout?.mainheader
     },
@@ -242,6 +248,7 @@ export class UIManager {
     public get graphControls(): GraphControls | undefined { return this.byKey.get('graphControls') as GraphControls | undefined }
     public get graphToolbar(): GraphToolbar | undefined { return this.byKey.get('graphToolbar') as GraphToolbar | undefined }
     public get modeRail(): ModeRail | undefined { return this.byKey.get('modeRail') as ModeRail | undefined }
+    public get toolPanel(): ToolPanel | undefined { return this.byKey.get('toolPanel') as ToolPanel | undefined }
     public get tooltip(): Tooltip | undefined { return this.byKey.get('tooltip') as Tooltip | undefined }
     public get contextMenu(): ContextMenu | undefined { return this.byKey.get('contextMenu') as ContextMenu | undefined }
 

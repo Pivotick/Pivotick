@@ -1,0 +1,95 @@
+// B3 contextual tool panel — anchored just right of the mode rail.
+.pvt-toolpanel {
+    position: absolute;
+    top: 14px;
+    left: 84px;
+    z-index: 6;
+    width: 216px;
+    max-height: calc(100% - 28px);
+    overflow-y: auto;
+}
+
+.pvt-toolpanel-panel {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    border-radius: 14px;
+    background-color: var(--pvt-bg-color-1);
+    border: 1px solid var(--pvt-border-color);
+    box-shadow: var(--pvt-box-shadow-strong);
+}
+
+.pvt-toolpanel-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 4px 10px;
+    font-weight: 600;
+    color: var(--pvt-text-color-6);
+
+    .pvt-toolpanel-icon svg {
+        color: var(--pvt-theme-primary);
+    }
+}
+
+.pvt-toolpanel-tool {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    height: 36px;
+    padding: 0 9px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--pvt-text-color-5);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    text-align: left;
+    transition: background-color 0.12s ease, color 0.12s ease;
+
+    .pvt-toolpanel-tool-label {
+        flex: 1;
+    }
+
+    &:hover:not(:disabled) {
+        background-color: var(--pvt-bg-color-3);
+        color: var(--pvt-text-color-6);
+    }
+
+    &.active {
+        color: var(--pvt-theme-primary);
+        background-color: color-mix(in srgb, var(--pvt-theme-primary) 16%, transparent);
+    }
+}
+
+.pvt-toolpanel-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    line-height: 0;
+    flex: none;
+
+    svg {
+        width: 18px;
+        height: 18px;
+    }
+}
+
+.pvt-toolpanel-soon {
+    opacity: 0.55;
+    cursor: not-allowed;
+
+    .pvt-toolpanel-badge {
+        margin-left: auto;
+        padding: 0 5px;
+        border-radius: 5px;
+        font-size: 8px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        color: var(--pvt-text-color-5);
+        background-color: var(--pvt-bg-color-3);
+    }
+}
