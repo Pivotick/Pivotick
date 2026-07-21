@@ -3,6 +3,9 @@
 // Body-appended, caret-anchored suggestion list (see ui/components/Typeahead.ts).
 // Position (left/top/fixed) is set inline; everything visual lives here.
 .pvt-typeahead {
+    // Portaled to <body>, outside `.pivotick`, so it must set the app font explicitly
+    // rather than inherit it (same reason as the scrollbar theme in _scrollbars.scss).
+    font-family: var(--pvt-font-family);
     z-index: 9999;
     min-width: 160px;
     max-width: 320px;

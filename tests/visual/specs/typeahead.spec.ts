@@ -58,6 +58,10 @@ test.describe('typeahead — [[node]] autocomplete in notes', () => {
         )
         expect(scrollbarWidth).toBe('thin')
 
+        // ...and the app font (`--pvt-font-family`), not the body's default serif.
+        const fontFamily = await menu(page).evaluate((el) => getComputedStyle(el).fontFamily)
+        expect(fontFamily).toContain('system-ui')
+
         // Narrowing to `med` leaves only MEDIUM, shown with its node preview.
         await page.keyboard.type('med')
         await expect(rows(page)).toHaveCount(1)
