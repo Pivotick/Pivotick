@@ -305,13 +305,14 @@ dl.pvt-property-list {
     }
 }
 
+// Focus-mode dimming: opacity only. A CSS `filter` here is resolution-dependent
+// and re-rasterizes every dimmed element on each zoom/pan/drag frame, so with
+// many nodes selecting one made the whole canvas lag.
 .pvt-node-selected-highlight-shadow > * {
-    filter: grayscale(0.5);
     opacity: 0.5;
 }
 
 .pvt-edge-selected-highlight-shadow > * {
-    filter: grayscale(0.5);
     opacity: 0.5;
 }
 
