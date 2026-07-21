@@ -18,7 +18,8 @@ import { GraphToolbar } from './elements/GraphToolbar/GraphToolbar'
 import { createInspectModal } from './elements/modals/InspectNodeModal/InspectNodeModal'
 import { Note } from '../Note'
 import { UIComponent, type UIPhase } from './UIComponent'
-import { ModeStore } from './ModeStore'
+import { ModeStore, isB3ChromeEnabled } from './ModeStore'
+import { ModeRail } from './elements/ModeRail/ModeRail'
 import type { PivotickPlugin, PluginContext } from '../interfaces/Plugin'
 
 
@@ -160,12 +161,21 @@ const UI_ELEMENTS: UIElementSpec[] = [
         make: ui => new ContextMenu(ui), slot: ui => ui.layout?.canvas
     },
     {
+        // Classic left controls — replaced by the B3 mode rail + View flyout.
         key: 'graphControls', modes: ['full', 'light'],
+        enabled: o => !isB3ChromeEnabled(o),
         make: ui => new GraphControls(ui), slot: ui => ui.layout?.graphcontrols
     },
     {
+        // Classic top toolbar — replaced by the B3 mode rail + contextual panels.
         key: 'graphToolbar', modes: ['full', 'light'],
+        enabled: o => !isB3ChromeEnabled(o),
         make: ui => new GraphToolbar(ui), slot: ui => ui.layout?.graphtoolbar
+    },
+    {
+        key: 'modeRail', modes: ['full', 'light'],
+        enabled: o => isB3ChromeEnabled(o),
+        make: ui => new ModeRail(ui), slot: ui => ui.layout?.moderail
     },
     {
         key: 'mainHeader', modes: ['full', 'light'],
@@ -231,6 +241,7 @@ export class UIManager {
     public get graphNaviation(): GraphNavigation | undefined { return this.byKey.get('navigation') as GraphNavigation | undefined }
     public get graphControls(): GraphControls | undefined { return this.byKey.get('graphControls') as GraphControls | undefined }
     public get graphToolbar(): GraphToolbar | undefined { return this.byKey.get('graphToolbar') as GraphToolbar | undefined }
+    public get modeRail(): ModeRail | undefined { return this.byKey.get('modeRail') as ModeRail | undefined }
     public get tooltip(): Tooltip | undefined { return this.byKey.get('tooltip') as Tooltip | undefined }
     public get contextMenu(): ContextMenu | undefined { return this.byKey.get('contextMenu') as ContextMenu | undefined }
 

@@ -1,4 +1,5 @@
 import { UIComponent } from '../UIComponent'
+import { isB3ChromeEnabled } from '../ModeStore'
 
 export class Layout extends UIComponent {
     public layout?: HTMLDivElement
@@ -11,6 +12,9 @@ export class Layout extends UIComponent {
     public graphnavigation?: HTMLDivElement
     public graphcontrols?: HTMLDivElement
     public graphtoolbar?: HTMLDivElement
+    /** B3 mode rail + contextual tool panel slots (only when experimentalB3Chrome is on). */
+    public moderail?: HTMLDivElement
+    public toolpanel?: HTMLDivElement
 
     protected onMount(container?: HTMLElement) {
         if (!container) return
@@ -59,6 +63,19 @@ export class Layout extends UIComponent {
             this.graphtoolbar = document.createElement('div')
             this.graphtoolbar.className = 'pvt-graphtoolbar'
             this.canvas.appendChild(this.graphtoolbar)
+        }
+
+        // B3 chrome slots: the mode rail and its contextual panel overlay the
+        // canvas (left edge). Only created when the experimental flag is on so the
+        // classic-chrome layout — and its visual baselines — stay untouched.
+        if ((mode === 'full' || mode === 'light') && isB3ChromeEnabled(this.uiManager.getOptions())) {
+            this.moderail = document.createElement('div')
+            this.moderail.className = 'pvt-moderail'
+            this.canvas.appendChild(this.moderail)
+
+            this.toolpanel = document.createElement('div')
+            this.toolpanel.className = 'pvt-toolpanel'
+            this.canvas.appendChild(this.toolpanel)
         }
 
         container.appendChild(this.layout)

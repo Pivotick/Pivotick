@@ -110,3 +110,9 @@ export const contrast = '<svg xmlns="http://www.w3.org/2000/svg" width="1em" hei
 
 // A crossed-out picture, for the "image unavailable" fallback when a src fails to load.
 export const imageOff = '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="2" x2="22" y2="22"/><path d="M10.41 10.41a2 2 0 1 1-2.83-2.83"/><line x1="13.5" y1="13.5" x2="6" y2="21"/><line x1="18" y1="12" x2="21" y2="15"/><path d="M3.59 3.59A1.99 1.99 0 0 0 3 5v14a2 2 0 0 0 2 2h14c.55 0 1.05-.22 1.41-.59"/><path d="M21 15V5a2 2 0 0 0-2-2H9"/></svg>'
+
+// ── B3 mode-rail glyphs ──────────────────────────────────────────────────────
+// Pointer arrow — the Select mode + Pointer tool.
+export const cursor = '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87c.45 0 .67-.54.35-.85L6.35 2.85a.5.5 0 0 0-.85.36z"/></svg>'
+// Sparkles — the Enrich (data-augmentation) mode, shown disabled "SOON" for now.
+export const sparkles = '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2l2.09 5.91L20 10l-5.91 2.09L12 18l-2.09-5.91L4 10l5.91-2.09z"/><path fill="currentColor" d="M18 14l.94 2.56L21.5 17.5l-2.56.94L18 21l-.94-2.56L14.5 17.5l2.56-.94z"/></svg>'
