@@ -1,6 +1,7 @@
 
 import { arrowDown, arrowEnter, arrowUp, magnifyingGlass } from '../../icons'
-import type { UIElement, UIManager } from '../../UIManager'
+import type { UIManager } from '../../UIManager'
+import { UIComponent } from '../../UIComponent'
 import type { Node } from '../../../Node'
 import './searchbox.scss'
 import { nodeNameGetter } from '../../../utils/GraphGetters'
@@ -11,8 +12,7 @@ interface Match {
     value: string,
 }
 
-export class SearchBox implements UIElement {
-    private uiManager: UIManager
+export class SearchBox extends UIComponent {
     private title?: string | HTMLElement
 
     public searchBox?: HTMLDivElement
@@ -25,11 +25,11 @@ export class SearchBox implements UIElement {
     private MAX_RESULT_COUNT = 12
 
     constructor(uiManager: UIManager, title?: string | HTMLElement) {
-        this.uiManager = uiManager
+        super(uiManager)
         this.title = title
     }
 
-    mount(container: HTMLElement | undefined) {
+    protected onMount(container: HTMLElement | undefined) {
         if (!container) return
 
         this.searchBox = this.build()
@@ -118,15 +118,15 @@ export class SearchBox implements UIElement {
         return this.searchBox
     }
 
-    destroy() {
+    protected onDestroy() {
         this.searchBox?.remove()
         this.searchBox = undefined
     }
 
-    afterMount() {
+    protected onAfterMount() {
     }
 
-    graphReady(): void { }
+    protected onGraphReady(): void { }
 
     private buildResult(result: [Node, Match]): HTMLDivElement {
         const fixedPreviewSize = 30

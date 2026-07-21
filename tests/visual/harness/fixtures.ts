@@ -26,6 +26,7 @@ export interface RawNote {
     height?: number
     content?: string
     color?: string
+    surface?: 'jewel' | 'terminal'
     attachedElement?: { type: 'node' | 'edge'; id: string }
 }
 
@@ -201,6 +202,61 @@ export const fixtures = {
         const a = mkNode('a', -160, 0, { label: 'Source' })
         const b = mkNode('b', 160, 0, { label: 'Target' })
         return { nodes: [a, b], edges: [], notes: [] }
+    },
+
+    /**
+     * A single rich node for the single-selection PROPERTIES panel: a long id,
+     * a plain string `label`/`text`, a nested `style` **object** (rendered as a
+     * JSON block) and a `url` (rendered as a link) — one value per renderer.
+     */
+    nodePanel(): BuiltFixture {
+        const domain = mkNode(
+            'domain::torsiqlecptj74i5rksxunffxb3it5pitd5lbyemvadmzrxeih7vjuad.onion',
+            0,
+            0,
+            {
+                label: 'torsiqlecptj74i5rksxunffxb3it5pitd5lbyemvadmzrxeih7vjuad.onion',
+                text: 'torsiqlecptj74i5rksxunffxb3it5pitd5lbyemvadmzrxeih7vjuad.onion',
+                style: {
+                    color: '#3DA760',
+                    icon_class: 'fas',
+                    node_color: '#3DA760',
+                    node_radius: 5,
+                    radius: 5,
+                    stroke: '#ffffff',
+                    stroke_width: 1.5,
+                },
+                url: '/crawlers/showDomain?domain=torsiqlecptj74i5rksxunffxb3it5pitd5lbyemvadmzrxeih7vjuad.onion',
+            }
+        )
+        const eve = mkNode('Eve', 180, -60, { label: 'Eve' })
+        const frank = mkNode('Frank', 180, 60, { label: 'Frank' })
+        const diana = mkNode('Diana', 0, 170, { label: 'Diana' })
+        const edges = [
+            new Edge('d-eve', domain, eve),
+            new Edge('d-frank', domain, frank),
+            new Edge('d-diana', domain, diana),
+        ]
+        return { nodes: [domain, eve, frank, diana], edges, notes: [] }
+    },
+
+    /**
+     * Nodes whose titles exercise the header's long-title handling:
+     *  - `short`  fits at the full 16px,
+     *  - `mid`    auto-fits by shrinking the font,
+     *  - `onion`  a long identifier (no spaces),
+     *  - `hugeId` an identifier too long to fit → monospace middle-ellipsis + copy,
+     *  - `prose`  a sentence too long to fit → clean two-line clamp.
+     */
+    longTitles(): BuiltFixture {
+        const short = mkNode('short', -200, 0, { label: 'Web Frontend' })
+        const mid = mkNode('mid', 0, -140, { label: 'Administration Console Dashboard — Service Instance 04' })
+        const onion = mkNode('onion', 0, 0, { label: 'torsiqlecptj74i5rksxunffxb3it5pitd5lbyemvadmzrxeih7vjuad.onion' })
+        const hugeId = mkNode('hugeId', 0, 140, { label: 'a3f9c1e8b7d64f20'.repeat(8) })
+        const prose = mkNode('prose', 200, 0, {
+            label: 'This is an unusually long human-readable node title that runs well past what the header can show in two lines even at the smallest font size',
+        })
+        return { nodes: [short, mid, onion, hugeId, prose], edges: [], notes: [] }
     },
 
     /** The basic graph plus a free-floating Markdown note. */
@@ -534,6 +590,62 @@ export const fixtures = {
      * matches a `{ min, max }` range filter (the query engine only checks `typeof
      * === 'number'`) and renders harmlessly as a categorical option in the form.
      */
+    /**
+     * Six nodes carrying a mix of attributes that exercise all three facet
+     * kinds in the multi-selection sidebar: `group` is shared by every node,
+     * `gender`/`is_active` split into small distributions, and `label` is
+     * unique per node. Booleans are stored as strings so the falsy-skip in
+     * `nodePropertiesGetter` keeps every node's value visible.
+     */
+    facetSample(): BuiltFixture {
+        const person = (
+            id: string, x: number, y: number,
+            label: string, gender: string, isActive: string
+        ) => mkNode(id, x, y, { label, group: 'C', gender, is_active: isActive })
+        const nodes = [
+            person('C1', -150, -90, 'Mallory', 'female', 'true'),
+            person('C2', 150, -90, 'Niaj', 'male', 'true'),
+            person('C3', -150, 0, 'Olivia', 'female', 'true'),
+            person('C4', 150, 0, 'Peggy', 'female', 'true'),
+            person('C5', -150, 90, 'Quentin', 'male', 'false'),
+            person('C6', 150, 90, 'Ruth', 'female', 'true'),
+        ]
+        return { nodes, edges: [], notes: [] }
+    },
+
+    /**
+     * A hub node ("API Gateway") wired to a mix of neighbours — used for the
+     * Neighbors sidebar: the "List" tab (directions, previews, label chips,
+     * long-name truncation) and the "Stats" tab facet (repeated edge labels
+     * `requests`×3 / `queries`×2, plus an unlabeled edge, give a clickable
+     * distribution). Directions are mixed: the hub calls its services (out) and
+     * is called by its clients (in).
+     */
+    neighbors(): BuiltFixture {
+        const hub = mkNode('hub', 0, 0, { label: 'API Gateway' })
+        const pg = mkNode('pg', 200, -120, { label: 'Postgres' })
+        const redis = mkNode('redis', 200, 0, { label: 'Redis' })
+        const auth = mkNode('auth', 200, 120, { label: 'Auth Service' })
+        const web = mkNode('web', -200, -120, { label: 'Web Frontend' })
+        const mobile = mkNode('mobile', -200, 0, { label: 'Mobile App' })
+        const admin = mkNode('admin', -200, 120, { label: 'Administration Console Dashboard' })
+        const health = mkNode('health', 0, 180, { label: 'Health Probe' })
+
+        const edges = [
+            // Outgoing: the gateway calls its backing services.
+            mkEdge('hub-pg', hub, pg, { label: 'queries' }),
+            mkEdge('hub-redis', hub, redis, { label: 'queries' }),
+            mkEdge('hub-auth', hub, auth, { label: 'authenticates' }),
+            // Incoming: clients call the gateway.
+            mkEdge('web-hub', web, hub, { label: 'requests' }),
+            mkEdge('mobile-hub', mobile, hub, { label: 'requests' }),
+            mkEdge('admin-hub', admin, hub, { label: 'requests' }),
+            // An unlabeled connection stays quiet (no chip / not filterable).
+            mkEdge('health-hub', health, hub),
+        ]
+        return { nodes: [hub, pg, redis, auth, web, mobile, admin, health], edges, notes: [] }
+    },
+
     filterable(): BuiltFixture {
         const node = (id: string, x: number, y: number, type: string, ports: number) =>
             mkNode(id, x, y, { type, ports })

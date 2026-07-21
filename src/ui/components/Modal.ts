@@ -1,5 +1,6 @@
 import { createButton, type ButtonOptions } from './Button'
-import type { UIElement, UIManager } from '../UIManager'
+import type { UIManager } from '../UIManager'
+import { UIComponent } from '../UIComponent'
 import './../../styles/components/modal.scss'
 
 export interface ModalHTMLElement extends HTMLDivElement {
@@ -40,8 +41,7 @@ export interface ModalOptions extends Partial<ModalEvents> {
     noBodyPadding?: boolean
 }
 
-export class Modal implements UIElement {
-    private uiManager: UIManager
+export class Modal extends UIComponent {
     private options: ModalOptions
 
     private overlay: HTMLDivElement | undefined
@@ -61,7 +61,7 @@ export class Modal implements UIElement {
     } as ButtonOptions<[() => void]>
 
     constructor(uiManager: UIManager, options: ModalOptions) {
-        this.uiManager = uiManager
+        super(uiManager)
         this.options = options
 
         if (!this.options.header) {
@@ -79,7 +79,7 @@ export class Modal implements UIElement {
         this.options.position = options.position ?? 'center'
     }
 
-    public mount(rootContainer: HTMLElement | undefined) {
+    protected onMount(rootContainer: HTMLElement | undefined) {
         if (!rootContainer) return
 
         this.overlay = document.createElement('div')
@@ -143,14 +143,14 @@ export class Modal implements UIElement {
         rootContainer.appendChild(this.overlay)
     }
 
-    public destroy() {
+    protected onDestroy() {
         this.hide()
     }
 
-    public afterMount() {
+    protected onAfterMount() {
     }
 
-    public graphReady() {
+    protected onGraphReady() {
     }
 
     public setButtons(btnConfigs: ButtonOptions<[() => void]>[]): void {

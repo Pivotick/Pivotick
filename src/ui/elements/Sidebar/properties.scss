@@ -1,90 +1,448 @@
-.pvt-aggregated-property-section {
-    margin-bottom: 14px;
+// Faceted breakdown of aggregated node/edge properties (multi-selection) and
+// of neighbour stats. One "facet card" per property, classified as a single
+// shared value, a small distribution, or an all-unique list of chips.
+.pvt-facets {
+    display: flex;
+    flex-direction: column;
+}
 
-    .pvt-aggregated-property-title {
-        display: inline-block;
-        padding: 4px 8px;
-        text-align: left;
-        font-size: .9rem;
-        font-weight: 500;
-        color: var(--pvt-text-color-5);
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        text-transform: uppercase;
+.pvt-facet-card {
+    padding: 13px 4px;
+    border-bottom: 1px solid color-mix(in srgb, var(--pvt-text-color-3) 20%, transparent);
+
+    &:last-child {
+        border-bottom: none;
     }
 
-    .pvt-aggregated-property-container {
-        margin: 0 4px 4px 4px;
+    .pvt-facet-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 9px;
+
+        .pvt-facet-label {
+            font-family: monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+
+            .pvt-facet-label-dot {
+                color: var(--pvt-text-color-3);
+            }
+
+            .pvt-facet-label-name {
+                color: var(--pvt-text-color-5);
+            }
+        }
+
+        .pvt-facet-badge {
+            flex: none;
+            font-family: monospace;
+            font-size: 0.62rem;
+            line-height: 1;
+            padding: 3px 8px;
+            border-radius: 5px;
+            border: 1px solid transparent;
+            white-space: nowrap;
+
+            // Neutral (a handful of repeated values).
+            color: var(--pvt-text-color-3);
+            background: color-mix(in srgb, var(--pvt-text-color-3) 12%, transparent);
+            border-color: color-mix(in srgb, var(--pvt-text-color-3) 24%, transparent);
+
+            &.pvt-facet-badge--shared {
+                color: hsl(165 45% 52%);
+                background: hsl(165 45% 52% / 0.13);
+                border-color: hsl(165 45% 52% / 0.28);
+            }
+
+            &.pvt-facet-badge--unique {
+                color: hsl(38 58% 56%);
+                background: hsl(38 58% 56% / 0.12);
+                border-color: hsl(38 58% 56% / 0.26);
+            }
+        }
+    }
+
+    .pvt-facet-bar {
+        display: flex;
+        gap: 2px;
+        height: 10px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        overflow: hidden;
+
+        .pvt-facet-bar-seg {
+            height: 100%;
+            border-radius: 3px;
+            min-width: 2px;
+
+            &.pvt-facet-filterable {
+                cursor: pointer;
+                transition: filter 0.12s ease;
+
+                &:hover {
+                    filter: brightness(1.2);
+                }
+            }
+        }
+    }
+
+    .pvt-facet-rows {
         display: flex;
         flex-direction: column;
-        gap: 2px;
+        gap: 6px;
 
-        .pvt-aggregated-property-row {
+        .pvt-facet-row {
+            position: relative;
             display: flex;
-            flex-direction: row;
             align-items: center;
+            gap: 9px;
+            font-size: 0.82rem;
 
-            .pvt-aggregated-property-value {
-                flex-grow: 1;
+            .pvt-facet-dot {
+                flex: none;
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+            }
+
+            .pvt-facet-value {
                 font-family: monospace;
-                font-size: 0.8rem;
+                color: var(--pvt-text-color-5);
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
 
                 &.code-container {
+                    flex: 1 1 auto;
                     position: relative;
-                    margin-right: 8px;
-                    text-overflow: ellipsis;
-                    overflow: hidden;
+                    min-width: 0;
                     user-select: all;
+                }
 
-                    font-size: 0.875rem;
-                    font-weight: 400;
-                    color: var(--pvt-text-color-primary);
+                &.pvt-facet-value--empty {
+                    flex: 1 1 auto;
+                    color: var(--pvt-text-color-3);
+                    font-style: italic;
+                }
+            }
 
-                    .pvt-aggregated-property-actions {
-                        display: none;
-                        position: absolute;
-                        right: 4px;
-                        flex-direction: row;
-                        gap: 4px;
+            .pvt-facet-caption {
+                flex: 1 1 auto;
+                color: var(--pvt-text-color-3);
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
 
-                        button {
-                            border: none;
-                            background: none;
-                            padding: 0;
-                            cursor: pointer;
-                            font-size: 1rem;
-                            color: color-mix(in srgb, var(--pvt-text-color-5) 80%, white);
-                            transition: font-size 0.15s ease;
-                            max-height: 22px;
+            .pvt-facet-count {
+                margin-left: auto;
+                font-weight: 600;
+                color: var(--pvt-text-color-6);
+            }
 
-                            &:hover:not(:disabled),
-                            &:active:not(:disabled) {
-                                color: color-mix(in srgb, var(--pvt-text-color-5) 70%, black);
-                            }
-                        
-                            &:disabled {
-                                filter: brightness(2);
-                                cursor: not-allowed;
-                            }
-                        }
+            .pvt-facet-percent {
+                flex: none;
+                width: 34px;
+                text-align: right;
+                color: var(--pvt-text-color-3);
+            }
+
+            // "Keep only" / "Exclude" affordances — a cluster that fades in over
+            // the count/percent on row hover, on a clean gradient backdrop so it
+            // never collides with the value text.
+            .pvt-aggregated-property-actions {
+                display: none;
+                position: absolute;
+                inset: 0 0 0 auto;
+                align-items: center;
+                gap: 2px;
+                padding: 0 1px 0 26px;
+                background: linear-gradient(
+                    to right,
+                    transparent 0,
+                    var(--pvt-sidebar-panelbody-bg) 42%
+                );
+
+                button {
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 24px;
+                    height: 24px;
+                    padding: 0;
+                    border: none;
+                    border-radius: 7px;
+                    background: none;
+                    color: var(--pvt-text-color-3);
+                    cursor: pointer;
+                    transition: background 0.12s ease, color 0.12s ease;
+
+                    .pvt-icon {
+                        display: inline-flex;
+                    }
+
+                    svg {
+                        display: block;
+                        width: 15px;
+                        height: 15px;
+                    }
+
+                    &:hover:not(:disabled) {
+                        background: color-mix(in srgb, var(--pvt-text-color-3) 20%, transparent);
+                        color: var(--pvt-text-color-6);
+                    }
+
+                    &.pvt-facet-action-select:hover:not(:disabled) {
+                        background: color-mix(in srgb, hsl(210 65% 55%) 22%, transparent);
+                        color: hsl(210 72% 60%);
+                    }
+
+                    &.pvt-facet-action-exclude:hover:not(:disabled) {
+                        background: color-mix(in srgb, hsl(2 72% 55%) 22%, transparent);
+                        color: hsl(2 78% 64%);
+                    }
+
+                    &:disabled {
+                        opacity: 0.4;
+                        cursor: not-allowed;
                     }
                 }
+            }
 
-                &.code-container:hover .pvt-aggregated-property-actions {
-                    display: inline-flex;
+            &:hover .pvt-aggregated-property-actions {
+                display: flex;
+            }
+        }
+    }
+
+    // All-unique facet: a wrapped list of value chips.
+    .pvt-facet-caption--block {
+        color: var(--pvt-text-color-3);
+        font-size: 0.72rem;
+        margin-bottom: 9px;
+    }
+
+    .pvt-facet-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+
+        .pvt-facet-chip {
+            font-family: monospace;
+            font-size: 0.72rem;
+            color: var(--pvt-text-color-5);
+            background: color-mix(in srgb, var(--pvt-text-color-3) 12%, transparent);
+            border: 1px solid color-mix(in srgb, var(--pvt-text-color-3) 22%, transparent);
+            border-radius: 5px;
+            padding: 3px 8px;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+
+            &.pvt-facet-chip--more {
+                color: var(--pvt-text-color-3);
+                font-style: italic;
+            }
+
+            &.pvt-facet-filterable {
+                cursor: pointer;
+                user-select: none;
+                transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+
+                &:hover {
+                    color: var(--pvt-text-color-6);
+                    background: color-mix(in srgb, var(--pvt-text-color-3) 20%, transparent);
+                    border-color: color-mix(in srgb, var(--pvt-text-color-3) 40%, transparent);
+                }
+            }
+        }
+    }
+}
+
+// Single-selection PROPERTIES panel: one type-aware row per property, stacked
+// vertically so long values (ids, JSON blobs, URLs) get the full column width.
+.pvt-node-props {
+    display: flex;
+    flex-direction: column;
+
+    .pvt-node-props-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 2px;
+
+        .pvt-node-props-label {
+            font-family: monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.5px;
+
+            .pvt-node-props-label-dot {
+                color: var(--pvt-text-color-3);
+            }
+
+            .pvt-node-props-label-name {
+                color: var(--pvt-text-color-5);
+            }
+        }
+
+        .pvt-node-props-count {
+            font-family: monospace;
+            font-size: 0.62rem;
+            color: var(--pvt-text-color-3);
+        }
+    }
+
+    .pvt-prop {
+        // Grid areas let the same markup render two ways: a stacked card in the
+        // narrow sidebar (name+affordance over a full-width value) and a scannable
+        // name│value│affordance table in the roomy modal (see the --columns variant).
+        display: grid;
+        grid-template-columns: 1fr auto;
+        grid-template-areas:
+            "key affordance"
+            "value value";
+        align-items: center;
+        column-gap: 8px;
+        row-gap: 5px;
+        padding: 11px 0;
+        border-bottom: 1px solid color-mix(in srgb, var(--pvt-text-color-3) 18%, transparent);
+
+        &:last-child {
+            border-bottom: none;
+        }
+
+        .pvt-prop-key {
+            grid-area: key;
+            font-family: monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.3px;
+            color: var(--pvt-text-color-4);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .pvt-prop-affordance {
+            grid-area: affordance;
+            justify-self: end;
+        }
+
+        .pvt-prop-badge {
+            font-family: monospace;
+            font-size: 0.62rem;
+            color: var(--pvt-text-color-3);
+            white-space: nowrap;
+        }
+
+        .pvt-prop-copy {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--pvt-text-color-3);
+            cursor: pointer;
+            transition: color 0.12s ease;
+
+            svg {
+                display: block;
+                width: 12px;
+                height: 12px;
+            }
+
+            &:hover {
+                color: var(--pvt-text-color-6);
+            }
+
+            &.pvt-prop-copy--done {
+                color: var(--pvt-text-color-success);
+            }
+        }
+
+        .pvt-prop-value {
+            grid-area: value;
+            min-width: 0;
+            font-size: 0.8125rem;
+            line-height: 1.5;
+            // Scalar values are string literals, coloured like a JSON string
+            // (the artifact's coral hue). Links and the JSON block override below.
+            color: var(--pvt-json-string);
+            word-break: break-all;
+            user-select: text;
+
+            &.pvt-prop-value--mono {
+                font-family: monospace;
+                font-size: 0.8125rem;
+            }
+
+            &.pvt-prop-value--link {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                max-width: 100%;
+                color: var(--pvt-text-color-info);
+                text-decoration: none;
+                word-break: normal;
+
+                .pvt-prop-link-text {
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                    min-width: 0;
+                }
+
+                svg {
+                    flex: none;
+                    display: block;
+                    width: 12px;
+                    height: 12px;
+                }
+
+                &:hover {
+                    text-decoration: underline;
                 }
             }
 
-            .pvt-aggregated-property-count {
-                --pvt-inline-bar-width: 60px;
-            }
+            &.pvt-prop-value--json {
+                border: 1px solid var(--pvt-json-border);
+                border-radius: 8px;
+                background: var(--pvt-json-background);
+                overflow: hidden;
 
-            .pvt-aggregated-property-value-dim {
-                display: inline-block;
-                width: 100%;
-                color: var(--pvt-text-color-3);
-                font-style: italic;
-                text-align: start;
+                .pvt-prop-json {
+                    margin: 0;
+                    max-height: 160px;
+                    overflow: auto;
+                    padding: 9px 11px;
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+                    font-size: 0.72rem;
+                    line-height: 1.6;
+                    white-space: pre;
+                    color: var(--pvt-text-color-5);
+                }
             }
+        }
+    }
+
+    // Roomy two-column layout (the inspect modal): the name sits in a fixed
+    // left column so names scan straight down, with the value to its right and
+    // the copy/badge affordance trailing on the far right.
+    &.pvt-node-props--columns .pvt-prop {
+        grid-template-columns: minmax(110px, 200px) 1fr auto;
+        grid-template-areas: "key value affordance";
+        align-items: start;
+        column-gap: 16px;
+        row-gap: 0;
+
+        .pvt-prop-key {
+            padding-top: 1px;
         }
     }
 }

@@ -1,7 +1,8 @@
 import './noteSidebar.scss'
 import { createButton } from '../../components/Button'
 import { hide, show, stickyNote, trash } from '../../icons'
-import type { UIElement, UIManager } from '../../UIManager'
+import type { UIManager } from '../../UIManager'
+import { UIComponent } from '../../UIComponent'
 import type { NoteManager } from '../../../NoteManager'
 import { Note } from '../../../Note'
 import { createHtmlElement, createHtmlTemplate } from '../../../utils/ElementCreation'
@@ -9,9 +10,8 @@ import type { Graph } from '../../../Graph'
 import { renderMarkdownInline } from '../../../plugins/noteContentRenderers/markdown/markdown'
 import { resolveReferences } from '../../../plugins/noteContentRenderers/markdown/markdownResolvers'
 
-export class NoteSidebar implements UIElement {
+export class NoteSidebar extends UIComponent {
 
-    public uiManager: UIManager
     private graph: Graph
     private noteManager: NoteManager
 
@@ -20,12 +20,12 @@ export class NoteSidebar implements UIElement {
     private hiddenContainer: HTMLDivElement | null = null
 
     public constructor(uiManager: UIManager) {
-        this.uiManager = uiManager
+        super(uiManager)
         this.graph = this.uiManager.graph
         this.noteManager = this.graph.noteManager
     }
 
-    public mount(container: HTMLElement): void {
+    protected onMount(container: HTMLElement): void {
         if (!container) return
 
         this.build()
@@ -34,17 +34,17 @@ export class NoteSidebar implements UIElement {
         }
     }
 
-    public afterMount(): void {
+    protected onAfterMount(): void {
         this.bindEvents()
         requestAnimationFrame(() => {
             this.refresh()
         })
     }
 
-    public graphReady(): void {
+    protected onGraphReady(): void {
     }
 
-    public destroy(): void {
+    protected onDestroy(): void {
 
         if (!this.rootElement) return
 

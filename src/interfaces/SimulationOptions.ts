@@ -61,6 +61,11 @@ export interface SimulationOptions {
     gridSnappingEnabled: boolean
     /** @default 50 */
     gridSize: number
+    /**
+     * Automatically fit the graph to the viewport after a cluster is expanded or collapsed.
+     * @default false
+     */
+    fitViewOnExpandCollapse: boolean
 
     /** @default true */
     enabled: boolean

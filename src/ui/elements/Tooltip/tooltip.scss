@@ -54,7 +54,20 @@
         min-width: 200px;
         min-height: 100px;
         resize: auto;
-        overflow: hidden;
+        // Scroll vertically when content exceeds max-height (e.g. a tall JSON as the
+        // last item) — otherwise the overflow was clipped and unreachable.
+        overflow: hidden auto;
+
+        // The native resize grip draws light diagonal lines that ignore the theme
+        // (they read as white on the dark tooltip). Replace them with muted, theme-
+        // aware lines. Chromium/Safari only — Firefox uses its own OS-drawn grip.
+        &::-webkit-resizer {
+            background: repeating-linear-gradient(
+                -45deg,
+                transparent 0 3px,
+                color-mix(in srgb, var(--pvt-text-color-3) 50%, transparent) 3px 4px
+            );
+        }
 
         &::before {
             --oversize-container-size: 10px;
@@ -97,17 +110,17 @@
 
             .pvt-mainheader-nodeinfo {
                 flex-grow: 1;
+                // Allow the info block to shrink so the identifier copy button
+                // stays inside the tooltip instead of pushing past its edge.
+                min-width: 0;
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
                 font-family: 'Segoe UI', sans-serif;
 
+                // Same auto-fit title treatment as the sidebar main header.
                 .pvt-mainheader-nodeinfo-name {
-                    font-size: 16px;
-                    font-weight: 600;
-                    color: var(--pvt-text-color-6);
-                    user-select: all;
-                    white-space: wrap;
+                    @include pvt.entity-title-name;
                 }
 
                 .pvt-mainheader-nodeinfo-subtitle {
@@ -116,9 +129,17 @@
                     user-select: all;
                     white-space: wrap;
                 }
+            }
 
-                .pvt-mainheader-nodeinfo-action {
-                    flex-shrink: 1;
+            // Right-hand cell holding the identifier fallback's copy button;
+            // collapses when empty (the common, auto-fit case).
+            .pvt-mainheader-nodeinfo-action {
+                flex: none;
+                display: flex;
+                align-items: center;
+
+                &:empty {
+                    display: none;
                 }
             }
         }
@@ -142,14 +163,36 @@
 
         .pvt-properties-container {
             margin-bottom: 4px;
+            // Same type-aware PropertyList as the sidebar, but noticeably more
+            // compact (tooltips are transient): a smaller gutter and much tighter
+            // rows than the sidebar's roomy .pvt-properties-body-panel.
+            padding: 6px 12px;
 
-            dl.pvt-property-list {
-                background: var(--pvt-tooltip-property-list);
-                gap: 0px 12px;
+            // The tooltip root sets `white-space: nowrap`; the sidebar relies on the
+            // default `normal` for values to wrap. Keys / JSON / links keep their own
+            // white-space rules (they're more specific), so only the base needs this.
+            .pvt-node-props {
+                white-space: normal;
+            }
 
-                .pvt-property-row {
-                    padding: 0.2em;
-                }
+            .pvt-node-props-header {
+                margin-bottom: 0;
+            }
+
+            .pvt-prop {
+                padding: 4px 0;
+                row-gap: 1px;
+            }
+
+            .pvt-prop-value {
+                line-height: 1.35;
+            }
+
+            // Single scroll region: the tooltip container scrolls (see above), so
+            // the JSON block grows inline instead of nesting its own scrollbar.
+            .pvt-prop-value--json .pvt-prop-json {
+                max-height: none;
+                padding: 6px 9px;
             }
         }
 

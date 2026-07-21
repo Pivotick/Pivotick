@@ -1,5 +1,6 @@
 import type { Edge } from '../Edge'
 import type { NodeEditSession } from '../editing/NodeEditSession'
+import type { EdgeLabelPromptMode } from './InterractionCallbacks'
 import type { Node } from '../Node'
 import type { Note } from '../Note'
 import type { UIElement } from '../ui/UIManager'
@@ -87,9 +88,13 @@ export interface HeaderMapEntry<T extends Node | Edge> {
 
 /**
  * Represents a single property entry to display in the properties panel.
- * 
+ *
  * - `name` is the label or key of the property.
  * - `value` is the value associated to the key for the node or edge.
+ *
+ * A `string` (for either field) renders as plain text; to render HTML, pass an
+ * `HTMLElement` (or a function returning one). Since 1.4.0 string values are no
+ * longer parsed as markup — wrap HTML in an element instead.
  */
 export interface PropertyEntry {
     name: ((element: Node | Edge | null) => HTMLElement | string) | HTMLElement | string,
@@ -262,6 +267,16 @@ export interface Editors {
          * @default undefined
          */
         render?: (session: NodeEditSession) => void
+    }
+    edgeEditor?: {
+        /**
+         * When set, every interactive edge create prompts the end-user for a label
+         * (stored on the new edge's `data.label`) using the chosen UI — no callback
+         * needed. An `onBeforeEdgeCreate` hook, if present, takes over and this is
+         * ignored (the hook can prompt itself via `ctx.promptLabel`).
+         * @default undefined
+         */
+        labelPrompt?: EdgeLabelPromptMode
     }
 }
 

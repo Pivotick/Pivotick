@@ -1,42 +1,51 @@
 import { createHtmlTemplate } from '../../../utils/ElementCreation'
 import type { Node } from '../../../Node'
 import type { Edge } from '../../../Edge'
-import type { UIElement, UIManager } from '../../UIManager'
+import type { UIManager } from '../../UIManager'
+import { UIComponent } from '../../UIComponent'
 import './mainHeader.scss'
 import { edgeDescriptionGetter, edgeNameGetter, nodeDescriptionGetter, nodeNameGetter } from '../../../utils/GraphGetters'
 import { graphEdgeIcon, graphMultiSelectNode } from '../../icons'
 import type { EdgeSelection, NodeSelection } from '../../../interfaces/GraphInteractions'
 import { tryResolveHTMLElement } from '../../../utils/Getters'
 import { createNodePreview } from '../../../utils/NodePreview'
+import { TitleFitController } from './titleFit'
 
 
-export class SidebarMainHeader implements UIElement {
-    private uiManager: UIManager
+export class SidebarMainHeader extends UIComponent {
 
     private panel?: HTMLDivElement
     private renderCb?: ((element: Node | Edge | Node[] | Edge[] | null) => HTMLElement | string) | HTMLElement | string
 
+    // Re-fits the current title whenever the sidebar width changes.
+    private titleFit?: TitleFitController
+
     constructor(uiManager: UIManager) {
-        this.uiManager = uiManager
+        super(uiManager)
         this.renderCb = typeof this.uiManager.getOptions().mainHeader.render === 'function' ? this.uiManager.getOptions().mainHeader.render : undefined
     }
 
-    public mount(rootContainer: HTMLElement | undefined) {
+    protected onMount(rootContainer: HTMLElement | undefined) {
         if (!rootContainer) return
 
         this.panel = rootContainer as HTMLDivElement
+
+        // The title fit depends on the panel width; recompute it on resize
+        // (sidebar collapse/expand, responsive layout) rather than only on select.
+        this.titleFit = new TitleFitController(this.panel)
+        this.track(() => this.titleFit?.destroy())
     }
 
-    public destroy() {
+    protected onDestroy() {
         this.panel?.remove()
         this.panel = undefined
     }
 
-    public afterMount() {
+    protected onAfterMount() {
         this.clearOverview()
     }
 
-    public graphReady() {
+    protected onGraphReady() {
         this.clearOverview()
     }
 
@@ -52,6 +61,8 @@ export class SidebarMainHeader implements UIElement {
 
     public clearOverview(): void {
         if (!this.panel) return
+
+        this.titleFit?.clear()
 
         if (this.renderCb) {
             this.renderCustomContent(null)
@@ -87,11 +98,15 @@ export class SidebarMainHeader implements UIElement {
         const previewElem = mainheaderContent.querySelector('.pvt-mainheader-nodepreview')
         const nameElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-name')
         const subtitleElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-subtitle')
-        // const _actionElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-action')
+        const actionElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-action')
 
         previewElem?.appendChild(createNodePreview(element instanceof SVGGElement ? element : node, { size: fixedPreviewSize }))
         if (nameElem) {
-            nameElem.textContent = nodeNameGetter(node, this.uiManager.getOptions().mainHeader)
+            this.renderTitle(
+                nameElem as HTMLElement,
+                actionElem as HTMLElement | null,
+                nodeNameGetter(node, this.uiManager.getOptions().mainHeader)
+            )
         }
         if (subtitleElem) {
             const description = nodeDescriptionGetter(node, this.uiManager.getOptions().mainHeader)
@@ -128,10 +143,14 @@ export class SidebarMainHeader implements UIElement {
         const mainheaderContent = createHtmlTemplate(template) as HTMLDivElement
         const nameElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-name')
         const subtitleElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-subtitle')
-        // const actionElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-action')
+        const actionElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-action')
 
         if (nameElem) {
-            nameElem.textContent = edgeNameGetter(edge, this.uiManager.getOptions().mainHeader)
+            this.renderTitle(
+                nameElem as HTMLElement,
+                actionElem as HTMLElement | null,
+                edgeNameGetter(edge, this.uiManager.getOptions().mainHeader)
+            )
         }
         if (subtitleElem) {
             subtitleElem.textContent = edgeDescriptionGetter(edge, this.uiManager.getOptions().mainHeader)
@@ -146,6 +165,8 @@ export class SidebarMainHeader implements UIElement {
     /* Multi selection */
     public updateNodesOverview(nodes: NodeSelection<unknown>[]): void {
         if (!this.panel) return
+
+        this.titleFit?.clear()
 
         if (this.renderCb) {
             this.renderCustomContent(nodes.map((nodeS: NodeSelection<unknown>) => nodeS.node))
@@ -192,6 +213,8 @@ export class SidebarMainHeader implements UIElement {
     public updateEdgesOverview(edges: EdgeSelection<unknown>[]): void {
         if (!this.panel) return
 
+        this.titleFit?.clear()
+
         if (this.renderCb) {
             this.renderCustomContent(edges.map((nodeS: EdgeSelection<unknown>) => nodeS.edge))
             return
@@ -228,6 +251,22 @@ export class SidebarMainHeader implements UIElement {
         })
     }
 
+
+    /* Title rendering */
+
+    /**
+     * Render a (possibly long) entity title into the header name slot.
+     *
+     * Strategy: first try to **auto-fit** — shrink the font from 16px down to
+     * 12px so the whole title fits across up to two lines. If it still doesn't
+     * fit at the floor size, fall back to a **type-aware** treatment: prose
+     * titles get a clean two-line clamp with an ellipsis; identifier-like titles
+     * (ids, URLs, hashes) get a monospace, middle-elided form (`abc…xyz`, both
+     * ends kept) plus a copy button, since middle-elision replaces the text.
+     */
+    private renderTitle(nameElem: HTMLElement, actionElem: HTMLElement | null, text: string): void {
+        this.titleFit?.render(nameElem, actionElem, text)
+    }
 
     /* Private methods */
     private showTotalNodeCount(): void {

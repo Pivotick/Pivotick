@@ -1,0 +1,62 @@
+// Theme-aware scrollbars.
+//
+// Applied to the widget root (`.pivotick`) AND the tooltip (`.pvt-tooltip`),
+// which is portaled to <body> — outside `.pivotick` — so it would otherwise fall
+// back to the browser default. Scoped to these roots (not the whole document) so
+// the host page's own scrollbars are left untouched. The theme variables resolve
+// from `:root` as well as `.pivotick`, so the body-level tooltip gets the right
+// colours, and they track the ink colour so the scrollbar follows light/dark.
+//
+// Firefox (and the spec) use `scrollbar-width` / `scrollbar-color`; Chromium and
+// Safari use the `::-webkit-scrollbar` pseudo-elements. We set both.
+
+@mixin themed-scrollbars {
+    // Standard properties — inherited by every descendant.
+    scrollbar-width: thin;
+    scrollbar-color: var(--pvt-scrollbar-thumb) var(--pvt-scrollbar-track);
+
+    // WebKit / Blink pseudo-elements. Applies to the root and, via the descendant
+    // selector below, to any scrollable child.
+    &::-webkit-scrollbar,
+    *::-webkit-scrollbar {
+        width: var(--pvt-scrollbar-size);
+        height: var(--pvt-scrollbar-size);
+    }
+
+    &::-webkit-scrollbar-track,
+    *::-webkit-scrollbar-track {
+        background: var(--pvt-scrollbar-track);
+    }
+
+    &::-webkit-scrollbar-thumb,
+    *::-webkit-scrollbar-thumb {
+        background: var(--pvt-scrollbar-thumb);
+        border-radius: 999px;
+        // Inset the thumb with a transparent border so it reads as a slim pill
+        // with breathing room, rather than filling the whole gutter edge-to-edge.
+        border: 2px solid transparent;
+        background-clip: padding-box;
+    }
+
+    &::-webkit-scrollbar-thumb:hover,
+    *::-webkit-scrollbar-thumb:hover {
+        background: var(--pvt-scrollbar-thumb-hover);
+        background-clip: padding-box;
+    }
+
+    // Hide the little corner square where two scrollbars meet.
+    &::-webkit-scrollbar-corner,
+    *::-webkit-scrollbar-corner {
+        background: transparent;
+    }
+}
+
+.pivotick {
+    @include themed-scrollbars;
+}
+
+// The tooltip renders at <body> level (see Tooltip.ts), outside `.pivotick`, so
+// it needs the treatment applied directly rather than inherited by scope.
+.pvt-tooltip {
+    @include themed-scrollbars;
+}

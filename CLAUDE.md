@@ -15,9 +15,11 @@ npm run lint             # ESLint check (src/**/*.{ts,tsx})
 npm run lint_fix         # ESLint autofix
 npm run vitepress:dev    # Documentation dev server
 npm run docs:build       # TypeDoc (markdown) + VitePress build
+npm run test:visual      # Playwright visual-regression suite (tests/visual/)
 ```
 
-There is no test framework configured.
+The only tests are the Playwright visual-regression suite under `tests/visual/` (`npm run test:visual`, `:update` to
+refresh snapshots, `:ui`/`:headed`/`:report` for debugging). There is no unit-test framework.
 
 `npm run build` runs four steps in sequence (see `package.json`): `tsc` (type-check only) then three separate Vite library builds, each with its own config:
 - `vite.config.es.js` → `dist/pivotick.es.js` (ES module; D3 + lodash.merge left external)

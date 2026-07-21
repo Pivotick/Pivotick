@@ -10,6 +10,18 @@ import {
     expectCanvas,
     expectElement,
 } from '../helpers'
+import type { Page } from '@playwright/test'
+
+/** Read a note's persisted surface finish from the live graph model. */
+async function surfaceOf(page: Page, domID: string): Promise<string | undefined> {
+    return page.evaluate((id) => {
+        type NoteModel = { domID: string; surface: string }
+        const graph = (window.__pivotick as unknown as {
+            graph?: { noteManager: { getNotes(): NoteModel[] } }
+        }).graph
+        return graph?.noteManager.getNotes().find((n) => n.domID === id)?.surface
+    }, domID)
+}
 
 test.describe('notes', () => {
     test.beforeEach(async ({ page }) => {
@@ -41,14 +53,15 @@ test.describe('notes', () => {
             y: -40,
             width: 200,
             height: 110,
-            content: 'Drag me by the header.',
+            content: 'Drag me\n\nfrom anywhere on the card.',
         })
         await harness(page, 'fit')
         const note = noteEl(page, 'draggable')
         await note.waitFor({ state: 'visible' })
 
-        const header = note.locator('.pvt-note-header')
-        const start = await centerOf(header)
+        // There is no header band any more — the whole card body is the drag
+        // surface. Grab the centre (clear of the hover chrome / resize handle).
+        const start = await centerOf(note)
         await page.mouse.move(start.x, start.y)
         await page.mouse.down()
         await page.mouse.move(start.x + 180, start.y + 90, { steps: 8 })
@@ -274,5 +287,69 @@ test.describe('notes — content, colours & sizing', () => {
         await expect(note.locator('.pvt-note-resize-handle')).toBeVisible()
 
         await expectElement(note, 'note-empty.png')
+    })
+
+    // T9.7 — surfaces: the same picker colour as the default *jewel* card (solid,
+    // deep) and the opt-in *terminal* card (neutral panel, colour as a top-hairline
+    // + mono "›" prompt), side by side. Both notes sit above the pinned graph over
+    // empty grid so the crop is stable. The terminal note carries the
+    // `pvt-note--terminal` modifier that drives the console surface.
+    test('renders jewel and terminal note surfaces', async ({ page }) => {
+        await loadFixture(page, 'basic')
+        await harness(page, 'pin')
+        await addNote(page, {
+            id: 'surf-jewel', x: -300, y: -300, width: 190, height: 110,
+            color: '#93C5FD', content: '**jewel**\n\nsolid colour card',
+        })
+        await addNote(page, {
+            id: 'surf-term', x: -90, y: -300, width: 190, height: 110,
+            color: '#93C5FD', surface: 'terminal', content: '## terminal\n\nneutral console panel',
+        })
+        await harness(page, 'fit', 1)
+
+        await noteEl(page, 'surf-jewel').waitFor({ state: 'visible' })
+        const term = noteEl(page, 'surf-term')
+        await term.waitFor({ state: 'visible' })
+        // The terminal note renders with the console-surface modifier; the jewel one does not.
+        await expect(term.locator('.pvt-note')).toHaveClass(/pvt-note--terminal/)
+        await expect(noteEl(page, 'surf-jewel').locator('.pvt-note')).not.toHaveClass(/pvt-note--terminal/)
+
+        await expectElement(page.locator('g.notes').first(), 'note-surfaces.png')
+    })
+
+    // T9.8 — surface toggle: in edit mode a small toggle beside the colour pills
+    // flips the note between jewel and terminal, persisting the choice on the model.
+    test('toggles a note between jewel and terminal surfaces', async ({ page }) => {
+        await loadFixture(page, 'basic')
+        await harness(page, 'pin')
+        const domID = await addNote(page, {
+            id: 'surf-toggle', x: -95, y: -300, width: 200, height: 110,
+            color: '#C4B5FD', content: 'Toggle my surface.',
+        })
+        await harness(page, 'fit', 1)
+
+        const note = noteEl(page, 'surf-toggle')
+        await note.waitFor({ state: 'visible' })
+        const surface = note.locator('.pvt-note')
+
+        // The toggle is an edit-mode affordance — hidden until the note is edited.
+        await expect(note.locator('.pvt-note-surface-toggle')).toBeHidden()
+        await note.locator('.pvt-note-content-rendered').dblclick()
+        const toggle = note.locator('.pvt-note-surface-toggle')
+        await expect(toggle).toBeVisible()
+        await expect(surface).not.toHaveClass(/pvt-note--terminal/)
+        expect(await surfaceOf(page, domID)).toBe('jewel')
+
+        // Switch to terminal — the surface class applies and the choice persists.
+        await toggle.click()
+        await expect(surface).toHaveClass(/pvt-note--terminal/)
+        await expect(toggle).toHaveClass(/is-active/)
+        expect(await surfaceOf(page, domID)).toBe('terminal')
+
+        // Switch back to jewel.
+        await toggle.click()
+        await expect(surface).not.toHaveClass(/pvt-note--terminal/)
+        await expect(toggle).not.toHaveClass(/is-active/)
+        expect(await surfaceOf(page, domID)).toBe('jewel')
     })
 })

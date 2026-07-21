@@ -11,7 +11,9 @@ import { defineConfig, devices } from '@playwright/test'
  * Baselines are suffixed with the platform so a future Linux CI run matches
  * local Linux runs; regenerate them on a different OS with `--update-snapshots`.
  */
-const PORT = 5173
+// Override with PW_PORT to dodge a stale dev server from another worktree
+// squatting on the default port (reuseExistingServer would serve its code).
+const PORT = Number(process.env.PW_PORT) || 5173
 
 export default defineConfig({
     testDir: './tests/visual/specs',
@@ -61,7 +63,7 @@ export default defineConfig({
     ],
 
     webServer: {
-        command: 'npm run dev',
+        command: `npm run dev -- --port ${PORT} --strictPort`,
         url: `http://localhost:${PORT}`,
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,

@@ -16,9 +16,12 @@ import type { GraphRenderer, AbstractSelectionBox } from './GraphRenderer'
 import type { Simulation } from './Simulation'
 import type { Notifier, NotificationLevel } from './ui/Notifier'
 import type { TreeLayoutAlgorithm } from './plugins/layout/Tree'
-import { defaultNodeStyle, defaultEdgeStyle, defaultLabelStyle, defaultMarkerStyleMap } from './renderers/svg/GraphSvgRenderer'
+import { defaultNodeStyle, defaultEdgeStyle, defaultLabelStyle, defaultMarkerStyleMap } from './styles/defaults'
 import type { DeepPartial } from './utils/utils'
 import type { UIElement } from './ui/UIManager'
+import { UIComponent } from './ui/UIComponent'
+import type { UIPhase } from './ui/UIComponent'
+import type { PivotickPlugin, PluginContext } from './interfaces/Plugin'
 
 export type {
     GraphOptions,
@@ -38,11 +41,15 @@ export type {
     NotificationLevel,
     DeepPartial,
     UIElement,
+    UIPhase,
+    PivotickPlugin,
+    PluginContext,
 }
 
 export {
     Node,
     Edge,
+    UIComponent,
     defaultNodeStyle as defaultNodeStyleValue,
     defaultEdgeStyle as defaultEdgeStyleValue,
     defaultLabelStyle as defaultLabelStyleValue,

@@ -186,7 +186,7 @@ export interface GraphRendererOptions {
 
 /**
  * - `'svg'` - Uses SVG elements for rendering
- * - `'canvas'` - Uses the HTML canvas for rendering (barely supported)
+ * - `'canvas'` - Reserved; not implemented (the renderer factory throws for it)
  * @default 'svg'
  */
 export type RendererType = 'svg' | 'canvas'

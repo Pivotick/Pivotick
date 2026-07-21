@@ -1,6 +1,7 @@
-import { Edge } from '../Edge'
+import { Edge, type EdgeData } from '../Edge'
 import type { Graph } from '../Graph'
 import type { GraphInteractionContext } from '../interfaces/GraphInteractions'
+import type { PartialEdgeFullStyle } from '../interfaces/RendererOptions'
 import { Node } from '../Node'
 import { Note } from '../Note'
 import { generateSafeDomId } from '../utils/ElementCreation'
@@ -148,6 +149,16 @@ export class GraphConnectManager {
         return this.activeSession !== null
     }
 
+    /**
+     * True while `session` is still the live session of an active connect mode.
+     * Async settle callbacks guard on this so a mode exited (Escape) or re-entered
+     * while an `onBeforeEdgeCreate` decision was in flight isn't resurrected/disturbed.
+     */
+    public ownsSession(session: EdgeCreationSession): boolean {
+
+        return this.modeActive && this.activeSession === session
+    }
+
     public isActiveAndNotIdle(): boolean {
 
         return this.activeSession !== null && this.activeSession.getState() !== 'idle'
@@ -167,19 +178,45 @@ export class GraphConnectManager {
         return this.activeSession.selectOrConnectNode(node)
     }
 
-    public createEdge(source: Node, target: Node): void {
+    /** True if a source→target edge already exists. Exposed so an `onBeforeEdgeCreate` hook can run its own duplicate policy. */
+    public edgeExists(source: Node, target: Node): boolean {
 
-        const exists = this.graph
+        return this.graph
             .getEdges()
             .some(edge =>
                 edge.source.id === source.id &&
                 edge.target.id === target.id
             )
+    }
 
-        if (exists) return
+    /**
+     * Create a source→target edge.
+     *
+     * `decision` carries the (optional) data/style/id/direction resolved by the
+     * `onBeforeEdgeCreate` hook in {@link EdgeCreationSession}; omitted on the
+     * programmatic path, where the edge is created with defaults.
+     *
+     * By default a same-pair edge is treated as a duplicate and skipped — right
+     * for the hook-less flow, where every connect yields an identical empty edge.
+     * With `allowDuplicate` set (the session passes this when a hook is present)
+     * the check is skipped, because once the consumer supplies data/labels a
+     * second A→B edge is a legitimately distinct edge, not a duplicate — the
+     * consumer owns that policy (see {@link edgeExists}).
+     */
+    public createEdge(
+        source: Node,
+        target: Node,
+        decision?: { data?: EdgeData, style?: PartialEdgeFullStyle, id?: string, directed?: boolean | null },
+        { allowDuplicate = false }: { allowDuplicate?: boolean } = {}
+    ): void {
 
-        const edgeID = generateSafeDomId(8, 'edge-')
-        const edge = new Edge(edgeID, source, target, {})
+        if (!allowDuplicate && this.edgeExists(source, target)) return
+
+        const edgeID = decision?.id ?? generateSafeDomId(8, 'edge-')
+        const edge = new Edge(edgeID, source, target, decision?.data ?? {}, undefined, decision?.directed ?? null)
+        // Apply the consumer's style overrides via the partial-merge API (the
+        // constructor's `style` param expects a full style, not partial-at-both-levels).
+        if (decision?.style) edge.updateStyle(decision.style)
         this.graph.addEdge(edge)
     }
 

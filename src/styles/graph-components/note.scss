@@ -1,56 +1,103 @@
 .pvt-note-fo {
-    box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.15);
-    border-radius: 8px;
+    box-shadow: 0 16px 34px -10px rgba(0, 0, 0, 0.5);
+    border-radius: 13px;
 }
 
 .pvt-note {
+    position: relative;
     width: 100%;
     height: 100%;
 
     display: flex;
     flex-direction: column;
 
-    border-radius: 8px;
+    border-radius: 13px;
     overflow: hidden;
+    box-sizing: border-box;
 
-    background: var(--note-color);
-    color: #333;
+    // The whole card is the drag surface (chrome / editor / links opt out in JS),
+    // so there is no dedicated header band to drag by.
+    cursor: move;
+
+    // "Jewel" surface — the picked `--note-color` driven deep, so a note is a
+    // rich full-colour card that reads the same on a light or dark canvas.
+    // color-mix() resolves here, where the per-note `--note-color` is in scope.
+    background: linear-gradient(
+        155deg,
+        color-mix(in srgb, var(--note-color), #26203a 36%),
+        color-mix(in srgb, var(--note-color), #1b1530 52%)
+    );
+    color: rgba(255, 255, 255, 0.95);
+    // Darker than the (dark-purple-mixed) fill so the edge recedes. At 24% the
+    // border was a *lighter* shade than the fill and read as a pale rim over a
+    // dark canvas / when zoomed.
+    border: 1px solid color-mix(in srgb, var(--note-color), #14101f 55%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
 
     transition:
         opacity 120ms ease,
-        stroke 120ms ease,
-        stroke-width 120ms ease,
         filter 120ms ease;
 
+    // Chrome overlay — the colour pills, surface toggle and edit/delete actions
+    // float over the top of the card, shown only on hover / while editing. At
+    // rest there is no band: the note's title owns the top (like the reference).
     .pvt-note-header {
-        height: 28px;
-        display: flex;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 6;
+
+        display: none;
         align-items: center;
         justify-content: space-between;
-        padding: 0 8px;
-        background: rgba(255, 255, 255, 0.25);
-        cursor: move;
+        gap: 8px;
+        padding: 7px 9px;
+
+        // Empty overlay areas pass pointer events through to the card so it stays
+        // draggable; only the actual controls capture clicks.
+        pointer-events: none;
+        button,
+        .pvt-note-color-pill {
+            pointer-events: auto;
+        }
+
+        .pvt-note-head-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        // Surface toggle (jewel ↔ terminal) — edit-only, beside the colour pills.
+        .pvt-note-surface-toggle {
+            display: none;
+
+            &.is-active {
+                color: #fff;
+                background-color: rgba(255, 255, 255, 0.18);
+                border-color: rgba(255, 255, 255, 0.42);
+            }
+        }
 
         .pvt-note-color-pills {
             display: none;
-            gap: 2px;
+            gap: 3px;
 
             .pvt-note-color-pill {
-                width: 8px;
-                height: 8px;
+                width: 9px;
+                height: 9px;
                 box-sizing: border-box;
-                border: 1px solid rgba(0, 0, 0, 0.15);
+                border: 1px solid rgba(255, 255, 255, 0.35);
                 border-radius: 999px;
 
                 cursor: pointer;
                 transform-box: fill-box;
                 transform-origin: center;
 
-                transition:
-                    transform 120ms ease;
+                transition: transform 120ms ease;
 
                 &:hover, &.pill-active {
-                    transform: scale(1.25);
+                    transform: scale(1.3);
                 }
             }
         }
@@ -58,10 +105,7 @@
         .pvt-note-actions {
             display: none;
             flex-direction: row-reverse;
-
-            .pvt-node-edit-button {
-                margin-left: auto;
-            }
+            gap: 4px;
 
             .pvt-node-remove-button {
                 display: none;
@@ -69,7 +113,38 @@
         }
     }
 
+    // Chrome buttons sit on the surface — force the outline variants light so the
+    // icons read regardless of the viewer's theme. Delete/unlink share the same
+    // neutral treatment (not a red tint) so they read as plain chrome; the solid
+    // "done" (success) button keeps its own colour.
+    .pivotick-button-outline-secondary,
+    .pivotick-button-outline-danger {
+        color: rgba(255, 255, 255, 0.82);
+        border-color: rgba(255, 255, 255, 0.26);
+
+        &:hover:not(:disabled) {
+            color: #fff;
+            background-color: rgba(255, 255, 255, 0.16);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+    }
+
+    // Markdown links and unresolved node references read light on the deep surface.
+    .pvt-markdown a {
+        color: #b7ccff;
+
+        &:hover {
+            color: #fff;
+        }
+    }
+
+    .pvt-node-reference.unresolved {
+        color: rgba(255, 255, 255, 0.6);
+        border-color: rgba(255, 255, 255, 0.32);
+    }
+
     .pvt-note-link-container {
+        order: 1; // a footer below the content, so the title keeps the top
         display: none;
         user-select: none;
 
@@ -86,12 +161,13 @@
             gap: 4px;
             cursor: default;
             box-sizing: border-box;
-        
-            background: rgba(255, 255, 255, 0.1);
+
+            background: rgba(0, 0, 0, 0.16);
             box-shadow:
-                inset 0 1px 2px rgba(0, 0, 0, 0.12),
-                inset 0 -1px 2px rgba(0, 0, 0, 0.12);
+                inset 0 1px 2px rgba(0, 0, 0, 0.18),
+                inset 0 -1px 2px rgba(0, 0, 0, 0.18);
             font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.82);
 
             .pvt-note-link-placeholder-icon {
                 width: 12px !important;
@@ -101,7 +177,8 @@
             }
 
             .pvt-note-link-content {
-                width: 100%;
+                flex: 1 1 auto;
+                min-width: 0;
                 display: flex;
                 align-items: center;
 
@@ -110,7 +187,7 @@
                     align-items: center;
                     gap: 6px;
                     font-style: italic;
-                    opacity: 0.6;
+                    opacity: 0.7;
                 }
 
                 .pvt-note-link-row {
@@ -125,7 +202,6 @@
                         display: none;
                     }
                 }
-
             }
 
             .pvt-node-search-button {
@@ -134,20 +210,17 @@
         }
     }
 
-
     .pvt-note-content {
         flex: 1;
         min-height: 0;
         overflow: auto;
-        padding: 8px;
-        margin: 4px;
+        padding: 11px 12px 12px;
         font-size: 14px;
         font-family: sans-serif;
 
         outline: none;
         background: transparent;
 
-        cursor: text;
         user-select: none;
 
         .pvt-note-content-rendered {
@@ -158,7 +231,19 @@
             word-break: break-word;
 
             &.pvt-markdown {
-                color: #333;
+                color: rgba(255, 255, 255, 0.88);
+            }
+
+            // The first rendered block is promoted to the note's title — a single
+            // consistent size regardless of the markdown the author used for it.
+            // Empty notes have no first child, so no title shows.
+            > :first-child {
+                margin-top: 0;
+                margin-bottom: 8px;
+                font-size: 15px;
+                font-weight: 600;
+                line-height: 1.3;
+                color: rgba(255, 255, 255, 0.96);
             }
         }
 
@@ -174,7 +259,7 @@
             background: transparent;
 
             font: inherit;
-            color: inherit;
+            color: rgba(255, 255, 255, 0.92);
 
             display: none;
 
@@ -183,7 +268,7 @@
     }
 
     .pvt-note-resize-handle {
-        background: rgba(0, 0, 0, 0.2);
+        background: rgba(255, 255, 255, 0.25);
         cursor: nwse-resize;
         pointer-events: all;
         border-radius: 3px 0 0 0;
@@ -192,22 +277,31 @@
         position: absolute;
         bottom: 0;
         right: 0;
+        z-index: 6;
     }
 
     &.dragging {
-        opacity: 0.9;
+        opacity: 0.92;
+        cursor: grabbing;
         filter: drop-shadow(4px 4px 6px var(--pvt-box-shadow-color-strong));
-
-        .pvt-note-header {
-            cursor: grabbing;
-        }
     }
 
     &.editing {
+        cursor: default;
 
         .pvt-note-header {
+            display: flex;
+            // In edit mode the header returns as a draggable toolbar band (the
+            // body is the textarea then, so it can't double as the drag surface).
+            pointer-events: auto;
+            cursor: move;
+            background: rgba(0, 0, 0, 0.22);
 
             .pvt-note-color-pills {
+                display: inline-flex;
+            }
+
+            .pvt-note-surface-toggle {
                 display: inline-flex;
             }
 
@@ -233,16 +327,14 @@
         }
 
         .pvt-note-content {
+            // Clear the chrome overlay so the first line (the title) is editable.
+            padding-top: 38px;
             cursor: text;
-            caret-color: #111;
-            backdrop-filter: blur(2px);
-
-            filter:
-                brightness(1.1) drop-shadow(8px 8px 8px var(--pvt-box-shadow-color-strong));
+            caret-color: #fff;
 
             box-shadow:
-                inset 0 1px 2px rgba(0, 0, 0, 0.1),
-                inset 0 -1px 2px rgba(0, 0, 0, 0.1);
+                inset 0 1px 2px rgba(0, 0, 0, 0.18),
+                inset 0 -1px 2px rgba(0, 0, 0, 0.18);
         }
 
         .pvt-note-link-row {
@@ -257,10 +349,110 @@
     }
 
     &:hover {
-        .pvt-note-header .pvt-note-actions {
-            display: inline-flex;
-            width: 100%;
+        .pvt-note-header {
+            display: flex;
+
+            .pvt-note-actions {
+                display: inline-flex;
+            }
+        }
+    }
+
+    // ── Terminal surface (opt-in via the surface toggle) ─────────────────────
+    // A neutral, theme-aware panel — the picker colour is only an accent (a thick
+    // top hairline + a mono "›" prompt on the title), not a fill — so the note
+    // reads as a hackable console card. Values mirror the "terminal" design
+    // direction; ink and chrome follow the theme-aware terminal text so it stays
+    // legible on a white or near-black panel.
+    &.pvt-note--terminal {
+        $mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+        background: var(--pvt-note-term-bg);
+        color: var(--pvt-note-term-text);
+        border-color: var(--pvt-note-term-border);
+        box-shadow: none;
+
+        // A colour bar across the top edge — the terminal accent.
+        &::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: var(--note-color);
+            z-index: 4;
+            pointer-events: none;
+        }
+
+        // Edit-mode header band, theme-aware so it reads on a white or dark panel.
+        &.editing .pvt-note-header {
+            background: color-mix(in srgb, var(--pvt-note-term-text) 8%, transparent);
+        }
+
+        .pivotick-button-outline-secondary,
+        .pivotick-button-outline-danger {
+            color: var(--pvt-note-term-text);
+            border-color: color-mix(in srgb, var(--pvt-note-term-text) 24%, transparent);
+
+            &:hover:not(:disabled) {
+                color: var(--pvt-note-term-text);
+                background-color: color-mix(in srgb, var(--pvt-note-term-text) 12%, transparent);
+                border-color: color-mix(in srgb, var(--pvt-note-term-text) 38%, transparent);
+            }
+        }
+
+        // The active toggle glows in the note's own accent colour.
+        .pvt-note-surface-toggle.is-active {
+            color: var(--pvt-note-term-text);
+            background-color: color-mix(in srgb, var(--note-color) 22%, transparent);
+            border-color: color-mix(in srgb, var(--note-color) 55%, transparent);
+        }
+
+        // Monospace body + editor — the console voice.
+        .pvt-note-content-rendered.pvt-markdown {
+            font-family: $mono;
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--pvt-note-term-text-dim);
+        }
+
+        // Terminal title: theme-aware ink, prefixed by the mono colour "›" prompt.
+        .pvt-note-content-rendered > :first-child {
+            color: var(--pvt-note-term-text);
+
+            &::before {
+                content: "›";
+                margin-right: 7px;
+                font-weight: 700;
+                color: var(--note-color);
+            }
+        }
+
+        .pvt-markdown a {
+            color: color-mix(in srgb, #3b82f6, var(--pvt-note-term-text) 12%);
+        }
+
+        .pvt-node-reference.unresolved {
+            color: var(--pvt-note-term-text-dim);
+            border-color: color-mix(in srgb, var(--pvt-note-term-text) 30%, transparent);
+        }
+
+        .pvt-note-link-subcontainer {
+            color: var(--pvt-note-term-text);
+            background: color-mix(in srgb, var(--pvt-note-term-text) 6%, transparent);
+        }
+
+        .pvt-note-editor {
+            font-family: $mono;
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--pvt-note-term-text);
+            caret-color: var(--note-color);
+        }
+
+        .pvt-note-resize-handle {
+            background: color-mix(in srgb, var(--pvt-note-term-text) 26%, transparent);
         }
     }
 }
-

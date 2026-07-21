@@ -13,203 +13,13 @@ import merge from 'lodash.merge'
 import { GraphInteractions } from '../../GraphInteractions'
 import { GraphRenderer } from '../../GraphRenderer'
 import { SelectionBox } from './SelectionBox'
-import type { EdgeStyle, GraphRendererOptions, LabelStyle, MarkerStyleMap, NodeStyle, SelectionBox as SelectionBoxI } from '../../interfaces/RendererOptions'
+import type { GraphRendererOptions, NodeStyle, SelectionBox as SelectionBoxI } from '../../interfaces/RendererOptions'
 import { ClusterDrawer } from './ClusterDrawer'
 import { NoteDrawer } from './NoteDrawer'
 import { Note } from '../../Note'
 import type { Point } from '../../utils/GeometryHelper'
+import { defaultMarkerStyleMap, defaultNodeStyle, defaultEdgeStyle, defaultLabelStyle } from '../../styles/defaults'
 d3Select.prototype.transition = d3Transition
-
-/**
- * @default
-{
-    arrow: {
-        pathD: 'M0,-5L10,0L0,5',
-        viewBox: '0 -5 10 10',
-        refX: 6,
-        refY: 0,
-        markerWidth: 12,
-        markerHeight: 12,
-        markerUnits: 'userSpaceOnUse',
-        orient: 'auto',
-        fill: 'var(--pvt-edge-stroke, #999)',
-        selected: {
-            fill: 'var(--pvt-edge-selected-stroke, #007acc)',
-        }
-    },
-    circle: {
-        pathD: 'M5,5m-3,0a3,3 0 1,0 6,0a3,3 0 1,0 -6,0',
-        viewBox: '0 0 10 10',
-        refX: 5,
-        refY: 5,
-        markerWidth: 10,
-        markerHeight: 10,
-        markerUnits: 'userSpaceOnUse',
-        orient: 0,
-        fill: 'var(--pvt-edge-stroke, #999)',
-        selected: {
-            fill: 'var(--pvt-edge-selected-stroke, #007acc)',
-            markerWidth: 16,
-            markerHeight: 16,
-        }
-    },
-    diamond: {
-        pathD: 'M0,-4L4,0L0,4L-4,0Z',
-        viewBox: '-5 -5 10 10',
-        refX: 0,
-        refY: 0,
-        markerWidth: 8,
-        markerHeight: 8,
-        markerUnits: 'userSpaceOnUse',
-        orient: 0,
-        fill: 'var(--pvt-edge-stroke, #999)',
-        selected: {
-            fill: 'var(--pvt-edge-selected-stroke, #007acc)',
-            markerWidth: 14,
-            markerHeight: 14,
-        }
-    }
-}
- */
-export const defaultMarkerStyleMap: MarkerStyleMap = {
-    arrow: {
-        pathD: 'M0,-5L10,0L0,5',
-        viewBox: '0 -5 10 10',
-        refX: 6,
-        refY: 0,
-        markerWidth: 12,
-        markerHeight: 12,
-        markerUnits: 'userSpaceOnUse',
-        orient: 'auto',
-        selected: {
-            fill: 'var(--pvt-edge-selected-stroke, #007acc)',
-        }
-    },
-    circle: {
-        pathD: 'M5,5m-3,0a3,3 0 1,0 6,0a3,3 0 1,0 -6,0',
-        viewBox: '0 0 10 10',
-        refX: 5,
-        refY: 5,
-        markerWidth: 10,
-        markerHeight: 10,
-        markerUnits: 'userSpaceOnUse',
-        orient: 0,
-        selected: {
-            fill: 'var(--pvt-edge-selected-stroke, #007acc)',
-            markerWidth: 16,
-            markerHeight: 16,
-        }
-    },
-    diamond: {
-        pathD: 'M0,-4L4,0L0,4L-4,0Z',
-        viewBox: '-5 -5 10 10',
-        refX: 0,
-        refY: 0,
-        markerWidth: 8,
-        markerHeight: 8,
-        markerUnits: 'userSpaceOnUse',
-        orient: 0,
-        selected: {
-            fill: 'var(--pvt-edge-selected-stroke, #007acc)',
-            markerWidth: 14,
-            markerHeight: 14,
-        }
-    },
-    bigcircle: {
-        pathD: 'M5,5m-3,0a3,3 0 1,0 6,0a3,3 0 1,0 -6,0',
-        viewBox: '0 0 10 10',
-        refX: 5,
-        refY: 5,
-        markerWidth: 16,
-        markerHeight: 16,
-        markerUnits: 'userSpaceOnUse',
-        orient: 0,
-        selected: {
-            fill: 'var(--pvt-edge-selected-stroke, #007acc)',
-            markerWidth: 24,
-            markerHeight: 24,
-        }
-    },
-}
-
-/**
- * @default
-{
-    shape: 'circle',
-    size: 10,
-    strokeWidth: var(--pvt-node-stroke-width, 2),
-    color: 'var(--pvt-node-color, #007acc)',
-    strokeColor: 'var(--pvt-node-stroke, #fff)',
-    fontFamily: 'var(--pvt-label-font, system-ui, sans-serif)',
-    textColor: 'var(--pvt-node-text-color, #fff)',
-    iconUnicode: undefined,
-    iconClass: undefined,
-    svgIcon: undefined,
-    imagePath: undefined,
-    text: undefined,
-}
- */
-export const defaultNodeStyle: NodeStyle = {
-    shape: 'circle',
-    size: 10,
-    strokeWidth: 'var(--pvt-node-stroke-width, 2)',
-    color: 'var(--pvt-node-color, #007acc)',
-    strokeColor: 'var(--pvt-node-stroke, #fff)',
-    fontFamily: 'var(--pvt-label-font, system-ui, sans-serif)',
-    textColor: 'var(--pvt-node-text-color, #fff)',
-    textAnchorPosition: 'middle',
-    textHorizontalShift: 0,
-    textVerticalShift: 0,
-    textRotateDegree: 0,
-    iconUnicode: undefined,
-    iconClass: undefined,
-    svgIcon: undefined,
-    imagePath: undefined,
-    text: undefined,
-    html: undefined,
-}
-
-/**
- * @default
-{
-    strokeWidth: 2,
-    opacity: 1.0,
-    curveStyle: 'bidirectional',
-    dashed: false,
-    animateDash: true,
-    rotateLabel: false,
-    markerEnd: 'arrow',
-    markerStart: undefined,
-    strokeColor: 'var(--pvt-edge-stroke, #999)',
-}
- */
-export const defaultEdgeStyle: EdgeStyle = {
-    strokeWidth: 2,
-    opacity: 1.0,
-    curveStyle: 'bidirectional',
-    dashed: false,
-    animateDash: true,
-    rotateLabel: false,
-    markerEnd: 'arrow',
-    markerStart: undefined,
-    strokeColor: 'var(--pvt-edge-stroke, #999)',
-}
-
-/**
- * @default
-{
-    fontSize: 12,
-    fontFamily: 'var(--pvt-label-font, system-ui, sans-serif)',
-    color: 'var(--pvt-edge-label-color, #333)',
-    backgroundColor: 'var(--pvt-edge-label-bg, #ffffffa0)',
-}
- */
-export const defaultLabelStyle: LabelStyle = {
-    fontSize: 12,
-    fontFamily: 'var(--pvt-label-font, system-ui, sans-serif)',
-    color: 'var(--pvt-edge-label-color, #333)',
-    backgroundColor: 'var(--pvt-edge-label-bg, #ffffffa0)',
-}
 
 const DEFAULT_RENDERER_OPTIONS = {
     type: 'svg',
@@ -232,7 +42,6 @@ const DEFAULT_RENDERER_OPTIONS = {
     } as SelectionBoxI
 } satisfies GraphRendererOptions
 
-
 export class GraphSvgRenderer extends GraphRenderer {
     protected options: GraphRendererOptions
 
@@ -254,6 +63,7 @@ export class GraphSvgRenderer extends GraphRenderer {
     private edgeGroup: Selection<SVGGElement, unknown, null, undefined>
     private nodeGroup: Selection<SVGGElement, unknown, null, undefined>
     private noteGroup: Selection<SVGGElement, unknown, null, undefined>
+    private noteEdgeGroup: Selection<SVGGElement, unknown, null, undefined>
     private selectionBoxGroup: Selection<SVGGElement, unknown, null, undefined>
     public defs: Selection<SVGDefsElement, unknown, null, undefined>
 
@@ -267,6 +77,7 @@ export class GraphSvgRenderer extends GraphRenderer {
     private nodeGroupSelection!: Selection<SVGGElement, Node, SVGGElement, unknown>
     private edgeGroupSelection!: Selection<SVGPathElement, Edge, SVGGElement, unknown>
     private noteGroupSelection!: Selection<SVGGElement, Note, SVGGElement, unknown>
+    private noteEdgeSelection!: Selection<SVGPathElement, { note: Note; target: Node }, SVGGElement, unknown>
     private nodeSelection!: Selection<SVGGElement, Node, SVGGElement, unknown>
     private edgeSelection!: Selection<SVGGElement, Edge, SVGGElement, unknown>
     private noteSelection!: Selection<SVGGElement, Note, SVGGElement, unknown>
@@ -302,10 +113,16 @@ export class GraphSvgRenderer extends GraphRenderer {
 
         this.shadowEdgeGroup = this.zoomGroup.append('g').attr('class', 'shadow-edges').style('pointer-events', 'none')
         this.shadowEdgePath = this.shadowEdgeGroup.append('path').attr('class', 'pvt-shadow-edge').style('display', 'none')
-        
-        this.noteGroup = this.zoomGroup.append('g').attr('class', 'notes')
+
+        this.noteEdgeGroup = this.zoomGroup.append('g').attr('class', 'note-edges')
+
         this.selectionBoxGroup = this.svg.append('g').attr('class', 'selection-box')
         this.nodeGroup = this.zoomGroup.append('g').attr('class', 'nodes')
+
+        // Notes sit above the graph — they are annotations meant to stay readable,
+        // never obscured by a node. Their connectors stay in the note-edges layer
+        // (below the nodes) so a link line doesn't float across unrelated nodes.
+        this.noteGroup = this.zoomGroup.append('g').attr('class', 'notes')
 
         this.handleLayer = this.zoomGroup.append('g').attr('class', 'connection-handle-layer')
 
@@ -356,7 +173,6 @@ export class GraphSvgRenderer extends GraphRenderer {
 
         this.svg.call(this.zoom)
         this.svg.on('dblclick.zoom', null)
-
 
         if (this.options.selectionBox.enabled) {
             this.selectionBox = new SelectionBox(this, this.svgCanvas, this.selectionBoxGroup.node())
@@ -579,8 +395,6 @@ export class GraphSvgRenderer extends GraphRenderer {
                             return
                         }
 
-                        note.clearDirty()
-
                         const selection = d3Select<SVGGElement, Note>(notes[i])
 
                         if (note.isAttachmentDirty()) {
@@ -588,7 +402,16 @@ export class GraphSvgRenderer extends GraphRenderer {
                             this.noteDrawer.refreshLink(note)
 
                             note.clearAttachmentDirty()
-                        } else {
+                        } else if (!note.isEditing()) {
+
+                            // While editing, the colour/surface pills apply their
+                            // change to the live DOM directly — rebuilding here
+                            // would blow away the editor state and reset the save
+                            // button back to the edit icon. Clear the dirty flag
+                            // only when we actually rebuild, so a programmatic
+                            // setContent() made mid-edit is kept and applied when
+                            // the session ends (save/cancelEditMode → dataUpdate()).
+                            note.clearDirty()
 
                             selection.selectChildren().remove()
 
@@ -597,6 +420,29 @@ export class GraphSvgRenderer extends GraphRenderer {
 
                     }),
 
+                exit => exit.remove()
+            )
+
+        // Builds array of note target pairs
+        const noteEdges: { note: Note; target: Node }[] = []
+        for (const note of this.graph.noteManager.getVisibleNotes()) {
+            const attached = note.getAttachedElement()
+            if (!attached || attached.type !== 'node') continue
+            const target = this.graph.getMutableNode(attached.id)
+            if (!target || !target.visible) continue
+            noteEdges.push({ note, target })
+        }
+
+        this.noteEdgeSelection = this.noteEdgeGroup
+            .selectAll<SVGPathElement, { note: Note; target: Node }>('path')
+            .data(noteEdges, d => d.note.id)
+            .join(
+                enter => enter
+                    .append('path')
+                    .attr('class', 'pvt-note-edge')
+                    .attr('d', d => this.noteEdgePath(d.note, d.target)),
+                update => update
+                    .attr('d', d => this.noteEdgePath(d.note, d.target)),
                 exit => exit.remove()
             )
     }
@@ -611,6 +457,7 @@ export class GraphSvgRenderer extends GraphRenderer {
 
     public nextTick(): void {
         this.updateEdgePositions() // Render edges first so nodes are drawn on top of them
+        this.updateNoteEdgePositions()
         this.updateNotePositions()
         this.updateNodePositions()
     }
@@ -752,14 +599,14 @@ export class GraphSvgRenderer extends GraphRenderer {
         const width = svgBounds.width
         const height = svgBounds.height
 
-        const transformList = targetEl.transform.baseVal
-
+        // Model coords are authoritative; the SVG transform is stale after a move and undefined for notes.
         let dx = 0, dy = 0
-        if (transformList.numberOfItems > 0) {
-            const t = transformList.getItem(0) // assumes only one transform (translate/scale)
-
-            dx = t.matrix.e
-            dy = t.matrix.f
+        if (element instanceof Edge) {
+            dx = ((element.from.x ?? 0) + (element.to.x ?? 0)) / 2
+            dy = ((element.from.y ?? 0) + (element.to.y ?? 0)) / 2
+        } else {
+            dx = element.x ?? 0
+            dy = element.y ?? 0
         }
 
         const scale = Math.min(
@@ -820,6 +667,39 @@ export class GraphSvgRenderer extends GraphRenderer {
         } else {
             this.edgeDrawer.updatePositions(this.edgeSelection)
         }
+    }
+
+    public updateNoteEdgePositions(): void {
+        if (!this.noteEdgeSelection) return
+        this.noteEdgeSelection.attr('d', d => this.noteEdgePath(d.note, d.target))
+    }
+
+    private noteEdgePath(note: Note, target: Node): string | null {
+        const centerX = note.x + note.width / 2
+        const centerY = note.y + note.height / 2
+
+        const targetX = target.x ?? 0
+        const targetY = target.y ?? 0
+
+        const dx = targetX - centerX
+        const dy = targetY - centerY
+        const dist = Math.hypot(dx, dy)
+
+        if (dist === 0) return null
+
+        const nx = dx / dist
+        const ny = dy / dist
+
+        const drawOffsetStart = 4
+        const startX = centerX + nx * drawOffsetStart
+        const startY = centerY + ny * drawOffsetStart
+
+        const rTo = target.getCircleRadius() || this.nodeDrawer.getNodeStyle(target).size as number
+        const drawOffsetEnd = 8
+        const endX = targetX - nx * (rTo + drawOffsetEnd)
+        const endY = targetY - ny * (rTo + drawOffsetEnd)
+
+        return `M ${startX},${startY} L ${endX},${endY}`
     }
 
     private updateNotePositions(): void {
@@ -977,10 +857,11 @@ export class GraphSvgRenderer extends GraphRenderer {
     public showShadowEdge(params: {
         source: Node | Note,
         targetNode?: Node,
-        targetPosition?: { x: number, y: number }
+        targetPosition?: { x: number, y: number },
+        invalid?: boolean
     }): void {
 
-        const { source, targetNode, targetPosition } = params
+        const { source, targetNode, targetPosition, invalid = false } = params
 
         if (source.x == null || source.y == null) {
             return
@@ -1063,12 +944,8 @@ export class GraphSvgRenderer extends GraphRenderer {
 
         this.shadowEdgePath
             .attr('d', path)
-            .attr('stroke', 'var(--pvt-edge-stroke, #999)')
-            .attr('stroke-width', 2)
-            .attr('stroke-dasharray', '6 4')
-            .attr('fill', 'none')
-            .attr('opacity', 0.7)
-            .attr('marker-end', 'url(#arrow)')
+            .attr('marker-end', invalid ? null : 'url(#arrow)')
+            .classed('pvt-shadow-edge--invalid', invalid)
             .style('display', null)
     }
 

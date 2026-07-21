@@ -74,6 +74,12 @@ $light-theme: (
     pvt-box-shadow-strong: "rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px",
     pvt-box-shadow-color-strong: "#aaaaaa55",
 
+    /* Scrollbar (thumb tracks the ink colour so it adapts to the theme) */
+    pvt-scrollbar-size: 10px,
+    pvt-scrollbar-track: transparent,
+    pvt-scrollbar-thumb: color-mix(in srgb, var(--pvt-text-color-6) 22%, transparent),
+    pvt-scrollbar-thumb-hover: color-mix(in srgb, var(--pvt-text-color-6) 40%, transparent),
+
 
     /* Sidebar */
     pvt-sidebar-bg: var(--pvt-bg-color-0),
@@ -198,6 +204,13 @@ $light-theme: (
     /* Note */
     pvt-note-node-reference-dot-default: #007acc,
     pvt-note-node-reference-text-color: #333,
+    // Terminal note surface — a neutral, theme-aware panel (light canvas: white
+    // card, dark ink). The colour is only an accent (top hairline + prompt); the
+    // jewel surface needs no vars (it is always a deep card).
+    pvt-note-term-bg: #ffffff,
+    pvt-note-term-border: #e6e8ec,
+    pvt-note-term-text: #1c2026,
+    pvt-note-term-text-dim: #61666e,
 
     /* Component */
     pvt-inline-bar-bg: var(--pvt-bg-color-2),
@@ -215,9 +228,9 @@ $light-theme: (
 
     pvt-json-background: var(--pvt-bg-color-3),
     pvt-json-border: var(--pvt-bg-color-7),
-    pvt-json-key: #b54708,
-    pvt-json-string: #067647,
-    pvt-json-number: #175cd3,
+    pvt-json-key: oklch(0.50 0.15 255),
+    pvt-json-string: oklch(0.55 0.17 25),
+    pvt-json-number: oklch(0.52 0.14 145),
     pvt-json-boolean: #7a3e9d,
     pvt-json-null: #98a2b3,
     pvt-json-bracket: var(--pvt-text-color-3),
@@ -321,6 +334,12 @@ $dark-theme: (
     pvt-box-shadow-medium: "rgba(0, 0, 0, 0.1) 0px 4px 6px -1px, rgba(0, 0, 0, 0.06) 0px 2px 4px -1px",
     pvt-box-shadow-strong: "rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px",
     pvt-box-shadow-color-strong: "#00000055",
+
+    /* Scrollbar (thumb tracks the ink colour so it adapts to the theme) */
+    pvt-scrollbar-size: 10px,
+    pvt-scrollbar-track: transparent,
+    pvt-scrollbar-thumb: color-mix(in srgb, var(--pvt-text-color-6) 18%, transparent),
+    pvt-scrollbar-thumb-hover: color-mix(in srgb, var(--pvt-text-color-6) 34%, transparent),
 
 
     /* Sidebar */
@@ -436,6 +455,13 @@ $dark-theme: (
     /* Note */
     pvt-note-node-reference-dot-default: #007acc,
     pvt-note-node-reference-text-color: #333,
+    // Terminal note surface — a neutral, theme-aware panel (dark canvas: near-
+    // black card, light ink). The colour is only an accent (top hairline +
+    // prompt); the jewel surface needs no vars (it is always a deep card).
+    pvt-note-term-bg: #1a1a1e,
+    pvt-note-term-border: #2a2b31,
+    pvt-note-term-text: #e8eaed,
+    pvt-note-term-text-dim: #a7abb2,
 
     /* Component */
     pvt-inline-bar-bg: var(--pvt-bg-color-6),
@@ -452,9 +478,9 @@ $dark-theme: (
 
     pvt-json-background: var(--pvt-bg-color-5),
     pvt-json-border: var(--pvt-bg-color-7),
-    pvt-json-key: #b5602e,
-    pvt-json-string: #239867,
-    pvt-json-number: #3975de,
+    pvt-json-key: oklch(0.74 0.10 255),
+    pvt-json-string: oklch(0.74 0.11 25),
+    pvt-json-number: oklch(0.78 0.13 145),
     pvt-json-boolean: #9564b2,
     pvt-json-null: #98a2b3,
     pvt-json-bracket: var(--pvt-text-color-3),

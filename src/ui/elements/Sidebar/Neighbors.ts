@@ -1,7 +1,8 @@
 import { createHtmlElement, createHtmlTemplate, createIcon } from '../../../utils/ElementCreation'
 import { Node, type NodeData } from '../../../Node'
 import { Edge } from '../../../Edge'
-import type { UIElement, UIManager } from '../../UIManager'
+import type { UIManager } from '../../UIManager'
+import { UIComponent } from '../../UIComponent'
 import './properties.scss'
 import type { EdgeSelection, NodeSelection } from '../../../interfaces/GraphInteractions'
 import { tryResolveHTMLElement } from '../../../utils/Getters'
@@ -10,14 +11,12 @@ import type { GraphOptions, RawEdge, RawNode, RelaxedGraphData } from '../../../
 import { Graph } from '../../../Graph'
 import { edgeNameGetter, nodeNameGetter } from '../../../utils/GraphGetters'
 import { arrowLeft, arrowRight, dash, edgeIncoming, edgeOutgoing, filterAdd, filterRemove, graphMultiSelectNode } from '../../icons'
-import { createBadge } from '../../components/Badge'
 import { createTableForAggregatedProperties } from '../../../utils/ElementCreationAggregatedProperties'
 import type { NodeStyle } from '../../../interfaces/RendererOptions'
 import { createNodePreview } from '../../../utils/NodePreview'
 
 
-export class SidebarNeighbors implements UIElement {
-    private uiManager: UIManager
+export class SidebarNeighbors extends UIComponent {
 
     private panel?: HTMLDivElement
     private header?: HTMLDivElement
@@ -34,11 +33,11 @@ export class SidebarNeighbors implements UIElement {
     private renderCb?: ((element: Node | Edge | Node[] | Edge[] | null) => HTMLElement | string) | HTMLElement | string
 
     constructor(uiManager: UIManager) {
-        this.uiManager = uiManager
+        super(uiManager)
         this.renderCb = typeof this.uiManager.getOptions().neighborsPanel.render === 'function' ? this.uiManager.getOptions().neighborsPanel.render : undefined
     }
 
-    public mount(rootContainer: HTMLElement | undefined) {
+    protected onMount(rootContainer: HTMLElement | undefined) {
         if (!rootContainer) return
 
         const template = `
@@ -91,12 +90,15 @@ export class SidebarNeighbors implements UIElement {
         this.body.insertBefore(this.neighborCount, this.body.firstChild)
     }
 
-    public destroy() {
+    protected onDestroy() {
+        // Tear down the nested ego graph (its own UIManager/renderer) too.
+        this.egoGraph?.destroy()
+        this.egoGraph = undefined
         this.panel?.remove()
         this.panel = undefined
     }
 
-    public afterMount() {
+    protected onAfterMount() {
         this.clearNeighbors()
     }
 
@@ -120,7 +122,7 @@ export class SidebarNeighbors implements UIElement {
         this.hidePanel()
     }
 
-    public graphReady(): void { }
+    protected onGraphReady(): void { }
 
     private renderCustomContent(element: Node | Edge | Node[] | Edge[] | null) {
         if (!this.body || !this.renderCb) return
@@ -343,7 +345,8 @@ export class SidebarNeighbors implements UIElement {
 
         this.listContainer.innerHTML = ''
 
-        const fixedPreviewSize = 26
+        const previewSize = 22
+        const mainHeader = this.uiManager.getOptions().mainHeader
 
         const connectedEdges = [
             ...node.getEdgesOut(),
@@ -354,86 +357,81 @@ export class SidebarNeighbors implements UIElement {
             const aTarget = a.from.id === node.id ? a.to : a.from
             const bTarget = b.from.id === node.id ? b.to : b.from
 
-            const aName = nodeNameGetter(aTarget, this.uiManager.getOptions().mainHeader)
-            const bName = nodeNameGetter(bTarget, this.uiManager.getOptions().mainHeader)
+            const aName = nodeNameGetter(aTarget, mainHeader)
+            const bName = nodeNameGetter(bTarget, mainHeader)
 
             return aName.localeCompare(bName)
         })
 
-        const container = createHtmlElement('div', { class: '' })
+        const container = createHtmlElement('div', { class: 'pvt-neighbor-list' })
         for (const edge of connectedEdges) {
             const isEdgeOut = edge.from.id === node.id
             const targetNode = isEdgeOut ? edge.to : edge.from
-            const edgeName = edgeNameGetter(edge, this.uiManager.getOptions().mainHeader) || ''
+            const edgeName = edgeNameGetter(edge, mainHeader) || ''
             const isDirected = this.uiManager.graph.getOptions().isDirected || edge.directed
 
-            let edgeIcon
-            if (isDirected) {
-                edgeIcon = isEdgeOut ? createIcon({svgIcon: arrowRight}) : createIcon({svgIcon: arrowLeft})
-            } else {
-                edgeIcon = createIcon({svgIcon: dash})
+            const directionIcon = isDirected
+                ? (isEdgeOut ? arrowRight : arrowLeft)
+                : dash
+            const directionClass = isDirected
+                ? (isEdgeOut ? 'edge-out' : 'edge-in')
+                : 'edge-undirected'
+            const directionLabel = isDirected
+                ? (isEdgeOut ? 'Outgoing connection' : 'Incoming connection')
+                : 'Connection'
+            const direction = createHtmlElement('span', {
+                class: ['pvt-neighbor-row__dir', directionClass],
+            }, [createIcon({ svgIcon: directionIcon })])
+
+            const preview = createHtmlElement('span', { class: 'pvt-neighbor-row__preview' })
+            preview.appendChild(createNodePreview(targetNode, { size: previewSize }))
+
+            const targetNodeName = nodeNameGetter(targetNode, mainHeader)
+            const name = createHtmlElement('span', { class: 'pvt-neighbor-row__name' }, [targetNodeName])
+
+            const rowChildren: HTMLElement[] = [direction, preview, name]
+            if (edgeName) {
+                // Only real labels get a chip — unlabeled edges stay quiet rather
+                // than each showing a loud "— empty —" pill.
+                rowChildren.push(createHtmlElement('span', {
+                    class: 'pvt-neighbor-row__label',
+                    title: edgeName,
+                }, [edgeName]))
             }
-            edgeIcon.classList.add('edge')
-            if (isDirected) {
-                edgeIcon.classList.add(isEdgeOut ? 'edge-out' : 'edge-in')
-                edgeIcon.setAttribute('title', isEdgeOut ? 'Outgoing edge' : 'Incoming edge')
-            } else {
-                edgeIcon.setAttribute('title', 'Non-directed edge')
-            }
 
-            const targetNodeName = nodeNameGetter(targetNode, this.uiManager.getOptions().mainHeader)
-            const targetNodeTemplate = document.createElement('template')
-            targetNodeTemplate.innerHTML = `
-            <div class="pvt-neighbors-list__nodecontainer">
-                <span class="pvt-neighbors-list__nodepreview"></span>
-                <span class="pvt-neighbors-list__nodename">${targetNodeName}</span>
-            </div>`
+            const rowTitle = edgeName
+                ? `${directionLabel} — ${targetNodeName} · ${edgeName}`
+                : `${directionLabel} — ${targetNodeName}`
+            const row = createHtmlElement('div', {
+                'class': 'pvt-neighbor-row',
+                'data-node-id': targetNode.id,
+                'title': rowTitle,
+            }, rowChildren)
 
-            const targetNodeDiv = targetNodeTemplate.content.firstElementChild as HTMLDivElement
-            const targetNodePreview = targetNodeDiv.querySelector('.pvt-neighbors-list__nodepreview') ?? undefined
-            targetNodePreview?.appendChild(createNodePreview(targetNode, { size: fixedPreviewSize }))
-
-            const fullEdgeDesc = createBadge({
-                text: edgeName ? edgeName : '- empty -',
-                size: 'sm',
-                variant: 'secondary',
-                class: ['pvt-neighbor-edge-description', edgeName ? edgeName : 'empty-label'],
-            })
-
-            const elements = [
-                edgeIcon,
-                targetNodeDiv,
-                fullEdgeDesc,
-            ]
-
-            const row = createHtmlElement('div',
-                {
-                    'class': 'edge-details',
-                    'data-node-id': targetNode.id
-                },
-                elements
-            )
+            // Resolve back to the live main-graph node — in the merged multi-select
+            // view `targetNode` is a clone, so look it up by id.
+            const resolveMainNode = () => this.uiManager.graph.getMutableNode(targetNode.id)
 
             row.addEventListener('mouseenter', (evt) => {
-                const nodeId = (evt.target as HTMLElement).getAttribute('data-node-id')
-                if (!nodeId) return
-
-                const mainGraphNode = this.uiManager.graph.getMutableNode(nodeId)
-                if (mainGraphNode) {
-                    this.uiManager.graph.highlightElement(mainGraphNode)
-                    this.egoGraph?.highlightElement(node)
-                    this.egoGraph?.UIManager.tooltip?.nodeHovered(evt, node)
-                }
+                const mainGraphNode = resolveMainNode()
+                if (!mainGraphNode) return
+                this.uiManager.graph.highlightElement(mainGraphNode)
+                this.egoGraph?.highlightElement(node)
+                this.egoGraph?.UIManager.tooltip?.nodeHovered(evt, node)
             })
-            row.addEventListener('mouseleave', (evt) => {
-                const nodeId = (evt.target as HTMLElement).getAttribute('data-node-id')
-                if (!nodeId) return
-
-                const mainGraphNode = this.uiManager.graph.getMutableNode(nodeId)
-                if (mainGraphNode) {
-                    this.uiManager.graph.unHighlightElement(mainGraphNode)
-                    this.egoGraph?.unHighlightElement(node)
-                }
+            row.addEventListener('mouseleave', () => {
+                const mainGraphNode = resolveMainNode()
+                if (!mainGraphNode) return
+                this.uiManager.graph.unHighlightElement(mainGraphNode)
+                this.egoGraph?.unHighlightElement(node)
+            })
+            // Click a row to walk to that neighbour: it becomes the selected node
+            // and the panel rebuilds around it.
+            row.addEventListener('click', () => {
+                const mainGraphNode = resolveMainNode()
+                if (!mainGraphNode) return
+                this.uiManager.graph.unHighlightElement(mainGraphNode)
+                this.uiManager.graph.selectElement(mainGraphNode)
             })
 
             container.appendChild(row)
@@ -482,7 +480,12 @@ export class SidebarNeighbors implements UIElement {
         })
         const aggregatedProperties: Map<string, Map<string, number>> = new Map()
         aggregatedProperties.set('Label', edgeNames)
-        const aggregatedPropertiesDiv = createTableForAggregatedProperties(aggregatedProperties, node.degree(), this.genActionButtonsSingleSelection.bind(this))
+        const aggregatedPropertiesDiv = createTableForAggregatedProperties(
+            aggregatedProperties,
+            node.degree(),
+            this.genActionButtonsSingleSelection.bind(this),
+            this.applyEdgeLabelFacetFilter.bind(this)
+        )
         const aggregatedLabelContainer = createHtmlElement('div', { class: 'aggregated-labels' }, [aggregatedPropertiesDiv])
 
         this.statContainer.appendChild(coreStatContainer)
@@ -490,36 +493,37 @@ export class SidebarNeighbors implements UIElement {
     }
 
 
-    private genActionButtonsSingleSelection(_key: string, value: string): HTMLDivElement {
+    /**
+     * Reselects the neighbours reached by a single edge label: `keep` selects the
+     * nodes linked through that label, `exclude` selects those linked through any
+     * other label. Shared by the row icons and by clicking a distribution bar /
+     * value chip, mirroring the node-properties facet filter.
+     */
+    private applyEdgeLabelFacetFilter(_key: string, value: string, mode: 'keep' | 'exclude'): void {
+        const matchingNodeSelection = this.getNodesMatchingFilteredEdgeName(value, mode === 'exclude')
+        if (!matchingNodeSelection || matchingNodeSelection.length === 0) return
+
+        const interaction = this.uiManager.graph.renderer.getGraphInteraction()
+        interaction.clearNodeSelectionList()
+        if (matchingNodeSelection.length > 1) {
+            interaction.selectNodes(matchingNodeSelection)
+        } else {
+            interaction.selectNode(matchingNodeSelection[0].element, matchingNodeSelection[0].node)
+        }
+    }
+
+    private genActionButtonsSingleSelection(key: string, value: string): HTMLDivElement {
         const buttonKeep = createHtmlElement('button', {
             title: 'Select nodes linked with this label',
+            class: 'pvt-facet-action-select',
         }, [createIcon({ svgIcon: filterAdd }) ])
-        buttonKeep.addEventListener('click', () => {
-            const matchingNodeSelection = this.getNodesMatchingFilteredEdgeName(value)
-            if (!matchingNodeSelection) return
+        buttonKeep.addEventListener('click', () => this.applyEdgeLabelFacetFilter(key, value, 'keep'))
 
-            this.uiManager.graph.renderer.getGraphInteraction().clearNodeSelectionList()
-            if (matchingNodeSelection.length > 1) {
-                this.uiManager.graph.renderer.getGraphInteraction().selectNodes(matchingNodeSelection)
-            } else {
-                this.uiManager.graph.renderer.getGraphInteraction().selectNode(matchingNodeSelection[0].element, matchingNodeSelection[0].node)
-            }
-        })
-        
         const buttonExclude = createHtmlElement('button', {
             title: 'Exclude nodes linked with this label',
+            class: 'pvt-facet-action-exclude',
         }, [createIcon({ svgIcon: filterRemove }) ])
-        buttonExclude.addEventListener('click', () => {
-            const matchingNodeSelection = this.getNodesMatchingFilteredEdgeName(value, true)
-            if (!matchingNodeSelection) return
-
-            this.uiManager.graph.renderer.getGraphInteraction().clearNodeSelectionList()
-            if (matchingNodeSelection.length > 1) {
-                this.uiManager.graph.renderer.getGraphInteraction().selectNodes(matchingNodeSelection)
-            } else {
-                this.uiManager.graph.renderer.getGraphInteraction().selectNode(matchingNodeSelection[0].element, matchingNodeSelection[0].node)
-            }
-        })
+        buttonExclude.addEventListener('click', () => this.applyEdgeLabelFacetFilter(key, value, 'exclude'))
 
         const container = createHtmlElement('div', { class: 'pvt-aggregated-property-actions' }, [
             buttonKeep,

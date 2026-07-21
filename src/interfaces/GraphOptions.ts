@@ -6,6 +6,7 @@ import type { DeepPartial } from '../utils/utils'
 import type { GraphUI } from './GraphUI'
 import type { InterractionCallbacks } from './InterractionCallbacks'
 import type { LayoutOptions } from './LayoutOptions'
+import type { PivotickPlugin } from './Plugin'
 import type { EdgeFullStyle, GraphRendererOptions, NodeStyle } from './RendererOptions'
 import type { SimulationOptions } from './SimulationOptions'
 
@@ -45,6 +46,13 @@ export interface GraphOptions {
      * Options for the UI
      */
     UI?: DeepPartial<GraphUI>,
+
+    /**
+     * Plugins to install after the UI is built. Each is handed a
+     * {@link PluginContext} and can add UI elements, keybindings and lifecycle
+     * hooks. See {@link Graph.use} for imperative registration.
+     */
+    plugins?: PivotickPlugin[],
 
     /**
      * @private

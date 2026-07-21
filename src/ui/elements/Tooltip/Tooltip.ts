@@ -1,11 +1,14 @@
 import type { Edge } from '../../../Edge'
 import type { Node } from '../../../Node'
-import { createHtmlDL, createHtmlElement, createHtmlTemplate, makeDraggable } from '../../../utils/ElementCreation'
+import { createHtmlElement, createHtmlTemplate, makeDraggable } from '../../../utils/ElementCreation'
+import { createCopyButton, createPropertyList } from '../Sidebar/PropertyList'
+import { TitleFitController } from '../Sidebar/titleFit'
 import { tryResolveHTMLElement } from '../../../utils/Getters'
 import { edgeDescriptionGetter, edgeNameGetter, edgePropertiesGetter, nodeDescriptionGetter, nodeNameGetter, nodePropertiesGetter } from '../../../utils/GraphGetters'
 import { createButton } from '../../components/Button'
 import { graphEdgeIcon, pin, closeIcon, selectElement, focusElement } from '../../icons'
-import type { UIElement, UIManager } from '../../UIManager'
+import type { UIManager } from '../../UIManager'
+import { UIComponent } from '../../UIComponent'
 import './tooltip.scss'
 import type { Tooltip as TooltipOptions, MainHeader, PropertiesPanel } from '../../../interfaces/GraphUI'
 import { deepMerge } from '../../../utils/utils'
@@ -19,8 +22,7 @@ const defaultTooltipOptions = {
     allowPinning: true,
 } as Partial<TooltipOptions>
 
-export class Tooltip implements UIElement {
-    private uiManager: UIManager
+export class Tooltip extends UIComponent {
     private options: TooltipOptions
     public shadowLinkManager: ShadowLinkManager | null = null
 
@@ -43,8 +45,12 @@ export class Tooltip implements UIElement {
 
     private tooltipDataMap = new Map<HTMLElement, Node | Edge>()
 
+    // Auto-fits the live tooltip's title on resize; each pinned copy gets its own.
+    private titleFit?: TitleFitController
+    private pinnedTitleFits = new Set<TitleFitController>()
+
     constructor(uiManager: UIManager) {
-        this.uiManager = uiManager
+        super(uiManager)
         this.options = deepMerge(defaultTooltipOptions, this.uiManager.getOptions().tooltip) as TooltipOptions
     }
 
@@ -68,7 +74,7 @@ export class Tooltip implements UIElement {
         }
     }
 
-    public mount(container: HTMLElement | undefined) {
+    protected onMount(container: HTMLElement | undefined) {
         if (!container) return
 
         this.parentContainer = document.querySelector('body')!
@@ -92,30 +98,44 @@ export class Tooltip implements UIElement {
         this.shadowLinkManager = new ShadowLinkManager(this.shadowLinkContainer)
     }
 
-    public destroy() {
+    protected onDestroy() {
+        this.titleFit?.destroy()
+        this.titleFit = undefined
+        this.pinnedTitleFits.forEach(c => c.destroy())
+        this.pinnedTitleFits.clear()
         this.tooltip?.remove()
         this.tooltip = undefined
     }
 
-    public afterMount() {
+    protected onAfterMount() {
+        // Refit the live tooltip's title whenever it's resized (content change).
+        if (this.tooltip) {
+            this.titleFit = new TitleFitController(this.tooltip)
+        }
     }
 
-    public graphReady() {
+    // Render an entity title into the header name slot with the sidebar's
+    // auto-fit / type-aware treatment (fit runs once the slot has a width).
+    private renderTitle(nameElem: HTMLElement, actionElem: HTMLElement | null, text: string): void {
+        this.titleFit?.render(nameElem, actionElem, text)
+    }
+
+    protected onGraphReady() {
         if (!this.tooltip) return
 
-        this.uiManager.graph.renderer.getGraphInteraction().on('nodeHoverIn', this.nodeHovered.bind(this))
-        this.uiManager.graph.renderer.getGraphInteraction().on('nodeHoverOut', this.delayedHide.bind(this))
-        // this.uiManager.graph.renderer.getGraphInteraction().on('nodeHoverOut', () => { this.delayedHide() })
-        // this.uiManager.graph.renderer.getGraphInteraction().on('edgeHoverIn', this.edgeHovered.bind(this))
-        // this.uiManager.graph.renderer.getGraphInteraction().on('edgeHoverOut', () => { this.delayedHide() })
-        this.uiManager.graph.renderer.getGraphInteraction().on('canvasMousemove', this.updateMousePosition.bind(this))
-        this.uiManager.graph.renderer.getGraphInteraction().on('dragging', (_event: MouseEvent, node: Node) => {
+        this.trackInteraction('nodeHoverIn', this.nodeHovered.bind(this))
+        this.trackInteraction('nodeHoverOut', this.delayedHide.bind(this))
+        // this.trackInteraction('nodeHoverOut', () => { this.delayedHide() })
+        // this.trackInteraction('edgeHoverIn', this.edgeHovered.bind(this))
+        // this.trackInteraction('edgeHoverOut', () => { this.delayedHide() })
+        this.trackInteraction('canvasMousemove', this.updateMousePosition.bind(this))
+        this.trackInteraction('dragging', (_event: MouseEvent, node: Node) => {
             if (this.hoveredElementID === node.id) {
                 this.hide(node)
             }
         })
-        this.uiManager.graph.renderer.getGraphInteraction().on('canvasZoom', this.canvasZoomed.bind(this))
-        this.uiManager.graph.renderer.getGraphInteraction().on('simulationSlowTick', this.simulationSlowTick.bind(this))
+        this.trackInteraction('canvasZoom', this.canvasZoomed.bind(this))
+        this.trackInteraction('simulationSlowTick', this.simulationSlowTick.bind(this))
 
         this.tooltip.addEventListener('mouseenter', () => {
             if (this.hideTimeout) {
@@ -225,13 +245,13 @@ export class Tooltip implements UIElement {
         const nameElem = tooltipContainer.querySelector('.pvt-mainheader-nodeinfo-name')!
         const subtitleElem = tooltipContainer.querySelector('.pvt-mainheader-nodeinfo-subtitle')!
         const toprightElem = tooltipContainer.querySelector('.pvt-mainheader-topright')!
-        // const actionElem = tooltipContainer.querySelector('.pvt-mainheader-nodeinfo-action')!
+        const actionElem = tooltipContainer.querySelector('.pvt-mainheader-nodeinfo-action') as HTMLElement | null
 
         const properties = nodePropertiesGetter(node, this.propertiesOptions())
 
         previewElem.prepend(createNodePreview(node, { size: fixedPreviewSize, removeSelectionHighlight: true }))
 
-        nameElem.textContent = nodeNameGetter(node, this.headerOptions())
+        this.renderTitle(nameElem as HTMLElement, actionElem, nodeNameGetter(node, this.headerOptions()))
         subtitleElem.textContent = nodeDescriptionGetter(node, this.headerOptions())
 
         if (this.options.allowPinning) {
@@ -262,7 +282,7 @@ export class Tooltip implements UIElement {
         }
 
         const propertiesContainer = createHtmlElement('div', { class: 'pvt-properties-container' }, [
-            createHtmlDL(properties, node)
+            createPropertyList(properties, node)
         ]) as HTMLDivElement
 
         tooltipContainer.appendChild(mainheaderContent)
@@ -347,7 +367,7 @@ export class Tooltip implements UIElement {
         const nameElem = tooltipContainer.querySelector('.pvt-mainheader-nodeinfo-name')!
         const subtitleElem = tooltipContainer.querySelector('.pvt-mainheader-nodeinfo-subtitle')!
         const toprightElem = tooltipContainer.querySelector('.pvt-mainheader-topright')!
-        // const actionElem = tooltipContainer.querySelector('.pvt-mainheader-nodeinfo-action')!
+        const actionElem = tooltipContainer.querySelector('.pvt-mainheader-nodeinfo-action') as HTMLElement | null
 
         const pinButton = createButton({
             title: 'Pin Tooltip',
@@ -376,10 +396,10 @@ export class Tooltip implements UIElement {
 
         const properties = edgePropertiesGetter(edge, this.propertiesOptions())
 
-        nameElem.textContent = edgeNameGetter(edge, this.headerOptions())
+        this.renderTitle(nameElem as HTMLElement, actionElem, edgeNameGetter(edge, this.headerOptions()))
         subtitleElem.textContent = edgeDescriptionGetter(edge, this.headerOptions())
 
-        const propertiesContainer = createHtmlElement('div', { class: 'pvt-properties-container' }, [createHtmlDL(properties, edge)]) as HTMLDivElement
+        const propertiesContainer = createHtmlElement('div', { class: 'pvt-properties-container' }, [createPropertyList(properties, edge)]) as HTMLDivElement
 
         tooltipContainer.appendChild(mainheaderContent)
         tooltipContainer.appendChild(propertiesContainer)
@@ -468,6 +488,8 @@ export class Tooltip implements UIElement {
             this.triggerY = -2000
             this.tooltip.classList.remove('shown')
             this.tooltip.style.left = '-10000px'
+            // Release the last hover's title-fit closure; the next show re-renders it.
+            this.titleFit?.clear()
         }
     }
 
@@ -493,10 +515,23 @@ export class Tooltip implements UIElement {
         const clonedTooltip = this.tooltip.cloneNode(true) as HTMLDivElement
         this.tooltipDataMap.set(clonedTooltip, this.hoveredElement)
 
+        // Its own title-fit controller, so resizing this copy refits its title
+        // (the live tooltip's controller only tracks the current hover). Created
+        // once the copy is in the DOM (below), disposed when it closes.
+        let pinnedTitleFit: TitleFitController | undefined
+
         clonedTooltip.classList.add('pvt-tooltip-floating')
 
         // The clone lost the live tooltip's listeners; re-wire the picture → lightbox click.
         clonedTooltip.addEventListener('click', (event) => this.handleLightboxClick(event))
+
+        // cloneNode() also dropped the copy buttons' listeners (property values and the
+        // fitted title). Rebuild each from its stashed text, keeping its layout classes.
+        clonedTooltip.querySelectorAll<HTMLElement>('.pvt-prop-copy').forEach((dead) => {
+            const fresh = createCopyButton(dead.dataset.copyText ?? '')
+            fresh.className = dead.className
+            dead.replaceWith(fresh)
+        })
 
         clonedTooltip.querySelector('.pin-button')?.remove()
         const closeButton = createButton({
@@ -509,6 +544,10 @@ export class Tooltip implements UIElement {
                 this.tooltipDataMap.delete(clonedTooltip)
                 // this.removeShadowLink(clonedTooltip)
                 this.shadowLinkManager?.removeShadowLink(clonedTooltip)
+                if (pinnedTitleFit) {
+                    pinnedTitleFit.destroy()
+                    this.pinnedTitleFits.delete(pinnedTitleFit)
+                }
                 clonedTooltip.remove()
             },
         })
@@ -561,6 +600,16 @@ export class Tooltip implements UIElement {
         })
         this.parentContainer.appendChild(clonedTooltip)
         this.shadowLinkManager?.addShadowLink(clonedTooltip)
+
+        // Refit this copy's title to its own width, now and on every resize.
+        const pinnedName = clonedTooltip.querySelector<HTMLElement>('.pvt-mainheader-nodeinfo-name')
+        const pinnedAction = clonedTooltip.querySelector<HTMLElement>('.pvt-mainheader-nodeinfo-action')
+        const titleText = pinnedName?.dataset.titleText
+        if (pinnedName && titleText !== undefined) {
+            pinnedTitleFit = new TitleFitController(clonedTooltip)
+            this.pinnedTitleFits.add(pinnedTitleFit)
+            pinnedTitleFit.render(pinnedName, pinnedAction, titleText)
+        }
     }
 
     private updateShadowLinks(recalculateBBoxes = false): void {

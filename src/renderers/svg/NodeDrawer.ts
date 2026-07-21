@@ -3,11 +3,12 @@ import { transition as d3Transition } from 'd3-transition'
 import { Node } from '../../Node'
 import { Edge } from '../../Edge'
 import type { Graph } from '../../Graph'
-import { GraphSvgRenderer, defaultLabelStyle } from './GraphSvgRenderer'
+import { GraphSvgRenderer } from './GraphSvgRenderer'
+import { defaultLabelStyle } from '../../styles/defaults'
 import { resolveIcon, tryResolveNumber, tryResolveString } from '../../utils/Getters'
 import type { CustomNodeShape, GraphRendererOptions, ImageFit, NodeShape, NodeStyle } from '../../interfaces/RendererOptions'
 import { ClusterDrawer } from './ClusterDrawer'
-import { forceConstrainParent } from '../../plugins/layout/MicroForce'
+import { forceConstrainParent } from '../../plugins/d3Forces/ForceConstrainParent'
 import { imageOff } from '../../ui/icons'
 d3Select.prototype.transition = d3Transition
 
@@ -589,7 +590,10 @@ export class NodeDrawer {
 
             const tailChars = 3
             const headChars = charsToKeep - tailChars
-            label = label.slice(0, headChars) + '…' + label.slice(label.length - tailChars)
+            const truncated = label.slice(0, headChars) + '…' + label.slice(label.length - tailChars)
+            // Near the threshold head+…+tail can be as long as (or longer than) the raw
+            // label — only ellipsize when it actually shortens the string.
+            if (truncated.length < label.length) label = truncated
         }
 
         return [fontSize, label]
@@ -605,7 +609,9 @@ export class NodeDrawer {
             this.graph.toggleExpandNode(node)
             if (!expand) { // reheating the simulation is done after the opening transition completes
                 this.graph.simulation.reheat(0.05)
-                this.graph.renderer.fitAndCenterWhenSettled()
+                if (this.graph.simulation.isFitViewOnExpandCollapse()) {
+                    this.graph.renderer.fitAndCenterWhenSettled()
+                }
             }
         }
 
@@ -659,7 +665,9 @@ export class NodeDrawer {
                 .transition()
                 .duration(250)
                 .on('end', () => {
-                    graph.renderer.fitAndCenterWhenSettled()
+                    if (graph.simulation.isFitViewOnExpandCollapse()) {
+                        graph.renderer.fitAndCenterWhenSettled()
+                    }
                 })
                 .attr('transform', `translate(${-offset}, ${-offset})`)
         }

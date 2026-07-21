@@ -17,7 +17,7 @@ export default defineConfig({
             output: {
                 ...base.build.rollupOptions.output,
                 globals: {},
-                footer: 'if(typeof window!="undefined"){var C=window.Pivotick;window.Pivotick=C.Pivotick;window.Pivotick.Node=C.Node;window.Pivotick.Edge=C.Edge;window.Pivotick.ColorPaletteMapper=C.ColorPaletteMapper}'
+                footer: 'if(typeof window!="undefined"){var C=window.Pivotick;window.Pivotick=C.Pivotick;window.Pivotick.Node=C.Node;window.Pivotick.Edge=C.Edge;window.Pivotick.ColorPaletteMapper=C.ColorPaletteMapper;window.Pivotick.UIComponent=C.UIComponent}'
             }
         }
     }

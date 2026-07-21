@@ -2,6 +2,8 @@
 title: "Filter / query engine"
 category: I
 order: 1
+aside: false
+pageClass: gallery-wide
 ---
 
 # Filter / query engine
@@ -43,6 +45,7 @@ const onUnmounted = () => { graph.value = null }
     :options="options"
     :onLoadedCallback="onLoaded"
     :onUnmountedCallback="onUnmounted"
+    useInlineStyle="margin: 1em 0; height: 560px; border: 1px solid #cccccc99; border-radius: 8px"
 ></Pivotick>
 
 <p class="flt-hint">Stack them: <em>type = api</em> then <em>load ≥ 70</em> leaves just the one busy API.</p>

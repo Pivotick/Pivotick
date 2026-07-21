@@ -8,7 +8,7 @@ import { Note } from '../../Note'
 import { Node } from '../../Node'
 import type { GraphRendererOptions, NodeStyle } from '../../interfaces/RendererOptions'
 import { createHtmlElement, createHtmlTemplate, createIcon, createSvgElement } from '../../utils/ElementCreation'
-import { checkmark, closeIcon, edit, link, magnifyingGlass, trash } from '../../ui/icons'
+import { checkmark, closeIcon, contrast, edit, link, magnifyingGlass, trash } from '../../ui/icons'
 import { pickNode } from '../../ui/components/NodePickers'
 import { nodeNameGetter } from '../../utils/GraphGetters'
 import { applyNodeReferenceColor } from '../../utils/NoteReferenceStyle'
@@ -39,21 +39,6 @@ export class NoteDrawer {
         this.graph = graph
         this.graphSvgRenderer = graphSvgRenderer
         this.noteContentRenderer = new NoteContentRenderer(this.graph)
-
-        this.graph.on('ready', () => {
-            this.graphSvgRenderer.getGraphInteraction().on('canvasZoom', this.canvasZoomed.bind(this))
-            this.graphSvgRenderer.getGraphInteraction().on('simulationSlowTick', this.simulationSlowTick.bind(this))
-        })
-    }
-
-    private canvasZoomed() {
-        this.updateShadowLinkBoundBoxes()
-        this.updateShadowLinks()
-    }
-
-    private simulationSlowTick() {
-        this.updateShadowLinkBoundBoxes()
-        this.updateShadowLinks()
     }
 
     public render(noteSelection: Selection<SVGGElement, Note, null, undefined>, note: Note): void {
@@ -86,6 +71,7 @@ export class NoteDrawer {
         const container = document.createElement('div')
         container.classList.add('pvt-note')
         container.style.setProperty('--note-color', note.color)
+        container.classList.toggle('pvt-note--terminal', note.surface === 'terminal')
 
         if (note.isEditing()) {
             container.classList.add('editing')
@@ -110,10 +96,38 @@ export class NoteDrawer {
             class: 'pvt-note-header',
         })
 
-        header.appendChild(this.createColorPills(container, note))
+        // Left cluster: colour pills + the surface toggle (both edit-only), so
+        // the restyle affordances stay grouped away from the right-hand actions.
+        const left = createHtmlElement('div', { class: 'pvt-note-head-left' })
+        left.appendChild(this.createColorPills(container, note))
+        left.appendChild(this.createSurfaceToggle(container, note))
+
+        header.appendChild(left)
         header.appendChild(this.createActionButtons(note))
 
         return header
+    }
+
+    /** Small toggle beside the colour pills: switches jewel ↔ terminal surface. */
+    private createSurfaceToggle(container: HTMLDivElement, note: Note): HTMLButtonElement {
+        const toggle = createButton({
+            title: 'Toggle terminal look',
+            svgIcon: contrast,
+            class: ['pvt-note-surface-toggle'],
+            variant: 'outline-secondary',
+            size: 'xs',
+            onClick: () => {
+                const next = note.surface === 'terminal' ? 'jewel' : 'terminal'
+                note.setSurface(next)
+                container.classList.toggle('pvt-note--terminal', next === 'terminal')
+                toggle.classList.toggle('is-active', next === 'terminal')
+                this.graph.noteManager.editNote(note)
+            }
+        })
+
+        toggle.classList.toggle('is-active', note.surface === 'terminal')
+
+        return toggle
     }
 
     private createLink(note: Note): HTMLDivElement {
@@ -204,28 +218,12 @@ export class NoteDrawer {
                         note.setAttachedElement(undefined)
                         this.graph.noteManager.editNote(note)
                         this.refreshLink(note)
-                        const rootHtml = root as unknown as HTMLElement
-                        this.graph.UIManager.tooltip?.shadowLinkManager?.removeShadowLink(rootHtml)
                     },
                 })
 
                 row.appendChild(unlinkButton)
 
                 linkContent.appendChild(row)
-
-                const rootHtml = root as unknown as HTMLElement
-                this.graph.UIManager.tooltip?.shadowLinkManager?.removeShadowLink(rootHtml)
-
-                requestAnimationFrame(() => {
-                    const rootHtml = root as unknown as HTMLElement
-                    const shadowLinkManager = this.graph.UIManager.tooltip?.shadowLinkManager
-                    shadowLinkManager?.setBoundingBox(rootHtml, {
-                        source: rootHtml.getBoundingClientRect(),
-                        target: node.getGraphElement()!.getBoundingClientRect(),
-                    })
-                    shadowLinkManager?.addShadowLink(rootHtml)
-                    shadowLinkManager?.updateShadowLink(rootHtml, this.getShadowLinkSourcePoint(rootHtml), false)
-                })
             } else {
                 const unresolved = document.createElement('span')
                 unresolved.classList.add('pvt-node-reference', 'unresolved')
@@ -246,28 +244,6 @@ export class NoteDrawer {
             linkContent.appendChild(empty)
         }
     }
-
-    /**
-     * Screen-space start point for a note's shadow link: the note's left edge at
-     * the vertical centre of its link handle. Measured live from the rendered DOM
-     * every draw, so it stays correct across zoom, drag and the note's initial
-     * layout settling. The shadow link path is drawn in screen coordinates (see
-     * ShadowLinkManager), matching how the target point is taken from the node's
-     * bounding box. Falls back to the note's top edge if the handle isn't laid
-     * out yet (e.g. the first frame after a note is linked at construction time).
-     */
-    private getShadowLinkSourcePoint(noteEl: HTMLElement): { x: number, y: number } {
-        const noteBCR = noteEl.getBoundingClientRect()
-        const handle = noteEl.querySelector('.pvt-note-link-placeholder-icon') as HTMLElement | null
-        const handleBCR = handle?.getBoundingClientRect()
-
-        const y = handleBCR && handleBCR.height > 0
-            ? handleBCR.top + handleBCR.height / 2 - 5 // -5 for slightly better ui
-            : noteBCR.top
-        return { x: noteBCR.left, y }
-    }
-
-    // Move shadowlink start point on note depending on target direction
 
     private createContent(note: Note): HTMLDivElement {
         const div = document.createElement('div')
@@ -353,11 +329,6 @@ export class NoteDrawer {
             size: 'xs',
             onClick: () => {
                 this.graph.noteManager.removeNote(note)
-                const root = note.getGraphElement()
-                if (root) {
-                    const rootHtml = root as unknown as HTMLElement
-                    this.graph.UIManager.tooltip?.shadowLinkManager?.removeShadowLink(rootHtml)
-                }
             }
         })
 
@@ -472,6 +443,10 @@ export class NoteDrawer {
         this.updateEditButtonState(false, note)
 
         this.graph.noteManager.editNote(note)
+
+        // Catch up any content change made programmatically while the editor was
+        // open — its rebuild was deferred (see GraphSvgRenderer note branch).
+        this.graphSvgRenderer.dataUpdate()
     }
 
     private cancelEditMode(note: Note): void {
@@ -494,6 +469,10 @@ export class NoteDrawer {
         editor.style.display = 'none'
 
         this.graph.editing.connectManager.cancel()
+
+        // Cancel discards the user's in-progress edit; a content change made
+        // programmatically mid-edit was deferred, so rebuild to surface it.
+        this.graphSvgRenderer.dataUpdate()
     }
 
     private bindEditing(contentContainer: HTMLDivElement, note: Note): void {
@@ -517,40 +496,10 @@ export class NoteDrawer {
         })
     }
 
-    private updateShadowLinkBoundBoxes(): void {
-        const shadowLinkManager = this.graph.UIManager.tooltip?.shadowLinkManager
-
-        this.graph.getNotes().forEach(note => {
-
-            const attached = note.getAttachedElement()
-            if (attached && attached.type === 'node') {
-                const node = this.graph.getMutableNode(attached.id)
-                if (node) {
-                    const root = note.getGraphElement()
-                    const rootHtml = root as unknown as HTMLElement
-                    shadowLinkManager?.setBoundingBox(rootHtml, {
-                        source: rootHtml.getBoundingClientRect(),
-                        target: node.getGraphElement()!.getBoundingClientRect(),
-                    })
-                }
-            }
-        })
-    }
-
-    private updateShadowLinks(): void {
-        const shadowLinkManager = this.graph.UIManager.tooltip?.shadowLinkManager
-        for (const note of this.graph.getNotes()) {
-            if (!note.getAttachedElement()) continue
-            const noteEl = note.getGraphElement() as unknown as HTMLElement | null
-            if (noteEl) {
-                shadowLinkManager?.updateShadowLink(noteEl, this.getShadowLinkSourcePoint(noteEl), false)
-            }
-        }
-    }
-
     private makeDraggable(noteSelection: Selection<SVGGElement, Note, null, undefined>, note: Note): void {
 
-        const header = noteSelection.select<SVGRectElement>('.pvt-note-header')
+        // The whole card is the drag surface now (there is no header band).
+        const card = noteSelection.select<HTMLElement>('.pvt-note')
 
         let isDragging = false
 
@@ -560,8 +509,15 @@ export class NoteDrawer {
         let startNoteX = 0
         let startNoteY = 0
 
-        header
+        card
             .on('mousedown', (evt: MouseEvent) => {
+
+                // Never drag from interactive chrome, the editor, links or refs.
+                const target = evt.target as HTMLElement
+                if (target.closest('button, a, .pvt-note-resize-handle, .pvt-node-reference, .pvt-note-color-pill, .pvt-note-editor')) return
+                // At rest the whole card is the drag surface; while editing only
+                // the header band drags (the body is the textarea then).
+                if (note.isEditing() && !target.closest('.pvt-note-header')) return
 
                 evt.preventDefault()
                 evt.stopPropagation()
@@ -590,7 +546,8 @@ export class NoteDrawer {
                     window.getSelection()?.removeAllRanges()
                     document.body.classList.add('pvt-disable-selection') // disable selection globally
 
-                    this.updateShadowLinks()
+                    // Only the note moved: re-anchor its connector, not every node/edge.
+                    this.graphSvgRenderer.updateNoteEdgePositions()
                 }
 
                 const onMouseUp = () => {
@@ -667,12 +624,8 @@ export class NoteDrawer {
 
                 this.updateNoteSize(noteSelection, note)
 
-                // Resizing changes the note's width/height, so refresh both the
-                // cached source bounding box (used to anchor the link to the
-                // note's edge) and the link itself, rather than waiting for the
-                // next tick or pan.
-                this.updateShadowLinkBoundBoxes()
-                this.updateShadowLinks()
+                // Only this note's box changed: re-anchor its connector, not everything.
+                this.graphSvgRenderer.updateNoteEdgePositions()
             }
 
             const onMouseUp = () => {

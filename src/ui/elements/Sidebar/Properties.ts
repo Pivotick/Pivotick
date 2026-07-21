@@ -1,7 +1,9 @@
-import { createHtmlDL, createHtmlElement, createHtmlTemplate, createIcon } from '../../../utils/ElementCreation'
+import { createHtmlElement, createHtmlTemplate, createIcon } from '../../../utils/ElementCreation'
+import { createPropertyList } from './PropertyList'
 import type { Node } from '../../../Node'
 import type { Edge } from '../../../Edge'
-import type { UIElement, UIManager } from '../../UIManager'
+import type { UIManager } from '../../UIManager'
+import { UIComponent } from '../../UIComponent'
 import './properties.scss'
 import { edgePropertiesGetter, nodePropertiesGetter } from '../../../utils/GraphGetters'
 import { filterAdd, filterRemove } from '../../icons'
@@ -12,8 +14,7 @@ import { aggregateProperties, createTableForAggregatedProperties } from '../../.
 
 
 
-export class SidebarProperties implements UIElement {
-    private uiManager: UIManager
+export class SidebarProperties extends UIComponent {
 
     private panel?: HTMLDivElement
     private header?: HTMLDivElement
@@ -22,11 +23,11 @@ export class SidebarProperties implements UIElement {
     private renderCb?: ((element: Node | Edge | Node[] | Edge[] | null) => HTMLElement | string) | HTMLElement | string
 
     constructor(uiManager: UIManager) {
-        this.uiManager = uiManager
+        super(uiManager)
         this.renderCb = typeof this.uiManager.getOptions().propertiesPanel.render === 'function' ? this.uiManager.getOptions().propertiesPanel.render : undefined
     }
 
-    public mount(rootContainer: HTMLElement | undefined) {
+    protected onMount(rootContainer: HTMLElement | undefined) {
         if (!rootContainer) return
 
         const template = `
@@ -41,12 +42,12 @@ export class SidebarProperties implements UIElement {
         rootContainer.appendChild(this.panel)
     }
 
-    public destroy() {
+    protected onDestroy() {
         this.panel?.remove()
         this.panel = undefined
     }
 
-    public afterMount() {
+    protected onAfterMount() {
         this.clearProperties()
     }
 
@@ -62,7 +63,7 @@ export class SidebarProperties implements UIElement {
         this.hidePanel()
     }
 
-    public graphReady(): void { }
+    protected onGraphReady(): void { }
 
     private renderCustomContent(element: Node | Edge | Node[] | Edge[] | null) {
         if (!this.body || !this.renderCb) return
@@ -110,18 +111,10 @@ export class SidebarProperties implements UIElement {
             return
         }
 
-        const template = `
-<div class="pvt-properties-container">
-    <div class="dl-container">
-    </div>
-</div>`
-        const propertiesContainer = createHtmlTemplate(template) as HTMLDivElement
-        const dlContainer = propertiesContainer.querySelector('.dl-container')
-
-        if (dlContainer) {
-            const properties = nodePropertiesGetter(node, this.uiManager.getOptions().propertiesPanel)
-            dlContainer.append(createHtmlDL(properties, node))
-        }
+        const properties = nodePropertiesGetter(node, this.uiManager.getOptions().propertiesPanel)
+        const propertiesContainer = createHtmlElement('div', { class: 'pvt-properties-container' }, [
+            createPropertyList(properties, node),
+        ])
 
         this.body.innerHTML = ''
         this.body.appendChild(propertiesContainer)
@@ -137,18 +130,10 @@ export class SidebarProperties implements UIElement {
             return
         }
 
-        const template = `
-<div class="pvt-properties-container">
-    <div class="dl-container">
-    </div>
-</div>`
-        const propertiesContainer = createHtmlTemplate(template) as HTMLDivElement
-        const dlContainer = propertiesContainer.querySelector('.dl-container')
-
-        if (dlContainer) {
-            const properties = edgePropertiesGetter(edge, this.uiManager.getOptions().propertiesPanel)
-            dlContainer.append(createHtmlDL(properties, edge))
-        }
+        const properties = edgePropertiesGetter(edge, this.uiManager.getOptions().propertiesPanel)
+        const propertiesContainer = createHtmlElement('div', { class: 'pvt-properties-container' }, [
+            createPropertyList(properties, edge),
+        ])
 
         this.body.innerHTML = ''
         this.body.appendChild(propertiesContainer)
@@ -183,7 +168,12 @@ export class SidebarProperties implements UIElement {
                 allProperties.push(properties)
             })
             const aggregatedProperties = aggregateProperties(allProperties)
-            const aggregatedPropertiesDiv = createTableForAggregatedProperties(aggregatedProperties, nodes.length, this.genActionButtons.bind(this))
+            const aggregatedPropertiesDiv = createTableForAggregatedProperties(
+                aggregatedProperties,
+                nodes.length,
+                this.genActionButtons.bind(this),
+                this.applyNodeFacetFilter.bind(this)
+            )
             div.appendChild(aggregatedPropertiesDiv)
         }
 
@@ -218,6 +208,7 @@ export class SidebarProperties implements UIElement {
                 allProperties.push(properties)
             })
             const aggregatedProperties = aggregateProperties(allProperties)
+            // No facet-filter callback here: edge selection filtering runs on nodes, so bars/chips stay non-clickable.
             const aggregatedPropertiesDiv = createTableForAggregatedProperties(aggregatedProperties, edges.length, this.genActionButtons.bind(this))
             div.appendChild(aggregatedPropertiesDiv)
         }
@@ -226,30 +217,40 @@ export class SidebarProperties implements UIElement {
         this.body.appendChild(propertiesContainer)
     }
 
+    /**
+     * Narrows the current node selection by a single facet value: `keep` drops
+     * every node that does not carry the value, `exclude` drops those that do.
+     * Shared by the row icons and by clicking a distribution bar / value chip.
+     *
+     * The value is read through `nodePropertiesGetter` — the same source the
+     * facet was built from — rather than raw `getData()`, so getter-derived
+     * fields (e.g. `id`, which lives on `node.id`) match instead of missing.
+     */
+    private applyNodeFacetFilter(key: string, value: string, mode: 'keep' | 'exclude'): void {
+        const propertiesPanel = this.uiManager.getOptions().propertiesPanel
+        const interaction = this.uiManager.graph.renderer.getGraphInteraction()
+        const toRemove = interaction.getSelectedNodes()
+            .filter((nodeSelection: NodeSelection<unknown>) => {
+                const nodeValue = nodePropertiesGetter(nodeSelection.node, propertiesPanel)
+                    .find((prop) => prop.name === key)?.value
+                // Strict: the facet is type-sensitive, so 80 and '80' are distinct rows.
+                return mode === 'keep' ? nodeValue !== value : nodeValue === value
+            })
+        interaction.removeNodesFromSelection(toRemove)
+    }
+
     private genActionButtons(key: string, value: string): HTMLDivElement {
         const buttonKeep = createHtmlElement('button', {
-            title: 'Select Similar',
+            title: 'Keep only nodes with this value',
+            class: 'pvt-facet-action-select',
         }, [createIcon({ svgIcon: filterAdd }) ])
-        buttonKeep.addEventListener('click', () => {
-            const matchingNodes = this.uiManager.graph.renderer.getGraphInteraction().getSelectedNodes()
-                .filter((nodeSelection: NodeSelection<unknown>) => {
-                    const node = nodeSelection.node
-                    return node.getData()[key] != value
-                })
-            this.uiManager.graph.renderer.getGraphInteraction().removeNodesFromSelection(matchingNodes)
-        })
-        
+        buttonKeep.addEventListener('click', () => this.applyNodeFacetFilter(key, value, 'keep'))
+
         const buttonExclude = createHtmlElement('button', {
-            title: 'Exclude Similar',
+            title: 'Exclude nodes with this value',
+            class: 'pvt-facet-action-exclude',
         }, [createIcon({ svgIcon: filterRemove }) ])
-        buttonExclude.addEventListener('click', () => {
-            const matchingNodes = this.uiManager.graph.renderer.getGraphInteraction().getSelectedNodes()
-                .filter((nodeSelection: NodeSelection<unknown>) => {
-                    const node = nodeSelection.node
-                    return node.getData()[key] == value
-                })
-            this.uiManager.graph.renderer.getGraphInteraction().removeNodesFromSelection(matchingNodes)
-        })
+        buttonExclude.addEventListener('click', () => this.applyNodeFacetFilter(key, value, 'exclude'))
 
         const container = createHtmlElement('div', { class: 'pvt-aggregated-property-actions' }, [
             buttonKeep,
