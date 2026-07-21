@@ -1,0 +1,63 @@
+@use "../pivotick" as pvt;
+
+// Body-appended, caret-anchored suggestion list (see ui/components/Typeahead.ts).
+// Position (left/top/fixed) is set inline; everything visual lives here.
+.pvt-typeahead {
+    z-index: 9999;
+    min-width: 160px;
+    max-width: 320px;
+    max-height: 240px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px;
+    border-radius: 6px;
+    background-color: color-mix(in srgb, var(--pvt-bg) 82%, white);
+    box-shadow: var(--pvt-graph-navigation-control-container-shadow);
+    animation: pvt-dropdown-open 120ms ease-out forwards;
+
+    .pvt-typeahead__item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 7px;
+        border-radius: 4px;
+        cursor: pointer;
+        color: var(--pvt-text-color-4);
+        font-size: 0.95em;
+        white-space: nowrap;
+
+        &:hover,
+        &.active {
+            background-color: var(--pvt-bg-color-8);
+        }
+    }
+
+    // Node-reference row: preview vignette + main label (built by NoteDrawer's renderItem).
+    .pvt-typeahead__node {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+
+        .pvt-typeahead__node-preview {
+            @include pvt.node-preview-container;
+            flex-shrink: 0;
+            width: 26px;
+            height: 26px;
+
+            .pvt-node-preview-icon {
+                width: 22px;
+                height: 22px;
+            }
+        }
+
+        .pvt-typeahead__node-name {
+            @include pvt.node-main-text-element;
+            font-size: 1em;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
+}
