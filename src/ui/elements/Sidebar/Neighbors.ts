@@ -18,6 +18,11 @@ import { createNodePreview } from '../../../utils/NodePreview'
 
 export class SidebarNeighbors extends UIComponent {
 
+    // Cap the neighbour graph: a very high-degree node otherwise builds an ego
+    // graph of thousands of SVG elements that re-lays-out on every main-graph
+    // frame (drag/zoom), dominating frame time. Stats/List tabs still show all.
+    private static readonly MAX_EGO_NEIGHBORS = 50
+
     private panel?: HTMLDivElement
     private header?: HTMLDivElement
     private body?: HTMLDivElement
@@ -251,10 +256,37 @@ export class SidebarNeighbors extends UIComponent {
             return n.getDeepestNodeClone()?.visible ?? false
         })
 
+        // Cap the neighbourhood: keep the ego node plus up to MAX_EGO_NEIGHBORS
+        // neighbours (in natural order, so a smaller neighbourhood is unchanged)
+        // and fold the remainder into a single "+N more" summary node, so a hub
+        // node doesn't produce a huge, reflow-heavy ego graph. The Stats and List
+        // tabs still report every connection.
+        const egoIdStr = egoNode.id.toString()
+        const visibleNeighbors = test.filter((n) => n.id.toString() !== egoIdStr)
+        const keptNeighbors = visibleNeighbors.slice(0, SidebarNeighbors.MAX_EGO_NEIGHBORS)
+        const hiddenCount = visibleNeighbors.length - keptNeighbors.length
+        const keptIds = new Set<string>([egoIdStr, ...keptNeighbors.map((n) => n.id.toString())])
+
+        const egoNodes: RawNode[] = [egoNode, ...keptNeighbors].map((n) => n.toDict(true) as RawNode)
+        const egoEdgeList: RawEdge[] = [...egoEdges.values()]
+            .filter((e) => keptIds.has(e.from.id.toString()) && keptIds.has(e.to.id.toString()))
+            .map((e) => e.toDict() as RawEdge)
+
+        if (hiddenCount > 0) {
+            const moreId = `__ego_more__${egoIdStr}`
+            egoNodes.push({
+                id: moreId,
+                data: { label: `+${hiddenCount} more` },
+                style: { shape: 'square', color: 'var(--pvt-bg-color-5)', textColor: 'var(--pvt-text-color-4)', size: 26 },
+                expanded: false,
+            })
+            egoEdgeList.push({ id: `${moreId}__edge`, from: egoIdStr, to: moreId, data: {} })
+        }
+
         // TODO: If cluster node is expanded, also expand it in the ego graph
         const egoGraphData: RelaxedGraphData = {
-            nodes: test.map((n) => n.toDict(true) as RawNode),
-            edges: [...egoEdges.values()].map(e => e.toDict() as RawEdge)
+            nodes: egoNodes,
+            edges: egoEdgeList,
         }
         
         const egoGraphOptions: GraphOptions = {
