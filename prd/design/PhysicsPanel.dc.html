@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
+</helmet>
+<div style="background:#1d2024;border:1px solid #34383f;border-radius:15px;padding:16px;box-shadow:0 26px 60px rgba(0,0,0,.55);width:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:13px;color:#d6d9de">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+    <div style="display:flex;align-items:center;gap:8px;font-weight:600;color:#f2f4f7"><i class="ph-bold ph-atom" style="font-size:17px;color:{{ accent }}"></i>Physics</div>
+    <i class="ph ph-x" style="font-size:15px;color:#7d828a;cursor:pointer"></i>
+  </div>
+  <div style="display:flex;gap:2px;background:#15181c;border:1px solid #34383f;border-radius:9px;padding:3px;margin-bottom:16px">
+    <div onClick="{{ setPresetTight }}" style="flex:1;text-align:center;padding:6px 0;border-radius:7px;font-size:12px;cursor:pointer;background:{{ tightBg }};color:{{ tightColor }}">Tight</div>
+    <div onClick="{{ setPresetLoose }}" style="flex:1;text-align:center;padding:6px 0;border-radius:7px;font-size:12px;cursor:pointer;background:{{ looseBg }};color:{{ looseColor }}">Loose</div>
+    <div onClick="{{ setPresetTree }}" style="flex:1;text-align:center;padding:6px 0;border-radius:7px;font-size:12px;cursor:pointer;background:{{ treeBg }};color:{{ treeColor }}">Tree</div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:15px;margin-bottom:16px">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between"><span style="display:flex;align-items:center;gap:6px;color:#aeb4bd;font-size:12px"><i class="ph ph-magnet" style="font-size:15px;color:#7d828a"></i>Repulsion</span><span style="color:#f2f4f7;font-size:12px;font-variant-numeric:tabular-nums">{{ repulsion }}</span></div>
+      <div data-param="repulsion" onPointerDown="{{ onDrag }}" style="position:relative;height:14px;display:flex;align-items:center;cursor:pointer"><div style="position:absolute;left:0;right:0;height:4px;background:#2f333b;border-radius:2px"></div><div style="position:absolute;left:0;height:4px;width:{{ repulsionFill }};background:{{ accent }};border-radius:2px"></div><div style="position:absolute;left:{{ repulsionFill }};top:50%;width:13px;height:13px;margin-left:-6px;margin-top:-6px;background:#eef1f5;border:2px solid {{ accent }};border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.5)"></div></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between"><span style="display:flex;align-items:center;gap:6px;color:#aeb4bd;font-size:12px"><i class="ph ph-arrows-horizontal" style="font-size:15px;color:#7d828a"></i>Link distance</span><span style="color:#f2f4f7;font-size:12px;font-variant-numeric:tabular-nums">{{ linkDist }}</span></div>
+      <div data-param="linkDist" onPointerDown="{{ onDrag }}" style="position:relative;height:14px;display:flex;align-items:center;cursor:pointer"><div style="position:absolute;left:0;right:0;height:4px;background:#2f333b;border-radius:2px"></div><div style="position:absolute;left:0;height:4px;width:{{ linkDistFill }};background:{{ accent }};border-radius:2px"></div><div style="position:absolute;left:{{ linkDistFill }};top:50%;width:13px;height:13px;margin-left:-6px;margin-top:-6px;background:#eef1f5;border:2px solid {{ accent }};border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.5)"></div></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between"><span style="display:flex;align-items:center;gap:6px;color:#aeb4bd;font-size:12px"><i class="ph ph-circle-dashed" style="font-size:15px;color:#7d828a"></i>Collision radius</span><span style="color:#f2f4f7;font-size:12px;font-variant-numeric:tabular-nums">{{ collision }}</span></div>
+      <div data-param="collision" onPointerDown="{{ onDrag }}" style="position:relative;height:14px;display:flex;align-items:center;cursor:pointer"><div style="position:absolute;left:0;right:0;height:4px;background:#2f333b;border-radius:2px"></div><div style="position:absolute;left:0;height:4px;width:{{ collisionFill }};background:{{ accent }};border-radius:2px"></div><div style="position:absolute;left:{{ collisionFill }};top:50%;width:13px;height:13px;margin-left:-6px;margin-top:-6px;background:#eef1f5;border:2px solid {{ accent }};border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.5)"></div></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between"><span style="display:flex;align-items:center;gap:6px;color:#aeb4bd;font-size:12px"><i class="ph ph-wind" style="font-size:15px;color:#7d828a"></i>Friction</span><span style="color:#f2f4f7;font-size:12px;font-variant-numeric:tabular-nums">{{ friction }}</span></div>
+      <div data-param="friction" onPointerDown="{{ onDrag }}" style="position:relative;height:14px;display:flex;align-items:center;cursor:pointer"><div style="position:absolute;left:0;right:0;height:4px;background:#2f333b;border-radius:2px"></div><div style="position:absolute;left:0;height:4px;width:{{ frictionFill }};background:{{ accent }};border-radius:2px"></div><div style="position:absolute;left:{{ frictionFill }};top:50%;width:13px;height:13px;margin-left:-6px;margin-top:-6px;background:#eef1f5;border:2px solid {{ accent }};border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.5)"></div></div>
+    </div>
+  </div>
+  <div onClick="{{ toggleRun }}" style="display:flex;align-items:center;justify-content:center;gap:7px;height:36px;background:{{ accent }};border-radius:9px;color:#0b1020;font-weight:600;cursor:pointer"><i class="ph-bold {{ runIcon }}" style="font-size:15px"></i>{{ runLabel }} simulation</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:262,&quot;height&quot;:380},&quot;repulsion&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:70,&quot;min&quot;:0,&quot;max&quot;:100,&quot;tsType&quot;:&quot;number&quot;},&quot;linkDist&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:150,&quot;min&quot;:40,&quot;max&quot;:260,&quot;tsType&quot;:&quot;number&quot;},&quot;collision&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:26,&quot;min&quot;:4,&quot;max&quot;:60,&quot;tsType&quot;:&quot;number&quot;},&quot;friction&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:28,&quot;min&quot;:0,&quot;max&quot;:100,&quot;tsType&quot;:&quot;number&quot;},&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#5b8cff&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;running&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;preset&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;loose&quot;,&quot;options&quot;:[&quot;tight&quot;,&quot;loose&quot;,&quot;tree&quot;],&quot;tsType&quot;:&quot;string&quot;},&quot;onDrag&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(e:any)=&gt;void&quot;},&quot;toggleRun&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;()=&gt;void&quot;},&quot;setPresetTight&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;()=&gt;void&quot;},&quot;setPresetLoose&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;()=&gt;void&quot;},&quot;setPresetTree&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;()=&gt;void&quot;}}">
+class Component extends DCLogic {
+  ranges = { repulsion:[0,100], linkDist:[40,260], collision:[4,60], friction:[0,100] };
+  pct(k){ const [lo,hi]=this.ranges[k]; const v=this.props[k]??lo; return Math.round((v-lo)/(hi-lo)*100)+'%'; }
+  renderVals(){
+    const p = this.props;
+    const accent = p.accent || '#5b8cff';
+    const chip = (on) => ({ bg: on ? accent : 'transparent', color: on ? '#0b1020' : '#c2c7ce' });
+    const t = chip(p.preset==='tight'), l = chip(p.preset==='loose'), tr = chip(p.preset==='tree');
+    return {
+      accent,
+      repulsion:p.repulsion, linkDist:p.linkDist, collision:p.collision, friction:p.friction,
+      repulsionFill:this.pct('repulsion'), linkDistFill:this.pct('linkDist'),
+      collisionFill:this.pct('collision'), frictionFill:this.pct('friction'),
+      runIcon: p.running ? 'ph-pause' : 'ph-play',
+      runLabel: p.running ? 'Pause' : 'Resume',
+      onDrag:p.onDrag, toggleRun:p.toggleRun,
+      setPresetTight:p.setPresetTight, setPresetLoose:p.setPresetLoose, setPresetTree:p.setPresetTree,
+      tightBg:t.bg, tightColor:t.color, looseBg:l.bg, looseColor:l.color, treeBg:tr.bg, treeColor:tr.color,
+    };
+  }
+}
+</script>
+</body>
+</html>

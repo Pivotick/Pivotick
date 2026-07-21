@@ -5,7 +5,7 @@
 **Requested:** 2026-07-21
 **Area:** `src/ui/` (new shell components + registry/scaffold), `src/Simulation.ts` (new physics setter API), `src/interfaces/GraphUI.ts` (mode state + options), `src/styles/` (layout + component SCSS), `src/ui/icons.ts` (new glyphs). Touches the **public UI surface** (breaking).
 **Type:** UI / interaction — control-surface redesign.
-**Design source:** Claude Design project **"Graph application controls layout"** (`ab310b4e-b570-47af-9cbc-c6a8aba7716b`). Target file **`Graph App - B3.dc.html`**; supporting exploration in `Graph Controls.dc.html` (families A–D), `Graph Controls - Rail Options.dc.html` (B1/B2/B3), and the reusable `PhysicsPanel.dc.html`.
+**Design source:** Claude Design project **"Graph application controls layout"** (`ab310b4e-b570-47af-9cbc-c6a8aba7716b`). Target file **`Graph App - B3.dc.html`**; supporting exploration in `Graph Controls.dc.html` (families A–D), `Graph Controls - Rail Options.dc.html` (B1/B2/B3), and the reusable `PhysicsPanel.dc.html`. Temporary local copies of the key mockups are vendored under [`prd/design/`](./design/) — **to be removed before merge**.
 **Related:** `drag-in-node-staging.md` (interactive add-node lands the drag/placement half of M2's add-node tool), `edge-create-veto-hook.md` (already-shipped, feeds Create/add-edge), `renderer-abstraction-audit.md` (grid-in-graph-space belongs to the deferred renderer work), the merged sidebar improvements (type-aware properties, neighbours redesign, faceted multi-select, header auto-fit — all on `develop`).
 
 ---

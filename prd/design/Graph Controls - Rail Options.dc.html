@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
+<style>*{box-sizing:border-box}body{margin:0;background:#0e0f12}::selection{background:#5b8cff;color:#fff}</style>
+</helmet>
+
+<!-- ============ B1 · ONE RAIL, BEHAVIORAL ZONES ============ -->
+<div style="position:absolute;left:40px;top:96px;width:1320px">
+  <div data-drags-parent="1" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;color:#e6e8ec;margin-bottom:14px">
+    <div style="font-size:20px;font-weight:650;letter-spacing:-.01em">B1 · One rail, behavioral zones</div>
+    <div style="font-size:14px;color:#8a909a;margin-top:3px;max-width:760px">Everything stays in the rail, but grouped by what it does: <b style="color:#c9ccd1">Interact</b> + <b style="color:#c9ccd1">Create</b> are pointer modes; <b style="color:#c9ccd1">View</b> (layout, physics, snap, freeze) sits in a visually separated zone — never confused with a cursor mode.</div>
+  </div>
+  <div style="position:relative;width:1320px;height:800px;background:#16181c;border:1px solid #2a2e34;border-radius:10px;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:13px;color:#d6d9de">
+    <div style="position:absolute;inset:0;background-image:linear-gradient(#ffffff0a 1px,transparent 1px),linear-gradient(90deg,#ffffff0a 1px,transparent 1px);background-size:34px 34px"></div>
+    <svg width="100%" height="100%" viewBox="0 0 1320 800" style="position:absolute;inset:0;opacity:.4;pointer-events:none">
+      <g stroke="#46568a" stroke-width="9" stroke-linecap="round"><line x1="760" y1="420" x2="890" y2="340"/><line x1="890" y1="340" x2="700" y2="540"/><line x1="700" y1="540" x2="900" y2="600"/><line x1="890" y1="340" x2="1040" y2="560"/></g>
+      <g fill="#9bd54a"><circle cx="890" cy="340" r="25"/><circle cx="760" cy="420" r="21"/><circle cx="700" cy="540" r="23"/><circle cx="900" cy="600" r="23"/><circle cx="1040" cy="560" r="21"/></g>
+    </svg>
+
+    <!-- top bar -->
+    <div style="position:absolute;top:0;left:0;right:0;height:52px;background:#1a1d21;border-bottom:1px solid #2a2e34;display:flex;align-items:center;justify-content:space-between;padding:0 16px">
+      <div style="display:flex;gap:8px">
+        <div style="display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;background:#23262b;border:1px solid #34383f;border-radius:9px;cursor:pointer;width:210px;color:#7d828a" style-hover="background:#2b2f36"><i class="ph ph-magnifying-glass" style="font-size:16px"></i>Search<span style="margin-left:auto;display:inline-flex;align-items:center;height:20px;padding:0 6px;background:#15181c;border:1px solid #3a3e45;border-radius:5px;color:#9aa0a8;font-size:11px">⇧J</span></div>
+        <div style="display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;background:#23262b;border:1px solid #34383f;border-radius:9px;cursor:pointer" style-hover="background:#2b2f36"><i class="ph ph-funnel" style="font-size:16px;color:#9aa0a8"></i>Filter<span style="display:inline-flex;align-items:center;height:20px;padding:0 6px;background:#15181c;border:1px solid #3a3e45;border-radius:5px;color:#9aa0a8;font-size:11px">⇧K</span></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="display:inline-flex;align-items:center;gap:2px;background:#23262b;border:1px solid #34383f;border-radius:9px;padding:4px"><div style="display:flex;align-items:center;justify-content:center;width:28px;height:26px;border-radius:6px;cursor:pointer;color:#9aa0a8" style-hover="background:#2e323a"><i class="ph ph-arrow-counter-clockwise" style="font-size:15px"></i></div><div style="display:flex;align-items:center;justify-content:center;width:28px;height:26px;border-radius:6px;cursor:pointer;color:#9aa0a8" style-hover="background:#2e323a"><i class="ph ph-arrow-clockwise" style="font-size:15px"></i></div></div>
+        <div style="display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;background:#23262b;border:1px solid #34383f;border-radius:9px;cursor:pointer" style-hover="background:#2b2f36"><i class="ph ph-note" style="font-size:16px;color:#9aa0a8"></i>Notes<span style="display:inline-flex;align-items:center;height:20px;padding:0 6px;background:#15181c;border:1px solid #3a3e45;border-radius:5px;color:#9aa0a8;font-size:11px">⇧N</span></div>
+      </div>
+    </div>
+
+    <!-- unified rail with zones -->
+    <div style="position:absolute;left:16px;top:68px;bottom:16px;width:196px;background:#1a1d21;border:1px solid #2a2e34;border-radius:14px;padding:8px;display:flex;flex-direction:column;overflow:hidden">
+      <!-- workspace switcher (reserved for future) -->
+      <div style="display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:9px;cursor:pointer;background:#23262b;border:1px solid #34383f" style-hover="background:#2b2f36">
+        <div style="width:26px;height:26px;border-radius:7px;background:#2f3a2a;border:1px solid #3f5233;display:flex;align-items:center;justify-content:center;color:#9bd54a;font-size:11px;font-weight:700">KB</div>
+        <div style="flex:1;min-width:0"><div style="font-size:13px;color:#e6e8ec;font-weight:600">Knowledge Base</div><div style="font-size:11px;color:#6c727b">Workspace</div></div>
+        <i class="ph ph-caret-up-down" style="font-size:14px;color:#7d828a"></i>
+      </div>
+
+      <div style="font-size:11px;font-weight:600;letter-spacing:.07em;color:#6c727b;padding:12px 11px 5px">INTERACT</div>
+      <div style="display:flex;align-items:center;gap:11px;height:36px;padding:0 11px;border-radius:8px;cursor:pointer;background:#34383f;color:#f2f4f7"><i class="ph-bold ph-cursor" style="font-size:18px;width:18px;text-align:center"></i>Select</div>
+      <div style="display:flex;align-items:center;gap:11px;height:36px;padding:0 11px;border-radius:8px;cursor:pointer;color:#c2c7ce" style-hover="background:#2e323a"><i class="ph ph-lasso" style="font-size:18px;color:#9aa0a8;width:18px;text-align:center"></i>Lasso</div>
+      <div style="display:flex;align-items:center;gap:11px;height:36px;padding:0 11px;border-radius:8px;cursor:pointer;color:#c2c7ce" style-hover="background:#2e323a"><i class="ph ph-path" style="font-size:18px;color:#9aa0a8;width:18px;text-align:center"></i>Path select</div>
+      <div style="display:flex;align-items:center;gap:11px;height:36px;padding:0 11px;border-radius:8px;cursor:pointer;color:#c2c7ce" style-hover="background:#2e323a"><i class="ph ph-selection-inverse" style="font-size:18px;color:#9aa0a8;width:18px;text-align:center"></i>Invert selection</div>
+
+      <div style="font-size:11px;font-weight:600;letter-spacing:.07em;color:#6c727b;padding:12px 11px 5px">CREATE</div>
+      <div style="display:flex;align-items:center;gap:11px;height:36px;padding:0 11px;border-radius:8px;cursor:pointer;color:#c2c7ce" style-hover="background:#2e323a"><i class="ph ph-plus-circle" style="font-size:18px;color:#9aa0a8;width:18px;text-align:center"></i>Add node</div>
+      <div style="display:flex;align-items:center;gap:11px;height:36px;padding:0 11px;border-radius:8px;cursor:pointer;color:#c2c7ce" style-hover="background:#2e323a"><i class="ph ph-line-segments" style="font-size:18px;color:#9aa0a8;width:18px;text-align:center"></i>Add edge</div>
+      <div style="display:flex;align-items:center;gap:11px;height:36px;padding:0 11px;border-radius:8px;cursor:pointer;color:#c2c7ce" style-hover="background:#2e323a"><i class="ph ph-note-pencil" style="font-size:18px;color:#9aa0a8;width:18px;text-align:center"></i>Add note</div>
+      <div style="display:flex;align-items:center;gap:11px;height:36px;padding:0 11px;border-radius:8px;cursor:pointer;color:#c2c7ce" style-hover="background:#2e323a"><i class="ph ph-pencil-simple" style="font-size:18px;color:#9aa0a8;width:18px;text-align:center"></i>Edit</div>
+
+      <div style="margin-top:auto"></div>
+      <!-- VIEW zone — visually separated -->
+      <div style="background:#13161a;border:1px solid #2a2e34;border-radius:11px;padding:5px;margin-top:10px">
+        <div style="font-size:11px;font-weight:600;letter-spacing:.07em;color:#6c727b;padding:6px 9px 5px">VIEW &amp; SIMULATION</div>
+        <div style="display:flex;align-items:center;gap:11px;height:34px;padding:0 9px;border-radius:7px;cursor:pointer;color:#c2c7ce" style-hover="background:#2e323a"><i class="ph ph-graph" style="font-size:17px;color:#9aa0a8;width:18px;text-align:center"></i>Layout<span style="margin-left:auto;display:flex;align-items:center;gap:3px;color:#8a909a;font-size:12px">Force<i class="ph ph-caret-down" style="font-size:11px"></i></span></div>
+        <div style="display:flex;align-items:center;gap:11px;height:34px;padding:0 9px;border-radius:7px;cursor:pointer;background:#222838;color:{{ accent }}"><i class="ph-bold ph-atom" style="font-size:17px;width:18px;text-align:center"></i>Physics<i class="ph-bold ph-caret-right" style="margin-left:auto;font-size:12px"></i></div>
+        <div style="display:flex;align-items:center;gap:11px;height:34px;padding:0 9px;border-radius:7px;cursor:pointer;color:#c2c7ce" style-hover="background:#2e323a"><i class="ph ph-grid-nine" style="font-size:17px;color:#9aa0a8;width:18px;text-align:center"></i>Snap to grid<div style="margin-left:auto;position:relative;width:32px;height:18px;border-radius:9px;background:#34383f"><div style="position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#9aa0a8"></div></div></div>
+        <div onClick="{{ toggleFreeze }}" style="display:flex;align-items:center;gap:11px;height:34px;padding:0 9px;border-radius:7px;cursor:pointer;color:#e6e8ec"><i class="ph-bold ph-push-pin" style="font-size:17px;width:18px;text-align:center;color:{{ danger }}"></i>Freeze on drag<div style="margin-left:auto;position:relative;width:32px;height:18px;border-radius:9px;background:{{ freezeSwitchBg }};transition:background .15s"><div style="position:absolute;top:2px;left:{{ freezeKnob14 }};width:14px;height:14px;border-radius:50%;background:#fff;transition:left .15s"></div></div></div>
+      </div>
+    </div>
+
+    <!-- physics flyout (reusable child component) -->
+    <dc-import name="PhysicsPanel" repulsion="{{ repulsion }}" link-dist="{{ linkDist }}" collision="{{ collision }}" friction="{{ friction }}" accent="{{ accent }}" running="{{ running }}" preset="{{ preset }}" on-drag="{{ onDrag }}" toggle-run="{{ toggleRun }}" set-preset-tight="{{ setPresetTight }}" set-preset-loose="{{ setPresetLoose }}" set-preset-tree="{{ setPresetTree }}" hint-size="262px,380px" style="position:absolute;left:222px;bottom:16px;width:262px"></dc-import>
+
+    <!-- viewport cluster -->
+    <div style="position:absolute;bottom:18px;right:18px;display:flex;flex-direction:column;gap:2px;background:#23262b;border:1px solid #34383f;border-radius:11px;padding:4px">
+      <div style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;cursor:pointer;color:#9aa0a8" style-hover="background:#2e323a"><i class="ph ph-crosshair" style="font-size:17px"></i></div>
+      <div style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;cursor:pointer;color:#9aa0a8" style-hover="background:#2e323a"><i class="ph ph-plus" style="font-size:17px"></i></div>
+      <div style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;cursor:pointer;color:#9aa0a8" style-hover="background:#2e323a"><i class="ph ph-minus" style="font-size:17px"></i></div>
+      <div style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;cursor:pointer;color:#9aa0a8" style-hover="background:#2e323a"><i class="ph ph-frame-corners" style="font-size:17px"></i></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ B2 · SPLIT: AUTHOR RAIL + VIEW BAR ============ -->
+<div style="position:absolute;left:1500px;top:96px;width:1320px">
+  <div data-drags-parent="1" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;color:#e6e8ec;margin-bottom:14px">
+    <div style="font-size:20px;font-weight:650;letter-spacing:-.01em">B2 · Split — author rail + view bar</div>
+    <div style="font-size:14px;color:#8a909a;margin-top:3px;max-width:760px">Hard separation. The left rail is only things you do <i>to</i> the graph (interact + create). Everything that changes the <i>view</i> — layout, physics, snap, freeze — moves to its own bar. No category overlap.</div>
+  </div>
+  <div style="position:relative;width:1320px;height:800px;background:#16181c;border:1px solid #2a2e34;border-radius:10px;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:13px;color:#d6d9de">
+    <div style="position:absolute;inset:0;background-image:linear-gradient(#ffffff0a 1px,transparent 1px),linear-gradient(90deg,#ffffff0a 1px,transparent 1px);background-size:34px 34px"></div>
+    <svg width="100%" height="100%" viewBox="0 0 1320 800" style="position:absolute;inset:0;opacity:.4;pointer-events:none">
+      <g stroke="#46568a" stroke-width="9" stroke-linecap="round"><line x1="700" y1="380" x2="840" y2="300"/><line x1="840" y1="300" x2="640" y2="480"/><line x1="640" y1="480" x2="860" y2="540"/><line x1="840" y1="300" x2="980" y2="500"/></g>
+      <g fill="#9bd54a"><circle cx="840" cy="300" r="25"/><circle cx="700" cy="380" r="21"/><circle cx="640" cy="480" r="23"/><circle cx="860" cy="540" r="23"/><circle cx="980" cy="500" r="21"/></g>
+    </svg>
+
+    <!-- top bar -->
+    <div style="position:absolute;top:0;left:0;right:0;height:52px;background:#1a1d21;border-bottom:1px solid #2a2e34;display:flex;align-items:center;justify-content:space-between;padding:0 16px">
+      <div style="display:flex;gap:8px">
+        <div style="display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;background:#23262b;border:1px solid #34383f;border-radius:9px;cursor:pointer;width:210px;color:#7d828a" style-hover="background:#2b2f36"><i class="ph ph-magnifying-glass" style="font-size:16px"></i>Search<span style="margin-left:auto;display:inline-flex;align-items:center;height:20px;padding:0 6px;background:#15181c;border:1px solid #3a3e45;border-radius:5px;color:#9aa0a8;font-size:11px">⇧J</span></div>
+        <div style="display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;background:#23262b;border:1px solid #34383f;border-radius:9px;cursor:pointer" style-hover="background:#2b2f36"><i class="ph ph-funnel" style="font-size:16px;color:#9aa0a8"></i>Filter<span style="display:inline-flex;align-items:center;height:20px;padding:0 6px;background:#15181c;border:1px solid #3a3e45;border-radius:5px;color:#9aa0a8;font-size:11px">⇧K</span></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="display:inline-flex;align-items:center;gap:2px;background:#23262b;border:1px solid #34383f;border-radius:9px;padding:4px"><div style="display:flex;align-items:center;justify-content:center;width:28px;height:26px;border-radius:6px;cursor:pointer;color:#9aa0a8" style-hover="background:#2e323a"><i class="ph ph-arrow-counter-clockwise" style="font-size:15px"></i></div><div style="display:flex;align-items:center;justify-content:center;width:28px;height:26px;border-radius:6px;cursor:pointer;color:#9aa0a8" style-hover="background:#2e323a"><i class="ph ph-arrow-clockwise" style="font-size:15px"></i></div></div>
+        <div style="display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;background:#23262b;border:1px solid #34383f;border-radius:9px;cursor:pointer" style-hover="background:#2b2f36"><i class="ph ph-note" style="font-size:16px;color:#9aa0a8"></i>Notes<span style="display:inline-flex;align-items:center;height:20px;padding:0 6px;background:#15181c;border:1px solid #3a3e45;border-radius:5px;color:#9aa0a8;font-size:11px">⇧N</span></div>
+      </div>
+    </div>
+
+    <!-- author rail (interact + create only) -->
+    <div style="position:absolute;left:16px;top:68px;bottom:16px;width:196px;background:#1a1d21;border:1px solid #2a2e34;border-radius:14px;padding:8px;display:flex;flex-direction:column;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:9px;cursor:pointer;background:#23262b;border:1px solid #34383f" style-hover="background:#2b2f36">
+        <div style="width:26px;height:26px;border-radius:7px;background:#2f3a2a;border:1px solid #3f5233;display:flex;align-items:center;justify-content:center;color:#9bd54a;font-size:11px;font-weight:700">KB</div>
+        <div style="flex:1;min-width:0"><div style="font-size:13px;color:#e6e8ec;font-weight:600">Knowledge Base</div><div style="font-size:11px;color:#6c727b">Workspace</div></div>
+        <i class="ph ph-caret-up-down" style="font-size:14px;color:#7d828a"></i>
+      </div>
+
+      <div style="font-size:11px;font-weight:600;letter-spacing:.07em;color:#6c727b;padding:12px 11px 5px">INTERACT</div>
+      <div style="display:flex;align-items:center;gap:11px;height:36px;padding:0 11px;border-radius:8px;cursor:pointer;background:#34383f;color:#f2f4f7"><i class="ph-bold ph-cursor" style="font-size:18px;width:18px;text-align:center"></i>Select</div>
+      <div style="display:flex;align-items:center;gap:11px;height:36px;padding:0 11px;border-radius:8px;cursor:pointer;color:#c2c7ce" style-hover="background:#2e323a"><i class="ph ph-lasso" style="font-size:18px;color:#9aa0a8;width:18px;text-align:center"></i>Lasso</div>
+      <div style="display:flex;align-items:center;gap:11px;height:36px;padding:0 11px;border-radius:8px;cursor:pointer;color:#c2c7ce" style-hover="background:#2e323a"><i class="ph ph-path" style="font-size:18px;color:#9aa0a8;width:18px;text-align:center"></i>Path select</div>
+      <div style="display:flex;align-items:center;gap:11px;height:36px;padding:0 11px;border-radius:8px;cursor:pointer;color:#c2c7ce" style-hover="background:#2e323a"><i class="ph ph-selection-inverse" style="font-size:18px;color:#9aa0a8;width:18px;text-align:center"></i>Invert selection</div>
+
+      <div style="font-size:11px;font-weight:600;letter-spacing:.07em;color:#6c727b;padding:12px 11px 5px">CREATE</div>
+      <div style="display:flex;align-items:center;gap:11px;height:36px;padding:0 11px;border-radius:8px;cursor:pointer;color:#c2c7ce" style-hover="background:#2e323a"><i class="ph ph-plus-circle" style="font-size:18px;color:#9aa0a8;width:18px;text-align:center"></i>Add node</div>
+      <div style="display:flex;align-items:center;gap:11px;height:36px;padding:0 11px;border-radius:8px;cursor:pointer;color:#c2c7ce" style-hover="background:#2e323a"><i class="ph ph-line-segments" style="font-size:18px;color:#9aa0a8;width:18px;text-align:center"></i>Add edge</div>
+      <div style="display:flex;align-items:center;gap:11px;height:36px;padding:0 11px;border-radius:8px;cursor:pointer;color:#c2c7ce" style-hover="background:#2e323a"><i class="ph ph-note-pencil" style="font-size:18px;color:#9aa0a8;width:18px;text-align:center"></i>Add note</div>
+      <div style="display:flex;align-items:center;gap:11px;height:36px;padding:0 11px;border-radius:8px;cursor:pointer;color:#c2c7ce" style-hover="background:#2e323a"><i class="ph ph-pencil-simple" style="font-size:18px;color:#9aa0a8;width:18px;text-align:center"></i>Edit</div>
+
+      <div style="margin-top:auto"></div>
+      <!-- reserved future zone -->
+      <div style="font-size:11px;font-weight:600;letter-spacing:.07em;color:#5a6069;padding:10px 11px 5px">DATA</div>
+      <div style="display:flex;align-items:center;gap:11px;height:36px;padding:0 11px;border-radius:8px;border:1px dashed #34383f;color:#6c727b;cursor:default"><i class="ph ph-database" style="font-size:18px;width:18px;text-align:center"></i>Enrich graph<span style="margin-left:auto;font-size:10px;font-weight:600;letter-spacing:.04em;background:#23262b;border:1px solid #34383f;color:#7d828a;padding:2px 6px;border-radius:5px">SOON</span></div>
+    </div>
+
+    <!-- separate VIEW bar -->
+    <div style="position:absolute;bottom:18px;left:calc(50% + 90px);transform:translateX(-50%);display:flex;align-items:center;gap:5px;background:#1a1d21;border:1px solid #2a2e34;border-radius:13px;padding:6px 8px;box-shadow:0 14px 34px rgba(0,0,0,.45)">
+      <div style="display:flex;align-items:center;gap:7px;color:#6c727b;font-size:11px;font-weight:600;letter-spacing:.06em;padding:0 8px 0 4px"><i class="ph ph-eye" style="font-size:16px"></i>VIEW</div>
+      <div style="width:1px;height:24px;background:#2a2e34"></div>
+      <div style="display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 12px;border-radius:8px;cursor:pointer;color:#c9ccd1" style-hover="background:#2e323a"><i class="ph ph-graph" style="font-size:17px;color:#9aa0a8"></i>Force<i class="ph ph-caret-down" style="font-size:12px;color:#7d828a"></i></div>
+      <div style="display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 12px;border-radius:8px;cursor:pointer;background:#222838;color:{{ accent }}"><i class="ph-bold ph-atom" style="font-size:17px"></i>Physics</div>
+      <div style="width:1px;height:24px;background:#2a2e34"></div>
+      <div style="display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 12px;border-radius:8px;cursor:pointer;color:#c9ccd1" style-hover="background:#2e323a"><i class="ph ph-grid-nine" style="font-size:17px;color:#9aa0a8"></i>Snap</div>
+      <div style="display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 12px;border-radius:8px;cursor:pointer;color:#c9ccd1" style-hover="background:#2e323a"><i class="ph ph-grid-four" style="font-size:17px;color:#9aa0a8"></i>Grid</div>
+      <div onClick="{{ toggleFreeze }}" style="display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 12px;border-radius:8px;cursor:pointer;background:{{ freezeBg }};color:{{ freezeColor }}"><i class="ph-bold ph-push-pin" style="font-size:17px"></i>Freeze</div>
+    </div>
+
+    <!-- physics flyout above the view bar -->
+    <div style="position:absolute;bottom:80px;left:calc(50% + 90px);transform:translateX(-50%);width:262px">
+      <dc-import name="PhysicsPanel" repulsion="{{ repulsion }}" link-dist="{{ linkDist }}" collision="{{ collision }}" friction="{{ friction }}" accent="{{ accent }}" running="{{ running }}" preset="{{ preset }}" on-drag="{{ onDrag }}" toggle-run="{{ toggleRun }}" set-preset-tight="{{ setPresetTight }}" set-preset-loose="{{ setPresetLoose }}" set-preset-tree="{{ setPresetTree }}" hint-size="262px,380px" style="width:262px"></dc-import>
+    </div>
+
+    <!-- viewport cluster -->
+    <div style="position:absolute;bottom:18px;right:18px;display:flex;flex-direction:column;gap:2px;background:#23262b;border:1px solid #34383f;border-radius:11px;padding:4px">
+      <div style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;cursor:pointer;color:#9aa0a8" style-hover="background:#2e323a"><i class="ph ph-crosshair" style="font-size:17px"></i></div>
+      <div style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;cursor:pointer;color:#9aa0a8" style-hover="background:#2e323a"><i class="ph ph-plus" style="font-size:17px"></i></div>
+      <div style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;cursor:pointer;color:#9aa0a8" style-hover="background:#2e323a"><i class="ph ph-minus" style="font-size:17px"></i></div>
+      <div style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;cursor:pointer;color:#9aa0a8" style-hover="background:#2e323a"><i class="ph ph-frame-corners" style="font-size:17px"></i></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ B3 · MODE-DRIVEN RAIL + CONTEXTUAL SUB-BAR ============ -->
+<div style="position:absolute;left:2960px;top:96px;width:1320px">
+  <div data-drags-parent="1" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;color:#e6e8ec;margin-bottom:14px">
+    <div style="font-size:20px;font-weight:650;letter-spacing:-.01em">B3 · Mode-driven + contextual bar <span style="font-size:13px;font-weight:500;color:{{ accent }};background:#222838;border:1px solid #3a4358;padding:2px 9px;border-radius:20px;margin-left:6px">most scalable</span></div>
+    <div style="font-size:14px;color:#8a909a;margin-top:3px;max-width:780px">The rail holds top-level <b style="color:#c9ccd1">modes</b>; each reveals only its own tools in a contextual bar. New capabilities (Enrich, more workspaces) drop in as new modes — no rail crowding. <span style="color:#6c727b">Click a mode to switch.</span></div>
+  </div>
+  <div style="position:relative;width:1320px;height:800px;background:#16181c;border:1px solid #2a2e34;border-radius:10px;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:13px;color:#d6d9de">
+    <div style="position:absolute;inset:0;background-image:linear-gradient(#ffffff0a 1px,transparent 1px),linear-gradient(90deg,#ffffff0a 1px,transparent 1px);background-size:34px 34px"></div>
+    <svg width="100%" height="100%" viewBox="0 0 1320 800" style="position:absolute;inset:0;opacity:.4;pointer-events:none">
+      <g stroke="#46568a" stroke-width="9" stroke-linecap="round"><line x1="600" y1="470" x2="740" y2="390"/><line x1="740" y1="390" x2="540" y2="570"/><line x1="740" y1="390" x2="900" y2="560"/><line x1="540" y1="570" x2="760" y2="630"/></g>
+      <g fill="#9bd54a"><circle cx="740" cy="390" r="25"/><circle cx="600" cy="470" r="21"/><circle cx="540" cy="570" r="23"/><circle cx="900" cy="560" r="23"/><circle cx="760" cy="630" r="21"/></g>
+    </svg>
+
+    <!-- top bar -->
+    <div style="position:absolute;top:0;left:0;right:0;height:52px;background:#1a1d21;border-bottom:1px solid #2a2e34;display:flex;align-items:center;justify-content:space-between;padding:0 16px">
+      <div style="display:flex;gap:8px">
+        <div style="display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;background:#23262b;border:1px solid #34383f;border-radius:9px;cursor:pointer;width:210px;color:#7d828a" style-hover="background:#2b2f36"><i class="ph ph-magnifying-glass" style="font-size:16px"></i>Search<span style="margin-left:auto;display:inline-flex;align-items:center;height:20px;padding:0 6px;background:#15181c;border:1px solid #3a3e45;border-radius:5px;color:#9aa0a8;font-size:11px">⇧J</span></div>
+        <div style="display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;background:#23262b;border:1px solid #34383f;border-radius:9px;cursor:pointer" style-hover="background:#2b2f36"><i class="ph ph-funnel" style="font-size:16px;color:#9aa0a8"></i>Filter<span style="display:inline-flex;align-items:center;height:20px;padding:0 6px;background:#15181c;border:1px solid #3a3e45;border-radius:5px;color:#9aa0a8;font-size:11px">⇧K</span></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="display:inline-flex;align-items:center;gap:2px;background:#23262b;border:1px solid #34383f;border-radius:9px;padding:4px"><div style="display:flex;align-items:center;justify-content:center;width:28px;height:26px;border-radius:6px;cursor:pointer;color:#9aa0a8" style-hover="background:#2e323a"><i class="ph ph-arrow-counter-clockwise" style="font-size:15px"></i></div><div style="display:flex;align-items:center;justify-content:center;width:28px;height:26px;border-radius:6px;cursor:pointer;color:#9aa0a8" style-hover="background:#2e323a"><i class="ph ph-arrow-clockwise" style="font-size:15px"></i></div></div>
+        <div style="display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;background:#23262b;border:1px solid #34383f;border-radius:9px;cursor:pointer" style-hover="background:#2b2f36"><i class="ph ph-note" style="font-size:16px;color:#9aa0a8"></i>Notes<span style="display:inline-flex;align-items:center;height:20px;padding:0 6px;background:#15181c;border:1px solid #3a3e45;border-radius:5px;color:#9aa0a8;font-size:11px">⇧N</span></div>
+      </div>
+    </div>
+
+    <!-- mode rail -->
+    <div style="position:absolute;left:16px;top:68px;bottom:16px;width:184px;background:#1a1d21;border:1px solid #2a2e34;border-radius:14px;padding:8px;display:flex;flex-direction:column;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:9px;cursor:pointer;background:#23262b;border:1px solid #34383f" style-hover="background:#2b2f36">
+        <div style="width:26px;height:26px;border-radius:7px;background:#2f3a2a;border:1px solid #3f5233;display:flex;align-items:center;justify-content:center;color:#9bd54a;font-size:11px;font-weight:700">KB</div>
+        <div style="flex:1;min-width:0"><div style="font-size:13px;color:#e6e8ec;font-weight:600">Knowledge Base</div><div style="font-size:11px;color:#6c727b">Workspace</div></div>
+        <i class="ph ph-caret-up-down" style="font-size:14px;color:#7d828a"></i>
+      </div>
+
+      <div style="font-size:11px;font-weight:600;letter-spacing:.07em;color:#6c727b;padding:14px 11px 6px">MODE</div>
+      <div onClick="{{ setModeSelect }}" style="display:flex;align-items:center;gap:11px;height:42px;padding:0 11px;border-radius:9px;cursor:pointer;background:{{ selBg }};color:{{ selColor }};border-left:3px solid {{ selBorder }}"><i class="ph-bold ph-cursor" style="font-size:19px;width:20px;text-align:center"></i><div><div style="font-weight:600">Select</div><div style="font-size:11px;color:#6c727b">Select, lasso, paths</div></div></div>
+      <div onClick="{{ setModeCreate }}" style="display:flex;align-items:center;gap:11px;height:42px;padding:0 11px;border-radius:9px;cursor:pointer;background:{{ creBg }};color:{{ creColor }};border-left:3px solid {{ creBorder }};margin-top:4px"><i class="ph-bold ph-plus-circle" style="font-size:19px;width:20px;text-align:center"></i><div><div style="font-weight:600">Create</div><div style="font-size:11px;color:#6c727b">Nodes, edges, notes</div></div></div>
+      <div onClick="{{ setModeView }}" style="display:flex;align-items:center;gap:11px;height:42px;padding:0 11px;border-radius:9px;cursor:pointer;background:{{ vwBg }};color:{{ vwColor }};border-left:3px solid {{ vwBorder }};margin-top:4px"><i class="ph-bold ph-eye" style="font-size:19px;width:20px;text-align:center"></i><div><div style="font-weight:600">View</div><div style="font-size:11px;color:#6c727b">Layout, physics, grid</div></div></div>
+
+      <div style="margin-top:auto"></div>
+      <div style="font-size:11px;font-weight:600;letter-spacing:.07em;color:#5a6069;padding:10px 11px 6px">DATA</div>
+      <div style="display:flex;align-items:center;gap:11px;height:42px;padding:0 11px;border-radius:9px;border:1px dashed #34383f;color:#6c727b;cursor:default"><i class="ph ph-database" style="font-size:19px;width:20px;text-align:center"></i><div style="flex:1"><div style="font-weight:600">Enrich</div><div style="font-size:11px;color:#565c64">Fetch more data</div></div><span style="font-size:10px;font-weight:600;background:#23262b;border:1px solid #34383f;color:#7d828a;padding:2px 6px;border-radius:5px">SOON</span></div>
+    </div>
+
+    <!-- contextual sub-bar: SELECT -->
+    <div style="position:absolute;top:66px;left:212px;display:{{ selBar }};align-items:center;gap:4px;background:#1a1d21;border:1px solid #2a2e34;border-radius:11px;padding:5px;box-shadow:0 8px 24px rgba(0,0,0,.4)">
+      <div style="color:#6c727b;font-size:11px;font-weight:600;letter-spacing:.06em;padding:0 9px">SELECT</div><div style="width:1px;height:22px;background:#2a2e34;margin:0 2px"></div>
+      <div style="display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 11px;border-radius:8px;cursor:pointer;background:#34383f;color:#f2f4f7"><i class="ph-bold ph-cursor" style="font-size:16px"></i>Pointer</div>
+      <div style="display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 11px;border-radius:8px;cursor:pointer;color:#c2c7ce" style-hover="background:#2e323a"><i class="ph ph-lasso" style="font-size:16px"></i>Lasso</div>
+      <div style="display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 11px;border-radius:8px;cursor:pointer;color:#c2c7ce" style-hover="background:#2e323a"><i class="ph ph-path" style="font-size:16px"></i>Path select</div>
+      <div style="width:1px;height:22px;background:#2a2e34;margin:0 2px"></div>
+      <div style="display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 11px;border-radius:8px;cursor:pointer;color:#c2c7ce" style-hover="background:#2e323a"><i class="ph ph-selection-inverse" style="font-size:16px"></i>Invert</div>
+    </div>
+    <!-- contextual sub-bar: CREATE -->
+    <div style="position:absolute;top:66px;left:212px;display:{{ creBar }};align-items:center;gap:4px;background:#1a1d21;border:1px solid #2a2e34;border-radius:11px;padding:5px;box-shadow:0 8px 24px rgba(0,0,0,.4)">
+      <div style="color:#6c727b;font-size:11px;font-weight:600;letter-spacing:.06em;padding:0 9px">CREATE</div><div style="width:1px;height:22px;background:#2a2e34;margin:0 2px"></div>
+      <div style="display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 11px;border-radius:8px;cursor:pointer;background:#34383f;color:#f2f4f7"><i class="ph-bold ph-plus-circle" style="font-size:16px"></i>Add node</div>
+      <div style="display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 11px;border-radius:8px;cursor:pointer;color:#c2c7ce" style-hover="background:#2e323a"><i class="ph ph-line-segments" style="font-size:16px"></i>Add edge</div>
+      <div style="display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 11px;border-radius:8px;cursor:pointer;color:#c2c7ce" style-hover="background:#2e323a"><i class="ph ph-note-pencil" style="font-size:16px"></i>Add note</div>
+      <div style="width:1px;height:22px;background:#2a2e34;margin:0 2px"></div>
+      <div style="display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 11px;border-radius:8px;cursor:pointer;color:#c2c7ce" style-hover="background:#2e323a"><i class="ph ph-pencil-simple" style="font-size:16px"></i>Edit</div>
+    </div>
+    <!-- contextual sub-bar: VIEW -->
+    <div style="position:absolute;top:66px;left:212px;display:{{ vwBar }};align-items:center;gap:4px;background:#1a1d21;border:1px solid #2a2e34;border-radius:11px;padding:5px;box-shadow:0 8px 24px rgba(0,0,0,.4)">
+      <div style="color:#6c727b;font-size:11px;font-weight:600;letter-spacing:.06em;padding:0 9px">VIEW</div><div style="width:1px;height:22px;background:#2a2e34;margin:0 2px"></div>
+      <div style="display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 11px;border-radius:8px;cursor:pointer;color:#c2c7ce" style-hover="background:#2e323a"><i class="ph ph-graph" style="font-size:16px;color:#9aa0a8"></i>Force<i class="ph ph-caret-down" style="font-size:11px;color:#7d828a"></i></div>
+      <div style="display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 11px;border-radius:8px;cursor:pointer;background:#222838;color:{{ accent }}"><i class="ph-bold ph-atom" style="font-size:16px"></i>Physics</div>
+      <div style="width:1px;height:22px;background:#2a2e34;margin:0 2px"></div>
+      <div style="display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 11px;border-radius:8px;cursor:pointer;color:#c2c7ce" style-hover="background:#2e323a"><i class="ph ph-grid-nine" style="font-size:16px;color:#9aa0a8"></i>Snap</div>
+      <div style="display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 11px;border-radius:8px;cursor:pointer;color:#c2c7ce" style-hover="background:#2e323a"><i class="ph ph-grid-four" style="font-size:16px;color:#9aa0a8"></i>Grid</div>
+      <div onClick="{{ toggleFreeze }}" style="display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 11px;border-radius:8px;cursor:pointer;background:{{ freezeBg }};color:{{ freezeColor }}"><i class="ph-bold ph-push-pin" style="font-size:16px"></i>Freeze</div>
+    </div>
+
+    <!-- physics flyout under the VIEW sub-bar -->
+    <div style="position:absolute;top:116px;left:212px;width:262px;display:{{ physOpen }}">
+      <dc-import name="PhysicsPanel" repulsion="{{ repulsion }}" link-dist="{{ linkDist }}" collision="{{ collision }}" friction="{{ friction }}" accent="{{ accent }}" running="{{ running }}" preset="{{ preset }}" on-drag="{{ onDrag }}" toggle-run="{{ toggleRun }}" set-preset-tight="{{ setPresetTight }}" set-preset-loose="{{ setPresetLoose }}" set-preset-tree="{{ setPresetTree }}" hint-size="262px,380px" style="width:262px"></dc-import>
+    </div>
+
+    <!-- viewport cluster -->
+    <div style="position:absolute;bottom:18px;right:18px;display:flex;flex-direction:column;gap:2px;background:#23262b;border:1px solid #34383f;border-radius:11px;padding:4px">
+      <div style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;cursor:pointer;color:#9aa0a8" style-hover="background:#2e323a"><i class="ph ph-crosshair" style="font-size:17px"></i></div>
+      <div style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;cursor:pointer;color:#9aa0a8" style-hover="background:#2e323a"><i class="ph ph-plus" style="font-size:17px"></i></div>
+      <div style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;cursor:pointer;color:#9aa0a8" style-hover="background:#2e323a"><i class="ph ph-minus" style="font-size:17px"></i></div>
+      <div style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;cursor:pointer;color:#9aa0a8" style-hover="background:#2e323a"><i class="ph ph-frame-corners" style="font-size:17px"></i></div>
+    </div>
+  </div>
+</div></x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#5b8cff&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;danger&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#ef4760&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = { repulsion: 70, linkDist: 150, collision: 26, friction: 28, running: true, preset: 'loose', freeze: true, mode: 'view' };
+  presets = {
+    tight: { repulsion: 32, linkDist: 70, collision: 16, friction: 58 },
+    loose: { repulsion: 70, linkDist: 150, collision: 26, friction: 28 },
+    tree:  { repulsion: 92, linkDist: 120, collision: 20, friction: 42 },
+  };
+  ranges = { repulsion:[0,100], linkDist:[40,260], collision:[4,60], friction:[0,100] };
+
+  setPreset = (name) => this.setState({ ...this.presets[name], preset: name });
+  toggleRun = () => this.setState(s => ({ running: !s.running }));
+  toggleFreeze = () => this.setState(s => ({ freeze: !s.freeze }));
+  setMode = (m) => this.setState({ mode: m });
+
+  onDrag = (e) => {
+    const track = e.currentTarget;
+    const param = track.dataset.param;
+    const [lo,hi] = this.ranges[param];
+    const apply = (clientX) => {
+      const r = track.getBoundingClientRect();
+      let p = Math.max(0, Math.min(1, (clientX - r.left) / r.width));
+      this.setState({ [param]: Math.round(lo + p*(hi-lo)), preset: null });
+    };
+    apply(e.clientX);
+    const mm = ev => apply(ev.clientX);
+    const mu = () => { window.removeEventListener('pointermove', mm); window.removeEventListener('pointerup', mu); };
+    window.addEventListener('pointermove', mm);
+    window.addEventListener('pointerup', mu);
+  };
+
+  renderVals(){
+    const s = this.state;
+    const accent = this.props.accent ?? '#5b8cff';
+    const danger = this.props.danger ?? '#ef4760';
+    const m = (on) => ({ bg: on ? '#222838' : 'transparent', color: on ? accent : '#c2c7ce', show: on ? 'flex' : 'none' });
+    const sel = m(s.mode==='select'), cre = m(s.mode==='create'), vw = m(s.mode==='view');
+    return {
+      accent, danger,
+      repulsion:s.repulsion, linkDist:s.linkDist, collision:s.collision, friction:s.friction,
+      running:s.running, preset:s.preset,
+      onDrag:this.onDrag, toggleRun:this.toggleRun,
+      setPresetTight:()=>this.setPreset('tight'), setPresetLoose:()=>this.setPreset('loose'), setPresetTree:()=>this.setPreset('tree'),
+      toggleFreeze:this.toggleFreeze,
+      freezeBg: s.freeze ? danger : 'transparent',
+      freezeColor: s.freeze ? '#fff' : '#c9ccd1',
+      freezeSwitchBg: s.freeze ? danger : '#34383f',
+      freezeKnob: s.freeze ? '18px' : '2px',
+      freezeKnob14: s.freeze ? '16px' : '2px',
+      setModeSelect:()=>this.setMode('select'), setModeCreate:()=>this.setMode('create'), setModeView:()=>this.setMode('view'),
+      selBg:sel.bg, selColor:sel.color, selBar:sel.show, selBorder: s.mode==='select'?accent:'transparent',
+      creBg:cre.bg, creColor:cre.color, creBar:cre.show, creBorder: s.mode==='create'?accent:'transparent',
+      vwBg:vw.bg, vwColor:vw.color, vwBar:vw.show, vwBorder: s.mode==='view'?accent:'transparent',
+      physOpen: s.mode==='view' ? 'block' : 'none',
+    };
+  }
+}
+</script>
+</body>
+</html>
