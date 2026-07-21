@@ -18,6 +18,7 @@ import { GraphToolbar } from './elements/GraphToolbar/GraphToolbar'
 import { createInspectModal } from './elements/modals/InspectNodeModal/InspectNodeModal'
 import { Note } from '../Note'
 import { UIComponent, type UIPhase } from './UIComponent'
+import { ModeStore } from './ModeStore'
 import type { PivotickPlugin, PluginContext } from '../interfaces/Plugin'
 
 
@@ -190,6 +191,14 @@ export class UIManager {
     private options: GraphUI
 
     public keyManager: KeybindingManager
+
+    /**
+     * Mode-rail state (Select / Create pointer-mode + View flyout). The rail,
+     * contextual panels, View flyout and canvas cursor subscribe to it. Lives on
+     * the manager (not per-component) so it survives element rebuilds and is
+     * reachable from the interaction layer via `graph.UIManager.modeStore`.
+     */
+    public readonly modeStore: ModeStore = new ModeStore()
 
     /** Lifecycle-managed elements, in registration order. */
     private elements: UIComponent[] = []
@@ -437,6 +446,7 @@ export class UIManager {
         this.phaseHandlers = { afterMount: [], graphReady: [], destroy: [] }
         this.emittedPhases.clear()
         this.installedPlugins.clear()
+        this.modeStore.dispose()
         for (const dispose of this.uiDisposables.splice(0)) dispose()
     }
 
