@@ -51,6 +51,13 @@ test.describe('typeahead — [[node]] autocomplete in notes', () => {
         await expect(menu(page)).toBeVisible()
         await expect(rows(page)).toHaveCount(4)
 
+        // The list is portaled to <body> (outside `.pivotick`), so it must opt into the app's
+        // themed scrollbar (_scrollbars.scss) rather than fall back to the browser default.
+        const scrollbarWidth = await menu(page).evaluate(
+            (el) => getComputedStyle(el).getPropertyValue('scrollbar-width')
+        )
+        expect(scrollbarWidth).toBe('thin')
+
         // Narrowing to `med` leaves only MEDIUM, shown with its node preview.
         await page.keyboard.type('med')
         await expect(rows(page)).toHaveCount(1)
