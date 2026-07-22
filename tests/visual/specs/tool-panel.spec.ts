@@ -21,6 +21,12 @@ const connectActive = (page: import('@playwright/test').Page) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     page.evaluate(() => (window.__pivotick as any).graph.editing.connectManager.isActive())
 
+// The armed edit tool drives the canvas cursor (crosshair to pick a source /
+// arm the lasso, copy once a source is chosen) — a resolved computed value,
+// not the class the TS toggles, since the class survived but its CSS didn't.
+const canvasCursor = (page: import('@playwright/test').Page) =>
+    page.evaluate(() => getComputedStyle(document.querySelector('.pvt-canvas')!).cursor)
+
 test.describe('tool-panel', () => {
     test.beforeEach(async ({ page }) => {
         await gotoHarness(page)
@@ -57,10 +63,12 @@ test.describe('tool-panel', () => {
         await panel.locator('.pvt-toolpanel-tool[data-tool="lasso"]').click()
         await expect(panel.locator('.pvt-toolpanel-tool[data-tool="lasso"]')).toHaveClass(/active/)
         await expect(page.locator('.pvt-canvas')).toHaveClass(/canvas--lasso-mode/)
+        expect(await canvasCursor(page)).toBe('crosshair')
 
         // Clicking Pointer disarms it again.
         await panel.locator('.pvt-toolpanel-tool[data-tool="pointer"]').click()
         await expect(page.locator('.pvt-canvas')).not.toHaveClass(/canvas--lasso-mode/)
+        expect(await canvasCursor(page)).not.toBe('crosshair')
     })
 
     test('Invert selects the complement of the current selection', async ({ page }) => {
@@ -82,9 +90,12 @@ test.describe('tool-panel', () => {
         await addEdge.click()
         await expect(addEdge).toHaveClass(/active/)
         expect(await connectActive(page)).toBe(true)
+        // idle connect state → crosshair to pick the source node
+        expect(await canvasCursor(page)).toBe('crosshair')
 
         await addEdge.click()
         expect(await connectActive(page)).toBe(false)
+        expect(await canvasCursor(page)).not.toBe('crosshair')
     })
 
     test('Add note creates a note on the canvas', async ({ page }) => {

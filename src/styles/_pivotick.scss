@@ -564,6 +564,22 @@ dl.pvt-property-list {
     }
 }
 
+// Cursor reflects the active edit tool; classes are toggled by EdgeCreationSession
+// (connect) and the lasso tool. Lost with the classic toolbar in the B3 refactor.
+.pvt-canvas.pvt-connect-mode-active {
+    &.select-first {
+        cursor: crosshair;
+    }
+
+    &.pick-second {
+        cursor: copy;
+    }
+}
+
+.pvt-canvas.canvas--lasso-mode {
+    cursor: crosshair;
+}
+
 .pvt-selection-rectangle {
     fill: var(--pvt-selection-rectangle-fill);
     stroke: var(--pvt-selection-rectangle-stroke);
