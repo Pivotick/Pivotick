@@ -21,17 +21,21 @@
     min-height: 300px;
     max-height: 100%;
 
+    // Decorative grid pitch — kept equal to the simulation `gridSize` default (50)
+    // so the visible grid and snap-to-grid line up at 100% zoom (see PRD D13).
+    --pvt-graph-grid-pitch: 50px;
+
     background-color: var(--pvt-bg);
     background-image: repeating-linear-gradient(0deg,
             var(--pvt-graph-grid-color) 0px,
             var(--pvt-graph-grid-color) 1px,
             transparent 1px,
-            transparent 20px),
+            transparent var(--pvt-graph-grid-pitch)),
         repeating-linear-gradient(90deg,
             var(--pvt-graph-grid-color) 0px,
             var(--pvt-graph-grid-color) 1px,
             transparent 1px,
-            transparent 20px);
+            transparent var(--pvt-graph-grid-pitch));
 
     &.grid-highlighted {
         --pvt-graph-grid-color: var(--pvt-graph-grid-color-highlighted);
