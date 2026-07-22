@@ -13,10 +13,10 @@
 .pvt-viewflyout-panel {
     display: none;
     flex-direction: column;
-    padding: 10px;
-    border-radius: 14px;
-    background-color: var(--pvt-bg-color-1);
-    border: 1px solid var(--pvt-border-color);
+    padding: 6px;
+    border-radius: 11px;
+    background-color: var(--pvt-bg-color-6);
+    border: 1px solid var(--pvt-bg-color-7);
     box-shadow: var(--pvt-box-shadow-strong);
 
     &.open {
@@ -40,7 +40,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 2px 4px 10px;
+    padding: 2px 9px 8px;
     font-weight: 600;
     color: var(--pvt-text-color-6);
 
@@ -50,7 +50,7 @@
 }
 
 .pvt-viewflyout-section-label {
-    padding: 0 4px 8px;
+    padding: 0 9px 8px;
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.06em;
@@ -71,8 +71,8 @@
         max-width: 130px;
         padding: 4px 6px;
         border-radius: 7px;
-        border: 1px solid var(--pvt-border-color);
-        background-color: var(--pvt-bg-color-0);
+        border: 1px solid var(--pvt-bg-color-5);
+        background-color: var(--pvt-bg-color-4);
         color: var(--pvt-text-color-6);
         font-family: inherit;
         font-size: 12px;
@@ -83,9 +83,9 @@
 .pvt-viewflyout-physics {
     margin: 8px 0;
     padding: 11px;
-    border-radius: 11px;
-    background-color: var(--pvt-bg-color-0);
-    border: 1px solid var(--pvt-border-color);
+    border-radius: 10px;
+    background-color: var(--pvt-bg-color-4);
+    border: 1px solid var(--pvt-bg-color-5);
 
     &.pvt-viewflyout-disabled {
         .pvt-viewflyout-presets,
@@ -212,7 +212,7 @@
     cursor: pointer;
     text-align: left;
 
-    &:hover { background-color: var(--pvt-bg-color-3); }
+    &:hover { background-color: var(--pvt-bg-color-7); }
 
     .pvt-viewflyout-switch {
         margin-left: auto;
@@ -220,7 +220,7 @@
         width: 32px;
         height: 18px;
         border-radius: 9px;
-        background-color: var(--pvt-bg-color-3);
+        background-color: var(--pvt-bg-color-7);
         transition: background-color 0.15s ease;
         flex: none;
 

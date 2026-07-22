@@ -12,10 +12,10 @@
 .pvt-toolpanel-panel {
     display: flex;
     flex-direction: column;
-    padding: 10px;
-    border-radius: 14px;
-    background-color: var(--pvt-bg-color-1);
-    border: 1px solid var(--pvt-border-color);
+    padding: 6px;
+    border-radius: 11px;
+    background-color: var(--pvt-bg-color-6);
+    border: 1px solid var(--pvt-bg-color-7);
     box-shadow: var(--pvt-box-shadow-strong);
 }
 
@@ -23,7 +23,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 2px 4px 10px;
+    padding: 2px 9px 8px;
     font-weight: 600;
     color: var(--pvt-text-color-6);
 
@@ -54,7 +54,7 @@
     }
 
     &:hover:not(:disabled) {
-        background-color: var(--pvt-bg-color-3);
+        background-color: var(--pvt-bg-color-7);
         color: var(--pvt-text-color-6);
     }
 
@@ -90,6 +90,6 @@
         font-weight: 700;
         letter-spacing: 0.04em;
         color: var(--pvt-text-color-5);
-        background-color: var(--pvt-bg-color-3);
+        background-color: var(--pvt-bg-color-7);
     }
 }
