@@ -41,7 +41,6 @@ export default defineConfig({
               { text: 'Sidebar', link: '/ui-sidebar' },
               { text: 'Tooltip', link: '/ui-tooltip' },
               { text: 'Context Menu', link: '/ui-context-menu' },
-              { text: 'Selection Menu', link: '/ui-selection-menu' },
               { text: 'Styling UI', link: '/ui-styling' },
             ]
           },

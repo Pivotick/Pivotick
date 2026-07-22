@@ -21,7 +21,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const REPO_ROOT = path.resolve(__dirname, '..')
 const GALLERY_DIR = path.resolve(REPO_ROOT, 'docs/examples/gallery')
 const BASE = '/Pivotick/'
-const PORT = 5180
+const PORT = Number(process.env.THUMB_PORT) || 5180
 const ORIGIN = `http://localhost:${PORT}`
 
 /** Poll an URL until it answers (server boot) or we give up. */
