@@ -1,39 +1,38 @@
-@use "../../../styles/components/buttons.scss";
-@use "../../../styles/components/input.scss";
+// B3 top bar — Search / Filter on the left, Notes + undo/redo pushed right.
+// Restyled to the "Graph App - B3" mockup: floating pill buttons over a
+// canvas-toned strip, driven by the theme variables so it tracks light/dark.
 
 .pvt-mainheader {
-    background: var(--pvt-ui-bg);
-    box-shadow: var(--pvt-sidebar-layout-shadow-bottom);
-    border-left: var(--pvt-sidebar-panel-border);
+    background: var(--pvt-bg);
 
     .pvt-mainheader-elements {
         display: flex;
         flex-direction: row;
-        gap: 4px;
         align-items: center;
-        margin: 2px 6px;
+        gap: 8px;
         width: 100%;
-        padding-left: 0.5rem;
+        height: 100%;
+        padding: 0 14px;
 
         .pvt-action-button {
-
             div.action-container {
                 position: relative;
                 display: inline-flex;
                 flex-direction: row;
                 align-items: center;
                 gap: 8px;
+                height: 34px;
+                padding: 0 12px;
                 cursor: pointer;
-                padding: 6px 12px;
-                border-radius: 4px;
-                background-color: var(--pvt-bg-color-1);
-                color: var(--pvt-text-color-4);
-                box-shadow: var(--pvt-action-container-shadow);
+                border-radius: 9px;
+                background-color: var(--pvt-bg-color-6);
+                border: 1px solid var(--pvt-bg-color-7);
+                color: var(--pvt-text-color-5);
+                user-select: none;
+                transition: background-color 0.12s ease;
 
                 span.action-text {
                     font-size: 0.8em;
-                    margin: 0 0.25em;
-                    user-select: none;
 
                     .active-filter-subtext {
                         font-weight: 400;
@@ -52,17 +51,34 @@
                     justify-content: center;
 
                     svg {
-                        width: 0.8rem;
-                        height: 0.8rem;
-                        color: var(--pvt-text-color-6);
-                        opacity: 0.7;
+                        width: 16px;
+                        height: 16px;
+                        color: var(--pvt-text-color-4);
                     }
                 }
             }
 
+            &:hover div.action-container {
+                background-color: var(--pvt-bg-color-7);
+            }
+
             &:active {
                 transition: transform 0.05s ease-out;
-                transform: scale(0.95);
+                transform: scale(0.97);
+            }
+        }
+
+        // Search reads as a wider field: dim placeholder-toned label with the
+        // shortcut badge pushed to the far edge.
+        #pvt-searchbox-button div.action-container {
+            width: 200px;
+
+            span.action-text {
+                color: var(--pvt-text-color-3);
+            }
+
+            .pvt-keyboard-shortcut {
+                margin-left: auto;
             }
         }
 
@@ -70,22 +86,46 @@
             margin-left: auto;
             display: flex;
             flex-direction: row;
-            flex-wrap: nowrap;
-            gap: 4px;
-
-            button.pvt-button-filter {
-                @include buttons.button-outline-info;
-                padding: 0.5rem 0.5rem;
-            }
+            align-items: center;
+            gap: 8px;
 
             div.pvt-undoredo-group {
                 display: inline-flex;
                 flex-direction: row;
-                flex-wrap: nowrap;
+                align-items: center;
+                gap: 2px;
+                padding: 4px;
+                border-radius: 9px;
+                background-color: var(--pvt-bg-color-6);
+                border: 1px solid var(--pvt-bg-color-7);
 
                 button {
-                    @include buttons.button-outline-secondary;
-                    padding: 0.5rem 0.5rem;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 30px;
+                    height: 28px;
+                    border: none;
+                    background: transparent;
+                    border-radius: 6px;
+                    color: var(--pvt-text-color-4);
+                    cursor: pointer;
+                    transition: background-color 0.12s ease, color 0.12s ease;
+
+                    svg {
+                        width: 16px;
+                        height: 16px;
+                    }
+
+                    &:hover:not(:disabled) {
+                        background-color: var(--pvt-bg-color-7);
+                        color: var(--pvt-text-color-6);
+                    }
+
+                    &:disabled {
+                        opacity: 0.45;
+                        cursor: default;
+                    }
                 }
             }
         }

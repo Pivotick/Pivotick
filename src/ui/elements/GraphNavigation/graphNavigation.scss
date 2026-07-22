@@ -1,67 +1,53 @@
+// B3 viewport rail — a single rounded pill (fit / zoom-in / zoom-out /
+// fullscreen · options), replacing the old stack of separate control boxes.
+// Colours come from the theme variables so it matches the mode rail / tool
+// panel family in both light and dark.
 .pvt-graphnavigation-elements {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px;
+    border-radius: 11px;
+    background-color: var(--pvt-bg-color-6);
+    border: 1px solid var(--pvt-bg-color-7);
+    box-shadow: var(--pvt-box-shadow-strong);
 
-    button {
-        border: none;
-        background: none;
+    .pvt-graphnavigation-button {
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 3px;
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        border: none;
+        background: transparent;
+        border-radius: 8px;
         cursor: pointer;
-        font-size: 1.0rem;
-        color: color-mix(in srgb, var(--pvt-text-color-5) 80%, white);
-        transition: font-size 0.15s ease;
-        @media (prefers-color-scheme: dark) {
-            color: #bbb;
+        color: var(--pvt-text-color-4);
+        transition: background-color 0.12s ease, color 0.12s ease;
+
+        svg {
+            width: 17px;
+            height: 17px;
         }
 
         &:hover,
         &:active {
-            color: color-mix(in srgb, var(--pvt-text-color-5) 70%, black);
-            @media (prefers-color-scheme: dark) {
-                color: #fff;
-            }
+            background-color: var(--pvt-bg-color-7);
+            color: var(--pvt-text-color-6);
         }
     }
 
-    .pvt-graphnavigation-zoom-fit {
-        background-color: color-mix(in srgb, var(--pvt-bg) 80%, white);
-        box-shadow: var(--pvt-graph-navigation-control-container-shadow);
-        border-radius: 4px;
-        margin-bottom: 6px;
-    }
-
-    .pvt-graphnavigation-zoom-controls {
+    .pvt-graphnavigation-fullscreen-button span {
         display: flex;
-        flex-direction: column;
-        background-color: color-mix(in srgb, var(--pvt-bg) 80%, white);
-        box-shadow: var(--pvt-graph-navigation-control-container-shadow);
-        margin-bottom: 6px;
-        border-radius: 4px;
-
-        .pvt-zoom-divider {
-            border-top: 1px solid color-mix(in srgb, var(--pvt-border-color) 40%, transparent);
-            margin: 0 5px;
-        }
+        align-items: center;
+        justify-content: center;
     }
 
-    .pvt-graphnavigation-fullscreen {
-        background-color: color-mix(in srgb, var(--pvt-bg) 80%, white);
-        box-shadow: var(--pvt-graph-navigation-control-container-shadow);
-        border-radius: 4px;
-        margin-bottom: 6px;
-
-        span {
-            height: 18px;
-            flex-direction: column;
-            justify-content: center;
-            display: flex;
-        }
-    }
-
-    .pvt-graphnavigation-options {
-        background-color: color-mix(in srgb, var(--pvt-bg) 80%, white);
-        box-shadow: var(--pvt-graph-navigation-control-container-shadow);
-        border-radius: 4px;
+    .pvt-graphnavigation-divider {
+        width: 20px;
+        height: 1px;
+        margin: 2px auto;
+        background-color: var(--pvt-bg-color-7);
     }
 }
