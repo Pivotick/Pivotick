@@ -81,8 +81,8 @@ export class ViewFlyout extends UIComponent {
         this.wireToggles()
 
         // Reflect the mode store: show/hide with the View flyout flag.
-        this.applyOpen(this.uiManager.modeStore.isViewFlyoutOpen())
-        this.track(this.uiManager.modeStore.subscribe((s) => this.applyOpen(s.viewFlyoutOpen)))
+        this.applyOpen(this.uiManager.modeStore.isViewActive())
+        this.track(this.uiManager.modeStore.subscribe((s) => this.applyOpen(s.mode === 'view')))
     }
 
     protected onGraphReady() {

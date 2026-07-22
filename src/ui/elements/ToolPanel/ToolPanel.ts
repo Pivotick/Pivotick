@@ -1,6 +1,6 @@
 import type { UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
-import type { PointerMode } from '../../ModeStore'
+import type { PointerMode, RailMode } from '../../ModeStore'
 import type { GraphInteractionContext } from '../../../interfaces/GraphInteractions'
 import type { GraphConnectManager } from '../../../editing/GraphConnectManager'
 import { Note } from '../../../Note'
@@ -45,7 +45,7 @@ export class ToolPanel extends UIComponent {
     }
 
     protected onAfterMount() {
-        this.render(this.uiManager.modeStore.getMode())
+        this.onModeChange(this.uiManager.modeStore.getMode())
         this.track(this.uiManager.modeStore.subscribe((state) => this.onModeChange(state.mode)))
 
         // Keep the Add-edge tool highlighted in step with the real connect session.
@@ -69,7 +69,8 @@ export class ToolPanel extends UIComponent {
         const cm = this.uiManager.graph.editing.connectManager
         if (cm.isActive()) cm.exitClickConnectionMode()
         this.disarmLasso()
-        this.reflectArmed(this.uiManager.modeStore.getMode())
+        const mode = this.uiManager.modeStore.getMode()
+        if (mode !== 'view') this.reflectArmed(mode)
     }
 
     protected onDestroy() {
@@ -78,14 +79,26 @@ export class ToolPanel extends UIComponent {
         this.panel = undefined
     }
 
-    /** On a mode switch, disarm the leaving mode's tool and render the new tool-set. */
-    private onModeChange(mode: PointerMode) {
+    /**
+     * On a mode switch, disarm the leaving mode's tool and render the new
+     * tool-set. View has no pointer tools, so the panel is hidden in View mode.
+     */
+    private onModeChange(mode: RailMode) {
         if (mode !== 'select') this.disarmLasso()
         if (mode !== 'create') {
             const cm = this.uiManager.graph.editing.connectManager
             if (cm.isActive()) cm.exitClickConnectionMode()
         }
+        if (mode === 'view') {
+            this.setPanelVisible(false)
+            return
+        }
+        this.setPanelVisible(true)
         this.render(mode)
+    }
+
+    private setPanelVisible(visible: boolean) {
+        if (this.panel) this.panel.style.display = visible ? '' : 'none'
     }
 
     private specsFor(mode: PointerMode): ToolSpec[] {

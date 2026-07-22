@@ -16,7 +16,7 @@ type Page = import('@playwright/test').Page
 
 const openFlyout = (page: Page) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    page.evaluate(() => (window.__pivotick as any).graph.UIManager.modeStore.setViewFlyoutOpen(true))
+    page.evaluate(() => (window.__pivotick as any).graph.UIManager.modeStore.setMode('view'))
 
 const knobs = (page: Page) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

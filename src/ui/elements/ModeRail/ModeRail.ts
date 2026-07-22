@@ -1,15 +1,15 @@
 import type { UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
-import type { ModeState, PointerMode } from '../../ModeStore'
+import type { ModeState } from '../../ModeStore'
 import { cursor, addCircle, show, sparkles } from '../../icons'
 import './moderail.scss'
 
 /**
- * The B3 left-edge mode rail. Holds the two real pointer-modes (Select, Create),
- * a View button that toggles the settings flyout, and a disabled "SOON" Enrich
- * affordance. It owns no logic beyond presentation + dispatching to the
- * {@link UIManager.modeStore}; the rail, contextual panels, View flyout and
- * canvas cursor all react to that shared store.
+ * The B3 left-edge mode rail. Holds the three exclusive modes (Select, Create,
+ * View) and a disabled "SOON" Enrich affordance. It owns no logic beyond
+ * presentation + dispatching to the {@link UIManager.modeStore}; the rail,
+ * contextual panels, View flyout and canvas cursor all react to that shared
+ * store.
  */
 export class ModeRail extends UIComponent {
     private rail?: HTMLDivElement
@@ -25,7 +25,7 @@ export class ModeRail extends UIComponent {
         this.rail = document.createElement('div')
         this.rail.className = 'pvt-moderail-rail'
 
-        // Pointer-modes (exclusive) + View (independent flyout toggle).
+        // The three exclusive modes: Select, Create, View.
         this.rail.appendChild(this.makeButton('select', 'Select', cursor, 'V'))
         this.rail.appendChild(this.makeButton('create', 'Create', addCircle, 'C'))
         this.rail.appendChild(this.makeButton('view', 'View', show))
@@ -42,7 +42,7 @@ export class ModeRail extends UIComponent {
     protected onAfterMount() {
         this.buttons.get('select')?.addEventListener('click', () => this.uiManager.modeStore.setMode('select'))
         this.buttons.get('create')?.addEventListener('click', () => this.uiManager.modeStore.setMode('create'))
-        this.buttons.get('view')?.addEventListener('click', () => this.uiManager.modeStore.toggleViewFlyout())
+        this.buttons.get('view')?.addEventListener('click', () => this.uiManager.modeStore.toggleView())
 
         // Keyboard: V → Select, C → Create (focus-gated via the key manager).
         this.track(this.uiManager.keyManager.register({ key: 'v', callback: () => this.uiManager.modeStore.setMode('select'), description: 'Select mode' }))
@@ -59,10 +59,10 @@ export class ModeRail extends UIComponent {
         this.buttons.clear()
     }
 
-    /** Highlight the active pointer-mode and the View button when its flyout is open. */
+    /** Highlight the single active mode (Select / Create / View are exclusive). */
     private render(state: Readonly<ModeState>) {
         for (const [key, button] of this.buttons) {
-            const active = key === 'view' ? state.viewFlyoutOpen : key === (state.mode as PointerMode)
+            const active = key === state.mode
             button.classList.toggle('active', active)
             button.setAttribute('aria-pressed', String(active))
         }

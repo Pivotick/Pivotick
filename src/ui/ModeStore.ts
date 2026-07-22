@@ -1,18 +1,21 @@
 /**
- * The two real pointer-modes of the B3 control layout. Basic click-select, pan
- * and zoom work in *every* mode; the mode only decides what a plain drag / the
+ * The two pointer-modes of the B3 control layout. Basic click-select, pan and
+ * zoom work in *every* mode; a pointer-mode only decides what a plain drag / the
  * contextual tool panel does (rubber-band select vs. the armed create tool).
- * `View` is deliberately **not** a mode — it's an always-available settings
- * flyout tracked here by {@link ModeState.viewFlyoutOpen}.
  */
 export type PointerMode = 'select' | 'create'
 
-/** Observable state of the mode rail + View flyout. */
+/**
+ * Every mode the rail can be in. Select/Create are pointer-modes; `'view'` opens
+ * the settings flyout and is **mutually exclusive** with them — entering View
+ * deactivates Select/Create (and vice-versa).
+ */
+export type RailMode = PointerMode | 'view'
+
+/** Observable state of the mode rail. */
 export interface ModeState {
-    /** Active pointer-mode. Defaults to `'select'`. */
-    mode: PointerMode
-    /** Whether the View settings flyout is open. Defaults to `false`. */
-    viewFlyoutOpen: boolean
+    /** The active rail mode. Defaults to `'select'`. */
+    mode: RailMode
 }
 
 type ModeListener = (state: Readonly<ModeState>) => void
@@ -28,15 +31,19 @@ type ModeListener = (state: Readonly<ModeState>) => void
  * {@link getState} first, then subscribe for updates.
  */
 export class ModeStore {
-    private state: ModeState = { mode: 'select', viewFlyoutOpen: false }
+    private state: ModeState = { mode: 'select' }
+    // Last pointer-mode, so toggling View off returns to Select/Create rather
+    // than stranding the rail with nothing active.
+    private lastPointerMode: PointerMode = 'select'
     private readonly listeners = new Set<ModeListener>()
 
-    getMode(): PointerMode {
+    getMode(): RailMode {
         return this.state.mode
     }
 
-    isViewFlyoutOpen(): boolean {
-        return this.state.viewFlyoutOpen
+    /** Whether the View flyout is open (i.e. View is the active mode). */
+    isViewActive(): boolean {
+        return this.state.mode === 'view'
     }
 
     /** A copy of the current state (safe to read; mutations don't leak back). */
@@ -44,20 +51,16 @@ export class ModeStore {
         return { ...this.state }
     }
 
-    setMode(mode: PointerMode): void {
+    setMode(mode: RailMode): void {
         if (this.state.mode === mode) return
+        if (mode !== 'view') this.lastPointerMode = mode
         this.state.mode = mode
         this.emit()
     }
 
-    setViewFlyoutOpen(open: boolean): void {
-        if (this.state.viewFlyoutOpen === open) return
-        this.state.viewFlyoutOpen = open
-        this.emit()
-    }
-
-    toggleViewFlyout(): void {
-        this.setViewFlyoutOpen(!this.state.viewFlyoutOpen)
+    /** Enter View mode, or leave it back to the last pointer-mode. */
+    toggleView(): void {
+        this.setMode(this.state.mode === 'view' ? this.lastPointerMode : 'view')
     }
 
     /** Subscribe to state changes. Returns an unsubscribe fn (pass to `UIComponent.track`). */

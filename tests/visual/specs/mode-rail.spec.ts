@@ -35,7 +35,7 @@ test.describe('mode-rail', () => {
         const rail = page.locator('.pvt-moderail')
         await expect(rail.locator('.pvt-moderail-button[data-mode="select"]')).toHaveClass(/active/)
         await expect(rail.locator('.pvt-moderail-button[data-mode="create"]')).not.toHaveClass(/active/)
-        expect(await modeState(page)).toEqual({ mode: 'select', viewFlyoutOpen: false })
+        expect(await modeState(page)).toEqual({ mode: 'select' })
 
         await expectElement(rail, 'moderail-select.png')
     })
@@ -54,17 +54,24 @@ test.describe('mode-rail', () => {
         await expectElement(rail, 'moderail-create.png')
     })
 
-    // View is an independent toggle — it highlights without leaving the pointer-mode.
-    test('View toggles the flyout flag without changing pointer-mode', async ({ page }) => {
+    // View is its own exclusive mode: activating it deactivates Select/Create,
+    // and toggling it off returns to the previous pointer-mode.
+    test('View is an exclusive mode; Select/Create switch off', async ({ page }) => {
         await loadFixture(page, 'basic', B3)
         const rail = page.locator('.pvt-moderail')
+        const view = rail.locator('.pvt-moderail-button[data-mode="view"]')
+        const select = rail.locator('.pvt-moderail-button[data-mode="select"]')
 
-        await rail.locator('.pvt-moderail-button[data-mode="view"]').click()
+        await view.click()
+        await expect(view).toHaveClass(/active/)
+        await expect(select).not.toHaveClass(/active/)
+        expect((await modeState(page)).mode).toBe('view')
 
-        await expect(rail.locator('.pvt-moderail-button[data-mode="view"]')).toHaveClass(/active/)
-        const state = await modeState(page)
-        expect(state.viewFlyoutOpen).toBe(true)
-        expect(state.mode).toBe('select') // pointer-mode unchanged
+        // Toggling View off returns to the previous pointer-mode (Select).
+        await view.click()
+        await expect(view).not.toHaveClass(/active/)
+        await expect(select).toHaveClass(/active/)
+        expect((await modeState(page)).mode).toBe('select')
     })
 
     // Keyboard: V → Select, C → Create (focus-gated key manager).
