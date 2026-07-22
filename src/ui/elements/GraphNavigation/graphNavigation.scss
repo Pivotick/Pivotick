@@ -6,8 +6,8 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
-    padding: 4px;
-    border-radius: 11px;
+    padding: 3px;
+    border-radius: 10px;
     background-color: var(--pvt-bg-color-6);
     border: 1px solid var(--pvt-bg-color-7);
     box-shadow: var(--pvt-box-shadow-strong);
@@ -16,19 +16,19 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 34px;
-        height: 34px;
+        width: 28px;
+        height: 28px;
         padding: 0;
         border: none;
         background: transparent;
-        border-radius: 8px;
+        border-radius: 7px;
         cursor: pointer;
         color: var(--pvt-text-color-4);
-        transition: background-color 0.12s ease, color 0.12s ease;
+        transition: background-color 0.06s ease, color 0.06s ease;
 
         svg {
-            width: 17px;
-            height: 17px;
+            width: 15px;
+            height: 15px;
         }
 
         &:hover,
@@ -42,12 +42,5 @@
         display: flex;
         align-items: center;
         justify-content: center;
-    }
-
-    .pvt-graphnavigation-divider {
-        width: 20px;
-        height: 1px;
-        margin: 2px auto;
-        background-color: var(--pvt-bg-color-7);
     }
 }

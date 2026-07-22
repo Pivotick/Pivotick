@@ -1,5 +1,4 @@
-import { PivotickDropdown } from '../../components/Dropdown'
-import { fullscreen, fullscreenExit, graphNavigationReset, graphNavigationZoomIn, graphNavigationZoomOut, grid, pin, sliderTune, snapGrid } from '../../icons'
+import { fullscreen, fullscreenExit, graphNavigationReset, graphNavigationZoomIn, graphNavigationZoomOut } from '../../icons'
 import type { UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
 import './graphNavigation.scss'
@@ -41,10 +40,6 @@ export class GraphNavigation extends UIComponent {
     <button id="pvt-graphnavigation-fullscreen" class="pvt-graphnavigation-button pvt-graphnavigation-fullscreen-button" title="Toggle Fullscreen">
         <span>${fullscreen}</span>
         <span style="display: none">${fullscreenExit}</span>
-    </button>
-    <div class="pvt-graphnavigation-divider"></div>
-    <button id="pvt-graphnavigation-options" class="pvt-graphnavigation-button" title="Open options">
-        ${sliderTune}
     </button>
   </div>
 `
@@ -97,58 +92,6 @@ export class GraphNavigation extends UIComponent {
         }
     }
 
-    private buildOptionsDropdown() {
-        const optionsButton: HTMLButtonElement | null | undefined =
-            this.navigation?.querySelector('#pvt-graphnavigation-options')
-        if (!optionsButton) return
-
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const dropdown = new PivotickDropdown(optionsButton, [
-            {
-                id: 'highligh-grid',
-                svgIcon: grid,
-                text: 'Highlight Grid',
-                onClick: (_option, _dropdown, btn) => {
-                    this.uiManager.layout?.canvas?.classList.toggle('grid-highlighted')
-                    btn.classList.toggle('primary')
-                    btn.classList.toggle('outline-primary')
-                }
-            },
-            {
-                id: 'snap-to-grid',
-                svgIcon: snapGrid,
-                text: 'Snap to grid',
-                onClick: (_option, _dropdown, btn) => {
-                    this.uiManager.graph.simulation.toggleGridSnapping()
-                    btn.classList.toggle('primary')
-                    btn.classList.toggle('outline-primary')
-                }
-            },
-            {
-                id: 'freeze-nodes-on-drag',
-                svgIcon: pin,
-                text: 'Freeze nodes on drag',
-                variant: this.uiManager.graph.simulation.isFreezeNodesOnDrag() ? 'primary' : 'outline-primary',
-                onClick: (_option, _dropdown, btn) => {
-                    this.uiManager.graph.simulation.toggleFreezeNodesOnDrag()
-                    btn.classList.toggle('primary')
-                    btn.classList.toggle('outline-primary')
-                }
-            },
-            {
-                id: 'fit-view-on-expand-collapse',
-                svgIcon: graphNavigationReset,
-                text: 'Fit view on expand/collapse',
-                variant: this.uiManager.graph.simulation.isFitViewOnExpandCollapse() ? 'primary' : 'outline-primary',
-                onClick: (_option, _dropdown, btn) => {
-                    this.uiManager.graph.simulation.toggleFitViewOnExpandCollapse()
-                    btn.classList.toggle('primary')
-                    btn.classList.toggle('outline-primary')
-                }
-            },
-        ])
-    }
-
     updateFullscreenIcon(button: HTMLElement) {
         const spans = button.querySelectorAll('span')
 
@@ -159,9 +102,5 @@ export class GraphNavigation extends UIComponent {
 
         enterIcon.style.display = isFullscreen ? 'none' : ''
         exitIcon.style.display = isFullscreen ? '' : 'none'
-    }
-
-    protected onGraphReady() {
-        this.buildOptionsDropdown()
     }
 }

@@ -29,7 +29,7 @@
                 border: 1px solid var(--pvt-bg-color-7);
                 color: var(--pvt-text-color-5);
                 user-select: none;
-                transition: background-color 0.12s ease;
+                transition: background-color 0.06s ease;
 
                 span.action-text {
                     font-size: 0.8em;
@@ -110,7 +110,7 @@
                     border-radius: 6px;
                     color: var(--pvt-text-color-4);
                     cursor: pointer;
-                    transition: background-color 0.12s ease, color 0.12s ease;
+                    transition: background-color 0.06s ease, color 0.06s ease;
 
                     svg {
                         width: 16px;

@@ -62,7 +62,7 @@ export class Mainheader extends UIComponent {
         /** Notebox */
         const templateNoteSidebar = document.createElement('template')
         templateNoteSidebar.innerHTML = `
-  <div id="pvt-filter-button" class="pvt-action-button">
+  <div id="pvt-notes-button" class="pvt-action-button">
     <div class="action-container">
         <span class="icon-container">${stickyNote}</span>
         <span class="action-text">Notes</span>
@@ -86,7 +86,6 @@ export class Mainheader extends UIComponent {
     </div>
   </div>`
         const filterContainer = templateRight.content.firstElementChild as HTMLDivElement
-        filterContainer.prepend(this.noteButton)
         this.undoButton = filterContainer.querySelector('#pvt-undo-button') ?? undefined
         this.redoButton = filterContainer.querySelector('#pvt-redo-button') ?? undefined
         this.mainheader.appendChild(filterContainer)

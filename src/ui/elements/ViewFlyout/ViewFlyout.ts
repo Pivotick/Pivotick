@@ -5,7 +5,7 @@ import hasCycle from '../../../plugins/analytics/cycle'
 import {
     show, atom, play, pause,
     magnet, arrowsHorizontal, circleDashed, wind,
-    snapGrid, grid, pin,
+    snapGrid, grid, pin, graphNavigationReset,
 } from '../../icons'
 import './viewflyout.scss'
 
@@ -202,6 +202,7 @@ export class ViewFlyout extends UIComponent {
             () => canvas?.classList.toggle('grid-highlighted'),
             () => canvas?.classList.contains('grid-highlighted') ?? false)
         this.wireToggle('freeze', () => this.sim.toggleFreezeNodesOnDrag(), () => this.sim.isFreezeNodesOnDrag())
+        this.wireToggle('fit', () => this.sim.toggleFitViewOnExpandCollapse(), () => this.sim.isFitViewOnExpandCollapse())
     }
 
     // Attaches the click handler now; `read()` touches the simulation, so the
@@ -253,6 +254,7 @@ export class ViewFlyout extends UIComponent {
             ${toggle('snap', snapGrid, 'Snap to grid')}
             ${toggle('highlight', grid, 'Highlight grid')}
             ${toggle('freeze', pin, 'Freeze on drag')}
+            ${toggle('fit', graphNavigationReset, 'Fit on expand/collapse')}
         `
     }
 }

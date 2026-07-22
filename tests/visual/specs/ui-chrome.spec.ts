@@ -78,10 +78,11 @@ test.describe('ui-chrome', () => {
     // covered by mode-rail.spec.ts / tool-panel.spec.ts; the classic edit-mode
     // toolbar it replaced has been retired.
 
-    // T8.3 — the viewport navigation rail (fit / zoom in-out / fullscreen /
-    // options). Snapshotted as its own element per the README's "target specific
-    // elements" guidance. The layout + physics controls now live in the View
-    // flyout (see view-flyout.spec.ts), not a separate corner element.
+    // T8.3 — the viewport navigation rail (fit / zoom in-out / fullscreen).
+    // Snapshotted as its own element per the README's "target specific
+    // elements" guidance. The layout/physics controls and the grid/freeze
+    // toggles now live in the View flyout (see view-flyout.spec.ts), not a
+    // separate corner element or the retired nav options dropdown.
     test('shows the navigation rail', async ({ page }) => {
         await loadFixture(page, 'tree')
 
