@@ -171,7 +171,7 @@ The mockup surfaces six *new* graph capabilities that do not exist on `develop`.
 3. **Inline top-bar search** — whether to promote the existing `SearchBox` (currently used inside the picker modal) into an inline top-bar field, as the mockup draws it. (M1 kept the picker modal.)
 4. **`viewer`-mode View flyout** — *resolved (deferred):* shipped **without** the flyout in `viewer` (it's gated to `full`/`light`). Revisit if read-only layout/physics tuning is wanted; view settings aren't data mutations, so it's a reasonable later add.
 5. **Fullscreen in the rail** — *resolved:* fullscreen shipped in the restyled viewport rail (D11).
-6. **"SOON" badge wording** — the shipped shell advertises **SOON** on Isolate/Group/Ungroup/Bulk-edit, Path-select/Add-node, and Enrich — all now **future capabilities** with no committed schedule (§7). Decide whether to keep the badges as forward-looking affordances or drop the "SOON" wording until a capability is actually committed (an unfulfilled "SOON" ages badly).
+6. **"SOON" badge wording** — the shipped shell advertises **SOON** on Isolate/Group/Ungroup/Bulk-edit, Path-select/Add-node, and Enrich — all now **future capabilities** with no committed schedule (§7). *Resolved (2026-07-22, Sami): keep the "SOON" badges for now* as forward-looking affordances; revisit if they go stale (an unfulfilled "SOON" ages badly).
 
 ## 10. Acceptance criteria (M1)
 
