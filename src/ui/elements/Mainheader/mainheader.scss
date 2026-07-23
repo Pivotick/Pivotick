@@ -3,7 +3,23 @@
 // canvas-toned strip, driven by the theme variables so it tracks light/dark.
 
 .pvt-mainheader {
-    background: var(--pvt-bg);
+    // Transparent strip — no solid bar. The canvas grid continues up through it
+    // so Search / Filter / Notes read as pills floating over the graph surface.
+    // Pitch + alignment match .pvt-canvas (grid begins one header-height below),
+    // so the lattice is seamless across the header/canvas seam.
+    background-color: transparent;
+    --pvt-graph-grid-pitch: 50px;
+    background-image: repeating-linear-gradient(0deg,
+            var(--pvt-graph-grid-color) 0px,
+            var(--pvt-graph-grid-color) 1px,
+            transparent 1px,
+            transparent var(--pvt-graph-grid-pitch)),
+        repeating-linear-gradient(90deg,
+            var(--pvt-graph-grid-color) 0px,
+            var(--pvt-graph-grid-color) 1px,
+            transparent 1px,
+            transparent var(--pvt-graph-grid-pitch));
+    background-position: 0 var(--pvt-mainheader-height);
 
     .pvt-mainheader-elements {
         display: flex;
