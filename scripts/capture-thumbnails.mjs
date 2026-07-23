@@ -43,6 +43,14 @@ async function captureCard(page, slug) {
     const url = `${ORIGIN}${BASE}examples/gallery/${slug}/content.html`
     await page.goto(url, { waitUntil: 'networkidle' })
 
+    // Each card page carries the surrounding VitePress doc chrome. The B3 top bar
+    // is a transparent overlay, so the fixed VitePress navbar (and "Return to top"
+    // link) shows through the top of the graph. Hide the page chrome so only the
+    // graph app is captured.
+    await page.addStyleTag({
+        content: '.VPNav,.VPLocalNav,.VPBackdrop,.VPDoc .aside,[class*="back-to-top"]{display:none !important}',
+    })
+
     // The graph un-hides its zoom layer only when the initial layout is "done"
     // (mirrors the visual-test harness's render-complete signal).
     await page
@@ -56,10 +64,13 @@ async function captureCard(page, slug) {
     await page.evaluate(() => document.fonts?.ready)
     await page.waitForTimeout(1300)
 
-    const canvas = page.locator('.pvt-canvas').first()
-    await canvas.waitFor({ state: 'visible', timeout: 10_000 })
+    // Shoot the layout root, not the inner canvas: it is bounded to the embed box
+    // (so page content can't bleed in) and includes the B3 chrome — top bar, mode
+    // rail, and the docked sidebar on full-mode cards that showcase it.
+    const layout = page.locator('.pvt-layout').first()
+    await layout.waitFor({ state: 'visible', timeout: 10_000 })
     const out = path.join(GALLERY_DIR, slug, 'pic.png')
-    await canvas.screenshot({ path: out })
+    await layout.screenshot({ path: out })
     return out
 }
 
