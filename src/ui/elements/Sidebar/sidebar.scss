@@ -23,6 +23,20 @@
             transform: translateX(-8px);
         }
 
+        // Nothing selected → a clean sidebar. A panel with no rendered content
+        // (no visible `.enter-active` child) collapses, and the separator before
+        // an empty panel is dropped. Scoped to the template's direct-child
+        // separators so panels' own internal dividers are untouched.
+        > .pvt-sidebar-panel:not(:has(> .enter-active)) {
+            display: none;
+        }
+        > .pvt-sidebar-separator {
+            display: none;
+        }
+        > .pvt-sidebar-separator:has(+ .pvt-sidebar-panel > .enter-active) {
+            display: block;
+        }
+
         .pvt-extra-panel {
             display: flex;
             flex-direction: column;
