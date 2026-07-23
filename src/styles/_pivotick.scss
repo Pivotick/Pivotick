@@ -648,7 +648,9 @@ dl.pvt-property-list {
     }
 
     &.unresolved {
-        opacity: 0.6;
+        // Signal "unresolved" with the dashed border + muted colour, not a
+        // half-transparent pill — whole-element opacity stacked with the surface
+        // and left the text barely readable.
         border-style: dashed;
         color: var(--pvt-text-color-3);
         cursor: default;
