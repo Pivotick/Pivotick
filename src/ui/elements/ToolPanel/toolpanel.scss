@@ -17,8 +17,8 @@
     flex-direction: column;
     padding: 6px;
     border-radius: 11px;
-    background-color: var(--pvt-bg-color-6);
-    border: 1px solid var(--pvt-bg-color-7);
+    background-color: var(--pvt-chrome-bg);
+    border: 1px solid var(--pvt-chrome-border);
     box-shadow: var(--pvt-box-shadow-strong);
     pointer-events: auto;
     transform-origin: top left;
@@ -78,7 +78,7 @@
     }
 
     &:hover:not(:disabled) {
-        background-color: var(--pvt-bg-color-7);
+        background-color: var(--pvt-chrome-border);
         color: var(--pvt-text-color-6);
     }
 
@@ -120,6 +120,6 @@
         font-weight: 700;
         letter-spacing: 0.04em;
         color: var(--pvt-text-color-5);
-        background-color: var(--pvt-bg-color-7);
+        background-color: var(--pvt-chrome-border);
     }
 }

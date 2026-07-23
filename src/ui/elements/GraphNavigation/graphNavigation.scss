@@ -8,8 +8,8 @@
     gap: 2px;
     padding: 3px;
     border-radius: 10px;
-    background-color: var(--pvt-bg-color-6);
-    border: 1px solid var(--pvt-bg-color-7);
+    background-color: var(--pvt-chrome-bg);
+    border: 1px solid var(--pvt-chrome-border);
     box-shadow: var(--pvt-box-shadow-strong);
 
     .pvt-graphnavigation-button {
@@ -33,7 +33,7 @@
 
         &:hover,
         &:active {
-            background-color: var(--pvt-bg-color-7);
+            background-color: var(--pvt-chrome-border);
             color: var(--pvt-text-color-6);
         }
     }
