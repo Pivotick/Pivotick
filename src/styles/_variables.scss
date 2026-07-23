@@ -35,6 +35,7 @@ $light-theme: (
     // doesn't read heavy on the white canvas; see the dark map for the dark tone.
     pvt-chrome-bg: var(--pvt-bg-color-3),
     pvt-chrome-border: #dcdcdc,
+    pvt-chrome-shadow: "0 2px 6px rgba(0, 0, 0, 0.10)",
 
     pvt-theme-primary: map.get($light-vibrant-color-palette, vibrant-amaranth),
     pvt-theme-secondary: #f2f2f2,
@@ -301,6 +302,7 @@ $dark-theme: (
     // B3 floating chrome surface (rails / pills / panels) — the graphite tone.
     pvt-chrome-bg: var(--pvt-bg-color-6),
     pvt-chrome-border: var(--pvt-bg-color-7),
+    pvt-chrome-shadow: "0 3px 8px rgba(0, 0, 0, 0.30)",
 
     // pvt-theme-primary: #730ff0,
     pvt-theme-primary: map.get($dark-vibrant-color-palette, vibrant-amaranth),
