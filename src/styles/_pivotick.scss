@@ -37,9 +37,12 @@
             transparent 1px,
             transparent var(--pvt-graph-grid-pitch));
 
-    &.grid-highlighted {
-        --pvt-graph-grid-color: var(--pvt-graph-grid-color-highlighted);
-    }
+}
+
+// Highlight-grid keys the grid colour on the layout root so both the canvas and
+// the transparent top-bar strip (which continues the grid) brighten together.
+.pvt-layout.grid-highlighted {
+    --pvt-graph-grid-color: var(--pvt-graph-grid-color-highlighted);
 }
 
 .pvt-loading-progress-bar {

@@ -196,11 +196,13 @@ export class ViewFlyout extends UIComponent {
     /* ---------- grid / freeze toggles ---------- */
 
     private wireToggles() {
-        const canvas = this.uiManager.layout?.canvas
+        // Highlight the grid on the layout root so the canvas AND the transparent
+        // top-bar strip (which continues the grid) brighten together.
+        const root = this.uiManager.layout?.layout
         this.wireToggle('snap', () => this.sim.toggleGridSnapping(), () => this.sim.isGridSnappingEnabled())
         this.wireToggle('highlight',
-            () => canvas?.classList.toggle('grid-highlighted'),
-            () => canvas?.classList.contains('grid-highlighted') ?? false)
+            () => root?.classList.toggle('grid-highlighted'),
+            () => root?.classList.contains('grid-highlighted') ?? false)
         this.wireToggle('freeze', () => this.sim.toggleFreezeNodesOnDrag(), () => this.sim.isFreezeNodesOnDrag())
         this.wireToggle('fit', () => this.sim.toggleFitViewOnExpandCollapse(), () => this.sim.isFitViewOnExpandCollapse())
     }
