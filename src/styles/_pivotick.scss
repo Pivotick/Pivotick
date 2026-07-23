@@ -654,5 +654,16 @@ dl.pvt-property-list {
         border-style: dashed;
         color: var(--pvt-text-color-3);
         cursor: default;
+
+        // No node to colour the dot, so draw it as a hollow ring in the muted
+        // ink (an "empty" marker) instead of the resolved dot's filled, glowing
+        // disc tinted by a node colour it doesn't have.
+        &::before {
+            box-sizing: border-box;
+            background: transparent;
+            border: 1.5px solid currentColor;
+            box-shadow: none;
+            opacity: 0.7;
+        }
     }
 }
