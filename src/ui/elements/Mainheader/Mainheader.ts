@@ -111,14 +111,21 @@ export class Mainheader extends UIComponent {
             header: 'Graph Filters',
             body: graphFilter.build()
         })
-        this.listen(filterButton, 'click', () => this.filteringSlidepanel!.toggle())
+        // Only one slide panel open at a time: opening one closes the other.
+        this.listen(filterButton, 'click', () => {
+            this.noteSlidepanel?.close()
+            this.filteringSlidepanel!.toggle()
+        })
 
         this.noteSidebar = new NoteSidebar(this.uiManager)
         this.noteSlidepanel = this.uiManager.createSlidepanel({
             header: 'Notes',
             body: this.noteSidebar.build()
         })
-        this.listen(noteButton, 'click', () => this.noteSlidepanel!.toggle())
+        this.listen(noteButton, 'click', () => {
+            this.filteringSlidepanel?.close()
+            this.noteSlidepanel!.toggle()
+        })
         // NoteSidebar's afterMount (bind) / destroy (unbind) are driven by UIComponent
         this.addChild(this.noteSidebar)
 
