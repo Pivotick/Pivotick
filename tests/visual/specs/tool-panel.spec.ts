@@ -232,4 +232,36 @@ test.describe('tool-panel', () => {
         await page.keyboard.press('c')
         await expect(page.locator('.pvt-toolpanel-header')).toContainText('Create')
     })
+
+    test('Edit node is disabled until exactly one node is selected', async ({ page }) => {
+        await loadFixture(page, 'basic', B3)
+        await setMode(page, 'create')
+        const editRow = page.locator('.pvt-toolpanel-tool[data-tool="edit"]')
+
+        await expect(editRow).toBeDisabled()          // nothing selected
+        await harness(page, 'selectNode', 'a')
+        await expect(editRow).toBeEnabled()           // one node → editable
+        await harness(page, 'deselectAll')
+        await expect(editRow).toBeDisabled()          // back to nothing
+    })
+
+    test('Edit node reopens the modal after it was closed', async ({ page }) => {
+        await loadFixture(page, 'basic', B3)
+        await harness(page, 'selectNode', 'a')
+        await setMode(page, 'create')
+        const editRow = page.locator('.pvt-toolpanel-tool[data-tool="edit"]')
+        const modal = page.locator('#edit-node-modal')
+
+        await editRow.click()
+        await expect(modal).toBeVisible()
+
+        // Dismiss without committing; the node stays selected.
+        await modal.locator('.pvt-modal__footer button', { hasText: 'Cancel' }).click()
+        await expect(modal).toHaveCount(0)
+        expect((await harness(page, 'selectedNodeIds') as string[])).toContain('a')
+
+        // Editing the still-selected node opens the modal again (regression guard).
+        await editRow.click()
+        await expect(modal).toBeVisible()
+    })
 })

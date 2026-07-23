@@ -102,6 +102,12 @@
     }
 }
 
+// A tool that's momentarily unusable (e.g. Edit with no single-node selection).
+.pvt-toolpanel-tool.pvt-toolpanel-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .pvt-toolpanel-soon {
     opacity: 0.55;
     cursor: not-allowed;

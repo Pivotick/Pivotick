@@ -44,6 +44,11 @@ export function createNodeEditModal(node: Node, session: NodeEditSession, uiMana
         header: header,
         body: body,
         rawBody: true,
+        // Any dismissal that isn't a commit (×, Cancel, backdrop) must end the
+        // session — otherwise it stays `active` and openNodeSession short-circuits,
+        // so a second Edit on the same node never reopens. A commit already
+        // deactivated it, hence the guard.
+        onHide: () => { if (session.active) session.cancel() },
         buttons: [
             {
                 variant: 'secondary',

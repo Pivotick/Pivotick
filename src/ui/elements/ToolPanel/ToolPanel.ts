@@ -20,6 +20,8 @@ interface ToolSpec {
     kind: ToolKind
     /** Perform the tool's effect (toggle tools receive the desired armed state). */
     run?: (armed: boolean) => void
+    /** Optional predicate: when it returns false the tool is rendered disabled. Re-checked on selection changes. */
+    enabled?: () => boolean
 }
 
 /** Keyboard shortcut shown in each mode's panel header. */
@@ -77,6 +79,16 @@ export class ToolPanel extends UIComponent {
         }))
     }
 
+    protected onGraphReady() {
+        // Selection-gated tools (Edit) follow the selection; re-check on any change.
+        const refresh = () => this.refreshEnabled()
+        this.trackInteraction('selectNode', refresh)
+        this.trackInteraction('unselectNode', refresh)
+        this.trackInteraction('selectNodes', refresh)
+        this.trackInteraction('unselectNodes', refresh)
+        this.refreshEnabled()
+    }
+
     /** Cancel whatever tool is currently armed (edge-connect / lasso). Panel state is left as-is. */
     private cancelActive() {
         const cm = this.uiManager.graph.editing.connectManager
@@ -118,7 +130,6 @@ export class ToolPanel extends UIComponent {
         }
         if (this.renderedMode !== mode) {
             this.render(mode)
-            this.renderedMode = mode
         }
         this.reflectArmed(state.armedTool[mode])
         this.setCollapsed(!state.panelOpen[mode])
@@ -142,12 +153,13 @@ export class ToolPanel extends UIComponent {
             { id: 'add-node', label: 'Add node', icon: addCircle, kind: 'soon' },
             { id: 'add-edge', label: 'Add edge', icon: graphEdgeIcon(18), kind: 'toggle', run: (armed) => this.toggleAddEdge(armed) },
             { id: 'add-note', label: 'Add note', icon: stickyNote, kind: 'action', run: () => this.addNote() },
-            { id: 'edit', label: 'Edit node', icon: edit, kind: 'action', run: () => this.editSelectedNode() },
+            { id: 'edit', label: 'Edit node', icon: edit, kind: 'action', run: () => this.editSelectedNode(), enabled: () => this.hasEditableSelection() },
         ]
     }
 
     private render(mode: PointerMode) {
         if (!this.panel) return
+        this.renderedMode = mode
         const specs = this.specsFor(mode)
         const title = mode === 'select' ? 'Select' : 'Create'
         const titleIcon = mode === 'select' ? cursor : addCircle
@@ -174,6 +186,25 @@ export class ToolPanel extends UIComponent {
             }
             this.panel.appendChild(row)
         }
+        this.refreshEnabled()
+    }
+
+    /** Apply each tool's `enabled` predicate to its row (disable + dim when false). */
+    private refreshEnabled() {
+        if (!this.panel || !this.renderedMode) return
+        for (const spec of this.specsFor(this.renderedMode)) {
+            if (spec.kind === 'soon' || !spec.enabled) continue
+            const row = this.panel.querySelector<HTMLButtonElement>(`.pvt-toolpanel-tool[data-tool="${spec.id}"]`)
+            if (!row) continue
+            const on = spec.enabled()
+            row.disabled = !on
+            row.classList.toggle('pvt-toolpanel-disabled', !on)
+        }
+    }
+
+    /** Edit acts on a single selected node, so it's usable only when exactly one is selected. */
+    private hasEditableSelection(): boolean {
+        return !!this.uiManager.graph.renderer.getGraphInteraction().getSelectedNode()
     }
 
     /**
