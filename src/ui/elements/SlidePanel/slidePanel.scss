@@ -4,10 +4,14 @@
     display: hidden;
     position: relative;
     background: var(--pvt-ui-bg);
-    transform: translateX(100%);
+    // Float as a rounded, bordered panel in the B3 chrome family (matches the
+    // tool panel / view flyout). Slide clears the inset + shadow when closed.
+    transform: translateX(calc(100% + 24px));
     transition: transform 0.1s ease-in-out;
-    border-top: 1px solid var(--pvt-border-color);
-    box-shadow: var(--pvt-sidebar-layout-shadow-left);
+    border: 1px solid var(--pvt-bg-color-7);
+    border-radius: 11px;
+    box-shadow: var(--pvt-box-shadow-strong);
+    overflow: hidden;
     width: clamp(280px, 25vw, 400px);
 
     &.open {

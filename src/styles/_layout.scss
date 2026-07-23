@@ -72,15 +72,14 @@
     overflow: hidden;
 
     .pvt-slide-panel {
+        // Float it inset from the edges like the rest of the B3 chrome, rather
+        // than as a full-height edge-to-edge slab (see slidePanel.scss).
         position: absolute;
-        top: var(--pvt-mainheader-height);
-        bottom: 0;
-        right: 0;
-        // width: 300px;
+        top: calc(var(--pvt-mainheader-height) + 14px);
+        right: 14px;
+        bottom: 14px;
         max-width: 30%;
         min-width: 220px;
-        overflow-y: auto;
-        height: 100%;
         z-index: 1000;
     }
 
