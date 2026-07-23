@@ -35,9 +35,23 @@ test.describe('mode-rail', () => {
         const rail = page.locator('.pvt-moderail')
         await expect(rail.locator('.pvt-moderail-button[data-mode="select"]')).toHaveClass(/active/)
         await expect(rail.locator('.pvt-moderail-button[data-mode="create"]')).not.toHaveClass(/active/)
-        expect(await modeState(page)).toEqual({ mode: 'select' })
+        expect((await modeState(page)).mode).toBe('select')
 
         await expectElement(rail, 'moderail-select.png')
+    })
+
+    // The Select/Create slots are split-buttons: arming a modal tool morphs the
+    // active slot's icon + label (e.g. Select → Lasso).
+    test('arming a tool morphs the active mode slot', async ({ page }) => {
+        await loadFixture(page, 'basic', B3)
+        const rail = page.locator('.pvt-moderail')
+        const selectLabel = rail.locator('.pvt-moderail-button[data-mode="select"] .pvt-moderail-label')
+
+        await expect(selectLabel).toHaveText('Select')
+        await page.locator('.pvt-toolpanel-tool[data-tool="lasso"]').click()
+        await expect(selectLabel).toHaveText('Lasso')
+
+        await expectElement(rail, 'moderail-lasso.png')
     })
 
     // Clicking Create makes it the exclusive active pointer-mode.

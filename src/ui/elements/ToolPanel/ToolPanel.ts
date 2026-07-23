@@ -1,9 +1,10 @@
 import type { UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
-import type { PointerMode, RailMode } from '../../ModeStore'
+import type { ModeState, PointerMode } from '../../ModeStore'
 import type { GraphInteractionContext } from '../../../interfaces/GraphInteractions'
 import type { GraphConnectManager } from '../../../editing/GraphConnectManager'
 import { Note } from '../../../Note'
+import { createShortcutBadge } from '../../../utils/ElementCreation'
 import {
     cursor, lassoTool, pathSelection, selectionInverse,
     addCircle, graphEdgeIcon, stickyNote, edit,
@@ -21,17 +22,26 @@ interface ToolSpec {
     run?: (armed: boolean) => void
 }
 
+/** Keyboard shortcut shown in each mode's panel header. */
+const MODE_SHORTCUT: Record<PointerMode, string> = { select: 'V', create: 'C' }
+
 /**
  * The B3 contextual tool panel, anchored beside the mode rail. It subscribes to
  * {@link UIManager.modeStore} and shows the tool-set for the active pointer-mode:
  * Select (Pointer / Lasso / Path-select SOON / Invert) or Create (Add-node SOON /
  * Add-edge / Add-note / Edit). Every tool binds to the pre-existing leaf logic —
  * the panel only re-organises it.
+ *
+ * Arming a *modal* tool (Pointer / Lasso / Add-edge) collapses the panel and the
+ * rail slot morphs to reflect it; one-shot *actions* (Invert / Add-note / Edit)
+ * just run. Open/collapsed state is remembered per mode by the store; the armed
+ * tool is reset to the mode default when its mode is left. The panel is hidden
+ * in View mode.
  */
 export class ToolPanel extends UIComponent {
     private panel?: HTMLDivElement
-    /** Persistent armed tool per mode (`'pointer'`/`null` = nothing armed). */
-    private armed: Record<PointerMode, string | null> = { select: 'pointer', create: null }
+    /** Which pointer-mode's tool-set is currently rendered (avoids needless rebuilds). */
+    private renderedMode: PointerMode | null = null
 
     constructor(uiManager: UIManager) {
         super(uiManager)
@@ -45,13 +55,14 @@ export class ToolPanel extends UIComponent {
     }
 
     protected onAfterMount() {
-        this.onModeChange(this.uiManager.modeStore.getMode())
-        this.track(this.uiManager.modeStore.subscribe((state) => this.onModeChange(state.mode)))
+        this.onState(this.uiManager.modeStore.getState())
+        this.track(this.uiManager.modeStore.subscribe((state) => this.onState(state)))
 
-        // Keep the Add-edge tool highlighted in step with the real connect session.
+        // Keep the Add-edge tool in step with the real connect session, whatever
+        // starts/stops it (panel click, Escape, programmatic).
         const connectManager = this.uiManager.graph.editing.connectManager
-        const onConnectStart = (cm: GraphConnectManager) => { if (cm.getMode() === 'node-edge') this.setArmed('create', 'add-edge') }
-        const onConnectStop = (cm: GraphConnectManager) => { if (cm.getMode() === 'node-edge') this.setArmed('create', null) }
+        const onConnectStart = (cm: GraphConnectManager) => { if (cm.getMode() === 'node-edge') this.uiManager.modeStore.armTool('create', 'add-edge') }
+        const onConnectStop = (cm: GraphConnectManager) => { if (cm.getMode() === 'node-edge') this.uiManager.modeStore.armTool('create', null) }
         connectManager.on('start', onConnectStart)
         connectManager.on('stop', onConnectStop)
         this.track(() => { connectManager.off('start', onConnectStart); connectManager.off('stop', onConnectStop) })
@@ -64,41 +75,48 @@ export class ToolPanel extends UIComponent {
         }))
     }
 
-    /** Cancel whatever tool is currently armed (edge-connect / lasso). */
+    /** Cancel whatever tool is currently armed (edge-connect / lasso). Panel state is left as-is. */
     private cancelActive() {
         const cm = this.uiManager.graph.editing.connectManager
         if (cm.isActive()) cm.exitClickConnectionMode()
         this.disarmLasso()
-        const mode = this.uiManager.modeStore.getMode()
-        if (mode !== 'view') this.reflectArmed(mode)
     }
 
     protected onDestroy() {
         this.disarmLasso()
         this.panel?.remove()
         this.panel = undefined
+        this.renderedMode = null
     }
 
     /**
-     * On a mode switch, disarm the leaving mode's tool and render the new
-     * tool-set. View has no pointer tools, so the panel is hidden in View mode.
+     * React to a store change: disarm the tool of any left mode, then render the
+     * active pointer-mode's tool-set and reflect its armed tool + open/collapsed
+     * state. View has no pointer tools, so the panel is collapsed in View mode.
+     * All operations are idempotent — a re-entrant emit (from disarming) converges.
      */
-    private onModeChange(mode: RailMode) {
+    private onState(state: Readonly<ModeState>) {
+        const mode = state.mode
         if (mode !== 'select') this.disarmLasso()
         if (mode !== 'create') {
             const cm = this.uiManager.graph.editing.connectManager
             if (cm.isActive()) cm.exitClickConnectionMode()
         }
         if (mode === 'view') {
-            this.setPanelVisible(false)
+            this.setCollapsed(true)
             return
         }
-        this.setPanelVisible(true)
-        this.render(mode)
+        if (this.renderedMode !== mode) {
+            this.render(mode)
+            this.renderedMode = mode
+        }
+        this.reflectArmed(state.armedTool[mode])
+        this.setCollapsed(!state.panelOpen[mode])
     }
 
-    private setPanelVisible(visible: boolean) {
-        if (this.panel) this.panel.style.display = visible ? '' : 'none'
+    /** Show/hide the panel with a short animation (see `.pvt-collapsed` in scss). */
+    private setCollapsed(collapsed: boolean) {
+        this.panel?.classList.toggle('pvt-collapsed', collapsed)
     }
 
     private specsFor(mode: PointerMode): ToolSpec[] {
@@ -124,7 +142,11 @@ export class ToolPanel extends UIComponent {
         const title = mode === 'select' ? 'Select' : 'Create'
         const titleIcon = mode === 'select' ? cursor : addCircle
         this.panel.innerHTML =
-            `<div class="pvt-toolpanel-header"><span class="pvt-toolpanel-icon">${titleIcon}</span>${title}</div>`
+            '<div class="pvt-toolpanel-header">'
+            + `<span class="pvt-toolpanel-icon">${titleIcon}</span>`
+            + `<span class="pvt-toolpanel-title">${title}</span>`
+            + createShortcutBadge(MODE_SHORTCUT[mode]).outerHTML
+            + '</div>'
 
         for (const spec of specs) {
             const row = document.createElement('button')
@@ -142,31 +164,36 @@ export class ToolPanel extends UIComponent {
             }
             this.panel.appendChild(row)
         }
-        this.reflectArmed(mode)
     }
 
+    /**
+     * Modal picks (Pointer / Lasso / Add-edge) arm the tool and collapse the
+     * panel — the rail slot then reflects the choice. One-shot actions just run.
+     */
     private onToolClick(mode: PointerMode, spec: ToolSpec) {
+        const store = this.uiManager.modeStore
         if (spec.kind === 'toggle') {
-            const nowArmed = this.armed[mode] !== spec.id
+            const nowArmed = store.getArmedTool(mode) !== spec.id
             spec.run?.(nowArmed)
-            this.setArmed(mode, nowArmed ? spec.id : (mode === 'select' ? 'pointer' : null))
+            store.armTool(mode, nowArmed ? spec.id : this.defaultTool(mode))
+            store.setPanelOpen(mode, false)
         } else if (spec.kind === 'default') {
             spec.run?.(true)
-            this.setArmed(mode, spec.id)
+            store.armTool(mode, spec.id)
+            store.setPanelOpen(mode, false)
         } else {
-            spec.run?.(true) // one-shot action; leave the armed tool as-is
+            spec.run?.(true) // one-shot action: leave the armed tool + panel as-is
         }
     }
 
-    private setArmed(mode: PointerMode, tool: string | null) {
-        this.armed[mode] = tool
-        if (this.uiManager.modeStore.getMode() === mode) this.reflectArmed(mode)
+    /** The tool a pointer-mode rests on when nothing special is armed. */
+    private defaultTool(mode: PointerMode): string | null {
+        return mode === 'select' ? 'pointer' : null
     }
 
-    /** Highlight the armed tool row for the given mode. */
-    private reflectArmed(mode: PointerMode) {
+    /** Highlight the armed tool row. */
+    private reflectArmed(armed: string | null) {
         if (!this.panel) return
-        const armed = this.armed[mode]
         for (const row of this.panel.querySelectorAll<HTMLElement>('.pvt-toolpanel-tool')) {
             row.classList.toggle('active', row.dataset.tool === armed)
         }
@@ -189,9 +216,9 @@ export class ToolPanel extends UIComponent {
     }
 
     private disarmLasso() {
-        if (this.armed.select === 'lasso') {
+        if (this.uiManager.modeStore.getArmedTool('select') === 'lasso') {
             this.toggleLasso(false)
-            this.armed.select = 'pointer'
+            this.uiManager.modeStore.armTool('select', 'pointer')
         }
     }
 

@@ -7,6 +7,9 @@
     width: 216px;
     max-height: calc(100% - 28px);
     overflow-y: auto;
+    // The wrapper is click-through; only the visible panel opts back in, so a
+    // collapsed (still laid-out) panel never intercepts canvas interaction.
+    pointer-events: none;
 }
 
 .pvt-toolpanel-panel {
@@ -17,6 +20,16 @@
     background-color: var(--pvt-bg-color-6);
     border: 1px solid var(--pvt-bg-color-7);
     box-shadow: var(--pvt-box-shadow-strong);
+    pointer-events: auto;
+    transform-origin: top left;
+    transition: opacity 0.13s ease, transform 0.13s ease;
+
+    // Collapsed: fade out + tuck back toward the rail, and stop catching clicks.
+    &.pvt-collapsed {
+        opacity: 0;
+        transform: translateX(-6px) scale(0.98);
+        pointer-events: none;
+    }
 }
 
 .pvt-toolpanel-header {
@@ -29,6 +42,17 @@
 
     .pvt-toolpanel-icon svg {
         color: var(--pvt-theme-primary);
+    }
+
+    // Mode name takes the slack so the shortcut badge sits flush right.
+    .pvt-toolpanel-title {
+        flex: 1;
+    }
+
+    .pvt-keyboard-shortcut {
+        padding: 1px 6px;
+        font-size: 0.7em;
+        font-weight: 500;
     }
 }
 

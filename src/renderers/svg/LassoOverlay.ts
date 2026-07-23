@@ -1,5 +1,4 @@
 import {
-    pointer as d3Pointer,
     type Selection
 } from 'd3-selection'
 import type { GraphRendererOptions } from '../../interfaces/RendererOptions'
@@ -86,18 +85,11 @@ export class LassoOverlay {
     }
 
     private addPoint(event: PointerEvent) {
-        const svgElement = event.currentTarget as SVGSVGElement
-
-        // coordinates relative to SVG viewport
-        const [sx, sy] = d3Pointer(event, svgElement)
-
-        // current zoom/pan transform
-        const transform = this.graphSvgRenderer.getZoomTransform()
-
-        // convert screen -> graph space
-        const x = transform.invertX(sx)
-        const y = transform.invertY(sy)
-        const point: Point = {x: x, y: y}
+        // Use the renderer's vetted screen->graph conversion (client px via
+        // getBoundingClientRect), which matches how nodes are positioned. The old
+        // d3.pointer path returned SVG user-space units and diverged whenever the
+        // SVG was scaled, so the lasso polygon missed the nodes entirely.
+        const point = this.graphSvgRenderer.screenToGraphCoordinates(event.clientX, event.clientY) as Point
 
         this.points.push(point)
 
