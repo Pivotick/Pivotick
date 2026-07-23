@@ -2,7 +2,10 @@
     position: absolute;
     pointer-events: auto;
     background-color: var(--pvt-menu-bg-color);
-    border: var(--pvt-menu-border-color);
+    // Match the B3 chrome family (rails / modal / slide panel): a 1px border and
+    // an 11px radius. overflow:hidden clips the top/bottom action panels to the
+    // rounded corners.
+    border: 1px solid var(--pvt-border-color);
     box-shadow: var(--pvt-menu-shadow);
     font-size: 13px;
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -14,7 +17,8 @@
     transition: opacity 0.1s ease-out, transform 0.1s ease-out;
     transform: translateY(-10px);
     min-width: 200px;
-    border-radius: 4px;
+    border-radius: 11px;
+    overflow: hidden;
     color: var(--pvt-text-color-5);
 
     &.shown {
@@ -29,8 +33,8 @@
         border-bottom: 1px solid var(--pvt-tooltip-floating-bg-color);
         padding: 2px;
         margin-bottom: 4px;
-        border-top-right-radius: 4px;
-        border-top-left-radius: 4px;
+        border-top-right-radius: 10px;
+        border-top-left-radius: 10px;
 
         .pvt-action-list {
             width: 100%;
@@ -55,8 +59,8 @@
         align-items: center;
         gap: 10px;
         background-color: var(--pvt-sidebar-mainpanelheader-bg);
-        border-bottom-right-radius: 4px;
-        border-bottom-left-radius: 4px;
+        border-bottom-right-radius: 10px;
+        border-bottom-left-radius: 10px;
 
         .pvt-action-list {
             width: 100%;
