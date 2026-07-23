@@ -42,6 +42,10 @@ const railLabel = async (page: PWPage, mode: string) =>
 const panelBox = (page: PWPage) => page.locator('.pvt-toolpanel-panel')
 /** A mode rail slot — clicking the active one toggles its panel. */
 const railSlot = (page: PWPage, mode: string) => page.locator(`.pvt-moderail-button[data-mode="${mode}"]`)
+/** Expand the Select panel (it boots collapsed by default), so its tools are clickable. */
+const openSelect = (page: PWPage) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    page.evaluate(() => (window.__pivotick as any).graph.UIManager.modeStore.setPanelOpen('select', true))
 
 test.describe('tool-panel', () => {
     test.beforeEach(async ({ page }) => {
@@ -50,6 +54,7 @@ test.describe('tool-panel', () => {
 
     test('Select mode shows its tool-set with Pointer active', async ({ page }) => {
         await loadFixture(page, 'basic', B3)
+        await openSelect(page)
         const panel = page.locator('.pvt-toolpanel')
 
         await expect(panel.locator('.pvt-toolpanel-header')).toContainText('Select')
@@ -76,6 +81,7 @@ test.describe('tool-panel', () => {
 
     test('Lasso arms lasso mode, collapses the panel, and morphs the rail slot', async ({ page }) => {
         await loadFixture(page, 'basic', B3)
+        await openSelect(page)
 
         await page.locator('.pvt-toolpanel-tool[data-tool="lasso"]').click()
         // armed on the canvas + cursor; the panel collapses; the rail reads "Lasso"
@@ -97,6 +103,7 @@ test.describe('tool-panel', () => {
 
     test('Invert selects the complement of the current selection', async ({ page }) => {
         await loadFixture(page, 'basic', B3)
+        await openSelect(page)
         await harness(page, 'selectNode', 'a')
 
         // A one-shot action: it runs and leaves the panel open (not collapsed).
@@ -140,27 +147,89 @@ test.describe('tool-panel', () => {
     test('collapse state persists per mode across switches', async ({ page }) => {
         await loadFixture(page, 'basic', B3)
 
-        // Collapse Select (Pointer = collapse-to-neutral).
-        await page.locator('.pvt-toolpanel-tool[data-tool="pointer"]').click()
+        // Select boots collapsed; Create opens on first entry.
         await expect(panelBox(page)).toHaveClass(/pvt-collapsed/)
-
-        // Create is open by default.
         await setMode(page, 'create')
         await expect(panelBox(page)).not.toHaveClass(/pvt-collapsed/)
 
-        // Returning to Select restores its collapsed state.
+        // Back to Select: its collapsed state persisted.
         await setMode(page, 'select')
         await expect(panelBox(page)).toHaveClass(/pvt-collapsed/)
+
+        // Open Select, round-trip through Create: now it persists open.
+        await openSelect(page)
+        await setMode(page, 'create')
+        await setMode(page, 'select')
+        await expect(panelBox(page)).not.toHaveClass(/pvt-collapsed/)
     })
 
     test('View mode collapses the tool panel', async ({ page }) => {
         await loadFixture(page, 'basic', B3)
+        await openSelect(page)
         await expect(panelBox(page)).not.toHaveClass(/pvt-collapsed/)
 
         await setMode(page, 'view')
         await expect(panelBox(page)).toHaveClass(/pvt-collapsed/)
 
+        // Returning to Select restores the open state we left it in.
         await setMode(page, 'select')
         await expect(panelBox(page)).not.toHaveClass(/pvt-collapsed/)
+    })
+
+    test('lasso selects the enclosed nodes, then reverts to Select (one-shot)', async ({ page }) => {
+        await loadFixture(page, 'basic', B3)
+        await openSelect(page)
+
+        // Region enclosing every node (screen coords).
+        const centers = await page.locator('.pvt-node').evaluateAll((els) =>
+            els.map((e) => (e as SVGGElement).getBoundingClientRect()).map((r) => ({ x: r.x + r.width / 2, y: r.y + r.height / 2 })))
+        const xs = centers.map((c) => c.x), ys = centers.map((c) => c.y)
+        // Generous margin so every node sits comfortably inside the traced polygon.
+        const minX = Math.min(...xs) - 70, maxX = Math.max(...xs) + 70, minY = Math.min(...ys) - 70, maxY = Math.max(...ys) + 70
+
+        await page.locator('.pvt-toolpanel-tool[data-tool="lasso"]').click()
+        expect(await railLabel(page, 'select')).toBe('Lasso')
+        await expect(page.locator('.pvt-canvas')).toHaveClass(/canvas--lasso-mode/)
+
+        // Trace a polygon around all nodes, starting bottom-right (clear of the
+        // top-left mode rail so the drag lands on the canvas, not a rail button).
+        await page.mouse.move(maxX, maxY)
+        await page.mouse.down()
+        await page.mouse.move(minX, maxY, { steps: 8 })
+        await page.mouse.move(minX, minY, { steps: 8 })
+        await page.mouse.move(maxX, minY, { steps: 8 })
+        await page.mouse.move(maxX, maxY, { steps: 8 })
+        await page.mouse.up()
+
+        // The enclosed nodes are selected AND the selection survives the disarm
+        // (the bug: disarming used to drop the guard and let a trailing click
+        // clear it). Assert a robust majority rather than a pixel-exact set —
+        // the synthetic drag can shave the extreme node off the polygon edge.
+        const selected = (await harness(page, 'selectedNodeIds')) as string[]
+        expect(selected.length).toBeGreaterThanOrEqual(5)
+        expect(selected).toContain('hub')
+
+        // ...and the lasso is one-shot: it reverts to Select afterwards.
+        await expect(page.locator('.pvt-canvas')).not.toHaveClass(/canvas--lasso-mode/)
+        expect(await armedTool(page, 'select')).toBe('pointer')
+        expect(await railLabel(page, 'select')).toBe('Select')
+    })
+
+    test('the active-mode shortcut toggles its tool panel', async ({ page }) => {
+        await loadFixture(page, 'basic', B3)
+        await page.locator('.pivotick').focus()
+        const collapsed = async () =>
+            ((await panelBox(page).getAttribute('class')) ?? '').includes('pvt-collapsed')
+
+        // Select is the active mode on load, so V toggles its panel (default-agnostic).
+        const start = await collapsed()
+        await page.keyboard.press('v')
+        expect(await collapsed()).toBe(!start)
+        await page.keyboard.press('v')
+        expect(await collapsed()).toBe(start)
+
+        // From another mode the shortcut switches (doesn't toggle).
+        await page.keyboard.press('c')
+        await expect(page.locator('.pvt-toolpanel-header')).toContainText('Create')
     })
 })

@@ -44,6 +44,9 @@ test.describe('mode-rail', () => {
     // active slot's icon + label (e.g. Select → Lasso).
     test('arming a tool morphs the active mode slot', async ({ page }) => {
         await loadFixture(page, 'basic', B3)
+        // Select boots collapsed; open it so the Lasso tool is clickable.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await page.evaluate(() => (window.__pivotick as any).graph.UIManager.modeStore.setPanelOpen('select', true))
         const rail = page.locator('.pvt-moderail')
         const selectLabel = rail.locator('.pvt-moderail-button[data-mode="select"] .pvt-moderail-label')
 

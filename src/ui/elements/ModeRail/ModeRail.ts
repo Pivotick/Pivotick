@@ -47,9 +47,10 @@ export class ModeRail extends UIComponent {
         this.buttons.get('create')?.addEventListener('click', () => this.activateOrToggle('create'))
         this.buttons.get('view')?.addEventListener('click', () => this.uiManager.modeStore.toggleView())
 
-        // Keyboard: V → Select, C → Create (switch only — no panel toggle).
-        this.track(this.uiManager.keyManager.register({ key: 'v', callback: () => this.uiManager.modeStore.setMode('select'), description: 'Select mode' }))
-        this.track(this.uiManager.keyManager.register({ key: 'c', callback: () => this.uiManager.modeStore.setMode('create'), description: 'Create mode' }))
+        // Keyboard mirrors the rail slot: V/C switch to the mode, or toggle its
+        // tool panel if that mode is already active.
+        this.track(this.uiManager.keyManager.register({ key: 'v', callback: () => this.activateOrToggle('select'), description: 'Select mode / toggle its tools' }))
+        this.track(this.uiManager.keyManager.register({ key: 'c', callback: () => this.activateOrToggle('create'), description: 'Create mode / toggle its tools' }))
 
         // Reflect the store; render the initial state, then subscribe for changes.
         this.render(this.uiManager.modeStore.getState())

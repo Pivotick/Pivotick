@@ -35,11 +35,11 @@ type ModeListener = (state: Readonly<ModeState>) => void
 const DEFAULT_ARMED: Record<PointerMode, string | null> = { select: 'pointer', create: null }
 
 /**
- * Initial per-mode panel-open state. **Internal knob (B3 Q6, undecided):** flip
- * `select` to `false` to preview the collapsed-by-default Select look. Kept a
- * plain constant — not a public option — until the default is set in stone.
+ * Initial per-mode panel-open state. Select boots collapsed (the rail alone
+ * carries the mode; the panel is one click/keypress away); Create opens on first
+ * entry so its tools are discoverable. Internal knob — not a public option yet.
  */
-const DEFAULT_PANEL_OPEN: Record<PointerMode, boolean> = { select: true, create: true }
+const DEFAULT_PANEL_OPEN: Record<PointerMode, boolean> = { select: false, create: true }
 
 /**
  * A tiny observable holding the mode-rail state. The rail, contextual tool panel

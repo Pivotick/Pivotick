@@ -1,6 +1,6 @@
 import type { UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
-import type { ModeState, PointerMode } from '../../ModeStore'
+import type { ModeState, PointerMode, RailMode } from '../../ModeStore'
 import type { GraphInteractionContext } from '../../../interfaces/GraphInteractions'
 import type { GraphConnectManager } from '../../../editing/GraphConnectManager'
 import { Note } from '../../../Note'
@@ -40,6 +40,8 @@ const MODE_SHORTCUT: Record<PointerMode, string> = { select: 'V', create: 'C' }
  */
 export class ToolPanel extends UIComponent {
     private panel?: HTMLDivElement
+    /** The last mode seen, so disarm-on-leave runs only on real mode changes. */
+    private prevMode: RailMode | null = null
     /** Which pointer-mode's tool-set is currently rendered (avoids needless rebuilds). */
     private renderedMode: PointerMode | null = null
 
@@ -87,6 +89,7 @@ export class ToolPanel extends UIComponent {
         this.panel?.remove()
         this.panel = undefined
         this.renderedMode = null
+        this.prevMode = null
     }
 
     /**
@@ -97,10 +100,17 @@ export class ToolPanel extends UIComponent {
      */
     private onState(state: Readonly<ModeState>) {
         const mode = state.mode
-        if (mode !== 'select') this.disarmLasso()
-        if (mode !== 'create') {
-            const cm = this.uiManager.graph.editing.connectManager
-            if (cm.isActive()) cm.exitClickConnectionMode()
+        // Disarm a mode's live tool only when we actually LEAVE it. onState now
+        // fires on every store emit (armTool / setPanelOpen too), so gating on a
+        // real mode change avoids cancelling, say, a drag-connect that runs while
+        // Select is active.
+        if (mode !== this.prevMode) {
+            this.prevMode = mode
+            if (mode !== 'select') this.disarmLasso()
+            if (mode !== 'create') {
+                const cm = this.uiManager.graph.editing.connectManager
+                if (cm.isActive()) cm.exitClickConnectionMode()
+            }
         }
         if (mode === 'view') {
             this.setCollapsed(true)
@@ -209,9 +219,15 @@ export class ToolPanel extends UIComponent {
         if (enabled) {
             interaction.on('canvasBeforeZoom', this.cancelPan)
             interaction.on('canvasClick', this.cancelClick)
+            // Lasso is one-shot: the selection it makes (selectNode for one hit,
+            // selectNodes otherwise) disarms it back to Select.
+            interaction.on('selectNode', this.onLassoComplete)
+            interaction.on('selectNodes', this.onLassoComplete)
         } else {
             interaction.off('canvasBeforeZoom', this.cancelPan)
             interaction.off('canvasClick', this.cancelClick)
+            interaction.off('selectNode', this.onLassoComplete)
+            interaction.off('selectNodes', this.onLassoComplete)
         }
     }
 
@@ -228,6 +244,16 @@ export class ToolPanel extends UIComponent {
         context.cancel()
     }
     private cancelClick = (_event: PointerEvent, context: GraphInteractionContext) => context.cancel()
+    // Disarm the lasso once it has produced a selection (see toggleLasso).
+    // Deferred to a microtask so it runs *after* the whole pointer gesture has
+    // settled — disarming synchronously would clear() the overlay mid-gesture
+    // (resetting `drawing`) and cancel the very selection that triggered it.
+    // Disarm the lasso once it has produced a selection (see toggleLasso).
+    // Deferred past the current gesture: disarming synchronously would drop the
+    // cancelClick guard, so the trailing canvas click that follows the drag would
+    // clear the selection we just made. A macrotask lets that click be swallowed
+    // by the still-armed guard first, then the lasso reverts to Select.
+    private onLassoComplete = () => { setTimeout(() => this.disarmLasso(), 0) }
 
     private invertSelection() {
         const interaction = this.uiManager.graph.renderer.getGraphInteraction()
