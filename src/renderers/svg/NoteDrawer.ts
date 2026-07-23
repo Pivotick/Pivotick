@@ -540,7 +540,9 @@ export class NoteDrawer {
                     const dx = currentGraph.x - startGraph.x
                     const dy = currentGraph.y - startGraph.y
 
-                    note.setPosition(startNoteX + dx, startNoteY + dy)
+                    // Snap to the same grid as nodes when grid-snapping is on.
+                    const sim = this.graph.simulation
+                    note.setPosition(sim.snapToGrid(startNoteX + dx), sim.snapToGrid(startNoteY + dy))
                     noteSelection.attr('transform', `translate(${note.x},${note.y})`)
                     noteSelection.classed('dragging', true)
                     window.getSelection()?.removeAllRanges()

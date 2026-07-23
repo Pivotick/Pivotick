@@ -885,6 +885,15 @@ export class Simulation {
         return Math.round(value / this.options.gridSize) * this.options.gridSize
     }
 
+    /**
+     * Snap a graph-space coordinate to the grid when grid-snapping is enabled
+     * (a no-op otherwise). Public so non-simulation draggables (e.g. notes) can
+     * snap on the same grid as nodes.
+     */
+    public snapToGrid(value: number): number {
+        return this.applySnap(value)
+    }
+
     public getForceSimulation(): typeof this.simulationForces {
         return this.simulationForces
     }
