@@ -1,7 +1,7 @@
 // B3 contextual tool panel — anchored just right of the mode rail.
 .pvt-toolpanel {
     position: absolute;
-    top: 14px;
+    top: calc(var(--pvt-mainheader-height) + 14px);
     left: 84px;
     z-index: 6;
     width: 216px;

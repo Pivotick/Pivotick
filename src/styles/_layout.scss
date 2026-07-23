@@ -18,21 +18,21 @@
     width: 100%;
     height: 100%;
     display: grid;
+    // The canvas fills the full height; the top bar overlays its top edge as a
+    // transparent, click-through strip (see .pvt-mainheader) so the graph renders
+    // behind the floating pills. Chrome offsets down by --pvt-mainheader-height.
     grid-template-columns: auto 1fr;
-    grid-template-rows: var(--pvt-mainheader-height) 1fr;
-    grid-template-areas: 
-        "sidebar mainheader"
-        "sidebar canvas";
+    grid-template-rows: 1fr;
+    grid-template-areas: "sidebar canvas";
 
     &.mode-static,
     &.mode-viewer {
+        --pvt-mainheader-height: 0px;
         grid-template-columns: 0px 1fr;
-        grid-template-rows: 0px 1fr;
     }
 
     &.mode-light {
         grid-template-columns: 0px 1fr;
-        grid-template-rows: var(--pvt-mainheader-height) 1fr;
     }
 
     &.mode-full.sidebar-collapsed {
@@ -73,7 +73,7 @@
 
     .pvt-slide-panel {
         position: absolute;
-        top: 0;
+        top: var(--pvt-mainheader-height);
         bottom: 0;
         right: 0;
         // width: 300px;
@@ -86,7 +86,7 @@
 
     .pvt-notification {
         position: absolute;
-        top: 1em;
+        top: calc(var(--pvt-mainheader-height) + 1em);
         right: 3em;
         max-width: 280px;
         display: flex;
@@ -96,17 +96,20 @@
 
     .pvt-graphnavigation {
         position: absolute;
-        top: 14px;
+        top: calc(var(--pvt-mainheader-height) + 14px);
         right: 14px;
         z-index: 5;
     }
 }
 
 .pvt-mainheader {
-    grid-area: mainheader;
-    height: 100%;
-    width: calc(100%);// - 12px);
+    // Overlay the top edge of the canvas as a transparent, click-through strip.
+    grid-area: canvas;
+    align-self: start;
+    height: var(--pvt-mainheader-height);
+    width: 100%;
     z-index: 10;
+    pointer-events: none; // canvas under the strip stays interactive; pills opt back in
     display: flex;
     flex-direction: row;
     align-items: center;

@@ -2,7 +2,7 @@
 // the contextual tool panel (higher z-index) and covers it while open.
 .pvt-viewflyout {
     position: absolute;
-    top: 14px;
+    top: calc(var(--pvt-mainheader-height) + 14px);
     left: 84px;
     z-index: 7;
     width: 252px;

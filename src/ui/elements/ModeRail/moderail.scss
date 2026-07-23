@@ -1,7 +1,7 @@
 // B3 mode rail — left-edge, vertical stack of mode buttons overlaying the canvas.
 .pvt-moderail {
     position: absolute;
-    top: 14px;
+    top: calc(var(--pvt-mainheader-height) + 14px);
     left: 14px;
     z-index: 6; // above the classic overlays during the migration
 }
