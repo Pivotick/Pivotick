@@ -688,6 +688,9 @@ export class GraphInteractions<TElement = unknown> {
                 this.callbacks.onNodeBlur(node, element)
             }
         })
+        // Repaint so selection rings / focus-mode dimming clear immediately, like
+        // every other selection mutator (e.g. selectNode, removeNodesFromSelection).
+        if (cleared.length) this.refreshRendering()
     }
 
     public clearEdgeSelectionList(): void {
@@ -700,6 +703,7 @@ export class GraphInteractions<TElement = unknown> {
                 this.callbacks.onEdgeBlur(edge, element)
             }
         })
+        if (cleared.length) this.refreshRendering()
     }
 
     public hasActiveMultiselection(): boolean {
