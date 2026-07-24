@@ -11,21 +11,29 @@ import './viewflyout.scss'
 
 type SliderKey = keyof PhysicsKnobs
 
-const SLIDERS: Array<{ key: SliderKey; label: string; icon: string; set: (sim: import('../../../Simulation').Simulation, v: number) => void }> = [
-    { key: 'repulsion', label: 'Repulsion', icon: magnet, set: (s, v) => s.setRepulsion(v) },
-    { key: 'linkDistance', label: 'Link distance', icon: arrowsHorizontal, set: (s, v) => s.setLinkDistance(v) },
-    { key: 'collisionRadius', label: 'Collision radius', icon: circleDashed, set: (s, v) => s.setCollisionRadius(v) },
-    { key: 'friction', label: 'Friction', icon: wind, set: (s, v) => s.setFriction(v) },
+// `desc` is surfaced as a hover tooltip (native `title`) so each knob explains itself.
+const SLIDERS: Array<{ key: SliderKey; label: string; desc: string; icon: string; set: (sim: import('../../../Simulation').Simulation, v: number) => void }> = [
+    { key: 'repulsion', label: 'Repulsion', desc: 'How strongly nodes push each other apart. Higher values spread the graph out.', icon: magnet, set: (s, v) => s.setRepulsion(v) },
+    { key: 'linkDistance', label: 'Link distance', desc: 'The resting length of edges, in pixels. Higher values place connected nodes further apart.', icon: arrowsHorizontal, set: (s, v) => s.setLinkDistance(v) },
+    { key: 'collisionRadius', label: 'Collision radius', desc: 'The clear space kept around each node to prevent overlap. Higher values keep nodes further apart.', icon: circleDashed, set: (s, v) => s.setCollisionRadius(v) },
+    { key: 'friction', label: 'Friction', desc: 'How quickly node motion is damped. Higher values calm the layout and settle it faster.', icon: wind, set: (s, v) => s.setFriction(v) },
 ]
 
 const PRESETS: PhysicsPresetName[] = ['tight', 'loose', 'default']
 
+/** Tooltip for each preset button, explaining the layout it produces. */
+const PRESET_DESCRIPTIONS: Record<PhysicsPresetName, string> = {
+    tight: 'Compact layout with nodes packed closely together.',
+    loose: 'Spacious layout with nodes spread further apart.',
+    default: 'Reset the physics sliders to their default balance.',
+}
+
 /** Layout choices offered by the flyout (tree variants are disabled on cyclic graphs). */
-const LAYOUTS: Array<{ id: string; label: string; tree: boolean }> = [
-    { id: 'force', label: 'Force', tree: false },
-    { id: 'tree-v', label: 'Tree — Vertical', tree: true },
-    { id: 'tree-h', label: 'Tree — Horizontal', tree: true },
-    { id: 'tree-r', label: 'Tree — Radial', tree: true },
+const LAYOUTS: Array<{ id: string; label: string; tree: boolean; desc: string }> = [
+    { id: 'force', label: 'Force', tree: false, desc: 'Positions nodes freely using the physics simulation.' },
+    { id: 'tree-v', label: 'Tree — Vertical', tree: true, desc: 'Hierarchical tree flowing from top to bottom.' },
+    { id: 'tree-h', label: 'Tree — Horizontal', tree: true, desc: 'Hierarchical tree flowing from left to right.' },
+    { id: 'tree-r', label: 'Tree — Radial', tree: true, desc: 'Hierarchical tree radiating out from a central root.' },
 ]
 
 /**
@@ -220,12 +228,12 @@ export class ViewFlyout extends UIComponent {
     /* ---------- template ---------- */
 
     private template(): string {
-        const options = LAYOUTS.map(l => `<option value="${l.id}">${l.label}</option>`).join('')
+        const options = LAYOUTS.map(l => `<option value="${l.id}" title="${l.desc}">${l.label}</option>`).join('')
         const presets = PRESETS.map(p =>
-            `<button type="button" class="pvt-viewflyout-preset" data-preset="${p}">${p[0].toUpperCase()}${p.slice(1)}</button>`
+            `<button type="button" class="pvt-viewflyout-preset" data-preset="${p}" title="${PRESET_DESCRIPTIONS[p]}">${p[0].toUpperCase()}${p.slice(1)}</button>`
         ).join('')
         const sliders = SLIDERS.map(s => `
-            <div class="pvt-viewflyout-slider">
+            <div class="pvt-viewflyout-slider" title="${s.desc}">
                 <div class="pvt-viewflyout-slider-head">
                     <span class="pvt-viewflyout-slider-label"><span class="pvt-viewflyout-icon">${s.icon}</span>${s.label}</span>
                     <span class="pvt-viewflyout-slider-value" data-value="${s.key}">0</span>
@@ -233,8 +241,8 @@ export class ViewFlyout extends UIComponent {
                 <input type="range" class="pvt-viewflyout-range" data-slider="${s.key}"
                     min="${PHYSICS_KNOB_RANGES[s.key][0]}" max="${PHYSICS_KNOB_RANGES[s.key][1]}" step="1" value="0" />
             </div>`).join('')
-        const toggle = (id: string, icon: string, label: string) => `
-            <button type="button" class="pvt-viewflyout-toggle" data-toggle="${id}" role="switch" aria-pressed="false">
+        const toggle = (id: string, icon: string, label: string, desc: string) => `
+            <button type="button" class="pvt-viewflyout-toggle" data-toggle="${id}" role="switch" aria-pressed="false" title="${desc}">
                 <span class="pvt-viewflyout-icon">${icon}</span>${label}
                 <span class="pvt-viewflyout-switch"></span>
             </button>`
@@ -243,7 +251,7 @@ export class ViewFlyout extends UIComponent {
             <div class="pvt-viewflyout-header"><span class="pvt-viewflyout-icon">${show}</span>View</div>
             <div class="pvt-viewflyout-section-label">LAYOUT &amp; SIMULATION</div>
             <label class="pvt-viewflyout-layout">Layout
-                <select class="pvt-viewflyout-layout-select">${options}</select>
+                <select class="pvt-viewflyout-layout-select" title="Choose how nodes are arranged on the canvas.">${options}</select>
             </label>
             <div class="pvt-viewflyout-physics">
                 <div class="pvt-viewflyout-physics-head">
@@ -253,10 +261,10 @@ export class ViewFlyout extends UIComponent {
                 <div class="pvt-viewflyout-presets">${presets}</div>
                 <div class="pvt-viewflyout-sliders">${sliders}</div>
             </div>
-            ${toggle('snap', snapGrid, 'Snap to grid')}
-            ${toggle('highlight', grid, 'Highlight grid')}
-            ${toggle('freeze', pin, 'Freeze on drag')}
-            ${toggle('fit', graphNavigationReset, 'Fit on expand/collapse')}
+            ${toggle('snap', snapGrid, 'Snap to grid', 'Align nodes to the grid while you drag them.')}
+            ${toggle('highlight', grid, 'Highlight grid', 'Make the background grid lines more visible.')}
+            ${toggle('freeze', pin, 'Freeze on drag', 'Keep nodes pinned where you drop them instead of letting physics move them again.')}
+            ${toggle('fit', graphNavigationReset, 'Fit on expand/collapse', 'Zoom and re-center to fit the graph when clusters are expanded or collapsed.')}
         `
     }
 }
