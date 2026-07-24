@@ -37,7 +37,7 @@ export class GraphNavigation extends UIComponent {
     <button id="pvt-graphnavigation-zoom-out" class="pvt-graphnavigation-button" title="Zoom Out">
         ${graphNavigationZoomOut}
     </button>
-    <button id="pvt-graphnavigation-fullscreen" class="pvt-graphnavigation-button pvt-graphnavigation-fullscreen-button" title="Toggle Fullscreen">
+    <button id="pvt-graphnavigation-fullscreen" class="pvt-graphnavigation-button pvt-graphnavigation-fullscreen-button" title="Toggle Fullscreen" aria-pressed="false">
         <span>${fullscreen}</span>
         <span style="display: none">${fullscreenExit}</span>
     </button>
@@ -102,5 +102,6 @@ export class GraphNavigation extends UIComponent {
 
         enterIcon.style.display = isFullscreen ? 'none' : ''
         exitIcon.style.display = isFullscreen ? '' : 'none'
+        button.setAttribute('aria-pressed', String(isFullscreen))
     }
 }

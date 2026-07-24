@@ -175,6 +175,9 @@ export class ToolPanel extends UIComponent {
             row.type = 'button'
             row.className = 'pvt-toolpanel-tool'
             row.dataset.tool = spec.id
+            row.dataset.kind = spec.kind
+            // Toggle tools (lasso / add-edge) expose their armed state to AT; reflectArmed keeps it in sync.
+            if (spec.kind === 'toggle') row.setAttribute('aria-pressed', 'false')
             row.innerHTML = `<span class="pvt-toolpanel-icon">${spec.icon}</span><span class="pvt-toolpanel-tool-label">${spec.label}</span>`
             if (spec.kind === 'soon') {
                 row.disabled = true
@@ -236,7 +239,9 @@ export class ToolPanel extends UIComponent {
     private reflectArmed(armed: string | null) {
         if (!this.panel) return
         for (const row of this.panel.querySelectorAll<HTMLElement>('.pvt-toolpanel-tool')) {
-            row.classList.toggle('active', row.dataset.tool === armed)
+            const active = row.dataset.tool === armed
+            row.classList.toggle('active', active)
+            if (row.dataset.kind === 'toggle') row.setAttribute('aria-pressed', String(active))
         }
     }
 

@@ -81,7 +81,13 @@ export class Sidebar extends UIComponent {
         this.extraPanelContainer = this.sidebar.querySelector('.pvt-extra-panel') ?? undefined
         this.addChild(this.extraPanelManager, this.extraPanelContainer)
 
-        this.collapse = createHtmlElement('span', { class: 'pvt-sidebar-collapse-container' }, [
+        this.collapse = createHtmlElement('span', {
+            class: 'pvt-sidebar-collapse-container',
+            role: 'button',
+            tabindex: '0',
+            'aria-label': 'Collapse sidebar',
+            'aria-expanded': 'true',
+        }, [
             createHtmlElement('span', { class: 'pvt-sidebar-collapse-button pvt-sidebar-collapse-button-collapse' }, [createIcon({ svgIcon: sidebarCollapse })]) as HTMLSpanElement,
             createHtmlElement('span', { class: 'pvt-sidebar-collapse-button pvt-sidebar-collapse-button-expand' }, [createIcon({ svgIcon: sidebarExpand })]) as HTMLSpanElement,
         ]) as HTMLSpanElement
@@ -147,6 +153,14 @@ export class Sidebar extends UIComponent {
 
         if (this.collapse) {
             this.listen(this.collapse, 'click', () => this.toggleSidebar())
+            // role="button" isn't natively keyboard-operable — activate on Enter/Space.
+            this.listen(this.collapse, 'keydown', (e) => {
+                const ev = e as KeyboardEvent
+                if (ev.key === 'Enter' || ev.key === ' ') {
+                    ev.preventDefault()
+                    this.toggleSidebar()
+                }
+            })
         }
         if (this.clearSelectionButton) {
             this.listen(this.clearSelectionButton, 'click', () => this.clearActiveSelection())
@@ -224,17 +238,27 @@ export class Sidebar extends UIComponent {
         const sidebarContainer = this.sidebar!.closest('.pvt-sidebar') as HTMLElement
         sidebarContainer.classList.toggle('pvt-sidebar-collapsed', this.sidebarOpen)
         this.sidebarOpen = !this.sidebarOpen
+        this.syncCollapseA11y()
     }
 
     public showSidebar(): void {
         const sidebarContainer = this.sidebar!.closest('.pvt-sidebar') as HTMLElement
         sidebarContainer.classList.remove('pvt-sidebar-collapsed')
         this.sidebarOpen = true
+        this.syncCollapseA11y()
     }
 
     public hideSidebar(): void {
         const sidebarContainer = this.sidebar!.closest('.pvt-sidebar') as HTMLElement
         sidebarContainer.classList.add('pvt-sidebar-collapsed')
         this.sidebarOpen = false
+        this.syncCollapseA11y()
+    }
+
+    /** Reflect open/closed state on the collapse control for AT + keyboard users. */
+    private syncCollapseA11y(): void {
+        if (!this.collapse) return
+        this.collapse.setAttribute('aria-expanded', String(this.sidebarOpen))
+        this.collapse.setAttribute('aria-label', this.sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar')
     }
 }

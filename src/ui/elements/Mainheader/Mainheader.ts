@@ -36,7 +36,7 @@ export class Mainheader extends UIComponent {
         /** Searchbox */
         const templateSearch = document.createElement('template')
         templateSearch.innerHTML = `
-  <div id="pvt-searchbox-button" class="pvt-action-button">
+  <div id="pvt-searchbox-button" class="pvt-action-button" role="button" tabindex="0" aria-label="Search for a node">
     <div class="action-container">
         <span class="icon-container">${magnifyingGlass}</span>
         <span class="action-text">Search</span>
@@ -49,7 +49,7 @@ export class Mainheader extends UIComponent {
         /** Filterbox */
         const templateFilter = document.createElement('template')
         templateFilter.innerHTML = `
-  <div id="pvt-filter-button" class="pvt-action-button">
+  <div id="pvt-filter-button" class="pvt-action-button" role="button" tabindex="0" aria-label="Filter the graph">
     <div class="action-container">
         <span class="icon-container">${funnel}</span>
         <span class="action-text">Filter Graph</span>
@@ -62,7 +62,7 @@ export class Mainheader extends UIComponent {
         /** Notebox */
         const templateNoteSidebar = document.createElement('template')
         templateNoteSidebar.innerHTML = `
-  <div id="pvt-notes-button" class="pvt-action-button">
+  <div id="pvt-notes-button" class="pvt-action-button" role="button" tabindex="0" aria-label="Notes">
     <div class="action-container">
         <span class="icon-container">${stickyNote}</span>
         <span class="action-text">Notes</span>
@@ -134,6 +134,18 @@ export class Mainheader extends UIComponent {
                 const node = await pickNode(this.uiManager)
                 if (!node) return
                 this.uiManager.graph.selectElement(node as unknown as Node)
+            })
+        }
+
+        // These action pills are role="button" divs — activate them on Enter/Space.
+        for (const btn of [searchBoxButton, filterButton, noteButton]) {
+            if (!btn) continue
+            this.listen(btn, 'keydown', (e) => {
+                const ev = e as KeyboardEvent
+                if (ev.key === 'Enter' || ev.key === ' ') {
+                    ev.preventDefault()
+                    btn.click()
+                }
             })
         }
     }
