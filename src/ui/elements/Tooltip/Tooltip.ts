@@ -105,6 +105,12 @@ export class Tooltip extends UIComponent {
         this.pinnedTitleFits.clear()
         this.tooltip?.remove()
         this.tooltip = undefined
+        // Tear the shadow-link container down too. onMount only reuses the DOM when
+        // BOTH the tooltip and this container are present, so leaving it orphaned made
+        // every rebuild append a fresh <svg class="pivotick-shadowlink-container">.
+        this.shadowLinkContainer?.remove()
+        this.shadowLinkContainer = undefined
+        this.shadowLinkManager = null
     }
 
     protected onAfterMount() {
