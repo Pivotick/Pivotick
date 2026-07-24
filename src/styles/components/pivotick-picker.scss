@@ -15,7 +15,11 @@
         cursor: text;
     }
 
-    &__input {
+    // The second selector defends the picker's own input when it sits inside a
+    // form: the ambient `.pvt-form .pvt-form-element input` box (0,2,1) would
+    // otherwise bleed a grey fill + border into the control. (0,3,0) wins.
+    &__input,
+    .pvt-form .pvt-form-element &__input {
         flex: 1;
         min-width: 80px;
         border: none;
@@ -158,17 +162,23 @@
     // ========================
     // Dropdown
     // ========================
+    // Floating menu surface, matching the B3 chrome menus (context menu / rails):
+    // the shared menu tokens, a 1px border, rounded corners and inner padding so
+    // the rounded option highlights sit within the panel.
     &__dropdown {
         position: absolute;
-        top: 100%;
+        top: calc(100% + 4px);
         left: 0;
         right: 0;
 
-        background: var(--pvt-bg-color-7);
-        border: 1px solid var(--pvt-menu-border-color);
-        box-shadow: var(--pvt-sidebar-layout-shadow-bottom);
+        padding: 4px;
+        background: var(--pvt-menu-bg-color);
+        border: 1px solid var(--pvt-border-color);
+        border-radius: 10px;
+        box-shadow: var(--pvt-menu-shadow);
         max-height: 250px;
         overflow-y: auto;
+        overflow-x: hidden;
 
         z-index: 1000;
 
@@ -188,22 +198,24 @@
     // Search box (multi-select dropdown)
     // ========================
     &__search {
-        padding: 1px;
+        padding: 2px 2px 6px;
     }
 
+    // Second selector defends against the ambient form-input box (see &__input).
     &__search-input,
     .pvt-form .pvt-form-element &__search-input {
         width: 100%;
+        padding: 6px 8px;
         font-size: 0.9rem;
         color: var(--pvt-text-color-6);
         box-sizing: border-box;
-        border-radius: 0;
-        border-color: var(--pvt-menu-border-color);
-        background: var(--pvt-bg-color-6);
+        border-radius: 7px;
+        border: 1px solid var(--pvt-border-color);
+        background: var(--pvt-bg-color-0);
 
         &::placeholder {
-            color: var(--pvt-text-color-6);
-            opacity: 0.7;
+            color: var(--pvt-text-color-4);
+            opacity: 1;
         }
     }
 
@@ -221,30 +233,28 @@
     // Options
     // ========================
     &__option {
-        padding: 0.5rem 0.75rem;
+        padding: 7px 10px;
+        border-radius: 7px;
         cursor: pointer;
-        color: var(--pvt-text-color-primary, #333);
+        color: var(--pvt-text-color-5);
         background: transparent;
-        border-bottom: 1px solid var(--pvt-bg-color-7, #eee);
         font-size: 0.9rem;
+        transition: background-color 0.08s ease, color 0.08s ease;
 
-        &:hover {
-            background: var(--pvt-bg-color-5, #f5f5f5);
-        }
-
+        &:hover,
         &.focused {
-            background: var(--pvt-bg-color-5, #f0f0f0);
-            // outline: 1px solid var(--pvt-text-color-6, #888);
+            background: color-mix(in srgb, var(--pvt-text-color-6) 8%, transparent);
+            color: var(--pvt-text-color-6);
         }
 
         &.focused-selected {
             font-weight: 600;
-            color: var(--pvt-text-color-6, #444);
         }
 
+        // Selected picks up the theme accent, matching the B3 active states.
         &.selected {
-            background: var(--pvt-bg-color-7, #e8edf2);
-            color: var(--pvt-text-color-6, #555);
+            background: color-mix(in srgb, var(--pvt-theme-primary) 16%, transparent);
+            color: var(--pvt-theme-primary);
             font-weight: 500;
         }
 
@@ -255,7 +265,8 @@
         }
 
         &.disabled {
-            background: var(--pvt-bg-color-7, #eee);
+            background: transparent;
+            color: var(--pvt-text-color-3);
             cursor: not-allowed;
             opacity: 0.6;
         }

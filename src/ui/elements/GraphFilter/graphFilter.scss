@@ -64,15 +64,6 @@
         border-radius: 8px;
     }
 
-    // The picker's internal search input otherwise inherits the global
-    // `.pvt-form .pvt-form-element input` box (a grey fill + border), which
-    // double-boxes it inside the control above. Keep it flush and transparent.
-    .pvt-form-element .pvt-picker__input {
-        background: transparent;
-        border: none;
-        color: var(--pvt-text-color-6);
-    }
-
     .pvt-form-element > input[type],
     .pvt-number-range input {
         width: 100%;
