@@ -1,21 +1,113 @@
 @use '../../../styles/pivotick' as pvt;
 
-.pvt-slide-panel {
+.pvt-graph-filter-container {
+    display: flex;
+    flex-direction: column;
 
+    // ── Section scaffolding ────────────────────────────────────────────────
+    // A labelled block (Attributes, Hidden nodes) with a header row that pairs
+    // the section label with its action (Reset / Show all), matching the B3
+    // chrome's section-label + control rhythm.
+    .pvt-filter-section-head {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        min-height: 24px;
+        margin-bottom: 12px;
+    }
+
+    .pvt-filter-section-label {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--pvt-text-color-4);
+    }
+
+    // ── Attribute form ─────────────────────────────────────────────────────
+    .pvt-form {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .pvt-form-element {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+
+        > label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--pvt-text-color-5);
+        }
+    }
+
+    // Normalise every field control to the same bordered box, so single-select
+    // pickers, multiselect chip fields and plain inputs read as one system.
+    .pvt-picker__control {
+        background: transparent;
+        border: none;
+    }
+
+    .pvt-picker__chips,
+    .pvt-picker__input-wrap {
+        min-height: 34px;
+        // bg-color-0 is the lightest surface in light mode (keeps the crisp white
+        // field) and the darkest in dark mode, so the field reads as an inset well
+        // against the chrome panel in both — unlike --pvt-ui-bg, which collapses
+        // onto --pvt-chrome-bg in dark.
+        background: var(--pvt-bg-color-0);
+        border: 1px solid var(--pvt-bg-color-5);
+        border-radius: 8px;
+    }
+
+    // The picker's internal search input otherwise inherits the global
+    // `.pvt-form .pvt-form-element input` box (a grey fill + border), which
+    // double-boxes it inside the control above. Keep it flush and transparent.
+    .pvt-form-element .pvt-picker__input {
+        background: transparent;
+        border: none;
+        color: var(--pvt-text-color-6);
+    }
+
+    .pvt-form-element > input[type],
+    .pvt-number-range input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 7px 10px;
+        font-family: inherit;
+        font-size: 13px;
+        color: var(--pvt-text-color-6);
+        background: var(--pvt-bg-color-0);
+        border: 1px solid var(--pvt-bg-color-5);
+        border-radius: 8px;
+        transition: border-color 0.15s ease;
+
+        &:focus {
+            outline: none;
+            border-color: var(--pvt-theme-primary);
+        }
+    }
+
+    // Primary apply button, spaced off the form.
+    .pvt-filter-section > button.pivotick-button-block {
+        margin-top: 18px;
+    }
+
+    // ── Hidden-nodes section ───────────────────────────────────────────────
     .pvt-hidden-nodes-container {
-        // margin-top: 24px;
-        // border-top: var(--pvt-sidebar-panel-border);
-        
-        h4 {
-            margin: 0;
-            display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-            align-items: center;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid var(--pvt-chrome-border);
+
+        &.hidden {
+            display: none;
         }
 
         .pvt-hidden-nodes-container-list {
-            margin-top: 24px;
             display: flex;
             flex-direction: column;
             gap: 6px;
@@ -25,14 +117,27 @@
                 user-select: auto;
                 display: flex;
                 flex-direction: row;
-                align-items: baseline;
-                cursor: help;
+                align-items: center;
+                gap: 8px;
+                padding: 8px 10px;
+                cursor: pointer;
+                background: var(--pvt-bg-color-2);
+                border: 1px solid var(--pvt-bg-color-4);
+                border-radius: 8px;
+                transition: background-color 0.12s ease, border-color 0.12s ease;
+
+                &:hover {
+                    background: var(--pvt-bg-color-3);
+                    border-color: var(--pvt-bg-color-5);
+                }
 
                 .subtext {
-                    margin: 0 0.5em 0 auto;
-                    color: var(--pvt-text-color-5);
+                    margin: 0 0 0 auto;
+                    color: var(--pvt-text-color-4);
                     display: inline-flex;
-                    gap: 0.25em;
+                    gap: 0.35em;
+                    font-size: 12px;
+                    flex: none;
 
                     .nodeinfo {
                         display: inline-flex;
@@ -40,6 +145,11 @@
                         align-items: center;
                         gap: 2px;
                     }
+                }
+
+                // "Show" action sits flush right, after the stats.
+                > button {
+                    flex: none;
                 }
             }
         }
