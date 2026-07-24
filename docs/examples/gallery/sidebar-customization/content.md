@@ -19,7 +19,7 @@ node to update it.
 import { data, options, onLoaded } from './options.js'
 </script>
 
-<Pivotick :data="data" :options="options" :onLoadedCallback="onLoaded" useInlineStyle="margin: 1em 0; height: 560px; border: 1px solid #cccccc99; border-radius: 8px"></Pivotick>
+<Pivotick :data="data" :options="options" :onLoadedCallback="onLoaded" useInlineStyle="margin: 1em 0; height: 900px; border: 1px solid #cccccc99; border-radius: 8px"></Pivotick>
 
 ::: code-group
 <<< ./options.js#options [Options]

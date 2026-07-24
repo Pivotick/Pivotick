@@ -29,7 +29,10 @@ let graph = null
 // selection from the interaction layer instead:
 const options = {
     UI: {
-        mode: 'full'
+        mode: 'full',
+        // Keep the sidebar open so the bulk-action row is visible (the embed is
+        // short enough that 'auto' would otherwise collapse it).
+        sidebar: { collapsed: false }
     },
     callbacks: {
         onNodesSelect: () => {
@@ -44,6 +47,17 @@ const options = {
 
 function onLoaded(g) {
     graph = g
+    // Pre-select two nodes so the sidebar's bulk-action row is on show — the
+    // point of this card. Multi-selection needs ≥2 nodes, so select via the
+    // interaction API (each entry pairs the node with its rendered element).
+    const selection = ['alice', 'bob']
+        .map((id) => g.getMutableNode(id))
+        .filter(Boolean)
+        .map((node) => ({ node, element: node.getGraphElement() }))
+        .filter((entry) => entry.element)
+    if (selection.length >= 2) {
+        g.renderer.getGraphInteraction().selectNodes(selection)
+    }
 }
 
 export { data, options, onLoaded }

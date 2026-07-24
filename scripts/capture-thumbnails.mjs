@@ -39,6 +39,31 @@ async function waitForServer(url, timeoutMs = 120_000) {
     throw new Error(`Dev server did not start within ${timeoutMs}ms`)
 }
 
+/**
+ * Optional per-slug interaction, run after the load settle and just before the
+ * shot, for cards whose subject is a transient / overlay UI that a static load
+ * never surfaces. Each uses the real code path (right-click, shift-click) so the
+ * thumbnail stays honest.
+ */
+// SVG <g class="node"> elements aren't reliably "visible"/clickable to Playwright,
+// so (like the visual-test harness) we drive them via bounding-box + page.mouse.
+const nodeCenter = async (locator) => {
+    await locator.waitFor({ state: 'attached', timeout: 10_000 })
+    const box = await locator.boundingBox()
+    if (!box) throw new Error('node has no bounding box')
+    return { x: box.x + box.width / 2, y: box.y + box.height / 2 }
+}
+
+const CARD_PREP = {
+    // Open a node's context menu so the thumbnail shows the entries this card is about.
+    // (The multi-select card pre-selects its nodes in the example's onLoaded instead.)
+    'context-menu-entries': async (page) => {
+        const { x, y } = await nodeCenter(page.locator('.pvt-canvas .node').first())
+        await page.mouse.click(x, y, { button: 'right' })
+        await page.locator('.pvt-contextmenu.shown').first().waitFor({ state: 'visible', timeout: 5_000 })
+    },
+}
+
 async function captureCard(page, slug) {
     const url = `${ORIGIN}${BASE}examples/gallery/${slug}/content.html`
     await page.goto(url, { waitUntil: 'networkidle' })
@@ -63,6 +88,14 @@ async function captureCard(page, slug) {
     // badges/radius to settle), so leave a little room past that for the final framing.
     await page.evaluate(() => document.fonts?.ready)
     await page.waitForTimeout(1300)
+
+    // Some cards need a transient UI opened (context menu, multi-selection) that a
+    // static load never shows; run its prep, then let the result settle.
+    const prep = CARD_PREP[slug]
+    if (prep) {
+        await prep(page)
+        await page.waitForTimeout(300)
+    }
 
     // Shoot the layout root, not the inner canvas: it is bounded to the embed box
     // (so page content can't bleed in) and includes the B3 chrome — top bar, mode
