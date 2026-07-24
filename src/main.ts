@@ -540,6 +540,8 @@ const options = {
         // enabled: false
       },
       mode: 'full',
+      // Showcase the coming-soon rail modes (hidden by default).
+      modeRail: { explore: true, enrich: true },
     },
     callbacks: {
         // onNodeEdit: (session) => {

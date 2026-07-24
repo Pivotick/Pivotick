@@ -73,6 +73,10 @@ const BASE_OPTIONS = {
         mode: 'light',
         theme: 'light',
         sidebar: { collapsed: true },
+        // The coming-soon rail modes are hidden by default (opt-in). Enrich is
+        // opted in here so the shared baselines keep exercising the SOON slot;
+        // the mode-rail spec additionally enables Explore.
+        modeRail: { enrich: true },
     },
     simulation: { enabled: false, useWorker: false },
     render: { zoomAnimation: false },

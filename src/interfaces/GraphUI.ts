@@ -29,7 +29,25 @@ export interface GraphUI {
     contextMenu: ContextMenu,
     navigation: Navigation,
     editors: Editors,
+    /**
+     * The left mode rail's "coming soon" data-zone modes (Explore / Enrich).
+     * These features aren't shipped yet, so they're **off by default**: when
+     * enabled they appear as disabled slots carrying a `SOON` badge; when
+     * disabled they're hidden from the rail entirely.
+     */
+    modeRail?: ModeRailOptions,
     keybindings?: Keybinding[];
+}
+
+/**
+ * Visibility of the mode rail's not-yet-shipped data-zone modes. Each is a
+ * disabled "SOON" affordance when shown; omit or set `false` to hide it.
+ */
+export interface ModeRailOptions {
+    /** Show the (coming-soon) Explore mode. @default false */
+    explore?: boolean,
+    /** Show the (coming-soon) Enrich mode. @default false */
+    enrich?: boolean,
 }
 
 export type Key = string; // e.g. 'Ctrl+C', 'Ctrl+F', 'ArrowUp'

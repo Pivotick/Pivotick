@@ -1,14 +1,16 @@
 import type { UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
 import type { ModeState, PointerMode } from '../../ModeStore'
-import { cursor, addCircle, show, sparkles, lassoTool, graphEdgeIcon } from '../../icons'
+import { cursor, addCircle, show, sparkles, compass, lassoTool, graphEdgeIcon } from '../../icons'
 import './moderail.scss'
 
 /**
  * The B3 left-edge mode rail. Holds the three exclusive modes (Select, Create,
- * View) and a disabled "SOON" Enrich affordance. It owns no logic beyond
- * presentation + dispatching to the {@link UIManager.modeStore}; the rail and
- * contextual tool panel react to that shared store.
+ * View) plus an optional data zone of not-yet-shipped modes (Explore, Enrich)
+ * rendered as disabled "SOON" affordances — each gated on
+ * {@link GraphUI.modeRail} and hidden when its flag is off. It owns no logic
+ * beyond presentation + dispatching to the {@link UIManager.modeStore}; the rail
+ * and contextual tool panel react to that shared store.
  *
  * The Select/Create slots double as split-buttons: clicking the *active* mode
  * toggles its tool panel, and the slot's icon + label reflect the armed tool
@@ -33,11 +35,19 @@ export class ModeRail extends UIComponent {
         this.rail.appendChild(this.makeButton('create', 'Create', addCircle, 'C'))
         this.rail.appendChild(this.makeButton('view', 'View', show))
 
-        // DATA zone — Enrich ships later; render it disabled with a SOON badge.
-        const divider = document.createElement('div')
-        divider.className = 'pvt-moderail-divider'
-        this.rail.appendChild(divider)
-        this.rail.appendChild(this.makeSoonButton('enrich', 'Enrich', sparkles))
+        // DATA zone — Explore and Enrich ship later. Each is opt-in via
+        // `UI.modeRail` (hidden by default); when shown it's a disabled SOON
+        // affordance. Skip the divider entirely when neither is enabled.
+        const railOptions = this.uiManager.getOptions().modeRail
+        const showExplore = !!railOptions?.explore
+        const showEnrich = !!railOptions?.enrich
+        if (showExplore || showEnrich) {
+            const divider = document.createElement('div')
+            divider.className = 'pvt-moderail-divider'
+            this.rail.appendChild(divider)
+            if (showExplore) this.rail.appendChild(this.makeSoonButton('explore', 'Explore', compass))
+            if (showEnrich) this.rail.appendChild(this.makeSoonButton('enrich', 'Enrich', sparkles))
+        }
 
         container.appendChild(this.rail)
     }

@@ -121,6 +121,8 @@ export const imageOff = '<svg xmlns="http://www.w3.org/2000/svg" width="1em" hei
 export const cursor = '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87c.45 0 .67-.54.35-.85L6.35 2.85a.5.5 0 0 0-.85.36z"/></svg>'
 // Sparkles — the Enrich (data-augmentation) mode, shown disabled "SOON" for now.
 export const sparkles = '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2l2.09 5.91L20 10l-5.91 2.09L12 18l-2.09-5.91L4 10l5.91-2.09z"/><path fill="currentColor" d="M18 14l.94 2.56L21.5 17.5l-2.56.94L18 21l-.94-2.56L14.5 17.5l2.56-.94z"/></svg>'
+// Compass — the Explore (guided-navigation) mode, shown disabled "SOON" for now.
+export const compass = '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M12 21a9 9 0 1 0 0-18a9 9 0 0 0 0 18Z"/><path fill="currentColor" d="M15.5 8.5l-2 5l-5 2l2-5z"/></svg>'
 // Play / pause — the View flyout's physics run toggle.
 export const play = '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5.14v13.72a1 1 0 0 0 1.54.84l10.29-6.86a1 1 0 0 0 0-1.68L9.54 4.3A1 1 0 0 0 8 5.14z"/></svg>'
 export const pause = '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5a1 1 0 0 1 1 1v12a1 1 0 0 1-2 0V6a1 1 0 0 1 1-1zm8 0a1 1 0 0 1 1 1v12a1 1 0 0 1-2 0V6a1 1 0 0 1 1-1z"/></svg>'
