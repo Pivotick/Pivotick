@@ -186,6 +186,13 @@ export class ViewFlyout extends UIComponent {
         }
     }
 
+    /** Re-sync the run/pause button with the live simulation state — e.g. after the
+     *  slow-tick watchdog disables physics without going through the button. */
+    public syncRunState() {
+        if (!this.uiManager.graph.simulation) return
+        this.updateRunButton()
+    }
+
     private updateRunButton() {
         if (!this.runButton) return
         const running = this.sim.isEnabled()

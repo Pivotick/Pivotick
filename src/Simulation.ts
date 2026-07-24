@@ -529,6 +529,8 @@ export class Simulation {
                 title: 'Physics engine running slow',
                 message: 'The physic has been disabled.'
             })
+            // Physics was disabled behind the user's back — resync the run/pause button.
+            this.graph.UIManager.viewFlyout?.syncRunState()
         }
     }
 
