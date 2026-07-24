@@ -677,8 +677,9 @@ export class GraphInteractions<TElement = unknown> {
 
     public clearNodeSelectionList(): void {
         // Clear the list *before* emitting so a handler that re-reads the live
-        // selection (e.g. the sidebar's `unselectNodes` → renderNodeSelection)
-        // sees the empty state — matching `removeNodesFromSelection`'s ordering.
+        // selection (e.g. the sidebar's `unselectNodes` → renderNodeSelection, or
+        // the neighbours ego-graph) sees the empty state — matching
+        // `removeNodesFromSelection`'s ordering.
         const cleared = this.selectedNodes
         this.selectedNodes = []
         this.selectedNode = null
