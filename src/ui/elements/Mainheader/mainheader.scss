@@ -40,14 +40,33 @@
                 span.action-text {
                     font-size: 0.8em;
 
-                    .active-filter-subtext {
-                        font-weight: 400;
-                        font-size: 0.9em;
+                    // Active-filter status: accent count + noun, then a muted
+                    // "· N hidden" — quiet enough to sit in the B3 chrome.
+                    .pvt-filter-status {
                         display: inline-flex;
                         flex-direction: row;
+                        align-items: center;
                         flex-wrap: nowrap;
-                        gap: 4px;
-                        margin-left: 4px;
+                        gap: 5px;
+
+                        .pvt-filter-count {
+                            color: var(--pvt-theme-primary);
+                            font-weight: 700;
+                            font-variant-numeric: tabular-nums;
+                        }
+
+                        .pvt-filter-word {
+                            color: var(--pvt-text-color-6);
+                            font-weight: 600;
+                        }
+
+                        .pvt-filter-hidden {
+                            font-weight: 400;
+                            color: var(--pvt-text-color-4);
+                            padding-left: 7px;
+                            margin-left: 2px;
+                            border-left: 1px solid var(--pvt-chrome-border);
+                        }
                     }
                 }
 
@@ -71,6 +90,22 @@
             &:active {
                 transition: transform 0.05s ease-out;
                 transform: scale(0.97);
+            }
+
+            // Filter pill with active filters: a quiet accent-tinted chip — the
+            // funnel and count glow in the theme accent, the surface picks up a
+            // faint tint and border, but it never shouts like a solid badge.
+            &.pvt-filter-on div.action-container {
+                background-color: color-mix(in srgb, var(--pvt-theme-primary) 8%, var(--pvt-chrome-bg));
+                border-color: color-mix(in srgb, var(--pvt-theme-primary) 45%, var(--pvt-chrome-border));
+
+                span.icon-container svg {
+                    color: var(--pvt-theme-primary);
+                }
+            }
+
+            &.pvt-filter-on:hover div.action-container {
+                background-color: color-mix(in srgb, var(--pvt-theme-primary) 14%, var(--pvt-chrome-bg));
             }
         }
 

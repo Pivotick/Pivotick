@@ -3,7 +3,6 @@ import { createHtmlElement, createHtmlTemplate, createIcon } from '../../../util
 import { Node } from '../../../Node'
 import { FormFactory, type FieldConfig, type FieldType, type FormValue, type FormValues } from '../../../utils/FormFactory'
 import { nodeNameGetter } from '../../../utils/GraphGetters'
-import { createBadge } from '../../components/Badge'
 import { createButton } from '../../components/Button'
 import { funnel, funnelClear, graphEdgeIcon, nodeProperty, show } from '../../icons'
 import { createInspectModal } from '../modals/InspectNodeModal/InspectNodeModal'
@@ -201,25 +200,21 @@ export class GraphFilter extends UIComponent {
             filterCount--
         }
 
+        // When filters are active the pill turns into a subtle accent-tinted chip
+        // (see mainheader.scss `.pvt-filter-on`): accent count + noun, with the
+        // hidden-node total as muted subtext — rather than a loud solid badge.
+        filterButton?.classList.toggle('pvt-filter-on', filterCount > 0)
+
         if (filterCount > 0) {
-            const activeFilterText = filterCount > 1 ? `${filterCount} active filters` : '1 active filter'
             const hiddenCount = this.uiManager.graph.queryEngine.getHiddenNodeCount()
-            const hiddenNodeHtml = createHtmlElement('span',
-                {
-                    'class': 'active-filter-subtext',
-                },
-                [
-                    createHtmlElement('span', {}, ['·']),
-                    createHtmlElement('span', {}, [`${hiddenCount} hidden`]),
-                ]
-            )
-            const filterBadge = createBadge({
-                text: activeFilterText,
-                html: hiddenNodeHtml,
-                variant: 'primary',
-                size: 'sm'
-            })
-            filterButtonElement.appendChild(filterBadge)
+            const status = createHtmlElement('span', { 'class': 'pvt-filter-status' }, [
+                createHtmlElement('span', { 'class': 'pvt-filter-count' }, [`${filterCount}`]),
+                createHtmlElement('span', { 'class': 'pvt-filter-word' }, [filterCount > 1 ? 'active filters' : 'active filter']),
+            ])
+            if (hiddenCount > 0) {
+                status.appendChild(createHtmlElement('span', { 'class': 'pvt-filter-hidden' }, [`${hiddenCount} hidden`]))
+            }
+            filterButtonElement.appendChild(status)
         } else {
             filterButtonElement.textContent = DEFAULT_FILTER_BUTTON_TEXT
         }
