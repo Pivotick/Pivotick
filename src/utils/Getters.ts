@@ -118,10 +118,19 @@ export function tryResolveArray<TArgs extends unknown[], TItem>(
     return []
 }
 
+function textSpan(text: string): HTMLElement {
+    const span = document.createElement('span')
+    span.textContent = text
+    return span
+}
+
 /**
  * Resolves the input to an html element. If it's a function, it is invoked with the given arguments.
  *
- * @param input - A string or a function that returns a string or html element.
+ * A string resolves to a `<span>` carrying it as **text**; it is never parsed as markup, since
+ * these values routinely carry graph data. Return an element to render your own HTML.
+ *
+ * @param input - A string, an element, or a function returning either.
  * @param args - Arguments to pass to the function, if applicable.
  * @returns A html element if resolved successfully, otherwise undefined.
  */
@@ -130,40 +139,17 @@ export function tryResolveHTMLElement<T extends unknown[]>(
     ...args: T
 ): HTMLElement | undefined {
 
-    if (input instanceof HTMLElement) {
-        return input
-    } else if (typeof input === 'string') {
-        const template = document.createElement('template')
-        const trimmed = input.trim()
-        template.innerHTML = trimmed
-        if (template.content.firstElementChild) {
-            return template.content.firstElementChild as HTMLElement
-        }
-        const span = document.createElement('span')
-        span.textContent = trimmed
-        return span
-    } else if (typeof input === 'boolean') {
-        const span = document.createElement('span')
-        span.textContent = input
-        return span
-    } else if (typeof input === 'object') {
-        const span = document.createElement('span')
-        span.textContent = JSON.stringify(input, undefined, 2)
-        return span
-    } else if (typeof input === 'function') {
-        const result = input(...args)
-        if (typeof result === 'string') {
-            const template = document.createElement('template')
-            template.innerHTML = result
-            if (template.content.firstElementChild) {
-                return template.content.firstElementChild as HTMLElement
-            }
-            const span = document.createElement('span')
-            span.textContent = result
-            return span
-        } else {
-            return result
-        }
+    const resolved: unknown = typeof input === 'function' ? input(...args) : input
+
+    // Element, not HTMLElement: an SVG element a render callback hands back passes through too.
+    if (resolved instanceof Element) {
+        return resolved as HTMLElement
+    } else if (typeof resolved === 'string') {
+        return textSpan(resolved.trim())
+    } else if (typeof resolved === 'boolean') {
+        return textSpan(String(resolved))
+    } else if (typeof resolved === 'object') {
+        return textSpan(JSON.stringify(resolved, undefined, 2))
     }
     return undefined
 }

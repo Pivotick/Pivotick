@@ -86,6 +86,7 @@ export interface MainHeader {
     * @default undefined
     * @example
     * (element) => `element id: ${element.id}`
+    * @remarks A returned `string` renders as plain text; return an `HTMLElement` to render HTML.
     */
     render?: ((element: Node | Edge | Node[] | Edge[] | null) => HTMLElement | string) | HTMLElement | string,
 }
@@ -142,6 +143,7 @@ export interface PropertiesPanel {
     * @default undefined
     * @example
     * (element) => `element id: ${element.id}`
+    * @remarks A returned `string` renders as plain text; return an `HTMLElement` to render HTML.
     */
     render?: ((element: Node | Edge | Node[] | Edge[] | null) => HTMLElement | string) | HTMLElement | string,
 }
@@ -177,7 +179,9 @@ export interface NeighborsPanel {
  * ```
  */
 export interface ExtraPanel {
+    /** A `string` renders as plain text; pass an `HTMLElement` to render HTML. */
     title: ((element: Node | Edge | null) => HTMLElement | string) | HTMLElement | string,
+    /** A `string` renders as plain text; pass an `HTMLElement` to render HTML. */
     render: ((element: Node | Edge | null) => HTMLElement | string) | HTMLElement | string,
     /**
      * should the panel be always visible
@@ -208,6 +212,7 @@ export interface Tooltip {
     * @default undefined
     * @example
     * (element) => `element id: ${element.id}`
+    * @remarks A returned `string` renders as plain text; return an `HTMLElement` to render HTML.
     */
     render?: ((element: Node | Edge) => HTMLElement | string) | HTMLElement | string,
     setPosition?: (tooltip: HTMLElement, hoveredBCR: DOMRect, canvasBbox: DOMRect) => void, 
