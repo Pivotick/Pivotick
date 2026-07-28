@@ -16,6 +16,7 @@ import type {
     LabelStyle,
     EdgeFullStyle,
 } from '../../../src/interfaces/RendererOptions'
+import { xssPayload, xssSvgIcon } from '../xssPayloads'
 
 /** Note option objects are passed raw; the graph normalises them into `Note`s. */
 export interface RawNote {
@@ -706,6 +707,28 @@ export const fixtures = {
             mkEdge('c-d', c, d, { label: 'rotated to edge' }, { rotateLabel: true, curveStyle: 'straight' }),
         ]
         return { nodes: [a, b, c, d], edges, notes: [] }
+    },
+
+    /**
+     * Hostile graph data for `specs/security.spec.ts`: every field the renderer or the UI echoes
+     * back carries a script payload that reports itself if it is ever parsed as markup.
+     */
+    xss(): BuiltFixture {
+        const label = mkStyledNode('xss-label', -170, -110, {}, {
+            label: xssPayload('label'),
+            description: xssPayload('description'),
+        })
+        const prop = mkStyledNode('xss-prop', 170, -110, {}, {
+            label: 'Plain label',
+            [xssPayload('property-key')]: 'value',
+            evil: xssPayload('property-value'),
+        })
+        const icon = mkStyledNode('xss-icon', 0, 120, {
+            size: 30,
+            svgIcon: xssSvgIcon('svg-icon'),
+        }, { label: 'Icon node' })
+
+        return { nodes: [label, prop, icon], edges: [], notes: [] }
     },
 }
 
