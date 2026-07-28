@@ -6,6 +6,7 @@ import type { Graph } from '../../Graph'
 import { GraphSvgRenderer } from './GraphSvgRenderer'
 import { defaultLabelStyle } from '../../styles/defaults'
 import { resolveIcon, tryResolveNumber, tryResolveString } from '../../utils/Getters'
+import { parseSvgIconMarkup } from '../../utils/SvgSanitizer'
 import type { CustomNodeShape, GraphRendererOptions, ImageFit, NodeShape, NodeStyle } from '../../interfaces/RendererOptions'
 import { ClusterDrawer } from './ClusterDrawer'
 import { forceConstrainParent } from '../../plugins/d3Forces/ForceConstrainParent'
@@ -395,7 +396,8 @@ export class NodeDrawer {
             }
         } else if (style.svgIcon) {
             const svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-            svgEl.innerHTML = style.svgIcon
+            // svgIcon can be driven by graph data, so it never reaches the live tree unsanitized.
+            svgEl.appendChild(parseSvgIconMarkup(style.svgIcon))
             if (svgEl.children[0]?.nodeName === 'svg') { // Make sure the icon takes the full size of the container
                 svgEl.children[0].removeAttribute('width')
                 svgEl.children[0].removeAttribute('height')
