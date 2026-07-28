@@ -22,23 +22,38 @@ export default function hasCycle(nodes: Node[], edges: Edge[]): boolean {
     }
 
     const visited = new Set<string>()
-    const recStack = new Set<string>()
+    // Nodes on the path currently being explored: reaching one again is a back edge.
+    const onPath = new Set<string>()
+    // Explicit stack of (node, index of its next unexplored neighbour) frames. A recursive
+    // DFS overflows the call stack on a long path, and path length follows the caller's data.
+    const stack: Array<{ id: string, next: number }> = []
 
-    const dfs = (nodeId: string): boolean => {
-        if (!visited.has(nodeId)) {
-            visited.add(nodeId)
-            recStack.add(nodeId)
+    for (const node of nodes) {
+        if (visited.has(node.id)) continue
 
-            if (adj[nodeId]) {
-                for (const neighbor of adj[nodeId]) {
-                    if (!visited.has(neighbor) && dfs(neighbor)) return true
-                    else if (recStack.has(neighbor)) return true
-                }
+        visited.add(node.id)
+        onPath.add(node.id)
+        stack.push({ id: node.id, next: 0 })
+
+        while (stack.length > 0) {
+            const frame = stack[stack.length - 1]
+            const neighbors = adj[frame.id] ?? []
+
+            if (frame.next >= neighbors.length) {
+                onPath.delete(frame.id)
+                stack.pop()
+                continue
             }
+
+            const neighbor = neighbors[frame.next++]
+            if (onPath.has(neighbor)) return true
+            if (visited.has(neighbor)) continue
+
+            visited.add(neighbor)
+            onPath.add(neighbor)
+            stack.push({ id: neighbor, next: 0 })
         }
-        recStack.delete(nodeId)
-        return false
     }
 
-    return nodes.some(node => dfs(node.id))
+    return false
 }
