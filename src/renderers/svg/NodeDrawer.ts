@@ -7,6 +7,7 @@ import { GraphSvgRenderer } from './GraphSvgRenderer'
 import { defaultLabelStyle } from '../../styles/defaults'
 import { resolveIcon, tryResolveNumber, tryResolveString } from '../../utils/Getters'
 import { parseSvgIconMarkup } from '../../utils/SvgSanitizer'
+import { hasAllowedScheme, SAFE_IMAGE_SCHEMES } from '../../utils/urlSafety'
 import type { CustomNodeShape, GraphRendererOptions, ImageFit, NodeShape, NodeStyle } from '../../interfaces/RendererOptions'
 import { ClusterDrawer } from './ClusterDrawer'
 import { forceConstrainParent } from '../../plugins/d3Forces/ForceConstrainParent'
@@ -251,6 +252,12 @@ export class NodeDrawer {
         nodeStyle.iconClass = nodeStyle.iconClass !== undefined ? tryResolveString(nodeStyle.iconClass, node) : undefined
         nodeStyle.svgIcon = nodeStyle.svgIcon !== undefined ? tryResolveString(nodeStyle.svgIcon, node) : undefined
         nodeStyle.imagePath = nodeStyle.imagePath !== undefined ? tryResolveString(nodeStyle.imagePath, node) : undefined
+        // imagePath can be driven by graph data, and rendering it fetches the URL. Drop anything
+        // outside the image schemes so hostile data can't turn a render into a tracking beacon.
+        // Dropped silently on purpose: this runs per node per render, so a log would flood.
+        if (nodeStyle.imagePath !== undefined && !hasAllowedScheme(nodeStyle.imagePath, SAFE_IMAGE_SCHEMES)) {
+            nodeStyle.imagePath = undefined
+        }
         nodeStyle.imageFit = nodeStyle.imageFit !== undefined ? (tryResolveString(nodeStyle.imageFit, node) as ImageFit) : undefined
 
         return nodeStyle

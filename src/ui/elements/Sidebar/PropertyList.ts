@@ -6,6 +6,7 @@ import { tryResolveHTMLElement } from '../../../utils/Getters'
 import { checkmark, copy as copyIcon, externalLink } from '../../icons'
 import { createPrimitive } from '../../components/JsonViewer'
 import { escapeHtml } from '../../../utils/utils'
+import { hasAllowedScheme, SAFE_LINK_SCHEMES } from '../../../utils/urlSafety'
 import './properties.scss'
 
 // Keys whose value we render as a link even when the value isn't an absolute URL
@@ -18,20 +19,9 @@ function keyToText(name: PropertyEntry['name'], element: Node | Edge | null): st
     return tryResolveHTMLElement(name, element)?.textContent ?? ''
 }
 
-// True when `value` carries a URL scheme that isn't in our allowlist (e.g.
-// `javascript:`, `data:`, `vbscript:`). A scheme-less value is a relative path
-// and can't execute script, so it's considered safe. Browsers ignore ASCII
-// whitespace/control chars inside a scheme (`java\tscript:` ≡ `javascript:`),
-// so strip those before deciding.
-function hasUnsafeScheme(value: string): boolean {
-    // eslint-disable-next-line no-control-regex -- stripping control chars is the point
-    const normalized = value.replace(/[\x00-\x20]+/g, '')
-    if (!/^[a-z][a-z0-9+.-]*:/i.test(normalized)) return false
-    return !ABSOLUTE_URL.test(normalized)
-}
-
 function looksLikeLink(key: string, value: string): boolean {
-    if (hasUnsafeScheme(value)) return false
+    // A `javascript:`/`data:`/`vbscript:` value never becomes a link; see SAFE_LINK_SCHEMES.
+    if (!hasAllowedScheme(value, SAFE_LINK_SCHEMES)) return false
     if (ABSOLUTE_URL.test(value)) return true
     return LINK_KEYS.has(key.toLowerCase()) && value.length > 0
 }
