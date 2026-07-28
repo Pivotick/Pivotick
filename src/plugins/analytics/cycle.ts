@@ -11,14 +11,16 @@ import type { Node } from '../../Node'
  * @returns `true` if the graph contains a cycle, otherwise `false`.
  */
 export default function hasCycle(nodes: Node[], edges: Edge[]): boolean {
-    const adj: Record<string, string[]> = {}
+    // A Map, not a plain object: node ids come from the caller, and one called `constructor` or
+    // `toString` would otherwise resolve to an inherited property instead of its own edge list.
+    const adj = new Map<string, string[]>()
     for (const node of nodes) {
-        adj[node.id] = []
+        adj.set(node.id, [])
     }
     for (const { source, target } of edges) {
-        if (!adj[source.id]) 
-            adj[source.id] = []
-        adj[source.id].push(target.id)
+        const list = adj.get(source.id)
+        if (list) list.push(target.id)
+        else adj.set(source.id, [target.id])
     }
 
     const visited = new Set<string>()
@@ -37,7 +39,7 @@ export default function hasCycle(nodes: Node[], edges: Edge[]): boolean {
 
         while (stack.length > 0) {
             const frame = stack[stack.length - 1]
-            const neighbors = adj[frame.id] ?? []
+            const neighbors = adj.get(frame.id) ?? []
 
             if (frame.next >= neighbors.length) {
                 onPath.delete(frame.id)
