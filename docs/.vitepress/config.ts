@@ -47,6 +47,7 @@ export default defineConfig({
           { text: 'Pivotick API', link: '/api' },
         ]
       },
+      { text: 'Security', link: '/security' },
       { text: 'API docs', link: '/generated-api' },
       {
         text: 'Gallery',

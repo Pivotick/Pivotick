@@ -22,6 +22,10 @@ export interface ModalOptions extends Partial<ModalEvents> {
     header?: string | HTMLElement | null;
     /**
      * Skip the encoding of the header to allow raw html.
+     *
+     * **Trusted HTML only.** The header is assigned as-is to `innerHTML`, so never enable this
+     * for a string built from graph data or any other untrusted source — pass an `HTMLElement`
+     * you populated with `textContent` instead.
      * @default false
      */
     rawHeader?: boolean;
@@ -31,6 +35,8 @@ export interface ModalOptions extends Partial<ModalEvents> {
     body?: string | HTMLElement | null;
     /**
      * Skip the encoding of the body to allow raw html.
+     *
+     * **Trusted HTML only.** See {@link rawHeader}.
      * @default false
      */
     rawBody?: boolean;
