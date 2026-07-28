@@ -1,5 +1,6 @@
 import '../../styles/components/jsonViewer.scss'
 import { createButton } from './Button'
+import { escapeHtml } from '../../utils/utils'
 
 export type JsonValue =
     | string
@@ -12,13 +13,6 @@ export type JsonValue =
 // Inspecting a node renders its whole `data` bag, so a self-reference or a pathologically
 // deep object would otherwise recurse until the stack gives out.
 const MAX_JSON_DEPTH = 64
-
-export function escapeHtml(value: string): string {
-    return value
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-}
 
 export function createPrimitive(value: unknown): string {
     if (typeof value === 'string') {

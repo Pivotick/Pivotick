@@ -27,3 +27,16 @@ export function deepMerge<T>(target: T, source: Partial<T>): T {
 export type DeepPartial<T> = {
     [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P]
 }
+
+/**
+ * Escape a string for interpolation into HTML text *or* a quoted attribute value — quotes are
+ * included so one helper covers both contexts and can't be misapplied.
+ */
+export function escapeHtml(value: string): string {
+    return value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+}

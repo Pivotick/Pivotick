@@ -1,4 +1,5 @@
 import type { MarkedExtension, Tokens } from 'marked'
+import { escapeHtml } from '../../../../utils/utils'
 
 interface NodeReferenceToken extends Tokens.Generic {
     type: 'node-reference'
@@ -32,12 +33,15 @@ export const nodeReferenceExtension: MarkedExtension = {
             renderer(token: Tokens.Generic) {
 
                 const { nodeName } = token as NodeReferenceToken
+                // The tokenizer only rejects [ and ], so nodeName can still carry quotes and
+                // angle brackets: escape it rather than leaning on the consumer to sanitize.
+                const safeName = escapeHtml(nodeName)
                 return `
                     <span
                         class="pvt-node-reference"
-                        data-node-name="${nodeName}"
+                        data-node-name="${safeName}"
                     >
-                        ${nodeName}
+                        ${safeName}
                     </span>
                 `
             }

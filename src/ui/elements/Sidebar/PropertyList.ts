@@ -4,7 +4,8 @@ import type { PropertyEntry } from '../../../interfaces/GraphUI'
 import { createHtmlElement, createIcon } from '../../../utils/ElementCreation'
 import { tryResolveHTMLElement } from '../../../utils/Getters'
 import { checkmark, copy as copyIcon, externalLink } from '../../icons'
-import { createPrimitive, escapeHtml } from '../../components/JsonViewer'
+import { createPrimitive } from '../../components/JsonViewer'
+import { escapeHtml } from '../../../utils/utils'
 import './properties.scss'
 
 // Keys whose value we render as a link even when the value isn't an absolute URL
