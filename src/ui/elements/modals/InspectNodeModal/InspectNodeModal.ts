@@ -15,11 +15,16 @@ export function createInspectModal(node: Node, uiManager: UIManager): void {
         <div class="main-container">
             <div class="icon-container"></div>
             <div class="nodeinfo-container">
-                <div class="nodeinfo-name">${nodeNameGetter(node, uiManager.getOptions().mainHeader)}</div>
-                <div class="nodeinfo-subtitle">${nodeDescriptionGetter(node, uiManager.getOptions().mainHeader) ?? ''}</div>
+                <div class="nodeinfo-name"></div>
+                <div class="nodeinfo-subtitle"></div>
             </div>
         </div>
     `) as HTMLDivElement
+    // Label and description are graph data: assign them as text, never interpolate as markup.
+    const nameEl = header.querySelector('.nodeinfo-name')
+    const subtitleEl = header.querySelector('.nodeinfo-subtitle')
+    if (nameEl) nameEl.textContent = nodeNameGetter(node, uiManager.getOptions().mainHeader)
+    if (subtitleEl) subtitleEl.textContent = nodeDescriptionGetter(node, uiManager.getOptions().mainHeader) ?? ''
     header.querySelector('.icon-container')?.appendChild(createNodePreview(node, { size: fixedPreviewSize, className: 'icon' }))
 
     const body = createInspectModalBody(node, uiManager)
