@@ -1,6 +1,37 @@
 # Changelog
 
-## Unreleased — B3 mode-driven chrome (breaking)
+## 1.5.0 — 2026-07-29
+
+Two headline changes: a security-hardening pass over everything reachable from untrusted
+graph data, and the replacement of the default `full`-mode chrome with the mode-driven
+"B3" layout. Both carry breaking changes — see the migration table at the end.
+
+## Security (breaking)
+
+Reported by Jeroen Pinoy. The new [security guide](./docs/security.md) documents the
+data → DOM boundary and the options that remain trusted-HTML sinks.
+
+- **A `string` never renders as markup.** `tryResolveHTMLElement` — behind extra panels,
+  custom context-menu entries, and the `render` hooks of the main header, properties panel
+  and tooltip — parsed any string as HTML and appended it live. Strings now resolve to
+  text; return an `HTMLElement` to render your own markup. (Property values already
+  changed in 1.4.0; this extends the rule to every `string | HTMLElement` option.)
+- `style.svgIcon` is sanitized (DOMPurify SVG profile) before insertion, for node icons
+  and UI icons alike, so handlers, `<script>` and `<foreignObject>` are stripped.
+- `style.imagePath` and property links are restricted to the `http:`, `https:`, `data:`
+  and `blob:` schemes — one shared scheme checker — blocking `javascript:` payloads and
+  render-triggered outbound requests.
+- Node name and description render as text in the edit-node and inspect-node modals.
+- The Markdown node-reference renderer escapes `nodeName`.
+- Recursive walks over caller-supplied data are iterative and bounded: `hasCycle`,
+  `findMaxReachabilityRoot` and `JsonViewer` no longer overflow the stack on a long path
+  or a deep/circular data bag, reachability is capped, and the JSON tab reports cycles
+  instead of throwing.
+- Node-id lookups in the tree layout and cycle check are keyed by `Map`, so a node named
+  `__proto__` or `constructor` is no longer dropped from the layout or resolved to an
+  inherited member. Edges whose source is outside the node set are guarded.
+
+## B3 mode-driven chrome (breaking)
 
 The default `full`-mode chrome was replaced with the mode-driven "B3" layout: a left
 **mode rail** (Select / Create / View), **contextual tool panels** that swap with the
@@ -29,6 +60,41 @@ control and a **bulk-action row**.
   `setFriction`, plus `applyPhysicsPreset('tight' | 'loose' | 'default')`.
 - Sidebar clear-selection control and bulk-action row (Pin / Unpin / Hide / Delete
   functional; Group / Ungroup / Isolate / Bulk-edit shown disabled, "SOON").
+- `UI.modeRail` — `{ explore?, enrich? }`, both `false` by default. The not-yet-shipped
+  data-zone modes stay hidden from the rail unless opted in, where they appear as
+  disabled "SOON" slots.
+- A reusable `Typeahead` component, wired to `[[node]]` references in note content.
+- Notes snap to the grid while dragging when grid-snapping is on.
+- The tool panel is collapsible, and the rail reflects the active tool.
+- B3 chrome controls are keyboard-focusable and expose their toggle state.
+
+### Changed
+
+- The Notes and Filters slide panels are mutually exclusive.
+- Modals, slide panels, context menus and tooltips are rounded and bordered to match the
+  chrome; the top bar is a true transparent overlay with the graph rendering behind it.
+
+### Fixed
+
+- The neighbours panel no longer rebuilds the ego-graph mid-unselect (fixes a zoom crash
+  and a shadowlink leak), and the tooltip no longer leaks a shadowlink-container SVG on
+  every rebuild.
+- The selection list is cleared before `unselect` events are emitted, and the canvas
+  repaints when it is cleared.
+- The View flyout resyncs its run/pause button when the slow-tick watchdog disables
+  physics.
+- Lasso outline styling and screen → graph mapping restored, as were the edit-tool canvas
+  cursors dropped with the classic toolbar.
+- The Edit-node tool is disabled without a selection and reopens after being closed.
+- The picker input no longer inherits form styling; its dropdown is themed.
+- Body-portaled roots (typeahead, dropdown, context menu) use the themed scrollbar.
+- The decorative grid pitch matches the snap `gridSize`.
+- The focus icon no longer renders as a black square.
+
+### Performance
+
+- Ego-graph construction is capped at 50 neighbours.
+- Dimmed nodes and edges no longer apply a grayscale filter.
 
 ### Migration
 
@@ -39,5 +105,7 @@ control and a **bulk-action row**.
 | `graph.UIManager.graphNaviation` | `graph.UIManager.graphNavigation` |
 | `UI.selectionMenu` (per-node) | `UI.contextMenu` |
 | `UI.selectionMenu` (multi-select) | Sidebar bulk-action row |
+| `render: () => '<b>hi</b>'` on any `string \| HTMLElement` option | Renders as text — return an `HTMLElement` for markup |
 
-See the [UI docs](./docs/ui.md) for the current control surface.
+See the [UI docs](./docs/ui.md) for the current control surface and the
+[security guide](./docs/security.md) for the data → DOM boundary.

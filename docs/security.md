@@ -35,9 +35,10 @@ propertiesPanel: { render: () => {
 } }
 ```
 
-::: warning Changed in 1.4.0
-Earlier versions parsed such strings as HTML. If you were relying on that to inject markup,
-switch to returning an element.
+::: warning Changed in 1.4.0 / 1.5.0
+Earlier versions parsed such strings as HTML — property values in 1.3.0 and earlier, every other
+`string | HTMLElement` option (extra panels, context-menu entries, custom renderers) up to 1.4.0.
+If you were relying on that to inject markup, switch to returning an element.
 :::
 
 ## Trusted-HTML sinks
