@@ -1,19 +1,19 @@
 // #region data
 // A small service-dependency graph. Each node carries categorical fields (type,
-// zone) and a numeric one (load) — exactly the kind of data the filter engine and
-// its built-in UI slice on. Colouring by type is purely so the filtering reads
-// clearly (see the Node styling cards for the technique).
+// zone), a numeric one (load) and an array-valued one (tags) — exactly the kind of
+// data the filter engine and its built-in UI slice on. Colouring by type is purely
+// so the filtering reads clearly (see the Node styling cards for the technique).
 const palette = { web: '#0072B2', api: '#E69F00', db: '#009E73' }
 
 const data = {
     nodes: [
-        { id: 'web-1', data: { type: 'web', zone: 'eu', load: 82 } },
-        { id: 'web-2', data: { type: 'web', zone: 'us', load: 45 } },
-        { id: 'api-1', data: { type: 'api', zone: 'eu', load: 68 } },
-        { id: 'api-2', data: { type: 'api', zone: 'us', load: 91 } },
-        { id: 'api-3', data: { type: 'api', zone: 'eu', load: 30 } },
-        { id: 'db-1', data: { type: 'db', zone: 'eu', load: 55 } },
-        { id: 'db-2', data: { type: 'db', zone: 'us', load: 74 } }
+        { id: 'web-1', data: { type: 'web', zone: 'eu', load: 82, tags: ['public', 'critical'] } },
+        { id: 'web-2', data: { type: 'web', zone: 'us', load: 45, tags: ['public'] } },
+        { id: 'api-1', data: { type: 'api', zone: 'eu', load: 68, tags: ['internal'] } },
+        { id: 'api-2', data: { type: 'api', zone: 'us', load: 91, tags: ['internal', 'critical'] } },
+        { id: 'api-3', data: { type: 'api', zone: 'eu', load: 30, tags: [] } },
+        { id: 'db-1', data: { type: 'db', zone: 'eu', load: 55, tags: ['critical'] } },
+        { id: 'db-2', data: { type: 'db', zone: 'us', load: 74, tags: ['critical'] } }
     ],
     edges: [
         { from: 'web-1', to: 'api-1' },
@@ -27,12 +27,55 @@ const data = {
 }
 // #endregion data
 
+// #region facets
+// Distinct values of a key across the graph, flattening array-valued data — so a
+// select's options follow the data without the facet set itself churning.
+function distinct(graph, key) {
+    const values = new Set()
+    for (const node of graph.getNodes()) {
+        const value = node.getData()[key]
+        if (Array.isArray(value)) value.forEach((entry) => values.add(entry))
+        else if (value !== null && value !== undefined) values.add(String(value))
+    }
+    return [...values].sort().map((value) => ({ label: value, value }))
+}
+
+// Declaring facets replaces the panel's data-scanning: exactly these fields, in
+// this order, with these labels and widgets. Omit `UI.filter.facets` entirely and
+// the panel derives a control per data key instead (the zero-config default).
+const facets = [
+    { key: 'type', label: 'Service type', type: 'multiselect', options: (g) => distinct(g, 'type') },
+    { key: 'zone', label: 'Region', type: 'select', options: (g) => distinct(g, 'zone') },
+    { key: 'load', label: 'Load (%)', type: 'numberRange' },
+
+    // Array-valued data: a filter tests membership, so picking `critical` matches
+    // every node carrying that tag — one control, no flattened shadow data key.
+    { key: 'tags', label: 'Tag', type: 'multiselect', options: (g) => distinct(g, 'tags') },
+
+    // Computed: `accessor` reads whatever you like, here the *dependencies'* load
+    // rather than the node's own data — "which services depend on a busy one?".
+    {
+        key: 'dep_load', label: 'Depends on load ≥', type: 'numberRange',
+        accessor: (node) => node.getEdgesOut().map((edge) => edge.to.getData().load)
+    },
+
+    // Full control: decide membership yourself.
+    {
+        key: 'name', label: 'Name matches', type: 'regex',
+        predicate: (node, value) => new RegExp(value, 'i').test(node.id)
+    }
+]
+// #endregion facets
+
 // #region options
 const options = {
     // Full mode ships the built-in Graph Filters panel (open it from the header's
-    // funnel, or Shift+K): it auto-discovers your node attributes and offers a
-    // dropdown per categorical field and a slider per numeric one.
-    UI: { mode: 'full' },
+    // funnel, or Shift+K). Its form is generated from the facets declared below;
+    // without `filter.facets` it auto-discovers your node attributes instead.
+    UI: {
+        mode: 'full',
+        filter: { facets }
+    },
     render: {
         nodeTypeAccessor: (node) => node.getData().type,
         nodeStyleMap: {
@@ -46,8 +89,8 @@ const options = {
 
 // #region filters
 // Everything the built-in panel does is available programmatically on
-// graph.queryEngine. setFilter(key, spec) keys off node.getData()[key] and applies
-// at once; call it for several keys and the filters AND together.
+// graph.queryEngine. setFilter(key, spec) keys off the facet's key and applies at
+// once; call it for several keys and the filters AND together.
 function filterByType(graph, type) {
     graph.queryEngine.setFilter('type', { value: type, matchMode: 'exact' })
 }
@@ -55,6 +98,17 @@ function filterByType(graph, type) {
 // A numeric spec takes a { min, max } range (either bound may be omitted).
 function filterByLoad(graph, min) {
     graph.queryEngine.setFilter('load', { value: { min, max: undefined } })
+}
+
+// Array-valued data matches by membership: this keeps every node tagged 'critical'.
+// Pass an array for any-of, or add matchMode: 'all' to require every tag.
+function filterByTag(graph, tag) {
+    graph.queryEngine.setFilter('tags', { value: tag })
+}
+
+// The computed facet: the node's own load is irrelevant, its dependencies' isn't.
+function filterByDependencyLoad(graph, min) {
+    graph.queryEngine.setFilter('dep_load', { value: { min, max: undefined } })
 }
 
 // resetFilters clears every active filter and restores the full graph.
@@ -74,4 +128,8 @@ function clearExclusions(graph) {
 }
 // #endregion filters
 
-export { data, options, filterByType, filterByLoad, clearFilters, excludeNode, clearExclusions }
+export {
+    data, options, facets,
+    filterByType, filterByLoad, filterByTag, filterByDependencyLoad,
+    clearFilters, excludeNode, clearExclusions
+}
