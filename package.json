@@ -25,6 +25,7 @@
     "lint": "eslint 'src/**/*.{ts,tsx}'",
     "lint_fix": "eslint --fix 'src/**/*.{ts,tsx}'",
     "gallery:thumbs": "node scripts/capture-thumbnails.mjs",
+    "docs:hero": "node scripts/capture-hero.mjs",
     "vitepress:dev": "vitepress dev docs",
     "vitepress:build": "vitepress build docs",
     "vitepress:preview": "vitepress preview docs",

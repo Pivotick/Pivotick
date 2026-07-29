@@ -540,8 +540,11 @@ const options = {
         // enabled: false
       },
       mode: 'full',
-      // Showcase the coming-soon rail modes (hidden by default).
-      modeRail: { explore: true, enrich: true },
+      // Showcase the coming-soon rail modes (hidden by default). `?hero` opts back
+      // out, so the README shot shows the rail a new user actually gets.
+      modeRail: new URLSearchParams(location.search).has('hero')
+          ? undefined
+          : { explore: true, enrich: true },
     },
     callbacks: {
         // onNodeEdit: (session) => {
