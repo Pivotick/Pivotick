@@ -64,8 +64,15 @@
         border-radius: 8px;
     }
 
+    // Min and Max sit on one row. `> input[type]` (not a bare `input`) so these
+    // boxes out-specify the ambient `.pvt-form .pvt-form-element input` styling.
+    .pvt-number-range {
+        display: flex;
+        gap: 8px;
+    }
+
     .pvt-form-element > input[type],
-    .pvt-number-range input {
+    .pvt-number-range > input[type] {
         width: 100%;
         box-sizing: border-box;
         padding: 7px 10px;
@@ -81,6 +88,16 @@
             outline: none;
             border-color: var(--pvt-theme-primary);
         }
+    }
+
+    // `font-family: inherit` above would drop the pattern field's monospace, and
+    // the invalid border has to out-specify this file's field-box rule.
+    .pvt-form-element > input[type].pvt-form-regex {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    .pvt-form-element > input[type].pvt-invalid {
+        border-color: var(--pvt-bg-color-danger);
     }
 
     // Primary apply button, spaced off the form.

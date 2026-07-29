@@ -1,7 +1,9 @@
-import type { FilterFieldConfig, FilterMatchMode, GraphFilters } from '../../../interfaces/GraphQueryEngine'
+import type {
+    FilterFacet, FilterFieldConfig, FilterMatchMode, FilterOptions, GraphFilters,
+} from '../../../interfaces/GraphQueryEngine'
 import { createHtmlElement, createHtmlTemplate, createIcon } from '../../../utils/ElementCreation'
 import { Node } from '../../../Node'
-import { FormFactory, type FieldConfig, type FieldType, type FormValue, type FormValues } from '../../../utils/FormFactory'
+import { FormFactory, type FieldConfig, type FieldOption, type FieldType, type FormValue, type FormValues } from '../../../utils/FormFactory'
 import { nodeNameGetter } from '../../../utils/GraphGetters'
 import { createButton } from '../../components/Button'
 import { funnel, funnelClear, graphEdgeIcon, nodeProperty, show } from '../../icons'
@@ -12,8 +14,8 @@ import './graphFilter.scss'
 
 
 interface AttributeFilter {
-    values?: string[];               // values for categorical attributes
-    range?: [number, number];        // range for numeric attributes
+    values?: unknown[];              // distinct values for categorical attributes
+    range?: [number, number];        // min/max for purely numeric attributes
 }
 
 const DEFAULT_FILTER_BUTTON_TEXT = 'Filter Graph'
@@ -87,45 +89,7 @@ export class GraphFilter extends UIComponent {
             }
         })
 
-        const attributeFilters = this.getAvailableNodeAttributes()
-        this.formOptions = Object.entries(attributeFilters).map(([key, filter]) => {
-            let filterType: FieldType = 'text'
-            let matchMode: FilterMatchMode = 'exact'
-            let valuesAreBoolean = false
-            if (!filter.values) {
-                filterType = 'numberRange'
-            } else if (filter.values && filter.values.every((v) => typeof v === 'string' && v.length < 64)) {
-                if (filter.values.length > 2) {
-                    filterType = 'multiselect'
-                    matchMode = 'partial'
-                } else {
-                    filterType = 'select'
-                }
-            } else if (filter.values.every((v) => typeof v === 'boolean')) {
-                filterType = 'select'
-                filter.values = ['true', 'false']
-                valuesAreBoolean = true
-            }
-            
-            const option: FieldConfig = {
-                key,
-                label: key,
-                type: filterType,
-                matchMode: matchMode,
-                valuesAreBoolean: valuesAreBoolean,
-            }
-
-            if ((option.type == 'select' || option.type == 'multiselect') && filter.values) {
-                option.options = filter.values.map((v) => {
-                    return {
-                        label: v,
-                        value: v
-                    }
-                })
-                option.allowEmpty = true
-            }
-            return option
-        })
+        this.formOptions = this.buildFormFields()
         const filteringForm = FormFactory.createForm({
             fields: this.formOptions
         })
@@ -298,37 +262,140 @@ export class GraphFilter extends UIComponent {
         }
     }
 
+    private get filterOptions(): FilterOptions {
+        return this.uiManager.getOptions().filter ?? {}
+    }
+
+    /**
+     * The panel's form fields: generated from `UI.filter.facets` when the consumer
+     * declared them, otherwise derived by scanning node data (the default).
+     */
+    private buildFormFields(): FieldConfig[] {
+        const facets = this.filterOptions.facets
+        return facets?.length ? this.declaredFields(facets) : this.derivedFields()
+    }
+
+    private declaredFields(facets: FilterFacet[]): FieldConfig[] {
+        return facets
+            .map((facet, index) => ({ facet, order: facet.order ?? index }))
+            .sort((a, b) => a.order - b.order)
+            .map(({ facet }) => this.facetToField(facet))
+    }
+
+    private facetToField(facet: FilterFacet): FieldConfig {
+        // A declared label is used verbatim (it may be translated); a key is prettified.
+        const label = facet.label ?? FormFactory.niceLabelFromKey(facet.key)
+        const matchMode = facet.matchMode ?? 'exact'
+
+        // 'boolean' is a true/false/unset dropdown — a checkbox has no "unset".
+        if (facet.type === 'boolean') {
+            return {
+                key: facet.key,
+                label,
+                type: 'select',
+                matchMode,
+                valuesAreBoolean: true,
+                allowEmpty: true,
+                options: [{ label: 'true', value: 'true' }, { label: 'false', value: 'false' }],
+            }
+        }
+
+        const field: FieldConfig = { key: facet.key, label, type: facet.type, matchMode }
+        if (facet.type === 'select' || facet.type === 'multiselect') {
+            field.options = this.resolveFacetOptions(facet)
+            field.allowEmpty = true
+        }
+        return field
+    }
+
+    /** Resolve a facet's option list, calling the consumer's function against the live graph. */
+    private resolveFacetOptions(facet: FilterFacet): FieldOption[] {
+        let options = facet.options ?? []
+        if (typeof options === 'function') {
+            try {
+                options = options(this.uiManager.graph)
+            } catch (error) {
+                console.warn(`Pivotick: options() for filter facet '${facet.key}' threw; the field will be empty.`, error)
+                options = []
+            }
+        }
+        return options.map(({ label, value }) => ({ label, value }))
+    }
+
+    /** Zero-config fallback: one field per node-data key, widget inferred from its values. */
+    private derivedFields(): FieldConfig[] {
+        const attributeFilters = this.getAvailableNodeAttributes()
+        return Object.entries(attributeFilters).map(([key, filter]) => {
+            let filterType: FieldType = 'text'
+            let matchMode: FilterMatchMode = 'exact'
+            let valuesAreBoolean = false
+            if (filter.range) {
+                filterType = 'numberRange'
+            } else if (filter.values && filter.values.every((v) => typeof v === 'string' && v.length < 64)) {
+                if (filter.values.length > 2) {
+                    filterType = 'multiselect'
+                    matchMode = 'partial'
+                } else {
+                    filterType = 'select'
+                }
+            } else if (filter.values && filter.values.every((v) => typeof v === 'boolean')) {
+                filterType = 'select'
+                filter.values = ['true', 'false']
+                valuesAreBoolean = true
+            }
+
+            const option: FieldConfig = {
+                key,
+                label: FormFactory.niceLabelFromKey(key),
+                type: filterType,
+                matchMode: matchMode,
+                valuesAreBoolean: valuesAreBoolean,
+            }
+
+            if ((option.type == 'select' || option.type == 'multiselect') && filter.values) {
+                option.options = filter.values.map((v) => {
+                    return {
+                        label: String(v),
+                        value: String(v)
+                    }
+                })
+                option.allowEmpty = true
+            }
+            return option
+        })
+    }
+
     private getAvailableNodeAttributes(): Record<string, AttributeFilter> {
-        const attributeMap = new Map()
+        const excludedKeys = new Set(this.filterOptions.excludeKeys ?? [])
+        const attributeMap = new Map<string, { numbers: Set<number>, values: Set<unknown> }>()
         const nodes = this.uiManager.graph.getMutableNodes()
 
         nodes.forEach(node => {
             Object.entries(node.getData()).forEach(([key, value]) => {
                 if (value === null || value === undefined) return // not a filterable facet value
-                let attributeFilter = attributeMap.get(key)
+                if (excludedKeys.has(key)) return
 
+                let attributeFilter = attributeMap.get(key)
                 if (!attributeFilter) {
-                    attributeFilter = {
-                        numbers: new Set(),
-                        values: new Set(),
-                    }
+                    attributeFilter = { numbers: new Set(), values: new Set() }
+                    attributeMap.set(key, attributeFilter)
                 }
-                if (Number.isInteger(value)) {
+                if (typeof value === 'number') {
                     attributeFilter.numbers.add(value)
                 } else {
                     attributeFilter.values.add(value)
                 }
-                attributeMap.set(key, attributeFilter)
             })
         })
 
         const attributeFilters = new Map<string, AttributeFilter>()
         attributeMap.forEach((filter, key) => {
             const attributeFilter: AttributeFilter = {}
-            if (filter.values) {
-                attributeFilter['values'] = [...new Set([...filter.values, ...filter.numbers])]
-            } else if (filter.number) {
+            // Purely numeric ⇒ a real min/max range widget; anything mixed stays a value list.
+            if (filter.values.size === 0 && filter.numbers.size > 0) {
                 attributeFilter['range'] = [Math.min(...filter.numbers), Math.max(...filter.numbers)]
+            } else {
+                attributeFilter['values'] = [...new Set([...filter.values, ...filter.numbers])]
             }
             attributeFilters.set(key, attributeFilter)
         })
@@ -336,13 +403,18 @@ export class GraphFilter extends UIComponent {
     }
 
     private filterGraph(filters: FormValues): void {
+        if (this.filteringForm) FormFactory.clearFieldErrors(this.filteringForm)
+        // An unusable pattern is a form error, not an exception inside apply(): report it
+        // and leave whatever was already applied in place.
+        if (!this.validatePatternFields(filters)) return
+
         const activeFilters: FormValues = this.getActiveFilters(filters)
         const graphFilter: GraphFilters = {}
         const formOptionMap = Object.fromEntries(this.formOptions.map(option => [option.key, option]))
         for (const [key, value] of Object.entries(activeFilters)) {
             const fieldCondig: FilterFieldConfig = {
                 value: value,
-                matchMode: formOptionMap[key].matchMode
+                matchMode: formOptionMap[key]?.matchMode
             }
             if (value !== undefined) {
                 graphFilter[key] = fieldCondig
@@ -351,6 +423,26 @@ export class GraphFilter extends UIComponent {
 
         this.uiManager.graph.queryEngine.resetFilters()
         this.uiManager.graph.queryEngine.setFilters(graphFilter)
+    }
+
+    /** Every `regex` field must hold a compilable pattern; marks the ones that don't. */
+    private validatePatternFields(filters: FormValues): boolean {
+        let valid = true
+        for (const option of this.formOptions) {
+            if (option.type !== 'regex') continue
+
+            const pattern = filters[option.key]
+            if (typeof pattern !== 'string' || pattern.trim() === '') continue
+            try {
+                new RegExp(pattern)
+            } catch {
+                valid = false
+                if (this.filteringForm) {
+                    FormFactory.setFieldError(this.filteringForm, option.key, 'Invalid pattern')
+                }
+            }
+        }
+        return valid
     }
 
     private getActiveFilters(filters: FormValues): FormValues {

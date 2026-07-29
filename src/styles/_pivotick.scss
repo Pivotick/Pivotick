@@ -275,6 +275,24 @@ dl.pvt-property-list {
             color: var(--pvt-text-color-4);
             border-color: var(--pvt-menu-border-color);
         }
+
+        // A pattern field reads as code, so its contents are legible as one.
+        input.pvt-form-regex {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        }
+
+        // Field-level validation (FormFactory.setFieldError) — e.g. an
+        // uncompilable regex facet pattern.
+        .pvt-invalid {
+            border-color: var(--pvt-bg-color-danger);
+        }
+
+        .pvt-form-error {
+            display: block;
+            margin-top: 4px;
+            font-size: 0.8em;
+            color: var(--pvt-text-color-danger);
+        }
     }
 
 }

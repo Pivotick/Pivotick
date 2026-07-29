@@ -5,6 +5,7 @@ import type { Node } from '../Node'
 import type { Note } from '../Note'
 import type { UIElement } from '../ui/UIManager'
 import type { FieldConfig } from '../utils/FormFactory'
+import type { FilterOptions } from './GraphQueryEngine'
 
 /**
  * @category Main Options
@@ -29,6 +30,12 @@ export interface GraphUI {
     contextMenu: ContextMenu,
     navigation: Navigation,
     editors: Editors,
+    /**
+     * The filter panel's facets. Omit to derive them by scanning node data
+     * (the zero-config default); declare `facets` to generate the form from
+     * your own declaration instead. See {@link FilterOptions}.
+     */
+    filter?: FilterOptions,
     /**
      * The left mode rail's "coming soon" data-zone modes (Explore / Enrich).
      * These features aren't shipped yet, so they're **off by default**: when

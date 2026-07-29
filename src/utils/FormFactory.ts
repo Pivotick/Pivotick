@@ -6,6 +6,8 @@ export type FieldType =
     | 'multiselect'
     | 'checkbox'
     | 'text'
+    /** A text field holding a regular-expression pattern (see `UI.filter.facets`). */
+    | 'regex'
     | 'numberRange';
 
 export interface FieldOption {
@@ -58,6 +60,7 @@ export class FormFactory {
 
             switch (type) {
                 case 'text':
+                case 'regex':
                     values[key] = (el as HTMLInputElement).value || undefined
                     break
 
@@ -65,9 +68,10 @@ export class FormFactory {
                     { const select = el as HTMLSelectElement
                     values[key] = select.value || undefined
                     if (select.dataset.fieldValuesAreBoolean === 'yes') {
-                        if (values[key] !== undefined && values[key] === 'true') {
-                            values[key] = true
-                        }
+                        // Both ways: 'false' has to become the boolean too, or a
+                        // boolean facet's "false" option never matches its nodes.
+                        if (values[key] === 'true') values[key] = true
+                        else if (values[key] === 'false') values[key] = false
                     }
 
                     break }
@@ -78,9 +82,6 @@ export class FormFactory {
                         select.selectedOptions
                     ).map(o => o.value)
                     .filter(v => v.length > 0) // Filter out  empty placeholders
-                    if (select.dataset.fieldValuesAreBoolean === 'yes') {
-                        values[key].map(v => v !== undefined && v === 'true' ? true : v)
-                    }
 
                     break }
 
@@ -117,7 +118,8 @@ export class FormFactory {
             const value = values[key]
 
             switch (type) {
-                case 'text': {
+                case 'text':
+                case 'regex': {
                     const input = el as HTMLInputElement
                     input.value = value != null ? String(value) : ''
                     break
@@ -164,7 +166,9 @@ export class FormFactory {
 
         const label = document.createElement('label')
         label.htmlFor = `pvt-form-element-${field.key}`
-        label.textContent = this.niceLabelFromKey(field.label)
+        // Verbatim: a caller that wants a key prettified calls niceLabelFromKey itself,
+        // so a consumer-supplied (translated) label survives as written.
+        label.textContent = field.label
         wrapper.appendChild(label)
 
         switch (field.type) {
@@ -184,12 +188,52 @@ export class FormFactory {
                 wrapper.appendChild(this.createText(field))
                 break
 
+            case 'regex':
+                wrapper.appendChild(this.createRegex(field))
+                break
+
             case 'numberRange':
                 wrapper.appendChild(this.createNumberRange(field))
                 break
         }
 
         return wrapper
+    }
+
+    /**
+     * Mark a field as invalid, showing `message` beneath it. Clears when the user
+     * edits the field, or on the next {@link clearFieldErrors}.
+     */
+    static setFieldError(form: HTMLFormElement, key: string, message: string): void {
+        const control = form.querySelector(`[data-field-key="${key}"]`)
+        const wrapper = control?.closest('.pvt-form-element')
+        if (!control || !wrapper) return
+
+        control.classList.add('pvt-invalid')
+        control.setAttribute('aria-invalid', 'true')
+        let error = wrapper.querySelector('.pvt-form-error')
+        if (!error) {
+            error = document.createElement('span')
+            error.className = 'pvt-form-error'
+            wrapper.appendChild(error)
+        }
+        error.textContent = message
+        control.addEventListener('input', () => this.clearFieldError(form, key), { once: true })
+    }
+
+    static clearFieldError(form: HTMLFormElement, key: string): void {
+        const control = form.querySelector(`[data-field-key="${key}"]`)
+        control?.classList.remove('pvt-invalid')
+        control?.removeAttribute('aria-invalid')
+        control?.closest('.pvt-form-element')?.querySelector('.pvt-form-error')?.remove()
+    }
+
+    static clearFieldErrors(form: HTMLFormElement): void {
+        form.querySelectorAll('.pvt-invalid').forEach((el) => {
+            el.classList.remove('pvt-invalid')
+            el.removeAttribute('aria-invalid')
+        })
+        form.querySelectorAll('.pvt-form-error').forEach((el) => el.remove())
     }
 
     private static baseAttrs(el: HTMLElement, field: FieldConfig) {
@@ -278,6 +322,16 @@ export class FormFactory {
         return input
     }
 
+    /** A pattern field: a text input that reads as one (monospace, `/…/` placeholder). */
+    private static createRegex(field: FieldConfig): HTMLInputElement {
+        const input = this.createText(field)
+        input.classList.add('pvt-form-regex')
+        input.placeholder = field.placeholder ?? 'pattern…'
+        input.spellcheck = false
+        input.autocapitalize = 'off'
+        return input
+    }
+
     private static createNumberRange(field: FieldConfig): HTMLElement {
         const container = document.createElement('div')
         container.className = 'pvt-number-range'
@@ -305,7 +359,8 @@ export class FormFactory {
         return container
     }
 
-    private static niceLabelFromKey(key: string): string {
+    /** `attr-type` / `attrType` / `attr_type` → `Attr Type`. */
+    static niceLabelFromKey(key: string): string {
         const words = key
             .replace(/([A-Z])/g, ' $1') // camelCase -> space
             .replace(/[_-]+/g, ' ')     // snake_case or kebab-case -> space

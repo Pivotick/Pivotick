@@ -1,6 +1,8 @@
 import { Node } from './Node'
 import type { Graph } from './Graph'
-import type { GraphQueryEvents, GraphFilters, FilterFieldConfig } from './interfaces/GraphQueryEngine'
+import type {
+    GraphQueryEvents, GraphFilters, FilterFieldConfig, FilterFacet, FilterValue, FilterMatchMode,
+} from './interfaces/GraphQueryEngine'
 
 
 const MANUALLY_HIDDEN_FILTER_KEY = 'manually_hidden'
@@ -11,6 +13,12 @@ export class GraphQueryEngine {
     private filters: GraphFilters = {}
     private excludedNodeIds = new Set<string>()
     private hiddenNodeCount: number = 0
+    /** Declared facets, by key — how to read and match a filter (see `UI.filter.facets`). */
+    private facets = new Map<string, FilterFacet>()
+    /** Patterns compiled once per filter application, not once per node (`null` = unusable). */
+    private regexCache = new Map<string, RegExp | null>()
+    /** Facet keys whose accessor/predicate has thrown, so we warn once rather than per node. */
+    private brokenFacets = new Set<string>()
 
     constructor(graph: Graph) {
         this.graph = graph
@@ -40,6 +48,20 @@ export class GraphQueryEngine {
         for (const handler of this.listeners[event]) {
             (handler as (...args: Parameters<GraphQueryEvents[K]>) => void)(...args)
         }
+    }
+
+    /**
+     * Declare the facets filters are matched with (normally from `UI.filter.facets`).
+     * Replaces any previous declaration, and re-applies when filters are already active.
+     */
+    setFacets(facets: FilterFacet[] | undefined) {
+        this.facets = new Map((facets ?? []).map((facet) => [facet.key, facet]))
+        this.brokenFacets.clear()
+        if (Object.keys(this.filters).length > 0) this.apply()
+    }
+
+    getFacets(): FilterFacet[] {
+        return [...this.facets.values()]
     }
 
     getFilters(): GraphFilters {
@@ -147,6 +169,7 @@ export class GraphQueryEngine {
     }
 
     private apply() {
+        this.regexCache.clear() // patterns are compiled once per application, below
         const nodes = this.graph.getMutableNodes()
         const visibleNodes = nodes
             .filter(node => this.nodeMatchesFilters(node)) // nodes that match the filter
@@ -162,6 +185,7 @@ export class GraphQueryEngine {
 
     public applyFiltersOnSubgraph() {
         const mainFilters = this.getFilters()
+        const facets = this.getFacets()
 
         this.graph.getMutableNodes()
             .filter(node => node.childrenDepth === 0)
@@ -169,6 +193,11 @@ export class GraphQueryEngine {
                 const subgraph = node.getSubgraph()
                 if (node.isParent && subgraph) {
                     subgraph.queryEngine.resetFilters()
+                    // A subgraph is built with fresh UI options, so it never sees the
+                    // consumer's `UI.filter.facets` — hand the declaration down here or
+                    // accessor/predicate facets would silently fall back to data keys.
+                    // (After the reset, so it doesn't apply on its way in.)
+                    subgraph.queryEngine.setFacets(facets)
                     subgraph.queryEngine.setFilters(mainFilters)
                 }
             })
@@ -181,18 +210,74 @@ export class GraphQueryEngine {
         for (const [key, value] of Object.entries(this.filters)) {
             if (key === 'manuallyHidden') continue
 
-            const nodeValue = node.getData()[key]
-            if (!this.matches(nodeValue, value)) return false
+            const facet = this.facets.get(key)
+            if (facet?.predicate) {
+                if (!this.runFacetFn(facet, () => facet.predicate!(node, value.value))) return false
+                continue
+            }
+
+            const nodeValue = facet?.accessor
+                ? this.runFacetFn(facet, () => facet.accessor!(node))
+                : node.getData()[key]
+            if (!this.matches(nodeValue, value, facet)) return false
         }
         return true
     }
 
-    private matches(nodeValue: unknown, filterConfig: FilterFieldConfig): boolean {
+    /**
+     * Run a consumer-supplied accessor/predicate without letting a throw take the
+     * whole render down: the facet stops matching and we warn once for that key.
+     */
+    private runFacetFn<T>(facet: FilterFacet, fn: () => T): T | undefined {
+        try {
+            return fn()
+        } catch (error) {
+            if (!this.brokenFacets.has(facet.key)) {
+                this.brokenFacets.add(facet.key)
+                console.warn(`Pivotick: filter facet '${facet.key}' threw; it will not match any node.`, error)
+            }
+            return undefined
+        }
+    }
+
+    /** Compile a `regex` facet's pattern (case-insensitive), memoised for this application. */
+    private compileRegex(pattern: string): RegExp | null {
+        const cached = this.regexCache.get(pattern)
+        if (cached !== undefined) return cached
+
+        let compiled: RegExp | null = null
+        try {
+            compiled = new RegExp(pattern, 'i')
+        } catch {
+            // The panel validates before applying; a bad pattern can only arrive from
+            // a programmatic setFilter, and must not throw out of apply().
+            console.warn(`Pivotick: invalid filter pattern '${pattern}' ignored.`)
+        }
+        this.regexCache.set(pattern, compiled)
+        return compiled
+    }
+
+    private matches(nodeValue: unknown, filterConfig: FilterFieldConfig, facet?: FilterFacet): boolean {
         if (filterConfig === undefined) return true
-        if (nodeValue === undefined) return false
+        if (nodeValue === undefined || nodeValue === null) return false
 
         const filterValue = filterConfig.value
-        const matchMode = filterConfig?.matchMode ?? 'partial'
+        const matchMode = filterConfig?.matchMode ?? facet?.matchMode ?? 'exact'
+
+        // A regex facet tests its pattern against the node value — or against any
+        // element, when the node value is an array.
+        if (facet?.type === 'regex' && typeof filterValue === 'string') {
+            const pattern = this.compileRegex(filterValue)
+            if (!pattern) return true // unusable pattern: don't hide the graph behind it
+            return Array.isArray(nodeValue)
+                ? nodeValue.some((element) => pattern.test(String(element)))
+                : pattern.test(String(nodeValue))
+        }
+
+        // Array node value (tags, categories, …) ⇒ set membership rather than equality.
+        if (Array.isArray(nodeValue)) {
+            return this.matchesArrayNodeValue(nodeValue, filterValue, matchMode)
+        }
 
         if (typeof filterValue === 'string') {
             return matchMode === 'partial' ? String(nodeValue).includes(filterValue) : nodeValue === filterValue
@@ -207,7 +292,12 @@ export class GraphQueryEngine {
         }
 
         if (Array.isArray(filterValue)) {
-            return matchMode === 'partial' ? filterValue.includes(nodeValue as never) : nodeValue === filterValue
+            if (filterValue.length === 0) return true
+            // A multiselect matches when the node's value is one of the picks; 'all'
+            // can only hold for a scalar when every pick *is* that value.
+            return matchMode === 'all'
+                ? filterValue.every((value) => value === nodeValue)
+                : filterValue.includes(nodeValue as never)
         }
 
         if (typeof filterValue === 'object' && filterValue !== null) {
@@ -219,5 +309,32 @@ export class GraphQueryEngine {
         }
 
         return false
+    }
+
+    /**
+     * Match an **array** node value: `'all'` requires every selected value to be
+     * present, anything else is any-of. `'partial'` compares elements by substring.
+     */
+    private matchesArrayNodeValue(nodeValue: unknown[], filterValue: FilterValue, matchMode: FilterMatchMode): boolean {
+        if (filterValue === undefined) return true
+
+        const contains = (value: unknown): boolean => matchMode === 'partial'
+            ? nodeValue.some((element) => String(element).includes(String(value)))
+            : nodeValue.some((element) => element === value)
+
+        if (Array.isArray(filterValue)) {
+            if (filterValue.length === 0) return true
+            return matchMode === 'all' ? filterValue.every(contains) : filterValue.some(contains)
+        }
+
+        // A range filter matches when any element falls inside it.
+        if (typeof filterValue === 'object' && filterValue !== null) {
+            const { min, max } = filterValue
+            return nodeValue.some((element) => typeof element === 'number'
+                && (min === undefined || element >= min)
+                && (max === undefined || element <= max))
+        }
+
+        return contains(filterValue)
     }
 }
