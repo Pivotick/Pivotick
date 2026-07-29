@@ -74,19 +74,20 @@ export class ViewFlyout extends UIComponent {
         if (!this.flyout) return
         this.layoutSelect = this.flyout.querySelector('.pvt-viewflyout-layout-select') as HTMLSelectElement
         this.runButton = this.flyout.querySelector('.pvt-viewflyout-run') as HTMLButtonElement
-        this.physicsCard = this.flyout.querySelector('.pvt-viewflyout-physics') as HTMLDivElement
+        this.physicsCard = this.flyout.querySelector('.pvt-viewflyout-card[data-card="physics"]') as HTMLDivElement
 
         for (const spec of SLIDERS) {
             this.sliders.set(spec.key, this.flyout.querySelector(`.pvt-viewflyout-range[data-slider="${spec.key}"]`) as HTMLInputElement)
             this.sliderValues.set(spec.key, this.flyout.querySelector(`.pvt-viewflyout-slider-value[data-value="${spec.key}"]`) as HTMLElement)
         }
         for (const name of PRESETS) {
-            this.presetButtons.set(name, this.flyout.querySelector(`.pvt-viewflyout-preset[data-preset="${name}"]`) as HTMLButtonElement)
+            this.presetButtons.set(name, this.flyout.querySelector(`.pvt-viewflyout-btn-group-btn[data-preset="${name}"]`) as HTMLButtonElement)
         }
 
         this.wireLayout()
         this.wirePhysics()
         this.wireToggles()
+        this.wireBackground()
 
         // Reflect the mode store: show/hide with the View flyout flag.
         this.applyOpen(this.uiManager.modeStore.isViewActive())
@@ -232,12 +233,141 @@ export class ViewFlyout extends UIComponent {
         button.addEventListener('click', () => { toggle(); sync() })
     }
 
+    /* ---------- background ---------- */
+
+    private wireBackground() {
+        const canvas = this.uiManager.layout?.canvas
+        if (!canvas || !this.flyout) return
+
+        const modeBtns = this.flyout.querySelectorAll<HTMLButtonElement>('.pvt-viewflyout-btn-group-btn[data-bg]')
+        const bgToggles = this.flyout.querySelector<HTMLElement>('.pvt-viewflyout-bg-toggles')
+        const bgImage = this.flyout.querySelector<HTMLElement>('.pvt-viewflyout-bg-image')
+        const gridColorLabel = this.flyout.querySelector<HTMLElement>('[data-bg-grid-label]')
+        const gridColorsEl = this.flyout.querySelector<HTMLElement>('[data-bg-grid-colors]')
+
+        const setMode = (mode: string) => {
+            canvas.classList.remove('bg-dots', 'bg-none', 'bg-image')
+            if (mode !== 'grid') canvas.classList.add(`bg-${mode}`)
+
+            // Show pattern options
+            const show = ((mode === 'grid') || (mode === 'dots'))
+            if (bgToggles) bgToggles.hidden = !show
+            if (gridColorLabel) gridColorLabel.hidden = !show
+            if (gridColorsEl) gridColorsEl.hidden = !show
+
+            // Show image options
+            if (bgImage) bgImage.hidden = (mode !== 'image')
+        }
+
+        modeBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const mode = btn.dataset.bg ?? 'grid'
+                modeBtns.forEach(b => b.setAttribute('aria-pressed', 'false'))
+                btn.setAttribute('aria-pressed', 'true')
+                setMode(mode)
+            })
+        })
+
+        // Background color swatches
+        const bgColorsContainer = this.flyout.querySelector<HTMLElement>('.pvt-viewflyout-bg-colors')
+        const bgSwatches = bgColorsContainer?.querySelectorAll<HTMLButtonElement>('.pvt-viewflyout-swatch')
+        const selectBgSwatch = (active: HTMLButtonElement | null) => {
+            bgSwatches?.forEach(s => s.classList.remove('active'))
+            if (active) active.classList.add('active')
+        }
+        bgSwatches?.forEach(swatch => {
+            swatch.addEventListener('click', () => {
+                const color = swatch.dataset.color ?? ''
+                selectBgSwatch(swatch)
+                if (color) {
+                    canvas.style.setProperty('--pvt-bg', color)
+                } else {
+                    canvas.style.removeProperty('--pvt-bg')
+                }
+            })
+        })
+        const bgColorPicker = bgColorsContainer?.querySelector<HTMLInputElement>('.pvt-viewflyout-color-picker')
+        bgColorPicker?.addEventListener('input', () => {
+            selectBgSwatch(null)
+            canvas.style.setProperty('--pvt-bg', bgColorPicker.value)
+        })
+
+        // Grid color swatches
+        const gridColorsContainer = this.flyout.querySelector<HTMLElement>('.pvt-viewflyout-bg-grid-colors')
+        const gridSwatches = gridColorsContainer?.querySelectorAll<HTMLButtonElement>('.pvt-viewflyout-swatch')
+        const selectGridSwatch = (active: HTMLButtonElement | null) => {
+            gridSwatches?.forEach(s => s.classList.remove('active'))
+            if (active) active.classList.add('active')
+        }
+        gridSwatches?.forEach(swatch => {
+            swatch.addEventListener('click', () => {
+                const color = swatch.dataset.color ?? ''
+                selectGridSwatch(swatch)
+                if (color) {
+                    canvas.style.setProperty('--pvt-graph-grid-color', color)
+                } else {
+                    canvas.style.removeProperty('--pvt-graph-grid-color')
+                }
+            })
+        })
+        const gridColorPicker = gridColorsContainer?.querySelector<HTMLInputElement>('.pvt-viewflyout-grid-color-picker')
+        gridColorPicker?.addEventListener('input', () => {
+            selectGridSwatch(null)
+            canvas.style.setProperty('--pvt-graph-grid-color', gridColorPicker.value)
+        })
+
+        // Image URL input
+        const imageUrl = this.flyout.querySelector<HTMLInputElement>('.pvt-viewflyout-bg-image-url')
+        imageUrl?.addEventListener('input', () => {
+            if (imageUrl.value) {
+                canvas.style.setProperty('--pvt-bg-image-url', `url(${imageUrl.value})`)
+            } else {
+                canvas.style.removeProperty('--pvt-bg-image-url')
+            }
+        })
+
+        // Image file upload
+        const imageFile = this.flyout.querySelector<HTMLInputElement>('.pvt-viewflyout-bg-image-file')
+        imageFile?.addEventListener('change', () => {
+            const file = imageFile.files?.[0]
+            if (!file) return
+            const reader = new FileReader()
+            reader.onload = () => {
+                canvas.style.setProperty('--pvt-bg-image-url', `url(${reader.result})`)
+                if (imageUrl) imageUrl.value = ''
+            }
+            reader.readAsDataURL(file)
+        })
+
+        // Image fit selector
+        const fitSelect = this.flyout.querySelector<HTMLSelectElement>('.pvt-viewflyout-bg-image-fit')
+        fitSelect?.addEventListener('change', () => {
+            if (fitSelect.value === 'repeat') {
+                canvas.style.setProperty('--pvt-bg-image-size', 'auto')
+                canvas.style.setProperty('--pvt-bg-image-repeat', 'repeat')
+            } else {
+                canvas.style.setProperty('--pvt-bg-image-size', fitSelect.value)
+                canvas.style.setProperty('--pvt-bg-image-repeat', 'no-repeat')
+            }
+        })
+
+        // Clear image
+        const clearBtn = this.flyout.querySelector<HTMLButtonElement>('.pvt-viewflyout-bg-image-clear')
+        clearBtn?.addEventListener('click', () => {
+            canvas.style.removeProperty('--pvt-bg-image-url')
+            canvas.style.removeProperty('--pvt-bg-image-size')
+            canvas.style.removeProperty('--pvt-bg-image-repeat')
+            if (imageUrl) imageUrl.value = ''
+            if (imageFile) imageFile.value = ''
+        })
+    }
+
     /* ---------- template ---------- */
 
     private template(): string {
         const options = LAYOUTS.map(l => `<option value="${l.id}" title="${l.desc}">${l.label}</option>`).join('')
         const presets = PRESETS.map(p =>
-            `<button type="button" class="pvt-viewflyout-preset" data-preset="${p}" title="${PRESET_DESCRIPTIONS[p]}">${p[0].toUpperCase()}${p.slice(1)}</button>`
+            `<button type="button" class="pvt-viewflyout-btn-group-btn" data-preset="${p}" title="${PRESET_DESCRIPTIONS[p]}">${p[0].toUpperCase()}${p.slice(1)}</button>`
         ).join('')
         const sliders = SLIDERS.map(s => `
             <div class="pvt-viewflyout-slider" title="${s.desc}">
@@ -254,22 +384,75 @@ export class ViewFlyout extends UIComponent {
                 <span class="pvt-viewflyout-switch"></span>
             </button>`
 
+        const bgModes = [
+            { id: 'grid', label: 'Grid' },
+            { id: 'dots', label: 'Dots' },
+            { id: 'none', label: 'None' },
+            { id: 'image', label: 'Image' },
+        ]
+        const bgModeButtons = bgModes.map(m =>
+            `<button type="button" class="pvt-viewflyout-btn-group-btn" data-bg="${m.id}" aria-pressed="${m.id === 'grid' ? 'true' : 'false'}">${m.label}</button>`
+        ).join('')
+
+        const colorSwatches = [
+            { color: '', title: 'Default', cls: 'swatch-default' },
+            { color: '#ffffff', title: 'White' },
+            { color: '#e3f2fd', title: 'Light blue' },
+            { color: '#f3e5f5', title: 'Light purple' },
+            { color: '#525252', title: 'Dark grey' },
+            { color: '#171717', title: 'Black' },
+        ]
+        const bgSwatchButtons = colorSwatches.map(s =>
+            `<button type="button" class="pvt-viewflyout-swatch ${s.cls ?? ''}" data-color="${s.color}" title="${s.title}" style="${s.color ? `--swatch: ${s.color}` : ''}"></button>`
+        ).join('')
+        const gridSwatchButtons = colorSwatches.map(s =>
+            `<button type="button" class="pvt-viewflyout-swatch ${s.cls ?? ''}" data-color="${s.color}" title="${s.title}" style="${s.color ? `--swatch: ${s.color}` : ''}"></button>`
+        ).join('')
+
         return `
             <div class="pvt-viewflyout-header"><span class="pvt-viewflyout-icon">${show}</span>View</div>
             <div class="pvt-viewflyout-section-label">LAYOUT &amp; SIMULATION</div>
             <label class="pvt-viewflyout-layout">Layout
                 <select class="pvt-viewflyout-layout-select" title="Choose how nodes are arranged on the canvas.">${options}</select>
             </label>
-            <div class="pvt-viewflyout-physics">
-                <div class="pvt-viewflyout-physics-head">
-                    <span class="pvt-viewflyout-physics-title"><span class="pvt-viewflyout-icon">${atom}</span>Physics</span>
+            <div class="pvt-viewflyout-card" data-card="physics">
+                <div class="pvt-viewflyout-card-head">
+                    <span class="pvt-viewflyout-card-title"><span class="pvt-viewflyout-icon">${atom}</span>Physics</span>
                     <button type="button" class="pvt-viewflyout-run" title="Pause physics">${pause}</button>
                 </div>
-                <div class="pvt-viewflyout-presets">${presets}</div>
+                <div class="pvt-viewflyout-btn-group">${presets}</div>
                 <div class="pvt-viewflyout-sliders">${sliders}</div>
             </div>
+            <div class="pvt-viewflyout-card">
+                <div class="pvt-viewflyout-card-head">
+                    <span class="pvt-viewflyout-card-title"><span class="pvt-viewflyout-icon">${grid}</span>Background</span>
+                </div>
+                <div class="pvt-viewflyout-btn-group">${bgModeButtons}</div>
+                <div class="pvt-viewflyout-bg-color-label">Background color</div>
+                <div class="pvt-viewflyout-bg-colors">${bgSwatchButtons}
+                    <input type="color" class="pvt-viewflyout-color-picker" value="#ffffff" title="Custom color">
+                </div>
+                <div class="pvt-viewflyout-bg-grid-color-label" data-bg-grid-label>Grid color</div>
+                <div class="pvt-viewflyout-bg-grid-colors" data-bg-grid-colors>${gridSwatchButtons}
+                    <input type="color" class="pvt-viewflyout-grid-color-picker" value="#cccccc" title="Custom color">
+                </div>
+                <div class="pvt-viewflyout-bg-toggles">
+                    ${toggle('highlight', grid, 'Highlight grid', 'Make the background grid lines more visible.')}
+                </div>
+                <div class="pvt-viewflyout-bg-image" hidden>
+                    <div class="pvt-viewflyout-bg-image-row">
+                        <input type="text" class="pvt-viewflyout-bg-image-url" placeholder="Image URL...">
+                        <input type="file" class="pvt-viewflyout-bg-image-file" accept="image/*">
+                    </div>
+                <select class="pvt-viewflyout-bg-image-fit">
+                    <option value="cover">Cover</option>
+                    <option value="contain">Contain</option>
+                    <option value="repeat">Tile</option>
+                </select>
+                    <button type="button" class="pvt-viewflyout-bg-image-clear">Remove image</button>
+                </div>
+            </div>
             ${toggle('snap', snapGrid, 'Snap to grid', 'Align nodes to the grid while you drag them.')}
-            ${toggle('highlight', grid, 'Highlight grid', 'Make the background grid lines more visible.')}
             ${toggle('freeze', pin, 'Freeze on drag', 'Keep nodes pinned where you drop them instead of letting physics move them again.')}
             ${toggle('fit', graphNavigationReset, 'Fit on expand/collapse', 'Zoom and re-center to fit the graph when clusters are expanded or collapsed.')}
         `

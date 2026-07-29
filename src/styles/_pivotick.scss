@@ -2,7 +2,9 @@
 
 
 .pvt-layout {
-    color: var(--pvt-text-color-6)
+    color: var(--pvt-text-color-6);
+    --pvt-graph-grid-line-width: 1px;
+    --pvt-graph-grid-dot-radius: 1px;
 }
 
 .hidden {
@@ -26,23 +28,46 @@
     --pvt-graph-grid-pitch: 50px;
 
     background-color: var(--pvt-bg);
-    background-image: repeating-linear-gradient(0deg,
+
+    // Grid pattern (Default)
+    background-image:
+        repeating-linear-gradient(0deg,
             var(--pvt-graph-grid-color) 0px,
-            var(--pvt-graph-grid-color) 1px,
-            transparent 1px,
+            var(--pvt-graph-grid-color) var(--pvt-graph-grid-line-width, 1px),
+            transparent var(--pvt-graph-grid-line-width, 1px),
             transparent var(--pvt-graph-grid-pitch)),
         repeating-linear-gradient(90deg,
             var(--pvt-graph-grid-color) 0px,
-            var(--pvt-graph-grid-color) 1px,
-            transparent 1px,
+            var(--pvt-graph-grid-color) var(--pvt-graph-grid-line-width, 1px),
+            transparent var(--pvt-graph-grid-line-width, 1px),
             transparent var(--pvt-graph-grid-pitch));
 
+    // Dots pattern
+    &.bg-dots {
+        background-image:
+            radial-gradient(circle, var(--pvt-graph-grid-color) var(--pvt-graph-grid-dot-radius, 1.5px), transparent var(--pvt-graph-grid-dot-radius, 1.5px)),
+            radial-gradient(circle, var(--pvt-graph-grid-color) var(--pvt-graph-grid-dot-radius, 1.5px), transparent var(--pvt-graph-grid-dot-radius, 1.5px));
+        background-size: var(--pvt-graph-grid-pitch) var(--pvt-graph-grid-pitch);
+        background-position: 0 0, calc(var(--pvt-graph-grid-pitch) / 2) calc(var(--pvt-graph-grid-pitch) / 2);
+    }
+
+    // No pattern
+    &.bg-none {
+        background-image: none;
+    }
+
+    // Custom background image
+    &.bg-image {
+        background-image: var(--pvt-bg-image-url, none);
+        background-size: var(--pvt-bg-image-size, cover);
+        background-repeat: var(--pvt-bg-image-repeat, no-repeat);
+        background-position: center;
+    }
 }
 
-// Highlight-grid keys the grid colour on the layout root so both the canvas and
-// the transparent top-bar strip (which continues the grid) brighten together.
 .pvt-layout.grid-highlighted {
-    --pvt-graph-grid-color: var(--pvt-graph-grid-color-highlighted);
+    --pvt-graph-grid-line-width: 2px;
+    --pvt-graph-grid-dot-radius: 2px;
 }
 
 .pvt-loading-progress-bar {
