@@ -1,7 +1,6 @@
 import { Graph } from '../Graph'
 import { Node } from  '../Node'
 import { Edge } from  '../Edge'
-import { GraphControls } from './elements/GraphControls/GraphControls'
 import { GraphNavigation } from './elements/GraphNavigation/GraphNavigation'
 import { Layout } from './elements/Layout'
 import { Sidebar } from './elements/Sidebar/Sidebar'
@@ -14,10 +13,13 @@ import { Tooltip } from './elements/Tooltip/Tooltip'
 import { ContextMenu } from './elements/ContextMenu/ContextMenu'
 import type { GraphUI, GraphUIMode, PropertyEntry } from '../interfaces/GraphUI'
 import { KeybindingManager } from './KeybindingManager'
-import { GraphToolbar } from './elements/GraphToolbar/GraphToolbar'
 import { createInspectModal } from './elements/modals/InspectNodeModal/InspectNodeModal'
 import { Note } from '../Note'
 import { UIComponent, type UIPhase } from './UIComponent'
+import { ModeStore } from './ModeStore'
+import { ModeRail } from './elements/ModeRail/ModeRail'
+import { ToolPanel } from './elements/ToolPanel/ToolPanel'
+import { ViewFlyout } from './elements/ViewFlyout/ViewFlyout'
 import type { PivotickPlugin, PluginContext } from '../interfaces/Plugin'
 
 
@@ -100,17 +102,16 @@ export const DEFAULT_UI_OPTIONS: GraphUI = {
             menu: [],
         },
     },
-    selectionMenu: {
-        menuNode: {
-            topbar: [],
-            menu: [],
-        },
-    },
     extraPanels: [],
     editors: {
         nodeEditor: {
             enabled: true
         }
+    },
+    // Coming-soon rail modes are hidden unless the integrator opts in.
+    modeRail: {
+        explore: false,
+        enrich: false,
     }
 }
 
@@ -159,12 +160,17 @@ const UI_ELEMENTS: UIElementSpec[] = [
         make: ui => new ContextMenu(ui), slot: ui => ui.layout?.canvas
     },
     {
-        key: 'graphControls', modes: ['full', 'light'],
-        make: ui => new GraphControls(ui), slot: ui => ui.layout?.graphcontrols
+        key: 'modeRail', modes: ['full', 'light'],
+        make: ui => new ModeRail(ui), slot: ui => ui.layout?.moderail
     },
     {
-        key: 'graphToolbar', modes: ['full', 'light'],
-        make: ui => new GraphToolbar(ui), slot: ui => ui.layout?.graphtoolbar
+        key: 'toolPanel', modes: ['full', 'light'],
+        make: ui => new ToolPanel(ui), slot: ui => ui.layout?.toolpanel
+    },
+    {
+        // viewer-mode View flyout is an open question (§9.4); full/light for now.
+        key: 'viewFlyout', modes: ['full', 'light'],
+        make: ui => new ViewFlyout(ui), slot: ui => ui.layout?.viewflyout
     },
     {
         key: 'mainHeader', modes: ['full', 'light'],
@@ -190,6 +196,14 @@ export class UIManager {
     private options: GraphUI
 
     public keyManager: KeybindingManager
+
+    /**
+     * Mode-rail state (Select / Create pointer-mode + View flyout). The rail,
+     * contextual panels, View flyout and canvas cursor subscribe to it. Lives on
+     * the manager (not per-component) so it survives element rebuilds and is
+     * reachable from the interaction layer via `graph.UIManager.modeStore`.
+     */
+    public readonly modeStore: ModeStore = new ModeStore()
 
     /** Lifecycle-managed elements, in registration order. */
     private elements: UIComponent[] = []
@@ -219,9 +233,10 @@ export class UIManager {
     public get layout(): Layout | undefined { return this.byKey.get('layout') as Layout | undefined }
     public get sidebar(): Sidebar | undefined { return this.byKey.get('sidebar') as Sidebar | undefined }
     public get mainHeader(): Mainheader | undefined { return this.byKey.get('mainHeader') as Mainheader | undefined }
-    public get graphNaviation(): GraphNavigation | undefined { return this.byKey.get('navigation') as GraphNavigation | undefined }
-    public get graphControls(): GraphControls | undefined { return this.byKey.get('graphControls') as GraphControls | undefined }
-    public get graphToolbar(): GraphToolbar | undefined { return this.byKey.get('graphToolbar') as GraphToolbar | undefined }
+    public get graphNavigation(): GraphNavigation | undefined { return this.byKey.get('navigation') as GraphNavigation | undefined }
+    public get modeRail(): ModeRail | undefined { return this.byKey.get('modeRail') as ModeRail | undefined }
+    public get toolPanel(): ToolPanel | undefined { return this.byKey.get('toolPanel') as ToolPanel | undefined }
+    public get viewFlyout(): ViewFlyout | undefined { return this.byKey.get('viewFlyout') as ViewFlyout | undefined }
     public get tooltip(): Tooltip | undefined { return this.byKey.get('tooltip') as Tooltip | undefined }
     public get contextMenu(): ContextMenu | undefined { return this.byKey.get('contextMenu') as ContextMenu | undefined }
 
@@ -437,6 +452,7 @@ export class UIManager {
         this.phaseHandlers = { afterMount: [], graphReady: [], destroy: [] }
         this.emittedPhases.clear()
         this.installedPlugins.clear()
+        this.modeStore.dispose()
         for (const dispose of this.uiDisposables.splice(0)) dispose()
     }
 

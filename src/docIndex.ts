@@ -13,12 +13,14 @@ import type * as SimulationOptions from './interfaces/SimulationOptions'
 import type * as GraphInteractionsI from './interfaces/GraphInteractions'
 import * as GraphInteractions from './GraphInteractions'
 import type { GraphRenderer, AbstractSelectionBox } from './GraphRenderer'
-import type { Simulation } from './Simulation'
+import type { Simulation, PhysicsKnobs, PhysicsPresetName } from './Simulation'
+import { PHYSICS_KNOB_RANGES, PHYSICS_PRESETS } from './Simulation'
 import type { Notifier, NotificationLevel } from './ui/Notifier'
 import type { TreeLayoutAlgorithm } from './plugins/layout/Tree'
 import { defaultNodeStyle, defaultEdgeStyle, defaultLabelStyle, defaultMarkerStyleMap } from './styles/defaults'
 import type { DeepPartial } from './utils/utils'
 import type { UIElement } from './ui/UIManager'
+import type { ModeStore, PointerMode, RailMode, ModeState } from './ui/ModeStore'
 import { UIComponent } from './ui/UIComponent'
 import type { UIPhase } from './ui/UIComponent'
 import type { PivotickPlugin, PluginContext } from './interfaces/Plugin'
@@ -36,11 +38,17 @@ export type {
     AbstractSelectionBox,
     GraphRenderer,
     Simulation,
+    PhysicsKnobs,
+    PhysicsPresetName,
     TreeLayoutAlgorithm,
     Notifier,
     NotificationLevel,
     DeepPartial,
     UIElement,
+    ModeStore,
+    PointerMode,
+    RailMode,
+    ModeState,
     UIPhase,
     PivotickPlugin,
     PluginContext,
@@ -55,5 +63,7 @@ export {
     defaultLabelStyle as defaultLabelStyleValue,
     GraphInteractions,
     defaultMarkerStyleMap,
+    PHYSICS_KNOB_RANGES,
+    PHYSICS_PRESETS,
     Pivotick
 }

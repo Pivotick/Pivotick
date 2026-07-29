@@ -4,6 +4,7 @@
     box-shadow: var(--pvt-sidebar-layout-shadow-right);
 
     .pvt-sidebar-elements {
+        position: relative;
         height: 100%;
         overflow-y: auto;
         overflow-x: hidden;
@@ -22,10 +23,120 @@
             transform: translateX(-8px);
         }
 
+        // Nothing selected → a clean sidebar. A panel with no rendered content
+        // (no visible `.enter-active` child) collapses, and the separator before
+        // an empty panel is dropped. Scoped to the template's direct-child
+        // separators so panels' own internal dividers are untouched.
+        > .pvt-sidebar-panel:not(:has(> .enter-active)) {
+            display: none;
+        }
+        > .pvt-sidebar-separator {
+            display: none;
+        }
+        > .pvt-sidebar-separator:has(+ .pvt-sidebar-panel > .enter-active) {
+            display: block;
+        }
+
         .pvt-extra-panel {
             display: flex;
             flex-direction: column;
             gap: 10px;
+        }
+
+        // B3 chrome: bulk-action row shown while a node selection is active.
+        // Display is toggled inline by SidebarBulkActions (none ⇄ flex).
+        .pvt-sidebar-bulkactions {
+            align-items: center;
+            gap: 2px;
+            padding: 2px 8px;
+
+            .pvt-sidebar-bulkactions-divider {
+                flex: none;
+                width: 1px;
+                height: 20px;
+                margin: 0 3px;
+                background: var(--pvt-border-color);
+            }
+
+            .pvt-sidebar-bulkaction {
+                flex: 1 1 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 34px;
+                padding: 0;
+                border: none;
+                border-radius: 7px;
+                background: transparent;
+                color: var(--pvt-text-color-4);
+                cursor: pointer;
+                transition: background-color 0.12s ease, color 0.12s ease;
+
+                .pvt-sidebar-bulkaction-icon {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    line-height: 0;
+
+                    svg {
+                        width: 18px;
+                        height: 18px;
+                    }
+                }
+
+                &:hover:not(:disabled) {
+                    background-color: var(--pvt-bg-color-3);
+                    color: var(--pvt-text-color-6);
+                }
+
+                &.pvt-sidebar-bulkaction-danger {
+                    color: color-mix(in srgb, var(--pvt-bg-color-danger) 70%, var(--pvt-text-color-4));
+
+                    &:hover:not(:disabled) {
+                        color: var(--pvt-bg-color-danger);
+                        background-color: color-mix(in srgb, var(--pvt-bg-color-danger) 14%, transparent);
+                    }
+                }
+
+                &.pvt-sidebar-bulkaction-soon {
+                    opacity: 0.4;
+                    cursor: not-allowed;
+                }
+            }
+        }
+
+        // B3 chrome: header clear-selection X, revealed via .pvt-visible.
+        .pvt-sidebar-clear {
+            position: absolute;
+            top: 14px;
+            right: 12px;
+            z-index: 2;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            border: none;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--pvt-text-color-3);
+            cursor: pointer;
+            transition: background-color 0.12s ease, color 0.12s ease;
+
+            svg {
+                width: 15px;
+                height: 15px;
+            }
+
+            &.pvt-visible {
+                display: flex;
+            }
+
+            &:hover {
+                background-color: var(--pvt-bg-color-3);
+                color: var(--pvt-text-color-6);
+            }
         }
 
         .pvt-sidebar-panel {

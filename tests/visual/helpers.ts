@@ -81,6 +81,20 @@ export async function expectElement(locator: Locator, name: string): Promise<voi
     await expect(locator).toHaveScreenshot(name)
 }
 
+/** Hover a node the way a user would: prime just above its top edge, then glide down onto
+ * it in small steps so the tooltip's proximity guard (last mousemove within 50px of the
+ * hover-in point) passes regardless of node size, then return the shown tooltip. */
+export async function openNodeTooltip(page: Page, id: string): Promise<Locator> {
+    const nb = await nodeEl(page, id).boundingBox()
+    if (!nb) throw new Error(`node ${id} has no bounding box`)
+    const cx = nb.x + nb.width / 2
+    await page.mouse.move(cx, nb.y - 10)
+    await page.mouse.move(cx, nb.y + nb.height / 2, { steps: 25 })
+    const tip = page.locator('.pvt-tooltip')
+    await expect(tip).toHaveClass(/shown/)
+    return tip
+}
+
 /** Centre point of a located element, in page coordinates. */
 export async function centerOf(locator: Locator): Promise<{ x: number; y: number }> {
     const box = await locator.boundingBox()

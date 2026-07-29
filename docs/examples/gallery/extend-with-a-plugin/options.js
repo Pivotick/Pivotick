@@ -33,8 +33,10 @@ class StatsOverlay extends UIComponent {
     // Build the DOM and drop it into the slot we were mounted into.
     onMount(slot) {
         this.el = document.createElement('div')
+        // Bottom-right corner: the top-left / top / left edges are taken by the
+        // B3 chrome (top bar, mode rail), so pin the overlay clear of them.
         this.el.style.cssText = [
-            'position:absolute', 'top:12px', 'left:12px', 'z-index:5',
+            'position:absolute', 'bottom:12px', 'right:12px', 'z-index:5',
             'padding:8px 12px', 'border-radius:8px', 'font:12px/1.6 sans-serif',
             'background:rgba(20,24,32,0.85)', 'color:#fff',
             'box-shadow:0 2px 8px rgba(0,0,0,0.25)', 'pointer-events:none'

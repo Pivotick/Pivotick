@@ -96,7 +96,7 @@ Notes are free-floating annotations on the canvas, rendered as HTML. Note conten
 
 - Top level: `UIManager.ts` (coordinates all UI elements; `UIElement` interface; exposes `keyManager`), `KeybindingManager.ts` (keyboard-shortcut registry, gated on container focus / editable targets), `Notifier.ts` (user notifications), `icons.ts` (icon set)
 - `components/` — reusable primitives (`Button`, `Dropdown`, `Modal`, `Tabs`, `Badge`, `InlineBar`, `NodePickers`, `JsonViewer`, …); `tom-select` backs select/picker widgets
-- `elements/` — feature areas: `Layout` (root DOM scaffold), `Sidebar`, `NoteSidebar`, `GraphToolbar`, `GraphControls`, `GraphFilter`, `GraphNavigation`, `Mainheader`, `ContextMenu`, `Tooltip`, `SlidePanel`, `ShadowLinkManager` (edge-creation preview, see Editing layer), `modals/` (incl. `editNodeModal`, `InspectNodeModal`)
+- `elements/` — feature areas: `Layout` (root DOM scaffold), `Sidebar` (incl. `BulkActions`), `NoteSidebar`, `ModeRail` / `ToolPanel` / `ViewFlyout` (the mode-driven "B3" chrome — Select/Create rail, contextual tool panel, and layout/physics/grid flyout), `GraphFilter`, `GraphNavigation`, `Mainheader`, `ContextMenu`, `Tooltip`, `SlidePanel`, `ShadowLinkManager` (edge-creation preview, see Editing layer), `modals/` (incl. `editNodeModal`, `InspectNodeModal`)
 
 ### Utilities (`src/utils/`)
 

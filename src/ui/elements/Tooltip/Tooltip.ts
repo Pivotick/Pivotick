@@ -29,6 +29,8 @@ export class Tooltip extends UIComponent {
     public tooltip?: HTMLDivElement
     private parentContainer?: HTMLElement
     private shadowLinkContainer?: SVGSVGElement
+    // True only when this instance created the shared tooltip/shadowlink singletons.
+    private ownsSharedElements = false
 
     private mouseX: number = 0
     private mouseY: number = 0
@@ -80,6 +82,9 @@ export class Tooltip extends UIComponent {
         this.parentContainer = document.querySelector('body')!
         const tooltipContainer: HTMLDivElement | null = this.parentContainer.querySelector('.pvt-tooltip')
         const shadowlinkContainer: SVGSVGElement | null = this.parentContainer.querySelector('.pivotick-shadowlink-container')
+        // The tooltip + shadowlink SVG are page-level singletons shared by every
+        // graph (main, nested subgraphs, neighbours ego-graph). Reuse the existing
+        // pair rather than stacking duplicates; only their creator owns teardown.
         if (tooltipContainer && shadowlinkContainer) {
             this.tooltip = tooltipContainer
             this.shadowLinkContainer = shadowlinkContainer
@@ -96,6 +101,7 @@ export class Tooltip extends UIComponent {
         this.parentContainer.appendChild(this.shadowLinkContainer)
 
         this.shadowLinkManager = new ShadowLinkManager(this.shadowLinkContainer)
+        this.ownsSharedElements = true
     }
 
     protected onDestroy() {
@@ -103,8 +109,19 @@ export class Tooltip extends UIComponent {
         this.titleFit = undefined
         this.pinnedTitleFits.forEach(c => c.destroy())
         this.pinnedTitleFits.clear()
-        this.tooltip?.remove()
+        // Only tear down the shared singletons if this instance created them; a
+        // reusing graph (e.g. the ego-graph) must not detach another graph's
+        // tooltip or orphan its shadowlink SVG (the leak source).
+        if (this.ownsSharedElements) {
+            this.tooltip?.remove()
+            this.shadowLinkContainer?.remove()
+        }
         this.tooltip = undefined
+        // Reset the per-instance refs so a later onMount rebuilds cleanly. The
+        // owner-guarded block above already detached the shared shadowlink SVG
+        // (removing it here unconditionally would orphan another graph's copy).
+        this.shadowLinkContainer = undefined
+        this.shadowLinkManager = null
     }
 
     protected onAfterMount() {

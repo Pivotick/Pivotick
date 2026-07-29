@@ -9,8 +9,10 @@ export class Layout extends UIComponent {
     public modal?: HTMLDivElement
     public slidePanel?: HTMLDivElement
     public graphnavigation?: HTMLDivElement
-    public graphcontrols?: HTMLDivElement
-    public graphtoolbar?: HTMLDivElement
+    /** B3 mode rail + contextual tool panel + View flyout slots. */
+    public moderail?: HTMLDivElement
+    public toolpanel?: HTMLDivElement
+    public viewflyout?: HTMLDivElement
 
     protected onMount(container?: HTMLElement) {
         if (!container) return
@@ -51,14 +53,22 @@ export class Layout extends UIComponent {
             this.graphnavigation = document.createElement('div')
             this.graphnavigation.className = 'pvt-graphnavigation'
             this.canvas.appendChild(this.graphnavigation)
+        }
 
-            this.graphcontrols = document.createElement('div')
-            this.graphcontrols.className = 'pvt-graphcontrols'
-            this.canvas.appendChild(this.graphcontrols)
+        // B3 chrome slots: the mode rail and its contextual panel overlay the
+        // canvas (left edge), positioned right of the sidebar.
+        if (mode === 'full' || mode === 'light') {
+            this.moderail = document.createElement('div')
+            this.moderail.className = 'pvt-moderail'
+            this.canvas.appendChild(this.moderail)
 
-            this.graphtoolbar = document.createElement('div')
-            this.graphtoolbar.className = 'pvt-graphtoolbar'
-            this.canvas.appendChild(this.graphtoolbar)
+            this.toolpanel = document.createElement('div')
+            this.toolpanel.className = 'pvt-toolpanel'
+            this.canvas.appendChild(this.toolpanel)
+
+            this.viewflyout = document.createElement('div')
+            this.viewflyout.className = 'pvt-viewflyout'
+            this.canvas.appendChild(this.viewflyout)
         }
 
         container.appendChild(this.layout)

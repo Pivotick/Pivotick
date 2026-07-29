@@ -41,13 +41,13 @@ export default defineConfig({
               { text: 'Sidebar', link: '/ui-sidebar' },
               { text: 'Tooltip', link: '/ui-tooltip' },
               { text: 'Context Menu', link: '/ui-context-menu' },
-              { text: 'Selection Menu', link: '/ui-selection-menu' },
               { text: 'Styling UI', link: '/ui-styling' },
             ]
           },
           { text: 'Pivotick API', link: '/api' },
         ]
       },
+      { text: 'Security', link: '/security' },
       { text: 'API docs', link: '/generated-api' },
       {
         text: 'Gallery',

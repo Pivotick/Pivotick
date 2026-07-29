@@ -49,7 +49,7 @@ export class TreeLayout {
     protected originalForceStrength: ForceStrengthArray
     protected canvasBCR!: DOMRect
 
-    protected levels: Record<string, number>
+    protected levels: Map<string, number>
     protected positionedNodesByID: Map<string, HierarchyNode<TreeNode>>
 
     constructor (
@@ -69,7 +69,7 @@ export class TreeLayout {
         }
 
         this.positionedNodesByID = new Map()
-        this.levels = {}
+        this.levels = new Map()
 
         const nodes = this.graph.getNodes()
         const edges = this.options.flipEdgeDirection ? this.flipEdgeDirection(this.graph.getEdges()) : this.graph.getEdges()
@@ -152,7 +152,7 @@ export class TreeLayout {
         const strength = this.options.strength ?? 0.1
         if (this.options.radial) {
             const radialForce = d3ForceRadial<Node>(
-                (node: Node) => (this.levels[node.id] ?? 1) * 100,
+                (node: Node) => (this.levels.get(node.id) ?? 1) * 100,
                 0,
                 0
             ).strength(strength)
@@ -219,7 +219,7 @@ export class TreeLayout {
 
         if (options.radial) {
             const radialForce = d3ForceRadial<Node>(
-                (node: Node) => (levels[node.id] ?? 1) * 100,
+                (node: Node) => (levels.get(node.id) ?? 1) * 100,
                 center[0],
                 center[1]
             ).strength(strength)
@@ -397,7 +397,7 @@ export class TreeLayout {
         passedRootId?: string,
         rootIdAlgorithmFinder?: TreeLayoutAlgorithm
     ): {
-        levels: Record<string, number>
+        levels: Map<string, number>
         maxDepth: number
         nodeCountPerLevel: Record<string, number>
     } {
@@ -421,28 +421,31 @@ export class TreeLayout {
         passedRootId?: string,
         rootIdAlgorithmFinder?: TreeLayoutAlgorithm
     ): {
-        levels: Record<string, number>
+        levels: Map<string, number>
         maxDepth: number
         nodeCountPerLevel: Record<string, number>
     } {
         if (!nodes.length) {
             return {
-                levels: {},
+                levels: new Map(),
                 maxDepth: 0,
                 nodeCountPerLevel: {},
             }
         }
         const rootId = passedRootId || TreeLayout.findRootId(nodes, edges, rootIdAlgorithmFinder)
 
-        const levels = { [rootId]: 0 }
-        const adj: Record<string, string[]> = {}
+        // Keyed by node id, so both are Maps: on a plain object a node called `constructor` or
+        // `toString` reads as already-visited through the prototype and drops out of the layout.
+        const levels = new Map<string, number>([[rootId, 0]])
+        const adj = new Map<string, string[]>()
 
         for (const node of nodes) {
-            adj[node.id] = []
+            adj.set(node.id, [])
         }
 
         for (const { source, target } of edges) {
-            adj[source.id].push(target.id)
+            // An edge whose source isn't in `nodes` is skipped rather than throwing.
+            adj.get(source.id)?.push(target.id)
         }
 
         // Perform BFS with cycle-tolerance
@@ -451,20 +454,23 @@ export class TreeLayout {
 
         while (index < queue.length) {
             const curr = queue[index++]
-            const currLevel = levels[curr]
+            const currLevel = levels.get(curr) ?? 0
 
-            for (const neighbor of adj[curr] || []) {
+            for (const neighbor of adj.get(curr) ?? []) {
                 // Skip if already visited (prevents infinite cycles)
-                if (neighbor in levels) continue
+                if (levels.has(neighbor)) continue
 
-                levels[neighbor] = currLevel + 1
+                levels.set(neighbor, currLevel + 1)
                 queue.push(neighbor)
             }
         }
 
-        const maxDepth = Math.max(...Object.values(levels))
+        // Accumulated in one pass: `Math.max(...levels.values())` throws on a large graph, since
+        // spreading hundreds of thousands of levels blows the argument limit.
+        let maxDepth = 0
         const nodeCountPerLevel: Record<string, number> = {}
-        for (const level of Object.values(levels)) {
+        for (const level of levels.values()) {
+            if (level > maxDepth) maxDepth = level
             nodeCountPerLevel[level] = (nodeCountPerLevel[level] || 0) + 1
         }
 

@@ -9,6 +9,7 @@ import {
     canvas,
     expectElement,
     expectCanvas,
+    openNodeTooltip,
 } from '../helpers'
 import type { Locator, Page } from '@playwright/test'
 
@@ -22,20 +23,6 @@ import type { Locator, Page } from '@playwright/test'
 /** The canvas node (not the same-id preview clone the tooltip injects into <body>). */
 function canvasNode(page: Page, id: string): Locator {
     return canvas(page).locator(`#node-${id}`)
-}
-
-/** Hover a node the way a user would: prime just above its top edge, then glide down onto
- * it in small steps so the tooltip's proximity guard (last mousemove within 50px of the
- * hover-in point) passes regardless of node size, then return the shown tooltip. */
-async function openNodeTooltip(page: Page, id: string): Promise<Locator> {
-    const nb = await nodeEl(page, id).boundingBox()
-    if (!nb) throw new Error(`node ${id} has no bounding box`)
-    const cx = nb.x + nb.width / 2
-    await page.mouse.move(cx, nb.y - 10)
-    await page.mouse.move(cx, nb.y + nb.height / 2, { steps: 25 })
-    const tip = page.locator('.pvt-tooltip')
-    await expect(tip).toHaveClass(/shown/)
-    return tip
 }
 
 /** True once the <img> has actually decoded its source (not empty/broken). */

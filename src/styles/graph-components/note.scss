@@ -139,8 +139,8 @@
     }
 
     .pvt-node-reference.unresolved {
-        color: rgba(255, 255, 255, 0.6);
-        border-color: rgba(255, 255, 255, 0.32);
+        color: rgba(255, 255, 255, 0.85);
+        border-color: rgba(255, 255, 255, 0.5);
     }
 
     .pvt-note-link-container {
@@ -434,8 +434,9 @@
         }
 
         .pvt-node-reference.unresolved {
-            color: var(--pvt-note-term-text-dim);
-            border-color: color-mix(in srgb, var(--pvt-note-term-text) 30%, transparent);
+            // Readable, but still short of the full ink so it doesn't read as resolved.
+            color: color-mix(in srgb, var(--pvt-note-term-text-dim), var(--pvt-note-term-text) 55%);
+            border-color: color-mix(in srgb, var(--pvt-note-term-text) 50%, transparent);
         }
 
         .pvt-note-link-subcontainer {

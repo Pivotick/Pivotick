@@ -13,6 +13,8 @@ import { pickNode } from '../../ui/components/NodePickers'
 import { nodeNameGetter } from '../../utils/GraphGetters'
 import { applyNodeReferenceColor } from '../../utils/NoteReferenceStyle'
 import { createButton } from '../../ui/components/Button'
+import { createNodePreview } from '../../utils/NodePreview'
+import { Typeahead, type TypeaheadItem } from '../../ui/components/Typeahead'
 
 d3Select.prototype.transition = d3Transition
 
@@ -33,6 +35,7 @@ export class NoteDrawer {
     private noteContentRenderer: NoteContentRenderer
 
     private originalContentMap = new WeakMap<Note, string>()
+    private noteReferenceTypeaheads = new WeakMap<HTMLTextAreaElement, Typeahead>()
 
     public constructor(rendererOptions: GraphRendererOptions, graph: Graph, graphSvgRenderer: GraphSvgRenderer, ) {
         this.rendererOptions = rendererOptions
@@ -480,6 +483,8 @@ export class NoteDrawer {
         const textarea = contentContainer.querySelector<HTMLTextAreaElement>('.pvt-note-editor')
         if (!rendered || !textarea) return
 
+        this.attachNodeReferenceTypeahead(textarea)
+
         rendered.addEventListener('dblclick', () => {
             this.enterEditMode(note)
         })
@@ -494,6 +499,52 @@ export class NoteDrawer {
                 this.saveEditMode(note)
             }
         })
+    }
+
+    /**
+     * Wire `[[…]]` node-name autocomplete onto a note's editor textarea. Typing `[[` opens a
+     * caret-anchored list of graph nodes filtered by the text after it (by display name or id);
+     * choosing one inserts the node's name and the closing `]]`, which the markdown renderer then
+     * resolves to a live node reference (see nodeReferenceExtension / markdownResolvers).
+     *
+     * The typeahead swallows its own navigation keys while open, so ↑/↓/Enter/Esc drive the list
+     * rather than the note editor (Esc closes the list instead of cancelling the edit).
+     */
+    private attachNodeReferenceTypeahead(textarea: HTMLTextAreaElement): void {
+        if (this.noteReferenceTypeaheads.has(textarea)) return
+
+        const typeahead = new Typeahead(textarea, {
+            trigger: '[[',
+            closing: ']]',
+            maxResults: 8,
+            source: (query: string): TypeaheadItem[] => {
+                const needle = query.trim().toLowerCase()
+                const mainHeader = this.graph.UIManager.getOptions().mainHeader
+                const matches: TypeaheadItem[] = []
+
+                for (const node of this.graph.getMutableNodes()) {
+                    const label = nodeNameGetter(node, mainHeader).trim()
+                    // Nodes without a real title fall back to their id, which `[[…]]` also resolves by.
+                    const name = label && label !== 'Optional name or label' ? label : node.id
+                    if (needle && !name.toLowerCase().includes(needle) && !node.id.toLowerCase().includes(needle)) {
+                        continue
+                    }
+                    matches.push({ value: name, label: name, data: node })
+                    if (matches.length >= 20) break
+                }
+
+                return matches
+            },
+            renderItem: (item: TypeaheadItem): HTMLElement => {
+                const node = item.data as Node
+                const preview = createHtmlElement('div', { class: 'pvt-typeahead__node-preview' })
+                preview.appendChild(createNodePreview(node, { size: 22 }))
+                const name = createHtmlElement('div', { class: 'pvt-typeahead__node-name' }, [item.label])
+                return createHtmlElement('div', { class: 'pvt-typeahead__node' }, [preview, name])
+            },
+        })
+
+        this.noteReferenceTypeaheads.set(textarea, typeahead)
     }
 
     private makeDraggable(noteSelection: Selection<SVGGElement, Note, null, undefined>, note: Note): void {
@@ -540,7 +591,9 @@ export class NoteDrawer {
                     const dx = currentGraph.x - startGraph.x
                     const dy = currentGraph.y - startGraph.y
 
-                    note.setPosition(startNoteX + dx, startNoteY + dy)
+                    // Snap to the same grid as nodes when grid-snapping is on.
+                    const sim = this.graph.simulation
+                    note.setPosition(sim.snapToGrid(startNoteX + dx), sim.snapToGrid(startNoteY + dy))
                     noteSelection.attr('transform', `translate(${note.x},${note.y})`)
                     noteSelection.classed('dragging', true)
                     window.getSelection()?.removeAllRanges()

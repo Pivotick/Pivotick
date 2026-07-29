@@ -32,8 +32,20 @@ export interface SimulationOptions {
     d3ManyBodyStrength: number
     /** @default 0.9 */
     d3ManyBodyTheta: number
-    /** @default 12 */
+    /**
+     * Fallback collision radius, in px, used only for nodes that report no circle
+     * radius. Nodes with a radius use {@link d3CollideRadiusMultiplier} × their radius.
+     * @default 12
+     */
     d3CollideRadius: number
+    /**
+     * Multiplier applied to each node's circle radius to derive its collision radius
+     * (the spacing the sim keeps between nodes). Higher spreads nodes further apart.
+     * This is what the "collision radius" physics knob scales via
+     * {@link Simulation.setCollisionRadius}.
+     * @default 1.2
+     */
+    d3CollideRadiusMultiplier: number
     /** @default 1 */
     d3CollideStrength: number
     /** @default 1 */

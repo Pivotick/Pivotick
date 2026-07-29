@@ -5,7 +5,7 @@ import type { UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
 import type { NoteManager } from '../../../NoteManager'
 import { Note } from '../../../Note'
-import { createHtmlElement, createHtmlTemplate } from '../../../utils/ElementCreation'
+import { createHtmlTemplate } from '../../../utils/ElementCreation'
 import type { Graph } from '../../../Graph'
 import { renderMarkdownInline } from '../../../plugins/noteContentRenderers/markdown/markdown'
 import { resolveReferences } from '../../../plugins/noteContentRenderers/markdown/markdownResolvers'
@@ -66,14 +66,11 @@ export class NoteSidebar extends UIComponent {
         if (!this.rootElement) return
         this.rootElement.innerHTML = ''
 
-        const separator = createHtmlElement('div', { class: 'pvt-sidebar-separator' })
-
         this.listElement = this.createList()
         this.hiddenContainer = this.createHiddenContainer()
 
         this.rootElement.appendChild(this.createHeader())
         this.rootElement.appendChild(this.listElement)
-        this.rootElement.appendChild(separator)
         this.rootElement.appendChild(this.hiddenContainer)
     }
 

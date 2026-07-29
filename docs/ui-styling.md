@@ -9,12 +9,14 @@ outline: [2, 3]
 ### Core UI Wrapper
 
 - `.pivotick` – The main container for the pivotick UI.
+  - `.pvt-mainheader` – Top bar (search / filter / notes).
+  - `.pvt-sidebar` – Left panel for the current selection (properties, facets, neighbours) and bulk actions.
   - `.pvt-canvas` – The area where the graph is rendered.
-    - `.pvt-graphnavigation` – Navigation controls for the graph.
-    - `.pvt-graphcontrols` – Graph-specific control buttons such as changing the layout.
     - `svg` – Inner canvas area (for [Render's type](./render#render-options) `SVG`).
-  - `.pvt-sidebar` – Sidebar panel for graph selection details or additional tools.
-  - `.pvt-toolbar` – Toolbar for actions related to filering and sorting.
+  - `.pvt-moderail` – Left mode rail (Select / Create / View).
+  - `.pvt-toolpanel` – Contextual tool panel for the active mode.
+  - `.pvt-viewflyout` – Layout / physics / grid settings flyout (toggled by View).
+  - `.pvt-graphnavigation` – Viewport controls (fit-and-center, zoom, settings, fullscreen).
 
 - `.pvt-tooltip` – Tooltip container for nodes or edges.
 - `.pvt-contextmenu` – Context menu container for right-click actions.

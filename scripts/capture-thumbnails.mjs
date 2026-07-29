@@ -21,7 +21,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const REPO_ROOT = path.resolve(__dirname, '..')
 const GALLERY_DIR = path.resolve(REPO_ROOT, 'docs/examples/gallery')
 const BASE = '/Pivotick/'
-const PORT = 5180
+const PORT = Number(process.env.THUMB_PORT) || 5180
 const ORIGIN = `http://localhost:${PORT}`
 
 /** Poll an URL until it answers (server boot) or we give up. */
@@ -39,9 +39,42 @@ async function waitForServer(url, timeoutMs = 120_000) {
     throw new Error(`Dev server did not start within ${timeoutMs}ms`)
 }
 
+/**
+ * Optional per-slug interaction, run after the load settle and just before the
+ * shot, for cards whose subject is a transient / overlay UI that a static load
+ * never surfaces. Each uses the real code path (right-click, shift-click) so the
+ * thumbnail stays honest.
+ */
+// SVG <g class="node"> elements aren't reliably "visible"/clickable to Playwright,
+// so (like the visual-test harness) we drive them via bounding-box + page.mouse.
+const nodeCenter = async (locator) => {
+    await locator.waitFor({ state: 'attached', timeout: 10_000 })
+    const box = await locator.boundingBox()
+    if (!box) throw new Error('node has no bounding box')
+    return { x: box.x + box.width / 2, y: box.y + box.height / 2 }
+}
+
+const CARD_PREP = {
+    // Open a node's context menu so the thumbnail shows the entries this card is about.
+    // (The multi-select card pre-selects its nodes in the example's onLoaded instead.)
+    'context-menu-entries': async (page) => {
+        const { x, y } = await nodeCenter(page.locator('.pvt-canvas .node').first())
+        await page.mouse.click(x, y, { button: 'right' })
+        await page.locator('.pvt-contextmenu.shown').first().waitFor({ state: 'visible', timeout: 5_000 })
+    },
+}
+
 async function captureCard(page, slug) {
     const url = `${ORIGIN}${BASE}examples/gallery/${slug}/content.html`
     await page.goto(url, { waitUntil: 'networkidle' })
+
+    // Each card page carries the surrounding VitePress doc chrome. The B3 top bar
+    // is a transparent overlay, so the fixed VitePress navbar (and "Return to top"
+    // link) shows through the top of the graph. Hide the page chrome so only the
+    // graph app is captured.
+    await page.addStyleTag({
+        content: '.VPNav,.VPLocalNav,.VPBackdrop,.VPDoc .aside,[class*="back-to-top"]{display:none !important}',
+    })
 
     // The graph un-hides its zoom layer only when the initial layout is "done"
     // (mirrors the visual-test harness's render-complete signal).
@@ -56,10 +89,21 @@ async function captureCard(page, slug) {
     await page.evaluate(() => document.fonts?.ready)
     await page.waitForTimeout(1300)
 
-    const canvas = page.locator('.pvt-canvas').first()
-    await canvas.waitFor({ state: 'visible', timeout: 10_000 })
+    // Some cards need a transient UI opened (context menu, multi-selection) that a
+    // static load never shows; run its prep, then let the result settle.
+    const prep = CARD_PREP[slug]
+    if (prep) {
+        await prep(page)
+        await page.waitForTimeout(300)
+    }
+
+    // Shoot the layout root, not the inner canvas: it is bounded to the embed box
+    // (so page content can't bleed in) and includes the B3 chrome — top bar, mode
+    // rail, and the docked sidebar on full-mode cards that showcase it.
+    const layout = page.locator('.pvt-layout').first()
+    await layout.waitFor({ state: 'visible', timeout: 10_000 })
     const out = path.join(GALLERY_DIR, slug, 'pic.png')
-    await canvas.screenshot({ path: out })
+    await layout.screenshot({ path: out })
     return out
 }
 

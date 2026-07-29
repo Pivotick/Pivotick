@@ -28,9 +28,26 @@ export interface GraphUI {
     tooltip: Tooltip,
     contextMenu: ContextMenu,
     navigation: Navigation,
-    selectionMenu: SelectionMenu,
     editors: Editors,
+    /**
+     * The left mode rail's "coming soon" data-zone modes (Explore / Enrich).
+     * These features aren't shipped yet, so they're **off by default**: when
+     * enabled they appear as disabled slots carrying a `SOON` badge; when
+     * disabled they're hidden from the rail entirely.
+     */
+    modeRail?: ModeRailOptions,
     keybindings?: Keybinding[];
+}
+
+/**
+ * Visibility of the mode rail's not-yet-shipped data-zone modes. Each is a
+ * disabled "SOON" affordance when shown; omit or set `false` to hide it.
+ */
+export interface ModeRailOptions {
+    /** Show the (coming-soon) Explore mode. @default false */
+    explore?: boolean,
+    /** Show the (coming-soon) Enrich mode. @default false */
+    enrich?: boolean,
 }
 
 export type Key = string; // e.g. 'Ctrl+C', 'Ctrl+F', 'ArrowUp'
@@ -69,6 +86,7 @@ export interface MainHeader {
     * @default undefined
     * @example
     * (element) => `element id: ${element.id}`
+    * @remarks A returned `string` renders as plain text; return an `HTMLElement` to render HTML.
     */
     render?: ((element: Node | Edge | Node[] | Edge[] | null) => HTMLElement | string) | HTMLElement | string,
 }
@@ -125,6 +143,7 @@ export interface PropertiesPanel {
     * @default undefined
     * @example
     * (element) => `element id: ${element.id}`
+    * @remarks A returned `string` renders as plain text; return an `HTMLElement` to render HTML.
     */
     render?: ((element: Node | Edge | Node[] | Edge[] | null) => HTMLElement | string) | HTMLElement | string,
 }
@@ -160,7 +179,9 @@ export interface NeighborsPanel {
  * ```
  */
 export interface ExtraPanel {
+    /** A `string` renders as plain text; pass an `HTMLElement` to render HTML. */
     title: ((element: Node | Edge | null) => HTMLElement | string) | HTMLElement | string,
+    /** A `string` renders as plain text; pass an `HTMLElement` to render HTML. */
     render: ((element: Node | Edge | null) => HTMLElement | string) | HTMLElement | string,
     /**
      * should the panel be always visible
@@ -191,6 +212,7 @@ export interface Tooltip {
     * @default undefined
     * @example
     * (element) => `element id: ${element.id}`
+    * @remarks A returned `string` renders as plain text; return an `HTMLElement` to render HTML.
     */
     render?: ((element: Node | Edge) => HTMLElement | string) | HTMLElement | string,
     setPosition?: (tooltip: HTMLElement, hoveredBCR: DOMRect, canvasBbox: DOMRect) => void, 
@@ -214,13 +236,6 @@ export interface ContextMenu {
         topbar?: MenuQuickActionItemOptions[],
         menu?: MenuActionItemOptions[],
     },
-}
-
-export interface SelectionMenu {
-    menuNode?: {
-        topbar?: MenuQuickActionItemOptions[],
-        menu?: MenuActionItemOptions[],
-    }
 }
 
 /**

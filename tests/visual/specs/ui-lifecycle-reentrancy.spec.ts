@@ -16,8 +16,8 @@ import { test, expect, gotoHarness, loadFixture } from '../helpers'
  * `callGraphReady()` is a no-op — these tests lock in that fire-once contract and
  * the addElement/onPhase catch-up that replaces re-broadcasting.
  *
- * The graph is booted in `light` mode (the harness default), so the GraphToolbar
- * is mounted and its `e` / `Escape` keybindings exist to assert on.
+ * The graph is booted in `light` mode (the harness default), so the ModeRail is
+ * mounted and its `v` / `c` keybindings exist to assert on.
  */
 
 test.beforeEach(async ({ page }) => {
@@ -112,19 +112,19 @@ test('addElement and installPlugin after destroy() warn once each and are true n
     expect(result.warnings.every((w) => /destroy/i.test(w))).toBe(true)
 })
 
-test('the GraphToolbar e/Escape keybindings are removed on destroy', async ({ page }) => {
+test('the ModeRail v/c keybindings are removed on destroy', async ({ page }) => {
     const result = await page.evaluate(() => {
         const um = (window as unknown as { __pivotick: { graph: { UIManager: {
             keyManager: { bindings: Map<string, unknown> }
             destroy: () => void
         } } } }).__pivotick.graph.UIManager
         const bindings = um.keyManager.bindings
-        const before = { e: bindings.has('e'), escape: bindings.has('Escape') }
+        const before = { v: bindings.has('v'), c: bindings.has('c') }
         um.destroy()
-        const after = { e: bindings.has('e'), escape: bindings.has('Escape') }
+        const after = { v: bindings.has('v'), c: bindings.has('c') }
         return { before, after }
     })
 
-    expect(result.before).toEqual({ e: true, escape: true })   // toolbar registered both in light mode
-    expect(result.after).toEqual({ e: false, escape: false })  // tracked disposers ran on destroy (Fix B)
+    expect(result.before).toEqual({ v: true, c: true })   // ModeRail registered both in light mode
+    expect(result.after).toEqual({ v: false, c: false })  // tracked disposers ran on destroy (Fix B)
 })

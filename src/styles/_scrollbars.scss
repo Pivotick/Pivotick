@@ -55,8 +55,13 @@
     @include themed-scrollbars;
 }
 
-// The tooltip renders at <body> level (see Tooltip.ts), outside `.pivotick`, so
-// it needs the treatment applied directly rather than inherited by scope.
-.pvt-tooltip {
+// Elements pivotick portals to <body> render OUTSIDE `.pivotick`, so they don't
+// inherit the scoped theme above and must opt in explicitly. Every body-level
+// pivotick root belongs here — add new ones as they are introduced. The theme
+// variables also resolve from `:root`, so the colours are correct at body level.
+.pvt-tooltip,      // Tooltip.ts
+.pvt-typeahead,    // ui/components/Typeahead.ts — the `[[node]]` note autocomplete
+.pvt-dropdown,     // ui/components/Dropdown.ts
+.pvt-contextmenu { // ui/elements/ContextMenu/ContextMenu.ts
     @include themed-scrollbars;
 }

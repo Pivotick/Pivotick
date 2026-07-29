@@ -11,6 +11,12 @@ export function findFirstZeroInDegreeNode(nodes: Node[], edges: Edge[]): Node {
 }
 
 
+// Exact all-pairs reachability is O(V·E) and both counts follow the caller's data, so the
+// search is capped: past this many edge traversals we keep the best root found so far. That is
+// exact for the graph sizes a tree layout is usable on (~1k nodes) and bounded above it — this
+// only picks a root heuristic, so an approximate answer beats a hung tab.
+const MAX_REACHABILITY_TRAVERSALS = 1_000_000
+
 export function findMaxReachabilityRoot(nodes: Node[], edges: Edge[]): Node {
     // Build adjacency list for directed edges
     const adj = new Map<string, Node[]>()
@@ -19,52 +25,45 @@ export function findMaxReachabilityRoot(nodes: Node[], edges: Edge[]): Node {
     }
 
     for (const edge of edges) {
-        if (!adj.get(edge.from.id)) {
-            console.log(edge)
-        }
-        adj.get(edge.from.id)!.push(edge.to)
+        // Edges pointing outside the given node set are skipped rather than throwing.
+        adj.get(edge.from.id)?.push(edge.to)
     }
 
-    // We'll memoize reachability counts to avoid recomputation
-    const reachCount = new Map<Node, number>()
-    const visitedCache = new Map<Node, Set<Node>>() // optional: store reachable sets for debugging
-
-    function dfs(node: Node, seen = new Set<Node>()): Set<Node> {
-        if (visitedCache.has(node)) {
-            // return cached set (copy to avoid mutation)
-            return new Set(visitedCache.get(node))
-        }
-
-        const reachable = new Set<Node>()
-        for (const next of adj.get(node.id) ?? []) {
-            if (!seen.has(next)) {
-                seen.add(next)
-                reachable.add(next)
-                const deeper = dfs(next, seen)
-                for (const n of deeper) reachable.add(n)
-            }
-        }
-        visitedCache.set(node, reachable)
-        reachCount.set(node, reachable.size)
-        return reachable
-    }
-
-    // Compute reachability for all nodes
-    for (const node of nodes) {
-        if (!reachCount.has(node)) {
-            dfs(node)
-        }
-    }
-
-    // Find node with maximum reach count
+    let traversals = 0
+    let exhausted = false
     let bestNode: Node | null = null
     let maxReach = -1
+
+    // One iterative DFS per node: a recursive walk overflowed the call stack on a long
+    // path, and the memo it carried was order-dependent, so counts came out short.
     for (const node of nodes) {
-        const count = reachCount.get(node) ?? 0
+        const reached = new Set<string>([node.id])
+        const stack: Node[] = [node]
+
+        while (stack.length > 0 && !exhausted) {
+            const current = stack.pop()!
+            for (const next of adj.get(current.id) ?? []) {
+                if (++traversals > MAX_REACHABILITY_TRAVERSALS) {
+                    exhausted = true
+                    break
+                }
+                if (reached.has(next.id)) continue
+                reached.add(next.id)
+                stack.push(next)
+            }
+        }
+
+        // `reached` is seeded with the node itself, which doesn't count towards its reach.
+        const count = reached.size - 1
         if (count > maxReach) {
             maxReach = count
             bestNode = node
         }
+        if (exhausted) break
+    }
+
+    if (exhausted) {
+        console.warn('Pivotick: reachability search hit its traversal cap, using the best root found so far.')
     }
 
     return bestNode ?? nodes[0]

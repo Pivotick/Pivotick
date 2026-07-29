@@ -3,7 +3,7 @@ import { createHtmlTemplate } from '../../../../utils/ElementCreation'
 import { nodeDescriptionGetter, nodeNameGetter, nodePropertiesGetter } from '../../../../utils/GraphGetters'
 import { createPropertyList } from '../../Sidebar/PropertyList'
 import { createNodePreview } from '../../../../utils/NodePreview'
-import { createJsonViewer } from '../../../components/JsonViewer'
+import { createJsonViewer, type JsonValue } from '../../../components/JsonViewer'
 import type { ModalHTMLElement } from '../../../components/Modal'
 import { createTabs } from '../../../components/Tabs'
 import type { UIManager } from '../../../UIManager'
@@ -15,11 +15,16 @@ export function createInspectModal(node: Node, uiManager: UIManager): void {
         <div class="main-container">
             <div class="icon-container"></div>
             <div class="nodeinfo-container">
-                <div class="nodeinfo-name">${nodeNameGetter(node, uiManager.getOptions().mainHeader)}</div>
-                <div class="nodeinfo-subtitle">${nodeDescriptionGetter(node, uiManager.getOptions().mainHeader) ?? ''}</div>
+                <div class="nodeinfo-name"></div>
+                <div class="nodeinfo-subtitle"></div>
             </div>
         </div>
     `) as HTMLDivElement
+    // Label and description are graph data: assign them as text, never interpolate as markup.
+    const nameEl = header.querySelector('.nodeinfo-name')
+    const subtitleEl = header.querySelector('.nodeinfo-subtitle')
+    if (nameEl) nameEl.textContent = nodeNameGetter(node, uiManager.getOptions().mainHeader)
+    if (subtitleEl) subtitleEl.textContent = nodeDescriptionGetter(node, uiManager.getOptions().mainHeader) ?? ''
     header.querySelector('.icon-container')?.appendChild(createNodePreview(node, { size: fixedPreviewSize, className: 'icon' }))
 
     const body = createInspectModalBody(node, uiManager)
@@ -52,8 +57,15 @@ function createNodePropertiesTab(node: Node, uiManager: UIManager): HTMLDivEleme
 function createNodeJsonTab(node: Node): HTMLDivElement {
     const container = document.createElement('div')
     container.classList.add('inspect-node-json-tab')
-    const jsonViewer = createJsonViewer(JSON.parse(JSON.stringify(node.getData())))
-    container.appendChild(jsonViewer)
+    // The snapshot keeps the tab from reflecting later edits, but a circular `data` bag makes
+    // it throw — the viewer guards cycles itself, so fall back to the live object.
+    let data = node.getData() as JsonValue
+    try {
+        data = JSON.parse(JSON.stringify(data))
+    } catch {
+        // keep the live object
+    }
+    container.appendChild(createJsonViewer(data))
 
     return container
 }

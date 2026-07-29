@@ -17,10 +17,13 @@ export function createNodeEditModal(node: Node, session: NodeEditSession, uiMana
             <div class="icon-container"></div>
             <div class="nodeinfo-container">
                 <div>Editing node: </div>
-                <div class="nodeinfo-name">${nodeNameGetter(node, uiManager.getOptions().mainHeader)}</div>
+                <div class="nodeinfo-name"></div>
             </div>
         </div>
     `) as HTMLDivElement
+    // The label is graph data: assign it as text, never interpolate as markup.
+    const nameEl = header.querySelector('.nodeinfo-name')
+    if (nameEl) nameEl.textContent = nodeNameGetter(node, uiManager.getOptions().mainHeader)
     header.querySelector('.icon-container')?.appendChild(createNodePreview(node, { size: fixedPreviewSize, className: 'icon' }))
 
     let body, form: HTMLFormElement
@@ -44,6 +47,11 @@ export function createNodeEditModal(node: Node, session: NodeEditSession, uiMana
         header: header,
         body: body,
         rawBody: true,
+        // Any dismissal that isn't a commit (×, Cancel, backdrop) must end the
+        // session — otherwise it stays `active` and openNodeSession short-circuits,
+        // so a second Edit on the same node never reopens. A commit already
+        // deactivated it, hence the guard.
+        onHide: () => { if (session.active) session.cancel() },
         buttons: [
             {
                 variant: 'secondary',

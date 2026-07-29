@@ -1,7 +1,8 @@
 import '../../styles/components/jsonViewer.scss'
 import { createButton } from './Button'
+import { escapeHtml } from '../../utils/utils'
 
-type JsonValue =
+export type JsonValue =
     | string
     | number
     | boolean
@@ -9,12 +10,9 @@ type JsonValue =
     | JsonValue[]
     | { [key: string]: JsonValue }
 
-export function escapeHtml(value: string): string {
-    return value
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-}
+// Inspecting a node renders its whole `data` bag, so a self-reference or a pathologically
+// deep object would otherwise recurse until the stack gives out.
+const MAX_JSON_DEPTH = 64
 
 export function createPrimitive(value: unknown): string {
     if (typeof value === 'string') {
@@ -67,7 +65,10 @@ function renderValue(
     lineCounter: { value: number },
     depth = 0,
     key?: string,
-    isLast = true
+    isLast = true,
+    // Ancestors of the current value, so a self-reference is reported while the same object
+    // reached twice down separate branches still renders in full.
+    ancestors: WeakSet<object> = new WeakSet()
 ): void {
     const wrapper = document.createElement('div')
     wrapper.className = 'pvt-json-viewer__node'
@@ -81,16 +82,25 @@ function renderValue(
         typeof value === 'number' ||
         typeof value === 'boolean'
 
-    if (isPrimitive) {
+    // Stop descending on a cycle or runaway nesting, and say so in place of the subtree.
+    const stopped = isPrimitive
+        ? null
+        : ancestors.has(value)
+            ? '<span class="json-null">[Circular]</span>'
+            : depth >= MAX_JSON_DEPTH
+                ? '<span class="json-null">[…]</span>'
+                : null
+
+    if (isPrimitive || stopped) {
         const content = document.createElement('div')
 
         if (key !== undefined) {
             content.innerHTML += `
-                <span class="json-key">"${escapeHtml(key)}"</span>: 
+                <span class="json-key">"${escapeHtml(key)}"</span>:
             `
         }
 
-        content.innerHTML += createPrimitive(value) + comma
+        content.innerHTML += (stopped ?? createPrimitive(value)) + comma
 
         wrapper.appendChild(createLine(content, lineCounter.value++, depth))
         container.appendChild(wrapper)
@@ -135,6 +145,7 @@ function renderValue(
     const children = document.createElement('div')
     children.className = 'pvt-json-viewer__children'
 
+    ancestors.add(value)
     entries.forEach(([childKey, childValue], index) => {
         renderValue(
             childValue,
@@ -142,9 +153,11 @@ function renderValue(
             lineCounter,
             depth + 1,
             isArray ? undefined : childKey,
-            index === entries.length - 1
+            index === entries.length - 1,
+            ancestors
         )
     })
+    ancestors.delete(value)
 
     details.appendChild(children)
 
@@ -161,6 +174,22 @@ function renderValue(
     container.appendChild(wrapper)
 }
 
+/** Pretty-print for the clipboard, marking cycles instead of throwing on them. */
+function stringifyForCopy(data: JsonValue): string {
+    try {
+        return JSON.stringify(data, null, 2)
+    } catch {
+        const seen = new WeakSet<object>()
+        return JSON.stringify(data, (_key, value) => {
+            if (value !== null && typeof value === 'object') {
+                if (seen.has(value)) return '[Circular]'
+                seen.add(value)
+            }
+            return value
+        }, 2)
+    }
+}
+
 export function createJsonViewer(data: JsonValue): HTMLDivElement {
     const container = document.createElement('div')
     container.className = 'pvt-json-viewer'
@@ -173,7 +202,11 @@ export function createJsonViewer(data: JsonValue): HTMLDivElement {
         variant: 'secondary',
         size: 'sm',
         onClick: async () => {
-            await navigator.clipboard.writeText(JSON.stringify(data, null, 2))
+            try {
+                await navigator.clipboard.writeText(stringifyForCopy(data))
+            } catch {
+                return
+            }
             const old = copyBtn.textContent
             copyBtn.textContent = 'Copied!'
             setTimeout(() => {

@@ -18,21 +18,21 @@
     width: 100%;
     height: 100%;
     display: grid;
+    // The canvas fills the full height; the top bar overlays its top edge as a
+    // transparent, click-through strip (see .pvt-mainheader) so the graph renders
+    // behind the floating pills. Chrome offsets down by --pvt-mainheader-height.
     grid-template-columns: auto 1fr;
-    grid-template-rows: var(--pvt-mainheader-height) 1fr;
-    grid-template-areas: 
-        "sidebar mainheader"
-        "sidebar canvas";
+    grid-template-rows: 1fr;
+    grid-template-areas: "sidebar canvas";
 
     &.mode-static,
     &.mode-viewer {
+        --pvt-mainheader-height: 0px;
         grid-template-columns: 0px 1fr;
-        grid-template-rows: 0px 1fr;
     }
 
     &.mode-light {
         grid-template-columns: 0px 1fr;
-        grid-template-rows: var(--pvt-mainheader-height) 1fr;
     }
 
     &.mode-full.sidebar-collapsed {
@@ -72,21 +72,20 @@
     overflow: hidden;
 
     .pvt-slide-panel {
+        // Float it inset from the edges like the rest of the B3 chrome, rather
+        // than as a full-height edge-to-edge slab (see slidePanel.scss).
         position: absolute;
-        top: 0;
-        bottom: 0;
-        right: 0;
-        // width: 300px;
+        top: calc(var(--pvt-mainheader-height) + 14px);
+        right: 14px;
+        bottom: 14px;
         max-width: 30%;
         min-width: 220px;
-        overflow-y: auto;
-        height: 100%;
         z-index: 1000;
     }
 
     .pvt-notification {
         position: absolute;
-        top: 1em;
+        top: calc(var(--pvt-mainheader-height) + 1em);
         right: 3em;
         max-width: 280px;
         display: flex;
@@ -96,33 +95,20 @@
 
     .pvt-graphnavigation {
         position: absolute;
-        top: 1rem;
-        right: 1rem;
+        top: calc(var(--pvt-mainheader-height) + 14px);
+        right: 14px;
         z-index: 5;
-    }
-
-    .pvt-graphcontrols {
-        position: absolute;
-        top: 1rem;
-        left: 1rem;
-        z-index: 5;
-    }
-
-    .pvt-graphtoolbar {
-        position: absolute;
-        top: 1rem;
-        right: 60px;
-        z-index: 5;
-        // max-width: calc(100% - 60px - 310px);
-        max-width: calc(100% - 60px - 190px);
     }
 }
 
 .pvt-mainheader {
-    grid-area: mainheader;
-    height: 100%;
-    width: calc(100%);// - 12px);
+    // Overlay the top edge of the canvas as a transparent, click-through strip.
+    grid-area: canvas;
+    align-self: start;
+    height: var(--pvt-mainheader-height);
+    width: 100%;
     z-index: 10;
+    pointer-events: none; // canvas under the strip stays interactive; pills opt back in
     display: flex;
     flex-direction: row;
     align-items: center;

@@ -272,7 +272,16 @@ export interface NodeStyle {
     textRotateDegree: ((node: Node) => number) | number
     iconClass?: IconClass,
     iconUnicode?: IconUnicode,
+    /**
+     * Inline SVG markup drawn inside the node. Sanitized before it reaches the DOM (scripting
+     * and event handlers are stripped), but a remote `<image href>` inside it is still fetched
+     * when the node renders — see the security guide.
+     */
     svgIcon?: SVGIcon,
+    /**
+     * URL of a picture to draw on the node. Restricted to the `http:`, `https:`, `data:` and
+     * `blob:` schemes; anything else is ignored. Rendering it fetches the URL.
+     */
     imagePath?: ImagePath,
     /**
      * How an `imagePath` picture sits on the node's shape. Resolvable per node so
@@ -286,6 +295,9 @@ export interface NodeStyle {
     text?: ((node: Node) => string) | string,
     /**
      * The html to be used inside the node as an `SVGForeignObject` element
+     *
+     * **Trusted HTML only.** Whatever this returns is inserted as-is, so build it with
+     * `textContent` (or escape it) rather than interpolating node data into a markup string.
      */
     html?: (node: Node) => HTMLElement | string | void
     /**

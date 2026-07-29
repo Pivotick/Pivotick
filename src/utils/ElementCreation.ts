@@ -1,10 +1,11 @@
-import { tryResolveBoolean, tryResolveHTMLElement } from './Getters'
+import { tryResolveBoolean } from './Getters'
+import { parseSvgIconMarkup } from './SvgSanitizer'
 import type { Node } from '../Node'
 import type { Edge } from '../Edge'
 import type { Note } from '../Note'
 import { createButton } from '../ui/components/Button'
 import type { UIElement } from '../ui/UIManager'
-import type { IconClass, IconUnicode, ImagePath, MenuActionItemOptions, MenuQuickActionItemOptions, PropertyEntry, SVGIcon } from '../interfaces/GraphUI'
+import type { IconClass, IconUnicode, ImagePath, MenuActionItemOptions, MenuQuickActionItemOptions, SVGIcon } from '../interfaces/GraphUI'
 
 const ACTION_DEFAULT_VARIANT = 'outline-primary'
 
@@ -99,27 +100,6 @@ export function createShortcutBadge(keyCombo: string, classString?: string | str
 
     return badge
 }
-
-export function createHtmlDL(data: PropertyEntry[], element: Node | Edge | null): HTMLDListElement {
-    const dl = createHtmlElement('dl', { class: 'pvt-property-list' })
-    for (const entry of data) {
-        const resolvedName = tryResolveHTMLElement(entry.name, element) || ''
-        const resolvedValue = tryResolveHTMLElement(entry.value, element) || ''
-
-        const row = createHtmlElement('dl',
-            {
-                'class': 'pvt-property-row',
-            },
-            [
-                createHtmlElement('dt', { class: 'pvt-property-name' }, [resolvedName]),
-                createHtmlElement('dd', { class: 'pvt-property-value' }, [resolvedValue]),
-            ]
-        )
-        dl.append(row)
-    }
-    return dl
-}
-
 
 export function createQuickActionList<TThis extends UIElement = UIElement>(thisContext: TThis, actions: MenuQuickActionItemOptions[], element: Node[] | Node | Edge | Note | null): HTMLDivElement {
         const div = createHtmlElement('div', { class: 'pvt-action-list' })
@@ -256,17 +236,19 @@ export function createIcon(options: iconOptions): HTMLSpanElement {
         }
         span.append(textEl)
     } else if (options.svgIcon) {
-        const templateEl = document.createElement('template')
-        templateEl.innerHTML = options.svgIcon.trim()
-        const svgEl = templateEl.content.firstElementChild as HTMLElement
-        svgEl.setAttribute('width', '100%')
-        svgEl.setAttribute('height', '100%')
+        // Sanitized as defence in depth: svgIcon is caller config, but nothing stops an
+        // integrator deriving it from untrusted data.
+        const svgEl = parseSvgIconMarkup(options.svgIcon).firstElementChild
+        if (svgEl) {
+            svgEl.setAttribute('width', '100%')
+            svgEl.setAttribute('height', '100%')
+            span.append(svgEl)
+        }
 
         span.style.display = 'inline-flex'
         span.style.alignItems = 'center'
         span.style.justifyContent = 'center'
         span.style.width = '1em'
-        span.append(svgEl)
     } else if (options.imagePath) {
         const imgEl = document.createElement('img')
         imgEl.src = options.imagePath

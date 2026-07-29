@@ -1,0 +1,125 @@
+// B3 contextual tool panel — anchored just right of the mode rail.
+.pvt-toolpanel {
+    position: absolute;
+    top: calc(var(--pvt-mainheader-height) + 14px);
+    left: 84px;
+    z-index: 6;
+    width: 216px;
+    max-height: calc(100% - 28px);
+    overflow-y: auto;
+    // The wrapper is click-through; only the visible panel opts back in, so a
+    // collapsed (still laid-out) panel never intercepts canvas interaction.
+    pointer-events: none;
+}
+
+.pvt-toolpanel-panel {
+    display: flex;
+    flex-direction: column;
+    padding: 6px;
+    border-radius: 11px;
+    background-color: var(--pvt-chrome-bg);
+    border: 1px solid var(--pvt-chrome-border);
+    box-shadow: var(--pvt-chrome-shadow);
+    pointer-events: auto;
+    transform-origin: top left;
+    transition: opacity 0.13s ease, transform 0.13s ease;
+
+    // Collapsed: fade out + tuck back toward the rail, and stop catching clicks.
+    &.pvt-collapsed {
+        opacity: 0;
+        transform: translateX(-6px) scale(0.98);
+        pointer-events: none;
+    }
+}
+
+.pvt-toolpanel-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 9px 8px;
+    font-weight: 600;
+    color: var(--pvt-text-color-6);
+
+    .pvt-toolpanel-icon svg {
+        color: var(--pvt-theme-primary);
+    }
+
+    // Mode name takes the slack so the shortcut badge sits flush right.
+    .pvt-toolpanel-title {
+        flex: 1;
+    }
+
+    .pvt-keyboard-shortcut {
+        padding: 1px 6px;
+        font-size: 0.7em;
+        font-weight: 500;
+    }
+}
+
+.pvt-toolpanel-tool {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    height: 36px;
+    padding: 0 9px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--pvt-text-color-5);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    text-align: left;
+    transition: background-color 0.06s ease, color 0.06s ease;
+
+    .pvt-toolpanel-tool-label {
+        flex: 1;
+    }
+
+    &:hover:not(:disabled) {
+        background-color: var(--pvt-chrome-border);
+        color: var(--pvt-text-color-6);
+    }
+
+    &.active {
+        color: var(--pvt-theme-primary);
+        background-color: color-mix(in srgb, var(--pvt-theme-primary) 16%, transparent);
+    }
+}
+
+.pvt-toolpanel-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    line-height: 0;
+    flex: none;
+
+    svg {
+        width: 18px;
+        height: 18px;
+    }
+}
+
+// A tool that's momentarily unusable (e.g. Edit with no single-node selection).
+.pvt-toolpanel-tool.pvt-toolpanel-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pvt-toolpanel-soon {
+    opacity: 0.55;
+    cursor: not-allowed;
+
+    .pvt-toolpanel-badge {
+        margin-left: auto;
+        padding: 0 5px;
+        border-radius: 5px;
+        font-size: 8px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        color: var(--pvt-text-color-5);
+        background-color: var(--pvt-chrome-border);
+    }
+}

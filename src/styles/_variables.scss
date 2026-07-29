@@ -31,6 +31,11 @@ $light-theme: (
     pvt-bg: var(--pvt-bg-color-0),
     pvt-ui-bg: var(--pvt-bg-color-0),
     pvt-border-color: var(--pvt-bg-color-7),
+    // B3 floating chrome surface (rails / pills / panels). Kept light here so it
+    // doesn't read heavy on the white canvas; see the dark map for the dark tone.
+    pvt-chrome-bg: var(--pvt-bg-color-3),
+    pvt-chrome-border: #dcdcdc,
+    pvt-chrome-shadow: "0 2px 6px rgba(0, 0, 0, 0.10)",
 
     pvt-theme-primary: map.get($light-vibrant-color-palette, vibrant-amaranth),
     pvt-theme-secondary: #f2f2f2,
@@ -290,8 +295,14 @@ $dark-bg-color-palette-3: (
 
 $dark-theme: (
     pvt-bg: var(--pvt-bg-color-2),
-    pvt-ui-bg: var(--pvt-bg-color-5),
-    pvt-border-color: var(--pvt-bg-color-3),
+    // B3: docked panels (sidebar + slide panels) sit on the chrome tone (bg-6);
+    // borders track the chrome's border tone (bg-7) so panels read as one family.
+    pvt-ui-bg: var(--pvt-bg-color-6),
+    pvt-border-color: var(--pvt-bg-color-7),
+    // B3 floating chrome surface (rails / pills / panels) — the graphite tone.
+    pvt-chrome-bg: var(--pvt-bg-color-6),
+    pvt-chrome-border: var(--pvt-bg-color-7),
+    pvt-chrome-shadow: "0 3px 8px rgba(0, 0, 0, 0.30)",
 
     // pvt-theme-primary: #730ff0,
     pvt-theme-primary: map.get($dark-vibrant-color-palette, vibrant-amaranth),
@@ -357,17 +368,18 @@ $dark-theme: (
     pvt-sidebar-collapse-shadow: var(--pvt-box-shadow-strong),
 
     /* Tooltip */
-    pvt-tooltip-floating-bg-color: var(--pvt-bg-color-8),
+    pvt-tooltip-floating-bg-color: var(--pvt-bg-color-7),
     pvt-tooltip-property-list: var(--pvt-bg-color-6),
 
     /* Menu */
-    pvt-menu-bg-color: var(--pvt-bg-color-7),
+    // B3: overlays (menu/tooltip/modal) sit one notch above the chrome tone.
+    pvt-menu-bg-color: #2E2E31,
     pvt-menu-border-color: var(--pvt-bg-color-2),
     pvt-menu-shadow: var(--pvt-sidebar-layout-shadow-right),
     pvt-action-container-shadow: "inset 0 1px 2px rgba(255, 255, 255, 0.12), inset 0 -1px 2px rgba(0, 0, 0, 0.18)",
 
     /* Modal */
-    pvt-modal-bg: var(--pvt-bg-color-7),
+    pvt-modal-bg: #2E2E31,
     pvt-modal-text-color: var(--pvt-text-color-5),
     pvt-modal-overlay-bg: rgba(0, 0, 0, 0.45),
     pvt-modal-shadow: "0 20px 40px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.15)",

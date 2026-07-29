@@ -3,11 +3,16 @@
 .pvt-slide-panel {
     display: hidden;
     position: relative;
-    background: var(--pvt-ui-bg);
-    transform: translateX(100%);
+    // Float as a rounded, bordered panel in the B3 chrome family, sharing the
+    // same surface tokens as the tool panel / view flyout. Slide clears the
+    // inset + shadow when closed.
+    background: var(--pvt-chrome-bg);
+    border: 1px solid var(--pvt-chrome-border);
+    border-radius: 11px;
+    box-shadow: var(--pvt-chrome-shadow);
+    transform: translateX(calc(100% + 24px));
     transition: transform 0.1s ease-in-out;
-    border-top: 1px solid var(--pvt-border-color);
-    box-shadow: var(--pvt-sidebar-layout-shadow-left);
+    overflow: hidden;
     width: clamp(280px, 25vw, 400px);
 
     &.open {
@@ -17,21 +22,39 @@
     }
 
     .pvt-slide-panel__header {
-        padding: 12px;
-        font-weight: bold;
+        padding: 14px 16px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--pvt-text-color-6);
         display: flex;
         flex-direction: row;
         flex-wrap: nowrap;
         align-items: center;
-        border-bottom: var(--pvt-sidebar-panel-border);
+        border-bottom: 1px solid var(--pvt-chrome-border);
 
+        // Subtle ghost close control that only reveals its destructive intent on
+        // hover — matches the quiet B3 chrome controls.
         button.pvt-close-button {
-            @include buttons.button-outline-danger;
-            padding: 0.25rem 0.5rem;
-            align-self: flex-start;
-            font-size: 1.2rem;
-            line-height: 0.8rem;
             margin-left: auto;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            border: none;
+            border-radius: 7px;
+            background: transparent;
+            color: var(--pvt-text-color-4);
+            font-size: 1.25rem;
+            line-height: 1;
+            cursor: pointer;
+            transition: background-color 0.12s ease, color 0.12s ease;
+
+            &:hover {
+                background: color-mix(in srgb, var(--pvt-theme-danger) 14%, transparent);
+                color: var(--pvt-theme-danger);
+            }
         }
     }
 
@@ -44,12 +67,6 @@
         .pvt-sidebar-separator {
             border-bottom: var(--pvt-sidebar-panel-border);
             margin: 24px -16px 24px -16px;
-        }
-
-        .pvt-graph-filter-container {
-            display: flex;
-            flex-direction: column;
-            gap: 0px;
         }
     }
 }

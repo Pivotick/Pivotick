@@ -70,14 +70,15 @@ test.describe('interactions', () => {
     })
 
     // T7.4 — right-clicking empty canvas opens the canvas context menu (Pin All /
-    // Unpin All + Add Note). A corner of the canvas is always empty after the fit.
+    // Unpin All + Add Note). The bottom-right corner stays empty after the fit and
+    // is clear of the B3 chrome (mode rail + tool panel top-left, nav top-right).
     test('shows the canvas context menu', async ({ page }) => {
         await loadFixture(page, 'basic')
         await harness(page, 'pin')
 
         const box = await canvas(page).boundingBox()
         if (!box) throw new Error('canvas has no bounding box')
-        await page.mouse.click(box.x + 40, box.y + 40, { button: 'right' })
+        await page.mouse.click(box.x + box.width - 40, box.y + box.height - 40, { button: 'right' })
 
         const menu = page.locator('.pvt-contextmenu')
         await expect(menu).toHaveClass(/shown/)

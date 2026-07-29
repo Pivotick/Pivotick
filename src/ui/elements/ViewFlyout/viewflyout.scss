@@ -1,0 +1,248 @@
+// B3 View flyout — overlay toggled by the mode rail's View button. Sits above
+// the contextual tool panel (higher z-index) and covers it while open.
+.pvt-viewflyout {
+    position: absolute;
+    top: calc(var(--pvt-mainheader-height) + 14px);
+    left: 84px;
+    z-index: 7;
+    width: 252px;
+    max-height: calc(100% - 28px);
+    overflow-y: auto;
+}
+
+.pvt-viewflyout-panel {
+    display: none;
+    flex-direction: column;
+    padding: 6px;
+    border-radius: 11px;
+    background-color: var(--pvt-chrome-bg);
+    border: 1px solid var(--pvt-chrome-border);
+    box-shadow: var(--pvt-chrome-shadow);
+
+    &.open {
+        display: flex;
+    }
+}
+
+.pvt-viewflyout-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+
+    svg {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+.pvt-viewflyout-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 9px 8px;
+    font-weight: 600;
+    color: var(--pvt-text-color-6);
+
+    .pvt-viewflyout-icon svg {
+        color: var(--pvt-theme-primary);
+    }
+}
+
+.pvt-viewflyout-section-label {
+    padding: 0 9px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--pvt-text-color-4);
+}
+
+.pvt-viewflyout-layout {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 4px 9px;
+    font-size: 13px;
+    color: var(--pvt-text-color-5);
+
+    .pvt-viewflyout-layout-select {
+        flex: 1;
+        max-width: 130px;
+        padding: 4px 6px;
+        border-radius: 7px;
+        border: 1px solid var(--pvt-bg-color-5);
+        background-color: var(--pvt-bg-color-4);
+        color: var(--pvt-text-color-6);
+        font-family: inherit;
+        font-size: 12px;
+        cursor: pointer;
+    }
+}
+
+.pvt-viewflyout-physics {
+    margin: 8px 0;
+    padding: 11px;
+    border-radius: 10px;
+    background-color: var(--pvt-bg-color-4);
+    border: 1px solid var(--pvt-bg-color-5);
+
+    &.pvt-viewflyout-disabled {
+        .pvt-viewflyout-presets,
+        .pvt-viewflyout-sliders {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+    }
+}
+
+.pvt-viewflyout-physics-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 11px;
+
+    .pvt-viewflyout-physics-title {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-weight: 600;
+        font-size: 13px;
+        color: var(--pvt-text-color-6);
+
+        .pvt-viewflyout-icon svg {
+            color: var(--pvt-theme-primary);
+        }
+    }
+
+    .pvt-viewflyout-run {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border: none;
+        border-radius: 7px;
+        background-color: var(--pvt-theme-primary);
+        color: #fff;
+        cursor: pointer;
+
+        svg { width: 14px; height: 14px; }
+    }
+}
+
+.pvt-viewflyout-presets {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 13px;
+    padding: 3px;
+    border-radius: 8px;
+    background-color: var(--pvt-bg-color-2);
+
+    .pvt-viewflyout-preset {
+        flex: 1;
+        padding: 6px 0;
+        border: none;
+        border-radius: 6px;
+        background: transparent;
+        color: var(--pvt-text-color-5);
+        font-family: inherit;
+        font-size: 12px;
+        cursor: pointer;
+
+        &.active {
+            background-color: var(--pvt-theme-primary);
+            color: #fff;
+        }
+    }
+}
+
+.pvt-viewflyout-sliders {
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+}
+
+.pvt-viewflyout-slider {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    .pvt-viewflyout-slider-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 12px;
+        color: var(--pvt-text-color-5);
+    }
+
+    .pvt-viewflyout-slider-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+
+        .pvt-viewflyout-icon svg { width: 14px; height: 14px; color: var(--pvt-text-color-4); }
+    }
+
+    .pvt-viewflyout-slider-value {
+        color: var(--pvt-text-color-6);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .pvt-viewflyout-range {
+        width: 100%;
+        accent-color: var(--pvt-theme-primary);
+        cursor: pointer;
+    }
+}
+
+.pvt-viewflyout-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    height: 36px;
+    padding: 0 9px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--pvt-text-color-5);
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    text-align: left;
+
+    &:hover { background-color: var(--pvt-chrome-border); }
+
+    .pvt-viewflyout-switch {
+        margin-left: auto;
+        position: relative;
+        width: 32px;
+        height: 18px;
+        border-radius: 9px;
+        background-color: var(--pvt-chrome-border);
+        transition: background-color 0.15s ease;
+        flex: none;
+
+        &::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background-color: var(--pvt-text-color-4);
+            transition: left 0.15s ease, background-color 0.15s ease;
+        }
+    }
+
+    &[aria-pressed='true'] .pvt-viewflyout-switch {
+        background-color: var(--pvt-theme-primary);
+
+        &::after {
+            left: 16px;
+            background-color: #fff;
+        }
+    }
+}

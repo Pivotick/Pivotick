@@ -3,9 +3,9 @@ import { createHtmlElement, createHtmlTemplate, createIcon } from '../../../util
 import { Node } from '../../../Node'
 import { FormFactory, type FieldConfig, type FieldType, type FormValue, type FormValues } from '../../../utils/FormFactory'
 import { nodeNameGetter } from '../../../utils/GraphGetters'
-import { createBadge } from '../../components/Badge'
 import { createButton } from '../../components/Button'
 import { funnel, funnelClear, graphEdgeIcon, nodeProperty, show } from '../../icons'
+import { createInspectModal } from '../modals/InspectNodeModal/InspectNodeModal'
 import type { UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
 import './graphFilter.scss'
@@ -77,9 +77,9 @@ export class GraphFilter extends UIComponent {
         const resetButton = createButton({
             variant: 'secondary',
             text: 'Reset',
-            size: 'sm',
-            style: 'align-self: end;',
+            size: 'xs',
             svgIcon: funnelClear,
+            title: 'Clear all attribute filters',
             onClick: () => {
                 FormFactory.clear(filteringForm)
                 const filters: FormValues = {}
@@ -135,7 +135,6 @@ export class GraphFilter extends UIComponent {
             variant: 'primary',
             text: 'Filter Graph',
             size: 'block',
-            style: 'margin-top: 16px;',
             svgIcon: funnel,
             onClick: () => {
                 const filters: FormValues = FormFactory.getValues(filteringForm)
@@ -143,30 +142,37 @@ export class GraphFilter extends UIComponent {
             }
         })
 
-        const separator = createHtmlElement('div', { class: 'pvt-sidebar-separator' })
+        // Attribute-filter section: a labelled header (with the reset action), the
+        // generated form, then the primary apply button.
+        const attributeSection = createHtmlElement('div', { class: 'pvt-filter-section' })
+        const attributeHead = createHtmlElement('div', { class: 'pvt-filter-section-head' }, [
+            createHtmlElement('span', { class: 'pvt-filter-section-label' }, ['Attributes']),
+            resetButton,
+        ])
+        attributeSection.appendChild(attributeHead)
+        attributeSection.appendChild(filteringForm)
+        attributeSection.appendChild(filterButton)
 
         this.manuallyFilteredContainer = createHtmlTemplate(`<div class="pvt-hidden-nodes-container">
-                <h4>Hidden nodes</h4>
+                <div class="pvt-filter-section-head">
+                    <span class="pvt-filter-section-label">Hidden nodes</span>
+                </div>
                 <div class="pvt-hidden-nodes-container-list"></div>
             </div>`) as HTMLDivElement
 
         const resetHiddenButton = createButton({
             variant: 'secondary',
-            text: 'Show all nodes',
-            size: 'sm',
-            style: 'align-self: end;',
+            text: 'Show all',
+            size: 'xs',
             svgIcon: show,
             onClick: () => {
                 this.uiManager.graph.queryEngine.clearNodeExclusions()
             },
             title: 'Restore manually hidden nodes',
         })
-        this.manuallyFilteredContainer.querySelector('h4')?.appendChild(resetHiddenButton)
+        this.manuallyFilteredContainer.querySelector('.pvt-filter-section-head')?.appendChild(resetHiddenButton)
 
-        this.graphFilter.appendChild(resetButton)
-        this.graphFilter.appendChild(filteringForm)
-        this.graphFilter.appendChild(filterButton)
-        this.graphFilter.appendChild(separator)
+        this.graphFilter.appendChild(attributeSection)
         this.graphFilter.appendChild(this.manuallyFilteredContainer)
     }
 
@@ -194,25 +200,21 @@ export class GraphFilter extends UIComponent {
             filterCount--
         }
 
+        // When filters are active the pill turns into a subtle accent-tinted chip
+        // (see mainheader.scss `.pvt-filter-on`): accent count + noun, with the
+        // hidden-node total as muted subtext — rather than a loud solid badge.
+        filterButton?.classList.toggle('pvt-filter-on', filterCount > 0)
+
         if (filterCount > 0) {
-            const activeFilterText = filterCount > 1 ? `${filterCount} active filters` : '1 active filter'
             const hiddenCount = this.uiManager.graph.queryEngine.getHiddenNodeCount()
-            const hiddenNodeHtml = createHtmlElement('span',
-                {
-                    'class': 'active-filter-subtext',
-                },
-                [
-                    createHtmlElement('span', {}, ['·']),
-                    createHtmlElement('span', {}, [`${hiddenCount} hidden`]),
-                ]
-            )
-            const filterBadge = createBadge({
-                text: activeFilterText,
-                html: hiddenNodeHtml,
-                variant: 'primary',
-                size: 'sm'
-            })
-            filterButtonElement.appendChild(filterBadge)
+            const status = createHtmlElement('span', { 'class': 'pvt-filter-status' }, [
+                createHtmlElement('span', { 'class': 'pvt-filter-count' }, [`${filterCount}`]),
+                createHtmlElement('span', { 'class': 'pvt-filter-word' }, [filterCount > 1 ? 'active filters' : 'active filter']),
+            ])
+            if (hiddenCount > 0) {
+                status.appendChild(createHtmlElement('span', { 'class': 'pvt-filter-hidden' }, [`${hiddenCount} hidden`]))
+            }
+            filterButtonElement.appendChild(status)
         } else {
             filterButtonElement.textContent = DEFAULT_FILTER_BUTTON_TEXT
         }
@@ -251,12 +253,16 @@ export class GraphFilter extends UIComponent {
                     ]
                 )
 
+                const nodeName = nodeNameGetter(node, this.uiManager.getOptions().mainHeader)
                 const nodeElement = createHtmlElement('div',
                     {
-                        'class': 'hidden-node'
+                        'class': 'hidden-node',
+                        'role': 'button',
+                        'tabindex': '0',
+                        'aria-label': `Inspect ${nodeName}`,
                     },
                     [
-                        nodeNameGetter(node, this.uiManager.getOptions().mainHeader),
+                        nodeName,
                         propertyTextElement,
                         showNodeButton,
                     ]
@@ -269,6 +275,21 @@ export class GraphFilter extends UIComponent {
                     .addEventListener('mouseleave', () => {
                         this.uiManager.tooltip?.hide()
                     })
+                // Click the row (but not its "Show node" button) to inspect the node.
+                const inspect = () => {
+                    this.uiManager.tooltip?.hide()
+                    createInspectModal(node, this.uiManager)
+                }
+                nodeElement.addEventListener('click', (event: MouseEvent) => {
+                    if ((event.target as HTMLElement).closest('button')) return
+                    inspect()
+                })
+                nodeElement.addEventListener('keydown', (event: KeyboardEvent) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        inspect()
+                    }
+                })
 
                 hiddenNodeContainer?.appendChild(nodeElement)
             })

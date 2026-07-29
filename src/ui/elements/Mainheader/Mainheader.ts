@@ -36,7 +36,7 @@ export class Mainheader extends UIComponent {
         /** Searchbox */
         const templateSearch = document.createElement('template')
         templateSearch.innerHTML = `
-  <div id="pvt-searchbox-button" class="pvt-action-button">
+  <div id="pvt-searchbox-button" class="pvt-action-button" role="button" tabindex="0" aria-label="Search for a node">
     <div class="action-container">
         <span class="icon-container">${magnifyingGlass}</span>
         <span class="action-text">Search</span>
@@ -49,7 +49,7 @@ export class Mainheader extends UIComponent {
         /** Filterbox */
         const templateFilter = document.createElement('template')
         templateFilter.innerHTML = `
-  <div id="pvt-filter-button" class="pvt-action-button">
+  <div id="pvt-filter-button" class="pvt-action-button" role="button" tabindex="0" aria-label="Filter the graph">
     <div class="action-container">
         <span class="icon-container">${funnel}</span>
         <span class="action-text">Filter Graph</span>
@@ -62,7 +62,7 @@ export class Mainheader extends UIComponent {
         /** Notebox */
         const templateNoteSidebar = document.createElement('template')
         templateNoteSidebar.innerHTML = `
-  <div id="pvt-filter-button" class="pvt-action-button">
+  <div id="pvt-notes-button" class="pvt-action-button" role="button" tabindex="0" aria-label="Notes">
     <div class="action-container">
         <span class="icon-container">${stickyNote}</span>
         <span class="action-text">Notes</span>
@@ -86,7 +86,6 @@ export class Mainheader extends UIComponent {
     </div>
   </div>`
         const filterContainer = templateRight.content.firstElementChild as HTMLDivElement
-        filterContainer.prepend(this.noteButton)
         this.undoButton = filterContainer.querySelector('#pvt-undo-button') ?? undefined
         this.redoButton = filterContainer.querySelector('#pvt-redo-button') ?? undefined
         this.mainheader.appendChild(filterContainer)
@@ -112,14 +111,21 @@ export class Mainheader extends UIComponent {
             header: 'Graph Filters',
             body: graphFilter.build()
         })
-        this.listen(filterButton, 'click', () => this.filteringSlidepanel!.toggle())
+        // Only one slide panel open at a time: opening one closes the other.
+        this.listen(filterButton, 'click', () => {
+            this.noteSlidepanel?.close()
+            this.filteringSlidepanel!.toggle()
+        })
 
         this.noteSidebar = new NoteSidebar(this.uiManager)
         this.noteSlidepanel = this.uiManager.createSlidepanel({
             header: 'Notes',
             body: this.noteSidebar.build()
         })
-        this.listen(noteButton, 'click', () => this.noteSlidepanel!.toggle())
+        this.listen(noteButton, 'click', () => {
+            this.filteringSlidepanel?.close()
+            this.noteSlidepanel!.toggle()
+        })
         // NoteSidebar's afterMount (bind) / destroy (unbind) are driven by UIComponent
         this.addChild(this.noteSidebar)
 
@@ -128,6 +134,18 @@ export class Mainheader extends UIComponent {
                 const node = await pickNode(this.uiManager)
                 if (!node) return
                 this.uiManager.graph.selectElement(node as unknown as Node)
+            })
+        }
+
+        // These action pills are role="button" divs — activate them on Enter/Space.
+        for (const btn of [searchBoxButton, filterButton, noteButton]) {
+            if (!btn) continue
+            this.listen(btn, 'keydown', (e) => {
+                const ev = e as KeyboardEvent
+                if (ev.key === 'Enter' || ev.key === ' ') {
+                    ev.preventDefault()
+                    btn.click()
+                }
             })
         }
     }
