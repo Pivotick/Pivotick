@@ -674,6 +674,59 @@ export const fixtures = {
     },
 
     /**
+     * MISP-shaped nodes for **declared filter facets** (`UI.filter.facets`). Every
+     * shape the declaration has to cope with is here:
+     *
+     *  - `tags` is **array-valued** — the facet kind that was impossible before.
+     *    `a2` is tagged `not-malware` on purpose: a `malware` filter must *not*
+     *    match it (membership), which a substring match against the stringified
+     *    array would.
+     *  - `sightings` is an **integer**, so auto-derivation must reach `numberRange`.
+     *  - `uuid` is pure noise — the `excludeKeys` case.
+     *  - `obj` is a **cluster** whose children carry their own `attr-type`, for the
+     *    computed facet ("object contains an attribute of type X") and for facet
+     *    propagation into an expanded cluster's subgraph.
+     *
+     * `tlp:amber` is on `a1`, `a3` and `obj`; `tlp:green` on `a3` and the child
+     * `c1` — so any-of and `'all'` semantics give visibly different answers.
+     */
+    mispLike(): BuiltFixture {
+        const c1 = mkNode('c1', -60, 120, {
+            'attr-type': 'md5', category: 'Payload delivery', to_ids: true,
+            value: 'd41d8cd98f00b204e9800998ecf8427e', tags: ['tlp:green'], uuid: 'u-c1', sightings: 2,
+        })
+        const c2 = mkNode('c2', 60, 120, {
+            'attr-type': 'filename', category: 'Payload delivery', to_ids: false,
+            value: 'invoice.doc', tags: [], uuid: 'u-c2', sightings: 0,
+        })
+        const obj = mkCluster('obj', 0, 40, [c1, c2], {
+            'attr-type': 'object', category: 'Payload delivery', to_ids: false,
+            value: 'file', tags: ['tlp:amber'], uuid: 'u-obj', sightings: 1,
+        })
+        markCluster(obj)
+
+        const a1 = mkNode('a1', -140, -90, {
+            'attr-type': 'ip-src', category: 'Network activity', to_ids: true,
+            value: '8.8.8.8', tags: ['tlp:amber', 'malware'], uuid: 'u-a1', sightings: 7,
+        })
+        const a2 = mkNode('a2', 0, -120, {
+            'attr-type': 'domain', category: 'Network activity', to_ids: false,
+            value: 'evil.example.com', tags: ['not-malware'], uuid: 'u-a2', sightings: 0,
+        })
+        const a3 = mkNode('a3', 140, -90, {
+            'attr-type': 'md5', category: 'Payload delivery', to_ids: true,
+            value: 'e99a18c428cb38d5f260853678922e03', tags: ['tlp:amber', 'tlp:green'], uuid: 'u-a3', sightings: 3,
+        })
+
+        const edges = [
+            mkEdge('a1-obj', a1, obj),
+            mkEdge('a2-obj', a2, obj),
+            mkEdge('a3-obj', a3, obj),
+        ]
+        return { nodes: [a1, a2, a3, obj], edges, notes: [] }
+    },
+
+    /**
      * Regression fixture for prd/bug-graphfilter-null-value-crash.md: node-data
      * fields whose value is `null`/`undefined`. MISP (and most real datasets)
      * serialise an absent optional attribute as `null`; a single such value used
