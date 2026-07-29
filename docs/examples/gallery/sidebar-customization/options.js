@@ -43,18 +43,23 @@ const options = {
                 ]
             }
         },
-        // 3 — add your own panel with arbitrary HTML (great for persistent,
-        //     graph-level context that sits alongside the per-node panels above):
+        // 3 — add your own panel (great for persistent, graph-level context that
+        //     sits alongside the per-node panels above). A returned string renders
+        //     as text, so build an element when you want your own markup:
         extraPanels: [
             {
                 title: 'Team summary',
                 render: () => {
                     const people = data.nodes.length
                     const commits = data.nodes.reduce((sum, n) => sum + n.data.commits, 0)
-                    return `<div style="font-size:12px;line-height:1.7">
-                        <div>${people} people</div>
-                        <div>${commits} commits total</div>
-                    </div>`
+                    const panel = document.createElement('div')
+                    panel.style.cssText = 'font-size:12px;line-height:1.7'
+                    for (const line of [`${people} people`, `${commits} commits total`]) {
+                        const row = document.createElement('div')
+                        row.textContent = line
+                        panel.append(row)
+                    }
+                    return panel
                 }
             }
         ]
