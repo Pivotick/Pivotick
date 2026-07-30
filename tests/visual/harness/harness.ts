@@ -16,6 +16,7 @@ import { EgoTreeLayout } from '../../../src/plugins/layout/EgoTree'
 import { createInspectModal } from '../../../src/ui/elements/modals/InspectNodeModal/InspectNodeModal'
 import type { FilterFieldConfig, GraphFilters } from '../../../src/interfaces/GraphQueryEngine'
 import type { GraphInteractionContext } from '../../../src/interfaces/GraphInteractions'
+import type { ExtraPanel, ExtraPanelSelection } from '../../../src/interfaces/GraphUI'
 import type {
     EdgeCreateContext,
     EdgeCreateDecision,
@@ -45,6 +46,32 @@ export type EdgeHookBehavior =
 
 /** Named `isValidConnection` live-predicate behaviours. */
 export type ValidConnBehavior = 'reject-all' | 'reject-target-b'
+
+/**
+ * A sidebar extra panel to build page-side (its `title` / `render` are functions,
+ * so the panel itself can't cross `page.evaluate`).
+ *
+ * Every panel renders the selection it was called with plus its own render count
+ * (`node a · renders=3`), so a test can read straight off the DOM whether — and
+ * how often — the library re-invoked it.
+ */
+export interface PanelSpec {
+    /** Explicit id, so tests can address the panel. Auto-generated when omitted. */
+    id?: string
+    alwaysVisible?: boolean
+    reactive?: boolean
+    order?: number
+    /**
+     * Where {@link HarnessApi.loadWithPanels} registers it: `'options'` (default)
+     * puts it in `UI.extraPanels`; `'early'` calls `addPanel` on the fresh graph,
+     * before `graphReady` fires.
+     */
+    register?: 'options' | 'early'
+    /** Add buttons wired to the panel handle's own `refresh()` / `remove()`. */
+    selfDriven?: boolean
+    /** Omit `title` entirely — the panel then has no header row. */
+    noTitle?: boolean
+}
 
 export interface ConnectConfig {
     edgeHook?: EdgeHookBehavior
@@ -80,6 +107,24 @@ const BASE_OPTIONS = {
     },
     simulation: { enabled: false, useWorker: false },
     render: { zoomAnimation: false },
+}
+
+/** How a test-panel reports the selection it was rendered with. */
+function describeSelection(selection: ExtraPanelSelection): string {
+    if (selection === null) return 'nothing selected'
+    if (Array.isArray(selection)) {
+        return `${selection.length} ${selection[0] instanceof Node ? 'nodes' : 'edges'}`
+    }
+    return `${selection instanceof Node ? 'node' : 'edge'} ${selection.id}`
+}
+
+function panelButton(className: string, label: string, onClick: () => void): HTMLButtonElement {
+    const button = document.createElement('button')
+    button.className = className
+    button.type = 'button'
+    button.textContent = label
+    button.addEventListener('click', onClick)
+    return button
 }
 
 type PlainObject = Record<string, unknown>
@@ -264,6 +309,35 @@ export interface HarnessApi {
     linkNote(noteId: string, nodeId: string): void
     /** The element a note is attached to, or null — for asserting a note-link was (not) made. */
     noteAttachment(noteId: string): { type: string; id: string } | null
+
+    /* ---------- sidebar extra panels ---------- */
+
+    /**
+     * Load a fixture with sidebar panels built from {@link PanelSpec}s — declared
+     * in `UI.extraPanels`, or (with `register: 'early'`) registered on the fresh
+     * graph before `graphReady`.
+     */
+    loadWithPanels(name: FixtureName, panels: PanelSpec[], overrides?: PlainObject): Promise<void>
+    /** Register a panel at runtime via `UIManager.addPanel`; returns its id. */
+    addPanel(spec: PanelSpec): string
+    /** Register a panel through a plugin's `install` (`ctx.addPanel`); returns its id. */
+    addPanelViaPlugin(spec: PanelSpec): string
+    /** Call the disposer `addPanel` returned. Safe to call twice (the no-op case). */
+    disposePanel(id: string): void
+    /** Remove a panel by id (`UIManager.removePanel`). */
+    removePanel(id: string): void
+    /** Force a re-render of one panel, or all of them (`UIManager.refreshPanel`). */
+    refreshPanel(id?: string): void
+    /** Registered panel ids, in display order (`UIManager.getPanels`). */
+    panelIds(): string[]
+    /** How many times a panel's `render` ran — proves reactive vs pinned. */
+    panelRenderCount(id: string): number
+    /**
+     * Tear the UI down, then try to register a panel: the "refused during
+     * teardown" case. Reports the panel count before, whether the late panel
+     * entered the registry, and how much panel DOM survives.
+     */
+    probePanelAfterTeardown(spec: PanelSpec): { panelsBefore: number; registered: boolean; domPanelsAfter: number }
 }
 
 class Harness implements HarnessApi {
@@ -277,6 +351,10 @@ class Harness implements HarnessApi {
     private edgeHookCalls = 0
     private validConnCalls = 0
     private seenHookContexts: Array<{ origin: string; kind: string }> = []
+    /** Extra-panel observation state: render counts and the disposers `addPanel` returned. */
+    private panelRenders = new Map<string, number>()
+    private panelDisposers = new Map<string, () => void>()
+    private panelSeq = 0
 
     constructor(container: HTMLElement) {
         this.container = container
@@ -311,6 +389,18 @@ class Harness implements HarnessApi {
     }
 
     async load(name: FixtureName, overrides: PlainObject = {}): Promise<void> {
+        return this.boot(name, overrides)
+    }
+
+    /**
+     * Build a fixture graph. `beforeReady` runs on the constructed graph *before*
+     * `graphReady` fires — the window where a plugin or an early `addPanel` lands.
+     */
+    private async boot(
+        name: FixtureName,
+        overrides: PlainObject = {},
+        beforeReady?: (graph: Pivotick) => void
+    ): Promise<void> {
         this.destroy()
         const data = fixtures[name]()
         // Snapshot the fixture's positions now — the graph mutates these Node
@@ -324,6 +414,7 @@ class Harness implements HarnessApi {
         // `data.notes` carries raw note options; the graph normalises them to Notes.
         const graph = new Pivotick(this.container, data as never, options as never)
         this.graph = graph
+        beforeReady?.(graph)
         await this.whenReady(graph)
         // Wait for web fonts so text metrics (and thus layout/labels) are stable.
         if (document.fonts?.ready) await document.fonts.ready
@@ -817,6 +908,108 @@ class Harness implements HarnessApi {
     noteAttachment(noteId: string): { type: string; id: string } | null {
         const attached = this.g.noteManager.getNote(noteId)?.getAttachedElement()
         return attached ? { type: attached.type, id: attached.id } : null
+    }
+
+    /* ---------- sidebar extra panels ---------- */
+
+    async loadWithPanels(name: FixtureName, panels: PanelSpec[], overrides: PlainObject = {}): Promise<void> {
+        const built = panels.map((spec) => ({ spec, panel: this.buildPanel(spec) }))
+        const declared = built.filter(({ spec }) => spec.register !== 'early').map(({ panel }) => panel)
+        const early = built.filter(({ spec }) => spec.register === 'early')
+
+        await this.boot(name, mergeOptions({ UI: { extraPanels: declared } }, overrides), (graph) => {
+            for (const { panel } of early) {
+                this.panelDisposers.set(panel.id, graph.UIManager.addPanel(panel))
+            }
+        })
+    }
+
+    addPanel(spec: PanelSpec): string {
+        const panel = this.buildPanel(spec)
+        this.panelDisposers.set(panel.id, this.g.UIManager.addPanel(panel))
+        return panel.id
+    }
+
+    addPanelViaPlugin(spec: PanelSpec): string {
+        const panel = this.buildPanel(spec)
+        this.g.use({
+            name: `panel-plugin-${panel.id}`,
+            install: (ctx) => {
+                this.panelDisposers.set(panel.id, ctx.addPanel(panel))
+            },
+        })
+        return panel.id
+    }
+
+    disposePanel(id: string): void {
+        this.panelDisposers.get(id)?.()
+    }
+
+    removePanel(id: string): void {
+        this.g.UIManager.removePanel(id)
+    }
+
+    refreshPanel(id?: string): void {
+        this.g.UIManager.refreshPanel(id)
+    }
+
+    panelIds(): string[] {
+        return this.g.UIManager.getPanels().map((panel) => panel.id)
+    }
+
+    panelRenderCount(id: string): number {
+        return this.panelRenders.get(id) ?? 0
+    }
+
+    probePanelAfterTeardown(spec: PanelSpec): { panelsBefore: number; registered: boolean; domPanelsAfter: number } {
+        const ui = this.g.UIManager
+        const panelsBefore = ui.getPanels().length
+        this.g.destroy()
+
+        const panel = this.buildPanel(spec)
+        ui.addPanel(panel)
+        return {
+            panelsBefore,
+            registered: ui.getPanels().some((registered) => registered.id === panel.id),
+            domPanelsAfter: this.container.querySelectorAll('[data-panel-id]').length,
+        }
+    }
+
+    /**
+     * A panel whose title and body report the selection they were handed plus
+     * their own render count, so both the re-render contract and the pinned
+     * (`reactive: false`) case are readable from the DOM.
+     */
+    private buildPanel(spec: PanelSpec): ExtraPanel & { id: string } {
+        const id = spec.id ?? `panel-${++this.panelSeq}`
+        this.panelRenders.set(id, 0)
+
+        return {
+            id,
+            order: spec.order,
+            alwaysVisible: spec.alwaysVisible,
+            reactive: spec.reactive,
+            title: spec.noTitle ? undefined : (selection) => `${id} · ${describeSelection(selection)}`,
+            render: (selection, handle) => {
+                const renders = (this.panelRenders.get(id) ?? 0) + 1
+                this.panelRenders.set(id, renders)
+
+                const body = document.createElement('div')
+                body.className = 'pvt-test-panel'
+                const summary = document.createElement('span')
+                summary.className = 'pvt-test-panel-summary'
+                summary.textContent = `${describeSelection(selection)} · renders=${renders}`
+                body.append(summary)
+
+                if (spec.selfDriven) {
+                    body.append(
+                        panelButton('pvt-test-panel-refresh', 'refresh me', () => handle.refresh()),
+                        panelButton('pvt-test-panel-remove', 'remove me', () => handle.remove())
+                    )
+                }
+                return body
+            },
+        }
     }
 
     enableLasso(): void {
