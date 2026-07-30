@@ -159,35 +159,104 @@ export interface NeighborsPanel {
 }
 
 /**
+ * The current sidebar selection handed to an {@link ExtraPanel}'s `title` /
+ * `render`: the selected `Node` or `Edge`, an array for a multi-selection, or
+ * `null` when nothing is selected. Same shape as {@link PropertiesPanel.render}.
+ */
+export type ExtraPanelSelection = Node | Edge | Node[] | Edge[] | null
+
+/**
+ * A handle on a live panel, passed as the second argument to its own `title` /
+ * `render`. It lets a panel drive itself — re-render when its own data changed,
+ * or unregister — without capturing the graph or the disposer `addPanel`
+ * returned.
+ */
+export interface ExtraPanelHandle {
+    /** The panel's id — the declared one, or the auto-generated one. */
+    readonly id: string
+    /** Re-resolve this panel's `title` and `render` against the current selection. */
+    refresh(): void
+    /** Unregister the panel and remove its DOM. */
+    remove(): void
+}
+
+/**
+ * A panel's title or body: static content, or a function of the current
+ * selection (and the panel's own {@link ExtraPanelHandle}).
+ *
+ * A `string` renders as plain **text**; return an `HTMLElement` to render your
+ * own markup.
+ */
+export type ExtraPanelContent =
+    | ((element: ExtraPanelSelection, panel: ExtraPanelHandle) => HTMLElement | string)
+    | HTMLElement
+    | string
+
+/**
  * Additional panel in the graph UI's sidebar.
- * Currently only displayed when an element is selected
- * 
+ *
  * Both `title` and `render` can be:
  * - A string or `HTMLElement` for static content, or
- * - A function returning a string or `HTMLElement` for dynamic content based on the current selected node or edge.
- * 
+ * - A function of the current selection (a `Node`, an `Edge`, an array of either
+ *   for a multi-selection, or `null` when nothing is selected) — re-invoked on
+ *   every selection change unless {@link ExtraPanel.reactive} is `false`.
+ *
+ * Declare panels up front via `UI.extraPanels`, or register them at any point in
+ * the graph's life with `graph.UIManager.addPanel()` (which returns a disposer).
+ *
  * @example
  * ```ts
  * {
- *     render: (node: Node): HTMLElement => {
+ *     id: 'description',
+ *     title: 'Description',
+ *     render: (element): HTMLElement => {
+ *         const node = element instanceof Node ? element : null
  *         const div = document.createElement('div')
- *         div.textContent = node?.description ?? 'Empty node description'
+ *         div.textContent = node?.getData().description ?? 'Empty node description'
  *         return div
  *     },
- *     title: "My extra panel",
  * }
  * ```
  */
 export interface ExtraPanel {
+    /**
+     * Stable identifier, used to address the panel in `removePanel` /
+     * `refreshPanel`. Auto-generated when omitted.
+     */
+    id?: string,
+    /**
+     * The panel's header row. A `string` renders as plain text; pass an
+     * `HTMLElement` to render HTML. Omit it (or resolve to blank) for a panel
+     * with no header at all.
+     */
+    title?: ExtraPanelContent,
     /** A `string` renders as plain text; pass an `HTMLElement` to render HTML. */
-    title: ((element: Node | Edge | null) => HTMLElement | string) | HTMLElement | string,
-    /** A `string` renders as plain text; pass an `HTMLElement` to render HTML. */
-    render: ((element: Node | Edge | null) => HTMLElement | string) | HTMLElement | string,
+    render: ExtraPanelContent,
     /**
      * should the panel be always visible
      * @default false
      */
-    alwaysVisible?: boolean
+    alwaysVisible?: boolean,
+    /**
+     * Display order in the sidebar, ascending. Panels sharing an `order` keep
+     * their registration order, so `UI.extraPanels` reads top-to-bottom and
+     * runtime panels append after them.
+     * @default 0
+     */
+    order?: number,
+    /**
+     * Re-resolve `title` and `render` whenever the selection changes. Set
+     * `false` for a panel that is expensive to build and doesn't describe the
+     * selection: it then renders once, and only an explicit `refreshPanel()`
+     * rebuilds it.
+     * @default true
+     */
+    reactive?: boolean
+}
+
+/** An {@link ExtraPanel} once registered: its `id` is always resolved. */
+export interface RegisteredExtraPanel extends ExtraPanel {
+    id: string
 }
 
 export interface Tooltip {

@@ -11,7 +11,7 @@ import type { Notification } from './Notifier'
 import merge from 'lodash.merge'
 import { Tooltip } from './elements/Tooltip/Tooltip'
 import { ContextMenu } from './elements/ContextMenu/ContextMenu'
-import type { GraphUI, GraphUIMode, PropertyEntry } from '../interfaces/GraphUI'
+import type { ExtraPanel, GraphUI, GraphUIMode, PropertyEntry, RegisteredExtraPanel } from '../interfaces/GraphUI'
 import { KeybindingManager } from './KeybindingManager'
 import { createInspectModal } from './elements/modals/InspectNodeModal/InspectNodeModal'
 import { Note } from '../Note'
@@ -123,6 +123,18 @@ export interface UIElement {
 }
 
 /**
+ * A change to the sidebar's extra-panel registry, broadcast to whatever is
+ * currently hosting the panels (the sidebar's `ExtraPanelManager`). The host
+ * owns the DOM; the registry is the single source of truth for *which* panels
+ * exist and in what order.
+ */
+export type ExtraPanelChange =
+    | { type: 'add', panel: RegisteredExtraPanel, index: number }
+    | { type: 'remove', id: string }
+    /** Re-render one panel, or every panel when `id` is omitted. */
+    | { type: 'refresh', id?: string }
+
+/**
  * Declarative catalog of the built-in UI elements. Each entry says which
  * modes it appears in, an optional `enabled` gate, how to construct it, and
  * which layout slot it mounts into. Adding a new built-in element is a single
@@ -213,6 +225,16 @@ export class UIManager {
     private emittedPhases = new Set<UIPhase>()
     /** UIManager-level teardown (global keybindings, container listeners). */
     private uiDisposables: Array<() => void> = []
+    /**
+     * Sidebar extra panels, in display order. Lives here rather than on the
+     * sidebar so registration works in any mode and at any point in the graph's
+     * life — including before the sidebar is built, or in a mode that has none.
+     */
+    private panels: RegisteredExtraPanel[] = []
+    /** Monotonic counter behind auto-generated panel ids (never reset, so stale disposers can't collide). */
+    private panelSeq = 0
+    /** Hosts subscribed to registry changes (the sidebar's panel manager). */
+    private panelSubscribers: Array<(change: ExtraPanelChange) => void> = []
     /** True after `destroy()`; late registrations are refused until `setup()` reruns. */
     private destroyed = false
     /** Names of installed plugins, for de-duplication. Reset on `destroy()`. */
@@ -253,6 +275,9 @@ export class UIManager {
         }
 
         this.resolveMode()
+        // `UI.extraPanels` is sugar for addPanel(): seeding before build() means
+        // the sidebar finds them already registered when it mounts.
+        for (const panel of this.options.extraPanels ?? []) this.addPanel(panel)
         this.build()
         this.emitPhase('afterMount')
         this.setupGlobalInteractions()
@@ -422,6 +447,9 @@ export class UIManager {
             get layout() { return this.ui.layout },
             keyManager: this.keyManager,
             addElement: (element, slot) => this.addElement(element, slot),
+            addPanel: (panel) => this.addPanel(panel),
+            removePanel: (id) => this.removePanel(id),
+            refreshPanel: (id) => this.refreshPanel(id),
             onPhase: (phase, callback) => this.onPhase(phase, callback),
             addKeybinding: (binding) => { this.uiDisposables.push(this.keyManager.register(binding)) },
         }
@@ -444,6 +472,96 @@ export class UIManager {
         if (this.emittedPhases.has('graphReady')) element.graphReady()
     }
 
+    /* ---------- sidebar extra panels ---------- */
+
+    /**
+     * Register a sidebar panel at any point in the graph's life — before or
+     * after `graphReady`, and from a plugin's `install`. A panel added late
+     * mounts immediately and is rendered against the current selection.
+     *
+     * Registration succeeds in every mode; the panel is only *shown* in the
+     * modes that have a sidebar (`full`), and mounts as soon as one exists.
+     *
+     * @param panel - The panel. `id` is auto-generated when omitted.
+     * @returns A disposer that removes the panel. Calling it twice is a no-op.
+     */
+    public addPanel(panel: ExtraPanel): () => void {
+        if (this.destroyed) {
+            console.warn('Cannot add a sidebar panel after the UI is destroyed.')
+            return () => {}
+        }
+        const id = panel.id ?? `pvt-panel-${++this.panelSeq}`
+        if (this.panels.some(p => p.id === id)) {
+            console.warn(`A sidebar panel with id "${id}" is already registered; skipping the duplicate.`)
+            return () => {}
+        }
+
+        const registered: RegisteredExtraPanel = { ...panel, id }
+        const index = this.panelInsertIndex(registered.order ?? 0)
+        this.panels.splice(index, 0, registered)
+        this.emitPanelChange({ type: 'add', panel: registered, index })
+
+        let disposed = false
+        return () => {
+            if (disposed) return
+            disposed = true
+            this.removePanel(id)
+        }
+    }
+
+    /** Remove a registered panel by id: its DOM goes and it stops re-rendering. */
+    public removePanel(id: string): void {
+        const index = this.panels.findIndex(p => p.id === id)
+        if (index === -1) {
+            // Silent after teardown: a disposer held across destroy() is a no-op, not a mistake.
+            if (!this.destroyed) console.warn(`No sidebar panel with id "${id}" to remove.`)
+            return
+        }
+        this.panels.splice(index, 1)
+        this.emitPanelChange({ type: 'remove', id })
+    }
+
+    /**
+     * Re-resolve a panel's `title` and `render` against the current selection —
+     * for when the panel's *own* data changed rather than the selection. Omit
+     * `id` to refresh every panel. Refreshes a `reactive: false` panel too.
+     */
+    public refreshPanel(id?: string): void {
+        if (id !== undefined && !this.panels.some(p => p.id === id)) {
+            console.warn(`No sidebar panel with id "${id}" to refresh.`)
+            return
+        }
+        this.emitPanelChange({ type: 'refresh', id })
+    }
+
+    /** The registered panels, in display order (a copy — mutate through addPanel / removePanel). */
+    public getPanels(): ReadonlyArray<RegisteredExtraPanel> {
+        return [...this.panels]
+    }
+
+    /**
+     * Subscribe to registry changes. Used by the sidebar's panel host to keep
+     * its DOM in step; returns an unsubscribe function.
+     */
+    public onPanelsChanged(callback: (change: ExtraPanelChange) => void): () => void {
+        this.panelSubscribers.push(callback)
+        return () => {
+            this.panelSubscribers = this.panelSubscribers.filter(s => s !== callback)
+        }
+    }
+
+    /** First index whose `order` sorts after `order` — so equal orders keep registration order. */
+    private panelInsertIndex(order: number): number {
+        const index = this.panels.findIndex(p => (p.order ?? 0) > order)
+        return index === -1 ? this.panels.length : index
+    }
+
+    private emitPanelChange(change: ExtraPanelChange): void {
+        // Snapshot: a subscriber that registers/removes a panel while reacting
+        // shouldn't mutate the list being iterated.
+        for (const subscriber of [...this.panelSubscribers]) subscriber(change)
+    }
+
     public destroy() {
         this.destroyed = true
         this.emitPhase('destroy')
@@ -452,6 +570,8 @@ export class UIManager {
         this.phaseHandlers = { afterMount: [], graphReady: [], destroy: [] }
         this.emittedPhases.clear()
         this.installedPlugins.clear()
+        this.panels = []
+        this.panelSubscribers = []
         this.modeStore.dispose()
         for (const dispose of this.uiDisposables.splice(0)) dispose()
     }

@@ -154,6 +154,13 @@
                     display: flex;
                     align-items: center;
                 }
+
+                // An extra panel's `title` is consumer-supplied, so it shows —
+                // but only when it resolved to something: a blank title leaves
+                // the header empty, and an empty header stays collapsed.
+                &.pivotick-extrapanel-header-panel:not(:empty) {
+                    display: flex;
+                }
             }
 
             .pvt-sidebar-body-panel {

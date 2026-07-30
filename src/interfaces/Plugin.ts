@@ -3,7 +3,7 @@ import type { UIManager } from '../ui/UIManager'
 import type { UIComponent, UIPhase } from '../ui/UIComponent'
 import type { Layout } from '../ui/elements/Layout'
 import type { KeybindingManager } from '../ui/KeybindingManager'
-import type { Keybinding } from './GraphUI'
+import type { ExtraPanel, Keybinding } from './GraphUI'
 
 /**
  * A Pivotick plugin: a self-contained bundle of UI elements, keybindings and
@@ -58,6 +58,16 @@ export interface PluginContext {
      * is already live — the element is caught up to the current phase.
      */
     addElement(element: UIComponent, slot?: HTMLElement): void
+    /**
+     * Register a sidebar panel — the same door as `UI.extraPanels` and
+     * `UIManager.addPanel`. Returns a disposer; the panel is re-rendered on every
+     * selection change and torn down with the UI.
+     */
+    addPanel(panel: ExtraPanel): () => void
+    /** Remove a sidebar panel by id (equivalent to calling its disposer). */
+    removePanel(id: string): void
+    /** Re-render one sidebar panel, or all of them when `id` is omitted. */
+    refreshPanel(id?: string): void
     /** Hook a lifecycle phase. Returns an unsubscribe function. */
     onPhase(phase: UIPhase, callback: () => void): () => void
     /** Register a keybinding that is automatically removed when the UI is torn down. */
