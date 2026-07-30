@@ -1,5 +1,28 @@
 # Changelog
 
+## Unreleased
+
+### Sidebar panels: a real lifecycle
+
+- **`UI.extraPanels` is now the declarative form of a live registry.** `graph.UIManager.addPanel(panel)`
+  registers a panel at any point in the graph's life — before or after `graphReady`, or from a
+  plugin's `install` via `ctx.addPanel` — and returns a disposer. Alongside it:
+  `removePanel(id)`, `refreshPanel(id?)` and `getPanels()`. `ExtraPanel` gains `id` (auto-generated
+  when omitted), `order` and `reactive`; `title` became optional.
+- **`ExtraPanel.render` and `ExtraPanel.title` are re-invoked on every selection change**, with the
+  selected `Node` / `Edge`, a `Node[]` / `Edge[]` for a multi-selection, or `null` when nothing is
+  selected — the contract the interface has always documented. They used to be resolved once, at
+  mount, with `null`, so a panel documented as a function of the selection could never see one.
+  Each transition renders exactly once. A panel that worked around the old behaviour by caching its
+  own element keeps working (a returned element that is already mounted is left in place, so focus
+  and scroll position inside a panel survive a re-render); pass `reactive: false` to pin a panel to
+  a single render, and refresh it explicitly when its own data changes.
+- Both hooks also receive a **handle on the panel itself** (`{ id, refresh(), remove() }`) as a
+  second argument, so a panel can re-render or unregister itself from its own event handlers.
+- **Extra-panel titles render again.** The B3 chrome hid every sidebar panel header, which silently
+  swallowed `ExtraPanel.title`; it is shown whenever it resolves to content (a panel with no title
+  has no header row).
+
 ## 1.5.0 — 2026-07-29
 
 Two headline changes: a security-hardening pass over everything reachable from untrusted

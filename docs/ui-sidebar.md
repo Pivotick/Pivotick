@@ -204,7 +204,7 @@ const options = {
 ## Extra Panels <sup>[interface](/api/html/interfaces/GraphUI.ExtraPanel.html)</sup>
 Allows adding fully custom panels with dynamic or static content. These panels are ideal for showing additional contextual information, custom controls, or interactive widgets related to the selected element.
 
-Each extra panel has a `title` and a `render()` function, both of which can be static (string/HTMLElement) or dynamic (function returning string/HTMLElement).
+Each extra panel has an optional `title` and a `render()`, both of which can be static (string/HTMLElement) or a function of the current selection. A returned `string` renders as **text**; return an `HTMLElement` to render your own markup.
 
 ::: code-group
 
@@ -222,14 +222,19 @@ const options = {
 ```
 
 ```ts [Dynamic content]
+// The selection is a Node, an Edge, an array of either, or null — this example
+// only cares about a single element:
+const single = (element) => (element && !Array.isArray(element)) ? element : null
+
 const options = {
     UI: {
         extraPanels: [
             {
-                title: (node) => `Node #${node?.id}`,
-                render: (node) => {
+                // Both are called with the live selection, on every selection change.
+                title: (element) => single(element) ? `Node #${single(element).id}` : 'Nothing selected',
+                render: (element) => {
                     const div = document.createElement('div')
-                    div.textContent = node?.description ?? 'No description'
+                    div.textContent = single(element)?.getData().description ?? 'No description'
                     return div
                 }
             }
@@ -237,4 +242,66 @@ const options = {
     }
 }
 ```
+:::
+
+### The selection a panel is rendered with
+
+`title` and `render` are re-invoked on **every selection change**, with what is currently selected:
+
+| Selection | Argument |
+| --- | --- |
+| One node / one edge | the [`Node`](/api/html/classes/Node.html) or [`Edge`](/api/html/classes/Edge.html) |
+| Several nodes / edges | a `Node[]` / `Edge[]` |
+| Nothing selected | `null` |
+
+A panel is only *shown* while something is selected, unless it sets `alwaysVisible: true` — but a reactive panel is re-rendered either way, so it never holds content describing a stale selection.
+
+Set `reactive: false` for a panel that doesn't describe the selection and is expensive to build: it then renders once, and only an explicit `refreshPanel()` rebuilds it.
+
+### Registering panels at runtime
+
+`UI.extraPanels` is the declarative form of the same registry. Anything you can declare there you can also register — and remove — at any point in the graph's life, through the [`UIManager`](/api/html/classes/UIManager.html):
+
+```ts
+const graph = new Pivotick(container, data, options)
+
+// Register a panel that depends on the graph itself. Returns a disposer.
+const dispose = graph.UIManager.addPanel({
+    id: 'unlinked-items',
+    title: 'Unlinked items',
+    alwaysVisible: true,
+    order: -1,                              // sorts above the option-declared panels
+    render: (selection) => tray.render(selection),
+})
+
+// Your own data changed (a save landed) rather than the selection —
+// ask for a re-render instead of hand-patching the panel's DOM.
+graph.UIManager.refreshPanel('unlinked-items')
+
+// Gone for good (equivalent to calling `dispose()`):
+graph.UIManager.removePanel('unlinked-items')
+```
+
+| Method | |
+| --- | --- |
+| `addPanel(panel)` | Register a panel; returns a disposer. `id` is auto-generated when omitted. Works before and after the graph is ready, and from a plugin's `install` (as `ctx.addPanel`). |
+| `removePanel(id)` | Remove the panel and its DOM. |
+| `refreshPanel(id?)` | Re-render one panel, or all of them. Refreshes `reactive: false` panels too. |
+| `getPanels()` | The registered panels, in display order. |
+
+Panels sort by `order` (ascending, default `0`) and keep registration order within the same value, so `UI.extraPanels` reads top-to-bottom and runtime panels append after them.
+
+A panel's own `title` / `render` receives a second argument — a handle on itself — so it can drive its own updates without reaching for the graph:
+
+```ts
+render: (selection, panel) => {
+    const button = document.createElement('button')
+    button.textContent = 'Reload'
+    button.onclick = () => panel.refresh()   // …or panel.remove()
+    return button
+}
+```
+
+::: tip Sidebar-only
+Panels are shown by the sidebar, which exists in `full` mode. Registration succeeds in any mode — the panel simply has nowhere to render until a sidebar does.
 :::
