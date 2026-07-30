@@ -103,6 +103,7 @@ export const DEFAULT_UI_OPTIONS: GraphUI = {
         },
     },
     extraPanels: [],
+    filter: {},
     editors: {
         nodeEditor: {
             enabled: true

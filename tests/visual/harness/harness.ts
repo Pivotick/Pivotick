@@ -14,7 +14,10 @@ import { Note } from '../../../src/Note'
 import { TreeLayout } from '../../../src/plugins/layout/Tree'
 import { EgoTreeLayout } from '../../../src/plugins/layout/EgoTree'
 import { createInspectModal } from '../../../src/ui/elements/modals/InspectNodeModal/InspectNodeModal'
-import type { FilterFieldConfig, GraphFilters } from '../../../src/interfaces/GraphQueryEngine'
+import { FormFactory } from '../../../src/utils/FormFactory'
+import type {
+    FilterFacet, FilterFacetOption, FilterFieldConfig, GraphFilters,
+} from '../../../src/interfaces/GraphQueryEngine'
 import type { GraphInteractionContext } from '../../../src/interfaces/GraphInteractions'
 import type { ExtraPanel, ExtraPanelSelection } from '../../../src/interfaces/GraphUI'
 import type {
@@ -108,6 +111,64 @@ const BASE_OPTIONS = {
     simulation: { enabled: false, useWorker: false },
     render: { zoomAnimation: false },
 }
+
+/** Distinct values of a node-data key across the graph, flattening array values. */
+function distinctValues(graph: Pivotick, key: string): FilterFacetOption[] {
+    const values = new Set<string>()
+    for (const node of graph.getMutableNodes()) {
+        const value = node.getData()[key]
+        if (Array.isArray(value)) value.forEach((entry) => values.add(String(entry)))
+        else if (value !== null && value !== undefined) values.add(String(value))
+    }
+    return [...values].sort().map((value) => ({ label: value, value }))
+}
+
+/**
+ * The facet declaration {@link HarnessApi.loadWithFacets} installs — one facet per
+ * shape the feature has to cover, against the `mispLike` fixture:
+ *
+ *  - `category` / `attr-type` — plain multiselects whose options follow the graph
+ *  - `to_ids`        — a boolean (true / false / unset)
+ *  - `value`         — a regex pattern
+ *  - `tags`          — array-valued data, any-of membership
+ *  - `tags_all`      — the same data with `matchMode: 'all'` (and-semantics)
+ *  - `child_type`    — computed: reads the node's *children*, not its own data
+ *  - `min_sightings` — a predicate; declared last but `order: -1` renders it first
+ *
+ * Note what is *absent*: `uuid`, `label`, `sightings`. A declared panel contains
+ * exactly what was declared.
+ */
+const DECLARED_FACETS: FilterFacet[] = [
+    {
+        key: 'category', label: 'Category', type: 'multiselect',
+        options: (graph) => distinctValues(graph as Pivotick, 'category'),
+    },
+    {
+        key: 'attr-type', label: 'Type', type: 'multiselect',
+        options: (graph) => distinctValues(graph as Pivotick, 'attr-type'),
+    },
+    { key: 'to_ids', label: 'IDS flag', type: 'boolean' },
+    { key: 'value', label: 'Value', type: 'regex' },
+    {
+        key: 'tags', label: 'Tag', type: 'multiselect',
+        options: (graph) => distinctValues(graph as Pivotick, 'tags'),
+    },
+    {
+        key: 'tags_all', label: 'Has all tags', type: 'multiselect', matchMode: 'all',
+        accessor: (node) => node.getData().tags,
+        options: (graph) => distinctValues(graph as Pivotick, 'tags'),
+    },
+    {
+        key: 'child_type', label: 'Contains attribute of type', type: 'multiselect',
+        accessor: (node) => node.children.map((child) => child.getData()['attr-type']),
+        options: () => [{ label: 'md5', value: 'md5' }, { label: 'filename', value: 'filename' }],
+    },
+    {
+        key: 'min_sightings', label: 'Min sightings', type: 'text', order: -1,
+        predicate: (node, value) => node.getData().to_ids === true
+            && Number(node.getData().sightings) >= Number(value),
+    },
+]
 
 /** How a test-panel reports the selection it was rendered with. */
 function describeSelection(selection: ExtraPanelSelection): string {
@@ -263,6 +324,33 @@ export interface HarnessApi {
     setFilter(key: string, value: FilterFieldConfig): void
     /** Apply several filters at once (each keyed by node-data field). */
     setFilters(filters: GraphFilters): void
+    /**
+     * Load a fixture with the MISP-shaped `UI.filter.facets` declaration installed
+     * (see {@link DECLARED_FACETS}). Facets carry `accessor`/`predicate`/`options`
+     * functions, which can't cross `page.evaluate` — so they're built page-side here.
+     */
+    loadWithFacets(name: FixtureName, overrides?: PlainObject): Promise<void>
+    /**
+     * Ids of the nodes currently visible. A filtered-out node is *removed* from the
+     * render, so this is the exact answer to "what did that filter leave on screen".
+     */
+    visibleNodeIds(): string[]
+    /**
+     * The filter panel's generated fields, in display order — `key`, the rendered
+     * label, and the widget type. Reads the live DOM, so it proves what the panel
+     * actually built (declared vs auto-derived).
+     */
+    filterFields(): Array<{ key: string; label: string; type: string }>
+    /** Visible node ids inside an expanded cluster's subgraph (facet propagation). */
+    subgraphVisibleNodeIds(clusterId: string): string[]
+    /**
+     * Set a filter-panel control's raw value — the `<select>`/`<input>` the picker
+     * widget drives — so a test can exercise the real read-back path without
+     * fighting the custom picker UI.
+     */
+    setPanelValue(key: string, value: string): void
+    /** The panel form read through `FormFactory` — exactly what "Filter Graph" applies. */
+    panelValues(): Record<string, unknown>
     /** Clear every active query filter, restoring the full graph. */
     resetFilters(): void
     /** Manually hide a single node by id (`queryEngine.excludeNode`). */
@@ -741,6 +829,57 @@ class Harness implements HarnessApi {
 
     setFilters(filters: GraphFilters): void {
         this.g.queryEngine.setFilters(filters)
+    }
+
+    async loadWithFacets(name: FixtureName, overrides: PlainObject = {}): Promise<void> {
+        await this.load(name, mergeOptions(overrides, { UI: { filter: { facets: DECLARED_FACETS } } }))
+    }
+
+    visibleNodeIds(): string[] {
+        // `childrenDepth === 0` = the nodes of *this* graph, mirroring what the query
+        // engine considers visible here (a cluster's children live in its subgraph).
+        return this.g.getMutableNodes()
+            .filter((node) => node.childrenDepth === 0 && node.visible)
+            .map((node) => node.id)
+    }
+
+    subgraphVisibleNodeIds(clusterId: string): string[] {
+        const subgraph = this.g.getMutableNode(clusterId)?.getSubgraph() as Pivotick | undefined
+        if (!subgraph) return []
+        return subgraph.getMutableNodes().filter((node) => node.visible).map((node) => node.id)
+    }
+
+    private filterForm(): HTMLFormElement | null {
+        return this.container.querySelector('.pvt-graph-filter-container .pvt-form')
+    }
+
+    setPanelValue(key: string, value: string): void {
+        const control = this.filterForm()?.querySelector(`[data-field-key="${key}"]`)
+        if (!control) return
+        if (control instanceof HTMLSelectElement) {
+            control.value = value
+            ;(control as HTMLSelectElement & { _picker?: { sync(): void } })._picker?.sync()
+        } else if (control instanceof HTMLInputElement) {
+            control.value = value
+        }
+    }
+
+    panelValues(): Record<string, unknown> {
+        const form = this.filterForm()
+        return form ? FormFactory.getValues(form) : {}
+    }
+
+    filterFields(): Array<{ key: string; label: string; type: string }> {
+        const form = this.filterForm()
+        if (!form) return []
+        return [...form.querySelectorAll('.pvt-form-element')].map((wrapper) => {
+            const control = wrapper.querySelector('[data-field-key]')
+            return {
+                key: control?.getAttribute('data-field-key') ?? '',
+                label: wrapper.querySelector('label')?.textContent ?? '',
+                type: control?.getAttribute('data-field-type') ?? '',
+            }
+        })
     }
 
     resetFilters(): void {

@@ -108,6 +108,9 @@ export class Graph {
         this.queryEngine = new GraphQueryEngine(this)
         this.editing = new GraphEditingManager(this)
         this.UIManager = new UIManager(this, appContainer, UIManagerOptions)
+        // Declared facets carry the accessor/predicate/matchMode the engine matches
+        // with, so hand them over as soon as the merged UI options exist.
+        this.queryEngine.setFacets(this.UIManager.getOptions().filter?.facets)
         this.notifier = new Notifier(this)
         this.renderer = createGraphRenderer(this, appContainer, rendererOptions)
         this.renderer.setupRendering()
