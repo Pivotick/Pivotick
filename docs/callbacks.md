@@ -62,6 +62,10 @@ the model is not gated by your own hook.
 | `onBeforeNodeEditCommit` | A node edit is committed                                                | `false` refuses the commit, leaving the node's data untouched                  |
 | `onBeforeEdgeEditCommit` | An edge edit is committed                                                | `false` refuses the commit, leaving the edge's data untouched                  |
 
+An accepted edit commit announces itself on the data bus — `nodeChange` / `edgeChange`,
+with `previousData` and `nextData` — and repaints straight away; a refused one changes
+nothing at all.
+
 Their UI counterparts — `onNodeEdit` / `onEdgeEdit` (return the modal body) and
 `onNodeEditCancel` / `onEdgeEditCancel` — let you replace the editor rather than gate it.
 Short of that, `editors.nodeEditor.fields` / `editors.edgeEditor.fields` declare the
