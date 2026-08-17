@@ -88,9 +88,9 @@ export class GraphEditingManager {
 
         this.nodeSessions.set(nodeId, session)
 
+        // The modal invokes the handler to build its body — once, not twice.
         const customHandler = this.graph.getOptions().callbacks?.onNodeEdit
 
-        this.graph.getOptions().callbacks?.onNodeEdit?.(session)
         createNodeEditModal(node, session, this.graph.UIManager, customHandler)
 
         return session
@@ -119,12 +119,11 @@ export class GraphEditingManager {
 
         this.edgeSessions.set(edge.id, session)
 
-        // The callback hook wins over the static `editors.edgeEditor.render` option.
-        const callbacks = this.graph.getOptions().callbacks
-        const customHandler = callbacks?.onEdgeEdit
+        // The callback hook wins over the static `editors.edgeEditor.render` option;
+        // the modal invokes whichever it gets to build its body.
+        const customHandler = this.graph.getOptions().callbacks?.onEdgeEdit
             ?? this.graph.UIManager.getOptions().editors?.edgeEditor?.render
 
-        callbacks?.onEdgeEdit?.(session)
         createEdgeEditModal(edge, session, this.graph.UIManager, customHandler)
 
         return session

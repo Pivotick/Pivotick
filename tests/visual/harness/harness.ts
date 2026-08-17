@@ -161,8 +161,23 @@ export interface WritePathConfig {
     deleteHook?: DeleteHookBehavior
     nodeCreateHook?: NodeCreateHookBehavior
     edgeEditHook?: EdgeEditHookBehavior
+    /**
+     * Install `onEdgeEdit`: the session's body becomes one custom input that writes
+     * straight into `session.draft` — the "a custom body owns the draft" contract.
+     * Also counts `onEdgeEditCancel` calls.
+     */
+    edgeEditBody?: boolean
     /** Delay (ms) for the `*-async` behaviours, so a test can observe the pending window. */
     asyncDelayMs?: number
+}
+
+/** Per-hook invocation counts, reset by `configureWritePath`. */
+export interface WritePathCalls {
+    delete: number
+    nodeCreate: number
+    edgeEditCommit: number
+    edgeEditBody: number
+    edgeEditCancel: number
 }
 
 /** The ids a `DeleteContext` carried — what the hook was actually told about. */
@@ -583,7 +598,7 @@ export interface HarnessApi {
      */
     configureWritePath(config?: WritePathConfig): void
     /** How many times each write-path hook was invoked (proves the pending lock, and the no-hook path). */
-    writePathCalls(): { delete: number; nodeCreate: number; edgeEditCommit: number }
+    writePathCalls(): WritePathCalls
     /** The ids every `DeleteContext` carried — including the library-resolved cascade. */
     deleteContexts(): RecordedDeleteContext[]
     /** Ids that actually left the model, from `nodeRemove` / `edgeRemove` / `noteRemove`. */
@@ -626,7 +641,7 @@ class Harness implements HarnessApi {
     private panelDisposers = new Map<string, () => void>()
     private panelSeq = 0
     /** Write-path observation state (reset by {@link configureWritePath}). */
-    private writePathHookCalls = { delete: 0, nodeCreate: 0, edgeEditCommit: 0 }
+    private writePathHookCalls = { delete: 0, nodeCreate: 0, edgeEditCommit: 0, edgeEditBody: 0, edgeEditCancel: 0 }
     private seenDeleteContexts: RecordedDeleteContext[] = []
     private removed: { nodes: string[]; edges: string[]; notes: string[] } = { nodes: [], edges: [], notes: [] }
     private recordedEdgeChanges: RecordedEdgeChange[] = []
@@ -1436,7 +1451,7 @@ class Harness implements HarnessApi {
         const delay = config.asyncDelayMs ?? 60
         const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms))
 
-        this.writePathHookCalls = { delete: 0, nodeCreate: 0, edgeEditCommit: 0 }
+        this.writePathHookCalls = { delete: 0, nodeCreate: 0, edgeEditCommit: 0, edgeEditBody: 0, edgeEditCancel: 0 }
         this.seenDeleteContexts = []
         this.removed = { nodes: [], edges: [], notes: [] }
         this.recordedEdgeChanges = []
@@ -1513,6 +1528,22 @@ class Harness implements HarnessApi {
             }
         }
 
+        if (config.edgeEditBody) {
+            callbacks.onEdgeEdit = (session): HTMLDivElement => {
+                this.writePathHookCalls.edgeEditBody++
+                const body = document.createElement('div')
+                body.className = 'test-edge-body'
+                const input = document.createElement('input')
+                input.className = 'test-edge-label'
+                input.value = String(session.draft.label ?? '')
+                // No form for the library to read: the handler owns the draft.
+                input.addEventListener('input', () => session.setDraft({ ...session.draft, label: input.value }))
+                body.appendChild(input)
+                return body
+            }
+            callbacks.onEdgeEditCancel = (): void => { this.writePathHookCalls.edgeEditCancel++ }
+        }
+
         if (config.edgeEditHook) {
             const behavior = config.edgeEditHook
             callbacks.onBeforeEdgeEditCommit = async (): Promise<boolean> => {
@@ -1523,7 +1554,7 @@ class Harness implements HarnessApi {
         }
     }
 
-    writePathCalls(): { delete: number; nodeCreate: number; edgeEditCommit: number } {
+    writePathCalls(): WritePathCalls {
         return { ...this.writePathHookCalls }
     }
 

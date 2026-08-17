@@ -126,6 +126,36 @@ test.describe('edge editing', () => {
         await expect.poll(async () => (await edgeData(page, 'b-c')).label).toBe('flows-to')
     })
 
+    test('onEdgeEdit supplies the body once, and that body owns the draft', async ({ page }) => {
+        await harness(page, 'configureWritePath', { edgeEditBody: true })
+        await harness(page, 'openEdgeSession', 'a-b')
+
+        // The custom body replaces the inferred form, and is built exactly once.
+        const custom = page.locator('#edit-edge-modal .test-edge-body .test-edge-label')
+        await expect(custom).toHaveValue('links')
+        await expect(field(page, 'label')).toHaveCount(0)
+        expect(((await harness(page, 'writePathCalls')) as { edgeEditBody: number }).edgeEditBody).toBe(1)
+
+        // There is no form for the library to read — the draft the handler wrote is
+        // what commits.
+        await custom.fill('owns')
+        await modalButton(page, 'Edit Edge').click()
+
+        await expect.poll(async () => (await edgeData(page, 'a-b')).label).toBe('owns')
+    })
+
+    test('dismissing a session notifies onEdgeEditCancel', async ({ page }) => {
+        await harness(page, 'configureWritePath', { edgeEditBody: true })
+        await harness(page, 'openEdgeSession', 'a-b')
+
+        await modalButton(page, 'Cancel').click()
+
+        await expect
+            .poll(async () => ((await harness(page, 'writePathCalls')) as { edgeEditCancel: number }).edgeEditCancel)
+            .toBe(1)
+        expect((await edgeData(page, 'a-b')).label).toBe('links')
+    })
+
     test('declared fields replace the inferred ones', async ({ page }) => {
         await loadFixture(page, 'basic', {
             UI: {
