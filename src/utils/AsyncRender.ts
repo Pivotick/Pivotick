@@ -185,9 +185,13 @@ export class AsyncRenderScope {
     /* ---------- internals ---------- */
 
     /**
-     * Write the settled content into every slot still carrying this render's id
-     * — the live one, plus any copy made while it was pending (a tooltip pinned
+     * Put the settled content in place of every slot still carrying this render's
+     * id — the live one, plus any copy made while it was pending (a tooltip pinned
      * mid-fetch). No slots left means the render was superseded: drop it.
+     *
+     * The slot is *replaced*, not filled, so once content lands the DOM is exactly
+     * what a synchronous hook would have produced — no leftover wrapper for the
+     * host's own layout rules (or a consumer's CSS) to trip over.
      */
     private commit(render: PendingRender, build: () => HTMLElement | undefined): void {
         const targets = document.querySelectorAll<HTMLElement>(`[${SLOT_ATTRIBUTE}="${render.slotId}"]`)
@@ -195,12 +199,10 @@ export class AsyncRenderScope {
 
         const content = build()
         targets.forEach((target, index) => {
-            // The same element cannot live in two slots; copies get a deep clone.
+            // The same element cannot live in two places; copies get a deep clone.
             const value = index === 0 ? content : content?.cloneNode(true) as HTMLElement | undefined
-            target.removeAttribute(SLOT_ATTRIBUTE)
-            target.classList.remove('pvt-async-pending')
-            target.replaceChildren()
-            if (value) target.appendChild(value)
+            if (value) target.replaceWith(value)
+            else target.remove()
         })
         this.onSettle?.()
     }

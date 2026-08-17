@@ -199,6 +199,31 @@ test.describe('async content renderers', () => {
             .toHaveText('nothing selected · renders=2 · inventory v2')
     })
 
+    test('the main header and neighbours panel resolve asynchronously too', async ({ page }) => {
+        await harness(page, 'loadAsyncContent', 'basic', {
+            hooks: ['mainHeader.render', 'neighborsPanel.render'],
+        }, FULL)
+
+        const header = page.locator('.pvt-mainheader-panel')
+        const neighbors = page.locator('.pvt-neighbor-panel')
+
+        await harness(page, 'selectNode', 'a')
+        await expect(skeleton(header)).toBeVisible()
+        await expect(skeleton(neighbors)).toBeVisible()
+
+        await harness(page, 'settleAsync', 'mainHeader.render:node a', 'header for a')
+        await harness(page, 'settleAsync', 'neighborsPanel.render:node a', 'neighbours of a')
+        await expect(asyncContent(header)).toHaveText('header for a')
+        await expect(asyncContent(neighbors)).toHaveText('neighbours of a')
+
+        // Clearing the selection re-renders both against `null`, and abandons
+        // anything the previous selection was still waiting on.
+        await harness(page, 'deselectAll')
+        await expect(skeleton(header)).toBeVisible()
+        await harness(page, 'settleAsync', 'mainHeader.render:nothing selected', 'no selection')
+        await expect(asyncContent(header)).toHaveText('no selection')
+    })
+
     test('tearing the graph down aborts whatever is still in flight', async ({ page }) => {
         await harness(page, 'loadAsyncContent', 'basic', { hooks: ['propertiesPanel.nodePropertiesMap'] }, FULL)
         await harness(page, 'selectNode', 'a')

@@ -2,8 +2,13 @@
    affordances shown in them. A slot is a plain block: once its promise settles
    it is emptied and the real content takes its place. */
 
+/* A slot has no intrinsic width of its own (the skeleton's bars are sized in %),
+   so it has to claim the space its content will occupy — otherwise it collapses
+   to nothing inside a flex container such as the sidebar's main header. */
 .pvt-async-slot {
     display: block;
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
 .pvt-async-skeleton {
@@ -11,6 +16,11 @@
     flex-direction: column;
     gap: 6px;
     padding: 4px 0;
+    // Its bars are sized in %, so it has no intrinsic width to lay out from —
+    // claim the slot's width however the host container arranges its children.
+    width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
 
     span {
         display: block;
