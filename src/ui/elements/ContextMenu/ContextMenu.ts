@@ -258,12 +258,9 @@ const defaultMenuCanvas = {
             svgIcon: stickyNote,
             variant: 'outline-primary',
             visible: true,
-            onclick(this: ContextMenu, evt: PointerEvent) {
-                const renderer = this.uiManager.graph.renderer
-                const { x, y } = renderer.screenToGraphCoordinates(
-                    evt.clientX,
-                    evt.clientY
-                )
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            onclick(this: ContextMenu, _evt: PointerEvent) {
+                const { x, y } = this.openPoint()
                 const note: Note = new Note({
                     content: 'This is not a note.',
                     x,
