@@ -450,9 +450,23 @@ export class Graph {
 
     /**
      * @private
-     * Announce that an edge's data was replaced in place — emits `edgeChange` plus a
-     * `dataBatchChanged` entry. Used by the interactive edge editor, which mutates the
-     * live edge rather than going through {@link updateData}.
+     * Announce that a node's data was replaced in place — emits `nodeChange` plus a
+     * `dataBatchChanged` entry. Used by the interactive node editor, which mutates the
+     * live node rather than going through {@link updateData}.
+     */
+    public nodeDataChanged(node: Node, previousData: NodeData, nextData: NodeData): void {
+        this.dataBatchChanged([{
+            type: 'node:change',
+            node,
+            previousData,
+            nextData,
+        } as GraphDataChange])
+    }
+
+    /**
+     * @private
+     * The edge twin of {@link nodeDataChanged} — emits `edgeChange` plus a
+     * `dataBatchChanged` entry for an edge whose data was replaced in place.
      */
     public edgeDataChanged(edge: Edge, previousData: EdgeData, nextData: EdgeData): void {
         this.dataBatchChanged([{

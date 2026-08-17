@@ -200,8 +200,10 @@ export interface InterractionCallbacks<TElement = unknown> {
      */
     onNodeEdit?: (session: NodeEditSession) => HTMLDivElement
     /**
-     * Called when an node edit session is about to be commited
-     * Act as a validation/interception hook.
+     * Called when a node edit session is about to be committed. Acts as a
+     * validation / persistence / veto hook: return `false` (or a promise of it) to
+     * refuse, leaving the node's data untouched and the modal open. On success the
+     * node's data is replaced and `nodeChange` fires on the data bus.
      * @returns boolean indicating if the commit should proceed or not
      */
     onBeforeNodeEditCommit?: (context: NodeEditCommitContext) => boolean | Promise<boolean>

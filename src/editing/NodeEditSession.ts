@@ -62,53 +62,41 @@ export class NodeEditSession {
 
     /**
      * Commits the draft data to the node.
+     *
+     * With no `onBeforeNodeEditCommit` hook the draft is written straight through.
+     * With one, userland owns validation / persistence — and a refusal leaves the
+     * node's data untouched so the user can correct the form and retry.
+     *
+     * @returns whether the commit went through.
      */
     public async commit(): Promise<boolean> {
         this.ensureActive()
 
+        const graph = this.manager.graph
         const previousData = this.node.getData()
         const nextData = this.draft
 
-        const callback = this.manager.graph.getOptions().callbacks?.onBeforeNodeEditCommit
+        const callback = graph.getOptions().callbacks?.onBeforeNodeEditCommit
 
-        /**
-         * No callback:
-         * default automatic commit behavior
-         */
-        if (!callback) {
-            this.node.setData(nextData)
-            this.manager.graph.renderer.update(true)
-            this.manager.graph.nextTickFor([this.node])
-            this.manager.graph.renderer.getGraphInteraction().selectNode(this.node.getGraphElement(), this.node)
-            this.active = false
-            this.manager.closeSession(this.node.id)
-            return true
+        if (callback) {
+            const accepted = await callback({
+                node: this.node,
+                previousData,
+                nextData,
+                session: this,
+            })
+
+            if (accepted === false) return false
         }
 
-        /**
-         * Userland controls validation/persistence.
-         */
-        const result = await callback({
-            node: this.node,
-            previousData,
-            nextData,
-            session: this,
-        })
-
-        /**
-         * Commit rejected by userland.
-         */
-        if (result === false) {
-            return false
-        }
-
-        /**
-         * Finalize commit.
-         */
         this.node.setData(nextData)
-        this.manager.graph.renderer.update(true)
-        this.manager.graph.nextTickFor([this.node])
-        this.manager.graph.renderer.getGraphInteraction().selectNode(this.node.getGraphElement(), this.node)
+        // Announce it on the data bus (`nodeChange` + a `dataBatchChanged` entry), then
+        // repaint: `update` re-renders the node, `nextTickFor` places what it drew.
+        graph.nodeDataChanged(this.node, previousData, nextData)
+        graph.renderer.update(true)
+        graph.nextTickFor([this.node])
+        // Re-select so the sidebar's panels re-read the node they are showing.
+        graph.renderer.getGraphInteraction().selectNode(this.node.getGraphElement(), this.node)
         this.active = false
         this.manager.closeSession(this.node.id)
         return true
