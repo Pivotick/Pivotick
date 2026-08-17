@@ -448,6 +448,21 @@ export class Graph {
         this.emit('noteRemove', note)
     }
 
+    /**
+     * @private
+     * Announce that an edge's data was replaced in place — emits `edgeChange` plus a
+     * `dataBatchChanged` entry. Used by the interactive edge editor, which mutates the
+     * live edge rather than going through {@link updateData}.
+     */
+    public edgeDataChanged(edge: Edge, previousData: EdgeData, nextData: EdgeData): void {
+        this.dataBatchChanged([{
+            type: 'edge:change',
+            edge,
+            previousData,
+            nextData,
+        } as GraphDataChange])
+    }
+
     private dataBatchChanged(changes: GraphDataChange[]): void {
         if (changes) {
             this.emit('dataBatchChanged', changes)

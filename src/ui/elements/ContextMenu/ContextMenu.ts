@@ -1,18 +1,31 @@
 import { Edge } from '../../../Edge'
 import type { Node } from '../../../Node'
 import { createActionList, createQuickActionList, generateSafeDomId } from '../../../utils/ElementCreation'
-import { expand, focusElement, fullscreen, graphEdgeIcon, hide, inspect, pin, selectNeighbor, stickyNote, trash, unpin } from '../../icons'
+import { addCircle, edit, expand, focusElement, fullscreen, graphEdgeIcon, hide, inspect, pin, selectNeighbor, stickyNote, trash, unpin } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
 import './contextmenu.scss'
 import { deepMerge } from '../../../utils/utils'
-import type { MenuActionItemOptions, MenuQuickActionItemOptions } from '../../../interfaces/GraphUI'
+import type { Editors, MenuActionItemOptions, MenuQuickActionItemOptions } from '../../../interfaces/GraphUI'
 import { createInspectModal } from '../modals/InspectNodeModal/InspectNodeModal'
 import { openImageLightbox } from '../modals/ImageLightboxModal/ImageLightboxModal'
 import { Note } from '../../../Note'
 import { pickNode } from '../../components/NodePickers'
 import { nodeNameGetter } from '../../../utils/GraphGetters'
 import { getNodeImageHref } from '../../../utils/NodePreview'
+
+/**
+ * A library default that is only offered while its editor is enabled — the write-path
+ * entries (delete, edit, create), which a read-only integration wants gone rather than
+ * present-but-refusing. Consumer-supplied entries are never gated.
+ */
+type GatedMenuItem = { requires?: keyof Editors }
+
+type GatedActionItem = MenuActionItemOptions & GatedMenuItem
+type GatedQuickActionItem = MenuQuickActionItemOptions & GatedMenuItem
+
+/** A menu section, as both the defaults and the merged options are shaped. */
+type MenuSection = { topbar: GatedQuickActionItem[]; menu: GatedActionItem[] }
 
 const defaultMenuNode = {
     topbar: [
@@ -58,7 +71,7 @@ const defaultMenuNode = {
                 this.uiManager.graph.queryEngine.excludeNode(node)
             }
         },
-    ] as MenuQuickActionItemOptions[],
+    ] as GatedQuickActionItem[],
     menu: [
         {
             text: 'View Image',
@@ -153,12 +166,43 @@ const defaultMenuNode = {
             },
             shortcut: 'I'
         },
-    ] as MenuActionItemOptions[],
+        {
+            text: 'Delete Node',
+            title: 'Delete Node',
+            requires: 'deletion',
+            svgIcon: trash,
+            variant: 'outline-danger',
+            onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
+                void this.uiManager.graph.editing.requestDelete({ nodes: [node], origin: 'context-menu' })
+            },
+        },
+    ] as GatedActionItem[],
 }
 
-const defaultMenuEdge: { topbar: MenuQuickActionItemOptions[]; menu: MenuActionItemOptions[] } = {
+const defaultMenuEdge: MenuSection = {
     topbar: [],
-    menu: [],
+    menu: [
+        {
+            text: 'Edit Edge',
+            title: 'Edit Edge',
+            requires: 'edgeEditor',
+            svgIcon: edit,
+            variant: 'outline-primary',
+            onclick(this: ContextMenu, _evt: PointerEvent, edge: Edge) {
+                this.uiManager.graph.editing.openEdgeSession(edge)
+            },
+        },
+        {
+            text: 'Delete Edge',
+            title: 'Delete Edge',
+            requires: 'deletion',
+            svgIcon: trash,
+            variant: 'outline-danger',
+            onclick(this: ContextMenu, _evt: PointerEvent, edge: Edge) {
+                void this.uiManager.graph.editing.requestDelete({ edges: [edge], origin: 'context-menu' })
+            },
+        },
+    ] as GatedActionItem[],
 }
 
 const defaultMenuCanvas = {
@@ -190,8 +234,24 @@ const defaultMenuCanvas = {
                 this.uiManager.graph.simulation?.reheat()
             }
         },
-    ] as MenuQuickActionItemOptions[],
+    ] as GatedQuickActionItem[],
     menu: [
+        {
+            title: 'Add Node Here',
+            text: 'Add Node Here',
+            requires: 'nodeCreator',
+            svgIcon: addCircle,
+            variant: 'outline-primary',
+            visible: true,
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            onclick(this: ContextMenu, _evt: PointerEvent) {
+                // Place it where the menu was opened — correct under any zoom/pan.
+                void this.uiManager.graph.editing.requestNodeCreate({
+                    position: this.openPoint(),
+                    origin: 'context-menu',
+                })
+            },
+        },
         {
             title: 'Add Note',
             text: 'Add Note',
@@ -213,7 +273,7 @@ const defaultMenuCanvas = {
             },
             shortcut: 'n'
         }
-    ] as MenuActionItemOptions[],
+    ] as GatedActionItem[],
 }
 
 const defaultMenuNote = {
@@ -230,20 +290,21 @@ const defaultMenuNote = {
                 this.uiManager.graph.noteManager.hideNote(note)
             }
         },
-    ] as MenuQuickActionItemOptions[],
+    ] as GatedQuickActionItem[],
     menu: [
         {
             title: 'Remove Note',
             text: 'Remove Note',
+            requires: 'deletion',
             svgIcon: trash,
             variant: 'outline-danger',
             visible: true,
             onclick(this: ContextMenu, _evt: PointerEvent, note: Note) {
-                this.uiManager.graph.noteManager.removeNote(note)
+                void this.uiManager.graph.editing.requestDelete({ notes: [note], origin: 'context-menu' })
             },
             shortcut: 'n'
         }
-    ] as MenuActionItemOptions[],
+    ] as GatedActionItem[],
 }
 
 export class ContextMenu extends UIComponent {
@@ -254,20 +315,35 @@ export class ContextMenu extends UIComponent {
 
     private element: Node | Edge | Note | null = null
 
-    private menuNode: { topbar: MenuQuickActionItemOptions[]; menu: MenuActionItemOptions[] }
-    private menuEdge: { topbar: MenuQuickActionItemOptions[]; menu: MenuActionItemOptions[] }
-    private menuNote: { topbar: MenuQuickActionItemOptions[]; menu: MenuActionItemOptions[] }
-    private menuCanvas: { topbar: MenuQuickActionItemOptions[]; menu: MenuActionItemOptions[] }
+    /** Page coords the menu was last opened at (see {@link openPoint}). */
+    private openedAt: { x: number, y: number } | null = null
+
+    private menuNode: MenuSection
+    private menuEdge: MenuSection
+    private menuNote: MenuSection
+    private menuCanvas: MenuSection
 
     constructor(uiManager: UIManager) {
         super(uiManager)
         this.visible = false
 
-        this.menuNode = deepMerge(defaultMenuNode, this.uiManager.getOptions().contextMenu.menuNode ?? {})
-        this.menuEdge = deepMerge(defaultMenuEdge, this.uiManager.getOptions().contextMenu.menuEdge ?? {})
-        this.menuNote = deepMerge(defaultMenuNote, this.uiManager.getOptions().contextMenu.menuNote ?? {})
-        this.menuCanvas = deepMerge(defaultMenuCanvas, this.uiManager.getOptions().contextMenu.menuCanvas ?? {})
+        this.menuNode = deepMerge(this.gate(defaultMenuNode), this.uiManager.getOptions().contextMenu.menuNode ?? {})
+        this.menuEdge = deepMerge(this.gate(defaultMenuEdge), this.uiManager.getOptions().contextMenu.menuEdge ?? {})
+        this.menuNote = deepMerge(this.gate(defaultMenuNote), this.uiManager.getOptions().contextMenu.menuNote ?? {})
+        this.menuCanvas = deepMerge(this.gate(defaultMenuCanvas), this.uiManager.getOptions().contextMenu.menuCanvas ?? {})
         this.wrapOnclickActions()
+    }
+
+    /**
+     * Drop the default entries whose editor is disabled, before the consumer's own
+     * entries are merged in — those are never gated.
+     */
+    private gate(section: MenuSection): MenuSection {
+        const offered = <T>(item: T): boolean => {
+            const requires = (item as GatedMenuItem).requires
+            return !requires || this.uiManager.isEditorEnabled(requires)
+        }
+        return { topbar: section.topbar.filter(offered), menu: section.menu.filter(offered) }
     }
 
     protected onMount(container: HTMLElement | undefined) {
@@ -444,12 +520,39 @@ export class ContextMenu extends UIComponent {
         this.visible = false
     }
 
+    /**
+     * The graph-space point the menu was opened at — what the "…here" entries act on.
+     * Their own `onclick` event is the click on the *menu row*, tens of pixels away
+     * from the gesture, so the opening position is captured instead.
+     */
+    public openPoint(): { x: number, y: number } {
+        const renderer = this.uiManager.graph.renderer
+        const canvas = this.uiManager.layout?.canvas
+        if (this.openedAt) {
+            // Page → client coords, resolved now: the document may have scrolled
+            // between opening the menu and picking the entry.
+            return renderer.screenToGraphCoordinates(
+                this.openedAt.x - window.scrollX,
+                this.openedAt.y - window.scrollY
+            )
+        }
+
+        // No menu has been opened (programmatic call): fall back to the view centre.
+        const bcr = canvas?.getBoundingClientRect()
+        return renderer.screenToGraphCoordinates(
+            (bcr?.x ?? 0) + (bcr?.width ?? 0) / 2,
+            (bcr?.y ?? 0) + (bcr?.height ?? 0) / 2
+        )
+    }
+
     private setPosition(event: PointerEvent): void {
         if (!this.menu) return
 
         const offset = 10
         const x = event.pageX
         const y = event.pageY
+
+        this.openedAt = { x, y }
 
         this.menu.style.left = `${x + offset}px`
         this.menu.style.top = `${y + offset}px`

@@ -150,10 +150,16 @@ export class ToolPanel extends UIComponent {
             ]
         }
         return [
-            { id: 'add-node', label: 'Add node', icon: addCircle, kind: 'soon' },
+            // Both write-path tools are dropped entirely when their editor is disabled —
+            // a read-only integration gets no affordance rather than one that refuses.
+            ...(this.uiManager.isEditorEnabled('nodeCreator')
+                ? [{ id: 'add-node', label: 'Add node', icon: addCircle, kind: 'action', run: () => this.addNode() } as ToolSpec]
+                : []),
             { id: 'add-edge', label: 'Add edge', icon: graphEdgeIcon(18), kind: 'toggle', run: (armed) => this.toggleAddEdge(armed) },
             { id: 'add-note', label: 'Add note', icon: stickyNote, kind: 'action', run: () => this.addNote() },
-            { id: 'edit', label: 'Edit node', icon: edit, kind: 'action', run: () => this.editSelectedNode(), enabled: () => this.hasEditableSelection() },
+            ...(this.uiManager.isEditorEnabled('nodeEditor')
+                ? [{ id: 'edit', label: 'Edit node', icon: edit, kind: 'action', run: () => this.editSelectedNode(), enabled: () => this.hasEditableSelection() } as ToolSpec]
+                : []),
         ]
     }
 
@@ -307,12 +313,28 @@ export class ToolPanel extends UIComponent {
     }
 
     private addNote() {
-        const renderer = this.uiManager.graph.renderer
+        const centre = this.canvasCentre()
+        if (!centre) return
+        this.uiManager.graph.noteManager.addNote(new Note({ content: 'This is not a note.', ...centre }))
+    }
+
+    /**
+     * Place a node at the middle of the current view, like Add note — the canvas
+     * context-menu's "Add Node Here" covers placing one at a chosen point. The
+     * before-create hook owns what it carries.
+     */
+    private addNode() {
+        const position = this.canvasCentre()
+        if (!position) return
+        void this.uiManager.graph.editing.requestNodeCreate({ position, origin: 'tool' })
+    }
+
+    /** The middle of the visible canvas, in graph space (so it survives zoom/pan). */
+    private canvasCentre(): { x: number, y: number } | null {
         const canvas = this.uiManager.layout?.canvas
-        if (!canvas) return
+        if (!canvas) return null
         const bcr = canvas.getBoundingClientRect()
-        const { x, y } = renderer.screenToGraphCoordinates(bcr.x + bcr.width / 2, bcr.y + bcr.height / 2)
-        this.uiManager.graph.noteManager.addNote(new Note({ content: 'This is not a note.', x, y }))
+        return this.uiManager.graph.renderer.screenToGraphCoordinates(bcr.x + bcr.width / 2, bcr.y + bcr.height / 2)
     }
 
     private editSelectedNode() {

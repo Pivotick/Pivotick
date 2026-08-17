@@ -11,7 +11,7 @@ import type { Notification } from './Notifier'
 import merge from 'lodash.merge'
 import { Tooltip } from './elements/Tooltip/Tooltip'
 import { ContextMenu } from './elements/ContextMenu/ContextMenu'
-import type { ExtraPanel, GraphUI, GraphUIMode, PropertyEntry, RegisteredExtraPanel } from '../interfaces/GraphUI'
+import type { Editors, ExtraPanel, GraphUI, GraphUIMode, PropertyEntry, RegisteredExtraPanel } from '../interfaces/GraphUI'
 import { KeybindingManager } from './KeybindingManager'
 import { createInspectModal } from './elements/modals/InspectNodeModal/InspectNodeModal'
 import { Note } from '../Note'
@@ -604,6 +604,16 @@ export class UIManager {
 
     public getOptions() {
         return this.options
+    }
+
+    /**
+     * Whether one of the write-path editors is offered at all, per its
+     * `editors.<editor>.enabled` flag (on unless explicitly `false`). Affordances ask
+     * this before rendering themselves, so an integration whose backend forbids an
+     * operation *removes* the button instead of vetoing every click.
+     */
+    public isEditorEnabled(editor: keyof Editors): boolean {
+        return this.options.editors?.[editor]?.enabled !== false
     }
 
     public getAppContainer(): HTMLElement {

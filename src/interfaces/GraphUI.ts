@@ -1,4 +1,5 @@
 import type { Edge } from '../Edge'
+import type { EdgeEditSession } from '../editing/EdgeEditSession'
 import type { NodeEditSession } from '../editing/NodeEditSession'
 import type { EdgeLabelPromptMode } from './InterractionCallbacks'
 import type { Node } from '../Node'
@@ -389,6 +390,12 @@ export type MenuQuickActionItemOptions = MenuActionItemOptions & {
 
 export interface Editors {
     nodeEditor?: {
+        /**
+         * Offer the node editor at all. `false` hides the Create ▸ Edit node tool —
+         * a consumer whose backend forbids edits removes the affordance rather than
+         * vetoing every commit.
+         * @default true
+         */
         enabled?: boolean
 
         /**
@@ -403,7 +410,55 @@ export interface Editors {
          */
         render?: (session: NodeEditSession) => void
     }
+    /**
+     * Interactive node creation — the Create ▸ Add node tool and the canvas
+     * context-menu's "Add Node Here". What the new node carries is decided by
+     * {@link InterractionCallbacks.onBeforeNodeCreate}.
+     */
+    nodeCreator?: {
+        /**
+         * Offer the create-node affordances at all.
+         * @default true
+         */
+        enabled?: boolean
+    }
+    /**
+     * Deleting graph elements from the UI — the sidebar bulk-action Delete button and
+     * the node / edge / note context-menu delete entries. Every one of them is gated
+     * by {@link InterractionCallbacks.onBeforeDelete}; this switch decides whether
+     * they are shown in the first place.
+     */
+    deletion?: {
+        /**
+         * Offer the delete affordances at all. `false` removes them, which is what a
+         * read-only integration wants — cleaner than vetoing every click.
+         * @default true
+         */
+        enabled?: boolean
+    }
     edgeEditor?: {
+        /**
+         * Offer the edge editor at all. `false` hides the "Edit Edge" context-menu
+         * entry.
+         * @default true
+         */
+        enabled?: boolean
+
+        /**
+         * Optional field list for the edge edit modal. Inferred from the edge's data
+         * when undefined.
+         * @default undefined
+         */
+        fields?: FieldConfig[]
+
+        /**
+         * Optional custom body renderer for the edge edit modal — the static twin of
+         * {@link InterractionCallbacks.onEdgeEdit}. A custom body owns the draft:
+         * mutate `session.draft` as the user types.
+         * @default undefined
+         */
+        render?: (session: EdgeEditSession) => HTMLDivElement
+
         /**
          * When set, every interactive edge create prompts the end-user for a label
          * (stored on the new edge's `data.label`) using the chosen UI — no callback
