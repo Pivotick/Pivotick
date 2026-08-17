@@ -71,10 +71,11 @@ export class EdgeEditSession {
     public async commit(): Promise<boolean> {
         this.ensureActive()
 
+        const graph = this.manager.graph
         const previousData = this.edge.getData()
         const nextData = this.draft
 
-        const callback = this.manager.graph.getOptions().callbacks?.onBeforeEdgeEditCommit
+        const callback = graph.getOptions().callbacks?.onBeforeEdgeEditCommit
 
         if (callback) {
             const accepted = await callback({
@@ -89,9 +90,18 @@ export class EdgeEditSession {
 
         this.edge.setData(nextData)
         // Announce it on the data bus (`edgeChange` + a `dataBatchChanged` entry), then
-        // repaint — the label and tooltip read straight off the edge's data.
-        this.manager.graph.edgeDataChanged(this.edge, previousData, nextData)
-        this.manager.graph.renderer.update(true)
+        // repaint. `update` re-renders the dirty edge — including a fresh label — but a
+        // freshly drawn label carries no transform yet, so tick the edge's endpoints to
+        // place it; otherwise the new label only appears once something else moves.
+        graph.edgeDataChanged(this.edge, previousData, nextData)
+        graph.renderer.update(true)
+        graph.nextTickFor([this.edge.from, this.edge.to])
+        // Keep the sidebar in step when it is showing this very edge — but don't hijack
+        // the selection for an edge edited from the context menu.
+        const interaction = graph.renderer.getGraphInteraction()
+        if (interaction.getSelectedEdge()?.edge.id === this.edge.id) {
+            interaction.selectEdge(this.edge.getGraphElement(), this.edge)
+        }
         this.active = false
         this.manager.closeEdgeSession(this.edge.id)
         return true
