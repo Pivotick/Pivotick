@@ -19,7 +19,9 @@ import type {
     FilterFacet, FilterFacetOption, FilterFieldConfig, GraphFilters,
 } from '../../../src/interfaces/GraphQueryEngine'
 import type { GraphInteractionContext } from '../../../src/interfaces/GraphInteractions'
-import type { ExtraPanel, ExtraPanelSelection } from '../../../src/interfaces/GraphUI'
+import type { ExtraPanel, ExtraPanelSelection, PropertyEntry } from '../../../src/interfaces/GraphUI'
+import type { RenderContext } from '../../../src/interfaces/AsyncContent'
+import type { Edge } from '../../../src/Edge'
 import type {
     EdgeCreateContext,
     EdgeCreateDecision,
@@ -74,6 +76,48 @@ export interface PanelSpec {
     selfDriven?: boolean
     /** Omit `title` entirely — the panel then has no header row. */
     noTitle?: boolean
+    /**
+     * Make `render` return a promise, settled by hand through
+     * {@link HarnessApi.settleAsync} under the key `extraPanel.render:<id>`.
+     */
+    async?: boolean
+}
+
+/**
+ * A consumer content hook the harness can install, synchronously or as a
+ * promise it hands back but does not settle — that is the test's job, via
+ * {@link HarnessApi.settleAsync} / {@link HarnessApi.failAsync}. Holding a
+ * render open indefinitely is what makes the pending window, the staleness
+ * drop and out-of-order commits observable.
+ */
+export type AsyncHook =
+    | 'tooltip.render'
+    | 'tooltip.renderNodeExtra'
+    | 'tooltip.nodePropertiesMap'
+    | 'propertiesPanel.render'
+    | 'propertiesPanel.nodePropertiesMap'
+    | 'neighborsPanel.render'
+    | 'mainHeader.render'
+    | 'extraPanel.render'
+
+export interface AsyncContentSpec {
+    /** Hooks installed as promises the test settles by hand. */
+    hooks?: AsyncHook[]
+    /** Hooks installed as ordinary synchronous ones — the regression baseline. */
+    syncHooks?: AsyncHook[]
+    /** Override `UI.asyncContent.placeholder` with this text. */
+    placeholder?: string
+    /** Override `UI.asyncContent.error` with this text. */
+    error?: string
+}
+
+/** One render the harness is holding open, and what the library gave it. */
+interface HeldRender {
+    resolve: (text: string) => void
+    reject: (error: Error) => void
+    /** Captured eagerly, the way a consumer forwarding it to `fetch` would. */
+    signal: AbortSignal
+    isStale: () => boolean
 }
 
 export interface ConnectConfig {
@@ -169,6 +213,19 @@ const DECLARED_FACETS: FilterFacet[] = [
             && Number(node.getData().sightings) >= Number(value),
     },
 ]
+
+/** What an async content hook renders once it settles — locatable, and self-describing. */
+function asyncTestElement(text: string): HTMLElement {
+    const element = document.createElement('div')
+    element.className = 'pvt-test-async'
+    element.textContent = text
+    return element
+}
+
+/** The properties-map counterpart: one row carrying the same text. */
+function asyncTestProperties(text: string): PropertyEntry[] {
+    return [{ name: 'async', value: text }]
+}
 
 /** How a test-panel reports the selection it was rendered with. */
 function describeSelection(selection: ExtraPanelSelection): string {
@@ -426,6 +483,25 @@ export interface HarnessApi {
      * entered the registry, and how much panel DOM survives.
      */
     probePanelAfterTeardown(spec: PanelSpec): { panelsBefore: number; registered: boolean; domPanelsAfter: number }
+
+    /* ---------- async content hooks ---------- */
+
+    /** Load a fixture with the content hooks {@link AsyncContentSpec} describes. */
+    loadAsyncContent(name: FixtureName, spec: AsyncContentSpec, overrides?: PlainObject): Promise<void>
+    /** Keys of the renders currently held open, in the order they were requested. */
+    pendingAsync(): string[]
+    /** Settle a held render with content. Unknown keys are a no-op. */
+    settleAsync(key: string, text?: string): void
+    /** Reject a held render, exercising the error affordance. */
+    failAsync(key: string, message?: string): void
+    /** Did the library abort the signal it handed this render? */
+    asyncAborted(key: string): boolean
+    /** Does the library consider this render superseded? */
+    asyncStale(key: string): boolean
+    /** How many times a hook has been invoked — the sync path must not add calls. */
+    asyncCallCount(hook: AsyncHook): number
+    /** Tear the graph down, for the "in-flight work is abandoned" case. */
+    destroyGraph(): void
 }
 
 class Harness implements HarnessApi {
@@ -443,6 +519,10 @@ class Harness implements HarnessApi {
     private panelRenders = new Map<string, number>()
     private panelDisposers = new Map<string, () => void>()
     private panelSeq = 0
+    /** Async-content observation state: renders held open, and per-hook call counts. */
+    private asyncSpec: AsyncContentSpec = {}
+    private heldRenders = new Map<string, HeldRender>()
+    private asyncCalls = new Map<AsyncHook, number>()
 
     constructor(container: HTMLElement) {
         this.container = container
@@ -1129,26 +1209,140 @@ class Harness implements HarnessApi {
             alwaysVisible: spec.alwaysVisible,
             reactive: spec.reactive,
             title: spec.noTitle ? undefined : (selection) => `${id} · ${describeSelection(selection)}`,
-            render: (selection, handle) => {
+            render: (selection, handle, ctx) => {
                 const renders = (this.panelRenders.get(id) ?? 0) + 1
                 this.panelRenders.set(id, renders)
 
-                const body = document.createElement('div')
-                body.className = 'pvt-test-panel'
-                const summary = document.createElement('span')
-                summary.className = 'pvt-test-panel-summary'
-                summary.textContent = `${describeSelection(selection)} · renders=${renders}`
-                body.append(summary)
+                const build = (suffix: string): HTMLElement => {
+                    const body = document.createElement('div')
+                    body.className = 'pvt-test-panel'
+                    const summary = document.createElement('span')
+                    summary.className = 'pvt-test-panel-summary'
+                    summary.textContent = `${describeSelection(selection)} · renders=${renders}${suffix}`
+                    body.append(summary)
 
-                if (spec.selfDriven) {
-                    body.append(
-                        panelButton('pvt-test-panel-refresh', 'refresh me', () => handle.refresh()),
-                        panelButton('pvt-test-panel-remove', 'remove me', () => handle.remove())
-                    )
+                    if (spec.selfDriven) {
+                        body.append(
+                            panelButton('pvt-test-panel-refresh', 'refresh me', () => handle.refresh()),
+                            panelButton('pvt-test-panel-remove', 'remove me', () => handle.remove())
+                        )
+                    }
+                    return body
                 }
-                return body
+
+                if (!spec.async) return build('')
+                return this.holdRender('extraPanel.render', id, ctx).then((text) => build(` · ${text}`))
             },
         }
+    }
+
+    /* ---------- async content hooks ---------- */
+
+    async loadAsyncContent(name: FixtureName, spec: AsyncContentSpec, overrides: PlainObject = {}): Promise<void> {
+        this.heldRenders.clear()
+        this.asyncCalls.clear()
+        this.asyncSpec = spec
+
+        const asyncContent: PlainObject = {}
+        if (spec.placeholder !== undefined) asyncContent.placeholder = spec.placeholder
+        if (spec.error !== undefined) asyncContent.error = spec.error
+
+        const installed = [...(spec.hooks ?? []), ...(spec.syncHooks ?? [])]
+        const wants = (hook: AsyncHook): boolean => installed.includes(hook)
+        const tooltip: PlainObject = {}
+        const propertiesPanel: PlainObject = {}
+        const neighborsPanel: PlainObject = {}
+        const mainHeader: PlainObject = {}
+
+        if (wants('tooltip.render')) {
+            tooltip.render = (element: Node | Edge, ctx: RenderContext) =>
+                this.hookContent('tooltip.render', element.id, ctx, asyncTestElement)
+        }
+        if (wants('tooltip.renderNodeExtra')) {
+            tooltip.renderNodeExtra = (node: Node, ctx: RenderContext) =>
+                this.hookContent('tooltip.renderNodeExtra', node.id, ctx, asyncTestElement)
+        }
+        if (wants('tooltip.nodePropertiesMap')) {
+            tooltip.nodePropertiesMap = (node: Node, ctx: RenderContext) =>
+                this.hookContent('tooltip.nodePropertiesMap', node.id, ctx, asyncTestProperties)
+        }
+        if (wants('propertiesPanel.render')) {
+            propertiesPanel.render = (selection: ExtraPanelSelection, ctx: RenderContext) =>
+                this.hookContent('propertiesPanel.render', describeSelection(selection), ctx, asyncTestElement)
+        }
+        if (wants('propertiesPanel.nodePropertiesMap')) {
+            propertiesPanel.nodePropertiesMap = (node: Node, ctx: RenderContext) =>
+                this.hookContent('propertiesPanel.nodePropertiesMap', node.id, ctx, asyncTestProperties)
+        }
+        if (wants('neighborsPanel.render')) {
+            neighborsPanel.render = (selection: ExtraPanelSelection, ctx: RenderContext) =>
+                this.hookContent('neighborsPanel.render', describeSelection(selection), ctx, asyncTestElement)
+        }
+        if (wants('mainHeader.render')) {
+            mainHeader.render = (selection: ExtraPanelSelection, ctx: RenderContext) =>
+                this.hookContent('mainHeader.render', describeSelection(selection), ctx, asyncTestElement)
+        }
+
+        await this.boot(name, mergeOptions({
+            UI: { asyncContent, tooltip, propertiesPanel, neighborsPanel, mainHeader },
+        }, overrides))
+    }
+
+    pendingAsync(): string[] {
+        return [...this.heldRenders.keys()]
+    }
+
+    settleAsync(key: string, text: string = `settled ${key}`): void {
+        this.heldRenders.get(key)?.resolve(text)
+        this.heldRenders.delete(key)
+    }
+
+    failAsync(key: string, message: string = `failed ${key}`): void {
+        this.heldRenders.get(key)?.reject(new Error(message))
+        this.heldRenders.delete(key)
+    }
+
+    asyncAborted(key: string): boolean {
+        return this.heldRenders.get(key)?.signal.aborted ?? false
+    }
+
+    asyncStale(key: string): boolean {
+        return this.heldRenders.get(key)?.isStale() ?? false
+    }
+
+    asyncCallCount(hook: AsyncHook): number {
+        return this.asyncCalls.get(hook) ?? 0
+    }
+
+    destroyGraph(): void {
+        this.g.destroy()
+    }
+
+    /**
+     * Run a content hook: count the call, then either answer straight away or —
+     * for a hook the spec listed as async — hand back a promise this holds open
+     * until the test settles it.
+     */
+    private hookContent<T>(
+        hook: AsyncHook,
+        elementKey: string,
+        ctx: RenderContext,
+        build: (text: string) => T,
+    ): T | Promise<T> {
+        this.asyncCalls.set(hook, (this.asyncCalls.get(hook) ?? 0) + 1)
+
+        if (!this.asyncSpec.hooks?.includes(hook)) return build(`sync ${hook} · ${elementKey}`)
+        return this.holdRender(hook, elementKey, ctx).then(build)
+    }
+
+    /** Park a render under `<hook>:<element>` until the test settles or fails it. */
+    private holdRender(hook: AsyncHook, elementKey: string, ctx: RenderContext): Promise<string> {
+        const key = `${hook}:${elementKey}`
+        return new Promise<string>((resolve, reject) => {
+            // `signal` is read now, as a consumer forwarding it to `fetch` would —
+            // so a later abort is observable even for a render nobody polls.
+            this.heldRenders.set(key, { resolve, reject, signal: ctx.signal, isStale: () => ctx.isStale() })
+        })
     }
 
     enableLasso(): void {
