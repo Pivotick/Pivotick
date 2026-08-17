@@ -6,6 +6,7 @@ import type * as GraphOptions from './interfaces/GraphOptions'
 import type { EdgeData } from './Edge'
 import type { NodeData } from './Node'
 import type * as GraphUI from './interfaces/GraphUI'
+import type * as AsyncContent from './interfaces/AsyncContent'
 import type * as InterractionCallbacks from './interfaces/InterractionCallbacks'
 import type * as LayoutOptions from './interfaces/LayoutOptions'
 import type * as RendererOptions from './interfaces/RendererOptions'
@@ -30,6 +31,7 @@ export type {
     EdgeData,
     NodeData,
     GraphUI,
+    AsyncContent,
     InterractionCallbacks,
     LayoutOptions,
     RendererOptions,

@@ -5,7 +5,8 @@ import type { UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
 import './properties.scss'
 import type { EdgeSelection, NodeSelection } from '../../../interfaces/GraphInteractions'
-import { tryResolveHTMLElement } from '../../../utils/Getters'
+import { AsyncRenderScope } from '../../../utils/AsyncRender'
+import type { NeighborsPanel } from '../../../interfaces/GraphUI'
 import { createTabs } from '../../components/Tabs'
 import type { GraphOptions, RawEdge, RawNode, RelaxedGraphData } from '../../../interfaces/GraphOptions'
 import { Graph } from '../../../Graph'
@@ -35,11 +36,16 @@ export class SidebarNeighbors extends UIComponent {
 
     private egoGraph?: Graph
 
-    private renderCb?: ((element: Node | Edge | Node[] | Edge[] | null) => HTMLElement | string) | HTMLElement | string
+    private renderCb?: NeighborsPanel['render']
+
+    // Placeholder / staleness for an async `render`; superseded on every selection.
+    private readonly renderScope: AsyncRenderScope
 
     constructor(uiManager: UIManager) {
         super(uiManager)
         this.renderCb = typeof this.uiManager.getOptions().neighborsPanel.render === 'function' ? this.uiManager.getOptions().neighborsPanel.render : undefined
+        this.renderScope = new AsyncRenderScope('neighbors', () => this.uiManager.getOptions().asyncContent)
+        this.track(() => this.renderScope.supersede())
     }
 
     protected onMount(rootContainer: HTMLElement | undefined) {
@@ -132,8 +138,11 @@ export class SidebarNeighbors extends UIComponent {
     private renderCustomContent(element: Node | Edge | Node[] | Edge[] | null) {
         if (!this.body || !this.renderCb) return
 
+        // Abandon the previous selection's render before its slot is wiped, so a
+        // late resolution can't paint over the element now selected.
+        this.renderScope.supersede()
         this.body.innerHTML = ''
-        const content = tryResolveHTMLElement(this.renderCb, element)
+        const content = this.renderScope.content(this.renderCb, element)
         if (content) {
             this.body?.appendChild(content)
         }

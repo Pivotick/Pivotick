@@ -5,11 +5,13 @@ import type { Edge } from '../../../Edge'
 import type { UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
 import './properties.scss'
-import { edgePropertiesGetter, nodePropertiesGetter } from '../../../utils/GraphGetters'
+import { collectPropertyEntries, edgePropertiesGetter, nodePropertiesGetter } from '../../../utils/GraphGetters'
 import { filterAdd, filterRemove } from '../../icons'
-import type { PropertyEntry } from '../../../interfaces/GraphUI'
+import type { PropertiesPanel, PropertyEntry } from '../../../interfaces/GraphUI'
 import type { EdgeSelection, NodeSelection } from '../../../interfaces/GraphInteractions'
-import { tryResolveHTMLElement } from '../../../utils/Getters'
+import { isThenable } from '../../../utils/Getters'
+import { AsyncRenderScope } from '../../../utils/AsyncRender'
+import type { RenderContext } from '../../../interfaces/AsyncContent'
 import { aggregateProperties, createTableForAggregatedProperties } from '../../../utils/ElementCreationAggregatedProperties'
 
 
@@ -20,11 +22,17 @@ export class SidebarProperties extends UIComponent {
     private header?: HTMLDivElement
     private body?: HTMLDivElement
 
-    private renderCb?: ((element: Node | Edge | Node[] | Edge[] | null) => HTMLElement | string) | HTMLElement | string
+    private renderCb?: PropertiesPanel['render']
+
+    // Placeholder / staleness for an async `render` or properties map; superseded
+    // on every selection change.
+    private readonly renderScope: AsyncRenderScope
 
     constructor(uiManager: UIManager) {
         super(uiManager)
         this.renderCb = typeof this.uiManager.getOptions().propertiesPanel.render === 'function' ? this.uiManager.getOptions().propertiesPanel.render : undefined
+        this.renderScope = new AsyncRenderScope('properties', () => this.uiManager.getOptions().asyncContent)
+        this.track(() => this.renderScope.supersede())
     }
 
     protected onMount(rootContainer: HTMLElement | undefined) {
@@ -68,11 +76,31 @@ export class SidebarProperties extends UIComponent {
     private renderCustomContent(element: Node | Edge | Node[] | Edge[] | null) {
         if (!this.body || !this.renderCb) return
 
+        this.renderScope.supersede()
         this.body.innerHTML = ''
-        const content = tryResolveHTMLElement(this.renderCb, element)
+        const content = this.renderScope.content(this.renderCb, element)
         if (content) {
             this.body?.appendChild(content)
         }
+    }
+
+    /**
+     * Replace the panel body with the outcome of a render pass.
+     *
+     * Everything the panel draws goes through here so the staleness guard is in
+     * one place: whatever the last pass was still fetching is abandoned before
+     * its slot leaves the DOM.
+     */
+    private renderBody<T>(
+        produce: (ctx: RenderContext) => T | Promise<T>,
+        build: (value: T) => HTMLElement | undefined,
+    ): void {
+        if (!this.body) return
+
+        this.renderScope.supersede()
+        const content = this.renderScope.resolve(produce, build)
+        this.body.innerHTML = ''
+        if (content) this.body.appendChild(content)
     }
 
     private setHeaderBasicNode() {
@@ -111,13 +139,12 @@ export class SidebarProperties extends UIComponent {
             return
         }
 
-        const properties = nodePropertiesGetter(node, this.uiManager.getOptions().propertiesPanel)
-        const propertiesContainer = createHtmlElement('div', { class: 'pvt-properties-container' }, [
-            createPropertyList(properties, node),
-        ])
-
-        this.body.innerHTML = ''
-        this.body.appendChild(propertiesContainer)
+        this.renderBody(
+            (ctx) => nodePropertiesGetter(node, this.uiManager.getOptions().propertiesPanel, ctx),
+            (properties) => createHtmlElement('div', { class: 'pvt-properties-container' }, [
+                createPropertyList(properties, node),
+            ]) as HTMLDivElement,
+        )
     }
 
     public updateEdgeProperties(edge: Edge): void {
@@ -130,13 +157,12 @@ export class SidebarProperties extends UIComponent {
             return
         }
 
-        const properties = edgePropertiesGetter(edge, this.uiManager.getOptions().propertiesPanel)
-        const propertiesContainer = createHtmlElement('div', { class: 'pvt-properties-container' }, [
-            createPropertyList(properties, edge),
-        ])
-
-        this.body.innerHTML = ''
-        this.body.appendChild(propertiesContainer)
+        this.renderBody(
+            (ctx) => edgePropertiesGetter(edge, this.uiManager.getOptions().propertiesPanel, ctx),
+            (properties) => createHtmlElement('div', { class: 'pvt-properties-container' }, [
+                createPropertyList(properties, edge),
+            ]) as HTMLDivElement,
+        )
     }
 
 
@@ -151,6 +177,25 @@ export class SidebarProperties extends UIComponent {
             return
         }
 
+        this.renderBody(
+            (ctx) => collectPropertyEntries(
+                nodes.map((selected) => selected.node),
+                (node) => nodePropertiesGetter(node, this.uiManager.getOptions().propertiesPanel, ctx),
+            ),
+            (allProperties) => this.buildAggregatedTable(allProperties, nodes.length, this.applyNodeFacetFilter.bind(this)),
+        )
+    }
+
+    /**
+     * The aggregated table for a multi-selection. `onFacetFilter` is node-only:
+     * edge selection filtering runs on nodes, so an edge table's bars and chips
+     * stay non-clickable.
+     */
+    private buildAggregatedTable(
+        allProperties: PropertyEntry[][],
+        count: number,
+        onFacetFilter?: (key: string, value: string, mode: 'keep' | 'exclude') => void,
+    ): HTMLDivElement {
         const template = `
 <div class="pvt-properties-container">
     <div class="">
@@ -161,24 +206,14 @@ export class SidebarProperties extends UIComponent {
         const div = propertiesContainer.querySelector('div.pvt-aggregated-properties') as HTMLDivElement
 
         if (div) {
-            const allProperties: PropertyEntry[][] = []
-            nodes.forEach((selectedNode) => {
-                const { node } = selectedNode
-                const properties = nodePropertiesGetter(node, this.uiManager.getOptions().propertiesPanel)
-                allProperties.push(properties)
-            })
-            const aggregatedProperties = aggregateProperties(allProperties)
-            const aggregatedPropertiesDiv = createTableForAggregatedProperties(
-                aggregatedProperties,
-                nodes.length,
+            div.appendChild(createTableForAggregatedProperties(
+                aggregateProperties(allProperties),
+                count,
                 this.genActionButtons.bind(this),
-                this.applyNodeFacetFilter.bind(this)
-            )
-            div.appendChild(aggregatedPropertiesDiv)
+                onFacetFilter,
+            ))
         }
-
-        this.body.innerHTML = ''
-        this.body.appendChild(propertiesContainer)
+        return propertiesContainer
     }
 
     public updateEdgesProperties(edges: EdgeSelection<unknown>[]): void {
@@ -191,30 +226,13 @@ export class SidebarProperties extends UIComponent {
             return
         }
 
-        const template = `
-<div class="pvt-properties-container">
-    <div class="">
-        <div class="pvt-aggregated-properties"></div>
-    </div>
-</div>`
-        const propertiesContainer = createHtmlTemplate(template) as HTMLDivElement
-        const div = propertiesContainer.querySelector('div.pvt-aggregated-properties') as HTMLDivElement
-
-        if (div) {
-            const allProperties: PropertyEntry[][] = []
-            edges.forEach((selectedEdge) => {
-                const { edge } = selectedEdge
-                const properties = edgePropertiesGetter(edge, this.uiManager.getOptions().propertiesPanel)
-                allProperties.push(properties)
-            })
-            const aggregatedProperties = aggregateProperties(allProperties)
-            // No facet-filter callback here: edge selection filtering runs on nodes, so bars/chips stay non-clickable.
-            const aggregatedPropertiesDiv = createTableForAggregatedProperties(aggregatedProperties, edges.length, this.genActionButtons.bind(this))
-            div.appendChild(aggregatedPropertiesDiv)
-        }
-
-        this.body.innerHTML = ''
-        this.body.appendChild(propertiesContainer)
+        this.renderBody(
+            (ctx) => collectPropertyEntries(
+                edges.map((selected) => selected.edge),
+                (edge) => edgePropertiesGetter(edge, this.uiManager.getOptions().propertiesPanel, ctx),
+            ),
+            (allProperties) => this.buildAggregatedTable(allProperties, edges.length),
+        )
     }
 
     /**
@@ -225,18 +243,33 @@ export class SidebarProperties extends UIComponent {
      * The value is read through `nodePropertiesGetter` — the same source the
      * facet was built from — rather than raw `getData()`, so getter-derived
      * fields (e.g. `id`, which lives on `node.id`) match instead of missing.
+     *
+     * A declared map may be async, in which case the narrowing waits for it.
+     * A synchronous map still narrows in the same tick as the click.
      */
     private applyNodeFacetFilter(key: string, value: string, mode: 'keep' | 'exclude'): void {
         const propertiesPanel = this.uiManager.getOptions().propertiesPanel
         const interaction = this.uiManager.graph.renderer.getGraphInteraction()
-        const toRemove = interaction.getSelectedNodes()
-            .filter((nodeSelection: NodeSelection<unknown>) => {
-                const nodeValue = nodePropertiesGetter(nodeSelection.node, propertiesPanel)
-                    .find((prop) => prop.name === key)?.value
+        const selected = interaction.getSelectedNodes()
+
+        const narrow = (allProperties: PropertyEntry[][]): void => {
+            const toRemove = selected.filter((_nodeSelection: NodeSelection<unknown>, index: number) => {
+                const nodeValue = allProperties[index].find((prop) => prop.name === key)?.value
                 // Strict: the facet is type-sensitive, so 80 and '80' are distinct rows.
                 return mode === 'keep' ? nodeValue !== value : nodeValue === value
             })
-        interaction.removeNodesFromSelection(toRemove)
+            interaction.removeNodesFromSelection(toRemove)
+        }
+
+        const collected = collectPropertyEntries(
+            selected.map((nodeSelection) => nodeSelection.node),
+            (node) => nodePropertiesGetter(node, propertiesPanel),
+        )
+        if (isThenable(collected)) {
+            void collected.then(narrow)
+        } else {
+            narrow(collected)
+        }
     }
 
     private genActionButtons(key: string, value: string): HTMLDivElement {

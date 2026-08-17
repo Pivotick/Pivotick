@@ -6,6 +6,7 @@ import type { Note } from '../Note'
 import type { UIElement } from '../ui/UIManager'
 import type { FieldConfig } from '../utils/FormFactory'
 import type { FilterOptions } from './GraphQueryEngine'
+import type { AsyncContentOptions, RenderContext, RenderResult } from './AsyncContent'
 
 /**
  * @category Main Options
@@ -43,6 +44,11 @@ export interface GraphUI {
      * disabled they're hidden from the rail entirely.
      */
     modeRail?: ModeRailOptions,
+    /**
+     * What to show while a content hook's promise is in flight, and if it
+     * rejects. Only async hooks ever reach it — see {@link AsyncContentOptions}.
+     */
+    asyncContent?: AsyncContentOptions,
     keybindings?: Keybinding[];
 }
 
@@ -94,8 +100,10 @@ export interface MainHeader {
     * @example
     * (element) => `element id: ${element.id}`
     * @remarks A returned `string` renders as plain text; return an `HTMLElement` to render HTML.
+    * May be `async`: the slot shows a placeholder until it resolves, and a result
+    * arriving after the selection moved on is dropped.
     */
-    render?: ((element: Node | Edge | Node[] | Edge[] | null) => HTMLElement | string) | HTMLElement | string,
+    render?: ((element: Node | Edge | Node[] | Edge[] | null, ctx: RenderContext) => RenderResult) | HTMLElement | string,
 }
 
 /**
@@ -105,6 +113,11 @@ export interface MainHeader {
  * @default
  * title   = node.getData().label || "Could not resolve title"
  * subtitle= node.getData().description || "Could not resolve subtitle"
+ *
+ * @remarks **Synchronous only.** These feed the header's auto-fitting title slot
+ * and `resolveNodeByName` (node search, `[[node]]` note autocomplete), all of
+ * which need the text now. To show fetched detail, use an async
+ * {@link MainHeader.render} or {@link PropertiesPanel.nodePropertiesMap} instead.
  */
 export interface HeaderMapEntry<T extends Node | Edge> {
     title: ((element: T) => string) | string,
@@ -120,6 +133,10 @@ export interface HeaderMapEntry<T extends Node | Edge> {
  * A `string` (for either field) renders as plain text; to render HTML, pass an
  * `HTMLElement` (or a function returning one). Since 1.4.0 string values are no
  * longer parsed as markup — wrap HTML in an element instead.
+ *
+ * @remarks **Synchronous only.** Fetch the rows instead: an async
+ * {@link PropertiesPanel.nodePropertiesMap} resolves once and then hands back
+ * plain entries, rather than putting a spinner in every cell.
  */
 export interface PropertyEntry {
     name: ((element: Node | Edge | null) => HTMLElement | string) | HTMLElement | string,
@@ -134,25 +151,33 @@ export interface PropertyEntry {
  */
 export interface PropertiesPanel {
     /**
-     * A function that computes the list of node properties to display
+     * A function that computes the list of node properties to display.
+     *
+     * May be `async` — return a promise of the entries and the panel shows a
+     * placeholder until it resolves.
      *
      * @default All key/value pairs from node.getData()
      */
-    nodePropertiesMap: ((node: Node) => PropertyEntry[])
+    nodePropertiesMap: ((node: Node, ctx: RenderContext) => PropertyEntry[] | Promise<PropertyEntry[]>)
     /**
-     * A function that computes the list of edge properties to display
+     * A function that computes the list of edge properties to display.
+     *
+     * May be `async` — return a promise of the entries and the panel shows a
+     * placeholder until it resolves.
      *
      * @default All key/value pairs from edge.getData()
      */
-    edgePropertiesMap: ((edge: Edge) => PropertyEntry[])
+    edgePropertiesMap: ((edge: Edge, ctx: RenderContext) => PropertyEntry[] | Promise<PropertyEntry[]>)
     /**
     * Custom renderer for the property panel. This content will override the default sidebar property panel.
     * @default undefined
     * @example
     * (element) => `element id: ${element.id}`
     * @remarks A returned `string` renders as plain text; return an `HTMLElement` to render HTML.
+    * May be `async`: the slot shows a placeholder until it resolves, and a result
+    * arriving after the selection moved on is dropped.
     */
-    render?: ((element: Node | Edge | Node[] | Edge[] | null) => HTMLElement | string) | HTMLElement | string,
+    render?: ((element: Node | Edge | Node[] | Edge[] | null, ctx: RenderContext) => RenderResult) | HTMLElement | string,
 }
 
 /**
@@ -162,7 +187,12 @@ export interface PropertiesPanel {
  * @default All neighbor for the chosen entity
  */
 export interface NeighborsPanel {
-    render?: ((element: Node | Edge | Node[] | Edge[] | null) => HTMLElement | string) | HTMLElement | string,
+    /**
+     * @remarks A returned `string` renders as plain text; return an `HTMLElement` to render HTML.
+     * May be `async`: the slot shows a placeholder until it resolves, and a result
+     * arriving after the selection moved on is dropped.
+     */
+    render?: ((element: Node | Edge | Node[] | Edge[] | null, ctx: RenderContext) => RenderResult) | HTMLElement | string,
 }
 
 /**
@@ -192,10 +222,11 @@ export interface ExtraPanelHandle {
  * selection (and the panel's own {@link ExtraPanelHandle}).
  *
  * A `string` renders as plain **text**; return an `HTMLElement` to render your
- * own markup.
+ * own markup. May be `async`: the panel shows a placeholder until it resolves,
+ * and a result arriving after the selection moved on is dropped.
  */
 export type ExtraPanelContent =
-    | ((element: ExtraPanelSelection, panel: ExtraPanelHandle) => HTMLElement | string)
+    | ((element: ExtraPanelSelection, panel: ExtraPanelHandle, ctx: RenderContext) => RenderResult)
     | HTMLElement
     | string
 
@@ -270,27 +301,36 @@ export interface Tooltip {
     enabled?: boolean /** @default true */
     allowPinning?: boolean /** @default true */
     /**
-     * Custom renderer for node tooltips. This content is added after the default tooltip
+     * Custom renderer for node tooltips. This content is added after the default tooltip.
+     *
+     * May be `async` — the tooltip shows a placeholder, then swaps in the content and
+     * repositions itself. Hovering another node first drops the stale result and aborts
+     * `ctx.signal`.
      * @default undefined
      */
-    renderNodeExtra?: (node: Node) => HTMLElement | string,
+    renderNodeExtra?: (node: Node, ctx: RenderContext) => RenderResult,
     /**
-    * Custom renderer for edge tooltips. This content is added after the default tooltip
+    * Custom renderer for edge tooltips. This content is added after the default tooltip.
+    *
+    * May be `async`, on the same terms as {@link Tooltip.renderNodeExtra}.
     * @default undefined
     */
-    renderEdgeExtra?: (edge: Edge) => HTMLElement | string,
+    renderEdgeExtra?: (edge: Edge, ctx: RenderContext) => RenderResult,
     nodeHeaderMap: Partial<HeaderMapEntry<Node>>,
     edgeHeaderMap: Partial<HeaderMapEntry<Edge>>,
-    nodePropertiesMap: ((node: Node) => Array<PropertyEntry>),
-    edgePropertiesMap: ((edge: Edge) => Array<PropertyEntry>),
+    /** May be `async` — the property list shows a placeholder until it resolves. */
+    nodePropertiesMap: ((node: Node, ctx: RenderContext) => Array<PropertyEntry> | Promise<Array<PropertyEntry>>),
+    /** May be `async` — the property list shows a placeholder until it resolves. */
+    edgePropertiesMap: ((edge: Edge, ctx: RenderContext) => Array<PropertyEntry> | Promise<Array<PropertyEntry>>),
     /**
     * Custom renderer for the tooltip. This content will override the default tooltip
     * @default undefined
     * @example
     * (element) => `element id: ${element.id}`
     * @remarks A returned `string` renders as plain text; return an `HTMLElement` to render HTML.
+    * May be `async`, on the same terms as {@link Tooltip.renderNodeExtra}.
     */
-    render?: ((element: Node | Edge) => HTMLElement | string) | HTMLElement | string,
+    render?: ((element: Node | Edge, ctx: RenderContext) => RenderResult) | HTMLElement | string,
     setPosition?: (tooltip: HTMLElement, hoveredBCR: DOMRect, canvasBbox: DOMRect) => void, 
 }
 

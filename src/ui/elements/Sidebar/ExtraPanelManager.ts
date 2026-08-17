@@ -1,7 +1,7 @@
 import type { Node } from '../../../Node'
 import type { Edge } from '../../../Edge'
 import { createHtmlTemplate } from '../../../utils/ElementCreation'
-import { tryResolveHTMLElement } from '../../../utils/Getters'
+import { AsyncRenderScope } from '../../../utils/AsyncRender'
 import type { ExtraPanelChange } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
 import type { ExtraPanelHandle, ExtraPanelSelection, RegisteredExtraPanel } from '../../../interfaces/GraphUI'
@@ -23,6 +23,12 @@ interface MountedPanel {
     body: HTMLDivElement
     /** Passed to the panel's own `title` / `render` so it can refresh or remove itself. */
     handle: ExtraPanelHandle
+    /**
+     * Placeholder / staleness for this panel's async `title` and `render`. One
+     * per panel, not one per manager: `refreshPanel(id)` re-renders a single
+     * panel and must not abandon its neighbours' in-flight content.
+     */
+    scope: AsyncRenderScope
     /** True once `render` has resolved at least once — what `reactive: false` pins. */
     rendered: boolean
 }
@@ -53,6 +59,7 @@ export class ExtraPanelManager extends UIComponent {
     }
 
     protected onDestroy() {
+        for (const mountedPanel of this.mounted) mountedPanel.scope.supersede()
         this.mounted = []
         this.panelContainer?.remove()
         this.panelContainer = undefined
@@ -155,6 +162,7 @@ export class ExtraPanelManager extends UIComponent {
                 refresh: () => this.uiManager.refreshPanel(panel.id),
                 remove: () => this.uiManager.removePanel(panel.id),
             },
+            scope: new AsyncRenderScope('extraPanel', () => this.uiManager.getOptions().asyncContent),
             rendered: false,
         }
 
@@ -173,17 +181,21 @@ export class ExtraPanelManager extends UIComponent {
         if (index === -1) return
 
         const [removed] = this.mounted.splice(index, 1)
+        removed.scope.supersede()
         removed.root.remove()
     }
 
     /* ---------- rendering ---------- */
 
     private renderPanel(mountedPanel: MountedPanel, force: boolean = false): void {
-        const { panel, header, body, handle } = mountedPanel
+        const { panel, header, body, handle, scope } = mountedPanel
         if (mountedPanel.rendered && panel.reactive === false && !force) return
 
+        // Drop whatever the previous selection was still fetching before its
+        // slots leave the DOM — a late arrival must not describe the wrong node.
+        scope.supersede()
         this.setContent(header, this.resolveTitle(mountedPanel))
-        this.setContent(body, tryResolveHTMLElement(panel.render, this.selection, handle))
+        this.setContent(body, scope.content(panel.render, this.selection, handle))
         mountedPanel.rendered = true
     }
 
@@ -191,10 +203,10 @@ export class ExtraPanelManager extends UIComponent {
      * A panel with no title — or one that resolved to blank text — leaves its
      * header element empty, which is what keeps the header row collapsed.
      */
-    private resolveTitle({ panel, handle }: MountedPanel): HTMLElement | undefined {
+    private resolveTitle({ panel, handle, scope }: MountedPanel): HTMLElement | undefined {
         if (panel.title === undefined) return undefined
 
-        const title = tryResolveHTMLElement(panel.title, this.selection, handle)
+        const title = scope.content(panel.title, this.selection, handle)
         if (!title) return undefined
 
         const blank = title.childElementCount === 0 && (title.textContent ?? '').trim() === ''
