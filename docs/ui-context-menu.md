@@ -31,7 +31,23 @@ Each context menu is split into two sections:
 You can configure these menus for these scopes:
 - `menuNode`
 - `menuEdge`
+- `menuNote`
 - `menuCanvas`
+
+## Default actions
+
+| Scope        | Default entries                                                                                                  |
+| ------------ | ---------------------------------------------------------------------------------------------------------------- |
+| `menuNode`   | Pin / Unpin / Focus / Hide (topbar) · View Image · Select Neighbors · Hide Children · Connect to… · Inspect Properties · **Delete Node** |
+| `menuEdge`   | **Edit Edge** · **Delete Edge**                                                                                  |
+| `menuNote`   | Hide Note (topbar) · Remove Note                                                                                 |
+| `menuCanvas` | Pin All / Unpin All (topbar) · **Add Node Here** · Add Note                                                       |
+
+The write-path entries (delete, edit, create) go through their before-hooks — see
+[Write-path lifecycle hooks](/callbacks#write-path-lifecycle-hooks) — and each disappears
+when its `editors.<editor>.enabled` flag is `false`. Your own entries are never gated.
+Both "…here" entries place their element where the **menu was opened**, whatever the
+zoom or pan.
 
 
 ::: code-group
