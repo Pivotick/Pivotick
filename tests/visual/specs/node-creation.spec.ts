@@ -8,6 +8,7 @@ import {
     nodeEl,
     canvas,
     centerOf,
+    waitForViewSettled,
 } from '../helpers'
 
 // Interactive node creation: the Create ▸ Add node tool and the canvas menu's
@@ -61,6 +62,9 @@ async function expectRenderedAt(page: PWPage, id: string, point: { x: number; y:
  * viewport would make Playwright scroll the page to click it.
  */
 async function emptySpot(page: PWPage): Promise<{ x: number; y: number }> {
+    // A late-landing initial fit emits `canvasZoom`, which closes the menu we are about
+    // to open — so settle the view before handing out a click target.
+    await waitForViewSettled(page)
     const box = await canvas(page).boundingBox()
     if (!box) throw new Error('canvas has no bounding box')
     return { x: box.x + box.width - 230, y: box.y + box.height - 170 }

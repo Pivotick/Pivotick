@@ -8,6 +8,7 @@ import {
     nodeEl,
 
     centerOf,
+    waitForViewSettled,
 } from '../helpers'
 import type { RecordedDeleteContext, RecordedDeleteOutcome } from '../harness/harness'
 
@@ -52,6 +53,8 @@ const bulkDeleteButton = (page: Page) =>
 
 /** Open an element's context menu and click one of its entries. */
 async function pickFromContextMenu(page: Page, target: { x: number; y: number }, entry: string): Promise<void> {
+    // A late-landing initial fit emits `canvasZoom`, which would close the menu.
+    await waitForViewSettled(page)
     await page.mouse.click(target.x, target.y, { button: 'right' })
     await expect(page.locator('.pvt-contextmenu')).toHaveClass(/shown/)
     await page.locator('.pvt-contextmenu .pvt-action-item', { hasText: entry }).click()
@@ -191,6 +194,7 @@ test.describe('delete — the context-menu entries', () => {
             UI: { editors: { deletion: { enabled: false }, edgeEditor: { enabled: false } } },
         })
 
+        await waitForViewSettled(page)
         await nodeEl(page, 'a').click({ button: 'right' })
         await expect(page.locator('.pvt-contextmenu')).toHaveClass(/shown/)
         await expect(page.locator('.pvt-contextmenu .pvt-action-item', { hasText: 'Delete Node' })).toHaveCount(0)

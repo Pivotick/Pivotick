@@ -6,6 +6,7 @@ import {
     loadFixture,
     harness,
     expectCanvas,
+    waitForViewSettled,
 } from '../helpers'
 import type { RecordedDataChange } from '../harness/harness'
 
@@ -52,6 +53,7 @@ test.describe('edge editing', () => {
     })
 
     test('the edge context menu opens a session whose form reflects the edge data', async ({ page }) => {
+        await waitForViewSettled(page) // a late fit would emit canvasZoom and close the menu
         const point = await edgePoint(page, 'a-b')
         await page.mouse.click(point.x, point.y, { button: 'right' })
         await page.locator('.pvt-contextmenu .pvt-action-item', { hasText: 'Edit Edge' }).click()
@@ -105,6 +107,22 @@ test.describe('edge editing', () => {
         const midpoint = await edgePoint(page, 'b-c')
         expect(label.text).toBe('flows-to')
         expect(Math.hypot(label.x - midpoint.x, label.y - midpoint.y)).toBeLessThan(30)
+    })
+
+    test('the sidebar re-reads the selected edge it is showing', async ({ page }) => {
+        // A commit has to refresh the panels too, or the sidebar keeps showing the label
+        // the edge had before the edit.
+        await loadFixture(page, 'basic', { UI: { mode: 'full', sidebar: { collapsed: false } } })
+        await harness(page, 'configureWritePath', {})
+        await harness(page, 'selectEdge', 'a-b')
+        const sidebarTitle = page.locator('.pvt-sidebar .pvt-mainheader-nodeinfo-name')
+        await expect(sidebarTitle).toHaveText('links')
+
+        await harness(page, 'openEdgeSession', 'a-b')
+        await field(page, 'label').fill('reports-to')
+        await modalButton(page, 'Edit Edge').click()
+
+        await expect(sidebarTitle).toHaveText('reports-to')
     })
 
     test('a vetoed commit leaves the edge untouched and the modal open', async ({ page }) => {
