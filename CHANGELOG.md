@@ -23,6 +23,29 @@
   swallowed `ExtraPanel.title`; it is shown whenever it resolves to content (a panel with no title
   has no header row).
 
+### Content renderers can be asynchronous
+
+- **Every consumer content hook may now return a `Promise`.** That is
+  `mainHeader.render`, `propertiesPanel.render` / `nodePropertiesMap` / `edgePropertiesMap`,
+  `neighborsPanel.render`, `ExtraPanel.title` / `render`, and the tooltip's `render` /
+  `renderNodeExtra` / `renderEdgeExtra` / `nodePropertiesMap` / `edgePropertiesMap`. The library
+  owns the three parts a consumer cannot: it mounts a placeholder while the promise is pending,
+  swaps the content in on resolve, and **drops a result whose slot has since gone away** — so a
+  fetch started for one node can never land in a tooltip or panel describing another. Only the most
+  recent render for a surface can commit, whatever order they resolve in.
+- **Returning a promise used to render the literal text `{}`.** `tryResolveHTMLElement`
+  stringified it. Async hooks now render their content; the hooks that remain synchronous
+  (`HeaderMapEntry.title` / `subtitle`, `PropertyEntry.name` / `value`) warn on the console
+  instead of painting `{}`.
+- Every content hook receives a **`RenderContext`** as its last argument — `{ signal, isStale() }`.
+  The signal is aborted when a render is superseded or the graph is destroyed, so a forwarded
+  `fetch` is cancelled rather than leaked. Existing one-argument callbacks are unaffected.
+- **New `UI.asyncContent`** (`{ placeholder, error }`) overrides the themed skeleton and the
+  error line, per surface via a factory argument.
+- **Synchronous hooks are byte-for-byte unchanged** — same call, same frame, no placeholder and
+  no wrapper element.
+- Internal: `tryResolveArray` was removed (it had no remaining callers).
+
 ## 1.5.0 — 2026-07-29
 
 Two headline changes: a security-hardening pass over everything reachable from untrusted

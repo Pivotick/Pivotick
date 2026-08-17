@@ -305,3 +305,32 @@ render: (selection, panel) => {
 ::: tip Sidebar-only
 Panels are shown by the sidebar, which exists in `full` mode. Registration succeeds in any mode — the panel simply has nowhere to render until a sidebar does.
 :::
+
+### Filling a panel asynchronously
+
+`title` and `render` may both be `async`, as may the properties panel's
+`render` / `nodePropertiesMap` / `edgePropertiesMap` and the main header's
+`render`. The panel shows a placeholder while the promise is pending:
+
+```ts
+graph.UIManager.addPanel({
+    id: 'sightings',
+    title: 'Sightings',
+    render: async (selection, panel, { signal }) => {
+        if (!(selection instanceof Node)) return 'Select a node'
+        const res = await fetch(`/sightings/${selection.id}`, { signal })
+        return renderSightings(await res.json())
+    },
+})
+```
+
+Note the argument order: the panel handle stays second, and the
+[`RenderContext`](/api/html/interfaces/AsyncContent.RenderContext.html) is
+always **last**.
+
+Because a panel re-renders on every selection change, a fetch is routinely
+superseded before it resolves. The library handles that for you: the old
+render's `signal` is aborted, and a result arriving after the selection moved on
+is dropped rather than painted into a panel describing a different node. The
+same applies to `refreshPanel()` and to removing the panel. See
+[asynchronous content](./ui#async-content) for the full contract.
