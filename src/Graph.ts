@@ -552,7 +552,7 @@ export class Graph {
                     changes.push({
                         type: 'edge:change',
                         edge: newEdge,
-                        previousData: this.nodes.get(newEdge.id)?.getData(),
+                        previousData: this.edges.get(newEdge.id)?.getData(),
                         nextData: newEdge.getData(),
                     } as GraphDataChange)
                     this.edges.set(newEdge.id, newEdge)
