@@ -23,9 +23,13 @@ import type { ExtraPanel, ExtraPanelSelection, PropertyEntry } from '../../../sr
 import type { RenderContext } from '../../../src/interfaces/AsyncContent'
 import type { Edge } from '../../../src/Edge'
 import type {
+    DeleteContext,
+    DeleteDecision,
     EdgeCreateContext,
     EdgeCreateDecision,
     InterractionCallbacks,
+    NodeCreateContext,
+    NodeCreateDecision,
 } from '../../../src/interfaces/InterractionCallbacks'
 import { fixtures, type FixtureName, type RawNote } from './fixtures'
 
@@ -125,6 +129,72 @@ export interface ConnectConfig {
     validConnection?: ValidConnBehavior
     /** Delay (ms) for the `*-async` behaviours, so a test can observe the pending window. */
     asyncDelayMs?: number
+}
+
+/** Named `onBeforeDelete` behaviours the harness can install. */
+export type DeleteHookBehavior =
+    | 'accept'
+    | 'accept-async'
+    | 'veto'
+    | 'veto-async'
+    /** Accept, but keep only the *first* requested node — the narrowing case. */
+    | 'narrow-nodes'
+    /** Accept the nodes while sparing every named edge (`edges: []`). */
+    | 'spare-edges'
+    /** Gate on `ctx.confirm()`, then accept — the library-provided confirm modal. */
+    | 'confirm'
+
+/** Named `onBeforeNodeCreate` behaviours. */
+export type NodeCreateHookBehavior =
+    | 'accept'
+    | 'accept-async'
+    | 'veto'
+    /** Accept, supplying the new node's id / data / style. */
+    | 'accept-data'
+    /** Collect the payload through `ctx.promptData({ fields })`, or veto on cancel. */
+    | 'prompt-data'
+
+/** Named `onBeforeEdgeEditCommit` behaviours. */
+export type EdgeEditHookBehavior = 'accept' | 'accept-async' | 'veto' | 'veto-async'
+
+export interface WritePathConfig {
+    deleteHook?: DeleteHookBehavior
+    nodeCreateHook?: NodeCreateHookBehavior
+    edgeEditHook?: EdgeEditHookBehavior
+    /** Delay (ms) for the `*-async` behaviours, so a test can observe the pending window. */
+    asyncDelayMs?: number
+}
+
+/** The ids a `DeleteContext` carried — what the hook was actually told about. */
+export interface RecordedDeleteContext {
+    nodes: string[]
+    edges: string[]
+    notes: string[]
+    cascadingEdges: string[]
+    origin: string
+}
+
+/** A `DeleteOutcome`, flattened to ids so it can cross `page.evaluate`. */
+export interface RecordedDeleteOutcome {
+    accepted: boolean
+    nodes: string[]
+    edges: string[]
+    notes: string[]
+}
+
+/** An `edgeChange` event, as the data bus reported it. */
+export interface RecordedEdgeChange {
+    id: string
+    previous: Record<string, unknown>
+    next: Record<string, unknown>
+}
+
+/** What a delete request names, by id. */
+export interface DeleteRequestSpec {
+    nodes?: string[]
+    edges?: string[]
+    notes?: string[]
+    origin?: 'bulk-action' | 'context-menu'
 }
 
 /** An edge that actually entered the model, captured from the `edgeAdd` event. */
@@ -502,6 +572,42 @@ export interface HarnessApi {
     asyncCallCount(hook: AsyncHook): number
     /** Tear the graph down, for the "in-flight work is abandoned" case. */
     destroyGraph(): void
+
+    /* ---------- write-path lifecycle hooks ---------- */
+
+    /**
+     * Install `onBeforeDelete` / `onBeforeNodeCreate` / `onBeforeEdgeEditCommit` by
+     * name (real functions can't cross `page.evaluate`) and start recording what the
+     * hooks saw plus every removal / edge change that reached the data bus. Call after
+     * `load`.
+     */
+    configureWritePath(config?: WritePathConfig): void
+    /** How many times each write-path hook was invoked (proves the pending lock, and the no-hook path). */
+    writePathCalls(): { delete: number; nodeCreate: number; edgeEditCommit: number }
+    /** The ids every `DeleteContext` carried — including the library-resolved cascade. */
+    deleteContexts(): RecordedDeleteContext[]
+    /** Ids that actually left the model, from `nodeRemove` / `edgeRemove` / `noteRemove`. */
+    removedIds(): { nodes: string[]; edges: string[]; notes: string[] }
+    /** `edgeChange` events seen since {@link configureWritePath}. */
+    edgeChanges(): RecordedEdgeChange[]
+    /** Drive a user-initiated delete through `graph.editing.requestDelete`, by id. */
+    requestDelete(spec: DeleteRequestSpec): Promise<RecordedDeleteOutcome>
+    /** Two delete requests in one page task — the second lands while the first decides. */
+    raceDeleteRequests(first: DeleteRequestSpec, second: DeleteRequestSpec): Promise<RecordedDeleteOutcome[]>
+    /** A viewport point that lies on an edge's rendered path, for real pointer events. */
+    edgePoint(id: string): { x: number; y: number } | null
+    /** Remove a node the *programmatic* way (`graph.removeNode`) — must bypass the hook. */
+    graphRemoveNode(id: string): void
+    /** Remove an edge the *programmatic* way (`graph.removeEdge`) — must bypass the hook. */
+    graphRemoveEdge(id: string): void
+    /** Open an edge edit session (`graph.editing.openEdgeSession`), as the edge menu does. */
+    openEdgeSession(id: string): void
+    /** An edge's current data — for asserting a commit landed (or a veto left it alone). */
+    edgeData(id: string): Record<string, unknown> | null
+    /** A node's current data — for asserting what a create hook stamped on it. */
+    nodeData(id: string): Record<string, unknown> | null
+    /** Ids of the notes still in the model. */
+    noteIds(): string[]
 }
 
 class Harness implements HarnessApi {
@@ -519,6 +625,12 @@ class Harness implements HarnessApi {
     private panelRenders = new Map<string, number>()
     private panelDisposers = new Map<string, () => void>()
     private panelSeq = 0
+    /** Write-path observation state (reset by {@link configureWritePath}). */
+    private writePathHookCalls = { delete: 0, nodeCreate: 0, edgeEditCommit: 0 }
+    private seenDeleteContexts: RecordedDeleteContext[] = []
+    private removed: { nodes: string[]; edges: string[]; notes: string[] } = { nodes: [], edges: [], notes: [] }
+    private recordedEdgeChanges: RecordedEdgeChange[] = []
+    private writePathHooked = false
     /** Async-content observation state: renders held open, and per-hook call counts. */
     private asyncSpec: AsyncContentSpec = {}
     private heldRenders = new Map<string, HeldRender>()
@@ -1316,6 +1428,179 @@ class Harness implements HarnessApi {
 
     destroyGraph(): void {
         this.g.destroy()
+    }
+
+    /* ---------- write-path lifecycle hooks ---------- */
+
+    configureWritePath(config: WritePathConfig = {}): void {
+        const delay = config.asyncDelayMs ?? 60
+        const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms))
+
+        this.writePathHookCalls = { delete: 0, nodeCreate: 0, edgeEditCommit: 0 }
+        this.seenDeleteContexts = []
+        this.removed = { nodes: [], edges: [], notes: [] }
+        this.recordedEdgeChanges = []
+
+        // Register the recorders once — the graph bus has no `off`, so re-registering
+        // per call would stack listeners and double-count. They always read the latest
+        // (reset above) arrays, so re-configuring still starts from empty.
+        if (!this.writePathHooked) {
+            this.writePathHooked = true
+            this.g.on('nodeRemove', (node) => { this.removed.nodes.push(node.id) })
+            this.g.on('edgeRemove', (edge) => { this.removed.edges.push(edge.id) })
+            this.g.on('noteRemove', (note) => { this.removed.notes.push(note.id) })
+            this.g.on('edgeChange', (edge, previous, next) => {
+                this.recordedEdgeChanges.push({
+                    id: edge.id,
+                    previous: { ...previous } as Record<string, unknown>,
+                    next: { ...next } as Record<string, unknown>,
+                })
+            })
+        }
+
+        const opts = this.g.getOptions() as { callbacks?: InterractionCallbacks }
+        const callbacks: InterractionCallbacks = opts.callbacks ?? (opts.callbacks = {})
+
+        if (config.deleteHook) {
+            const behavior = config.deleteHook
+            callbacks.onBeforeDelete = async (ctx: DeleteContext): Promise<DeleteDecision> => {
+                this.writePathHookCalls.delete++
+                this.seenDeleteContexts.push({
+                    nodes: ctx.nodes.map((node) => node.id),
+                    edges: ctx.edges.map((edge) => edge.id),
+                    notes: ctx.notes.map((note) => note.id),
+                    cascadingEdges: ctx.cascadingEdges.map((edge) => edge.id),
+                    origin: ctx.origin,
+                })
+                if (behavior.endsWith('-async')) await sleep(delay)
+                if (behavior.startsWith('veto')) return false
+                if (behavior === 'narrow-nodes') return { accept: true, nodes: ctx.nodes.slice(0, 1) }
+                if (behavior === 'spare-edges') return { accept: true, edges: [] }
+                if (behavior === 'confirm') {
+                    return await ctx.confirm({ title: 'Delete?', body: `${ctx.nodes.length} node(s) will go.` })
+                }
+                return true
+            }
+        }
+
+        if (config.nodeCreateHook) {
+            const behavior = config.nodeCreateHook
+            callbacks.onBeforeNodeCreate = async (ctx: NodeCreateContext): Promise<NodeCreateDecision> => {
+                this.writePathHookCalls.nodeCreate++
+                if (behavior.endsWith('-async')) await sleep(delay)
+                if (behavior === 'veto') return false
+                if (behavior === 'accept-data') {
+                    return {
+                        accept: true,
+                        id: 'created',
+                        // Echo the position back as data, so a test can prove the hook
+                        // was handed the graph-space point the gesture landed on.
+                        data: { label: 'Created', origin: ctx.origin, at: `${Math.round(ctx.position.x)},${Math.round(ctx.position.y)}` },
+                        style: { color: '#e6194B' },
+                    }
+                }
+                if (behavior === 'prompt-data') {
+                    const values = await ctx.promptData({
+                        fields: [
+                            { key: 'label', label: 'Label', type: 'text' },
+                            { key: 'kind', label: 'Kind', type: 'text' },
+                        ],
+                    })
+                    if (values === null) return false
+                    return { accept: true, id: 'prompted', data: values }
+                }
+                return true
+            }
+        }
+
+        if (config.edgeEditHook) {
+            const behavior = config.edgeEditHook
+            callbacks.onBeforeEdgeEditCommit = async (): Promise<boolean> => {
+                this.writePathHookCalls.edgeEditCommit++
+                if (behavior.endsWith('-async')) await sleep(delay)
+                return !behavior.startsWith('veto')
+            }
+        }
+    }
+
+    writePathCalls(): { delete: number; nodeCreate: number; edgeEditCommit: number } {
+        return { ...this.writePathHookCalls }
+    }
+
+    deleteContexts(): RecordedDeleteContext[] {
+        return this.seenDeleteContexts
+    }
+
+    removedIds(): { nodes: string[]; edges: string[]; notes: string[] } {
+        return this.removed
+    }
+
+    edgeChanges(): RecordedEdgeChange[] {
+        return this.recordedEdgeChanges
+    }
+
+    async requestDelete(spec: DeleteRequestSpec): Promise<RecordedDeleteOutcome> {
+        const outcome = await this.g.editing.requestDelete({
+            nodes: (spec.nodes ?? []).map((id) => this.g.getMutableNode(id)).filter((n): n is Node => Boolean(n)),
+            edges: (spec.edges ?? []).map((id) => this.g.getMutableEdge(id)).filter((e): e is Edge => Boolean(e)),
+            notes: (spec.notes ?? []).map((id) => this.g.noteManager.getNote(id)).filter((n): n is Note => Boolean(n)),
+            origin: spec.origin ?? 'bulk-action',
+        })
+        return {
+            accepted: outcome.accepted,
+            nodes: outcome.nodes.map((node) => node.id),
+            edges: outcome.edges.map((edge) => edge.id),
+            notes: outcome.notes.map((note) => note.id),
+        }
+    }
+
+    /**
+     * Fire two delete requests back-to-back *within one page task*, so the second
+     * genuinely lands while the first is still deciding — the pending-lock case.
+     */
+    async raceDeleteRequests(first: DeleteRequestSpec, second: DeleteRequestSpec): Promise<RecordedDeleteOutcome[]> {
+        const a = this.requestDelete(first)
+        const b = this.requestDelete(second)
+        return [await a, await b]
+    }
+
+    edgePoint(id: string): { x: number; y: number } | null {
+        const path = this.g.getMutableEdge(id)?.getGraphElement()?.querySelector('path')
+        if (!path) return null
+        // Sample the *rendered* path, so the point is on the line whether it's drawn
+        // straight or curved, then map it into viewport space for a real pointer event.
+        const line = path as SVGPathElement
+        const point = line.getPointAtLength(line.getTotalLength() / 2)
+        const ctm = line.getScreenCTM()
+        if (!ctm) return null
+        return { x: point.x * ctm.a + point.y * ctm.c + ctm.e, y: point.x * ctm.b + point.y * ctm.d + ctm.f }
+    }
+
+    graphRemoveNode(id: string): void {
+        this.g.removeNode(id)
+    }
+
+    graphRemoveEdge(id: string): void {
+        this.g.removeEdge(id)
+    }
+
+    openEdgeSession(id: string): void {
+        const edge = this.g.getMutableEdge(id)
+        if (edge) this.g.editing.openEdgeSession(edge)
+    }
+
+    edgeData(id: string): Record<string, unknown> | null {
+        const edge = this.g.getMutableEdge(id)
+        return edge ? ({ ...edge.getData() } as Record<string, unknown>) : null
+    }
+
+    nodeData(id: string): Record<string, unknown> | null {
+        const node = this.g.getMutableNode(id)
+        return node ? ({ ...node.getData() } as Record<string, unknown>) : null
+    }
+
+    noteIds(): string[] {
+        return this.g.noteManager.getNotes().map((note) => note.id)
     }
 
     /**

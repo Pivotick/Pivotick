@@ -74,7 +74,8 @@ test.describe('tool-panel', () => {
         await expect(panel.locator('.pvt-toolpanel-header')).toContainText('Create')
         await expect(panel.locator('.pvt-toolpanel-header .pvt-keyboard-shortcut')).toHaveText('C')
         await expect(panel.locator('.pvt-toolpanel-tool[data-tool="add-edge"]')).toBeVisible()
-        await expect(panel.locator('.pvt-toolpanel-tool[data-tool="add-node"]')).toBeDisabled()
+        // Add node is a real one-shot action now (see node-creation.spec.ts).
+        await expect(panel.locator('.pvt-toolpanel-tool[data-tool="add-node"]')).toBeEnabled()
 
         await expectElement(panel, 'toolpanel-create.png')
     })
