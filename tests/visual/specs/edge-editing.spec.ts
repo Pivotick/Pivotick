@@ -5,8 +5,9 @@ import {
     gotoHarness,
     loadFixture,
     harness,
+    expectCanvas,
 } from '../helpers'
-import type { RecordedEdgeChange } from '../harness/harness'
+import type { RecordedDataChange } from '../harness/harness'
 
 // Editing an *existing* edge — the edge twin of `node-editing.spec.ts`. The edge
 // context menu opens a session, the modal writes the draft, and
@@ -18,8 +19,15 @@ const EDIT_BUTTON = '.pvt-modal__footer button'
 const edgeData = async (page: Page, id: string): Promise<Record<string, unknown>> =>
     (await harness(page, 'edgeData', id)) as Record<string, unknown>
 
-const edgeChanges = async (page: Page): Promise<RecordedEdgeChange[]> =>
-    (await harness(page, 'edgeChanges')) as RecordedEdgeChange[]
+const edgeChanges = async (page: Page): Promise<RecordedDataChange[]> =>
+    (await harness(page, 'edgeChanges')) as RecordedDataChange[]
+
+/** What the edge's label reads, and where on screen it is drawn. */
+const edgeLabel = async (page: Page, id: string): Promise<{ text: string; x: number; y: number }> => {
+    const label = (await harness(page, 'edgeLabel', id)) as { text: string; x: number; y: number } | null
+    if (!label) throw new Error(`edge ${id} has no rendered label`)
+    return label
+}
 
 const commitCalls = async (page: Page): Promise<number> =>
     ((await harness(page, 'writePathCalls')) as { edgeEditCommit: number }).edgeEditCommit
@@ -65,6 +73,38 @@ test.describe('edge editing', () => {
         const changes = await edgeChanges(page)
         expect(changes).toHaveLength(1)
         expect(changes[0]).toMatchObject({ id: 'a-b', previous: { label: 'links' }, next: { label: 'reports-to' } })
+    })
+
+    test('the new label is repainted on the edge straight away', async ({ page }) => {
+        // Regression guard: `update()` re-renders a dirty edge but leaves the fresh
+        // label untransformed, so without a tick the new text only showed up once
+        // something else moved the graph.
+        await harness(page, 'openEdgeSession', 'a-b')
+        await field(page, 'label').fill('reports-to')
+        await modalButton(page, 'Edit Edge').click()
+        await expect(modal(page)).toHaveCount(0)
+
+        const label = await edgeLabel(page, 'a-b')
+        const midpoint = await edgePoint(page, 'a-b')
+        expect(label.text).toBe('reports-to')
+        // …and drawn *on* the edge: an unplaced label sits at the graph origin instead.
+        expect(Math.hypot(label.x - midpoint.x, label.y - midpoint.y)).toBeLessThan(30)
+
+        await expectCanvas(page, 'edge-label-after-edit.png')
+    })
+
+    test('a labelless edge gains a drawn label on its first edit', async ({ page }) => {
+        // `b-c` starts with no data, so it has no label element at all — the commit has
+        // to create *and* place one.
+        await harness(page, 'openEdgeSession', 'b-c')
+        await field(page, 'label').fill('flows-to')
+        await modalButton(page, 'Edit Edge').click()
+        await expect(modal(page)).toHaveCount(0)
+
+        const label = await edgeLabel(page, 'b-c')
+        const midpoint = await edgePoint(page, 'b-c')
+        expect(label.text).toBe('flows-to')
+        expect(Math.hypot(label.x - midpoint.x, label.y - midpoint.y)).toBeLessThan(30)
     })
 
     test('a vetoed commit leaves the edge untouched and the modal open', async ({ page }) => {
@@ -120,10 +160,6 @@ test.describe('edge editing', () => {
         await harness(page, 'openEdgeSession', 'b-c')
 
         await expect(field(page, 'label')).toHaveValue('')
-        await field(page, 'label').fill('flows-to')
-        await modalButton(page, 'Edit Edge').click()
-
-        await expect.poll(async () => (await edgeData(page, 'b-c')).label).toBe('flows-to')
     })
 
     test('onEdgeEdit supplies the body once, and that body owns the draft', async ({ page }) => {

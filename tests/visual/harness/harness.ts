@@ -154,13 +154,15 @@ export type NodeCreateHookBehavior =
     /** Collect the payload through `ctx.promptData({ fields })`, or veto on cancel. */
     | 'prompt-data'
 
-/** Named `onBeforeEdgeEditCommit` behaviours. */
+/** Named `onBeforeEdgeEditCommit` / `onBeforeNodeEditCommit` behaviours. */
 export type EdgeEditHookBehavior = 'accept' | 'accept-async' | 'veto' | 'veto-async'
 
 export interface WritePathConfig {
     deleteHook?: DeleteHookBehavior
     nodeCreateHook?: NodeCreateHookBehavior
     edgeEditHook?: EdgeEditHookBehavior
+    /** The node twin of {@link edgeEditHook} (`onBeforeNodeEditCommit`). */
+    nodeEditHook?: EdgeEditHookBehavior
     /**
      * Install `onEdgeEdit`: the session's body becomes one custom input that writes
      * straight into `session.draft` — the "a custom body owns the draft" contract.
@@ -178,6 +180,7 @@ export interface WritePathCalls {
     edgeEditCommit: number
     edgeEditBody: number
     edgeEditCancel: number
+    nodeEditCommit: number
 }
 
 /** The ids a `DeleteContext` carried — what the hook was actually told about. */
@@ -197,8 +200,8 @@ export interface RecordedDeleteOutcome {
     notes: string[]
 }
 
-/** An `edgeChange` event, as the data bus reported it. */
-export interface RecordedEdgeChange {
+/** A `nodeChange` / `edgeChange` event, as the data bus reported it. */
+export interface RecordedDataChange {
     id: string
     previous: Record<string, unknown>
     next: Record<string, unknown>
@@ -603,8 +606,12 @@ export interface HarnessApi {
     deleteContexts(): RecordedDeleteContext[]
     /** Ids that actually left the model, from `nodeRemove` / `edgeRemove` / `noteRemove`. */
     removedIds(): { nodes: string[]; edges: string[]; notes: string[] }
+    /** `nodeChange` events seen since {@link configureWritePath}. */
+    nodeChanges(): RecordedDataChange[]
     /** `edgeChange` events seen since {@link configureWritePath}. */
-    edgeChanges(): RecordedEdgeChange[]
+    edgeChanges(): RecordedDataChange[]
+    /** An edge label's text and the viewport point it is drawn at (null when unlabelled). */
+    edgeLabel(id: string): { text: string; x: number; y: number } | null
     /** Drive a user-initiated delete through `graph.editing.requestDelete`, by id. */
     requestDelete(spec: DeleteRequestSpec): Promise<RecordedDeleteOutcome>
     /** Two delete requests in one page task — the second lands while the first decides. */
@@ -641,10 +648,11 @@ class Harness implements HarnessApi {
     private panelDisposers = new Map<string, () => void>()
     private panelSeq = 0
     /** Write-path observation state (reset by {@link configureWritePath}). */
-    private writePathHookCalls = { delete: 0, nodeCreate: 0, edgeEditCommit: 0, edgeEditBody: 0, edgeEditCancel: 0 }
+    private writePathHookCalls = { delete: 0, nodeCreate: 0, edgeEditCommit: 0, edgeEditBody: 0, edgeEditCancel: 0, nodeEditCommit: 0 }
     private seenDeleteContexts: RecordedDeleteContext[] = []
     private removed: { nodes: string[]; edges: string[]; notes: string[] } = { nodes: [], edges: [], notes: [] }
-    private recordedEdgeChanges: RecordedEdgeChange[] = []
+    private recordedNodeChanges: RecordedDataChange[] = []
+    private recordedEdgeChanges: RecordedDataChange[] = []
     private writePathHooked = false
     /** Async-content observation state: renders held open, and per-hook call counts. */
     private asyncSpec: AsyncContentSpec = {}
@@ -1451,9 +1459,10 @@ class Harness implements HarnessApi {
         const delay = config.asyncDelayMs ?? 60
         const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms))
 
-        this.writePathHookCalls = { delete: 0, nodeCreate: 0, edgeEditCommit: 0, edgeEditBody: 0, edgeEditCancel: 0 }
+        this.writePathHookCalls = { delete: 0, nodeCreate: 0, edgeEditCommit: 0, edgeEditBody: 0, edgeEditCancel: 0, nodeEditCommit: 0 }
         this.seenDeleteContexts = []
         this.removed = { nodes: [], edges: [], notes: [] }
+        this.recordedNodeChanges = []
         this.recordedEdgeChanges = []
 
         // Register the recorders once — the graph bus has no `off`, so re-registering
@@ -1464,6 +1473,13 @@ class Harness implements HarnessApi {
             this.g.on('nodeRemove', (node) => { this.removed.nodes.push(node.id) })
             this.g.on('edgeRemove', (edge) => { this.removed.edges.push(edge.id) })
             this.g.on('noteRemove', (note) => { this.removed.notes.push(note.id) })
+            this.g.on('nodeChange', (node, previous, next) => {
+                this.recordedNodeChanges.push({
+                    id: node.id,
+                    previous: { ...previous } as Record<string, unknown>,
+                    next: { ...next } as Record<string, unknown>,
+                })
+            })
             this.g.on('edgeChange', (edge, previous, next) => {
                 this.recordedEdgeChanges.push({
                     id: edge.id,
@@ -1552,6 +1568,15 @@ class Harness implements HarnessApi {
                 return !behavior.startsWith('veto')
             }
         }
+
+        if (config.nodeEditHook) {
+            const behavior = config.nodeEditHook
+            callbacks.onBeforeNodeEditCommit = async (): Promise<boolean> => {
+                this.writePathHookCalls.nodeEditCommit++
+                if (behavior.endsWith('-async')) await sleep(delay)
+                return !behavior.startsWith('veto')
+            }
+        }
     }
 
     writePathCalls(): WritePathCalls {
@@ -1566,8 +1591,21 @@ class Harness implements HarnessApi {
         return this.removed
     }
 
-    edgeChanges(): RecordedEdgeChange[] {
+    nodeChanges(): RecordedDataChange[] {
+        return this.recordedNodeChanges
+    }
+
+    edgeChanges(): RecordedDataChange[] {
         return this.recordedEdgeChanges
+    }
+
+    edgeLabel(id: string): { text: string; x: number; y: number } | null {
+        const label = this.g.getMutableEdge(id)?.getGraphElement()?.querySelector('text.pvt-edge-label')
+        if (!label) return null
+        // Where it is actually drawn: a label the renderer never positioned sits at the
+        // group origin, not on its edge.
+        const box = (label as SVGGraphicsElement).getBoundingClientRect()
+        return { text: label.textContent ?? '', x: box.x + box.width / 2, y: box.y + box.height / 2 }
     }
 
     async requestDelete(spec: DeleteRequestSpec): Promise<RecordedDeleteOutcome> {
