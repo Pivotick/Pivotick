@@ -97,6 +97,10 @@ export const DEFAULT_UI_OPTIONS: GraphUI = {
             topbar: [],
             menu: [],
         },
+        menuNote: {
+            topbar: [],
+            menu: [],
+        },
         menuCanvas: {
             topbar: [],
             menu: [],

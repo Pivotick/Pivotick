@@ -348,6 +348,10 @@ export interface ContextMenu {
         topbar?: MenuQuickActionItemOptions[],
         menu?: MenuActionItemOptions[],
     },
+    menuNote?: {
+        topbar?: MenuQuickActionItemOptions[],
+        menu?: MenuActionItemOptions[],
+    },
     menuCanvas?: {
         topbar?: MenuQuickActionItemOptions[],
         menu?: MenuActionItemOptions[],

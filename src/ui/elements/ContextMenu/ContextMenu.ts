@@ -265,7 +265,7 @@ export class ContextMenu extends UIComponent {
 
         this.menuNode = deepMerge(defaultMenuNode, this.uiManager.getOptions().contextMenu.menuNode ?? {})
         this.menuEdge = deepMerge(defaultMenuEdge, this.uiManager.getOptions().contextMenu.menuEdge ?? {})
-        this.menuNote = deepMerge(defaultMenuNote, this.uiManager.getOptions().contextMenu.menuCanvas ?? {})
+        this.menuNote = deepMerge(defaultMenuNote, this.uiManager.getOptions().contextMenu.menuNote ?? {})
         this.menuCanvas = deepMerge(defaultMenuCanvas, this.uiManager.getOptions().contextMenu.menuCanvas ?? {})
         this.wrapOnclickActions()
     }
