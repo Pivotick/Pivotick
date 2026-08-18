@@ -9,7 +9,7 @@
  * This file is internal test code, so it imports internal modules directly
  * (`../../../src/...`). Importing from `index` also pulls in the stylesheet.
  */
-import { Pivotick, Node } from '../../../src/index'
+import { Pivotick, Node, ColorPaletteMapper } from '../../../src/index'
 import { Note } from '../../../src/Note'
 import { TreeLayout } from '../../../src/plugins/layout/Tree'
 import { EgoTreeLayout } from '../../../src/plugins/layout/EgoTree'
@@ -19,7 +19,10 @@ import type {
     FilterFacet, FilterFacetOption, FilterFieldConfig, GraphFilters,
 } from '../../../src/interfaces/GraphQueryEngine'
 import type { GraphInteractionContext } from '../../../src/interfaces/GraphInteractions'
-import type { ExtraPanel, ExtraPanelSelection, PropertyEntry } from '../../../src/interfaces/GraphUI'
+import type {
+    ExtraPanel, ExtraPanelSelection, LegendEntry, LegendOptions, LegendPosition, LegendToggleState,
+    PropertyEntry,
+} from '../../../src/interfaces/GraphUI'
 import type { RenderContext } from '../../../src/interfaces/AsyncContent'
 import type { Edge } from '../../../src/Edge'
 import type {
@@ -270,6 +273,63 @@ function distinctValues(graph: Pivotick, key: string): FilterFacetOption[] {
  * Note what is *absent*: `uuid`, `label`, `sightings`. A declared panel contains
  * exactly what was declared.
  */
+/**
+ * A legend to install page-side. `UI.legend` carries predicates (and possibly an
+ * entries *function*), none of which survive `page.evaluate`, so a test describes
+ * the legend it wants and the harness builds it.
+ *
+ * Every mode colours the graph the way an integrator would — a
+ * {@link ColorPaletteMapper} over the legend's key — so the swatches the legend
+ * samples are the colours actually painted.
+ */
+export interface LegendSpec {
+    /**
+     * `'derived'` (default) lets the library derive entries from `key`;
+     * `'declared-array'` / `'declared-function'` hand it explicit entries as an
+     * array / as a function of the live graph.
+     */
+    mode?: 'derived' | 'declared-array' | 'declared-function'
+    /** The node-data key the legend keys on, and that drives the node colours. */
+    key?: string
+    /** Declare entries with neither a predicate nor a `key` — the "matches nothing" case. */
+    omitKey?: boolean
+    title?: string
+    position?: LegendPosition
+    collapsed?: boolean
+    collapsible?: boolean
+    filterable?: boolean
+    showCounts?: boolean
+    maxVisibleEntries?: number
+    /** Also declare `UI.filter.facets`, so a legend `key` naming one is adopted. */
+    withFacets?: boolean
+    /** Paint this node off-palette, so its category resolves to two colours. */
+    conflictNodeId?: string
+}
+
+/** One rendered legend row, read straight off the DOM. */
+export interface LegendRow {
+    id: string
+    label: string
+    /** The rendered count, or `null` when `showCounts: false`. */
+    count: string | null
+    /** The swatch's CSS colour (`--pvt-legend-swatch-color`). */
+    color: string
+    hidden: boolean
+    disabled: boolean
+}
+
+/** The key a `LegendSpec` defaults to: four distinct values across `mispLike`'s top level. */
+const LEGEND_KEY = 'attr-type'
+
+/** The values a `declared-array` legend lists, in declaration order. */
+const DECLARED_LEGEND_VALUES = ['ip-src', 'domain', 'md5', 'object']
+
+/** Fixed colours for declared entries, so a screenshot can't depend on assignment order. */
+const LEGEND_COLORS = ['#7EA2FB', '#85CB33', '#FFB74D', '#BA68C8', '#4DD0E1']
+
+/** The off-palette colour `LegendSpec.conflictNodeId` is painted with. */
+const LEGEND_CONFLICT_COLOR = '#FF0000'
+
 const DECLARED_FACETS: FilterFacet[] = [
     {
         key: 'category', label: 'Category', type: 'multiselect',
@@ -390,7 +450,7 @@ export interface HarnessApi {
     /** Clear all selection. */
     deselectAll(): void
     /** Add a node with a fixed position and stable domID (`#node-<id>`). */
-    addNode(id: string, x: number, y: number, label?: string): void
+    addNode(id: string, x: number, y: number, label?: string, data?: PlainObject): void
     /** Create an edge directly through the editing layer. */
     connect(fromId: string, toId: string): void
     /** Enter click-to-connect mode. */
@@ -475,6 +535,31 @@ export interface HarnessApi {
      * functions, which can't cross `page.evaluate` — so they're built page-side here.
      */
     loadWithFacets(name: FixtureName, overrides?: PlainObject): Promise<void>
+    /**
+     * Load a fixture coloured by a palette mapper over the legend's key, with
+     * `UI.legend` built from {@link LegendSpec}.
+     */
+    loadWithLegend(name: FixtureName, spec?: LegendSpec, overrides?: PlainObject): Promise<void>
+    /** Replace the legend at runtime (`graph.setLegend`); `undefined` removes it. */
+    setLegend(spec?: LegendSpec): void
+    /** The rendered legend rows, in display order. */
+    legendRows(): LegendRow[]
+    /** The legend's header text, or `null` when there is no legend. */
+    legendTitle(): string | null
+    /**
+     * The colour the renderer resolved for a node — what is actually painted, and
+     * so what a derived legend's swatch must equal.
+     */
+    nodeColor(id: string): string
+    /** Every `legendToggle` event since the graph was loaded, in order. */
+    legendEvents(): LegendToggleState[]
+    /**
+     * Active filter keys, minus the always-present `manuallyHidden` — the answer to
+     * "did the legend leave a phantom filter behind".
+     */
+    activeFilterKeys(): string[]
+    /** `console.warn` messages recorded since the graph was loaded. */
+    warnings(): string[]
     /**
      * Ids of the nodes currently visible. A filtered-out node is *removed* from the
      * render, so this is the exact answer to "what did that filter leave on screen".
@@ -659,8 +744,21 @@ class Harness implements HarnessApi {
     private heldRenders = new Map<string, HeldRender>()
     private asyncCalls = new Map<AsyncHook, number>()
 
+    /** Legend observation state, reset per boot. */
+    private legendToggles: LegendToggleState[] = []
+    private recordedWarnings: string[] = []
+
     constructor(container: HTMLElement) {
         this.container = container
+
+        // Several behaviours are only observable as a dev-time warning (a legend
+        // category rendering two colours, nodes with no value for its key, …), so
+        // they're recorded rather than merely printed.
+        const original = console.warn.bind(console)
+        console.warn = (...args: unknown[]): void => {
+            this.recordedWarnings.push(args.map((arg) => typeof arg === 'string' ? arg : String(arg)).join(' '))
+            original(...args)
+        }
     }
 
     private get g(): Pivotick {
@@ -714,9 +812,12 @@ class Harness implements HarnessApi {
                 .map((n) => [n.id, { x: n.x as number, y: n.y as number }])
         )
         const options = mergeOptions(BASE_OPTIONS, overrides)
+        this.legendToggles = []
+        this.recordedWarnings = []
         // `data.notes` carries raw note options; the graph normalises them to Notes.
         const graph = new Pivotick(this.container, data as never, options as never)
         this.graph = graph
+        graph.on('legendToggle', (state) => this.legendToggles.push(state))
         beforeReady?.(graph)
         await this.whenReady(graph)
         // Wait for web fonts so text metrics (and thus layout/labels) are stable.
@@ -803,8 +904,8 @@ class Harness implements HarnessApi {
         this.g.deselectAll()
     }
 
-    addNode(id: string, x: number, y: number, label?: string): void {
-        const node = new Node(id, { label: label ?? id.toUpperCase() }, {}, id)
+    addNode(id: string, x: number, y: number, label?: string, data: PlainObject = {}): void {
+        const node = new Node(id, { label: label ?? id.toUpperCase(), ...data }, {}, id)
         node.x = x
         node.y = y
         node.fx = x
@@ -1048,6 +1149,110 @@ class Harness implements HarnessApi {
 
     async loadWithFacets(name: FixtureName, overrides: PlainObject = {}): Promise<void> {
         await this.load(name, mergeOptions(overrides, { UI: { filter: { facets: DECLARED_FACETS } } }))
+    }
+
+    async loadWithLegend(name: FixtureName, spec: LegendSpec = {}, overrides: PlainObject = {}): Promise<void> {
+        const key = spec.key ?? LEGEND_KEY
+        // Colour the graph the way an integrator would — the legend only ever reads
+        // these colours back out of the renderer.
+        const mapper = new ColorPaletteMapper('pivotick')
+        const color = (node: Node): string => node.id === spec.conflictNodeId
+            ? LEGEND_CONFLICT_COLOR
+            : mapper.getColor(String(node.getData()?.[key] ?? ''))
+
+        const options: PlainObject = {
+            render: { defaultNodeStyle: { color } },
+            UI: {
+                legend: this.buildLegend(spec),
+                ...(spec.withFacets ? { filter: { facets: DECLARED_FACETS } } : {}),
+            },
+        }
+        await this.load(name, mergeOptions(options, overrides))
+    }
+
+    setLegend(spec?: LegendSpec): void {
+        this.g.setLegend(this.buildLegend(spec))
+    }
+
+    /** Turn a {@link LegendSpec} into the real `UI.legend` block. */
+    private buildLegend(spec?: LegendSpec): LegendOptions | undefined {
+        if (!spec) return undefined
+        const key = spec.key ?? LEGEND_KEY
+        const legend: LegendOptions = {}
+
+        // `omitKey` is the only way to get declared entries that can't match anything.
+        if (!spec.omitKey) legend.key = key
+        if (spec.mode === 'declared-array') {
+            legend.entries = this.legendEntriesFor(DECLARED_LEGEND_VALUES, key, spec)
+        } else if (spec.mode === 'declared-function') {
+            legend.entries = (graph) => this.legendEntriesFor(
+                distinctValues(graph as Pivotick, key).map((option) => option.value), key, spec
+            )
+        }
+
+        if (spec.title !== undefined) legend.title = spec.title
+        if (spec.position !== undefined) legend.position = spec.position
+        if (spec.collapsed !== undefined) legend.collapsed = spec.collapsed
+        if (spec.collapsible !== undefined) legend.collapsible = spec.collapsible
+        if (spec.filterable !== undefined) legend.filterable = spec.filterable
+        if (spec.showCounts !== undefined) legend.showCounts = spec.showCounts
+        if (spec.maxVisibleEntries !== undefined) legend.maxVisibleEntries = spec.maxVisibleEntries
+        return legend
+    }
+
+    /**
+     * Declared entries for `values`: fixed colours, upper-cased labels (so a
+     * declared label is visibly not the raw value) and an explicit predicate —
+     * unless `omitKey`, which leaves them unmatched on purpose.
+     */
+    private legendEntriesFor(values: string[], key: string, spec: LegendSpec): LegendEntry[] {
+        return values.map((value, index) => {
+            const entry: LegendEntry = {
+                id: value,
+                label: value.toUpperCase(),
+                color: LEGEND_COLORS[index % LEGEND_COLORS.length],
+            }
+            if (!spec.omitKey) {
+                entry.predicate = (node) => String(node.getData()?.[key] ?? '') === value
+            }
+            return entry
+        })
+    }
+
+    legendRows(): LegendRow[] {
+        return [...document.querySelectorAll('.pvt-legend-entry')].map((row) => ({
+            id: row.getAttribute('data-id') ?? '',
+            label: row.querySelector('.pvt-legend-label')?.textContent ?? '',
+            count: row.querySelector('.pvt-legend-count')?.textContent ?? null,
+            color: (row.querySelector('.pvt-legend-swatch') as HTMLElement | null)
+                ?.style.getPropertyValue('--pvt-legend-swatch-color').trim() ?? '',
+            hidden: row.classList.contains('pvt-legend-hidden'),
+            disabled: (row as HTMLButtonElement).disabled === true,
+        }))
+    }
+
+    legendTitle(): string | null {
+        return document.querySelector('.pvt-legend-title')?.textContent ?? null
+    }
+
+    nodeColor(id: string): string {
+        const node = this.g.getMutableNode(id)
+        if (!node) return ''
+        return String(this.g.renderer.getNodeStyle(node).color)
+    }
+
+    legendEvents(): LegendToggleState[] {
+        return this.legendToggles.map((state) => ({ hidden: [...state.hidden], visible: [...state.visible] }))
+    }
+
+    activeFilterKeys(): string[] {
+        return Object.keys(this.g.queryEngine.getFilters())
+            .filter((key) => key !== 'manuallyHidden')
+            .sort()
+    }
+
+    warnings(): string[] {
+        return [...this.recordedWarnings]
     }
 
     visibleNodeIds(): string[] {
