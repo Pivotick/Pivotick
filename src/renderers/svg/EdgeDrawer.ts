@@ -1,6 +1,7 @@
 import { type Selection, select as d3Select } from 'd3-selection'
 import { Edge } from '../../Edge'
-import { getApproximateArcLengthAndMidpoint, getApproximateCircleArcLengthAndMidpoint, getArcIntersectionWithCircle, getSegmentLengthAndMidpoint, type ArcParams, type Circle } from '../../utils/GeometryHelper'
+import { getApproximateArcLengthAndMidpoint, getApproximateCircleArcLengthAndMidpoint, getArcIntersectionWithCircle, getSegmentLengthAndMidpoint, rectRadiusAlongDirection, type ArcParams, type Circle } from '../../utils/GeometryHelper'
+import type { Node } from '../../Node'
 import type { Graph } from '../../Graph'
 import type { GraphSvgRenderer } from './GraphSvgRenderer'
 import { tryResolveBoolean, tryResolveNumber, tryResolveString } from '../../utils/Getters'
@@ -335,6 +336,29 @@ export class EdgeDrawer {
         return `M ${startX} ${startY} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${endX} ${endY}`
     }
 
+    // TEMP (feature/node-hitboxes) test: shape-aware edge anchor radius.
+    // Square nodes anchor on their rectangular border; every other shape keeps
+    // the existing circle-radius approximation.
+    private getNodeBorderRadius(node: Node, dirX: number, dirY: number): number {
+        const style = this.graphSvgRenderer.nodeDrawer.getNodeStyle(node)
+        const shape = typeof style.shape === 'function' ? style.shape(node) : style.shape
+
+        if (shape === 'square') {
+            const halfSize = tryResolveNumber(style.size, node) ?? node.getCircleRadius()
+            return rectRadiusAlongDirection(halfSize, halfSize, dirX, dirY)
+        }
+
+        // Custom-path shape: use its measured bounding box once NodeDrawer has it
+        // (falls back to the circle approximation on the first frame, before it's measured).
+        const halfWidth = node.getBoxHalfWidth()
+        const halfHeight = node.getBoxHalfHeight()
+        if (typeof shape === 'object' && shape !== null && halfWidth && halfHeight) {
+            return rectRadiusAlongDirection(halfWidth, halfHeight, dirX, dirY)
+        }
+
+        return node.getCircleRadius() ? node.getCircleRadius() : tryResolveNumber(style.size, node) as number
+    }
+
     private linkStraight(edge: Edge): string | null {
         const { from, to } = edge
         const isEdgeSelected = this.graphSvgRenderer.getGraphInteraction().getSelectedEdge()?.edge.id === edge.id
@@ -356,19 +380,17 @@ export class EdgeDrawer {
         let dy = to.y - from.y
         let distance = Math.sqrt(dx * dx + dy * dy)
 
-        let normX = dx / distance
-        let normY = dy / distance
-
-        // Compute source/target node radius
-        const rFrom = from.getCircleRadius() ? from.getCircleRadius() : this.graphSvgRenderer.nodeDrawer.getNodeStyle(from).size as number
-        const toNode = edge.getSubgraphToNode() ?? edge.to
-        const rTo = toNode.getCircleRadius() ? toNode.getCircleRadius() : this.graphSvgRenderer.nodeDrawer.getNodeStyle(toNode).size as number
-
         // From coordinate are taken from the center of the cluster node
         // If from and to overlap, take the translated node as origin
+        const normX = distance === 0 ? -Math.SQRT1_2 : dx / distance
+        const normY = distance === 0 ? -Math.SQRT1_2 : dy / distance
+
+        // Compute source/target node radius (shape-aware: see getNodeBorderRadius)
+        const toNode = edge.getSubgraphToNode() ?? edge.to
+        const rFrom = this.getNodeBorderRadius(from, normX, normY)
+        const rTo = this.getNodeBorderRadius(toNode, normX, normY)
+
         if (distance === 0) {
-            normX = -Math.SQRT1_2
-            normY = -Math.SQRT1_2
             dx = normX * rFrom
             dy = normY * rFrom
             distance = rFrom

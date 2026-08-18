@@ -106,6 +106,10 @@ export class NodeDrawer {
                     height = Math.ceil(bbox.height)
                 }
 
+                // TEMP (feature/node-hitboxes): feed the measured box into the shape-aware
+                // edge-anchor calculation (EdgeDrawer.getNodeBorderRadius) for custom shapes.
+                node.setBoxSize(width, height)
+
                 if (this.rendererOptions.enableNodeExpansion && (!node.hasChildren() || !node.expanded)) {
                     if (this.getNodeStyle(node).shape == 'square') {
                         node.setCircleRadius(Math.SQRT1_2 * Math.max(width, height)) // Is the only shape that has a coord. shift

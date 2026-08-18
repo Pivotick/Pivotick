@@ -150,6 +150,16 @@ export function getArcCenter(params: ArcParams): ArcCenterResult {
 }
 
 /**
+ * Distance from an axis-aligned rectangle's center to its border, along a
+ * (not necessarily unit) direction vector. Used to anchor edges on rectangular
+ * nodes instead of approximating them with a bounding circle.
+ */
+export function rectRadiusAlongDirection(halfWidth: number, halfHeight: number, dirX: number, dirY: number): number {
+    const ratio = Math.max(Math.abs(dirX) / halfWidth, Math.abs(dirY) / halfHeight)
+    return ratio === 0 ? halfWidth : 1 / ratio
+}
+
+/**
 * Find intersection points between two circles:
 * Circle 1: center (cx, cy), radius r
 * Circle 2: center (to.x, to.y), radius rTo
