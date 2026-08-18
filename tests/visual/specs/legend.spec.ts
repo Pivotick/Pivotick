@@ -1,5 +1,8 @@
 import { test, expect, gotoHarness, loadFixture, harness, expectCanvas, canvas } from '../helpers'
 import type { Page, Locator } from '@playwright/test'
+
+/** The shape `Locator.boundingBox()` resolves to. */
+interface BoundingBox { x: number; y: number; width: number; height: number }
 import type { LegendRow, LegendSpec } from '../harness/harness'
 
 /**
@@ -40,6 +43,12 @@ async function expectVisible(page: Page, ids: string[]): Promise<void> {
 
 async function activeFilterKeys(page: Page): Promise<string[]> {
     return (await harness(page, 'activeFilterKeys')) as string[]
+}
+
+/** Do two on-screen boxes intersect at all? */
+function overlaps(a: BoundingBox, b: BoundingBox): boolean {
+    return a.x < b.x + b.width && b.x < a.x + a.width
+        && a.y < b.y + b.height && b.y < a.y + a.height
 }
 
 function legendRow(page: Page, id: string): Locator {
@@ -348,6 +357,38 @@ test.describe('canvas legend', () => {
         // Right half, top half — the opposite corner from the default.
         expect(legendBox!.x).toBeGreaterThan(canvasBox!.x + canvasBox!.width / 2)
         expect(legendBox!.y).toBeLessThan(canvasBox!.y + canvasBox!.height / 2)
+    })
+
+    test('does not cover the sidebar collapse toggle in full mode', async ({ page }) => {
+        // Full mode hangs that toggle over the canvas's bottom-left corner — the
+        // legend's own default corner.
+        await harness(page, 'loadWithLegend', 'mispLike', { key: 'attr-type' },
+            { UI: { mode: 'full', sidebar: { collapsed: false } } })
+        await expect(page.locator('.pvt-legend-entry')).toHaveCount(4)
+
+        const clear = async (): Promise<boolean> => {
+            const legendBox = await page.locator('.pvt-legend-panel').boundingBox()
+            const toggleBox = await page.locator('.pvt-sidebar-collapse-container').boundingBox()
+            expect(legendBox && toggleBox).toBeTruthy()
+            return !overlaps(legendBox!, toggleBox!)
+        }
+
+        expect(await clear()).toBe(true)
+
+        // The toggle hangs off the sidebar's edge either way, so check the collapsed
+        // state too — and that it still toggles with the legend on screen.
+        await page.locator('.pvt-sidebar-collapse-container').click()
+        await expect(page.locator('.pvt-sidebar')).toHaveClass(/pvt-sidebar-collapsed/)
+        expect(await clear()).toBe(true)
+    })
+
+    test('does not sit under the mode rail when docked top-left', async ({ page }) => {
+        await loadLegend(page, { position: 'top-left' })
+
+        const legendBox = await page.locator('.pvt-legend-panel').boundingBox()
+        const railBox = await page.locator('.pvt-moderail-rail').boundingBox()
+        expect(legendBox && railBox).toBeTruthy()
+        expect(overlaps(legendBox!, railBox!)).toBe(false)
     })
 
     test('full mode has the legend, viewer mode has none', async ({ page }) => {

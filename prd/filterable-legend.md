@@ -91,6 +91,25 @@ is no. Details worth keeping:
   default mode, but `DEFAULT_UI_OPTIONS.mode` is `'viewer'` — a pre-existing doc bug,
   left alone here.
 
+### Corner collisions (fixed 2026-08-18, after review)
+
+§3.4's inventory of canvas overlays missed two absolutely-positioned neighbours, both
+of which the legend landed on top of:
+
+- **The sidebar's collapse toggle.** `.pvt-sidebar-collapse-container` is
+  `right: -40px; bottom: 7px` on a sidebar whose right edge *is* the canvas's left
+  edge, so it hangs over the canvas's bottom-left corner — occupying x ∈ [12, 40] and
+  7–35px up from the bottom, in **both** sidebar states. A `bottom-left` legend covered
+  it. Fixed by lifting the legend to `bottom: 44px` in `mode-full` (the only mode with
+  a sidebar); it stays aligned with the mode rail at `left: 14px`.
+- **The mode rail**, for `position: 'top-left'`: the rail is 54px wide at `left: 14px`,
+  so a top-left legend sat under it. Now `left: 84px`, lining up with the tool panel
+  and the View flyout — which still overlay the legend when open, being transient and
+  higher `z-index`.
+
+Both are covered by tests that compare the two elements' bounding boxes rather than a
+screenshot, so a future move of either one fails loudly.
+
 ### Found on the way in
 
 - `queryEngine.getFilters()` **always** appends a `manuallyHidden` entry, so "no

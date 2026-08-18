@@ -24,15 +24,25 @@
         right: 14px;
     }
 
+    // Clear of the mode rail (54px at left:14px), lining up with the tool panel and
+    // View flyout instead — those overlay the legend when open, being transient.
     &[data-position='top-left'] {
         top: calc(var(--pvt-mainheader-height) + 14px);
-        left: 14px;
+        left: 84px;
     }
 
     &[data-position='top-right'] {
         top: calc(var(--pvt-mainheader-height) + 14px);
         right: 14px;
     }
+}
+
+// Full mode hangs the sidebar's collapse toggle over the canvas's bottom-left
+// corner (`.pvt-sidebar-collapse-container` is `right: -40px; bottom: 7px` on a
+// sidebar that ends at the canvas edge), so a bottom-left legend lifts clear of it
+// instead of covering it.
+.pvt-layout.mode-full .pvt-legend[data-position='bottom-left'] {
+    bottom: 44px;
 }
 
 .pvt-legend-panel {
