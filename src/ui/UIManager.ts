@@ -11,7 +11,7 @@ import type { Notification } from './Notifier'
 import merge from 'lodash.merge'
 import { Tooltip } from './elements/Tooltip/Tooltip'
 import { ContextMenu } from './elements/ContextMenu/ContextMenu'
-import type { Editors, ExtraPanel, GraphUI, GraphUIMode, PropertyEntry, RegisteredExtraPanel } from '../interfaces/GraphUI'
+import type { Editors, ExtraPanel, GraphUI, GraphUIMode, LegendOptions, PropertyEntry, RegisteredExtraPanel } from '../interfaces/GraphUI'
 import { KeybindingManager } from './KeybindingManager'
 import { createInspectModal } from './elements/modals/InspectNodeModal/InspectNodeModal'
 import { Note } from '../Note'
@@ -21,6 +21,7 @@ import { ModeRail } from './elements/ModeRail/ModeRail'
 import { ToolPanel } from './elements/ToolPanel/ToolPanel'
 import { ViewFlyout } from './elements/ViewFlyout/ViewFlyout'
 import { PhysicsFlyout } from './elements/PhysicsFlyout/PhysicsFlyout'
+import { Legend } from './elements/Legend/Legend'
 import type { PivotickPlugin, PluginContext } from '../interfaces/Plugin'
 
 
@@ -157,6 +158,17 @@ interface UIElementSpec {
     slot: (ui: UIManager) => HTMLElement | undefined
 }
 
+/**
+ * Is a legend wanted at all? Only `false` (or `enabled: false`) says no — with no
+ * declaration the legend decides for itself whether the graph's colours warrant
+ * one, which it can only judge once the renderer and the data exist.
+ */
+function legendWanted(legend?: LegendOptions | boolean): boolean {
+    if (legend === false) return false
+    if (typeof legend === 'object' && legend.enabled === false) return false
+    return true
+}
+
 const UI_ELEMENTS: UIElementSpec[] = [
     {
         key: 'layout', modes: '*',
@@ -193,6 +205,14 @@ const UI_ELEMENTS: UIElementSpec[] = [
     {
         key: 'physicsFlyout', modes: ['full', 'light'],
         make: ui => new PhysicsFlyout(ui), slot: ui => ui.layout?.flyout
+    },
+    {
+        // Built unless suppressed: with no `UI.legend` the component tries to derive
+        // one from `render.nodeTypeAccessor` and renders nothing if that doesn't
+        // explain the colours. `setLegend` builds it later if it was suppressed.
+        key: 'legend', modes: ['full', 'light'],
+        enabled: o => legendWanted(o.legend),
+        make: ui => new Legend(ui), slot: ui => ui.layout?.legend
     },
     {
         key: 'mainHeader', modes: ['full', 'light'],
@@ -271,6 +291,7 @@ export class UIManager {
     public get toolPanel(): ToolPanel | undefined { return this.byKey.get('toolPanel') as ToolPanel | undefined }
     public get viewFlyout(): ViewFlyout | undefined { return this.byKey.get('viewFlyout') as ViewFlyout | undefined }
     public get physicsFlyout(): PhysicsFlyout | undefined { return this.byKey.get('physicsFlyout') as PhysicsFlyout | undefined }
+    public get legend(): Legend | undefined { return this.byKey.get('legend') as Legend | undefined }
     public get tooltip(): Tooltip | undefined { return this.byKey.get('tooltip') as Tooltip | undefined }
     public get contextMenu(): ContextMenu | undefined { return this.byKey.get('contextMenu') as ContextMenu | undefined }
 
@@ -482,6 +503,33 @@ export class UIManager {
         element.mount(slot)
         if (this.emittedPhases.has('afterMount')) element.afterMount()
         if (this.emittedPhases.has('graphReady')) element.graphReady()
+    }
+
+    /* ---------- canvas legend ---------- */
+
+    /**
+     * Replace `UI.legend` at runtime. The element is built on first need, so a graph
+     * that started without a legend can be given one; an `undefined` config empties
+     * the legend and drops its filter.
+     */
+    public setLegend(config?: LegendOptions | boolean) {
+        if (this.destroyed) {
+            console.warn('Cannot set the legend after the UI is destroyed.')
+            return
+        }
+        this.options.legend = config
+
+        const existing = this.legend
+        if (existing) {
+            existing.refresh()
+            return
+        }
+        // Nothing to build: the legend is suppressed, or this mode has no slot for it.
+        if (!legendWanted(config) || !this.layout?.legend) return
+
+        const legend = new Legend(this)
+        this.byKey.set('legend', legend)
+        this.addElement(legend, this.layout.legend)
     }
 
     /* ---------- sidebar extra panels ---------- */

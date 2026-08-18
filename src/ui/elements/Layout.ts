@@ -13,6 +13,8 @@ export class Layout extends UIComponent {
     public moderail?: HTMLDivElement
     public toolpanel?: HTMLDivElement
     public flyout?: HTMLDivElement
+    /** Canvas-docked legend slot (its corner is set by the legend itself). */
+    public legend?: HTMLDivElement
 
     protected onMount(container?: HTMLElement) {
         if (!container) return
@@ -71,6 +73,12 @@ export class Layout extends UIComponent {
             this.flyout = document.createElement('div')
             this.flyout.className = 'pvt-flyout'
             this.canvas.appendChild(this.flyout)
+
+            // Always present in these modes, even with no `UI.legend`, so a later
+            // `graph.setLegend()` has a slot to mount into.
+            this.legend = document.createElement('div')
+            this.legend.className = 'pvt-legend'
+            this.canvas.appendChild(this.legend)
         }
 
         container.appendChild(this.layout)

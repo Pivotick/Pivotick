@@ -2,6 +2,7 @@ import type { Edge } from '../Edge'
 import type { EdgeEditSession } from '../editing/EdgeEditSession'
 import type { NodeEditSession } from '../editing/NodeEditSession'
 import type { EdgeLabelPromptMode } from './InterractionCallbacks'
+import type { Graph } from '../Graph'
 import type { Node } from '../Node'
 import type { Note } from '../Note'
 import type { UIElement } from '../ui/UIManager'
@@ -39,6 +40,15 @@ export interface GraphUI {
      */
     filter?: FilterOptions,
     /**
+     * The canvas legend: a key for the graph's colours that doubles as a filter.
+     *
+     * Left out, a legend appears **by itself** when the graph's colours are
+     * explained by a declared `render.nodeTypeAccessor` — see
+     * {@link LegendOptions}. `false` suppresses it, `true` asks for it without the
+     * check, and an object configures it.
+     */
+    legend?: LegendOptions | boolean,
+    /**
      * The left mode rail's "coming soon" data-zone modes (Explore / Enrich).
      * These features aren't shipped yet, so they're **off by default**: when
      * enabled they appear as disabled slots carrying a `SOON` badge; when
@@ -62,6 +72,102 @@ export interface ModeRailOptions {
     explore?: boolean,
     /** Show the (coming-soon) Enrich mode. @default false */
     enrich?: boolean,
+}
+
+/** Which canvas corner the legend is docked in. */
+export type LegendPosition = 'bottom-left' | 'bottom-right' | 'top-left' | 'top-right'
+
+/**
+ * One row in the legend: a swatch, a label, and how to tell which nodes it
+ * stands for.
+ *
+ * @example
+ * ```js
+ * { id: 'hub', label: 'Hub', color: '#7EA2FB',
+ *   predicate: (node) => node.getData()?.type === 'hub' }
+ * ```
+ */
+export interface LegendEntry {
+    /** Stable identity: the toggle key, and the value written to the filter. */
+    id: string
+    /**
+     * Human label, used verbatim (so it can be translated).
+     * @default a prettified `id`
+     */
+    label?: string
+    /** The swatch colour — any CSS colour. Sampled from the renderer in derived mode. */
+    color: string
+    /**
+     * Which nodes this entry stands for. Defaults to matching `id` against
+     * `LegendOptions.key` on the node's data, when a `key` is declared.
+     */
+    predicate?: (node: Node) => boolean
+    /** Display order, ascending. @default declaration (or first-seen) order */
+    order?: number
+}
+
+/**
+ * `UI.legend` — the canvas legend. It is **descriptive**: it reports the colours
+ * the renderer already resolved and never assigns one, so the consumer stays the
+ * sole owner of node colouring.
+ *
+ * Entries come from `key` (derived from the data, swatches sampled from the
+ * renderer), from `entries` (declared), or from both — `key` then supplies the
+ * default predicate for entries that don't carry one.
+ *
+ * With **neither**, the legend keys itself on `render.nodeTypeAccessor` (the
+ * dimension you already declared for `nodeStyleMap`) — but only after checking
+ * that this dimension really is the colour dimension: every category must resolve
+ * to exactly one colour, there must be at least two of them, and few enough of
+ * them to be categories. That check is what makes a legend nobody asked for safe;
+ * `UI.legend: true` skips it, `false` suppresses the legend entirely.
+ *
+ * Shown in `full` and `light` modes only.
+ *
+ * @example
+ * ```js
+ * UI: { legend: { key: 'type', title: 'Node type' } }
+ * ```
+ */
+export interface LegendOptions {
+    /** @default true when the block is present */
+    enabled?: boolean
+    /**
+     * Header text, used verbatim (so it can be translated).
+     * @default a prettified `key`, else `'Legend'`
+     */
+    title?: string
+    /**
+     * Derived mode: the node-data key whose distinct values become the entries,
+     * each swatch sampled from the renderer's resolved node style. Also supplies
+     * the default predicate when `entries` are declared without one.
+     */
+    key?: string
+    /**
+     * Declared entries, or a function re-resolved against the live graph every
+     * time the legend rebuilds (so the list can follow the data).
+     */
+    entries?: LegendEntry[] | ((graph: Graph) => LegendEntry[])
+    /** @default 'bottom-left' */
+    position?: LegendPosition
+    /** @default true */
+    collapsible?: boolean
+    /** Start collapsed. @default false */
+    collapsed?: boolean
+    /** Show a per-entry node count. @default true */
+    showCounts?: boolean
+    /** Clicking an entry filters the graph. `false` renders a pure key. @default true */
+    filterable?: boolean
+    /** Entries shown before the list scrolls. @default 12 */
+    maxVisibleEntries?: number
+}
+
+/** The payload of the `legendToggle` event: which legend entries are on and off. */
+export interface LegendToggleState {
+    /** Ids of the entries whose nodes are hidden. */
+    hidden: string[]
+    /** Ids of the entries whose nodes are shown. */
+    visible: string[]
 }
 
 export type Key = string; // e.g. 'Ctrl+C', 'Ctrl+F', 'ArrowUp'
