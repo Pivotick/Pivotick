@@ -281,7 +281,7 @@ test.describe('canvas legend', () => {
 
         await harness(page, 'setLegend', { key: 'attr-type' })
         await legendRow(page, 'md5').click()
-        await harness(page, 'setLegend', undefined)
+        await harness(page, 'setLegend', false)
         await expect(page.locator('.pvt-legend-entry')).toHaveCount(0)
         // Removing the legend must not leave its filter hiding nodes.
         expect(await activeFilterKeys(page)).toEqual([])
@@ -363,6 +363,92 @@ test.describe('canvas legend', () => {
         await harness(page, 'loadWithLegend', 'mispLike', { key: 'attr-type' }, { UI: { mode: 'viewer' } })
         await expect(page.locator('.pvt-legend-panel')).toHaveCount(0)
         await expectVisible(page, ['a1', 'a2', 'a3', 'obj'])
+    })
+
+    // The legend appears with no `UI.legend` at all — but only when the dimension the
+    // consumer already declared (`render.nodeTypeAccessor`) demonstrably *is* the
+    // colour dimension. These cover both halves of that check.
+    test.describe('without any UI.legend', () => {
+        test('derives one when the declared type accessor explains the colours', async ({ page }) => {
+            await harness(page, 'loadAutoLegend', 'mispLike')
+
+            await expect(page.locator('.pvt-legend-entry')).toHaveCount(4)
+            expect(await rowIds(page)).toEqual(['ip-src', 'domain', 'md5', 'object'])
+            // No key name to prettify, so the header names the dimension itself.
+            expect(await harness(page, 'legendTitle')).toBe('Type')
+
+            // A legend nobody asked for filters like any other.
+            await legendRow(page, 'md5').click()
+            await expectVisible(page, ['a1', 'a2', 'obj'])
+            await expectCanvas(page, 'legend-automatic.png')
+        })
+
+        test('stays silent when nothing declares the colour dimension', async ({ page }) => {
+            // The common shape: colours come from an opaque accessor and no
+            // `nodeTypeAccessor` is declared, so the library has nothing to key on.
+            await harness(page, 'loadAutoLegend', 'mispLike', { accessor: null })
+
+            await expect(page.locator('.pvt-legend-panel')).toBeEmpty()
+            expect(await harness(page, 'warnings')).toEqual([])
+        })
+
+        test('stays silent when the declared dimension does not explain the colours', async ({ page }) => {
+            // One colour for the whole graph: `attr-type` partitions the data but says
+            // nothing about what the canvas looks like, so a swatch per type would be
+            // an invention.
+            await harness(page, 'loadAutoLegend', 'mispLike', { constantColor: true })
+
+            await expect(page.locator('.pvt-legend-panel')).toBeEmpty()
+            // Nobody asked for a legend, so its absence is not worth a warning.
+            expect(await harness(page, 'warnings')).toEqual([])
+        })
+
+        test('stays silent when the dimension has too many values to be categories', async ({ page }) => {
+            await harness(page, 'loadAutoLegend', 'mispLike')
+            await expect(page.locator('.pvt-legend-entry')).toHaveCount(4)
+
+            // An id-like dimension passes "one colour per value" trivially; what rules
+            // it out is having a value per node.
+            for (let index = 0; index < 25; index++) {
+                await harness(page, 'addNode', `x${index}`, -400 + index * 12, 200, `X${index}`, {
+                    'attr-type': `type-${index}`,
+                })
+            }
+
+            await expect.poll(async () => (await rows(page)).length).toBe(0)
+        })
+
+        test('`legend: false` suppresses it even when the colours would explain themselves', async ({ page }) => {
+            await harness(page, 'loadAutoLegend', 'mispLike', { legend: false })
+
+            await expect(page.locator('.pvt-legend-panel')).toHaveCount(0)
+        })
+
+        test('`legend: true` derives one even when the check is inconclusive', async ({ page }) => {
+            await harness(page, 'loadAutoLegend', 'mispLike', { constantColor: true, legend: true })
+
+            expect(await rowIds(page)).toEqual(['ip-src', 'domain', 'md5', 'object'])
+            // Every swatch is the same colour — which is the truth about this graph.
+            expect(new Set((await rows(page)).map((row) => row.color)).size).toBe(1)
+        })
+
+        test('`legend: true` with nothing to key on says so', async ({ page }) => {
+            await harness(page, 'loadAutoLegend', 'mispLike', { accessor: null, legend: true })
+
+            await expect(page.locator('.pvt-legend-panel')).toBeEmpty()
+            expect(await harness(page, 'warnings')).toEqual(
+                expect.arrayContaining([expect.stringContaining('has nothing to list')])
+            )
+        })
+
+        test('an options block with no key or entries still derives', async ({ page }) => {
+            // `UI.legend` is about presentation here — where it sits — so the entries
+            // are still worked out automatically.
+            await harness(page, 'loadAutoLegend', 'mispLike', {}, { UI: { legend: { position: 'top-right' } } })
+
+            await expect(page.locator('.pvt-legend-entry')).toHaveCount(4)
+            await expect(page.locator('.pvt-legend')).toHaveAttribute('data-position', 'top-right')
+        })
     })
 
     test('the legend hides a category inside an expanded cluster too', async ({ page }) => {

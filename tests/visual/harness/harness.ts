@@ -306,6 +306,20 @@ export interface LegendSpec {
     conflictNodeId?: string
 }
 
+/**
+ * A graph that declares `render.nodeTypeAccessor` (or doesn't) so the *automatic*
+ * legend has something — or nothing — to key on, and whose colours either do or
+ * don't line up with that dimension.
+ */
+export interface AutoLegendSpec {
+    /** Data key the declared accessor reads. `null` declares no accessor at all. */
+    accessor?: string | null
+    /** Paint every node the same colour, so no dimension can explain the colours. */
+    constantColor?: boolean
+    /** `UI.legend`: `true` forces a legend, `false` suppresses it, omitted = automatic. */
+    legend?: boolean
+}
+
 /** One rendered legend row, read straight off the DOM. */
 export interface LegendRow {
     id: string
@@ -540,8 +554,13 @@ export interface HarnessApi {
      * `UI.legend` built from {@link LegendSpec}.
      */
     loadWithLegend(name: FixtureName, spec?: LegendSpec, overrides?: PlainObject): Promise<void>
-    /** Replace the legend at runtime (`graph.setLegend`); `undefined` removes it. */
-    setLegend(spec?: LegendSpec): void
+    /**
+     * Load a fixture with **no** `UI.legend` (unless the spec sets one), so the
+     * automatic legend decides for itself whether to appear.
+     */
+    loadAutoLegend(name: FixtureName, spec?: AutoLegendSpec, overrides?: PlainObject): Promise<void>
+    /** Replace the legend at runtime (`graph.setLegend`); `false` removes it. */
+    setLegend(spec?: LegendSpec | boolean): void
     /** The rendered legend rows, in display order. */
     legendRows(): LegendRow[]
     /** The legend's header text, or `null` when there is no legend. */
@@ -1170,8 +1189,28 @@ class Harness implements HarnessApi {
         await this.load(name, mergeOptions(options, overrides))
     }
 
-    setLegend(spec?: LegendSpec): void {
-        this.g.setLegend(this.buildLegend(spec))
+    async loadAutoLegend(name: FixtureName, spec: AutoLegendSpec = {}, overrides: PlainObject = {}): Promise<void> {
+        const colorKey = spec.accessor ?? LEGEND_KEY
+        const mapper = new ColorPaletteMapper('pivotick')
+        const render: PlainObject = {
+            defaultNodeStyle: {
+                color: spec.constantColor
+                    ? LEGEND_COLORS[0]
+                    : (node: Node) => mapper.getColor(String(node.getData()?.[colorKey] ?? '')),
+            },
+        }
+        // `null` means "declare no accessor", which is what most graphs look like.
+        if (spec.accessor !== null) {
+            render.nodeTypeAccessor = (node: Node) => node.getData()?.[colorKey]
+        }
+
+        const options: PlainObject = { render }
+        if (spec.legend !== undefined) options.UI = { legend: spec.legend }
+        await this.load(name, mergeOptions(options, overrides))
+    }
+
+    setLegend(spec?: LegendSpec | boolean): void {
+        this.g.setLegend(typeof spec === 'boolean' ? spec : this.buildLegend(spec))
     }
 
     /** Turn a {@link LegendSpec} into the real `UI.legend` block. */
