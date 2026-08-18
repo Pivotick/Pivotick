@@ -6,9 +6,10 @@
 
 - **Layout and simulation moved out of the View flyout into a Physics flyout**, opened by a new
   `Physics` slot on the mode rail. View keeps the grid and canvas switches (snap, highlight,
-  freeze-on-drag, fit-on-expand/collapse); Physics carries the layout picker and the simulation
-  card (presets, live sliders, run/pause). Both are rail modes, so they exclude each other and the
-  pointer-modes exactly as View always did.
+  freeze-on-drag, fit-on-expand/collapse); Physics carries the layout picker — a tile per layout,
+  one click each, replacing the dropdown — and the simulation card (presets, live sliders,
+  run/pause). Both are rail modes, so they exclude each other and the pointer-modes exactly as View
+  always did.
 - **New `UIManager.physicsFlyout` accessor** (`PhysicsFlyout`), alongside the existing
   `viewFlyout`. Both flyouts now share a base class and one DOM slot.
 - `ModeStore`: `RailMode` gained `'physics'`, with a `FlyoutMode` union and an `isPointerMode`

@@ -4,6 +4,7 @@ import { PHYSICS_KNOB_RANGES, type PhysicsKnobs, type PhysicsPresetName } from '
 import hasCycle from '../../../plugins/analytics/cycle'
 import {
     atom, play, pause,
+    graphControlLayoutOrganic, graphControlLayoutTreeV, graphControlLayoutTreeH, graphControlLayoutTreeR,
     magnet, arrowsHorizontal, circleDashed, wind,
 } from '../../icons'
 import './physicsflyout.scss'
@@ -27,12 +28,16 @@ const PRESET_DESCRIPTIONS: Record<PhysicsPresetName, string> = {
     default: 'Reset the physics sliders to their default balance.',
 }
 
-/** Layout choices offered by the flyout (tree variants are disabled on cyclic graphs). */
-const LAYOUTS: Array<{ id: string; label: string; tree: boolean; desc: string }> = [
-    { id: 'force', label: 'Force', tree: false, desc: 'Positions nodes freely using the physics simulation.' },
-    { id: 'tree-v', label: 'Tree — Vertical', tree: true, desc: 'Hierarchical tree flowing from top to bottom.' },
-    { id: 'tree-h', label: 'Tree — Horizontal', tree: true, desc: 'Hierarchical tree flowing from left to right.' },
-    { id: 'tree-r', label: 'Tree — Radial', tree: true, desc: 'Hierarchical tree radiating out from a central root.' },
+/**
+ * Layout choices, rendered as a grid of tiles — one click each, no dropdown to
+ * open first. `label` is the tile's caption (the `desc` tooltip carries the full
+ * name); tree variants are disabled on cyclic graphs.
+ */
+const LAYOUTS: Array<{ id: string; label: string; icon: string; tree: boolean; desc: string }> = [
+    { id: 'force', label: 'Force', icon: graphControlLayoutOrganic, tree: false, desc: 'Force — positions nodes freely using the physics simulation.' },
+    { id: 'tree-v', label: 'Vertical', icon: graphControlLayoutTreeV, tree: true, desc: 'Tree — hierarchical layout flowing from top to bottom.' },
+    { id: 'tree-h', label: 'Horizontal', icon: graphControlLayoutTreeH, tree: true, desc: 'Tree — hierarchical layout flowing from left to right.' },
+    { id: 'tree-r', label: 'Radial', icon: graphControlLayoutTreeR, tree: true, desc: 'Tree — hierarchical layout radiating out from a central root.' },
 ]
 
 /**
@@ -47,15 +52,14 @@ const LAYOUTS: Array<{ id: string; label: string; tree: boolean; desc: string }>
 export class PhysicsFlyout extends Flyout {
     protected readonly mode: FlyoutMode = 'physics'
 
-    private layoutSelect?: HTMLSelectElement
     private runButton?: HTMLButtonElement
     private simulationCard?: HTMLDivElement
     private readonly sliders = new Map<SliderKey, HTMLInputElement>()
     private readonly sliderValues = new Map<SliderKey, HTMLElement>()
     private readonly presetButtons = new Map<PhysicsPresetName, HTMLButtonElement>()
+    private readonly layoutButtons = new Map<string, HTMLButtonElement>()
 
     protected wire() {
-        this.layoutSelect = this.query<HTMLSelectElement>('.pvt-physicsflyout-layout-select') ?? undefined
         this.runButton = this.query<HTMLButtonElement>('.pvt-physicsflyout-run') ?? undefined
         this.simulationCard = this.query<HTMLDivElement>('.pvt-physicsflyout-card') ?? undefined
 
@@ -69,6 +73,10 @@ export class PhysicsFlyout extends Flyout {
             const button = this.query<HTMLButtonElement>(`.pvt-physicsflyout-preset[data-preset="${name}"]`)
             if (button) this.presetButtons.set(name, button)
         }
+        for (const choice of LAYOUTS) {
+            const button = this.query<HTMLButtonElement>(`.pvt-physicsflyout-layout[data-layout="${choice.id}"]`)
+            if (button) this.layoutButtons.set(choice.id, button)
+        }
 
         this.wireLayout()
         this.wirePhysics()
@@ -77,14 +85,12 @@ export class PhysicsFlyout extends Flyout {
     protected onGraphReady() {
         super.onGraphReady()
         // Disable tree layouts on cyclic graphs (they can't be drawn as a tree).
-        const cyclic = hasCycle(this.uiManager.graph.getNodes(), this.uiManager.graph.getEdges())
-        if (cyclic && this.layoutSelect) {
-            for (const option of Array.from(this.layoutSelect.options)) {
-                const choice = LAYOUTS.find(l => l.id === option.value)
-                if (choice?.tree) {
-                    option.disabled = true
-                    option.title = 'The graph contains a cycle, so it cannot be displayed as a tree.'
-                }
+        if (hasCycle(this.uiManager.graph.getNodes(), this.uiManager.graph.getEdges())) {
+            for (const choice of LAYOUTS.filter(l => l.tree)) {
+                const button = this.layoutButtons.get(choice.id)
+                if (!button) continue
+                button.disabled = true
+                button.title = 'The graph contains a cycle, so it cannot be displayed as a tree.'
             }
         }
         // Seed physics from the live simulation (only available by graphReady —
@@ -92,32 +98,43 @@ export class PhysicsFlyout extends Flyout {
         this.refreshSliders(this.sim.getPhysicsKnobs())
         this.updateRunButton()
         this.updatePhysicsEnabled()
-        if (this.layoutSelect) this.layoutSelect.value = this.sim.getLayoutType() === 'force' ? 'force' : 'tree-v'
+        this.highlightLayout(this.sim.getLayoutType() === 'force' ? 'force' : 'tree-v')
     }
 
     protected onDestroy() {
         super.onDestroy()
-        this.layoutSelect = undefined
         this.runButton = undefined
         this.simulationCard = undefined
         this.sliders.clear()
         this.sliderValues.clear()
         this.presetButtons.clear()
+        this.layoutButtons.clear()
     }
 
     /* ---------- layout ---------- */
 
     private wireLayout() {
-        if (!this.layoutSelect) return
-        this.listen(this.layoutSelect, 'change', () => {
-            const choice = LAYOUTS.find(l => l.id === this.layoutSelect!.value)
-            if (!choice) return
-            if (choice.id === 'force') this.sim.changeLayout('force')
-            else if (choice.id === 'tree-v') this.sim.changeLayout('tree', { layout: { horizontal: false } })
-            else if (choice.id === 'tree-h') this.sim.changeLayout('tree', { layout: { horizontal: true } })
-            else if (choice.id === 'tree-r') this.sim.changeLayout('tree', { layout: { radial: true } })
-            this.updatePhysicsEnabled(choice.tree)
-        })
+        for (const choice of LAYOUTS) {
+            const button = this.layoutButtons.get(choice.id)
+            if (!button) continue
+            this.listen(button, 'click', () => {
+                if (choice.id === 'force') this.sim.changeLayout('force')
+                else if (choice.id === 'tree-v') this.sim.changeLayout('tree', { layout: { horizontal: false } })
+                else if (choice.id === 'tree-h') this.sim.changeLayout('tree', { layout: { horizontal: true } })
+                else if (choice.id === 'tree-r') this.sim.changeLayout('tree', { layout: { radial: true } })
+                this.highlightLayout(choice.id)
+                this.updatePhysicsEnabled(choice.tree)
+            })
+        }
+    }
+
+    /** Mark the chosen layout tile as the active one. */
+    private highlightLayout(active: string) {
+        for (const [id, button] of this.layoutButtons) {
+            const on = id === active
+            button.classList.toggle('active', on)
+            button.setAttribute('aria-pressed', String(on))
+        }
     }
 
     /* ---------- physics ---------- */
@@ -194,7 +211,10 @@ export class PhysicsFlyout extends Flyout {
     /* ---------- template ---------- */
 
     protected template(): string {
-        const options = LAYOUTS.map(l => `<option value="${l.id}" title="${l.desc}">${l.label}</option>`).join('')
+        const layouts = LAYOUTS.map(l => `
+            <button type="button" class="pvt-physicsflyout-layout" data-layout="${l.id}" aria-pressed="false" title="${l.desc}">
+                <span class="pvt-flyout-icon">${l.icon}</span>${l.label}
+            </button>`).join('')
         const presets = PRESETS.map(p =>
             `<button type="button" class="pvt-physicsflyout-preset" data-preset="${p}" title="${PRESET_DESCRIPTIONS[p]}">${p[0].toUpperCase()}${p.slice(1)}</button>`
         ).join('')
@@ -211,9 +231,7 @@ export class PhysicsFlyout extends Flyout {
         return this.headerRow(atom, 'Physics')
             + this.sectionLabel('LAYOUT &amp; SIMULATION')
             + `
-            <label class="pvt-physicsflyout-layout">Layout
-                <select class="pvt-physicsflyout-layout-select" title="Choose how nodes are arranged on the canvas.">${options}</select>
-            </label>
+            <div class="pvt-physicsflyout-layouts">${layouts}</div>
             <div class="pvt-physicsflyout-card">
                 <div class="pvt-physicsflyout-card-head">
                     <span class="pvt-physicsflyout-card-title">Simulation</span>

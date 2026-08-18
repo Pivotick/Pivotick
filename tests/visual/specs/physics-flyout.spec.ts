@@ -29,6 +29,10 @@ const simFlag = (page: Page, fn: string) =>
 
 const panel = (page: Page) => page.locator('.pvt-flyout-panel.pvt-flyout-physics')
 
+/** One of the four layout tiles that replaced the layout dropdown. */
+const layoutTile = (page: Page, id: string) =>
+    panel(page).locator(`.pvt-physicsflyout-layout[data-layout="${id}"]`)
+
 test.describe('physics-flyout', () => {
     test.beforeEach(async ({ page }) => {
         await gotoHarness(page)
@@ -94,24 +98,49 @@ test.describe('physics-flyout', () => {
         expect(await simFlag(page, 'isEnabled')).toBe(true)
     })
 
+    // One click per layout: the tile switches the simulation and takes the highlight.
+    test('a layout tile switches the layout in one click', async ({ page }) => {
+        await loadFixture(page, 'tree', B3) // acyclic → tree layouts allowed
+        await openFlyout(page)
+
+        // Force is the layout the graph boots in, so its tile starts active.
+        await expect(layoutTile(page, 'force')).toHaveClass(/active/)
+
+        await layoutTile(page, 'tree-h').click()
+        expect(await simFlag(page, 'getLayoutType')).toBe('tree')
+        await expect(layoutTile(page, 'tree-h')).toHaveClass(/active/)
+        await expect(layoutTile(page, 'tree-h')).toHaveAttribute('aria-pressed', 'true')
+        await expect(layoutTile(page, 'force')).not.toHaveClass(/active/)
+
+        // An acyclic graph offers all four tiles; the picked one carries the highlight.
+        await expectElement(panel(page), 'physicsflyout-tree-layout.png')
+
+        // And back: only one tile is ever active.
+        await layoutTile(page, 'force').click()
+        expect(await simFlag(page, 'getLayoutType')).toBe('force')
+        await expect(layoutTile(page, 'force')).toHaveClass(/active/)
+        await expect(layoutTile(page, 'tree-h')).not.toHaveClass(/active/)
+    })
+
     // Presets + sliders grey out under a non-force layout (D6/D7).
     test('a tree layout greys out the physics controls', async ({ page }) => {
         await loadFixture(page, 'tree', B3) // acyclic → tree layouts allowed
         await openFlyout(page)
 
-        await panel(page).locator('.pvt-physicsflyout-layout-select').selectOption('tree-v')
+        await layoutTile(page, 'tree-v').click()
 
         await expect(panel(page).locator('.pvt-physicsflyout-card')).toHaveClass(/pvt-physicsflyout-disabled/)
         await expect(panel(page).locator('.pvt-physicsflyout-range[data-slider="repulsion"]')).toBeDisabled()
     })
 
-    // Tree layouts are unavailable on a cyclic graph.
+    // Tree layouts are unavailable on a cyclic graph — their tiles refuse the click.
     test('tree layouts are disabled on a cyclic graph', async ({ page }) => {
         await loadFixture(page, 'basic', B3) // basic has a pentagon cycle
         await openFlyout(page)
-        const treeDisabled = await panel(page)
-            .locator('.pvt-physicsflyout-layout-select option[value="tree-v"]')
-            .evaluate((o: HTMLOptionElement) => o.disabled)
-        expect(treeDisabled).toBe(true)
+
+        for (const id of ['tree-v', 'tree-h', 'tree-r']) {
+            await expect(layoutTile(page, id)).toBeDisabled()
+        }
+        await expect(layoutTile(page, 'force')).toBeEnabled()
     })
 })

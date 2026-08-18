@@ -1,25 +1,48 @@
 // B3 Physics flyout — layout picker + simulation card (presets, sliders, run
 // toggle). The panel chrome it sits in is shared, see `Flyout/flyout.scss`.
+// Layout picker: one tile per layout, two per row — pick in a single click.
+.pvt-physicsflyout-layouts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+    padding: 0 3px;
+}
+
 .pvt-physicsflyout-layout {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 4px 9px;
-    font-size: 13px;
+    gap: 7px;
+    padding: 8px 9px;
+    border-radius: 8px;
+    border: 1px solid var(--pvt-bg-color-5);
+    background-color: var(--pvt-bg-color-4);
     color: var(--pvt-text-color-5);
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    text-align: left;
 
-    .pvt-physicsflyout-layout-select {
-        flex: 1;
-        max-width: 130px;
-        padding: 4px 6px;
-        border-radius: 7px;
-        border: 1px solid var(--pvt-bg-color-5);
-        background-color: var(--pvt-bg-color-4);
-        color: var(--pvt-text-color-6);
-        font-family: inherit;
-        font-size: 12px;
-        cursor: pointer;
+    .pvt-flyout-icon svg {
+        width: 15px;
+        height: 15px;
+        color: var(--pvt-text-color-4);
+    }
+
+    &:hover:not(:disabled) {
+        border-color: var(--pvt-theme-primary);
+    }
+
+    &.active {
+        background-color: var(--pvt-theme-primary);
+        border-color: var(--pvt-theme-primary);
+        color: #fff;
+
+        .pvt-flyout-icon svg { color: #fff; }
+    }
+
+    &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
     }
 }
 
