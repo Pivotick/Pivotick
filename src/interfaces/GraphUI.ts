@@ -41,9 +41,13 @@ export interface GraphUI {
     filter?: FilterOptions,
     /**
      * The canvas legend: a key for the graph's colours that doubles as a filter.
-     * Omit it and no legend is shown. See {@link LegendOptions}.
+     *
+     * Left out, a legend appears **by itself** when the graph's colours are
+     * explained by a declared `render.nodeTypeAccessor` — see
+     * {@link LegendOptions}. `false` suppresses it, `true` asks for it without the
+     * check, and an object configures it.
      */
-    legend?: LegendOptions,
+    legend?: LegendOptions | boolean,
     /**
      * The left mode rail's "coming soon" data-zone modes (Explore / Enrich).
      * These features aren't shipped yet, so they're **off by default**: when
@@ -110,6 +114,13 @@ export interface LegendEntry {
  * Entries come from `key` (derived from the data, swatches sampled from the
  * renderer), from `entries` (declared), or from both — `key` then supplies the
  * default predicate for entries that don't carry one.
+ *
+ * With **neither**, the legend keys itself on `render.nodeTypeAccessor` (the
+ * dimension you already declared for `nodeStyleMap`) — but only after checking
+ * that this dimension really is the colour dimension: every category must resolve
+ * to exactly one colour, there must be at least two of them, and few enough of
+ * them to be categories. That check is what makes a legend nobody asked for safe;
+ * `UI.legend: true` skips it, `false` suppresses the legend entirely.
  *
  * Shown in `full` and `light` modes only.
  *

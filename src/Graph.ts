@@ -459,12 +459,13 @@ export class Graph {
 
     /**
      * Replace the canvas legend at runtime — the imperative twin of `UI.legend`.
-     * A graph that started without one gets it built on the spot; `undefined`
-     * empties the legend and drops its filter.
+     * A graph that started without one gets it built on the spot; `false` empties
+     * the legend and drops its filter, and `true` / `undefined` fall back to
+     * deriving one from `render.nodeTypeAccessor`.
      *
-     * @param config - The legend to show, or `undefined` to remove it.
+     * @param config - The legend to show, or `false` to remove it.
      */
-    public setLegend(config?: LegendOptions): void {
+    public setLegend(config?: LegendOptions | boolean): void {
         this.UIManager.setLegend(config)
     }
 

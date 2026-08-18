@@ -13,6 +13,18 @@ export const RESERVED_LEGEND_FILTER_KEY = '__legend'
 
 const DEFAULT_MAX_VISIBLE_ENTRIES = 12
 
+/**
+ * Ceilings for the *automatic* legend (the one nobody asked for). More categories
+ * than this and the dimension isn't categorical — an id-like key gives one value
+ * per node, and one colour each, which would otherwise pass the colour check. More
+ * nodes than this and the colour sampling isn't worth paying for uninvited.
+ */
+const AUTO_MAX_CATEGORIES = 24
+const AUTO_MAX_NODES = 5000
+
+/** Header text for the automatic legend, whose dimension has no key name. */
+const AUTO_TITLE = 'Type'
+
 /** A legend entry with every default resolved, plus the node count behind it. */
 interface ResolvedLegendEntry {
     id: string
@@ -20,6 +32,13 @@ interface ResolvedLegendEntry {
     color: string
     predicate: (node: Node) => boolean
     count: number
+}
+
+/** The outcome of deriving entries from a dimension of the data. */
+interface DerivedEntries {
+    entries: ResolvedLegendEntry[]
+    /** A category resolved to more than one colour, so a swatch can only approximate. */
+    conflicted: boolean
 }
 
 /**
@@ -55,6 +74,8 @@ export class Legend extends UIComponent {
     /** Set while the legend writes its own filter, so it doesn't read the echo back. */
     private applyingFilter = false
     private rebuildFrame: number | null = null
+    /** Header text when `title` isn't set — depends on where the entries came from. */
+    private titleFallback = 'Legend'
     /** Warnings already emitted, so rebuilds don't spam the console. */
     private readonly warned = new Set<string>()
 
@@ -136,14 +157,21 @@ export class Legend extends UIComponent {
 
     /* ---------- configuration ---------- */
 
+    /**
+     * `UI.legend` normalised: `false` (or `enabled: false`) means no legend, while
+     * `true` / absent / an object with no `key` or `entries` all mean "work out what
+     * to list" — see {@link deriveAutomatically}.
+     */
     private get config(): LegendOptions | undefined {
-        return this.uiManager.getOptions().legend
+        const declared = this.uiManager.getOptions().legend
+        if (declared === false) return undefined
+        if (declared === undefined || declared === true) return {}
+        return declared.enabled === false ? undefined : declared
     }
 
-    /** A legend needs a source of entries: a data key, or declared entries. */
-    private isActive(config?: LegendOptions): config is LegendOptions {
-        if (!config || config.enabled === false) return false
-        return config.key !== undefined || config.entries !== undefined
+    /** `UI.legend: true` — derive a legend without vetting the colours first. */
+    private get forced(): boolean {
+        return this.uiManager.getOptions().legend === true
     }
 
     private get filterable(): boolean {
@@ -163,7 +191,7 @@ export class Legend extends UIComponent {
     private rebuild() {
         if (!this.panel) return
         const config = this.config
-        if (!this.isActive(config)) {
+        if (!config) {
             this.clear()
             return
         }
@@ -210,12 +238,71 @@ export class Legend extends UIComponent {
     /* ---------- entry resolution ---------- */
 
     private resolveEntries(config: LegendOptions): ResolvedLegendEntry[] {
-        const nodes = this.uiManager.graph.getMutableNodes().filter(node => !node.isChild)
         const declared = this.declaredEntries(config)
-        const resolved = declared?.length
-            ? this.fromDeclared(declared, config, nodes)
-            : config.key !== undefined ? this.derive(config.key, nodes) : []
-        return resolved
+        if (declared?.length) {
+            this.titleFallback = 'Legend'
+            return this.fromDeclared(declared, config, this.topLevelNodes())
+        }
+
+        if (config.key !== undefined) {
+            const key = config.key
+            this.titleFallback = FormFactory.niceLabelFromKey(key)
+            return this.derive(node => node.getData()?.[key], key, this.topLevelNodes()).entries
+        }
+
+        this.titleFallback = AUTO_TITLE
+        return this.deriveAutomatically()
+    }
+
+    /** The nodes of *this* graph — a cluster's children live in its own subgraph. */
+    private topLevelNodes(): Node[] {
+        return this.uiManager.graph.getMutableNodes().filter(node => !node.isChild)
+    }
+
+    /**
+     * The legend nobody asked for. It keys on `render.nodeTypeAccessor` — the
+     * dimension the consumer already declared for `nodeStyleMap`, so it is never a
+     * guess about their data — and then checks that this dimension really *is* the
+     * colour dimension before showing anything (see {@link explainsColors}). A
+     * legend that can't be shown truthfully isn't shown at all, and says nothing
+     * about it: nobody asked. `UI.legend: true` skips the vetting.
+     */
+    private deriveAutomatically(): ResolvedLegendEntry[] {
+        const accessor = this.uiManager.graph.renderer?.getOptions()?.nodeTypeAccessor
+        if (typeof accessor !== 'function') {
+            if (this.forced) {
+                this.warnOnce('auto-no-accessor',
+                    'Pivotick: `UI.legend: true` has nothing to list — declare `render.nodeTypeAccessor`, or give the legend a `key` / `entries`.')
+            }
+            return []
+        }
+
+        const nodes = this.topLevelNodes()
+        if (!this.forced && nodes.length > AUTO_MAX_NODES) {
+            this.warnOnce('auto-too-many-nodes',
+                `Pivotick: not deriving a legend for ${nodes.length} nodes (over ${AUTO_MAX_NODES}); declare 'UI.legend' to have one anyway.`)
+            return []
+        }
+
+        // Quiet: the blank-value and multi-colour warnings are for a legend the
+        // consumer configured, not for one the library is merely considering.
+        const derived = this.derive(node => accessor(node), 'nodeTypeAccessor', nodes, !this.forced)
+        if (this.forced) return derived.entries
+        return this.explainsColors(derived) ? derived.entries : []
+    }
+
+    /**
+     * Does this dimension actually explain what the canvas looks like? Every
+     * category must resolve to exactly one colour, there must be at least two
+     * colours (or the colours aren't telling the categories apart), and few enough
+     * categories to *be* categories — an id-like dimension yields one value per
+     * node, each with its own colour, which would sail through the colour test.
+     */
+    private explainsColors(derived: DerivedEntries): boolean {
+        if (derived.conflicted) return false
+        const { entries } = derived
+        if (entries.length < 2 || entries.length > AUTO_MAX_CATEGORIES) return false
+        return new Set(entries.map(entry => entry.color)).size >= 2
     }
 
     private declaredEntries(config: LegendOptions): LegendEntry[] | undefined {
@@ -235,9 +322,10 @@ export class Legend extends UIComponent {
         withOrder.sort((a, b) => a.order - b.order)
 
         return withOrder.map(({ entry }) => {
+            const key = config.key
             const predicate = entry.predicate
-                ?? (config.key !== undefined
-                    ? (node: Node) => this.nodeHasValue(node, config.key!, entry.id)
+                ?? (key !== undefined
+                    ? (node: Node) => this.matchesValue(node.getData()?.[key], entry.id)
                     : undefined)
             if (!predicate) {
                 this.warnOnce(`no-predicate-${entry.id}`,
@@ -257,19 +345,29 @@ export class Legend extends UIComponent {
     }
 
     /**
-     * Derived entries: one per distinct value of `key`, each swatch sampled from the
-     * colour the renderer resolved for the first node carrying that value.
+     * Derived entries: one per distinct value `read` returns, each swatch sampled
+     * from the colour the renderer resolved for the first node carrying that value.
      *
      * Blank values (`null` / `undefined` / `''`) get no entry — those nodes are
      * unrepresented, and the legend never hides them. A value rendering more than
      * one colour keeps the first, since the legend can only show one swatch.
+     *
+     * `label` names the dimension in warnings; `quiet` suppresses them for a legend
+     * that is only being *considered* (see {@link deriveAutomatically}).
      */
-    private derive(key: string, nodes: Node[]): ResolvedLegendEntry[] {
+    private derive(
+        read: (node: Node) => unknown,
+        label: string,
+        nodes: Node[],
+        quiet = false
+    ): DerivedEntries {
+        const safeRead = this.guardRead(label, read)
         const found = new Map<string, { color: string, count: number }>()
         let blanks = 0
+        let conflicted = false
 
         for (const node of nodes) {
-            const raw = node.getData()?.[key]
+            const raw = safeRead(node)
             const values = Array.isArray(raw) ? raw : [raw]
             let represented = false
 
@@ -285,25 +383,29 @@ export class Legend extends UIComponent {
                 }
                 existing.count++
                 if (color !== existing.color) {
-                    this.warnOnce(`multi-color-${id}`,
-                        `Pivotick: legend category '${id}' (${key}) renders more than one colour; the legend shows the first (${existing.color}).`)
+                    conflicted = true
+                    if (!quiet) {
+                        this.warnOnce(`multi-color-${id}`,
+                            `Pivotick: legend category '${id}' (${label}) renders more than one colour; the legend shows the first (${existing.color}).`)
+                    }
                 }
             }
             if (!represented) blanks++
         }
 
-        if (blanks > 0) {
-            this.warnOnce(`blank-${key}`,
-                `Pivotick: ${blanks} node(s) have no '${key}', so they have no legend entry and the legend cannot hide them.`)
+        if (blanks > 0 && !quiet) {
+            this.warnOnce(`blank-${label}`,
+                `Pivotick: ${blanks} node(s) have no '${label}', so they have no legend entry and the legend cannot hide them.`)
         }
 
-        return [...found].map(([id, { color, count }]) => ({
+        const entries = [...found].map(([id, { color, count }]) => ({
             id,
             label: id,
             color,
-            predicate: (node: Node) => this.nodeHasValue(node, key, id),
+            predicate: (node: Node) => this.matchesValue(safeRead(node), id),
             count,
         }))
+        return { entries, conflicted }
     }
 
     /** The colour the renderer actually paints this node with, as a CSS colour. */
@@ -316,10 +418,22 @@ export class Legend extends UIComponent {
     }
 
     /** Derived matching: a scalar equals the id, an array contains it (stringified). */
-    private nodeHasValue(node: Node, key: string, id: string): boolean {
-        const raw = node.getData()?.[key]
+    private matchesValue(raw: unknown, id: string): boolean {
         if (Array.isArray(raw)) return raw.some(value => String(value) === id)
         return raw !== null && raw !== undefined && String(raw) === id
+    }
+
+    /** Read a dimension without letting a consumer accessor's throw take the render down. */
+    private guardRead(label: string, read: (node: Node) => unknown): (node: Node) => unknown {
+        return (node: Node) => {
+            try {
+                return read(node)
+            } catch (error) {
+                this.warnOnce(`read-threw-${label}`,
+                    `Pivotick: reading '${label}' for the legend threw; it lists nothing.`, error)
+                return undefined
+            }
+        }
     }
 
     /** Run a consumer predicate without letting a throw take the render down. */
@@ -552,8 +666,7 @@ export class Legend extends UIComponent {
     }
 
     private renderHeader(config: LegendOptions): HTMLElement {
-        const title = config.title
-            ?? (config.key !== undefined ? FormFactory.niceLabelFromKey(config.key) : 'Legend')
+        const title = config.title ?? this.titleFallback
         const children: HTMLElement[] = []
 
         if (this.filterable) {

@@ -157,10 +157,15 @@ interface UIElementSpec {
     slot: (ui: UIManager) => HTMLElement | undefined
 }
 
-/** A legend is only shown when it has something to list: a data key, or entries. */
-function hasLegendSource(legend?: LegendOptions): boolean {
-    if (!legend || legend.enabled === false) return false
-    return legend.key !== undefined || legend.entries !== undefined
+/**
+ * Is a legend wanted at all? Only `false` (or `enabled: false`) says no — with no
+ * declaration the legend decides for itself whether the graph's colours warrant
+ * one, which it can only judge once the renderer and the data exist.
+ */
+function legendWanted(legend?: LegendOptions | boolean): boolean {
+    if (legend === false) return false
+    if (typeof legend === 'object' && legend.enabled === false) return false
+    return true
 }
 
 const UI_ELEMENTS: UIElementSpec[] = [
@@ -197,10 +202,11 @@ const UI_ELEMENTS: UIElementSpec[] = [
         make: ui => new ViewFlyout(ui), slot: ui => ui.layout?.viewflyout
     },
     {
-        // Only built when a legend is actually declared; `setLegend` constructs one
-        // later if it wasn't (see UIManager.setLegend).
+        // Built unless suppressed: with no `UI.legend` the component tries to derive
+        // one from `render.nodeTypeAccessor` and renders nothing if that doesn't
+        // explain the colours. `setLegend` builds it later if it was suppressed.
         key: 'legend', modes: ['full', 'light'],
-        enabled: o => hasLegendSource(o.legend),
+        enabled: o => legendWanted(o.legend),
         make: ui => new Legend(ui), slot: ui => ui.layout?.legend
     },
     {
@@ -499,7 +505,7 @@ export class UIManager {
      * that started without a legend can be given one; an `undefined` config empties
      * the legend and drops its filter.
      */
-    public setLegend(config?: LegendOptions) {
+    public setLegend(config?: LegendOptions | boolean) {
         if (this.destroyed) {
             console.warn('Cannot set the legend after the UI is destroyed.')
             return
@@ -511,8 +517,8 @@ export class UIManager {
             existing.refresh()
             return
         }
-        // Nothing to build: no source of entries, or a mode with no legend slot.
-        if (!hasLegendSource(config) || !this.layout?.legend) return
+        // Nothing to build: the legend is suppressed, or this mode has no slot for it.
+        if (!legendWanted(config) || !this.layout?.legend) return
 
         const legend = new Legend(this)
         this.byKey.set('legend', legend)
