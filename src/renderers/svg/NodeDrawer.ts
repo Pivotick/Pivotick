@@ -68,6 +68,10 @@ export class NodeDrawer {
                 const height = Math.ceil(bcr.height)
                 if (width === 0 || height === 0) return // never measurable: keep the fallback size
 
+                // Feed the measured box into the automatic edge-anchor calculation
+                // (EdgeDrawer.getNodeBorderRadius).
+                node.setBoxSize(width, height)
+
                 fo.attr('width', width)
                     .attr('height', height)
 
@@ -106,8 +110,8 @@ export class NodeDrawer {
                     height = Math.ceil(bbox.height)
                 }
 
-                // TEMP (feature/node-hitboxes): feed the measured box into the shape-aware
-                // edge-anchor calculation (EdgeDrawer.getNodeBorderRadius) for custom shapes.
+                // Feed the measured box into the automatic edge-anchor calculation
+                // (EdgeDrawer.getNodeBorderRadius).
                 node.setBoxSize(width, height)
 
                 if (this.rendererOptions.enableNodeExpansion && (!node.hasChildren() || !node.expanded)) {

@@ -66,8 +66,8 @@ export class Node {
     private _subgraph?: Graph
     private _circleRadius = this.defaultCircleRadius
     private _circleRadiusCollapsed = this.defaultCircleRadius
-    // TEMP (feature/node-hitboxes): measured bounding box, for shape-aware edge anchoring
-    // on custom-path nodes (undefined until NodeDrawer measures the rendered shape).
+    // Measured bounding box, used to anchor edges on the node's actual border instead
+    // of a bounding circle (undefined until NodeDrawer measures the rendered shape).
     private _boxHalfWidth?: number
     private _boxHalfHeight?: number
     private _dirty: boolean

@@ -439,10 +439,6 @@ const data = {
     { 'id': 'D3', 'data': {'label': 'Uma', 'group': 'D', 'gender': 'female'}},
     { 'id': 'D4', 'data': {'label': 'Victor', 'group': 'D', 'gender': 'male'}},
     { 'id': 'D5', 'data': {'label': 'Walter', 'group': 'D', 'gender': 'male'}},
-    // TEMP (feature/node-hitboxes): rectangle demo nodes
-    { 'id': 'E1', 'data': {'label': 'Rect 1', 'group': 'E'}},
-    { 'id': 'E2', 'data': {'label': 'Rect 2', 'group': 'E'}},
-    { 'id': 'E3', 'data': {'label': 'Rect 3', 'group': 'E'}},
     { 'id': 'D6', 'data': {'label': 'Xavier', 'group': 'D', 'gender': 'male'}, children: [
         {
             'id': 'children-1',
@@ -505,13 +501,6 @@ const data = {
     { 'from': 'C3', 'to': 'D2' },
     { 'from': 'D4', 'to': 'A6' },
 
-    // TEMP (feature/node-hitboxes): rectangle demo edges — straight, mixed angles
-    { 'from': 'E1', 'to': 'E2' },
-    { 'from': 'E2', 'to': 'E3' },
-    { 'from': 'A1', 'to': 'E1' },
-    { 'from': 'E1', 'to': 'C1' },
-    { 'from': 'B1', 'to': 'E3' },
-
     // { 'from': 'children-1', 'to': 'children-2', 'data': { 'label': 'c1-c2' } },
     //   { 'from': 'children-2', 'to': 'children-3', 'data': { 'label': 'c2-c3' } },
     //   { 'from': 'children-3', 'to': 'children-1', 'data': { 'label': 'c3-c1' } },
@@ -539,9 +528,6 @@ const options = {
             'B': { shape: 'circle', color: 'var(--pvt-vibrant-blue)', svgIcon: (node) => node.getData()?.icon, text: (node) => node.getData()?.label, textVerticalShift: 1 },
             'C': { shape: 'square', color: 'var(--pvt-vibrant-indigo)', size: 18 },
             'D': { color: 'var(--pvt-vibrant-green)', size: 22 },
-            // TEMP (feature/node-hitboxes): true (non-square) rectangle via a custom SVG
-            // path shape — 'square' is always width===height, this is a real w!==h case.
-            'E': { shape: { d: 'M -40,-15 L 40,-15 L 40,15 L -40,15 Z' }, color: '#e67e22' },
         },
         defaultEdgeStyle: {
             dashed: (e) => { return e.getData().cool },

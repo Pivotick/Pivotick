@@ -336,26 +336,26 @@ export class EdgeDrawer {
         return `M ${startX} ${startY} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${endX} ${endY}`
     }
 
-    // TEMP (feature/node-hitboxes) test: shape-aware edge anchor radius.
-    // Square nodes anchor on their rectangular border; every other shape keeps
-    // the existing circle-radius approximation.
+    // Automatic, shape-agnostic edge anchor radius. Driven purely by the node's
+    // measured bounding box, not by its shape name — a
+    // roughly square/round box (circle, square, triangle, hexagon, ...) keeps the
+    // existing circle-radius approximation, which already fits those well; a box
+    // clearly longer on one axis (rectangles, elongated custom shapes) anchors on
+    // its actual rectangular border instead.
+    private static readonly RECT_ASPECT_THRESHOLD = 1.3
+
     private getNodeBorderRadius(node: Node, dirX: number, dirY: number): number {
-        const style = this.graphSvgRenderer.nodeDrawer.getNodeStyle(node)
-        const shape = typeof style.shape === 'function' ? style.shape(node) : style.shape
-
-        if (shape === 'square') {
-            const halfSize = tryResolveNumber(style.size, node) ?? node.getCircleRadius()
-            return rectRadiusAlongDirection(halfSize, halfSize, dirX, dirY)
-        }
-
-        // Custom-path shape: use its measured bounding box once NodeDrawer has it
-        // (falls back to the circle approximation on the first frame, before it's measured).
         const halfWidth = node.getBoxHalfWidth()
         const halfHeight = node.getBoxHalfHeight()
-        if (typeof shape === 'object' && shape !== null && halfWidth && halfHeight) {
-            return rectRadiusAlongDirection(halfWidth, halfHeight, dirX, dirY)
+
+        if (halfWidth && halfHeight) {
+            const aspectRatio = Math.max(halfWidth, halfHeight) / Math.min(halfWidth, halfHeight)
+            if (aspectRatio > EdgeDrawer.RECT_ASPECT_THRESHOLD) {
+                return rectRadiusAlongDirection(halfWidth, halfHeight, dirX, dirY)
+            }
         }
 
+        const style = this.graphSvgRenderer.nodeDrawer.getNodeStyle(node)
         return node.getCircleRadius() ? node.getCircleRadius() : tryResolveNumber(style.size, node) as number
     }
 
