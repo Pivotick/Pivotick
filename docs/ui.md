@@ -11,6 +11,7 @@ Pivotick provides a flexible UI layer on top of your graph, allowing you to cont
 - Define [**tooltips**](./ui-tooltip) for nodes and edges, with optional custom renderers.
 - Configure [**context menus**](./ui-context-menu) for nodes, edges, and the canvas.
 - Declare the [**filter**](./ui-filter) panel's facets, or let them be derived from your data.
+- Dock a [**legend**](./ui-legend) on the canvas — a key for your colours that doubles as a filter.
 - Fill any of those surfaces [**asynchronously**](#async-content), from data you fetch on demand.
 
 ### UI Mode {#ui-mode}

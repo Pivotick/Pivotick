@@ -158,6 +158,11 @@ propagation into an expanded cluster's subgraph all keep working. Declared facet
 are handed down to a cluster's subgraph too, so an `accessor` / `predicate` facet
 filters children exactly as it filters top-level nodes.
 
+The canvas [legend](/ui-legend) is a third way into the same engine: clicking a
+legend row hides that category. Give the legend the `key` of a declared
+`select` / `multiselect` facet and the two drive **one** filter, so the panel's
+control and the legend stay in step.
+
 See the [Filter / query engine](/examples/gallery/filter-query-engine/content)
 gallery card for a live example, and
 [`FilterFacet`](/api/html/interfaces/GraphQueryEngine.FilterFacet.html) for the

@@ -11,6 +11,9 @@ per category value, and `color` accepts an accessor — so one line maps every
 node's group to a color. The `okabe-ito` palette shown here is colorblind-safe;
 `tol-bright`, `kelly-22`, and `d3-category10` are built in too.
 
+Add `UI.legend` and the same mapping gets a key the reader can click — see
+[Filterable legend](/examples/gallery/filterable-legend/content).
+
 <script setup>
 import { data, options } from './options.js'
 </script>

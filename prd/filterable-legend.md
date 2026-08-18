@@ -1,11 +1,87 @@
 # Feature — a canvas legend that doubles as a filter
 
-**Status:** Specified — 2026-08-18. Not implemented.
+**Status:** Implemented — 2026-08-18, branch `worktree-worktree-filterable-legend`. Not merged.
 **Owner:** Sami Mokaddem
 **Requested:** 2026-08-18
 **Area:** `src/ui/elements/Legend/` (new), `src/ui/elements/Layout.ts` (new canvas slot), `src/ui/UIManager.ts` (`UI_ELEMENTS` row), `src/interfaces/GraphUI.ts` (new `UI.legend`), `src/GraphQueryEngine.ts` + `src/interfaces/GraphQueryEngine.ts` (synthetic facet registration), `src/Graph.ts` (`setLegend`, `legendToggle` event)
 **Type:** UI element / filtering capability
 **Related:** [`misp/declarative-filter-facets.md`](misp/declarative-filter-facets.md) (the facet vocabulary this reuses, and the panel it must stay in sync with); [`graph-app-b3-control-layout.md`](graph-app-b3-control-layout.md) (the canvas chrome it has to share corners with); [`misp/runtime-sidebar-panels.md`](misp/runtime-sidebar-panels.md) (the runtime-registration pattern `setLegend` mirrors)
+
+---
+
+## Implementation (2026-08-18)
+
+Shipped on `worktree-worktree-filterable-legend`. `tsc`, `eslint` and `npm run build`
+clean; `npx vitepress build docs` clean (no dead links); the new `legend.spec.ts` is
+20/20, and `filter` / `filter-facets` / `facets` / `ui-chrome` / `extra-panels` /
+`mode-rail` / `tool-panel` / `view-flyout` / `node-panel` stay green (90 tests) — the
+suite's ~16 pre-existing canvas-drift failures on this machine were not re-run.
+
+### Where things landed
+
+| Area | File |
+|---|---|
+| Types (`LegendEntry` / `LegendOptions` / `LegendToggleState` / `LegendPosition`) | `src/interfaces/GraphUI.ts` |
+| `legendToggle` on the data bus | `src/interfaces/GraphOptions.ts`, `src/Graph.ts` |
+| `graph.setLegend()` | `src/Graph.ts` → `UIManager.setLegend` |
+| Additive facet registration | `src/GraphQueryEngine.ts` (`registerFacet` / `unregisterFacet` / `facetFor` / `allFacets`) |
+| Canvas slot + element row | `src/ui/elements/Layout.ts`, `src/ui/UIManager.ts` |
+| The component | `src/ui/elements/Legend/Legend.ts` + `legend.scss` |
+| Tests | `tests/visual/specs/legend.spec.ts`, harness `loadWithLegend` / `legendRows` / `legendEvents` / `warnings` / `nodeColor` |
+| Docs | `docs/ui-legend.md`, gallery card `filterable-legend`, cross-links from `ui.md` / `ui-filter.md` / `color-by-category` |
+
+### Decisions that refine the spec
+
+- **§5.3 the reserved predicate is negative.** A node is hidden when it matches a
+  **hidden** entry — not "visible when it matches a visible one". Written the other way
+  round, a node whose key is blank matches no entry and would be hidden the moment any
+  legend filter existed, contradicting D9. As a consequence "hide everything" empties
+  the canvas *except* the nodes no entry covers, which is the honest reading of D9.
+  This also side-steps a trap in `matches()`: an empty array filter value matches
+  **everything**, so a value-list approach would have shown the whole graph back.
+- **Adopted mode cannot express "hide everything".** For a declared facet an empty
+  multiselect means *no constraint*, so the last shown row is `disabled` (with a title
+  saying why) and invert is refused when it would empty the set. The legend's own key
+  has no such limit. Also inherited from the panel's vocabulary: in adopted mode,
+  blank-valued nodes *are* hidden by any selection — exactly as the panel hides them.
+- **`entries` + `key` combine** instead of "entries wins and warns": the entries give
+  labels/colours and `key` supplies the default predicate for entries without one. An
+  entry with neither warns and matches nothing.
+- **Derived labels are the raw value**, not a prettified one — matching the filter
+  panel, whose auto-derived option labels are `String(value)`. Only the *title* is
+  prettified from the key.
+- **The list cap is `maxVisibleEntries` + a quarter row**, so the next entry's top edge
+  peeks through and says "there is more". An exact cap looked like a clean edge with no
+  scroll affordance (Chromium renders no gutter here); a half row sliced a label
+  through the middle.
+- **`setLegend(undefined)` keeps the component and empties it**, rather than
+  unregistering the element — reversible, and it still removes the filter, unregisters
+  the reserved facet and clears the DOM. Conversely `setLegend(config)` on a graph that
+  never declared one constructs and registers the element on the spot.
+- **Counts** are over `getMutableNodes()` minus `isChild` (§7.2 as proposed): the
+  top-level nodes, so expanding a cluster doesn't move the numbers. The *predicates*
+  still match children, so a hidden category is hidden inside a subgraph too.
+
+### Found on the way in
+
+- `queryEngine.getFilters()` **always** appends a `manuallyHidden` entry, so "no
+  filter" can only ever mean "no legend key present" — the tests assert on
+  `activeFilterKeys()` minus that entry.
+- `setFacets()` replaces the registry wholesale, which is why the legend needed
+  `registerFacet`. `applyFiltersOnSubgraph` now hands **declared + reserved** facets
+  down: the `__legend` filter key travels in `mainFilters`, and without its facet the
+  subgraph would match it against a non-existent data key and hide every child.
+- The legend renders from a `requestAnimationFrame` after `afterMount`, not from
+  `graphReady`: `graphReady` only fires once the simulation has settled (seconds on a
+  big graph), while `graph.renderer` — whose styles the swatches sample — only exists
+  after the `UIManager` constructor returns.
+
+### Not done
+
+- §7.5 (legend vs. a tall View flyout on a short viewport) is handled only by
+  `z-index` + the collapse affordance, as specced. No auto-collapse or auto-reposition.
+- A `viewer`-mode legend stays out of scope per D6, so a published `static` graph still
+  has no key.
 
 ---
 

@@ -42,6 +42,7 @@ export default defineConfig({
               { text: 'Tooltip', link: '/ui-tooltip' },
               { text: 'Context Menu', link: '/ui-context-menu' },
               { text: 'Filters', link: '/ui-filter' },
+              { text: 'Legend', link: '/ui-legend' },
               { text: 'Styling UI', link: '/ui-styling' },
             ]
           },
