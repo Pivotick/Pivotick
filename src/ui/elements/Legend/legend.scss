@@ -1,0 +1,207 @@
+// Canvas legend — a key for the graph's colours that doubles as a filter.
+// Docked in a canvas corner (bottom-left by default) and styled as part of the
+// B3 chrome family: same surface, border and shadow as the mode rail / view
+// flyout / navigation pill.
+.pvt-legend {
+    position: absolute;
+    // Below the mode rail and its panels (z-index 6/7): on a short viewport the
+    // left-edge chrome wins the overlap, and the legend can be collapsed away.
+    z-index: 5;
+    max-width: 232px;
+
+    // Nothing declared, nothing rendered — an empty slot must not swallow clicks.
+    &:empty {
+        display: none;
+    }
+
+    &[data-position='bottom-left'] {
+        bottom: 14px;
+        left: 14px;
+    }
+
+    &[data-position='bottom-right'] {
+        bottom: 14px;
+        right: 14px;
+    }
+
+    &[data-position='top-left'] {
+        top: calc(var(--pvt-mainheader-height) + 14px);
+        left: 14px;
+    }
+
+    &[data-position='top-right'] {
+        top: calc(var(--pvt-mainheader-height) + 14px);
+        right: 14px;
+    }
+}
+
+.pvt-legend-panel {
+    --pvt-legend-row-height: 24px;
+
+    display: flex;
+    flex-direction: column;
+    padding: 6px;
+    border-radius: 11px;
+    background-color: var(--pvt-chrome-bg);
+    border: 1px solid var(--pvt-chrome-border);
+    box-shadow: var(--pvt-chrome-shadow);
+}
+
+.pvt-legend-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 1px 4px 6px 7px;
+
+    .pvt-legend-title {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--pvt-text-color-4);
+    }
+
+    .pvt-legend-actions {
+        display: flex;
+        align-items: center;
+        gap: 1px;
+    }
+}
+
+.pvt-legend-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--pvt-text-color-4);
+    transition: background-color 0.06s ease, color 0.06s ease;
+
+    svg {
+        width: 13px;
+        height: 13px;
+    }
+
+    &:hover:not(:disabled) {
+        background-color: var(--pvt-chrome-border);
+        color: var(--pvt-text-color-6);
+    }
+
+    &:disabled {
+        opacity: 0.35;
+        cursor: default;
+    }
+}
+
+// The chevron points down when open, right when the list is folded away.
+.pvt-legend-collapse svg {
+    transition: transform 0.12s ease;
+}
+
+.pvt-legend-list {
+    display: flex;
+    flex-direction: column;
+    // No gap: the row height is the whole story, so the capped height can land on
+    // an exact row boundary instead of slicing a row in half (see Legend.render).
+    gap: 0;
+    overflow-y: auto;
+}
+
+.pvt-legend-collapsed {
+    .pvt-legend-list {
+        display: none;
+    }
+
+    .pvt-legend-header {
+        padding-bottom: 1px;
+    }
+
+    .pvt-legend-collapse svg {
+        transform: rotate(-90deg);
+    }
+}
+
+.pvt-legend-entry {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-height: var(--pvt-legend-row-height);
+    padding: 2px 7px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    font-family: inherit;
+    font-size: 12px;
+    text-align: left;
+    color: var(--pvt-text-color-6);
+    transition: background-color 0.06s ease;
+
+    .pvt-legend-swatch {
+        flex: none;
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        // The fallback covers a colour the browser rejected as invalid (the value
+        // comes from consumer data — see Legend.renderEntry).
+        background-color: var(--pvt-legend-swatch-color, var(--pvt-node-color, #007acc));
+        border: 1px solid var(--pvt-legend-swatch-color, var(--pvt-node-color, #007acc));
+        box-sizing: border-box;
+    }
+
+    .pvt-legend-label {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .pvt-legend-count {
+        flex: none;
+        font-size: 11px;
+        font-variant-numeric: tabular-nums;
+        color: var(--pvt-text-color-4);
+    }
+}
+
+// Interactive rows only: a plain key (`filterable: false`) keeps its cursor.
+.pvt-legend-panel:not(.pvt-legend-static) .pvt-legend-entry {
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+        background-color: var(--pvt-chrome-border);
+    }
+
+    &:disabled {
+        cursor: default;
+    }
+}
+
+// Hidden category: hollow swatch *and* dimmed text — colour alone must not be
+// the only signal that a row is off.
+.pvt-legend-entry.pvt-legend-hidden {
+    .pvt-legend-swatch {
+        background-color: transparent;
+    }
+
+    .pvt-legend-label,
+    .pvt-legend-count {
+        color: var(--pvt-text-color-3);
+    }
+}
+
+// A declared category with no nodes behind it right now.
+.pvt-legend-entry.pvt-legend-empty {
+    opacity: 0.55;
+}

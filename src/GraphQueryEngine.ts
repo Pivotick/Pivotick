@@ -15,6 +15,12 @@ export class GraphQueryEngine {
     private hiddenNodeCount: number = 0
     /** Declared facets, by key — how to read and match a filter (see `UI.filter.facets`). */
     private facets = new Map<string, FilterFacet>()
+    /**
+     * Facets owned by the library's own UI (the canvas legend). Kept apart from the
+     * declared ones so `setFacets` can't clobber them and they never show up in
+     * `getFacets()` — which is the consumer's declaration, not ours.
+     */
+    private reservedFacets = new Map<string, FilterFacet>()
     /** Patterns compiled once per filter application, not once per node (`null` = unusable). */
     private regexCache = new Map<string, RegExp | null>()
     /** Facet keys whose accessor/predicate has thrown, so we warn once rather than per node. */
@@ -62,6 +68,31 @@ export class GraphQueryEngine {
 
     getFacets(): FilterFacet[] {
         return [...this.facets.values()]
+    }
+
+    /**
+     * Register a facet the library itself owns — the legend's, so its filter key
+     * matches through a predicate instead of a raw data key. Additive: it survives
+     * {@link setFacets} and stays out of {@link getFacets}.
+     */
+    registerFacet(facet: FilterFacet) {
+        this.reservedFacets.set(facet.key, facet)
+        if (this.filters[facet.key] !== undefined) this.apply()
+    }
+
+    /** Drop a reserved facet, and any filter that was relying on it to match. */
+    unregisterFacet(key: string) {
+        if (!this.reservedFacets.delete(key)) return
+        this.removeFilter(key)
+    }
+
+    /** Declared facets plus the library's own — what filters are actually matched with. */
+    private allFacets(): FilterFacet[] {
+        return [...this.facets.values(), ...this.reservedFacets.values()]
+    }
+
+    private facetFor(key: string): FilterFacet | undefined {
+        return this.facets.get(key) ?? this.reservedFacets.get(key)
     }
 
     getFilters(): GraphFilters {
@@ -185,7 +216,10 @@ export class GraphQueryEngine {
 
     public applyFiltersOnSubgraph() {
         const mainFilters = this.getFilters()
-        const facets = this.getFacets()
+        // The legend's reserved facet goes down with the declared ones: its filter key
+        // travels in `mainFilters`, and without the facet the subgraph would match it
+        // against a data key that doesn't exist and hide every child node.
+        const facets = this.allFacets()
 
         this.graph.getMutableNodes()
             .filter(node => node.childrenDepth === 0)
@@ -210,7 +244,7 @@ export class GraphQueryEngine {
         for (const [key, value] of Object.entries(this.filters)) {
             if (key === 'manuallyHidden') continue
 
-            const facet = this.facets.get(key)
+            const facet = this.facetFor(key)
             if (facet?.predicate) {
                 if (!this.runFacetFn(facet, () => facet.predicate!(node, value.value))) return false
                 continue

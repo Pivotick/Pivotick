@@ -11,7 +11,7 @@ import type { Notification } from './Notifier'
 import merge from 'lodash.merge'
 import { Tooltip } from './elements/Tooltip/Tooltip'
 import { ContextMenu } from './elements/ContextMenu/ContextMenu'
-import type { Editors, ExtraPanel, GraphUI, GraphUIMode, PropertyEntry, RegisteredExtraPanel } from '../interfaces/GraphUI'
+import type { Editors, ExtraPanel, GraphUI, GraphUIMode, LegendOptions, PropertyEntry, RegisteredExtraPanel } from '../interfaces/GraphUI'
 import { KeybindingManager } from './KeybindingManager'
 import { createInspectModal } from './elements/modals/InspectNodeModal/InspectNodeModal'
 import { Note } from '../Note'
@@ -20,6 +20,7 @@ import { ModeStore } from './ModeStore'
 import { ModeRail } from './elements/ModeRail/ModeRail'
 import { ToolPanel } from './elements/ToolPanel/ToolPanel'
 import { ViewFlyout } from './elements/ViewFlyout/ViewFlyout'
+import { Legend } from './elements/Legend/Legend'
 import type { PivotickPlugin, PluginContext } from '../interfaces/Plugin'
 
 
@@ -156,6 +157,12 @@ interface UIElementSpec {
     slot: (ui: UIManager) => HTMLElement | undefined
 }
 
+/** A legend is only shown when it has something to list: a data key, or entries. */
+function hasLegendSource(legend?: LegendOptions): boolean {
+    if (!legend || legend.enabled === false) return false
+    return legend.key !== undefined || legend.entries !== undefined
+}
+
 const UI_ELEMENTS: UIElementSpec[] = [
     {
         key: 'layout', modes: '*',
@@ -188,6 +195,13 @@ const UI_ELEMENTS: UIElementSpec[] = [
         // viewer-mode View flyout is an open question (§9.4); full/light for now.
         key: 'viewFlyout', modes: ['full', 'light'],
         make: ui => new ViewFlyout(ui), slot: ui => ui.layout?.viewflyout
+    },
+    {
+        // Only built when a legend is actually declared; `setLegend` constructs one
+        // later if it wasn't (see UIManager.setLegend).
+        key: 'legend', modes: ['full', 'light'],
+        enabled: o => hasLegendSource(o.legend),
+        make: ui => new Legend(ui), slot: ui => ui.layout?.legend
     },
     {
         key: 'mainHeader', modes: ['full', 'light'],
@@ -264,6 +278,7 @@ export class UIManager {
     public get modeRail(): ModeRail | undefined { return this.byKey.get('modeRail') as ModeRail | undefined }
     public get toolPanel(): ToolPanel | undefined { return this.byKey.get('toolPanel') as ToolPanel | undefined }
     public get viewFlyout(): ViewFlyout | undefined { return this.byKey.get('viewFlyout') as ViewFlyout | undefined }
+    public get legend(): Legend | undefined { return this.byKey.get('legend') as Legend | undefined }
     public get tooltip(): Tooltip | undefined { return this.byKey.get('tooltip') as Tooltip | undefined }
     public get contextMenu(): ContextMenu | undefined { return this.byKey.get('contextMenu') as ContextMenu | undefined }
 
@@ -475,6 +490,33 @@ export class UIManager {
         element.mount(slot)
         if (this.emittedPhases.has('afterMount')) element.afterMount()
         if (this.emittedPhases.has('graphReady')) element.graphReady()
+    }
+
+    /* ---------- canvas legend ---------- */
+
+    /**
+     * Replace `UI.legend` at runtime. The element is built on first need, so a graph
+     * that started without a legend can be given one; an `undefined` config empties
+     * the legend and drops its filter.
+     */
+    public setLegend(config?: LegendOptions) {
+        if (this.destroyed) {
+            console.warn('Cannot set the legend after the UI is destroyed.')
+            return
+        }
+        this.options.legend = config
+
+        const existing = this.legend
+        if (existing) {
+            existing.refresh()
+            return
+        }
+        // Nothing to build: no source of entries, or a mode with no legend slot.
+        if (!hasLegendSource(config) || !this.layout?.legend) return
+
+        const legend = new Legend(this)
+        this.byKey.set('legend', legend)
+        this.addElement(legend, this.layout.legend)
     }
 
     /* ---------- sidebar extra panels ---------- */

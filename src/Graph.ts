@@ -6,7 +6,7 @@ import { Simulation } from './Simulation'
 import { UIManager } from './ui/UIManager'
 import { Notifier } from './ui/Notifier'
 import type { GraphOptions, GraphData, RelaxedGraphData, RawNode, RawEdge, GraphEvents, GraphDataChange } from './interfaces/GraphOptions'
-import type { GraphUI } from './interfaces/GraphUI'
+import type { GraphUI, LegendOptions, LegendToggleState } from './interfaces/GraphUI'
 import type { InterractionCallbacks } from './interfaces/InterractionCallbacks'
 import type { LayoutOptions } from './interfaces/LayoutOptions'
 import { generateSafeDomId } from './utils/ElementCreation'
@@ -48,7 +48,7 @@ export class Graph {
             ready: [],
             nodeAdd: [], nodeRemove: [], nodeChange: [], edgeAdd: [], edgeRemove: [], edgeChange: [],
             noteAdd: [], noteRemove: [], noteChange: [],
-            dataBatchChanged: [],
+            dataBatchChanged: [], legendToggle: [],
         }
 
         this.options = {
@@ -446,6 +446,26 @@ export class Graph {
     }
     public noteRemove(note: Note): void {
         this.emit('noteRemove', note)
+    }
+
+    /**
+     * @private
+     * Announce that a legend entry was toggled. Called by the legend after it has
+     * applied its filter, so a consumer can persist the user's choice.
+     */
+    public legendToggled(state: LegendToggleState): void {
+        this.emit('legendToggle', state)
+    }
+
+    /**
+     * Replace the canvas legend at runtime — the imperative twin of `UI.legend`.
+     * A graph that started without one gets it built on the spot; `undefined`
+     * empties the legend and drops its filter.
+     *
+     * @param config - The legend to show, or `undefined` to remove it.
+     */
+    public setLegend(config?: LegendOptions): void {
+        this.UIManager.setLegend(config)
     }
 
     /**
