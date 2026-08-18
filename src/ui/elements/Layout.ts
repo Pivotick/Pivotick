@@ -9,10 +9,10 @@ export class Layout extends UIComponent {
     public modal?: HTMLDivElement
     public slidePanel?: HTMLDivElement
     public graphnavigation?: HTMLDivElement
-    /** B3 mode rail + contextual tool panel + View flyout slots. */
+    /** B3 mode rail + contextual tool panel + settings-flyout slots. */
     public moderail?: HTMLDivElement
     public toolpanel?: HTMLDivElement
-    public viewflyout?: HTMLDivElement
+    public flyout?: HTMLDivElement
 
     protected onMount(container?: HTMLElement) {
         if (!container) return
@@ -66,9 +66,11 @@ export class Layout extends UIComponent {
             this.toolpanel.className = 'pvt-toolpanel'
             this.canvas.appendChild(this.toolpanel)
 
-            this.viewflyout = document.createElement('div')
-            this.viewflyout.className = 'pvt-viewflyout'
-            this.canvas.appendChild(this.viewflyout)
+            // One slot for every settings flyout (View / Physics) — the rail keeps
+            // them mutually exclusive, so at most one is ever displayed.
+            this.flyout = document.createElement('div')
+            this.flyout.className = 'pvt-flyout'
+            this.canvas.appendChild(this.flyout)
         }
 
         container.appendChild(this.layout)

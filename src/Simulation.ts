@@ -530,7 +530,7 @@ export class Simulation {
                 message: 'The physic has been disabled.'
             })
             // Physics was disabled behind the user's back — resync the run/pause button.
-            this.graph.UIManager.viewFlyout?.syncRunState()
+            this.graph.UIManager.physicsFlyout?.syncRunState()
         }
     }
 

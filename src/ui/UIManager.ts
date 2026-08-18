@@ -20,6 +20,7 @@ import { ModeStore } from './ModeStore'
 import { ModeRail } from './elements/ModeRail/ModeRail'
 import { ToolPanel } from './elements/ToolPanel/ToolPanel'
 import { ViewFlyout } from './elements/ViewFlyout/ViewFlyout'
+import { PhysicsFlyout } from './elements/PhysicsFlyout/PhysicsFlyout'
 import type { PivotickPlugin, PluginContext } from '../interfaces/Plugin'
 
 
@@ -185,9 +186,13 @@ const UI_ELEMENTS: UIElementSpec[] = [
         make: ui => new ToolPanel(ui), slot: ui => ui.layout?.toolpanel
     },
     {
-        // viewer-mode View flyout is an open question (§9.4); full/light for now.
+        // viewer-mode flyouts are an open question (§9.4); full/light for now.
         key: 'viewFlyout', modes: ['full', 'light'],
-        make: ui => new ViewFlyout(ui), slot: ui => ui.layout?.viewflyout
+        make: ui => new ViewFlyout(ui), slot: ui => ui.layout?.flyout
+    },
+    {
+        key: 'physicsFlyout', modes: ['full', 'light'],
+        make: ui => new PhysicsFlyout(ui), slot: ui => ui.layout?.flyout
     },
     {
         key: 'mainHeader', modes: ['full', 'light'],
@@ -215,8 +220,9 @@ export class UIManager {
     public keyManager: KeybindingManager
 
     /**
-     * Mode-rail state (Select / Create pointer-mode + View flyout). The rail,
-     * contextual panels, View flyout and canvas cursor subscribe to it. Lives on
+     * Mode-rail state (Select / Create pointer-modes + the View / Physics
+     * flyouts). The rail, contextual panels, both flyouts and the canvas cursor
+     * subscribe to it. Lives on
      * the manager (not per-component) so it survives element rebuilds and is
      * reachable from the interaction layer via `graph.UIManager.modeStore`.
      */
@@ -264,6 +270,7 @@ export class UIManager {
     public get modeRail(): ModeRail | undefined { return this.byKey.get('modeRail') as ModeRail | undefined }
     public get toolPanel(): ToolPanel | undefined { return this.byKey.get('toolPanel') as ToolPanel | undefined }
     public get viewFlyout(): ViewFlyout | undefined { return this.byKey.get('viewFlyout') as ViewFlyout | undefined }
+    public get physicsFlyout(): PhysicsFlyout | undefined { return this.byKey.get('physicsFlyout') as PhysicsFlyout | undefined }
     public get tooltip(): Tooltip | undefined { return this.byKey.get('tooltip') as Tooltip | undefined }
     public get contextMenu(): ContextMenu | undefined { return this.byKey.get('contextMenu') as ContextMenu | undefined }
 

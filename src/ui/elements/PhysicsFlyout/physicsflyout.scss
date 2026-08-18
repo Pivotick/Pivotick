@@ -1,0 +1,133 @@
+// B3 Physics flyout — layout picker + simulation card (presets, sliders, run
+// toggle). The panel chrome it sits in is shared, see `Flyout/flyout.scss`.
+.pvt-physicsflyout-layout {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 4px 9px;
+    font-size: 13px;
+    color: var(--pvt-text-color-5);
+
+    .pvt-physicsflyout-layout-select {
+        flex: 1;
+        max-width: 130px;
+        padding: 4px 6px;
+        border-radius: 7px;
+        border: 1px solid var(--pvt-bg-color-5);
+        background-color: var(--pvt-bg-color-4);
+        color: var(--pvt-text-color-6);
+        font-family: inherit;
+        font-size: 12px;
+        cursor: pointer;
+    }
+}
+
+.pvt-physicsflyout-card {
+    margin: 8px 0 0;
+    padding: 11px;
+    border-radius: 10px;
+    background-color: var(--pvt-bg-color-4);
+    border: 1px solid var(--pvt-bg-color-5);
+
+    &.pvt-physicsflyout-disabled {
+        .pvt-physicsflyout-presets,
+        .pvt-physicsflyout-sliders {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+    }
+}
+
+.pvt-physicsflyout-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 11px;
+
+    .pvt-physicsflyout-card-title {
+        font-weight: 600;
+        font-size: 13px;
+        color: var(--pvt-text-color-6);
+    }
+
+    .pvt-physicsflyout-run {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border: none;
+        border-radius: 7px;
+        background-color: var(--pvt-theme-primary);
+        color: #fff;
+        cursor: pointer;
+
+        svg { width: 14px; height: 14px; }
+    }
+}
+
+.pvt-physicsflyout-presets {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 13px;
+    padding: 3px;
+    border-radius: 8px;
+    background-color: var(--pvt-bg-color-2);
+
+    .pvt-physicsflyout-preset {
+        flex: 1;
+        padding: 6px 0;
+        border: none;
+        border-radius: 6px;
+        background: transparent;
+        color: var(--pvt-text-color-5);
+        font-family: inherit;
+        font-size: 12px;
+        cursor: pointer;
+
+        &.active {
+            background-color: var(--pvt-theme-primary);
+            color: #fff;
+        }
+    }
+}
+
+.pvt-physicsflyout-sliders {
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+}
+
+.pvt-physicsflyout-slider {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    .pvt-physicsflyout-slider-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 12px;
+        color: var(--pvt-text-color-5);
+    }
+
+    .pvt-physicsflyout-slider-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+
+        .pvt-flyout-icon svg { width: 14px; height: 14px; color: var(--pvt-text-color-4); }
+    }
+
+    .pvt-physicsflyout-slider-value {
+        color: var(--pvt-text-color-6);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .pvt-physicsflyout-range {
+        width: 100%;
+        accent-color: var(--pvt-theme-primary);
+        cursor: pointer;
+    }
+}

@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+### Physics is its own rail mode
+
+- **Layout and simulation moved out of the View flyout into a Physics flyout**, opened by a new
+  `Physics` slot on the mode rail. View keeps the grid and canvas switches (snap, highlight,
+  freeze-on-drag, fit-on-expand/collapse); Physics carries the layout picker and the simulation
+  card (presets, live sliders, run/pause). Both are rail modes, so they exclude each other and the
+  pointer-modes exactly as View always did.
+- **New `UIManager.physicsFlyout` accessor** (`PhysicsFlyout`), alongside the existing
+  `viewFlyout`. Both flyouts now share a base class and one DOM slot.
+- `ModeStore`: `RailMode` gained `'physics'`, with a `FlyoutMode` union and an `isPointerMode`
+  guard for the modes that own pointer tools. `toggleFlyout(mode)` / `isFlyoutActive(mode)`
+  replace `toggleView()` / `isViewActive()`, which still work but are deprecated.
+- **CSS hooks changed.** The flyout slot is `.pvt-flyout` (was `.pvt-viewflyout`) and each panel
+  is `.pvt-flyout-panel.pvt-flyout-view` / `.pvt-flyout-physics`. The shared chrome — header,
+  section label, icon, switch rows — is `.pvt-flyout-*` (was `.pvt-viewflyout-*`); the layout and
+  simulation controls are `.pvt-physicsflyout-*`.
+
 ### Sidebar panels: a real lifecycle
 
 - **`UI.extraPanels` is now the declarative form of a live registry.** `graph.UIManager.addPanel(panel)`

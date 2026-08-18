@@ -1,0 +1,111 @@
+// B3 settings flyouts — overlays toggled by the mode rail's flyout buttons
+// (View, Physics). One shared slot hosts every flyout panel: they're mutually
+// exclusive, so at most one is displayed at a time. Sits above the contextual
+// tool panel (higher z-index) and covers it while open.
+.pvt-flyout {
+    position: absolute;
+    top: calc(var(--pvt-mainheader-height) + 14px);
+    left: 84px;
+    z-index: 7;
+    width: 252px;
+    max-height: calc(100% - 28px);
+    overflow-y: auto;
+}
+
+.pvt-flyout-panel {
+    display: none;
+    flex-direction: column;
+    padding: 6px;
+    border-radius: 11px;
+    background-color: var(--pvt-chrome-bg);
+    border: 1px solid var(--pvt-chrome-border);
+    box-shadow: var(--pvt-chrome-shadow);
+
+    &.open {
+        display: flex;
+    }
+}
+
+.pvt-flyout-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+
+    svg {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+.pvt-flyout-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 9px 8px;
+    font-weight: 600;
+    color: var(--pvt-text-color-6);
+
+    .pvt-flyout-icon svg {
+        color: var(--pvt-theme-primary);
+    }
+}
+
+.pvt-flyout-section-label {
+    padding: 0 9px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--pvt-text-color-4);
+}
+
+.pvt-flyout-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    height: 36px;
+    padding: 0 9px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--pvt-text-color-5);
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    text-align: left;
+
+    &:hover { background-color: var(--pvt-chrome-border); }
+
+    .pvt-flyout-switch {
+        margin-left: auto;
+        position: relative;
+        width: 32px;
+        height: 18px;
+        border-radius: 9px;
+        background-color: var(--pvt-chrome-border);
+        transition: background-color 0.15s ease;
+        flex: none;
+
+        &::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background-color: var(--pvt-text-color-4);
+            transition: left 0.15s ease, background-color 0.15s ease;
+        }
+    }
+
+    &[aria-pressed='true'] .pvt-flyout-switch {
+        background-color: var(--pvt-theme-primary);
+
+        &::after {
+            left: 16px;
+            background-color: #fff;
+        }
+    }
+}

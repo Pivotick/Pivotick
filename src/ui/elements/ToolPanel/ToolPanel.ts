@@ -1,6 +1,6 @@
 import type { UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
-import type { ModeState, PointerMode, RailMode } from '../../ModeStore'
+import { isPointerMode, type ModeState, type PointerMode, type RailMode } from '../../ModeStore'
 import type { GraphInteractionContext } from '../../../interfaces/GraphInteractions'
 import type { GraphConnectManager } from '../../../editing/GraphConnectManager'
 import { Note } from '../../../Note'
@@ -38,7 +38,7 @@ const MODE_SHORTCUT: Record<PointerMode, string> = { select: 'V', create: 'C' }
  * rail slot morphs to reflect it; one-shot *actions* (Invert / Add-note / Edit)
  * just run. Open/collapsed state is remembered per mode by the store; the armed
  * tool is reset to the mode default when its mode is left. The panel is hidden
- * in View mode.
+ * while a settings flyout (View / Physics) is open.
  */
 export class ToolPanel extends UIComponent {
     private panel?: HTMLDivElement
@@ -107,7 +107,7 @@ export class ToolPanel extends UIComponent {
     /**
      * React to a store change: disarm the tool of any left mode, then render the
      * active pointer-mode's tool-set and reflect its armed tool + open/collapsed
-     * state. View has no pointer tools, so the panel is collapsed in View mode.
+     * state. A flyout mode has no pointer tools, so the panel collapses there.
      * All operations are idempotent — a re-entrant emit (from disarming) converges.
      */
     private onState(state: Readonly<ModeState>) {
@@ -124,7 +124,8 @@ export class ToolPanel extends UIComponent {
                 if (cm.isActive()) cm.exitClickConnectionMode()
             }
         }
-        if (mode === 'view') {
+        // A flyout mode (View / Physics) has no pointer tools — collapse the panel.
+        if (!isPointerMode(mode)) {
             this.setCollapsed(true)
             return
         }

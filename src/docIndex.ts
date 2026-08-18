@@ -21,7 +21,7 @@ import type { TreeLayoutAlgorithm } from './plugins/layout/Tree'
 import { defaultNodeStyle, defaultEdgeStyle, defaultLabelStyle, defaultMarkerStyleMap } from './styles/defaults'
 import type { DeepPartial } from './utils/utils'
 import type { UIElement } from './ui/UIManager'
-import type { ModeStore, PointerMode, RailMode, ModeState } from './ui/ModeStore'
+import type { ModeStore, PointerMode, FlyoutMode, RailMode, ModeState } from './ui/ModeStore'
 import { UIComponent } from './ui/UIComponent'
 import type { UIPhase } from './ui/UIComponent'
 import type { PivotickPlugin, PluginContext } from './interfaces/Plugin'
@@ -49,6 +49,7 @@ export type {
     UIElement,
     ModeStore,
     PointerMode,
+    FlyoutMode,
     RailMode,
     ModeState,
     UIPhase,

@@ -164,18 +164,21 @@ test.describe('tool-panel', () => {
         await expect(panelBox(page)).not.toHaveClass(/pvt-collapsed/)
     })
 
-    test('View mode collapses the tool panel', async ({ page }) => {
-        await loadFixture(page, 'basic', B3)
-        await openSelect(page)
-        await expect(panelBox(page)).not.toHaveClass(/pvt-collapsed/)
+    // Every flyout mode (View, Physics) collapses the panel — it has no tools there.
+    for (const flyout of ['view', 'physics'] as const) {
+        test(`${flyout} mode collapses the tool panel`, async ({ page }) => {
+            await loadFixture(page, 'basic', B3)
+            await openSelect(page)
+            await expect(panelBox(page)).not.toHaveClass(/pvt-collapsed/)
 
-        await setMode(page, 'view')
-        await expect(panelBox(page)).toHaveClass(/pvt-collapsed/)
+            await setMode(page, flyout)
+            await expect(panelBox(page)).toHaveClass(/pvt-collapsed/)
 
-        // Returning to Select restores the open state we left it in.
-        await setMode(page, 'select')
-        await expect(panelBox(page)).not.toHaveClass(/pvt-collapsed/)
-    })
+            // Returning to Select restores the open state we left it in.
+            await setMode(page, 'select')
+            await expect(panelBox(page)).not.toHaveClass(/pvt-collapsed/)
+        })
+    }
 
     test('lasso selects the enclosed nodes, then reverts to Select (one-shot)', async ({ page }) => {
         await loadFixture(page, 'basic', B3)
