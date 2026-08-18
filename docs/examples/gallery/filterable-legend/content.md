@@ -14,7 +14,10 @@ node count per category, and **clicking a row hides that category**.
 
 One line configures it: `legend: { key: 'type' }`. The library collects the distinct
 values of `data.type`, reads each swatch from the colour the **renderer already
-resolved**, and counts the nodes behind it. The legend is purely descriptive — the
+resolved**, and counts the nodes behind it. Often you need no line at all — with a
+`render.nodeTypeAccessor` declared, a legend appears by itself once that dimension is
+shown to explain the colours (see [Legend](/ui-legend#on-by-default)); this card
+declares the block to show the knobs. The legend is purely descriptive — the
 colours here come from a `ColorPaletteMapper` in the options, exactly as in
 [Color by category](/examples/gallery/color-by-category/content), and the legend
 never assigns one. Change the palette and the legend follows.

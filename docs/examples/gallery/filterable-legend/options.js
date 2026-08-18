@@ -37,6 +37,10 @@ const palette = new ColorPaletteMapper('okabe-ito')
 // `key` is all a legend needs: it collects the distinct values of `data.type`,
 // reads each swatch out of the colour the renderer resolved, counts the nodes
 // behind it, and makes every row a filter toggle.
+//
+// You can also leave `UI.legend` out entirely: with a `render.nodeTypeAccessor`
+// declared, a legend appears by itself as soon as that dimension is shown to
+// explain the colours. `UI.legend: false` opts out.
 const legend = {
     key: 'type',
     title: 'Service type',
@@ -101,7 +105,7 @@ function legendByType(graph) {
 }
 
 function removeLegend(graph) {
-    graph.setLegend(undefined)
+    graph.setLegend(false)
 }
 
 // Declared entries, for when the categories aren't a plain data key: supply the

@@ -16,8 +16,12 @@ const options = {
 }
 ```
 
-Omit `UI.legend` and no legend is shown. It is part of the chrome, so it appears in
-`full` and `light` modes only — `viewer` and `static` have none.
+You may not need that block at all: with no `UI.legend`, a legend appears **on its
+own** when your graph's colours are explained by a declared `render.nodeTypeAccessor`
+— see [On by default](#on-by-default). `UI.legend: false` turns it off.
+
+The legend is part of the chrome, so it appears in `full` and `light` modes only —
+`viewer` and `static` have none.
 
 ::: tip The legend never colours anything
 The legend is **descriptive**. It reads the colour the renderer already resolved for
@@ -26,6 +30,41 @@ was: `render.defaultNodeStyle.color`, `render.nodeStyleMap`, or a per-node style
 typically via [`ColorPaletteMapper`](/examples/gallery/color-by-category/content).
 Change the palette and the legend follows on its own.
 :::
+
+## On by default {#on-by-default}
+
+A legend is only worth showing unasked if it is guaranteed to tell the truth, so the
+automatic one starts from something you already declared rather than from a guess
+about your data: **`render.nodeTypeAccessor`**, the dimension you point
+[`nodeStyleMap`](/render) at.
+
+Having a candidate isn't enough, though — a dimension can partition your data without
+having anything to do with its colours. So before rendering anything, the legend
+checks that this dimension **explains the colours**:
+
+- every category resolves to exactly **one** colour;
+- there are at least **two** distinct colours (otherwise the colours aren't telling
+  the categories apart);
+- there are at most **24** categories — an id-like dimension yields one value per
+  node, each with its own colour, which would otherwise sail through the check above.
+
+If any of that fails, no legend appears and nothing is logged: you didn't ask for one.
+The automatic legend is also skipped past **5000 nodes**, where sampling every node's
+colour isn't worth paying for uninvited — that one warns, so the absence is
+explainable. Declaring `UI.legend` (or `true`) lifts both.
+
+```ts
+// nothing declared → a legend appears iff `type` explains the colours
+render: { nodeTypeAccessor: (node) => node.getData().type, nodeStyleMap: { … } }
+
+UI: { legend: false }   // never
+UI: { legend: true }    // derive from nodeTypeAccessor, check or no check
+UI: { legend: { position: 'top-right' } }   // automatic entries, your placement
+```
+
+An automatic legend keys on an accessor rather than a data key, so it can't
+[share a filter](#sharing-a-filter-with-the-panel) with a declared facet — give it an
+explicit `key` for that.
 
 ## Where the entries come from
 
@@ -156,21 +195,26 @@ graph.queryEngine.setFilter('__legend', { value: visible, matchMode: 'exact' })
 ## Changing the legend at runtime
 
 `graph.setLegend(config)` replaces `UI.legend` live. A graph that started without a
-legend gets one built on the spot, and `undefined` removes it — clearing its filter
-with it, so nothing stays hidden behind a legend that is gone.
+legend gets one built on the spot, and `false` removes it — clearing its filter with
+it, so nothing stays hidden behind a legend that is gone.
 
 ```ts
 graph.setLegend({ key: 'zone', title: 'Region' })
-graph.setLegend(undefined)
+graph.setLegend(false)        // remove it
+graph.setLegend(true)         // back to the derived one
 ```
 
 ## Options
 
+`UI.legend` also takes a **boolean**: `false` suppresses the legend, `true` derives one
+from `render.nodeTypeAccessor` without vetting the colours first. Everything below is
+the object form.
+
 | Option | Type | Default | What it does |
 |---|---|---|---|
-| `enabled` | `boolean` | `true` | `false` keeps the declaration but shows nothing. |
+| `enabled` | `boolean` | `true` | `false` keeps the declaration but shows nothing (same as `legend: false`). |
 | `title` | `string` | prettified `key`, else `'Legend'` | Header text, used verbatim (so it can be translated). |
-| `key` | `string` | — | Data key the rows are derived from, and the default predicate for declared entries. |
+| `key` | `string` | — | Data key the rows are derived from, and the default predicate for declared entries. Omit both this and `entries` for the [automatic](#on-by-default) legend. |
 | `entries` | `LegendEntry[] \| (graph) => LegendEntry[]` | — | Declared rows; a function is re-resolved on data change. |
 | `position` | `'bottom-left' \| 'bottom-right' \| 'top-left' \| 'top-right'` | `'bottom-left'` | Which canvas corner it docks in. |
 | `collapsible` | `boolean` | `true` | Show the chevron that folds it to its title. |

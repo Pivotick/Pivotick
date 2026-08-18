@@ -62,6 +62,35 @@ suite's ~16 pre-existing canvas-drift failures on this machine were not re-run.
   top-level nodes, so expanding a cluster doesn't move the numbers. The *predicates*
   still match children, so a hidden category is hidden inside a subgraph too.
 
+### The automatic legend (D10)
+
+`UI.legend` became `LegendOptions | boolean`, and the element is now built in
+`full` / `light` **unless** suppressed — the colour check needs the renderer and the
+data, so only the component can make the call, and it renders nothing when the answer
+is no. Details worth keeping:
+
+- **The candidate is never a guess.** It is `render.nodeTypeAccessor`, which the
+  consumer declared to drive `nodeStyleMap`. A data scan would have repeated the filter
+  panel's auto-derivation footgun (§3.3 of the facets PRD): a legend keyed on `uuid`.
+- **The cardinality ceiling is load-bearing, not decoration.** An id-like dimension
+  gives one value per node *and* one colour each, so it passes "every category resolves
+  to one colour" trivially. Only the ≤24 cap rules it out.
+- **A legend nobody asked for warns about nothing.** The blank-value and multi-colour
+  warnings are suppressed while the legend is merely being *considered* — hence
+  `derive(…, quiet)` and the `conflicted` flag on its result. The one exception is the
+  >5000-node skip, which warns so the absence is explainable.
+- **No facet adoption in automatic mode:** there is an accessor, not a key, so there is
+  nothing to match a declared facet against.
+- `setLegend(undefined)` now means *automatic* (it used to mean *remove*);
+  `setLegend(false)` removes. The API had not shipped, so this replaces rather than
+  breaks.
+- Gallery fallout: only `filter-query-engine` actually gains a legend (`mode: 'full'`
+  plus `nodeTypeAccessor` + `nodeStyleMap` colours) — its `pic.png` is regenerated. The
+  other five cards declaring an accessor run in the library's default `viewer` mode, so
+  nothing changes. **Note for whoever reads `docs/ui.md` next:** it claims `full` is the
+  default mode, but `DEFAULT_UI_OPTIONS.mode` is `'viewer'` — a pre-existing doc bug,
+  left alone here.
+
 ### Found on the way in
 
 - `queryEngine.getFilters()` **always** appends a `manuallyHidden` entry, so "no
@@ -198,6 +227,7 @@ viewports, which is what the collapse affordance and a capped height are for.
 | D7 | Legend key collides with a declared filter facet? | **Adopt the facet.** The legend writes that facet's key instead of the reserved one, so panel and legend become two views of one filter. |
 | D8 | API surface? | `UI.legend` config + `graph.setLegend(config)` runtime setter + a `legendToggle` data-bus event. **No** custom-render override in v1. |
 | D9 | Derived-mode awkward data? | **Skip blanks** (null/undefined key values get no entry and are never hidden by the legend); if a category resolves to several colours, **the first sampled colour wins**, with a dev-time warning. |
+| D10 | Should the legend be on by default? | **Yes, but only when it can be truthful.** With no `UI.legend`, key on the already-declared `render.nodeTypeAccessor` and show a legend *only* if that dimension explains the colours (one colour per category, ≥2 colours, ≤24 categories, ≤5000 nodes). `legend: false` suppresses, `legend: true` skips the vetting. Added 2026-08-18 after the first pass shipped. |
 
 Smaller calls made in the same session, open to revision:
 
