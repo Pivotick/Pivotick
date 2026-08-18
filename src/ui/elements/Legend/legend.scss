@@ -1,7 +1,7 @@
 // Canvas legend — a key for the graph's colours that doubles as a filter.
 // Docked in a canvas corner (bottom-left by default) and styled as part of the
-// B3 chrome family: same surface, border and shadow as the mode rail / view
-// flyout / navigation pill.
+// B3 chrome family: same surface, border and shadow as the mode rail /
+// settings flyouts / navigation pill.
 .pvt-legend {
     position: absolute;
     // Below the mode rail and its panels (z-index 6/7): on a short viewport the
@@ -25,7 +25,7 @@
     }
 
     // Clear of the mode rail (54px at left:14px), lining up with the tool panel and
-    // View flyout instead — those overlay the legend when open, being transient.
+    // the settings flyouts instead — those overlay the legend when open, being transient.
     &[data-position='top-left'] {
         top: calc(var(--pvt-mainheader-height) + 14px);
         left: 84px;
