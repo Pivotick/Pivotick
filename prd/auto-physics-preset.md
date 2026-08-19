@@ -566,3 +566,62 @@ bbox, overlaps and nearest-neighbour gap — all blind to whether clusters are d
 separation and density-CV metrics above still live in a throwaway probe. They should move into
 `measureLayout`, with a community-structured fixture, before this can be called guarded; the
 existing fixture builder makes a single random recursive tree, which has no communities to lose.
+
+### 13.7 Correction — the length scale is node radius, not the area budget (2026-08-19, later still)
+
+Sami confirmed clusters were the right call at scale, then sent three screenshots: `hybrid`
+and `fill` at radius 60, and a hand-tuned config of the same graph that reads beautifully.
+The comparison rewrites §7.2's premise.
+
+| knob | `hybrid` | `fill` | hand-tuned | auto now |
+|---|---|---|---|---|
+| repulsion | 38 | 38 | **100** | 95 |
+| linkDistance | 144 | 115 | **387** | **390** |
+| collisionRadius | 32 | 22 | 24 | 23 |
+| centering | 23 | 23 | **7** | 10 |
+
+**The tell.** Both the flattened layout and the good one measure `nearestNeighbourGap ≈ 0.99r`.
+Identical local spacing, completely different pictures — so the metric §5.1 chose to judge
+spacing by is blind to the thing that matters. What separates them is the *variation* in
+nearest-neighbour gaps: 0.24 for the carpet, 1.26 for the legible one. Clusters mean dense
+insides and empty gaps; an even disc has neither.
+
+**Cause.** §7.2 derived the link distance from an area budget (canvas ÷ node count). A budget
+cannot know how big the nodes are, so on a graph of 60px nodes it asked for 115–144px of
+spacing — less than three node diameters — and every star packed into a hexagonal blob. The
+fix is a second, independent term: `387 / 60 ≈ 6.5` from the hand-tuned graph, and
+`67 / 10 ≈ 6.7` from the radius-10 version of the same graph that also reads well. Two
+independent readings of the same constant.
+
+**Changes.**
+
+- **`LINK_PER_RADIUS = 6.5`**, taken as `max(areaBudget, 6.5 · r̄)`. The budget survives as a
+  lower bound so a sparse graph on a large canvas still spreads.
+- **Repulsion floor scales with node size** (`38 · (r̄/10)^0.54`), fitted to the same two
+  points: r=10 wants 38, r=60 wants ~100. Bigger discs need a proportionally harder push to
+  open the same gap.
+- **Collide crowding is measured against `N · L²`** — the area the layout will actually
+  occupy — rather than against a canvas budget it may exceed. Against the budget a large-node
+  graph reads as permanently crowded, so the collide radius inflated and packed the clusters
+  *tighter*. This alone took collide from 32 to 23 (hand-tuned: 24).
+- **Centring's bound-graph ceiling is now the historical 0.001**, and the small-graph licence
+  falls off cubically. The looseness term went from `sqrt(fraction)` to linear — sqrt let one
+  loose node in 118 earn a sixth of the full ceiling, which visibly compressed a graph whose
+  links were holding it perfectly well.
+
+Auto now lands on rep 95 / link 390 / coll 23 / cent 10 against the hand-tuned 100 / 387 / 24 /
+7, and the picture matches: hub-and-spoke stars, clear separation, thin edges between clusters.
+
+**Test coverage, finally closed.** `MeasuredLayout` gains `densityVariation`, and
+`buildAutoFixture` gains a `clusters` option that builds hub-and-spoke stars — the shape real
+data has, and the only shape that can tell a legible layout from a blob (a random tree has no
+clusters to lose). New fixture **G** asserts it at radius 60 *and* radius 6, so the rule is a
+scale rather than a special case. This is the assertion that would have caught the original
+regression; nothing in the suite could.
+
+**Two test-infrastructure notes.** The spec is now `mode: 'default'` (sequential within the
+file): every other spec disables the simulation, so this one starves itself of ticks when its
+own cases run in parallel — F alone lays out 2000 nodes twice. And F no longer compares against
+a pinned arm at all: two 2000-node layouts on a wall-clock tick budget gave ratios spanning
+0.58–0.9 across runs, which measures machine load rather than tuning, so only the deterministic
+knob claims and a small overlap tolerance remain.
