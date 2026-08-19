@@ -160,9 +160,10 @@ rectangle is always visible and honestly sized — zoom far out and the graph sh
 inside the frame rather than the rectangle sliding off it.
 
 It keeps the graph in an offscreen bitmap and only re-rasterises it when the picture
-actually changed: on a data change, on every 10th simulation tick while the layout
-settles, and on resize. **Panning and zooming redraw one image and one rectangle**, so
-navigating costs the same whether the graph has 20 nodes or 50,000.
+actually changed: on a data change, when a filter hides or restores nodes, when a node is
+dropped after a drag, on every 10th simulation tick while a layout settles, and on resize.
+**Panning and zooming redraw one image and one rectangle**, so navigating costs the same
+whether the graph has 20 nodes or 50,000.
 
 Detail degrades with size, on purpose:
 

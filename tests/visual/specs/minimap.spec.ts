@@ -24,6 +24,25 @@ async function viewCenter(page: Page): Promise<{ x: number, y: number }> {
     return center!
 }
 
+/**
+ * How much node ink the minimap is actually showing: pixels drawn in the fixtures'
+ * blue node colour. Reading the canvas back is the only way to assert the *drawing*
+ * changed rather than merely that a redraw was scheduled.
+ */
+async function inkPixels(page: Page): Promise<number> {
+    return page.evaluate(() => {
+        const surface = document.querySelector('.pvt-minimap-surface') as HTMLCanvasElement
+        const context = surface.getContext('2d')!
+        const { data } = context.getImageData(0, 0, surface.width, surface.height)
+        let count = 0
+        for (let index = 0; index < data.length; index += 4) {
+            const [red, green, blue, alpha] = [data[index], data[index + 1], data[index + 2], data[index + 3]]
+            if (alpha > 200 && blue > 150 && red < 120 && green < 170) count++
+        }
+        return count
+    })
+}
+
 /** The minimap's own box, for aiming real pointer events at it. */
 async function minimapBox(page: Page): Promise<{ x: number, y: number, width: number, height: number }> {
     const box = await page.locator('.pvt-minimap').boundingBox()
@@ -128,6 +147,45 @@ test.describe('minimap plugin', () => {
             .toBeGreaterThan(0)
         expect(await harness(page, 'warnings')).toEqual([])
         await expectCanvas(page, 'minimap-density.png')
+    })
+
+    test('filtered-out nodes leave the minimap', async ({ page }) => {
+        // Filtering hides nodes through the query engine, which emits neither a data
+        // event nor a tick — so this is about the minimap noticing at all.
+        await harness(page, 'loadWithMinimap', 'basic')
+        await waitForViewSettled(page)
+        const before = { dots: await inkPixels(page), rebuilds: await harness(page, 'minimapRebuilds') }
+        expect(before.dots).toBeGreaterThan(0)
+
+        // Every node in `basic` carries an upper-cased label; keep only one of them.
+        await harness(page, 'setFilter', 'label', { value: 'A', matchMode: 'exact' })
+
+        expect(await harness(page, 'visibleNodeIds')).toEqual(['a'])
+        await expect.poll(async () => (await harness(page, 'minimapRebuilds')) as number)
+            .toBeGreaterThan(before.rebuilds as number)
+        // The drawing itself lost ink: five of the six nodes are gone from the picture.
+        await expect.poll(async () => await inkPixels(page)).toBeLessThan(before.dots / 2)
+
+        // …and they come back.
+        await harness(page, 'resetFilters')
+        await expect.poll(async () => await inkPixels(page)).toBeGreaterThan(before.dots / 2)
+    })
+
+    test('a node dragged with the simulation off still moves in the minimap', async ({ page }) => {
+        // No simulation means no ticks, so the drop has to be noticed on its own.
+        await harness(page, 'loadWithMinimap', 'basic')
+        await waitForViewSettled(page)
+        const rebuilds = (await harness(page, 'minimapRebuilds')) as number
+
+        const node = page.locator('#node-hub')
+        const box = (await node.boundingBox())!
+        await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+        await page.mouse.down()
+        await page.mouse.move(box.x + 220, box.y + 140, { steps: 8 })
+        await page.mouse.up()
+
+        await expect.poll(async () => (await harness(page, 'minimapRebuilds')) as number)
+            .toBeGreaterThan(rebuilds)
     })
 
     test('static mode gets no minimap, and says why', async ({ page }) => {

@@ -53,6 +53,29 @@ stayed out of the renderer-agnostic surface.
   buffer is sized from the surface's laid-out size rather than the configured number, so
   the border can't distort the aspect ratio.
 
+### Fixed after review (2026-08-19)
+
+**Filtering was not reflected in the minimap.** Hiding nodes goes through the query
+engine, which toggles `node.visible` and emits **`filterChange`** — not
+`dataBatchChanged`, and not a tick (the simulation is usually idle by then). The minimap
+subscribed to neither, so it kept drawing nodes that had left the canvas. It now watches
+`queryEngine.on('filterChange')`, which covers the filter panel, the legend's toggles,
+programmatic `setFilter` and per-node `excludeNode` alike. `rasterise` was already reading
+`getMutableVisibleNodes()`, so this was purely a missing trigger.
+
+Verified by removing the subscription and confirming the new test fails — it reads the
+minimap's canvas back and counts node-coloured pixels, so it asserts the *drawing* lost
+ink rather than merely that a redraw was scheduled.
+
+**The same defect class, found while fixing it:** with the simulation disabled a node drag
+produces no ticks either, so a dropped node kept drawing at its old position. Now also
+rebuilds on `dragended` — once per drag, never per `pointermove`, which would put the O(N)
+pass back into the frame budget.
+
+The general rule this exposes: **the minimap must subscribe to every signal that changes
+what is drawn, and those signals are not all on one bus** — data events on the graph,
+filter events on the query engine, drag and tick events on the interaction bus.
+
 ### Notes for the next person
 
 - Adding N nodes to a live graph costs one full render **each** — `updateData` loops

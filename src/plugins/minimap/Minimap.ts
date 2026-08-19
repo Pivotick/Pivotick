@@ -104,9 +104,21 @@ export class Minimap extends UIComponent {
         graph.on('dataBatchChanged', onData)
         this.track(() => graph.off('dataBatchChanged', onData))
 
+        // Filtering changes which nodes are drawn without touching the data or the
+        // simulation, so it emits neither of the signals above — the minimap has to watch
+        // the query engine itself or it keeps showing nodes that left the canvas. Covers
+        // the filter panel, the legend, `setFilter` and per-node `excludeNode` alike.
+        const onFilterChange = () => this.queueRebuild()
+        graph.queryEngine.on('filterChange', onFilterChange)
+        this.track(() => graph.queryEngine.off('filterChange', onFilterChange))
+
         // A slow tick is every 10th simulation tick — often enough to follow a settling
         // layout, rare enough that the O(N) pass isn't in the frame budget.
         this.trackInteraction('simulationSlowTick', () => this.queueRebuild())
+        // With the simulation disabled a drag produces no ticks at all, so the dropped
+        // node would keep showing at its old place. Once per drag, not per pointermove:
+        // rebuilding mid-drag would put the O(N) pass back in the frame budget.
+        this.trackInteraction('dragended', () => this.queueRebuild())
         // Panning / zooming leaves the content alone: only the rectangle moves.
         this.trackInteraction('canvasZoom', () => this.queuePaint())
 
