@@ -38,11 +38,6 @@ self.onmessage = (e: MessageEvent<WorkerInput>) => {
     })
     const nodeMap = new Map<string, Node>(nodes.map(n => [n.id, n]))
 
-    if (options.layout?.type === 'force') {
-        // const updatedOptions = Simulation.scaleSimulationOptions(options, canvasBCR, nodeMap.size)
-        // options.d3ManyBodyStrength = updatedOptions.d3ManyBodyStrength ?? DEFAULT_SIMULATION_OPTIONS.d3ManyBodyStrength
-        // options.d3CollideStrength = updatedOptions.d3ManyBodyStrength ?? DEFAULT_SIMULATION_OPTIONS.d3ManyBodyStrength
-    }
 
     const {simulation, simulationForces} = Simulation
         .initSimulationForces(options, canvasBCR)
@@ -162,11 +157,6 @@ export function runSimulation(plainNodes: Node[], plainEdges: Edge[], options: S
     })
     const nodeMap = new Map<string, Node>(nodes.map(n => [n.id, n]))
 
-    if (options.layout?.type === 'force') {
-        // const updatedOptions = Simulation.scaleSimulationOptions(options, canvasBCR, nodeMap.size)
-        // options.d3ManyBodyStrength = updatedOptions.d3ManyBodyStrength ?? DEFAULT_SIMULATION_OPTIONS.d3ManyBodyStrength
-        // options.d3CollideStrength = updatedOptions.d3ManyBodyStrength ?? DEFAULT_SIMULATION_OPTIONS.d3ManyBodyStrength
-    }
 
     const { simulation, simulationForces } = Simulation
         .initSimulationForces(options, canvasBCR)

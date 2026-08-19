@@ -182,6 +182,70 @@ function basicNodes(): Record<string, Node> {
     return Object.fromEntries(entries)
 }
 
+/**
+ * The shape of a graph the `Auto` physics preset has to cope with.
+ *
+ * Unlike every other fixture here, auto fixtures are *not* pinned: the whole point
+ * is to let the simulation place the nodes and then measure where they ended up.
+ * What is pinned instead is the input — node count, radius and topology — so a run
+ * is reproducible even though the positions are not hand-written.
+ */
+export interface AutoFixtureSpec {
+    /** Total nodes, isolated ones included. */
+    nodes: number
+    /** Circle radius every node gets, in px. */
+    radius: number
+    /** How many connected components the linked nodes form. @default 1 */
+    components?: number
+    /** How many nodes are left with no edges at all. @default 0 */
+    isolated?: number
+    /** Node-id prefix, so a second batch can be added without colliding. @default 'n' */
+    prefix?: string
+}
+
+/**
+ * Build an auto fixture: `nodes` circles of the given `radius`, seeded in a tight
+ * spiral at the origin so every run starts from the same clump — which is the
+ * complaint auto answers ("too concentrated"), and makes "did it spread?" a real
+ * question rather than an artefact of where the nodes happened to start.
+ */
+export function buildAutoFixture(spec: AutoFixtureSpec): BuiltFixture {
+    const { nodes: count, radius, components = 1, isolated = 0, prefix = 'n' } = spec
+    const linkedCount = Math.max(0, count - isolated)
+
+    const nodes: Node[] = []
+    for (let i = 0; i < count; i++) {
+        // Deterministic seed spiral — a golden-angle placement inside a 60px disc.
+        const angle = i * 2.399963
+        const distance = 6 * Math.sqrt(i)
+        const id = `${prefix}${i}`
+        const node = new Node(id, { label: id.toUpperCase() }, { size: radius }, id)
+        node.x = Math.cos(angle) * distance
+        node.y = Math.sin(angle) * distance
+        // The renderer re-measures this after its first frame; seeding it means the
+        // opening tune already sees the real size instead of the default r=10.
+        node.setCircleRadius(radius)
+        nodes.push(node)
+    }
+
+    // Each component is a random recursive tree: node `i` attaches to an earlier node
+    // picked by a seeded LCG. Deterministic, but branching — a plain path would be a
+    // 60-node string 4000px long whatever the physics did, which says nothing about
+    // whether the tuner is any good.
+    const edges: Edge[] = []
+    const perComponent = Math.ceil(linkedCount / Math.max(1, components))
+    let seed = 12345
+    const nextRandom = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648
+    for (let i = 0; i < linkedCount; i++) {
+        const offsetInComponent = i % perComponent
+        if (offsetInComponent === 0) continue // first node of a component starts a new tree
+        const parent = i - offsetInComponent + Math.floor(nextRandom() * offsetInComponent)
+        edges.push(new Edge(`${prefix}e${i}`, nodes[parent], nodes[i]))
+    }
+
+    return { nodes, edges, notes: [] }
+}
+
 export const fixtures = {
     /** A small directed graph: pentagon + hub, with a couple of labelled edges. */
     basic(): BuiltFixture {

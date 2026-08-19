@@ -99,7 +99,13 @@
     background-color: var(--pvt-bg-color-2);
 
     .pvt-physicsflyout-preset {
+        // Only Auto carries an icon, so centre the pair rather than letting it
+        // hang off the left of a button sized for a bare word.
+        display: flex;
         flex: 1;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
         padding: 6px 0;
         border: none;
         border-radius: 6px;

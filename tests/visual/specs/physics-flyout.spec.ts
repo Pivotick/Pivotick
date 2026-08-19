@@ -62,16 +62,32 @@ test.describe('physics-flyout', () => {
         await expect(view).not.toHaveClass(/open/)
     })
 
-    // A preset snaps all four sliders (and the underlying knobs).
-    test('applying the Loose preset sets all four sliders', async ({ page }) => {
+    // A preset snaps every slider (and the underlying knobs).
+    test('applying the Loose preset sets every slider', async ({ page }) => {
         await loadFixture(page, 'basic', B3)
         await openFlyout(page)
 
         await panel(page).locator('.pvt-physicsflyout-preset[data-preset="loose"]').click()
         await expect(panel(page).locator('.pvt-physicsflyout-preset[data-preset="loose"]')).toHaveClass(/active/)
 
-        expect(await knobs(page)).toEqual({ repulsion: 70, linkDistance: 150, collisionRadius: 26, friction: 28 })
+        expect(await knobs(page)).toEqual({
+            repulsion: 70, linkDistance: 150, collisionRadius: 26, friction: 28, centering: 7, settleTime: 2.25,
+        })
         await expect(panel(page).locator('.pvt-physicsflyout-slider-value[data-value="repulsion"]')).toHaveText('70')
+        await expect(panel(page).locator('.pvt-physicsflyout-slider-value[data-value="settleTime"]')).toHaveText('2.25s')
+    })
+
+    // The preset row is [Auto] [Tight] [Loose] — "Default" is gone; Auto *is* the default.
+    test('the preset row offers Auto, Tight and Loose', async ({ page }) => {
+        await loadFixture(page, 'basic', B3)
+        await openFlyout(page)
+
+        const presets = panel(page).locator('.pvt-physicsflyout-preset')
+        await expect(presets).toHaveCount(3)
+        for (const name of ['auto', 'tight', 'loose']) {
+            await expect(panel(page).locator(`.pvt-physicsflyout-preset[data-preset="${name}"]`)).toBeVisible()
+        }
+        await expect(panel(page).locator('.pvt-physicsflyout-preset[data-preset="default"]')).toHaveCount(0)
     })
 
     // Dragging a slider drives the setter API.
