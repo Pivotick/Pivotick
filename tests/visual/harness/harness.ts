@@ -9,7 +9,7 @@
  * This file is internal test code, so it imports internal modules directly
  * (`../../../src/...`). Importing from `index` also pulls in the stylesheet.
  */
-import { Pivotick, Node, ColorPaletteMapper } from '../../../src/index'
+import { Pivotick, Node, ColorPaletteMapper, minimap } from '../../../src/index'
 import { Note } from '../../../src/Note'
 import { TreeLayout } from '../../../src/plugins/layout/Tree'
 import { EgoTreeLayout } from '../../../src/plugins/layout/EgoTree'
@@ -19,6 +19,8 @@ import type {
     FilterFacet, FilterFacetOption, FilterFieldConfig, GraphFilters,
 } from '../../../src/interfaces/GraphQueryEngine'
 import type { GraphInteractionContext } from '../../../src/interfaces/GraphInteractions'
+import type { GraphBounds } from '../../../src/GraphRenderer'
+import { Minimap, type MinimapOptions } from '../../../src/plugins/minimap'
 import type {
     ExtraPanel, ExtraPanelSelection, LegendEntry, LegendOptions, LegendPosition, LegendToggleState,
     PropertyEntry,
@@ -579,6 +581,20 @@ export interface HarnessApi {
     activeFilterKeys(): string[]
     /** `console.warn` messages recorded since the graph was loaded. */
     warnings(): string[]
+    /** Load a fixture with the real `minimap()` plugin installed. */
+    loadWithMinimap(name: FixtureName, options?: MinimapOptions, overrides?: PlainObject): Promise<void>
+    /** The region the minimap reports as visible (what its rectangle draws), in graph coords. */
+    minimapViewport(): GraphBounds | null
+    /** How many times the minimap has rasterised its content bitmap. */
+    minimapRebuilds(): number
+    /** Centre of the main view in graph coordinates — moves when the minimap drives it. */
+    viewCenter(): { x: number, y: number } | null
+    /**
+     * Boot a graph of `count` pinned, edge-less nodes with the minimap installed — for
+     * crossing its detail threshold. Adding them to an existing graph would cost one
+     * full render each, so this builds the graph in one pass instead.
+     */
+    loadManyNodesWithMinimap(count: number, options?: MinimapOptions): Promise<void>
     /**
      * Ids of the nodes currently visible. A filtered-out node is *removed* from the
      * render, so this is the exact answer to "what did that filter leave on screen".
@@ -1292,6 +1308,65 @@ class Harness implements HarnessApi {
 
     warnings(): string[] {
         return [...this.recordedWarnings]
+    }
+
+    async loadWithMinimap(name: FixtureName, options: MinimapOptions = {}, overrides: PlainObject = {}): Promise<void> {
+        await this.load(name, mergeOptions({ plugins: [minimap(options)] }, overrides))
+    }
+
+    /**
+     * The live minimap instance. `UIManager.elements` is private, but plugin-added
+     * elements aren't in the keyed registry — and this is the same runtime-reach the
+     * unrendered-visibility probe uses.
+     */
+    private minimapElement(): Minimap | undefined {
+        const ui = this.g.UIManager as unknown as { elements: unknown[] }
+        return ui.elements.find((element) => element instanceof Minimap) as Minimap | undefined
+    }
+
+    minimapViewport(): GraphBounds | null {
+        return this.minimapElement()?.getViewportBounds() ?? null
+    }
+
+    minimapRebuilds(): number {
+        return this.minimapElement()?.getRebuildCount() ?? -1
+    }
+
+    viewCenter(): { x: number, y: number } | null {
+        const canvas = this.g.UIManager.layout?.canvas
+        if (!canvas) return null
+        const rect = canvas.getBoundingClientRect()
+        return this.g.renderer.screenToGraphCoordinates(
+            rect.left + rect.width / 2,
+            rect.top + rect.height / 2,
+        )
+    }
+
+    async loadManyNodesWithMinimap(count: number, options: MinimapOptions = {}): Promise<void> {
+        this.destroy()
+        const nodes: Node[] = []
+        for (let index = 0; index < count; index++) {
+            // Concentric rings: a stable extent, and enough structure that the density
+            // path has something recognisable to draw.
+            const angle = (index / count) * Math.PI * 12
+            const radius = 60 + (index / count) * 420
+            const node = new Node(`bulk-${index}`, {}, {}, `bulk-${index}`)
+            node.x = Math.cos(angle) * radius
+            node.y = Math.sin(angle) * radius
+            node.fx = node.x
+            node.fy = node.y
+            nodes.push(node)
+        }
+
+        const graph = new Pivotick(
+            this.container,
+            { nodes, edges: [] } as never,
+            mergeOptions(BASE_OPTIONS, { plugins: [minimap(options)] }) as never,
+        )
+        this.graph = graph
+        graph.on('legendToggle', (state) => this.legendToggles.push(state))
+        await this.whenReady(graph)
+        if (document.fonts?.ready) await document.fonts.ready
     }
 
     visibleNodeIds(): string[] {
