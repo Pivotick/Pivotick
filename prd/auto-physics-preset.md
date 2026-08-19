@@ -501,3 +501,68 @@ constant. The `physics: 'manual'` pinning did its job — no graph drifted.
    with its two call sites in `src/main.ts`.
 2. CHANGELOG entry for the breaking bits: `PHYSICS_PRESETS.default` removed, `PhysicsKnobs`
    widened to six fields, `linkDistance` range now `[40, 600]`.
+
+### 13.6 Correction — gravity was flattening cluster structure (2026-08-19, later)
+
+Sami tried the `ail` topology (301 nodes, 300 edges, radius 5, two components) and reported
+that all three strategies concentrated the graph in the middle and showed clusters less
+clearly than the old defaults. Measured, he was right, and by a wide margin:
+
+| config | separation ↑ | density CV ↑ | fill | zoom |
+|---|---|---|---|---|
+| pinned (`d3LinkDistance: 90`) | 4.6 | 0.84 | 1.57 | 0.38 |
+| auto, before this fix | 3.1 | **0.24** | 0.84 | 0.75 |
+| auto, after | 4.3 | **0.65** | 1.26 | 0.52 |
+
+*separation* = mean random-pair distance ÷ mean edge length (high = connected things near,
+unrelated things far). *density CV* = spread of nearest-neighbour distances (high = clumps and
+gaps; low = an even blob). A CV of 0.24 is the signature of exactly what he saw.
+
+**Cause.** §7.1's objective is a bounding-box target, which is blind to internal structure —
+a graph can hit it perfectly while being a uniform disc. Gravity is the bluntest way to hit
+it, and the space it eats first is the space *between* clusters, because that is where the
+emptiness is. Two compounding errors:
+
+1. `centering` was sized to pull the layout onto the fill target. On `ail` it reached knob 48,
+   and sweeping it shows a strictly monotonic trade: knob 0 → sep 3.74 / CV 0.62; knob 48 →
+   sep 2.30 / CV 0.41. Gravity never buys structure, it only ever sells it.
+2. `repulsion` sat on its floor of 10 (against the historical default's 38), because the area
+   budget divides the canvas by `N`. Charge is what pushes *unrelated* subgraphs apart while
+   links hold each cluster together — that difference *is* the visible structure.
+
+**Fix.** Gravity became a fence rather than a target, aimed at 0.9 of the canvas half-extent
+with a ceiling that is the larger of two independent licences to compress:
+
+- **small-graph licence**, decaying with node count. Compression costs nothing on a four-node
+  graph (no clusters to flatten) and buys the thing that matters there — a compact layout is
+  one the camera can zoom *into*. Removing it entirely dropped fixture A's on-screen node
+  radius from 25px to 11px.
+- **looseness licence**, from the fraction of nodes in components smaller than 8. That is the
+  only thing gravity is genuinely needed for (D6), and it is 0 for `ail`'s two 150-node
+  components and ~1 for fixture D's scattering of pairs and singletons. The first version of
+  this used `components / nodes`, which reads a 4-node connected graph as maximally loose
+  purely because it is small — wrong, and it broke fixture A.
+
+`FILL_MAX` also went from 0.64 to 1.0 (large graphs may use the whole canvas rather than
+two-thirds of it), and the repulsion floor now eases from 38 down to 8 on very large graphs —
+easing the floor rather than adding gravity, because repulsion scales a layout *uniformly*
+(dropping it 38 → 6 on 300 nodes took the box from 4.3 to 1.9 canvases with the
+nearest-neighbour gap staying proportional, 3.95r → 1.94r) whereas gravity does not.
+
+**Consequences for the fixtures.** F's margin loosened from `fill < pinned/3` to
+`< pinned × 0.8` (measured 7.5 vs 12.9 canvases). That fixture is a random recursive tree,
+which measures 1.9 canvases wide at 300 nodes even with repulsion at its *minimum* — most of
+its size is topology, so it cannot be tuned into one screen and should not be. Fixture A is
+now stated as measured (nodes 13–20px, coverage 1.4–2.0× pinned) rather than as an aspiration.
+
+**Still open — a product call, not a tuning one.** At the large end there is a genuine
+either/or: compress and get legible node sizes but a blob, or spread and get visible clusters
+but small nodes. The fix picks *clusters*, on the grounds that structure is the information
+and zoom is one gesture away. Worth confirming that is the preference, because it is the axis
+everything else at scale hangs off.
+
+**Test-coverage gap.** Nothing in the suite would have caught this: `measureLayout` reports
+bbox, overlaps and nearest-neighbour gap — all blind to whether clusters are distinct. The
+separation and density-CV metrics above still live in a throwaway probe. They should move into
+`measureLayout`, with a community-structured fixture, before this can be called guarded; the
+existing fixture builder makes a single random recursive tree, which has no communities to lose.
