@@ -46,6 +46,12 @@ export interface AutoContext {
     edgeCount: number
     /** Connected components over the active edges; each isolated node counts as one. */
     componentCount: number
+    /**
+     * Fraction of nodes sitting in a component too small to hold itself together —
+     * the only thing gravity is actually needed for. Zero for a single component,
+     * however small, because its own links already bound it.
+     */
+    looseNodeFraction: number
     /** Present only for `feedback` — the previous settled layout. */
     measured?: MeasuredLayout
     /** The knobs in force right now, for relative/incremental strategies. */
@@ -59,10 +65,17 @@ export type AutoStrategyName = 'hybrid' | 'fill' | 'feedback'
 // ─── Tuning constants ───────────────────────────────────────────────────────
 // Starting points, settled by eye and by the metrics overlay against fixtures A–F.
 
-/** Linear fill target for the smallest graphs — the camera's 3× fit does the rest. */
+/** Area fill target for the smallest graphs — the camera's 3× fit does the rest. */
 const FILL_MIN = 0.30
-/** …and for large ones, where the camera can no longer help and a sprawl only shrinks nodes. */
-const FILL_MAX = 0.64
+/**
+ * …and for large ones. Deliberately the whole canvas rather than a fraction of it:
+ * a lower target squeezes the link distance, and on a sparse graph the space that
+ * gets squeezed out is the space *between* clusters — the layout's only visible
+ * structure. A 300-node graph that slightly overflows and gets zoomed out reads
+ * better than a compact one that reads as a single blob. Measured on a 301-node
+ * forest: raising this recovered nearly all the cluster separation.
+ */
+const FILL_MAX = 1.0
 /** `fillTarget` sits at `FILL_MIN` up to this node count… */
 const FILL_REF_LO = 4
 /** …and reaches `FILL_MAX` here. */
@@ -82,9 +95,36 @@ const COLLIDE_FULL = 0.35
 
 /** Effective per-node charge wanted per unit of characteristic spacing squared. */
 const CHARGE_PER_AREA = 0.0058
-/** Repulsion is never let all the way to zero (hairballs) nor to the rail. */
-const REPULSION_MIN = 10
+/**
+ * Repulsion floor and ceiling.
+ *
+ * The floor matters more than it looks. The area budget divides the canvas by `N`,
+ * so the charge it asks for falls away as the graph grows — and charge is precisely
+ * what pushes *unrelated* subgraphs apart while links hold each cluster together.
+ * That difference is what makes clusters visible, so letting it collapse turns a
+ * large sparse graph into an even blob. Measured on a 301-node forest, raising
+ * repulsion from 10 to 40 moved the separation ratio from 3.7 to 4.8 and the
+ * local-density variation from 0.67 to 0.75; the floor is the library's historical
+ * default of 38, which is the layout this is trying not to be worse than.
+ */
+const REPULSION_FLOOR = 38
 const REPULSION_MAX = 95
+/**
+ * …but the floor itself eases off on very large graphs. d3's many-body force sums
+ * over every node, so holding per-node charge constant makes the total grow without
+ * bound: a 2000-node tree at the 300-node floor sprawls to ten canvases.
+ *
+ * Easing the *floor* rather than adding gravity is deliberate, and the measurements
+ * say why. Repulsion scales a layout uniformly — dropping it from 38 to 6 on a
+ * 300-node graph took the bounding box from 4.3 to 1.9 canvases while the
+ * nearest-neighbour gap stayed proportional (3.95r → 1.94r), so the *relative*
+ * structure survived. Gravity, being one inward pull applied equally to everything,
+ * shrinks the gaps between clusters faster than the clusters themselves and flattens
+ * the structure out. Same containment, very different cost.
+ */
+const REPULSION_FLOOR_REF_NODES = 300
+const REPULSION_FLOOR_DECAY = 0.35
+const REPULSION_FLOOR_MIN = 8
 
 /** Damping range: more nodes → more friction, so a big graph stops jittering instead of boiling. */
 const FRICTION_MIN = 24
@@ -99,8 +139,37 @@ const CENTERING_MAX_STRENGTH = 0.2
  * back-solves to ~280 and ~215 through the balance. 240 splits them.
  */
 const CENTERING_GAIN = 240
-/** Never centre so hard the graph collapses to a point, nor so softly it does nothing. */
-const CENTERING_STRENGTH_RANGE = [0.002, 0.12] as const
+/** Gravity is aimed at this fraction of the canvas half-extent — a fence, not a target. */
+const CENTERING_FENCE = 0.9
+/**
+ * Ceiling on the centring strength, interpolated by how fragmented the graph is
+ * (see {@link centeringKnob}). The low end is for a graph its own links already
+ * hold together; the high end is for one that is mostly loose pieces.
+ */
+const CENTERING_CEILING_BOUND = 0.003
+const CENTERING_CEILING_LOOSE = 0.06
+/**
+ * Ceiling for the smallest graphs, decaying to {@link CENTERING_CEILING_BOUND} as the
+ * graph grows.
+ *
+ * Compression costs nothing on a four-node graph — there is no cluster structure to
+ * flatten — and it buys the thing that actually matters there: a compact layout is
+ * one the camera can zoom *into*, so the nodes end up large. Take this away and the
+ * four nodes spread until they fill the canvas at zoom ~0.9, which is how a graph
+ * with plenty of room ends up rendering its nodes at 11px instead of 25px.
+ *
+ * The same compression on a 300-node graph flattens the only structure it has. So
+ * the licence to compress is exactly the licence to not have clusters yet.
+ */
+const CENTERING_CEILING_SMALL = 0.03
+/**
+ * A component with fewer nodes than this counts as a loose piece. Above it, a
+ * component has enough internal links to keep its own shape and only needs the
+ * fence if it would leave the frame entirely.
+ */
+const LOOSE_COMPONENT_SIZE = 8
+/** Floor: enough to stop a slow drift, never enough to shape the layout. */
+const CENTERING_STRENGTH_MIN = 0.002
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -127,10 +196,19 @@ function clampKnob(value: number, key: keyof PhysicsKnobs): number {
  * help (their fit is already ≤ 1), so the target climbs.
  */
 export function fillTarget(nodeCount: number): number {
-    const t = clamp01(
+    return FILL_MIN + (FILL_MAX - FILL_MIN) * sizeFraction(nodeCount)
+}
+
+/**
+ * Where a graph sits on the small-to-large scale: 0 at {@link FILL_REF_LO} nodes or
+ * fewer, 1 at {@link FILL_REF_HI} or more, log-interpolated between. Several
+ * decisions turn on "how big is this, really", and they should all turn on the
+ * same number.
+ */
+function sizeFraction(nodeCount: number): number {
+    return clamp01(
         Math.log10(Math.max(nodeCount, 1) / FILL_REF_LO) / Math.log10(FILL_REF_HI / FILL_REF_LO)
     )
-    return FILL_MIN + (FILL_MAX - FILL_MIN) * t
 }
 
 /**
@@ -153,10 +231,17 @@ function chargeDamping(meanRadius: number): number {
     return (damped * damped) / 100
 }
 
+/** The repulsion floor for a graph of this size — see {@link REPULSION_FLOOR_REF_NODES}. */
+function repulsionFloor(nodeCount: number): number {
+    const eased = REPULSION_FLOOR
+        * Math.pow(REPULSION_FLOOR_REF_NODES / Math.max(1, nodeCount), REPULSION_FLOOR_DECAY)
+    return clamp(eased, REPULSION_FLOOR_MIN, REPULSION_FLOOR)
+}
+
 /** Effective per-node charge magnitude → the `repulsion` knob. */
-function repulsionKnob(effectiveCharge: number, meanRadius: number): number {
+function repulsionKnob(effectiveCharge: number, meanRadius: number, nodeCount: number): number {
     const base = effectiveCharge / chargeDamping(meanRadius)
-    return clamp((base / 400) * 100, REPULSION_MIN, REPULSION_MAX)
+    return clamp((base / 400) * 100, repulsionFloor(nodeCount), REPULSION_MAX)
 }
 
 /**
@@ -178,22 +263,46 @@ function collisionKnob(multiplier: number): number {
 }
 
 /**
- * Gravity strength that holds the layout at a radius of `boxSide / 2`.
- *
- * This is the knob that actually decides how big the graph ends up. Link distance
- * only sets the rest length of a spring; charge is long-range and summed over every
- * other node, so without a counter-force the layout expands well past any area
- * budget — measured at 1.5–5× the target before this knob existed.
+ * Gravity strength: a fence that keeps loose pieces in frame, not a size dial.
  *
  * A node at radius `R` is pushed out by roughly `N · |Q| / R²` and pulled in by
- * `R · s`; equating them gives `s = N · |Q| / R³`, scaled by an empirical gain.
- * The knob is quadratic (see `Simulation.setCentering`), so the useful band — which
- * spans two orders of magnitude — lands mid-slider rather than pinned against zero.
+ * `R · s`; equating them at the fence radius gives `s = N · |Q| / R³`, scaled by an
+ * empirical gain. The knob is quadratic (see `Simulation.setCentering`), so the
+ * useful band — which spans two orders of magnitude — lands mid-slider.
+ *
+ * The ceiling is the important part, and it scales with **fragmentation**
+ * (`components / nodes`). Gravity is a single inward pull applied equally to
+ * everything, so it cannot create structure — it can only shrink, and what it
+ * shrinks first is the empty space between clusters. It is therefore only worth
+ * spending where links are *not* already doing the job:
+ *
+ *  - A 301-node forest in two components is held together by its own 300 links.
+ *    Fragmentation ~0.007, so gravity stays near the floor and the layout keeps its
+ *    shape. (Driving this graph to a fill target with gravity instead cost half its
+ *    cluster separation — the regression this scaling exists to prevent.)
+ *  - Seven nodes in four pieces, two of them lone, have almost nothing holding them.
+ *    Fragmentation ~0.57, so gravity gets real authority and they stay in frame.
  */
-function centeringKnob(effectiveCharge: number, boxSide: number, nodeCount: number): number {
-    const radius = Math.max(1, boxSide / 2)
+function centeringKnob(
+    effectiveCharge: number,
+    canvas: AutoCanvas,
+    nodeCount: number,
+    looseNodeFraction: number,
+): number {
+    const radius = Math.max(1, CENTERING_FENCE * 0.5 * Math.min(canvas.width, canvas.height))
     const balance = CENTERING_GAIN * nodeCount * effectiveCharge / (radius * radius * radius)
-    const strength = clamp(balance, CENTERING_STRENGTH_RANGE[0], CENTERING_STRENGTH_RANGE[1])
+
+    // Two independent licences to centre, whichever is larger:
+    //  - the graph is small enough that compressing it costs no structure, and
+    //  - some of it is in pieces nothing else is holding.
+    // sqrt on the second, so a graph that is even slightly loose gets some help.
+    const smallCeiling = CENTERING_CEILING_BOUND
+        + (CENTERING_CEILING_SMALL - CENTERING_CEILING_BOUND) * (1 - sizeFraction(nodeCount))
+    const looseCeiling = CENTERING_CEILING_BOUND
+        + (CENTERING_CEILING_LOOSE - CENTERING_CEILING_BOUND) * Math.sqrt(clamp01(looseNodeFraction))
+    const ceiling = Math.max(smallCeiling, looseCeiling)
+
+    const strength = clamp(balance, CENTERING_STRENGTH_MIN, Math.max(CENTERING_STRENGTH_MIN, ceiling))
     return clampKnob(100 * Math.sqrt(clamp01(strength / CENTERING_MAX_STRENGTH)), 'centering')
 }
 
@@ -226,13 +335,9 @@ function quantise(knobs: PhysicsKnobs): PhysicsKnobs {
  * of the canvas and split it evenly between the nodes. `spacing` is the resulting
  * characteristic distance — one node's share of the budget, expressed as a length.
  */
-function areaBudget(ctx: AutoContext): { targetArea: number; spacing: number; boxSide: number } {
+function areaBudget(ctx: AutoContext): { targetArea: number; spacing: number } {
     const targetArea = fillTarget(ctx.nodeCount) * ctx.canvas.width * ctx.canvas.height
-    return {
-        targetArea,
-        spacing: Math.sqrt(targetArea / Math.max(1, ctx.nodeCount)),
-        boxSide: Math.sqrt(targetArea),
-    }
+    return { targetArea, spacing: Math.sqrt(targetArea / Math.max(1, ctx.nodeCount)) }
 }
 
 /**
@@ -244,7 +349,7 @@ function areaBudget(ctx: AutoContext): { targetArea: number; spacing: number; bo
  * (the `C_MAX` ceiling).
  */
 const hybrid: AutoStrategy = (ctx) => {
-    const { targetArea, spacing, boxSide } = areaBudget(ctx)
+    const { targetArea, spacing } = areaBudget(ctx)
     const meanRadius = Math.max(1, ctx.radii.mean)
 
     const floor = 2 * meanRadius + GAP_MIN
@@ -254,14 +359,14 @@ const hybrid: AutoStrategy = (ctx) => {
     const effectiveCharge = CHARGE_PER_AREA * spacing * spacing
     const occupancy = ctx.radii.totalArea / Math.max(1, targetArea)
     const multiplier = COLLIDE_BASE + COLLIDE_SPAN * clamp01(occupancy / COLLIDE_FULL)
-    const repulsion = repulsionKnob(effectiveCharge, meanRadius)
+    const repulsion = repulsionKnob(effectiveCharge, meanRadius, ctx.nodeCount)
 
     return quantise({
         repulsion,
         linkDistance,
         collisionRadius: collisionKnob(multiplier),
         friction: frictionFor(ctx.nodeCount),
-        centering: centeringKnob(chargeForKnob(repulsion, meanRadius), boxSide, ctx.nodeCount),
+        centering: centeringKnob(chargeForKnob(repulsion, meanRadius), ctx.canvas, ctx.nodeCount, ctx.looseNodeFraction),
         settleTime: settleTimeFor(ctx.nodeCount),
     })
 }
@@ -273,16 +378,16 @@ const hybrid: AutoStrategy = (ctx) => {
  * what proves `hybrid`'s clamps are load-bearing rather than superstition.
  */
 const fill: AutoStrategy = (ctx) => {
-    const { spacing, boxSide } = areaBudget(ctx)
+    const { spacing } = areaBudget(ctx)
     const meanRadius = Math.max(1, ctx.radii.mean)
-    const repulsion = repulsionKnob(CHARGE_PER_AREA * spacing * spacing, meanRadius)
+    const repulsion = repulsionKnob(CHARGE_PER_AREA * spacing * spacing, meanRadius, ctx.nodeCount)
 
     return quantise({
         repulsion,
         linkDistance: clampKnob(0.8 * spacing, 'linkDistance'),
         collisionRadius: collisionKnob(COLLIDE_BASE),
         friction: frictionFor(ctx.nodeCount),
-        centering: centeringKnob(chargeForKnob(repulsion, meanRadius), boxSide, ctx.nodeCount),
+        centering: centeringKnob(chargeForKnob(repulsion, meanRadius), ctx.canvas, ctx.nodeCount, ctx.looseNodeFraction),
         settleTime: settleTimeFor(ctx.nodeCount),
     })
 }
@@ -348,7 +453,10 @@ export function isAutoStrategyName(value: unknown): value is AutoStrategyName {
  * O(N + E)). `centering` exists because separate components only ever repel — this
  * is how a strategy knows there is more than one.
  */
-export function countComponents(nodeIds: string[], edges: Array<[string, string]>): number {
+export function analyseComponents(
+    nodeIds: string[],
+    edges: Array<[string, string]>,
+): { count: number; looseNodeFraction: number } {
     const parent = new Map<string, string>()
     for (const id of nodeIds) parent.set(id, id)
 
@@ -373,7 +481,22 @@ export function countComponents(nodeIds: string[], edges: Array<[string, string]
         parent.set(rootA, rootB)
         components--
     }
-    return components
+
+    // How many nodes live in a piece too small to hold itself together. One component
+    // is bounded by its own links however small it is, so it never counts as loose.
+    let looseNodes = 0
+    if (components > 1) {
+        const sizes = new Map<string, number>()
+        for (const id of nodeIds) {
+            const root = find(id)
+            sizes.set(root, (sizes.get(root) ?? 0) + 1)
+        }
+        for (const size of sizes.values()) {
+            if (size < LOOSE_COMPONENT_SIZE) looseNodes += size
+        }
+    }
+
+    return { count: components, looseNodeFraction: nodeIds.length ? looseNodes / nodeIds.length : 0 }
 }
 
 /**

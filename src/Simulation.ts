@@ -25,7 +25,7 @@ import type { LayoutType, TreeLayoutOptions } from './interfaces/LayoutOptions'
 import type { GraphInteractions } from './GraphInteractions'
 import { ForceClusterRadial } from './plugins/d3Forces/ForceClusterRadial'
 import {
-    AUTO_STRATEGIES, DEFAULT_AUTO_STRATEGY, countComponents, measureLayout,
+    AUTO_STRATEGIES, DEFAULT_AUTO_STRATEGY, analyseComponents, measureLayout,
     type AutoContext, type AutoStrategyName, type MeasuredLayout,
 } from './AutoPhysics'
 
@@ -1055,15 +1055,18 @@ export class Simulation {
             totalArea += Math.PI * radius * radius
         }
 
+        const components = analyseComponents(
+            nodes.map(node => node.id),
+            edges.map(edge => [(edge.source as Node).id, (edge.target as Node).id] as [string, string])
+        )
+
         return {
             canvas: { width: canvasBCR.width, height: canvasBCR.height },
             nodeCount: nodes.length,
             radii: { mean: nodes.length ? radiusSum / nodes.length : 0, max: maxRadius, totalArea },
             edgeCount: edges.length,
-            componentCount: countComponents(
-                nodes.map(node => node.id),
-                edges.map(edge => [(edge.source as Node).id, (edge.target as Node).id] as [string, string])
-            ),
+            componentCount: components.count,
+            looseNodeFraction: components.looseNodeFraction,
             measured: this.autoStrategyName === 'feedback' ? this.measureCurrentLayout(canvasBCR) : undefined,
             current: this.getPhysicsKnobs(),
         }
