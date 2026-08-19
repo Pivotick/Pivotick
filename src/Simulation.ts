@@ -24,10 +24,7 @@ import type { SimulationCallbacks, SimulationForces, SimulationOptions } from '.
 import type { LayoutType, TreeLayoutOptions } from './interfaces/LayoutOptions'
 import type { GraphInteractions } from './GraphInteractions'
 import { ForceClusterRadial } from './plugins/d3Forces/ForceClusterRadial'
-import {
-    AUTO_STRATEGIES, DEFAULT_AUTO_STRATEGY, analyseComponents, measureLayout,
-    type AutoContext, type AutoStrategyName, type MeasuredLayout,
-} from './AutoPhysics'
+import { analyseComponents, tunePhysics, type AutoContext } from './AutoPhysics'
 
 
 export const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
@@ -118,9 +115,8 @@ export const PHYSICS_PRESETS: Record<PhysicsPresetName, PhysicsKnobs> = {
     loose: { repulsion: 70, linkDistance: 150, collisionRadius: 26, friction: 28, centering: 7, settleTime: 2.25 },
 }
 
-/** One pass of the auto tuner, kept for the dev metrics overlay. */
+/** One pass of the auto tuner. */
 export interface AutoRun {
-    strategy: AutoStrategyName
     context: AutoContext
     knobs: PhysicsKnobs
     /** `true` when every knob landed inside the deadband and nothing was applied. */
@@ -184,13 +180,12 @@ export class Simulation {
     // ─── Auto tuner ─────────────────────────────────────────────────────────
     /** Whether the `Auto` preset is driving the knobs (see the constructor for how this is decided). */
     private autoEnabled: boolean
-    private autoStrategyName: AutoStrategyName = DEFAULT_AUTO_STRATEGY
     private autoTuneTimer: ReturnType<typeof setTimeout> | null = null
     /** Set while auto writes knobs, so its own setter calls don't read as a manual edit. */
     private applyingAutoKnobs = false
     /** Set while auto writes knobs, so six setters produce one reheat rather than six. */
     private suppressReheat = false
-    /** Last context + knobs auto computed, for the dev metrics overlay. */
+    /** Last context + knobs auto computed. */
     private autoLastRun: AutoRun | null = null
 
     /** Simulation options auto derives; setting any of them opts a graph out of auto. */
@@ -963,22 +958,7 @@ export class Simulation {
         }
     }
 
-    /**
-     * Swap the auto strategy. Development hook for the strategy bake-off — the
-     * winner becomes the only implementation and this goes away.
-     * @private
-     */
-    public setAutoStrategy(name: AutoStrategyName): void {
-        this.autoStrategyName = name
-        if (this.autoEnabled) this.tuneNow()
-    }
-
-    /** @private */
-    public getAutoStrategy(): AutoStrategyName {
-        return this.autoStrategyName
-    }
-
-    /** The last tuning pass, for the development metrics overlay. @private */
+    /** The last tuning pass — what auto saw and what it decided. @private */
     public getAutoRun(): AutoRun | null {
         return this.autoLastRun
     }
@@ -1010,7 +990,7 @@ export class Simulation {
 
         const context = this.buildAutoContext()
         if (context.nodeCount === 0) return
-        const next = AUTO_STRATEGIES[this.autoStrategyName](context)
+        const next = tunePhysics(context)
 
         // Deadband: below it the layout would not visibly change, and every apply
         // costs a reheat. Without this, pivoting reheats once per node added.
@@ -1018,7 +998,7 @@ export class Simulation {
             const [lo, hi] = PHYSICS_KNOB_RANGES[key]
             return Math.abs(next[key] - this.physicsKnobs[key]) <= (hi - lo) * Simulation.AUTO_DEADBAND
         })
-        this.autoLastRun = { strategy: this.autoStrategyName, context, knobs: skipped ? this.getPhysicsKnobs() : next, skipped }
+        this.autoLastRun = { context, knobs: skipped ? this.getPhysicsKnobs() : next, skipped }
         if (skipped) return
 
         this.applyingAutoKnobs = true
@@ -1067,21 +1047,8 @@ export class Simulation {
             edgeCount: edges.length,
             componentCount: components.count,
             looseNodeFraction: components.looseNodeFraction,
-            measured: this.autoStrategyName === 'feedback' ? this.measureCurrentLayout(canvasBCR) : undefined,
             current: this.getPhysicsKnobs(),
         }
-    }
-
-    /** Measure the layout as it currently stands — only `feedback` asks for this. */
-    private measureCurrentLayout(canvasBCR: DOMRect): MeasuredLayout {
-        const nodes = this.graph.getMutableNodes()
-            .filter(node => node.visible)
-            .map(node => ({
-                x: node.x,
-                y: node.y,
-                radius: node.expanded ? node.getCircleRadiusCollapsed() : node.getCircleRadius(),
-            }))
-        return measureLayout(nodes, { width: canvasBCR.width, height: canvasBCR.height })
     }
 
     /**

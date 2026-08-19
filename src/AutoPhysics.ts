@@ -2,13 +2,13 @@
  * The `Auto` physics preset: pure functions that derive the {@link PhysicsKnobs}
  * from what is actually on screen.
  *
- * Nothing here touches d3, the DOM or the {@link Simulation} — a strategy is a
- * plain `(AutoContext) => PhysicsKnobs`. `Simulation` measures the context, calls
- * the active strategy and applies the result through the same public knob setters
- * a preset uses, so everything auto decides stays visible and adjustable.
+ * Nothing here touches d3, the DOM or the {@link Simulation} — {@link tunePhysics}
+ * is a plain `(AutoContext) => PhysicsKnobs`. `Simulation` measures the context,
+ * calls it, and applies the result through the same public knob setters a preset
+ * uses, so everything auto decides stays visible and adjustable.
  *
- * Three candidates ship side by side behind {@link AUTO_STRATEGIES} while the
- * bake-off runs; the losers and the dev switch go before merge.
+ * The constants here were settled by measuring real layouts rather than by
+ * derivation; each carries the reading that fixed it.
  */
 import { PHYSICS_KNOB_RANGES, type PhysicsKnobs } from './Simulation'
 
@@ -25,11 +25,11 @@ export interface AutoCanvas {
     height: number
 }
 
-/** What a settled layout actually looks like — the input `feedback` corrects against. */
+/** What a settled layout actually looks like. Measurement only — nothing here feeds back into the tuner. */
 export interface MeasuredLayout {
     /** Node positions inflated by their radii. */
     bbox: { width: number; height: number }
-    /** `sqrt(bboxArea / canvasArea)` — a *linear* fill ratio, comparable to {@link fillTarget}. */
+    /** `sqrt(bboxArea / canvasArea)` — a *linear* fill ratio (`fillTarget` is an area one). */
     fill: number
     /** Node pairs closer than the sum of their radii. */
     overlaps: number
@@ -63,15 +63,9 @@ export interface AutoContext {
      * however small, because its own links already bound it.
      */
     looseNodeFraction: number
-    /** Present only for `feedback` — the previous settled layout. */
-    measured?: MeasuredLayout
     /** The knobs in force right now, for relative/incremental strategies. */
     current: PhysicsKnobs
 }
-
-export type AutoStrategy = (ctx: AutoContext) => PhysicsKnobs
-
-export type AutoStrategyName = 'hybrid' | 'fill' | 'feedback'
 
 // ─── Tuning constants ───────────────────────────────────────────────────────
 // Starting points, settled by eye and by the metrics overlay against fixtures A–F.
@@ -241,16 +235,6 @@ function sizeFraction(nodeCount: number): number {
 }
 
 /**
- * {@link fillTarget} as a *linear* ratio — the same quantity {@link MeasuredLayout.fill}
- * reports, and the only form the two may be compared in. The area fraction and the
- * side-length fraction of the same box differ by a square root, which is a
- * comfortable factor of two in the middle of the range.
- */
-export function linearFillTarget(nodeCount: number): number {
-    return Math.sqrt(fillTarget(nodeCount))
-}
-
-/**
  * The charge force multiplies its base strength by a sqrt-damped radius² term
  * (see `Simulation.initSimulationForceCharge`). Strategies reason about the
  * *effective* charge, so that term is divided back out before writing the knob.
@@ -370,11 +354,11 @@ function quantise(knobs: PhysicsKnobs): PhysicsKnobs {
     }
 }
 
-// ─── Strategies ─────────────────────────────────────────────────────────────
+// ─── The tuner ──────────────────────────────────────────────────────────────
 
 /**
- * The area budget shared by `fill` and `hybrid`: give the graph `fillTarget(N)`
- * of the canvas and split it evenly between the nodes. `spacing` is the resulting
+ * The area budget: give the graph `fillTarget(N)` of the canvas and split it evenly
+ * between the nodes. `spacing` is the resulting
  * characteristic distance — one node's share of the budget, expressed as a length.
  */
 function areaBudget(ctx: AutoContext): { targetArea: number; spacing: number } {
@@ -383,20 +367,21 @@ function areaBudget(ctx: AutoContext): { targetArea: number; spacing: number } {
 }
 
 /**
- * `hybrid` — the area budget, clamped by node size.
+ * Derive the physics knobs from what is on screen.
  *
- * The budget alone answers "few nodes look cramped"; the clamps answer "large
- * nodes look cramped", by refusing a link distance that would let two discs touch
- * (the `GAP_MIN` floor) or let a handful of small nodes drift into separate specks
- * (the `C_MAX` ceiling).
+ * Two length scales feed in and the larger wins: the room each node has been
+ * budgeted (canvas ÷ node count) and the room its own size demands
+ * ({@link LINK_PER_RADIUS}). Everything else follows from the link distance that
+ * comes out — charge from the budget spacing, collide from how crowded the layout
+ * will really be, centring as a fence around the lot.
  */
-const hybrid: AutoStrategy = (ctx) => {
+export function tunePhysics(ctx: AutoContext): PhysicsKnobs {
     const { spacing } = areaBudget(ctx)
     const meanRadius = Math.max(1, ctx.radii.mean)
 
-    // The two things that set a sensible edge length, whichever is larger: the room
-    // each node has been budgeted, and the room its own size demands.
     const wanted = Math.max(0.8 * spacing, LINK_PER_RADIUS * meanRadius)
+    // Floor so two discs can never touch; ceiling so a handful of small nodes cannot
+    // drift into separate specks.
     const floor = 2 * meanRadius + GAP_MIN
     const ceiling = Math.min(PHYSICS_KNOB_RANGES.linkDistance[1], C_MAX * meanRadius + CEIL_BASE)
     const linkDistance = clampKnob(clamp(wanted, floor, Math.max(floor, ceiling)), 'linkDistance')
@@ -418,81 +403,6 @@ const hybrid: AutoStrategy = (ctx) => {
         centering: centeringKnob(chargeForKnob(repulsion, meanRadius), ctx.canvas, ctx.nodeCount, ctx.looseNodeFraction),
         settleTime: settleTimeFor(ctx.nodeCount),
     })
-}
-
-/**
- * `fill` — the same area budget with the radius clamps taken out. The control:
- * it should fail visibly wherever the clamps were doing the work (40 large nodes
- * get a ~124px per-node budget against a 120px diameter, so they touch), which is
- * what proves `hybrid`'s clamps are load-bearing rather than superstition.
- */
-const fill: AutoStrategy = (ctx) => {
-    const { spacing } = areaBudget(ctx)
-    const meanRadius = Math.max(1, ctx.radii.mean)
-    const repulsion = repulsionKnob(CHARGE_PER_AREA * spacing * spacing, meanRadius, ctx.nodeCount)
-
-    return quantise({
-        repulsion,
-        linkDistance: clampKnob(0.8 * spacing, 'linkDistance'),
-        collisionRadius: collisionKnob(COLLIDE_BASE),
-        friction: frictionFor(ctx.nodeCount),
-        centering: centeringKnob(chargeForKnob(repulsion, meanRadius), ctx.canvas, ctx.nodeCount, ctx.looseNodeFraction),
-        settleTime: settleTimeFor(ctx.nodeCount),
-    })
-}
-
-/** How far off target the measured fill must be before `feedback` corrects. */
-const FEEDBACK_DEADBAND = 0.08
-/** Per-pass correction limits — one bounded nudge, never a chase. */
-const FEEDBACK_LINK_STEP = 0.10
-const FEEDBACK_CHARGE_STEP = 0.15
-
-/**
- * `feedback` — measure the layout that actually came out, then correct it.
- *
- * The only candidate that is topology-honest: a 10-node chain and a 10-node hub
- * have very different bounding boxes for identical knobs, which no closed-form
- * `N`-based formula can know. Its cost is determinism — `cooldownTime` is a
- * wall-clock budget, so a slower machine settles less and measures a different
- * box. It therefore never produces the *opening* layout (that stays feed-forward
- * via `hybrid`) and only ever applies bounded corrections afterwards.
- */
-const feedback: AutoStrategy = (ctx) => {
-    const seed = hybrid(ctx)
-    if (!ctx.measured || ctx.measured.fill <= 0) return seed
-
-    const base = ctx.current.linkDistance > 0 ? ctx.current : seed
-    // Both sides linear — `measured.fill` is a side-length ratio, not an area one.
-    const error = linearFillTarget(ctx.nodeCount) / ctx.measured.fill
-    const next: PhysicsKnobs = { ...base }
-
-    if (Math.abs(error - 1) > FEEDBACK_DEADBAND) {
-        next.linkDistance = clampKnob(
-            base.linkDistance * clamp(error, 1 - FEEDBACK_LINK_STEP, 1 + FEEDBACK_LINK_STEP),
-            'linkDistance'
-        )
-        next.repulsion = clampKnob(
-            base.repulsion * clamp(error * error, 1 - FEEDBACK_CHARGE_STEP, 1 + FEEDBACK_CHARGE_STEP),
-            'repulsion'
-        )
-    }
-    if (ctx.measured.overlaps > 0) {
-        next.collisionRadius = clampKnob(base.collisionRadius + 3, 'collisionRadius')
-    }
-    // Centring and settle time have no measurable error signal — take the feed-forward value.
-    next.centering = seed.centering
-    next.settleTime = seed.settleTime
-    return quantise(next)
-}
-
-export const AUTO_STRATEGIES: Record<AutoStrategyName, AutoStrategy> = { hybrid, fill, feedback }
-
-export const AUTO_STRATEGY_NAMES = Object.keys(AUTO_STRATEGIES) as AutoStrategyName[]
-
-export const DEFAULT_AUTO_STRATEGY: AutoStrategyName = 'hybrid'
-
-export function isAutoStrategyName(value: unknown): value is AutoStrategyName {
-    return typeof value === 'string' && value in AUTO_STRATEGIES
 }
 
 // ─── Measurement ────────────────────────────────────────────────────────────

@@ -7,7 +7,6 @@ import { graph as ailGraph } from './ail-graph'
 import { graph as ail2Graph } from './ail-graph2'
 import { Simulation } from './Simulation'
 import type { SimulationOptions } from './interfaces/SimulationOptions'
-import { applyAutoStrategyFromUrl, mountAutoMetricsOverlay } from './AutoPhysicsOverlay.dev'
 
 
 /**
@@ -43,7 +42,7 @@ export function createSampleGraph(): Pivotick {
     // edges.push(new Edge('1-0', nodes[1], nodes[0], { relation : 'b'}))
 
 
-    const N = 6
+    const N = 64
     // const N = 1000
     const createNodes = (n=N): Node[] => {
         return Array.from({ length: n }, (_, i) => new Node(`n${i + 1}`, { label: `Node ${i}`, type: `${i % Math.floor(n / 10) }`}))
@@ -276,7 +275,7 @@ export function createSampleGraph(): Pivotick {
 
     }
 
-    const topo = 'random'
+    const topo = 'vt'
 
     const colorPaletteMapper = new ColorPaletteMapper('pivotick')
     const graph = new Pivotick(container, {nodes: topologies[topo].nodes, edges: topologies[topo].edges}, {
@@ -408,12 +407,6 @@ function addRandomNode(counter: number, graph: Pivotick) {
 
 const graph = createSampleGraph()
 window.pivotick = graph
-
-// DEV ONLY — the Auto physics bake-off rig (`?autoStrategy=hybrid|fill|feedback`
-// plus a live metrics readout). Remove this, and AutoPhysicsOverlay.dev.ts, once a
-// strategy is chosen. See prd/auto-physics-preset.md D1.
-applyAutoStrategyFromUrl(graph)
-mountAutoMetricsOverlay(graph)
 
 const data = {
   'notes': [

@@ -38,7 +38,7 @@ import {
     buildAutoFixture, fixtures,
     type AutoFixtureSpec, type BuiltFixture, type FixtureName, type RawNote,
 } from './fixtures'
-import { measureLayout, type AutoStrategyName, type MeasuredLayout } from '../../../src/AutoPhysics'
+import { measureLayout, type MeasuredLayout } from '../../../src/AutoPhysics'
 import type { PhysicsKnobs } from '../../../src/Simulation'
 
 /** Named `onBeforeEdgeCreate` behaviours the harness can install (functions can't cross `page.evaluate`). */
@@ -451,8 +451,6 @@ export interface HarnessApi {
     loadAutoWithConfig(spec: AutoFixtureSpec, simulation?: PlainObject): Promise<void>
     /** Add `count` nodes of radius `radius`, chained onto the graph already loaded. */
     growAuto(count: number, radius: number): void
-    /** Swap the auto strategy (the bake-off hook). */
-    setAutoStrategy(name: AutoStrategyName): void
     /** What auto chose, what the layout looks like, and what the camera made of it. */
     autoState(): AutoState
     /** Reheats since the last `loadAuto` or `resetReheatCount`. */
@@ -2079,10 +2077,6 @@ class Harness implements HarnessApi {
         this.g.updateData(added, addedEdges)
     }
 
-    setAutoStrategy(name: AutoStrategyName): void {
-        this.g.simulation.setAutoStrategy(name)
-    }
-
     /**
      * Everything the auto acceptance criteria are stated in terms of, measured off
      * the live graph: what auto chose, what the layout actually looks like at zoom 1,
@@ -2104,7 +2098,6 @@ class Harness implements HarnessApi {
 
         return {
             auto: sim.isAutoPhysicsEnabled(),
-            strategy: sim.getAutoStrategy(),
             skipped: run?.skipped ?? false,
             tunedNodeCount: run?.context.nodeCount ?? -1,
             knobs: sim.getPhysicsKnobs(),
@@ -2123,7 +2116,6 @@ class Harness implements HarnessApi {
 /** {@link HarnessApi.autoState}'s return shape. */
 export interface AutoState {
     auto: boolean
-    strategy: AutoStrategyName
     skipped: boolean
     /** Node count the last tune actually saw — tells "auto has not looked yet" from "auto looked and left it alone". */
     tunedNodeCount: number
