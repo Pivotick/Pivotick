@@ -2,6 +2,49 @@
 
 ## Unreleased
 
+### The layout tunes itself
+
+- **`Auto` is the new default physics preset.** Rather than applying one fixed bundle of force
+  settings to every graph, Pivotick now derives them from what is on screen — node count, node
+  size, canvas size, how fragmented the graph is — and re-derives them whenever the visible graph
+  changes. Four small nodes get room to breathe; forty large ones get spread far enough apart to
+  read as clusters instead of a carpet.
+- **Existing configuration is never taken over.** Auto is on only for graphs that configure none of
+  the options it drives (`d3LinkDistance`, `d3ManyBodyStrength`, `d3CollideRadiusMultiplier`,
+  `d3VelocityDecay`, `d3GravityStrength`, `d3GravityStrengthConnected`, `d3AlphaDecay`,
+  `cooldownTime`). The new **`simulation.physics: 'auto' | 'manual'`** forces it either way;
+  `'auto'` alongside explicit d3 options is legal — they seed the opening frame and auto takes over.
+  Turning any knob by hand (a slider, a `set*` call, a preset) also leaves auto, permanently.
+- **Auto only ever moves knobs you can see**, and the flyout sliders follow it as it re-tunes. It is
+  force-layout only (inert under `tree` / `egoTree`), coalesces triggers that arrive together, skips
+  changes too small to see, and never restarts a simulation that is paused.
+
+#### Breaking
+
+- **`PhysicsKnobs` gained two fields, `centering` and `settleTime`** — a widening, so code reading a
+  knob bundle is fine, but code *constructing* one must now supply six values. `centering` drives
+  the gravity strengths (`d3GravityStrengthConnected`, with `d3GravityStrength` following as a
+  multiple); `settleTime` drives `d3AlphaDecay` **and** `cooldownTime` together, since moving either
+  alone does nothing.
+- **`PHYSICS_PRESETS.default` is gone**, along with `'default'` from `PhysicsPresetName`. It was an
+  alias of `loose` rather than the library's actual defaults, and `Auto` replaces the concept — the
+  flyout's preset row is now `[Auto] [Tight] [Loose]`. `tight` and `loose` keep their four existing
+  values and gain `centering: 7` / `settleTime: 2.25`, which reproduce the historical gravity
+  (0.001 / 0.1) and alpha decay (0.05) exactly.
+- **`PHYSICS_KNOB_RANGES.linkDistance` is now `[40, 600]`** (was `[40, 260]`). The knob maps to
+  pixels one-for-one, so every existing value is unchanged; only a UI rendering the slider's `max`
+  sees a difference. The old ceiling made it impossible to put visible space between two large
+  nodes — 260px leaves 140px between a pair of 120px discs.
+- **Removed private API:** `Simulation.scaleSimulationOptions` and
+  `Simulation.applyScalledSimulationOptions`, both `@private` and both dead (commented out at all
+  three call sites). They were an abandoned earlier attempt at this feature.
+
+### Fixed
+
+- **`ForceGravity` skipped nodes at rest.** It guarded its accumulation on `node.vx && node.x`
+  rather than on the values being present, so a node sitting exactly on the centring axis, or
+  momentarily at rest, silently received no centring pull at all.
+
 ### Physics is its own rail mode
 
 - **Layout and simulation moved out of the View flyout into a Physics flyout**, opened by a new

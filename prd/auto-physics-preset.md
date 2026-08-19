@@ -1,8 +1,9 @@
 # Feature — an "Auto" physics preset that tunes the layout on the fly
 
-**Status:** Built — 2026-08-19, branch `worktree-auto-physics-preset`. All of §9.1 is in and
-green; §13 records what the bake-off settled and the one call left to make (pick the winner,
-delete the losers + the dev switch + the overlay).
+**Status:** Done — 2026-08-19, branch `worktree-auto-physics-preset`, unmerged. All of §9.1 is in
+and green. §13 records what the measurements settled, including two corrections to the design
+after Sami reviewed it on real data. `hybrid` won the bake-off; `fill`, `feedback`, the strategy
+indirection and the whole dev rig are deleted, and the tuner is a single `tunePhysics()`.
 **Owner:** Sami Mokaddem
 **Requested:** 2026-08-18
 **Area:** `src/AutoPhysics.ts` (new), `src/Simulation.ts` (knob vocabulary, triggers, tuner state, dead-code removal), `src/interfaces/SimulationOptions.ts` (`physics` option, gravity/settle plumbing), `src/ui/elements/PhysicsFlyout/` (preset row + two new sliders), `tests/visual/harness/` (fixtures + `physics: 'manual'` baseline), `docs/.vitepress/components/Pivotick.vue` (gallery pin), `docs/simulation.md` + `docs/configuration.md`.
@@ -494,13 +495,20 @@ constant. The `physics: 'manual'` pinning did its job — no graph drifted.
 - Deadband 4% of range and debounce 150ms both held on fixture E unchanged: 5 → 60 costs
   exactly one reheat, 60 → 61 costs none.
 
-### 13.5 Still to do before merge
+### 13.5 Bake-off closed
 
-1. Pick the winner (§13.2 recommends `hybrid`), delete the other two strategies,
-   `setAutoStrategy` / `getAutoStrategy` / `AUTO_STRATEGIES`, and `src/AutoPhysicsOverlay.dev.ts`
-   with its two call sites in `src/main.ts`.
-2. CHANGELOG entry for the breaking bits: `PHYSICS_PRESETS.default` removed, `PhysicsKnobs`
-   widened to six fields, `linkDistance` range now `[40, 600]`.
+`hybrid` kept, on Sami's call. Deleted: the `fill` and `feedback` strategies, `AUTO_STRATEGIES` /
+`AUTO_STRATEGY_NAMES` / `DEFAULT_AUTO_STRATEGY` / `isAutoStrategyName`, the `AutoStrategy` and
+`AutoStrategyName` types, `Simulation.setAutoStrategy` / `getAutoStrategy`, `AutoContext.measured`,
+`linearFillTarget`, and `src/AutoPhysicsOverlay.dev.ts` with its `src/main.ts` call sites. What
+was `hybrid` is now the module's single `tunePhysics(ctx)`.
+
+`measureLayout` / `MeasuredLayout` stay — they are the measurement API the visual tests assert
+against, and `densityVariation` (§13.7) is the metric that guards the structure regression.
+
+CHANGELOG entry written: `Auto` as the default, `simulation.physics`, the two new knobs, and the
+breaking bits (`PHYSICS_PRESETS.default` removed, `PhysicsKnobs` widened, `linkDistance` range
+`[40, 600]`, the two dead `@private` methods gone) plus the `ForceGravity` fix.
 
 ### 13.6 Correction — gravity was flattening cluster structure (2026-08-19, later)
 
