@@ -105,13 +105,22 @@ export const PHYSICS_KNOB_RANGES: Record<keyof PhysicsKnobs, readonly [number, n
 export type PhysicsPresetName = 'tight' | 'loose'
 
 /**
- * Knob bundles applied by {@link Simulation.applyPhysicsPreset}. `centering` 7 and
- * `settleTime` 2.25 reproduce the library's historical gravity (0.001 / 0.1) and
- * alpha decay (0.05) exactly, so clicking a preset still changes nothing but the
- * four knobs it always set.
+ * Knob bundles applied by {@link Simulation.applyPhysicsPreset}. `centering` 7
+ * reproduces the library's historical gravity (0.001 / 0.1) exactly, and `loose`'s
+ * `settleTime` 2.25 its historical alpha decay (0.05).
+ *
+ * `tight` is the exception, and deliberately so. Its friction was 58 against the same
+ * 2.25s settle — the heaviest damping in the set paired with the shortest run, which
+ * is a contradiction: damping is what makes a layout take longer to arrive, and
+ * `tight` also has the harder journey (contracting a graph means pushing it past
+ * `forceCollide`, the one force that never scales with alpha and so cannot be hurried
+ * by heat). Measured, one click reached 60% of the way to tight's own equilibrium and
+ * the layout looked like the preset had barely worked. 45 with a 3s settle reaches
+ * ~87% — still clearly the calmer preset, now one that arrives. See
+ * prd/physics-preset-reheat.md.
  */
 export const PHYSICS_PRESETS: Record<PhysicsPresetName, PhysicsKnobs> = {
-    tight: { repulsion: 32, linkDistance: 70, collisionRadius: 16, friction: 58, centering: 7, settleTime: 2.25 },
+    tight: { repulsion: 32, linkDistance: 70, collisionRadius: 16, friction: 45, centering: 7, settleTime: 3 },
     loose: { repulsion: 70, linkDistance: 150, collisionRadius: 26, friction: 28, centering: 7, settleTime: 2.25 },
 }
 
@@ -147,6 +156,8 @@ export class Simulation {
     private dragInProgress: boolean = false
     private dragSelection: dragSelectionNode[] = []
     private totalTickCount: number = 0
+    /** Ticks since the current run started ({@link restart}); the cooldown budget. */
+    private runTickCount: number = 0
 
     private options: SimulationOptions
     private callbacks: Partial<SimulationCallbacks>
@@ -200,6 +211,20 @@ export class Simulation {
     private static readonly AUTO_DEADBAND = 0.04
     /** Auto relaxes the layout from where it is; it never restarts it. */
     private static readonly AUTO_REHEAT_ALPHA = 0.3
+    /**
+     * Heat for an *explicit* preset or `Auto` click. A click means "lay this graph
+     * out like that", so it gets what a fresh layout gets — a slider drag keeps the
+     * gentler {@link reheatIfEnabled} default, and auto's own background re-tune
+     * keeps {@link AUTO_REHEAT_ALPHA}.
+     */
+    private static readonly CLICK_REHEAT_ALPHA = 1
+    /** Ticks per second the alpha schedule is written against (rAF at full speed). */
+    private static readonly NOMINAL_FPS = 60
+    /**
+     * How far past `cooldownTime` the wall-clock backstop lets a run go. Only ever
+     * binding on a throttled tab; see {@link cooledDown}.
+     */
+    private static readonly COOLDOWN_WALL_GRACE = 4
 
     constructor(graph: Graph, options: Partial<SimulationOptions> = {}) {
         this.graph = graph
@@ -472,6 +497,7 @@ export class Simulation {
      */
     public restart() {
         this.startSimulationTime = (new Date()).getTime()
+        this.runTickCount = 0
         this.engineRunning = true
         this.slowTickThresholdReached = false
     }
@@ -540,13 +566,7 @@ export class Simulation {
      */
     private simulationTick() {
         if (this.engineRunning) {
-            if (
-                !this.dragInProgress &&
-                (
-                    (new Date()).getTime() - this.startSimulationTime > this.options.cooldownTime ||
-                    this.options.d3AlphaMin > 0 && this.simulation.alpha() < this.options.d3AlphaMin
-                )
-            ) {
+            if (!this.dragInProgress && this.cooledDown()) {
                 this.engineRunning = false
                 this.simulation.stop()
                 if (this.callbacks.onStop) {
@@ -554,6 +574,7 @@ export class Simulation {
                 }
             }
             this.totalTickCount++
+            this.runTickCount++
             const tickStart = performance.now()
             this.simulation.tick()
             this.graph.nextTick()
@@ -566,6 +587,29 @@ export class Simulation {
                 this.graphInteraction.simulationSlowTick()
             }
         }
+    }
+
+    /**
+     * Is the current run finished?
+     *
+     * The tick budget is the real wall. `cooldownTime` is milliseconds, but
+     * `d3AlphaDecay` is per *tick* — {@link alphaDecayForSettleTime} lands alpha on
+     * `alphaMin` after `settleTime * NOMINAL_FPS` ticks — so measuring the budget in
+     * wall-clock truncates every graph that ticks below 60fps. That is the heavy
+     * graphs, which need the settling most, and it is why a preset click on a large
+     * graph appears to do half its job.
+     *
+     * The ms budget survives as a backstop, times {@link COOLDOWN_WALL_GRACE}: a
+     * hidden or throttled tab gets rAF at ~1fps, where a pure tick budget would keep
+     * the run nominally alive for minutes. The slow-tick watchdog cannot cover that
+     * case — it measures compute time per tick, deliberately immune to the frame gap.
+     */
+    private cooledDown(): boolean {
+        const tickBudget = this.options.cooldownTime / 1000 * Simulation.NOMINAL_FPS
+        if (this.runTickCount >= tickBudget) return true
+        if (this.options.d3AlphaMin > 0 && this.simulation.alpha() < this.options.d3AlphaMin) return true
+        const elapsed = (new Date()).getTime() - this.startSimulationTime
+        return elapsed > this.options.cooldownTime * Simulation.COOLDOWN_WALL_GRACE
     }
 
     private updateTickMetrics(tickDuration: number) {
@@ -811,11 +855,18 @@ export class Simulation {
         this.noteManualKnobEdit()
     }
 
-    /** Apply a named preset ({@link PHYSICS_PRESETS}): sets every knob and reheats once. */
+    /**
+     * Apply a named preset ({@link PHYSICS_PRESETS}): sets every knob and reheats once.
+     *
+     * Reheated at {@link CLICK_REHEAT_ALPHA}, not the slider default: a preset
+     * describes a whole layout, and reaching it from a settled graph takes a fresh
+     * layout's worth of travel. Half the heat lands the graph half way there, which
+     * reads as "the preset did nothing".
+     */
     public applyPhysicsPreset(name: PhysicsPresetName): void {
         this.disableAutoPhysics()
         this.writeKnobs(PHYSICS_PRESETS[name])
-        this.reheatIfEnabled()
+        this.reheatIfEnabled(Simulation.CLICK_REHEAT_ALPHA)
     }
 
     /**
@@ -911,7 +962,7 @@ export class Simulation {
      * decay of 0.05 exactly.
      */
     private static alphaDecayForSettleTime(settleTime: number, alphaMin: number): number {
-        const ticks = Math.max(1, settleTime * 60)
+        const ticks = Math.max(1, settleTime * Simulation.NOMINAL_FPS)
         const floor = Math.min(0.999, Math.max(1e-6, alphaMin))
         return 1 - Math.pow(floor, 1 / ticks)
     }
@@ -919,7 +970,7 @@ export class Simulation {
     private static settleTimeFromAlphaDecay(alphaDecay: number, alphaMin: number): number {
         const floor = Math.min(0.999, Math.max(1e-6, alphaMin))
         const decay = Math.min(0.999, Math.max(1e-6, alphaDecay))
-        return Math.log(floor) / Math.log(1 - decay) / 60
+        return Math.log(floor) / Math.log(1 - decay) / Simulation.NOMINAL_FPS
     }
 
     // ─── Auto physics ───────────────────────────────────────────────────────────
@@ -943,10 +994,16 @@ export class Simulation {
         return this.autoEnabled
     }
 
-    /** Turn `Auto` on and tune immediately. */
+    /**
+     * Turn `Auto` on and tune immediately.
+     *
+     * `force` because this is the Auto *button*: if auto's answer happens to sit
+     * inside the deadband the click would otherwise do nothing at all — no knob
+     * written, no reheat, no visible response.
+     */
     public enableAutoPhysics(): void {
         this.autoEnabled = true
-        this.tuneNow()
+        this.tuneNow({ alpha: Simulation.CLICK_REHEAT_ALPHA, force: true })
     }
 
     /** Turn `Auto` off, leaving the knobs wherever they currently sit. */
@@ -984,8 +1041,10 @@ export class Simulation {
      *
      * `reheat: false` is for callers that are about to reheat anyway (the opening
      * layout, `refreshForcesAndReheat`), so one logical change stays one reheat.
+     * `alpha` and `force` are for the Auto button — see {@link enableAutoPhysics}.
      */
-    private tuneNow({ reheat = true }: { reheat?: boolean } = {}): void {
+    private tuneNow(options: { reheat?: boolean, alpha?: number, force?: boolean } = {}): void {
+        const { reheat = true, alpha = Simulation.AUTO_REHEAT_ALPHA, force = false } = options
         if (!this.autoEnabled || this.options.layout.type !== 'force') return
 
         const context = this.buildAutoContext()
@@ -993,11 +1052,13 @@ export class Simulation {
         const next = tunePhysics(context)
 
         // Deadband: below it the layout would not visibly change, and every apply
-        // costs a reheat. Without this, pivoting reheats once per node added.
-        const skipped = (Object.keys(next) as Array<keyof PhysicsKnobs>).every(key => {
+        // costs a reheat. Without this, pivoting reheats once per node added. A
+        // forced tune ignores it — a button press has to answer.
+        const withinDeadband = (Object.keys(next) as Array<keyof PhysicsKnobs>).every(key => {
             const [lo, hi] = PHYSICS_KNOB_RANGES[key]
             return Math.abs(next[key] - this.physicsKnobs[key]) <= (hi - lo) * Simulation.AUTO_DEADBAND
         })
+        const skipped = withinDeadband && !force
         this.autoLastRun = { context, knobs: skipped ? this.getPhysicsKnobs() : next, skipped }
         if (skipped) return
 
@@ -1009,8 +1070,8 @@ export class Simulation {
             this.suppressReheat = false
             this.applyingAutoKnobs = false
         }
-        // Gentle: relax the layout from where it is instead of restarting it.
-        if (reheat) this.reheatIfEnabled(Simulation.AUTO_REHEAT_ALPHA)
+        // Gentle by default: relax the layout from where it is instead of restarting it.
+        if (reheat) this.reheatIfEnabled(alpha)
         this.graph.UIManager.physicsFlyout?.syncAutoKnobs(this.getPhysicsKnobs())
     }
 

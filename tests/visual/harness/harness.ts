@@ -457,6 +457,22 @@ export interface HarnessApi {
     reheatCount(): number
     resetReheatCount(): void
     /**
+     * Is the engine still ticking this run?
+     *
+     * Reads the flag the tick loop itself stops on. The alternative — polling the
+     * bounding box until two samples agree — reports a slow-moving mid-run frame as
+     * settled, and the noise that introduces is larger than the effect a convergence
+     * test is trying to measure.
+     */
+    simulationRunning(): boolean
+    /**
+     * The live d3 alpha — how much heat is left in the run.
+     *
+     * Read in the same `page.evaluate` as the call that reheats, this is how much heat
+     * that caller asked for, exactly and with no timing in the way.
+     */
+    simulationAlpha(): number
+    /**
      * Build a graph of custom `renderNode` HTML cards (fixed-size boxes) packed
      * tightly around the origin with no edges — for exercising library-fixes #8
      * (a custom node's measured size must feed its collision radius). A
@@ -2053,6 +2069,14 @@ class Harness implements HarnessApi {
 
     resetReheatCount(): void {
         this.reheats = 0
+    }
+
+    simulationRunning(): boolean {
+        return (this.g.simulation as unknown as { engineRunning: boolean }).engineRunning
+    }
+
+    simulationAlpha(): number {
+        return (this.g.simulation as unknown as { simulation: { alpha(): number } }).simulation.alpha()
     }
 
     reheatCount(): number {

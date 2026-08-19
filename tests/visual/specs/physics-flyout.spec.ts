@@ -77,6 +77,23 @@ test.describe('physics-flyout', () => {
         await expect(panel(page).locator('.pvt-physicsflyout-slider-value[data-value="settleTime"]')).toHaveText('2.25s')
     })
 
+    // Tight's `friction` and `settleTime` are load-bearing rather than cosmetic: 58 against
+    // a 2.25s settle was the heaviest damping in the set paired with the shortest run, and
+    // a click reached only 60% of the way to where tight actually settles. Pinned here so
+    // the pair cannot drift back apart. See prd/physics-preset-reheat.md.
+    test('applying the Tight preset sets every slider', async ({ page }) => {
+        await loadFixture(page, 'basic', B3)
+        await openFlyout(page)
+
+        await panel(page).locator('.pvt-physicsflyout-preset[data-preset="tight"]').click()
+        await expect(panel(page).locator('.pvt-physicsflyout-preset[data-preset="tight"]')).toHaveClass(/active/)
+
+        expect(await knobs(page)).toEqual({
+            repulsion: 32, linkDistance: 70, collisionRadius: 16, friction: 45, centering: 7, settleTime: 3,
+        })
+        await expect(panel(page).locator('.pvt-physicsflyout-slider-value[data-value="settleTime"]')).toHaveText('3s')
+    })
+
     // The preset row is [Auto] [Tight] [Loose] — "Default" is gone; Auto *is* the default.
     test('the preset row offers Auto, Tight and Loose', async ({ page }) => {
         await loadFixture(page, 'basic', B3)

@@ -28,9 +28,15 @@
   alone does nothing.
 - **`PHYSICS_PRESETS.default` is gone**, along with `'default'` from `PhysicsPresetName`. It was an
   alias of `loose` rather than the library's actual defaults, and `Auto` replaces the concept — the
-  flyout's preset row is now `[Auto] [Tight] [Loose]`. `tight` and `loose` keep their four existing
-  values and gain `centering: 7` / `settleTime: 2.25`, which reproduce the historical gravity
-  (0.001 / 0.1) and alpha decay (0.05) exactly.
+  flyout's preset row is now `[Auto] [Tight] [Loose]`. Both remaining presets gain `centering: 7`,
+  reproducing the historical gravity (0.001 / 0.1) exactly; `loose` also keeps its four original
+  values and the historical alpha decay (`settleTime: 2.25` → 0.05).
+- **`PHYSICS_PRESETS.tight` is re-tuned to `friction: 45`, `settleTime: 3`** (from 58 / 2.25). Its
+  old numbers paired the heaviest damping in the set with the shortest settle, which is a
+  contradiction — damping is what makes a layout take longer to arrive — and the result was that
+  clicking `Tight` moved the graph roughly half way to where `Tight` actually settles. The settled
+  look is unaffected (`friction` shapes the approach; at rest, velocity is zero either way), and
+  `tight` is still clearly the calmer preset. See `prd/physics-preset-reheat.md`.
 - **`PHYSICS_KNOB_RANGES.linkDistance` is now `[40, 600]`** (was `[40, 260]`). The knob maps to
   pixels one-for-one, so every existing value is unchanged; only a UI rendering the slider's `max`
   sees a difference. The old ceiling made it impossible to put visible space between two large
@@ -41,6 +47,20 @@
 
 ### Fixed
 
+- **Clicking a physics preset now re-lays-out the graph instead of nudging it.** A preset or `Auto`
+  click reheats the simulation at full strength, where it used to get half of a fresh layout's heat
+  and stop half way — the reason the same preset had to be clicked several times before its effect
+  showed. Measured, one click now covers 87-99% of the distance to the preset's own equilibrium,
+  against 60% before. Dragging a slider keeps the gentler reheat it always had, and `Auto`'s
+  background re-tuning is unchanged.
+- **Clicking `Auto` always does something.** Auto skips re-tunes too small to see, which is right
+  for a background re-tune fired by a graph change but made the *button* a no-op whenever auto's
+  answer happened to sit near the current knobs. An explicit click now always applies and reheats.
+- **A simulation run gets the settling time it was promised at any frame rate.** `cooldownTime` was
+  compared against wall-clock while `d3AlphaDecay` is per tick, so a graph rendering below 60fps had
+  its run truncated — the heavy graphs, which need settling most, got the least of it. The budget is
+  now counted in ticks (identical at 60fps), with the wall-clock limit kept as a backstop so a
+  hidden or throttled tab still stops.
 - **`ForceGravity` skipped nodes at rest.** It guarded its accumulation on `node.vx && node.x`
   rather than on the values being present, so a node sitting exactly on the centring axis, or
   momentarily at rest, silently received no centring pull at all.

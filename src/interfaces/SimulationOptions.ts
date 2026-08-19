@@ -63,7 +63,18 @@ export interface SimulationOptions {
      * @default 0.001
      */
     d3GravityStrengthConnected: number
-    /** @default 2000 */
+    /**
+     * How long a simulation run is given before it is stopped, in milliseconds.
+     *
+     * Counted in ticks — `cooldownTime / 1000 * 60` of them — so the budget means the
+     * same thing whatever the frame rate. `d3AlphaDecay` is a per-tick schedule, so a
+     * wall-clock budget would silently shorten the run on any graph rendering below
+     * 60fps. The wall-clock value is still honoured as a backstop (at 4x) for a hidden
+     * or throttled tab, where frames stop arriving altogether.
+     *
+     * Driven by the `settleTime` knob, which sets this and `d3AlphaDecay` together.
+     * @default 2000
+     */
     cooldownTime: number
     /** @default auto */
     warmupTicks: number | 'auto'

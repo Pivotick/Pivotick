@@ -62,6 +62,32 @@ async function whenTuned(page: Page, nodeCount: number, timeoutMs = 8_000): Prom
     }
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const applyPreset = (page: Page, name: 'tight' | 'loose') =>
+    page.evaluate((n) => (window.__pivotick as any).graph.simulation.applyPhysicsPreset(n), name)
+
+const enableAuto = (page: Page) =>
+    page.evaluate(() => (window.__pivotick as any).graph.simulation.enableAutoPhysics())
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+/**
+ * Wait for the current run to finish, exactly.
+ *
+ * {@link whenLayoutStable} answers "has the picture stopped changing", which is the
+ * right question for the tuning assertions. It is the wrong one for measuring how far
+ * a single reheat travelled: a mid-run frame that happens to be moving slowly reads as
+ * settled, and that noise is larger than the effect being measured.
+ */
+async function whenRunStopped(page: Page, timeoutMs = 30_000): Promise<AutoState> {
+    const deadline = Date.now() + timeoutMs
+    while (await page.evaluate(() => window.__pivotick.simulationRunning())) {
+        if (Date.now() > deadline) break
+        await page.waitForTimeout(120)
+    }
+    await page.waitForTimeout(120) // let the last frame render
+    return autoState(page)
+}
+
 /**
  * Wait until the layout stops moving.
  *
@@ -90,11 +116,12 @@ async function whenLayoutStable(page: Page, timeoutMs = 20_000): Promise<AutoSta
 
 test.describe('auto-physics', () => {
     // Sequential within this file. Every other spec disables the simulation, so they
-    // cost DOM work and a screenshot; these run a real force layout whose budget is
-    // wall-clock (`cooldownTime`). Run in parallel they starve each other of ticks —
-    // F alone lays out 2000 nodes three times — and the settled layouts move enough to
-    // break bounds that hold comfortably on their own. `default` rather than `serial`
-    // so one failure does not skip the rest.
+    // cost DOM work and a screenshot; these run a real force layout, which needs
+    // `settleTime * 60` frames of rAF to finish. Run in parallel they starve each other
+    // of frames — F alone lays out 2000 nodes three times — until the wall-clock
+    // backstop truncates a run, and the settled layouts then move enough to break
+    // bounds that hold comfortably on their own. `default` rather than `serial` so one
+    // failure does not skip the rest.
     test.describe.configure({ mode: 'default' })
 
     test.beforeEach(async ({ page }) => {
@@ -243,17 +270,17 @@ test.describe('auto-physics', () => {
         expect(huge.knobs.linkDistance).toBeLessThan(sixty.knobs.linkDistance)
 
         // Two things are deliberately *not* asserted here, both for the same reason:
-        // at this size the layout is a statement about the tick budget rather than
-        // about the tuning. `cooldownTime` is wall-clock, so a loaded machine simply
-        // ticks fewer times.
+        // at this size the layout is a statement about the frame budget rather than
+        // about the tuning. 2000 nodes tick slowly enough that a loaded machine drops
+        // frames and trips the wall-clock backstop, cutting the run short.
         //
         // Overlaps: collide resolves iteratively, and unresolved pairs scale with how
         // starved it was — measured 2 on an idle machine and 43 on a busy one, out of
         // two million pairs. B, C and G assert a strict zero, where the sim converges.
         //
         // And no comparison against a pinned arm. Auto is tighter — 7.5
-        // canvases against 12.9 when measured — but two 2000-node layouts on a
-        // wall-clock tick budget are not a repeatable measurement: the ratio ranged
+        // canvases against 12.9 when measured — but two 2000-node layouts on a frame
+        // budget this tight are not a repeatable measurement: the ratio ranged
         // 0.58-0.9 across runs, which is a statement about machine load, not tuning.
         // The knobs above are the deterministic part, so that is what is asserted.
         //
@@ -351,5 +378,69 @@ test.describe('auto-physics', () => {
 
         const after = await autoState(page)
         expect(after.knobs).toEqual(before.knobs)
+    })
+
+    // ── Reaching the preset in one click ────────────────────────────────────
+    // A preset click used to land the layout roughly half way to the preset's own
+    // equilibrium, so the preset read as having done nothing and the only way to see it
+    // was to keep clicking. Measured, one click now covers 87% of the distance to where
+    // the preset settles, against 60% before — see prd/physics-preset-reheat.md §3.3.
+    //
+    // That measurement is deliberately *not* the assertion here. It depends on the run
+    // getting its full budget of frames, and under a parallel suite the browser does not
+    // deliver them: the same measurement reads 87% run alone and 57% run alongside the
+    // other specs. Fixture F above declines tick-budget-dependent assertions for exactly
+    // this reason. What is asserted instead is the mechanism the measurement came from —
+    // how much heat each caller asks for — which is exact and has no timing in it.
+    test('an explicit click reheats to full strength; a slider drag does not', async ({ page }) => {
+        await loadAuto(page, { nodes: 40, radius: 14 })
+        await whenRunStopped(page)
+
+        // Read alpha inside the same evaluate as the call that sets it, so no tick can
+        // decay it in between — these are exact values, not tolerances.
+        const alphaAfter = (action: 'preset' | 'slider') =>
+            page.evaluate((what) => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const sim = (window.__pivotick as any).graph.simulation
+                if (what === 'preset') sim.applyPhysicsPreset('tight')
+                else sim.setRepulsion(85)
+                return window.__pivotick.simulationAlpha()
+            }, action)
+
+        // A preset describes a whole layout, so it gets what a fresh layout gets.
+        expect(await alphaAfter('preset')).toBe(1)
+        await whenRunStopped(page)
+
+        // A drag is continuous — one `input` event per pixel — so it must stay gentle.
+        expect(await alphaAfter('slider')).toBe(0.5)
+    })
+
+    // An explicit click is a request, and a request has to be answered. Auto's
+    // deadband exists so that *background* re-tunes do not reheat over a change too
+    // small to see — applied to the button it made the button do nothing at all.
+    test('an explicit click always reheats, even when no knob moves', async ({ page }) => {
+        await loadAuto(page, { nodes: 40, radius: 14 })
+        await whenRunStopped(page)
+
+        // Auto is already on and already tuned, so its answer is exactly the knobs in
+        // place — the deadband case, in its purest form.
+        await resetReheats(page)
+        await enableAuto(page)
+        await whenRunStopped(page)
+        await enableAuto(page)
+        await whenRunStopped(page)
+
+        expect(await reheats(page)).toBe(2)
+        const state = await autoState(page)
+        expect(state.auto).toBe(true)
+        expect(state.skipped).toBe(false) // a forced tune is never recorded as skipped
+
+        // Same for a named preset clicked twice: the second click is not a no-op.
+        await resetReheats(page)
+        await applyPreset(page, 'tight')
+        await whenRunStopped(page)
+        await applyPreset(page, 'tight')
+        await whenRunStopped(page)
+        expect(await reheats(page)).toBe(2)
     })
 })
