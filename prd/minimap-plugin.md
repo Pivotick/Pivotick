@@ -199,7 +199,7 @@ colours (`renderer.getNodeStyle(node).color`), and change signals: `canvasZoom`,
 | D3 | How does drawing degrade with size? | **Two paths.** ≤1500 nodes: anti-aliased dots + hairline edges (edges dropped past 4000 edges). Above: pixel stamps into an `ImageData`, no edges — dense regions saturate into a density map. |
 | D4 | What area does it map? | **Content bounds ∪ current viewport**, so the rectangle is always visible and honestly sized. |
 | D5 | How does it ship? | `minimap(options?)` **exported from the package root**, plus `Graph.minimap` for the UMD/IIFE builds. |
-| D6 | What options? | `position` (default `'bottom-right'`), `width` (default 200), optional `height` (defaults to the canvas aspect ratio). **Nothing else** — no collapse, no keybinding, no `interactive: false`, no `showEdges`. |
+| D6 | What options? | `position` (default `'bottom-right'`), `width` (default 200), optional `height` (defaults to the canvas aspect ratio). **Nothing else** — no keybinding, no `interactive: false`, no `showEdges`. *Revised after the fact:* a small collapse toggle was asked for and added, with `collapsed` for the state it opens in — collapsing was the one omission that a corner-docked panel is genuinely expected to have. |
 | D7 | Which modes? | `full`, `light`, `viewer`. **`static` gets no minimap at all** — `install` no-ops with one warning, since it was requested explicitly. |
 | D8 | Refactor `fitAndCenter`? | It keeps its own bounds and scale math; only its **final transform write** becomes a `setViewport` call. Identical output by construction, one writer. |
 | D9 | Deliverables | This PRD → implementation → a **minimal** visual spec → gallery card → new `docs/plugins.md`. |

@@ -20,6 +20,13 @@ const PADDING = 4
 /** Retina without paying for a 3× buffer. */
 const MAX_DEVICE_PIXEL_RATIO = 2
 
+/**
+ * The collapse toggle's glyph: an arrow into a corner. It is rotated by CSS to point at
+ * whichever corner the minimap docks in — the way it collapses — and flipped once it is
+ * collapsed, so the same 12px path reads as both "put this away" and "bring it back".
+ */
+const COLLAPSE_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" d="M3.4 3.4l5.2 5.2M8.6 5.6v3h-3"/></svg>'
+
 /** How graph coordinates map onto minimap pixels. */
 interface Projection {
     scale: number
@@ -29,7 +36,8 @@ interface Projection {
 
 /**
  * The minimap: a cached overview of the whole graph with a rectangle showing what is
- * currently on screen. Click to recentre, drag to pan.
+ * currently on screen. Click to recentre, drag to pan, and fold it away with the small
+ * toggle in the corner it faces.
  *
  * Two layers, which is the whole performance story:
  *
@@ -50,6 +58,9 @@ export class Minimap extends UIComponent {
     private readonly options: MinimapOptions
     private root?: HTMLDivElement
     private surface?: HTMLCanvasElement
+    /** The collapse toggle, and whether it has the minimap folded away. */
+    private toggle?: HTMLButtonElement
+    private collapsed = false
     private context?: CanvasRenderingContext2D
     /** Offscreen content layer, and the graph-space extent it covers. */
     private bitmap?: HTMLCanvasElement
@@ -71,6 +82,7 @@ export class Minimap extends UIComponent {
     constructor(uiManager: UIManager, options: MinimapOptions = {}) {
         super(uiManager)
         this.options = options
+        this.collapsed = options.collapsed ?? false
     }
 
     /* ---------- lifecycle ---------- */
@@ -86,6 +98,13 @@ export class Minimap extends UIComponent {
         this.surface.className = 'pvt-minimap-surface'
         this.root.appendChild(this.surface)
 
+        this.toggle = document.createElement('button')
+        this.toggle.type = 'button'
+        this.toggle.className = 'pvt-minimap-toggle'
+        this.toggle.innerHTML = COLLAPSE_ICON
+        this.listen(this.toggle, 'click', () => this.setCollapsed(!this.collapsed))
+        this.root.appendChild(this.toggle)
+
         // Inside the root, so theme custom properties resolve against the real cascade.
         this.probe = document.createElement('span')
         this.probe.style.display = 'none'
@@ -93,6 +112,7 @@ export class Minimap extends UIComponent {
         container.appendChild(this.root)
 
         this.context = this.surface.getContext('2d') ?? undefined
+        this.applyCollapsed()
         this.resize()
         this.wirePointer()
     }
@@ -149,6 +169,7 @@ export class Minimap extends UIComponent {
         this.observer = undefined
         this.root?.remove()
         this.root = undefined
+        this.toggle = undefined
         this.probe = undefined
         this.colorCache.clear()
         this.surface = undefined
@@ -159,6 +180,46 @@ export class Minimap extends UIComponent {
     /** How many times the content bitmap has been rasterised. */
     public getRebuildCount(): number {
         return this.rebuildCount
+    }
+
+    /* ---------- collapsing ---------- */
+
+    /** Whether the minimap is folded away to just its toggle. */
+    public isCollapsed(): boolean {
+        return this.collapsed
+    }
+
+    /**
+     * Fold the minimap away to its toggle, or bring it back. Collapsed it draws nothing
+     * at all — not even the rectangle — so it costs nothing while it is put away.
+     */
+    public setCollapsed(collapsed: boolean) {
+        if (collapsed === this.collapsed) return
+        this.collapsed = collapsed
+        this.applyCollapsed()
+        // Expanding comes back to a stale bitmap sized for the old canvas, and every
+        // signal that would have refreshed it was skipped while collapsed.
+        if (!collapsed) {
+            this.resize()
+            this.queueRebuild()
+        }
+    }
+
+    /** Reflect the collapsed state on the DOM: the CSS does the rest. */
+    private applyCollapsed() {
+        if (!this.root || !this.toggle) return
+        this.root.dataset.collapsed = String(this.collapsed)
+        // Collapsed, the stylesheet sizes the root to the button; expanded, resize() owns
+        // the box, so hand it back rather than leaving a stale inline size behind.
+        if (this.collapsed) {
+            this.root.style.width = ''
+            this.root.style.height = ''
+        }
+
+        const label = this.collapsed ? 'Show the minimap' : 'Collapse the minimap'
+        this.toggle.title = label
+        this.toggle.setAttribute('aria-label', label)
+        this.toggle.setAttribute('aria-expanded', String(!this.collapsed))
     }
 
     /* ---------- sizing ---------- */
@@ -172,7 +233,7 @@ export class Minimap extends UIComponent {
      * ratio so the viewport rectangle isn't stretched.
      */
     private resize() {
-        if (!this.surface || !this.root) return
+        if (!this.surface || !this.root || this.collapsed) return
         const canvas = this.uiManager.layout?.canvas
         const width = this.options.width ?? DEFAULT_WIDTH
         const aspect = canvas && canvas.clientWidth > 0 ? canvas.clientHeight / canvas.clientWidth : 0.625
@@ -189,9 +250,9 @@ export class Minimap extends UIComponent {
         this.surface.height = Math.round(cssHeight * this.dpr)
     }
 
-    /** Nothing to do while we're display:none, detached or zero-sized. */
+    /** Nothing to do while we're collapsed, display:none, detached or zero-sized. */
     private get hidden(): boolean {
-        if (!this.root || !this.surface) return true
+        if (!this.root || !this.surface || this.collapsed) return true
         return !this.root.isConnected || this.root.offsetParent === null || this.surface.width === 0
     }
 

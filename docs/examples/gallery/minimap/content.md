@@ -11,7 +11,8 @@ pageClass: gallery-wide
 One line — `plugins: [minimap()]` — docks an overview of the whole graph in a canvas
 corner, with a rectangle showing what's on screen. **Click** anywhere in it to bring the
 view there; **drag** the rectangle to pan. The graph below is wider than its viewport, so
-there is somewhere to go.
+there is somewhere to go. The tiny arrow in the minimap's inner corner folds it away to
+just that button when the canvas matters more than the overview.
 
 The minimap is a **plugin**, not built-in chrome: it installs itself through the
 `PluginContext` it is handed and uses nothing a plugin of your own couldn't — it reads

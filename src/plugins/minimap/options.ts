@@ -18,6 +18,12 @@ export interface MinimapOptions {
      */
     width?: number
     /**
+     * Start folded away to just the collapse toggle. The toggle is always there — this is
+     * only which state the minimap opens in.
+     * @default false
+     */
+    collapsed?: boolean
+    /**
      * Height in CSS pixels. Left out, it follows the canvas's aspect ratio (clamped to
      * 70–400px) so the viewport rectangle keeps the shape of the real viewport.
      * @default derived from the canvas

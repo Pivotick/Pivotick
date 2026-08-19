@@ -126,7 +126,8 @@ const bottomRight = graph.renderer.screenToGraphCoordinates(rect.right, rect.bot
 
 A first-party plugin: a cached overview of the whole graph docked in a canvas corner,
 with a rectangle showing what is on screen. **Click** it to recentre the view;
-**drag** the rectangle to pan.
+**drag** the rectangle to pan. A very small toggle in the corner it faces folds it away
+to just that button, and brings it back.
 
 ```ts
 import { Pivotick, minimap } from 'pivotick'
@@ -149,9 +150,16 @@ new Pivotick(container, data, {
 | `position` | `'bottom-right' \| 'bottom-left' \| 'top-right' \| 'top-left'` | `'bottom-right'` | Which corner it docks in. `'bottom-right'` is the only corner the built-in chrome leaves free in `full` mode. |
 | `width` | `number` | `200` | Width in CSS pixels, border included. |
 | `height` | `number` | derived | Height in CSS pixels. Omitted, it follows the canvas's aspect ratio (clamped to 70–400px) so the rectangle keeps the shape of the real viewport. |
+| `collapsed` | `boolean` | `false` | Open folded away to just the collapse toggle. The toggle is always there; this is only the state it starts in. |
 
 Nothing else is configurable, because nothing else needs to be: the level of detail and
 the redraw cadence adapt to the graph.
+
+The toggle's arrow points at the corner the minimap docks in — the direction it folds
+away — and flips once it is collapsed. Folded away it draws nothing at all, not even the
+rectangle, so it costs nothing while it is out of the way; opening it re-rasterises for
+whatever the canvas looks like by then. `setCollapsed(boolean)` and `isCollapsed()` on the
+`Minimap` instance drive the same thing from code.
 
 ### What it draws, and what it costs
 

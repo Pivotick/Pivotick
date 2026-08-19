@@ -188,6 +188,51 @@ test.describe('minimap plugin', () => {
             .toBeGreaterThan(rebuilds)
     })
 
+    test('the collapse toggle folds it away to just the button, and back', async ({ page }) => {
+        await harness(page, 'loadWithMinimap', 'basic')
+        await waitForViewSettled(page)
+        const expanded = await minimapBox(page)
+        const toggle = page.locator('.pvt-minimap-toggle')
+
+        // Really small, and it lives inside the minimap rather than beside it.
+        const button = (await toggle.boundingBox())!
+        expect(button.width).toBeLessThanOrEqual(20)
+        expect(button.height).toBeLessThanOrEqual(20)
+
+        await toggle.click()
+
+        // Nothing left but the button — and it folded into its own corner, so the docked
+        // edges (right / bottom here) did not move.
+        await expect(page.locator('.pvt-minimap-surface')).toBeHidden()
+        const collapsed = await minimapBox(page)
+        expect(collapsed.width).toBeLessThanOrEqual(20)
+        expect(collapsed.height).toBeLessThanOrEqual(20)
+        expect(collapsed.x + collapsed.width).toBeCloseTo(expanded.x + expanded.width, 0)
+        expect(collapsed.y + collapsed.height).toBeCloseTo(expanded.y + expanded.height, 0)
+
+        // Coming back re-rasterises rather than trusting a canvas that was resized away,
+        // so there is real ink on the surface again.
+        const rebuilds = (await harness(page, 'minimapRebuilds')) as number
+        await toggle.click()
+        await expect(page.locator('.pvt-minimap-surface')).toBeVisible()
+        expect((await minimapBox(page)).width).toBeCloseTo(expanded.width, 0)
+        await expect.poll(async () => (await harness(page, 'minimapRebuilds')) as number)
+            .toBeGreaterThan(rebuilds)
+        await expect.poll(async () => await inkPixels(page)).toBeGreaterThan(0)
+    })
+
+    test('it can open collapsed, and draws nothing until it is opened', async ({ page }) => {
+        await harness(page, 'loadWithMinimap', 'basic', { collapsed: true })
+
+        await expect(page.locator('.pvt-minimap-toggle')).toBeVisible()
+        await expect(page.locator('.pvt-minimap-surface')).toBeHidden()
+        // Put away it costs nothing at all: the O(N) pass never ran.
+        expect(await harness(page, 'minimapRebuilds')).toBe(0)
+
+        await page.locator('.pvt-minimap-toggle').click()
+        await expect.poll(async () => await inkPixels(page)).toBeGreaterThan(0)
+    })
+
     test('static mode gets no minimap, and says why', async ({ page }) => {
         await harness(page, 'loadWithMinimap', 'basic', {}, { UI: { mode: 'static' } })
 
