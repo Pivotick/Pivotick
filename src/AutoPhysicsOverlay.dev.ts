@@ -2,10 +2,13 @@
  * DEVELOPMENT ONLY — the `Auto` physics strategy bake-off rig. Delete this file,
  * and its two call sites in `src/main.ts`, once a strategy has been chosen.
  *
- * Two things live here:
+ * Three things live here:
  *
  *  - `?autoStrategy=hybrid|fill|feedback` in the URL, so the candidates can be
  *    swapped on the running dev server rather than by editing and reloading.
+ *  - `?physics=auto|manual`, which is what makes an A/B possible at all: this demo
+ *    page sets `d3LinkDistance`, so auto is correctly *off* here by default and
+ *    there would otherwise be nothing to look at without editing the file.
  *  - A corner readout of what the tuner last decided and what the layout actually
  *    came out as, so the comparison is made against numbers rather than against
  *    an impression of which one "looks better".
@@ -18,11 +21,29 @@ import { isAutoStrategyName, measureLayout } from './AutoPhysics'
 /** How often the readout re-measures. Cheap: the overlap scan is a spatial hash. */
 const REFRESH_MS = 250
 
-/** Apply `?autoStrategy=` if present. Returns the name in force. */
+/** Apply `?autoStrategy=` and `?physics=` if present. Returns the strategy in force. */
 export function applyAutoStrategyFromUrl(graph: Pivotick): string {
-    const requested = new URLSearchParams(window.location.search).get('autoStrategy')
-    if (isAutoStrategyName(requested)) graph.simulation.setAutoStrategy(requested)
-    else if (requested) console.warn(`[Pivotick] unknown autoStrategy "${requested}"`)
+    const params = new URLSearchParams(window.location.search)
+    const physics = params.get('physics')
+    const strategy = params.get('autoStrategy')
+
+    if (physics === 'auto') graph.simulation.enableAutoPhysics()
+    else if (physics === 'manual') graph.simulation.disableAutoPhysics()
+    else if (physics) console.warn(`[Pivotick] unknown physics "${physics}" (auto|manual)`)
+
+    if (isAutoStrategyName(strategy)) graph.simulation.setAutoStrategy(strategy)
+    else if (strategy) console.warn(`[Pivotick] unknown autoStrategy "${strategy}"`)
+
+    // These flags land *after* the graph has already computed its opening layout from
+    // whatever `main.ts` configured, so without a fresh layout pass the comparison
+    // would be "auto relaxing a pinned layout" rather than "auto laying it out" —
+    // which is the thing being judged. Re-run once the first pass has finished, so
+    // the two never race for the same node positions.
+    if (physics || strategy) {
+        graph.on('ready', () => {
+            void graph.simulation.start().then(() => graph.renderer.fitAndCenterWhenSettled())
+        })
+    }
     return graph.simulation.getAutoStrategy()
 }
 
