@@ -201,6 +201,16 @@ export interface AutoFixtureSpec {
     isolated?: number
     /** Node-id prefix, so a second batch can be added without colliding. @default 'n' */
     prefix?: string
+    /**
+     * Build hub-and-spoke clusters instead of a random tree: `clusters` stars, each a
+     * hub with its share of the nodes as satellites, hubs chained to each other.
+     *
+     * This is the shape real data tends to have — and the shape that exposes whether a
+     * layout keeps its structure, because a star either opens into a legible flower or
+     * packs into an anonymous blob. A random tree has no clusters to lose, so it cannot
+     * tell the two apart.
+     */
+    clusters?: number
 }
 
 /**
@@ -228,11 +238,28 @@ export function buildAutoFixture(spec: AutoFixtureSpec): BuiltFixture {
         nodes.push(node)
     }
 
-    // Each component is a random recursive tree: node `i` attaches to an earlier node
-    // picked by a seeded LCG. Deterministic, but branching — a plain path would be a
-    // 60-node string 4000px long whatever the physics did, which says nothing about
-    // whether the tuner is any good.
     const edges: Edge[] = []
+
+    // Hub-and-spoke: every `stride`-th node is a hub, the rest are its satellites, and
+    // the hubs are chained together.
+    if (spec.clusters && spec.clusters > 0) {
+        const stride = Math.max(2, Math.floor(linkedCount / spec.clusters))
+        const hubs: Node[] = []
+        for (let i = 0; i < linkedCount; i++) {
+            if (i % stride === 0) {
+                const hub = nodes[i]
+                if (hubs.length) edges.push(new Edge(`${prefix}h${i}`, hubs[hubs.length - 1], hub))
+                hubs.push(hub)
+                continue
+            }
+            edges.push(new Edge(`${prefix}e${i}`, hubs[hubs.length - 1], nodes[i]))
+        }
+        return { nodes, edges, notes: [] }
+    }
+
+    // Otherwise a random recursive tree: node `i` attaches to an earlier node picked by
+    // a seeded LCG. Deterministic, but branching — a plain path would be a 60-node
+    // string 4000px long whatever the physics did, which says nothing about the tuner.
     const perComponent = Math.ceil(linkedCount / Math.max(1, components))
     let seed = 12345
     const nextRandom = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648

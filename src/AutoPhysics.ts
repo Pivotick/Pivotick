@@ -35,6 +35,17 @@ export interface MeasuredLayout {
     overlaps: number
     /** Mean nearest-neighbour surface gap, in units of the mean radius. */
     nearestNeighbourGap: number
+    /**
+     * Spread of the nearest-neighbour *gaps*, relative to their mean.
+     *
+     * This is the one number that tells a structured layout from a blob, and it earns
+     * its place: a hand-tuned layout showing clear hub-and-spoke clusters and a
+     * flattened one that reads as an even carpet measured *the same*
+     * {@link nearestNeighbourGap} (0.98r vs 0.99r) while differing three-fold here
+     * (1.26 vs 0.24). Clusters mean dense insides and empty gaps — uneven spacing.
+     * An even disc has nothing to see and scores near zero.
+     */
+    densityVariation: number
 }
 
 /** Everything a strategy is allowed to know. */
@@ -83,6 +94,21 @@ const FILL_REF_HI = 400
 
 /** Clear space guaranteed between two mean-sized discs, whatever the area budget says. */
 const GAP_MIN = 24
+/**
+ * Link distance as a multiple of the mean node radius — the primary length scale.
+ *
+ * This is the correction to the original design, which derived link distance from an
+ * area budget alone (canvas ÷ node count). A budget cannot know how big the nodes
+ * are, so on a graph of large nodes it asks for a spacing smaller than the nodes
+ * themselves and the layout comes out as a carpet of touching discs: every cluster
+ * packs into a hexagonal blob and the topology between them disappears.
+ *
+ * Two independent readings put the right value near 6.5×: a hand-tuned 118-node
+ * graph of r=60 nodes that reads well sits at link 387 (6.5r), and the r=10 version
+ * of the same graph, which also reads well, sits at 67 (6.7r). The area budget stays
+ * on as a *lower* bound, so a sparse graph on a big canvas still spreads out.
+ */
+const LINK_PER_RADIUS = 6.5
 /** Link-distance ceiling, as a multiple of the mean radius plus a base: small nodes stay a graph, not a constellation. */
 const C_MAX = 10
 const CEIL_BASE = 140
@@ -125,6 +151,9 @@ const REPULSION_MAX = 95
 const REPULSION_FLOOR_REF_NODES = 300
 const REPULSION_FLOOR_DECAY = 0.35
 const REPULSION_FLOOR_MIN = 8
+/** Node radius the floor is quoted for, and how hard it climbs above it. */
+const REPULSION_FLOOR_REF_RADIUS = 10
+const REPULSION_FLOOR_SIZE_GAIN = 0.54
 
 /** Damping range: more nodes → more friction, so a big graph stops jittering instead of boiling. */
 const FRICTION_MIN = 24
@@ -146,7 +175,7 @@ const CENTERING_FENCE = 0.9
  * (see {@link centeringKnob}). The low end is for a graph its own links already
  * hold together; the high end is for one that is mostly loose pieces.
  */
-const CENTERING_CEILING_BOUND = 0.003
+const CENTERING_CEILING_BOUND = 0.001
 const CENTERING_CEILING_LOOSE = 0.06
 /**
  * Ceiling for the smallest graphs, decaying to {@link CENTERING_CEILING_BOUND} as the
@@ -231,17 +260,25 @@ function chargeDamping(meanRadius: number): number {
     return (damped * damped) / 100
 }
 
-/** The repulsion floor for a graph of this size — see {@link REPULSION_FLOOR_REF_NODES}. */
-function repulsionFloor(nodeCount: number): number {
+/**
+ * The repulsion floor for a graph of this size and node size.
+ *
+ * Eased down on very large graphs (see {@link REPULSION_FLOOR_REF_NODES}) and up for
+ * large nodes: bigger discs need a proportionally harder push to open the same gap,
+ * and the area budget cannot supply it. The exponent is fitted to the same two
+ * hand-tuned graphs as {@link LINK_PER_RADIUS} — r=10 wants 38, r=60 wants ~100.
+ */
+function repulsionFloor(nodeCount: number, meanRadius: number): number {
+    const sizeBoost = Math.pow(Math.max(1, meanRadius) / REPULSION_FLOOR_REF_RADIUS, REPULSION_FLOOR_SIZE_GAIN)
     const eased = REPULSION_FLOOR
         * Math.pow(REPULSION_FLOOR_REF_NODES / Math.max(1, nodeCount), REPULSION_FLOOR_DECAY)
-    return clamp(eased, REPULSION_FLOOR_MIN, REPULSION_FLOOR)
+    return clamp(eased * sizeBoost, REPULSION_FLOOR_MIN, REPULSION_MAX)
 }
 
 /** Effective per-node charge magnitude → the `repulsion` knob. */
 function repulsionKnob(effectiveCharge: number, meanRadius: number, nodeCount: number): number {
     const base = effectiveCharge / chargeDamping(meanRadius)
-    return clamp((base / 400) * 100, repulsionFloor(nodeCount), REPULSION_MAX)
+    return clamp((base / 400) * 100, repulsionFloor(nodeCount, meanRadius), REPULSION_MAX)
 }
 
 /**
@@ -295,11 +332,16 @@ function centeringKnob(
     // Two independent licences to centre, whichever is larger:
     //  - the graph is small enough that compressing it costs no structure, and
     //  - some of it is in pieces nothing else is holding.
-    // sqrt on the second, so a graph that is even slightly loose gets some help.
+    // Cubic: the licence to compress should be gone by the time a graph is big
+    // enough to have any structure worth keeping. A hand-tuned 118-node layout that
+    // reads well sits at the historical gravity of 0.001, which is what this reaches.
     const smallCeiling = CENTERING_CEILING_BOUND
-        + (CENTERING_CEILING_SMALL - CENTERING_CEILING_BOUND) * (1 - sizeFraction(nodeCount))
+        + (CENTERING_CEILING_SMALL - CENTERING_CEILING_BOUND) * Math.pow(1 - sizeFraction(nodeCount), 3)
+    // Linear, not sqrt: a graph with one loose node in a hundred needs a hundredth of
+    // the help, and sqrt was handing it a sixth — enough to visibly compress a graph
+    // whose links were holding it perfectly well.
     const looseCeiling = CENTERING_CEILING_BOUND
-        + (CENTERING_CEILING_LOOSE - CENTERING_CEILING_BOUND) * Math.sqrt(clamp01(looseNodeFraction))
+        + (CENTERING_CEILING_LOOSE - CENTERING_CEILING_BOUND) * clamp01(looseNodeFraction)
     const ceiling = Math.max(smallCeiling, looseCeiling)
 
     const strength = clamp(balance, CENTERING_STRENGTH_MIN, Math.max(CENTERING_STRENGTH_MIN, ceiling))
@@ -349,15 +391,22 @@ function areaBudget(ctx: AutoContext): { targetArea: number; spacing: number } {
  * (the `C_MAX` ceiling).
  */
 const hybrid: AutoStrategy = (ctx) => {
-    const { targetArea, spacing } = areaBudget(ctx)
+    const { spacing } = areaBudget(ctx)
     const meanRadius = Math.max(1, ctx.radii.mean)
 
+    // The two things that set a sensible edge length, whichever is larger: the room
+    // each node has been budgeted, and the room its own size demands.
+    const wanted = Math.max(0.8 * spacing, LINK_PER_RADIUS * meanRadius)
     const floor = 2 * meanRadius + GAP_MIN
     const ceiling = Math.min(PHYSICS_KNOB_RANGES.linkDistance[1], C_MAX * meanRadius + CEIL_BASE)
-    const linkDistance = clampKnob(clamp(0.8 * spacing, floor, Math.max(floor, ceiling)), 'linkDistance')
+    const linkDistance = clampKnob(clamp(wanted, floor, Math.max(floor, ceiling)), 'linkDistance')
 
     const effectiveCharge = CHARGE_PER_AREA * spacing * spacing
-    const occupancy = ctx.radii.totalArea / Math.max(1, targetArea)
+    // Crowding measured against the area the layout will actually occupy (one link
+    // distance squared per node), not against a canvas budget it may well exceed.
+    // Against the budget, a graph of large nodes reads as permanently crowded and the
+    // collide radius inflates to compensate — which packs the clusters even tighter.
+    const occupancy = ctx.radii.totalArea / Math.max(1, ctx.nodeCount * linkDistance * linkDistance)
     const multiplier = COLLIDE_BASE + COLLIDE_SPAN * clamp01(occupancy / COLLIDE_FULL)
     const repulsion = repulsionKnob(effectiveCharge, meanRadius, ctx.nodeCount)
 
@@ -509,7 +558,7 @@ export function analyseComponents(
 export function measureLayout(nodes: AutoNode[], canvas: AutoCanvas): MeasuredLayout {
     const placed = nodes.filter(node => typeof node.x === 'number' && typeof node.y === 'number')
     if (placed.length === 0) {
-        return { bbox: { width: 0, height: 0 }, fill: 0, overlaps: 0, nearestNeighbourGap: 0 }
+        return { bbox: { width: 0, height: 0 }, fill: 0, overlaps: 0, nearestNeighbourGap: 0, densityVariation: 0 }
     }
 
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
@@ -545,6 +594,7 @@ export function measureLayout(nodes: AutoNode[], canvas: AutoCanvas): MeasuredLa
     let overlaps = 0
     let gapSum = 0
     let gapCount = 0
+    const neighbourDistances: number[] = []
     for (const node of placed) {
         const cx = Math.floor(node.x! / cell)
         const cy = Math.floor(node.y! / cell)
@@ -575,8 +625,19 @@ export function measureLayout(nodes: AutoNode[], canvas: AutoCanvas): MeasuredLa
         if (nearest !== Infinity) {
             gapSum += nearest
             gapCount++
+            // The *gap*, not the centre-to-centre distance. Adding back 2r damps the
+            // signal exactly where it is needed most: on large nodes the constant
+            // swamps the variation, and a flattened carpet then scores the same as a
+            // legible layout. Measured both ways on the same pair of layouts — the gap
+            // separated them 0.24 vs 1.26, centre-to-centre could not.
+            neighbourDistances.push(nearest)
         }
     }
+
+    const meanNeighbour = neighbourDistances.reduce((a, b) => a + b, 0) / (neighbourDistances.length || 1)
+    const variance = neighbourDistances.reduce((a, d) => a + (d - meanNeighbour) ** 2, 0)
+        / (neighbourDistances.length || 1)
+    const densityVariation = meanNeighbour > 0 ? Math.sqrt(variance) / meanNeighbour : 0
 
     const meanRadius = radiusSum / placed.length || 1
     return {
@@ -584,5 +645,6 @@ export function measureLayout(nodes: AutoNode[], canvas: AutoCanvas): MeasuredLa
         fill,
         overlaps: overlaps / 2, // each pair is seen from both ends
         nearestNeighbourGap: gapCount ? gapSum / gapCount / meanRadius : 0,
+        densityVariation,
     }
 }
