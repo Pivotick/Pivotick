@@ -1,13 +1,68 @@
 # Feature — a minimap, and the viewport API that makes it possible as a plugin
 
-**Status:** Specified — 2026-08-19. Not implemented.
+**Status:** Implemented — 2026-08-19, branch `worktree-worktree-minimap-plugin`. Not merged.
 **Owner:** Sami Mokaddem
 **Requested:** 2026-08-19
-**Area:** `src/GraphRenderer.ts` + `src/renderers/svg/GraphSvgRenderer.ts` + `src/renderers/canvas/GraphCanvasRenderer.ts` (new viewport API), `src/plugins/minimap/` (new), `src/index.ts` (export), `src/interfaces/Plugin.ts` (stale doc), `docs/plugins.md` (new)
+**Area:** `src/GraphRenderer.ts` + `src/renderers/svg/GraphSvgRenderer.ts` (new viewport API), `src/plugins/minimap/` (new), `src/index.ts` (export), `src/interfaces/Plugin.ts` (stale doc), `docs/plugins.md` (new)
 **Type:** Plugin + renderer API
 **Related:** [`renderer-abstraction-audit.md`](renderer-abstraction-audit.md) (WP1–WP8 deferred until a real consumer needs the abstraction — this is that consumer, for one narrow slice); [`filterable-legend.md`](filterable-legend.md) (the canvas-corner inventory, and the cached-render pattern this reuses); [`graph-app-b3-control-layout.md`](graph-app-b3-control-layout.md) (the chrome it shares corners with)
 
 ---
+
+## Implementation (2026-08-19)
+
+`tsc`, `eslint` and `npm run build` clean; `vitepress build docs` clean; `minimap.spec.ts`
+7/7, and 50 tests green across the minimap plus `cluster-fit-toggle` (the `fitAndCenter`
+canary for D8), `legend`, `ui-chrome` and `mode-rail`.
+
+### Verdict on the foundation
+
+**The plugin API needed no changes at all.** The minimap is a `UIComponent` handed to
+`ctx.addElement(el, ctx.layout?.canvas)`, and every capability it uses is public:
+`getContentBounds`, `setViewport`, `screenToGraphCoordinates`, `getNodeStyle`,
+`getMutableVisibleNodes`, `getEdges`, plus the `dataBatchChanged` / `simulationSlowTick` /
+`canvasZoom` events. Only the two new renderer methods were missing, exactly as §3.2/§3.3
+predicted. §3.4 held too: `getZoomTransform` was never needed, so d3's `ZoomTransform`
+stayed out of the renderer-agnostic surface.
+
+### Changed from the spec while building
+
+- **The canvas renderer was left alone.** §5.1 promised a node-derived `getContentBounds`
+  there. It turns out `GraphCanvasRenderer` is a 125-line **`// @ts-nocheck`** stub that
+  already implements almost none of `GraphRenderer` (no `fitAndCenter`, no
+  `screenToGraphCoordinates`), so adding two half-working methods would have been
+  pretending. Both new methods are SVG-only, like the rest of the working surface.
+- **CSS colour expressions have to be resolved before a canvas can paint them.** The
+  renderer's resolved node colour is normally `var(--pvt-node-color, #007acc)`, and a
+  custom property is *substituted* rather than computed, so `getPropertyValue` hands back
+  `color-mix(in srgb, var(…) 80%, transparent)` verbatim. Assigning either to `fillStyle`
+  is a silent no-op that leaves the previous colour in place — which is why the first
+  render drew every dot black. `Minimap.cssColor` parks the expression on a hidden probe
+  inside the themed subtree and reads back the computed `color`, cached per rebuild
+  (cleared each time, since a theme switch changes the answer). **This is a trap for any
+  future canvas-drawn UI in this library.**
+- **Click and drag had to be disambiguated.** Preserving the grab offset on *pointerdown*
+  meant a click inside the rectangle recentred on the point it was already centred on —
+  i.e. did nothing. Now the offset is only applied once the pointer actually moves; a
+  press and release without movement is treated as a click and recentres.
+- **The viewport is drawn as a shroud, not a fill.** A translucent fill *inside* the
+  rectangle washes out the whole minimap in the common fitted-view case (where the
+  viewport contains the content), and with `--pvt-theme-primary` being amaranth it read as
+  an error state. Everything *outside* the rectangle is dimmed instead, plus a 1px stroke.
+- **The `width` option is the outer footprint** (`box-sizing: border-box`), and the pixel
+  buffer is sized from the surface's laid-out size rather than the configured number, so
+  the border can't distort the aspect ratio.
+
+### Notes for the next person
+
+- Adding N nodes to a live graph costs one full render **each** — `updateData` loops
+  `addNode` — so 1600 incremental adds never finish inside a test budget. The large-graph
+  test boots a graph of 1600 nodes in one pass instead (`loadManyNodesWithMinimap`).
+- The interaction tests must `waitForViewSettled` first: `fitAndCenterWhenSettled` commits
+  a transform several frames after `load` resolves, and it will fight a test that starts
+  driving the viewport before then.
+- Reading a screenshot file twice in one session can serve stale content; copy it to a
+  fresh path when re-checking after a change, or a fixed render looks unfixed.
 
 ## 0. Instructions
 
