@@ -9,6 +9,10 @@
  *  - `?physics=auto|manual`, which is what makes an A/B possible at all: this demo
  *    page sets `d3LinkDistance`, so auto is correctly *off* here by default and
  *    there would otherwise be nothing to look at without editing the file.
+ *  - `?nodeSize=N`, which resizes every node. The strategies differ only where node
+ *    size is large enough for `hybrid`'s clamps to bite; on a graph of uniform
+ *    10px nodes they compute identical knobs, so there is nothing to see. Turn the
+ *    nodes up and the difference appears.
  *  - A corner readout of what the tuner last decided and what the layout actually
  *    came out as, so the comparison is made against numbers rather than against
  *    an impression of which one "looks better".
@@ -26,6 +30,7 @@ export function applyAutoStrategyFromUrl(graph: Pivotick): string {
     const params = new URLSearchParams(window.location.search)
     const physics = params.get('physics')
     const strategy = params.get('autoStrategy')
+    const nodeSize = Number(params.get('nodeSize')) || 0
 
     if (physics === 'auto') graph.simulation.enableAutoPhysics()
     else if (physics === 'manual') graph.simulation.disableAutoPhysics()
@@ -39,8 +44,15 @@ export function applyAutoStrategyFromUrl(graph: Pivotick): string {
     // would be "auto relaxing a pinned layout" rather than "auto laying it out" —
     // which is the thing being judged. Re-run once the first pass has finished, so
     // the two never race for the same node positions.
-    if (physics || strategy) {
+    if (physics || strategy || nodeSize) {
         graph.on('ready', () => {
+            if (nodeSize) {
+                for (const node of graph.getMutableNodes()) {
+                    node.setStyle({ ...node.getStyle(), size: nodeSize })
+                    node.setCircleRadius(nodeSize)
+                }
+                graph.renderer.update(true)
+            }
             void graph.simulation.start().then(() => graph.renderer.fitAndCenterWhenSettled())
         })
     }
