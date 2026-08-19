@@ -1,6 +1,8 @@
 # Feature — an "Auto" physics preset that tunes the layout on the fly
 
-**Status:** Specified — 2026-08-19, branch `worktree-auto-physics-preset`. Not implemented.
+**Status:** Built — 2026-08-19, branch `worktree-auto-physics-preset`. All of §9.1 is in and
+green; §13 records what the bake-off settled and the one call left to make (pick the winner,
+delete the losers + the dev switch + the overlay).
 **Owner:** Sami Mokaddem
 **Requested:** 2026-08-18
 **Area:** `src/AutoPhysics.ts` (new), `src/Simulation.ts` (knob vocabulary, triggers, tuner state, dead-code removal), `src/interfaces/SimulationOptions.ts` (`physics` option, gravity/settle plumbing), `src/ui/elements/PhysicsFlyout/` (preset row + two new sliders), `tests/visual/harness/` (fixtures + `physics: 'manual'` baseline), `docs/.vitepress/components/Pivotick.vue` (gallery pin), `docs/simulation.md` + `docs/configuration.md`.
@@ -404,3 +406,98 @@ Net: **2 one-line changes, 0 baselines and 0 thumbnails regenerated.**
 - **Q4 — deadband width and debounce window** (D10): 4% / 150ms are guesses; fixture E decides.
 - **Q5 — `GAP_MIN` / `C_MAX`** (§7.2), and whether the collide clamp needs label width as an
   input as well as radius.
+
+---
+
+## 13. Build notes — what the numbers settled
+
+Built 2026-08-19. The open questions were decided against measurements taken through
+`window.__pivotick.autoState()` (fill, overlaps, nearest-neighbour gap, camera zoom) rather
+than by eye, using a throwaway bake-off spec that ran all three strategies over the fixture
+set. Canvas in the harness is 1280×720.
+
+### 13.1 What changed against the spec
+
+**`centering` needed an order of magnitude more authority than §6 assumed.** A sweep of the
+raw gravity strength against settled layouts put the useful band at **0.005–0.2** — below
+0.005 nothing moves, above 0.2 the graph collapses. The knob's linear `[0, 0.05]` map would
+have spent almost all its travel on values that do nothing, so the map is **quadratic onto
+`[0, 0.2]`**; knob 7 reproduces the historical `0.001` / `0.1` pair exactly, and the values
+auto picks land mid-slider. `tight` / `loose` therefore carry `centering: 7`, not the 14 the
+spec guessed. Isolated-node strength is `4×` the connected one clamped to `[0.1, 0.3]`, so a
+lone node still gets at least today's `0.1` at any setting.
+
+Without this the feature does not work at all: before it, fixture D settled at a **3457×7356**
+bounding box on a 1280×720 canvas. After: **588×583**.
+
+**Centring must balance the charge that actually runs, not the one the budget asked for.**
+`repulsion` is clamped to a floor of 10, and on a 500-node graph the applied charge is ~6×
+what the area budget requested. Balancing the requested value left large graphs at triple
+their target size (fixture F fill 198% → **105%** once corrected).
+
+**`fillTarget` is an area fraction; `MeasuredLayout.fill` is a linear one.** They differ by a
+square root — a factor of two in the middle of the range. `linearFillTarget()` now exists for
+the comparison, and `feedback` uses it.
+
+**Two bugs found and fixed on the way.** `ForceGravity` guarded its accumulation on
+`node.vx && node.x` — truthiness, so a node resting exactly on the centring axis silently got
+no pull. And `measureLayout`'s spatial hash searched one ring, which is correct for overlaps
+(bounded by the contact distance) but wrong for nearest-neighbour gaps (unbounded); it now
+expands ring by ring.
+
+### 13.2 The bake-off (Q2)
+
+`hybrid` wins. The clamps are load-bearing exactly where §7.3 predicted — `fill` roughly
+halves the nearest-neighbour gap on every fixture where node size binds:
+
+| fixture | `hybrid` gap | `fill` gap | `feedback` gap |
+|---|---|---|---|
+| B 5×r60 | 0.68r | **0.29r** | 0.75r |
+| C 40×r60 | 1.02r | **0.29r** | 1.08r |
+| E 60×r18 | 0.89r | 0.74r | 0.86r |
+| F 500×r10 | 1.02r | **0.55r** | 1.02r |
+
+`feedback` tracks `hybrid` within noise everywhere except fixture D (fill 48% vs 61%, against
+a 58% target), which does not buy back its machine-dependence (§7.4). **Recommendation: keep
+`hybrid`, delete `fill` and `feedback`** — but this is the call D1 reserves for a human, so
+all three and the `?autoStrategy=` switch are still in the tree.
+
+### 13.3 Where the acceptance criteria landed
+
+Nine of eleven hold as written. Two do not, for reasons that are geometry and pre-existing
+library limits rather than tuner quality:
+
+- **AC 1 (~80% viewport coverage) is unreachable by construction.** `fitAndCenter` pads to
+  0.8 and fits the *tighter* axis, so a squarish layout on a 16:9 canvas tops out near 0.6.
+  Fixture A measures **0.67 coverage against 0.36 with the knobs pinned** — the layout itself
+  is 2.2× wider — which is the claim the criterion was reaching for. The spec asserts the
+  comparison, since `cooldownTime` is a wall-clock budget and absolute coverage moves with
+  machine load (0.47–0.67 across repeats).
+- **AC 5 (the watchdog must not fire at 2000 nodes) does not hold, and is not auto's.**
+  Measured with `physics: 'manual'` for comparison: physics is off by 1000 nodes *either
+  way*. It is the cost of rendering that many SVG nodes on the main thread. What auto does
+  own is covered instead: it tightens (fill **180% vs 1289%** pinned at 2000 nodes) and never
+  restarts a paused simulation.
+
+**AC 8, restated honestly:** `tsc` / `eslint` / `npm run build` / `vitepress build` are clean
+and 314 of 317 baselines are untouched. The three that moved are all
+`physics-flyout.spec.ts`: two snapshots that *had* to change because the flyout gained two
+sliders and lost the Default button (D8), and one assertion carrying the old `centering`
+constant. The `physics: 'manual'` pinning did its job — no graph drifted.
+
+### 13.4 Settled constants (Q1, Q4, Q5)
+
+- Fill target: linear-area fraction `0.30` at N≤4 rising to `0.64` at N≥400, log-interpolated.
+- `GAP_MIN` 24px; link ceiling `10·r̄ + 140`, capped at the 600px knob maximum.
+- Collide multiplier `1.15 → 1.50` with occupancy; `CENTERING_GAIN` 240 (back-solved from the
+  gravity sweep); centring strength clamped to `[0.002, 0.12]`.
+- Deadband 4% of range and debounce 150ms both held on fixture E unchanged: 5 → 60 costs
+  exactly one reheat, 60 → 61 costs none.
+
+### 13.5 Still to do before merge
+
+1. Pick the winner (§13.2 recommends `hybrid`), delete the other two strategies,
+   `setAutoStrategy` / `getAutoStrategy` / `AUTO_STRATEGIES`, and `src/AutoPhysicsOverlay.dev.ts`
+   with its two call sites in `src/main.ts`.
+2. CHANGELOG entry for the breaking bits: `PHYSICS_PRESETS.default` removed, `PhysicsKnobs`
+   widened to six fields, `linkDistance` range now `[40, 600]`.
