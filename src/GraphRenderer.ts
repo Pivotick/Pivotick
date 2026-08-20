@@ -95,6 +95,16 @@ export abstract class GraphRenderer {
         return this.container.querySelector('.pvt-canvas') as HTMLElement
     }
 
+    /**
+     * The graph's root container — everything, chrome included. Deliberately distinct
+     * from {@link getCanvas}: the canvas shrinks whenever chrome opens (a sidebar, the
+     * data dock), the container only changes when the page around it does. Anything
+     * that must not react to chrome measures this instead.
+     */
+    public getRootContainer(): HTMLElement {
+        return this.container
+    }
+
     public updateLayoutProgress(progress: number, elapsedTime: number, progressType: ProgressType): void {
         this.layoutProgress = progress
         this.layoutProgressType = progressType

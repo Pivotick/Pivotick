@@ -106,10 +106,19 @@ interface dragSelectionNode {
 export class Simulation {
     private simulation: d3Simulation<Node, undefined>
     private graph: Graph
-    private canvas: HTMLElement | undefined
+    private container: HTMLElement | undefined
     private graphInteraction: GraphInteractions
     private layout
-    private canvasBCR: DOMRect
+    /**
+     * The area the physics tunes itself against: the **root container**, never the
+     * canvas. Chrome opening or closing (a sidebar, the data dock) resizes the canvas,
+     * and a layout has to come out the same either way — so the canvas is deliberately
+     * not measured here. Kept in step with real container resizes by
+     * {@link observeContainer}, and read by every site that used to take its own
+     * reading, so the live forces and a re-layout can no longer disagree.
+     */
+    private containerBCR: DOMRect
+    private containerObserver?: ResizeObserver
 
     private animationFrameId: number | null = null
     private startSimulationTime: number = 0
@@ -146,15 +155,15 @@ export class Simulation {
         this.callbacks = this.options.callbacks ?? {}
         this.physicsKnobs = Simulation.knobsFromOptions(this.options)
 
-        this.canvas = this.graph.renderer.getCanvas()
-        if (!this.canvas) throw new Error('Canvas element is not defined in the graph renderer.')
-        this.canvasBCR = this.canvas.getBoundingClientRect()
+        this.container = this.graph.renderer.getRootContainer()
+        if (!this.container) throw new Error('Root container is not defined in the graph renderer.')
+        this.containerBCR = Simulation.measureContainer(this.container)
 
         this.graphInteraction = this.graph.renderer.getGraphInteraction()
         if (!this.graphInteraction) throw new Error('Graph interaction is not available.')
 
 
-        const simulationForces = Simulation.initSimulationForces(this.options, this.canvasBCR)
+        const simulationForces = Simulation.initSimulationForces(this.options, this.containerBCR)
         this.simulation = simulationForces.simulation
         this.simulationForces = simulationForces.simulationForces
         this.scaledForces.d3ManyBodyStrength = this.options.d3ManyBodyStrength || DEFAULT_SIMULATION_OPTIONS.d3ManyBodyStrength
@@ -178,13 +187,62 @@ export class Simulation {
             // this.scaleSimulationOptions()
         }
 
+        // Last, so a callback firing on the very next frame finds the forces in place.
+        this.observeContainer()
+
         if (this.callbacks.onInit) {
             this.callbacks.onInit(this)
         }
     }
 
+    /**
+     * Stand-in size used until the container has a real one. A graph can be built while
+     * hidden, where `getBoundingClientRect()` reads 0×0 — and a zero area would make
+     * {@link scaleSimulationOptions} divide by zero, zeroing charge and collide so every
+     * node collapses onto the gravity point.
+     */
+    private static readonly FALLBACK_CONTAINER_SIZE = { width: 1000, height: 800 }
+
+    /** Measure a container, substituting {@link FALLBACK_CONTAINER_SIZE} for a zero area. */
+    private static measureContainer(element: HTMLElement): DOMRect {
+        const rect = element.getBoundingClientRect()
+        if (rect.width > 0 && rect.height > 0) return rect
+        const { width, height } = Simulation.FALLBACK_CONTAINER_SIZE
+        return new DOMRect(rect.x, rect.y, width, height)
+    }
+
+    /**
+     * Keep {@link containerBCR} in step with genuine container resizes — a window resize,
+     * a responsive parent, or the container getting its first real size after being built
+     * hidden — and re-aim the forces derived from it. Chrome resizes the *canvas*, not the
+     * container, so opening the data dock or collapsing the sidebar never reaches here.
+     */
+    private observeContainer(): void {
+        if (!this.container || typeof ResizeObserver === 'undefined') return
+
+        this.containerObserver = new ResizeObserver(() => {
+            if (!this.container) return
+            const next = Simulation.measureContainer(this.container)
+            if (next.width === this.containerBCR.width && next.height === this.containerBCR.height) return
+
+            this.containerBCR = next
+            Simulation.initSimulationForceGravity(this.simulationForces.gravity, this.options, next)
+            this.scaleSimulationOptions()
+            this.applyScalledSimulationOptions()
+        })
+        this.containerObserver.observe(this.container)
+    }
+
+    /** Stop the engine and release the container observer. */
+    public destroy(): void {
+        this.stop()
+        this.containerObserver?.disconnect()
+        this.containerObserver = undefined
+        this.container = undefined
+    }
+
     /** @private */
-    public static initSimulationForces(options: SimulationOptions, canvasBCR: DOMRect): {
+    public static initSimulationForces(options: SimulationOptions, containerBCR: DOMRect): {
         simulation: d3Simulation<Node, undefined>,
         simulationForces: {
             link: d3ForceLinkType<Node, Edge>,
@@ -209,7 +267,7 @@ export class Simulation {
             // .force('clusterRadialConstraint', simulationForces.clusterRadialConstraint)
 
         // this.initSimulationForceCenter(simulationForces.center, options)
-        this.initSimulationForceGravity(simulationForces.gravity, options, canvasBCR)
+        this.initSimulationForceGravity(simulationForces.gravity, options, containerBCR)
         this.initSimulationForceLink(simulationForces.link, options)
         this.initSimulationForceCharge(simulationForces.charge, options)
         this.initSimulationForceCollide(simulationForces.collide, options)
@@ -226,9 +284,9 @@ export class Simulation {
         }
     }
 
-    private static initSimulationForceGravity(force: ForceGravity<Node>, options: SimulationOptions, canvasBCR: DOMRect) {
-        force.x(canvasBCR.width / 2)
-            .y(canvasBCR.height / 2)
+    private static initSimulationForceGravity(force: ForceGravity<Node>, options: SimulationOptions, containerBCR: DOMRect) {
+        force.x(containerBCR.width / 2)
+            .y(containerBCR.height / 2)
             .strength((node) => {
                 const degree = (node as Node).degree() ?? 0
                 // Isolated nodes get full pull to counter charge repulsion; connected nodes get a low (configurable) floor so link forces + charge find equilibrium
@@ -384,14 +442,14 @@ export class Simulation {
 
     /** @private */
     public scaleSimulationOptions(): void {
-        const scaled = Simulation.scaleSimulationOptions(this.options, this.canvasBCR, this.graph.getNodeCount())
+        const scaled = Simulation.scaleSimulationOptions(this.options, this.containerBCR, this.graph.getNodeCount())
         this.scaledForces.d3ManyBodyStrength = scaled.d3ManyBodyStrength ?? DEFAULT_SIMULATION_OPTIONS.d3ManyBodyStrength
         this.scaledForces.d3CollideStrength = scaled.d3CollideStrength ?? DEFAULT_SIMULATION_OPTIONS.d3CollideStrength
     }
 
     /** @private */
-    public static scaleSimulationOptions(options: SimulationOptions, canvasBCR: DOMRect, nodeCount: number): Partial<SimulationOptions> {
-        const density = nodeCount / (canvasBCR.width * canvasBCR.height)
+    public static scaleSimulationOptions(options: SimulationOptions, containerBCR: DOMRect, nodeCount: number): Partial<SimulationOptions> {
+        const density = nodeCount / (containerBCR.width * containerBCR.height)
         const scale = Math.min(2, 0.000075 / density) // or some other heuristic
 
         return {
@@ -573,8 +631,9 @@ export class Simulation {
 
     private async computeGraph(optionOverride: Partial<SimulationOptions> = {}) {
         const { runSimulation } = await import('./workers/SimulationWorker')
-        const canvasBCR = this.canvas?.getBoundingClientRect()
-        if (!canvasBCR) return
+        // The container snapshot, never a fresh canvas reading: a layout pass has to
+        // produce the same result whether or not chrome happens to be open.
+        const containerBCR = this.containerBCR
 
         const nodes = this.graph.getMutableNodes()
         // Keep caller-set fixed positions (fx/fy) so pinned nodes stay put through the layout.
@@ -588,7 +647,7 @@ export class Simulation {
         const { nodes: updatedNodes } = runSimulation(nodesCopy,
             edgesCopy,
             optionsWithoutCBs,
-            canvasBCR)
+            containerBCR)
 
         this.applyComputedPositions(updatedNodes)
         this.graph.updateData(nodes, undefined, false)
@@ -615,8 +674,8 @@ export class Simulation {
     }
 
     private async runSimulationWorker(optionOverride: Partial<SimulationOptions> = {}) {
-        const canvasBCR = this.canvas?.getBoundingClientRect()
-        if (!canvasBCR) return
+        // Same snapshot the live forces use — see computeGraph.
+        const containerBCR = this.containerBCR
 
         const nodes = this.graph.getMutableNodes()
         // Send serialization-safe DTOs, not live Node/Edge clones: a clone's
@@ -638,7 +697,7 @@ export class Simulation {
             nodesCopy,
             edgesCopy,
             optionsWithoutCBs,
-            canvasBCR,
+            containerBCR,
             onWorkerProgress
         )
         this.graph.updateLayoutProgress(100, 0, 'rendering')
