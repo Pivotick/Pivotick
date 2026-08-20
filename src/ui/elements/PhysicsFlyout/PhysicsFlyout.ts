@@ -113,8 +113,8 @@ const SELECTED_ROOT_DESCRIPTION = 'Hangs the tree from the node you have selecte
 const ROOT_CHOICES: Array<{ id: RootChoice, label: string, icon: string, desc: string }> = [
     { id: 'selected', label: 'Selected node', icon: selectElement, desc: SELECTED_ROOT_DESCRIPTION },
     { id: 'FirstZeroInDegree', label: 'First source', icon: firstValidNode, desc: 'The first node nothing points at.' },
-    { id: 'MaxReachability', label: 'Widest reach', icon: mostConnectedNode, desc: 'Reaches the most other nodes. The default.' },
-    { id: 'MinHeight', label: 'Shallowest', icon: minHeight, desc: 'Makes the tree as shallow as it can be. Needs an acyclic graph.' },
+    { id: 'MaxReachability', label: 'Widest reach', icon: mostConnectedNode, desc: 'Reaches the most other nodes.' },
+    { id: 'MinHeight', label: 'Shallowest', icon: minHeight, desc: 'Makes the tree as shallow as it can be.' },
 ]
 
 /** The menu entry that stands for a finder — the two duplicate finders share one. */

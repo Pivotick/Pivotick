@@ -306,10 +306,25 @@
     visibility: hidden;
     color: var(--pvt-theme-primary);
 
-    svg { width: 13px; height: 13px; }
+    svg { width: 15px; height: 15px; }
 }
 
-.pvt-rootmenu-item.current .pvt-rootmenu-tick { visibility: visible; }
+// The live choice, said four ways at once — a tick alone was too quiet to find. The
+// padding is cancelled by an equal negative margin, so the highlight gets room to
+// breathe without making this row taller than the others.
+.pvt-rootmenu-item.current {
+    margin: -3px -5px;
+    padding: 3px 5px;
+    border-radius: 6px;
+    background-color: color-mix(in srgb, var(--pvt-theme-primary) 18%, transparent);
+    box-shadow: inset 3px 0 0 var(--pvt-theme-primary);
+
+    .pvt-rootmenu-tick { visibility: visible; }
+
+    .pvt-rootmenu-text b { color: var(--pvt-theme-primary); font-weight: 700; }
+
+    .pvt-flyout-icon svg { color: var(--pvt-theme-primary); }
+}
 
 // The dropdown's own disabled styling is cursor-only, so an unreachable choice reads as
 // a reachable one. Scoped to these rows rather than fixed in the shared component.
