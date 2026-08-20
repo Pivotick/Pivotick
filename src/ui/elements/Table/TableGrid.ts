@@ -49,17 +49,22 @@ export class TableGrid {
 
     private rows: Row[] = []
     private visible: Row[] = []
+    /** Anchor for a shift-click range, as an index into {@link visible}. */
+    private lastClickedIndex: number | null = null
+    /** What a row click does, from `UI.table.rowActivate`. */
+    private readonly rowActivate: 'select' | 'selectAndCenter' | 'none'
 
     private head?: HTMLDivElement
     private bodyRows?: HTMLDivElement
     private summary?: HTMLSpanElement
 
-    constructor(uiManager: UIManager, tab: TableTab, initialSort?: SortState) {
+    constructor(uiManager: UIManager, tab: TableTab, initialSort?: SortState, rowActivate: 'select' | 'selectAndCenter' | 'none' = 'select') {
         this.uiManager = uiManager
         this.tab = tab
         this.root = document.createElement('div')
         this.root.className = 'pvt-table-grid'
         this.sort = initialSort ?? null
+        this.rowActivate = rowActivate
     }
 
     public getRoot(): HTMLElement {
@@ -160,6 +165,9 @@ export class TableGrid {
         // Sorting, narrowing and hiding a column all land here, and each of them can
         // change the count — so the summary is refreshed from render, not from rebuild.
         this.updateSummary()
+        // Rows are rebuilt from scratch, so the selection marks have to be reapplied.
+        // No scrolling: the user asked for a sort or a filter, not to be moved.
+        this.syncSelection(false)
     }
 
     /** One grid template shared by the header and every row, so the columns line up. */
@@ -253,6 +261,7 @@ export class TableGrid {
         element.className = 'pvt-table-row'
         element.dataset.id = row.id
         element.style.gridTemplateColumns = template
+        if (this.rowActivate !== 'none') this.wireRow(element, row)
 
         for (const column of columns) {
             const cell = document.createElement('div')
@@ -284,6 +293,94 @@ export class TableGrid {
             : this.tab === 'edges' ? 'This graph has no edges.' : 'This graph has no nodes.'
         empty.appendChild(text)
         return empty
+    }
+
+    /* ---------- selection ---------- */
+
+    /**
+     * Row gestures, matching what the canvas offers: plain click replaces the selection,
+     * Ctrl/Cmd adds or removes one row, Shift takes a range from the last row clicked.
+     *
+     * The range runs over the rows **as currently listed** — sorted and narrowed — because
+     * that is what the user can see. Sorting by degree and shift-clicking the top twenty is
+     * the whole point.
+     */
+    private wireRow(element: HTMLElement, row: Row): void {
+        element.addEventListener('click', (event) => {
+            const index = this.visible.findIndex((candidate) => candidate.id === row.id)
+
+            if (event.shiftKey && this.lastClickedIndex !== null) {
+                const [from, to] = [this.lastClickedIndex, index].sort((a, b) => a - b)
+                this.selectRange(from, to)
+                return
+            }
+
+            this.lastClickedIndex = index
+
+            if (event.ctrlKey || event.metaKey) {
+                this.toggleRow(row)
+                return
+            }
+
+            this.uiManager.graph.selectElements([row.element])
+            if (this.rowActivate === 'selectAndCenter') this.uiManager.graph.focusElement(row.element)
+        })
+
+        // A double-click is the "take me there" gesture, whatever a single click does.
+        element.addEventListener('dblclick', () => {
+            this.uiManager.graph.selectElements([row.element])
+            this.uiManager.graph.focusElement(row.element)
+        })
+
+        // Hovering a row lights the element up on the canvas, so a row and a dot can be
+        // matched by eye. Only rendered rows can fire this, so it costs nothing at scale.
+        element.addEventListener('pointerenter', () => this.uiManager.graph.highlightElement(row.element))
+        element.addEventListener('pointerleave', () => this.uiManager.graph.unHighlightElement(row.element))
+    }
+
+    private selectRange(from: number, to: number): void {
+        const elements = this.visible.slice(from, to + 1).map((row) => row.element)
+        this.uiManager.graph.selectElements(elements)
+    }
+
+    private toggleRow(row: Row): void {
+        const graph = this.uiManager.graph
+        const selected = graph.renderer?.getGraphInteraction()?.getSelectedNodeIDs() ?? []
+        if (this.tab === 'edges') {
+            // Edges have no additive setter in the interaction layer, so Ctrl-click on an
+            // edge row behaves like a plain click rather than pretending to toggle.
+            graph.selectElements([row.element])
+            return
+        }
+        if (selected.includes(row.id)) graph.removeFromSelection([row.element as Node])
+        else graph.addToSelection([row.element as Node])
+    }
+
+    /** Select every row currently listed — post-sort, post-narrowing. */
+    public selectAllListed(): void {
+        if (this.tab === 'edges') return
+        this.uiManager.graph.selectElements(this.visible.map((row) => row.element))
+    }
+
+    /**
+     * Reflect the graph's selection onto the rows, and bring the first selected row into
+     * view. Reads the selection wholesale rather than tracking deltas, so it cannot drift
+     * out of step with the canvas.
+     */
+    public syncSelection(scrollIntoView = true): void {
+        // The renderer is built after the UI, so an early render can land before there is
+        // an interaction layer to read. Nothing is selected yet in that case.
+        const interaction = this.uiManager.graph.renderer?.getGraphInteraction()
+        const selected = new Set(interaction?.getSelectedNodeIDs() ?? [])
+        let first: HTMLElement | null = null
+
+        for (const element of this.root.querySelectorAll<HTMLElement>('.pvt-table-row')) {
+            const isSelected = selected.has(element.dataset.id ?? '')
+            element.classList.toggle('pvt-table-row-selected', isSelected)
+            if (isSelected && !first) first = element
+        }
+
+        if (scrollIntoView && first) first.scrollIntoView({ block: 'nearest' })
     }
 
     private toggleSort(key: string): void {

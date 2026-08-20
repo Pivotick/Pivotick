@@ -52,6 +52,7 @@ export class Table extends UIComponent {
     private toggle?: HTMLButtonElement
     private summary?: HTMLSpanElement
     private pickerButton?: HTMLButtonElement
+    private selectAllButton?: HTMLButtonElement
     private picker?: HTMLDivElement
     private grid?: TableGrid
     /** Coalescing frame: one rebuild per frame however many events arrive. */
@@ -123,7 +124,16 @@ export class Table extends UIComponent {
         this.body.className = 'pvt-table-body'
         this.root.appendChild(this.body)
 
-        this.grid = new TableGrid(this.uiManager, 'nodes', this.options.sort)
+        this.selectAllButton = document.createElement('button')
+        this.selectAllButton.type = 'button'
+        this.selectAllButton.className = 'pvt-table-selectall'
+        this.selectAllButton.textContent = 'Select all'
+        this.selectAllButton.title = 'Select every row currently listed'
+        this.listen(this.selectAllButton, 'click', () => this.grid?.selectAllListed())
+        // Left of the column picker, so the header reads: state · actions · settings.
+        this.header.insertBefore(this.selectAllButton, this.pickerButton)
+
+        this.grid = new TableGrid(this.uiManager, 'nodes', this.options.sort, this.options.rowActivate)
         this.grid.setSummaryTarget(this.summary)
         this.body.appendChild(this.grid.getRoot())
 
@@ -156,6 +166,21 @@ export class Table extends UIComponent {
     }
 
     protected onGraphReady() {
+        // Graph → table. Wired here rather than in afterMount because the UI is built
+        // before the renderer exists (`Graph` constructs the UIManager first), so there is
+        // no interaction layer to subscribe to yet at that point.
+        //
+        // Reads the selection wholesale on any change (see syncSelection), so a
+        // rubber-band on the canvas shows up as marked rows and the first is scrolled to.
+        const interaction = this.uiManager.graph.renderer?.getGraphInteraction()
+        if (interaction) {
+            const syncSelection = () => this.grid?.syncSelection()
+            for (const event of ['selectNode', 'selectNodes', 'unselectNode', 'unselectNodes'] as const) {
+                interaction.on(event, syncSelection)
+                this.track(() => interaction.off(event, syncSelection))
+            }
+        }
+
         this.queueRebuild()
     }
 
@@ -232,6 +257,7 @@ export class Table extends UIComponent {
         this.toggle = undefined
         this.summary = undefined
         this.pickerButton = undefined
+        this.selectAllButton = undefined
         this.picker = undefined
         this.grid = undefined
     }

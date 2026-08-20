@@ -100,7 +100,7 @@ test.describe('table grid', () => {
     test('a manually excluded node stays listed, marked excluded', async ({ page }) => {
         await openDock(page)
         await harness(page, 'excludeNode', 'a')
-        await page.waitForTimeout(120)
+        await expect.poll(() => visibilityById(page).then((byId) => byId.a)).toBe('excluded')
 
         // Still all six rows — nothing is dropped from the table.
         expect((await rowIds(page)).sort()).toEqual(['a', 'b', 'c', 'd', 'e', 'hub'])
@@ -114,10 +114,10 @@ test.describe('table grid', () => {
         await openDock(page)
         // Only HUB matches, so the other five are hidden by the graph filter.
         await harness(page, 'setFilter', 'label', { value: 'HUB', matchMode: 'exact' })
-        await page.waitForTimeout(160)
+        await expect.poll(() => visibleNodeCount(page)).toBe(1)
+        await expect.poll(() => visibilityById(page).then((byId) => byId.a)).toBe('filtered')
 
         expect((await rowIds(page)).sort()).toEqual(['a', 'b', 'c', 'd', 'e', 'hub'])
-        expect(await visibleNodeCount(page)).toBe(1)
 
         const byId = await visibilityById(page)
         expect(byId.hub).toBe('visible')
@@ -153,7 +153,7 @@ test.describe('table grid', () => {
         expect(await rowIds(page)).toHaveLength(6)
 
         await page.locator('.pvt-table-filter').first().fill('HUB')
-        await page.waitForTimeout(60)
+        await expect(page.locator('.pvt-table-row')).toHaveCount(1)
 
         expect(await rowIds(page)).toEqual(['hub'])
         expect(await summary(page)).toBe('1 of 6 nodes')
@@ -200,9 +200,8 @@ test.describe('table grid', () => {
         expect(await rowIds(page)).toHaveLength(6)
 
         await harness(page, 'addNode', 'zz', 200, 200, 'ZZ')
-        await page.waitForTimeout(120)
+        await expect(page.locator('.pvt-table-row')).toHaveCount(7)
 
-        expect(await rowIds(page)).toHaveLength(7)
         expect(await rowIds(page)).toContain('zz')
     })
 })

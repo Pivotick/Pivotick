@@ -121,12 +121,33 @@
     white-space: nowrap;
 }
 
+// Selects every row currently listed — post-sort, post-narrowing — so the sidebar's
+// bulk actions can act on exactly what you filtered down to.
+.pvt-table-selectall {
+    // First of the right-hand group, so it carries the gap.
+    margin-left: auto;
+    padding: 2px 8px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--pvt-text-color-4);
+    font-size: 12px;
+    cursor: pointer;
+
+    &:hover {
+        border-color: var(--pvt-chrome-border);
+        color: var(--pvt-text-color-6);
+    }
+
+    .pvt-table-collapsed & {
+        display: none;
+    }
+}
+
 .pvt-table-columns-button {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    // Pushed to the far end of the header bar.
-    margin-left: auto;
     padding: 2px 8px;
     border: 1px solid transparent;
     border-radius: 4px;
@@ -260,10 +281,17 @@
 .pvt-table-row {
     display: grid;
     border-bottom: 1px solid var(--pvt-chrome-border);
-    cursor: default;
+    cursor: pointer;
 
     &:hover {
         background-color: var(--pvt-bg-color-4);
+    }
+
+    // Marked from the graph's own selection, so a rubber-band on the canvas and a
+    // click in the table light up the same rows.
+    &.pvt-table-row-selected {
+        background-color: color-mix(in srgb, var(--pvt-primary-color, #007acc) 14%, transparent);
+        box-shadow: inset 2px 0 0 var(--pvt-primary-color, #007acc);
     }
 }
 
