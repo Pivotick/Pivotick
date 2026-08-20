@@ -99,7 +99,8 @@ tests pass unchanged.
 
 ## Out of scope
 
-- B3 (`flipEdgeDirection` is broken three ways) — still open, still needs its own decision.
+- B3 (`flipEdgeDirection` is broken three ways) — closed 2026-08-20 by removing the option; see
+  `prd/tree-layout-direction.md`.
 - A `drawerRow()` for the `Flyout` base, so Spacing and Simulation can collapse — see above.
 - Making the *algorithm* root finders direction-agnostic, or an "ignore edge direction" switch of
   its own.

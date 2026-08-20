@@ -6,9 +6,9 @@
 Things the tree layout needs that were each too big or too semantic to fold into a spacing change.
 Sami's call (2026-08-20): "we'll definitely have to revisit the other big change afterward."
 
-**B1 and B2 are done** — B1 delivered 2026-08-20, see `prd/tree-layout-cycles.md`; B2 delivered
-2026-08-20, see `prd/tree-root-picker.md`. Their entries are kept below for the reasoning; B3 is
-still open.
+**All three are done.** B1 delivered 2026-08-20, see `prd/tree-layout-cycles.md`; B2 delivered
+2026-08-20, see `prd/tree-root-picker.md`; B3 closed 2026-08-20 by *deleting* the option rather than
+fixing it, see `prd/tree-layout-direction.md`. The entries are kept below for the reasoning.
 
 ---
 
@@ -51,7 +51,7 @@ using those icons, plus "use the selected node as root" (the selection is alread
 the selected node). Re-rooting is just `changeLayout('tree', { layout: { rootId } })`, so the
 plumbing exists.
 
-## B3 — `flipEdgeDirection` is broken three ways
+## B3 — `flipEdgeDirection` is broken three ways — **DONE (removed)**
 
 1. **Net no-op on load.** The constructor flips, then calls `update()`, which flips again.
 2. **Toggles on every re-layout.** `update()` runs on any graph change (and now on a spacing drag),
@@ -64,4 +64,11 @@ plumbing exists.
 **Decision needed before coding:** should flipping change the drawing, or only the layout? If only
 the layout (what the docs say), build a reversed *view* for `buildLevels` / `buildTree` / `hasCycle`
 instead of mutating edges. If it should change the drawing too, fix the registries and the docs.
+
+**Answered 2026-08-20: neither — the option is gone.** The question that reopened this was whether the
+AIL demo needed its edges flipped to give a decent tree. It does not: the flip was compensating for
+the spanning walk being directed, and a flip cannot be right for two datasets at once — reversing
+`ail-graph` takes it from 41 to 287 of 300 edges kept in the hierarchy, and reversing `ail-graph2`
+takes it from 299 to 3 of 299. `buildLevelsStatic` now gives up on direction by itself when no node
+can cover its component along the arrows. See `prd/tree-layout-direction.md`.
 Nothing in the UI or the test suite sets the option today, so there is no user to break either way.
