@@ -352,6 +352,11 @@ test.describe('physics-flyout', () => {
         }
         await expect(rootItem(page, 'Widest reach').locator('.pvt-rootmenu-item')).toHaveClass(/current/)
         await expectElement(rootMenu(page), 'physicsflyout-root-menu.png')
+
+        // Hover fills the row with the theme colour, so the text on it has to change
+        // with it — the live row's coloured title otherwise lands on its own colour.
+        await rootItem(page, 'Widest reach').hover()
+        await expectElement(rootMenu(page), 'physicsflyout-root-menu-hover.png')
     })
 
     // A finder reaches the real layout, not just the row's label.
