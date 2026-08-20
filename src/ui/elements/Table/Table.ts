@@ -230,7 +230,7 @@ export class Table extends UIComponent {
         this.tab = tab
         this.body.innerHTML = ''
 
-        const grid = this.grids.get(tab) ?? new TableGrid(this.uiManager, tab, this.options.sort, this.options.rowActivate)
+        const grid = this.grids.get(tab) ?? new TableGrid(this.uiManager, tab, this.options.sort, this.options.rowActivate, this.options.virtualizeAbove)
         this.grids.set(tab, grid)
         this.grid = grid
         grid.setSummaryTarget(this.summary)
@@ -357,6 +357,7 @@ export class Table extends UIComponent {
         this.picker = undefined
         this.tabs = undefined
         this.grid = undefined
+        for (const grid of this.grids.values()) grid.dispose()
         this.grids.clear()
     }
 

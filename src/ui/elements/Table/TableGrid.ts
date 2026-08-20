@@ -36,6 +36,14 @@ interface SortState {
  * reporting the truth alongside whatever you have narrowed to.
  */
 export class TableGrid {
+    /**
+     * Every row is exactly this tall, in px. Windowed rows are positioned arithmetically
+     * from it, so it has to agree with `--pvt-table-row-height` in table.scss.
+     */
+    private static readonly ROW_HEIGHT = 24
+    /** Rows drawn beyond each edge of the viewport, so a fast scroll shows no gap. */
+    private static readonly OVERSCAN = 6
+
     private readonly uiManager: UIManager
     private readonly tab: TableTab
     private readonly root: HTMLDivElement
@@ -53,18 +61,30 @@ export class TableGrid {
     private lastClickedIndex: number | null = null
     /** What a row click does, from `UI.table.rowActivate`. */
     private readonly rowActivate: 'select' | 'selectAndCenter' | 'none'
+    /** Row count above which rows are windowed rather than all rendered. */
+    private readonly virtualizeAbove: number
+    private scrollHandler?: () => void
+    private windowStart = -1
+    private windowEnd = -1
 
     private head?: HTMLDivElement
     private bodyRows?: HTMLDivElement
     private summary?: HTMLSpanElement
 
-    constructor(uiManager: UIManager, tab: TableTab, initialSort?: SortState, rowActivate: 'select' | 'selectAndCenter' | 'none' = 'select') {
+    constructor(
+        uiManager: UIManager,
+        tab: TableTab,
+        initialSort?: SortState,
+        rowActivate: 'select' | 'selectAndCenter' | 'none' = 'select',
+        virtualizeAbove = 200,
+    ) {
         this.uiManager = uiManager
         this.tab = tab
         this.root = document.createElement('div')
         this.root.className = 'pvt-table-grid'
         this.sort = initialSort ?? null
         this.rowActivate = rowActivate
+        this.virtualizeAbove = virtualizeAbove
     }
 
     public getRoot(): HTMLElement {
@@ -158,6 +178,11 @@ export class TableGrid {
 
     public render(): void {
         this.visible = this.applySort(this.applyRowFilters())
+        // A rebuild replaces the rows wholesale; keep the reader where they were.
+        const scroller = this.scroller()
+        const scrollTop = scroller?.scrollTop ?? 0
+        this.windowStart = -1
+        this.windowEnd = -1
 
         this.root.innerHTML = ''
         this.root.appendChild(this.buildHead())
@@ -165,6 +190,7 @@ export class TableGrid {
         // Sorting, narrowing and hiding a column all land here, and each of them can
         // change the count — so the summary is refreshed from render, not from rebuild.
         this.updateSummary()
+        if (scroller && scrollTop > 0) scroller.scrollTop = scrollTop
         // Rows are rebuilt from scratch, so the selection marks have to be reapplied.
         // No scrolling: the user asked for a sort or a filter, not to be moved.
         this.syncSelection(false)
@@ -244,16 +270,89 @@ export class TableGrid {
         this.bodyRows = container
 
         if (this.visible.length === 0) {
+            this.detachScrollListener()
             container.appendChild(this.buildEmptyState())
             return container
         }
 
+        // Under the threshold, render the lot: plain DOM keeps the common case simple to
+        // debug and screenshot without any scroll choreography.
+        if (this.visible.length <= this.virtualizeAbove) {
+            this.detachScrollListener()
+            const template = this.gridTemplate()
+            const columns = this.getVisibleColumns()
+            for (const row of this.visible) {
+                container.appendChild(this.buildRow(row, columns, template))
+            }
+            return container
+        }
+
+        // Over it, window the rows. The container carries the full scroll height so the
+        // scrollbar measures the data, not the handful of rows actually in the DOM.
+        container.classList.add('pvt-table-rows-windowed')
+        container.style.height = `${this.visible.length * TableGrid.ROW_HEIGHT}px`
+        this.attachScrollListener()
+        this.renderWindow(container)
+        return container
+    }
+
+    /* ---------- windowing ---------- */
+
+    /** The scroll container the dock puts this grid inside. */
+    private scroller(): HTMLElement | null {
+        return this.root.parentElement
+    }
+
+    private attachScrollListener(): void {
+        const scroller = this.scroller()
+        if (!scroller || this.scrollHandler) return
+        this.scrollHandler = () => this.renderWindow()
+        scroller.addEventListener('scroll', this.scrollHandler, { passive: true })
+    }
+
+    private detachScrollListener(): void {
+        const scroller = this.scroller()
+        if (scroller && this.scrollHandler) scroller.removeEventListener('scroll', this.scrollHandler)
+        this.scrollHandler = undefined
+    }
+
+    /**
+     * Draw the slice of rows the viewport can see, plus an overscan margin either side so
+     * a fast scroll doesn't show empty space before the next frame lands.
+     *
+     * Rows are positioned arithmetically from {@link ROW_HEIGHT}, which is why the CSS
+     * pins every row to exactly that height.
+     */
+    private renderWindow(container = this.bodyRows): void {
+        if (!container) return
+        const scroller = this.scroller()
+        const viewportHeight = scroller?.clientHeight ?? 0
+        const scrollTop = scroller?.scrollTop ?? 0
+
+        const first = Math.max(0, Math.floor(scrollTop / TableGrid.ROW_HEIGHT) - TableGrid.OVERSCAN)
+        const count = Math.ceil(viewportHeight / TableGrid.ROW_HEIGHT) + TableGrid.OVERSCAN * 2
+        const last = Math.min(this.visible.length, first + count)
+
+        // Redrawing the same window on every scroll event would be wasted work — most
+        // scroll events don't cross a row boundary.
+        if (this.windowStart === first && this.windowEnd === last && container.childElementCount > 0) return
+        this.windowStart = first
+        this.windowEnd = last
+
+        container.innerHTML = ''
         const template = this.gridTemplate()
         const columns = this.getVisibleColumns()
-        for (const row of this.visible) {
-            container.appendChild(this.buildRow(row, columns, template))
+        for (let index = first; index < last; index++) {
+            const row = this.buildRow(this.visible[index], columns, template)
+            row.style.top = `${index * TableGrid.ROW_HEIGHT}px`
+            container.appendChild(row)
         }
-        return container
+        this.syncSelection(false)
+    }
+
+    /** Release the scroll listener. Called by the dock when it tears the grid down. */
+    public dispose(): void {
+        this.detachScrollListener()
     }
 
     private buildRow(row: Row, columns: TableColumn<Element>[], template: string): HTMLElement {

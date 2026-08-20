@@ -603,6 +603,12 @@ export interface HarnessApi {
      */
     loadManyNodesWithMinimap(count: number, options?: MinimapOptions): Promise<void>
     /**
+     * Boot a graph of `count` pinned, edge-less nodes with arbitrary overrides — for
+     * crossing the data dock's row-windowing threshold. Each node carries a numeric
+     * `seq` so a sort has unique keys and the order is deterministic.
+     */
+    loadManyNodes(count: number, overrides?: PlainObject): Promise<void>
+    /**
      * Ids of the nodes currently visible. A filtered-out node is *removed* from the
      * render, so this is the exact answer to "what did that filter leave on screen".
      */
@@ -1356,6 +1362,28 @@ class Harness implements HarnessApi {
             rect.left + rect.width / 2,
             rect.top + rect.height / 2,
         )
+    }
+
+    async loadManyNodes(count: number, overrides: PlainObject = {}): Promise<void> {
+        this.destroy()
+        const nodes: Node[] = []
+        for (let index = 0; index < count; index++) {
+            const node = new Node(`bulk-${index}`, { label: `Row ${index}`, seq: index }, {}, `bulk-${index}`)
+            node.x = (index % 40) * 24
+            node.y = Math.floor(index / 40) * 24
+            node.fx = node.x
+            node.fy = node.y
+            nodes.push(node)
+        }
+
+        const graph = new Pivotick(
+            this.container,
+            { nodes, edges: [] } as never,
+            mergeOptions(BASE_OPTIONS, overrides) as never,
+        )
+        this.graph = graph
+        await this.whenReady(graph)
+        if (document.fonts?.ready) await document.fonts.ready
     }
 
     async loadManyNodesWithMinimap(count: number, options: MinimapOptions = {}): Promise<void> {

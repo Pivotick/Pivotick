@@ -266,6 +266,11 @@
     // grid from collapsing narrower than its columns.
     min-width: min-content;
     font-size: 12px;
+
+    // Every row is exactly this tall. Windowing above the row threshold positions
+    // rows arithmetically from it, so this is load-bearing rather than cosmetic —
+    // see ROW_HEIGHT in TableGrid.ts, which must agree with it.
+    --pvt-table-row-height: 24px;
 }
 
 .pvt-table-head {
@@ -334,8 +339,23 @@
     }
 }
 
+// Holds the full scroll height when the rows are windowed, so the scrollbar is
+// the real length of the data rather than of what happens to be rendered.
+.pvt-table-rows-windowed {
+    position: relative;
+
+    .pvt-table-row {
+        position: absolute;
+        left: 0;
+        right: 0;
+    }
+}
+
 .pvt-table-row {
     display: grid;
+    align-items: center;
+    height: var(--pvt-table-row-height);
+    box-sizing: border-box;
     border-bottom: 1px solid var(--pvt-chrome-border);
     cursor: pointer;
 
