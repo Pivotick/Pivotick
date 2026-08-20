@@ -32,6 +32,23 @@ export class PivotickDropdown {
     private menu: HTMLDivElement
     private opened = false
 
+    // Kept as fields so {@link destroy} can take them off again: they live on
+    // `document` / `window`, so an anonymous handler would outlive the dropdown and
+    // go on measuring a detached element every time the page scrolls.
+    private readonly onTargetClick = (e: Event) => {
+        e.stopPropagation()
+        this.toggle()
+    }
+
+    private readonly onOutsidePointerDown = (e: Event) => {
+        const target = e.target as Node
+        if (!this.root.contains(target) && !this.target.contains(target)) this.close()
+    }
+
+    private readonly onViewportChange = () => {
+        if (this.opened) this.position()
+    }
+
     constructor(
         target: HTMLElement,
         options: DropdownOption[],
@@ -131,38 +148,10 @@ export class PivotickDropdown {
     }
 
     private attach() {
-        this.target.addEventListener('click', (e) => {
-            e.stopPropagation()
-
-            if (this.opened) {
-                this.close()
-            } else {
-                this.open()
-            }
-        })
-
-        document.addEventListener('pointerdown', (e) => {
-            const target = e.target as Node
-
-            if (
-                !this.root.contains(target) &&
-                !this.target.contains(target)
-            ) {
-                this.close()
-            }
-        })
-
-        window.addEventListener('resize', () => {
-            if (this.opened) {
-                this.position()
-            }
-        })
-
-        window.addEventListener('scroll', () => {
-            if (this.opened) {
-                this.position()
-            }
-        })
+        this.target.addEventListener('click', this.onTargetClick)
+        document.addEventListener('pointerdown', this.onOutsidePointerDown)
+        window.addEventListener('resize', this.onViewportChange)
+        window.addEventListener('scroll', this.onViewportChange)
     }
 
     private position() {
@@ -258,6 +247,10 @@ export class PivotickDropdown {
     }
 
     public destroy() {
+        this.target.removeEventListener('click', this.onTargetClick)
+        document.removeEventListener('pointerdown', this.onOutsidePointerDown)
+        window.removeEventListener('resize', this.onViewportChange)
+        window.removeEventListener('scroll', this.onViewportChange)
         this.root.remove()
     }
 }
