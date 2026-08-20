@@ -1,7 +1,6 @@
 import { Flyout } from '../Flyout/Flyout'
 import type { FlyoutMode } from '../../ModeStore'
 import { PHYSICS_KNOB_RANGES, TREE_SPACING_RANGE, type PhysicsKnobs, type PhysicsPresetName, type TreeSpacing } from '../../../Simulation'
-import hasCycle from '../../../plugins/analytics/cycle'
 import {
     atom, play, pause,
     graphControlLayoutOrganic, graphControlLayoutTreeV, graphControlLayoutTreeH, graphControlLayoutTreeR,
@@ -64,6 +63,16 @@ const LAYOUTS: Array<{ id: string; label: string; icon: string; tree: boolean; d
     { id: 'tree-r', label: 'Radial', icon: graphControlLayoutTreeR, tree: true, desc: 'Tree — hierarchical layout radiating out from a central root.' },
 ]
 
+/**
+ * The one physics knob a tree layout still answers to.
+ *
+ * `adjustOtherSimulationForces` zeroes link, charge and gravity under a tree — but not
+ * `forceCollide`, which goes on keeping nodes off each other along whichever axis the
+ * layout left free. So this slider stays live where the rest grey out. Not under the
+ * radial layout, which pins both axes and leaves collision nothing to push.
+ */
+const TREE_LIVE_SLIDER: SliderKey = 'collisionRadius'
+
 type SpacingKey = keyof TreeSpacing
 
 /**
@@ -93,9 +102,10 @@ const TREE_ORIENTATIONS: Record<string, { horizontal?: boolean, radial?: boolean
  * The B3 Physics flyout: an overlay toggled by the mode rail's Physics button
  * (via {@link UIManager.modeStore}). Holds the layout control and the simulation
  * card — presets + live sliders driving the {@link Simulation} setter API, plus a
- * run/pause toggle. Under a non-`force` layout the presets + sliders are disabled
- * and hidden, and the tree-spacing card takes their place: a tree places nodes
- * itself, so the distances are the layout's to give rather than the forces'.
+ * run/pause toggle. Under a non-`force` layout the presets and all but one of the
+ * sliders are disabled and hidden, and the tree-spacing card takes their place: a
+ * tree places nodes itself, so the distances are the layout's to give rather than
+ * the forces'. The exception is {@link TREE_LIVE_SLIDER}.
  *
  * While `Auto` is active the sliders stay enabled and *follow* what the tuner
  * decides ({@link syncAutoKnobs}) — so auto's choices are visible and can be taken
@@ -155,15 +165,6 @@ export class PhysicsFlyout extends Flyout {
 
     protected onGraphReady() {
         super.onGraphReady()
-        // Disable tree layouts on cyclic graphs (they can't be drawn as a tree).
-        if (hasCycle(this.uiManager.graph.getNodes(), this.uiManager.graph.getEdges())) {
-            for (const choice of LAYOUTS.filter(l => l.tree)) {
-                const button = this.layoutButtons.get(choice.id)
-                if (!button) continue
-                button.disabled = true
-                button.title = 'The graph contains a cycle, so it cannot be displayed as a tree.'
-            }
-        }
         // Seed physics from the live simulation (only available by graphReady —
         // the UIManager, and thus this component, is built before graph.simulation).
         this.refreshSliders(this.sim.getPhysicsKnobs())
@@ -370,8 +371,12 @@ export class PhysicsFlyout extends Flyout {
      */
     private updateLayoutControls() {
         const isTree = this.activeLayout !== 'force'
+        const collisionApplies = isTree && this.activeLayout !== 'tree-r'
         this.simulationCard?.classList.toggle('pvt-physicsflyout-disabled', isTree)
-        for (const input of this.sliders.values()) input.disabled = isTree
+        this.simulationCard?.classList.toggle('pvt-physicsflyout-collision-only', collisionApplies)
+        for (const [key, input] of this.sliders) {
+            input.disabled = isTree && !(collisionApplies && key === TREE_LIVE_SLIDER)
+        }
         for (const button of this.presetButtons.values()) button.disabled = isTree
 
         if (this.spacingCard) this.spacingCard.hidden = !isTree
@@ -402,7 +407,7 @@ export class PhysicsFlyout extends Flyout {
                     min="${TREE_SPACING_RANGE[0]}" max="${TREE_SPACING_RANGE[1]}" step="0.1" value="1" />
             </div>`).join('')
         const sliders = SLIDERS.map(s => `
-            <div class="pvt-physicsflyout-slider" title="${s.desc}">
+            <div class="pvt-physicsflyout-slider" data-row="${s.key}" title="${s.desc}">
                 <div class="pvt-physicsflyout-slider-head">
                     <span class="pvt-physicsflyout-slider-label"><span class="pvt-flyout-icon">${s.icon}</span>${s.label}</span>
                     <span class="pvt-physicsflyout-slider-value" data-value="${s.key}">0</span>

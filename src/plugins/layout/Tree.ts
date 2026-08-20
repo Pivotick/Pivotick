@@ -9,13 +9,18 @@ import merge from 'lodash.merge'
 import type { Graph } from '../../Graph'
 import type { Node } from '../../Node'
 import type { Edge } from '../../Edge'
-import hasCycle from '../analytics/cycle'
 import { findFirstZeroInDegreeNode, findMaxReachabilityRoot, findMinHeightDAGRoot, findMinMaxDistanceRoot } from '../analytics/DAGAlgorithms'
 import type { AnyTreeLayoutOptions, TreeLayoutOptions } from '../../interfaces/LayoutOptions'
 import { neededLevelGap, neededSiblingGap, tuneTreeSpacing, type AutoTreeContext, type TreeGap } from '../../AutoTreeSpacing'
 import type { SimulationForces } from '../../interfaces/SimulationOptions'
 
 export type TreeLayoutAlgorithm = 'FirstZeroInDegree' | 'MaxReachability' | 'MinMaxDistance' | 'MinHeight'
+
+/**
+ * Id of the synthetic root a *forest* is hung under. Not a graph node: it exists only so
+ * d3 lays the components out side by side, and is filtered out of every result.
+ */
+export const FOREST_ROOT_ID = '__pivotick_forest_root__'
 
 const DEFAULT_TREE_LAYOUT_OPTIONS: TreeLayoutOptions = {
     type: 'tree',
@@ -89,12 +94,6 @@ export class TreeLayout {
         this.positionedNodesByID = new Map()
         this.levels = new Map()
 
-        const nodes = this.graph.getNodes()
-        const edges = this.options.flipEdgeDirection ? this.flipEdgeDirection(this.graph.getEdges()) : this.graph.getEdges()
-        if (hasCycle(nodes, edges)) {
-            this.graph.notifier.warning('Tree layout unavailable', 'The graph contains a cycle, so it cannot be displayed as a tree.')
-            return
-        }
         this.setSizes()
         this.update()
         this.registerForces()
@@ -150,7 +149,10 @@ export class TreeLayout {
         for (const [id, positioned] of this.positionedNodesByID) {
             const node = this.graph.getMutableNode(id)
             if (!node) continue
-            const radius = node.expanded ? node.getCircleRadiusCollapsed() : node.getCircleRadius()
+            const measured = node.expanded ? node.getCircleRadiusCollapsed() : node.getCircleRadius()
+            // A node that has not measured itself yet reports no usable radius; it asks for
+            // no clearance rather than poisoning the pair's arithmetic.
+            const radius = Number.isFinite(measured) ? measured : 0
             const bucket = byDepth.get(positioned.depth) ?? []
             bucket.push({ node: positioned, radius })
             byDepth.set(positioned.depth, bucket)
@@ -313,11 +315,7 @@ export class TreeLayout {
         const height = canvasBCR.height
         const center = [width / 2, height / 2]
 
-        if (hasCycle(nodes, edges)) {
-            return
-        }
-
-        const { levels, maxDepth } = cls.buildLevelsStatic(nodes, edges, undefined, options.rootIdAlgorithmFinder)
+        const { levels, maxDepth } = cls.buildLevelsStatic(nodes, edges, options.rootId, options.rootIdAlgorithmFinder)
         const { nodeById: positionedNodesByID } = cls.buildTreeStatic(nodes, edges, options, canvasBCR)
 
         if (options.radial) {
@@ -415,7 +413,11 @@ export class TreeLayout {
 
     /** The spacing multipliers in force, defaulted for a partially-specified options object. */
     protected static spacingOf(options: Partial<TreeLayoutOptions>): { level: number, sibling: number } {
-        return { level: options.levelSpacing ?? 1, sibling: options.siblingSpacing ?? 1 }
+        // Anything not a usable number reads as `1`: these scale the box d3 normalises the
+        // tree onto, so a bad multiplier would not misplace one node — it would make every
+        // coordinate NaN.
+        const usable = (value: number | undefined) => (Number.isFinite(value) ? value as number : 1)
+        return { level: usable(options.levelSpacing), sibling: usable(options.siblingSpacing) }
     }
 
     /** The spacing multipliers currently laid out. */
@@ -556,15 +558,6 @@ export class TreeLayout {
             }
         }
 
-        if (hasCycle(nodes, edges)) {
-            console.warn('Cycle detected in graph. Tree layout will not be computed.')
-            return {
-                root: null,
-                nodes: [],
-                nodeById: new Map<string, HierarchyNode<TreeNode>>(),
-            }
-        }
-
         const nodeMap = new Map<string, TreeNode>()
         for (const node of nodes) {
             const treeNode = node as TreeNode
@@ -572,21 +565,24 @@ export class TreeLayout {
             nodeMap.set(node.id, treeNode)
         }
 
-        // Build parent-child relationships
-        for (const edge of edges) {
-            const sourceNode = nodeMap.get(edge.source.id)
-            const targetNode = nodeMap.get(edge.target.id)
-            if (sourceNode && targetNode) {
-                sourceNode.children!.push(targetNode)
-                targetNode.parent = sourceNode
-            }
+        // The hierarchy is built from the *spanning tree*, not from the raw edges. Reading
+        // parent/child straight off the edges is what made a cycle fatal — `d3.hierarchy`
+        // walks children and a cycle never ends — and it also gave a node with two parents
+        // two places in the tree. One BFS parent per node settles both.
+        const { parentOf, roots } = TreeLayout.buildLevelsStatic(
+            nodes, edges, options.rootId, options.rootIdAlgorithmFinder
+        )
+        for (const [childId, parentId] of parentOf) {
+            const child = nodeMap.get(childId)
+            const parent = nodeMap.get(parentId)
+            if (!child || !parent) continue
+            parent.children.push(child)
+            child.parent = parent
         }
 
-        // Find root node
-        const rootId = options.rootId || TreeLayout.findRootId(nodes, edges, options.rootIdAlgorithmFinder)
-        const root = nodeMap.get(rootId)
+        const root = TreeLayout.hierarchyRootFor(roots, nodeMap)
         if (!root) {
-            throw new Error(`Root node with id "${rootId}" not found.`)
+            throw new Error(`Root node with id "${roots[0]}" not found.`)
         }
 
         // Create a d3 hierarchy and compute tree layout
@@ -598,14 +594,29 @@ export class TreeLayout {
 
         const nodeById = new Map<string, HierarchyNode<TreeNode>>()
         treeRoot.descendants().forEach((node) => {
+            if (node.data.id === FOREST_ROOT_ID) return
             nodeById.set(node.data.id, node)
         })
 
         return {
             root: treeRoot,
-            nodes: treeRoot.descendants(),
+            nodes: treeRoot.descendants().filter(node => node.data.id !== FOREST_ROOT_ID),
             nodeById: nodeById,
         }
+    }
+
+    /**
+     * The node to hang the hierarchy off. A graph with one component roots the tree at its
+     * own root; a graph with several is a *forest*, and gets a synthetic root holding one
+     * component per child — which is what lays them out side by side instead of on top of
+     * each other. It is not a graph node and is dropped from everything returned, so it is
+     * never drawn and never positioned.
+     */
+    private static hierarchyRootFor(roots: string[], nodeMap: Map<string, TreeNode>): TreeNode | undefined {
+        if (roots.length === 1) return nodeMap.get(roots[0])
+        const children = roots.map(id => nodeMap.get(id)).filter((node): node is TreeNode => Boolean(node))
+        if (!children.length) return undefined
+        return { id: FOREST_ROOT_ID, children } as unknown as TreeNode
     }
 
     protected buildLevels(
@@ -641,20 +652,28 @@ export class TreeLayout {
         levels: Map<string, number>
         maxDepth: number
         nodeCountPerLevel: Record<string, number>
+        /** Spanning-tree parent of each node — the edge the BFS first reached it by. */
+        parentOf: Map<string, string>
+        /** The primary root, plus one per component the primary root cannot reach. */
+        roots: string[]
     } {
         if (!nodes.length) {
             return {
                 levels: new Map(),
                 maxDepth: 0,
                 nodeCountPerLevel: {},
+                parentOf: new Map(),
+                roots: [],
             }
         }
         const rootId = passedRootId || TreeLayout.findRootId(nodes, edges, rootIdAlgorithmFinder)
 
         // Keyed by node id, so both are Maps: on a plain object a node called `constructor` or
         // `toString` reads as already-visited through the prototype and drops out of the layout.
-        const levels = new Map<string, number>([[rootId, 0]])
+        const levels = new Map<string, number>()
+        const parentOf = new Map<string, string>()
         const adj = new Map<string, string[]>()
+        const targeted = new Set<string>()
 
         for (const node of nodes) {
             adj.set(node.id, [])
@@ -663,23 +682,53 @@ export class TreeLayout {
         for (const { source, target } of edges) {
             // An edge whose source isn't in `nodes` is skipped rather than throwing.
             adj.get(source.id)?.push(target.id)
+            targeted.add(target.id)
         }
 
-        // Perform BFS with cycle-tolerance
-        const queue: string[] = [rootId]
-        let index = 0
-
-        while (index < queue.length) {
-            const curr = queue[index++]
-            const currLevel = levels.get(curr) ?? 0
-
-            for (const neighbor of adj.get(curr) ?? []) {
-                // Skip if already visited (prevents infinite cycles)
-                if (levels.has(neighbor)) continue
-
-                levels.set(neighbor, currLevel + 1)
-                queue.push(neighbor)
+        // BFS, and the first edge to reach a node is its parent in the spanning tree. This
+        // is what makes the layout total: a back-edge finds its target already visited and
+        // is simply not part of the tree, so a cycle costs the graph nothing but that edge's
+        // place in the hierarchy — and a node with two parents is claimed by exactly one.
+        const walkFrom = (start: string) => {
+            levels.set(start, 0)
+            const queue: string[] = [start]
+            let index = 0
+            while (index < queue.length) {
+                const curr = queue[index++]
+                const currLevel = levels.get(curr) ?? 0
+                for (const neighbor of adj.get(curr) ?? []) {
+                    if (levels.has(neighbor)) continue
+                    levels.set(neighbor, currLevel + 1)
+                    parentOf.set(neighbor, curr)
+                    queue.push(neighbor)
+                }
             }
+        }
+
+        const roots = [rootId]
+        walkFrom(rootId)
+
+        // Whatever the primary root could not reach is its own component, and gets its own
+        // root. Without this those nodes have no slot in the tree, and the tree forces —
+        // which fall back to 0 for a node they have no position for — quietly pile them all
+        // onto the origin.
+        if (levels.size < nodes.length) {
+            for (const node of nodes) {
+                if (levels.has(node.id)) continue
+                // Prefer a source: a component that *is* a hierarchy should be drawn as one.
+                const componentRoot = nodes.find(candidate => !levels.has(candidate.id) && !targeted.has(candidate.id))
+                    ?? node
+                roots.push(componentRoot.id)
+                walkFrom(componentRoot.id)
+            }
+        }
+
+        // A forest is hung under one synthetic root (see `buildTreeStatic`), which puts every
+        // real node one level deeper. Shifted here so `levels` keeps meaning "depth in the
+        // laid-out hierarchy" — the radial force divides `radialGap` by `maxDepth` and would
+        // otherwise disagree with the positions by exactly one ring.
+        if (roots.length > 1) {
+            for (const [id, level] of levels) levels.set(id, level + 1)
         }
 
         // Accumulated in one pass: `Math.max(...levels.values())` throws on a large graph, since
@@ -695,6 +744,8 @@ export class TreeLayout {
             levels: levels,
             maxDepth: maxDepth,
             nodeCountPerLevel: nodeCountPerLevel,
+            parentOf: parentOf,
+            roots: roots,
         }
     }
 

@@ -21,7 +21,7 @@ import type { Page } from '@playwright/test'
  */
 type Positions = Record<string, { x: number; y: number }>
 
-async function positionsAfterLayout(page: Page, name: 'tree' | 'egoNet', layout: Record<string, unknown>): Promise<Positions> {
+async function positionsAfterLayout(page: Page, name: 'tree' | 'egoNet' | 'basic' | 'pair', layout: Record<string, unknown>): Promise<Positions> {
     await loadFixture(page, name, { layout })
     await harness(page, 'applyLayout')
     return (await harness(page, 'nodePositions')) as Positions
@@ -159,6 +159,36 @@ test.describe('layouts', () => {
         expect(radius(spaced.d) / radius(fitted.d)).toBeCloseTo(2, 1)
     })
 
+    // ── Cyclic and disconnected graphs ───────────────────────────────────────
+    // The hierarchy is built from a BFS spanning tree, so neither a cycle nor a second
+    // component costs a graph its tree layout.
+
+    test('a cyclic graph is laid out as a tree, its back-edge crossing levels', async ({ page }) => {
+        // `basic` is a pentagon (a→b→c→d→e→a) with a hub pointing into it — the shape
+        // that used to refuse the layout outright.
+        const p = await positionsAfterLayout(page, 'basic', { type: 'tree' })
+        expect(Object.keys(p)).toHaveLength(6)
+
+        // The hub is the only node nothing points at, so it roots the tree, and the BFS
+        // reaches a and c from it directly.
+        expect(p.hub.y).toBeLessThan(p.a.y)
+        expect(Math.abs(p.a.y - p.c.y)).toBeLessThan(1)
+        // Then one level per step around the ring — e→a is the back-edge, and it is left
+        // out of the hierarchy rather than closing a loop d3 would walk forever.
+        expect(p.a.y).toBeLessThan(p.b.y)
+        expect(p.c.y).toBeLessThan(p.d.y)
+        expect(p.d.y).toBeLessThan(p.e.y)
+    })
+
+    test('a forest is laid out side by side, not stacked on the origin', async ({ page }) => {
+        // Two nodes, no edges: two components, so two roots. They used to have no slot in
+        // the hierarchy at all — only the first was positioned, and the tree forces (which
+        // fall back to 0 for a node they have no position for) dragged the rest onto (0, 0).
+        const p = await positionsAfterLayout(page, 'pair', { type: 'tree' })
+        expect(Math.abs(p.a.y - p.b.y)).toBeLessThan(1)
+        expect(Math.abs(p.a.x - p.b.x)).toBeGreaterThan(1)
+    })
+
     // ── Auto spacing ─────────────────────────────────────────────────────────
     // A tree is sized from the canvas and never looks at how big its nodes are, so
     // `spacing: 'auto'` derives both multipliers from what the nodes actually need.
@@ -199,6 +229,23 @@ test.describe('layouts', () => {
         const spacing = await spacingOf(page)
         expect(spacing.levelSpacing).toBeGreaterThan(2)
         expect(spacing.siblingSpacing).toBe(1)
+    })
+
+    test('a node with no usable radius does not blank the layout', async ({ page }) => {
+        await loadFixture(page, 'tree', { layout: { type: 'tree' } })
+        // A custom node has no radius until it has measured itself. That used to reach the
+        // tuner as NaN, and from there the multiplier and every coordinate d3 derives from
+        // it — a blank canvas rather than a slightly wrong one.
+        const finite = await page.evaluate(() => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const g = (window.__pivotick as any).graph
+            g.getMutableNodes()[0].setCircleRadius(undefined)
+            g.simulation.enableAutoTreeSpacing()
+            return g.getNodes().every((n: { x: number; y: number }) =>
+                Number.isFinite(n.x) && Number.isFinite(n.y))
+        })
+        expect(finite).toBe(true)
+        expect(await spacingOf(page)).toEqual({ levelSpacing: 1, siblingSpacing: 1 })
     })
 
     test('a hand-set multiplier opts out of auto entirely', async ({ page }) => {

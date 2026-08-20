@@ -28,6 +28,22 @@ When `type: 'tree'` is selected, the following additional options are available:
 | `flipEdgeDirection`     | `boolean` | `false`           | Flip the direction of edges in the layout.                                                                                                  |
 
 
+#### Cycles and disconnected graphs
+
+The hierarchy is built from a breadth-first **spanning tree** rooted at `rootId`, not from the raw
+edges, so neither of these stops a tree layout:
+
+- **Cycles.** The first edge to reach a node makes it that node's parent; an edge that arrives at an
+  already-placed node is simply not part of the hierarchy and is drawn crossing levels like any
+  other edge. A node with two parents is likewise claimed by one of them.
+- **Several components.** Each component the root cannot reach gets its own root — preferring a node
+  with no incoming edges, so a component that *is* a hierarchy is drawn as one — and the components
+  are laid out side by side.
+
+Note that `rootIdAlgorithmFinder: 'MinMaxDistance'` and `'MinHeight'` are topological-sort based, so
+on a graph with a cycle they warn and fall back to the first node. The default `'MaxReachability'`
+has no such limitation.
+
 #### Tree Root Finder
 In a tree-based layout, one node must be designated as the root. You can specify the root node using the `rootId` option.
 

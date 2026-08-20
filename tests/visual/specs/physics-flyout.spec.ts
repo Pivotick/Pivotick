@@ -197,8 +197,10 @@ test.describe('physics-flyout', () => {
 
         await expect(panel(page).locator('.pvt-physicsflyout-card')).toHaveClass(/pvt-physicsflyout-disabled/)
         await expect(panel(page).locator('.pvt-physicsflyout-range[data-slider="repulsion"]')).toBeDisabled()
-        await expect(panel(page).locator('.pvt-physicsflyout-card .pvt-physicsflyout-sliders')).toBeHidden()
-        // The run/pause toggle still applies to a tree's relaxation, so it stays.
+        await expect(panel(page).locator('.pvt-physicsflyout-slider[data-row="repulsion"]')).toBeHidden()
+        await expect(panel(page).locator('.pvt-physicsflyout-presets')).toBeHidden()
+        // The run/pause toggle still applies to a tree's relaxation, so it stays — as does
+        // the collision knob, which a tree does not zero (see its own test below).
         await expect(panel(page).locator('.pvt-physicsflyout-run')).toBeVisible()
     })
 
@@ -280,14 +282,42 @@ test.describe('physics-flyout', () => {
         await expect(spacingSlider(page, 'levelSpacing')).toHaveValue('1')
     })
 
-    // Tree layouts are unavailable on a cyclic graph — their tiles refuse the click.
-    test('tree layouts are disabled on a cyclic graph', async ({ page }) => {
+    // A cycle used to disable all three tree tiles; the layout is built from a spanning
+    // tree now, so they are offered like any other graph.
+    test('tree layouts are offered on a cyclic graph', async ({ page }) => {
         await loadFixture(page, 'basic', B3) // basic has a pentagon cycle
         await openFlyout(page)
 
         for (const id of ['tree-v', 'tree-h', 'tree-r']) {
-            await expect(layoutTile(page, id)).toBeDisabled()
+            await expect(layoutTile(page, id)).toBeEnabled()
         }
-        await expect(layoutTile(page, 'force')).toBeEnabled()
+
+        await layoutTile(page, 'tree-v').click()
+        expect(await simFlag(page, 'getLayoutType')).toBe('tree')
+        await expect(layoutTile(page, 'tree-v')).toHaveClass(/active/)
+    })
+
+    // Collision is the one force a tree layout does not zero, so its knob stays live —
+    // except under the radial layout, which pins both axes and leaves it nothing to push.
+    test('collision radius stays live under a tree, except a radial one', async ({ page }) => {
+        await loadFixture(page, 'tree', B3)
+        await openFlyout(page)
+
+        await layoutTile(page, 'tree-v').click()
+        const collision = panel(page).locator('.pvt-physicsflyout-range[data-slider="collisionRadius"]')
+        await expect(collision).toBeEnabled()
+        await expect(collision).toBeVisible()
+        // …while the knobs a tree really does ignore are gone.
+        await expect(panel(page).locator('.pvt-physicsflyout-range[data-slider="repulsion"]')).toBeHidden()
+
+        // And it still drives the simulation from there.
+        await drag(collision, '40')
+        expect((await knobs(page)).collisionRadius).toBe(40)
+
+        await layoutTile(page, 'tree-r').click()
+        await expect(collision).toBeDisabled()
+
+        await layoutTile(page, 'force').click()
+        await expect(panel(page).locator('.pvt-physicsflyout-range[data-slider="repulsion"]')).toBeVisible()
     })
 })

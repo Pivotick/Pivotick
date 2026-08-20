@@ -73,8 +73,17 @@ export function requiredSpacing(gap: TreeGap | null, current: number): number {
     return (gap.needed / gap.measured) * current
 }
 
-/** Round up onto the slider's step, then hold inside auto's own range. */
+/**
+ * Round up onto the slider's step, then hold inside auto's own range.
+ *
+ * Non-finite input falls back to the fitted layout rather than passing the problem on.
+ * A node whose radius is not a number — a custom node that has not measured itself yet,
+ * or a `setCircleRadius(undefined)` — otherwise turns one gap into `NaN`, and from there
+ * the multiplier, the tree's own size, and every coordinate d3 computes from it. Losing
+ * a tune is nothing; losing every position is a blank canvas.
+ */
 function toStep(value: number): number {
+    if (!Number.isFinite(value)) return AUTO_FLOOR
     const stepped = Math.ceil(value / STEP) * STEP
     return Math.min(TREE_SPACING_RANGE[1], Math.max(AUTO_FLOOR, Math.round(stepped * 10) / 10))
 }

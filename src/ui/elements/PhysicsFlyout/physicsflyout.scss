@@ -70,6 +70,23 @@
             margin-bottom: 0;
         }
     }
+
+    // …except collision radius, which a non-radial tree does still answer to: the
+    // layout leaves one axis free and collision is what keeps neighbours off each
+    // other along it. Its row stays, the other five and the presets do not.
+    &.pvt-physicsflyout-collision-only {
+        .pvt-physicsflyout-sliders {
+            display: flex;
+        }
+
+        .pvt-physicsflyout-slider:not([data-row='collisionRadius']) {
+            display: none;
+        }
+
+        .pvt-physicsflyout-card-head {
+            margin-bottom: 11px;
+        }
+    }
 }
 
 .pvt-physicsflyout-card-head {

@@ -3,12 +3,15 @@
 **Status:** open backlog, recorded 2026-08-20
 **Context:** surfaced while building `prd/tree-layout-spacing.md`; deliberately not done there.
 
-Three things the tree layout needs that are each too big or too semantic to fold into a spacing
-change. Sami's call (2026-08-20): "we'll definitely have to revisit the other big change afterward."
+Things the tree layout needs that were each too big or too semantic to fold into a spacing change.
+Sami's call (2026-08-20): "we'll definitely have to revisit the other big change afterward."
+
+**B1 is done** — delivered 2026-08-20, see `prd/tree-layout-cycles.md`. Its entry is kept below for
+the reasoning; the rest are still open.
 
 ---
 
-## B1 — A single cycle disables tree layouts entirely (the big one)
+## B1 — A single cycle disables tree layouts entirely — **DONE**
 
 `TreeLayout`'s constructor calls `hasCycle(nodes, edges)` and, on a hit, warns
 ("The graph contains a cycle, so it cannot be displayed as a tree") and returns before laying

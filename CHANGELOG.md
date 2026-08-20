@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+### Tree layouts no longer need a perfect hierarchy
+
+- **A cycle no longer costs you the tree layout.** A single back-edge used to disable all three tree
+  layouts outright, with a "the graph contains a cycle" warning — which, for most real data, meant
+  the feature was unavailable. The hierarchy is now built from a breadth-first **spanning tree**:
+  the first edge to reach a node is its parent, an edge arriving at an already-placed node is drawn
+  crossing levels like any other, and a node with two parents is claimed by exactly one instead of
+  being laid out twice.
+- **Disconnected graphs lay out too.** Each component the root cannot reach gets its own root
+  (preferring one with no incoming edges) and the components are drawn side by side. Previously such
+  nodes had no place in the hierarchy at all, and the tree forces — which fall back to `0` for a
+  node they have no position for — quietly piled them onto the origin.
+- **`Collision radius` stays live under a tree layout.** It is the one force a tree does not zero,
+  and it goes on keeping neighbours apart along whichever axis the layout leaves free, so disabling
+  it with the rest was wrong. Still disabled under the radial layout, which pins both axes.
+- **Fixed: a node with no usable radius no longer blanks the layout.** A non-numeric
+  `getCircleRadius()` — a custom node that has not measured itself yet — turned a measured gap into
+  `NaN`, and from there the spacing multiplier and every coordinate derived from it.
+
 ### A tree layout works out its own spacing
 
 - **`Auto` is the default for tree spacing.** A tree layout is sized from the canvas and never looks

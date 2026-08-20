@@ -124,12 +124,25 @@ reaches for it, auto has already placed the thumb mid-track.
 
 - **The worker path does not tune.** `TreeLayout.registerForcesOnSimulation` is handed the options
   `changeLayout` was called with, and auto decides *inside* the main-thread layout. `Simulation`
-  reads the answer back into its own options after every `update()`, so `graph.getOptions()` and any
-  later worker pass are correct — but the very first worker pass of a freshly loaded tree runs at
-  `1×`. `useWorker` + `tree` already had rougher edges than this.
+  reads the answer back into its own options after every `update()`, so a later no-argument worker
+  pass picks it up — but a pass driven by `changeLayout` uses the caller's options, which under auto
+  say `spacing: 'auto'` and no multipliers, so the worker lays out at `1×`. `useWorker` + `tree`
+  already had rougher edges than this.
+- **`graph.getOptions()` reports the layout as *configured*, not as tuned.** Verified: it is a
+  different object from the simulation's own options (`getOptions().layout === sim.options.layout`
+  is `false`), so the read-back above does not reach it — on a graph where auto chose `5.4×` it still
+  reports just `{ type: 'tree' }`. `simulation.getTreeSpacing()` is the accessor that tells the
+  truth, and the same is true of `getPhysicsKnobs()` for the force layout, so this is the
+  established shape rather than a new wart.
 - **Auto cannot see labels.** It reasons about circle radii only, so a tree of long-labelled nodes
   can still overlap horizontally. Node label extents are not measured anywhere the layout can reach.
-- **A graph needing more than 10× stays crowded**, by D5 and §6.
+- **A graph needing more than 10× stays crowded**, by D5 and §5.
+- **A node with no usable radius asks for no clearance.** Found the hard way: a fixture built
+  without a radius gave `getCircleRadius()` a non-number, which turned one gap into `NaN`, then the
+  multiplier, then the box d3 normalises the tree onto — and every coordinate with it, for a blank
+  canvas. Both the measurement and `spacingOf` now treat non-finite input as "no clearance needed" /
+  `1×`. It is a real case, not just a bad fixture: a custom node has no radius until it has measured
+  itself, which is exactly what `refreshForcesAndReheat` exists for.
 
 ## 7. What is asserted
 
