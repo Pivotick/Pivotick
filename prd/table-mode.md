@@ -58,6 +58,16 @@ All nine held. The two that earned their keep most:
   which only re-renders — no data event. So no observer can react to it; the minimap has
   the same blind spot. The dock tracks the query engine's events instead, which covers
   every *supported* hide path.
+- **A popover inside the dock has to be `position: fixed`.** The column picker first
+  shipped broken: `.pvt-table-header` is `position: static`, so an absolutely-positioned
+  `top: 100%` anchored to `.pvt-table` — putting the picker *below the whole dock*, off the
+  bottom of a 720px viewport and clipped by `.pvt-table-dock { overflow: hidden }`. It now
+  anchors to its button in viewport coordinates and opens **upwards**, since the dock is at
+  the bottom of the layout and there is no room below it.
+  **The test passed anyway**, which is the more useful lesson: Playwright's visibility
+  check ignores viewport position and ancestor clipping, so `uncheck()` happily drove a
+  control the user could not see. Asserting the *effect* (the headings changed) was not
+  enough — `toBeInViewport()` plus a rect-inside-the-container check is what catches it.
 - **A real split does not fully escape corner pressure**, contrary to §3.7's claim. The
   dock never covers the legend or the minimap — but it shortens the canvas until
   bottom-left chrome and the left-edge rail converge, and the legend's own SCSS already

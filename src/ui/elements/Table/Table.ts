@@ -55,6 +55,8 @@ export class Table extends UIComponent {
     private pickerButton?: HTMLButtonElement
     private selectAllButton?: HTMLButtonElement
     private picker?: HTMLDivElement
+    /** Outside-click / Escape handler, live only while the picker is open. */
+    private dismissPicker?: (event: Event) => void
     private tabs?: HTMLDivElement
     private grid?: TableGrid
     /** One grid per tab, so each keeps its own sort, columns and row filters. */
@@ -294,17 +296,54 @@ export class Table extends UIComponent {
     /* ---------- the column picker ---------- */
 
     private togglePicker(): void {
-        if (this.picker) {
-            this.picker.remove()
-            this.picker = undefined
-            this.pickerButton?.classList.remove('active')
-            return
-        }
+        if (this.picker) return this.closePicker()
+
         this.picker = document.createElement('div')
         this.picker.className = 'pvt-table-columns-picker'
         this.pickerButton?.classList.add('active')
-        this.header?.appendChild(this.picker)
+        this.root?.appendChild(this.picker)
         this.renderPicker()
+        this.positionPicker()
+
+        // Clicking anywhere else, or Escape, puts it away — a popover that only its own
+        // button can close is a papercut.
+        this.dismissPicker = (event: Event) => {
+            if (event instanceof KeyboardEvent && event.key !== 'Escape') return
+            const target = event.target as globalThis.Node | null
+            if (event.type === 'pointerdown' && target
+                && (this.picker?.contains(target) || this.pickerButton?.contains(target))) return
+            this.closePicker()
+        }
+        // Capture, so a click reaches this before anything stops it propagating.
+        document.addEventListener('pointerdown', this.dismissPicker, true)
+        document.addEventListener('keydown', this.dismissPicker, true)
+    }
+
+    private closePicker(): void {
+        if (this.dismissPicker) {
+            document.removeEventListener('pointerdown', this.dismissPicker, true)
+            document.removeEventListener('keydown', this.dismissPicker, true)
+            this.dismissPicker = undefined
+        }
+        this.picker?.remove()
+        this.picker = undefined
+        this.pickerButton?.classList.remove('active')
+    }
+
+    /**
+     * Anchor the picker to its button in viewport coordinates, opening **upwards**: the
+     * dock lives at the bottom of the layout, so there is room above it and none below.
+     * Height is capped to the room actually available.
+     */
+    private positionPicker(): void {
+        const picker = this.picker
+        const anchor = this.pickerButton?.getBoundingClientRect()
+        if (!picker || !anchor) return
+
+        const gap = 4
+        picker.style.bottom = `${Math.max(0, window.innerHeight - anchor.top + gap)}px`
+        picker.style.right = `${Math.max(0, window.innerWidth - anchor.right)}px`
+        picker.style.maxHeight = `${Math.max(80, anchor.top - gap * 3)}px`
     }
 
     /**
@@ -339,6 +378,7 @@ export class Table extends UIComponent {
     }
 
     protected onDestroy() {
+        this.closePicker()
         if (this.rebuildFrame !== null) cancelAnimationFrame(this.rebuildFrame)
         this.rebuildFrame = null
         this.observer?.disconnect()

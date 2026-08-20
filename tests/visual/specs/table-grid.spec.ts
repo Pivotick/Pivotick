@@ -161,6 +161,31 @@ test.describe('table grid', () => {
         expect(await visibleNodeCount(page)).toBe(before)
     })
 
+    // The picker opens *upwards* in viewport coordinates: the dock sits at the bottom of
+    // the layout and clips its overflow, so a downwards popover lands off-screen. Assert
+    // it is genuinely on screen — `toBeVisible()` alone does not catch that, which is
+    // exactly how this shipped broken once.
+    test('the column picker opens where it can be seen', async ({ page }) => {
+        await openDock(page)
+        await page.locator('.pvt-table-columns-button').click()
+
+        const picker = page.locator('.pvt-table-columns-picker')
+        await expect(picker).toBeVisible()
+        await expect(picker).toBeInViewport()
+
+        // …and inside the graph's own container, not spilling past it.
+        const boxes = await page.evaluate(() => {
+            const rect = (selector: string) => {
+                const r = document.querySelector(selector)!.getBoundingClientRect()
+                return { top: r.top, bottom: r.bottom, left: r.left, right: r.right }
+            }
+            return { picker: rect('.pvt-table-columns-picker'), container: rect('.pivotick') }
+        })
+        expect(boxes.picker.bottom).toBeLessThanOrEqual(boxes.container.bottom + 1)
+        expect(boxes.picker.top).toBeGreaterThanOrEqual(boxes.container.top - 1)
+        expect(boxes.picker.right).toBeLessThanOrEqual(boxes.container.right + 1)
+    })
+
     test('the column picker hides and restores a column', async ({ page }) => {
         await openDock(page)
         expect(await headings(page)).toContain('Degree')
@@ -172,6 +197,21 @@ test.describe('table grid', () => {
 
         await degreeToggle.check()
         expect(await headings(page)).toContain('Degree')
+    })
+
+    test('the picker closes on an outside click and on Escape', async ({ page }) => {
+        await openDock(page)
+        const picker = page.locator('.pvt-table-columns-picker')
+
+        await page.locator('.pvt-table-columns-button').click()
+        await expect(picker).toBeVisible()
+        await page.locator('.pvt-table-summary').click()
+        await expect(picker).toHaveCount(0)
+
+        await page.locator('.pvt-table-columns-button').click()
+        await expect(picker).toBeVisible()
+        await page.keyboard.press('Escape')
+        await expect(picker).toHaveCount(0)
     })
 
     // Declared facets describe the data once; the filter panel and the grid both read them.
