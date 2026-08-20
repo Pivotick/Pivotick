@@ -39,6 +39,11 @@ edges, so neither of these stops a tree layout:
 - **Several components.** Each component the root cannot reach gets its own root — preferring a node
   with no incoming edges, so a component that *is* a hierarchy is drawn as one — and the components
   are laid out side by side.
+- **Nodes with no edges at all.** These have no place in a hierarchy, so they are *parked* rather
+  than given one: they fill the dead space beside the shallow levels, at the trailing edge of the
+  layout, which a tree leaves empty because it widens as it descends. In the radial layout they take
+  a ring of their own outside the last. Only nodes nothing points at *and* which point at nothing are
+  parked, so no edge is ever left stretching from the tree to the parking area.
 
 Note that `rootIdAlgorithmFinder: 'MinMaxDistance'` and `'MinHeight'` are topological-sort based, so
 on a graph with a cycle they warn and fall back to the first node. The default `'MaxReachability'`

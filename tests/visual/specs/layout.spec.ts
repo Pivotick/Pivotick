@@ -181,12 +181,53 @@ test.describe('layouts', () => {
     })
 
     test('a forest is laid out side by side, not stacked on the origin', async ({ page }) => {
-        // Two nodes, no edges: two components, so two roots. They used to have no slot in
-        // the hierarchy at all — only the first was positioned, and the tree forces (which
-        // fall back to 0 for a node they have no position for) dragged the rest onto (0, 0).
-        const p = await positionsAfterLayout(page, 'pair', { type: 'tree' })
-        expect(Math.abs(p.a.y - p.b.y)).toBeLessThan(1)
-        expect(Math.abs(p.a.x - p.b.x)).toBeGreaterThan(1)
+        // Three components the primary root cannot reach each other from. They used to have
+        // no slot in the hierarchy at all — only the first component was positioned, and the
+        // tree forces (which fall back to 0 for a node they have no position for) dragged the
+        // rest onto (0, 0).
+        await harness(page, 'loadAuto', { nodes: 12, radius: 10, components: 3 }, { layout: { type: 'tree' } })
+        await harness(page, 'applyLayout')
+        const p = (await harness(page, 'nodePositions')) as Positions
+        const rows = new Set(Object.values(p).map(q => Math.round(q.y)))
+
+        // Every node landed on a level of the hierarchy: a dozen nodes share a handful of
+        // rows, rather than keeping the scattered positions of nodes nothing placed.
+        expect(Object.keys(p)).toHaveLength(12)
+        expect(rows.size).toBeLessThanOrEqual(5)
+    })
+
+    test('nodes with no edges are parked clear of the tree', async ({ page }) => {
+        // They have no place in a hierarchy, so they used to be given one anyway — a slot on
+        // the root's own row, packed tight against it. Now they go in the dead space beside
+        // the shallow levels, at the trailing edge of the layout.
+        await harness(page, 'loadAuto', { nodes: 16, radius: 10, isolated: 4 }, { layout: { type: 'tree' } })
+        await harness(page, 'applyLayout')
+        const placement = await page.evaluate(() => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const g = (window.__pivotick as any).graph
+            const touched = new Set<string>()
+            for (const edge of g.getEdges()) {
+                touched.add(edge.source.id)
+                touched.add(edge.target.id)
+            }
+            const all = g.getNodes() as Array<{ id: string; x: number; y: number }>
+            const linked = all.filter(n => touched.has(n.id))
+            const parked = all.filter(n => !touched.has(n.id))
+            const topRow = Math.min(...linked.map(n => n.y))
+            return {
+                parkedCount: parked.length,
+                // The tree's own reach on the row the parked nodes sit on…
+                treeEdge: Math.max(...linked.filter(n => Math.abs(n.y - topRow) < 1).map(n => n.x)),
+                parkedMinX: Math.min(...parked.map(n => n.x)),
+                parkedRows: [...new Set(parked.map(n => Math.round(n.y)))],
+                topRow: Math.round(topRow),
+            }
+        })
+
+        expect(placement.parkedCount).toBe(4)
+        // …and they sit past it, on the shallow rows where a tree leaves room.
+        expect(placement.parkedMinX).toBeGreaterThan(placement.treeEdge)
+        expect(placement.parkedRows).toEqual([placement.topRow])
     })
 
     // ── Auto spacing ─────────────────────────────────────────────────────────

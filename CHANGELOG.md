@@ -14,6 +14,13 @@
   (preferring one with no incoming edges) and the components are drawn side by side. Previously such
   nodes had no place in the hierarchy at all, and the tree forces — which fall back to `0` for a
   node they have no position for — quietly piled them onto the origin.
+- **Nodes with no edges at all are parked out of the way.** Giving them a slot in the hierarchy put
+  them on the root's own row, packed tight against it, reading as the root's children. They now fill
+  the dead space beside the shallow levels at the trailing edge of the layout — space a tree leaves
+  empty because it widens as it descends, and which is *inside* the layout's bounding box, so parking
+  them there does not zoom the tree out. The radial layout gives them a ring of their own outside the
+  last. Only nodes with no edges in *either* direction qualify, so no edge is left stretching from
+  the tree to the parking area.
 - **`Collision radius` stays live under a tree layout.** It is the one force a tree does not zero,
   and it goes on keeping neighbours apart along whichever axis the layout leaves free, so disabling
   it with the rest was wrong. Still disabled under the radial layout, which pins both axes.

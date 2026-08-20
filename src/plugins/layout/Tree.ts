@@ -16,6 +16,9 @@ import type { SimulationForces } from '../../interfaces/SimulationOptions'
 
 export type TreeLayoutAlgorithm = 'FirstZeroInDegree' | 'MaxReachability' | 'MinMaxDistance' | 'MinHeight'
 
+/** Clear space left around a parked node, on top of its own diameter. */
+const PARKED_GAP = 20
+
 /**
  * Id of the synthetic root a *forest* is hung under. Not a graph node: it exists only so
  * d3 lays the components out side by side, and is filtered out of every result.
@@ -63,6 +66,8 @@ export class TreeLayout {
     protected maxDepth = 0
     /** Whether {@link update} re-derives the spacing multipliers; see {@link setSpacing}. */
     protected autoSpacing: boolean
+    /** Nodes no edge touches, placed by {@link packParked} rather than by the hierarchy. */
+    protected parkedIds = new Set<string>()
     protected positionedNodesByID: Map<string, HierarchyNode<TreeNode>>
 
     constructor (
@@ -127,7 +132,8 @@ export class TreeLayout {
     private layoutOnce(): void {
         const nodes = this.graph.getNodes()
         const edges = this.options.flipEdgeDirection ? this.flipEdgeDirection(this.graph.getEdges()) : this.graph.getEdges()
-        const { levels, maxDepth } = this.buildLevels(nodes, edges, undefined, this.options.rootIdAlgorithmFinder)
+        const { levels, maxDepth, parked } = this.buildLevels(nodes, edges, undefined, this.options.rootIdAlgorithmFinder)
+        this.parkedIds = new Set(parked)
         const { nodes: positionedNodes, nodeById: positionedNodesByID } = this.buildTree(nodes, edges, this.options, this.canvasBCR)
         this.positionedNodesByID = positionedNodesByID
 
@@ -149,6 +155,9 @@ export class TreeLayout {
         for (const [id, positioned] of this.positionedNodesByID) {
             const node = this.graph.getMutableNode(id)
             if (!node) continue
+            // Parked nodes are placed at a spacing this layout chose, not one the canvas
+            // implied, so measuring them would have auto tuning against its own output.
+            if (this.parkedIds.has(id)) continue
             const measured = node.expanded ? node.getCircleRadiusCollapsed() : node.getCircleRadius()
             // A node that has not measured itself yet reports no usable radius; it asks for
             // no clearance rather than poisoning the pair's arithmetic.
@@ -518,6 +527,110 @@ export class TreeLayout {
         }
     }
 
+    /**
+     * Where to put the nodes with no relations at all.
+     *
+     * They have no place in a hierarchy, and giving them one anyway — a slot on the root's
+     * own row — made them read as the root's children, packed tight against it because
+     * `separation` squeezes same-parent siblings by their number. They go in the dead space
+     * instead: the wedge beside the shallow levels, which a tree always leaves empty because
+     * it widens as it descends. Pushed to the far end of it, one cell clear of the tree's
+     * silhouette.
+     *
+     * The *trailing* end, not the leading one, because that is the side the interface leaves
+     * alone: the mode rail is always down the left of the canvas and the flyouts open over it,
+     * so nodes parked there would sit behind a panel.
+     *
+     * Deliberately *inside* the layout's bounding box. The view is fitted, so a node parked
+     * outside it would zoom the entire tree out to make room for a stray dot — and below the
+     * tree, where the wedge does not exist, is also where the tree is widest.
+     *
+     * Positions are in hierarchy space (`x` breadth, `y` depth — angle and radius when
+     * radial), the same as everything `buildTreeStatic` returns, so `setNodePositions` maps
+     * them for whichever orientation is in force.
+     */
+    protected static packParked(
+        parked: TreeNode[],
+        laidOut: HierarchyNode<TreeNode>[],
+        options: TreeLayoutOptions,
+        canvasBCR: DOMRect,
+    ): HierarchyNode<TreeNode>[] {
+        if (!parked.length) return []
+
+        const radiusOf = (node: TreeNode) => {
+            const measured = node.getCircleRadius()
+            return Number.isFinite(measured) ? measured : 0
+        }
+        const cell = 2 * parked.reduce((max, node) => Math.max(max, radiusOf(node)), 0) + PARKED_GAP
+        const standIn = (node: TreeNode, x: number, y: number, depth: number) =>
+            ({ data: node, depth, x, y, height: 0 } as unknown as HierarchyNode<TreeNode>)
+
+        const xs = laidOut.map(node => node.x ?? 0)
+        const ys = laidOut.map(node => node.y ?? 0)
+
+        if (options.radial) {
+            // No wedge on a disc: one more ring, outside the last.
+            const rings = new Set(ys).size
+            const outer = ys.length ? Math.max(...ys) : options.radialGap
+            const ringGap = rings > 0 ? outer / rings : outer
+            return parked.map((node, index) => standIn(
+                node,
+                (index * 2 * Math.PI) / parked.length,
+                outer + ringGap,
+                rings + 1,
+            ))
+        }
+
+        if (!laidOut.length) {
+            // Nothing but parked nodes: they are the layout, so grid them over the canvas.
+            const perRow = Math.max(1, Math.floor(canvasBCR.width / cell))
+            return parked.map((node, index) => standIn(
+                node,
+                (index % perRow) * cell,
+                Math.floor(index / perRow) * cell,
+                0,
+            ))
+        }
+
+        // The tree's silhouette: how far it reaches on each of its rows, on the side the
+        // parked nodes are going.
+        const treeEdgeByRow = new Map<number, number>()
+        for (const node of laidOut) {
+            const row = node.y ?? 0
+            const x = node.x ?? 0
+            treeEdgeByRow.set(row, Math.max(treeEdgeByRow.get(row) ?? x, x))
+        }
+        const rows = [...treeEdgeByRow.keys()].sort((a, b) => a - b)
+        const boxLeft = Math.min(...xs)
+        const boxRight = Math.max(...xs)
+        const rowGap = rows.length > 1 ? rows[1] - rows[0] : cell
+
+        const positions: HierarchyNode<TreeNode>[] = []
+        let next = 0
+        for (const [index, row] of rows.entries()) {
+            if (next >= parked.length) break
+            const wedge = boxRight - ((treeEdgeByRow.get(row) ?? boxRight) + cell)
+            const fits = Math.floor(wedge / cell)
+            for (let column = 0; column < fits && next < parked.length; column++) {
+                positions.push(standIn(parked[next++], boxRight - column * cell, row, index))
+            }
+        }
+
+        // More parked nodes than the wedge holds: carry on in rows under the tree, which is
+        // the one direction still free once the wedge is full.
+        const perRow = Math.max(1, Math.floor((boxRight - boxLeft) / cell))
+        const lastRow = rows[rows.length - 1]
+        for (let index = 0; next < parked.length; index++) {
+            positions.push(standIn(
+                parked[next++],
+                boxRight - (index % perRow) * cell,
+                lastRow + rowGap * (1 + Math.floor(index / perRow)),
+                rows.length,
+            ))
+        }
+        return positions
+    }
+
     /** Shift a laid-out tree in hierarchy space; see {@link sizedTreeLayout}. */
     protected static offsetTree(nodes: HierarchyNode<TreeNode>[], offset: { x: number, y: number }): void {
         if (!offset.x && !offset.y) return
@@ -569,7 +682,7 @@ export class TreeLayout {
         // parent/child straight off the edges is what made a cycle fatal — `d3.hierarchy`
         // walks children and a cycle never ends — and it also gave a node with two parents
         // two places in the tree. One BFS parent per node settles both.
-        const { parentOf, roots } = TreeLayout.buildLevelsStatic(
+        const { parentOf, roots, parked } = TreeLayout.buildLevelsStatic(
             nodes, edges, options.rootId, options.rootIdAlgorithmFinder
         )
         for (const [childId, parentId] of parentOf) {
@@ -580,8 +693,21 @@ export class TreeLayout {
             child.parent = parent
         }
 
+        const parkedNodes = parked
+            .map(id => nodeMap.get(id))
+            .filter((node): node is TreeNode => Boolean(node))
+
         const root = TreeLayout.hierarchyRootFor(roots, nodeMap)
         if (!root) {
+            // Every node is parked: there is no hierarchy to lay out, only the grid.
+            if (!roots.length && parkedNodes.length) {
+                const only = TreeLayout.packParked(parkedNodes, [], options, canvasBCR)
+                return {
+                    root: null,
+                    nodes: only,
+                    nodeById: new Map(only.map(node => [node.data.id, node])),
+                }
+            }
             throw new Error(`Root node with id "${roots[0]}" not found.`)
         }
 
@@ -592,7 +718,11 @@ export class TreeLayout {
         const treeRoot = treeLayout(rootHierarchy)
         TreeLayout.offsetTree(treeRoot.descendants(), offset)
 
+        const laidOut = treeRoot.descendants().filter(node => node.data.id !== FOREST_ROOT_ID)
+        const parkedPositions = TreeLayout.packParked(parkedNodes, laidOut, options, canvasBCR)
+
         const nodeById = new Map<string, HierarchyNode<TreeNode>>()
+        for (const node of parkedPositions) nodeById.set(node.data.id, node)
         treeRoot.descendants().forEach((node) => {
             if (node.data.id === FOREST_ROOT_ID) return
             nodeById.set(node.data.id, node)
@@ -600,7 +730,7 @@ export class TreeLayout {
 
         return {
             root: treeRoot,
-            nodes: treeRoot.descendants().filter(node => node.data.id !== FOREST_ROOT_ID),
+            nodes: [...laidOut, ...parkedPositions],
             nodeById: nodeById,
         }
     }
@@ -624,11 +754,7 @@ export class TreeLayout {
         edges: Edge[],
         passedRootId?: string,
         rootIdAlgorithmFinder?: TreeLayoutAlgorithm
-    ): {
-        levels: Map<string, number>
-        maxDepth: number
-        nodeCountPerLevel: Record<string, number>
-    } {
+    ): ReturnType<typeof TreeLayout.buildLevelsStatic> {
         return TreeLayout.buildLevelsStatic(nodes, edges, passedRootId, rootIdAlgorithmFinder)
     }
 
@@ -656,6 +782,8 @@ export class TreeLayout {
         parentOf: Map<string, string>
         /** The primary root, plus one per component the primary root cannot reach. */
         roots: string[]
+        /** Nodes with no edges at all: parked rather than given a place in the hierarchy. */
+        parked: string[]
     } {
         if (!nodes.length) {
             return {
@@ -664,16 +792,16 @@ export class TreeLayout {
                 nodeCountPerLevel: {},
                 parentOf: new Map(),
                 roots: [],
+                parked: [],
             }
         }
-        const rootId = passedRootId || TreeLayout.findRootId(nodes, edges, rootIdAlgorithmFinder)
-
         // Keyed by node id, so both are Maps: on a plain object a node called `constructor` or
         // `toString` reads as already-visited through the prototype and drops out of the layout.
         const levels = new Map<string, number>()
         const parentOf = new Map<string, string>()
         const adj = new Map<string, string[]>()
         const targeted = new Set<string>()
+        const touched = new Set<string>()
 
         for (const node of nodes) {
             adj.set(node.id, [])
@@ -683,7 +811,22 @@ export class TreeLayout {
             // An edge whose source isn't in `nodes` is skipped rather than throwing.
             adj.get(source.id)?.push(target.id)
             targeted.add(target.id)
+            touched.add(source.id)
+            touched.add(target.id)
         }
+
+        // A node no edge touches has no place in a hierarchy — nothing points at it and it
+        // points at nothing. It is parked instead (see `packParked`), and kept out of the root
+        // search: `FirstZeroInDegree` would happily root the whole tree at one.
+        //
+        // Read off the edges being laid out rather than from `node.degree()`, which counts a
+        // node's own edge registries — and those are empty for the objects a graph builds from
+        // data, so it reports 0 for every node in a perfectly connected graph.
+        // An explicitly named root counts as linked even with no edges: naming it is a
+        // deliberate choice, and honouring it beats parking it.
+        const isLinked = (id: string) => touched.has(id) || id === passedRootId
+        const linked = nodes.filter(node => isLinked(node.id))
+        const parked = nodes.filter(node => !isLinked(node.id)).map(node => node.id)
 
         // BFS, and the first edge to reach a node is its parent in the spanning tree. This
         // is what makes the layout total: a back-edge finds its target already visited and
@@ -705,18 +848,25 @@ export class TreeLayout {
             }
         }
 
-        const roots = [rootId]
-        walkFrom(rootId)
+        // With nothing linked there is no hierarchy to root: every node is parked, and
+        // `buildTreeStatic` lays them out as a grid. Searching for a root anyway would
+        // promote one parked node to be the tree, and then place it twice.
+        const roots: string[] = []
+        if (linked.length) {
+            const rootId = passedRootId || TreeLayout.findRootId(linked, edges, rootIdAlgorithmFinder)
+            roots.push(rootId)
+            walkFrom(rootId)
+        }
 
         // Whatever the primary root could not reach is its own component, and gets its own
         // root. Without this those nodes have no slot in the tree, and the tree forces —
         // which fall back to 0 for a node they have no position for — quietly pile them all
         // onto the origin.
-        if (levels.size < nodes.length) {
-            for (const node of nodes) {
+        if (levels.size < linked.length) {
+            for (const node of linked) {
                 if (levels.has(node.id)) continue
                 // Prefer a source: a component that *is* a hierarchy should be drawn as one.
-                const componentRoot = nodes.find(candidate => !levels.has(candidate.id) && !targeted.has(candidate.id))
+                const componentRoot = linked.find(candidate => !levels.has(candidate.id) && !targeted.has(candidate.id))
                     ?? node
                 roots.push(componentRoot.id)
                 walkFrom(componentRoot.id)
@@ -734,9 +884,19 @@ export class TreeLayout {
         // Accumulated in one pass: `Math.max(...levels.values())` throws on a large graph, since
         // spreading hundreds of thousands of levels blows the argument limit.
         let maxDepth = 0
-        const nodeCountPerLevel: Record<string, number> = {}
         for (const level of levels.values()) {
             if (level > maxDepth) maxDepth = level
+        }
+
+        // Parked nodes count as sitting past the last level. The radial force reads `levels`
+        // rather than the positions, and without this it would pull them all onto the centre.
+        if (parked.length) {
+            maxDepth += 1
+            for (const id of parked) levels.set(id, maxDepth)
+        }
+
+        const nodeCountPerLevel: Record<string, number> = {}
+        for (const level of levels.values()) {
             nodeCountPerLevel[level] = (nodeCountPerLevel[level] || 0) + 1
         }
 
@@ -746,6 +906,7 @@ export class TreeLayout {
             nodeCountPerLevel: nodeCountPerLevel,
             parentOf: parentOf,
             roots: roots,
+            parked: parked,
         }
     }
 

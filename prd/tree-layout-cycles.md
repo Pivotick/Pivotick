@@ -43,6 +43,29 @@ origin. The BFS now restarts from each unreached component, and the components a
 **synthetic root** (`FOREST_ROOT_ID`) so d3 spreads them side by side. It is not a graph node and is
 filtered out of every result, so it is never drawn and never positioned.
 
+**D1a — A node with no edges at all is parked, not given a slot.** Follow-up, after seeing it: with
+every node guaranteed a place, the edgeless ones landed on the root's *own row*, and `separation`
+(`1.5 / siblingCount`) packed them tight against it — six strays read as six children of the root.
+They now go in the **dead space beside the shallow levels**, at the trailing edge of the layout, one
+cell clear of the tree's silhouette; the radial layout gives them a ring of their own outside the
+last. Three things decided this shape:
+
+- *Not below the tree.* A tree widens as it descends, so below is where it is busiest, and a strip
+  there also extends the layout's height. (Sami's observation.)
+- *Inside the bounding box.* The view is fitted, so anything parked outside the box zooms the whole
+  tree out to make room for a few stray dots. The wedge beside the shallow levels is free real estate
+  and costs the view nothing. Radial is the exception — a disc has no wedge — and its extra ring does
+  grow the box by one ring gap.
+- *Trailing edge, not leading.* The mode rail runs down the left of the canvas and the flyouts open
+  over it, so nodes parked there sit behind a panel.
+
+**D1b — "No edges" means no edges in either direction.** The tempting definition was "its own
+component", but the BFS follows edge *direction*: a node whose only edge points *into* the tree is
+unreachable from the root while still being connected to it. Parking one of those would leave an edge
+stretching from the tree to the parking area (Sami spotted this before it was built). Only nodes
+nothing points at *and* which point at nothing are parked; everything else is a component, laid out
+side by side.
+
 **D2 — A component root prefers a node with no incoming edges.** A second component that *is* a
 hierarchy should be drawn as one, rather than rooted at whichever node happened to come first in the
 array. A component that is a pure cycle has no such node and falls back to the first one left.
@@ -57,7 +80,21 @@ set-based, `MaxReachability` (the default) walks iteratively with a visited set 
 and the two topological-sort ones detect the cycle and fall back to the first node with a console
 warning. Documented rather than papered over.
 
-## 4. Also fixed along the way
+## 4. Two traps in the parking code
+
+**`node.degree()` reports 0 for every node in a connected graph.** It counts the node's own
+`edgesIn`/`edgesOut` registries, and those are empty for the node objects a graph builds from data —
+so the first implementation parked the entire graph. Parked-ness is read off the edge list being laid
+out instead, which is the authoritative thing anyway.
+
+**A parked node must not also be the root.** With nothing linked at all, the root search still
+returned *some* node, which then appeared both as the hierarchy's root and in the parking grid — two
+positions, and the `pair` fixture (two edgeless nodes) landed one above the other instead of side by
+side. Now no root is searched for when nothing is linked: every node is parked and laid out as a
+grid. An explicitly passed `rootId` is exempt — naming a root is a deliberate choice, so it counts as
+linked even with no edges.
+
+## 5. Also fixed along the way
 
 - **`EgoTreeLayout` counted a mutual pair twice.** It scanned edges for anything touching the root,
   so `a→b` *and* `b→a` pushed `b` as a child twice — two ring slots for one neighbour. Unreachable
@@ -66,7 +103,7 @@ warning. Documented rather than papered over.
   `getCircleRadius()` turned an auto-spacing gap into `NaN`, then the multiplier, then the box d3
   normalises the tree onto — so every coordinate came out `NaN`. See `prd/auto-tree-spacing.md` §6.
 
-## 5. What is asserted
+## 6. What is asserted
 
 `tests/visual/specs/layout.spec.ts`:
 
@@ -74,8 +111,11 @@ warning. Documented rather than papered over.
   pentagon with a hub pointing into it, i.e. exactly the shape that used to be refused. The hub roots
   the tree, `a`/`c` share the row below it, and the ring is walked one level per step, with `e→a`
   left out of the hierarchy.
-- **a forest is laid out side by side, not stacked on the origin** — two edgeless nodes, so two
-  roots: same row, different columns.
+- **a forest is laid out side by side, not stacked on the origin** — three components: every node
+  lands on a level of the hierarchy, so a dozen of them share a handful of rows rather than keeping
+  the scattered positions of nodes nothing placed.
+- **nodes with no edges are parked clear of the tree** — the parked ones sit past the tree's reach on
+  the row they share with it, and only on the shallow rows where a tree leaves room.
 - **a node with no usable radius does not blank the layout** — every coordinate finite, spacing back
   at `1×`.
 
