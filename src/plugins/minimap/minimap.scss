@@ -1,0 +1,151 @@
+// The minimap plugin — a canvas-corner overview, styled as part of the B3 chrome
+// family (same surface, border and shadow as the mode rail / navigation pill).
+.pvt-minimap {
+    position: absolute;
+    // The configured width/height is the minimap's footprint, border included.
+    box-sizing: border-box;
+    // Below the mode rail and its panels (6/7) so the left-edge chrome wins an overlap,
+    // and below the slide panel (1000), which legitimately covers this corner when open.
+    z-index: 5;
+    overflow: hidden;
+    border-radius: 10px;
+    background-color: var(--pvt-chrome-bg);
+    border: 1px solid var(--pvt-chrome-border);
+    box-shadow: var(--pvt-chrome-shadow);
+
+    // The density path's ink and the edge hairlines, resolved by the component through
+    // getComputedStyle so the drawing follows the theme.
+    --pvt-minimap-ink: color-mix(in srgb, var(--pvt-text-color-4) 80%, transparent);
+    --pvt-minimap-edge: color-mix(in srgb, var(--pvt-text-color-3) 55%, transparent);
+    --pvt-minimap-viewport-stroke: var(--pvt-theme-primary);
+    // Everything *outside* the viewport is dimmed by this, so the picture inside stays
+    // true to the canvas (see Minimap.paint).
+    --pvt-minimap-shroud: color-mix(in srgb, var(--pvt-bg-color-7) 22%, transparent);
+
+    // Footprint once collapsed: the toggle, and nothing else.
+    --pvt-minimap-collapsed-size: 20px;
+    // Which corner it docks in, as a rotation for the toggle's arrow (see below).
+    --pvt-minimap-corner-angle: 0deg;
+    --pvt-minimap-toggle-flip: 0deg;
+
+    &[data-collapsed='true'] {
+        // The inline size is cleared while collapsed (Minimap.applyCollapsed), so this wins.
+        width: var(--pvt-minimap-collapsed-size);
+        height: var(--pvt-minimap-collapsed-size);
+        // Folded away, the arrow points back out of the corner.
+        --pvt-minimap-toggle-flip: 180deg;
+
+        .pvt-minimap-surface {
+            display: none;
+        }
+
+        // The root *is* the button now: fill it, and let the chrome surface show through.
+        .pvt-minimap-toggle {
+            position: static;
+            width: 100%;
+            height: 100%;
+            opacity: 1;
+            background-color: transparent;
+        }
+    }
+
+    // Per corner: the toggle takes the corner facing the canvas, and its arrow points at
+    // the docked one — the direction the minimap folds away in.
+    &[data-position='bottom-right'] {
+        right: 14px;
+        bottom: 14px;
+        --pvt-minimap-corner-angle: 0deg;
+
+        .pvt-minimap-toggle {
+            top: 3px;
+            left: 3px;
+        }
+    }
+
+    &[data-position='bottom-left'] {
+        left: 14px;
+        bottom: 14px;
+        --pvt-minimap-corner-angle: 90deg;
+
+        .pvt-minimap-toggle {
+            top: 3px;
+            right: 3px;
+        }
+    }
+
+    &[data-position='top-right'] {
+        right: 14px;
+        top: calc(var(--pvt-mainheader-height) + 14px);
+        --pvt-minimap-corner-angle: 270deg;
+
+        .pvt-minimap-toggle {
+            bottom: 3px;
+            left: 3px;
+        }
+    }
+
+    &[data-position='top-left'] {
+        // Clear of the 54px mode rail, lined up with the tool panel and flyout.
+        left: 84px;
+        top: calc(var(--pvt-mainheader-height) + 14px);
+        --pvt-minimap-corner-angle: 180deg;
+
+        .pvt-minimap-toggle {
+            bottom: 3px;
+            right: 3px;
+        }
+    }
+}
+
+.pvt-minimap-surface {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    // The whole surface is the drag target; a press inside the viewport rectangle keeps
+    // its grab offset (see Minimap.wirePointer).
+    touch-action: none;
+
+    &.pvt-minimap-dragging {
+        cursor: grabbing;
+    }
+}
+
+// The collapse toggle: deliberately tiny, tucked into the minimap corner that faces the
+// canvas. Faint until the pointer is on the minimap — it is chrome over the picture.
+.pvt-minimap-toggle {
+    position: absolute;
+    // Above the surface, which fills the whole box.
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    opacity: 0.5;
+    color: var(--pvt-text-color-4);
+    background-color: color-mix(in srgb, var(--pvt-chrome-bg) 70%, transparent);
+    transition: background-color 0.06s ease, color 0.06s ease, opacity 0.12s ease;
+
+    .pvt-minimap:hover &,
+    &:focus-visible {
+        opacity: 1;
+    }
+
+    &:hover,
+    &:active {
+        opacity: 1;
+        color: var(--pvt-text-color-6);
+        background-color: var(--pvt-chrome-border);
+    }
+
+    svg {
+        // Points at the docked corner, and flips once collapsed, so one path serves both.
+        transform: rotate(calc(var(--pvt-minimap-corner-angle) + var(--pvt-minimap-toggle-flip)));
+        transition: transform 0.14s ease;
+    }
+}

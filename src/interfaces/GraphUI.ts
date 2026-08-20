@@ -9,6 +9,7 @@ import type { UIElement } from '../ui/UIManager'
 import type { FieldConfig } from '../utils/FormFactory'
 import type { FilterOptions } from './GraphQueryEngine'
 import type { AsyncContentOptions, RenderContext, RenderResult } from './AsyncContent'
+import type { MinimapOptions } from '../plugins/minimap/options'
 
 /**
  * @category Main Options
@@ -48,6 +49,16 @@ export interface GraphUI {
      * check, and an object configures it.
      */
     legend?: LegendOptions | boolean,
+    /**
+     * The canvas minimap: an overview of the whole graph with a rectangle showing what is
+     * on screen. Click it to recentre the view, drag it to pan.
+     *
+     * `full` mode mounts one for you, opening in `collapsed: 'auto'` so it folds itself
+     * away on a canvas with no corner to spare. `false` suppresses it; `true` or an object
+     * asks for it in any mode — see {@link MinimapOptions}. Passing your own
+     * `minimap()` plugin in `plugins` also wins over this.
+     */
+    minimap?: MinimapOptions | boolean,
     /**
      * The left mode rail's "coming soon" data-zone modes (Explore / Enrich).
      * These features aren't shipped yet, so they're **off by default**: when

@@ -11,7 +11,7 @@ import { EventHandler } from './EventHandler'
 import type { Graph } from '../../Graph'
 import merge from 'lodash.merge'
 import { GraphInteractions } from '../../GraphInteractions'
-import { GraphRenderer } from '../../GraphRenderer'
+import { GraphRenderer, type GraphBounds, type ViewportTarget } from '../../GraphRenderer'
 import { SelectionBox } from './SelectionBox'
 import type { GraphRendererOptions, NodeStyle, SelectionBox as SelectionBoxI } from '../../interfaces/RendererOptions'
 import { ClusterDrawer } from './ClusterDrawer'
@@ -254,6 +254,49 @@ export class GraphSvgRenderer extends GraphRenderer {
             x: localX + svgRect.left,
             y: localY + svgRect.top,
         } as Point
+    }
+
+    /**
+     * The extent of everything drawn, in graph coordinates. Read off the zoom layer's
+     * bbox — so it includes labels, cluster bubbles and notes, not just node centres —
+     * and `null` whenever there is nothing measurable: no content, or a canvas that is
+     * detached or zero-sized (where d3-zoom would throw on a relative length).
+     */
+    public getContentBounds(): GraphBounds | null {
+        const zoomLayerEl = this.zoomGroup?.node() as SVGGElement | null
+        if (!zoomLayerEl || !this.svgCanvas?.isConnected) return null
+
+        const bounds = zoomLayerEl.getBBox()
+        if (bounds.width === 0 || bounds.height === 0) return null
+
+        return { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height }
+    }
+
+    /**
+     * Centre the view on a graph-space point, optionally at a new scale. The single
+     * place a viewport transform is written — {@link fitAndCenter} computes its own
+     * bounds and scale, then ends here.
+     */
+    public setViewport(target: ViewportTarget): void {
+        const zoomBehavior = this.getZoomBehavior()
+        const canvas = this.getCanvasSelection()
+        const svgEl = canvas.node() as SVGSVGElement | null
+        if (!zoomBehavior || !svgEl) return
+
+        // d3-zoom resolves the SVG's relative 100% width/height against its viewport;
+        // a detached or zero-size SVG throws "Could not resolve relative length".
+        if (!svgEl.isConnected || svgEl.clientWidth === 0 || svgEl.clientHeight === 0) return
+
+        const scale = target.scale ?? this.getZoomTransform().k
+        const transform = d3ZoomIdentity
+            .translate(svgEl.clientWidth / 2 - scale * target.x, svgEl.clientHeight / 2 - scale * target.y)
+            .scale(scale)
+
+        if (target.animate) {
+            canvas.transition().duration(this.options.zoomAnimationDuration).call(zoomBehavior.transform, transform)
+        } else {
+            canvas.call(zoomBehavior.transform, transform)
+        }
     }
 
     public getSelectionBox(): SelectionBox | null {
@@ -530,18 +573,9 @@ export class GraphSvgRenderer extends GraphRenderer {
             scale = Math.min(scale, 3)
         }
 
-        const translateX = fullWidth / 2 - scale * midX
-        const translateY = fullHeight / 2 - scale * midY
-
-        const transform = d3ZoomIdentity
-            .translate(translateX, translateY)
-            .scale(scale)
-
-        if (this.options.zoomAnimation) {
-            canvas.transition().duration(this.options.zoomAnimationDuration).call(zoomBehavior.transform, transform)
-        } else {
-            canvas.call(zoomBehavior.transform, transform)
-        }
+        // The bounds and scale above are this method's own; the write itself belongs to
+        // setViewport, so there is exactly one place a viewport transform is applied.
+        this.setViewport({ x: midX, y: midY, scale, animate: this.options.zoomAnimation })
     }
 
     /**

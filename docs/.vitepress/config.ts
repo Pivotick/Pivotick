@@ -46,6 +46,7 @@ export default defineConfig({
               { text: 'Styling UI', link: '/ui-styling' },
             ]
           },
+          { text: 'Plugins', link: '/plugins' },
           { text: 'Pivotick API', link: '/api' },
         ]
       },

@@ -45,9 +45,11 @@ export interface PluginContext {
      * The root DOM scaffold, read live from the UI (never a stale snapshot). It
      * exists in every mode while the UI is alive and is `undefined` only after
      * the UI is destroyed. Its *slots* are what vary by mode: `canvas` and
-     * `notification` always; `mainheader` / `modal` / `slidePanel` in `full` and
-     * `light`; `sidebar` in `full` only; `graphnavigation` / `graphcontrols` /
-     * `graphtoolbar` in every mode except `static`.
+     * `notification` always; `graphnavigation` in every mode except `static`;
+     * `mainheader` / `modal` / `slidePanel` / `moderail` / `toolpanel` / `flyout` /
+     * `legend` in `full` and `light`; `sidebar` in `full` only.
+     *
+     * `canvas` is the slot a canvas-docked element wants — see the minimap plugin.
      */
     layout: Layout | undefined
     keyManager: KeybindingManager
