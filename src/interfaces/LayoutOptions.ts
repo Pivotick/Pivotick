@@ -73,11 +73,6 @@ export interface TreeLayoutOptions extends BaseLayoutOptions {
      * @default 1
      */
     siblingSpacing?: number
-    /**
-     * If the direction of the edges should be flipped. This can lead to other visualization
-     * @default false
-     */
-    flipEdgeDirection: boolean
 }
 
 export interface EgoTreeLayoutOptions

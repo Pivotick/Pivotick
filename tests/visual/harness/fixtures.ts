@@ -561,6 +561,36 @@ export const fixtures = {
     },
 
     /**
+     * The mirror of {@link fixtures.tree}: the same three tiers, with every arrow
+     * pointing the other way. Twelve leaves each point at one of four hubs, and the
+     * hubs point at a single sink — so **every leaf is a source** and no node reaches
+     * the graph by following the arrows, which is the shape of provenance data (the
+     * AIL demo graph is 259 messages pointing at 41 chats).
+     *
+     * A directed spanning walk cannot lay this out: it leaves all twelve leaves as
+     * roots of their own and drops most edges out of the hierarchy. Drives the
+     * direction-blind fallback in `TreeLayout.buildLevelsStatic`.
+     *
+     *       l0 l1 l2  l3 l4 l5  l6 l7 l8  l9 l10 l11
+     *         \ | /     \ | /     \ | /     \  |  /
+     *          h0         h1        h2         h3
+     *            \         \        /         /
+     *                        sink
+     */
+    converging(): BuiltFixture {
+        const sink = mkNode('sink', 0, 200)
+        const hubs = [0, 1, 2, 3].map(i => mkNode(`h${i}`, -240 + i * 160, 60))
+        const leaves = hubs.flatMap((_, h) =>
+            [0, 1, 2].map(l => mkNode(`l${h * 3 + l}`, -300 + h * 160 + l * 50, -100))
+        )
+        const edges = [
+            ...leaves.map((leaf, i) => new Edge(`leaf-${i}`, leaf, hubs[Math.floor(i / 3)])),
+            ...hubs.map((hub, i) => new Edge(`hub-${i}`, hub, sink)),
+        ]
+        return { nodes: [sink, ...hubs, ...leaves], edges, notes: [] }
+    },
+
+    /**
      * An ego network: a central node directly connected to every other node.
      * The ego-tree layout only positions the root's *direct* neighbours, so a
      * star guarantees **all** nodes get deterministic positions (a deeper tree

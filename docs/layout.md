@@ -25,7 +25,6 @@ When `type: 'tree'` is selected, the following additional options are available:
 | `spacing`               | `'auto' \| 'manual'` | `'auto'` | Whether the two multipliers below tune themselves from the size of the nodes and the shape of the tree. Setting either one explicitly implies `'manual'`. |
 | `levelSpacing`          | `number`  | `1`               | Multiplies the distance between consecutive levels (between rings, when `radial`). `1` fits the tree to the canvas, as before.               |
 | `siblingSpacing`        | `number`  | `1`               | Multiplies the distance between nodes *within* a level. Ignored when `radial`, where a level always spans the full circle.                   |
-| `flipEdgeDirection`     | `boolean` | `false`           | Flip the direction of edges in the layout.                                                                                                  |
 
 
 #### Cycles and disconnected graphs
@@ -61,6 +60,27 @@ component.) The edges themselves are still drawn as they are, so a link used the
 renders as an arrow pointing up a level. A root the `rootIdAlgorithmFinder` chose keeps walking along
 the arrows: it was read off them in the first place.
 
+**Unless the arrows are not a hierarchy.** On data that *converges* — every leaf a source, all of them
+pointing at a few hubs, which is the shape of most provenance and "seen-with" data — no node reaches
+the graph along the arrows, whichever finder is asked. A directed walk then leaves nearly every node
+as a root of its own, and the tree comes out as a comb of stubs with most edges flying across the
+layout. So when **no node at all** can cover half of its own component by following the arrows, the
+layout stops reading direction: it walks every edge both ways and re-roots at the middle of the graph.
+The edges are still *drawn* exactly as they are, which means their arrows point up the tree toward the
+root — the honest rendering of data that points that way.
+
+This is a fallback, not the rule, and the test is about the graph rather than about the root that was
+picked:
+
+- Where the arrows do form a hierarchy they are the best thing to lay out by, and every finder keeps
+  its own answer — including `'MinHeight'`, whose answer on a tree is always a *leaf*, reaching
+  nothing on purpose. A root that covers little of the graph is only overruled when nothing else
+  could have covered more.
+- A graph of several separate hierarchies still comes out as a forest: coverage is measured against
+  the root's own component, so a perfectly good multi-component hierarchy is not mistaken for a
+  failure.
+- A pinned `rootId` skips the test entirely — it is already walked ignoring direction.
+
 A `rootId` naming a node that is not in the graph — filtered out, deleted, inside a collapsed cluster
 — is ignored for as long as that is true, and the finder picks the root instead. The option is kept,
 so the node coming back re-roots the tree.
@@ -75,8 +95,6 @@ graph.simulation.setTreeRoot({ rootId: 'node-42' })          // pin the tree to 
 graph.simulation.setTreeRoot({ algorithm: 'MinHeight' })     // drop the pin, let the finder choose
 graph.simulation.getTreeRoot() // { rootId: undefined, algorithm: 'MinHeight' }
 ```
-
-Similarly, the `flipEdgeDirection` option lets you reverse the direction of edges in a directed graph (so `A -> B` becomes `B -> A`)—this only affects the layout computation, not the underlying graph data.
 
 #### Spacing
 

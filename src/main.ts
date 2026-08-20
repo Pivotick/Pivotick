@@ -275,7 +275,7 @@ export function createSampleGraph(): Pivotick {
 
     }
 
-    const topo = 'vt'
+    const topo = 'ail'
 
     const colorPaletteMapper = new ColorPaletteMapper('pivotick')
     const graph = new Pivotick(container, {nodes: topologies[topo].nodes, edges: topologies[topo].edges}, {
@@ -284,7 +284,7 @@ export function createSampleGraph(): Pivotick {
             // warmupTicks: 5000,
             // d3ManyBodyStrength: -500,
             // d3LinkStrength: 0.1,
-            d3LinkDistance: 90,
+            //d3LinkDistance: 90,
         },
         layout: {
             // type: 'tree',

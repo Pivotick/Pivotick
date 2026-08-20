@@ -140,3 +140,64 @@ export function findMinHeightDAGRoot(nodes: Node[], edges: Edge[]): Node {
 
     return bestNode ?? nodes[0]
 }
+
+
+/**
+ * The root for a graph whose arrows do *not* form a hierarchy: the node closest to the
+ * middle of the graph, reading every edge as undirected.
+ *
+ * The odd one out among the finders above — they all read arrow direction, and this one
+ * deliberately ignores it. It exists for converging data, where every leaf is a source
+ * and no single node reaches the graph along the arrows: there the direction-aware
+ * finders can only return a node that sees a handful of others, and the tree comes out
+ * as a comb of hundreds of stubs. See {@link TreeLayout.buildLevelsStatic}, which falls
+ * back to this when the finder it was asked for cannot cover the graph.
+ *
+ * Found by *double sweep* — walk to the farthest node, walk again to the farthest node
+ * from there, and take the middle of that path. On a tree that is exactly the centre;
+ * off a tree it is within one level of it, which is far closer than this needs to be.
+ * Two BFS passes, so O(V+E): the exhaustive search (BFS from every node) agreed on the
+ * same node for both AIL datasets and costs O(V·E).
+ */
+export function findUndirectedCenterRoot(nodes: Node[], edges: Edge[], startFrom?: string): Node {
+    const nodeById = new Map(nodes.map(node => [node.id, node]))
+    const adj = new Map<string, string[]>(nodes.map(node => [node.id, []]))
+    for (const edge of edges) {
+        // Edges pointing outside the given node set are skipped rather than throwing.
+        if (!adj.has(edge.from.id) || !adj.has(edge.to.id)) continue
+        adj.get(edge.from.id)!.push(edge.to.id)
+        adj.get(edge.to.id)!.push(edge.from.id)
+    }
+
+    /** Levels and the walk's parent tree, from one node, over the undirected reading. */
+    const walk = (start: string) => {
+        const levels = new Map<string, number>([[start, 0]])
+        const parentOf = new Map<string, string>()
+        const order = [start]
+        for (let i = 0; i < order.length; i++) {
+            const curr = order[i]
+            for (const neighbor of adj.get(curr) ?? []) {
+                if (levels.has(neighbor)) continue
+                levels.set(neighbor, levels.get(curr)! + 1)
+                parentOf.set(neighbor, curr)
+                order.push(neighbor)
+            }
+        }
+        // `order` is a BFS order, so its last entry is always a deepest node.
+        return { levels, parentOf, farthest: order[order.length - 1] }
+    }
+
+    // Only the start node's own component is searched, which is the one being rooted.
+    const start = startFrom !== undefined && adj.has(startFrom) ? startFrom : nodes[0]?.id
+    if (start === undefined) return nodes[0]
+
+    const end = walk(start).farthest
+    const { parentOf, farthest: other } = walk(end)
+
+    // Back up the parent chain to recover the longest path found, and take its middle.
+    const path: string[] = []
+    for (let step: string | undefined = other; step !== undefined; step = parentOf.get(step)) {
+        path.push(step)
+    }
+    return nodeById.get(path[Math.floor(path.length / 2)]) ?? nodes[0]
+}

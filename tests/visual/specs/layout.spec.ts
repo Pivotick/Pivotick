@@ -21,7 +21,7 @@ import type { Page } from '@playwright/test'
  */
 type Positions = Record<string, { x: number; y: number }>
 
-async function positionsAfterLayout(page: Page, name: 'tree' | 'egoNet' | 'basic' | 'pair', layout: Record<string, unknown>): Promise<Positions> {
+async function positionsAfterLayout(page: Page, name: 'tree' | 'egoNet' | 'basic' | 'pair' | 'converging', layout: Record<string, unknown>): Promise<Positions> {
     await loadFixture(page, name, { layout })
     await harness(page, 'applyLayout')
     return (await harness(page, 'nodePositions')) as Positions
@@ -29,6 +29,21 @@ async function positionsAfterLayout(page: Page, name: 'tree' | 'egoNet' | 'basic
 
 /** Distance from the origin (radial layouts place the root at (0, 0)). */
 const radius = (p: { x: number; y: number }) => Math.hypot(p.x, p.y)
+
+/**
+ * The levels of a laid-out vertical tree, shallowest first, each as its sorted ids.
+ * A level shares one `y` exactly, so rounding groups rather than buckets.
+ */
+const levelsOf = (p: Positions): string[][] => {
+    const byRow = new Map<number, string[]>()
+    for (const [id, point] of Object.entries(p)) {
+        const row = Math.round(point.y)
+        byRow.set(row, [...(byRow.get(row) ?? []), id])
+    }
+    return [...byRow.entries()]
+        .sort(([a], [b]) => a - b)
+        .map(([, ids]) => ids.sort())
+}
 
 const spread = (p: Positions, axis: 'x' | 'y') => {
     const values = Object.values(p).map(point => point[axis])
@@ -178,6 +193,21 @@ test.describe('layouts', () => {
         expect(p.a.y).toBeLessThan(p.b.y)
         expect(p.c.y).toBeLessThan(p.d.y)
         expect(p.d.y).toBeLessThan(p.e.y)
+    })
+
+    test('a graph whose arrows all converge still comes out as one tree', async ({ page }) => {
+        // Every leaf is a source, so no node reaches the graph along the arrows — the best
+        // any of them manages is 3 of the 17. A directed spanning walk therefore left all
+        // twelve leaves as roots of their own, hung side by side under the synthetic forest
+        // root, with most edges dropping out of the hierarchy and drawn across the layout.
+        // The layout now reads the edges both ways instead and re-roots at the middle.
+        const p = await positionsAfterLayout(page, 'converging', { type: 'tree' })
+
+        expect(levelsOf(p)).toEqual([
+            ['sink'],                          // the middle of the graph roots it...
+            ['h0', 'h1', 'h2', 'h3'],          // ...its four hubs one level down...
+            ['l0', 'l1', 'l10', 'l11', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7', 'l8', 'l9'],
+        ])                                     // ...and every leaf on the last level
     })
 
     test('a forest is laid out side by side, not stacked on the origin', async ({ page }) => {

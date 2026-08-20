@@ -9,7 +9,7 @@ import merge from 'lodash.merge'
 import type { Graph } from '../../Graph'
 import type { Node } from '../../Node'
 import type { Edge } from '../../Edge'
-import { findFirstZeroInDegreeNode, findMaxReachabilityRoot, findMinHeightDAGRoot, findMinMaxDistanceRoot } from '../analytics/DAGAlgorithms'
+import { findFirstZeroInDegreeNode, findMaxReachabilityRoot, findMinHeightDAGRoot, findMinMaxDistanceRoot, findUndirectedCenterRoot } from '../analytics/DAGAlgorithms'
 import type { AnyTreeLayoutOptions, TreeLayoutOptions } from '../../interfaces/LayoutOptions'
 import { neededLevelGap, neededSiblingGap, tuneTreeSpacing, type AutoTreeContext, type TreeGap } from '../../AutoTreeSpacing'
 import type { SimulationForces } from '../../interfaces/SimulationOptions'
@@ -33,6 +33,20 @@ const PARKED_GAP = 20
  */
 export const FOREST_ROOT_ID = '__pivotick_forest_root__'
 
+/**
+ * How much of its own component the *best available* root must reach along the arrows for
+ * the spanning tree to be walked directed at all. Below this no node can traverse the
+ * graph the arrows describe, so they are taken not to describe a hierarchy and the walk
+ * reads every edge both ways — see {@link TreeLayout.buildLevelsStatic}.
+ *
+ * Half is a deliberately weak test: it should catch data that converges rather than
+ * branches, and leave alone a hierarchy that merely has a few extra sources. Measured on
+ * the two AIL demo graphs, each in both orientations, the two regimes sit at 1–2% and
+ * 96–100% — so anything between them picks the same branch, and this is not a knob that
+ * wants tuning.
+ */
+const MIN_DIRECTED_COVERAGE = 0.5
+
 const DEFAULT_TREE_LAYOUT_OPTIONS: TreeLayoutOptions = {
     type: 'tree',
     rootId: undefined,
@@ -44,7 +58,6 @@ const DEFAULT_TREE_LAYOUT_OPTIONS: TreeLayoutOptions = {
     levelSpacing: 1,
     siblingSpacing: 1,
     horizontal: false,
-    flipEdgeDirection: false,
 }
 
 export interface TreeNode extends Node {
@@ -139,7 +152,7 @@ export class TreeLayout {
 
     private layoutOnce(): void {
         const nodes = this.graph.getNodes()
-        const edges = this.options.flipEdgeDirection ? this.flipEdgeDirection(this.graph.getEdges()) : this.graph.getEdges()
+        const edges = this.graph.getEdges()
         const { levels, maxDepth, parked } = this.buildLevels(
             // The same root the positions come from: `levels` is what the radial force
             // assigns rings by, and a different root there puts a node on a ring its
@@ -219,15 +232,6 @@ export class TreeLayout {
 
     private static widestOf(nodes: Array<{ radius: number }>): number {
         return nodes.reduce((max, n) => Math.max(max, n.radius), 0)
-    }
-
-    protected flipEdgeDirection(edges: Edge[]): Edge[] {
-        edges.forEach((edge) => {
-            const tmp = edge.from
-            edge.setFrom(edge.to)
-            edge.setTo(tmp)
-        })
-        return edges
     }
 
     private setSizes(): void {
@@ -805,7 +809,9 @@ export class TreeLayout {
      * @param nodes - The list of graph nodes.
      * @param edges - The list of graph edges (assumed to be directed).
      * @param passedRootId - The ID of the node considered as the root. Ignored when no such
-     *   node is in `nodes`; when it is, the walk follows edges in either direction.
+     *   node is in `nodes`; when it is, the walk follows edges in either direction — as it
+     *   also does for a *found* root whose arrows cannot cover the graph, see
+     *   {@link MIN_DIRECTED_COVERAGE}.
      * @param rootIdAlgorithmFinder - The algorithm to use to find the root ID.
      * @returns A mapping of each node's ID to its depth level in the tree and the maximum depth
      */
@@ -847,9 +853,10 @@ export class TreeLayout {
         // How the spanning tree is walked. Naming a root is a deliberate choice, so it
         // outranks arrow direction: a directed walk from a leaf reaches nothing, and the
         // graph would fall apart into the picked node plus the old tree beside it. This is
-        // already the rule `EgoTreeLayout` uses. A root the *finders* chose keeps walking
-        // directed — it was read off the arrows in the first place.
-        const undirected = rootId !== undefined
+        // already the rule `EgoTreeLayout` uses. A root the *finders* chose starts out
+        // walking directed — it was read off the arrows in the first place — and gives that
+        // up only if the arrows turn out not to be a hierarchy, see `MIN_DIRECTED_COVERAGE`.
+        let undirected = rootId !== undefined
 
         // Keyed by node id, so both are Maps: on a plain object a node called `constructor` or
         // `toString` reads as already-visited through the prototype and drops out of the layout.
@@ -866,11 +873,17 @@ export class TreeLayout {
         for (const { source, target } of edges) {
             // An edge whose source isn't in `nodes` is skipped rather than throwing.
             adj.get(source.id)?.push(target.id)
-            if (undirected) adj.get(target.id)?.push(source.id)
             targeted.add(target.id)
             touched.add(source.id)
             touched.add(target.id)
         }
+
+        /** Make every edge walkable both ways. Idempotent only in the sense that it is called once. */
+        const readEdgesBothWays = () => {
+            for (const { source, target } of edges) adj.get(target.id)?.push(source.id)
+            undirected = true
+        }
+        if (undirected) readEdgesBothWays()
 
         // A node no edge touches has no place in a hierarchy — nothing points at it and it
         // points at nothing. It is parked instead (see `packParked`), and kept out of the root
@@ -910,7 +923,35 @@ export class TreeLayout {
         // promote one parked node to be the tree, and then place it twice.
         const roots: string[] = []
         if (linked.length) {
-            const primaryRoot = rootId ?? TreeLayout.findRootId(linked, edges, rootIdAlgorithmFinder)
+            let primaryRoot = rootId ?? TreeLayout.findRootId(linked, edges, rootIdAlgorithmFinder)
+
+            // Can this root cover its component by following the arrows? A root that cannot
+            // is not automatically a problem — `MinHeight` picks a *leaf* of any tree, which
+            // reaches nothing and is meant to, so the question that decides it is whether
+            // **any** node could have done better.
+            //
+            // Where none can, the arrows do not describe a hierarchy at all. That is what
+            // *converging* data looks like — every leaf a source, all of them pointing at a
+            // few hubs — and it is the shape of the AIL demo graph, whose best possible root
+            // sees 7 of its 300 nodes: 259 nodes become roots of their own and only 41 of the
+            // 300 edges keep a place in the hierarchy, so it draws as a comb of stubs with the
+            // other 259 edges flying across the canvas. Reading the same edges both ways puts
+            // 299 of the 300 back in the tree under a single root.
+            //
+            // So the walk gives up on direction, and the root with it — a direction-aware
+            // finder has nothing useful to say about a graph its arrows cannot traverse.
+            // Deliberately a *fallback* and not the rule: where the arrows do form a
+            // hierarchy they are the best thing to lay out by, an org chart's natural root is
+            // the node at the top rather than the node in the middle, and each finder keeps
+            // its own answer — including the ones that deliberately name a leaf.
+            if (rootId === undefined && TreeLayout.directedCoverage(primaryRoot, adj, edges) < MIN_DIRECTED_COVERAGE) {
+                const bestPossible = findMaxReachabilityRoot(linked, edges).id
+                if (TreeLayout.directedCoverage(bestPossible, adj, edges) < MIN_DIRECTED_COVERAGE) {
+                    readEdgesBothWays()
+                    primaryRoot = findUndirectedCenterRoot(linked, edges, bestPossible).id
+                }
+            }
+
             roots.push(primaryRoot)
             walkFrom(primaryRoot)
         }
@@ -965,6 +1006,42 @@ export class TreeLayout {
             roots: roots,
             parked: parked,
         }
+    }
+
+    /**
+     * The share of `root`'s own component that `root` reaches by following the arrows —
+     * the test behind {@link MIN_DIRECTED_COVERAGE}.
+     *
+     * Measured against the component rather than the whole graph on purpose: a graph of
+     * several separate hierarchies is *supposed* to come out as a forest, and scoring
+     * against every node would read that as a failure and throw away the arrows for a
+     * graph whose arrows are perfectly good.
+     *
+     * @param adj - Adjacency in its **directed** reading, before any reverse links.
+     */
+    private static directedCoverage(root: string, adj: Map<string, string[]>, edges: Edge[]): number {
+        const reachedBy = (neighbors: Map<string, string[]>) => {
+            const seen = new Set<string>([root])
+            const queue = [root]
+            for (let i = 0; i < queue.length; i++) {
+                for (const neighbor of neighbors.get(queue[i]) ?? []) {
+                    if (seen.has(neighbor)) continue
+                    seen.add(neighbor)
+                    queue.push(neighbor)
+                }
+            }
+            return seen.size
+        }
+
+        const both = new Map<string, string[]>()
+        for (const id of adj.keys()) both.set(id, [])
+        for (const { source, target } of edges) {
+            both.get(source.id)?.push(target.id)
+            both.get(target.id)?.push(source.id)
+        }
+
+        const component = reachedBy(both)
+        return component === 0 ? 1 : reachedBy(adj) / component
     }
 
     /**
