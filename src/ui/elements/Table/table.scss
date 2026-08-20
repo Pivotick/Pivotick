@@ -113,3 +113,195 @@
         display: none;
     }
 }
+
+// A count of what is listed — "12 of 40 nodes" once a column filter narrows it.
+.pvt-table-summary {
+    font-size: 12px;
+    color: var(--pvt-text-color-4);
+    white-space: nowrap;
+}
+
+.pvt-table-columns-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    // Pushed to the far end of the header bar.
+    margin-left: auto;
+    padding: 2px 8px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--pvt-text-color-4);
+    font-size: 12px;
+    cursor: pointer;
+
+    svg {
+        width: 13px;
+        height: 13px;
+    }
+
+    &:hover,
+    &.active {
+        border-color: var(--pvt-chrome-border);
+        color: var(--pvt-text-color-6);
+    }
+
+    .pvt-table-collapsed & {
+        display: none;
+    }
+}
+
+.pvt-table-columns-picker {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 8px;
+    z-index: 3;
+    min-width: 150px;
+    max-height: 240px;
+    overflow-y: auto;
+    padding: 5px;
+    border: 1px solid var(--pvt-chrome-border);
+    border-radius: 6px;
+    background-color: var(--pvt-chrome-bg);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
+}
+
+.pvt-table-columns-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 3px 5px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+
+    &:hover {
+        background-color: var(--pvt-bg-color-4);
+    }
+}
+
+// ── the grid ────────────────────────────────────────────────────────────────
+// Header and rows share one `grid-template-columns` so the columns line up
+// without a table element — which is what makes windowed rows possible later.
+
+.pvt-table-grid {
+    // Wider than the dock is fine: the body scrolls. `min-content` keeps the row
+    // grid from collapsing narrower than its columns.
+    min-width: min-content;
+    font-size: 12px;
+}
+
+.pvt-table-head {
+    display: grid;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background-color: var(--pvt-chrome-bg);
+    border-bottom: 1px solid var(--pvt-chrome-border);
+}
+
+.pvt-table-th {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 5px 8px;
+    min-width: 0;
+
+    &[data-align='right'] {
+        align-items: flex-end;
+    }
+}
+
+.pvt-table-th-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--pvt-text-color-4);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:disabled {
+        cursor: default;
+    }
+
+    &:hover:not(:disabled),
+    &.pvt-table-sorted {
+        color: var(--pvt-text-color-6);
+    }
+}
+
+.pvt-table-sort-arrow svg {
+    width: 11px;
+    height: 11px;
+}
+
+.pvt-table-filter {
+    width: 100%;
+    min-width: 0;
+    padding: 2px 5px;
+    border: 1px solid var(--pvt-chrome-border);
+    border-radius: 3px;
+    background-color: var(--pvt-bg);
+    color: var(--pvt-text-color-6);
+    font-size: 11px;
+
+    &::placeholder {
+        color: var(--pvt-text-color-3);
+    }
+}
+
+.pvt-table-row {
+    display: grid;
+    border-bottom: 1px solid var(--pvt-chrome-border);
+    cursor: default;
+
+    &:hover {
+        background-color: var(--pvt-bg-color-4);
+    }
+}
+
+.pvt-table-td {
+    padding: 4px 8px;
+    min-width: 0;
+    // One line per cell: a long value is clipped rather than reflowing the row, so
+    // every row keeps the same height (which the windowing depends on).
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &[data-align='right'] {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+    }
+}
+
+// The Visibility column's reading, picked out so it can be scanned down.
+.pvt-table-td[data-visibility] {
+    color: var(--pvt-text-color-4);
+}
+
+.pvt-table-td[data-visibility='filtered'],
+.pvt-table-td[data-visibility='excluded'] {
+    font-style: italic;
+}
+
+.pvt-table-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 28px 12px;
+    color: var(--pvt-text-color-3);
+
+    svg {
+        width: 18px;
+        height: 18px;
+    }
+}

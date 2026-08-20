@@ -646,7 +646,7 @@ export interface TableOptions {
      */
     columns?: TableColumn[],
     /** The edge columns, on the same terms as {@link TableOptions.columns}. */
-    edgeColumns?: TableColumn[],
+    edgeColumns?: TableColumn<Edge>[],
     /** Open the dock on boot. @default false */
     open?: boolean,
     /**
@@ -691,7 +691,12 @@ export type TableExportFormat = 'csv' | 'json'
  * { key: 'severity', label: 'Severity', type: 'numberRange', align: 'right', filterable: true }
  * ```
  */
-export interface TableColumn extends Pick<FilterFacet, 'key' | 'label' | 'type' | 'accessor' | 'order'> {
+export interface TableColumn<T extends Node | Edge = Node> extends Pick<FilterFacet, 'key' | 'label' | 'type' | 'order'> {
+    /**
+     * How to read this column off an element. Defaults to `element.getData()[key]`, which
+     * is what makes a {@link FilterFacet} usable as a column unchanged.
+     */
+    accessor?: (element: T) => unknown,
     /** Column width — a pixel count, or any CSS length. @default sized from its content */
     width?: number | string,
     /** @default 'right' for `numberRange`, `'left'` otherwise */
@@ -712,5 +717,5 @@ export interface TableColumn extends Pick<FilterFacet, 'key' | 'label' | 'type' 
      * Ignored by export, which always writes the raw value.
      * @default `String(value)`
      */
-    format?: (value: unknown, element: Node | Edge) => string | HTMLElement,
+    format?: (value: unknown, element: T) => string | HTMLElement,
 }

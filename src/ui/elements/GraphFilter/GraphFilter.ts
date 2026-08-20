@@ -1,5 +1,5 @@
 import type {
-    FilterFacet, FilterFieldConfig, FilterMatchMode, FilterOptions, GraphFilters,
+    FilterFacet, FilterFieldConfig, FilterOptions, GraphFilters,
 } from '../../../interfaces/GraphQueryEngine'
 import { createHtmlElement, createHtmlTemplate, createIcon } from '../../../utils/ElementCreation'
 import { Node } from '../../../Node'
@@ -10,13 +10,9 @@ import { funnel, funnelClear, graphEdgeIcon, nodeProperty, show } from '../../ic
 import { createInspectModal } from '../modals/InspectNodeModal/InspectNodeModal'
 import type { UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
+import { collectDataAttributes, inferAttributeType } from '../../../utils/DataAttributes'
 import './graphFilter.scss'
 
-
-interface AttributeFilter {
-    values?: unknown[];              // distinct values for categorical attributes
-    range?: [number, number];        // min/max for purely numeric attributes
-}
 
 const DEFAULT_FILTER_BUTTON_TEXT = 'Filter Graph'
 
@@ -322,84 +318,35 @@ export class GraphFilter extends UIComponent {
         return options.map(({ label, value }) => ({ label, value }))
     }
 
-    /** Zero-config fallback: one field per node-data key, widget inferred from its values. */
+    /**
+     * Zero-config fallback: one field per node-data key, widget inferred from its values.
+     *
+     * The scan and the inference live in `utils/DataAttributes` because the data dock
+     * derives its columns from exactly the same reading — sharing them is what keeps the
+     * filter panel's controls and the dock's column types from ever disagreeing.
+     */
     private derivedFields(): FieldConfig[] {
-        const attributeFilters = this.getAvailableNodeAttributes()
-        return Object.entries(attributeFilters).map(([key, filter]) => {
-            let filterType: FieldType = 'text'
-            let matchMode: FilterMatchMode = 'exact'
-            let valuesAreBoolean = false
-            if (filter.range) {
-                filterType = 'numberRange'
-            } else if (filter.values && filter.values.every((v) => typeof v === 'string' && v.length < 64)) {
-                if (filter.values.length > 2) {
-                    filterType = 'multiselect'
-                    matchMode = 'partial'
-                } else {
-                    filterType = 'select'
-                }
-            } else if (filter.values && filter.values.every((v) => typeof v === 'boolean')) {
-                filterType = 'select'
-                filter.values = ['true', 'false']
-                valuesAreBoolean = true
+        const attributes = collectDataAttributes(
+            this.uiManager.graph.getMutableNodes(),
+            this.filterOptions.excludeKeys,
+        )
+
+        return attributes.map((attribute) => {
+            const inferred = inferAttributeType(attribute)
+            const field: FieldConfig = {
+                key: attribute.key,
+                label: FormFactory.niceLabelFromKey(attribute.key),
+                type: inferred.type as FieldType,
+                matchMode: inferred.matchMode,
+                valuesAreBoolean: inferred.valuesAreBoolean,
             }
 
-            const option: FieldConfig = {
-                key,
-                label: FormFactory.niceLabelFromKey(key),
-                type: filterType,
-                matchMode: matchMode,
-                valuesAreBoolean: valuesAreBoolean,
+            if ((field.type === 'select' || field.type === 'multiselect') && inferred.options) {
+                field.options = inferred.options.map((value) => ({ label: String(value), value: String(value) }))
+                field.allowEmpty = true
             }
-
-            if ((option.type == 'select' || option.type == 'multiselect') && filter.values) {
-                option.options = filter.values.map((v) => {
-                    return {
-                        label: String(v),
-                        value: String(v)
-                    }
-                })
-                option.allowEmpty = true
-            }
-            return option
+            return field
         })
-    }
-
-    private getAvailableNodeAttributes(): Record<string, AttributeFilter> {
-        const excludedKeys = new Set(this.filterOptions.excludeKeys ?? [])
-        const attributeMap = new Map<string, { numbers: Set<number>, values: Set<unknown> }>()
-        const nodes = this.uiManager.graph.getMutableNodes()
-
-        nodes.forEach(node => {
-            Object.entries(node.getData()).forEach(([key, value]) => {
-                if (value === null || value === undefined) return // not a filterable facet value
-                if (excludedKeys.has(key)) return
-
-                let attributeFilter = attributeMap.get(key)
-                if (!attributeFilter) {
-                    attributeFilter = { numbers: new Set(), values: new Set() }
-                    attributeMap.set(key, attributeFilter)
-                }
-                if (typeof value === 'number') {
-                    attributeFilter.numbers.add(value)
-                } else {
-                    attributeFilter.values.add(value)
-                }
-            })
-        })
-
-        const attributeFilters = new Map<string, AttributeFilter>()
-        attributeMap.forEach((filter, key) => {
-            const attributeFilter: AttributeFilter = {}
-            // Purely numeric ⇒ a real min/max range widget; anything mixed stays a value list.
-            if (filter.values.size === 0 && filter.numbers.size > 0) {
-                attributeFilter['range'] = [Math.min(...filter.numbers), Math.max(...filter.numbers)]
-            } else {
-                attributeFilter['values'] = [...new Set([...filter.values, ...filter.numbers])]
-            }
-            attributeFilters.set(key, attributeFilter)
-        })
-        return Object.fromEntries(attributeFilters)
     }
 
     private filterGraph(filters: FormValues): void {

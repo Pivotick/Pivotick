@@ -1,6 +1,8 @@
 import { UIComponent } from '../../UIComponent'
 import type { UIManager } from '../../UIManager'
 import type { TableOptions } from '../../../interfaces/GraphUI'
+import { TableGrid } from './TableGrid'
+import { sliderTune } from '../../icons'
 import './table.scss'
 
 /**
@@ -48,6 +50,12 @@ export class Table extends UIComponent {
     private header?: HTMLDivElement
     private body?: HTMLDivElement
     private toggle?: HTMLButtonElement
+    private summary?: HTMLSpanElement
+    private pickerButton?: HTMLButtonElement
+    private picker?: HTMLDivElement
+    private grid?: TableGrid
+    /** Coalescing frame: one rebuild per frame however many events arrive. */
+    private rebuildFrame: number | null = null
 
     private open: boolean
     private collapsed: boolean
@@ -99,9 +107,25 @@ export class Table extends UIComponent {
         })
         this.header.appendChild(this.toggle)
 
+        this.summary = document.createElement('span')
+        this.summary.className = 'pvt-table-summary'
+        this.header.appendChild(this.summary)
+
+        this.pickerButton = document.createElement('button')
+        this.pickerButton.type = 'button'
+        this.pickerButton.className = 'pvt-table-columns-button'
+        this.pickerButton.innerHTML = `${sliderTune}<span>Columns</span>`
+        this.pickerButton.title = 'Choose which columns to show'
+        this.listen(this.pickerButton, 'click', () => this.togglePicker())
+        this.header.appendChild(this.pickerButton)
+
         this.body = document.createElement('div')
         this.body.className = 'pvt-table-body'
         this.root.appendChild(this.body)
+
+        this.grid = new TableGrid(this.uiManager, 'nodes', this.options.sort)
+        this.grid.setSummaryTarget(this.summary)
+        this.body.appendChild(this.grid.getRoot())
 
         container.appendChild(this.root)
 
@@ -110,7 +134,92 @@ export class Table extends UIComponent {
         this.apply()
     }
 
+    protected onAfterMount() {
+        const graph = this.uiManager.graph
+
+        // One rebuild per frame, whatever arrives. A single user action fires several of
+        // these — a filter apply emits both `filterChange` and the visibility changes it
+        // caused — and rebuilding per event is both visibly janky and a good way to lose
+        // the scroll position.
+        const queue = () => this.queueRebuild()
+        for (const event of ['dataBatchChanged', 'nodeAdd', 'nodeRemove', 'nodeChange', 'edgeAdd', 'edgeRemove', 'edgeChange'] as const) {
+            graph.on(event, queue)
+            this.track(() => graph.off(event, queue))
+        }
+        // Filtering moves values in the Visibility column without touching the data.
+        for (const event of ['filterAdd', 'filterRemove', 'filterChange', 'filterReset'] as const) {
+            graph.queryEngine.on(event, queue)
+            this.track(() => graph.queryEngine.off(event, queue))
+        }
+
+        this.queueRebuild()
+    }
+
+    protected onGraphReady() {
+        this.queueRebuild()
+    }
+
+    /** Schedule a rebuild for the next frame, collapsing any already pending. */
+    private queueRebuild(): void {
+        if (this.rebuildFrame !== null) return
+        this.rebuildFrame = requestAnimationFrame(() => {
+            this.rebuildFrame = null
+            this.grid?.rebuild()
+            this.grid?.updateSummary()
+            if (this.picker) this.renderPicker()
+        })
+    }
+
+    /* ---------- the column picker ---------- */
+
+    private togglePicker(): void {
+        if (this.picker) {
+            this.picker.remove()
+            this.picker = undefined
+            this.pickerButton?.classList.remove('active')
+            return
+        }
+        this.picker = document.createElement('div')
+        this.picker.className = 'pvt-table-columns-picker'
+        this.pickerButton?.classList.add('active')
+        this.header?.appendChild(this.picker)
+        this.renderPicker()
+    }
+
+    /**
+     * One checkbox per column. Every column is listed, including the ones switched off —
+     * the dock shows everything by default, so on property-heavy data this is how you get
+     * a table you can read rather than one you have to scroll sideways through.
+     */
+    private renderPicker(): void {
+        const picker = this.picker
+        const grid = this.grid
+        if (!picker || !grid) return
+
+        picker.innerHTML = ''
+        for (const column of grid.getAllColumns()) {
+            const row = document.createElement('label')
+            row.className = 'pvt-table-columns-row'
+
+            const checkbox = document.createElement('input')
+            checkbox.type = 'checkbox'
+            checkbox.checked = !grid.isColumnHidden(column.key)
+            checkbox.addEventListener('change', () => {
+                grid.setColumnHidden(column.key, !checkbox.checked)
+                grid.updateSummary()
+            })
+
+            const text = document.createElement('span')
+            text.textContent = column.label ?? column.key
+
+            row.append(checkbox, text)
+            picker.appendChild(row)
+        }
+    }
+
     protected onDestroy() {
+        if (this.rebuildFrame !== null) cancelAnimationFrame(this.rebuildFrame)
+        this.rebuildFrame = null
         this.observer?.disconnect()
         this.observer = undefined
         // Give the grid row back before losing the handle that can find it.
@@ -121,6 +230,15 @@ export class Table extends UIComponent {
         this.header = undefined
         this.body = undefined
         this.toggle = undefined
+        this.summary = undefined
+        this.pickerButton = undefined
+        this.picker = undefined
+        this.grid = undefined
+    }
+
+    /** The grid, for anything that needs its rows (export, selection sync). */
+    public getGrid(): TableGrid | undefined {
+        return this.grid
     }
 
     /* ---------- open / collapse ---------- */
