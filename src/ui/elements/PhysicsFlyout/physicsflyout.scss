@@ -1,5 +1,6 @@
-// B3 Physics flyout — layout picker + simulation card (presets, sliders, run
-// toggle). The panel chrome it sits in is shared, see `Flyout/flyout.scss`.
+// B3 Physics flyout — layout picker, root + spacing cards for a tree layout, and the
+// simulation card (presets, sliders, run toggle) for a force one. The panel chrome it
+// sits in is shared, see `Flyout/flyout.scss`.
 // Layout picker: one tile per layout, two per row — pick in a single click.
 .pvt-physicsflyout-layouts {
     display: grid;
@@ -8,7 +9,10 @@
     padding: 0 3px;
 }
 
-.pvt-physicsflyout-layout {
+// Two tile rows share one look: the layout picker and the Root card's four choices.
+// Same gesture in both — one click picks, the picked one stays lit.
+.pvt-physicsflyout-layout,
+.pvt-physicsflyout-roottile {
     display: flex;
     align-items: center;
     gap: 7px;
@@ -46,9 +50,18 @@
     }
 }
 
-// The simulation card and the tree-spacing card that stands in for it share the
-// same chrome; only one of the two is ever live (see `updateLayoutControls`).
+// The Root card's tiles. One per row, unlike the layout picker above: a root is named
+// by what it picks ("Widest reach", "First source"), and two of those to a row wrap onto
+// a second line and read as scruffy next to the one-word layout tiles.
+.pvt-physicsflyout-roots {
+    display: grid;
+    gap: 5px;
+}
+
+// The simulation card, and the two cards that stand in for it under a tree layout,
+// share the same chrome; only one side is ever live (see `updateLayoutControls`).
 .pvt-physicsflyout-card,
+.pvt-physicsflyout-root,
 .pvt-physicsflyout-spacing {
     margin: 8px 0 0;
     padding: 11px;

@@ -45,14 +45,34 @@ edges, so neither of these stops a tree layout:
   a ring of their own outside the last. Only nodes nothing points at *and* which point at nothing are
   parked, so no edge is ever left stretching from the tree to the parking area.
 
-Note that `rootIdAlgorithmFinder: 'MinMaxDistance'` and `'MinHeight'` are topological-sort based, so
-on a graph with a cycle they warn and fall back to the first node. The default `'MaxReachability'`
-has no such limitation.
+Note that `rootIdAlgorithmFinder: 'MinMaxDistance'` and `'MinHeight'` are the same search — the node
+whose longest path down is shortest — and both are topological-sort based, so on a graph with a cycle
+they warn and fall back to the first node. The default `'MaxReachability'` has no such limitation.
 
 #### Tree Root Finder
 In a tree-based layout, one node must be designated as the root. You can specify the root node using the `rootId` option.
 
 If you're unsure which node should be the root, don't worry! Pivotick will automatically select one using the algorithm defined in `rootIdAlgorithmFinder`.
+
+A named `rootId` is walked **ignoring edge direction**, so any node can root a whole tree — pick a
+leaf and the graph re-hangs beneath it, with its former parent one level down. (Following the arrows
+from a leaf would reach nothing, and the rest of the graph would be laid out beside it as a second
+component.) The edges themselves are still drawn as they are, so a link used the other way round
+renders as an arrow pointing up a level. A root the `rootIdAlgorithmFinder` chose keeps walking along
+the arrows: it was read off them in the first place.
+
+A `rootId` naming a node that is not in the graph — filtered out, deleted, inside a collapsed cluster
+— is ignored for as long as that is true, and the finder picks the root instead. The option is kept,
+so the node coming back re-roots the tree.
+
+The root can also be changed at runtime — the Physics flyout offers it as a card of tiles whenever a
+tree layout is active, one of them being "the node I have selected":
+
+```ts
+graph.simulation.setTreeRoot({ rootId: 'node-42' })          // pin the tree to a node
+graph.simulation.setTreeRoot({ algorithm: 'MinHeight' })     // drop the pin, let the finder choose
+graph.simulation.getTreeRoot() // { rootId: undefined, algorithm: 'MinHeight' }
+```
 
 Similarly, the `flipEdgeDirection` option lets you reverse the direction of edges in a directed graph (so `A -> B` becomes `B -> A`)—this only affects the layout computation, not the underlying graph data.
 

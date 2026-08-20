@@ -6,8 +6,9 @@
 Things the tree layout needs that were each too big or too semantic to fold into a spacing change.
 Sami's call (2026-08-20): "we'll definitely have to revisit the other big change afterward."
 
-**B1 is done** — delivered 2026-08-20, see `prd/tree-layout-cycles.md`. Its entry is kept below for
-the reasoning; the rest are still open.
+**B1 and B2 are done** — B1 delivered 2026-08-20, see `prd/tree-layout-cycles.md`; B2 delivered
+2026-08-20, see `prd/tree-root-picker.md`. Their entries are kept below for the reasoning; B3 is
+still open.
 
 ---
 
@@ -36,7 +37,7 @@ and its wording; `EgoTreeLayout`, which builds its own one-level hierarchy and i
 `tests/visual/specs/physics-flyout.spec.ts` → "tree layouts are disabled on a cyclic graph", which
 asserts today's behaviour and would need to invert.
 
-## B2 — No root picker in the UI
+## B2 — No root picker in the UI — **DONE**
 
 `rootId` and `rootIdAlgorithmFinder` are real options (`'FirstZeroInDegree' | 'MaxReachability' |
 'MinMaxDistance' | 'MinHeight'`, implemented in `plugins/analytics/DAGAlgorithms.ts`) with no way to

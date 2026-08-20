@@ -1,10 +1,12 @@
 import { Flyout } from '../Flyout/Flyout'
 import type { FlyoutMode } from '../../ModeStore'
 import { PHYSICS_KNOB_RANGES, TREE_SPACING_RANGE, type PhysicsKnobs, type PhysicsPresetName, type TreeSpacing } from '../../../Simulation'
+import type { TreeLayoutAlgorithm } from '../../../plugins/layout/Tree'
 import {
     atom, play, pause,
     graphControlLayoutOrganic, graphControlLayoutTreeV, graphControlLayoutTreeH, graphControlLayoutTreeR,
     magnet, arrowsHorizontal, arrowsVertical, circleDashed, wind, focusElement, timeDuration10, sparkles,
+    firstValidNode, mostConnectedNode, minHeight, selectElement,
 } from '../../icons'
 import './physicsflyout.scss'
 
@@ -88,6 +90,34 @@ const SPACING_SLIDERS: Array<{ key: SpacingKey, label: string, desc: string, ico
     { key: 'siblingSpacing', label: 'Sibling distance', desc: 'How far apart nodes on the same level sit. The radial layout spreads a level over the whole circle, so it ignores this one.', icon: arrowsHorizontal, radial: false },
 ]
 
+/**
+ * What the Root card offers: the node the user has selected, or one of the finders in
+ * `plugins/analytics/DAGAlgorithms.ts`.
+ */
+type RootChoice = 'selected' | TreeLayoutAlgorithm
+
+/**
+ * The Root tiles, in the order they read best: the deliberate choice first, then the
+ * three finders.
+ *
+ * Three finders, not the four `TreeLayoutAlgorithm` accepts: `MinMaxDistance` and
+ * `MinHeight` are the same search — smallest longest-path-down — so offering both would
+ * be offering the same tile twice. A tree that asks for `MinMaxDistance` lights the
+ * `MinHeight` tile, which is what it gets.
+ */
+const SELECTED_ROOT_DESCRIPTION = 'Hang the tree from the selected node. Edges are followed either way round, so any node — a leaf included — gives a whole tree. Select a node to enable this.'
+
+const ROOT_TILES: Array<{ id: RootChoice, label: string, icon: string, desc: string }> = [
+    { id: 'selected', label: 'Selected node', icon: selectElement, desc: SELECTED_ROOT_DESCRIPTION },
+    { id: 'FirstZeroInDegree', label: 'First source', icon: firstValidNode, desc: 'Root at the first node nothing points at.' },
+    { id: 'MaxReachability', label: 'Widest reach', icon: mostConnectedNode, desc: 'Root at the node that reaches the most others. The default.' },
+    { id: 'MinHeight', label: 'Shallowest', icon: minHeight, desc: 'Root at the node that makes the tree as shallow as it can be. Needs an acyclic graph; on a cyclic one it falls back to the first node.' },
+]
+
+/** The tile that stands for a finder — the two duplicate finders share one. */
+const rootTileFor = (algorithm: TreeLayoutAlgorithm): RootChoice =>
+    algorithm === 'MinMaxDistance' ? 'MinHeight' : algorithm
+
 /** Tooltip for the spacing card's Auto button. */
 const AUTO_SPACING_DESCRIPTION = 'Let the tree work out its own distances from the size of the nodes and the shape of the tree — and keep working them out as the graph changes.'
 
@@ -103,9 +133,10 @@ const TREE_ORIENTATIONS: Record<string, { horizontal?: boolean, radial?: boolean
  * (via {@link UIManager.modeStore}). Holds the layout control and the simulation
  * card — presets + live sliders driving the {@link Simulation} setter API, plus a
  * run/pause toggle. Under a non-`force` layout the presets and all but one of the
- * sliders are disabled and hidden, and the tree-spacing card takes their place: a
- * tree places nodes itself, so the distances are the layout's to give rather than
- * the forces'. The exception is {@link TREE_LIVE_SLIDER}.
+ * sliders are disabled and hidden, and the root and tree-spacing cards take their
+ * place: a tree places nodes itself, so where it hangs from and how far apart it
+ * spreads are the layout's to give rather than the forces'. The exception is
+ * {@link TREE_LIVE_SLIDER}.
  *
  * While `Auto` is active the sliders stay enabled and *follow* what the tuner
  * decides ({@link syncAutoKnobs}) — so auto's choices are visible and can be taken
@@ -126,8 +157,14 @@ export class PhysicsFlyout extends Flyout {
     private readonly spacingValues = new Map<SpacingKey, HTMLElement>()
     private readonly presetButtons = new Map<PresetChoice, HTMLButtonElement>()
     private readonly layoutButtons = new Map<string, HTMLButtonElement>()
+    private readonly rootButtons = new Map<RootChoice, HTMLButtonElement>()
+    private rootCard?: HTMLDivElement
     /** The tile the graph is laid out by; drives which controls are live. */
     private activeLayout = 'force'
+    /** The node the tree is pinned to, if the user picked one; the Root card's state. */
+    private pinnedRootId?: string
+    /** The finder in force while nothing is pinned. */
+    private rootFinder: TreeLayoutAlgorithm = 'MaxReachability'
     /** Whether tree spacing is left to the tuner — the Auto button's state. */
     private autoSpacing = true
     private autoSpacingButton?: HTMLButtonElement
@@ -158,8 +195,14 @@ export class PhysicsFlyout extends Flyout {
             const button = this.query<HTMLButtonElement>(`.pvt-physicsflyout-layout[data-layout="${choice.id}"]`)
             if (button) this.layoutButtons.set(choice.id, button)
         }
+        for (const tile of ROOT_TILES) {
+            const button = this.query<HTMLButtonElement>(`.pvt-physicsflyout-roottile[data-root="${tile.id}"]`)
+            if (button) this.rootButtons.set(tile.id, button)
+        }
+        this.rootCard = this.query<HTMLDivElement>('.pvt-physicsflyout-root') ?? undefined
 
         this.wireLayout()
+        this.wireRoot()
         this.wirePhysics()
     }
 
@@ -173,6 +216,8 @@ export class PhysicsFlyout extends Flyout {
         this.highlightPreset(this.sim.isAutoPhysicsEnabled() ? 'auto' : null)
         this.updateRunButton()
         this.highlightLayout(this.sim.getLayoutType() === 'force' ? 'force' : 'tree-v')
+        this.watchSelection()
+        this.syncRoot()
         this.updateLayoutControls()
     }
 
@@ -188,6 +233,8 @@ export class PhysicsFlyout extends Flyout {
         this.spacingValues.clear()
         this.presetButtons.clear()
         this.layoutButtons.clear()
+        this.rootButtons.clear()
+        this.rootCard = undefined
     }
 
     /* ---------- layout ---------- */
@@ -198,10 +245,10 @@ export class PhysicsFlyout extends Flyout {
             if (!button) continue
             this.listen(button, 'click', () => {
                 // `changeLayout` builds a fresh TreeLayout from what it is handed, so the
-                // spacing has to travel with the orientation or every tile click would
-                // reset the sliders the user just set.
+                // spacing and the root have to travel with the orientation or every tile
+                // click would reset both to the defaults the user just moved away from.
                 if (choice.id === 'force') this.sim.changeLayout('force')
-                else this.sim.changeLayout('tree', { layout: { ...TREE_ORIENTATIONS[choice.id], ...this.spacingOptions() } })
+                else this.sim.changeLayout('tree', { layout: { ...TREE_ORIENTATIONS[choice.id], ...this.spacingOptions(), ...this.rootOptions() } })
                 this.highlightLayout(choice.id)
                 this.updateLayoutControls()
             })
@@ -228,6 +275,90 @@ export class PhysicsFlyout extends Flyout {
         if (this.autoSpacing) return { spacing: 'auto' }
         const read = (key: SpacingKey) => Number(this.spacingSliders.get(key)?.value ?? 1)
         return { spacing: 'manual', levelSpacing: read('levelSpacing'), siblingSpacing: read('siblingSpacing') }
+    }
+
+    /* ---------- root ---------- */
+
+    private wireRoot() {
+        for (const tile of ROOT_TILES) {
+            const button = this.rootButtons.get(tile.id)
+            if (!button) continue
+            this.listen(button, 'click', () => {
+                if (tile.id === 'selected') {
+                    const selected = this.selectedNodeId()
+                    if (!selected) return
+                    this.pinnedRootId = selected
+                    this.sim.setTreeRoot({ rootId: selected })
+                } else {
+                    this.pinnedRootId = undefined
+                    this.rootFinder = tile.id
+                    this.sim.setTreeRoot({ algorithm: tile.id })
+                }
+                this.highlightRoot()
+                // A tree hung from somewhere else is a different shape, and nothing pulls it
+                // back into frame — so reframe, as a spacing drag does.
+                this.uiManager.graph.renderer.fitAndCenterWhenSettled()
+            })
+        }
+    }
+
+    /**
+     * Keep the Selected-node tile in step with the selection. Subscribed at `graphReady`
+     * rather than in {@link wire}: the interaction bus belongs to the renderer, which does
+     * not exist yet when the flyout builds its markup.
+     */
+    private watchSelection() {
+        for (const event of ['selectNode', 'unselectNode', 'selectNodes', 'unselectNodes'] as const) {
+            this.trackInteraction(event, () => this.updateSelectedRootTile())
+        }
+    }
+
+    /** Take the Root card's state from the layout — at `graphReady`, and after a rebuild. */
+    private syncRoot() {
+        const root = this.sim.getTreeRoot()
+        this.pinnedRootId = root.rootId
+        this.rootFinder = root.algorithm
+        this.highlightRoot()
+    }
+
+    /** The one selected node, or nothing — a multi-selection roots nothing in particular. */
+    private selectedNodeId(): string | undefined {
+        return this.uiManager.graph.renderer.getGraphInteraction().getSelectedNode()?.node.id
+    }
+
+    /** Light the tile the tree is actually hung from. */
+    private highlightRoot() {
+        const active: RootChoice = this.pinnedRootId ? 'selected' : rootTileFor(this.rootFinder)
+        for (const [id, button] of this.rootButtons) {
+            const on = id === active
+            button.classList.toggle('active', on)
+            button.setAttribute('aria-pressed', String(on))
+        }
+        this.updateSelectedRootTile()
+    }
+
+    /**
+     * Enable the Selected-node tile only when a click on it would do something. It can be
+     * lit and disabled at once — the tree stays pinned to a node after the selection moves
+     * off it, and saying so beats pretending the pin is gone.
+     */
+    private updateSelectedRootTile() {
+        const button = this.rootButtons.get('selected')
+        if (!button) return
+        button.disabled = this.activeLayout === 'force' || !this.selectedNodeId()
+        button.title = this.pinnedRootId
+            ? `The tree is hung from "${this.pinnedRootId}". Select another node to move it.`
+            : SELECTED_ROOT_DESCRIPTION
+    }
+
+    /**
+     * What to hand `changeLayout` so a rebuilt tree hangs from the same place. A pin
+     * travels as the id; otherwise the finder does, since a fresh `TreeLayout` starts from
+     * the defaults and would silently go back to `MaxReachability`.
+     */
+    private rootOptions(): { rootId: string } | { rootIdAlgorithmFinder: TreeLayoutAlgorithm } {
+        if (this.pinnedRootId) return { rootId: this.pinnedRootId }
+        return { rootIdAlgorithmFinder: this.rootFinder }
     }
 
     /* ---------- physics ---------- */
@@ -379,6 +510,8 @@ export class PhysicsFlyout extends Flyout {
         }
         for (const button of this.presetButtons.values()) button.disabled = isTree
 
+        if (this.rootCard) this.rootCard.hidden = !isTree
+        this.updateSelectedRootTile()
         if (this.spacingCard) this.spacingCard.hidden = !isTree
         for (const spec of SPACING_SLIDERS) {
             const input = this.spacingSliders.get(spec.key)
@@ -397,6 +530,10 @@ export class PhysicsFlyout extends Flyout {
             const icon = PRESET_ICONS[p] ? `<span class="pvt-flyout-icon">${PRESET_ICONS[p]}</span>` : ''
             return `<button type="button" class="pvt-physicsflyout-preset" data-preset="${p}" title="${PRESET_DESCRIPTIONS[p]}">${icon}${p[0].toUpperCase()}${p.slice(1)}</button>`
         }).join('')
+        const roots = ROOT_TILES.map(r => `
+            <button type="button" class="pvt-physicsflyout-roottile" data-root="${r.id}" aria-pressed="false" title="${r.desc}">
+                <span class="pvt-flyout-icon">${r.icon}</span>${r.label}
+            </button>`).join('')
         const spacing = SPACING_SLIDERS.map(s => `
             <div class="pvt-physicsflyout-slider" title="${s.desc}">
                 <div class="pvt-physicsflyout-slider-head">
@@ -420,6 +557,12 @@ export class PhysicsFlyout extends Flyout {
             + this.sectionLabel('LAYOUT &amp; SIMULATION')
             + `
             <div class="pvt-physicsflyout-layouts">${layouts}</div>
+            <div class="pvt-physicsflyout-root" hidden>
+                <div class="pvt-physicsflyout-card-head">
+                    <span class="pvt-physicsflyout-card-title">Root</span>
+                </div>
+                <div class="pvt-physicsflyout-roots">${roots}</div>
+            </div>
             <div class="pvt-physicsflyout-spacing" hidden>
                 <div class="pvt-physicsflyout-card-head">
                     <span class="pvt-physicsflyout-card-title">Spacing</span>

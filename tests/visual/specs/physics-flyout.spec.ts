@@ -58,6 +58,31 @@ const drag = (locator: import('@playwright/test').Locator, value: string) =>
         el.dispatchEvent(new Event('change', { bubbles: true }))
     }, value)
 
+/** The Root card, which stands beside the spacing one under a tree layout. */
+const rootCard = (page: Page) => panel(page).locator('.pvt-physicsflyout-root')
+
+const rootTile = (page: Page, id: string) =>
+    panel(page).locator(`.pvt-physicsflyout-roottile[data-root="${id}"]`)
+
+const treeRoot = (page: Page) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    page.evaluate(() => (window.__pivotick as any).graph.simulation.getTreeRoot())
+
+/**
+ * The ids sitting at a given end of a *vertical* tree — `min` for the shallowest level,
+ * `max` for the deepest. A level shares one depth coordinate exactly, so an equality
+ * within a pixel is the level, not a tolerance.
+ */
+const nodesAtDepth = async (page: Page, end: 'min' | 'max') => {
+    const positions = (await harness(page, 'nodePositions')) as Record<string, { x: number; y: number }>
+    const ys = Object.values(positions).map(p => p.y)
+    const target = end === 'min' ? Math.min(...ys) : Math.max(...ys)
+    return Object.entries(positions)
+        .filter(([, p]) => Math.abs(p.y - target) < 1)
+        .map(([id]) => id)
+        .sort()
+}
+
 /** How tall the laid-out graph is, in graph coordinates. */
 const graphHeight = async (page: Page) => {
     const positions = (await harness(page, 'nodePositions')) as Record<string, { x: number; y: number }>
@@ -280,6 +305,94 @@ test.describe('physics-flyout', () => {
         // Auto's answer for this small graph is the fitted layout, and the slider follows it.
         expect((await treeSpacing(page)).levelSpacing).toBe(1)
         await expect(spacingSlider(page, 'levelSpacing')).toHaveValue('1')
+    })
+
+    // ── Root picker ──────────────────────────────────────────────────────────
+    // `rootId` / `rootIdAlgorithmFinder` were real options with no way to reach them;
+    // the Root card is that way. See prd/tree-root-picker.md.
+
+    // It belongs to the tree layouts, like the spacing card beside it.
+    test('a tree layout offers the root picker', async ({ page }) => {
+        await loadFixture(page, 'tree', B3)
+        await openFlyout(page)
+        await expect(rootCard(page)).toBeHidden()
+
+        await layoutTile(page, 'tree-v').click()
+        await expect(rootCard(page)).toBeVisible()
+        await expect(panel(page).locator('.pvt-physicsflyout-roottile')).toHaveCount(4)
+        // Nothing is pinned yet, so the tile for the default finder is the lit one.
+        await expect(rootTile(page, 'MaxReachability')).toHaveClass(/active/)
+        await expectElement(panel(page), 'physicsflyout-tree-root.png')
+
+        await layoutTile(page, 'force').click()
+        await expect(rootCard(page)).toBeHidden()
+    })
+
+    // A finder tile reaches the real layout, not just the highlight.
+    test('a finder tile re-roots the tree', async ({ page }) => {
+        await loadFixture(page, 'tree', B3)
+        await openFlyout(page)
+        await layoutTile(page, 'tree-v').click()
+        expect(await nodesAtDepth(page, 'min')).toEqual(['root'])
+
+        await rootTile(page, 'MinHeight').click()
+
+        expect(await treeRoot(page)).toEqual({ rootId: undefined, algorithm: 'MinHeight' })
+        await expect(rootTile(page, 'MinHeight')).toHaveClass(/active/)
+        await expect(rootTile(page, 'MaxReachability')).not.toHaveClass(/active/)
+        // The shallowest root of this fixture is the leaf `b` (nothing hangs below it).
+        // A finder root is walked along the arrows, so `b` reaches nothing and the rest of
+        // the graph keeps its own root: the two now stand side by side at the top level.
+        await expect.poll(() => nodesAtDepth(page, 'min')).toEqual(['b', 'root'])
+    })
+
+    // Nothing to hang the tree from → nothing to click. A multi-selection is no more of
+    // an answer than an empty one.
+    test('the selected-node tile is live only for a single selection', async ({ page }) => {
+        await loadFixture(page, 'tree', B3)
+        await openFlyout(page)
+        await layoutTile(page, 'tree-v').click()
+        await expect(rootTile(page, 'selected')).toBeDisabled()
+
+        await harness(page, 'selectNode', 'c')
+        await expect(rootTile(page, 'selected')).toBeEnabled()
+
+        await harness(page, 'multiSelect', ['a', 'c'])
+        await expect(rootTile(page, 'selected')).toBeDisabled()
+    })
+
+    // The point of the card: hang the tree from the node you are looking at.
+    test('the selected-node tile hangs the tree from that node', async ({ page }) => {
+        await loadFixture(page, 'tree', B3)
+        await openFlyout(page)
+        await layoutTile(page, 'tree-v').click()
+
+        await harness(page, 'selectNode', 'c')
+        await rootTile(page, 'selected').click()
+
+        expect((await treeRoot(page)).rootId).toBe('c')
+        await expect(rootTile(page, 'selected')).toHaveClass(/active/)
+        await expect(rootTile(page, 'MaxReachability')).not.toHaveClass(/active/)
+        // `c` is a child in this fixture, so a walk along the arrows would reach only its
+        // own two leaves. A picked root is walked either way round instead, so the whole
+        // graph re-hangs beneath it: c → (root, f, g) → (a, b) → (d, e).
+        await expect.poll(() => nodesAtDepth(page, 'min')).toEqual(['c'])
+        expect(await nodesAtDepth(page, 'max')).toEqual(['d', 'e'])
+    })
+
+    // Switching orientation rebuilds the layout — the root has to survive it, like the
+    // spacing above.
+    test('the root survives a switch to another tree orientation', async ({ page }) => {
+        await loadFixture(page, 'tree', B3)
+        await openFlyout(page)
+        await layoutTile(page, 'tree-v').click()
+        await harness(page, 'selectNode', 'c')
+        await rootTile(page, 'selected').click()
+
+        await layoutTile(page, 'tree-h').click()
+
+        expect((await treeRoot(page)).rootId).toBe('c')
+        await expect(rootTile(page, 'selected')).toHaveClass(/active/)
     })
 
     // A cycle used to disable all three tree tiles; the layout is built from a spanning
