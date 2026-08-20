@@ -16,7 +16,7 @@ import type { Node } from './Node'
 import { Edge } from './Edge'
 import { runSimulationInWorker } from './SimulationWorkerWrapper'
 import merge from 'lodash.merge'
-import { TreeLayout } from './plugins/layout/Tree'
+import { TreeLayout, type TreeLayoutAlgorithm } from './plugins/layout/Tree'
 import { EgoTreeLayout } from './plugins/layout/EgoTree'
 import { edgeLabelGetter } from './utils/GraphGetters'
 import type { DeepPartial } from './utils/utils'
@@ -135,6 +135,22 @@ export interface TreeSpacing {
  * spreading — and the slider sitting at its maximum says so honestly.
  */
 export const TREE_SPACING_RANGE: readonly [number, number] = [0.5, 10]
+
+/**
+ * Where a tree layout hangs from, as the Physics flyout's Root card offers it: a node
+ * the tree is pinned to, or — with nothing pinned — the finder that picks one.
+ *
+ * The two are exclusive: pinning a node retires the finder until the pin is dropped.
+ */
+export interface TreeRoot {
+    /** The node the tree is pinned to; `undefined` while the finder decides. */
+    rootId?: string
+    /** The finder that chooses the root while nothing is pinned. */
+    algorithm: TreeLayoutAlgorithm
+}
+
+/** What a tree with no pinned root and nothing said about it uses; see `DEFAULT_TREE_LAYOUT_OPTIONS`. */
+const DEFAULT_ROOT_FINDER: TreeLayoutAlgorithm = 'MaxReachability'
 
 /** `1×` on both axes: the fitted layout, and what the force layout reports. */
 const FITTED_TREE_SPACING: TreeSpacing = { levelSpacing: 1, siblingSpacing: 1 }
@@ -974,6 +990,33 @@ export class Simulation {
         this.layout.setSpacing(clamped)
         // Keep the options the graph reports in step with what is actually laid out.
         Object.assign(this.options.layout, clamped, { spacing: 'manual' })
+        this.graph.nextTick()
+        this.reheatIfEnabled()
+    }
+
+    /**
+     * Where the active tree hangs from. Under the force layout there is no tree, so this
+     * reports the finder a tree would start with and no pin.
+     */
+    public getTreeRoot(): TreeRoot {
+        return this.layout?.getRoot() ?? { algorithm: DEFAULT_ROOT_FINDER }
+    }
+
+    /**
+     * Re-hang the tree from another root: `{ rootId }` pins it to that node, `{ algorithm }`
+     * drops the pin and lets the finder choose. No-op under the force layout, which has no
+     * hierarchy to root.
+     *
+     * A pinned root is walked ignoring edge direction, so any node — a leaf included — gives
+     * a whole tree rather than a stump beside the old one. See {@link TreeLayout.setRoot}.
+     */
+    public setTreeRoot(root: { rootId: string } | { algorithm: TreeLayoutAlgorithm }): void {
+        if (!this.layout) return
+        this.layout.setRoot(root)
+        // Keep the options the graph reports — and the worker path is handed — in step with
+        // what is actually laid out.
+        const applied = this.layout.getRoot()
+        Object.assign(this.options.layout, { rootId: applied.rootId, rootIdAlgorithmFinder: applied.algorithm })
         this.graph.nextTick()
         this.reheatIfEnabled()
     }

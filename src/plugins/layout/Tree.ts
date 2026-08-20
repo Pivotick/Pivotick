@@ -16,6 +16,14 @@ import type { SimulationForces } from '../../interfaces/SimulationOptions'
 
 export type TreeLayoutAlgorithm = 'FirstZeroInDegree' | 'MaxReachability' | 'MinMaxDistance' | 'MinHeight'
 
+/**
+ * Everything a tree layout resolves at construction, except `rootId` — which stays
+ * optional, because "no pinned root, let the finder choose" is a state the layout has
+ * to be able to go back to. `Required<TreeLayoutOptions>` would type it as a `string`
+ * that is in fact `undefined` most of the time.
+ */
+type ResolvedTreeLayoutOptions = Required<Omit<TreeLayoutOptions, 'rootId'>> & { rootId?: string }
+
 /** Clear space left around a parked node, on top of its own diameter. */
 const PARKED_GAP = 20
 
@@ -56,7 +64,7 @@ export class TreeLayout {
     protected graph: Graph
     protected simulation: d3Simulation<Node, undefined>
     protected simulationForces: SimulationForces
-    protected options: Required<TreeLayoutOptions>
+    protected options: ResolvedTreeLayoutOptions
 
     protected originalForceStrength: ForceStrengthArray
     protected canvasBCR!: DOMRect
@@ -79,7 +87,7 @@ export class TreeLayout {
         this.graph = graph
         this.simulation = simulation
         this.simulationForces = simulationForces
-        this.options = merge({}, DEFAULT_TREE_LAYOUT_OPTIONS, partialOptions) as Required<TreeLayoutOptions>
+        this.options = merge({}, DEFAULT_TREE_LAYOUT_OPTIONS, partialOptions) as ResolvedTreeLayoutOptions
         this.originalForceStrength = {
             link: this.simulationForces.link.strength(),
             charge: this.simulationForces.charge.strength(),
@@ -132,7 +140,12 @@ export class TreeLayout {
     private layoutOnce(): void {
         const nodes = this.graph.getNodes()
         const edges = this.options.flipEdgeDirection ? this.flipEdgeDirection(this.graph.getEdges()) : this.graph.getEdges()
-        const { levels, maxDepth, parked } = this.buildLevels(nodes, edges, undefined, this.options.rootIdAlgorithmFinder)
+        const { levels, maxDepth, parked } = this.buildLevels(
+            // The same root the positions come from: `levels` is what the radial force
+            // assigns rings by, and a different root there puts a node on a ring its
+            // own position does not sit on.
+            nodes, edges, this.options.rootId, this.options.rootIdAlgorithmFinder
+        )
         this.parkedIds = new Set(parked)
         const { nodes: positionedNodes, nodeById: positionedNodesByID } = this.buildTree(nodes, edges, this.options, this.canvasBCR)
         this.positionedNodesByID = positionedNodesByID
@@ -463,6 +476,32 @@ export class TreeLayout {
         return this.autoSpacing
     }
 
+    /** The root the tree hangs from: a pinned node id, or the finder that picks one. */
+    public getRoot(): { rootId?: string, algorithm: TreeLayoutAlgorithm } {
+        return { rootId: this.options.rootId, algorithm: this.options.rootIdAlgorithmFinder }
+    }
+
+    /**
+     * Re-hang the tree from another root, keeping the orientation and the spacing.
+     *
+     * A `rootId` pins the tree to that node — and, per {@link buildLevelsStatic}, is walked
+     * without regard for edge direction, so any node gives a whole tree. An `algorithm`
+     * drops the pin and lets the finder choose again.
+     *
+     * Goes through {@link relayout} for the same reason {@link setSpacing} does: the tree
+     * forces cache their per-node target at initialize time, so recomputing the positions
+     * without re-registering them leaves every node pulled back to its old slot.
+     */
+    public setRoot(root: { rootId: string } | { algorithm: TreeLayoutAlgorithm }): void {
+        if ('rootId' in root) {
+            this.options.rootId = root.rootId
+        } else {
+            this.options.rootId = undefined
+            this.options.rootIdAlgorithmFinder = root.algorithm
+        }
+        this.relayout()
+    }
+
     /** Hand the multipliers back to the tuner and re-lay-out at what it picks. */
     public enableAutoSpacing(): void {
         this.autoSpacing = true
@@ -765,7 +804,8 @@ export class TreeLayout {
      *
      * @param nodes - The list of graph nodes.
      * @param edges - The list of graph edges (assumed to be directed).
-     * @param passedRootId - The ID of the node considered as the root.
+     * @param passedRootId - The ID of the node considered as the root. Ignored when no such
+     *   node is in `nodes`; when it is, the walk follows edges in either direction.
      * @param rootIdAlgorithmFinder - The algorithm to use to find the root ID.
      * @returns A mapping of each node's ID to its depth level in the tree and the maximum depth
      */
@@ -795,6 +835,22 @@ export class TreeLayout {
                 parked: [],
             }
         }
+        // An id naming a node that is not in this set — filtered out, deleted, inside a
+        // collapsed cluster — cannot root anything: the walk from it reaches nothing, so
+        // every real component becomes its own root and the graph comes out as a forest one
+        // level too deep. This pass falls back to the finder; the pin itself is the caller's
+        // to keep, so the node coming back re-roots the tree.
+        const rootId = passedRootId !== undefined && nodes.some(node => node.id === passedRootId)
+            ? passedRootId
+            : undefined
+
+        // How the spanning tree is walked. Naming a root is a deliberate choice, so it
+        // outranks arrow direction: a directed walk from a leaf reaches nothing, and the
+        // graph would fall apart into the picked node plus the old tree beside it. This is
+        // already the rule `EgoTreeLayout` uses. A root the *finders* chose keeps walking
+        // directed — it was read off the arrows in the first place.
+        const undirected = rootId !== undefined
+
         // Keyed by node id, so both are Maps: on a plain object a node called `constructor` or
         // `toString` reads as already-visited through the prototype and drops out of the layout.
         const levels = new Map<string, number>()
@@ -810,6 +866,7 @@ export class TreeLayout {
         for (const { source, target } of edges) {
             // An edge whose source isn't in `nodes` is skipped rather than throwing.
             adj.get(source.id)?.push(target.id)
+            if (undirected) adj.get(target.id)?.push(source.id)
             targeted.add(target.id)
             touched.add(source.id)
             touched.add(target.id)
@@ -824,7 +881,7 @@ export class TreeLayout {
         // data, so it reports 0 for every node in a perfectly connected graph.
         // An explicitly named root counts as linked even with no edges: naming it is a
         // deliberate choice, and honouring it beats parking it.
-        const isLinked = (id: string) => touched.has(id) || id === passedRootId
+        const isLinked = (id: string) => touched.has(id) || id === rootId
         const linked = nodes.filter(node => isLinked(node.id))
         const parked = nodes.filter(node => !isLinked(node.id)).map(node => node.id)
 
@@ -853,9 +910,9 @@ export class TreeLayout {
         // promote one parked node to be the tree, and then place it twice.
         const roots: string[] = []
         if (linked.length) {
-            const rootId = passedRootId || TreeLayout.findRootId(linked, edges, rootIdAlgorithmFinder)
-            roots.push(rootId)
-            walkFrom(rootId)
+            const primaryRoot = rootId ?? TreeLayout.findRootId(linked, edges, rootIdAlgorithmFinder)
+            roots.push(primaryRoot)
+            walkFrom(primaryRoot)
         }
 
         // Whatever the primary root could not reach is its own component, and gets its own
