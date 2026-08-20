@@ -7,7 +7,7 @@ import type { Node } from '../Node'
 import type { Note } from '../Note'
 import type { UIElement } from '../ui/UIManager'
 import type { FieldConfig } from '../utils/FormFactory'
-import type { FilterOptions } from './GraphQueryEngine'
+import type { FilterFacet, FilterOptions } from './GraphQueryEngine'
 import type { AsyncContentOptions, RenderContext, RenderResult } from './AsyncContent'
 import type { MinimapOptions } from '../plugins/minimap/options'
 
@@ -71,6 +71,15 @@ export interface GraphUI {
      * rejects. Only async hooks ever reach it — see {@link AsyncContentOptions}.
      */
     asyncContent?: AsyncContentOptions,
+    /**
+     * The data dock: the graph's nodes and edges as a sortable, selectable grid
+     * split off the bottom of the canvas.
+     *
+     * `full` mode offers one by default — the header grows a Table pill and the dock
+     * opens on demand. `false` suppresses it entirely; an object configures it. Other
+     * modes never mount it. See {@link TableOptions}.
+     */
+    table?: TableOptions | boolean,
     keybindings?: Keybinding[];
 }
 
@@ -612,3 +621,96 @@ export type IconClass = string
  * @example '/icon.svg'
  */
 export type ImagePath = string
+
+/**
+ * The data dock's configuration. Everything here is read-only behaviour: the table
+ * reflects and selects, and never changes the graph. Hiding, pinning and restoring stay
+ * with the sidebar's bulk actions and the filter panel.
+ *
+ * @example
+ * ```js
+ * UI: { mode: 'full', table: { open: true, height: 0.4,
+ *                              sort: { key: 'degree', direction: 'desc' } } }
+ * ```
+ *
+ * @category Main Options
+ */
+export interface TableOptions {
+    /** @default true whenever `UI.table` isn't `false` */
+    enabled?: boolean,
+    /** Which tabs to offer, in order. @default ['nodes', 'edges'] */
+    tabs?: TableTab[],
+    /**
+     * The node columns. Omit to have them resolved for you: from declared
+     * {@link FilterOptions.facets} if there are any, otherwise by scanning node data.
+     */
+    columns?: TableColumn[],
+    /** The edge columns, on the same terms as {@link TableOptions.columns}. */
+    edgeColumns?: TableColumn[],
+    /** Open the dock on boot. @default false */
+    open?: boolean,
+    /**
+     * Folded away to just its header bar. `'auto'` follows the room available, until the
+     * first explicit collapse or expand hands control to the user for good.
+     * @default 'auto'
+     */
+    collapsed?: boolean | 'auto',
+    /**
+     * The dock's height: a pixel count, or a fraction of the canvas between 0 and 1.
+     * Clamped so the canvas keeps a usable minimum whatever you ask for.
+     * @default 0.35
+     */
+    height?: number,
+    /** Initial sort. @default the first sortable column, ascending */
+    sort?: { key: string, direction: TableSortDirection },
+    /** What clicking a row does. @default 'select' */
+    rowActivate?: 'select' | 'selectAndCenter' | 'none',
+    /** Export buttons offered in the dock header. `false` hides them. @default ['csv', 'json'] */
+    export?: TableExportFormat[] | false,
+    /** Row count above which rows are windowed rather than all rendered. @default 200 */
+    virtualizeAbove?: number,
+}
+
+/** Which set of rows the dock is showing. */
+export type TableTab = 'nodes' | 'edges'
+
+export type TableSortDirection = 'asc' | 'desc'
+
+export type TableExportFormat = 'csv' | 'json'
+
+/**
+ * One column of the data dock.
+ *
+ * Deliberately an extension of {@link FilterFacet}: a facet already says how to read a
+ * value off an element and what kind of value it is, which is exactly what a column
+ * needs. So declaring `UI.filter.facets` describes your data once and the filter panel
+ * and the table agree about it.
+ *
+ * @example
+ * ```js
+ * { key: 'severity', label: 'Severity', type: 'numberRange', align: 'right', filterable: true }
+ * ```
+ */
+export interface TableColumn extends Pick<FilterFacet, 'key' | 'label' | 'type' | 'accessor' | 'order'> {
+    /** Column width — a pixel count, or any CSS length. @default sized from its content */
+    width?: number | string,
+    /** @default 'right' for `numberRange`, `'left'` otherwise */
+    align?: 'left' | 'right' | 'center',
+    /** @default true */
+    sortable?: boolean,
+    /**
+     * Give this column a filter control in its header. It narrows the **rows**; the
+     * canvas is left alone — changing what the graph displays stays with the filter
+     * panel, so the two can never disagree.
+     * @default false
+     */
+    filterable?: boolean,
+    /** Start hidden (still listed in the column picker). @default false */
+    hidden?: boolean,
+    /**
+     * Render the cell. A string is inserted as text, an `HTMLElement` as markup.
+     * Ignored by export, which always writes the raw value.
+     * @default `String(value)`
+     */
+    format?: (value: unknown, element: Node | Edge) => string | HTMLElement,
+}

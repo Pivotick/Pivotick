@@ -11,7 +11,7 @@ import type { Notification } from './Notifier'
 import merge from 'lodash.merge'
 import { Tooltip } from './elements/Tooltip/Tooltip'
 import { ContextMenu } from './elements/ContextMenu/ContextMenu'
-import type { Editors, ExtraPanel, GraphUI, GraphUIMode, LegendOptions, PropertyEntry, RegisteredExtraPanel } from '../interfaces/GraphUI'
+import type { Editors, ExtraPanel, GraphUI, GraphUIMode, LegendOptions, PropertyEntry, RegisteredExtraPanel, TableOptions } from '../interfaces/GraphUI'
 import { KeybindingManager } from './KeybindingManager'
 import { createInspectModal } from './elements/modals/InspectNodeModal/InspectNodeModal'
 import { Note } from '../Note'
@@ -22,6 +22,7 @@ import { ToolPanel } from './elements/ToolPanel/ToolPanel'
 import { ViewFlyout } from './elements/ViewFlyout/ViewFlyout'
 import { PhysicsFlyout } from './elements/PhysicsFlyout/PhysicsFlyout'
 import { Legend } from './elements/Legend/Legend'
+import { Table } from './elements/Table/Table'
 import type { PivotickPlugin, PluginContext } from '../interfaces/Plugin'
 
 
@@ -169,6 +170,22 @@ function legendWanted(legend?: LegendOptions | boolean): boolean {
     return true
 }
 
+/**
+ * Is a data dock wanted? `full` mode offers one unless it is explicitly turned off —
+ * the dock is closed until asked for, so the cost of having it available is a header
+ * pill. The mode gate itself lives in the {@link UI_ELEMENTS} entry.
+ */
+function tableWanted(table?: TableOptions | boolean): boolean {
+    if (table === false) return false
+    if (typeof table === 'object' && table.enabled === false) return false
+    return true
+}
+
+/** The declared dock options, normalised — `true` and omitted both mean "defaults". */
+function tableOptions(table?: TableOptions | boolean): TableOptions {
+    return typeof table === 'object' ? table : {}
+}
+
 const UI_ELEMENTS: UIElementSpec[] = [
     {
         key: 'layout', modes: '*',
@@ -213,6 +230,14 @@ const UI_ELEMENTS: UIElementSpec[] = [
         key: 'legend', modes: ['full', 'light'],
         enabled: o => legendWanted(o.legend),
         make: ui => new Legend(ui), slot: ui => ui.layout?.legend
+    },
+    {
+        // `full` only: the dock is a grid row beside the sidebar, and the other modes
+        // promise a canvas without that much chrome. **Before `mainHeader`**, which only
+        // grows its Table pill when there is already a dock for it to toggle.
+        key: 'table', modes: ['full'],
+        enabled: o => tableWanted(o.table),
+        make: ui => new Table(ui, tableOptions(ui.getOptions().table)), slot: ui => ui.layout?.table
     },
     {
         key: 'mainHeader', modes: ['full', 'light'],
@@ -292,6 +317,7 @@ export class UIManager {
     public get viewFlyout(): ViewFlyout | undefined { return this.byKey.get('viewFlyout') as ViewFlyout | undefined }
     public get physicsFlyout(): PhysicsFlyout | undefined { return this.byKey.get('physicsFlyout') as PhysicsFlyout | undefined }
     public get legend(): Legend | undefined { return this.byKey.get('legend') as Legend | undefined }
+    public get table(): Table | undefined { return this.byKey.get('table') as Table | undefined }
     public get tooltip(): Tooltip | undefined { return this.byKey.get('tooltip') as Tooltip | undefined }
     public get contextMenu(): ContextMenu | undefined { return this.byKey.get('contextMenu') as ContextMenu | undefined }
 

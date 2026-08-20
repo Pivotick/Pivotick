@@ -1255,6 +1255,25 @@ export class Graph {
     }
 
     /**
+     * Opens the data dock — the graph's rows as a sortable, selectable grid split off
+     * the bottom of the canvas. `full` mode only, and only when `UI.table` allows it;
+     * a no-op otherwise.
+     */
+    openTable(): void {
+        this.UIManager.table?.setOpen(true)
+    }
+
+    /** Closes the data dock. */
+    closeTable(): void {
+        this.UIManager.table?.setOpen(false)
+    }
+
+    /** Opens the data dock if it is closed, closes it if it is open. */
+    toggleTable(): void {
+        this.UIManager.table?.toggleOpen()
+    }
+
+    /**
      * Deselect all
      */
     deselectAll(): void {

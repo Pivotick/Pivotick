@@ -1,0 +1,115 @@
+// The data dock — the graph's rows, split off the bottom of the canvas.
+//
+// It is a real grid row rather than a canvas overlay, so the canvas genuinely
+// shrinks and the chrome docked inside it (legend, minimap) rides up with it
+// instead of being buried. `--pvt-table-height` on `.pvt-layout` drives the row;
+// this file only styles what sits inside it.
+//
+// Scrollbars need no opt-in here: `themed-scrollbars` is applied to `.pivotick`
+// and inherits down. Only elements portaled outside it have to include the mixin.
+
+.pvt-table {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    position: relative;
+    background-color: var(--pvt-chrome-bg);
+    border-top: 1px solid var(--pvt-chrome-border);
+    color: var(--pvt-text-color-6);
+
+    // Closed: the row is 0px, so make sure nothing peeks out of it.
+    &:not(.pvt-table-open) {
+        display: none;
+    }
+}
+
+// Grab handle straddling the top edge. Wider than it looks so it is easy to hit,
+// but drawn as a hairline so it reads as an edge rather than a bar.
+.pvt-table-divider {
+    position: absolute;
+    top: -3px;
+    left: 0;
+    right: 0;
+    height: 7px;
+    cursor: row-resize;
+    touch-action: none;
+    z-index: 2;
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 3px;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background-color: transparent;
+        transition: background-color 0.1s ease-out;
+    }
+
+    &:hover::after,
+    &.pvt-table-divider-dragging::after {
+        background-color: var(--pvt-primary-color, #007acc);
+    }
+
+    // A collapsed dock is a bar, not a resizable pane.
+    .pvt-table-collapsed & {
+        cursor: default;
+        pointer-events: none;
+    }
+}
+
+.pvt-table-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+    min-height: 34px;
+    padding: 0 10px;
+    border-bottom: 1px solid var(--pvt-chrome-border);
+
+    // Collapsed, the header *is* the dock — nothing below it to divide from.
+    .pvt-table-collapsed & {
+        border-bottom: none;
+    }
+}
+
+.pvt-table-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--pvt-text-color-4);
+    cursor: pointer;
+
+    &:hover {
+        background-color: var(--pvt-chrome-border);
+        color: var(--pvt-text-color-6);
+    }
+
+    // Points down to fold away, up to bring back.
+    svg {
+        transform: rotate(180deg);
+        transition: transform 0.12s ease-out;
+    }
+
+    .pvt-table-collapsed & svg {
+        transform: rotate(0deg);
+    }
+}
+
+.pvt-table-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    // Wide column sets scroll here, never by stretching the layout.
+    overflow: auto;
+
+    .pvt-table-collapsed & {
+        display: none;
+    }
+}
