@@ -182,6 +182,13 @@ test.describe('layouts', () => {
         expect(spacing.levelSpacing).toBe(1)
     })
 
+    test('auto reaches past 4x on a wide tree', async ({ page }) => {
+        // 200 nodes of radius 10 want ~5.4× between siblings — an ordinary graph size
+        // asking for more than the multipliers used to be allowed to give.
+        await harness(page, 'loadAuto', { nodes: 200, radius: 10 }, { layout: { type: 'tree' } })
+        expect((await spacingOf(page)).siblingSpacing).toBeGreaterThan(4)
+    })
+
     test('auto opens up the levels of a deep chain', async ({ page }) => {
         // A 40-node chain is 39 levels deep: ~18px of canvas per level against the
         // ~44px two default nodes and an arrowhead need, so auto asks for ~2.4×.

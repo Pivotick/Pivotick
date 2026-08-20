@@ -118,8 +118,23 @@ export interface TreeSpacing {
     siblingSpacing: number
 }
 
-/** Inclusive `[min, max]` slider range for both {@link TreeSpacing} multipliers. */
-export const TREE_SPACING_RANGE: readonly [number, number] = [0.5, 4]
+/**
+ * Inclusive `[min, max]` slider range for both {@link TreeSpacing} multipliers.
+ *
+ * The ceiling is set from what real graphs ask for, measured on a 1280×720 canvas
+ * with the cap lifted: a 60-node tree wants 1.4× between siblings, 120 nodes want
+ * 4.9×, 200 want 5.4× — so a ceiling of 4 was below what an ordinary graph needs.
+ * `levelSpacing` reaches just as high, though only in the two cases where depth is
+ * the crowded axis: a 100-level chain wants 6.1×, and a radial tree — where the ring
+ * gap is the only lever — wants 9.3× at 200 nodes.
+ *
+ * It stops at 10 rather than following the curve up (400 nodes want 20×, and it grows
+ * with the widest level) because beyond that the extra room buys nothing a reader can
+ * use: the view is fitted, so a tree 20× wider than the canvas renders its nodes at a
+ * twentieth of their size. Past this point a graph is explored by panning, not by
+ * spreading — and the slider sitting at its maximum says so honestly.
+ */
+export const TREE_SPACING_RANGE: readonly [number, number] = [0.5, 10]
 
 /** `1×` on both axes: the fitted layout, and what the force layout reports. */
 const FITTED_TREE_SPACING: TreeSpacing = { levelSpacing: 1, siblingSpacing: 1 }

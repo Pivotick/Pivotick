@@ -40,7 +40,7 @@ Similarly, the `flipEdgeDirection` option lets you reverse the direction of edge
 A tree is laid out to *fit* the canvas, so its natural spacing already follows the canvas size and
 how deep and wide the tree is. `levelSpacing` and `siblingSpacing` scale that fitted geometry: `2`
 means "twice as far apart as the fitted layout" on the depth and breadth axis respectively. Both
-default to `1`, which is the fitted layout itself.
+default to `1`, which is the fitted layout itself, and both accept `0.5` to `10`.
 
 They can also be changed at runtime — the Physics flyout offers them as sliders whenever a tree
 layout is active (in place of the simulation knobs, which a tree layout ignores):

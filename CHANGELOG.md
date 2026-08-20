@@ -17,13 +17,18 @@
   `simulation.enableAutoTreeSpacing()` / `isAutoTreeSpacingEnabled()` to drive it at runtime.
 - **In the radial layout both measurements drive the ring gap**, since a level always spans the full
   circle and pushing the rings out is the only way to relieve crowding within one.
+- **The spacing ceiling is now `10×`, up from `4×`.** With auto able to report what a tree asks for,
+  `4` turned out to be below what ordinary graphs need: 120 nodes want 4.9× between siblings, 200
+  want 5.4×, a 100-level chain wants 6.1× between levels, and a 200-node radial tree wants 9.3×
+  between rings. It stops at 10 because past that the view is fitted so far out that the extra room
+  buys nothing a reader can use.
 
 ### A tree layout can be spread out by hand
 
 - **Two spacing sliders for tree layouts.** A tree places its own nodes, so the physics knobs have
   nothing to do — they grey out, and until now that left no way to open up a cramped hierarchy. The
   Physics flyout now offers **Level distance** and **Sibling distance** in their place: multipliers
-  on the canvas-fitted geometry (`0.5×`–`4×`), applied live and reframed when the drag ends. The
+  on the canvas-fitted geometry (`0.5×`–`10×`), applied live and reframed when the drag ends. The
   inert simulation knobs are hidden rather than greyed while a tree is active; the run/pause toggle,
   which still bites, stays.
 - **New tree layout options `levelSpacing` / `siblingSpacing`** (both default `1` — the fitted

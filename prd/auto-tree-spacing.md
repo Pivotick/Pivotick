@@ -49,8 +49,8 @@ dragging a slider leaves auto permanently (`setSpacing` sets `spacing: 'manual'`
 
 **D5 — Auto speaks only in slider values.** Answers are rounded *up* onto the slider's 0.1 step and
 clamped to `TREE_SPACING_RANGE`, so every value auto picks is one the user could have dragged to and
-the sliders can display it honestly. A graph that needs more than 4× stays crowded — visible, and
-preferable to auto moving a control past where the control goes.
+the sliders can display it honestly. A graph that needs more than the ceiling stays crowded —
+visible, and preferable to auto moving a control past where the control goes.
 
 **D6 — Radial folds sibling crowding into the ring gap.** A radial level always spans the full
 circle, so the only way to give neighbours room is to push the rings out. Both measurements drive
@@ -77,7 +77,7 @@ Measured through the real UI (`loadAuto` fixtures, 1280×720 canvas), vertical t
 | 8 nodes, r10 (the `tree` fixture) | 1× | 1× |
 | 60 nodes, r10 | 1× | 1.4× |
 | 60 nodes, r30 | 1× | 3× |
-| 200 nodes, r10 | 1× | 4× (clamped) |
+| 200 nodes, r10 | 1× | 5.4× |
 | 40-node chain, r10 | **2.4×** | 1× |
 | 40-node chain, r10, horizontal | **1.4×** | 1× |
 
@@ -87,7 +87,40 @@ case exists. And the chain's numbers are exactly the arithmetic: 720px over 39 l
 against the 44px two default nodes and an arrowhead need → 2.4×; horizontally the same chain gets
 1280px over 39 levels → 1.4×, which is the axis fix from commit `9a54663` visible in a number.
 
-## 5. Known gaps
+## 5. Where the ceiling ended up
+
+The multipliers shipped with a shared range of `[0.5, 4]`, chosen before anything measured what a
+tree actually asks for. With auto in place the question is answerable, so the cap was lifted to 100
+and the requirements read off directly (1280×720 canvas, vertical unless stated):
+
+| graph | level | sibling |
+|---|---|---|
+| 60 nodes, r10 | 1× | 1.4× |
+| 60 nodes, r30 | 1× | 3× |
+| 120 nodes, r10 | 1× | **4.9×** |
+| 200 nodes, r10 | 1× | **5.4×** |
+| 200 nodes, r30 | 1.5× | **11.4×** |
+| 400 nodes, r10 | 1× | **20.2×** |
+| 100-node chain, r10 | **6.1×** | 1× |
+| 200 nodes, r10, *radial* | **9.3×** | 1× |
+| 200 nodes, r30, *radial* | **19.6×** | 1× |
+
+So `4` was below what an ordinary graph needs — 120 nodes already exceeded it — and both axes reach
+equally high, `levelSpacing` in the two cases where depth is the crowded axis (a deep chain, and a
+radial tree where the ring gap is the only lever). A per-axis range would encode a difference that
+is not there.
+
+`TREE_SPACING_RANGE` is now `[0.5, 10]`. It stops short of the curve (400 nodes want 20×, growing
+with the widest level) because past that the extra room buys nothing a reader can use: the view is
+fitted, so a tree 20× wider than the canvas draws its nodes at a twentieth of their size. Beyond
+this point a graph is explored by panning — which is what the minimap is for — not by spreading.
+
+The one cost is slider feel: `1×` now sits 5% along the track rather than 14%. It matters less than
+it sounds, because auto and the wider range work together — on an uncrowded graph the thumb sits at
+the far left and the control is one nobody needs, and on a crowded graph, which is when somebody
+reaches for it, auto has already placed the thumb mid-track.
+
+## 6. Known gaps
 
 - **The worker path does not tune.** `TreeLayout.registerForcesOnSimulation` is handed the options
   `changeLayout` was called with, and auto decides *inside* the main-thread layout. `Simulation`
@@ -96,9 +129,9 @@ against the 44px two default nodes and an arrowhead need → 2.4×; horizontally
   `1×`. `useWorker` + `tree` already had rougher edges than this.
 - **Auto cannot see labels.** It reasons about circle radii only, so a tree of long-labelled nodes
   can still overlap horizontally. Node label extents are not measured anywhere the layout can reach.
-- **A graph needing more than 4× stays crowded**, by D5.
+- **A graph needing more than 10× stays crowded**, by D5 and §6.
 
-## 6. What is asserted
+## 7. What is asserted
 
 `tests/visual/specs/layout.spec.ts`:
 
@@ -110,6 +143,8 @@ against the 44px two default nodes and an arrowhead need → 2.4×; horizontally
   the layout exists* so it also pins auto's promise to re-derive as the graph changes.
 - **a hand-set multiplier opts out of auto entirely** — D4, on a graph crowded enough that auto
   would certainly have moved it.
+- **auto reaches past 4× on a wide tree** — 200 nodes at r10 asking for more than the multipliers
+  used to be allowed to give, so the ceiling cannot quietly drop back.
 
 `tests/visual/specs/physics-flyout.spec.ts`:
 
