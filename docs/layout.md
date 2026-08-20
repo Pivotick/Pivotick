@@ -22,6 +22,8 @@ When `type: 'tree'` is selected, the following additional options are available:
 | `horizontal`            | `boolean` | `false`           | Arrange nodes horizontally rather than vertically.                                                                                          |
 | `radial`                | `boolean` | `false`           | Place nodes in a radial layout instead of vertical.                                                                                         |
 | `radialGap`             | `number`  | `750`             | Gap between layers in radial layout.                                                                                                        |
+| `levelSpacing`          | `number`  | `1`               | Multiplies the distance between consecutive levels (between rings, when `radial`). `1` fits the tree to the canvas, as before.               |
+| `siblingSpacing`        | `number`  | `1`               | Multiplies the distance between nodes *within* a level. Ignored when `radial`, where a level always spans the full circle.                   |
 | `flipEdgeDirection`     | `boolean` | `false`           | Flip the direction of edges in the layout.                                                                                                  |
 
 
@@ -31,6 +33,21 @@ In a tree-based layout, one node must be designated as the root. You can specify
 If you're unsure which node should be the root, don't worry! Pivotick will automatically select one using the algorithm defined in `rootIdAlgorithmFinder`.
 
 Similarly, the `flipEdgeDirection` option lets you reverse the direction of edges in a directed graph (so `A -> B` becomes `B -> A`)—this only affects the layout computation, not the underlying graph data.
+
+#### Spacing
+
+A tree is laid out to *fit* the canvas, so its natural spacing already follows the canvas size and
+how deep and wide the tree is. `levelSpacing` and `siblingSpacing` scale that fitted geometry: `2`
+means "twice as far apart as the fitted layout" on the depth and breadth axis respectively. Both
+default to `1`, which is the fitted layout itself.
+
+They can also be changed at runtime — the Physics flyout offers them as sliders whenever a tree
+layout is active (in place of the simulation knobs, which a tree layout ignores):
+
+```ts
+graph.simulation.setTreeSpacing({ levelSpacing: 2 })
+graph.simulation.getTreeSpacing() // { levelSpacing: 2, siblingSpacing: 1 }
+```
 
 
 ::: danger

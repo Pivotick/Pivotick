@@ -51,6 +51,19 @@ export interface TreeLayoutOptions extends BaseLayoutOptions {
      */
     radialGap: number
     /**
+     * Multiplies the distance between consecutive levels — the depth axis of the
+     * tree, or the gap between rings in `radial` mode. `1` is the historical
+     * behaviour: the tree is scaled to fill the canvas.
+     * @default 1
+     */
+    levelSpacing?: number
+    /**
+     * Multiplies the distance between nodes *within* a level — the breadth axis.
+     * Ignored in `radial` mode, where a level always spans the full circle.
+     * @default 1
+     */
+    siblingSpacing?: number
+    /**
      * If the direction of the edges should be flipped. This can lead to other visualization
      * @default false
      */

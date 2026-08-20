@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+### A tree layout can be spread out by hand
+
+- **Two spacing sliders for tree layouts.** A tree places its own nodes, so the physics knobs have
+  nothing to do — they grey out, and until now that left no way to open up a cramped hierarchy. The
+  Physics flyout now offers **Level distance** and **Sibling distance** in their place: multipliers
+  on the canvas-fitted geometry (`0.5×`–`4×`), applied live and reframed when the drag ends. The
+  inert simulation knobs are hidden rather than greyed while a tree is active; the run/pause toggle,
+  which still bites, stays.
+- **New tree layout options `levelSpacing` / `siblingSpacing`** (both default `1` — the fitted
+  layout, unchanged), plus `simulation.setTreeSpacing()` / `getTreeSpacing()` to drive them at
+  runtime. `siblingSpacing` has no meaning under `radial`, where a level always spans the full
+  circle, and its slider is disabled there.
+- **Fixed: a re-laid-out tree fought its own forces.** `forceX` / `forceY` / `forceRadial` cache
+  their per-node target when initialised, so recomputing tree positions without re-registering them
+  left every force pulling nodes back to the previous layout — visible as the pinned axis moving
+  while siblings snapped back.
+
 ### The layout tunes itself
 
 - **`Auto` is the new default physics preset.** Rather than applying one fixed bundle of force

@@ -101,6 +101,29 @@ export const PHYSICS_KNOB_RANGES: Record<keyof PhysicsKnobs, readonly [number, n
     settleTime: [0.5, 8],
 }
 
+/**
+ * The tree-spacing multipliers surfaced by the Physics flyout — the one thing left
+ * to turn once the physics knobs grey out under a `tree` / `egoTree` layout.
+ *
+ * Multipliers rather than pixel gaps, because a tree is laid out to *fit* the
+ * canvas: its natural spacing already depends on the canvas size and on how deep
+ * and how wide the tree is. `1.5` means "half again as far apart as the fitted
+ * layout", which stays meaningful across a window resize and a graph that just
+ * grew a level; a pixel gap would not.
+ */
+export interface TreeSpacing {
+    /** Distance between levels — rings, in `radial` mode. */
+    levelSpacing: number
+    /** Distance between nodes within a level. Ignored in `radial` mode, where a level always spans the full circle. */
+    siblingSpacing: number
+}
+
+/** Inclusive `[min, max]` slider range for both {@link TreeSpacing} multipliers. */
+export const TREE_SPACING_RANGE: readonly [number, number] = [0.5, 4]
+
+/** `1×` on both axes: the fitted layout, and what the force layout reports. */
+const FITTED_TREE_SPACING: TreeSpacing = { levelSpacing: 1, siblingSpacing: 1 }
+
 /** Named physics presets — a fixed character to pick, as opposed to letting `Auto` decide. */
 export type PhysicsPresetName = 'tight' | 'loose'
 
@@ -903,6 +926,37 @@ export class Simulation {
     /** The active layout type — the Physics flyout greys out physics under non-`force` layouts. */
     public getLayoutType(): LayoutType {
         return this.options.layout.type
+    }
+
+    /** The active tree layout's spacing multipliers; `1×` under the force layout. */
+    public getTreeSpacing(): TreeSpacing {
+        return this.layout?.getSpacing() ?? { ...FITTED_TREE_SPACING }
+    }
+
+    /**
+     * Re-lay-out the tree at new spacing multipliers ({@link TREE_SPACING_RANGE}).
+     * No-op under the force layout, where spacing is the physics knobs' job.
+     *
+     * A redraw *and* a reheat: recomputing the layout moves the pinned axis
+     * immediately — so the change shows even with physics paused — while the free
+     * axis still has to be settled into its new sibling slots. Not a manual knob
+     * edit: spacing is not one of auto's knobs, and auto is inert under a tree
+     * anyway, so there is nothing to hand over.
+     */
+    public setTreeSpacing(spacing: Partial<TreeSpacing>): void {
+        if (!this.layout) return
+        const clamped: Partial<TreeSpacing> = {}
+        if (spacing.levelSpacing !== undefined) {
+            clamped.levelSpacing = Simulation.clamp(spacing.levelSpacing, TREE_SPACING_RANGE)
+        }
+        if (spacing.siblingSpacing !== undefined) {
+            clamped.siblingSpacing = Simulation.clamp(spacing.siblingSpacing, TREE_SPACING_RANGE)
+        }
+        this.layout.setSpacing(clamped)
+        // Keep the options the graph reports in step with what is actually laid out.
+        Object.assign(this.options.layout, clamped)
+        this.graph.nextTick()
+        this.reheatIfEnabled()
     }
 
     private reheatIfEnabled(alpha = 0.5): void {

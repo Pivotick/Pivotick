@@ -2,7 +2,7 @@ import type { Node } from '../../Node'
 import type { Edge } from '../../Edge'
 import type { AnyTreeLayoutOptions, TreeLayoutOptions } from '../../interfaces/LayoutOptions'
 import { TreeLayout, type TreeNode } from './Tree'
-import { hierarchy, tree, type HierarchyNode } from 'd3-hierarchy'
+import { hierarchy, type HierarchyNode } from 'd3-hierarchy'
 import { type Simulation as d3Simulation } from 'd3-force'
 import hasCycle from '../analytics/cycle'
 import type { Graph } from '../../Graph'
@@ -116,25 +116,11 @@ export class EgoTreeLayout extends TreeLayout {
             }
 
             // Create a d3 hierarchy and compute tree layout
-            const radius = options.radialGap
-            const width = options.radial ? 2 * Math.PI : canvasBCR.width
-            const height = options.radial ? radius : canvasBCR.height
-    
-            const treeLayout = tree<TreeNode>()
-            if (options.radial) {
-                treeLayout.size([width, height])
-            } else {
-                treeLayout
-                    .size([width, height])
-                    // .nodeSize(options.horizontal ? [100, 50] : [50, 100])
-                    .separation((a, b) => {
-                        const siblingsCount = a.parent?.children?.length ?? 1
-                        return a.parent === b.parent ? 1.5 / siblingsCount : 1.5
-                    })
-            }
+            const { treeLayout, offset } = EgoTreeLayout.sizedTreeLayout(options, canvasBCR)
     
             const rootHierarchy = hierarchy(root)
             const treeRoot = treeLayout(rootHierarchy)
+            EgoTreeLayout.offsetTree(treeRoot.descendants(), offset)
     
             const nodeById = new Map<string, HierarchyNode<TreeNode>>()
             treeRoot.descendants().forEach((node) => {

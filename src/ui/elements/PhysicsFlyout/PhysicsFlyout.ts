@@ -1,11 +1,11 @@
 import { Flyout } from '../Flyout/Flyout'
 import type { FlyoutMode } from '../../ModeStore'
-import { PHYSICS_KNOB_RANGES, type PhysicsKnobs, type PhysicsPresetName } from '../../../Simulation'
+import { PHYSICS_KNOB_RANGES, TREE_SPACING_RANGE, type PhysicsKnobs, type PhysicsPresetName, type TreeSpacing } from '../../../Simulation'
 import hasCycle from '../../../plugins/analytics/cycle'
 import {
     atom, play, pause,
     graphControlLayoutOrganic, graphControlLayoutTreeV, graphControlLayoutTreeH, graphControlLayoutTreeR,
-    magnet, arrowsHorizontal, circleDashed, wind, focusElement, timeDuration10, sparkles,
+    magnet, arrowsHorizontal, arrowsVertical, circleDashed, wind, focusElement, timeDuration10, sparkles,
 } from '../../icons'
 import './physicsflyout.scss'
 
@@ -64,11 +64,35 @@ const LAYOUTS: Array<{ id: string; label: string; icon: string; tree: boolean; d
     { id: 'tree-r', label: 'Radial', icon: graphControlLayoutTreeR, tree: true, desc: 'Tree — hierarchical layout radiating out from a central root.' },
 ]
 
+type SpacingKey = keyof TreeSpacing
+
+/**
+ * The tree-spacing sliders — what the flyout offers *instead of* the physics knobs
+ * while a tree layout is active. Under a tree the simulation only holds nodes in
+ * slots the layout has already chosen, so the distances are the layout's to give.
+ *
+ * `radial` marks the sliders the radial layout can honour: it spreads every level
+ * over the full circle, so only the ring gap is left to widen.
+ */
+const SPACING_SLIDERS: Array<{ key: SpacingKey, label: string, desc: string, icon: string, radial: boolean }> = [
+    { key: 'levelSpacing', label: 'Level distance', desc: 'How far apart consecutive levels of the tree sit — the gap between rings, in the radial layout.', icon: arrowsVertical, radial: true },
+    { key: 'siblingSpacing', label: 'Sibling distance', desc: 'How far apart nodes on the same level sit. The radial layout spreads a level over the whole circle, so it ignores this one.', icon: arrowsHorizontal, radial: false },
+]
+
+/** The layout options each tree tile applies, keyed by tile id. */
+const TREE_ORIENTATIONS: Record<string, { horizontal?: boolean, radial?: boolean }> = {
+    'tree-v': { horizontal: false },
+    'tree-h': { horizontal: true },
+    'tree-r': { radial: true },
+}
+
 /**
  * The B3 Physics flyout: an overlay toggled by the mode rail's Physics button
  * (via {@link UIManager.modeStore}). Holds the layout control and the simulation
  * card — presets + live sliders driving the {@link Simulation} setter API, plus a
- * run/pause toggle. Presets + sliders grey out under non-`force` layouts.
+ * run/pause toggle. Under a non-`force` layout the presets + sliders are disabled
+ * and hidden, and the tree-spacing card takes their place: a tree places nodes
+ * itself, so the distances are the layout's to give rather than the forces'.
  *
  * While `Auto` is active the sliders stay enabled and *follow* what the tuner
  * decides ({@link syncAutoKnobs}) — so auto's choices are visible and can be taken
@@ -82,20 +106,32 @@ export class PhysicsFlyout extends Flyout {
 
     private runButton?: HTMLButtonElement
     private simulationCard?: HTMLDivElement
+    private spacingCard?: HTMLDivElement
     private readonly sliders = new Map<SliderKey, HTMLInputElement>()
     private readonly sliderValues = new Map<SliderKey, HTMLElement>()
+    private readonly spacingSliders = new Map<SpacingKey, HTMLInputElement>()
+    private readonly spacingValues = new Map<SpacingKey, HTMLElement>()
     private readonly presetButtons = new Map<PresetChoice, HTMLButtonElement>()
     private readonly layoutButtons = new Map<string, HTMLButtonElement>()
+    /** The tile the graph is laid out by; drives which controls are live. */
+    private activeLayout = 'force'
 
     protected wire() {
         this.runButton = this.query<HTMLButtonElement>('.pvt-physicsflyout-run') ?? undefined
         this.simulationCard = this.query<HTMLDivElement>('.pvt-physicsflyout-card') ?? undefined
+        this.spacingCard = this.query<HTMLDivElement>('.pvt-physicsflyout-spacing') ?? undefined
 
         for (const spec of SLIDERS) {
             const input = this.query<HTMLInputElement>(`.pvt-physicsflyout-range[data-slider="${spec.key}"]`)
             const value = this.query(`.pvt-physicsflyout-slider-value[data-value="${spec.key}"]`)
             if (input) this.sliders.set(spec.key, input)
             if (value) this.sliderValues.set(spec.key, value)
+        }
+        for (const spec of SPACING_SLIDERS) {
+            const input = this.query<HTMLInputElement>(`.pvt-physicsflyout-range[data-spacing="${spec.key}"]`)
+            const value = this.query(`.pvt-physicsflyout-slider-value[data-value="${spec.key}"]`)
+            if (input) this.spacingSliders.set(spec.key, input)
+            if (value) this.spacingValues.set(spec.key, value)
         }
         for (const name of PRESETS) {
             const button = this.query<HTMLButtonElement>(`.pvt-physicsflyout-preset[data-preset="${name}"]`)
@@ -124,18 +160,22 @@ export class PhysicsFlyout extends Flyout {
         // Seed physics from the live simulation (only available by graphReady —
         // the UIManager, and thus this component, is built before graph.simulation).
         this.refreshSliders(this.sim.getPhysicsKnobs())
+        this.refreshSpacingSliders(this.sim.getTreeSpacing())
         this.highlightPreset(this.sim.isAutoPhysicsEnabled() ? 'auto' : null)
         this.updateRunButton()
-        this.updatePhysicsEnabled()
         this.highlightLayout(this.sim.getLayoutType() === 'force' ? 'force' : 'tree-v')
+        this.updateLayoutControls()
     }
 
     protected onDestroy() {
         super.onDestroy()
         this.runButton = undefined
         this.simulationCard = undefined
+        this.spacingCard = undefined
         this.sliders.clear()
         this.sliderValues.clear()
+        this.spacingSliders.clear()
+        this.spacingValues.clear()
         this.presetButtons.clear()
         this.layoutButtons.clear()
     }
@@ -147,23 +187,31 @@ export class PhysicsFlyout extends Flyout {
             const button = this.layoutButtons.get(choice.id)
             if (!button) continue
             this.listen(button, 'click', () => {
+                // `changeLayout` builds a fresh TreeLayout from what it is handed, so the
+                // spacing has to travel with the orientation or every tile click would
+                // reset the sliders the user just set.
                 if (choice.id === 'force') this.sim.changeLayout('force')
-                else if (choice.id === 'tree-v') this.sim.changeLayout('tree', { layout: { horizontal: false } })
-                else if (choice.id === 'tree-h') this.sim.changeLayout('tree', { layout: { horizontal: true } })
-                else if (choice.id === 'tree-r') this.sim.changeLayout('tree', { layout: { radial: true } })
+                else this.sim.changeLayout('tree', { layout: { ...TREE_ORIENTATIONS[choice.id], ...this.spacingFromSliders() } })
                 this.highlightLayout(choice.id)
-                this.updatePhysicsEnabled(choice.tree)
+                this.updateLayoutControls()
             })
         }
     }
 
     /** Mark the chosen layout tile as the active one. */
     private highlightLayout(active: string) {
+        this.activeLayout = active
         for (const [id, button] of this.layoutButtons) {
             const on = id === active
             button.classList.toggle('active', on)
             button.setAttribute('aria-pressed', String(on))
         }
+    }
+
+    /** The spacing the sliders are showing, as layout options. */
+    private spacingFromSliders(): TreeSpacing {
+        const read = (key: SpacingKey) => Number(this.spacingSliders.get(key)?.value ?? 1)
+        return { levelSpacing: read('levelSpacing'), siblingSpacing: read('siblingSpacing') }
     }
 
     /* ---------- physics ---------- */
@@ -198,6 +246,20 @@ export class PhysicsFlyout extends Flyout {
                 this.highlightPreset(null) // manual edit → no active preset
             })
         }
+
+        for (const spec of SPACING_SLIDERS) {
+            const input = this.spacingSliders.get(spec.key)
+            if (!input) continue
+            this.listen(input, 'input', () => {
+                const value = Number(input.value)
+                this.sim.setTreeSpacing({ [spec.key]: value })
+                this.setSpacingLabel(spec.key, value)
+            })
+            // A spread-out tree easily outgrows the viewport, and unlike a force layout
+            // nothing pulls it back toward the centre — so reframe once the gesture ends
+            // (`change`, not `input`, or the view would be yanked on every step of a drag).
+            this.listen(input, 'change', () => this.uiManager.graph.renderer.fitAndCenterWhenSettled())
+        }
     }
 
     /**
@@ -226,6 +288,20 @@ export class PhysicsFlyout extends Flyout {
         label.textContent = `${value}${spec?.unit ?? ''}`
     }
 
+    private refreshSpacingSliders(spacing: TreeSpacing) {
+        for (const spec of SPACING_SLIDERS) {
+            const value = spacing[spec.key]
+            const input = this.spacingSliders.get(spec.key)
+            if (input) input.value = String(value)
+            this.setSpacingLabel(spec.key, value)
+        }
+    }
+
+    private setSpacingLabel(key: SpacingKey, value: number) {
+        const label = this.spacingValues.get(key)
+        if (label) label.textContent = `${value}\u00d7`
+    }
+
     private highlightPreset(active: PresetChoice | null) {
         for (const [name, button] of this.presetButtons) {
             button.classList.toggle('active', name === active)
@@ -247,11 +323,22 @@ export class PhysicsFlyout extends Flyout {
         this.runButton.setAttribute('aria-pressed', String(running))
     }
 
-    /** Grey out presets + sliders when the layout isn't force-directed. */
-    private updatePhysicsEnabled(isTree = this.sim.getLayoutType() !== 'force') {
+    /**
+     * Hand the controls to whichever half of the flyout the active layout listens
+     * to: the physics presets + sliders grey out under a tree, and the spacing card
+     * — which only a tree can honour — takes their place.
+     */
+    private updateLayoutControls() {
+        const isTree = this.activeLayout !== 'force'
         this.simulationCard?.classList.toggle('pvt-physicsflyout-disabled', isTree)
         for (const input of this.sliders.values()) input.disabled = isTree
         for (const button of this.presetButtons.values()) button.disabled = isTree
+
+        if (this.spacingCard) this.spacingCard.hidden = !isTree
+        for (const spec of SPACING_SLIDERS) {
+            const input = this.spacingSliders.get(spec.key)
+            if (input) input.disabled = this.activeLayout === 'tree-r' && !spec.radial
+        }
     }
 
     /* ---------- template ---------- */
@@ -265,6 +352,15 @@ export class PhysicsFlyout extends Flyout {
             const icon = PRESET_ICONS[p] ? `<span class="pvt-flyout-icon">${PRESET_ICONS[p]}</span>` : ''
             return `<button type="button" class="pvt-physicsflyout-preset" data-preset="${p}" title="${PRESET_DESCRIPTIONS[p]}">${icon}${p[0].toUpperCase()}${p.slice(1)}</button>`
         }).join('')
+        const spacing = SPACING_SLIDERS.map(s => `
+            <div class="pvt-physicsflyout-slider" title="${s.desc}">
+                <div class="pvt-physicsflyout-slider-head">
+                    <span class="pvt-physicsflyout-slider-label"><span class="pvt-flyout-icon">${s.icon}</span>${s.label}</span>
+                    <span class="pvt-physicsflyout-slider-value" data-value="${s.key}">1&times;</span>
+                </div>
+                <input type="range" class="pvt-physicsflyout-range" data-spacing="${s.key}"
+                    min="${TREE_SPACING_RANGE[0]}" max="${TREE_SPACING_RANGE[1]}" step="0.1" value="1" />
+            </div>`).join('')
         const sliders = SLIDERS.map(s => `
             <div class="pvt-physicsflyout-slider" title="${s.desc}">
                 <div class="pvt-physicsflyout-slider-head">
@@ -279,6 +375,12 @@ export class PhysicsFlyout extends Flyout {
             + this.sectionLabel('LAYOUT &amp; SIMULATION')
             + `
             <div class="pvt-physicsflyout-layouts">${layouts}</div>
+            <div class="pvt-physicsflyout-spacing" hidden>
+                <div class="pvt-physicsflyout-card-head">
+                    <span class="pvt-physicsflyout-card-title">Spacing</span>
+                </div>
+                <div class="pvt-physicsflyout-sliders">${spacing}</div>
+            </div>
             <div class="pvt-physicsflyout-card">
                 <div class="pvt-physicsflyout-card-head">
                     <span class="pvt-physicsflyout-card-title">Simulation</span>

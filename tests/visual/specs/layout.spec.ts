@@ -30,6 +30,11 @@ async function positionsAfterLayout(page: Page, name: 'tree' | 'egoNet', layout:
 /** Distance from the origin (radial layouts place the root at (0, 0)). */
 const radius = (p: { x: number; y: number }) => Math.hypot(p.x, p.y)
 
+const spread = (p: Positions, axis: 'x' | 'y') => {
+    const values = Object.values(p).map(point => point[axis])
+    return { extent: Math.max(...values) - Math.min(...values), mid: (Math.max(...values) + Math.min(...values)) / 2 }
+}
+
 test.describe('layouts', () => {
     test.beforeEach(async ({ page }) => {
         await gotoHarness(page)
@@ -109,6 +114,45 @@ test.describe('layouts', () => {
         expect(Math.abs(radius(p.a) - radius(p.b))).toBeLessThan(1)
         expect(Math.abs(radius(p.a) - radius(p.c))).toBeLessThan(1)
         expect(Math.abs(radius(p.d) - radius(p.e))).toBeLessThan(1)
+    })
+
+    // ── Tree spacing (the manual distances a tree layout offers in place of the
+    //    physics knobs it ignores). `levelSpacing` / `siblingSpacing` multiply the
+    //    canvas-fitted geometry, so each is checked against the same layout at 1×.
+
+    test('level spacing scales the distance between levels, and only that', async ({ page }) => {
+        const fitted = await positionsAfterLayout(page, 'tree', { type: 'tree' })
+        const spaced = await positionsAfterLayout(page, 'tree', { type: 'tree', levelSpacing: 2 })
+
+        // Twice as deep…
+        const depth = spread(spaced, 'y').extent / spread(fitted, 'y').extent
+        expect(depth).toBeGreaterThan(1.9)
+        expect(depth).toBeLessThan(2.1)
+        // …no wider (the two axes are independent)…
+        expect(spread(spaced, 'x').extent).toBeCloseTo(spread(fitted, 'x').extent, 0)
+        // …and grown about its own middle rather than pushed down the canvas.
+        expect(spread(spaced, 'y').mid).toBeCloseTo(spread(fitted, 'y').mid, 0)
+    })
+
+    test('sibling spacing scales the distance within a level, and only that', async ({ page }) => {
+        const fitted = await positionsAfterLayout(page, 'tree', { type: 'tree' })
+        const spaced = await positionsAfterLayout(page, 'tree', { type: 'tree', siblingSpacing: 2 })
+
+        const breadth = spread(spaced, 'x').extent / spread(fitted, 'x').extent
+        expect(breadth).toBeGreaterThan(1.9)
+        expect(breadth).toBeLessThan(2.1)
+        expect(spread(spaced, 'y').extent).toBeCloseTo(spread(fitted, 'y').extent, 0)
+        expect(spread(spaced, 'x').mid).toBeCloseTo(spread(fitted, 'x').mid, 0)
+    })
+
+    test('radial level spacing scales the ring radii', async ({ page }) => {
+        const fitted = await positionsAfterLayout(page, 'tree', { type: 'tree', radial: true })
+        const spaced = await positionsAfterLayout(page, 'tree', { type: 'tree', radial: true, levelSpacing: 2 })
+
+        // The root stays at the centre; every ring around it doubles.
+        expect(radius(spaced.root)).toBeLessThan(1)
+        expect(radius(spaced.a) / radius(fitted.a)).toBeCloseTo(2, 1)
+        expect(radius(spaced.d) / radius(fitted.d)).toBeCloseTo(2, 1)
     })
 
     test('ego tree positions — neighbours fan out from the root', async ({ page }) => {

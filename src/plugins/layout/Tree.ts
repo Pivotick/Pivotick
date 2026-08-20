@@ -4,7 +4,7 @@ import {
     forceY as d3ForceY,
 } from 'd3-force'
 import { type Simulation as d3Simulation } from 'd3-force'
-import { hierarchy, type HierarchyNode, tree } from 'd3-hierarchy'
+import { hierarchy, type HierarchyNode, tree, type TreeLayout as D3TreeGenerator } from 'd3-hierarchy'
 import merge from 'lodash.merge'
 import type { Graph } from '../../Graph'
 import type { Node } from '../../Node'
@@ -23,6 +23,8 @@ const DEFAULT_TREE_LAYOUT_OPTIONS: TreeLayoutOptions = {
     strength: 0.25,
     radial: false,
     radialGap: 750,
+    levelSpacing: 1,
+    siblingSpacing: 1,
     horizontal: false,
     flipEdgeDirection: false,
 }
@@ -151,8 +153,9 @@ export class TreeLayout {
     protected registerForces(): void {
         const strength = this.options.strength ?? 0.1
         if (this.options.radial) {
+            const ringGap = 100 * TreeLayout.spacingOf(this.options).level
             const radialForce = d3ForceRadial<Node>(
-                (node: Node) => (this.levels.get(node.id) ?? 1) * 100,
+                (node: Node) => (this.levels.get(node.id) ?? 1) * ringGap,
                 0,
                 0
             ).strength(strength)
@@ -218,8 +221,9 @@ export class TreeLayout {
         const { nodeById: positionedNodesByID } = cls.buildTreeStatic(nodes, edges, options, canvasBCR)
 
         if (options.radial) {
+            const ringGap = 100 * cls.spacingOf(options).level
             const radialForce = d3ForceRadial<Node>(
-                (node: Node) => (levels.get(node.id) ?? 1) * 100,
+                (node: Node) => (levels.get(node.id) ?? 1) * ringGap,
                 center[0],
                 center[1]
             ).strength(strength)
@@ -294,6 +298,91 @@ export class TreeLayout {
         }
     }
 
+    /** The spacing multipliers in force, defaulted for a partially-specified options object. */
+    protected static spacingOf(options: Partial<TreeLayoutOptions>): { level: number, sibling: number } {
+        return { level: options.levelSpacing ?? 1, sibling: options.siblingSpacing ?? 1 }
+    }
+
+    /** The spacing multipliers currently laid out. */
+    public getSpacing(): { levelSpacing: number, siblingSpacing: number } {
+        const { level, sibling } = TreeLayout.spacingOf(this.options)
+        return { levelSpacing: level, siblingSpacing: sibling }
+    }
+
+    /**
+     * Re-lay-out at new spacing multipliers, keeping the root and orientation.
+     *
+     * The canvas is re-measured first: it is the length scale both multipliers work
+     * against, and it may have been resized since the layout was built.
+     *
+     * The forces are then re-registered, and that is not optional. `forceX` / `forceY`
+     * / `forceRadial` read their per-node target **once, at initialize time**, and
+     * tick against the cached copy — so a recomputed positions map alone leaves every
+     * force still pulling nodes back to where the old spacing put them. The pinned
+     * axis moves anyway (`fx`/`fy` outrank forces), which makes the symptom lopsided:
+     * levels spread, siblings snap back.
+     */
+    public setSpacing(spacing: { levelSpacing?: number, siblingSpacing?: number }): void {
+        if (spacing.levelSpacing !== undefined) this.options.levelSpacing = spacing.levelSpacing
+        if (spacing.siblingSpacing !== undefined) this.options.siblingSpacing = spacing.siblingSpacing
+        this.setSizes()
+        this.update()
+        // A cyclic graph has no tree to lay out (the constructor warned and gave up):
+        // registering forces with no targets would pull every node onto the origin.
+        if (this.positionedNodesByID.size === 0) return
+        this.registerForces()
+    }
+
+    /**
+     * The d3 tree generator, sized for the canvas and the spacing multipliers, plus
+     * the offset that re-centres the result on the box it would have filled at `1×`.
+     *
+     * A `size`d d3 tree is normalised onto the whole box, so here the box *is* the
+     * spacing — and it grows from the top-left corner. Without the offset, raising a
+     * multiplier would push the tree off the bottom-right of the canvas instead of
+     * expanding it in place. At `1×` the offset is zero, so the layout is unchanged.
+     */
+    protected static sizedTreeLayout(options: TreeLayoutOptions, canvasBCR: DOMRect): {
+        treeLayout: D3TreeGenerator<TreeNode>
+        offset: { x: number, y: number }
+    } {
+        const spacing = TreeLayout.spacingOf(options)
+        const treeLayout = tree<TreeNode>()
+
+        if (options.radial) {
+            // A level always spans the full circle, so only the ring gap can grow.
+            treeLayout.size([2 * Math.PI, options.radialGap * spacing.level])
+            return { treeLayout, offset: { x: 0, y: 0 } }
+        }
+
+        // Hierarchy `x` is the breadth axis (siblings), `y` the depth axis (levels).
+        const width = canvasBCR.width * spacing.sibling
+        const height = canvasBCR.height * spacing.level
+        treeLayout
+            .size([width, height])
+            .separation((a, b) => {
+                const siblingsCount = a.parent?.children?.length ?? 1
+                return a.parent === b.parent ? 1.5 / siblingsCount : 1.5
+            })
+
+        return {
+            treeLayout,
+            offset: {
+                x: -(width - canvasBCR.width) / 2,
+                y: -(height - canvasBCR.height) / 2,
+            },
+        }
+    }
+
+    /** Shift a laid-out tree in hierarchy space; see {@link sizedTreeLayout}. */
+    protected static offsetTree(nodes: HierarchyNode<TreeNode>[], offset: { x: number, y: number }): void {
+        if (!offset.x && !offset.y) return
+        for (const node of nodes) {
+            node.x = (node.x ?? 0) + offset.x
+            node.y = (node.y ?? 0) + offset.y
+        }
+    }
+
     protected buildTree(
         nodes: Node[],
         edges: Edge[],
@@ -359,25 +448,11 @@ export class TreeLayout {
         }
 
         // Create a d3 hierarchy and compute tree layout
-        const radius = options.radialGap
-        const width = options.radial ? 2 * Math.PI : canvasBCR.width
-        const height = options.radial ? radius : canvasBCR.height
-
-        const treeLayout = tree<TreeNode>()
-        if (options.radial) {
-            treeLayout.size([width, height])
-        } else {
-            treeLayout
-                .size([width, height])
-                // .nodeSize(options.horizontal ? [100, 50] : [50, 100])
-                .separation((a, b) => {
-                    const siblingsCount = a.parent?.children?.length ?? 1
-                    return a.parent === b.parent ? 1.5 / siblingsCount : 1.5
-                })
-        }
+        const { treeLayout, offset } = TreeLayout.sizedTreeLayout(options, canvasBCR)
 
         const rootHierarchy = hierarchy(root)
         const treeRoot = treeLayout(rootHierarchy)
+        TreeLayout.offsetTree(treeRoot.descendants(), offset)
 
         const nodeById = new Map<string, HierarchyNode<TreeNode>>()
         treeRoot.descendants().forEach((node) => {

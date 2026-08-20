@@ -4,6 +4,7 @@ import {
     gotoHarness,
     loadFixture,
     expectElement,
+    harness,
 } from '../helpers'
 
 // ── B3 Physics flyout ────────────────────────────────────────────────────────
@@ -32,6 +33,31 @@ const panel = (page: Page) => page.locator('.pvt-flyout-panel.pvt-flyout-physics
 /** One of the four layout tiles that replaced the layout dropdown. */
 const layoutTile = (page: Page, id: string) =>
     panel(page).locator(`.pvt-physicsflyout-layout[data-layout="${id}"]`)
+
+/** The tree-spacing card, which stands in for the greyed-out simulation knobs. */
+const spacingCard = (page: Page) => panel(page).locator('.pvt-physicsflyout-spacing')
+
+const spacingSlider = (page: Page, key: string) =>
+    panel(page).locator(`.pvt-physicsflyout-range[data-spacing="${key}"]`)
+
+const treeSpacing = (page: Page) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    page.evaluate(() => (window.__pivotick as any).graph.simulation.getTreeSpacing())
+
+/** Drag a range input to `value` the way a user would: `input`, then release. */
+const drag = (locator: import('@playwright/test').Locator, value: string) =>
+    locator.evaluate((el: HTMLInputElement, v: string) => {
+        el.value = v
+        el.dispatchEvent(new Event('input', { bubbles: true }))
+        el.dispatchEvent(new Event('change', { bubbles: true }))
+    }, value)
+
+/** How tall the laid-out graph is, in graph coordinates. */
+const graphHeight = async (page: Page) => {
+    const positions = (await harness(page, 'nodePositions')) as Record<string, { x: number; y: number }>
+    const ys = Object.values(positions).map(p => p.y)
+    return Math.max(...ys) - Math.min(...ys)
+}
 
 test.describe('physics-flyout', () => {
     test.beforeEach(async ({ page }) => {
@@ -155,8 +181,9 @@ test.describe('physics-flyout', () => {
         await expect(layoutTile(page, 'tree-h')).not.toHaveClass(/active/)
     })
 
-    // Presets + sliders grey out under a non-force layout (D6/D7).
-    test('a tree layout greys out the physics controls', async ({ page }) => {
+    // Presets + sliders go inert under a non-force layout (D6/D7) — and out of
+    // sight, since the spacing card takes over the same job.
+    test('a tree layout puts the physics controls away', async ({ page }) => {
         await loadFixture(page, 'tree', B3) // acyclic → tree layouts allowed
         await openFlyout(page)
 
@@ -164,6 +191,66 @@ test.describe('physics-flyout', () => {
 
         await expect(panel(page).locator('.pvt-physicsflyout-card')).toHaveClass(/pvt-physicsflyout-disabled/)
         await expect(panel(page).locator('.pvt-physicsflyout-range[data-slider="repulsion"]')).toBeDisabled()
+        await expect(panel(page).locator('.pvt-physicsflyout-card .pvt-physicsflyout-sliders')).toBeHidden()
+        // The run/pause toggle still applies to a tree's relaxation, so it stays.
+        await expect(panel(page).locator('.pvt-physicsflyout-run')).toBeVisible()
+    })
+
+    // A tree layout ignores the physics knobs, so it offers its own distances instead.
+    test('a tree layout swaps the physics knobs for spacing controls', async ({ page }) => {
+        await loadFixture(page, 'tree', B3)
+        await openFlyout(page)
+        await expect(spacingCard(page)).toBeHidden()
+
+        await layoutTile(page, 'tree-v').click()
+        await expect(spacingCard(page)).toBeVisible()
+        await expect(spacingSlider(page, 'levelSpacing')).toBeEnabled()
+        await expectElement(panel(page), 'physicsflyout-tree-spacing.png')
+
+        // Back on force, the physics knobs are the spacing controls again.
+        await layoutTile(page, 'force').click()
+        await expect(spacingCard(page)).toBeHidden()
+    })
+
+    // The slider drives the real layout: the tree comes out twice as deep.
+    test('the level distance slider re-lays-out the tree further apart', async ({ page }) => {
+        await loadFixture(page, 'tree', B3)
+        await openFlyout(page)
+        await layoutTile(page, 'tree-v').click()
+        const fitted = await graphHeight(page)
+
+        await drag(spacingSlider(page, 'levelSpacing'), '2')
+
+        expect((await treeSpacing(page)).levelSpacing).toBe(2)
+        await expect(panel(page).locator('.pvt-physicsflyout-slider-value[data-value="levelSpacing"]')).toHaveText('2×')
+        expect(await graphHeight(page) / fitted).toBeGreaterThan(1.9)
+    })
+
+    // Switching orientation rebuilds the layout — the spacing has to survive it.
+    test('spacing survives a switch to another tree orientation', async ({ page }) => {
+        await loadFixture(page, 'tree', B3)
+        await openFlyout(page)
+        await layoutTile(page, 'tree-v').click()
+        await drag(spacingSlider(page, 'levelSpacing'), '2.5')
+
+        await layoutTile(page, 'tree-h').click()
+
+        expect((await treeSpacing(page)).levelSpacing).toBe(2.5)
+        await expect(spacingSlider(page, 'levelSpacing')).toHaveValue('2.5')
+    })
+
+    // The radial layout spreads every level over the full circle, so sibling
+    // distance has nothing left to widen — its slider says so.
+    test('the radial layout offers only level distance', async ({ page }) => {
+        await loadFixture(page, 'tree', B3)
+        await openFlyout(page)
+
+        await layoutTile(page, 'tree-r').click()
+        await expect(spacingSlider(page, 'levelSpacing')).toBeEnabled()
+        await expect(spacingSlider(page, 'siblingSpacing')).toBeDisabled()
+
+        await layoutTile(page, 'tree-v').click()
+        await expect(spacingSlider(page, 'siblingSpacing')).toBeEnabled()
     })
 
     // Tree layouts are unavailable on a cyclic graph — their tiles refuse the click.

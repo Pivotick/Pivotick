@@ -46,18 +46,28 @@
     }
 }
 
-.pvt-physicsflyout-card {
+// The simulation card and the tree-spacing card that stands in for it share the
+// same chrome; only one of the two is ever live (see `updateLayoutControls`).
+.pvt-physicsflyout-card,
+.pvt-physicsflyout-spacing {
     margin: 8px 0 0;
     padding: 11px;
     border-radius: 10px;
     background-color: var(--pvt-bg-color-4);
     border: 1px solid var(--pvt-bg-color-5);
 
+    // Under a tree layout the knobs are inert, so they are put away rather than
+    // greyed: the spacing card takes their place, and stacking a dead copy of six
+    // sliders underneath it would push the panel past a laptop's viewport.
+    // The card head — and with it the run/pause toggle, which still bites — stays.
     &.pvt-physicsflyout-disabled {
         .pvt-physicsflyout-presets,
         .pvt-physicsflyout-sliders {
-            opacity: 0.4;
-            pointer-events: none;
+            display: none;
+        }
+
+        .pvt-physicsflyout-card-head {
+            margin-bottom: 0;
         }
     }
 }
@@ -159,4 +169,11 @@
         accent-color: var(--pvt-theme-primary);
         cursor: pointer;
     }
+}
+
+// A spacing slider the active tree layout cannot honour — the radial layout always
+// spreads a level over the full circle, so sibling distance has nothing to widen.
+.pvt-physicsflyout-spacing .pvt-physicsflyout-range:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }
