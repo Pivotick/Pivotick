@@ -2,7 +2,7 @@ import type { Edge } from '../../../Edge'
 import type { Node } from '../../../Node'
 import type { TableColumn, TableSortDirection, TableTab } from '../../../interfaces/GraphUI'
 import type { UIManager } from '../../UIManager'
-import { readCell, resolveColumns } from './TableColumns'
+import { LABEL_COLUMN_KEY, VISIBILITY_COLUMN_KEY, readCell, resolveColumns } from './TableColumns'
 import { arrowDown, arrowUp, dataTable } from '../../icons'
 
 type Element = Node | Edge
@@ -128,8 +128,11 @@ export class TableGrid {
             if (column.hidden) this.hiddenColumns.add(column.key)
         }
         if (!this.sort) {
-            const first = this.columns.find((column) => column.sortable !== false)
-            if (first) this.sort = { key: first.key, direction: 'asc' }
+            // Prefer the name. Visibility leads the columns but sorting by it on open is
+            // useless — every row reads `visible` until something is hidden.
+            const preferred = this.columns.find((column) => column.key === LABEL_COLUMN_KEY && column.sortable !== false)
+                ?? this.columns.find((column) => column.sortable !== false)
+            if (preferred) this.sort = { key: preferred.key, direction: 'asc' }
         }
 
         this.rows = this.collectElements().map((element) => ({
@@ -368,14 +371,23 @@ export class TableGrid {
             if (column.align) cell.dataset.align = column.align
 
             const value = row.values.get(column.key)
+
+            // The visibility cell is drawn as a state chip. Keyed on the *column*, not on
+            // the value — a data column that happens to hold the word "visible" is not a
+            // visibility column.
+            if (column.key === VISIBILITY_COLUMN_KEY && typeof value === 'string' && value !== '') {
+                cell.dataset.visibility = value
+                const chip = document.createElement('span')
+                chip.className = 'pvt-table-visibility'
+                chip.textContent = value
+                cell.appendChild(chip)
+                element.appendChild(cell)
+                continue
+            }
+
             const formatted = column.format?.(value, row.element as never)
             if (formatted instanceof HTMLElement) cell.appendChild(formatted)
             else cell.textContent = formatted ?? formatValue(value)
-
-            // The visibility cell is the one people scan for, so give it a chip.
-            if (typeof value === 'string' && (value === 'filtered' || value === 'excluded' || value === 'visible')) {
-                cell.dataset.visibility = value
-            }
             element.appendChild(cell)
         }
         return element

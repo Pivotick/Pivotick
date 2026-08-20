@@ -35,13 +35,17 @@ instrument for *building* the selection those act on.
 ## It lists the whole graph {#superset}
 
 The table does **not** mirror the canvas. It lists every top-level node, including the
-ones currently hidden, and a `Visibility` column says where each one stands:
+ones currently hidden, and the leading `Visibility` column says where each one stands:
 
-| Value | Meaning |
-|---|---|
-| `visible` | On the canvas now |
-| `filtered` | Hidden by the filter panel |
-| `excluded` | Hidden by hand (the sidebar's Hide action) |
+| Value | Styling | Meaning |
+|---|---|---|
+| `visible` | quiet, untinted | On the canvas now |
+| `filtered` | amber chip | Hidden by the filter panel — change the filter to get it back |
+| `excluded` | red chip | Hidden by hand; restore it from the filter panel's hidden-node list |
+
+Each state differs in weight and border as well as colour, so the column reads without
+relying on hue. A hidden node's whole row also recedes, keeping the eye on what is
+actually drawn.
 
 That is deliberate. "23 nodes hidden" is a claim you should be able to inspect, and a
 table that quietly drops the rows you are looking for is worse than no table. Sort by
@@ -90,8 +94,13 @@ With no `columns` declared, the dock works it out for you, in three tiers:
 3. **Scanned** — otherwise the data is read, ordered by **coverage** so the
    well-populated keys come first and the sparse tail sits at the far right.
 
-Either way the graph-aware columns lead: `Label`, `Degree` and `Visibility` for nodes,
-`Source` / `Label` / `Target` for edges.
+Either way the graph-aware columns lead. For nodes that is **`Visibility`, `Degree`, then
+`Label`**: the first two are narrow, scannable facts you read straight down a column, so
+they sit at the left edge as a status gutter rather than being pushed right by a wide name.
+Edges read as a sentence instead — `Source` / `Label` / `Target`.
+
+The default sort is the `Label` column, not the leading one: sorting by `Visibility` on
+open tells you nothing while every row still reads `visible`.
 
 Everything is shown by default, and the grid scrolls sideways rather than dropping
 anything. On property-heavy nodes use the **Columns** picker to switch off what you don't
@@ -114,9 +123,9 @@ new Pivotick(el, data, {
             // the key itself is namespaced so it can never clash with a data key.
             sort: { key: tableColumns.degree.key, direction: 'desc' },
             columns: [
-                tableColumns.label,
-                { ...tableColumns.degree, label: 'Links' },
                 tableColumns.visibility,
+                { ...tableColumns.degree, label: 'Links' },
+                tableColumns.label,
                 { key: 'severity', label: 'Severity', type: 'numberRange', filterable: true },
             ],
         },
@@ -165,7 +174,7 @@ inspect.
 | `open` | `false` | Open the dock on boot |
 | `collapsed` | `'auto'` | Folded to its header bar. `'auto'` follows the room available until you choose for yourself |
 | `height` | `0.35` | A pixel count, or a fraction of the canvas. Clamped so the canvas keeps a usable minimum |
-| `sort` | first sortable column | `{ key, direction }` |
+| `sort` | the `Label` column | `{ key, direction }` |
 | `rowActivate` | `'select'` | `'selectAndCenter'` also moves the canvas; `'none'` makes rows inert |
 | `export` | `['csv', 'json']` | `false` hides the buttons |
 | `virtualizeAbove` | `200` | Row count above which rows are windowed |

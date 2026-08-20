@@ -390,14 +390,54 @@
     }
 }
 
-// The Visibility column's reading, picked out so it can be scanned down.
-.pvt-table-td[data-visibility] {
-    color: var(--pvt-text-color-4);
+// ── the Visibility state chip ───────────────────────────────────────────────
+// The column leads the table as a status gutter, so it has to be readable at a
+// glance and scannable straight down. A tinted chip per state does that where
+// plain text would not.
+//
+// Colour is not the only signal — each state also differs in weight and in
+// border — so the column still reads for anyone who can't separate the hues.
+
+.pvt-table-visibility {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 6px;
+    height: 16px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    white-space: nowrap;
 }
 
-.pvt-table-td[data-visibility='filtered'],
-.pvt-table-td[data-visibility='excluded'] {
-    font-style: italic;
+// On the canvas: deliberately quiet. It is the normal case, and a table full of
+// loud green chips would drown out the two states that matter.
+.pvt-table-td[data-visibility='visible'] .pvt-table-visibility {
+    color: var(--pvt-text-color-3);
+    font-weight: 500;
+}
+
+// Hidden by the filter panel — recoverable by changing the filter.
+.pvt-table-td[data-visibility='filtered'] .pvt-table-visibility {
+    color: var(--pvt-text-color-warning);
+    border-color: color-mix(in srgb, var(--pvt-bg-color-warning) 45%, transparent);
+    background-color: color-mix(in srgb, var(--pvt-bg-color-warning) 16%, transparent);
+}
+
+// Hidden by hand — recoverable only from the filter panel's hidden-node list, so
+// it gets the stronger of the two treatments.
+.pvt-table-td[data-visibility='excluded'] .pvt-table-visibility {
+    color: var(--pvt-text-color-danger);
+    border-color: color-mix(in srgb, var(--pvt-bg-color-danger) 45%, transparent);
+    background-color: color-mix(in srgb, var(--pvt-bg-color-danger) 16%, transparent);
+}
+
+// A hidden node's whole row recedes, so the eye lands on what is actually drawn.
+.pvt-table-row:has(.pvt-table-td[data-visibility='filtered']) .pvt-table-td:not([data-visibility]),
+.pvt-table-row:has(.pvt-table-td[data-visibility='excluded']) .pvt-table-td:not([data-visibility]) {
+    color: var(--pvt-text-color-4);
 }
 
 .pvt-table-empty {

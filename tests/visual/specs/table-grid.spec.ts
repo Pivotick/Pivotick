@@ -65,7 +65,8 @@ test.describe('table grid', () => {
         await openDock(page)
 
         const columns = await headings(page)
-        expect(columns.slice(0, 3)).toEqual(['Label', 'Degree', 'Visibility'])
+        // Visibility and Degree lead as a status gutter; the name follows.
+        expect(columns.slice(0, 3)).toEqual(['Visibility', 'Degree', 'Label'])
         // `label` is the built-in Label column's source, so it is not repeated.
         expect(columns.filter((name) => name === 'Label')).toHaveLength(1)
     })
@@ -123,6 +124,49 @@ test.describe('table grid', () => {
         expect(byId.hub).toBe('visible')
         expect(byId.a).toBe('filtered')
         expect(byId.e).toBe('filtered')
+    })
+
+    // Visibility leads the table as a status gutter, so each state has to be
+    // distinguishable at a glance — and by more than hue alone.
+    test('each visibility state gets its own chip styling', async ({ page }) => {
+        await openDock(page)
+        await harness(page, 'excludeNode', 'a')
+        await expect.poll(() => visibilityById(page).then((byId) => byId.a)).toBe('excluded')
+
+        const chip = (id: string) => page.locator(`.pvt-table-row[data-id="${id}"] .pvt-table-visibility`)
+        await expect(chip('a')).toBeVisible()
+        await expect(chip('c')).toBeVisible()
+
+        const styles = await page.evaluate(() => {
+            const read = (id: string) => {
+                const el = document.querySelector(`.pvt-table-row[data-id="${id}"] .pvt-table-visibility`)!
+                const s = getComputedStyle(el)
+                return { color: s.color, background: s.backgroundColor, weight: s.fontWeight }
+            }
+            return { excluded: read('a'), visible: read('c') }
+        })
+
+        // Distinct colour *and* a distinct weight, so hue is not the only cue.
+        expect(styles.excluded.color).not.toBe(styles.visible.color)
+        expect(styles.excluded.weight).not.toBe(styles.visible.weight)
+        // The hidden state is tinted; the ordinary one stays quiet.
+        expect(styles.excluded.background).not.toBe(styles.visible.background)
+    })
+
+    // The chip is keyed on the column, not on the value — this is what stops a data
+    // column that happens to say "visible" being dressed up as a status.
+    test('a data column holding the word "visible" is not styled as a state', async ({ page }) => {
+        await loadFixture(page, 'basic', {
+            UI: {
+                mode: 'full',
+                sidebar: { collapsed: false },
+                table: { open: true, columns: [{ key: 'label', label: 'State', type: 'text' }] },
+            },
+        })
+        await page.locator('.pvt-table-row').first().waitFor()
+
+        await expect(page.locator('.pvt-table-visibility')).toHaveCount(0)
+        await expect(page.locator('.pvt-table-td[data-visibility]')).toHaveCount(0)
     })
 
     test('clicking a heading sorts, and clicking again reverses', async ({ page }) => {
@@ -232,7 +276,7 @@ test.describe('table grid', () => {
         await page.locator('.pvt-table-row').first().waitFor()
 
         const columns = await headings(page)
-        expect(columns).toEqual(['Label', 'Degree', 'Visibility', 'Category', 'To IDs'])
+        expect(columns).toEqual(['Visibility', 'Degree', 'Label', 'Category', 'To IDs'])
     })
 
     test('a new node appears without reopening the dock', async ({ page }) => {

@@ -36,10 +36,10 @@ test.describe('table export', () => {
         const csv = await exportText(page, 'CSV')
 
         const lines = csv.split('\r\n')
-        expect(lines[0]).toBe('Label,Degree,Visibility')
+        expect(lines[0]).toBe('Visibility,Degree,Label')
         // Six nodes plus the header.
         expect(lines).toHaveLength(7)
-        expect(csv).toContain('HUB,2,visible')
+        expect(csv).toContain('visible,2,HUB')
     })
 
     test('JSON is one object per row, keyed by column label', async ({ page }) => {
@@ -47,7 +47,7 @@ test.describe('table export', () => {
         const parsed = JSON.parse(await exportText(page, 'JSON'))
 
         expect(parsed).toHaveLength(6)
-        expect(Object.keys(parsed[0])).toEqual(['Label', 'Degree', 'Visibility'])
+        expect(Object.keys(parsed[0])).toEqual(['Visibility', 'Degree', 'Label'])
         expect(parsed.find((row: Record<string, unknown>) => row.Label === 'HUB')).toMatchObject({
             Degree: 2, Visibility: 'visible',
         })
@@ -72,7 +72,7 @@ test.describe('table export', () => {
         await page.locator('.pvt-table-columns-row', { hasText: 'Degree' }).locator('input').uncheck()
 
         const csv = await exportText(page, 'CSV')
-        expect(csv.split('\r\n')[0]).toBe('Label,Visibility')
+        expect(csv.split('\r\n')[0]).toBe('Visibility,Label')
     })
 
     test('a row filter narrows the export too', async ({ page }) => {

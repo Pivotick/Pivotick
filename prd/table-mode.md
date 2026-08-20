@@ -11,8 +11,8 @@
 
 ## Implementation (2026-08-20)
 
-`tsc`, `eslint`, `npm run build` and `vitepress build docs` clean; **384 visual tests
-green**, including 48 new ones across `physics-container`, `selection-hidden-nodes`,
+`tsc`, `eslint`, `npm run build` and `vitepress build docs` clean; **388 visual tests
+green**, including 64 new ones across `physics-container`, `selection-hidden-nodes`,
 `table-dock`, `table-grid`, `table-selection`, `table-export` and
 `table-virtualization`. Everything in §9 shipped except the deferred items below.
 
@@ -82,7 +82,9 @@ All nine held. The two that earned their keep most:
   already carried on the column.
 - **`getHiddenNodes()` and the reason-recording filter pass** (old §5.3 / R5) — dropped
   outright by D-A, not deferred. The over-reporting `getHiddenNodeCount()` (§3.2) is
-  **still wrong** and is now the only consumer of that count; worth a separate fix.
+  **still wrong**, and the dock now makes that visible: on a graph with clusters the filter
+  pill reads "4 hidden" while the table lists 2 non-visible rows. Nobody could see the
+  contradiction before; it should be fixed on its own merits now.
 - **Row-level actions.** D-B by design. §5.9 holds the seam.
 
 ### Notes for the next person
@@ -381,7 +383,7 @@ import { Pivotick, tableColumns } from 'pivotick'
 `tableColumns.label` wraps `nodeNameGetter(node, mainHeader)` so labels match the rest of
 the UI; the edge counterparts wrap `edgeNameGetter` / `edgeLabelGetter`.
 
-**Default order (D-H):** `label`, `degree`, `visibility`, then derived keys **ordered by
+**Default order (D-H):** `visibility`, `degree`, `label`, then derived keys **ordered by
 coverage** (how many nodes carry the key), most-populated first. Everything is shown; the
 grid scrolls horizontally inside its own container. The **column picker** in the dock header
 toggles visibility — table view state, so it stays inside D-B.

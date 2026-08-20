@@ -29,6 +29,12 @@ const RESERVED = {
 /** What the `Visibility` column reports, and why. */
 export type TableVisibility = 'visible' | 'filtered' | 'excluded'
 
+/** The `Visibility` column's key — the grid checks for it to style the cell per state. */
+export const VISIBILITY_COLUMN_KEY = RESERVED.visibility
+
+/** The `Label` column's key — the default sort prefers it over whatever comes first. */
+export const LABEL_COLUMN_KEY = RESERVED.label
+
 /** Data keys the leading built-in columns already show, so a scan must not repeat them. */
 const CLAIMED_DATA_KEYS = new Set(['label'])
 
@@ -65,8 +71,11 @@ export const tableColumns = {
      * Whether the node is on the canvas, and if not, why — `filtered` by the filter panel,
      * or `excluded` by hand. The dock lists hidden nodes rather than hiding them, so this
      * is how you tell them apart.
+     *
+     * Narrow and fixed-width: it leads the derived column set as a status gutter, so it
+     * should not eat the room the name needs.
      */
-    visibility: { key: RESERVED.visibility, label: 'Visibility', type: 'select', sortable: true } as TableColumn,
+    visibility: { key: RESERVED.visibility, label: 'Visibility', type: 'select', sortable: true, width: 104 } as TableColumn,
     /** Whether the node is pinned in place. */
     pinned: { key: RESERVED.pinned, label: 'Pinned', type: 'boolean', accessor: (node: Node) => typeof node.fx === 'number' && typeof node.fy === 'number' } as TableColumn,
     /** The cluster the node belongs to, if any. */
@@ -122,9 +131,13 @@ function isEdge(element: Node | Edge): element is Edge {
  * 3. **Scanned** — otherwise read the data, sharing `collectDataAttributes` with the
  *    filter panel's zero-config path so the inferred types match.
  *
- * Tiers 2 and 3 are prefixed with the graph-aware columns (label, degree, visibility for
- * nodes; source/label/target for edges), because a table that opens without them can't
- * answer "which are the hubs" — the question people actually arrive with.
+ * Tiers 2 and 3 are prefixed with the graph-aware columns, because a table that opens
+ * without them can't answer "which are the hubs" — the question people actually arrive
+ * with.
+ *
+ * For nodes those lead **visibility, degree, label**: the first two are the narrow,
+ * scannable facts you read down a column, so they sit at the left edge as a status gutter
+ * rather than being pushed off to the right by a wide name.
  */
 export function resolveColumns(uiManager: UIManager, tab: TableTab): TableColumn<Node | Edge>[] {
     const options = uiManager.getOptions()
@@ -137,7 +150,8 @@ export function resolveColumns(uiManager: UIManager, tab: TableTab): TableColumn
     }
 
     const leading: TableColumn<Node | Edge>[] = tab === 'nodes'
-        ? [tableColumns.label, tableColumns.degree, tableColumns.visibility] as TableColumn<Node | Edge>[]
+        ? [tableColumns.visibility, tableColumns.degree, tableColumns.label] as TableColumn<Node | Edge>[]
+        // Edges read as a sentence — source, relation, target — so they keep that order.
         : [tableColumns.source, tableColumns.label, tableColumns.target] as unknown as TableColumn<Node | Edge>[]
 
     return bindReservedAccessors([...leading, ...dataColumns(uiManager, tab)], uiManager)
