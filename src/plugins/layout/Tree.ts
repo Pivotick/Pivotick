@@ -12,6 +12,7 @@ import type { Edge } from '../../Edge'
 import hasCycle from '../analytics/cycle'
 import { findFirstZeroInDegreeNode, findMaxReachabilityRoot, findMinHeightDAGRoot, findMinMaxDistanceRoot } from '../analytics/DAGAlgorithms'
 import type { AnyTreeLayoutOptions, TreeLayoutOptions } from '../../interfaces/LayoutOptions'
+import { neededLevelGap, neededSiblingGap, tuneTreeSpacing, type AutoTreeContext, type TreeGap } from '../../AutoTreeSpacing'
 import type { SimulationForces } from '../../interfaces/SimulationOptions'
 
 export type TreeLayoutAlgorithm = 'FirstZeroInDegree' | 'MaxReachability' | 'MinMaxDistance' | 'MinHeight'
@@ -23,6 +24,7 @@ const DEFAULT_TREE_LAYOUT_OPTIONS: TreeLayoutOptions = {
     strength: 0.25,
     radial: false,
     radialGap: 750,
+    spacing: 'auto',
     levelSpacing: 1,
     siblingSpacing: 1,
     horizontal: false,
@@ -54,6 +56,8 @@ export class TreeLayout {
     protected levels: Map<string, number>
     /** Deepest level in {@link levels}; the divisor turning `radialGap` into a ring gap. */
     protected maxDepth = 0
+    /** Whether {@link update} re-derives the spacing multipliers; see {@link setSpacing}. */
+    protected autoSpacing: boolean
     protected positionedNodesByID: Map<string, HierarchyNode<TreeNode>>
 
     constructor (
@@ -72,6 +76,16 @@ export class TreeLayout {
             gravity: this.simulationForces.gravity.strength(),
         }
 
+        // Auto is the default but never a takeover: a tree that set either multiplier
+        // explicitly keeps exactly what it asked for. Decided from the *raw* partial,
+        // before the merge buries it under the defaults — the same rule (and the same
+        // reason) as `Simulation.shouldAutoTune`.
+        this.autoSpacing = partialOptions.spacing === 'auto' || (
+            partialOptions.spacing !== 'manual'
+            && partialOptions.levelSpacing === undefined
+            && partialOptions.siblingSpacing === undefined
+        )
+
         this.positionedNodesByID = new Map()
         this.levels = new Map()
 
@@ -86,7 +100,32 @@ export class TreeLayout {
         this.registerForces()
     }
 
+    /**
+     * Lay the tree out — and, while `spacing: 'auto'`, re-derive the multipliers from
+     * what the nodes actually need and lay it out once more.
+     *
+     * Two passes rather than a loop: a gap scales linearly with its multiplier, so the
+     * correction {@link tuneTreeSpacing} computes from the first pass is exact. The
+     * second pass is skipped entirely when it would change nothing, which is the
+     * common case — including every graph that was never crowded.
+     */
     public update(): void {
+        this.layoutOnce()
+        if (!this.autoSpacing || this.positionedNodesByID.size === 0) return
+
+        const tuned = tuneTreeSpacing(this.measureAutoContext())
+        if (tuned.levelSpacing === this.options.levelSpacing
+            && tuned.siblingSpacing === this.options.siblingSpacing) return
+
+        this.options.levelSpacing = tuned.levelSpacing
+        this.options.siblingSpacing = tuned.siblingSpacing
+        this.layoutOnce()
+        // Auto only ever moves multipliers the user can see, so the sliders follow it —
+        // the same contract, and the same hand-off point, as the physics knobs.
+        this.graph.UIManager?.physicsFlyout?.syncAutoSpacing(tuned)
+    }
+
+    private layoutOnce(): void {
         const nodes = this.graph.getNodes()
         const edges = this.options.flipEdgeDirection ? this.flipEdgeDirection(this.graph.getEdges()) : this.graph.getEdges()
         const { levels, maxDepth } = this.buildLevels(nodes, edges, undefined, this.options.rootIdAlgorithmFinder)
@@ -98,6 +137,64 @@ export class TreeLayout {
         if (positionedNodes) {
             this.setNodePositions(positionedNodes, this.options)
         }
+    }
+
+    /**
+     * The tightest pair on each axis of the tree as currently laid out, for
+     * {@link tuneTreeSpacing}. Measured in *hierarchy* space (`x` = breadth or angle,
+     * `y` = depth or radius), which is the layout's own answer, unpolluted by whatever
+     * the force relaxation has since done to the free axis.
+     */
+    protected measureAutoContext(): AutoTreeContext {
+        const byDepth = new Map<number, Array<{ node: HierarchyNode<TreeNode>, radius: number }>>()
+        for (const [id, positioned] of this.positionedNodesByID) {
+            const node = this.graph.getMutableNode(id)
+            if (!node) continue
+            const radius = node.expanded ? node.getCircleRadiusCollapsed() : node.getCircleRadius()
+            const bucket = byDepth.get(positioned.depth) ?? []
+            bucket.push({ node: positioned, radius })
+            byDepth.set(positioned.depth, bucket)
+        }
+
+        const depths = [...byDepth.keys()].sort((a, b) => a - b)
+        let level: TreeGap | null = null
+        let sibling: TreeGap | null = null
+
+        for (let i = 0; i < depths.length; i++) {
+            const here = byDepth.get(depths[i])!
+
+            const next = i + 1 < depths.length ? byDepth.get(depths[i + 1])! : undefined
+            if (next) {
+                // Every node of a level shares its depth coordinate, so one of each will do.
+                const measured = Math.abs((next[0].node.y ?? 0) - (here[0].node.y ?? 0))
+                const needed = neededLevelGap(TreeLayout.widestOf(here), TreeLayout.widestOf(next))
+                level = TreeLayout.tighter(level, { measured, needed })
+            }
+
+            const inOrder = [...here].sort((a, b) => (a.node.x ?? 0) - (b.node.x ?? 0))
+            for (let j = 1; j < inOrder.length; j++) {
+                const [before, after] = [inOrder[j - 1], inOrder[j]]
+                const measured = this.options.radial
+                    // Same ring, so the chord between two angles — the distance a reader sees.
+                    ? 2 * (after.node.y ?? 0) * Math.sin(Math.abs((after.node.x ?? 0) - (before.node.x ?? 0)) / 2)
+                    : (after.node.x ?? 0) - (before.node.x ?? 0)
+                const needed = neededSiblingGap(before.radius, after.radius)
+                sibling = TreeLayout.tighter(sibling, { measured, needed })
+            }
+        }
+
+        return { level, sibling, radial: this.options.radial, current: this.getSpacing() }
+    }
+
+    /** The pair in the worse shape — the biggest shortfall relative to what it needs. */
+    private static tighter(current: TreeGap | null, candidate: TreeGap): TreeGap {
+        if (!current) return candidate
+        const shortfall = (gap: TreeGap) => gap.needed / Math.max(gap.measured, 1e-6)
+        return shortfall(candidate) > shortfall(current) ? candidate : current
+    }
+
+    private static widestOf(nodes: Array<{ radius: number }>): number {
+        return nodes.reduce((max, n) => Math.max(max, n.radius), 0)
     }
 
     protected flipEdgeDirection(edges: Edge[]): Edge[] {
@@ -341,8 +438,28 @@ export class TreeLayout {
      * levels spread, siblings snap back.
      */
     public setSpacing(spacing: { levelSpacing?: number, siblingSpacing?: number }): void {
+        // A hand-set multiplier is a deliberate choice; auto must not overwrite it a
+        // moment later.
+        this.autoSpacing = false
+        this.options.spacing = 'manual'
         if (spacing.levelSpacing !== undefined) this.options.levelSpacing = spacing.levelSpacing
         if (spacing.siblingSpacing !== undefined) this.options.siblingSpacing = spacing.siblingSpacing
+        this.relayout()
+    }
+
+    /** Is the spacing tuning itself? */
+    public isAutoSpacing(): boolean {
+        return this.autoSpacing
+    }
+
+    /** Hand the multipliers back to the tuner and re-lay-out at what it picks. */
+    public enableAutoSpacing(): void {
+        this.autoSpacing = true
+        this.options.spacing = 'auto'
+        this.relayout()
+    }
+
+    private relayout(): void {
         this.setSizes()
         this.update()
         // A cyclic graph has no tree to lay out (the constructor warned and gave up):

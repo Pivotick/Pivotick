@@ -171,6 +171,30 @@
     }
 }
 
+// The spacing card's Auto pill, sitting where the simulation card keeps its run
+// button. Lit while the tree is deriving its own distances.
+.pvt-physicsflyout-autospacing {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 9px;
+    border: 1px solid var(--pvt-bg-color-5);
+    border-radius: 7px;
+    background-color: var(--pvt-bg-color-2);
+    color: var(--pvt-text-color-5);
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+
+    .pvt-flyout-icon svg { width: 13px; height: 13px; }
+
+    &.active {
+        background-color: var(--pvt-theme-primary);
+        border-color: var(--pvt-theme-primary);
+        color: #fff;
+    }
+}
+
 // A spacing slider the active tree layout cannot honour — the radial layout always
 // spreads a level over the full circle, so sibling distance has nothing to widen.
 .pvt-physicsflyout-spacing .pvt-physicsflyout-range:disabled {

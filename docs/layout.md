@@ -22,6 +22,7 @@ When `type: 'tree'` is selected, the following additional options are available:
 | `horizontal`            | `boolean` | `false`           | Arrange nodes horizontally rather than vertically.                                                                                          |
 | `radial`                | `boolean` | `false`           | Place nodes in a radial layout instead of vertical.                                                                                         |
 | `radialGap`             | `number`  | `750`             | Gap between layers in radial layout.                                                                                                        |
+| `spacing`               | `'auto' \| 'manual'` | `'auto'` | Whether the two multipliers below tune themselves from the size of the nodes and the shape of the tree. Setting either one explicitly implies `'manual'`. |
 | `levelSpacing`          | `number`  | `1`               | Multiplies the distance between consecutive levels (between rings, when `radial`). `1` fits the tree to the canvas, as before.               |
 | `siblingSpacing`        | `number`  | `1`               | Multiplies the distance between nodes *within* a level. Ignored when `radial`, where a level always spans the full circle.                   |
 | `flipEdgeDirection`     | `boolean` | `false`           | Flip the direction of edges in the layout.                                                                                                  |
@@ -48,6 +49,25 @@ layout is active (in place of the simulation knobs, which a tree layout ignores)
 graph.simulation.setTreeSpacing({ levelSpacing: 2 })
 graph.simulation.getTreeSpacing() // { levelSpacing: 2, siblingSpacing: 1 }
 ```
+
+#### Auto spacing
+
+By default the tree works its own spacing out. A tree layout is sized from the canvas and never
+looks at how big the nodes are, so a tree of small dots and a tree of large labelled nodes are laid
+out identically — and the second one overlaps. `spacing: 'auto'` measures the tightest pair of
+neighbours on each axis, works out what they need for their radii (plus room for an arrowhead
+between levels), and scales the multipliers to suit. It re-derives them whenever the graph changes.
+
+Two things it deliberately will not do:
+
+- **It never packs a tree tighter than the fitted layout.** Auto only ever raises a multiplier above
+  `1`, so a graph that was never crowded is laid out exactly as it always was.
+- **It never overrides a choice you made.** A tree that sets `levelSpacing` or `siblingSpacing` is
+  taken as having made up its mind, and moving either slider by hand leaves auto for good. Hand the
+  multipliers back with `simulation.enableAutoTreeSpacing()`.
+
+In the `radial` layout, where a level always spans the full circle, crowding within a ring can only
+be relieved by pushing the rings further out — so both measurements drive `levelSpacing` there.
 
 
 ::: danger

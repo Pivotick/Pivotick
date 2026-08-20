@@ -51,6 +51,16 @@ export interface TreeLayoutOptions extends BaseLayoutOptions {
      */
     radialGap: number
     /**
+     * Whether the two spacing multipliers tune themselves from the size of the nodes
+     * and the shape of the tree, or stay exactly where they are put.
+     *
+     * `'auto'` is the default — except for a tree that sets `levelSpacing` or
+     * `siblingSpacing` explicitly, which is taken as having made up its mind. Turning
+     * either multiplier by hand afterwards also leaves auto, permanently.
+     * @default 'auto'
+     */
+    spacing?: 'auto' | 'manual'
+    /**
      * Multiplies the distance between consecutive levels — the depth axis of the
      * tree, or the gap between rings in `radial` mode. `1` is the historical
      * behaviour: the tree is scaled to fill the canvas.

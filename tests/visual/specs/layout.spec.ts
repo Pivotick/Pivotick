@@ -159,6 +159,48 @@ test.describe('layouts', () => {
         expect(radius(spaced.d) / radius(fitted.d)).toBeCloseTo(2, 1)
     })
 
+    // ── Auto spacing ─────────────────────────────────────────────────────────
+    // A tree is sized from the canvas and never looks at how big its nodes are, so
+    // `spacing: 'auto'` derives both multipliers from what the nodes actually need.
+
+    const spacingOf = (page: Page) =>
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        page.evaluate(() => (window.__pivotick as any).graph.simulation.getTreeSpacing())
+
+    test('auto leaves an uncrowded tree at the fitted layout', async ({ page }) => {
+        await loadFixture(page, 'tree', { layout: { type: 'tree' } })
+        // Auto never packs a tree tighter than the fitted layout, so a sparse graph is
+        // untouched — which is what makes it safe as a default.
+        expect(await spacingOf(page)).toEqual({ levelSpacing: 1, siblingSpacing: 1 })
+    })
+
+    test('auto opens up a tree whose nodes are too big for their level', async ({ page }) => {
+        // 60 nodes of radius 30 in a random tree: the levels have room, the rows do not.
+        await harness(page, 'loadAuto', { nodes: 60, radius: 30 }, { layout: { type: 'tree' } })
+        const spacing = await spacingOf(page)
+        expect(spacing.siblingSpacing).toBeGreaterThan(1)
+        expect(spacing.levelSpacing).toBe(1)
+    })
+
+    test('auto opens up the levels of a deep chain', async ({ page }) => {
+        // A 40-node chain is 39 levels deep: ~18px of canvas per level against the
+        // ~44px two default nodes and an arrowhead need, so auto asks for ~2.4×.
+        await harness(page, 'loadAuto', { nodes: 2, radius: 10 }, { layout: { type: 'tree' } })
+        // Grown *after* the layout exists, so this also pins auto's promise to keep
+        // re-deriving as the graph changes: the 2-node tree needed nothing.
+        await harness(page, 'growAuto', 38, 10)
+        const spacing = await spacingOf(page)
+        expect(spacing.levelSpacing).toBeGreaterThan(2)
+        expect(spacing.siblingSpacing).toBe(1)
+    })
+
+    test('a hand-set multiplier opts out of auto entirely', async ({ page }) => {
+        // Configuring either multiplier is taken as having made up your mind: auto must
+        // not tune a crowded graph out from under the value it was given.
+        await harness(page, 'loadAuto', { nodes: 60, radius: 30 }, { layout: { type: 'tree', levelSpacing: 1.5 } })
+        expect(await spacingOf(page)).toEqual({ levelSpacing: 1.5, siblingSpacing: 1 })
+    })
+
     test('ego tree positions — neighbours fan out from the root', async ({ page }) => {
         const p = await positionsAfterLayout(page, 'egoNet', { type: 'egoTree', rootId: 'ego' })
         const neighbours = ['n1', 'n2', 'n3', 'n4', 'n5', 'n6']

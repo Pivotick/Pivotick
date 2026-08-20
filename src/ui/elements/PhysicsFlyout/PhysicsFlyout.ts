@@ -79,6 +79,9 @@ const SPACING_SLIDERS: Array<{ key: SpacingKey, label: string, desc: string, ico
     { key: 'siblingSpacing', label: 'Sibling distance', desc: 'How far apart nodes on the same level sit. The radial layout spreads a level over the whole circle, so it ignores this one.', icon: arrowsHorizontal, radial: false },
 ]
 
+/** Tooltip for the spacing card's Auto button. */
+const AUTO_SPACING_DESCRIPTION = 'Let the tree work out its own distances from the size of the nodes and the shape of the tree — and keep working them out as the graph changes.'
+
 /** The layout options each tree tile applies, keyed by tile id. */
 const TREE_ORIENTATIONS: Record<string, { horizontal?: boolean, radial?: boolean }> = {
     'tree-v': { horizontal: false },
@@ -115,11 +118,15 @@ export class PhysicsFlyout extends Flyout {
     private readonly layoutButtons = new Map<string, HTMLButtonElement>()
     /** The tile the graph is laid out by; drives which controls are live. */
     private activeLayout = 'force'
+    /** Whether tree spacing is left to the tuner — the Auto button's state. */
+    private autoSpacing = true
+    private autoSpacingButton?: HTMLButtonElement
 
     protected wire() {
         this.runButton = this.query<HTMLButtonElement>('.pvt-physicsflyout-run') ?? undefined
         this.simulationCard = this.query<HTMLDivElement>('.pvt-physicsflyout-card') ?? undefined
         this.spacingCard = this.query<HTMLDivElement>('.pvt-physicsflyout-spacing') ?? undefined
+        this.autoSpacingButton = this.query<HTMLButtonElement>('.pvt-physicsflyout-autospacing') ?? undefined
 
         for (const spec of SLIDERS) {
             const input = this.query<HTMLInputElement>(`.pvt-physicsflyout-range[data-slider="${spec.key}"]`)
@@ -161,6 +168,7 @@ export class PhysicsFlyout extends Flyout {
         // the UIManager, and thus this component, is built before graph.simulation).
         this.refreshSliders(this.sim.getPhysicsKnobs())
         this.refreshSpacingSliders(this.sim.getTreeSpacing())
+        this.setAutoSpacing(this.sim.getLayoutType() === 'force' || this.sim.isAutoTreeSpacingEnabled())
         this.highlightPreset(this.sim.isAutoPhysicsEnabled() ? 'auto' : null)
         this.updateRunButton()
         this.highlightLayout(this.sim.getLayoutType() === 'force' ? 'force' : 'tree-v')
@@ -172,6 +180,7 @@ export class PhysicsFlyout extends Flyout {
         this.runButton = undefined
         this.simulationCard = undefined
         this.spacingCard = undefined
+        this.autoSpacingButton = undefined
         this.sliders.clear()
         this.sliderValues.clear()
         this.spacingSliders.clear()
@@ -191,7 +200,7 @@ export class PhysicsFlyout extends Flyout {
                 // spacing has to travel with the orientation or every tile click would
                 // reset the sliders the user just set.
                 if (choice.id === 'force') this.sim.changeLayout('force')
-                else this.sim.changeLayout('tree', { layout: { ...TREE_ORIENTATIONS[choice.id], ...this.spacingFromSliders() } })
+                else this.sim.changeLayout('tree', { layout: { ...TREE_ORIENTATIONS[choice.id], ...this.spacingOptions() } })
                 this.highlightLayout(choice.id)
                 this.updateLayoutControls()
             })
@@ -208,10 +217,16 @@ export class PhysicsFlyout extends Flyout {
         }
     }
 
-    /** The spacing the sliders are showing, as layout options. */
-    private spacingFromSliders(): TreeSpacing {
+    /**
+     * What to hand `changeLayout` so a rebuilt tree carries on as it was. Under `Auto`
+     * that means the *mode*, not the numbers: the new tree may be a different shape
+     * (a radial one crowds where a vertical one does not), so it must be free to
+     * re-derive its own multipliers rather than inherit the last tree's.
+     */
+    private spacingOptions(): { spacing: 'auto' | 'manual' } | ({ spacing: 'manual' } & TreeSpacing) {
+        if (this.autoSpacing) return { spacing: 'auto' }
         const read = (key: SpacingKey) => Number(this.spacingSliders.get(key)?.value ?? 1)
-        return { levelSpacing: read('levelSpacing'), siblingSpacing: read('siblingSpacing') }
+        return { spacing: 'manual', levelSpacing: read('levelSpacing'), siblingSpacing: read('siblingSpacing') }
     }
 
     /* ---------- physics ---------- */
@@ -247,13 +262,22 @@ export class PhysicsFlyout extends Flyout {
             })
         }
 
+        if (this.autoSpacingButton) {
+            this.listen(this.autoSpacingButton, 'click', () => {
+                this.sim.enableAutoTreeSpacing()
+                this.refreshSpacingSliders(this.sim.getTreeSpacing())
+                this.setAutoSpacing(true)
+            })
+        }
+
         for (const spec of SPACING_SLIDERS) {
             const input = this.spacingSliders.get(spec.key)
             if (!input) continue
             this.listen(input, 'input', () => {
                 const value = Number(input.value)
-                this.sim.setTreeSpacing({ [spec.key]: value })
+                this.sim.setTreeSpacing({ [spec.key]: value }) // also leaves Auto, in the layout
                 this.setSpacingLabel(spec.key, value)
+                this.setAutoSpacing(false)
             })
             // A spread-out tree easily outgrows the viewport, and unlike a force layout
             // nothing pulls it back toward the centre — so reframe once the gesture ends
@@ -286,6 +310,22 @@ export class PhysicsFlyout extends Flyout {
         if (!label) return
         const spec = SLIDERS.find(s => s.key === key)
         label.textContent = `${value}${spec?.unit ?? ''}`
+    }
+
+    /**
+     * Follow a tune the tree's `Auto` spacing just applied: move the sliders to what it
+     * chose and keep the Auto button lit. Called by the layout, not the user.
+     * @private
+     */
+    public syncAutoSpacing(spacing: TreeSpacing) {
+        this.refreshSpacingSliders(spacing)
+        this.setAutoSpacing(true)
+    }
+
+    private setAutoSpacing(on: boolean) {
+        this.autoSpacing = on
+        this.autoSpacingButton?.classList.toggle('active', on)
+        this.autoSpacingButton?.setAttribute('aria-pressed', String(on))
     }
 
     private refreshSpacingSliders(spacing: TreeSpacing) {
@@ -378,6 +418,8 @@ export class PhysicsFlyout extends Flyout {
             <div class="pvt-physicsflyout-spacing" hidden>
                 <div class="pvt-physicsflyout-card-head">
                     <span class="pvt-physicsflyout-card-title">Spacing</span>
+                    <button type="button" class="pvt-physicsflyout-autospacing active" aria-pressed="true"
+                        title="${AUTO_SPACING_DESCRIPTION}"><span class="pvt-flyout-icon">${sparkles}</span>Auto</button>
                 </div>
                 <div class="pvt-physicsflyout-sliders">${spacing}</div>
             </div>

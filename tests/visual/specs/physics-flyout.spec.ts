@@ -44,6 +44,12 @@ const treeSpacing = (page: Page) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     page.evaluate(() => (window.__pivotick as any).graph.simulation.getTreeSpacing())
 
+const autoSpacingOn = (page: Page) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    page.evaluate(() => (window.__pivotick as any).graph.simulation.isAutoTreeSpacingEnabled())
+
+const autoSpacingButton = (page: Page) => panel(page).locator('.pvt-physicsflyout-autospacing')
+
 /** Drag a range input to `value` the way a user would: `input`, then release. */
 const drag = (locator: import('@playwright/test').Locator, value: string) =>
     locator.evaluate((el: HTMLInputElement, v: string) => {
@@ -251,6 +257,27 @@ test.describe('physics-flyout', () => {
 
         await layoutTile(page, 'tree-v').click()
         await expect(spacingSlider(page, 'siblingSpacing')).toBeEnabled()
+    })
+
+    // Auto is where a tree's spacing starts, and a slider takes it over.
+    test('dragging a spacing slider leaves Auto; the Auto button takes it back', async ({ page }) => {
+        await loadFixture(page, 'tree', B3)
+        await openFlyout(page)
+        await layoutTile(page, 'tree-v').click()
+        expect(await autoSpacingOn(page)).toBe(true)
+        await expect(autoSpacingButton(page)).toHaveClass(/active/)
+
+        await drag(spacingSlider(page, 'levelSpacing'), '3')
+        expect(await autoSpacingOn(page)).toBe(false)
+        await expect(autoSpacingButton(page)).not.toHaveClass(/active/)
+        expect((await treeSpacing(page)).levelSpacing).toBe(3)
+
+        await autoSpacingButton(page).click()
+        expect(await autoSpacingOn(page)).toBe(true)
+        await expect(autoSpacingButton(page)).toHaveClass(/active/)
+        // Auto's answer for this small graph is the fitted layout, and the slider follows it.
+        expect((await treeSpacing(page)).levelSpacing).toBe(1)
+        await expect(spacingSlider(page, 'levelSpacing')).toHaveValue('1')
     })
 
     // Tree layouts are unavailable on a cyclic graph — their tiles refuse the click.

@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+### A tree layout works out its own spacing
+
+- **`Auto` is the default for tree spacing.** A tree layout is sized from the canvas and never looks
+  at how big its nodes are, so a tree of 10px dots and a tree of 40px avatars were laid out
+  identically — and the second one overlapped. Auto now measures the tightest pair of neighbours on
+  each axis, works out what their radii need (plus room for an arrowhead between levels), and scales
+  `levelSpacing` / `siblingSpacing` to suit, re-deriving them whenever the graph changes. Exact
+  rather than iterative: a gap scales linearly with its multiplier, so one correction pass is enough.
+- **It never packs a tree tighter than the fitted layout**, only looser — so a graph that was never
+  crowded is laid out exactly as before, bit for bit. And it never takes over a decision: a tree
+  that sets either multiplier explicitly keeps it, and dragging either slider leaves auto for good.
+  The new **`layout.spacing: 'auto' | 'manual'`** forces it either way, with
+  `simulation.enableAutoTreeSpacing()` / `isAutoTreeSpacingEnabled()` to drive it at runtime.
+- **In the radial layout both measurements drive the ring gap**, since a level always spans the full
+  circle and pushing the rings out is the only way to relieve crowding within one.
+
 ### A tree layout can be spread out by hand
 
 - **Two spacing sliders for tree layouts.** A tree places its own nodes, so the physics knobs have

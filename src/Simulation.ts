@@ -288,6 +288,7 @@ export class Simulation {
                 this.options.layout
             )
         }
+        if (this.layout) Object.assign(this.options.layout, this.layout.getSpacing())
 
         if (this.callbacks.onInit) {
             this.callbacks.onInit(this)
@@ -410,6 +411,9 @@ export class Simulation {
 
         if (this.layout) {
             this.layout.update()
+            // Auto spacing decides inside the layout, so read its answer back: the options
+            // are what `graph.getOptions()` reports and what the worker path is handed.
+            Object.assign(this.options.layout, this.layout.getSpacing())
         } else {
             // Graph.onChange() is the funnel every visible-graph change passes through
             // — add/remove, filter, cluster expand/collapse — so this one hook covers
@@ -954,7 +958,28 @@ export class Simulation {
         }
         this.layout.setSpacing(clamped)
         // Keep the options the graph reports in step with what is actually laid out.
-        Object.assign(this.options.layout, clamped)
+        Object.assign(this.options.layout, clamped, { spacing: 'manual' })
+        this.graph.nextTick()
+        this.reheatIfEnabled()
+    }
+
+    /** Is the tree spacing tuning itself? `false` under the force layout. */
+    public isAutoTreeSpacingEnabled(): boolean {
+        return this.layout?.isAutoSpacing() ?? false
+    }
+
+    /**
+     * Hand the tree spacing back to the tuner: it re-derives both multipliers from the
+     * size of the nodes and the shape of the tree, and keeps re-deriving them as the
+     * graph changes. The counterpart of {@link setTreeSpacing}, which takes them back.
+     *
+     * No-op under the force layout, where spacing is the physics knobs' job — and
+     * `Auto` there is {@link enableAutoPhysics}.
+     */
+    public enableAutoTreeSpacing(): void {
+        if (!this.layout) return
+        this.layout.enableAutoSpacing()
+        Object.assign(this.options.layout, { spacing: 'auto' })
         this.graph.nextTick()
         this.reheatIfEnabled()
     }
