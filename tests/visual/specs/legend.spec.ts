@@ -37,8 +37,13 @@ async function visibleIds(page: Page): Promise<string[]> {
     return ((await harness(page, 'visibleNodeIds')) as string[]).slice().sort()
 }
 
+/**
+ * Poll rather than read once. Filtering is re-applied asynchronously, so anything that
+ * changes the data (adding a node, resetting) settles a frame or two later — a one-shot
+ * read here passes locally and flakes in a loaded parallel run.
+ */
 async function expectVisible(page: Page, ids: string[]): Promise<void> {
-    expect(await visibleIds(page)).toEqual(ids.slice().sort())
+    await expect.poll(() => visibleIds(page)).toEqual(ids.slice().sort())
 }
 
 async function activeFilterKeys(page: Page): Promise<string[]> {

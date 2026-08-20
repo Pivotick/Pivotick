@@ -1,6 +1,6 @@
 # Feature — Table mode: the graph's data as a sortable, selectable grid
 
-**Status:** Specced — grilled 2026-08-20, ready to build
+**Status:** Implemented — 2026-08-20, branch `worktree-table-mode-prd`. Not merged.
 **Owner:** Sami Mokaddem
 **Requested:** 2026-08-20
 **Area:** `src/ui/elements/Table/` (new), `src/ui/elements/Layout.ts` + `src/styles/_layout.scss` (dock slot + grid row), `src/ui/UIManager.ts` (`UI_ELEMENTS` row), `src/ui/elements/Mainheader/Mainheader.ts` (the toggle pill), `src/interfaces/GraphUI.ts` (`TableOptions`), `src/Graph.ts` (multi-select by identity + open/close API), `src/Simulation.ts` (container measurement), `src/renderers/svg/NodeDrawer.ts` (`applyShadow`), `src/ui/elements/GraphFilter/GraphFilter.ts` → a shared derivation util, `docs/ui-table.md` + a gallery card (new)
@@ -8,6 +8,85 @@
 **Related:** [`filterable-legend.md`](filterable-legend.md) (the three-tier declared/derived/off resolution this copies; its "one filter model" ruling is **narrowed** here — see §5.6); [`minimap-plugin.md`](minimap-plugin.md) (`getMutable*` over `get*`; the `collapsed: 'auto'` hysteresis + `userChose` latch this reuses); [`graph-app-b3-control-layout.md`](graph-app-b3-control-layout.md) (the rail taxonomy this deliberately stays out of); `misp/declarative-filter-facets.md` (`FilterFacet`, which is already a column spec — §5.2); `misp/runtime-sidebar-panels.md` (multi-event re-render coalescing — §5.7); `misp/selection-api-by-identity.md` (**desirable, not blocking** — see §3.5)
 
 ---
+
+## Implementation (2026-08-20)
+
+`tsc`, `eslint`, `npm run build` and `vitepress build docs` clean; **384 visual tests
+green**, including 48 new ones across `physics-container`, `selection-hidden-nodes`,
+`table-dock`, `table-grid`, `table-selection`, `table-export` and
+`table-virtualization`. Everything in §9 shipped except the deferred items below.
+
+### Verdict on the decisions
+
+All nine held. The two that earned their keep most:
+
+- **D-A (superset) paid for itself twice.** It dissolved the `getHiddenNodes()` API the
+  first draft wanted, and it turned "why is nothing showing?" into a sortable column.
+- **D-F is what makes the dock safe.** Every other decision assumed the canvas could
+  shrink freely; without the container measurement it could not.
+
+### Changed from the spec while building
+
+- **The dock's toggle is the header pill only** (D-I), and `Shift+T` joins Shift+J/K/N.
+  The `table` entry has to sit **before** `mainHeader` in `UI_ELEMENTS`, because the
+  header only grows its pill when there is already a dock to toggle.
+- **`onGraphReady`, not `onAfterMount`, for the interaction subscription.** `Graph`
+  constructs the `UIManager` (`:92`) *before* the renderer (`:116`), so `graph.renderer`
+  is undefined during `afterMount` — there is no interaction layer to subscribe to yet.
+  A trap for any element that wants selection events.
+- **Built-in column keys are namespaced (`pvt:degree`, …)** so they can never collide
+  with a data key. Consumers never type them: they compose the `tableColumns` objects, and
+  reference a key as `tableColumns.degree.key` when `sort` needs one.
+- **The scanned columns skip `label`.** The built-in Label column *is* the display name and
+  `label` is the conventional source, so a scanned `label` column showed the same value
+  twice under the same heading.
+- **`nodePropertiesGetter` stayed unused**, as §5.2 predicted — per-node and possibly
+  async is unusable across 10k rows. The facet route is the one that works.
+- **Each tab gets its own grid**, so switching to Edges and back does not rearrange the
+  node table's sort, columns or row filters.
+- **`Simulation` gained a `destroy()`**, wired into `Graph.destroy()`. It was never torn
+  down before; the new container observer made that a leak rather than a curiosity.
+
+### Found on the way in
+
+- **The header row could inflate the canvas grid column past its container.** A grid
+  item's automatic minimum is its content width, so the row of pills was widening
+  `.pvt-canvas` beyond `.pivotick` — clipped, so it looked fine while reporting a wrong
+  width to anything that measured it. Adding a fourth pill made it big enough to break the
+  minimap's `collapsed: 'auto'` thresholds. Fixed with `min-width: 0` on `.pvt-mainheader`.
+- **`graph.hideNode()` notifies nobody.** It flips `node.visible` and calls `onChange()`,
+  which only re-renders — no data event. So no observer can react to it; the minimap has
+  the same blind spot. The dock tracks the query engine's events instead, which covers
+  every *supported* hide path.
+- **A real split does not fully escape corner pressure**, contrary to §3.7's claim. The
+  dock never covers the legend or the minimap — but it shortens the canvas until
+  bottom-left chrome and the left-edge rail converge, and the legend's own SCSS already
+  concedes that the rail wins on a short viewport. The gallery card docks its legend
+  `top-left` for that reason. Worth revisiting if the dock becomes common.
+
+### Not done
+
+- **Typed header filter controls.** Every `filterable` column gets a contains-match text
+  box, whatever its facet `type`. §5.6 implied a control typed off the facet (a range pair
+  for `numberRange`, a picker for `select`); that is a clean follow-up and the type is
+  already carried on the column.
+- **`getHiddenNodes()` and the reason-recording filter pass** (old §5.3 / R5) — dropped
+  outright by D-A, not deferred. The over-reporting `getHiddenNodeCount()` (§3.2) is
+  **still wrong** and is now the only consumer of that count; worth a separate fix.
+- **Row-level actions.** D-B by design. §5.9 holds the seam.
+
+### Notes for the next person
+
+- `TableGrid.ROW_HEIGHT` (24) and `--pvt-table-row-height` in `table.scss` must agree —
+  windowed rows are positioned arithmetically from the constant. `table-virtualization`
+  asserts the product (800 rows → `19200px`), so a change to one without the other fails.
+- The visual harness runs with `simulation: { enabled: false }` and every fixture node
+  pinned, so **the suite gives physics changes almost no coverage.** `physics-container`
+  asserts the measured rect and the gravity centre directly for that reason — assert
+  inputs, not settled positions.
+- Every one of the new specs was checked against a deliberately reverted fix to confirm it
+  actually fails without it. Worth keeping up: three of the four `physics-container` tests
+  pass against the old canvas measurement if you only check the happy path.
 
 ## 0. Instructions
 
