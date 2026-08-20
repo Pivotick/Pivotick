@@ -14,6 +14,13 @@
   layout, unchanged), plus `simulation.setTreeSpacing()` / `getTreeSpacing()` to drive them at
   runtime. `siblingSpacing` has no meaning under `radial`, where a level always spans the full
   circle, and its slider is disabled there.
+- **Fixed: a horizontal tree budgeted both its axes from the wrong canvas dimension** — depth was
+  sized from the canvas *height* and breadth from its *width*, then swapped on assignment, so a
+  left-to-right tree on a 1280×720 canvas got 720px for its levels and 1280px for its siblings.
+- **Fixed: the radial force and the radial layout described different pictures.** The force used a
+  hard-coded 100px per level while the layout divided `radialGap` across the tree's depth. It goes
+  unnoticed on the main thread (radial pins both axes, so the force never gets a say), but the
+  worker path is driven by the force alone — the same options drew two different layouts.
 - **Fixed: a re-laid-out tree fought its own forces.** `forceX` / `forceY` / `forceRadial` cache
   their per-node target when initialised, so recomputing tree positions without re-registering them
   left every force pulling nodes back to the previous layout — visible as the pinned axis moving

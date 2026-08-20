@@ -52,6 +52,8 @@ export class TreeLayout {
     protected canvasBCR!: DOMRect
 
     protected levels: Map<string, number>
+    /** Deepest level in {@link levels}; the divisor turning `radialGap` into a ring gap. */
+    protected maxDepth = 0
     protected positionedNodesByID: Map<string, HierarchyNode<TreeNode>>
 
     constructor (
@@ -87,11 +89,12 @@ export class TreeLayout {
     public update(): void {
         const nodes = this.graph.getNodes()
         const edges = this.options.flipEdgeDirection ? this.flipEdgeDirection(this.graph.getEdges()) : this.graph.getEdges()
-        const { levels } = this.buildLevels(nodes, edges, undefined, this.options.rootIdAlgorithmFinder)
+        const { levels, maxDepth } = this.buildLevels(nodes, edges, undefined, this.options.rootIdAlgorithmFinder)
         const { nodes: positionedNodes, nodeById: positionedNodesByID } = this.buildTree(nodes, edges, this.options, this.canvasBCR)
         this.positionedNodesByID = positionedNodesByID
 
         this.levels = levels
+        this.maxDepth = maxDepth
         if (positionedNodes) {
             this.setNodePositions(positionedNodes, this.options)
         }
@@ -153,7 +156,7 @@ export class TreeLayout {
     protected registerForces(): void {
         const strength = this.options.strength ?? 0.1
         if (this.options.radial) {
-            const ringGap = 100 * TreeLayout.spacingOf(this.options).level
+            const ringGap = TreeLayout.radialRingGap(this.options, this.maxDepth)
             const radialForce = d3ForceRadial<Node>(
                 (node: Node) => (this.levels.get(node.id) ?? 1) * ringGap,
                 0,
@@ -217,11 +220,11 @@ export class TreeLayout {
             return
         }
 
-        const { levels } = cls.buildLevelsStatic(nodes, edges, undefined, options.rootIdAlgorithmFinder)
+        const { levels, maxDepth } = cls.buildLevelsStatic(nodes, edges, undefined, options.rootIdAlgorithmFinder)
         const { nodeById: positionedNodesByID } = cls.buildTreeStatic(nodes, edges, options, canvasBCR)
 
         if (options.radial) {
-            const ringGap = 100 * cls.spacingOf(options).level
+            const ringGap = cls.radialRingGap(options, maxDepth)
             const radialForce = d3ForceRadial<Node>(
                 (node: Node) => (levels.get(node.id) ?? 1) * ringGap,
                 center[0],
@@ -298,6 +301,21 @@ export class TreeLayout {
         }
     }
 
+    /**
+     * Distance between two consecutive rings in the radial layout.
+     *
+     * The layout itself sizes the tree to `radialGap` and lets d3 spread `maxDepth`
+     * levels across it, so this has to be the same division or the radial *force* and
+     * the radial *positions* describe two different pictures. They used to: the force
+     * had a hard-coded `100` per level. It goes unnoticed on the main thread, where
+     * the radial layout pins `fx`/`fy` and the force never gets a say — but the worker
+     * path is driven by the force alone, so the same options drew two layouts.
+     */
+    protected static radialRingGap(options: TreeLayoutOptions, maxDepth: number): number {
+        const radius = options.radialGap * TreeLayout.spacingOf(options).level
+        return maxDepth > 0 ? radius / maxDepth : radius
+    }
+
     /** The spacing multipliers in force, defaulted for a partially-specified options object. */
     protected static spacingOf(options: Partial<TreeLayoutOptions>): { level: number, sibling: number } {
         return { level: options.levelSpacing ?? 1, sibling: options.siblingSpacing ?? 1 }
@@ -356,8 +374,15 @@ export class TreeLayout {
         }
 
         // Hierarchy `x` is the breadth axis (siblings), `y` the depth axis (levels).
-        const width = canvasBCR.width * spacing.sibling
-        const height = canvasBCR.height * spacing.level
+        // Which canvas dimension each gets depends on the orientation, because
+        // `setNodePositions` swaps them for a horizontal tree: depth is budgeted from
+        // the canvas edge it will actually run along. Reading them the other way round
+        // gave a left-to-right tree the canvas *height* for its levels and the *width*
+        // for its siblings — both dimensions backwards on any landscape canvas.
+        const depthBudget = options.horizontal ? canvasBCR.width : canvasBCR.height
+        const breadthBudget = options.horizontal ? canvasBCR.height : canvasBCR.width
+        const width = breadthBudget * spacing.sibling
+        const height = depthBudget * spacing.level
         treeLayout
             .size([width, height])
             .separation((a, b) => {
@@ -368,8 +393,8 @@ export class TreeLayout {
         return {
             treeLayout,
             offset: {
-                x: -(width - canvasBCR.width) / 2,
-                y: -(height - canvasBCR.height) / 2,
+                x: -(width - breadthBudget) / 2,
+                y: -(height - depthBudget) / 2,
             },
         }
     }

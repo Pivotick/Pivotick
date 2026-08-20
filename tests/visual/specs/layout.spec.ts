@@ -95,6 +95,10 @@ test.describe('layouts', () => {
 
     test('horizontal tree positions — root left, deeper levels right', async ({ page }) => {
         const p = await positionsAfterLayout(page, 'tree', { type: 'tree', horizontal: true })
+        // Depth runs along the canvas' *wide* axis, which is the whole point of asking
+        // for a horizontal tree — it used to budget depth from the canvas height and
+        // breadth from its width, i.e. both dimensions the wrong way round.
+        expect(spread(p, 'x').extent).toBeGreaterThan(spread(p, 'y').extent)
         // Depth runs left→right; equal-depth siblings share a column.
         expect(p.root.x).toBeLessThan(p.a.x)
         expect(p.a.x).toBeLessThan(p.d.x)
