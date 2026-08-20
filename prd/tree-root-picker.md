@@ -10,20 +10,42 @@ flyout always builds a tree at the default root. Four icons were drawn for the p
 
 ## What ships
 
-A **Root** card in the Physics flyout, shown exactly when the Spacing card is — i.e. whenever a tree
-layout is active — sitting above it. Four tiles in a 2×2 grid, one click each, same chrome as the
-layout tiles above:
+A **Root row** in the Physics flyout, shown exactly when the Spacing card is — i.e. whenever a tree
+layout is active — sitting above it. One line: the label `Root`, and a picker naming what the tree
+hangs from. Clicking it opens a menu of four:
 
-| Tile | Icon | What it does |
+| Entry | Icon | What it does |
 | --- | --- | --- |
-| **Selected node** | `selectElement` | Hangs the tree from whatever node is selected. Disabled while nothing is selected. |
+| **Selected node** | `selectElement` | Hangs the tree from the selected node. Disabled, and says "Select a node first", while nothing is selected. Once picked, the row shows the *node's* label instead of a finder name. |
 | **First source** | `firstValidNode` | `FirstZeroInDegree` — the first node nothing points at. |
-| **Widest reach** | `mostConnectedNode` | `MaxReachability` — reaches the most other nodes. The default, so this tile starts lit. |
+| **Widest reach** | `mostConnectedNode` | `MaxReachability` — reaches the most other nodes. The default, so the row starts here. |
 | **Shallowest** | `minHeight` | `MinHeight` — makes the tree as shallow as it can be. |
 
-Plus the API the card drives: `simulation.setTreeRoot()` / `getTreeRoot()`, mirroring the
+Plus the API the row drives: `simulation.setTreeRoot()` / `getTreeRoot()`, mirroring the
 `setTreeSpacing` / `getTreeSpacing` pair — a re-root is a re-layout of the same tree, not a new
 layout, so it goes through `TreeLayout.setRoot()` → `relayout()` rather than `changeLayout`.
+
+### Why a menu and not tiles
+
+The first cut was four full-width tiles in a card of their own, and at 219&nbsp;px it was the tallest
+control in the panel — for something a session sets once. Seven alternatives were drawn to scale in
+the panel's real CSS and compared; the shortlist came down to a collapsing drawer (50&nbsp;px closed)
+and this menu (53&nbsp;px). They tie on height, so the decision was behavioural:
+
+- **The panel never moves.** The drawer expands *inline*, pushing Spacing and Simulation down
+  166&nbsp;px and scrolling the flyout on a short window. The menu is portaled to `<body>`, so it
+  floats over them and nothing reflows.
+- **Every choice gets a sentence.** "First source" and "Shallowest" do not explain themselves in two
+  words, and a tile can only hide the explanation in a tooltip.
+- **No state to keep.** There is no open-or-closed to remember, or to decide whether it outlives
+  closing the flyout.
+- **No new component.** `PivotickDropdown` already portals, positions itself `fixed`, flips up near
+  the bottom of the window, closes on select and on an outside click, and takes arbitrary `html` per
+  option — which is what carries the two-line entries.
+
+The drawer's one real argument was reuse: a `drawerRow()` in the `Flyout` base that Spacing and
+Simulation could adopt too. That is still available if the flyout goes that way; it just is not worth
+building for this row alone.
 
 ## Decisions
 
@@ -50,6 +72,16 @@ layout, so it goes through `TreeLayout.setRoot()` → `relayout()` rather than `
    into the options handed to `changeLayout`, or clicking `tree-h` after re-rooting would silently
    revert to the default root.
 
+## Fixed on the way (beyond the layout)
+
+- `PivotickDropdown` had no caller in `src/` and leaked its listeners: `attach()` registered
+  anonymous handlers on `document` and `window`, and `destroy()` removed only the root element, so
+  every scroll went on measuring a detached node. They are fields now, and `destroy()` takes them
+  off. Its disabled items are also styled cursor-only, so an unreachable choice read as a reachable
+  one — dimmed here, scoped to these rows rather than changed in the shared component.
+- `Graph.getNode()` `structuredClone`s the node it returns, which throws on the DOM references a
+  rendered node holds — so naming the pinned root has to go through `getMutableNode()`.
+
 ## Fixed on the way
 
 - `TreeLayout.layoutOnce` passes `undefined` where `buildLevels` takes `passedRootId`, so `levels` —
@@ -68,5 +100,6 @@ tests pass unchanged.
 ## Out of scope
 
 - B3 (`flipEdgeDirection` is broken three ways) — still open, still needs its own decision.
+- A `drawerRow()` for the `Flyout` base, so Spacing and Simulation can collapse — see above.
 - Making the *algorithm* root finders direction-agnostic, or an "ignore edge direction" switch of
   its own.

@@ -2,11 +2,12 @@ import { Flyout } from '../Flyout/Flyout'
 import type { FlyoutMode } from '../../ModeStore'
 import { PHYSICS_KNOB_RANGES, TREE_SPACING_RANGE, type PhysicsKnobs, type PhysicsPresetName, type TreeSpacing } from '../../../Simulation'
 import type { TreeLayoutAlgorithm } from '../../../plugins/layout/Tree'
+import { PivotickDropdown, type DropdownOption } from '../../components/Dropdown'
 import {
     atom, play, pause,
     graphControlLayoutOrganic, graphControlLayoutTreeV, graphControlLayoutTreeH, graphControlLayoutTreeR,
     magnet, arrowsHorizontal, arrowsVertical, circleDashed, wind, focusElement, timeDuration10, sparkles,
-    firstValidNode, mostConnectedNode, minHeight, selectElement,
+    firstValidNode, mostConnectedNode, minHeight, selectElement, arrowDown, checkmark,
 } from '../../icons'
 import './physicsflyout.scss'
 
@@ -91,31 +92,33 @@ const SPACING_SLIDERS: Array<{ key: SpacingKey, label: string, desc: string, ico
 ]
 
 /**
- * What the Root card offers: the node the user has selected, or one of the finders in
+ * What the root menu offers: the node the user has selected, or one of the finders in
  * `plugins/analytics/DAGAlgorithms.ts`.
  */
 type RootChoice = 'selected' | TreeLayoutAlgorithm
 
+const SELECTED_ROOT_DESCRIPTION = 'Hangs the tree from the node you have selected, following edges either way round.'
+
 /**
- * The Root tiles, in the order they read best: the deliberate choice first, then the
- * three finders.
+ * The root menu, in the order it reads best: the deliberate choice first, then the three
+ * finders. Each carries a sentence, which is the reason this is a menu rather than a row
+ * of tiles — "First source" and "Shallowest" do not explain themselves in two words, and
+ * a tooltip is a poor place to keep the explanation.
  *
  * Three finders, not the four `TreeLayoutAlgorithm` accepts: `MinMaxDistance` and
  * `MinHeight` are the same search — smallest longest-path-down — so offering both would
- * be offering the same tile twice. A tree that asks for `MinMaxDistance` lights the
- * `MinHeight` tile, which is what it gets.
+ * be offering the same item twice. A tree that asks for `MinMaxDistance` reads as
+ * `MinHeight`, which is what it gets.
  */
-const SELECTED_ROOT_DESCRIPTION = 'Hang the tree from the selected node. Edges are followed either way round, so any node — a leaf included — gives a whole tree. Select a node to enable this.'
-
-const ROOT_TILES: Array<{ id: RootChoice, label: string, icon: string, desc: string }> = [
+const ROOT_CHOICES: Array<{ id: RootChoice, label: string, icon: string, desc: string }> = [
     { id: 'selected', label: 'Selected node', icon: selectElement, desc: SELECTED_ROOT_DESCRIPTION },
-    { id: 'FirstZeroInDegree', label: 'First source', icon: firstValidNode, desc: 'Root at the first node nothing points at.' },
-    { id: 'MaxReachability', label: 'Widest reach', icon: mostConnectedNode, desc: 'Root at the node that reaches the most others. The default.' },
-    { id: 'MinHeight', label: 'Shallowest', icon: minHeight, desc: 'Root at the node that makes the tree as shallow as it can be. Needs an acyclic graph; on a cyclic one it falls back to the first node.' },
+    { id: 'FirstZeroInDegree', label: 'First source', icon: firstValidNode, desc: 'The first node nothing points at.' },
+    { id: 'MaxReachability', label: 'Widest reach', icon: mostConnectedNode, desc: 'Reaches the most other nodes. The default.' },
+    { id: 'MinHeight', label: 'Shallowest', icon: minHeight, desc: 'Makes the tree as shallow as it can be. Needs an acyclic graph.' },
 ]
 
-/** The tile that stands for a finder — the two duplicate finders share one. */
-const rootTileFor = (algorithm: TreeLayoutAlgorithm): RootChoice =>
+/** The menu entry that stands for a finder — the two duplicate finders share one. */
+const rootChoiceFor = (algorithm: TreeLayoutAlgorithm): RootChoice =>
     algorithm === 'MinMaxDistance' ? 'MinHeight' : algorithm
 
 /** Tooltip for the spacing card's Auto button. */
@@ -157,8 +160,9 @@ export class PhysicsFlyout extends Flyout {
     private readonly spacingValues = new Map<SpacingKey, HTMLElement>()
     private readonly presetButtons = new Map<PresetChoice, HTMLButtonElement>()
     private readonly layoutButtons = new Map<string, HTMLButtonElement>()
-    private readonly rootButtons = new Map<RootChoice, HTMLButtonElement>()
-    private rootCard?: HTMLDivElement
+    private rootRow?: HTMLDivElement
+    private rootPicker?: HTMLButtonElement
+    private rootMenu?: PivotickDropdown
     /** The tile the graph is laid out by; drives which controls are live. */
     private activeLayout = 'force'
     /** The node the tree is pinned to, if the user picked one; the Root card's state. */
@@ -195,11 +199,8 @@ export class PhysicsFlyout extends Flyout {
             const button = this.query<HTMLButtonElement>(`.pvt-physicsflyout-layout[data-layout="${choice.id}"]`)
             if (button) this.layoutButtons.set(choice.id, button)
         }
-        for (const tile of ROOT_TILES) {
-            const button = this.query<HTMLButtonElement>(`.pvt-physicsflyout-roottile[data-root="${tile.id}"]`)
-            if (button) this.rootButtons.set(tile.id, button)
-        }
-        this.rootCard = this.query<HTMLDivElement>('.pvt-physicsflyout-root') ?? undefined
+        this.rootRow = this.query<HTMLDivElement>('.pvt-physicsflyout-rootrow') ?? undefined
+        this.rootPicker = this.query<HTMLButtonElement>('.pvt-physicsflyout-rootpick') ?? undefined
 
         this.wireLayout()
         this.wireRoot()
@@ -233,8 +234,10 @@ export class PhysicsFlyout extends Flyout {
         this.spacingValues.clear()
         this.presetButtons.clear()
         this.layoutButtons.clear()
-        this.rootButtons.clear()
-        this.rootCard = undefined
+        this.rootMenu?.destroy()
+        this.rootMenu = undefined
+        this.rootRow = undefined
+        this.rootPicker = undefined
     }
 
     /* ---------- layout ---------- */
@@ -279,41 +282,81 @@ export class PhysicsFlyout extends Flyout {
 
     /* ---------- root ---------- */
 
+    /**
+     * Hang the root menu off the picker row. {@link PivotickDropdown} already does what
+     * this needs — it portals to `document.body`, so the menu is never clipped by the
+     * flyout's own scroll box; it positions itself against the row, flips upward near the
+     * bottom of the window, and closes on an outside click and on select.
+     */
     private wireRoot() {
-        for (const tile of ROOT_TILES) {
-            const button = this.rootButtons.get(tile.id)
-            if (!button) continue
-            this.listen(button, 'click', () => {
-                if (tile.id === 'selected') {
-                    const selected = this.selectedNodeId()
-                    if (!selected) return
-                    this.pinnedRootId = selected
-                    this.sim.setTreeRoot({ rootId: selected })
-                } else {
-                    this.pinnedRootId = undefined
-                    this.rootFinder = tile.id
-                    this.sim.setTreeRoot({ algorithm: tile.id })
-                }
-                this.highlightRoot()
-                // A tree hung from somewhere else is a different shape, and nothing pulls it
-                // back into frame — so reframe, as a spacing drag does.
-                this.uiManager.graph.renderer.fitAndCenterWhenSettled()
-            })
-        }
+        if (!this.rootPicker) return
+        this.rootMenu = new PivotickDropdown(this.rootPicker, this.rootMenuOptions(), {
+            closeOnSelect: true,
+            placement: 'bottom-end',
+        })
     }
 
     /**
-     * Keep the Selected-node tile in step with the selection. Subscribed at `graphReady`
-     * rather than in {@link wire}: the interaction bus belongs to the renderer, which does
-     * not exist yet when the flyout builds its markup.
+     * The menu, rebuilt whenever it can have changed: which item carries the tick, and
+     * whether `Selected node` is reachable at all, both follow state the user moves from
+     * outside this flyout.
+     */
+    private rootMenuOptions(): DropdownOption[] {
+        const current: RootChoice = this.pinnedRootId ? 'selected' : rootChoiceFor(this.rootFinder)
+        return ROOT_CHOICES.map(choice => ({
+            id: choice.id,
+            html: this.rootMenuItem(choice, choice.id === current),
+            disabled: choice.id === 'selected' && !this.selectedNodeId(),
+            onClick: () => this.applyRoot(choice.id),
+        }))
+    }
+
+    /** One menu row: icon, name, and the sentence the name needs. */
+    private rootMenuItem(choice: typeof ROOT_CHOICES[number], isCurrent: boolean): HTMLElement {
+        const item = document.createElement('span')
+        item.className = 'pvt-rootmenu-item'
+        if (isCurrent) item.classList.add('current')
+        const desc = choice.id === 'selected' && !this.selectedNodeId()
+            ? 'Select a node first.'
+            : choice.desc
+        item.innerHTML = `
+            <span class="pvt-flyout-icon">${choice.icon}</span>
+            <span class="pvt-rootmenu-text"><b>${choice.label}</b><em>${desc}</em></span>
+            <span class="pvt-rootmenu-tick">${checkmark}</span>`
+        return item
+    }
+
+    /** Take a pick from the menu: pin the selected node, or hand back to a finder. */
+    private applyRoot(choice: RootChoice) {
+        if (choice === 'selected') {
+            const selected = this.selectedNodeId()
+            if (!selected) return
+            this.pinnedRootId = selected
+            this.sim.setTreeRoot({ rootId: selected })
+        } else {
+            this.pinnedRootId = undefined
+            this.rootFinder = choice
+            this.sim.setTreeRoot({ algorithm: choice })
+        }
+        this.highlightRoot()
+        // A tree hung from somewhere else is a different shape, and nothing pulls it back
+        // into frame — so reframe, as a spacing drag does.
+        this.uiManager.graph.renderer.fitAndCenterWhenSettled()
+    }
+
+    /**
+     * Keep the menu in step with the selection: `Selected node` is only reachable while
+     * there is one node to hang the tree from. Subscribed at `graphReady` rather than in
+     * {@link wire}: the interaction bus belongs to the renderer, which does not exist yet
+     * when the flyout builds its markup.
      */
     private watchSelection() {
         for (const event of ['selectNode', 'unselectNode', 'selectNodes', 'unselectNodes'] as const) {
-            this.trackInteraction(event, () => this.updateSelectedRootTile())
+            this.trackInteraction(event, () => this.rootMenu?.setOptions(this.rootMenuOptions()))
         }
     }
 
-    /** Take the Root card's state from the layout — at `graphReady`, and after a rebuild. */
+    /** Take the row's state from the layout — at `graphReady`, and after a rebuild. */
     private syncRoot() {
         const root = this.sim.getTreeRoot()
         this.pinnedRootId = root.rootId
@@ -321,34 +364,40 @@ export class PhysicsFlyout extends Flyout {
         this.highlightRoot()
     }
 
-    /** The one selected node, or nothing — a multi-selection roots nothing in particular. */
-    private selectedNodeId(): string | undefined {
-        return this.uiManager.graph.renderer.getGraphInteraction().getSelectedNode()?.node.id
-    }
-
-    /** Light the tile the tree is actually hung from. */
-    private highlightRoot() {
-        const active: RootChoice = this.pinnedRootId ? 'selected' : rootTileFor(this.rootFinder)
-        for (const [id, button] of this.rootButtons) {
-            const on = id === active
-            button.classList.toggle('active', on)
-            button.setAttribute('aria-pressed', String(on))
-        }
-        this.updateSelectedRootTile()
-    }
-
     /**
-     * Enable the Selected-node tile only when a click on it would do something. It can be
-     * lit and disabled at once — the tree stays pinned to a node after the selection moves
-     * off it, and saying so beats pretending the pin is gone.
+     * The one selected node, or nothing — a multi-selection roots nothing in particular.
+     *
+     * Guarded rather than assumed: the menu is built while the flyout's markup is, which
+     * is before the renderer that owns the interaction bus exists.
      */
-    private updateSelectedRootTile() {
-        const button = this.rootButtons.get('selected')
-        if (!button) return
-        button.disabled = this.activeLayout === 'force' || !this.selectedNodeId()
-        button.title = this.pinnedRootId
-            ? `The tree is hung from "${this.pinnedRootId}". Select another node to move it.`
-            : SELECTED_ROOT_DESCRIPTION
+    private selectedNodeId(): string | undefined {
+        return this.uiManager.graph.renderer?.getGraphInteraction()?.getSelectedNode()?.node.id
+    }
+
+    /** What to call the pinned node: its label if it has one, else its id. */
+    private pinnedRootName(): string {
+        if (!this.pinnedRootId) return ''
+        // `getMutableNode`, not `getNode`: the latter `structuredClone`s the node, which
+        // throws on the DOM references a rendered node holds. Nothing here mutates it.
+        const label = this.uiManager.graph.getMutableNode(this.pinnedRootId)?.getData()?.label
+        return typeof label === 'string' && label ? label : this.pinnedRootId
+    }
+
+    /** Say on the row what the tree is actually hung from, and move the menu's tick. */
+    private highlightRoot() {
+        this.rootMenu?.setOptions(this.rootMenuOptions())
+        if (!this.rootPicker) return
+
+        const pinned = Boolean(this.pinnedRootId)
+        const choice = ROOT_CHOICES.find(c => c.id === (pinned ? 'selected' : rootChoiceFor(this.rootFinder)))
+        const label = pinned ? this.pinnedRootName() : choice?.label ?? ''
+        const icon = this.query('.pvt-physicsflyout-rootpick-icon')
+        const value = this.query('.pvt-physicsflyout-rootpick-value')
+        if (icon && choice) icon.innerHTML = choice.icon
+        if (value) value.textContent = label
+        this.rootPicker.title = pinned
+            ? `The tree is hung from "${label}". Pick again to change it.`
+            : `${choice?.label}: ${choice?.desc}`
     }
 
     /**
@@ -510,8 +559,7 @@ export class PhysicsFlyout extends Flyout {
         }
         for (const button of this.presetButtons.values()) button.disabled = isTree
 
-        if (this.rootCard) this.rootCard.hidden = !isTree
-        this.updateSelectedRootTile()
+        if (this.rootRow) this.rootRow.hidden = !isTree
         if (this.spacingCard) this.spacingCard.hidden = !isTree
         for (const spec of SPACING_SLIDERS) {
             const input = this.spacingSliders.get(spec.key)
@@ -530,10 +578,6 @@ export class PhysicsFlyout extends Flyout {
             const icon = PRESET_ICONS[p] ? `<span class="pvt-flyout-icon">${PRESET_ICONS[p]}</span>` : ''
             return `<button type="button" class="pvt-physicsflyout-preset" data-preset="${p}" title="${PRESET_DESCRIPTIONS[p]}">${icon}${p[0].toUpperCase()}${p.slice(1)}</button>`
         }).join('')
-        const roots = ROOT_TILES.map(r => `
-            <button type="button" class="pvt-physicsflyout-roottile" data-root="${r.id}" aria-pressed="false" title="${r.desc}">
-                <span class="pvt-flyout-icon">${r.icon}</span>${r.label}
-            </button>`).join('')
         const spacing = SPACING_SLIDERS.map(s => `
             <div class="pvt-physicsflyout-slider" title="${s.desc}">
                 <div class="pvt-physicsflyout-slider-head">
@@ -557,11 +601,13 @@ export class PhysicsFlyout extends Flyout {
             + this.sectionLabel('LAYOUT &amp; SIMULATION')
             + `
             <div class="pvt-physicsflyout-layouts">${layouts}</div>
-            <div class="pvt-physicsflyout-root" hidden>
-                <div class="pvt-physicsflyout-card-head">
-                    <span class="pvt-physicsflyout-card-title">Root</span>
-                </div>
-                <div class="pvt-physicsflyout-roots">${roots}</div>
+            <div class="pvt-physicsflyout-rootrow" hidden>
+                <span class="pvt-physicsflyout-rootrow-label">Root</span>
+                <button type="button" class="pvt-physicsflyout-rootpick" aria-haspopup="menu">
+                    <span class="pvt-flyout-icon pvt-physicsflyout-rootpick-icon"></span>
+                    <span class="pvt-physicsflyout-rootpick-value"></span>
+                    <span class="pvt-flyout-icon pvt-physicsflyout-rootpick-caret">${arrowDown}</span>
+                </button>
             </div>
             <div class="pvt-physicsflyout-spacing" hidden>
                 <div class="pvt-physicsflyout-card-head">

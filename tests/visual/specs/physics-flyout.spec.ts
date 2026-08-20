@@ -58,11 +58,22 @@ const drag = (locator: import('@playwright/test').Locator, value: string) =>
         el.dispatchEvent(new Event('change', { bubbles: true }))
     }, value)
 
-/** The Root card, which stands beside the spacing one under a tree layout. */
-const rootCard = (page: Page) => panel(page).locator('.pvt-physicsflyout-root')
+/** The root row, which appears alongside the spacing card under a tree layout. */
+const rootRow = (page: Page) => panel(page).locator('.pvt-physicsflyout-rootrow')
 
-const rootTile = (page: Page, id: string) =>
-    panel(page).locator(`.pvt-physicsflyout-roottile[data-root="${id}"]`)
+/** What the row currently says the tree is hung from. */
+const rootName = (page: Page) => panel(page).locator('.pvt-physicsflyout-rootpick-value')
+
+/** The menu itself lives at the end of <body> — PivotickDropdown portals it there. */
+const rootMenu = (page: Page) => page.locator('.pvt-dropdown.open')
+
+const rootItem = (page: Page, label: string) =>
+    rootMenu(page).locator('.pvt-dropdown__item', { hasText: label })
+
+const openRootMenu = async (page: Page) => {
+    await panel(page).locator('.pvt-physicsflyout-rootpick').click()
+    await rootMenu(page).waitFor()
+}
 
 const treeRoot = (page: Page) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -308,71 +319,91 @@ test.describe('physics-flyout', () => {
     })
 
     // ── Root picker ──────────────────────────────────────────────────────────
-    // `rootId` / `rootIdAlgorithmFinder` were real options with no way to reach them;
-    // the Root card is that way. See prd/tree-root-picker.md.
+    // `rootId` / `rootIdAlgorithmFinder` were real options with no way to reach them; the
+    // root row is that way. A menu rather than a row of tiles, so each choice can carry
+    // the sentence its name needs — see prd/tree-root-picker.md.
 
     // It belongs to the tree layouts, like the spacing card beside it.
     test('a tree layout offers the root picker', async ({ page }) => {
         await loadFixture(page, 'tree', B3)
         await openFlyout(page)
-        await expect(rootCard(page)).toBeHidden()
+        await expect(rootRow(page)).toBeHidden()
 
         await layoutTile(page, 'tree-v').click()
-        await expect(rootCard(page)).toBeVisible()
-        await expect(panel(page).locator('.pvt-physicsflyout-roottile')).toHaveCount(4)
-        // Nothing is pinned yet, so the tile for the default finder is the lit one.
-        await expect(rootTile(page, 'MaxReachability')).toHaveClass(/active/)
+        await expect(rootRow(page)).toBeVisible()
+        // Nothing is pinned yet, so the row names the default finder.
+        await expect(rootName(page)).toHaveText('Widest reach')
         await expectElement(panel(page), 'physicsflyout-tree-root.png')
 
         await layoutTile(page, 'force').click()
-        await expect(rootCard(page)).toBeHidden()
+        await expect(rootRow(page)).toBeHidden()
     })
 
-    // A finder tile reaches the real layout, not just the highlight.
-    test('a finder tile re-roots the tree', async ({ page }) => {
+    // Every choice is named and explained, and the live one carries the tick.
+    test('the root menu names all four choices', async ({ page }) => {
+        await loadFixture(page, 'tree', B3)
+        await openFlyout(page)
+        await layoutTile(page, 'tree-v').click()
+
+        await openRootMenu(page)
+        await expect(rootMenu(page).locator('.pvt-dropdown__item')).toHaveCount(4)
+        for (const label of ['Selected node', 'First source', 'Widest reach', 'Shallowest']) {
+            await expect(rootItem(page, label)).toBeVisible()
+        }
+        await expect(rootItem(page, 'Widest reach').locator('.pvt-rootmenu-item')).toHaveClass(/current/)
+        await expectElement(rootMenu(page), 'physicsflyout-root-menu.png')
+    })
+
+    // A finder reaches the real layout, not just the row's label.
+    test('picking a finder re-roots the tree', async ({ page }) => {
         await loadFixture(page, 'tree', B3)
         await openFlyout(page)
         await layoutTile(page, 'tree-v').click()
         expect(await nodesAtDepth(page, 'min')).toEqual(['root'])
 
-        await rootTile(page, 'MinHeight').click()
+        await openRootMenu(page)
+        await rootItem(page, 'Shallowest').click()
 
         expect(await treeRoot(page)).toEqual({ rootId: undefined, algorithm: 'MinHeight' })
-        await expect(rootTile(page, 'MinHeight')).toHaveClass(/active/)
-        await expect(rootTile(page, 'MaxReachability')).not.toHaveClass(/active/)
+        await expect(rootName(page)).toHaveText('Shallowest')
+        await expect(rootMenu(page)).toBeHidden() // the menu closes on the pick
         // The shallowest root of this fixture is the leaf `b` (nothing hangs below it).
         // A finder root is walked along the arrows, so `b` reaches nothing and the rest of
         // the graph keeps its own root: the two now stand side by side at the top level.
         await expect.poll(() => nodesAtDepth(page, 'min')).toEqual(['b', 'root'])
     })
 
-    // Nothing to hang the tree from → nothing to click. A multi-selection is no more of
+    // Nothing to hang the tree from → nothing to pick. A multi-selection is no more of
     // an answer than an empty one.
-    test('the selected-node tile is live only for a single selection', async ({ page }) => {
+    test('the selected-node choice is live only for a single selection', async ({ page }) => {
         await loadFixture(page, 'tree', B3)
         await openFlyout(page)
         await layoutTile(page, 'tree-v').click()
-        await expect(rootTile(page, 'selected')).toBeDisabled()
+
+        await openRootMenu(page)
+        await expect(rootItem(page, 'Selected node')).toBeDisabled()
+        await expect(rootItem(page, 'Selected node')).toContainText('Select a node first')
 
         await harness(page, 'selectNode', 'c')
-        await expect(rootTile(page, 'selected')).toBeEnabled()
+        await expect(rootItem(page, 'Selected node')).toBeEnabled()
 
         await harness(page, 'multiSelect', ['a', 'c'])
-        await expect(rootTile(page, 'selected')).toBeDisabled()
+        await expect(rootItem(page, 'Selected node')).toBeDisabled()
     })
 
-    // The point of the card: hang the tree from the node you are looking at.
-    test('the selected-node tile hangs the tree from that node', async ({ page }) => {
+    // The point of the picker: hang the tree from the node you are looking at.
+    test('the selected-node choice hangs the tree from that node', async ({ page }) => {
         await loadFixture(page, 'tree', B3)
         await openFlyout(page)
         await layoutTile(page, 'tree-v').click()
 
         await harness(page, 'selectNode', 'c')
-        await rootTile(page, 'selected').click()
+        await openRootMenu(page)
+        await rootItem(page, 'Selected node').click()
 
         expect((await treeRoot(page)).rootId).toBe('c')
-        await expect(rootTile(page, 'selected')).toHaveClass(/active/)
-        await expect(rootTile(page, 'MaxReachability')).not.toHaveClass(/active/)
+        // A pinned root is named by the node, not by the choice that set it.
+        await expect(rootName(page)).toHaveText('C')
         // `c` is a child in this fixture, so a walk along the arrows would reach only its
         // own two leaves. A picked root is walked either way round instead, so the whole
         // graph re-hangs beneath it: c → (root, f, g) → (a, b) → (d, e).
@@ -387,12 +418,13 @@ test.describe('physics-flyout', () => {
         await openFlyout(page)
         await layoutTile(page, 'tree-v').click()
         await harness(page, 'selectNode', 'c')
-        await rootTile(page, 'selected').click()
+        await openRootMenu(page)
+        await rootItem(page, 'Selected node').click()
 
         await layoutTile(page, 'tree-h').click()
 
         expect((await treeRoot(page)).rootId).toBe('c')
-        await expect(rootTile(page, 'selected')).toHaveClass(/active/)
+        await expect(rootName(page)).toHaveText('C')
     })
 
     // A cycle used to disable all three tree tiles; the layout is built from a spanning

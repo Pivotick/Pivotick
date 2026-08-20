@@ -65,8 +65,10 @@ A `rootId` naming a node that is not in the graph — filtered out, deleted, ins
 — is ignored for as long as that is true, and the finder picks the root instead. The option is kept,
 so the node coming back re-roots the tree.
 
-The root can also be changed at runtime — the Physics flyout offers it as a card of tiles whenever a
-tree layout is active, one of them being "the node I have selected":
+The root can also be changed at runtime — the Physics flyout offers it as a menu on the `Root` row
+whenever a tree layout is active. The menu names each finder and says what it does; its first entry
+is "the node I have selected", which is greyed out until exactly one node is selected. Once a node is
+pinned, the row shows that node's label rather than a finder's name:
 
 ```ts
 graph.simulation.setTreeRoot({ rootId: 'node-42' })          // pin the tree to a node

@@ -9,10 +9,7 @@
     padding: 0 3px;
 }
 
-// Two tile rows share one look: the layout picker and the Root card's four choices.
-// Same gesture in both — one click picks, the picked one stays lit.
-.pvt-physicsflyout-layout,
-.pvt-physicsflyout-roottile {
+.pvt-physicsflyout-layout {
     display: flex;
     align-items: center;
     gap: 7px;
@@ -50,18 +47,9 @@
     }
 }
 
-// The Root card's tiles. One per row, unlike the layout picker above: a root is named
-// by what it picks ("Widest reach", "First source"), and two of those to a row wrap onto
-// a second line and read as scruffy next to the one-word layout tiles.
-.pvt-physicsflyout-roots {
-    display: grid;
-    gap: 5px;
-}
-
-// The simulation card, and the two cards that stand in for it under a tree layout,
-// share the same chrome; only one side is ever live (see `updateLayoutControls`).
+// The simulation card and the tree-spacing card that stands in for it share the
+// same chrome; only one of the two is ever live (see `updateLayoutControls`).
 .pvt-physicsflyout-card,
-.pvt-physicsflyout-root,
 .pvt-physicsflyout-spacing {
     margin: 8px 0 0;
     padding: 11px;
@@ -231,3 +219,98 @@
     opacity: 0.4;
     cursor: not-allowed;
 }
+
+// The root picker: a row, not a card. Four choices in a menu cost the panel one line
+// instead of four tiles, and the menu — which portals to <body> — can afford a sentence
+// per choice, which "First source" and "Shallowest" need and a tooltip hides.
+.pvt-physicsflyout-rootrow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    // `display: flex` on a class outranks the UA stylesheet's `[hidden] { display: none }`,
+    // so the row has to opt back out or it shows under the force layout too.
+    &[hidden] { display: none; }
+
+    margin: 8px 0 0;
+    padding: 7px 11px;
+    border-radius: 10px;
+    background-color: var(--pvt-bg-color-4);
+    border: 1px solid var(--pvt-bg-color-5);
+}
+
+.pvt-physicsflyout-rootrow-label {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--pvt-text-color-6);
+}
+
+.pvt-physicsflyout-rootpick {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    padding: 5px 8px;
+    border: 1px solid var(--pvt-bg-color-5);
+    border-radius: 7px;
+    background-color: var(--pvt-bg-color-2);
+    color: var(--pvt-text-color-5);
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+
+    svg { width: 14px; height: 14px; color: var(--pvt-text-color-4); }
+
+    &:hover { border-color: var(--pvt-theme-primary); }
+}
+
+// A pinned root is named by the node, and node labels are arbitrarily long.
+.pvt-physicsflyout-rootpick-value {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
+}
+
+.pvt-physicsflyout-rootpick-caret { margin-left: auto; }
+
+// The menu's rows, inside `PivotickDropdown`'s own chrome. That component centres its
+// items, so the wrapper takes the full width and lays itself out instead.
+.pvt-rootmenu-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    width: 100%;
+    max-width: 260px;
+    text-align: left;
+
+    .pvt-flyout-icon svg { width: 14px; height: 14px; color: var(--pvt-text-color-4); }
+}
+
+.pvt-rootmenu-text {
+    flex: 1;
+    min-width: 0;
+
+    b { display: block; font-size: 12px; font-weight: 600; color: var(--pvt-text-color-6); }
+    em { display: block; font-style: normal; font-size: 11px; line-height: 1.35; color: var(--pvt-text-color-4); }
+}
+
+// Marks the choice the tree is actually hung from — the menu's equivalent of the lit
+// tile it replaced. Hidden rather than absent so every row stays the same width.
+.pvt-rootmenu-tick {
+    display: inline-flex;
+    line-height: 0;
+    visibility: hidden;
+    color: var(--pvt-theme-primary);
+
+    svg { width: 13px; height: 13px; }
+}
+
+.pvt-rootmenu-item.current .pvt-rootmenu-tick { visibility: visible; }
+
+// The dropdown's own disabled styling is cursor-only, so an unreachable choice reads as
+// a reachable one. Scoped to these rows rather than fixed in the shared component.
+.pvt-dropdown__item:disabled .pvt-rootmenu-item { opacity: 0.45; }
