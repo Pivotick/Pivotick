@@ -18,11 +18,17 @@ export interface MinimapOptions {
      */
     width?: number
     /**
-     * Start folded away to just the collapse toggle. The toggle is always there — this is
-     * only which state the minimap opens in.
-     * @default false
+     * Which state the minimap opens in. The toggle is always there — this only decides
+     * where it starts.
+     *
+     * `'auto'` keeps it open unless the canvas is too small to give a 200px overlay away,
+     * and follows the canvas from then on: collapsing when the room goes (the sidebar
+     * opening, the window shrinking) and coming back when it returns. The first manual
+     * toggle — or any `setCollapsed` call — ends that and the choice sticks.
+     *
+     * @default false — but `'auto'` for the minimap `full` mode mounts for you
      */
-    collapsed?: boolean
+    collapsed?: boolean | 'auto'
     /**
      * Height in CSS pixels. Left out, it follows the canvas's aspect ratio (clamped to
      * 70–400px) so the viewport rectangle keeps the shape of the real viewport.

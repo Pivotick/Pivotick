@@ -129,14 +129,26 @@ with a rectangle showing what is on screen. **Click** it to recentre the view;
 **drag** the rectangle to pan. A very small toggle in the corner it faces folds it away
 to just that button, and brings it back.
 
-```ts
-import { Pivotick, minimap } from 'pivotick'
+**`full` mode mounts one for you** — it is part of that mode's chrome, like the header,
+the sidebar and the mode rail. Every other mode leaves it to you:
 
-new Pivotick(container, data, {
-    UI: { mode: 'full' },
-    plugins: [minimap()],
-})
+```ts
+// full mode: already there, nothing to install
+new Pivotick(container, data, { UI: { mode: 'full' } })
+
+// any other mode: ask for it, with `UI.minimap` …
+new Pivotick(container, data, { UI: { mode: 'light', minimap: true } })
+
+// … or as the plugin it is
+import { Pivotick, minimap } from 'pivotick'
+new Pivotick(container, data, { UI: { mode: 'light' }, plugins: [minimap()] })
 ```
+
+`UI.minimap` takes the same {@link MinimapOptions} the plugin does, so
+`{ minimap: { position: 'top-left' } }` configures the one full mode brings along.
+`UI.minimap: false` suppresses it. Passing your own `minimap()` in `plugins` also wins —
+full mode stands aside rather than mounting a second one — so an existing
+`plugins: [minimap({ … })]` keeps working exactly as it did.
 
 ```html
 <!-- browser build: it hangs off the global, like Node and Edge -->
@@ -150,10 +162,22 @@ new Pivotick(container, data, {
 | `position` | `'bottom-right' \| 'bottom-left' \| 'top-right' \| 'top-left'` | `'bottom-right'` | Which corner it docks in. `'bottom-right'` is the only corner the built-in chrome leaves free in `full` mode. |
 | `width` | `number` | `200` | Width in CSS pixels, border included. |
 | `height` | `number` | derived | Height in CSS pixels. Omitted, it follows the canvas's aspect ratio (clamped to 70–400px) so the rectangle keeps the shape of the real viewport. |
-| `collapsed` | `boolean` | `false` | Open folded away to just the collapse toggle. The toggle is always there; this is only the state it starts in. |
+| `collapsed` | `boolean \| 'auto'` | `false`, or `'auto'` for the one `full` mode mounts | Which state it opens in. The toggle is always there; this is only where it starts. See [Getting out of the way](#minimap-auto) for `'auto'`. |
 
 Nothing else is configurable, because nothing else needs to be: the level of detail and
 the redraw cadence adapt to the graph.
+
+### Getting out of the way {#minimap-auto}
+
+A minimap you asked for stays where you put it. The one `full` mode mounts on your behalf
+was not asked for, so it opens `collapsed: 'auto'` and takes the canvas into account: it
+stays open while the canvas is at least **four minimaps wide and tall**, and folds itself
+away to the toggle below that. It keeps following the canvas from then on — folding away
+when the sidebar opens over it or the window narrows, coming back when the room does.
+
+The moment anyone folds it away or brings it back — by the toggle, or through
+`setCollapsed()` — that stops: an explicit choice sticks, and no later resize overrides
+it. Pass an explicit `collapsed: true` / `false` to opt out of `'auto'` from the start.
 
 The toggle's arrow points at the corner the minimap docks in — the direction it folds
 away — and flips once it is collapsed. Folded away it draws nothing at all, not even the
@@ -180,7 +204,8 @@ Detail degrades with size, on purpose:
 | ≤ 1500 nodes | a dot per node in the colour the renderer resolved, plus hairline edges (dropped past 4000 edges) |
 | > 1500 nodes | one stamp per node in a single ink, alpha accumulating — dense regions read as a density map, and no per-node style is resolved at all |
 
-It appears in `full`, `light` and `viewer` modes. In `static` — which promises no
-interactions — it is not mounted, and installing it there warns.
+It works in `full`, `light` and `viewer` modes, and `full` is the one that mounts it
+without being asked. In `static` — which promises no interactions — it is not mounted, and
+installing it there warns.
 
 See the [Minimap](/examples/gallery/minimap/content) gallery card for a live one.

@@ -17,6 +17,19 @@ const MIN_HEIGHT = 70
 const MAX_HEIGHT = 400
 /** Inset (in minimap pixels) so content and the viewport rectangle never touch the frame. */
 const PADDING = 4
+/**
+ * `collapsed: 'auto'` thresholds, counted in minimaps: it stays open while the canvas is
+ * at least {@link EXPAND_ROOM_RATIO} minimaps wide *and* tall, and folds away below
+ * {@link COLLAPSE_ROOM_RATIO}. Two thresholds rather than one so a canvas sitting on the
+ * boundary — or being dragged across it — doesn't flap it open and shut.
+ *
+ * Four is the point where a default 200px minimap stops feeling like it is in the way:
+ * an eighth of a 1600px canvas, but a third of a 600px one. Note that the derived height
+ * tracks the canvas's aspect ratio, so on a normal canvas both axes give the same answer
+ * and the height test only bites when the box is clamped — a short, wide canvas.
+ */
+const EXPAND_ROOM_RATIO = 4
+const COLLAPSE_ROOM_RATIO = 3.6
 /** Retina without paying for a 3× buffer. */
 const MAX_DEVICE_PIXEL_RATIO = 2
 
@@ -61,6 +74,10 @@ export class Minimap extends UIComponent {
     /** The collapse toggle, and whether it has the minimap folded away. */
     private toggle?: HTMLButtonElement
     private collapsed = false
+    /** Whether the collapsed state follows the available room (`collapsed: 'auto'`). */
+    private readonly autoCollapse: boolean
+    /** Latched by the first explicit choice, which ends {@link autoCollapse}. */
+    private userChose = false
     private context?: CanvasRenderingContext2D
     /** Offscreen content layer, and the graph-space extent it covers. */
     private bitmap?: HTMLCanvasElement
@@ -82,7 +99,8 @@ export class Minimap extends UIComponent {
     constructor(uiManager: UIManager, options: MinimapOptions = {}) {
         super(uiManager)
         this.options = options
-        this.collapsed = options.collapsed ?? false
+        this.autoCollapse = options.collapsed === 'auto'
+        this.collapsed = options.collapsed === true
     }
 
     /* ---------- lifecycle ---------- */
@@ -112,6 +130,9 @@ export class Minimap extends UIComponent {
         container.appendChild(this.root)
 
         this.context = this.surface.getContext('2d') ?? undefined
+        // Resolved before the first paint, so an 'auto' minimap with no room for it never
+        // opens only to fold itself away a frame later.
+        if (this.autoCollapse) this.collapsed = !this.hasRoom(EXPAND_ROOM_RATIO)
         this.applyCollapsed()
         this.resize()
         this.wirePointer()
@@ -147,6 +168,9 @@ export class Minimap extends UIComponent {
         const canvas = this.uiManager.layout?.canvas
         if (canvas && typeof ResizeObserver !== 'undefined') {
             this.observer = new ResizeObserver(() => {
+                // The canvas is what the minimap covers, so its size is what 'auto'
+                // tracks — the window resizing, and the sidebar opening on top of it.
+                this.reconsiderRoom()
                 this.resize()
                 this.queueRebuild()
             })
@@ -192,8 +216,18 @@ export class Minimap extends UIComponent {
     /**
      * Fold the minimap away to its toggle, or bring it back. Collapsed it draws nothing
      * at all — not even the rectangle — so it costs nothing while it is put away.
+     *
+     * Calling this ends `collapsed: 'auto'`: from here on the state is whatever it was
+     * last set to.
      */
     public setCollapsed(collapsed: boolean) {
+        // An explicit choice outranks the room. Without this, opening the sidebar would
+        // fold away the minimap the user had just opened by hand.
+        this.userChose = true
+        this.setCollapsedState(collapsed)
+    }
+
+    private setCollapsedState(collapsed: boolean) {
         if (collapsed === this.collapsed) return
         this.collapsed = collapsed
         this.applyCollapsed()
@@ -203,6 +237,29 @@ export class Minimap extends UIComponent {
             this.resize()
             this.queueRebuild()
         }
+    }
+
+    /** Re-resolve `collapsed: 'auto'` against the room the canvas has now. */
+    private reconsiderRoom() {
+        if (!this.autoCollapse || this.userChose) return
+        if (this.collapsed) {
+            if (this.hasRoom(EXPAND_ROOM_RATIO)) this.setCollapsedState(false)
+        } else if (!this.hasRoom(COLLAPSE_ROOM_RATIO)) {
+            this.setCollapsedState(true)
+        }
+    }
+
+    /**
+     * Whether the canvas is at least `ratio` minimaps across, in both axes. A canvas that
+     * can't be measured (detached, `display:none`) counts as having room: the
+     * ResizeObserver will ask again with a real size, and folding on a zero-sized canvas
+     * would only be a guess.
+     */
+    private hasRoom(ratio: number): boolean {
+        const canvas = this.uiManager.layout?.canvas
+        if (!canvas || canvas.clientWidth === 0 || canvas.clientHeight === 0) return true
+        const { width, height } = this.targetSize()
+        return canvas.clientWidth >= width * ratio && canvas.clientHeight >= height * ratio
     }
 
     /** Reflect the collapsed state on the DOM: the CSS does the rest. */
@@ -229,16 +286,22 @@ export class Minimap extends UIComponent {
     }
 
     /**
-     * Size the surface: the width is configured, the height follows the canvas's aspect
-     * ratio so the viewport rectangle isn't stretched.
+     * The box the minimap asks for: the width is configured, the height follows the
+     * canvas's aspect ratio so the viewport rectangle isn't stretched.
      */
-    private resize() {
-        if (!this.surface || !this.root || this.collapsed) return
+    private targetSize(): { width: number, height: number } {
         const canvas = this.uiManager.layout?.canvas
         const width = this.options.width ?? DEFAULT_WIDTH
         const aspect = canvas && canvas.clientWidth > 0 ? canvas.clientHeight / canvas.clientWidth : 0.625
         const height = this.options.height
             ?? Math.round(Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, width * aspect)))
+        return { width, height }
+    }
+
+    /** Size the surface to {@link targetSize}, in both CSS and device pixels. */
+    private resize() {
+        if (!this.surface || !this.root || this.collapsed) return
+        const { width, height } = this.targetSize()
 
         this.root.style.width = `${width}px`
         this.root.style.height = `${height}px`

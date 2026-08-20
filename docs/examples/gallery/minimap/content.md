@@ -8,13 +8,15 @@ pageClass: gallery-wide
 
 # Minimap
 
-One line — `plugins: [minimap()]` — docks an overview of the whole graph in a canvas
-corner, with a rectangle showing what's on screen. **Click** anywhere in it to bring the
+`full` mode already docks an overview of the whole graph in a canvas corner, and one
+line — `plugins: [minimap()]`, as below — puts your own configured one there instead, in
+any mode. **Click** anywhere in it to bring the
 view there; **drag** the rectangle to pan. The graph below is wider than its viewport, so
 there is somewhere to go. The tiny arrow in the minimap's inner corner folds it away to
 just that button when the canvas matters more than the overview.
 
-The minimap is a **plugin**, not built-in chrome: it installs itself through the
+Even so it is a **plugin**, not built-in chrome — `full` mode simply installs it for
+you, and stands aside for the copy passed here. It installs itself through the
 `PluginContext` it is handed and uses nothing a plugin of your own couldn't — it reads
 the graph's extent with `renderer.getContentBounds()`, works out the visible region by
 inverting the canvas corners through `renderer.screenToGraphCoordinates()`, and moves the

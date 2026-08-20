@@ -1,4 +1,4 @@
-import { test, expect, gotoHarness, harness, expectCanvas, canvas, waitForViewSettled } from '../helpers'
+import { test, expect, gotoHarness, harness, expectCanvas, canvas, loadFixture, waitForViewSettled } from '../helpers'
 import type { Page } from '@playwright/test'
 
 /**
@@ -48,6 +48,21 @@ async function minimapBox(page: Page): Promise<{ x: number, y: number, width: nu
     const box = await page.locator('.pvt-minimap').boundingBox()
     expect(box).not.toBeNull()
     return box!
+}
+
+/** Long enough for the ResizeObserver to fire and the rAF after it to run. */
+const RESIZE_SETTLE = 250
+
+/** A canvas too small to give a 200px overlay away (under 4 minimaps wide). */
+async function cramp(page: Page): Promise<void> {
+    await harness(page, 'setContainerSize', 700, 500)
+    await page.waitForTimeout(RESIZE_SETTLE)
+}
+
+/** Room to spare again. */
+async function uncramp(page: Page): Promise<void> {
+    await harness(page, 'setContainerSize', 1200, 800)
+    await page.waitForTimeout(RESIZE_SETTLE)
 }
 
 test.describe('minimap plugin', () => {
@@ -233,6 +248,15 @@ test.describe('minimap plugin', () => {
         await expect.poll(async () => await inkPixels(page)).toBeGreaterThan(0)
     })
 
+    test('a graph in a cramped canvas keeps the minimap it was given', async ({ page }) => {
+        // The explicit plugin defaults to `collapsed: false`, not 'auto': asked for by
+        // hand, it stays where it was put however little room there is.
+        await harness(page, 'loadWithMinimap', 'basic')
+        await harness(page, 'setContainerSize', 700, 500)
+        await page.waitForTimeout(RESIZE_SETTLE)
+        expect(await harness(page, 'minimapCollapsed')).toBe(false)
+    })
+
     test('static mode gets no minimap, and says why', async ({ page }) => {
         await harness(page, 'loadWithMinimap', 'basic', {}, { UI: { mode: 'static' } })
 
@@ -240,5 +264,94 @@ test.describe('minimap plugin', () => {
         expect(await harness(page, 'warnings')).toEqual(
             expect.arrayContaining([expect.stringContaining('not available in \'static\' mode')])
         )
+    })
+})
+
+/**
+ * The minimap `full` mode mounts for you. Same plugin, installed by the mode rather than
+ * by the consumer — so what is being tested here is the *gating*: which modes get one,
+ * who wins when both the mode and the consumer ask, and the `collapsed: 'auto'` that
+ * makes an unasked-for minimap acceptable in the first place.
+ */
+test.describe('the minimap full mode brings along', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoHarness(page)
+    })
+
+    test('full mode mounts one without being asked', async ({ page }) => {
+        await loadFixture(page, 'basic', { UI: { mode: 'full' } })
+
+        await expect(page.locator('.pvt-minimap-surface')).toBeVisible()
+        // Open, not merely mounted: the harness viewport has room to spare.
+        expect(await harness(page, 'minimapCollapsed')).toBe(false)
+        expect(await harness(page, 'warnings')).toEqual([])
+    })
+
+    test('no other mode does, unless it is asked', async ({ page }) => {
+        await loadFixture(page, 'basic', { UI: { mode: 'light' } })
+        await expect(page.locator('.pvt-minimap')).toHaveCount(0)
+
+        // Declared, it goes up anywhere — `UI.minimap` is the ask, not just the config.
+        await loadFixture(page, 'basic', { UI: { mode: 'light', minimap: { width: 160 } } })
+        await expect(page.locator('.pvt-minimap-surface')).toBeVisible()
+        expect((await page.locator('.pvt-minimap').boundingBox())!.width).toBeCloseTo(160, 0)
+    })
+
+    test('`UI.minimap: false` suppresses it', async ({ page }) => {
+        await loadFixture(page, 'basic', { UI: { mode: 'full', minimap: false } })
+
+        await expect(page.locator('.pvt-minimap')).toHaveCount(0)
+        // Suppressed, not warned about: nothing was asked for and nothing went wrong.
+        expect(await harness(page, 'warnings')).toEqual([])
+    })
+
+    test('a consumer\'s own minimap() keeps its configuration', async ({ page }) => {
+        // Both the mode and the consumer want a minimap. The consumer's copy must be the
+        // one that mounts, or its options would be silently dropped by the name dedupe.
+        await harness(page, 'loadWithMinimap', 'basic', { width: 260 }, { UI: { mode: 'full' } })
+
+        await expect(page.locator('.pvt-minimap')).toHaveCount(1)
+        expect((await page.locator('.pvt-minimap').boundingBox())!.width).toBeCloseTo(260, 0)
+        // And no "already installed" complaint on the way.
+        expect(await harness(page, 'warnings')).toEqual([])
+    })
+
+    test('it folds itself away when the canvas runs out of room, and comes back', async ({ page }) => {
+        await loadFixture(page, 'basic', { UI: { mode: 'full' } })
+        expect(await harness(page, 'minimapCollapsed')).toBe(false)
+
+        await cramp(page)
+        // Gone but not removed: the toggle is still there to bring it back by hand.
+        expect(await harness(page, 'minimapCollapsed')).toBe(true)
+        await expect(page.locator('.pvt-minimap-surface')).toBeHidden()
+        await expect(page.locator('.pvt-minimap-toggle')).toBeVisible()
+
+        await uncramp(page)
+        expect(await harness(page, 'minimapCollapsed')).toBe(false)
+        await expect(page.locator('.pvt-minimap-surface')).toBeVisible()
+    })
+
+    test('folding it away by hand ends the automatic behaviour', async ({ page }) => {
+        await loadFixture(page, 'basic', { UI: { mode: 'full' } })
+
+        await page.locator('.pvt-minimap-toggle').click()
+        expect(await harness(page, 'minimapCollapsed')).toBe(true)
+
+        // Room appearing must not re-open what the user closed — nor, the other way
+        // round, must a manually opened minimap be folded away by a resize.
+        await harness(page, 'setContainerSize', 1600, 1000)
+        await page.waitForTimeout(RESIZE_SETTLE)
+        expect(await harness(page, 'minimapCollapsed')).toBe(true)
+
+        await page.locator('.pvt-minimap-toggle').click()
+        await cramp(page)
+        expect(await harness(page, 'minimapCollapsed')).toBe(false)
+    })
+
+    test('an explicit `collapsed` overrides the automatic behaviour', async ({ page }) => {
+        await loadFixture(page, 'basic', { UI: { mode: 'full', minimap: { collapsed: false } } })
+
+        await cramp(page)
+        expect(await harness(page, 'minimapCollapsed')).toBe(false)
     })
 })

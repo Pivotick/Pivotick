@@ -38,11 +38,13 @@ const data = { nodes, edges }
 
 const options = {
     UI: {
-        // The minimap is chrome: `full`, `light` and `viewer` have it, `static` doesn't.
+        // `full` mode brings a minimap of its own; `light` and `viewer` need asking
+        // (`UI.minimap: true`, or the plugin below). `static` never has one.
         mode: 'full'
     },
     // A plugin installs itself through the PluginContext it is handed — the core never
     // needs to know it exists. `graph.use(minimap())` works just as well, at any time.
+    // Passed here it replaces the one full mode would have mounted, configuration and all.
     plugins: [
         minimap({
             position: 'bottom-right', // the corner the built-in chrome leaves free

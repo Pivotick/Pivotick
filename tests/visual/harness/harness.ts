@@ -583,6 +583,13 @@ export interface HarnessApi {
     warnings(): string[]
     /** Load a fixture with the real `minimap()` plugin installed. */
     loadWithMinimap(name: FixtureName, options?: MinimapOptions, overrides?: PlainObject): Promise<void>
+    /**
+     * Resize the graph's own container, the way an embedding page would — for the
+     * minimap's `collapsed: 'auto'`, which follows the room the canvas has.
+     */
+    setContainerSize(width: number, height: number): void
+    /** Whether the minimap is currently folded away to its toggle. */
+    minimapCollapsed(): boolean | null
     /** The region the minimap reports as visible (what its rectangle draws), in graph coords. */
     minimapViewport(): GraphBounds | null
     /** How many times the minimap has rasterised its content bitmap. */
@@ -1322,6 +1329,15 @@ class Harness implements HarnessApi {
     private minimapElement(): Minimap | undefined {
         const ui = this.g.UIManager as unknown as { elements: unknown[] }
         return ui.elements.find((element) => element instanceof Minimap) as Minimap | undefined
+    }
+
+    setContainerSize(width: number, height: number): void {
+        this.container.style.width = `${width}px`
+        this.container.style.height = `${height}px`
+    }
+
+    minimapCollapsed(): boolean | null {
+        return this.minimapElement()?.isCollapsed() ?? null
     }
 
     minimapViewport(): GraphBounds | null {

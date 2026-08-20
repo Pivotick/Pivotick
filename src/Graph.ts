@@ -16,6 +16,7 @@ import { GraphEditingManager } from './editing/GraphEditingManager'
 import { NoteManager } from './NoteManager'
 import { Note, type NoteOptions } from './Note'
 import type { PivotickPlugin } from './interfaces/Plugin'
+import { minimap } from './plugins/minimap'
 
 export class Graph {
     private nodes: Map<string, Node> = new Map()
@@ -130,8 +131,28 @@ export class Graph {
         }
 
         this.options.plugins?.forEach(plugin => this.use(plugin))
+        this.installModePlugins()
 
         this.startAndRender()
+    }
+
+    /**
+     * The plugins the chosen mode brings along, installed once `options.plugins`
+     * has had first claim on the name — a consumer's own `minimap({ width: 240 })`
+     * must win, and `installPlugin` drops whichever copy arrives second.
+     */
+    private installModePlugins() {
+        const ui = this.UIManager.getOptions()
+        const declared = ui.minimap
+        if (declared === false || this.UIManager.hasPlugin('minimap')) return
+        // Asked for explicitly it goes up in any mode; left out, only `full` gets one —
+        // the mode that already brings a header, a sidebar, a rail and a legend.
+        if (declared === undefined && ui.mode !== 'full') return
+
+        const options = typeof declared === 'object' ? declared : {}
+        // 'auto' unless overridden: a minimap nobody asked for has to be able to get out
+        // of the way. An explicit `collapsed` in the options wins.
+        this.use(minimap({ collapsed: 'auto', ...options }))
     }
 
     /**

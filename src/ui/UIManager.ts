@@ -457,6 +457,14 @@ export class UIManager {
     /* ---------- plugins ---------- */
 
     /**
+     * Whether a plugin of that name is already installed. Lets a mode's default
+     * plugins stand aside for a consumer's own configured copy.
+     */
+    public hasPlugin(name: string): boolean {
+        return this.installedPlugins.has(name)
+    }
+
+    /**
      * Install a plugin, handing it a {@link PluginContext} to register UI
      * elements, keybindings and lifecycle hooks. Called for each entry in
      * `GraphOptions.plugins` and by {@link Graph.use}.

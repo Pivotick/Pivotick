@@ -56,9 +56,11 @@ In `full` mode the chrome is a mode-driven layout: a left **mode rail**
 pointer-mode, two settings flyouts — **View** (grid and canvas switches) and
 **Physics** (layout + simulation) — the top **main header** (search, filter, notes),
 the selection **sidebar** (properties, facets, neighbours, and a bulk-action row), and
-a right-side **viewport rail** (fit-and-center, zoom, settings, fullscreen). `light`
-mode drops the sidebar; `viewer` keeps only the viewport rail; `static` is a bare
-canvas.
+a right-side **viewport rail** (fit-and-center, zoom, settings, fullscreen), and a
+[**minimap**](./plugins#minimap) in the free bottom-right corner, which folds itself away
+when the canvas is too small to spare the room (`UI.minimap: false` to drop it). `light`
+mode drops the sidebar and the minimap; `viewer` keeps only the viewport rail; `static`
+is a bare canvas.
 
 ::: warning Migrating from the corner chrome
 The floating `GraphControls` and `GraphToolbar` overlays were removed. Layout and
