@@ -114,6 +114,62 @@
     }
 }
 
+// Nodes / Edges. Rendered only when there is more than one tab on offer.
+.pvt-table-tabs {
+    display: flex;
+    gap: 2px;
+
+    &:empty {
+        display: none;
+    }
+
+    .pvt-table-collapsed & {
+        display: none;
+    }
+}
+
+.pvt-table-tab {
+    padding: 2px 9px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--pvt-text-color-4);
+    font-size: 12px;
+    cursor: pointer;
+
+    &:hover {
+        color: var(--pvt-text-color-6);
+    }
+
+    &.active {
+        border-color: var(--pvt-chrome-border);
+        background-color: var(--pvt-bg-color-4);
+        color: var(--pvt-text-color-6);
+        font-weight: 600;
+    }
+}
+
+// Exports exactly what is shown: this tab, these columns, this sort, this filter.
+.pvt-table-export {
+    padding: 2px 7px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--pvt-text-color-4);
+    font-size: 11px;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+
+    &:hover {
+        border-color: var(--pvt-chrome-border);
+        color: var(--pvt-text-color-6);
+    }
+
+    .pvt-table-collapsed & {
+        display: none;
+    }
+}
+
 // A count of what is listed — "12 of 40 nodes" once a column filter narrows it.
 .pvt-table-summary {
     font-size: 12px;

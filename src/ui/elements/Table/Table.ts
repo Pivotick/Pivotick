@@ -1,7 +1,8 @@
 import { UIComponent } from '../../UIComponent'
 import type { UIManager } from '../../UIManager'
-import type { TableOptions } from '../../../interfaces/GraphUI'
+import type { TableExportFormat, TableOptions, TableTab } from '../../../interfaces/GraphUI'
 import { TableGrid } from './TableGrid'
+import { downloadText, toCsv, toJson } from './TableExport'
 import { sliderTune } from '../../icons'
 import './table.scss'
 
@@ -54,7 +55,11 @@ export class Table extends UIComponent {
     private pickerButton?: HTMLButtonElement
     private selectAllButton?: HTMLButtonElement
     private picker?: HTMLDivElement
+    private tabs?: HTMLDivElement
     private grid?: TableGrid
+    /** One grid per tab, so each keeps its own sort, columns and row filters. */
+    private readonly grids = new Map<TableTab, TableGrid>()
+    private tab: TableTab = 'nodes'
     /** Coalescing frame: one rebuild per frame however many events arrive. */
     private rebuildFrame: number | null = null
 
@@ -108,6 +113,10 @@ export class Table extends UIComponent {
         })
         this.header.appendChild(this.toggle)
 
+        this.tabs = document.createElement('div')
+        this.tabs.className = 'pvt-table-tabs'
+        this.header.appendChild(this.tabs)
+
         this.summary = document.createElement('span')
         this.summary.className = 'pvt-table-summary'
         this.header.appendChild(this.summary)
@@ -133,9 +142,18 @@ export class Table extends UIComponent {
         // Left of the column picker, so the header reads: state · actions · settings.
         this.header.insertBefore(this.selectAllButton, this.pickerButton)
 
-        this.grid = new TableGrid(this.uiManager, 'nodes', this.options.sort, this.options.rowActivate)
-        this.grid.setSummaryTarget(this.summary)
-        this.body.appendChild(this.grid.getRoot())
+        for (const format of this.exportFormats()) {
+            const button = document.createElement('button')
+            button.type = 'button'
+            button.className = 'pvt-table-export'
+            button.dataset.format = format
+            button.textContent = format.toUpperCase()
+            button.title = `Export the rows and columns currently shown as ${format.toUpperCase()}`
+            this.listen(button, 'click', () => this.exportAs(format))
+            this.header.insertBefore(button, this.pickerButton)
+        }
+
+        this.buildGrid('nodes')
 
         container.appendChild(this.root)
 
@@ -193,6 +211,84 @@ export class Table extends UIComponent {
             this.grid?.updateSummary()
             if (this.picker) this.renderPicker()
         })
+    }
+
+    /* ---------- tabs ---------- */
+
+    /** The tabs on offer. A single tab renders no strip — there is nothing to switch. */
+    private tabsOffered(): TableTab[] {
+        return this.options.tabs ?? ['nodes', 'edges']
+    }
+
+    /**
+     * Swap the grid for another tab's. Each tab gets a fresh grid so its sort, its column
+     * choices and its row filters are its own — switching to Edges and back should not
+     * have quietly rearranged the node table.
+     */
+    private buildGrid(tab: TableTab): void {
+        if (!this.body) return
+        this.tab = tab
+        this.body.innerHTML = ''
+
+        const grid = this.grids.get(tab) ?? new TableGrid(this.uiManager, tab, this.options.sort, this.options.rowActivate)
+        this.grids.set(tab, grid)
+        this.grid = grid
+        grid.setSummaryTarget(this.summary)
+        this.body.appendChild(grid.getRoot())
+
+        this.renderTabs()
+        this.queueRebuild()
+    }
+
+    private renderTabs(): void {
+        const strip = this.tabs
+        if (!strip) return
+        const offered = this.tabsOffered()
+        strip.innerHTML = ''
+        if (offered.length < 2) return
+
+        for (const tab of offered) {
+            const button = document.createElement('button')
+            button.type = 'button'
+            button.className = 'pvt-table-tab'
+            button.dataset.tab = tab
+            button.textContent = tab === 'edges' ? 'Edges' : 'Nodes'
+            button.classList.toggle('active', tab === this.tab)
+            button.setAttribute('aria-pressed', String(tab === this.tab))
+            this.listen(button, 'click', () => {
+                if (this.tab !== tab) this.buildGrid(tab)
+            })
+            strip.appendChild(button)
+        }
+    }
+
+    /* ---------- export ---------- */
+
+    private exportFormats(): TableExportFormat[] {
+        if (this.options.export === false) return []
+        return this.options.export ?? ['csv', 'json']
+    }
+
+    private exportAs(format: TableExportFormat): void {
+        const grid = this.grid
+        if (!grid) return
+
+        const columns = grid.getVisibleColumns()
+        const rows = grid.getVisibleRows()
+        const stem = `${this.uiManager.graph.getAppID()}-${this.tab}`
+
+        const started = format === 'csv'
+            ? downloadText(`${stem}.csv`, 'text/csv', toCsv(columns, rows))
+            : downloadText(`${stem}.json`, 'application/json', toJson(columns, rows))
+
+        // A sandboxed page (the docs gallery embeds examples in iframes) can block the
+        // download outright. Say so rather than leaving a button that does nothing.
+        if (!started) {
+            this.uiManager.graph.notifier?.warning(
+                'Export blocked',
+                'This page will not let the file download. Try the example outside its frame.',
+            )
+        }
     }
 
     /* ---------- the column picker ---------- */
@@ -259,7 +355,9 @@ export class Table extends UIComponent {
         this.pickerButton = undefined
         this.selectAllButton = undefined
         this.picker = undefined
+        this.tabs = undefined
         this.grid = undefined
+        this.grids.clear()
     }
 
     /** The grid, for anything that needs its rows (export, selection sync). */
