@@ -613,6 +613,8 @@ export interface HarnessApi {
      * render, so this is the exact answer to "what did that filter leave on screen".
      */
     visibleNodeIds(): string[]
+    /** What the filter pill reports as hidden (`queryEngine.getHiddenNodeCount`). */
+    hiddenNodeCount(): number
     /**
      * The filter panel's generated fields, in display order — `key`, the rendered
      * label, and the widget type. Reads the live DOM, so it proves what the panel
@@ -1419,6 +1421,10 @@ class Harness implements HarnessApi {
         return this.g.getMutableNodes()
             .filter((node) => node.childrenDepth === 0 && node.visible)
             .map((node) => node.id)
+    }
+
+    hiddenNodeCount(): number {
+        return this.g.queryEngine.getHiddenNodeCount()
     }
 
     subgraphVisibleNodeIds(clusterId: string): string[] {
