@@ -3,11 +3,22 @@
 // B3 chrome family: same surface, border and shadow as the mode rail /
 // settings flyouts / navigation pill.
 .pvt-legend {
+    --pvt-legend-row-height: 24px;
+    // Everything the panel puts above its list: 6px padding and a 1px border twice
+    // over, plus the header. Subtracted so a capped legend can be cut on one of the
+    // list's row boundaries; erring low only costs some of the peek.
+    --pvt-legend-chrome: 41px;
+    // Smallest legend worth drawing: the header and one row.
+    --pvt-legend-floor: calc(var(--pvt-legend-chrome) + var(--pvt-legend-row-height));
+
     position: absolute;
     // Below the mode rail and its panels (z-index 6/7): on a short viewport the
     // left-edge chrome wins the overlap, and the legend can be collapsed away.
     z-index: 5;
     max-width: 232px;
+    // A flex column so a capped slot can squeeze the panel, which squeezes the list.
+    display: flex;
+    flex-direction: column;
 
     // Nothing declared, nothing rendered — an empty slot must not swallow clicks.
     &:empty {
@@ -15,8 +26,22 @@
     }
 
     &[data-position='bottom-left'] {
-        bottom: 14px;
+        --pvt-legend-bottom: 14px;
+        // What this column has left once the mode rail has taken its share: the 28px
+        // is the rail's own top offset plus the gap kept below it. `100%` is the
+        // canvas, which already excludes the data dock's row, so this tracks the dock
+        // opening and closing for free.
+        --pvt-legend-room: calc(
+            100% - var(--pvt-legend-bottom) - var(--pvt-mainheader-height)
+                - var(--pvt-moderail-height, 0px) - 28px
+        );
+
+        bottom: var(--pvt-legend-bottom);
         left: 14px;
+        // The rail grows *down* this column, so a long category list would grow *up*
+        // into it. Cap the legend at the room left and let the list scroll: it never
+        // moves, and it only overlaps where even one row doesn't fit.
+        max-height: max(var(--pvt-legend-floor), var(--pvt-legend-room));
     }
 
     &[data-position='bottom-right'] {
@@ -40,16 +65,31 @@
 // Full mode hangs the sidebar's collapse toggle over the canvas's bottom-left
 // corner (`.pvt-sidebar-collapse-container` is `right: -40px; bottom: 7px` on a
 // sidebar that ends at the canvas edge), so a bottom-left legend lifts clear of it
-// instead of covering it.
+// instead of covering it. Lifting it also spends 30px of the room above, which the
+// `max-height` above subtracts on its own.
 .pvt-layout.mode-full .pvt-legend[data-position='bottom-left'] {
-    bottom: 44px;
+    --pvt-legend-bottom: 44px;
+}
+
+// Cut a capped legend on a row boundary plus the half row that says "there is more
+// below" — the same slack `Legend.render` leaves for its own row cap. A cut landing
+// inside a row's leading space reads as the end of the list, and an overlay
+// scrollbar won't say otherwise. Without `round()` the cap above still holds; only
+// the peek is lost.
+@supports (max-height: round(down, 10px, 3px)) {
+    .pvt-legend[data-position='bottom-left'] {
+        max-height: max(var(--pvt-legend-floor), calc(
+            round(down, var(--pvt-legend-room) - var(--pvt-legend-chrome), var(--pvt-legend-row-height))
+                + 0.5 * var(--pvt-legend-row-height) + var(--pvt-legend-chrome)
+        ));
+    }
 }
 
 .pvt-legend-panel {
-    --pvt-legend-row-height: 24px;
-
     display: flex;
     flex-direction: column;
+    // Shrink with a capped slot rather than overflowing it.
+    min-height: 0;
     padding: 6px;
     border-radius: 11px;
     background-color: var(--pvt-chrome-bg);
@@ -125,6 +165,9 @@
     // an exact row boundary instead of slicing a row in half (see Legend.render).
     gap: 0;
     overflow-y: auto;
+    // The row cap in `Legend.render` is one ceiling; the room left beside the mode
+    // rail is another. This is the flex give that lets the smaller of the two win.
+    min-height: 0;
 }
 
 .pvt-legend-collapsed {

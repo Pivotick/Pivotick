@@ -68,12 +68,42 @@ export class ModeRail extends UIComponent {
         // Reflect the store; render the initial state, then subscribe for changes.
         this.render(this.uiManager.modeStore.getState())
         this.track(this.uiManager.modeStore.subscribe((state) => this.render(state)))
+
+        this.publishHeight()
     }
 
     protected onDestroy() {
+        this.layoutRoot()?.style.removeProperty('--pvt-moderail-height')
         this.rail?.remove()
         this.rail = undefined
         this.buttons.clear()
+    }
+
+    /**
+     * Publish the rail's height as `--pvt-moderail-height`. The rail grows down the
+     * canvas's left column, so anything else docked there (the legend) can size
+     * itself against it instead of guessing — see `legend.scss`. Observed rather
+     * than computed: the height moves with the opt-in SOON modes and with whatever
+     * the label font resolves to.
+     */
+    private publishHeight(): void {
+        const rail = this.rail
+        if (!rail) return
+
+        const write = (): void => {
+            const height = rail.getBoundingClientRect().height
+            this.layoutRoot()?.style.setProperty('--pvt-moderail-height', `${height}px`)
+        }
+        write()
+
+        if (typeof ResizeObserver === 'undefined') return
+        const observer = new ResizeObserver(write)
+        observer.observe(rail)
+        this.track(() => observer.disconnect())
+    }
+
+    private layoutRoot(): HTMLElement | null {
+        return (this.rail?.closest('.pvt-layout') as HTMLElement | null) ?? null
     }
 
     /** Click the active mode to toggle its panel; click another to switch to it. */

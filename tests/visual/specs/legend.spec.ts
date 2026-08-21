@@ -1,4 +1,4 @@
-import { test, expect, gotoHarness, loadFixture, harness, expectCanvas, canvas } from '../helpers'
+import { test, expect, gotoHarness, loadFixture, harness, expectCanvas, expectElement, canvas } from '../helpers'
 import type { Page, Locator } from '@playwright/test'
 
 /** The shape `Locator.boundingBox()` resolves to. */
@@ -350,7 +350,52 @@ test.describe('canvas legend', () => {
             }
         })
         expect(overflow).toEqual({ listScrolls: true, legendFitsCanvas: true, pageScrolls: false })
-        await expectCanvas(page, 'legend-long-list.png')
+        // The legend itself, not the canvas: 30 new nodes move the graph's bounds, and
+        // the re-fit that follows lands a variable number of frames later. The three
+        // measurements above already cover the legend's relationship to the canvas.
+        await expectElement(page.locator('.pvt-legend-panel'), 'legend-long-list.png')
+    })
+
+    test.describe('on a short viewport', () => {
+        // 620px tall: the mode rail reaches most of the way down the left column, and
+        // full mode's data dock takes another 34px off the canvas. The legend docks in
+        // that same column, so this is where the two meet.
+        test.use({ viewport: { width: 1024, height: 620 } })
+
+        test('shrinks to the room left beside the mode rail instead of growing into it', async ({ page }) => {
+            await harness(page, 'loadWithLegend', 'mispLike', {}, { UI: { mode: 'full', sidebar: { collapsed: false } } })
+            await expect(page.locator('.pvt-legend-entry')).toHaveCount(4)
+
+            // Enough categories to want far more height than the column has: the row
+            // cap alone would still be ~335px against ~140px of room. All stacked on
+            // one point well inside the graph's existing bounds, so the re-fit that
+            // follows each addition resolves to the transform already on screen — this
+            // baseline is of the canvas, and a moving graph would make it a coin flip.
+            for (let index = 0; index < 30; index++) {
+                await harness(page, 'addNode', `x${index}`, 0, -20, `X${index}`, {
+                    'attr-type': `type-${String(index).padStart(2, '0')}`,
+                })
+            }
+            await expect.poll(async () => (await rows(page)).length).toBe(34)
+
+            const legendBox = await page.locator('.pvt-legend-panel').boundingBox()
+            const railBox = await page.locator('.pvt-moderail-rail').boundingBox()
+            expect(legendBox && railBox).toBeTruthy()
+            // It gives way rather than moving: still bottom-left, just shorter, with
+            // the overflow in the list's own scroller.
+            expect(overlaps(legendBox!, railBox!)).toBe(false)
+            expect(await page.evaluate(() => {
+                const list = document.querySelector('.pvt-legend-list') as HTMLElement
+                return list.scrollHeight > list.clientHeight
+            })).toBe(true)
+
+            // The list was just re-cut, and the half-row peek it now exposes lands a
+            // frame behind the DOM — screenshot only once it has actually been painted.
+            await page.evaluate(() => new Promise<void>((resolve) => {
+                requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+            }))
+            await expectCanvas(page, 'legend-short-viewport.png')
+        })
     })
 
     test('the legend docks in the requested corner', async ({ page }) => {

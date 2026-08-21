@@ -47,8 +47,9 @@ const palette = new ColorPaletteMapper('okabe-ito')
 const options = {
     UI: {
         mode: 'full',
-        // Top-left, because the dock leaves a shorter canvas and the mode rail wins the
-        // bottom-left corner on a short viewport (see the legend docs).
+        // Top-left, because this embed is 560px tall and the dock takes 42% of it: the
+        // canvas that's left is shorter than the mode rail, so the bottom-left corner has
+        // no column to give. A bottom-left legend would shrink to its header here.
         legend: { position: 'top-left' },
         table: {
             open: true,
