@@ -76,16 +76,97 @@ All nine held. The two that earned their keep most:
 
 ### Not done
 
-- **Typed header filter controls.** Every `filterable` column gets a contains-match text
-  box, whatever its facet `type`. §5.6 implied a control typed off the facet (a range pair
-  for `numberRange`, a picker for `select`); that is a clean follow-up and the type is
-  already carried on the column.
-- **`getHiddenNodes()` and the reason-recording filter pass** (old §5.3 / R5) — dropped
-  outright by D-A, not deferred. The over-reporting `getHiddenNodeCount()` (§3.2) is
-  **still wrong**, and the dock now makes that visible: on a graph with clusters the filter
-  pill reads "4 hidden" while the table lists 2 non-visible rows. Nobody could see the
-  contradiction before; it should be fixed on its own merits now.
 - **Row-level actions.** D-B by design. §5.9 holds the seam.
+- **`getHiddenNodes()` and the reason-recording filter pass** (old §5.3 / R5) — dropped
+  outright by D-A, not deferred. (The *count* it was tangled up with is now fixed; see the
+  follow-ups.)
+
+## Follow-ups (2026-08-20/21, same branch)
+
+The two items §5.6 and §3.2 left open, both done, plus a dead column found while
+answering a question about clusters. `tsc`, `eslint` and `npm run build` clean;
+**398 visual tests green**, 10 of them new, each checked against a reverted fix.
+
+### The hidden-node count was over-reporting (§3.2)
+
+`getHiddenNodeCount()` was `every node in the map − the visible top-level ones`, which
+folded a cluster's collapsed descendants into the total — they are rows of their parent's
+subgraph, so no filter here can hide them. On the `clustered` fixture the pill read
+"6 hidden" over a single filtered-out node.
+
+Fixed in `GraphQueryEngine.apply()` by matching and counting `childrenDepth === 0` only.
+Two things fell out of it:
+
+- `nodeMatchesFilters` no longer runs on children at all, so a consumer's facet
+  accessor/predicate is no longer invoked for nodes that are not in this graph.
+- `clearNodeExclusions()`'s `hiddenNodeCount +=` line was dead — `apply()` overwrites the
+  field on the next statement. Removed.
+
+`filter-hidden-count` covers it, and its last test is the pairing that exposed the bug:
+the pill and the dock's `Visibility` column describe the same nodes, so they must agree.
+
+### Header filter controls are typed off the column (§5.6)
+
+`TableRowFilters.ts` holds the model — a `RowFilter` union of `text` / `value` / `range`
+rather than one string for all three, because "between 3 and 9" is not a substring match.
+`numberRange` gets a Min/Max pair (either end optional), `select`/`multiselect`/`boolean` a
+dropdown, everything else the text box as before.
+
+- **The dropdown's choices come from the column's own values**, not from a declared option
+  list: `TableColumn` borrows only `key`/`label`/`type`/`order` from `FilterFacet`, so it
+  has no `options` — and offering a value no row holds would only ever return nothing.
+  Read from *all* rows, or picking one would empty the list you picked it from.
+- **Above 50 distinct values it falls back to the text box.** The scanned column types are
+  inferred from the data, and `inferAttributeType` will happily call a key with one value
+  per node a `multiselect`.
+- **The UA dropdown arrow is not dependable** — VitePress's own reset clears `appearance`,
+  and the control shipped looking exactly like a text box. It is drawn from the wrapper's
+  `::after` in `currentColor` instead. Form controls don't inherit the page font either,
+  so a header row mixing a box and a select showed two typefaces; `.pvt-table-filter` now
+  sets `font-family: inherit`.
+- **Narrowing re-renders the rows only** (`renderRows`), leaving the header standing. It
+  used to rebuild the whole grid per keystroke and then re-focus the input by selector —
+  which also means `cssEscape` had no callers left, and went.
+
+Still open, and deliberately: a dark-themed dock pops a **light** native option list,
+because nothing in `_theme.scss` sets `color-scheme`. Not new — `FormFactory.buildSelect`
+has the same gap in the filter panel — so it wants fixing at the theme, not here.
+
+### `Children` replaces a column that could never render
+
+Asked why the dock lists hidden nodes but not nested ones, the answer held — but the code
+did not. `tableColumns.cluster` read `node.parentNode?.id ?? ''`, and `parentNode` is
+assigned in exactly one place: `markAsChild`, which also sets `isChild = true` — the flag
+`collectElements` excludes on. So `!isChild ⟹ parentNode === undefined`, and the built-in
+**Cluster column could only ever render an empty string**. It was written expecting
+children to be listed. Dropped rather than kept as decoration; nothing had shipped, since
+the whole dock is still unmerged.
+
+In its place, `tableColumns.children` — direct children, `0` for a leaf. It earns this on
+its own: **nothing else in the library says how big a cluster is** — not the label, not
+the tooltip, not the sidebar — so the only way to find out was to expand it. It joins the
+derived leading set only on a graph that has clusters, because everywhere else it is a
+column of zeros.
+
+### Why nested rows stay out (and what it would take)
+
+The distinction is the same one the count fix rests on, and it is worth stating once: a
+**hidden** node is a node of this graph that isn't drawn; a **nested** node is not a node
+of this graph at all. Listing them would break three of the dock's own columns —
+
+- `Visibility` would read `filtered` for every child, because `normalizeNode` calls
+  `child.hide()` at load (`Graph.ts:389-390`). Nothing filtered them.
+- `Degree` counts `edgesIn`/`edgesOut`, but edges into a collapsed cluster's children are
+  hidden and replaced by synthetic edges to the parent — so a child's degree is not the
+  degree the canvas shows.
+- Clicking the row selects a node the canvas cannot display while the cluster is collapsed.
+
+Mechanically it is one line — `_setData` already puts every descendant in `graph.nodes`
+(`Graph.ts:670-673`) and `collectElements` filters them back out. What makes it a spec
+rather than a patch is the set of questions above it: a `nested` visibility state, whether
+selecting a child expands its cluster, whether `Degree` reads the subgraph, whether export
+and the summary count include them, and what a row filter does to a parent/child pair.
+**Ruled a separate PRD, 2026-08-21.**
 
 ### Notes for the next person
 
