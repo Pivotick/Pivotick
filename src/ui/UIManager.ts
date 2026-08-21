@@ -22,6 +22,7 @@ import { ToolPanel } from './elements/ToolPanel/ToolPanel'
 import { ViewFlyout } from './elements/ViewFlyout/ViewFlyout'
 import { PhysicsFlyout } from './elements/PhysicsFlyout/PhysicsFlyout'
 import { Legend } from './elements/Legend/Legend'
+import { Dock, type DockOptions } from './elements/Dock/Dock'
 import { Table } from './elements/Table/Table'
 import type { PivotickPlugin, PluginContext } from '../interfaces/Plugin'
 
@@ -171,9 +172,9 @@ function legendWanted(legend?: LegendOptions | boolean): boolean {
 }
 
 /**
- * Is a data dock wanted? `full` mode offers one unless it is explicitly turned off —
- * the dock is closed until asked for, so the cost of having it available is a header
- * pill. The mode gate itself lives in the {@link UI_ELEMENTS} entry.
+ * Is a data table wanted? `full` mode offers one unless it is explicitly turned off.
+ * It gates the bottom dock too: the region exists for its occupant, and must not
+ * outlive it. The mode gate itself lives in the {@link UI_ELEMENTS} entry.
  */
 function tableWanted(table?: TableOptions | boolean): boolean {
     if (table === false) return false
@@ -181,9 +182,19 @@ function tableWanted(table?: TableOptions | boolean): boolean {
     return true
 }
 
-/** The declared dock options, normalised — `true` and omitted both mean "defaults". */
+/** The declared table options, normalised — `true` and omitted both mean "defaults". */
 function tableOptions(table?: TableOptions | boolean): TableOptions {
     return typeof table === 'object' ? table : {}
+}
+
+/**
+ * The region's share of `UI.table`. The dock has no options of its own — one occupant,
+ * so its settings are still declared where the occupant is — but it is the dock that
+ * reads these, so they are pulled out here rather than handed the whole table config.
+ */
+function dockOptions(table?: TableOptions | boolean): DockOptions {
+    const { open, collapsed, height } = tableOptions(table)
+    return { open, collapsed, height, label: 'table' }
 }
 
 const UI_ELEMENTS: UIElementSpec[] = [
@@ -233,11 +244,20 @@ const UI_ELEMENTS: UIElementSpec[] = [
     },
     {
         // `full` only: the dock is a grid row beside the sidebar, and the other modes
-        // promise a canvas without that much chrome. Order-independent — the dock owns its
-        // own toggle and shortcut, so nothing else has to exist first.
+        // promise a canvas without that much chrome. It owns its own toggle and shortcut,
+        // so nothing else has to exist first — but it must come before its occupant,
+        // which mounts into the slots it renders.
+        key: 'dock', modes: ['full'],
+        enabled: o => tableWanted(o.table),
+        make: ui => new Dock(ui, dockOptions(ui.getOptions().table)), slot: ui => ui.layout?.dock
+    },
+    {
+        // The dock's one occupant. Registered separately rather than built by the dock,
+        // so the region stays ignorant of what is in it.
         key: 'table', modes: ['full'],
         enabled: o => tableWanted(o.table),
-        make: ui => new Table(ui, tableOptions(ui.getOptions().table)), slot: ui => ui.layout?.table
+        make: ui => new Table(ui, tableOptions(ui.getOptions().table), ui.dock),
+        slot: ui => ui.dock?.contentHost()
     },
     {
         key: 'mainHeader', modes: ['full', 'light'],
@@ -317,6 +337,7 @@ export class UIManager {
     public get viewFlyout(): ViewFlyout | undefined { return this.byKey.get('viewFlyout') as ViewFlyout | undefined }
     public get physicsFlyout(): PhysicsFlyout | undefined { return this.byKey.get('physicsFlyout') as PhysicsFlyout | undefined }
     public get legend(): Legend | undefined { return this.byKey.get('legend') as Legend | undefined }
+    public get dock(): Dock | undefined { return this.byKey.get('dock') as Dock | undefined }
     public get table(): Table | undefined { return this.byKey.get('table') as Table | undefined }
     public get tooltip(): Tooltip | undefined { return this.byKey.get('tooltip') as Tooltip | undefined }
     public get contextMenu(): ContextMenu | undefined { return this.byKey.get('contextMenu') as ContextMenu | undefined }

@@ -16,10 +16,10 @@ export class Layout extends UIComponent {
     /** Canvas-docked legend slot (its corner is set by the legend itself). */
     public legend?: HTMLDivElement
     /**
-     * The data dock: a grid row under the canvas, spanning the canvas column only so
+     * The bottom dock: a grid row under the canvas, spanning the canvas column only so
      * the sidebar stays full height beside it. `full` mode only.
      */
-    public table?: HTMLDivElement
+    public dock?: HTMLDivElement
 
     protected onMount(container?: HTMLElement) {
         if (!container) return
@@ -43,9 +43,9 @@ export class Layout extends UIComponent {
 
             // Always present, even with no `UI.table`, so the dock has a slot to mount
             // into later. It occupies no height until the dock puts something in it.
-            this.table = document.createElement('div')
-            this.table.className = 'pvt-table-dock'
-            this.layout.appendChild(this.table)
+            this.dock = document.createElement('div')
+            this.dock.className = 'pvt-dock-slot'
+            this.layout.appendChild(this.dock)
         }
 
         if (mode === 'light' || mode === 'full') {

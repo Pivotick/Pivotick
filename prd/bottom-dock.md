@@ -1,11 +1,86 @@
 # Feature — hoist the bottom dock out of the table
 
-**Status:** Draft — 2026-08-21. Not started. Scope cut on 2026-08-21 from "generic panel host" to **internal hoist only** — see §2.
+**Status:** Implemented — 2026-08-21, branch `worktree-table-mode-prd`. Not merged. Scope cut on 2026-08-21 from "generic panel host" to **internal hoist only** — see §2.
 **Owner:** Sami Mokaddem
 **Requested:** 2026-08-21
-**Area:** `src/ui/elements/Dock/` (new, hoisted out of `src/ui/elements/Table/Table.ts`), `src/ui/UIManager.ts` (`UI_ELEMENTS` row), `src/ui/elements/Layout.ts` + `src/styles/_layout.scss` (unchanged — the row already exists)
+**Area:** `src/ui/elements/Dock/` (new, hoisted out of `src/ui/elements/Table/Table.ts`), `src/ui/UIManager.ts` (`UI_ELEMENTS` row + `dock` accessor), `src/ui/elements/Layout.ts` + `src/styles/_layout.scss` + `src/ui/elements/Sidebar/sidebar.scss` (the row was already there; only its names moved), `src/Graph.ts` (`openTable`/`closeTable`/`toggleTable` now reach the dock)
 **Type:** UI architecture — separate one feature's container from the feature
 **Related:** [`table-mode.md`](table-mode.md) (built the dock as part of the table; this splits them, and its §5.6/§5.9 seams stay intact); `misp/runtime-sidebar-panels.md` (**the pattern this leaves room for** — `UI.extraPanels` + `graph.UIManager.addPanel()` returning a disposer); [`minimap-plugin.md`](minimap-plugin.md) (proof that a UI surface can ship as a plugin on public API — a log or console tab should eventually be able to do the same); [`graph-app-b3-control-layout.md`](graph-app-b3-control-layout.md) (its rejected family **A · "Command Dock"** put tools in a bottom dock; this is not that — no tools move here)
+
+---
+
+## Implementation (2026-08-21)
+
+`tsc`, `eslint` and `npm run build` clean; **404 visual tests green with no baseline
+regenerated** — nothing about the rendered dock moved, which was the whole bar to clear.
+`Table.ts` went from 586 lines to 354; `Dock.ts` is 369, nearly all of it moved rather
+than written.
+
+### The split, as built
+
+```
+.pvt-dock-slot            ← Layout, grid-area: dock (was .pvt-table-dock)
+└ .pvt-dock               ← Dock: the row, --pvt-dock-height, open/collapsed/userChose
+  ├ .pvt-dock-divider     ← Dock: drag-to-resize
+  ├ .pvt-dock-header
+  │ ├ .pvt-dock-toggle    ← Dock: the chevron
+  │ └ .pvt-dock-toolbar   ← Dock renders it, `display: contents`; the table fills it with
+  │                         the Nodes/Edges strip, the summary, Select all, CSV/JSON, Columns
+  └ .pvt-dock-body        ← Dock: the content host and scroll container; the table's grid
+```
+
+`UIManager` registers the two as separate `UI_ELEMENTS` rows — `dock` first, `table`
+mounting into `ui.dock?.contentHost()` — rather than having the dock build its occupant.
+That is what keeps the region ignorant of what is in it, and it is the line the future
+`addDockTab()` would replace.
+
+### Verdict on the decisions
+
+- **D-1 held.** One height, one collapse state, on the dock. A new spec proves it: the
+  region keeps its height and its fold through a data change *and* a column change.
+- **D-2 held (as reversed).** Nodes / Edges are untouched, and so is every pixel.
+- **D-3 held**, via `display: contents` on the toolbar slot — the occupant's controls lay
+  out as if they were the header's own children, so an empty slot costs nothing, not even
+  a flex gap. Without it the hoist would have needed a wrapper box and a new baseline.
+- **D-4, D-5, D-6 held.** No `DockTab`, no second occupant, no public registration API;
+  `Dock` is not exported from `index.ts`.
+
+### Departures worth knowing
+
+1. **The region's names moved with it.** `.pvt-table` → `.pvt-dock` (and `-divider`,
+   `-header`, `-toggle`, `-body`, `-collapsed`, `-open`), `.pvt-table-dock` →
+   `.pvt-dock-slot`, `--pvt-table-height` → `--pvt-dock-height`, `Layout.table` →
+   `Layout.dock`. §3 draws the region as `.pvt-dock`, and leaving a log pane to live
+   inside `pvt-table-*` scaffolding would have undone the point. Nothing outside `src/`
+   and two spec files names them: no doc, no gallery card, no theming API — the custom
+   property is only ever *written* by the dock, so no override could have depended on it.
+   The table's own classes (`.pvt-table-row`, `-grid`, `-tab`, `-summary`, …) are
+   untouched, which is why only `table-dock` and one line of `table-virtualization`
+   needed re-pointing. The `table-*` filenames stay as they are.
+2. **`UI.table` is read in two halves.** `dockOptions()` in `UIManager` picks `open`,
+   `collapsed` and `height` out of it for the region and adds `label: 'table'`, so the
+   dock's own controls still read "Resize the table" without the dock knowing what a
+   table is. The occupant gets the rest, unchanged. `UI.table`'s shape did not move.
+3. **`graph.UIManager.table` no longer carries the region's methods.** `setOpen`,
+   `toggleOpen`, `isOpen` and `isCollapsed` are the dock's now, reachable at
+   `graph.UIManager.dock`; `getBody()`/`getHeader()` are gone, replaced by the dock's
+   `contentHost()`/`toolbarSlot()`. The documented path — `graph.openTable()`,
+   `closeTable()`, `toggleTable()` — is unchanged and now delegates to the dock.
+4. **One behaviour changed, deliberately.** Folding the dock now dismisses the column
+   picker. The chevron always did (its click counted as an outside click); `Shift+T` and
+   `collapsed: 'auto'` did not, and left a popover hanging over the canvas with no anchor.
+   It is the one caller of `onCollapsedChange`, which is how that half of §4's interface
+   ships load-bearing rather than speculative.
+
+### Follow-ups
+
+- `Shift+T` and the `MIN_CANVAS_HEIGHT` / `MIN_DOCK_HEIGHT` floors are the dock's now, and
+  correctly so — but the *letter* T and the label both still come from the table. When a
+  second occupant lands, the shortcut stays with the region and the label follows whatever
+  tab is showing.
+- The dock is still gated on `tableWanted(UI.table)`: no table, no region. That is D-6
+  working as intended (the region must not outlive its occupant), and it is the predicate
+  the next PRD widens.
 
 ---
 

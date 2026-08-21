@@ -305,8 +305,8 @@
         // The sidebar spans the dock's row too (see _layout.scss), so measuring from its
         // own bottom would hang this over the dock — where it collided with the dock's
         // collapse chevron and swallowed its clicks. Sit above the dock instead: this
-        // control belongs to the canvas edge, and `--pvt-table-height` is 0 without one.
-        bottom: calc(var(--pvt-table-height, 0px) + 7px);
+        // control belongs to the canvas edge, and `--pvt-dock-height` is 0 without one.
+        bottom: calc(var(--pvt-dock-height, 0px) + 7px);
         background-color: var(--pvt-sidebar-collapse-bg);
         color: var(--pvt-sidebar-collapse-color);
         box-shadow: var(--pvt-sidebar-collapse-shadow);

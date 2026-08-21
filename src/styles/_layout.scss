@@ -13,9 +13,9 @@
 .pvt-layout {
     --pvt-sidebar-width: 340px;
     --pvt-mainheader-height: 48px;
-    // The data dock's height. 0 while it is closed, so the second grid row
+    // The bottom dock's height. 0 while it is closed, so the second grid row
     // collapses away and nothing shifts.
-    --pvt-table-height: 0px;
+    --pvt-dock-height: 0px;
 
     position: relative;
     width: 100%;
@@ -29,12 +29,12 @@
     // item's content, so a long sidebar would stretch the row past the viewport
     // instead of scrolling inside it.
     //
-    // The second row is the data dock. The sidebar spans both rows, so it keeps its
-    // full height and goes on showing the selected row's properties beside the table.
-    grid-template-rows: minmax(0, 1fr) var(--pvt-table-height);
+    // The second row is the bottom dock. The sidebar spans both rows, so it keeps its
+    // full height and goes on showing the selected row's properties beside the dock.
+    grid-template-rows: minmax(0, 1fr) var(--pvt-dock-height);
     grid-template-areas:
         "sidebar canvas"
-        "sidebar table";
+        "sidebar dock";
 
     &.mode-static,
     &.mode-viewer {
@@ -113,9 +113,9 @@
     }
 }
 
-.pvt-table-dock {
-    grid-area: table;
-    // The row is sized by --pvt-table-height; anything wide inside the dock has to
+.pvt-dock-slot {
+    grid-area: dock;
+    // The row is sized by --pvt-dock-height; anything wide inside the dock has to
     // scroll in its own container rather than stretching this one.
     min-width: 0;
     min-height: 0;

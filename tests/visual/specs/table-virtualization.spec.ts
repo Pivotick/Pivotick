@@ -18,7 +18,7 @@ const load = async (page: Page, count: number, table: Record<string, unknown> = 
 
 const renderedRows = (page: Page) => page.locator('.pvt-table-row').count()
 const rowsContainer = (page: Page) => page.locator('.pvt-table-rows')
-const body = (page: Page) => page.locator('.pvt-table-body')
+const body = (page: Page) => page.locator('.pvt-dock-body')
 
 const summary = (page: Page) =>
     page.locator('.pvt-table-summary').evaluate((el) => (el.textContent ?? '').trim())

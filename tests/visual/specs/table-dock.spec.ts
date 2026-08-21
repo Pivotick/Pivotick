@@ -1,8 +1,9 @@
-import { test, expect, gotoHarness, loadFixture } from '../helpers'
+import { test, expect, gotoHarness, harness, loadFixture } from '../helpers'
 
-// ── The data dock's shell ────────────────────────────────────────────────────
-// A real grid row under the canvas: resizable by its divider, collapsible to its
-// header bar, gated to `full` mode, and off by option.
+// ── The bottom dock ──────────────────────────────────────────────────────────
+// The region, not what is in it: a real grid row under the canvas, resizable by
+// its divider, collapsible to its header bar, gated to `full` mode, and off by
+// option. The table that fills it is asserted by the other table-* specs.
 //
 // The load-bearing assertion is that opening it does not disturb the physics.
 // The dock shrinks the canvas, and a layout has to come out the same whether the
@@ -15,21 +16,25 @@ type Page = import('@playwright/test').Page
 
 const FULL = { UI: { mode: 'full', sidebar: { collapsed: false } } }
 
-const dock = (page: Page) => page.locator('.pvt-table')
+const dock = (page: Page) => page.locator('.pvt-dock')
 /** There is no toolbar button for the dock — the bar's own chevron is the control. */
 const pill = (page: Page) => page.locator('#pvt-table-button')
-const chevron = (page: Page) => page.locator('.pvt-table-toggle')
-const divider = (page: Page) => page.locator('.pvt-table-divider')
+const chevron = (page: Page) => page.locator('.pvt-dock-toggle')
+const divider = (page: Page) => page.locator('.pvt-dock-divider')
 
 /** Height of the dock's grid row, as the layout actually resolved it. */
 const rowHeight = (page: Page) =>
     page.evaluate(() => {
         const layout = document.querySelector('.pvt-layout') as HTMLElement
-        return parseFloat(getComputedStyle(layout).getPropertyValue('--pvt-table-height')) || 0
+        return parseFloat(getComputedStyle(layout).getPropertyValue('--pvt-dock-height')) || 0
     })
 
 const canvasHeight = (page: Page) =>
     page.evaluate(() => document.querySelector('.pvt-canvas')!.getBoundingClientRect().height)
+
+/** The height the canvas and the dock share out between them. */
+const layoutHeight = (page: Page) =>
+    page.evaluate(() => document.querySelector('.pvt-layout')!.getBoundingClientRect().height)
 
 const physicsState = (page: Page) =>
     page.evaluate(() => {
@@ -65,10 +70,29 @@ test.describe('table dock', () => {
         await loadFixture(page, 'basic', FULL)
 
         await expect(dock(page)).toBeVisible()
-        await expect(dock(page)).toHaveClass(/pvt-table-collapsed/)
-        await expect(page.locator('.pvt-table-body')).toBeHidden()
+        await expect(dock(page)).toHaveClass(/pvt-dock-collapsed/)
+        await expect(page.locator('.pvt-dock-body')).toBeHidden()
         expect(await rowHeight(page)).toBeGreaterThan(0)
         await expect(pill(page)).toHaveCount(0)
+    })
+
+    // `open`'s three states, in one place rather than inferred from the specs that
+    // happen to pass `open: true`. They are the part of the dock's contract most easily
+    // dropped now that the region and its occupant are configured from the same option.
+    test('UI.table.open drives the three states', async ({ page }) => {
+        await loadFixture(page, 'basic', { UI: { mode: 'full', table: { open: true } } })
+        await expect(dock(page)).toBeVisible()
+        await expect(dock(page)).not.toHaveClass(/pvt-dock-collapsed/)
+        await expect(page.locator('.pvt-dock-body')).toBeVisible()
+
+        await loadFixture(page, 'basic', FULL)
+        await expect(dock(page)).toBeVisible()
+        await expect(dock(page)).toHaveClass(/pvt-dock-collapsed/)
+        await expect(page.locator('.pvt-dock-body')).toBeHidden()
+
+        await loadFixture(page, 'basic', { UI: { mode: 'full', table: { open: false } } })
+        await expect(dock(page)).toBeHidden()
+        expect(await rowHeight(page)).toBe(0)
     })
 
     test('expanding takes the room from the canvas', async ({ page }) => {
@@ -91,7 +115,7 @@ test.describe('table dock', () => {
     // One meaning: show the content, or fold it away again.
     test('Shift+T shows and folds the content', async ({ page }) => {
         await loadFixture(page, 'basic', FULL)
-        const body = page.locator('.pvt-table-body')
+        const body = page.locator('.pvt-dock-body')
 
         await page.locator('.pivotick').click({ position: { x: 5, y: 5 } })
         await page.keyboard.press('Shift+T')
@@ -116,7 +140,7 @@ test.describe('table dock', () => {
         await settle(page)
 
         await expect(dock(page)).toBeVisible()
-        await expect(page.locator('.pvt-table-body')).toBeVisible()
+        await expect(page.locator('.pvt-dock-body')).toBeVisible()
     })
 
     // The whole justification for D-F. Opening the dock resizes the canvas; the
@@ -143,8 +167,8 @@ test.describe('table dock', () => {
         await chevron(page).click()
         await settle(page)
 
-        await expect(dock(page)).toHaveClass(/pvt-table-collapsed/)
-        await expect(page.locator('.pvt-table-body')).toBeHidden()
+        await expect(dock(page)).toHaveClass(/pvt-dock-collapsed/)
+        await expect(page.locator('.pvt-dock-body')).toBeHidden()
         // Still on screen, just folded — the header bar remains.
         const collapsed = await rowHeight(page)
         expect(collapsed).toBeGreaterThan(0)
@@ -152,7 +176,7 @@ test.describe('table dock', () => {
 
         await chevron(page).click()
         await settle(page)
-        await expect(dock(page)).not.toHaveClass(/pvt-table-collapsed/)
+        await expect(dock(page)).not.toHaveClass(/pvt-dock-collapsed/)
     })
 
     test('dragging the divider resizes it', async ({ page }) => {
@@ -227,7 +251,7 @@ test.describe('table dock', () => {
             await page.locator('.pvt-table-row').first().waitFor()
 
             const edge = await page.evaluate(() => {
-                const table = getComputedStyle(document.querySelector('.pvt-table')!)
+                const table = getComputedStyle(document.querySelector('.pvt-dock')!)
                 const sidebar = getComputedStyle(document.querySelector('.pvt-sidebar')!)
                 return {
                     width: parseFloat(table.borderLeftWidth),
@@ -249,11 +273,36 @@ test.describe('table dock', () => {
         await expect(dock(page)).toHaveCount(0)
     })
 
+    // The region must not outlive its occupant: with the table suppressed there is no
+    // dock at all, and the canvas keeps the whole height rather than a row of nothing.
     test('UI.table false suppresses it in full mode', async ({ page }) => {
         await loadFixture(page, 'basic', { UI: { mode: 'full', table: false } })
 
         await expect(pill(page)).toHaveCount(0)
         await expect(dock(page)).toHaveCount(0)
+        expect(await rowHeight(page)).toBe(0)
+        expect(await canvasHeight(page)).toBeCloseTo(await layoutHeight(page), 0)
+    })
+
+    // The height and the fold belong to the region, so nothing the occupant does to
+    // itself can lose them — not a data change, not a column change.
+    test('the dock keeps its height and its fold through a table rebuild', async ({ page }) => {
+        await loadFixture(page, 'basic', { UI: { mode: 'full', table: { open: true } } })
+        await page.locator('.pvt-table-row').first().waitFor()
+        const before = await rowHeight(page)
+        const rows = await page.locator('.pvt-table-row').count()
+
+        // A data change…
+        await harness(page, 'addNode', 'late-arrival', 120, 120)
+        await expect(page.locator('.pvt-table-row')).toHaveCount(rows + 1)
+
+        // …and a column change, both of which rebuild the grid from scratch.
+        await page.locator('.pvt-table-columns-button').click()
+        await page.locator('.pvt-table-columns-row', { hasText: 'Degree' }).locator('input').uncheck()
+        await expect(page.locator('.pvt-table-th-label', { hasText: 'Degree' })).toHaveCount(0)
+
+        expect(await rowHeight(page)).toBe(before)
+        await expect(dock(page)).not.toHaveClass(/pvt-dock-collapsed/)
     })
 
     // `collapsed: 'auto'` folds the dock away when the layout can't spare the room
@@ -261,11 +310,11 @@ test.describe('table dock', () => {
     test('auto-collapse folds it away on a short layout', async ({ page }) => {
         await loadFixture(page, 'basic', { UI: { mode: 'full', table: { open: true } } })
         await settle(page)
-        await expect(dock(page)).not.toHaveClass(/pvt-table-collapsed/)
+        await expect(dock(page)).not.toHaveClass(/pvt-dock-collapsed/)
 
         await page.evaluate(() => window.__pivotick.setContainerSize(1000, 380))
         await settle(page)
 
-        await expect(dock(page)).toHaveClass(/pvt-table-collapsed/)
+        await expect(dock(page)).toHaveClass(/pvt-dock-collapsed/)
     })
 })

@@ -1260,17 +1260,17 @@ export class Graph {
      * a no-op otherwise.
      */
     openTable(): void {
-        this.UIManager.table?.setOpen(true)
+        this.UIManager.dock?.setOpen(true)
     }
 
     /** Closes the data dock. */
     closeTable(): void {
-        this.UIManager.table?.setOpen(false)
+        this.UIManager.dock?.setOpen(false)
     }
 
     /** Opens the data dock if it is closed, closes it if it is open. */
     toggleTable(): void {
-        this.UIManager.table?.toggleOpen()
+        this.UIManager.dock?.toggleOpen()
     }
 
     /**
