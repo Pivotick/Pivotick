@@ -72,9 +72,9 @@ All nine held. The two that earned their keep most:
   enough — `toBeInViewport()` plus a rect-inside-the-container check is what catches it.
 - **A real split does not fully escape corner pressure**, contrary to §3.7's claim. The
   dock never covers the legend or the minimap — but it shortens the canvas until
-  bottom-left chrome and the left-edge rail converge, and the legend's own SCSS already
-  concedes that the rail wins on a short viewport. The gallery card docks its legend
-  `top-left` for that reason. Worth revisiting if the dock becomes common.
+  bottom-left chrome and the left-edge rail converge. Measured and fixed afterwards: the
+  legend now sizes itself against the rail rather than growing into it, and the gallery
+  card's `top-left` workaround is gone. See the legend entry under *Follow-ups*.
 
 ### Not done
 
@@ -190,14 +190,61 @@ dock's grid row**:
   chevron. They overlapped and the chevron ate the toggle's clicks — a click *timeout* in
   `legend.spec`, which is an obscure signal for a layout collision, so `table-dock` now
   asserts the non-overlap directly. Fixed by measuring the toggle from above the dock.
-- The **legend now collides with the mode rail** on a short viewport (1024×620: legend top
-  412px, rail bottom 440px; without the dock it cleared by ~6px). **Still open** — see
-  [`bottom-dock.md`](bottom-dock.md) §9.
+- The **legend collides with the mode rail** on a short viewport (1024×620: legend top
+  412px, rail bottom 440px). Fixed, and not by the dock's doing — see below.
 
 Also fixed while here: on the **dark** theme the sidebar and the dock resolve to the *same*
 fill (`--pvt-ui-bg` and `--pvt-chrome-bg` are both `--pvt-bg-color-6`), and the sidebar's
 only right-edge separator is a black box-shadow — invisible on dark, so the two surfaces
 merged. The dock draws its own `border-left` now, as it already drew its top.
+
+### The legend sizes itself against the mode rail (2026-08-21)
+
+The collision recorded above was blamed on the dock. It wasn't. Re-measured at 1024×620
+in full mode with a four-row legend, the folded dock bar costs exactly 34px, and the gap
+from the legend's top to the rail's bottom is:
+
+| rail | with dock | without dock |
+|---|---|---|
+| 4 buttons (library default) | **+89px** | +123px |
+| 5 buttons (`enrich` — the test harness default) | **+18px** | +52px |
+| 6 buttons (`explore` + `enrich`) | **−44px** | **−10px** |
+
+The overlap predates the dock; the dock spent a ~6px margin that had already gone. The
+variables that matter are the rail's button count and the legend's row count — and
+`maxVisibleEntries: 12` alone makes the legend ~330px tall, which overlaps even the
+four-button rail on that viewport.
+
+So the fix is geometric, not positional. `ModeRail` publishes `--pvt-moderail-height`
+(observed, not computed — it moves with the opt-in SOON modes), and the `bottom-left`
+legend caps itself at the room left in its column: `100%` minus the header, the rail,
+the gaps and its own bottom offset. `100%` is the canvas, which already excludes the
+dock's row, so it tracks the dock opening and closing for free. The panel and list carry
+`min-height: 0` so the cap reaches the list, which already scrolled. It never changes
+corner and only overlaps where not even one row fits.
+
+Three things found on the way, each worth more than the fix:
+
+- **`top-left` is not the safe corner it looks like.** It is the contextual tool panel's
+  exact anchor (`left: 84px`, `top: mainheader + 14px`) at a higher z-index — clear only
+  while that panel is collapsed, which is its initial state and nothing more. Full mode
+  has **no** free corner: tool panel top-left, nav pill top-right, minimap bottom-right,
+  sidebar collapse toggle bottom-left (which the legend clears by 3px). The `data-table`
+  gallery card keeps `top-left` anyway, and for a better-stated reason: its embed is
+  560px tall with the dock taking 42%, leaving a canvas *shorter than the rail itself*.
+  When the column can't seat one row, the cap floors at header-plus-a-row and the legend
+  goes under the rail — correct, and still not what you want on a showcase card.
+- **The "quarter row of slack" cue did nothing.** A row's first 6.5px are its swatch's
+  leading space, and a quarter of 24px is 6px, so the cut landed in blank space and read
+  as the end of the list. Both cap paths now leave half a row. Cheap to verify and easy
+  to get wrong: dump the pixel column through the swatch gutter rather than eyeballing a
+  crop, and mind that a crop of your own can fake the slice you are looking for.
+- **`--update-snapshots` does not rewrite a baseline that still matches** within
+  `maxDiffPixelRatio` (0.01 ≈ 4000px here). A 6px height change on a small element sails
+  under that, so the run reports success and keeps the old file. Delete the baseline to
+  force it. This had also been hiding a stale `legend-long-list` baseline whose rail
+  predates the Physics mode — a whole missing rail button, ~3500px, which had been
+  quietly eating most of the tolerance budget.
 
 ### Notes for the next person
 
@@ -211,6 +258,12 @@ merged. The dock draws its own `border-left` now, as it already drew its top.
 - Every one of the new specs was checked against a deliberately reverted fix to confirm it
   actually fails without it. Worth keeping up: three of the four `physics-container` tests
   pass against the old canvas measurement if you only check the happy path.
+- **Don't add nodes and then screenshot the canvas.** New nodes move the graph's bounds
+  and the re-fit lands a variable number of frames later, so the baseline becomes a coin
+  flip under a loaded parallel run — `waitForViewSettled` doesn't help, it can resolve
+  while the fit is still polling the bbox. Either screenshot the element you actually
+  care about (`expectElement`), or place the new nodes inside the existing bounds so the
+  re-fit is a no-op.
 
 ## 0. Instructions
 
