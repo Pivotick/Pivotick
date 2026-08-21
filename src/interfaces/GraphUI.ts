@@ -647,7 +647,16 @@ export interface TableOptions {
     columns?: TableColumn[],
     /** The edge columns, on the same terms as {@link TableOptions.columns}. */
     edgeColumns?: TableColumn<Edge>[],
-    /** Open the dock on boot. @default false */
+    /**
+     * Whether the dock starts expanded. Three states, because the collapsed bar is the
+     * control that opens it:
+     *
+     * - `true` — present and expanded, showing the grid.
+     * - `false` — not present at all, for a canvas with no dock. `Shift+T` still brings
+     *   it in.
+     * - **unset (default)** — present, folded to its header bar. The bar is the
+     *   affordance, which is why there is no toolbar button for the dock.
+     */
     open?: boolean,
     /**
      * Folded away to just its header bar. `'auto'` follows the room available, until the

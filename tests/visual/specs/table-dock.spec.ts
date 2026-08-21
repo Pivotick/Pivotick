@@ -16,7 +16,9 @@ type Page = import('@playwright/test').Page
 const FULL = { UI: { mode: 'full', sidebar: { collapsed: false } } }
 
 const dock = (page: Page) => page.locator('.pvt-table')
+/** There is no toolbar button for the dock — the bar's own chevron is the control. */
 const pill = (page: Page) => page.locator('#pvt-table-button')
+const chevron = (page: Page) => page.locator('.pvt-table-toggle')
 const divider = (page: Page) => page.locator('.pvt-table-divider')
 
 /** Height of the dock's grid row, as the layout actually resolved it. */
@@ -40,6 +42,13 @@ const physicsState = (page: Page) =>
         }
     })
 
+type BoundingBox = { x: number, y: number, width: number, height: number }
+
+function overlaps(a: BoundingBox, b: BoundingBox): boolean {
+    return a.x < b.x + b.width && b.x < a.x + a.width
+        && a.y < b.y + b.height && b.y < a.y + a.height
+}
+
 const settle = (page: Page) =>
     page.evaluate(() => new Promise<void>((resolve) => {
         requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
@@ -50,43 +59,64 @@ test.describe('table dock', () => {
         await gotoHarness(page)
     })
 
-    test('full mode offers a Table pill, closed until it is asked for', async ({ page }) => {
+    // The dock is on screen by default, folded to its bar. That bar is what replaced the
+    // header pill, so it has to be there — and the pill has to be gone.
+    test('full mode starts folded to its bar, with no toolbar button', async ({ page }) => {
         await loadFixture(page, 'basic', FULL)
 
-        await expect(pill(page)).toBeVisible()
-        expect(await rowHeight(page)).toBe(0)
-        await expect(dock(page)).toBeHidden()
-    })
-
-    test('the pill opens and closes the dock', async ({ page }) => {
-        await loadFixture(page, 'basic', FULL)
-        const closedCanvas = await canvasHeight(page)
-
-        await pill(page).click()
-        await settle(page)
         await expect(dock(page)).toBeVisible()
+        await expect(dock(page)).toHaveClass(/pvt-table-collapsed/)
+        await expect(page.locator('.pvt-table-body')).toBeHidden()
         expect(await rowHeight(page)).toBeGreaterThan(0)
-        // The canvas genuinely gave up the room — this is a split, not an overlay.
-        expect(await canvasHeight(page)).toBeLessThan(closedCanvas)
-
-        await pill(page).click()
-        await settle(page)
-        await expect(dock(page)).toBeHidden()
-        expect(await rowHeight(page)).toBe(0)
-        expect(await canvasHeight(page)).toBeCloseTo(closedCanvas, 0)
+        await expect(pill(page)).toHaveCount(0)
     })
 
-    test('Shift+T toggles it too', async ({ page }) => {
+    test('expanding takes the room from the canvas', async ({ page }) => {
         await loadFixture(page, 'basic', FULL)
+        const foldedCanvas = await canvasHeight(page)
+        const foldedRow = await rowHeight(page)
+
+        await chevron(page).click()
+        await settle(page)
+        expect(await rowHeight(page)).toBeGreaterThan(foldedRow)
+        // The canvas genuinely gave up the room — this is a split, not an overlay.
+        expect(await canvasHeight(page)).toBeLessThan(foldedCanvas)
+
+        await chevron(page).click()
+        await settle(page)
+        expect(await rowHeight(page)).toBe(foldedRow)
+        expect(await canvasHeight(page)).toBeCloseTo(foldedCanvas, 0)
+    })
+
+    // One meaning: show the content, or fold it away again.
+    test('Shift+T shows and folds the content', async ({ page }) => {
+        await loadFixture(page, 'basic', FULL)
+        const body = page.locator('.pvt-table-body')
 
         await page.locator('.pivotick').click({ position: { x: 5, y: 5 } })
         await page.keyboard.press('Shift+T')
         await settle(page)
-        await expect(dock(page)).toBeVisible()
+        await expect(body).toBeVisible()
 
         await page.keyboard.press('Shift+T')
         await settle(page)
+        await expect(body).toBeHidden()
+        // Folded, not gone — the bar stays, or there would be no way back.
+        await expect(dock(page)).toBeVisible()
+    })
+
+    // `open: false` is the zero-footprint opt-out, and the one state with no affordance
+    // on screen at all — so the shortcut has to be able to bring the dock in.
+    test('Shift+T brings in a dock that was switched off', async ({ page }) => {
+        await loadFixture(page, 'basic', { UI: { mode: 'full', table: { open: false } } })
         await expect(dock(page)).toBeHidden()
+
+        await page.locator('.pivotick').click({ position: { x: 5, y: 5 } })
+        await page.keyboard.press('Shift+T')
+        await settle(page)
+
+        await expect(dock(page)).toBeVisible()
+        await expect(page.locator('.pvt-table-body')).toBeVisible()
     })
 
     // The whole justification for D-F. Opening the dock resizes the canvas; the
@@ -95,7 +125,7 @@ test.describe('table dock', () => {
         await loadFixture(page, 'basic', FULL)
         const before = await physicsState(page)
 
-        await pill(page).click()
+        await chevron(page).click()
         await settle(page)
 
         // The canvas really did shrink…
@@ -106,11 +136,11 @@ test.describe('table dock', () => {
 
     test('the collapse toggle folds it to its header bar', async ({ page }) => {
         await loadFixture(page, 'basic', FULL)
-        await pill(page).click()
+        await chevron(page).click()
         await settle(page)
         const expanded = await rowHeight(page)
 
-        await page.locator('.pvt-table-toggle').click()
+        await chevron(page).click()
         await settle(page)
 
         await expect(dock(page)).toHaveClass(/pvt-table-collapsed/)
@@ -120,14 +150,14 @@ test.describe('table dock', () => {
         expect(collapsed).toBeGreaterThan(0)
         expect(collapsed).toBeLessThan(expanded)
 
-        await page.locator('.pvt-table-toggle').click()
+        await chevron(page).click()
         await settle(page)
         await expect(dock(page)).not.toHaveClass(/pvt-table-collapsed/)
     })
 
     test('dragging the divider resizes it', async ({ page }) => {
         await loadFixture(page, 'basic', FULL)
-        await pill(page).click()
+        await chevron(page).click()
         await settle(page)
         const before = await rowHeight(page)
 
@@ -147,7 +177,7 @@ test.describe('table dock', () => {
     // matter how far the divider is dragged.
     test('the divider cannot starve the canvas', async ({ page }) => {
         await loadFixture(page, 'basic', FULL)
-        await pill(page).click()
+        await chevron(page).click()
         await settle(page)
 
         const handle = await divider(page).boundingBox()
@@ -160,7 +190,59 @@ test.describe('table dock', () => {
         expect(await canvasHeight(page)).toBeGreaterThanOrEqual(199)
     })
 
-    test('light mode has neither pill nor dock', async ({ page }) => {
+    // The sidebar spans the dock's grid row, and hangs its collapse toggle off its own
+    // bottom-right corner — which, with the dock always present, is where the dock's
+    // chevron lives. They overlapped, and the chevron swallowed the toggle's clicks.
+    test('the dock chevron does not sit on the sidebar collapse toggle', async ({ page }) => {
+        await loadFixture(page, 'basic', FULL)
+        const toggle = page.locator('.pvt-sidebar-collapse-container')
+
+        const boxes = async () => {
+            const a = await chevron(page).boundingBox()
+            const b = await toggle.boundingBox()
+            expect(a && b).toBeTruthy()
+            return { a: a!, b: b! }
+        }
+
+        const folded = await boxes()
+        expect(overlaps(folded.a, folded.b)).toBe(false)
+
+        // And the sidebar toggle still does its job, which is what the overlap broke.
+        await toggle.click()
+        await expect(page.locator('.pvt-sidebar')).toHaveClass(/pvt-sidebar-collapsed/)
+
+        // Expanded, the dock is taller — the toggle has to keep clear of that too.
+        await chevron(page).click()
+        await settle(page)
+        const expanded = await boxes()
+        expect(overlaps(expanded.a, expanded.b)).toBe(false)
+    })
+
+    // The sidebar's only right-edge separator is a black box-shadow, and on the dark
+    // theme `--pvt-ui-bg` and `--pvt-chrome-bg` are the *same* colour — so without a
+    // border of its own the dock and the sidebar merged into one surface.
+    test('the dock draws an edge against the sidebar in both themes', async ({ page }) => {
+        for (const theme of ['dark', 'light'] as const) {
+            await loadFixture(page, 'basic', { UI: { mode: 'full', theme, sidebar: { collapsed: false }, table: { open: true } } })
+            await page.locator('.pvt-table-row').first().waitFor()
+
+            const edge = await page.evaluate(() => {
+                const table = getComputedStyle(document.querySelector('.pvt-table')!)
+                const sidebar = getComputedStyle(document.querySelector('.pvt-sidebar')!)
+                return {
+                    width: parseFloat(table.borderLeftWidth),
+                    colour: table.borderLeftColor,
+                    sidebarFill: sidebar.backgroundColor,
+                }
+            })
+
+            expect(edge.width, `${theme}: dock has a left border`).toBeGreaterThan(0)
+            // A border the same colour as what it sits against is not a separator.
+            expect(edge.colour, `${theme}: edge is distinguishable`).not.toBe(edge.sidebarFill)
+        }
+    })
+
+    test('light mode has no dock at all', async ({ page }) => {
         await loadFixture(page, 'basic', { UI: { mode: 'light' } })
 
         await expect(pill(page)).toHaveCount(0)

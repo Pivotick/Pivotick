@@ -233,8 +233,8 @@ const UI_ELEMENTS: UIElementSpec[] = [
     },
     {
         // `full` only: the dock is a grid row beside the sidebar, and the other modes
-        // promise a canvas without that much chrome. **Before `mainHeader`**, which only
-        // grows its Table pill when there is already a dock for it to toggle.
+        // promise a canvas without that much chrome. Order-independent — the dock owns its
+        // own toggle and shortcut, so nothing else has to exist first.
         key: 'table', modes: ['full'],
         enabled: o => tableWanted(o.table),
         make: ui => new Table(ui, tableOptions(ui.getOptions().table)), slot: ui => ui.layout?.table

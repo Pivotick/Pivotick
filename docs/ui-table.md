@@ -19,8 +19,13 @@ const options = {
 }
 ```
 
-That is all it takes. In `full` mode the header grows a **Table** pill (or press
-`Shift+T`) and the dock opens on demand. `UI.table: false` removes it entirely.
+That is all it takes. In `full` mode the dock sits at the bottom **folded to its header
+bar**; click its chevron — or press `Shift+T` — to show the table. `UI.table: false`
+removes it entirely.
+
+There is deliberately no toolbar button for it. The bar *is* the control: the pills in the
+top bar all open something *over* the canvas, while the dock is a split region that already
+shows you its own chevron.
 
 The dock is `full` mode only — it is a grid row beside the sidebar, and the other modes
 promise a canvas without that much chrome.
@@ -184,11 +189,11 @@ inspect.
 
 | Option | Default | What it does |
 |---|---|---|
-| `enabled` | `true` | `false` (or `UI.table: false`) removes the dock and its pill |
+| `enabled` | `true` | `false` (or `UI.table: false`) removes the dock entirely |
 | `tabs` | `['nodes', 'edges']` | Which tabs to offer. One tab renders no strip |
 | `columns` / `edgeColumns` | derived | See [Columns](#columns) |
-| `open` | `false` | Open the dock on boot |
-| `collapsed` | `'auto'` | Folded to its header bar. `'auto'` follows the room available until you choose for yourself |
+| `open` | unset | Unset starts folded to the bar; `true` starts expanded; `false` leaves no dock at all (`Shift+T` still brings it in) |
+| `collapsed` | folded | Folded to its header bar. With `open: true`, `'auto'` follows the room available until you choose for yourself |
 | `height` | `0.35` | A pixel count, or a fraction of the canvas. Clamped so the canvas keeps a usable minimum |
 | `sort` | the `Label` column | `{ key, direction }` |
 | `rowActivate` | `'select'` | `'selectAndCenter'` also moves the canvas; `'none'` makes rows inert |

@@ -35,8 +35,9 @@ const palette = new ColorPaletteMapper('okabe-ito')
 // #region options
 // import { ColorPaletteMapper, tableColumns } from 'pivotick'
 //
-// The data dock comes with `mode: 'full'` — the header grows a Table pill, or press
-// Shift+T. Everything here is optional; `UI: { mode: 'full' }` alone gets you a table.
+// The data dock comes with `mode: 'full'`, folded to its header bar — click the chevron
+// or press Shift+T. `open: true` below starts it expanded instead. Everything here is
+// optional; `UI: { mode: 'full' }` alone gets you a dock.
 //
 // Columns are derived when you don't declare any: the graph-aware ones lead (Label,
 // Degree, Visibility) and the data keys follow, ordered by how many nodes carry them.

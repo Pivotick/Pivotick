@@ -81,9 +81,17 @@ export class Table extends UIComponent {
     constructor(uiManager: UIManager, options: TableOptions = {}) {
         super(uiManager)
         this.options = options
-        this.open = options.open === true
-        this.autoCollapse = options.collapsed === undefined || options.collapsed === 'auto'
-        this.collapsed = options.collapsed === true
+        // Three states, because the collapsed bar is now the affordance that opens the
+        // dock — so it has to be on screen by default, or nothing points at it:
+        //   `open: false` → not present at all (the zero-footprint opt-out)
+        //   `open: true`  → present and expanded
+        //   unset         → present, folded to its bar
+        this.open = options.open !== false
+        const startFolded = options.open === undefined
+        // Deliberately folded, so there is no room question to answer yet; the first
+        // expand latches `userChose` and takes over from here anyway.
+        this.autoCollapse = !startFolded && (options.collapsed === undefined || options.collapsed === 'auto')
+        this.collapsed = startFolded || options.collapsed === true
     }
 
     /* ---------- lifecycle ---------- */
@@ -166,6 +174,20 @@ export class Table extends UIComponent {
 
     protected onAfterMount() {
         const graph = this.uiManager.graph
+
+        // The dock's own shortcut, alongside Shift+J/K/N. It lives here rather than on a
+        // header pill: collapsed, the dock already shows a chevron, so a second control
+        // in the top bar was pointing at something that was pointing at itself.
+        // One meaning: show the table's content, or fold it away again.
+        this.track(this.uiManager.keyManager.register({
+            key: 'Shift+T',
+            callback: () => {
+                this.userChose = true
+                const wasShowingContent = this.open && !this.collapsed
+                if (!this.open) this.setOpen(true)
+                this.setCollapsed(wasShowingContent)
+            },
+        }))
 
         // One rebuild per frame, whatever arrives. A single user action fires several of
         // these — a filter apply emits both `filterChange` and the visibility changes it

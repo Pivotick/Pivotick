@@ -1,4 +1,4 @@
-import { dataTable, funnel, magnifyingGlass, redo, stickyNote, undo } from '../../icons'
+import { funnel, magnifyingGlass, redo, stickyNote, undo } from '../../icons'
 import type { UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
 // import { SearchBox } from './SearchBox'
@@ -16,8 +16,6 @@ export class Mainheader extends UIComponent {
     public searchBoxButton?: HTMLDivElement
     public filterButton?: HTMLDivElement
     public noteButton?: HTMLDivElement
-    /** Toggles the data dock. Only built when there is a dock to toggle (`full` mode). */
-    public tableButton?: HTMLDivElement
     public undoButton?: HTMLButtonElement
     public redoButton?: HTMLButtonElement
     public filteringSlidepanel?: SlidePanel
@@ -74,20 +72,10 @@ export class Mainheader extends UIComponent {
         this.noteButton = templateNoteSidebar.content.firstElementChild as HTMLDivElement
         this.mainheader.appendChild(this.noteButton)
 
-        /** Table dock — a persistent data surface, like the three above it. */
-        if (this.uiManager.table) {
-            const templateTable = document.createElement('template')
-            templateTable.innerHTML = `
-  <div id="pvt-table-button" class="pvt-action-button" role="button" tabindex="0" aria-label="Show the data table">
-    <div class="action-container">
-        <span class="icon-container">${dataTable}</span>
-        <span class="action-text">Table</span>
-        ${createShortcutBadge('Shift+T').outerHTML}
-    </div>
-  </div>`
-            this.tableButton = templateTable.content.firstElementChild as HTMLDivElement
-            this.mainheader.appendChild(this.tableButton)
-        }
+        // No Table pill. The three above all *open something over the canvas*; the dock is
+        // a split region that, collapsed, already shows its own chevron — so the pill was a
+        // second control for something already pointing at itself, and the worse-placed of
+        // the two. `Shift+T` lives on the dock itself now.
 
         /** Undo/Redo */
         const templateRight = document.createElement('template')
@@ -122,15 +110,6 @@ export class Mainheader extends UIComponent {
         this.track(this.uiManager.keyManager.register({ key: 'Shift+J', callback: () => this.searchBoxButton?.click() }))
         this.track(this.uiManager.keyManager.register({ key: 'Shift+K', callback: () => this.filterButton?.click() }))
         this.track(this.uiManager.keyManager.register({ key: 'Shift+N', callback: () => this.noteButton?.click() }))
-        if (this.tableButton) {
-            this.track(this.uiManager.keyManager.register({ key: 'Shift+T', callback: () => this.tableButton?.click() }))
-            this.listen(this.tableButton, 'click', () => {
-                const table = this.uiManager.table
-                if (!table) return
-                table.toggleOpen()
-                this.tableButton?.classList.toggle('active', table.isOpen())
-            })
-        }
 
         const graphFilter = new GraphFilter(this.uiManager)
         this.filteringSlidepanel = this.uiManager.createSlidepanel({
@@ -164,7 +143,7 @@ export class Mainheader extends UIComponent {
         }
 
         // These action pills are role="button" divs — activate them on Enter/Space.
-        for (const btn of [searchBoxButton, filterButton, noteButton, this.tableButton]) {
+        for (const btn of [searchBoxButton, filterButton, noteButton]) {
             if (!btn) continue
             this.listen(btn, 'keydown', (e) => {
                 const ev = e as KeyboardEvent
