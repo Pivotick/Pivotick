@@ -83,9 +83,10 @@ All nine held. The two that earned their keep most:
 
 ## Follow-ups (2026-08-20/21, same branch)
 
-The two items §5.6 and §3.2 left open, both done, plus a dead column found while
-answering a question about clusters. `tsc`, `eslint` and `npm run build` clean;
-**398 visual tests green**, 10 of them new, each checked against a reverted fix.
+The two items §5.6 and §3.2 left open, both done, plus a dead column and a dead toolbar
+pill found while answering questions about clusters and about where the toggle belongs.
+`tsc`, `eslint`, `npm run build` and `vitepress build docs` clean; **401 visual tests
+green**, 13 of them new, each checked against a reverted fix.
 
 ### The hidden-node count was over-reporting (§3.2)
 
@@ -167,6 +168,34 @@ rather than a patch is the set of questions above it: a `nested` visibility stat
 selecting a child expands its cluster, whether `Degree` reads the subgraph, whether export
 and the summary count include them, and what a row filter does to a parent/child pair.
 **Ruled a separate PRD, 2026-08-21.**
+
+### The header pill is gone; the bar is the control
+
+The dock's toggle was a fourth Mainheader pill (D-I). Removed: the other three all open
+something *over* the canvas, while the dock is a split region that, collapsed, already
+shows its own chevron — so the pill was a second control for something already pointing at
+itself, and the worse-placed of the two. `Shift+T` moved onto the dock.
+
+The pill only existed because the dock defaulted to **closed**, leaving nothing on screen
+to point at it. So `open` became three-state — unset (present, folded to its bar), `true`
+(expanded), `false` (absent, the zero-footprint opt-out). That also dissolved the
+`UI_ELEMENTS` ordering constraint this PRD had to record.
+
+Two things broke, both in the bottom-left corner, both because the sidebar **spans the
+dock's grid row**:
+
+- Its collapse toggle hangs off its own bottom-right corner, which is now the dock's
+  chevron. They overlapped and the chevron ate the toggle's clicks — a click *timeout* in
+  `legend.spec`, which is an obscure signal for a layout collision, so `table-dock` now
+  asserts the non-overlap directly. Fixed by measuring the toggle from above the dock.
+- The **legend now collides with the mode rail** on a short viewport (1024×620: legend top
+  412px, rail bottom 440px; without the dock it cleared by ~6px). **Still open** — see
+  [`bottom-dock.md`](bottom-dock.md) §9.
+
+Also fixed while here: on the **dark** theme the sidebar and the dock resolve to the *same*
+fill (`--pvt-ui-bg` and `--pvt-chrome-bg` are both `--pvt-bg-color-6`), and the sidebar's
+only right-edge separator is a black box-shadow — invisible on dark, so the two surfaces
+merged. The dock draws its own `border-left` now, as it already drew its top.
 
 ### Notes for the next person
 

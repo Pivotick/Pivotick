@@ -134,12 +134,19 @@ are additive; `table: false` removes the table tab, and a dock with no tabs does
 
 ## 9. Risks
 
-- **The canvas gets permanently shorter.** Once the dock defaults to its collapsed bar
-  (shipped ahead of this PRD, 2026-08-21) the bottom-left chrome and the left rail converge
-  sooner. `table-mode`'s outcome already records that the legend concedes the rail on a
-  short viewport, and the gallery card docks its legend `top-left` for that reason.
-  **Re-check the legend and minimap `collapsed: 'auto'` thresholds against the shorter
-  default**, rather than assuming the 34px is free.
+- **The canvas gets permanently shorter**, and this already bit twice when the collapsed
+  bar became the default (shipped ahead of this PRD, 2026-08-21):
+  - The **sidebar's collapse toggle** hangs off its own bottom-right corner, and the
+    sidebar spans the dock's row — so the toggle landed on the dock's chevron and the
+    chevron swallowed its clicks. Fixed by measuring it from above the dock
+    (`bottom: calc(var(--pvt-table-height, 0px) + 7px)`).
+  - The **legend collides with the mode rail** on a short viewport: at 1024×620 the legend
+    sits at 412px and the rail reaches 440px, where without the dock it cleared by ~6px.
+    Still open — `table-mode`'s outcome already records that the legend concedes the rail
+    on a short viewport, and the gallery card docks its legend `top-left` for that reason.
+
+  The lesson for this PRD: **nothing in the bottom-left corner is safe to leave measured
+  from the layout's bottom.** Anything docked there has to measure from the dock.
 - **`Table.ts` is the dock.** This is a move, not an addition, so it touches everything the
   `table-*` specs assert. Expect the header-row assertions to churn; the grid ones should
   not move at all, and it is a bad sign if they do.
