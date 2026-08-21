@@ -719,7 +719,10 @@ export interface TableColumn<T extends Node | Edge = Node> extends Pick<FilterFa
      *
      * It narrows the **rows**; the canvas is left alone — changing what the graph
      * displays stays with the filter panel, so the two can never disagree.
-     * @default false
+     *
+     * @default false for a column you declare — but `true` throughout the **derived**
+     * column set, which infers its filters off the types it already inferred. Declare
+     * `columns` and you get exactly what you asked for.
      */
     filterable?: boolean,
     /** Start hidden (still listed in the column picker). @default false */

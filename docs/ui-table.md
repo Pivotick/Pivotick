@@ -64,8 +64,10 @@ are inside it; that column appears in the derived set whenever the graph has clu
 
 ## Sorting and narrowing {#sorting}
 
-Click any column heading to sort; click again to reverse. Give a column
-`filterable: true` and its header grows a control that **narrows the rows**.
+Click any column heading to sort; click again to reverse. Filterable columns grow a
+control in the header that **narrows the rows** — every column in the
+[derived set](#columns) has one, and a column you declare yourself gets one by asking for
+`filterable: true`.
 
 Which control you get follows the column's `type`, so you can ask a column what it is
 actually able to answer:
@@ -125,7 +127,12 @@ open tells you nothing while every row still reads `visible`.
 
 Everything is shown by default, and the grid scrolls sideways rather than dropping
 anything. On property-heavy nodes use the **Columns** picker to switch off what you don't
-need.
+need — which also takes its filter control off the header with it.
+
+**Derived columns come filterable.** Their labels, types and alignment are all inferred
+already, and the [row filter](#sorting) is inferred off that same type — so a table you
+never configured is one you can still narrow. Declared columns are the opposite: you get
+exactly the set you wrote, `filterable: false` unless you say otherwise.
 
 ### The built-in columns {#built-ins}
 

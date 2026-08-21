@@ -135,6 +135,35 @@ Still open, and deliberately: a dark-themed dock pops a **light** native option 
 because nothing in `_theme.scss` sets `color-scheme`. Not new — `FormFactory.buildSelect`
 has the same gap in the filter panel — so it wants fixing at the theme, not here.
 
+### Derived columns come filterable (2026-08-21)
+
+Shipping `filterable: false` for everything meant the feature could only be seen by
+hand-declaring `columns` — `src/main.ts` declares no `UI.table` at all, so the demo showed
+a grid with no controls on it, and so does anyone's first look at the dock. But **the
+derived set already infers everything a control needs**: `dataColumns` types each scanned
+key through `inferAttributeType`, and the graph-aware columns carry theirs (`Visibility` is
+a `select`, `Degree` and `Children` are `numberRange`). Only the flag was missing.
+
+So `resolveColumns` marks the **derived** tiers filterable and leaves the declared tier
+literal — one `.map` on the way out, over copies, so the exported `tableColumns` constants
+a consumer may also be declaring are never mutated. The split is the honest one: a derived
+column's label, type and alignment are all guesses we make, and the control is one more
+guess off the same type; a `columns` array someone wrote out is a statement, and gets
+exactly what it asks for.
+
+That distinction is load-bearing rather than tidy — the `data-table` gallery card
+deliberately gives 3 of its 6 declared columns a filter to show that the control follows
+the `type`, and a blanket default would have flattened the point it is making.
+
+On `main.ts` this comes out as nine columns, each with the right widget (Visibility and
+Gender dropdowns, Degree and Children bounds, Label / Icon / Nested1 text), for one extra
+26px row in the sticky header. Two known-harmless edges, both pre-existing: a categorical
+column whose rows hold **one** distinct value still draws a dropdown that cannot narrow
+anything (suppressing it would make the control flicker in and out as data changes, and
+`Visibility` gains its second value at exactly the moment you want the dropdown), and a
+column of long strings — the demo's `icon` holds 500-char SVG — gets a substring box that
+is legal but pointless.
+
 ### `Children` replaces a column that could never render
 
 Asked why the dock lists hidden nodes but not nested ones, the answer held — but the code

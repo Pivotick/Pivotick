@@ -46,6 +46,15 @@ const columnCells = async (page: Page, heading: string) => {
 const summary = (page: Page) =>
     page.locator('.pvt-table-summary').evaluate((el) => (el.textContent ?? '').trim())
 
+/** One column's filter control, by its key and the role it plays (`text`/`value`/`min`/`max`). */
+const filterIn = (page: Page, column: string, role: string) =>
+    page.locator(`.pvt-table-th[data-column="${column}"] .pvt-table-filter[data-role="${role}"]`)
+
+/** Column headings that carry a filter control of any kind. */
+const filterableHeadings = (page: Page) =>
+    page.locator('.pvt-table-th:has(.pvt-table-filter) .pvt-table-th-label').evaluateAll((cells) =>
+        cells.map((cell) => (cell.textContent ?? '').trim()))
+
 const visibleNodeCount = (page: Page) =>
     page.evaluate(() => (window.__pivotick as any).graph.getMutableVisibleNodes().length)
 
@@ -182,6 +191,49 @@ test.describe('table grid', () => {
         expect(descending).toEqual([...ascending].reverse())
     })
 
+    // A table nobody configured is the one most likely to need narrowing before it can be
+    // read, and its types are already inferred — so the derived set infers the controls
+    // too. Asserted by narrowing for real, not by counting boxes.
+    test('every derived column comes with a working filter', async ({ page }) => {
+        await openDock(page)
+
+        // Every one of them, including the graph-aware columns at the left edge.
+        expect(await filterableHeadings(page)).toEqual(await headings(page))
+
+        // `Degree` was derived as a numberRange, so its control is a pair of bounds —
+        // which is the thing a substring box cannot express: only `a` and `c` have 3
+        // edges, but "contains 3" would match nothing at all.
+        await filterIn(page, 'pvt:degree', 'min').fill('3')
+        expect((await rowIds(page)).sort()).toEqual(['a', 'c'])
+        expect(await summary(page)).toBe('2 of 6 nodes')
+
+        // And `Visibility` came out a select, which is the control only the derived set
+        // offers: nothing else in the UI lists just what a filter took away.
+        await expect(filterIn(page, 'pvt:visibility', 'value')).toHaveCount(1)
+    })
+
+    // The other half of the rule: a column set written out by hand is a statement, so it
+    // gets the filters it asked for and no others.
+    test('a declared column set gets no filter it did not ask for', async ({ page }) => {
+        await loadFixture(page, 'basic', {
+            UI: {
+                mode: 'full',
+                sidebar: { collapsed: false },
+                table: {
+                    open: true,
+                    columns: [
+                        { key: 'label', label: 'Label', type: 'text' },
+                        { key: 'pvt:visibility', label: 'Visibility', type: 'select', filterable: true },
+                    ],
+                },
+            },
+        })
+        await page.locator('.pvt-table-row').first().waitFor()
+
+        expect(await headings(page)).toEqual(['Label', 'Visibility'])
+        expect(await filterableHeadings(page)).toEqual(['Visibility'])
+    })
+
     // The load-bearing separation: narrowing rows is reading, not filtering the graph.
     test('a column filter narrows the rows and leaves the canvas alone', async ({ page }) => {
         await loadFixture(page, 'basic', {
@@ -245,9 +297,6 @@ test.describe('table grid', () => {
             },
         },
     }
-
-    const filterIn = (page: Page, column: string, role: string) =>
-        page.locator(`.pvt-table-th[data-column="${column}"] .pvt-table-filter[data-role="${role}"]`)
 
     // A range is the thing a text box cannot express: `ports` holds 4.5 / 24.5 / 48.5,
     // and "contains 4" matches all three of them.

@@ -170,7 +170,15 @@ export function resolveColumns(uiManager: UIManager, tab: TableTab): TableColumn
         leading.push(tableColumns.children as TableColumn<Node | Edge>)
     }
 
+    // Derived columns filter themselves. Everything about them is already inferred — the
+    // label, the type, the alignment — and the control is inferred off that same type, so
+    // this is one more guess of a piece with the rest. It is also the table nobody
+    // configured, which is the one most likely to need narrowing before it can be read.
+    // Declared columns keep the literal `filterable: false`: a column set someone wrote
+    // out by hand is a statement, not a guess. Copies, so the shared `tableColumns`
+    // constants a consumer may also be declaring are never touched.
     return bindReservedAccessors([...leading, ...dataColumns(uiManager, tab)], uiManager)
+        .map((column) => ({ ...column, filterable: true }))
 }
 
 /**
