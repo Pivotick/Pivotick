@@ -117,10 +117,13 @@ With no `columns` declared, the dock works it out for you, in three tiers:
 3. **Scanned** — otherwise the data is read, ordered by **coverage** so the
    well-populated keys come first and the sparse tail sits at the far right.
 
-Either way the graph-aware columns lead. For nodes that is **`Visibility`, `Degree`, then
-`Label`**: the first two are narrow, scannable facts you read straight down a column, so
-they sit at the left edge as a status gutter rather than being pushed right by a wide name.
-Edges read as a sentence instead — `Source` / `Label` / `Target`.
+Either way the graph-aware columns wrap the data. For nodes, **`Visibility`** and
+**`Label`** lead — a status gutter and the name, the two things you scan down to find a
+row — and the counts close it: **`Degree`**, plus **`Children`** on a graph that has
+clusters. The counts sit at the end because they are the graph's arithmetic rather than
+the element's own data, and they are narrow, fixed-width columns so a couple of digits
+never take the share of the row a name needs. Edges read as a sentence instead —
+`Source` / `Label` / `Target`.
 
 The default sort is the `Label` column, not the leading one: sorting by `Visibility` on
 open tells you nothing while every row still reads `visible`.

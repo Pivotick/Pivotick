@@ -77,6 +77,30 @@ test.describe('table selection', () => {
         expect(await selectedIds(page)).toEqual([ids[1], ids[2], ids[3]].sort())
     })
 
+    // Shift-click is the browser's "extend the text selection to here" too, and it used
+    // to drag a blue smear across every row the range covered. Plain clicks still put a
+    // caret in the cell, so the values stay selectable.
+    test('taking a range does not smear a text selection across the rows', async ({ page }) => {
+        const selectedText = () => page.evaluate(() => (window.getSelection()?.toString() ?? '').trim())
+
+        await row(page, 'a').click()
+        await row(page, 'e').click({ modifiers: ['Shift'] })
+
+        expect((await selectedIds(page)).length).toBeGreaterThan(1)
+        expect(await selectedText()).toBe('')
+
+        // Still ordinary text: dragging across a cell picks the value up, which is the
+        // gesture that survives here — double-click is spoken for, as "take me there".
+        const cell = row(page, 'a').locator('.pvt-table-td').nth(1)
+        const box = (await cell.boundingBox())!
+        await page.mouse.move(box.x + 4, box.y + box.height / 2)
+        await page.mouse.down()
+        await page.mouse.move(box.x + box.width - 6, box.y + box.height / 2, { steps: 8 })
+        await page.mouse.up()
+
+        expect(await selectedText()).not.toBe('')
+    })
+
     test('Select all takes every row currently listed', async ({ page }) => {
         await page.locator('.pvt-table-selectall').click()
 

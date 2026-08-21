@@ -430,6 +430,15 @@ export class TableGrid {
      * the whole point.
      */
     private wireRow(element: HTMLElement, row: Row): void {
+        // Shift-click is a range gesture here, but it is also the browser's own "extend
+        // the text selection to here" — which drags a blue smear across every row the
+        // range covers. Cancelled at mousedown, where that selection is actually made.
+        // Only when Shift is held: a plain click still puts a caret in the cell, so the
+        // values stay selectable text, which is half of what a table is for.
+        element.addEventListener('mousedown', (event) => {
+            if (event.shiftKey) event.preventDefault()
+        })
+
         element.addEventListener('click', (event) => {
             const index = this.visible.findIndex((candidate) => candidate.id === row.id)
 

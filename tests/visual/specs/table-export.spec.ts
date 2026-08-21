@@ -36,10 +36,11 @@ test.describe('table export', () => {
         const csv = await exportText(page, 'CSV')
 
         const lines = csv.split('\r\n')
-        expect(lines[0]).toBe('Visibility,Degree,Label')
+        // Written in display order, counts last — see the derived column set.
+        expect(lines[0]).toBe('Visibility,Label,Degree')
         // Six nodes plus the header.
         expect(lines).toHaveLength(7)
-        expect(csv).toContain('visible,2,HUB')
+        expect(csv).toContain('visible,HUB,2')
     })
 
     test('JSON is one object per row, keyed by column label', async ({ page }) => {
@@ -47,7 +48,7 @@ test.describe('table export', () => {
         const parsed = JSON.parse(await exportText(page, 'JSON'))
 
         expect(parsed).toHaveLength(6)
-        expect(Object.keys(parsed[0])).toEqual(['Visibility', 'Degree', 'Label'])
+        expect(Object.keys(parsed[0])).toEqual(['Visibility', 'Label', 'Degree'])
         expect(parsed.find((row: Record<string, unknown>) => row.Label === 'HUB')).toMatchObject({
             Degree: 2, Visibility: 'visible',
         })

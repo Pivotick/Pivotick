@@ -70,14 +70,38 @@ test.describe('table grid', () => {
         await gotoHarness(page)
     })
 
-    test('leads with the graph-aware columns, then the data', async ({ page }) => {
+    test('opens with the status gutter and the name, and closes with the counts', async ({ page }) => {
         await openDock(page)
 
         const columns = await headings(page)
-        // Visibility and Degree lead as a status gutter; the name follows.
-        expect(columns.slice(0, 3)).toEqual(['Visibility', 'Degree', 'Label'])
+        // What you scan down to find a row leads; the data follows.
+        expect(columns.slice(0, 2)).toEqual(['Visibility', 'Label'])
+        // The counts are the graph's arithmetic, not the element's data, so they close
+        // the row rather than pushing the data right. (`basic` has no clusters, so
+        // `Children` isn't among them — see the cluster tests.)
+        expect(columns.at(-1)).toBe('Degree')
         // `label` is the built-in Label column's source, so it is not repeated.
         expect(columns.filter((name) => name === 'Label')).toHaveLength(1)
+    })
+
+    // A column of single digits used to take the same `minmax(120px, 1fr)` share as the
+    // name beside it, and its Min/Max pair stretched to fill that.
+    test('a count column is narrow, and its bounds fit inside it', async ({ page }) => {
+        await openDock(page)
+
+        const cell = (key: string) => page.locator(`.pvt-table-th[data-column="${key}"]`)
+        const width = (key: string) => cell(key).evaluate((el) => el.getBoundingClientRect().width)
+
+        expect(await width('pvt:degree')).toBeLessThan(await width('pvt:label'))
+
+        // And the controls stay inside the column they were compacted into: the library
+        // sets no global `box-sizing`, so a `width: 100%` input overflows without one.
+        const overflows = await cell('pvt:degree').evaluate((th) => {
+            const bounds = th.getBoundingClientRect()
+            return [...th.querySelectorAll('.pvt-table-filter')]
+                .some((input) => input.getBoundingClientRect().right > bounds.right + 0.5)
+        })
+        expect(overflows).toBe(false)
     })
 
     test('lists every node, with a count', async ({ page }) => {
@@ -431,9 +455,9 @@ test.describe('table grid', () => {
         await page.locator('.pvt-table-row').first().waitFor()
 
         const columns = await headings(page)
-        // `mispLike` has a cluster, so Children joins the graph-aware leaders — the facets
-        // still supply every *data* column, which is what this is about.
-        expect(columns).toEqual(['Visibility', 'Degree', 'Label', 'Children', 'Category', 'To IDs'])
+        // `mispLike` has a cluster, so Children joins Degree in the trailing counts — the
+        // facets still supply every *data* column, which is what this is about.
+        expect(columns).toEqual(['Visibility', 'Label', 'Category', 'To IDs', 'Degree', 'Children'])
     })
 
     test('a new node appears without reopening the dock', async ({ page }) => {

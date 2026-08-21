@@ -164,6 +164,41 @@ anything (suppressing it would make the control flicker in and out as data chang
 column of long strings — the demo's `icon` holds 500-char SVG — gets a substring box that
 is legal but pointless.
 
+### The counts are a narrow tail now (2026-08-21)
+
+Seen with filters on, `Degree` and `Children` were as wide as the name column and their
+Min/Max pairs stretched to match. The cause is `gridTemplate()`: a column with no `width`
+takes `minmax(120px, 1fr)` — a floor *and* an equal share of the leftover room — so a
+column of single digits was sized like a column of names. They carry
+`width: COUNT_COLUMN_WIDTH` (96px) now, as `visibility` already did, and so do
+`degreeIn` / `degreeOut`, which are the same kind of column.
+
+Measuring that surfaced a real bug underneath: **the filter controls overflowed their
+cells by 12px**. `.pvt-table-filter` is `width: 100%` with padding and a border, and the
+library sets no global `box-sizing` — so every control leaned on the next column, and in a
+96px count column the `Max` box was clipped outright. `box-sizing: border-box` on the
+control. The regression test asserts the inputs' right edge stays inside the cell's, since
+this is exactly the kind of thing that looks approximately fine.
+
+**Order changed with it (reverses part of §5.2):** for nodes the derived set is now
+`Visibility · Label · …data… · Degree · Children`. The original rationale put the counts at
+the left edge as a status gutter; in practice two narrow number columns wedged between the
+name and the data pushed the data right for no reading benefit. The counts are the graph's
+arithmetic rather than the element's data, they are both right-aligned, and as a
+fixed-width pair they make a natural tail. `Visibility` keeps the gutter on its own. Edges
+are untouched — `Source · Label · Target` still reads as a sentence.
+
+### Shift-click no longer smears a text selection
+
+Shift-click is the dock's range gesture and *also* the browser's "extend the text selection
+to here", so taking a range dragged a blue smear across every row it covered. Cancelled at
+`mousedown`, and only when Shift is held, so a plain drag across a cell still picks the
+value up — a table you cannot copy out of is half a table.
+
+Worth knowing: **double-clicking a word selects nothing**, and did not before this either.
+`dblclick` on a row is the "take me there" gesture (select and centre the canvas), and the
+re-render clears the word the browser had just picked. Drag is the copy gesture here.
+
 ### `Children` replaces a column that could never render
 
 Asked why the dock lists hidden nodes but not nested ones, the answer held — but the code

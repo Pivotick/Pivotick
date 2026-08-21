@@ -225,6 +225,10 @@
 .pvt-table-filter {
     width: 100%;
     min-width: 0;
+    // The library sets no global `box-sizing`, so `width: 100%` plus the padding and the
+    // border below made every control 12px wider than the cell holding it — it leaned on
+    // the next column, and on a narrow count column it was clipped outright.
+    box-sizing: border-box;
     padding: 2px 5px;
     border: 1px solid var(--pvt-chrome-border);
     border-radius: 3px;

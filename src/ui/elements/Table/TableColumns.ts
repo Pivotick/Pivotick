@@ -39,6 +39,14 @@ export const LABEL_COLUMN_KEY = RESERVED.label
 const CLAIMED_DATA_KEYS = new Set(['label'])
 
 /**
+ * A count is two or three digits wide, but a column with no `width` takes
+ * `minmax(120px, 1fr)` — a floor *and* an equal share of the leftover room — so `Degree`
+ * came out as wide as the name beside it, and its Min/Max pair stretched to match. Fixed
+ * and narrow instead: wide enough for the heading and the two bounds, and no wider.
+ */
+const COUNT_COLUMN_WIDTH = 96
+
+/**
  * The library's graph-aware columns — the ones no generic grid could compute, because
  * they are about an element's place in the graph rather than its data.
  *
@@ -62,11 +70,11 @@ export const tableColumns = {
     /** The element's display name, as the rest of the UI resolves it. */
     label: { key: RESERVED.label, label: 'Label', type: 'text', sortable: true } as TableColumn,
     /** Total edges touching the node. */
-    degree: { key: RESERVED.degree, label: 'Degree', type: 'numberRange', align: 'right', accessor: (node: Node) => node.degree() } as TableColumn,
+    degree: { key: RESERVED.degree, label: 'Degree', type: 'numberRange', align: 'right', accessor: (node: Node) => node.degree(), width: COUNT_COLUMN_WIDTH } as TableColumn,
     /** Edges pointing at the node. */
-    degreeIn: { key: RESERVED.degreeIn, label: 'In', type: 'numberRange', align: 'right', accessor: (node: Node) => node.getEdgesIn().length } as TableColumn,
+    degreeIn: { key: RESERVED.degreeIn, label: 'In', type: 'numberRange', align: 'right', accessor: (node: Node) => node.getEdgesIn().length, width: COUNT_COLUMN_WIDTH } as TableColumn,
     /** Edges leaving the node. */
-    degreeOut: { key: RESERVED.degreeOut, label: 'Out', type: 'numberRange', align: 'right', accessor: (node: Node) => node.getEdgesOut().length } as TableColumn,
+    degreeOut: { key: RESERVED.degreeOut, label: 'Out', type: 'numberRange', align: 'right', accessor: (node: Node) => node.getEdgesOut().length, width: COUNT_COLUMN_WIDTH } as TableColumn,
     /**
      * Whether the node is on the canvas, and if not, why — `filtered` by the filter panel,
      * or `excluded` by hand. The dock lists hidden nodes rather than hiding them, so this
@@ -88,7 +96,7 @@ export const tableColumns = {
      * Direct children, not the whole subtree, so it matches the structure a nested
      * cluster's own row then reports one level down.
      */
-    children: { key: RESERVED.children, label: 'Children', type: 'numberRange', align: 'right', accessor: (node: Node) => node.children.length } as TableColumn,
+    children: { key: RESERVED.children, label: 'Children', type: 'numberRange', align: 'right', accessor: (node: Node) => node.children.length, width: COUNT_COLUMN_WIDTH } as TableColumn,
     /** An edge's origin, by display name. */
     source: { key: RESERVED.source, label: 'Source', type: 'text' } as TableColumn<Edge>,
     /** An edge's destination, by display name. */
@@ -140,14 +148,16 @@ function isEdge(element: Node | Edge): element is Edge {
  * 3. **Scanned** — otherwise read the data, sharing `collectDataAttributes` with the
  *    filter panel's zero-config path so the inferred types match.
  *
- * Tiers 2 and 3 are prefixed with the graph-aware columns, because a table that opens
+ * Tiers 2 and 3 are wrapped in the graph-aware columns, because a table that opens
  * without them can't answer "which are the hubs" — the question people actually arrive
  * with.
  *
- * For nodes those lead **visibility, degree, label**: the first two are the narrow,
- * scannable facts you read down a column, so they sit at the left edge as a status gutter
- * rather than being pushed off to the right by a wide name. **Children** joins them on a
- * graph that actually has clusters.
+ * For nodes, **visibility** and **label** lead: a status gutter and the name, the two
+ * things you scan down to find a row. The counts — **degree**, and **children** on a
+ * graph that has clusters — close the row instead, as a fixed-width numeric tail. They
+ * belong together (both are counts, both read right-aligned) and they are the graph's
+ * arithmetic rather than the element's own data, so they sit past it rather than pushing
+ * it right. Edges read as a sentence and keep their own order: source, label, target.
  */
 export function resolveColumns(uiManager: UIManager, tab: TableTab): TableColumn<Node | Edge>[] {
     const options = uiManager.getOptions()
@@ -160,14 +170,18 @@ export function resolveColumns(uiManager: UIManager, tab: TableTab): TableColumn
     }
 
     const leading: TableColumn<Node | Edge>[] = tab === 'nodes'
-        ? [tableColumns.visibility, tableColumns.degree, tableColumns.label] as TableColumn<Node | Edge>[]
+        ? [tableColumns.visibility, tableColumns.label] as TableColumn<Node | Edge>[]
         // Edges read as a sentence — source, relation, target — so they keep that order.
         : [tableColumns.source, tableColumns.label, tableColumns.target] as unknown as TableColumn<Node | Edge>[]
+
+    const trailing: TableColumn<Node | Edge>[] = tab === 'nodes'
+        ? [tableColumns.degree] as TableColumn<Node | Edge>[]
+        : []
 
     // Children only earns a column on a graph that has clusters — everywhere else it is a
     // column of zeros, and the derived set is meant to be what this graph can answer.
     if (tab === 'nodes' && uiManager.graph.getMutableNodes().some((node) => node.isParent)) {
-        leading.push(tableColumns.children as TableColumn<Node | Edge>)
+        trailing.push(tableColumns.children as TableColumn<Node | Edge>)
     }
 
     // Derived columns filter themselves. Everything about them is already inferred — the
@@ -177,7 +191,7 @@ export function resolveColumns(uiManager: UIManager, tab: TableTab): TableColumn
     // Declared columns keep the literal `filterable: false`: a column set someone wrote
     // out by hand is a statement, not a guess. Copies, so the shared `tableColumns`
     // constants a consumer may also be declaring are never touched.
-    return bindReservedAccessors([...leading, ...dataColumns(uiManager, tab)], uiManager)
+    return bindReservedAccessors([...leading, ...dataColumns(uiManager, tab), ...trailing], uiManager)
         .map((column) => ({ ...column, filterable: true }))
 }
 
