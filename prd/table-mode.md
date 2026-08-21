@@ -30,6 +30,8 @@ All nine held. The two that earned their keep most:
 - **The dock's toggle is the header pill only** (D-I), and `Shift+T` joins Shift+J/K/N.
   The `table` entry has to sit **before** `mainHeader` in `UI_ELEMENTS`, because the
   header only grows its pill when there is already a dock to toggle.
+  ⚠️ **Both halves of this were undone on 2026-08-21** — the pill is gone and the ordering
+  constraint with it. See "The header pill is gone" in the follow-ups.
 - **`onGraphReady`, not `onAfterMount`, for the interaction subscription.** `Graph`
   constructs the `UIManager` (`:92`) *before* the renderer (`:116`), so `graph.renderer`
   is undefined during `afterMount` — there is no interaction layer to subscribe to yet.
