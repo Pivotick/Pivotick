@@ -21,7 +21,7 @@ const RESERVED = {
     degreeOut: 'pvt:degreeOut',
     visibility: 'pvt:visibility',
     pinned: 'pvt:pinned',
-    cluster: 'pvt:cluster',
+    children: 'pvt:children',
     source: 'pvt:source',
     target: 'pvt:target',
 } as const
@@ -78,8 +78,17 @@ export const tableColumns = {
     visibility: { key: RESERVED.visibility, label: 'Visibility', type: 'select', sortable: true, width: 104 } as TableColumn,
     /** Whether the node is pinned in place. */
     pinned: { key: RESERVED.pinned, label: 'Pinned', type: 'boolean', accessor: (node: Node) => typeof node.fx === 'number' && typeof node.fy === 'number' } as TableColumn,
-    /** The cluster the node belongs to, if any. */
-    cluster: { key: RESERVED.cluster, label: 'Cluster', type: 'text', accessor: (node: Node) => node.parentNode?.id ?? '' } as TableColumn,
+    /**
+     * How many nodes a cluster holds directly — `0` for a leaf.
+     *
+     * Nothing else in the UI says how big a cluster is: not the label, not the tooltip,
+     * not the sidebar. Without this the only way to find out is to expand it, which is
+     * the exact "read the value instead of hunting for it" the dock exists for.
+     *
+     * Direct children, not the whole subtree, so it matches the structure a nested
+     * cluster's own row then reports one level down.
+     */
+    children: { key: RESERVED.children, label: 'Children', type: 'numberRange', align: 'right', accessor: (node: Node) => node.children.length } as TableColumn,
     /** An edge's origin, by display name. */
     source: { key: RESERVED.source, label: 'Source', type: 'text' } as TableColumn<Edge>,
     /** An edge's destination, by display name. */
@@ -137,7 +146,8 @@ function isEdge(element: Node | Edge): element is Edge {
  *
  * For nodes those lead **visibility, degree, label**: the first two are the narrow,
  * scannable facts you read down a column, so they sit at the left edge as a status gutter
- * rather than being pushed off to the right by a wide name.
+ * rather than being pushed off to the right by a wide name. **Children** joins them on a
+ * graph that actually has clusters.
  */
 export function resolveColumns(uiManager: UIManager, tab: TableTab): TableColumn<Node | Edge>[] {
     const options = uiManager.getOptions()
@@ -153,6 +163,12 @@ export function resolveColumns(uiManager: UIManager, tab: TableTab): TableColumn
         ? [tableColumns.visibility, tableColumns.degree, tableColumns.label] as TableColumn<Node | Edge>[]
         // Edges read as a sentence — source, relation, target — so they keep that order.
         : [tableColumns.source, tableColumns.label, tableColumns.target] as unknown as TableColumn<Node | Edge>[]
+
+    // Children only earns a column on a graph that has clusters — everywhere else it is a
+    // column of zeros, and the derived set is meant to be what this graph can answer.
+    if (tab === 'nodes' && uiManager.graph.getMutableNodes().some((node) => node.isParent)) {
+        leading.push(tableColumns.children as TableColumn<Node | Edge>)
+    }
 
     return bindReservedAccessors([...leading, ...dataColumns(uiManager, tab)], uiManager)
 }

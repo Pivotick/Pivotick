@@ -3,6 +3,8 @@ import type { Node } from '../../../Node'
 import type { TableColumn, TableSortDirection, TableTab } from '../../../interfaces/GraphUI'
 import type { UIManager } from '../../UIManager'
 import { LABEL_COLUMN_KEY, VISIBILITY_COLUMN_KEY, readCell, resolveColumns } from './TableColumns'
+import { buildRowFilterControl, columnChoices, isRowFilterActive, rowFilterMatches } from './TableRowFilters'
+import type { RowFilter } from './TableRowFilters'
 import { arrowDown, arrowUp, dataTable } from '../../icons'
 
 type Element = Node | Edge
@@ -51,8 +53,8 @@ export class TableGrid {
     private columns: TableColumn<Element>[] = []
     /** Column keys the picker has switched off. */
     private readonly hiddenColumns = new Set<string>()
-    /** Per-column row filters, by column key. Empty string / unset means "no filter". */
-    private readonly rowFilters = new Map<string, string>()
+    /** Per-column row filters, by column key. Unset means "no filter". */
+    private readonly rowFilters = new Map<string, RowFilter>()
     private sort: SortState | null = null
 
     private rows: Row[] = []
@@ -156,15 +158,11 @@ export class TableGrid {
     /* ---------- narrowing and ordering ---------- */
 
     private applyRowFilters(): Row[] {
-        const active = [...this.rowFilters].filter(([, needle]) => needle.trim() !== '')
+        const active = [...this.rowFilters].filter(([, filter]) => isRowFilterActive(filter))
         if (active.length === 0) return [...this.rows]
 
         return this.rows.filter((row) =>
-            active.every(([key, needle]) => {
-                const value = row.values.get(key)
-                if (value === null || value === undefined) return false
-                return String(value).toLowerCase().includes(needle.trim().toLowerCase())
-            })
+            active.every(([key, filter]) => rowFilterMatches(filter, row.values.get(key)))
         )
     }
 
@@ -196,6 +194,26 @@ export class TableGrid {
         if (scroller && scrollTop > 0) scroller.scrollTop = scrollTop
         // Rows are rebuilt from scratch, so the selection marks have to be reapplied.
         // No scrolling: the user asked for a sort or a filter, not to be moved.
+        this.syncSelection(false)
+    }
+
+    /**
+     * Re-narrow and redraw the rows, leaving the header standing.
+     *
+     * A row filter changes nothing in the header — not the sort arrow, not the column
+     * widths, not the dropdowns' own choices, which are read from every row rather than
+     * the narrowed ones. Rebuilding it anyway would blur the control mid-keystroke.
+     */
+    private renderRows(): void {
+        this.visible = this.applySort(this.applyRowFilters())
+        this.windowStart = -1
+        this.windowEnd = -1
+
+        // The scroll container is the grid's parent, so replacing the body leaves the
+        // scroll position alone — unlike `render`, which has to put it back by hand.
+        this.bodyRows?.remove()
+        this.root.appendChild(this.buildRows())
+        this.updateSummary()
         this.syncSelection(false)
     }
 
@@ -247,24 +265,19 @@ export class TableGrid {
     }
 
     /**
-     * The header's row filter. Labelled as narrowing *rows* rather than the graph, because
-     * the header pill one row up says "Filter Graph" and means something else entirely.
+     * The header's row filter, typed off the column's facet `type` — a bounds pair for a
+     * `numberRange`, a dropdown of the values present for a `select`, a text box otherwise.
+     *
+     * Only the rows are re-rendered on a change: rebuilding the header under a control the
+     * user is typing into would take the focus and the caret with it.
      */
     private buildFilterControl(column: TableColumn<Element>): HTMLElement {
-        const input = document.createElement('input')
-        input.type = 'text'
-        input.className = 'pvt-table-filter'
-        input.placeholder = 'Filter rows…'
-        input.title = `Narrow the rows by ${column.label ?? column.key}. The graph is not affected.`
-        input.value = this.rowFilters.get(column.key) ?? ''
-        input.addEventListener('input', () => {
-            this.rowFilters.set(column.key, input.value)
-            this.render()
-            // Rendering replaces the DOM, so put the caret back where it was.
-            const restored = this.root.querySelector<HTMLInputElement>(`.pvt-table-th[data-column="${cssEscape(column.key)}"] .pvt-table-filter`)
-            restored?.focus()
+        const choices = columnChoices(this.rows.map((row) => row.values.get(column.key)))
+        return buildRowFilterControl(column, this.rowFilters.get(column.key), choices, (filter) => {
+            if (filter) this.rowFilters.set(column.key, filter)
+            else this.rowFilters.delete(column.key)
+            this.renderRows()
         })
-        return input
     }
 
     private buildRows(): HTMLElement {
@@ -396,7 +409,7 @@ export class TableGrid {
     private buildEmptyState(): HTMLElement {
         const empty = document.createElement('div')
         empty.className = 'pvt-table-empty'
-        const narrowed = [...this.rowFilters.values()].some((needle) => needle.trim() !== '')
+        const narrowed = [...this.rowFilters.values()].some(isRowFilterActive)
         empty.innerHTML = `<span class="pvt-table-empty-icon">${dataTable}</span>`
         const text = document.createElement('span')
         text.textContent = narrowed
@@ -558,9 +571,4 @@ function formatValue(value: unknown): string {
     if (Array.isArray(value)) return value.map((entry) => String(entry)).join(', ')
     if (typeof value === 'object') return JSON.stringify(value)
     return String(value)
-}
-
-/** Column keys carry a `pvt:` namespace, so they need escaping inside a selector. */
-function cssEscape(value: string): string {
-    return typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(value) : value.replace(/[^a-zA-Z0-9_-]/g, '\\$&')
 }

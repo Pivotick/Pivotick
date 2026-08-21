@@ -40,8 +40,9 @@ const palette = new ColorPaletteMapper('okabe-ito')
 //
 // Columns are derived when you don't declare any: the graph-aware ones lead (Label,
 // Degree, Visibility) and the data keys follow, ordered by how many nodes carry them.
-// They are declared here instead, to put `requests` on the right and give two columns
-// a row filter. `tableColumns` holds the graph-aware ones — clone one to relabel it.
+// They are declared here instead, to put `requests` on the right and give three columns
+// a row filter — one of each kind, since the control follows the column's `type`.
+// `tableColumns` holds the graph-aware ones — clone one to relabel it.
 const options = {
     UI: {
         mode: 'full',
@@ -58,7 +59,7 @@ const options = {
                 { key: 'kind', label: 'Kind', type: 'select', filterable: true },
                 { key: 'owner', label: 'Owner', type: 'select' },
                 { key: 'tier', label: 'Tier', type: 'select' },
-                { key: 'requests', label: 'Requests / day', type: 'numberRange', align: 'right' },
+                { key: 'requests', label: 'Requests / day', type: 'numberRange', align: 'right', filterable: true },
                 { ...tableColumns.degree, label: 'Links' },
             ],
         },

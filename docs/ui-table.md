@@ -51,13 +51,29 @@ That is deliberate. "23 nodes hidden" is a claim you should be able to inspect, 
 table that quietly drops the rows you are looking for is worse than no table. Sort by
 `Visibility` to see exactly what a filter took away.
 
-Cluster children are the one exception: they belong to their cluster's own graph, so they
-are not listed here.
+Cluster children are the one exception, and for a different reason than hiding: they are
+not nodes of this graph at all. A child lives in its cluster's own subgraph, with its own
+filters and its own edges — `Visibility` and `Degree` would both be answering about the
+wrong graph. So the cluster gets one row, and a **Children** column saying how many nodes
+are inside it; that column appears in the derived set whenever the graph has clusters.
 
 ## Sorting and narrowing {#sorting}
 
 Click any column heading to sort; click again to reverse. Give a column
-`filterable: true` and its header grows a box that **narrows the rows**.
+`filterable: true` and its header grows a control that **narrows the rows**.
+
+Which control you get follows the column's `type`, so you can ask a column what it is
+actually able to answer:
+
+| `type` | Control | Matches |
+|---|---|---|
+| `numberRange` | a **Min / Max** pair | inside the interval; either end may be left empty |
+| `select` · `multiselect` · `boolean` | a **dropdown** of the values the column holds | that value exactly, or membership when the cell is a list |
+| `text` · `regex` · untyped | a **text box** | case-insensitive substring |
+
+The dropdown is built from the column's own values rather than a declared option list, so
+it never offers a choice that would come back empty. Above 50 distinct values it steps
+aside for the text box — a dropdown that long is not a control anyone can use.
 
 That row filter is *not* the graph's filter. It changes what you are reading; the canvas
 is untouched, and the `Visibility` column goes on reporting the truth beside it. Deciding
@@ -133,7 +149,7 @@ new Pivotick(el, data, {
 })
 ```
 
-`label` · `degree` · `degreeIn` · `degreeOut` · `visibility` · `pinned` · `cluster`, plus
+`label` · `degree` · `degreeIn` · `degreeOut` · `visibility` · `pinned` · `children`, plus
 `source` and `target` for edges. Clone one to adjust it, as above.
 
 A `TableColumn` is a [`FilterFacet`](/ui-filter#facets) with a few presentation extras

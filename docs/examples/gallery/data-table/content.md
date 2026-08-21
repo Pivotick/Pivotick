@@ -20,8 +20,9 @@ The loop is **table to find, canvas to understand, sidebar to read**:
   <kbd>`Shift`</kbd> + <kbd>`Click`</kbd> to take a range **in the order shown** — then act
   on the lot with the sidebar's bulk actions.
 - Rubber-band a group on the canvas instead and the matching rows light up.
-- Type in the **Service** or **Kind** header to narrow the rows. That never touches the
-  canvas: the graph's own filter stays with the filter panel, so the two can't fight.
+- Narrow the rows from the headers — the control follows the column: type into
+  **Service**, pick from **Kind**, set bounds on **Requests / day**. That never touches
+  the canvas: the graph's own filter stays with the filter panel, so the two can't fight.
 - **Nodes** / **Edges** switch what is listed. **CSV** and **JSON** write out exactly what
   is on screen — this tab, these columns, this sort, this filter.
 

@@ -704,9 +704,12 @@ export interface TableColumn<T extends Node | Edge = Node> extends Pick<FilterFa
     /** @default true */
     sortable?: boolean,
     /**
-     * Give this column a filter control in its header. It narrows the **rows**; the
-     * canvas is left alone — changing what the graph displays stays with the filter
-     * panel, so the two can never disagree.
+     * Give this column a filter control in its header, typed off its {@link type} — a
+     * Min/Max pair for a `numberRange`, a dropdown of the values present for a `select`,
+     * a substring box otherwise.
+     *
+     * It narrows the **rows**; the canvas is left alone — changing what the graph
+     * displays stays with the filter panel, so the two can never disagree.
      * @default false
      */
     filterable?: boolean,

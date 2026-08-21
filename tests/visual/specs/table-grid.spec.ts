@@ -205,6 +205,112 @@ test.describe('table grid', () => {
         expect(await visibleNodeCount(page)).toBe(before)
     })
 
+    // ── Clusters ─────────────────────────────────────────────────────────────
+    // A cluster gets one row. Its children are not rows of this graph — they live in the
+    // cluster's own subgraph — so `Children` is what tells you how big it is. Nothing else
+    // in the UI does.
+
+    test('a cluster is one row, with a count of what it holds', async ({ page }) => {
+        await loadFixture(page, 'clustered', FULL)
+        await page.locator('.pvt-table-row').first().waitFor()
+
+        expect(await rowIds(page)).toEqual(['ext1', 'ext2', 'group'])
+        // Direct children (c1, c2, c3) — c1's own two leaves are c1's business, and would
+        // be its row's count if a subgraph were being listed.
+        expect(await columnCells(page, 'Children')).toEqual(['0', '0', '3'])
+    })
+
+    // A column of zeros is not information, so it only appears where it can say something.
+    test('Children stays out of a graph with no clusters', async ({ page }) => {
+        await openDock(page)
+        expect(await headings(page)).not.toContain('Children')
+    })
+
+    // ── Typed filter controls ────────────────────────────────────────────────
+    // The control is chosen from the column's facet `type`, so the header offers what
+    // the column can actually be asked. Every one of them still narrows rows only.
+
+    /** The `filterable` fixture, with one column per control kind. */
+    const TYPED_COLUMNS = {
+        UI: {
+            mode: 'full',
+            sidebar: { collapsed: false },
+            table: {
+                open: true,
+                columns: [
+                    { key: 'label', label: 'Label', type: 'text', filterable: true },
+                    { key: 'type', label: 'Type', type: 'select', filterable: true },
+                    { key: 'ports', label: 'Ports', type: 'numberRange', filterable: true },
+                ],
+            },
+        },
+    }
+
+    const filterIn = (page: Page, column: string, role: string) =>
+        page.locator(`.pvt-table-th[data-column="${column}"] .pvt-table-filter[data-role="${role}"]`)
+
+    // A range is the thing a text box cannot express: `ports` holds 4.5 / 24.5 / 48.5,
+    // and "contains 4" matches all three of them.
+    test('a numeric column filters on bounds, not on substrings', async ({ page }) => {
+        await loadFixture(page, 'filterable', TYPED_COLUMNS)
+        await page.locator('.pvt-table-row').first().waitFor()
+        expect(await rowIds(page)).toHaveLength(8)
+
+        await filterIn(page, 'ports', 'min').fill('20')
+        await filterIn(page, 'ports', 'max').fill('30')
+
+        // The two switches (24.5) — not the routers above the range, nor the hosts below.
+        expect(await rowIds(page)).toEqual(['sw1', 'sw2'])
+        expect(await summary(page)).toBe('2 of 8 nodes')
+    })
+
+    // One end left empty is still a filter — "at least 20 ports" is the common ask.
+    test('a numeric column takes a half-open range', async ({ page }) => {
+        await loadFixture(page, 'filterable', TYPED_COLUMNS)
+        await page.locator('.pvt-table-row').first().waitFor()
+
+        await filterIn(page, 'ports', 'min').fill('20')
+
+        expect(await rowIds(page)).toEqual(['r1', 'r2', 'r3', 'sw1', 'sw2'])
+    })
+
+    // A categorical column offers the values it actually holds, so you pick rather than
+    // guess at the spelling.
+    test('a categorical column offers the values present', async ({ page }) => {
+        await loadFixture(page, 'filterable', TYPED_COLUMNS)
+        await page.locator('.pvt-table-row').first().waitFor()
+
+        const choice = filterIn(page, 'type', 'value')
+        const options = await choice.locator('option').evaluateAll(
+            (all) => all.map((option) => (option as HTMLOptionElement).textContent))
+        expect(options).toEqual(['All', 'host', 'router', 'switch'])
+
+        await choice.selectOption('switch')
+        expect(await rowIds(page)).toEqual(['sw1', 'sw2'])
+
+        // And back to everything, without having to clear a text box.
+        await choice.selectOption('')
+        expect(await rowIds(page)).toHaveLength(8)
+    })
+
+    // Narrowing rebuilds the rows and nothing else. It used to rebuild the header too,
+    // which pulled the focus out from under whoever was typing into it.
+    test('typing in a filter keeps the focus and the caret', async ({ page }) => {
+        await loadFixture(page, 'filterable', TYPED_COLUMNS)
+        await page.locator('.pvt-table-row').first().waitFor()
+
+        const box = filterIn(page, 'label', 'text')
+        await box.click()
+        await page.keyboard.type('sw')
+        await expect(page.locator('.pvt-table-row')).toHaveCount(2)
+
+        await expect(box).toBeFocused()
+        // The caret sat at the end, so typing on continues the word rather than splitting it.
+        await page.keyboard.type('1')
+        expect(await box.inputValue()).toBe('sw1')
+        expect(await rowIds(page)).toEqual(['sw1'])
+    })
+
     // The picker opens *upwards* in viewport coordinates: the dock sits at the bottom of
     // the layout and clips its overflow, so a downwards popover lands off-screen. Assert
     // it is genuinely on screen — `toBeVisible()` alone does not catch that, which is
@@ -276,7 +382,9 @@ test.describe('table grid', () => {
         await page.locator('.pvt-table-row').first().waitFor()
 
         const columns = await headings(page)
-        expect(columns).toEqual(['Visibility', 'Degree', 'Label', 'Category', 'To IDs'])
+        // `mispLike` has a cluster, so Children joins the graph-aware leaders — the facets
+        // still supply every *data* column, which is what this is about.
+        expect(columns).toEqual(['Visibility', 'Degree', 'Label', 'Children', 'Category', 'To IDs'])
     })
 
     test('a new node appears without reopening the dock', async ({ page }) => {

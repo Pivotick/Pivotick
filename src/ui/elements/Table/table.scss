@@ -336,11 +336,68 @@
     border-radius: 3px;
     background-color: var(--pvt-bg);
     color: var(--pvt-text-color-6);
+    // Form controls don't inherit the page's font, and a header row mixing a text box
+    // with a select would otherwise show two different typefaces side by side.
+    font-family: inherit;
     font-size: 11px;
 
     &::placeholder {
         color: var(--pvt-text-color-3);
     }
+}
+
+// A numeric column filters on bounds, so its control is a pair. They share the
+// column's width evenly and each may be left empty — "at least 3" is a range too.
+.pvt-table-filter-range {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3px;
+    min-width: 0;
+}
+
+// The spinners would eat most of an 11px-tall control that is already only half a
+// column wide, and the value is typed rather than stepped.
+.pvt-table-filter-number {
+    appearance: textfield;
+    -moz-appearance: textfield;
+
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+        appearance: none;
+        margin: 0;
+    }
+}
+
+// A dropdown that looks like a text box is worse than no dropdown, and the UA arrow
+// cannot be relied on — VitePress and plenty of app resets clear `appearance`. So the
+// arrow is drawn here, in `currentColor`, and the select is flattened to match.
+.pvt-table-filter-choice-wrap {
+    position: relative;
+    min-width: 0;
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        right: 6px;
+        width: 4px;
+        height: 4px;
+        border-right: 1px solid currentColor;
+        border-bottom: 1px solid currentColor;
+        // Rotated square, so the corner it leaves is the chevron. Lifted a little above
+        // centre because rotation puts the visual weight below the geometric middle.
+        transform: translateY(-70%) rotate(45deg);
+        color: var(--pvt-text-color-3);
+        pointer-events: none;
+    }
+}
+
+.pvt-table-filter-choice {
+    appearance: none;
+    -webkit-appearance: none;
+    // Room for the chevron above.
+    padding-right: 15px;
+    cursor: pointer;
 }
 
 // Holds the full scroll height when the rows are windowed, so the scrollbar is
