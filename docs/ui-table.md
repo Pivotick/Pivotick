@@ -283,8 +283,7 @@ a pane that swapped its own DOM would leave the dock re-attaching a stale node t
 time it came to the front.
 
 See the [Add a dock pane](/examples/gallery/dock-panes/content) gallery card for a live
-one, [`eventLog()`](/plugins#event-log) for a complete pane in the library itself, and
-[Plugins](/plugins#dock-tab) for the plugin route.
+one, and [Plugins](/plugins#dock-tab) for the plugin route.
 
 ### `UI.dock` — the region's own settings {#ui-dock}
 

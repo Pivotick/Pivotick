@@ -137,12 +137,13 @@ Four things are worth knowing:
 - **`onActivate` / `onDeactivate` are the only signal that you are off screen**, and what
   to do with them depends on your pane. Content that is a function of the graph's current
   state can stop working while hidden and re-derive on return — that is what the table
-  does. Content that would *miss* something has to keep working and merely stop painting —
-  that is what the event log does. Nothing about the hooks prefers either.
+  does. Content that would *miss* something (a pane watching a live bus — an event is gone
+  once it has fired) has to keep working and merely stop *painting*, flushing its backlog
+  when it comes back. Nothing about the hooks prefers either.
 
 A tab is not a `UIComponent`, so nothing drives lifecycle phases into it. When your pane
-needs `graphReady`, do what `eventLog()` does: hold a `UIComponent`, `addElement` it, and
-call `addDockTab` from its `onMount`.
+needs `graphReady`, hold a `UIComponent`, `addElement` it, and call `addDockTab` from its
+`onMount` — see [Contributing a UI element](#contributing-a-ui-element) above.
 
 See the [Add a dock pane](/examples/gallery/dock-panes/content) gallery card for a live,
 complete example — a pane with two views of its own, beside the data table.
@@ -261,51 +262,3 @@ without being asked. In `static` — which promises no interactions — it is no
 installing it there warns.
 
 See the [Minimap](/examples/gallery/minimap/content) gallery card for a live one.
-
-## The event log {#event-log}
-
-`eventLog()` puts a pane in the [bottom dock](/ui-table#dock-tabs) listing what the graph
-is emitting, newest first: every data change, every filter, every selection, with a
-timestamp and a one-line subject.
-
-```js
-import { Pivotick, eventLog } from 'pivotick'
-
-new Pivotick(container, data, { UI: { mode: 'full' }, plugins: [eventLog()] })
-// …or at any point later:
-graph.use(eventLog({ limit: 100, kinds: ['data'] }))
-```
-
-It is a development instrument — off by default, because nobody wants an event log they
-did not ask for. What it shows is exactly what your own handlers would have seen: it
-subscribes to the public buses (`graph.on`, `graph.queryEngine.on`, and the interaction
-bus for the selection) and reaches for nothing else.
-
-### Options
-
-| Option | Default | What it does |
-|---|---|---|
-| `kinds` | all three | Which buses to record: `'data'`, `'filter'`, `'selection'` |
-| `limit` | `500` | Entries kept; the oldest fall off. A bulk import emits thousands |
-| `paused` | `false` | Start out not recording |
-| `label` | `'Events'` | The tab's label |
-| `id` / `order` | auto | Identity, and placement in the strip |
-
-The header carries a count, a kind filter, **Pause** — which stops recording without
-dropping what is already listed — and **Clear**.
-
-### Why it exists
-
-It is the dock's second occupant, and therefore the proof that
-[`addDockTab`](#dock-tab) is enough to build a pane with rather than a hole shaped like
-the data table. It shares the region's row, height and fold with the table and asked for
-no concessions to get there — it sits beside it as `Table │ Events`.
-
-It also uses the activation hooks the **opposite** way round from the table, which is the
-part worth copying. The table stops working when it is off screen and re-derives on
-return, because its content is a function of the graph's current state. The log cannot do
-that — an event is gone once it has fired — so it keeps recording while hidden and only
-stops *painting*, flushing the backlog when it comes back.
-
-It needs `full` mode, since that is the only mode with a dock; installing it elsewhere
-warns rather than failing silently.

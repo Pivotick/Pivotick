@@ -1,6 +1,6 @@
 /* eslint-disable */
 // @ts-nocheck
-import { Pivotick, Node, Edge, ColorPaletteMapper, eventLog } from './index'
+import { Pivotick, Node, Edge, ColorPaletteMapper } from './index'
 
 import {graph as vtGraph} from './vt-graph'
 import { graph as ailGraph } from './ail-graph'
@@ -545,12 +545,9 @@ const options = {
       modeRail: new URLSearchParams(location.search).has('hero')
           ? undefined
           : { explore: true, enrich: true },
-      // Open the dock so the third tab is visible on load — the demo's point here is
-      // the strip. The shipped default is folded to its bar.
+      // Open the dock on load. The shipped default is folded to its bar.
       dock: { open: true },
     },
-    // A third dock pane beside Nodes / Edges, so the tab strip has something to show.
-    plugins: [eventLog()],
     callbacks: {
         // onNodeEdit: (session) => {
         //     const label = prompt(

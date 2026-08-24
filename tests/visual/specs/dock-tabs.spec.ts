@@ -50,6 +50,12 @@ const openDock = async (page: Page, overrides: Record<string, unknown> = FULL) =
     await page.locator('.pvt-table-row').first().waitFor()
 }
 
+/** Move the graph, so a pane has something to have missed while it was hidden. */
+const addNode = (page: Page, id: string, label: string) =>
+    page.evaluate(([id, label]) => {
+        window.__pivotick.graph.addNode({ id, data: { label } } as never)
+    }, [id, label])
+
 test.describe('dock tab registry', () => {
     test.beforeEach(async ({ page }) => {
         await gotoHarness(page)
@@ -267,9 +273,7 @@ test.describe('the two levels of switch', () => {
 
         await page.locator('.pvt-dock-tab[data-tab="audit"]').click()
         await expect(page.locator('.pvt-table-row')).toHaveCount(0)
-        await page.evaluate(() => {
-            window.__pivotick.graph.addNode({ id: 'ADDED_WHILE_HIDDEN', data: { label: 'Ghost' } } as never)
-        })
+        await addNode(page, 'ADDED_WHILE_HIDDEN', 'Ghost')
 
         await page.locator('.pvt-dock-tab[data-tab="table"]').click()
         await expect(page.locator('.pvt-table-row')).toHaveCount(rowsBefore + 1)
@@ -308,118 +312,54 @@ test.describe('the two levels of switch', () => {
     })
 })
 
-test.describe('the event log — the dock\'s second occupant', () => {
+test.describe('a pane contributed by a plugin', () => {
     test.beforeEach(async ({ page }) => {
         await gotoHarness(page)
     })
 
-    test('joins the strip as a pane beside the table', async ({ page }) => {
-        await harness(page, 'loadWithEventLog', 'basic', {}, FULL)
-        expect(await paneLabels(page)).toEqual(['Table', 'Events'])
+    test('joins the strip beside the table', async ({ page }) => {
+        await harness(page, 'loadWithPluginPane', 'basic', FULL)
+        expect(await paneLabels(page)).toEqual(['Table', 'Recorder'])
         expect(await harness(page, 'activeDockTabId')).toBe('table')
         // The table's own views stay the table's.
         await expect(viewTabs(page)).toHaveCount(2)
     })
 
-    // The whole point of D-4: plugins install after the UI is built, so a tab has to be
-    // able to bring the region with it rather than needing the table switched on.
+    // The whole point of D-4, and the reason `ensureDock()` is load-bearing rather than
+    // defensive: plugins install *after* the UI is built, so a tab has to be able to
+    // bring the region with it rather than needing the table switched on. This is the
+    // plugin route specifically — `addTestDockTab` reaches `UIManager` directly.
     test('brings the dock with it when the table is switched off', async ({ page }) => {
-        await harness(page, 'loadWithEventLog', 'basic', {}, NO_TABLE)
+        await harness(page, 'loadWithPluginPane', 'basic', NO_TABLE)
 
         await expect(dock(page)).toBeVisible()
-        expect(await harness(page, 'dockTabIds')).toHaveLength(1)
-        // One pane, so no strip — the log is simply what the dock is.
+        expect(await harness(page, 'dockTabIds')).toEqual(['pluginPane'])
+        // One pane, so no strip — the pane is simply what the dock is.
         await expect(paneTabs(page)).toHaveCount(0)
     })
 
-    test('records off the public buses, and Clear empties it', async ({ page }) => {
-        await harness(page, 'loadWithEventLog', 'basic', {}, NO_TABLE)
-        await page.locator('.pvt-eventlog').waitFor()
-
-        await page.evaluate(() => {
-            window.__pivotick.graph.addNode({ id: 'LOGGED', data: { label: 'Logged' } } as never)
-        })
-        await expect(page.locator('.pvt-eventlog-row').first()).toBeVisible()
-        expect(await harness(page, 'eventLogTypes')).toContain('nodeAdd')
-        await expect(page.locator('.pvt-eventlog-row', { hasText: 'Logged' })).toHaveCount(1)
-
-        await page.locator('.pvt-eventlog-clear').click()
-        await expect(page.locator('.pvt-eventlog-row')).toHaveCount(0)
-        await expect(page.locator('.pvt-eventlog-empty')).toBeVisible()
-    })
-
-    test('Pause stops recording, and the list survives it', async ({ page }) => {
-        await harness(page, 'loadWithEventLog', 'basic', {}, NO_TABLE)
-        await page.locator('.pvt-eventlog').waitFor()
-        await page.locator('.pvt-eventlog-clear').click()
-
-        await page.locator('.pvt-eventlog-pause').click()
-        await page.evaluate(() => {
-            window.__pivotick.graph.addNode({ id: 'WHILE_PAUSED', data: { label: 'Nope' } } as never)
-        })
-        await expect(page.locator('.pvt-eventlog-row')).toHaveCount(0)
-
-        await page.locator('.pvt-eventlog-pause').click()
-        await page.evaluate(() => {
-            window.__pivotick.graph.addNode({ id: 'AFTER_RESUME', data: { label: 'Yes' } } as never)
-        })
-        await expect(page.locator('.pvt-eventlog-row', { hasText: 'Yes' })).toHaveCount(1)
-        await expect(page.locator('.pvt-eventlog-row', { hasText: 'Nope' })).toHaveCount(0)
-    })
-
-    // The contrast that proves the activation hooks are not table-shaped. The table
-    // stops working while hidden because it can re-derive; the log cannot — an event is
-    // gone once it has fired — so it keeps recording and only stops painting.
-    test('keeps recording while hidden, and paints the backlog on return', async ({ page }) => {
-        await harness(page, 'loadWithEventLog', 'basic', {}, FULL)
+    // The contrast that proves the activation hooks are not table-shaped. The table stops
+    // working while hidden because it can re-derive; a pane watching a live bus cannot —
+    // an event is gone once it has fired — so it keeps recording and only stops painting.
+    test('keeps working while hidden, and paints the backlog on return', async ({ page }) => {
+        await harness(page, 'loadWithPluginPane', 'basic', FULL)
         await page.locator('.pvt-dock-tab[data-tab="table"]').waitFor()
 
-        // The log has never been activated, so it has no DOM at all yet.
-        await expect(page.locator('.pvt-eventlog')).toHaveCount(0)
-        await page.evaluate(() => {
-            window.__pivotick.graph.addNode({ id: 'BEFORE_FIRST_LOOK', data: { label: 'Early' } } as never)
-        })
-        expect(await harness(page, 'eventLogTypes')).toContain('nodeAdd')
+        // Never activated, so it has no DOM at all yet — but it is already recording.
+        await expect(page.locator('.pvt-plugin-pane')).toHaveCount(0)
+        await addNode(page, 'BEFORE_FIRST_LOOK', 'Early')
+        expect(await harness(page, 'pluginPaneRecorded')).toContain('Early')
 
-        const events = page.locator('.pvt-dock-tab', { hasText: 'Events' })
-        await events.click()
-        await expect(page.locator('.pvt-eventlog-row', { hasText: 'Early' })).toHaveCount(1)
+        const recorder = page.locator('.pvt-dock-tab', { hasText: 'Recorder' })
+        await recorder.click()
+        await expect(page.locator('.pvt-plugin-pane-row', { hasText: 'Early' })).toHaveCount(1)
 
-        // Back to the table, emit again, and return: the entry recorded while the log
-        // was off screen has to be on the list.
+        // Back to the table, emit again, and return: what was recorded while the pane was
+        // off screen has to be on the list.
         await page.locator('.pvt-dock-tab[data-tab="table"]').click()
-        await page.evaluate(() => {
-            window.__pivotick.graph.addNode({ id: 'WHILE_LOG_HIDDEN', data: { label: 'Later' } } as never)
-        })
-        await events.click()
-        await expect(page.locator('.pvt-eventlog-row', { hasText: 'Later' })).toHaveCount(1)
-        await expect(page.locator('.pvt-eventlog-row', { hasText: 'Early' })).toHaveCount(1)
-    })
-
-    test('the kind filter narrows the list to one bus', async ({ page }) => {
-        await harness(page, 'loadWithEventLog', 'basic', {}, NO_TABLE)
-        await page.locator('.pvt-eventlog').waitFor()
-        await page.locator('.pvt-eventlog-clear').click()
-
-        await page.evaluate(() => {
-            const graph = window.__pivotick.graph
-            graph.addNode({ id: 'MIXED', data: { label: 'Mixed' } } as never)
-            graph.queryEngine.setFilter('label', 'A' as never)
-        })
-        await expect(page.locator('.pvt-eventlog-row[data-kind="data"]').first()).toBeVisible()
-        await expect(page.locator('.pvt-eventlog-row[data-kind="filter"]').first()).toBeVisible()
-
-        await page.locator('.pvt-eventlog-kind').selectOption('filter')
-        await expect(page.locator('.pvt-eventlog-row[data-kind="data"]')).toHaveCount(0)
-        await expect(page.locator('.pvt-eventlog-row[data-kind="filter"]').first()).toBeVisible()
-    })
-
-    // The dock is a `full`-mode grid row. Asked for explicitly, so silence would be worse
-    // than a warning.
-    test('says why it did not mount outside full mode', async ({ page }) => {
-        await harness(page, 'loadWithEventLog', 'basic', {}, { UI: { mode: 'light' } })
-        await expect(page.locator('.pvt-eventlog')).toHaveCount(0)
-        expect(await harness(page, 'warnings'))
-            .toEqual(expect.arrayContaining([expect.stringContaining('\'full\' mode only')]))
+        await addNode(page, 'WHILE_PANE_HIDDEN', 'Later')
+        await recorder.click()
+        await expect(page.locator('.pvt-plugin-pane-row', { hasText: 'Later' })).toHaveCount(1)
+        await expect(page.locator('.pvt-plugin-pane-row', { hasText: 'Early' })).toHaveCount(1)
     })
 })

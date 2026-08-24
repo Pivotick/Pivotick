@@ -57,9 +57,8 @@ what to do with them is yours to choose:
 - Content that is a **function of the graph's current state** can stop working while
   hidden and re-derive on return. That is what this pane does, and what the data table
   does.
-- Content that would **miss** something has to keep working and merely stop painting.
-  That is what [`eventLog()`](/plugins#event-log) does — an event is gone once it has
-  fired.
+- Content that would **miss** something has to keep working and merely stop painting —
+  a pane watching a live bus, say, since an event is gone once it has fired.
 
 Nothing about the hooks prefers either.
 

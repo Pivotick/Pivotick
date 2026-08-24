@@ -21,11 +21,11 @@ import type {
 import type { GraphInteractionContext } from '../../../src/interfaces/GraphInteractions'
 import type { GraphBounds } from '../../../src/GraphRenderer'
 import { Minimap, type MinimapOptions } from '../../../src/plugins/minimap'
-import { EventLog, eventLog, type EventLogOptions } from '../../../src/plugins/eventLog'
 import type {
     ExtraPanel, ExtraPanelSelection, LegendEntry, LegendOptions, LegendPosition, LegendToggleState,
     PropertyEntry,
 } from '../../../src/interfaces/GraphUI'
+import type { PivotickPlugin } from '../../../src/interfaces/Plugin'
 import type { RenderContext } from '../../../src/interfaces/AsyncContent'
 import type { Edge } from '../../../src/Edge'
 import type {
@@ -584,10 +584,20 @@ export interface HarnessApi {
     warnings(): string[]
     /** Load a fixture with the real `minimap()` plugin installed. */
     loadWithMinimap(name: FixtureName, options?: MinimapOptions, overrides?: PlainObject): Promise<void>
-    /** Load a fixture with the real `eventLog()` plugin installed — the dock's second occupant. */
-    loadWithEventLog(name: FixtureName, options?: EventLogOptions, overrides?: PlainObject): Promise<void>
-    /** What the event log has recorded, newest first: one `type` per entry. */
-    eventLogTypes(): string[]
+    /**
+     * Load a fixture with a **plugin-registered** dock pane. Distinct from
+     * `addTestDockTab`, which reaches `UIManager.addDockTab` directly: this goes through
+     * `ctx.addDockTab` inside a plugin's `install`, which is the route that arrives after
+     * the UI is already built.
+     *
+     * The pane records `nodeAdd` whether or not it is on screen, so it exercises the
+     * activation hooks in the **opposite** direction from the table: the table stops
+     * working while hidden and re-derives on return, this one cannot (an event is gone
+     * once it has fired) so it keeps recording and only stops painting.
+     */
+    loadWithPluginPane(name: FixtureName, overrides?: PlainObject): Promise<void>
+    /** Labels the plugin pane has recorded, in arrival order — painted or not. */
+    pluginPaneRecorded(): string[]
     /** The dock's registered tab ids, in strip order. */
     dockTabIds(): string[]
     /** The tab the dock is currently showing. */
@@ -818,6 +828,8 @@ class Harness implements HarnessApi {
     private recordedWarnings: string[] = []
     /** Disposers from `addTestDockTab`, so a test can unregister the way a consumer does. */
     private dockTabDisposers = new Map<string, () => void>()
+    /** What `loadWithPluginPane`'s pane has recorded, painted or not. */
+    private pluginPaneEntries: string[] = []
 
     constructor(container: HTMLElement) {
         this.container = container
@@ -1352,21 +1364,58 @@ class Harness implements HarnessApi {
         await this.load(name, mergeOptions({ plugins: [minimap(options)] }, overrides))
     }
 
-    async loadWithEventLog(name: FixtureName, options: EventLogOptions = {}, overrides: PlainObject = {}): Promise<void> {
-        await this.load(name, mergeOptions({ plugins: [eventLog(options)] }, overrides))
+    async loadWithPluginPane(name: FixtureName, overrides: PlainObject = {}): Promise<void> {
+        this.pluginPaneEntries = []
+        await this.load(name, mergeOptions({ plugins: [this.pluginPane()] }, overrides))
     }
 
     /**
-     * The live event log. Same runtime-reach as {@link minimapElement}: plugin-added
-     * elements are not in the UIManager's keyed registry.
+     * A pane contributed the way a real plugin contributes one — nothing but
+     * `ctx.addDockTab` and a public event bus. It records while hidden and paints only
+     * when it is on screen, so `onActivate` has a backlog to show on return.
      */
-    private eventLogElement(): EventLog | undefined {
-        const ui = this.g.UIManager as unknown as { elements: unknown[] }
-        return ui.elements.find((element) => element instanceof EventLog) as EventLog | undefined
+    private pluginPane(): PivotickPlugin {
+        return {
+            name: 'testPluginPane',
+            install: (ctx) => {
+                let body: HTMLElement | undefined
+                // Painting is gated, not the element: the dock keeps what `render`
+                // returned and re-attaches it, so dropping the reference on deactivation
+                // would leave nothing to paint into on return.
+                let visible = false
+                const paint = () => {
+                    if (!body || !visible) return
+                    body.innerHTML = ''
+                    for (const label of this.pluginPaneEntries) {
+                        const row = document.createElement('div')
+                        row.className = 'pvt-plugin-pane-row'
+                        row.textContent = label
+                        body.appendChild(row)
+                    }
+                }
+                ctx.addDockTab({
+                    id: 'pluginPane',
+                    label: 'Recorder',
+                    render: () => {
+                        body = document.createElement('div')
+                        body.className = 'pvt-plugin-pane'
+                        paint()
+                        return body
+                    },
+                    onActivate: () => { visible = true; paint() },
+                    onDeactivate: () => { visible = false },
+                })
+                // Recording is unconditional — that is the whole contrast with the table.
+                ctx.graph.on('nodeAdd', (node) => {
+                    this.pluginPaneEntries.push(String(node.getData()?.label ?? node.id))
+                    paint()
+                })
+            },
+        }
     }
 
-    eventLogTypes(): string[] {
-        return (this.eventLogElement()?.getEntries() ?? []).map((entry) => entry.type)
+    pluginPaneRecorded(): string[] {
+        return [...this.pluginPaneEntries]
     }
 
     dockTabIds(): string[] {
