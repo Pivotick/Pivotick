@@ -32,13 +32,15 @@ pane does: `Nodes` and `Edges` are *its* tabs, drawn on its own bar.
 The two levels are drawn differently so they can sit next to each other and still read as
 an outer and an inner:
 
-| | Look | Owner |
+| | Look | Class |
 |---|---|---|
-| `Table │ Summary` | full-height tabs, underlined when active, closed off by a rule | the dock |
-| `Nodes │ Edges`, `By owner │ By kind` | a small pill group | the pane |
+| `Table │ Summary` | full-height tabs, underlined when active, closed off by a rule | `pvt-dock-tabs` / `pvt-dock-tab` |
+| `Nodes │ Edges`, `By owner │ By kind` | a small pill group | `pvt-dock-views` / `pvt-dock-view` |
 
-The library styles its own built-ins; a pane you write brings whatever look you want —
-the buttons in the code below carry their styling inline, so what you see is what runs.
+The inner pair is public, which is why the switch below is three class names rather than a
+block of inline style: your pane gets the same control the built-in table has, and a
+consumer who retints `--pvt-theme-primary` or overrides either class retints both levels
+at once.
 
 ## `refresh()` is not optional politeness
 

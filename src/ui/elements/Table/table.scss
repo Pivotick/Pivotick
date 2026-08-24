@@ -8,44 +8,9 @@
 // Scrollbars need no opt-in here: `themed-scrollbars` is applied to `.pivotick`
 // and inherits down. Only elements portaled outside it have to include the mixin.
 
-// The pane's **own** view switch — Nodes / Edges. Two views of one table, so it is drawn
-// as a small segmented pill group rather than as tabs: the dock's own strip beside it
-// names *panes*, and the two must not read as one flat row. Rendered only when there is
-// more than one view on offer.
-.pvt-table-tabs {
-    display: flex;
-    gap: 2px;
-
-    &:empty {
-        display: none;
-    }
-
-    .pvt-dock-collapsed & {
-        display: none;
-    }
-}
-
-.pvt-table-tab {
-    padding: 2px 9px;
-    border: 1px solid transparent;
-    border-radius: 4px;
-    background: transparent;
-    color: var(--pvt-text-color-4);
-    font-family: inherit;
-    font-size: 12px;
-    cursor: pointer;
-
-    &:hover {
-        color: var(--pvt-text-color-6);
-    }
-
-    &.active {
-        border-color: var(--pvt-chrome-border);
-        background-color: var(--pvt-bg-color-4);
-        color: var(--pvt-text-color-6);
-        font-weight: 600;
-    }
-}
+// The pane's own Nodes / Edges switch is styled by the dock, not here: `.pvt-dock-views`
+// / `.pvt-dock-view` in `Dock/dock.scss`. Nothing about a pill group of views is
+// table-specific, and any pane registered through `addDockTab` wants the same look.
 
 // Exports exactly what is shown: this tab, these columns, this sort, this filter.
 .pvt-table-export {
@@ -329,8 +294,8 @@
     // Marked from the graph's own selection, so a rubber-band on the canvas and a
     // click in the table light up the same rows.
     &.pvt-table-row-selected {
-        background-color: color-mix(in srgb, var(--pvt-primary-color, #007acc) 14%, transparent);
-        box-shadow: inset 2px 0 0 var(--pvt-primary-color, #007acc);
+        background-color: color-mix(in srgb, var(--pvt-selection-color) 14%, transparent);
+        box-shadow: inset 2px 0 0 var(--pvt-selection-color);
     }
 }
 

@@ -32,7 +32,7 @@ const NO_TABLE = { UI: { mode: 'full', sidebar: { collapsed: false }, table: fal
 const paneStrip = (page: Page) => page.locator('.pvt-dock-tabs')
 const paneTabs = (page: Page) => page.locator('.pvt-dock-tab')
 /** The table's own strip — views of one pane. */
-const viewTabs = (page: Page) => page.locator('.pvt-table-tab')
+const viewTabs = (page: Page) => page.locator('.pvt-dock-view')
 const dock = (page: Page) => page.locator('.pvt-dock')
 
 const paneLabels = (page: Page) =>
@@ -135,7 +135,7 @@ test.describe('the two levels of switch', () => {
             const s = getComputedStyle(el)
             return { borderBottom: parseFloat(s.borderBottomWidth), radius: parseFloat(s.borderTopLeftRadius), bg: s.backgroundColor }
         })
-        const inner = await page.locator('.pvt-table-tab.active').evaluate((el) => {
+        const inner = await page.locator('.pvt-dock-view.active').evaluate((el) => {
             const s = getComputedStyle(el)
             return { borderBottom: parseFloat(s.borderBottomWidth), radius: parseFloat(s.borderTopLeftRadius), bg: s.backgroundColor }
         })
@@ -159,7 +159,7 @@ test.describe('the two levels of switch', () => {
 
         const header = (await page.locator('.pvt-dock-header').boundingBox())!
         const outer = (await page.locator('.pvt-dock-tab.active').boundingBox())!
-        const inner = (await page.locator('.pvt-table-tab.active').boundingBox())!
+        const inner = (await page.locator('.pvt-dock-view.active').boundingBox())!
 
         expect(outer.height).toBeGreaterThanOrEqual(header.height - 1)
         expect(inner.height).toBeLessThan(header.height - 4)
@@ -193,7 +193,7 @@ test.describe('the two levels of switch', () => {
         await openDock(page)
         await harness(page, 'addTestDockTab', 'audit', 'Audit')
 
-        await page.locator('.pvt-table-tab[data-tab="edges"]').click()
+        await page.locator('.pvt-dock-view[data-tab="edges"]').click()
         await page.locator('.pvt-table-row').first().waitFor()
         const headings = () => page.locator('.pvt-table-th-label')
             .evaluateAll(cells => cells.map(c => (c.textContent ?? '').trim()).slice(0, 3))
@@ -206,7 +206,7 @@ test.describe('the two levels of switch', () => {
 
         // Still Edges, and still the edges grid — not a stale node grid re-attached.
         expect(await headings()).toEqual(['Source', 'Label', 'Target'])
-        await expect(page.locator('.pvt-table-tab[data-tab="edges"]')).toHaveClass(/active/)
+        await expect(page.locator('.pvt-dock-view[data-tab="edges"]')).toHaveClass(/active/)
         await expect(page.locator('.pvt-table-row')).toHaveCount(7)
     })
 
@@ -215,14 +215,14 @@ test.describe('the two levels of switch', () => {
     // marking the view you just left — which is exactly what shipped first.
     test('refresh rebuilds the controls, not just the body', async ({ page }) => {
         await openDock(page)
-        await expect(page.locator('.pvt-table-tab[data-tab="nodes"]')).toHaveClass(/active/)
+        await expect(page.locator('.pvt-dock-view[data-tab="nodes"]')).toHaveClass(/active/)
 
-        await page.locator('.pvt-table-tab[data-tab="edges"]').click()
+        await page.locator('.pvt-dock-view[data-tab="edges"]').click()
         await page.locator('.pvt-table-row').first().waitFor()
 
         // The strip is rebuilt by the refresh, so it must come back marking Edges.
-        await expect(page.locator('.pvt-table-tab[data-tab="edges"]')).toHaveClass(/active/)
-        await expect(page.locator('.pvt-table-tab[data-tab="nodes"]')).not.toHaveClass(/active/)
+        await expect(page.locator('.pvt-dock-view[data-tab="edges"]')).toHaveClass(/active/)
+        await expect(page.locator('.pvt-dock-view[data-tab="nodes"]')).not.toHaveClass(/active/)
     })
 
     // The region's state is the dock's, and switching what is inside it is not a reason

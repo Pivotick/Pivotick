@@ -229,7 +229,7 @@ export class Table extends UIComponent {
         for (const tab of offered) {
             const button = document.createElement('button')
             button.type = 'button'
-            button.className = 'pvt-table-tab'
+            button.className = 'pvt-dock-view'
             button.dataset.tab = tab
             button.textContent = tab === 'edges' ? 'Edges' : 'Nodes'
             button.classList.toggle('active', tab === this.tab)
@@ -259,7 +259,7 @@ export class Table extends UIComponent {
         // The pane's own view switch leads the bar, immediately after the dock's own
         // strip — which is exactly where it has always sat.
         this.tabs = document.createElement('div')
-        this.tabs.className = 'pvt-table-tabs'
+        this.tabs.className = 'pvt-dock-views'
         items.push(this.tabs)
         this.renderTabs()
 

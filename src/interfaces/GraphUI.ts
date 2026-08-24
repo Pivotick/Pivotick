@@ -743,6 +743,11 @@ export interface DockTab {
      * Build this tab's header controls, laid out as part of the dock's header row.
      * Re-invoked on **every** activation, so the controls can reflect the tab's
      * current state.
+     *
+     * A pane with several views of its own draws the switch here. Two public classes
+     * give it the same look the built-in table has — `pvt-dock-views` on the strip,
+     * `pvt-dock-view` on each button, `active` on the current one — so it stays a pill
+     * group beside the dock's own tabs and follows the theme.
      */
     toolbar?: (tab: DockTabHandle) => HTMLElement | HTMLElement[]
     /**

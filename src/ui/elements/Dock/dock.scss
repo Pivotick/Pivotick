@@ -63,7 +63,7 @@
 
     &:hover::after,
     &.pvt-dock-divider-dragging::after {
-        background-color: var(--pvt-primary-color, #007acc);
+        background-color: var(--pvt-theme-primary);
     }
 
     // A collapsed dock is a bar, not a resizable pane.
@@ -101,9 +101,9 @@
 // look empty.
 //
 // These are deliberately *tabs*: full-height, square, joined to the pane below by an
-// underline that lands on the header's own bottom rule. An occupant's internal switch —
-// the table's Nodes / Edges — is a small pill group instead (see `Table/table.scss`), so
-// the two levels can sit next to each other and still read as an outer and an inner.
+// underline that lands on the header's own bottom rule. A pane's internal switch — the
+// table's Nodes / Edges — is a small pill group instead (`.pvt-dock-views` below), so the
+// two levels can sit next to each other and still read as an outer and an inner.
 .pvt-dock-tabs {
     display: flex;
     gap: 2px;
@@ -145,7 +145,52 @@
     }
 
     &.active {
-        border-bottom-color: var(--pvt-primary-color, #007acc);
+        border-bottom-color: var(--pvt-theme-primary);
+        color: var(--pvt-text-color-6);
+        font-weight: 600;
+    }
+}
+
+// A **pane's own** view switch — the table's Nodes / Edges, and the same look for anyone
+// else's pane. Two views of one pane, so it is drawn as a small segmented pill group
+// rather than as tabs: the strip above names *panes*, and the two must not read as one
+// flat row.
+//
+// This pair is public on purpose. A pane registered through `addDockTab` puts its own
+// controls in the header slot, and without a class for them the only way to match the
+// built-in table was to restate its look inline — which then drifts from the theme. Give
+// the strip `pvt-dock-views`, each button `pvt-dock-view`, and `active` to the current
+// one; override either class, or just `--pvt-theme-primary`, to retheme both levels.
+.pvt-dock-views {
+    display: flex;
+    gap: 2px;
+
+    &:empty {
+        display: none;
+    }
+
+    .pvt-dock-collapsed & {
+        display: none;
+    }
+}
+
+.pvt-dock-view {
+    padding: 2px 9px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--pvt-text-color-4);
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+
+    &:hover {
+        color: var(--pvt-text-color-6);
+    }
+
+    &.active {
+        border-color: var(--pvt-chrome-border);
+        background-color: var(--pvt-bg-color-4);
         color: var(--pvt-text-color-6);
         font-weight: 600;
     }

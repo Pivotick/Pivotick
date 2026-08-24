@@ -124,7 +124,9 @@ Four things are worth knowing:
   pane's views out beside another pane. Switching your own DOM behind the dock's back does
   not work: it keeps the element `render` gave it, and would re-attach a stale node on the
   next activation. Draw an inner switch as a segmented control, not as tabs — the outer
-  level already looks like tabs.
+  level already looks like tabs. `pvt-dock-views` on the strip and `pvt-dock-view` on each
+  button (plus `active`) are public, so it looks like the table's switch and follows the
+  theme without you restating either.
 - **The first pane builds the region.** Plugins install *after* the UI is built, so a tab
   always arrives too late for the dock's own mode gate to have said yes on its behalf.
   Registering one brings the dock into being, which means your plugin works with

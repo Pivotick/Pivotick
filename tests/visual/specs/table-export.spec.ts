@@ -107,7 +107,7 @@ test.describe('table edges tab', () => {
 
     test('switching to Edges lists the edges, source to target', async ({ page }) => {
         await openDock(page)
-        await page.locator('.pvt-table-tab[data-tab="edges"]').click()
+        await page.locator('.pvt-dock-view[data-tab="edges"]').click()
         await page.locator('.pvt-table-row').first().waitFor()
 
         const headings = await page.locator('.pvt-table-th-label').evaluateAll((cells) =>
@@ -130,9 +130,9 @@ test.describe('table edges tab', () => {
         const nodeOrderBefore = await page.locator('.pvt-table-row').evaluateAll((rows) =>
             rows.map((row) => (row as HTMLElement).dataset.id!))
 
-        await page.locator('.pvt-table-tab[data-tab="edges"]').click()
+        await page.locator('.pvt-dock-view[data-tab="edges"]').click()
         await page.locator('.pvt-table-row').first().waitFor()
-        await page.locator('.pvt-table-tab[data-tab="nodes"]').click()
+        await page.locator('.pvt-dock-view[data-tab="nodes"]').click()
         await page.locator('.pvt-table-row').first().waitFor()
 
         const nodeOrderAfter = await page.locator('.pvt-table-row').evaluateAll((rows) =>
@@ -144,6 +144,6 @@ test.describe('table edges tab', () => {
         await openDock(page, {
             UI: { mode: 'full', sidebar: { collapsed: false }, table: { open: true, tabs: ['nodes'] } },
         })
-        await expect(page.locator('.pvt-table-tab')).toHaveCount(0)
+        await expect(page.locator('.pvt-dock-view')).toHaveCount(0)
     })
 })

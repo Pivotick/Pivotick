@@ -39,9 +39,10 @@ const data = {
 // view of the summary and the whole data table are the same kind of thing.
 //
 // That is also why the two levels look different: the dock draws panes as full-height
-// underlined tabs, and a pane's own views want a lighter, smaller control. The styling
-// below is the card's own — the library styles its built-ins, and your pane brings
-// whatever look you want.
+// underlined tabs, and a pane's own views a lighter pill group. That inner look is public
+// — `pvt-dock-views` on the strip, `pvt-dock-view` on each button, `active` on the current
+// one — so your pane matches the built-in table for free, and follows the theme when a
+// consumer overrides `--pvt-theme-primary` or either class.
 
 const VIEWS = [
     { key: 'owner', label: 'By owner' },
@@ -99,21 +100,15 @@ function renderSummary(graph, key) {
  */
 function renderControls(current, pick) {
     const strip = document.createElement('div')
-    strip.style.cssText = 'display: flex; gap: 2px'
+    strip.className = 'pvt-dock-views'
 
     for (const view of VIEWS) {
         const button = document.createElement('button')
         button.type = 'button'
+        button.className = 'pvt-dock-view'
         button.textContent = view.label
-        const on = view.key === current
-        button.style.cssText = [
-            'padding: 2px 9px', 'border-radius: 4px', 'font: inherit', 'font-size: 12px',
-            'cursor: pointer',
-            `border: 1px solid ${on ? 'var(--pvt-chrome-border)' : 'transparent'}`,
-            `background: ${on ? 'var(--pvt-bg-color-4)' : 'transparent'}`,
-            `color: var(--pvt-text-color-${on ? '6' : '4'})`,
-            `font-weight: ${on ? '600' : '400'}`,
-        ].join(';')
+        button.classList.toggle('active', view.key === current)
+        button.setAttribute('aria-pressed', String(view.key === current))
         button.addEventListener('click', () => pick(view.key))
         strip.appendChild(button)
     }

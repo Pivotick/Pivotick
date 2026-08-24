@@ -244,21 +244,39 @@ table and a separate pane are the same kind of thing.
 The two levels are drawn differently so they can sit next to each other and still read as
 an outer and an inner:
 
-| | Looks like | Belongs to |
+| | Looks like | Class |
 |---|---|---|
-| `Table │ Audit` | full-height tabs, underlined when active, closed off by a rule | the dock |
-| `Nodes │ Edges` | a small segmented pill group | the table |
+| `Table │ Audit` | full-height tabs, underlined when active, closed off by a rule | `pvt-dock-tabs` / `pvt-dock-tab` |
+| `Nodes │ Edges` | a small segmented pill group | `pvt-dock-views` / `pvt-dock-view` |
 
 A pane with its own views does what the table does: draw the switch in its `toolbar`, and
-call `refresh()` on its handle to change body.
+call `refresh()` on its handle to change body. The inner classes are public, so your
+switch is the built-in one rather than a restatement of it:
 
 ```js
+function viewSwitch(current, pick) {
+    const strip = document.createElement('div')
+    strip.className = 'pvt-dock-views'
+    for (const view of VIEWS) {
+        const button = document.createElement('button')
+        button.className = 'pvt-dock-view'
+        button.textContent = view.label
+        button.classList.toggle('active', view.key === current)
+        button.addEventListener('click', () => pick(view.key))
+        strip.appendChild(button)
+    }
+    return strip
+}
+
 graph.UIManager.addDockTab({
     label: 'Audit',
-    toolbar: (pane) => [viewSwitch(() => pane.refresh())],
+    toolbar: (pane) => [viewSwitch(current, (key) => { current = key; pane.refresh() })],
     render: () => renderCurrentView(),
 })
 ```
+
+Both levels take their active accent from `--pvt-theme-primary`, so a consumer that
+retints the theme retints the dock with it; override either class to go further.
 
 `refresh()` is not optional politeness — the dock keeps the element `render` handed it, so
 a pane that swapped its own DOM would leave the dock re-attaching a stale node the next
