@@ -7,13 +7,19 @@ import { downloadText, toCsv, toJson } from './TableExport'
 import { sliderTune } from '../../icons'
 import './table.scss'
 
+/** Prefix for the dock-tab ids the table claims. Stable, so they can be activated by name. */
+const TAB_ID_PREFIX = 'table-'
+
 /**
- * The graph's rows, as a sortable, selectable grid — the {@link Dock}'s one occupant.
+ * The graph's rows, as a sortable, selectable grid — contributed to the {@link Dock} as
+ * one tab per {@link TableTab}, so `Nodes` and `Edges` are dock tabs like any other.
  *
- * The table owns its content and its controls: the Nodes / Edges strip, the row summary,
- * `Select all`, the exports and the column picker all go into the dock's toolbar slot,
- * and the grid itself into the dock's content host. The region around them — the row's
- * height, the divider, the fold — is the dock's, and this class never touches it.
+ * That is why the strip reads `Nodes │ Edges │ …` rather than nesting one switch inside
+ * another: the table registers through the same `addDockTab` a plugin uses, and is
+ * exactly as privileged. What it owns is the content — a grid per tab, each keeping its
+ * own sort, columns and row filters — and the header controls that go with whichever tab
+ * is on show. The region around them (the row's height, the divider, the fold, the strip
+ * itself) belongs to the dock, and this class never touches it.
  *
  * It is deliberately **read-only**: it reflects the graph and drives the selection, and
  * never changes what the graph displays. Hiding and pinning stay with the sidebar's bulk
@@ -24,25 +30,25 @@ export class Table extends UIComponent {
     private readonly options: TableOptions
     private readonly dock?: Dock
 
-    /** The dock's content host — the grid's parent, and its scroll container. */
-    private host?: HTMLElement
-    /** The dock's toolbar slot, which this table is the only one filling. */
-    private toolbar?: HTMLElement
-    /** What we put in that slot, so it can all be taken back out again. */
-    private readonly toolbarItems: HTMLElement[] = []
-
     private summary?: HTMLSpanElement
     private pickerButton?: HTMLButtonElement
     private picker?: HTMLDivElement
     /** Outside-click / Escape handler, live only while the picker is open. */
     private dismissPicker?: (event: Event) => void
-    private tabs?: HTMLDivElement
     private grid?: TableGrid
     /** One grid per tab, so each keeps its own sort, columns and row filters. */
     private readonly grids = new Map<TableTab, TableGrid>()
     private tab: TableTab = 'nodes'
+    /**
+     * Whether the table's tab is the one on show. A hidden grid does not rebuild: it
+     * would be sorting and windowing rows nobody can see, and losing its scroll
+     * position doing it. Activation always rebuilds, which is the catch-up.
+     */
+    private active = false
     /** Coalescing frame: one rebuild per frame however many events arrive. */
     private rebuildFrame: number | null = null
+    /** Disposers from `addDockTab`, one per tab offered. */
+    private readonly tabDisposers: Array<() => void> = []
 
     constructor(uiManager: UIManager, options: TableOptions = {}, dock?: Dock) {
         super(uiManager)
@@ -52,46 +58,22 @@ export class Table extends UIComponent {
 
     /* ---------- lifecycle ---------- */
 
-    protected onMount(container?: HTMLElement) {
-        const toolbar = this.dock?.toolbarSlot()
-        if (!container || !toolbar) return
-
-        this.host = container
-        this.toolbar = toolbar
-
-        this.tabs = this.addToToolbar(document.createElement('div'))
-        this.tabs.className = 'pvt-table-tabs'
-
-        this.summary = this.addToToolbar(document.createElement('span'))
-        this.summary.className = 'pvt-table-summary'
-
-        // `Select all` carries the margin that pushes the right-hand group over, so the
-        // bar reads: state · actions · settings.
-        const selectAll = this.addToToolbar(document.createElement('button'))
-        selectAll.type = 'button'
-        selectAll.className = 'pvt-table-selectall'
-        selectAll.textContent = 'Select all'
-        selectAll.title = 'Select every row currently listed'
-        this.listen(selectAll, 'click', () => this.grid?.selectAllListed())
-
-        for (const format of this.exportFormats()) {
-            const button = this.addToToolbar(document.createElement('button'))
-            button.type = 'button'
-            button.className = 'pvt-table-export'
-            button.dataset.format = format
-            button.textContent = format.toUpperCase()
-            button.title = `Export the rows and columns currently shown as ${format.toUpperCase()}`
-            this.listen(button, 'click', () => this.exportAs(format))
+    protected onMount() {
+        // No container: the table has no slot of its own any more. It registers tabs and
+        // the dock decides where and when to draw them — the same door a plugin uses.
+        for (const tab of this.tabsOffered()) {
+            this.tabDisposers.push(this.uiManager.addDockTab({
+                id: `${TAB_ID_PREFIX}${tab}`,
+                label: tab === 'edges' ? 'Edges' : 'Nodes',
+                render: () => this.renderTab(tab),
+                toolbar: () => this.buildToolbar(),
+                // No `order`: equal orders keep registration order, so the table's tabs
+                // stay in the order offered, and a plugin's tab — registered later, since
+                // plugins install after the UI is built — lands after them.
+                onActivate: () => this.activateTab(tab),
+                onDeactivate: () => this.deactivateTab(),
+            }))
         }
-
-        this.pickerButton = this.addToToolbar(document.createElement('button'))
-        this.pickerButton.type = 'button'
-        this.pickerButton.className = 'pvt-table-columns-button'
-        this.pickerButton.innerHTML = `${sliderTune}<span>Columns</span>`
-        this.pickerButton.title = 'Choose which columns to show'
-        this.listen(this.pickerButton, 'click', () => this.togglePicker())
-
-        this.buildGrid('nodes')
     }
 
     protected onAfterMount() {
@@ -144,15 +126,11 @@ export class Table extends UIComponent {
         this.queueRebuild()
     }
 
-    /** Add a control to the dock's toolbar slot, remembering it for teardown. */
-    private addToToolbar<T extends HTMLElement>(element: T): T {
-        this.toolbar?.appendChild(element)
-        this.toolbarItems.push(element)
-        return element
-    }
-
     /** Schedule a rebuild for the next frame, collapsing any already pending. */
     private queueRebuild(): void {
+        // Nothing to catch up on that activation won't do: a hidden grid rebuilds when it
+        // comes back, and until then the work is invisible either way.
+        if (!this.active) return
         if (this.rebuildFrame !== null) return
         this.rebuildFrame = requestAnimationFrame(() => {
             this.rebuildFrame = null
@@ -162,55 +140,97 @@ export class Table extends UIComponent {
         })
     }
 
-    /* ---------- tabs ---------- */
+    /* ---------- the dock tabs ---------- */
 
-    /** The tabs on offer. A single tab renders no strip — there is nothing to switch. */
+    /** The tabs on offer. One is fine — the dock draws no strip for a single tab. */
     private tabsOffered(): TableTab[] {
         return this.options.tabs ?? ['nodes', 'edges']
     }
 
     /**
-     * Swap the grid for another tab's. Each tab gets a fresh grid so its sort, its column
-     * choices and its row filters are its own — switching to Edges and back should not
-     * have quietly rearranged the node table.
+     * The body for a tab: its grid's root. Each tab gets a grid of its own so its sort,
+     * its column choices and its row filters are its own — switching to Edges and back
+     * should not have quietly rearranged the node table.
+     *
+     * The dock calls this once per tab and keeps what it returns, so the grid it hands
+     * back has to be the one that tab keeps for good.
      */
-    private buildGrid(tab: TableTab): void {
-        if (!this.host) return
-        this.tab = tab
-        // The grid has to stay a *direct* child of the host: that is the scroll container
-        // it windows its rows against.
-        this.grid?.getRoot().remove()
-
-        const grid = this.grids.get(tab) ?? new TableGrid(this.uiManager, tab, this.options.sort, this.options.rowActivate, this.options.virtualizeAbove)
+    private renderTab(tab: TableTab): HTMLElement {
+        const grid = this.grids.get(tab)
+            ?? new TableGrid(this.uiManager, tab, this.options.sort, this.options.rowActivate, this.options.virtualizeAbove)
         this.grids.set(tab, grid)
-        this.grid = grid
-        grid.setSummaryTarget(this.summary)
-        this.host.appendChild(grid.getRoot())
+        return grid.getRoot()
+    }
 
-        this.renderTabs()
+    /**
+     * Take over as the visible tab. Runs after the dock has attached the body and filled
+     * the toolbar, so `this.summary` is already the fresh element to bind to.
+     */
+    private activateTab(tab: TableTab): void {
+        this.tab = tab
+        this.grid = this.grids.get(tab)
+        this.grid?.setSummaryTarget(this.summary)
+        this.active = true
+        // Unconditional, because anything could have changed while this tab was away.
         this.queueRebuild()
     }
 
-    private renderTabs(): void {
-        const strip = this.tabs
-        if (!strip) return
-        const offered = this.tabsOffered()
-        strip.innerHTML = ''
-        if (offered.length < 2) return
+    private deactivateTab(): void {
+        this.active = false
+        if (this.rebuildFrame !== null) cancelAnimationFrame(this.rebuildFrame)
+        this.rebuildFrame = null
+        // The picker is anchored to a button the dock is about to take off the bar, and it
+        // is not one of the toolbar items the dock knows to remove.
+        this.closePicker()
+    }
 
-        for (const tab of offered) {
+    /**
+     * The header controls for whichever tab is coming to the front. Rebuilt on every
+     * activation rather than cached: they are cheap, they read the current tab, and a
+     * fresh set cannot hold a stale grid reference.
+     *
+     * Listeners go on directly rather than through `listen`: these elements are discarded
+     * on the next tab switch, and a tracked disposer would outlive them — one more entry
+     * per switch, held for the life of the table.
+     *
+     * `Select all` carries the margin that pushes the right-hand group over, so the bar
+     * reads: state · actions · settings.
+     */
+    private buildToolbar(): HTMLElement[] {
+        const items: HTMLElement[] = []
+
+        this.summary = document.createElement('span')
+        this.summary.className = 'pvt-table-summary'
+        items.push(this.summary)
+
+        const selectAll = document.createElement('button')
+        selectAll.type = 'button'
+        selectAll.className = 'pvt-table-selectall'
+        selectAll.textContent = 'Select all'
+        selectAll.title = 'Select every row currently listed'
+        selectAll.addEventListener('click', () => this.grid?.selectAllListed())
+        items.push(selectAll)
+
+        for (const format of this.exportFormats()) {
             const button = document.createElement('button')
             button.type = 'button'
-            button.className = 'pvt-table-tab'
-            button.dataset.tab = tab
-            button.textContent = tab === 'edges' ? 'Edges' : 'Nodes'
-            button.classList.toggle('active', tab === this.tab)
-            button.setAttribute('aria-pressed', String(tab === this.tab))
-            this.listen(button, 'click', () => {
-                if (this.tab !== tab) this.buildGrid(tab)
-            })
-            strip.appendChild(button)
+            button.className = 'pvt-table-export'
+            button.dataset.format = format
+            button.textContent = format.toUpperCase()
+            button.title = `Export the rows and columns currently shown as ${format.toUpperCase()}`
+            button.addEventListener('click', () => this.exportAs(format))
+            items.push(button)
         }
+
+        this.pickerButton = document.createElement('button')
+        this.pickerButton.type = 'button'
+        this.pickerButton.className = 'pvt-table-columns-button'
+        this.pickerButton.innerHTML = `${sliderTune}<span>Columns</span>`
+        this.pickerButton.title = 'Choose which columns to show'
+        this.pickerButton.addEventListener('click', () => this.togglePicker())
+        items.push(this.pickerButton)
+
+        return items
     }
 
     /* ---------- export ---------- */
@@ -250,7 +270,10 @@ export class Table extends UIComponent {
         this.picker = document.createElement('div')
         this.picker.className = 'pvt-table-columns-picker'
         this.pickerButton?.classList.add('active')
-        this.toolbar?.appendChild(this.picker)
+        // Beside its own button — which is in the dock's toolbar slot, so the popover
+        // stays inside `.pivotick` and inherits its theme. It is `position: fixed` and
+        // anchored in viewport coordinates, so the parent is about scoping, not layout.
+        this.pickerButton?.parentElement?.appendChild(this.picker)
         this.renderPicker()
         this.positionPicker()
 
@@ -330,25 +353,32 @@ export class Table extends UIComponent {
         this.closePicker()
         if (this.rebuildFrame !== null) cancelAnimationFrame(this.rebuildFrame)
         this.rebuildFrame = null
-        // Hand the dock's slots back the way we found them.
-        for (const item of this.toolbarItems) item.remove()
-        this.toolbarItems.length = 0
+        this.active = false
+        // Unregistering takes each tab's body out of the dock with it, so the grid roots
+        // are already detached by the time they are disposed.
+        for (const dispose of this.tabDisposers.splice(0)) dispose()
         for (const grid of this.grids.values()) {
             grid.getRoot().remove()
             grid.dispose()
         }
         this.grids.clear()
-        this.host = undefined
-        this.toolbar = undefined
         this.summary = undefined
         this.pickerButton = undefined
         this.picker = undefined
-        this.tabs = undefined
         this.grid = undefined
     }
 
     /** The grid, for anything that needs its rows (export, selection sync). */
     public getGrid(): TableGrid | undefined {
         return this.grid
+    }
+
+    /**
+     * The id of the table's first dock tab — what `Graph.openTable()` activates, so a
+     * call named for the table actually shows one. `undefined` if it offers none.
+     */
+    public firstTabId(): string | undefined {
+        const [first] = this.tabsOffered()
+        return first ? `${TAB_ID_PREFIX}${first}` : undefined
     }
 }

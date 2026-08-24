@@ -11,7 +11,7 @@ import type { Notification } from './Notifier'
 import merge from 'lodash.merge'
 import { Tooltip } from './elements/Tooltip/Tooltip'
 import { ContextMenu } from './elements/ContextMenu/ContextMenu'
-import type { Editors, ExtraPanel, GraphUI, GraphUIMode, LegendOptions, PropertyEntry, RegisteredExtraPanel, TableOptions } from '../interfaces/GraphUI'
+import type { DockTab, Editors, ExtraPanel, GraphUI, GraphUIMode, LegendOptions, PropertyEntry, RegisteredDockTab, RegisteredExtraPanel, TableOptions } from '../interfaces/GraphUI'
 import { KeybindingManager } from './KeybindingManager'
 import { createInspectModal } from './elements/modals/InspectNodeModal/InspectNodeModal'
 import { Note } from '../Note'
@@ -144,6 +144,23 @@ export type ExtraPanelChange =
     | { type: 'refresh', id?: string }
 
 /**
+ * A change to the dock's tab registry, broadcast to the {@link Dock} when one is
+ * mounted. Same division of labour as {@link ExtraPanelChange}: the registry is the
+ * single source of truth for which tabs exist and in what order, and the dock owns
+ * the strip's DOM.
+ *
+ * The registry outlives any particular dock — tabs can be registered before the
+ * region is built, and survive it being torn down and rebuilt.
+ */
+export type DockTabChange =
+    | { type: 'add', tab: RegisteredDockTab, index: number }
+    /** Carries the tab, not just its id: it is already out of the registry by now, and
+     *  the dock still owes a departing tab its `onDeactivate`. */
+    | { type: 'remove', tab: RegisteredDockTab }
+    /** Bring one tab to the front. */
+    | { type: 'activate', id: string }
+
+/**
  * Declarative catalog of the built-in UI elements. Each entry says which
  * modes it appears in, an optional `enabled` gate, how to construct it, and
  * which layout slot it mounts into. Adding a new built-in element is a single
@@ -245,19 +262,24 @@ const UI_ELEMENTS: UIElementSpec[] = [
     {
         // `full` only: the dock is a grid row beside the sidebar, and the other modes
         // promise a canvas without that much chrome. It owns its own toggle and shortcut,
-        // so nothing else has to exist first — but it must come before its occupant,
-        // which mounts into the slots it renders.
+        // so nothing else has to exist first — but it must come before the table, whose
+        // tabs it has to be there to receive.
+        //
+        // A dock is *also* built on demand by `addDockTab` when a tab arrives without one
+        // (see `ensureDock`), which is the only way a plugin can get in: plugins install
+        // after this whole catalogue has run.
         key: 'dock', modes: ['full'],
         enabled: o => tableWanted(o.table),
         make: ui => new Dock(ui, dockOptions(ui.getOptions().table)), slot: ui => ui.layout?.dock
     },
     {
-        // The dock's one occupant. Registered separately rather than built by the dock,
-        // so the region stays ignorant of what is in it.
+        // Not an occupant of the dock so much as a contributor to it: the table registers
+        // one dock tab per `TableTab` and owns no region of its own, which is why it asks
+        // for no slot.
         key: 'table', modes: ['full'],
         enabled: o => tableWanted(o.table),
         make: ui => new Table(ui, tableOptions(ui.getOptions().table), ui.dock),
-        slot: ui => ui.dock?.contentHost()
+        slot: () => undefined
     },
     {
         key: 'mainHeader', modes: ['full', 'light'],
@@ -311,6 +333,16 @@ export class UIManager {
     private panelSeq = 0
     /** Hosts subscribed to registry changes (the sidebar's panel manager). */
     private panelSubscribers: Array<(change: ExtraPanelChange) => void> = []
+    /**
+     * Dock tabs, in display order. Here rather than on the dock for the same reason the
+     * panels are here rather than on the sidebar — and for one more: a tab may be the
+     * *reason* the region gets built, so the registry has to exist before the dock does.
+     */
+    private dockTabs: RegisteredDockTab[] = []
+    /** Monotonic counter behind auto-generated tab ids (never reset, so stale disposers can't collide). */
+    private dockTabSeq = 0
+    /** The mounted dock, subscribed to registry changes. At most one. */
+    private dockTabSubscribers: Array<(change: DockTabChange) => void> = []
     /** True after `destroy()`; late registrations are refused until `setup()` reruns. */
     private destroyed = false
     /** Names of installed plugins, for de-duplication. Reset on `destroy()`. */
@@ -538,6 +570,8 @@ export class UIManager {
             addPanel: (panel) => this.addPanel(panel),
             removePanel: (id) => this.removePanel(id),
             refreshPanel: (id) => this.refreshPanel(id),
+            addDockTab: (tab) => this.addDockTab(tab),
+            removeDockTab: (id) => this.removeDockTab(id),
             onPhase: (phase, callback) => this.onPhase(phase, callback),
             addKeybinding: (binding) => { this.uiDisposables.push(this.keyManager.register(binding)) },
         }
@@ -677,6 +711,110 @@ export class UIManager {
         for (const subscriber of [...this.panelSubscribers]) subscriber(change)
     }
 
+    /* ---------- dock tabs ---------- */
+
+    /**
+     * Register a pane in the bottom dock, at any point in the graph's life — before or
+     * after `graphReady`, and from a plugin's `install`.
+     *
+     * **The first tab brings the region with it.** Plugins install after the UI is
+     * built (`Graph` constructs the UIManager before it runs `options.plugins`), so a
+     * tab always arrives too late for the dock's `UI_ELEMENTS` gate to have said yes on
+     * its behalf. Rather than make every consumer turn the dock on separately,
+     * registering a tab builds it — the same on-first-need construction
+     * {@link setLegend} uses.
+     *
+     * Registration succeeds in every mode; the tab is only *shown* in the modes that
+     * have a dock (`full`).
+     *
+     * @param tab - The tab. `id` is auto-generated when omitted.
+     * @returns A disposer that removes the tab. Calling it twice is a no-op.
+     */
+    public addDockTab(tab: DockTab): () => void {
+        if (this.destroyed) {
+            console.warn('Cannot add a dock tab after the UI is destroyed.')
+            return () => {}
+        }
+        const id = tab.id ?? `pvt-dock-tab-${++this.dockTabSeq}`
+        if (this.dockTabs.some(t => t.id === id)) {
+            console.warn(`A dock tab with id "${id}" is already registered; skipping the duplicate.`)
+            return () => {}
+        }
+
+        const registered: RegisteredDockTab = { ...tab, id }
+        const index = this.dockTabInsertIndex(registered.order ?? 0)
+        this.dockTabs.splice(index, 0, registered)
+        this.emitDockTabChange({ type: 'add', tab: registered, index })
+        // After the broadcast: a dock that already exists has taken the tab, and one that
+        // doesn't gets built holding it. Either way the registry is the truth first.
+        this.ensureDock()
+
+        let disposed = false
+        return () => {
+            if (disposed) return
+            disposed = true
+            this.removeDockTab(id)
+        }
+    }
+
+    /** Remove a registered dock tab by id: its DOM goes, and the strip closes over it. */
+    public removeDockTab(id: string): void {
+        const index = this.dockTabs.findIndex(t => t.id === id)
+        if (index === -1) {
+            // Silent after teardown: a disposer held across destroy() is a no-op, not a mistake.
+            if (!this.destroyed) console.warn(`No dock tab with id "${id}" to remove.`)
+            return
+        }
+        const [removed] = this.dockTabs.splice(index, 1)
+        this.emitDockTabChange({ type: 'remove', tab: removed })
+    }
+
+    /** Bring a registered tab to the front, unfolding the dock if it is folded. */
+    public activateDockTab(id: string): void {
+        if (!this.dockTabs.some(t => t.id === id)) {
+            console.warn(`No dock tab with id "${id}" to activate.`)
+            return
+        }
+        this.emitDockTabChange({ type: 'activate', id })
+    }
+
+    /** The registered tabs, in display order (a copy — mutate through addDockTab / removeDockTab). */
+    public getDockTabs(): ReadonlyArray<RegisteredDockTab> {
+        return [...this.dockTabs]
+    }
+
+    /**
+     * Subscribe to registry changes. Used by the dock to keep its strip in step;
+     * returns an unsubscribe function.
+     */
+    public onDockTabsChanged(callback: (change: DockTabChange) => void): () => void {
+        this.dockTabSubscribers.push(callback)
+        return () => {
+            this.dockTabSubscribers = this.dockTabSubscribers.filter(s => s !== callback)
+        }
+    }
+
+    /** First index whose `order` sorts after `order` — so equal orders keep registration order. */
+    private dockTabInsertIndex(order: number): number {
+        const index = this.dockTabs.findIndex(t => (t.order ?? 0) > order)
+        return index === -1 ? this.dockTabs.length : index
+    }
+
+    private emitDockTabChange(change: DockTabChange): void {
+        for (const subscriber of [...this.dockTabSubscribers]) subscriber(change)
+    }
+
+    /**
+     * Build the dock if tabs want one and this mode has a slot for it. A no-op once it
+     * exists, so it is safe to call on every registration.
+     */
+    private ensureDock(): void {
+        if (this.dock || !this.dockTabs.length || !this.layout?.dock) return
+        const dock = new Dock(this, dockOptions(this.options.table))
+        this.byKey.set('dock', dock)
+        this.addElement(dock, this.layout.dock)
+    }
+
     public destroy() {
         this.destroyed = true
         this.emitPhase('destroy')
@@ -687,6 +825,8 @@ export class UIManager {
         this.installedPlugins.clear()
         this.panels = []
         this.panelSubscribers = []
+        this.dockTabs = []
+        this.dockTabSubscribers = []
         this.modeStore.dispose()
         for (const dispose of this.uiDisposables.splice(0)) dispose()
     }

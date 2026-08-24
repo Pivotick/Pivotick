@@ -1258,9 +1258,15 @@ export class Graph {
      * Opens the data dock — the graph's rows as a sortable, selectable grid split off
      * the bottom of the canvas. `full` mode only, and only when `UI.table` allows it;
      * a no-op otherwise.
+     *
+     * The dock can hold panes other than the table now, so this also brings a table tab
+     * to the front: the call is named for the table and should show you one. Reach for
+     * `UIManager.dock` or `activateDockTab()` to drive the region without that.
      */
     openTable(): void {
         this.UIManager.dock?.setOpen(true)
+        const tableTab = this.UIManager.table?.firstTabId()
+        if (tableTab) this.UIManager.activateDockTab(tableTab)
     }
 
     /** Closes the data dock. */

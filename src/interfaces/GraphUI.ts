@@ -623,6 +623,88 @@ export type IconClass = string
 export type ImagePath = string
 
 /**
+ * What a live dock tab gets to drive itself with — passed to its own `render`,
+ * `toolbar` and activation hooks. It lets a tab bring itself to the front or
+ * unregister without capturing the graph, the dock, or the disposer
+ * `addDockTab` returned.
+ */
+export interface DockTabHandle {
+    /** The tab's id — the declared one, or the auto-generated one. */
+    readonly id: string
+    /** Whether this is the tab currently on show. */
+    readonly active: boolean
+    /** Bring this tab to the front, unfolding the dock if it is folded. */
+    activate(): void
+    /** Unregister the tab and take its DOM with it. */
+    remove(): void
+}
+
+/**
+ * A pane in the bottom dock — one entry in its tab strip.
+ *
+ * The dock owns the **region**: the grid row, its height, the resize divider and the
+ * fold. A tab owns what is *in* it — a body, and optionally its own header controls,
+ * which the dock swaps in and out as the active tab changes. With only one tab
+ * registered no strip is drawn at all; there is nothing to switch.
+ *
+ * Register one at any point in the graph's life with `graph.UIManager.addDockTab()`,
+ * or from a plugin's `install` via `ctx.addDockTab()`. Either returns a disposer.
+ *
+ * The data table is itself expressed as dock tabs (`Nodes`, `Edges`), so a registered
+ * tab is exactly as privileged as the built-in one.
+ *
+ * @example
+ * ```js
+ * const dispose = graph.UIManager.addDockTab({
+ *     label: 'Audit',
+ *     render: () => myAuditPane(),
+ *     toolbar: () => [clearButton],
+ * })
+ * ```
+ */
+export interface DockTab {
+    /**
+     * Stable identity: what `removeDockTab` / `activateDockTab` take, and the
+     * `data-tab` written onto the strip's button.
+     * @default an auto-generated `pvt-dock-tab-N`
+     */
+    id?: string
+    /** The strip's label, used verbatim (so it can be translated). */
+    label: string
+    /**
+     * Build the pane's body. Called **once**, lazily, the first time the tab comes to
+     * the front — a tab nobody opens costs nothing. The element is kept and re-attached
+     * on later activations, so it holds its own state (scroll position included).
+     */
+    render: (tab: DockTabHandle) => HTMLElement
+    /**
+     * Build this tab's header controls, laid out as part of the dock's header row.
+     * Re-invoked on **every** activation, so the controls can reflect the tab's
+     * current state.
+     */
+    toolbar?: (tab: DockTabHandle) => HTMLElement | HTMLElement[]
+    /**
+     * Display order in the strip, ascending. Equal orders keep registration order —
+     * and since plugins install after the UI is built, a plugin's tabs land after the
+     * built-in ones without having to say so.
+     * @default 0
+     */
+    order?: number
+    /**
+     * Called when this tab comes to the front, and when it leaves. A tab that watches
+     * live data should stop working in `onDeactivate` and catch up in `onActivate`:
+     * nothing else tells it that it is off screen.
+     */
+    onActivate?: (tab: DockTabHandle) => void
+    onDeactivate?: (tab: DockTabHandle) => void
+}
+
+/** A {@link DockTab} once registered: its `id` is resolved. */
+export interface RegisteredDockTab extends DockTab {
+    id: string
+}
+
+/**
  * The data dock's configuration. Everything here is read-only behaviour: the table
  * reflects and selects, and never changes the graph. Hiding, pinning and restoring stay
  * with the sidebar's bulk actions and the filter panel.

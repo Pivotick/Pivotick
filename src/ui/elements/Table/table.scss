@@ -8,41 +8,6 @@
 // Scrollbars need no opt-in here: `themed-scrollbars` is applied to `.pivotick`
 // and inherits down. Only elements portaled outside it have to include the mixin.
 
-// Nodes / Edges. Rendered only when there is more than one tab on offer.
-.pvt-table-tabs {
-    display: flex;
-    gap: 2px;
-
-    &:empty {
-        display: none;
-    }
-
-    .pvt-dock-collapsed & {
-        display: none;
-    }
-}
-
-.pvt-table-tab {
-    padding: 2px 9px;
-    border: 1px solid transparent;
-    border-radius: 4px;
-    background: transparent;
-    color: var(--pvt-text-color-4);
-    font-size: 12px;
-    cursor: pointer;
-
-    &:hover {
-        color: var(--pvt-text-color-6);
-    }
-
-    &.active {
-        border-color: var(--pvt-chrome-border);
-        background-color: var(--pvt-bg-color-4);
-        color: var(--pvt-text-color-6);
-        font-weight: 600;
-    }
-}
-
 // Exports exactly what is shown: this tab, these columns, this sort, this filter.
 .pvt-table-export {
     padding: 2px 7px;

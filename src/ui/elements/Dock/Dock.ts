@@ -1,5 +1,6 @@
 import { UIComponent } from '../../UIComponent'
-import type { UIManager } from '../../UIManager'
+import type { DockTabChange, UIManager } from '../../UIManager'
+import type { DockTabHandle, RegisteredDockTab } from '../../../interfaces/GraphUI'
 import './dock.scss'
 
 /**
@@ -67,9 +68,25 @@ export class Dock extends UIComponent {
     private root?: HTMLDivElement
     private divider?: HTMLDivElement
     private header?: HTMLDivElement
+    private tabStrip?: HTMLDivElement
     private toolbar?: HTMLDivElement
     private body?: HTMLDivElement
     private toggle?: HTMLButtonElement
+
+    /** The tab on show, or `null` while the registry is empty. */
+    private activeId: string | null = null
+    /**
+     * Each tab's body, built on first activation and kept — so a tab holds its own
+     * state (its scroll position included) across a detour through another one.
+     */
+    private readonly bodies = new Map<string, HTMLElement>()
+    /** One handle per tab, so a tab that stashed its handle keeps a live one. */
+    private readonly handles = new Map<string, DockTabHandle>()
+    /**
+     * What the *active tab* put in the toolbar, so a swap takes back only what it
+     * added. Anything else in the slot belongs to someone else and is left alone.
+     */
+    private toolbarItems: HTMLElement[] = []
 
     private open: boolean
     private collapsed: boolean
@@ -136,12 +153,31 @@ export class Dock extends UIComponent {
         })
         this.header.appendChild(this.toggle)
 
+        // The tab strip sits between the chevron and the toolbar — which is exactly
+        // where the table drew its own Nodes / Edges strip before the dock took the job,
+        // so nothing moved when it did.
+        this.tabStrip = document.createElement('div')
+        this.tabStrip.className = 'pvt-dock-tabs'
+        this.tabStrip.setAttribute('role', 'tablist')
+        // Delegated, so the strip can be redrawn on every registry change without
+        // accumulating a listener per button behind it.
+        this.listen(this.tabStrip, 'click', (event) => {
+            const target = event.target as HTMLElement | null
+            const id = target?.closest<HTMLElement>('.pvt-dock-tab')?.dataset.tab
+            if (id) this.setActive(id, false)
+        })
+        this.header.appendChild(this.tabStrip)
+
         // `display: contents`, so what the occupant puts here lays out as if it sat in
         // the header itself — and an occupant with nothing to add leaves no gap.
         this.toolbar = document.createElement('div')
         this.toolbar.className = 'pvt-dock-toolbar'
         this.header.appendChild(this.toolbar)
 
+        // The active tab's body goes straight in here, as a *direct* child: this is also
+        // the scroll container, so content taller or wider than the region scrolls rather
+        // than stretching the layout — and a `TableGrid` windows its rows against
+        // `root.parentElement`, which only works if nothing is wrapped around it.
         this.body = document.createElement('div')
         this.body.className = 'pvt-dock-body'
         this.root.appendChild(this.body)
@@ -150,6 +186,10 @@ export class Dock extends UIComponent {
 
         this.wireDivider()
         this.observeRoom()
+        // The registry is the source of truth and it predates this dock — tabs may
+        // already be waiting, and one of them may be why the region exists at all.
+        this.track(this.uiManager.onDockTabsChanged(change => this.onTabsChanged(change)))
+        this.syncTabs()
         this.apply()
     }
 
@@ -174,35 +214,26 @@ export class Dock extends UIComponent {
         this.observer?.disconnect()
         this.observer = undefined
         this.collapseWatchers.clear()
+        // The tabs themselves are the registry's, and outlive this dock — only what was
+        // built for them is ours to drop.
+        this.clearToolbar()
+        for (const element of this.bodies.values()) element.remove()
+        this.bodies.clear()
+        this.handles.clear()
+        this.activeId = null
         // Give the grid row back before losing the handle that can find it.
         this.writeHeight(0)
         this.root?.remove()
         this.root = undefined
         this.divider = undefined
         this.header = undefined
+        this.tabStrip = undefined
         this.toolbar = undefined
         this.body = undefined
         this.toggle = undefined
     }
 
     /* ---------- what the occupant gets ---------- */
-
-    /**
-     * The element an occupant renders into, and the scroll container for what it puts
-     * there: content wider or taller than the region scrolls here rather than stretching
-     * the layout.
-     */
-    public contentHost(): HTMLElement | undefined {
-        return this.body
-    }
-
-    /**
-     * The header slot an occupant fills with its own controls, laid out as part of the
-     * header row and to the right of the collapse chevron.
-     */
-    public toolbarSlot(): HTMLElement | undefined {
-        return this.toolbar
-    }
 
     /**
      * Watch the fold. `pvt-dock-collapsed` on the root is what hides the chrome, so an
@@ -212,6 +243,156 @@ export class Dock extends UIComponent {
     public onCollapsedChange(watcher: (collapsed: boolean) => void): () => void {
         this.collapseWatchers.add(watcher)
         return () => this.collapseWatchers.delete(watcher)
+    }
+
+    /* ---------- tabs ---------- */
+
+    /** The registry is the truth; the dock only draws it. */
+    private tabs(): ReadonlyArray<RegisteredDockTab> {
+        return this.uiManager.getDockTabs()
+    }
+
+    /** Which tab is on show, if any. */
+    public getActiveTabId(): string | null {
+        return this.activeId
+    }
+
+    private onTabsChanged(change: DockTabChange): void {
+        if (change.type === 'activate') return this.setActive(change.id, true)
+        if (change.type === 'remove') this.forgetTab(change.tab)
+        this.syncTabs()
+    }
+
+    /** Redraw the strip, and make sure something is on show if anything can be. */
+    private syncTabs(): void {
+        const tabs = this.tabs()
+        const activeIsGone = this.activeId !== null && !tabs.some(t => t.id === this.activeId)
+        if (activeIsGone) this.activeId = null
+        // Silently, without revealing: a tab arriving must not unfold a dock the
+        // consumer asked to keep folded. Only `activateDockTab` reveals.
+        if (this.activeId === null && tabs.length) this.setActive(tabs[0].id, false)
+        this.renderStrip()
+        // The registry changing can hand the row back, or ask for it again.
+        this.apply()
+    }
+
+    /**
+     * Put a tab on show: detach the outgoing body, attach the incoming one, and swap the
+     * header controls with it.
+     *
+     * @param reveal - Also bring the region into view (open it, unfold it). Only an
+     * explicit `activateDockTab` does this; auto-selection never does.
+     */
+    private setActive(id: string, reveal: boolean): void {
+        const tabs = this.tabs()
+        const next = tabs.find(t => t.id === id)
+
+        if (next && this.body && this.activeId !== id) {
+            const current = tabs.find(t => t.id === this.activeId)
+            if (current) {
+                this.clearToolbar()
+                // Detached, not hidden. A `TableGrid` measures its scroller as
+                // `root.parentElement`, so a body parked inside a hidden wrapper would
+                // window its rows against the wrong element.
+                this.bodies.get(current.id)?.remove()
+                current.onDeactivate?.(this.handleFor(current))
+            }
+
+            this.activeId = id
+            let element = this.bodies.get(id)
+            if (!element) {
+                element = next.render(this.handleFor(next))
+                this.bodies.set(id, element)
+            }
+            this.body.appendChild(element)
+            this.fillToolbar(next)
+            next.onActivate?.(this.handleFor(next))
+            this.renderStrip()
+        }
+
+        if (reveal) {
+            if (!this.open) this.setOpen(true)
+            if (this.collapsed) this.setCollapsed(false)
+        }
+    }
+
+    /** Drop everything held for a tab that has left the registry. */
+    private forgetTab(tab: RegisteredDockTab): void {
+        if (this.activeId === tab.id) {
+            this.clearToolbar()
+            this.activeId = null
+            tab.onDeactivate?.(this.handleFor(tab))
+        }
+        this.bodies.get(tab.id)?.remove()
+        this.bodies.delete(tab.id)
+        this.handles.delete(tab.id)
+    }
+
+    private fillToolbar(tab: RegisteredDockTab): void {
+        const slot = this.toolbar
+        if (!slot || !tab.toolbar) return
+        const built = tab.toolbar(this.handleFor(tab))
+        for (const element of Array.isArray(built) ? built : [built]) {
+            slot.appendChild(element)
+            this.toolbarItems.push(element)
+        }
+    }
+
+    /**
+     * Take back only what the active tab put in the slot. Anything else there belongs
+     * to someone else — and `display: contents` means an emptied slot still costs
+     * nothing, not even a flex gap, which is what keeps a swap invisible.
+     */
+    private clearToolbar(): void {
+        for (const item of this.toolbarItems) item.remove()
+        this.toolbarItems = []
+    }
+
+    /**
+     * One handle per tab, kept — so a tab that stashed the handle its `render` was
+     * given still holds a live one on its next activation.
+     */
+    private handleFor(tab: RegisteredDockTab): DockTabHandle {
+        const existing = this.handles.get(tab.id)
+        if (existing) return existing
+
+        // Read through a closure rather than a captured `this`: `active` has to answer
+        // live, and a getter in an object literal has a `this` of its own.
+        const isActive = () => this.activeId === tab.id
+        const handle: DockTabHandle = {
+            id: tab.id,
+            get active() { return isActive() },
+            // Through the registry rather than straight to `setActive`, so a tab driving
+            // itself takes the same path as everyone else.
+            activate: () => this.uiManager.activateDockTab(tab.id),
+            remove: () => this.uiManager.removeDockTab(tab.id),
+        }
+        this.handles.set(tab.id, handle)
+        return handle
+    }
+
+    private renderStrip(): void {
+        const strip = this.tabStrip
+        if (!strip) return
+
+        strip.innerHTML = ''
+        const tabs = this.tabs()
+        // One tab is not a choice — nothing should point at a switch with one setting.
+        // Same rule the table's own Nodes / Edges strip followed before the dock took it.
+        if (tabs.length < 2) return
+
+        for (const tab of tabs) {
+            const button = document.createElement('button')
+            button.type = 'button'
+            button.className = 'pvt-dock-tab'
+            button.dataset.tab = tab.id
+            button.textContent = tab.label
+            const active = tab.id === this.activeId
+            button.classList.toggle('active', active)
+            button.setAttribute('role', 'tab')
+            button.setAttribute('aria-selected', String(active))
+            strip.appendChild(button)
+        }
     }
 
     /* ---------- open / collapse ---------- */
@@ -261,6 +442,14 @@ export class Dock extends UIComponent {
         this.root?.classList.toggle('pvt-dock-open', this.open)
         this.toggle?.setAttribute('aria-expanded', String(!this.collapsed))
         this.toggle?.setAttribute('title', `${this.collapsed ? 'Expand' : 'Collapse'} the ${this.label}`)
+
+        // A region with nothing in it is not a region. The original gate said the dock
+        // must not outlive its occupant; with a registry the occupants can come and go,
+        // so the rule becomes a state rather than a construction-time verdict — and an
+        // empty dock gives the row back instead of showing a bar with nothing behind it.
+        const empty = this.tabs().length === 0
+        this.root?.classList.toggle('pvt-dock-empty', empty)
+        if (empty) return this.writeHeight(0)
 
         if (!this.open) return this.writeHeight(0)
         if (this.collapsed) return this.writeHeight(this.headerHeight())

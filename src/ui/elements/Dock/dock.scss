@@ -30,6 +30,12 @@
     &:not(.pvt-dock-open) {
         display: none;
     }
+
+    // Nothing registered to show. Same treatment as closed — the row is 0px either way,
+    // and a header bar over an empty region is a control that points at nothing.
+    &.pvt-dock-empty {
+        display: none;
+    }
 }
 
 // Grab handle straddling the top edge. Wider than it looks so it is easy to hit,
@@ -87,6 +93,43 @@
 // occupant with nothing to put here costs nothing, not even a gap.
 .pvt-dock-toolbar {
     display: contents;
+}
+
+// The tab strip, between the chevron and the occupant's own controls. Drawn only when
+// there is more than one tab — a switch with one setting is not a switch — which is why
+// `:empty` has to collapse it completely rather than just look empty.
+.pvt-dock-tabs {
+    display: flex;
+    gap: 2px;
+
+    &:empty {
+        display: none;
+    }
+
+    .pvt-dock-collapsed & {
+        display: none;
+    }
+}
+
+.pvt-dock-tab {
+    padding: 2px 9px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--pvt-text-color-4);
+    font-size: 12px;
+    cursor: pointer;
+
+    &:hover {
+        color: var(--pvt-text-color-6);
+    }
+
+    &.active {
+        border-color: var(--pvt-chrome-border);
+        background-color: var(--pvt-bg-color-4);
+        color: var(--pvt-text-color-6);
+        font-weight: 600;
+    }
 }
 
 .pvt-dock-toggle {
