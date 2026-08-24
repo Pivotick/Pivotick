@@ -11,7 +11,7 @@ import type { Notification } from './Notifier'
 import merge from 'lodash.merge'
 import { Tooltip } from './elements/Tooltip/Tooltip'
 import { ContextMenu } from './elements/ContextMenu/ContextMenu'
-import type { Editors, ExtraPanel, GraphUI, GraphUIMode, LegendOptions, PropertyEntry, RegisteredExtraPanel } from '../interfaces/GraphUI'
+import type { Editors, ExtraPanel, GraphUI, GraphUIMode, LegendGroupOptions, LegendOptions, PropertyEntry, RegisteredExtraPanel } from '../interfaces/GraphUI'
 import { KeybindingManager } from './KeybindingManager'
 import { createInspectModal } from './elements/modals/InspectNodeModal/InspectNodeModal'
 import { Note } from '../Note'
@@ -163,7 +163,7 @@ interface UIElementSpec {
  * declaration the legend decides for itself whether the graph's colours warrant
  * one, which it can only judge once the renderer and the data exist.
  */
-function legendWanted(legend?: LegendOptions | boolean): boolean {
+function legendWanted(legend?: LegendOptions | LegendGroupOptions | boolean): boolean {
     if (legend === false) return false
     if (typeof legend === 'object' && legend.enabled === false) return false
     return true
@@ -520,7 +520,7 @@ export class UIManager {
      * that started without a legend can be given one; an `undefined` config empties
      * the legend and drops its filter.
      */
-    public setLegend(config?: LegendOptions | boolean) {
+    public setLegend(config?: LegendOptions | LegendGroupOptions | boolean) {
         if (this.destroyed) {
             console.warn('Cannot set the legend after the UI is destroyed.')
             return

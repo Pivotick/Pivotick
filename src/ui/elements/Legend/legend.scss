@@ -8,6 +8,11 @@
     // left-edge chrome wins the overlap, and the legend can be collapsed away.
     z-index: 5;
     max-width: 232px;
+    // A column so the card below can be told to shrink: a stack of sections must
+    // never grow the card past the canvas — it scrolls instead.
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100% - 28px);
 
     // Nothing declared, nothing rendered — an empty slot must not swallow clicks.
     &:empty {
@@ -35,6 +40,12 @@
         top: calc(var(--pvt-mainheader-height) + 14px);
         right: 14px;
     }
+
+    // Docked below the header, so that is the room there is.
+    &[data-position='top-left'],
+    &[data-position='top-right'] {
+        max-height: calc(100% - var(--pvt-mainheader-height) - 28px);
+    }
 }
 
 // Full mode hangs the sidebar's collapse toggle over the canvas's bottom-left
@@ -43,6 +54,7 @@
 // instead of covering it.
 .pvt-layout.mode-full .pvt-legend[data-position='bottom-left'] {
     bottom: 44px;
+    max-height: calc(100% - 58px);
 }
 
 .pvt-legend-panel {
@@ -50,11 +62,29 @@
 
     display: flex;
     flex-direction: column;
+    // `min-height: 0` is what lets the card shrink inside the capped slot rather
+    // than pushing past it; past that height the whole stack scrolls.
+    min-height: 0;
+    overflow-y: auto;
     padding: 6px;
     border-radius: 11px;
     background-color: var(--pvt-chrome-bg);
     border: 1px solid var(--pvt-chrome-border);
     box-shadow: var(--pvt-chrome-shadow);
+}
+
+// Nothing to list — no card. Sections that resolve to no entries are skipped,
+// and a card with none of them left would otherwise be an empty rounded box.
+.pvt-legend-panel:empty {
+    display: none;
+}
+
+// One key per encoding, stacked. The rule only ever sits *between* sections, so a
+// lone section looks exactly as it did when the legend held only one.
+.pvt-legend-section + .pvt-legend-section {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid var(--pvt-chrome-border);
 }
 
 .pvt-legend-header {
@@ -186,7 +216,7 @@
 }
 
 // Interactive rows only: a plain key (`filterable: false`) keeps its cursor.
-.pvt-legend-panel:not(.pvt-legend-static) .pvt-legend-entry {
+.pvt-legend-section:not(.pvt-legend-static) .pvt-legend-entry {
     cursor: pointer;
 
     &:hover:not(:disabled) {

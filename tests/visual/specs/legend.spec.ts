@@ -1,9 +1,9 @@
-import { test, expect, gotoHarness, loadFixture, harness, expectCanvas, canvas } from '../helpers'
+import { test, expect, gotoHarness, loadFixture, harness, expectCanvas, expectElement, canvas } from '../helpers'
 import type { Page, Locator } from '@playwright/test'
 
 /** The shape `Locator.boundingBox()` resolves to. */
 interface BoundingBox { x: number; y: number; width: number; height: number }
-import type { LegendRow, LegendSpec } from '../harness/harness'
+import type { LegendGroupSpec, LegendRow, LegendSectionSnapshot, LegendSpec } from '../harness/harness'
 
 /**
  * The canvas legend (prd/filterable-legend.md).
@@ -68,6 +68,46 @@ async function loadLegend(page: Page, spec: LegendSpec = {}, expectedEntries = 4
     await expect(page.locator('.pvt-legend-entry')).toHaveCount(expectedEntries)
 }
 
+/* ---------- stacked legends (prd/misp/multi-facet-legend.md) ---------- */
+
+function legendSection(page: Page, id: string): Locator {
+    return page.locator(`.pvt-legend-section[data-section="${id}"]`)
+}
+
+/** One section's entry row — ids repeat across sections, so they are scoped. */
+function sectionRow(page: Page, section: string, id: string): Locator {
+    return legendSection(page, section).locator(`.pvt-legend-entry[data-id="${id}"]`)
+}
+
+function sectionAction(page: Page, section: string, action: string): Locator {
+    return legendSection(page, section).locator(`.pvt-legend-action[data-action="${action}"]`)
+}
+
+/** The rendered sections, top to bottom, each with its own rows. */
+async function sections(page: Page): Promise<LegendSectionSnapshot[]> {
+    return (await harness(page, 'legendSections')) as LegendSectionSnapshot[]
+}
+
+async function sectionIds(page: Page): Promise<string[]> {
+    return (await sections(page)).map((section) => section.id)
+}
+
+/** Which sections are folded, top to bottom — the shape a collapse assertion reads. */
+async function collapsedFlags(page: Page): Promise<boolean[]> {
+    return (await sections(page)).map((section) => section.collapsed)
+}
+
+/** Load a stacked legend and wait until every section has resolved its entries. */
+async function loadGroup(page: Page, spec: LegendGroupSpec, expectedSections: number): Promise<void> {
+    await harness(page, 'loadWithLegendGroup', 'mispLike', spec)
+    await expect(page.locator('.pvt-legend-section')).toHaveCount(expectedSections)
+}
+
+/** Does the card scroll rather than grow past the canvas? */
+async function panelScrolls(page: Page): Promise<boolean> {
+    return page.locator('.pvt-legend-panel').evaluate((el) => el.scrollHeight > el.clientHeight)
+}
+
 test.describe('canvas legend', () => {
     test.beforeEach(async ({ page }) => {
         await gotoHarness(page)
@@ -100,8 +140,9 @@ test.describe('canvas legend', () => {
         // The count is over the whole graph, so it doesn't flicker as you toggle.
         expect((await rows(page)).map((row) => row.count)).toEqual(['1', '1', '1', '1'])
         expect(await activeFilterKeys(page)).toEqual(['__legend'])
+        // The event names the section it came from, whether there is one or several.
         expect(await harness(page, 'legendEvents')).toEqual([
-            { hidden: ['md5'], visible: ['ip-src', 'domain', 'object'] },
+            { section: 'attr-type', hidden: ['md5'], visible: ['ip-src', 'domain', 'object'] },
         ])
         await expectCanvas(page, 'legend-one-hidden.png')
     })
@@ -315,7 +356,8 @@ test.describe('canvas legend', () => {
 
         await legendAction(page, 'collapse').click()
 
-        await expect(page.locator('.pvt-legend-panel')).toHaveClass(/pvt-legend-collapsed/)
+        // The fold is per section, so the state class lives on the section block.
+        await expect(page.locator('.pvt-legend-section')).toHaveClass(/pvt-legend-collapsed/)
         await expect(page.locator('.pvt-legend-list')).toBeHidden()
         await expectCanvas(page, 'legend-collapsed.png')
 
@@ -502,6 +544,187 @@ test.describe('canvas legend', () => {
 
         // c1 is an md5 attribute inside the cluster, c2 a filename.
         expect(await harness(page, 'subgraphVisibleNodeIds', 'obj')).toEqual(['c2'])
+    })
+
+    /**
+     * More than one key on one canvas (prd/misp/multi-facet-legend.md). `UI.legend`
+     * also takes `{ sections: [...] }`: one docked card, one section per encoding,
+     * each keying its own dimension and driving its own filter.
+     */
+    test.describe('several sections', () => {
+        test('stacks one titled section per encoding, in declaration order', async ({ page }) => {
+            await loadGroup(page, {
+                sections: [
+                    { key: 'attr-type', title: 'Element' },
+                    { key: 'category', title: 'Provenance' },
+                    { key: 'to_ids', title: 'IDS flag' },
+                ],
+            }, 3)
+
+            // One card, three sections — not three cards in three corners.
+            await expect(page.locator('.pvt-legend-panel')).toHaveCount(1)
+
+            const rendered = await sections(page)
+            expect(rendered.map((section) => section.id)).toEqual(['attr-type', 'category', 'to_ids'])
+            expect(rendered.map((section) => section.title)).toEqual(['Element', 'Provenance', 'IDS flag'])
+            expect(rendered.map((section) => section.rows.map((row) => row.id))).toEqual([
+                ['ip-src', 'domain', 'md5', 'object'],
+                ['Network activity', 'Payload delivery'],
+                ['true', 'false'],
+            ])
+
+            await expectCanvas(page, 'legend-three-sections.png')
+        })
+
+        test('two sections and together, each on its own filter key', async ({ page }) => {
+            await loadGroup(page, { sections: [{ key: 'attr-type' }, { key: 'category' }] }, 2)
+
+            // md5 is a3; Network activity is a1 and a2. What is left is the node that
+            // neither section excluded — under or-semantics a1 and a2 would survive,
+            // the type section having said nothing against them.
+            await sectionRow(page, 'attr-type', 'md5').click()
+            await sectionRow(page, 'category', 'Network activity').click()
+            await expectVisible(page, ['obj'])
+
+            // Two filters, one per section — the engine ands them.
+            expect(await activeFilterKeys(page)).toEqual(['__legend:attr-type', '__legend:category'])
+
+            // Each section releases only its own half.
+            await sectionRow(page, 'category', 'Network activity').click()
+            await expectVisible(page, ['a1', 'a2', 'obj'])
+            expect(await activeFilterKeys(page)).toEqual(['__legend:attr-type'])
+        })
+
+        test('sections fold one at a time, or all at once with alt', async ({ page }) => {
+            await loadGroup(page, {
+                sections: [{ key: 'attr-type' }, { key: 'category' }, { key: 'to_ids' }],
+            }, 3)
+            expect(await collapsedFlags(page)).toEqual([false, false, false])
+
+            await sectionAction(page, 'category', 'collapse').click()
+            expect(await collapsedFlags(page)).toEqual([false, true, false])
+            await expectCanvas(page, 'legend-section-collapsed.png')
+
+            // Alt-click is collapse-all, so a card keying four dimensions gets out of
+            // the way in one click — and unfolds the same way.
+            await sectionAction(page, 'attr-type', 'collapse').click({ modifiers: ['Alt'] })
+            expect(await collapsedFlags(page)).toEqual([true, true, true])
+            await sectionAction(page, 'attr-type', 'collapse').click({ modifiers: ['Alt'] })
+            expect(await collapsedFlags(page)).toEqual([false, false, false])
+
+            // A fold is the user's, so re-resolving the entries must not undo it.
+            await sectionAction(page, 'category', 'collapse').click()
+            await harness(page, 'addNode', 'a4', 200, 40, 'A4', { 'attr-type': 'sha256', category: 'Network activity' })
+            await expect.poll(async () => (await sections(page))[0].rows.length).toBe(5)
+            expect(await collapsedFlags(page)).toEqual([false, true, false])
+        })
+
+        test('a section keyed on a declared facet drives it; its sibling keeps its own key', async ({ page }) => {
+            // `category` is a declared multiselect, `uuid` is not declared at all.
+            await loadGroup(page, {
+                withFacets: true,
+                sections: [{ key: 'category' }, { key: 'uuid' }],
+            }, 2)
+
+            await sectionRow(page, 'category', 'Network activity').click()
+            expect(await activeFilterKeys(page)).toEqual(['category'])
+            await expectVisible(page, ['a3', 'obj'])
+
+            // The panel is the same filter seen from the other side.
+            await harness(page, 'openFilterPanel')
+            await expect(page.locator('.pvt-slide-panel.open')).toBeVisible()
+            await expect
+                .poll(async () => (await harness(page, 'panelValues')) as Record<string, unknown>)
+                .toMatchObject({ category: ['Payload delivery'] })
+
+            // The undeclared sibling writes its own namespaced key alongside it.
+            await sectionRow(page, 'uuid', 'u-obj').click()
+            expect(await activeFilterKeys(page)).toEqual(['__legend:uuid', 'category'])
+            await expectVisible(page, ['a3'])
+
+            // And a reset re-lights both sections at once.
+            await harness(page, 'resetFilters')
+            await expect.poll(async () => activeFilterKeys(page)).toEqual([])
+            expect(await hiddenRowIds(page)).toEqual([])
+            await expectVisible(page, ['a1', 'a2', 'a3', 'obj'])
+        })
+
+        test('six sections scroll inside the card instead of growing past the canvas', async ({ page }) => {
+            // Top-right: clear of the mode rail, which deliberately overlaps a
+            // bottom-left legend, and the corner whose ceiling is the main header.
+            await loadGroup(page, {
+                position: 'top-right',
+                sections: [
+                    { key: 'attr-type' }, { key: 'category' }, { key: 'to_ids' },
+                    { key: 'value' }, { key: 'uuid' }, { key: 'tags' },
+                ],
+            }, 6)
+
+            // A canvas with no room to spare: the card must cap itself, not overflow.
+            await harness(page, 'setContainerSize', 900, 420)
+            await expect.poll(async () => panelScrolls(page)).toBe(true)
+
+            const canvasBox = await canvas(page).boundingBox()
+            const panelBox = await page.locator('.pvt-legend-panel').boundingBox()
+            expect(panelBox!.y).toBeGreaterThanOrEqual(canvasBox!.y)
+            expect(panelBox!.y + panelBox!.height).toBeLessThanOrEqual(canvasBox!.y + canvasBox!.height)
+
+            await expectElement(page.locator('.pvt-legend-panel'), 'legend-six-sections.png')
+        })
+
+        test('setLegend swaps between the lone and the stacked form, leaving no filter behind', async ({ page }) => {
+            await loadLegend(page)
+            await legendRow(page, 'md5').click()
+            expect(await activeFilterKeys(page)).toEqual(['__legend'])
+
+            // The lone form's key is not the stacked form's, so the old filter goes.
+            await harness(page, 'setLegendGroup', { sections: [{ key: 'attr-type' }, { key: 'category' }] })
+            await expect(page.locator('.pvt-legend-section')).toHaveCount(2)
+            expect(await activeFilterKeys(page)).toEqual([])
+            await expectVisible(page, ['a1', 'a2', 'a3', 'obj'])
+
+            await sectionRow(page, 'category', 'Network activity').click()
+            expect(await activeFilterKeys(page)).toEqual(['__legend:category'])
+
+            // …and back: the section that left takes its filter with it.
+            await harness(page, 'setLegend', { key: 'attr-type' })
+            await expect(page.locator('.pvt-legend-section')).toHaveCount(1)
+            expect(await activeFilterKeys(page)).toEqual([])
+            await expectVisible(page, ['a1', 'a2', 'a3', 'obj'])
+        })
+
+        test('a section with nothing to list is skipped, not shown empty', async ({ page }) => {
+            await loadGroup(page, {
+                sections: [{ key: 'attr-type' }, { key: 'not-a-field', title: 'Nothing' }],
+            }, 1)
+
+            expect(await sectionIds(page)).toEqual(['attr-type'])
+            // The card is the surviving section, with no empty titled box under it.
+            await expect(page.locator('.pvt-legend-title')).toHaveCount(1)
+        })
+
+        test('sections that collide on identity are dropped or renamed, and say so', async ({ page }) => {
+            // Two sections keying on `nodeTypeAccessor` would be the same list twice.
+            await loadGroup(page, {
+                accessor: 'attr-type',
+                sections: [{ auto: true }, { auto: true }, { key: 'category' }],
+            }, 2)
+            expect(await sectionIds(page)).toEqual(['section-0', 'category'])
+            expect(await harness(page, 'warnings')).toEqual(
+                expect.arrayContaining([expect.stringContaining('only one legend section')])
+            )
+
+            // Two sections on one key still both render — under distinct ids, so their
+            // filters stay apart — and the repeated header is called out.
+            await loadGroup(page, { sections: [{ key: 'attr-type' }, { key: 'attr-type' }] }, 2)
+            expect(await sectionIds(page)).toEqual(['attr-type', 'attr-type-1'])
+            expect(await harness(page, 'warnings')).toEqual(
+                expect.arrayContaining([
+                    expect.stringContaining("resolve to the id 'attr-type'"),
+                    expect.stringContaining("both headed 'Attr Type'"),
+                ])
+            )
+        })
     })
 })
 

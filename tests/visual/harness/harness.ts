@@ -22,7 +22,8 @@ import type { GraphInteractionContext } from '../../../src/interfaces/GraphInter
 import type { GraphBounds } from '../../../src/GraphRenderer'
 import { Minimap, type MinimapOptions } from '../../../src/plugins/minimap'
 import type {
-    ExtraPanel, ExtraPanelSelection, LegendEntry, LegendOptions, LegendPosition, LegendToggleState,
+    ExtraPanel, ExtraPanelSelection, LegendEntry, LegendGroupOptions, LegendOptions, LegendPosition,
+    LegendSection, LegendToggleState,
     PropertyEntry,
 } from '../../../src/interfaces/GraphUI'
 import type { RenderContext } from '../../../src/interfaces/AsyncContent'
@@ -303,6 +304,10 @@ export interface LegendSpec {
     key?: string
     /** Declare entries with neither a predicate nor a `key` — the "matches nothing" case. */
     omitKey?: boolean
+    /** Declare neither `key` nor `entries`: the `render.nodeTypeAccessor` section. */
+    auto?: boolean
+    /** Explicit section identity, when the test needs to name a filter key. */
+    id?: string
     title?: string
     position?: LegendPosition
     collapsed?: boolean
@@ -314,6 +319,30 @@ export interface LegendSpec {
     withFacets?: boolean
     /** Paint this node off-palette, so its category resolves to two colours. */
     conflictNodeId?: string
+}
+
+/**
+ * A legend keyed on several dimensions at once — `UI.legend` in its stacked form.
+ * Each section is an ordinary {@link LegendSpec}; the card carries the position.
+ */
+export interface LegendGroupSpec {
+    sections: LegendSpec[]
+    position?: LegendPosition
+    /** The key the node *colours* follow. @default the first section's key */
+    colorKey?: string
+    /** Declare `render.nodeTypeAccessor` on this key, for an `auto` section to find. */
+    accessor?: string
+    /** Also declare `UI.filter.facets`, so a section key naming one is adopted. */
+    withFacets?: boolean
+}
+
+/** One rendered legend section, read straight off the DOM. */
+export interface LegendSectionSnapshot {
+    /** The `data-section` attribute — the section's resolved id. */
+    id: string
+    title: string
+    collapsed: boolean
+    rows: LegendRow[]
 }
 
 /**
@@ -605,6 +634,15 @@ export interface HarnessApi {
     loadAutoLegend(name: FixtureName, spec?: AutoLegendSpec, overrides?: PlainObject): Promise<void>
     /** Replace the legend at runtime (`graph.setLegend`); `false` removes it. */
     setLegend(spec?: LegendSpec | boolean): void
+    /**
+     * Load a fixture whose `UI.legend` keys the graph on several dimensions at once
+     * — the stacked form built from {@link LegendGroupSpec}.
+     */
+    loadWithLegendGroup(name: FixtureName, spec: LegendGroupSpec, overrides?: PlainObject): Promise<void>
+    /** Replace the legend at runtime with a stacked one. */
+    setLegendGroup(spec: LegendGroupSpec): void
+    /** The rendered sections, top to bottom, each with its own rows. */
+    legendSections(): LegendSectionSnapshot[]
     /** The rendered legend rows, in display order. */
     legendRows(): LegendRow[]
     /** The legend's header text, or `null` when there is no legend. */
@@ -1292,27 +1330,84 @@ class Harness implements HarnessApi {
     /** Turn a {@link LegendSpec} into the real `UI.legend` block. */
     private buildLegend(spec?: LegendSpec): LegendOptions | undefined {
         if (!spec) return undefined
-        const key = spec.key ?? LEGEND_KEY
-        const legend: LegendOptions = {}
+        const legend: LegendOptions = this.buildLegendSection(spec)
+        if (spec.position !== undefined) legend.position = spec.position
+        return legend
+    }
 
-        // `omitKey` is the only way to get declared entries that can't match anything.
-        if (!spec.omitKey) legend.key = key
-        if (spec.mode === 'declared-array') {
-            legend.entries = this.legendEntriesFor(DECLARED_LEGEND_VALUES, key, spec)
-        } else if (spec.mode === 'declared-function') {
-            legend.entries = (graph) => this.legendEntriesFor(
-                distinctValues(graph as Pivotick, key).map((option) => option.value), key, spec
-            )
+    /** One section of a legend: a {@link LegendSpec} minus the docking corner. */
+    private buildLegendSection(spec: LegendSpec): LegendSection {
+        const key = spec.key ?? LEGEND_KEY
+        const section: LegendSection = {}
+
+        // An `auto` section declares neither, and keys on `nodeTypeAccessor` instead.
+        if (!spec.auto) {
+            // `omitKey` is the only way to get declared entries that can't match anything.
+            if (!spec.omitKey) section.key = key
+            if (spec.mode === 'declared-array') {
+                section.entries = this.legendEntriesFor(DECLARED_LEGEND_VALUES, key, spec)
+            } else if (spec.mode === 'declared-function') {
+                section.entries = (graph) => this.legendEntriesFor(
+                    distinctValues(graph as Pivotick, key).map((option) => option.value), key, spec
+                )
+            }
         }
 
-        if (spec.title !== undefined) legend.title = spec.title
-        if (spec.position !== undefined) legend.position = spec.position
-        if (spec.collapsed !== undefined) legend.collapsed = spec.collapsed
-        if (spec.collapsible !== undefined) legend.collapsible = spec.collapsible
-        if (spec.filterable !== undefined) legend.filterable = spec.filterable
-        if (spec.showCounts !== undefined) legend.showCounts = spec.showCounts
-        if (spec.maxVisibleEntries !== undefined) legend.maxVisibleEntries = spec.maxVisibleEntries
-        return legend
+        if (spec.id !== undefined) section.id = spec.id
+        if (spec.title !== undefined) section.title = spec.title
+        if (spec.collapsed !== undefined) section.collapsed = spec.collapsed
+        if (spec.collapsible !== undefined) section.collapsible = spec.collapsible
+        if (spec.filterable !== undefined) section.filterable = spec.filterable
+        if (spec.showCounts !== undefined) section.showCounts = spec.showCounts
+        if (spec.maxVisibleEntries !== undefined) section.maxVisibleEntries = spec.maxVisibleEntries
+        return section
+    }
+
+    /** Turn a {@link LegendGroupSpec} into the real stacked `UI.legend` block. */
+    private buildLegendGroup(spec: LegendGroupSpec): LegendGroupOptions {
+        const group: LegendGroupOptions = {
+            sections: spec.sections.map((section) => this.buildLegendSection(section)),
+        }
+        if (spec.position !== undefined) group.position = spec.position
+        return group
+    }
+
+    async loadWithLegendGroup(name: FixtureName, spec: LegendGroupSpec, overrides: PlainObject = {}): Promise<void> {
+        // One dimension drives the colours, the way a real graph works: the other
+        // sections key on dimensions the canvas encodes some other way.
+        const colorKey = spec.colorKey ?? spec.sections[0]?.key ?? LEGEND_KEY
+        const mapper = new ColorPaletteMapper('pivotick')
+        const render: PlainObject = {
+            defaultNodeStyle: {
+                color: (node: Node) => mapper.getColor(String(node.getData()?.[colorKey] ?? '')),
+            },
+        }
+        if (spec.accessor !== undefined) {
+            const accessorKey = spec.accessor
+            render.nodeTypeAccessor = (node: Node) => node.getData()?.[accessorKey]
+        }
+
+        const options: PlainObject = {
+            render,
+            UI: {
+                legend: this.buildLegendGroup(spec),
+                ...(spec.withFacets ? { filter: { facets: DECLARED_FACETS } } : {}),
+            },
+        }
+        await this.load(name, mergeOptions(options, overrides))
+    }
+
+    setLegendGroup(spec: LegendGroupSpec): void {
+        this.g.setLegend(this.buildLegendGroup(spec))
+    }
+
+    legendSections(): LegendSectionSnapshot[] {
+        return [...document.querySelectorAll('.pvt-legend-section')].map((block) => ({
+            id: (block as HTMLElement).dataset.section ?? '',
+            title: block.querySelector('.pvt-legend-title')?.textContent ?? '',
+            collapsed: block.classList.contains('pvt-legend-collapsed'),
+            rows: [...block.querySelectorAll('.pvt-legend-entry')].map((row) => this.readLegendRow(row)),
+        }))
     }
 
     /**
@@ -1335,7 +1430,11 @@ class Harness implements HarnessApi {
     }
 
     legendRows(): LegendRow[] {
-        return [...document.querySelectorAll('.pvt-legend-entry')].map((row) => ({
+        return [...document.querySelectorAll('.pvt-legend-entry')].map((row) => this.readLegendRow(row))
+    }
+
+    private readLegendRow(row: Element): LegendRow {
+        return {
             id: row.getAttribute('data-id') ?? '',
             label: row.querySelector('.pvt-legend-label')?.textContent ?? '',
             count: row.querySelector('.pvt-legend-count')?.textContent ?? null,
@@ -1343,7 +1442,7 @@ class Harness implements HarnessApi {
                 ?.style.getPropertyValue('--pvt-legend-swatch-color').trim() ?? '',
             hidden: row.classList.contains('pvt-legend-hidden'),
             disabled: (row as HTMLButtonElement).disabled === true,
-        }))
+        }
     }
 
     legendTitle(): string | null {
@@ -1357,7 +1456,11 @@ class Harness implements HarnessApi {
     }
 
     legendEvents(): LegendToggleState[] {
-        return this.legendToggles.map((state) => ({ hidden: [...state.hidden], visible: [...state.visible] }))
+        return this.legendToggles.map((state) => ({
+            section: state.section,
+            hidden: [...state.hidden],
+            visible: [...state.visible],
+        }))
     }
 
     activeFilterKeys(): string[] {

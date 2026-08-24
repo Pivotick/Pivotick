@@ -2,17 +2,18 @@ import { ColorPaletteMapper } from '../../../../src/index'
 
 // #region data
 // A service graph whose `type` drives both the colours and the legend. The counts
-// differ per type on purpose — the legend reports them.
+// differ per type on purpose — the legend reports them. `zone` is a second
+// dimension the colours say nothing about — see the stacked legend below.
 const data = {
     nodes: [
-        { id: 'web-1', data: { name: 'Web app', type: 'web' } },
-        { id: 'web-2', data: { name: 'Mobile web', type: 'web' } },
-        { id: 'api-1', data: { name: 'Auth API', type: 'api' } },
-        { id: 'api-2', data: { name: 'Orders API', type: 'api' } },
-        { id: 'api-3', data: { name: 'Billing API', type: 'api' } },
-        { id: 'db-1', data: { name: 'Postgres', type: 'database' } },
-        { id: 'db-2', data: { name: 'Replica', type: 'database' } },
-        { id: 'cache-1', data: { name: 'Redis', type: 'cache' } }
+        { id: 'web-1', data: { name: 'Web app', type: 'web', zone: 'dmz' } },
+        { id: 'web-2', data: { name: 'Mobile web', type: 'web', zone: 'dmz' } },
+        { id: 'api-1', data: { name: 'Auth API', type: 'api', zone: 'internal' } },
+        { id: 'api-2', data: { name: 'Orders API', type: 'api', zone: 'internal' } },
+        { id: 'api-3', data: { name: 'Billing API', type: 'api', zone: 'internal' } },
+        { id: 'db-1', data: { name: 'Postgres', type: 'database', zone: 'internal' } },
+        { id: 'db-2', data: { name: 'Replica', type: 'database', zone: 'internal' } },
+        { id: 'cache-1', data: { name: 'Redis', type: 'cache', zone: 'internal' } }
     ],
     edges: [
         { from: 'web-1', to: 'api-1' },
@@ -93,8 +94,8 @@ const options = {
 // The legend announces every toggle on the data bus, so the choice can be
 // persisted, mirrored elsewhere, or logged.
 function watchLegend(graph) {
-    graph.on('legendToggle', ({ hidden, visible }) => {
-        console.log(`legend: showing ${visible.join(', ') || '(none)'} — hiding ${hidden.join(', ') || '(none)'}`)
+    graph.on('legendToggle', ({ section, hidden, visible }) => {
+        console.log(`legend [${section}]: showing ${visible.join(', ') || '(none)'} — hiding ${hidden.join(', ') || '(none)'}`)
     })
 }
 
@@ -130,6 +131,35 @@ function legendByTier(graph) {
         ]
     })
 }
+
+// Two keys at once: `sections` stacks one titled block per dimension in a single
+// docked card. Each section filters on its own, and the filters *and* together —
+// hide `api` above and `dmz` below and what is left is neither.
+function legendByTypeAndZone(graph) {
+    graph.setLegend({
+        // `position` belongs to the card, not to a section. Top-left, because a
+        // two-section card is tall enough to reach the mode rail in the corner the
+        // single-key legend uses.
+        position: 'top-left',
+        sections: [
+            // Still adopts the declared `type` facet, so this section and the filter
+            // panel remain one control.
+            { key: 'type', title: 'Service type' },
+            {
+                key: 'zone',
+                title: 'Network zone',
+                // The colours encode `type`, not `zone`, and the legend can only
+                // sample colours — so this section declares swatches of its own
+                // rather than showing one that would be a coincidence. `key` still
+                // supplies the predicate.
+                entries: [
+                    { id: 'dmz', label: 'DMZ', color: '#CC79A7' },
+                    { id: 'internal', label: 'Internal', color: '#56B4E9' }
+                ]
+            }
+        ]
+    })
+}
 // #endregion control
 
-export { data, options, watchLegend, legendByType, legendByTier, removeLegend }
+export { data, options, watchLegend, legendByType, legendByTier, legendByTypeAndZone, removeLegend }

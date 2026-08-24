@@ -32,9 +32,16 @@ every row.
 Nodes with no `type` at all get no row, and the legend never hides them: it can
 only act on the categories it lists.
 
+One key is rarely the whole story. **Two keys at once** stacks a titled section per
+dimension in the same docked card — press *type + zone* below: `type` keeps driving
+the panel's facet, `zone` gets a section of its own, and the two filters **and**
+together, so hiding `api` and `dmz` leaves what is neither. `zone` declares its own
+swatch colours, because the canvas encodes `type` in its colours and a sampled swatch
+for `zone` would only be a coincidence.
+
 <script setup>
 import { shallowRef } from 'vue'
-import { data, options, watchLegend, legendByType, legendByTier, removeLegend } from './options.js'
+import { data, options, watchLegend, legendByType, legendByTier, legendByTypeAndZone, removeLegend } from './options.js'
 
 const graph = shallowRef(null)
 const onLoaded = (g) => { graph.value = g; watchLegend(g) }
@@ -44,6 +51,7 @@ const onUnmounted = () => { graph.value = null }
 <div class="lgd-toolbar">
     <button :disabled="!graph" @click="legendByType(graph)">legend by type</button>
     <button :disabled="!graph" @click="legendByTier(graph)">declared entries (tiers)</button>
+    <button :disabled="!graph" @click="legendByTypeAndZone(graph)">two keys at once (type + zone)</button>
     <button :disabled="!graph" @click="removeLegend(graph)">remove legend</button>
 </div>
 
@@ -56,9 +64,10 @@ const onUnmounted = () => { graph.value = null }
 ></Pivotick>
 
 <p class="lgd-hint">
-    In the legend header: <em>show all</em>, <em>invert</em>, and a chevron that folds
-    it to its title. <strong>Alt-click</strong> a row to show only that category.
-    Toggles are logged to the console through <code>legendToggle</code>.
+    In a section header: <em>show all</em>, <em>invert</em>, and a chevron that folds
+    that section to its title — <strong>alt-click</strong> the chevron to fold every
+    section. <strong>Alt-click</strong> a row to show only that category. Toggles are
+    logged to the console through <code>legendToggle</code>, which names its section.
 </p>
 
 <style>

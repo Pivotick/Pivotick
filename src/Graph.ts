@@ -6,7 +6,7 @@ import { Simulation } from './Simulation'
 import { UIManager } from './ui/UIManager'
 import { Notifier } from './ui/Notifier'
 import type { GraphOptions, GraphData, RelaxedGraphData, RawNode, RawEdge, GraphEvents, GraphDataChange } from './interfaces/GraphOptions'
-import type { GraphUI, LegendOptions, LegendToggleState } from './interfaces/GraphUI'
+import type { GraphUI, LegendGroupOptions, LegendOptions, LegendToggleState } from './interfaces/GraphUI'
 import type { InterractionCallbacks } from './interfaces/InterractionCallbacks'
 import type { LayoutOptions } from './interfaces/LayoutOptions'
 import { generateSafeDomId } from './utils/ElementCreation'
@@ -482,11 +482,12 @@ export class Graph {
      * Replace the canvas legend at runtime — the imperative twin of `UI.legend`.
      * A graph that started without one gets it built on the spot; `false` empties
      * the legend and drops its filter, and `true` / `undefined` fall back to
-     * deriving one from `render.nodeTypeAccessor`.
+     * deriving one from `render.nodeTypeAccessor`. Pass a
+     * {@link LegendGroupOptions} to key the graph on several dimensions at once.
      *
      * @param config - The legend to show, or `false` to remove it.
      */
-    public setLegend(config?: LegendOptions | boolean): void {
+    public setLegend(config?: LegendOptions | LegendGroupOptions | boolean): void {
         this.UIManager.setLegend(config)
     }
 

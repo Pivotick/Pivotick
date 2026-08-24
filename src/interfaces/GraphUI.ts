@@ -46,9 +46,11 @@ export interface GraphUI {
      * Left out, a legend appears **by itself** when the graph's colours are
      * explained by a declared `render.nodeTypeAccessor` — see
      * {@link LegendOptions}. `false` suppresses it, `true` asks for it without the
-     * check, and an object configures it.
+     * check, and an object configures it. A graph that encodes several things at
+     * once passes {@link LegendGroupOptions} instead: one docked card, one section
+     * per encoding.
      */
-    legend?: LegendOptions | boolean,
+    legend?: LegendOptions | LegendGroupOptions | boolean,
     /**
      * The canvas minimap: an overview of the whole graph with a rectangle showing what is
      * on screen. Click it to recentre the view, drag it to pan.
@@ -118,31 +120,19 @@ export interface LegendEntry {
 }
 
 /**
- * `UI.legend` — the canvas legend. It is **descriptive**: it reports the colours
- * the renderer already resolved and never assigns one, so the consumer stays the
- * sole owner of node colouring.
- *
- * Entries come from `key` (derived from the data, swatches sampled from the
- * renderer), from `entries` (declared), or from both — `key` then supplies the
- * default predicate for entries that don't carry one.
- *
- * With **neither**, the legend keys itself on `render.nodeTypeAccessor` (the
- * dimension you already declared for `nodeStyleMap`) — but only after checking
- * that this dimension really is the colour dimension: every category must resolve
- * to exactly one colour, there must be at least two of them, and few enough of
- * them to be categories. That check is what makes a legend nobody asked for safe;
- * `UI.legend: true` skips it, `false` suppresses the legend entirely.
- *
- * Shown in `full` and `light` modes only.
- *
- * @example
- * ```js
- * UI: { legend: { key: 'type', title: 'Node type' } }
- * ```
+ * One section of the legend: a key for one dimension of the data. These are
+ * {@link LegendOptions} minus `position` — a section never claims a corner of the
+ * canvas, the card it is stacked in does (see {@link LegendGroupOptions}).
  */
-export interface LegendOptions {
+export interface LegendSection {
     /** @default true when the block is present */
     enabled?: boolean
+    /**
+     * Stable identity: the section's own filter key (`__legend:<id>`) and the
+     * `section` field of the `legendToggle` event.
+     * @default `key`, else `section-<index>`
+     */
+    id?: string
     /**
      * Header text, used verbatim (so it can be translated).
      * @default a prettified `key`, else `'Legend'`
@@ -159,8 +149,6 @@ export interface LegendOptions {
      * time the legend rebuilds (so the list can follow the data).
      */
     entries?: LegendEntry[] | ((graph: Graph) => LegendEntry[])
-    /** @default 'bottom-left' */
-    position?: LegendPosition
     /** @default true */
     collapsible?: boolean
     /** Start collapsed. @default false */
@@ -173,8 +161,76 @@ export interface LegendOptions {
     maxVisibleEntries?: number
 }
 
+/**
+ * `UI.legend` — the canvas legend. It is **descriptive**: it reports the colours
+ * the renderer already resolved and never assigns one, so the consumer stays the
+ * sole owner of node colouring.
+ *
+ * Entries come from `key` (derived from the data, swatches sampled from the
+ * renderer), from `entries` (declared), or from both — `key` then supplies the
+ * default predicate for entries that don't carry one.
+ *
+ * With **neither**, the legend keys itself on `render.nodeTypeAccessor` (the
+ * dimension you already declared for `nodeStyleMap`) — but only after checking
+ * that this dimension really is the colour dimension: every category must resolve
+ * to exactly one colour, there must be at least two of them, and few enough of
+ * them to be categories. That check is what makes a legend nobody asked for safe;
+ * `UI.legend: true` skips it, `false` suppresses the legend entirely.
+ *
+ * To key a graph on more than one dimension at a time, pass
+ * {@link LegendGroupOptions} instead.
+ *
+ * Shown in `full` and `light` modes only.
+ *
+ * @example
+ * ```js
+ * UI: { legend: { key: 'type', title: 'Node type' } }
+ * ```
+ */
+export interface LegendOptions extends LegendSection {
+    /** @default 'bottom-left' */
+    position?: LegendPosition
+}
+
+/**
+ * `UI.legend` in its **multi-section** form: one docked card keying the graph on
+ * several encodings at once. Sections stack top to bottom in declaration order,
+ * each with its own title, entries and collapse toggle.
+ *
+ * Every filterable section owns its own filter, and filters **and** together: with
+ * `attribute` switched off in one section and `self` in another, what stays on the
+ * canvas is the nodes that are neither.
+ *
+ * A section declaring neither `key` nor `entries` is the dimension already declared
+ * as `render.nodeTypeAccessor` — the one spelling for a styling dimension that
+ * isn't a plain data key. Only one section may do that.
+ *
+ * @example
+ * ```js
+ * UI: {
+ *     legend: {
+ *         position: 'bottom-left',
+ *         sections: [
+ *             { key: 'type',  title: 'Element' },
+ *             { key: 'scope', title: 'Provenance' },
+ *         ],
+ *     },
+ * }
+ * ```
+ */
+export interface LegendGroupOptions {
+    /** @default true when the block is present */
+    enabled?: boolean
+    /** Which corner the whole card docks in. @default 'bottom-left' */
+    position?: LegendPosition
+    /** The sections, rendered top to bottom in declaration order. */
+    sections: LegendSection[]
+}
+
 /** The payload of the `legendToggle` event: which legend entries are on and off. */
 export interface LegendToggleState {
+    /** Which section was toggled — its {@link LegendSection.id}. */
+    section: string
     /** Ids of the entries whose nodes are hidden. */
     hidden: string[]
     /** Ids of the entries whose nodes are shown. */

@@ -20,6 +20,9 @@ You may not need that block at all: with no `UI.legend`, a legend appears **on i
 own** when your graph's colours are explained by a declared `render.nodeTypeAccessor`
 — see [On by default](#on-by-default). `UI.legend: false` turns it off.
 
+A graph that encodes several things at once needs several keys: pass `sections`
+instead of a single key — see [Several keys at once](#sections).
+
 The legend is part of the chrome, so it appears in `full` and `light` modes only —
 `viewer` and `static` have none.
 
@@ -134,6 +137,76 @@ and matches nothing.
 A row's toggle state survives a re-resolution; an entry that disappears from the data
 loses it rather than lingering as a hidden ghost.
 
+## Several keys at once {#sections}
+
+A graph that encodes three things — kind in the fill, provenance in the enclosure,
+relationship in the stroke — needs three keys, not one. Pass `sections` and each gets
+its own titled block, stacked top to bottom in **declaration order** inside one docked
+card:
+
+```ts
+UI: {
+    legend: {
+        position: 'bottom-left',        // the card docks; sections don't
+        sections: [
+            { key: 'type',  title: 'Element' },
+            { key: 'scope', title: 'Provenance' },
+            { key: 'tlp',   title: 'Sharing', filterable: false },
+        ],
+    },
+}
+```
+
+A section takes everything a single legend takes except `position`, which belongs to
+the card. Sections are independent in every other way: their own entries, their own
+counts, their own fold state, their own filter.
+
+### Filters and together
+
+Each filterable section drives **its own filter**, and the query engine ands them:
+switch `attribute` off in the first section and `self` off in the second, and what
+stays on the canvas is the nodes that are **neither**. Every section's `show all`
+clears only that section.
+
+A section writes to `__legend:<id>`, where the id is the section's `id`, else its
+`key`, else its place in the stack (`section-0`). A **single-key** legend — the object
+form — keeps the plain `__legend` it has always used. As with a lone legend, a section
+whose `key` names a declared `select` / `multiselect` facet
+[drives that facet](#sharing-a-filter-with-the-panel) instead, and its siblings are
+unaffected.
+
+### Naming the dimension you style by
+
+A section with neither `key` nor `entries` is the dimension you already declared as
+`render.nodeTypeAccessor` — the one spelling for a styling dimension that isn't a
+plain data key. It skips the [colour check](#on-by-default): inside a `sections` list
+you asked for it. Only one section may do this; a second is dropped with a warning.
+
+```ts
+UI: { legend: { sections: [{}, { key: 'scope', title: 'Provenance' }] } }
+//                         ↑ whatever nodeTypeAccessor returns, headed "Type"
+```
+
+::: warning A section keyed off the colour dimension
+Swatches are **sampled from the colours the renderer resolved**, and that is the only
+channel the legend can read. A section keyed on a dimension the colours don't encode
+— provenance, when provenance is drawn as an enclosure — gets the colour of the first
+node in each category, and warns that the category renders more than one. Declare
+`entries` with your own `color` on that section to give it swatches that mean
+something.
+:::
+
+### Space
+
+Sections fold individually; **alt**-click any chevron to fold or unfold the whole
+stack at once. Each section still scrolls its own list past `maxVisibleEntries`, and
+the card as a whole is capped against the canvas height and scrolls rather than
+growing past it — so six sections stay inside the viewport.
+
+A section that resolves to **no entries** (a key no node carries, an empty
+declaration) is skipped entirely rather than shown as an empty titled box; a card
+whose sections are all empty renders nothing at all.
+
 ## Filtering
 
 Toggling a row writes a filter to `graph.queryEngine` — the same engine the
@@ -147,7 +220,8 @@ mechanism:
   doesn't report a legend that isn't hiding anything.
 
 By default the legend owns a reserved filter key of its own (`__legend`) matched
-through a predicate.
+through a predicate — one per section, namespaced as `__legend:<id>`, in the
+[stacked form](#sections).
 
 ### Sharing a filter with the panel
 
@@ -181,10 +255,14 @@ legend keeps its own key and warns — a value list has no meaning there.
 Every toggle is announced on the [data event bus](/callbacks):
 
 ```ts
-graph.on('legendToggle', ({ hidden, visible }) => {
-    localStorage.setItem('legend.hidden', JSON.stringify(hidden))
+graph.on('legendToggle', ({ section, hidden, visible }) => {
+    localStorage.setItem(`legend.hidden.${section}`, JSON.stringify(hidden))
 })
 ```
+
+`section` is the id of the section that was toggled, and `hidden` / `visible` are that
+section's rows. A single-key legend reports its own derived id (its `key`, else
+`section-0`).
 
 Restoring is the same call the legend makes:
 
@@ -200,9 +278,13 @@ it, so nothing stays hidden behind a legend that is gone.
 
 ```ts
 graph.setLegend({ key: 'zone', title: 'Region' })
+graph.setLegend({ sections: [{ key: 'zone' }, { key: 'tier' }] })
 graph.setLegend(false)        // remove it
 graph.setLegend(true)         // back to the derived one
 ```
+
+Swapping between the two forms renames the filter keys, so the filters of the form you
+left are dropped: nothing stays hidden behind a section that is gone.
 
 ## Options
 
@@ -210,13 +292,17 @@ graph.setLegend(true)         // back to the derived one
 from `render.nodeTypeAccessor` without vetting the colours first. Everything below is
 the object form.
 
+The **stacked** form is `{ enabled?, position?, sections }`: `sections` is the list
+below minus `position`, and `enabled` / `position` describe the whole card.
+
 | Option | Type | Default | What it does |
 |---|---|---|---|
 | `enabled` | `boolean` | `true` | `false` keeps the declaration but shows nothing (same as `legend: false`). |
+| `id` | `string` | `key`, else `section-<index>` | Section identity: its filter key (`__legend:<id>`) and the `legendToggle` `section` field. |
 | `title` | `string` | prettified `key`, else `'Legend'` | Header text, used verbatim (so it can be translated). |
 | `key` | `string` | — | Data key the rows are derived from, and the default predicate for declared entries. Omit both this and `entries` for the [automatic](#on-by-default) legend. |
 | `entries` | `LegendEntry[] \| (graph) => LegendEntry[]` | — | Declared rows; a function is re-resolved on data change. |
-| `position` | `'bottom-left' \| 'bottom-right' \| 'top-left' \| 'top-right'` | `'bottom-left'` | Which canvas corner it docks in. |
+| `position` | `'bottom-left' \| 'bottom-right' \| 'top-left' \| 'top-right'` | `'bottom-left'` | Which canvas corner it docks in. Belongs to the card, so it is **not** a section option. |
 | `collapsible` | `boolean` | `true` | Show the chevron that folds it to its title. |
 | `collapsed` | `boolean` | `false` | Start folded. |
 | `showCounts` | `boolean` | `true` | Show the per-category node count (over the whole graph, so it doesn't flicker as you toggle). |
@@ -234,7 +320,8 @@ identity, the value written to the filter, and the label's fallback.
 | **Alt**-click a row | Show only that category |
 | Header **show all** | Re-light every row (clears the legend's filter) |
 | Header **invert** | Swap which categories are shown |
-| Header **chevron** | Fold the legend to its title |
+| Header **chevron** | Fold that section to its title |
+| **Alt**-click the chevron | Fold or unfold every section at once |
 
 Rows are real buttons: tab-reachable, `Enter` / `Space` toggle, and `aria-pressed`
 carries the state. A hidden row is drawn with a hollow swatch **and** dimmed text, so
@@ -242,4 +329,6 @@ colour is never the only signal.
 
 See the [Filterable legend](/examples/gallery/filterable-legend/content) gallery card
 for a live example, and
-[`LegendOptions`](/api/html/interfaces/GraphUI.LegendOptions.html) for the full type.
+[`LegendOptions`](/api/html/interfaces/GraphUI.LegendOptions.html) /
+[`LegendGroupOptions`](/api/html/interfaces/GraphUI.LegendGroupOptions.html) for the
+full types.
