@@ -1,10 +1,121 @@
 # Feature — dock tabs: `addDockTab()`, and the second occupant that proves it
 
-**Status:** Draft — pre-grilling. 2026-08-24.
+**Status:** Implemented — 2026-08-24, branch `worktree-table-mode-prd`. Not merged. **Not grilled** — the decisions below were taken while building, and §3 records the two that departed from the draft. Read §11 before merging.
 **Owner:** Sami Mokaddem
 **Requested:** 2026-08-24
 **Area:** `src/ui/elements/Dock/` (the tab strip, activation, the toolbar swap), `src/ui/UIManager.ts` (`addDockTab` / `removeDockTab` / lazy dock build + the `PluginContext` entry), `src/ui/elements/Table/Table.ts` (becomes a tab contributor rather than *the* occupant), `src/interfaces/GraphUI.ts` (`DockTab`), `src/plugins/eventLog/` (new — the second occupant), `src/Graph.ts` (`openTable` and friends now name a tab)
 **Related:** [`bottom-dock.md`](bottom-dock.md) — its **§8** sketched this API and its **D-6** deferred it *until a real second occupant exists*; this PRD is that effort, and the sketch is the starting point, not the answer. [`table-mode.md`](table-mode.md) — the table is the incumbent occupant and the thing a regression would land on. [`minimap-plugin.md`](minimap-plugin.md) — proof a UI surface can ship as a plugin on public API; the event log should be able to do the same. `misp/runtime-sidebar-panels.md` — `addPanel()` is the closest precedent in the codebase and this API should rhyme with it.
+
+---
+
+## Implementation (2026-08-24)
+
+`tsc`, `eslint` and `npm run build` clean; **427 visual tests green (19 new) with no
+baseline regenerated** — which was the bar, since the table is the incumbent and every
+pixel of its header was already committed to a screenshot.
+
+Four commits on top of the table work: `1880149` (the tabs, and the table moving onto
+them), `7686cc9` (`UI.dock`), `a106f47` (the event log + specs), and this one.
+
+### Verdict on the proposals
+
+- **D-1 held.** The strip is `.pvt-dock-tabs` / `.pvt-dock-tab`, styled from
+  `.pvt-table-tab`'s rules and placed between the chevron and the toolbar — which is
+  exactly where the table drew its own. `Table.renderTabs` and `.pvt-table-tabs` are gone.
+  Cost was the four selectors in `table-export.spec` the draft predicted, and nothing else.
+- **D-2 held**, and it was the right call to depart from §8's singular sketch. One dock tab
+  per `TableTab`: the header's end state *is* what it already looked like, and a third pane
+  is a sibling rather than a second strip. `order` needed no special-casing — both table
+  tabs take the default `0`, equal orders keep registration order, and a plugin registers
+  later by construction.
+- **D-3 held**, and it is the most interesting outcome. `onActivate` / `onDeactivate` are
+  the only signal a pane gets, and the two occupants use them in **opposite** directions:
+  the table stops rebuilding while hidden and re-derives on return, the log keeps recording
+  and stops only painting. That is the strongest evidence the hooks are not table-shaped,
+  and it was not something the draft predicted.
+- **D-4 held.** `ensureDock()` builds the region on first registration, `setLegend`-style.
+  This is load-bearing rather than defensive: `Graph` builds the UIManager at `:111` and
+  installs plugins at `:133`, so **every** plugin tab arrives after the gate. Reverting it
+  fails two specs.
+- **D-5 held, minus the shortcut.** `openTable()` now also activates a table tab, via
+  `Table.firstTabId()` — asking the table which tab is its own rather than matching id
+  prefixes in `Graph`. `Shift+T` still means the region. **No `Shift+\`` was added**: the
+  strip and the chevron are both one click away, and the draft was right to doubt it.
+- **D-6 held.** The event log, `src/plugins/eventLog/`, on public API only — no private
+  reach was needed, so the log found no gaps the way the minimap found three. That is a
+  result about the *event buses*, not about `addDockTab`.
+- **D-7 held.** Off by default, opt-in via `plugins: [eventLog()]`. §11 keeps the tension.
+- **D-8 held.** `Dock` is still not exported; `DockTab` / `DockTabHandle` are. A tab gets a
+  handle, never the dock, so it cannot resize or fold the region it is sharing.
+
+### Changed from the draft while building
+
+1. **`UI.dock` exists after all** (§7.3, answered by a failing test rather than an
+   argument). The draft's conservative plan was `addDockTab`-only, no second config door.
+   That is wrong, and the spec caught it within a minute: `dockOptions()` read `open` /
+   `collapsed` / `height` out of `UI.table`, so with `table: false` **the region's settings
+   were unreachable** — a plugin-only dock could not be asked to open. A log tab could get
+   the region built and then had no way to unfold it short of `activateDockTab`. So
+   `UI.dock` is now the region's own group, `UI.table`'s copies are still honoured, and
+   `UI.dock` wins. This is §7.3's middle option, chosen because a real case demanded it.
+2. **`DockTabChange`'s `remove` carries the tab, not just its id** — unlike
+   `ExtraPanelChange`. By the time the dock hears about a removal the tab is already out of
+   the registry, and the dock still owes a departing tab its `onDeactivate`. The
+   alternative was a second map in the dock mirroring the registry.
+3. **An empty registry hands the row back** (§7.5, answered as assumed). `pvt-dock-empty`,
+   the same treatment as closed. The old gate said the region must not outlive its
+   occupant; with a registry that becomes a *state* rather than a construction-time verdict.
+4. **The region's label is `'dock'`, not `'table'`.** It reads "Resize the dock" /
+   "Collapse the dock" now — the docs already called it that, and with three tabs in it
+   naming the region after one of them was simply wrong. Nothing asserted the old strings.
+5. **`contentHost()` and `toolbarSlot()` are gone.** They were the single-occupant
+   interface and had exactly one caller; `DockTab.render` / `.toolbar` replace them. The
+   dock still fills its own toolbar slot, but on the active tab's behalf.
+6. **`toolbar` is re-invoked per activation** (§7.6, as proposed), and the picker's open
+   state deliberately does *not* survive a switch — consistent with the fold, which already
+   dismisses it. Listeners on those per-activation controls go on with plain
+   `addEventListener` rather than `listen`: a tracked disposer would outlive the element it
+   refers to, adding one entry per tab switch for the life of the table.
+
+### Found on the way in
+
+- **A redrawn strip must not own its listeners.** `renderStrip` runs on every registry
+  change, and the table's old `renderTabs` pattern (`this.listen` per button, after
+  `innerHTML = ''`) would leak a closure per redraw into the component's disposables. One
+  delegated listener on the strip instead.
+- **`display: contents` survived the swap** with no measurable change, which is what kept
+  the baselines still. Worth restating why it matters: an emptied slot costs nothing, not
+  even a flex gap, so a tab with no controls does not shift the header.
+- **Detach, never hide.** An inactive tab's body is removed from the DOM rather than
+  `display: none`-d, because `TableGrid` measures its scroller as `root.parentElement`.
+
+### Verified against reverted fixes
+
+Per this branch's practice, each new claim was checked against a deliberately broken build:
+
+| Reverted | Fails |
+|---|---|
+| the catch-up `queueRebuild()` in `activateTab` | *a data change while the table is hidden shows up on return* |
+| `ensureDock()` | *brings the dock with it when the table is switched off*, *an empty registry gives the row back* |
+| the `pvt-dock-empty` branch in `apply()` | *an empty registry gives the row back* |
+
+## 11. Still open
+
+1. **This was never grilled.** §3's decisions are mine, taken to keep moving; D-2 and the
+   `UI.dock` addition are the two that changed public shape and deserve a second opinion.
+   Both are cheap to reverse — D-2 is one function returning one tab instead of two.
+2. **D-7's tension is unresolved.** The API's proof is behind an opt-in, so no default
+   configuration shows a tab strip at all. A **gallery card** is the cheap answer (§7.2)
+   and is not written.
+3. **The header's width is untested past three tabs.** Nothing in the CSS wraps or
+   scrolls, and at 1024px the bar already carries a chevron, three tabs, a count and four
+   controls. Measure before a fourth pane exists, not after.
+4. **Folding still does not stop an occupant working.** The `active` gate covers hidden
+   tabs; a *folded* dock keeps rebuilding the visible one, as it always has. The same
+   signal would cover it, and §2.4 flagged it as out of scope.
+5. **`docs/ui-table.md` now documents a region under the table's page.** With a second
+   occupant shipped, the dock probably deserves `docs/ui-dock.md` of its own; the content
+   is written, only misfiled.
 
 ---
 

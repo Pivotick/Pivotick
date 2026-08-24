@@ -208,7 +208,12 @@ need editing, the hoist has overreached — that is the tell to watch for.
 ## 8. Out of scope
 
 - **`DockTab` / `addDockTab()`.** Deferred to the effort that brings a real second
-  occupant. The shape to aim at, so the hoist doesn't paint itself into a corner:
+  occupant — **done 2026-08-24**, see [`dock-tabs.md`](dock-tabs.md). The sketch below
+  survived almost intact; the one departure is that `UI.table` resolves into **one tab per
+  `TableTab`** rather than the single `Table` tab written here, because the singular
+  version reproduces exactly the two-strip regression this PRD's D-6 refused. `render` also
+  receives a narrow handle rather than the `Dock` itself, which would have made `Dock`
+  public API by accident. The shape as it was aimed at:
 
   ```ts
   interface DockTab {
@@ -224,7 +229,8 @@ need editing, the hoist has overreached — that is the tell to watch for.
 
   `UI.table` would then resolve into a `DockTab` internally, so it becomes sugar rather
   than a second mechanism. Keep that resolution possible; don't build it.
-- **A log or output pane.** The proof the API works, and the reason to write it.
+- **A log or output pane.** The proof the API works, and the reason to write it. **Done**
+  — `eventLog()`, on public API only, in `src/plugins/eventLog/`.
 - **A console / CLI.** The command language is the real problem, and `GraphQueryEngine`
   filters are the obvious first surface — type an expression, watch the canvas filter.
   Worth doing, separately.

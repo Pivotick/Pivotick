@@ -46,6 +46,7 @@ listed in `plugins` and re-applied through `graph.use` without doubling up.
 | `layout` | the DOM scaffold, read **live** (never a snapshot). `layout.canvas` is where canvas-docked chrome goes |
 | `addElement(element, slot?)` | put a `UIComponent` into the lifecycle, mounted into `slot` |
 | `addPanel(panel)` / `removePanel(id)` / `refreshPanel(id?)` | sidebar panels — the same door as `UI.extraPanels` |
+| `addDockTab(tab)` / `removeDockTab(id)` | a pane in the bottom dock — the same door the built-in table comes through |
 | `onPhase(phase, cb)` | hook `afterMount` / `graphReady` / `destroy`; returns an unsubscribe |
 | `addKeybinding(binding)` | a shortcut that is removed when the UI is torn down |
 | `keyManager` | the keybinding registry, for anything more involved |
@@ -94,6 +95,44 @@ constructed after the UI).
 
 See the [Extend with a plugin](/examples/gallery/extend-with-a-plugin/content) gallery
 card for a live, complete example.
+
+### Contributing a dock tab {#dock-tab}
+
+`ctx.addDockTab` puts a pane in the [bottom dock](/ui-table#dock-tabs), beside the data
+table's `Nodes` and `Edges`. The dock owns the region — its height, its divider, its fold
+and the tab strip — and your tab owns what is in it:
+
+```ts
+const auditLog: PivotickPlugin = {
+    name: 'auditLog',
+    install: (ctx) => ctx.addDockTab({
+        label: 'Audit',
+        render: () => buildPane(ctx.graph),   // once, on first activation
+        toolbar: () => [clearButton],         // on every activation
+        onActivate: () => resumePainting(),
+        onDeactivate: () => stopPainting(),
+    }),
+}
+```
+
+Three things are worth knowing:
+
+- **The first tab builds the region.** Plugins install *after* the UI is built, so a tab
+  always arrives too late for the dock's own mode gate to have said yes on its behalf.
+  Registering one brings the dock into being, which means your plugin works with
+  `UI.table: false` and needs nothing turned on but `full` mode.
+- **`render` is called once, lazily**, the first time the tab is opened; the element is
+  kept and re-attached afterwards, so it holds its own scroll position. `toolbar` is
+  rebuilt on every activation, so its controls can read your pane's current state.
+- **`onActivate` / `onDeactivate` are the only signal that you are off screen**, and what
+  to do with them depends on your pane. Content that is a function of the graph's current
+  state can stop working while hidden and re-derive on return — that is what the table
+  does. Content that would *miss* something has to keep working and merely stop painting —
+  that is what the event log does. Nothing about the hooks prefers either.
+
+A tab is not a `UIComponent`, so nothing drives lifecycle phases into it. When your pane
+needs `graphReady`, do what `eventLog()` does: hold a `UIComponent`, `addElement` it, and
+call `addDockTab` from its `onMount`.
 
 ## Driving the viewport
 
@@ -209,3 +248,51 @@ without being asked. In `static` — which promises no interactions — it is no
 installing it there warns.
 
 See the [Minimap](/examples/gallery/minimap/content) gallery card for a live one.
+
+## The event log {#event-log}
+
+`eventLog()` puts a pane in the [bottom dock](/ui-table#dock-tabs) listing what the graph
+is emitting, newest first: every data change, every filter, every selection, with a
+timestamp and a one-line subject.
+
+```js
+import { Pivotick, eventLog } from 'pivotick'
+
+new Pivotick(container, data, { UI: { mode: 'full' }, plugins: [eventLog()] })
+// …or at any point later:
+graph.use(eventLog({ limit: 100, kinds: ['data'] }))
+```
+
+It is a development instrument — off by default, because nobody wants an event log they
+did not ask for. What it shows is exactly what your own handlers would have seen: it
+subscribes to the public buses (`graph.on`, `graph.queryEngine.on`, and the interaction
+bus for the selection) and reaches for nothing else.
+
+### Options
+
+| Option | Default | What it does |
+|---|---|---|
+| `kinds` | all three | Which buses to record: `'data'`, `'filter'`, `'selection'` |
+| `limit` | `500` | Entries kept; the oldest fall off. A bulk import emits thousands |
+| `paused` | `false` | Start out not recording |
+| `label` | `'Events'` | The tab's label |
+| `id` / `order` | auto | Identity, and placement in the strip |
+
+The header carries a count, a kind filter, **Pause** — which stops recording without
+dropping what is already listed — and **Clear**.
+
+### Why it exists
+
+It is the dock's second occupant, and therefore the proof that
+[`addDockTab`](#dock-tab) is enough to build a pane with rather than a hole shaped like
+the data table. It shares the region's row, height and fold with the table and asked for
+no concessions to get there.
+
+It also uses the activation hooks the **opposite** way round from the table, which is the
+part worth copying. The table stops working when it is off screen and re-derives on
+return, because its content is a function of the graph's current state. The log cannot do
+that — an event is gone once it has fired — so it keeps recording while hidden and only
+stops *painting*, flushing the backlog when it comes back.
+
+It needs `full` mode, since that is the only mode with a dock; installing it elsewhere
+warns rather than failing silently.
