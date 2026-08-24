@@ -21,6 +21,7 @@ import type {
 import type { GraphInteractionContext } from '../../../src/interfaces/GraphInteractions'
 import type { GraphBounds } from '../../../src/GraphRenderer'
 import { Minimap, type MinimapOptions } from '../../../src/plugins/minimap'
+import { EventLog, eventLog, type EventLogOptions } from '../../../src/plugins/eventLog'
 import type {
     ExtraPanel, ExtraPanelSelection, LegendEntry, LegendOptions, LegendPosition, LegendToggleState,
     PropertyEntry,
@@ -583,6 +584,22 @@ export interface HarnessApi {
     warnings(): string[]
     /** Load a fixture with the real `minimap()` plugin installed. */
     loadWithMinimap(name: FixtureName, options?: MinimapOptions, overrides?: PlainObject): Promise<void>
+    /** Load a fixture with the real `eventLog()` plugin installed — the dock's second occupant. */
+    loadWithEventLog(name: FixtureName, options?: EventLogOptions, overrides?: PlainObject): Promise<void>
+    /** What the event log has recorded, newest first: one `type` per entry. */
+    eventLogTypes(): string[]
+    /** The dock's registered tab ids, in strip order. */
+    dockTabIds(): string[]
+    /** The tab the dock is currently showing. */
+    activeDockTabId(): string | null
+    /**
+     * Register a bare dock tab through the public API, the way a consumer would.
+     * Returns its id; `removeTestDockTab` disposes it.
+     */
+    addTestDockTab(id: string, label: string, order?: number): string
+    removeTestDockTab(id: string): void
+    /** Text content of the body the dock is currently showing. */
+    activeDockBodyText(): string
     /**
      * Resize the graph's own container, the way an embedding page would — for the
      * minimap's `collapsed: 'auto'`, which follows the room the canvas has.
@@ -797,6 +814,8 @@ class Harness implements HarnessApi {
     /** Legend observation state, reset per boot. */
     private legendToggles: LegendToggleState[] = []
     private recordedWarnings: string[] = []
+    /** Disposers from `addTestDockTab`, so a test can unregister the way a consumer does. */
+    private dockTabDisposers = new Map<string, () => void>()
 
     constructor(container: HTMLElement) {
         this.container = container
@@ -864,6 +883,8 @@ class Harness implements HarnessApi {
         const options = mergeOptions(BASE_OPTIONS, overrides)
         this.legendToggles = []
         this.recordedWarnings = []
+        // The previous graph's UI is gone, so its disposers refer to nothing.
+        this.dockTabDisposers.clear()
         // `data.notes` carries raw note options; the graph normalises them to Notes.
         const graph = new Pivotick(this.container, data as never, options as never)
         this.graph = graph
@@ -1327,6 +1348,66 @@ class Harness implements HarnessApi {
 
     async loadWithMinimap(name: FixtureName, options: MinimapOptions = {}, overrides: PlainObject = {}): Promise<void> {
         await this.load(name, mergeOptions({ plugins: [minimap(options)] }, overrides))
+    }
+
+    async loadWithEventLog(name: FixtureName, options: EventLogOptions = {}, overrides: PlainObject = {}): Promise<void> {
+        await this.load(name, mergeOptions({ plugins: [eventLog(options)] }, overrides))
+    }
+
+    /**
+     * The live event log. Same runtime-reach as {@link minimapElement}: plugin-added
+     * elements are not in the UIManager's keyed registry.
+     */
+    private eventLogElement(): EventLog | undefined {
+        const ui = this.g.UIManager as unknown as { elements: unknown[] }
+        return ui.elements.find((element) => element instanceof EventLog) as EventLog | undefined
+    }
+
+    eventLogTypes(): string[] {
+        return (this.eventLogElement()?.getEntries() ?? []).map((entry) => entry.type)
+    }
+
+    dockTabIds(): string[] {
+        return this.g.UIManager.getDockTabs().map((tab) => tab.id)
+    }
+
+    activeDockTabId(): string | null {
+        return this.g.UIManager.dock?.getActiveTabId() ?? null
+    }
+
+    addTestDockTab(id: string, label: string, order?: number): string {
+        this.dockTabDisposers.set(id, this.g.UIManager.addDockTab({
+            id,
+            label,
+            order,
+            render: () => {
+                const body = document.createElement('div')
+                body.className = 'pvt-test-dock-body'
+                body.textContent = `body of ${label}`
+                return body
+            },
+            toolbar: () => {
+                const control = document.createElement('button')
+                control.type = 'button'
+                control.className = 'pvt-test-dock-control'
+                control.textContent = `${label} control`
+                return control
+            },
+        }))
+        return id
+    }
+
+    /**
+     * Calls the *disposer*, not `removeDockTab` — and keeps it, so a second call goes
+     * through the disposer's own idempotence rather than round-tripping to a registry
+     * that has legitimately forgotten the tab. That distinction is the thing under test.
+     */
+    removeTestDockTab(id: string): void {
+        this.dockTabDisposers.get(id)?.()
+    }
+
+    activeDockBodyText(): string {
+        return (document.querySelector('.pvt-dock-body')?.textContent ?? '').trim()
     }
 
     /**
