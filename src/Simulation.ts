@@ -171,7 +171,7 @@ export type PhysicsPresetName = 'tight' | 'loose'
  * by heat). Measured, one click reached 60% of the way to tight's own equilibrium and
  * the layout looked like the preset had barely worked. 45 with a 3s settle reaches
  * ~87% — still clearly the calmer preset, now one that arrives. See
- * prd/physics-preset-reheat.md.
+ * prd/archive/physics-preset-reheat.md.
  */
 export const PHYSICS_PRESETS: Record<PhysicsPresetName, PhysicsKnobs> = {
     tight: { repulsion: 32, linkDistance: 70, collisionRadius: 16, friction: 45, centering: 7, settleTime: 3 },

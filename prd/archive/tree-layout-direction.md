@@ -1,7 +1,7 @@
 # Tree layout and edge direction (backlog item B3)
 
 **Status:** done 2026-08-20
-**Source:** `prd/tree-layout-backlog.md` → B3, which asked for `flipEdgeDirection` to be fixed.
+**Source:** `prd/archive/tree-layout-backlog.md` → B3, which asked for `flipEdgeDirection` to be fixed.
 **Outcome:** `flipEdgeDirection` is **deleted**, not fixed. The layout works out for itself when the
 arrows are not a hierarchy.
 

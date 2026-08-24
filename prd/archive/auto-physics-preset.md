@@ -1,6 +1,6 @@
 # Feature — an "Auto" physics preset that tunes the layout on the fly
 
-**Status:** Done — 2026-08-19, branch `worktree-auto-physics-preset`, unmerged. All of §9.1 is in
+**Status:** Done — 2026-08-19, branch `worktree-auto-physics-preset`, since merged into develop. Archived. All of §9.1 is in
 and green. §13 records what the measurements settled, including two corrections to the design
 after Sami reviewed it on real data. `hybrid` won the bake-off; `fill`, `feedback`, the strategy
 indirection and the whole dev rig are deleted, and the tuner is a single `tunePhysics()`.
@@ -8,7 +8,7 @@ indirection and the whole dev rig are deleted, and the tuner is a single `tunePh
 **Requested:** 2026-08-18
 **Area:** `src/AutoPhysics.ts` (new), `src/Simulation.ts` (knob vocabulary, triggers, tuner state, dead-code removal), `src/interfaces/SimulationOptions.ts` (`physics` option, gravity/settle plumbing), `src/ui/elements/PhysicsFlyout/` (preset row + two new sliders), `tests/visual/harness/` (fixtures + `physics: 'manual'` baseline), `docs/.vitepress/components/Pivotick.vue` (gallery pin), `docs/simulation.md` + `docs/configuration.md`.
 **Type:** Layout capability + physics API surface. Changes default behaviour (see §10).
-**Related:** [`graph-app-b3-control-layout.md`](graph-app-b3-control-layout.md) (§5.3 introduced the four-knob setter API and the preset row this extends), `physics-rail-mode` (the flyout this lands in, merged 2026-08-18).
+**Related:** [`graph-app-b3-control-layout.md`](../graph-app-b3-control-layout.md) (§5.3 introduced the four-knob setter API and the preset row this extends), `physics-rail-mode` (the flyout this lands in, merged 2026-08-18).
 
 ---
 

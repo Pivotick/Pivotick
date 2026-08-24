@@ -1,11 +1,11 @@
 # Feature — hoist the bottom dock out of the table
 
-**Status:** Implemented — 2026-08-21, branch `worktree-table-mode-prd`. Not merged. Scope cut on 2026-08-21 from "generic panel host" to **internal hoist only** — see §2.
+**Status:** Done — implemented 2026-08-21 on `worktree-table-mode-prd`, merged into develop 2026-08-24. Archived. Scope cut on 2026-08-21 from "generic panel host" to **internal hoist only** — see §2.
 **Owner:** Sami Mokaddem
 **Requested:** 2026-08-21
 **Area:** `src/ui/elements/Dock/` (new, hoisted out of `src/ui/elements/Table/Table.ts`), `src/ui/UIManager.ts` (`UI_ELEMENTS` row + `dock` accessor), `src/ui/elements/Layout.ts` + `src/styles/_layout.scss` + `src/ui/elements/Sidebar/sidebar.scss` (the row was already there; only its names moved), `src/Graph.ts` (`openTable`/`closeTable`/`toggleTable` now reach the dock)
 **Type:** UI architecture — separate one feature's container from the feature
-**Related:** [`table-mode.md`](table-mode.md) (built the dock as part of the table; this splits them, and its §5.6/§5.9 seams stay intact); `misp/runtime-sidebar-panels.md` (**the pattern this leaves room for** — `UI.extraPanels` + `graph.UIManager.addPanel()` returning a disposer); [`minimap-plugin.md`](minimap-plugin.md) (proof that a UI surface can ship as a plugin on public API — a log or console tab should eventually be able to do the same); [`graph-app-b3-control-layout.md`](graph-app-b3-control-layout.md) (its rejected family **A · "Command Dock"** put tools in a bottom dock; this is not that — no tools move here)
+**Related:** [`table-mode.md`](table-mode.md) (built the dock as part of the table; this splits them, and its §5.6/§5.9 seams stay intact); `misp/runtime-sidebar-panels.md` (**the pattern this leaves room for** — `UI.extraPanels` + `graph.UIManager.addPanel()` returning a disposer); [`minimap-plugin.md`](minimap-plugin.md) (proof that a UI surface can ship as a plugin on public API — a log or console tab should eventually be able to do the same); [`graph-app-b3-control-layout.md`](../graph-app-b3-control-layout.md) (its rejected family **A · "Command Dock"** put tools in a bottom dock; this is not that — no tools move here)
 
 ---
 

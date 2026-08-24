@@ -1,11 +1,11 @@
 # Feature — a minimap, and the viewport API that makes it possible as a plugin
 
-**Status:** Implemented — 2026-08-19, branch `worktree-worktree-minimap-plugin`. Not merged.
+**Status:** Done — implemented 2026-08-19 on `worktree-worktree-minimap-plugin`, since merged into develop. Archived.
 **Owner:** Sami Mokaddem
 **Requested:** 2026-08-19
 **Area:** `src/GraphRenderer.ts` + `src/renderers/svg/GraphSvgRenderer.ts` (new viewport API), `src/plugins/minimap/` (new), `src/index.ts` (export), `src/interfaces/Plugin.ts` (stale doc), `docs/plugins.md` (new)
 **Type:** Plugin + renderer API
-**Related:** [`renderer-abstraction-audit.md`](renderer-abstraction-audit.md) (WP1–WP8 deferred until a real consumer needs the abstraction — this is that consumer, for one narrow slice); [`filterable-legend.md`](filterable-legend.md) (the canvas-corner inventory, and the cached-render pattern this reuses); [`graph-app-b3-control-layout.md`](graph-app-b3-control-layout.md) (the chrome it shares corners with)
+**Related:** [`renderer-abstraction-audit.md`](../renderer-abstraction-audit.md) (WP1–WP8 deferred until a real consumer needs the abstraction — this is that consumer, for one narrow slice); [`filterable-legend.md`](filterable-legend.md) (the canvas-corner inventory, and the cached-render pattern this reuses); [`graph-app-b3-control-layout.md`](../graph-app-b3-control-layout.md) (the chrome it shares corners with)
 
 ---
 

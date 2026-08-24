@@ -1,6 +1,6 @@
 # Feature — dock tabs: `addDockTab()`, and the second occupant that proves it
 
-**Status:** Implemented — 2026-08-24, branch `worktree-table-mode-prd`. Not merged. **D-2 was reversed on review** (Sami, 2026-08-24) from a flat strip to the nested model — see *Reversed* below, which supersedes the D-2 verdict. Read §11 before merging.
+**Status:** Done — implemented 2026-08-24 on `worktree-table-mode-prd`, merged into develop 2026-08-24. Archived. **D-2 was reversed on review** (Sami, 2026-08-24) from a flat strip to the nested model — see *Reversed* below, which supersedes the D-2 verdict. Merged with §11.1 still open: `UI.dock` and `DockTabHandle.refresh()` shipped without a second opinion.
 **Owner:** Sami Mokaddem
 **Requested:** 2026-08-24
 **Area:** `src/ui/elements/Dock/` (the tab strip, activation, the toolbar swap), `src/ui/UIManager.ts` (`addDockTab` / `removeDockTab` / lazy dock build + the `PluginContext` entry), `src/ui/elements/Table/Table.ts` (becomes a tab contributor rather than *the* occupant), `src/interfaces/GraphUI.ts` (`DockTab`), `src/plugins/eventLog/` (new — the second occupant), `src/Graph.ts` (`openTable` and friends now name a tab)

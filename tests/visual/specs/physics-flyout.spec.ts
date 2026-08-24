@@ -148,7 +148,7 @@ test.describe('physics-flyout', () => {
     // Tight's `friction` and `settleTime` are load-bearing rather than cosmetic: 58 against
     // a 2.25s settle was the heaviest damping in the set paired with the shortest run, and
     // a click reached only 60% of the way to where tight actually settles. Pinned here so
-    // the pair cannot drift back apart. See prd/physics-preset-reheat.md.
+    // the pair cannot drift back apart. See prd/archive/physics-preset-reheat.md.
     test('applying the Tight preset sets every slider', async ({ page }) => {
         await loadFixture(page, 'basic', B3)
         await openFlyout(page)
@@ -321,7 +321,7 @@ test.describe('physics-flyout', () => {
     // ── Root picker ──────────────────────────────────────────────────────────
     // `rootId` / `rootIdAlgorithmFinder` were real options with no way to reach them; the
     // root row is that way. A menu rather than a row of tiles, so each choice can carry
-    // the sentence its name needs — see prd/tree-root-picker.md.
+    // the sentence its name needs — see prd/archive/tree-root-picker.md.
 
     // It belongs to the tree layouts, like the spacing card beside it.
     test('a tree layout offers the root picker', async ({ page }) => {

@@ -384,7 +384,7 @@ test.describe('auto-physics', () => {
     // A preset click used to land the layout roughly half way to the preset's own
     // equilibrium, so the preset read as having done nothing and the only way to see it
     // was to keep clicking. Measured, one click now covers 87% of the distance to where
-    // the preset settles, against 60% before — see prd/physics-preset-reheat.md §3.3.
+    // the preset settles, against 60% before — see prd/archive/physics-preset-reheat.md §3.3.
     //
     // That measurement is deliberately *not* the assertion here. It depends on the run
     // getting its full budget of frames, and under a parallel suite the browser does not

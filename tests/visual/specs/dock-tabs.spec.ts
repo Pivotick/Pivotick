@@ -1,7 +1,7 @@
 import { test, expect, gotoHarness, harness, loadFixture } from '../helpers'
 
 // ── Dock tabs, and the second occupant ──────────────────────────────────────
-// `addDockTab()` (prd/dock-tabs.md). The model is **nested**: the dock's strip names
+// `addDockTab()` (prd/archive/dock-tabs.md). The model is **nested**: the dock's strip names
 // *panes* (`Table`, `Events`), and a pane with several views of its own draws its own
 // switch. So `Nodes` / `Edges` are the table's, not the dock's — they are two views of
 // one pane, and listing them beside another pane's tab would claim otherwise.

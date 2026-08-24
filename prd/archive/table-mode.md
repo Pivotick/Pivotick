@@ -1,11 +1,11 @@
 # Feature — Table mode: the graph's data as a sortable, selectable grid
 
-**Status:** Implemented — 2026-08-20, branch `worktree-table-mode-prd`. Not merged.
+**Status:** Done — implemented 2026-08-20 on `worktree-table-mode-prd`, merged into develop 2026-08-24. Archived.
 **Owner:** Sami Mokaddem
 **Requested:** 2026-08-20
 **Area:** `src/ui/elements/Table/` (new), `src/ui/elements/Layout.ts` + `src/styles/_layout.scss` (dock slot + grid row), `src/ui/UIManager.ts` (`UI_ELEMENTS` row), `src/ui/elements/Mainheader/Mainheader.ts` (the toggle pill), `src/interfaces/GraphUI.ts` (`TableOptions`), `src/Graph.ts` (multi-select by identity + open/close API), `src/Simulation.ts` (container measurement), `src/renderers/svg/NodeDrawer.ts` (`applyShadow`), `src/ui/elements/GraphFilter/GraphFilter.ts` → a shared derivation util, `docs/ui-table.md` + a gallery card (new)
 **Type:** Core view mode (read-only, v1)
-**Related:** [`filterable-legend.md`](filterable-legend.md) (the three-tier declared/derived/off resolution this copies; its "one filter model" ruling is **narrowed** here — see §5.6); [`minimap-plugin.md`](minimap-plugin.md) (`getMutable*` over `get*`; the `collapsed: 'auto'` hysteresis + `userChose` latch this reuses); [`graph-app-b3-control-layout.md`](graph-app-b3-control-layout.md) (the rail taxonomy this deliberately stays out of); `misp/declarative-filter-facets.md` (`FilterFacet`, which is already a column spec — §5.2); `misp/runtime-sidebar-panels.md` (multi-event re-render coalescing — §5.7); `misp/selection-api-by-identity.md` (**desirable, not blocking** — see §3.5)
+**Related:** [`filterable-legend.md`](filterable-legend.md) (the three-tier declared/derived/off resolution this copies; its "one filter model" ruling is **narrowed** here — see §5.6); [`minimap-plugin.md`](minimap-plugin.md) (`getMutable*` over `get*`; the `collapsed: 'auto'` hysteresis + `userChose` latch this reuses); [`graph-app-b3-control-layout.md`](../graph-app-b3-control-layout.md) (the rail taxonomy this deliberately stays out of); `misp/declarative-filter-facets.md` (`FilterFacet`, which is already a column spec — §5.2); `misp/runtime-sidebar-panels.md` (multi-event re-render coalescing — §5.7); `misp/selection-api-by-identity.md` (**desirable, not blocking** — see §3.5)
 
 ---
 
