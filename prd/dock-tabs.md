@@ -21,9 +21,10 @@ card). **431 tests green, no baseline regenerated.**
 
 ### Verdict on the proposals
 
-- **D-1 held.** The strip is `.pvt-dock-tabs` / `.pvt-dock-tab`, styled from
-  `.pvt-table-tab`'s rules and placed between the chevron and the toolbar — which is
-  exactly where the table drew its own. `Table.renderTabs` and `.pvt-table-tabs` are gone.
+- **D-1 held.** The strip is `.pvt-dock-tabs` / `.pvt-dock-tab`, styled from the table's
+  old tab rules and placed between the chevron and the toolbar — which is exactly where
+  the table drew its own. (The reversal below brought `Table.renderTabs` back; its classes
+  are `.pvt-dock-views` / `.pvt-dock-view`, per §11.3.)
   Cost was the four selectors in `table-export.spec` the draft predicted, and nothing else.
 - **D-2 was reversed** — see *Reversed: the nested model* below. §8's singular sketch was
   right all along. `order` still needed no special-casing: the table's one tab takes the
@@ -170,13 +171,25 @@ Per this branch's practice, each new claim was checked against a deliberately br
    thing `refreshPanel` does for a panel's title — and `PluginContext` grew
    `refreshDockTab` for parity with `refreshPanel`. Regression spec: *refresh rebuilds the
    controls, not just the body*, checked against a reverted fix.
-3. **The header's width is untested past three tabs.** Nothing in the CSS wraps or
+3. **Both switch levels are now themeable, and the accent bug is fixed.** Writing the
+   gallery card left a pane's inner switch with no class to reach for, so the card
+   restated the table's pill look inline. `.pvt-dock-views` / `.pvt-dock-view` are now
+   public (documented on `DockTab.toolbar`, in `ui-table.md` and in `plugins.md`), the
+   table renders through them, and the card uses them instead of inline style. Doing it
+   surfaced a real bug: **`--pvt-primary-color` was never defined anywhere in the
+   library**, so the active tab's underline, the divider's drag accent and the selected
+   row all fell through to a hard-coded `#007acc`, ignoring the theme. The two chrome
+   accents now use `--pvt-theme-primary` like the rest of the B3 chrome, and the selected
+   row uses `--pvt-selection-color` — the same colour the canvas marks a selected node
+   with, which is what its own comment always claimed. `dock-panes/pic.png` regenerated
+   for the new accent; no baseline moved.
+4. **The header's width is untested past three tabs.** Nothing in the CSS wraps or
    scrolls, and at 1024px the bar already carries a chevron, three tabs, a count and four
    controls. Measure before a fourth pane exists, not after.
-4. **Folding still does not stop an occupant working.** The `active` gate covers hidden
+5. **Folding still does not stop an occupant working.** The `active` gate covers hidden
    tabs; a *folded* dock keeps rebuilding the visible one, as it always has. The same
    signal would cover it, and §2.4 flagged it as out of scope.
-5. **`docs/ui-table.md` now documents a region under the table's page.** With a second
+6. **`docs/ui-table.md` now documents a region under the table's page.** With a second
    occupant shipped, the dock probably deserves `docs/ui-dock.md` of its own; the content
    is written, only misfiled.
 
