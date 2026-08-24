@@ -80,7 +80,53 @@ export interface GraphUI {
      * modes never mount it. See {@link TableOptions}.
      */
     table?: TableOptions | boolean,
+    /**
+     * The bottom dock itself — the region the table and any registered
+     * {@link DockTab} share, rather than what is in it.
+     *
+     * `UI.table` still carries the same three settings, and did before the region
+     * had tabs; those are honoured, and anything set here wins. Declare them here
+     * when the table is switched off, since that is the only way to reach the dock
+     * a plugin's tab brings with it.
+     */
+    dock?: DockOptions,
     keybindings?: Keybinding[];
+}
+
+/**
+ * `UI.dock` — the bottom dock's own settings: the region, not its occupants.
+ *
+ * Everything about *what is in* the dock is declared elsewhere — the table under
+ * `UI.table`, anything else through `addDockTab()`. What is left here is the region
+ * the occupants share, which is why there is exactly one of each setting however
+ * many tabs are registered.
+ *
+ * @example
+ * ```js
+ * // A dock holding only a plugin's pane, open on load
+ * UI: { mode: 'full', table: false, dock: { open: true, height: 0.3 } }
+ * ```
+ *
+ * @category Main Options
+ */
+export interface DockOptions {
+    /**
+     * Whether the region is present, and expanded when it is. Three states, because
+     * the collapsed bar is the control that opens it:
+     *
+     * - `true` — present and expanded.
+     * - `false` — not present at all. `Shift+T` still brings it in.
+     * - **unset (default)** — present, folded to its header bar.
+     */
+    open?: boolean,
+    /**
+     * Folded away to just its header bar. `'auto'` follows the room available, until
+     * the first explicit collapse or expand hands control to the user for good.
+     * @default 'auto'
+     */
+    collapsed?: boolean | 'auto',
+    /** Expanded height: a pixel count, or a fraction of the canvas between 0 and 1. */
+    height?: number,
 }
 
 /**

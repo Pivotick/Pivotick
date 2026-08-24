@@ -22,7 +22,7 @@ import { ToolPanel } from './elements/ToolPanel/ToolPanel'
 import { ViewFlyout } from './elements/ViewFlyout/ViewFlyout'
 import { PhysicsFlyout } from './elements/PhysicsFlyout/PhysicsFlyout'
 import { Legend } from './elements/Legend/Legend'
-import { Dock, type DockOptions } from './elements/Dock/Dock'
+import { Dock, type DockConfig } from './elements/Dock/Dock'
 import { Table } from './elements/Table/Table'
 import type { PivotickPlugin, PluginContext } from '../interfaces/Plugin'
 
@@ -190,8 +190,9 @@ function legendWanted(legend?: LegendOptions | boolean): boolean {
 
 /**
  * Is a data table wanted? `full` mode offers one unless it is explicitly turned off.
- * It gates the bottom dock too: the region exists for its occupant, and must not
- * outlive it. The mode gate itself lives in the {@link UI_ELEMENTS} entry.
+ * It gates the bottom dock's *construction* too — no table, no region to build up front —
+ * but a dock tab registered later can bring one into being on its own (`ensureDock`), and
+ * an emptied registry hands the row back. The mode gate lives in {@link UI_ELEMENTS}.
  */
 function tableWanted(table?: TableOptions | boolean): boolean {
     if (table === false) return false
@@ -205,13 +206,19 @@ function tableOptions(table?: TableOptions | boolean): TableOptions {
 }
 
 /**
- * The region's share of `UI.table`. The dock has no options of its own — one occupant,
- * so its settings are still declared where the occupant is — but it is the dock that
- * reads these, so they are pulled out here rather than handed the whole table config.
+ * The region's settings, from `UI.dock` — falling back to the copies `UI.table` has
+ * carried since the dock was the table's. Those predate the region having tabs and are
+ * still honoured; `UI.dock` wins where both are set, and is the only door when the table
+ * is switched off, which is exactly the case a plugin's tab creates.
  */
-function dockOptions(table?: TableOptions | boolean): DockOptions {
-    const { open, collapsed, height } = tableOptions(table)
-    return { open, collapsed, height, label: 'table' }
+function dockOptions(options: GraphUI): DockConfig {
+    const table = tableOptions(options.table)
+    const dock = options.dock ?? {}
+    return {
+        open: dock.open ?? table.open,
+        collapsed: dock.collapsed ?? table.collapsed,
+        height: dock.height ?? table.height,
+    }
 }
 
 const UI_ELEMENTS: UIElementSpec[] = [
@@ -270,7 +277,7 @@ const UI_ELEMENTS: UIElementSpec[] = [
         // after this whole catalogue has run.
         key: 'dock', modes: ['full'],
         enabled: o => tableWanted(o.table),
-        make: ui => new Dock(ui, dockOptions(ui.getOptions().table)), slot: ui => ui.layout?.dock
+        make: ui => new Dock(ui, dockOptions(ui.getOptions())), slot: ui => ui.layout?.dock
     },
     {
         // Not an occupant of the dock so much as a contributor to it: the table registers
@@ -810,7 +817,7 @@ export class UIManager {
      */
     private ensureDock(): void {
         if (this.dock || !this.dockTabs.length || !this.layout?.dock) return
-        const dock = new Dock(this, dockOptions(this.options.table))
+        const dock = new Dock(this, dockOptions(this.options))
         this.byKey.set('dock', dock)
         this.addElement(dock, this.layout.dock)
     }

@@ -1,6 +1,6 @@
 import { UIComponent } from '../../UIComponent'
 import type { DockTabChange, UIManager } from '../../UIManager'
-import type { DockTabHandle, RegisteredDockTab } from '../../../interfaces/GraphUI'
+import type { DockOptions, DockTabHandle, RegisteredDockTab } from '../../../interfaces/GraphUI'
 import './dock.scss'
 
 /**
@@ -30,40 +30,35 @@ const COLLAPSE_ROOM_RATIO = 2.1
 const COLLAPSE_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" d="M2.5 7.5L6 4l3.5 3.5"/></svg>'
 
 /**
- * The region's own settings — deliberately *not* a `GraphUI` group. The dock has no
- * public option of its own: `UIManager` resolves these out of `UI.table`, which is the
- * only occupant there is.
+ * What the dock is constructed with: the public {@link DockOptions} it resolves out of
+ * `UI.dock` / `UI.table`, plus the name it puts on its own controls.
  */
-export interface DockOptions {
-    /** Whether the region is present, and expanded when it is. See `TableOptions.open`. */
-    open?: boolean,
-    /** Folded away to the header bar. `'auto'` follows the room available. */
-    collapsed?: boolean | 'auto',
-    /** Expanded height: a pixel count, or a fraction of the canvas between 0 and 1. */
-    height?: number,
+export interface DockConfig extends DockOptions {
     /**
-     * What the occupant is called, for the labels the dock puts on its own controls
-     * ("Resize the table"). The region borrows its name from whatever is inside it.
-     * @default 'panel'
+     * What the region is called on the controls it draws itself ("Resize the dock").
+     * @default 'dock'
      */
     label?: string,
 }
 
 /**
- * The bottom dock: a grid row under the canvas that something else fills.
+ * The bottom dock: a grid row under the canvas that other panes fill.
  *
  * It owns the **region** — the row and its height, the resize divider, the collapse
- * state and the chevron that drives it, plus a header bar carrying a toolbar slot it
- * renders but never fills. It knows nothing about what is inside it: the occupant
- * renders into {@link contentHost} and puts its own controls in {@link toolbarSlot}.
+ * state and the chevron that drives it, the tab strip, and a header bar whose toolbar
+ * slot it fills on the active tab's behalf but never with anything of its own. It knows
+ * nothing about what is inside it: occupants are {@link DockTab}s in the `UIManager`'s
+ * registry, and this class only draws whatever is there.
  *
- * There is exactly one occupant today — the `Table` — and no public way to register
- * another. That is deliberate: the split exists so the *next* pane (a log, a query
- * console) has somewhere to go without standing up a second resizable row beside this
- * one, each fighting the other for the canvas's height.
+ * One region rather than a row per pane, so two panes cannot each stand up a resizable
+ * strip and fight over the canvas's height. One height, one fold, one strip.
+ *
+ * The registry is the source of truth and **outlives any particular dock**: tabs can be
+ * registered before the region is built — indeed a tab is what builds it, when the table
+ * is switched off — and survive it being torn down.
  */
 export class Dock extends UIComponent {
-    private readonly options: DockOptions
+    private readonly options: DockConfig
 
     private root?: HTMLDivElement
     private divider?: HTMLDivElement
@@ -103,7 +98,7 @@ export class Dock extends UIComponent {
     /** Pointer id held for the duration of a divider drag. */
     private dragPointer: number | null = null
 
-    constructor(uiManager: UIManager, options: DockOptions = {}) {
+    constructor(uiManager: UIManager, options: DockConfig = {}) {
         super(uiManager)
         this.options = options
         // Three states, because the collapsed bar is the affordance that opens the dock —
@@ -121,7 +116,7 @@ export class Dock extends UIComponent {
 
     /** What the region is called on the controls it draws itself. */
     private get label(): string {
-        return this.options.label ?? 'panel'
+        return this.options.label ?? 'dock'
     }
 
     /* ---------- lifecycle ---------- */
