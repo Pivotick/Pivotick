@@ -1,25 +1,29 @@
 import { UIComponent } from '../../UIComponent'
 import type { UIManager } from '../../UIManager'
-import type { TableExportFormat, TableOptions, TableTab } from '../../../interfaces/GraphUI'
+import type { DockTabHandle, TableExportFormat, TableOptions, TableTab } from '../../../interfaces/GraphUI'
 import type { Dock } from '../Dock/Dock'
 import { TableGrid } from './TableGrid'
 import { downloadText, toCsv, toJson } from './TableExport'
 import { sliderTune } from '../../icons'
 import './table.scss'
 
-/** Prefix for the dock-tab ids the table claims. Stable, so they can be activated by name. */
-const TAB_ID_PREFIX = 'table-'
+/** The dock-tab id the table claims. Stable, so it can be activated by name. */
+const DOCK_TAB_ID = 'table'
 
 /**
- * The graph's rows, as a sortable, selectable grid — contributed to the {@link Dock} as
- * one tab per {@link TableTab}, so `Nodes` and `Edges` are dock tabs like any other.
+ * The graph's rows, as a sortable, selectable grid — **one** pane in the {@link Dock},
+ * registered through the same `addDockTab` a plugin uses and exactly as privileged.
  *
- * That is why the strip reads `Nodes │ Edges │ …` rather than nesting one switch inside
- * another: the table registers through the same `addDockTab` a plugin uses, and is
- * exactly as privileged. What it owns is the content — a grid per tab, each keeping its
- * own sort, columns and row filters — and the header controls that go with whichever tab
- * is on show. The region around them (the row's height, the divider, the fold, the strip
- * itself) belongs to the dock, and this class never touches it.
+ * `Nodes` and `Edges` are the table's *own* tabs, not the dock's: they are two views of
+ * this one pane, and listing them out beside another pane's tab would claim they are the
+ * same kind of thing. So the dock's strip names panes (`Table`, `Events`) and this class
+ * draws its own segmented switch in the header slot the dock hands it — the two levels
+ * are styled differently so they never read as one flat row.
+ *
+ * What it owns is the content — a grid per inner tab, each keeping its own sort, columns
+ * and row filters — and the header controls that go with whichever view is on show. The
+ * region around them (the row's height, the divider, the fold, the pane strip) belongs to
+ * the dock, and this class never touches it.
  *
  * It is deliberately **read-only**: it reflects the graph and drives the selection, and
  * never changes what the graph displays. Hiding and pinning stay with the sidebar's bulk
@@ -36,19 +40,23 @@ export class Table extends UIComponent {
     /** Outside-click / Escape handler, live only while the picker is open. */
     private dismissPicker?: (event: Event) => void
     private grid?: TableGrid
-    /** One grid per tab, so each keeps its own sort, columns and row filters. */
+    /** The pane's own `Nodes` / `Edges` strip, in the dock's header slot. */
+    private tabs?: HTMLDivElement
+    /** One grid per inner tab, so each keeps its own sort, columns and row filters. */
     private readonly grids = new Map<TableTab, TableGrid>()
     private tab: TableTab = 'nodes'
     /**
-     * Whether the table's tab is the one on show. A hidden grid does not rebuild: it
-     * would be sorting and windowing rows nobody can see, and losing its scroll
-     * position doing it. Activation always rebuilds, which is the catch-up.
+     * Whether this pane is the one on show. A hidden grid does not rebuild: it would be
+     * sorting and windowing rows nobody can see, and losing its scroll position doing it.
+     * Activation always rebuilds, which is the catch-up.
      */
     private active = false
     /** Coalescing frame: one rebuild per frame however many events arrive. */
     private rebuildFrame: number | null = null
-    /** Disposers from `addDockTab`, one per tab offered. */
-    private readonly tabDisposers: Array<() => void> = []
+    /** The live handle for this pane's dock tab — how an inner switch reaches the dock. */
+    private handle?: DockTabHandle
+    /** Disposer from `addDockTab`. */
+    private disposeTab?: () => void
 
     constructor(uiManager: UIManager, options: TableOptions = {}, dock?: Dock) {
         super(uiManager)
@@ -59,21 +67,21 @@ export class Table extends UIComponent {
     /* ---------- lifecycle ---------- */
 
     protected onMount() {
-        // No container: the table has no slot of its own any more. It registers tabs and
-        // the dock decides where and when to draw them — the same door a plugin uses.
-        for (const tab of this.tabsOffered()) {
-            this.tabDisposers.push(this.uiManager.addDockTab({
-                id: `${TAB_ID_PREFIX}${tab}`,
-                label: tab === 'edges' ? 'Edges' : 'Nodes',
-                render: () => this.renderTab(tab),
-                toolbar: () => this.buildToolbar(),
-                // No `order`: equal orders keep registration order, so the table's tabs
-                // stay in the order offered, and a plugin's tab — registered later, since
-                // plugins install after the UI is built — lands after them.
-                onActivate: () => this.activateTab(tab),
-                onDeactivate: () => this.deactivateTab(),
-            }))
-        }
+        // No container: the table has no slot of its own. It is **one** dock tab — one
+        // pane — and `Nodes` / `Edges` are its own business, drawn as a strip in the
+        // toolbar it fills. Flattening them out beside another pane's tab would say they
+        // are the same kind of thing, which they are not.
+        //
+        // No `order`: equal orders keep registration order, and a plugin's tab —
+        // registered later, since plugins install after the UI is built — lands after it.
+        this.disposeTab = this.uiManager.addDockTab({
+            id: DOCK_TAB_ID,
+            label: 'Table',
+            render: () => this.renderBody(),
+            toolbar: () => this.buildToolbar(),
+            onActivate: (handle) => this.activatePane(handle),
+            onDeactivate: () => this.deactivatePane(),
+        })
     }
 
     protected onAfterMount() {
@@ -140,48 +148,96 @@ export class Table extends UIComponent {
         })
     }
 
-    /* ---------- the dock tabs ---------- */
+    /* ---------- the pane, and its own tabs ---------- */
 
-    /** The tabs on offer. One is fine — the dock draws no strip for a single tab. */
+    /** The inner tabs on offer. A single one renders no strip — nothing to switch. */
     private tabsOffered(): TableTab[] {
         return this.options.tabs ?? ['nodes', 'edges']
     }
 
     /**
-     * The body for a tab: its grid's root. Each tab gets a grid of its own so its sort,
-     * its column choices and its row filters are its own — switching to Edges and back
-     * should not have quietly rearranged the node table.
+     * The pane's body: the current inner tab's grid root. Each inner tab gets a grid of
+     * its own so its sort, its column choices and its row filters are its own —
+     * switching to Edges and back should not have quietly rearranged the node table.
      *
-     * The dock calls this once per tab and keeps what it returns, so the grid it hands
-     * back has to be the one that tab keeps for good.
+     * Returned **bare**, with no wrapper: `TableGrid` measures its scroller as
+     * `root.parentElement`, so the grid has to stay a direct child of the dock's body or
+     * windowing silently measures the wrong element.
      */
-    private renderTab(tab: TableTab): HTMLElement {
+    private renderBody(): HTMLElement {
+        return this.gridFor(this.tab).getRoot()
+    }
+
+    private gridFor(tab: TableTab): TableGrid {
         const grid = this.grids.get(tab)
             ?? new TableGrid(this.uiManager, tab, this.options.sort, this.options.rowActivate, this.options.virtualizeAbove)
         this.grids.set(tab, grid)
-        return grid.getRoot()
+        return grid
     }
 
     /**
-     * Take over as the visible tab. Runs after the dock has attached the body and filled
-     * the toolbar, so `this.summary` is already the fresh element to bind to.
+     * Switch inner tab. The dock is holding the element `render` handed it, so the swap
+     * has to go through `refresh` rather than being done behind its back — otherwise the
+     * dock re-attaches a stale grid on its next activation.
      */
-    private activateTab(tab: TableTab): void {
+    private showTab(tab: TableTab): void {
+        if (this.tab === tab) return
         this.tab = tab
-        this.grid = this.grids.get(tab)
-        this.grid?.setSummaryTarget(this.summary)
-        this.active = true
-        // Unconditional, because anything could have changed while this tab was away.
+        this.grid = this.gridFor(tab)
+        this.closePicker()
+        this.renderTabs()
+        this.handle?.refresh()
+        this.grid.setSummaryTarget(this.summary)
         this.queueRebuild()
     }
 
-    private deactivateTab(): void {
+    /**
+     * Take over as the visible pane. Runs after the dock has attached the body and filled
+     * the toolbar, so `this.summary` is already the fresh element to bind to.
+     */
+    private activatePane(handle: DockTabHandle): void {
+        this.handle = handle
+        this.grid = this.gridFor(this.tab)
+        this.grid.setSummaryTarget(this.summary)
+        this.active = true
+        // Unconditional, because anything could have changed while the pane was away.
+        this.queueRebuild()
+    }
+
+    private deactivatePane(): void {
         this.active = false
         if (this.rebuildFrame !== null) cancelAnimationFrame(this.rebuildFrame)
         this.rebuildFrame = null
         // The picker is anchored to a button the dock is about to take off the bar, and it
         // is not one of the toolbar items the dock knows to remove.
         this.closePicker()
+    }
+
+    /**
+     * The pane's own `Nodes` / `Edges` strip, in the header slot the dock gave it. These
+     * are deliberately *not* dock tabs and are drawn as a segmented control rather than
+     * as tabs, so the two levels of switch never read as one flat row.
+     */
+    private renderTabs(): void {
+        const strip = this.tabs
+        if (!strip) return
+        const offered = this.tabsOffered()
+        strip.innerHTML = ''
+        if (offered.length < 2) return
+
+        for (const tab of offered) {
+            const button = document.createElement('button')
+            button.type = 'button'
+            button.className = 'pvt-table-tab'
+            button.dataset.tab = tab
+            button.textContent = tab === 'edges' ? 'Edges' : 'Nodes'
+            button.classList.toggle('active', tab === this.tab)
+            button.setAttribute('aria-pressed', String(tab === this.tab))
+            // Direct, not tracked: rebuilt on every activation, so a tracked disposer
+            // would outlive the button it refers to.
+            button.addEventListener('click', () => this.showTab(tab))
+            strip.appendChild(button)
+        }
     }
 
     /**
@@ -198,6 +254,13 @@ export class Table extends UIComponent {
      */
     private buildToolbar(): HTMLElement[] {
         const items: HTMLElement[] = []
+
+        // The pane's own view switch leads the bar, immediately after the dock's own
+        // strip — which is exactly where it has always sat.
+        this.tabs = document.createElement('div')
+        this.tabs.className = 'pvt-table-tabs'
+        items.push(this.tabs)
+        this.renderTabs()
 
         this.summary = document.createElement('span')
         this.summary.className = 'pvt-table-summary'
@@ -354,14 +417,17 @@ export class Table extends UIComponent {
         if (this.rebuildFrame !== null) cancelAnimationFrame(this.rebuildFrame)
         this.rebuildFrame = null
         this.active = false
-        // Unregistering takes each tab's body out of the dock with it, so the grid roots
-        // are already detached by the time they are disposed.
-        for (const dispose of this.tabDisposers.splice(0)) dispose()
+        // Unregistering takes the pane's body out of the dock with it, so the grid root is
+        // already detached by the time it is disposed.
+        this.disposeTab?.()
+        this.disposeTab = undefined
+        this.handle = undefined
         for (const grid of this.grids.values()) {
             grid.getRoot().remove()
             grid.dispose()
         }
         this.grids.clear()
+        this.tabs = undefined
         this.summary = undefined
         this.pickerButton = undefined
         this.picker = undefined
@@ -373,12 +439,8 @@ export class Table extends UIComponent {
         return this.grid
     }
 
-    /**
-     * The id of the table's first dock tab — what `Graph.openTable()` activates, so a
-     * call named for the table actually shows one. `undefined` if it offers none.
-     */
-    public firstTabId(): string | undefined {
-        const [first] = this.tabsOffered()
-        return first ? `${TAB_ID_PREFIX}${first}` : undefined
+    /** The dock-tab id this pane is registered under — what `Graph.openTable()` activates. */
+    public dockTabId(): string {
+        return DOCK_TAB_ID
     }
 }

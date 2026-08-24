@@ -681,6 +681,16 @@ export interface DockTabHandle {
     readonly active: boolean
     /** Bring this tab to the front, unfolding the dock if it is folded. */
     activate(): void
+    /**
+     * Rebuild this tab's body: `render` is called again and what it returns replaces
+     * what is there.
+     *
+     * This is how a pane with **its own** internal views switches between them — the
+     * data table does exactly this for `Nodes` / `Edges`. Doing it by hand is not an
+     * option: the dock keeps the element `render` gave it, so an occupant that swapped
+     * its own DOM would leave the dock holding a stale reference to re-attach later.
+     */
+    refresh(): void
     /** Unregister the tab and take its DOM with it. */
     remove(): void
 }
@@ -696,8 +706,14 @@ export interface DockTabHandle {
  * Register one at any point in the graph's life with `graph.UIManager.addDockTab()`,
  * or from a plugin's `install` via `ctx.addDockTab()`. Either returns a disposer.
  *
- * The data table is itself expressed as dock tabs (`Nodes`, `Edges`), so a registered
- * tab is exactly as privileged as the built-in one.
+ * **One tab is one pane, not one view of one.** A pane with several views of its own —
+ * the data table's `Nodes` and `Edges` — is a *single* dock tab that draws its own
+ * switch in its `toolbar` and calls {@link DockTabHandle.refresh} to change body. So
+ * the dock's strip lists panes (`Table`, `Events`) and never flattens one pane's views
+ * out alongside another pane; the two levels are drawn differently for the same reason.
+ *
+ * The data table is itself just such a tab, so a registered tab is exactly as
+ * privileged as the built-in one.
  *
  * @example
  * ```js

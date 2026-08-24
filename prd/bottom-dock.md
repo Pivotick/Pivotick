@@ -208,12 +208,15 @@ need editing, the hoist has overreached — that is the tell to watch for.
 ## 8. Out of scope
 
 - **`DockTab` / `addDockTab()`.** Deferred to the effort that brings a real second
-  occupant — **done 2026-08-24**, see [`dock-tabs.md`](dock-tabs.md). The sketch below
-  survived almost intact; the one departure is that `UI.table` resolves into **one tab per
-  `TableTab`** rather than the single `Table` tab written here, because the singular
-  version reproduces exactly the two-strip regression this PRD's D-6 refused. `render` also
+  occupant — **done 2026-08-24**, see [`dock-tabs.md`](dock-tabs.md). The sketch below was
+  right: `UI.table` resolves into **a** `DockTab`, singular, and `Nodes` / `Edges` stay the
+  table's own switch. (It shipped flat first, one dock tab per `TableTab`, and was reversed
+  on review — flattening one pane's views out beside another pane's tab claims they are the
+  same kind of thing, and does not scale past two occupants.) Two departures: `render`
   receives a narrow handle rather than the `Dock` itself, which would have made `Dock`
-  public API by accident. The shape as it was aimed at:
+  public API by accident; and the handle grew a `refresh()`, because a pane with internal
+  views has to be able to change body without the dock being left holding a stale element.
+  The shape as it was aimed at:
 
   ```ts
   interface DockTab {

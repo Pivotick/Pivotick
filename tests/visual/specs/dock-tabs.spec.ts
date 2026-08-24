@@ -1,17 +1,22 @@
 import { test, expect, gotoHarness, harness, loadFixture } from '../helpers'
 
 // ── Dock tabs, and the second occupant ──────────────────────────────────────
-// `addDockTab()` (prd/dock-tabs.md). Two claims carry this file:
+// `addDockTab()` (prd/dock-tabs.md). The model is **nested**: the dock's strip names
+// *panes* (`Table`, `Events`), and a pane with several views of its own draws its own
+// switch. So `Nodes` / `Edges` are the table's, not the dock's — they are two views of
+// one pane, and listing them beside another pane's tab would claim otherwise.
 //
-//  1. **The table did not get worse to make room.** Its Nodes / Edges strip is now the
-//     dock's own, so with nothing else registered the header is what it always was —
-//     the whole table suite passes against unregenerated baselines, and the assertions
-//     here are about the strip's *identity*, not its pixels.
-//  2. **The API is enough to build a pane with.** The event log ships on nothing but
+// Three claims carry this file:
+//
+//  1. **The table did not get worse to make room.** On its own it is a single pane, so
+//     the dock draws no strip at all and its header is exactly what it always was — the
+//     whole table suite passes against unregenerated baselines.
+//  2. **The two levels are visually distinct.** Outer tabs are full-height and
+//     underlined; the inner switch is a pill group. Adjacent strips that looked alike
+//     would defeat the point of nesting them.
+//  3. **The API is enough to build a pane with.** The event log ships on nothing but
 //     `addDockTab` and the public event buses, and it uses the activation hooks the
-//     *opposite* way round from the table: the table stops working when hidden and
-//     re-derives, the log keeps recording and stops painting. If the hooks were
-//     table-shaped, the log could not do that.
+//     *opposite* way round from the table.
 
 type Page = import('@playwright/test').Page
 
@@ -23,12 +28,15 @@ const FULL = { UI: { mode: 'full', sidebar: { collapsed: false }, table: { open:
  */
 const NO_TABLE = { UI: { mode: 'full', sidebar: { collapsed: false }, table: false, dock: { open: true } } }
 
-const strip = (page: Page) => page.locator('.pvt-dock-tabs')
-const tabs = (page: Page) => page.locator('.pvt-dock-tab')
+/** The dock's own strip — panes. */
+const paneStrip = (page: Page) => page.locator('.pvt-dock-tabs')
+const paneTabs = (page: Page) => page.locator('.pvt-dock-tab')
+/** The table's own strip — views of one pane. */
+const viewTabs = (page: Page) => page.locator('.pvt-table-tab')
 const dock = (page: Page) => page.locator('.pvt-dock')
 
-const tabLabels = (page: Page) =>
-    tabs(page).evaluateAll(nodes => nodes.map(node => (node.textContent ?? '').trim()))
+const paneLabels = (page: Page) =>
+    paneTabs(page).evaluateAll(nodes => nodes.map(node => (node.textContent ?? '').trim()))
 
 /** Height of the dock's grid row, as the layout actually resolved it. */
 const rowHeight = (page: Page) =>
@@ -47,31 +55,34 @@ test.describe('dock tab registry', () => {
         await gotoHarness(page)
     })
 
-    // The table is not a special case: it comes through `addDockTab` like anything else,
-    // which is what makes a plugin's tab its equal rather than its guest.
-    test('the table registers one tab per TableTab', async ({ page }) => {
+    // One pane, not two. The table's Nodes / Edges live inside it and never reach the
+    // registry — this is the assertion that pins the nested model down.
+    test('the table registers a single pane, and keeps its own views', async ({ page }) => {
         await openDock(page)
-        expect(await harness(page, 'dockTabIds')).toEqual(['table-nodes', 'table-edges'])
-        expect(await harness(page, 'activeDockTabId')).toBe('table-nodes')
-        expect(await tabLabels(page)).toEqual(['Nodes', 'Edges'])
+        expect(await harness(page, 'dockTabIds')).toEqual(['table'])
+        expect(await harness(page, 'activeDockTabId')).toBe('table')
+
+        // Alone, there is nothing to switch between at the pane level…
+        await expect(paneTabs(page)).toHaveCount(0)
+        await expect(paneStrip(page)).toBeHidden()
+        // …but the table's own two views are on the bar as always.
+        await expect(viewTabs(page)).toHaveCount(2)
     })
 
-    // Equal `order` keeps registration order, and a late arrival registers later by
-    // definition — so a plugin lands after the built-in tabs without saying so.
-    test('a registered tab lands after the built-in ones and joins the strip', async ({ page }) => {
+    test('a registered pane joins the strip, after the built-in one', async ({ page }) => {
         await openDock(page)
         await harness(page, 'addTestDockTab', 'audit', 'Audit')
 
-        expect(await harness(page, 'dockTabIds')).toEqual(['table-nodes', 'table-edges', 'audit'])
-        expect(await tabLabels(page)).toEqual(['Nodes', 'Edges', 'Audit'])
+        expect(await harness(page, 'dockTabIds')).toEqual(['table', 'audit'])
+        expect(await paneLabels(page)).toEqual(['Table', 'Audit'])
         // Arriving must not steal the front, nor unfold a dock somebody folded.
-        expect(await harness(page, 'activeDockTabId')).toBe('table-nodes')
+        expect(await harness(page, 'activeDockTabId')).toBe('table')
     })
 
-    test('order places a tab ahead of the built-in ones', async ({ page }) => {
+    test('order places a pane ahead of the built-in one', async ({ page }) => {
         await openDock(page)
         await harness(page, 'addTestDockTab', 'first', 'First', -10)
-        expect(await tabLabels(page)).toEqual(['First', 'Nodes', 'Edges'])
+        expect(await paneLabels(page)).toEqual(['First', 'Table'])
     })
 
     test('a duplicate id is refused, not stacked', async ({ page }) => {
@@ -79,16 +90,16 @@ test.describe('dock tab registry', () => {
         await harness(page, 'addTestDockTab', 'audit', 'Audit')
         await harness(page, 'addTestDockTab', 'audit', 'Audit again')
 
-        expect(await harness(page, 'dockTabIds')).toEqual(['table-nodes', 'table-edges', 'audit'])
+        expect(await harness(page, 'dockTabIds')).toEqual(['table', 'audit'])
         expect(await harness(page, 'warnings'))
             .toEqual(expect.arrayContaining([expect.stringContaining('already registered')]))
     })
 
-    test('the disposer removes the tab, and twice is a no-op', async ({ page }) => {
+    test('the disposer removes the pane, and twice is a no-op', async ({ page }) => {
         await openDock(page)
         await harness(page, 'addTestDockTab', 'audit', 'Audit')
         await harness(page, 'removeTestDockTab', 'audit')
-        expect(await harness(page, 'dockTabIds')).toEqual(['table-nodes', 'table-edges'])
+        expect(await harness(page, 'dockTabIds')).toEqual(['table'])
 
         // Second call goes through the disposer's own idempotence, so it must not warn
         // about a tab that is legitimately already gone.
@@ -97,62 +108,111 @@ test.describe('dock tab registry', () => {
         expect(warnings.filter(w => w.includes('No dock tab'))).toHaveLength(0)
     })
 
-    // Removing the visible tab has to hand the front to a survivor, or the region shows
-    // a header over nothing.
-    test('removing the active tab promotes another', async ({ page }) => {
+    test('removing the active pane promotes another', async ({ page }) => {
         await openDock(page)
         await harness(page, 'addTestDockTab', 'audit', 'Audit')
         await page.locator('.pvt-dock-tab[data-tab="audit"]').click()
         expect(await harness(page, 'activeDockTabId')).toBe('audit')
 
         await harness(page, 'removeTestDockTab', 'audit')
-        expect(await harness(page, 'activeDockTabId')).toBe('table-nodes')
-        expect(await harness(page, 'activeDockBodyText')).toContain('A')
+        expect(await harness(page, 'activeDockTabId')).toBe('table')
+        await expect(page.locator('.pvt-table-row').first()).toBeVisible()
     })
 })
 
-test.describe('the dock tab strip', () => {
+test.describe('the two levels of switch', () => {
     test.beforeEach(async ({ page }) => {
         await gotoHarness(page)
     })
 
-    // The rule the table's own strip already followed, now the dock's: nothing should
-    // point at a switch with one setting.
-    test('one tab renders no strip; a second brings it in', async ({ page }) => {
-        await openDock(page, {
-            UI: { mode: 'full', sidebar: { collapsed: false }, table: { open: true, tabs: ['nodes'] } },
-        })
-        await expect(tabs(page)).toHaveCount(0)
-        await expect(strip(page)).toBeHidden()
-
-        await harness(page, 'addTestDockTab', 'audit', 'Audit')
-        await expect(tabs(page)).toHaveCount(2)
-        await expect(strip(page)).toBeVisible()
-    })
-
-    test('switching swaps the body and the toolbar together', async ({ page }) => {
+    // The whole reason for nesting: an outer tab and an inner one sitting side by side
+    // must not look like siblings. Outer are full-height and underlined; inner are pills.
+    test('outer tabs are underlined, inner ones are pills', async ({ page }) => {
         await openDock(page)
         await harness(page, 'addTestDockTab', 'audit', 'Audit')
 
-        // The table's controls are on the bar, and the test tab's are not.
+        const outer = await page.locator('.pvt-dock-tab.active').evaluate((el) => {
+            const s = getComputedStyle(el)
+            return { borderBottom: parseFloat(s.borderBottomWidth), radius: parseFloat(s.borderTopLeftRadius), bg: s.backgroundColor }
+        })
+        const inner = await page.locator('.pvt-table-tab.active').evaluate((el) => {
+            const s = getComputedStyle(el)
+            return { borderBottom: parseFloat(s.borderBottomWidth), radius: parseFloat(s.borderTopLeftRadius), bg: s.backgroundColor }
+        })
+
+        // Outer: an underline, square corners, no fill.
+        expect(outer.borderBottom).toBeGreaterThanOrEqual(2)
+        expect(outer.radius).toBe(0)
+        expect(outer.bg).toMatch(/rgba\(0, 0, 0, 0\)|transparent/)
+        // Inner: a filled, rounded pill with a hairline border.
+        expect(inner.radius).toBeGreaterThan(0)
+        expect(inner.bg).not.toMatch(/rgba\(0, 0, 0, 0\)|transparent/)
+        expect(inner.borderBottom).toBeLessThan(2)
+    })
+
+    // The outer tab stretches the bar so its underline meets the header's bottom rule;
+    // the inner pill does not. That is what makes one read as attached and the other as
+    // a control sitting in the bar.
+    test('an outer tab spans the header, an inner one does not', async ({ page }) => {
+        await openDock(page)
+        await harness(page, 'addTestDockTab', 'audit', 'Audit')
+
+        const header = (await page.locator('.pvt-dock-header').boundingBox())!
+        const outer = (await page.locator('.pvt-dock-tab.active').boundingBox())!
+        const inner = (await page.locator('.pvt-table-tab.active').boundingBox())!
+
+        expect(outer.height).toBeGreaterThanOrEqual(header.height - 1)
+        expect(inner.height).toBeLessThan(header.height - 4)
+    })
+
+    // Switching pane takes the table's own switch away with the rest of its controls —
+    // an inner strip belonging to a pane nobody is looking at would be nonsense.
+    test('switching pane swaps the body, the controls and the inner strip', async ({ page }) => {
+        await openDock(page)
+        await harness(page, 'addTestDockTab', 'audit', 'Audit')
+
+        await expect(viewTabs(page)).toHaveCount(2)
         await expect(page.locator('.pvt-table-columns-button')).toBeVisible()
         await expect(page.locator('.pvt-test-dock-control')).toHaveCount(0)
 
         await page.locator('.pvt-dock-tab[data-tab="audit"]').click()
         await expect(page.locator('.pvt-test-dock-body')).toBeVisible()
         await expect(page.locator('.pvt-test-dock-control')).toBeVisible()
-        // The table's controls mean nothing over another pane, so they go with it.
         await expect(page.locator('.pvt-table-columns-button')).toHaveCount(0)
+        await expect(viewTabs(page)).toHaveCount(0)
         await expect(page.locator('.pvt-table-row')).toHaveCount(0)
 
-        await page.locator('.pvt-dock-tab[data-tab="table-nodes"]').click()
+        await page.locator('.pvt-dock-tab[data-tab="table"]').click()
+        await expect(viewTabs(page)).toHaveCount(2)
         await expect(page.locator('.pvt-table-columns-button')).toBeVisible()
-        await expect(page.locator('.pvt-test-dock-control')).toHaveCount(0)
+    })
+
+    // The inner switch goes through `handle.refresh()`, so the dock is never left holding
+    // a stale grid to re-attach. Prove it by switching view, leaving the pane, coming back.
+    test('an inner switch survives leaving the pane and returning', async ({ page }) => {
+        await openDock(page)
+        await harness(page, 'addTestDockTab', 'audit', 'Audit')
+
+        await page.locator('.pvt-table-tab[data-tab="edges"]').click()
+        await page.locator('.pvt-table-row').first().waitFor()
+        const headings = () => page.locator('.pvt-table-th-label')
+            .evaluateAll(cells => cells.map(c => (c.textContent ?? '').trim()).slice(0, 3))
+        expect(await headings()).toEqual(['Source', 'Label', 'Target'])
+
+        await page.locator('.pvt-dock-tab[data-tab="audit"]').click()
+        await expect(page.locator('.pvt-test-dock-body')).toBeVisible()
+        await page.locator('.pvt-dock-tab[data-tab="table"]').click()
+        await page.locator('.pvt-table-row').first().waitFor()
+
+        // Still Edges, and still the edges grid — not a stale node grid re-attached.
+        expect(await headings()).toEqual(['Source', 'Label', 'Target'])
+        await expect(page.locator('.pvt-table-tab[data-tab="edges"]')).toHaveClass(/active/)
+        await expect(page.locator('.pvt-table-row')).toHaveCount(7)
     })
 
     // The region's state is the dock's, and switching what is inside it is not a reason
-    // for the row to move — the same invariant the hoist established for rebuilds.
-    test('switching tabs leaves the height and the fold alone', async ({ page }) => {
+    // for the row to move.
+    test('switching panes leaves the height and the fold alone', async ({ page }) => {
         await openDock(page)
         await harness(page, 'addTestDockTab', 'audit', 'Audit')
         const before = await rowHeight(page)
@@ -163,9 +223,7 @@ test.describe('the dock tab strip', () => {
         await expect(dock(page)).not.toHaveClass(/pvt-dock-collapsed/)
     })
 
-    // Each tab's own view state is the table's promise, and it has to survive a detour
-    // through a pane that has nothing to do with it.
-    test('the table keeps its sort across a detour through another tab', async ({ page }) => {
+    test('each inner view keeps its own sort across a detour through another pane', async ({ page }) => {
         await openDock(page)
         await harness(page, 'addTestDockTab', 'audit', 'Audit')
 
@@ -177,7 +235,7 @@ test.describe('the dock tab strip', () => {
 
         await page.locator('.pvt-dock-tab[data-tab="audit"]').click()
         await expect(page.locator('.pvt-test-dock-body')).toBeVisible()
-        await page.locator('.pvt-dock-tab[data-tab="table-nodes"]').click()
+        await page.locator('.pvt-dock-tab[data-tab="table"]').click()
         await page.locator('.pvt-table-row').first().waitFor()
 
         const after = await page.locator('.pvt-table-row')
@@ -185,9 +243,9 @@ test.describe('the dock tab strip', () => {
         expect(after).toEqual(before)
     })
 
-    // D-3's failure mode is silent: a hidden grid that stopped rebuilding and never
+    // D-3's failure mode is silent: a hidden pane that stopped rebuilding and never
     // caught up looks fine, just wrong. So change the data *while* it is hidden.
-    test('a data change while the table is hidden shows up on return', async ({ page }) => {
+    test('a data change while the table pane is hidden shows up on return', async ({ page }) => {
         await openDock(page)
         await harness(page, 'addTestDockTab', 'audit', 'Audit')
         const rowsBefore = await page.locator('.pvt-table-row').count()
@@ -198,7 +256,7 @@ test.describe('the dock tab strip', () => {
             window.__pivotick.graph.addNode({ id: 'ADDED_WHILE_HIDDEN', data: { label: 'Ghost' } } as never)
         })
 
-        await page.locator('.pvt-dock-tab[data-tab="table-nodes"]').click()
+        await page.locator('.pvt-dock-tab[data-tab="table"]').click()
         await expect(page.locator('.pvt-table-row')).toHaveCount(rowsBefore + 1)
         await expect(page.locator('.pvt-table-row[data-id="ADDED_WHILE_HIDDEN"]')).toHaveCount(1)
     })
@@ -217,6 +275,22 @@ test.describe('the dock tab strip', () => {
         await expect(dock(page)).toBeHidden()
         expect(await rowHeight(page)).toBe(0)
     })
+
+    // `refresh` on a pane nobody is looking at must not build anything — it drops the
+    // cached body so the next activation rebuilds it.
+    test('refreshing a hidden pane defers the rebuild to its next activation', async ({ page }) => {
+        await openDock(page)
+        await harness(page, 'addTestDockTab', 'audit', 'Audit')
+        await page.locator('.pvt-dock-tab[data-tab="audit"]').click()
+        await expect(page.locator('.pvt-test-dock-body')).toBeVisible()
+
+        await harness(page, 'refreshDockTab', 'table')
+        // Nothing of the table appears while it is hidden…
+        await expect(page.locator('.pvt-table-row')).toHaveCount(0)
+        // …and it comes back whole.
+        await page.locator('.pvt-dock-tab[data-tab="table"]').click()
+        await expect(page.locator('.pvt-table-row').first()).toBeVisible()
+    })
 })
 
 test.describe('the event log — the dock\'s second occupant', () => {
@@ -224,10 +298,12 @@ test.describe('the event log — the dock\'s second occupant', () => {
         await gotoHarness(page)
     })
 
-    test('joins the strip beside the table', async ({ page }) => {
+    test('joins the strip as a pane beside the table', async ({ page }) => {
         await harness(page, 'loadWithEventLog', 'basic', {}, FULL)
-        expect(await tabLabels(page)).toEqual(['Nodes', 'Edges', 'Events'])
-        expect(await harness(page, 'activeDockTabId')).toBe('table-nodes')
+        expect(await paneLabels(page)).toEqual(['Table', 'Events'])
+        expect(await harness(page, 'activeDockTabId')).toBe('table')
+        // The table's own views stay the table's.
+        await expect(viewTabs(page)).toHaveCount(2)
     })
 
     // The whole point of D-4: plugins install after the UI is built, so a tab has to be
@@ -237,8 +313,8 @@ test.describe('the event log — the dock\'s second occupant', () => {
 
         await expect(dock(page)).toBeVisible()
         expect(await harness(page, 'dockTabIds')).toHaveLength(1)
-        // One occupant, so no strip — the log is simply what the dock is.
-        await expect(tabs(page)).toHaveCount(0)
+        // One pane, so no strip — the log is simply what the dock is.
+        await expect(paneTabs(page)).toHaveCount(0)
     })
 
     test('records off the public buses, and Clear empties it', async ({ page }) => {
@@ -281,7 +357,7 @@ test.describe('the event log — the dock\'s second occupant', () => {
     // gone once it has fired — so it keeps recording and only stops painting.
     test('keeps recording while hidden, and paints the backlog on return', async ({ page }) => {
         await harness(page, 'loadWithEventLog', 'basic', {}, FULL)
-        await page.locator('.pvt-dock-tab[data-tab="table-nodes"]').waitFor()
+        await page.locator('.pvt-dock-tab[data-tab="table"]').waitFor()
 
         // The log has never been activated, so it has no DOM at all yet.
         await expect(page.locator('.pvt-eventlog')).toHaveCount(0)
@@ -290,17 +366,17 @@ test.describe('the event log — the dock\'s second occupant', () => {
         })
         expect(await harness(page, 'eventLogTypes')).toContain('nodeAdd')
 
-        const eventsTab = page.locator('.pvt-dock-tab', { hasText: 'Events' })
-        await eventsTab.click()
+        const events = page.locator('.pvt-dock-tab', { hasText: 'Events' })
+        await events.click()
         await expect(page.locator('.pvt-eventlog-row', { hasText: 'Early' })).toHaveCount(1)
 
         // Back to the table, emit again, and return: the entry recorded while the log
         // was off screen has to be on the list.
-        await page.locator('.pvt-dock-tab[data-tab="table-nodes"]').click()
+        await page.locator('.pvt-dock-tab[data-tab="table"]').click()
         await page.evaluate(() => {
             window.__pivotick.graph.addNode({ id: 'WHILE_LOG_HIDDEN', data: { label: 'Later' } } as never)
         })
-        await eventsTab.click()
+        await events.click()
         await expect(page.locator('.pvt-eventlog-row', { hasText: 'Later' })).toHaveCount(1)
         await expect(page.locator('.pvt-eventlog-row', { hasText: 'Early' })).toHaveCount(1)
     })

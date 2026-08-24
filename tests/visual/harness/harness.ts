@@ -600,6 +600,8 @@ export interface HarnessApi {
     removeTestDockTab(id: string): void
     /** Text content of the body the dock is currently showing. */
     activeDockBodyText(): string
+    /** Rebuild a registered tab's body through the public API. */
+    refreshDockTab(id: string): void
     /**
      * Resize the graph's own container, the way an embedding page would — for the
      * minimap's `collapsed: 'auto'`, which follows the room the canvas has.
@@ -1408,6 +1410,10 @@ class Harness implements HarnessApi {
 
     activeDockBodyText(): string {
         return (document.querySelector('.pvt-dock-body')?.textContent ?? '').trim()
+    }
+
+    refreshDockTab(id: string): void {
+        this.g.UIManager.refreshDockTab(id)
     }
 
     /**

@@ -254,8 +254,31 @@ export class Dock extends UIComponent {
 
     private onTabsChanged(change: DockTabChange): void {
         if (change.type === 'activate') return this.setActive(change.id, true)
+        if (change.type === 'refresh') return this.refreshTab(change.id)
         if (change.type === 'remove') this.forgetTab(change.tab)
         this.syncTabs()
+    }
+
+    /**
+     * Rebuild a tab's body from its `render`. This is what lets a pane switch between
+     * views of its own — the table's `Nodes` / `Edges` — without the dock being left
+     * holding a stale element to re-attach on the next activation.
+     *
+     * A tab that is not on show just loses its cached body; it will be rebuilt when it
+     * next comes to the front, which is the same work either way.
+     */
+    private refreshTab(id: string): void {
+        const tab = this.tabs().find(t => t.id === id)
+        if (!tab) return
+
+        const previous = this.bodies.get(id)
+        this.bodies.delete(id)
+        if (this.activeId !== id) return void previous?.remove()
+
+        const element = tab.render(this.handleFor(tab))
+        this.bodies.set(id, element)
+        previous?.remove()
+        this.body?.appendChild(element)
     }
 
     /** Redraw the strip, and make sure something is on show if anything can be. */
@@ -360,6 +383,7 @@ export class Dock extends UIComponent {
             // Through the registry rather than straight to `setActive`, so a tab driving
             // itself takes the same path as everyone else.
             activate: () => this.uiManager.activateDockTab(tab.id),
+            refresh: () => this.uiManager.refreshDockTab(tab.id),
             remove: () => this.uiManager.removeDockTab(tab.id),
         }
         this.handles.set(tab.id, handle)

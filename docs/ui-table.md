@@ -200,7 +200,7 @@ inspect.
 | Option | Default | What it does |
 |---|---|---|
 | `enabled` | `true` | `false` (or `UI.table: false`) removes the dock entirely |
-| `tabs` | `['nodes', 'edges']` | Which tabs the table contributes to the dock's strip. One tab overall renders no strip |
+| `tabs` | `['nodes', 'edges']` | The table's **own** views. One renders no inner strip |
 | `columns` / `edgeColumns` | derived | See [Columns](#columns) |
 | `open` | unset | Unset starts folded to the bar; `true` starts expanded; `false` leaves no dock at all (`Shift+T` still brings it in) |
 | `collapsed` | folded | Folded to its header bar. With `open: true`, `'auto'` follows the room available until you choose for yourself |
@@ -212,29 +212,57 @@ inspect.
 
 ## The dock holds more than the table {#dock-tabs}
 
-`Nodes` and `Edges` are **dock tabs**, and the strip that switches them belongs to the
-dock rather than to the table. So does anything else you register:
+The table is **one pane** in the dock, and anything else you register is another:
 
 ```js
 const dispose = graph.UIManager.addDockTab({
     label: 'Audit',
-    render: () => myAuditPane(),        // called once, the first time the tab is opened
+    render: () => myAuditPane(),        // called once, the first time the pane is opened
     toolbar: () => [clearButton],       // rebuilt on every activation
 })
 ```
 
-The strip then reads `Nodes │ Edges │ Audit`. Switching swaps the body **and** the header
-controls, since `Select all`, the exports and `Columns` are the table's and mean nothing
-over another pane. One tab renders no strip at all — nothing should point at a switch with
-one setting.
+The dock's strip then reads `Table │ Audit`. Switching swaps the body **and** the header
+controls, since `Select all`, the exports and `Columns` belong to the table and mean
+nothing over another pane. One pane renders no strip at all — nothing should point at a
+switch with one setting.
 
-The table is not a special case: it comes through the same `addDockTab`, so a tab you
+The table is not a special case: it comes through the same `addDockTab`, so a pane you
 register is its equal rather than its guest. `order` places it (equal orders keep
-registration order, and a tab registered later — as a plugin's always is — lands after the
-built-in ones). The returned disposer removes it.
+registration order, and a pane registered later — as a plugin's always is — lands after
+the built-in one). The returned disposer removes it.
 
-There is one region, so there is one height and one fold, however many tabs are in it.
+There is one region, so there is one height and one fold, however many panes are in it.
 Two panes cannot each stand up a resizable strip and fight over the canvas.
+
+### Two levels of switch, and why they look different {#two-levels}
+
+`Nodes` and `Edges` are **the table's own** tabs, not the dock's. They are two views of a
+single pane, so they are not listed out beside `Audit` — that would claim a view of the
+table and a separate pane are the same kind of thing.
+
+The two levels are drawn differently so they can sit next to each other and still read as
+an outer and an inner:
+
+| | Looks like | Belongs to |
+|---|---|---|
+| `Table │ Audit` | full-height tabs, underlined when active, closed off by a rule | the dock |
+| `Nodes │ Edges` | a small segmented pill group | the table |
+
+A pane with its own views does what the table does: draw the switch in its `toolbar`, and
+call `refresh()` on its handle to change body.
+
+```js
+graph.UIManager.addDockTab({
+    label: 'Audit',
+    toolbar: (pane) => [viewSwitch(() => pane.refresh())],
+    render: () => renderCurrentView(),
+})
+```
+
+`refresh()` is not optional politeness — the dock keeps the element `render` handed it, so
+a pane that swapped its own DOM would leave the dock re-attaching a stale node the next
+time it came to the front.
 
 See [`eventLog()`](/plugins#event-log) for a complete pane built this way, and
 [Plugins](/plugins#dock-tab) for the plugin route.
@@ -262,13 +290,13 @@ graph.toggleTable()
 ```
 
 Each is a no-op when there is no dock (any mode but `full`, or `UI.table: false`).
-`openTable()` also brings a table tab to the front, so a call named for the table shows
-you one. To drive the region without that:
+`openTable()` also brings the table's pane to the front, so a call named for the table
+shows you one. To drive the region without that:
 
 ```js
-graph.UIManager.dock?.setOpen(true)          // the region
-graph.UIManager.activateDockTab('table-edges')  // a tab, unfolding the dock if need be
-graph.UIManager.getDockTabs()                // what is registered, in strip order
+graph.UIManager.dock?.setOpen(true)        // the region
+graph.UIManager.activateDockTab('table')   // a pane, unfolding the dock if need be
+graph.UIManager.getDockTabs()              // what is registered, in strip order
 ```
 
 The dock drives the ordinary selection API, so anything that reads a selection sees what

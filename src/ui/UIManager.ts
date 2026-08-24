@@ -159,6 +159,8 @@ export type DockTabChange =
     | { type: 'remove', tab: RegisteredDockTab }
     /** Bring one tab to the front. */
     | { type: 'activate', id: string }
+    /** Rebuild one tab's body — how a pane switches between its own internal views. */
+    | { type: 'refresh', id: string }
 
 /**
  * Declarative catalog of the built-in UI elements. Each entry says which
@@ -783,6 +785,18 @@ export class UIManager {
             return
         }
         this.emitDockTabChange({ type: 'activate', id })
+    }
+
+    /**
+     * Rebuild a registered tab's body by calling its `render` again. A pane with its own
+     * internal views uses this to switch between them — see {@link DockTabHandle.refresh}.
+     */
+    public refreshDockTab(id: string): void {
+        if (!this.dockTabs.some(t => t.id === id)) {
+            if (!this.destroyed) console.warn(`No dock tab with id "${id}" to refresh.`)
+            return
+        }
+        this.emitDockTabChange({ type: 'refresh', id })
     }
 
     /** The registered tabs, in display order (a copy — mutate through addDockTab / removeDockTab). */

@@ -96,11 +96,11 @@ constructed after the UI).
 See the [Extend with a plugin](/examples/gallery/extend-with-a-plugin/content) gallery
 card for a live, complete example.
 
-### Contributing a dock tab {#dock-tab}
+### Contributing a dock pane {#dock-tab}
 
 `ctx.addDockTab` puts a pane in the [bottom dock](/ui-table#dock-tabs), beside the data
-table's `Nodes` and `Edges`. The dock owns the region — its height, its divider, its fold
-and the tab strip — and your tab owns what is in it:
+table. The dock owns the region — its height, its divider, its fold and the strip that
+names the panes — and your pane owns what is in it:
 
 ```ts
 const auditLog: PivotickPlugin = {
@@ -115,13 +115,21 @@ const auditLog: PivotickPlugin = {
 }
 ```
 
-Three things are worth knowing:
+Four things are worth knowing:
 
-- **The first tab builds the region.** Plugins install *after* the UI is built, so a tab
+- **A tab is a pane, not a view of one.** If your pane has several views of its own, it
+  stays a single dock tab and draws its own switch in `toolbar`, calling
+  `handle.refresh()` to change body — which re-invokes `render`. That is exactly what the
+  data table does for `Nodes` / `Edges`, and why the dock's strip never flattens one
+  pane's views out beside another pane. Switching your own DOM behind the dock's back does
+  not work: it keeps the element `render` gave it, and would re-attach a stale node on the
+  next activation. Draw an inner switch as a segmented control, not as tabs — the outer
+  level already looks like tabs.
+- **The first pane builds the region.** Plugins install *after* the UI is built, so a tab
   always arrives too late for the dock's own mode gate to have said yes on its behalf.
   Registering one brings the dock into being, which means your plugin works with
   `UI.table: false` and needs nothing turned on but `full` mode.
-- **`render` is called once, lazily**, the first time the tab is opened; the element is
+- **`render` is called once, lazily**, the first time the pane is opened; the element is
   kept and re-attached afterwards, so it holds its own scroll position. `toolbar` is
   rebuilt on every activation, so its controls can read your pane's current state.
 - **`onActivate` / `onDeactivate` are the only signal that you are off screen**, and what
@@ -286,7 +294,7 @@ dropping what is already listed — and **Clear**.
 It is the dock's second occupant, and therefore the proof that
 [`addDockTab`](#dock-tab) is enough to build a pane with rather than a hole shaped like
 the data table. It shares the region's row, height and fold with the table and asked for
-no concessions to get there.
+no concessions to get there — it sits beside it as `Table │ Events`.
 
 It also uses the activation hooks the **opposite** way round from the table, which is the
 part worth copying. The table stops working when it is off screen and re-derives on

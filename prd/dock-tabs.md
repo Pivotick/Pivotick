@@ -1,6 +1,6 @@
 # Feature — dock tabs: `addDockTab()`, and the second occupant that proves it
 
-**Status:** Implemented — 2026-08-24, branch `worktree-table-mode-prd`. Not merged. **Not grilled** — the decisions below were taken while building, and §3 records the two that departed from the draft. Read §11 before merging.
+**Status:** Implemented — 2026-08-24, branch `worktree-table-mode-prd`. Not merged. **D-2 was reversed on review** (Sami, 2026-08-24) from a flat strip to the nested model — see *Reversed* below, which supersedes the D-2 verdict. Read §11 before merging.
 **Owner:** Sami Mokaddem
 **Requested:** 2026-08-24
 **Area:** `src/ui/elements/Dock/` (the tab strip, activation, the toolbar swap), `src/ui/UIManager.ts` (`addDockTab` / `removeDockTab` / lazy dock build + the `PluginContext` entry), `src/ui/elements/Table/Table.ts` (becomes a tab contributor rather than *the* occupant), `src/interfaces/GraphUI.ts` (`DockTab`), `src/plugins/eventLog/` (new — the second occupant), `src/Graph.ts` (`openTable` and friends now name a tab)
@@ -14,8 +14,9 @@
 baseline regenerated** — which was the bar, since the table is the incumbent and every
 pixel of its header was already committed to a screenshot.
 
-Four commits on top of the table work: `1880149` (the tabs, and the table moving onto
-them), `7686cc9` (`UI.dock`), `a106f47` (the event log + specs), and this one.
+Commits on top of the table work: `1880149` (the tabs, and the table moving onto them),
+`7686cc9` (`UI.dock`), `a106f47` (the event log + specs), `d3603d7` (the demo), and the
+D-2 reversal below.
 
 ### Verdict on the proposals
 
@@ -23,13 +24,14 @@ them), `7686cc9` (`UI.dock`), `a106f47` (the event log + specs), and this one.
   `.pvt-table-tab`'s rules and placed between the chevron and the toolbar — which is
   exactly where the table drew its own. `Table.renderTabs` and `.pvt-table-tabs` are gone.
   Cost was the four selectors in `table-export.spec` the draft predicted, and nothing else.
-- **D-2 held**, and it was the right call to depart from §8's singular sketch. One dock tab
-  per `TableTab`: the header's end state *is* what it already looked like, and a third pane
-  is a sibling rather than a second strip. `order` needed no special-casing — both table
-  tabs take the default `0`, equal orders keep registration order, and a plugin registers
-  later by construction.
-- **D-3 held**, and it is the most interesting outcome. `onActivate` / `onDeactivate` are
-  the only signal a pane gets, and the two occupants use them in **opposite** directions:
+- **D-2 was reversed** — see *Reversed: the nested model* below. §8's singular sketch was
+  right all along. `order` still needed no special-casing: the table's one tab takes the
+  default `0`, equal orders keep registration order, and a plugin registers later by
+  construction.
+- **D-3 held**, and it is the most interesting outcome — and it got *simpler* under the
+  reversal, since the gate is now pane-level rather than per-grid. `onActivate` /
+  `onDeactivate` are the only signal a pane gets, and the two occupants use them in
+  **opposite** directions:
   the table stops rebuilding while hidden and re-derives on return, the log keeps recording
   and stops only painting. That is the strongest evidence the hooks are not table-shaped,
   and it was not something the draft predicted.
@@ -37,8 +39,8 @@ them), `7686cc9` (`UI.dock`), `a106f47` (the event log + specs), and this one.
   This is load-bearing rather than defensive: `Graph` builds the UIManager at `:111` and
   installs plugins at `:133`, so **every** plugin tab arrives after the gate. Reverting it
   fails two specs.
-- **D-5 held, minus the shortcut.** `openTable()` now also activates a table tab, via
-  `Table.firstTabId()` — asking the table which tab is its own rather than matching id
+- **D-5 held, minus the shortcut.** `openTable()` now also activates the table's pane, via
+  `Table.dockTabId()` — asking the table which tab is its own rather than matching id
   prefixes in `Graph`. `Shift+T` still means the region. **No `Shift+\`` was added**: the
   strip and the chevron are both one click away, and the draft was right to doubt it.
 - **D-6 held.** The event log, `src/plugins/eventLog/`, on public API only — no private
@@ -47,6 +49,59 @@ them), `7686cc9` (`UI.dock`), `a106f47` (the event log + specs), and this one.
 - **D-7 held.** Off by default, opt-in via `plugins: [eventLog()]`. §11 keeps the tension.
 - **D-8 held.** `Dock` is still not exported; `DockTab` / `DockTabHandle` are. A tab gets a
   handle, never the dock, so it cannot resize or fold the region it is sharing.
+
+
+### Reversed: the nested model (Sami's call, 2026-08-24)
+
+**Each docked element gets its own space; each element owns its own tabs.** The dock's
+strip names *panes* — `Table`, `Events` — and `Nodes` / `Edges` went back to being the
+table's own switch. This supersedes the D-2 verdict above and lands on exactly what
+`bottom-dock.md` §8 sketched: `UI.table` resolves into **a** `DockTab`, singular.
+
+Why the flat version was wrong, and why my argument for it did not hold:
+
+- **It flattens a real hierarchy.** `Nodes` and `Edges` are two views of one pane;
+  `Events` is a different pane. Listing all three as siblings asserts they are the same
+  kind of thing.
+- **It does not scale.** Three panes with two or three views each gives six-to-nine
+  sibling tabs in one strip with no way to see which belong together. §6 flagged header
+  *width* as the risk and missed that **grouping** is what actually breaks.
+- **I over-read D-6.** I justified the flat model by saying nesting "reproduces the visible
+  regression D-6 refused". D-6 refused *imposing a cost on the table before a second
+  occupant existed to justify it*. It was never a verdict on nesting.
+- **The baseline argument was also wrong.** I claimed only the flat model kept the
+  screenshots still. Under the `< 2 tabs → no strip` rule the nested model draws **no**
+  outer strip while the table is the only pane, so the header is byte-identical either way.
+  430 tests pass, no baseline regenerated.
+
+What the reversal cost, and what it did not:
+
+- **The dock side was untouched.** Registry, `addDockTab`, the strip, the toolbar swap,
+  `ensureDock`, `UI.dock`, the empty-registry handling — all as built.
+- **The table side reverted**: `renderTabs` and `.pvt-table-tabs` are back, and it
+  registers one tab, id `table`, label `Table`.
+- **One API addition was needed**: `DockTabHandle.refresh()` (+ `UIManager.refreshDockTab`,
+  + a `refresh` `DockTabChange`), mirroring `refreshPanel`. A pane with internal views has
+  to be able to change body, and it cannot do it behind the dock's back — the dock keeps
+  the element `render` returned, so a self-swapped DOM would leave it re-attaching a stale
+  node on the next activation. A spec covers exactly that path (*an inner switch survives
+  leaving the pane and returning*). Refreshing a **hidden** pane just drops the cached
+  body, deferring the rebuild to its next activation.
+- Four selectors in `table-export.spec` went back to `.pvt-table-tab`.
+
+**The two levels are drawn differently**, which is the part that makes nesting legible
+rather than confusing — two adjacent identical pill groups would have defeated the point:
+
+| | Look | Owner |
+|---|---|---|
+| `Table │ Events` | full-height, square, underlined when active, closed off by a full-height rule | the dock |
+| `Nodes │ Edges` | small rounded pill group, filled when active | the table |
+
+The rule after the pane strip was added after looking at it in the running app: with only
+the header's 8px gap between the groups the outer switch ran straight into the inner one.
+It comes and goes with the strip, so a single-pane dock is unaffected. Two specs assert the
+split numerically (border-bottom vs radius/fill, and full-header height vs not) rather than
+leaving it to a screenshot.
 
 ### Changed from the draft while building
 
@@ -101,9 +156,9 @@ Per this branch's practice, each new claim was checked against a deliberately br
 
 ## 11. Still open
 
-1. **This was never grilled.** §3's decisions are mine, taken to keep moving; D-2 and the
-   `UI.dock` addition are the two that changed public shape and deserve a second opinion.
-   Both are cheap to reverse — D-2 is one function returning one tab instead of two.
+1. **This was never grilled.** §3's decisions were taken while building. D-2 has since
+   been reviewed and reversed (above); `UI.dock` and `DockTabHandle.refresh()` are the
+   remaining public-shape additions and have not had a second opinion.
 2. **D-7's tension is unresolved.** The API's proof is behind an opt-in, so no default
    configuration shows a tab strip at all. A **gallery card** is the cheap answer (§7.2)
    and is not written.

@@ -95,12 +95,27 @@
     display: contents;
 }
 
-// The tab strip, between the chevron and the occupant's own controls. Drawn only when
-// there is more than one tab — a switch with one setting is not a switch — which is why
-// `:empty` has to collapse it completely rather than just look empty.
+// The strip of **panes** — Table, Events — between the chevron and whatever the active
+// pane puts in the header. Drawn only when there is more than one pane; a switch with one
+// setting is not a switch, which is why `:empty` has to collapse it rather than merely
+// look empty.
+//
+// These are deliberately *tabs*: full-height, square, joined to the pane below by an
+// underline that lands on the header's own bottom rule. An occupant's internal switch —
+// the table's Nodes / Edges — is a small pill group instead (see `Table/table.scss`), so
+// the two levels can sit next to each other and still read as an outer and an inner.
 .pvt-dock-tabs {
     display: flex;
     gap: 2px;
+    align-self: stretch;
+    // Hard against the chevron: these belong to the region, not to what is in it.
+    margin-left: -2px;
+    // A full-height rule closing the group off from whatever the active pane puts on the
+    // bar. Without it the outer switch runs straight into the inner one and the eye has
+    // only the styling to go on; with it the nesting is unmistakable. It comes and goes
+    // with the strip, so a single-pane dock is unaffected.
+    padding-right: 8px;
+    border-right: 1px solid var(--pvt-chrome-border);
 
     &:empty {
         display: none;
@@ -112,11 +127,16 @@
 }
 
 .pvt-dock-tab {
-    padding: 2px 9px;
-    border: 1px solid transparent;
-    border-radius: 4px;
+    align-self: stretch;
+    padding: 0 10px;
+    border: none;
+    // Overlaps the header's bottom rule, so an active tab reads as joined to the pane
+    // under it rather than as a button floating in the bar.
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
     background: transparent;
     color: var(--pvt-text-color-4);
+    font-family: inherit;
     font-size: 12px;
     cursor: pointer;
 
@@ -125,8 +145,7 @@
     }
 
     &.active {
-        border-color: var(--pvt-chrome-border);
-        background-color: var(--pvt-bg-color-4);
+        border-bottom-color: var(--pvt-primary-color, #007acc);
         color: var(--pvt-text-color-6);
         font-weight: 600;
     }

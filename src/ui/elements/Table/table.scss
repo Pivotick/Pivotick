@@ -8,6 +8,45 @@
 // Scrollbars need no opt-in here: `themed-scrollbars` is applied to `.pivotick`
 // and inherits down. Only elements portaled outside it have to include the mixin.
 
+// The pane's **own** view switch — Nodes / Edges. Two views of one table, so it is drawn
+// as a small segmented pill group rather than as tabs: the dock's own strip beside it
+// names *panes*, and the two must not read as one flat row. Rendered only when there is
+// more than one view on offer.
+.pvt-table-tabs {
+    display: flex;
+    gap: 2px;
+
+    &:empty {
+        display: none;
+    }
+
+    .pvt-dock-collapsed & {
+        display: none;
+    }
+}
+
+.pvt-table-tab {
+    padding: 2px 9px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--pvt-text-color-4);
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+
+    &:hover {
+        color: var(--pvt-text-color-6);
+    }
+
+    &.active {
+        border-color: var(--pvt-chrome-border);
+        background-color: var(--pvt-bg-color-4);
+        color: var(--pvt-text-color-6);
+        font-weight: 600;
+    }
+}
+
 // Exports exactly what is shown: this tab, these columns, this sort, this filter.
 .pvt-table-export {
     padding: 2px 7px;
