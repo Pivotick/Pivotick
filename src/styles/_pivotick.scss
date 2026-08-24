@@ -518,7 +518,7 @@ dl.pvt-property-list {
 
     // Live-predicate feedback: an invalid hovered target (isValidConnection → false).
     &--invalid {
-        stroke: var(--pvt-danger, #e5484d);
+        stroke: var(--pvt-theme-danger);
         opacity: 0.85;
     }
 }
@@ -538,7 +538,7 @@ dl.pvt-property-list {
     max-width: 220px;
     padding: 3px 8px;
     font-size: 12px;
-    color: var(--pvt-text-color);
+    color: var(--pvt-text-color-6);
     background: var(--pvt-bg-color-0);
     border: 1px solid var(--pvt-border-color);
     border-radius: 4px;

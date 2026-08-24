@@ -244,7 +244,7 @@ export interface NodeStyle {
     strokeColor: ((node: Node) => string) | string
     /** @default 'var(--pvt-node-stroke-width, 2)' */
     strokeWidth: number | string
-    /** @default 'var(--pvt-label-font, system-ui, sans-serif)' */
+    /** @default 'var(--pvt-font-family)' */
     fontFamily: string
     /** @default 'var(--pvt-node-text-color, #fff)' */
     textColor: ((node: Node) => string) | string

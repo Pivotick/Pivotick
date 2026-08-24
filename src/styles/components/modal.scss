@@ -27,7 +27,7 @@ $modal-responsive-padding: 1rem;
 .pvt-modal {
     display: hidden;
     background: var(--pvt-modal-bg);
-    color: var(--pvt-modal-text);
+    color: var(--pvt-modal-text-color);
     width: 100%;
     max-height: 85vh;
     // Match the B3 chrome family (rails / tool panel / view flyout / slide panel).

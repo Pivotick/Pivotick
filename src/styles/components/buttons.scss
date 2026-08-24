@@ -97,7 +97,7 @@
 @mixin button-outline-variant($bg-color, $bg-text-color) {
     @include button-outline;
     background-color: transparent;
-    color: var(--pvt-text-color);
+    color: var(--pvt-text-color-6);
     border: none;
 
     &:hover {
