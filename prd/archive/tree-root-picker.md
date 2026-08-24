@@ -1,7 +1,7 @@
 # Tree root picker (backlog item B2)
 
 **Status:** done 2026-08-20
-**Source:** `prd/tree-layout-backlog.md` → B2. B1 (cycles) shipped in `prd/tree-layout-cycles.md`.
+**Source:** `prd/archive/tree-layout-backlog.md` → B2. B1 (cycles) shipped in `prd/archive/tree-layout-cycles.md`.
 
 `rootId` and `rootIdAlgorithmFinder` are real `TreeLayoutOptions`, implemented in
 `plugins/analytics/DAGAlgorithms.ts`, with no way to reach them from the interface: the Physics
@@ -100,7 +100,7 @@ tests pass unchanged.
 ## Out of scope
 
 - B3 (`flipEdgeDirection` is broken three ways) — closed 2026-08-20 by removing the option; see
-  `prd/tree-layout-direction.md`.
+  `prd/archive/tree-layout-direction.md`.
 - A `drawerRow()` for the `Flyout` base, so Spacing and Simulation can collapse — see above.
 - Making the *algorithm* root finders direction-agnostic, or an "ignore edge direction" switch of
   its own.

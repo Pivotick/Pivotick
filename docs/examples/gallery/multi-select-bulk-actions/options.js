@@ -30,6 +30,10 @@ let graph = null
 const options = {
     UI: {
         mode: 'full',
+        // Off: `full` mode brings a minimap and the data dock, and this card is about
+        // neither (see the Minimap and Data table cards for those).
+        minimap: false,
+        table: false,
         // Keep the sidebar open so the bulk-action row is visible (the embed is
         // short enough that 'auto' would otherwise collapse it).
         sidebar: { collapsed: false }

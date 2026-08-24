@@ -26,6 +26,7 @@ import type {
     LegendSection, LegendToggleState,
     PropertyEntry,
 } from '../../../src/interfaces/GraphUI'
+import type { PivotickPlugin } from '../../../src/interfaces/Plugin'
 import type { RenderContext } from '../../../src/interfaces/AsyncContent'
 import { Edge as EdgeInstance, type Edge } from '../../../src/Edge'
 import type {
@@ -664,6 +665,34 @@ export interface HarnessApi {
     /** Load a fixture with the real `minimap()` plugin installed. */
     loadWithMinimap(name: FixtureName, options?: MinimapOptions, overrides?: PlainObject): Promise<void>
     /**
+     * Load a fixture with a **plugin-registered** dock pane. Distinct from
+     * `addTestDockTab`, which reaches `UIManager.addDockTab` directly: this goes through
+     * `ctx.addDockTab` inside a plugin's `install`, which is the route that arrives after
+     * the UI is already built.
+     *
+     * The pane records `nodeAdd` whether or not it is on screen, so it exercises the
+     * activation hooks in the **opposite** direction from the table: the table stops
+     * working while hidden and re-derives on return, this one cannot (an event is gone
+     * once it has fired) so it keeps recording and only stops painting.
+     */
+    loadWithPluginPane(name: FixtureName, overrides?: PlainObject): Promise<void>
+    /** Labels the plugin pane has recorded, in arrival order — painted or not. */
+    pluginPaneRecorded(): string[]
+    /** The dock's registered tab ids, in strip order. */
+    dockTabIds(): string[]
+    /** The tab the dock is currently showing. */
+    activeDockTabId(): string | null
+    /**
+     * Register a bare dock tab through the public API, the way a consumer would.
+     * Returns its id; `removeTestDockTab` disposes it.
+     */
+    addTestDockTab(id: string, label: string, order?: number): string
+    removeTestDockTab(id: string): void
+    /** Text content of the body the dock is currently showing. */
+    activeDockBodyText(): string
+    /** Rebuild a registered tab's body through the public API. */
+    refreshDockTab(id: string): void
+    /**
      * Resize the graph's own container, the way an embedding page would — for the
      * minimap's `collapsed: 'auto'`, which follows the room the canvas has.
      */
@@ -683,10 +712,18 @@ export interface HarnessApi {
      */
     loadManyNodesWithMinimap(count: number, options?: MinimapOptions): Promise<void>
     /**
+     * Boot a graph of `count` pinned, edge-less nodes with arbitrary overrides — for
+     * crossing the data dock's row-windowing threshold. Each node carries a numeric
+     * `seq` so a sort has unique keys and the order is deterministic.
+     */
+    loadManyNodes(count: number, overrides?: PlainObject): Promise<void>
+    /**
      * Ids of the nodes currently visible. A filtered-out node is *removed* from the
      * render, so this is the exact answer to "what did that filter leave on screen".
      */
     visibleNodeIds(): string[]
+    /** What the filter pill reports as hidden (`queryEngine.getHiddenNodeCount`). */
+    hiddenNodeCount(): number
     /**
      * The filter panel's generated fields, in display order — `key`, the rendered
      * label, and the widget type. Reads the live DOM, so it proves what the panel
@@ -869,6 +906,10 @@ class Harness implements HarnessApi {
     /** Legend observation state, reset per boot. */
     private legendToggles: LegendToggleState[] = []
     private recordedWarnings: string[] = []
+    /** Disposers from `addTestDockTab`, so a test can unregister the way a consumer does. */
+    private dockTabDisposers = new Map<string, () => void>()
+    /** What `loadWithPluginPane`'s pane has recorded, painted or not. */
+    private pluginPaneEntries: string[] = []
 
     constructor(container: HTMLElement) {
         this.container = container
@@ -947,6 +988,8 @@ class Harness implements HarnessApi {
         )
         this.legendToggles = []
         this.recordedWarnings = []
+        // The previous graph's UI is gone, so its disposers refer to nothing.
+        this.dockTabDisposers.clear()
         // `data.notes` carries raw note options; the graph normalises them to Notes.
         const graph = new Pivotick(this.container, data as never, options as never)
         this.graph = graph
@@ -1477,6 +1520,107 @@ class Harness implements HarnessApi {
         await this.load(name, mergeOptions({ plugins: [minimap(options)] }, overrides))
     }
 
+    async loadWithPluginPane(name: FixtureName, overrides: PlainObject = {}): Promise<void> {
+        this.pluginPaneEntries = []
+        await this.load(name, mergeOptions({ plugins: [this.pluginPane()] }, overrides))
+    }
+
+    /**
+     * A pane contributed the way a real plugin contributes one — nothing but
+     * `ctx.addDockTab` and a public event bus. It records while hidden and paints only
+     * when it is on screen, so `onActivate` has a backlog to show on return.
+     */
+    private pluginPane(): PivotickPlugin {
+        return {
+            name: 'testPluginPane',
+            install: (ctx) => {
+                let body: HTMLElement | undefined
+                // Painting is gated, not the element: the dock keeps what `render`
+                // returned and re-attaches it, so dropping the reference on deactivation
+                // would leave nothing to paint into on return.
+                let visible = false
+                const paint = () => {
+                    if (!body || !visible) return
+                    body.innerHTML = ''
+                    for (const label of this.pluginPaneEntries) {
+                        const row = document.createElement('div')
+                        row.className = 'pvt-plugin-pane-row'
+                        row.textContent = label
+                        body.appendChild(row)
+                    }
+                }
+                ctx.addDockTab({
+                    id: 'pluginPane',
+                    label: 'Recorder',
+                    render: () => {
+                        body = document.createElement('div')
+                        body.className = 'pvt-plugin-pane'
+                        paint()
+                        return body
+                    },
+                    onActivate: () => { visible = true; paint() },
+                    onDeactivate: () => { visible = false },
+                })
+                // Recording is unconditional — that is the whole contrast with the table.
+                ctx.graph.on('nodeAdd', (node) => {
+                    this.pluginPaneEntries.push(String(node.getData()?.label ?? node.id))
+                    paint()
+                })
+            },
+        }
+    }
+
+    pluginPaneRecorded(): string[] {
+        return [...this.pluginPaneEntries]
+    }
+
+    dockTabIds(): string[] {
+        return this.g.UIManager.getDockTabs().map((tab) => tab.id)
+    }
+
+    activeDockTabId(): string | null {
+        return this.g.UIManager.dock?.getActiveTabId() ?? null
+    }
+
+    addTestDockTab(id: string, label: string, order?: number): string {
+        this.dockTabDisposers.set(id, this.g.UIManager.addDockTab({
+            id,
+            label,
+            order,
+            render: () => {
+                const body = document.createElement('div')
+                body.className = 'pvt-test-dock-body'
+                body.textContent = `body of ${label}`
+                return body
+            },
+            toolbar: () => {
+                const control = document.createElement('button')
+                control.type = 'button'
+                control.className = 'pvt-test-dock-control'
+                control.textContent = `${label} control`
+                return control
+            },
+        }))
+        return id
+    }
+
+    /**
+     * Calls the *disposer*, not `removeDockTab` — and keeps it, so a second call goes
+     * through the disposer's own idempotence rather than round-tripping to a registry
+     * that has legitimately forgotten the tab. That distinction is the thing under test.
+     */
+    removeTestDockTab(id: string): void {
+        this.dockTabDisposers.get(id)?.()
+    }
+
+    activeDockBodyText(): string {
+        return (document.querySelector('.pvt-dock-body')?.textContent ?? '').trim()
+    }
+
+    refreshDockTab(id: string): void {
+        this.g.UIManager.refreshDockTab(id)
+    }
+
     /**
      * The live minimap instance. `UIManager.elements` is private, but plugin-added
      * elements aren't in the keyed registry — and this is the same runtime-reach the
@@ -1514,6 +1658,28 @@ class Harness implements HarnessApi {
         )
     }
 
+    async loadManyNodes(count: number, overrides: PlainObject = {}): Promise<void> {
+        this.destroy()
+        const nodes: Node[] = []
+        for (let index = 0; index < count; index++) {
+            const node = new Node(`bulk-${index}`, { label: `Row ${index}`, seq: index }, {}, `bulk-${index}`)
+            node.x = (index % 40) * 24
+            node.y = Math.floor(index / 40) * 24
+            node.fx = node.x
+            node.fy = node.y
+            nodes.push(node)
+        }
+
+        const graph = new Pivotick(
+            this.container,
+            { nodes, edges: [] } as never,
+            mergeOptions(BASE_OPTIONS, overrides) as never,
+        )
+        this.graph = graph
+        await this.whenReady(graph)
+        if (document.fonts?.ready) await document.fonts.ready
+    }
+
     async loadManyNodesWithMinimap(count: number, options: MinimapOptions = {}): Promise<void> {
         this.destroy()
         const nodes: Node[] = []
@@ -1547,6 +1713,10 @@ class Harness implements HarnessApi {
         return this.g.getMutableNodes()
             .filter((node) => node.childrenDepth === 0 && node.visible)
             .map((node) => node.id)
+    }
+
+    hiddenNodeCount(): number {
+        return this.g.queryEngine.getHiddenNodeCount()
     }
 
     subgraphVisibleNodeIds(clusterId: string): string[] {

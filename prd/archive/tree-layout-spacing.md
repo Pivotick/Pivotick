@@ -2,7 +2,7 @@
 
 **Status:** done, 2026-08-19
 **Branch:** `worktree-auto-physics-preset`
-**Follows:** `prd/auto-physics-preset.md`, `prd/physics-preset-reheat.md`
+**Follows:** `prd/archive/auto-physics-preset.md`, `prd/archive/physics-preset-reheat.md`
 
 ---
 

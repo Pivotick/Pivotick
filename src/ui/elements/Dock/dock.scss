@@ -1,0 +1,239 @@
+// The bottom dock — a grid row under the canvas, and whatever fills it.
+//
+// It is a real grid row rather than a canvas overlay, so the canvas genuinely
+// shrinks and the chrome docked inside it (legend, minimap) rides up with it
+// instead of being buried. `--pvt-dock-height` on `.pvt-layout` drives the row;
+// this file only styles the region itself. What the occupant puts in the header
+// slot and the body brings its own styles (see `Table/table.scss`).
+//
+// Scrollbars need no opt-in here: `themed-scrollbars` is applied to `.pivotick`
+// and inherits down. Only elements portaled outside it have to include the mixin.
+
+.pvt-dock {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    // The borders below are inside the dock's row, not on top of it.
+    box-sizing: border-box;
+    position: relative;
+    background-color: var(--pvt-chrome-bg);
+    border-top: 1px solid var(--pvt-chrome-border);
+    // The sidebar spans this row, and its only right-edge separator is a black
+    // box-shadow — invisible on a dark background, where `--pvt-ui-bg` and
+    // `--pvt-chrome-bg` are the *same* colour and the two surfaces merged into one.
+    // So the dock draws its own left edge, the way it already draws its top one.
+    border-left: 1px solid var(--pvt-chrome-border);
+    color: var(--pvt-text-color-6);
+
+    // Closed: the row is 0px, so make sure nothing peeks out of it.
+    &:not(.pvt-dock-open) {
+        display: none;
+    }
+
+    // Nothing registered to show. Same treatment as closed — the row is 0px either way,
+    // and a header bar over an empty region is a control that points at nothing.
+    &.pvt-dock-empty {
+        display: none;
+    }
+}
+
+// Grab handle straddling the top edge. Wider than it looks so it is easy to hit,
+// but drawn as a hairline so it reads as an edge rather than a bar.
+.pvt-dock-divider {
+    position: absolute;
+    top: -3px;
+    left: 0;
+    right: 0;
+    height: 7px;
+    cursor: row-resize;
+    touch-action: none;
+    z-index: 2;
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 3px;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background-color: transparent;
+        transition: background-color 0.1s ease-out;
+    }
+
+    &:hover::after,
+    &.pvt-dock-divider-dragging::after {
+        background-color: var(--pvt-theme-primary);
+    }
+
+    // A collapsed dock is a bar, not a resizable pane.
+    .pvt-dock-collapsed & {
+        cursor: default;
+        pointer-events: none;
+    }
+}
+
+.pvt-dock-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+    min-height: 34px;
+    padding: 0 10px;
+    border-bottom: 1px solid var(--pvt-chrome-border);
+
+    // Collapsed, the header *is* the dock — nothing below it to divide from.
+    .pvt-dock-collapsed & {
+        border-bottom: none;
+    }
+}
+
+// The occupant's half of the header bar. It generates no box of its own, so the
+// controls it holds lay out as if they were the header's own children — and an
+// occupant with nothing to put here costs nothing, not even a gap.
+.pvt-dock-toolbar {
+    display: contents;
+}
+
+// The strip of **panes** — Table, Events — between the chevron and whatever the active
+// pane puts in the header. Drawn only when there is more than one pane; a switch with one
+// setting is not a switch, which is why `:empty` has to collapse it rather than merely
+// look empty.
+//
+// These are deliberately *tabs*: full-height, square, joined to the pane below by an
+// underline that lands on the header's own bottom rule. A pane's internal switch — the
+// table's Nodes / Edges — is a small pill group instead (`.pvt-dock-views` below), so the
+// two levels can sit next to each other and still read as an outer and an inner.
+.pvt-dock-tabs {
+    display: flex;
+    gap: 2px;
+    align-self: stretch;
+    // Hard against the chevron: these belong to the region, not to what is in it.
+    margin-left: -2px;
+    // A full-height rule closing the group off from whatever the active pane puts on the
+    // bar. Without it the outer switch runs straight into the inner one and the eye has
+    // only the styling to go on; with it the nesting is unmistakable. It comes and goes
+    // with the strip, so a single-pane dock is unaffected.
+    padding-right: 8px;
+    border-right: 1px solid var(--pvt-chrome-border);
+
+    &:empty {
+        display: none;
+    }
+
+    .pvt-dock-collapsed & {
+        display: none;
+    }
+}
+
+.pvt-dock-tab {
+    align-self: stretch;
+    padding: 0 10px;
+    border: none;
+    // Overlaps the header's bottom rule, so an active tab reads as joined to the pane
+    // under it rather than as a button floating in the bar.
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    background: transparent;
+    color: var(--pvt-text-color-4);
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+
+    &:hover {
+        color: var(--pvt-text-color-6);
+    }
+
+    &.active {
+        border-bottom-color: var(--pvt-theme-primary);
+        color: var(--pvt-text-color-6);
+        font-weight: 600;
+    }
+}
+
+// A **pane's own** view switch — the table's Nodes / Edges, and the same look for anyone
+// else's pane. Two views of one pane, so it is drawn as a small segmented pill group
+// rather than as tabs: the strip above names *panes*, and the two must not read as one
+// flat row.
+//
+// This pair is public on purpose. A pane registered through `addDockTab` puts its own
+// controls in the header slot, and without a class for them the only way to match the
+// built-in table was to restate its look inline — which then drifts from the theme. Give
+// the strip `pvt-dock-views`, each button `pvt-dock-view`, and `active` to the current
+// one; override either class, or just `--pvt-theme-primary`, to retheme both levels.
+.pvt-dock-views {
+    display: flex;
+    gap: 2px;
+
+    &:empty {
+        display: none;
+    }
+
+    .pvt-dock-collapsed & {
+        display: none;
+    }
+}
+
+.pvt-dock-view {
+    padding: 2px 9px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--pvt-text-color-4);
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+
+    &:hover {
+        color: var(--pvt-text-color-6);
+    }
+
+    &.active {
+        border-color: var(--pvt-chrome-border);
+        background-color: var(--pvt-bg-color-4);
+        color: var(--pvt-text-color-6);
+        font-weight: 600;
+    }
+}
+
+.pvt-dock-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--pvt-text-color-4);
+    cursor: pointer;
+
+    &:hover {
+        background-color: var(--pvt-chrome-border);
+        color: var(--pvt-text-color-6);
+    }
+
+    // Points down to fold away, up to bring back.
+    svg {
+        transform: rotate(180deg);
+        transition: transform 0.12s ease-out;
+    }
+
+    .pvt-dock-collapsed & svg {
+        transform: rotate(0deg);
+    }
+}
+
+.pvt-dock-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    // Wide content scrolls here, never by stretching the layout. This is also the
+    // scroll container an occupant windows its rows against, so it stays the direct
+    // parent of what it holds (see `TableGrid.scroller`).
+    overflow: auto;
+
+    .pvt-dock-collapsed & {
+        display: none;
+    }
+}

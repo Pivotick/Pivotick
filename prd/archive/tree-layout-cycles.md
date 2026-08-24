@@ -2,7 +2,7 @@
 
 **Status:** done, 2026-08-20
 **Branch:** `worktree-auto-physics-preset`
-**Was:** B1 in `prd/tree-layout-backlog.md`
+**Was:** B1 in `prd/archive/tree-layout-backlog.md`
 
 ---
 
@@ -101,7 +101,7 @@ linked even with no edges.
   before, since a mutual pair is a cycle and the layout refused to run at all.
 - **A node with no usable radius blanked the layout.** Found while testing forests: a non-numeric
   `getCircleRadius()` turned an auto-spacing gap into `NaN`, then the multiplier, then the box d3
-  normalises the tree onto — so every coordinate came out `NaN`. See `prd/auto-tree-spacing.md` §6.
+  normalises the tree onto — so every coordinate came out `NaN`. See `prd/archive/auto-tree-spacing.md` §6.
 
 ## 6. What is asserted
 

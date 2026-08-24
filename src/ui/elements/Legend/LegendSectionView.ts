@@ -619,10 +619,11 @@ export class LegendSectionView {
         this.listElement = createHtmlElement('div', {
             class: 'pvt-legend-list',
             // Cap the height in rows, then scroll — the canvas must never grow because
-            // a category list got long. The quarter row of slack lets the next entry's
-            // top edge peek through, which is what says "there is more below" without
-            // slicing a label in half.
-            style: `max-height: calc(${max + 0.25} * var(--pvt-legend-row-height))`,
+            // a category list got long. The half row of slack lets the next entry's
+            // swatch peek through, which is what says "there is more below" without
+            // slicing a label in half. Half, not a quarter: a row's first 6.5px are
+            // the swatch's own leading space, so less than that shows nothing at all.
+            style: `max-height: calc(${max + 0.5} * var(--pvt-legend-row-height))`,
         })
         for (const entry of this.entries) this.listElement.appendChild(this.renderEntry(entry))
         block.appendChild(this.listElement)

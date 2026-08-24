@@ -13,6 +13,9 @@
 .pvt-layout {
     --pvt-sidebar-width: 340px;
     --pvt-mainheader-height: 48px;
+    // The bottom dock's height. 0 while it is closed, so the second grid row
+    // collapses away and nothing shifts.
+    --pvt-dock-height: 0px;
 
     position: relative;
     width: 100%;
@@ -25,8 +28,13 @@
     // minmax(0, 1fr) rather than 1fr: a plain `1fr` row floors at the tallest
     // item's content, so a long sidebar would stretch the row past the viewport
     // instead of scrolling inside it.
-    grid-template-rows: minmax(0, 1fr);
-    grid-template-areas: "sidebar canvas";
+    //
+    // The second row is the bottom dock. The sidebar spans both rows, so it keeps its
+    // full height and goes on showing the selected row's properties beside the dock.
+    grid-template-rows: minmax(0, 1fr) var(--pvt-dock-height);
+    grid-template-areas:
+        "sidebar canvas"
+        "sidebar dock";
 
     &.mode-static,
     &.mode-viewer {
@@ -105,12 +113,28 @@
     }
 }
 
+.pvt-dock-slot {
+    grid-area: dock;
+    // The row is sized by --pvt-dock-height; anything wide inside the dock has to
+    // scroll in its own container rather than stretching this one.
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
 .pvt-mainheader {
     // Overlay the top edge of the canvas as a transparent, click-through strip.
     grid-area: canvas;
     align-self: start;
     height: var(--pvt-mainheader-height);
     width: 100%;
+    // A grid item's automatic minimum is its content width, so without this the
+    // row of pills can force the canvas column *wider than the container* — the
+    // canvas clips it, so it looks fine while quietly reporting the wrong width to
+    // anything that measures it. The header only overlays the canvas; it must never
+    // size it.
+    min-width: 0;
+    overflow: hidden;
     z-index: 10;
     pointer-events: none; // canvas under the strip stays interactive; pills opt back in
     display: flex;

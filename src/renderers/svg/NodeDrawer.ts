@@ -551,7 +551,7 @@ export class NodeDrawer {
     public checkForHighlight(nodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
         const nodeSelected = this.isNodeSelected(node)
         const nodeAdjacentToSelection = this.isNodeAdjacentToSelection(node)
-        const applyShadow = this.getSelectedNodeIDs().length !== 0
+        const applyShadow = this.hasVisibleSelection()
         
         // Manage node
         node.getGraphElement()?.classList.toggle('pvt-node-selected-highlight', nodeSelected)
@@ -577,6 +577,22 @@ export class NodeDrawer {
         const gi = this.graphSvgRenderer.getGraphInteraction()
         const selectedIds = gi.getSelectedNodeIDs()
         return Array.isArray(selectedIds) ? selectedIds : []
+    }
+
+    /**
+     * Whether the selection contains anything that is actually on screen — the gate for
+     * focus-mode dimming.
+     *
+     * A hidden node can be selected without ever being drawn (a filtered-out search
+     * result, or a row in the data dock), and its element is gone from the DOM entirely.
+     * Dimming on the strength of a selection like that would grey out the whole canvas
+     * with nothing highlighted, which reads as a broken graph.
+     *
+     * Short-circuits on the first visible node, so the usual case costs one check.
+     */
+    private hasVisibleSelection(): boolean {
+        const gi = this.graphSvgRenderer.getGraphInteraction()
+        return gi.getSelectedNodes().some(selection => selection.node.visible)
     }
 
     private isNodeSelected(node: Node): boolean {

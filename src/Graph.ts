@@ -1141,6 +1141,8 @@ export class Graph {
      * Destroy all UI components.
      */
     destroy(): void {
+        // Stop ticking before the DOM it renders into goes away.
+        this.simulation.destroy()
         this.UIManager.destroy()
         this.renderer.destroy()
     }
@@ -1199,6 +1201,83 @@ export class Graph {
         } else if (element instanceof Node) {
             this.renderer.getGraphInteraction().selectNode(element.getGraphElement(), element)
         }
+    }
+
+    /**
+     * Selects several nodes, or several edges, replacing the current selection — the
+     * plural {@link selectElement}, resolving each element's rendered handle for you.
+     *
+     * Nodes and edges cannot be selected together (the interaction layer clears one kind
+     * when the other is set), so a mixed array selects the **nodes** and warns.
+     *
+     * @param elements The `Node`s or `Edge`s to select. An empty array clears the selection.
+     */
+    selectElements(elements: Array<Node | Edge>): void {
+        const interaction = this.renderer.getGraphInteraction()
+        if (elements.length === 0) return interaction.unselectAll()
+
+        const nodes = elements.filter((element): element is Node => element instanceof Node)
+        const edges = elements.filter((element): element is Edge => element instanceof Edge)
+
+        if (nodes.length && edges.length) {
+            console.warn('Pivotick: selectElements cannot select nodes and edges together; selecting the nodes only.')
+        }
+
+        if (nodes.length) {
+            interaction.selectNodes(nodes.map(node => ({ node, element: node.getGraphElement() })))
+        } else if (edges.length) {
+            interaction.selectEdges(edges.map(edge => [edge, edge.getGraphElement()] as [Edge, unknown]))
+        }
+    }
+
+    /**
+     * Adds nodes to the current selection, leaving what is already selected in place.
+     * Already-selected nodes are ignored.
+     *
+     * Nodes only: the interaction layer has no additive setter for edges, which can only
+     * be selected as a whole set via {@link selectElements}.
+     *
+     * @param nodes The `Node`s to add.
+     */
+    addToSelection(nodes: Node[]): void {
+        this.renderer.getGraphInteraction()
+            .addNodesToSelection(nodes.map(node => ({ node, element: node.getGraphElement() })))
+    }
+
+    /**
+     * Removes nodes from the current selection, leaving the rest of it in place.
+     * Nodes only, on the same terms as {@link addToSelection}.
+     *
+     * @param nodes The `Node`s to remove.
+     */
+    removeFromSelection(nodes: Node[]): void {
+        this.renderer.getGraphInteraction()
+            .removeNodesFromSelection(nodes.map(node => ({ node, element: node.getGraphElement() })))
+    }
+
+    /**
+     * Opens the data dock — the graph's rows as a sortable, selectable grid split off
+     * the bottom of the canvas. `full` mode only, and only when `UI.table` allows it;
+     * a no-op otherwise.
+     *
+     * The dock can hold panes other than the table now, so this also brings the table's
+     * pane to the front: the call is named for the table and should show you one. Reach
+     * for `UIManager.dock` or `activateDockTab()` to drive the region without that.
+     */
+    openTable(): void {
+        this.UIManager.dock?.setOpen(true)
+        const tableTab = this.UIManager.table?.dockTabId()
+        if (tableTab) this.UIManager.activateDockTab(tableTab)
+    }
+
+    /** Closes the data dock. */
+    closeTable(): void {
+        this.UIManager.dock?.setOpen(false)
+    }
+
+    /** Opens the data dock if it is closed, closes it if it is open. */
+    toggleTable(): void {
+        this.UIManager.dock?.toggleOpen()
     }
 
     /**

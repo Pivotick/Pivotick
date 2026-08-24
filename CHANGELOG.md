@@ -107,7 +107,7 @@
   contradiction — damping is what makes a layout take longer to arrive — and the result was that
   clicking `Tight` moved the graph roughly half way to where `Tight` actually settles. The settled
   look is unaffected (`friction` shapes the approach; at rest, velocity is zero either way), and
-  `tight` is still clearly the calmer preset. See `prd/physics-preset-reheat.md`.
+  `tight` is still clearly the calmer preset. See `prd/archive/physics-preset-reheat.md`.
 - **`PHYSICS_KNOB_RANGES.linkDistance` is now `[40, 600]`** (was `[40, 260]`). The knob maps to
   pixels one-for-one, so every existing value is unchanged; only a UI rendering the slider's `max`
   sees a difference. The old ceiling made it impossible to put visible space between two large

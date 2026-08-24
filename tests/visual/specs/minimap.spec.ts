@@ -2,7 +2,7 @@ import { test, expect, gotoHarness, harness, expectCanvas, canvas, loadFixture, 
 import type { Page } from '@playwright/test'
 
 /**
- * The minimap plugin (prd/minimap-plugin.md).
+ * The minimap plugin (prd/archive/minimap-plugin.md).
  *
  * Deliberately small: the interesting claims are numeric, not pixel-level — the
  * rectangle tracks the real viewport, clicking and dragging drive it through the new

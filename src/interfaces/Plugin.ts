@@ -3,7 +3,7 @@ import type { UIManager } from '../ui/UIManager'
 import type { UIComponent, UIPhase } from '../ui/UIComponent'
 import type { Layout } from '../ui/elements/Layout'
 import type { KeybindingManager } from '../ui/KeybindingManager'
-import type { ExtraPanel, Keybinding } from './GraphUI'
+import type { DockTab, ExtraPanel, Keybinding } from './GraphUI'
 
 /**
  * A Pivotick plugin: a self-contained bundle of UI elements, keybindings and
@@ -70,6 +70,22 @@ export interface PluginContext {
     removePanel(id: string): void
     /** Re-render one sidebar panel, or all of them when `id` is omitted. */
     refreshPanel(id?: string): void
+    /**
+     * Register a pane in the bottom dock — the same door as `UIManager.addDockTab`,
+     * and the one the built-in table comes through. Returns a disposer.
+     *
+     * The first tab **builds the region**, so a plugin does not have to ask the
+     * consumer to turn the dock on: `full` mode is the only requirement.
+     */
+    addDockTab(tab: DockTab): () => void
+    /** Remove a dock tab by id (equivalent to calling its disposer). */
+    removeDockTab(id: string): void
+    /**
+     * Rebuild a dock tab from its `render` and `toolbar` — for when the pane's own data
+     * or chosen view changed. The same thing a `DockTabHandle`'s `refresh()` does, for
+     * code that holds the id rather than the handle.
+     */
+    refreshDockTab(id: string): void
     /** Hook a lifecycle phase. Returns an unsubscribe function. */
     onPhase(phase: UIPhase, callback: () => void): () => void
     /** Register a keybinding that is automatically removed when the UI is torn down. */

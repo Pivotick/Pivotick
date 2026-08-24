@@ -22,7 +22,9 @@ let graph = null
 // Edit Graph → Add Edge starts a click-click (or drag) connect session — the
 // shadow-edge preview and both interaction styles come for free.
 const options = {
-    UI: { mode: 'full' }
+    // Off: `full` mode brings a minimap and the data dock, and this card is about
+    // neither (see the Minimap and Data table cards for those).
+    UI: { mode: 'full', minimap: false, table: false }
 }
 // #endregion options
 

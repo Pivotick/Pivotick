@@ -2,13 +2,13 @@
 
 **Status:** done, 2026-08-20
 **Branch:** `worktree-auto-physics-preset`
-**Follows:** `prd/tree-layout-spacing.md`, `prd/auto-physics-preset.md`
+**Follows:** `prd/archive/tree-layout-spacing.md`, `prd/archive/auto-physics-preset.md`
 
 ---
 
 ## 1. Why the sliders were not enough
 
-`prd/tree-layout-spacing.md` gave a tree layout two multipliers to turn. It left the *starting*
+`prd/archive/tree-layout-spacing.md` gave a tree layout two multipliers to turn. It left the *starting*
 value at whatever the canvas happened to imply, and that starting value has a real defect: a tree
 is sized from the canvas and **never looks at how big its nodes are**.
 

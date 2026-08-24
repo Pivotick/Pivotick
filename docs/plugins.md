@@ -46,6 +46,7 @@ listed in `plugins` and re-applied through `graph.use` without doubling up.
 | `layout` | the DOM scaffold, read **live** (never a snapshot). `layout.canvas` is where canvas-docked chrome goes |
 | `addElement(element, slot?)` | put a `UIComponent` into the lifecycle, mounted into `slot` |
 | `addPanel(panel)` / `removePanel(id)` / `refreshPanel(id?)` | sidebar panels — the same door as `UI.extraPanels` |
+| `addDockTab(tab)` / `removeDockTab(id)` | a pane in the bottom dock — the same door the built-in table comes through |
 | `onPhase(phase, cb)` | hook `afterMount` / `graphReady` / `destroy`; returns an unsubscribe |
 | `addKeybinding(binding)` | a shortcut that is removed when the UI is torn down |
 | `keyManager` | the keybinding registry, for anything more involved |
@@ -94,6 +95,58 @@ constructed after the UI).
 
 See the [Extend with a plugin](/examples/gallery/extend-with-a-plugin/content) gallery
 card for a live, complete example.
+
+### Contributing a dock pane {#dock-tab}
+
+`ctx.addDockTab` puts a pane in the [bottom dock](/ui-table#dock-tabs), beside the data
+table. The dock owns the region — its height, its divider, its fold and the strip that
+names the panes — and your pane owns what is in it:
+
+```ts
+const auditLog: PivotickPlugin = {
+    name: 'auditLog',
+    install: (ctx) => ctx.addDockTab({
+        label: 'Audit',
+        render: () => buildPane(ctx.graph),   // once, on first activation
+        toolbar: () => [clearButton],         // on every activation
+        onActivate: () => resumePainting(),
+        onDeactivate: () => stopPainting(),
+    }),
+}
+```
+
+Four things are worth knowing:
+
+- **A tab is a pane, not a view of one.** If your pane has several views of its own, it
+  stays a single dock tab and draws its own switch in `toolbar`, calling
+  `handle.refresh()` to change body — which re-invokes `render`. That is exactly what the
+  data table does for `Nodes` / `Edges`, and why the dock's strip never flattens one
+  pane's views out beside another pane. Switching your own DOM behind the dock's back does
+  not work: it keeps the element `render` gave it, and would re-attach a stale node on the
+  next activation. Draw an inner switch as a segmented control, not as tabs — the outer
+  level already looks like tabs. `pvt-dock-views` on the strip and `pvt-dock-view` on each
+  button (plus `active`) are public, so it looks like the table's switch and follows the
+  theme without you restating either.
+- **The first pane builds the region.** Plugins install *after* the UI is built, so a tab
+  always arrives too late for the dock's own mode gate to have said yes on its behalf.
+  Registering one brings the dock into being, which means your plugin works with
+  `UI.table: false` and needs nothing turned on but `full` mode.
+- **`render` is called once, lazily**, the first time the pane is opened; the element is
+  kept and re-attached afterwards, so it holds its own scroll position. `toolbar` is
+  rebuilt on every activation, so its controls can read your pane's current state.
+- **`onActivate` / `onDeactivate` are the only signal that you are off screen**, and what
+  to do with them depends on your pane. Content that is a function of the graph's current
+  state can stop working while hidden and re-derive on return — that is what the table
+  does. Content that would *miss* something (a pane watching a live bus — an event is gone
+  once it has fired) has to keep working and merely stop *painting*, flushing its backlog
+  when it comes back. Nothing about the hooks prefers either.
+
+A tab is not a `UIComponent`, so nothing drives lifecycle phases into it. When your pane
+needs `graphReady`, hold a `UIComponent`, `addElement` it, and call `addDockTab` from its
+`onMount` — see [Contributing a UI element](#contributing-a-ui-element) above.
+
+See the [Add a dock pane](/examples/gallery/dock-panes/content) gallery card for a live,
+complete example — a pane with two views of its own, beside the data table.
 
 ## Driving the viewport
 

@@ -2,7 +2,7 @@
 
 **Status:** done, 2026-08-19
 **Branch:** `worktree-auto-physics-preset`
-**Follows:** `prd/auto-physics-preset.md`
+**Follows:** `prd/archive/auto-physics-preset.md`
 
 ---
 
@@ -114,7 +114,7 @@ click after click, and 12 is not enough to settle.
 The first click contracts; from the second on the graph re-expands, past where `loose` sat. This is
 not the reheat split misbehaving — it is that at this size the layout's extent is set by *topology*
 rather than by the knobs, and it is nowhere near converged when the run ends, so each further dose of
-heat lets the chain of clusters unfold a little more. `prd/auto-physics-preset.md` §13 says the same
+heat lets the chain of clusters unfold a little more. `prd/archive/auto-physics-preset.md` §13 says the same
 thing about fixture F: a random recursive tree is "about the least compressible thing a force layout
 can be handed", and at 300 nodes "most of its size is topology".
 
@@ -197,7 +197,7 @@ Measured, giving auto more time fixes it the same way:
 Left out of this change on purpose. Raising `settleTimeFor` lengthens *every* auto run — including
 the background re-tune that fires on every graph change — for a benefit realised on an occasional
 button click, and lowering `FRICTION_MAX` risks the boiling on large graphs that band was tuned to
-prevent (`prd/auto-physics-preset.md` §13.6). Both are one-line data changes and both touch a
+prevent (`prd/archive/auto-physics-preset.md` §13.6). Both are one-line data changes and both touch a
 subsystem whose fixtures A–G encode a lot of tuning, so the trade belongs to whoever owns that
 call. The measurement above is the evidence for it.
 

@@ -1,14 +1,14 @@
 # Tree layout — deferred work
 
-**Status:** open backlog, recorded 2026-08-20
-**Context:** surfaced while building `prd/tree-layout-spacing.md`; deliberately not done there.
+**Status:** closed — recorded 2026-08-20, all three items (B1/B2/B3) delivered 2026-08-20. Archived.
+**Context:** surfaced while building `prd/archive/tree-layout-spacing.md`; deliberately not done there.
 
 Things the tree layout needs that were each too big or too semantic to fold into a spacing change.
 Sami's call (2026-08-20): "we'll definitely have to revisit the other big change afterward."
 
-**All three are done.** B1 delivered 2026-08-20, see `prd/tree-layout-cycles.md`; B2 delivered
-2026-08-20, see `prd/tree-root-picker.md`; B3 closed 2026-08-20 by *deleting* the option rather than
-fixing it, see `prd/tree-layout-direction.md`. The entries are kept below for the reasoning.
+**All three are done.** B1 delivered 2026-08-20, see `prd/archive/tree-layout-cycles.md`; B2 delivered
+2026-08-20, see `prd/archive/tree-root-picker.md`; B3 closed 2026-08-20 by *deleting* the option rather than
+fixing it, see `prd/archive/tree-layout-direction.md`. The entries are kept below for the reasoning.
 
 ---
 
@@ -70,5 +70,5 @@ AIL demo needed its edges flipped to give a decent tree. It does not: the flip w
 the spanning walk being directed, and a flip cannot be right for two datasets at once — reversing
 `ail-graph` takes it from 41 to 287 of 300 edges kept in the hierarchy, and reversing `ail-graph2`
 takes it from 299 to 3 of 299. `buildLevelsStatic` now gives up on direction by itself when no node
-can cover its component along the arrows. See `prd/tree-layout-direction.md`.
+can cover its component along the arrows. See `prd/archive/tree-layout-direction.md`.
 Nothing in the UI or the test suite sets the option today, so there is no user to break either way.

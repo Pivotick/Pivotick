@@ -7,7 +7,7 @@ import type { Node } from '../Node'
 import type { Note } from '../Note'
 import type { UIElement } from '../ui/UIManager'
 import type { FieldConfig } from '../utils/FormFactory'
-import type { FilterOptions } from './GraphQueryEngine'
+import type { FilterFacet, FilterOptions } from './GraphQueryEngine'
 import type { AsyncContentOptions, RenderContext, RenderResult } from './AsyncContent'
 import type { MinimapOptions } from '../plugins/minimap/options'
 
@@ -73,7 +73,62 @@ export interface GraphUI {
      * rejects. Only async hooks ever reach it — see {@link AsyncContentOptions}.
      */
     asyncContent?: AsyncContentOptions,
+    /**
+     * The data dock: the graph's nodes and edges as a sortable, selectable grid
+     * split off the bottom of the canvas.
+     *
+     * `full` mode offers one by default — the header grows a Table pill and the dock
+     * opens on demand. `false` suppresses it entirely; an object configures it. Other
+     * modes never mount it. See {@link TableOptions}.
+     */
+    table?: TableOptions | boolean,
+    /**
+     * The bottom dock itself — the region the table and any registered
+     * {@link DockTab} share, rather than what is in it.
+     *
+     * `UI.table` still carries the same three settings, and did before the region
+     * had tabs; those are honoured, and anything set here wins. Declare them here
+     * when the table is switched off, since that is the only way to reach the dock
+     * a plugin's tab brings with it.
+     */
+    dock?: DockOptions,
     keybindings?: Keybinding[];
+}
+
+/**
+ * `UI.dock` — the bottom dock's own settings: the region, not its occupants.
+ *
+ * Everything about *what is in* the dock is declared elsewhere — the table under
+ * `UI.table`, anything else through `addDockTab()`. What is left here is the region
+ * the occupants share, which is why there is exactly one of each setting however
+ * many tabs are registered.
+ *
+ * @example
+ * ```js
+ * // A dock holding only a plugin's pane, open on load
+ * UI: { mode: 'full', table: false, dock: { open: true, height: 0.3 } }
+ * ```
+ *
+ * @category Main Options
+ */
+export interface DockOptions {
+    /**
+     * Whether the region is present, and expanded when it is. Three states, because
+     * the collapsed bar is the control that opens it:
+     *
+     * - `true` — present and expanded.
+     * - `false` — not present at all. `Shift+T` still brings it in.
+     * - **unset (default)** — present, folded to its header bar.
+     */
+    open?: boolean,
+    /**
+     * Folded away to just its header bar. `'auto'` follows the room available, until
+     * the first explicit collapse or expand hands control to the user for good.
+     * @default 'auto'
+     */
+    collapsed?: boolean | 'auto',
+    /** Expanded height: a pixel count, or a fraction of the canvas between 0 and 1. */
+    height?: number,
 }
 
 /**
@@ -668,3 +723,219 @@ export type IconClass = string
  * @example '/icon.svg'
  */
 export type ImagePath = string
+
+/**
+ * What a live dock tab gets to drive itself with — passed to its own `render`,
+ * `toolbar` and activation hooks. It lets a tab bring itself to the front or
+ * unregister without capturing the graph, the dock, or the disposer
+ * `addDockTab` returned.
+ */
+export interface DockTabHandle {
+    /** The tab's id — the declared one, or the auto-generated one. */
+    readonly id: string
+    /** Whether this is the tab currently on show. */
+    readonly active: boolean
+    /** Bring this tab to the front, unfolding the dock if it is folded. */
+    activate(): void
+    /**
+     * Rebuild this tab's body: `render` is called again and what it returns replaces
+     * what is there.
+     *
+     * This is how a pane with **its own** internal views switches between them — the
+     * data table does exactly this for `Nodes` / `Edges`. Doing it by hand is not an
+     * option: the dock keeps the element `render` gave it, so an occupant that swapped
+     * its own DOM would leave the dock holding a stale reference to re-attach later.
+     */
+    refresh(): void
+    /** Unregister the tab and take its DOM with it. */
+    remove(): void
+}
+
+/**
+ * A pane in the bottom dock — one entry in its tab strip.
+ *
+ * The dock owns the **region**: the grid row, its height, the resize divider and the
+ * fold. A tab owns what is *in* it — a body, and optionally its own header controls,
+ * which the dock swaps in and out as the active tab changes. With only one tab
+ * registered no strip is drawn at all; there is nothing to switch.
+ *
+ * Register one at any point in the graph's life with `graph.UIManager.addDockTab()`,
+ * or from a plugin's `install` via `ctx.addDockTab()`. Either returns a disposer.
+ *
+ * **One tab is one pane, not one view of one.** A pane with several views of its own —
+ * the data table's `Nodes` and `Edges` — is a *single* dock tab that draws its own
+ * switch in its `toolbar` and calls {@link DockTabHandle.refresh} to change body. So
+ * the dock's strip lists panes (`Table`, `Events`) and never flattens one pane's views
+ * out alongside another pane; the two levels are drawn differently for the same reason.
+ *
+ * The data table is itself just such a tab, so a registered tab is exactly as
+ * privileged as the built-in one.
+ *
+ * @example
+ * ```js
+ * const dispose = graph.UIManager.addDockTab({
+ *     label: 'Audit',
+ *     render: () => myAuditPane(),
+ *     toolbar: () => [clearButton],
+ * })
+ * ```
+ */
+export interface DockTab {
+    /**
+     * Stable identity: what `removeDockTab` / `activateDockTab` take, and the
+     * `data-tab` written onto the strip's button.
+     * @default an auto-generated `pvt-dock-tab-N`
+     */
+    id?: string
+    /** The strip's label, used verbatim (so it can be translated). */
+    label: string
+    /**
+     * Build the pane's body. Called **once**, lazily, the first time the tab comes to
+     * the front — a tab nobody opens costs nothing. The element is kept and re-attached
+     * on later activations, so it holds its own state (scroll position included).
+     */
+    render: (tab: DockTabHandle) => HTMLElement
+    /**
+     * Build this tab's header controls, laid out as part of the dock's header row.
+     * Re-invoked on **every** activation, so the controls can reflect the tab's
+     * current state.
+     *
+     * A pane with several views of its own draws the switch here. Two public classes
+     * give it the same look the built-in table has — `pvt-dock-views` on the strip,
+     * `pvt-dock-view` on each button, `active` on the current one — so it stays a pill
+     * group beside the dock's own tabs and follows the theme.
+     */
+    toolbar?: (tab: DockTabHandle) => HTMLElement | HTMLElement[]
+    /**
+     * Display order in the strip, ascending. Equal orders keep registration order —
+     * and since plugins install after the UI is built, a plugin's tabs land after the
+     * built-in ones without having to say so.
+     * @default 0
+     */
+    order?: number
+    /**
+     * Called when this tab comes to the front, and when it leaves. A tab that watches
+     * live data should stop working in `onDeactivate` and catch up in `onActivate`:
+     * nothing else tells it that it is off screen.
+     */
+    onActivate?: (tab: DockTabHandle) => void
+    onDeactivate?: (tab: DockTabHandle) => void
+}
+
+/** A {@link DockTab} once registered: its `id` is resolved. */
+export interface RegisteredDockTab extends DockTab {
+    id: string
+}
+
+/**
+ * The data dock's configuration. Everything here is read-only behaviour: the table
+ * reflects and selects, and never changes the graph. Hiding, pinning and restoring stay
+ * with the sidebar's bulk actions and the filter panel.
+ *
+ * @example
+ * ```js
+ * UI: { mode: 'full', table: { open: true, height: 0.4,
+ *                              sort: { key: 'degree', direction: 'desc' } } }
+ * ```
+ *
+ * @category Main Options
+ */
+export interface TableOptions {
+    /** @default true whenever `UI.table` isn't `false` */
+    enabled?: boolean,
+    /** Which tabs to offer, in order. @default ['nodes', 'edges'] */
+    tabs?: TableTab[],
+    /**
+     * The node columns. Omit to have them resolved for you: from declared
+     * {@link FilterOptions.facets} if there are any, otherwise by scanning node data.
+     */
+    columns?: TableColumn[],
+    /** The edge columns, on the same terms as {@link TableOptions.columns}. */
+    edgeColumns?: TableColumn<Edge>[],
+    /**
+     * Whether the dock starts expanded. Three states, because the collapsed bar is the
+     * control that opens it:
+     *
+     * - `true` — present and expanded, showing the grid.
+     * - `false` — not present at all, for a canvas with no dock. `Shift+T` still brings
+     *   it in.
+     * - **unset (default)** — present, folded to its header bar. The bar is the
+     *   affordance, which is why there is no toolbar button for the dock.
+     */
+    open?: boolean,
+    /**
+     * Folded away to just its header bar. `'auto'` follows the room available, until the
+     * first explicit collapse or expand hands control to the user for good.
+     * @default 'auto'
+     */
+    collapsed?: boolean | 'auto',
+    /**
+     * The dock's height: a pixel count, or a fraction of the canvas between 0 and 1.
+     * Clamped so the canvas keeps a usable minimum whatever you ask for.
+     * @default 0.35
+     */
+    height?: number,
+    /** Initial sort. @default the first sortable column, ascending */
+    sort?: { key: string, direction: TableSortDirection },
+    /** What clicking a row does. @default 'select' */
+    rowActivate?: 'select' | 'selectAndCenter' | 'none',
+    /** Export buttons offered in the dock header. `false` hides them. @default ['csv', 'json'] */
+    export?: TableExportFormat[] | false,
+    /** Row count above which rows are windowed rather than all rendered. @default 200 */
+    virtualizeAbove?: number,
+}
+
+/** Which set of rows the dock is showing. */
+export type TableTab = 'nodes' | 'edges'
+
+export type TableSortDirection = 'asc' | 'desc'
+
+export type TableExportFormat = 'csv' | 'json'
+
+/**
+ * One column of the data dock.
+ *
+ * Deliberately an extension of {@link FilterFacet}: a facet already says how to read a
+ * value off an element and what kind of value it is, which is exactly what a column
+ * needs. So declaring `UI.filter.facets` describes your data once and the filter panel
+ * and the table agree about it.
+ *
+ * @example
+ * ```js
+ * { key: 'severity', label: 'Severity', type: 'numberRange', align: 'right', filterable: true }
+ * ```
+ */
+export interface TableColumn<T extends Node | Edge = Node> extends Pick<FilterFacet, 'key' | 'label' | 'type' | 'order'> {
+    /**
+     * How to read this column off an element. Defaults to `element.getData()[key]`, which
+     * is what makes a {@link FilterFacet} usable as a column unchanged.
+     */
+    accessor?: (element: T) => unknown,
+    /** Column width — a pixel count, or any CSS length. @default sized from its content */
+    width?: number | string,
+    /** @default 'right' for `numberRange`, `'left'` otherwise */
+    align?: 'left' | 'right' | 'center',
+    /** @default true */
+    sortable?: boolean,
+    /**
+     * Give this column a filter control in its header, typed off its {@link type} — a
+     * Min/Max pair for a `numberRange`, a dropdown of the values present for a `select`,
+     * a substring box otherwise.
+     *
+     * It narrows the **rows**; the canvas is left alone — changing what the graph
+     * displays stays with the filter panel, so the two can never disagree.
+     *
+     * @default false for a column you declare — but `true` throughout the **derived**
+     * column set, which infers its filters off the types it already inferred. Declare
+     * `columns` and you get exactly what you asked for.
+     */
+    filterable?: boolean,
+    /** Start hidden (still listed in the column picker). @default false */
+    hidden?: boolean,
+    /**
+     * Render the cell. A string is inserted as text, an `HTMLElement` as markup.
+     * Ignored by export, which always writes the raw value.
+     * @default `String(value)`
+     */
+    format?: (value: unknown, element: T) => string | HTMLElement,
+}

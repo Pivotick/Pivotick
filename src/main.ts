@@ -545,6 +545,8 @@ const options = {
       modeRail: new URLSearchParams(location.search).has('hero')
           ? undefined
           : { explore: true, enrich: true },
+      // Open the dock on load. The shipped default is folded to its bar.
+      dock: { open: true },
     },
     callbacks: {
         // onNodeEdit: (session) => {

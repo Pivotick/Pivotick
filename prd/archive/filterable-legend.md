@@ -1,11 +1,11 @@
 # Feature — a canvas legend that doubles as a filter
 
-**Status:** Implemented — 2026-08-18, branch `worktree-worktree-filterable-legend`. Not merged.
+**Status:** Done — implemented 2026-08-18 on `worktree-worktree-filterable-legend`, since merged into develop. Archived.
 **Owner:** Sami Mokaddem
 **Requested:** 2026-08-18
 **Area:** `src/ui/elements/Legend/` (new), `src/ui/elements/Layout.ts` (new canvas slot), `src/ui/UIManager.ts` (`UI_ELEMENTS` row), `src/interfaces/GraphUI.ts` (new `UI.legend`), `src/GraphQueryEngine.ts` + `src/interfaces/GraphQueryEngine.ts` (synthetic facet registration), `src/Graph.ts` (`setLegend`, `legendToggle` event)
 **Type:** UI element / filtering capability
-**Related:** [`misp/declarative-filter-facets.md`](misp/declarative-filter-facets.md) (the facet vocabulary this reuses, and the panel it must stay in sync with); [`graph-app-b3-control-layout.md`](graph-app-b3-control-layout.md) (the canvas chrome it has to share corners with); [`misp/runtime-sidebar-panels.md`](misp/runtime-sidebar-panels.md) (the runtime-registration pattern `setLegend` mirrors)
+**Related:** [`misp/declarative-filter-facets.md`](misp/declarative-filter-facets.md) (the facet vocabulary this reuses, and the panel it must stay in sync with); [`graph-app-b3-control-layout.md`](../graph-app-b3-control-layout.md) (the canvas chrome it has to share corners with); [`misp/runtime-sidebar-panels.md`](misp/runtime-sidebar-panels.md) (the runtime-registration pattern `setLegend` mirrors)
 
 ---
 

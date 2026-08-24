@@ -176,7 +176,6 @@ export class GraphQueryEngine {
     }
 
     clearNodeExclusions() {
-        this.hiddenNodeCount += this.excludedNodeIds.size
         this.excludedNodeIds.clear()
         this.apply()
         this.emit('filterRemove', MANUALLY_HIDDEN_FILTER_KEY)
@@ -195,20 +194,22 @@ export class GraphQueryEngine {
             })
     }
 
+    /** How many of *this* graph's nodes the active filters hide (children excluded). */
     getHiddenNodeCount() {
         return this.hiddenNodeCount
     }
 
     private apply() {
         this.regexCache.clear() // patterns are compiled once per application, below
-        const nodes = this.graph.getMutableNodes()
-        const visibleNodes = nodes
+        // A cluster's children are filtered in their own subgraph, so they can be
+        // neither shown nor hidden here — match and count this graph's nodes only.
+        const nodesInCurrentGraph = this.graph.getMutableNodes()
+            .filter(node => node.childrenDepth === 0)
+
+        const visibleNodesInCurrentGraph = nodesInCurrentGraph
             .filter(node => this.nodeMatchesFilters(node)) // nodes that match the filter
 
-        const visibleNodesInCurrentGraph = visibleNodes
-            .filter(node => node.childrenDepth === 0) // children filtering is done in their own graph
-
-        this.hiddenNodeCount = nodes.length - visibleNodesInCurrentGraph.length
+        this.hiddenNodeCount = nodesInCurrentGraph.length - visibleNodesInCurrentGraph.length
         this.applyFiltersOnSubgraph()
 
         this.graph.setVisibleNodes(visibleNodesInCurrentGraph)

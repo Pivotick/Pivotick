@@ -72,6 +72,11 @@ export class Mainheader extends UIComponent {
         this.noteButton = templateNoteSidebar.content.firstElementChild as HTMLDivElement
         this.mainheader.appendChild(this.noteButton)
 
+        // No Table pill. The three above all *open something over the canvas*; the dock is
+        // a split region that, collapsed, already shows its own chevron — so the pill was a
+        // second control for something already pointing at itself, and the worse-placed of
+        // the two. `Shift+T` lives on the dock itself now.
+
         /** Undo/Redo */
         const templateRight = document.createElement('template')
         templateRight.innerHTML = `

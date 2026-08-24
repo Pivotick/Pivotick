@@ -123,7 +123,7 @@ export const defaultMarkerStyleMap: MarkerStyleMap = {
     strokeWidth: var(--pvt-node-stroke-width, 2),
     color: 'var(--pvt-node-color, #007acc)',
     strokeColor: 'var(--pvt-node-stroke, #fff)',
-    fontFamily: 'var(--pvt-label-font, system-ui, sans-serif)',
+    fontFamily: 'var(--pvt-font-family)',
     textColor: 'var(--pvt-node-text-color, #fff)',
     textTruncate: true,
     iconUnicode: undefined,
@@ -139,7 +139,7 @@ export const defaultNodeStyle: NodeStyle = {
     strokeWidth: 'var(--pvt-node-stroke-width, 2)',
     color: 'var(--pvt-node-color, #007acc)',
     strokeColor: 'var(--pvt-node-stroke, #fff)',
-    fontFamily: 'var(--pvt-label-font, system-ui, sans-serif)',
+    fontFamily: 'var(--pvt-font-family)',
     textColor: 'var(--pvt-node-text-color, #fff)',
     textAnchorPosition: 'middle',
     textHorizontalShift: 0,
@@ -184,14 +184,14 @@ export const defaultEdgeStyle: EdgeStyle = {
  * @default
 {
     fontSize: 12,
-    fontFamily: 'var(--pvt-label-font, system-ui, sans-serif)',
+    fontFamily: 'var(--pvt-font-family)',
     color: 'var(--pvt-edge-label-color, #333)',
     backgroundColor: 'var(--pvt-edge-label-bg, #ffffffa0)',
 }
  */
 export const defaultLabelStyle: LabelStyle = {
     fontSize: 12,
-    fontFamily: 'var(--pvt-label-font, system-ui, sans-serif)',
+    fontFamily: 'var(--pvt-font-family)',
     color: 'var(--pvt-edge-label-color, #333)',
     backgroundColor: 'var(--pvt-edge-label-bg, #ffffffa0)',
 }
