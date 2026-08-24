@@ -264,7 +264,8 @@ graph.UIManager.addDockTab({
 a pane that swapped its own DOM would leave the dock re-attaching a stale node the next
 time it came to the front.
 
-See [`eventLog()`](/plugins#event-log) for a complete pane built this way, and
+See the [Add a dock pane](/examples/gallery/dock-panes/content) gallery card for a live
+one, [`eventLog()`](/plugins#event-log) for a complete pane in the library itself, and
 [Plugins](/plugins#dock-tab) for the plugin route.
 
 ### `UI.dock` — the region's own settings {#ui-dock}

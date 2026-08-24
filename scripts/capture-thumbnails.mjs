@@ -62,6 +62,14 @@ const CARD_PREP = {
         await page.mouse.click(x, y, { button: 'right' })
         await page.locator('.pvt-contextmenu.shown').first().waitFor({ state: 'visible', timeout: 5_000 })
     },
+    // Open the pane this card adds. The dock activates its first tab (the table) on
+    // load, and the card is about the one beside it — with the pane on show the shot
+    // carries both levels of switch at once: `Table │ Summary`, then the pane's own
+    // `By owner │ By kind`.
+    'dock-panes': async (page) => {
+        await page.locator('.pvt-dock-tab', { hasText: 'Summary' }).click()
+        await page.locator('.pvt-dock-body').first().waitFor({ state: 'visible', timeout: 5_000 })
+    },
 }
 
 async function captureCard(page, slug) {

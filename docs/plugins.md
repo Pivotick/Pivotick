@@ -142,6 +142,9 @@ A tab is not a `UIComponent`, so nothing drives lifecycle phases into it. When y
 needs `graphReady`, do what `eventLog()` does: hold a `UIComponent`, `addElement` it, and
 call `addDockTab` from its `onMount`.
 
+See the [Add a dock pane](/examples/gallery/dock-panes/content) gallery card for a live,
+complete example — a pane with two views of its own, beside the data table.
+
 ## Driving the viewport
 
 Anything that navigates the graph — a minimap, an overview, a "jump to" control — uses
