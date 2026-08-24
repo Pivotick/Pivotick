@@ -70,64 +70,14 @@ export function findMaxReachabilityRoot(nodes: Node[], edges: Edge[]): Node {
 }
 
 
+/**
+ * Kept as its own option value: `MinMaxDistance` asks for the node whose furthest
+ * descendant is nearest, which — on a DAG, where "distance to the furthest descendant"
+ * *is* the height of the subtree — is the same question {@link findMinHeightDAGRoot}
+ * answers. It was implemented twice, identically, and one copy is enough.
+ */
 export function findMinMaxDistanceRoot(nodes: Node[], edges: Edge[]): Node {
-    // Build adjacency list for directed edges
-    const adj = new Map<string, Node[]>()
-    const inDegree = new Map<string, number>()
-
-    for (const node of nodes) {
-        adj.set(node.id, [])
-        inDegree.set(node.id, 0)
-    }
-
-    for (const edge of edges) {
-        if (edge.directed !== false) {
-            adj.get(edge.from.id)!.push(edge.to)
-            inDegree.set(edge.to.id, (inDegree.get(edge.to.id) || 0) + 1)
-        }
-    }
-
-    // Kahn's algorithm for topological sort
-    const topo: Node[] = []
-    const queue: Node[] = nodes.filter(n => inDegree.get(n.id)! === 0)
-
-    while (queue.length) {
-        const node = queue.shift()!
-        topo.push(node)
-        for (const child of adj.get(node.id)!) {
-            inDegree.set(child.id, inDegree.get(child.id)! - 1)
-            if (inDegree.get(child.id) === 0) queue.push(child)
-        }
-    }
-
-    if (topo.length !== nodes.length) {
-        console.warn('Graph has a cycle! Min-max distance root undefined.')
-        return nodes[0]
-    }
-
-    // DP: longest path from each node to any reachable node
-    const maxDist = new Map<string, number>()
-    for (let i = topo.length - 1; i >= 0; i--) {
-        const node = topo[i]
-        let dist = 0
-        for (const child of adj.get(node.id)!) {
-            dist = Math.max(dist, 1 + (maxDist.get(child.id) || 0))
-        }
-        maxDist.set(node.id, dist)
-    }
-
-    // Find node with minimal max distance
-    let bestNode: Node | null = null
-    let minMaxDist = Infinity
-    for (const node of nodes) {
-        const dist = maxDist.get(node.id)!
-        if (dist < minMaxDist) {
-            minMaxDist = dist
-            bestNode = node
-        }
-    }
-
-    return bestNode ?? nodes[0]
+    return findMinHeightDAGRoot(nodes, edges)
 }
 
 
@@ -162,7 +112,7 @@ export function findMinHeightDAGRoot(nodes: Node[], edges: Edge[]): Node {
     }
 
     if (topo.length !== nodes.length) {
-        console.warn('Graph has a cycle! Cannot minimize DAG height.')
+        console.warn('Pivotick: the graph has a cycle, so no shallowest root is defined — using the first node.')
         return nodes[0]
     }
 
@@ -189,4 +139,65 @@ export function findMinHeightDAGRoot(nodes: Node[], edges: Edge[]): Node {
     }
 
     return bestNode ?? nodes[0]
+}
+
+
+/**
+ * The root for a graph whose arrows do *not* form a hierarchy: the node closest to the
+ * middle of the graph, reading every edge as undirected.
+ *
+ * The odd one out among the finders above — they all read arrow direction, and this one
+ * deliberately ignores it. It exists for converging data, where every leaf is a source
+ * and no single node reaches the graph along the arrows: there the direction-aware
+ * finders can only return a node that sees a handful of others, and the tree comes out
+ * as a comb of hundreds of stubs. See {@link TreeLayout.buildLevelsStatic}, which falls
+ * back to this when the finder it was asked for cannot cover the graph.
+ *
+ * Found by *double sweep* — walk to the farthest node, walk again to the farthest node
+ * from there, and take the middle of that path. On a tree that is exactly the centre;
+ * off a tree it is within one level of it, which is far closer than this needs to be.
+ * Two BFS passes, so O(V+E): the exhaustive search (BFS from every node) agreed on the
+ * same node for both AIL datasets and costs O(V·E).
+ */
+export function findUndirectedCenterRoot(nodes: Node[], edges: Edge[], startFrom?: string): Node {
+    const nodeById = new Map(nodes.map(node => [node.id, node]))
+    const adj = new Map<string, string[]>(nodes.map(node => [node.id, []]))
+    for (const edge of edges) {
+        // Edges pointing outside the given node set are skipped rather than throwing.
+        if (!adj.has(edge.from.id) || !adj.has(edge.to.id)) continue
+        adj.get(edge.from.id)!.push(edge.to.id)
+        adj.get(edge.to.id)!.push(edge.from.id)
+    }
+
+    /** Levels and the walk's parent tree, from one node, over the undirected reading. */
+    const walk = (start: string) => {
+        const levels = new Map<string, number>([[start, 0]])
+        const parentOf = new Map<string, string>()
+        const order = [start]
+        for (let i = 0; i < order.length; i++) {
+            const curr = order[i]
+            for (const neighbor of adj.get(curr) ?? []) {
+                if (levels.has(neighbor)) continue
+                levels.set(neighbor, levels.get(curr)! + 1)
+                parentOf.set(neighbor, curr)
+                order.push(neighbor)
+            }
+        }
+        // `order` is a BFS order, so its last entry is always a deepest node.
+        return { levels, parentOf, farthest: order[order.length - 1] }
+    }
+
+    // Only the start node's own component is searched, which is the one being rooted.
+    const start = startFrom !== undefined && adj.has(startFrom) ? startFrom : nodes[0]?.id
+    if (start === undefined) return nodes[0]
+
+    const end = walk(start).farthest
+    const { parentOf, farthest: other } = walk(end)
+
+    // Back up the parent chain to recover the longest path found, and take its middle.
+    const path: string[] = []
+    for (let step: string | undefined = other; step !== undefined; step = parentOf.get(step)) {
+        path.push(step)
+    }
+    return nodeById.get(path[Math.floor(path.length / 2)]) ?? nodes[0]
 }

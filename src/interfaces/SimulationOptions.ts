@@ -63,7 +63,18 @@ export interface SimulationOptions {
      * @default 0.001
      */
     d3GravityStrengthConnected: number
-    /** @default 2000 */
+    /**
+     * How long a simulation run is given before it is stopped, in milliseconds.
+     *
+     * Counted in ticks — `cooldownTime / 1000 * 60` of them — so the budget means the
+     * same thing whatever the frame rate. `d3AlphaDecay` is a per-tick schedule, so a
+     * wall-clock budget would silently shorten the run on any graph rendering below
+     * 60fps. The wall-clock value is still honoured as a backstop (at 4x) for a hidden
+     * or throttled tab, where frames stop arriving altogether.
+     *
+     * Driven by the `settleTime` knob, which sets this and `d3AlphaDecay` together.
+     * @default 2000
+     */
     cooldownTime: number
     /** @default auto */
     warmupTicks: number | 'auto'
@@ -78,6 +89,29 @@ export interface SimulationOptions {
      * @default false
      */
     fitViewOnExpandCollapse: boolean
+
+    /**
+     * Who drives the physics knobs.
+     *
+     * - `'auto'` — the layout re-tunes itself from what is on screen (node count,
+     *   node sizes, canvas size) and keeps doing so as the graph changes.
+     * - `'manual'` — the knobs stay exactly where they were configured.
+     *
+     * Left unset, `'auto'` is used *unless* the graph configures a physics option
+     * auto drives ({@link d3LinkDistance}, {@link d3ManyBodyStrength},
+     * {@link d3CollideRadiusMultiplier}, {@link d3VelocityDecay},
+     * {@link d3GravityStrength}, {@link d3GravityStrengthConnected},
+     * {@link d3AlphaDecay}, {@link cooldownTime}) — so tuning any of them is enough
+     * to keep it, and no existing configuration is taken over. Setting
+     * `physics: 'auto'` *and* d3 options is legal: the explicit values seed the
+     * opening frame and auto takes over from there.
+     *
+     * Turning any knob by hand (a flyout slider, a `set*` call, a preset) also
+     * leaves auto.
+     *
+     * @default 'auto' when no physics option is configured, `'manual'` otherwise
+     */
+    physics?: 'auto' | 'manual'
 
     /** @default true */
     enabled: boolean

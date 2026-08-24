@@ -270,6 +270,14 @@ export interface NodeStyle {
      * @default 0
      */
     textRotateDegree: ((node: Node) => number) | number
+    /**
+     * Whether a label wider than the room it has is shortened with a middle ellipsis
+     * (`head…tail`). Set it to `false` to always draw the label in full; one that spills
+     * past the node's shape then gets the same themed pill as a floated label, so it
+     * stays readable over the canvas.
+     * @default true
+     */
+    textTruncate: ((node: Node) => boolean) | boolean
     iconClass?: IconClass,
     iconUnicode?: IconUnicode,
     /**

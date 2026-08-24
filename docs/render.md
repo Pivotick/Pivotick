@@ -80,6 +80,25 @@ const data = {
 ></Pivotick>
 
 
+## Full node labels
+
+A node label longer than the room it has is shortened with a middle ellipsis
+(`Supe…abel`). Set `textTruncate: false` to draw it in full instead — as a default,
+per node type, or per node:
+
+```ts
+const options = {
+    render: {
+        defaultNodeStyle: { textTruncate: false },
+    },
+}
+```
+
+A full label usually spills past the node's shape, so it is drawn on the same
+themed pill as a floated label to stay readable over the canvas. Pair it with
+`textVerticalShift: 1` (or `textHorizontalShift`) to move the whole label clear
+of the node. Edge labels are never truncated.
+
 ## API
 
 Pivotick exposes a renderer controller that lets you interact directly with the rendering engine.

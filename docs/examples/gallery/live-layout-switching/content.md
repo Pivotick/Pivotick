@@ -1,7 +1,7 @@
 ---
 title: "Live layout switching"
 category: D
-order: 2
+order: 3
 ---
 
 # Live layout switching

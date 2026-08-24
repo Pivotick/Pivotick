@@ -27,7 +27,7 @@ import type {
 } from '../../../src/interfaces/GraphUI'
 import type { PivotickPlugin } from '../../../src/interfaces/Plugin'
 import type { RenderContext } from '../../../src/interfaces/AsyncContent'
-import type { Edge } from '../../../src/Edge'
+import { Edge as EdgeInstance, type Edge } from '../../../src/Edge'
 import type {
     DeleteContext,
     DeleteDecision,
@@ -37,7 +37,12 @@ import type {
     NodeCreateContext,
     NodeCreateDecision,
 } from '../../../src/interfaces/InterractionCallbacks'
-import { fixtures, type FixtureName, type RawNote } from './fixtures'
+import {
+    buildAutoFixture, fixtures,
+    type AutoFixtureSpec, type BuiltFixture, type FixtureName, type RawNote,
+} from './fixtures'
+import { measureLayout, type MeasuredLayout } from '../../../src/AutoPhysics'
+import type { PhysicsKnobs } from '../../../src/Simulation'
 
 /** Named `onBeforeEdgeCreate` behaviours the harness can install (functions can't cross `page.evaluate`). */
 export type EdgeHookBehavior =
@@ -246,7 +251,10 @@ const BASE_OPTIONS = {
         // the mode-rail spec additionally enables Explore.
         modeRail: { enrich: true },
     },
-    simulation: { enabled: false, useWorker: false },
+    // `physics: 'manual'` pins the knobs for every baseline: the `Auto` preset is the
+    // library default and re-tunes as the graph changes, which would make snapshots
+    // depend on node count and canvas size. The auto spec opts back in explicitly.
+    simulation: { enabled: false, useWorker: false, physics: 'manual' },
     render: { zoomAnimation: false },
 }
 
@@ -433,6 +441,40 @@ function mergeOptions(base: PlainObject, override: PlainObject): PlainObject {
 export interface HarnessApi {
     /** Build a graph from a named fixture; resolves once it has finished rendering. */
     load(name: FixtureName, overrides?: PlainObject): Promise<void>
+    /**
+     * Build an unpinned graph of `spec.nodes` circles with the simulation running
+     * and the `Auto` physics preset on — the one place in the suite where the layout
+     * is produced by physics rather than by fixed coordinates.
+     */
+    loadAuto(spec: AutoFixtureSpec, overrides?: PlainObject): Promise<void>
+    /**
+     * Boot an auto fixture with a raw simulation config — including *no* `physics`
+     * key, which is what auto's default-on rule is decided from.
+     */
+    loadAutoWithConfig(spec: AutoFixtureSpec, simulation?: PlainObject): Promise<void>
+    /** Add `count` nodes of radius `radius`, chained onto the graph already loaded. */
+    growAuto(count: number, radius: number): void
+    /** What auto chose, what the layout looks like, and what the camera made of it. */
+    autoState(): AutoState
+    /** Reheats since the last `loadAuto` or `resetReheatCount`. */
+    reheatCount(): number
+    resetReheatCount(): void
+    /**
+     * Is the engine still ticking this run?
+     *
+     * Reads the flag the tick loop itself stops on. The alternative — polling the
+     * bounding box until two samples agree — reports a slow-moving mid-run frame as
+     * settled, and the noise that introduces is larger than the effect a convergence
+     * test is trying to measure.
+     */
+    simulationRunning(): boolean
+    /**
+     * The live d3 alpha — how much heat is left in the run.
+     *
+     * Read in the same `page.evaluate` as the call that reheats, this is how much heat
+     * that caller asked for, exactly and with no timing in the way.
+     */
+    simulationAlpha(): number
     /**
      * Build a graph of custom `renderNode` HTML cards (fixed-size boxes) packed
      * tightly around the origin with no edges — for exercising library-fixes #8
@@ -885,8 +927,20 @@ class Harness implements HarnessApi {
         overrides: PlainObject = {},
         beforeReady?: (graph: Pivotick) => void
     ): Promise<void> {
+        return this.bootData(fixtures[name](), mergeOptions(BASE_OPTIONS, overrides), beforeReady)
+    }
+
+    /**
+     * {@link boot}, for fixtures built from a spec rather than looked up by name.
+     * `options` is taken as final — callers do their own {@link BASE_OPTIONS} merge,
+     * so one of them can drop a pinned key instead of only overriding it.
+     */
+    private async bootData(
+        data: BuiltFixture,
+        options: PlainObject = {},
+        beforeReady?: (graph: Pivotick) => void
+    ): Promise<void> {
         this.destroy()
-        const data = fixtures[name]()
         // Snapshot the fixture's positions now — the graph mutates these Node
         // instances during its initial layout pass (see `pin()`).
         this.intended = new Map(
@@ -894,7 +948,6 @@ class Harness implements HarnessApi {
                 .filter((n) => typeof n.x === 'number' && typeof n.y === 'number')
                 .map((n) => [n.id, { x: n.x as number, y: n.y as number }])
         )
-        const options = mergeOptions(BASE_OPTIONS, overrides)
         this.legendToggles = []
         this.recordedWarnings = []
         // The previous graph's UI is gone, so its disposers refer to nothing.
@@ -2227,6 +2280,137 @@ class Harness implements HarnessApi {
     private cancelClick = (_event: unknown, context: GraphInteractionContext): void => {
         context.cancel()
     }
+
+    /* ---------- auto physics ---------- */
+
+    /** Reheats since the last `loadAuto` — the calm policy is a claim about this number. */
+    private reheats = 0
+
+    async loadAuto(spec: AutoFixtureSpec, overrides: PlainObject = {}): Promise<void> {
+        // Auto only means anything with the simulation actually running, so these
+        // fixtures override the suite-wide `enabled: false` / `physics: 'manual'` pin.
+        // The worker stays off: it would compute the opening layout on a second thread
+        // and the test could not observe the tune that produced it.
+        await this.bootData(buildAutoFixture(spec), mergeOptions(BASE_OPTIONS, mergeOptions(
+            { simulation: { enabled: true, useWorker: false, physics: 'auto' } },
+            overrides,
+        )))
+        this.countReheats()
+    }
+
+    /**
+     * Boot an auto fixture with a *raw* simulation config — including the absence of
+     * `physics`, which is the whole point: auto's default-on rule is decided from
+     * which keys the consumer set, so the suite-wide `physics: 'manual'` pin has to
+     * be removed rather than overridden for that rule to be observable at all.
+     */
+    async loadAutoWithConfig(spec: AutoFixtureSpec, simulation: PlainObject = {}): Promise<void> {
+        const options = mergeOptions(BASE_OPTIONS, {
+            simulation: { enabled: true, useWorker: false, ...simulation },
+        }) as { simulation: PlainObject }
+        if (!('physics' in simulation)) delete options.simulation.physics
+        await this.bootData(buildAutoFixture(spec), options)
+        this.countReheats()
+    }
+
+    /**
+     * Count every reheat from here on. The simulation has no reheat event, and
+     * adding one just for a test would be a production API nobody asked for — so
+     * the test wraps the public method instead.
+     */
+    private countReheats(): void {
+        this.reheats = 0
+        const sim = this.g.simulation as unknown as { reheat: (alpha?: number) => void }
+        const original = sim.reheat.bind(sim)
+        sim.reheat = (alpha?: number) => {
+            this.reheats++
+            original(alpha)
+        }
+    }
+
+    resetReheatCount(): void {
+        this.reheats = 0
+    }
+
+    simulationRunning(): boolean {
+        return (this.g.simulation as unknown as { engineRunning: boolean }).engineRunning
+    }
+
+    simulationAlpha(): number {
+        return (this.g.simulation as unknown as { simulation: { alpha(): number } }).simulation.alpha()
+    }
+
+    reheatCount(): number {
+        return this.reheats
+    }
+
+    /**
+     * Add `count` nodes to an auto graph, chained onto the last node already there —
+     * growth by insertion, as a pivot would produce, rather than a reload.
+     */
+    growAuto(count: number, radius: number): void {
+        const existing = this.g.getNodeCount()
+        const prefix = `g${existing}_`
+        const { nodes: added } = buildAutoFixture({ nodes: count, radius, prefix })
+
+        const anchor = this.g.getMutableNodes().filter((node) => node.visible).pop()
+        const addedEdges: EdgeInstance[] = []
+        added.forEach((node, index) => {
+            const previous = index === 0 ? anchor : added[index - 1]
+            if (previous) addedEdges.push(new EdgeInstance(`${prefix}e${index}`, previous, node))
+        })
+        this.g.updateData(added, addedEdges)
+    }
+
+    /**
+     * Everything the auto acceptance criteria are stated in terms of, measured off
+     * the live graph: what auto chose, what the layout actually looks like at zoom 1,
+     * and what the camera then made of it.
+     */
+    autoState(): AutoState {
+        const sim = this.g.simulation
+        const run = sim.getAutoRun()
+        const canvasEl = this.g.renderer.getCanvas()
+        const box = canvasEl?.getBoundingClientRect()
+        const canvas = { width: box?.width ?? 0, height: box?.height ?? 0 }
+        const nodes = this.g.getMutableNodes()
+            .filter((node) => node.visible)
+            .map((node) => ({ x: node.x, y: node.y, radius: node.getCircleRadius() }))
+        const measured = measureLayout(nodes, canvas)
+        // getZoomTransform lives on the SVG renderer, not the abstract interface.
+        const renderer = this.g.renderer as unknown as { getZoomTransform?: () => { k: number } }
+        const zoom = renderer.getZoomTransform?.().k ?? 1
+
+        return {
+            auto: sim.isAutoPhysicsEnabled(),
+            skipped: run?.skipped ?? false,
+            tunedNodeCount: run?.context.nodeCount ?? -1,
+            knobs: sim.getPhysicsKnobs(),
+            enabled: sim.isEnabled(),
+            nodeCount: nodes.length,
+            canvas,
+            measured,
+            zoom,
+            // What the viewer ends up seeing: the layout's linear fill, scaled by the
+            // camera fit. This — not the raw fill — is what "covers ~80%" means.
+            coverage: measured.fill * zoom,
+        }
+    }
+}
+
+/** {@link HarnessApi.autoState}'s return shape. */
+export interface AutoState {
+    auto: boolean
+    skipped: boolean
+    /** Node count the last tune actually saw — tells "auto has not looked yet" from "auto looked and left it alone". */
+    tunedNodeCount: number
+    knobs: PhysicsKnobs
+    enabled: boolean
+    nodeCount: number
+    canvas: { width: number; height: number }
+    measured: MeasuredLayout
+    zoom: number
+    coverage: number
 }
 
 declare global {

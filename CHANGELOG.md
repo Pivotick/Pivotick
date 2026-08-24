@@ -2,6 +2,140 @@
 
 ## Unreleased
 
+### Tree layouts no longer need a perfect hierarchy
+
+- **A cycle no longer costs you the tree layout.** A single back-edge used to disable all three tree
+  layouts outright, with a "the graph contains a cycle" warning — which, for most real data, meant
+  the feature was unavailable. The hierarchy is now built from a breadth-first **spanning tree**:
+  the first edge to reach a node is its parent, an edge arriving at an already-placed node is drawn
+  crossing levels like any other, and a node with two parents is claimed by exactly one instead of
+  being laid out twice.
+- **Disconnected graphs lay out too.** Each component the root cannot reach gets its own root
+  (preferring one with no incoming edges) and the components are drawn side by side. Previously such
+  nodes had no place in the hierarchy at all, and the tree forces — which fall back to `0` for a
+  node they have no position for — quietly piled them onto the origin.
+- **Nodes with no edges at all are parked out of the way.** Giving them a slot in the hierarchy put
+  them on the root's own row, packed tight against it, reading as the root's children. They now fill
+  the dead space beside the shallow levels at the trailing edge of the layout — space a tree leaves
+  empty because it widens as it descends, and which is *inside* the layout's bounding box, so parking
+  them there does not zoom the tree out. The radial layout gives them a ring of their own outside the
+  last. Only nodes with no edges in *either* direction qualify, so no edge is left stretching from
+  the tree to the parking area.
+- **`Collision radius` stays live under a tree layout.** It is the one force a tree does not zero,
+  and it goes on keeping neighbours apart along whichever axis the layout leaves free, so disabling
+  it with the rest was wrong. Still disabled under the radial layout, which pins both axes.
+- **Fixed: a node with no usable radius no longer blanks the layout.** A non-numeric
+  `getCircleRadius()` — a custom node that has not measured itself yet — turned a measured gap into
+  `NaN`, and from there the spacing multiplier and every coordinate derived from it.
+
+### A tree layout works out its own spacing
+
+- **`Auto` is the default for tree spacing.** A tree layout is sized from the canvas and never looks
+  at how big its nodes are, so a tree of 10px dots and a tree of 40px avatars were laid out
+  identically — and the second one overlapped. Auto now measures the tightest pair of neighbours on
+  each axis, works out what their radii need (plus room for an arrowhead between levels), and scales
+  `levelSpacing` / `siblingSpacing` to suit, re-deriving them whenever the graph changes. Exact
+  rather than iterative: a gap scales linearly with its multiplier, so one correction pass is enough.
+- **It never packs a tree tighter than the fitted layout**, only looser — so a graph that was never
+  crowded is laid out exactly as before, bit for bit. And it never takes over a decision: a tree
+  that sets either multiplier explicitly keeps it, and dragging either slider leaves auto for good.
+  The new **`layout.spacing: 'auto' | 'manual'`** forces it either way, with
+  `simulation.enableAutoTreeSpacing()` / `isAutoTreeSpacingEnabled()` to drive it at runtime.
+- **In the radial layout both measurements drive the ring gap**, since a level always spans the full
+  circle and pushing the rings out is the only way to relieve crowding within one.
+- **The spacing ceiling is now `10×`, up from `4×`.** With auto able to report what a tree asks for,
+  `4` turned out to be below what ordinary graphs need: 120 nodes want 4.9× between siblings, 200
+  want 5.4×, a 100-level chain wants 6.1× between levels, and a 200-node radial tree wants 9.3×
+  between rings. It stops at 10 because past that the view is fitted so far out that the extra room
+  buys nothing a reader can use.
+
+### A tree layout can be spread out by hand
+
+- **Two spacing sliders for tree layouts.** A tree places its own nodes, so the physics knobs have
+  nothing to do — they grey out, and until now that left no way to open up a cramped hierarchy. The
+  Physics flyout now offers **Level distance** and **Sibling distance** in their place: multipliers
+  on the canvas-fitted geometry (`0.5×`–`10×`), applied live and reframed when the drag ends. The
+  inert simulation knobs are hidden rather than greyed while a tree is active; the run/pause toggle,
+  which still bites, stays.
+- **New tree layout options `levelSpacing` / `siblingSpacing`** (both default `1` — the fitted
+  layout, unchanged), plus `simulation.setTreeSpacing()` / `getTreeSpacing()` to drive them at
+  runtime. `siblingSpacing` has no meaning under `radial`, where a level always spans the full
+  circle, and its slider is disabled there.
+- **Fixed: a horizontal tree budgeted both its axes from the wrong canvas dimension** — depth was
+  sized from the canvas *height* and breadth from its *width*, then swapped on assignment, so a
+  left-to-right tree on a 1280×720 canvas got 720px for its levels and 1280px for its siblings.
+- **Fixed: the radial force and the radial layout described different pictures.** The force used a
+  hard-coded 100px per level while the layout divided `radialGap` across the tree's depth. It goes
+  unnoticed on the main thread (radial pins both axes, so the force never gets a say), but the
+  worker path is driven by the force alone — the same options drew two different layouts.
+- **Fixed: a re-laid-out tree fought its own forces.** `forceX` / `forceY` / `forceRadial` cache
+  their per-node target when initialised, so recomputing tree positions without re-registering them
+  left every force pulling nodes back to the previous layout — visible as the pinned axis moving
+  while siblings snapped back.
+
+### The layout tunes itself
+
+- **`Auto` is the new default physics preset.** Rather than applying one fixed bundle of force
+  settings to every graph, Pivotick now derives them from what is on screen — node count, node
+  size, canvas size, how fragmented the graph is — and re-derives them whenever the visible graph
+  changes. Four small nodes get room to breathe; forty large ones get spread far enough apart to
+  read as clusters instead of a carpet.
+- **Existing configuration is never taken over.** Auto is on only for graphs that configure none of
+  the options it drives (`d3LinkDistance`, `d3ManyBodyStrength`, `d3CollideRadiusMultiplier`,
+  `d3VelocityDecay`, `d3GravityStrength`, `d3GravityStrengthConnected`, `d3AlphaDecay`,
+  `cooldownTime`). The new **`simulation.physics: 'auto' | 'manual'`** forces it either way;
+  `'auto'` alongside explicit d3 options is legal — they seed the opening frame and auto takes over.
+  Turning any knob by hand (a slider, a `set*` call, a preset) also leaves auto, permanently.
+- **Auto only ever moves knobs you can see**, and the flyout sliders follow it as it re-tunes. It is
+  force-layout only (inert under `tree` / `egoTree`), coalesces triggers that arrive together, skips
+  changes too small to see, and never restarts a simulation that is paused.
+
+#### Breaking
+
+- **`PhysicsKnobs` gained two fields, `centering` and `settleTime`** — a widening, so code reading a
+  knob bundle is fine, but code *constructing* one must now supply six values. `centering` drives
+  the gravity strengths (`d3GravityStrengthConnected`, with `d3GravityStrength` following as a
+  multiple); `settleTime` drives `d3AlphaDecay` **and** `cooldownTime` together, since moving either
+  alone does nothing.
+- **`PHYSICS_PRESETS.default` is gone**, along with `'default'` from `PhysicsPresetName`. It was an
+  alias of `loose` rather than the library's actual defaults, and `Auto` replaces the concept — the
+  flyout's preset row is now `[Auto] [Tight] [Loose]`. Both remaining presets gain `centering: 7`,
+  reproducing the historical gravity (0.001 / 0.1) exactly; `loose` also keeps its four original
+  values and the historical alpha decay (`settleTime: 2.25` → 0.05).
+- **`PHYSICS_PRESETS.tight` is re-tuned to `friction: 45`, `settleTime: 3`** (from 58 / 2.25). Its
+  old numbers paired the heaviest damping in the set with the shortest settle, which is a
+  contradiction — damping is what makes a layout take longer to arrive — and the result was that
+  clicking `Tight` moved the graph roughly half way to where `Tight` actually settles. The settled
+  look is unaffected (`friction` shapes the approach; at rest, velocity is zero either way), and
+  `tight` is still clearly the calmer preset. See `prd/physics-preset-reheat.md`.
+- **`PHYSICS_KNOB_RANGES.linkDistance` is now `[40, 600]`** (was `[40, 260]`). The knob maps to
+  pixels one-for-one, so every existing value is unchanged; only a UI rendering the slider's `max`
+  sees a difference. The old ceiling made it impossible to put visible space between two large
+  nodes — 260px leaves 140px between a pair of 120px discs.
+- **Removed private API:** `Simulation.scaleSimulationOptions` and
+  `Simulation.applyScalledSimulationOptions`, both `@private` and both dead (commented out at all
+  three call sites). They were an abandoned earlier attempt at this feature.
+
+### Fixed
+
+- **Clicking a physics preset now re-lays-out the graph instead of nudging it.** A preset or `Auto`
+  click reheats the simulation at full strength, where it used to get half of a fresh layout's heat
+  and stop half way — the reason the same preset had to be clicked several times before its effect
+  showed. Measured, one click now covers 87-99% of the distance to the preset's own equilibrium,
+  against 60% before. Dragging a slider keeps the gentler reheat it always had, and `Auto`'s
+  background re-tuning is unchanged.
+- **Clicking `Auto` always does something.** Auto skips re-tunes too small to see, which is right
+  for a background re-tune fired by a graph change but made the *button* a no-op whenever auto's
+  answer happened to sit near the current knobs. An explicit click now always applies and reheats.
+- **A simulation run gets the settling time it was promised at any frame rate.** `cooldownTime` was
+  compared against wall-clock while `d3AlphaDecay` is per tick, so a graph rendering below 60fps had
+  its run truncated — the heavy graphs, which need settling most, got the least of it. The budget is
+  now counted in ticks (identical at 60fps), with the wall-clock limit kept as a backstop so a
+  hidden or throttled tab still stops.
+- **`ForceGravity` skipped nodes at rest.** It guarded its accumulation on `node.vx && node.x`
+  rather than on the values being present, so a node sitting exactly on the centring axis, or
+  momentarily at rest, silently received no centring pull at all.
+
 ### Physics is its own rail mode
 
 - **Layout and simulation moved out of the View flyout into a Physics flyout**, opened by a new

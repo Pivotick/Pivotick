@@ -182,6 +182,97 @@ function basicNodes(): Record<string, Node> {
     return Object.fromEntries(entries)
 }
 
+/**
+ * The shape of a graph the `Auto` physics preset has to cope with.
+ *
+ * Unlike every other fixture here, auto fixtures are *not* pinned: the whole point
+ * is to let the simulation place the nodes and then measure where they ended up.
+ * What is pinned instead is the input — node count, radius and topology — so a run
+ * is reproducible even though the positions are not hand-written.
+ */
+export interface AutoFixtureSpec {
+    /** Total nodes, isolated ones included. */
+    nodes: number
+    /** Circle radius every node gets, in px. */
+    radius: number
+    /** How many connected components the linked nodes form. @default 1 */
+    components?: number
+    /** How many nodes are left with no edges at all. @default 0 */
+    isolated?: number
+    /** Node-id prefix, so a second batch can be added without colliding. @default 'n' */
+    prefix?: string
+    /**
+     * Build hub-and-spoke clusters instead of a random tree: `clusters` stars, each a
+     * hub with its share of the nodes as satellites, hubs chained to each other.
+     *
+     * This is the shape real data tends to have — and the shape that exposes whether a
+     * layout keeps its structure, because a star either opens into a legible flower or
+     * packs into an anonymous blob. A random tree has no clusters to lose, so it cannot
+     * tell the two apart.
+     */
+    clusters?: number
+}
+
+/**
+ * Build an auto fixture: `nodes` circles of the given `radius`, seeded in a tight
+ * spiral at the origin so every run starts from the same clump — which is the
+ * complaint auto answers ("too concentrated"), and makes "did it spread?" a real
+ * question rather than an artefact of where the nodes happened to start.
+ */
+export function buildAutoFixture(spec: AutoFixtureSpec): BuiltFixture {
+    const { nodes: count, radius, components = 1, isolated = 0, prefix = 'n' } = spec
+    const linkedCount = Math.max(0, count - isolated)
+
+    const nodes: Node[] = []
+    for (let i = 0; i < count; i++) {
+        // Deterministic seed spiral — a golden-angle placement inside a 60px disc.
+        const angle = i * 2.399963
+        const distance = 6 * Math.sqrt(i)
+        const id = `${prefix}${i}`
+        const node = new Node(id, { label: id.toUpperCase() }, { size: radius }, id)
+        node.x = Math.cos(angle) * distance
+        node.y = Math.sin(angle) * distance
+        // The renderer re-measures this after its first frame; seeding it means the
+        // opening tune already sees the real size instead of the default r=10.
+        node.setCircleRadius(radius)
+        nodes.push(node)
+    }
+
+    const edges: Edge[] = []
+
+    // Hub-and-spoke: every `stride`-th node is a hub, the rest are its satellites, and
+    // the hubs are chained together.
+    if (spec.clusters && spec.clusters > 0) {
+        const stride = Math.max(2, Math.floor(linkedCount / spec.clusters))
+        const hubs: Node[] = []
+        for (let i = 0; i < linkedCount; i++) {
+            if (i % stride === 0) {
+                const hub = nodes[i]
+                if (hubs.length) edges.push(new Edge(`${prefix}h${i}`, hubs[hubs.length - 1], hub))
+                hubs.push(hub)
+                continue
+            }
+            edges.push(new Edge(`${prefix}e${i}`, hubs[hubs.length - 1], nodes[i]))
+        }
+        return { nodes, edges, notes: [] }
+    }
+
+    // Otherwise a random recursive tree: node `i` attaches to an earlier node picked by
+    // a seeded LCG. Deterministic, but branching — a plain path would be a 60-node
+    // string 4000px long whatever the physics did, which says nothing about the tuner.
+    const perComponent = Math.ceil(linkedCount / Math.max(1, components))
+    let seed = 12345
+    const nextRandom = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648
+    for (let i = 0; i < linkedCount; i++) {
+        const offsetInComponent = i % perComponent
+        if (offsetInComponent === 0) continue // first node of a component starts a new tree
+        const parent = i - offsetInComponent + Math.floor(nextRandom() * offsetInComponent)
+        edges.push(new Edge(`${prefix}e${i}`, nodes[parent], nodes[i]))
+    }
+
+    return { nodes, edges, notes: [] }
+}
+
 export const fixtures = {
     /** A small directed graph: pentagon + hub, with a couple of labelled edges. */
     basic(): BuiltFixture {
@@ -377,6 +468,24 @@ export const fixtures = {
         return { nodes, edges: [], notes: [] }
     },
 
+    /**
+     * `textTruncate: false` — the same over-long label drawn in full, inside the node
+     * and floated above it, with the truncating default on top for contrast. The edge
+     * label is there to show edges never truncated in the first place.
+     */
+    nodeLabelsFull(): BuiltFixture {
+        const color = '#0f766e'
+        const long = 'Supercalifragilistic node label'
+        const truncated = mkStyledNode('truncated', -170, -110, { size: 16, color, text: long })
+        const inside = mkStyledNode('full-inside', -170, 0, { size: 16, color, text: long, textTruncate: false })
+        const outside = mkStyledNode('full-outside', -170, 110, {
+            size: 16, color, text: long, textTruncate: false, textVerticalShift: 1,
+        })
+        const edgeEnd = mkStyledNode('edge-end', 170, 110, { size: 16, color })
+        const edge = mkEdge('outside-end', outside, edgeEnd, { label: 'edge labels are never truncated' })
+        return { nodes: [truncated, inside, outside, edgeEnd], edges: [edge], notes: [] }
+    },
+
     /** Straight, curved, and a reciprocal pair that curves apart under `bidirectional`. */
     edgeCurves(): BuiltFixture {
         const mk = (id: string, x: number, y: number) => mkStyledNode(id, x, y, { size: 14, color: '#64748b' })
@@ -467,6 +576,95 @@ export const fixtures = {
             new Edge('c-g', n.c, n.g),
         ]
         return { nodes: Object.values(n), edges, notes: [] }
+    },
+
+    /**
+     * The mirror of {@link fixtures.tree}: the same three tiers, with every arrow
+     * pointing the other way. Twelve leaves each point at one of four hubs, and the
+     * hubs point at a single sink — so **every leaf is a source** and no node reaches
+     * the graph by following the arrows, which is the shape of provenance data (the
+     * AIL demo graph is 259 messages pointing at 41 chats).
+     *
+     * A directed spanning walk cannot lay this out: it leaves all twelve leaves as
+     * roots of their own and drops most edges out of the hierarchy. Drives the
+     * direction-blind fallback in `TreeLayout.buildLevelsStatic`.
+     *
+     *       l0 l1 l2  l3 l4 l5  l6 l7 l8  l9 l10 l11
+     *         \ | /     \ | /     \ | /     \  |  /
+     *          h0         h1        h2         h3
+     *            \         \        /         /
+     *                        sink
+     */
+    converging(): BuiltFixture {
+        const sink = mkNode('sink', 0, 200)
+        const hubs = [0, 1, 2, 3].map(i => mkNode(`h${i}`, -240 + i * 160, 60))
+        const leaves = hubs.flatMap((_, h) =>
+            [0, 1, 2].map(l => mkNode(`l${h * 3 + l}`, -300 + h * 160 + l * 50, -100))
+        )
+        const edges = [
+            ...leaves.map((leaf, i) => new Edge(`leaf-${i}`, leaf, hubs[Math.floor(i / 3)])),
+            ...hubs.map((hub, i) => new Edge(`hub-${i}`, hub, sink)),
+        ]
+        return { nodes: [sink, ...hubs, ...leaves], edges, notes: [] }
+    },
+
+    /**
+     * Two separate trees, the second of which declares where it starts.
+     *
+     *      a                          <- row 0
+     *     / \
+     *   a1   a2        b              <- b declares `level: 2`
+     *                 / \
+     *               b1   b2
+     *
+     * With `layout.depthKey: 'level'` the two roots sit on different rows; without it
+     * they share one, which is what a forest could only ever do before. Same fixture
+     * either way, so one graph covers both halves of the behaviour.
+     */
+    declaredForest(): BuiltFixture {
+        const a = mkNode('a', -200, -100)
+        const a1 = mkNode('a1', -280, 40)
+        const a2 = mkNode('a2', -120, 40)
+        const b = mkNode('b', 200, -100, { level: 2 })
+        const b1 = mkNode('b1', 120, 40)
+        const b2 = mkNode('b2', 280, 40)
+        const edges = [
+            new Edge('a-a1', a, a1),
+            new Edge('a-a2', a, a2),
+            new Edge('b-b1', b, b1),
+            new Edge('b-b2', b, b2),
+        ]
+        return { nodes: [a, a1, a2, b, b1, b2], edges, notes: [] }
+    },
+
+    /**
+     * One tree carrying every rule a declared hierarchy has to arbitrate.
+     *
+     *   root                                  row 0
+     *     |
+     *    mid                                  row 1
+     *    / \
+     * deep  clash        free                 deep asks row 4 (gap padded)
+     *                                         clash asks row 1 (clamped to 2)
+     *                                         free has no edge, names `root`
+     *
+     * `deep` proves an empty row takes real space; `clash` proves a row that is not
+     * below its parent's is clamped rather than honoured by detaching the node; `free`
+     * proves a declared parent is honoured with no edge to back it, which also keeps it
+     * out of the parked wedge.
+     */
+    declaredHierarchy(): BuiltFixture {
+        const root = mkNode('root', 0, -160)
+        const mid = mkNode('mid', 0, -40)
+        const deep = mkNode('deep', -120, 80, { level: 4 })
+        const clash = mkNode('clash', 120, 80, { level: 1 })
+        const free = mkNode('free', 240, -40, { parentId: 'root' })
+        const edges = [
+            new Edge('root-mid', root, mid),
+            new Edge('mid-deep', mid, deep),
+            new Edge('mid-clash', mid, clash),
+        ]
+        return { nodes: [root, mid, deep, clash, free], edges, notes: [] }
     },
 
     /**

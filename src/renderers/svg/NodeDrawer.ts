@@ -5,7 +5,7 @@ import { Edge } from '../../Edge'
 import type { Graph } from '../../Graph'
 import { GraphSvgRenderer } from './GraphSvgRenderer'
 import { defaultLabelStyle } from '../../styles/defaults'
-import { resolveIcon, tryResolveNumber, tryResolveString } from '../../utils/Getters'
+import { resolveIcon, tryResolveBoolean, tryResolveNumber, tryResolveString } from '../../utils/Getters'
 import { parseSvgIconMarkup } from '../../utils/SvgSanitizer'
 import { hasAllowedScheme, SAFE_IMAGE_SCHEMES } from '../../utils/urlSafety'
 import type { CustomNodeShape, GraphRendererOptions, ImageFit, NodeShape, NodeStyle } from '../../interfaces/RendererOptions'
@@ -180,6 +180,7 @@ export class NodeDrawer {
             textHorizontalShift: style?.textHorizontalShift ?? this.rendererOptions.defaultNodeStyle.textHorizontalShift,
             textVerticalShift: style?.textVerticalShift ?? this.rendererOptions.defaultNodeStyle.textVerticalShift,
             textRotateDegree: style?.textRotateDegree ?? this.rendererOptions.defaultNodeStyle.textRotateDegree,
+            textTruncate: style?.textTruncate ?? this.rendererOptions.defaultNodeStyle.textTruncate,
             iconUnicode: style?.iconUnicode ?? this.rendererOptions.defaultNodeStyle.iconUnicode,
             iconClass: style?.iconClass ?? this.rendererOptions.defaultNodeStyle.iconClass,
             svgIcon: style?.svgIcon ?? this.rendererOptions.defaultNodeStyle.svgIcon,
@@ -218,6 +219,7 @@ export class NodeDrawer {
                 textHorizontalShift: style?.textHorizontalShift ?? styleFromStyleMap?.textHorizontalShift,
                 textVerticalShift: style?.textVerticalShift ?? styleFromStyleMap?.textVerticalShift,
                 textRotateDegree: style?.textRotateDegree ?? styleFromStyleMap?.textRotateDegree,
+                textTruncate: style?.textTruncate ?? styleFromStyleMap?.textTruncate,
                 iconUnicode: style?.iconUnicode ?? styleFromStyleMap?.iconUnicode,
                 iconClass: style?.iconClass ?? styleFromStyleMap?.iconClass,
                 svgIcon: style?.svgIcon ?? styleFromStyleMap?.svgIcon,
@@ -246,6 +248,7 @@ export class NodeDrawer {
         nodeStyle.textHorizontalShift = nodeStyle.textHorizontalShift !== undefined ? (tryResolveNumber(nodeStyle.textHorizontalShift, node) ?? 0) : 0
         nodeStyle.textVerticalShift = nodeStyle.textVerticalShift !== undefined ? (tryResolveNumber(nodeStyle.textVerticalShift, node) ?? 0) : 0
         nodeStyle.textRotateDegree = nodeStyle.textRotateDegree !== undefined ? (tryResolveNumber(nodeStyle.textRotateDegree, node) ?? 0) : 0
+        nodeStyle.textTruncate = nodeStyle.textTruncate !== undefined ? (tryResolveBoolean(nodeStyle.textTruncate, node) ?? true) : true
         nodeStyle.text = nodeStyle.text !== undefined ? tryResolveString(nodeStyle.text, node) : undefined
 
         nodeStyle.iconUnicode = nodeStyle.iconUnicode !== undefined ? tryResolveString(nodeStyle.iconUnicode, node) : undefined
@@ -487,7 +490,7 @@ export class NodeDrawer {
                 .classed('pvt-node-label-group', true)
 
             const isOusideNode = Math.abs(style.textVerticalShift) >= 1 || Math.abs(style.textHorizontalShift) >= 1
-            const [fontSize, text] = this.computeTextLayout(style.text, style.size, isOusideNode)
+            const [fontSize, text] = this.computeTextLayout(style.text, style.size, isOusideNode, style.textTruncate as boolean)
 
             const x_pos = style.textHorizontalShift * (style.size + fontSize/2*1.2)
             const y_pos = - style.textVerticalShift * (style.size + fontSize/2*1.2)
@@ -507,7 +510,14 @@ export class NodeDrawer {
                 .text(text)
 
             const bbox = textSelection.node()?.getBBox()
-            if (isOusideNode && bbox) {
+            // An untruncated label spills past the shape, where the node's own text colour
+            // is drawn against the canvas instead of the node (white on white, by default).
+            // Give it the floated label's pill + colour so the whole string stays readable.
+            const spillsOutOfNode = !isOusideNode && style.textTruncate === false
+                && !!bbox && bbox.width > (style.size as number) * 2
+            if (spillsOutOfNode) textSelection.attr('fill', defaultLabelStyle.color)
+
+            if ((isOusideNode || spillsOutOfNode) && bbox) {
                 const paddingX = 4
                 const paddingY = 2
                 labelG.insert('rect', 'text')
@@ -598,7 +608,7 @@ export class NodeDrawer {
         return this.isNodeSelected(edge.from) || this.isNodeSelected(edge.to)
     }
 
-    private computeTextLayout(label: string, nodeSize: number, isOusideNode: boolean = false): [number, string] {
+    private computeTextLayout(label: string, nodeSize: number, isOusideNode: boolean = false, truncate: boolean = true): [number, string] {
         const base = nodeSize * 0.9
         // Allow wider strings when text is outside the node
         const maxWidth = isOusideNode ? base * 5 : base * 2
@@ -609,7 +619,7 @@ export class NodeDrawer {
         const charWidth = fontSize * 0.55
         const maxChars = Math.floor(maxWidth / charWidth) - 1
 
-        if (label.length > maxChars && label.length > 7) {
+        if (truncate && label.length > maxChars && label.length > 7) {
             // Since text is too long, add ellipsis
             const charsToKeep = Math.max(6, maxWidth / charWidth) - 1 // Reserve 1 space for "…"
 
