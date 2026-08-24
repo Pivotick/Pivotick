@@ -1,4 +1,4 @@
-import { test, gotoHarness, loadFixture, harness, expectCanvas } from '../helpers'
+import { test, expect, gotoHarness, loadFixture, harness, expectCanvas, nodeEl } from '../helpers'
 import type { Page } from '@playwright/test'
 import type { FixtureName } from '../harness/fixtures'
 
@@ -50,6 +50,20 @@ test.describe('node & edge styling', () => {
     test('node labels', async ({ page }) => {
         await loadPinned(page, 'nodeLabels')
         await expectCanvas(page, 'node-labels.png')
+    })
+
+    // T1.4b — `textTruncate: false` draws the whole label instead of `head…tail`,
+    // both inside the node and floated above it. The top node keeps the truncating
+    // default for contrast; the edge label shows edges were never truncated.
+    test('node labels without truncation', async ({ page }) => {
+        await loadPinned(page, 'nodeLabelsFull')
+        const labelOf = (id: string) => nodeEl(page, id).locator('text.pvt-node-label')
+        const full = 'Supercalifragilistic node label'
+
+        await expect(labelOf('truncated')).toHaveText(/…/)
+        await expect(labelOf('full-inside')).toHaveText(full)
+        await expect(labelOf('full-outside')).toHaveText(full)
+        await expectCanvas(page, 'node-labels-full.png')
     })
 
     // T1.5 — straight vs curved vs bidirectional (reciprocal edges curve apart).

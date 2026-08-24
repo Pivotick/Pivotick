@@ -468,6 +468,24 @@ export const fixtures = {
         return { nodes, edges: [], notes: [] }
     },
 
+    /**
+     * `textTruncate: false` — the same over-long label drawn in full, inside the node
+     * and floated above it, with the truncating default on top for contrast. The edge
+     * label is there to show edges never truncated in the first place.
+     */
+    nodeLabelsFull(): BuiltFixture {
+        const color = '#0f766e'
+        const long = 'Supercalifragilistic node label'
+        const truncated = mkStyledNode('truncated', -170, -110, { size: 16, color, text: long })
+        const inside = mkStyledNode('full-inside', -170, 0, { size: 16, color, text: long, textTruncate: false })
+        const outside = mkStyledNode('full-outside', -170, 110, {
+            size: 16, color, text: long, textTruncate: false, textVerticalShift: 1,
+        })
+        const edgeEnd = mkStyledNode('edge-end', 170, 110, { size: 16, color })
+        const edge = mkEdge('outside-end', outside, edgeEnd, { label: 'edge labels are never truncated' })
+        return { nodes: [truncated, inside, outside, edgeEnd], edges: [edge], notes: [] }
+    },
+
     /** Straight, curved, and a reciprocal pair that curves apart under `bidirectional`. */
     edgeCurves(): BuiltFixture {
         const mk = (id: string, x: number, y: number) => mkStyledNode(id, x, y, { size: 14, color: '#64748b' })
