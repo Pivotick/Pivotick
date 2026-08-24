@@ -40,7 +40,9 @@ const options = {
     UI: {
         // `full` mode brings a minimap of its own; `light` and `viewer` need asking
         // (`UI.minimap: true`, or the plugin below). `static` never has one.
-        mode: 'full'
+        mode: 'full',
+        // The other thing full mode brings. Off here: this card is about the minimap.
+        table: false
     },
     // A plugin installs itself through the PluginContext it is handed — the core never
     // needs to know it exists. `graph.use(minimap())` works just as well, at any time.

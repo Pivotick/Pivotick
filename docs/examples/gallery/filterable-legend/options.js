@@ -60,6 +60,10 @@ const options = {
         // `static` don't. Full mode also ships the Graph Filters panel, which the
         // legend below shares a filter with.
         mode: 'full',
+        // Off: `full` mode brings a minimap and the data dock, and this card is about
+        // neither (see the Minimap and Data table cards for those).
+        minimap: false,
+        table: false,
         legend,
         // Declaring a facet under the *same key* the legend uses makes the two one
         // control: toggle a swatch and the panel's multiselect follows, and the

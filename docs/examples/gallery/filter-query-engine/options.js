@@ -74,6 +74,10 @@ const options = {
     // without `filter.facets` it auto-discovers your node attributes instead.
     UI: {
         mode: 'full',
+        // Off: `full` mode brings a minimap and the data dock, and this card is about
+        // neither (see the Minimap and Data table cards for those).
+        minimap: false,
+        table: false,
         filter: { facets }
     },
     render: {

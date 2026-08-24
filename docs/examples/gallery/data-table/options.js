@@ -47,6 +47,9 @@ const palette = new ColorPaletteMapper('okabe-ito')
 const options = {
     UI: {
         mode: 'full',
+        // Full mode's minimap would sit in the corner this card wants for the dock,
+        // and the dock is the subject — see the Minimap card for that one.
+        minimap: false,
         // Top-left, because this embed is 560px tall and the dock takes 42% of it: the
         // canvas that's left is shorter than the mode rail, so the bottom-left corner has
         // no column to give. A bottom-left legend would shrink to its header here.

@@ -33,6 +33,10 @@ const options = {
     },
     UI: {
         mode: 'full',
+        // Off: `full` mode brings a minimap and the data dock, and this card is about
+        // neither (see the Minimap and Data table cards for those).
+        minimap: false,
+        table: false,
         // Give the edge editor a relationship dropdown instead of a free-text field.
         editors: {
             edgeEditor: {
