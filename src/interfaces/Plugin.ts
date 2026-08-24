@@ -80,6 +80,12 @@ export interface PluginContext {
     addDockTab(tab: DockTab): () => void
     /** Remove a dock tab by id (equivalent to calling its disposer). */
     removeDockTab(id: string): void
+    /**
+     * Rebuild a dock tab from its `render` and `toolbar` — for when the pane's own data
+     * or chosen view changed. The same thing a `DockTabHandle`'s `refresh()` does, for
+     * code that holds the id rather than the handle.
+     */
+    refreshDockTab(id: string): void
     /** Hook a lifecycle phase. Returns an unsubscribe function. */
     onPhase(phase: UIPhase, callback: () => void): () => void
     /** Register a keybinding that is automatically removed when the UI is torn down. */

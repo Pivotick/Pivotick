@@ -260,9 +260,13 @@ export class Dock extends UIComponent {
     }
 
     /**
-     * Rebuild a tab's body from its `render`. This is what lets a pane switch between
-     * views of its own — the table's `Nodes` / `Edges` — without the dock being left
-     * holding a stale element to re-attach on the next activation.
+     * Rebuild a tab from its `render` **and** its `toolbar`. This is what lets a pane
+     * switch between views of its own — the table's `Nodes` / `Edges` — without the dock
+     * being left holding a stale element to re-attach on the next activation.
+     *
+     * The toolbar goes with it because a pane's controls usually *are* the switch:
+     * rebuilding only the body leaves the control showing the view you just left. Same
+     * reasoning as `refreshPanel`, which re-resolves a panel's title as well as its body.
      *
      * A tab that is not on show just loses its cached body; it will be rebuilt when it
      * next comes to the front, which is the same work either way.
@@ -279,6 +283,9 @@ export class Dock extends UIComponent {
         this.bodies.set(id, element)
         previous?.remove()
         this.body?.appendChild(element)
+
+        this.clearToolbar()
+        this.fillToolbar(tab)
     }
 
     /** Redraw the strip, and make sure something is on show if anything can be. */

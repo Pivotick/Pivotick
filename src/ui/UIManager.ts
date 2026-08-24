@@ -581,6 +581,7 @@ export class UIManager {
             refreshPanel: (id) => this.refreshPanel(id),
             addDockTab: (tab) => this.addDockTab(tab),
             removeDockTab: (id) => this.removeDockTab(id),
+            refreshDockTab: (id) => this.refreshDockTab(id),
             onPhase: (phase, callback) => this.onPhase(phase, callback),
             addKeybinding: (binding) => { this.uiDisposables.push(this.keyManager.register(binding)) },
         }

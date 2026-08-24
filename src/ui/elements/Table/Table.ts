@@ -185,7 +185,8 @@ export class Table extends UIComponent {
         this.tab = tab
         this.grid = this.gridFor(tab)
         this.closePicker()
-        this.renderTabs()
+        // Rebuilds the body *and* the toolbar, so the strip below comes back marking the
+        // view we just moved to — and `summary` is a fresh element by the time we bind it.
         this.handle?.refresh()
         this.grid.setSummaryTarget(this.summary)
         this.queueRebuild()

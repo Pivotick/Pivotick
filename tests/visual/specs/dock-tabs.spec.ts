@@ -210,6 +210,21 @@ test.describe('the two levels of switch', () => {
         await expect(page.locator('.pvt-table-row')).toHaveCount(7)
     })
 
+    // `refresh()` has to rebuild the **toolbar** as well as the body. A pane's controls
+    // usually *are* its view switch, so refreshing only the body leaves the control
+    // marking the view you just left — which is exactly what shipped first.
+    test('refresh rebuilds the controls, not just the body', async ({ page }) => {
+        await openDock(page)
+        await expect(page.locator('.pvt-table-tab[data-tab="nodes"]')).toHaveClass(/active/)
+
+        await page.locator('.pvt-table-tab[data-tab="edges"]').click()
+        await page.locator('.pvt-table-row').first().waitFor()
+
+        // The strip is rebuilt by the refresh, so it must come back marking Edges.
+        await expect(page.locator('.pvt-table-tab[data-tab="edges"]')).toHaveClass(/active/)
+        await expect(page.locator('.pvt-table-tab[data-tab="nodes"]')).not.toHaveClass(/active/)
+    })
+
     // The region's state is the dock's, and switching what is inside it is not a reason
     // for the row to move.
     test('switching panes leaves the height and the fold alone', async ({ page }) => {
