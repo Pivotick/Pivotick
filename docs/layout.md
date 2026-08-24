@@ -18,6 +18,8 @@ When `type: 'tree'` is selected, the following additional options are available:
 | ----------------------- | --------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | `rootId`                | `string`  | `undefined`       | Specify the ID of the node to use as the root. If not provided, Pivotick will automatically select a root based on `rootIdAlgorithmFinder`. |
 | `rootIdAlgorithmFinder` | -         | `MaxReachability` | Algorithm used to automatically find the root node.                                                                                         |
+| `parentKey`             | `string`  | `undefined`       | Name of the `node.data` key holding the id of the node's parent. Unset, parenthood comes from the edges. See [Declaring the hierarchy](#declaring-the-hierarchy). |
+| `depthKey`              | `string`  | `undefined`       | Name of the `node.data` key holding the row the node sits on, counting from `0`. Unset, a node sits one row below its parent.                |
 | `strength`              | `number`  | `0.1`             | The force strength to maintain tree structure.                                                                                              |
 | `horizontal`            | `boolean` | `false`           | Arrange nodes horizontally rather than vertically.                                                                                          |
 | `radial`                | `boolean` | `false`           | Place nodes in a radial layout instead of vertical.                                                                                         |
@@ -95,6 +97,95 @@ graph.simulation.setTreeRoot({ rootId: 'node-42' })          // pin the tree to 
 graph.simulation.setTreeRoot({ algorithm: 'MinHeight' })     // drop the pin, let the finder choose
 graph.simulation.getTreeRoot() // { rootId: undefined, algorithm: 'MinHeight' }
 ```
+
+#### Declaring the hierarchy
+
+Normally Pivotick works the hierarchy out for itself: parenthood from a spanning tree over the
+edges, and each node one row below its parent. Two options let the data say it instead.
+
+- **`parentKey`** names the `node.data` key holding a node's parent id.
+- **`depthKey`** names the `node.data` key holding the row it sits on, counting from `0` at the
+  shallowest root.
+
+Both are unset by default, and nothing at all is read until you name a key — so a graph whose data
+happens to carry a `depth` or `parent` field is unaffected until you ask for it.
+
+Either key may be missing from any individual node. A node with no declared parent gets one from the
+edges as usual; a node with no declared row sits one below its parent. A graph that declares neither
+is laid out exactly as it always was.
+
+##### Starting a tree further down
+
+This is what `depthKey` is mainly for. A graph of several separate trees is a *forest*, and its roots
+all share the shallowest row — there was previously no way to say that one of them belongs further
+down. Give that root a row:
+
+```ts
+const data = {
+    nodes: [
+        { id: 'a' }, { id: 'a1' }, { id: 'a2' },
+        { id: 'b', data: { level: 2 } }, { id: 'b1' }, { id: 'b2' },
+    ],
+    edges: [
+        { from: 'a', to: 'a1' }, { from: 'a', to: 'a2' },
+        { from: 'b', to: 'b1' }, { from: 'b', to: 'b2' },
+    ],
+}
+
+const graph = new Pivotick(container, data, {
+    layout: { type: 'tree', depthKey: 'level' },
+})
+```
+
+```
+row 0     a
+row 1   a1  a2
+row 2                b          <- b asked for row 2
+row 3              b1  b2
+```
+
+The whole tree moves with its root: `b`'s children follow it down. In the `radial` layout a row is a
+*ring*, so the same declaration starts that tree two rings out.
+
+##### What the rows mean
+
+A row can only ever push a node **further down**. A tidy tree places a child exactly one row below
+its parent, so a row that is not below the parent's cannot be drawn — it is clamped to `parent + 1`
+and a warning names how many were. The alternative, honouring the row by detaching the node from its
+parent, would let one wrong number break a tree into extra pieces.
+
+Rows the data skips are left **empty, and they take up real space** — that is what makes a declared
+row mean anything. A tree is scaled to fit the canvas, so declaring row `50` on an otherwise shallow
+graph makes it fifty-one rows tall and squeezes every real row to nothing. `levelSpacing` and
+[auto spacing](#auto-spacing) are the way back out.
+
+##### What a declared parent does
+
+A declared parent is honoured **whether or not an edge joins the pair**. That makes it able to state
+a hierarchy the edges do not contain — but it also means such a branch is drawn with no line along
+it, because there is no edge there to draw. The declaration is where the hierarchy comes from; the
+edges are only ever drawn as they are.
+
+Two useful consequences: a node with several incoming edges can say which one is its real parent
+(the spanning tree would otherwise take whichever reached it first), and a node with no edges at all
+that declares a parent gets a proper place in the tree instead of the parked area.
+
+Declarations that cannot be used are dropped for that node, which then falls back to the edges, and
+one warning tallies them all:
+
+- a parent naming a node that is not being laid out — filtered out, deleted, or inside a collapsed
+  cluster — the same way `rootId` falls back when the node it names is missing;
+- a parent that would close a cycle (the link that closes it is the one dropped);
+- a row that is not a number `0` or greater.
+
+##### Precedence
+
+`rootId` outranks `parentKey`. Pinning a root — in the options, or by picking one in the Physics
+rail — is a request to re-hang the tree from that node, so parenthood is re-derived from the edges
+and declared parents are set aside for that pass. Declared **rows** are unaffected: they say how deep
+a node sits, not what it hangs from.
+
+`egoTree` ignores both options; it builds a star from the root's own neighbours.
 
 #### Spacing
 

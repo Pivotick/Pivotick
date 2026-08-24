@@ -22,7 +22,9 @@ export type TreeLayoutAlgorithm = 'FirstZeroInDegree' | 'MaxReachability' | 'Min
  * to be able to go back to. `Required<TreeLayoutOptions>` would type it as a `string`
  * that is in fact `undefined` most of the time.
  */
-type ResolvedTreeLayoutOptions = Required<Omit<TreeLayoutOptions, 'rootId'>> & { rootId?: string }
+type ResolvedTreeLayoutOptions =
+    Required<Omit<TreeLayoutOptions, 'rootId' | 'parentKey' | 'depthKey'>>
+    & { rootId?: string, parentKey?: string, depthKey?: string }
 
 /** Clear space left around a parked node, on top of its own diameter. */
 const PARKED_GAP = 20
@@ -32,6 +34,29 @@ const PARKED_GAP = 20
  * d3 lays the components out side by side, and is filtered out of every result.
  */
 export const FOREST_ROOT_ID = '__pivotick_forest_root__'
+
+/**
+ * Id prefix of the empty rows a *declared depth* leaves behind. Not graph nodes: a d3 tree
+ * places a node strictly one row below its parent, so the only way to put a node further down
+ * is to give it ancestors to be further down *than*. Being single-child chains they cost one
+ * node's breadth per row crossed and no more, and — like {@link FOREST_ROOT_ID} — they are
+ * filtered out of everything returned, so they are never drawn and never positioned.
+ */
+export const TREE_SPACER_ID_PREFIX = '__pivotick_tree_spacer__'
+
+/**
+ * Deepest row a `depthKey` may ask for, and the total number of empty rows one layout will
+ * build to reach them.
+ *
+ * Neither is a design limit — a tree is scaled to fit the canvas, so a few hundred rows is
+ * already far past the point of being readable. They are there because the scaffolding is
+ * otherwise unbounded in the *data*: one mistyped `level: 1e9` would sit in a loop building a
+ * billion nodes, and a star of 10,000 leaves each asking for row 1,000 would build ten
+ * million. A row past the cap is reported as unusable, the same as any other value that is not
+ * a row; past the spacer budget a node simply sits below its parent instead.
+ */
+const MAX_DECLARED_ROW = 4096
+const MAX_TREE_SPACERS = 50_000
 
 /**
  * How much of its own component the *best available* root must reach along the arrows for
@@ -47,9 +72,22 @@ export const FOREST_ROOT_ID = '__pivotick_forest_root__'
  */
 const MIN_DIRECTED_COVERAGE = 0.5
 
+/**
+ * Last declared-hierarchy warning logged, so the same complaint is only ever made once.
+ *
+ * Laying a tree out is not a one-off: auto spacing does it twice per pass, and loading a graph
+ * runs more than one pass. Every one of them re-reads the declared hierarchy and finds the same
+ * things wrong with it, so without this a single load prints the same line several times. The
+ * text carries the counts, so a message that has changed is a *different* complaint and is
+ * still logged.
+ */
+let lastDeclaredWarning = ''
+
 const DEFAULT_TREE_LAYOUT_OPTIONS: TreeLayoutOptions = {
     type: 'tree',
     rootId: undefined,
+    parentKey: undefined,
+    depthKey: undefined,
     rootIdAlgorithmFinder: 'MaxReachability',
     strength: 0.25,
     radial: false,
@@ -153,14 +191,15 @@ export class TreeLayout {
     private layoutOnce(): void {
         const nodes = this.graph.getNodes()
         const edges = this.graph.getEdges()
-        const { levels, maxDepth, parked } = this.buildLevels(
-            // The same root the positions come from: `levels` is what the radial force
-            // assigns rings by, and a different root there puts a node on a ring its
-            // own position does not sit on.
-            nodes, edges, this.options.rootId, this.options.rootIdAlgorithmFinder
-        )
+        // Built once and handed on to `buildTree`, which used to run the whole walk a second
+        // time for itself. Beyond the waste, `levels` is what the radial force assigns rings
+        // by, so the two had to agree exactly: a second walk that picked another root put
+        // nodes on rings their own positions do not sit on.
+        const built = this.buildLevels(nodes, edges, this.options)
+        const { levels, maxDepth, parked } = built
         this.parkedIds = new Set(parked)
-        const { nodes: positionedNodes, nodeById: positionedNodesByID } = this.buildTree(nodes, edges, this.options, this.canvasBCR)
+        const { nodes: positionedNodes, nodeById: positionedNodesByID } =
+            this.buildTree(nodes, edges, this.options, this.canvasBCR, built)
         this.positionedNodesByID = positionedNodesByID
 
         this.levels = levels
@@ -203,7 +242,11 @@ export class TreeLayout {
             const next = i + 1 < depths.length ? byDepth.get(depths[i + 1])! : undefined
             if (next) {
                 // Every node of a level shares its depth coordinate, so one of each will do.
-                const measured = Math.abs((next[0].node.y ?? 0) - (here[0].node.y ?? 0))
+                // Divided by the rows between them, because a declared depth can leave rows
+                // empty: measuring across four empty rows as one gap would report a crowded
+                // tree as having ample room, and auto tuning would then shrink it further.
+                const spannedRows = Math.max(depths[i + 1] - depths[i], 1)
+                const measured = Math.abs((next[0].node.y ?? 0) - (here[0].node.y ?? 0)) / spannedRows
                 const needed = neededLevelGap(TreeLayout.widestOf(here), TreeLayout.widestOf(next))
                 level = TreeLayout.tighter(level, { measured, needed })
             }
@@ -341,8 +384,9 @@ export class TreeLayout {
         const height = canvasBCR.height
         const center = [width / 2, height / 2]
 
-        const { levels, maxDepth } = cls.buildLevelsStatic(nodes, edges, options.rootId, options.rootIdAlgorithmFinder)
-        const { nodeById: positionedNodesByID } = cls.buildTreeStatic(nodes, edges, options, canvasBCR)
+        const built = cls.buildLevelsStatic(nodes, edges, options)
+        const { levels, maxDepth } = built
+        const { nodeById: positionedNodesByID } = cls.buildTreeStatic(nodes, edges, options, canvasBCR, built)
 
         if (options.radial) {
             const ringGap = cls.radialRingGap(options, maxDepth)
@@ -597,6 +641,12 @@ export class TreeLayout {
         laidOut: HierarchyNode<TreeNode>[],
         options: TreeLayoutOptions,
         canvasBCR: DOMRect,
+        /**
+         * Rows the caller asked for. A parked node named here is placed on its own row rather
+         * than past the end of the tree — it keeps its parking, out of the hierarchy and out
+         * of the tree's way, but on the row it asked to be on.
+         */
+        declaredRows: Map<string, number> = new Map(),
     ): HierarchyNode<TreeNode>[] {
         if (!parked.length) return []
 
@@ -611,37 +661,103 @@ export class TreeLayout {
         const xs = laidOut.map(node => node.x ?? 0)
         const ys = laidOut.map(node => node.y ?? 0)
 
+        const asked = parked.filter(node => declaredRows.has(node.id))
+        const unasked = parked.filter(node => !declaredRows.has(node.id))
+        const rowAsked = (node: TreeNode) => declaredRows.get(node.id) ?? 0
+
+        /**
+         * Where a row sits in hierarchy space. Read off the tree where a node marks the row,
+         * and extrapolated from the row height otherwise — a declared depth can leave rows
+         * empty, and an asked-for row is exactly the kind that no laid-out node occupies.
+         */
+        const depths = [...new Set(laidOut.map(node => node.depth))].sort((a, b) => a - b)
+        const yByDepth = new Map<number, number>()
+        for (const node of laidOut) yByDepth.set(node.depth, node.y ?? 0)
+        const first = depths[0] ?? 0
+        const last = depths[depths.length - 1] ?? 0
+        const rowHeight = last > first
+            ? ((yByDepth.get(last) ?? 0) - (yByDepth.get(first) ?? 0)) / (last - first)
+            : cell
+        const yForRow = (row: number) => yByDepth.get(row)
+            ?? (depths.length ? (yByDepth.get(first) ?? 0) + (row - first) * rowHeight : row * cell)
+
         if (options.radial) {
+            const positions: HierarchyNode<TreeNode>[] = []
+
+            // A named row is a named *ring*. Placed in the widest angle the tree leaves free
+            // on it, so they never land on top of the nodes already there.
+            const byRing = new Map<number, TreeNode[]>()
+            for (const node of asked) {
+                const row = rowAsked(node)
+                byRing.set(row, [...(byRing.get(row) ?? []), node])
+            }
+            for (const [row, group] of byRing) {
+                const taken = laidOut.filter(node => node.depth === row)
+                    .map(node => node.x ?? 0)
+                    .sort((a, b) => a - b)
+                let from = 0
+                let width = 2 * Math.PI
+                if (taken.length) {
+                    width = 0
+                    for (let i = 0; i < taken.length; i++) {
+                        // Wrapping round past the last one, so the gap across 0 counts too.
+                        const next = i + 1 < taken.length ? taken[i + 1] : taken[0] + 2 * Math.PI
+                        if (next - taken[i] > width) {
+                            width = next - taken[i]
+                            from = taken[i]
+                        }
+                    }
+                }
+                const step = width / (group.length + 1)
+                group.forEach((node, index) => positions.push(
+                    standIn(node, from + step * (index + 1), yForRow(row), row)
+                ))
+            }
+
             // No wedge on a disc: one more ring, outside the last.
             const rings = new Set(ys).size
             const outer = ys.length ? Math.max(...ys) : options.radialGap
             const ringGap = rings > 0 ? outer / rings : outer
-            return parked.map((node, index) => standIn(
+            unasked.forEach((node, index) => positions.push(standIn(
                 node,
-                (index * 2 * Math.PI) / parked.length,
+                (index * 2 * Math.PI) / unasked.length,
                 outer + ringGap,
                 rings + 1,
-            ))
+            )))
+            return positions
         }
 
         if (!laidOut.length) {
-            // Nothing but parked nodes: they are the layout, so grid them over the canvas.
+            // Nothing but parked nodes: they are the layout, so grid them over the canvas —
+            // on the rows they named, where they named one.
             const perRow = Math.max(1, Math.floor(canvasBCR.width / cell))
-            return parked.map((node, index) => standIn(
-                node,
-                (index % perRow) * cell,
-                Math.floor(index / perRow) * cell,
-                0,
-            ))
+            const positions: HierarchyNode<TreeNode>[] = []
+            const columns = new Map<number, number>()
+            for (const node of asked) {
+                const row = rowAsked(node)
+                const column = columns.get(row) ?? 0
+                columns.set(row, column + 1)
+                positions.push(standIn(node, column * cell, row * cell, row))
+            }
+            // Below whatever the named rows reached, so the grid and the rows never overlap.
+            const below = columns.size ? Math.max(...columns.keys()) + 1 : 0
+            unasked.forEach((node, index) => {
+                const row = below + Math.floor(index / perRow)
+                positions.push(standIn(node, (index % perRow) * cell, row * cell, row))
+            })
+            return positions
         }
 
         // The tree's silhouette: how far it reaches on each of its rows, on the side the
-        // parked nodes are going.
+        // parked nodes are going. Kept by depth as well, since an asked-for row is known by
+        // its depth before it is known by its coordinate.
         const treeEdgeByRow = new Map<number, number>()
+        const treeEdgeByDepth = new Map<number, number>()
         for (const node of laidOut) {
             const row = node.y ?? 0
             const x = node.x ?? 0
             treeEdgeByRow.set(row, Math.max(treeEdgeByRow.get(row) ?? x, x))
+            treeEdgeByDepth.set(node.depth, Math.max(treeEdgeByDepth.get(node.depth) ?? x, x))
         }
         const rows = [...treeEdgeByRow.keys()].sort((a, b) => a - b)
         const boxLeft = Math.min(...xs)
@@ -649,13 +765,36 @@ export class TreeLayout {
         const rowGap = rows.length > 1 ? rows[1] - rows[0] : cell
 
         const positions: HierarchyNode<TreeNode>[] = []
+
+        // The named rows first, packed in from the trailing edge and stopping one cell clear
+        // of the tree. Whatever will not fit falls through to the ordinary wedge below, which
+        // is where a parked node goes when its own row has no room for it.
+        const overflow: TreeNode[] = []
+        const columnsAtY = new Map<number, number>()
+        for (const node of asked) {
+            const row = rowAsked(node)
+            const y = yForRow(row)
+            const column = columnsAtY.get(y) ?? 0
+            const x = boxRight - column * cell
+            const edge = treeEdgeByDepth.get(row)
+            if (edge !== undefined && x - cell <= edge) {
+                overflow.push(node)
+                continue
+            }
+            columnsAtY.set(y, column + 1)
+            positions.push(standIn(node, x, y, row))
+        }
+
+        const queue = [...unasked, ...overflow]
         let next = 0
         for (const [index, row] of rows.entries()) {
-            if (next >= parked.length) break
-            const wedge = boxRight - ((treeEdgeByRow.get(row) ?? boxRight) + cell)
+            if (next >= queue.length) break
+            // Starting past anything already parked on this row by name.
+            const used = columnsAtY.get(row) ?? 0
+            const wedge = boxRight - used * cell - ((treeEdgeByRow.get(row) ?? boxRight) + cell)
             const fits = Math.floor(wedge / cell)
-            for (let column = 0; column < fits && next < parked.length; column++) {
-                positions.push(standIn(parked[next++], boxRight - column * cell, row, index))
+            for (let column = 0; column < fits && next < queue.length; column++) {
+                positions.push(standIn(queue[next++], boxRight - (used + column) * cell, row, index))
             }
         }
 
@@ -663,9 +802,9 @@ export class TreeLayout {
         // the one direction still free once the wedge is full.
         const perRow = Math.max(1, Math.floor((boxRight - boxLeft) / cell))
         const lastRow = rows[rows.length - 1]
-        for (let index = 0; next < parked.length; index++) {
+        for (let index = 0; next < queue.length; index++) {
             positions.push(standIn(
-                parked[next++],
+                queue[next++],
                 boxRight - (index % perRow) * cell,
                 lastRow + rowGap * (1 + Math.floor(index / perRow)),
                 rows.length,
@@ -688,12 +827,18 @@ export class TreeLayout {
         edges: Edge[],
         options: TreeLayoutOptions,
         canvasBCR: DOMRect,
+        built?: ReturnType<typeof TreeLayout.buildLevelsStatic>,
     ): {
         root: HierarchyNode<TreeNode> | null
         nodes: HierarchyNode<TreeNode>[]
         nodeById: Map<string, HierarchyNode<TreeNode>>
     } {
-        return TreeLayout.buildTreeStatic(nodes, edges, options, canvasBCR)
+        return TreeLayout.buildTreeStatic(nodes, edges, options, canvasBCR, built)
+    }
+
+    /** Is this one of the layout's own scaffolding nodes rather than a node of the graph? */
+    protected static isScaffolding(id: string): boolean {
+        return id === FOREST_ROOT_ID || id.startsWith(TREE_SPACER_ID_PREFIX)
     }
 
     static buildTreeStatic(
@@ -701,6 +846,8 @@ export class TreeLayout {
         edges: Edge[],
         options: TreeLayoutOptions,
         canvasBCR: DOMRect,
+        /** The walk `layoutOnce` already did; recomputed here only for the static callers. */
+        built?: ReturnType<typeof TreeLayout.buildLevelsStatic>,
     ): {
         root: HierarchyNode<TreeNode> | null
         nodes: HierarchyNode<TreeNode>[]
@@ -725,14 +872,44 @@ export class TreeLayout {
         // parent/child straight off the edges is what made a cycle fatal — `d3.hierarchy`
         // walks children and a cycle never ends — and it also gave a node with two parents
         // two places in the tree. One BFS parent per node settles both.
-        const { parentOf, roots, parked } = TreeLayout.buildLevelsStatic(
-            nodes, edges, options.rootId, options.rootIdAlgorithmFinder
-        )
+        const { parentOf, roots, parked, levels, declaredRows } = built
+            ?? TreeLayout.buildLevelsStatic(nodes, edges, options)
+
+        let spacers = 0
+        /** An empty row: no data, no id of its own beyond the prefix, never drawn. */
+        const makeSpacer = () =>
+            ({ id: `${TREE_SPACER_ID_PREFIX}${spacers++}`, children: [] } as unknown as TreeNode)
+        const rowOf = (id: string) => levels.get(id) ?? 0
+
+        /**
+         * Hang `child` under `parent`, padding with spacer rows until the child lands on the
+         * row `levels` gives it. A d3 tree places a node exactly one row below its parent, so
+         * padding the chain is the only way to honour a declared depth.
+         *
+         * The chain is not quite free: a tidy tree separates whatever shares a row, so each
+         * spacer takes one node's worth of breadth on the row it crosses. That is the whole
+         * cost — one slot per row, not a subtree's — so an offset tree squeezes the gap beside
+         * it slightly rather than reshaping the layout.
+         */
+        const hang = (parent: TreeNode, parentRow: number, child: TreeNode, childRow: number) => {
+            let attachTo = parent
+            for (let row = parentRow + 1; row < childRow && spacers < MAX_TREE_SPACERS; row++) {
+                const spacer = makeSpacer()
+                attachTo.children.push(spacer)
+                attachTo = spacer
+            }
+            // Out of budget: the node sits below its parent rather than on the row it asked
+            // for, so `levels` reads one row deeper than it is drawn. That only matters to the
+            // radial force, and only on a graph already asking for tens of thousands of empty
+            // rows — which has no readable layout either way.
+            attachTo.children.push(child)
+        }
+
         for (const [childId, parentId] of parentOf) {
             const child = nodeMap.get(childId)
             const parent = nodeMap.get(parentId)
             if (!child || !parent) continue
-            parent.children.push(child)
+            hang(parent, rowOf(parentId), child, rowOf(childId))
             child.parent = parent
         }
 
@@ -740,11 +917,11 @@ export class TreeLayout {
             .map(id => nodeMap.get(id))
             .filter((node): node is TreeNode => Boolean(node))
 
-        const root = TreeLayout.hierarchyRootFor(roots, nodeMap)
+        const root = TreeLayout.hierarchyRootFor(roots, nodeMap, rowOf, hang, makeSpacer)
         if (!root) {
             // Every node is parked: there is no hierarchy to lay out, only the grid.
             if (!roots.length && parkedNodes.length) {
-                const only = TreeLayout.packParked(parkedNodes, [], options, canvasBCR)
+                const only = TreeLayout.packParked(parkedNodes, [], options, canvasBCR, declaredRows)
                 return {
                     root: null,
                     nodes: only,
@@ -761,13 +938,13 @@ export class TreeLayout {
         const treeRoot = treeLayout(rootHierarchy)
         TreeLayout.offsetTree(treeRoot.descendants(), offset)
 
-        const laidOut = treeRoot.descendants().filter(node => node.data.id !== FOREST_ROOT_ID)
-        const parkedPositions = TreeLayout.packParked(parkedNodes, laidOut, options, canvasBCR)
+        const laidOut = treeRoot.descendants().filter(node => !TreeLayout.isScaffolding(node.data.id))
+        const parkedPositions = TreeLayout.packParked(parkedNodes, laidOut, options, canvasBCR, declaredRows)
 
         const nodeById = new Map<string, HierarchyNode<TreeNode>>()
         for (const node of parkedPositions) nodeById.set(node.data.id, node)
         treeRoot.descendants().forEach((node) => {
-            if (node.data.id === FOREST_ROOT_ID) return
+            if (TreeLayout.isScaffolding(node.data.id)) return
             nodeById.set(node.data.id, node)
         })
 
@@ -784,52 +961,164 @@ export class TreeLayout {
      * component per child — which is what lays them out side by side instead of on top of
      * each other. It is not a graph node and is dropped from everything returned, so it is
      * never drawn and never positioned.
+     *
+     * A root that asked to start further down needs the rows above it to exist, so it gets a
+     * chain of spacers too. In a forest they hang off the synthetic root, which is why that
+     * one counts as sitting on the row above 0 — the `forestShift` in `buildLevelsStatic`. A
+     * lone root instead has the top of its own chain stand in as the hierarchy root.
      */
-    private static hierarchyRootFor(roots: string[], nodeMap: Map<string, TreeNode>): TreeNode | undefined {
-        if (roots.length === 1) return nodeMap.get(roots[0])
+    private static hierarchyRootFor(
+        roots: string[],
+        nodeMap: Map<string, TreeNode>,
+        rowOf: (id: string) => number,
+        hang: (parent: TreeNode, parentRow: number, child: TreeNode, childRow: number) => void,
+        makeSpacer: () => TreeNode,
+    ): TreeNode | undefined {
+        if (roots.length === 1) {
+            const only = nodeMap.get(roots[0])
+            if (!only || rowOf(roots[0]) <= 0) return only
+            const top = makeSpacer()
+            hang(top, 0, only, rowOf(roots[0]))
+            return top
+        }
         const children = roots.map(id => nodeMap.get(id)).filter((node): node is TreeNode => Boolean(node))
         if (!children.length) return undefined
-        return { id: FOREST_ROOT_ID, children } as unknown as TreeNode
+        const forest = { id: FOREST_ROOT_ID, children: [] } as unknown as TreeNode
+        for (const child of children) hang(forest, 0, child, rowOf(child.id))
+        return forest
     }
 
     protected buildLevels(
         nodes: Node[],
         edges: Edge[],
-        passedRootId?: string,
-        rootIdAlgorithmFinder?: TreeLayoutAlgorithm
+        options: Partial<TreeLayoutOptions>,
     ): ReturnType<typeof TreeLayout.buildLevelsStatic> {
-        return TreeLayout.buildLevelsStatic(nodes, edges, passedRootId, rootIdAlgorithmFinder)
+        return TreeLayout.buildLevelsStatic(nodes, edges, options)
     }
 
     /**
-     * Builds a mapping from node ID to its level (distance from the root),
-     * by traversing the graph in BFS manner. If the graph contains cycles,
-     * each node is assigned the shortest level found first.
+     * What the caller stated about the hierarchy, read off `node.data` per `parentKey` and
+     * `depthKey`, with everything unusable already dropped.
+     */
+    private static readDeclaredHierarchy(
+        nodes: Node[],
+        options: Partial<TreeLayoutOptions>,
+        /** Honour `parentKey`? A pinned root re-derives every parent from the edges instead. */
+        useParents: boolean,
+    ): {
+        /** Child id -> parent id; cycle-free, and naming only nodes being laid out. */
+        parentOf: Map<string, string>
+        /** Requested rows, counted from `0` at the shallowest root. */
+        rowOf: Map<string, number>
+        /** What had to be dropped or clamped, tallied for one warning. */
+        complaints: Map<string, number>
+    } {
+        const parentOf = new Map<string, string>()
+        const rowOf = new Map<string, number>()
+        const complaints = new Map<string, number>()
+        const complain = (what: string) => complaints.set(what, (complaints.get(what) ?? 0) + 1)
+
+        const parentKey = useParents ? options.parentKey : undefined
+        const depthKey = options.depthKey
+        if (!parentKey && !depthKey) return { parentOf, rowOf, complaints }
+
+        const present = new Set(nodes.map(node => node.id))
+        for (const node of nodes) {
+            const data = node.getData()
+
+            if (depthKey) {
+                const raw = data[depthKey]
+                if (raw !== undefined && raw !== null && raw !== '') {
+                    const row = Math.floor(Number(raw))
+                    if (Number.isFinite(row) && row >= 0 && row <= MAX_DECLARED_ROW) rowOf.set(node.id, row)
+                    else complain(`declared depths that are not a row between 0 and ${MAX_DECLARED_ROW}`)
+                }
+            }
+
+            if (!parentKey) continue
+            const raw = data[parentKey]
+            if (raw === undefined || raw === null || raw === '') continue
+            const parentId = String(raw)
+            // A parent outside the laid-out set cannot hold anything up, for the same reason
+            // `rootId` falls back when the node it names has been filtered away.
+            if (parentId === node.id) complain('declared parents pointing at their own node')
+            else if (!present.has(parentId)) complain('declared parents not in the layout')
+            else parentOf.set(node.id, parentId)
+        }
+
+        // A cycle is not a tree, so one link of each has to go: the one that closes it.
+        const settled = new Set<string>()
+        for (const start of [...parentOf.keys()]) {
+            if (settled.has(start)) continue
+            const walked: string[] = []
+            const onPath = new Set<string>()
+            let curr: string | undefined = start
+            while (curr !== undefined && !settled.has(curr)) {
+                if (onPath.has(curr)) {
+                    parentOf.delete(curr)
+                    complain('declared parent cycles broken')
+                    break
+                }
+                onPath.add(curr)
+                walked.push(curr)
+                curr = parentOf.get(curr)
+            }
+            for (const id of walked) settled.add(id)
+        }
+
+        return { parentOf, rowOf, complaints }
+    }
+
+    /** One line per layout pass, however many things the declared hierarchy got wrong. */
+    private static warnAboutDeclared(complaints: Map<string, number>): void {
+        if (!complaints.size) return
+        const message = '[Pivotick] Tree layout ignored part of the declared hierarchy: '
+            + [...complaints].map(([what, count]) => `${count} ${what}`).join(', ') + '.'
+        // A single pass lays the tree out twice whenever spacing is auto (see `update`), so
+        // without this the same line is logged twice for every graph that declares anything.
+        if (message === lastDeclaredWarning) return
+        lastDeclaredWarning = message
+        console.warn(message)
+    }
+
+    /**
+     * The hierarchy the layout will draw: one parent per node, the row each sits on, and the
+     * roots it all hangs from.
+     *
+     * Parenthood comes from a BFS over the edges — the first edge to reach a node is its
+     * parent — except where the caller stated it through `parentKey`, which is honoured
+     * whether or not an edge joins the pair. Rows are then one-below-the-parent, except where
+     * `depthKey` asks for a lower one. A row that is not below the parent's is clamped: a
+     * tidy tree cannot place a child above its parent, and honouring the row by detaching the
+     * node instead would let one bad number shatter the tree into extra components.
+     *
+     * If the graph contains cycles, each node is assigned the shortest level found first.
      *
      * @param nodes - The list of graph nodes.
      * @param edges - The list of graph edges (assumed to be directed).
-     * @param passedRootId - The ID of the node considered as the root. Ignored when no such
-     *   node is in `nodes`; when it is, the walk follows edges in either direction — as it
-     *   also does for a *found* root whose arrows cannot cover the graph, see
-     *   {@link MIN_DIRECTED_COVERAGE}.
-     * @param rootIdAlgorithmFinder - The algorithm to use to find the root ID.
+     * @param options - The layout options. `rootId` is ignored when no such node is in
+     *   `nodes`; when it is, the walk follows edges in either direction — as it also does for
+     *   a *found* root whose arrows cannot cover the graph, see {@link MIN_DIRECTED_COVERAGE}
+     *   — and `parentKey` is dropped with it, because pinning a root is a request to re-hang
+     *   the tree from there.
      * @returns A mapping of each node's ID to its depth level in the tree and the maximum depth
      */
     static buildLevelsStatic(
         nodes: Node[],
         edges: Edge[],
-        passedRootId?: string,
-        rootIdAlgorithmFinder?: TreeLayoutAlgorithm
+        options: Partial<TreeLayoutOptions> = {},
     ): {
         levels: Map<string, number>
         maxDepth: number
         nodeCountPerLevel: Record<string, number>
-        /** Spanning-tree parent of each node — the edge the BFS first reached it by. */
+        /** Spanning-tree parent of each node — declared, or the edge the BFS first reached it by. */
         parentOf: Map<string, string>
         /** The primary root, plus one per component the primary root cannot reach. */
         roots: string[]
         /** Nodes with no edges at all: parked rather than given a place in the hierarchy. */
         parked: string[]
+        /** The rows the caller asked for, in the same numbering as `levels`. */
+        declaredRows: Map<string, number>
     } {
         if (!nodes.length) {
             return {
@@ -839,6 +1128,7 @@ export class TreeLayout {
                 parentOf: new Map(),
                 roots: [],
                 parked: [],
+                declaredRows: new Map(),
             }
         }
         // An id naming a node that is not in this set — filtered out, deleted, inside a
@@ -846,9 +1136,15 @@ export class TreeLayout {
         // every real component becomes its own root and the graph comes out as a forest one
         // level too deep. This pass falls back to the finder; the pin itself is the caller's
         // to keep, so the node coming back re-roots the tree.
-        const rootId = passedRootId !== undefined && nodes.some(node => node.id === passedRootId)
-            ? passedRootId
+        const rootId = options.rootId !== undefined && nodes.some(node => node.id === options.rootId)
+            ? options.rootId
             : undefined
+
+        // A pinned root outranks a declared parent. Picking a root is a request to re-hang the
+        // tree from there, and a declared parent left in place would hold a branch back where
+        // the new walk wants to take it — so `parentKey` is dropped for this pass. Declared
+        // *rows* are unaffected: they say how deep a node sits, not what it hangs from.
+        const declared = TreeLayout.readDeclaredHierarchy(nodes, options, rootId === undefined)
 
         // How the spanning tree is walked. Naming a root is a deliberate choice, so it
         // outranks arrow direction: a directed walk from a leaf reaches nothing, and the
@@ -861,7 +1157,7 @@ export class TreeLayout {
         // Keyed by node id, so both are Maps: on a plain object a node called `constructor` or
         // `toString` reads as already-visited through the prototype and drops out of the layout.
         const levels = new Map<string, number>()
-        const parentOf = new Map<string, string>()
+        const parentOf = new Map<string, string>(declared.parentOf)
         const adj = new Map<string, string[]>()
         const targeted = new Set<string>()
         const touched = new Set<string>()
@@ -876,6 +1172,14 @@ export class TreeLayout {
             targeted.add(target.id)
             touched.add(source.id)
             touched.add(target.id)
+        }
+
+        // A declared parent puts both ends in the hierarchy even where no edge does, and marks
+        // the child as claimed so no component-root search promotes it to a root.
+        for (const [child, parent] of declared.parentOf) {
+            touched.add(child)
+            touched.add(parent)
+            targeted.add(child)
         }
 
         /** Make every edge walkable both ways. Idempotent only in the sense that it is called once. */
@@ -893,26 +1197,55 @@ export class TreeLayout {
         // node's own edge registries — and those are empty for the objects a graph builds from
         // data, so it reports 0 for every node in a perfectly connected graph.
         // An explicitly named root counts as linked even with no edges: naming it is a
-        // deliberate choice, and honouring it beats parking it.
+        // deliberate choice, and honouring it beats parking it. So does a declared parent —
+        // but *only* a parent: a declared row says where a node sits, not that it has a place
+        // in the hierarchy, so an edgeless node that names one stays parked, on that row.
         const isLinked = (id: string) => touched.has(id) || id === rootId
         const linked = nodes.filter(node => isLinked(node.id))
         const parked = nodes.filter(node => !isLinked(node.id)).map(node => node.id)
+
+        const hasDeclaredParents = declared.parentOf.size > 0
+
+        /**
+         * Is `ancestor` already above `id`? A declared parent and a BFS one can between them
+         * close a loop the BFS alone never could: declare A's parent to be B, then let the walk
+         * reach B through A and claim it as A's child.
+         */
+        const isAncestor = (ancestor: string, id: string): boolean => {
+            const seen = new Set<string>()
+            let curr: string | undefined = id
+            while (curr !== undefined && !seen.has(curr)) {
+                if (curr === ancestor) return true
+                seen.add(curr)
+                curr = parentOf.get(curr)
+            }
+            return false
+        }
 
         // BFS, and the first edge to reach a node is its parent in the spanning tree. This
         // is what makes the layout total: a back-edge finds its target already visited and
         // is simply not part of the tree, so a cycle costs the graph nothing but that edge's
         // place in the hierarchy — and a node with two parents is claimed by exactly one.
+        //
+        // `reached` marks the walk rather than `levels`, because a node the caller placed is
+        // parented before the walk even starts and has to keep that parent while still being
+        // walked through.
+        const reached = new Set<string>()
         const walkFrom = (start: string) => {
-            levels.set(start, 0)
+            if (reached.has(start)) return
+            reached.add(start)
             const queue: string[] = [start]
             let index = 0
             while (index < queue.length) {
                 const curr = queue[index++]
-                const currLevel = levels.get(curr) ?? 0
                 for (const neighbor of adj.get(curr) ?? []) {
-                    if (levels.has(neighbor)) continue
-                    levels.set(neighbor, currLevel + 1)
-                    parentOf.set(neighbor, curr)
+                    if (reached.has(neighbor)) continue
+                    reached.add(neighbor)
+                    // A node the caller already placed keeps its parent; the edge that found it
+                    // is then just an edge — drawn, but with no place in the hierarchy.
+                    if (!parentOf.has(neighbor) && !(hasDeclaredParents && isAncestor(neighbor, curr))) {
+                        parentOf.set(neighbor, curr)
+                    }
                     queue.push(neighbor)
                 }
             }
@@ -923,7 +1256,12 @@ export class TreeLayout {
         // promote one parked node to be the tree, and then place it twice.
         const roots: string[] = []
         if (linked.length) {
-            let primaryRoot = rootId ?? TreeLayout.findRootId(linked, edges, rootIdAlgorithmFinder)
+            // A node the caller hung under a parent has its place already and cannot root
+            // anything, so the finders only get to choose among the rest.
+            const free = hasDeclaredParents ? linked.filter(node => !parentOf.has(node.id)) : linked
+            const candidates = free.length ? free : linked
+
+            let primaryRoot = rootId ?? TreeLayout.findRootId(candidates, edges, options.rootIdAlgorithmFinder)
 
             // Can this root cover its component by following the arrows? A root that cannot
             // is not automatically a problem — `MinHeight` picks a *leaf* of any tree, which
@@ -945,38 +1283,81 @@ export class TreeLayout {
             // the node at the top rather than the node in the middle, and each finder keeps
             // its own answer — including the ones that deliberately name a leaf.
             if (rootId === undefined && TreeLayout.directedCoverage(primaryRoot, adj, edges) < MIN_DIRECTED_COVERAGE) {
-                const bestPossible = findMaxReachabilityRoot(linked, edges).id
+                const bestPossible = findMaxReachabilityRoot(candidates, edges).id
                 if (TreeLayout.directedCoverage(bestPossible, adj, edges) < MIN_DIRECTED_COVERAGE) {
                     readEdgesBothWays()
-                    primaryRoot = findUndirectedCenterRoot(linked, edges, bestPossible).id
+                    primaryRoot = findUndirectedCenterRoot(candidates, edges, bestPossible).id
                 }
             }
 
-            roots.push(primaryRoot)
             walkFrom(primaryRoot)
-        }
 
-        // Whatever the primary root could not reach is its own component, and gets its own
-        // root. Without this those nodes have no slot in the tree, and the tree forces —
-        // which fall back to 0 for a node they have no position for — quietly pile them all
-        // onto the origin.
-        if (levels.size < linked.length) {
+            // Whatever the primary root could not reach is its own component, and gets walked
+            // too. Without this those nodes have no slot in the tree, and the tree forces —
+            // which fall back to 0 for a node they have no position for — quietly pile them
+            // all onto the origin.
             for (const node of linked) {
-                if (levels.has(node.id)) continue
+                if (reached.has(node.id)) continue
                 // Prefer a source: a component that *is* a hierarchy should be drawn as one.
-                const componentRoot = linked.find(candidate => !levels.has(candidate.id) && !targeted.has(candidate.id))
+                const componentRoot = linked.find(candidate => !reached.has(candidate.id) && !targeted.has(candidate.id))
                     ?? node
-                roots.push(componentRoot.id)
                 walkFrom(componentRoot.id)
             }
+
+            // The roots are whatever nothing ended up parenting, the primary one first so it
+            // keeps its place at the head of the forest.
+            if (!parentOf.has(primaryRoot)) roots.push(primaryRoot)
+            for (const node of linked) {
+                if (node.id !== primaryRoot && !parentOf.has(node.id)) roots.push(node.id)
+            }
         }
+
+        // The row each node sits on, walked top-down from the roots: one below its parent, or
+        // the row the caller asked for where that is lower still. Counted from 0 at the
+        // shallowest root; the forest shift below puts them back in step with the hierarchy
+        // `buildTreeStatic` actually builds.
+        const childrenOf = new Map<string, string[]>()
+        for (const [child, parent] of parentOf) {
+            const bucket = childrenOf.get(parent) ?? []
+            bucket.push(child)
+            childrenOf.set(parent, bucket)
+        }
+
+        let clamped = 0
+        // An explicit stack rather than recursion: a chain of declared parents can be as long
+        // as the graph has nodes, which is enough to overflow on a real dataset.
+        const rowsFrom = (start: string, floor: number) => {
+            const stack: Array<[string, number]> = [[start, floor]]
+            while (stack.length) {
+                const [id, lowest] = stack.pop()!
+                if (levels.has(id)) continue
+                const asked = declared.rowOf.get(id)
+                if (asked !== undefined && asked < lowest) clamped++
+                const row = asked !== undefined && asked > lowest ? asked : lowest
+                levels.set(id, row)
+                for (const child of childrenOf.get(id) ?? []) stack.push([child, row + 1])
+            }
+        }
+        for (const root of roots) rowsFrom(root, 0)
+        // Nothing should be left over, but a node whose parent never got a row would otherwise
+        // fall out of `levels` — and the tree forces read a missing level as 0, which piles it
+        // on the origin. Cheap insurance against any hierarchy this walk failed to cover.
+        for (const node of linked) {
+            if (!levels.has(node.id)) rowsFrom(node.id, 0)
+        }
+
+        if (clamped) {
+            declared.complaints.set('declared depths clamped to just below their parent', clamped)
+        }
+        TreeLayout.warnAboutDeclared(declared.complaints)
 
         // A forest is hung under one synthetic root (see `buildTreeStatic`), which puts every
         // real node one level deeper. Shifted here so `levels` keeps meaning "depth in the
         // laid-out hierarchy" — the radial force divides `radialGap` by `maxDepth` and would
         // otherwise disagree with the positions by exactly one ring.
-        if (roots.length > 1) {
-            for (const [id, level] of levels) levels.set(id, level + 1)
+        const forestShift = roots.length > 1 ? 1 : 0
+        if (forestShift) {
+            for (const [id, level] of levels) levels.set(id, level + forestShift)
         }
 
         // Accumulated in one pass: `Math.max(...levels.values())` throws on a large graph, since
@@ -988,10 +1369,23 @@ export class TreeLayout {
 
         // Parked nodes count as sitting past the last level. The radial force reads `levels`
         // rather than the positions, and without this it would pull them all onto the centre.
+        // A parked node that named a row keeps it: it stays parked — out of the hierarchy and
+        // out of the tree's way — but on the row it asked for.
         if (parked.length) {
-            maxDepth += 1
-            for (const id of parked) levels.set(id, maxDepth)
+            const pastTheEnd = maxDepth + 1
+            for (const id of parked) {
+                const asked = declared.rowOf.get(id)
+                levels.set(id, asked === undefined ? pastTheEnd : asked + forestShift)
+            }
+            for (const level of levels.values()) {
+                if (level > maxDepth) maxDepth = level
+            }
         }
+
+        // Handed on in the same numbering as `levels`, so `packParked` can tell which parked
+        // nodes named a row, and where that row is.
+        const declaredRows = new Map<string, number>()
+        for (const [id, row] of declared.rowOf) declaredRows.set(id, row + forestShift)
 
         const nodeCountPerLevel: Record<string, number> = {}
         for (const level of levels.values()) {
@@ -1005,6 +1399,7 @@ export class TreeLayout {
             parentOf: parentOf,
             roots: roots,
             parked: parked,
+            declaredRows: declaredRows,
         }
     }
 

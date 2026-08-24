@@ -21,7 +21,10 @@ import type { Page } from '@playwright/test'
  */
 type Positions = Record<string, { x: number; y: number }>
 
-async function positionsAfterLayout(page: Page, name: 'tree' | 'egoNet' | 'basic' | 'pair' | 'converging', layout: Record<string, unknown>): Promise<Positions> {
+type LayoutFixture = 'tree' | 'egoNet' | 'basic' | 'pair' | 'converging'
+    | 'declaredForest' | 'declaredHierarchy'
+
+async function positionsAfterLayout(page: Page, name: LayoutFixture, layout: Record<string, unknown>): Promise<Positions> {
     await loadFixture(page, name, { layout })
     await harness(page, 'applyLayout')
     return (await harness(page, 'nodePositions')) as Positions
@@ -43,6 +46,20 @@ const levelsOf = (p: Positions): string[][] => {
     return [...byRow.entries()]
         .sort(([a], [b]) => a - b)
         .map(([, ids]) => ids.sort())
+}
+
+/**
+ * Every node's row *number*, counting the rows of the laid-out tree rather than only the
+ * ones that turned out to be occupied — which is the whole point when a declared depth has
+ * left rows empty. One row is the tightest gap between two distinct rows, which it is by
+ * construction: a tree always has at least one parent-child pair one row apart.
+ */
+const rowsOf = (p: Positions): Record<string, number> => {
+    const ys = [...new Set(Object.values(p).map((point) => Math.round(point.y)))].sort((a, b) => a - b)
+    const rowHeight = Math.min(...ys.slice(1).map((y, i) => y - ys[i]))
+    return Object.fromEntries(
+        Object.entries(p).map(([id, point]) => [id, Math.round((point.y - ys[0]) / rowHeight)])
+    )
 }
 
 const spread = (p: Positions, axis: 'x' | 'y') => {
@@ -324,6 +341,60 @@ test.describe('layouts', () => {
         // not tune a crowded graph out from under the value it was given.
         await harness(page, 'loadAuto', { nodes: 60, radius: 30 }, { layout: { type: 'tree', levelSpacing: 1.5 } })
         expect(await spacingOf(page)).toEqual({ levelSpacing: 1.5, siblingSpacing: 1 })
+    })
+
+    // T3.7 — a hierarchy declared in the data rather than derived from the edges.
+    test('declared depth starts a second tree lower down', async ({ page }) => {
+        const p = await positionsAfterLayout(page, 'declaredForest', { type: 'tree', depthKey: 'level' })
+        const rows = rowsOf(p)
+        // `b` asked for row 2 and gets it, two rows below the root that asked for nothing —
+        // which is the thing a forest could not express at all before.
+        expect(rows).toEqual({ a: 0, a1: 1, a2: 1, b: 2, b1: 3, b2: 3 })
+    })
+
+    test('without depthKey the same forest keeps both roots on one row', async ({ page }) => {
+        // The `level` field is still in the fixture's data; not naming it must leave it inert.
+        const p = await positionsAfterLayout(page, 'declaredForest', { type: 'tree' })
+        expect(rowsOf(p)).toEqual({ a: 0, a1: 1, a2: 1, b: 0, b1: 1, b2: 1 })
+    })
+
+    test('declared depth pads the gap, clamps a conflict, honours a parent with no edge', async ({ page }) => {
+        const p = await positionsAfterLayout(
+            page, 'declaredHierarchy', { type: 'tree', parentKey: 'parentId', depthKey: 'level' }
+        )
+        expect(rowsOf(p)).toEqual({
+            root: 0,
+            mid: 1,
+            // `deep` asked for row 4 under a parent on row 1: the two rows between stay empty.
+            deep: 4,
+            // `clash` asked for row 1, level with its own parent — clamped to just below it.
+            clash: 2,
+            // `free` has no edge at all and named `root` as its parent, so it hangs off it
+            // rather than going to the parked wedge.
+            free: 1,
+        })
+    })
+
+    test('a clamped depth says so', async ({ page }) => {
+        await loadFixture(page, 'declaredHierarchy', { layout: { type: 'tree', depthKey: 'level' } })
+        const warnings = (await harness(page, 'warnings')) as string[]
+        const clamps = warnings.filter((w) => /clamped to just below their parent/.test(w))
+        expect(clamps).toHaveLength(1)
+    })
+
+    test('the empty rows are scaffolding, not nodes', async ({ page }) => {
+        // `deep` asking for row 4 pads the hierarchy with two extra rows. They must never
+        // reach the graph: no phantom node, and nothing drawn on those rows.
+        await loadFixture(page, 'declaredHierarchy', { layout: { type: 'tree', depthKey: 'level' } })
+        await harness(page, 'applyLayout')
+        expect(await harness(page, 'counts')).toMatchObject({ nodes: 5, edges: 3 })
+        expect(await page.locator('.node').count()).toBe(5)
+    })
+
+    test('declared hierarchy — vertical', async ({ page }) => {
+        await loadFixture(page, 'declaredForest', { layout: { type: 'tree', depthKey: 'level' } })
+        await harness(page, 'applyLayout')
+        await expectCanvas(page, 'layout-tree-declared-forest.png')
     })
 
     test('ego tree positions — neighbours fan out from the root', async ({ page }) => {

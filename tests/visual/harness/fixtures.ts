@@ -591,6 +591,65 @@ export const fixtures = {
     },
 
     /**
+     * Two separate trees, the second of which declares where it starts.
+     *
+     *      a                          <- row 0
+     *     / \
+     *   a1   a2        b              <- b declares `level: 2`
+     *                 / \
+     *               b1   b2
+     *
+     * With `layout.depthKey: 'level'` the two roots sit on different rows; without it
+     * they share one, which is what a forest could only ever do before. Same fixture
+     * either way, so one graph covers both halves of the behaviour.
+     */
+    declaredForest(): BuiltFixture {
+        const a = mkNode('a', -200, -100)
+        const a1 = mkNode('a1', -280, 40)
+        const a2 = mkNode('a2', -120, 40)
+        const b = mkNode('b', 200, -100, { level: 2 })
+        const b1 = mkNode('b1', 120, 40)
+        const b2 = mkNode('b2', 280, 40)
+        const edges = [
+            new Edge('a-a1', a, a1),
+            new Edge('a-a2', a, a2),
+            new Edge('b-b1', b, b1),
+            new Edge('b-b2', b, b2),
+        ]
+        return { nodes: [a, a1, a2, b, b1, b2], edges, notes: [] }
+    },
+
+    /**
+     * One tree carrying every rule a declared hierarchy has to arbitrate.
+     *
+     *   root                                  row 0
+     *     |
+     *    mid                                  row 1
+     *    / \
+     * deep  clash        free                 deep asks row 4 (gap padded)
+     *                                         clash asks row 1 (clamped to 2)
+     *                                         free has no edge, names `root`
+     *
+     * `deep` proves an empty row takes real space; `clash` proves a row that is not
+     * below its parent's is clamped rather than honoured by detaching the node; `free`
+     * proves a declared parent is honoured with no edge to back it, which also keeps it
+     * out of the parked wedge.
+     */
+    declaredHierarchy(): BuiltFixture {
+        const root = mkNode('root', 0, -160)
+        const mid = mkNode('mid', 0, -40)
+        const deep = mkNode('deep', -120, 80, { level: 4 })
+        const clash = mkNode('clash', 120, 80, { level: 1 })
+        const free = mkNode('free', 240, -40, { parentId: 'root' })
+        const edges = [
+            new Edge('root-mid', root, mid),
+            new Edge('mid-deep', mid, deep),
+            new Edge('mid-clash', mid, clash),
+        ]
+        return { nodes: [root, mid, deep, clash, free], edges, notes: [] }
+    },
+
+    /**
      * An ego network: a central node directly connected to every other node.
      * The ego-tree layout only positions the root's *direct* neighbours, so a
      * star guarantees **all** nodes get deterministic positions (a deeper tree

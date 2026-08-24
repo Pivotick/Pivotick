@@ -26,6 +26,36 @@ export interface TreeLayoutOptions extends BaseLayoutOptions {
      */
     rootId?: string
     /**
+     * Name of the `node.data` key holding the id of the node's parent in the hierarchy.
+     *
+     * Leave undefined — the default — and parenthood is derived from the edges, as it
+     * always was. Name a key and each node that carries it is attached to the node it
+     * names, whether or not an edge joins them; a branch declared without an edge is
+     * drawn without a line. A key naming a node that is not being laid out, or one that
+     * would close a cycle, is dropped for that node, which falls back to the edges.
+     *
+     * Ignored while `rootId` is set: pinning a root re-derives every parent from the
+     * edges, which is what makes the root picker able to re-hang a declared tree.
+     * @default undefined
+     */
+    parentKey?: string
+    /**
+     * Name of the `node.data` key holding the row the node should sit on, counting from
+     * `0` at the shallowest root.
+     *
+     * Leave undefined — the default — and a node sits one row below its parent. Name a
+     * key and each node that carries it is pushed down to the row it asks for, the gap
+     * filled with empty rows. This is how the roots of a multi-tree graph are put on
+     * different rows: give one of them a depth of `2` and its whole tree starts there.
+     *
+     * A row can only ever push a node *further down*: a tidy tree cannot place a child
+     * above its parent, so a depth that is not below the parent's is clamped to
+     * `parent + 1`. Empty rows take up real space, so a large depth on a shallow graph
+     * squeezes every row — `levelSpacing` is the way back out.
+     * @default undefined
+     */
+    depthKey?: string
+    /**
      * The strength of the force keeping the nodes placed to form a tree in place
      * @default 0.1
      */
@@ -76,7 +106,7 @@ export interface TreeLayoutOptions extends BaseLayoutOptions {
 }
 
 export interface EgoTreeLayoutOptions
-    extends Omit<TreeLayoutOptions, 'rootId' | 'type'> {
+    extends Omit<TreeLayoutOptions, 'rootId' | 'type' | 'parentKey' | 'depthKey'> {
     type: 'egoTree'
     rootId: string
 }
