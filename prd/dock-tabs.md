@@ -15,8 +15,9 @@ baseline regenerated** — which was the bar, since the table is the incumbent a
 pixel of its header was already committed to a screenshot.
 
 Commits on top of the table work: `1880149` (the tabs, and the table moving onto them),
-`7686cc9` (`UI.dock`), `a106f47` (the event log + specs), `d3603d7` (the demo), and the
-D-2 reversal below.
+`7686cc9` (`UI.dock`), `a106f47` (the event log + specs), `d3603d7` (the demo), `acb0050`
+(the D-2 reversal below), `0e60b6a` (the refresh-toolbar fix) and `c1d2cc9` (the gallery
+card). **431 tests green, no baseline regenerated.**
 
 ### Verdict on the proposals
 
@@ -159,9 +160,16 @@ Per this branch's practice, each new claim was checked against a deliberately br
 1. **This was never grilled.** §3's decisions were taken while building. D-2 has since
    been reviewed and reversed (above); `UI.dock` and `DockTabHandle.refresh()` are the
    remaining public-shape additions and have not had a second opinion.
-2. **D-7's tension is unresolved.** The API's proof is behind an opt-in, so no default
-   configuration shows a tab strip at all. A **gallery card** is the cheap answer (§7.2)
-   and is not written.
+2. **D-7's tension is resolved by the gallery** (§7.2's cheap answer, now written). The
+   API's proof is still behind an opt-in, so no default configuration shows a pane strip —
+   but the `dock-panes` card (F/8, *Add a dock pane*) exercises it in the docs, with a
+   plugin contributing a `Summary` pane that has two views of its own, so the card teaches
+   the nested model rather than just the call. Writing it **found a bug**: `refresh()`
+   rebuilt the body but not the `toolbar`, so a pane whose controls *are* its view switch
+   came back marking the view you had just left. `refresh` now rebuilds both — the same
+   thing `refreshPanel` does for a panel's title — and `PluginContext` grew
+   `refreshDockTab` for parity with `refreshPanel`. Regression spec: *refresh rebuilds the
+   controls, not just the body*, checked against a reverted fix.
 3. **The header's width is untested past three tabs.** Nothing in the CSS wraps or
    scrolls, and at 1024px the bar already carries a chevron, three tabs, a count and four
    controls. Measure before a fourth pane exists, not after.
