@@ -545,7 +545,11 @@ export class Simulation {
         const seenPairs = new Set<string>()
 
         for (const edge of this.graph.getMutableEdges()) {
-            if (!edge.visible) continue
+            // `visibleIgnoringLayer`, not `visible`: an edge whose layer is switched off
+            // keeps pulling its endpoints together, so hiding a layer never moves the
+            // graph. Endpoint-hidden edges and unchosen cross-cluster stand-ins still
+            // leave the force, since those reasons do set it false.
+            if (!edge.visibleIgnoringLayer) continue
             const source = edge.source as Node
             const target = edge.target as Node
 

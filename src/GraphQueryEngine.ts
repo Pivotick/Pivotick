@@ -1,11 +1,20 @@
 import { Node } from './Node'
+import type { Edge } from './Edge'
 import type { Graph } from './Graph'
 import type {
     GraphQueryEvents, GraphFilters, FilterFieldConfig, FilterFacet, FilterValue, FilterMatchMode,
+    EdgeFacet, FacetMatching,
 } from './interfaces/GraphQueryEngine'
 
 
 const MANUALLY_HIDDEN_FILTER_KEY = 'manually_hidden'
+/**
+ * How an edge filter's key is namespaced inside the one {@link GraphFilters} record,
+ * so `resetFilters` and the filter pill cover both scopes and a node facet and an edge
+ * facet may share a key name. An internal encoding: `setEdgeFilter` and friends add and
+ * strip it, and it never reaches consumer code.
+ */
+const EDGE_FILTER_PREFIX = 'edge:'
 export class GraphQueryEngine {
     private graph: Graph
     private listeners: Record<keyof GraphQueryEvents, Array<GraphQueryEvents[keyof GraphQueryEvents]>>
@@ -25,6 +34,12 @@ export class GraphQueryEngine {
     private regexCache = new Map<string, RegExp | null>()
     /** Facet keys whose accessor/predicate has thrown, so we warn once rather than per node. */
     private brokenFacets = new Set<string>()
+    /** Declared edge facets, by bare key — the graph's relation *layers*. */
+    private edgeFacets = new Map<string, EdgeFacet>()
+    /** Edge facets owned by the library's own UI (an `edge`-scoped legend section). */
+    private reservedEdgeFacets = new Map<string, EdgeFacet>()
+    /** How many edges the active edge filters hide (layer reasons only). */
+    private hiddenEdgeCount: number = 0
 
     constructor(graph: Graph) {
         this.graph = graph
@@ -93,6 +108,97 @@ export class GraphQueryEngine {
 
     private facetFor(key: string): FilterFacet | undefined {
         return this.facets.get(key) ?? this.reservedFacets.get(key)
+    }
+
+    /**
+     * Declare the edge facets — the graph's relation layers (normally from
+     * `UI.filter.edgeFacets`). Replaces any previous declaration, and re-applies when
+     * an edge filter is already active.
+     */
+    setEdgeFacets(facets: EdgeFacet[] | undefined) {
+        this.edgeFacets = new Map((facets ?? []).map((facet) => [facet.key, facet]))
+        if (this.hasEdgeFilters()) this.apply()
+    }
+
+    getEdgeFacets(): EdgeFacet[] {
+        return [...this.edgeFacets.values()]
+    }
+
+    /**
+     * Register an edge facet the library itself owns — an `edge`-scoped legend
+     * section's. Additive: it survives {@link setEdgeFacets} and stays out of
+     * {@link getEdgeFacets}.
+     */
+    registerEdgeFacet(facet: EdgeFacet) {
+        this.reservedEdgeFacets.set(facet.key, facet)
+        if (this.filters[EDGE_FILTER_PREFIX + facet.key] !== undefined) this.apply()
+    }
+
+    /** Drop a reserved edge facet, and any filter that was relying on it to match. */
+    unregisterEdgeFacet(key: string) {
+        if (!this.reservedEdgeFacets.delete(key)) return
+        this.removeEdgeFilter(key)
+    }
+
+    /** Declared edge facets plus the library's own — what edge filters are matched with. */
+    private allEdgeFacets(): EdgeFacet[] {
+        return [...this.edgeFacets.values(), ...this.reservedEdgeFacets.values()]
+    }
+
+    private edgeFacetFor(key: string): EdgeFacet | undefined {
+        return this.edgeFacets.get(key) ?? this.reservedEdgeFacets.get(key)
+    }
+
+    private hasEdgeFilters(): boolean {
+        return Object.keys(this.filters).some((key) => key.startsWith(EDGE_FILTER_PREFIX))
+    }
+
+    /** Set an edge filter. `key` is the facet's own — the namespacing is internal. */
+    setEdgeFilter(key: string, value: FilterFieldConfig) {
+        this.setFilter(EDGE_FILTER_PREFIX + key, value)
+    }
+
+    removeEdgeFilter(key: string) {
+        this.removeFilter(EDGE_FILTER_PREFIX + key)
+    }
+
+    /** The active edge filters, keyed by the facet's own key. */
+    getEdgeFilters(): GraphFilters {
+        const edgeFilters: GraphFilters = {}
+        for (const [key, config] of Object.entries(this.filters)) {
+            if (!key.startsWith(EDGE_FILTER_PREFIX)) continue
+            edgeFilters[key.slice(EDGE_FILTER_PREFIX.length)] = config
+        }
+        return edgeFilters
+    }
+
+    /** How many edges the active edge filters hide. Endpoint-hidden edges don't count. */
+    getHiddenEdgeCount(): number {
+        return this.hiddenEdgeCount
+    }
+
+    /**
+     * The distinct values an edge facet reads across the graph's real edges, sorted —
+     * what a `select` / `multiselect` edge facet is populated with when it declares no
+     * options of its own. Synthetic stand-ins are skipped: they carry no data, and the
+     * real edges they speak for are read directly.
+     */
+    getEdgeFacetValues(key: string): string[] {
+        const facet = this.edgeFacetFor(key)
+        const found = new Set<string>()
+        for (const edge of this.realEdges()) {
+            const raw = this.readEdgeValue(edge, key, facet)
+            for (const value of Array.isArray(raw) ? raw : [raw]) {
+                if (value === null || value === undefined || value === '') continue
+                found.add(String(value))
+            }
+        }
+        return [...found].sort()
+    }
+
+    /** The graph's real edges — every synthetic stand-in excluded. */
+    private realEdges(): Edge[] {
+        return this.graph.getMutableEdges().filter((edge) => !edge.representedEdges?.length)
     }
 
     getFilters(): GraphFilters {
@@ -212,7 +318,71 @@ export class GraphQueryEngine {
         this.hiddenNodeCount = nodesInCurrentGraph.length - visibleNodesInCurrentGraph.length
         this.applyFiltersOnSubgraph()
 
-        this.graph.setVisibleNodes(visibleNodesInCurrentGraph)
+        // Layers first, so setVisibleNodes' recompute lands on the final flag; it fires
+        // the graph's change hook itself when node visibility moved, which is why the
+        // edge-only case has to ask for a repaint of its own.
+        const layersChanged = this.applyEdgeLayers()
+        const nodesChanged = this.graph.setVisibleNodes(visibleNodesInCurrentGraph)
+        if (layersChanged && !nodesChanged) this.graph.edgeVisibilityChanged()
+    }
+
+    /**
+     * Push the active edge filters onto every edge's layer flag. Returns whether any
+     * edge moved, so the caller can repaint without disturbing the simulation — a
+     * layer is a lens, and hiding one must not change the layout.
+     */
+    private applyEdgeLayers(): boolean {
+        const filtering = this.hasEdgeFilters()
+        let changed = false
+        let hidden = 0
+
+        for (const edge of this.graph.getMutableEdges()) {
+            const layerOn = !filtering || this.edgeMatchesFilters(edge)
+            if (edge.setLayerVisible(layerOn)) changed = true
+            if (!layerOn) hidden++
+        }
+
+        this.hiddenEdgeCount = hidden
+        return changed
+    }
+
+    /**
+     * Does this edge survive the active edge filters? A synthetic stand-in carries no
+     * data of its own — it speaks for real edges, and survives while any of them does.
+     */
+    private edgeMatchesFilters(edge: Edge): boolean {
+        const represented = edge.representedEdges
+        if (represented?.length) return represented.some((real) => this.edgeMatchesFilters(real))
+
+        for (const [key, value] of Object.entries(this.filters)) {
+            if (!key.startsWith(EDGE_FILTER_PREFIX)) continue
+
+            const bareKey = key.slice(EDGE_FILTER_PREFIX.length)
+            const facet = this.edgeFacetFor(bareKey)
+            if (facet?.predicate) {
+                if (!this.runFacetFn(key, () => facet.predicate!(edge, value.value))) return false
+                continue
+            }
+
+            const edgeValue = this.readEdgeValue(edge, bareKey, facet)
+            const matching: FacetMatching = {
+                key: bareKey,
+                // A layer is a multiselect unless the facet says otherwise — the same
+                // default the panel builds its control from.
+                type: facet?.type ?? 'multiselect',
+                matchMode: facet?.matchMode,
+            }
+            if (!this.matches(edgeValue, value, matching)) return false
+        }
+        return true
+    }
+
+    /** Read an edge facet's dimension off an edge: its `accessor`, else the data key. */
+    private readEdgeValue(edge: Edge, key: string, facet?: EdgeFacet): unknown {
+        if (facet?.accessor) {
+            return this.runFacetFn(EDGE_FILTER_PREFIX + key, () => facet.accessor!(edge))
+        }
+        return (edge.getData() as Record<string, unknown> | undefined)?.[key]
     }
 
     public applyFiltersOnSubgraph() {
@@ -221,6 +391,10 @@ export class GraphQueryEngine {
         // travels in `mainFilters`, and without the facet the subgraph would match it
         // against a data key that doesn't exist and hide every child node.
         const facets = this.allFacets()
+        // Edge facets travel the same way: a subgraph's edges are its own, and without
+        // the declaration an `edge:` filter key would match against a data key that
+        // doesn't exist and blank every relation inside an expanded cluster.
+        const edgeFacets = this.allEdgeFacets()
 
         this.graph.getMutableNodes()
             .filter(node => node.childrenDepth === 0)
@@ -233,6 +407,7 @@ export class GraphQueryEngine {
                     // accessor/predicate facets would silently fall back to data keys.
                     // (After the reset, so it doesn't apply on its way in.)
                     subgraph.queryEngine.setFacets(facets)
+                    subgraph.queryEngine.setEdgeFacets(edgeFacets)
                     subgraph.queryEngine.setFilters(mainFilters)
                 }
             })
@@ -244,15 +419,18 @@ export class GraphQueryEngine {
         }
         for (const [key, value] of Object.entries(this.filters)) {
             if (key === 'manuallyHidden') continue
+            // Edge layers select edges, never nodes: a node with no visible edge left
+            // stays on the canvas (hiding it is a node filter's decision).
+            if (key.startsWith(EDGE_FILTER_PREFIX)) continue
 
             const facet = this.facetFor(key)
             if (facet?.predicate) {
-                if (!this.runFacetFn(facet, () => facet.predicate!(node, value.value))) return false
+                if (!this.runFacetFn(key, () => facet.predicate!(node, value.value))) return false
                 continue
             }
 
             const nodeValue = facet?.accessor
-                ? this.runFacetFn(facet, () => facet.accessor!(node))
+                ? this.runFacetFn(key, () => facet.accessor!(node))
                 : node.getData()[key]
             if (!this.matches(nodeValue, value, facet)) return false
         }
@@ -262,14 +440,16 @@ export class GraphQueryEngine {
     /**
      * Run a consumer-supplied accessor/predicate without letting a throw take the
      * whole render down: the facet stops matching and we warn once for that key.
+     * Keyed by the *filter* key, so a node and an edge facet of the same name are
+     * reported apart.
      */
-    private runFacetFn<T>(facet: FilterFacet, fn: () => T): T | undefined {
+    private runFacetFn<T>(key: string, fn: () => T): T | undefined {
         try {
             return fn()
         } catch (error) {
-            if (!this.brokenFacets.has(facet.key)) {
-                this.brokenFacets.add(facet.key)
-                console.warn(`Pivotick: filter facet '${facet.key}' threw; it will not match any node.`, error)
+            if (!this.brokenFacets.has(key)) {
+                this.brokenFacets.add(key)
+                console.warn(`Pivotick: filter facet '${key}' threw; it will not match anything.`, error)
             }
             return undefined
         }
@@ -292,7 +472,7 @@ export class GraphQueryEngine {
         return compiled
     }
 
-    private matches(nodeValue: unknown, filterConfig: FilterFieldConfig, facet?: FilterFacet): boolean {
+    private matches(nodeValue: unknown, filterConfig: FilterFieldConfig, facet?: FacetMatching): boolean {
         if (filterConfig === undefined) return true
         if (nodeValue === undefined || nodeValue === null) return false
 

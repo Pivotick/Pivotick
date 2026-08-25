@@ -5,6 +5,7 @@ import { Edge, type EdgeData } from '../../Edge'
 import type { EdgeStyle, GraphRendererOptions } from '../../GraphOptions'
 import { getArcIntersectionWithCircle, type ArcParams, type Circle } from '../../utils/GeometryHelper'
 import type { Graph } from '../../Graph'
+import { edgeTypeGetter } from '../../utils/GraphGetters'
 
 export class EdgeDrawer {
 
@@ -38,19 +39,33 @@ export class EdgeDrawer {
         }
     }
 
-    private getEdgeStyle(edge: Edge): EdgeStyle {
+    /**
+     * The style this renderer paints an edge with. It resolves the four properties the
+     * canvas renderer actually draws — a legend keyed on it therefore shows solid,
+     * markerless swatches here, which is the truthful key for what lands on screen.
+     */
+    public getEdgeStyle(edge: Edge): EdgeStyle {
         let styleFromEdge
+        const fromStyleMap = this.styleFromKindMap(edge)
         if (edge.getStyle()?.styleCb) {
             styleFromEdge = edge.getStyle().styleCb(edge)
         } else {
             styleFromEdge = {
-                strokeColor: edge.getStyle()?.strokeColor,
-                strokeWidth: edge.getStyle()?.strokeWidth,
-                opacity: edge.getStyle()?.color,
-                curveStyle: edge.getStyle()?.curveStyle,
+                strokeColor: edge.getStyle()?.strokeColor ?? fromStyleMap.strokeColor,
+                strokeWidth: edge.getStyle()?.strokeWidth ?? fromStyleMap.strokeWidth,
+                opacity: edge.getStyle()?.opacity ?? fromStyleMap.opacity,
+                curveStyle: edge.getStyle()?.curveStyle ?? fromStyleMap.curveStyle,
             }
         }
         return this.mergeEdgeStylingOptions(styleFromEdge)
+    }
+
+    /** `render.edgeStyleMap`'s entry for this edge's kind, empty when it declares none. */
+    private styleFromKindMap(edge: Edge): Partial<EdgeStyle> {
+        const { edgeStyleMap, edgeTypeAccessor } = this.rendererOptions
+        if (!edgeStyleMap) return {}
+        const kind = edgeTypeGetter(edge, edgeTypeAccessor)
+        return kind !== undefined ? edgeStyleMap[kind] ?? {} : {}
     }
 
     private mergeEdgeStylingOptions(style: Partial<EdgeStyle>): EdgeStyle {

@@ -1,3 +1,4 @@
+import type { Edge } from '../Edge'
 import type { Node } from '../Node'
 import type { Graph } from '../Graph'
 
@@ -88,6 +89,63 @@ export interface FilterFacet {
     order?: number
 }
 
+/**
+ * What the query engine needs from a facet in order to match a value: the widget
+ * (only `regex` changes how matching works) and the match mode. Shared by node and
+ * edge facets so one matcher serves both scopes.
+ */
+export interface FacetMatching {
+    key: string
+    type?: FilterFacetType
+    matchMode?: FilterMatchMode
+}
+
+/**
+ * A declared **edge** facet: one control in the filter panel's Relationships section,
+ * read off edge data and driving edge visibility rather than node visibility.
+ *
+ * The same vocabulary as {@link FilterFacet} with edge-shaped defaults — a layer is a
+ * multiselect, so `type` is optional, and `options` are derived from the graph's real
+ * edges when omitted. `{ key: 'kind' }` is therefore a complete declaration.
+ *
+ * @example
+ * ```js
+ * { key: 'kind', label: 'Relationship layer' }
+ * { key: 'weight', type: 'numberRange' }
+ * ```
+ */
+export interface EdgeFacet {
+    /** Filter identity. The `GraphFilters` key is namespaced; `setEdgeFilter` takes this. */
+    key: string
+    /**
+     * Human label for the control, used verbatim (so it can be translated).
+     * Defaults to a prettified `key`.
+     */
+    label?: string
+    /** @default 'multiselect' — a layer is a set of kinds, each on or off. */
+    type?: FilterFacetType
+    /**
+     * Options for `select` / `multiselect`. A function is resolved against the live
+     * graph every time the panel rebuilds. Omitted entirely, the options are derived
+     * from the distinct values this facet reads off the graph's real edges.
+     */
+    options?: FilterFacetOption[] | ((graph: Graph) => FilterFacetOption[])
+    /** @default 'exact' */
+    matchMode?: FilterMatchMode
+    /**
+     * How to read this facet off an edge. Defaults to `edge.getData()[key]`.
+     * This is what makes computed facets possible.
+     */
+    accessor?: (edge: Edge) => unknown
+    /**
+     * Full control: decide membership yourself. Wins over `accessor` / `matchMode`.
+     * Runs per edge per filter application, so keep it cheap.
+     */
+    predicate?: (edge: Edge, value: FilterValue) => boolean
+    /** Display order in the panel. @default declaration order */
+    order?: number
+}
+
 /** `UI.filter` — how the filter panel is populated. */
 export interface FilterOptions {
     /**
@@ -101,4 +159,15 @@ export interface FilterOptions {
      * without declaring everything. Ignored when `facets` is set.
      */
     excludeKeys?: string[]
+    /**
+     * The edge dimensions the graph's relations are filterable by — the *layers*.
+     * Each renders in the panel's Relationships section and drives edge visibility;
+     * node positions, selection and camera are untouched by a toggle.
+     *
+     * Unlike {@link facets} these are never auto-derived: a graph that declares none
+     * behaves exactly as one that has never heard of edge layers.
+     *
+     * @default undefined — no edge filtering
+     */
+    edgeFacets?: EdgeFacet[]
 }

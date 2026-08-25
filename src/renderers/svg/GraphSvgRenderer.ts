@@ -13,7 +13,7 @@ import merge from 'lodash.merge'
 import { GraphInteractions } from '../../GraphInteractions'
 import { GraphRenderer, type GraphBounds, type ViewportTarget } from '../../GraphRenderer'
 import { SelectionBox } from './SelectionBox'
-import type { GraphRendererOptions, NodeStyle, SelectionBox as SelectionBoxI } from '../../interfaces/RendererOptions'
+import type { EdgeStyle, GraphRendererOptions, NodeStyle, SelectionBox as SelectionBoxI } from '../../interfaces/RendererOptions'
 import { ClusterDrawer } from './ClusterDrawer'
 import { NoteDrawer } from './NoteDrawer'
 import { Note } from '../../Note'
@@ -309,6 +309,10 @@ export class GraphSvgRenderer extends GraphRenderer {
 
     public getNodeStyle(node: Node): NodeStyle {
         return this.nodeDrawer.getNodeStyle(node)
+    }
+
+    public getEdgeStyle(edge: Edge): EdgeStyle {
+        return this.edgeDrawer.getEdgeStyle(edge)
     }
 
     public init(): void {

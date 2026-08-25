@@ -112,6 +112,7 @@ export class Graph {
         // Declared facets carry the accessor/predicate/matchMode the engine matches
         // with, so hand them over as soon as the merged UI options exist.
         this.queryEngine.setFacets(this.UIManager.getOptions().filter?.facets)
+        this.queryEngine.setEdgeFacets(this.UIManager.getOptions().filter?.edgeFacets)
         this.notifier = new Notifier(this)
         this.renderer = createGraphRenderer(this, appContainer, rendererOptions)
         this.renderer.setupRendering()
@@ -253,8 +254,10 @@ export class Graph {
 
         // Generate synthetic edges for edges pointing to child in collapsed nodes
         const newEdges: Edge[] = []
-        // Dedup cross-cluster stand-ins by their (representative-from, representative-to) pair.
-        const crossClusterEdgeIds = new Set<string>()
+        // Dedup cross-cluster stand-ins by their (representative-from, representative-to)
+        // pair, keeping each one so a later real edge over the same pair can join its
+        // `representedEdges` instead of being lost to the dedup.
+        const crossClusterStandIns = new Map<string, Edge>()
         for (const edge of normalizedEdges) {
             if (!edge.from.isChild && edge.to.isChild && edge.to.parentNode) {
 
@@ -278,6 +281,10 @@ export class Graph {
                     if (newEdge.to.isChild) {
                         newEdge.hide()
                     }
+                    // One stand-in per ancestor level, all for this one real edge — so
+                    // an edge facet reads the real edge's data rather than the blank
+                    // payload a synthetic carries.
+                    newEdge.representedEdges = [edge]
                     newEdges.push(newEdge)
 
                     if (!currentParent.parentNode) break
@@ -305,11 +312,16 @@ export class Graph {
                     for (const t of toChain) {
                         if (f === edge.from && t === edge.to) continue // that's the real edge, tagged above
                         const syntheticId = `synthetic-${f.id}-${t.id}`
-                        if (crossClusterEdgeIds.has(syntheticId)) continue
-                        crossClusterEdgeIds.add(syntheticId)
+                        const existing = crossClusterStandIns.get(syntheticId)
+                        if (existing) {
+                            existing.representedEdges?.push(edge)
+                            continue
+                        }
                         const newEdge = new Edge(syntheticId, f, t, {}, {}, edge.directed, edge.to)
                         newEdge.isCrossCluster = true
                         newEdge.syntheticSourceNode = edge.from
+                        newEdge.representedEdges = [edge]
+                        crossClusterStandIns.set(syntheticId, newEdge)
                         newEdges.push(newEdge)
                     }
                 }
@@ -358,7 +370,7 @@ export class Graph {
             const shouldShow =
                 edge.from === representative(edge.syntheticSourceNode) &&
                 edge.to === representative(edge.syntheticTerminalNode)
-            if (edge.visible !== shouldShow) {
+            if (edge.visibleIgnoringLayer !== shouldShow) {
                 if (shouldShow) edge.show()
                 else edge.hide()
             }
@@ -1059,7 +1071,8 @@ export class Graph {
         return this.noteManager.getNote(id)
     }
 
-    setVisibleNodes(nodes: Node[]) {
+    /** Returns whether anything moved, so an edge-only filter change can repaint itself. */
+    setVisibleNodes(nodes: Node[]): boolean {
         const visibleSet = new Set(nodes.map(n => n.id))
 
         let changed = false
@@ -1080,13 +1093,27 @@ export class Graph {
             const isValidSynthetic = !edge.isSynthetic || !edge.to.expanded
 
             const shouldBeVisible = bothEndVisible && isValidSynthetic
-            if (edge.visible !== shouldBeVisible) {
+            // Compared against `visibleIgnoringLayer`, not `visible`: this decides the
+            // endpoint reason only, and an edge already dark because its layer is off
+            // must not be reported as a change on every reapplication.
+            if (edge.visibleIgnoringLayer !== shouldBeVisible) {
                 edge.toggleVisibility(shouldBeVisible)
                 changed = true
             }
         })
 
         if (changed) this.onChange()
+        return changed
+    }
+
+    /**
+     * Repaint after an edge-layer change. Deliberately not {@link onChange}: layers
+     * don't touch the link force (see `Simulation.getActiveEdges`), so restarting the
+     * simulation would move the graph for no reason.
+     */
+    edgeVisibilityChanged() {
+        this.renderer?.update(true)
+        this.renderer?.nextTick()
     }
 
     hideNode(node: Node) {

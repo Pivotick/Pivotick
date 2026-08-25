@@ -4,7 +4,7 @@ import { getApproximateArcLengthAndMidpoint, getApproximateCircleArcLengthAndMid
 import type { Graph } from '../../Graph'
 import type { GraphSvgRenderer } from './GraphSvgRenderer'
 import { tryResolveBoolean, tryResolveNumber, tryResolveString } from '../../utils/Getters'
-import { edgeLabelGetter } from '../../utils/GraphGetters'
+import { edgeLabelGetter, edgeTypeGetter } from '../../utils/GraphGetters'
 import type { CurveStyle, EdgeStyle, GraphRendererOptions, LabelStyle, MarkerStyle } from '../../interfaces/RendererOptions'
 
 export class EdgeDrawer {
@@ -105,23 +105,28 @@ export class EdgeDrawer {
         return mergedStyle
     }
 
-    private getEdgeStyle(edge: Edge): EdgeStyle {
+    /**
+     * The style this renderer actually paints an edge with, every property resolved.
+     * Public so the legend can key on it — it is descriptive, and never assigns a style.
+     */
+    public getEdgeStyle(edge: Edge): EdgeStyle {
         let styleFromEdge
         const edgeStyle = edge.getEdgeStyle()
+        const fromStyleMap = this.styleFromKindMap(edge)
 
         if (edgeStyle && edgeStyle.styleCb) {
             styleFromEdge = edgeStyle.styleCb(edge)
         } else {
             styleFromEdge = {
-                strokeColor: edgeStyle?.strokeColor,
-                strokeWidth: edgeStyle?.strokeWidth,
-                opacity: edgeStyle?.opacity,
-                curveStyle: edgeStyle?.curveStyle,
-                dashed: edgeStyle?.dashed,
-                animateDash: edgeStyle?.animateDash,
-                rotateLabel: edgeStyle?.rotateLabel,
-                markerEnd: edgeStyle?.markerEnd,
-                markerStart: edgeStyle?.markerStart,
+                strokeColor: edgeStyle?.strokeColor ?? fromStyleMap.strokeColor,
+                strokeWidth: edgeStyle?.strokeWidth ?? fromStyleMap.strokeWidth,
+                opacity: edgeStyle?.opacity ?? fromStyleMap.opacity,
+                curveStyle: edgeStyle?.curveStyle ?? fromStyleMap.curveStyle,
+                dashed: edgeStyle?.dashed ?? fromStyleMap.dashed,
+                animateDash: edgeStyle?.animateDash ?? fromStyleMap.animateDash,
+                rotateLabel: edgeStyle?.rotateLabel ?? fromStyleMap.rotateLabel,
+                markerEnd: edgeStyle?.markerEnd ?? fromStyleMap.markerEnd,
+                markerStart: edgeStyle?.markerStart ?? fromStyleMap.markerStart,
             }
         }
         const mergedStyle = this.mergeEdgeStylingOptions(styleFromEdge)
@@ -149,6 +154,14 @@ export class EdgeDrawer {
         }
 
         return mergedStyle
+    }
+
+    /** `render.edgeStyleMap`'s entry for this edge's kind, empty when it declares none. */
+    private styleFromKindMap(edge: Edge): Partial<EdgeStyle> {
+        const { edgeStyleMap, edgeTypeAccessor } = this.rendererOptions
+        if (!edgeStyleMap) return {}
+        const kind = edgeTypeGetter(edge, edgeTypeAccessor)
+        return kind !== undefined ? edgeStyleMap[kind] ?? {} : {}
     }
 
     private mergeEdgeStylingOptions(style: Partial<EdgeStyle>): EdgeStyle {

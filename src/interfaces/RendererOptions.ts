@@ -153,6 +153,39 @@ export interface GraphRendererOptions {
      */
     nodeStyleMap?: Record<string, NodeStyle>
     /**
+     * Function to access the kind of an edge — the dimension {@link edgeStyleMap}
+     * keys on, and the one an `edge` legend section and edge filter facets derive
+     * from when they aren't given a data key of their own.
+     *
+     * @remarks
+     * Used in conjuction with {@link edgeStyleMap}
+     *
+     * @example
+     * ```ts
+     * edgeTypeAccessor: (edge) => edge.getData()?.kind
+     * ```
+     */
+    edgeTypeAccessor?: (edge: Edge) => string | undefined
+    /**
+     * Maps edge kinds to their styles.
+     *
+     * Each key is an edge kind (as returned by `edgeTypeAccessor`) and maps to a
+     * partial `EdgeStyle`. An edge's own `styleCb` still wins over the map, exactly
+     * as it does over {@link nodeStyleMap}.
+     *
+     * @remarks
+     * Used in conjuction with {@link edgeTypeAccessor}
+     *
+     * @example
+     * ```ts
+     * edgeStyleMap: {
+     *   'object-reference': { strokeColor: '#428bca' },
+     *   'correlation': { strokeColor: '#888', dashed: true },
+     * }
+     * ```
+     */
+    edgeStyleMap?: Record<string, Partial<EdgeStyle>>
+    /**
      * Controls whether non-connected nodes and edges are grayed out when a node is selected
      * @default true
      */

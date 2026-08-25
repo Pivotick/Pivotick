@@ -152,3 +152,28 @@ export function resolveNodeByName(nodeName: string, nodes: Node[], mainHeaderOpt
         )
     })
 }
+/**
+ * The kind an edge is styled and keyed by, via `render.edgeTypeAccessor`.
+ *
+ * A synthetic stand-in carries no data of its own, so it borrows the kind of the
+ * real edges it speaks for — but only when they agree: a stand-in covering several
+ * kinds has no single kind to draw in and falls back to the default style.
+ */
+export function edgeTypeGetter(
+    edge: Edge,
+    accessor: ((edge: Edge) => string | undefined) | undefined
+): string | undefined {
+    if (typeof accessor !== 'function') return undefined
+
+    const represented = edge.representedEdges
+    if (!represented?.length) return accessor(edge)
+
+    let common: string | undefined
+    for (const real of represented) {
+        const kind = accessor(real)
+        if (kind === undefined) continue
+        if (common === undefined) common = kind
+        else if (common !== kind) return undefined
+    }
+    return common
+}
