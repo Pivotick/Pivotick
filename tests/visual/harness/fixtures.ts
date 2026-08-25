@@ -18,6 +18,9 @@ import type {
 } from '../../../src/interfaces/RendererOptions'
 import { xssPayload, xssSvgIcon } from '../xssPayloads'
 
+/** A plain, structured-cloneable bag — what a fixture can carry across `page.evaluate`. */
+type PlainObject = Record<string, unknown>
+
 /** Note option objects are passed raw; the graph normalises them into `Note`s. */
 export interface RawNote {
     id: string
@@ -57,9 +60,10 @@ function mkCluster(
     x: number,
     y: number,
     children: Node[],
-    data: Record<string, unknown> = {}
+    data: Record<string, unknown> = {},
+    style: Partial<NodeStyle> = {}
 ): Node {
-    const node = new Node(id, { label: id.toUpperCase(), ...data }, {}, id, children)
+    const node = new Node(id, { label: id.toUpperCase(), ...data }, style, id, children)
     node.x = x
     node.y = y
     node.fx = x
@@ -1061,6 +1065,89 @@ export const fixtures = {
         }, { label: 'Icon node' })
 
         return { nodes: [label, prop, icon], edges: [], notes: [] }
+    },
+
+    /**
+     * Every shape and size a rim badge has to sit on, well separated so no two nodes'
+     * badges can be mistaken for each other.
+     *
+     * Badges themselves are **not** declared here: `NodeBadge.onClick` and a `badges`
+     * function cannot cross `page.evaluate`, so each node carries a plain descriptor list
+     * in `data.badges` that {@link HarnessApi.loadBadges} turns into real badges page-side.
+     */
+    badges(): BuiltFixture {
+        const withBadges = (
+            id: string,
+            x: number,
+            y: number,
+            style: Partial<NodeStyle>,
+            badges: PlainObject[]
+        ): Node => mkStyledNode(id, x, y, style, { badges })
+
+        const count = (text: string, extra: PlainObject = {}): PlainObject =>
+            ({ text, title: `${text} things`, ...extra })
+
+        // A round node and a square one of the same `size`: the pair that proves the rim
+        // maths is shape-aware rather than one circumscribed circle for both.
+        const circle = withBadges('circle', -300, -140, { size: 24 }, [count('3'), count('7')])
+        const square = withBadges('square', -60, -140, { shape: 'square', size: 24 }, [count('3')])
+
+        // The clamp's two ends.
+        const small = withBadges('small', 180, -140, { size: 5 }, [count('1')])
+        const big = withBadges('big', 380, -140, { size: 48 }, [count('9')])
+
+        // A custom path is drawn at a guessed radius and only measured a frame later.
+        const star = withBadges('star', -300, 60, { shape: { d: starPath(28, 12) }, size: 28 }, [count('2')])
+
+        // A framed picture resizes itself once the image probe resolves.
+        const framed = withBadges(
+            'framed',
+            -60,
+            60,
+            { shape: 'square', size: 30, imagePath: landscapeImageDataUri(), imageFit: 'frame' },
+            [count('4')]
+        )
+
+        // Six auto-placed badges on a leaf: four corners, so three show and the rest fold in.
+        const overflow = withBadges('overflow', 180, 60, { size: 26 },
+            ['1', '2', '3', '4', '5', '6'].map((text) => count(text)))
+
+        // Both asking for the same corner — honoured verbatim, overlap and all.
+        const explicit = withBadges('explicit', 380, 60, { size: 26 }, [
+            count('A', { position: 'nw' }),
+            count('B', { position: 'nw' }),
+        ])
+
+        // A clickable badge next to an inert one, on the same node.
+        const clickable = withBadges('clickable', -300, 250, { size: 26 }, [
+            count('C', { click: true }),
+            count('D'),
+        ])
+
+        // Four auto badges on an expandable node: the affordance reserves both East corners,
+        // leaving one slot for a badge and one for the overflow.
+        const kids = [mkNode('kid-1', -40, 240), mkNode('kid-2', 40, 260)]
+        const cluster = mkCluster('cluster', 60, 250, kids, {
+            badges: ['W', 'X', 'Y', 'Z'].map((text) => count(text)),
+        }, { size: 26 })
+        markCluster(cluster)
+
+        // A *square* expandable node: the one place the expand affordance's corner maths is
+        // visibly wrong when it treats every shape as a circumscribed circle.
+        const squareKids = [mkNode('sq-kid-1', 340, 240), mkNode('sq-kid-2', 420, 260)]
+        const squareCluster = mkCluster('sqcluster', 380, 250, squareKids,
+            { badges: [count('S')] },
+            { shape: 'square', size: 26 })
+        markCluster(squareCluster)
+
+        return {
+            nodes: [
+                circle, square, small, big, star, framed, overflow, explicit, clickable,
+                cluster, ...kids, squareCluster, ...squareKids,
+            ],
+            edges: [],
+            notes: [],
+        }
     },
 }
 

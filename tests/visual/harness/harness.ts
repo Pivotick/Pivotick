@@ -20,7 +20,7 @@ import type {
 } from '../../../src/interfaces/GraphQueryEngine'
 import type { GraphInteractionContext } from '../../../src/interfaces/GraphInteractions'
 import type { GraphBounds } from '../../../src/GraphRenderer'
-import type { EdgeStyle } from '../../../src/interfaces/RendererOptions'
+import type { EdgeStyle, NodeBadge } from '../../../src/interfaces/RendererOptions'
 import { Minimap, type MinimapOptions } from '../../../src/plugins/minimap'
 import type {
     ExtraPanel, ExtraPanelSelection, LegendEntry, LegendGroupOptions, LegendOptions, LegendPosition,
@@ -422,6 +422,50 @@ export interface EdgeLayerRow {
     hidden: boolean
 }
 
+/** One rim badge as it is actually drawn — where it sits, how big it is, how it is wired. */
+export interface NodeBadgeSnapshot {
+    position: string
+    /** Badge centre, in the node group's own coordinates. */
+    cx: number
+    cy: number
+    /** The pill's box; `radius` is its corner rounding, i.e. half its height. */
+    width: number
+    height: number
+    radius: number
+    text: string
+    /** The painted fill, as the browser reports it — so a themed default reads back too. */
+    fill: string
+    title: string | null
+    interactive: boolean
+    overflow: boolean
+}
+
+/** How far a node's drawn shape reaches, and whether it curves away from its corners. */
+export interface NodeRimBox {
+    hx: number
+    hy: number
+    round: boolean
+}
+
+/** What {@link HarnessApi.loadBadges} should install alongside the fixture's own badges. */
+export interface BadgeHarnessSpec {
+    /** Declare `callbacks.onBadgeClick`, which makes every badge interactive. */
+    globalHandler?: boolean
+    /** Have a `badgeClick` bus listener call `cancel()`, which should suppress both handlers. */
+    cancelBus?: boolean
+    /**
+     * Swap the fixture for two `renderNode` HTML cards wearing badges — the path where
+     * the default node render never runs and the node's box is only known once measured.
+     */
+    customNodes?: boolean
+    /**
+     * Declare badges at three levels at once so precedence is observable: `nodeStyleMap`
+     * gives every node a `MAP` badge, `circle` declares its own, and `square` declares
+     * an empty array.
+     */
+    precedence?: boolean
+}
+
 /** The stroke a line swatch draws with, and whether it is dashed / arrow-headed. */
 export interface EdgeSwatchSnapshot {
     stroke: string
@@ -626,6 +670,31 @@ export interface HarnessApi {
     multiSelect(ids: string[]): void
     /** Ids of the currently selected nodes — for verifying box / lasso selection. */
     selectedNodeIds(): string[]
+    /**
+     * Load the `badges` fixture with real badges installed page-side.
+     *
+     * `NodeBadge.onClick` and a `badges` function are functions, so they cannot travel
+     * through `load`'s serialisable overrides — each node's `data.badges` descriptors are
+     * turned into badges here instead. A descriptor with `click: true` gets an `onClick`.
+     */
+    loadBadges(spec?: BadgeHarnessSpec, overrides?: PlainObject): Promise<void>
+    /** Every badge drawn on a node, in DOM order — geometry, paint and wiring. */
+    nodeBadges(id: string): NodeBadgeSnapshot[]
+    /**
+     * How far the node's drawn shape reaches, and whether its outline curves away from
+     * the corner — what a badge's placement has to be judged against.
+     */
+    nodeRimBox(id: string): NodeRimBox | null
+    /**
+     * The shift applied to the whole badge group — zero until a cluster expands and the node
+     * slides to the bubble's NW rim, taking its badges with it.
+     */
+    badgeGroupOffset(id: string): { x: number; y: number } | null
+    /** Where the expand/collapse affordance sits, in the node group's coordinates. */
+    nodeIconAnchor(id: string): { x: number; y: number } | null
+    /** Badge handlers that fired, in order, since the fixture loaded. */
+    badgeClickLog(): string[]
+    clearBadgeClickLog(): void
     /** Clear all selection. */
     deselectAll(): void
     /** Add a node with a fixed position and stable domID (`#node-<id>`). */
@@ -1207,6 +1276,185 @@ class Harness implements HarnessApi {
 
     selectedNodeIds(): string[] {
         return this.g.renderer.getGraphInteraction().getSelectedNodeIDs() ?? []
+    }
+
+    private badgeClicks: string[] = []
+
+    async loadBadges(spec: BadgeHarnessSpec = {}, overrides: PlainObject = {}): Promise<void> {
+        this.badgeClicks = []
+
+        // Turn each node's plain `data.badges` descriptors into real badges. Done here and
+        // not in the fixture because `onClick` is a function: it cannot cross page.evaluate.
+        const badges = (node: Node): NodeBadge[] => {
+            const declared = node.getData().badges
+            if (!Array.isArray(declared)) return []
+            return declared.map((entry) => {
+                const descriptor = entry as PlainObject
+                const badge: NodeBadge = {
+                    text: descriptor.text as string,
+                    title: descriptor.title as string,
+                    position: descriptor.position as NodeBadge['position'],
+                }
+                if (descriptor.click) {
+                    badge.onClick = () => this.badgeClicks.push(`badge:${badge.text}`)
+                }
+                return badge
+            })
+        }
+
+        const options: PlainObject = { render: { defaultNodeStyle: { badges } } }
+        if (spec.globalHandler) {
+            options.callbacks = {
+                onBadgeClick: (_event: PointerEvent, _node: Node, badge: NodeBadge) => {
+                    this.badgeClicks.push(`global:${badge.text}`)
+                },
+            }
+        }
+
+        if (spec.customNodes) {
+            await this.loadBadgedCustomNodes(options, overrides)
+            return
+        }
+
+        if (spec.precedence) {
+            // Every level declares badges, so which one is drawn says how they combine.
+            const render = options.render as PlainObject
+            delete (render.defaultNodeStyle as PlainObject).badges
+            render.nodeTypeAccessor = () => 'plain'
+            render.nodeStyleMap = { plain: { badges: [{ text: 'MAP', title: 'From the style map' }] } }
+            await this.load('badges', mergeOptions(options, overrides))
+            // Merged, not replaced, so each node keeps the shape and size the fixture gave it.
+            this.g.getMutableNode('circle')?.updateStyle({ badges: [{ text: 'OWN', title: 'Declared on the node' }] })
+            this.g.getMutableNode('square')?.updateStyle({ badges: [] })
+            this.g.renderer.update(false)
+            return
+        }
+
+        await this.load('badges', mergeOptions(options, overrides))
+
+        this.g.renderer.getGraphInteraction().on('badgeClick', ((
+            _event: PointerEvent,
+            _node: Node,
+            badge: NodeBadge,
+            _element: unknown,
+            context: { cancel(): void }
+        ) => {
+            this.badgeClicks.push(`bus:${badge.text}`)
+            if (spec.cancelBus) context.cancel()
+        }) as never)
+    }
+
+    /**
+     * Two `renderNode` cards wearing badges. The default node render never runs here, so
+     * there is no `.node` shape at all — the badge rim has to come off the measured card.
+     */
+    private async loadBadgedCustomNodes(options: PlainObject, overrides: PlainObject): Promise<void> {
+        const CARD_W = 140
+        const CARD_H = 44
+        const renderNode = (node: Node): HTMLElement => {
+            const el = document.createElement('div')
+            el.style.cssText = `display:inline-flex;box-sizing:border-box;width:${CARD_W}px;height:${CARD_H}px;border:1px solid #334155;background:#fff`
+            el.textContent = String(node.getData().label ?? node.id)
+            return el
+        }
+        const nodes = [-200, 200].map((x, i) => {
+            const node = new Node(`card-${i}`, {
+                label: `Card ${i}`,
+                badges: [{ text: String(i + 1), title: `Card ${i} badge` }],
+            }, {}, `card-${i}`)
+            node.x = x
+            node.y = 0
+            node.fx = x
+            node.fy = 0
+            return node
+        })
+        const render = mergeOptions(options.render as PlainObject, { renderNode })
+        const merged = mergeOptions(BASE_OPTIONS, mergeOptions(overrides, { ...options, render }))
+        this.destroy()
+        const graph = new Pivotick(this.container, { nodes, edges: [] } as never, merged as never)
+        this.graph = graph
+        await this.whenReady(graph)
+        if (document.fonts?.ready) await document.fonts.ready
+    }
+
+    nodeBadges(id: string): NodeBadgeSnapshot[] {
+        const group = document.getElementById(`node-${id}`)
+        if (!group) return []
+        const badges = group.querySelectorAll<SVGGElement>(':scope > .pvt-node-badges > .pvt-node-badge')
+        return Array.from(badges).map((badge) => {
+            const shape = badge.querySelector<SVGRectElement>('.pvt-node-badge-shape')
+            const translate = /translate\(([-\d.]+),\s*([-\d.]+)\)/.exec(badge.getAttribute('transform') ?? '')
+            return {
+                position: badge.getAttribute('data-pvt-badge-position') ?? '',
+                cx: translate ? Number(translate[1]) : NaN,
+                cy: translate ? Number(translate[2]) : NaN,
+                width: Number(shape?.getAttribute('width') ?? 0),
+                height: Number(shape?.getAttribute('height') ?? 0),
+                radius: Number(shape?.getAttribute('rx') ?? 0),
+                text: badge.querySelector('.pvt-node-badge-text')?.textContent ?? '',
+                fill: shape ? getComputedStyle(shape).fill : '',
+                title: badge.querySelector('title')?.textContent ?? null,
+                interactive: badge.classList.contains('pvt-node-badge-interactive'),
+                overflow: badge.classList.contains('pvt-node-badge-overflow'),
+            }
+        })
+    }
+
+    nodeRimBox(id: string): NodeRimBox | null {
+        const group = document.getElementById(`node-${id}`)
+        if (!group) return null
+
+        const shape = group.querySelector(':scope > .node')
+        if (shape) {
+            const tag = shape.tagName.toLowerCase()
+            if (tag === 'rect') {
+                return {
+                    hx: Number(shape.getAttribute('width')) / 2,
+                    hy: Number(shape.getAttribute('height')) / 2,
+                    round: false,
+                }
+            }
+            if (tag === 'circle') {
+                const r = Number(shape.getAttribute('r'))
+                return { hx: r, hy: r, round: true }
+            }
+        }
+        const card = group.querySelector(':scope > foreignObject')
+        if (card) {
+            return {
+                hx: Number(card.getAttribute('width')) / 2,
+                hy: Number(card.getAttribute('height')) / 2,
+                round: false,
+            }
+        }
+        // A path shape carries no honest box; the node's radius is what it was drawn against.
+        const radius = this.g.getMutableNode(id)?.getCircleRadius() ?? 0
+        return { hx: radius, hy: radius, round: true }
+    }
+
+    /**
+     * The shift applied to the whole badge group — zero until a cluster expands and the node
+     * slides to the bubble's NW rim, taking its badges with it.
+     */
+    badgeGroupOffset(id: string): { x: number; y: number } | null {
+        const group = document.getElementById(`node-${id}`)?.querySelector(':scope > .pvt-node-badges')
+        if (!group) return null
+        const translate = /translate\(([-\d.]+),\s*([-\d.]+)\)/.exec(group.getAttribute('transform') ?? '')
+        return translate ? { x: Number(translate[1]), y: Number(translate[2]) } : { x: 0, y: 0 }
+    }
+
+    nodeIconAnchor(id: string): { x: number; y: number } | null {
+        const icon = document.getElementById(`node-${id}`)?.querySelector(':scope > .node-icon')
+        const translate = /translate\(([-\d.]+),\s*([-\d.]+)\)/.exec(icon?.getAttribute('transform') ?? '')
+        return translate ? { x: Number(translate[1]), y: Number(translate[2]) } : null
+    }
+
+    badgeClickLog(): string[] {
+        return [...this.badgeClicks]
+    }
+
+    clearBadgeClickLog(): void {
+        this.badgeClicks = []
     }
 
     deselectAll(): void {
