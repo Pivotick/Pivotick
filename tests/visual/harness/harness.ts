@@ -390,6 +390,28 @@ export interface EdgeLayerSpec {
     styleCb?: boolean
 }
 
+/**
+ * Which of the `render.default*Style.styleCb` callbacks to declare, and what else to
+ * declare beside them, so a test can pin down where each one sits in the precedence
+ * chain. A flag set rather than overrides because callbacks cannot cross
+ * `page.evaluate`.
+ */
+export interface StyleCbSpec {
+    /** `render.defaultNodeStyle.styleCb` — paints every node {@link DEFAULT_CB_COLOR}. */
+    node?: boolean
+    /**
+     * `render.defaultEdgeStyle.styleCb` — sets *both* a colour and a width, so a test
+     * can watch a narrower declaration take the colour while the width still lands.
+     */
+    edge?: boolean
+    /** `render.defaultLabelStyle.styleCb` — paints every edge label {@link DEFAULT_CB_COLOR}. */
+    label?: boolean
+    /** Also declare `edgeTypeAccessor` + `edgeStyleMap`, which names each kind more narrowly. */
+    edgeStyleMap?: boolean
+    /** Give every edge its own `styleCb` too — the one that wins outright. */
+    edgeOwn?: boolean
+}
+
 /** One rendered relationship-layer row in the filter panel, read off the DOM. */
 export interface EdgeLayerRow {
     /** The edge-data value this row toggles. */
@@ -444,6 +466,11 @@ const EDGE_STYLE_MAP: Record<string, Partial<EdgeStyle>> = {
 
 /** What `EdgeLayerSpec.styleCb` paints, so it can't be confused with any mapped kind. */
 const STYLE_CB_COLOR = '#ff00ff'
+
+/** What a `render.default*Style.styleCb` paints — distinct from every other source. */
+const DEFAULT_CB_COLOR = '#00c2a8'
+/** The width a default edge `styleCb` sets; nothing else in these fixtures sets one. */
+const DEFAULT_CB_WIDTH = 7
 
 /** The off-palette colour `LegendSpec.conflictNodeId` is painted with. */
 const LEGEND_CONFLICT_COLOR = '#FF0000'
@@ -795,6 +822,21 @@ export interface HarnessApi {
      * options carry functions.
      */
     loadWithEdgeLayers(name: FixtureName, spec?: EdgeLayerSpec, overrides?: PlainObject): Promise<void>
+    /**
+     * Load a fixture declaring some combination of the `render.default*Style.styleCb`
+     * callbacks (and optionally `edgeStyleMap` / a per-edge `styleCb` beside them), so a
+     * test can pin down where each sits in the precedence chain. Built from
+     * {@link StyleCbSpec} because callbacks cannot cross `page.evaluate`.
+     */
+    loadWithStyleCallbacks(name: FixtureName, spec?: StyleCbSpec, overrides?: PlainObject): Promise<void>
+    /** The colour a `render.default*Style.styleCb` paints in that loader. */
+    defaultCallbackColor(): string
+    /** The stroke width a default edge `styleCb` sets in that loader. */
+    defaultCallbackWidth(): number
+    /** The stroke width the renderer resolved for an edge. */
+    edgeStrokeWidth(id: string): number | null
+    /** The inline `fill` of every rendered edge label. */
+    edgeLabelFills(): string[]
     /** Ids of the edges currently drawn — a layer-hidden edge leaves the render. */
     visibleEdgeIds(): string[]
     /**
@@ -1861,6 +1903,59 @@ class Harness implements HarnessApi {
             }
             this.g.onChange()
         }
+    }
+
+    async loadWithStyleCallbacks(
+        name: FixtureName,
+        spec: StyleCbSpec = {},
+        overrides: PlainObject = {}
+    ): Promise<void> {
+        const render: PlainObject = {}
+        if (spec.node) render.defaultNodeStyle = { styleCb: () => ({ color: DEFAULT_CB_COLOR }) }
+        if (spec.edge) {
+            render.defaultEdgeStyle = {
+                styleCb: () => ({ strokeColor: DEFAULT_CB_COLOR, strokeWidth: DEFAULT_CB_WIDTH }),
+            }
+        }
+        if (spec.label) render.defaultLabelStyle = { styleCb: () => ({ color: DEFAULT_CB_COLOR }) }
+        if (spec.edgeStyleMap) {
+            render.edgeTypeAccessor = (edge: Edge) =>
+                (edge.getData() as Record<string, unknown>)?.kind as string | undefined
+            render.edgeStyleMap = EDGE_STYLE_MAP
+        }
+
+        await this.load(name, mergeOptions({ render }, overrides))
+
+        if (spec.edgeOwn) {
+            // Only a colour: what the default callback's width does next is the point.
+            for (const edge of this.g.getMutableEdges()) {
+                edge.updateStyle({ edge: { styleCb: () => ({ strokeColor: STYLE_CB_COLOR }) } })
+            }
+            this.g.onChange()
+        }
+    }
+
+    /** The colour a `render.default*Style.styleCb` paints, for a test to assert against. */
+    defaultCallbackColor(): string {
+        return DEFAULT_CB_COLOR
+    }
+
+    /** The width a default edge `styleCb` sets. */
+    defaultCallbackWidth(): number {
+        return DEFAULT_CB_WIDTH
+    }
+
+    /** The stroke width the renderer resolved for an edge. */
+    edgeStrokeWidth(id: string): number | null {
+        const edge = this.g.getMutableEdges().find((candidate) => candidate.id === id)
+        if (!edge) return null
+        return Number(this.g.renderer?.getEdgeStyle(edge)?.strokeWidth)
+    }
+
+    /** The inline `fill` of every rendered edge label — where a label style lands. */
+    edgeLabelFills(): string[] {
+        return [...this.container.querySelectorAll('.pvt-edge-label')]
+            .map((label) => (label as SVGTextElement).style.fill)
     }
 
     /** Ids of the edges currently drawn — a layer-hidden edge is removed from the render. */

@@ -57,7 +57,7 @@ export class EdgeDrawer {
                 curveStyle: edge.getStyle()?.curveStyle ?? fromStyleMap.curveStyle,
             }
         }
-        return this.mergeEdgeStylingOptions(styleFromEdge)
+        return this.mergeEdgeStylingOptions(styleFromEdge, edge)
     }
 
     /** `render.edgeStyleMap`'s entry for this edge's kind, empty when it declares none. */
@@ -68,12 +68,14 @@ export class EdgeDrawer {
         return kind !== undefined ? edgeStyleMap[kind] ?? {} : {}
     }
 
-    private mergeEdgeStylingOptions(style: Partial<EdgeStyle>): EdgeStyle {
+    private mergeEdgeStylingOptions(style: Partial<EdgeStyle>, edge: Edge): EdgeStyle {
+        const defaults = this.rendererOptions.defaultEdgeStyle
+        const fromDefaultCb = defaults.styleCb?.(edge) ?? {}
         const mergedStyle = {
-            strokeColor: style?.strokeColor ?? this.rendererOptions.defaultEdgeStyle.strokeColor,
-            strokeWidth: style?.strokeWidth ?? this.rendererOptions.defaultEdgeStyle.strokeWidth,
-            opacity: style?.opacity ?? this.rendererOptions.defaultEdgeStyle.opacity,
-            curveStyle: style?.curveStyle ?? this.rendererOptions.defaultEdgeStyle.curveStyle,
+            strokeColor: style?.strokeColor ?? fromDefaultCb.strokeColor ?? defaults.strokeColor,
+            strokeWidth: style?.strokeWidth ?? fromDefaultCb.strokeWidth ?? defaults.strokeWidth,
+            opacity: style?.opacity ?? fromDefaultCb.opacity ?? defaults.opacity,
+            curveStyle: style?.curveStyle ?? fromDefaultCb.curveStyle ?? defaults.curveStyle,
         }
         return mergedStyle
     }

@@ -343,6 +343,14 @@ export interface NodeStyle {
     html?: (node: Node) => HTMLElement | string | void
     /**
      * Callback to dynamically override style properties based on the node.
+     *
+     * Where it sits depends on which style block declares it. On a **node's own**
+     * style it wins outright, and `nodeStyleMap` is skipped entirely. On
+     * `render.defaultNodeStyle` it is the computed form of the default slot: it fills
+     * only what neither the node nor `nodeStyleMap` set (and what a per-node `styleCb`
+     * left out), and its result still loses to both.
+     *
+     * Runs once per node per render, so keep it cheap.
      */
     styleCb?: (node: Node) => Partial<NodeStyle>
 }
@@ -398,6 +406,17 @@ export interface EdgeStyle {
      * @default undefined
      */
     markerStart?: ((edge: Edge) => string) | string
+    /**
+     * Callback to dynamically override style properties based on the edge.
+     *
+     * Where it sits depends on which style block declares it. On an **edge's own**
+     * style it wins outright, and `edgeStyleMap` is skipped entirely. On
+     * `render.defaultEdgeStyle` it is the computed form of the default slot: it fills
+     * only what neither the edge nor `edgeStyleMap` set (and what a per-edge `styleCb`
+     * left out), and its result still loses to both.
+     *
+     * Runs once per edge per render, so keep it cheap.
+     */
     styleCb?: (edge: Edge) => Partial<EdgeStyle>
 }
 
@@ -410,6 +429,11 @@ export interface LabelStyle {
     fontFamily: string
     /** @default #333 */
     color: string
+    /**
+     * Callback to dynamically override label style properties based on the edge. On an
+     * edge's own label style it wins outright; on `render.defaultLabelStyle` it fills
+     * only what the edge's own label style left unset.
+     */
     styleCb?: (edge: Edge) => Partial<LabelStyle>
     labelAccessor?: (edge: Edge) => HTMLElement | string | void
 }

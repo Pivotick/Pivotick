@@ -167,29 +167,37 @@ export class NodeDrawer {
         this.genericNodeRender(nodeSelection, style, node)
     }
 
-    private mergeNodeStylingOptions(style: Partial<NodeStyle>): NodeStyle {
+    /**
+     * Fill whatever the node and the style map left unset from `defaultNodeStyle` —
+     * from its `styleCb` first, then its literals. The default callback is the computed
+     * form of the default slot, so it yields to anything that names this node more
+     * narrowly and fills what a per-node `styleCb` left out.
+     */
+    private mergeNodeStylingOptions(style: Partial<NodeStyle>, node: Node): NodeStyle {
+        const defaults = this.rendererOptions.defaultNodeStyle
+        const fromDefaultCb = defaults.styleCb?.(node) ?? {}
         const mergedStyle = {
-            shape: style?.shape ?? this.rendererOptions.defaultNodeStyle.shape,
-            strokeColor: style?.strokeColor ?? this.rendererOptions.defaultNodeStyle.strokeColor,
-            strokeWidth: style?.strokeWidth ?? this.rendererOptions.defaultNodeStyle.strokeWidth,
-            fontFamily: style?.fontFamily ?? this.rendererOptions.defaultNodeStyle.fontFamily,
-            size: style?.size ?? this.rendererOptions.defaultNodeStyle.size,
-            color: style?.color ?? this.rendererOptions.defaultNodeStyle.color,
-            textColor: style?.textColor ?? this.rendererOptions.defaultNodeStyle.textColor,
-            textAnchorPosition: style?.textAnchorPosition ?? this.rendererOptions.defaultNodeStyle.textAnchorPosition,
-            textHorizontalShift: style?.textHorizontalShift ?? this.rendererOptions.defaultNodeStyle.textHorizontalShift,
-            textVerticalShift: style?.textVerticalShift ?? this.rendererOptions.defaultNodeStyle.textVerticalShift,
-            textRotateDegree: style?.textRotateDegree ?? this.rendererOptions.defaultNodeStyle.textRotateDegree,
-            textTruncate: style?.textTruncate ?? this.rendererOptions.defaultNodeStyle.textTruncate,
-            iconUnicode: style?.iconUnicode ?? this.rendererOptions.defaultNodeStyle.iconUnicode,
-            iconClass: style?.iconClass ?? this.rendererOptions.defaultNodeStyle.iconClass,
-            svgIcon: style?.svgIcon ?? this.rendererOptions.defaultNodeStyle.svgIcon,
-            imagePath: style?.imagePath ?? this.rendererOptions.defaultNodeStyle.imagePath,
-            imageFit: style?.imageFit ?? this.rendererOptions.defaultNodeStyle.imageFit,
-            text: style?.text ?? this.rendererOptions.defaultNodeStyle.text,
-            html: style?.html ?? this.rendererOptions.defaultNodeStyle.html,
+            shape: style?.shape ?? fromDefaultCb.shape ?? defaults.shape,
+            strokeColor: style?.strokeColor ?? fromDefaultCb.strokeColor ?? defaults.strokeColor,
+            strokeWidth: style?.strokeWidth ?? fromDefaultCb.strokeWidth ?? defaults.strokeWidth,
+            fontFamily: style?.fontFamily ?? fromDefaultCb.fontFamily ?? defaults.fontFamily,
+            size: style?.size ?? fromDefaultCb.size ?? defaults.size,
+            color: style?.color ?? fromDefaultCb.color ?? defaults.color,
+            textColor: style?.textColor ?? fromDefaultCb.textColor ?? defaults.textColor,
+            textAnchorPosition: style?.textAnchorPosition ?? fromDefaultCb.textAnchorPosition ?? defaults.textAnchorPosition,
+            textHorizontalShift: style?.textHorizontalShift ?? fromDefaultCb.textHorizontalShift ?? defaults.textHorizontalShift,
+            textVerticalShift: style?.textVerticalShift ?? fromDefaultCb.textVerticalShift ?? defaults.textVerticalShift,
+            textRotateDegree: style?.textRotateDegree ?? fromDefaultCb.textRotateDegree ?? defaults.textRotateDegree,
+            textTruncate: style?.textTruncate ?? fromDefaultCb.textTruncate ?? defaults.textTruncate,
+            iconUnicode: style?.iconUnicode ?? fromDefaultCb.iconUnicode ?? defaults.iconUnicode,
+            iconClass: style?.iconClass ?? fromDefaultCb.iconClass ?? defaults.iconClass,
+            svgIcon: style?.svgIcon ?? fromDefaultCb.svgIcon ?? defaults.svgIcon,
+            imagePath: style?.imagePath ?? fromDefaultCb.imagePath ?? defaults.imagePath,
+            imageFit: style?.imageFit ?? fromDefaultCb.imageFit ?? defaults.imageFit,
+            text: style?.text ?? fromDefaultCb.text ?? defaults.text,
+            html: style?.html ?? fromDefaultCb.html ?? defaults.html,
         }
-        
+
         return mergedStyle
     }
 
@@ -229,7 +237,7 @@ export class NodeDrawer {
                 html: style?.html ?? styleFromStyleMap?.html,
             }
         }
-        return this.mergeNodeStylingOptions(styleFromNode)
+        return this.mergeNodeStylingOptions(styleFromNode, node)
     }
 
     public getNodeStyle(node: Node): NodeStyle {

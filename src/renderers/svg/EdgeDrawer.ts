@@ -91,16 +91,19 @@ export class EdgeDrawer {
                 color: edge.getLabelStyle()?.color,
             }
         }
-        return this.mergeLabelStylingOptions(styleFromLabel)
+        return this.mergeLabelStylingOptions(styleFromLabel, edge)
     }
 
 
-    private mergeLabelStylingOptions(style: Partial<LabelStyle>): LabelStyle {
+    /** As {@link mergeEdgeStylingOptions}, for the edge's label. */
+    private mergeLabelStylingOptions(style: Partial<LabelStyle>, edge: Edge): LabelStyle {
+        const defaults = this.rendererOptions.defaultLabelStyle
+        const fromDefaultCb = defaults.styleCb?.(edge) ?? {}
         const mergedStyle = {
-            backgroundColor: style?.backgroundColor ?? this.rendererOptions.defaultLabelStyle.backgroundColor,
-            fontSize: style?.fontSize ?? this.rendererOptions.defaultLabelStyle.fontSize,
-            fontFamily: style?.fontFamily ?? this.rendererOptions.defaultLabelStyle.fontFamily,
-            color: style?.color ?? this.rendererOptions.defaultLabelStyle.color,
+            backgroundColor: style?.backgroundColor ?? fromDefaultCb.backgroundColor ?? defaults.backgroundColor,
+            fontSize: style?.fontSize ?? fromDefaultCb.fontSize ?? defaults.fontSize,
+            fontFamily: style?.fontFamily ?? fromDefaultCb.fontFamily ?? defaults.fontFamily,
+            color: style?.color ?? fromDefaultCb.color ?? defaults.color,
         }
         return mergedStyle
     }
@@ -129,7 +132,7 @@ export class EdgeDrawer {
                 markerStart: edgeStyle?.markerStart ?? fromStyleMap.markerStart,
             }
         }
-        const mergedStyle = this.mergeEdgeStylingOptions(styleFromEdge)
+        const mergedStyle = this.mergeEdgeStylingOptions(styleFromEdge, edge)
 
         mergedStyle.strokeColor = mergedStyle.strokeColor !== undefined ? (tryResolveString(mergedStyle.strokeColor, edge) ?? 'var(--pvt-edge-stroke, #999)') : 'var(--pvt-edge-stroke, #999)'
         mergedStyle.strokeWidth = mergedStyle.strokeWidth !== undefined ? (tryResolveNumber(mergedStyle.strokeWidth, edge) ?? 2) : 2
@@ -164,17 +167,25 @@ export class EdgeDrawer {
         return kind !== undefined ? edgeStyleMap[kind] ?? {} : {}
     }
 
-    private mergeEdgeStylingOptions(style: Partial<EdgeStyle>): EdgeStyle {
+    /**
+     * Fill whatever the edge and the style map left unset from `defaultEdgeStyle` —
+     * from its `styleCb` first, then its literals. The default callback is the computed
+     * form of the default slot, so it yields to anything that names this edge more
+     * narrowly and fills what a per-edge `styleCb` left out.
+     */
+    private mergeEdgeStylingOptions(style: Partial<EdgeStyle>, edge: Edge): EdgeStyle {
+        const defaults = this.rendererOptions.defaultEdgeStyle
+        const fromDefaultCb = defaults.styleCb?.(edge) ?? {}
         const mergedStyle = {
-            strokeColor: style?.strokeColor ?? this.rendererOptions.defaultEdgeStyle.strokeColor,
-            strokeWidth: style?.strokeWidth ?? this.rendererOptions.defaultEdgeStyle.strokeWidth,
-            opacity: style?.opacity ?? this.rendererOptions.defaultEdgeStyle.opacity,
-            curveStyle: style?.curveStyle ?? this.rendererOptions.defaultEdgeStyle.curveStyle,
-            dashed: style?.dashed ?? this.rendererOptions.defaultEdgeStyle.dashed,
-            animateDash: style?.animateDash ?? this.rendererOptions.defaultEdgeStyle.animateDash,
-            rotateLabel: style?.rotateLabel ?? this.rendererOptions.defaultEdgeStyle.rotateLabel,
-            markerEnd: style?.markerEnd ?? this.rendererOptions.defaultEdgeStyle.markerEnd,
-            markerStart: style?.markerStart ?? this.rendererOptions.defaultEdgeStyle.markerStart,
+            strokeColor: style?.strokeColor ?? fromDefaultCb.strokeColor ?? defaults.strokeColor,
+            strokeWidth: style?.strokeWidth ?? fromDefaultCb.strokeWidth ?? defaults.strokeWidth,
+            opacity: style?.opacity ?? fromDefaultCb.opacity ?? defaults.opacity,
+            curveStyle: style?.curveStyle ?? fromDefaultCb.curveStyle ?? defaults.curveStyle,
+            dashed: style?.dashed ?? fromDefaultCb.dashed ?? defaults.dashed,
+            animateDash: style?.animateDash ?? fromDefaultCb.animateDash ?? defaults.animateDash,
+            rotateLabel: style?.rotateLabel ?? fromDefaultCb.rotateLabel ?? defaults.rotateLabel,
+            markerEnd: style?.markerEnd ?? fromDefaultCb.markerEnd ?? defaults.markerEnd,
+            markerStart: style?.markerStart ?? fromDefaultCb.markerStart ?? defaults.markerStart,
         }
         return mergedStyle
     }

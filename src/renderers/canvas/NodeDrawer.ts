@@ -32,13 +32,15 @@ export class NodeDrawer {
         this.genericNodeRender(nodeSelection, style, node)
     }
 
-    private mergeNodeStylingOptions(style: Partial<NodeStyle>): NodeStyle {
+    private mergeNodeStylingOptions(style: Partial<NodeStyle>, node: Node): NodeStyle {
+        const defaults = this.rendererOptions.defaultNodeStyle
+        const fromDefaultCb = defaults.styleCb?.(node) ?? {}
         const mergedStyle = {
-            shape: style?.shape ?? this.rendererOptions.defaultNodeStyle.shape,
-            strokeColor: style?.strokeColor ?? this.rendererOptions.defaultNodeStyle.strokeColor,
-            strokeWidth: style?.strokeWidth ?? this.rendererOptions.defaultNodeStyle.strokeWidth,
-            size: style?.size ?? this.rendererOptions.defaultNodeStyle.size,
-            color: style?.color ?? this.rendererOptions.defaultNodeStyle.color,
+            shape: style?.shape ?? fromDefaultCb.shape ?? defaults.shape,
+            strokeColor: style?.strokeColor ?? fromDefaultCb.strokeColor ?? defaults.strokeColor,
+            strokeWidth: style?.strokeWidth ?? fromDefaultCb.strokeWidth ?? defaults.strokeWidth,
+            size: style?.size ?? fromDefaultCb.size ?? defaults.size,
+            color: style?.color ?? fromDefaultCb.color ?? defaults.color,
         }
         return mergedStyle
     }
@@ -64,7 +66,7 @@ export class NodeDrawer {
                 color: node.getStyle()?.color ?? styleFromStyleMap?.color,
             }
         }
-        return this.mergeNodeStylingOptions(styleFromNode)
+        return this.mergeNodeStylingOptions(styleFromNode, node)
     }
 
     public getNodeStyle(node: Node): NodeStyle {
