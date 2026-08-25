@@ -99,6 +99,69 @@ themed pill as a floated label to stay readable over the canvas. Pair it with
 `textVerticalShift: 1` (or `textHorizontalShift`) to move the whole label clear
 of the node. Edge labels are never truncated.
 
+## Node badges
+
+By the time a graph is useful, `color`, `shape`, `size` and `iconClass` are usually
+all carrying something. `badges` is a channel of its own — small indicators pinned
+to the node's rim, spending none of the others:
+
+```ts
+const options = {
+    render: {
+        defaultNodeStyle: {
+            badges: (node) => {
+                const { notes, disputed } = node.getData()
+                return [
+                    notes && { text: String(notes), color: '#2563eb', title: `${notes} notes` },
+                    disputed && { iconClass: 'fa fa-exclamation', color: '#b94a48', title: 'Disputed' },
+                ].filter(Boolean)
+            },
+        },
+    },
+}
+```
+
+Give a badge `text` (a count, or a character or two), an `iconClass`,
+`iconUnicode` or `svgIcon`, and a `title` for its native tooltip. `text` wins if
+you supply both. Longer text grows the badge into a pill, and past three
+characters it renders `99+`.
+
+### Where they go
+
+Omit `position` and badges fill the free corners clockwise from `'ne'`. Name one
+(`'ne' | 'nw' | 'se' | 'sw'`) and it is honoured verbatim, overlaps included.
+
+**Four fit on a plain node, two on one with children.** The expand/collapse
+control sits north-east when a node is collapsed and south-east when it is
+expanded, so on any expandable node *both* East corners are reserved — otherwise
+every badge would change corner the moment a cluster opened. Badges beyond what
+fits fold into a `+n` whose tooltip names them.
+
+Badges scale with the node between a floor and a ceiling, so they stay legible on
+a tiny node without swelling on a large one, and they sit on the shape's real
+rim — the corner of a square or a framed picture, the 45° point of a circle.
+
+### Clicks
+
+A badge is hit-testable but transparent by default: with no handler its click
+falls through and selects the node underneath, so a badge is never a dead spot.
+
+```ts
+{ text: '3', onClick: (event, node, badge) => openNotes(node) }
+```
+
+Give a badge an `onClick` — or declare `callbacks.onBadgeClick` for behaviour they
+all share — and it takes the pointer cursor and consumes its click, leaving the
+node unselected. Both fire, the badge's own first. Pressing a badge still drags
+the node either way, and a `badgeClick` listener on the interaction bus can
+`cancel()` both.
+
+### Scope
+
+Badges describe **only the node they sit on**. A collapsed cluster does not
+aggregate its children's — walk `node.children` in your own `badges` function if
+that is what you want, since only you know whether a fact sums, wins, or neither.
+
 ## API
 
 Pivotick exposes a renderer controller that lets you interact directly with the rendering engine.
