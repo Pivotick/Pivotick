@@ -1,5 +1,5 @@
 /**
- * The two pointer-modes of the B3 control layout. Basic click-select, pan and
+ * The two pointer-modes of the control layout. Basic click-select, pan and
  * zoom work in *every* mode; a pointer-mode only decides what a plain drag / the
  * contextual tool panel does (rubber-band select vs. the armed create tool).
  */

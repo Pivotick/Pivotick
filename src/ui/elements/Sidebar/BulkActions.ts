@@ -18,7 +18,7 @@ interface BulkActionSpec {
 }
 
 /**
- * The B3 sidebar bulk-action row, shown while a node selection is active. Each
+ * The sidebar bulk-action row, shown while a node selection is active. Each
  * functional action (Pin / Unpin / Hide / Delete) applies to *every* selected
  * node; Isolate / Group / Ungroup / Bulk-edit render disabled with a "SOON"
  * affordance (deferred M2–M3 capabilities). Node-only — the Sidebar hides the

@@ -65,13 +65,10 @@ export const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
 }
 
 /**
- * The abstract physics knobs surfaced by the Physics flyout. Each is a plain
- * number in its own {@link PHYSICS_KNOB_RANGES | range}; the {@link Simulation}
- * setters map them onto the underlying d3-force domains.
- *
- * This is also the complete vocabulary the `Auto` preset speaks: auto expresses
- * itself only through knobs the user can see and turn, never through a hidden
- * d3 option.
+ * The abstract physics knobs surfaced by the Physics flyout. Each is a plain number in
+ * its own {@link PHYSICS_KNOB_RANGES | range}; the {@link Simulation} setters map them
+ * onto the underlying d3-force domains. Also the complete vocabulary the `Auto` preset
+ * speaks — auto only ever moves a knob the user can see.
  */
 export interface PhysicsKnobs {
     /** Push-apart force. Higher spreads the graph out. */
@@ -102,14 +99,11 @@ export const PHYSICS_KNOB_RANGES: Record<keyof PhysicsKnobs, readonly [number, n
 }
 
 /**
- * The tree-spacing multipliers surfaced by the Physics flyout — the one thing left
- * to turn once the physics knobs grey out under a `tree` / `egoTree` layout.
+ * The tree-spacing multipliers surfaced by the Physics flyout — the one thing left to
+ * turn once the physics knobs grey out under a `tree` / `egoTree` layout.
  *
- * Multipliers rather than pixel gaps, because a tree is laid out to *fit* the
- * canvas: its natural spacing already depends on the canvas size and on how deep
- * and how wide the tree is. `1.5` means "half again as far apart as the fitted
- * layout", which stays meaningful across a window resize and a graph that just
- * grew a level; a pixel gap would not.
+ * Multipliers rather than pixel gaps because a tree is laid out to *fit* the canvas:
+ * "half again as far apart as the fitted layout" survives a resize; a pixel gap does not.
  */
 export interface TreeSpacing {
     /** Distance between levels — rings, in `radial` mode. */
@@ -121,18 +115,10 @@ export interface TreeSpacing {
 /**
  * Inclusive `[min, max]` slider range for both {@link TreeSpacing} multipliers.
  *
- * The ceiling is set from what real graphs ask for, measured on a 1280×720 canvas
- * with the cap lifted: a 60-node tree wants 1.4× between siblings, 120 nodes want
- * 4.9×, 200 want 5.4× — so a ceiling of 4 was below what an ordinary graph needs.
- * `levelSpacing` reaches just as high, though only in the two cases where depth is
- * the crowded axis: a 100-level chain wants 6.1×, and a radial tree — where the ring
- * gap is the only lever — wants 9.3× at 200 nodes.
- *
- * It stops at 10 rather than following the curve up (400 nodes want 20×, and it grows
- * with the widest level) because beyond that the extra room buys nothing a reader can
- * use: the view is fitted, so a tree 20× wider than the canvas renders its nodes at a
- * twentieth of their size. Past this point a graph is explored by panning, not by
- * spreading — and the slider sitting at its maximum says so honestly.
+ * The ceiling stops at 10 rather than following what the largest trees ask for, because
+ * past it the extra room buys nothing readable: the view is fitted, so a tree 20× wider
+ * than the canvas draws its nodes at a twentieth of their size. Beyond this a graph is
+ * explored by panning, and the slider sitting at its maximum says so.
  */
 export const TREE_SPACING_RANGE: readonly [number, number] = [0.5, 10]
 
@@ -159,19 +145,10 @@ const FITTED_TREE_SPACING: TreeSpacing = { levelSpacing: 1, siblingSpacing: 1 }
 export type PhysicsPresetName = 'tight' | 'loose'
 
 /**
- * Knob bundles applied by {@link Simulation.applyPhysicsPreset}. `centering` 7
- * reproduces the library's historical gravity (0.001 / 0.1) exactly, and `loose`'s
- * `settleTime` 2.25 its historical alpha decay (0.05).
- *
- * `tight` is the exception, and deliberately so. Its friction was 58 against the same
- * 2.25s settle — the heaviest damping in the set paired with the shortest run, which
- * is a contradiction: damping is what makes a layout take longer to arrive, and
- * `tight` also has the harder journey (contracting a graph means pushing it past
- * `forceCollide`, the one force that never scales with alpha and so cannot be hurried
- * by heat). Measured, one click reached 60% of the way to tight's own equilibrium and
- * the layout looked like the preset had barely worked. 45 with a 3s settle reaches
- * ~87% — still clearly the calmer preset, now one that arrives. See
- * prd/archive/physics-preset-reheat.md.
+ * Knob bundles applied by {@link Simulation.applyPhysicsPreset}. `tight`'s friction is
+ * lighter than its name suggests on purpose: contracting a graph has to push past
+ * `forceCollide`, which never scales with alpha, so heavier damping just stalls the run
+ * short of the preset's own equilibrium.
  */
 export const PHYSICS_PRESETS: Record<PhysicsPresetName, PhysicsKnobs> = {
     tight: { repulsion: 32, linkDistance: 70, collisionRadius: 16, friction: 45, centering: 7, settleTime: 3 },
@@ -199,12 +176,10 @@ export class Simulation {
     private graphInteraction: GraphInteractions
     private layout
     /**
-     * The area the physics tunes itself against: the **root container**, never the
-     * canvas. Chrome opening or closing (a sidebar, the data dock) resizes the canvas,
-     * and a layout has to come out the same either way — so the canvas is deliberately
-     * not measured here. Kept in step with real container resizes by
-     * {@link observeContainer}, and read by every site that used to take its own
-     * reading, so the live forces and a re-layout can no longer disagree.
+     * The area the physics tunes itself against: the **root container**, never the canvas.
+     * Chrome opening or closing (a sidebar, the data dock) resizes the canvas, and a layout
+     * has to come out the same either way. Every site reads this one snapshot, kept in step
+     * with real container resizes by {@link observeContainer}.
      */
     private containerBCR: DOMRect
     private containerObserver?: ResizeObserver
@@ -243,8 +218,7 @@ export class Simulation {
     // `centering` is the odd one out: measured against real layouts, gravity does
     // nothing below ~0.005 and crushes the graph above ~0.2, so a linear knob would
     // spend most of its travel on values that make no difference. The map is
-    // quadratic instead — knob 7 reproduces the historical
-    // d3GravityStrengthConnected of 0.001, and the useful band sits mid-slider.
+    // quadratic instead, so the useful band sits mid-slider.
     private static readonly CENTERING_STRENGTH_MAX = 0.2
     /** Isolated nodes get a fixed multiple of the connected strength… */
     private static readonly CENTERING_ISOLATED_MULTIPLE = 4
@@ -478,8 +452,7 @@ export class Simulation {
 
     private static initSimulationForceCollide(force: d3ForceCollideType<Node>, options: SimulationOptions) {
         // The collision radius is the node's circle radius scaled by d3CollideRadiusMultiplier
-        // (the "collision radius" knob). Previously this multiplier was hard-coded to 1.2, so
-        // the knob only reached radius-less nodes via d3CollideRadius and never scaled the layout.
+        // (the "collision radius" knob).
         const mult = options.d3CollideRadiusMultiplier
         force.radius((node: SimulationNodeDatum) => {
             const n = node as Node
@@ -707,19 +680,12 @@ export class Simulation {
     }
 
     /**
-     * Is the current run finished?
+     * Is the current run finished? The tick budget is the real wall: `d3AlphaDecay` is
+     * per *tick*, so a wall-clock budget would truncate every graph ticking below 60fps —
+     * the heavy ones, which need the settling most.
      *
-     * The tick budget is the real wall. `cooldownTime` is milliseconds, but
-     * `d3AlphaDecay` is per *tick* — {@link alphaDecayForSettleTime} lands alpha on
-     * `alphaMin` after `settleTime * NOMINAL_FPS` ticks — so measuring the budget in
-     * wall-clock truncates every graph that ticks below 60fps. That is the heavy
-     * graphs, which need the settling most, and it is why a preset click on a large
-     * graph appears to do half its job.
-     *
-     * The ms budget survives as a backstop, times {@link COOLDOWN_WALL_GRACE}: a
-     * hidden or throttled tab gets rAF at ~1fps, where a pure tick budget would keep
-     * the run nominally alive for minutes. The slow-tick watchdog cannot cover that
-     * case — it measures compute time per tick, deliberately immune to the frame gap.
+     * The ms budget stays as a backstop, times {@link COOLDOWN_WALL_GRACE}, for a hidden
+     * tab where rAF drops to ~1fps and a pure tick budget would run on for minutes.
      */
     private cooledDown(): boolean {
         const tickBudget = this.options.cooldownTime / 1000 * Simulation.NOMINAL_FPS
@@ -871,14 +837,10 @@ export class Simulation {
     }
 
     /**
-     * Re-read the node-dependent force accessors and reheat.
-     *
-     * d3-force caches per-node radius/strength when a force is initialised (i.e.
-     * when nodes are set), not on every tick — so mutating a node's radius after
-     * the sim is running has no effect until the forces are re-initialised.
-     * Re-setting the nodes does that; the reheat then lets collision/charge
-     * re-lay-out with the new sizes. Used when a custom node measures its size
-     * after the initial layout has already cooled. No-op when disabled.
+     * Re-read the node-dependent force accessors and reheat. d3-force caches per-node
+     * radius/strength when a force is initialised, not per tick, so a radius mutated mid-run
+     * has no effect until the nodes are re-set. For a custom node that measures itself after
+     * the opening layout has cooled. No-op when disabled.
      */
     public refreshForcesAndReheat(alpha = 0.5): void {
         if (!this.options.enabled) return
@@ -891,14 +853,12 @@ export class Simulation {
     }
 
     // ─── Physics knobs (Physics flyout) ─────────────────────────────────────────
-    // Each setter takes an abstract knob value (range in PHYSICS_KNOB_RANGES), maps
-    // it onto a d3-force domain, re-initialises the affected force so d3 re-reads its
-    // cached per-node array, then reheats. Reheat is skipped while physics is disabled;
-    // the value is still stored so it takes effect once physics is re-enabled.
+    // Each setter maps an abstract knob (range in PHYSICS_KNOB_RANGES) onto a d3-force
+    // domain, re-initialises that force so d3 re-reads its cached per-node array, then
+    // reheats. While physics is disabled the value is stored but not reheated.
     //
-    // These are also auto's only way of expressing itself. A call that does *not*
-    // come from auto is a deliberate choice and switches auto off, so a re-tune can
-    // never overwrite it a moment later.
+    // Also auto's only way of expressing itself: a call that does *not* come from auto
+    // switches auto off, so a re-tune cannot overwrite a deliberate choice.
 
     /** Push-apart strength. Knob 0–100 → d3ManyBodyStrength. */
     public setRepulsion(knob: number): void {
@@ -942,11 +902,8 @@ export class Simulation {
 
     /**
      * Pull toward the canvas centre. Knob 0–100 → d3GravityStrengthConnected, with
-     * d3GravityStrength (isolated nodes) following as a fixed multiple.
-     *
-     * Separate components only ever repel each other, so without this a
-     * multi-component graph has nothing bounding it but the canvas — and the canvas
-     * is not a force. This is the dial that keeps it in frame.
+     * d3GravityStrength (isolated nodes) following as a fixed multiple. Separate components
+     * only repel each other, so this is the only thing keeping them in frame.
      */
     public setCentering(knob: number): void {
         const v = Simulation.clamp(knob, PHYSICS_KNOB_RANGES.centering)
@@ -974,12 +931,9 @@ export class Simulation {
     }
 
     /**
-     * Apply a named preset ({@link PHYSICS_PRESETS}): sets every knob and reheats once.
-     *
-     * Reheated at {@link CLICK_REHEAT_ALPHA}, not the slider default: a preset
-     * describes a whole layout, and reaching it from a settled graph takes a fresh
-     * layout's worth of travel. Half the heat lands the graph half way there, which
-     * reads as "the preset did nothing".
+     * Apply a named preset ({@link PHYSICS_PRESETS}): sets every knob and reheats once, at
+     * {@link CLICK_REHEAT_ALPHA} rather than the slider default — a preset describes a whole
+     * layout, and reaching it from a settled graph takes a fresh layout's worth of travel.
      */
     public applyPhysicsPreset(name: PhysicsPresetName): void {
         this.disableAutoPhysics()
@@ -1029,14 +983,11 @@ export class Simulation {
     }
 
     /**
-     * Re-lay-out the tree at new spacing multipliers ({@link TREE_SPACING_RANGE}).
-     * No-op under the force layout, where spacing is the physics knobs' job.
+     * Re-lay-out the tree at new spacing multipliers ({@link TREE_SPACING_RANGE}). No-op
+     * under the force layout, where spacing is the physics knobs' job.
      *
-     * A redraw *and* a reheat: recomputing the layout moves the pinned axis
-     * immediately — so the change shows even with physics paused — while the free
-     * axis still has to be settled into its new sibling slots. Not a manual knob
-     * edit: spacing is not one of auto's knobs, and auto is inert under a tree
-     * anyway, so there is nothing to hand over.
+     * A redraw *and* a reheat: the pinned axis moves immediately, so the change shows even
+     * with physics paused, while the free axis still settles into its new sibling slots.
      */
     public setTreeSpacing(spacing: Partial<TreeSpacing>): void {
         if (!this.layout) return
@@ -1087,12 +1038,10 @@ export class Simulation {
     }
 
     /**
-     * Hand the tree spacing back to the tuner: it re-derives both multipliers from the
-     * size of the nodes and the shape of the tree, and keeps re-deriving them as the
-     * graph changes. The counterpart of {@link setTreeSpacing}, which takes them back.
-     *
-     * No-op under the force layout, where spacing is the physics knobs' job — and
-     * `Auto` there is {@link enableAutoPhysics}.
+     * Hand the tree spacing back to the tuner, which re-derives both multipliers from the
+     * node sizes and tree shape and keeps doing so as the graph changes. The counterpart of
+     * {@link setTreeSpacing}. No-op under the force layout, where `Auto` is
+     * {@link enableAutoPhysics}.
      */
     public enableAutoTreeSpacing(): void {
         if (!this.layout) return
@@ -1154,9 +1103,8 @@ export class Simulation {
     }
 
     /**
-     * `settleTime` (s) → the per-tick alpha decay that lands alpha on `alphaMin`
-     * after roughly `t · 60` ticks. `t = 2.25` reproduces the library's historical
-     * decay of 0.05 exactly.
+     * `settleTime` (s) → the per-tick alpha decay that lands alpha on `alphaMin` after roughly
+     * `t · 60` ticks.
      */
     private static alphaDecayForSettleTime(settleTime: number, alphaMin: number): number {
         const ticks = Math.max(1, settleTime * Simulation.NOMINAL_FPS)
@@ -1173,12 +1121,10 @@ export class Simulation {
     // ─── Auto physics ───────────────────────────────────────────────────────────
 
     /**
-     * Whether a graph gets the `Auto` preset. `simulation.physics` forces it either
-     * way; otherwise auto is on unless the consumer configured something auto drives,
-     * so nobody's existing tuning is quietly taken over.
-     *
-     * `physics: 'auto'` alongside explicit d3 options is legal: the explicit values
-     * seed the opening frame, and auto takes it from there.
+     * Whether a graph gets the `Auto` preset. `simulation.physics` forces it either way;
+     * otherwise auto is on unless the consumer configured something auto drives, so existing
+     * tuning is never quietly taken over. `physics: 'auto'` alongside explicit d3 options is
+     * legal — they seed the opening frame and auto takes it from there.
      */
     private static shouldAutoTune(options: Partial<SimulationOptions>): boolean {
         if (options.physics === 'auto') return true
@@ -1192,11 +1138,8 @@ export class Simulation {
     }
 
     /**
-     * Turn `Auto` on and tune immediately.
-     *
-     * `force` because this is the Auto *button*: if auto's answer happens to sit
-     * inside the deadband the click would otherwise do nothing at all — no knob
-     * written, no reheat, no visible response.
+     * Turn `Auto` on and tune immediately. `force` because this is the Auto *button*: an
+     * answer inside the deadband would otherwise make the click do nothing visible.
      */
     public enableAutoPhysics(): void {
         this.autoEnabled = true
@@ -1234,11 +1177,9 @@ export class Simulation {
     }
 
     /**
-     * Run the active strategy and apply what it decided.
-     *
-     * `reheat: false` is for callers that are about to reheat anyway (the opening
-     * layout, `refreshForcesAndReheat`), so one logical change stays one reheat.
-     * `alpha` and `force` are for the Auto button — see {@link enableAutoPhysics}.
+     * Run the active strategy and apply what it decided. `reheat: false` is for callers
+     * about to reheat anyway, so one logical change stays one reheat; `alpha` and `force`
+     * are for the Auto button — see {@link enableAutoPhysics}.
      */
     private tuneNow(options: { reheat?: boolean, alpha?: number, force?: boolean } = {}): void {
         const { reheat = true, alpha = Simulation.AUTO_REHEAT_ALPHA, force = false } = options
@@ -1273,11 +1214,10 @@ export class Simulation {
     }
 
     /**
-     * What auto is allowed to see: the container at zoom 1, the nodes the sim holds and
-     * their radii. The zoom transform is deliberately never read — reading the
-     * *zoomed* viewport would loop against `fitAndCenter` (zoom out → more apparent
-     * space → spread → re-fit → spread). The container rather than the canvas, for the
-     * reason {@link containerBCR} gives: chrome opening must not retune the physics.
+     * What auto is allowed to see: the container at zoom 1, the nodes the sim holds and their
+     * radii. The zoom transform is never read — the *zoomed* viewport would loop against
+     * `fitAndCenter` (zoom out → more apparent space → spread → re-fit). The container rather
+     * than the canvas, for the reason {@link containerBCR} gives.
      */
     private buildAutoContext(): AutoContext {
         const containerBCR = this.containerBCR

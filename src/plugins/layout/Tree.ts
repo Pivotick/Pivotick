@@ -37,49 +37,37 @@ export const FOREST_ROOT_ID = '__pivotick_forest_root__'
 
 /**
  * Id prefix of the empty rows a *declared depth* leaves behind. Not graph nodes: a d3 tree
- * places a node strictly one row below its parent, so the only way to put a node further down
- * is to give it ancestors to be further down *than*. Being single-child chains they cost one
- * node's breadth per row crossed and no more, and — like {@link FOREST_ROOT_ID} — they are
- * filtered out of everything returned, so they are never drawn and never positioned.
+ * places a node strictly one row below its parent, so reaching a lower row means giving it
+ * ancestors to be lower *than*. Filtered out of everything returned, like
+ * {@link FOREST_ROOT_ID}.
  */
 export const TREE_SPACER_ID_PREFIX = '__pivotick_tree_spacer__'
 
 /**
- * Deepest row a `depthKey` may ask for, and the total number of empty rows one layout will
- * build to reach them.
- *
- * Neither is a design limit — a tree is scaled to fit the canvas, so a few hundred rows is
- * already far past the point of being readable. They are there because the scaffolding is
- * otherwise unbounded in the *data*: one mistyped `level: 1e9` would sit in a loop building a
- * billion nodes, and a star of 10,000 leaves each asking for row 1,000 would build ten
- * million. A row past the cap is reported as unusable, the same as any other value that is not
- * a row; past the spacer budget a node simply sits below its parent instead.
+ * Deepest row a `depthKey` may ask for, and the spacer budget one layout will build to reach
+ * it. Not design limits but guards: the scaffolding is unbounded in the *data*, so a mistyped
+ * `level: 1e9` would loop building a billion nodes. A row past the cap is reported unusable;
+ * past the spacer budget a node just sits below its parent.
  */
 const MAX_DECLARED_ROW = 4096
 const MAX_TREE_SPACERS = 50_000
 
 /**
- * How much of its own component the *best available* root must reach along the arrows for
- * the spanning tree to be walked directed at all. Below this no node can traverse the
- * graph the arrows describe, so they are taken not to describe a hierarchy and the walk
- * reads every edge both ways — see {@link TreeLayout.buildLevelsStatic}.
+ * How much of its own component the *best available* root must reach along the arrows for the
+ * spanning tree to be walked directed at all. Below this the arrows are taken not to describe
+ * a hierarchy and the walk reads every edge both ways — see
+ * {@link TreeLayout.buildLevelsStatic}.
  *
- * Half is a deliberately weak test: it should catch data that converges rather than
- * branches, and leave alone a hierarchy that merely has a few extra sources. Measured on
- * the two AIL demo graphs, each in both orientations, the two regimes sit at 1–2% and
- * 96–100% — so anything between them picks the same branch, and this is not a knob that
- * wants tuning.
+ * Half is a deliberately weak test: it catches data that converges rather than branches, and
+ * leaves alone a hierarchy that merely has a few extra sources. The two regimes sit far either
+ * side of it, so this is not a knob that wants tuning.
  */
 const MIN_DIRECTED_COVERAGE = 0.5
 
 /**
- * Last declared-hierarchy warning logged, so the same complaint is only ever made once.
- *
- * Laying a tree out is not a one-off: auto spacing does it twice per pass, and loading a graph
- * runs more than one pass. Every one of them re-reads the declared hierarchy and finds the same
- * things wrong with it, so without this a single load prints the same line several times. The
- * text carries the counts, so a message that has changed is a *different* complaint and is
- * still logged.
+ * Last declared-hierarchy warning logged, so one load does not print the same complaint per
+ * layout pass. The text carries the counts, so a changed message is a different complaint and
+ * is still logged.
  */
 let lastDeclaredWarning = ''
 
@@ -164,13 +152,10 @@ export class TreeLayout {
     }
 
     /**
-     * Lay the tree out — and, while `spacing: 'auto'`, re-derive the multipliers from
-     * what the nodes actually need and lay it out once more.
-     *
-     * Two passes rather than a loop: a gap scales linearly with its multiplier, so the
-     * correction {@link tuneTreeSpacing} computes from the first pass is exact. The
-     * second pass is skipped entirely when it would change nothing, which is the
-     * common case — including every graph that was never crowded.
+     * Lay the tree out — and, while `spacing: 'auto'`, re-derive the multipliers from what the
+     * nodes need and lay it out once more. Two passes rather than a loop: a gap scales linearly
+     * with its multiplier, so the correction is exact. The second pass is skipped when it would
+     * change nothing.
      */
     public update(): void {
         this.layoutOnce()
@@ -191,10 +176,9 @@ export class TreeLayout {
     private layoutOnce(): void {
         const nodes = this.graph.getNodes()
         const edges = this.graph.getEdges()
-        // Built once and handed on to `buildTree`, which used to run the whole walk a second
-        // time for itself. Beyond the waste, `levels` is what the radial force assigns rings
-        // by, so the two had to agree exactly: a second walk that picked another root put
-        // nodes on rings their own positions do not sit on.
+        // Built once and handed on to `buildTree`: `levels` is what the radial force assigns
+        // rings by, so a second walk picking another root would put nodes on rings their own
+        // positions do not sit on.
         const built = this.buildLevels(nodes, edges, this.options)
         const { levels, maxDepth, parked } = built
         this.parkedIds = new Set(parked)
@@ -467,14 +451,11 @@ export class TreeLayout {
     }
 
     /**
-     * Distance between two consecutive rings in the radial layout.
-     *
-     * The layout itself sizes the tree to `radialGap` and lets d3 spread `maxDepth`
-     * levels across it, so this has to be the same division or the radial *force* and
-     * the radial *positions* describe two different pictures. They used to: the force
-     * had a hard-coded `100` per level. It goes unnoticed on the main thread, where
-     * the radial layout pins `fx`/`fy` and the force never gets a say — but the worker
-     * path is driven by the force alone, so the same options drew two layouts.
+     * Distance between two consecutive rings in the radial layout. The layout sizes the tree to
+     * `radialGap` and lets d3 spread `maxDepth` levels across it, so this must be the same
+     * division or the radial *force* and the radial *positions* describe two different pictures
+     * — invisible on the main thread, where pinned `fx`/`fy` outrank the force, but the worker
+     * path is driven by the force alone.
      */
     protected static radialRingGap(options: TreeLayoutOptions, maxDepth: number): number {
         const radius = options.radialGap * TreeLayout.spacingOf(options).level
@@ -497,17 +478,12 @@ export class TreeLayout {
     }
 
     /**
-     * Re-lay-out at new spacing multipliers, keeping the root and orientation.
+     * Re-lay-out at new spacing multipliers, keeping the root and orientation. The canvas is
+     * re-measured first, being the length scale both multipliers work against.
      *
-     * The canvas is re-measured first: it is the length scale both multipliers work
-     * against, and it may have been resized since the layout was built.
-     *
-     * The forces are then re-registered, and that is not optional. `forceX` / `forceY`
-     * / `forceRadial` read their per-node target **once, at initialize time**, and
-     * tick against the cached copy — so a recomputed positions map alone leaves every
-     * force still pulling nodes back to where the old spacing put them. The pinned
-     * axis moves anyway (`fx`/`fy` outrank forces), which makes the symptom lopsided:
-     * levels spread, siblings snap back.
+     * Re-registering the forces is not optional: `forceX`/`forceY`/`forceRadial` read their
+     * per-node target once at initialize time, so recomputed positions alone leave every force
+     * still pulling nodes to their old slots — levels spread, siblings snap back.
      */
     public setSpacing(spacing: { levelSpacing?: number, siblingSpacing?: number }): void {
         // A hand-set multiplier is a deliberate choice; auto must not overwrite it a
@@ -530,15 +506,10 @@ export class TreeLayout {
     }
 
     /**
-     * Re-hang the tree from another root, keeping the orientation and the spacing.
-     *
-     * A `rootId` pins the tree to that node — and, per {@link buildLevelsStatic}, is walked
-     * without regard for edge direction, so any node gives a whole tree. An `algorithm`
-     * drops the pin and lets the finder choose again.
-     *
-     * Goes through {@link relayout} for the same reason {@link setSpacing} does: the tree
-     * forces cache their per-node target at initialize time, so recomputing the positions
-     * without re-registering them leaves every node pulled back to its old slot.
+     * Re-hang the tree from another root, keeping the orientation and the spacing. A `rootId`
+     * pins the tree to that node and is walked ignoring edge direction, so any node gives a
+     * whole tree; an `algorithm` drops the pin and lets the finder choose again. Goes through
+     * {@link relayout} for the force-caching reason {@link setSpacing} gives.
      */
     public setRoot(root: { rootId: string } | { algorithm: TreeLayoutAlgorithm }): void {
         if ('rootId' in root) {
@@ -567,13 +538,10 @@ export class TreeLayout {
     }
 
     /**
-     * The d3 tree generator, sized for the canvas and the spacing multipliers, plus
-     * the offset that re-centres the result on the box it would have filled at `1×`.
-     *
-     * A `size`d d3 tree is normalised onto the whole box, so here the box *is* the
-     * spacing — and it grows from the top-left corner. Without the offset, raising a
-     * multiplier would push the tree off the bottom-right of the canvas instead of
-     * expanding it in place. At `1×` the offset is zero, so the layout is unchanged.
+     * The d3 tree generator, sized for the canvas and the spacing multipliers, plus the offset
+     * that re-centres the result on the box it would have filled at `1×`. A `size`d d3 tree is
+     * normalised onto the whole box and grows from the top-left, so without the offset raising
+     * a multiplier would push the tree off the bottom-right instead of expanding it in place.
      */
     protected static sizedTreeLayout(options: TreeLayoutOptions, canvasBCR: DOMRect): {
         treeLayout: D3TreeGenerator<TreeNode>
@@ -615,26 +583,16 @@ export class TreeLayout {
     }
 
     /**
-     * Where to put the nodes with no relations at all.
+     * Where to put the nodes with no relations at all. They have no place in a hierarchy, so
+     * they go in the dead space a tree always leaves beside its shallow levels, one cell clear
+     * of its silhouette.
      *
-     * They have no place in a hierarchy, and giving them one anyway — a slot on the root's
-     * own row — made them read as the root's children, packed tight against it because
-     * `separation` squeezes same-parent siblings by their number. They go in the dead space
-     * instead: the wedge beside the shallow levels, which a tree always leaves empty because
-     * it widens as it descends. Pushed to the far end of it, one cell clear of the tree's
-     * silhouette.
+     * The *trailing* end, because the mode rail and its flyouts live down the left of the
+     * canvas and nodes parked there would sit behind a panel. Inside the bounding box, because
+     * the view is fitted and a stray dot outside it would zoom the whole tree out.
      *
-     * The *trailing* end, not the leading one, because that is the side the interface leaves
-     * alone: the mode rail is always down the left of the canvas and the flyouts open over it,
-     * so nodes parked there would sit behind a panel.
-     *
-     * Deliberately *inside* the layout's bounding box. The view is fitted, so a node parked
-     * outside it would zoom the entire tree out to make room for a stray dot — and below the
-     * tree, where the wedge does not exist, is also where the tree is widest.
-     *
-     * Positions are in hierarchy space (`x` breadth, `y` depth — angle and radius when
-     * radial), the same as everything `buildTreeStatic` returns, so `setNodePositions` maps
-     * them for whichever orientation is in force.
+     * Positions are in hierarchy space (`x` breadth, `y` depth — angle and radius when radial),
+     * as everything `buildTreeStatic` returns.
      */
     protected static packParked(
         parked: TreeNode[],
@@ -882,14 +840,10 @@ export class TreeLayout {
         const rowOf = (id: string) => levels.get(id) ?? 0
 
         /**
-         * Hang `child` under `parent`, padding with spacer rows until the child lands on the
-         * row `levels` gives it. A d3 tree places a node exactly one row below its parent, so
-         * padding the chain is the only way to honour a declared depth.
-         *
-         * The chain is not quite free: a tidy tree separates whatever shares a row, so each
-         * spacer takes one node's worth of breadth on the row it crosses. That is the whole
-         * cost — one slot per row, not a subtree's — so an offset tree squeezes the gap beside
-         * it slightly rather than reshaping the layout.
+         * Hang `child` under `parent`, padding with spacer rows until it lands on the row
+         * `levels` gives it — the only way to honour a declared depth, since d3 places a node
+         * exactly one row below its parent. Each spacer costs one node's breadth on the row it
+         * crosses, so an offset tree narrows the gap beside it rather than reshaping the layout.
          */
         const hang = (parent: TreeNode, parentRow: number, child: TreeNode, childRow: number) => {
             let attachTo = parent
@@ -956,16 +910,13 @@ export class TreeLayout {
     }
 
     /**
-     * The node to hang the hierarchy off. A graph with one component roots the tree at its
-     * own root; a graph with several is a *forest*, and gets a synthetic root holding one
-     * component per child — which is what lays them out side by side instead of on top of
-     * each other. It is not a graph node and is dropped from everything returned, so it is
-     * never drawn and never positioned.
+     * The node to hang the hierarchy off. One component roots the tree at its own root; several
+     * make a *forest*, which gets a synthetic root holding one component per child so they lay
+     * out side by side. That root is dropped from everything returned.
      *
-     * A root that asked to start further down needs the rows above it to exist, so it gets a
-     * chain of spacers too. In a forest they hang off the synthetic root, which is why that
-     * one counts as sitting on the row above 0 — the `forestShift` in `buildLevelsStatic`. A
-     * lone root instead has the top of its own chain stand in as the hierarchy root.
+     * A root starting further down needs the rows above it, so it gets a spacer chain too — in
+     * a forest hanging off the synthetic root (the `forestShift` in `buildLevelsStatic`), and
+     * otherwise with the top of its own chain standing in as the hierarchy root.
      */
     private static hierarchyRootFor(
         roots: string[],
@@ -1086,11 +1037,10 @@ export class TreeLayout {
      * roots it all hangs from.
      *
      * Parenthood comes from a BFS over the edges — the first edge to reach a node is its
-     * parent — except where the caller stated it through `parentKey`, which is honoured
-     * whether or not an edge joins the pair. Rows are then one-below-the-parent, except where
-     * `depthKey` asks for a lower one. A row that is not below the parent's is clamped: a
-     * tidy tree cannot place a child above its parent, and honouring the row by detaching the
-     * node instead would let one bad number shatter the tree into extra components.
+     * parent — except where the caller stated it through `parentKey`, honoured whether or not
+     * an edge joins the pair. Rows are one-below-the-parent unless `depthKey` asks for a lower
+     * one; a row above the parent's is clamped, since detaching the node instead would let one
+     * bad number shatter the tree into extra components.
      *
      * If the graph contains cycles, each node is assigned the shortest level found first.
      *
@@ -1189,17 +1139,15 @@ export class TreeLayout {
         }
         if (undirected) readEdgesBothWays()
 
-        // A node no edge touches has no place in a hierarchy — nothing points at it and it
-        // points at nothing. It is parked instead (see `packParked`), and kept out of the root
-        // search: `FirstZeroInDegree` would happily root the whole tree at one.
+        // A node no edge touches has no place in a hierarchy, so it is parked (see
+        // `packParked`) and kept out of the root search, which `FirstZeroInDegree` would
+        // otherwise happily root the whole tree at.
         //
-        // Read off the edges being laid out rather than from `node.degree()`, which counts a
-        // node's own edge registries — and those are empty for the objects a graph builds from
-        // data, so it reports 0 for every node in a perfectly connected graph.
-        // An explicitly named root counts as linked even with no edges: naming it is a
-        // deliberate choice, and honouring it beats parking it. So does a declared parent —
-        // but *only* a parent: a declared row says where a node sits, not that it has a place
-        // in the hierarchy, so an edgeless node that names one stays parked, on that row.
+        // Read off the edges being laid out, not `node.degree()`: that counts a node's own edge
+        // registries, which are empty for objects built from data, so it reports 0 across a
+        // perfectly connected graph. An explicitly named root — or a declared parent — counts
+        // as linked even with no edges. A declared *row* does not: it says where a node sits,
+        // not that it belongs in the hierarchy.
         const isLinked = (id: string) => touched.has(id) || id === rootId
         const linked = nodes.filter(node => isLinked(node.id))
         const parked = nodes.filter(node => !isLinked(node.id)).map(node => node.id)
@@ -1222,14 +1170,12 @@ export class TreeLayout {
             return false
         }
 
-        // BFS, and the first edge to reach a node is its parent in the spanning tree. This
-        // is what makes the layout total: a back-edge finds its target already visited and
-        // is simply not part of the tree, so a cycle costs the graph nothing but that edge's
-        // place in the hierarchy — and a node with two parents is claimed by exactly one.
+        // BFS, and the first edge to reach a node is its parent in the spanning tree — which
+        // is what makes the layout total: a back-edge finds its target visited and drops out, so
+        // a cycle costs nothing but that edge's place in the hierarchy.
         //
-        // `reached` marks the walk rather than `levels`, because a node the caller placed is
-        // parented before the walk even starts and has to keep that parent while still being
-        // walked through.
+        // `reached` marks the walk rather than `levels`, since a node the caller placed is
+        // parented before the walk starts and must keep that parent while still being walked.
         const reached = new Set<string>()
         const walkFrom = (start: string) => {
             if (reached.has(start)) return
@@ -1263,25 +1209,19 @@ export class TreeLayout {
 
             let primaryRoot = rootId ?? TreeLayout.findRootId(candidates, edges, options.rootIdAlgorithmFinder)
 
-            // Can this root cover its component by following the arrows? A root that cannot
-            // is not automatically a problem — `MinHeight` picks a *leaf* of any tree, which
-            // reaches nothing and is meant to, so the question that decides it is whether
-            // **any** node could have done better.
+            // Can this root cover its component by following the arrows? A root that cannot is
+            // not automatically a problem — `MinHeight` picks a *leaf* on purpose — so what
+            // decides it is whether **any** node could have done better.
             //
-            // Where none can, the arrows do not describe a hierarchy at all. That is what
-            // *converging* data looks like — every leaf a source, all of them pointing at a
-            // few hubs — and it is the shape of the AIL demo graph, whose best possible root
-            // sees 7 of its 300 nodes: 259 nodes become roots of their own and only 41 of the
-            // 300 edges keep a place in the hierarchy, so it draws as a comb of stubs with the
-            // other 259 edges flying across the canvas. Reading the same edges both ways puts
-            // 299 of the 300 back in the tree under a single root.
+            // Where none can, the arrows do not describe a hierarchy: that is converging data,
+            // every leaf a source pointing at a few hubs, which draws as a comb of stubs with
+            // most edges flying across the canvas. Reading the same edges both ways puts nearly
+            // all of them back in one tree.
             //
-            // So the walk gives up on direction, and the root with it — a direction-aware
-            // finder has nothing useful to say about a graph its arrows cannot traverse.
-            // Deliberately a *fallback* and not the rule: where the arrows do form a
-            // hierarchy they are the best thing to lay out by, an org chart's natural root is
-            // the node at the top rather than the node in the middle, and each finder keeps
-            // its own answer — including the ones that deliberately name a leaf.
+            // So the walk gives up on direction, and the root with it — a direction-aware finder
+            // has nothing useful to say about a graph its arrows cannot traverse. Deliberately a
+            // fallback: where the arrows do form a hierarchy they are the best thing to lay out
+            // by, and each finder keeps its own answer.
             if (rootId === undefined && TreeLayout.directedCoverage(primaryRoot, adj, edges) < MIN_DIRECTED_COVERAGE) {
                 const bestPossible = findMaxReachabilityRoot(candidates, edges).id
                 if (TreeLayout.directedCoverage(bestPossible, adj, edges) < MIN_DIRECTED_COVERAGE) {
@@ -1404,13 +1344,10 @@ export class TreeLayout {
     }
 
     /**
-     * The share of `root`'s own component that `root` reaches by following the arrows —
-     * the test behind {@link MIN_DIRECTED_COVERAGE}.
-     *
-     * Measured against the component rather than the whole graph on purpose: a graph of
-     * several separate hierarchies is *supposed* to come out as a forest, and scoring
-     * against every node would read that as a failure and throw away the arrows for a
-     * graph whose arrows are perfectly good.
+     * The share of `root`'s own component that `root` reaches by following the arrows — the test
+     * behind {@link MIN_DIRECTED_COVERAGE}. Scored against the component, not the whole graph:
+     * several separate hierarchies are *supposed* to come out as a forest, and scoring against
+     * every node would read that as a failure and throw away perfectly good arrows.
      *
      * @param adj - Adjacency in its **directed** reading, before any reverse links.
      */

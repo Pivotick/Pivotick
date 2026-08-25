@@ -3,7 +3,7 @@ import type { FlyoutMode } from '../../ModeStore'
 import './flyout.scss'
 
 /**
- * Shared scaffolding for the B3 settings flyouts — the overlays opened by the
+ * Shared scaffolding for the settings flyouts — the overlays opened by the
  * mode rail's flyout modes: {@link ViewFlyout} (grid + canvas behaviour) and
  * {@link PhysicsFlyout} (layout + simulation). The base owns the panel element,
  * the shared `pvt-flyout-*` chrome (header, section labels, switch rows) and the

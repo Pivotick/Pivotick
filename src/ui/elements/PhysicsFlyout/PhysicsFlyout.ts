@@ -132,7 +132,7 @@ const TREE_ORIENTATIONS: Record<string, { horizontal?: boolean, radial?: boolean
 }
 
 /**
- * The B3 Physics flyout: an overlay toggled by the mode rail's Physics button
+ * The Physics flyout: an overlay toggled by the mode rail's Physics button
  * (via {@link UIManager.modeStore}). Holds the layout control and the simulation
  * card — presets + live sliders driving the {@link Simulation} setter API, plus a
  * run/pause toggle. Under a non-`force` layout the presets and all but one of the

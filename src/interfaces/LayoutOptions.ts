@@ -91,9 +91,8 @@ export interface TreeLayoutOptions extends BaseLayoutOptions {
      */
     spacing?: 'auto' | 'manual'
     /**
-     * Multiplies the distance between consecutive levels — the depth axis of the
-     * tree, or the gap between rings in `radial` mode. `1` is the historical
-     * behaviour: the tree is scaled to fill the canvas.
+     * Multiplies the distance between consecutive levels — the depth axis of the tree, or
+     * the gap between rings in `radial` mode. At `1` the tree is scaled to fill the canvas.
      * @default 1
      */
     levelSpacing?: number

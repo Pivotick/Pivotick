@@ -75,19 +75,17 @@ export interface GraphUI {
      * The data dock: the graph's nodes and edges as a sortable, selectable grid
      * split off the bottom of the canvas.
      *
-     * `full` mode offers one by default — the header grows a Table pill and the dock
-     * opens on demand. `false` suppresses it entirely; an object configures it. Other
-     * modes never mount it. See {@link TableOptions}.
+     * `full` mode offers one by default; `false` suppresses it entirely, an object
+     * configures it. Other modes never mount it. See {@link TableOptions}.
      */
     table?: TableOptions | boolean,
     /**
      * The bottom dock itself — the region the table and any registered
      * {@link DockTab} share, rather than what is in it.
      *
-     * `UI.table` still carries the same three settings, and did before the region
-     * had tabs; those are honoured, and anything set here wins. Declare them here
-     * when the table is switched off, since that is the only way to reach the dock
-     * a plugin's tab brings with it.
+     * `UI.table` carries the same three settings; those are honoured, and anything
+     * set here wins. Declare them here when the table is switched off, since that is
+     * the only way to reach the dock a plugin's tab brings with it.
      */
     dock?: DockOptions,
     keybindings?: Keybinding[];

@@ -3,7 +3,7 @@ import type { FlyoutMode } from '../../ModeStore'
 import { show, snapGrid, grid, pin, graphNavigationReset } from '../../icons'
 
 /**
- * The B3 View flyout: the grid and canvas-behaviour switches, opened by the mode
+ * The View flyout: the grid and canvas-behaviour switches, opened by the mode
  * rail's View button (via {@link UIManager.modeStore}). Layout and physics used
  * to live here too — they now have their own rail mode, see
  * {@link PhysicsFlyout}.
