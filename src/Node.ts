@@ -2,6 +2,7 @@ import type { Edge } from './Edge'
 import type { Graph } from './Graph'
 import type { NodeStyle } from './interfaces/RendererOptions'
 import { generateSafeDomId } from './utils/ElementCreation'
+import { stripFunctions } from './utils/utils'
 
 export interface NodeData {
     [key: string]: unknown;
@@ -218,12 +219,16 @@ export class Node {
         return obj
     }
 
-    /** Structured-cloneable payload for the simulation worker (no live parent/children/_subgraph refs, unlike `clone()`). */
+    /**
+     * Structured-cloneable payload for the simulation worker (no live parent/children/_subgraph
+     * refs, unlike `clone()`). The style is stripped of functions: every resolvable channel may
+     * hold one, and no force reads them, so sending them only risks a `DataCloneError`.
+     */
     toSimulationDTO(): SimulationNodeDTO {
         return {
             id: this.id,
             data: this.data,
-            style: this.style,
+            style: stripFunctions(this.style),
             weight: this.weight,
             _circleRadius: this._circleRadius,
             x: this.x,

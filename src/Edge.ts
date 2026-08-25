@@ -1,6 +1,7 @@
 import type { EdgeFullStyle, EdgeStyle, LabelStyle, PartialEdgeFullStyle } from './interfaces/RendererOptions'
 import { Node } from './Node'
 import { generateSafeDomId } from './utils/ElementCreation'
+import { stripFunctions } from './utils/utils'
 
 export interface EdgeData {
     [key: string]: unknown;
@@ -200,14 +201,17 @@ export class Edge {
         } as Record<string, unknown>
     }
 
-    /** Structured-cloneable payload for the simulation worker; endpoints reduced to ids, keeps `directed`. */
+    /**
+     * Structured-cloneable payload for the simulation worker; endpoints reduced to ids, keeps
+     * `directed`. The style is stripped of functions — see {@link Node.toSimulationDTO}.
+     */
     toSimulationDTO(): SimulationEdgeDTO {
         return {
             id: this.id,
             from: { id: this.from.id },
             to: { id: this.to.id },
             data: this.data,
-            style: this.style,
+            style: stripFunctions(this.style),
             directed: this.directed,
         }
     }
