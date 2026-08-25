@@ -1,6 +1,6 @@
 # Enhancement — a node decoration channel (badges) independent of fill, stroke and icon
 
-**Status:** Grilled 2026-08-25 — decisions settled, implemented on `worktree-node-badges` (branched from `worktree-edge-layers`).
+**Status:** Done 2026-08-25 — grilled, then implemented on `worktree-node-badges` (branched from `worktree-edge-layers`). Full visual suite green at 535.
 **Owner:** Sami Mokaddem
 **Requested:** 2026-08-24
 **Area:** `src/interfaces/RendererOptions.ts` (`NodeStyle`), `src/interfaces/InterractionCallbacks.ts`, `src/GraphInteractions.ts`, `src/renderers/svg/NodeDrawer.ts`, `src/Node.ts` (`toSimulationDTO`)
@@ -165,6 +165,20 @@ not survive; they are corrected in §3 and §4 above and noted below where relev
     reads `node.style`. Functions are stripped from the DTO, **in its own commit**, since the bug
     predates badges.
 
+## 6b. Found while building
+
+- **A badge's `color` must be an inline style, not a `fill` attribute.** SVG presentation
+  attributes lose to every stylesheet rule, so the themed `--pvt-badge-color` silently
+  overrode every consumer-declared colour. Caught by the gallery thumbnail, not the suite:
+  the fixture declared no colours, and the canvas baseline's pixel threshold is too coarse
+  to notice one badge changing hue. Both gaps are closed now by a DOM-level assertion.
+- **`--pvt-bg-color` does not exist.** The badge stroke first pointed at it and therefore
+  drew nothing — the same silent-variable trap as the old `--pvt-primary-color`. Now `--pvt-bg`.
+- **The overflow badge cannot inherit `--pvt-bg-color-secondary`**: that is `#f2f2f2` in the
+  light theme, i.e. white on white. It takes a fixed mid-slate in both themes instead.
+- **`Edge.toSimulationDTO()` had the same function-in-`postMessage` bug** as the node one, so
+  decision 16's fix covers both.
+
 ## 7. Acceptance criteria
 
 - `badges` accepts an array or a per-node function; `undefined` renders no group at all and costs nothing.
@@ -173,6 +187,6 @@ not survive; they are corrected in §3 and §4 above and noted below where relev
 - A badge declaring `onClick` fires it, then the global `onBadgeClick`, and does not select the node; a bus listener may `cancel()` both.
 - Exceeding the free corners collapses to `+n`, whose `title` names what is hidden.
 - `title` surfaces as a native tooltip and does not suppress the graph tooltip for the node.
-- A graph declaring no badges renders byte-identically to today, except for square and image nodes, whose expand `+` moves to the corrected geometry (§6.6) — those baselines are re-shot deliberately.
+- A graph declaring no badges renders byte-identically to today. **No baseline moved:** the new geometry differs only for rectangles, no existing fixture has a square or image node *with children*, and for circles the new maths is arithmetically identical to the old `(r + padding) / √2`. The anticipated re-shoot was not needed.
 - Tests: placement, attachment, resolution, overflow and interaction — numeric harness readers rather than screenshots, since the suite's 0.2 pixel threshold hides colour-only change.
 - Docs: a `## Node badges` section in `docs/render.md` and a `node-badges` gallery card. `docs/public/api` is left to CI.
