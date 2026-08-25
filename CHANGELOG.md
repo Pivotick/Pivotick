@@ -92,8 +92,9 @@ promise. The breaking changes are confined to the physics presets — see **Brea
 - **`full` mode mounts a minimap**: a cached overview of the whole graph in a canvas corner,
   with a rectangle showing what is on screen. Click it to recentre, drag the rectangle to pan,
   and a very small toggle folds it away to just that button. `UI.minimap` configures it and
-  `UI.minimap: false` suppresses it; every other mode installs it as the plugin it is —
-  `plugins: [minimap()]`, a new export (on the browser global too).
+  `UI.minimap: false` suppresses it; `light` and `viewer` get one by asking — `UI.minimap: true`,
+  or `plugins: [minimap()]` for the plugin it is (a new export, on the browser global too).
+  `static` promises no interactions, so it is not mounted there and installing it warns.
 - **Navigating costs the same at any size.** The graph is kept in an offscreen bitmap that is
   re-rasterised only when the picture actually changed — a data change, a filter hiding or
   restoring nodes, a node dropped after a drag, every 10th tick while a layout settles, a
