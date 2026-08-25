@@ -1294,6 +1294,7 @@ class Harness implements HarnessApi {
                     text: descriptor.text as string,
                     title: descriptor.title as string,
                     position: descriptor.position as NodeBadge['position'],
+                    color: descriptor.color as string | undefined,
                 }
                 if (descriptor.click) {
                     badge.onClick = () => this.badgeClicks.push(`badge:${badge.text}`)

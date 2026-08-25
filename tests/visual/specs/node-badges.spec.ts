@@ -233,6 +233,18 @@ test.describe('resolution', () => {
         expect(await badgeTexts(page, 'square')).toEqual([])
     })
 
+    test('a declared colour beats the themed default', async ({ page }) => {
+        await gotoHarness(page)
+        await loadBadges(page)
+
+        const [themed, declared] = await badgesOn(page, 'circle')
+
+        // SVG presentation attributes lose to any stylesheet rule, so a `fill` attribute here
+        // would leave every badge wearing the theme colour and silently drop the consumer's.
+        expect(declared.fill).toBe('rgb(22, 163, 74)')
+        expect(themed.fill).not.toBe(declared.fill)
+    })
+
     test('a graph declaring no badges draws no badge group at all', async ({ page }) => {
         await gotoHarness(page)
         await loadFixture(page, 'basic')

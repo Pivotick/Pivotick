@@ -235,8 +235,10 @@ export class BadgeDrawer {
             .attr('height', 2 * radius)
             .attr('rx', radius)
             .attr('ry', radius)
-        // Left unset when the consumer named no colour, so the themed default applies.
-        if (badge.color) shape.attr('fill', badge.color)
+        // Written as an inline style, not a `fill` attribute: a presentation attribute loses
+        // to any stylesheet rule, so the themed default would silently win over the consumer.
+        // Left unset entirely when no colour was named, so that default does apply.
+        if (badge.color) shape.style('fill', badge.color)
 
         if (label !== undefined) {
             group.append('text')

@@ -1089,7 +1089,10 @@ export const fixtures = {
 
         // A round node and a square one of the same `size`: the pair that proves the rim
         // maths is shape-aware rather than one circumscribed circle for both.
-        const circle = withBadges('circle', -300, -140, { size: 24 }, [count('3'), count('7')])
+        // The second badge names a colour: a `fill` attribute would lose to the themed
+        // stylesheet rule, so this is what proves the consumer's choice survives.
+        const circle = withBadges('circle', -300, -140, { size: 24 },
+            [count('3'), count('7', { color: '#16a34a' })])
         const square = withBadges('square', -60, -140, { shape: 'square', size: 24 }, [count('3')])
 
         // The clamp's two ends.
