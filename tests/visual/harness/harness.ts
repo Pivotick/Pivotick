@@ -16,10 +16,11 @@ import { EgoTreeLayout } from '../../../src/plugins/layout/EgoTree'
 import { createInspectModal } from '../../../src/ui/elements/modals/InspectNodeModal/InspectNodeModal'
 import { FormFactory } from '../../../src/utils/FormFactory'
 import type {
-    FilterFacet, FilterFacetOption, FilterFieldConfig, GraphFilters,
+    EdgeFacet, FilterFacet, FilterFacetOption, FilterFieldConfig, GraphFilters,
 } from '../../../src/interfaces/GraphQueryEngine'
 import type { GraphInteractionContext } from '../../../src/interfaces/GraphInteractions'
 import type { GraphBounds } from '../../../src/GraphRenderer'
+import type { EdgeStyle } from '../../../src/interfaces/RendererOptions'
 import { Minimap, type MinimapOptions } from '../../../src/plugins/minimap'
 import type {
     ExtraPanel, ExtraPanelSelection, LegendEntry, LegendGroupOptions, LegendOptions, LegendPosition,
@@ -360,6 +361,52 @@ export interface AutoLegendSpec {
     legend?: boolean
 }
 
+/**
+ * A graph whose relations come in kinds — `render.edgeTypeAccessor` +
+ * `edgeStyleMap`, plus whichever of the two controls the test is about.
+ *
+ * Like {@link LegendSpec}, this exists because the real options carry *functions*
+ * (the accessor, an entries function), none of which survive `page.evaluate` — so a
+ * test describes what it wants and the harness builds it page-side.
+ */
+export interface EdgeLayerSpec {
+    /** Declare `UI.filter.edgeFacets`, so the panel grows its Relationships section. @default true */
+    facet?: boolean
+    /** Declare a `scope: 'edge'` legend section. @default false */
+    legend?: boolean
+    /** Put a node-scoped section above the edge one — the mixed card. @default false */
+    nodeSection?: boolean
+    /** The edge facet's widget. @default 'multiselect' (a layer) */
+    facetType?: 'multiselect' | 'numberRange' | 'regex'
+    /** The edge-data key the facet and the legend section key on. @default 'kind' */
+    key?: string
+    /** Suppress `render.edgeStyleMap`, leaving every kind the default stroke. @default false */
+    noStyleMap?: boolean
+    /**
+     * Give every edge its own `styleCb`, to prove it bypasses the style map — the
+     * precedence nodes already document. A flag rather than an override because a
+     * callback cannot cross `page.evaluate`.
+     */
+    styleCb?: boolean
+}
+
+/** One rendered relationship-layer row in the filter panel, read off the DOM. */
+export interface EdgeLayerRow {
+    /** The edge-data value this row toggles. */
+    value: string
+    label: string
+    count: string | null
+    /** Whether the layer is currently switched **off**. */
+    hidden: boolean
+}
+
+/** The stroke a line swatch draws with, and whether it is dashed / arrow-headed. */
+export interface EdgeSwatchSnapshot {
+    stroke: string
+    dashed: boolean
+    marker: boolean
+}
+
 /** One rendered legend row, read straight off the DOM. */
 export interface LegendRow {
     id: string
@@ -380,6 +427,23 @@ const DECLARED_LEGEND_VALUES = ['ip-src', 'domain', 'md5', 'object']
 
 /** Fixed colours for declared entries, so a screenshot can't depend on assignment order. */
 const LEGEND_COLORS = ['#7EA2FB', '#85CB33', '#FFB74D', '#BA68C8', '#4DD0E1']
+
+/** The edge-data key `EdgeLayerSpec` defaults to — the dimension the fixtures carry. */
+const EDGE_LAYER_KEY = 'kind'
+
+/**
+ * Per-kind edge styling, declared the way an integrator would. The legend is
+ * descriptive, so these are exactly the strokes its line swatches must report back.
+ */
+const EDGE_STYLE_MAP: Record<string, Partial<EdgeStyle>> = {
+    'object-reference': { strokeColor: '#428bca' },
+    'correlation': { strokeColor: '#888888', dashed: true },
+    'analyst-relationship': { strokeColor: '#f39a1f', dashed: true, markerEnd: 'arrow' },
+    'tag': { strokeColor: '#85CB33' },
+}
+
+/** What `EdgeLayerSpec.styleCb` paints, so it can't be confused with any mapped kind. */
+const STYLE_CB_COLOR = '#ff00ff'
 
 /** The off-palette colour `LegendSpec.conflictNodeId` is painted with. */
 const LEGEND_CONFLICT_COLOR = '#FF0000'
@@ -724,6 +788,33 @@ export interface HarnessApi {
     visibleNodeIds(): string[]
     /** What the filter pill reports as hidden (`queryEngine.getHiddenNodeCount`). */
     hiddenNodeCount(): number
+    /**
+     * Load a fixture whose relations come in kinds — `render.edgeTypeAccessor` plus
+     * `edgeStyleMap`, and whichever of the edge facet / `scope: 'edge'` legend section
+     * the test is about. Built from {@link EdgeLayerSpec}, page-side, because the real
+     * options carry functions.
+     */
+    loadWithEdgeLayers(name: FixtureName, spec?: EdgeLayerSpec, overrides?: PlainObject): Promise<void>
+    /** Ids of the edges currently drawn — a layer-hidden edge leaves the render. */
+    visibleEdgeIds(): string[]
+    /**
+     * Ids of the edges the **link force** holds. A layer-hidden edge must still be in
+     * here: that is what keeps the layout from drifting when a layer goes off.
+     */
+    simulationEdgeIds(): string[]
+    /** What the filter pill reports as hidden by an edge layer. */
+    hiddenEdgeCount(): number
+    /** Set an edge filter through the public API (`queryEngine.setEdgeFilter`). */
+    setEdgeFilter(key: string, value: FilterFieldConfig): void
+    removeEdgeFilter(key: string): void
+    /** The filter panel's Relationships rows, in display order. */
+    edgeLayerRows(): EdgeLayerRow[]
+    /** The stroke the renderer resolves for an edge — what a line swatch must report. */
+    edgeStyleOf(id: string): EdgeSwatchSnapshot | null
+    /** What the `index`-th rendered line swatch inside `container` actually draws. */
+    edgeSwatchOf(container: string, index: number): EdgeSwatchSnapshot | null
+    /** A CSS colour as the browser normalises it — what a swatch's stroke reads back as. */
+    cssColor(value: string): string
     /**
      * The filter panel's generated fields, in display order — `key`, the rendered
      * label, and the widget type. Reads the live DOM, so it proves what the panel
@@ -1481,8 +1572,12 @@ class Harness implements HarnessApi {
             id: row.getAttribute('data-id') ?? '',
             label: row.querySelector('.pvt-legend-label')?.textContent ?? '',
             count: row.querySelector('.pvt-legend-count')?.textContent ?? null,
+            // A node section's dot carries its colour as a custom property; an edge
+            // section draws a line instead, whose stroke the CSSOM has normalised.
             color: (row.querySelector('.pvt-legend-swatch') as HTMLElement | null)
-                ?.style.getPropertyValue('--pvt-legend-swatch-color').trim() ?? '',
+                ?.style.getPropertyValue('--pvt-legend-swatch-color').trim()
+                || (row.querySelector('.pvt-edge-swatch line') as SVGLineElement | null)?.style.stroke
+                || '',
             hidden: row.classList.contains('pvt-legend-hidden'),
             disabled: (row as HTMLButtonElement).disabled === true,
         }
@@ -1717,6 +1812,132 @@ class Harness implements HarnessApi {
 
     hiddenNodeCount(): number {
         return this.g.queryEngine.getHiddenNodeCount()
+    }
+
+    /* ---------- edge layers ---------- */
+
+    async loadWithEdgeLayers(
+        name: FixtureName,
+        spec: EdgeLayerSpec = {},
+        overrides: PlainObject = {}
+    ): Promise<void> {
+        const key = spec.key ?? EDGE_LAYER_KEY
+        const render: PlainObject = {
+            edgeTypeAccessor: (edge: Edge) => (edge.getData() as Record<string, unknown>)?.[key] as string | undefined,
+        }
+        if (!spec.noStyleMap) render.edgeStyleMap = EDGE_STYLE_MAP
+
+        // A node-scoped section beside the edge one only *shows* anything if the nodes
+        // are actually coloured by that dimension — the legend reports colours, it never
+        // assigns them. Coloured the way an integrator would, as loadWithLegend does.
+        if (spec.nodeSection) {
+            const mapper = new ColorPaletteMapper('pivotick')
+            render.defaultNodeStyle = {
+                color: (node: Node) => mapper.getColor(String(node.getData()?.type ?? '')),
+            }
+        }
+
+        const UI: PlainObject = {}
+        if (spec.facet !== false) {
+            const facet: EdgeFacet = { key, label: 'Relationship layer' }
+            if (spec.facetType && spec.facetType !== 'multiselect') facet.type = spec.facetType
+            UI.filter = { edgeFacets: [facet] }
+        }
+        if (spec.legend) {
+            const sections: LegendSection[] = []
+            if (spec.nodeSection) sections.push({ key: 'type', title: 'Element' })
+            sections.push({ key, title: 'Relationship', scope: 'edge' })
+            UI.legend = { sections }
+        }
+
+        await this.load(name, mergeOptions({ render, UI }, overrides))
+
+        // Applied after the load, on the edges themselves: only an edge's *own*
+        // `style.edge.styleCb` is ever called (`render.defaultEdgeStyle.styleCb` is
+        // declared but never invoked), and that is the precedence being tested.
+        if (spec.styleCb) {
+            for (const edge of this.g.getMutableEdges()) {
+                edge.updateStyle({ edge: { styleCb: () => ({ strokeColor: STYLE_CB_COLOR }) } })
+            }
+            this.g.onChange()
+        }
+    }
+
+    /** Ids of the edges currently drawn — a layer-hidden edge is removed from the render. */
+    visibleEdgeIds(): string[] {
+        return this.g.getMutableVisibleEdges().map((edge) => edge.id).sort()
+    }
+
+    /**
+     * Ids of the edges the **link force** is holding. This is the layout question: an
+     * edge switched off by a layer must stay in here, or the equilibrium changes and
+     * the graph drifts. Endpoint-hidden edges and unchosen cluster stand-ins do leave.
+     */
+    simulationEdgeIds(): string[] {
+        return this.g.simulation.getActiveEdges().map((edge) => edge.id).sort()
+    }
+
+    /** What the filter pill reports as hidden by an edge layer. */
+    hiddenEdgeCount(): number {
+        return this.g.queryEngine.getHiddenEdgeCount()
+    }
+
+    setEdgeFilter(key: string, value: FilterFieldConfig): void {
+        this.g.queryEngine.setEdgeFilter(key, value)
+    }
+
+    removeEdgeFilter(key: string): void {
+        this.g.queryEngine.removeEdgeFilter(key)
+    }
+
+    /** The panel's Relationships rows, in display order. */
+    edgeLayerRows(): EdgeLayerRow[] {
+        return [...this.container.querySelectorAll('.pvt-edge-layer')].map((row) => ({
+            value: row.getAttribute('data-value') ?? '',
+            label: row.querySelector('.pvt-edge-layer-label')?.textContent ?? '',
+            count: row.querySelector('.pvt-edge-layer-count')?.textContent ?? null,
+            hidden: row.classList.contains('pvt-edge-layer-hidden'),
+        }))
+    }
+
+    /**
+     * The stroke the renderer resolves for an edge — what is actually painted, and so
+     * what a line swatch must report back.
+     */
+    edgeStyleOf(id: string): EdgeSwatchSnapshot | null {
+        const edge = this.g.getMutableEdges().find((candidate) => candidate.id === id)
+        if (!edge) return null
+        const style = this.g.renderer?.getEdgeStyle(edge)
+        return {
+            stroke: String(style?.strokeColor ?? ''),
+            dashed: style?.dashed === true,
+            marker: typeof style?.markerEnd === 'string' && style.markerEnd !== '',
+        }
+    }
+
+    /**
+     * A CSS colour as the browser reports it back. A swatch's colour is written through
+     * the CSSOM (so a bogus value from consumer data is dropped rather than taken
+     * verbatim), which normalises `#888888` to `rgb(136, 136, 136)` — so an assertion
+     * against a declared hex has to go through the same normalisation.
+     */
+    cssColor(value: string): string {
+        const probe = document.createElement('span')
+        probe.style.color = value
+        return probe.style.color
+    }
+
+    /** What a rendered line swatch draws, read off the DOM inside `container`. */
+    edgeSwatchOf(container: string, index: number): EdgeSwatchSnapshot | null {
+        const swatches = this.container.querySelectorAll(`${container} .pvt-edge-swatch`)
+        const svg = swatches[index]
+        if (!svg) return null
+        const line = svg.querySelector('line')
+        return {
+            stroke: line ? (line as SVGLineElement).style.stroke : '',
+            dashed: line?.hasAttribute('stroke-dasharray') === true,
+            marker: svg.querySelector('path') !== null,
+        }
     }
 
     subgraphVisibleNodeIds(clusterId: string): string[] {

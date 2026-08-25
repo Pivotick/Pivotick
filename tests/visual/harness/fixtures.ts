@@ -83,6 +83,16 @@ function markCluster(parent: Node, depth = 1): void {
     })
 }
 
+/**
+ * An edge carrying the `kind` an edge layer keys on, plus the two dimensions the
+ * non-layer facet types need: a `relation` string for a `regex` facet and a
+ * fractional `weight` for a `numberRange` one (fractional so it can't be mistaken
+ * for the integer bucket the *node* field discovery reserves).
+ */
+function kindEdge(id: string, from: Node, to: Node, kind: string, weight = 1.5): Edge {
+    return new Edge(id, from, to, { kind, relation: `${kind}:${id}`, weight })
+}
+
 /** Create a node with a fixed position, baked-in style, and a stable id-equals-domID. */
 function mkStyledNode(
     id: string,
@@ -759,6 +769,77 @@ export const fixtures = {
         ]
         // Mirror the normaliser: any edge touching a hidden child starts hidden (the
         // synthetic external→cluster / cross-cluster edges are what show while collapsed).
+        edges.forEach((e) => { if (e.from.isChild || e.to.isChild) e.hide() })
+        return { nodes: [core, groupA, groupB], edges, notes: [] }
+    },
+
+    // ── Edge layers (prd/misp/edge-layers.md) ───────────────────────────────────
+
+    /**
+     * A graph whose relations come in **kinds**, so the same canvas carries four
+     * layers at once: `object-reference`, `correlation`, `analyst-relationship` and
+     * `tag`. The kind lives on the edge's own data, which is what
+     * `render.edgeTypeAccessor` reads and what an edge facet and an `edge`-scoped
+     * legend section key on.
+     *
+     * Nodes are pinned, so what a layer toggle changes is only ever which lines are
+     * drawn — never where anything sits.
+     */
+    edgeLayers(): BuiltFixture {
+        // `type` is the node dimension a node-scoped legend section keys on, so a mixed
+        // card has a short list on both sides.
+        const hub = mkNode('hub', 0, 0, { type: 'object' })
+        const a = mkNode('a', -120, -80, { type: 'attribute' })
+        const b = mkNode('b', 120, -80, { type: 'attribute' })
+        const c = mkNode('c', -120, 80, { type: 'attribute' })
+        const d = mkNode('d', 120, 80, { type: 'object' })
+        const e = mkNode('e', 0, 160, { type: 'tag' })
+        const edges = [
+            kindEdge('hub-a', hub, a, 'object-reference', 1.5),
+            kindEdge('hub-b', hub, b, 'object-reference', 2.5),
+            kindEdge('hub-c', hub, c, 'object-reference', 8.5),
+            kindEdge('a-b', a, b, 'correlation', 3.5),
+            kindEdge('c-d', c, d, 'correlation', 9.5),
+            kindEdge('b-d', b, d, 'analyst-relationship', 4.5),
+            kindEdge('hub-e', hub, e, 'tag', 1.5),
+            kindEdge('d-e', d, e, 'tag', 7.5),
+        ]
+        return { nodes: [hub, a, b, c, d, e], edges, notes: [] }
+    },
+
+    /**
+     * Two collapsed clusters joined by relations of **two different kinds** — the case
+     * a cross-cluster stand-in aggregates, because stand-ins are deduped by node pair
+     * and not by edge. Collapsed, one line stands for both `a3→b1` (`correlation`) and
+     * `a2→b2` (`tag`): switching one kind off must leave it drawn, and switching both
+     * off must take it away.
+     *
+     * `core→a1` and `core→b1` are external→cluster relations instead, whose stand-ins
+     * are one per real edge and so carry a single kind each.
+     */
+    edgeLayerClusters(): BuiltFixture {
+        const a1 = mkNode('a1', -60, -40)
+        const a2 = mkNode('a2', -20, -40)
+        const a3 = mkNode('a3', -40, -80)
+        const groupA = mkCluster('group-a', -120, 0, [a1, a2, a3])
+        markCluster(groupA)
+        const b1 = mkNode('b1', 60, -40)
+        const b2 = mkNode('b2', 100, -40)
+        const b3 = mkNode('b3', 80, -80)
+        const groupB = mkCluster('group-b', 120, 0, [b1, b2, b3])
+        markCluster(groupB)
+        const core = mkNode('core', 0, 140)
+        const edges = [
+            kindEdge('core-a1', core, a1, 'object-reference'),
+            kindEdge('core-b1', core, b1, 'object-reference'),
+            kindEdge('a1-a2', a1, a2, 'object-reference'),
+            kindEdge('b1-b2', b1, b2, 'object-reference'),
+            kindEdge('b2-b3', b2, b3, 'tag'),
+            // The two cross-cluster relations one stand-in has to speak for.
+            kindEdge('a3-b1', a3, b1, 'correlation'),
+            kindEdge('a2-b2', a2, b2, 'tag'),
+        ]
+        // Mirror the normaliser: any edge touching a hidden child starts hidden.
         edges.forEach((e) => { if (e.from.isChild || e.to.isChild) e.hide() })
         return { nodes: [core, groupA, groupB], edges, notes: [] }
     },

@@ -316,8 +316,18 @@ export class GraphFilter extends UIComponent {
                 createHtmlElement('span', { 'class': 'pvt-filter-count' }, [`${filterCount}`]),
                 createHtmlElement('span', { 'class': 'pvt-filter-word' }, [filterCount > 1 ? 'active filters' : 'active filter']),
             ])
-            if (hiddenCount > 0) {
-                status.appendChild(createHtmlElement('span', { 'class': 'pvt-filter-hidden' }, [`${hiddenCount} hidden`]))
+            // Edges are counted apart from nodes — a layer hides relations and nothing
+            // else, so one bare total would misreport the nodes. The nouns only appear
+            // once edges are involved: a graph with no edge layers reads as it always did.
+            const hiddenEdges = this.uiManager.graph.queryEngine.getHiddenEdgeCount()
+            const hiddenText = hiddenEdges === 0
+                ? (hiddenCount > 0 ? `${hiddenCount} hidden` : undefined)
+                : [
+                    hiddenCount > 0 ? `${hiddenCount} ${hiddenCount > 1 ? 'nodes' : 'node'}` : undefined,
+                    `${hiddenEdges} ${hiddenEdges > 1 ? 'edges' : 'edge'}`,
+                ].filter((part) => part !== undefined).join(', ') + ' hidden'
+            if (hiddenText !== undefined) {
+                status.appendChild(createHtmlElement('span', { 'class': 'pvt-filter-hidden' }, [hiddenText]))
             }
             filterButtonElement.appendChild(status)
         } else {
