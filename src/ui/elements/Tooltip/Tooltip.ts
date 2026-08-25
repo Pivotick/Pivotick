@@ -3,7 +3,7 @@ import type { Node } from '../../../Node'
 import { createHtmlElement, createHtmlTemplate, makeDraggable } from '../../../utils/ElementCreation'
 import { createCopyButton, createPropertyList } from '../Sidebar/PropertyList'
 import { TitleFitController } from '../Sidebar/titleFit'
-import { tryResolveHTMLElement } from '../../../utils/Getters'
+import { AsyncRenderScope } from '../../../utils/AsyncRender'
 import { edgeDescriptionGetter, edgeNameGetter, edgePropertiesGetter, nodeDescriptionGetter, nodeNameGetter, nodePropertiesGetter } from '../../../utils/GraphGetters'
 import { createButton } from '../../components/Button'
 import { graphEdgeIcon, pin, closeIcon, selectElement, focusElement } from '../../icons'
@@ -51,9 +51,24 @@ export class Tooltip extends UIComponent {
     private titleFit?: TitleFitController
     private pinnedTitleFits = new Set<TitleFitController>()
 
+    /**
+     * Placeholder / staleness for the tooltip's async content. The tooltip is a
+     * single reused container, so this is the surface that most needs it: a
+     * fetch started for one node must never paint into the tooltip once it is
+     * describing another. Superseded on every open and on hide.
+     */
+    private readonly renderScope: AsyncRenderScope
+
     constructor(uiManager: UIManager) {
         super(uiManager)
         this.options = deepMerge(defaultTooltipOptions, this.uiManager.getOptions().tooltip) as TooltipOptions
+        this.renderScope = new AsyncRenderScope(
+            'tooltip',
+            () => this.uiManager.getOptions().asyncContent,
+            // Content that arrives late changes the tooltip's size; keep it on screen.
+            () => { if (this.tooltip?.classList.contains('shown')) this.setPosition() },
+        )
+        this.track(() => this.renderScope.supersede())
     }
 
     // The tooltip honours its own header/property maps, falling back to the
@@ -264,8 +279,6 @@ export class Tooltip extends UIComponent {
         const toprightElem = tooltipContainer.querySelector('.pvt-mainheader-topright')!
         const actionElem = tooltipContainer.querySelector('.pvt-mainheader-nodeinfo-action') as HTMLElement | null
 
-        const properties = nodePropertiesGetter(node, this.propertiesOptions())
-
         previewElem.prepend(createNodePreview(node, { size: fixedPreviewSize, removeSelectionHighlight: true }))
 
         this.renderTitle(nameElem as HTMLElement, actionElem, nodeNameGetter(node, this.headerOptions()))
@@ -288,7 +301,7 @@ export class Tooltip extends UIComponent {
 
         const renderCb = this.uiManager.getOptions().tooltip.render
         if (renderCb && typeof renderCb === 'function') {
-            const tooltipContent = tryResolveHTMLElement(renderCb, node)
+            const tooltipContent = this.renderScope.content(renderCb, node)
             if (tooltipContent) {
                 const tooltipContentWrapped = createHtmlElement('div', { class: 'pivotick-extra-content-container' }, [
                     tooltipContent
@@ -298,9 +311,14 @@ export class Tooltip extends UIComponent {
             return tooltipContainer
         }
 
-        const propertiesContainer = createHtmlElement('div', { class: 'pvt-properties-container' }, [
-            createPropertyList(properties, node)
-        ]) as HTMLDivElement
+        // Resolved here rather than up top: an override above returns early, and a
+        // properties map that fetches must not be run for content nobody shows.
+        const propertiesContainer = this.renderScope.resolve(
+            (ctx) => nodePropertiesGetter(node, this.propertiesOptions(), ctx),
+            (properties) => createHtmlElement('div', { class: 'pvt-properties-container' }, [
+                createPropertyList(properties, node)
+            ]) as HTMLDivElement,
+        )
 
         tooltipContainer.appendChild(mainheaderContent)
         // Image nodes: show the actual picture large (before the properties), so a compact
@@ -310,11 +328,11 @@ export class Tooltip extends UIComponent {
         if (imageHref) {
             tooltipContainer.appendChild(this.buildTooltipImage(imageHref, nodeNameGetter(node, this.headerOptions())))
         }
-        tooltipContainer.appendChild(propertiesContainer)
+        if (propertiesContainer) tooltipContainer.appendChild(propertiesContainer)
 
         const nodeRenderCb = this.uiManager.getOptions().tooltip.renderNodeExtra
         if (nodeRenderCb && typeof nodeRenderCb === 'function') {
-            const extraContent = tryResolveHTMLElement(nodeRenderCb, node)
+            const extraContent = this.renderScope.content(nodeRenderCb, node)
             if (extraContent) {
                 const extraContentWrapped = createHtmlElement('div', { class: 'pivotick-extra-content-container' }, [
                     extraContent
@@ -352,6 +370,9 @@ export class Tooltip extends UIComponent {
     private createNodeTooltip(node: Node) {
         if (!this.tooltip) return false
 
+        // The tooltip is one reused container: release the previous hover's
+        // in-flight content before wiping it, so it can never land here again.
+        this.renderScope.supersede()
         this.tooltip.innerHTML = ''
 
         const tooltipContainer = this.buildNodeTooltip(node)
@@ -361,6 +382,7 @@ export class Tooltip extends UIComponent {
     private createEdgeTooltip(edge: Edge) {
         if (!this.tooltip) return false
 
+        this.renderScope.supersede()
         this.tooltip.innerHTML = ''
 
         const fixedPreviewSize = 32
@@ -400,7 +422,7 @@ export class Tooltip extends UIComponent {
 
         const renderCb = this.uiManager.getOptions().tooltip.render
         if (renderCb && typeof renderCb === 'function') {
-            const tooltipContent = tryResolveHTMLElement(renderCb, edge)
+            const tooltipContent = this.renderScope.content(renderCb, edge)
             if (tooltipContent) {
                 const tooltipContentWrapped = createHtmlElement('div', { class: 'pivotick-extra-content-container' }, [
                     tooltipContent
@@ -411,19 +433,22 @@ export class Tooltip extends UIComponent {
             return
         }
 
-        const properties = edgePropertiesGetter(edge, this.propertiesOptions())
-
         this.renderTitle(nameElem as HTMLElement, actionElem, edgeNameGetter(edge, this.headerOptions()))
         subtitleElem.textContent = edgeDescriptionGetter(edge, this.headerOptions())
 
-        const propertiesContainer = createHtmlElement('div', { class: 'pvt-properties-container' }, [createPropertyList(properties, edge)]) as HTMLDivElement
+        const propertiesContainer = this.renderScope.resolve(
+            (ctx) => edgePropertiesGetter(edge, this.propertiesOptions(), ctx),
+            (properties) => createHtmlElement('div', { class: 'pvt-properties-container' }, [
+                createPropertyList(properties, edge)
+            ]) as HTMLDivElement,
+        )
 
         tooltipContainer.appendChild(mainheaderContent)
-        tooltipContainer.appendChild(propertiesContainer)
+        if (propertiesContainer) tooltipContainer.appendChild(propertiesContainer)
 
         const edgeRenderCb = this.uiManager.getOptions().tooltip.renderEdgeExtra
         if (edgeRenderCb && typeof edgeRenderCb === 'function') {
-            const extraContent = tryResolveHTMLElement(edgeRenderCb, edge)
+            const extraContent = this.renderScope.content(edgeRenderCb, edge)
             if (extraContent) {
                 const extraContentWrapped = createHtmlElement('div', { class: 'pivotick-extra-content-container' }, [
                     extraContent
@@ -499,6 +524,8 @@ export class Tooltip extends UIComponent {
                 clearTimeout(this.tooltipTimeout)
                 this.tooltipTimeout = null
             }
+            // Nothing is going to read this content now — call off the fetch.
+            this.renderScope.supersede()
             this.hoveredElementID = null
             this.hoveredElement = null
             this.triggerX = -2000

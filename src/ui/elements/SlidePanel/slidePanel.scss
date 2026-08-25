@@ -3,7 +3,7 @@
 .pvt-slide-panel {
     display: hidden;
     position: relative;
-    // Float as a rounded, bordered panel in the B3 chrome family, sharing the
+    // Float as a rounded, bordered panel in the chrome family, sharing the
     // same surface tokens as the tool panel / view flyout. Slide clears the
     // inset + shadow when closed.
     background: var(--pvt-chrome-bg);
@@ -33,7 +33,7 @@
         border-bottom: 1px solid var(--pvt-chrome-border);
 
         // Subtle ghost close control that only reveals its destructive intent on
-        // hover — matches the quiet B3 chrome controls.
+        // hover — matches the quiet chrome controls.
         button.pvt-close-button {
             margin-left: auto;
             display: inline-flex;

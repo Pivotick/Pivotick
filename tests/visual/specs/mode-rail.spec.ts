@@ -7,8 +7,8 @@ import {
 } from '../helpers'
 
 // ── B3 mode rail ─────────────────────────────────────────────────────────────
-// The B3 chrome (mode rail + contextual panels + View flyout) is the default
-// full/light chrome.
+// The B3 chrome (mode rail + contextual panels + the View / Physics flyouts) is
+// the default full/light chrome.
 //
 // The rail is a canvas overlay, so each visual assertion targets the
 // `.pvt-moderail` element (per the chrome-test convention), not the whole page.
@@ -30,7 +30,7 @@ test.describe('mode-rail', () => {
         await gotoHarness(page)
     })
 
-    // Default landing: Select active, View flyout closed (PRD D5).
+    // Default landing: Select active, both flyouts closed (PRD D5).
     test('renders with Select active by default', async ({ page }) => {
         await loadFixture(page, 'basic', B3)
 
@@ -73,8 +73,8 @@ test.describe('mode-rail', () => {
         await expectElement(rail, 'moderail-create.png')
     })
 
-    // View is its own exclusive mode: activating it deactivates Select/Create,
-    // and toggling it off returns to the previous pointer-mode.
+    // View and Physics are exclusive modes: activating one deactivates
+    // Select/Create, and toggling it off returns to the previous pointer-mode.
     test('View is an exclusive mode; Select/Create switch off', async ({ page }) => {
         await loadFixture(page, 'basic', B3)
         const rail = page.locator('.pvt-moderail')
@@ -93,6 +93,28 @@ test.describe('mode-rail', () => {
         expect((await modeState(page)).mode).toBe('select')
     })
 
+    // Physics is the second flyout mode, and the two exclude each other.
+    test('Physics is exclusive with View and with the pointer-modes', async ({ page }) => {
+        await loadFixture(page, 'basic', B3)
+        const rail = page.locator('.pvt-moderail')
+        const physics = rail.locator('.pvt-moderail-button[data-mode="physics"]')
+        const view = rail.locator('.pvt-moderail-button[data-mode="view"]')
+        const select = rail.locator('.pvt-moderail-button[data-mode="select"]')
+
+        await view.click()
+        await physics.click()
+        await expect(physics).toHaveClass(/active/)
+        await expect(view).not.toHaveClass(/active/)
+        await expect(select).not.toHaveClass(/active/)
+        expect((await modeState(page)).mode).toBe('physics')
+
+        // Toggling Physics off returns to the previous pointer-mode (Select).
+        await physics.click()
+        await expect(physics).not.toHaveClass(/active/)
+        await expect(select).toHaveClass(/active/)
+        expect((await modeState(page)).mode).toBe('select')
+    })
+
     // Keyboard: V → Select, C → Create (focus-gated key manager).
     test('V / C keys switch pointer-mode', async ({ page }) => {
         await loadFixture(page, 'basic', B3)
@@ -106,7 +128,7 @@ test.describe('mode-rail', () => {
     })
 
     // Explore and Enrich are disabled "SOON" affordances when enabled, ordered
-    // Explore-then-Enrich after the divider (Explore sits between View and Enrich).
+    // Explore-then-Enrich after the divider (i.e. below the Physics slot).
     test('Explore and Enrich render disabled with SOON badges', async ({ page }) => {
         await loadFixture(page, 'basic', B3)
         for (const mode of ['explore', 'enrich']) {

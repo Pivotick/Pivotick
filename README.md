@@ -8,7 +8,10 @@ Pivotick is a hackable TypeScript graph visualization library built on top of [D
 
 - Directed and undirected graph rendering
 - Force-based simulation with optional worker support
-- Tree/hierarchy layout support
+- Tree/hierarchy layout support, with the hierarchy inferred or declared by the data
+- Self-tuning force layout, or hand-tuned from the Physics flyout
+- A data table docked under the canvas, sharing one selection with the canvas and the sidebar
+- Minimap, filtering legend and a declarative filter panel
 - Different UI modes (`full`, `light`, `viewer`, `static`)
 - Configurable node/edge styles, labels, and callbacks
 - Interactive editing — node editing and edge creation (drag or click) with validation and enrichment hooks

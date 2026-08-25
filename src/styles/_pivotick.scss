@@ -24,7 +24,7 @@
     max-height: 100%;
 
     // Decorative grid pitch — kept equal to the simulation `gridSize` default (50)
-    // so the visible grid and snap-to-grid line up at 100% zoom (see PRD D13).
+    // so the visible grid and snap-to-grid line up at 100% zoom.
     --pvt-graph-grid-pitch: 50px;
 
     background-color: var(--pvt-bg);
@@ -300,6 +300,24 @@ dl.pvt-property-list {
             color: var(--pvt-text-color-4);
             border-color: var(--pvt-menu-border-color);
         }
+
+        // A pattern field reads as code, so its contents are legible as one.
+        input.pvt-form-regex {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        }
+
+        // Field-level validation (FormFactory.setFieldError) — e.g. an
+        // uncompilable regex facet pattern.
+        .pvt-invalid {
+            border-color: var(--pvt-bg-color-danger);
+        }
+
+        .pvt-form-error {
+            display: block;
+            margin-top: 4px;
+            font-size: 0.8em;
+            color: var(--pvt-text-color-danger);
+        }
     }
 
 }
@@ -525,7 +543,7 @@ dl.pvt-property-list {
 
     // Live-predicate feedback: an invalid hovered target (isValidConnection → false).
     &--invalid {
-        stroke: var(--pvt-danger, #e5484d);
+        stroke: var(--pvt-theme-danger);
         opacity: 0.85;
     }
 }
@@ -545,7 +563,7 @@ dl.pvt-property-list {
     max-width: 220px;
     padding: 3px 8px;
     font-size: 12px;
-    color: var(--pvt-text-color);
+    color: var(--pvt-text-color-6);
     background: var(--pvt-bg-color-0);
     border: 1px solid var(--pvt-border-color);
     border-radius: 4px;
@@ -558,7 +576,7 @@ dl.pvt-property-list {
 }
 
 // The same field inside the modal spans the body — drop the floating layout.
-.pvt-edge-prompt-modal-body .pvt-edge-label-input {
+.pvt-prompt-modal-body .pvt-edge-label-input {
     position: static;
     transform: none;
     display: block;
@@ -570,8 +588,14 @@ dl.pvt-property-list {
 // An open picker dropdown sits in normal flow inside the prompt modal, so it grows
 // the (otherwise short) body to fit its options instead of overflowing it and being
 // clipped into a one-row scroll. Closed, it stays out of flow — no reserved gap.
-.pvt-edge-prompt-modal-body .pvt-picker__dropdown.open {
+.pvt-prompt-modal-body .pvt-picker__dropdown.open {
     position: static;
+}
+
+.pvt-confirm-modal-body .pvt-confirm-modal-text {
+    margin: 0;
+    color: var(--pvt-text-color-primary);
+    line-height: 1.5;
 }
 
 .pvt-cluster-area {
@@ -594,7 +618,7 @@ dl.pvt-property-list {
 }
 
 // Cursor reflects the active edit tool; classes are toggled by EdgeCreationSession
-// (connect) and the lasso tool. Lost with the classic toolbar in the B3 refactor.
+// (connect) and the lasso tool.
 .pvt-canvas.pvt-connect-mode-active {
     &.select-first {
         cursor: crosshair;
@@ -609,7 +633,7 @@ dl.pvt-property-list {
     cursor: crosshair;
 }
 
-// The lasso preview outline (also lost with the classic toolbar in the B3 refactor).
+// The lasso preview outline.
 .pvt-lasso-overlay polyline {
     fill: var(--pvt-selection-rectangle-fill);
     stroke: var(--pvt-selection-rectangle-stroke);

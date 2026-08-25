@@ -89,7 +89,9 @@ const statsPlugin = {
 // with `graph.use(statsPlugin)` (late installs are caught up to the current
 // lifecycle phase automatically).
 const options = {
-    UI: { mode: 'full', sidebar: { collapsed: true } },
+    // Off: `full` mode brings a minimap and the data dock, and this card is about
+    // neither (see the Minimap and Data table cards for those).
+    UI: { mode: 'full', minimap: false, table: false, sidebar: { collapsed: true } },
     plugins: [statsPlugin]
 }
 // #endregion options

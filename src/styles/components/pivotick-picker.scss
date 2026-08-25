@@ -162,7 +162,7 @@
     // ========================
     // Dropdown
     // ========================
-    // Floating menu surface, matching the B3 chrome menus (context menu / rails):
+    // Floating menu surface, matching the chrome menus (context menu / rails):
     // the shared menu tokens, a 1px border, rounded corners and inner padding so
     // the rounded option highlights sit within the panel.
     &__dropdown {
@@ -251,7 +251,7 @@
             font-weight: 600;
         }
 
-        // Selected picks up the theme accent, matching the B3 active states.
+        // Selected picks up the theme accent, matching the chrome's active states.
         &.selected {
             background: color-mix(in srgb, var(--pvt-theme-primary) 16%, transparent);
             color: var(--pvt-theme-primary);

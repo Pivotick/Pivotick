@@ -23,7 +23,9 @@ let graph = null
 // Editing needs the full UI mode — the default 'viewer' is read-only. Double-click
 // opens the built-in edit modal; the two commit hooks below validate and observe it.
 const options = {
-    UI: { mode: 'full' },
+    // Off: `full` mode brings a minimap and the data dock, and this card is about
+    // neither (see the Minimap and Data table cards for those).
+    UI: { mode: 'full', minimap: false, table: false },
     callbacks: {
         // Open the edit modal on double-click (the toolbar's Edit Graph → Edit does
         // the same). onNodeEdit(session) also lets you return a fully custom body.

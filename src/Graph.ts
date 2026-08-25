@@ -6,7 +6,7 @@ import { Simulation } from './Simulation'
 import { UIManager } from './ui/UIManager'
 import { Notifier } from './ui/Notifier'
 import type { GraphOptions, GraphData, RelaxedGraphData, RawNode, RawEdge, GraphEvents, GraphDataChange } from './interfaces/GraphOptions'
-import type { GraphUI } from './interfaces/GraphUI'
+import type { GraphUI, LegendOptions, LegendToggleState } from './interfaces/GraphUI'
 import type { InterractionCallbacks } from './interfaces/InterractionCallbacks'
 import type { LayoutOptions } from './interfaces/LayoutOptions'
 import { generateSafeDomId } from './utils/ElementCreation'
@@ -16,6 +16,7 @@ import { GraphEditingManager } from './editing/GraphEditingManager'
 import { NoteManager } from './NoteManager'
 import { Note, type NoteOptions } from './Note'
 import type { PivotickPlugin } from './interfaces/Plugin'
+import { minimap } from './plugins/minimap'
 
 export class Graph {
     private nodes: Map<string, Node> = new Map()
@@ -48,7 +49,7 @@ export class Graph {
             ready: [],
             nodeAdd: [], nodeRemove: [], nodeChange: [], edgeAdd: [], edgeRemove: [], edgeChange: [],
             noteAdd: [], noteRemove: [], noteChange: [],
-            dataBatchChanged: [],
+            dataBatchChanged: [], legendToggle: [],
         }
 
         this.options = {
@@ -108,6 +109,9 @@ export class Graph {
         this.queryEngine = new GraphQueryEngine(this)
         this.editing = new GraphEditingManager(this)
         this.UIManager = new UIManager(this, appContainer, UIManagerOptions)
+        // Declared facets carry the accessor/predicate/matchMode the engine matches
+        // with, so hand them over as soon as the merged UI options exist.
+        this.queryEngine.setFacets(this.UIManager.getOptions().filter?.facets)
         this.notifier = new Notifier(this)
         this.renderer = createGraphRenderer(this, appContainer, rendererOptions)
         this.renderer.setupRendering()
@@ -127,8 +131,28 @@ export class Graph {
         }
 
         this.options.plugins?.forEach(plugin => this.use(plugin))
+        this.installModePlugins()
 
         this.startAndRender()
+    }
+
+    /**
+     * The plugins the chosen mode brings along, installed once `options.plugins`
+     * has had first claim on the name — a consumer's own `minimap({ width: 240 })`
+     * must win, and `installPlugin` drops whichever copy arrives second.
+     */
+    private installModePlugins() {
+        const ui = this.UIManager.getOptions()
+        const declared = ui.minimap
+        if (declared === false || this.UIManager.hasPlugin('minimap')) return
+        // Asked for explicitly it goes up in any mode; left out, only `full` gets one —
+        // the mode that already brings a header, a sidebar, a rail and a legend.
+        if (declared === undefined && ui.mode !== 'full') return
+
+        const options = typeof declared === 'object' ? declared : {}
+        // 'auto' unless overridden: a minimap nobody asked for has to be able to get out
+        // of the way. An explicit `collapsed` in the options wins.
+        this.use(minimap({ collapsed: 'auto', ...options }))
     }
 
     /**
@@ -445,6 +469,56 @@ export class Graph {
         this.emit('noteRemove', note)
     }
 
+    /**
+     * @private
+     * Announce that a legend entry was toggled. Called by the legend after it has
+     * applied its filter, so a consumer can persist the user's choice.
+     */
+    public legendToggled(state: LegendToggleState): void {
+        this.emit('legendToggle', state)
+    }
+
+    /**
+     * Replace the canvas legend at runtime — the imperative twin of `UI.legend`.
+     * A graph that started without one gets it built on the spot; `false` empties
+     * the legend and drops its filter, and `true` / `undefined` fall back to
+     * deriving one from `render.nodeTypeAccessor`.
+     *
+     * @param config - The legend to show, or `false` to remove it.
+     */
+    public setLegend(config?: LegendOptions | boolean): void {
+        this.UIManager.setLegend(config)
+    }
+
+    /**
+     * @private
+     * Announce that a node's data was replaced in place — emits `nodeChange` plus a
+     * `dataBatchChanged` entry. Used by the interactive node editor, which mutates the
+     * live node rather than going through {@link updateData}.
+     */
+    public nodeDataChanged(node: Node, previousData: NodeData, nextData: NodeData): void {
+        this.dataBatchChanged([{
+            type: 'node:change',
+            node,
+            previousData,
+            nextData,
+        } as GraphDataChange])
+    }
+
+    /**
+     * @private
+     * The edge twin of {@link nodeDataChanged} — emits `edgeChange` plus a
+     * `dataBatchChanged` entry for an edge whose data was replaced in place.
+     */
+    public edgeDataChanged(edge: Edge, previousData: EdgeData, nextData: EdgeData): void {
+        this.dataBatchChanged([{
+            type: 'edge:change',
+            edge,
+            previousData,
+            nextData,
+        } as GraphDataChange])
+    }
+
     private dataBatchChanged(changes: GraphDataChange[]): void {
         if (changes) {
             this.emit('dataBatchChanged', changes)
@@ -549,7 +623,7 @@ export class Graph {
                     changes.push({
                         type: 'edge:change',
                         edge: newEdge,
-                        previousData: this.nodes.get(newEdge.id)?.getData(),
+                        previousData: this.edges.get(newEdge.id)?.getData(),
                         nextData: newEdge.getData(),
                     } as GraphDataChange)
                     this.edges.set(newEdge.id, newEdge)
@@ -1066,6 +1140,8 @@ export class Graph {
      * Destroy all UI components.
      */
     destroy(): void {
+        // Stop ticking before the DOM it renders into goes away.
+        this.simulation.destroy()
         this.UIManager.destroy()
         this.renderer.destroy()
     }
@@ -1124,6 +1200,83 @@ export class Graph {
         } else if (element instanceof Node) {
             this.renderer.getGraphInteraction().selectNode(element.getGraphElement(), element)
         }
+    }
+
+    /**
+     * Selects several nodes, or several edges, replacing the current selection — the
+     * plural {@link selectElement}, resolving each element's rendered handle for you.
+     *
+     * Nodes and edges cannot be selected together (the interaction layer clears one kind
+     * when the other is set), so a mixed array selects the **nodes** and warns.
+     *
+     * @param elements The `Node`s or `Edge`s to select. An empty array clears the selection.
+     */
+    selectElements(elements: Array<Node | Edge>): void {
+        const interaction = this.renderer.getGraphInteraction()
+        if (elements.length === 0) return interaction.unselectAll()
+
+        const nodes = elements.filter((element): element is Node => element instanceof Node)
+        const edges = elements.filter((element): element is Edge => element instanceof Edge)
+
+        if (nodes.length && edges.length) {
+            console.warn('Pivotick: selectElements cannot select nodes and edges together; selecting the nodes only.')
+        }
+
+        if (nodes.length) {
+            interaction.selectNodes(nodes.map(node => ({ node, element: node.getGraphElement() })))
+        } else if (edges.length) {
+            interaction.selectEdges(edges.map(edge => [edge, edge.getGraphElement()] as [Edge, unknown]))
+        }
+    }
+
+    /**
+     * Adds nodes to the current selection, leaving what is already selected in place.
+     * Already-selected nodes are ignored.
+     *
+     * Nodes only: the interaction layer has no additive setter for edges, which can only
+     * be selected as a whole set via {@link selectElements}.
+     *
+     * @param nodes The `Node`s to add.
+     */
+    addToSelection(nodes: Node[]): void {
+        this.renderer.getGraphInteraction()
+            .addNodesToSelection(nodes.map(node => ({ node, element: node.getGraphElement() })))
+    }
+
+    /**
+     * Removes nodes from the current selection, leaving the rest of it in place.
+     * Nodes only, on the same terms as {@link addToSelection}.
+     *
+     * @param nodes The `Node`s to remove.
+     */
+    removeFromSelection(nodes: Node[]): void {
+        this.renderer.getGraphInteraction()
+            .removeNodesFromSelection(nodes.map(node => ({ node, element: node.getGraphElement() })))
+    }
+
+    /**
+     * Opens the data dock — the graph's rows as a sortable, selectable grid split off
+     * the bottom of the canvas. `full` mode only, and only when `UI.table` allows it;
+     * a no-op otherwise.
+     *
+     * The dock can hold panes other than the table now, so this also brings the table's
+     * pane to the front: the call is named for the table and should show you one. Reach
+     * for `UIManager.dock` or `activateDockTab()` to drive the region without that.
+     */
+    openTable(): void {
+        this.UIManager.dock?.setOpen(true)
+        const tableTab = this.UIManager.table?.dockTabId()
+        if (tableTab) this.UIManager.activateDockTab(tableTab)
+    }
+
+    /** Closes the data dock. */
+    closeTable(): void {
+        this.UIManager.dock?.setOpen(false)
+    }
+
+    /** Opens the data dock if it is closed, closes it if it is open. */
+    toggleTable(): void {
+        this.UIManager.dock?.toggleOpen()
     }
 
     /**

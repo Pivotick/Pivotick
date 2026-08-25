@@ -31,7 +31,7 @@ $light-theme: (
     pvt-bg: var(--pvt-bg-color-0),
     pvt-ui-bg: var(--pvt-bg-color-0),
     pvt-border-color: var(--pvt-bg-color-7),
-    // B3 floating chrome surface (rails / pills / panels). Kept light here so it
+    // Floating chrome surface (rails / pills / panels). Kept light here so it
     // doesn't read heavy on the white canvas; see the dark map for the dark tone.
     pvt-chrome-bg: var(--pvt-bg-color-3),
     pvt-chrome-border: #dcdcdc,
@@ -100,6 +100,7 @@ $light-theme: (
     pvt-sidebar-layout-shadow-top: "rgba(0, 0, 0, 0.07) 3px -2px 3px 0px, rgba(0, 0, 0, 0.04) 2px -3px 2px 0px",
     pvt-sidebar-collapse-bg: var(--pvt-bg),
     pvt-sidebar-collapse-color: var(--pvt-text-color-4),
+    pvt-sidebar-collapse-border-color: var(--pvt-border-color),
     pvt-sidebar-collapse-shadow: var(--pvt-box-shadow-strong),
 
     /* Tooltip */
@@ -295,11 +296,11 @@ $dark-bg-color-palette-3: (
 
 $dark-theme: (
     pvt-bg: var(--pvt-bg-color-2),
-    // B3: docked panels (sidebar + slide panels) sit on the chrome tone (bg-6);
+    // Docked panels (sidebar + slide panels) sit on the chrome tone (bg-6);
     // borders track the chrome's border tone (bg-7) so panels read as one family.
     pvt-ui-bg: var(--pvt-bg-color-6),
     pvt-border-color: var(--pvt-bg-color-7),
-    // B3 floating chrome surface (rails / pills / panels) — the graphite tone.
+    // Floating chrome surface (rails / pills / panels) — the graphite tone.
     pvt-chrome-bg: var(--pvt-bg-color-6),
     pvt-chrome-border: var(--pvt-bg-color-7),
     pvt-chrome-shadow: "0 3px 8px rgba(0, 0, 0, 0.30)",
@@ -365,6 +366,7 @@ $dark-theme: (
     pvt-sidebar-layout-shadow-bottom: "rgba(0, 0, 0, 0.07) 3px 2px 3px 0px, rgba(0, 0, 0, 0.04) 2px 3px 2px 0px",
     pvt-sidebar-collapse-bg: var(--pvt-bg),
     pvt-sidebar-collapse-color: var(--pvt-text-color-4),
+    pvt-sidebar-collapse-border-color: var(--pvt-border-color),
     pvt-sidebar-collapse-shadow: var(--pvt-box-shadow-strong),
 
     /* Tooltip */
@@ -372,7 +374,7 @@ $dark-theme: (
     pvt-tooltip-property-list: var(--pvt-bg-color-6),
 
     /* Menu */
-    // B3: overlays (menu/tooltip/modal) sit one notch above the chrome tone.
+    // Overlays (menu/tooltip/modal) sit one notch above the chrome tone.
     pvt-menu-bg-color: #2E2E31,
     pvt-menu-border-color: var(--pvt-bg-color-2),
     pvt-menu-shadow: var(--pvt-sidebar-layout-shadow-right),

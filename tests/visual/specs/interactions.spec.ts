@@ -82,6 +82,8 @@ test.describe('interactions', () => {
 
         const menu = page.locator('.pvt-contextmenu')
         await expect(menu).toHaveClass(/shown/)
+        // Step off the menu so the baseline captures its resting look, not a hover.
+        await page.mouse.move(box.x + 20, box.y + 20)
         await expectElement(menu, 'contextmenu-canvas.png')
     })
 

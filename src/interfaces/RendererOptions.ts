@@ -244,7 +244,7 @@ export interface NodeStyle {
     strokeColor: ((node: Node) => string) | string
     /** @default 'var(--pvt-node-stroke-width, 2)' */
     strokeWidth: number | string
-    /** @default 'var(--pvt-label-font, system-ui, sans-serif)' */
+    /** @default 'var(--pvt-font-family)' */
     fontFamily: string
     /** @default 'var(--pvt-node-text-color, #fff)' */
     textColor: ((node: Node) => string) | string
@@ -270,6 +270,12 @@ export interface NodeStyle {
      * @default 0
      */
     textRotateDegree: ((node: Node) => number) | number
+    /**
+     * Shorten an over-wide label with a middle ellipsis (`head…tail`); `false` draws it
+     * in full, on a themed pill where it spills past the node.
+     * @default true
+     */
+    textTruncate: ((node: Node) => boolean) | boolean
     iconClass?: IconClass,
     iconUnicode?: IconUnicode,
     /**

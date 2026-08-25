@@ -24,6 +24,10 @@ const options = {
         // The sidebar is part of the full UI (the default 'viewer' mode ships
         // pan/zoom only); enable it and keep it open so it's visible right away:
         mode: 'full',
+        // Off: `full` mode brings a minimap and the data dock, and this card is about
+        // neither (see the Minimap and Data table cards for those).
+        minimap: false,
+        table: false,
         sidebar: { collapsed: false },
         // 1 — map the header's title & subtitle from your data:
         mainHeader: {

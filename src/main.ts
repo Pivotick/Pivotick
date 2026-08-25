@@ -42,7 +42,7 @@ export function createSampleGraph(): Pivotick {
     // edges.push(new Edge('1-0', nodes[1], nodes[0], { relation : 'b'}))
 
 
-    const N = 63
+    const N = 64
     // const N = 1000
     const createNodes = (n=N): Node[] => {
         return Array.from({ length: n }, (_, i) => new Node(`n${i + 1}`, { label: `Node ${i}`, type: `${i % Math.floor(n / 10) }`}))
@@ -275,7 +275,7 @@ export function createSampleGraph(): Pivotick {
 
     }
 
-    const topo = 'ail2'
+    const topo = 'ail'
 
     const colorPaletteMapper = new ColorPaletteMapper('pivotick')
     const graph = new Pivotick(container, {nodes: topologies[topo].nodes, edges: topologies[topo].edges}, {
@@ -284,7 +284,7 @@ export function createSampleGraph(): Pivotick {
             // warmupTicks: 5000,
             // d3ManyBodyStrength: -500,
             // d3LinkStrength: 0.1,
-            d3LinkDistance: 90,
+            //d3LinkDistance: 90,
         },
         layout: {
             // type: 'tree',
@@ -545,6 +545,8 @@ const options = {
       modeRail: new URLSearchParams(location.search).has('hero')
           ? undefined
           : { explore: true, enrich: true },
+      // Open the dock on load. The shipped default is folded to its bar.
+      dock: { open: true },
     },
     callbacks: {
         // onNodeEdit: (session) => {

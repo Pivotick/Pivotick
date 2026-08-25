@@ -2,9 +2,8 @@ import type { Node } from '../../Node'
 import type { Edge } from '../../Edge'
 import type { AnyTreeLayoutOptions, TreeLayoutOptions } from '../../interfaces/LayoutOptions'
 import { TreeLayout, type TreeNode } from './Tree'
-import { hierarchy, tree, type HierarchyNode } from 'd3-hierarchy'
+import { hierarchy, type HierarchyNode } from 'd3-hierarchy'
 import { type Simulation as d3Simulation } from 'd3-force'
-import hasCycle from '../analytics/cycle'
 import type { Graph } from '../../Graph'
 import type { SimulationForces } from '../../interfaces/SimulationOptions'
 
@@ -73,15 +72,6 @@ export class EgoTreeLayout extends TreeLayout {
                 }
             }
 
-            if (hasCycle(nodes, edges)) {
-                console.warn('Cycle detected in graph. Tree layout will not be computed.')
-                return {
-                    root: null,
-                    nodes: [],
-                    nodeById: new Map<string, HierarchyNode<TreeNode>>(),
-                }
-            }
-    
             const nodeMap = new Map<string, TreeNode>()
             for (const node of nodes) {
                 const treeNode = node as TreeNode
@@ -100,41 +90,29 @@ export class EgoTreeLayout extends TreeLayout {
                 throw new Error(`Root node with id "${rootId}" not found.`)
             }
     
-            // Build parent-child relationships ignoring edge direction
+            // Build parent-child relationships ignoring edge direction. Claimed once each:
+            // a pair joined in both directions is one neighbour, not two, and listing it
+            // twice would spend two slots of the ring on it.
+            const claimed = new Set<string>([root.id])
             for (const edge of edges) {
                 const sourceNode = nodeMap.get(edge.source.id)
                 const targetNode = nodeMap.get(edge.target.id)
-                if (sourceNode && targetNode) {
-                    if (edge.source.id === root.id) {
-                        root.children.push(targetNode)
-                        targetNode.parent = root
-                    } else if (edge.target.id === root.id) {
-                        root.children.push(sourceNode)
-                        sourceNode.parent = root
-                    }
-                }
+                if (!sourceNode || !targetNode) continue
+                const neighbour = edge.source.id === root.id ? targetNode
+                    : edge.target.id === root.id ? sourceNode
+                        : undefined
+                if (!neighbour || claimed.has(neighbour.id)) continue
+                claimed.add(neighbour.id)
+                root.children.push(neighbour)
+                neighbour.parent = root
             }
 
             // Create a d3 hierarchy and compute tree layout
-            const radius = options.radialGap
-            const width = options.radial ? 2 * Math.PI : canvasBCR.width
-            const height = options.radial ? radius : canvasBCR.height
-    
-            const treeLayout = tree<TreeNode>()
-            if (options.radial) {
-                treeLayout.size([width, height])
-            } else {
-                treeLayout
-                    .size([width, height])
-                    // .nodeSize(options.horizontal ? [100, 50] : [50, 100])
-                    .separation((a, b) => {
-                        const siblingsCount = a.parent?.children?.length ?? 1
-                        return a.parent === b.parent ? 1.5 / siblingsCount : 1.5
-                    })
-            }
+            const { treeLayout, offset } = EgoTreeLayout.sizedTreeLayout(options, canvasBCR)
     
             const rootHierarchy = hierarchy(root)
             const treeRoot = treeLayout(rootHierarchy)
+            EgoTreeLayout.offsetTree(treeRoot.descendants(), offset)
     
             const nodeById = new Map<string, HierarchyNode<TreeNode>>()
             treeRoot.descendants().forEach((node) => {

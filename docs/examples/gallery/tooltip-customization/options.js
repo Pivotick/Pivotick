@@ -26,16 +26,17 @@ const options = {
                 title: (node) => node.getData().label,
                 subtitle: (node) => `${node.getData().role} · ${node.getData().team}`
             },
-            // 2 — keep the default tooltip and append your own content (shown live):
+            // 2 — keep the default tooltip and append your own content (shown live).
+            // Return an element to render markup: since 1.5.0 a returned *string*
+            // is rendered as plain text, never parsed as HTML.
             renderNodeExtra: (node) => {
-                const d = node.getData()
-                return `<div style="margin-top:6px;font-size:12px;opacity:.85">⭐ ${d.commits} commits</div>`
+                const line = document.createElement('div')
+                line.textContent = `⭐ ${node.getData().commits} commits`
+                line.style.cssText = 'margin-top:6px;font-size:12px;opacity:.85'
+                return line
             }
             // 3 — take over the whole tooltip (uncomment to override 1 & 2):
-            // render: (node) => {
-            //     const d = node.getData()
-            //     return `<strong>${d.label}</strong> — ${d.role}`
-            // }
+            // render: (node) => `${node.getData().label} — ${node.getData().role}`
         }
     }
 }

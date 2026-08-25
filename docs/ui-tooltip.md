@@ -87,3 +87,35 @@ const options = {
 }
 ```
 :::
+
+## Fetching tooltip content {#async-content}
+
+`render`, `renderNodeExtra`, `renderEdgeExtra`, `nodePropertiesMap` and
+`edgePropertiesMap` may all be `async`. The tooltip shows a placeholder while
+the promise is pending, swaps the content in when it resolves, and repositions
+itself so the grown tooltip stays on screen.
+
+```ts
+const options = {
+    UI: {
+        tooltip: {
+            renderNodeExtra: async (node, { signal }) => { // [!code focus:5]
+                const res = await fetch(`/enrich/${node.getData().uuid}`, { signal })
+                return renderChips(await res.json())
+            },
+        },
+    },
+}
+```
+
+The tooltip is the surface where this matters most, because it is a **single
+reused container** opened behind a 400 ms delay: a fetch started for one node
+would otherwise land in a tooltip already describing another. It cannot here —
+hovering a second node aborts the first render's `signal` and drops its result,
+even if it resolves last. See [asynchronous content](./ui#async-content) for the
+full contract and for `UI.asyncContent`, which customises the placeholder.
+
+::: tip Pinning a pending tooltip
+Pinning while content is still loading is fine: the copy fills itself in when
+the fetch resolves, as long as it hasn't been superseded by another hover first.
+:::

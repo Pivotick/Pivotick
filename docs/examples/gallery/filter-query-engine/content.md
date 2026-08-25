@@ -18,14 +18,25 @@ brings it back and `clearNodeExclusions()` restores every manually hidden node.
 
 The buttons below drive the engine directly. The same filtering is available
 without code: in **full mode** the header carries a **Graph Filters** panel (the
-funnel icon, or press **Shift+K**) that auto-builds a control per attribute — a
-dropdown for `type`/`zone`, a slider for `load`. Code and panel stay in sync —
-filter from a button, open the panel, and its controls already reflect the active
-filter, while hidden nodes appear in its **Hidden nodes** list.
+funnel icon, or press **Shift+K**). Code and panel stay in sync — filter from a
+button, open the panel, and its controls already reflect the active filter, while
+hidden nodes appear in its **Hidden nodes** list.
+
+This card **declares** its facets (`UI.filter.facets`), so the panel contains
+exactly the six controls below with the labels and widgets given — including two
+that aren't node-data keys at all. Omit `facets` and the panel instead derives a
+control per data key, inferring each widget from the values it finds; see
+[Filter options](/ui-filter).
+
+`tags` is **array-valued**, so filtering it tests membership: *tag = critical*
+keeps every node carrying that tag. `Depends on load ≥` is **computed** — an
+`accessor` reads the *dependencies'* load instead of the node's own, which is why
+`web-1` (the busiest service at 82%) drops out of it while the quieter `db-1`
+survives.
 
 <script setup>
 import { shallowRef } from 'vue'
-import { data, options, filterByType, filterByLoad, clearFilters, excludeNode, clearExclusions } from './options.js'
+import { data, options, filterByType, filterByLoad, filterByTag, filterByDependencyLoad, clearFilters, excludeNode, clearExclusions } from './options.js'
 
 const graph = shallowRef(null)
 const onLoaded = (g) => { graph.value = g }
@@ -35,6 +46,8 @@ const onUnmounted = () => { graph.value = null }
 <div class="flt-toolbar">
     <button :disabled="!graph" @click="filterByType(graph, 'api')">type = api</button>
     <button :disabled="!graph" @click="filterByLoad(graph, 70)">load ≥ 70</button>
+    <button :disabled="!graph" @click="filterByTag(graph, 'critical')">tag = critical</button>
+    <button :disabled="!graph" @click="filterByDependencyLoad(graph, 70)">depends on load ≥ 70</button>
     <button :disabled="!graph" @click="clearFilters(graph)">reset</button>
     <button :disabled="!graph" @click="excludeNode(graph, 'db-2')">hide db-2</button>
     <button :disabled="!graph" @click="clearExclusions(graph)">show hidden</button>
@@ -62,6 +75,7 @@ const onUnmounted = () => { graph.value = null }
 </style>
 
 ::: code-group
+<<< ./options.js#facets [Declared facets]
 <<< ./options.js#filters [Filtering]
 <<< ./options.js#options [Options]
 <<< ./options.js#data [Data]

@@ -1,0 +1,58 @@
+/* Slots holding consumer content that is still being fetched, and the built-in
+   affordances shown in them. A slot is a plain block: once its promise settles
+   it is emptied and the real content takes its place. */
+
+/* A slot has no intrinsic width of its own (the skeleton's bars are sized in %),
+   so it has to claim the space its content will occupy — otherwise it collapses
+   to nothing inside a flex container such as the sidebar's main header. */
+.pvt-async-slot {
+    display: block;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.pvt-async-skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 4px 0;
+    // Its bars are sized in %, so it has no intrinsic width to lay out from —
+    // claim the slot's width however the host container arranges its children.
+    width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
+
+    span {
+        display: block;
+        height: 8px;
+        border-radius: 4px;
+        background: linear-gradient(90deg,
+                var(--pvt-bg-color-3) 25%,
+                var(--pvt-bg-color-4) 37%,
+                var(--pvt-bg-color-3) 63%);
+        background-size: 400% 100%;
+        animation: pvtAsyncShimmer 1.4s ease-in-out infinite;
+    }
+
+    /* Ragged line lengths read as "text loading" rather than as a table. */
+    span:nth-child(1) { width: 82%; }
+    span:nth-child(2) { width: 96%; }
+    span:nth-child(3) { width: 64%; }
+}
+
+.pvt-async-error {
+    padding: 4px 0;
+    font-size: 0.85em;
+    color: var(--pvt-theme-danger);
+}
+
+@keyframes pvtAsyncShimmer {
+    0% { background-position: 100% 50%; }
+    100% { background-position: 0 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pvt-async-skeleton span {
+        animation: none;
+    }
+}

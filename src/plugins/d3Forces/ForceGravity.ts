@@ -61,9 +61,12 @@ export function ForceGravity<Node extends SimulationNodeDatum = SimulationNodeDa
         for (let i = 0, n = nodes.length; i < n; ++i) {
             const node = nodes[i]
             const s = strengthFn(node, i, nodes)
-            if (node.vx && node.x)
+            // Guard on "has a value", not on truthiness: a node resting exactly on the
+            // centring axis (x === 0) or momentarily at rest (vx === 0) still needs the
+            // pull, and skipping it is how a node quietly escapes the frame.
+            if (node.vx != null && node.x != null)
                 node.vx -= (node.x - x) * s * alpha
-            if (node.vy && node.y)
+            if (node.vy != null && node.y != null)
                 node.vy -= (node.y - y) * s * alpha
         }
     }

@@ -1,7 +1,9 @@
-import { tryResolveArray, tryResolveString } from './Getters'
+import { isThenable, tryResolveString } from './Getters'
+import { DETACHED_RENDER_CONTEXT } from './AsyncRender'
 import type { Node } from '../Node'
 import type { Edge } from '../Edge'
 import type { MainHeader, PropertiesPanel, PropertyEntry } from '../interfaces/GraphUI'
+import type { RenderContext } from '../interfaces/AsyncContent'
 
 
 export function nodeNameGetter(node: Node, mainHeader: MainHeader): string {
@@ -41,12 +43,38 @@ export function edgeLabelGetter(edge: Edge): string {
     return typeof text === 'string' ? text : ''
 }
 
-export function nodePropertiesGetter(node: Node, propertiesPanel: PropertiesPanel): Array<PropertyEntry> {
+/**
+ * A properties map may hand back the entries or a promise of them (and, being
+ * consumer code, occasionally neither). Normalise both shapes, keeping the
+ * synchronous one synchronous.
+ */
+function asPropertyEntries(
+    resolved: PropertyEntry[] | Promise<PropertyEntry[]>,
+): PropertyEntry[] | Promise<PropertyEntry[]> {
+    if (isThenable(resolved)) {
+        return Promise.resolve(resolved).then((entries) => Array.isArray(entries) ? entries : [])
+    }
+    return Array.isArray(resolved) ? resolved : []
+}
+
+/**
+ * The property entries to show for a node: the consumer's map when one is
+ * declared, otherwise every key/value pair on the node's data.
+ *
+ * A declared map may be `async`; pass the render pass's `ctx` so the consumer
+ * can cancel when the selection moves on. Omit it for a one-shot read outside
+ * any render pass.
+ */
+export function nodePropertiesGetter(
+    node: Node,
+    propertiesPanel: PropertiesPanel,
+    ctx: RenderContext = DETACHED_RENDER_CONTEXT,
+): PropertyEntry[] | Promise<PropertyEntry[]> {
     const data = node.getData()
     const properties: PropertyEntry[] = []
 
     if (propertiesPanel.nodePropertiesMap) {
-        return tryResolveArray<[Node], PropertyEntry>(propertiesPanel.nodePropertiesMap, node)
+        return asPropertyEntries(propertiesPanel.nodePropertiesMap(node, ctx))
     }
     properties.push({
         name: 'id',
@@ -64,12 +92,31 @@ export function nodePropertiesGetter(node: Node, propertiesPanel: PropertiesPane
     return properties
 }
 
-export function edgePropertiesGetter(edge: Edge, propertiesPanel: PropertiesPanel): Array<PropertyEntry> {
+/**
+ * Read one property list per element (a multi-selection, aggregated).
+ *
+ * Stays synchronous unless at least one element's map is async, so the common
+ * case never picks up a microtask it didn't have before.
+ */
+export function collectPropertyEntries<T>(
+    elements: T[],
+    read: (element: T) => PropertyEntry[] | Promise<PropertyEntry[]>,
+): PropertyEntry[][] | Promise<PropertyEntry[][]> {
+    const collected = elements.map(read)
+    return collected.some(isThenable) ? Promise.all(collected) : collected as PropertyEntry[][]
+}
+
+/** The edge counterpart of {@link nodePropertiesGetter}, on the same terms. */
+export function edgePropertiesGetter(
+    edge: Edge,
+    propertiesPanel: PropertiesPanel,
+    ctx: RenderContext = DETACHED_RENDER_CONTEXT,
+): PropertyEntry[] | Promise<PropertyEntry[]> {
     const data = edge.getData()
     const properties: Array<PropertyEntry> = []
 
     if (propertiesPanel.edgePropertiesMap) {
-        return tryResolveArray<[Edge], PropertyEntry>(propertiesPanel.edgePropertiesMap, edge)
+        return asPropertyEntries(propertiesPanel.edgePropertiesMap(edge, ctx))
     }
     properties.push({
         name: 'id',

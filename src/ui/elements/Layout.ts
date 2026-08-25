@@ -9,10 +9,17 @@ export class Layout extends UIComponent {
     public modal?: HTMLDivElement
     public slidePanel?: HTMLDivElement
     public graphnavigation?: HTMLDivElement
-    /** B3 mode rail + contextual tool panel + View flyout slots. */
+    /** Mode rail + contextual tool panel + settings-flyout slots. */
     public moderail?: HTMLDivElement
     public toolpanel?: HTMLDivElement
-    public viewflyout?: HTMLDivElement
+    public flyout?: HTMLDivElement
+    /** Canvas-docked legend slot (its corner is set by the legend itself). */
+    public legend?: HTMLDivElement
+    /**
+     * The bottom dock: a grid row under the canvas, spanning the canvas column only so
+     * the sidebar stays full height beside it. `full` mode only.
+     */
+    public dock?: HTMLDivElement
 
     protected onMount(container?: HTMLElement) {
         if (!container) return
@@ -33,6 +40,12 @@ export class Layout extends UIComponent {
             this.sidebar = document.createElement('div')
             this.sidebar.className = 'pvt-sidebar'
             this.layout.appendChild(this.sidebar)
+
+            // Always present, even with no `UI.table`, so the dock has a slot to mount
+            // into later. It occupies no height until the dock puts something in it.
+            this.dock = document.createElement('div')
+            this.dock.className = 'pvt-dock-slot'
+            this.layout.appendChild(this.dock)
         }
 
         if (mode === 'light' || mode === 'full') {
@@ -55,7 +68,7 @@ export class Layout extends UIComponent {
             this.canvas.appendChild(this.graphnavigation)
         }
 
-        // B3 chrome slots: the mode rail and its contextual panel overlay the
+        // Chrome slots: the mode rail and its contextual panel overlay the
         // canvas (left edge), positioned right of the sidebar.
         if (mode === 'full' || mode === 'light') {
             this.moderail = document.createElement('div')
@@ -66,9 +79,17 @@ export class Layout extends UIComponent {
             this.toolpanel.className = 'pvt-toolpanel'
             this.canvas.appendChild(this.toolpanel)
 
-            this.viewflyout = document.createElement('div')
-            this.viewflyout.className = 'pvt-viewflyout'
-            this.canvas.appendChild(this.viewflyout)
+            // One slot for every settings flyout (View / Physics) — the rail keeps
+            // them mutually exclusive, so at most one is ever displayed.
+            this.flyout = document.createElement('div')
+            this.flyout.className = 'pvt-flyout'
+            this.canvas.appendChild(this.flyout)
+
+            // Always present in these modes, even with no `UI.legend`, so a later
+            // `graph.setLegend()` has a slot to mount into.
+            this.legend = document.createElement('div')
+            this.legend.className = 'pvt-legend'
+            this.canvas.appendChild(this.legend)
         }
 
         container.appendChild(this.layout)

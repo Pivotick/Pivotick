@@ -8,6 +8,28 @@ import type { Note } from './Note'
 
 
 export type ProgressType = 'simulation' | 'rendering' | 'done'
+
+/** A rectangle in graph coordinates. */
+export interface GraphBounds {
+    x: number
+    y: number
+    width: number
+    height: number
+}
+
+/**
+ * Where to point the view. `x` / `y` is the graph-space point to put in the middle
+ * of the canvas.
+ */
+export interface ViewportTarget {
+    x: number
+    y: number
+    /** Absolute zoom scale. @default the current scale */
+    scale?: number
+    /** Animate the move rather than jumping. @default false */
+    animate?: boolean
+}
+
 export abstract class GraphRenderer {
     protected graph: Graph
     protected container: HTMLElement
@@ -44,6 +66,8 @@ export abstract class GraphRenderer {
     abstract zoomIn(): void
     abstract zoomOut(): void
     abstract fitAndCenter(forceScale?: number): void
+    abstract getContentBounds(): GraphBounds | null
+    abstract setViewport(target: ViewportTarget): void
     abstract focusElement(element: Node | Edge | Note): void
     abstract highlightElement(element: Node | Edge): void
     abstract unHighlightElement(element: Node | Edge): void
@@ -69,6 +93,16 @@ export abstract class GraphRenderer {
 
     public getCanvas(): HTMLElement {
         return this.container.querySelector('.pvt-canvas') as HTMLElement
+    }
+
+    /**
+     * The graph's root container — everything, chrome included. Deliberately distinct
+     * from {@link getCanvas}: the canvas shrinks whenever chrome opens (a sidebar, the
+     * data dock), the container only changes when the page around it does. Anything
+     * that must not react to chrome measures this instead.
+     */
+    public getRootContainer(): HTMLElement {
+        return this.container
     }
 
     public updateLayoutProgress(progress: number, elapsedTime: number, progressType: ProgressType): void {

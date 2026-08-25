@@ -49,6 +49,10 @@ const localOptions = computed(() => ({
         // (see the large-graph "scale" card, which offloads its layout).
         ...props.options.simulation,
         useWorker: props.options.simulation?.useWorker ?? false,
+        // The `Auto` preset re-tunes the knobs from node count / node size / canvas,
+        // which would make every card's thumbnail depend on its embed height. Pin the
+        // gallery to manual; the auto card opts back in with simulation.physics: 'auto'.
+        physics: props.options.simulation?.physics ?? 'manual',
     },
 }))
 

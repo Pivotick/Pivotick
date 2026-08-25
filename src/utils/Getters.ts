@@ -97,38 +97,49 @@ export function tryResolveValue<T extends unknown[]>(
 //     return input === undefined ? undefined : input
 // }
 
-/**
- * Resolves the input to an Array. If it's a function, it is invoked with the given arguments.
- *
- * @param input - An Array or a function that returns a Array.
- * @param args - Arguments to pass to the function, if applicable.
- * @returns An Array if resolved successfully, otherwise undefined.
- */
-export function tryResolveArray<TArgs extends unknown[], TItem>(
-    input: TItem[] | ((...args: TArgs) => TItem[]),
-    ...args: TArgs
-): TItem[] {
-    
-    if (Array.isArray(input)) {
-        return input
-    } else if (typeof input === 'function') {
-        const result = input(...args)
-        return Array.isArray(result) ? result : []
-    }
-    return []
-}
-
 function textSpan(text: string): HTMLElement {
     const span = document.createElement('span')
     span.textContent = text
     return span
 }
 
+/** Is this a promise (or any other thenable a consumer might hand back)? */
+export function isThenable(value: unknown): value is PromiseLike<unknown> {
+    return typeof (value as PromiseLike<unknown> | null | undefined)?.then === 'function'
+}
+
+/**
+ * Turns whatever a content hook returned into an element to mount.
+ *
+ * A string becomes a `<span>` carrying it as **text**; it is never parsed as markup, since
+ * these values routinely carry graph data. Return an element to render your own HTML.
+ *
+ * @param resolved - The value a content hook returned (already invoked, if it was a function).
+ * @returns An html element, or undefined when there is nothing to render.
+ */
+export function toRenderedElement(resolved: unknown): HTMLElement | undefined {
+    // Element, not HTMLElement: an SVG element a render callback hands back passes through too.
+    if (resolved instanceof Element) {
+        return resolved as HTMLElement
+    } else if (typeof resolved === 'string') {
+        return textSpan(resolved.trim())
+    } else if (typeof resolved === 'boolean') {
+        return textSpan(String(resolved))
+    } else if (isThenable(resolved)) {
+        // Stringifying a promise paints the literal text `{}`; say so instead.
+        console.warn('[pivotick] a synchronous content hook returned a Promise — this surface renders sync content only.')
+        return undefined
+    } else if (typeof resolved === 'object') {
+        return textSpan(JSON.stringify(resolved, undefined, 2))
+    }
+    return undefined
+}
+
 /**
  * Resolves the input to an html element. If it's a function, it is invoked with the given arguments.
  *
- * A string resolves to a `<span>` carrying it as **text**; it is never parsed as markup, since
- * these values routinely carry graph data. Return an element to render your own HTML.
+ * Synchronous surfaces only — a hook that returns a promise here warns and renders nothing.
+ * Async-capable surfaces go through `AsyncRenderScope` instead.
  *
  * @param input - A string, an element, or a function returning either.
  * @param args - Arguments to pass to the function, if applicable.
@@ -139,19 +150,7 @@ export function tryResolveHTMLElement<T extends unknown[]>(
     ...args: T
 ): HTMLElement | undefined {
 
-    const resolved: unknown = typeof input === 'function' ? input(...args) : input
-
-    // Element, not HTMLElement: an SVG element a render callback hands back passes through too.
-    if (resolved instanceof Element) {
-        return resolved as HTMLElement
-    } else if (typeof resolved === 'string') {
-        return textSpan(resolved.trim())
-    } else if (typeof resolved === 'boolean') {
-        return textSpan(String(resolved))
-    } else if (typeof resolved === 'object') {
-        return textSpan(JSON.stringify(resolved, undefined, 2))
-    }
-    return undefined
+    return toRenderedElement(typeof input === 'function' ? input(...args) : input)
 }
 
 /**
