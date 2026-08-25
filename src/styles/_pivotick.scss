@@ -417,6 +417,42 @@ dl.pvt-property-list {
         user-select: none;
     }
 
+    // Rim badges. Hit-testable on purpose: a native <title> tooltip needs to be hit to show,
+    // and node click/drag/hover are bound on the group above, so nothing is stolen from them.
+    .pvt-node-badge {
+        user-select: none;
+
+        &.pvt-node-badge-interactive {
+            cursor: pointer;
+
+            &:hover .pvt-node-badge-shape {
+                filter: brightness(0.9);
+            }
+        }
+
+        .pvt-node-badge-shape {
+            fill: var(--pvt-badge-color);
+            stroke: var(--pvt-badge-stroke);
+            stroke-width: 1.5;
+        }
+
+        .pvt-node-badge-text {
+            fill: var(--pvt-badge-text-color);
+            font-family: var(--pvt-font-family);
+            font-weight: 600;
+        }
+
+        .pvt-node-badge-icon {
+            color: var(--pvt-badge-text-color);
+            pointer-events: none;
+        }
+
+        // The overflow stand-in speaks for a mixed set, so it borrows no single badge's colour.
+        &.pvt-node-badge-overflow .pvt-node-badge-shape {
+            fill: var(--pvt-badge-overflow-color);
+        }
+    }
+
     text.icon {
         user-select: none;
         pointer-events: none;

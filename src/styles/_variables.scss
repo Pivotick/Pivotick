@@ -158,6 +158,14 @@ $light-theme: (
     pvt-node-icon-font-family: '"Font Awesome 7 Free"',
     pvt-node-icon-font-weight: 900,
 
+    /* Node rim badges */
+    pvt-badge-color: map.get($light-vibrant-color-palette, vibrant-lobster),
+    pvt-badge-text-color: #fff,
+    pvt-badge-stroke: var(--pvt-bg),
+    // Mid-slate in both themes: the secondary background is near-white in light mode, which
+    // leaves a white-on-white badge. Neutral chrome, so it borrows no single badge's colour.
+    pvt-badge-overflow-color: #64748b,
+
     /* Node selected state */
     pvt-node-selected-color: map.get($light-vibrant-color-palette, vibrant-lobster),
     pvt-node-selected-stroke: var(--pvt-selection-stroke-color),
@@ -420,6 +428,14 @@ $dark-theme: (
     pvt-node-text-color: #fff,
     pvt-node-icon-font-family: '"Font Awesome 7 Free"',
     pvt-node-icon-font-weight: 900,
+
+    /* Node rim badges */
+    pvt-badge-color: map.get($dark-vibrant-color-palette, vibrant-lobster),
+    pvt-badge-text-color: #fff,
+    pvt-badge-stroke: var(--pvt-bg),
+    // Mid-slate in both themes: the secondary background is near-white in light mode, which
+    // leaves a white-on-white badge. Neutral chrome, so it borrows no single badge's colour.
+    pvt-badge-overflow-color: #64748b,
 
     /* Node selected state */
     pvt-node-selected-color: var(--pvt-selection-color),

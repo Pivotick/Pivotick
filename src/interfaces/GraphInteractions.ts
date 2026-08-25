@@ -1,6 +1,7 @@
 import type { Edge } from '../Edge'
 import type { Node } from '../Node'
 import type { Note } from '../Note'
+import type { NodeBadge } from './RendererOptions'
 
 
 export interface NodeSelection<TElement> {
@@ -33,6 +34,12 @@ export type GraphInteractionEvents<TElement> = {
     nodeBlur: (node: Node, element: TElement, context: GraphInteractionContext) => void;
     dragging: (event: MouseEvent, node: Node) => void;
     dragended: (event: MouseEvent, node: Node) => void;
+    /**
+     * A rim badge was clicked. Fires before the badge's own `onClick` and before
+     * {@link InterractionCallbacks.onBadgeClick}; `context.cancel()` suppresses both.
+     * `element` is the node's group, as for every other node event.
+     */
+    badgeClick: (event: PointerEvent, node: Node, badge: NodeBadge, element: TElement, context: GraphInteractionContext) => void;
 
     edgeClick: (event: PointerEvent, edge: Edge, element: TElement, context: GraphInteractionContext) => void;
     edgeDbclick: (event: PointerEvent, edge: Edge, element: TElement, context: GraphInteractionContext) => void;

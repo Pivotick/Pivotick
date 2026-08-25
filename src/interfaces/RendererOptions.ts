@@ -260,6 +260,62 @@ export type NodeShape = StandardShape | CustomNodeShape
  */
 export type ImageFit = 'icon' | 'cover' | 'contain' | 'frame'
 
+/**
+ * Which corner of the node's rim a badge sits on.
+ *
+ * The expand/collapse affordance owns `'ne'` when a node is collapsed and `'se'` when it is
+ * expanded, so on a node with children **both** are reserved and auto-placement skips them —
+ * otherwise badges would swap corners every time the cluster opened.
+ */
+export type NodeBadgePosition = 'ne' | 'nw' | 'se' | 'sw'
+
+/**
+ * A small indicator pinned to a node's rim — what KeyLines and ReGraph call a *glyph*.
+ *
+ * Badges are a decoration channel of their own, so a node can carry a fact that `color`,
+ * `shape`, `size`, `iconClass` and `imagePath` are already spent on. They describe **only the
+ * node they sit on**: a collapsed cluster does not aggregate its children's badges — walk
+ * `node.children` yourself if you want that.
+ *
+ * @example
+ * ```js
+ * defaultNodeStyle: {
+ *     badges: node => node.getData().notes
+ *         ? [{ text: String(node.getData().notes), title: 'Notes', onClick: () => openNotes(node) }]
+ *         : [],
+ * }
+ * ```
+ */
+export interface NodeBadge {
+    /**
+     * Which corner to sit on. Omit it and the badge is auto-placed in the first free corner,
+     * clockwise from `'ne'`. An explicit position is honoured **verbatim**, even where that
+     * overlaps another badge or the expand affordance.
+     */
+    position?: NodeBadgePosition
+    /** Any CSS colour. @default `var(--pvt-badge-color)` */
+    color?: string
+    /**
+     * A count, or one or two characters. Longer text grows the badge into a pill; past three
+     * characters it renders as `99+`. Takes precedence over any icon on the same badge.
+     */
+    text?: string
+    iconClass?: IconClass
+    iconUnicode?: IconUnicode
+    /** Inline SVG markup, sanitized before it reaches the DOM. */
+    svgIcon?: SVGIcon
+    /** Native tooltip, rendered as a real `<title>`. Does not suppress the graph's own tooltip. */
+    title?: string
+    /**
+     * Called when the badge is clicked, before {@link InterractionCallbacks.onBadgeClick}.
+     *
+     * Declaring it makes the badge take the pointer cursor and **consume** the click, so the
+     * node is not also selected. A badge without one stays transparent to the node underneath.
+     * Pressing a badge still drags the node either way.
+     */
+    onClick?: (event: PointerEvent, node: Node, badge: NodeBadge) => void
+}
+
 export interface NodeStyle {
     /**
      * The shape of the node, either a standard shape or a custom SVG path
@@ -341,6 +397,19 @@ export interface NodeStyle {
      * `textContent` (or escape it) rather than interpolating node data into a markup string.
      */
     html?: (node: Node) => HTMLElement | string | void
+    /**
+     * Small indicators pinned to the node's rim, independent of every other channel —
+     * see {@link NodeBadge}.
+     *
+     * Resolved like any other channel: the narrowest declaration wins outright rather than
+     * merging, so a node's own `badges` **replaces** whatever `nodeStyleMap` or
+     * `defaultNodeStyle` gave it. An empty array is the way to say "this one wears none";
+     * `undefined` renders no badge group at all.
+     *
+     * Four fit on a plain node, two on one with children (the expand affordance reserves the
+     * East corners). Anything beyond that collapses into a `+n` badge naming the rest.
+     */
+    badges?: ((node: Node) => NodeBadge[]) | NodeBadge[]
     /**
      * Callback to dynamically override style properties based on the node.
      *

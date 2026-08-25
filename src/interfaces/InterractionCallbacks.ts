@@ -4,7 +4,7 @@ import type { NodeSelection } from './GraphInteractions'
 import type { EdgeEditSession } from '../editing/EdgeEditSession'
 import type { NodeEditSession } from '../editing/NodeEditSession'
 import type { Note } from '../Note'
-import type { NodeStyle, PartialEdgeFullStyle } from './RendererOptions'
+import type { NodeBadge, NodeStyle, PartialEdgeFullStyle } from './RendererOptions'
 import type { FieldConfig } from '../utils/FormFactory'
 
 export interface InterractionCallbacks<TElement = unknown> {
@@ -60,6 +60,16 @@ export interface InterractionCallbacks<TElement = unknown> {
      * Called when a node is expanded (e.g., drilled down or pivoted).
      */
     onNodeExpansion?: (event: PointerEvent, edge: Edge, element: TElement) => void
+
+    /**
+     * Called when any of a node's rim badges is clicked, after that badge's own
+     * `onClick`. Use it for behaviour every badge shares; use {@link NodeBadge.onClick}
+     * for one badge's own action.
+     *
+     * Declaring it makes every badge take the pointer cursor and consume its click, so
+     * the node underneath is not also selected.
+     */
+    onBadgeClick?: (event: PointerEvent, node: Node, badge: NodeBadge, element: TElement) => void
 
     /**
      * Called when a node is dragged.

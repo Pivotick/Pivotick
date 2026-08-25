@@ -10,6 +10,7 @@ import { parseSvgIconMarkup } from '../../utils/SvgSanitizer'
 import { hasAllowedScheme, SAFE_IMAGE_SCHEMES } from '../../utils/urlSafety'
 import type { CustomNodeShape, GraphRendererOptions, ImageFit, NodeShape, NodeStyle } from '../../interfaces/RendererOptions'
 import { ClusterDrawer } from './ClusterDrawer'
+import { BadgeDrawer, nodeRimAnchor, resolveBadges } from './BadgeDrawer'
 import { forceConstrainParent } from '../../plugins/d3Forces/ForceConstrainParent'
 import { imageOff } from '../../ui/icons'
 d3Select.prototype.transition = d3Transition
@@ -20,6 +21,7 @@ export class NodeDrawer {
     public rendererOptions: GraphRendererOptions
     public graphSvgRenderer: GraphSvgRenderer
     public clusterDrawer: ClusterDrawer
+    public badgeDrawer: BadgeDrawer
     private renderCB?: GraphRendererOptions['renderNode']
 
     public constructor(rendererOptions: GraphRendererOptions, graph: Graph, graphSvgRenderer: GraphSvgRenderer) {
@@ -28,9 +30,14 @@ export class NodeDrawer {
         this.rendererOptions = rendererOptions
         this.renderCB = this.rendererOptions?.renderNode
         this.clusterDrawer = new ClusterDrawer(this)
+        this.badgeDrawer = new BadgeDrawer(graph)
     }
 
     public render(theNodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
+
+        // Resolved once and shared: badges need it on both paths, and it is the same value the
+        // default path would have resolved for itself.
+        const style = this.getNodeStyle(node)
 
         if (this.renderCB) {
             const fo = theNodeSelection.append('foreignObject')
@@ -90,11 +97,13 @@ export class NodeDrawer {
                         this.scheduleCollisionReheat()
                     }
                 }
+                // The card's real box is only known here, so the rim moves with it.
+                this.badgeDrawer.reanchor(node)
             }
             requestAnimationFrame(() => measureAndSize(0))
 
         } else {
-            this.defaultNodeRender(theNodeSelection, node)
+            this.genericNodeRender(theNodeSelection, style, node)
             requestAnimationFrame(() => {
                 const nodeElement = theNodeSelection.node()
                 if (!nodeElement) return
@@ -107,14 +116,18 @@ export class NodeDrawer {
                 }
 
                 if (this.rendererOptions.enableNodeExpansion && (!node.hasChildren() || !node.expanded)) {
-                    if (this.getNodeStyle(node).shape == 'square') {
+                    if (style.shape == 'square') {
                         node.setCircleRadius(Math.SQRT1_2 * Math.max(width, height)) // Is the only shape that has a coord. shift
                     } else {
                         node.setCircleRadius(0.5 * Math.max(width, height))
                     }
+                    // A custom shape only learns its real radius here, having been drawn at a guess.
+                    if (this.isCustomShape(style.shape as NodeShape)) this.badgeDrawer.reanchor(node)
                 }
             })
         }
+
+        this.badgeDrawer.render(theNodeSelection, node, resolveBadges(style, node))
 
         if (this.rendererOptions.enableNodeExpansion && node.hasChildren()) {
             if (node.expanded) {
@@ -162,11 +175,6 @@ export class NodeDrawer {
             })
     }
 
-    private defaultNodeRender(nodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
-        const style = this.getNodeStyle(node)
-        this.genericNodeRender(nodeSelection, style, node)
-    }
-
     /**
      * Fill whatever the node and the style map left unset from `defaultNodeStyle` —
      * from its `styleCb` first, then its literals. The default callback is the computed
@@ -196,6 +204,7 @@ export class NodeDrawer {
             imageFit: style?.imageFit ?? fromDefaultCb.imageFit ?? defaults.imageFit,
             text: style?.text ?? fromDefaultCb.text ?? defaults.text,
             html: style?.html ?? fromDefaultCb.html ?? defaults.html,
+            badges: style?.badges ?? fromDefaultCb.badges ?? defaults.badges,
         }
 
         return mergedStyle
@@ -235,6 +244,7 @@ export class NodeDrawer {
                 imageFit: style?.imageFit ?? styleFromStyleMap?.imageFit,
                 text: style?.text ?? styleFromStyleMap?.text,
                 html: style?.html ?? styleFromStyleMap?.html,
+                badges: style?.badges ?? styleFromStyleMap?.badges,
             }
         }
         return this.mergeNodeStylingOptions(styleFromNode, node)
@@ -460,6 +470,12 @@ export class NodeDrawer {
                     image.attr('x', -w / 2).attr('y', -h / 2).attr('width', w).attr('height', h)
                     renderedNode.attr('x', -w / 2).attr('y', -h / 2).attr('width', w).attr('height', h)
                     node.setCircleRadius(0.5 * Math.max(w, h))
+                    // The frame only takes its real proportions here; without this the rim
+                    // chrome stays pinned to the square guess and ends up over the picture.
+                    this.badgeDrawer.reanchor(node)
+                    if (this.rendererOptions.enableNodeExpansion && node.hasChildren()) {
+                        this.addExpandCollapseIcons(nodeSelection, node)
+                    }
                 }
                 probe.src = style.imagePath
             } else {
@@ -645,7 +661,6 @@ export class NodeDrawer {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private addExpandCollapseIcons(theNodeSelection: Selection<SVGGElement, Node, null, undefined>, _node: Node): void {
         const iconRadius = 8      // radius of the small circle
-        const padding = 2         // distance from node bounds
 
         const toggleExpand = (node: Node, expand: boolean) => {
             if (this.graph.UIManager.tooltip) this.graph.UIManager.tooltip.hide(node)
@@ -665,12 +680,14 @@ export class NodeDrawer {
             // Remove existing icons if any
             group.selectAll<SVGGElement, unknown>(':scope > .node-icon').remove()
 
-            const offset = (node.getCircleRadius() + padding) / Math.sqrt(2)
+            // Same rim maths as the badges, so the two agree on where a corner is — on a
+            // square or an image frame the circumscribed 45° point sits well inside the shape.
+            const anchor = nodeRimAnchor(nodes[i], node, !node.expanded ? 'ne' : 'se')
 
             const svgG = group.append('g')
                 .classed('node-icon', true)
                 .classed(!node.expanded ? 'expand-icon' : 'collapse-icon', true)
-                .attr('transform', !node.expanded ? `translate(${offset}, ${-(offset)})` : `translate(${offset}, ${offset})`)
+                .attr('transform', `translate(${anchor.x}, ${anchor.y})`)
             svgG
                 .append('title')
                 .text(!node.expanded ? 'Expand node' : 'Collapse nodes')
@@ -723,6 +740,18 @@ export class NodeDrawer {
                 .duration(250)
                 .attr('transform', `translate(${-offset}, ${-offset})`)
         })
+
+        // Badges ride to the NW rim with the shape, keeping their corners. Unlike the label
+        // they are not steered away from the bubble: a badge is small enough to sit over the
+        // boundary without hiding anything, and re-flowing would change what a corner means
+        // halfway through an interaction.
+        const badgeGroup = nodeGroup?.querySelector<SVGGElement>(':scope > .pvt-node-badges')
+        if (badgeGroup) {
+            d3Select(badgeGroup)
+                .transition()
+                .duration(250)
+                .attr('transform', `translate(${-offset}, ${-offset})`)
+        }
 
         // Move the label with the node. An inner label rides along centred on the
         // shape; a label floating outside the node is steered into the top-left
