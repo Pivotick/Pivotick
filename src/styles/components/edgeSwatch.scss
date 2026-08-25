@@ -1,0 +1,19 @@
+// The line key for one edge kind, shared by the filter panel's Relationships section
+// and the canvas legend's edge-scoped sections.
+//
+// The slot is fixed at 18px — the width a dash pattern and an arrowhead need to read at
+// all — and it is the *same* slot a node dot sits in, so a legend card stacking node and
+// edge sections keeps its labels on one line.
+.pvt-edge-swatch {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 18px;
+    height: 11px;
+
+    > svg {
+        display: block;
+        overflow: visible;
+    }
+}

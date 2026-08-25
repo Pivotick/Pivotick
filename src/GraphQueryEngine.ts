@@ -3,7 +3,7 @@ import type { Edge } from './Edge'
 import type { Graph } from './Graph'
 import type {
     GraphQueryEvents, GraphFilters, FilterFieldConfig, FilterFacet, FilterValue, FilterMatchMode,
-    EdgeFacet, FacetMatching,
+    EdgeFacet, EdgeFacetValue, FacetMatching,
 } from './interfaces/GraphQueryEngine'
 
 
@@ -14,7 +14,7 @@ const MANUALLY_HIDDEN_FILTER_KEY = 'manually_hidden'
  * facet may share a key name. An internal encoding: `setEdgeFilter` and friends add and
  * strip it, and it never reaches consumer code.
  */
-const EDGE_FILTER_PREFIX = 'edge:'
+export const EDGE_FILTER_PREFIX = 'edge:'
 export class GraphQueryEngine {
     private graph: Graph
     private listeners: Record<keyof GraphQueryEvents, Array<GraphQueryEvents[keyof GraphQueryEvents]>>
@@ -183,17 +183,24 @@ export class GraphQueryEngine {
      * options of its own. Synthetic stand-ins are skipped: they carry no data, and the
      * real edges they speak for are read directly.
      */
-    getEdgeFacetValues(key: string): string[] {
+    getEdgeFacetValues(key: string): EdgeFacetValue[] {
         const facet = this.edgeFacetFor(key)
-        const found = new Set<string>()
+        const found = new Map<string, { count: number, sample: Edge }>()
         for (const edge of this.realEdges()) {
             const raw = this.readEdgeValue(edge, key, facet)
             for (const value of Array.isArray(raw) ? raw : [raw]) {
                 if (value === null || value === undefined || value === '') continue
-                found.add(String(value))
+                const id = String(value)
+                const existing = found.get(id)
+                // The first edge carrying a value is its sample — what a swatch asks the
+                // renderer to resolve a style from.
+                if (existing) existing.count++
+                else found.set(id, { count: 1, sample: edge })
             }
         }
-        return [...found].sort()
+        return [...found]
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([value, { count, sample }]) => ({ value, count, sample }))
     }
 
     /** The graph's real edges — every synthetic stand-in excluded. */
@@ -232,6 +239,21 @@ export class GraphQueryEngine {
         this.apply()
 
         this.emit('filterAdd', key, value)
+        this.emit('filterChange', this.getFilters())
+    }
+
+    /**
+     * Replace the filters `ownedKeys` hold with `filters`, leaving every other key
+     * untouched. What the filter panel applies with: a key the panel's form does not
+     * own — a legend section's, a live edge layer's — must survive pressing its button.
+     */
+    replaceFilters(ownedKeys: string[], filters: GraphFilters) {
+        for (const key of ownedKeys) delete this.filters[key]
+        for (const [key, value] of Object.entries(filters)) {
+            if (value === undefined) continue
+            this.filters[key] = value
+        }
+        this.apply()
         this.emit('filterChange', this.getFilters())
     }
 
@@ -356,6 +378,11 @@ export class GraphQueryEngine {
 
         for (const [key, value] of Object.entries(this.filters)) {
             if (!key.startsWith(EDGE_FILTER_PREFIX)) continue
+
+            // An empty pick hides the layer outright. A node multiselect reads an empty
+            // list as "no constraint" — that is how the panel's form says *unset* — but a
+            // layer control writes exactly what stays on, so nothing has to mean nothing.
+            if (Array.isArray(value.value) && value.value.length === 0) return false
 
             const bareKey = key.slice(EDGE_FILTER_PREFIX.length)
             const facet = this.edgeFacetFor(bareKey)

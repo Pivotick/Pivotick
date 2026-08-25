@@ -146,6 +146,16 @@ export interface EdgeFacet {
     order?: number
 }
 
+/**
+ * One distinct value an edge facet reads off the graph, with how many real edges
+ * carry it and the first of them — the sample a line swatch resolves its style from.
+ */
+export interface EdgeFacetValue {
+    value: string
+    count: number
+    sample: Edge
+}
+
 /** `UI.filter` — how the filter panel is populated. */
 export interface FilterOptions {
     /**

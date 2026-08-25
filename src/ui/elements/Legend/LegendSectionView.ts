@@ -1,8 +1,11 @@
+import type { Edge } from '../../../Edge'
 import type { Node } from '../../../Node'
-import type { FilterFacet, FilterValue, GraphFilters } from '../../../interfaces/GraphQueryEngine'
-import type { LegendEntry, LegendSection } from '../../../interfaces/GraphUI'
+import { EDGE_FILTER_PREFIX } from '../../../GraphQueryEngine'
+import type { EdgeFacet, FilterFacet, FilterValue, GraphFilters } from '../../../interfaces/GraphQueryEngine'
+import type { LegendEntry, LegendScope, LegendSection } from '../../../interfaces/GraphUI'
 import { createHtmlElement } from '../../../utils/ElementCreation'
 import { FormFactory } from '../../../utils/FormFactory'
+import { createEdgeSwatch } from '../../components/EdgeSwatch'
 import { arrowDown, selectionInverse, show } from '../../icons'
 import type { UIManager } from '../../UIManager'
 
@@ -20,13 +23,21 @@ const AUTO_MAX_NODES = 5000
 /** Header text for the automatic section, whose dimension has no key name. */
 const AUTO_TITLE = 'Type'
 
-/** A legend entry with every default resolved, plus the node count behind it. */
+/** What a section keys on: nodes, or the graph's relations. */
+type LegendItem = Node | Edge
+
+/** A legend entry with every default resolved, plus the element count behind it. */
 interface ResolvedLegendEntry {
     id: string
     label: string
     color: string
-    predicate: (node: Node) => boolean
+    predicate: (item: LegendItem) => boolean
     count: number
+    /**
+     * For an `edge` section: an edge carrying this value, whose resolved style the line
+     * swatch is drawn from. Absent for declared entries, which bring their own colour.
+     */
+    sample?: Edge
 }
 
 /** The outcome of deriving entries from a dimension of the data. */
@@ -78,7 +89,7 @@ export class LegendSectionView {
     /** The filter key in use: the reserved one, or a declared facet's when adopted. */
     private filterKey: string
     /** The declared facet being driven, when the section's `key` names one. */
-    private adoptedFacet?: FilterFacet
+    private adoptedFacet?: FilterFacet | EdgeFacet
     private facetRegistered = false
     /** Set while the section writes its own filter, so it doesn't read the echo back. */
     private applyingFilter = false
@@ -118,6 +129,28 @@ export class LegendSectionView {
         return this.config.filterable !== false
     }
 
+    /** Which collection this section keys on, and therefore which facets it drives. */
+    private get scope(): LegendScope {
+        return this.config.scope === 'edge' ? 'edge' : 'node'
+    }
+
+    /** The key the query engine holds this section's filter under. */
+    private get engineKey(): string {
+        return this.scope === 'edge' ? EDGE_FILTER_PREFIX + this.filterKey : this.filterKey
+    }
+
+    /**
+     * The elements this section lists. A cluster's children live in its own subgraph,
+     * and a synthetic stand-in carries no data — so neither is listed here; the real
+     * edges a stand-in speaks for are counted directly.
+     */
+    private items(): LegendItem[] {
+        const graph = this.uiManager.graph
+        return this.scope === 'edge'
+            ? graph.getMutableEdges().filter(edge => !edge.representedEdges?.length)
+            : graph.getMutableNodes().filter(node => !node.isChild)
+    }
+
     /** The header text: declared, else derived from wherever the entries came from. */
     public get title(): string {
         return this.config.title ?? this.titleFallback
@@ -147,7 +180,7 @@ export class LegendSectionView {
 
         if (this.entries.length === 0) {
             // Nothing left to list: this section must not leave nodes hidden behind it.
-            if (hadHidden) this.uiManager.graph.queryEngine.removeFilter(this.filterKey)
+            if (hadHidden) this.removeOwnFilter(this.filterKey)
             this.hiddenIds.clear()
             this.releaseFacet()
             this.rows.clear()
@@ -173,7 +206,7 @@ export class LegendSectionView {
 
     /** Drop everything this section holds — its facet, and any filter it was driving. */
     public dispose() {
-        if (this.hiddenIds.size > 0) this.uiManager.graph.queryEngine.removeFilter(this.filterKey)
+        if (this.hiddenIds.size > 0) this.removeOwnFilter(this.filterKey)
         this.releaseFacet()
         this.hiddenIds.clear()
         this.entries = []
@@ -189,22 +222,17 @@ export class LegendSectionView {
         const declared = this.declaredEntries()
         if (declared?.length) {
             this.titleFallback = 'Legend'
-            return this.fromDeclared(declared, this.topLevelNodes())
+            return this.fromDeclared(declared, this.items())
         }
 
         const key = this.config.key
         if (key !== undefined) {
             this.titleFallback = FormFactory.niceLabelFromKey(key)
-            return this.derive(node => node.getData()?.[key], key, this.topLevelNodes()).entries
+            return this.derive(item => readItemData(item, key), key, this.items()).entries
         }
 
         this.titleFallback = AUTO_TITLE
         return this.deriveAutomatically()
-    }
-
-    /** The nodes of *this* graph — a cluster's children live in its own subgraph. */
-    private topLevelNodes(): Node[] {
-        return this.uiManager.graph.getMutableNodes().filter(node => !node.isChild)
     }
 
     /**
@@ -219,25 +247,29 @@ export class LegendSectionView {
      * is skipped.
      */
     private deriveAutomatically(): ResolvedLegendEntry[] {
-        const accessor = this.uiManager.graph.renderer?.getOptions()?.nodeTypeAccessor
+        const options = this.uiManager.graph.renderer?.getOptions()
+        const edgeScope = this.scope === 'edge'
+        const accessorName = edgeScope ? 'edgeTypeAccessor' : 'nodeTypeAccessor'
+        const accessor = edgeScope ? options?.edgeTypeAccessor : options?.nodeTypeAccessor
         if (typeof accessor !== 'function') {
             if (this.forced) {
                 this.warnOnce('auto-no-accessor',
-                    'Pivotick: this legend has nothing to list — declare `render.nodeTypeAccessor`, or give the section a `key` / `entries`.')
+                    `Pivotick: this legend has nothing to list — declare \`render.${accessorName}\`, or give the section a \`key\` / \`entries\`.`)
             }
             return []
         }
 
-        const nodes = this.topLevelNodes()
-        if (!this.forced && nodes.length > AUTO_MAX_NODES) {
+        const items = this.items()
+        if (!this.forced && items.length > AUTO_MAX_NODES) {
             this.warnOnce('auto-too-many-nodes',
-                `Pivotick: not deriving a legend for ${nodes.length} nodes (over ${AUTO_MAX_NODES}); declare 'UI.legend' to have one anyway.`)
+                `Pivotick: not deriving a legend for ${items.length} elements (over ${AUTO_MAX_NODES}); declare 'UI.legend' to have one anyway.`)
             return []
         }
 
         // Quiet: the blank-value and multi-colour warnings are for a legend the
         // consumer configured, not for one the library is merely considering.
-        const derived = this.derive(node => accessor(node), 'nodeTypeAccessor', nodes, !this.forced)
+        const read = accessor as (item: LegendItem) => string | undefined
+        const derived = this.derive(item => read(item), accessorName, items, !this.forced)
         if (this.forced) return derived.entries
         return this.explainsColors(derived) ? derived.entries : []
     }
@@ -268,19 +300,20 @@ export class LegendSectionView {
     }
 
     /** Declared entries: `key` (when given) supplies the predicate they don't carry. */
-    private fromDeclared(declared: LegendEntry[], nodes: Node[]): ResolvedLegendEntry[] {
+    private fromDeclared(declared: LegendEntry[], items: LegendItem[]): ResolvedLegendEntry[] {
         const withOrder = declared.map((entry, index) => ({ entry, order: entry.order ?? index }))
         withOrder.sort((a, b) => a.order - b.order)
 
         return withOrder.map(({ entry }) => {
             const key = this.config.key
-            const predicate = entry.predicate
+            const declaredPredicate = entry.predicate as ((item: LegendItem) => boolean) | undefined
+            const predicate = declaredPredicate
                 ?? (key !== undefined
-                    ? (node: Node) => this.matchesValue(node.getData()?.[key], entry.id)
+                    ? (item: LegendItem) => this.matchesValue(readItemData(item, key), entry.id)
                     : undefined)
             if (!predicate) {
                 this.warnOnce(`no-predicate-${entry.id}`,
-                    `Pivotick: legend entry '${entry.id}' has no predicate and its section declares no 'key', so it matches no node.`)
+                    `Pivotick: legend entry '${entry.id}' has no predicate and its section declares no 'key', so it matches nothing.`)
             }
             const safePredicate = this.guard(entry.id, predicate ?? (() => false))
             return {
@@ -290,7 +323,7 @@ export class LegendSectionView {
                 label: entry.label ?? entry.id,
                 color: entry.color,
                 predicate: safePredicate,
-                count: nodes.reduce((total, node) => total + (safePredicate(node) ? 1 : 0), 0),
+                count: items.reduce((total, item) => total + (safePredicate(item) ? 1 : 0), 0),
             }
         })
     }
@@ -307,18 +340,18 @@ export class LegendSectionView {
      * that is only being *considered* (see {@link deriveAutomatically}).
      */
     private derive(
-        read: (node: Node) => unknown,
+        read: (item: LegendItem) => unknown,
         label: string,
-        nodes: Node[],
+        items: LegendItem[],
         quiet = false
     ): DerivedEntries {
         const safeRead = this.guardRead(label, read)
-        const found = new Map<string, { color: string, count: number }>()
+        const found = new Map<string, { color: string, count: number, sample?: Edge }>()
         let blanks = 0
         let conflicted = false
 
-        for (const node of nodes) {
-            const raw = safeRead(node)
+        for (const item of items) {
+            const raw = safeRead(item)
             const values = Array.isArray(raw) ? raw : [raw]
             let represented = false
 
@@ -326,10 +359,12 @@ export class LegendSectionView {
                 if (value === null || value === undefined || value === '') continue
                 represented = true
                 const id = String(value)
-                const color = this.sampleColor(node)
+                const color = this.sampleColor(item)
                 const existing = found.get(id)
                 if (!existing) {
-                    found.set(id, { color, count: 1 })
+                    // The first element carrying a value is the one an edge swatch
+                    // resolves its dash and marker from, not just its colour.
+                    found.set(id, { color, count: 1, sample: this.scope === 'edge' ? item as Edge : undefined })
                     continue
                 }
                 existing.count++
@@ -347,27 +382,39 @@ export class LegendSectionView {
         }
 
         if (blanks > 0 && !quiet) {
+            const noun = this.scope === 'edge' ? 'edge' : 'node'
             this.warnOnce(`blank-${label}`,
-                `Pivotick: ${blanks} node(s) have no '${label}', so they have no legend entry and the legend cannot hide them.`)
+                `Pivotick: ${blanks} ${noun}(s) have no '${label}', so they have no legend entry and the legend cannot hide them.`)
         }
 
-        const entries = [...found].map(([id, { color, count }]) => ({
+        const entries = [...found].map(([id, { color, count, sample }]) => ({
             id,
             label: id,
             color,
-            predicate: (node: Node) => this.matchesValue(safeRead(node), id),
+            predicate: (item: LegendItem) => this.matchesValue(safeRead(item), id),
             count,
+            sample,
         }))
         return { entries, conflicted }
     }
 
-    /** The colour the renderer actually paints this node with, as a CSS colour. */
-    private sampleColor(node: Node): string {
-        const color = this.uiManager.graph.renderer?.getNodeStyle(node)?.color
+    /**
+     * The colour the renderer actually paints this element with, as a CSS colour — a
+     * node's fill, or an edge's stroke.
+     */
+    private sampleColor(item: LegendItem): string {
+        const renderer = this.uiManager.graph.renderer
+        const color = this.scope === 'edge'
+            ? renderer?.getEdgeStyle(item as Edge)?.strokeColor
+            : renderer?.getNodeStyle(item as Node)?.color
         if (typeof color === 'string') return color
+
+        const fallback = this.scope === 'edge'
+            ? 'var(--pvt-edge-stroke, #999)'
+            : 'var(--pvt-node-color, #007acc)'
         this.warnOnce('unresolved-color',
-            'Pivotick: the renderer returned an unresolved node colour; legend swatches fall back to the theme colour.')
-        return 'var(--pvt-node-color, #007acc)'
+            'Pivotick: the renderer returned an unresolved colour; legend swatches fall back to the theme colour.')
+        return fallback
     }
 
     /** Derived matching: a scalar equals the id, an array contains it (stringified). */
@@ -377,10 +424,10 @@ export class LegendSectionView {
     }
 
     /** Read a dimension without letting a consumer accessor's throw take the render down. */
-    private guardRead(label: string, read: (node: Node) => unknown): (node: Node) => unknown {
-        return (node: Node) => {
+    private guardRead(label: string, read: (item: LegendItem) => unknown): (item: LegendItem) => unknown {
+        return (item: LegendItem) => {
             try {
-                return read(node)
+                return read(item)
             } catch (error) {
                 this.warnOnce(`read-threw-${label}`,
                     `Pivotick: reading '${label}' for the legend threw; it lists nothing.`, error)
@@ -390,13 +437,13 @@ export class LegendSectionView {
     }
 
     /** Run a consumer predicate without letting a throw take the render down. */
-    private guard(id: string, predicate: (node: Node) => boolean): (node: Node) => boolean {
-        return (node: Node) => {
+    private guard(id: string, predicate: (item: LegendItem) => boolean): (item: LegendItem) => boolean {
+        return (item: LegendItem) => {
             try {
-                return predicate(node)
+                return predicate(item)
             } catch (error) {
                 this.warnOnce(`predicate-threw-${id}`,
-                    `Pivotick: legend entry '${id}' predicate threw; it will match no node.`, error)
+                    `Pivotick: legend entry '${id}' predicate threw; it will match nothing.`, error)
                 return false
             }
         }
@@ -420,17 +467,24 @@ export class LegendSectionView {
     private resolveFilterKey() {
         const previousKey = this.filterKey
         const key = this.config.key
-        const declared = key !== undefined
-            ? this.uiManager.graph.queryEngine.getFacets().find(facet => facet.key === key)
-            : undefined
+        const engine = this.uiManager.graph.queryEngine
+        const declared: FilterFacet | EdgeFacet | undefined = key === undefined
+            ? undefined
+            : this.scope === 'edge'
+                ? engine.getEdgeFacets().find(facet => facet.key === key)
+                : engine.getFacets().find(facet => facet.key === key)
+        // An edge facet's type is optional and defaults to the multiselect a layer is.
+        const declaredType = declared === undefined
+            ? undefined
+            : declared.type ?? (this.scope === 'edge' ? 'multiselect' : undefined)
 
-        if (declared && (declared.type === 'select' || declared.type === 'multiselect')) {
+        if (declared && (declaredType === 'select' || declaredType === 'multiselect')) {
             this.adoptedFacet = declared
             this.filterKey = declared.key
         } else {
             if (declared) {
                 this.warnOnce(`adopt-${declared.key}`,
-                    `Pivotick: the legend's key '${declared.key}' is a declared '${declared.type}' facet, which can't hold a list of values; the legend filters on its own instead.`)
+                    `Pivotick: the legend's key '${declared.key}' is a declared '${declaredType}' facet, which can't hold a list of values; the legend filters on its own instead.`)
             }
             this.adoptedFacet = undefined
             this.filterKey = this.reservedKey
@@ -440,8 +494,15 @@ export class LegendSectionView {
         // filter behind.
         if (previousKey !== this.filterKey) {
             this.releaseFacet(previousKey)
-            this.uiManager.graph.queryEngine.removeFilter(previousKey)
+            this.removeOwnFilter(previousKey)
         }
+    }
+
+    /** Drop the filter under a bare key, on whichever side of the engine it lives. */
+    private removeOwnFilter(key: string) {
+        const engine = this.uiManager.graph.queryEngine
+        if (this.scope === 'edge') engine.removeEdgeFilter(key)
+        else engine.removeFilter(key)
     }
 
     /**
@@ -451,22 +512,31 @@ export class LegendSectionView {
      */
     private claimFacet() {
         if (this.adoptedFacet || this.facetRegistered) return
-        this.uiManager.graph.queryEngine.registerFacet({
+        const engine = this.uiManager.graph.queryEngine
+        const predicate = (item: LegendItem, value: FilterValue) => {
+            const visible = new Set(this.toIdArray(value))
+            return !this.entries.some(entry => !visible.has(entry.id) && entry.predicate(item))
+        }
+        const facet = {
             key: this.reservedKey,
             label: this.title,
-            type: 'multiselect',
-            matchMode: 'exact',
-            predicate: (node: Node, value: FilterValue) => {
-                const visible = new Set(this.toIdArray(value))
-                return !this.entries.some(entry => !visible.has(entry.id) && entry.predicate(node))
-            },
-        })
+            type: 'multiselect' as const,
+            matchMode: 'exact' as const,
+        }
+
+        if (this.scope === 'edge') {
+            engine.registerEdgeFacet({ ...facet, predicate: (edge, value) => predicate(edge, value) })
+        } else {
+            engine.registerFacet({ ...facet, predicate: (node, value) => predicate(node, value) })
+        }
         this.facetRegistered = true
     }
 
     private releaseFacet(key: string = this.filterKey) {
         if (!this.facetRegistered || key !== this.reservedKey) return
-        this.uiManager.graph.queryEngine.unregisterFacet(this.reservedKey)
+        const engine = this.uiManager.graph.queryEngine
+        if (this.scope === 'edge') engine.unregisterEdgeFacet(this.reservedKey)
+        else engine.unregisterFacet(this.reservedKey)
         this.facetRegistered = false
     }
 
@@ -487,11 +557,10 @@ export class LegendSectionView {
 
         this.applyingFilter = true
         try {
-            if (this.hiddenIds.size === 0) engine.removeFilter(this.filterKey)
-            else engine.setFilter(this.filterKey, {
-                value: visible,
-                matchMode: this.adoptedFacet?.matchMode ?? 'exact',
-            })
+            const config = { value: visible, matchMode: this.adoptedFacet?.matchMode ?? 'exact' as const }
+            if (this.hiddenIds.size === 0) this.removeOwnFilter(this.filterKey)
+            else if (this.scope === 'edge') engine.setEdgeFilter(this.filterKey, config)
+            else engine.setFilter(this.filterKey, config)
         } finally {
             this.applyingFilter = false
         }
@@ -517,7 +586,7 @@ export class LegendSectionView {
     public syncFromFilters(filters: GraphFilters) {
         if (this.applyingFilter || !this.filterable || this.entries.length === 0) return
 
-        const config = filters[this.filterKey]
+        const config = filters[this.engineKey]
         if (config === undefined) {
             if (this.hiddenIds.size === 0) return
             this.hiddenIds.clear()
@@ -526,7 +595,10 @@ export class LegendSectionView {
         }
 
         const visible = this.toIdArray(config.value)
-        if (visible.length === 0 && this.adoptedFacet) {
+        // An empty list means "no constraint" only for a node multiselect, which is how
+        // the filter panel's form spells *unset*. An edge layer control writes exactly
+        // what stays on, so for an edge section it means every layer is off.
+        if (visible.length === 0 && this.adoptedFacet && this.scope !== 'edge') {
             this.hiddenIds.clear()
         } else {
             // Values the section knows nothing about are left alone — they belong to
@@ -585,6 +657,9 @@ export class LegendSectionView {
      * disabled) — a section's own key has no such limit.
      */
     private wouldEmptyAdopted(nextVisibleCount: number): boolean {
+        // Edge scope has no such limit: the engine reads an empty edge pick as "every
+        // layer off", which is exactly what the toggle means.
+        if (this.scope === 'edge') return false
         return this.adoptedFacet !== undefined && nextVisibleCount <= 0
     }
 
@@ -675,14 +750,32 @@ export class LegendSectionView {
         return button
     }
 
-    private renderEntry(entry: ResolvedLegendEntry): HTMLElement {
+    /**
+     * An entry's key: a dot for a node, a **line** for an edge — stroke colour, dash
+     * and marker as the renderer resolved them. Both sit in the same fixed-width slot,
+     * so a card stacking node and edge sections keeps its labels on one line.
+     */
+    private renderSwatch(entry: ResolvedLegendEntry): HTMLElement {
+        if (this.scope === 'edge') {
+            // A derived entry samples a real edge, so dash and marker come along; a
+            // declared one brought only a colour, so it gets a plain rule in it.
+            const style = entry.sample !== undefined
+                ? this.uiManager.graph.renderer?.getEdgeStyle(entry.sample)
+                : undefined
+            return createEdgeSwatch(style ?? { strokeColor: entry.color }, 'pvt-legend-swatch-line')
+        }
+
         const swatch = createHtmlElement('span', { class: 'pvt-legend-swatch' })
         // Via the CSSOM, not an interpolated style attribute: the colour comes from
         // consumer data, and this way the browser validates it (a bogus value is
         // dropped) instead of it landing in the attribute verbatim.
         swatch.style.setProperty('--pvt-legend-swatch-color', entry.color)
+        return swatch
+    }
+
+    private renderEntry(entry: ResolvedLegendEntry): HTMLElement {
         const children: HTMLElement[] = [
-            swatch,
+            this.renderSwatch(entry),
             createHtmlElement('span', { class: 'pvt-legend-label' }, [entry.label]),
         ]
         if (this.config.showCounts !== false) {
@@ -723,4 +816,12 @@ export class LegendSectionView {
         const showAll = this.block?.querySelector('.pvt-legend-action[data-action="show-all"]') as HTMLButtonElement | null
         if (showAll) showAll.disabled = this.hiddenIds.size === 0
     }
+}
+
+/**
+ * A data key off either kind of element. `Node` and `Edge` both carry `getData()`, and
+ * a section reads whichever collection its scope names.
+ */
+function readItemData(item: LegendItem, key: string): unknown {
+    return (item.getData() as Record<string, unknown> | undefined)?.[key]
 }

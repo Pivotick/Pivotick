@@ -145,9 +145,12 @@ export interface ModeRailOptions {
 /** Which canvas corner the legend is docked in. */
 export type LegendPosition = 'bottom-left' | 'bottom-right' | 'top-left' | 'top-right'
 
+/** Which collection a legend section keys on. @default 'node' */
+export type LegendScope = 'node' | 'edge'
+
 /**
- * One row in the legend: a swatch, a label, and how to tell which nodes it
- * stands for.
+ * One row in the legend: a swatch, a label, and how to tell which elements it
+ * stands for — nodes, or edges in an `edge`-scoped section.
  *
  * @example
  * ```js
@@ -163,13 +166,18 @@ export interface LegendEntry {
      * @default a prettified `id`
      */
     label?: string
-    /** The swatch colour — any CSS colour. Sampled from the renderer in derived mode. */
+    /**
+     * The swatch colour — any CSS colour. Sampled from the renderer in derived mode:
+     * the node's fill, or an edge's stroke in an `edge`-scoped section.
+     */
     color: string
     /**
-     * Which nodes this entry stands for. Defaults to matching `id` against
-     * `LegendOptions.key` on the node's data, when a `key` is declared.
+     * Which elements this entry stands for. Defaults to matching `id` against
+     * `LegendOptions.key` on the element's data, when a `key` is declared.
+     *
+     * Receives a `Node`, or an `Edge` when the section declares `scope: 'edge'`.
      */
-    predicate?: (node: Node) => boolean
+    predicate?: ((node: Node) => boolean) | ((edge: Edge) => boolean)
     /** Display order, ascending. @default declaration (or first-seen) order */
     order?: number
 }
@@ -183,6 +191,19 @@ export interface LegendSection {
     /** @default true when the block is present */
     enabled?: boolean
     /**
+     * Which collection this section keys on. `'edge'` lists the graph's relation
+     * kinds with a **line** swatch — stroke colour, dash and marker as the renderer
+     * resolved them — and its toggles hide edge *layers*: the nodes stay put, and so
+     * do the layout, the selection and the camera.
+     *
+     * An `edge` section filters whether or not `UI.filter.edgeFacets` declares its
+     * key: given one it drives that facet, so the panel and the legend are two views
+     * of one filter; without one it reserves a facet of its own.
+     *
+     * @default 'node'
+     */
+    scope?: LegendScope
+    /**
      * Stable identity: the section's own filter key (`__legend:<id>`) and the
      * `section` field of the `legendToggle` event.
      * @default `key`, else `section-<index>`
@@ -194,9 +215,10 @@ export interface LegendSection {
      */
     title?: string
     /**
-     * Derived mode: the node-data key whose distinct values become the entries,
-     * each swatch sampled from the renderer's resolved node style. Also supplies
-     * the default predicate when `entries` are declared without one.
+     * Derived mode: the data key whose distinct values become the entries, each
+     * swatch sampled from the renderer's resolved style. Read off nodes, or off edges
+     * when {@link scope} is `'edge'`. Also supplies the default predicate when
+     * `entries` are declared without one.
      */
     key?: string
     /**
@@ -208,7 +230,7 @@ export interface LegendSection {
     collapsible?: boolean
     /** Start collapsed. @default false */
     collapsed?: boolean
-    /** Show a per-entry node count. @default true */
+    /** Show a per-entry element count. @default true */
     showCounts?: boolean
     /** Clicking an entry filters the graph. `false` renders a pure key. @default true */
     filterable?: boolean

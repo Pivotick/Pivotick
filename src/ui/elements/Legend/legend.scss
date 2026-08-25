@@ -221,10 +221,15 @@
     color: var(--pvt-text-color-6);
     transition: background-color 0.06s ease;
 
+    // One 18px slot for every section, whatever it keys on: a node dot is 11px and
+    // centres in it, an edge line needs the full width for its dash and marker to read.
+    // Sharing the slot is what keeps labels aligned down a card that stacks both.
     .pvt-legend-swatch {
         flex: none;
+        box-sizing: content-box;
         width: 11px;
         height: 11px;
+        margin: 0 calc((18px - 11px) / 2);
         border-radius: 50%;
         // The fallback covers a colour the browser rejected as invalid (the value
         // comes from consumer data — see Legend.renderEntry).
@@ -267,6 +272,11 @@
 .pvt-legend-entry.pvt-legend-hidden {
     .pvt-legend-swatch {
         background-color: transparent;
+    }
+
+    // A line has no fill to hollow out, so it fades instead.
+    .pvt-legend-swatch-line {
+        opacity: 0.35;
     }
 
     .pvt-legend-label,
