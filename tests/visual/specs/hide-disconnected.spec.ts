@@ -88,7 +88,10 @@ test.describe('declared in the options', () => {
         await openViewFlyout(page)
 
         await expect(orphanSwitch(page)).toHaveAttribute('aria-pressed', 'true')
-        await expect(orphanNote(page)).toHaveText('1 hidden')
+        // A bare count on the row — the words are in its tooltip, because the row has no
+        // width for them (see syncOrphanNote).
+        await expect(orphanNote(page)).toHaveText('1')
+        await expect(orphanNote(page)).toHaveAttribute('title', '1 unconnected node hidden')
     })
 })
 
@@ -103,7 +106,7 @@ test.describe('the View flyout switch', () => {
         await orphanSwitch(page).click()
         await expectDrawnNodes(page, CONNECTED)
         expect(await harness(page, 'hideDisconnectedOn')).toBe(true)
-        await expect(orphanNote(page)).toHaveText('1 hidden')
+        await expect(orphanNote(page)).toHaveText('1')
 
         await orphanSwitch(page).click()
         await expectDrawnNodes(page, ALL)

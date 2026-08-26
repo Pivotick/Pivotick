@@ -142,10 +142,16 @@ export class ViewFlyout extends Flyout {
         this.track(() => engine.off('filterChange', sync))
     }
 
-    /** How many nodes the switch is hiding, on the row itself. Blank while it hides none. */
+    /**
+     * How many nodes the switch is hiding, on the row itself. Blank while it hides none.
+     * The bare count is what fits: the row has 238px, and the label plus "1 hidden" needs
+     * 253 — so the words go in the note's own tooltip, and the number reads like the
+     * filter panel's layer counts.
+     */
     private syncOrphanNote() {
         const hidden = this.uiManager.graph.queryEngine.getDisconnectedNodeCount()
-        this.toggleNote('orphans', hidden > 0 ? `${hidden} hidden` : '')
+        if (hidden === 0) return this.toggleNote('orphans', '')
+        this.toggleNote('orphans', String(hidden), `${hidden} unconnected ${hidden > 1 ? 'nodes' : 'node'} hidden`)
     }
 
     /* ---------- background ---------- */

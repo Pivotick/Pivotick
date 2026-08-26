@@ -98,10 +98,15 @@ export abstract class Flyout extends UIComponent {
             </button>`
     }
 
-    /** Write a switch row's note, or clear it with an empty string. */
-    protected toggleNote(id: string, text: string) {
+    /**
+     * Write a switch row's note, or clear it with an empty string. A note is short enough
+     * to sit on the row — a count, not a sentence; `title` is where the sentence goes.
+     */
+    protected toggleNote(id: string, text: string, title = '') {
         const note = this.query<HTMLElement>(`.pvt-flyout-toggle-note[data-note="${id}"]`)
-        if (note) note.textContent = text
+        if (!note) return
+        note.textContent = text
+        note.title = title
     }
 
     /**

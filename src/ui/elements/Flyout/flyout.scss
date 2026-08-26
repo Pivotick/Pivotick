@@ -147,6 +147,9 @@
         margin-left: auto;
         color: var(--pvt-text-color-3);
         font-size: 11px;
+        // Same treatment as the filter panel's layer counts, so a count reads as a count
+        // wherever it appears.
+        font-variant-numeric: tabular-nums;
         white-space: nowrap;
         flex: none;
 
