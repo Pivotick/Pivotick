@@ -29,6 +29,13 @@ confined to the physics presets — see **Breaking** under *The layout tunes its
   differs in weight and border as well as colour, and a hidden node's whole row recedes. A
   cluster gets one row and a **`Children`** count instead: its children are nodes of another
   graph, so `Visibility` and `Degree` would both be answering about the wrong one.
+- **The Edges tab gets the same `Visibility` gutter**, because a hidden edge that read as
+  present was the whole complaint. An edge reads `filtered` when its own layer is switched
+  off and **`endpoint`** when an end of it has left the canvas — filtered out, or inside a
+  collapsed cluster. The two reasons are independent, and `endpoint` is reported first: while
+  a node it touches is gone, switching the layer back on cannot bring the edge back. An edge
+  is never `excluded` — there is no hide-this-edge action. Edge columns then read as a
+  sentence behind that gutter: `Visibility`, `Source`, `Label`, `Target`.
 - **The selection is shared, both ways.** Click, `Ctrl`-click, `Shift`-range and **Select all**
   build the same selection the sidebar's bulk actions read; rubber-band a group on the canvas
   and the matching rows are marked and scrolled to. Double-click centres the canvas on a row,
@@ -189,8 +196,9 @@ confined to the physics presets — see **Breaking** under *The layout tunes its
   the professional tools do: vis-network carries `hidden` *and* a separate per-edge `physics`,
   Sigma's `edgeReducer` never reaches the layout, Cytoscape and KeyLines move only on an
   explicit layout call. A hidden relation is a display decision, not a layout one.
-- **A node left with no visible edges stays visible.** Hiding it would be a node-filter
-  decision, and an edge facet never takes one.
+- **A node left with no visible edges stays visible.** Hiding it is a node-filter decision,
+  and an edge facet never takes one — see `UI.filter.hideDisconnected` below for the opt-in
+  that does, on the node side, where it can admit that it moves the graph.
 - **The filter panel grew a live `Relationships` section**: one toggle per relation kind, each
   with a **line** swatch — stroke colour, dash and marker as the renderer resolved them — and
   each applying at once rather than waiting behind the panel's apply button, since the legend
@@ -221,6 +229,40 @@ confined to the physics presets — see **Breaking** under *The layout tunes its
   `opacity: ...?.color` typo; it still resolves only four of the nine `EdgeStyle` properties.
 - **An empty edge pick means every layer off**, unlike a node multiselect where an empty list is
   how the panel spells *unset* — there is nothing else an emptied layer list could mean.
+
+### Nodes with nothing left attached
+
+- **New `UI.filter.hideDisconnected`** hides a node once it has no **visible** edge — the
+  orphans an edge-layer toggle strands. Counted after the layers *and* the node filters have
+  had their say, so it reflects what is actually drawn rather than what the data holds. A
+  self-loop counts as a relation; a note pinned to a node does not.
+- **The View flyout carries the same switch — *Hide unconnected* — on every graph**, whether
+  or not the option is declared, so a user can clear the orphans a layer toggle left or put
+  back the ones you hid. While it is hiding, the row reports how many.
+- **This is the one control in the release that moves the graph, and it says so.** A hidden
+  node leaves the simulation, so the rest re-settle. That is exactly why it is a *node* rule
+  and not something the layer control does for you: an edge layer stays a lens, and anyone
+  who wants a tidy canvas instead opts in. Off by default.
+- **Two things it deliberately does not do.** A cluster's interior is left alone — clusters
+  routinely group nodes with no relations between them, so applying the rule inside one would
+  open an empty box. And nothing is protected: switch every layer off and nothing is
+  connected, so nothing is drawn, with the switch as the way back.
+- **New on the query engine:** `setHideDisconnected()`, `isHideDisconnected()`,
+  `getDisconnectedNodeCount()`, and **`reapply()`** — filters are applied when a *filter*
+  changes, not when the data does, so a node that has just been given the edge it was
+  missing stays hidden until something recomputes. Worth knowing before you call it:
+  re-deriving visibility undoes a manual `graph.hideNode()`, which nothing remembers;
+  `queryEngine.excludeNode()` is the hide that survives, and it is what the context menu and
+  the bulk actions already use.
+- **Filters now apply before the first layout**, not after it: a node the filters mean to
+  hide never reaches the canvas and is not in the graph the opening fit frames.
+  `setVisibleNodes` gained a `notify` parameter (defaulted, so nothing changes for existing
+  callers) for that first silent pass, and one predicate now answers "would this edge be
+  drawn" for both the commit path and the query engine's look-ahead.
+- **Flyout switch rows grow instead of clipping.** They were a fixed 36px, which cut a
+  wrapping label in half; they are `min-height` now, and `.pvt-flyout-toggle-note` is a new
+  public hook for a row that reports on its own effect (a count, with the sentence in its
+  `title`).
 
 ### Badges on a node's rim
 
