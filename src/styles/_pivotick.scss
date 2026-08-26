@@ -43,7 +43,7 @@
             transparent var(--pvt-graph-grid-pitch));
 
     // Dots pattern
-    &.bg-dots {
+    &.pvt-bg-dots {
         background-image:
             radial-gradient(circle, var(--pvt-graph-grid-color) var(--pvt-graph-grid-dot-radius, 1.5px), transparent var(--pvt-graph-grid-dot-radius, 1.5px)),
             radial-gradient(circle, var(--pvt-graph-grid-color) var(--pvt-graph-grid-dot-radius, 1.5px), transparent var(--pvt-graph-grid-dot-radius, 1.5px));
@@ -52,12 +52,12 @@
     }
 
     // No pattern
-    &.bg-none {
+    &.pvt-bg-none {
         background-image: none;
     }
 
     // Custom background image
-    &.bg-image {
+    &.pvt-bg-image {
         background-image: var(--pvt-bg-image-url, none);
         background-size: var(--pvt-bg-image-size, cover);
         background-repeat: var(--pvt-bg-image-repeat, no-repeat);

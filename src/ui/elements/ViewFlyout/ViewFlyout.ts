@@ -17,16 +17,19 @@ const PATTERNED_MODES = ['grid', 'dots']
 /**
  * The swatch row offered for both the canvas and the grid colour. The empty
  * `color` is the reset swatch: it drops the override and hands the colour back
- * to the theme.
+ * to the theme. Neutrals only — the theme's own accent is where the custom
+ * picker beside them starts, so it costs the row no slot.
  */
 const COLOR_SWATCHES: Array<{ color: string, title: string, cls?: string }> = [
     { color: '', title: 'Theme default', cls: 'swatch-default' },
     { color: '#ffffff', title: 'White' },
-    { color: '#e3f2fd', title: 'Light blue' },
-    { color: '#f3e5f5', title: 'Light purple' },
+    { color: '#d4d4d4', title: 'Light grey' },
     { color: '#525252', title: 'Dark grey' },
     { color: '#171717', title: 'Black' },
 ]
+
+/** A colour input takes a plain hex and nothing else. */
+const HEX = /^#[0-9a-f]{6}$/i
 
 /**
  * The View flyout: the canvas background card and the canvas-behaviour
@@ -57,16 +60,16 @@ export class ViewFlyout extends Flyout {
             + `
             <div class="pvt-viewflyout-card">
                 <div class="pvt-viewflyout-card-head">
-                    <span class="pvt-viewflyout-card-title"><span class="pvt-flyout-icon">${grid}</span>Background</span>
+                    <span class="pvt-viewflyout-card-title">Background</span>
                 </div>
                 <div class="pvt-viewflyout-btn-group">${modes}</div>
                 <div class="pvt-viewflyout-swatch-label">Canvas colour</div>
                 <div class="pvt-viewflyout-swatches" data-swatches="canvas">${swatches}
-                    <input type="color" class="pvt-viewflyout-color-picker" value="#ffffff" title="Custom canvas colour">
+                    <input type="color" class="pvt-viewflyout-color-picker" title="Custom canvas colour">
                 </div>
                 <div class="pvt-viewflyout-swatch-label" data-pattern-only>Grid colour</div>
                 <div class="pvt-viewflyout-swatches" data-swatches="grid" data-pattern-only>${swatches}
-                    <input type="color" class="pvt-viewflyout-color-picker" value="#cccccc" title="Custom grid colour">
+                    <input type="color" class="pvt-viewflyout-color-picker" title="Custom grid colour">
                 </div>
                 <div class="pvt-viewflyout-bg-toggles" data-pattern-only>
                     ${this.toggleRow('highlight', grid, 'Highlight grid', 'Make the background grid lines more visible.')}
@@ -120,18 +123,18 @@ export class ViewFlyout extends Flyout {
      * only mean something under a pattern, the image inputs only under `image`.
      */
     private wireBackgroundMode(canvas: HTMLElement) {
-        const buttons = this.panel?.querySelectorAll<HTMLButtonElement>('.pvt-viewflyout-btn-group-btn[data-bg]')
-        const patternOnly = this.panel?.querySelectorAll<HTMLElement>('[data-pattern-only]')
+        const buttons = this.queryAll<HTMLButtonElement>('.pvt-viewflyout-btn-group-btn[data-bg]')
+        const patternOnly = this.queryAll('[data-pattern-only]')
         const image = this.query<HTMLElement>('.pvt-viewflyout-bg-image')
 
         const apply = (mode: string) => {
-            canvas.classList.remove('bg-dots', 'bg-none', 'bg-image')
-            if (mode !== 'grid') canvas.classList.add(`bg-${mode}`)
-            patternOnly?.forEach(el => { el.hidden = !PATTERNED_MODES.includes(mode) })
+            canvas.classList.remove('pvt-bg-dots', 'pvt-bg-none', 'pvt-bg-image')
+            if (mode !== 'grid') canvas.classList.add(`pvt-bg-${mode}`)
+            for (const el of patternOnly) el.hidden = !PATTERNED_MODES.includes(mode)
             if (image) image.hidden = mode !== 'image'
         }
 
-        buttons?.forEach(button => {
+        buttons.forEach(button => {
             this.listen(button, 'click', () => {
                 buttons.forEach(other => other.setAttribute('aria-pressed', String(other === button)))
                 apply(button.dataset.bg ?? 'grid')
@@ -163,10 +166,24 @@ export class ViewFlyout extends Flyout {
 
         const picker = container.querySelector<HTMLInputElement>('.pvt-viewflyout-color-picker')
         if (!picker) return
+        // Open the picker on the theme's accent: the colour worth reaching for,
+        // reachable without spending a swatch slot on it.
+        const accent = this.themeAccent()
+        if (accent) picker.value = accent
         this.listen(picker, 'input', () => {
             highlight(null)
             canvas.style.setProperty(property, picker.value)
         })
+    }
+
+    /**
+     * `--pvt-theme-primary` as a hex, or `null` if the theme states it in a form
+     * a colour input would refuse (a function, a named colour, an alpha).
+     */
+    private themeAccent(): string | null {
+        if (!this.panel) return null
+        const accent = getComputedStyle(this.panel).getPropertyValue('--pvt-theme-primary').trim()
+        return HEX.test(accent) ? accent : null
     }
 
     /**

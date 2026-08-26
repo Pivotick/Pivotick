@@ -1,30 +1,21 @@
 // View flyout — the canvas background card. The panel chrome, the section labels
-// and the switch rows are the shared `pvt-flyout-*` styles, see Flyout/flyout.scss.
+// and the switch rows are the shared `pvt-flyout-*` styles, see Flyout/flyout.scss;
+// the card itself is the Physics flyout's card, so the two rails read alike.
 .pvt-viewflyout-card {
     margin: 8px 0;
     padding: 11px;
     border-radius: 10px;
-    background-color: var(--pvt-bg-color-1);
+    background-color: var(--pvt-bg-color-4);
     border: 1px solid var(--pvt-bg-color-5);
 }
 
 .pvt-viewflyout-card-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
     margin-bottom: 11px;
 
     .pvt-viewflyout-card-title {
-        display: flex;
-        align-items: center;
-        gap: 7px;
         font-size: 13px;
         font-weight: 600;
         color: var(--pvt-text-color-6);
-
-        .pvt-flyout-icon svg {
-            color: var(--pvt-theme-primary);
-        }
     }
 }
 
@@ -86,25 +77,32 @@
     flex: none;
     border-radius: 50%;
     border: 2px solid var(--pvt-chrome-border);
-    background: var(--swatch);
+    // Keep the swatch colour off the border so a transparent one shows the card
+    // through — that's the gap the selected ring needs.
+    background: var(--swatch) padding-box;
     cursor: pointer;
 
     &:hover {
         border-color: var(--pvt-text-color-4);
     }
 
+    // The ring sits outside a gap rather than on the rim: the accent swatch is
+    // itself the ring's colour, and a primary rim on primary reads as nothing.
     &.active {
-        border-color: var(--pvt-theme-primary);
-        box-shadow: 0 0 0 1px var(--pvt-theme-primary);
+        border-color: transparent;
+        box-shadow: 0 0 0 2px var(--pvt-theme-primary);
     }
 
     // The reset swatch stands for "whatever the theme says", so it shows two
     // tones rather than a colour of its own.
     &.swatch-default {
-        background: linear-gradient(135deg, var(--pvt-bg-color-0) 48%, var(--pvt-chrome-border) 52%);
+        background: linear-gradient(135deg, var(--pvt-bg-color-0) 48%, var(--pvt-chrome-border) 52%) padding-box;
     }
 }
 
+// A hue wheel for a rim, so the custom-colour control is not mistaken for a
+// seventh swatch. The chosen colour is the disc inside it: the native swatch is
+// inset (webkit) or holds a transparent border (gecko) to let the rim through.
 .pvt-viewflyout-color-picker {
     width: 22px;
     height: 22px;
@@ -113,12 +111,18 @@
     border: none;
     border-radius: 50%;
     overflow: hidden;
-    background: var(--pvt-bg-color-2);
+    background: conic-gradient(
+        hsl(0 85% 60%), hsl(60 85% 60%), hsl(120 85% 60%),
+        hsl(180 85% 60%), hsl(240 85% 60%), hsl(300 85% 60%), hsl(360 85% 60%));
     cursor: pointer;
 
-    &::-webkit-color-swatch-wrapper { padding: 0; }
-    &::-webkit-color-swatch { border: 2px solid var(--pvt-chrome-border); border-radius: 50%; }
-    &::-moz-color-swatch { border: 2px solid var(--pvt-chrome-border); border-radius: 50%; }
+    &::-webkit-color-swatch-wrapper { padding: 4px; }
+    &::-webkit-color-swatch { border: none; border-radius: 50%; }
+    &::-moz-color-swatch {
+        border: 4px solid transparent;
+        border-radius: 50%;
+        background-clip: padding-box;
+    }
 }
 
 // The highlight switch sits inside the card, so it loses the full-width row's

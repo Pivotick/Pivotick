@@ -68,6 +68,11 @@ export abstract class Flyout extends UIComponent {
         return this.panel?.querySelector<T>(selector) ?? null
     }
 
+    /** `querySelectorAll`, scoped to this flyout's panel. Empty before mount. */
+    protected queryAll<T extends HTMLElement>(selector: string): T[] {
+        return [...this.panel?.querySelectorAll<T>(selector) ?? []]
+    }
+
     /** The flyout's title row. */
     protected headerRow(icon: string, label: string): string {
         return `<div class="pvt-flyout-header"><span class="pvt-flyout-icon">${icon}</span>${label}</div>`
