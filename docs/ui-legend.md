@@ -175,6 +175,24 @@ whose `key` names a declared `select` / `multiselect` facet
 [drives that facet](#sharing-a-filter-with-the-panel) instead, and its siblings are
 unaffected.
 
+### Keying edges instead of nodes
+
+A section declaring `scope: 'edge'` lists the graph's **relation kinds** with a *line*
+swatch — stroke colour, dash and marker as the renderer resolved them — and its toggles
+hide edge layers rather than nodes. It sits beside node-scoped sections in the same card
+and leaves them untouched. See [Edge layers](/edge-layers#legend) for the whole feature.
+
+```ts
+UI: {
+    legend: {
+        sections: [
+            { key: 'type', title: 'Element' },
+            { key: 'kind', title: 'Relationship', scope: 'edge' },
+        ],
+    },
+}
+```
+
 ### Naming the dimension you style by
 
 A section with neither `key` nor `entries` is the dimension you already declared as

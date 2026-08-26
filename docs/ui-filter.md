@@ -19,6 +19,12 @@ const options = {
 }
 ```
 
+::: tip Filtering edges, not nodes
+Everything on this page selects **nodes**. To filter *edges* — hiding a whole relation
+kind without moving the graph — declare `UI.filter.edgeFacets` instead; they reuse the
+same facet vocabulary and are documented under [Edge layers](/edge-layers).
+:::
+
 ## Auto-derivation (the default)
 
 With no `UI.filter` at all, the panel walks every node's data keys, collects the

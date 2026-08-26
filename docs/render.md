@@ -21,6 +21,8 @@ All styles defined here apply only when `render.type` is set to `svg`.
 | `markerStyleMap`   | `Record<string, MarkerStyle>`                                          | [defaultMarkerStyle](/api/html/variables/defaultMarkerStyleMap.html) | Custom styles for edge markers (`'arrow'`, `'diamond'`, etc.). See [`MarkerStyle`](/api/html/interfaces/RendererOptions.MarkerStyle.html) |
 | `nodeTypeAccessor` | `(node: Node) => string \| undefined`                                  | `undefined`                                                              | Function to access the type of a node, used with `nodeStyleMap`.                                                                         |
 | `nodeStyleMap`     | `Record<string, NodeStyle>`                                            | `{}`                                                                     | Maps node types (from `nodeTypeAccessor`) to styles.                                                                                     |
+| `edgeTypeAccessor` | `(edge: Edge) => string \| undefined`                                  | `undefined`                                                              | The *kind* of an edge, used with `edgeStyleMap` and as a [layer](/edge-layers) key.                                                       |
+| `edgeStyleMap`     | `Record<string, Partial<EdgeStyle>>`                                   | `undefined`                                                              | Maps edge kinds (from `edgeTypeAccessor`) to styles. See [Edge layers](/edge-layers).                                                    |
 | `minZoom`          | `number`                                                               | `0.1`                                                                    | Minimum zoom level.                                                                                                                      |
 | `maxZoom`          | `number`                                                               | `10`                                                                     | Maximum zoom level.                                                                                                                      |
 | `zoomEnabled`      | `boolean`                                                              | `true`                                                                   | Enable zoom.                                                                                                                             |
@@ -35,6 +37,8 @@ Here's a quick rundown:
 - **`renderNode`** and **`renderLabel`** let you fully customize how nodes and labels are drawn (you can return HTML or text).
 - **`nodeTypeAccessor`** + **`nodeStyleMap`** allow dynamic styling based on each element's type.
 - **`defaultNodeStyle`**, **`defaultEdgeStyle`**, and **`defaultLabelStyle`** define the base appearance for all elements.
+- **`edgeTypeAccessor`** + **`edgeStyleMap`** are the edge counterparts, and they double as
+  the key a relation layer is switched off by — see [Edge layers](/edge-layers).
 :::
 
 ::: warning `renderNode` content must be self-sizing

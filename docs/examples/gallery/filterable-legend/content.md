@@ -39,6 +39,11 @@ together, so hiding `api` and `dmz` leaves what is neither. `zone` declares its 
 swatch colours, because the canvas encodes `type` in its colours and a sampled swatch
 for `zone` would only be a coincidence.
 
+A section can key **edges** instead of nodes, too — `scope: 'edge'` lists the graph's
+relation kinds with a line swatch and hides a whole layer when you click one. That needs
+edges that come in kinds, so it lives on the
+[Edge layers](/examples/gallery/edge-layers/content) card.
+
 <script setup>
 import { shallowRef } from 'vue'
 import { data, options, watchLegend, legendByType, legendByTier, legendByTypeAndZone, removeLegend } from './options.js'
