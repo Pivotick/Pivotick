@@ -28,7 +28,7 @@ interface ToolSpec {
 const MODE_SHORTCUT: Record<PointerMode, string> = { select: 'V', create: 'C' }
 
 /**
- * The B3 contextual tool panel, anchored beside the mode rail. It subscribes to
+ * The contextual tool panel, anchored beside the mode rail. It subscribes to
  * {@link UIManager.modeStore} and shows the tool-set for the active pointer-mode:
  * Select (Pointer / Lasso / Path-select SOON / Invert) or Create (Add-node SOON /
  * Add-edge / Add-note / Edit). Every tool binds to the pre-existing leaf logic —

@@ -5,7 +5,7 @@ import { cursor, addCircle, show, atom, sparkles, compass, lassoTool, graphEdgeI
 import './moderail.scss'
 
 /**
- * The B3 left-edge mode rail. Holds the four exclusive modes — the Select and
+ * The left-edge mode rail. Holds the four exclusive modes — the Select and
  * Create pointer-modes plus the View and Physics settings flyouts — followed by
  * an optional data zone of not-yet-shipped modes (Explore, Enrich) rendered as
  * disabled "SOON" affordances, each gated on {@link GraphUI.modeRail} and hidden

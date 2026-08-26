@@ -1,4 +1,4 @@
-// B3 top bar — Search / Filter on the left, Notes + undo/redo pushed right.
+// Top bar — Search / Filter on the left, Notes + undo/redo pushed right.
 // A transparent, click-through strip overlaying the top of the canvas (see
 // _layout.scss): the graph renders behind it and the pills float over it.
 
@@ -41,7 +41,7 @@
                     font-size: 0.8em;
 
                     // Active-filter status: accent count + noun, then a muted
-                    // "· N hidden" — quiet enough to sit in the B3 chrome.
+                    // "· N hidden" — quiet enough to sit in the chrome.
                     .pvt-filter-status {
                         display: inline-flex;
                         flex-direction: row;

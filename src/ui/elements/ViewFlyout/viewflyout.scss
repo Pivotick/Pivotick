@@ -1,0 +1,149 @@
+// View flyout — the canvas background card's own controls. The panel chrome, the
+// card, the segmented pattern picker and the switch rows are all shared
+// `pvt-flyout-*` styles; see Flyout/flyout.scss.
+
+// Switch rows follow this card, unlike the Physics rail's, which end their panel.
+.pvt-flyout-view .pvt-flyout-card {
+    margin-bottom: 8px;
+}
+
+.pvt-viewflyout-swatch-label {
+    margin-bottom: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--pvt-text-color-4);
+
+    &[hidden] { display: none; }
+}
+
+.pvt-viewflyout-swatches {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 6px;
+    padding: 0 2px;
+
+    &[hidden] { display: none; }
+}
+
+.pvt-viewflyout-swatch {
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    flex: none;
+    border-radius: 50%;
+    border: 2px solid var(--pvt-chrome-border);
+    // Keep the swatch colour off the border so a transparent one shows the card
+    // through — that's the gap the selected ring needs.
+    background: var(--swatch) padding-box;
+    cursor: pointer;
+
+    &:hover {
+        border-color: var(--pvt-text-color-4);
+    }
+
+    // The ring sits outside a gap rather than on the rim: the accent swatch is
+    // itself the ring's colour, and a primary rim on primary reads as nothing.
+    &.active {
+        border-color: transparent;
+        box-shadow: 0 0 0 2px var(--pvt-theme-primary);
+    }
+
+    // The reset swatch stands for "whatever the theme says", so it shows two
+    // tones rather than a colour of its own.
+    &.swatch-default {
+        background: linear-gradient(135deg, var(--pvt-bg-color-0) 48%, var(--pvt-chrome-border) 52%) padding-box;
+    }
+}
+
+// A hue wheel for a rim, so the custom-colour control is not mistaken for a
+// seventh swatch. The chosen colour is the disc inside it: the native swatch is
+// inset (webkit) or holds a transparent border (gecko) to let the rim through.
+.pvt-viewflyout-color-picker {
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    flex: none;
+    border: none;
+    border-radius: 50%;
+    overflow: hidden;
+    background: conic-gradient(
+        hsl(0 85% 60%), hsl(60 85% 60%), hsl(120 85% 60%),
+        hsl(180 85% 60%), hsl(240 85% 60%), hsl(300 85% 60%), hsl(360 85% 60%));
+    cursor: pointer;
+
+    &::-webkit-color-swatch-wrapper { padding: 4px; }
+    &::-webkit-color-swatch { border: none; border-radius: 50%; }
+    &::-moz-color-swatch {
+        border: 4px solid transparent;
+        border-radius: 50%;
+        background-clip: padding-box;
+    }
+}
+
+// The highlight switch sits inside the card, so it loses the full-width row's
+// horizontal padding.
+.pvt-viewflyout-bg-toggles {
+    .pvt-flyout-toggle {
+        height: 32px;
+        padding: 0 4px;
+        font-size: 12px;
+    }
+
+    &[hidden] { display: none; }
+}
+
+// A plain stack on the card rather than a filled box of its own: the fit group
+// nested here has to read like the pattern group above it, which it cannot do
+// against a fill of the same tone as its own track.
+.pvt-viewflyout-bg-image {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    &[hidden] { display: none; }
+
+    .pvt-flyout-btn-group { margin-bottom: 0; }
+}
+
+.pvt-viewflyout-bg-image-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.pvt-viewflyout-bg-image-url {
+    box-sizing: border-box;
+    flex: 1;
+    min-width: 0;
+    padding: 4px 6px;
+    border-radius: 6px;
+    border: 1px solid var(--pvt-bg-color-5);
+    background-color: var(--pvt-bg-color-2);
+    color: var(--pvt-text-color-6);
+    font-family: inherit;
+    font-size: 12px;
+}
+
+.pvt-viewflyout-bg-image-pick,
+.pvt-viewflyout-bg-image-clear {
+    flex: none;
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--pvt-bg-color-5);
+    background-color: transparent;
+    color: var(--pvt-text-color-5);
+    font-family: inherit;
+    font-size: 11px;
+    cursor: pointer;
+
+    &:hover {
+        background-color: var(--pvt-bg-color-4);
+    }
+}
+
+// The one control in the card that takes something away.
+.pvt-viewflyout-bg-image-clear {
+    color: var(--pvt-theme-danger);
+}

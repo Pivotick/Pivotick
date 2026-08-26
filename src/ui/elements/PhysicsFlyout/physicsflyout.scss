@@ -1,4 +1,4 @@
-// B3 Physics flyout — layout picker, root + spacing cards for a tree layout, and the
+// Physics flyout — layout picker, root + spacing cards for a tree layout, and the
 // simulation card (presets, sliders, run toggle) for a force one. The panel chrome it
 // sits in is shared, see `Flyout/flyout.scss`.
 // Layout picker: one tile per layout, two per row — pick in a single click.
@@ -47,16 +47,11 @@
     }
 }
 
-// The simulation card and the tree-spacing card that stands in for it share the
-// same chrome; only one of the two is ever live (see `updateLayoutControls`).
+// The simulation card and the tree-spacing card that stands in for it take their
+// box from `.pvt-flyout-card`; only one of the two is ever live (see
+// `updateLayoutControls`), which is what these state classes switch between.
 .pvt-physicsflyout-card,
 .pvt-physicsflyout-spacing {
-    margin: 8px 0 0;
-    padding: 11px;
-    border-radius: 10px;
-    background-color: var(--pvt-bg-color-4);
-    border: 1px solid var(--pvt-bg-color-5);
-
     // Under a tree layout the knobs are inert, so they are put away rather than
     // greyed: the spacing card takes their place, and stacking a dead copy of six
     // sliders underneath it would push the panel past a laptop's viewport.
@@ -67,7 +62,7 @@
             display: none;
         }
 
-        .pvt-physicsflyout-card-head {
+        .pvt-flyout-card-head {
             margin-bottom: 0;
         }
     }
@@ -84,70 +79,26 @@
             display: none;
         }
 
-        .pvt-physicsflyout-card-head {
+        .pvt-flyout-card-head {
             margin-bottom: 11px;
         }
     }
 }
 
-.pvt-physicsflyout-card-head {
+// The run/pause toggle the simulation card keeps in its head.
+.pvt-physicsflyout-run {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    margin-bottom: 11px;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 7px;
+    background-color: var(--pvt-theme-primary);
+    color: #fff;
+    cursor: pointer;
 
-    .pvt-physicsflyout-card-title {
-        font-weight: 600;
-        font-size: 13px;
-        color: var(--pvt-text-color-6);
-    }
-
-    .pvt-physicsflyout-run {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 28px;
-        height: 28px;
-        border: none;
-        border-radius: 7px;
-        background-color: var(--pvt-theme-primary);
-        color: #fff;
-        cursor: pointer;
-
-        svg { width: 14px; height: 14px; }
-    }
-}
-
-.pvt-physicsflyout-presets {
-    display: flex;
-    gap: 2px;
-    margin-bottom: 13px;
-    padding: 3px;
-    border-radius: 8px;
-    background-color: var(--pvt-bg-color-2);
-
-    .pvt-physicsflyout-preset {
-        // Only Auto carries an icon, so centre the pair rather than letting it
-        // hang off the left of a button sized for a bare word.
-        display: flex;
-        flex: 1;
-        align-items: center;
-        justify-content: center;
-        gap: 5px;
-        padding: 6px 0;
-        border: none;
-        border-radius: 6px;
-        background: transparent;
-        color: var(--pvt-text-color-5);
-        font-family: inherit;
-        font-size: 12px;
-        cursor: pointer;
-
-        &.active {
-            background-color: var(--pvt-theme-primary);
-            color: #fff;
-        }
-    }
+    svg { width: 14px; height: 14px; }
 }
 
 .pvt-physicsflyout-sliders {

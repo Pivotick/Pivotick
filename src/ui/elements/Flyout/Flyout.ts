@@ -3,7 +3,7 @@ import type { FlyoutMode } from '../../ModeStore'
 import './flyout.scss'
 
 /**
- * Shared scaffolding for the B3 settings flyouts — the overlays opened by the
+ * Shared scaffolding for the settings flyouts — the overlays opened by the
  * mode rail's flyout modes: {@link ViewFlyout} (grid + canvas behaviour) and
  * {@link PhysicsFlyout} (layout + simulation). The base owns the panel element,
  * the shared `pvt-flyout-*` chrome (header, section labels, switch rows) and the
@@ -66,6 +66,11 @@ export abstract class Flyout extends UIComponent {
     /** `querySelector`, scoped to this flyout's panel. */
     protected query<T extends HTMLElement>(selector: string): T | null {
         return this.panel?.querySelector<T>(selector) ?? null
+    }
+
+    /** `querySelectorAll`, scoped to this flyout's panel. Empty before mount. */
+    protected queryAll<T extends HTMLElement>(selector: string): T[] {
+        return [...this.panel?.querySelectorAll<T>(selector) ?? []]
     }
 
     /** The flyout's title row. */

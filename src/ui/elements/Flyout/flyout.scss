@@ -1,4 +1,4 @@
-// B3 settings flyouts — overlays toggled by the mode rail's flyout buttons
+// Settings flyouts — overlays toggled by the mode rail's flyout buttons
 // (View, Physics). One shared slot hosts every flyout panel: they're mutually
 // exclusive, so at most one is displayed at a time. Sits above the contextual
 // tool panel (higher z-index) and covers it while open.
@@ -57,6 +57,69 @@
     font-weight: 600;
     letter-spacing: 0.06em;
     color: var(--pvt-text-color-4);
+}
+
+// A card: the box a flyout groups a set of controls into — the Physics rail's
+// simulation and spacing cards, the View rail's background card. A flyout that
+// needs to reach one from script keeps its own class on it as well.
+.pvt-flyout-card {
+    margin: 8px 0 0;
+    padding: 11px;
+    border-radius: 10px;
+    background-color: var(--pvt-bg-color-4);
+    border: 1px solid var(--pvt-bg-color-5);
+}
+
+.pvt-flyout-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 11px;
+
+    .pvt-flyout-card-title {
+        font-weight: 600;
+        font-size: 13px;
+        color: var(--pvt-text-color-6);
+    }
+}
+
+// A segmented control: one track, one live button. Both `active` and
+// `aria-pressed` mark the live one — the flyouts differ over which they carry.
+.pvt-flyout-btn-group {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 13px;
+    padding: 3px;
+    border-radius: 8px;
+    background-color: var(--pvt-bg-color-2);
+
+    .pvt-flyout-btn-group-btn {
+        // Some buttons carry an icon, so centre the pair rather than letting it
+        // hang off the left of a button sized for a bare word.
+        display: flex;
+        flex: 1;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        padding: 6px 0;
+        border: none;
+        border-radius: 6px;
+        background: transparent;
+        color: var(--pvt-text-color-5);
+        font-family: inherit;
+        font-size: 12px;
+        cursor: pointer;
+
+        &.active,
+        &[aria-pressed='true'] {
+            background-color: var(--pvt-theme-primary);
+            color: #fff;
+        }
+
+        &:hover:not(.active):not([aria-pressed='true']) {
+            background-color: var(--pvt-bg-color-4);
+        }
+    }
 }
 
 .pvt-flyout-toggle {

@@ -9,7 +9,7 @@ export class Layout extends UIComponent {
     public modal?: HTMLDivElement
     public slidePanel?: HTMLDivElement
     public graphnavigation?: HTMLDivElement
-    /** B3 mode rail + contextual tool panel + settings-flyout slots. */
+    /** Mode rail + contextual tool panel + settings-flyout slots. */
     public moderail?: HTMLDivElement
     public toolpanel?: HTMLDivElement
     public flyout?: HTMLDivElement
@@ -68,7 +68,7 @@ export class Layout extends UIComponent {
             this.canvas.appendChild(this.graphnavigation)
         }
 
-        // B3 chrome slots: the mode rail and its contextual panel overlay the
+        // Chrome slots: the mode rail and its contextual panel overlay the
         // canvas (left edge), positioned right of the sidebar.
         if (mode === 'full' || mode === 'light') {
             this.moderail = document.createElement('div')

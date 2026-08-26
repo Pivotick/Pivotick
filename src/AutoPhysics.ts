@@ -1,14 +1,10 @@
 /**
- * The `Auto` physics preset: pure functions that derive the {@link PhysicsKnobs}
- * from what is actually on screen.
+ * The `Auto` physics preset: pure functions that derive the {@link PhysicsKnobs} from
+ * what is on screen. Nothing here touches d3, the DOM or the {@link Simulation}, which
+ * measures the context, calls {@link tunePhysics}, and applies the result through the
+ * same public knob setters a preset uses — so what auto decides stays adjustable.
  *
- * Nothing here touches d3, the DOM or the {@link Simulation} — {@link tunePhysics}
- * is a plain `(AutoContext) => PhysicsKnobs`. `Simulation` measures the context,
- * calls it, and applies the result through the same public knob setters a preset
- * uses, so everything auto decides stays visible and adjustable.
- *
- * The constants here were settled by measuring real layouts rather than by
- * derivation; each carries the reading that fixed it.
+ * The constants below were settled by measuring real layouts, not derived.
  */
 import { PHYSICS_KNOB_RANGES, type PhysicsKnobs } from './Simulation'
 
@@ -36,14 +32,9 @@ export interface MeasuredLayout {
     /** Mean nearest-neighbour surface gap, in units of the mean radius. */
     nearestNeighbourGap: number
     /**
-     * Spread of the nearest-neighbour *gaps*, relative to their mean.
-     *
-     * This is the one number that tells a structured layout from a blob, and it earns
-     * its place: a hand-tuned layout showing clear hub-and-spoke clusters and a
-     * flattened one that reads as an even carpet measured *the same*
-     * {@link nearestNeighbourGap} (0.98r vs 0.99r) while differing three-fold here
-     * (1.26 vs 0.24). Clusters mean dense insides and empty gaps — uneven spacing.
-     * An even disc has nothing to see and scores near zero.
+     * Spread of the nearest-neighbour *gaps*, relative to their mean — the one number
+     * that separates a structured layout from a blob. Clusters mean dense insides and
+     * empty gaps; an even carpet scores near zero at the same mean gap.
      */
     densityVariation: number
 }
@@ -73,12 +64,9 @@ export interface AutoContext {
 /** Area fill target for the smallest graphs — the camera's 3× fit does the rest. */
 const FILL_MIN = 0.30
 /**
- * …and for large ones. Deliberately the whole canvas rather than a fraction of it:
- * a lower target squeezes the link distance, and on a sparse graph the space that
- * gets squeezed out is the space *between* clusters — the layout's only visible
- * structure. A 300-node graph that slightly overflows and gets zoomed out reads
- * better than a compact one that reads as a single blob. Measured on a 301-node
- * forest: raising this recovered nearly all the cluster separation.
+ * …and for large ones. Deliberately the whole canvas: a lower target squeezes the link
+ * distance, and on a sparse graph what gets squeezed out is the space *between* clusters
+ * — the layout's only visible structure.
  */
 const FILL_MAX = 1.0
 /** `fillTarget` sits at `FILL_MIN` up to this node count… */
@@ -89,18 +77,10 @@ const FILL_REF_HI = 400
 /** Clear space guaranteed between two mean-sized discs, whatever the area budget says. */
 const GAP_MIN = 24
 /**
- * Link distance as a multiple of the mean node radius — the primary length scale.
- *
- * This is the correction to the original design, which derived link distance from an
- * area budget alone (canvas ÷ node count). A budget cannot know how big the nodes
- * are, so on a graph of large nodes it asks for a spacing smaller than the nodes
- * themselves and the layout comes out as a carpet of touching discs: every cluster
- * packs into a hexagonal blob and the topology between them disappears.
- *
- * Two independent readings put the right value near 6.5×: a hand-tuned 118-node
- * graph of r=60 nodes that reads well sits at link 387 (6.5r), and the r=10 version
- * of the same graph, which also reads well, sits at 67 (6.7r). The area budget stays
- * on as a *lower* bound, so a sparse graph on a big canvas still spreads out.
+ * Link distance as a multiple of the mean node radius — the primary length scale. An
+ * area budget alone (canvas ÷ node count) cannot know how big the nodes are, and on
+ * large nodes asks for a spacing smaller than the nodes themselves, packing every
+ * cluster into a blob. The budget stays on as a *lower* bound so sparse graphs spread.
  */
 const LINK_PER_RADIUS = 6.5
 /** Link-distance ceiling, as a multiple of the mean radius plus a base: small nodes stay a graph, not a constellation. */
@@ -116,31 +96,19 @@ const COLLIDE_FULL = 0.35
 /** Effective per-node charge wanted per unit of characteristic spacing squared. */
 const CHARGE_PER_AREA = 0.0058
 /**
- * Repulsion floor and ceiling.
- *
- * The floor matters more than it looks. The area budget divides the canvas by `N`,
- * so the charge it asks for falls away as the graph grows — and charge is precisely
- * what pushes *unrelated* subgraphs apart while links hold each cluster together.
- * That difference is what makes clusters visible, so letting it collapse turns a
- * large sparse graph into an even blob. Measured on a 301-node forest, raising
- * repulsion from 10 to 40 moved the separation ratio from 3.7 to 4.8 and the
- * local-density variation from 0.67 to 0.75; the floor is the library's historical
- * default of 38, which is the layout this is trying not to be worse than.
+ * Repulsion floor and ceiling. The floor matters more than it looks: the area budget
+ * divides the canvas by `N`, so the charge it asks for falls away as the graph grows —
+ * and charge is what pushes *unrelated* subgraphs apart while links hold each cluster
+ * together. Letting it collapse turns a large sparse graph into an even blob.
  */
 const REPULSION_FLOOR = 38
 const REPULSION_MAX = 95
 /**
- * …but the floor itself eases off on very large graphs. d3's many-body force sums
- * over every node, so holding per-node charge constant makes the total grow without
- * bound: a 2000-node tree at the 300-node floor sprawls to ten canvases.
- *
- * Easing the *floor* rather than adding gravity is deliberate, and the measurements
- * say why. Repulsion scales a layout uniformly — dropping it from 38 to 6 on a
- * 300-node graph took the bounding box from 4.3 to 1.9 canvases while the
- * nearest-neighbour gap stayed proportional (3.95r → 1.94r), so the *relative*
- * structure survived. Gravity, being one inward pull applied equally to everything,
- * shrinks the gaps between clusters faster than the clusters themselves and flattens
- * the structure out. Same containment, very different cost.
+ * …but the floor eases off on very large graphs: d3's many-body force sums over every
+ * node, so a constant per-node charge makes the total grow without bound. Easing the
+ * floor rather than adding gravity is deliberate — repulsion scales a layout uniformly
+ * and keeps its relative structure, where gravity closes the gaps between clusters
+ * faster than the clusters themselves and flattens them out.
  */
 const REPULSION_FLOOR_REF_NODES = 300
 const REPULSION_FLOOR_DECAY = 0.35
@@ -155,12 +123,7 @@ const FRICTION_MAX = 62
 
 /** Upper end of the `centering` knob's d3 domain — mirrors `Simulation.CENTERING_STRENGTH_MAX`. */
 const CENTERING_MAX_STRENGTH = 0.2
-/**
- * Calibration for the centring balance below. Derived by measuring, not by theory:
- * sweeping the gravity strength against settled 60-node and 7-node layouts put the
- * strength that lands each on its fill target at 0.08 and 0.09 respectively, which
- * back-solves to ~280 and ~215 through the balance. 240 splits them.
- */
+/** Calibration for the centring balance below — measured rather than derived. */
 const CENTERING_GAIN = 240
 /** Gravity is aimed at this fraction of the canvas half-extent — a fence, not a target. */
 const CENTERING_FENCE = 0.9
@@ -173,16 +136,9 @@ const CENTERING_CEILING_BOUND = 0.001
 const CENTERING_CEILING_LOOSE = 0.06
 /**
  * Ceiling for the smallest graphs, decaying to {@link CENTERING_CEILING_BOUND} as the
- * graph grows.
- *
- * Compression costs nothing on a four-node graph — there is no cluster structure to
- * flatten — and it buys the thing that actually matters there: a compact layout is
- * one the camera can zoom *into*, so the nodes end up large. Take this away and the
- * four nodes spread until they fill the canvas at zoom ~0.9, which is how a graph
- * with plenty of room ends up rendering its nodes at 11px instead of 25px.
- *
- * The same compression on a 300-node graph flattens the only structure it has. So
- * the licence to compress is exactly the licence to not have clusters yet.
+ * graph grows. Compression costs nothing where there is no cluster structure to flatten,
+ * and buys a layout the camera can zoom *into* so the nodes read as nodes. The licence
+ * to compress is exactly the licence to not have clusters yet.
  */
 const CENTERING_CEILING_SMALL = 0.03
 /**
@@ -210,23 +166,18 @@ function clampKnob(value: number, key: keyof PhysicsKnobs): number {
 }
 
 /**
- * How much of the canvas the layout should cover *at zoom 1*.
- *
- * Deliberately not a constant: `fitAndCenter` scales the settled layout by up to
- * 3×, so a small graph only needs ~0.27 to end at ~80% on-screen coverage — and
- * stopping there is better, because the camera then zooms in and the nodes read
- * as nodes rather than as four dots on a 1200px canvas. Large graphs get no such
- * help (their fit is already ≤ 1), so the target climbs.
+ * How much of the canvas the layout should cover *at zoom 1*. Not a constant, because
+ * `fitAndCenter` scales a settled layout by up to 3×: a small graph can stop early and
+ * let the camera zoom in, while a large one gets no such help and so aims higher.
  */
 export function fillTarget(nodeCount: number): number {
     return FILL_MIN + (FILL_MAX - FILL_MIN) * sizeFraction(nodeCount)
 }
 
 /**
- * Where a graph sits on the small-to-large scale: 0 at {@link FILL_REF_LO} nodes or
- * fewer, 1 at {@link FILL_REF_HI} or more, log-interpolated between. Several
- * decisions turn on "how big is this, really", and they should all turn on the
- * same number.
+ * Where a graph sits on the small-to-large scale: 0 at {@link FILL_REF_LO} nodes or fewer,
+ * 1 at {@link FILL_REF_HI} or more, log-interpolated. Every "how big is this" decision
+ * turns on this one number.
  */
 function sizeFraction(nodeCount: number): number {
     return clamp01(
@@ -245,12 +196,9 @@ function chargeDamping(meanRadius: number): number {
 }
 
 /**
- * The repulsion floor for a graph of this size and node size.
- *
- * Eased down on very large graphs (see {@link REPULSION_FLOOR_REF_NODES}) and up for
- * large nodes: bigger discs need a proportionally harder push to open the same gap,
- * and the area budget cannot supply it. The exponent is fitted to the same two
- * hand-tuned graphs as {@link LINK_PER_RADIUS} — r=10 wants 38, r=60 wants ~100.
+ * The repulsion floor for a graph of this size and node size. Eased down on very large
+ * graphs (see {@link REPULSION_FLOOR_REF_NODES}) and up for large nodes, which need a
+ * proportionally harder push to open the same gap than the area budget can supply.
  */
 function repulsionFloor(nodeCount: number, meanRadius: number): number {
     const sizeBoost = Math.pow(Math.max(1, meanRadius) / REPULSION_FLOOR_REF_RADIUS, REPULSION_FLOOR_SIZE_GAIN)
@@ -266,11 +214,9 @@ function repulsionKnob(effectiveCharge: number, meanRadius: number, nodeCount: n
 }
 
 /**
- * The charge the simulation will *actually* apply for a repulsion knob — which is
- * not what was asked for whenever {@link repulsionKnob}'s clamps bite. Centring has
- * to balance the charge that runs, not the one the area budget wanted: on a
- * 500-node graph the two differ six-fold, and balancing the wrong one leaves the
- * layout at triple its target size.
+ * The charge the simulation will *actually* apply for a repulsion knob, which is not what
+ * was asked for whenever {@link repulsionKnob}'s clamps bite. Centring has to balance the
+ * charge that runs — balancing the requested one leaves the layout well past its target.
  */
 function chargeForKnob(knob: number, meanRadius: number): number {
     return (knob / 100) * 400 * chargeDamping(meanRadius)
@@ -286,23 +232,13 @@ function collisionKnob(multiplier: number): number {
 /**
  * Gravity strength: a fence that keeps loose pieces in frame, not a size dial.
  *
- * A node at radius `R` is pushed out by roughly `N · |Q| / R²` and pulled in by
- * `R · s`; equating them at the fence radius gives `s = N · |Q| / R³`, scaled by an
- * empirical gain. The knob is quadratic (see `Simulation.setCentering`), so the
- * useful band — which spans two orders of magnitude — lands mid-slider.
+ * A node at radius `R` is pushed out by roughly `N · |Q| / R²` and pulled in by `R · s`;
+ * equating them at the fence radius gives `s = N · |Q| / R³`, scaled by an empirical gain.
  *
- * The ceiling is the important part, and it scales with **fragmentation**
- * (`components / nodes`). Gravity is a single inward pull applied equally to
- * everything, so it cannot create structure — it can only shrink, and what it
- * shrinks first is the empty space between clusters. It is therefore only worth
- * spending where links are *not* already doing the job:
- *
- *  - A 301-node forest in two components is held together by its own 300 links.
- *    Fragmentation ~0.007, so gravity stays near the floor and the layout keeps its
- *    shape. (Driving this graph to a fill target with gravity instead cost half its
- *    cluster separation — the regression this scaling exists to prevent.)
- *  - Seven nodes in four pieces, two of them lone, have almost nothing holding them.
- *    Fragmentation ~0.57, so gravity gets real authority and they stay in frame.
+ * The ceiling is the important part, and it scales with fragmentation
+ * (`components / nodes`). Gravity is one inward pull applied equally to everything, so it
+ * cannot create structure — it only shrinks, and what it shrinks first is the space
+ * between clusters. Worth spending only where links are not already doing the job.
  */
 function centeringKnob(
     effectiveCharge: number,
@@ -313,17 +249,13 @@ function centeringKnob(
     const radius = Math.max(1, CENTERING_FENCE * 0.5 * Math.min(canvas.width, canvas.height))
     const balance = CENTERING_GAIN * nodeCount * effectiveCharge / (radius * radius * radius)
 
-    // Two independent licences to centre, whichever is larger:
-    //  - the graph is small enough that compressing it costs no structure, and
-    //  - some of it is in pieces nothing else is holding.
-    // Cubic: the licence to compress should be gone by the time a graph is big
-    // enough to have any structure worth keeping. A hand-tuned 118-node layout that
-    // reads well sits at the historical gravity of 0.001, which is what this reaches.
+    // Two independent licences to centre, whichever is larger: the graph is small enough
+    // that compressing it costs no structure, or some of it is in pieces nothing else
+    // holds. Cubic, so the licence is gone by the time there is structure worth keeping.
     const smallCeiling = CENTERING_CEILING_BOUND
         + (CENTERING_CEILING_SMALL - CENTERING_CEILING_BOUND) * Math.pow(1 - sizeFraction(nodeCount), 3)
-    // Linear, not sqrt: a graph with one loose node in a hundred needs a hundredth of
-    // the help, and sqrt was handing it a sixth — enough to visibly compress a graph
-    // whose links were holding it perfectly well.
+    // Linear, not sqrt: one loose node in a hundred needs a hundredth of the help, where
+    // sqrt would hand it a sixth and compress a graph its links were holding fine.
     const looseCeiling = CENTERING_CEILING_BOUND
         + (CENTERING_CEILING_LOOSE - CENTERING_CEILING_BOUND) * clamp01(looseNodeFraction)
     const ceiling = Math.max(smallCeiling, looseCeiling)
@@ -367,13 +299,10 @@ function areaBudget(ctx: AutoContext): { targetArea: number; spacing: number } {
 }
 
 /**
- * Derive the physics knobs from what is on screen.
- *
- * Two length scales feed in and the larger wins: the room each node has been
- * budgeted (canvas ÷ node count) and the room its own size demands
- * ({@link LINK_PER_RADIUS}). Everything else follows from the link distance that
- * comes out — charge from the budget spacing, collide from how crowded the layout
- * will really be, centring as a fence around the lot.
+ * Derive the physics knobs from what is on screen. Two length scales feed in and the
+ * larger wins: the room each node is budgeted (canvas ÷ node count) and the room its own
+ * size demands ({@link LINK_PER_RADIUS}). Everything else follows from the link distance
+ * that comes out, with centring as a fence around the lot.
  */
 export function tunePhysics(ctx: AutoContext): PhysicsKnobs {
     const { spacing } = areaBudget(ctx)
@@ -459,11 +388,9 @@ export function analyseComponents(
 }
 
 /**
- * Measure a settled layout: its bounding box, how much of the canvas that covers,
- * how many node pairs overlap and how much clear space a node typically has.
- *
- * Overlaps and gaps go through a uniform spatial hash keyed on the largest contact
- * distance, so 2000 nodes stay a few thousand comparisons rather than two million.
+ * Measure a settled layout: bounding box, canvas coverage, overlapping pairs and typical
+ * clear space. Overlaps and gaps go through a uniform spatial hash keyed on the largest
+ * contact distance, keeping 2000 nodes to a few thousand comparisons.
  */
 export function measureLayout(nodes: AutoNode[], canvas: AutoCanvas): MeasuredLayout {
     const placed = nodes.filter(node => typeof node.x === 'number' && typeof node.y === 'number')
