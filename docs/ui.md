@@ -53,7 +53,7 @@ const options = {
 
 In `full` mode the chrome is a mode-driven layout: a left **mode rail**
 (Select / Create / View / Physics), a **contextual tool panel** for the active
-pointer-mode, two settings flyouts — **View** (grid and canvas switches) and
+pointer-mode, two settings flyouts — **View** (canvas background and switches) and
 **Physics** (layout + simulation) — the top **main header** (search, filter, notes),
 the selection **sidebar** (properties, facets, neighbours, and a bulk-action row), and
 a right-side **viewport rail** (fit-and-center, zoom, settings, fullscreen), and a
@@ -65,8 +65,8 @@ is a bare canvas.
 ::: warning Migrating from the corner chrome
 The floating `GraphControls` and `GraphToolbar` overlays were removed. Layout and
 physics moved into the Physics flyout (`UIManager.physicsFlyout`) — they shipped in the
-View flyout (`UIManager.viewFlyout`) in 1.5.0, which now holds the grid and canvas
-switches only. Select/Create tools live in the tool panel (`UIManager.toolPanel`) and
+View flyout (`UIManager.viewFlyout`) in 1.5.0, which now holds the canvas background
+and the grid switches. Select/Create tools live in the tool panel (`UIManager.toolPanel`) and
 mode rail (`UIManager.modeRail`). The
 `UI.selectionMenu` option is gone — use `contextMenu` for per-node actions and the
 sidebar bulk-action row for multi-selection actions. `UIManager.graphNaviation` was
