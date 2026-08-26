@@ -3,9 +3,9 @@ import type { Page } from '@playwright/test'
 import type { BadgeHarnessSpec, NodeBadgeSnapshot, NodeRimBox } from '../harness/harness'
 
 /**
- * Node badges (prd/misp/node-badges.md): small indicators pinned to a node's rim, in a
- * decoration channel of their own so a node can carry a fact that colour, shape, size,
- * icon and picture are already spent on.
+ * Node badges: small indicators pinned to a node's rim, in a decoration channel of
+ * their own so a node can carry a fact that colour, shape, size, icon and picture are
+ * already spent on.
  *
  * Two properties carry most of these tests. First, a badge is **glued to the shape**, not
  * to a number resolved once at draw time — framed pictures, custom paths and measured HTML

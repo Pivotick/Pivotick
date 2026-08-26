@@ -73,7 +73,7 @@ async function loadLegend(page: Page, spec: LegendSpec = {}, expectedEntries = 4
     await expect(page.locator('.pvt-legend-entry')).toHaveCount(expectedEntries)
 }
 
-/* ---------- stacked legends (prd/misp/multi-facet-legend.md) ---------- */
+/* ---------- stacked legends ---------- */
 
 function legendSection(page: Page, id: string): Locator {
     return page.locator(`.pvt-legend-section[data-section="${id}"]`)
@@ -597,9 +597,9 @@ test.describe('canvas legend', () => {
     })
 
     /**
-     * More than one key on one canvas (prd/misp/multi-facet-legend.md). `UI.legend`
-     * also takes `{ sections: [...] }`: one docked card, one section per encoding,
-     * each keying its own dimension and driving its own filter.
+     * More than one key on one canvas. `UI.legend` also takes `{ sections: [...] }`:
+     * one docked card, one section per encoding, each keying its own dimension and
+     * driving its own filter.
      */
     test.describe('several sections', () => {
         test('stacks one titled section per encoding, in declaration order', async ({ page }) => {

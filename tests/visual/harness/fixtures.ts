@@ -777,7 +777,7 @@ export const fixtures = {
         return { nodes: [core, groupA, groupB], edges, notes: [] }
     },
 
-    // ── Edge layers (prd/misp/edge-layers.md) ───────────────────────────────────
+    // ── Edge layers ─────────────────────────────────────────────────────────────
 
     /**
      * A graph whose relations come in **kinds**, so the same canvas carries four

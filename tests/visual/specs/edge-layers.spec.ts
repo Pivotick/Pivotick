@@ -3,8 +3,8 @@ import type { Page } from '@playwright/test'
 import type { EdgeLayerRow, EdgeSwatchSnapshot, LegendRow, LegendSectionSnapshot } from '../harness/harness'
 
 /**
- * Edge layers (prd/misp/edge-layers.md): relations that come in **kinds**, each
- * styled apart, keyed in the legend, and switchable off.
+ * Edge layers: relations that come in **kinds**, each styled apart, keyed in the
+ * legend, and switchable off.
  *
  * Two properties carry most of these tests. First, a layer is a **lens**: switching
  * one off changes which lines are drawn and nothing else, so `simulationEdgeIds()` —
@@ -254,7 +254,7 @@ test.describe('with a node filter active', () => {
         await harness(page, 'loadWithEdgeLayers', 'edgeLayers')
         await openFilterPanel(page)
 
-        // Layer off → node filter → layer on: the restore order the PRD calls out.
+        // Layer off → node filter → layer on: the two restore independently.
         await clickLayer(page, 'correlation')
         await expectEdgeNotDrawn(page, 'a-b')
 
