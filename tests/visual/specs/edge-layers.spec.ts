@@ -110,8 +110,12 @@ async function clickLayer(page: Page, value: string): Promise<void> {
     await page.locator(`.pvt-edge-layer[data-value="${value}"]`).click()
 }
 
+/** Open the Graph-Filters panel and wait for its slide-in to settle. */
 async function openFilterPanel(page: Page): Promise<void> {
     await harness(page, 'openFilterPanel')
+    // Clicking mid-slide makes Playwright scroll the canvas to reach its target.
+    await expect(page.locator('.pvt-slide-panel.open'))
+        .toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, 0)')
 }
 
 test.beforeEach(async ({ page }) => {

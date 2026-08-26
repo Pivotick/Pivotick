@@ -81,7 +81,9 @@
     height: 100%;
     width: 100%;
     position: relative;
-    overflow: hidden;
+    // `clip`, not `hidden`: a closed slide panel sits outside the canvas, and a
+    // hidden box is still scrollable, so a scroll-into-view could shift the chrome.
+    overflow: clip;
 
     .pvt-slide-panel {
         // Float it inset from the edges like the rest of the chrome, rather
