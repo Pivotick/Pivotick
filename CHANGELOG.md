@@ -1,16 +1,18 @@
 # Changelog
 
-## 1.6.0 — 2026-08-25
+## 1.6.0 — 2026-08-26
 
 Three headline additions, each of them something a force layout is bad at on its own: a **data
 dock** under the canvas — the graph as a sortable, selectable table, and a host for panes of
 your own — a **minimap** with the renderer viewport API behind it, and a **filtering legend**
-in a canvas corner. Alongside them the layout stopped needing to be configured: physics tunes
-itself from what is on screen, it moved into a rail mode of its own, and tree layouts now
-handle cyclic, disconnected and data-declared hierarchies. Two contracts got real: every
-user-initiated write goes through a before-hook, and every content renderer may return a
-promise. The breaking changes are confined to the physics presets — see **Breaking** under
-*The layout tunes itself*.
+in a canvas corner, which now keys several dimensions at once. Alongside them the layout
+stopped needing to be configured: physics tunes itself from what is on screen, it moved into a
+rail mode of its own, and tree layouts now handle cyclic, disconnected and data-declared
+hierarchies. The canvas itself carries more: **edges come in kinds** that can be styled and
+switched off without moving the graph, nodes carry **rim badges**, and the background is a
+control rather than a constant. Two contracts got real: every user-initiated write goes through
+a before-hook, and every content renderer may return a promise. The breaking changes are
+confined to the physics presets — see **Breaking** under *The layout tunes itself*.
 
 ### The graph as a table
 
@@ -140,6 +142,117 @@ promise. The breaking changes are confined to the physics presets — see **Brea
 - **The legend is descriptive, never prescriptive.** It reads the colour the renderer already
   resolved for a node and reports it, so changing a palette moves the legend with it; a
   category painted in more than one colour keeps the first and warns.
+- **`sections` keys a graph on several dimensions at once.** A graph that encodes kind in the
+  fill, provenance in an enclosure and sharing in the stroke needs three keys, not one:
+  `UI.legend: { position, sections: [...] }` stacks a titled block per dimension in one docked
+  card, in declaration order. A section takes everything a single legend takes except
+  `position`, which belongs to the card, and is independent in every other way — its own
+  entries, its own counts, its own fold state, its own filter. Sections fold individually and
+  **alt**-clicking any chevron folds the stack; a section that resolves to no entries is
+  skipped rather than drawn as an empty titled box, and the card is capped against the canvas
+  height and scrolls rather than growing past it.
+- **Each section drives its own filter, and they and together.** A section writes to
+  `__legend:<id>` — its `id`, else its `key`, else `section-<index>` — while the single-key
+  object form keeps the plain `__legend` it has always had, and a section whose `key` names a
+  declared facet drives that facet exactly as a lone legend does. Switch `attribute` off in one
+  section and `self` off in another and what stays on the canvas is the nodes that are neither;
+  each section's `show all` clears only its own. **`legendToggle` gained a `section` field**
+  naming the section that was toggled.
+- **A section with neither `key` nor `entries` is the `render.nodeTypeAccessor` dimension** —
+  the one way to spell a styling dimension that isn't a plain data key — and it skips the
+  colour check, since inside a `sections` list you asked for it. Only one section may do this;
+  a second is dropped with a warning.
+- **The legend can only sample colour**, so a section keyed on a dimension the colours don't
+  encode — provenance, when provenance is drawn as an enclosure — takes the first node's colour
+  and warns that the category renders more than one. Declare `entries` with your own `color` on
+  that section for swatches that mean something.
+- One section renders byte-identically to the single-key legend, so the stacked form costs a
+  graph that doesn't use it nothing. The state classes `pvt-legend-collapsed` /
+  `pvt-legend-static` moved from `.pvt-legend-panel` to `.pvt-legend-section`, which is where
+  the state now lives.
+
+### Edges come in kinds
+
+- **`render.edgeTypeAccessor` and `render.edgeStyleMap`** mirror the node pair: a function
+  returning an edge's kind, and a map from kind to a partial `EdgeStyle`. Per-kind edge styling
+  was possible before only as a hand-rolled `switch` inside `styleCb` — which still wins over
+  the map, exactly as it does for nodes.
+- **`UI.filter.edgeFacets` turns those kinds into *layers* you can switch off.** Declared like
+  node facets but read off edge data, with edge-shaped defaults — a layer is a `multiselect` and
+  its options are derived from the graph's real edges — so `{ key: 'kind' }` is a complete
+  declaration. The full facet vocabulary applies (`text`, `regex`, `select`, `multiselect`,
+  `numberRange`, `boolean`, plus `accessor` and `predicate`), and nothing is ever auto-derived:
+  a graph that declares no edge facets behaves exactly as one that has never heard of layers.
+- **Switching a layer does not move the graph.** Layout, selection and camera are bit-for-bit
+  unchanged, because the link force gates on the new `Edge.visibleIgnoringLayer` rather than on
+  `visible` — an edge whose layer is off goes on pulling its endpoints together. Which is what
+  the professional tools do: vis-network carries `hidden` *and* a separate per-edge `physics`,
+  Sigma's `edgeReducer` never reaches the layout, Cytoscape and KeyLines move only on an
+  explicit layout call. A hidden relation is a display decision, not a layout one.
+- **A node left with no visible edges stays visible.** Hiding it would be a node-filter
+  decision, and an edge facet never takes one.
+- **The filter panel grew a live `Relationships` section**: one toggle per relation kind, each
+  with a **line** swatch — stroke colour, dash and marker as the renderer resolved them — and
+  each applying at once rather than waiting behind the panel's apply button, since the legend
+  right beside it toggles instantly. A non-multiselect edge facet is a batch control, so it
+  stays in the attribute form with the node facets.
+- **A legend section takes `scope: 'edge'`**, listing the kinds with that same line swatch
+  beside node-scoped sections in one card. Given a matching `edgeFacets` declaration it drives
+  that facet, so the panel and the legend become two views of one filter; without one it
+  reserves a facet of its own and still filters.
+- **New on `Edge`:** `layerVisible`, `setLayerVisible()`, `visibleIgnoringLayer` and
+  `representedEdges`. `visible` has five independent writers — endpoint filtering, cluster
+  collapse, the cluster drawer, `hideNode` / `showNode`, and normalisation — so layer state
+  could not live in it. `layerVisible` is a veto instead: `show()` is now
+  `visible = layerVisible`, and none of the five writers had to change.
+- **A collapsed cluster's stand-in edges filter properly.** Stand-ins are deduped by node
+  *pair*, so one can speak for several real relations of several kinds; each now carries the
+  real edges it represents and survives while any of them passes the filter. That is also what
+  makes every facet type reach inside a collapsed cluster rather than just a list of kinds, and
+  a stand-in whose edges share one kind inherits that kind's style.
+- **New on the query engine:** `setEdgeFilter`, `getEdgeFilters`, `removeEdgeFilter`,
+  `getHiddenEdgeCount`, `getEdgeFacetValues`, `setEdgeFacets` and
+  `replaceFilters(ownedKeys, filters)`. Edge filters share the one `GraphFilters` record under an
+  `edge:` prefix (`EDGE_FILTER_PREFIX`, exported from `GraphQueryEngine`) that every one of those
+  methods hides — so a key name may be a node facet and an edge facet at once.
+- **`renderer.getEdgeStyle(edge)` is public**, promoted onto the `GraphRenderer` abstract beside
+  `getNodeStyle` — both renderers already resolved edge style privately, so this is exposure
+  rather than new logic. The canvas renderer's copy gained `edgeStyleMap` and lost an
+  `opacity: ...?.color` typo; it still resolves only four of the nine `EdgeStyle` properties.
+- **An empty edge pick means every layer off**, unlike a node multiselect where an empty list is
+  how the panel spells *unset* — there is nothing else an emptied layer list could mean.
+
+### Badges on a node's rim
+
+- **`NodeStyle.badges` is a decoration channel of its own** — small indicators pinned to the
+  node's rim, what KeyLines and ReGraph call *glyphs* — so a node can carry a fact that `color`,
+  `shape`, `size`, `iconClass` and `imagePath` are already spent on. An array, or a function of
+  the node; each badge takes `text` (a count, or a character or two), an `iconClass` /
+  `iconUnicode` / `svgIcon`, a `color`, a `title` rendered as a real `<title>`, and an
+  `onClick`. `text` wins over an icon on the same badge, longer text grows it into a pill, and
+  past three characters it renders `99+`.
+- **Four fit on a plain node, two on one with children.** Omit `position` and badges fill the
+  free corners clockwise from `'ne'`; name one (`'ne' | 'nw' | 'se' | 'sw'`) and it is honoured
+  verbatim, overlaps included. The expand affordance sits north-east while a node is collapsed
+  and south-east while it is expanded, so on any expandable node *both* East corners are
+  reserved — otherwise every badge would change corner the moment a cluster opened. Anything
+  past capacity folds into a `+n` whose tooltip names the rest.
+- **They sit on the shape's real rim** — the corner of a square or a framed picture, the 45°
+  point of a circle — through one anchor shared with the expand icon, and they scale with the
+  node between a floor and a ceiling, so they stay legible on a tiny node without swelling on a
+  large one.
+- **A badge is transparent until you give it a handler.** With no `onClick` its click falls
+  through and selects the node underneath, so a badge is never a dead spot. Declare one — or
+  `callbacks.onBadgeClick` for behaviour every badge shares — and it takes the pointer cursor
+  and consumes its click, leaving the node unselected. Both fire, the badge's own first, and a
+  `badgeClick` listener on the interaction bus can `cancel()` both. Pressing a badge still drags
+  the node either way.
+- **Badges describe only the node they sit on.** A collapsed cluster does not aggregate its
+  children's — walk `node.children` in your own `badges` function if that is what you want,
+  since only you know whether a fact sums, wins, or neither.
+- Resolved like every other channel: the narrowest declaration wins outright rather than
+  merging, so a node's own `badges` **replaces** what `nodeStyleMap` or `defaultNodeStyle` gave
+  it. `[]` is how a node says it wears none; `undefined` renders no badge group at all.
 
 ### The layout tunes itself
 
@@ -201,6 +314,25 @@ promise. The breaking changes are confined to the physics presets — see **Brea
   is `.pvt-flyout-panel.pvt-flyout-view` / `.pvt-flyout-physics`. The shared chrome — header,
   section label, icon, switch rows — is `.pvt-flyout-*` (was `.pvt-viewflyout-*`); the layout and
   simulation controls are `.pvt-physicsflyout-*`.
+
+### The canvas background is a control
+
+- **A `Background` card in the View flyout** picks the canvas pattern — `Grid`, `Dots`, `None`
+  or `Image` — and the colours behind it: a neutral swatch row plus a custom picker, for the
+  canvas and, under a pattern, for the grid lines. The first swatch is a reset that drops the
+  override and hands the colour back to the theme, and the picker opens on the theme's own
+  accent, so the row spends no slot reaching for it. Under `Image`, a URL or a file picked from
+  the device, sized `Cover`, `Contain` or `Tile`.
+- It writes nothing but classes and CSS custom properties on the canvas element —
+  `pvt-bg-dots` / `pvt-bg-none` / `pvt-bg-image`, and `--pvt-bg`, `--pvt-graph-grid-color`,
+  `--pvt-bg-image-url` / `-size` / `-repeat` — so every one of these looks is reachable from a
+  stylesheet without the flyout. `Grid` is the stylesheet's default rather than a class of its
+  own, so it is the absence of the other three.
+- **Both flyouts now share their chrome.** The card box and the segmented button group hoisted
+  into the `Flyout` base as `.pvt-flyout-card*` and `.pvt-flyout-btn-group*`; each flyout keeps
+  a class of its own only where script or a spec reaches for the element.
+- **Removed `--pvt-graph-grid-color-highlighted`.** *Highlight grid* thickens the grid lines
+  rather than recolouring them, so nothing had read the variable and overriding it was a no-op.
 
 ### Tree layouts no longer need a perfect hierarchy
 
@@ -422,6 +554,28 @@ promise. The breaking changes are confined to the physics presets — see **Brea
 
 ### Fixed
 
+- **A `styleCb` declared on a *default* style block is finally called.**
+  `render.defaultNodeStyle`, `defaultEdgeStyle` and `defaultLabelStyle` each accepted one that
+  no drawer ever invoked. There are now two distinct roles, documented on the options: on an
+  element's **own** style a `styleCb` wins outright and the style map is skipped; on
+  `render.default*Style` it is the *computed form of the default slot* — it fills only what
+  nothing narrower set, and loses to both the element's style and the style map. Specificity
+  ordering, not callback-beats-static. Inert for a graph that declares none.
+- **A style holding a function no longer breaks the simulation worker.** A resolvable channel
+  carrying a callback threw `DataCloneError` for the whole `postMessage` payload, taking the
+  simulation down with it. Functions are stripped from the node and edge style DTOs — no force
+  reads the style anyway.
+- **`Filter Graph` no longer wipes filters the form doesn't own.** It called `resetFilters()`
+  before writing its own, which cost the legend its toggles on every apply; it now calls
+  `replaceFilters(ownedKeys, ...)` and replaces only its own keys.
+- **A declared badge colour beats the themed default.** It was written as a `fill` *attribute*,
+  which loses to any stylesheet rule, so every badge silently wore the theme's colour.
+- **`icons.selectElement` has a real size.** It was a single-quoted template holding
+  `${fixedPreviewSize}`, so the placeholder reached the SVG verbatim and the browser rejected
+  its `width` and `height` — logged by the tooltip button and the Physics root picker.
+- **A scroll-into-view no longer shifts the canvas chrome.** The canvas box clipped with
+  `overflow: hidden`, which is still scrollable, so bringing an element inside a closed slide
+  panel into view could slide the whole chrome across; it is `overflow: clip` now.
 - **Clicking a physics preset now re-lays-out the graph instead of nudging it.** A preset or `Auto`
   click reheats the simulation at full strength, where it used to get half of a fresh layout's heat
   and stop half way — the reason the same preset had to be clicked several times before its effect
