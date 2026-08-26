@@ -137,15 +137,17 @@
     &[hidden] { display: none; }
 }
 
+// A plain stack on the card rather than a filled box of its own: the fit group
+// nested here has to read like the pattern group above it, which it cannot do
+// against a fill of the same tone as its own track.
 .pvt-viewflyout-bg-image {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    padding: 8px;
-    border-radius: 8px;
-    background-color: var(--pvt-bg-color-2);
 
     &[hidden] { display: none; }
+
+    .pvt-viewflyout-btn-group { margin-bottom: 0; }
 }
 
 .pvt-viewflyout-bg-image-row {
@@ -154,9 +156,10 @@
     gap: 4px;
 }
 
-.pvt-viewflyout-bg-image-url,
-.pvt-viewflyout-bg-image-fit {
+.pvt-viewflyout-bg-image-url {
     box-sizing: border-box;
+    flex: 1;
+    min-width: 0;
     padding: 4px 6px;
     border-radius: 6px;
     border: 1px solid var(--pvt-bg-color-5);
@@ -166,41 +169,14 @@
     font-size: 12px;
 }
 
-.pvt-viewflyout-bg-image-url {
-    flex: 1;
-    min-width: 0;
-}
-
-.pvt-viewflyout-bg-image-fit {
-    cursor: pointer;
-}
-
-// Only the button fits beside the URL field, so the native "no file chosen"
-// label is dropped — the canvas itself reports what was picked.
-.pvt-viewflyout-bg-image-file {
-    flex: none;
-    width: 86px;
-    font-size: 11px;
-    color: transparent;
-
-    &::file-selector-button {
-        padding: 3px 8px;
-        border-radius: 6px;
-        border: 1px solid var(--pvt-bg-color-5);
-        background-color: var(--pvt-bg-color-2);
-        color: var(--pvt-text-color-5);
-        font-family: inherit;
-        font-size: 11px;
-        cursor: pointer;
-    }
-}
-
+.pvt-viewflyout-bg-image-pick,
 .pvt-viewflyout-bg-image-clear {
+    flex: none;
     padding: 4px 8px;
     border-radius: 6px;
     border: 1px solid var(--pvt-bg-color-5);
     background-color: transparent;
-    color: var(--pvt-theme-danger);
+    color: var(--pvt-text-color-5);
     font-family: inherit;
     font-size: 11px;
     cursor: pointer;
@@ -208,4 +184,9 @@
     &:hover {
         background-color: var(--pvt-bg-color-4);
     }
+}
+
+// The one control in the card that takes something away.
+.pvt-viewflyout-bg-image-clear {
+    color: var(--pvt-theme-danger);
 }
