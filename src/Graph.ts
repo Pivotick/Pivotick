@@ -113,6 +113,7 @@ export class Graph {
         // with, so hand them over as soon as the merged UI options exist.
         this.queryEngine.setFacets(this.UIManager.getOptions().filter?.facets)
         this.queryEngine.setEdgeFacets(this.UIManager.getOptions().filter?.edgeFacets)
+        this.queryEngine.setHideDisconnected(this.UIManager.getOptions().filter?.hideDisconnected === true)
         this.notifier = new Notifier(this)
         this.renderer = createGraphRenderer(this, appContainer, rendererOptions)
         this.renderer.setupRendering()
@@ -126,6 +127,9 @@ export class Graph {
         if (data) {
             const normalisedData = Graph.normalizeGraphData(data)
             this._setData(normalisedData?.nodes, normalisedData?.edges, normalisedData?.notes)
+            // Before the layout and the first paint: a node the filters mean to hide must
+            // never reach the canvas, and must not be in the graph the opening fit frames.
+            this.queryEngine.applyInitialVisibility()
             this.simulation?.update()
             this.renderer.init()
             this.renderer.fitAndCenter(1)
@@ -1071,8 +1075,34 @@ export class Graph {
         return this.noteManager.getNote(id)
     }
 
-    /** Returns whether anything moved, so an edge-only filter change can repaint itself. */
-    setVisibleNodes(nodes: Node[]): boolean {
+    /**
+     * Would this edge be drawn, if `visibleIds` were the visible nodes? The endpoint,
+     * collapse and synthetic reasons only — layers are a separate veto (`layerVisible`).
+     *
+     * Asked twice: once by {@link setVisibleNodes} as it commits, and once by the query
+     * engine *before* it commits, to find the nodes a filter left with no relation. Both
+     * ask here so there is one copy of the answer. A cross-cluster stand-in is not
+     * answerable — `resolveCrossClusterEdges` owns those — so callers handle them.
+     * @private
+     */
+    edgeWouldBeVisible(edge: Edge, visibleIds: Set<string>): boolean {
+        // A subgraph endpoint belongs to another graph, so it can only be read as it
+        // stands; `from` / `to` are this graph's and are read off the candidate set.
+        const endVisible = (subgraphNode: Node | undefined, endpoint: Node): boolean =>
+            subgraphNode ? subgraphNode.visible : visibleIds.has(endpoint.id)
+
+        const bothEndVisible = endVisible(edge.getSubgraphFromNode(), edge.from) &&
+            endVisible(edge.getSubgraphToNode(), edge.to)
+        const isValidSynthetic = !edge.isSynthetic || !edge.to.expanded
+        return bothEndVisible && isValidSynthetic
+    }
+
+    /**
+     * Returns whether anything moved, so an edge-only filter change can repaint itself.
+     * `notify` is off for the query engine's first pass, which runs before anything is
+     * drawn — the constructor's own `simulation.update()` / `renderer.init()` follow it.
+     */
+    setVisibleNodes(nodes: Node[], notify = true): boolean {
         const visibleSet = new Set(nodes.map(n => n.id))
 
         let changed = false
@@ -1088,11 +1118,8 @@ export class Graph {
             // Cross-cluster stand-ins are owned by resolveCrossClusterEdges (expansion
             // state), not by node visibility — leave their visibility as it set it.
             if (edge.isCrossCluster) return
-            const bothEndVisible = (edge.getSubgraphFromNode()?.visible ?? edge.from.visible) &&
-                (edge.getSubgraphToNode()?.visible ?? edge.to.visible)
-            const isValidSynthetic = !edge.isSynthetic || !edge.to.expanded
 
-            const shouldBeVisible = bothEndVisible && isValidSynthetic
+            const shouldBeVisible = this.edgeWouldBeVisible(edge, visibleSet)
             // Compared against `visibleIgnoringLayer`, not `visible`: this decides the
             // endpoint reason only, and an edge already dark because its layer is off
             // must not be reported as a change on every reapplication.
@@ -1102,7 +1129,7 @@ export class Graph {
             }
         })
 
-        if (changed) this.onChange()
+        if (changed && notify) this.onChange()
         return changed
     }
 

@@ -32,7 +32,8 @@ const options = {
 ::: tip Switching a layer off never moves the graph
 This is the property the whole feature is built around — see
 [Toggling is a lens](#lens). Layout, selection and camera come back bit-for-bit
-identical.
+identical, unless you opt into
+[hiding unconnected nodes](/ui-filter#hide-disconnected).
 :::
 
 ## Naming and styling a kind
@@ -168,6 +169,12 @@ a per-edge `hidden` *and* a separate per-edge `physics`, Sigma's `edgeReducer`
 never reaches the layout, Cytoscape and KeyLines re-layout only when asked. A
 hidden relation is a display decision. If hiding a correlation layer re-flowed the
 graph, you could not use the toggle to *read* the graph, which is the entire point.
+
+The one thing that bends it is opt-in, and on the node side:
+[`UI.filter.hideDisconnected`](/ui-filter#hide-disconnected) hides the nodes a layer
+strands. Those nodes leave the simulation, so the graph re-settles — which is why it is
+off by default, and why it is a node filter rather than something the layer control does
+on its own.
 
 Mechanically, `Edge` grew a second flag:
 

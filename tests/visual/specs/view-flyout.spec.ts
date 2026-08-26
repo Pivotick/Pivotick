@@ -76,6 +76,7 @@ test.describe('view-flyout', () => {
 
         await expect(panel(page).locator('.pvt-physicsflyout-layout-select')).toHaveCount(0)
         await expect(panel(page).locator('.pvt-physicsflyout-range')).toHaveCount(0)
-        await expect(panel(page).locator('.pvt-flyout-toggle')).toHaveCount(4)
+        // Highlight grid, snap, freeze, fit-on-expand, hide-unconnected.
+        await expect(panel(page).locator('.pvt-flyout-toggle')).toHaveCount(5)
     })
 })

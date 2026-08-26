@@ -812,6 +812,31 @@ export const fixtures = {
     },
 
     /**
+     * Relations in kinds, plus the shapes `hideDisconnected` has to tell apart:
+     *
+     * - `loner` has no edge at all — the node the rule hides on sight.
+     * - `c`/`d` hold each other up with a single `correlation`, so switching that layer
+     *   off strands them both.
+     * - `a`/`b` are joined by a `tag` *and* by the hub, so switching `tag` off strands
+     *   nobody — the negative case that stops the rule looking right by accident.
+     */
+    disconnectedLayers(): BuiltFixture {
+        const hub = mkNode('hub', 0, -40)
+        const a = mkNode('a', -140, -140)
+        const b = mkNode('b', 140, -140)
+        const c = mkNode('c', -140, 120)
+        const d = mkNode('d', 140, 120)
+        const loner = mkNode('loner', 0, 200)
+        const edges = [
+            kindEdge('hub-a', hub, a, 'object-reference'),
+            kindEdge('hub-b', hub, b, 'object-reference'),
+            kindEdge('a-b', a, b, 'tag'),
+            kindEdge('c-d', c, d, 'correlation'),
+        ]
+        return { nodes: [hub, a, b, c, d, loner], edges, notes: [] }
+    },
+
+    /**
      * Two collapsed clusters joined by relations of **two different kinds** — the case
      * a cross-cluster stand-in aggregates, because stand-ins are deduped by node pair
      * and not by edge. Collapsed, one line stands for both `a3→b1` (`correlation`) and

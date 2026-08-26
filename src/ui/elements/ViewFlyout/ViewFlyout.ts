@@ -1,6 +1,6 @@
 import { Flyout } from '../Flyout/Flyout'
 import type { FlyoutMode } from '../../ModeStore'
-import { show, snapGrid, grid, pin, graphNavigationReset } from '../../icons'
+import { show, snapGrid, grid, hide, pin, graphNavigationReset } from '../../icons'
 import './viewflyout.scss'
 
 /** The canvas background patterns, in the order the button group offers them. */
@@ -102,6 +102,15 @@ export class ViewFlyout extends Flyout {
             + this.toggleRow('snap', snapGrid, 'Snap to grid', 'Align nodes to the grid while you drag them.')
             + this.toggleRow('freeze', pin, 'Freeze on drag', 'Keep nodes pinned where you drop them instead of letting physics move them again.')
             + this.toggleRow('fit', graphNavigationReset, 'Fit on expand/collapse', 'Zoom and re-center to fit the graph when clusters are expanded or collapsed.')
+            + this.toggleRow('orphans', hide, 'Hide unconnected',
+                'Hide nodes that have no visible relation left. Unlike hiding a relationship layer, this moves the graph.')
+    }
+
+    protected onGraphReady() {
+        super.onGraphReady()
+        // A graph that declared the rule hid its orphans before anything was drawn, so no
+        // filter change ever announced them — the row has to read the count itself.
+        this.syncOrphanNote()
     }
 
     protected wire() {
@@ -114,7 +123,29 @@ export class ViewFlyout extends Flyout {
             () => root?.classList.contains('grid-highlighted') ?? false)
         this.wireToggle('freeze', () => this.sim.toggleFreezeNodesOnDrag(), () => this.sim.isFreezeNodesOnDrag())
         this.wireToggle('fit', () => this.sim.toggleFitViewOnExpandCollapse(), () => this.sim.isFitViewOnExpandCollapse())
+        this.wireOrphans()
         this.wireBackground()
+    }
+
+    /**
+     * The unconnected-nodes switch, which drives the query engine's own rule
+     * (`UI.filter.hideDisconnected`). Its note follows every filter change, not just its
+     * own clicks: switching a relationship layer off strands more nodes.
+     */
+    private wireOrphans() {
+        const engine = this.uiManager.graph.queryEngine
+        const sync = () => this.syncOrphanNote()
+        this.wireToggle('orphans',
+            () => engine.setHideDisconnected(!engine.isHideDisconnected()),
+            () => engine.isHideDisconnected())
+        engine.on('filterChange', sync)
+        this.track(() => engine.off('filterChange', sync))
+    }
+
+    /** How many nodes the switch is hiding, on the row itself. Blank while it hides none. */
+    private syncOrphanNote() {
+        const hidden = this.uiManager.graph.queryEngine.getDisconnectedNodeCount()
+        this.toggleNote('orphans', hidden > 0 ? `${hidden} hidden` : '')
     }
 
     /* ---------- background ---------- */

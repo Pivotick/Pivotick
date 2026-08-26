@@ -156,6 +156,63 @@ matched a node tagged `not-malware`, and an array filter value never matched at
 all. Both now behave as described above.
 :::
 
+## Hiding unconnected nodes {#hide-disconnected}
+
+Filtering relations away leaves nodes behind. Switch an
+[edge layer](/edge-layers) off and a node whose only relation was in it stays on the
+canvas with nothing attached — which is deliberate, because a layer is a lens. When you
+*do* want those nodes gone, that is a node-side rule:
+
+```ts
+const options = {
+    UI: {
+        filter: { hideDisconnected: true },
+    },
+}
+```
+
+A node is hidden when it has no **visible** edge left, counted after the layers and the
+node filters have had their say. A self-loop counts as a relation; a note pinned to a
+node does not.
+
+The same switch is in the **View** flyout as *Hide unconnected*, on every graph, off
+unless the option turns it on — so a user can clean up the orphans a layer toggle left,
+or put back the ones you hid. While it is hiding, the row says how many.
+
+::: warning This one moves the graph
+Everything else on this page, and every edge layer, leaves the layout alone. A hidden
+node leaves the simulation, so the rest re-settle. That is the trade for a tidy canvas,
+and it is why the rule is off by default.
+:::
+
+Two things it deliberately does not do:
+
+- **Cluster interiors are left alone.** Clusters routinely group nodes with no relations
+  between them, so applying the rule inside one would open an empty box.
+- **Nothing is protected.** Switch off every layer and nothing is connected, so nothing
+  is drawn. The switch is the way back.
+
+```ts
+graph.queryEngine.setHideDisconnected(true)  // same as the switch
+graph.queryEngine.isHideDisconnected()
+graph.queryEngine.getDisconnectedNodeCount() // what the switch row reports
+```
+
+## Re-applying after the data changes {#reapply}
+
+Filters are applied when a filter changes — not when the graph's data does. Add the edge
+a node was missing and it stays hidden until something recomputes:
+
+```ts
+graph.updateData(newNodes, newEdges)
+graph.queryEngine.reapply()   // recompute now
+```
+
+Worth knowing before you call it: re-deriving visibility **undoes a manual
+`graph.hideNode()`**, which nothing remembers. `queryEngine.excludeNode()` is the hide
+that survives — it is what the context menu and the bulk actions use, and only *Show
+node* reverses it.
+
 ## Where the panel gets its values
 
 Filter *values* always flow through `graph.queryEngine`, whichever way the form is

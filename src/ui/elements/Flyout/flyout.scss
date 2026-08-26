@@ -127,8 +127,9 @@
     align-items: center;
     gap: 10px;
     width: 100%;
-    height: 36px;
-    padding: 0 9px;
+    // Grows rather than clips: a two-line label would otherwise spill out of the row.
+    min-height: 36px;
+    padding: 6px 9px;
     border: none;
     border-radius: 8px;
     background: transparent;
@@ -139,6 +140,22 @@
     text-align: left;
 
     &:hover { background-color: var(--pvt-chrome-border); }
+
+    // What this switch is doing right now, e.g. how many nodes it hides. Pushed against
+    // the switch it belongs to, and gone entirely while it has nothing to say.
+    .pvt-flyout-toggle-note {
+        margin-left: auto;
+        color: var(--pvt-text-color-3);
+        font-size: 11px;
+        white-space: nowrap;
+        flex: none;
+
+        &:empty { display: none; }
+
+        // With a note in the row it is the note that takes the free space, so the
+        // switch sits next to it rather than splitting the gap with it.
+        &:not(:empty) + .pvt-flyout-switch { margin-left: 8px; }
+    }
 
     .pvt-flyout-switch {
         margin-left: auto;

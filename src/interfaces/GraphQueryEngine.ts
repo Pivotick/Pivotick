@@ -180,4 +180,19 @@ export interface FilterOptions {
      * @default undefined — no edge filtering
      */
     edgeFacets?: EdgeFacet[]
+    /**
+     * Hide nodes left with no visible edge — the orphans an edge-layer toggle strands.
+     * Counted after the layers and the node filters have had their say; a note pinned
+     * to a node is not a relation and does not keep it.
+     *
+     * Unlike a layer toggle this **moves the graph**: a hidden node leaves the
+     * simulation, so the rest re-settle. The View flyout carries the same switch, so a
+     * user can turn it off (or on) without the graph declaring anything.
+     *
+     * Runs on this graph's own nodes; a cluster's interior is left alone, because
+     * clusters routinely group nodes that have no relations between them.
+     *
+     * @default false
+     */
+    hideDisconnected?: boolean
 }

@@ -884,6 +884,12 @@ export interface HarnessApi {
     visibleNodeIds(): string[]
     /** What the filter pill reports as hidden (`queryEngine.getHiddenNodeCount`). */
     hiddenNodeCount(): number
+    /** How many nodes are hidden for having no visible relation — what the switch reports. */
+    disconnectedNodeCount(): number
+    /** Whether the unconnected-nodes rule is on (`queryEngine.isHideDisconnected`). */
+    hideDisconnectedOn(): boolean
+    /** Re-derive visibility from the current filters (`queryEngine.reapply`). */
+    reapplyFilters(): void
     /**
      * Load a fixture whose relations come in kinds — `render.edgeTypeAccessor` plus
      * `edgeStyleMap`, and whichever of the edge facet / `scope: 'edge'` legend section
@@ -2103,6 +2109,18 @@ class Harness implements HarnessApi {
 
     hiddenNodeCount(): number {
         return this.g.queryEngine.getHiddenNodeCount()
+    }
+
+    disconnectedNodeCount(): number {
+        return this.g.queryEngine.getDisconnectedNodeCount()
+    }
+
+    hideDisconnectedOn(): boolean {
+        return this.g.queryEngine.isHideDisconnected()
+    }
+
+    reapplyFilters(): void {
+        this.g.queryEngine.reapply()
     }
 
     /* ---------- edge layers ---------- */

@@ -83,13 +83,25 @@ export abstract class Flyout extends UIComponent {
         return `<div class="pvt-flyout-section-label">${text}</div>`
     }
 
-    /** A labelled switch row; wire it with {@link wireToggle} under the same `id`. */
+    /**
+     * A labelled switch row; wire it with {@link wireToggle} under the same `id`. The
+     * note span is for a row that has something to report about its own effect (how many
+     * nodes it is hiding, say) — filled through {@link toggleNote}, and invisible while
+     * empty.
+     */
     protected toggleRow(id: string, icon: string, label: string, desc: string): string {
         return `
             <button type="button" class="pvt-flyout-toggle" data-toggle="${id}" role="switch" aria-pressed="false" title="${desc}">
                 <span class="pvt-flyout-icon">${icon}</span>${label}
+                <span class="pvt-flyout-toggle-note" data-note="${id}"></span>
                 <span class="pvt-flyout-switch"></span>
             </button>`
+    }
+
+    /** Write a switch row's note, or clear it with an empty string. */
+    protected toggleNote(id: string, text: string) {
+        const note = this.query<HTMLElement>(`.pvt-flyout-toggle-note[data-note="${id}"]`)
+        if (note) note.textContent = text
     }
 
     /**

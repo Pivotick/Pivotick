@@ -40,6 +40,10 @@ export class GraphQueryEngine {
     private reservedEdgeFacets = new Map<string, EdgeFacet>()
     /** How many edges the active edge filters hide (layer reasons only). */
     private hiddenEdgeCount: number = 0
+    /** Whether nodes left with no visible edge are hidden (`UI.filter.hideDisconnected`). */
+    private hideDisconnected: boolean = false
+    /** How many nodes that rule is hiding — what the View flyout's switch reports. */
+    private disconnectedNodeCount: number = 0
 
     constructor(graph: Graph) {
         this.graph = graph
@@ -327,7 +331,56 @@ export class GraphQueryEngine {
         return this.hiddenNodeCount
     }
 
-    private apply() {
+    /**
+     * Hide, or stop hiding, the nodes left with no visible edge. Unlike a layer toggle
+     * this moves the graph: a hidden node leaves the simulation, so the rest re-settle.
+     */
+    setHideDisconnected(hide: boolean) {
+        if (this.hideDisconnected === hide) return
+        this.hideDisconnected = hide
+
+        // Set from `UI.filter.hideDisconnected` before any data exists; the constructor's
+        // own {@link applyInitialVisibility} is what puts it into effect.
+        if (this.graph.getMutableNodes().length === 0) return
+
+        this.apply()
+        this.emit('filterChange', this.getFilters())
+    }
+
+    isHideDisconnected(): boolean {
+        return this.hideDisconnected
+    }
+
+    /** How many nodes are hidden for having no visible edge. `0` when the rule is off. */
+    getDisconnectedNodeCount(): number {
+        return this.disconnectedNodeCount
+    }
+
+    /**
+     * Re-derive visibility from the current filters. Filters are otherwise applied only
+     * when one changes, so a graph whose nodes or edges moved underneath it can be stale
+     * — adding an edge doesn't bring back the node that was hidden for lacking one.
+     *
+     * Re-deriving also **undoes a manual `graph.hideNode()`**, which nothing remembers;
+     * {@link excludeNode} is the hide that survives.
+     */
+    reapply() {
+        this.apply()
+        this.emit('filterChange', this.getFilters())
+    }
+
+    /**
+     * The first pass, run by `Graph`'s constructor before the layout and the first paint:
+     * with {@link setHideDisconnected} on, a node with no relation must never reach the
+     * canvas, nor be in the graph the opening fit frames. Quiet, and a no-op otherwise.
+     * @private
+     */
+    applyInitialVisibility() {
+        if (!this.hideDisconnected) return
+        this.apply(false)
+    }
+
+    private apply(notify = true) {
         this.regexCache.clear() // patterns are compiled once per application, below
         // A cluster's children are filtered in their own subgraph, so they can be
         // neither shown nor hidden here — match and count this graph's nodes only.
@@ -344,8 +397,54 @@ export class GraphQueryEngine {
         // the graph's change hook itself when node visibility moved, which is why the
         // edge-only case has to ask for a repaint of its own.
         const layersChanged = this.applyEdgeLayers()
-        const nodesChanged = this.graph.setVisibleNodes(visibleNodesInCurrentGraph)
-        if (layersChanged && !nodesChanged) this.graph.edgeVisibilityChanged()
+        // Then the disconnected rule, which needs those final layer flags — and has to
+        // run before the commit, since that is what makes an endpoint reason true.
+        const visibleNodes = this.dropDisconnectedNodes(visibleNodesInCurrentGraph)
+        const nodesChanged = this.graph.setVisibleNodes(visibleNodes, notify)
+        if (notify && layersChanged && !nodesChanged) this.graph.edgeVisibilityChanged()
+    }
+
+    /**
+     * Drop the nodes {@link setHideDisconnected} hides: the ones with no visible edge
+     * left. Asked of the *candidate* set rather than of `edge.visible`, because the
+     * endpoint reason is only committed afterwards, by `setVisibleNodes`.
+     *
+     * One pass is already the fixed point: a node with no visible edge hides no visible
+     * edge when it goes, so removing it can strand nobody.
+     */
+    private dropDisconnectedNodes(candidates: Node[]): Node[] {
+        if (!this.hideDisconnected) {
+            this.disconnectedNodeCount = 0
+            return candidates
+        }
+
+        const candidateIds = new Set(candidates.map((node) => node.id))
+        // The node the canvas actually shows for an endpoint: a relation into an open
+        // cluster's child is drawn, and it keeps the *cluster* on screen — the child is
+        // not one of this graph's nodes.
+        const onCanvas = (node: Node): Node => {
+            let current = node
+            while (current.childrenDepth > 0 && current.parentNode) current = current.parentNode
+            return current
+        }
+
+        const connected = new Set<string>()
+        for (const edge of this.graph.getMutableEdges()) {
+            // A cross-cluster stand-in's visibility is the cluster drawer's answer, not
+            // one we can predict — read it, and still ask that both ends survived the
+            // node filters. `edge.visible` already folds in its layer.
+            const drawn = edge.isCrossCluster
+                ? edge.visible && candidateIds.has(edge.from.id) && candidateIds.has(edge.to.id)
+                : edge.layerVisible && this.graph.edgeWouldBeVisible(edge, candidateIds)
+            if (!drawn) continue
+
+            connected.add(onCanvas(edge.from).id)
+            connected.add(onCanvas(edge.to).id)
+        }
+
+        const kept = candidates.filter((node) => connected.has(node.id))
+        this.disconnectedNodeCount = candidates.length - kept.length
+        return kept
     }
 
     /**
