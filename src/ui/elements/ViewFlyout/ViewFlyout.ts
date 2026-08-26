@@ -57,7 +57,7 @@ export class ViewFlyout extends Flyout {
 
     protected template(): string {
         const modes = BG_MODES.map(m =>
-            `<button type="button" class="pvt-viewflyout-btn-group-btn" data-bg="${m.id}"
+            `<button type="button" class="pvt-flyout-btn-group-btn" data-bg="${m.id}"
                 aria-pressed="${m.id === 'grid'}" title="${m.desc}">${m.label}</button>`
         ).join('')
         const swatches = COLOR_SWATCHES.map(s =>
@@ -65,18 +65,18 @@ export class ViewFlyout extends Flyout {
                 title="${s.title}" style="${s.color ? `--swatch: ${s.color}` : ''}"></button>`
         ).join('')
         const fits = FIT_MODES.map((f, i) =>
-            `<button type="button" class="pvt-viewflyout-btn-group-btn" data-fit="${f.id}"
+            `<button type="button" class="pvt-flyout-btn-group-btn" data-fit="${f.id}"
                 aria-pressed="${i === 0}" title="${f.desc}">${f.label}</button>`
         ).join('')
 
         return this.headerRow(show, 'View')
             + this.sectionLabel('GRID &amp; CANVAS')
             + `
-            <div class="pvt-viewflyout-card">
-                <div class="pvt-viewflyout-card-head">
-                    <span class="pvt-viewflyout-card-title">Background</span>
+            <div class="pvt-flyout-card">
+                <div class="pvt-flyout-card-head">
+                    <span class="pvt-flyout-card-title">Background</span>
                 </div>
-                <div class="pvt-viewflyout-btn-group">${modes}</div>
+                <div class="pvt-flyout-btn-group">${modes}</div>
                 <div class="pvt-viewflyout-swatch-label">Canvas colour</div>
                 <div class="pvt-viewflyout-swatches" data-swatches="canvas">${swatches}
                     <input type="color" class="pvt-viewflyout-color-picker" title="Custom canvas colour">
@@ -95,7 +95,7 @@ export class ViewFlyout extends Flyout {
                             title="Pick an image file from this device.">Browse</button>
                         <input type="file" class="pvt-viewflyout-bg-image-file" accept="image/*" hidden>
                     </div>
-                    <div class="pvt-viewflyout-btn-group">${fits}</div>
+                    <div class="pvt-flyout-btn-group">${fits}</div>
                     <button type="button" class="pvt-viewflyout-bg-image-clear">Remove image</button>
                 </div>
             </div>`
@@ -135,7 +135,7 @@ export class ViewFlyout extends Flyout {
      * only mean something under a pattern, the image inputs only under `image`.
      */
     private wireBackgroundMode(canvas: HTMLElement) {
-        const buttons = this.queryAll<HTMLButtonElement>('.pvt-viewflyout-btn-group-btn[data-bg]')
+        const buttons = this.queryAll<HTMLButtonElement>('.pvt-flyout-btn-group-btn[data-bg]')
         const patternOnly = this.queryAll('[data-pattern-only]')
         const image = this.query<HTMLElement>('.pvt-viewflyout-bg-image')
 
@@ -208,7 +208,7 @@ export class ViewFlyout extends Flyout {
         const file = this.query<HTMLInputElement>('.pvt-viewflyout-bg-image-file')
         const pick = this.query<HTMLButtonElement>('.pvt-viewflyout-bg-image-pick')
         const clear = this.query<HTMLButtonElement>('.pvt-viewflyout-bg-image-clear')
-        const fits = this.queryAll<HTMLButtonElement>('.pvt-viewflyout-btn-group-btn[data-fit]')
+        const fits = this.queryAll<HTMLButtonElement>('.pvt-flyout-btn-group-btn[data-fit]')
         const highlightFit = (id: string) => {
             for (const button of fits) button.setAttribute('aria-pressed', String(button.dataset.fit === id))
         }

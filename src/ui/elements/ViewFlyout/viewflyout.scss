@@ -1,53 +1,10 @@
-// View flyout — the canvas background card. The panel chrome, the section labels
-// and the switch rows are the shared `pvt-flyout-*` styles, see Flyout/flyout.scss;
-// the card itself is the Physics flyout's card, so the two rails read alike.
-.pvt-viewflyout-card {
-    margin: 8px 0;
-    padding: 11px;
-    border-radius: 10px;
-    background-color: var(--pvt-bg-color-4);
-    border: 1px solid var(--pvt-bg-color-5);
-}
+// View flyout — the canvas background card's own controls. The panel chrome, the
+// card, the segmented pattern picker and the switch rows are all shared
+// `pvt-flyout-*` styles; see Flyout/flyout.scss.
 
-.pvt-viewflyout-card-head {
-    margin-bottom: 11px;
-
-    .pvt-viewflyout-card-title {
-        font-size: 13px;
-        font-weight: 600;
-        color: var(--pvt-text-color-6);
-    }
-}
-
-// The pattern picker: segmented buttons sharing one track.
-.pvt-viewflyout-btn-group {
-    display: flex;
-    gap: 2px;
-    margin-bottom: 10px;
-    padding: 3px;
-    border-radius: 8px;
-    background-color: var(--pvt-bg-color-2);
-
-    .pvt-viewflyout-btn-group-btn {
-        flex: 1;
-        padding: 6px 0;
-        border: none;
-        border-radius: 6px;
-        background: transparent;
-        color: var(--pvt-text-color-5);
-        font-family: inherit;
-        font-size: 12px;
-        cursor: pointer;
-
-        &[aria-pressed='true'] {
-            background-color: var(--pvt-theme-primary);
-            color: #fff;
-        }
-
-        &:hover:not([aria-pressed='true']) {
-            background-color: var(--pvt-bg-color-4);
-        }
-    }
+// Switch rows follow this card, unlike the Physics rail's, which end their panel.
+.pvt-flyout-view .pvt-flyout-card {
+    margin-bottom: 8px;
 }
 
 .pvt-viewflyout-swatch-label {
@@ -147,7 +104,7 @@
 
     &[hidden] { display: none; }
 
-    .pvt-viewflyout-btn-group { margin-bottom: 0; }
+    .pvt-flyout-btn-group { margin-bottom: 0; }
 }
 
 .pvt-viewflyout-bg-image-row {

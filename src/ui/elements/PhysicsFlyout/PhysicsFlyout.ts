@@ -576,7 +576,7 @@ export class PhysicsFlyout extends Flyout {
             </button>`).join('')
         const presets = PRESETS.map(p => {
             const icon = PRESET_ICONS[p] ? `<span class="pvt-flyout-icon">${PRESET_ICONS[p]}</span>` : ''
-            return `<button type="button" class="pvt-physicsflyout-preset" data-preset="${p}" title="${PRESET_DESCRIPTIONS[p]}">${icon}${p[0].toUpperCase()}${p.slice(1)}</button>`
+            return `<button type="button" class="pvt-flyout-btn-group-btn pvt-physicsflyout-preset" data-preset="${p}" title="${PRESET_DESCRIPTIONS[p]}">${icon}${p[0].toUpperCase()}${p.slice(1)}</button>`
         }).join('')
         const spacing = SPACING_SLIDERS.map(s => `
             <div class="pvt-physicsflyout-slider" title="${s.desc}">
@@ -609,20 +609,20 @@ export class PhysicsFlyout extends Flyout {
                     <span class="pvt-flyout-icon pvt-physicsflyout-rootpick-caret">${arrowDown}</span>
                 </button>
             </div>
-            <div class="pvt-physicsflyout-spacing" hidden>
-                <div class="pvt-physicsflyout-card-head">
-                    <span class="pvt-physicsflyout-card-title">Spacing</span>
+            <div class="pvt-flyout-card pvt-physicsflyout-spacing" hidden>
+                <div class="pvt-flyout-card-head">
+                    <span class="pvt-flyout-card-title">Spacing</span>
                     <button type="button" class="pvt-physicsflyout-autospacing active" aria-pressed="true"
                         title="${AUTO_SPACING_DESCRIPTION}"><span class="pvt-flyout-icon">${sparkles}</span>Auto</button>
                 </div>
                 <div class="pvt-physicsflyout-sliders">${spacing}</div>
             </div>
-            <div class="pvt-physicsflyout-card">
-                <div class="pvt-physicsflyout-card-head">
-                    <span class="pvt-physicsflyout-card-title">Simulation</span>
+            <div class="pvt-flyout-card pvt-physicsflyout-card">
+                <div class="pvt-flyout-card-head">
+                    <span class="pvt-flyout-card-title">Simulation</span>
                     <button type="button" class="pvt-physicsflyout-run" title="Pause physics">${pause}</button>
                 </div>
-                <div class="pvt-physicsflyout-presets">${presets}</div>
+                <div class="pvt-flyout-btn-group pvt-physicsflyout-presets">${presets}</div>
                 <div class="pvt-physicsflyout-sliders">${sliders}</div>
             </div>`
     }
