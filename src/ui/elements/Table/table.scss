@@ -358,9 +358,16 @@
     background-color: color-mix(in srgb, var(--pvt-bg-color-danger) 16%, transparent);
 }
 
-// A hidden node's whole row recedes, so the eye lands on what is actually drawn.
-.pvt-table-row:has(.pvt-table-td[data-visibility='filtered']) .pvt-table-td:not([data-visibility]),
-.pvt-table-row:has(.pvt-table-td[data-visibility='excluded']) .pvt-table-td:not([data-visibility]) {
+// An edge whose end has left the canvas: hidden, but not by anything done to the edge —
+// so it is stated rather than flagged, and stays quieter than the two filter states.
+.pvt-table-td[data-visibility='endpoint'] .pvt-table-visibility {
+    color: var(--pvt-text-color-3);
+    border-color: var(--pvt-chrome-border);
+}
+
+// A hidden element's whole row recedes, so the eye lands on what is actually drawn. Any
+// state but `visible` counts, so a new one joins in without touching this.
+.pvt-table-row:has(.pvt-table-td[data-visibility]:not([data-visibility='visible'])) .pvt-table-td:not([data-visibility]) {
     color: var(--pvt-text-color-4);
 }
 

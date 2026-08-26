@@ -26,8 +26,15 @@ const RESERVED = {
     target: 'pvt:target',
 } as const
 
-/** What the `Visibility` column reports, and why. */
-export type TableVisibility = 'visible' | 'filtered' | 'excluded'
+/**
+ * What the `Visibility` column reports, and why.
+ *
+ * `filtered` and `excluded` are a node's two reasons; an edge reads `filtered` when its
+ * own layer is switched off, and `endpoint` when an end of it is not on the canvas —
+ * filtered out, or inside a collapsed cluster. An edge cannot be `excluded`: there is no
+ * hide-this-edge action.
+ */
+export type TableVisibility = 'visible' | 'filtered' | 'excluded' | 'endpoint'
 
 /** The `Visibility` column's key — the grid checks for it to style the cell per state. */
 export const VISIBILITY_COLUMN_KEY = RESERVED.visibility
@@ -76,9 +83,10 @@ export const tableColumns = {
     /** Edges leaving the node. */
     degreeOut: { key: RESERVED.degreeOut, label: 'Out', type: 'numberRange', align: 'right', accessor: (node: Node) => node.getEdgesOut().length, width: COUNT_COLUMN_WIDTH } as TableColumn,
     /**
-     * Whether the node is on the canvas, and if not, why — `filtered` by the filter panel,
-     * or `excluded` by hand. The dock lists hidden nodes rather than hiding them, so this
-     * is how you tell them apart.
+     * Whether the element is on the canvas, and if not, why — for a node, `filtered` by
+     * the filter panel or `excluded` by hand; for an edge, `filtered` when its layer is
+     * off or `endpoint` when an end of it has left. The dock lists hidden elements rather
+     * than hiding them, so this is how you tell them apart.
      *
      * Narrow and fixed-width: it leads the derived column set as a status gutter, so it
      * should not eat the room the name needs.
@@ -110,6 +118,16 @@ export function nodeVisibility(node: Node, graph: Graph): TableVisibility {
 }
 
 /**
+ * Where an edge stands relative to the canvas. Its two reasons are independent — see
+ * `Edge.layerVisible` — and an end that has left the canvas is reported first: while a
+ * node it touches is gone, switching its layer back on cannot bring the edge back.
+ */
+export function edgeVisibility(edge: Edge): TableVisibility {
+    if (edge.visible) return 'visible'
+    return edge.visibleIgnoringLayer ? 'filtered' : 'endpoint'
+}
+
+/**
  * Bind the accessors that need the graph or the UI's own naming options. A column that
  * brought its own `accessor` is left alone, so a consumer can always override.
  */
@@ -123,7 +141,7 @@ function bindReservedAccessors(columns: TableColumn<Node | Edge>[], uiManager: U
             case RESERVED.label:
                 return { ...column, accessor: (element: Node | Edge) => isEdge(element) ? edgeNameGetter(element, mainHeader) : nodeNameGetter(element, mainHeader) }
             case RESERVED.visibility:
-                return { ...column, accessor: (element: Node | Edge) => isEdge(element) ? '' : nodeVisibility(element, graph) }
+                return { ...column, accessor: (element: Node | Edge) => isEdge(element) ? edgeVisibility(element) : nodeVisibility(element, graph) }
             case RESERVED.source:
                 return { ...column, accessor: (element: Node | Edge) => isEdge(element) ? nodeNameGetter(element.from, mainHeader) : '' }
             case RESERVED.target:
@@ -157,7 +175,8 @@ function isEdge(element: Node | Edge): element is Edge {
  * graph that has clusters — close the row instead, as a fixed-width numeric tail. They
  * belong together (both are counts, both read right-aligned) and they are the graph's
  * arithmetic rather than the element's own data, so they sit past it rather than pushing
- * it right. Edges read as a sentence and keep their own order: source, label, target.
+ * it right. Edges keep the same gutter and then read as a sentence: visibility, source,
+ * label, target.
  */
 export function resolveColumns(uiManager: UIManager, tab: TableTab): TableColumn<Node | Edge>[] {
     const options = uiManager.getOptions()
@@ -171,8 +190,10 @@ export function resolveColumns(uiManager: UIManager, tab: TableTab): TableColumn
 
     const leading: TableColumn<Node | Edge>[] = tab === 'nodes'
         ? [tableColumns.visibility, tableColumns.label] as TableColumn<Node | Edge>[]
-        // Edges read as a sentence — source, relation, target — so they keep that order.
-        : [tableColumns.source, tableColumns.label, tableColumns.target] as unknown as TableColumn<Node | Edge>[]
+        // Edges read as a sentence — source, relation, target — so they keep that order,
+        // behind the same status gutter the nodes get: a hidden edge that read as present
+        // was the whole complaint.
+        : [tableColumns.visibility, tableColumns.source, tableColumns.label, tableColumns.target] as unknown as TableColumn<Node | Edge>[]
 
     const trailing: TableColumn<Node | Edge>[] = tab === 'nodes'
         ? [tableColumns.degree] as TableColumn<Node | Edge>[]

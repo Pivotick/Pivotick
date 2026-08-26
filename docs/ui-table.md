@@ -39,18 +39,24 @@ instrument for *building* the selection those act on.
 
 ## It lists the whole graph {#superset}
 
-The table does **not** mirror the canvas. It lists every top-level node, including the
-ones currently hidden, and the leading `Visibility` column says where each one stands:
+The table does **not** mirror the canvas. It lists every top-level node — and on the
+Edges tab every edge — including the ones currently hidden, and the leading `Visibility`
+column says where each one stands:
 
 | Value | Styling | Meaning |
 |---|---|---|
 | `visible` | quiet, untinted | On the canvas now |
-| `filtered` | amber chip | Hidden by the filter panel — change the filter to get it back |
-| `excluded` | red chip | Hidden by hand; restore it from the filter panel's hidden-node list |
+| `filtered` | amber chip | Hidden by a filter — a node filter, or for an edge its [layer](/edge-layers) being switched off. Change the filter to get it back |
+| `excluded` | red chip | A node hidden by hand; restore it from the filter panel's hidden-node list |
+| `endpoint` | neutral outline | An edge whose end is not on the canvas — filtered out, or inside a collapsed cluster. Nothing was done to the edge itself |
 
 Each state differs in weight and border as well as colour, so the column reads without
-relying on hue. A hidden node's whole row also recedes, keeping the eye on what is
+relying on hue. A hidden element's whole row also recedes, keeping the eye on what is
 actually drawn.
+
+An edge reads `endpoint` in preference to `filtered`, because that is the reason you have
+to fix first: while a node it touches is gone, switching its layer back on cannot bring
+the edge back.
 
 That is deliberate. "23 nodes hidden" is a claim you should be able to inspect, and a
 table that quietly drops the rows you are looking for is worse than no table. Sort by
@@ -122,8 +128,8 @@ Either way the graph-aware columns wrap the data. For nodes, **`Visibility`** an
 row — and the counts close it: **`Degree`**, plus **`Children`** on a graph that has
 clusters. The counts sit at the end because they are the graph's arithmetic rather than
 the element's own data, and they are narrow, fixed-width columns so a couple of digits
-never take the share of the row a name needs. Edges read as a sentence instead —
-`Source` / `Label` / `Target`.
+never take the share of the row a name needs. Edges keep the same `Visibility` gutter and
+then read as a sentence — `Source` / `Label` / `Target`.
 
 The default sort is the `Label` column, not the leading one: sorting by `Visibility` on
 open tells you nothing while every row still reads `visible`.

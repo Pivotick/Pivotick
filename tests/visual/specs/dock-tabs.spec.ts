@@ -202,8 +202,8 @@ test.describe('the two levels of switch', () => {
         await page.locator('.pvt-dock-view[data-tab="edges"]').click()
         await page.locator('.pvt-table-row').first().waitFor()
         const headings = () => page.locator('.pvt-table-th-label')
-            .evaluateAll(cells => cells.map(c => (c.textContent ?? '').trim()).slice(0, 3))
-        expect(await headings()).toEqual(['Source', 'Label', 'Target'])
+            .evaluateAll(cells => cells.map(c => (c.textContent ?? '').trim()).slice(0, 4))
+        expect(await headings()).toEqual(['Visibility', 'Source', 'Label', 'Target'])
 
         await page.locator('.pvt-dock-tab[data-tab="audit"]').click()
         await expect(page.locator('.pvt-test-dock-body')).toBeVisible()
@@ -211,7 +211,7 @@ test.describe('the two levels of switch', () => {
         await page.locator('.pvt-table-row').first().waitFor()
 
         // Still Edges, and still the edges grid — not a stale node grid re-attached.
-        expect(await headings()).toEqual(['Source', 'Label', 'Target'])
+        expect(await headings()).toEqual(['Visibility', 'Source', 'Label', 'Target'])
         await expect(page.locator('.pvt-dock-view[data-tab="edges"]')).toHaveClass(/active/)
         await expect(page.locator('.pvt-table-row')).toHaveCount(7)
     })

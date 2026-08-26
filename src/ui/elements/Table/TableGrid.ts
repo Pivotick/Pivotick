@@ -406,6 +406,20 @@ export class TableGrid {
         return element
     }
 
+    /**
+     * Has any row's `Visibility` reading moved since the last rebuild?
+     *
+     * Visibility changes for reasons nothing announces — a cluster opening or closing, a
+     * programmatic `hideNode` — so the dock asks this from `Graph.onVisibleChange`. A
+     * read-and-compare pass rather than a patch: a rebuild is what keeps the sort, the row
+     * filters and the summary consistent, and it only has to happen when something moved.
+     */
+    public visibilityMoved(): boolean {
+        const column = this.columns.find((candidate) => candidate.key === VISIBILITY_COLUMN_KEY)
+        if (!column) return false
+        return this.rows.some((row) => row.values.get(column.key) !== safeRead(column, row.element))
+    }
+
     private buildEmptyState(): HTMLElement {
         const empty = document.createElement('div')
         empty.className = 'pvt-table-empty'

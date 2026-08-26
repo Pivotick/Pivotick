@@ -131,6 +131,14 @@ export class Table extends UIComponent {
             }
         }
 
+        // Filters announce themselves; a cluster opening or closing does not, and it moves
+        // the Visibility column for every edge that crossed its boundary. `onChange` is the
+        // funnel those all pass through, so ask it — and rebuild only when a reading really
+        // moved, since most of what comes through here is not about visibility at all.
+        this.track(this.uiManager.graph.onVisibleChange(() => {
+            if (this.grid?.visibilityMoved()) this.queueRebuild()
+        }))
+
         this.queueRebuild()
     }
 

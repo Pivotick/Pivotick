@@ -36,6 +36,8 @@ export class Graph {
     public readonly editing: GraphEditingManager
     
     private listeners: Record<keyof GraphEvents, Array<GraphEvents[keyof GraphEvents]>>
+    /** Subscribers to {@link onVisibleChange} — kept apart from the data event bus. */
+    private changeListeners: Array<() => void> = []
 
     /**
      * Initializes a graph inside the specified container using the provided data and options.
@@ -600,6 +602,24 @@ export class Graph {
         this.renderer?.update(true)
         this.simulation?.update()
         this.renderer?.nextTick()
+        // Last, so a listener reads the settled graph: the cluster drawer does its
+        // expand/collapse work inside `renderer.update`, above.
+        for (const listener of this.changeListeners) listener()
+    }
+
+    /**
+     * Subscribe to {@link onChange} — the funnel every visible-graph change passes
+     * through: add/remove, filter, cluster expand/collapse, manual hide. For UI that has
+     * to re-read what is on the canvas when nothing more specific is emitted; a cluster
+     * opening announces itself no other way, and on a pinned graph there are no
+     * simulation ticks to fall back on either. Returns its own unsubscribe.
+     * @private
+     */
+    onVisibleChange(listener: () => void): () => void {
+        this.changeListeners.push(listener)
+        return () => {
+            this.changeListeners = this.changeListeners.filter((candidate) => candidate !== listener)
+        }
     }
 
     /**

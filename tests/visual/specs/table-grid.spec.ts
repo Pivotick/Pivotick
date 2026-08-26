@@ -470,3 +470,64 @@ test.describe('table grid', () => {
         expect(await rowIds(page)).toContain('zz')
     })
 })
+
+/* ---------- the edges tab ---------- */
+
+// An edge leaves the canvas for reasons of its own — its layer switched off — and for
+// reasons that are not about it at all: an end of it left. The column has to tell those
+// apart, and it has to keep up when nothing announces the change.
+test.describe('table grid — edge visibility', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoHarness(page)
+    })
+
+    const showEdges = async (page: Page) => {
+        await page.locator('.pvt-dock-view[data-tab="edges"]').click()
+        await page.locator('.pvt-table-row').first().waitFor()
+    }
+
+    test('an edge whose layer is off reads filtered', async ({ page }) => {
+        await harness(page, 'loadWithEdgeLayers', 'edgeLayers', {}, FULL)
+        await page.locator('.pvt-table-grid').waitFor()
+        await showEdges(page)
+
+        expect((await visibilityById(page))['hub-e']).toBe('visible')
+
+        // `tag` covers hub-e and d-e; switching it off is the edge's own reason.
+        await harness(page, 'setEdgeFilter', 'kind', { value: ['object-reference', 'correlation', 'analyst-relationship'] })
+        await expect.poll(() => visibilityById(page).then((byId) => byId['hub-e'])).toBe('filtered')
+
+        const byId = await visibilityById(page)
+        expect(byId['d-e']).toBe('filtered')
+        expect(byId['hub-a']).toBe('visible')
+    })
+
+    test('an edge whose node was excluded reads endpoint', async ({ page }) => {
+        await openDock(page)
+        await showEdges(page)
+
+        await harness(page, 'excludeNode', 'a')
+
+        // a-b, e-a and hub-a all touch `a` — nothing was done to the edges themselves.
+        await expect.poll(() => visibilityById(page).then((byId) => byId['a-b'])).toBe('endpoint')
+
+        const byId = await visibilityById(page)
+        expect(byId['hub-a']).toBe('endpoint')
+        expect(byId['b-c']).toBe('visible')
+    })
+
+    // The state nothing announces: opening a cluster shows the real edges into its
+    // children and hides the stand-in, with no filter and no data change. The dock polls
+    // a slow simulation tick for exactly this.
+    test('opening a cluster updates the column with no filter event', async ({ page }) => {
+        await openDock(page, 'clustered')
+        await showEdges(page)
+
+        // Collapsed: the real edge into the child is hidden, so its end is off the canvas.
+        expect((await visibilityById(page))['ext1-c2']).toBe('endpoint')
+
+        await harness(page, 'expand', 'group')
+
+        await expect.poll(() => visibilityById(page).then((byId) => byId['ext1-c2'])).toBe('visible')
+    })
+})

@@ -112,7 +112,7 @@ test.describe('table edges tab', () => {
 
         const headings = await page.locator('.pvt-table-th-label').evaluateAll((cells) =>
             cells.map((cell) => (cell.textContent ?? '').trim()))
-        expect(headings.slice(0, 3)).toEqual(['Source', 'Label', 'Target'])
+        expect(headings.slice(0, 4)).toEqual(['Visibility', 'Source', 'Label', 'Target'])
 
         // The basic fixture has seven edges.
         await expect(page.locator('.pvt-table-row')).toHaveCount(7)
