@@ -226,6 +226,13 @@ legend row hides that category. Give the legend the `key` of a declared
 `select` / `multiselect` facet and the two drive **one** filter, so the panel's
 control and the legend stay in step.
 
+The [data table](/ui-table#apply-to-graph) is a fourth: its **Apply to graph** button
+hides the elements its column filters leave out. That push lands under a reserved key of
+its own, so it survives pressing **Filter Graph** here and is combined with whatever this
+panel is filtering rather than replacing it. Because the form structurally cannot show a
+reserved key, the panel grows a **From the table** row naming what the push is hiding —
+and the only other place it can be cleared from, once the dock is folded away.
+
 See the [Filter / query engine](/examples/gallery/filter-query-engine/content)
 gallery card for a live example, and
 [`FilterFacet`](/api/html/interfaces/GraphQueryEngine.FilterFacet.html) for the

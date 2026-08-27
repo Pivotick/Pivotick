@@ -181,6 +181,42 @@
         }
     }
 
+    // ── The data dock's push ───────────────────────────────────────────────
+    // What the table's column filters are hiding. One row per pushed scope, because the
+    // dock's two tabs each keep their own filter and both can be live at once.
+    .pvt-filter-from-table {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid var(--pvt-chrome-border);
+
+        &.hidden {
+            display: none;
+        }
+
+        .pvt-filter-from-table-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .pvt-filter-from-table-row {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 8px 10px;
+            background: var(--pvt-bg-color-2);
+            border: 1px solid var(--pvt-bg-color-4);
+            border-radius: 8px;
+        }
+
+        .pvt-filter-from-table-count {
+            font-size: 12px;
+            color: var(--pvt-text-color-5);
+        }
+    }
+
     // ── Hidden-nodes section ───────────────────────────────────────────────
     .pvt-hidden-nodes-container {
         margin-top: 20px;

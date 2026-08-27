@@ -3,8 +3,9 @@ import type { UIManager } from '../../UIManager'
 import type { DockTabHandle, TableExportFormat, TableOptions, TableTab } from '../../../interfaces/GraphUI'
 import type { Dock } from '../Dock/Dock'
 import { TableGrid } from './TableGrid'
+import { TableGraphFilter, sameIdSet } from './TableGraphFilter'
 import { downloadText, toCsv, toJson } from './TableExport'
-import { sliderTune } from '../../icons'
+import { funnel, funnelClear, sliderTune } from '../../icons'
 import './table.scss'
 
 /** The dock-tab id the table claims. Stable, so it can be activated by name. */
@@ -25,10 +26,15 @@ const DOCK_TAB_ID = 'table'
  * region around them (the row's height, the divider, the fold, the pane strip) belongs to
  * the dock, and this class never touches it.
  *
- * It is deliberately **read-only**: it reflects the graph and drives the selection, and
- * never changes what the graph displays. Hiding and pinning stay with the sidebar's bulk
- * actions; restoring a hidden node stays with the filter panel. What the table offers is
- * a better instrument for *building* the selection those act on.
+ * It mutates nothing: it reflects the graph and drives the selection. Hiding and pinning
+ * stay with the sidebar's bulk actions; restoring a hidden node stays with the filter
+ * panel. What the table offers is a better instrument for *building* the selection those
+ * act on.
+ *
+ * The one thing it can change is what the canvas *shows*, and only when asked: the
+ * toolbar's push button applies the column filters to the graph as one reserved filter
+ * (see {@link TableGraphFilter}). Until it is pressed, narrowing a column is reading, not
+ * filtering — which is the separation the `Visibility` column depends on.
  */
 export class Table extends UIComponent {
     private readonly options: TableOptions
@@ -40,6 +46,10 @@ export class Table extends UIComponent {
     /** Outside-click / Escape handler, live only while the picker is open. */
     private dismissPicker?: (event: Event) => void
     private grid?: TableGrid
+    /** Owns the reserved filter the push button writes. Absent when `filterGraph: false`. */
+    private graphFilter?: TableGraphFilter
+    /** The push button, rebuilt with the rest of the toolbar on every activation. */
+    private applyButton?: HTMLButtonElement
     /** The pane's own `Nodes` / `Edges` strip, in the dock's header slot. */
     private tabs?: HTMLDivElement
     /** One grid per inner tab, so each keeps its own sort, columns and row filters. */
@@ -86,6 +96,14 @@ export class Table extends UIComponent {
 
     protected onAfterMount() {
         const graph = this.uiManager.graph
+
+        // Claimed up front rather than on the first press: registering the facet is what
+        // makes the filter matchable, and a facet declared late would have to re-apply a
+        // filter that is already in flight.
+        if (this.options.filterGraph !== false) {
+            this.graphFilter = new TableGraphFilter(this.uiManager)
+            this.graphFilter.claim()
+        }
 
         // Folding the dock takes the picker's button off the bar with it, and a popover
         // left hanging over the canvas with nothing to anchor it is a papercut. The
@@ -151,6 +169,10 @@ export class Table extends UIComponent {
         this.rebuildFrame = requestAnimationFrame(() => {
             this.rebuildFrame = null
             this.grid?.rebuild()
+            // Between the rebuild and the summary: the button's state is read off the
+            // freshly resolved rows, and it is what tells the grid how many elements the
+            // push is hiding — which the summary then reports.
+            this.refreshApplyButton()
             this.grid?.updateSummary()
             if (this.picker) this.renderPicker()
         })
@@ -177,8 +199,14 @@ export class Table extends UIComponent {
     }
 
     private gridFor(tab: TableTab): TableGrid {
-        const grid = this.grids.get(tab)
-            ?? new TableGrid(this.uiManager, tab, this.options.sort, this.options.rowActivate, this.options.virtualizeAbove)
+        const existing = this.grids.get(tab)
+        if (existing) return existing
+
+        const grid = new TableGrid(this.uiManager, tab, this.options.sort, this.options.rowActivate, this.options.virtualizeAbove)
+        // Editing a column filter changes what a press would hide, so the button follows
+        // the keystroke. Nothing else would tell us: a row-filter change re-renders the
+        // rows only, deliberately leaving the header (and this) standing.
+        grid.onRowFiltersChange(() => this.refreshApplyButton())
         this.grids.set(tab, grid)
         return grid
     }
@@ -283,6 +311,19 @@ export class Table extends UIComponent {
         selectAll.addEventListener('click', () => this.grid?.selectAllListed())
         items.push(selectAll)
 
+        // Beside `Select all`, in the bar's actions group — it acts on what the filters
+        // picked out, the way that one acts on what they left listed. Starts hidden and is
+        // revealed by the first refresh: the columns are not resolved yet at build time,
+        // so whether there is a filter to push is not yet knowable.
+        if (this.options.filterGraph !== false) {
+            this.applyButton = document.createElement('button')
+            this.applyButton.type = 'button'
+            this.applyButton.className = 'pvt-table-apply'
+            this.applyButton.hidden = true
+            this.applyButton.addEventListener('click', () => this.toggleGraphFilter())
+            items.push(this.applyButton)
+        }
+
         for (const format of this.exportFormats()) {
             const button = document.createElement('button')
             button.type = 'button'
@@ -332,6 +373,75 @@ export class Table extends UIComponent {
                 'This page will not let the file download. Try the example outside its frame.',
             )
         }
+    }
+
+    /* ---------- the push to the graph ---------- */
+
+    /**
+     * Whether a press would clear rather than push: either the push already says what the
+     * filters say, or the filters have been emptied and the push is all that is left.
+     */
+    private pressClears(pushed: string[] | undefined, target: string[]): boolean {
+        return pushed !== undefined && (target.length === 0 || sameIdSet(pushed, target))
+    }
+
+    /**
+     * Reflect the push's state onto the button, and tell the grid how much it is hiding.
+     *
+     * Three states in one control: nothing pushed reads `Apply to graph`; a push that
+     * still agrees with the filters reads `Clear`; a push the filters have moved past
+     * reads `Apply to graph` again while staying lit — so the accent says the graph is
+     * filtered by this table and the label says what a press would do.
+     *
+     * The pushed ids are read back off the engine every time rather than remembered here,
+     * which is what makes a `resetFilters()` from anywhere un-light the button.
+     */
+    private refreshApplyButton(): void {
+        const button = this.applyButton
+        const grid = this.grid
+        if (!button || !grid || !this.graphFilter) return
+
+        const pushed = this.graphFilter.pushed(this.tab)
+        const target = grid.graphFilterIds()
+        const clears = this.pressClears(pushed, target)
+        const noun = this.tab === 'edges' ? 'relations' : 'nodes'
+
+        button.hidden = !grid.hasFilterableColumns()
+        grid.setGraphFilterCount(pushed?.length ?? 0)
+        button.classList.toggle('active', pushed !== undefined)
+        button.disabled = !clears && target.length === 0
+
+        // Only when the action itself moved: this runs on every rebuild, and re-parsing
+        // the icon each time would churn the DOM for nothing.
+        const action = clears ? 'clear' : 'push'
+        if (button.dataset.action !== action) {
+            button.dataset.action = action
+            button.innerHTML = clears
+                ? `${funnelClear}<span>Clear</span>`
+                : `${funnel}<span>Apply to graph</span>`
+        }
+
+        button.title = clears
+            ? `Stop filtering the graph from this table — ${pushed?.length ?? 0} ${noun} hidden`
+            : button.disabled
+                ? 'Narrow a column first, then apply it to the graph'
+                : `Hide the ${target.length} ${noun} the column filters leave out`
+    }
+
+    /** Push the current column filters onto the graph, or clear a push already on it. */
+    private toggleGraphFilter(): void {
+        const grid = this.grid
+        if (!grid || !this.graphFilter) return
+
+        const target = grid.graphFilterIds()
+        if (this.pressClears(this.graphFilter.pushed(this.tab), target)) {
+            this.graphFilter.clear(this.tab)
+        } else {
+            this.graphFilter.push(this.tab, target)
+        }
+        // The write emits `filterChange`, which queues the rebuild that repaints the rows
+        // and the summary. The button is refreshed here so the press reads as immediate.
+        this.refreshApplyButton()
     }
 
     /* ---------- the column picker ---------- */
@@ -423,6 +533,10 @@ export class Table extends UIComponent {
 
     protected onDestroy() {
         this.closePicker()
+        // Before anything else: a filter left behind would go on hiding nodes with no
+        // control left anywhere to clear it.
+        this.graphFilter?.release()
+        this.graphFilter = undefined
         if (this.rebuildFrame !== null) cancelAnimationFrame(this.rebuildFrame)
         this.rebuildFrame = null
         this.active = false
@@ -438,6 +552,7 @@ export class Table extends UIComponent {
         this.grids.clear()
         this.tabs = undefined
         this.summary = undefined
+        this.applyButton = undefined
         this.pickerButton = undefined
         this.picker = undefined
         this.grid = undefined

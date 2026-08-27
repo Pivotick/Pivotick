@@ -97,8 +97,10 @@ function widgetFor(
 /**
  * Build a column's header filter control, typed off its facet `type`.
  *
- * Every control narrows **rows only** — hence the wording, which has to stay distinct
- * from the "Filter Graph" pill one row up, which means something else entirely.
+ * Every control narrows **rows** — hence the wording, which has to stay distinct from the
+ * "Filter Graph" pill one row up. Pushing that narrowing onto the canvas is a separate and
+ * explicit act (the dock's "Apply to graph" button); a control on its own never moves the
+ * graph, which is why the tooltip promises nothing about it either way.
  *
  * `onChange` receives `undefined` when the control is cleared back to matching everything.
  */
@@ -109,7 +111,7 @@ export function buildRowFilterControl(
     onChange: (filter: RowFilter | undefined) => void,
 ): HTMLElement {
     const name = column.label ?? column.key
-    const explain = `Narrow the rows by ${name}. The graph is not affected.`
+    const explain = `Narrow the rows by ${name}`
 
     switch (widgetFor(column, choices, current)) {
         case 'range': return buildRangeControl(current, explain, onChange)

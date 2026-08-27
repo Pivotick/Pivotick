@@ -63,6 +63,53 @@
     }
 }
 
+// Applies the column filters to the canvas, hiding what they leave out. Sits beside
+// `Select all` in the actions group: that one acts on what the filters kept, this one on
+// what they dropped. Lit with the theme accent while a push is live — the accent is what
+// says the hiding is this table's doing rather than the filter panel's.
+.pvt-table-apply {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 8px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--pvt-text-color-4);
+    font-size: 12px;
+    cursor: pointer;
+
+    svg {
+        width: 13px;
+        height: 13px;
+    }
+
+    // The UA's `display: none` for `hidden` loses to the author rule above, so the
+    // attribute has to be honoured explicitly or a hidden button still shows.
+    &[hidden] {
+        display: none;
+    }
+
+    &:hover:not(:disabled) {
+        border-color: var(--pvt-chrome-border);
+        color: var(--pvt-text-color-6);
+    }
+
+    &:disabled {
+        opacity: 0.45;
+        cursor: default;
+    }
+
+    &.active {
+        border-color: var(--pvt-theme-primary);
+        color: var(--pvt-theme-primary);
+    }
+
+    .pvt-dock-collapsed & {
+        display: none;
+    }
+}
+
 .pvt-table-columns-button {
     display: inline-flex;
     align-items: center;

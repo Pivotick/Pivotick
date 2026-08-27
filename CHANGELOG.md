@@ -1,5 +1,38 @@
 # Changelog
 
+## Unreleased
+
+### The table can filter the graph
+
+- **`Apply to graph`, in the data dock's toolbar**, hides the elements the column filters leave
+  out — the bridge between narrowing what you *read* and narrowing what the canvas *shows*.
+  Narrow the rows until the table lists what you care about, press it once, and the graph shows
+  the same thing. Nothing happens until it is pressed, so a column filter is still reading by
+  default and the `Visibility` column goes on reporting the truth beside it.
+- **Three states in one button.** Unlit `Apply to graph` means nothing is pushed, and it stays
+  disabled until a filter is actually narrowing something; lit `Clear` means the graph is
+  filtered and agrees with your filters; lit `Apply to graph` means an earlier push is still on
+  the canvas and the filters have moved past it. Staleness is decided by comparing what *would*
+  be hidden rather than by whether a control moved — so two different filters that exclude the
+  same rows leave the button settled, and data changing underneath re-offers the press.
+- **It hides exactly what the filters left out**, never "show only these". A node that arrives
+  after the push stays on the canvas, and an expanded cluster's interior is left alone: the
+  engine hands active filters down into a cluster's own engine, where a show-only-these filter
+  would blank the lot. The `Visibility` column is never part of a push, though it still narrows
+  rows like any other — its values *are* the graph's filter state, so pushing them would hide
+  whatever is on the canvas and then disagree with itself.
+- **Both tabs push independently.** Nodes hides nodes; Edges hides relations through the layer
+  flag, which repaints without moving the layout. Both can be live at once.
+- **It composes with the filter panel instead of competing with it.** The push lands as a single
+  filter under a reserved key, so pressing the panel's own **Filter Graph** never clobbers it
+  and it never clears the panel's filters — a node has to survive both. The panel grows a
+  **From the table** row naming what the push is hiding, and clearing it there un-lights the
+  dock's button: the form structurally cannot show a reserved key, and a filter you cannot find
+  once the dock is folded away is worse than none. While a push is live the dock's count reports
+  both halves — `12 of 40 nodes · 28 hidden`.
+- **`UI.table.filterGraph: false`** leaves the button out, for a dock whose controls can never
+  touch the canvas at all.
+
 ## 1.6.0 — 2026-08-26
 
 Three headline additions, each of them something a force layout is bad at on its own: a **data

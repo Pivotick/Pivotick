@@ -55,6 +55,8 @@ export class TableGrid {
     private readonly hiddenColumns = new Set<string>()
     /** Per-column row filters, by column key. Unset means "no filter". */
     private readonly rowFilters = new Map<string, RowFilter>()
+    /** Elements this tab's push is hiding on the canvas — `0` when nothing is pushed. */
+    private graphFilterCount = 0
     private sort: SortState | null = null
 
     private rows: Row[] = []
@@ -72,6 +74,8 @@ export class TableGrid {
     private head?: HTMLDivElement
     private bodyRows?: HTMLDivElement
     private summary?: HTMLSpanElement
+    /** Told when a header filter changes, so the table can refresh its push button. */
+    private rowFiltersChanged?: () => void
 
     constructor(
         uiManager: UIManager,
@@ -91,6 +95,14 @@ export class TableGrid {
 
     public getRoot(): HTMLElement {
         return this.root
+    }
+
+    /**
+     * Listen for header-filter changes. A row filter re-renders the rows only, leaving the
+     * header standing, so nothing else announces that what a push would hide has moved.
+     */
+    public onRowFiltersChange(listener: () => void): void {
+        this.rowFiltersChanged = listener
     }
 
     /** Rows currently listed, in the order they are shown. Export reads this. */
@@ -157,13 +169,42 @@ export class TableGrid {
 
     /* ---------- narrowing and ordering ---------- */
 
+    /** The filters actually narrowing anything, as `[columnKey, filter]` pairs. */
+    private activeRowFilters(): Array<[string, RowFilter]> {
+        return [...this.rowFilters].filter(([, filter]) => isRowFilterActive(filter))
+    }
+
+    private rowPasses(row: Row, active: Array<[string, RowFilter]>): boolean {
+        return active.every(([key, filter]) => rowFilterMatches(filter, row.values.get(key)))
+    }
+
     private applyRowFilters(): Row[] {
-        const active = [...this.rowFilters].filter(([, filter]) => isRowFilterActive(filter))
+        const active = this.activeRowFilters()
         if (active.length === 0) return [...this.rows]
 
-        return this.rows.filter((row) =>
-            active.every(([key, filter]) => rowFilterMatches(filter, row.values.get(key)))
-        )
+        return this.rows.filter((row) => this.rowPasses(row, active))
+    }
+
+    /**
+     * The ids the column filters exclude — what {@link TableGraphFilter} hides when the
+     * push button is pressed.
+     *
+     * The **Visibility** column is deliberately left out of this, though it still narrows
+     * rows like any other: its values *are* the graph's filter state, so pushing it would
+     * hide whatever is currently on the canvas and then immediately disagree with itself.
+     * A consequence worth knowing: with a Visibility filter active the rows listed are
+     * narrower than what a push hides, so the two counts are not complements.
+     */
+    public graphFilterIds(): string[] {
+        const active = this.activeRowFilters().filter(([key]) => key !== VISIBILITY_COLUMN_KEY)
+        if (active.length === 0) return []
+
+        return this.rows.filter((row) => !this.rowPasses(row, active)).map((row) => row.id)
+    }
+
+    /** Whether any column offers a filter at all — no control, no push to make. */
+    public hasFilterableColumns(): boolean {
+        return this.columns.some((column) => column.filterable && column.key !== VISIBILITY_COLUMN_KEY)
     }
 
     private applySort(rows: Row[]): Row[] {
@@ -277,6 +318,7 @@ export class TableGrid {
             if (filter) this.rowFilters.set(column.key, filter)
             else this.rowFilters.delete(column.key)
             this.renderRows()
+            this.rowFiltersChanged?.()
         })
     }
 
@@ -539,13 +581,27 @@ export class TableGrid {
         this.render()
     }
 
-    /** A one-line count for the dock header — "12 of 40 nodes". */
+    /**
+     * How many elements this tab's push is hiding on the canvas, for the summary to
+     * report. Set by the table whenever it refreshes the push button.
+     */
+    public setGraphFilterCount(count: number): void {
+        this.graphFilterCount = count
+    }
+
+    /**
+     * A one-line count for the dock header — "12 of 40 nodes", plus "· 28 hidden" while a
+     * push is filtering the canvas. The lit button beside it is what says the hiding is
+     * this table's doing; the exact sentence is in the summary's own title.
+     */
     public describe(): string {
         const noun = this.tab === 'edges' ? 'edge' : 'node'
         const total = this.rows.length
         const shown = this.visible.length
-        if (shown === total) return `${total} ${noun}${total === 1 ? '' : 's'}`
-        return `${shown} of ${total} ${noun}${total === 1 ? '' : 's'}`
+        const counted = shown === total
+            ? `${total} ${noun}${total === 1 ? '' : 's'}`
+            : `${shown} of ${total} ${noun}${total === 1 ? '' : 's'}`
+        return this.graphFilterCount > 0 ? `${counted} · ${this.graphFilterCount} hidden` : counted
     }
 
     public setSummaryTarget(element: HTMLSpanElement | undefined): void {
@@ -553,7 +609,14 @@ export class TableGrid {
     }
 
     public updateSummary(): void {
-        if (this.summary) this.summary.textContent = this.describe()
+        if (!this.summary) return
+        this.summary.textContent = this.describe()
+        // "· 28 hidden" has to be short enough for the bar, so the sentence that says
+        // whose doing it is goes here rather than into the count.
+        const noun = this.tab === 'edges' ? 'relations' : 'nodes'
+        this.summary.title = this.graphFilterCount > 0
+            ? `${this.graphFilterCount} ${noun} hidden on the canvas by this table's column filters`
+            : ''
     }
 }
 

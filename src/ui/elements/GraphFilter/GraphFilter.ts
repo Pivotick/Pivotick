@@ -1,9 +1,10 @@
 import type {
-    EdgeFacet, EdgeFacetValue, FilterFacet, FilterFieldConfig, FilterOptions, GraphFilters,
+    EdgeFacet, EdgeFacetValue, FilterFacet, FilterFieldConfig, FilterOptions, FilterValue, GraphFilters,
 } from '../../../interfaces/GraphQueryEngine'
 import { createHtmlElement, createHtmlTemplate, createIcon } from '../../../utils/ElementCreation'
 import { Node } from '../../../Node'
 import { EDGE_FILTER_PREFIX } from '../../../GraphQueryEngine'
+import { TABLE_FILTER_KEY } from '../Table/TableGraphFilter'
 import { FormFactory, type FieldConfig, type FieldOption, type FieldType, type FormValue, type FormValues } from '../../../utils/FormFactory'
 import { nodeNameGetter } from '../../../utils/GraphGetters'
 import { createButton } from '../../components/Button'
@@ -25,6 +26,8 @@ export class GraphFilter extends UIComponent {
     private formOptions: FieldConfig[]
     private filteringForm?: HTMLFormElement
     private manuallyFilteredContainer?: HTMLDivElement
+    /** The data dock's push, when there is one — see {@link updateUIFilterFromTable}. */
+    private fromTableContainer?: HTMLDivElement
     /** The layer-toggle rows, by `edge:<key>|<value>`, so a filter change can relight them. */
     private layerRows = new Map<string, HTMLElement>()
     /** Set while the panel writes a layer filter, so it doesn't read its own echo back. */
@@ -65,6 +68,7 @@ export class GraphFilter extends UIComponent {
         this.uiManager.graph.queryEngine.on('filterChange', (filters: GraphFilters) => {
             this.updateUIFilterButtonContent(filters)
             this.updateUIFilterHiddenNodes()
+            this.updateUIFilterFromTable()
             this.syncFormFromActiveFilters(filters)
             this.syncLayerRows()
         })
@@ -72,6 +76,7 @@ export class GraphFilter extends UIComponent {
         requestAnimationFrame(() => {
             this.updateUIFilterButtonContent({})
             this.updateUIFilterHiddenNodes()
+            this.updateUIFilterFromTable()
         })
         return this.graphFilter
     }
@@ -142,7 +147,70 @@ export class GraphFilter extends UIComponent {
         this.graphFilter.appendChild(attributeSection)
         const layerSection = this.buildLayerSection()
         if (layerSection) this.graphFilter.appendChild(layerSection)
+        // Between the declared filters and the by-hand ones: a push is a filter like the
+        // sections above it, but it was made somewhere else.
+        this.fromTableContainer = this.buildFromTableSection()
+        this.graphFilter.appendChild(this.fromTableContainer)
         this.graphFilter.appendChild(this.manuallyFilteredContainer)
+        this.updateUIFilterFromTable()
+    }
+
+    /**
+     * The data dock's push: what the table's column filters are hiding, and the second
+     * place it can be cleared from.
+     *
+     * Without this a push is unfindable. Its key is reserved, so the Attributes form
+     * cannot show it; the header pill counts it but cannot name it; and folding the dock
+     * away takes the button that made it off the screen. Empty and hidden until a push
+     * exists.
+     */
+    private buildFromTableSection(): HTMLDivElement {
+        return createHtmlElement('div', { class: 'pvt-filter-section pvt-filter-from-table hidden' }, [
+            createHtmlElement('div', { class: 'pvt-filter-section-head' }, [
+                createHtmlElement('span', { class: 'pvt-filter-section-label' }, ['From the table']),
+            ]),
+            createHtmlElement('div', { class: 'pvt-filter-from-table-list' }),
+        ]) as HTMLDivElement
+    }
+
+    private updateUIFilterFromTable() {
+        const container = this.fromTableContainer
+        const list = container?.querySelector('.pvt-filter-from-table-list')
+        if (!container || !list) return
+
+        const engine = this.uiManager.graph.queryEngine
+        // Both scopes can be pushed at once — the dock's two tabs are independent lenses,
+        // and each keeps its own filter.
+        const scopes = [
+            {
+                noun: 'node',
+                count: countFilterValues(engine.getFilters()[TABLE_FILTER_KEY]?.value),
+                clear: () => engine.removeFilter(TABLE_FILTER_KEY),
+            },
+            {
+                noun: 'relation',
+                count: countFilterValues(engine.getEdgeFilters()[TABLE_FILTER_KEY]?.value),
+                clear: () => engine.removeEdgeFilter(TABLE_FILTER_KEY),
+            },
+        ].filter((scope) => scope.count > 0)
+
+        container.classList.toggle('hidden', scopes.length === 0)
+        list.innerHTML = ''
+        for (const scope of scopes) {
+            const clearButton = createButton({
+                variant: 'secondary',
+                text: 'Clear',
+                size: 'sm',
+                svgIcon: show,
+                title: `Stop hiding the ${scope.noun}s the table's column filters leave out`,
+                onClick: scope.clear,
+            })
+            list.appendChild(createHtmlElement('div', { class: 'pvt-filter-from-table-row' }, [
+                createHtmlElement('span', { class: 'pvt-filter-from-table-count' },
+                    [`${scope.count} ${scope.noun}${scope.count > 1 ? 's' : ''} hidden`]),
+                clearButton,
+            ]))
+        }
     }
 
     /** The declared edge facets — the graph's relation layers. */
@@ -614,4 +682,10 @@ export class GraphFilter extends UIComponent {
     }
 
 
+}
+
+/** How many elements a push's id list names. `0` when there is no push at all. */
+function countFilterValues(value: FilterValue): number {
+    if (value === undefined || value === null) return 0
+    return Array.isArray(value) ? value.length : 1
 }

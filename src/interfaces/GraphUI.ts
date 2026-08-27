@@ -899,6 +899,17 @@ export interface TableOptions {
     sort?: { key: string, direction: TableSortDirection },
     /** What clicking a row does. @default 'select' */
     rowActivate?: 'select' | 'selectAndCenter' | 'none',
+    /**
+     * Offer the **Apply to graph** button, which hides the elements the column filters
+     * leave out — the one thing in the dock that changes what the canvas shows.
+     *
+     * Nothing happens until it is pressed: narrowing a column is still reading, and the
+     * `Visibility` column goes on reporting the truth beside it. Pass `false` for a dock
+     * that can never touch the canvas at all.
+     *
+     * @default true
+     */
+    filterGraph?: boolean,
     /** Export buttons offered in the dock header. `false` hides them. @default ['csv', 'json'] */
     export?: TableExportFormat[] | false,
     /** Row count above which rows are windowed rather than all rendered. @default 200 */
@@ -942,8 +953,9 @@ export interface TableColumn<T extends Node | Edge = Node> extends Pick<FilterFa
      * Min/Max pair for a `numberRange`, a dropdown of the values present for a `select`,
      * a substring box otherwise.
      *
-     * It narrows the **rows**; the canvas is left alone — changing what the graph
-     * displays stays with the filter panel, so the two can never disagree.
+     * It narrows the **rows**; the canvas is left alone unless someone presses the dock's
+     * **Apply to graph** button (see {@link TableOptions.filterGraph}), so reading and
+     * filtering stay separate acts.
      *
      * @default false for a column you declare — but `true` throughout the **derived**
      * column set, which infers its filters off the types it already inferred. Declare

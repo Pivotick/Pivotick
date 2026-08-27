@@ -30,11 +30,15 @@ shows you its own chevron.
 The dock is `full` mode only — it is a grid row beside the sidebar, and the other modes
 promise a canvas without that much chrome.
 
-::: tip The table never changes what the graph shows
-The dock is **read-only**. It reflects the graph and drives the selection, and that is
-all. Hiding and pinning stay with the sidebar's [bulk actions](/ui-sidebar); restoring a
-hidden node stays with the [filter panel](/ui-filter). What the dock adds is a far better
-instrument for *building* the selection those act on.
+::: tip The table changes nothing you did not ask it to
+The dock mutates nothing. It reflects the graph and drives the selection; hiding and
+pinning stay with the sidebar's [bulk actions](/ui-sidebar), and restoring a hidden node
+stays with the [filter panel](/ui-filter). What the dock adds is a far better instrument
+for *building* the selection those act on.
+
+The one thing it can change is what the canvas **shows**, and only on request: the
+[Apply to graph](#apply-to-graph) button hides the elements your column filters leave out.
+Until you press it, narrowing a column is reading, not filtering.
 :::
 
 ## It lists the whole graph {#superset}
@@ -88,12 +92,53 @@ The dropdown is built from the column's own values rather than a declared option
 it never offers a choice that would come back empty. Above 50 distinct values it steps
 aside for the text box — a dropdown that long is not a control anyone can use.
 
-That row filter is *not* the graph's filter. It changes what you are reading; the canvas
-is untouched, and the `Visibility` column goes on reporting the truth beside it. Deciding
-what the graph displays stays with the filter panel, so the two can never end up fighting
-over it.
+A row filter is not the graph's filter. It changes what you are *reading*: the canvas is
+untouched and the `Visibility` column goes on reporting the truth beside it, so the two can
+disagree without either being wrong. Pushing your narrowing onto the canvas is a separate
+and explicit act — see below.
 
 The dock's count reflects both: `40 nodes` becomes `12 of 40 nodes` once you narrow.
+
+## Applying the filters to the graph {#apply-to-graph}
+
+**Apply to graph**, in the dock's toolbar, hides the elements your column filters leave
+out. It is the bridge between the two kinds of filtering: narrow the rows until the table
+lists what you care about, then press it once and the canvas shows the same thing.
+
+It is a one-shot push, not a live link, and the button says which of three states you are
+in:
+
+| Button | Meaning |
+|---|---|
+| `Apply to graph`, unlit | Nothing is pushed. Disabled until a column filter is actually narrowing something. |
+| `Clear`, **lit** | The graph is filtered, and it agrees with your filters. Press to restore it. |
+| `Apply to graph`, **lit** | The graph is filtered by an *earlier* push and your filters have moved on. Press to bring it up to date. |
+
+Two properties worth knowing, because they are what keep the push predictable:
+
+- It hides **exactly the rows the filters left out** — never "show only these". So a node
+  added after the push stays on the canvas, and an expanded cluster's interior is left
+  alone. What you pushed is a statement about a moment, not a standing query.
+- The `Visibility` column is **never** part of a push, though it still narrows rows like
+  any other. Its values *are* the graph's filter state, so pushing them would hide whatever
+  is currently on the canvas and then disagree with itself.
+
+While a push is live the count reports both halves — `12 of 40 nodes · 28 hidden` — and the
+[filter panel](/ui-filter) grows a **From the table** row that names it and can clear it,
+so a push is never a filter you cannot find once the dock is folded away.
+
+The push lands as a single filter under a reserved key, which means it composes with the
+filter panel rather than competing with it: pressing the panel's own **Filter Graph** never
+clobbers a push, and a push never clears the panel's filters. The two are combined, so a
+node has to survive both.
+
+Pass `filterGraph: false` for a dock whose controls can never touch the canvas at all:
+
+```ts
+const options = {
+    UI: { mode: 'full', table: { filterGraph: false } },
+}
+```
 
 ## Selecting {#selecting}
 
@@ -213,6 +258,7 @@ inspect.
 | `height` | `0.35` | A pixel count, or a fraction of the canvas. Clamped so the canvas keeps a usable minimum |
 | `sort` | the `Label` column | `{ key, direction }` |
 | `rowActivate` | `'select'` | `'selectAndCenter'` also moves the canvas; `'none'` makes rows inert |
+| `filterGraph` | `true` | Offer [Apply to graph](#apply-to-graph). `false` for a dock that can never filter the canvas |
 | `export` | `['csv', 'json']` | `false` hides the buttons |
 | `virtualizeAbove` | `200` | Row count above which rows are windowed |
 
