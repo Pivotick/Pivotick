@@ -96,6 +96,9 @@ export class GraphFilter extends UIComponent {
         if (!this.graphFilter) return
         // The form about to be replaced may have a keystroke still waiting to commit.
         window.clearTimeout(this.typedApplyTimer)
+        // Every section below is rebuilt, so drop the previous set: a leftover form is
+        // one the panel no longer reads, but which still applies what is typed into it.
+        this.graphFilter.replaceChildren()
 
         const resetButton = createButton({
             variant: 'secondary',
@@ -156,6 +159,9 @@ export class GraphFilter extends UIComponent {
         this.graphFilter.appendChild(this.fromTableContainer)
         this.graphFilter.appendChild(this.manuallyFilteredContainer)
         this.updateUIFilterFromTable()
+        // The controls came back empty, so put the live filters back into them — a blank
+        // form beside a filtered canvas is the disagreement this panel no longer has.
+        this.syncFormFromActiveFilters(this.uiManager.graph.queryEngine.getFilters())
     }
 
     /**

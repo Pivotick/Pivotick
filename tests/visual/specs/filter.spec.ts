@@ -71,4 +71,21 @@ test.describe('filtering', () => {
         await expect(chip).toHaveText('router')
         await expect(panel).toHaveScreenshot('filter-panel-reflects-filter.png')
     })
+
+    // T5.6 — the panel rebuilds itself on every data batch change. It used to *append*
+    // the rebuilt sections, stacking a second (blank) copy of the form under the first:
+    // the panel then read one form while the user typed into the other.
+    test('a data change rebuilds the panel once, filters intact', async ({ page }) => {
+        await loadFixture(page, 'filterable')
+        await harness(page, 'setFilter', 'type', { value: 'router', matchMode: 'exact' })
+        await harness(page, 'openFilterPanel')
+        const panel = page.locator('.pvt-slide-panel.open')
+        await panel.waitFor({ state: 'visible' })
+
+        await harness(page, 'addNode', 'extra', 300, 300)
+
+        await expect(panel.locator('.pvt-form')).toHaveCount(1)
+        // …and the one surviving form still shows the filter the canvas is applying.
+        await expect(panel.locator('.pvt-picker__chip-label')).toHaveText('router')
+    })
 })
