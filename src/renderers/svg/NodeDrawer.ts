@@ -53,58 +53,8 @@ export class NodeDrawer {
 
             // In here, we could add support of other lightweight framework such as jQuery, Vue.js, ..
 
-            // The custom content must be measured to size the foreignObject. During the
-            // initial layout the graph's .zoom-layer is display:none, so getBoundingClientRect
-            // reports 0×0 — retry on later frames until it has real dimensions (bounded), else
-            // the node would stay locked at 0×0 and be invisible.
-            const maxMeasureAttempts = 300
-            const measureAndSize = (attempt: number): void => {
-                const foNode = fo.node() as SVGForeignObjectElement
-                if (!foNode || !foNode.isConnected) return
-
-                const content = foNode.firstElementChild as HTMLElement | null
-                if (!content) return
-
-                const bcr = content.getBoundingClientRect()
-                if ((bcr.width === 0 || bcr.height === 0) && attempt < maxMeasureAttempts) {
-                    requestAnimationFrame(() => measureAndSize(attempt + 1))
-                    return
-                }
-
-                const width = Math.ceil(bcr.width)
-                const height = Math.ceil(bcr.height)
-                if (width === 0 || height === 0) return // never measurable: keep the fallback size
-
-                // Feed the measured box into the automatic edge-anchor calculation
-                // (EdgeDrawer.getNodeBorderRadius).
-                node.setBoxSize(width, height)
-
-                fo.attr('width', width)
-                    .attr('height', height)
-
-                // Offset the position so it's centered
-                fo.attr('x', -width / 2)
-                    .attr('y', -height / 2)
-
-                // Feed the measured size into the node radius so the force sim's
-                // collision + charge see the real card, not the default r=10 (else
-                // large HTML cards get packed until they overlap). Expanded clusters
-                // are skipped — their bubble radius is owned by the cluster drawer.
-                if (!node.hasChildren() || !node.expanded) {
-                    const measuredRadius = 0.5 * Math.max(width, height)
-                    if (node.getCircleRadius() !== measuredRadius) {
-                        node.setCircleRadius(measuredRadius)
-                        // Measurement only lands once the card is on-screen — the zoom
-                        // layer is display:none during the initial layout, so this runs
-                        // after the sim has cooled. Nudge it once so collision re-spaces
-                        // the freshly-sized cards.
-                        this.scheduleCollisionReheat()
-                    }
-                }
-                // The card's real box is only known here, so the rim moves with it.
-                this.badgeDrawer.reanchor(node)
-            }
-            requestAnimationFrame(() => measureAndSize(0))
+            // The card *is* the node here, so nothing is drawn behind it.
+            this.fitCardToContent(fo, node, 0)
 
         } else {
             this.genericNodeRender(theNodeSelection, style, node)
@@ -113,15 +63,12 @@ export class NodeDrawer {
                 if (!nodeElement) return
 
                 let width = 50, height = 50 // default fallback size of a node
-                const bbox = (nodeElement.querySelector('.node') as SVGGraphicsElement).getBBox()
-                if (bbox.width > 0 && bbox.height > 0) {
+                const shapeElement = nodeElement.querySelector('.node') as SVGGraphicsElement | null
+                const bbox = shapeElement?.getBBox()
+                if (bbox && bbox.width > 0 && bbox.height > 0) {
                     width = Math.ceil(bbox.width)
                     height = Math.ceil(bbox.height)
                 }
-
-                // Feed the measured box into the automatic edge-anchor calculation
-                // (EdgeDrawer.getNodeBorderRadius).
-                node.setBoxSize(width, height)
 
                 if (this.rendererOptions.enableNodeExpansion && (!node.hasChildren() || !node.expanded)) {
                     if (style.shape == 'square') {
@@ -132,6 +79,9 @@ export class NodeDrawer {
                     // A custom shape only learns its real radius here, having been drawn at a guess.
                     if (this.isCustomShape(style.shape as NodeShape)) this.badgeDrawer.reanchor(node)
                 }
+
+                // After the radius: setting it clears any border the shape had.
+                this.applyShapeBorder(node, style.shape as NodeShape, bbox)
             })
         }
 
@@ -151,6 +101,114 @@ export class NodeDrawer {
                 this.addExpandCollapseIcons(theNodeSelection, node)
             })
         }
+    }
+
+    /**
+     * How far from `node`'s centre an edge leaving along the unit vector
+     * `(dirX, dirY)` should start: its real border, grown by `outset`. Shared by
+     * every drawer that lands something on a node's rim.
+     *
+     * The node caches its own geometry, so this stays pure arithmetic — resolving
+     * a style here would run for both ends of every edge on every tick.
+     */
+    public borderReach(node: Node, dirX: number, dirY: number, outset = 0): number {
+        if (node.getCircleRadius() || node.getBorderBox()) {
+            return node.getBorderDistance(dirX, dirY, outset)
+        }
+        // Never measured and no radius of its own: fall back to the styled size.
+        return (tryResolveNumber(this.getNodeStyle(node).size, node) as number) + outset
+    }
+
+    /**
+     * Size a `foreignObject` card to the HTML it holds, then let that box drive
+     * the node's collision radius and where edges land on it. HTML-in-SVG is the
+     * common way to get a styled node, so the card — not a bounding circle — is
+     * the node's real border.
+     *
+     * `shapeHalfExtent` is the half-size of any shape still drawn behind the card
+     * (0 when the card *is* the node): the node never shrinks below it, so edges
+     * cannot end up inside a shape that is still visible.
+     */
+    private fitCardToContent(
+        fo: Selection<SVGForeignObjectElement, Node, null, undefined>,
+        node: Node,
+        shapeHalfExtent: number
+    ): void {
+        // During the initial layout the graph's .zoom-layer is display:none, so the
+        // content measures 0×0 — retry on later frames until it has real dimensions
+        // (bounded), else the card would stay locked at its placeholder size.
+        const maxMeasureAttempts = 300
+        const measureAndSize = (attempt: number): void => {
+            const foNode = fo.node()
+            if (!foNode || !foNode.isConnected) return
+
+            const content = foNode.firstElementChild as HTMLElement | null
+            if (!content) return
+
+            const bcr = content.getBoundingClientRect()
+            if ((bcr.width === 0 || bcr.height === 0) && attempt < maxMeasureAttempts) {
+                requestAnimationFrame(() => measureAndSize(attempt + 1))
+                return
+            }
+
+            // getBoundingClientRect reports screen pixels, so a card first measured
+            // while the graph is zoomed comes back scaled. Undo the zoom.
+            const scale = foNode.getScreenCTM()?.a || 1
+            const width = Math.ceil(bcr.width / scale)
+            const height = Math.ceil(bcr.height / scale)
+            if (width === 0 || height === 0) return // never measurable: keep the fallback size
+
+            fo.attr('width', width)
+                .attr('height', height)
+                // Offset the position so it's centered
+                .attr('x', -width / 2)
+                .attr('y', -height / 2)
+
+            // Feed the measured size into the node radius so the force sim's
+            // collision + charge see the real card, not the default r=10 (else
+            // large HTML cards get packed until they overlap). Expanded clusters
+            // are skipped — their bubble radius is owned by the cluster drawer.
+            if (!node.hasChildren() || !node.expanded) {
+                const halfWidth = Math.max(width / 2, shapeHalfExtent)
+                const halfHeight = Math.max(height / 2, shapeHalfExtent)
+                const measuredRadius = Math.max(halfWidth, halfHeight)
+                if (node.getCircleRadius() !== measuredRadius) {
+                    node.setCircleRadius(measuredRadius)
+                    // Measurement only lands once the card is on-screen — the zoom
+                    // layer is display:none during the initial layout, so this runs
+                    // after the sim has cooled. Nudge it once so collision re-spaces
+                    // the freshly-sized cards.
+                    this.scheduleCollisionReheat()
+                }
+                // Anchor on the card only when it reaches past the shape behind it;
+                // a shape that still sticks out keeps its circle, which fits it better.
+                if (width / 2 > shapeHalfExtent || height / 2 > shapeHalfExtent) {
+                    node.setBorderBox(halfWidth * 2, halfHeight * 2) // after the radius, which clears it
+                }
+            }
+            // The card's real box is only known here, so the rim moves with it.
+            this.badgeDrawer.reanchor(node)
+        }
+        requestAnimationFrame(() => measureAndSize(0))
+    }
+
+    /**
+     * Anchor edges on the node's rectangular border when that is what it renders
+     * as. Circle, triangle and hexagon keep the circle radius: their bounding box
+     * is a worse fit than it, most of all on the diagonals.
+     *
+     * A custom path is only trusted when its box is centred on the node's origin,
+     * since a border is stored as half-extents around the centre.
+     */
+    private applyShapeBorder(node: Node, shape: NodeShape, bbox?: DOMRect): void {
+        if (!bbox || bbox.width <= 0 || bbox.height <= 0) return
+        // A border is half-extents around the centre, so an off-centre box cannot
+        // be expressed as one — those keep their circle.
+        const centred = Math.abs(bbox.x + bbox.width / 2) <= 0.5
+            && Math.abs(bbox.y + bbox.height / 2) <= 0.5
+        if (!centred) return
+        if (shape !== 'square' && !this.isCustomShape(shape)) return
+        node.setBorderBox(bbox.width, bbox.height)
     }
 
     /** Pending frame for the debounced collision reheat, if any. */
@@ -478,6 +536,7 @@ export class NodeDrawer {
                     image.attr('x', -w / 2).attr('y', -h / 2).attr('width', w).attr('height', h)
                     renderedNode.attr('x', -w / 2).attr('y', -h / 2).attr('width', w).attr('height', h)
                     node.setCircleRadius(0.5 * Math.max(w, h))
+                    node.setBorderBox(w, h) // after the radius, which clears it
                     // The frame only takes its real proportions here; without this the rim
                     // chrome stays pinned to the square guess and ends up over the picture.
                     this.badgeDrawer.reanchor(node)
@@ -514,6 +573,10 @@ export class NodeDrawer {
             } else if (rendered instanceof HTMLElement) {
                 fo.node()?.append(rendered)
             }
+            // The box above is only a guess: measure the card and grow to it, so a
+            // card wider than `2 × size` is neither clipped nor anchored as a circle.
+            // `style.size` is the half-extent of the shape still drawn behind it.
+            this.fitCardToContent(fo, node, style.size)
         }
         // Do not have text dislay be mutually exclusive with icons
         if (style.text) {

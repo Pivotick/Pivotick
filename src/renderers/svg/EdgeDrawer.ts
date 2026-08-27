@@ -1,7 +1,7 @@
 import { type Selection, select as d3Select } from 'd3-selection'
 import { Edge } from '../../Edge'
-import { getApproximateArcLengthAndMidpoint, getApproximateCircleArcLengthAndMidpoint, getArcIntersectionWithCircle, getSegmentLengthAndMidpoint, rectRadiusAlongDirection, type ArcParams, type Circle } from '../../utils/GeometryHelper'
-import type { Node } from '../../Node'
+import { getApproximateArcLengthAndMidpoint, getApproximateCircleArcLengthAndMidpoint, getArcIntersectionWithBox, getArcIntersectionWithCircle, getSegmentLengthAndMidpoint, type ArcParams, type Circle } from '../../utils/GeometryHelper'
+import type { Node, NodeBorderBox } from '../../Node'
 import type { Graph } from '../../Graph'
 import type { GraphSvgRenderer } from './GraphSvgRenderer'
 import { tryResolveBoolean, tryResolveNumber, tryResolveString } from '../../utils/Getters'
@@ -333,7 +333,8 @@ export class EdgeDrawer {
 
         const x = from.x ?? 0
         const y = from.y ?? 0
-        const nodeRadius = from.getCircleRadius() ? from.getCircleRadius() : this.graphSvgRenderer.nodeDrawer.getNodeStyle(from).size as number
+        // The loop sits NE, so size it from the node's reach in that direction.
+        const nodeRadius = this.borderReach(from, Math.SQRT1_2, -Math.SQRT1_2)
         const control_point_radius = nodeRadius + 16 * Math.log(nodeRadius + 1)
         const spread = Math.max(10, 110 / Math.sqrt(nodeRadius)) // degrees, shrinks with size
 
@@ -349,38 +350,22 @@ export class EdgeDrawer {
         const cx2 = x + control_point_radius * Math.cos(angle2)
         const cy2 = y - control_point_radius * Math.sin(angle2)
 
-        // Start point offset by (r + drawOffset) in angle1 direction
-        const startX = x + (nodeRadius + drawOffsetStart) * Math.cos(angle1)
-        const startY = y - (nodeRadius + drawOffsetStart) * Math.sin(angle1)
+        // Start point offset past the border in angle1 direction
+        const startReach = this.borderReach(from, Math.cos(angle1), -Math.sin(angle1), drawOffsetStart)
+        const startX = x + startReach * Math.cos(angle1)
+        const startY = y - startReach * Math.sin(angle1)
 
-        // End point offset by (r + drawOffset) in angle2 direction
-        const endX = x + (nodeRadius + drawOffsetEnd) * Math.cos(angle2)
-        const endY = y - (nodeRadius + drawOffsetEnd) * Math.sin(angle2)
+        // End point offset past the border in angle2 direction
+        const endReach = this.borderReach(from, Math.cos(angle2), -Math.sin(angle2), drawOffsetEnd)
+        const endX = x + endReach * Math.cos(angle2)
+        const endY = y - endReach * Math.sin(angle2)
 
         return `M ${startX} ${startY} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${endX} ${endY}`
     }
 
-    // Automatic, shape-agnostic edge anchor radius. Driven purely by the node's
-    // measured bounding box, not by its shape name — a
-    // roughly square/round box (circle, square, triangle, hexagon, ...) keeps the
-    // existing circle-radius approximation, which already fits those well; a box
-    // clearly longer on one axis (rectangles, elongated custom shapes) anchors on
-    // its actual rectangular border instead.
-    private static readonly RECT_ASPECT_THRESHOLD = 1.3
-
-    private getNodeBorderRadius(node: Node, dirX: number, dirY: number): number {
-        const halfWidth = node.getBoxHalfWidth()
-        const halfHeight = node.getBoxHalfHeight()
-
-        if (halfWidth && halfHeight) {
-            const aspectRatio = Math.max(halfWidth, halfHeight) / Math.min(halfWidth, halfHeight)
-            if (aspectRatio > EdgeDrawer.RECT_ASPECT_THRESHOLD) {
-                return rectRadiusAlongDirection(halfWidth, halfHeight, dirX, dirY)
-            }
-        }
-
-        const style = this.graphSvgRenderer.nodeDrawer.getNodeStyle(node)
-        return node.getCircleRadius() ? node.getCircleRadius() : tryResolveNumber(style.size, node) as number
+    /** See {@link NodeDrawer.borderReach} — where an edge should meet this node. */
+    private borderReach(node: Node, dirX: number, dirY: number, outset = 0): number {
+        return this.graphSvgRenderer.nodeDrawer.borderReach(node, dirX, dirY, outset)
     }
 
     private linkStraight(edge: Edge): string | null {
@@ -409,10 +394,8 @@ export class EdgeDrawer {
         const normX = distance === 0 ? -Math.SQRT1_2 : dx / distance
         const normY = distance === 0 ? -Math.SQRT1_2 : dy / distance
 
-        // Compute source/target node radius (shape-aware: see getNodeBorderRadius)
         const toNode = edge.getSubgraphToNode() ?? edge.to
-        const rFrom = this.getNodeBorderRadius(from, normX, normY)
-        const rTo = this.getNodeBorderRadius(toNode, normX, normY)
+        const rFrom = this.borderReach(from, normX, normY)
 
         if (distance === 0) {
             dx = normX * rFrom
@@ -422,20 +405,19 @@ export class EdgeDrawer {
 
         const isInsideParent = distance <= rFrom
 
-        // Offset both ends of the line
-        let startX, startY
-        let endX, endY
-        if (isInsideParent) {
-            startX = from.x + (rFrom) * normX
-            startY = from.y + (rFrom) * normY
-            endX = to.x + (rTo + drawOffsetEnd) * normX
-            endY = to.y + (rTo + drawOffsetEnd) * normY
-        } else {
-            startX = from.x + (rFrom + drawOffsetStart) * normX
-            startY = from.y + (rFrom + drawOffsetStart) * normY
-            endX = to.x - (rTo + drawOffsetEnd) * normX
-            endY = to.y - (rTo + drawOffsetEnd) * normY
-        }
+        // The edge reaches `to` from the far side normally, but from the same side
+        // when `to` sits inside `from` (an expanded cluster).
+        const toDirX = isInsideParent ? normX : -normX
+        const toDirY = isInsideParent ? normY : -normY
+
+        // Offset both ends of the line, each along its own outgoing direction
+        const fromReach = isInsideParent ? rFrom : this.borderReach(from, normX, normY, drawOffsetStart)
+        const toReach = this.borderReach(toNode, toDirX, toDirY, drawOffsetEnd)
+
+        const startX = from.x + fromReach * normX
+        const startY = from.y + fromReach * normY
+        const endX = isInsideParent ? to.x + toReach * normX : to.x - toReach * normX
+        const endY = isInsideParent ? to.y + toReach * normY : to.y - toReach * normY
 
         return `M ${startX},${startY} L ${endX},${endY}`
     }
@@ -452,8 +434,13 @@ export class EdgeDrawer {
         const drawOffsetStart = 4 + (edgeStyle.markerStart !== undefined ? 0 : 0) + (isEdgeSelected ? 2 : 0) // Distance from which to start the edge
         const drawOffsetEnd = 4 + (edgeStyle.markerStart !== undefined ? 2 : 0) + (isEdgeSelected ? 2 : 0) // Distance from which to end the edge
 
-        const rFrom = edge.source.getCircleRadius() ? edge.source.getCircleRadius() : this.graphSvgRenderer.nodeDrawer.getNodeStyle(from).size as number
-        const rTo = edge.target.getCircleRadius() ? edge.target.getCircleRadius() : this.graphSvgRenderer.nodeDrawer.getNodeStyle(to).size as number
+        // Radii along the chord: they anchor a circular node, and stand in when a
+        // measured node's border is missed by the arc.
+        const chordLength = Math.hypot(to.x - from.x, to.y - from.y) || 1
+        const chordX = (to.x - from.x) / chordLength
+        const chordY = (to.y - from.y) / chordLength
+        const rFrom = this.borderReach(from, chordX, chordY)
+        const rTo = this.borderReach(to, -chordX, -chordY)
 
         return this.buildArcPath({
             fromX: from.x,
@@ -462,6 +449,8 @@ export class EdgeDrawer {
             toY: to.y,
             fromRadius: rFrom,
             toRadius: rTo,
+            fromBox: from.getBorderBox(drawOffsetStart),
+            toBox: to.getBorderBox(drawOffsetEnd),
             drawOffsetStart,
             drawOffsetEnd,
         })
@@ -474,6 +463,10 @@ export class EdgeDrawer {
         toY: number
         fromRadius: number
         toRadius: number
+        /** Rectangular border of the source node, already grown by `drawOffsetStart`. */
+        fromBox?: NodeBorderBox
+        /** Rectangular border of the target node, already grown by `drawOffsetEnd`. */
+        toBox?: NodeBorderBox
         drawOffsetStart?: number
         drawOffsetEnd?: number
     }): string | null {
@@ -485,6 +478,8 @@ export class EdgeDrawer {
             toY,
             fromRadius,
             toRadius,
+            fromBox,
+            toBox,
             drawOffsetStart = 4,
             drawOffsetEnd = 8,
         } = params
@@ -513,11 +508,15 @@ export class EdgeDrawer {
             r: toRadius + drawOffsetEnd,
         }
 
+        // A measured node is a rectangle, so cross the arc with that border; the
+        // circle is the fallback for round nodes and for an arc that misses the box.
         const intersectionFrom =
-            getArcIntersectionWithCircle(arcParams, circleFrom)
+            (fromBox && getArcIntersectionWithBox(arcParams, { x: fromX, y: fromY }, fromBox.halfWidth, fromBox.halfHeight, 'from'))
+            || getArcIntersectionWithCircle(arcParams, circleFrom)
 
         const intersectionTo =
-            getArcIntersectionWithCircle(arcParams, circleTo)
+            (toBox && getArcIntersectionWithBox(arcParams, { x: toX, y: toY }, toBox.halfWidth, toBox.halfHeight, 'to'))
+            || getArcIntersectionWithCircle(arcParams, circleTo)
 
         if (intersectionFrom && intersectionTo) {
 

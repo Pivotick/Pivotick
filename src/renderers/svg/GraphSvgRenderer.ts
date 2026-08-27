@@ -737,10 +737,10 @@ export class GraphSvgRenderer extends GraphRenderer {
         const startX = centerX + nx * drawOffsetStart
         const startY = centerY + ny * drawOffsetStart
 
-        const rTo = target.getCircleRadius() || this.nodeDrawer.getNodeStyle(target).size as number
-        const drawOffsetEnd = 8
-        const endX = targetX - nx * (rTo + drawOffsetEnd)
-        const endY = targetY - ny * (rTo + drawOffsetEnd)
+        // The connector arrives from the note's side, so measure the node's border there.
+        const toReach = this.nodeDrawer.borderReach(target, -nx, -ny, 8)
+        const endX = targetX - nx * toReach
+        const endY = targetY - ny * toReach
 
         return `M ${startX},${startY} L ${endX},${endY}`
     }
@@ -912,7 +912,6 @@ export class GraphSvgRenderer extends GraphRenderer {
 
         let targetX: number
         let targetY: number
-        let targetRadius = 0
 
         if (targetNode) {
 
@@ -922,7 +921,6 @@ export class GraphSvgRenderer extends GraphRenderer {
 
             targetX = targetNode.x
             targetY = targetNode.y
-            targetRadius = targetNode.getCircleRadius() || this.nodeDrawer.getNodeStyle(targetNode).size as number
 
         } else if (targetPosition) {
 
@@ -933,18 +931,12 @@ export class GraphSvgRenderer extends GraphRenderer {
             return
         }
 
-        let sourceRadius
         let wantedSourceX = source.x
         let wantedSourceY = source.y
 
-        if (source instanceof Node) {
-            sourceRadius = source.getCircleRadius() || this.nodeDrawer.getNodeStyle(source).size as number
-        } else if (source instanceof Note) {
+        if (source instanceof Note) {
             wantedSourceX += source.width / 2
             wantedSourceY += source.height / 2
-            sourceRadius = 0
-        } else {
-            sourceRadius = 12
         }
 
         const dx = targetX - wantedSourceX
@@ -959,11 +951,25 @@ export class GraphSvgRenderer extends GraphRenderer {
         const nx = dx / distance
         const ny = dy / distance
 
-        const startX = wantedSourceX + nx * (sourceRadius + 4)
-        const startY = wantedSourceY + ny * (sourceRadius + 4)
+        // The preview meets each end on its real border, like a finished edge does.
+        let sourceRadius: number
+        if (source instanceof Node) {
+            sourceRadius = this.nodeDrawer.borderReach(source, nx, ny)
+        } else if (source instanceof Note) {
+            sourceRadius = 0
+        } else {
+            sourceRadius = 12
+        }
+        const targetRadius = targetNode ? this.nodeDrawer.borderReach(targetNode, -nx, -ny) : 0
 
-        const endX = targetX - nx * (targetRadius + 8)
-        const endY = targetY - ny * (targetRadius + 8)
+        const startReach = source instanceof Node ? this.nodeDrawer.borderReach(source, nx, ny, 4) : sourceRadius + 4
+        const endReach = targetNode ? this.nodeDrawer.borderReach(targetNode, -nx, -ny, 8) : targetRadius + 8
+
+        const startX = wantedSourceX + nx * startReach
+        const startY = wantedSourceY + ny * startReach
+
+        const endX = targetX - nx * endReach
+        const endY = targetY - ny * endReach
 
         let path: string | null
 
@@ -976,6 +982,8 @@ export class GraphSvgRenderer extends GraphRenderer {
                 toY: targetY,
                 fromRadius: sourceRadius,
                 toRadius: targetRadius,
+                fromBox: source instanceof Node ? source.getBorderBox(4) : undefined,
+                toBox: targetNode.getBorderBox(8),
                 drawOffsetStart: 4,
                 drawOffsetEnd: 8,
             })

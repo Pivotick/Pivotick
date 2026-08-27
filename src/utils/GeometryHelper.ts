@@ -150,13 +150,87 @@ export function getArcCenter(params: ArcParams): ArcCenterResult {
 }
 
 /**
- * Distance from an axis-aligned rectangle's center to its border, along a
- * (not necessarily unit) direction vector. Used to anchor edges on rectangular
- * nodes instead of approximating them with a bounding circle.
+ * Distance from a centred axis-aligned rectangle to its border, along `dir`.
+ * `dir` must be a unit vector — the result is scaled by its length otherwise.
+ * Used to anchor edges on a node's real border instead of a bounding circle.
  */
 export function rectRadiusAlongDirection(halfWidth: number, halfHeight: number, dirX: number, dirY: number): number {
     const ratio = Math.max(Math.abs(dirX) / halfWidth, Math.abs(dirY) / halfHeight)
     return ratio === 0 ? halfWidth : 1 / ratio
+}
+
+/** The four sides of a centred axis-aligned rectangle, as segments. */
+function boxSides(center: Point, halfWidth: number, halfHeight: number): Line[] {
+    const left = center.x - halfWidth, right = center.x + halfWidth
+    const top = center.y - halfHeight, bottom = center.y + halfHeight
+    return [
+        { x0: left, y0: top, x1: right, y1: top },
+        { x0: right, y0: top, x1: right, y1: bottom },
+        { x0: right, y0: bottom, x1: left, y1: bottom },
+        { x0: left, y0: bottom, x1: left, y1: top },
+    ]
+}
+
+/** Points where a circle crosses a line *segment* (0, 1 or 2). */
+export function circleSegmentIntersections(circle: Circle, segment: Line): Point[] {
+    const dx = segment.x1 - segment.x0
+    const dy = segment.y1 - segment.y0
+    const fx = segment.x0 - circle.cx
+    const fy = segment.y0 - circle.cy
+
+    const a = dx * dx + dy * dy
+    if (a === 0) return []
+    const b = 2 * (fx * dx + fy * dy)
+    const c = fx * fx + fy * fy - circle.r * circle.r
+
+    const discriminant = b * b - 4 * a * c
+    if (discriminant < 0) return []
+
+    const root = Math.sqrt(discriminant)
+    const points: Point[] = []
+    for (const t of [(-b - root) / (2 * a), (-b + root) / (2 * a)]) {
+        if (t < 0 || t > 1) continue // crossing lies off the ends of the segment
+        points.push({ x: segment.x0 + t * dx, y: segment.y0 + t * dy })
+    }
+    return points
+}
+
+/**
+ * Where a circular arc crosses the border of a centred axis-aligned box around
+ * one of its endpoints — the rectangular counterpart of
+ * {@link getArcIntersectionWithCircle}, so a curved edge stops on a card's real
+ * border like a straight one does.
+ *
+ * `endpoint` names the end of the arc the box belongs to: an arc can clip a long
+ * box twice, and the crossing wanted is the one nearest that end.
+ */
+export function getArcIntersectionWithBox(
+    arcParams: ArcParams,
+    center: Point,
+    halfWidth: number,
+    halfHeight: number,
+    endpoint: 'from' | 'to'
+): Point | null {
+    const arc = getArcCenter(arcParams)
+    if (arc.rx !== arc.ry || arc.xAxisRotation !== 0) return null // only circular arcs are drawn
+
+    const arcCircle: Circle = { cx: arc.cx, cy: arc.cy, r: arc.rx }
+    const anchor = endpoint === 'from' ? arcParams.from : arcParams.to
+
+    let best: Point | null = null
+    let bestDistance = Infinity
+    for (const side of boxSides(center, halfWidth, halfHeight)) {
+        for (const point of circleSegmentIntersections(arcCircle, side)) {
+            const angle = Math.atan2(point.y - arc.cy, point.x - arc.cx)
+            if (!isAngleOnArc(angle, arc.startAngle, arc.deltaAngle)) continue
+            const distance = Math.hypot(point.x - anchor.x, point.y - anchor.y)
+            if (distance < bestDistance) {
+                bestDistance = distance
+                best = point
+            }
+        }
+    }
+    return best
 }
 
 /**

@@ -2,10 +2,17 @@ import type { Edge } from './Edge'
 import type { Graph } from './Graph'
 import type { NodeStyle } from './interfaces/RendererOptions'
 import { generateSafeDomId } from './utils/ElementCreation'
+import { rectRadiusAlongDirection } from './utils/GeometryHelper'
 import { stripFunctions } from './utils/utils'
 
 export interface NodeData {
     [key: string]: unknown;
+}
+
+/** Half-extents of a node's rectangular border, measured from its centre. */
+export interface NodeBorderBox {
+    halfWidth: number
+    halfHeight: number
 }
 
 /** Serialization-safe, layout-only projection of a Node for the simulation worker — no parentNode/children/_subgraph, so postMessage can always clone it. */
@@ -67,10 +74,8 @@ export class Node {
     private _subgraph?: Graph
     private _circleRadius = this.defaultCircleRadius
     private _circleRadiusCollapsed = this.defaultCircleRadius
-    // Measured bounding box, used to anchor edges on the node's actual border instead
-    // of a bounding circle (undefined until NodeDrawer measures the rendered shape).
-    private _boxHalfWidth?: number
-    private _boxHalfHeight?: number
+    /** Measured rectangular border; unset means the node is anchored as a circle. */
+    private _border?: NodeBorderBox
     private _dirty: boolean
     public readonly domID: string
 
@@ -356,8 +361,15 @@ export class Node {
         return this.edgesOut.size + this.edgesIn.size
     }
 
+    /**
+     * Set the node's circle radius. Also drops any measured rectangular border:
+     * the radius is the coarser fact, so every caller that resizes a node keeps
+     * anchoring correct by default, and only the drawers that know the rendered
+     * shape opt back in through {@link setBorderBox}.
+     */
     setCircleRadius(radius: number): void {
         this._circleRadius = radius
+        this._border = undefined
     }
 
     getCircleRadius(): number {
@@ -372,17 +384,35 @@ export class Node {
         return this._circleRadiusCollapsed
     }
 
-    setBoxSize(width: number, height: number): void {
-        this._boxHalfWidth = width / 2
-        this._boxHalfHeight = height / 2
+    /**
+     * Declare that the node's border is the centred `width`×`height` rectangle it
+     * actually renders as, so edges stop on it instead of on the bounding circle.
+     * Call it *after* {@link setCircleRadius}, which clears it.
+     */
+    setBorderBox(width: number, height: number): void {
+        this._border = { halfWidth: width / 2, halfHeight: height / 2 }
     }
 
-    getBoxHalfWidth(): number | undefined {
-        return this._boxHalfWidth
+    /**
+     * The node's rectangular border grown by `outset`, or `undefined` when the
+     * node is anchored as a circle.
+     */
+    getBorderBox(outset = 0): NodeBorderBox | undefined {
+        if (!this._border) return undefined
+        return { halfWidth: this._border.halfWidth + outset, halfHeight: this._border.halfHeight + outset }
     }
 
-    getBoxHalfHeight(): number | undefined {
-        return this._boxHalfHeight
+    /**
+     * Distance from the node's centre to its border along the unit direction
+     * `(dirX, dirY)`, grown by `outset` — where an edge leaving in that direction
+     * should start. Rectangular for a measured node, the circle radius otherwise.
+     * Deliberately free of style resolution: this runs for both ends of every
+     * edge on every tick.
+     */
+    getBorderDistance(dirX: number, dirY: number, outset = 0): number {
+        const border = this._border
+        if (!border) return this._circleRadius + outset
+        return rectRadiusAlongDirection(border.halfWidth + outset, border.halfHeight + outset, dirX, dirY)
     }
 
     setChildren(children: Node[]): void {
