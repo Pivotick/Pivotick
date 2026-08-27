@@ -29,6 +29,36 @@ export type DeepPartial<T> = {
 }
 
 /**
+ * Deep copy of `value` with every function-valued entry dropped, so the result survives
+ * `postMessage`'s structured clone. Style blocks are the reason this exists: a resolvable
+ * channel (`color`, `size`, `styleCb`, `badges`, an edge's `markerEnd`…) may hold a function,
+ * and one anywhere in the payload throws `DataCloneError` for the whole message.
+ *
+ * Only plain objects and arrays are walked; anything else structured-clonable (Date, RegExp,
+ * typed arrays…) is passed through untouched. Cycles resolve to `undefined` rather than hanging.
+ */
+export function stripFunctions<T>(value: T, seen: WeakSet<object> = new WeakSet()): T {
+    if (typeof value === 'function') return undefined as T
+    if (value === null || typeof value !== 'object') return value
+
+    const asObject = value as unknown as object
+    if (seen.has(asObject)) return undefined as T
+    seen.add(asObject)
+
+    if (Array.isArray(value)) {
+        return value.map((entry) => stripFunctions(entry, seen)) as T
+    }
+    if (Object.getPrototypeOf(value) !== Object.prototype) return value
+
+    const result: any = {}
+    for (const [key, entry] of Object.entries(value)) {
+        if (typeof entry === 'function') continue
+        result[key] = stripFunctions(entry, seen)
+    }
+    return result as T
+}
+
+/**
  * Escape a string for interpolation into HTML text *or* a quoted attribute value — quotes are
  * included so one helper covers both contexts and can't be misapplied.
  */

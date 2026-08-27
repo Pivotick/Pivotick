@@ -80,6 +80,10 @@ export class GraphCanvasRenderer extends GraphRenderer {
         return this.nodeDrawer.getNodeStyle(node)
     }
 
+    public getEdgeStyle(edge: Edge): EdgeStyle {
+        return this.edgeDrawer.getEdgeStyle(edge)
+    }
+
     public dataUpdate(): void {
         // Nothing to bind here, since canvas is immediate mode.
         this.redraw()

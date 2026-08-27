@@ -1,6 +1,6 @@
 import type { UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
-import type { ModeState, PointerMode, RailMode } from '../../ModeStore'
+import { isPointerMode, type ModeState, type PointerMode, type RailMode } from '../../ModeStore'
 import type { GraphInteractionContext } from '../../../interfaces/GraphInteractions'
 import type { GraphConnectManager } from '../../../editing/GraphConnectManager'
 import { Note } from '../../../Note'
@@ -28,7 +28,7 @@ interface ToolSpec {
 const MODE_SHORTCUT: Record<PointerMode, string> = { select: 'V', create: 'C' }
 
 /**
- * The B3 contextual tool panel, anchored beside the mode rail. It subscribes to
+ * The contextual tool panel, anchored beside the mode rail. It subscribes to
  * {@link UIManager.modeStore} and shows the tool-set for the active pointer-mode:
  * Select (Pointer / Lasso / Path-select SOON / Invert) or Create (Add-node SOON /
  * Add-edge / Add-note / Edit). Every tool binds to the pre-existing leaf logic —
@@ -38,7 +38,7 @@ const MODE_SHORTCUT: Record<PointerMode, string> = { select: 'V', create: 'C' }
  * rail slot morphs to reflect it; one-shot *actions* (Invert / Add-note / Edit)
  * just run. Open/collapsed state is remembered per mode by the store; the armed
  * tool is reset to the mode default when its mode is left. The panel is hidden
- * in View mode.
+ * while a settings flyout (View / Physics) is open.
  */
 export class ToolPanel extends UIComponent {
     private panel?: HTMLDivElement
@@ -107,7 +107,7 @@ export class ToolPanel extends UIComponent {
     /**
      * React to a store change: disarm the tool of any left mode, then render the
      * active pointer-mode's tool-set and reflect its armed tool + open/collapsed
-     * state. View has no pointer tools, so the panel is collapsed in View mode.
+     * state. A flyout mode has no pointer tools, so the panel collapses there.
      * All operations are idempotent — a re-entrant emit (from disarming) converges.
      */
     private onState(state: Readonly<ModeState>) {
@@ -124,7 +124,8 @@ export class ToolPanel extends UIComponent {
                 if (cm.isActive()) cm.exitClickConnectionMode()
             }
         }
-        if (mode === 'view') {
+        // A flyout mode (View / Physics) has no pointer tools — collapse the panel.
+        if (!isPointerMode(mode)) {
             this.setCollapsed(true)
             return
         }
@@ -150,10 +151,16 @@ export class ToolPanel extends UIComponent {
             ]
         }
         return [
-            { id: 'add-node', label: 'Add node', icon: addCircle, kind: 'soon' },
+            // Both write-path tools are dropped entirely when their editor is disabled —
+            // a read-only integration gets no affordance rather than one that refuses.
+            ...(this.uiManager.isEditorEnabled('nodeCreator')
+                ? [{ id: 'add-node', label: 'Add node', icon: addCircle, kind: 'action', run: () => this.addNode() } as ToolSpec]
+                : []),
             { id: 'add-edge', label: 'Add edge', icon: graphEdgeIcon(18), kind: 'toggle', run: (armed) => this.toggleAddEdge(armed) },
             { id: 'add-note', label: 'Add note', icon: stickyNote, kind: 'action', run: () => this.addNote() },
-            { id: 'edit', label: 'Edit node', icon: edit, kind: 'action', run: () => this.editSelectedNode(), enabled: () => this.hasEditableSelection() },
+            ...(this.uiManager.isEditorEnabled('nodeEditor')
+                ? [{ id: 'edit', label: 'Edit node', icon: edit, kind: 'action', run: () => this.editSelectedNode(), enabled: () => this.hasEditableSelection() } as ToolSpec]
+                : []),
         ]
     }
 
@@ -307,12 +314,28 @@ export class ToolPanel extends UIComponent {
     }
 
     private addNote() {
-        const renderer = this.uiManager.graph.renderer
+        const centre = this.canvasCentre()
+        if (!centre) return
+        this.uiManager.graph.noteManager.addNote(new Note({ content: 'This is not a note.', ...centre }))
+    }
+
+    /**
+     * Place a node at the middle of the current view, like Add note — the canvas
+     * context-menu's "Add Node Here" covers placing one at a chosen point. The
+     * before-create hook owns what it carries.
+     */
+    private addNode() {
+        const position = this.canvasCentre()
+        if (!position) return
+        void this.uiManager.graph.editing.requestNodeCreate({ position, origin: 'tool' })
+    }
+
+    /** The middle of the visible canvas, in graph space (so it survives zoom/pan). */
+    private canvasCentre(): { x: number, y: number } | null {
         const canvas = this.uiManager.layout?.canvas
-        if (!canvas) return
+        if (!canvas) return null
         const bcr = canvas.getBoundingClientRect()
-        const { x, y } = renderer.screenToGraphCoordinates(bcr.x + bcr.width / 2, bcr.y + bcr.height / 2)
-        this.uiManager.graph.noteManager.addNote(new Note({ content: 'This is not a note.', x, y }))
+        return this.uiManager.graph.renderer.screenToGraphCoordinates(bcr.x + bcr.width / 2, bcr.y + bcr.height / 2)
     }
 
     private editSelectedNode() {

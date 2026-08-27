@@ -4,6 +4,7 @@ import type { Edge } from './Edge'
 import type { InterractionCallbacks } from './interfaces/InterractionCallbacks'
 import type { EdgeSelection, GraphInteractionContext, GraphInteractionEvents, NodeSelection } from './interfaces/GraphInteractions'
 import type { Note } from './Note'
+import type { NodeBadge } from './interfaces/RendererOptions'
 
 
 export class GraphInteractions<TElement = unknown> {
@@ -24,7 +25,7 @@ export class GraphInteractions<TElement = unknown> {
         this.callbacks = this.graph.getCallbacks() ?? {}
         this.listeners = {
             nodeClick: [], nodeDbclick: [], nodeHoverIn: [], nodeHoverOut: [], nodePointerDown: [], nodePointerUp: [],
-            nodeSelect: [], nodeBlur: [], dragging: [], dragended: [], nodeContextmenu: [],
+            nodeSelect: [], nodeBlur: [], dragging: [], dragended: [], nodeContextmenu: [], badgeClick: [],
             edgeClick: [], edgeDbclick: [], edgeHoverIn: [], edgeHoverOut: [],
             edgeSelect: [], edgeBlur: [], edgeContextmenu: [],
             noteClick: [], noteDbclick: [], notePointerDown: [], notePointerUp: [], noteContextmenu: [], noteHoverIn: [], noteHoverOut: [],
@@ -95,6 +96,32 @@ export class GraphInteractions<TElement = unknown> {
         }
         if (this.callbacks.onNodeClick && typeof this.callbacks.onNodeClick === 'function') {
             this.callbacks.onNodeClick(event, node, element)
+        }
+    }
+
+    /**
+     * A rim badge was clicked. Specific before general: the badge's own `onClick` runs first,
+     * then the graph-wide `onBadgeClick`. Neither can suppress the other — a bus listener
+     * calling `cancel()` is the one way to stop both.
+     */
+    public badgeClick(element: TElement, event: PointerEvent, node: Node, badge: NodeBadge): void {
+        const interaction: GraphInteractionContext = {
+            cancelled: false,
+            cancel() {
+                this.cancelled = true
+            }
+        }
+
+        this.emit('badgeClick', event, node, badge, element, interaction)
+
+        if (interaction.cancelled) {
+            return
+        }
+
+        badge.onClick?.(event, node, badge)
+
+        if (typeof this.callbacks.onBadgeClick === 'function') {
+            this.callbacks.onBadgeClick(event, node, badge, element)
         }
     }
 

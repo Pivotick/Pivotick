@@ -16,7 +16,7 @@ import type { Node } from './Node'
 import { Edge } from './Edge'
 import { runSimulationInWorker } from './SimulationWorkerWrapper'
 import merge from 'lodash.merge'
-import { TreeLayout } from './plugins/layout/Tree'
+import { TreeLayout, type TreeLayoutAlgorithm } from './plugins/layout/Tree'
 import { EgoTreeLayout } from './plugins/layout/EgoTree'
 import { edgeLabelGetter } from './utils/GraphGetters'
 import type { DeepPartial } from './utils/utils'
@@ -24,6 +24,7 @@ import type { SimulationCallbacks, SimulationForces, SimulationOptions } from '.
 import type { LayoutType, TreeLayoutOptions } from './interfaces/LayoutOptions'
 import type { GraphInteractions } from './GraphInteractions'
 import { ForceClusterRadial } from './plugins/d3Forces/ForceClusterRadial'
+import { analyseComponents, tunePhysics, type AutoContext } from './AutoPhysics'
 
 
 export const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
@@ -64,9 +65,10 @@ export const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
 }
 
 /**
- * The four abstract physics knobs surfaced by the View flyout. Each is a plain
- * number in its own {@link PHYSICS_KNOB_RANGES | range}; the {@link Simulation}
- * setters map them onto the underlying d3-force domains.
+ * The abstract physics knobs surfaced by the Physics flyout. Each is a plain number in
+ * its own {@link PHYSICS_KNOB_RANGES | range}; the {@link Simulation} setters map them
+ * onto the underlying d3-force domains. Also the complete vocabulary the `Auto` preset
+ * speaks — auto only ever moves a knob the user can see.
  */
 export interface PhysicsKnobs {
     /** Push-apart force. Higher spreads the graph out. */
@@ -77,24 +79,88 @@ export interface PhysicsKnobs {
     collisionRadius: number
     /** Motion damping. Higher settles the layout faster (calmer). */
     friction: number
+    /**
+     * Pull toward the canvas centre. Higher keeps separate components — which
+     * otherwise only ever repel — inside the frame.
+     */
+    centering: number
+    /** How long the layout is given to settle, in seconds. */
+    settleTime: number
 }
 
 /** Inclusive `[min, max]` slider range for each {@link PhysicsKnobs} value. */
 export const PHYSICS_KNOB_RANGES: Record<keyof PhysicsKnobs, readonly [number, number]> = {
     repulsion: [0, 100],
-    linkDistance: [40, 260],
+    linkDistance: [40, 600],
     collisionRadius: [4, 60],
     friction: [0, 100],
+    centering: [0, 100],
+    settleTime: [0.5, 8],
 }
 
-/** Named physics presets. `default` is an alias of `loose` (see PRD D6). */
-export type PhysicsPresetName = 'tight' | 'loose' | 'default'
+/**
+ * The tree-spacing multipliers surfaced by the Physics flyout — the one thing left to
+ * turn once the physics knobs grey out under a `tree` / `egoTree` layout.
+ *
+ * Multipliers rather than pixel gaps because a tree is laid out to *fit* the canvas:
+ * "half again as far apart as the fitted layout" survives a resize; a pixel gap does not.
+ */
+export interface TreeSpacing {
+    /** Distance between levels — rings, in `radial` mode. */
+    levelSpacing: number
+    /** Distance between nodes within a level. Ignored in `radial` mode, where a level always spans the full circle. */
+    siblingSpacing: number
+}
 
-/** Knob bundles applied by {@link Simulation.applyPhysicsPreset}. */
+/**
+ * Inclusive `[min, max]` slider range for both {@link TreeSpacing} multipliers.
+ *
+ * The ceiling stops at 10 rather than following what the largest trees ask for, because
+ * past it the extra room buys nothing readable: the view is fitted, so a tree 20× wider
+ * than the canvas draws its nodes at a twentieth of their size. Beyond this a graph is
+ * explored by panning, and the slider sitting at its maximum says so.
+ */
+export const TREE_SPACING_RANGE: readonly [number, number] = [0.5, 10]
+
+/**
+ * Where a tree layout hangs from, as the Physics flyout's Root card offers it: a node
+ * the tree is pinned to, or — with nothing pinned — the finder that picks one.
+ *
+ * The two are exclusive: pinning a node retires the finder until the pin is dropped.
+ */
+export interface TreeRoot {
+    /** The node the tree is pinned to; `undefined` while the finder decides. */
+    rootId?: string
+    /** The finder that chooses the root while nothing is pinned. */
+    algorithm: TreeLayoutAlgorithm
+}
+
+/** What a tree with no pinned root and nothing said about it uses; see `DEFAULT_TREE_LAYOUT_OPTIONS`. */
+const DEFAULT_ROOT_FINDER: TreeLayoutAlgorithm = 'MaxReachability'
+
+/** `1×` on both axes: the fitted layout, and what the force layout reports. */
+const FITTED_TREE_SPACING: TreeSpacing = { levelSpacing: 1, siblingSpacing: 1 }
+
+/** Named physics presets — a fixed character to pick, as opposed to letting `Auto` decide. */
+export type PhysicsPresetName = 'tight' | 'loose'
+
+/**
+ * Knob bundles applied by {@link Simulation.applyPhysicsPreset}. `tight`'s friction is
+ * lighter than its name suggests on purpose: contracting a graph has to push past
+ * `forceCollide`, which never scales with alpha, so heavier damping just stalls the run
+ * short of the preset's own equilibrium.
+ */
 export const PHYSICS_PRESETS: Record<PhysicsPresetName, PhysicsKnobs> = {
-    tight: { repulsion: 32, linkDistance: 70, collisionRadius: 16, friction: 58 },
-    loose: { repulsion: 70, linkDistance: 150, collisionRadius: 26, friction: 28 },
-    default: { repulsion: 70, linkDistance: 150, collisionRadius: 26, friction: 28 },
+    tight: { repulsion: 32, linkDistance: 70, collisionRadius: 16, friction: 45, centering: 7, settleTime: 3 },
+    loose: { repulsion: 70, linkDistance: 150, collisionRadius: 26, friction: 28, centering: 7, settleTime: 2.25 },
+}
+
+/** One pass of the auto tuner. */
+export interface AutoRun {
+    context: AutoContext
+    knobs: PhysicsKnobs
+    /** `true` when every knob landed inside the deadband and nothing was applied. */
+    skipped: boolean
 }
 
 interface dragSelectionNode {
@@ -106,10 +172,17 @@ interface dragSelectionNode {
 export class Simulation {
     private simulation: d3Simulation<Node, undefined>
     private graph: Graph
-    private canvas: HTMLElement | undefined
+    private container: HTMLElement | undefined
     private graphInteraction: GraphInteractions
     private layout
-    private canvasBCR: DOMRect
+    /**
+     * The area the physics tunes itself against: the **root container**, never the canvas.
+     * Chrome opening or closing (a sidebar, the data dock) resizes the canvas, and a layout
+     * has to come out the same either way. Every site reads this one snapshot, kept in step
+     * with real container resizes by {@link observeContainer}.
+     */
+    private containerBCR: DOMRect
+    private containerObserver?: ResizeObserver
 
     private animationFrameId: number | null = null
     private startSimulationTime: number = 0
@@ -121,6 +194,8 @@ export class Simulation {
     private dragInProgress: boolean = false
     private dragSelection: dragSelectionNode[] = []
     private totalTickCount: number = 0
+    /** Ticks since the current run started ({@link restart}); the cooldown budget. */
+    private runTickCount: number = 0
 
     private options: SimulationOptions
     private callbacks: Partial<SimulationCallbacks>
@@ -136,25 +211,77 @@ export class Simulation {
 
     // d3-force domains each knob maps onto; the knob's own range is in PHYSICS_KNOB_RANGES.
     private static readonly REPULSION_STRENGTH_RANGE = [0, -400] as const   // repulsion 0..100 (more negative = stronger)
-    private static readonly LINK_DISTANCE_RANGE = [40, 260] as const        // linkDistance 40..260 (identity, px)
+    private static readonly LINK_DISTANCE_RANGE = [40, 600] as const        // linkDistance 40..600 (identity, px)
     private static readonly COLLIDE_MULTIPLIER_RANGE = [0.6, 2.4] as const  // collisionRadius 4..60
     private static readonly FRICTION_DECAY_RANGE = [0, 1] as const          // friction 0..100 → velocityDecay
 
+    // `centering` is the odd one out: measured against real layouts, gravity does
+    // nothing below ~0.005 and crushes the graph above ~0.2, so a linear knob would
+    // spend most of its travel on values that make no difference. The map is
+    // quadratic instead, so the useful band sits mid-slider.
+    private static readonly CENTERING_STRENGTH_MAX = 0.2
+    /** Isolated nodes get a fixed multiple of the connected strength… */
+    private static readonly CENTERING_ISOLATED_MULTIPLE = 4
+    /** …clamped, so they never fly off at `centering: 0` nor snap to a point at 100. */
+    private static readonly CENTERING_ISOLATED_RANGE = [0.1, 0.3] as const
+
+    // ─── Auto tuner ─────────────────────────────────────────────────────────
+    /** Whether the `Auto` preset is driving the knobs (see the constructor for how this is decided). */
+    private autoEnabled: boolean
+    private autoTuneTimer: ReturnType<typeof setTimeout> | null = null
+    /** Set while auto writes knobs, so its own setter calls don't read as a manual edit. */
+    private applyingAutoKnobs = false
+    /** Set while auto writes knobs, so six setters produce one reheat rather than six. */
+    private suppressReheat = false
+    /** Last context + knobs auto computed. */
+    private autoLastRun: AutoRun | null = null
+
+    /** Simulation options auto derives; setting any of them opts a graph out of auto. */
+    private static readonly AUTO_OWNED_OPTIONS = [
+        'd3LinkDistance', 'd3ManyBodyStrength', 'd3CollideRadiusMultiplier', 'd3VelocityDecay',
+        'd3GravityStrength', 'd3GravityStrengthConnected', 'd3AlphaDecay', 'cooldownTime',
+    ] as const
+
+    /** Triggers inside this window collapse into a single tune. */
+    private static readonly AUTO_DEBOUNCE_MS = 150
+    /** A knob has to move by this fraction of its range before auto bothers applying it. */
+    private static readonly AUTO_DEADBAND = 0.04
+    /** Auto relaxes the layout from where it is; it never restarts it. */
+    private static readonly AUTO_REHEAT_ALPHA = 0.3
+    /**
+     * Heat for an *explicit* preset or `Auto` click. A click means "lay this graph
+     * out like that", so it gets what a fresh layout gets — a slider drag keeps the
+     * gentler {@link reheatIfEnabled} default, and auto's own background re-tune
+     * keeps {@link AUTO_REHEAT_ALPHA}.
+     */
+    private static readonly CLICK_REHEAT_ALPHA = 1
+    /** Ticks per second the alpha schedule is written against (rAF at full speed). */
+    private static readonly NOMINAL_FPS = 60
+    /**
+     * How far past `cooldownTime` the wall-clock backstop lets a run go. Only ever
+     * binding on a throttled tab; see {@link cooledDown}.
+     */
+    private static readonly COOLDOWN_WALL_GRACE = 4
+
     constructor(graph: Graph, options: Partial<SimulationOptions> = {}) {
         this.graph = graph
+        // Decided from the *raw* partial, before the merge buries it under the
+        // defaults: auto is the default only for graphs that never configured
+        // their physics, so no existing consumer's tuning is silently overridden.
+        this.autoEnabled = Simulation.shouldAutoTune(options)
         this.options = merge({}, DEFAULT_SIMULATION_OPTIONS, options)
         this.callbacks = this.options.callbacks ?? {}
         this.physicsKnobs = Simulation.knobsFromOptions(this.options)
 
-        this.canvas = this.graph.renderer.getCanvas()
-        if (!this.canvas) throw new Error('Canvas element is not defined in the graph renderer.')
-        this.canvasBCR = this.canvas.getBoundingClientRect()
+        this.container = this.graph.renderer.getRootContainer()
+        if (!this.container) throw new Error('Root container is not defined in the graph renderer.')
+        this.containerBCR = Simulation.measureContainer(this.container)
 
         this.graphInteraction = this.graph.renderer.getGraphInteraction()
         if (!this.graphInteraction) throw new Error('Graph interaction is not available.')
 
 
-        const simulationForces = Simulation.initSimulationForces(this.options, this.canvasBCR)
+        const simulationForces = Simulation.initSimulationForces(this.options, this.containerBCR)
         this.simulation = simulationForces.simulation
         this.simulationForces = simulationForces.simulationForces
         this.scaledForces.d3ManyBodyStrength = this.options.d3ManyBodyStrength || DEFAULT_SIMULATION_OPTIONS.d3ManyBodyStrength
@@ -174,17 +301,66 @@ export class Simulation {
                 this.simulationForces,
                 this.options.layout
             )
-        } else {
-            // this.scaleSimulationOptions()
         }
+        if (this.layout) Object.assign(this.options.layout, this.layout.getSpacing())
+
+        // Last, so a callback firing on the very next frame finds the forces in place.
+        this.observeContainer()
 
         if (this.callbacks.onInit) {
             this.callbacks.onInit(this)
         }
     }
 
+    /**
+     * Stand-in size used until the container has a real one. A graph can be built while
+     * hidden, where `getBoundingClientRect()` reads 0×0 — and a zero area would have the
+     * auto tuner fit the layout into no space at all, collapsing every node onto the
+     * gravity point.
+     */
+    private static readonly FALLBACK_CONTAINER_SIZE = { width: 1000, height: 800 }
+
+    /** Measure a container, substituting {@link FALLBACK_CONTAINER_SIZE} for a zero area. */
+    private static measureContainer(element: HTMLElement): DOMRect {
+        const rect = element.getBoundingClientRect()
+        if (rect.width > 0 && rect.height > 0) return rect
+        const { width, height } = Simulation.FALLBACK_CONTAINER_SIZE
+        return new DOMRect(rect.x, rect.y, width, height)
+    }
+
+    /**
+     * Keep {@link containerBCR} in step with genuine container resizes — a window resize,
+     * a responsive parent, or the container getting its first real size after being built
+     * hidden — and re-aim the forces derived from it. Chrome resizes the *canvas*, not the
+     * container, so opening the data dock or collapsing the sidebar never reaches here.
+     */
+    private observeContainer(): void {
+        if (!this.container || typeof ResizeObserver === 'undefined') return
+
+        this.containerObserver = new ResizeObserver(() => {
+            if (!this.container) return
+            const next = Simulation.measureContainer(this.container)
+            if (next.width === this.containerBCR.width && next.height === this.containerBCR.height) return
+
+            this.containerBCR = next
+            Simulation.initSimulationForceGravity(this.simulationForces.gravity, this.options, next)
+            // The other thing the area feeds is auto's tuning — debounced, and a no-op
+            // when auto is off.
+            this.scheduleTune()
+        })
+        this.containerObserver.observe(this.container)
+    }
+
+    /** Stop the engine and release the container observer. */
+    public destroy(): void {
+        this.stop()
+        this.containerObserver?.disconnect()
+        this.containerObserver = undefined
+        this.container = undefined
+    }
+
     /** @private */
-    public static initSimulationForces(options: SimulationOptions, canvasBCR: DOMRect): {
+    public static initSimulationForces(options: SimulationOptions, containerBCR: DOMRect): {
         simulation: d3Simulation<Node, undefined>,
         simulationForces: {
             link: d3ForceLinkType<Node, Edge>,
@@ -209,7 +385,7 @@ export class Simulation {
             // .force('clusterRadialConstraint', simulationForces.clusterRadialConstraint)
 
         // this.initSimulationForceCenter(simulationForces.center, options)
-        this.initSimulationForceGravity(simulationForces.gravity, options, canvasBCR)
+        this.initSimulationForceGravity(simulationForces.gravity, options, containerBCR)
         this.initSimulationForceLink(simulationForces.link, options)
         this.initSimulationForceCharge(simulationForces.charge, options)
         this.initSimulationForceCollide(simulationForces.collide, options)
@@ -226,9 +402,9 @@ export class Simulation {
         }
     }
 
-    private static initSimulationForceGravity(force: ForceGravity<Node>, options: SimulationOptions, canvasBCR: DOMRect) {
-        force.x(canvasBCR.width / 2)
-            .y(canvasBCR.height / 2)
+    private static initSimulationForceGravity(force: ForceGravity<Node>, options: SimulationOptions, containerBCR: DOMRect) {
+        force.x(containerBCR.width / 2)
+            .y(containerBCR.height / 2)
             .strength((node) => {
                 const degree = (node as Node).degree() ?? 0
                 // Isolated nodes get full pull to counter charge repulsion; connected nodes get a low (configurable) floor so link forces + charge find equilibrium
@@ -276,8 +452,7 @@ export class Simulation {
 
     private static initSimulationForceCollide(force: d3ForceCollideType<Node>, options: SimulationOptions) {
         // The collision radius is the node's circle radius scaled by d3CollideRadiusMultiplier
-        // (the "collision radius" knob). Previously this multiplier was hard-coded to 1.2, so
-        // the knob only reached radius-less nodes via d3CollideRadius and never scaled the layout.
+        // (the "collision radius" knob).
         const mult = options.d3CollideRadiusMultiplier
         force.radius((node: SimulationNodeDatum) => {
             const n = node as Node
@@ -299,8 +474,14 @@ export class Simulation {
 
         if (this.layout) {
             this.layout.update()
+            // Auto spacing decides inside the layout, so read its answer back: the options
+            // are what `graph.getOptions()` reports and what the worker path is handed.
+            Object.assign(this.options.layout, this.layout.getSpacing())
         } else {
-            // this.scaleSimulationOptions()
+            // Graph.onChange() is the funnel every visible-graph change passes through
+            // — add/remove, filter, cluster expand/collapse — so this one hook covers
+            // auto's "re-tune on the fly" promise. Debounced: a pivot fires it per node.
+            this.scheduleTune()
         }
 
         // const visibleNodes = this.graph.getMutableVisibleNodes()
@@ -337,7 +518,11 @@ export class Simulation {
         const seenPairs = new Set<string>()
 
         for (const edge of this.graph.getMutableEdges()) {
-            if (!edge.visible) continue
+            // `visibleIgnoringLayer`, not `visible`: an edge whose layer is switched off
+            // keeps pulling its endpoints together, so hiding a layer never moves the
+            // graph. Endpoint-hidden edges and unchosen cross-cluster stand-ins still
+            // leave the force, since those reasons do set it false.
+            if (!edge.visibleIgnoringLayer) continue
             const source = edge.source as Node
             const target = edge.target as Node
 
@@ -382,30 +567,6 @@ export class Simulation {
         } as unknown as Edge
     }
 
-    /** @private */
-    public scaleSimulationOptions(): void {
-        const scaled = Simulation.scaleSimulationOptions(this.options, this.canvasBCR, this.graph.getNodeCount())
-        this.scaledForces.d3ManyBodyStrength = scaled.d3ManyBodyStrength ?? DEFAULT_SIMULATION_OPTIONS.d3ManyBodyStrength
-        this.scaledForces.d3CollideStrength = scaled.d3CollideStrength ?? DEFAULT_SIMULATION_OPTIONS.d3CollideStrength
-    }
-
-    /** @private */
-    public static scaleSimulationOptions(options: SimulationOptions, canvasBCR: DOMRect, nodeCount: number): Partial<SimulationOptions> {
-        const density = nodeCount / (canvasBCR.width * canvasBCR.height)
-        const scale = Math.min(2, 0.000075 / density) // or some other heuristic
-
-        return {
-            d3ManyBodyStrength: options.d3ManyBodyStrength * scale,
-            d3CollideStrength: options.d3ManyBodyStrength * scale,
-        }
-    }
-
-    /** @private */
-    public applyScalledSimulationOptions(): void {
-        Simulation.initSimulationForceCharge(this.simulationForces.charge, this.options)
-        Simulation.initSimulationForceCollide(this.simulationForces.collide, this.options)
-    }
-
     public enable() {
         this.avgTickDuration = 0
         this.options.enabled = true
@@ -430,6 +591,7 @@ export class Simulation {
      */
     public restart() {
         this.startSimulationTime = (new Date()).getTime()
+        this.runTickCount = 0
         this.engineRunning = true
         this.slowTickThresholdReached = false
     }
@@ -438,7 +600,12 @@ export class Simulation {
      * Start the simulation with rendering on each animation frame.
      */
     public async start(recomputeLayout:boolean=true) {
-        if (recomputeLayout) await this.runSimulationWorkerRouter()
+        // Tune *before* the layout pass, so the worker is handed the tuned options and
+        // the opening frame is already right rather than corrected a moment later.
+        if (recomputeLayout) {
+            this.tuneNow({ reheat: false })
+            await this.runSimulationWorkerRouter()
+        }
 
         if (!this.options.enabled) {
             this.engineRunning = false
@@ -460,6 +627,10 @@ export class Simulation {
      */
     public stop() {
         this.engineRunning = false
+        if (this.autoTuneTimer !== null) {
+            clearTimeout(this.autoTuneTimer)
+            this.autoTuneTimer = null
+        }
         if (this.animationFrameId !== null) {
             cancelAnimationFrame(this.animationFrameId)
             this.animationFrameId = null
@@ -489,13 +660,7 @@ export class Simulation {
      */
     private simulationTick() {
         if (this.engineRunning) {
-            if (
-                !this.dragInProgress &&
-                (
-                    (new Date()).getTime() - this.startSimulationTime > this.options.cooldownTime ||
-                    this.options.d3AlphaMin > 0 && this.simulation.alpha() < this.options.d3AlphaMin
-                )
-            ) {
+            if (!this.dragInProgress && this.cooledDown()) {
                 this.engineRunning = false
                 this.simulation.stop()
                 if (this.callbacks.onStop) {
@@ -503,6 +668,7 @@ export class Simulation {
                 }
             }
             this.totalTickCount++
+            this.runTickCount++
             const tickStart = performance.now()
             this.simulation.tick()
             this.graph.nextTick()
@@ -515,6 +681,22 @@ export class Simulation {
                 this.graphInteraction.simulationSlowTick()
             }
         }
+    }
+
+    /**
+     * Is the current run finished? The tick budget is the real wall: `d3AlphaDecay` is
+     * per *tick*, so a wall-clock budget would truncate every graph ticking below 60fps —
+     * the heavy ones, which need the settling most.
+     *
+     * The ms budget stays as a backstop, times {@link COOLDOWN_WALL_GRACE}, for a hidden
+     * tab where rAF drops to ~1fps and a pure tick budget would run on for minutes.
+     */
+    private cooledDown(): boolean {
+        const tickBudget = this.options.cooldownTime / 1000 * Simulation.NOMINAL_FPS
+        if (this.runTickCount >= tickBudget) return true
+        if (this.options.d3AlphaMin > 0 && this.simulation.alpha() < this.options.d3AlphaMin) return true
+        const elapsed = (new Date()).getTime() - this.startSimulationTime
+        return elapsed > this.options.cooldownTime * Simulation.COOLDOWN_WALL_GRACE
     }
 
     private updateTickMetrics(tickDuration: number) {
@@ -530,7 +712,7 @@ export class Simulation {
                 message: 'The physic has been disabled.'
             })
             // Physics was disabled behind the user's back — resync the run/pause button.
-            this.graph.UIManager.viewFlyout?.syncRunState()
+            this.graph.UIManager.physicsFlyout?.syncRunState()
         }
     }
 
@@ -573,8 +755,9 @@ export class Simulation {
 
     private async computeGraph(optionOverride: Partial<SimulationOptions> = {}) {
         const { runSimulation } = await import('./workers/SimulationWorker')
-        const canvasBCR = this.canvas?.getBoundingClientRect()
-        if (!canvasBCR) return
+        // The container snapshot, never a fresh canvas reading: a layout pass has to
+        // produce the same result whether or not chrome happens to be open.
+        const containerBCR = this.containerBCR
 
         const nodes = this.graph.getMutableNodes()
         // Keep caller-set fixed positions (fx/fy) so pinned nodes stay put through the layout.
@@ -588,7 +771,7 @@ export class Simulation {
         const { nodes: updatedNodes } = runSimulation(nodesCopy,
             edgesCopy,
             optionsWithoutCBs,
-            canvasBCR)
+            containerBCR)
 
         this.applyComputedPositions(updatedNodes)
         this.graph.updateData(nodes, undefined, false)
@@ -615,8 +798,8 @@ export class Simulation {
     }
 
     private async runSimulationWorker(optionOverride: Partial<SimulationOptions> = {}) {
-        const canvasBCR = this.canvas?.getBoundingClientRect()
-        if (!canvasBCR) return
+        // Same snapshot the live forces use — see computeGraph.
+        const containerBCR = this.containerBCR
 
         const nodes = this.graph.getMutableNodes()
         // Send serialization-safe DTOs, not live Node/Edge clones: a clone's
@@ -638,7 +821,7 @@ export class Simulation {
             nodesCopy,
             edgesCopy,
             optionsWithoutCBs,
-            canvasBCR,
+            containerBCR,
             onWorkerProgress
         )
         this.graph.updateLayoutProgress(100, 0, 'rendering')
@@ -658,27 +841,28 @@ export class Simulation {
     }
 
     /**
-     * Re-read the node-dependent force accessors and reheat.
-     *
-     * d3-force caches per-node radius/strength when a force is initialised (i.e.
-     * when nodes are set), not on every tick — so mutating a node's radius after
-     * the sim is running has no effect until the forces are re-initialised.
-     * Re-setting the nodes does that; the reheat then lets collision/charge
-     * re-lay-out with the new sizes. Used when a custom node measures its size
-     * after the initial layout has already cooled. No-op when disabled.
+     * Re-read the node-dependent force accessors and reheat. d3-force caches per-node
+     * radius/strength when a force is initialised, not per tick, so a radius mutated mid-run
+     * has no effect until the nodes are re-set. For a custom node that measures itself after
+     * the opening layout has cooled. No-op when disabled.
      */
     public refreshForcesAndReheat(alpha = 0.5): void {
         if (!this.options.enabled) return
+        // Radii may only just have been measured by a custom node, so re-tune off the
+        // real sizes; the reheat below covers both changes at once.
+        this.tuneNow({ reheat: false })
         const visibleNodes = this.graph.getMutableNodes().filter(node => node.visible)
         this.simulation.nodes(visibleNodes) // re-initialises every force → re-reads node radii
         this.reheat(alpha)
     }
 
-    // ─── Physics knobs (View flyout) ────────────────────────────────────────────
-    // Each setter takes an abstract knob value (range in PHYSICS_KNOB_RANGES), maps
-    // it onto a d3-force domain, re-initialises the affected force so d3 re-reads its
-    // cached per-node array, then reheats. Reheat is skipped while physics is disabled;
-    // the value is still stored so it takes effect once physics is re-enabled.
+    // ─── Physics knobs (Physics flyout) ─────────────────────────────────────────
+    // Each setter maps an abstract knob (range in PHYSICS_KNOB_RANGES) onto a d3-force
+    // domain, re-initialises that force so d3 re-reads its cached per-node array, then
+    // reheats. While physics is disabled the value is stored but not reheated.
+    //
+    // Also auto's only way of expressing itself: a call that does *not* come from auto
+    // switches auto off, so a re-tune cannot overwrite a deliberate choice.
 
     /** Push-apart strength. Knob 0–100 → d3ManyBodyStrength. */
     public setRepulsion(knob: number): void {
@@ -687,15 +871,17 @@ export class Simulation {
         this.options.d3ManyBodyStrength = Simulation.mapLinear(v, PHYSICS_KNOB_RANGES.repulsion, Simulation.REPULSION_STRENGTH_RANGE)
         this.scaledForces.d3ManyBodyStrength = this.options.d3ManyBodyStrength
         Simulation.initSimulationForceCharge(this.simulationForces.charge, this.options)
+        this.noteManualKnobEdit()
         this.reheatIfEnabled()
     }
 
-    /** Preferred edge length. Knob 40–260 (px) → d3LinkDistance. */
+    /** Preferred edge length. Knob 40–600 (px) → d3LinkDistance. */
     public setLinkDistance(knob: number): void {
         const v = Simulation.clamp(knob, PHYSICS_KNOB_RANGES.linkDistance)
         this.physicsKnobs.linkDistance = v
         this.options.d3LinkDistance = Simulation.mapLinear(v, PHYSICS_KNOB_RANGES.linkDistance, Simulation.LINK_DISTANCE_RANGE)
         Simulation.initSimulationForceLink(this.simulationForces.link, this.options)
+        this.noteManualKnobEdit()
         this.reheatIfEnabled()
     }
 
@@ -705,6 +891,7 @@ export class Simulation {
         this.physicsKnobs.collisionRadius = v
         this.options.d3CollideRadiusMultiplier = Simulation.mapLinear(v, PHYSICS_KNOB_RANGES.collisionRadius, Simulation.COLLIDE_MULTIPLIER_RANGE)
         Simulation.initSimulationForceCollide(this.simulationForces.collide, this.options)
+        this.noteManualKnobEdit()
         this.reheatIfEnabled()
     }
 
@@ -714,36 +901,162 @@ export class Simulation {
         this.physicsKnobs.friction = v
         this.options.d3VelocityDecay = Simulation.mapLinear(v, PHYSICS_KNOB_RANGES.friction, Simulation.FRICTION_DECAY_RANGE)
         this.simulation.velocityDecay(this.options.d3VelocityDecay)
+        this.noteManualKnobEdit()
     }
 
-    /** Apply a named preset ({@link PHYSICS_PRESETS}): sets all four knobs and reheats once. */
+    /**
+     * Pull toward the canvas centre. Knob 0–100 → d3GravityStrengthConnected, with
+     * d3GravityStrength (isolated nodes) following as a fixed multiple. Separate components
+     * only repel each other, so this is the only thing keeping them in frame.
+     */
+    public setCentering(knob: number): void {
+        const v = Simulation.clamp(knob, PHYSICS_KNOB_RANGES.centering)
+        this.physicsKnobs.centering = v
+        this.options.d3GravityStrengthConnected = Simulation.gravityForCentering(v)
+        this.options.d3GravityStrength = Simulation.isolatedGravityFor(this.options.d3GravityStrengthConnected)
+        Simulation.initSimulationForceGravity(this.simulationForces.gravity, this.options, this.containerBCR)
+        this.noteManualKnobEdit()
+        this.reheatIfEnabled()
+    }
+
+    /**
+     * How long the layout is given to settle, in seconds. Knob 0.5–8 → d3AlphaDecay
+     * *and* cooldownTime together: alpha decay sets how fast the sim cools, cooldown
+     * is the wall-clock wall that stops it. Moving either alone does nothing — raise
+     * the cooldown and the sim is already cold; slow the decay and the wall truncates it.
+     */
+    public setSettleTime(knob: number): void {
+        const v = Simulation.clamp(knob, PHYSICS_KNOB_RANGES.settleTime)
+        this.physicsKnobs.settleTime = v
+        this.options.d3AlphaDecay = Simulation.alphaDecayForSettleTime(v, this.options.d3AlphaMin)
+        this.options.cooldownTime = v * 1000
+        this.simulation.alphaDecay(this.options.d3AlphaDecay)
+        this.noteManualKnobEdit()
+    }
+
+    /**
+     * Apply a named preset ({@link PHYSICS_PRESETS}): sets every knob and reheats once, at
+     * {@link CLICK_REHEAT_ALPHA} rather than the slider default — a preset describes a whole
+     * layout, and reaching it from a settled graph takes a fresh layout's worth of travel.
+     */
     public applyPhysicsPreset(name: PhysicsPresetName): void {
-        const preset = PHYSICS_PRESETS[name]
-        this.physicsKnobs = { ...preset }
-        this.options.d3ManyBodyStrength = Simulation.mapLinear(preset.repulsion, PHYSICS_KNOB_RANGES.repulsion, Simulation.REPULSION_STRENGTH_RANGE)
+        this.disableAutoPhysics()
+        this.writeKnobs(PHYSICS_PRESETS[name])
+        this.reheatIfEnabled(Simulation.CLICK_REHEAT_ALPHA)
+    }
+
+    /**
+     * Write a whole knob bundle onto the options + forces, without reheating.
+     * Shared by {@link applyPhysicsPreset} and the auto tuner, which each decide
+     * their own reheat: one setter per knob would re-init six forces and reheat
+     * six times for what is a single logical change.
+     */
+    private writeKnobs(knobs: PhysicsKnobs): void {
+        this.physicsKnobs = { ...knobs }
+        this.options.d3ManyBodyStrength = Simulation.mapLinear(knobs.repulsion, PHYSICS_KNOB_RANGES.repulsion, Simulation.REPULSION_STRENGTH_RANGE)
         this.scaledForces.d3ManyBodyStrength = this.options.d3ManyBodyStrength
-        this.options.d3LinkDistance = Simulation.mapLinear(preset.linkDistance, PHYSICS_KNOB_RANGES.linkDistance, Simulation.LINK_DISTANCE_RANGE)
-        this.options.d3CollideRadiusMultiplier = Simulation.mapLinear(preset.collisionRadius, PHYSICS_KNOB_RANGES.collisionRadius, Simulation.COLLIDE_MULTIPLIER_RANGE)
-        this.options.d3VelocityDecay = Simulation.mapLinear(preset.friction, PHYSICS_KNOB_RANGES.friction, Simulation.FRICTION_DECAY_RANGE)
+        this.options.d3LinkDistance = Simulation.mapLinear(knobs.linkDistance, PHYSICS_KNOB_RANGES.linkDistance, Simulation.LINK_DISTANCE_RANGE)
+        this.options.d3CollideRadiusMultiplier = Simulation.mapLinear(knobs.collisionRadius, PHYSICS_KNOB_RANGES.collisionRadius, Simulation.COLLIDE_MULTIPLIER_RANGE)
+        this.options.d3VelocityDecay = Simulation.mapLinear(knobs.friction, PHYSICS_KNOB_RANGES.friction, Simulation.FRICTION_DECAY_RANGE)
+        this.options.d3GravityStrengthConnected = Simulation.gravityForCentering(knobs.centering)
+        this.options.d3GravityStrength = Simulation.isolatedGravityFor(this.options.d3GravityStrengthConnected)
+        this.options.d3AlphaDecay = Simulation.alphaDecayForSettleTime(knobs.settleTime, this.options.d3AlphaMin)
+        this.options.cooldownTime = knobs.settleTime * 1000
 
         Simulation.initSimulationForceCharge(this.simulationForces.charge, this.options)
         Simulation.initSimulationForceLink(this.simulationForces.link, this.options)
         Simulation.initSimulationForceCollide(this.simulationForces.collide, this.options)
+        Simulation.initSimulationForceGravity(this.simulationForces.gravity, this.options, this.containerBCR)
         this.simulation.velocityDecay(this.options.d3VelocityDecay)
-        this.reheatIfEnabled()
+        this.simulation.alphaDecay(this.options.d3AlphaDecay)
     }
 
-    /** Current knob values, for seeding the View-flyout sliders. */
+    /** Current knob values, for seeding the Physics-flyout sliders. */
     public getPhysicsKnobs(): PhysicsKnobs {
         return { ...this.physicsKnobs }
     }
 
-    /** The active layout type — the View flyout greys out physics under non-`force` layouts. */
+    /** The active layout type — the Physics flyout greys out physics under non-`force` layouts. */
     public getLayoutType(): LayoutType {
         return this.options.layout.type
     }
 
+    /** The active tree layout's spacing multipliers; `1×` under the force layout. */
+    public getTreeSpacing(): TreeSpacing {
+        return this.layout?.getSpacing() ?? { ...FITTED_TREE_SPACING }
+    }
+
+    /**
+     * Re-lay-out the tree at new spacing multipliers ({@link TREE_SPACING_RANGE}). No-op
+     * under the force layout, where spacing is the physics knobs' job.
+     *
+     * A redraw *and* a reheat: the pinned axis moves immediately, so the change shows even
+     * with physics paused, while the free axis still settles into its new sibling slots.
+     */
+    public setTreeSpacing(spacing: Partial<TreeSpacing>): void {
+        if (!this.layout) return
+        const clamped: Partial<TreeSpacing> = {}
+        if (spacing.levelSpacing !== undefined) {
+            clamped.levelSpacing = Simulation.clamp(spacing.levelSpacing, TREE_SPACING_RANGE)
+        }
+        if (spacing.siblingSpacing !== undefined) {
+            clamped.siblingSpacing = Simulation.clamp(spacing.siblingSpacing, TREE_SPACING_RANGE)
+        }
+        this.layout.setSpacing(clamped)
+        // Keep the options the graph reports in step with what is actually laid out.
+        Object.assign(this.options.layout, clamped, { spacing: 'manual' })
+        this.graph.nextTick()
+        this.reheatIfEnabled()
+    }
+
+    /**
+     * Where the active tree hangs from. Under the force layout there is no tree, so this
+     * reports the finder a tree would start with and no pin.
+     */
+    public getTreeRoot(): TreeRoot {
+        return this.layout?.getRoot() ?? { algorithm: DEFAULT_ROOT_FINDER }
+    }
+
+    /**
+     * Re-hang the tree from another root: `{ rootId }` pins it to that node, `{ algorithm }`
+     * drops the pin and lets the finder choose. No-op under the force layout, which has no
+     * hierarchy to root.
+     *
+     * A pinned root is walked ignoring edge direction, so any node — a leaf included — gives
+     * a whole tree rather than a stump beside the old one. See {@link TreeLayout.setRoot}.
+     */
+    public setTreeRoot(root: { rootId: string } | { algorithm: TreeLayoutAlgorithm }): void {
+        if (!this.layout) return
+        this.layout.setRoot(root)
+        // Keep the options the graph reports — and the worker path is handed — in step with
+        // what is actually laid out.
+        const applied = this.layout.getRoot()
+        Object.assign(this.options.layout, { rootId: applied.rootId, rootIdAlgorithmFinder: applied.algorithm })
+        this.graph.nextTick()
+        this.reheatIfEnabled()
+    }
+
+    /** Is the tree spacing tuning itself? `false` under the force layout. */
+    public isAutoTreeSpacingEnabled(): boolean {
+        return this.layout?.isAutoSpacing() ?? false
+    }
+
+    /**
+     * Hand the tree spacing back to the tuner, which re-derives both multipliers from the
+     * node sizes and tree shape and keeps doing so as the graph changes. The counterpart of
+     * {@link setTreeSpacing}. No-op under the force layout, where `Auto` is
+     * {@link enableAutoPhysics}.
+     */
+    public enableAutoTreeSpacing(): void {
+        if (!this.layout) return
+        this.layout.enableAutoSpacing()
+        Object.assign(this.options.layout, { spacing: 'auto' })
+        this.graph.nextTick()
+        this.reheatIfEnabled()
+    }
+
     private reheatIfEnabled(alpha = 0.5): void {
+        if (this.suppressReheat) return
         if (this.options.enabled) this.reheat(alpha)
     }
 
@@ -760,11 +1073,184 @@ export class Simulation {
     private static knobsFromOptions(options: SimulationOptions): PhysicsKnobs {
         const knob = (value: number, from: readonly [number, number], key: keyof PhysicsKnobs) =>
             Math.round(Simulation.clamp(Simulation.mapLinear(value, from, PHYSICS_KNOB_RANGES[key]), PHYSICS_KNOB_RANGES[key]))
+        const settleTime = Simulation.settleTimeFromAlphaDecay(options.d3AlphaDecay, options.d3AlphaMin)
         return {
             repulsion: knob(options.d3ManyBodyStrength, Simulation.REPULSION_STRENGTH_RANGE, 'repulsion'),
             linkDistance: knob(options.d3LinkDistance, Simulation.LINK_DISTANCE_RANGE, 'linkDistance'),
             collisionRadius: knob(options.d3CollideRadiusMultiplier, Simulation.COLLIDE_MULTIPLIER_RANGE, 'collisionRadius'),
             friction: knob(options.d3VelocityDecay, Simulation.FRICTION_DECAY_RANGE, 'friction'),
+            centering: Math.round(Simulation.clamp(
+                Simulation.centeringFromGravity(options.d3GravityStrengthConnected), PHYSICS_KNOB_RANGES.centering)),
+            settleTime: Math.round(Simulation.clamp(settleTime, PHYSICS_KNOB_RANGES.settleTime) * 10) / 10,
+        }
+    }
+
+    /** `centering` knob → connected-node gravity strength. Quadratic; see CENTERING_STRENGTH_MAX. */
+    private static gravityForCentering(knob: number): number {
+        const t = knob / PHYSICS_KNOB_RANGES.centering[1]
+        return Simulation.CENTERING_STRENGTH_MAX * t * t
+    }
+
+    private static centeringFromGravity(strength: number): number {
+        const t = Math.sqrt(Math.max(0, strength) / Simulation.CENTERING_STRENGTH_MAX)
+        return PHYSICS_KNOB_RANGES.centering[1] * t
+    }
+
+    /**
+     * Isolated (degree-0) nodes have no links holding them, only charge pushing them
+     * away, so they need a much firmer pull than connected ones — and they need *some*
+     * pull even at `centering: 0`, or they leave the canvas entirely.
+     */
+    private static isolatedGravityFor(connectedStrength: number): number {
+        const [lo, hi] = Simulation.CENTERING_ISOLATED_RANGE
+        return Math.max(lo, Math.min(hi, connectedStrength * Simulation.CENTERING_ISOLATED_MULTIPLE))
+    }
+
+    /**
+     * `settleTime` (s) → the per-tick alpha decay that lands alpha on `alphaMin` after roughly
+     * `t · 60` ticks.
+     */
+    private static alphaDecayForSettleTime(settleTime: number, alphaMin: number): number {
+        const ticks = Math.max(1, settleTime * Simulation.NOMINAL_FPS)
+        const floor = Math.min(0.999, Math.max(1e-6, alphaMin))
+        return 1 - Math.pow(floor, 1 / ticks)
+    }
+
+    private static settleTimeFromAlphaDecay(alphaDecay: number, alphaMin: number): number {
+        const floor = Math.min(0.999, Math.max(1e-6, alphaMin))
+        const decay = Math.min(0.999, Math.max(1e-6, alphaDecay))
+        return Math.log(floor) / Math.log(1 - decay) / Simulation.NOMINAL_FPS
+    }
+
+    // ─── Auto physics ───────────────────────────────────────────────────────────
+
+    /**
+     * Whether a graph gets the `Auto` preset. `simulation.physics` forces it either way;
+     * otherwise auto is on unless the consumer configured something auto drives, so existing
+     * tuning is never quietly taken over. `physics: 'auto'` alongside explicit d3 options is
+     * legal — they seed the opening frame and auto takes it from there.
+     */
+    private static shouldAutoTune(options: Partial<SimulationOptions>): boolean {
+        if (options.physics === 'auto') return true
+        if (options.physics === 'manual') return false
+        return !Simulation.AUTO_OWNED_OPTIONS.some(key => options[key] !== undefined)
+    }
+
+    /** Is the `Auto` preset currently driving the knobs? */
+    public isAutoPhysicsEnabled(): boolean {
+        return this.autoEnabled
+    }
+
+    /**
+     * Turn `Auto` on and tune immediately. `force` because this is the Auto *button*: an
+     * answer inside the deadband would otherwise make the click do nothing visible.
+     */
+    public enableAutoPhysics(): void {
+        this.autoEnabled = true
+        this.tuneNow({ alpha: Simulation.CLICK_REHEAT_ALPHA, force: true })
+    }
+
+    /** Turn `Auto` off, leaving the knobs wherever they currently sit. */
+    public disableAutoPhysics(): void {
+        this.autoEnabled = false
+        if (this.autoTuneTimer !== null) {
+            clearTimeout(this.autoTuneTimer)
+            this.autoTuneTimer = null
+        }
+    }
+
+    /** The last tuning pass — what auto saw and what it decided. @private */
+    public getAutoRun(): AutoRun | null {
+        return this.autoLastRun
+    }
+
+    /** A user (or a consumer) turning a knob themselves takes auto out of the loop. */
+    private noteManualKnobEdit(): void {
+        if (this.applyingAutoKnobs) return
+        this.disableAutoPhysics()
+    }
+
+    /** Collapse the triggers that arrive together — a pivot fires one per node. */
+    private scheduleTune(): void {
+        if (!this.autoEnabled) return
+        if (this.autoTuneTimer !== null) clearTimeout(this.autoTuneTimer)
+        this.autoTuneTimer = setTimeout(() => {
+            this.autoTuneTimer = null
+            this.tuneNow()
+        }, Simulation.AUTO_DEBOUNCE_MS)
+    }
+
+    /**
+     * Run the active strategy and apply what it decided. `reheat: false` is for callers
+     * about to reheat anyway, so one logical change stays one reheat; `alpha` and `force`
+     * are for the Auto button — see {@link enableAutoPhysics}.
+     */
+    private tuneNow(options: { reheat?: boolean, alpha?: number, force?: boolean } = {}): void {
+        const { reheat = true, alpha = Simulation.AUTO_REHEAT_ALPHA, force = false } = options
+        if (!this.autoEnabled || this.options.layout.type !== 'force') return
+
+        const context = this.buildAutoContext()
+        if (context.nodeCount === 0) return
+        const next = tunePhysics(context)
+
+        // Deadband: below it the layout would not visibly change, and every apply
+        // costs a reheat. Without this, pivoting reheats once per node added. A
+        // forced tune ignores it — a button press has to answer.
+        const withinDeadband = (Object.keys(next) as Array<keyof PhysicsKnobs>).every(key => {
+            const [lo, hi] = PHYSICS_KNOB_RANGES[key]
+            return Math.abs(next[key] - this.physicsKnobs[key]) <= (hi - lo) * Simulation.AUTO_DEADBAND
+        })
+        const skipped = withinDeadband && !force
+        this.autoLastRun = { context, knobs: skipped ? this.getPhysicsKnobs() : next, skipped }
+        if (skipped) return
+
+        this.applyingAutoKnobs = true
+        this.suppressReheat = true
+        try {
+            this.writeKnobs(next)
+        } finally {
+            this.suppressReheat = false
+            this.applyingAutoKnobs = false
+        }
+        // Gentle by default: relax the layout from where it is instead of restarting it.
+        if (reheat) this.reheatIfEnabled(alpha)
+        this.graph.UIManager.physicsFlyout?.syncAutoKnobs(this.getPhysicsKnobs())
+    }
+
+    /**
+     * What auto is allowed to see: the container at zoom 1, the nodes the sim holds and their
+     * radii. The zoom transform is never read — the *zoomed* viewport would loop against
+     * `fitAndCenter` (zoom out → more apparent space → spread → re-fit). The container rather
+     * than the canvas, for the reason {@link containerBCR} gives.
+     */
+    private buildAutoContext(): AutoContext {
+        const containerBCR = this.containerBCR
+        const nodes = this.graph.getMutableNodes().filter(node => node.visible)
+        const edges = this.getActiveEdges()
+
+        let radiusSum = 0
+        let maxRadius = 0
+        let totalArea = 0
+        for (const node of nodes) {
+            const radius = node.expanded ? node.getCircleRadiusCollapsed() : node.getCircleRadius()
+            radiusSum += radius
+            maxRadius = Math.max(maxRadius, radius)
+            totalArea += Math.PI * radius * radius
+        }
+
+        const components = analyseComponents(
+            nodes.map(node => node.id),
+            edges.map(edge => [(edge.source as Node).id, (edge.target as Node).id] as [string, string])
+        )
+
+        return {
+            canvas: { width: containerBCR.width, height: containerBCR.height },
+            nodeCount: nodes.length,
+            radii: { mean: nodes.length ? radiusSum / nodes.length : 0, max: maxRadius, totalArea },
+            edgeCount: edges.length,
+            componentCount: components.count,
+            looseNodeFraction: components.looseNodeFraction,
+            current: this.getPhysicsKnobs(),
         }
     }
 
@@ -928,7 +1414,10 @@ export class Simulation {
         simulationOptions.layout.type = type
 
         if (type === 'force') {
-            this.applyScalledSimulationOptions()
+            // Re-init the node-dependent forces so d3 re-reads radii after the tree
+            // layout let go of them; auto (if on) re-tunes on the update() below.
+            Simulation.initSimulationForceCharge(this.simulationForces.charge, this.options)
+            Simulation.initSimulationForceCollide(this.simulationForces.collide, this.options)
         } else if (type === 'tree') {
             this.layout = new TreeLayout(this.graph, this.simulation, this.simulationForces, simulationOptions.layout as TreeLayoutOptions)
         }

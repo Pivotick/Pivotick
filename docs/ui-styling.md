@@ -13,9 +13,10 @@ outline: [2, 3]
   - `.pvt-sidebar` – Left panel for the current selection (properties, facets, neighbours) and bulk actions.
   - `.pvt-canvas` – The area where the graph is rendered.
     - `svg` – Inner canvas area (for [Render's type](./render#render-options) `SVG`).
-  - `.pvt-moderail` – Left mode rail (Select / Create / View).
+  - `.pvt-moderail` – Left mode rail (Select / Create / View / Physics).
   - `.pvt-toolpanel` – Contextual tool panel for the active mode.
-  - `.pvt-viewflyout` – Layout / physics / grid settings flyout (toggled by View).
+  - `.pvt-flyout` – Slot holding the settings flyouts; each panel is a `.pvt-flyout-panel`
+    (`.pvt-flyout-view` for grid / canvas switches, `.pvt-flyout-physics` for layout and simulation).
   - `.pvt-graphnavigation` – Viewport controls (fit-and-center, zoom, settings, fullscreen).
 
 - `.pvt-tooltip` – Tooltip container for nodes or edges.

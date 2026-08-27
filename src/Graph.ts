@@ -6,7 +6,7 @@ import { Simulation } from './Simulation'
 import { UIManager } from './ui/UIManager'
 import { Notifier } from './ui/Notifier'
 import type { GraphOptions, GraphData, RelaxedGraphData, RawNode, RawEdge, GraphEvents, GraphDataChange } from './interfaces/GraphOptions'
-import type { GraphUI } from './interfaces/GraphUI'
+import type { GraphUI, LegendGroupOptions, LegendOptions, LegendToggleState } from './interfaces/GraphUI'
 import type { InterractionCallbacks } from './interfaces/InterractionCallbacks'
 import type { LayoutOptions } from './interfaces/LayoutOptions'
 import { generateSafeDomId } from './utils/ElementCreation'
@@ -16,6 +16,7 @@ import { GraphEditingManager } from './editing/GraphEditingManager'
 import { NoteManager } from './NoteManager'
 import { Note, type NoteOptions } from './Note'
 import type { PivotickPlugin } from './interfaces/Plugin'
+import { minimap } from './plugins/minimap'
 
 export class Graph {
     private nodes: Map<string, Node> = new Map()
@@ -35,6 +36,8 @@ export class Graph {
     public readonly editing: GraphEditingManager
     
     private listeners: Record<keyof GraphEvents, Array<GraphEvents[keyof GraphEvents]>>
+    /** Subscribers to {@link onVisibleChange} — kept apart from the data event bus. */
+    private changeListeners: Array<() => void> = []
 
     /**
      * Initializes a graph inside the specified container using the provided data and options.
@@ -48,7 +51,7 @@ export class Graph {
             ready: [],
             nodeAdd: [], nodeRemove: [], nodeChange: [], edgeAdd: [], edgeRemove: [], edgeChange: [],
             noteAdd: [], noteRemove: [], noteChange: [],
-            dataBatchChanged: [],
+            dataBatchChanged: [], legendToggle: [],
         }
 
         this.options = {
@@ -108,6 +111,11 @@ export class Graph {
         this.queryEngine = new GraphQueryEngine(this)
         this.editing = new GraphEditingManager(this)
         this.UIManager = new UIManager(this, appContainer, UIManagerOptions)
+        // Declared facets carry the accessor/predicate/matchMode the engine matches
+        // with, so hand them over as soon as the merged UI options exist.
+        this.queryEngine.setFacets(this.UIManager.getOptions().filter?.facets)
+        this.queryEngine.setEdgeFacets(this.UIManager.getOptions().filter?.edgeFacets)
+        this.queryEngine.setHideDisconnected(this.UIManager.getOptions().filter?.hideDisconnected === true)
         this.notifier = new Notifier(this)
         this.renderer = createGraphRenderer(this, appContainer, rendererOptions)
         this.renderer.setupRendering()
@@ -121,14 +129,37 @@ export class Graph {
         if (data) {
             const normalisedData = Graph.normalizeGraphData(data)
             this._setData(normalisedData?.nodes, normalisedData?.edges, normalisedData?.notes)
+            // Before the layout and the first paint: a node the filters mean to hide must
+            // never reach the canvas, and must not be in the graph the opening fit frames.
+            this.queryEngine.applyInitialVisibility()
             this.simulation?.update()
             this.renderer.init()
             this.renderer.fitAndCenter(1)
         }
 
         this.options.plugins?.forEach(plugin => this.use(plugin))
+        this.installModePlugins()
 
         this.startAndRender()
+    }
+
+    /**
+     * The plugins the chosen mode brings along, installed once `options.plugins`
+     * has had first claim on the name — a consumer's own `minimap({ width: 240 })`
+     * must win, and `installPlugin` drops whichever copy arrives second.
+     */
+    private installModePlugins() {
+        const ui = this.UIManager.getOptions()
+        const declared = ui.minimap
+        if (declared === false || this.UIManager.hasPlugin('minimap')) return
+        // Asked for explicitly it goes up in any mode; left out, only `full` gets one —
+        // the mode that already brings a header, a sidebar, a rail and a legend.
+        if (declared === undefined && ui.mode !== 'full') return
+
+        const options = typeof declared === 'object' ? declared : {}
+        // 'auto' unless overridden: a minimap nobody asked for has to be able to get out
+        // of the way. An explicit `collapsed` in the options wins.
+        this.use(minimap({ collapsed: 'auto', ...options }))
     }
 
     /**
@@ -229,8 +260,10 @@ export class Graph {
 
         // Generate synthetic edges for edges pointing to child in collapsed nodes
         const newEdges: Edge[] = []
-        // Dedup cross-cluster stand-ins by their (representative-from, representative-to) pair.
-        const crossClusterEdgeIds = new Set<string>()
+        // Dedup cross-cluster stand-ins by their (representative-from, representative-to)
+        // pair, keeping each one so a later real edge over the same pair can join its
+        // `representedEdges` instead of being lost to the dedup.
+        const crossClusterStandIns = new Map<string, Edge>()
         for (const edge of normalizedEdges) {
             if (!edge.from.isChild && edge.to.isChild && edge.to.parentNode) {
 
@@ -254,6 +287,10 @@ export class Graph {
                     if (newEdge.to.isChild) {
                         newEdge.hide()
                     }
+                    // One stand-in per ancestor level, all for this one real edge — so
+                    // an edge facet reads the real edge's data rather than the blank
+                    // payload a synthetic carries.
+                    newEdge.representedEdges = [edge]
                     newEdges.push(newEdge)
 
                     if (!currentParent.parentNode) break
@@ -281,11 +318,16 @@ export class Graph {
                     for (const t of toChain) {
                         if (f === edge.from && t === edge.to) continue // that's the real edge, tagged above
                         const syntheticId = `synthetic-${f.id}-${t.id}`
-                        if (crossClusterEdgeIds.has(syntheticId)) continue
-                        crossClusterEdgeIds.add(syntheticId)
+                        const existing = crossClusterStandIns.get(syntheticId)
+                        if (existing) {
+                            existing.representedEdges?.push(edge)
+                            continue
+                        }
                         const newEdge = new Edge(syntheticId, f, t, {}, {}, edge.directed, edge.to)
                         newEdge.isCrossCluster = true
                         newEdge.syntheticSourceNode = edge.from
+                        newEdge.representedEdges = [edge]
+                        crossClusterStandIns.set(syntheticId, newEdge)
                         newEdges.push(newEdge)
                     }
                 }
@@ -334,7 +376,7 @@ export class Graph {
             const shouldShow =
                 edge.from === representative(edge.syntheticSourceNode) &&
                 edge.to === representative(edge.syntheticTerminalNode)
-            if (edge.visible !== shouldShow) {
+            if (edge.visibleIgnoringLayer !== shouldShow) {
                 if (shouldShow) edge.show()
                 else edge.hide()
             }
@@ -445,6 +487,57 @@ export class Graph {
         this.emit('noteRemove', note)
     }
 
+    /**
+     * @private
+     * Announce that a legend entry was toggled. Called by the legend after it has
+     * applied its filter, so a consumer can persist the user's choice.
+     */
+    public legendToggled(state: LegendToggleState): void {
+        this.emit('legendToggle', state)
+    }
+
+    /**
+     * Replace the canvas legend at runtime — the imperative twin of `UI.legend`.
+     * A graph that started without one gets it built on the spot; `false` empties
+     * the legend and drops its filter, and `true` / `undefined` fall back to
+     * deriving one from `render.nodeTypeAccessor`. Pass a
+     * {@link LegendGroupOptions} to key the graph on several dimensions at once.
+     *
+     * @param config - The legend to show, or `false` to remove it.
+     */
+    public setLegend(config?: LegendOptions | LegendGroupOptions | boolean): void {
+        this.UIManager.setLegend(config)
+    }
+
+    /**
+     * @private
+     * Announce that a node's data was replaced in place — emits `nodeChange` plus a
+     * `dataBatchChanged` entry. Used by the interactive node editor, which mutates the
+     * live node rather than going through {@link updateData}.
+     */
+    public nodeDataChanged(node: Node, previousData: NodeData, nextData: NodeData): void {
+        this.dataBatchChanged([{
+            type: 'node:change',
+            node,
+            previousData,
+            nextData,
+        } as GraphDataChange])
+    }
+
+    /**
+     * @private
+     * The edge twin of {@link nodeDataChanged} — emits `edgeChange` plus a
+     * `dataBatchChanged` entry for an edge whose data was replaced in place.
+     */
+    public edgeDataChanged(edge: Edge, previousData: EdgeData, nextData: EdgeData): void {
+        this.dataBatchChanged([{
+            type: 'edge:change',
+            edge,
+            previousData,
+            nextData,
+        } as GraphDataChange])
+    }
+
     private dataBatchChanged(changes: GraphDataChange[]): void {
         if (changes) {
             this.emit('dataBatchChanged', changes)
@@ -509,6 +602,24 @@ export class Graph {
         this.renderer?.update(true)
         this.simulation?.update()
         this.renderer?.nextTick()
+        // Last, so a listener reads the settled graph: the cluster drawer does its
+        // expand/collapse work inside `renderer.update`, above.
+        for (const listener of this.changeListeners) listener()
+    }
+
+    /**
+     * Subscribe to {@link onChange} — the funnel every visible-graph change passes
+     * through: add/remove, filter, cluster expand/collapse, manual hide. For UI that has
+     * to re-read what is on the canvas when nothing more specific is emitted; a cluster
+     * opening announces itself no other way, and on a pinned graph there are no
+     * simulation ticks to fall back on either. Returns its own unsubscribe.
+     * @private
+     */
+    onVisibleChange(listener: () => void): () => void {
+        this.changeListeners.push(listener)
+        return () => {
+            this.changeListeners = this.changeListeners.filter((candidate) => candidate !== listener)
+        }
     }
 
     /**
@@ -549,7 +660,7 @@ export class Graph {
                     changes.push({
                         type: 'edge:change',
                         edge: newEdge,
-                        previousData: this.nodes.get(newEdge.id)?.getData(),
+                        previousData: this.edges.get(newEdge.id)?.getData(),
                         nextData: newEdge.getData(),
                     } as GraphDataChange)
                     this.edges.set(newEdge.id, newEdge)
@@ -984,7 +1095,34 @@ export class Graph {
         return this.noteManager.getNote(id)
     }
 
-    setVisibleNodes(nodes: Node[]) {
+    /**
+     * Would this edge be drawn, if `visibleIds` were the visible nodes? The endpoint,
+     * collapse and synthetic reasons only — layers are a separate veto (`layerVisible`).
+     *
+     * Asked twice: once by {@link setVisibleNodes} as it commits, and once by the query
+     * engine *before* it commits, to find the nodes a filter left with no relation. Both
+     * ask here so there is one copy of the answer. A cross-cluster stand-in is not
+     * answerable — `resolveCrossClusterEdges` owns those — so callers handle them.
+     * @private
+     */
+    edgeWouldBeVisible(edge: Edge, visibleIds: Set<string>): boolean {
+        // A subgraph endpoint belongs to another graph, so it can only be read as it
+        // stands; `from` / `to` are this graph's and are read off the candidate set.
+        const endVisible = (subgraphNode: Node | undefined, endpoint: Node): boolean =>
+            subgraphNode ? subgraphNode.visible : visibleIds.has(endpoint.id)
+
+        const bothEndVisible = endVisible(edge.getSubgraphFromNode(), edge.from) &&
+            endVisible(edge.getSubgraphToNode(), edge.to)
+        const isValidSynthetic = !edge.isSynthetic || !edge.to.expanded
+        return bothEndVisible && isValidSynthetic
+    }
+
+    /**
+     * Returns whether anything moved, so an edge-only filter change can repaint itself.
+     * `notify` is off for the query engine's first pass, which runs before anything is
+     * drawn — the constructor's own `simulation.update()` / `renderer.init()` follow it.
+     */
+    setVisibleNodes(nodes: Node[], notify = true): boolean {
         const visibleSet = new Set(nodes.map(n => n.id))
 
         let changed = false
@@ -1000,18 +1138,29 @@ export class Graph {
             // Cross-cluster stand-ins are owned by resolveCrossClusterEdges (expansion
             // state), not by node visibility — leave their visibility as it set it.
             if (edge.isCrossCluster) return
-            const bothEndVisible = (edge.getSubgraphFromNode()?.visible ?? edge.from.visible) &&
-                (edge.getSubgraphToNode()?.visible ?? edge.to.visible)
-            const isValidSynthetic = !edge.isSynthetic || !edge.to.expanded
 
-            const shouldBeVisible = bothEndVisible && isValidSynthetic
-            if (edge.visible !== shouldBeVisible) {
+            const shouldBeVisible = this.edgeWouldBeVisible(edge, visibleSet)
+            // Compared against `visibleIgnoringLayer`, not `visible`: this decides the
+            // endpoint reason only, and an edge already dark because its layer is off
+            // must not be reported as a change on every reapplication.
+            if (edge.visibleIgnoringLayer !== shouldBeVisible) {
                 edge.toggleVisibility(shouldBeVisible)
                 changed = true
             }
         })
 
-        if (changed) this.onChange()
+        if (changed && notify) this.onChange()
+        return changed
+    }
+
+    /**
+     * Repaint after an edge-layer change. Deliberately not {@link onChange}: layers
+     * don't touch the link force (see `Simulation.getActiveEdges`), so restarting the
+     * simulation would move the graph for no reason.
+     */
+    edgeVisibilityChanged() {
+        this.renderer?.update(true)
+        this.renderer?.nextTick()
     }
 
     hideNode(node: Node) {
@@ -1066,6 +1215,8 @@ export class Graph {
      * Destroy all UI components.
      */
     destroy(): void {
+        // Stop ticking before the DOM it renders into goes away.
+        this.simulation.destroy()
         this.UIManager.destroy()
         this.renderer.destroy()
     }
@@ -1124,6 +1275,83 @@ export class Graph {
         } else if (element instanceof Node) {
             this.renderer.getGraphInteraction().selectNode(element.getGraphElement(), element)
         }
+    }
+
+    /**
+     * Selects several nodes, or several edges, replacing the current selection — the
+     * plural {@link selectElement}, resolving each element's rendered handle for you.
+     *
+     * Nodes and edges cannot be selected together (the interaction layer clears one kind
+     * when the other is set), so a mixed array selects the **nodes** and warns.
+     *
+     * @param elements The `Node`s or `Edge`s to select. An empty array clears the selection.
+     */
+    selectElements(elements: Array<Node | Edge>): void {
+        const interaction = this.renderer.getGraphInteraction()
+        if (elements.length === 0) return interaction.unselectAll()
+
+        const nodes = elements.filter((element): element is Node => element instanceof Node)
+        const edges = elements.filter((element): element is Edge => element instanceof Edge)
+
+        if (nodes.length && edges.length) {
+            console.warn('Pivotick: selectElements cannot select nodes and edges together; selecting the nodes only.')
+        }
+
+        if (nodes.length) {
+            interaction.selectNodes(nodes.map(node => ({ node, element: node.getGraphElement() })))
+        } else if (edges.length) {
+            interaction.selectEdges(edges.map(edge => [edge, edge.getGraphElement()] as [Edge, unknown]))
+        }
+    }
+
+    /**
+     * Adds nodes to the current selection, leaving what is already selected in place.
+     * Already-selected nodes are ignored.
+     *
+     * Nodes only: the interaction layer has no additive setter for edges, which can only
+     * be selected as a whole set via {@link selectElements}.
+     *
+     * @param nodes The `Node`s to add.
+     */
+    addToSelection(nodes: Node[]): void {
+        this.renderer.getGraphInteraction()
+            .addNodesToSelection(nodes.map(node => ({ node, element: node.getGraphElement() })))
+    }
+
+    /**
+     * Removes nodes from the current selection, leaving the rest of it in place.
+     * Nodes only, on the same terms as {@link addToSelection}.
+     *
+     * @param nodes The `Node`s to remove.
+     */
+    removeFromSelection(nodes: Node[]): void {
+        this.renderer.getGraphInteraction()
+            .removeNodesFromSelection(nodes.map(node => ({ node, element: node.getGraphElement() })))
+    }
+
+    /**
+     * Opens the data dock — the graph's rows as a sortable, selectable grid split off
+     * the bottom of the canvas. `full` mode only, and only when `UI.table` allows it;
+     * a no-op otherwise.
+     *
+     * The dock can hold panes other than the table now, so this also brings the table's
+     * pane to the front: the call is named for the table and should show you one. Reach
+     * for `UIManager.dock` or `activateDockTab()` to drive the region without that.
+     */
+    openTable(): void {
+        this.UIManager.dock?.setOpen(true)
+        const tableTab = this.UIManager.table?.dockTabId()
+        if (tableTab) this.UIManager.activateDockTab(tableTab)
+    }
+
+    /** Closes the data dock. */
+    closeTable(): void {
+        this.UIManager.dock?.setOpen(false)
+    }
+
+    /** Opens the data dock if it is closed, closes it if it is open. */
+    toggleTable(): void {
+        this.UIManager.dock?.toggleOpen()
     }
 
     /**

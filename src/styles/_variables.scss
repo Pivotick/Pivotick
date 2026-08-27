@@ -31,7 +31,7 @@ $light-theme: (
     pvt-bg: var(--pvt-bg-color-0),
     pvt-ui-bg: var(--pvt-bg-color-0),
     pvt-border-color: var(--pvt-bg-color-7),
-    // B3 floating chrome surface (rails / pills / panels). Kept light here so it
+    // Floating chrome surface (rails / pills / panels). Kept light here so it
     // doesn't read heavy on the white canvas; see the dark map for the dark tone.
     pvt-chrome-bg: var(--pvt-bg-color-3),
     pvt-chrome-border: #dcdcdc,
@@ -100,6 +100,7 @@ $light-theme: (
     pvt-sidebar-layout-shadow-top: "rgba(0, 0, 0, 0.07) 3px -2px 3px 0px, rgba(0, 0, 0, 0.04) 2px -3px 2px 0px",
     pvt-sidebar-collapse-bg: var(--pvt-bg),
     pvt-sidebar-collapse-color: var(--pvt-text-color-4),
+    pvt-sidebar-collapse-border-color: var(--pvt-border-color),
     pvt-sidebar-collapse-shadow: var(--pvt-box-shadow-strong),
 
     /* Tooltip */
@@ -137,7 +138,6 @@ $light-theme: (
     /* Graph canvas */
     // #region canvas
     pvt-graph-grid-color: var(--pvt-bg-color-2),
-    pvt-graph-grid-color-highlighted: var(--pvt-bg-color-5),
     pvt-graph-navigation-control-container-shadow:
         "rgba(0, 0, 0, 0.22) 0px 0px 4px,"
         "rgba(0, 0, 0, 0.30) 0px 1px 2px",
@@ -156,6 +156,14 @@ $light-theme: (
     pvt-node-text-color: #fff,
     pvt-node-icon-font-family: '"Font Awesome 7 Free"',
     pvt-node-icon-font-weight: 900,
+
+    /* Node rim badges */
+    pvt-badge-color: map.get($light-vibrant-color-palette, vibrant-lobster),
+    pvt-badge-text-color: #fff,
+    pvt-badge-stroke: var(--pvt-bg),
+    // Mid-slate in both themes: the secondary background is near-white in light mode, which
+    // leaves a white-on-white badge. Neutral chrome, so it borrows no single badge's colour.
+    pvt-badge-overflow-color: #64748b,
 
     /* Node selected state */
     pvt-node-selected-color: map.get($light-vibrant-color-palette, vibrant-lobster),
@@ -295,11 +303,11 @@ $dark-bg-color-palette-3: (
 
 $dark-theme: (
     pvt-bg: var(--pvt-bg-color-2),
-    // B3: docked panels (sidebar + slide panels) sit on the chrome tone (bg-6);
+    // Docked panels (sidebar + slide panels) sit on the chrome tone (bg-6);
     // borders track the chrome's border tone (bg-7) so panels read as one family.
     pvt-ui-bg: var(--pvt-bg-color-6),
     pvt-border-color: var(--pvt-bg-color-7),
-    // B3 floating chrome surface (rails / pills / panels) — the graphite tone.
+    // Floating chrome surface (rails / pills / panels) — the graphite tone.
     pvt-chrome-bg: var(--pvt-bg-color-6),
     pvt-chrome-border: var(--pvt-bg-color-7),
     pvt-chrome-shadow: "0 3px 8px rgba(0, 0, 0, 0.30)",
@@ -365,6 +373,7 @@ $dark-theme: (
     pvt-sidebar-layout-shadow-bottom: "rgba(0, 0, 0, 0.07) 3px 2px 3px 0px, rgba(0, 0, 0, 0.04) 2px 3px 2px 0px",
     pvt-sidebar-collapse-bg: var(--pvt-bg),
     pvt-sidebar-collapse-color: var(--pvt-text-color-4),
+    pvt-sidebar-collapse-border-color: var(--pvt-border-color),
     pvt-sidebar-collapse-shadow: var(--pvt-box-shadow-strong),
 
     /* Tooltip */
@@ -372,7 +381,7 @@ $dark-theme: (
     pvt-tooltip-property-list: var(--pvt-bg-color-6),
 
     /* Menu */
-    // B3: overlays (menu/tooltip/modal) sit one notch above the chrome tone.
+    // Overlays (menu/tooltip/modal) sit one notch above the chrome tone.
     pvt-menu-bg-color: #2E2E31,
     pvt-menu-border-color: var(--pvt-bg-color-2),
     pvt-menu-shadow: var(--pvt-sidebar-layout-shadow-right),
@@ -401,7 +410,6 @@ $dark-theme: (
 
     /* Graph canvas */
     pvt-graph-grid-color: var(--pvt-bg-color-4),
-    pvt-graph-grid-color-highlighted: var(--pvt-bg-color-7),
     pvt-graph-navigation-control-container-shadow: "rgba(255, 255, 255, 0.15) 0px 0px 4px"
     "rgba(255, 255, 255, 0.10) 0px 1px 2px",
 
@@ -418,6 +426,14 @@ $dark-theme: (
     pvt-node-text-color: #fff,
     pvt-node-icon-font-family: '"Font Awesome 7 Free"',
     pvt-node-icon-font-weight: 900,
+
+    /* Node rim badges */
+    pvt-badge-color: map.get($dark-vibrant-color-palette, vibrant-lobster),
+    pvt-badge-text-color: #fff,
+    pvt-badge-stroke: var(--pvt-bg),
+    // Mid-slate in both themes: the secondary background is near-white in light mode, which
+    // leaves a white-on-white badge. Neutral chrome, so it borrows no single badge's colour.
+    pvt-badge-overflow-color: #64748b,
 
     /* Node selected state */
     pvt-node-selected-color: var(--pvt-selection-color),

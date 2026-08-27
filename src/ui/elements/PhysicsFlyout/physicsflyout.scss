@@ -1,0 +1,296 @@
+// Physics flyout — layout picker, root + spacing cards for a tree layout, and the
+// simulation card (presets, sliders, run toggle) for a force one. The panel chrome it
+// sits in is shared, see `Flyout/flyout.scss`.
+// Layout picker: one tile per layout, two per row — pick in a single click.
+.pvt-physicsflyout-layouts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+    padding: 0 3px;
+}
+
+.pvt-physicsflyout-layout {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 9px;
+    border-radius: 8px;
+    border: 1px solid var(--pvt-bg-color-5);
+    background-color: var(--pvt-bg-color-4);
+    color: var(--pvt-text-color-5);
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    text-align: left;
+
+    .pvt-flyout-icon svg {
+        width: 15px;
+        height: 15px;
+        color: var(--pvt-text-color-4);
+    }
+
+    &:hover:not(:disabled) {
+        border-color: var(--pvt-theme-primary);
+    }
+
+    &.active {
+        background-color: var(--pvt-theme-primary);
+        border-color: var(--pvt-theme-primary);
+        color: #fff;
+
+        .pvt-flyout-icon svg { color: #fff; }
+    }
+
+    &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+}
+
+// The simulation card and the tree-spacing card that stands in for it take their
+// box from `.pvt-flyout-card`; only one of the two is ever live (see
+// `updateLayoutControls`), which is what these state classes switch between.
+.pvt-physicsflyout-card,
+.pvt-physicsflyout-spacing {
+    // Under a tree layout the knobs are inert, so they are put away rather than
+    // greyed: the spacing card takes their place, and stacking a dead copy of six
+    // sliders underneath it would push the panel past a laptop's viewport.
+    // The card head — and with it the run/pause toggle, which still bites — stays.
+    &.pvt-physicsflyout-disabled {
+        .pvt-physicsflyout-presets,
+        .pvt-physicsflyout-sliders {
+            display: none;
+        }
+
+        .pvt-flyout-card-head {
+            margin-bottom: 0;
+        }
+    }
+
+    // …except collision radius, which a non-radial tree does still answer to: the
+    // layout leaves one axis free and collision is what keeps neighbours off each
+    // other along it. Its row stays, the other five and the presets do not.
+    &.pvt-physicsflyout-collision-only {
+        .pvt-physicsflyout-sliders {
+            display: flex;
+        }
+
+        .pvt-physicsflyout-slider:not([data-row='collisionRadius']) {
+            display: none;
+        }
+
+        .pvt-flyout-card-head {
+            margin-bottom: 11px;
+        }
+    }
+}
+
+// The run/pause toggle the simulation card keeps in its head.
+.pvt-physicsflyout-run {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 7px;
+    background-color: var(--pvt-theme-primary);
+    color: #fff;
+    cursor: pointer;
+
+    svg { width: 14px; height: 14px; }
+}
+
+.pvt-physicsflyout-sliders {
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+}
+
+.pvt-physicsflyout-slider {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    .pvt-physicsflyout-slider-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 12px;
+        color: var(--pvt-text-color-5);
+    }
+
+    .pvt-physicsflyout-slider-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+
+        .pvt-flyout-icon svg { width: 14px; height: 14px; color: var(--pvt-text-color-4); }
+    }
+
+    .pvt-physicsflyout-slider-value {
+        color: var(--pvt-text-color-6);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .pvt-physicsflyout-range {
+        width: 100%;
+        accent-color: var(--pvt-theme-primary);
+        cursor: pointer;
+    }
+}
+
+// The spacing card's Auto pill, sitting where the simulation card keeps its run
+// button. Lit while the tree is deriving its own distances.
+.pvt-physicsflyout-autospacing {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 9px;
+    border: 1px solid var(--pvt-bg-color-5);
+    border-radius: 7px;
+    background-color: var(--pvt-bg-color-2);
+    color: var(--pvt-text-color-5);
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+
+    .pvt-flyout-icon svg { width: 13px; height: 13px; }
+
+    &.active {
+        background-color: var(--pvt-theme-primary);
+        border-color: var(--pvt-theme-primary);
+        color: #fff;
+    }
+}
+
+// A spacing slider the active tree layout cannot honour — the radial layout always
+// spreads a level over the full circle, so sibling distance has nothing to widen.
+.pvt-physicsflyout-spacing .pvt-physicsflyout-range:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+// The root picker: a row, not a card. Four choices in a menu cost the panel one line
+// instead of four tiles, and the menu — which portals to <body> — can afford a sentence
+// per choice, which "First source" and "Shallowest" need and a tooltip hides.
+.pvt-physicsflyout-rootrow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    // `display: flex` on a class outranks the UA stylesheet's `[hidden] { display: none }`,
+    // so the row has to opt back out or it shows under the force layout too.
+    &[hidden] { display: none; }
+
+    margin: 8px 0 0;
+    padding: 7px 11px;
+    border-radius: 10px;
+    background-color: var(--pvt-bg-color-4);
+    border: 1px solid var(--pvt-bg-color-5);
+}
+
+.pvt-physicsflyout-rootrow-label {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--pvt-text-color-6);
+}
+
+.pvt-physicsflyout-rootpick {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    padding: 5px 8px;
+    border: 1px solid var(--pvt-bg-color-5);
+    border-radius: 7px;
+    background-color: var(--pvt-bg-color-2);
+    color: var(--pvt-text-color-5);
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+
+    svg { width: 14px; height: 14px; color: var(--pvt-text-color-4); }
+
+    &:hover { border-color: var(--pvt-theme-primary); }
+}
+
+// A pinned root is named by the node, and node labels are arbitrarily long.
+.pvt-physicsflyout-rootpick-value {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
+}
+
+.pvt-physicsflyout-rootpick-caret { margin-left: auto; }
+
+// The menu's rows, inside `PivotickDropdown`'s own chrome. That component centres its
+// items, so the wrapper takes the full width and lays itself out instead.
+.pvt-rootmenu-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    width: 100%;
+    max-width: 260px;
+    text-align: left;
+
+    .pvt-flyout-icon svg { width: 14px; height: 14px; color: var(--pvt-text-color-4); }
+}
+
+.pvt-rootmenu-text {
+    flex: 1;
+    min-width: 0;
+
+    b { display: block; font-size: 12px; font-weight: 600; color: var(--pvt-text-color-6); }
+    em { display: block; font-style: normal; font-size: 11px; line-height: 1.35; color: var(--pvt-text-color-4); }
+}
+
+// Marks the choice the tree is actually hung from — the menu's equivalent of the lit
+// tile it replaced. Hidden rather than absent so every row stays the same width.
+.pvt-rootmenu-tick {
+    display: inline-flex;
+    line-height: 0;
+    visibility: hidden;
+    color: var(--pvt-theme-primary);
+
+    svg { width: 15px; height: 15px; }
+}
+
+// The live choice: a highlight behind the row, plus the tick. A tick on its own was too
+// quiet to find. The padding is cancelled by an equal negative margin, so the highlight
+// gets room to breathe without making this row taller than the others.
+.pvt-rootmenu-item.current {
+    margin: -3px -5px;
+    padding: 3px 5px;
+    border-radius: 6px;
+    background-color: color-mix(in srgb, var(--pvt-theme-primary) 28%, transparent);
+
+    .pvt-rootmenu-tick { visibility: visible; }
+
+    // Weight only, no colour: the title stays the same ink as every other row's, which
+    // is what keeps the highlight reading as a highlight rather than as decoration.
+    .pvt-rootmenu-text b { font-weight: 700; }
+}
+
+// Hovering an item fills the whole row with the theme colour — that is the dropdown's
+// own behaviour — so every layer of text on it has to switch to the on-primary
+// foreground. Without this the description greys out against the fill, and the live
+// row's coloured title lands on its own colour and disappears.
+.pvt-dropdown__item:hover:not(:disabled) .pvt-rootmenu-item {
+    background-color: transparent;
+
+    .pvt-rootmenu-text b,
+    .pvt-rootmenu-text em,
+    .pvt-rootmenu-tick,
+    .pvt-flyout-icon svg {
+        color: var(--pvt-text-color-for-primary);
+    }
+}
+
+// The dropdown's own disabled styling is cursor-only, so an unreachable choice reads as
+// a reachable one. Scoped to these rows rather than fixed in the shared component.
+.pvt-dropdown__item:disabled .pvt-rootmenu-item { opacity: 0.45; }

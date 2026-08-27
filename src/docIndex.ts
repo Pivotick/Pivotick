@@ -6,6 +6,7 @@ import type * as GraphOptions from './interfaces/GraphOptions'
 import type { EdgeData } from './Edge'
 import type { NodeData } from './Node'
 import type * as GraphUI from './interfaces/GraphUI'
+import type * as AsyncContent from './interfaces/AsyncContent'
 import type * as InterractionCallbacks from './interfaces/InterractionCallbacks'
 import type * as LayoutOptions from './interfaces/LayoutOptions'
 import type * as RendererOptions from './interfaces/RendererOptions'
@@ -13,14 +14,14 @@ import type * as SimulationOptions from './interfaces/SimulationOptions'
 import type * as GraphInteractionsI from './interfaces/GraphInteractions'
 import * as GraphInteractions from './GraphInteractions'
 import type { GraphRenderer, AbstractSelectionBox } from './GraphRenderer'
-import type { Simulation, PhysicsKnobs, PhysicsPresetName } from './Simulation'
-import { PHYSICS_KNOB_RANGES, PHYSICS_PRESETS } from './Simulation'
+import type { Simulation, PhysicsKnobs, PhysicsPresetName, TreeSpacing, TreeRoot } from './Simulation'
+import { PHYSICS_KNOB_RANGES, PHYSICS_PRESETS, TREE_SPACING_RANGE } from './Simulation'
 import type { Notifier, NotificationLevel } from './ui/Notifier'
 import type { TreeLayoutAlgorithm } from './plugins/layout/Tree'
 import { defaultNodeStyle, defaultEdgeStyle, defaultLabelStyle, defaultMarkerStyleMap } from './styles/defaults'
 import type { DeepPartial } from './utils/utils'
 import type { UIElement } from './ui/UIManager'
-import type { ModeStore, PointerMode, RailMode, ModeState } from './ui/ModeStore'
+import type { ModeStore, PointerMode, FlyoutMode, RailMode, ModeState } from './ui/ModeStore'
 import { UIComponent } from './ui/UIComponent'
 import type { UIPhase } from './ui/UIComponent'
 import type { PivotickPlugin, PluginContext } from './interfaces/Plugin'
@@ -30,6 +31,7 @@ export type {
     EdgeData,
     NodeData,
     GraphUI,
+    AsyncContent,
     InterractionCallbacks,
     LayoutOptions,
     RendererOptions,
@@ -40,6 +42,8 @@ export type {
     Simulation,
     PhysicsKnobs,
     PhysicsPresetName,
+    TreeSpacing,
+    TreeRoot,
     TreeLayoutAlgorithm,
     Notifier,
     NotificationLevel,
@@ -47,6 +51,7 @@ export type {
     UIElement,
     ModeStore,
     PointerMode,
+    FlyoutMode,
     RailMode,
     ModeState,
     UIPhase,
@@ -65,5 +70,6 @@ export {
     defaultMarkerStyleMap,
     PHYSICS_KNOB_RANGES,
     PHYSICS_PRESETS,
+    TREE_SPACING_RANGE,
     Pivotick
 }

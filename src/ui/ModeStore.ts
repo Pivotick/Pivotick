@@ -1,16 +1,27 @@
 /**
- * The two pointer-modes of the B3 control layout. Basic click-select, pan and
+ * The two pointer-modes of the control layout. Basic click-select, pan and
  * zoom work in *every* mode; a pointer-mode only decides what a plain drag / the
  * contextual tool panel does (rubber-band select vs. the armed create tool).
  */
 export type PointerMode = 'select' | 'create'
 
 /**
- * Every mode the rail can be in. Select/Create are pointer-modes; `'view'` opens
- * the settings flyout and is **mutually exclusive** with them — entering View
- * deactivates Select/Create (and vice-versa).
+ * Rail modes that open a settings flyout instead of deciding what a drag does:
+ * `'view'` (grid + canvas behaviour) and `'physics'` (layout + simulation).
  */
-export type RailMode = PointerMode | 'view'
+export type FlyoutMode = 'view' | 'physics'
+
+/**
+ * Every mode the rail can be in. Pointer-modes and flyout-modes are **mutually
+ * exclusive** — opening a flyout deactivates Select/Create (and vice-versa), and
+ * only one flyout is open at a time.
+ */
+export type RailMode = PointerMode | FlyoutMode
+
+/** Narrow a rail mode to a pointer-mode (i.e. not a flyout). */
+export function isPointerMode(mode: RailMode): mode is PointerMode {
+    return mode === 'select' || mode === 'create'
+}
 
 /** Observable state of the mode rail. */
 export interface ModeState {
@@ -43,10 +54,10 @@ const DEFAULT_PANEL_OPEN: Record<PointerMode, boolean> = { select: false, create
 
 /**
  * A tiny observable holding the mode-rail state. The rail, contextual tool panel
- * and View flyout subscribe to it; clicks / keybindings dispatch to it. Setters
- * are idempotent — they only notify when the value actually changes — and every
- * notification carries a fresh snapshot so a listener can't mutate the store's
- * internal state.
+ * and the settings flyouts subscribe to it; clicks / keybindings dispatch to it.
+ * Setters are idempotent — they only notify when the value actually changes — and
+ * every notification carries a fresh snapshot so a listener can't mutate the
+ * store's internal state.
  *
  * `subscribe` fires on *changes only*; render initial state from
  * {@link getState} first, then subscribe for updates.
@@ -57,7 +68,7 @@ export class ModeStore {
         armedTool: { ...DEFAULT_ARMED },
         panelOpen: { ...DEFAULT_PANEL_OPEN },
     }
-    // Last pointer-mode, so toggling View off returns to Select/Create rather
+    // Last pointer-mode, so closing a flyout returns to Select/Create rather
     // than stranding the rail with nothing active.
     private lastPointerMode: PointerMode = 'select'
     private readonly listeners = new Set<ModeListener>()
@@ -66,9 +77,14 @@ export class ModeStore {
         return this.state.mode
     }
 
-    /** Whether the View flyout is open (i.e. View is the active mode). */
+    /** Whether a flyout is open (i.e. its mode is the active one). */
+    isFlyoutActive(mode: FlyoutMode): boolean {
+        return this.state.mode === mode
+    }
+
+    /** @deprecated use `isFlyoutActive('view')` — the rail has more than one flyout now. */
     isViewActive(): boolean {
-        return this.state.mode === 'view'
+        return this.isFlyoutActive('view')
     }
 
     /** The armed tool for a pointer-mode (`'pointer'`/`null` = default). */
@@ -92,14 +108,19 @@ export class ModeStore {
 
     setMode(mode: RailMode): void {
         if (this.state.mode === mode) return
-        if (mode !== 'view') this.lastPointerMode = mode
+        if (isPointerMode(mode)) this.lastPointerMode = mode
         this.state.mode = mode
         this.emit()
     }
 
-    /** Enter View mode, or leave it back to the last pointer-mode. */
+    /** Open a flyout mode, or close it back to the last pointer-mode. */
+    toggleFlyout(mode: FlyoutMode): void {
+        this.setMode(this.state.mode === mode ? this.lastPointerMode : mode)
+    }
+
+    /** @deprecated use `toggleFlyout('view')` — the rail has more than one flyout now. */
     toggleView(): void {
-        this.setMode(this.state.mode === 'view' ? this.lastPointerMode : 'view')
+        this.toggleFlyout('view')
     }
 
     /** Arm a tool in a pointer-mode (the rail slot reflects it). Idempotent. */

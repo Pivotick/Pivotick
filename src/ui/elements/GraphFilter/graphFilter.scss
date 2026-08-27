@@ -6,7 +6,7 @@
 
     // ── Section scaffolding ────────────────────────────────────────────────
     // A labelled block (Attributes, Hidden nodes) with a header row that pairs
-    // the section label with its action (Reset / Show all), matching the B3
+    // the section label with its action (Reset / Show all), matching the
     // chrome's section-label + control rhythm.
     .pvt-filter-section-head {
         display: flex;
@@ -64,8 +64,15 @@
         border-radius: 8px;
     }
 
+    // Min and Max sit on one row. `> input[type]` (not a bare `input`) so these
+    // boxes out-specify the ambient `.pvt-form .pvt-form-element input` styling.
+    .pvt-number-range {
+        display: flex;
+        gap: 8px;
+    }
+
     .pvt-form-element > input[type],
-    .pvt-number-range input {
+    .pvt-number-range > input[type] {
         width: 100%;
         box-sizing: border-box;
         padding: 7px 10px;
@@ -83,9 +90,95 @@
         }
     }
 
+    // `font-family: inherit` above would drop the pattern field's monospace, and
+    // the invalid border has to out-specify this file's field-box rule.
+    .pvt-form-element > input[type].pvt-form-regex {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    .pvt-form-element > input[type].pvt-invalid {
+        border-color: var(--pvt-bg-color-danger);
+    }
+
     // Primary apply button, spaced off the form.
     .pvt-filter-section > button.pivotick-button-block {
         margin-top: 18px;
+    }
+
+    // ── Relationship layers ────────────────────────────────────────────────
+    // One row per edge kind, toggled live (no apply button): a layer is a lens, and
+    // the canvas legend beside it toggles on click too.
+    .pvt-edge-layers {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid var(--pvt-chrome-border);
+    }
+
+    .pvt-edge-layer-group {
+        display: block;
+        margin: 12px 0 6px;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--pvt-text-color-5);
+
+        &:first-of-type {
+            margin-top: 0;
+        }
+    }
+
+    .pvt-edge-layer-list {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .pvt-edge-layer {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        // Per-control, since there is no global border-box.
+        box-sizing: border-box;
+        padding: 4px 6px;
+        border: none;
+        border-radius: 6px;
+        background: none;
+        color: var(--pvt-text-color-5);
+        font: inherit;
+        font-size: 12px;
+        text-align: left;
+        cursor: pointer;
+        transition: background-color 0.12s ease;
+
+        &:hover {
+            background: var(--pvt-bg-color-2);
+        }
+
+        .pvt-edge-layer-label {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .pvt-edge-layer-count {
+            flex: none;
+            font-size: 11px;
+            font-variant-numeric: tabular-nums;
+            color: var(--pvt-text-color-3);
+        }
+    }
+
+    // A switched-off layer dims its label *and* fades its line — colour alone must not
+    // carry the state.
+    .pvt-edge-layer-hidden {
+        color: var(--pvt-text-color-3);
+
+        .pvt-edge-swatch {
+            opacity: 0.35;
+        }
     }
 
     // ── Hidden-nodes section ───────────────────────────────────────────────

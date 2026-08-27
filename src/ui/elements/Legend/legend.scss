@@ -1,0 +1,291 @@
+// Canvas legend — a key for the graph's colours that doubles as a filter.
+// Docked in a canvas corner (bottom-left by default) and styled as part of the
+// Chrome family: same surface, border and shadow as the mode rail /
+// settings flyouts / navigation pill.
+.pvt-legend {
+    --pvt-legend-row-height: 24px;
+    // Everything the panel puts above its list: 6px padding and a 1px border twice
+    // over, plus the header. Subtracted so a capped legend can be cut on one of the
+    // list's row boundaries; erring low only costs some of the peek.
+    --pvt-legend-chrome: 41px;
+    // Smallest legend worth drawing: the header and one row.
+    --pvt-legend-floor: calc(var(--pvt-legend-chrome) + var(--pvt-legend-row-height));
+
+    position: absolute;
+    // Below the mode rail and its panels (z-index 6/7): on a short viewport the
+    // left-edge chrome wins the overlap, and the legend can be collapsed away.
+    z-index: 5;
+    max-width: 232px;
+    // A flex column so a capped slot can squeeze the panel, which squeezes the list.
+    display: flex;
+    flex-direction: column;
+    // Every corner is capped against the canvas below the header, so a stack of
+    // sections scrolls instead of growing past it. Bottom-left refines this below,
+    // where the mode rail takes a further share of the same column.
+    max-height: calc(100% - var(--pvt-mainheader-height) - 28px);
+
+    // Nothing declared, nothing rendered — an empty slot must not swallow clicks.
+    &:empty {
+        display: none;
+    }
+
+    &[data-position='bottom-left'] {
+        --pvt-legend-bottom: 14px;
+        // What this column has left once the mode rail has taken its share: the 28px
+        // is the rail's own top offset plus the gap kept below it. `100%` is the
+        // canvas, which already excludes the data dock's row, so this tracks the dock
+        // opening and closing for free.
+        --pvt-legend-room: calc(
+            100% - var(--pvt-legend-bottom) - var(--pvt-mainheader-height)
+                - var(--pvt-moderail-height, 0px) - 28px
+        );
+
+        bottom: var(--pvt-legend-bottom);
+        left: 14px;
+        // The rail grows *down* this column, so a long category list would grow *up*
+        // into it. Cap the legend at the room left and let the list scroll: it never
+        // moves, and it only overlaps where even one row doesn't fit.
+        max-height: max(var(--pvt-legend-floor), var(--pvt-legend-room));
+    }
+
+    &[data-position='bottom-right'] {
+        bottom: 14px;
+        right: 14px;
+    }
+
+    // Clear of the mode rail (54px at left:14px), lining up with the tool panel and
+    // the settings flyouts instead — those overlay the legend when open, being transient.
+    &[data-position='top-left'] {
+        top: calc(var(--pvt-mainheader-height) + 14px);
+        left: 84px;
+    }
+
+    &[data-position='top-right'] {
+        top: calc(var(--pvt-mainheader-height) + 14px);
+        right: 14px;
+    }
+}
+
+// Full mode hangs the sidebar's collapse toggle over the canvas's bottom-left
+// corner (`.pvt-sidebar-collapse-container` is `right: -40px; bottom: 7px` on a
+// sidebar that ends at the canvas edge), so a bottom-left legend lifts clear of it
+// instead of covering it. Lifting it also spends 30px of the room above, which the
+// `max-height` above subtracts on its own.
+.pvt-layout.mode-full .pvt-legend[data-position='bottom-left'] {
+    --pvt-legend-bottom: 44px;
+}
+
+// Cut a capped legend on a row boundary plus the half row that says "there is more
+// below" — the same slack `Legend.render` leaves for its own row cap. A cut landing
+// inside a row's leading space reads as the end of the list, and an overlay
+// scrollbar won't say otherwise. Without `round()` the cap above still holds; only
+// the peek is lost.
+@supports (max-height: round(down, 10px, 3px)) {
+    .pvt-legend[data-position='bottom-left'] {
+        max-height: max(var(--pvt-legend-floor), calc(
+            round(down, var(--pvt-legend-room) - var(--pvt-legend-chrome), var(--pvt-legend-row-height))
+                + 0.5 * var(--pvt-legend-row-height) + var(--pvt-legend-chrome)
+        ));
+    }
+}
+
+.pvt-legend-panel {
+    display: flex;
+    flex-direction: column;
+    // Shrink with a capped slot rather than overflowing it.
+    min-height: 0;
+    // Each section caps its own list; this is the card's own ceiling, so a stack of
+    // sections taller than the slot scrolls as one instead of overflowing.
+    overflow-y: auto;
+    padding: 6px;
+    border-radius: 11px;
+    background-color: var(--pvt-chrome-bg);
+    border: 1px solid var(--pvt-chrome-border);
+    box-shadow: var(--pvt-chrome-shadow);
+}
+
+// Nothing to list — no card. Sections that resolve to no entries are skipped,
+// and a card with none of them left would otherwise be an empty rounded box.
+.pvt-legend-panel:empty {
+    display: none;
+}
+
+// One key per encoding, stacked. The rule only ever sits *between* sections, so a
+// lone section looks exactly as it did when the legend held only one.
+.pvt-legend-section + .pvt-legend-section {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid var(--pvt-chrome-border);
+}
+
+.pvt-legend-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 1px 4px 6px 7px;
+
+    .pvt-legend-title {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--pvt-text-color-4);
+    }
+
+    .pvt-legend-actions {
+        display: flex;
+        align-items: center;
+        gap: 1px;
+    }
+}
+
+.pvt-legend-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--pvt-text-color-4);
+    transition: background-color 0.06s ease, color 0.06s ease;
+
+    svg {
+        width: 13px;
+        height: 13px;
+    }
+
+    &:hover:not(:disabled) {
+        background-color: var(--pvt-chrome-border);
+        color: var(--pvt-text-color-6);
+    }
+
+    &:disabled {
+        opacity: 0.35;
+        cursor: default;
+    }
+}
+
+// The chevron points down when open, right when the list is folded away.
+.pvt-legend-collapse svg {
+    transition: transform 0.12s ease;
+}
+
+.pvt-legend-list {
+    display: flex;
+    flex-direction: column;
+    // No gap: the row height is the whole story, so the capped height can land on
+    // an exact row boundary instead of slicing a row in half (see Legend.render).
+    gap: 0;
+    overflow-y: auto;
+    // The row cap in `Legend.render` is one ceiling; the room left beside the mode
+    // rail is another. This is the flex give that lets the smaller of the two win.
+    min-height: 0;
+}
+
+.pvt-legend-collapsed {
+    .pvt-legend-list {
+        display: none;
+    }
+
+    .pvt-legend-header {
+        padding-bottom: 1px;
+    }
+
+    .pvt-legend-collapse svg {
+        transform: rotate(-90deg);
+    }
+}
+
+.pvt-legend-entry {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-height: var(--pvt-legend-row-height);
+    padding: 2px 7px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    font-family: inherit;
+    font-size: 12px;
+    text-align: left;
+    color: var(--pvt-text-color-6);
+    transition: background-color 0.06s ease;
+
+    // One 18px slot for every section, whatever it keys on: a node dot is 11px and
+    // centres in it, an edge line needs the full width for its dash and marker to read.
+    // Sharing the slot is what keeps labels aligned down a card that stacks both.
+    .pvt-legend-swatch {
+        flex: none;
+        box-sizing: content-box;
+        width: 11px;
+        height: 11px;
+        margin: 0 calc((18px - 11px) / 2);
+        border-radius: 50%;
+        // The fallback covers a colour the browser rejected as invalid (the value
+        // comes from consumer data — see Legend.renderEntry).
+        background-color: var(--pvt-legend-swatch-color, var(--pvt-node-color, #007acc));
+        border: 1px solid var(--pvt-legend-swatch-color, var(--pvt-node-color, #007acc));
+        box-sizing: border-box;
+    }
+
+    .pvt-legend-label {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .pvt-legend-count {
+        flex: none;
+        font-size: 11px;
+        font-variant-numeric: tabular-nums;
+        color: var(--pvt-text-color-4);
+    }
+}
+
+// Interactive rows only: a plain key (`filterable: false`) keeps its cursor.
+.pvt-legend-section:not(.pvt-legend-static) .pvt-legend-entry {
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+        background-color: var(--pvt-chrome-border);
+    }
+
+    &:disabled {
+        cursor: default;
+    }
+}
+
+// Hidden category: hollow swatch *and* dimmed text — colour alone must not be
+// the only signal that a row is off.
+.pvt-legend-entry.pvt-legend-hidden {
+    .pvt-legend-swatch {
+        background-color: transparent;
+    }
+
+    // A line has no fill to hollow out, so it fades instead.
+    .pvt-legend-swatch-line {
+        opacity: 0.35;
+    }
+
+    .pvt-legend-label,
+    .pvt-legend-count {
+        color: var(--pvt-text-color-3);
+    }
+}
+
+// A declared category with no nodes behind it right now.
+.pvt-legend-entry.pvt-legend-empty {
+    opacity: 0.55;
+}

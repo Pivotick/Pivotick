@@ -30,6 +30,7 @@ export default defineConfig({
         link: '/configuration',
         items: [
           { text: 'Callbacks', link: '/callbacks' },
+          { text: 'Edge layers', link: '/edge-layers' },
           { text: 'Layout', link: '/layout' },
           { text: 'Render', link: '/render' },
           { text: 'Simulation', link: '/simulation' },
@@ -41,9 +42,13 @@ export default defineConfig({
               { text: 'Sidebar', link: '/ui-sidebar' },
               { text: 'Tooltip', link: '/ui-tooltip' },
               { text: 'Context Menu', link: '/ui-context-menu' },
+              { text: 'Filters', link: '/ui-filter' },
+              { text: 'Legend', link: '/ui-legend' },
+              { text: 'Data table', link: '/ui-table' },
               { text: 'Styling UI', link: '/ui-styling' },
             ]
           },
+          { text: 'Plugins', link: '/plugins' },
           { text: 'Pivotick API', link: '/api' },
         ]
       },

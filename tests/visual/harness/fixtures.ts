@@ -18,6 +18,9 @@ import type {
 } from '../../../src/interfaces/RendererOptions'
 import { xssPayload, xssSvgIcon } from '../xssPayloads'
 
+/** A plain, structured-cloneable bag — what a fixture can carry across `page.evaluate`. */
+type PlainObject = Record<string, unknown>
+
 /** Note option objects are passed raw; the graph normalises them into `Note`s. */
 export interface RawNote {
     id: string
@@ -57,9 +60,10 @@ function mkCluster(
     x: number,
     y: number,
     children: Node[],
-    data: Record<string, unknown> = {}
+    data: Record<string, unknown> = {},
+    style: Partial<NodeStyle> = {}
 ): Node {
-    const node = new Node(id, { label: id.toUpperCase(), ...data }, {}, id, children)
+    const node = new Node(id, { label: id.toUpperCase(), ...data }, style, id, children)
     node.x = x
     node.y = y
     node.fx = x
@@ -81,6 +85,16 @@ function markCluster(parent: Node, depth = 1): void {
         child.hide()
         markCluster(child, depth + 1)
     })
+}
+
+/**
+ * An edge carrying the `kind` an edge layer keys on, plus the two dimensions the
+ * non-layer facet types need: a `relation` string for a `regex` facet and a
+ * fractional `weight` for a `numberRange` one (fractional so it can't be mistaken
+ * for the integer bucket the *node* field discovery reserves).
+ */
+function kindEdge(id: string, from: Node, to: Node, kind: string, weight = 1.5): Edge {
+    return new Edge(id, from, to, { kind, relation: `${kind}:${id}`, weight })
 }
 
 /** Create a node with a fixed position, baked-in style, and a stable id-equals-domID. */
@@ -180,6 +194,97 @@ function basicNodes(): Record<string, Node> {
         ([id, [x, y]]) => [id, mkNode(id, x, y)] as const
     )
     return Object.fromEntries(entries)
+}
+
+/**
+ * The shape of a graph the `Auto` physics preset has to cope with.
+ *
+ * Unlike every other fixture here, auto fixtures are *not* pinned: the whole point
+ * is to let the simulation place the nodes and then measure where they ended up.
+ * What is pinned instead is the input — node count, radius and topology — so a run
+ * is reproducible even though the positions are not hand-written.
+ */
+export interface AutoFixtureSpec {
+    /** Total nodes, isolated ones included. */
+    nodes: number
+    /** Circle radius every node gets, in px. */
+    radius: number
+    /** How many connected components the linked nodes form. @default 1 */
+    components?: number
+    /** How many nodes are left with no edges at all. @default 0 */
+    isolated?: number
+    /** Node-id prefix, so a second batch can be added without colliding. @default 'n' */
+    prefix?: string
+    /**
+     * Build hub-and-spoke clusters instead of a random tree: `clusters` stars, each a
+     * hub with its share of the nodes as satellites, hubs chained to each other.
+     *
+     * This is the shape real data tends to have — and the shape that exposes whether a
+     * layout keeps its structure, because a star either opens into a legible flower or
+     * packs into an anonymous blob. A random tree has no clusters to lose, so it cannot
+     * tell the two apart.
+     */
+    clusters?: number
+}
+
+/**
+ * Build an auto fixture: `nodes` circles of the given `radius`, seeded in a tight
+ * spiral at the origin so every run starts from the same clump — which is the
+ * complaint auto answers ("too concentrated"), and makes "did it spread?" a real
+ * question rather than an artefact of where the nodes happened to start.
+ */
+export function buildAutoFixture(spec: AutoFixtureSpec): BuiltFixture {
+    const { nodes: count, radius, components = 1, isolated = 0, prefix = 'n' } = spec
+    const linkedCount = Math.max(0, count - isolated)
+
+    const nodes: Node[] = []
+    for (let i = 0; i < count; i++) {
+        // Deterministic seed spiral — a golden-angle placement inside a 60px disc.
+        const angle = i * 2.399963
+        const distance = 6 * Math.sqrt(i)
+        const id = `${prefix}${i}`
+        const node = new Node(id, { label: id.toUpperCase() }, { size: radius }, id)
+        node.x = Math.cos(angle) * distance
+        node.y = Math.sin(angle) * distance
+        // The renderer re-measures this after its first frame; seeding it means the
+        // opening tune already sees the real size instead of the default r=10.
+        node.setCircleRadius(radius)
+        nodes.push(node)
+    }
+
+    const edges: Edge[] = []
+
+    // Hub-and-spoke: every `stride`-th node is a hub, the rest are its satellites, and
+    // the hubs are chained together.
+    if (spec.clusters && spec.clusters > 0) {
+        const stride = Math.max(2, Math.floor(linkedCount / spec.clusters))
+        const hubs: Node[] = []
+        for (let i = 0; i < linkedCount; i++) {
+            if (i % stride === 0) {
+                const hub = nodes[i]
+                if (hubs.length) edges.push(new Edge(`${prefix}h${i}`, hubs[hubs.length - 1], hub))
+                hubs.push(hub)
+                continue
+            }
+            edges.push(new Edge(`${prefix}e${i}`, hubs[hubs.length - 1], nodes[i]))
+        }
+        return { nodes, edges, notes: [] }
+    }
+
+    // Otherwise a random recursive tree: node `i` attaches to an earlier node picked by
+    // a seeded LCG. Deterministic, but branching — a plain path would be a 60-node
+    // string 4000px long whatever the physics did, which says nothing about the tuner.
+    const perComponent = Math.ceil(linkedCount / Math.max(1, components))
+    let seed = 12345
+    const nextRandom = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648
+    for (let i = 0; i < linkedCount; i++) {
+        const offsetInComponent = i % perComponent
+        if (offsetInComponent === 0) continue // first node of a component starts a new tree
+        const parent = i - offsetInComponent + Math.floor(nextRandom() * offsetInComponent)
+        edges.push(new Edge(`${prefix}e${i}`, nodes[parent], nodes[i]))
+    }
+
+    return { nodes, edges, notes: [] }
 }
 
 export const fixtures = {
@@ -377,6 +482,24 @@ export const fixtures = {
         return { nodes, edges: [], notes: [] }
     },
 
+    /**
+     * `textTruncate: false` — the same over-long label drawn in full, inside the node
+     * and floated above it, with the truncating default on top for contrast. The edge
+     * label is there to show edges never truncated in the first place.
+     */
+    nodeLabelsFull(): BuiltFixture {
+        const color = '#0f766e'
+        const long = 'Supercalifragilistic node label'
+        const truncated = mkStyledNode('truncated', -170, -110, { size: 16, color, text: long })
+        const inside = mkStyledNode('full-inside', -170, 0, { size: 16, color, text: long, textTruncate: false })
+        const outside = mkStyledNode('full-outside', -170, 110, {
+            size: 16, color, text: long, textTruncate: false, textVerticalShift: 1,
+        })
+        const edgeEnd = mkStyledNode('edge-end', 170, 110, { size: 16, color })
+        const edge = mkEdge('outside-end', outside, edgeEnd, { label: 'edge labels are never truncated' })
+        return { nodes: [truncated, inside, outside, edgeEnd], edges: [edge], notes: [] }
+    },
+
     /** Straight, curved, and a reciprocal pair that curves apart under `bidirectional`. */
     edgeCurves(): BuiltFixture {
         const mk = (id: string, x: number, y: number) => mkStyledNode(id, x, y, { size: 14, color: '#64748b' })
@@ -467,6 +590,95 @@ export const fixtures = {
             new Edge('c-g', n.c, n.g),
         ]
         return { nodes: Object.values(n), edges, notes: [] }
+    },
+
+    /**
+     * The mirror of {@link fixtures.tree}: the same three tiers, with every arrow
+     * pointing the other way. Twelve leaves each point at one of four hubs, and the
+     * hubs point at a single sink — so **every leaf is a source** and no node reaches
+     * the graph by following the arrows, which is the shape of provenance data (the
+     * AIL demo graph is 259 messages pointing at 41 chats).
+     *
+     * A directed spanning walk cannot lay this out: it leaves all twelve leaves as
+     * roots of their own and drops most edges out of the hierarchy. Drives the
+     * direction-blind fallback in `TreeLayout.buildLevelsStatic`.
+     *
+     *       l0 l1 l2  l3 l4 l5  l6 l7 l8  l9 l10 l11
+     *         \ | /     \ | /     \ | /     \  |  /
+     *          h0         h1        h2         h3
+     *            \         \        /         /
+     *                        sink
+     */
+    converging(): BuiltFixture {
+        const sink = mkNode('sink', 0, 200)
+        const hubs = [0, 1, 2, 3].map(i => mkNode(`h${i}`, -240 + i * 160, 60))
+        const leaves = hubs.flatMap((_, h) =>
+            [0, 1, 2].map(l => mkNode(`l${h * 3 + l}`, -300 + h * 160 + l * 50, -100))
+        )
+        const edges = [
+            ...leaves.map((leaf, i) => new Edge(`leaf-${i}`, leaf, hubs[Math.floor(i / 3)])),
+            ...hubs.map((hub, i) => new Edge(`hub-${i}`, hub, sink)),
+        ]
+        return { nodes: [sink, ...hubs, ...leaves], edges, notes: [] }
+    },
+
+    /**
+     * Two separate trees, the second of which declares where it starts.
+     *
+     *      a                          <- row 0
+     *     / \
+     *   a1   a2        b              <- b declares `level: 2`
+     *                 / \
+     *               b1   b2
+     *
+     * With `layout.depthKey: 'level'` the two roots sit on different rows; without it
+     * they share one, which is what a forest could only ever do before. Same fixture
+     * either way, so one graph covers both halves of the behaviour.
+     */
+    declaredForest(): BuiltFixture {
+        const a = mkNode('a', -200, -100)
+        const a1 = mkNode('a1', -280, 40)
+        const a2 = mkNode('a2', -120, 40)
+        const b = mkNode('b', 200, -100, { level: 2 })
+        const b1 = mkNode('b1', 120, 40)
+        const b2 = mkNode('b2', 280, 40)
+        const edges = [
+            new Edge('a-a1', a, a1),
+            new Edge('a-a2', a, a2),
+            new Edge('b-b1', b, b1),
+            new Edge('b-b2', b, b2),
+        ]
+        return { nodes: [a, a1, a2, b, b1, b2], edges, notes: [] }
+    },
+
+    /**
+     * One tree carrying every rule a declared hierarchy has to arbitrate.
+     *
+     *   root                                  row 0
+     *     |
+     *    mid                                  row 1
+     *    / \
+     * deep  clash        free                 deep asks row 4 (gap padded)
+     *                                         clash asks row 1 (clamped to 2)
+     *                                         free has no edge, names `root`
+     *
+     * `deep` proves an empty row takes real space; `clash` proves a row that is not
+     * below its parent's is clamped rather than honoured by detaching the node; `free`
+     * proves a declared parent is honoured with no edge to back it, which also keeps it
+     * out of the parked wedge.
+     */
+    declaredHierarchy(): BuiltFixture {
+        const root = mkNode('root', 0, -160)
+        const mid = mkNode('mid', 0, -40)
+        const deep = mkNode('deep', -120, 80, { level: 4 })
+        const clash = mkNode('clash', 120, 80, { level: 1 })
+        const free = mkNode('free', 240, -40, { parentId: 'root' })
+        const edges = [
+            new Edge('root-mid', root, mid),
+            new Edge('mid-deep', mid, deep),
+            new Edge('mid-clash', mid, clash),
+        ]
+        return { nodes: [root, mid, deep, clash, free], edges, notes: [] }
     },
 
     /**
@@ -561,6 +773,102 @@ export const fixtures = {
         ]
         // Mirror the normaliser: any edge touching a hidden child starts hidden (the
         // synthetic external→cluster / cross-cluster edges are what show while collapsed).
+        edges.forEach((e) => { if (e.from.isChild || e.to.isChild) e.hide() })
+        return { nodes: [core, groupA, groupB], edges, notes: [] }
+    },
+
+    // ── Edge layers ─────────────────────────────────────────────────────────────
+
+    /**
+     * A graph whose relations come in **kinds**, so the same canvas carries four
+     * layers at once: `object-reference`, `correlation`, `analyst-relationship` and
+     * `tag`. The kind lives on the edge's own data, which is what
+     * `render.edgeTypeAccessor` reads and what an edge facet and an `edge`-scoped
+     * legend section key on.
+     *
+     * Nodes are pinned, so what a layer toggle changes is only ever which lines are
+     * drawn — never where anything sits.
+     */
+    edgeLayers(): BuiltFixture {
+        // `type` is the node dimension a node-scoped legend section keys on, so a mixed
+        // card has a short list on both sides.
+        const hub = mkNode('hub', 0, 0, { type: 'object' })
+        const a = mkNode('a', -120, -80, { type: 'attribute' })
+        const b = mkNode('b', 120, -80, { type: 'attribute' })
+        const c = mkNode('c', -120, 80, { type: 'attribute' })
+        const d = mkNode('d', 120, 80, { type: 'object' })
+        const e = mkNode('e', 0, 160, { type: 'tag' })
+        const edges = [
+            kindEdge('hub-a', hub, a, 'object-reference', 1.5),
+            kindEdge('hub-b', hub, b, 'object-reference', 2.5),
+            kindEdge('hub-c', hub, c, 'object-reference', 8.5),
+            kindEdge('a-b', a, b, 'correlation', 3.5),
+            kindEdge('c-d', c, d, 'correlation', 9.5),
+            kindEdge('b-d', b, d, 'analyst-relationship', 4.5),
+            kindEdge('hub-e', hub, e, 'tag', 1.5),
+            kindEdge('d-e', d, e, 'tag', 7.5),
+        ]
+        return { nodes: [hub, a, b, c, d, e], edges, notes: [] }
+    },
+
+    /**
+     * Relations in kinds, plus the shapes `hideDisconnected` has to tell apart:
+     *
+     * - `loner` has no edge at all — the node the rule hides on sight.
+     * - `c`/`d` hold each other up with a single `correlation`, so switching that layer
+     *   off strands them both.
+     * - `a`/`b` are joined by a `tag` *and* by the hub, so switching `tag` off strands
+     *   nobody — the negative case that stops the rule looking right by accident.
+     */
+    disconnectedLayers(): BuiltFixture {
+        const hub = mkNode('hub', 0, -40)
+        const a = mkNode('a', -140, -140)
+        const b = mkNode('b', 140, -140)
+        const c = mkNode('c', -140, 120)
+        const d = mkNode('d', 140, 120)
+        const loner = mkNode('loner', 0, 200)
+        const edges = [
+            kindEdge('hub-a', hub, a, 'object-reference'),
+            kindEdge('hub-b', hub, b, 'object-reference'),
+            kindEdge('a-b', a, b, 'tag'),
+            kindEdge('c-d', c, d, 'correlation'),
+        ]
+        return { nodes: [hub, a, b, c, d, loner], edges, notes: [] }
+    },
+
+    /**
+     * Two collapsed clusters joined by relations of **two different kinds** — the case
+     * a cross-cluster stand-in aggregates, because stand-ins are deduped by node pair
+     * and not by edge. Collapsed, one line stands for both `a3→b1` (`correlation`) and
+     * `a2→b2` (`tag`): switching one kind off must leave it drawn, and switching both
+     * off must take it away.
+     *
+     * `core→a1` and `core→b1` are external→cluster relations instead, whose stand-ins
+     * are one per real edge and so carry a single kind each.
+     */
+    edgeLayerClusters(): BuiltFixture {
+        const a1 = mkNode('a1', -60, -40)
+        const a2 = mkNode('a2', -20, -40)
+        const a3 = mkNode('a3', -40, -80)
+        const groupA = mkCluster('group-a', -120, 0, [a1, a2, a3])
+        markCluster(groupA)
+        const b1 = mkNode('b1', 60, -40)
+        const b2 = mkNode('b2', 100, -40)
+        const b3 = mkNode('b3', 80, -80)
+        const groupB = mkCluster('group-b', 120, 0, [b1, b2, b3])
+        markCluster(groupB)
+        const core = mkNode('core', 0, 140)
+        const edges = [
+            kindEdge('core-a1', core, a1, 'object-reference'),
+            kindEdge('core-b1', core, b1, 'object-reference'),
+            kindEdge('a1-a2', a1, a2, 'object-reference'),
+            kindEdge('b1-b2', b1, b2, 'object-reference'),
+            kindEdge('b2-b3', b2, b3, 'tag'),
+            // The two cross-cluster relations one stand-in has to speak for.
+            kindEdge('a3-b1', a3, b1, 'correlation'),
+            kindEdge('a2-b2', a2, b2, 'tag'),
+        ]
+        // Mirror the normaliser: any edge touching a hidden child starts hidden.
         edges.forEach((e) => { if (e.from.isChild || e.to.isChild) e.hide() })
         return { nodes: [core, groupA, groupB], edges, notes: [] }
     },
@@ -674,6 +982,59 @@ export const fixtures = {
     },
 
     /**
+     * MISP-shaped nodes for **declared filter facets** (`UI.filter.facets`). Every
+     * shape the declaration has to cope with is here:
+     *
+     *  - `tags` is **array-valued** — the facet kind that was impossible before.
+     *    `a2` is tagged `not-malware` on purpose: a `malware` filter must *not*
+     *    match it (membership), which a substring match against the stringified
+     *    array would.
+     *  - `sightings` is an **integer**, so auto-derivation must reach `numberRange`.
+     *  - `uuid` is pure noise — the `excludeKeys` case.
+     *  - `obj` is a **cluster** whose children carry their own `attr-type`, for the
+     *    computed facet ("object contains an attribute of type X") and for facet
+     *    propagation into an expanded cluster's subgraph.
+     *
+     * `tlp:amber` is on `a1`, `a3` and `obj`; `tlp:green` on `a3` and the child
+     * `c1` — so any-of and `'all'` semantics give visibly different answers.
+     */
+    mispLike(): BuiltFixture {
+        const c1 = mkNode('c1', -60, 120, {
+            'attr-type': 'md5', category: 'Payload delivery', to_ids: true,
+            value: 'd41d8cd98f00b204e9800998ecf8427e', tags: ['tlp:green'], uuid: 'u-c1', sightings: 2,
+        })
+        const c2 = mkNode('c2', 60, 120, {
+            'attr-type': 'filename', category: 'Payload delivery', to_ids: false,
+            value: 'invoice.doc', tags: [], uuid: 'u-c2', sightings: 0,
+        })
+        const obj = mkCluster('obj', 0, 40, [c1, c2], {
+            'attr-type': 'object', category: 'Payload delivery', to_ids: false,
+            value: 'file', tags: ['tlp:amber'], uuid: 'u-obj', sightings: 1,
+        })
+        markCluster(obj)
+
+        const a1 = mkNode('a1', -140, -90, {
+            'attr-type': 'ip-src', category: 'Network activity', to_ids: true,
+            value: '8.8.8.8', tags: ['tlp:amber', 'malware'], uuid: 'u-a1', sightings: 7,
+        })
+        const a2 = mkNode('a2', 0, -120, {
+            'attr-type': 'domain', category: 'Network activity', to_ids: false,
+            value: 'evil.example.com', tags: ['not-malware'], uuid: 'u-a2', sightings: 0,
+        })
+        const a3 = mkNode('a3', 140, -90, {
+            'attr-type': 'md5', category: 'Payload delivery', to_ids: true,
+            value: 'e99a18c428cb38d5f260853678922e03', tags: ['tlp:amber', 'tlp:green'], uuid: 'u-a3', sightings: 3,
+        })
+
+        const edges = [
+            mkEdge('a1-obj', a1, obj),
+            mkEdge('a2-obj', a2, obj),
+            mkEdge('a3-obj', a3, obj),
+        ]
+        return { nodes: [a1, a2, a3, obj], edges, notes: [] }
+    },
+
+    /**
      * Regression fixture for prd/bug-graphfilter-null-value-crash.md: node-data
      * fields whose value is `null`/`undefined`. MISP (and most real datasets)
      * serialise an absent optional attribute as `null`; a single such value used
@@ -729,6 +1090,92 @@ export const fixtures = {
         }, { label: 'Icon node' })
 
         return { nodes: [label, prop, icon], edges: [], notes: [] }
+    },
+
+    /**
+     * Every shape and size a rim badge has to sit on, well separated so no two nodes'
+     * badges can be mistaken for each other.
+     *
+     * Badges themselves are **not** declared here: `NodeBadge.onClick` and a `badges`
+     * function cannot cross `page.evaluate`, so each node carries a plain descriptor list
+     * in `data.badges` that {@link HarnessApi.loadBadges} turns into real badges page-side.
+     */
+    badges(): BuiltFixture {
+        const withBadges = (
+            id: string,
+            x: number,
+            y: number,
+            style: Partial<NodeStyle>,
+            badges: PlainObject[]
+        ): Node => mkStyledNode(id, x, y, style, { badges })
+
+        const count = (text: string, extra: PlainObject = {}): PlainObject =>
+            ({ text, title: `${text} things`, ...extra })
+
+        // A round node and a square one of the same `size`: the pair that proves the rim
+        // maths is shape-aware rather than one circumscribed circle for both.
+        // The second badge names a colour: a `fill` attribute would lose to the themed
+        // stylesheet rule, so this is what proves the consumer's choice survives.
+        const circle = withBadges('circle', -300, -140, { size: 24 },
+            [count('3'), count('7', { color: '#16a34a' })])
+        const square = withBadges('square', -60, -140, { shape: 'square', size: 24 }, [count('3')])
+
+        // The clamp's two ends.
+        const small = withBadges('small', 180, -140, { size: 5 }, [count('1')])
+        const big = withBadges('big', 380, -140, { size: 48 }, [count('9')])
+
+        // A custom path is drawn at a guessed radius and only measured a frame later.
+        const star = withBadges('star', -300, 60, { shape: { d: starPath(28, 12) }, size: 28 }, [count('2')])
+
+        // A framed picture resizes itself once the image probe resolves.
+        const framed = withBadges(
+            'framed',
+            -60,
+            60,
+            { shape: 'square', size: 30, imagePath: landscapeImageDataUri(), imageFit: 'frame' },
+            [count('4')]
+        )
+
+        // Six auto-placed badges on a leaf: four corners, so three show and the rest fold in.
+        const overflow = withBadges('overflow', 180, 60, { size: 26 },
+            ['1', '2', '3', '4', '5', '6'].map((text) => count(text)))
+
+        // Both asking for the same corner — honoured verbatim, overlap and all.
+        const explicit = withBadges('explicit', 380, 60, { size: 26 }, [
+            count('A', { position: 'nw' }),
+            count('B', { position: 'nw' }),
+        ])
+
+        // A clickable badge next to an inert one, on the same node.
+        const clickable = withBadges('clickable', -300, 250, { size: 26 }, [
+            count('C', { click: true }),
+            count('D'),
+        ])
+
+        // Four auto badges on an expandable node: the affordance reserves both East corners,
+        // leaving one slot for a badge and one for the overflow.
+        const kids = [mkNode('kid-1', -40, 240), mkNode('kid-2', 40, 260)]
+        const cluster = mkCluster('cluster', 60, 250, kids, {
+            badges: ['W', 'X', 'Y', 'Z'].map((text) => count(text)),
+        }, { size: 26 })
+        markCluster(cluster)
+
+        // A *square* expandable node: the one place the expand affordance's corner maths is
+        // visibly wrong when it treats every shape as a circumscribed circle.
+        const squareKids = [mkNode('sq-kid-1', 340, 240), mkNode('sq-kid-2', 420, 260)]
+        const squareCluster = mkCluster('sqcluster', 380, 250, squareKids,
+            { badges: [count('S')] },
+            { shape: 'square', size: 26 })
+        markCluster(squareCluster)
+
+        return {
+            nodes: [
+                circle, square, small, big, star, framed, overflow, explicit, clickable,
+                cluster, ...kids, squareCluster, ...squareKids,
+            ],
+            edges: [],
+            notes: [],
+        }
     },
 }
 

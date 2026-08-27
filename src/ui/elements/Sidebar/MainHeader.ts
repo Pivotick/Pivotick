@@ -7,22 +7,28 @@ import './mainHeader.scss'
 import { edgeDescriptionGetter, edgeNameGetter, nodeDescriptionGetter, nodeNameGetter } from '../../../utils/GraphGetters'
 import { graphEdgeIcon, graphMultiSelectNode } from '../../icons'
 import type { EdgeSelection, NodeSelection } from '../../../interfaces/GraphInteractions'
-import { tryResolveHTMLElement } from '../../../utils/Getters'
 import { createNodePreview } from '../../../utils/NodePreview'
 import { TitleFitController } from './titleFit'
+import { AsyncRenderScope } from '../../../utils/AsyncRender'
+import type { MainHeader as MainHeaderOptions } from '../../../interfaces/GraphUI'
 
 
 export class SidebarMainHeader extends UIComponent {
 
     private panel?: HTMLDivElement
-    private renderCb?: ((element: Node | Edge | Node[] | Edge[] | null) => HTMLElement | string) | HTMLElement | string
+    private renderCb?: MainHeaderOptions['render']
 
     // Re-fits the current title whenever the sidebar width changes.
     private titleFit?: TitleFitController
 
+    // Placeholder / staleness for an async `render`; superseded on every selection.
+    private readonly renderScope: AsyncRenderScope
+
     constructor(uiManager: UIManager) {
         super(uiManager)
         this.renderCb = typeof this.uiManager.getOptions().mainHeader.render === 'function' ? this.uiManager.getOptions().mainHeader.render : undefined
+        this.renderScope = new AsyncRenderScope('mainHeader', () => this.uiManager.getOptions().asyncContent)
+        this.track(() => this.renderScope.supersede())
     }
 
     protected onMount(rootContainer: HTMLElement | undefined) {
@@ -52,8 +58,11 @@ export class SidebarMainHeader extends UIComponent {
     private renderCustomContent(element: Node | Edge | Node[] | Edge[] | null) {
         if (!this.panel || !this.renderCb) return
 
+        // Abandon the previous selection's render before its slot is wiped, so a
+        // late resolution can't paint over the element now selected.
+        this.renderScope.supersede()
         this.panel.innerHTML = ''
-        const content = tryResolveHTMLElement(this.renderCb, element)
+        const content = this.renderScope.content(this.renderCb, element)
         if (content) {
             this.panel?.appendChild(content)
         }

@@ -1,6 +1,7 @@
 import type { EdgeFullStyle, EdgeStyle, LabelStyle, PartialEdgeFullStyle } from './interfaces/RendererOptions'
 import { Node } from './Node'
 import { generateSafeDomId } from './utils/ElementCreation'
+import { stripFunctions } from './utils/utils'
 
 export interface EdgeData {
     [key: string]: unknown;
@@ -28,6 +29,25 @@ export class Edge {
     private style: Partial<EdgeFullStyle>
 
     visible: boolean
+    /**
+     * Whether this edge's layer is switched on. A veto over {@link visible}: every
+     * other reason an edge is hidden (endpoints filtered out, a collapsed cluster,
+     * a manual hide) is asserted through {@link show} / {@link hide}, and `show`
+     * cannot bring an edge back while its layer is off.
+     */
+    layerVisible: boolean
+    /**
+     * What {@link visible} would be if every layer were on — i.e. visibility from
+     * the endpoint, collapse and manual reasons alone. The simulation gates on this
+     * rather than on `visible`, so switching a layer off never changes the layout.
+     */
+    visibleIgnoringLayer: boolean
+    /**
+     * For a cross-cluster stand-in: the real edges it speaks for. Stand-ins are
+     * deduped by node *pair*, so one can cover several relations of several kinds;
+     * it is filtered out only once every one of them is.
+     */
+    representedEdges?: Edge[]
     /** True if this is a synthetic edge (placeholder for collapsed cluster child) */
     isSynthetic?: boolean
     /**
@@ -65,6 +85,8 @@ export class Edge {
         this.data = data ?? ({} as EdgeData)
         this.style = style ?? ({} as EdgeFullStyle)
         this.visible = true
+        this.layerVisible = true
+        this.visibleIgnoringLayer = true
         this._dirty = true
         this.isSynthetic = syntheticTerminalNode !== undefined
         this.syntheticTerminalNode = syntheticTerminalNode
@@ -179,14 +201,17 @@ export class Edge {
         } as Record<string, unknown>
     }
 
-    /** Structured-cloneable payload for the simulation worker; endpoints reduced to ids, keeps `directed`. */
+    /**
+     * Structured-cloneable payload for the simulation worker; endpoints reduced to ids, keeps
+     * `directed`. The style is stripped of functions — see {@link Node.toSimulationDTO}.
+     */
     toSimulationDTO(): SimulationEdgeDTO {
         return {
             id: this.id,
             from: { id: this.from.id },
             to: { id: this.to.id },
             data: this.data,
-            style: this.style,
+            style: stripFunctions(this.style),
             directed: this.directed,
         }
     }
@@ -206,6 +231,8 @@ export class Edge {
         )
 
         clone.visible = this.visible
+        clone.layerVisible = this.layerVisible
+        clone.visibleIgnoringLayer = this.visibleIgnoringLayer
 
         return clone
     }
@@ -233,11 +260,28 @@ export class Edge {
     }
 
     show(): void {
-        this.visible = true
+        this.visibleIgnoringLayer = true
+        this.visible = this.layerVisible
     }
 
     hide(): void {
+        this.visibleIgnoringLayer = false
         this.visible = false
+    }
+
+    /**
+     * Switch this edge's layer on or off, re-deriving {@link visible} from the other
+     * reasons it may already be hidden for. Returns whether anything changed.
+     */
+    setLayerVisible(layerVisible: boolean): boolean {
+        if (this.layerVisible === layerVisible) return false
+        this.layerVisible = layerVisible
+        const nextVisible = layerVisible && this.visibleIgnoringLayer
+        if (this.visible !== nextVisible) {
+            this.visible = nextVisible
+            this.markDirty()
+        }
+        return true
     }
 
     /**

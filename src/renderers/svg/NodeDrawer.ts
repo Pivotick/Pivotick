@@ -5,11 +5,12 @@ import { Edge } from '../../Edge'
 import type { Graph } from '../../Graph'
 import { GraphSvgRenderer } from './GraphSvgRenderer'
 import { defaultLabelStyle } from '../../styles/defaults'
-import { resolveIcon, tryResolveNumber, tryResolveString } from '../../utils/Getters'
+import { resolveIcon, tryResolveBoolean, tryResolveNumber, tryResolveString } from '../../utils/Getters'
 import { parseSvgIconMarkup } from '../../utils/SvgSanitizer'
 import { hasAllowedScheme, SAFE_IMAGE_SCHEMES } from '../../utils/urlSafety'
 import type { CustomNodeShape, GraphRendererOptions, ImageFit, NodeShape, NodeStyle } from '../../interfaces/RendererOptions'
 import { ClusterDrawer } from './ClusterDrawer'
+import { BadgeDrawer, nodeRimAnchor, resolveBadges } from './BadgeDrawer'
 import { forceConstrainParent } from '../../plugins/d3Forces/ForceConstrainParent'
 import { imageOff } from '../../ui/icons'
 d3Select.prototype.transition = d3Transition
@@ -20,6 +21,7 @@ export class NodeDrawer {
     public rendererOptions: GraphRendererOptions
     public graphSvgRenderer: GraphSvgRenderer
     public clusterDrawer: ClusterDrawer
+    public badgeDrawer: BadgeDrawer
     private renderCB?: GraphRendererOptions['renderNode']
 
     public constructor(rendererOptions: GraphRendererOptions, graph: Graph, graphSvgRenderer: GraphSvgRenderer) {
@@ -28,9 +30,14 @@ export class NodeDrawer {
         this.rendererOptions = rendererOptions
         this.renderCB = this.rendererOptions?.renderNode
         this.clusterDrawer = new ClusterDrawer(this)
+        this.badgeDrawer = new BadgeDrawer(graph)
     }
 
     public render(theNodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
+
+        // Resolved once and shared: badges need it on both paths, and it is the same value the
+        // default path would have resolved for itself.
+        const style = this.getNodeStyle(node)
 
         if (this.renderCB) {
             const fo = theNodeSelection.append('foreignObject')
@@ -94,11 +101,13 @@ export class NodeDrawer {
                         this.scheduleCollisionReheat()
                     }
                 }
+                // The card's real box is only known here, so the rim moves with it.
+                this.badgeDrawer.reanchor(node)
             }
             requestAnimationFrame(() => measureAndSize(0))
 
         } else {
-            this.defaultNodeRender(theNodeSelection, node)
+            this.genericNodeRender(theNodeSelection, style, node)
             requestAnimationFrame(() => {
                 const nodeElement = theNodeSelection.node()
                 if (!nodeElement) return
@@ -115,14 +124,18 @@ export class NodeDrawer {
                 node.setBoxSize(width, height)
 
                 if (this.rendererOptions.enableNodeExpansion && (!node.hasChildren() || !node.expanded)) {
-                    if (this.getNodeStyle(node).shape == 'square') {
+                    if (style.shape == 'square') {
                         node.setCircleRadius(Math.SQRT1_2 * Math.max(width, height)) // Is the only shape that has a coord. shift
                     } else {
                         node.setCircleRadius(0.5 * Math.max(width, height))
                     }
+                    // A custom shape only learns its real radius here, having been drawn at a guess.
+                    if (this.isCustomShape(style.shape as NodeShape)) this.badgeDrawer.reanchor(node)
                 }
             })
         }
+
+        this.badgeDrawer.render(theNodeSelection, node, resolveBadges(style, node))
 
         if (this.rendererOptions.enableNodeExpansion && node.hasChildren()) {
             if (node.expanded) {
@@ -170,33 +183,38 @@ export class NodeDrawer {
             })
     }
 
-    private defaultNodeRender(nodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
-        const style = this.getNodeStyle(node)
-        this.genericNodeRender(nodeSelection, style, node)
-    }
-
-    private mergeNodeStylingOptions(style: Partial<NodeStyle>): NodeStyle {
+    /**
+     * Fill whatever the node and the style map left unset from `defaultNodeStyle` —
+     * from its `styleCb` first, then its literals. The default callback is the computed
+     * form of the default slot, so it yields to anything that names this node more
+     * narrowly and fills what a per-node `styleCb` left out.
+     */
+    private mergeNodeStylingOptions(style: Partial<NodeStyle>, node: Node): NodeStyle {
+        const defaults = this.rendererOptions.defaultNodeStyle
+        const fromDefaultCb = defaults.styleCb?.(node) ?? {}
         const mergedStyle = {
-            shape: style?.shape ?? this.rendererOptions.defaultNodeStyle.shape,
-            strokeColor: style?.strokeColor ?? this.rendererOptions.defaultNodeStyle.strokeColor,
-            strokeWidth: style?.strokeWidth ?? this.rendererOptions.defaultNodeStyle.strokeWidth,
-            fontFamily: style?.fontFamily ?? this.rendererOptions.defaultNodeStyle.fontFamily,
-            size: style?.size ?? this.rendererOptions.defaultNodeStyle.size,
-            color: style?.color ?? this.rendererOptions.defaultNodeStyle.color,
-            textColor: style?.textColor ?? this.rendererOptions.defaultNodeStyle.textColor,
-            textAnchorPosition: style?.textAnchorPosition ?? this.rendererOptions.defaultNodeStyle.textAnchorPosition,
-            textHorizontalShift: style?.textHorizontalShift ?? this.rendererOptions.defaultNodeStyle.textHorizontalShift,
-            textVerticalShift: style?.textVerticalShift ?? this.rendererOptions.defaultNodeStyle.textVerticalShift,
-            textRotateDegree: style?.textRotateDegree ?? this.rendererOptions.defaultNodeStyle.textRotateDegree,
-            iconUnicode: style?.iconUnicode ?? this.rendererOptions.defaultNodeStyle.iconUnicode,
-            iconClass: style?.iconClass ?? this.rendererOptions.defaultNodeStyle.iconClass,
-            svgIcon: style?.svgIcon ?? this.rendererOptions.defaultNodeStyle.svgIcon,
-            imagePath: style?.imagePath ?? this.rendererOptions.defaultNodeStyle.imagePath,
-            imageFit: style?.imageFit ?? this.rendererOptions.defaultNodeStyle.imageFit,
-            text: style?.text ?? this.rendererOptions.defaultNodeStyle.text,
-            html: style?.html ?? this.rendererOptions.defaultNodeStyle.html,
+            shape: style?.shape ?? fromDefaultCb.shape ?? defaults.shape,
+            strokeColor: style?.strokeColor ?? fromDefaultCb.strokeColor ?? defaults.strokeColor,
+            strokeWidth: style?.strokeWidth ?? fromDefaultCb.strokeWidth ?? defaults.strokeWidth,
+            fontFamily: style?.fontFamily ?? fromDefaultCb.fontFamily ?? defaults.fontFamily,
+            size: style?.size ?? fromDefaultCb.size ?? defaults.size,
+            color: style?.color ?? fromDefaultCb.color ?? defaults.color,
+            textColor: style?.textColor ?? fromDefaultCb.textColor ?? defaults.textColor,
+            textAnchorPosition: style?.textAnchorPosition ?? fromDefaultCb.textAnchorPosition ?? defaults.textAnchorPosition,
+            textHorizontalShift: style?.textHorizontalShift ?? fromDefaultCb.textHorizontalShift ?? defaults.textHorizontalShift,
+            textVerticalShift: style?.textVerticalShift ?? fromDefaultCb.textVerticalShift ?? defaults.textVerticalShift,
+            textRotateDegree: style?.textRotateDegree ?? fromDefaultCb.textRotateDegree ?? defaults.textRotateDegree,
+            textTruncate: style?.textTruncate ?? fromDefaultCb.textTruncate ?? defaults.textTruncate,
+            iconUnicode: style?.iconUnicode ?? fromDefaultCb.iconUnicode ?? defaults.iconUnicode,
+            iconClass: style?.iconClass ?? fromDefaultCb.iconClass ?? defaults.iconClass,
+            svgIcon: style?.svgIcon ?? fromDefaultCb.svgIcon ?? defaults.svgIcon,
+            imagePath: style?.imagePath ?? fromDefaultCb.imagePath ?? defaults.imagePath,
+            imageFit: style?.imageFit ?? fromDefaultCb.imageFit ?? defaults.imageFit,
+            text: style?.text ?? fromDefaultCb.text ?? defaults.text,
+            html: style?.html ?? fromDefaultCb.html ?? defaults.html,
+            badges: style?.badges ?? fromDefaultCb.badges ?? defaults.badges,
         }
-        
+
         return mergedStyle
     }
 
@@ -226,6 +244,7 @@ export class NodeDrawer {
                 textHorizontalShift: style?.textHorizontalShift ?? styleFromStyleMap?.textHorizontalShift,
                 textVerticalShift: style?.textVerticalShift ?? styleFromStyleMap?.textVerticalShift,
                 textRotateDegree: style?.textRotateDegree ?? styleFromStyleMap?.textRotateDegree,
+                textTruncate: style?.textTruncate ?? styleFromStyleMap?.textTruncate,
                 iconUnicode: style?.iconUnicode ?? styleFromStyleMap?.iconUnicode,
                 iconClass: style?.iconClass ?? styleFromStyleMap?.iconClass,
                 svgIcon: style?.svgIcon ?? styleFromStyleMap?.svgIcon,
@@ -233,9 +252,10 @@ export class NodeDrawer {
                 imageFit: style?.imageFit ?? styleFromStyleMap?.imageFit,
                 text: style?.text ?? styleFromStyleMap?.text,
                 html: style?.html ?? styleFromStyleMap?.html,
+                badges: style?.badges ?? styleFromStyleMap?.badges,
             }
         }
-        return this.mergeNodeStylingOptions(styleFromNode)
+        return this.mergeNodeStylingOptions(styleFromNode, node)
     }
 
     public getNodeStyle(node: Node): NodeStyle {
@@ -254,6 +274,7 @@ export class NodeDrawer {
         nodeStyle.textHorizontalShift = nodeStyle.textHorizontalShift !== undefined ? (tryResolveNumber(nodeStyle.textHorizontalShift, node) ?? 0) : 0
         nodeStyle.textVerticalShift = nodeStyle.textVerticalShift !== undefined ? (tryResolveNumber(nodeStyle.textVerticalShift, node) ?? 0) : 0
         nodeStyle.textRotateDegree = nodeStyle.textRotateDegree !== undefined ? (tryResolveNumber(nodeStyle.textRotateDegree, node) ?? 0) : 0
+        nodeStyle.textTruncate = nodeStyle.textTruncate !== undefined ? (tryResolveBoolean(nodeStyle.textTruncate, node) ?? true) : true
         nodeStyle.text = nodeStyle.text !== undefined ? tryResolveString(nodeStyle.text, node) : undefined
 
         nodeStyle.iconUnicode = nodeStyle.iconUnicode !== undefined ? tryResolveString(nodeStyle.iconUnicode, node) : undefined
@@ -457,6 +478,12 @@ export class NodeDrawer {
                     image.attr('x', -w / 2).attr('y', -h / 2).attr('width', w).attr('height', h)
                     renderedNode.attr('x', -w / 2).attr('y', -h / 2).attr('width', w).attr('height', h)
                     node.setCircleRadius(0.5 * Math.max(w, h))
+                    // The frame only takes its real proportions here; without this the rim
+                    // chrome stays pinned to the square guess and ends up over the picture.
+                    this.badgeDrawer.reanchor(node)
+                    if (this.rendererOptions.enableNodeExpansion && node.hasChildren()) {
+                        this.addExpandCollapseIcons(nodeSelection, node)
+                    }
                 }
                 probe.src = style.imagePath
             } else {
@@ -495,7 +522,7 @@ export class NodeDrawer {
                 .classed('pvt-node-label-group', true)
 
             const isOusideNode = Math.abs(style.textVerticalShift) >= 1 || Math.abs(style.textHorizontalShift) >= 1
-            const [fontSize, text] = this.computeTextLayout(style.text, style.size, isOusideNode)
+            const [fontSize, text] = this.computeTextLayout(style.text, style.size, isOusideNode, style.textTruncate as boolean)
 
             const x_pos = style.textHorizontalShift * (style.size + fontSize/2*1.2)
             const y_pos = - style.textVerticalShift * (style.size + fontSize/2*1.2)
@@ -515,7 +542,14 @@ export class NodeDrawer {
                 .text(text)
 
             const bbox = textSelection.node()?.getBBox()
-            if (isOusideNode && bbox) {
+            // An untruncated label spills past the shape, where the node's own text colour
+            // is drawn against the canvas instead of the node (white on white, by default).
+            // Give it the floated label's pill + colour so the whole string stays readable.
+            const spillsOutOfNode = !isOusideNode && style.textTruncate === false
+                && !!bbox && bbox.width > (style.size as number) * 2
+            if (spillsOutOfNode) textSelection.attr('fill', defaultLabelStyle.color)
+
+            if ((isOusideNode || spillsOutOfNode) && bbox) {
                 const paddingX = 4
                 const paddingY = 2
                 labelG.insert('rect', 'text')
@@ -549,7 +583,7 @@ export class NodeDrawer {
     public checkForHighlight(nodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
         const nodeSelected = this.isNodeSelected(node)
         const nodeAdjacentToSelection = this.isNodeAdjacentToSelection(node)
-        const applyShadow = this.getSelectedNodeIDs().length !== 0
+        const applyShadow = this.hasVisibleSelection()
         
         // Manage node
         node.getGraphElement()?.classList.toggle('pvt-node-selected-highlight', nodeSelected)
@@ -577,6 +611,22 @@ export class NodeDrawer {
         return Array.isArray(selectedIds) ? selectedIds : []
     }
 
+    /**
+     * Whether the selection contains anything that is actually on screen — the gate for
+     * focus-mode dimming.
+     *
+     * A hidden node can be selected without ever being drawn (a filtered-out search
+     * result, or a row in the data dock), and its element is gone from the DOM entirely.
+     * Dimming on the strength of a selection like that would grey out the whole canvas
+     * with nothing highlighted, which reads as a broken graph.
+     *
+     * Short-circuits on the first visible node, so the usual case costs one check.
+     */
+    private hasVisibleSelection(): boolean {
+        const gi = this.graphSvgRenderer.getGraphInteraction()
+        return gi.getSelectedNodes().some(selection => selection.node.visible)
+    }
+
     private isNodeSelected(node: Node): boolean {
         return this.getSelectedNodeIDs().includes(node.id)
     }
@@ -590,7 +640,7 @@ export class NodeDrawer {
         return this.isNodeSelected(edge.from) || this.isNodeSelected(edge.to)
     }
 
-    private computeTextLayout(label: string, nodeSize: number, isOusideNode: boolean = false): [number, string] {
+    private computeTextLayout(label: string, nodeSize: number, isOusideNode: boolean = false, truncate: boolean = true): [number, string] {
         const base = nodeSize * 0.9
         // Allow wider strings when text is outside the node
         const maxWidth = isOusideNode ? base * 5 : base * 2
@@ -601,7 +651,7 @@ export class NodeDrawer {
         const charWidth = fontSize * 0.55
         const maxChars = Math.floor(maxWidth / charWidth) - 1
 
-        if (label.length > maxChars && label.length > 7) {
+        if (truncate && label.length > maxChars && label.length > 7) {
             // Since text is too long, add ellipsis
             const charsToKeep = Math.max(6, maxWidth / charWidth) - 1 // Reserve 1 space for "…"
 
@@ -619,7 +669,6 @@ export class NodeDrawer {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private addExpandCollapseIcons(theNodeSelection: Selection<SVGGElement, Node, null, undefined>, _node: Node): void {
         const iconRadius = 8      // radius of the small circle
-        const padding = 2         // distance from node bounds
 
         const toggleExpand = (node: Node, expand: boolean) => {
             if (this.graph.UIManager.tooltip) this.graph.UIManager.tooltip.hide(node)
@@ -639,12 +688,14 @@ export class NodeDrawer {
             // Remove existing icons if any
             group.selectAll<SVGGElement, unknown>(':scope > .node-icon').remove()
 
-            const offset = (node.getCircleRadius() + padding) / Math.sqrt(2)
+            // Same rim maths as the badges, so the two agree on where a corner is — on a
+            // square or an image frame the circumscribed 45° point sits well inside the shape.
+            const anchor = nodeRimAnchor(nodes[i], node, !node.expanded ? 'ne' : 'se')
 
             const svgG = group.append('g')
                 .classed('node-icon', true)
                 .classed(!node.expanded ? 'expand-icon' : 'collapse-icon', true)
-                .attr('transform', !node.expanded ? `translate(${offset}, ${-(offset)})` : `translate(${offset}, ${offset})`)
+                .attr('transform', `translate(${anchor.x}, ${anchor.y})`)
             svgG
                 .append('title')
                 .text(!node.expanded ? 'Expand node' : 'Collapse nodes')
@@ -697,6 +748,18 @@ export class NodeDrawer {
                 .duration(250)
                 .attr('transform', `translate(${-offset}, ${-offset})`)
         })
+
+        // Badges ride to the NW rim with the shape, keeping their corners. Unlike the label
+        // they are not steered away from the bubble: a badge is small enough to sit over the
+        // boundary without hiding anything, and re-flowing would change what a corner means
+        // halfway through an interaction.
+        const badgeGroup = nodeGroup?.querySelector<SVGGElement>(':scope > .pvt-node-badges')
+        if (badgeGroup) {
+            d3Select(badgeGroup)
+                .transition()
+                .duration(250)
+                .attr('transform', `translate(${-offset}, ${-offset})`)
+        }
 
         // Move the label with the node. An inner label rides along centred on the
         // shape; a label floating outside the node is steered into the top-left

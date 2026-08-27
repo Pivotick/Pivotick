@@ -3,7 +3,7 @@ import type { Graph } from '../Graph'
 import type { Node, NodeData } from '../Node'
 import type { Note } from '../Note'
 import type { DeepPartial } from '../utils/utils'
-import type { GraphUI } from './GraphUI'
+import type { GraphUI, LegendToggleState } from './GraphUI'
 import type { InterractionCallbacks } from './InterractionCallbacks'
 import type { LayoutOptions } from './LayoutOptions'
 import type { PivotickPlugin } from './Plugin'
@@ -95,6 +95,8 @@ export type GraphEvents = {
     noteRemove: (note: Note) => void
     noteChange: (note: Note) => void
     dataBatchChanged: (changes: GraphDataChange[]) => void // Batch of data changes(transactions, imports, undo / redo)
+    /** A legend entry was toggled: which categories are now hidden / shown. */
+    legendToggle: (state: LegendToggleState) => void
 }
 
 export type GraphDataChange =

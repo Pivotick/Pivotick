@@ -1,16 +1,17 @@
 import type { UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
 import type { ModeState, PointerMode } from '../../ModeStore'
-import { cursor, addCircle, show, sparkles, compass, lassoTool, graphEdgeIcon } from '../../icons'
+import { cursor, addCircle, show, atom, sparkles, compass, lassoTool, graphEdgeIcon } from '../../icons'
 import './moderail.scss'
 
 /**
- * The B3 left-edge mode rail. Holds the three exclusive modes (Select, Create,
- * View) plus an optional data zone of not-yet-shipped modes (Explore, Enrich)
- * rendered as disabled "SOON" affordances — each gated on
- * {@link GraphUI.modeRail} and hidden when its flag is off. It owns no logic
- * beyond presentation + dispatching to the {@link UIManager.modeStore}; the rail
- * and contextual tool panel react to that shared store.
+ * The left-edge mode rail. Holds the four exclusive modes — the Select and
+ * Create pointer-modes plus the View and Physics settings flyouts — followed by
+ * an optional data zone of not-yet-shipped modes (Explore, Enrich) rendered as
+ * disabled "SOON" affordances, each gated on {@link GraphUI.modeRail} and hidden
+ * when its flag is off. It owns no logic beyond presentation + dispatching to the
+ * {@link UIManager.modeStore}; the rail, contextual tool panel and flyouts react
+ * to that shared store.
  *
  * The Select/Create slots double as split-buttons: clicking the *active* mode
  * toggles its tool panel, and the slot's icon + label reflect the armed tool
@@ -30,10 +31,11 @@ export class ModeRail extends UIComponent {
         this.rail = document.createElement('div')
         this.rail.className = 'pvt-moderail-rail'
 
-        // The three exclusive modes: Select, Create, View.
+        // The four exclusive modes: Select, Create, View, Physics.
         this.rail.appendChild(this.makeButton('select', 'Select', cursor, 'V'))
         this.rail.appendChild(this.makeButton('create', 'Create', addCircle, 'C'))
         this.rail.appendChild(this.makeButton('view', 'View', show))
+        this.rail.appendChild(this.makeButton('physics', 'Physics', atom))
 
         // DATA zone — Explore and Enrich ship later. Each is opt-in via
         // `UI.modeRail` (hidden by default); when shown it's a disabled SOON
@@ -55,7 +57,8 @@ export class ModeRail extends UIComponent {
     protected onAfterMount() {
         this.buttons.get('select')?.addEventListener('click', () => this.activateOrToggle('select'))
         this.buttons.get('create')?.addEventListener('click', () => this.activateOrToggle('create'))
-        this.buttons.get('view')?.addEventListener('click', () => this.uiManager.modeStore.toggleView())
+        this.buttons.get('view')?.addEventListener('click', () => this.uiManager.modeStore.toggleFlyout('view'))
+        this.buttons.get('physics')?.addEventListener('click', () => this.uiManager.modeStore.toggleFlyout('physics'))
 
         // Keyboard mirrors the rail slot: V/C switch to the mode, or toggle its
         // tool panel if that mode is already active.
@@ -65,12 +68,42 @@ export class ModeRail extends UIComponent {
         // Reflect the store; render the initial state, then subscribe for changes.
         this.render(this.uiManager.modeStore.getState())
         this.track(this.uiManager.modeStore.subscribe((state) => this.render(state)))
+
+        this.publishHeight()
     }
 
     protected onDestroy() {
+        this.layoutRoot()?.style.removeProperty('--pvt-moderail-height')
         this.rail?.remove()
         this.rail = undefined
         this.buttons.clear()
+    }
+
+    /**
+     * Publish the rail's height as `--pvt-moderail-height`. The rail grows down the
+     * canvas's left column, so anything else docked there (the legend) can size
+     * itself against it instead of guessing — see `legend.scss`. Observed rather
+     * than computed: the height moves with the opt-in SOON modes and with whatever
+     * the label font resolves to.
+     */
+    private publishHeight(): void {
+        const rail = this.rail
+        if (!rail) return
+
+        const write = (): void => {
+            const height = rail.getBoundingClientRect().height
+            this.layoutRoot()?.style.setProperty('--pvt-moderail-height', `${height}px`)
+        }
+        write()
+
+        if (typeof ResizeObserver === 'undefined') return
+        const observer = new ResizeObserver(write)
+        observer.observe(rail)
+        this.track(() => observer.disconnect())
+    }
+
+    private layoutRoot(): HTMLElement | null {
+        return (this.rail?.closest('.pvt-layout') as HTMLElement | null) ?? null
     }
 
     /** Click the active mode to toggle its panel; click another to switch to it. */

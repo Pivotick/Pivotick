@@ -18,7 +18,7 @@ interface BulkActionSpec {
 }
 
 /**
- * The B3 sidebar bulk-action row, shown while a node selection is active. Each
+ * The sidebar bulk-action row, shown while a node selection is active. Each
  * functional action (Pin / Unpin / Hide / Delete) applies to *every* selected
  * node; Isolate / Group / Ungroup / Bulk-edit render disabled with a "SOON"
  * affordance (deferred M2–M3 capabilities). Node-only — the Sidebar hides the
@@ -67,7 +67,11 @@ export class SidebarBulkActions extends UIComponent {
             { id: 'group', label: 'Group', icon: groupNodes, kind: 'soon', divider: true },
             { id: 'ungroup', label: 'Ungroup', icon: ungroupNodes, kind: 'soon' },
             { id: 'bulk-edit', label: 'Bulk edit', icon: bulkEdit, kind: 'soon' },
-            { id: 'delete', label: 'Delete', icon: trash, kind: 'danger', divider: true, run: () => this.deleteSelection() },
+            // Dropped entirely when deletion is disabled — a read-only integration
+            // wants no Delete button, not one that always refuses.
+            ...(this.uiManager.isEditorEnabled('deletion')
+                ? [{ id: 'delete', label: 'Delete', icon: trash, kind: 'danger', divider: true, run: () => void this.deleteSelection() } as BulkActionSpec]
+                : []),
         ]
     }
 
@@ -128,11 +132,17 @@ export class SidebarBulkActions extends UIComponent {
         this.clearSelection()
     }
 
-    private deleteSelection(): void {
-        // Snapshot ids first — removeNode mutates the graph as we iterate.
-        const ids = this.selectedNodes().map(node => node.id)
-        for (const id of ids) this.uiManager.graph.removeNode(id)
-        this.clearSelection()
+    /**
+     * Route the selection through the before-delete hook. A veto keeps the selection
+     * (and the row) exactly as it was, so the user can act on it again; only a delete
+     * that actually happened clears it.
+     */
+    private async deleteSelection(): Promise<void> {
+        const outcome = await this.uiManager.graph.editing.requestDelete({
+            nodes: this.selectedNodes(),
+            origin: 'bulk-action',
+        })
+        if (outcome.accepted) this.clearSelection()
     }
 
     private clearSelection(): void {

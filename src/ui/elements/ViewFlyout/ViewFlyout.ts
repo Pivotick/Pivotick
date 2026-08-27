@@ -1,216 +1,119 @@
-import type { UIManager } from '../../UIManager'
-import { UIComponent } from '../../UIComponent'
-import { PHYSICS_KNOB_RANGES, type PhysicsKnobs, type PhysicsPresetName } from '../../../Simulation'
-import hasCycle from '../../../plugins/analytics/cycle'
-import {
-    show, atom, play, pause,
-    magnet, arrowsHorizontal, circleDashed, wind,
-    snapGrid, grid, pin, graphNavigationReset,
-} from '../../icons'
+import { Flyout } from '../Flyout/Flyout'
+import type { FlyoutMode } from '../../ModeStore'
+import { show, snapGrid, grid, hide, pin, graphNavigationReset } from '../../icons'
 import './viewflyout.scss'
 
-type SliderKey = keyof PhysicsKnobs
-
-// `desc` is surfaced as a hover tooltip (native `title`) so each knob explains itself.
-const SLIDERS: Array<{ key: SliderKey; label: string; desc: string; icon: string; set: (sim: import('../../../Simulation').Simulation, v: number) => void }> = [
-    { key: 'repulsion', label: 'Repulsion', desc: 'How strongly nodes push each other apart. Higher values spread the graph out.', icon: magnet, set: (s, v) => s.setRepulsion(v) },
-    { key: 'linkDistance', label: 'Link distance', desc: 'The resting length of edges, in pixels. Higher values place connected nodes further apart.', icon: arrowsHorizontal, set: (s, v) => s.setLinkDistance(v) },
-    { key: 'collisionRadius', label: 'Collision radius', desc: 'The clear space kept around each node to prevent overlap. Higher values keep nodes further apart.', icon: circleDashed, set: (s, v) => s.setCollisionRadius(v) },
-    { key: 'friction', label: 'Friction', desc: 'How quickly node motion is damped. Higher values calm the layout and settle it faster.', icon: wind, set: (s, v) => s.setFriction(v) },
+/** The canvas background patterns, in the order the button group offers them. */
+const BG_MODES: Array<{ id: string, label: string, desc: string }> = [
+    { id: 'grid', label: 'Grid', desc: 'Rule the canvas with grid lines.' },
+    { id: 'dots', label: 'Dots', desc: 'Mark the grid with dots instead of lines.' },
+    { id: 'none', label: 'None', desc: 'Leave the canvas plain.' },
+    { id: 'image', label: 'Image', desc: 'Paint an image behind the graph.' },
 ]
 
-const PRESETS: PhysicsPresetName[] = ['tight', 'loose', 'default']
+/** The patterns that have a grid colour to pick and can be highlighted. */
+const PATTERNED_MODES = ['grid', 'dots']
 
-/** Tooltip for each preset button, explaining the layout it produces. */
-const PRESET_DESCRIPTIONS: Record<PhysicsPresetName, string> = {
-    tight: 'Compact layout with nodes packed closely together.',
-    loose: 'Spacious layout with nodes spread further apart.',
-    default: 'Reset the physics sliders to their default balance.',
-}
-
-/** Layout choices offered by the flyout (tree variants are disabled on cyclic graphs). */
-const LAYOUTS: Array<{ id: string; label: string; tree: boolean; desc: string }> = [
-    { id: 'force', label: 'Force', tree: false, desc: 'Positions nodes freely using the physics simulation.' },
-    { id: 'tree-v', label: 'Tree — Vertical', tree: true, desc: 'Hierarchical tree flowing from top to bottom.' },
-    { id: 'tree-h', label: 'Tree — Horizontal', tree: true, desc: 'Hierarchical tree flowing from left to right.' },
-    { id: 'tree-r', label: 'Tree — Radial', tree: true, desc: 'Hierarchical tree radiating out from a central root.' },
+/**
+ * How a background image sits on the canvas. The first entry is the default,
+ * and `id` doubles as the `background-size` the two scaling fits want.
+ */
+const FIT_MODES: Array<{ id: string, label: string, desc: string }> = [
+    { id: 'cover', label: 'Cover', desc: 'Scale the image to fill the canvas, cropping whatever overflows.' },
+    { id: 'contain', label: 'Contain', desc: 'Scale the image until all of it fits on the canvas.' },
+    { id: 'repeat', label: 'Tile', desc: 'Keep the image at its own size and repeat it across the canvas.' },
 ]
 
 /**
- * The B3 View flyout: an overlay toggled by the mode rail's View button (via
- * {@link UIManager.modeStore}). Consolidates the layout control, the physics
- * card (presets + sliders driving the {@link Simulation} setter API + a run
- * toggle) and the grid / freeze toggles — the graph's view/layout settings in one
- * place. Physics presets + sliders grey out under non-`force` layouts (D6/D7).
+ * The swatch row offered for both the canvas and the grid colour. The empty
+ * `color` is the reset swatch: it drops the override and hands the colour back
+ * to the theme. Neutrals only — the theme's own accent is where the custom
+ * picker beside them starts, so it costs the row no slot.
  */
-export class ViewFlyout extends UIComponent {
-    private flyout?: HTMLDivElement
-    private layoutSelect?: HTMLSelectElement
-    private runButton?: HTMLButtonElement
-    private physicsCard?: HTMLDivElement
-    private readonly sliders = new Map<SliderKey, HTMLInputElement>()
-    private readonly sliderValues = new Map<SliderKey, HTMLElement>()
-    private readonly presetButtons = new Map<PhysicsPresetName, HTMLButtonElement>()
-    /** Closures that push each toggle's live state onto its button — run once the simulation exists. */
-    private readonly toggleSync: Array<() => void> = []
+const COLOR_SWATCHES: Array<{ color: string, title: string, cls?: string }> = [
+    { color: '', title: 'Theme default', cls: 'swatch-default' },
+    { color: '#ffffff', title: 'White' },
+    { color: '#d4d4d4', title: 'Light grey' },
+    { color: '#525252', title: 'Dark grey' },
+    { color: '#171717', title: 'Black' },
+]
 
-    constructor(uiManager: UIManager) {
-        super(uiManager)
-    }
+/** A colour input takes a plain hex and nothing else. */
+const HEX = /^#[0-9a-f]{6}$/i
 
-    private get sim() {
-        return this.uiManager.graph.simulation
-    }
+/**
+ * The View flyout: the canvas background card and the canvas-behaviour
+ * switches, opened by the mode rail's View button (via
+ * {@link UIManager.modeStore}). Layout and physics used to live here too — they
+ * now have their own rail mode, see {@link PhysicsFlyout}.
+ *
+ * The switches drive pre-existing {@link Simulation} / renderer state; the
+ * background controls write pattern classes and CSS custom properties onto the
+ * canvas element, which `styles/_pivotick.scss` paints. The {@link Flyout} base
+ * owns the panel chrome and the open/closed binding.
+ */
+export class ViewFlyout extends Flyout {
+    protected readonly mode: FlyoutMode = 'view'
 
-    protected onMount(container?: HTMLElement) {
-        if (!container) return
-        this.flyout = document.createElement('div')
-        this.flyout.className = 'pvt-viewflyout-panel'
-        this.flyout.innerHTML = this.template()
-        container.appendChild(this.flyout)
-    }
+    protected template(): string {
+        const modes = BG_MODES.map(m =>
+            `<button type="button" class="pvt-flyout-btn-group-btn" data-bg="${m.id}"
+                aria-pressed="${m.id === 'grid'}" title="${m.desc}">${m.label}</button>`
+        ).join('')
+        const swatches = COLOR_SWATCHES.map(s =>
+            `<button type="button" class="pvt-viewflyout-swatch ${s.cls ?? ''}" data-color="${s.color}"
+                title="${s.title}" style="${s.color ? `--swatch: ${s.color}` : ''}"></button>`
+        ).join('')
+        const fits = FIT_MODES.map((f, i) =>
+            `<button type="button" class="pvt-flyout-btn-group-btn" data-fit="${f.id}"
+                aria-pressed="${i === 0}" title="${f.desc}">${f.label}</button>`
+        ).join('')
 
-    protected onAfterMount() {
-        if (!this.flyout) return
-        this.layoutSelect = this.flyout.querySelector('.pvt-viewflyout-layout-select') as HTMLSelectElement
-        this.runButton = this.flyout.querySelector('.pvt-viewflyout-run') as HTMLButtonElement
-        this.physicsCard = this.flyout.querySelector('.pvt-viewflyout-physics') as HTMLDivElement
-
-        for (const spec of SLIDERS) {
-            this.sliders.set(spec.key, this.flyout.querySelector(`.pvt-viewflyout-range[data-slider="${spec.key}"]`) as HTMLInputElement)
-            this.sliderValues.set(spec.key, this.flyout.querySelector(`.pvt-viewflyout-slider-value[data-value="${spec.key}"]`) as HTMLElement)
-        }
-        for (const name of PRESETS) {
-            this.presetButtons.set(name, this.flyout.querySelector(`.pvt-viewflyout-preset[data-preset="${name}"]`) as HTMLButtonElement)
-        }
-
-        this.wireLayout()
-        this.wirePhysics()
-        this.wireToggles()
-
-        // Reflect the mode store: show/hide with the View flyout flag.
-        this.applyOpen(this.uiManager.modeStore.isViewActive())
-        this.track(this.uiManager.modeStore.subscribe((s) => this.applyOpen(s.mode === 'view')))
+        return this.headerRow(show, 'View')
+            + this.sectionLabel('GRID &amp; CANVAS')
+            + `
+            <div class="pvt-flyout-card">
+                <div class="pvt-flyout-card-head">
+                    <span class="pvt-flyout-card-title">Background</span>
+                </div>
+                <div class="pvt-flyout-btn-group">${modes}</div>
+                <div class="pvt-viewflyout-swatch-label">Canvas colour</div>
+                <div class="pvt-viewflyout-swatches" data-swatches="canvas">${swatches}
+                    <input type="color" class="pvt-viewflyout-color-picker" title="Custom canvas colour">
+                </div>
+                <div class="pvt-viewflyout-swatch-label" data-pattern-only>Grid colour</div>
+                <div class="pvt-viewflyout-swatches" data-swatches="grid" data-pattern-only>${swatches}
+                    <input type="color" class="pvt-viewflyout-color-picker" title="Custom grid colour">
+                </div>
+                <div class="pvt-viewflyout-bg-toggles" data-pattern-only>
+                    ${this.toggleRow('highlight', grid, 'Highlight grid', 'Make the background grid lines more visible.')}
+                </div>
+                <div class="pvt-viewflyout-bg-image" hidden>
+                    <div class="pvt-viewflyout-bg-image-row">
+                        <input type="text" class="pvt-viewflyout-bg-image-url" placeholder="Image URL...">
+                        <button type="button" class="pvt-viewflyout-bg-image-pick"
+                            title="Pick an image file from this device.">Browse</button>
+                        <input type="file" class="pvt-viewflyout-bg-image-file" accept="image/*" hidden>
+                    </div>
+                    <div class="pvt-flyout-btn-group">${fits}</div>
+                    <button type="button" class="pvt-viewflyout-bg-image-clear">Remove image</button>
+                </div>
+            </div>`
+            + this.toggleRow('snap', snapGrid, 'Snap to grid', 'Align nodes to the grid while you drag them.')
+            + this.toggleRow('freeze', pin, 'Freeze on drag', 'Keep nodes pinned where you drop them instead of letting physics move them again.')
+            + this.toggleRow('fit', graphNavigationReset, 'Fit on expand/collapse', 'Zoom and re-center to fit the graph when clusters are expanded or collapsed.')
+            + this.toggleRow('orphans', hide, 'Hide unconnected',
+                'Hide nodes that have no visible relation left. Unlike hiding a relationship layer, this moves the graph.')
     }
 
     protected onGraphReady() {
-        // Disable tree layouts on cyclic graphs (they can't be drawn as a tree).
-        const cyclic = hasCycle(this.uiManager.graph.getNodes(), this.uiManager.graph.getEdges())
-        if (cyclic && this.layoutSelect) {
-            for (const option of Array.from(this.layoutSelect.options)) {
-                const choice = LAYOUTS.find(l => l.id === option.value)
-                if (choice?.tree) {
-                    option.disabled = true
-                    option.title = 'The graph contains a cycle, so it cannot be displayed as a tree.'
-                }
-            }
-        }
-        // Seed physics from the live simulation (only available by graphReady —
-        // the UIManager, and thus this component, is built before graph.simulation).
-        this.refreshSliders(this.sim.getPhysicsKnobs())
-        this.updateRunButton()
-        this.updatePhysicsEnabled()
-        for (const sync of this.toggleSync) sync()
-        if (this.layoutSelect) this.layoutSelect.value = this.sim.getLayoutType() === 'force' ? 'force' : 'tree-v'
+        super.onGraphReady()
+        // A graph that declared the rule hid its orphans before anything was drawn, so no
+        // filter change ever announced them — the row has to read the count itself.
+        this.syncOrphanNote()
     }
 
-    protected onDestroy() {
-        this.flyout?.remove()
-        this.flyout = undefined
-        this.sliders.clear()
-        this.sliderValues.clear()
-        this.presetButtons.clear()
-    }
-
-    /* ---------- open / close ---------- */
-
-    private applyOpen(open: boolean) {
-        this.flyout?.classList.toggle('open', open)
-    }
-
-    /* ---------- layout ---------- */
-
-    private wireLayout() {
-        this.layoutSelect?.addEventListener('change', () => {
-            const choice = LAYOUTS.find(l => l.id === this.layoutSelect!.value)
-            if (!choice) return
-            if (choice.id === 'force') this.sim.changeLayout('force')
-            else if (choice.id === 'tree-v') this.sim.changeLayout('tree', { layout: { horizontal: false } })
-            else if (choice.id === 'tree-h') this.sim.changeLayout('tree', { layout: { horizontal: true } })
-            else if (choice.id === 'tree-r') this.sim.changeLayout('tree', { layout: { radial: true } })
-            this.updatePhysicsEnabled(choice.tree)
-        })
-    }
-
-    /* ---------- physics ---------- */
-
-    private wirePhysics() {
-        this.runButton?.addEventListener('click', () => {
-            if (this.sim.isEnabled()) this.sim.disable()
-            else this.sim.enable()
-            this.updateRunButton()
-        })
-
-        for (const name of PRESETS) {
-            this.presetButtons.get(name)?.addEventListener('click', () => {
-                this.sim.applyPhysicsPreset(name)
-                this.refreshSliders(this.sim.getPhysicsKnobs())
-                this.highlightPreset(name)
-            })
-        }
-
-        for (const spec of SLIDERS) {
-            const input = this.sliders.get(spec.key)
-            input?.addEventListener('input', () => {
-                const value = Number(input.value)
-                spec.set(this.sim, value)
-                this.sliderValues.get(spec.key)!.textContent = String(value)
-                this.highlightPreset(null) // manual edit → no active preset
-            })
-        }
-    }
-
-    private refreshSliders(knobs: PhysicsKnobs) {
-        for (const spec of SLIDERS) {
-            const value = knobs[spec.key]
-            const input = this.sliders.get(spec.key)
-            if (input) input.value = String(value)
-            const label = this.sliderValues.get(spec.key)
-            if (label) label.textContent = String(value)
-        }
-    }
-
-    private highlightPreset(active: PhysicsPresetName | null) {
-        for (const [name, button] of this.presetButtons) {
-            button.classList.toggle('active', name === active)
-        }
-    }
-
-    /** Re-sync the run/pause button with the live simulation state — e.g. after the
-     *  slow-tick watchdog disables physics without going through the button. */
-    public syncRunState() {
-        if (!this.uiManager.graph.simulation) return
-        this.updateRunButton()
-    }
-
-    private updateRunButton() {
-        if (!this.runButton) return
-        const running = this.sim.isEnabled()
-        this.runButton.innerHTML = running ? pause : play
-        this.runButton.title = running ? 'Pause physics' : 'Resume physics'
-        this.runButton.setAttribute('aria-pressed', String(running))
-    }
-
-    /** Grey out presets + sliders when the layout isn't force-directed. */
-    private updatePhysicsEnabled(isTree = this.sim.getLayoutType() !== 'force') {
-        this.physicsCard?.classList.toggle('pvt-viewflyout-disabled', isTree)
-        for (const input of this.sliders.values()) input.disabled = isTree
-        for (const button of this.presetButtons.values()) button.disabled = isTree
-    }
-
-    /* ---------- grid / freeze toggles ---------- */
-
-    private wireToggles() {
+    protected wire() {
         // Highlight the grid on the layout root so the canvas AND the transparent
         // top-bar strip (which continues the grid) brighten together.
         const root = this.uiManager.layout?.layout
@@ -220,58 +123,179 @@ export class ViewFlyout extends UIComponent {
             () => root?.classList.contains('grid-highlighted') ?? false)
         this.wireToggle('freeze', () => this.sim.toggleFreezeNodesOnDrag(), () => this.sim.isFreezeNodesOnDrag())
         this.wireToggle('fit', () => this.sim.toggleFitViewOnExpandCollapse(), () => this.sim.isFitViewOnExpandCollapse())
+        this.wireOrphans()
+        this.wireBackground()
     }
 
-    // Attaches the click handler now; `read()` touches the simulation, so the
-    // initial state is pushed later (via toggleSync) once graph.simulation exists.
-    private wireToggle(id: string, toggle: () => void, read: () => boolean) {
-        const button = this.flyout?.querySelector(`.pvt-viewflyout-toggle[data-toggle="${id}"]`) as HTMLButtonElement | null
-        if (!button) return
-        const sync = () => button.setAttribute('aria-pressed', String(read()))
-        this.toggleSync.push(sync)
-        button.addEventListener('click', () => { toggle(); sync() })
+    /**
+     * The unconnected-nodes switch, which drives the query engine's own rule
+     * (`UI.filter.hideDisconnected`). Its note follows every filter change, not just its
+     * own clicks: switching a relationship layer off strands more nodes.
+     */
+    private wireOrphans() {
+        const engine = this.uiManager.graph.queryEngine
+        const sync = () => this.syncOrphanNote()
+        this.wireToggle('orphans',
+            () => engine.setHideDisconnected(!engine.isHideDisconnected()),
+            () => engine.isHideDisconnected())
+        engine.on('filterChange', sync)
+        this.track(() => engine.off('filterChange', sync))
     }
 
-    /* ---------- template ---------- */
+    /**
+     * How many nodes the switch is hiding, on the row itself. Blank while it hides none.
+     * The bare count is what fits: the row has 238px, and the label plus "1 hidden" needs
+     * 253 — so the words go in the note's own tooltip, and the number reads like the
+     * filter panel's layer counts.
+     */
+    private syncOrphanNote() {
+        const hidden = this.uiManager.graph.queryEngine.getDisconnectedNodeCount()
+        if (hidden === 0) return this.toggleNote('orphans', '')
+        this.toggleNote('orphans', String(hidden), `${hidden} unconnected ${hidden > 1 ? 'nodes' : 'node'} hidden`)
+    }
 
-    private template(): string {
-        const options = LAYOUTS.map(l => `<option value="${l.id}" title="${l.desc}">${l.label}</option>`).join('')
-        const presets = PRESETS.map(p =>
-            `<button type="button" class="pvt-viewflyout-preset" data-preset="${p}" title="${PRESET_DESCRIPTIONS[p]}">${p[0].toUpperCase()}${p.slice(1)}</button>`
-        ).join('')
-        const sliders = SLIDERS.map(s => `
-            <div class="pvt-viewflyout-slider" title="${s.desc}">
-                <div class="pvt-viewflyout-slider-head">
-                    <span class="pvt-viewflyout-slider-label"><span class="pvt-viewflyout-icon">${s.icon}</span>${s.label}</span>
-                    <span class="pvt-viewflyout-slider-value" data-value="${s.key}">0</span>
-                </div>
-                <input type="range" class="pvt-viewflyout-range" data-slider="${s.key}"
-                    min="${PHYSICS_KNOB_RANGES[s.key][0]}" max="${PHYSICS_KNOB_RANGES[s.key][1]}" step="1" value="0" />
-            </div>`).join('')
-        const toggle = (id: string, icon: string, label: string, desc: string) => `
-            <button type="button" class="pvt-viewflyout-toggle" data-toggle="${id}" role="switch" aria-pressed="false" title="${desc}">
-                <span class="pvt-viewflyout-icon">${icon}</span>${label}
-                <span class="pvt-viewflyout-switch"></span>
-            </button>`
+    /* ---------- background ---------- */
 
-        return `
-            <div class="pvt-viewflyout-header"><span class="pvt-viewflyout-icon">${show}</span>View</div>
-            <div class="pvt-viewflyout-section-label">LAYOUT &amp; SIMULATION</div>
-            <label class="pvt-viewflyout-layout">Layout
-                <select class="pvt-viewflyout-layout-select" title="Choose how nodes are arranged on the canvas.">${options}</select>
-            </label>
-            <div class="pvt-viewflyout-physics">
-                <div class="pvt-viewflyout-physics-head">
-                    <span class="pvt-viewflyout-physics-title"><span class="pvt-viewflyout-icon">${atom}</span>Physics</span>
-                    <button type="button" class="pvt-viewflyout-run" title="Pause physics">${pause}</button>
-                </div>
-                <div class="pvt-viewflyout-presets">${presets}</div>
-                <div class="pvt-viewflyout-sliders">${sliders}</div>
-            </div>
-            ${toggle('snap', snapGrid, 'Snap to grid', 'Align nodes to the grid while you drag them.')}
-            ${toggle('highlight', grid, 'Highlight grid', 'Make the background grid lines more visible.')}
-            ${toggle('freeze', pin, 'Freeze on drag', 'Keep nodes pinned where you drop them instead of letting physics move them again.')}
-            ${toggle('fit', graphNavigationReset, 'Fit on expand/collapse', 'Zoom and re-center to fit the graph when clusters are expanded or collapsed.')}
-        `
+    private wireBackground() {
+        const canvas = this.uiManager.layout?.canvas
+        if (!canvas) return
+        this.wireBackgroundMode(canvas)
+        this.wireSwatches('canvas', canvas, '--pvt-bg')
+        this.wireSwatches('grid', canvas, '--pvt-graph-grid-color')
+        this.wireBackgroundImage(canvas)
+    }
+
+    /**
+     * The pattern picker. The pattern is a class on the canvas — `grid` is the
+     * stylesheet's default, so it is the absence of the other three. Which
+     * controls the card shows follows from it: a grid colour and the highlight
+     * only mean something under a pattern, the image inputs only under `image`.
+     */
+    private wireBackgroundMode(canvas: HTMLElement) {
+        const buttons = this.queryAll<HTMLButtonElement>('.pvt-flyout-btn-group-btn[data-bg]')
+        const patternOnly = this.queryAll('[data-pattern-only]')
+        const image = this.query<HTMLElement>('.pvt-viewflyout-bg-image')
+
+        const apply = (mode: string) => {
+            canvas.classList.remove('pvt-bg-dots', 'pvt-bg-none', 'pvt-bg-image')
+            if (mode !== 'grid') canvas.classList.add(`pvt-bg-${mode}`)
+            for (const el of patternOnly) el.hidden = !PATTERNED_MODES.includes(mode)
+            if (image) image.hidden = mode !== 'image'
+        }
+
+        for (const button of buttons) {
+            this.listen(button, 'click', () => {
+                for (const other of buttons) other.setAttribute('aria-pressed', String(other === button))
+                apply(button.dataset.bg ?? 'grid')
+            })
+        }
+    }
+
+    /**
+     * One swatch row plus its custom-colour input, both writing `property` on
+     * the canvas. The reset swatch carries no colour: it removes the override
+     * so the theme's own value shows through again.
+     */
+    private wireSwatches(row: string, canvas: HTMLElement, property: string) {
+        const container = this.query<HTMLElement>(`.pvt-viewflyout-swatches[data-swatches="${row}"]`)
+        if (!container) return
+        const swatches = container.querySelectorAll<HTMLButtonElement>('.pvt-viewflyout-swatch')
+        const highlight = (active: HTMLButtonElement | null) => {
+            for (const swatch of swatches) swatch.classList.toggle('active', swatch === active)
+        }
+
+        for (const swatch of swatches) {
+            this.listen(swatch, 'click', () => {
+                highlight(swatch)
+                const color = swatch.dataset.color
+                if (color) canvas.style.setProperty(property, color)
+                else canvas.style.removeProperty(property)
+            })
+        }
+
+        const picker = container.querySelector<HTMLInputElement>('.pvt-viewflyout-color-picker')
+        if (!picker) return
+        // Open the picker on the theme's accent: the colour worth reaching for,
+        // reachable without spending a swatch slot on it.
+        const accent = this.themeAccent()
+        if (accent) picker.value = accent
+        this.listen(picker, 'input', () => {
+            highlight(null)
+            canvas.style.setProperty(property, picker.value)
+        })
+    }
+
+    /**
+     * `--pvt-theme-primary` as a hex, or `null` if the theme states it in a form
+     * a colour input would refuse (a function, a named colour, an alpha).
+     */
+    private themeAccent(): string | null {
+        if (!this.panel) return null
+        const accent = getComputedStyle(this.panel).getPropertyValue('--pvt-theme-primary').trim()
+        return HEX.test(accent) ? accent : null
+    }
+
+    /**
+     * The image controls. A URL and a picked file are the same thing to the
+     * canvas — a `url()` for `--pvt-bg-image-url` — so setting either clears
+     * the other's input.
+     */
+    private wireBackgroundImage(canvas: HTMLElement) {
+        const url = this.query<HTMLInputElement>('.pvt-viewflyout-bg-image-url')
+        const file = this.query<HTMLInputElement>('.pvt-viewflyout-bg-image-file')
+        const pick = this.query<HTMLButtonElement>('.pvt-viewflyout-bg-image-pick')
+        const clear = this.query<HTMLButtonElement>('.pvt-viewflyout-bg-image-clear')
+        const fits = this.queryAll<HTMLButtonElement>('.pvt-flyout-btn-group-btn[data-fit]')
+        const highlightFit = (id: string) => {
+            for (const button of fits) button.setAttribute('aria-pressed', String(button.dataset.fit === id))
+        }
+
+        if (url) {
+            this.listen(url, 'input', () => {
+                if (url.value) canvas.style.setProperty('--pvt-bg-image-url', `url("${url.value}")`)
+                else canvas.style.removeProperty('--pvt-bg-image-url')
+                if (file) file.value = ''
+            })
+        }
+
+        // The native file input is kept off-screen and opened from a button, so
+        // the row holds the chrome's own controls rather than the browser's.
+        if (pick && file) this.listen(pick, 'click', () => file.click())
+
+        if (file) {
+            this.listen(file, 'change', () => {
+                const picked = file.files?.[0]
+                if (!picked) return
+                const reader = new FileReader()
+                reader.onload = () => {
+                    canvas.style.setProperty('--pvt-bg-image-url', `url("${reader.result}")`)
+                    if (url) url.value = ''
+                }
+                reader.readAsDataURL(picked)
+            })
+        }
+
+        for (const button of fits) {
+            this.listen(button, 'click', () => {
+                const id = button.dataset.fit ?? FIT_MODES[0].id
+                highlightFit(id)
+                // Tiling is a size *and* a repeat; the scaling fits are a size alone.
+                const tile = id === 'repeat'
+                canvas.style.setProperty('--pvt-bg-image-size', tile ? 'auto' : id)
+                canvas.style.setProperty('--pvt-bg-image-repeat', tile ? 'repeat' : 'no-repeat')
+            })
+        }
+
+        if (clear) {
+            this.listen(clear, 'click', () => {
+                for (const property of ['--pvt-bg-image-url', '--pvt-bg-image-size', '--pvt-bg-image-repeat']) {
+                    canvas.style.removeProperty(property)
+                }
+                // Cleared is the default state, so the fit group has to say so.
+                highlightFit(FIT_MODES[0].id)
+                if (url) url.value = ''
+                if (file) file.value = ''
+            })
+        }
     }
 }

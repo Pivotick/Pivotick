@@ -43,7 +43,7 @@
             gap: 10px;
         }
 
-        // B3 chrome: bulk-action row shown while a node selection is active.
+        // Bulk-action row shown while a node selection is active.
         // Display is toggled inline by SidebarBulkActions (none ⇄ flex).
         .pvt-sidebar-bulkactions {
             align-items: center;
@@ -105,7 +105,7 @@
             }
         }
 
-        // B3 chrome: header clear-selection X, revealed via .pvt-visible.
+        // Header clear-selection X, revealed via .pvt-visible.
         .pvt-sidebar-clear {
             position: absolute;
             top: 14px;
@@ -153,6 +153,13 @@
                 &.pvt-neighbors-header-panel {
                     display: flex;
                     align-items: center;
+                }
+
+                // An extra panel's `title` is consumer-supplied, so it shows —
+                // but only when it resolved to something: a blank title leaves
+                // the header empty, and an empty header stays collapsed.
+                &.pivotick-extrapanel-header-panel:not(:empty) {
+                    display: flex;
                 }
             }
 
@@ -295,7 +302,11 @@
     .pvt-sidebar-collapse-container {
         position: absolute;
         right: -40px;
-        bottom: 7px;
+        // The sidebar spans the dock's row too (see _layout.scss), so measuring from its
+        // own bottom would hang this over the dock — where it collided with the dock's
+        // collapse chevron and swallowed its clicks. Sit above the dock instead: this
+        // control belongs to the canvas edge, and `--pvt-dock-height` is 0 without one.
+        bottom: calc(var(--pvt-dock-height, 0px) + 7px);
         background-color: var(--pvt-sidebar-collapse-bg);
         color: var(--pvt-sidebar-collapse-color);
         box-shadow: var(--pvt-sidebar-collapse-shadow);

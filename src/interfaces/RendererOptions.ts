@@ -153,6 +153,39 @@ export interface GraphRendererOptions {
      */
     nodeStyleMap?: Record<string, NodeStyle>
     /**
+     * Function to access the kind of an edge — the dimension {@link edgeStyleMap}
+     * keys on, and the one an `edge` legend section and edge filter facets derive
+     * from when they aren't given a data key of their own.
+     *
+     * @remarks
+     * Used in conjuction with {@link edgeStyleMap}
+     *
+     * @example
+     * ```ts
+     * edgeTypeAccessor: (edge) => edge.getData()?.kind
+     * ```
+     */
+    edgeTypeAccessor?: (edge: Edge) => string | undefined
+    /**
+     * Maps edge kinds to their styles.
+     *
+     * Each key is an edge kind (as returned by `edgeTypeAccessor`) and maps to a
+     * partial `EdgeStyle`. An edge's own `styleCb` still wins over the map, exactly
+     * as it does over {@link nodeStyleMap}.
+     *
+     * @remarks
+     * Used in conjuction with {@link edgeTypeAccessor}
+     *
+     * @example
+     * ```ts
+     * edgeStyleMap: {
+     *   'object-reference': { strokeColor: '#428bca' },
+     *   'correlation': { strokeColor: '#888', dashed: true },
+     * }
+     * ```
+     */
+    edgeStyleMap?: Record<string, Partial<EdgeStyle>>
+    /**
      * Controls whether non-connected nodes and edges are grayed out when a node is selected
      * @default true
      */
@@ -227,6 +260,62 @@ export type NodeShape = StandardShape | CustomNodeShape
  */
 export type ImageFit = 'icon' | 'cover' | 'contain' | 'frame'
 
+/**
+ * Which corner of the node's rim a badge sits on.
+ *
+ * The expand/collapse affordance owns `'ne'` when a node is collapsed and `'se'` when it is
+ * expanded, so on a node with children **both** are reserved and auto-placement skips them —
+ * otherwise badges would swap corners every time the cluster opened.
+ */
+export type NodeBadgePosition = 'ne' | 'nw' | 'se' | 'sw'
+
+/**
+ * A small indicator pinned to a node's rim — what KeyLines and ReGraph call a *glyph*.
+ *
+ * Badges are a decoration channel of their own, so a node can carry a fact that `color`,
+ * `shape`, `size`, `iconClass` and `imagePath` are already spent on. They describe **only the
+ * node they sit on**: a collapsed cluster does not aggregate its children's badges — walk
+ * `node.children` yourself if you want that.
+ *
+ * @example
+ * ```js
+ * defaultNodeStyle: {
+ *     badges: node => node.getData().notes
+ *         ? [{ text: String(node.getData().notes), title: 'Notes', onClick: () => openNotes(node) }]
+ *         : [],
+ * }
+ * ```
+ */
+export interface NodeBadge {
+    /**
+     * Which corner to sit on. Omit it and the badge is auto-placed in the first free corner,
+     * clockwise from `'ne'`. An explicit position is honoured **verbatim**, even where that
+     * overlaps another badge or the expand affordance.
+     */
+    position?: NodeBadgePosition
+    /** Any CSS colour. @default `var(--pvt-badge-color)` */
+    color?: string
+    /**
+     * A count, or one or two characters. Longer text grows the badge into a pill; past three
+     * characters it renders as `99+`. Takes precedence over any icon on the same badge.
+     */
+    text?: string
+    iconClass?: IconClass
+    iconUnicode?: IconUnicode
+    /** Inline SVG markup, sanitized before it reaches the DOM. */
+    svgIcon?: SVGIcon
+    /** Native tooltip, rendered as a real `<title>`. Does not suppress the graph's own tooltip. */
+    title?: string
+    /**
+     * Called when the badge is clicked, before {@link InterractionCallbacks.onBadgeClick}.
+     *
+     * Declaring it makes the badge take the pointer cursor and **consume** the click, so the
+     * node is not also selected. A badge without one stays transparent to the node underneath.
+     * Pressing a badge still drags the node either way.
+     */
+    onClick?: (event: PointerEvent, node: Node, badge: NodeBadge) => void
+}
+
 export interface NodeStyle {
     /**
      * The shape of the node, either a standard shape or a custom SVG path
@@ -244,7 +333,7 @@ export interface NodeStyle {
     strokeColor: ((node: Node) => string) | string
     /** @default 'var(--pvt-node-stroke-width, 2)' */
     strokeWidth: number | string
-    /** @default 'var(--pvt-label-font, system-ui, sans-serif)' */
+    /** @default 'var(--pvt-font-family)' */
     fontFamily: string
     /** @default 'var(--pvt-node-text-color, #fff)' */
     textColor: ((node: Node) => string) | string
@@ -270,6 +359,12 @@ export interface NodeStyle {
      * @default 0
      */
     textRotateDegree: ((node: Node) => number) | number
+    /**
+     * Shorten an over-wide label with a middle ellipsis (`head…tail`); `false` draws it
+     * in full, on a themed pill where it spills past the node.
+     * @default true
+     */
+    textTruncate: ((node: Node) => boolean) | boolean
     iconClass?: IconClass,
     iconUnicode?: IconUnicode,
     /**
@@ -301,7 +396,28 @@ export interface NodeStyle {
      */
     html?: (node: Node) => HTMLElement | string | void
     /**
+     * Small indicators pinned to the node's rim, independent of every other channel —
+     * see {@link NodeBadge}.
+     *
+     * Resolved like any other channel: the narrowest declaration wins outright rather than
+     * merging, so a node's own `badges` **replaces** whatever `nodeStyleMap` or
+     * `defaultNodeStyle` gave it. An empty array is the way to say "this one wears none";
+     * `undefined` renders no badge group at all.
+     *
+     * Four fit on a plain node, two on one with children (the expand affordance reserves the
+     * East corners). Anything beyond that collapses into a `+n` badge naming the rest.
+     */
+    badges?: ((node: Node) => NodeBadge[]) | NodeBadge[]
+    /**
      * Callback to dynamically override style properties based on the node.
+     *
+     * Where it sits depends on which style block declares it. On a **node's own**
+     * style it wins outright, and `nodeStyleMap` is skipped entirely. On
+     * `render.defaultNodeStyle` it is the computed form of the default slot: it fills
+     * only what neither the node nor `nodeStyleMap` set (and what a per-node `styleCb`
+     * left out), and its result still loses to both.
+     *
+     * Runs once per node per render, so keep it cheap.
      */
     styleCb?: (node: Node) => Partial<NodeStyle>
 }
@@ -357,6 +473,17 @@ export interface EdgeStyle {
      * @default undefined
      */
     markerStart?: ((edge: Edge) => string) | string
+    /**
+     * Callback to dynamically override style properties based on the edge.
+     *
+     * Where it sits depends on which style block declares it. On an **edge's own**
+     * style it wins outright, and `edgeStyleMap` is skipped entirely. On
+     * `render.defaultEdgeStyle` it is the computed form of the default slot: it fills
+     * only what neither the edge nor `edgeStyleMap` set (and what a per-edge `styleCb`
+     * left out), and its result still loses to both.
+     *
+     * Runs once per edge per render, so keep it cheap.
+     */
     styleCb?: (edge: Edge) => Partial<EdgeStyle>
 }
 
@@ -369,6 +496,11 @@ export interface LabelStyle {
     fontFamily: string
     /** @default #333 */
     color: string
+    /**
+     * Callback to dynamically override label style properties based on the edge. On an
+     * edge's own label style it wins outright; on `render.defaultLabelStyle` it fills
+     * only what the edge's own label style left unset.
+     */
     styleCb?: (edge: Edge) => Partial<LabelStyle>
     labelAccessor?: (edge: Edge) => HTMLElement | string | void
 }

@@ -1,0 +1,386 @@
+// The data table — the graph's rows, and the controls that drive them.
+//
+// The region they sit in belongs to the dock (see `Dock/dock.scss`): this file styles
+// only the occupant. What the dock hands over is a header slot laid out as part of its
+// bar and a scrolling content host, plus one class to react to — `pvt-dock-collapsed` on
+// its root, which is why most of these controls key their folded state off it.
+//
+// Scrollbars need no opt-in here: `themed-scrollbars` is applied to `.pivotick`
+// and inherits down. Only elements portaled outside it have to include the mixin.
+
+// The pane's own Nodes / Edges switch is styled by the dock, not here: `.pvt-dock-views`
+// / `.pvt-dock-view` in `Dock/dock.scss`. Nothing about a pill group of views is
+// table-specific, and any pane registered through `addDockTab` wants the same look.
+
+// Exports exactly what is shown: this tab, these columns, this sort, this filter.
+.pvt-table-export {
+    padding: 2px 7px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--pvt-text-color-4);
+    font-size: 11px;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+
+    &:hover {
+        border-color: var(--pvt-chrome-border);
+        color: var(--pvt-text-color-6);
+    }
+
+    .pvt-dock-collapsed & {
+        display: none;
+    }
+}
+
+// A count of what is listed — "12 of 40 nodes" once a column filter narrows it.
+.pvt-table-summary {
+    font-size: 12px;
+    color: var(--pvt-text-color-4);
+    white-space: nowrap;
+}
+
+// Selects every row currently listed — post-sort, post-narrowing — so the sidebar's
+// bulk actions can act on exactly what you filtered down to.
+.pvt-table-selectall {
+    // First of the right-hand group, so it carries the gap.
+    margin-left: auto;
+    padding: 2px 8px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--pvt-text-color-4);
+    font-size: 12px;
+    cursor: pointer;
+
+    &:hover {
+        border-color: var(--pvt-chrome-border);
+        color: var(--pvt-text-color-6);
+    }
+
+    .pvt-dock-collapsed & {
+        display: none;
+    }
+}
+
+.pvt-table-columns-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 8px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--pvt-text-color-4);
+    font-size: 12px;
+    cursor: pointer;
+
+    svg {
+        width: 13px;
+        height: 13px;
+    }
+
+    &:hover,
+    &.active {
+        border-color: var(--pvt-chrome-border);
+        color: var(--pvt-text-color-6);
+    }
+
+    .pvt-dock-collapsed & {
+        display: none;
+    }
+}
+
+// Anchored in *viewport* coordinates, set by the table when it opens the picker.
+//
+// `position: absolute` cannot work here: the dock sits at the bottom of the layout and
+// carries `overflow: hidden`, so a popover opening downwards lands off-screen and gets
+// clipped. `fixed` escapes the ancestor clip (nothing here creates a containing block),
+// and staying inside the dock keeps it in the themed subtree so the CSS variables and
+// scrollbar theme still resolve.
+.pvt-table-columns-picker {
+    position: fixed;
+    z-index: 30;
+    min-width: 150px;
+    overflow-y: auto;
+    padding: 5px;
+    border: 1px solid var(--pvt-chrome-border);
+    border-radius: 6px;
+    background-color: var(--pvt-chrome-bg);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
+}
+
+.pvt-table-columns-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 3px 5px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+
+    &:hover {
+        background-color: var(--pvt-bg-color-4);
+    }
+}
+
+// ── the grid ────────────────────────────────────────────────────────────────
+// Header and rows share one `grid-template-columns` so the columns line up
+// without a table element — which is what makes windowed rows possible later.
+
+.pvt-table-grid {
+    // Wider than the dock is fine: the body scrolls. `min-content` keeps the row
+    // grid from collapsing narrower than its columns.
+    min-width: min-content;
+    font-size: 12px;
+
+    // Every row is exactly this tall. Windowing above the row threshold positions
+    // rows arithmetically from it, so this is load-bearing rather than cosmetic —
+    // see ROW_HEIGHT in TableGrid.ts, which must agree with it.
+    --pvt-table-row-height: 24px;
+}
+
+.pvt-table-head {
+    display: grid;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background-color: var(--pvt-chrome-bg);
+    border-bottom: 1px solid var(--pvt-chrome-border);
+}
+
+.pvt-table-th {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 5px 8px;
+    min-width: 0;
+
+    &[data-align='right'] {
+        align-items: flex-end;
+    }
+}
+
+.pvt-table-th-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--pvt-text-color-4);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:disabled {
+        cursor: default;
+    }
+
+    &:hover:not(:disabled),
+    &.pvt-table-sorted {
+        color: var(--pvt-text-color-6);
+    }
+}
+
+.pvt-table-sort-arrow svg {
+    width: 11px;
+    height: 11px;
+}
+
+.pvt-table-filter {
+    width: 100%;
+    min-width: 0;
+    // The library sets no global `box-sizing`, so `width: 100%` plus the padding and the
+    // border below made every control 12px wider than the cell holding it — it leaned on
+    // the next column, and on a narrow count column it was clipped outright.
+    box-sizing: border-box;
+    padding: 2px 5px;
+    border: 1px solid var(--pvt-chrome-border);
+    border-radius: 3px;
+    background-color: var(--pvt-bg);
+    color: var(--pvt-text-color-6);
+    // Form controls don't inherit the page's font, and a header row mixing a text box
+    // with a select would otherwise show two different typefaces side by side.
+    font-family: inherit;
+    font-size: 11px;
+
+    &::placeholder {
+        color: var(--pvt-text-color-3);
+    }
+}
+
+// A numeric column filters on bounds, so its control is a pair. They share the
+// column's width evenly and each may be left empty — "at least 3" is a range too.
+.pvt-table-filter-range {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3px;
+    min-width: 0;
+}
+
+// The spinners would eat most of an 11px-tall control that is already only half a
+// column wide, and the value is typed rather than stepped.
+.pvt-table-filter-number {
+    appearance: textfield;
+    -moz-appearance: textfield;
+
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+        appearance: none;
+        margin: 0;
+    }
+}
+
+// A dropdown that looks like a text box is worse than no dropdown, and the UA arrow
+// cannot be relied on — VitePress and plenty of app resets clear `appearance`. So the
+// arrow is drawn here, in `currentColor`, and the select is flattened to match.
+.pvt-table-filter-choice-wrap {
+    position: relative;
+    min-width: 0;
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        right: 6px;
+        width: 4px;
+        height: 4px;
+        border-right: 1px solid currentColor;
+        border-bottom: 1px solid currentColor;
+        // Rotated square, so the corner it leaves is the chevron. Lifted a little above
+        // centre because rotation puts the visual weight below the geometric middle.
+        transform: translateY(-70%) rotate(45deg);
+        color: var(--pvt-text-color-3);
+        pointer-events: none;
+    }
+}
+
+.pvt-table-filter-choice {
+    appearance: none;
+    -webkit-appearance: none;
+    // Room for the chevron above.
+    padding-right: 15px;
+    cursor: pointer;
+}
+
+// Holds the full scroll height when the rows are windowed, so the scrollbar is
+// the real length of the data rather than of what happens to be rendered.
+.pvt-table-rows-windowed {
+    position: relative;
+
+    .pvt-table-row {
+        position: absolute;
+        left: 0;
+        right: 0;
+    }
+}
+
+.pvt-table-row {
+    display: grid;
+    align-items: center;
+    height: var(--pvt-table-row-height);
+    box-sizing: border-box;
+    border-bottom: 1px solid var(--pvt-chrome-border);
+    cursor: pointer;
+
+    &:hover {
+        background-color: var(--pvt-bg-color-4);
+    }
+
+    // Marked from the graph's own selection, so a rubber-band on the canvas and a
+    // click in the table light up the same rows.
+    &.pvt-table-row-selected {
+        background-color: color-mix(in srgb, var(--pvt-selection-color) 14%, transparent);
+        box-shadow: inset 2px 0 0 var(--pvt-selection-color);
+    }
+}
+
+.pvt-table-td {
+    padding: 4px 8px;
+    min-width: 0;
+    // One line per cell: a long value is clipped rather than reflowing the row, so
+    // every row keeps the same height (which the windowing depends on).
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &[data-align='right'] {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+    }
+}
+
+// ── the Visibility state chip ───────────────────────────────────────────────
+// The column leads the table as a status gutter, so it has to be readable at a
+// glance and scannable straight down. A tinted chip per state does that where
+// plain text would not.
+//
+// Colour is not the only signal — each state also differs in weight and in
+// border — so the column still reads for anyone who can't separate the hues.
+
+.pvt-table-visibility {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 6px;
+    height: 16px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+// On the canvas: deliberately quiet. It is the normal case, and a table full of
+// loud green chips would drown out the two states that matter.
+.pvt-table-td[data-visibility='visible'] .pvt-table-visibility {
+    color: var(--pvt-text-color-3);
+    font-weight: 500;
+}
+
+// Hidden by the filter panel — recoverable by changing the filter.
+.pvt-table-td[data-visibility='filtered'] .pvt-table-visibility {
+    color: var(--pvt-text-color-warning);
+    border-color: color-mix(in srgb, var(--pvt-bg-color-warning) 45%, transparent);
+    background-color: color-mix(in srgb, var(--pvt-bg-color-warning) 16%, transparent);
+}
+
+// Hidden by hand — recoverable only from the filter panel's hidden-node list, so
+// it gets the stronger of the two treatments.
+.pvt-table-td[data-visibility='excluded'] .pvt-table-visibility {
+    color: var(--pvt-text-color-danger);
+    border-color: color-mix(in srgb, var(--pvt-bg-color-danger) 45%, transparent);
+    background-color: color-mix(in srgb, var(--pvt-bg-color-danger) 16%, transparent);
+}
+
+// An edge whose end has left the canvas: hidden, but not by anything done to the edge —
+// so it is stated rather than flagged, and stays quieter than the two filter states.
+.pvt-table-td[data-visibility='endpoint'] .pvt-table-visibility {
+    color: var(--pvt-text-color-3);
+    border-color: var(--pvt-chrome-border);
+}
+
+// A hidden element's whole row recedes, so the eye lands on what is actually drawn. Any
+// state but `visible` counts, so a new one joins in without touching this.
+.pvt-table-row:has(.pvt-table-td[data-visibility]:not([data-visibility='visible'])) .pvt-table-td:not([data-visibility]) {
+    color: var(--pvt-text-color-4);
+}
+
+.pvt-table-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 28px 12px;
+    color: var(--pvt-text-color-3);
+
+    svg {
+        width: 18px;
+        height: 18px;
+    }
+}

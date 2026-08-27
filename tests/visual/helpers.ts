@@ -44,6 +44,32 @@ export async function loadFixture(
 }
 
 /**
+ * Wait until the zoom transform stops changing — i.e. the initial fit-and-centre has
+ * committed. `loadFixture` resolves as soon as the layout is done, but the fit polls a
+ * few frames past that; a zoom landing later emits `canvasZoom`, which (for instance)
+ * closes an already-open context menu. Await this before driving such UI.
+ */
+export async function waitForViewSettled(page: Page): Promise<void> {
+    await page.evaluate(
+        () =>
+            new Promise<void>((resolve) => {
+                const layer = document.querySelector('.zoom-layer')
+                if (!layer) return resolve()
+                let last = layer.getAttribute('transform')
+                let stable = 0
+                const step = (): void => {
+                    const now = layer.getAttribute('transform')
+                    stable = now === last ? stable + 1 : 0
+                    last = now
+                    if (stable >= 5) return resolve()
+                    requestAnimationFrame(step)
+                }
+                requestAnimationFrame(step)
+            })
+    )
+}
+
+/**
  * Run a method of the harness API in the page and return its (serialisable) result.
  *
  * @example await harness(page, 'connect', 'a', 'b')

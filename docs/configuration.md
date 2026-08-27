@@ -115,7 +115,11 @@ The Simulation options control the physics and layout behavior of nodes and edge
 
 Check [D3-force official documentation](https://d3js.org/d3-force/simulation#forceSimulation) to learn more.
 
-Most of the time, there is no need to modify these options.
+Most of the time, there is no need to modify these options: by default Pivotick
+[tunes the layout itself](./simulation#auto-physics) from the number of nodes, their
+size and the canvas, and keeps tuning as the graph changes. Setting any force option
+opts that graph out and keeps your value — or set `simulation.physics` to `'auto'` /
+`'manual'` to be explicit.
 
 
 ## UI Options

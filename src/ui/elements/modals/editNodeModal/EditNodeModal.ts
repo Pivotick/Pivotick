@@ -89,7 +89,7 @@ function createEditModalBody(node: Node): { body: HTMLDivElement, form: HTMLForm
     Object.entries(node.getData() as Record<string, unknown>).forEach(([k, v]) => {
         const fieldConfig: FieldConfig = {
             key: k,
-            label: k,
+            label: FormFactory.niceLabelFromKey(k),
             type: 'text',
             defaultValue: (v as string).toString()
         }

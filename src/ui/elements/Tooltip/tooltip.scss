@@ -4,7 +4,7 @@
     position: absolute;
     pointer-events: auto;
     background-color: var(--pvt-menu-bg-color);
-    // Match the B3 chrome family (rails / modal / slide panel): a 1px border and
+    // Match the chrome family (rails / modal / slide panel): a 1px border and
     // an 11px radius. overflow:hidden clips the inner header/image panels to the
     // rounded corners.
     border: 1px solid var(--pvt-border-color);

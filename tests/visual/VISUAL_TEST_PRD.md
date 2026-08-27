@@ -123,7 +123,8 @@ SLOWMO=600 npm run test:visual:headed   # watch a real browser drive it
 - Edge style: `curveStyle`, `markerEnd`, `markerStart`, `dashed`, `animateDash` (avoid),
   `rotateLabel`. Direction comes from `isDirected` (graph) or per-edge `directed`.
 - Layout: `layout.type` is `'force' | 'tree' | 'egoTree'`; tree opts `radial`, `horizontal`,
-  `rootId`, `strength`, `rootIdAlgorithmFinder`, `flipEdgeDirection`. `egoTree` **requires** `rootId`.
+  `rootId`, `strength`, `rootIdAlgorithmFinder`, `spacing`, `levelSpacing`, `siblingSpacing`.
+  `egoTree` **requires** `rootId`.
 - Theme: `UI.theme` (string class, e.g. `'light'` / `'dark'`).
 - Graph public API: `graph.queryEngine` (`setFilter`/`setFilters`/`resetFilters`/`excludeNode`),
   `graph.noteManager`, `graph.editing`, `graph.toggleExpandNode(node)` / `toggleExpandNodes(nodes)`,

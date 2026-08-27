@@ -2,7 +2,9 @@
 
 
 .pvt-layout {
-    color: var(--pvt-text-color-6)
+    color: var(--pvt-text-color-6);
+    --pvt-graph-grid-line-width: 1px;
+    --pvt-graph-grid-dot-radius: 1px;
 }
 
 .hidden {
@@ -22,27 +24,50 @@
     max-height: 100%;
 
     // Decorative grid pitch — kept equal to the simulation `gridSize` default (50)
-    // so the visible grid and snap-to-grid line up at 100% zoom (see PRD D13).
+    // so the visible grid and snap-to-grid line up at 100% zoom.
     --pvt-graph-grid-pitch: 50px;
 
     background-color: var(--pvt-bg);
-    background-image: repeating-linear-gradient(0deg,
+
+    // Grid pattern (Default)
+    background-image:
+        repeating-linear-gradient(0deg,
             var(--pvt-graph-grid-color) 0px,
-            var(--pvt-graph-grid-color) 1px,
-            transparent 1px,
+            var(--pvt-graph-grid-color) var(--pvt-graph-grid-line-width, 1px),
+            transparent var(--pvt-graph-grid-line-width, 1px),
             transparent var(--pvt-graph-grid-pitch)),
         repeating-linear-gradient(90deg,
             var(--pvt-graph-grid-color) 0px,
-            var(--pvt-graph-grid-color) 1px,
-            transparent 1px,
+            var(--pvt-graph-grid-color) var(--pvt-graph-grid-line-width, 1px),
+            transparent var(--pvt-graph-grid-line-width, 1px),
             transparent var(--pvt-graph-grid-pitch));
 
+    // Dots pattern
+    &.pvt-bg-dots {
+        background-image:
+            radial-gradient(circle, var(--pvt-graph-grid-color) var(--pvt-graph-grid-dot-radius, 1.5px), transparent var(--pvt-graph-grid-dot-radius, 1.5px)),
+            radial-gradient(circle, var(--pvt-graph-grid-color) var(--pvt-graph-grid-dot-radius, 1.5px), transparent var(--pvt-graph-grid-dot-radius, 1.5px));
+        background-size: var(--pvt-graph-grid-pitch) var(--pvt-graph-grid-pitch);
+        background-position: 0 0, calc(var(--pvt-graph-grid-pitch) / 2) calc(var(--pvt-graph-grid-pitch) / 2);
+    }
+
+    // No pattern
+    &.pvt-bg-none {
+        background-image: none;
+    }
+
+    // Custom background image
+    &.pvt-bg-image {
+        background-image: var(--pvt-bg-image-url, none);
+        background-size: var(--pvt-bg-image-size, cover);
+        background-repeat: var(--pvt-bg-image-repeat, no-repeat);
+        background-position: center;
+    }
 }
 
-// Highlight-grid keys the grid colour on the layout root so both the canvas and
-// the transparent top-bar strip (which continues the grid) brighten together.
 .pvt-layout.grid-highlighted {
-    --pvt-graph-grid-color: var(--pvt-graph-grid-color-highlighted);
+    --pvt-graph-grid-line-width: 2px;
+    --pvt-graph-grid-dot-radius: 2px;
 }
 
 .pvt-loading-progress-bar {
@@ -275,6 +300,24 @@ dl.pvt-property-list {
             color: var(--pvt-text-color-4);
             border-color: var(--pvt-menu-border-color);
         }
+
+        // A pattern field reads as code, so its contents are legible as one.
+        input.pvt-form-regex {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        }
+
+        // Field-level validation (FormFactory.setFieldError) — e.g. an
+        // uncompilable regex facet pattern.
+        .pvt-invalid {
+            border-color: var(--pvt-bg-color-danger);
+        }
+
+        .pvt-form-error {
+            display: block;
+            margin-top: 4px;
+            font-size: 0.8em;
+            color: var(--pvt-text-color-danger);
+        }
     }
 
 }
@@ -399,6 +442,42 @@ dl.pvt-property-list {
         user-select: none;
     }
 
+    // Rim badges. Hit-testable on purpose: a native <title> tooltip needs to be hit to show,
+    // and node click/drag/hover are bound on the group above, so nothing is stolen from them.
+    .pvt-node-badge {
+        user-select: none;
+
+        &.pvt-node-badge-interactive {
+            cursor: pointer;
+
+            &:hover .pvt-node-badge-shape {
+                filter: brightness(0.9);
+            }
+        }
+
+        .pvt-node-badge-shape {
+            fill: var(--pvt-badge-color);
+            stroke: var(--pvt-badge-stroke);
+            stroke-width: 1.5;
+        }
+
+        .pvt-node-badge-text {
+            fill: var(--pvt-badge-text-color);
+            font-family: var(--pvt-font-family);
+            font-weight: 600;
+        }
+
+        .pvt-node-badge-icon {
+            color: var(--pvt-badge-text-color);
+            pointer-events: none;
+        }
+
+        // The overflow stand-in speaks for a mixed set, so it borrows no single badge's colour.
+        &.pvt-node-badge-overflow .pvt-node-badge-shape {
+            fill: var(--pvt-badge-overflow-color);
+        }
+    }
+
     text.icon {
         user-select: none;
         pointer-events: none;
@@ -500,7 +579,7 @@ dl.pvt-property-list {
 
     // Live-predicate feedback: an invalid hovered target (isValidConnection → false).
     &--invalid {
-        stroke: var(--pvt-danger, #e5484d);
+        stroke: var(--pvt-theme-danger);
         opacity: 0.85;
     }
 }
@@ -520,7 +599,7 @@ dl.pvt-property-list {
     max-width: 220px;
     padding: 3px 8px;
     font-size: 12px;
-    color: var(--pvt-text-color);
+    color: var(--pvt-text-color-6);
     background: var(--pvt-bg-color-0);
     border: 1px solid var(--pvt-border-color);
     border-radius: 4px;
@@ -533,7 +612,7 @@ dl.pvt-property-list {
 }
 
 // The same field inside the modal spans the body — drop the floating layout.
-.pvt-edge-prompt-modal-body .pvt-edge-label-input {
+.pvt-prompt-modal-body .pvt-edge-label-input {
     position: static;
     transform: none;
     display: block;
@@ -545,8 +624,14 @@ dl.pvt-property-list {
 // An open picker dropdown sits in normal flow inside the prompt modal, so it grows
 // the (otherwise short) body to fit its options instead of overflowing it and being
 // clipped into a one-row scroll. Closed, it stays out of flow — no reserved gap.
-.pvt-edge-prompt-modal-body .pvt-picker__dropdown.open {
+.pvt-prompt-modal-body .pvt-picker__dropdown.open {
     position: static;
+}
+
+.pvt-confirm-modal-body .pvt-confirm-modal-text {
+    margin: 0;
+    color: var(--pvt-text-color-primary);
+    line-height: 1.5;
 }
 
 .pvt-cluster-area {
@@ -569,7 +654,7 @@ dl.pvt-property-list {
 }
 
 // Cursor reflects the active edit tool; classes are toggled by EdgeCreationSession
-// (connect) and the lasso tool. Lost with the classic toolbar in the B3 refactor.
+// (connect) and the lasso tool.
 .pvt-canvas.pvt-connect-mode-active {
     &.select-first {
         cursor: crosshair;
@@ -584,7 +669,7 @@ dl.pvt-property-list {
     cursor: crosshair;
 }
 
-// The lasso preview outline (also lost with the classic toolbar in the B3 refactor).
+// The lasso preview outline.
 .pvt-lasso-overlay polyline {
     fill: var(--pvt-selection-rectangle-fill);
     stroke: var(--pvt-selection-rectangle-stroke);

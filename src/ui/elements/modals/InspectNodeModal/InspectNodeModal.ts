@@ -1,6 +1,7 @@
 import { Node } from '../../../../Node'
 import { createHtmlTemplate } from '../../../../utils/ElementCreation'
 import { nodeDescriptionGetter, nodeNameGetter, nodePropertiesGetter } from '../../../../utils/GraphGetters'
+import { AsyncRenderScope } from '../../../../utils/AsyncRender'
 import { createPropertyList } from '../../Sidebar/PropertyList'
 import { createNodePreview } from '../../../../utils/NodePreview'
 import { createJsonViewer, type JsonValue } from '../../../components/JsonViewer'
@@ -49,8 +50,14 @@ export function createInspectModal(node: Node, uiManager: UIManager): void {
 
 function createNodePropertiesTab(node: Node, uiManager: UIManager): HTMLDivElement {
     const container = createHtmlTemplate('<div class="inspect-node-properties-tab"></div>') as HTMLDivElement
-    const properties = nodePropertiesGetter(node, uiManager.getOptions().propertiesPanel)
-    container.appendChild(createPropertyList(properties, node, { layout: 'columns' }))
+    // A one-shot surface: nothing supersedes the modal, it just closes — and a
+    // resolution arriving after that finds no slot and is dropped.
+    const scope = new AsyncRenderScope('properties', () => uiManager.getOptions().asyncContent)
+    const properties = scope.resolve(
+        (ctx) => nodePropertiesGetter(node, uiManager.getOptions().propertiesPanel, ctx),
+        (entries) => createPropertyList(entries, node, { layout: 'columns' }),
+    )
+    if (properties) container.appendChild(properties)
     return container
 }
 

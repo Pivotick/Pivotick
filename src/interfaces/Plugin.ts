@@ -3,7 +3,7 @@ import type { UIManager } from '../ui/UIManager'
 import type { UIComponent, UIPhase } from '../ui/UIComponent'
 import type { Layout } from '../ui/elements/Layout'
 import type { KeybindingManager } from '../ui/KeybindingManager'
-import type { Keybinding } from './GraphUI'
+import type { DockTab, ExtraPanel, Keybinding } from './GraphUI'
 
 /**
  * A Pivotick plugin: a self-contained bundle of UI elements, keybindings and
@@ -45,9 +45,11 @@ export interface PluginContext {
      * The root DOM scaffold, read live from the UI (never a stale snapshot). It
      * exists in every mode while the UI is alive and is `undefined` only after
      * the UI is destroyed. Its *slots* are what vary by mode: `canvas` and
-     * `notification` always; `mainheader` / `modal` / `slidePanel` in `full` and
-     * `light`; `sidebar` in `full` only; `graphnavigation` / `graphcontrols` /
-     * `graphtoolbar` in every mode except `static`.
+     * `notification` always; `graphnavigation` in every mode except `static`;
+     * `mainheader` / `modal` / `slidePanel` / `moderail` / `toolpanel` / `flyout` /
+     * `legend` in `full` and `light`; `sidebar` in `full` only.
+     *
+     * `canvas` is the slot a canvas-docked element wants — see the minimap plugin.
      */
     layout: Layout | undefined
     keyManager: KeybindingManager
@@ -58,6 +60,32 @@ export interface PluginContext {
      * is already live — the element is caught up to the current phase.
      */
     addElement(element: UIComponent, slot?: HTMLElement): void
+    /**
+     * Register a sidebar panel — the same door as `UI.extraPanels` and
+     * `UIManager.addPanel`. Returns a disposer; the panel is re-rendered on every
+     * selection change and torn down with the UI.
+     */
+    addPanel(panel: ExtraPanel): () => void
+    /** Remove a sidebar panel by id (equivalent to calling its disposer). */
+    removePanel(id: string): void
+    /** Re-render one sidebar panel, or all of them when `id` is omitted. */
+    refreshPanel(id?: string): void
+    /**
+     * Register a pane in the bottom dock — the same door as `UIManager.addDockTab`,
+     * and the one the built-in table comes through. Returns a disposer.
+     *
+     * The first tab **builds the region**, so a plugin does not have to ask the
+     * consumer to turn the dock on: `full` mode is the only requirement.
+     */
+    addDockTab(tab: DockTab): () => void
+    /** Remove a dock tab by id (equivalent to calling its disposer). */
+    removeDockTab(id: string): void
+    /**
+     * Rebuild a dock tab from its `render` and `toolbar` — for when the pane's own data
+     * or chosen view changed. The same thing a `DockTabHandle`'s `refresh()` does, for
+     * code that holds the id rather than the handle.
+     */
+    refreshDockTab(id: string): void
     /** Hook a lifecycle phase. Returns an unsubscribe function. */
     onPhase(phase: UIPhase, callback: () => void): () => void
     /** Register a keybinding that is automatically removed when the UI is torn down. */
