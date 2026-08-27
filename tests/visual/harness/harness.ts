@@ -602,6 +602,36 @@ function mergeOptions(base: PlainObject, override: PlainObject): PlainObject {
     return out
 }
 
+/** Which node shape an anchoring subject renders as. */
+export type AnchorSubject =
+    | 'circle' | 'square' | 'triangle' | 'hexagon'
+    | 'customPath' | 'frameImage' | 'htmlCard' | 'htmlSmallCard' | 'renderNodeCard'
+
+/** One end of one edge, as actually drawn — everything {@link HarnessApi.probeAnchors} knows. */
+export interface AnchorProbe {
+    edgeId: string
+    /** The subject node this end belongs to. */
+    subject: AnchorSubject
+    /** Which end of the edge the subject sits at. */
+    end: 'from' | 'to'
+    /** How the router drew it: straight / curved / self-loop. */
+    kind: 'straight' | 'curved' | 'selfLoop'
+    /** Where the drawn path meets the subject. */
+    anchor: { x: number; y: number }
+    /** The subject's centre. */
+    center: { x: number; y: number }
+    /** Centre of the node at the other end (the subject itself for a self-loop). */
+    other: { x: number; y: number }
+    /** Bounding box of the drawn `.node` shape, if it has one. */
+    shapeBox: { width: number; height: number } | null
+    /** Box of the HTML card's foreignObject, if it has one. */
+    cardBox: { width: number; height: number } | null
+    /** What collision sees — must stay untouched by the anchoring work. */
+    circleRadius: number
+    /** The measured rectangular border, when the node has one. */
+    borderBox: { halfWidth: number; halfHeight: number } | null
+}
+
 export interface HarnessApi {
     /** Build a graph from a named fixture; resolves once it has finished rendering. */
     load(name: FixtureName, overrides?: PlainObject): Promise<void>
@@ -656,6 +686,36 @@ export interface HarnessApi {
      * whether `nodeSelection` was unset and whether the callback threw. Pre-fix
      * it throws `Cannot read properties of undefined (reading 'each')`.
      */
+    /**
+     * Build the edge-anchoring matrix: one subject per node shape, each carrying a
+     * straight edge, a reciprocal (curved) pair and a self-loop, so a test can
+     * check where every kind of edge meets every kind of node.
+     *
+     * `render.renderNode` applies to *every* node, so the card built that way
+     * needs its own graph — pass `'renderNode'` for it and `'shapes'` for the rest.
+     */
+    loadAnchorMatrix(mode: 'shapes' | 'renderNode'): Promise<void>
+    /** Every subject end of every edge in the matrix, as actually drawn. */
+    probeAnchors(): AnchorProbe[]
+    /**
+     * Where the connector from an attached note lands on its node — the
+     * note→node counterpart of {@link probeAnchors}.
+     */
+    probeNoteConnector(noteId: string): { anchor: { x: number; y: number }; center: { x: number; y: number } } | null
+    /**
+     * Zoom the canvas to `scale`, then add a node, and report the box its card was
+     * measured at. A card is measured with `getBoundingClientRect`, which reports
+     * *screen* pixels — so one first laid out while the graph is zoomed has to end
+     * up at its own CSS size all the same.
+     */
+    addCardWhileZoomed(id: string, scale: number): Promise<{ cardBox: { width: number; height: number } | null; zoom: number }>
+    /**
+     * Re-draw all edge positions `ticks` times and report how many node styles
+     * that cost. Edge anchoring must read cached geometry, so this has to stay 0:
+     * resolving a style per edge end per frame also drags user style callbacks
+     * into the render loop.
+     */
+    countStyleResolvesPerTick(ticks: number): number
     probeUnrenderedVisibility(): { nodeSelectionUnset: boolean; remeasureThrew: boolean }
     /** Select a node by id (renders the selection visuals). */
     selectNode(id: string): void
@@ -1236,6 +1296,239 @@ class Harness implements HarnessApi {
         this.graph = graph
         await this.whenReady(graph)
         if (document.fonts?.ready) await document.fonts.ready
+    }
+
+    /** Subjects of the anchoring matrix and the shape each one renders as. */
+    private static readonly ANCHOR_SUBJECTS: Array<{ subject: AnchorSubject; style: Record<string, unknown> }> = [
+        { subject: 'circle', style: { shape: 'circle', size: 20 } },
+        { subject: 'square', style: { shape: 'square', size: 20 } },
+        { subject: 'triangle', style: { shape: 'triangle', size: 20 } },
+        { subject: 'hexagon', style: { shape: 'hexagon', size: 20 } },
+        // A wide centred path: the classic "my node is not a circle" case.
+        { subject: 'customPath', style: { shape: { d: 'M-60,-15 L60,-15 L60,15 L-60,15 Z' }, size: 20 } },
+        // 4:1 picture, so the frame ends up markedly wider than it is tall.
+        {
+            subject: 'frameImage',
+            style: {
+                shape: 'circle', size: 30, imageFit: 'frame',
+                imagePath: 'data:image/svg+xml;utf8,' + encodeURIComponent(
+                    '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="100"><rect width="400" height="100" fill="#c33"/></svg>'
+                ),
+            },
+        },
+        // HTML-in-SVG, the way integrations usually style a node. The card reaches
+        // past the shape behind it, so the card is the border.
+        { subject: 'htmlCard', style: { shape: 'square', size: 20, html: () => Harness.anchorCard(180, 60) } },
+        // ...and the same thing with the shape larger than the card, which must keep
+        // its circle rather than shrink onto a card sitting inside it.
+        { subject: 'htmlSmallCard', style: { shape: 'circle', size: 60, html: () => Harness.anchorCard(100, 40) } },
+    ]
+
+    /** A fixed-size card: `box-sizing` pins the outer box so the measure is font-independent. */
+    private static anchorCard(width: number, height: number): HTMLElement {
+        const el = document.createElement('div')
+        el.style.cssText = `display:inline-flex;box-sizing:border-box;width:${width}px;height:${height}px;border:1px solid #334155;background:#eef`
+        return el
+    }
+
+    async loadAnchorMatrix(mode: 'shapes' | 'renderNode'): Promise<void> {
+        this.destroy()
+        const subjects = mode === 'renderNode'
+            ? [{ subject: 'renderNodeCard' as AnchorSubject, style: {} }]
+            : Harness.ANCHOR_SUBJECTS
+
+        const nodes: Node[] = []
+        const edges: Edge[] = []
+        // Pinned (fx/fy) and spaced far apart, so the initial fit cannot move a
+        // subject and no two subjects' probes interact.
+        const pin = (id: string, style: Record<string, unknown>, x: number, y: number): Node => {
+            const node = new Node(id, { label: '' }, style as never, id)
+            node.x = x; node.y = y; node.fx = x; node.fy = y
+            return node
+        }
+        subjects.forEach(({ subject, style }, index) => {
+            const cx = 600, cy = 400 + index * 1200
+            const node = pin(subject, style, cx, cy)
+            // Probe targets are tiny circles, so their own anchoring is negligible.
+            const east = pin(`${subject}-east`, { shape: 'circle', size: 2 }, cx + 400, cy)
+            const diag = pin(`${subject}-diag`, { shape: 'circle', size: 2 }, cx + 400, cy - 400)
+            const pair = pin(`${subject}-pair`, { shape: 'circle', size: 2 }, cx + 300, cy + 300)
+            nodes.push(node, east, diag, pair)
+            // No edge leaves `east`/`diag`, so the router keeps these straight.
+            edges.push(new EdgeInstance(`${subject}|east`, node, east, {}))
+            edges.push(new EdgeInstance(`${subject}|diag`, node, diag, {}))
+            // A reciprocal pair: the router flips both of these to curved.
+            edges.push(new EdgeInstance(`${subject}|curvedOut`, node, pair, {}))
+            edges.push(new EdgeInstance(`${subject}|curvedIn`, pair, node, {}))
+            edges.push(new EdgeInstance(`${subject}|loop`, node, node, {}))
+        })
+
+        const overrides: PlainObject = mode === 'renderNode'
+            ? { render: { renderNode: () => Harness.anchorCard(180, 60) } }
+            : {}
+        const graph = new Pivotick(this.container, { nodes, edges } as never, mergeOptions(BASE_OPTIONS, overrides) as never)
+        this.graph = graph
+        await this.whenReady(graph)
+        if (document.fonts?.ready) await document.fonts.ready
+        // Cards and framed images are measured asynchronously, and only then does
+        // the node learn its real border - wait for every subject to have settled
+        // rather than trusting a fixed delay.
+        await this.whenAnchorGeometrySettled(subjects.map((s) => s.subject))
+        this.graph.renderer.nextTick()
+    }
+
+    /**
+     * Resolve once every subject's measured geometry has stopped changing, so a
+     * probe cannot read a card mid-measure. Falls through after a bounded wait -
+     * a subject that legitimately never measures must not hang the suite.
+     */
+    private async whenAnchorGeometrySettled(subjects: string[]): Promise<void> {
+        const signature = (): string => subjects
+            .map((id) => {
+                const node = this.graph?.getMutableNode(id)
+                if (!node) return '-'
+                const border = node.getBorderBox()
+                return `${node.getCircleRadius()}:${border ? `${border.halfWidth}x${border.halfHeight}` : 'circle'}`
+            })
+            .join('|')
+
+        let previous = signature()
+        let stableFrames = 0
+        for (let frame = 0; frame < 240 && stableFrames < 6; frame++) {
+            await new Promise((resolve) => requestAnimationFrame(() => resolve(null)))
+            const current = signature()
+            stableFrames = current === previous ? stableFrames + 1 : 0
+            previous = current
+        }
+    }
+
+    probeAnchors(): AnchorProbe[] {
+        const graph = this.graph
+        if (!graph) return []
+
+        const boxesOf = (node: Node): Pick<AnchorProbe, 'shapeBox' | 'cardBox'> => {
+            const element = document.getElementById(`node-${node.domID}`)
+            const shape = element?.querySelector('.node') as SVGGraphicsElement | null
+            const shapeBbox = shape?.getBBox()
+            const card = element?.querySelector('foreignObject') as SVGForeignObjectElement | null
+            return {
+                shapeBox: shapeBbox && shapeBbox.width > 0
+                    ? { width: shapeBbox.width, height: shapeBbox.height }
+                    : null,
+                cardBox: card
+                    ? { width: Number(card.getAttribute('width')), height: Number(card.getAttribute('height')) }
+                    : null,
+            }
+        }
+
+        /** Every coordinate pair in a path: the first is where it starts, the last where it ends. */
+        const endpointsOf = (d: string): { start: { x: number; y: number }; end: { x: number; y: number } } | null => {
+            const numbers = (d.match(/-?\d+(?:\.\d+)?(?:e-?\d+)?/g) ?? []).map(Number)
+            if (numbers.length < 4) return null
+            return {
+                start: { x: numbers[0], y: numbers[1] },
+                end: { x: numbers[numbers.length - 2], y: numbers[numbers.length - 1] },
+            }
+        }
+
+        const subjectIds = new Set(Harness.ANCHOR_SUBJECTS.map((s) => s.subject as string).concat('renderNodeCard'))
+        const probes: AnchorProbe[] = []
+        const renderer = graph.renderer as unknown as {
+            edgeSelection?: { each(fn: (this: SVGGElement, edge: Edge) => void): void }
+        }
+        renderer.edgeSelection?.each(function (this: SVGGElement, edge: Edge) {
+            const d = this.querySelector('path')?.getAttribute('d')
+            if (!d) return
+            const endpoints = endpointsOf(d)
+            if (!endpoints) return
+
+            const isSelfLoop = edge.from === edge.to
+            const kind: AnchorProbe['kind'] = isSelfLoop
+                ? 'selfLoop'
+                : edge.getStyle()?.edge?.curveStyle === 'curved' ? 'curved' : 'straight'
+
+            for (const end of ['from', 'to'] as const) {
+                const node = end === 'from' ? edge.from : edge.to
+                if (!subjectIds.has(node.id)) continue
+                const otherNode = end === 'from' ? edge.to : edge.from
+                const border = node.getBorderBox()
+                probes.push({
+                    edgeId: edge.id,
+                    subject: node.id as AnchorSubject,
+                    end,
+                    kind,
+                    anchor: end === 'from' ? endpoints.start : endpoints.end,
+                    center: { x: node.x ?? 0, y: node.y ?? 0 },
+                    other: { x: otherNode.x ?? 0, y: otherNode.y ?? 0 },
+                    circleRadius: node.getCircleRadius(),
+                    borderBox: border ? { halfWidth: border.halfWidth, halfHeight: border.halfHeight } : null,
+                    ...boxesOf(node),
+                })
+            }
+        })
+        return probes
+    }
+
+    probeNoteConnector(noteId: string): { anchor: { x: number; y: number }; center: { x: number; y: number } } | null {
+        const renderer = this.graph?.renderer as unknown as {
+            noteEdgeSelection?: { each(fn: (this: SVGPathElement, datum: { note: Note; target: Node }) => void): void }
+        } | undefined
+        let found: { anchor: { x: number; y: number }; center: { x: number; y: number } } | null = null
+        renderer?.noteEdgeSelection?.each(function (this: SVGPathElement, datum) {
+            if (datum.note.id !== noteId) return
+            const numbers = (this.getAttribute('d')?.match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number)
+            if (numbers.length < 4) return
+            // The connector runs note → node, so its *end* is the node's rim.
+            found = {
+                anchor: { x: numbers[numbers.length - 2], y: numbers[numbers.length - 1] },
+                center: { x: datum.target.x ?? 0, y: datum.target.y ?? 0 },
+            }
+        })
+        return found
+    }
+
+    async addCardWhileZoomed(id: string, scale: number): Promise<{ cardBox: { width: number; height: number } | null; zoom: number }> {
+        const renderer = this.g.renderer as unknown as {
+            getZoomBehavior: () => { scaleTo: (selection: unknown, k: number) => void }
+            getCanvasSelection: () => unknown
+            getZoomTransform: () => { k: number }
+        }
+        renderer.getZoomBehavior().scaleTo(renderer.getCanvasSelection(), scale)
+        await new Promise((resolve) => requestAnimationFrame(() => resolve(null)))
+
+        this.addNode(id, 600, 400)
+        await this.whenAnchorGeometrySettled([id])
+
+        const node = this.g.getMutableNode(id)
+        const card = node
+            ? document.getElementById(`node-${node.domID}`)?.querySelector('foreignObject')
+            : null
+        return {
+            cardBox: card
+                ? { width: Number(card.getAttribute('width')), height: Number(card.getAttribute('height')) }
+                : null,
+            zoom: renderer.getZoomTransform().k,
+        }
+    }
+
+    countStyleResolvesPerTick(ticks: number): number {
+        const graph = this.graph
+        if (!graph) return -1
+        const nodeDrawer = (graph.renderer as unknown as {
+            nodeDrawer: { getNodeStyle: (node: Node) => unknown }
+        }).nodeDrawer
+        const original = nodeDrawer.getNodeStyle.bind(nodeDrawer)
+        let calls = 0
+        nodeDrawer.getNodeStyle = (node: Node): unknown => {
+            calls += 1
+            return original(node)
+        }
+        try {
+            for (let i = 0; i < ticks; i++) graph.renderer.nextTick()
+        } finally {
+            nodeDrawer.getNodeStyle = original
+        }
+        return calls / ticks
     }
 
     probeUnrenderedVisibility(): { nodeSelectionUnset: boolean; remeasureThrew: boolean } {
