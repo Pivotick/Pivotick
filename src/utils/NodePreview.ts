@@ -14,8 +14,16 @@ const DEFAULT_NODE_PREVIEW_CLASS = 'pvt-node-preview-icon'
 /** The rendered `<image>` an `imagePath` node carries (regardless of `imageFit`). */
 const NODE_IMAGE_SELECTOR = 'image.node-content'
 
-/** The selection-highlight ring drawn around a selected node's rendered group. */
-const SELECTION_HIGHLIGHT_SELECTOR = 'circle.pvt-node-selected-highlight'
+/**
+ * The interaction-state classes the renderer toggles on a node's rendered `<g>`. They drive the
+ * selection and highlight rings and the focus-mode dimming, none of which mean anything in a
+ * preview — and they sit on the group itself, so they are stripped, not removed.
+ */
+const STATE_CLASSES = [
+    'pvt-node-selected-highlight',
+    'pvt-node-selected-highlight-shadow',
+    'pvt-node-highlighted',
+]
 
 /**
  * The node's label text. The renderer wraps the label (text + optional background) in a
@@ -28,7 +36,7 @@ export interface NodePreviewOptions {
     size?: number
     /** Class set on the wrapping <svg>. Defaults to `'pvt-node-preview-icon'`. */
     className?: string
-    /** Strip the selection-highlight ring from the clone (the tooltip wants this). Defaults to `false`. */
+    /** Strip the selection, hover and dimming states from the clone (the tooltip wants this). Defaults to `false`. */
     removeSelectionHighlight?: boolean
 }
 
@@ -59,7 +67,7 @@ function measureBBox(clone: SVGGElement, source: SVGGElement): DOMRect {
 function buildScaledClone(element: SVGGElement, size: number, removeSelectionHighlight: boolean): SVGGElement {
     const clonedGroup = element.cloneNode(true) as SVGGElement
     if (removeSelectionHighlight) {
-        clonedGroup.querySelector(SELECTION_HIGHLIGHT_SELECTOR)?.remove()
+        clonedGroup.classList.remove(...STATE_CLASSES)
     }
     clonedGroup.querySelector(NODE_LABEL_SELECTOR)?.parentElement?.remove()
 

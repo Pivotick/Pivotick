@@ -196,12 +196,7 @@ export class NodeDrawer {
             if (shapeHalfExtent === 0) {
                 const backing = foNode.parentElement
                     ?.querySelector<SVGRectElement>(':scope > rect.node')
-                if (backing) {
-                    backing.setAttribute('width', String(width))
-                    backing.setAttribute('height', String(height))
-                    backing.setAttribute('x', String(-width / 2))
-                    backing.setAttribute('y', String(-height / 2))
-                }
+                if (backing) fitBackingBox(backing, content, width, height)
             }
             // The card's real box is only known here, so the rim moves with it.
             this.badgeDrawer.reanchor(node)
@@ -941,6 +936,41 @@ function appendCard(
     if (typeof content === 'string') shell.textContent = content
     else shell.append(content)
     fo.node()?.append(shell)
+}
+
+/**
+ * The corner radius an author gave a card, in user units, so the ring around it is not a
+ * sharp box around a rounded card. A percentage is resolved here against the card's own box:
+ * that is what `border-radius` means, whereas an SVG `rx` percentage would resolve against
+ * the viewport.
+ */
+function cardCornerRadius(card: Element, width: number, height: number): number {
+    const declared = getComputedStyle(card).borderTopLeftRadius
+    const value = parseFloat(declared)
+    if (!Number.isFinite(value) || value <= 0) return 0
+    return declared.endsWith('%') ? (value / 100) * Math.min(width, height) : value
+}
+
+/**
+ * Put the backing box on the measured card, and round its corners to match.
+ *
+ * The box stays exactly the card's size. It is not just what the selection and hover rings
+ * are painted on — the badge rim and the pointer hit area are measured off it too — so
+ * padding it out for the ring's sake would push the badges off the card and inflate the hit
+ * area. A stroke is centred on the edge it follows, which means the inner half of the ring
+ * goes behind the card and the outer half clears it: the same half a shaped node shows
+ * outside its own rim.
+ */
+function fitBackingBox(backing: SVGRectElement, shell: HTMLElement, width: number, height: number): void {
+    backing.setAttribute('width', String(width))
+    backing.setAttribute('height', String(height))
+    backing.setAttribute('x', String(-width / 2))
+    backing.setAttribute('y', String(-height / 2))
+
+    // `shell` is the shrink-to-fit box appendCard wraps every card in, so the radius lives on
+    // the card inside it — unless the card was a bare string, which has no element to ask.
+    const card = shell.firstElementChild
+    backing.setAttribute('rx', String(card ? cardCornerRadius(card, width, height) : 0))
 }
 
 /**

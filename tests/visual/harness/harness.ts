@@ -11,6 +11,7 @@
  */
 import { Pivotick, Node, ColorPaletteMapper, minimap } from '../../../src/index'
 import { Note } from '../../../src/Note'
+import { ROUNDED_CARD_RADIUS } from './sceneConstants'
 import { TreeLayout } from '../../../src/plugins/layout/Tree'
 import { EgoTreeLayout } from '../../../src/plugins/layout/EgoTree'
 import { createInspectModal } from '../../../src/ui/elements/modals/InspectNodeModal/InspectNodeModal'
@@ -448,6 +449,24 @@ export interface NodeRimBox {
 }
 
 /** What a node actually drew — see {@link HarnessApi.nodeVisual}. */
+/**
+ * The paint the state rules left on a node's shape element. A selected node keeps its own
+ * `fill` and gains a ring, so `stroke` alone does not say whether that ring is visible —
+ * the width and the opacity are both part of the answer.
+ */
+export interface NodeShapePaint {
+    /** The shape's resolved `fill`. Selection no longer touches it. */
+    fill: string
+    /** The ring's colour, `'none'` when nothing is drawn. */
+    stroke: string
+    /** The ring's width, in user units. Pulsed by the state animations. */
+    strokeWidth: string
+    /** The ring's opacity. Zero here is what used to hide the selection stroke entirely. */
+    strokeOpacity: string
+    /** The resolved `filter`, which carries the state glow. */
+    filter: string
+}
+
 export interface NodeVisual {
     /** Tag of the `.node` element, `null` when the node drew none at all. */
     shapeTag: string | null
@@ -455,6 +474,8 @@ export interface NodeVisual {
     shapeFill: string | null
     /** Its box, when it has one in its attributes (`rect` only). */
     shapeBox: { width: number, height: number } | null
+    /** Its corner radius. A card-only node mirrors the card's, so the ring is not a sharp box. */
+    shapeRx: number | null
     /** The `foreignObject`'s measured box, `null` when the node has no card. */
     cardBox: { width: number, height: number } | null
     /** Whether the card sits in the shrink-to-fit shell the renderer owns. */
@@ -485,6 +506,8 @@ export type CustomNodeSubject =
     | 'stringCard'
     /** `shape: 'none'` + a card *and* a label, which are separate channels. */
     | 'cardAndLabel'
+    /** `shape: 'none'` + a card with rounded corners, which the ring has to follow. */
+    | 'roundedCard'
     /** `shape: 'none'` + a centred `text` and nothing else: a bare label on the canvas. */
     | 'labelOnly'
     /** No card at all: its `nodeStyleMap` entry styles it as usual. */
@@ -767,6 +790,11 @@ export interface HarnessApi {
     /** Select an edge by id. */
     selectEdge(id: string): void
     /**
+     * Highlight a node the way a hovered table row, a note's `[[node]]` link or an
+     * edge-creation target does — the state that shares a node's rim with selection.
+     */
+    highlightNode(id: string): void
+    /**
      * Select several nodes at once (multi-selection). Renders every node's
      * selection highlight and — with focus mode on — dims the nodes/edges adjacent
      * to none of them. This is the deterministic stand-in for shift+clicking nodes:
@@ -797,7 +825,13 @@ export interface HarnessApi {
      * The answer to "does the selected look actually reach this node" without depending on
      * the zoom a screenshot would be taken at.
      */
-    nodeShapePaint(id: string): { fill: string, stroke: string, filter: string } | null
+    nodeShapePaint(id: string): NodeShapePaint | null
+    /**
+     * A theme colour custom property, resolved to the `rgb(...)` form a computed `fill` or
+     * `stroke` comes back in, so a test can name the colour it expects instead of
+     * hard-coding the palette's hex.
+     */
+    themeColor(name: string): string
     /**
      * The custom-HTML-node scene: one pinned node per {@link CustomNodeSubject}, styled
      * through `nodeStyleMap` so the cards and the plain shapes come from one style chain.
@@ -1625,6 +1659,11 @@ class Harness implements HarnessApi {
         if (edge) this.g.selectElement(edge)
     }
 
+    highlightNode(id: string): void {
+        const node = this.g.getMutableNode(id)
+        if (node) this.g.highlightElement(node)
+    }
+
     multiSelect(ids: string[]): void {
         const selection = ids
             .map((id) => this.g.getMutableNode(id))
@@ -1779,6 +1818,7 @@ class Harness implements HarnessApi {
             shapeTag: shape?.tagName.toLowerCase() ?? null,
             shapeFill: shape?.getAttribute('fill') ?? null,
             shapeBox: box(shape),
+            shapeRx: shape?.hasAttribute('rx') ? Number(shape.getAttribute('rx')) : null,
             cardBox: box(card),
             cardShelled: !!card?.firstElementChild?.classList.contains('pvt-node-card'),
             radius: node.getCircleRadius(),
@@ -1789,17 +1829,38 @@ class Harness implements HarnessApi {
         }
     }
 
-    nodeShapePaint(id: string): { fill: string, stroke: string, filter: string } | null {
+    nodeShapePaint(id: string): NodeShapePaint | null {
         const shape = document.getElementById(`node-${id}`)?.querySelector(':scope > .node')
         if (!shape) return null
         const resolved = getComputedStyle(shape)
-        return { fill: resolved.fill, stroke: resolved.stroke, filter: resolved.filter }
+        return {
+            fill: resolved.fill,
+            stroke: resolved.stroke,
+            // A ring only counts as drawn when it has both a width and an opacity: the
+            // selection look used to zero the opacity and leave the colour in place.
+            strokeWidth: resolved.strokeWidth,
+            strokeOpacity: resolved.strokeOpacity,
+            filter: resolved.filter,
+        }
+    }
+
+    themeColor(name: string): string {
+        const root = document.querySelector('.pivotick') ?? document.documentElement
+        const declared = getComputedStyle(root).getPropertyValue(name).trim()
+        // The variable holds a hex, a computed `stroke` comes back as `rgb(...)`. Let the
+        // browser do the conversion rather than parsing colours here.
+        const probe = document.createElement('span')
+        probe.style.color = declared
+        document.body.append(probe)
+        const resolved = getComputedStyle(probe).color
+        probe.remove()
+        return resolved
     }
 
     /** A card whose root shrink-wraps its content, the way the docs used to require. */
-    private static selfSizingCard(width: number, height: number): HTMLElement {
+    private static selfSizingCard(width: number, height: number, radius = 0): HTMLElement {
         const el = document.createElement('div')
-        el.style.cssText = `display:inline-flex;box-sizing:border-box;width:${width}px;height:${height}px;background:#ede9fe`
+        el.style.cssText = `display:inline-flex;box-sizing:border-box;width:${width}px;height:${height}px;background:#ede9fe;border-radius:${radius}px`
         return el
     }
 
@@ -1822,7 +1883,7 @@ class Harness implements HarnessApi {
 
         const subjects: CustomNodeSubject[] = [
             'stretchCard', 'shapelessCard', 'shapedCard', 'shapelessEmpty',
-            'stringCard', 'cardAndLabel', 'labelOnly', 'plain', 'declined',
+            'stringCard', 'cardAndLabel', 'roundedCard', 'labelOnly', 'plain', 'declined',
         ]
         // Every card comes from `nodeStyleMap`, so the scene also proves a card resolves
         // through the same chain as any other channel rather than needing `renderNode`.
@@ -1836,6 +1897,9 @@ class Harness implements HarnessApi {
             cardAndLabel: {
                 shape: 'none', size: 38, html: () => Harness.selfSizingCard(200, 50),
                 text: 'beside the card', textVerticalShift: -1.4,
+            },
+            roundedCard: {
+                shape: 'none', size: 38, html: () => Harness.selfSizingCard(200, 50, ROUNDED_CARD_RADIUS),
             },
             // No shape and no card: the text is the whole node.
             labelOnly: { shape: 'none', size: 26, text: 'label only', textTruncate: false },

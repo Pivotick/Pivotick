@@ -3,7 +3,7 @@
  * locating graph elements, and taking stable screenshots.
  */
 import { test, expect, type Page, type Locator } from '@playwright/test'
-import type { HarnessApi } from './harness/harness'
+import type { HarnessApi, NodeShapePaint } from './harness/harness'
 import type { FixtureName, RawNote } from './harness/fixtures'
 
 export { test, expect }
@@ -126,4 +126,18 @@ export async function centerOf(locator: Locator): Promise<{ x: number; y: number
     const box = await locator.boundingBox()
     if (!box) throw new Error('Element has no bounding box (not visible?)')
     return { x: box.x + box.width / 2, y: box.y + box.height / 2 }
+}
+
+/**
+ * Whether a stroke is actually painted on a node's shape.
+ *
+ * Three things have to line up, and the selection look used to fail on the last two: a
+ * colour, a width, and an opacity. `--pvt-node-selected-stroke-opacity: 0` kept a lobster
+ * `stroke` resolving while drawing nothing at all. `strokeWidth` arrives as `'3px'`, so it
+ * needs parsing rather than coercing.
+ */
+export function ringIsDrawn(paint: NodeShapePaint): boolean {
+    return paint.stroke !== 'none'
+        && parseFloat(paint.strokeWidth) > 0
+        && parseFloat(paint.strokeOpacity) > 0
 }

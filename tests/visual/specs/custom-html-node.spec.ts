@@ -1,8 +1,7 @@
-import { test, expect, gotoHarness, harness } from '../helpers'
+import { test, expect, gotoHarness, harness, ringIsDrawn } from '../helpers'
 import type { Page } from '@playwright/test'
-import type { NodeVisual } from '../harness/harness'
-
-type PaintState = { fill: string, stroke: string, filter: string }
+import type { NodeShapePaint, NodeVisual } from '../harness/harness'
+import { ROUNDED_CARD_RADIUS } from '../harness/sceneConstants'
 
 /**
  * Custom HTML nodes: a card declared as `NodeStyle.html`, and what `shape: 'none'` adds.
@@ -118,20 +117,41 @@ test.describe('custom HTML nodes', () => {
     // zoom the initial fit chose for the scene.
     test('the selected look reaches a card-only node', async ({ page }) => {
         const card = page.locator('#node-shapelessCard')
-        const unselected = await harness(page, 'nodeShapePaint', 'shapelessCard') as PaintState
+        const unselected = await harness(page, 'nodeShapePaint', 'shapelessCard') as NodeShapePaint
 
         // Idle, the box is drawn in nothing at all.
         expect(unselected.fill).toBe('rgba(0, 0, 0, 0)')
+        expect(unselected.stroke).toBe('none')
         expect(unselected.filter).toBe('none')
 
         await card.click({ force: true })
         await expect(card).toHaveClass(/pvt-node-selected-highlight/)
 
-        const selected = await harness(page, 'nodeShapePaint', 'shapelessCard') as PaintState
-        // Selected, the same box carries the selection colour and its glow — which is what
-        // bleeds out around the card and makes the selection visible.
-        expect(selected.fill).not.toBe(unselected.fill)
+        const selected = await harness(page, 'nodeShapePaint', 'shapelessCard') as NodeShapePaint
+        // Selected, the box rings the card and glows. The fill stays out of it: the box is
+        // behind an opaque card, so a fill would be invisible there anyway — the ring is
+        // what clears the card's edge.
+        expect(selected.fill).toBe(unselected.fill)
+        expect(ringIsDrawn(selected)).toBe(true)
         expect(selected.filter).toContain('drop-shadow')
+    })
+
+    // The backing box carries the ring, but the badge rim and the pointer hit area are
+    // measured off the very same box — so it has to stay exactly the card's size.
+    test('the ring does not push the box off the card', async ({ page }) => {
+        const shapeless = await visual(page, 'shapelessCard')
+
+        expect(shapeless.shapeBox).toEqual(shapeless.cardBox)
+    })
+
+    // A sharp ring around a rounded card reads as a mistake, and the library cannot know the
+    // radius an author chose — so the box reads it back off the card.
+    test('the ring follows the card’s rounded corners', async ({ page }) => {
+        const rounded = await visual(page, 'roundedCard')
+        const square = await visual(page, 'shapelessCard')
+
+        expect(rounded.shapeRx).toBe(ROUNDED_CARD_RADIUS)
+        expect(square.shapeRx).toBe(0)
     })
 
     // `shape` and `text` are separate channels, so a card can carry a label beside it —

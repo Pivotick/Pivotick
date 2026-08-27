@@ -70,6 +70,28 @@
   canvas. A shapeless node with a `text` and no card is a bare label; with neither, it is
   invisible but still there.
 
+### A selected node keeps its colour
+
+- **Selection draws a ring instead of repainting the node.** A selected node used to have its
+  fill replaced by the selection colour, which threw away the one thing the colour was there to
+  say — a node encoding its type, its cluster or its score went uniformly lobster the moment you
+  clicked it, and in a sidebar's neighbour graph the focal node was indistinguishable from a
+  genuinely red one. It now keeps its own `color` and takes the selection colour on its rim, the
+  way a highlighted node already did.
+- **Selection outranks highlight on the rim they now share.** Both states paint the same edge, so
+  a node that is selected *and* highlighted — hovering its table row, following a note's
+  `[[node]]` link — keeps the selection colour rather than reading as though it had been let go
+  of.
+- **A card-only node rings its card.** `shape: 'none'` leaves an invisible box under the card for
+  the state looks to land on; a ring is drawn centred on that box's edge, so it clears an opaque
+  card where a fill behind it could not. The box stays exactly the card's size, since the badge
+  rim and the pointer hit area are measured off it too, and it takes the card's `border-radius`
+  so the ring is not a sharp box around a rounded card.
+- **`--pvt-node-selected-stroke-opacity` now defaults to `1`.** Zeroing it was what actually hid
+  the selection ring; `--pvt-node-selected-stroke-width` never applied, because the pulse
+  animation sets a width of its own and an animated declaration wins. Both are still yours to
+  override — set the opacity to `0` for the old fill-only look.
+
 ## 1.6.0 — 2026-08-26
 
 Three headline additions, each of them something a force layout is bad at on its own: a **data

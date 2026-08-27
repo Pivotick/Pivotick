@@ -1,8 +1,6 @@
 # Node selection: ring instead of fill-recolouring
 
-**Status:** decided, not implemented. **Release gate: land before `develop` → `main` for 1.6.**
-
-Accepts a full visual-baseline regeneration.
+**Status:** done, on `worktree-selection-ring`. Cleared the 1.6 release gate.
 
 ## What changes
 
@@ -38,27 +36,37 @@ this is: stop zeroing that opacity, and drop the `fill` override from
 Same trap in reverse: dark-mode `--pvt-node-highlighted-stroke-width: 0` (`_variables.scss:448`)
 is moot for the same reason, which is why hover shows a ring in both themes. Don't "fix" it.
 
-## Loose ends to settle while implementing
+## How the loose ends were settled
 
-- **Selected vs hovered must stay distinguishable** once both are rings. They differ in colour
-  today (lobster vs vibrant-blue) and in animation for a node that is both
-  (`glowPulseBigSelected`); confirm that still reads.
-- **Occlusion on a card.** The backing rect paints under the `foreignObject`, so the inner half
-  of the ring is hidden. Either accept the outer half or grow the rect by half the max stroke.
-  Do *not* move the rect above the card — a transparent fill on top swallows pointer events
-  aimed at interactive card content.
-- **Corner radius on a card.** A sharp ring around a `border-radius` card looks wrong and the
-  library does not know the author's radius; mirror `getComputedStyle(root).borderRadius` onto
-  the rect's `rx`.
-- **`NodePreview`'s strip selector is already dead.** `SELECTION_HIGHLIGHT_SELECTOR =
-  'circle.pvt-node-selected-highlight'` (`src/utils/NodePreview.ts:18`) matches nothing — the
-  class goes on the `<g>` (`NodeDrawer.ts:652`), not a child circle — and it would not match a
-  `rect.node` either. Without fixing it, previews of a selected card render with the ring.
-- **Baselines.** Every screenshot with a selected node moves. Regenerate deliberately and eyeball
-  the diffs: see the note that a 0.2 threshold hides colour-only changes.
+- **Selected vs highlighted.** The colliding state is not canvas hover — `pvt-node-highlighted`
+  is the explicit `highlightElement` API (a hovered table row, a note's `[[node]]` link, an
+  edge-creation target). Its rule is later in `_pivotick.scss` and so won on source order, which
+  would have made highlighting a selected node read as letting go of it. Selection now wins the
+  shared rim via `.pvt-node-selected-highlight.pvt-node-highlighted > .node`.
+- **Occlusion on a card: the outer half was accepted.** Growing the rect was tried and reverted.
+  The backing rect is not only the ring's paint target — the badge rim and the pointer hit area
+  are measured off the same box — so padding it pushed every badge 2.5px off its card and
+  inflated the hit box. Two existing tests caught it. The outer half is the same half a shaped
+  node shows outside its own rim.
+- **Corner radius on a card: done**, read off `borderTopLeftRadius` (percentages resolved against
+  the card's box, since an SVG `rx` percentage resolves against the viewport instead).
+- **`NodePreview`'s strip selector: fixed.** It now strips the state classes from the clone's own
+  `<g>` — selection, highlight and the focus-mode dimming — rather than querying for a child
+  `circle` that never existed.
+- **Baselines.** Only six moved: four in `selection.spec.ts`, `dark-node-selected` and
+  `sidebar-node-selected`. Found by running the suite at `threshold: 0` with and without the
+  change and diffing the per-snapshot pixel counts, because at the committed tolerances a single
+  node is well under the 1% budget and a stale baseline stays green — so `--update-snapshots`
+  would not have rewritten them. They were deleted and regenerated.
+
+## What this turned up
+
+**The committed baselines are broadly stale.** At `threshold: 0`, 85 of them differ on untouched
+`develop` — most by an identical 50352 pixels, and the regenerated shots show why: they predate
+the Physics rail mode (shipped 2026-08-18) and a node-colour change. The 0.2 per-pixel threshold
+hides all of it. Not addressed here; worth a deliberate sweep of its own.
 
 ## Also stale before the merge
 
-`CHANGELOG.md`'s Unreleased section still says a push "composes with the filter panel … pressing
-the panel's own **Filter Graph** never clobbers it". That button was removed in `b9825ac` (the
-attribute form applies itself). Reword to "nothing the panel's form applies clobbers it".
+`CHANGELOG.md`'s **Filter Graph** wording — already reworded on `develop` to "nothing the panel's
+own form applies ever clobbers it". Nothing left to do.

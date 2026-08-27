@@ -168,8 +168,10 @@ $light-theme: (
     /* Node selected state */
     pvt-node-selected-color: map.get($light-vibrant-color-palette, vibrant-lobster),
     pvt-node-selected-stroke: var(--pvt-selection-stroke-color),
-    pvt-node-selected-stroke-width: 0,
-    pvt-node-selected-stroke-opacity: 0,
+    // The pulse animates stroke-width 3 -> 5 -> 3 and an animated declaration wins, so this
+    // only matters where the animation is off. Match its resting frame.
+    pvt-node-selected-stroke-width: 3,
+    pvt-node-selected-stroke-opacity: 1,
     pvt-node-selected-filter: drop-shadow(0 0 2px var(--pvt-node-selected-color)),
     pvt-node-selected-animation: glowPulseSelected 1.5s infinite,
     pvt-node-selected-big-animation: glowPulseBigSelected 1.5s infinite,
@@ -438,8 +440,10 @@ $dark-theme: (
     /* Node selected state */
     pvt-node-selected-color: var(--pvt-selection-color),
     pvt-node-selected-stroke: var(--pvt-selection-stroke-color),
-    pvt-node-selected-stroke-width: 0,
-    pvt-node-selected-stroke-opacity: 0,
+    // The pulse animates stroke-width 3 -> 5 -> 3 and an animated declaration wins, so this
+    // only matters where the animation is off. Match its resting frame.
+    pvt-node-selected-stroke-width: 3,
+    pvt-node-selected-stroke-opacity: 1,
     pvt-node-selected-filter: drop-shadow(0 0 2px var(--pvt-node-selected-color)),
     pvt-node-selected-animation: glowPulseSelected 1.5s infinite,
 

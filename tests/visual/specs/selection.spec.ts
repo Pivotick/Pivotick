@@ -8,7 +8,9 @@ import {
     centerOf,
     canvas,
     expectCanvas,
+    ringIsDrawn,
 } from '../helpers'
+import type { NodeShapePaint } from '../harness/harness'
 
 test.describe('selection', () => {
     test.beforeEach(async ({ page }) => {
@@ -19,6 +21,41 @@ test.describe('selection', () => {
     test('highlights a selected node', async ({ page }) => {
         await harness(page, 'selectNode', 'a')
         await expectCanvas(page, 'node-selected.png')
+    })
+
+    // The colour of a node is what says which node it is, so selecting one must not repaint
+    // it. The ring is the whole signal — the invariant the screenshot above can only show,
+    // not state. Selection used to replace the fill and leave the rim alone.
+    test('a selected node keeps its own colour and gains a ring', async ({ page }) => {
+        const ringColor = await harness(page, 'themeColor', '--pvt-node-selected-stroke')
+        const idle = await harness(page, 'nodeShapePaint', 'a') as NodeShapePaint
+        expect(idle.stroke).not.toBe(ringColor)
+
+        await harness(page, 'selectNode', 'a')
+        const selected = await harness(page, 'nodeShapePaint', 'a') as NodeShapePaint
+
+        expect(selected.fill).toBe(idle.fill)
+        expect(selected.stroke).toBe(ringColor)
+        expect(ringIsDrawn(selected)).toBe(true)
+    })
+
+    // Selection and highlight both draw a ring now, and they land on the same rim. Whichever
+    // arrives second, the node still has to read as selected — highlighting one from a table
+    // row or a note link must not look like it was let go of.
+    test('a highlighted node that is selected keeps the selection ring', async ({ page }) => {
+        const selectedRing = await harness(page, 'themeColor', '--pvt-node-selected-stroke')
+        const highlightRing = await harness(page, 'themeColor', '--pvt-node-highlighted-stroke')
+        expect(selectedRing).not.toBe(highlightRing)
+
+        // Highlighted alone, the rim is the highlight colour.
+        await harness(page, 'highlightNode', 'a')
+        const highlighted = await harness(page, 'nodeShapePaint', 'a') as NodeShapePaint
+        expect(highlighted.stroke).toBe(highlightRing)
+
+        await harness(page, 'selectNode', 'a')
+        const both = await harness(page, 'nodeShapePaint', 'a') as NodeShapePaint
+        expect(both.stroke).toBe(selectedRing)
+        expect(ringIsDrawn(both)).toBe(true)
     })
 
     test('highlights a selected edge', async ({ page }) => {
