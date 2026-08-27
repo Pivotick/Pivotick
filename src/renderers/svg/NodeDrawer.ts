@@ -39,17 +39,17 @@ export class NodeDrawer {
         // default path would have resolved for itself.
         const style = this.getNodeStyle(node)
 
-        if (this.renderCB) {
+        // `renderNode` claims the node outright — but only for the nodes it actually draws.
+        // Returning nothing hands this one back to the styling pipeline, so one callback can
+        // card a few nodes and leave the rest their shapes.
+        const custom = cardContent(this.renderCB?.(node))
+        if (custom !== undefined) {
+            // Before the card, so it paints behind: the box selection and hover are drawn on.
+            appendBackingBox(theNodeSelection, 10)
             const fo = theNodeSelection.append('foreignObject')
-            const rendered = this?.renderCB?.(node)
-            fo.attr('width', 20)
+                .attr('width', 20)
                 .attr('height', 20)
-
-            if (typeof rendered === 'string') {
-                fo.text(rendered)
-            } else if (rendered instanceof HTMLElement) {
-                fo.node()?.append(rendered)
-            }
+            appendCard(fo, custom)
 
             // In here, we could add support of other lightweight framework such as jQuery, Vue.js, ..
 
@@ -58,7 +58,10 @@ export class NodeDrawer {
 
         } else {
             this.genericNodeRender(theNodeSelection, style, node)
-            requestAnimationFrame(() => {
+            // A shapeless node's geometry belongs to its content, which measures itself. The
+            // block below reads the drawn shape's box, and with no shape to read falls back
+            // to a 50x50 guess — which would overwrite whatever the card measured.
+            if (style.shape !== 'none') requestAnimationFrame(() => {
                 const nodeElement = theNodeSelection.node()
                 if (!nodeElement) return
 
@@ -142,6 +145,8 @@ export class NodeDrawer {
             const foNode = fo.node()
             if (!foNode || !foNode.isConnected) return
 
+            // The shell appendCard put the card in — a shrink-to-fit box, so this measures
+            // the card's own size and not the placeholder it was dropped into.
             const content = foNode.firstElementChild as HTMLElement | null
             if (!content) return
 
@@ -184,6 +189,18 @@ export class NodeDrawer {
                 // a shape that still sticks out keeps its circle, which fits it better.
                 if (width / 2 > shapeHalfExtent || height / 2 > shapeHalfExtent) {
                     node.setBorderBox(halfWidth * 2, halfHeight * 2) // after the radius, which clears it
+                }
+            }
+            // The card is the node when nothing is drawn behind it, so the box selection and
+            // hover paint has to follow the card rather than stay on the placeholder.
+            if (shapeHalfExtent === 0) {
+                const backing = foNode.parentElement
+                    ?.querySelector<SVGRectElement>(':scope > rect.node')
+                if (backing) {
+                    backing.setAttribute('width', String(width))
+                    backing.setAttribute('height', String(height))
+                    backing.setAttribute('x', String(-width / 2))
+                    backing.setAttribute('y', String(-height / 2))
                 }
             }
             // The card's real box is only known here, so the rim moves with it.
@@ -391,17 +408,24 @@ export class NodeDrawer {
         style.textVerticalShift = style.textVerticalShift as number
         style.textRotateDegree = style.textRotateDegree as number
 
+        // A shapeless node still gets a box — it is just drawn in nothing. That box is what
+        // the selection and hover rules paint (they are `> .node` child rules, so with no
+        // element they paint nothing at all) and what the pointer hits across the card.
+        const shapeless = style.shape === 'none'
+
         // A 'frame' image node IS the picture: it renders as a rectangle sized to
         // the image's aspect ratio (resized async in the imagePath branch), so it
-        // rides the square/rect path regardless of the requested shape.
+        // rides the square/rect path regardless of the requested shape. A shapeless one
+        // keeps its own shape name — the box below is already a rect, so the frame still
+        // takes the picture's proportions, invisibly.
         const framed = !!style.imagePath && style.imageFit === 'frame'
-        if (framed) {
+        if (framed && !shapeless) {
             style.shape = 'square'
         }
 
         // map logical node shapes to SVG element tag names (use string to allow 'rect' which is not part of NodeShape)
         let actualShape: string = style.shape as string
-        if (style.shape == 'square') {
+        if (style.shape == 'square' || shapeless) {
             actualShape = 'rect'
         } else if (this.isCustomShape(style.shape) || ['triangle', 'hexagon',].includes(style.shape)) {
             actualShape = 'path'
@@ -409,9 +433,11 @@ export class NodeDrawer {
 
         const renderedNode = nodeSelection
             .append(actualShape)
-            .attr('stroke', style.strokeColor)
-            .attr('stroke-width', style.strokeWidth)
-            .attr('fill', style.color)
+            // `transparent`, not `none`: `none` is not hit-testable, so the node would be
+            // unclickable anywhere its content does not cover.
+            .attr('stroke', shapeless ? 'none' : style.strokeColor)
+            .attr('stroke-width', shapeless ? 0 : style.strokeWidth)
+            .attr('fill', shapeless ? 'transparent' : style.color)
             .classed('node', true)
 
         switch (style.shape) {
@@ -439,6 +465,16 @@ export class NodeDrawer {
                     node.setCircleRadius(style.size)
                     break
                 }
+            case 'none':
+                // A placeholder box, replaced by the measured card when there is one. No
+                // circle radius: the content owns the geometry, and until something measures
+                // `borderReach` falls back to `size` anyway.
+                renderedNode
+                    .attr('width', style.size * 2)
+                    .attr('height', style.size * 2)
+                    .attr('x', -style.size)
+                    .attr('y', -style.size)
+                break
             case 'hexagon':
                 {
                     const angle = Math.PI / 3 // 60°
@@ -560,23 +596,23 @@ export class NodeDrawer {
                 image.on('error', () => this.renderImageFallback(nodeSelection, image, style))
             }
         } else if (style.html) {
-            const fo = nodeSelection.append('foreignObject')
-                .attr('class', 'node-content')
-            const rendered = style.html(node)
-            fo.attr('width', style.size * 2)
-                .attr('height', style.size * 2)
-                .attr('x', -style.size)
-                .attr('y', -style.size)
-
-            if (typeof rendered === 'string') {
-                fo.text(rendered)
-            } else if (rendered instanceof HTMLElement) {
-                fo.node()?.append(rendered)
+            // Nothing back means no card, so one callback can card some nodes and leave
+            // the others to their shape.
+            const rendered = cardContent(style.html(node))
+            if (rendered !== undefined) {
+                const fo = nodeSelection.append('foreignObject')
+                    .attr('class', 'node-content')
+                    .attr('width', style.size * 2)
+                    .attr('height', style.size * 2)
+                    .attr('x', -style.size)
+                    .attr('y', -style.size)
+                appendCard(fo, rendered)
+                // The box above is only a guess: measure the card and grow to it, so a
+                // card wider than `2 × size` is neither clipped nor anchored as a circle.
+                // The half-extent below is the shape still drawn behind it — nothing, for a
+                // shapeless node, whose card owns its geometry outright.
+                this.fitCardToContent(fo, node, shapeless ? 0 : style.size)
             }
-            // The box above is only a guess: measure the card and grow to it, so a
-            // card wider than `2 × size` is neither clipped nor anchored as a circle.
-            // `style.size` is the half-extent of the shape still drawn behind it.
-            this.fitCardToContent(fo, node, style.size)
         }
         // Do not have text dislay be mutually exclusive with icons
         if (style.text) {
@@ -584,8 +620,13 @@ export class NodeDrawer {
             const labelG = nodeSelection.append('g')
                 .classed('pvt-node-label-group', true)
 
-            const isOusideNode = Math.abs(style.textVerticalShift) >= 1 || Math.abs(style.textHorizontalShift) >= 1
-            const [fontSize, text] = this.computeTextLayout(style.text, style.size, isOusideNode, style.textTruncate as boolean)
+            // Shifted clear of the node, so it is laid out with no shape to fit inside.
+            const floated = Math.abs(style.textVerticalShift) >= 1 || Math.abs(style.textHorizontalShift) >= 1
+            // …and a shapeless node's label has nothing behind it wherever it sits, so it
+            // gets the same treatment: the node's own `textColor` is white by default, which
+            // here would be drawn straight onto the canvas.
+            const isOusideNode = floated || shapeless
+            const [fontSize, text] = this.computeTextLayout(style.text, style.size, floated, style.textTruncate as boolean)
 
             const x_pos = style.textHorizontalShift * (style.size + fontSize/2*1.2)
             const y_pos = - style.textVerticalShift * (style.size + fontSize/2*1.2)
@@ -865,4 +906,61 @@ export class NodeDrawer {
                 .force('constrainParent', forceConstrainParent<Node>(Number(clusterRadius), 10))
         }
     }
+}
+
+/**
+ * What a render callback actually gave us to draw, or `undefined` for "nothing" — which
+ * hands the node back to the normal styling pipeline. An empty string counts as nothing,
+ * the same way `text: ''` and `badges: []` opt out of their channels.
+ */
+function cardContent(rendered: unknown): HTMLElement | string | undefined {
+    if (typeof rendered === 'string') return rendered === '' ? undefined : rendered
+    return rendered instanceof HTMLElement ? rendered : undefined
+}
+
+/**
+ * Put a card inside the `foreignObject`, in a shrink-to-fit box of our own.
+ *
+ * That box is what gets measured, and `width: max-content` is what makes the measure
+ * honest: a card whose own root is `width: 100%` would otherwise resolve the percentage
+ * against the placeholder box the renderer had just guessed, and report the guess back as
+ * its size — leaving the card squeezed into it. A string gets the same box, so it measures
+ * like any other card instead of never measuring at all.
+ *
+ * `flex`, not `inline-block`: an inline-level card root — `display: inline-flex`, which is
+ * what a hand-written card usually is — would sit on a line box and measure its own height
+ * plus the descender space under it, silently growing every such card by a few pixels.
+ */
+function appendCard(
+    fo: Selection<SVGForeignObjectElement, Node, null, undefined>,
+    content: HTMLElement | string,
+): void {
+    const shell = document.createElement('div')
+    shell.className = 'pvt-node-card'
+    shell.style.cssText = 'display:flex;width:max-content;height:max-content'
+    if (typeof content === 'string') shell.textContent = content
+    else shell.append(content)
+    fo.node()?.append(shell)
+}
+
+/**
+ * The invisible box a card-only node is selected, hovered and clicked on.
+ *
+ * Both state looks are `> .node` child rules, so a node with no shape element has no
+ * selected or hovered look at all; and `fill: none` would leave it unclickable wherever
+ * the card does not cover. Sized from the card once that measures.
+ */
+function appendBackingBox(
+    nodeSelection: Selection<SVGGElement, Node, null, undefined>,
+    halfExtent: number,
+): void {
+    nodeSelection.append('rect')
+        .attr('stroke', 'none')
+        .attr('stroke-width', 0)
+        .attr('fill', 'transparent')
+        .attr('width', halfExtent * 2)
+        .attr('height', halfExtent * 2)
+        .attr('x', -halfExtent)
+        .attr('y', -halfExtent)
+        .classed('node', true)
 }

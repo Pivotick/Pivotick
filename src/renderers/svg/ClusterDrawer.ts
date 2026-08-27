@@ -8,6 +8,7 @@ import { Graph } from '../../Graph'
 import type { GraphOptions, RawEdge, RawNode, RelaxedGraphData } from '../../interfaces/GraphOptions'
 import { forceCenter } from 'd3-force'
 import type { GraphSvgRenderer } from './GraphSvgRenderer'
+import { isInvisiblePaint } from '../../utils/utils'
 import { CoordinateTransform } from '../../utils/CoordinateTransform'
 import type { NodeSelection } from '../../interfaces/GraphInteractions'
 
@@ -656,6 +657,9 @@ export class ClusterDrawer {
     ): string | undefined {
         if (parentCircleElement) {
             const parentNodeFillColor = getComputedStyle(parentCircleElement).fill
+            // A shapeless parent is painted in nothing, so the halo would be a gradient
+            // between two transparents. Leave the cluster its own themed fill instead.
+            if (isInvisiblePaint(parentNodeFillColor)) return
             const outerColor = `color-mix(in srgb, ${parentNodeFillColor} 40%, transparent)`
             const id = `pvt-cluster-area-${node.id}`
 

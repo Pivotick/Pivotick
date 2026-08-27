@@ -6,6 +6,7 @@ import type { Graph } from '../../Graph'
 import type { GraphSvgRenderer } from './GraphSvgRenderer'
 import { tryResolveBoolean, tryResolveNumber, tryResolveString } from '../../utils/Getters'
 import { edgeLabelGetter, edgeTypeGetter } from '../../utils/GraphGetters'
+import { isInvisiblePaint } from '../../utils/utils'
 import type { CurveStyle, EdgeStyle, GraphRendererOptions, LabelStyle, MarkerStyle } from '../../interfaces/RendererOptions'
 
 export class EdgeDrawer {
@@ -150,8 +151,11 @@ export class EdgeDrawer {
             // FROM node rendering might be done in a subgraph
             const fromNode = edge.getSubgraphFromNode() ?? edge.from
             const nodeElement = fromNode.getGraphElement()?.querySelector('.node')
-            if (nodeElement) {
-                mergedStyle.strokeColor = getComputedStyle(nodeElement).fill
+            const parentFill = nodeElement ? getComputedStyle(nodeElement).fill : undefined
+            // A shapeless parent's box is painted in nothing, so there is no colour to
+            // borrow — tinting the edge from it would draw an invisible edge.
+            if (parentFill && !isInvisiblePaint(parentFill)) {
+                mergedStyle.strokeColor = parentFill
                 mergedStyle.markerStart = 'bigcircle'
                 mergedStyle.markerEnd = 'arrow'
             }

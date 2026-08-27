@@ -447,6 +447,51 @@ export interface NodeRimBox {
     round: boolean
 }
 
+/** What a node actually drew — see {@link HarnessApi.nodeVisual}. */
+export interface NodeVisual {
+    /** Tag of the `.node` element, `null` when the node drew none at all. */
+    shapeTag: string | null
+    /** Its `fill` attribute. A shapeless node's hit box is `transparent`. */
+    shapeFill: string | null
+    /** Its box, when it has one in its attributes (`rect` only). */
+    shapeBox: { width: number, height: number } | null
+    /** The `foreignObject`'s measured box, `null` when the node has no card. */
+    cardBox: { width: number, height: number } | null
+    /** Whether the card sits in the shrink-to-fit shell the renderer owns. */
+    cardShelled: boolean
+    /** The collision radius the node ended up with. */
+    radius: number
+    /** Its rectangular border, when a card or frame gave it one. */
+    borderBox: { width: number, height: number } | null
+    /** The SVG label text, `null` when none was drawn. */
+    label: string | null
+    /** Its resolved `fill`. A label with no shape under it must not be drawn in node-text white. */
+    labelFill: string | null
+    /** Whether the label got the themed pill behind it. */
+    labelPilled: boolean
+}
+
+/** One node in the {@link HarnessApi.loadCustomHtmlNodes} scene. */
+export type CustomNodeSubject =
+    /** `shape: 'none'` + a card whose root is `width: 100%` — the non-self-sizing case. */
+    | 'stretchCard'
+    /** `shape: 'none'` + a self-sizing card. */
+    | 'shapelessCard'
+    /** A card with its shape still drawn behind it. */
+    | 'shapedCard'
+    /** `shape: 'none'` and no content: an invisible node that is still there. */
+    | 'shapelessEmpty'
+    /** `shape: 'none'` + a card returned as a plain string. */
+    | 'stringCard'
+    /** `shape: 'none'` + a card *and* a label, which are separate channels. */
+    | 'cardAndLabel'
+    /** `shape: 'none'` + a centred `text` and nothing else: a bare label on the canvas. */
+    | 'labelOnly'
+    /** No card at all: its `nodeStyleMap` entry styles it as usual. */
+    | 'plain'
+    /** Its `html` callback returns nothing, so the style map styles it as usual. */
+    | 'declined'
+
 /** What {@link HarnessApi.loadBadges} should install alongside the fixture's own badges. */
 export interface BadgeHarnessSpec {
     /** Declare `callbacks.onBadgeClick`, which makes every badge interactive. */
@@ -745,6 +790,21 @@ export interface HarnessApi {
      * the corner — what a badge's placement has to be judged against.
      */
     nodeRimBox(id: string): NodeRimBox | null
+    /** What a node actually drew: its shape element, its card, and the geometry both gave it. */
+    nodeVisual(id: string): NodeVisual | null
+    /**
+     * The paint the browser resolved for a node's shape element, as the state rules left it.
+     * The answer to "does the selected look actually reach this node" without depending on
+     * the zoom a screenshot would be taken at.
+     */
+    nodeShapePaint(id: string): { fill: string, stroke: string, filter: string } | null
+    /**
+     * The custom-HTML-node scene: one pinned node per {@link CustomNodeSubject}, styled
+     * through `nodeStyleMap` so the cards and the plain shapes come from one style chain.
+     * `renderNode` opts in a global callback that cards `stretchCard` only and returns
+     * nothing for the rest.
+     */
+    loadCustomHtmlNodes(spec?: { renderNode?: boolean }): Promise<void>
     /**
      * The shift applied to the whole badge group — zero until a cluster expands and the node
      * slides to the bubble's NW rim, taking its badges with it.
@@ -1699,6 +1759,122 @@ class Harness implements HarnessApi {
                 overflow: badge.classList.contains('pvt-node-badge-overflow'),
             }
         })
+    }
+
+    nodeVisual(id: string): NodeVisual | null {
+        const group = document.getElementById(`node-${id}`)
+        const node = this.graph?.getMutableNode(id)
+        if (!group || !node) return null
+
+        const shape = group.querySelector(':scope > .node')
+        const box = (el: Element | null): { width: number, height: number } | null => {
+            const width = Number(el?.getAttribute('width'))
+            const height = Number(el?.getAttribute('height'))
+            return width > 0 && height > 0 ? { width, height } : null
+        }
+        const card = group.querySelector(':scope > foreignObject')
+        const label = group.querySelector(':scope > .pvt-node-label-group text')
+        const border = node.getBorderBox()
+        return {
+            shapeTag: shape?.tagName.toLowerCase() ?? null,
+            shapeFill: shape?.getAttribute('fill') ?? null,
+            shapeBox: box(shape),
+            cardBox: box(card),
+            cardShelled: !!card?.firstElementChild?.classList.contains('pvt-node-card'),
+            radius: node.getCircleRadius(),
+            borderBox: border ? { width: border.halfWidth * 2, height: border.halfHeight * 2 } : null,
+            label: label?.textContent ?? null,
+            labelFill: label?.getAttribute('fill') ?? null,
+            labelPilled: !!group.querySelector(':scope > .pvt-node-label-group rect'),
+        }
+    }
+
+    nodeShapePaint(id: string): { fill: string, stroke: string, filter: string } | null {
+        const shape = document.getElementById(`node-${id}`)?.querySelector(':scope > .node')
+        if (!shape) return null
+        const resolved = getComputedStyle(shape)
+        return { fill: resolved.fill, stroke: resolved.stroke, filter: resolved.filter }
+    }
+
+    /** A card whose root shrink-wraps its content, the way the docs used to require. */
+    private static selfSizingCard(width: number, height: number): HTMLElement {
+        const el = document.createElement('div')
+        el.style.cssText = `display:inline-flex;box-sizing:border-box;width:${width}px;height:${height}px;background:#ede9fe`
+        return el
+    }
+
+    /**
+     * A card whose root fills its box instead — `width: 100%` of the placeholder the
+     * renderer guessed. Measured naively it reports the guess back and the real content
+     * gets squeezed into it, which is the trap the owned shell exists to close.
+     */
+    private static stretchingCard(width: number, height: number): HTMLElement {
+        const wrap = document.createElement('div')
+        wrap.style.cssText = 'display:flex;align-items:center;justify-content:center;width:100%;height:100%'
+        const inner = document.createElement('div')
+        inner.style.cssText = `display:flex;box-sizing:border-box;width:${width}px;height:${height}px;background:#c4b5fd`
+        wrap.append(inner)
+        return wrap
+    }
+
+    async loadCustomHtmlNodes(spec: { renderNode?: boolean } = {}): Promise<void> {
+        this.destroy()
+
+        const subjects: CustomNodeSubject[] = [
+            'stretchCard', 'shapelessCard', 'shapedCard', 'shapelessEmpty',
+            'stringCard', 'cardAndLabel', 'labelOnly', 'plain', 'declined',
+        ]
+        // Every card comes from `nodeStyleMap`, so the scene also proves a card resolves
+        // through the same chain as any other channel rather than needing `renderNode`.
+        const nodeStyleMap: PlainObject = {
+            stretchCard: { shape: 'none', size: 38, html: () => Harness.stretchingCard(260, 60) },
+            shapelessCard: { shape: 'none', size: 38, html: () => Harness.selfSizingCard(200, 50) },
+            // The shape stays drawn and `size` stays the floor: the pre-existing behaviour.
+            shapedCard: { shape: 'hexagon', size: 38, html: () => Harness.selfSizingCard(200, 50) },
+            shapelessEmpty: { shape: 'none', size: 24 },
+            stringCard: { shape: 'none', size: 38, html: () => 'a plain string' },
+            cardAndLabel: {
+                shape: 'none', size: 38, html: () => Harness.selfSizingCard(200, 50),
+                text: 'beside the card', textVerticalShift: -1.4,
+            },
+            // No shape and no card: the text is the whole node.
+            labelOnly: { shape: 'none', size: 26, text: 'label only', textTruncate: false },
+            plain: { shape: 'hexagon', size: 30, text: 'on a shape' },
+            // Declining leaves this one to the rest of its style-map entry.
+            declined: { shape: 'hexagon', size: 30, html: () => undefined },
+        }
+
+        const nodes = subjects.map((subject, index) => {
+            const node = new Node(subject, { label: '', kind: subject }, {} as never, subject)
+            const x = 400 + (index % 4) * 700, y = 400 + Math.floor(index / 4) * 700
+            node.x = x; node.y = y; node.fx = x; node.fy = y
+            return node
+        })
+
+        const render: PlainObject = {
+            nodeTypeAccessor: (node: Node) => (node.getData() as Record<string, unknown>)?.kind,
+            nodeStyleMap,
+        }
+        // Cards only `stretchCard`; every other node gets nothing back and falls through to
+        // the styling pipeline, which is what makes a global callback usable per node.
+        if (spec.renderNode) {
+            render.renderNode = (node: Node) => node.id === 'stretchCard'
+                ? Harness.stretchingCard(260, 60)
+                : undefined
+        }
+
+        const graph = new Pivotick(
+            this.container,
+            { nodes, edges: [] } as never,
+            mergeOptions(BASE_OPTIONS, { render }) as never,
+        )
+        this.graph = graph
+        await this.whenReady(graph)
+        if (document.fonts?.ready) await document.fonts.ready
+        // Cards measure asynchronously, so wait for the geometry to stop moving rather
+        // than trusting a fixed delay.
+        await this.whenAnchorGeometrySettled(subjects)
+        this.graph.renderer.nextTick()
     }
 
     nodeRimBox(id: string): NodeRimBox | null {

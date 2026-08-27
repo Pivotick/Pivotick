@@ -14,12 +14,22 @@ export interface GraphRendererOptions {
     type: RendererType,
     /**
      * Custom renderer for nodes.
-     * 
+     *
      * Allows full control over how a node is displayed
      * The function can return either:
-     * - An `HTMLElement` to be used as the node, or
-     * - A string to render inside the node
-     * 
+     * - An `HTMLElement` to be used as the node,
+     * - A string to render inside the node, or
+     * - nothing, to leave that node to the normal styling pipeline
+     *
+     * A card returned here **is** the node: no shape, icon, picture or label is drawn
+     * behind it, and its measured size drives the collision radius and edge anchors.
+     * Returning nothing for a node instead gives it its `nodeStyleMap` entry, shape and
+     * label as usual — so this can card a few nodes rather than all of them.
+     *
+     * For a card that composes with the rest of the styling chain, declare
+     * {@link NodeStyle.html} with `shape: 'none'` instead; it resolves per type or per
+     * node, where this one is global.
+     *
      * @example
      * ```ts
      * renderNode: (node: Node): HTMLElement | string | void => {
@@ -228,8 +238,13 @@ export type RendererType = 'svg' | 'canvas'
 /**
  * Represents one of the predefined, common node shapes.
  * These can be rendered using basic SVG elements like `<circle>`, `<rect>`, or `<polygon>`.
+ *
+ * `'none'` draws no shape at all: whatever {@link NodeStyle.html} (or an icon, a picture or
+ * a label) puts on the node *is* the node, and the node's collision radius and edge anchors
+ * come from that content rather than from `size`. The node stays selectable and draggable
+ * over its whole extent.
  */
-export type StandardShape = 'circle' | 'square' | 'triangle' | 'hexagon'
+export type StandardShape = 'circle' | 'square' | 'triangle' | 'hexagon' | 'none'
 
 /**
  * Represents a node with a custom SVG path.
@@ -389,7 +404,20 @@ export interface NodeStyle {
      */
     text?: ((node: Node) => string) | string,
     /**
-     * The html to be used inside the node as an `SVGForeignObject` element
+     * The html to be used inside the node as an `SVGForeignObject` element.
+     *
+     * Resolved like every other channel, so a card can be declared at any level —
+     * `nodeStyleMap[type].html` gives one kind of node a card while the rest keep their
+     * shapes, and a single node's own style overrides that. Returning nothing draws no
+     * card, so one callback can card some nodes and leave the others alone.
+     *
+     * Pair it with `shape: 'none'` for a card that **is** the node. Otherwise the shape is
+     * still drawn behind it, and `size` is the smallest the node can be.
+     *
+     * The card is measured and the node grows to it, so it is never clipped and edges land
+     * on its border. You do not have to make the returned element self-sizing — it is
+     * measured inside a shrink-to-fit box, so `width: 100%` resolves against its own
+     * content rather than against the placeholder.
      *
      * **Trusted HTML only.** Whatever this returns is inserted as-is, so build it with
      * `textContent` (or escape it) rather than interpolating node data into a markup string.

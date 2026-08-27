@@ -70,3 +70,16 @@ export function escapeHtml(value: string): string {
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;')
 }
+
+/**
+ * Whether a resolved CSS paint draws nothing: `none`, or any colour at zero alpha.
+ *
+ * A shapeless node (`shape: 'none'`) is painted in `transparent` so it stays invisible but
+ * still hit-testable, which anything borrowing a node's colour has to notice — an edge or a
+ * cluster halo tinted from it would otherwise come out invisible too.
+ */
+export function isInvisiblePaint(paint: string | null | undefined): boolean {
+    if (!paint) return true
+    const value = paint.trim().toLowerCase()
+    return value === 'none' || value === 'transparent' || /,\s*0(\.0+)?\s*\)$/.test(value)
+}
