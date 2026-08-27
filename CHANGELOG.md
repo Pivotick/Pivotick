@@ -24,14 +24,51 @@
 - **Both tabs push independently.** Nodes hides nodes; Edges hides relations through the layer
   flag, which repaints without moving the layout. Both can be live at once.
 - **It composes with the filter panel instead of competing with it.** The push lands as a single
-  filter under a reserved key, so pressing the panel's own **Filter Graph** never clobbers it
-  and it never clears the panel's filters — a node has to survive both. The panel grows a
+  filter under a reserved key, so nothing the panel's own form applies ever clobbers it and it
+  never clears the panel's filters — a node has to survive both. The panel grows a
   **From the table** row naming what the push is hiding, and clearing it there un-lights the
   dock's button: the form structurally cannot show a reserved key, and a filter you cannot find
   once the dock is folded away is worse than none. While a push is live the dock's count reports
   both halves — `12 of 40 nodes · 28 hidden`.
 - **`UI.table.filterGraph: false`** leaves the button out, for a dock whose controls can never
   touch the canvas at all.
+
+### The filter panel applies itself
+
+- **The `Filter Graph` button is gone from the panel.** A pick or a tick commits the moment you
+  make it, a text or pattern field a beat after the last keystroke, and `Enter` applies at once.
+  The relationship layers and the canvas legend already worked this way; a form behind an apply
+  button read wrong beside them, and it was the only place the panel could show one filter while
+  the canvas had another. **Reset** still clears every attribute filter in one go, and the
+  header pill that *opens* the panel keeps its name.
+- **An unusable pattern is reported while you type**, rather than silently filtering nothing.
+  Whatever was already applied stays applied until the pattern compiles.
+- **A data change rebuilds the panel in place.** It used to append the rebuilt sections, leaving
+  a second, blank copy of the form stacked under the first — the panel read one while you typed
+  into the other — and the regenerated controls now come back holding the live filters.
+
+### HTML nodes compose
+
+- **`shape: 'none'`** draws no shape, so an `html` card *is* the node: its measured box drives
+  the collision radius and the edge anchors instead of `size`. Previously a card was always
+  drawn on top of a shape, and `size` was the smallest the node could be — which left
+  `render.renderNode` as the only way to a card standing on its own, and that replaces the
+  styling chain for the whole graph. A card is now something you give one type of node
+  (`nodeStyleMap[type].html`) or one node, beside every other style channel.
+- **A card no longer has to be self-sizing.** It is measured inside a shrink-to-fit box of the
+  library's own, so a root declared `width: 100%` — the natural way to write "fill the node" —
+  resolves against its own content instead of collapsing onto the placeholder box and being
+  squeezed into it. A card returned as a **string** is measured too; it never was.
+- **Returning nothing means "not this one".** Both `renderNode` and `html` have always been
+  typed to allow it, but a void return left an empty 20×20 card rather than falling through. A
+  callback can now card a few nodes and leave the rest their shapes, icons and labels.
+- **A card-only node has a selected and a hovered look.** Both are drawn on the node's shape
+  element, so a custom node had neither; it now keeps an invisible box, sized to the card, which
+  also makes it clickable and draggable over its whole extent.
+- **A label with no shape under it stays readable.** It gets the themed label colour and pill
+  rather than the node text colour, which is white by default — and so was drawn white on the
+  canvas. A shapeless node with a `text` and no card is a bare label; with neither, it is
+  invisible but still there.
 
 ## 1.6.0 — 2026-08-26
 

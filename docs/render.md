@@ -35,17 +35,18 @@ Pivotick gives you flexible control over rendering, from simple defaults to full
 Here's a quick rundown:
 
 - **`renderNode`** and **`renderLabel`** let you fully customize how nodes and labels are drawn (you can return HTML or text).
+- **`defaultNodeStyle.html`** (per node or per type) is the same escape hatch inside the styling chain — see [HTML nodes](#html-nodes).
 - **`nodeTypeAccessor`** + **`nodeStyleMap`** allow dynamic styling based on each element's type.
 - **`defaultNodeStyle`**, **`defaultEdgeStyle`**, and **`defaultLabelStyle`** define the base appearance for all elements.
 - **`edgeTypeAccessor`** + **`edgeStyleMap`** are the edge counterparts, and they double as
   the key a relation layer is switched off by — see [Edge layers](/edge-layers).
 :::
 
-::: warning `renderNode` content must be self-sizing
-Pivotick measures your element to size its `<foreignObject>` and to feed the
-force layout's collision radius, so its root must shrink-wrap its content — use
-`display: inline-flex`/`inline-block`. A block-level root has no intrinsic width
-and stretches to fill the measured box (which then grows unbounded).
+::: tip Your card is measured, whatever shape it is
+Pivotick measures what you return to size its `<foreignObject>` and to feed the force
+layout's collision radius. The card is measured inside a shrink-to-fit box of the
+library's own, so you do **not** have to make your root self-sizing: `width: 100%` on it
+resolves against its own content rather than against the placeholder.
 :::
 
 The next three rendering examples are using the following data:
@@ -83,6 +84,90 @@ const data = {
     :options="optionsR"
 ></Pivotick>
 
+
+## HTML nodes {#html-nodes}
+
+When no combination of `shape`, `color`, `icon` and `text` will do, hand the renderer some
+markup. There are two ways in, and the difference is only *where they are declared*:
+
+| | Declared on | Reaches |
+|---|---|---|
+| `NodeStyle.html` | `defaultNodeStyle`, `nodeStyleMap[type]`, a node's own style, a `styleCb` return | one type, or one node |
+| `render.renderNode` | the renderer options | every node, ahead of the styling chain |
+
+`html` is the one to reach for first: it is an ordinary style channel, so it resolves
+through the same precedence chain as `color` or `shape`, and a card can be given to one
+kind of node while the rest keep their shapes.
+
+```ts
+const options = {
+    render: {
+        nodeTypeAccessor: (node) => node.getData()?.kind,
+        nodeStyleMap: {
+            // A card, and nothing else: `shape: 'none'` is what makes it the whole node.
+            service: {
+                shape: 'none',
+                html: (node) => {
+                    const card = document.createElement('div')
+                    card.className = 'my-service-card'
+                    card.textContent = node.getData()?.name
+                    return card
+                },
+            },
+            // Same graph, ordinary shapes.
+            host: { shape: 'circle', size: 18, color: '#0891b2' },
+        },
+    },
+}
+```
+
+### `shape: 'none'`
+
+Without it, the shape is **still drawn behind your card**, and `size` is the smallest the
+node is allowed to be — which is what you want for a card sitting on a coloured disc, and
+not what you want for a card that is the node. `shape: 'none'` draws no shape, and hands
+the node's collision radius and edge anchors to the card instead.
+
+It is a shape value like any other, so it composes: a label-only node is
+`shape: 'none'` with a `text` and no card, and an icon-only node is `shape: 'none'` with
+an `iconClass`. A shapeless node with no content at all is invisible — but still there,
+still draggable, and still selectable over `2 × size`.
+
+::: tip What a card does *not* switch off
+`text` is a separate channel, so a card and a node label are drawn together. If your card
+carries its own title, set `text: ''` — an inherited value cannot be cleared with
+`undefined`, which falls through to whatever the style map said.
+:::
+
+### Sizing
+
+Your card is measured and the node grows to it, so it is never clipped, the collision
+force spaces the real cards, and edges land on the card's border rather than on a circle
+around it. You do not have to do anything to make that work — returning a `width: 100%`
+root is fine, because the measurement happens inside a shrink-to-fit box.
+
+Two consequences worth knowing:
+
+- The measurement is **asynchronous** (a card cannot be measured before it is on screen),
+  so a node's radius is its styled `size` for the first frame or two and then becomes the
+  card's. The layout is nudged once when that lands.
+- A card is measured **once, at render**. If its content later changes size on its own,
+  re-render the node to re-measure it.
+
+### Carding only some nodes
+
+Both callbacks may return **nothing** for a node, which hands that node back to the
+styling chain — shape, style-map entry, icons and label as usual. So a single global
+`renderNode` can card the nodes that deserve one:
+
+```ts
+renderNode: (node) => node.getData()?.featured ? buildCard(node) : undefined
+```
+
+::: warning Trusted markup only
+Whatever you return is inserted as-is. Build it with `textContent`, or escape it — do not
+interpolate node data into a markup string. See the [security guide](/security).
+:::
 
 ## Full node labels
 
