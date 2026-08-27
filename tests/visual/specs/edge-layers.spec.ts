@@ -280,8 +280,8 @@ test.describe('with a node filter active', () => {
         await clickLayer(page, 'correlation')
         expect(await switchedOffLayers(page)).toEqual(['correlation'])
 
-        // The panel's button used to reset every filter first, which dropped the layer.
-        await page.locator('.pvt-graph-filter-container button:has-text("Filter Graph")').click()
+        // The attribute form used to reset every filter first, which dropped the layer.
+        await harness(page, 'setPanelValue', 'type', 'attribute')
 
         expect(await switchedOffLayers(page)).toEqual(['correlation'])
         await expectEdgeNotDrawn(page, 'a-b')

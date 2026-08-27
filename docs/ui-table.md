@@ -128,7 +128,7 @@ While a push is live the count reports both halves — `12 of 40 nodes · 28 hid
 so a push is never a filter you cannot find once the dock is folded away.
 
 The push lands as a single filter under a reserved key, which means it composes with the
-filter panel rather than competing with it: pressing the panel's own **Filter Graph** never
+filter panel rather than competing with it: nothing you set in that panel's own form ever
 clobbers a push, and a push never clears the panel's filters. The two are combined, so a
 node has to survive both.
 

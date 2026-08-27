@@ -19,6 +19,11 @@ const options = {
 }
 ```
 
+The form **applies itself**: a pick or a tick commits the moment you make it, a text or
+pattern field a beat after you stop typing. There is no apply button, so the panel can
+never be showing a filter the canvas hasn't got. **Reset**, beside the section label,
+clears every attribute filter at once.
+
 ::: tip Filtering edges, not nodes
 Everything on this page selects **nodes**. To filter *edges* — hiding a whole relation
 kind without moving the graph — declare `UI.filter.edgeFacets` instead; they reuse the
@@ -228,8 +233,8 @@ control and the legend stay in step.
 
 The [data table](/ui-table#apply-to-graph) is a fourth: its **Apply to graph** button
 hides the elements its column filters leave out. That push lands under a reserved key of
-its own, so it survives pressing **Filter Graph** here and is combined with whatever this
-panel is filtering rather than replacing it. Because the form structurally cannot show a
+its own, so it survives anything this panel's form applies and is combined with whatever
+this panel is filtering rather than replacing it. Because the form structurally cannot show a
 reserved key, the panel grows a **From the table** row naming what the push is hiding —
 and the only other place it can be cleared from, once the dock is folded away.
 

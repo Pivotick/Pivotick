@@ -8,7 +8,7 @@ import { TABLE_FILTER_KEY } from '../Table/TableGraphFilter'
 import { FormFactory, type FieldConfig, type FieldOption, type FieldType, type FormValue, type FormValues } from '../../../utils/FormFactory'
 import { nodeNameGetter } from '../../../utils/GraphGetters'
 import { createButton } from '../../components/Button'
-import { funnel, funnelClear, graphEdgeIcon, nodeProperty, show } from '../../icons'
+import { funnelClear, graphEdgeIcon, nodeProperty, show } from '../../icons'
 import { createEdgeSwatchFor } from '../../components/EdgeSwatch'
 import { createInspectModal } from '../modals/InspectNodeModal/InspectNodeModal'
 import type { UIManager } from '../../UIManager'
@@ -18,6 +18,12 @@ import './graphFilter.scss'
 
 
 const DEFAULT_FILTER_BUTTON_TEXT = 'Filter Graph'
+
+/** The field kinds you type into, and so the ones that commit on a pause, not per keystroke. */
+const TYPED_FIELD_TYPES: ReadonlySet<string> = new Set(['text', 'regex', 'numberRange'])
+
+/** How long after the last keystroke a typed field commits itself. */
+const TYPED_APPLY_DELAY_MS = 300
 
 
 export class GraphFilter extends UIComponent {
@@ -32,6 +38,10 @@ export class GraphFilter extends UIComponent {
     private layerRows = new Map<string, HTMLElement>()
     /** Set while the panel writes a layer filter, so it doesn't read its own echo back. */
     private applyingLayers = false
+    /** Same, for the attribute form: pushing values back would rebuild the open picker. */
+    private applyingForm = false
+    /** The pending commit of a typed field, cleared whenever anything else commits first. */
+    private typedApplyTimer?: number
 
     constructor(uiManager: UIManager) {
         super(uiManager)
@@ -48,6 +58,7 @@ export class GraphFilter extends UIComponent {
     }
 
     protected onDestroy() {
+        window.clearTimeout(this.typedApplyTimer)
         this.graphFilter?.remove()
         this.graphFilter = undefined
     }
@@ -83,6 +94,8 @@ export class GraphFilter extends UIComponent {
 
     private rebuild(): void {
         if (!this.graphFilter) return
+        // The form about to be replaced may have a keystroke still waiting to commit.
+        window.clearTimeout(this.typedApplyTimer)
 
         const resetButton = createButton({
             variant: 'secondary',
@@ -103,19 +116,10 @@ export class GraphFilter extends UIComponent {
         })
         this.filteringForm = filteringForm
 
-        const filterButton = createButton({
-            variant: 'primary',
-            text: 'Filter Graph',
-            size: 'block',
-            svgIcon: funnel,
-            onClick: () => {
-                const filters: FormValues = FormFactory.getValues(filteringForm)
-                this.filterGraph(filters)
-            }
-        })
+        this.bindLiveApply(filteringForm)
 
-        // Attribute-filter section: a labelled header (with the reset action), the
-        // generated form, then the primary apply button.
+        // Attribute-filter section: a labelled header (with the reset action) and the
+        // generated form, which applies itself — see bindLiveApply.
         const attributeSection = createHtmlElement('div', { class: 'pvt-filter-section' })
         const attributeHead = createHtmlElement('div', { class: 'pvt-filter-section-head' }, [
             createHtmlElement('span', { class: 'pvt-filter-section-label' }, ['Attributes']),
@@ -123,7 +127,6 @@ export class GraphFilter extends UIComponent {
         ])
         attributeSection.appendChild(attributeHead)
         attributeSection.appendChild(filteringForm)
-        attributeSection.appendChild(filterButton)
 
         this.manuallyFilteredContainer = createHtmlTemplate(`<div class="pvt-hidden-nodes-container">
                 <div class="pvt-filter-section-head">
@@ -153,6 +156,47 @@ export class GraphFilter extends UIComponent {
         this.graphFilter.appendChild(this.fromTableContainer)
         this.graphFilter.appendChild(this.manuallyFilteredContainer)
         this.updateUIFilterFromTable()
+    }
+
+    /**
+     * The attribute form applies itself, like the layer rows and the legend already do:
+     * a pick or a tick commits at once, a typed field a beat after the last keystroke.
+     * A separate apply button only bought a state where the panel showed one filter and
+     * the canvas had another.
+     */
+    private bindLiveApply(form: HTMLFormElement): void {
+        // With no button in it the form is submittable by Enter, which would reload the
+        // page. Enter means "apply now" instead.
+        form.addEventListener('submit', (event) => {
+            event.preventDefault()
+            this.applyForm(form)
+        })
+
+        form.addEventListener('change', (event) => {
+            if (fieldTypeOf(event.target) === undefined) return
+            this.applyForm(form)
+        })
+
+        form.addEventListener('input', (event) => {
+            // Only the typed kinds wait. A picker commits on `change`, and the `input`
+            // events from its own search box belong to no field at all.
+            const type = fieldTypeOf(event.target)
+            if (type === undefined || !TYPED_FIELD_TYPES.has(type)) return
+
+            window.clearTimeout(this.typedApplyTimer)
+            this.typedApplyTimer = window.setTimeout(() => this.applyForm(form), TYPED_APPLY_DELAY_MS)
+        })
+    }
+
+    /** Read the form and apply it, without letting the resulting event echo back into it. */
+    private applyForm(form: HTMLFormElement): void {
+        window.clearTimeout(this.typedApplyTimer)
+        this.applyingForm = true
+        try {
+            this.filterGraph(FormFactory.getValues(form))
+        } finally {
+            this.applyingForm = false
+        }
     }
 
     /**
@@ -352,7 +396,7 @@ export class GraphFilter extends UIComponent {
     // Reflect the active filters (e.g. set via queryEngine.setFilter from code) back into the
     // form controls; without this the panel only updates on dataBatchChanged and stays empty.
     private syncFormFromActiveFilters(filters: GraphFilters): void {
-        if (!this.filteringForm) return
+        if (!this.filteringForm || this.applyingForm) return
         const values: FormValues = {}
         for (const [key, config] of Object.entries(filters)) {
             if (key === 'manuallyHidden' || config === undefined) continue
@@ -605,7 +649,8 @@ export class GraphFilter extends UIComponent {
     private filterGraph(filters: FormValues): void {
         if (this.filteringForm) FormFactory.clearFieldErrors(this.filteringForm)
         // An unusable pattern is a form error, not an exception inside apply(): report it
-        // and leave whatever was already applied in place.
+        // and leave whatever was already applied in place. Reported while you type, too —
+        // a half-written pattern that silently filtered nothing would be worse.
         if (!this.validatePatternFields(filters)) return
 
         const activeFilters: FormValues = this.getActiveFilters(filters)
@@ -682,6 +727,16 @@ export class GraphFilter extends UIComponent {
     }
 
 
+}
+
+/**
+ * Which form field an event came from, by the `data-field-type` the control (or, for a
+ * number range, its container) carries. `undefined` for the picker's own search inputs,
+ * which sit inside the form but are not fields.
+ */
+function fieldTypeOf(target: EventTarget | null): string | undefined {
+    if (!(target instanceof Element)) return undefined
+    return target.closest('[data-field-type]')?.getAttribute('data-field-type') ?? undefined
 }
 
 /** How many elements a push's id list names. `0` when there is no push at all. */

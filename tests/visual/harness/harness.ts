@@ -1003,10 +1003,11 @@ export interface HarnessApi {
     /**
      * Set a filter-panel control's raw value — the `<select>`/`<input>` the picker
      * widget drives — so a test can exercise the real read-back path without
-     * fighting the custom picker UI.
+     * fighting the custom picker UI. Fires `change` like the widget would, so the
+     * form applies itself exactly as it does for a real pick.
      */
     setPanelValue(key: string, value: string): void
-    /** The panel form read through `FormFactory` — exactly what "Filter Graph" applies. */
+    /** The panel form read through `FormFactory` — the values the form applies. */
     panelValues(): Record<string, unknown>
     /** Clear every active query filter, restoring the full graph. */
     resetFilters(): void
@@ -2613,7 +2614,10 @@ class Harness implements HarnessApi {
             ;(control as HTMLSelectElement & { _picker?: { sync(): void } })._picker?.sync()
         } else if (control instanceof HTMLInputElement) {
             control.value = value
+        } else {
+            return
         }
+        control.dispatchEvent(new Event('change', { bubbles: true }))
     }
 
     panelValues(): Record<string, unknown> {

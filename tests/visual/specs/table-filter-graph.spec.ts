@@ -90,8 +90,8 @@ test.describe('table: applying column filters to the graph', () => {
         expect(await buttonState(page)).toMatchObject({ label: 'Clear', lit: true, disabled: false })
     })
 
-    // One reserved key, so the panel's own "Filter Graph" button can never clobber it and
-    // the header pill counts it as the one filter it is.
+    // One reserved key, so the filter panel's own form can never clobber it and the
+    // header pill counts it as the one filter it is.
     test('the push lands as a single reserved filter', async ({ page }) => {
         await openDock(page)
         await chooseType(page, 'router')

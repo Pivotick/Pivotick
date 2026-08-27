@@ -118,9 +118,8 @@ like one that has never heard of layers. Edge visibility is too consequential to
 guess at.
 
 The filter panel grows a **`Relationships`** section: one row per kind, each with a
-line swatch and a count, applying **at once** rather than waiting behind the
-panel's *Filter Graph* button. A layer sitting behind an apply button reads wrong
-when the legend beside it toggles instantly.
+line swatch and a count, applying **at once** — like the attribute fields above it and
+the legend beside it. Nothing in that panel waits behind an apply button.
 
 ### Facets that aren't layers
 

@@ -100,14 +100,9 @@
         border-color: var(--pvt-bg-color-danger);
     }
 
-    // Primary apply button, spaced off the form.
-    .pvt-filter-section > button.pivotick-button-block {
-        margin-top: 18px;
-    }
-
     // ── Relationship layers ────────────────────────────────────────────────
-    // One row per edge kind, toggled live (no apply button): a layer is a lens, and
-    // the canvas legend beside it toggles on click too.
+    // One row per edge kind, like the attribute fields above: applied on the spot.
+    // A layer is a lens, and the canvas legend beside it toggles on click too.
     .pvt-edge-layers {
         margin-top: 20px;
         padding-top: 20px;

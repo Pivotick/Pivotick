@@ -27,6 +27,11 @@ async function expectVisible(page: Page, ids: string[]): Promise<void> {
     expect(await visibleIds(page)).toEqual(ids.slice().sort())
 }
 
+/** Same, but waits: a typed field commits a beat after the last keystroke. */
+async function expectVisibleSoon(page: Page, ids: string[]): Promise<void> {
+    await expect.poll(() => visibleIds(page)).toEqual(ids.slice().sort())
+}
+
 /** Ids still visible *inside* an expanded cluster (its own subgraph + query engine). */
 async function expectVisibleInCluster(page: Page, clusterId: string, ids: string[]): Promise<void> {
     const visible = ((await harness(page, 'subgraphVisibleNodeIds', clusterId)) as string[]).slice().sort()
@@ -154,7 +159,8 @@ test.describe('declared filter facets', () => {
     })
 
     // An uncompilable pattern is a field error, not an exception out of apply() —
-    // and whatever was already applied stays applied.
+    // and whatever was already applied stays applied. Reported as you type: nothing
+    // has to be pressed for it to show up.
     test('an invalid pattern is reported and leaves the filters alone', async ({ page }) => {
         await harness(page, 'loadWithFacets', 'mispLike')
         await harness(page, 'setFilter', 'tags', { value: 'malware' })
@@ -162,27 +168,24 @@ test.describe('declared filter facets', () => {
 
         const panel = await openFilterPanel(page, 6)
         await panel.locator('[data-field-key="value"]').fill('[unclosed')
-        await panel.getByRole('button', { name: 'Filter Graph' }).click()
 
         await expect(panel.locator('.pvt-form-error')).toHaveText('Invalid pattern')
         await expectVisible(page, ['a1'])
     })
 
-    // Editing the offending field clears the error, and applying then works.
+    // Editing the offending field clears the error, and the fixed pattern applies.
     test('fixing the pattern clears the error and applies', async ({ page }) => {
         await harness(page, 'loadWithFacets', 'mispLike')
         const panel = await openFilterPanel(page, 6)
         const pattern = panel.locator('[data-field-key="value"]')
 
         await pattern.fill('[unclosed')
-        await panel.getByRole('button', { name: 'Filter Graph' }).click()
         await expect(panel.locator('.pvt-form-error')).toBeVisible()
 
         await pattern.fill('^8\\.')
         await expect(panel.locator('.pvt-form-error')).toHaveCount(0)
-        await panel.getByRole('button', { name: 'Filter Graph' }).click()
 
-        await expectVisible(page, ['a1'])
+        await expectVisibleSoon(page, ['a1'])
     })
 
     // Declaring facets must not cost the panel's existing wiring: a filter set from
@@ -210,7 +213,7 @@ test.describe('declared filter facets', () => {
         await harness(page, 'setPanelValue', 'to_ids', 'false')
         expect(await harness(page, 'panelValues')).toMatchObject({ to_ids: false })
 
-        await harness(page, 'setFilter', 'to_ids', { value: false })
+        // Setting the control is the whole act — the form applies itself.
         await expectVisible(page, ['a2', 'obj'])
     })
 })
@@ -271,5 +274,72 @@ test.describe('auto-derived facets', () => {
         await harness(page, 'setFilter', 'category', { value: 'Payload', matchMode: 'partial' })
 
         await expectVisible(page, ['a3', 'obj'])
+    })
+})
+
+/**
+ * The form applies itself: there is no apply button, so the panel can never be
+ * showing one filter while the canvas has another. A pick or a tick commits at
+ * once; a typed field commits a beat after the last keystroke.
+ */
+test.describe('the attribute form applies itself', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoHarness(page)
+    })
+
+    test('the panel has no apply button', async ({ page }) => {
+        await harness(page, 'loadWithFacets', 'mispLike')
+        const panel = await openFilterPanel(page, 6)
+
+        // Reset is still there; the thing that used to apply is not. (The header
+        // pill that *opens* this panel is outside it and keeps its name.)
+        await expect(panel.getByRole('button', { name: 'Filter Graph' })).toHaveCount(0)
+        await expect(panel.getByRole('button', { name: 'Reset' })).toHaveCount(1)
+    })
+
+    test('picking a value in a picker filters the graph on the spot', async ({ page }) => {
+        await harness(page, 'loadWithFacets', 'mispLike')
+        const panel = await openFilterPanel(page, 6)
+
+        const tagField = panel.locator('.pvt-form-element').filter({ hasText: 'Tag' }).first()
+        await tagField.locator('.pvt-picker__control').click()
+        await tagField.locator('.pvt-picker__option', { hasText: 'malware' }).first().click()
+
+        // a1 is the only node tagged `malware`.
+        await expectVisibleSoon(page, ['a1'])
+    })
+
+    // pressSequentially, not fill: it fires `input` per key and never `change`, so
+    // this is the debounced path and not a commit on blur.
+    test('a typed field applies once the keystrokes stop', async ({ page }) => {
+        await harness(page, 'loadWithFacets', 'mispLike')
+        const panel = await openFilterPanel(page, 6)
+
+        await panel.locator('[data-field-key="value"]').pressSequentially('^8\\.')
+
+        await expectVisibleSoon(page, ['a1'])
+    })
+
+    // A form with one text field and no button in it submits on Enter, which would
+    // reload the page. Enter has to mean "apply now" instead.
+    test('Enter applies the field instead of submitting the form', async ({ page }) => {
+        await loadFixture(page, 'mispLike', {
+            UI: { filter: { facets: [{ key: 'value', label: 'Value', type: 'text' }] } },
+        })
+        await harness(page, 'openFilterPanel')
+        const panel = page.locator('.pvt-slide-panel.open')
+        await panel.waitFor({ state: 'visible' })
+
+        // Survives only if the page never navigated.
+        await page.evaluate(() => { (window as unknown as { __noReload?: boolean }).__noReload = true })
+
+        const field = panel.locator('[data-field-key="value"]')
+        await field.pressSequentially('8.8.8.8')
+        await field.press('Enter')
+
+        await expectVisibleSoon(page, ['a1'])
+        expect(await page.evaluate(
+            () => (window as unknown as { __noReload?: boolean }).__noReload
+        )).toBe(true)
     })
 })
