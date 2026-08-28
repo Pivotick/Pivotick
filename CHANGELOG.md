@@ -1,137 +1,22 @@
 # Changelog
 
-## Unreleased
-
-### The table can filter the graph
-
-- **`Apply to graph`, in the data dock's toolbar**, hides the elements the column filters leave
-  out — the bridge between narrowing what you *read* and narrowing what the canvas *shows*.
-  Narrow the rows until the table lists what you care about, press it once, and the graph shows
-  the same thing. Nothing happens until it is pressed, so a column filter is still reading by
-  default and the `Visibility` column goes on reporting the truth beside it.
-- **Three states in one button.** Unlit `Apply to graph` means nothing is pushed, and it stays
-  disabled until a filter is actually narrowing something; lit `Clear` means the graph is
-  filtered and agrees with your filters; lit `Apply to graph` means an earlier push is still on
-  the canvas and the filters have moved past it. Staleness is decided by comparing what *would*
-  be hidden rather than by whether a control moved — so two different filters that exclude the
-  same rows leave the button settled, and data changing underneath re-offers the press.
-- **It hides exactly what the filters left out**, never "show only these". A node that arrives
-  after the push stays on the canvas, and an expanded cluster's interior is left alone: the
-  engine hands active filters down into a cluster's own engine, where a show-only-these filter
-  would blank the lot. The `Visibility` column is never part of a push, though it still narrows
-  rows like any other — its values *are* the graph's filter state, so pushing them would hide
-  whatever is on the canvas and then disagree with itself.
-- **Both tabs push independently.** Nodes hides nodes; Edges hides relations through the layer
-  flag, which repaints without moving the layout. Both can be live at once.
-- **It composes with the filter panel instead of competing with it.** The push lands as a single
-  filter under a reserved key, so nothing the panel's own form applies ever clobbers it and it
-  never clears the panel's filters — a node has to survive both. The panel grows a
-  **From the table** row naming what the push is hiding, and clearing it there un-lights the
-  dock's button: the form structurally cannot show a reserved key, and a filter you cannot find
-  once the dock is folded away is worse than none. While a push is live the dock's count reports
-  both halves — `12 of 40 nodes · 28 hidden`.
-- **`UI.table.filterGraph: false`** leaves the button out, for a dock whose controls can never
-  touch the canvas at all.
-
-### The filter panel applies itself
-
-- **The `Filter Graph` button is gone from the panel.** A pick or a tick commits the moment you
-  make it, a text or pattern field a beat after the last keystroke, and `Enter` applies at once.
-  The relationship layers and the canvas legend already worked this way; a form behind an apply
-  button read wrong beside them, and it was the only place the panel could show one filter while
-  the canvas had another. **Reset** still clears every attribute filter in one go, and the
-  header pill that *opens* the panel keeps its name.
-- **An unusable pattern is reported while you type**, rather than silently filtering nothing.
-  Whatever was already applied stays applied until the pattern compiles.
-- **A data change rebuilds the panel in place.** It used to append the rebuilt sections, leaving
-  a second, blank copy of the form stacked under the first — the panel read one while you typed
-  into the other — and the regenerated controls now come back holding the live filters.
-
-### HTML nodes compose
-
-- **`shape: 'none'`** draws no shape, so an `html` card *is* the node: its measured box drives
-  the collision radius and the edge anchors instead of `size`. Previously a card was always
-  drawn on top of a shape, and `size` was the smallest the node could be — which left
-  `render.renderNode` as the only way to a card standing on its own, and that replaces the
-  styling chain for the whole graph. A card is now something you give one type of node
-  (`nodeStyleMap[type].html`) or one node, beside every other style channel.
-- **A card no longer has to be self-sizing.** It is measured inside a shrink-to-fit box of the
-  library's own, so a root declared `width: 100%` — the natural way to write "fill the node" —
-  resolves against its own content instead of collapsing onto the placeholder box and being
-  squeezed into it. A card returned as a **string** is measured too; it never was.
-- **Returning nothing means "not this one".** Both `renderNode` and `html` have always been
-  typed to allow it, but a void return left an empty 20×20 card rather than falling through. A
-  callback can now card a few nodes and leave the rest their shapes, icons and labels.
-- **A card-only node has a selected and a hovered look.** Both are drawn on the node's shape
-  element, so a custom node had neither; it now keeps an invisible box, sized to the card, which
-  also makes it clickable and draggable over its whole extent.
-- **A label with no shape under it stays readable.** It gets the themed label colour and pill
-  rather than the node text colour, which is white by default — and so was drawn white on the
-  canvas. A shapeless node with a `text` and no card is a bare label; with neither, it is
-  invisible but still there.
-
-### A selected node keeps its colour
-
-- **Selection draws a ring instead of repainting the node.** A selected node used to have its
-  fill replaced by the selection colour, which threw away the one thing the colour was there to
-  say — a node encoding its type, its cluster or its score went uniformly lobster the moment you
-  clicked it, and in a sidebar's neighbour graph the focal node was indistinguishable from a
-  genuinely red one. It now keeps its own `color` and takes the selection colour on its rim, the
-  way a highlighted node already did.
-- **Selection outranks highlight on the rim they now share.** Both states paint the same edge, so
-  a node that is selected *and* highlighted — hovering its table row, following a note's
-  `[[node]]` link — keeps the selection colour rather than reading as though it had been let go
-  of.
-- **A card-only node rings its card.** `shape: 'none'` leaves an invisible box under the card for
-  the state looks to land on; a ring is drawn centred on that box's edge, so it clears an opaque
-  card where a fill behind it could not. The box stays exactly the card's size, since the badge
-  rim and the pointer hit area are measured off it too, and it takes the card's `border-radius`
-  so the ring is not a sharp box around a rounded card.
-- **`--pvt-node-selected-stroke-opacity` now defaults to `1`.** Zeroing it was what actually hid
-  the selection ring; `--pvt-node-selected-stroke-width` never applied, because the pulse
-  animation sets a width of its own and an animated declaration wins. Both are still yours to
-  override — set the opacity to `0` for the old fill-only look.
-
-### Selecting an edge shows
-
-- **A selected edge is painted again.** It had stopped entirely: the class that carries the
-  selected look was only applied while an edge was being *redrawn*, and selecting one
-  deliberately does not redraw it — a full redraw recreates the label and loses the listeners
-  hung off it. So nothing ever added the class, and a selected edge looked exactly like an idle
-  one. It is now applied on each render pass, the way a node's selected state already was.
-  Deselecting takes it off again, and an edge selected as part of a multi-selection lights up
-  too, which it never did.
-- **A highlighted edge no longer vanishes in the dark theme.** Edges borrowed
-  `--pvt-node-highlighted-stroke-width`, which is `0` there — harmless on a node, whose pulse
-  animation overrides it, and fatal on an edge, which has no animation. Edges now have their own
-  `--pvt-edge-highlighted-stroke`, `-stroke-width` and `-filter`.
-- **A highlighted edge gets its glow.** The rule sat outside the `.pvt-edge-group` block, so it
-  tied with that block's own `path` rule and lost on source order — the highlight's `filter` was
-  never applied in either theme. Selection still outranks highlight on an edge, as it now does on
-  a node.
-- **The light theme's selected edge is the selection colour, not orange.** Its glow and its
-  label outline were hard-coded `orange` while the dark theme, and every other selected thing,
-  used the selection colour.
-- **A state look never draws thinner than what it decorates.** The selected and highlighted
-  widths were fixed, and these rules *replace* the stroke they land on — so a node with a 12px
-  border got a 3px ring, and a 14px edge dropped to 3px on highlight. They are floors now: a
-  stroke already past the floor grows by `--pvt-state-stroke-boost` instead. A default-width
-  node or edge is unchanged, and the node pulse breathes around the resolved width rather than
-  a hard-coded 3.
-
-## 1.6.0 — 2026-08-26
+## 1.6.0 — 2026-08-28
 
 Three headline additions, each of them something a force layout is bad at on its own: a **data
-dock** under the canvas — the graph as a sortable, selectable table, and a host for panes of
-your own — a **minimap** with the renderer viewport API behind it, and a **filtering legend**
-in a canvas corner, which now keys several dimensions at once. Alongside them the layout
-stopped needing to be configured: physics tunes itself from what is on screen, it moved into a
-rail mode of its own, and tree layouts now handle cyclic, disconnected and data-declared
-hierarchies. The canvas itself carries more: **edges come in kinds** that can be styled and
-switched off without moving the graph, nodes carry **rim badges**, and the background is a
-control rather than a constant. Two contracts got real: every user-initiated write goes through
-a before-hook, and every content renderer may return a promise. The breaking changes are
-confined to the physics presets — see **Breaking** under *The layout tunes itself*.
+dock** under the canvas — the graph as a sortable, selectable table, a host for panes of your
+own, and a place to narrow what the canvas shows — a **minimap** with the renderer viewport API
+behind it, and a **filtering legend** in a canvas corner, which now keys several dimensions at
+once. Alongside them the layout stopped needing to be configured: physics tunes itself from what
+is on screen, it moved into a rail mode of its own, and tree layouts now handle cyclic,
+disconnected and data-declared hierarchies. The canvas itself carries more: **edges come in
+kinds** that can be styled and switched off without moving the graph, nodes carry **rim
+badges**, an **HTML card can be the whole node** rather than a decoration on top of a shape, and
+the background is a control rather than a constant. What it draws is measured rather than
+guessed: **an edge meets a node on its real border**, and a selected node is **ringed instead of
+repainted**. Filtering lost its apply button — the attribute form commits as you set it, the way
+the legend and the relationship layers already did. Two contracts got real: every user-initiated
+write goes through a before-hook, and every content renderer may return a promise. The breaking
+changes are confined to the physics presets — see **Breaking** under *The layout tunes itself*.
 
 ### The graph as a table
 
@@ -146,8 +31,8 @@ confined to the physics presets — see **Breaking** under *The layout tunes its
   `excluded` (hidden by hand). "23 nodes hidden" is a claim you should be able to inspect, and
   a table that quietly drops the rows you are looking for is worse than no table — each state
   differs in weight and border as well as colour, and a hidden node's whole row recedes. A
-  cluster gets one row and a **`Children`** count instead: its children are nodes of another
-  graph, so `Visibility` and `Degree` would both be answering about the wrong one.
+  cluster carries a **`Children`** count of its own, and its contents get rows of their own
+  too — see *Nodes inside a cluster get rows too*.
 - **The Edges tab gets the same `Visibility` gutter**, because a hidden edge that read as
   present was the whole complaint. An edge reads `filtered` when its own layer is switched
   off and **`endpoint`** when an end of it has left the canvas — filtered out, or inside a
@@ -186,6 +71,60 @@ confined to the physics presets — see **Breaking** under *The layout tunes its
   better instrument for *building* the selection those act on. `graph.openTable()` /
   `closeTable()` / `toggleTable()` drive it from code, and dragging the divider resizes it —
   the canvas keeps a floor whatever you ask for.
+
+### Nodes inside a cluster get rows too
+
+- **A cluster's contents are listed as peers of the graph's own nodes**, with a **`Cluster`**
+  column giving the path they came from, outermost first, beside the **`Children`** count of the
+  cluster itself. Both appear on any graph that has clusters. A collapsed cluster used to be a
+  dead end in the dock — a count of what it was hiding, and no way to read any of it without
+  opening the cluster on the canvas first.
+- **They are flat, not indented under their cluster.** The table exists to answer what the
+  canvas cannot — which nodes are the hubs, which are over a threshold — and that only holds if
+  a sort or a filter reaches every row equally. A tree can only ever sort siblings.
+- **A nested node is not drawn by this graph**, and the dock says so rather than pretending
+  otherwise: an open cluster renders a subgraph of its own, so `Visibility` reads **`nested`**
+  while any cluster above the node is shut and `visible` once they are all open. It is never
+  `filtered` — no filter put it there. `Degree` stays the node's own arithmetic, counting its
+  real edges rather than the stand-in the canvas draws while its cluster is closed.
+- **Clicking a row selects the node** — often the only way to reach it at all — and
+  **double-clicking opens the cluster hiding it**, one level per press. An export carries the
+  nested rows and their path along with everything else.
+- **`UI.table.nested: false`** never offers them, and the header's **Nested nodes** switch takes
+  them back out for a reader who only wants the top level, leaving `Children` as all a cluster's
+  row says about its contents. The switch leaves the bar while the dock is folded, and the edges
+  tab never shows it.
+
+### The table can filter the graph
+
+- **`Apply to graph`, in the data dock's toolbar**, hides the elements the column filters leave
+  out — the bridge between narrowing what you *read* and narrowing what the canvas *shows*.
+  Narrow the rows until the table lists what you care about, press it once, and the graph shows
+  the same thing. Nothing happens until it is pressed, so a column filter is still reading by
+  default and the `Visibility` column goes on reporting the truth beside it.
+- **Three states in one button.** Unlit `Apply to graph` means nothing is pushed, and it stays
+  disabled until a filter is actually narrowing something; lit `Clear` means the graph is
+  filtered and agrees with your filters; lit `Apply to graph` means an earlier push is still on
+  the canvas and the filters have moved past it. Staleness is decided by comparing what *would*
+  be hidden rather than by whether a control moved — so two different filters that exclude the
+  same rows leave the button settled, and data changing underneath re-offers the press.
+- **It hides exactly what the filters left out**, never "show only these". A node that arrives
+  after the push stays on the canvas, and an expanded cluster's interior is left alone: the
+  engine hands active filters down into a cluster's own engine, where a show-only-these filter
+  would blank the lot. The `Visibility` column is never part of a push, though it still narrows
+  rows like any other — its values *are* the graph's filter state, so pushing them would hide
+  whatever is on the canvas and then disagree with itself.
+- **Both tabs push independently.** Nodes hides nodes; Edges hides relations through the layer
+  flag, which repaints without moving the layout. Both can be live at once.
+- **It composes with the filter panel instead of competing with it.** The push lands as a single
+  filter under a reserved key, so nothing the panel's own form applies ever clobbers it and it
+  never clears the panel's filters — a node has to survive both. The panel grows a
+  **From the table** row naming what the push is hiding, and clearing it there un-lights the
+  dock's button: the form structurally cannot show a reserved key, and a filter you cannot find
+  once the dock is folded away is worse than none. While a push is live the dock's count reports
+  both halves — `12 of 40 nodes · 28 hidden`.
+- **`UI.table.filterGraph: false`** leaves the button out, for a dock whose controls can never
+  touch the canvas at all.
 
 ### The dock holds more than the table
 
@@ -415,6 +354,99 @@ confined to the physics presets — see **Breaking** under *The layout tunes its
   merging, so a node's own `badges` **replaces** what `nodeStyleMap` or `defaultNodeStyle` gave
   it. `[]` is how a node says it wears none; `undefined` renders no badge group at all.
 
+### An edge meets a node on its own border
+
+- **Every anchor is measured from the shape that was drawn**, rather than from a circle around
+  it. Straight edges, curved ones, self-loops, note connectors and the edge-creation preview all
+  stopped at a single scalar radius — `getCircleRadius()`, or the style's `size` — and one number
+  cannot fit a box with two different half-extents: it is too long for the short axis and too
+  short for the long one, so the same node showed a gap above and below while the edges on its
+  sides ran in underneath it. The node drawers now report the box they actually rendered, and
+  each of those five places asks for the distance to that border along its own direction.
+- **A circle is untouched.** A node with no measured border falls back to its radius, which is
+  what a circle, an icon and a plain sized node still are — so a graph of round nodes looks
+  exactly as it did.
+- **A card is measured at any zoom.** An `html` node's border comes from its own content rather
+  than from the placeholder box it was first rendered into, so its edges meet the card's edge
+  whatever the zoom was at the time.
+- **New on `Node`:** `setBorderBox(width, height)`, `getBorderBox(outset?)` and
+  `getBorderDistance(dirX, dirY, outset?)`, with the `NodeBorderBox` type. A custom drawer that
+  paints its own shape can declare its border and get the anchoring for free — but
+  `setCircleRadius()` **clears** any measured border, so call `setBorderBox()` *after* it, never
+  before.
+
+### HTML nodes compose
+
+- **`shape: 'none'`** draws no shape, so an `html` card *is* the node: its measured box drives
+  the collision radius and the edge anchors instead of `size`. Previously a card was always
+  drawn on top of a shape, and `size` was the smallest the node could be — which left
+  `render.renderNode` as the only way to a card standing on its own, and that replaces the
+  styling chain for the whole graph. A card is now something you give one type of node
+  (`nodeStyleMap[type].html`) or one node, beside every other style channel.
+- **A card no longer has to be self-sizing.** It is measured inside a shrink-to-fit box of the
+  library's own, so a root declared `width: 100%` — the natural way to write "fill the node" —
+  resolves against its own content instead of collapsing onto the placeholder box and being
+  squeezed into it. A card returned as a **string** is measured too; it never was.
+- **Returning nothing means "not this one".** Both `renderNode` and `html` have always been
+  typed to allow it, but a void return left an empty 20×20 card rather than falling through. A
+  callback can now card a few nodes and leave the rest their shapes, icons and labels.
+- **A card-only node has a selected and a hovered look.** Both are drawn on the node's shape
+  element, so a custom node had neither; it now keeps an invisible box, sized to the card, which
+  also makes it clickable and draggable over its whole extent.
+- **A label with no shape under it stays readable.** It gets the themed label colour and pill
+  rather than the node text colour, which is white by default — and so was drawn white on the
+  canvas. A shapeless node with a `text` and no card is a bare label; with neither, it is
+  invisible but still there.
+
+### A selected node keeps its colour
+
+- **Selection draws a ring instead of repainting the node.** A selected node used to have its
+  fill replaced by the selection colour, which threw away the one thing the colour was there to
+  say — a node encoding its type, its cluster or its score went uniformly lobster the moment you
+  clicked it, and in a sidebar's neighbour graph the focal node was indistinguishable from a
+  genuinely red one. It now keeps its own `color` and takes the selection colour on its rim, the
+  way a highlighted node already did.
+- **Selection outranks highlight on the rim they now share.** Both states paint the same edge, so
+  a node that is selected *and* highlighted — hovering its table row, following a note's
+  `[[node]]` link — keeps the selection colour rather than reading as though it had been let go
+  of.
+- **A card-only node rings its card.** `shape: 'none'` leaves an invisible box under the card for
+  the state looks to land on; a ring is drawn centred on that box's edge, so it clears an opaque
+  card where a fill behind it could not. The box stays exactly the card's size, since the badge
+  rim and the pointer hit area are measured off it too, and it takes the card's `border-radius`
+  so the ring is not a sharp box around a rounded card.
+- **`--pvt-node-selected-stroke-opacity` now defaults to `1`.** Zeroing it was what actually hid
+  the selection ring; `--pvt-node-selected-stroke-width` never applied, because the pulse
+  animation sets a width of its own and an animated declaration wins. Both are still yours to
+  override — set the opacity to `0` for the old fill-only look.
+
+### Selecting an edge shows
+
+- **A selected edge is painted again.** It had stopped entirely: the class that carries the
+  selected look was only applied while an edge was being *redrawn*, and selecting one
+  deliberately does not redraw it — a full redraw recreates the label and loses the listeners
+  hung off it. So nothing ever added the class, and a selected edge looked exactly like an idle
+  one. It is now applied on each render pass, the way a node's selected state already was.
+  Deselecting takes it off again, and an edge selected as part of a multi-selection lights up
+  too, which it never did.
+- **A highlighted edge no longer vanishes in the dark theme.** Edges borrowed
+  `--pvt-node-highlighted-stroke-width`, which is `0` there — harmless on a node, whose pulse
+  animation overrides it, and fatal on an edge, which has no animation. Edges now have their own
+  `--pvt-edge-highlighted-stroke`, `-stroke-width` and `-filter`.
+- **A highlighted edge gets its glow.** The rule sat outside the `.pvt-edge-group` block, so it
+  tied with that block's own `path` rule and lost on source order — the highlight's `filter` was
+  never applied in either theme. Selection still outranks highlight on an edge, as it now does on
+  a node.
+- **The light theme's selected edge is the selection colour, not orange.** Its glow and its
+  label outline were hard-coded `orange` while the dark theme, and every other selected thing,
+  used the selection colour.
+- **A state look never draws thinner than what it decorates.** The selected and highlighted
+  widths were fixed, and these rules *replace* the stroke they land on — so a node with a 12px
+  border got a 3px ring, and a 14px edge dropped to 3px on highlight. They are floors now: a
+  stroke already past the floor grows by `--pvt-state-stroke-boost` instead. A default-width
+  node or edge is unchanged, and the node pulse breathes around the resolved width rather than
+  a hard-coded 3.
+
 ### The layout tunes itself
 
 - **`Auto` is the new default physics preset.** Rather than applying one fixed bundle of force
@@ -628,6 +660,20 @@ confined to the physics presets — see **Breaking** under *The layout tunes its
   rather than taking the render down. Declared facets are handed down to an expanded cluster's
   subgraph, so they keep working there.
 
+### The filter panel applies itself
+
+- **The `Filter Graph` button is gone from the panel.** A pick or a tick commits the moment you
+  make it, a text or pattern field a beat after the last keystroke, and `Enter` applies at once.
+  The relationship layers and the canvas legend already worked this way; a form behind an apply
+  button read wrong beside them, and it was the only place the panel could show one filter while
+  the canvas had another. **Reset** still clears every attribute filter in one go, and the
+  header pill that *opens* the panel keeps its name.
+- **An unusable pattern is reported while you type**, rather than silently filtering nothing.
+  Whatever was already applied stays applied until the pattern compiles.
+- **A data change rebuilds the panel in place.** It used to append the rebuilt sections, leaving
+  a second, blank copy of the form stacked under the first — the panel read one while you typed
+  into the other — and the regenerated controls now come back holding the live filters.
+
 ### Every user write goes through a hook
 
 - **Every mutation a user can perform is now proposed to your code first**, asynchronously, and
@@ -711,7 +757,7 @@ confined to the physics presets — see **Breaking** under *The layout tunes its
 - **New exports:** `minimap` and `tableColumns` (both also attached to the browser global), plus
   the types `MinimapOptions`, `MinimapPosition`, `GraphBounds`, `ViewportTarget`, `TableOptions`,
   `TableColumn`, `TableTab`, `TableSortDirection`, `TableExportFormat`, `TableVisibility`,
-  `DockTab` and `DockTabHandle`.
+  `DockTab`, `DockTabHandle` and `NodeBorderBox`.
 
 ### Fixed
 
