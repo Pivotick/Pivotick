@@ -197,6 +197,9 @@ export class EdgeDrawer {
             .append('path')
             .attr('stroke', style.strokeColor ?? 'var(--pvt-edge-stroke)')
             .attr('stroke-width', style.strokeWidth ?? 'var(--pvt-edge-stroke-width)')
+            // Published so the selected and highlighted strokes can be drawn relative to it:
+            // they replace this width, and a fixed one would render a thick edge thinner.
+            .style('--pvt-edge-own-stroke-width', String(style.strokeWidth ?? 'var(--pvt-edge-stroke-width)'))
             .attr('stroke-opacity', style.opacity)
 
         if (style.dashed) {

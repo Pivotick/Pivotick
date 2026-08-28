@@ -165,6 +165,11 @@ $light-theme: (
     // leaves a white-on-white badge. Neutral chrome, so it borrows no single badge's colour.
     pvt-badge-overflow-color: #64748b,
 
+    // How much thicker than its own border a node's or edge's state ring is drawn. The
+    // widths below are floors, not fixed sizes: a stroke already thicker than the floor
+    // grows by this instead, so decorating it can never make it thinner.
+    pvt-state-stroke-boost: 1,
+
     /* Node selected state */
     pvt-node-selected-color: map.get($light-vibrant-color-palette, vibrant-lobster),
     pvt-node-selected-stroke: var(--pvt-selection-stroke-color),
@@ -442,6 +447,9 @@ $dark-theme: (
     // Mid-slate in both themes: the secondary background is near-white in light mode, which
     // leaves a white-on-white badge. Neutral chrome, so it borrows no single badge's colour.
     pvt-badge-overflow-color: #64748b,
+
+    // See the light theme's note: the state widths are floors, not fixed sizes.
+    pvt-state-stroke-boost: 1,
 
     /* Node selected state */
     pvt-node-selected-color: var(--pvt-selection-color),

@@ -129,15 +129,25 @@ export async function centerOf(locator: Locator): Promise<{ x: number; y: number
 }
 
 /**
+ * The number of user units a computed stroke width comes to.
+ *
+ * It arrives as `'3px'` normally, and as `'calc(13px)'` wherever the state rules resolved it
+ * against the element's own border — so the digits have to be picked out rather than coerced.
+ */
+export function strokeWidthOf(paint: NodeShapePaint): number {
+    const digits = paint.strokeWidth.match(/-?\d*\.?\d+/)
+    return digits ? Number(digits[0]) : NaN
+}
+
+/**
  * Whether a stroke is actually painted on a node's shape.
  *
  * Three things have to line up, and the selection look used to fail on the last two: a
  * colour, a width, and an opacity. `--pvt-node-selected-stroke-opacity: 0` kept a lobster
- * `stroke` resolving while drawing nothing at all. `strokeWidth` arrives as `'3px'`, so it
- * needs parsing rather than coercing.
+ * `stroke` resolving while drawing nothing at all.
  */
 export function ringIsDrawn(paint: NodeShapePaint): boolean {
     return paint.stroke !== 'none'
-        && parseFloat(paint.strokeWidth) > 0
+        && strokeWidthOf(paint) > 0
         && parseFloat(paint.strokeOpacity) > 0
 }

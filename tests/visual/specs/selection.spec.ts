@@ -9,6 +9,7 @@ import {
     canvas,
     expectCanvas,
     ringIsDrawn,
+    strokeWidthOf,
 } from '../helpers'
 import type { NodeShapePaint } from '../harness/harness'
 
@@ -74,7 +75,7 @@ test.describe('selection', () => {
         await harness(page, 'selectEdge', 'a-b')
         const selected = await harness(page, 'edgePaint', 'a-b') as NodeShapePaint
         expect(selected.stroke).toBe(selectionColor)
-        expect(parseFloat(selected.strokeWidth)).toBeGreaterThan(parseFloat(idle.strokeWidth))
+        expect(strokeWidthOf(selected)).toBeGreaterThan(strokeWidthOf(idle))
 
         await harness(page, 'deselectAll')
         expect(await harness(page, 'edgePaint', 'a-b')).toEqual(idle)
@@ -105,7 +106,7 @@ test.describe('selection', () => {
             await harness(page, 'highlightEdge', 'a-b')
 
             const paint = await harness(page, 'edgePaint', 'a-b') as NodeShapePaint
-            expect(parseFloat(paint.strokeWidth), theme).toBeGreaterThan(0)
+            expect(strokeWidthOf(paint), theme).toBeGreaterThan(0)
             expect(paint.filter, theme).toContain('drop-shadow')
         }
     })
@@ -121,6 +122,48 @@ test.describe('selection', () => {
 
         await harness(page, 'selectEdge', 'a-b')
         expect((await harness(page, 'edgePaint', 'a-b') as NodeShapePaint).stroke).toBe(selectionColor)
+    })
+
+    // The state rules replace the stroke they are drawn on, so a fixed width made decorating
+    // a heavy border or a fat edge visibly *thin* it — a 12px node border became a 3px ring.
+    // The themed widths are floors now, and anything already past them grows instead.
+    test('a state ring is never thinner than the stroke it decorates', async ({ page }) => {
+        await loadFixture(page, 'basic', {
+            render: {
+                defaultNodeStyle: { strokeWidth: 12 },
+                defaultEdgeStyle: { strokeWidth: 14 },
+            },
+        })
+        const nodeBorder = strokeWidthOf(await harness(page, 'nodeShapePaint', 'a') as NodeShapePaint)
+        const edgeBorder = strokeWidthOf(await harness(page, 'edgePaint', 'a-b') as NodeShapePaint)
+        expect([nodeBorder, edgeBorder]).toEqual([12, 14])
+
+        await harness(page, 'highlightNode', 'a')
+        await harness(page, 'highlightEdge', 'a-b')
+        expect(strokeWidthOf(await harness(page, 'nodeShapePaint', 'a') as NodeShapePaint))
+            .toBeGreaterThan(nodeBorder)
+        expect(strokeWidthOf(await harness(page, 'edgePaint', 'a-b') as NodeShapePaint))
+            .toBeGreaterThan(edgeBorder)
+
+        await harness(page, 'selectNode', 'a')
+        expect(strokeWidthOf(await harness(page, 'nodeShapePaint', 'a') as NodeShapePaint))
+            .toBeGreaterThan(nodeBorder)
+        await harness(page, 'selectEdge', 'a-b')
+        expect(strokeWidthOf(await harness(page, 'edgePaint', 'a-b') as NodeShapePaint))
+            .toBeGreaterThan(edgeBorder)
+    })
+
+    // …and a default-width one is untouched by that: the floors are what it still gets.
+    test('a default-width stroke keeps the widths the theme names', async ({ page }) => {
+        await harness(page, 'selectNode', 'a')
+        expect(strokeWidthOf(await harness(page, 'nodeShapePaint', 'a') as NodeShapePaint)).toBe(3)
+
+        await harness(page, 'selectEdge', 'a-b')
+        expect(strokeWidthOf(await harness(page, 'edgePaint', 'a-b') as NodeShapePaint)).toBe(5)
+
+        await harness(page, 'deselectAll')
+        await harness(page, 'highlightEdge', 'a-b')
+        expect(strokeWidthOf(await harness(page, 'edgePaint', 'a-b') as NodeShapePaint)).toBe(3)
     })
 
     test('clears selection', async ({ page }) => {

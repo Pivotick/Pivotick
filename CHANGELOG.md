@@ -112,6 +112,12 @@
 - **The light theme's selected edge is the selection colour, not orange.** Its glow and its
   label outline were hard-coded `orange` while the dark theme, and every other selected thing,
   used the selection colour.
+- **A state look never draws thinner than what it decorates.** The selected and highlighted
+  widths were fixed, and these rules *replace* the stroke they land on — so a node with a 12px
+  border got a 3px ring, and a 14px edge dropped to 3px on highlight. They are floors now: a
+  stroke already past the floor grows by `--pvt-state-stroke-boost` instead. A default-width
+  node or edge is unchanged, and the node pulse breathes around the resolved width rather than
+  a hard-coded 3.
 
 ## 1.6.0 — 2026-08-26
 

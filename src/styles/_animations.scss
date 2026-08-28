@@ -1,51 +1,39 @@
+// The pulses breathe around `--pvt-node-ring-width` rather than a fixed 3, because each
+// state rule resolves that against the node's *own* border: pulsing a thick-bordered node
+// between 3 and 5 would have made selecting it look like the border had thinned.
 @keyframes glowPulseSelected {
-    0% {
-        stroke-width: 3;
+    0%, 100% {
+        stroke-width: var(--pvt-node-ring-width);
         filter: drop-shadow(0 0 1px var(--pvt-node-selected-color));
     }
 
     50% {
-        stroke-width: 5;
+        stroke-width: calc(var(--pvt-node-ring-width) + 2);
         filter: drop-shadow(0 0 3px var(--pvt-node-selected-color));
-    }
-
-    100% {
-        stroke-width: 3;
-        filter: drop-shadow(0 0 1px var(--pvt-node-selected-color));
     }
 }
 
 @keyframes glowPulseBigSelected {
-    0% {
-        stroke-width: 3;
+    0%, 100% {
+        stroke-width: var(--pvt-node-ring-width);
         filter: drop-shadow(0 0 5px var(--pvt-node-selected-color));
     }
 
     50% {
-        stroke-width: 5;
+        stroke-width: calc(var(--pvt-node-ring-width) + 2);
         filter: drop-shadow(0 0 7px var(--pvt-node-selected-color));
-    }
-
-    100% {
-        stroke-width: 3;
-        filter: drop-shadow(0 0 5px var(--pvt-node-selected-color));
     }
 }
 
 @keyframes glowPulseHighlighted {
-    0% {
-        stroke-width: 3;
+    0%, 100% {
+        stroke-width: var(--pvt-node-ring-width);
         filter: drop-shadow(0 0 1px var(--pvt-node-highlighted-stroke));
     }
 
     50% {
-        stroke-width: 5;
+        stroke-width: calc(var(--pvt-node-ring-width) + 2);
         filter: drop-shadow(0 0 3px var(--pvt-node-highlighted-stroke));
-    }
-
-    100% {
-        stroke-width: 3;
-        filter: drop-shadow(0 0 1px var(--pvt-node-highlighted-stroke));
     }
 }
 

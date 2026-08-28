@@ -432,6 +432,9 @@ export class NodeDrawer {
             // unclickable anywhere its content does not cover.
             .attr('stroke', shapeless ? 'none' : style.strokeColor)
             .attr('stroke-width', shapeless ? 0 : style.strokeWidth)
+            // Published so the selection and hover rings can be drawn relative to it: they
+            // replace this stroke, and a fixed width would render a thick border thinner.
+            .style('--pvt-node-own-stroke-width', shapeless ? '0' : String(style.strokeWidth))
             .attr('fill', shapeless ? 'transparent' : style.color)
             .classed('node', true)
 

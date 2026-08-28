@@ -1,5 +1,17 @@
 @use "./components/input.scss";
 
+/**
+ * The width to draw a state ring at: never thinner than what it decorates.
+ *
+ * `$floor` is the themed width for the state, which is what a default-width stroke gets.
+ * `$own` is the element's own stroke width, published by the drawer — a stroke already
+ * thicker than the floor grows past it by `--pvt-state-stroke-boost` instead, because these
+ * rules *replace* the element's stroke and a fixed width would visibly thin a heavy border.
+ */
+@function ring-width($floor, $own) {
+    @return max(var(#{$floor}), calc(var(#{$own}, 0) + var(--pvt-state-stroke-boost)));
+}
+
 
 .pvt-layout {
     color: var(--pvt-text-color-6);
@@ -341,7 +353,8 @@ dl.pvt-property-list {
 .pvt-node-selected-highlight {
     & > .node {
         stroke: var(--pvt-node-selected-stroke);
-        stroke-width: var(--pvt-node-selected-stroke-width);
+        --pvt-node-ring-width: #{ring-width('--pvt-node-selected-stroke-width', '--pvt-node-own-stroke-width')};
+        stroke-width: var(--pvt-node-ring-width);
         stroke-opacity: var(--pvt-node-selected-stroke-opacity);
         filter: var(--pvt-node-selected-filter);
         animation: var(--pvt-node-selected-animation);
@@ -376,7 +389,8 @@ dl.pvt-property-list {
 
 .pvt-node-highlighted > .node {
     stroke: var(--pvt-node-highlighted-stroke);
-    stroke-width: var(--pvt-node-highlighted-stroke-width);
+    --pvt-node-ring-width: #{ring-width('--pvt-node-highlighted-stroke-width', '--pvt-node-own-stroke-width')};
+    stroke-width: var(--pvt-node-ring-width);
     opacity: var(--pvt-node-highlighted-opacity);
     filter: var(--pvt-node-highlighted-filter);
     animation: var(--pvt-node-highlighted-animation);
@@ -416,7 +430,7 @@ dl.pvt-property-list {
     &.pvt-edge-highlighted {
         path {
             stroke: var(--pvt-edge-highlighted-stroke);
-            stroke-width: var(--pvt-edge-highlighted-stroke-width);
+            stroke-width: #{ring-width('--pvt-edge-highlighted-stroke-width', '--pvt-edge-own-stroke-width')};
             filter: var(--pvt-edge-highlighted-filter);
         }
     }
@@ -424,7 +438,7 @@ dl.pvt-property-list {
     &.selected {
         path {
             stroke: var(--pvt-edge-selected-stroke);
-            stroke-width: var(--pvt-edge-selected-stroke-width);
+            stroke-width: #{ring-width('--pvt-edge-selected-stroke-width', '--pvt-edge-own-stroke-width')};
             filter: var(--pvt-edge-selected-filter);
         }
     
