@@ -406,15 +406,19 @@ export class GraphSvgRenderer extends GraphRenderer {
                         const selection = d3Select<SVGGElement, Edge>(edges[i])
                         selection.attr('id', `edge-${edge.domID}`)
                         this.edgeDrawer.render(selection, edge)
+                        this.edgeDrawer.checkForSelection(selection, edge)
                     }),
                 update => update
                     .each((edge: Edge, i: number, edges: ArrayLike<SVGPathElement>) => {
+                        const selection = d3Select<SVGGElement, Edge>(edges[i])
                         if (edge.isDirty()) {
                             edge.clearDirty()
-                            const selection = d3Select<SVGGElement, Edge>(edges[i])
                             selection.selectChildren().remove()
                             this.edgeDrawer.render(selection, edge)
                         }
+                        // Outside the dirty branch, like the node pass above: selecting an
+                        // edge does not dirty it, so this is the only thing that applies it.
+                        this.edgeDrawer.checkForSelection(selection, edge)
                     }),
                 exit => exit.remove()
             )

@@ -63,6 +63,66 @@ test.describe('selection', () => {
         await expectCanvas(page, 'edge-selected.png')
     })
 
+    // Selecting an edge deliberately does *not* mark it dirty — a full redraw recreates the
+    // label and loses the listeners hung off it — so for a long time nothing applied the
+    // class at all and a selected edge looked exactly like an idle one.
+    test('a selected edge takes the selection colour, and gives it back', async ({ page }) => {
+        const selectionColor = await harness(page, 'themeColor', '--pvt-edge-selected-stroke')
+        const idle = await harness(page, 'edgePaint', 'a-b') as NodeShapePaint
+        expect(idle.stroke).not.toBe(selectionColor)
+
+        await harness(page, 'selectEdge', 'a-b')
+        const selected = await harness(page, 'edgePaint', 'a-b') as NodeShapePaint
+        expect(selected.stroke).toBe(selectionColor)
+        expect(parseFloat(selected.strokeWidth)).toBeGreaterThan(parseFloat(idle.strokeWidth))
+
+        await harness(page, 'deselectAll')
+        expect(await harness(page, 'edgePaint', 'a-b')).toEqual(idle)
+    })
+
+    // The end marker swaps to a `_selected` variant, and the swap runs on every render pass
+    // now — so it has to resolve from the base id rather than append to whatever is there.
+    test('an edge’s end marker swaps to the selected variant and back', async ({ page }) => {
+        const idle = await harness(page, 'edgeMarkers', 'a-b')
+        expect(idle?.end).toBe('url(#arrow)')
+
+        await harness(page, 'selectEdge', 'a-b')
+        expect((await harness(page, 'edgeMarkers', 'a-b'))?.end).toBe('url(#arrow_selected)')
+
+        await harness(page, 'deselectAll')
+        expect(await harness(page, 'edgeMarkers', 'a-b')).toEqual(idle)
+
+        // Twice through, because appending rather than resolving only shows up on the second.
+        await harness(page, 'selectEdge', 'a-b')
+        expect((await harness(page, 'edgeMarkers', 'a-b'))?.end).toBe('url(#arrow_selected)')
+    })
+
+    // An edge carries no state animation, so unlike a node nothing overrides a width of 0 —
+    // which the dark theme's node-highlight width is, and edges used to borrow it.
+    test('a highlighted edge stays visible in both themes', async ({ page }) => {
+        for (const theme of ['light', 'dark'] as const) {
+            await loadFixture(page, 'basic', { UI: { theme } })
+            await harness(page, 'highlightEdge', 'a-b')
+
+            const paint = await harness(page, 'edgePaint', 'a-b') as NodeShapePaint
+            expect(parseFloat(paint.strokeWidth), theme).toBeGreaterThan(0)
+            expect(paint.filter, theme).toContain('drop-shadow')
+        }
+    })
+
+    // Same rim, same rule as for nodes: an edge that is both must read as selected.
+    test('a highlighted edge that is selected keeps the selection colour', async ({ page }) => {
+        const selectionColor = await harness(page, 'themeColor', '--pvt-edge-selected-stroke')
+        const highlightColor = await harness(page, 'themeColor', '--pvt-edge-highlighted-stroke')
+        expect(selectionColor).not.toBe(highlightColor)
+
+        await harness(page, 'highlightEdge', 'a-b')
+        expect((await harness(page, 'edgePaint', 'a-b') as NodeShapePaint).stroke).toBe(highlightColor)
+
+        await harness(page, 'selectEdge', 'a-b')
+        expect((await harness(page, 'edgePaint', 'a-b') as NodeShapePaint).stroke).toBe(selectionColor)
+    })
+
     test('clears selection', async ({ page }) => {
         await harness(page, 'selectNode', 'a')
         await harness(page, 'deselectAll')

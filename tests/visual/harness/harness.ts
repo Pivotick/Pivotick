@@ -794,6 +794,12 @@ export interface HarnessApi {
      * edge-creation target does — the state that shares a node's rim with selection.
      */
     highlightNode(id: string): void
+    /** Highlight an edge the same way — the state that shares an edge's stroke with selection. */
+    highlightEdge(id: string): void
+    /** The paint the state rules left on an edge's `path`. */
+    edgePaint(id: string): NodeShapePaint | null
+    /** An edge's `marker-start` / `marker-end`, which swap to `_selected` variants. */
+    edgeMarkers(id: string): { start: string | null, end: string | null } | null
     /**
      * Select several nodes at once (multi-selection). Renders every node's
      * selection highlight and — with focus mode on — dims the nodes/edges adjacent
@@ -1664,6 +1670,24 @@ class Harness implements HarnessApi {
         if (node) this.g.highlightElement(node)
     }
 
+    highlightEdge(id: string): void {
+        const edge = this.g.getMutableEdge(id)
+        if (edge) this.g.highlightElement(edge)
+    }
+
+    edgePaint(id: string): NodeShapePaint | null {
+        const path = this.g.getMutableEdge(id)?.getGraphElement()?.querySelector('path')
+        if (!path) return null
+        const resolved = getComputedStyle(path)
+        return {
+            fill: resolved.fill,
+            stroke: resolved.stroke,
+            strokeWidth: resolved.strokeWidth,
+            strokeOpacity: resolved.strokeOpacity,
+            filter: resolved.filter,
+        }
+    }
+
     multiSelect(ids: string[]): void {
         const selection = ids
             .map((id) => this.g.getMutableNode(id))
@@ -1841,6 +1865,15 @@ class Harness implements HarnessApi {
             strokeWidth: resolved.strokeWidth,
             strokeOpacity: resolved.strokeOpacity,
             filter: resolved.filter,
+        }
+    }
+
+    edgeMarkers(id: string): { start: string | null, end: string | null } | null {
+        const path = this.g.getMutableEdge(id)?.getGraphElement()?.querySelector('path')
+        if (!path) return null
+        return {
+            start: path.getAttribute('marker-start'),
+            end: path.getAttribute('marker-end'),
         }
     }
 

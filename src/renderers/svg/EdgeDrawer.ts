@@ -69,12 +69,9 @@ export class EdgeDrawer {
                 // Offset the position so it's centered
                 fo.attr('x', -width / 2)
                     .attr('y', -height / 2)
-                this.highlightSelection(edgeSelection, edge)
-
             })
         } else {
             this.defaultLabelRender(edgeSelection, edge, labelStyle)
-            this.highlightSelection(edgeSelection, edge)
         }
 
     }
@@ -616,21 +613,42 @@ export class EdgeDrawer {
             .attr('fill', config.selected?.fill ?? (config.fill ?? 'context-stroke'))
     }
 
-    private highlightSelection(edgeSelection: Selection<SVGGElement, Edge, null, undefined>, edge: Edge): void {
-        
-        edgeSelection.classed('selected', false)
-        if (this.graphSvgRenderer.getGraphInteraction().getSelectedEdge()?.edge.id === edge.id) {
-            edgeSelection.classed('selected', true)
+    /**
+     * Put the selected look on an edge, or take it off again.
+     *
+     * Called on every render pass rather than only when the edge is redrawn: selecting an
+     * edge does not mark it dirty (a full redraw recreates the label and loses the listeners
+     * hung off it), so nothing else would ever add or remove the class. This is the edge's
+     * counterpart to `NodeDrawer.checkForHighlight`, and like it, it only touches attributes.
+     */
+    public checkForSelection(edgeSelection: Selection<SVGGElement, Edge, null, undefined>, edge: Edge): void {
+        const interaction = this.graphSvgRenderer.getGraphInteraction()
+        // A lone selection and a multi-selection are tracked separately, and an edge in a
+        // multi-selection is not in `getSelectedEdge()`.
+        const selected = interaction.getSelectedEdge()?.edge.id === edge.id
+            || interaction.getSelectedEdges().some(({ edge: selectedEdge }) => selectedEdge.id === edge.id)
 
-            const edgePathSelection = edgeSelection.selectAll<SVGPathElement, Edge>('path')
-            const currentMarkerStart = edgePathSelection.attr('marker-start')?.match(/#.*(?=\))/)
-            if (currentMarkerStart) {
-                edgePathSelection.attr('marker-start', `url(${currentMarkerStart[0]}_selected)`)
-            }
-            const currentMarkerEnd = edgePathSelection.attr('marker-end')?.match(/#.*(?=\))/)
-            if (currentMarkerEnd) {
-                edgePathSelection.attr('marker-end', `url(${currentMarkerEnd[0]}_selected)`)
-            }
+        edgeSelection.classed('selected', selected)
+        this.pointMarkersAtSelectedVariant(edgeSelection, selected)
+    }
+
+    /**
+     * Swap an edge's end markers between their plain and `_selected` variants.
+     *
+     * Resolved from the base id each time rather than by appending to whatever is there:
+     * running on every pass, appending would grow `#m_selected_selected…` and never come
+     * back when the edge is deselected.
+     */
+    private pointMarkersAtSelectedVariant(
+        edgeSelection: Selection<SVGGElement, Edge, null, undefined>,
+        selected: boolean,
+    ): void {
+        const paths = edgeSelection.selectAll<SVGPathElement, Edge>('path')
+        for (const attribute of ['marker-start', 'marker-end'] as const) {
+            const current = paths.attr(attribute)?.match(/#.*(?=\))/)
+            if (!current) continue
+            const base = current[0].replace(/_selected$/, '')
+            paths.attr(attribute, `url(${selected ? `${base}_selected` : base})`)
         }
 
     }

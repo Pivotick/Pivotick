@@ -92,6 +92,27 @@
   animation sets a width of its own and an animated declaration wins. Both are still yours to
   override — set the opacity to `0` for the old fill-only look.
 
+### Selecting an edge shows
+
+- **A selected edge is painted again.** It had stopped entirely: the class that carries the
+  selected look was only applied while an edge was being *redrawn*, and selecting one
+  deliberately does not redraw it — a full redraw recreates the label and loses the listeners
+  hung off it. So nothing ever added the class, and a selected edge looked exactly like an idle
+  one. It is now applied on each render pass, the way a node's selected state already was.
+  Deselecting takes it off again, and an edge selected as part of a multi-selection lights up
+  too, which it never did.
+- **A highlighted edge no longer vanishes in the dark theme.** Edges borrowed
+  `--pvt-node-highlighted-stroke-width`, which is `0` there — harmless on a node, whose pulse
+  animation overrides it, and fatal on an edge, which has no animation. Edges now have their own
+  `--pvt-edge-highlighted-stroke`, `-stroke-width` and `-filter`.
+- **A highlighted edge gets its glow.** The rule sat outside the `.pvt-edge-group` block, so it
+  tied with that block's own `path` rule and lost on source order — the highlight's `filter` was
+  never applied in either theme. Selection still outranks highlight on an edge, as it now does on
+  a node.
+- **The light theme's selected edge is the selection colour, not orange.** Its glow and its
+  label outline were hard-coded `orange` while the dark theme, and every other selected thing,
+  used the selection colour.
+
 ## 1.6.0 — 2026-08-26
 
 Three headline additions, each of them something a force layout is bad at on its own: a **data

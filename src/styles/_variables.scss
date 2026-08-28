@@ -204,12 +204,18 @@ $light-theme: (
     pvt-edge-label-stroke: none,
     pvt-edge-label-stroke-width: 1,
 
+    /* Edge highlighted state — its own, because a node's highlight width is animated and an
+       edge's is not: a 0 there is overridden on a node and simply erases an edge. */
+    pvt-edge-highlighted-stroke: var(--pvt-node-highlighted-stroke),
+    pvt-edge-highlighted-stroke-width: 3,
+    pvt-edge-highlighted-filter: drop-shadow(0 0 2px var(--pvt-edge-highlighted-stroke)),
+
     /* Edge selected state */
     pvt-edge-selected-stroke: var(--pvt-selection-color),
     pvt-edge-selected-stroke-width: 5,
     pvt-edge-selected-stroke-opacity: 0.8,
-    pvt-edge-selected-filter: drop-shadow(0 0 1px orange),
-    pvt-edge-label-selected-stroke: orange,
+    pvt-edge-selected-filter: drop-shadow(0 0 1px var(--pvt-selection-color)),
+    pvt-edge-label-selected-stroke: var(--pvt-selection-color),
     pvt-edge-label-selected-stroke-width: 2,
     pvt-edge-label-selected-color: var(--pvt-edge-label-color),
     pvt-edge-label-selected-font-size: var(--pvt-edge-label-font-size),
@@ -472,6 +478,11 @@ $dark-theme: (
     pvt-edge-label-color: var(--pvt-text-color-5),
     pvt-edge-label-stroke: none,
     pvt-edge-label-stroke-width: 1,
+
+    /* Edge highlighted state — see the light theme's note. */
+    pvt-edge-highlighted-stroke: var(--pvt-node-highlighted-stroke),
+    pvt-edge-highlighted-stroke-width: 3,
+    pvt-edge-highlighted-filter: drop-shadow(0 0 2px var(--pvt-edge-highlighted-stroke)),
 
     /* Edge selected state */
     pvt-edge-selected-stroke: var(--pvt-selection-color),
