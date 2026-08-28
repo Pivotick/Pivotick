@@ -1,6 +1,6 @@
 # Feature — hide nodes with no visible relation
 
-**Status:** in build (branch `worktree-worktree-hide-disconnected`)
+**Status:** done — shipped 2026-08-26 on `worktree-worktree-hide-disconnected`, since merged into develop. Part of 1.6.0.
 **Owner:** Sami Mokaddem
 **Requested:** 2026-08-26
 **Area:** `src/GraphQueryEngine.ts`, `src/Graph.ts`, `src/interfaces/GraphQueryEngine.ts`, `src/ui/elements/ViewFlyout/`, `src/ui/elements/Flyout/`
