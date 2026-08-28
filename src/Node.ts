@@ -361,6 +361,32 @@ export class Node {
         return this.edgesOut.size + this.edgesIn.size
     }
 
+    /** The node's clusters, outermost first — empty for a node of the root graph. */
+    ancestorChain(): Node[] {
+        const chain: Node[] = []
+        let current = this.parentNode
+        while (current) {
+            chain.unshift(current)
+            current = current.parentNode
+        }
+        return chain
+    }
+
+    /**
+     * The node the canvas actually draws for this one: itself when every cluster above it
+     * is expanded, otherwise the outermost collapsed cluster — the box hiding it.
+     *
+     * This answers "which dot on screen stands for this node", not "is it visible": an
+     * expanded cluster renders a *separate* subgraph built from `toDict()` data, so a
+     * nested node is never drawn by this graph even when its cluster is open.
+     */
+    canvasRepresentative(): Node {
+        for (const ancestor of this.ancestorChain()) {
+            if (!ancestor.expanded) return ancestor
+        }
+        return this
+    }
+
     /**
      * Set the node's circle radius. Also drops any measured rectangular border:
      * the radius is the coarser fact, so every caller that resizes a node keeps

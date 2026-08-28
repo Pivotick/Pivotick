@@ -282,18 +282,18 @@ test.describe('table grid', () => {
     })
 
     // ── Clusters ─────────────────────────────────────────────────────────────
-    // A cluster gets one row. Its children are not rows of this graph — they live in the
-    // cluster's own subgraph — so `Children` is what tells you how big it is. Nothing else
-    // in the UI does.
+    // A cluster's row says how big it is, in `Children`. Nothing else in the UI does — not
+    // the label, not the tooltip, not the sidebar. What the rows themselves look like once
+    // a cluster's contents are listed is table-nested.spec.ts's business.
 
-    test('a cluster is one row, with a count of what it holds', async ({ page }) => {
+    test('every cluster row counts what it holds directly', async ({ page }) => {
         await loadFixture(page, 'clustered', FULL)
         await page.locator('.pvt-table-row').first().waitFor()
 
-        expect(await rowIds(page)).toEqual(['ext1', 'ext2', 'group'])
-        // Direct children (c1, c2, c3) — c1's own two leaves are c1's business, and would
-        // be its row's count if a subgraph were being listed.
-        expect(await columnCells(page, 'Children')).toEqual(['0', '0', '3'])
+        expect(await rowIds(page)).toEqual(['c1', 'c1a', 'c1b', 'c2', 'c3', 'ext1', 'ext2', 'group'])
+        // Direct children only, at every depth: `group` holds 3, and the nested `c1` holds
+        // its own 2 — which is why the count is per-row rather than a subtree total.
+        expect(await columnCells(page, 'Children')).toEqual(['2', '0', '0', '0', '0', '0', '0', '3'])
     })
 
     // A column of zeros is not information, so it only appears where it can say something.
@@ -455,9 +455,10 @@ test.describe('table grid', () => {
         await page.locator('.pvt-table-row').first().waitFor()
 
         const columns = await headings(page)
-        // `mispLike` has a cluster, so Children joins Degree in the trailing counts — the
-        // facets still supply every *data* column, which is what this is about.
-        expect(columns).toEqual(['Visibility', 'Label', 'Category', 'To IDs', 'Degree', 'Children'])
+        // `mispLike` has a cluster, so `Cluster` joins the leading pair and `Children`
+        // joins Degree in the trailing counts — the facets still supply every *data*
+        // column, which is what this is about.
+        expect(columns).toEqual(['Visibility', 'Label', 'Cluster', 'Category', 'To IDs', 'Degree', 'Children'])
     })
 
     test('a new node appears without reopening the dock', async ({ page }) => {

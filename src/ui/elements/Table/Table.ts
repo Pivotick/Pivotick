@@ -50,6 +50,8 @@ export class Table extends UIComponent {
     private graphFilter?: TableGraphFilter
     /** The push button, rebuilt with the rest of the toolbar on every activation. */
     private applyButton?: HTMLButtonElement
+    /** The **Nested nodes** switch, on the same terms. Absent when the tab cannot nest. */
+    private nestedControl?: HTMLDivElement
     /** The pane's own `Nodes` / `Edges` strip, in the dock's header slot. */
     private tabs?: HTMLDivElement
     /** One grid per inner tab, so each keeps its own sort, columns and row filters. */
@@ -173,6 +175,7 @@ export class Table extends UIComponent {
             // freshly resolved rows, and it is what tells the grid how many elements the
             // push is hiding — which the summary then reports.
             this.refreshApplyButton()
+            this.refreshNestedControl()
             this.grid?.updateSummary()
             if (this.picker) this.renderPicker()
         })
@@ -207,6 +210,9 @@ export class Table extends UIComponent {
         // the keystroke. Nothing else would tell us: a row-filter change re-renders the
         // rows only, deliberately leaving the header (and this) standing.
         grid.onRowFiltersChange(() => this.refreshApplyButton())
+        // The switch changes the row count the summary reports, and the bar is rebuilt
+        // through the dock rather than patched behind its back.
+        grid.onNestedChange(() => this.refreshBar())
         this.grids.set(tab, grid)
         return grid
     }
@@ -299,6 +305,12 @@ export class Table extends UIComponent {
         items.push(this.tabs)
         this.renderTabs()
 
+        // Before the summary, because it decides *what* is being counted. Cleared first so
+        // switching to a tab that cannot nest never leaves the last tab's switch behind.
+        this.nestedControl = undefined
+        const nestedControl = this.buildNestedControl()
+        if (nestedControl) items.push(nestedControl)
+
         this.summary = document.createElement('span')
         this.summary.className = 'pvt-table-summary'
         items.push(this.summary)
@@ -344,6 +356,59 @@ export class Table extends UIComponent {
         items.push(this.pickerButton)
 
         return items
+    }
+
+    /* ---------- nested rows ---------- */
+
+    /**
+     * Redraw the header bar. `refresh` replaces every element in it, `summary` included,
+     * so the grid has to be pointed at the fresh one — the same dance `showTab` does.
+     */
+    private refreshBar(): void {
+        this.handle?.refresh()
+        this.grid?.setSummaryTarget(this.summary)
+        this.refreshNestedControl()
+        this.grid?.updateSummary()
+    }
+
+    /**
+     * The **Nested nodes** switch. Nested rows are peers of the graph's own and read as
+     * ordinary rows, so someone who wants only the top level needs a way to say so —
+     * `Children` still says how big each cluster is once they are gone.
+     *
+     * Never built for a tab that cannot nest — the edges tab, or `nested: false`. Built
+     * but **hidden** otherwise, and revealed by the first refresh once the graph turns out
+     * to have a cluster: like the push button, the bar is filled before the data has
+     * arrived, so "are there clusters" is not yet knowable here.
+     */
+    private buildNestedControl(): HTMLElement | null {
+        const grid = this.gridFor(this.tab)
+        if (!grid.offersNested()) return null
+
+        const wrap = document.createElement('div')
+        wrap.className = 'pvt-table-nested'
+        wrap.hidden = true
+        this.nestedControl = wrap
+
+        const label = document.createElement('label')
+        label.className = 'pvt-table-nested-toggle'
+        label.title = 'List the nodes inside clusters alongside the graph\'s own'
+        const input = document.createElement('input')
+        input.type = 'checkbox'
+        input.checked = grid.getIncludeNested()
+        input.addEventListener('change', () => grid.setIncludeNested(input.checked))
+        label.appendChild(input)
+        const text = document.createElement('span')
+        text.textContent = 'Nested nodes'
+        label.appendChild(text)
+        wrap.appendChild(label)
+        return wrap
+    }
+
+    /** Show the switch once the graph has a cluster for it to be about. */
+    private refreshNestedControl(): void {
+        if (!this.nestedControl) return
+        this.nestedControl.hidden = !this.uiManager.graph.getMutableNodes().some((node) => node.isParent)
     }
 
     /* ---------- export ---------- */

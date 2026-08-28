@@ -68,8 +68,11 @@ test.describe('hidden-node count', () => {
         await page.locator('.pvt-table-row').first().waitFor()
         await harness(page, 'setFilter', 'label', { value: 'EXT', matchMode: 'partial' })
 
-        // The dock lists this graph's nodes only — the cluster, not what it holds.
-        await expect(page.locator('.pvt-table-row')).toHaveCount(3)
+        // The dock lists what the cluster holds too — 3 top-level nodes over 5
+        // descendants. They do not disturb the pairing, because a nested row reads
+        // `nested` rather than `filtered`: nothing filtered it, and no filter brings it
+        // back. That distinction is the whole reason the count still agrees.
+        await expect(page.locator('.pvt-table-row')).toHaveCount(8)
         await expect.poll(() => dockHiddenRowCount(page)).toBe(1)
         expect(await pillHiddenText(page)).toBe('1 hidden')
     })

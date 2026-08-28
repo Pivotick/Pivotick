@@ -360,22 +360,11 @@ export class Graph {
      * @private
      */
     public static resolveCrossClusterEdges(edges: Edge[]): void {
-        // The node currently shown for `node`: walk ancestors from the top down and
-        // return the first collapsed one (it hides everything below it), else `node`.
-        const representative = (node: Node): Node => {
-            const chain: Node[] = []
-            let cur = node.parentNode
-            while (cur) { chain.push(cur); cur = cur.parentNode }
-            for (let i = chain.length - 1; i >= 0; i--) {
-                if (!chain[i].expanded) return chain[i]
-            }
-            return node
-        }
         for (const edge of edges) {
             if (!edge.isCrossCluster || !edge.syntheticSourceNode || !edge.syntheticTerminalNode) continue
             const shouldShow =
-                edge.from === representative(edge.syntheticSourceNode) &&
-                edge.to === representative(edge.syntheticTerminalNode)
+                edge.from === edge.syntheticSourceNode.canvasRepresentative() &&
+                edge.to === edge.syntheticTerminalNode.canvasRepresentative()
             if (edge.visibleIgnoringLayer !== shouldShow) {
                 if (shouldShow) edge.show()
                 else edge.hide()

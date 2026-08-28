@@ -43,15 +43,16 @@ Until you press it, narrowing a column is reading, not filtering.
 
 ## It lists the whole graph {#superset}
 
-The table does **not** mirror the canvas. It lists every top-level node — and on the
-Edges tab every edge — including the ones currently hidden, and the leading `Visibility`
-column says where each one stands:
+The table does **not** mirror the canvas. It lists every node — and on the Edges tab every
+edge — including the ones currently hidden, and the leading `Visibility` column says where
+each one stands:
 
 | Value | Styling | Meaning |
 |---|---|---|
 | `visible` | quiet, untinted | On the canvas now |
 | `filtered` | amber chip | Hidden by a filter — a node filter, or for an edge its [layer](/edge-layers) being switched off. Change the filter to get it back |
 | `excluded` | red chip | A node hidden by hand; restore it from the filter panel's hidden-node list |
+| `nested` | dashed outline | A node inside a cluster the canvas has shut. Nothing filtered it; open the cluster to see it |
 | `endpoint` | neutral outline | An edge whose end is not on the canvas — filtered out, or inside a collapsed cluster. Nothing was done to the edge itself |
 
 Each state differs in weight and border as well as colour, so the column reads without
@@ -66,11 +67,29 @@ That is deliberate. "23 nodes hidden" is a claim you should be able to inspect, 
 table that quietly drops the rows you are looking for is worse than no table. Sort by
 `Visibility` to see exactly what a filter took away.
 
-Cluster children are the one exception, and for a different reason than hiding: they are
-not nodes of this graph at all. A child lives in its cluster's own subgraph, with its own
-filters and its own edges — `Visibility` and `Degree` would both be answering about the
-wrong graph. So the cluster gets one row, and a **Children** column saying how many nodes
-are inside it; that column appears in the derived set whenever the graph has clusters.
+### Nodes inside clusters {#nested}
+
+A cluster's contents get rows too, as **peers** of the graph's own nodes, with
+a **Cluster** column giving the path they came from (`Team B / Squad`, outermost first) and
+a **Children** column saying how big each cluster is. Both columns appear whenever the
+graph has clusters. The header's **Nested nodes** switch takes those rows out again if you
+only want the top level, and `UI.table.nested: false` never offers them at all.
+
+They are listed flat rather than indented under their cluster on purpose: the table exists
+to answer questions the canvas cannot — which nodes are the hubs, which are over a
+threshold — and that only keeps working if a sort or a filter reaches every row equally. A
+tree can only ever sort siblings.
+
+What is worth knowing is that a nested node is **not drawn by this graph**. An open cluster
+renders a separate subgraph of its own, so:
+
+- `Visibility` reads `nested` while any cluster above the node is shut, and `visible` once
+  they are all open. It is never `filtered` — no filter put it there.
+- `Degree` counts the node's real edges. While its cluster is shut the canvas draws a
+  stand-in edge to the cluster instead, so this is the node's own arithmetic rather than a
+  description of the picture. (The column already counts stand-ins for ordinary nodes.)
+- Clicking the row selects the node, so the sidebar can show it — often the only way to
+  reach it. **Double-clicking opens the cluster hiding it**, one level per press.
 
 ## Sorting and narrowing {#sorting}
 
@@ -117,8 +136,10 @@ in:
 Two properties worth knowing, because they are what keep the push predictable:
 
 - It hides **exactly the rows the filters left out** — never "show only these". So a node
-  added after the push stays on the canvas, and an expanded cluster's interior is left
-  alone. What you pushed is a statement about a moment, not a standing query.
+  added after the push stays on the canvas. What you pushed is a statement about a moment,
+  not a standing query. An open cluster's interior narrows only in so far as its own rows
+  were among the ones left out; with [nested rows](#nested) switched off, nothing names
+  them and the interior is untouched.
 - The `Visibility` column is **never** part of a push, though it still narrows rows like
   any other. Its values *are* the graph's filter state, so pushing them would hide whatever
   is currently on the canvas and then disagree with itself.
@@ -170,8 +191,10 @@ With no `columns` declared, the dock works it out for you, in three tiers:
 
 Either way the graph-aware columns wrap the data. For nodes, **`Visibility`** and
 **`Label`** lead — a status gutter and the name, the two things you scan down to find a
-row — and the counts close it: **`Degree`**, plus **`Children`** on a graph that has
-clusters. The counts sit at the end because they are the graph's arithmetic rather than
+row — joined by **`Cluster`** on a graph that has clusters, since a
+[nested row](#nested) needs it to say where it came from. The counts close it:
+**`Degree`**, plus **`Children`** on a graph that has clusters. The counts sit at the end
+because they are the graph's arithmetic rather than
 the element's own data, and they are narrow, fixed-width columns so a couple of digits
 never take the share of the row a name needs. Edges keep the same `Visibility` gutter and
 then read as a sentence — `Source` / `Label` / `Target`.
@@ -215,8 +238,8 @@ new Pivotick(el, data, {
 })
 ```
 
-`label` · `degree` · `degreeIn` · `degreeOut` · `visibility` · `pinned` · `children`, plus
-`source` and `target` for edges. Clone one to adjust it, as above.
+`label` · `degree` · `degreeIn` · `degreeOut` · `visibility` · `pinned` · `children` ·
+`cluster`, plus `source` and `target` for edges. Clone one to adjust it, as above.
 
 A `TableColumn` is a [`FilterFacet`](/ui-filter#facets) with a few presentation extras
 (`width`, `align`, `sortable`, `filterable`, `hidden`, `format`), which is why a facet can
@@ -259,6 +282,7 @@ inspect.
 | `sort` | the `Label` column | `{ key, direction }` |
 | `rowActivate` | `'select'` | `'selectAndCenter'` also moves the canvas; `'none'` makes rows inert |
 | `filterGraph` | `true` | Offer [Apply to graph](#apply-to-graph). `false` for a dock that can never filter the canvas |
+| `nested` | `true` | List a cluster's contents as rows of their own. See [Nodes inside clusters](#nested) |
 | `export` | `['csv', 'json']` | `false` hides the buttons |
 | `virtualizeAbove` | `200` | Row count above which rows are windowed |
 

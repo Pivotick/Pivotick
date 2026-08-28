@@ -5,6 +5,7 @@ import type { UIManager } from '../../UIManager'
 import { LABEL_COLUMN_KEY, VISIBILITY_COLUMN_KEY, readCell, resolveColumns } from './TableColumns'
 import { buildRowFilterControl, columnChoices, isRowFilterActive, rowFilterMatches } from './TableRowFilters'
 import type { RowFilter } from './TableRowFilters'
+import { nestedOffered, revealNested } from './TableNested'
 import { arrowDown, arrowUp, dataTable } from '../../icons'
 
 type Element = Node | Edge
@@ -15,6 +16,8 @@ interface Row {
     element: Element
     /** Raw values, by column key — sorted, filtered and exported from these. */
     values: Map<string, unknown>
+    /** Inside a cluster, so nothing on this canvas is it. See TableNested. */
+    nested: boolean
 }
 
 interface SortState {
@@ -76,6 +79,16 @@ export class TableGrid {
     private summary?: HTMLSpanElement
     /** Told when a header filter changes, so the table can refresh its push button. */
     private rowFiltersChanged?: () => void
+    /**
+     * Whether this tab can list nested nodes at all — `UI.table.nested`, and never on the
+     * edges tab: a cluster holds nodes, and an edge into one is already represented by the
+     * stand-in the `endpoint` state reports.
+     */
+    private readonly nestedOffered: boolean
+    /** Whether nested nodes are listed right now — the header's switch. */
+    private includeNested: boolean
+    /** Told when the nested switch moves, so the toolbar can redraw. */
+    private nestedChanged?: () => void
 
     constructor(
         uiManager: UIManager,
@@ -91,6 +104,33 @@ export class TableGrid {
         this.sort = initialSort ?? null
         this.rowActivate = rowActivate
         this.virtualizeAbove = virtualizeAbove
+        this.nestedOffered = tab === 'nodes' && nestedOffered(uiManager)
+        this.includeNested = this.nestedOffered
+    }
+
+    /* ---------- nested rows ---------- */
+
+    /** Whether this tab offers the nested switch at all. */
+    public offersNested(): boolean {
+        return this.nestedOffered
+    }
+
+    /** Whether nested nodes are listed right now. */
+    public getIncludeNested(): boolean {
+        return this.includeNested
+    }
+
+    public setIncludeNested(include: boolean): void {
+        if (this.includeNested === include) return
+        this.includeNested = include
+        this.lastClickedIndex = null
+        this.rebuild()
+        this.nestedChanged?.()
+    }
+
+    /** Told when the nested switch moves, so the toolbar can redraw. */
+    public onNestedChange(listener: () => void): void {
+        this.nestedChanged = listener
     }
 
     public getRoot(): HTMLElement {
@@ -152,6 +192,8 @@ export class TableGrid {
         this.rows = this.collectElements().map((element) => ({
             id: element.id,
             element,
+            // `nestedOffered` already implies the nodes tab, so this is safe on an edge.
+            nested: this.nestedOffered && (element as Node).isChild,
             values: new Map(this.columns.map((column) => [column.key, safeRead(column, element)])),
         }))
 
@@ -162,9 +204,10 @@ export class TableGrid {
         const graph = this.uiManager.graph
         if (this.tab === 'edges') return graph.getMutableEdges()
         // The superset: hidden nodes are listed, not omitted — that is what the
-        // `Visibility` column is for. Cluster children are left out, because they belong
-        // to their cluster's own graph rather than this one.
-        return graph.getMutableNodes().filter((node) => !node.isChild)
+        // `Visibility` column is for, and with the switch on a cluster's contents are
+        // listed too, as peers with their path in `Cluster` (see TableNested).
+        const nodes = graph.getMutableNodes()
+        return this.includeNested ? nodes : nodes.filter((node) => !node.isChild)
     }
 
     /* ---------- narrowing and ordering ---------- */
@@ -213,6 +256,8 @@ export class TableGrid {
 
         const direction = sort.direction === 'asc' ? 1 : -1
         // Sorting the array, never the DOM — the rendered rows are a projection of it.
+        // Nested rows sort with the rest: they are peers, which is the whole reason they
+        // are listed flat rather than under their cluster.
         return [...rows].sort((a, b) => direction * compareValues(a.values.get(sort.key), b.values.get(sort.key)))
     }
 
@@ -418,6 +463,7 @@ export class TableGrid {
         element.className = 'pvt-table-row'
         element.dataset.id = row.id
         element.style.gridTemplateColumns = template
+        if (row.nested) element.dataset.nestedRow = 'true'
         if (this.rowActivate !== 'none') this.wireRow(element, row)
 
         for (const column of columns) {
@@ -515,9 +561,15 @@ export class TableGrid {
             if (this.rowActivate === 'selectAndCenter') this.uiManager.graph.focusElement(row.element)
         })
 
-        // A double-click is the "take me there" gesture, whatever a single click does.
+        // A double-click is the "take me there" gesture, whatever a single click does. For
+        // a nested row "there" is behind a shut cluster, so it opens one and aims at that
+        // instead — `focusElement` on a nested node is a silent no-op (see `revealNested`).
         element.addEventListener('dblclick', () => {
             this.uiManager.graph.selectElements([row.element])
+            if (row.nested) {
+                revealNested(this.uiManager.graph, row.element as Node)
+                return
+            }
             this.uiManager.graph.focusElement(row.element)
         })
 

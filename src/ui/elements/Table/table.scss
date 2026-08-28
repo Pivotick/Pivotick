@@ -412,10 +412,57 @@
     border-color: var(--pvt-chrome-border);
 }
 
+// Inside a shut cluster. Nothing filtered it and no filter brings it back — only opening
+// the cluster does — so it borrows the neutral treatment rather than a warning colour,
+// and is set apart by a dashed border: a boundary, not a state.
+.pvt-table-td[data-visibility='nested'] .pvt-table-visibility {
+    color: var(--pvt-text-color-3);
+    border-style: dashed;
+    border-color: var(--pvt-text-color-4);
+}
+
 // A hidden element's whole row recedes, so the eye lands on what is actually drawn. Any
 // state but `visible` counts, so a new one joins in without touching this.
 .pvt-table-row:has(.pvt-table-td[data-visibility]:not([data-visibility='visible'])) .pvt-table-td:not([data-visibility]) {
     color: var(--pvt-text-color-4);
+}
+
+// ── nested rows ─────────────────────────────────────────────────────────────
+// A cluster's contents are ordinary rows — unindented, so a sort and a filter reach them
+// the same way they reach everything else, and the `Cluster` column says where they came
+// from. Only the ink differs: this canvas has no dot for them, so the row recedes.
+
+.pvt-table-row[data-nested-row='true'] .pvt-table-td {
+    color: var(--pvt-text-color-4);
+}
+
+// ── the bar's nested switch ─────────────────────────────────────────────────
+
+.pvt-table-nested {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+
+    // The UA's `display: none` for `hidden` loses to the author rule above, so the
+    // attribute has to be honoured explicitly — same as `.pvt-table-apply`.
+    &[hidden] {
+        display: none;
+    }
+}
+
+.pvt-table-nested-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--pvt-text-color-4);
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+
+    input {
+        margin: 0;
+        cursor: pointer;
+    }
 }
 
 .pvt-table-empty {

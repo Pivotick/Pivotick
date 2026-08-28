@@ -1,11 +1,12 @@
 import type { Edge } from '../../../Edge'
 import type { Node } from '../../../Node'
 import type { Graph } from '../../../Graph'
-import type { TableColumn, TableTab } from '../../../interfaces/GraphUI'
+import type { MainHeader, TableColumn, TableTab } from '../../../interfaces/GraphUI'
 import type { UIManager } from '../../UIManager'
 import { collectDataAttributes, inferAttributeType } from '../../../utils/DataAttributes'
 import { edgeNameGetter, nodeNameGetter } from '../../../utils/GraphGetters'
 import { FormFactory } from '../../../utils/FormFactory'
+import { nestedOffered } from './TableNested'
 
 /**
  * Keys of the library's own columns.
@@ -22,6 +23,7 @@ const RESERVED = {
     visibility: 'pvt:visibility',
     pinned: 'pvt:pinned',
     children: 'pvt:children',
+    cluster: 'pvt:cluster',
     source: 'pvt:source',
     target: 'pvt:target',
 } as const
@@ -33,11 +35,19 @@ const RESERVED = {
  * own layer is switched off, and `endpoint` when an end of it is not on the canvas —
  * filtered out, or inside a collapsed cluster. An edge cannot be `excluded`: there is no
  * hide-this-edge action.
+ *
+ * `nested` is the fourth answer for a node, and only reachable with
+ * {@link TableOptions.nested} on: it is inside a cluster the canvas has shut, so nothing
+ * filtered it and nothing on screen is it. Distinct from `filtered` because the action
+ * that brings it back is opening a cluster, not clearing a filter.
  */
-export type TableVisibility = 'visible' | 'filtered' | 'excluded' | 'endpoint'
+export type TableVisibility = 'visible' | 'filtered' | 'excluded' | 'endpoint' | 'nested'
 
 /** The `Visibility` column's key — the grid checks for it to style the cell per state. */
 export const VISIBILITY_COLUMN_KEY = RESERVED.visibility
+
+/** The `Cluster` column's key — added by the `flat` nested mode, which needs the path. */
+export const CLUSTER_COLUMN_KEY = RESERVED.cluster
 
 /** The `Label` column's key — the default sort prefers it over whatever comes first. */
 export const LABEL_COLUMN_KEY = RESERVED.label
@@ -105,6 +115,12 @@ export const tableColumns = {
      * cluster's own row then reports one level down.
      */
     children: { key: RESERVED.children, label: 'Children', type: 'numberRange', align: 'right', accessor: (node: Node) => node.children.length, width: COUNT_COLUMN_WIDTH } as TableColumn,
+    /**
+     * The clusters a nested node sits inside, outermost first — empty for a node of the
+     * root graph. The `flat` nested mode's answer to "where is this row from", since flat
+     * rows carry no structure of their own.
+     */
+    cluster: { key: RESERVED.cluster, label: 'Cluster', type: 'text' } as TableColumn,
     /** An edge's origin, by display name. */
     source: { key: RESERVED.source, label: 'Source', type: 'text' } as TableColumn<Edge>,
     /** An edge's destination, by display name. */
@@ -114,6 +130,10 @@ export const tableColumns = {
 /** Where a node stands relative to the canvas — the `visibility` column's reading. */
 export function nodeVisibility(node: Node, graph: Graph): TableVisibility {
     if (graph.queryEngine.getExcludedNodes().some((excluded) => excluded.id === node.id)) return 'excluded'
+    // A nested node's own `visible` flag is meaningless: `normalizeNode` hid it at load and
+    // nothing ever shows it again — the canvas draws a subgraph clone instead. So the
+    // reading comes from the clusters above it, and `filtered` is never the answer.
+    if (node.isChild) return node.canvasRepresentative() === node ? 'visible' : 'nested'
     return node.visible ? 'visible' : 'filtered'
 }
 
@@ -146,10 +166,20 @@ function bindReservedAccessors(columns: TableColumn<Node | Edge>[], uiManager: U
                 return { ...column, accessor: (element: Node | Edge) => isEdge(element) ? nodeNameGetter(element.from, mainHeader) : '' }
             case RESERVED.target:
                 return { ...column, accessor: (element: Node | Edge) => isEdge(element) ? nodeNameGetter(element.to, mainHeader) : '' }
+            case RESERVED.cluster:
+                return { ...column, accessor: (element: Node | Edge) => isEdge(element) ? '' : clusterPath(element, mainHeader) }
             default:
                 return column
         }
     })
+}
+
+/** The separator between cluster names in a `Cluster` cell — outermost first. */
+export const CLUSTER_PATH_SEPARATOR = ' / '
+
+/** A nested node's clusters as one readable string; `''` for a node of the root graph. */
+export function clusterPath(node: Node, mainHeader: MainHeader): string {
+    return node.ancestorChain().map((ancestor) => nodeNameGetter(ancestor, mainHeader)).join(CLUSTER_PATH_SEPARATOR)
 }
 
 /** `Edge` has a `from`; `Node` does not. Cheaper and safer here than an `instanceof`. */
@@ -199,10 +229,14 @@ export function resolveColumns(uiManager: UIManager, tab: TableTab): TableColumn
         ? [tableColumns.degree] as TableColumn<Node | Edge>[]
         : []
 
-    // Children only earns a column on a graph that has clusters — everywhere else it is a
-    // column of zeros, and the derived set is meant to be what this graph can answer.
+    // Both of these only earn a column on a graph that has clusters — everywhere else one
+    // is a column of zeros and the other a column of blanks, and the derived set is meant
+    // to be what *this* graph can answer.
     if (tab === 'nodes' && uiManager.graph.getMutableNodes().some((node) => node.isParent)) {
         trailing.push(tableColumns.children as TableColumn<Node | Edge>)
+        // Nested rows are peers of the graph's own, so nothing in the row itself says
+        // where one came from. Without the path they would read as top-level nodes.
+        if (nestedOffered(uiManager)) leading.push(tableColumns.cluster as TableColumn<Node | Edge>)
     }
 
     // Derived columns filter themselves. Everything about them is already inferred — the
@@ -244,8 +278,11 @@ function dataColumns(uiManager: UIManager, tab: TableTab): TableColumn<Node | Ed
             }))
     }
 
+    // With nested rows on, the scan has to see nested data too, or a key that only the
+    // contents of clusters carry gets no column and those rows read blank.
+    const nested = nestedOffered(uiManager)
     const elements: Array<Node | Edge> = tab === 'nodes'
-        ? graph.getMutableNodes().filter((node) => !node.isChild)
+        ? graph.getMutableNodes().filter((node) => nested || !node.isChild)
         : graph.getMutableEdges()
 
     return collectDataAttributes(elements, options.filter?.excludeKeys)

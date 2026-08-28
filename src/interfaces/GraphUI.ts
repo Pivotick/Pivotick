@@ -914,6 +914,23 @@ export interface TableOptions {
     export?: TableExportFormat[] | false,
     /** Row count above which rows are windowed rather than all rendered. @default 200 */
     virtualizeAbove?: number,
+    /**
+     * Whether a cluster's nested nodes get rows of their own, as peers of the graph's own
+     * nodes, with a `Cluster` column carrying the path they came from. A **Nested nodes**
+     * switch in the header takes them back out for a reader who only wants the top level.
+     *
+     * They are listed flat rather than as a tree on purpose: the dock exists to answer
+     * questions the canvas cannot — which are the hubs, which are over a threshold — and
+     * that only keeps working if a sort or a filter reaches every row equally.
+     *
+     * A nested node is not a node of this graph: the canvas draws it from a separate
+     * subgraph, so it has no dot of its own here and its `Visibility` reads `nested` while
+     * any cluster above it is shut. Pass `false` for a dock that never lists them, where
+     * `Children` is all a cluster's row says about its contents.
+     *
+     * @default true (the `Cluster` column appears only on a graph that has clusters)
+     */
+    nested?: boolean,
 }
 
 /** Which set of rows the dock is showing. */

@@ -746,6 +746,52 @@ export const fixtures = {
     },
 
     /**
+     * A cluster scene built for the **dock**, not the canvas: enough clusters, enough
+     * depth and enough data per node that the three `UI.table.nested` modes actually
+     * read differently from each other.
+     *
+     * Two top-level clusters (`team-a` with four leaves, `team-b` with two leaves and a
+     * nested `squad` of two) plus two ordinary nodes — so the default table shows 4 rows
+     * and a nested one shows 13, at three depths. Every node carries `role` and
+     * `severity`, which gives the columns something to sort and narrow on: the point of
+     * comparison between the modes is what a sort and a filter *mean* once rows are
+     * nested, and that needs real values to show.
+     */
+    clusteredTable(): BuiltFixture {
+        const leaf = (id: string, x: number, y: number, role: string, severity: number) =>
+            mkNode(id, x, y, { role, severity })
+
+        const a = [
+            leaf('a1', -40, -40, 'api', 3),
+            leaf('a2', 40, -40, 'worker', 7),
+            leaf('a3', -40, 40, 'api', 1),
+            leaf('a4', 40, 40, 'cache', 9),
+        ]
+        const teamA = mkCluster('team-a', -180, 0, a, { role: 'team', severity: 5 })
+        markCluster(teamA)
+
+        const squadLeaves = [leaf('s1', -30, 40, 'worker', 4), leaf('s2', 30, 40, 'api', 8)]
+        const squad = mkCluster('squad', 0, 50, squadLeaves, { role: 'squad', severity: 6 })
+        const b = [leaf('b1', -40, -40, 'cache', 2), leaf('b2', 40, -40, 'api', 6), squad]
+        const teamB = mkCluster('team-b', 180, 0, b, { role: 'team', severity: 4 })
+        markCluster(teamB)
+
+        const gateway = leaf('gateway', 0, -140, 'edge', 8)
+        const store = leaf('store', 0, 140, 'store', 2)
+
+        // One edge per shape the dock has to report: between two root nodes, from a root
+        // into a cluster's child, and between two clusters' children.
+        const edges = [
+            new Edge('gateway-store', gateway, store),
+            new Edge('gateway-a2', gateway, a[1]),
+            new Edge('a4-b1', a[3], b[0]),
+        ]
+        edges.slice(1).forEach((e) => e.hide())
+
+        return { nodes: [teamA, teamB, gateway, store], edges, notes: [] }
+    },
+
+    /**
      * Two clusters (`group-a`, `group-b`) plus a `core` node that links to a child
      * of each. Used by the cluster-drag settle test — expanding `group-a` and
      * holding a drag must keep `core` anchored to the cluster.

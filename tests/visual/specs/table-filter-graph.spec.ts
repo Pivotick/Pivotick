@@ -278,11 +278,16 @@ test.describe('table: applying column filters to the graph', () => {
 
     // ── Clusters ─────────────────────────────────────────────────────────────
     // The engine hands the active filters down into every open cluster's own engine. A
-    // "hide exactly these ids" filter is inert there; a "show only these" one would blank
-    // the interior. This is the test that would fail if the push were ever inverted.
+    // "hide exactly these ids" filter can only act on ids it names; a "show only these"
+    // one would blank the interior. This is the test that would fail if the push were
+    // ever inverted.
+    //
+    // Read with nested rows off, so the pushed set is top-level ids only and the interior
+    // is untouched *because nothing named it*. The other half — a push that does name a
+    // nested node, and so does reach inside — is in table-nested.spec.ts.
 
-    test('a push leaves an open cluster\'s interior alone', async ({ page }) => {
-        await openDock(page, 'clustered')
+    test('a push naming only top-level ids leaves an open cluster\'s interior alone', async ({ page }) => {
+        await openDock(page, 'clustered', { UI: { ...FULL.UI, table: { open: true, nested: false } } })
         await harness(page, 'expand', 'group')
         expect(await harness(page, 'subgraphVisibleNodeIds', 'group')).toEqual(['c1', 'c2', 'c3'])
 
