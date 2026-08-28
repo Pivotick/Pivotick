@@ -151,3 +151,24 @@ export function ringIsDrawn(paint: NodeShapePaint): boolean {
         && strokeWidthOf(paint) > 0
         && parseFloat(paint.strokeOpacity) > 0
 }
+
+/**
+ * How many distinct stroke widths a node's ring passes through over `ms` of its pulse.
+ *
+ * The only way to tell a breathing ring from a blinking one: a smoothly interpolated animation
+ * lands on a new width every sample, while one CSS cannot interpolate steps between exactly the
+ * two keyframe values. Screenshots are blind to this — Playwright disables animations for them.
+ */
+export async function ringWidthsDuringPulse(page: Page, nodeId: string, ms = 1200): Promise<number> {
+    return page.evaluate(async ({ id, duration }) => {
+        const shape = document.querySelector(`#node-${id} > .node`)
+        if (!shape) throw new Error(`node ${id} has no shape element`)
+        const seen = new Set<string>()
+        const step = 40
+        for (let elapsed = 0; elapsed < duration; elapsed += step) {
+            seen.add(getComputedStyle(shape).strokeWidth)
+            await new Promise(resolve => setTimeout(resolve, step))
+        }
+        return seen.size
+    }, { id: nodeId, duration: ms })
+}

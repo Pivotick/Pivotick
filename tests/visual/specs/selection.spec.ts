@@ -10,6 +10,7 @@ import {
     expectCanvas,
     ringIsDrawn,
     strokeWidthOf,
+    ringWidthsDuringPulse,
 } from '../helpers'
 import type { NodeShapePaint } from '../harness/harness'
 
@@ -156,14 +157,40 @@ test.describe('selection', () => {
     // …and a default-width one is untouched by that: the floors are what it still gets.
     test('a default-width stroke keeps the widths the theme names', async ({ page }) => {
         await harness(page, 'selectNode', 'a')
-        expect(strokeWidthOf(await harness(page, 'nodeShapePaint', 'a') as NodeShapePaint)).toBe(3)
+        // A range, not a number: the node's ring is mid-pulse whenever this is read, breathing
+        // between the themed floor and two above it.
+        const ring = strokeWidthOf(await harness(page, 'nodeShapePaint', 'a') as NodeShapePaint)
+        expect(ring).toBeGreaterThanOrEqual(3)
+        expect(ring).toBeLessThanOrEqual(5)
 
+        // Edges carry no animation, so theirs are exact.
         await harness(page, 'selectEdge', 'a-b')
         expect(strokeWidthOf(await harness(page, 'edgePaint', 'a-b') as NodeShapePaint)).toBe(5)
 
         await harness(page, 'deselectAll')
         await harness(page, 'highlightEdge', 'a-b')
         expect(strokeWidthOf(await harness(page, 'edgePaint', 'a-b') as NodeShapePaint)).toBe(3)
+    })
+
+    // The pulse is written as two keyframes reading custom properties, so that a thick border
+    // can be pulsed relative to itself. CSS will only interpolate that if each keyframe is a
+    // bare `var()` of a *registered* number — put a `calc()` in the keyframe, or leave the
+    // property untyped, and the animation silently drops to discrete steps and the ring blinks.
+    // No screenshot can see this: Playwright disables animations when it takes one.
+    test('the selection ring breathes rather than blinking', async ({ page }) => {
+        await harness(page, 'selectNode', 'a')
+        // Two would mean it is snapping between the keyframes; a real ramp lands somewhere new
+        // almost every sample.
+        expect(await ringWidthsDuringPulse(page, 'a')).toBeGreaterThan(10)
+    })
+
+    test('a thick border breathes too, around its own width', async ({ page }) => {
+        await loadFixture(page, 'basic', { render: { defaultNodeStyle: { strokeWidth: 12 } } })
+        await harness(page, 'selectNode', 'a')
+
+        expect(await ringWidthsDuringPulse(page, 'a')).toBeGreaterThan(10)
+        expect(strokeWidthOf(await harness(page, 'nodeShapePaint', 'a') as NodeShapePaint))
+            .toBeGreaterThanOrEqual(12)
     })
 
     test('clears selection', async ({ page }) => {

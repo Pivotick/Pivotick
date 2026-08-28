@@ -1,3 +1,26 @@
+/**
+ * Both ends of the pulse, precomputed and typed, because the animation only interpolates if
+ * each keyframe is a bare `var()` of a *registered* number.
+ *
+ * The widths resolve through a `max()` against the node's own border. Two things then break
+ * interpolation, and both had to go: an *untyped* custom property leaves `stroke-width` holding
+ * an unresolved math expression, and so does a `calc()` written **in the keyframe** — even
+ * around a registered property. Either one drops the animation to discrete steps, and the ring
+ * blinks between its two widths instead of breathing. The arithmetic therefore happens in the
+ * rule that sets these, where it is resolved before the keyframes ever read it.
+ */
+@property --pvt-node-ring-width {
+    syntax: "<number>";
+    inherits: false;
+    initial-value: 3;
+}
+
+@property --pvt-node-ring-peak {
+    syntax: "<number>";
+    inherits: false;
+    initial-value: 5;
+}
+
 // The pulses breathe around `--pvt-node-ring-width` rather than a fixed 3, because each
 // state rule resolves that against the node's *own* border: pulsing a thick-bordered node
 // between 3 and 5 would have made selecting it look like the border had thinned.
@@ -8,7 +31,7 @@
     }
 
     50% {
-        stroke-width: calc(var(--pvt-node-ring-width) + 2);
+        stroke-width: var(--pvt-node-ring-peak);
         filter: drop-shadow(0 0 3px var(--pvt-node-selected-color));
     }
 }
@@ -20,7 +43,7 @@
     }
 
     50% {
-        stroke-width: calc(var(--pvt-node-ring-width) + 2);
+        stroke-width: var(--pvt-node-ring-peak);
         filter: drop-shadow(0 0 7px var(--pvt-node-selected-color));
     }
 }
@@ -32,7 +55,7 @@
     }
 
     50% {
-        stroke-width: calc(var(--pvt-node-ring-width) + 2);
+        stroke-width: var(--pvt-node-ring-peak);
         filter: drop-shadow(0 0 3px var(--pvt-node-highlighted-stroke));
     }
 }
