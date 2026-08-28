@@ -1,10 +1,10 @@
 # Feature — rail modes as a plugin extension point
 
-**Status:** **draft** — written 2026-08-28, awaiting a grilling session. Nothing implemented.
+**Status:** **grilled 2026-08-28** — decisions below are binding. Nothing implemented yet.
 **Owner:** Sami Mokaddem
 **Requested:** 2026-08-28
-**Area:** `src/ui/ModeStore.ts`, `src/ui/elements/ModeRail/`, `src/ui/elements/ToolPanel/`, `src/ui/elements/Flyout/`, `src/ui/UIManager.ts`, `src/interfaces/Plugin.ts`, `src/interfaces/GraphUI.ts`, `src/index.ts` + `src/docIndex.ts`. Touches **public types** (`RailMode` / `PointerMode` / `FlyoutMode`).
-**Type:** plugin API — turn a hardcoded list into a registry.
+**Area:** `src/ui/ModeStore.ts`, `src/ui/elements/ModeRail/`, `src/ui/elements/ToolPanel/`, `src/ui/elements/Flyout/`, `src/ui/UIManager.ts`, `src/interfaces/Plugin.ts`, `src/interfaces/GraphUI.ts`, `src/index.ts` + `src/docIndex.ts`. Touches **public types** (`RailMode` / `PointerMode` / `FlyoutMode`) and **removes a public option** (`UI.modeRail`).
+**Type:** plugin API — a registry beside the hardcoded rail, not a rewrite of it.
 **Related:** `graph-app-b3-control-layout.md` (built the rail, and parked Explore/Enrich as "SOON" stubs — D10, §7), `table-mode` + the dock-tab hoist (the registry precedent this copies), `minimap` (the reference plugin, built entirely on public API).
 
 ---
@@ -25,168 +25,194 @@ add a sidebar panel, a dock tab, a canvas element, a keybinding and a whole UI c
 
 So the SOON badges are the wrong answer twice over: they promise work we have not
 scheduled (flagged as ageing badly in `graph-app-b3-control-layout.md` §9.6), and they
-occupy the slot the integrator should be filling themselves. Making the rail a registry
+occupy the slot the integrator should be filling themselves. Making the rail extensible
 lets the people who know what "enrich" means for *their* data ship it, and lets us delete
 a promise we are not keeping.
 
-The refactor is small because the groundwork is already done — see §4.
-
 ## 2. What ships
 
-1. **`ctx.addRailMode(mode)`** on `PluginContext`, returning a disposer — the same door
-   shape as `addPanel` and `addDockTab`.
-2. **`UIManager.addRailMode` / `removeRailMode` / `getRailModes`** underneath it, plus
-   `onRailModesChanged` for the rail to subscribe to. Registration works in any mode; the
-   button is only *drawn* where the rail exists (`full`, `light`).
-3. **A registry-driven `ModeRail`** — buttons, order, zones, divider, keyboard shortcuts
-   and the active highlight all come from the registry, and it rebuilds when the registry
-   changes.
-4. **A registry-driven `ToolPanel`** — the tool list, panel title, icon and shortcut badge
-   come from the active mode's definition instead of `specsFor()`.
-5. **A `ModeStore` keyed by string**, with per-mode defaults seeded at registration.
-6. **The four built-ins re-expressed as registry entries** (see Q2) — the honest test that
-   the door is wide enough, exactly as the data table is "just" a dock tab.
-7. **Public types**: `RailModeDefinition`, `RailTool` (today's private `ToolSpec`),
-   `RailModeHandle`, exported from `index.ts` and `docIndex.ts`.
-8. **Docs**: a plugins-page section, and a gallery card with a working custom mode.
+1. **`addRailMode(mode)`** on both `PluginContext` and `UIManager`, returning a disposer —
+   the same door shape as `addPanel` and `addDockTab`, plus `removeRailMode`,
+   `getRailModes` and `onRailModesChanged` for the rail to subscribe to.
+2. **A plugin zone on the rail** — the four built-in buttons, a divider, then the
+   registered modes sorted by `order`. The rail rebuilds that zone when the registry
+   changes, because plugins install after it has already mounted.
+3. **A plugin path through `ToolPanel`** — for a registered pointer mode the panel renders
+   from the definition (`tools`, then `render()`), with core owning the header, the
+   shortcut badge, arming and collapse.
+4. **Flyout-kind modes** — `Flyout` is exported so a plugin subclasses it, and the mode
+   definition carries a factory that core mounts into the flyout slot and disposes with
+   the mode.
+5. **A string-keyed `ModeStore`** — `mode`, `armedTool` and `panelOpen` accept any
+   registered id; each registered mode seeds its own defaults.
+6. **`UI.modeRail`, `ModeRailOptions` and the SOON stubs deleted**, along with the
+   `.pvt-moderail-soon` / `-badge` styling.
+7. **Public types**: `RailModeDefinition`, `RailTool`, and the exported `Flyout`.
+8. **Docs**: a plugins-page section, a gallery card with a working custom mode, and a demo
+   Explore mode behind `?hero` replacing the deleted stubs.
 
-## 3. The shape of the door
+## 3. Decisions taken
 
-Sketch, not a ruling — the fields are what §7 is for.
+Resolved one by one in the 2026-08-28 grilling session. Binding.
+
+| # | Decision | Ruling |
+|---|---|---|
+| D1 | What a mode may own | **Tools only.** Drag arbitration is out of scope. Note the PRD's first draft was wrong to say a mode *cannot* claim a drag: `LassoOverlay` does exactly that with its own namespaced handlers plus `context.cancel()` guards, and every hook it uses is public. What is missing is **arbitration** — nothing decides who owns `pointerdown` when two claimants exist. A plugin may still do it by hand, unsupported. |
+| D2 | The built-ins | **Stay hardcoded.** The registry only appends. Rejected: re-expressing Select/Create/View/Physics as registry entries — it would prove the door is wide enough, but it churns the two most delicate files for no user-visible gain. Accepted cost: the built-ins keep privileges a plugin cannot have, and a gap in the door will not show up in our own use of it. |
+| D3 | Panel authoring | A mode declares **`tools`, plus an optional `render()`**. Rows cover the common case; the hatch covers the Explore mode that wants a depth slider. Core keeps the header and the collapse either way. |
+| D4 | Public type shape | `RailMode = PointerMode \| FlyoutMode \| (string & {})` — accepts any id while keeping IDE autocomplete for the four built-in names, which D2 makes permanent. Neither form catches a typo in a plugin id; that is impossible. **Fallback:** if TypeDoc renders the idiom badly in the generated reference, drop to plain `string` and document the four names in prose. A five-minute check during M1, not a commitment. |
+| D5 | Rail placement | **Built-ins, divider, then plugin modes by `order`.** The divider appears once one mode is registered — the same treatment the SOON zone had. No `zone` field: with a single plugin zone it collapses into `order`. Plugin modes cannot interleave with, reorder or remove built-ins. |
+| D6 | The SOON stubs | **Delete the lot** — `UI.modeRail`, `ModeRailOptions`, the two buttons and their CSS. The option is undocumented (only `UIManager.modeRail`, the component accessor, appears in the docs) and has three consumers: two visual tests and `main.ts:545`. The `?hero` shot registers a **demo Explore mode** instead, which shows off the new door and keeps the `compass` glyph alive. |
+| D7 | Flyout modes | **Both kinds ship.** `Flyout` is exported so a plugin subclasses it and inherits `toggleRow` / `sectionLabel` / `wireToggle` / `query`. Consequence: its `protected` members become public API and are covered by semver from here. |
+| D8 | Flyout wiring | The definition carries a **factory** (`flyout: ui => new MyFlyout(ui)`); core mounts it into the flyout slot and tears it down with the mode. Rejected: letting the plugin mount it itself — the disposer would then remove the button and leave a dead overlay bound to a mode that no longer exists. `kind: 'flyout'` without a factory is refused. Core **warns** when the subclass's `mode` does not match the definition's `id`; that is the one mismatch a factory cannot prevent. In `viewer` there is no flyout slot, so the factory never runs. |
+| D9 | Teardown | Unregistering the **active** mode calls its `onExit`, then falls back to **Select** — which D2 guarantees exists. `onExit` does **not** fire on UI teardown: the plugin's own tracked disposers cover that, and firing hooks mid-teardown is the re-entrancy trap `ui-lifecycle-emitphase-reentrancy` already cost us once. |
+| D10 | Shortcuts | Register through `keyManager` and **inherit its shadowing**: last-in wins, warns (`"…is already bound; the new handler shadows it until disposed"`), and pops back on dispose. A plugin may shadow `V`, noisily and reversibly. Rejected: reserving the built-in keys — a special case that exists nowhere else in the library. |
+| D11 | Panel default | A plugin mode's panel **opens** on first entry, like Create, so its tools are discoverable. `panelOpen: false` opts out. |
+| D12 | Icons | **No export.** `icon` stays a raw SVG string; `icons.ts`'s 82 glyphs stay private rather than being frozen as API. Document instead that the string is **`innerHTML`'d and never sanitised** — unlike the note markdown path, which goes through DOMPurify — so it must be trusted, and that CSS sizes it to 20px on the rail and 18px in the panel. |
+| D13 | Tool list | **`RailTool[] \| (() => RailTool[])`.** The array covers a static mode; the function covers one whose tools depend on the selection, and matches what `specsFor()` already does internally. |
+| D14 | Tool kinds | Public `RailTool.kind` is **`'default' \| 'toggle' \| 'action'`**. No `'soon'`: we are deleting our own SOON stubs for going stale (D6), and publishing the badge would invite plugins to repeat it. The internal `ToolSpec` keeps `'soon'` for the built-in Path select, so the public type is a strict subset. |
+| D15 | Rail slot morph | **Yes, derived from the armed tool.** A plugin mode's button swaps in the armed `RailTool`'s own icon and label, the way Select becomes Lasso. No per-mode hook and no config — the tool already carries both fields. |
+| D16 | `tools` + `render()` | **They compose.** Core renders the tool rows, then appends `render()`'s element below them, so a mode gets rows *and* a slider without hand-building rows. |
+
+**Consequences taken as read** (agreed, not separately grilled):
+
+- `addRailMode` lands on **both** `UIManager` and `PluginContext`, like every other door.
+- Registration in `viewer` / `static` is a **silent no-op**; a duplicate id **warns and
+  skips**. Both match `addDockTab`.
+- The rail is **never empty**, so there is no empty state to design.
+- The initial mode stays `'select'`. An integrator who wants to boot into their own mode
+  calls `modeStore.setMode('explore')` after install — the store is already public.
+- Two drive-bys folded in: delete `GraphSvgRenderer.lassoModeActive` (assigned at
+  `GraphSvgRenderer.ts:778`, read nowhere), and keep `compass` alive through the demo mode
+  rather than deleting it with the stub.
+
+## 4. The shape of the door
 
 ```js
+import { Pivotick, Flyout } from 'pivotick'
+
 const explore = {
     name: 'explore-mode',
     install(ctx) {
         ctx.addRailMode({
             id: 'explore',
             label: 'Explore',
-            icon: compassSvg,
-            kind: 'pointer',        // or 'flyout'
+            icon: compassSvg,          // raw SVG string, innerHTML'd — must be trusted (D12)
+            kind: 'pointer',
             shortcut: 'E',
-            zone: 'data',           // rail grouping; a divider separates zones
-            order: 10,
-            tools: () => [
+            order: 10,                 // ordering among plugin modes only (D5)
+            defaultTool: null,
+            // panelOpen defaults to true (D11)
+            tools: () => [             // array or function (D13)
                 { id: 'expand', label: 'Expand neighbours', icon: plusSvg, kind: 'action',
                   run: () => expandSelected(ctx.graph),
                   enabled: () => !!ctx.graph.renderer.getGraphInteraction().getSelectedNode() },
                 { id: 'walk', label: 'Path walk', icon: pathSvg, kind: 'toggle',
-                  run: (armed) => armPathWalk(ctx.graph, armed) },
+                  run: armed => armPathWalk(ctx.graph, armed) },
             ],
+            render: () => depthSlider(),   // appended below the rows (D16)
             onEnter: () => {},
-            onExit: () => {},       // disarm whatever the mode armed
+            onExit: () => disarmEverything(),   // also called on unregister (D9)
         })
     },
 }
-
-new Pivotick(el, data, { plugins: [explore] })
 ```
 
-A **flyout** mode declares `kind: 'flyout'` and mounts its own panel into
-`ctx.layout.flyout`; the store already opens exactly the panel whose mode is active, so
-mutual exclusion is free. See Q6 for whether the definition should carry a `render`
-instead.
+A flyout mode instead subclasses the exported `Flyout` and hands over a factory:
 
-## 4. Why this is cheap — what already holds
+```js
+class EnrichFlyout extends Flyout {
+    mode = 'enrich'                    // must match the definition's id (D8)
+    template() { return this.headerRow(sparklesSvg, 'Enrich') + this.toggleRow(...) }
+    wire() { this.wireToggle('auto', () => toggleAuto(), () => isAuto()) }
+}
+
+ctx.addRailMode({
+    id: 'enrich', label: 'Enrich', icon: sparklesSvg, kind: 'flyout',
+    flyout: ui => new EnrichFlyout(ui),   // core mounts and disposes it
+})
+```
+
+## 5. Why this is cheap — what already holds
 
 Established by reading the code on 2026-08-28. These are the load-bearing facts; if one
 turns out to be wrong the estimate moves.
 
 - **`ModeStore` is purely presentational.** It holds `mode` / `armedTool` / `panelOpen`
-  and notifies. It has no coupling to the interaction layer. The real work is done by
-  `ToolPanel` calling public graph API directly — `renderer.toggleLassoMode`,
-  `editing.connectManager`, `noteManager.addNote`. A plugin mode's tools can therefore do
-  anything a plugin can already do, with no new privilege.
+  and notifies. The real work is done by `ToolPanel` calling public graph API directly —
+  `renderer.toggleLassoMode`, `editing.connectManager`, `noteManager.addNote`. A plugin
+  mode's tools can therefore do anything a plugin can already do, with no new privilege.
 - **Nothing outside the rail cluster reads mode state.** `grep` for
   `PointerMode|RailMode|FlyoutMode|modeStore|getArmedTool` outside `ModeStore.ts` hits
   only `ModeRail`, `ToolPanel`, `Flyout`, `ViewFlyout`, `PhysicsFlyout` and `docIndex.ts`.
-  Nothing in `GraphInteractions`, the renderers or `Graph`. (The one other `getMode()` in
-  the tree is `GraphConnectManager`'s, unrelated.)
+  Nothing in `GraphInteractions`, the renderers or `Graph`.
 - **The SCSS is class-driven, not name-driven.** `moderail.scss` styles
-  `.pvt-moderail-button` / `-soon` / `-divider` / `.active`; the only per-mode rule in the
-  whole cluster is `.pvt-flyout-view .pvt-flyout-card`. A plugin mode inherits the native
-  look with no styling work.
+  `.pvt-moderail-button` / `-divider` / `.active`; the only per-mode rule in the whole
+  cluster is `.pvt-flyout-view .pvt-flyout-card`. A plugin mode inherits the native look
+  with no styling work.
 - **The rail already self-sizes.** `ModeRail.publishHeight()` (`ModeRail.ts:89`) observes
   its own box with a `ResizeObserver` and publishes `--pvt-moderail-height`, which the
   legend sizes against. Adding or removing modes keeps that correct for free.
-- **`Flyout` is already the right contract** — an abstract base where a subclass declares
-  its mode, a `template()` and a `wire()`, with `open` bound to the store. It is simply
-  not exported.
+- **`Flyout` is already the right contract** — a subclass declares its mode, a
+  `template()` and a `wire()`, with `open` bound to the store. D7 just exports it.
 - **The precedent exists twice.** `addPanel` and `addDockTab` are registry + disposer +
   subscriber, and `addDockTab` additionally solves the *late arrival* problem
   (`ensureDock`, `UIManager.ts:833`). This is the same problem: plugins install at
   `Graph.ts:140`, after `new UIManager` has already run `build()` and mounted the rail.
-  **So the rail must subscribe and rebuild — that is a requirement, not a nicety.**
+  **So the rail must subscribe and rebuild its plugin zone — a requirement, not a nicety.**
 
-## 5. What has to move
+## 6. What has to move
 
-| File | Hardcoded today | Becomes |
-|---|---|---|
-| `ModeStore.ts:6-24` | `PointerMode` / `FlyoutMode` string-literal unions; `isPointerMode` is `mode === 'select' \|\| mode === 'create'` | `RailMode = string`; `isPointerMode` a registry lookup |
-| `ModeStore.ts:46,53` | `DEFAULT_ARMED` / `DEFAULT_PANEL_OPEN` as `Record<PointerMode, …>` | maps seeded per mode at registration |
-| `ModeStore.ts:73` | `lastPointerMode` | unchanged, but needs an answer for "the last pointer-mode was just unregistered" (Q8) |
-| `ModeRail.ts:28-55` | four `makeButton` calls in a fixed order, then a DATA zone gated on `UI.modeRail.explore/enrich` | iterate the registry by `zone` then `order`; draw a divider between zones |
-| `ModeRail.ts:57-66` | click wiring per literal key; `V` / `C` registered inline | wiring per registry entry; `shortcut` from the definition |
-| `ModeRail.ts:138` | `railFace()` — the select→Lasso, create→Edge icon morph | derive from the armed tool's own `icon` + `label`, which deletes the special case rather than generalising it |
-| `ToolPanel.ts:144` | `specsFor()` — the two tool lists | the active mode's `tools` |
-| `ToolPanel.ts:28,170,241` | `MODE_SHORTCUT`, the panel title + icon, `defaultTool()` | per-mode fields |
-| `ToolPanel.ts:120-127` | disarm-on-leave hardcodes lasso + connect-manager cleanup | a per-mode `onExit()` hook |
-| `UIManager.ts:246-262` | `modeRail` / `toolPanel` / `viewFlyout` / `physicsFlyout` as fixed `UI_ELEMENTS` entries | rail + tool panel stay; the two flyouts become registry entries (Q2) |
-| `interfaces/Plugin.ts` | no rail door | `addRailMode` / `removeRailMode` |
+D2 shrinks this list sharply: every built-in path stays as it is, and the new code sits
+*beside* it.
 
-`ToolSpec` (`ToolPanel.ts:17`) is already a decent public shape —
-`{ id, label, icon, kind, run, enabled }` — and can be promoted to
-`interfaces/GraphUI.ts` close to as-is.
+| File | Change |
+|---|---|
+| `ModeStore.ts:6-24` | Widen the types per D4. `isPointerMode` can no longer be `mode === 'select' \|\| mode === 'create'` — the store records each registered mode's `kind` at registration, with the four built-ins pre-seeded, and the check becomes a lookup |
+| `ModeStore.ts:46,53` | `DEFAULT_ARMED` / `DEFAULT_PANEL_OPEN` stay for the built-ins; a registered mode seeds its own entries from `defaultTool` and `panelOpen` (D11) |
+| `ModeStore.ts:73` | `lastPointerMode` unchanged; the D9 fallback is Select, not the last mode |
+| `ModeRail.ts:28-55` | Keep the four `makeButton` calls. **Delete** the SOON zone (D6). **Add** a plugin zone: divider + registry-ordered buttons, rebuilt on registry change |
+| `ModeRail.ts:57-66` | Keep `V` / `C`. Register each plugin mode's `shortcut` through `keyManager` (D10) |
+| `ModeRail.ts:138` | `railFace()` untouched for built-ins; plugin buttons derive their face from the armed `RailTool` (D15) |
+| `ToolPanel.ts:144` | `specsFor()` untouched. Add a branch: for a registered mode, read `tools` (array or function, D13) and append `render()` (D16) |
+| `ToolPanel.ts:28,170,241` | `MODE_SHORTCUT`, the title/icon and `defaultTool()` keep their built-in values; the registered path reads the definition |
+| `ToolPanel.ts:120-127` | **Unchanged.** The lasso / connect-manager disarm-on-leave stays exactly as written. Plugin modes get `onExit` instead |
+| `Flyout/Flyout.ts` | Widen `mode` per D4; export the class (D7) |
+| `UIManager.ts` | The registry: `addRailMode` / `removeRailMode` / `getRailModes` / `onRailModesChanged`, plus mounting each flyout factory into `layout.flyout` (D8). `UI_ELEMENTS` is untouched |
+| `interfaces/GraphUI.ts` | Add `RailModeDefinition` + `RailTool`; **delete** `ModeRailOptions` and `UI.modeRail` (D6) |
+| `interfaces/Plugin.ts` | `addRailMode` / `removeRailMode` on `PluginContext` |
+| `index.ts` / `docIndex.ts` | Export `Flyout`, `RailModeDefinition`, `RailTool` |
 
-**The one genuinely fiddly bit** is `ToolPanel.onState`'s disarm-on-leave. Its lasso
-cleanup carries hard-won ordering (the macrotask deferral at `ToolPanel.ts:299`, so the
-trailing canvas click is swallowed by the still-armed guard before the lasso reverts).
-Turning that into a documented `onExit` contract is the part most likely to regress, and
-the part worth writing a test around first.
+`ToolSpec` (`ToolPanel.ts:17`) is promoted to a public `RailTool` in
+`interfaces/GraphUI.ts`, minus `'soon'` (D14).
 
-## 6. Not in scope
+**The risk the first draft flagged is gone.** It named `ToolPanel.onState`'s
+disarm-on-leave — with its macrotask lasso deferral at `ToolPanel.ts:299` — as the part
+most likely to regress. D2 means that code is never touched.
 
-- **Changing what a plain drag does.** Today Select and Create differ *only* in what the
-  tool panel arms; there is no mechanism in `GraphInteractions` for a pointer-mode to
-  claim the canvas gesture. An Explore mode that wants drag-to-expand needs that
-  mechanism, and it is a second, larger piece of work. This PRD ships the rail door only.
-  See Q1 — if the answer changes, the estimate doubles.
-- **Shipping an Explore or Enrich mode ourselves.** The point is that integrators ship
-  theirs. A gallery card demonstrating one is scope; a built-in is not.
-- **Reworking the flyout chrome.** `Flyout`'s helpers (`toggleRow`, `sectionLabel`,
-  `wireToggle`) are exported as-is or not at all.
+## 7. Not in scope
 
-## 7. Open decisions — the grilling list
-
-Nothing below is decided.
-
-| # | Question | Lean |
-|---|---|---|
-| Q1 | Can a plugin mode change what a plain drag does, or only what the tool panel offers? | Only the tool panel, for now — §6 |
-| Q2 | Do the four built-ins move onto the registry, or stay hardcoded beside it? | Move them; it is the only real test of the door |
-| Q3 | `RailMode` widens from a literal union to `string`. Acceptable break? | Yes — it is a read-only type for consumers |
-| Q4 | Do the `UI.modeRail.explore` / `.enrich` SOON stubs survive? | Drop them; they are the thing this replaces |
-| Q5 | Is `tools` a static array or a function called per render? | A function — `specsFor()` already re-derives, and Create hides tools when an editor is off |
-| Q6 | Does a flyout mode carry a `render` in its definition, or mount its own `UIComponent`? | Mount its own; export the `Flyout` base |
-| Q7 | Do we export `icons.ts`? A plugin author must otherwise supply raw SVG strings. | Export a curated set, not the lot |
-| Q8 | A mode is unregistered while it is the active mode — what happens? | Fall back to the first registered pointer-mode |
-| Q9 | Can a plugin remove or reorder a *built-in* mode? | Reorder yes, remove no |
-| Q10 | A plugin claims a shortcut a built-in already owns (`V`). Who wins, and does anyone hear about it? | First registration wins, warn on the second |
-| Q11 | Is `zone` a real concept, or just `order` plus an explicit divider flag? | Real, but a free string, not an enum |
-| Q12 | Does the store keep `armedTool` / `panelOpen` for flyout modes too, or only pointer-modes? | Only pointer-modes; keep the asymmetry that exists |
-| Q13 | Is `kind: 'soon'` part of the public tool API? | Yes — an integrator has the same roadmap problem we do |
-| Q14 | What does the rail draw if every mode is unregistered? | Nothing, and no empty chrome box |
-| Q15 | Registration in `viewer` mode is accepted but never drawn. Silent, or a warning? | Silent — matches `addDockTab` |
+- **Arbitrated drag ownership** (D1). A plugin can wire its own pointer handlers the way
+  `LassoOverlay` does, using the public `canvasPointerDown/Up`, `canvasMousemove`,
+  `canvasBeforeZoom` and `context.cancel()`. What core will not do in v1 is decide between
+  two claimants or suppress pan and the selection box on a mode's behalf. An Explore mode
+  wanting drag-to-expand is a second, larger piece of work.
+- **Shipping an Explore or Enrich mode ourselves.** The demo mode behind `?hero` and a
+  gallery card are scope; a built-in is not.
+- **Converting the built-ins** (D2), and **reworking the flyout chrome** beyond exporting
+  the base class.
 
 ## 8. Work plan
 
-- **M1 — the registry.** `ModeStore` keyed by string; `UIManager` registry + subscribers;
-  `ModeRail` and `ToolPanel` driven from it; the four built-ins converted. No public API
-  yet. Ends green on the existing visual suite, with the rail pixel-identical.
-- **M2 — the door.** `addRailMode` on `PluginContext` and `UIManager`; public types
-  exported; `Flyout` exported if Q6 says so; the SOON stubs removed if Q4 says so.
-- **M3 — proof + docs.** A gallery card with a real custom mode, a plugins-page section, a
-  changelog entry, and visual coverage for a plugin-registered mode.
+- **M1 — the door.** Registry on `UIManager`; store widened; the rail's plugin zone; the
+  tool-panel path for registered pointer modes; `RailModeDefinition` / `RailTool` exported.
+  Check how TypeDoc renders the D4 idiom and fall back to `string` if it is ugly. Ends with
+  the existing visual suite green and the built-in rail pixel-identical.
+- **M2 — flyout modes.** Export `Flyout`, widen its `mode`, mount and dispose factories,
+  warn on id mismatch.
+- **M3 — retire the stubs and prove it.** Delete `UI.modeRail` + `ModeRailOptions` + the
+  SOON buttons and CSS; the `?hero` demo Explore mode; a gallery card; the plugins-page
+  section; a changelog entry; visual coverage for a registered mode.
 
 Roughly one session for M1, half for M2, half for M3 — the same shape and size as the
 dock-tabs work.
@@ -194,12 +220,16 @@ dock-tabs work.
 ## 9. Tests and docs
 
 - `tests/visual/specs/mode-rail.spec.ts` uses
-  `UI: { modeRail: { explore: true, enrich: true } }` for its `B3` fixture, and
-  `harness.ts:255` sets `modeRail: { enrich: true }`. Both need updating if Q4 drops the
-  flags — and the harness is the natural place to register a fake plugin mode instead, so
-  the suite covers the new door rather than the old stubs.
-- The rail is a small target and the suite is colour-blind at threshold 0.2, so a registry
-  regression that moves a button by a few pixels will not fail on its own. Assert the
-  rail's button ids and order in the DOM, not only by screenshot.
+  `UI: { modeRail: { explore: true, enrich: true } }` for its `B3` fixture (and
+  `{ explore: false, enrich: false }` at line 145), and `harness.ts:255` sets
+  `modeRail: { enrich: true }`. All three go with D6 — and the harness is the natural place
+  to register a fake plugin mode instead, so the suite covers the new door rather than the
+  old stubs.
+- The rail is a small target and the suite is **colour-blind at threshold 0.2** and blind
+  to ~16px chrome moves. A registry regression that reorders or drops a button will not
+  fail on a screenshot alone: assert the rail's button ids and their order in the DOM.
+- Worth a test before the code: unregistering the active mode must call `onExit` and land
+  on Select (D9), and a `kind: 'flyout'` mode's disposer must take its panel with it (D8).
 - `docs/ui.md:70` describes the rail and carries the 1.5→1.6 migration warning; it needs
-  the new extension point. `docs/plugins.md` gains the section.
+  the new extension point and a note that `UI.modeRail` is gone. `docs/plugins.md` gains
+  the section, including the D12 warning that `icon` is injected as raw HTML.
