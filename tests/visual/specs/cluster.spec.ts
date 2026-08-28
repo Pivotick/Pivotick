@@ -1,4 +1,4 @@
-import { test, gotoHarness, loadFixture, harness, expectCanvas } from '../helpers'
+import { test, expect, gotoHarness, loadFixture, harness, expectCanvas, nodeEl } from '../helpers'
 import type { Page } from '@playwright/test'
 import type { FixtureName } from '../harness/fixtures'
 
@@ -16,6 +16,26 @@ import type { FixtureName } from '../harness/fixtures'
 async function loadPinned(page: Page, name: FixtureName, overrides: Record<string, unknown> = {}) {
     await loadFixture(page, name, overrides)
     await harness(page, 'pin')
+}
+
+/**
+ * Expand a cluster the way a user does — by clicking its affordance — leaving the library's
+ * own placement alone. `harness.expand` re-seats the rim chrome itself after tightening the
+ * bubble, so it cannot see where the library would have put it.
+ */
+async function expandByClick(page: Page, id: string) {
+    await nodeEl(page, id).locator('.expand-icon circle').click()
+    await nodeEl(page, id).locator('.pvt-cluster-area').waitFor({ state: 'attached' })
+    // The bubble grows over a 250ms d3 transition, which Playwright's animation freeze
+    // does not touch.
+    await page.waitForTimeout(400)
+}
+
+/** How far from the cluster's centre the collapse affordance ended up. */
+async function collapseIconReach(page: Page, id: string): Promise<number> {
+    const anchor = await harness(page, 'nodeIconAnchor', id) as { x: number, y: number } | null
+    if (!anchor) throw new Error(`node ${id} has no expand/collapse affordance`)
+    return Math.hypot(anchor.x, anchor.y)
 }
 
 test.describe('clustering', () => {
@@ -43,5 +63,19 @@ test.describe('clustering', () => {
         await harness(page, 'expand', ['group', 'c1'])
         await harness(page, 'fit')
         await expectCanvas(page, 'cluster-nested.png')
+    })
+
+    // T4.4 — the collapse affordance rides the bubble, not the node inside it. Expanding
+    // pushes the node's own shape to the NW rim, so anchoring off that shape leaves the
+    // affordance stranded near the cluster's centre. Screenshots are blind to a 16px circle
+    // moving, so this is read off the geometry: the affordance sits on the 45° diagonal at
+    // the bubble's radius plus the 2px rim padding.
+    test('the collapse affordance sits on the cluster rim', async ({ page }) => {
+        await loadPinned(page, 'clustered')
+        await expandByClick(page, 'group')
+
+        const radius = await harness(page, 'clusterRimRadius', 'group') as number
+        expect(radius).toBeGreaterThan(0)
+        expect(await collapseIconReach(page, 'group')).toBeCloseTo(radius + 2, 0)
     })
 })

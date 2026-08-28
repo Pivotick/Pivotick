@@ -852,6 +852,8 @@ export interface HarnessApi {
     badgeGroupOffset(id: string): { x: number; y: number } | null
     /** Where the expand/collapse affordance sits, in the node group's coordinates. */
     nodeIconAnchor(id: string): { x: number; y: number } | null
+    /** The radius an expanded cluster's bubble settles at — what its rim chrome is judged against. */
+    clusterRimRadius(id: string): number | null
     /** Badge handlers that fired, in order, since the fixture loaded. */
     badgeClickLog(): string[]
     clearBadgeClickLog(): void
@@ -2021,6 +2023,13 @@ class Harness implements HarnessApi {
         const icon = document.getElementById(`node-${id}`)?.querySelector(':scope > .node-icon')
         const translate = /translate\(([-\d.]+),\s*([-\d.]+)\)/.exec(icon?.getAttribute('transform') ?? '')
         return translate ? { x: Number(translate[1]), y: Number(translate[2]) } : null
+    }
+
+    clusterRimRadius(id: string): number | null {
+        const area = document.getElementById(`node-${id}`)?.querySelector(':scope > .pvt-cluster-area')
+        // The drawn `r` is mid-transition on a fresh expand; `_final_r` is where it lands.
+        const radius = Number(area?.getAttribute('_final_r'))
+        return Number.isFinite(radius) ? radius : null
     }
 
     badgeClickLog(): string[] {

@@ -10,7 +10,7 @@ import { parseSvgIconMarkup } from '../../utils/SvgSanitizer'
 import { hasAllowedScheme, SAFE_IMAGE_SCHEMES } from '../../utils/urlSafety'
 import type { CustomNodeShape, GraphRendererOptions, ImageFit, NodeShape, NodeStyle } from '../../interfaces/RendererOptions'
 import { ClusterDrawer } from './ClusterDrawer'
-import { BadgeDrawer, nodeRimAnchor, resolveBadges } from './BadgeDrawer'
+import { BadgeDrawer, nodeRimAnchor, resolveBadges, RIM_PADDING } from './BadgeDrawer'
 import { forceConstrainParent } from '../../plugins/d3Forces/ForceConstrainParent'
 import { imageOff } from '../../ui/icons'
 d3Select.prototype.transition = d3Transition
@@ -790,9 +790,16 @@ export class NodeDrawer {
             // Remove existing icons if any
             group.selectAll<SVGGElement, unknown>(':scope > .node-icon').remove()
 
-            // Same rim maths as the badges, so the two agree on where a corner is — on a
-            // square or an image frame the circumscribed 45° point sits well inside the shape.
-            const anchor = nodeRimAnchor(nodes[i], node, !node.expanded ? 'ne' : 'se')
+            // An expanded node is drawn as a bubble with its shape pushed to the NW rim, so
+            // the affordance belongs on the bubble — measuring the shape would strand it near
+            // the cluster's centre. Otherwise the same rim maths as the badges, so the two
+            // agree on where a corner is: on a square or an image frame the circumscribed 45°
+            // point sits well inside the shape.
+            const clusterArea = nodes[i].querySelector<SVGCircleElement>(':scope > .pvt-cluster-area')
+            const clusterRadius = node.expanded ? Number(clusterArea?.getAttribute('_final_r')) || 0 : 0
+            const anchor = clusterRadius > 0
+                ? { x: clusterRimOffset(clusterRadius), y: clusterRimOffset(clusterRadius) }
+                : nodeRimAnchor(nodes[i], node, !node.expanded ? 'ne' : 'se')
 
             const svgG = group.append('g')
                 .classed('node-icon', true)
@@ -823,8 +830,7 @@ export class NodeDrawer {
         const clusterRadius = Number(cluster.attr('_final_r')) // 'r' attribute is being transitioned, get the final value
 
         // Compute the offset for the north-west position (45° angle, distance = clusterRadius + padding)
-        const padding = 2         // distance from node bounds
-        const offset = (clusterRadius + padding) / Math.sqrt(2)
+        const offset = clusterRimOffset(clusterRadius)
 
         const nodeGroup = node.getGraphElement()
 
@@ -904,6 +910,15 @@ export class NodeDrawer {
                 .force('constrainParent', forceConstrainParent<Node>(Number(clusterRadius), 10))
         }
     }
+}
+
+/**
+ * How far along the 45° diagonal a cluster bubble's corner sits, in the node group's own
+ * coordinates. Shared by everything that rides an expanded node's rim so the shape, its
+ * badges, its label and the collapse affordance all measure the same circle.
+ */
+function clusterRimOffset(clusterRadius: number): number {
+    return (clusterRadius + RIM_PADDING) / Math.SQRT2
 }
 
 /**
