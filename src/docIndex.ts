@@ -4,7 +4,7 @@ import { Edge } from './Edge'
 
 import type * as GraphOptions from './interfaces/GraphOptions'
 import type { EdgeData } from './Edge'
-import type { NodeData } from './Node'
+import type { NodeData, NodeBorderBox } from './Node'
 import type * as GraphUI from './interfaces/GraphUI'
 import type * as AsyncContent from './interfaces/AsyncContent'
 import type * as InterractionCallbacks from './interfaces/InterractionCallbacks'
@@ -13,7 +13,11 @@ import type * as RendererOptions from './interfaces/RendererOptions'
 import type * as SimulationOptions from './interfaces/SimulationOptions'
 import type * as GraphInteractionsI from './interfaces/GraphInteractions'
 import * as GraphInteractions from './GraphInteractions'
-import type { GraphRenderer, AbstractSelectionBox } from './GraphRenderer'
+import type { GraphRenderer, AbstractSelectionBox, GraphBounds, ViewportTarget } from './GraphRenderer'
+import { minimap } from './plugins/minimap'
+import type { MinimapOptions, MinimapPosition } from './plugins/minimap'
+import { tableColumns } from './ui/elements/Table/TableColumns'
+import type { TableVisibility } from './ui/elements/Table/TableColumns'
 import type { Simulation, PhysicsKnobs, PhysicsPresetName, TreeSpacing, TreeRoot } from './Simulation'
 import { PHYSICS_KNOB_RANGES, PHYSICS_PRESETS, TREE_SPACING_RANGE } from './Simulation'
 import type { Notifier, NotificationLevel } from './ui/Notifier'
@@ -30,6 +34,7 @@ export type {
     GraphOptions,
     EdgeData,
     NodeData,
+    NodeBorderBox,
     GraphUI,
     AsyncContent,
     InterractionCallbacks,
@@ -39,6 +44,11 @@ export type {
     GraphInteractionsI,
     AbstractSelectionBox,
     GraphRenderer,
+    GraphBounds,
+    ViewportTarget,
+    MinimapOptions,
+    MinimapPosition,
+    TableVisibility,
     Simulation,
     PhysicsKnobs,
     PhysicsPresetName,
@@ -71,5 +81,7 @@ export {
     PHYSICS_KNOB_RANGES,
     PHYSICS_PRESETS,
     TREE_SPACING_RANGE,
+    minimap,
+    tableColumns,
     Pivotick
 }

@@ -37,7 +37,7 @@ const RESERVED = {
  * hide-this-edge action.
  *
  * `nested` is the fourth answer for a node, and only reachable with
- * {@link TableOptions.nested} on: it is inside a cluster the canvas has shut, so nothing
+ * {@link GraphUI.TableOptions.nested} on: it is inside a cluster the canvas has shut, so nothing
  * filtered it and nothing on screen is it. Distinct from `filtered` because the action
  * that brings it back is opening a cluster, not clearing a filter.
  */
