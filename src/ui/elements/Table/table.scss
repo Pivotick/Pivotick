@@ -448,6 +448,12 @@
     &[hidden] {
         display: none;
     }
+
+    // Folded, there are no rows for it to be about: it decides what is listed, and
+    // nothing is. The summary is the only bar item that still says something.
+    .pvt-dock-collapsed & {
+        display: none;
+    }
 }
 
 .pvt-table-nested-toggle {

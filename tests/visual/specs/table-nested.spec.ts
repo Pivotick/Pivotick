@@ -156,6 +156,22 @@ test.describe('nested nodes turned off, and graphs that have none', () => {
         await expect(page.locator('.pvt-table-nested')).toBeHidden()
     })
 
+    // Folding the dock takes away the rows, so every bar control that acts on them goes
+    // too — the switch is one of them, and a control over nothing is just confusing.
+    test('folding the dock takes the switch off the bar', async ({ page }) => {
+        await openDock(page)
+        await expect(nestedSwitch(page)).toBeVisible()
+
+        await page.locator('.pvt-dock-toggle').click()
+        await expect(page.locator('.pvt-dock')).toHaveClass(/pvt-dock-collapsed/)
+        await expect(page.locator('.pvt-table-nested')).toBeHidden()
+        // The count is the one thing the folded bar still says.
+        await expect(page.locator('.pvt-table-summary')).toBeVisible()
+
+        await page.locator('.pvt-dock-toggle').click()
+        await expect(nestedSwitch(page)).toBeVisible()
+    })
+
     test('the edges tab never offers the switch', async ({ page }) => {
         await openDock(page)
         await expect(nestedSwitch(page)).toBeVisible()
