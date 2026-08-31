@@ -13,9 +13,8 @@ import {
 // The rail is a canvas overlay, so each visual assertion targets the
 // `.pvt-moderail` element (per the chrome-test convention), not the whole page.
 
-// Enable both coming-soon data-zone modes so the rail exercises their SOON
-// slots. They're hidden by default (opt-in) — see the "hidden by default" test.
-const B3 = { UI: { modeRail: { explore: true, enrich: true } } }
+// The rail needs no options of its own; the four built-in modes are always there.
+const B3 = {}
 
 /** Current mode-store state, read from the live graph. */
 async function modeState(page: import('@playwright/test').Page) {
@@ -127,24 +126,11 @@ test.describe('mode-rail', () => {
         expect((await modeState(page)).mode).toBe('select')
     })
 
-    // Explore and Enrich are disabled "SOON" affordances when enabled, ordered
-    // Explore-then-Enrich after the divider (i.e. below the Physics slot).
-    test('Explore and Enrich render disabled with SOON badges', async ({ page }) => {
+    // Nothing but the four built-ins, until something is registered — the rail's own
+    // extension zone is covered in `rail-modes.spec.ts`.
+    test('holds only the four built-in modes', async ({ page }) => {
         await loadFixture(page, 'basic', B3)
-        for (const mode of ['explore', 'enrich']) {
-            const soon = page.locator(`.pvt-moderail-button[data-mode="${mode}"]`)
-            await expect(soon).toBeDisabled()
-            await expect(soon.locator('.pvt-moderail-badge')).toHaveText('SOON')
-        }
-    })
-
-    // The coming-soon modes are opt-in: disabling them (as the library does by
-    // default) drops the data zone — divider + Explore/Enrich — entirely.
-    // (The shared harness opts Enrich in, so this test overrides both off.)
-    test('disabled coming-soon modes drop the data zone', async ({ page }) => {
-        await loadFixture(page, 'basic', { UI: { modeRail: { explore: false, enrich: false } } })
-        await expect(page.locator('.pvt-moderail-button[data-mode="explore"]')).toHaveCount(0)
-        await expect(page.locator('.pvt-moderail-button[data-mode="enrich"]')).toHaveCount(0)
+        await expect(page.locator('.pvt-moderail-button')).toHaveCount(4)
         await expect(page.locator('.pvt-moderail-divider')).toHaveCount(0)
     })
 })

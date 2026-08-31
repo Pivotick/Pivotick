@@ -294,10 +294,6 @@ const BASE_OPTIONS = {
         mode: 'light',
         theme: 'light',
         sidebar: { collapsed: true },
-        // The coming-soon rail modes are hidden by default (opt-in). Enrich is
-        // opted in here so the shared baselines keep exercising the SOON slot;
-        // the mode-rail spec additionally enables Explore.
-        modeRail: { enrich: true },
     },
     // `physics: 'manual'` pins the knobs for every baseline: the `Auto` preset is the
     // library default and re-tunes as the graph changes, which would make snapshots

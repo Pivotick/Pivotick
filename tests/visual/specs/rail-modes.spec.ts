@@ -33,9 +33,7 @@ const BUILTINS = ['select', 'create', 'view', 'physics']
 test.describe('rail-modes', () => {
     test.beforeEach(async ({ page }) => {
         await gotoHarness(page)
-        // The harness turns the coming-soon Enrich slot on by default. Off here, so the
-        // rail holds exactly the four built-ins and these assertions can be exact.
-        await loadFixture(page, 'basic', { UI: { modeRail: { explore: false, enrich: false } } })
+        await loadFixture(page, 'basic')
     })
 
     // A plugin installs after the rail has mounted, so this is the path that only

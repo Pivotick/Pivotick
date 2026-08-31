@@ -117,11 +117,6 @@ export const DEFAULT_UI_OPTIONS: GraphUI = {
             enabled: true
         }
     },
-    // Coming-soon rail modes are hidden unless the integrator opts in.
-    modeRail: {
-        explore: false,
-        enrich: false,
-    }
 }
 
 export interface UIElement {

@@ -63,12 +63,6 @@ export interface GraphUI {
      */
     minimap?: MinimapOptions | boolean,
     /**
-     * The left mode rail's "coming soon" data-zone modes (Explore / Enrich).
-     * These features aren't shipped yet, so they're **off by default**: when
-     * enabled they appear as disabled slots carrying a `SOON` badge; when
-     * disabled they're hidden from the rail entirely.
-     */
-    modeRail?: ModeRailOptions,
     /**
      * What to show while a content hook's promise is in flight, and if it
      * rejects. Only async hooks ever reach it — see {@link AsyncContentOptions}.
@@ -128,17 +122,6 @@ export interface DockOptions {
     collapsed?: boolean | 'auto',
     /** Expanded height: a pixel count, or a fraction of the canvas between 0 and 1. */
     height?: number,
-}
-
-/**
- * Visibility of the mode rail's not-yet-shipped data-zone modes. Each is a
- * disabled "SOON" affordance when shown; omit or set `false` to hide it.
- */
-export interface ModeRailOptions {
-    /** Show the (coming-soon) Explore mode. @default false */
-    explore?: boolean,
-    /** Show the (coming-soon) Enrich mode. @default false */
-    enrich?: boolean,
 }
 
 /**

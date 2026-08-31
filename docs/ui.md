@@ -70,8 +70,15 @@ and the grid switches. Select/Create tools live in the tool panel (`UIManager.to
 mode rail (`UIManager.modeRail`). The
 `UI.selectionMenu` option is gone — use `contextMenu` for per-node actions and the
 sidebar bulk-action row for multi-selection actions. `UIManager.graphNaviation` was
-renamed to `graphNavigation`. See the [CHANGELOG](https://github.com/Pivotick/Pivotick/blob/main/CHANGELOG.md).
+renamed to `graphNavigation`. The `UI.modeRail` option and its disabled `Explore` /
+`Enrich` slots were removed — register a real mode with
+[`addRailMode`](./plugins#rail-mode) instead. See the
+[CHANGELOG](https://github.com/Pivotick/Pivotick/blob/main/CHANGELOG.md).
 :::
+
+The rail's four modes are built in, but not the only ones it can hold: a plugin adds its
+own with [`addRailMode`](./plugins#rail-mode), which is how an Explore or Enrich mode that
+knows what *your* data means gets built.
 
 ## Asynchronous content {#async-content}
 

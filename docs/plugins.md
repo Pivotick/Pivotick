@@ -47,6 +47,7 @@ listed in `plugins` and re-applied through `graph.use` without doubling up.
 | `addElement(element, slot?)` | put a `UIComponent` into the lifecycle, mounted into `slot` |
 | `addPanel(panel)` / `removePanel(id)` / `refreshPanel(id?)` | sidebar panels — the same door as `UI.extraPanels` |
 | `addDockTab(tab)` / `removeDockTab(id)` | a pane in the bottom dock — the same door the built-in table comes through |
+| `addRailMode(mode)` / `removeRailMode(id)` | a mode on the left rail, beside Select / Create / View / Physics |
 | `onPhase(phase, cb)` | hook `afterMount` / `graphReady` / `destroy`; returns an unsubscribe |
 | `addKeybinding(binding)` | a shortcut that is removed when the UI is torn down |
 | `keyManager` | the keybinding registry, for anything more involved |
@@ -147,6 +148,95 @@ needs `graphReady`, hold a `UIComponent`, `addElement` it, and call `addDockTab`
 
 See the [Add a dock pane](/examples/gallery/dock-panes/content) gallery card for a live,
 complete example — a pane with two views of its own, beside the data table.
+
+### Contributing a rail mode {#rail-mode}
+
+The left rail's four modes — Select, Create, View, Physics — are built in. Anything else
+is yours: `addRailMode` puts a mode of your own **below a divider**, after them, ordered
+among its peers by `order`.
+
+A **pointer mode** owns the contextual tool panel. Declare its `tools` and the panel draws
+them the way Select's and Create's are drawn, with the arming, the enabled/disabled states
+and the collapse handled for you:
+
+```js
+const explore = {
+    name: 'explore-mode',
+    install(ctx) {
+        const selected = () => ctx.graph.renderer.getGraphInteraction().getSelectedNode()?.node
+
+        ctx.addRailMode({
+            id: 'explore',
+            label: 'Explore',
+            icon: compassSvg,
+            shortcut: 'E',
+            tools: [
+                { id: 'expand', label: 'Expand neighbours', icon: plusSvg, kind: 'action',
+                  enabled: () => !!selected(),
+                  run: () => expandFrom(ctx.graph, selected()) },
+                { id: 'walk', label: 'Path walk', icon: pathSvg, kind: 'toggle',
+                  run: (armed) => armPathWalk(ctx.graph, armed) },
+            ],
+            onExit: () => armPathWalk(ctx.graph, false),
+        })
+    },
+}
+
+new Pivotick(el, data, { plugins: [explore] })
+```
+
+A tool's `kind` decides how it behaves. An `'action'` runs once and leaves the mode as it
+was. A `'toggle'` arms a modal tool: the panel collapses, and **the rail button morphs to
+that tool's own icon and label**, exactly as Select's slot becomes `Lasso`. A `'default'`
+is the tool the mode rests on; name it in `defaultTool` and it is what a toggle reverts to.
+
+`tools` may also be a **function**, re-read every time the panel is drawn — use that when
+the rows depend on what is selected, rather than only greying out. For anything a row
+cannot express, `render()` returns an element appended **below** the rows:
+
+```js
+ctx.addRailMode({
+    id: 'explore', label: 'Explore', icon: compassSvg,
+    tools: () => toolsFor(ctx.graph.renderer.getGraphInteraction().getSelectedNode()),
+    render: () => depthSlider(),
+})
+```
+
+A **flyout mode** opens a settings overlay instead, like View and Physics. Subclass
+`Flyout` and hand `addRailMode` a factory — core mounts the panel, opens it exactly while
+your mode is active, and takes it away with the mode:
+
+```js
+import { Pivotick, Flyout } from 'pivotick'
+
+class EnrichFlyout extends Flyout {
+    mode = 'enrich'                     // must match the definition's id
+    template() { return this.headerRow(sparklesSvg, 'Enrich') + this.toggleRow('auto', gearSvg, 'Auto-enrich', 'Enrich on load') }
+    wire() { this.wireToggle('auto', () => toggleAuto(), () => isAuto()) }
+}
+
+ctx.addRailMode({
+    id: 'enrich', label: 'Enrich', icon: sparklesSvg,
+    kind: 'flyout',
+    flyout: (ui) => new EnrichFlyout(ui),
+})
+```
+
+Modes are mutually exclusive, so yours excludes View and Physics for free — one store, one
+active mode.
+
+Three things worth knowing:
+
+- **`icon` is a raw SVG string, injected as HTML and never sanitised.** It must come from
+  a source you trust. CSS sizes it to 20px on the rail, 18px in the panel.
+- **`shortcut` follows the normal keybinding rules**: claiming a key something else already
+  owns shadows it, with a warning, until your mode is removed.
+- **`onExit` is where you disarm.** It runs when the mode is left, and when it is removed
+  while active — in which case the rail falls back to Select. It does *not* run on UI
+  teardown; the disposers your plugin already tracks cover that.
+
+`addRailMode` returns a disposer, and works in every mode — the button is only drawn where
+there is a rail, which means `full` and `light`.
 
 ## Driving the viewport
 

@@ -1,6 +1,7 @@
 /* eslint-disable */
 // @ts-nocheck
 import { Pivotick, Node, Edge, ColorPaletteMapper } from './index'
+import { compass, addCircle, focusElement } from './ui/icons'
 
 import {graph as vtGraph} from './vt-graph'
 import { graph as ailGraph } from './ail-graph'
@@ -540,11 +541,6 @@ const options = {
         // enabled: false
       },
       mode: 'full',
-      // Showcase the coming-soon rail modes (hidden by default). `?hero` opts back
-      // out, so the README shot shows the rail a new user actually gets.
-      modeRail: new URLSearchParams(location.search).has('hero')
-          ? undefined
-          : { explore: true, enrich: true },
       // Open the dock on load. The shipped default is folded to its bar.
       dock: { open: true },
     },
@@ -572,6 +568,46 @@ const options = {
 
 if (!window.pivotick)
 window.pivotick = new Pivotick(document.getElementById('app')!, data, options)
+
+// A registered rail mode, so the demo page shows what `addRailMode` gives an
+// integrator. `?hero` skips it, keeping the README shot to the rail a new user gets.
+if (!new URLSearchParams(location.search).has('hero')) {
+    window.pivotick.use({
+        name: 'demo-explore-mode',
+        install(ctx) {
+            const selected = () => ctx.graph.renderer.getGraphInteraction().getSelectedNode()?.node
+            ctx.addRailMode({
+                id: 'explore',
+                label: 'Explore',
+                icon: compass,
+                shortcut: 'E',
+                tools: [
+                    {
+                        id: 'relations',
+                        label: 'Count relations',
+                        icon: addCircle,
+                        kind: 'action',
+                        enabled: () => !!selected(),
+                        run: () => {
+                            const node = selected()
+                            if (!node) return
+                            const degree = ctx.graph.getEdges()
+                                .filter(edge => edge.from.id === node.id || edge.to.id === node.id).length
+                            ctx.graph.notifier.info('Explore', `${node.id} has ${degree} relation(s)`)
+                        },
+                    },
+                    {
+                        id: 'fit',
+                        label: 'Fit view',
+                        icon: focusElement,
+                        kind: 'action',
+                        run: () => ctx.graph.renderer.fitAndCenter(),
+                    },
+                ],
+            })
+        },
+    })
+}
 
 // let counter = 0
 // setInterval(() => {

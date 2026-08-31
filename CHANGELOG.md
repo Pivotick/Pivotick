@@ -1,5 +1,33 @@
 # Changelog
 
+## Unreleased
+
+### The mode rail takes your own modes
+
+- **`addRailMode` puts a mode of your own on the left rail**, beside Select, Create, View and
+  Physics — on `UIManager`, and on a plugin's `ctx`. The rail was picked as the default chrome
+  because it scales: modes drop in without crowding it. Until now only we could add one. A
+  pointer mode declares `tools` and the contextual panel draws them with the arming, the
+  enabled states and the collapse handled for you; arming a `'toggle'` morphs the rail button
+  to that tool's icon and label, the way Select's slot becomes `Lasso`. `tools` may be a
+  function when the rows depend on the selection, and `render()` adds anything a row cannot
+  express, below them. Registered modes render below a divider, after the built-ins.
+- **A mode can open a flyout instead.** `kind: 'flyout'` plus a `flyout` factory mounts your
+  own panel in the settings overlay, exclusive with View and Physics for free. **`Flyout` is
+  now exported** so you can subclass it and inherit its header, section and switch-row
+  helpers.
+- **`onExit` is called when a mode is left, and when it is removed while active** — the rail
+  then falls back to Select. It is not called on UI teardown.
+
+### Breaking
+
+- **`UI.modeRail` is gone**, along with the disabled `Explore` / `Enrich` "SOON" slots it
+  showed. They advertised work that was never scheduled, and they occupied exactly the slot
+  `addRailMode` now fills — build the mode instead. If you had `UI: { modeRail: … }`, delete
+  it; nothing replaces it.
+- **`RailMode` is now `string`** rather than a union of the four built-in names, since a
+  registered mode's id is arbitrary. `PointerMode` and `FlyoutMode` still name the built-ins.
+
 ## 1.6.0 — 2026-08-28
 
 Three headline additions, each of them something a force layout is bad at on its own: a **data

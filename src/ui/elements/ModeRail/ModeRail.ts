@@ -3,17 +3,15 @@ import { UIComponent } from '../../UIComponent'
 import type { ModeState, PointerMode, RailMode } from '../../ModeStore'
 import type { RailModeDefinition } from '../../../interfaces/GraphUI'
 import { railModeKind, resolveRailTools } from '../../railModes'
-import { cursor, addCircle, show, atom, sparkles, compass, lassoTool, graphEdgeIcon } from '../../icons'
+import { cursor, addCircle, show, atom, lassoTool, graphEdgeIcon } from '../../icons'
 import './moderail.scss'
 
 /**
  * The left-edge mode rail. Holds the four exclusive built-in modes — the Select and
- * Create pointer-modes plus the View and Physics settings flyouts — followed by an
- * optional data zone of not-yet-shipped modes (Explore, Enrich) rendered as disabled
- * "SOON" affordances, and then any modes registered through
- * {@link UIManager.addRailMode}, below a divider of their own. It owns no logic beyond
- * presentation + dispatching to the {@link UIManager.modeStore}; the rail, contextual
- * tool panel and flyouts react to that shared store.
+ * Create pointer-modes plus the View and Physics settings flyouts — followed by any
+ * modes registered through {@link UIManager.addRailMode}, below a divider of their own.
+ * It owns no logic beyond presentation + dispatching to the {@link UIManager.modeStore};
+ * the rail, contextual tool panel and flyouts react to that shared store.
  *
  * The built-in modes are hardcoded here; the registry only ever appends. Registered modes
  * arrive *after* this component has mounted — plugins install once the UI is built — so
@@ -48,18 +46,6 @@ export class ModeRail extends UIComponent {
         this.rail.appendChild(this.makeButton('create', 'Create', addCircle, 'C'))
         this.rail.appendChild(this.makeButton('view', 'View', show))
         this.rail.appendChild(this.makeButton('physics', 'Physics', atom))
-
-        // DATA zone — Explore and Enrich ship later. Each is opt-in via
-        // `UI.modeRail` (hidden by default); when shown it's a disabled SOON
-        // affordance. Skip the divider entirely when neither is enabled.
-        const railOptions = this.uiManager.getOptions().modeRail
-        const showExplore = !!railOptions?.explore
-        const showEnrich = !!railOptions?.enrich
-        if (showExplore || showEnrich) {
-            this.rail.appendChild(this.makeDivider())
-            if (showExplore) this.rail.appendChild(this.makeSoonButton('explore', 'Explore', compass))
-            if (showEnrich) this.rail.appendChild(this.makeSoonButton('enrich', 'Enrich', sparkles))
-        }
 
         // Everything registered through `addRailMode` lands here, after the built-ins.
         this.pluginZone = document.createElement('div')
@@ -142,8 +128,8 @@ export class ModeRail extends UIComponent {
      * Publish the rail's height as `--pvt-moderail-height`. The rail grows down the
      * canvas's left column, so anything else docked there (the legend) can size
      * itself against it instead of guessing — see `legend.scss`. Observed rather
-     * than computed: the height moves with the opt-in SOON modes, with whatever
-     * modes are registered, and with whatever the label font resolves to.
+     * than computed: the height moves with whatever modes are registered, and with
+     * whatever the label font resolves to.
      */
     private publishHeight(): void {
         const rail = this.rail
@@ -243,12 +229,4 @@ export class ModeRail extends UIComponent {
         return button
     }
 
-    private makeSoonButton(key: string, label: string, icon: string): HTMLButtonElement {
-        const button = this.makeButton(key, label, icon)
-        button.classList.add('pvt-moderail-soon')
-        button.disabled = true
-        button.title = `${label} — coming soon`
-        button.innerHTML += '<span class="pvt-moderail-badge">SOON</span>'
-        return button
-    }
 }
