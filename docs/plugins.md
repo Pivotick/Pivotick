@@ -310,6 +310,17 @@ full mode stands aside rather than mounting a second one — so an existing
 Nothing else is configurable, because nothing else needs to be: the level of detail and
 the redraw cadence adapt to the graph.
 
+### What it draws
+
+Nodes are dots in the colour the renderer gave them, edges are hairlines under them, and
+notes — the only content with a size of its own — are drawn to scale as translucent
+blocks in their own colour, over the nodes as they are on the canvas. Hidden and
+filtered-out content is left out. Past a few thousand nodes the picture becomes a density
+map instead (one stamp per node, no edges), which reads better than tens of thousands of
+overlapping dots; notes are drawn either way. It is all cached and only re-rasterised when
+the picture really changed — a node dropped, a note moved, the layout settling, a filter
+applied — so panning and zooming stay free however big the graph is.
+
 ### Getting out of the way {#minimap-auto}
 
 A minimap you asked for stays where you put it. The one `full` mode mounts on your behalf

@@ -1,6 +1,7 @@
 import type { Edge } from '../../Edge'
 import type { GraphBounds } from '../../GraphRenderer'
 import type { Node } from '../../Node'
+import type { Note } from '../../Note'
 import { UIComponent } from '../../ui/UIComponent'
 import type { UIManager } from '../../ui/UIManager'
 import type { MinimapOptions } from './options'
@@ -10,6 +11,11 @@ import './minimap.scss'
 const DETAIL_NODE_LIMIT = 1500
 /** …and edges are dropped past this many, well before they turn into a grey wash. */
 const DETAIL_EDGE_LIMIT = 4000
+
+/** Notes are blocks rather than dots, so the fill is translucent to keep nodes readable. */
+const NOTE_FILL_ALPHA = 0.45
+/** A note with no colour of its own — the Note default, so it matches the canvas. */
+const NOTE_FALLBACK_COLOR = '#FDE68A'
 
 const DEFAULT_WIDTH = 200
 /** Bounds for the height derived from the canvas aspect ratio. */
@@ -62,10 +68,12 @@ interface Projection {
  * So navigating costs O(1) at any graph size, and the O(N) pass is rare. Above
  * {@link DETAIL_NODE_LIMIT} nodes the bitmap is painted as density (no per-node colour
  * lookups, no edges), which also reads better than tens of thousands of overlapping dots.
+ * Notes are drawn either way: there are never many of them and they are the landmarks a
+ * dense picture most needs.
  *
  * Everything it needs is public API — `getContentBounds`, `setViewport`,
- * `screenToGraphCoordinates`, `getNodeStyle` — so it is renderer-agnostic and is exactly
- * as privileged as any consumer's own plugin.
+ * `screenToGraphCoordinates`, `getNodeStyle`, `noteManager` — so it is renderer-agnostic
+ * and is exactly as privileged as any consumer's own plugin.
  */
 export class Minimap extends UIComponent {
     private readonly options: MinimapOptions
@@ -152,6 +160,19 @@ export class Minimap extends UIComponent {
         const onFilterChange = () => this.queueRebuild()
         graph.queryEngine.on('filterChange', onFilterChange)
         this.track(() => graph.queryEngine.off('filterChange', onFilterChange))
+
+        // Notes travel on their own events rather than in a data batch, and each one
+        // carries its own geometry — added, moved, resized, recoloured or hidden, they all
+        // change the picture.
+        const onNote = () => this.queueRebuild()
+        graph.on('noteAdd', onNote)
+        graph.on('noteChange', onNote)
+        graph.on('noteRemove', onNote)
+        this.track(() => {
+            graph.off('noteAdd', onNote)
+            graph.off('noteChange', onNote)
+            graph.off('noteRemove', onNote)
+        })
 
         // A slow tick is every 10th simulation tick — often enough to follow a settling
         // layout, rare enough that the O(N) pass isn't in the frame budget.
@@ -375,11 +396,11 @@ export class Minimap extends UIComponent {
         const nodes = this.uiManager.graph.getMutableVisibleNodes().filter((node) => !node.isChild)
         if (nodes.length > DETAIL_NODE_LIMIT) {
             this.drawDensity(context, nodes, projection)
-            return
+        } else {
+            this.drawEdges(context, projection)
+            this.drawNodes(context, nodes, projection)
         }
-
-        this.drawEdges(context, projection)
-        this.drawNodes(context, nodes, projection)
+        this.drawNotes(context, this.uiManager.graph.noteManager.getVisibleNotes(), projection)
     }
 
     /**
@@ -440,6 +461,35 @@ export class Minimap extends UIComponent {
         for (const node of nodes) {
             if (typeof node.x !== 'number' || typeof node.y !== 'number') continue
             context.fillRect(this.px(node.x, projection), this.py(node.y, projection), size, size)
+        }
+        context.restore()
+    }
+
+    /**
+     * Notes as blocks, to scale: they are the only content with a real extent, so a dot
+     * would misrepresent them. Over the nodes, as on the canvas, but a translucent fill
+     * so what they cover stays readable — with a solid hairline of the same colour, which
+     * is all that is left of a note once it is a few pixels across.
+     */
+    private drawNotes(context: CanvasRenderingContext2D, notes: Note[], projection: Projection) {
+        if (notes.length === 0) return
+
+        context.save()
+        context.lineWidth = Math.max(0.5, 0.5 * this.dpr)
+        for (const note of notes) {
+            if (!isFinite(note.x) || !isFinite(note.y)) continue
+            const x = this.px(note.x, projection)
+            const y = this.py(note.y, projection)
+            const width = Math.max(1, note.width * projection.scale)
+            const height = Math.max(1, note.height * projection.scale)
+
+            const color = this.cssColor(note.color, NOTE_FALLBACK_COLOR)
+            context.fillStyle = color
+            context.strokeStyle = color
+            context.globalAlpha = NOTE_FILL_ALPHA
+            context.fillRect(x, y, width, height)
+            context.globalAlpha = 1
+            context.strokeRect(x, y, width, height)
         }
         context.restore()
     }

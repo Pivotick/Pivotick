@@ -553,6 +553,8 @@ export class NoteDrawer {
         const card = noteSelection.select<HTMLElement>('.pvt-note')
 
         let isDragging = false
+        /** Whether the pointer moved at all — a press that doesn't is a click, not a drag. */
+        let hasMoved = false
 
         let startMouseX = 0
         let startMouseY = 0
@@ -574,6 +576,7 @@ export class NoteDrawer {
                 evt.stopPropagation()
 
                 isDragging = true
+                hasMoved = false
 
                 startMouseX = evt.clientX
                 startMouseY = evt.clientY
@@ -583,6 +586,7 @@ export class NoteDrawer {
 
                 const onMouseMove = (moveEvt: MouseEvent) => {
                     if (!isDragging) return
+                    hasMoved = true
 
                     const renderer = this.graphSvgRenderer
                     const startGraph = renderer.screenToGraphCoordinates(startMouseX, startMouseY)
@@ -612,6 +616,10 @@ export class NoteDrawer {
                     noteSelection.style('user-select', 'all')
                     noteSelection.classed('dragging', false)
                     document.body.classList.remove('pvt-disable-selection') // restore selection globally
+
+                    // The note's position is data, and it just changed: once per drop, so
+                    // listeners (the minimap redraws off this) aren't hit per frame.
+                    if (hasMoved) this.graph.noteChange(note)
                 }
 
                 document.addEventListener('mousemove', onMouseMove)
@@ -631,6 +639,7 @@ export class NoteDrawer {
         if (!handle) return
 
         let isResizing = false
+        let hasResized = false
 
         let startMouseX = 0
         let startMouseY = 0
@@ -644,6 +653,7 @@ export class NoteDrawer {
             evt.stopPropagation()
 
             isResizing = true
+            hasResized = false
 
             startMouseX = evt.clientX
             startMouseY = evt.clientY
@@ -654,6 +664,7 @@ export class NoteDrawer {
             const onMouseMove = (moveEvt: MouseEvent) => {
 
                 if (!isResizing) return
+                hasResized = true
 
                 const renderer = this.graphSvgRenderer
 
@@ -687,6 +698,8 @@ export class NoteDrawer {
 
                 document.removeEventListener('mousemove', onMouseMove)
                 document.removeEventListener('mouseup', onMouseUp)
+
+                if (hasResized) this.graph.noteChange(note)
             }
 
             document.addEventListener('mousemove', onMouseMove)

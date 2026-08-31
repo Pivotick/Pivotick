@@ -93,6 +93,7 @@ export type GraphEvents = {
     edgeChange: (edge: Edge, previousData: EdgeData, nextData: EdgeData) => void
     noteAdd: (note: Note) => void
     noteRemove: (note: Note) => void
+    /** A note changed: its content, colour, visibility — or, on drop / resize, its geometry. */
     noteChange: (note: Note) => void
     dataBatchChanged: (changes: GraphDataChange[]) => void // Batch of data changes(transactions, imports, undo / redo)
     /** A legend entry was toggled: which categories are now hidden / shown. */

@@ -1,4 +1,4 @@
-import { test, expect, gotoHarness, harness, expectCanvas, canvas, loadFixture, waitForViewSettled } from '../helpers'
+import { test, expect, gotoHarness, harness, expectCanvas, canvas, loadFixture, waitForViewSettled, addNote, noteEl, centerOf } from '../helpers'
 import type { Page } from '@playwright/test'
 
 /**
@@ -41,6 +41,60 @@ async function inkPixels(page: Page): Promise<number> {
         }
         return count
     })
+}
+
+/**
+ * The note colour the tests look for. The fixtures' own palette runs through reds too,
+ * so the block is found by matching this exact colour rather than a hue: a translucent
+ * fill is stored premultiplied, which costs a unit or two per channel on the way back
+ * out — hence the tolerance, not a wider net.
+ */
+const NOTE_COLOR = '#e02b20'
+const NOTE_RGB = [224, 43, 32]
+const NOTE_TOLERANCE = 8
+
+/**
+ * The note block in the minimap: how much of it there is, and where it sits. A note is
+ * drawn to scale rather than as a dot, so this answers both "is it drawn" and
+ * "did it move".
+ */
+async function noteInk(page: Page): Promise<{ pixels: number, x: number, y: number }> {
+    return page.evaluate(({ rgb, tolerance }: { rgb: number[], tolerance: number }) => {
+        const [wantRed, wantGreen, wantBlue] = rgb
+        const surface = document.querySelector('.pvt-minimap-surface') as HTMLCanvasElement
+        const context = surface.getContext('2d')!
+        const { data } = context.getImageData(0, 0, surface.width, surface.height)
+        let pixels = 0
+        let sumX = 0
+        let sumY = 0
+        for (let index = 0; index < data.length; index += 4) {
+            const [red, green, blue, alpha] = [data[index], data[index + 1], data[index + 2], data[index + 3]]
+            // The fill is translucent, so match on the colour rather than on full opacity.
+            if (alpha < 40) continue
+            if (Math.abs(red - wantRed) > tolerance) continue
+            if (Math.abs(green - wantGreen) > tolerance) continue
+            if (Math.abs(blue - wantBlue) > tolerance) continue
+            const pixel = index / 4
+            pixels++
+            sumX += pixel % surface.width
+            sumY += Math.floor(pixel / surface.width)
+        }
+        return pixels === 0
+            ? { pixels, x: 0, y: 0 }
+            : { pixels, x: sumX / pixels, y: sumY / pixels }
+    }, { rgb: NOTE_RGB, tolerance: NOTE_TOLERANCE })
+}
+
+/** Hide a note the way the note sidebar's own button does. */
+async function hideNote(page: Page, id: string): Promise<void> {
+    await page.evaluate((noteId) => {
+        type NoteModel = { id: string }
+        const graph = (window.__pivotick as unknown as {
+            graph?: { noteManager: { getNotes(): NoteModel[], hideNote(note: NoteModel): void } }
+        }).graph!
+        const note = graph.noteManager.getNotes().find((candidate) => candidate.id === noteId)!
+        graph.noteManager.hideNote(note)
+    }, id)
 }
 
 /** The minimap's own box, for aiming real pointer events at it. */
@@ -201,6 +255,67 @@ test.describe('minimap plugin', () => {
 
         await expect.poll(async () => (await harness(page, 'minimapRebuilds')) as number)
             .toBeGreaterThan(rebuilds)
+    })
+
+    test('notes are drawn as blocks, and leave when hidden', async ({ page }) => {
+        await harness(page, 'loadWithMinimap', 'basic')
+        await addNote(page, {
+            id: 'landmark',
+            x: -260,
+            y: -60,
+            width: 240,
+            height: 150,
+            color: NOTE_COLOR,
+            content: '## Landmark\n\nA note has a size, so the minimap draws it to scale.',
+        })
+        await harness(page, 'fit')
+        await waitForViewSettled(page)
+
+        // Orders of magnitude more ink than a dot (a node's is at most ~50px): the note
+        // is drawn at its own width and height.
+        const drawn = await noteInk(page)
+        expect(drawn.pixels).toBeGreaterThan(1000)
+        await expectCanvas(page, 'minimap-notes.png')
+
+        // Hiding it is a note event and nothing else — no tick, no data batch.
+        await hideNote(page, 'landmark')
+        await expect.poll(async () => (await noteInk(page)).pixels).toBe(0)
+        expect(await harness(page, 'warnings')).toEqual([])
+    })
+
+    test('a dragged note moves in the minimap', async ({ page }) => {
+        // A note drag runs on its own pointer handlers — no simulation tick, no data
+        // batch — so the drop has to be noticed on its own.
+        await harness(page, 'loadWithMinimap', 'basic')
+        await addNote(page, {
+            id: 'movable',
+            x: -60,
+            y: -40,
+            width: 200,
+            height: 110,
+            color: NOTE_COLOR,
+            content: 'Drag me.',
+        })
+        await harness(page, 'fit')
+        await waitForViewSettled(page)
+        const before = await noteInk(page)
+        expect(before.pixels).toBeGreaterThan(0)
+        const rebuilds = (await harness(page, 'minimapRebuilds')) as number
+
+        const note = noteEl(page, 'movable')
+        await note.waitFor({ state: 'visible' })
+        const start = await centerOf(note)
+        await page.mouse.move(start.x, start.y)
+        await page.mouse.down()
+        await page.mouse.move(start.x + 240, start.y + 150, { steps: 8 })
+        await page.mouse.up()
+
+        await expect.poll(async () => (await harness(page, 'minimapRebuilds')) as number)
+            .toBeGreaterThan(rebuilds)
+        // The block itself is somewhere else now, not merely redrawn where it was.
+        const after = await noteInk(page)
+        expect(after.pixels).toBeGreaterThan(0)
+        expect(Math.abs(after.x - before.x) + Math.abs(after.y - before.y)).toBeGreaterThan(3)
     })
 
     test('the collapse toggle folds it away to just the button, and back', async ({ page }) => {
