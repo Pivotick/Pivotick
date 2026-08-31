@@ -11,12 +11,12 @@ import type { Notification } from './Notifier'
 import merge from 'lodash.merge'
 import { Tooltip } from './elements/Tooltip/Tooltip'
 import { ContextMenu } from './elements/ContextMenu/ContextMenu'
-import type { DockTab, Editors, ExtraPanel, GraphUI, GraphUIMode, LegendGroupOptions, LegendOptions, PropertyEntry, RegisteredDockTab, RegisteredExtraPanel, TableOptions } from '../interfaces/GraphUI'
+import type { DockTab, Editors, ExtraPanel, GraphUI, GraphUIMode, LegendGroupOptions, LegendOptions, PropertyEntry, RailModeDefinition, RegisteredDockTab, RegisteredExtraPanel, TableOptions } from '../interfaces/GraphUI'
 import { KeybindingManager } from './KeybindingManager'
 import { createInspectModal } from './elements/modals/InspectNodeModal/InspectNodeModal'
 import { Note } from '../Note'
 import { UIComponent, type UIPhase } from './UIComponent'
-import { ModeStore } from './ModeStore'
+import { ModeStore, type RailMode } from './ModeStore'
 import { ModeRail } from './elements/ModeRail/ModeRail'
 import { ToolPanel } from './elements/ToolPanel/ToolPanel'
 import { ViewFlyout } from './elements/ViewFlyout/ViewFlyout'
@@ -161,6 +161,19 @@ export type DockTabChange =
     | { type: 'activate', id: string }
     /** Rebuild one tab's body — how a pane switches between its own internal views. */
     | { type: 'refresh', id: string }
+
+/**
+ * A change to the rail-mode registry, broadcast to the {@link ModeRail} and the
+ * {@link ToolPanel}. Same division of labour again: the registry says which modes exist
+ * and in what order, and the rail owns the buttons.
+ *
+ * The four built-in modes are never in this registry — they are hardcoded in the rail,
+ * and registered modes always render after them.
+ */
+export type RailModeChange =
+    | { type: 'add', mode: RailModeDefinition, index: number }
+    /** Carries the definition: it is already out of the registry, and still owed its `onExit`. */
+    | { type: 'remove', mode: RailModeDefinition }
 
 /**
  * Declarative catalog of the built-in UI elements. Each entry says which
@@ -352,6 +365,20 @@ export class UIManager {
     private dockTabSeq = 0
     /** The mounted dock, subscribed to registry changes. At most one. */
     private dockTabSubscribers: Array<(change: DockTabChange) => void> = []
+    /**
+     * Registered rail modes, in display order. Here rather than on the rail for the same
+     * reason as the others: registration must work before the rail is built, and in modes
+     * that have no rail at all.
+     */
+    private railModes: RailModeDefinition[] = []
+    /** The mounted rail and tool panel, subscribed to registry changes. */
+    private railModeSubscribers: Array<(change: RailModeChange) => void> = []
+    /** Flyout panels mounted on a registered mode's behalf, so they go when it does. */
+    private railModeFlyouts = new Map<string, UIComponent>()
+    /** The mode at the previous store emit, so onEnter / onExit fire only on real changes. */
+    private lastRailMode: RailMode = 'select'
+    /** Unsubscribes the enter/exit dispatcher; created lazily with the first registration. */
+    private railModeWatcher?: () => void
     /** True after `destroy()`; late registrations are refused until `setup()` reruns. */
     private destroyed = false
     /** Names of installed plugins, for de-duplication. Reset on `destroy()`. */
@@ -582,6 +609,8 @@ export class UIManager {
             addDockTab: (tab) => this.addDockTab(tab),
             removeDockTab: (id) => this.removeDockTab(id),
             refreshDockTab: (id) => this.refreshDockTab(id),
+            addRailMode: (mode) => this.addRailMode(mode),
+            removeRailMode: (id) => this.removeRailMode(id),
             onPhase: (phase, callback) => this.onPhase(phase, callback),
             addKeybinding: (binding) => { this.uiDisposables.push(this.keyManager.register(binding)) },
         }
@@ -837,6 +866,148 @@ export class UIManager {
         this.addElement(dock, this.layout.dock)
     }
 
+    /* ---------- rail modes ---------- */
+
+    /**
+     * Register a mode on the mode rail — the door an integrator's own Explore or Enrich
+     * mode comes through, and the same one `ctx.addRailMode()` opens for a plugin.
+     *
+     * Registered modes render below a divider, after the four built-in modes, ordered by
+     * `order`. Registration succeeds in every UI mode; the button is only *drawn* where
+     * there is a rail (`full` and `light`).
+     *
+     * @param mode - The mode. See {@link RailModeDefinition}.
+     * @returns A disposer that removes the mode. Calling it twice is a no-op.
+     */
+    public addRailMode(mode: RailModeDefinition): () => void {
+        if (this.destroyed) {
+            console.warn(`Cannot add the rail mode "${mode.id}" after the UI is destroyed.`)
+            return () => {}
+        }
+        if (!mode.id) {
+            console.warn('Pivotick: a rail mode needs an id; skipping it.')
+            return () => {}
+        }
+        if (this.modeStore.hasMode(mode.id)) {
+            console.warn(`A rail mode with id "${mode.id}" already exists; skipping the duplicate.`)
+            return () => {}
+        }
+        const kind = mode.kind ?? 'pointer'
+        if (kind === 'flyout' && !mode.flyout) {
+            console.warn(`Rail mode "${mode.id}" is a flyout mode but declares no \`flyout\` factory; skipping it.`)
+            return () => {}
+        }
+
+        const index = this.railModeInsertIndex(mode.order ?? 0)
+        this.railModes.splice(index, 0, mode)
+        this.modeStore.registerMode(mode.id, kind, mode.defaultTool ?? null, mode.panelOpen ?? true)
+        this.watchRailModes()
+        this.mountRailModeFlyout(mode)
+        this.emitRailModeChange({ type: 'add', mode, index })
+
+        let disposed = false
+        return () => {
+            if (disposed) return
+            disposed = true
+            this.removeRailMode(mode.id)
+        }
+    }
+
+    /**
+     * Remove a registered rail mode: its button goes, and its flyout panel with it.
+     *
+     * Removing the *active* mode sees it out with its `onExit` and falls back to Select,
+     * which is built in and therefore always available.
+     */
+    public removeRailMode(id: string): void {
+        const index = this.railModes.findIndex(m => m.id === id)
+        if (index === -1) {
+            // Silent after teardown: a disposer held across destroy() is a no-op, not a mistake.
+            if (!this.destroyed) console.warn(`No rail mode with id "${id}" to remove.`)
+            return
+        }
+        const [removed] = this.railModes.splice(index, 1)
+
+        if (this.modeStore.getMode() === id) {
+            removed.onExit?.()
+            // Set before switching so the watcher does not fire onExit a second time.
+            this.lastRailMode = 'select'
+            this.modeStore.setMode('select')
+        }
+
+        this.railModeFlyouts.get(id)?.destroy()
+        this.railModeFlyouts.delete(id)
+        this.modeStore.unregisterMode(id)
+        this.emitRailModeChange({ type: 'remove', mode: removed })
+    }
+
+    /** The registered modes, in display order (a copy — mutate through add/removeRailMode). */
+    public getRailModes(): ReadonlyArray<RailModeDefinition> {
+        return [...this.railModes]
+    }
+
+    /**
+     * Subscribe to registry changes. Used by the rail and the tool panel to keep in step;
+     * returns an unsubscribe function.
+     */
+    public onRailModesChanged(callback: (change: RailModeChange) => void): () => void {
+        this.railModeSubscribers.push(callback)
+        return () => {
+            this.railModeSubscribers = this.railModeSubscribers.filter(s => s !== callback)
+        }
+    }
+
+    /** First index whose `order` sorts after `order` — so equal orders keep registration order. */
+    private railModeInsertIndex(order: number): number {
+        const index = this.railModes.findIndex(m => (m.order ?? 0) > order)
+        return index === -1 ? this.railModes.length : index
+    }
+
+    private emitRailModeChange(change: RailModeChange): void {
+        for (const subscriber of [...this.railModeSubscribers]) subscriber(change)
+    }
+
+    /**
+     * Mount a flyout mode's panel into the flyout slot. A mode registered in a UI mode
+     * with no flyout region (`viewer`, `static`) simply never builds one.
+     */
+    private mountRailModeFlyout(mode: RailModeDefinition): void {
+        if ((mode.kind ?? 'pointer') !== 'flyout' || !mode.flyout) return
+        const slot = this.layout?.flyout
+        if (!slot) return
+
+        const panel = mode.flyout(this)
+        if (panel.getMode() !== mode.id) {
+            console.warn(`Rail mode "${mode.id}" mounted a flyout whose own mode is "${panel.getMode()}"; the button will not open it.`)
+        }
+        this.railModeFlyouts.set(mode.id, panel)
+        this.addElement(panel, slot)
+    }
+
+    /**
+     * Dispatch `onEnter` / `onExit` as the active mode changes. Lives here rather than on
+     * the rail so it works in every UI mode, and is installed once, with the first
+     * registration. It deliberately does *not* fire on teardown — a plugin's own tracked
+     * disposers cover that, and re-entering the store mid-teardown is how
+     * `ui-lifecycle-emitphase-reentrancy` happened.
+     */
+    private watchRailModes(): void {
+        if (this.railModeWatcher) return
+        this.lastRailMode = this.modeStore.getMode()
+        this.railModeWatcher = this.modeStore.subscribe(state => {
+            if (state.mode === this.lastRailMode) return
+            const left = this.railModes.find(m => m.id === this.lastRailMode)
+            const entered = this.railModes.find(m => m.id === state.mode)
+            this.lastRailMode = state.mode
+            left?.onExit?.()
+            entered?.onEnter?.()
+        })
+        this.uiDisposables.push(() => {
+            this.railModeWatcher?.()
+            this.railModeWatcher = undefined
+        })
+    }
+
     public destroy() {
         this.destroyed = true
         this.emitPhase('destroy')
@@ -849,6 +1020,10 @@ export class UIManager {
         this.panelSubscribers = []
         this.dockTabs = []
         this.dockTabSubscribers = []
+        this.railModes = []
+        this.railModeSubscribers = []
+        this.railModeFlyouts.clear()
+        this.lastRailMode = 'select'
         this.modeStore.dispose()
         for (const dispose of this.uiDisposables.splice(0)) dispose()
     }

@@ -1,5 +1,5 @@
 import { UIComponent } from '../../UIComponent'
-import type { FlyoutMode } from '../../ModeStore'
+import type { RailMode } from '../../ModeStore'
 import './flyout.scss'
 
 /**
@@ -21,11 +21,19 @@ export abstract class Flyout extends UIComponent {
     private readonly toggleSync: Array<() => void> = []
 
     /** The rail mode that opens this flyout. */
-    protected abstract readonly mode: FlyoutMode
+    protected abstract readonly mode: RailMode
     /** The panel's inner markup. */
     protected abstract template(): string
     /** Attach listeners to the markup {@link template} produced. */
     protected abstract wire(): void
+
+    /**
+     * The rail mode this panel answers to. Public so the rail-mode registry can check a
+     * registered flyout against the id its definition declared.
+     */
+    public getMode(): RailMode {
+        return this.mode
+    }
 
     protected get sim() {
         return this.uiManager.graph.simulation

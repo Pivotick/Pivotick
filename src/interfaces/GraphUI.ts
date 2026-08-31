@@ -5,7 +5,8 @@ import type { EdgeLabelPromptMode } from './InterractionCallbacks'
 import type { Graph } from '../Graph'
 import type { Node } from '../Node'
 import type { Note } from '../Note'
-import type { UIElement } from '../ui/UIManager'
+import type { UIElement, UIManager } from '../ui/UIManager'
+import type { Flyout } from '../ui/elements/Flyout/Flyout'
 import type { FieldConfig } from '../utils/FormFactory'
 import type { FilterFacet, FilterOptions } from './GraphQueryEngine'
 import type { AsyncContentOptions, RenderContext, RenderResult } from './AsyncContent'
@@ -138,6 +139,113 @@ export interface ModeRailOptions {
     explore?: boolean,
     /** Show the (coming-soon) Enrich mode. @default false */
     enrich?: boolean,
+}
+
+/**
+ * One tool in a rail mode's contextual panel — a row in the panel the mode owns.
+ *
+ * `'default'` is the tool a mode rests on when nothing special is armed (Select's
+ * Pointer); `'toggle'` arms a modal tool and morphs the rail slot to match it;
+ * `'action'` runs once and leaves the armed tool alone.
+ */
+export interface RailTool {
+    /** Stable identity: what the store arms, and the `data-tool` on the row. */
+    id: string
+    /** The row's label, used verbatim (so it can be translated). */
+    label: string
+    /**
+     * An SVG string. It is injected with `innerHTML` and **is not sanitised**, so it
+     * must come from a source you trust. CSS sizes it to 18px in the panel.
+     */
+    icon: string
+    kind: 'default' | 'toggle' | 'action'
+    /** Perform the tool's effect. A `'toggle'` receives the desired armed state. */
+    run?: (armed: boolean) => void
+    /** When it returns false the row is disabled. Re-checked on every selection change. */
+    enabled?: () => boolean
+}
+
+/**
+ * A mode registered onto the mode rail — the door an integrator builds their own
+ * Explore or Enrich mode through.
+ *
+ * Registered modes render **below a divider**, after the four built-in modes, ordered by
+ * {@link order}. Register one at any point in the graph's life with
+ * `graph.UIManager.addRailMode()`, or from a plugin's `install` via `ctx.addRailMode()`.
+ * Either returns a disposer.
+ *
+ * A `'pointer'` mode owns the contextual tool panel: it declares {@link tools}, and may
+ * add anything else through {@link render}. A `'flyout'` mode instead supplies a
+ * {@link flyout} factory whose panel opens while the mode is active.
+ *
+ * @example
+ * ```js
+ * const dispose = graph.UIManager.addRailMode({
+ *     id: 'explore', label: 'Explore', icon: compassSvg, shortcut: 'E',
+ *     tools: [{ id: 'expand', label: 'Expand', icon: plusSvg, kind: 'action', run: () => … }],
+ * })
+ * ```
+ */
+export interface RailModeDefinition {
+    /** Stable identity: what the store holds, and the `data-mode` on the rail button. */
+    id: string
+    /** The rail button's label, used verbatim. */
+    label: string
+    /**
+     * An SVG string, injected with `innerHTML` and **not sanitised** — it must be
+     * trusted. CSS sizes it to 20px on the rail.
+     */
+    icon: string
+    /**
+     * `'pointer'` modes own the tool panel; `'flyout'` modes open a settings overlay and
+     * have no tools.
+     * @default 'pointer'
+     */
+    kind?: 'pointer' | 'flyout'
+    /**
+     * A single key that activates the mode, or toggles its panel when it is already
+     * active. Registered through the normal keybinding manager, so a key already bound is
+     * shadowed (with a warning) until this mode is removed.
+     */
+    shortcut?: string
+    /**
+     * Display order among registered modes, ascending. Equal orders keep registration
+     * order. Does not affect the built-in modes, which always come first.
+     * @default 0
+     */
+    order?: number
+    /** The tool this mode rests on when nothing is armed. @default null */
+    defaultTool?: string | null
+    /**
+     * Whether the tool panel is expanded the first time the mode is entered. Defaults to
+     * open so the mode's tools are discoverable.
+     * @default true
+     */
+    panelOpen?: boolean
+    /**
+     * The mode's tools, as rows in its panel. Pass a function when the set depends on
+     * the current selection or data; it is re-read on every render.
+     */
+    tools?: RailTool[] | (() => RailTool[])
+    /**
+     * Extra panel content, appended **below** the tool rows — a slider, a search box,
+     * anything the rows cannot express. Re-invoked whenever the panel is rebuilt.
+     */
+    render?: () => HTMLElement
+    /**
+     * Builds this mode's flyout panel. Required for `kind: 'flyout'` and ignored
+     * otherwise. The panel is mounted into the flyout slot and torn down with the mode;
+     * the subclass's own `mode` must equal this definition's {@link id}.
+     */
+    flyout?: (ui: UIManager) => Flyout
+    /** Called when the mode becomes active. */
+    onEnter?: () => void
+    /**
+     * Called when the mode is left, and when it is unregistered while active. Disarm
+     * whatever the mode armed here. Not called on UI teardown — use the disposers your
+     * plugin already tracks for that.
+     */
+    onExit?: () => void
 }
 
 /** Which canvas corner the legend is docked in. */

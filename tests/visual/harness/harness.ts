@@ -29,6 +29,10 @@ import type {
     PropertyEntry,
 } from '../../../src/interfaces/GraphUI'
 import type { PivotickPlugin } from '../../../src/interfaces/Plugin'
+import { Flyout } from '../../../src/ui/elements/Flyout/Flyout'
+import type { RailMode } from '../../../src/ui/ModeStore'
+import type { UIManager } from '../../../src/ui/UIManager'
+import type { RailModeDefinition, RailTool } from '../../../src/interfaces/GraphUI'
 import type { RenderContext } from '../../../src/interfaces/AsyncContent'
 import { Edge as EdgeInstance, type Edge } from '../../../src/Edge'
 import type {
@@ -78,6 +82,47 @@ export type ValidConnBehavior = 'reject-all' | 'reject-target-b'
  * (`node a · renders=3`), so a test can read straight off the DOM whether — and
  * how often — the library re-invoked it.
  */
+/** A plain glyph for harness-registered modes and their tools. */
+const TEST_MODE_ICON = '<svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="9" fill="currentColor"/></svg>'
+
+/** The smallest real {@link Flyout}, so a `kind: 'flyout'` mode has a panel to mount. */
+class TestRailFlyout extends Flyout {
+    protected readonly mode: RailMode
+    private readonly heading: string
+
+    constructor(uiManager: UIManager, mode: RailMode, heading: string) {
+        super(uiManager)
+        this.mode = mode
+        this.heading = heading
+    }
+
+    protected template(): string {
+        return `<div class="pvt-test-flyout">${this.heading} flyout</div>`
+    }
+
+    protected wire(): void {}
+}
+
+/**
+ * A rail mode for the harness to register. Plain data so a spec can pass it through
+ * `page.evaluate`; the harness builds the real callbacks on this side.
+ */
+export interface RailModeSpec {
+    id: string
+    label?: string
+    kind?: 'pointer' | 'flyout'
+    shortcut?: string
+    order?: number
+    panelOpen?: boolean
+    defaultTool?: string | null
+    /** Tool rows to declare. `kind` defaults to `'action'`. */
+    tools?: Array<{ id: string, label?: string, kind?: 'default' | 'toggle' | 'action' }>
+    /** Declare `tools` as a function rather than an array (the re-derived form). */
+    dynamicTools?: boolean
+    /** Also supply `render()`, so the composition of rows + custom content is testable. */
+    withRender?: boolean
+}
+
 export interface PanelSpec {
     /** Explicit id, so tests can address the panel. Auto-generated when omitted. */
     id?: string
@@ -1010,6 +1055,30 @@ export interface HarnessApi {
      */
     addTestDockTab(id: string, label: string, order?: number): string
     removeTestDockTab(id: string): void
+
+    /* ---------- rail modes ---------- */
+
+    /**
+     * Register a mode on the rail through `UIManager.addRailMode`, the way a consumer
+     * would. Returns its id; {@link removeTestRailMode} calls the disposer.
+     */
+    addTestRailMode(spec: RailModeSpec): string
+    /**
+     * The same mode, but registered through `ctx.addRailMode` inside a plugin's
+     * `install` — the route that arrives *after* the rail has already mounted, which is
+     * the case the rail's registry subscription exists for.
+     */
+    addTestRailModeViaPlugin(spec: RailModeSpec): string
+    /** Call the disposer `addRailMode` returned. Safe to call twice. */
+    removeTestRailMode(id: string): void
+    /** Registered mode ids, in display order (`UIManager.getRailModes`). */
+    railModeIds(): string[]
+    /** Mode ids whose `onExit` has fired, in order — proves the teardown contract. */
+    railModeExits(): string[]
+    /** Mode ids whose `onEnter` has fired, in order. */
+    railModeEnters(): string[]
+    /** `<modeId>:<toolId>` for each tool row actually run, in order. */
+    railToolRuns(): string[]
     /** Text content of the body the dock is currently showing. */
     activeDockBodyText(): string
     /** Rebuild a registered tab's body through the public API. */
@@ -1277,6 +1346,12 @@ class Harness implements HarnessApi {
     /** Legend observation state, reset per boot. */
     private legendToggles: LegendToggleState[] = []
     private recordedWarnings: string[] = []
+    /** Disposers from `addTestRailMode`, so a test can unregister the way a consumer does. */
+    private railModeDisposers = new Map<string, () => void>()
+    /** Rail-mode lifecycle observation: which modes were entered, left, and which tools ran. */
+    private railEnters: string[] = []
+    private railExits: string[] = []
+    private railRuns: string[] = []
     /** Disposers from `addTestDockTab`, so a test can unregister the way a consumer does. */
     private dockTabDisposers = new Map<string, () => void>()
     /** What `loadWithPluginPane`'s pane has recorded, painted or not. */
@@ -2579,6 +2654,83 @@ class Harness implements HarnessApi {
      */
     removeTestDockTab(id: string): void {
         this.dockTabDisposers.get(id)?.()
+    }
+
+    /* ---------- rail modes ---------- */
+
+    /** Turn the plain {@link RailModeSpec} a test passes into a real mode definition. */
+    private buildRailMode(spec: RailModeSpec): RailModeDefinition {
+        const label = spec.label ?? spec.id
+        const tools: RailTool[] = (spec.tools ?? []).map(tool => ({
+            id: tool.id,
+            label: tool.label ?? tool.id,
+            icon: TEST_MODE_ICON,
+            kind: tool.kind ?? 'action',
+            run: () => { this.railRuns.push(`${spec.id}:${tool.id}`) },
+        }))
+
+        const definition: RailModeDefinition = {
+            id: spec.id,
+            label,
+            icon: TEST_MODE_ICON,
+            kind: spec.kind ?? 'pointer',
+            shortcut: spec.shortcut,
+            order: spec.order,
+            panelOpen: spec.panelOpen,
+            defaultTool: spec.defaultTool,
+            tools: spec.dynamicTools ? () => tools : tools,
+            onEnter: () => { this.railEnters.push(spec.id) },
+            onExit: () => { this.railExits.push(spec.id) },
+        }
+        if (spec.withRender) {
+            definition.render = () => {
+                const extra = document.createElement('div')
+                extra.className = 'pvt-test-mode-extra'
+                extra.textContent = `${label} extra`
+                return extra
+            }
+        }
+        if (definition.kind === 'flyout') {
+            definition.flyout = (ui) => new TestRailFlyout(ui, spec.id, label)
+        }
+        return definition
+    }
+
+    addTestRailMode(spec: RailModeSpec): string {
+        this.railModeDisposers.set(spec.id, this.g.UIManager.addRailMode(this.buildRailMode(spec)))
+        return spec.id
+    }
+
+    addTestRailModeViaPlugin(spec: RailModeSpec): string {
+        const definition = this.buildRailMode(spec)
+        this.g.use({
+            name: `rail-mode-plugin-${spec.id}`,
+            install: (ctx) => {
+                this.railModeDisposers.set(spec.id, ctx.addRailMode(definition))
+            },
+        })
+        return spec.id
+    }
+
+    /** Calls the *disposer*, so a second call exercises its own idempotence. */
+    removeTestRailMode(id: string): void {
+        this.railModeDisposers.get(id)?.()
+    }
+
+    railModeIds(): string[] {
+        return this.g.UIManager.getRailModes().map(mode => mode.id)
+    }
+
+    railModeExits(): string[] {
+        return [...this.railExits]
+    }
+
+    railModeEnters(): string[] {
+        return [...this.railEnters]
+    }
+
+    railToolRuns(): string[] {
+        return [...this.railRuns]
     }
 
     activeDockBodyText(): string {

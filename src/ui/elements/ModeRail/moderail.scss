@@ -63,6 +63,12 @@
     }
 }
 
+// Registered modes render into this wrapper. `display: contents` so their buttons and
+// divider join the rail's own flex column rather than forming a nested block with no gap.
+.pvt-moderail-zone {
+    display: contents;
+}
+
 .pvt-moderail-divider {
     height: 1px;
     margin: 2px 8px;

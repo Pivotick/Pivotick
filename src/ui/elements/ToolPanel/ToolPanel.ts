@@ -1,6 +1,8 @@
 import type { UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
-import { isPointerMode, type ModeState, type PointerMode, type RailMode } from '../../ModeStore'
+import type { ModeState, PointerMode, RailMode } from '../../ModeStore'
+import type { RailModeDefinition } from '../../../interfaces/GraphUI'
+import { resolveRailTools } from '../../railModes'
 import type { GraphInteractionContext } from '../../../interfaces/GraphInteractions'
 import type { GraphConnectManager } from '../../../editing/GraphConnectManager'
 import { Note } from '../../../Note'
@@ -45,7 +47,7 @@ export class ToolPanel extends UIComponent {
     /** The last mode seen, so disarm-on-leave runs only on real mode changes. */
     private prevMode: RailMode | null = null
     /** Which pointer-mode's tool-set is currently rendered (avoids needless rebuilds). */
-    private renderedMode: PointerMode | null = null
+    private renderedMode: RailMode | null = null
 
     constructor(uiManager: UIManager) {
         super(uiManager)
@@ -81,7 +83,7 @@ export class ToolPanel extends UIComponent {
 
     protected onGraphReady() {
         // Selection-gated tools (Edit) follow the selection; re-check on any change.
-        const refresh = () => this.refreshEnabled()
+        const refresh = () => this.refreshOnSelection()
         this.trackInteraction('selectNode', refresh)
         this.trackInteraction('unselectNode', refresh)
         this.trackInteraction('selectNodes', refresh)
@@ -124,8 +126,9 @@ export class ToolPanel extends UIComponent {
                 if (cm.isActive()) cm.exitClickConnectionMode()
             }
         }
-        // A flyout mode (View / Physics) has no pointer tools — collapse the panel.
-        if (!isPointerMode(mode)) {
+        // A flyout mode (View / Physics, or a registered one) has no pointer tools —
+        // collapse the panel.
+        if (!this.uiManager.modeStore.isPointerMode(mode)) {
             this.setCollapsed(true)
             return
         }
@@ -141,7 +144,16 @@ export class ToolPanel extends UIComponent {
         this.panel?.classList.toggle('pvt-collapsed', collapsed)
     }
 
-    private specsFor(mode: PointerMode): ToolSpec[] {
+    /** The registered mode with this id, or undefined for one of the four built-ins. */
+    private registered(mode: RailMode): RailModeDefinition | undefined {
+        return this.uiManager.getRailModes().find(m => m.id === mode)
+    }
+
+    private specsFor(mode: RailMode): ToolSpec[] {
+        // A registered mode brings its own tools; the built-ins keep theirs here.
+        const registered = this.registered(mode)
+        if (registered) return resolveRailTools(registered)
+
         if (mode === 'select') {
             return [
                 { id: 'pointer', label: 'Pointer', icon: cursor, kind: 'default', run: () => this.disarmLasso() },
@@ -150,6 +162,9 @@ export class ToolPanel extends UIComponent {
                 { id: 'invert', label: 'Invert selection', icon: selectionInverse, kind: 'action', run: () => this.invertSelection() },
             ]
         }
+        // Explicit rather than a fallthrough: a mode unregistered mid-render would
+        // otherwise be handed Create's tools on its way out.
+        if (mode !== 'create') return []
         return [
             // Both write-path tools are dropped entirely when their editor is disabled —
             // a read-only integration gets no affordance rather than one that refuses.
@@ -164,17 +179,19 @@ export class ToolPanel extends UIComponent {
         ]
     }
 
-    private render(mode: PointerMode) {
+    private render(mode: RailMode) {
         if (!this.panel) return
         this.renderedMode = mode
         const specs = this.specsFor(mode)
-        const title = mode === 'select' ? 'Select' : 'Create'
-        const titleIcon = mode === 'select' ? cursor : addCircle
+        const registered = this.registered(mode)
+        const title = registered?.label ?? (mode === 'select' ? 'Select' : 'Create')
+        const titleIcon = registered?.icon ?? (mode === 'select' ? cursor : addCircle)
+        const shortcut = registered ? registered.shortcut : MODE_SHORTCUT[mode as PointerMode]
         this.panel.innerHTML =
             '<div class="pvt-toolpanel-header">'
             + `<span class="pvt-toolpanel-icon">${titleIcon}</span>`
             + `<span class="pvt-toolpanel-title">${title}</span>`
-            + createShortcutBadge(MODE_SHORTCUT[mode]).outerHTML
+            + (shortcut ? createShortcutBadge(shortcut.toUpperCase()).outerHTML : '')
             + '</div>'
 
         for (const spec of specs) {
@@ -195,6 +212,28 @@ export class ToolPanel extends UIComponent {
                 row.addEventListener('click', () => this.onToolClick(mode, spec))
             }
             this.panel.appendChild(row)
+        }
+
+        // A registered mode's own content goes below its rows — a slider or a search box,
+        // whatever the rows cannot express.
+        const extra = registered?.render?.()
+        if (extra) this.panel.appendChild(extra)
+
+        this.refreshEnabled()
+    }
+
+    /**
+     * The selection changed. A registered mode that declared `tools` as a *function* may
+     * want a different set of rows now — not just different enabled states — so rebuild
+     * for those, and only re-check predicates for everyone else.
+     */
+    private refreshOnSelection() {
+        const mode = this.renderedMode
+        const registered = mode !== null ? this.registered(mode) : undefined
+        if (mode !== null && registered && typeof registered.tools === 'function') {
+            this.render(mode)
+            this.reflectArmed(this.uiManager.modeStore.getArmedTool(mode))
+            return
         }
         this.refreshEnabled()
     }
@@ -221,7 +260,7 @@ export class ToolPanel extends UIComponent {
      * Modal picks (Pointer / Lasso / Add-edge) arm the tool and collapse the
      * panel — the rail slot then reflects the choice. One-shot actions just run.
      */
-    private onToolClick(mode: PointerMode, spec: ToolSpec) {
+    private onToolClick(mode: RailMode, spec: ToolSpec) {
         const store = this.uiManager.modeStore
         if (spec.kind === 'toggle') {
             const nowArmed = store.getArmedTool(mode) !== spec.id
@@ -237,9 +276,12 @@ export class ToolPanel extends UIComponent {
         }
     }
 
-    /** The tool a pointer-mode rests on when nothing special is armed. */
-    private defaultTool(mode: PointerMode): string | null {
-        return mode === 'select' ? 'pointer' : null
+    /**
+     * The tool a pointer-mode rests on when nothing special is armed. The store holds it
+     * for the built-ins and for every registered mode alike.
+     */
+    private defaultTool(mode: RailMode): string | null {
+        return this.uiManager.modeStore.getDefaultTool(mode)
     }
 
     /** Highlight the armed tool row. */

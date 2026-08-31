@@ -3,7 +3,7 @@ import type { UIManager } from '../ui/UIManager'
 import type { UIComponent, UIPhase } from '../ui/UIComponent'
 import type { Layout } from '../ui/elements/Layout'
 import type { KeybindingManager } from '../ui/KeybindingManager'
-import type { DockTab, ExtraPanel, Keybinding } from './GraphUI'
+import type { DockTab, ExtraPanel, Keybinding, RailModeDefinition } from './GraphUI'
 
 /**
  * A Pivotick plugin: a self-contained bundle of UI elements, keybindings and
@@ -86,6 +86,17 @@ export interface PluginContext {
      * code that holds the id rather than the handle.
      */
     refreshDockTab(id: string): void
+    /**
+     * Register a mode on the mode rail — the same door as `UIManager.addRailMode`, and
+     * the way a plugin ships its own Explore or Enrich mode. Returns a disposer.
+     *
+     * Registered modes render below a divider, after the four built-in modes. Registration
+     * succeeds in every mode; the button is only drawn where there is a rail
+     * (`full` and `light`).
+     */
+    addRailMode(mode: RailModeDefinition): () => void
+    /** Remove a rail mode by id (equivalent to calling its disposer). */
+    removeRailMode(id: string): void
     /** Hook a lifecycle phase. Returns an unsubscribe function. */
     onPhase(phase: UIPhase, callback: () => void): () => void
     /** Register a keybinding that is automatically removed when the UI is torn down. */

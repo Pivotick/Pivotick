@@ -1,25 +1,37 @@
 import type { UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
-import type { ModeState, PointerMode } from '../../ModeStore'
+import type { ModeState, PointerMode, RailMode } from '../../ModeStore'
+import type { RailModeDefinition } from '../../../interfaces/GraphUI'
+import { railModeKind, resolveRailTools } from '../../railModes'
 import { cursor, addCircle, show, atom, sparkles, compass, lassoTool, graphEdgeIcon } from '../../icons'
 import './moderail.scss'
 
 /**
- * The left-edge mode rail. Holds the four exclusive modes — the Select and
- * Create pointer-modes plus the View and Physics settings flyouts — followed by
- * an optional data zone of not-yet-shipped modes (Explore, Enrich) rendered as
- * disabled "SOON" affordances, each gated on {@link GraphUI.modeRail} and hidden
- * when its flag is off. It owns no logic beyond presentation + dispatching to the
- * {@link UIManager.modeStore}; the rail, contextual tool panel and flyouts react
- * to that shared store.
+ * The left-edge mode rail. Holds the four exclusive built-in modes — the Select and
+ * Create pointer-modes plus the View and Physics settings flyouts — followed by an
+ * optional data zone of not-yet-shipped modes (Explore, Enrich) rendered as disabled
+ * "SOON" affordances, and then any modes registered through
+ * {@link UIManager.addRailMode}, below a divider of their own. It owns no logic beyond
+ * presentation + dispatching to the {@link UIManager.modeStore}; the rail, contextual
+ * tool panel and flyouts react to that shared store.
  *
- * The Select/Create slots double as split-buttons: clicking the *active* mode
- * toggles its tool panel, and the slot's icon + label reflect the armed tool
- * (e.g. `Select` → `Lasso`).
+ * The built-in modes are hardcoded here; the registry only ever appends. Registered modes
+ * arrive *after* this component has mounted — plugins install once the UI is built — so
+ * the rail subscribes to the registry and rebuilds its zone on every change.
+ *
+ * A pointer-mode slot doubles as a split-button: clicking the *active* mode toggles its
+ * tool panel, and the slot's icon + label reflect the armed tool (e.g. `Select` →
+ * `Lasso`), for registered modes as much as for the built-ins.
  */
 export class ModeRail extends UIComponent {
     private rail?: HTMLDivElement
     private readonly buttons = new Map<string, HTMLButtonElement>()
+    /** The zone registered modes render into, below their own divider. */
+    private pluginZone?: HTMLDivElement
+    /** Button ids owned by the registry, so a rebuild only clears its own. */
+    private readonly pluginButtonIds = new Set<string>()
+    /** Keybindings registered for the current set of registered modes. */
+    private readonly pluginDisposers: Array<() => void> = []
 
     constructor(uiManager: UIManager) {
         super(uiManager)
@@ -31,7 +43,7 @@ export class ModeRail extends UIComponent {
         this.rail = document.createElement('div')
         this.rail.className = 'pvt-moderail-rail'
 
-        // The four exclusive modes: Select, Create, View, Physics.
+        // The four exclusive built-in modes: Select, Create, View, Physics.
         this.rail.appendChild(this.makeButton('select', 'Select', cursor, 'V'))
         this.rail.appendChild(this.makeButton('create', 'Create', addCircle, 'C'))
         this.rail.appendChild(this.makeButton('view', 'View', show))
@@ -44,12 +56,15 @@ export class ModeRail extends UIComponent {
         const showExplore = !!railOptions?.explore
         const showEnrich = !!railOptions?.enrich
         if (showExplore || showEnrich) {
-            const divider = document.createElement('div')
-            divider.className = 'pvt-moderail-divider'
-            this.rail.appendChild(divider)
+            this.rail.appendChild(this.makeDivider())
             if (showExplore) this.rail.appendChild(this.makeSoonButton('explore', 'Explore', compass))
             if (showEnrich) this.rail.appendChild(this.makeSoonButton('enrich', 'Enrich', sparkles))
         }
+
+        // Everything registered through `addRailMode` lands here, after the built-ins.
+        this.pluginZone = document.createElement('div')
+        this.pluginZone.className = 'pvt-moderail-zone'
+        this.rail.appendChild(this.pluginZone)
 
         container.appendChild(this.rail)
     }
@@ -65,6 +80,10 @@ export class ModeRail extends UIComponent {
         this.track(this.uiManager.keyManager.register({ key: 'v', callback: () => this.activateOrToggle('select'), description: 'Select mode / toggle its tools' }))
         this.track(this.uiManager.keyManager.register({ key: 'c', callback: () => this.activateOrToggle('create'), description: 'Create mode / toggle its tools' }))
 
+        // Registered modes can arrive at any point, including before this runs.
+        this.rebuildPluginZone()
+        this.track(this.uiManager.onRailModesChanged(() => this.rebuildPluginZone()))
+
         // Reflect the store; render the initial state, then subscribe for changes.
         this.render(this.uiManager.modeStore.getState())
         this.track(this.uiManager.modeStore.subscribe((state) => this.render(state)))
@@ -73,18 +92,58 @@ export class ModeRail extends UIComponent {
     }
 
     protected onDestroy() {
+        for (const dispose of this.pluginDisposers.splice(0)) dispose()
         this.layoutRoot()?.style.removeProperty('--pvt-moderail-height')
         this.rail?.remove()
         this.rail = undefined
+        this.pluginZone = undefined
+        this.pluginButtonIds.clear()
         this.buttons.clear()
+    }
+
+    /**
+     * Rebuild the registered-mode zone from the registry. Cheap and idempotent: the zone
+     * holds a handful of buttons, so a full rebuild beats diffing, and it keeps ordering
+     * correct when a mode is added in the middle.
+     */
+    private rebuildPluginZone() {
+        const zone = this.pluginZone
+        if (!zone) return
+
+        for (const dispose of this.pluginDisposers.splice(0)) dispose()
+        for (const id of this.pluginButtonIds) this.buttons.delete(id)
+        this.pluginButtonIds.clear()
+        zone.replaceChildren()
+
+        const modes = this.uiManager.getRailModes()
+        if (modes.length) zone.appendChild(this.makeDivider())
+
+        for (const mode of modes) {
+            const button = this.makeButton(mode.id, mode.label, mode.icon, mode.shortcut)
+            this.pluginButtonIds.add(mode.id)
+            zone.appendChild(button)
+
+            const activate = () => this.activateRegistered(mode)
+            button.addEventListener('click', activate)
+            if (mode.shortcut) {
+                this.pluginDisposers.push(this.uiManager.keyManager.register({
+                    key: mode.shortcut.toLowerCase(),
+                    callback: activate,
+                    description: `${mode.label} mode`,
+                }))
+            }
+        }
+
+        // The new buttons have no active state or armed face yet.
+        this.render(this.uiManager.modeStore.getState())
     }
 
     /**
      * Publish the rail's height as `--pvt-moderail-height`. The rail grows down the
      * canvas's left column, so anything else docked there (the legend) can size
      * itself against it instead of guessing — see `legend.scss`. Observed rather
-     * than computed: the height moves with the opt-in SOON modes and with whatever
-     * the label font resolves to.
+     * than computed: the height moves with the opt-in SOON modes, with whatever
+     * modes are registered, and with whatever the label font resolves to.
      */
     private publishHeight(): void {
         const rail = this.rail
@@ -107,10 +166,16 @@ export class ModeRail extends UIComponent {
     }
 
     /** Click the active mode to toggle its panel; click another to switch to it. */
-    private activateOrToggle(mode: PointerMode) {
+    private activateOrToggle(mode: RailMode) {
         const store = this.uiManager.modeStore
         if (store.getMode() === mode) store.toggleToolPanel(mode)
         else store.setMode(mode)
+    }
+
+    /** A registered mode's slot: flyout modes toggle their panel, pointer modes behave like Select. */
+    private activateRegistered(mode: RailModeDefinition) {
+        if (railModeKind(mode) === 'flyout') this.uiManager.modeStore.toggleFlyout(mode.id)
+        else this.activateOrToggle(mode.id)
     }
 
     /** Highlight the active mode and reflect each pointer-mode's armed tool. */
@@ -122,13 +187,32 @@ export class ModeRail extends UIComponent {
         }
         this.applyFace('select', state.armedTool.select)
         this.applyFace('create', state.armedTool.create)
+
+        for (const mode of this.uiManager.getRailModes()) {
+            if (railModeKind(mode) !== 'pointer') continue
+            this.applyRegisteredFace(mode, state.armedTool[mode.id] ?? null)
+        }
     }
 
-    /** Set a mode slot's icon + label to match its armed tool (mode name at rest). */
+    /** Set a built-in mode slot's icon + label to match its armed tool (mode name at rest). */
     private applyFace(mode: PointerMode, armed: string | null) {
-        const button = this.buttons.get(mode)
-        if (!button) return
         const { icon, label } = this.railFace(mode, armed)
+        this.paintFace(mode, icon, label)
+    }
+
+    /**
+     * The same treatment for a registered mode, taken straight off the armed tool — a
+     * registered mode needs no hook for this, because its tools already carry an icon and
+     * a label.
+     */
+    private applyRegisteredFace(mode: RailModeDefinition, armed: string | null) {
+        const tool = armed ? resolveRailTools(mode).find(t => t.id === armed) : undefined
+        this.paintFace(mode.id, tool?.icon ?? mode.icon, tool?.label ?? mode.label)
+    }
+
+    private paintFace(key: string, icon: string, label: string) {
+        const button = this.buttons.get(key)
+        if (!button) return
         const iconEl = button.querySelector('.pvt-moderail-icon')
         const labelEl = button.querySelector('.pvt-moderail-label')
         if (iconEl) iconEl.innerHTML = icon
@@ -142,12 +226,18 @@ export class ModeRail extends UIComponent {
         return armed === 'add-edge' ? { icon: graphEdgeIcon(20), label: 'Edge' } : { icon: addCircle, label: 'Create' }
     }
 
+    private makeDivider(): HTMLDivElement {
+        const divider = document.createElement('div')
+        divider.className = 'pvt-moderail-divider'
+        return divider
+    }
+
     private makeButton(key: string, label: string, icon: string, shortcut?: string): HTMLButtonElement {
         const button = document.createElement('button')
         button.type = 'button'
         button.className = 'pvt-moderail-button'
         button.dataset.mode = key
-        button.title = shortcut ? `${label} (${shortcut})` : label
+        button.title = shortcut ? `${label} (${shortcut.toUpperCase()})` : label
         button.innerHTML = `<span class="pvt-moderail-icon">${icon}</span><span class="pvt-moderail-label">${label}</span>`
         this.buttons.set(key, button)
         return button
