@@ -15,14 +15,16 @@ export type FlyoutMode = 'view' | 'physics'
 export type RailModeKind = 'pointer' | 'flyout'
 
 /**
- * Every mode the rail can be in: the four built-ins, plus the id of any mode registered
- * through `addRailMode`. Modes are **mutually exclusive** — opening a flyout deactivates
- * the active pointer-mode (and vice-versa), and only one flyout is open at a time.
+ * Every mode the rail can be in: the four built-ins — `'select'`, `'create'`, `'view'`
+ * and `'physics'` — plus the id of any mode registered through `addRailMode`. Modes are
+ * **mutually exclusive**: opening a flyout deactivates the active pointer-mode (and
+ * vice-versa), and only one flyout is open at a time.
  *
- * The `(string & {})` arm accepts a registered mode's id while keeping editor
- * autocomplete for the four built-in names.
+ * A plain `string`, since a registered id is arbitrary. Adding `| (string & {})` would
+ * keep editor autocomplete for the four names above, but TypeDoc renders it as
+ * `string & object`.
  */
-export type RailMode = PointerMode | FlyoutMode | (string & {})
+export type RailMode = string
 
 /** Narrow a rail mode to one of the two *built-in* pointer-modes. */
 export function isBuiltinPointerMode(mode: RailMode): mode is PointerMode {

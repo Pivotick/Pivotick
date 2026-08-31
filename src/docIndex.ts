@@ -28,6 +28,7 @@ import type { UIElement } from './ui/UIManager'
 import type { ModeStore, PointerMode, FlyoutMode, RailMode, RailModeKind, ModeState } from './ui/ModeStore'
 import { UIComponent } from './ui/UIComponent'
 import type { UIPhase } from './ui/UIComponent'
+import { Flyout } from './ui/elements/Flyout/Flyout'
 import type { PivotickPlugin, PluginContext } from './interfaces/Plugin'
 
 export type {
@@ -74,6 +75,7 @@ export {
     Node,
     Edge,
     UIComponent,
+    Flyout,
     defaultNodeStyle as defaultNodeStyleValue,
     defaultEdgeStyle as defaultEdgeStyleValue,
     defaultLabelStyle as defaultLabelStyleValue,
