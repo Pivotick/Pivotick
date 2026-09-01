@@ -1,7 +1,10 @@
 # States and copy — the pivot/enrichment UI
 
 **Status:** Step 1 of [`pivot-enrichment-ui-prototype-brief.md`](pivot-enrichment-ui-prototype-brief.md),
-written 2026-09-01. Groundwork in
+written 2026-09-01. **§5 and §6 are built** — see §17 of the PRD, which amends **C5** (the
+suppressed rows are an id list with a restore, because M1 does not stage them), **C8** (reversed:
+`DockTabHandle.setLabel` exists, so the count is in the tab) and **C9** (built as specified).
+Groundwork in
 [`pivot-enrichment-ui-groundwork.md`](pivot-enrichment-ui-groundwork.md); behaviour in
 [`pivot-enrichment-interface.md`](pivot-enrichment-interface.md), which wins on any disagreement.
 **Owner:** Sami Mokaddem

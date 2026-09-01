@@ -1,6 +1,6 @@
 # Feature — a pivot/enrichment interface: advertise, run, triage, ingest
 
-**Status:** Proposed — scoped with Sami over two passes (2026-08-31, 2026-09-01), a sanity-check review pass (2026-09-01, findings in [`pivot-enrichment-review.md`](pivot-enrichment-review.md)), and a Phase A design pass (2026-09-01, [`pivot-enrichment-ui-states.md`](pivot-enrichment-ui-states.md) and the artboards beside it). Twenty-seven decisions are taken (§6): D1–D15 in the first pass; D16–D21 plus an **amended D7** in the second; **D22–D25** in the review pass, which also amended D1, D4, D7, D8, D11, D12, D14, D16, D17 and D20; **D26** in the design pass, which chose the surface and reversed the §12 line on rail modes; and **D27**, which closed §11.4's triage concurrency when M1 landed. **M1 and M1b are built** (2026-09-01) — see §10, §14 and §15.
+**Status:** Proposed — scoped with Sami over two passes (2026-08-31, 2026-09-01), a sanity-check review pass (2026-09-01, findings in [`pivot-enrichment-review.md`](pivot-enrichment-review.md)), and a Phase A design pass (2026-09-01, [`pivot-enrichment-ui-states.md`](pivot-enrichment-ui-states.md) and the artboards beside it). Twenty-seven decisions are taken (§6): D1–D15 in the first pass; D16–D21 plus an **amended D7** in the second; **D22–D25** in the review pass, which also amended D1, D4, D7, D8, D11, D12, D14, D16, D17 and D20; **D26** in the design pass, which chose the surface and reversed the §12 line on rail modes; and **D27**, which closed §11.4's triage concurrency when M1 landed. **M1, M1b and M2 are built** (2026-09-01) — see §10, §14, §15 and §17. Only **M3** — the Pivot rail mode, the badges and the docs — is left; §18 says where it starts.
 **Owner:** Sami Mokaddem
 **Requested:** 2026-08-31
 **Area:** greenfield `src/PivotManager.ts` + `src/interfaces/Pivot.ts`, with touch points in `src/Graph.ts` (ingest, provenance, `dataBatchChanged`), `src/Node.ts` / `src/Edge.ts` (source tags), `src/interfaces/InterractionCallbacks.ts` (`onBeforeIngest`), `src/interfaces/Plugin.ts` (`addPivot`), `src/ui/elements/Dock/` + a new `src/ui/elements/Pivot/` (the triage pane and the Pivot rail mode), `src/interfaces/RendererOptions.ts` (declared-potential badges). Adds **public types** and a **new public option group**.
@@ -676,7 +676,7 @@ that reaches into the cluster subsystem, and because it is deliberately the *che
 reuse the existing expand path, no new `ClusterDrawer` abstraction. Sequence it after M1 so the
 pipeline is proven before touching clusters at all.
 
-**M2 — the triage pane.** A dock tab holding the candidate table: facets from `PivotSummary`,
+**M2 — the triage pane. DONE (2026-09-01).** A dock tab holding the candidate table: facets from `PivotSummary`,
 client-side filter / sort / page over the full facet vocabulary (D5, D18), row selection,
 edge-only rows in their own section (D24), the ingest action, explicit rejection with "reject
 all remaining" (D14), the post-ingest undo affordance (D25), and honest empty and error states —
@@ -696,6 +696,8 @@ Two small library changes this milestone depends on, both flagged by the Phase A
 **per-mode tool-panel width** (it is a fixed 216px today and Pivot mode wants 300px), and an
 **actionable notification** — an action, a longer lifetime, hover-pause, dismiss and a returned
 handle — without which the post-ingest undo of D25 has nowhere to live for `autoIngest` pivots.
+The notification **was built in M2** (§17.1), along with `DockTabHandle.setLabel`; the tool-panel
+width is all that is left.
 
 ## 11. Open questions
 
@@ -712,7 +714,9 @@ all of it is M2-or-later:
    an analyst re-pivots an expanded event; revisit with the cluster/children/subgraph refactor
    rather than pre-emptively here.
 3. **The 10,000 safety ceiling (D17) is a proposal, not a measurement.** Confirm it against a
-   real AIL payload before M2 ships; it is a knob, so being wrong is cheap.
+   real AIL payload; it is a knob, so being wrong is cheap. **Still not measured** — M2 shipped
+   without it, since nothing in the pane depends on where the number sits, only on the refusal
+   being honest when it is hit (T5, covered).
 4. ~~**Triage concurrency (from the review pass).**~~ **Closed by D27**: one pane per pivot id —
    a re-run replaces that pivot's candidate set, and panes for different pivots coexist as dock
    tabs.
@@ -956,3 +960,136 @@ tab cannot carry a live count.
 so its dock wiring and its row-lifecycle behaviour transfer directly. Its `manager.ts` is
 superseded by `src/PivotManager.ts`; the API names differ slightly (`sets` → `staged()`,
 `applicable` → `for`).
+
+## 17. M2 as built (2026-09-01)
+
+The triage pane is in `src/`, driven by
+[`tests/visual/specs/pivot-triage.spec.ts`](../tests/visual/specs/pivot-triage.spec.ts) (15
+cases) against the same fake providers M1 used. Unlike M1's spec it drives the **real DOM** —
+which state is showing, what the header line says, which rows are ingestable — because that is
+precisely the half M1 could not reach. The one M1 fact it re-asserts at every ingest is the one
+the whole feature rests on: a candidate is not in the graph until someone commits it.
+
+**Files:** `src/ui/elements/Pivot/PivotTriage.ts` (the controller: one dock tab per staged set,
+and the post-ingest toast) · `src/ui/elements/Pivot/TriagePane.ts` (one pane) ·
+`src/ui/elements/Pivot/pivot.scss` · the two library additions in `src/ui/Notifier.ts` /
+`src/ui/UIManager.ts` (actionable toasts) and `src/interfaces/GraphUI.ts` / `Dock.ts` /
+`interfaces/Plugin.ts` (`setLabel`) · a `pending` slice in `PivotManager` · one signature
+relaxed in `Table/TableRowFilters.ts`.
+
+### 17.1 The two library gaps, closed
+
+- **The actionable notification is a handle, not a button.** `Notification` gained
+  `action?: { label, onClick }` and `duration?`; `showNotification` and every `Notifier` method
+  now return a `NotificationHandle` with `update()` and `dismiss()`. An action lifts the
+  lifetime from 4s to 12s, the pointer pauses it, and there is always a dismiss control. That
+  handle is what makes `Ingested 12 — Undo` become `Undone — Redo` **in place** rather than
+  stacking a second toast on the first. Existing three-argument calls are untouched.
+- **`DockTabHandle.setLabel` reverses C8.** The states doc put the count in the pane header
+  *because* a tab could not be relabelled; it can now, through a `'relabel'` change the dock
+  answers by redrawing only its strip. So the tab reads `Correlations (198)` and the count is
+  what is still waiting for a verdict — not what was fetched, which is already the header's
+  first segment and would say the same thing twice.
+
+### 17.2 What the implementation settled
+
+- **The pane owns its view state and nothing else.** Search text, the per-column filters, the
+  sort, the page and whether the suppressed list is open live on `TriagePane`; everything else
+  is read from `PivotManager` on every paint. So a pane torn down and rebuilt loses a scroll
+  position and nothing more, which is what §16 asked for.
+- **Paging, not windowing.** M2's brief says "filter / sort / page" and the dock is ~330px
+  tall, so 100 rows a page with a `1–100 of 210` pager beats reproducing `TableGrid`'s
+  virtualisation. `TableGrid` itself is not reusable here — it is typed over `Node | Edge`, and
+  a candidate is deliberately neither.
+- **The per-column filter controls are the data table's, unchanged.** `buildRowFilterControl`
+  only ever read a column's `key` / `label` / `type`, so it now takes a `FilterableColumn`
+  instead of a `TableColumn<Node | Edge>` and the triage pane calls it directly. Two tables in
+  one dock offering two different-looking filters would have been the wrong kind of
+  difference. Columns themselves come from `collectDataAttributes` — the same scan the dock
+  uses — so a provider declares no columns and still gets a readable table.
+- **The search box matches per cell, not over the joined row.** Joining the cells first makes
+  `^url 1[0-9]$` match nothing, which is a silent lie about the analyst's own pattern. Regex
+  lives here and only here (D5): these rows are already in hand.
+- **Edge-only rows are drawn *above* the node table.** There are usually a handful of them
+  against hundreds of nodes, and under a full page of rows a core AIL result would never be
+  seen at all. §5.5 fixed that they get their own section; it did not fix where.
+- **The pane brings itself to the front on its first appearance, and never again.** The
+  analyst asked for the fetch, so its results should not wait behind the table — but a later
+  update must not yank them out of whatever they are reading.
+- **`kind` became `Label` in the edge section.** The states doc's `from` / `to` / `kind` has no
+  referent in the library: there is no edge-kind concept, and `data.label` is the conventional
+  edge name (`edgeNameGetter`). So the edge columns are `From` / `To` plus whatever the edges'
+  own data holds, derived like the node columns.
+
+### 17.3 Three things M2 changed behind it
+
+Each of these is an M1 behaviour that made a specced pane state unreachable. None reverses a
+D-number.
+
+- **A ceiling refusal now keeps its set.** M1 deleted the candidate set on a `'ceiling'`
+  refusal, which left **T5** — "the source returned 14,203 candidates, over the 10,000 limit"
+  — with no pane to appear in. It is kept instead, empty of candidates and carrying its
+  `refusal`, exactly as a *failed* fetch is already kept so it can offer a retry. `run()` still
+  returns the `'refused'` outcome. `pivot-pipeline.spec.ts`'s ceiling case was updated to
+  assert the refusal on the set rather than the set's absence. An **auto-ingest** pivot is the
+  exception on both paths: it was never offering triage, so neither its refusal nor its failure
+  leaves a pane behind.
+- **A re-run over marked rows waits instead of replacing (C7, and D27's own commitment).**
+  `PivotCandidateSet.pending` holds the new set while the analyst still has marks on the old
+  one, and `showPending` / `dismissPending` are *Show new* / *Keep triaging*. A re-run with
+  nothing marked replaces outright, as before — there is nothing to lose. The identity checks
+  around the in-flight set were tightened while doing this: a superseded run could previously
+  delete the set belonging to the run that superseded it.
+- **`unreject` reaches the session memory even when the row is not staged.** It returned early
+  on a candidate it could not find, so an id rejected in an earlier run could never be taken
+  back — which is C5's whole purpose. Which leads to the one place M2 reads C5 differently:
+  suppressed candidates are dropped at stage time (M1, tested), so there are no rows to
+  reveal. The segment opens the **list of suppressed ids with a `restore` beside each**
+  instead; restoring clears the rejection and the next run offers the candidate again. Same
+  guarantee — the suppression is inspectable and reversible — without re-staging rows M1
+  deliberately does not keep.
+
+### 17.4 What M2 found
+
+- **A double toast, from announcing a run twice.** The controller reports any ingest it did not
+  itself trigger (an `autoIngest` pivot, or a consumer calling `pivots.ingest`) by watching the
+  `'runs'` change — but `ingest()` notifies `'runs'` *before* its promise resolves, so the
+  pane's own ingest was announced by both paths. The run id is now claimed from the set before
+  the call rather than from the outcome after it.
+- **Playwright's assertion polling is ~350ms**, which is wider than a 400ms in-flight state. The
+  fake provider's latency in that one case is 1200ms so the window cannot fall between two
+  polls; this is worth knowing for any future state that exists only while a call is out.
+- **`[hidden]` loses to `display: flex`.** The toast's action row is a flex container, so the
+  UA's `[hidden]` rule had to be restated — the same trap `.pvt-table-apply` already documents.
+
+### 17.5 §13's test list, against what is covered
+
+Covered by the new spec: the pane appearing with the set and the graph unchanged; the tab's live
+count; the header line's three segments; T0 with a cancel, T2, T3, T4 with a retry, T5, T6 with
+its tally, and T7 both ways (*Show new* / *Keep triaging*); a re-run with nothing marked
+replacing outright; the row lifecycle R1–R3 including a rejection struck in place, losing its
+checkbox and keeping its slot; reject-all-remaining; filter, sort and paging asserted to move no
+node; a regex search; the edge-only section; ingest landing exactly the marked rows with the
+toast's undo and redo; closing the pane rejecting nothing; suppression inspected and restored;
+and an auto-ingest bringing no pane but the same toast.
+
+Still open for M3: the facet-count arithmetic *as rendered* (there is no narrowing UI until the
+rail mode exists), and the pane in a UI mode with no dock — `full` is the only mode with one, so
+a staged set elsewhere is reachable through `graph.pivots` and simply has no pane.
+
+## 18. Where M3 starts
+
+Unchanged from §10's M3 paragraph, minus the two library dependencies it listed: the actionable
+notification is built, and `DockTabHandle.setLabel` with it. What is left of that note is the
+**per-mode tool-panel width** (216px today, Pivot mode wants 300px — C15), which is Pivot mode's
+own problem rather than the pane's.
+
+Two hand-offs from this milestone:
+
+- The pane's **Re-run** calls `run(pivotId, set.origin, set.narrowing)` — the narrowing the set
+  was fetched with. Once Pivot mode owns the narrowing controls, a re-run should take the
+  *current* narrowing instead, and S9's `210 in triage ▸` link should activate the pane's tab
+  (`UIManager.activateDockTab('pivot-triage:<pivotId>')`).
+- The controller already reports **every** run, including ones it did not trigger, so M3's
+  "a failed `autoIngest` fetch reporting through the notifier" is the only reporting still
+  missing: a failure produces no run, so nothing announces it.
