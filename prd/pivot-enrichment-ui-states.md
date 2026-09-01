@@ -15,6 +15,24 @@ variant invents its own states and wording, they differ in a dozen incidental wa
 comparison stops being about placement — which is the only thing actually being chosen. So: this
 document fixes states and copy, the artboards vary placement, and Phase B implements this.
 
+**The surface, settled in round 2 (Sami's call).** Pivot is **its own rail mode** — a
+`kind: 'pointer'` mode with its own tools (*Pick origin*, *Lasso origin*), its own panel, and its
+own options. Two consequences run through everything below:
+
+- Wherever this document says *the menu*, read *Pivot mode's panel*, and wherever it says *opening
+  the menu*, read *entering Pivot mode*. The D11 intent boundary is the mode boundary:
+  `onEnter` starts `summarize`, `onExit` stops every call.
+- Wherever it says *the selection*, read *the origin* — the node set Pivot mode's tools built. An
+  **empty origin** is a legitimate state, not an error, and it is where origin-less pivots live
+  (C14).
+
+**This reverses a PRD decision, deliberately.** PRD §12 and D25 say the library ships no Enrich
+rail mode and the consumer builds one; brief §5 repeats it as a hard rule. A built-in Pivot mode
+is the opposite, and both documents need amending to match. Recorded here rather than silently
+applied. Note that `RailModeDefinition`'s own doc comment already imagines the mode — "the door an
+integrator builds their own Explore or **Enrich** mode through" — it just expected the consumer to
+walk through it.
+
 ---
 
 ## 1. Copy conventions
@@ -42,8 +60,8 @@ are indeterminate and always cancellable.
 
 ## 2. The pivot entry — state machine
 
-One pivot in the menu, whatever surface hosts it. `summarize` runs on **menu open**, never on
-selection (D11, and the call log makes this visible).
+One pivot in the panel. `summarize` runs on **entering Pivot mode** (`onEnter`) and stops on
+leaving it (`onExit`) — never on selection (D11, and the call log makes this visible).
 
 | # | State | What the entry shows | Copy |
 |---|---|---|---|
@@ -58,8 +76,8 @@ selection (D11, and the call log makes this visible).
 | **S9** | `staged` | Returns to S3/S4, plus a link to the dock tab now holding the candidates | `210 in triage ▸` |
 | **S10** | `ingested` | Auto-ingest pivots only (D13): back to S1/S3, the toast carries the outcome | — |
 
-**Transitions.** S1→S2 on menu open · S2→S3/S4/S6 on the summarize settling · S3/S4→S5 whenever
-narrowing changes or the selection changes while the menu is open (D11), then S5→S3/S4/S6 ·
+**Transitions.** S1→S2 on entering the mode · S2→S3/S4/S6 on the summarize settling · S3/S4→S5
+whenever narrowing changes or the origin changes while the mode is active (D11), then S5→S3/S4/S6 ·
 S4→S3 when a narrowed re-summarize comes back under the cap — **this is the gate lifting, and it
 is the single most important moment in the flow** · S3→S8 on Fetch · S8→S9 on results, S8→S3 on
 Cancel · S7→S8 on Run.
@@ -78,17 +96,28 @@ nodes` (D2 batches it into one request; nothing can decompose it, D20).
 
 ---
 
-## 3. The menu itself
+## 3. Pivot mode's panel
 
 | # | State | Copy |
 |---|---|---|
-| **M1** | pivots available | the list |
-| **M2** | selection has no applicable pivots | `No pivots apply to this selection` |
-| **M3** | nothing selected, origin-less pivots exist | those pivots only, no selection-scoped section |
-| **M4** | no pivots registered at all | the surface is absent entirely — not an empty state |
+| **M1** | pivots apply to the origin | the list, under `n pivots apply` |
+| **M2** | an origin is picked, nothing applies to it | `No pivots apply to this origin` |
+| **M3** | **empty origin** | the mode's instruction — `Nothing picked — click a node on the canvas, or run one of the pivots below` — over the origin-less pivots (C14) |
+| **M4** | no pivots registered at all | the rail button is absent — not an empty mode |
 
-Esc closes it. Closing cancels nothing that is already fetching (see C3). In `viewer` and
-`static` UI modes the whole surface is absent (brief §5).
+Leaving the mode cancels nothing that is already fetching (see C3). In `viewer` and `static` UI
+modes the mode is never registered, so the rail button does not exist (brief §5).
+
+**Above the pivots, always:** the mode's tools (*Pick origin*, *Lasso origin*) and the current
+origin with a **Clear**. The origin is the mode's subject; the pivots are what can be done to it.
+
+**C15 — the panel is 300px in this mode, and the legend moves.** The tool panel is a fixed 216px
+today (`toolpanel.scss:7`), which is too narrow for a `multiselect` with counts beside four
+options plus a `numberRange` pair. Pivot mode asks for a per-mode width of 300px. Consequence,
+stated rather than discovered later: a panel that runs the full canvas height collides with the
+legend at the canvas's bottom-left, so in this mode the legend moves. The alternative — capping
+the panel and scrolling — was rejected because the panel's height is precisely what it has over
+the sidebar placement.
 
 **C3 — the dock tab is created when `fetch` starts, not when results land.** This answers the
 brief's §3.6 question ("menu closes mid-fetch — complete into a dock tab, or cancel?") with
@@ -247,12 +276,13 @@ Nothing on the rim ever changes because of a selection or an open menu (brief §
 
 ## 8. Origin-less pivots (PRD §11.1)
 
-**C14 — they get no new chrome at all.** They occupy the same Pivots surface: alone when nothing
-is selected (M3), and folded into a collapsed **"Without a selection (2)"** group at the bottom
-when something is. The reasoning: the brief asks for one proposal and asks it to stay quiet, and
-D19's whole argument was one pipeline rather than two. A mainheader entry — the first draft of
-this decision — would give a secondary door the most prominent chrome in the app; a rail mode is
-the consumer's to ship, never the library's. Their results route into the same triage pane and
+**C14 — an empty origin is where they live, and they need no new surface.** Pivot mode has an
+*origin*; an empty one is meaningful rather than broken. So origin-less pivots are simply the ones
+that apply when the origin is empty (M3), and fold into a collapsed **"Without an origin (2)"**
+group at the bottom once one is picked. The first draft of this decision gave them a mainheader
+entry, which handed a secondary door the most prominent chrome in the app; the mode dissolves the
+problem instead, and keeps D19's argument intact — the gap was never "the data came from
+elsewhere", it was "there is no node to run this on". Results route into the same triage pane and
 land at the viewport centre (D22).
 
 ---

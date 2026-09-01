@@ -8,9 +8,11 @@ Published canvas: <https://claude.ai/code/artifact/5cb54730-fbfd-4e14-8f35-b9a9c
 
 | Artboard | Shows |
 |---|---|
-| `Main` | the recommendation and the three variants side by side |
+| `Main` | the recommendation, the two live placements, and why round 1 was ruled out |
 | `EntryStates` | S1–S10 of one pivot entry, plus the five narrowing controls |
-| `VariantA/B/C` | each placement in the full 1600×950 chrome |
+| `VariantD` | **recommended** — Pivot as its own pointer rail mode, with tools and options |
+| `VariantE` | the menu in the dock, where narrowing is laid out across rather than down |
+| `VariantA/B/C` | round 1, ruled out; kept on their own page for the record |
 | `Triage` | the candidate pane: header line, row lifecycle, edge-only section |
 | `TriageStates` | fetching, failed, ceiling refusal, all-deduped, zero, finished |
 | `Concurrency` | two panes coexisting, and a replacing re-run |

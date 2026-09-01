@@ -1,15 +1,15 @@
 {
   "pages": [
     { "id": "page-1", "name": "Where the menu lives" },
-    { "id": "page-2", "name": "Triage, badges, undo" }
+    { "id": "page-2", "name": "Triage, badges, undo" },
+    { "id": "page-3", "name": "Ruled out (round 1)" }
   ],
   "artboards": [
-    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 1560, "h": 1360, "page": "page-1", "title": "Recommendation" },
-    { "file": "EntryStates.dc.html", "x": 1660, "y": 0, "w": 1140, "h": 1470, "page": "page-1", "title": "Pivot entry — every state" },
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 1600, "h": 1500, "page": "page-1", "title": "Recommendation" },
+    { "file": "EntryStates.dc.html", "x": 1700, "y": 0, "w": 1140, "h": 1470, "page": "page-1", "title": "Pivot entry — every state" },
 
-    { "file": "VariantA.dc.html", "x": 0, "y": 1590, "w": 1600, "h": 950, "page": "page-1", "title": "Variant A — tool panel" },
-    { "file": "VariantB.dc.html", "x": 1700, "y": 1590, "w": 1600, "h": 950, "page": "page-1", "title": "Variant B — popover" },
-    { "file": "VariantC.dc.html", "x": 3400, "y": 1590, "w": 1600, "h": 950, "page": "page-1", "title": "Variant C — sidebar tab" },
+    { "file": "VariantD.dc.html", "x": 0, "y": 1620, "w": 1600, "h": 950, "page": "page-1", "title": "Variant D — Pivot rail mode" },
+    { "file": "VariantE.dc.html", "x": 1700, "y": 1620, "w": 1600, "h": 950, "page": "page-1", "title": "Variant E — menu in the dock" },
 
     { "file": "Triage.dc.html", "x": 0, "y": 0, "w": 1620, "h": 830, "page": "page-2", "title": "Triage pane" },
     { "file": "TriageStates.dc.html", "x": 1720, "y": 0, "w": 1620, "h": 1270, "page": "page-2", "title": "Triage — empty, error, refusal" },
@@ -19,48 +19,52 @@
     { "file": "Themes.dc.html", "x": 2490, "y": 1390, "w": 1130, "h": 1010, "page": "page-2", "title": "Both themes" },
 
     { "file": "Badges.dc.html", "x": 0, "y": 2730, "w": 1340, "h": 790, "page": "page-2", "title": "Rim badges" },
-    { "file": "OriginLess.dc.html", "x": 1440, "y": 2730, "w": 1300, "h": 850, "page": "page-2", "title": "Origin-less pivots" }
+    { "file": "OriginLess.dc.html", "x": 1440, "y": 2730, "w": 1300, "h": 910, "page": "page-2", "title": "Origin-less pivots" },
+
+    { "file": "VariantA.dc.html", "x": 0, "y": 0, "w": 1600, "h": 950, "page": "page-3", "title": "Variant A — tool panel section" },
+    { "file": "VariantB.dc.html", "x": 1700, "y": 0, "w": 1600, "h": 950, "page": "page-3", "title": "Variant B — popover" },
+    { "file": "VariantC.dc.html", "x": 3400, "y": 0, "w": 1600, "h": 950, "page": "page-3", "title": "Variant C — sidebar tab" }
   ],
   "annotations": [
     {
       "id": "start-here",
       "x": 0,
-      "y": -200,
-      "w": 700,
+      "y": -210,
+      "w": 760,
       "page": "page-1",
-      "text": "Start at Recommendation, then read the three variants below it.\n\nThe states and every string are fixed in prd/pivot-enrichment-ui-states.md, so A, B and C differ in PLACEMENT ONLY — that is the decision being asked for. Anything numbered C1–C14 there is a presentation call I made and can be argued separately from the layout."
+      "text": "Round 2. The sidebar placement is out — measured: property rows are 61px and the sidebar scrolls as one column, so a Pivots tab falls below the fold at 13 properties.\n\nD is the rail mode you asked for, built as a POINTER mode rather than a flyout — that is what gives it tools, a render slot for narrowing, and onEnter/onExit as the summarize boundary.\n\nE is the other new one: the menu in the dock, where narrowing finally has width.\n\nRuled-out round 1 is on page 3."
     },
     {
-      "id": "variant-a-note",
+      "id": "variant-d-note",
       "x": 0,
-      "y": 2580,
-      "w": 520,
+      "y": 2660,
+      "w": 620,
       "page": "page-1",
-      "text": "A — mode-rail tool panel\n\nRequired to be shown. It resolves the no-Enrich-mode tension by living as a section INSIDE Select mode.\n\nThe cost is structural, not cosmetic: the panel is scoped to a pointer mode, so switching to Create to draw one edge throws away a narrowing session. It also sits ~700px from a node on the right of the canvas."
+      "text": "D — Pivot as its own rail mode — RECOMMENDED\n\nIts own tools: Pick origin / Lasso origin. Its own options: dim nodes with no pivots. Its own panel, full canvas height, indifferent to how many properties a node carries — the sidebar here has 18 and it changes nothing.\n\nThe argument that decided it: entering the mode IS the intent that fires summarize, and leaving it IS the disinterest that stops every call. D11 stops being a rule to enforce and becomes a property of the mode.\n\nTwo asks: the tool panel is 216px today and this wants 300px; and a full-height panel pushes the legend off the canvas's left edge (drawn here as the legend moving)."
     },
     {
-      "id": "variant-b-note",
+      "id": "variant-e-note",
       "x": 1700,
-      "y": 2580,
-      "w": 520,
+      "y": 2660,
+      "w": 620,
       "page": "page-1",
-      "text": "B — popover anchored to the selection\n\nThe Maltego shape, and the one that feels most right until it is measured.\n\nDrawn at an ordinary anchor it overlaps the dock by 168px — the pane it is about to fill. It needs re-anchoring on every pan and zoom, competes with the context menu for the same gesture, and has no honest anchor for 50 selected nodes."
+      "text": "E — the menu in the dock, beside its own results\n\nThe only placement where narrowing is laid out ACROSS rather than down: 1,260px, four facets visible at once, nothing scrolled. Choose the pivot, narrow it, fetch, triage — all adjacent tabs in one region.\n\nCosts: it needs the dock open (332px, 35% of the viewport) to do anything at all, it turns a surface framed as read-only reflection into an action surface, and it gives the canvas no part to play.\n\nKeep it in reserve: if four facets in a 300px column prove too tight once real providers are wired, this is the fallback that already has the room."
     },
     {
-      "id": "variant-c-note",
-      "x": 3400,
-      "y": 2580,
-      "w": 520,
-      "page": "page-1",
-      "text": "C — a Pivots tab in the selection sidebar — RECOMMENDED\n\nNo new chrome: a fourth tab beside Neighbours / Stats / List.\n\nThe argument that decided it: D11's lifecycle is already tab-shaped. summarize fires when the menu opens, re-runs while it stays open as the selection changes, and costs nothing while closed — which is exactly what a sidebar tab does for free.\n\nHonest cost: it is the furthest surface from the node. The badge click and the context-menu entry both route here to answer that."
+      "id": "ruled-out-note",
+      "x": 0,
+      "y": 1030,
+      "w": 760,
+      "page": "page-3",
+      "text": "Round 1, kept for the record.\n\nA — a Pivots section inside the Select tool panel. Mode-scoped, so switching to Create to draw one edge discarded a narrowing session. D is this idea done properly.\n\nB — a popover on the selection. Overlaps the dock by 168px at an ordinary anchor, re-anchors on every pan, fights the context menu, and has no anchor for 50 nodes.\n\nC — a Pivots tab in the selection sidebar. Killed by measurement: 61px property rows, one scrolling column, below the fold at 13 properties."
     },
     {
       "id": "gaps-note",
       "x": 0,
-      "y": 3620,
+      "y": 3740,
       "w": 700,
       "page": "page-2",
-      "text": "Three library gaps this design depends on:\n\n1. An actionable toast — and not merely a button. Today's dies on a hard 4s timer with no handle, which is less time than it takes to read \"Ingested 12 nodes, 14 edges\". Without it, auto-ingest pivots have no undo surface at all.\n\n2. DockTabHandle.setLabel(), or the candidate count stays in the pane header rather than the tab strip.\n\n3. Dark tokens for the refusal amber and the success-toast green — the only two colours here that are not already in _variables.scss."
+      "text": "Library gaps this design depends on:\n\n1. An actionable toast — and not merely a button. Today's dies on a hard 4s timer with no handle, which is less time than it takes to read \"Ingested 12 nodes, 14 edges\". Without it, auto-ingest pivots have no undo surface at all.\n\n2. DockTabHandle.setLabel(), or the candidate count stays in the pane header rather than the tab strip.\n\n3. Dark tokens for the refusal amber and the success-toast green — the only two colours here that are not already in _variables.scss.\n\n4. A per-mode tool-panel width: 216px is fixed today, Pivot mode wants 300px."
     }
   ],
   "launch": { "view": "canvas", "page": "page-1" }
