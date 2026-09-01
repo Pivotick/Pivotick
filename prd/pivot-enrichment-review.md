@@ -4,6 +4,16 @@
 **How it was done:** every codebase claim in the PRD was verified against `src/`, the twenty-one
 decisions were each re-examined, and four gaps the PRD does not cover were put to Sami as
 questions during the review — his answers are recorded in §2 and are ready to become D22–D25.
+**Outcome (2026-09-01, same day):** folded into the PRD with Sami's rulings. The four answers
+became **D22 (placement), D23 (dedup skips), D24 (hybrid edge triage)** and the rejection answer
+was folded into an amended D14 — numbering in the PRD differs from this doc's proposal. F1–F2,
+F4–F7 and F9–F11 plus the nits were applied as recommended; **F3 accepted with a refinement**
+(menu-open trigger, *and* a live `summarize` re-run when the selection changes while the menu
+stays open); **F4 strengthened** ("same pivot MUST be distinguishable" — runId recorded, and
+**D25** now ships pivot-scoped undo/redo on top of it, while the general history engine from
+`graph-app-b3-control-layout.md` §7 stays unbuilt: Sami's call is that data-modification undo
+will likely never be needed, and candidates for operation-level undo — workspace, graph
+coarsening/reduction — don't exist yet); **F8** became §11's fourth open question.
 **Verdict:** the architecture holds. Two-phase summarise/fetch, candidates-not-graph, one batch
 gate, set-shaped provenance, and the additive-only invariant are all the right calls and none of
 the findings below touches them. What the review found is one genuine contract hole (F1), one

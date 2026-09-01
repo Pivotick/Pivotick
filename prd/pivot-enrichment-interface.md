@@ -1,11 +1,11 @@
 # Feature — a pivot/enrichment interface: advertise, run, triage, ingest
 
-**Status:** Proposed — scoped with Sami over two passes, 2026-08-31 and 2026-09-01. Twenty-one decisions are taken (§6): D1–D15 in the first pass, D16–D21 plus an **amended D7** in the second, which closed every question the first pass had left open. Not started.
+**Status:** Proposed — scoped with Sami over two passes (2026-08-31, 2026-09-01) plus a sanity-check review pass (2026-09-01, findings in [`pivot-enrichment-review.md`](pivot-enrichment-review.md)). Twenty-five decisions are taken (§6): D1–D15 in the first pass; D16–D21 plus an **amended D7** in the second; **D22–D25** in the review pass, which also amended D1, D4, D7, D8, D11, D12, D14, D16, D17 and D20. Not started.
 **Owner:** Sami Mokaddem
 **Requested:** 2026-08-31
 **Area:** greenfield `src/PivotManager.ts` + `src/interfaces/Pivot.ts`, with touch points in `src/Graph.ts` (ingest, provenance, `dataBatchChanged`), `src/Node.ts` / `src/Edge.ts` (source tags), `src/interfaces/InterractionCallbacks.ts` (`onBeforeIngest`), `src/interfaces/Plugin.ts` (`addPivot`), `src/ui/elements/Dock/` + a new `src/ui/elements/Pivot/` (the triage pane and the pivot menu), `src/interfaces/RendererOptions.ts` (declared-potential badges). Adds **public types** and a **new public option group**.
 **Type:** data-path capability + plugin API — a registry and an ingest pipeline, not a rewrite of anything.
-**Related:** [`plugin-rail-modes.md`](plugin-rail-modes.md) (this PRD defines the *vocabulary* an Enrich mode speaks; it does **not** ship an Enrich mode — built-ins stay hardcoded and the consumer ships the mode), [`archive/table-mode.md`](archive/table-mode.md) + [`archive/dock-tabs.md`](archive/dock-tabs.md) (the dock and the tab registry this triage pane rides on), `misp/declarative-filter-facets.md` (the facet vocabulary reused for narrowing), `misp/write-path-lifecycle-hooks.md` and `edge-create-veto-hook.md` (the before-hook / narrowing idiom mirrored by `onBeforeIngest`), `misp/edge-layers.md` (the carrier for edge provenance).
+**Related:** [`plugin-rail-modes.md`](plugin-rail-modes.md) (this PRD defines the *vocabulary* an Enrich mode speaks; it does **not** ship an Enrich mode — built-ins stay hardcoded and the consumer ships the mode), [`archive/table-mode.md`](archive/table-mode.md) + [`archive/dock-tabs.md`](archive/dock-tabs.md) (the dock and the tab registry this triage pane rides on), `misp/declarative-filter-facets.md` (the facet vocabulary reused for narrowing), `misp/write-path-lifecycle-hooks.md` and `edge-create-veto-hook.md` (the before-hook / narrowing idiom mirrored by `onBeforeIngest`), `misp/edge-layers.md` (the carrier for edge provenance), [`graph-app-b3-control-layout.md`](graph-app-b3-control-layout.md) (its §7 roadmap holds the *general* undo/redo engine this PRD deliberately does not build — D25 ships pivot-run undo only, and the Mainheader's disabled undo/redo buttons stay unwired).
 **Supersedes:** `misp/async-children-provider.md` and `drag-in-node-staging.md`. Both attacked subsets of this problem — lazy cluster children, and a drag-in staging tray. Both stay **deferred**, and neither should be implemented ahead of this.
 
 ---
@@ -81,7 +81,9 @@ The parts exist; the pipeline does not.
    data elsewhere cannot say so.
 2. **`onNodeExpansion` is dead.** Declared at `interfaces/InterractionCallbacks.ts:62`, no call
    site anywhere in `src/`, and its signature takes `edge: Edge` where a node is meant. It is not
-   a foundation to build on.
+   a foundation to build on — M1 deletes it (public API, so a changelog entry; also drop the
+   commented reference in `src/main.ts:303`) rather than leave a second, broken pivot-shaped
+   door beside the new one.
 3. **Async stops at the UI boundary.** `AsyncSurface` is `'tooltip' | 'properties' | 'neighbors'
    | 'mainHeader' | 'extraPanel'` (`interfaces/AsyncContent.ts`). The pattern is right and
    already proven — it just never reaches graph *structure*.
@@ -97,23 +99,31 @@ The parts exist; the pipeline does not.
 
 - **A pivot registry** on `Graph` — declarative via options, imperative via `graph.pivots`, and
   plugin-facing via `PluginContext.addPivot`.
-- **A two-call provider contract** — `summarise` then `fetch` (§7).
+- **A two-call provider contract** — `summarize` then `fetch` (§7).
 - **A candidate model** that is not the graph, session-scoped, with remembered rejections.
-- **A triage pane in the dock** — the candidate table, with facets, selection and an ingest
-  action.
-- **An ingest pipeline** — dedup, children union by id, provenance tagging, one `onBeforeIngest`
-  gate, clean `dataBatchChanged` emission. Purely additive: only `removeBySource` removes.
-- **A provenance API** — source tags on nodes and edges, and `removeBySource`.
+- **A triage pane in the dock** — the candidate table (node rows, and edge-only results as
+  their own rows — D24), with facets, selection and an ingest action.
+- **An ingest pipeline** — dedup (D23), children union by id, origin-seeded placement (D22),
+  provenance tagging, one `onBeforeIngest` gate, clean `dataBatchChanged` emission. Purely
+  additive: removal happens only through provenance — `removeBySource` and run undo (D25).
+- **A provenance API** — source tags on nodes and edges backed by run-scoped records (D16),
+  `removeBySource`, and pivot-run undo/redo (D25).
 - **Declared-potential badges** on the node rim, plus a pivot menu on selection.
 - **Origin-less pivots** — search, import and staging, through the same pipeline.
 - Docs + one gallery card.
 
 ## 6. Decisions taken
 
-**D1 — Two calls, not three. `summarise` *is* the potential query.**
-`summarise(nodes, ctx)` returns counts and facets; `fetch(nodes, narrowing, ctx)` returns the
-data. There is no separate "list potential" call: selecting a node runs `summarise`, and that is
-what fills the pivot menu. One concept, two functions.
+**D1 — Two calls, not three. `summarize` *is* the potential query.** *(amended in the review pass)*
+`summarize(nodes, narrowing, ctx)` returns counts and facets; `fetch(nodes, narrowing, ctx)`
+returns the data. There is no separate "list potential" call: opening the pivot menu runs
+`summarize` (D11), and that is what fills it. One concept, two functions, one signature shape.
+The review gave `summarize` the same `narrowing` argument as `fetch` — called with `{}` before
+any narrowing exists, re-run (debounced, cancellable) as the analyst narrows — because without
+it D4's gate can never see a narrowed count and a refusal could never lift. Providers may
+ignore the argument. (Also renamed from `summarise`: the public surface is American-spelled —
+`normalizeNode`, `ColorPaletteMapper` — and one British hold-out would be misremembered
+forever.)
 
 **D2 — Array-shaped signatures from day one.**
 Both calls take `Node[]`; a single-node pivot is `[node]`. Bulk pivot on a selection is
@@ -123,15 +133,19 @@ rather than fifty. Array-first also means bulk is not a breaking v2.
 **D3 — Narrowing replaces streaming. No streaming, no server cursor in v1.**
 The constraint is **backend** capability, not client support: MISP is AJAX-only, AIL may have
 websocket/event-stream. So the contract must never *require* progressive delivery. With
-`summarise` in front you never fetch 2000 — the analyst narrows to ~40 and one ordinary request
+`summarize` in front you never fetch 2000 — the analyst narrows to ~40 and one ordinary request
 serves it. Secondary reason streaming is wrong here anyway: a partially-arrived candidate set
 cannot be triaged honestly (facet counts jump, "select all matching" lies).
 
-**D4 — The cap sits at the narrowing gate, driven by `summarise`'s count.**
+**D4 — The cap sits at the narrowing gate, driven by `summarize`'s count.** *(amended in the review pass)*
 This is the quiet win of two-phase: you know it is 300,000 *before* asking for it. Above
 `maxCandidates` the UI refuses to fetch and says "narrow further" — no truncation, no silent
-sampling, no set that claims to be complete and isn't. Because counts are advisory (D10) the
-gate is advisory too, so a **defensive ceiling** on what `fetch` actually returns is still
+sampling, no set that claims to be complete and isn't. "Narrow further" only works if narrowing
+can change the number the gate sees: client-side arithmetic over facet option counts covers
+exactly one `multiselect` facet and nothing else (combine two facets, or narrow by `text` or
+`numberRange`, and there is nothing to sum) — so the gate **re-runs `summarize` with the
+current narrowing** and acts on the freshest advisory count. Because counts are advisory (D10)
+the gate is advisory too, so a **defensive ceiling** on what `fetch` actually returns is still
 required for a provider that ignores it.
 
 **D5 — Filters and paging in the triage pane are client-side presentation only.**
@@ -145,7 +159,7 @@ shipping it once is right, and it reuses the dock, `DockTab` and the facet machi
 built. This is consistent with, not contrary to, `plugin-rail-modes.md`: the *domain* knowledge
 (what a pivot is, what it returns) stays with the consumer; the generic surface does not.
 
-**D7 — Flat fragments and no re-parenting, but children union by id.** *(amended in pass 2)*
+**D7 — Flat fragments and no re-parenting, but children union by id.** *(amended in pass 2 and the review pass)*
 A returned node **never** names an existing on-canvas parent: there is no `containedBy` field and
 no arbitrary re-parenting. MISP's collapsed-event case needs no new mechanism at all — the
 container arrives as a **new** node, and `RawNode.children?: RawNode[]`
@@ -153,10 +167,15 @@ container arrives as a **new** node, and `RawNode.children?: RawNode[]`
 
 What *is* supported: when a returned node's **id matches a node already on canvas** and it
 carries `children`, those children are **merged into the existing node by id** — new ones added,
-matching ones updated, none removed. This is what makes re-pivoting a container work, and it
-fixes the invariant for the whole feature: **ingest is purely additive; only `removeBySource`
-removes.** It also keeps D8 intact, since a merge can never delete a child another source
-vouches for.
+matching ones **left untouched**, none removed. (The review pass changed "matching ones updated"
+to align with D23: an id collision is handled the same way at every level — pivots discover
+*structure*; refreshing stale attributes is the deferred persistence PRD's business.) The union
+**recurses** — MISP nests event → objects → attributes — and union-added children **carry the
+source tag**, so `removeBySource` and run undo reach into containers and remove a child only its
+own sources vouch for. This is what makes re-pivoting a container work, and it fixes the
+invariant for the whole feature: **ingest is purely additive; removal happens only through
+provenance — `removeBySource` and run undo (D25).** It also keeps D8 intact, since a merge can
+never delete a child another source vouches for.
 
 The cost is real and accepted deliberately. `setChildren` (`Node.ts:444`) is the only
 child-mutation entry point today — a wholesale replace, called from the constructor — so a union
@@ -177,7 +196,10 @@ A scalar `source` breaks the moment two pivots overlap — guaranteed with AIL c
 X can arrive from pivot A, then pivot B, and have been in the seed all along. Treating the seed
 as just another source (`'seed'`) makes removal one uniform rule: **drop the tag; delete only if
 the set is now empty.** Edge provenance is the load-bearing half (which pivot asserted this
-relationship) and can ride `edgeTypeAccessor` / edge layers for styling and toggling.
+relationship). It *can* ride `edgeTypeAccessor` / edge layers for styling and toggling — but as
+an opt-in pattern, honestly stated: the accessor maps an edge to **one** kind, provenance is a
+set, and a consumer may already key layers on domain relationship types, so provenance styling
+means dedicating the accessor to it and picking a primary source.
 
 **D9 — No per-item veto hooks. One batch-shaped `onBeforeIngest`.**
 1,800 `onBeforeEdgeCreate` calls is absurd, and the existing write-path hooks are semantically
@@ -192,27 +214,42 @@ already on canvas — the advertised and the ingestable count differ *by design*
 permissions, staleness, and deliberate approximation ("2000+"). A shrink must never surface as an
 error, and a count must never be load-bearing for layout or capacity.
 
-**D11 — Potential is declarative; a provider is called only on user intent.**
+**D11 — Potential is declarative; a provider is called only on user intent.** *(amended in the review pass)*
 The library **never** speculatively calls a provider on load — that is precisely the
-N-requests-per-visible-node cost `async-children-provider.md` complained about. But *selection
-counts as intent*: selecting one node or fifty runs `summarise`, batched into one request,
-debounced, cached per node, and cancelled through the existing `signal` / `isStale()` pattern
-when the selection changes.
+N-requests-per-visible-node cost `async-children-provider.md` complained about. The first pass
+said *selection* counts as intent; the review moved the trigger one notch later, because
+selection is also the gesture for dragging, styling and bulk edit — box-selecting fifty nodes
+to *move* them must not fire every pivot's count query. So: **opening the pivot menu counts as
+intent.** `summarize` runs when the menu is first opened for a selection, and — while the menu
+stays open — **re-runs when the selection changes** (and when the narrowing changes, D4). Still
+batched into one request for a multi-selection, debounced, cached (D20), and cancelled through
+the existing `signal` / `isStale()` pattern when superseded. A closed menu costs zero backend
+calls whatever the selection does; prefetch-on-selection can return later as an opt-in knob if
+menu latency proves annoying — the reverse migration would be much harder.
 
 **D12 — Rim badges show *declared* potential only.**
 Queried counts (D11) appear in the pivot menu, not on the rim. Otherwise a count materialises on
-one node the moment it is selected and the canvas looks inconsistent.
+one node the moment it is selected and the canvas looks inconsistent. One honest limit: a node
+with children has only **two** free rim corners (the expand affordance reserves the East side —
+`RendererOptions.ts` badges doc), so several declared-potential badges collapse into `+n` early,
+on exactly the container nodes MISP cares about. Acceptable — the menu is the full surface, the
+rim is a hint.
 
 **D13 — Auto-ingest is provider-declared.**
 Each pivot says whether its results land directly or open triage — MISP's expand-an-event
 auto-ingests 12 objects; AIL's correlations always triage. No library threshold: a magic number
 would surprise someone, and the provider genuinely knows.
 
-**D14 — Rejections are remembered for the session, with the hook shape designed in.**
-Triaging 1,800 down to 12 and then being re-offered the same 1,788 an hour later is a workflow
-failure, so rejections must stick. Persisting them across reloads belongs to the deferred
-persistence PRD (§12), so v1 keeps the rejection set in memory but shapes it so a consumer
-read/write hook can be added without a breaking change.
+**D14 — Rejections are explicit, remembered for the session, keyed per pivot.** *(amended in the review pass)*
+A rejection is a row the analyst **explicitly rejected** — nothing implicit. If "everything not
+ingested when the pane closes" counted, ingesting today's 12 URLs would silently bury the
+domains the analyst simply didn't get to; instead, un-triaged leftovers are re-offered, and the
+pane ships a **"reject all remaining"** affordance so triaging 1,800 down to 12 and dismissing
+the rest is still one gesture. The key is **(pivotId, candidate id)**: rejecting a candidate
+offered by one pivot does not hide it from a different pivot, which offers it in a different
+analytic context. Persisting rejections across reloads belongs to the deferred persistence PRD
+(§12), so v1 keeps the set in memory but shapes it so a consumer read/write hook can be added
+without a breaking change.
 
 **D15 — The registry lives on `Graph`, not `UIManager`.**
 Pivots produce *data*; the triage pane is a UI element that reads them. There is also a hard
@@ -225,27 +262,32 @@ of the lesson `write-path-lifecycle-hooks.md` learned.
 
 The six below came out of the second scoping pass, which closed the first pass's open questions.
 
-**D16 — Provenance is `string[]` publicly, timestamped records internally.**
+**D16 — Provenance is `string[]` publicly; timestamped, run-scoped records internally.** *(amended in the review pass)*
 The tension between "a timestamp is cheap now and awkward later" and "a set of strings is
-simpler" dissolves by separating storage from surface: keep an internal
-`Map<string, { at: number }>` per node and edge, expose `getSources(): string[]`. The timestamp
-exists for the deferred persistence PRD and for "what did this pivot add, and when", without a
-public commitment. Exposing it later (`getSourceRecords()`) is purely additive.
+simpler" dissolves by separating storage from surface: keep internal records per node and edge —
+`Map<string, Array<{ runId: string, at: number }>>`, one entry per run that vouched — and expose
+`getSources(): string[]`. Two runs of the same pivot **must be distinguishable** (Sami, review
+pass): with the pivot-id tag alone, "undo that enrichment" silently means "undo that enrichment
+*type*", and D25's run-level undo is built on exactly these records. The timestamp exists for
+the deferred persistence PRD and for "what did this pivot add, and when", without a public
+commitment. Exposing records later (`getSourceRecords()`) is purely additive.
 
 **D17 — No default cap, plus an absolute safety ceiling.**
 `maxCandidates` applies only when a pivot declares it — a library default would be wrong for
 somebody, exactly as D13 argues. Separately, an absolute ceiling of **10,000 candidates**
 (overridable through options) **refuses** an oversized payload rather than truncating it, which
 keeps D4's no-silent-sampling rule intact. The triage table is not the constraint here:
-`TableGrid` already virtualises above 200 rows (`virtualizeAbove`, `TableGrid.ts:98`), so the
-ceiling is about memory for candidate objects, not DOM.
+`TableGrid` already virtualises above 200 rows (`virtualizeAbove`,
+`src/ui/elements/Table/TableGrid.ts:98`), so the ceiling is about memory for candidate objects,
+not DOM.
 
 **D18 — Narrowing uses every facet type except `regex`.**
 So `text`, `select`, `multiselect`, `numberRange`, `boolean` — all things a backend can
 realistically serve. `regex` is excluded because narrowing is **server-bound** and most backends
 cannot evaluate it safely. The triage pane's own filters are client-side (D5) and keep the
 **full** `FilterFacetType` vocabulary, `regex` included. Two audiences, two vocabularies, one
-type to derive both from.
+type to derive both from — concretely `NarrowingFacetType = Exclude<FilterFacetType, 'regex'>`
+(§7), so the type system enforces this instead of a code review.
 
 **D19 — Origin-less pivots, and no separate `offer()` door.**
 A pivot may declare that it needs no selection. This was reached by rejecting a second ingestion
@@ -260,17 +302,62 @@ needs an entry point elsewhere (§11.1). `appliesTo` is meaningless for one and 
 **D20 — The consumer owns caching, auth, retry and rate limiting.**
 Providers are plain functions the consumer writes, so they can wrap `fetch` however they like;
 anything the library added would only be in the way. This closes the scope boundary deferred
-during the first pass. One honest exception: the library *does* cache `summarise` results per
-node (D11). That is UI state rather than data policy, but a cache without invalidation is a bug,
-so `graph.pivots.invalidate(pivotId?, nodes?)` exists. Entries are dropped automatically when a
-node is removed; otherwise invalidation is explicit, because only the consumer knows when their
-backend changed.
+during the first pass. One honest exception: the library *does* cache `summarize` results (D11)
+— keyed by **(pivot id, the sorted id set of the nodes asked about, the narrowing)**, because a
+multi-selection summary is an aggregate nothing can decompose into per-node entries. That is UI
+state rather than data policy, but a cache without invalidation is a bug, so
+`graph.pivots.invalidate(pivotId?, nodes?)` exists and drops every entry whose id set intersects
+`nodes`. Entries are dropped automatically when a node is removed; otherwise invalidation is
+explicit, because only the consumer knows when their backend changed.
 
 **D21 — What would actually justify v2 cursor paging.**
 Not "narrowing cannot get small enough" — facets are exactly what these backends index on, so
 that is unlikely. The realistic failure is **a consumer with no cheap count endpoint** *and*
-large result sets: with no `summarise`, narrowing is blind and D4's gate simply blocks them.
+large result sets: with no `summarize`, narrowing is blind and D4's gate simply blocks them.
 That pairing, not narrowing's inadequacy, is the signal to revisit D3 and D5.
+
+---
+
+The four below came out of the review pass (2026-09-01,
+[`pivot-enrichment-review.md`](pivot-enrichment-review.md)), which verified every codebase claim,
+amended the decisions marked above, and closed four gaps the first two passes never covered.
+
+**D22 — Ingest seeds unpositioned nodes near their origin.**
+`addNode` seeds nothing today — only caller-supplied `x/y` is honoured — so 200 ingested nodes
+would materialise wherever the simulation throws them, with no visual connection to the node the
+analyst pivoted on. Ingest therefore seeds candidates that carry no position **around the origin
+node(s)**, jittered so the simulation can fan them out; provider-supplied `x/y` still wins;
+origin-less pivots (D19) seed at the viewport centre. This is pipeline behaviour, not UI — it
+lands in M1.
+
+**D23 — Dedup skips: an id-matched candidate leaves the existing node untouched.**
+Candidate data never overwrites on-canvas data — not the node's `data`, not its style, nothing.
+Children union (D7) is the *only* way ingest touches an existing node, and after the review pass
+even the union adds without updating. This keeps "purely additive" sharp and dedup trivially
+explainable: already there means already there. Refreshing stale attributes is a data-sync
+concern that belongs to the deferred persistence PRD.
+
+**D24 — Hybrid edge triage.**
+Candidate edges ride along with their endpoint nodes — an edge lands iff both its endpoints end
+up on canvas, and it is not itself a triage row. **Except** edges whose endpoints are *all
+already on canvas*: a pivot returning correlations *between* nodes already on screen is a core
+AIL case, and with follow-the-nodes semantics alone it would produce an empty triage table and
+silently auto-land its edges, violating the staging principle. Such edge-only results get their
+own triage rows (M2 note: a separate section or toggle in the pane, not edge rows forced into
+the node table's columns).
+
+**D25 — Pivot-scoped undo/redo; no general history engine.**
+Every run gets a `runId` (D16), and `graph.pivots.undo(runId?)` / `redo()` operate on whole
+runs. Undo drops the run's vouching from everything it touched — nodes, edges, union-added
+children — and deletes whatever empties, the same uniform rule as `removeBySource`; a node
+another source vouches for survives, one record lighter. Redo re-lands the recorded delta
+exactly: no refetch, no re-gating (it already passed once). The stack is session-scoped and
+holds only pivot runs. Deliberately **not** built: the general command/history stack from
+`graph-app-b3-control-layout.md` §7 — Sami's call is that undo on plain data modification will
+likely never be needed, and the operations that might want operation-level undo later
+(workspace switching, graph coarsening/reduction) do not exist yet. The Mainheader's disabled
+undo/redo buttons stay unwired; the surfaces are the API plus a post-ingest notifier action
+("Ingested 12 — Undo").
 
 ## 7. The shape of the door
 
@@ -297,11 +384,13 @@ export interface PivotDefinition {
      */
     appliesTo?: (nodes: Node[]) => boolean
     /**
-     * Cheap "what's out there". Runs on selection (D11) and fills the pivot menu; its facets
-     * become the narrowing controls. Omit it and the pivot offers no narrowing and no
-     * advertised count — legal, but then `fetch` must be safe to call blind.
+     * Cheap "what's out there". Runs when the pivot menu opens, re-runs while it stays open
+     * as the selection or the narrowing changes (D11, D4), and fills the menu; its facets
+     * become the narrowing controls. Called with `{}` before any narrowing exists; ignoring
+     * the argument is legal. Omit the whole function and the pivot offers no narrowing and
+     * no advertised count — also legal, but then `fetch` must be safe to call blind.
      */
-    summarise?: (nodes: Node[], ctx: PivotContext) => PivotSummary | Promise<PivotSummary>
+    summarize?: (nodes: Node[], narrowing: PivotNarrowing, ctx: PivotContext) => PivotSummary | Promise<PivotSummary>
     /** The real fetch, narrowed by what the analyst chose. */
     fetch: (nodes: Node[], narrowing: PivotNarrowing, ctx: PivotContext) => PivotResult | Promise<PivotResult>
     /** Land results directly instead of opening triage (D13). @default false */
@@ -310,7 +399,7 @@ export interface PivotDefinition {
     maxCandidates?: number
 }
 
-/** What `summarise` advertises. Every count here is advisory (D10). */
+/** What `summarize` advertises. Every count here is advisory (D10). */
 export interface PivotSummary {
     /** Advisory total. Render it as approximate. */
     total: number
@@ -318,18 +407,25 @@ export interface PivotSummary {
     facets?: PivotFacet[]
 }
 
+/** Narrowing is server-bound, so `regex` is out (D18); triage's own client-side filters keep it. */
+export type NarrowingFacetType = Exclude<FilterFacetType, 'regex'>
+
 /** A narrowing control, reusing the query engine's facet vocabulary. */
 export interface PivotFacet {
     key: string
     label: string
-    type: FilterFacetType
+    type: NarrowingFacetType
     options?: Array<{ label: string, value: string, count?: number }>
 }
 
 /** The analyst's narrowing choices, keyed by facet key. */
 export type PivotNarrowing = Record<string, unknown>
 
-/** A flat graph fragment (D7) — no returned node names an existing parent. */
+/**
+ * A flat graph fragment (D7) — no returned node names an existing parent. Edges-only sets are
+ * legal (D24). M1 makes `RawNode.expanded` optional (default `false`) so flat results carry no
+ * boilerplate.
+ */
 export interface PivotResult {
     nodes: RawNode[]
     edges: RawEdge[]
@@ -340,6 +436,19 @@ export interface PivotContext extends RenderContext {
     graph: Graph
     /** Which pivot is running. */
     pivotId: string
+}
+
+/** What `graph.pivots.run` resolves with — at the hand-off, never waiting on the analyst. */
+export interface PivotRunOutcome {
+    /** 'ingested' auto-ingest landed; 'staged' triage opened; 'refused' the D4/D17 gates; 'vetoed' `onBeforeIngest`. */
+    status: 'ingested' | 'staged' | 'refused' | 'vetoed'
+    /** This run's identity in the provenance records — the handle for `undo` (D16, D25). */
+    runId: string
+    /** What landed. Empty unless 'ingested'; a staged run's later ingest announces itself via `dataBatchChanged` under the same runId. */
+    nodes: Node[]
+    edges: Edge[]
+    /** Candidates dropped because they were already on canvas (D23). */
+    deduped: number
 }
 ```
 
@@ -381,20 +490,25 @@ graph.pivots.for(nodes)                     // what applies to this selection
 ctx.addPivot(def)                           // PluginContext, mirrors addPanel / addDockTab
 
 // Running one
-await graph.pivots.run(id, nodes)           // summarise -> gate -> triage or auto-ingest
+await graph.pivots.run(id, nodes)           // gate -> triage or auto-ingest; resolves PivotRunOutcome
 await graph.pivots.run(id)                  // an origin: 'none' pivot (D19)
 
-// Dropping the summarise cache (D20) — all, per-pivot, or per-node
+// Dropping the summarize cache (D20) — all, per-pivot, or per-node
 graph.pivots.invalidate(pivotId?: string, nodes?: Node[])
 
-// Provenance (D8) — string[] publicly, timestamped records internally (D16)
+// Provenance (D8) — string[] publicly, run-scoped timestamped records internally (D16)
 node.getSources(): string[]                 // e.g. ['seed', 'misp-correlation']
 node.hasSource(source: string): boolean
 edge.getSources(): string[]
 graph.removeBySource(source: string)        // drop tag; delete only when the set empties
 
-// Declared potential (D11 / D12)
+// Pivot-run undo/redo (D25) — whole runs, LIFO; default is the most recent run
+graph.pivots.undo(runId?: string)
+graph.pivots.redo()
+
+// Declared potential (D11 / D12) — count 0 clears the badge
 node.setPotential(pivotId: string, count: number)
+node.getPotential(pivotId: string): number | undefined
 ```
 
 ## 8. What the consumer does
@@ -406,10 +520,11 @@ const correlations: PivotDefinition = {
     id: 'ail-correlation',
     label: 'Correlations',
     appliesTo: nodes => nodes.every(n => n.getData()?.type !== 'note'),
-    summarise: async (nodes, { signal }) => {
+    summarize: async (nodes, narrowing, { signal }) => {
         const res = await fetch('/api/correlation/count', {
             method: 'POST',
-            body: JSON.stringify({ ids: nodes.map(n => n.id) }),
+            // narrowing included so the count tracks it and the D4 gate can lift
+            body: JSON.stringify({ ids: nodes.map(n => n.id), types: narrowing.type }),
             signal,
         })
         const { total, byType } = await res.json()
@@ -435,9 +550,10 @@ const correlations: PivotDefinition = {
 }
 ```
 
-An analyst selects the node, sees **"~2,143 correlations — 1,800 domains, 210 URLs, 95 pastes"**
-without a single node being created, ticks *URLs*, fetches 210, filters them down in the dock,
-and ingests 12. Nothing else ever enters the graph.
+An analyst selects the node, opens the pivot menu, sees **"~2,143 correlations — 1,800 domains,
+210 URLs, 95 pastes"** without a single node being created, ticks *URLs*, fetches 210, filters
+them down in the dock, and ingests 12 — which appear around the node they pivoted from (D22).
+Nothing else ever enters the graph.
 
 **MISP — expanding a correlated event, auto-ingesting because the result is small.** The
 container is a new node carrying its own children (D7):
@@ -459,10 +575,12 @@ const expandEvent: PivotDefinition = {
 }
 ```
 
-**Undoing an enrichment**, which is what provenance buys:
+**Undoing an enrichment**, which is what provenance buys — by pivot, or by run (D25):
 
 ```ts
-graph.removeBySource('ail-correlation')   // seed data, and pivots that also vouch for a node, survive
+graph.removeBySource('ail-correlation')   // every run of that pivot; other vouchers survive
+graph.pivots.undo()                       // just the last run
+graph.pivots.redo()                       // changed your mind — lands identically, no refetch
 ```
 
 ## 9. Why this is cheap — what already holds
@@ -479,17 +597,21 @@ Most of this is assembly, not invention:
 | Rim affordances for declared potential | `NodeBadge` + the `badges` accessor (`interfaces/RendererOptions.ts:438`) |
 | Plugin registration pattern | `PluginContext.addPanel` / `addDockTab` / `addRailMode` |
 | Batch change announcement | `dataBatchChanged` |
+| Post-ingest undo affordance | `ui/Notifier.ts` |
 
-Genuinely new: the registry, the candidate model, the ingest pipeline, provenance tags, and the
-triage pane.
+Genuinely new: the registry, the candidate model, the ingest pipeline (with origin-seeded
+placement), provenance tags with their run records, pivot-run undo/redo, and the triage pane.
 
 ## 10. Work plan
 
 **M1 — contract and pipeline, no new UI.** `interfaces/Pivot.ts`, `PivotManager` on `Graph`,
-`summarise` / `fetch` invocation with cancellation, the summarise cache and `invalidate` (D20),
-dedup, the narrowing gate and safety ceiling (D4, D17), provenance tags and `removeBySource`
-(D8, D16), `onBeforeIngest`, `dataBatchChanged` emission. Drivable entirely from the console and
-testable without a pane — a pivot with `autoIngest: true` is end-to-end here.
+`summarize` / `fetch` invocation with cancellation, the summarize cache and `invalidate` (D20),
+dedup (D23), origin-seeded placement (D22), the narrowing gate and safety ceiling (D4, D17),
+provenance run records with `removeBySource` and run undo/redo (D8, D16, D25), `onBeforeIngest`,
+`dataBatchChanged` emission, `PivotRunOutcome`. Housekeeping that belongs here: make
+`RawNode.expanded` optional (defaulting `false`) and delete the dead `onNodeExpansion` callback
+(§4). Drivable entirely from the console and testable without a pane — a pivot with
+`autoIngest: true` is end-to-end here.
 
 **M1b — children union by id** (D7, amended). The new child-mutation API beside `setChildren`,
 plus the collapsed and expanded merge paths. Kept as its own slice because it is the one part
@@ -498,18 +620,23 @@ reuse the existing expand path, no new `ClusterDrawer` abstraction. Sequence it 
 pipeline is proven before touching clusters at all.
 
 **M2 — the triage pane.** A dock tab holding the candidate table: facets from `PivotSummary`,
-client-side filter / sort / page over the full facet vocabulary (D5, D18), row selection, the
-ingest action, rejection memory (D14), and honest empty and error states.
+client-side filter / sort / page over the full facet vocabulary (D5, D18), row selection,
+edge-only rows in their own section (D24), the ingest action, explicit rejection with "reject
+all remaining" (D14), the post-ingest undo affordance (D25), and honest empty and error states —
+a failed `fetch` included.
 
-**M3 — surfaces and docs.** The selection-driven pivot menu (D11), an entry point for
-origin-less pivots (D19, §11.1), declared-potential badges (D12), a context-menu and tool-panel
-entry, `addPivot` on `PluginContext`, a docs page, and one gallery card (a fake provider with a
+**M3 — surfaces and docs.** The pivot menu — opening it triggers `summarize`, re-run live while
+it stays open as the selection changes (D11), with an honest error state for a failed
+`summarize`; an entry point for origin-less pivots (D19, §11.1); declared-potential badges
+(D12); a context-menu and tool-panel entry; `addPivot` on `PluginContext`; a failed `autoIngest`
+fetch reporting through the notifier; a docs page; and one gallery card (a fake provider with a
 deliberately large candidate set, so the card demonstrates narrowing rather than merging).
 
 ## 11. Open questions
 
-The first pass's seven questions are all closed (D7 amended, D16–D21). What the second pass
-opened in their place is smaller, and all of it is M3-or-later:
+The first pass's seven questions are all closed (D7 amended, D16–D21), and the review pass's
+findings are folded in (D22–D25 plus the amendments marked in §6). What remains is smaller, and
+all of it is M2-or-later:
 
 1. **The entry point for origin-less pivots (D19).** They cannot sit in the selection-driven
    menu, so where? A rail mode is the consumer's to ship (`plugin-rail-modes.md`), which leaves
@@ -521,6 +648,10 @@ opened in their place is smaller, and all of it is M3-or-later:
    rather than pre-emptively here.
 3. **The 10,000 safety ceiling (D17) is a proposal, not a measurement.** Confirm it against a
    real AIL payload before M2 ships; it is a knob, so being wrong is cheap.
+4. **Triage concurrency (from the review pass).** Run pivot A, leave it un-ingested, run pivot
+   B — do the candidate sets stack, replace, or refuse? Recommendation on the table: one pane
+   per pivot id (a re-run replaces that pivot's candidate set; panes for different pivots
+   coexist as dock tabs). Decide in M2, when the pane exists.
 
 ## 12. Not in scope
 
@@ -536,6 +667,11 @@ opened in their place is smaller, and all of it is M3-or-later:
 - **A second ingestion door.** `pivots.offer()` was considered and rejected in favour of
   origin-less pivots (D19) — one pipeline, not two.
 - **Streaming or server-cursor providers** (D3, D5, D21).
+- **A general undo/redo history engine.** `graph-app-b3-control-layout.md` §7 keeps that
+  roadmap; D25 ships run-scoped undo for pivots only. Sami's call: undo on plain data
+  modification will likely never be needed, and the operations that might justify
+  operation-level undo later (workspace switching, graph coarsening/reduction) don't exist
+  yet. The Mainheader's disabled undo/redo buttons stay unwired.
 - **Shipping an Enrich rail mode.** This PRD gives such a mode its vocabulary; the consumer ships
   the mode, per `plugin-rail-modes.md`.
 - **Lazy cluster children** (`misp/async-children-provider.md`) and the **drag-in staging tray**
@@ -547,28 +683,43 @@ opened in their place is smaller, and all of it is M3-or-later:
 Visual specs under `tests/visual/`, driven by a **fake provider in the harness** (resolve,
 reject, abort, and a deliberately large candidate set) so nothing depends on a network:
 
-- `summarise` runs on selection, once, batched for a multi-selection, and is cancelled when the
-  selection changes mid-flight.
-- The narrowing gate refuses to fetch above `maxCandidates`, and says so.
+- Selection alone fires **zero** provider calls; `summarize` runs on first menu open, once,
+  batched for a multi-selection; re-runs when the selection changes while the menu stays open;
+  and is cancelled when superseded mid-flight (D11).
+- The narrowing gate refuses to fetch above `maxCandidates`, says so, and the refusal **lifts**
+  once a re-run `summarize` with the current narrowing comes back under the cap (D4).
 - Candidates do **not** appear in the graph, the table, or facet counts before ingest.
 - Ingest lands exactly the chosen subset; dedup against existing nodes leaves the count honest,
-  and an advisory-count shrink is **not** an error.
+  a deduped node's own data is untouched (D23), and an advisory-count shrink is **not** an error.
+- Ingested nodes land near their origin node; origin-less results land at the viewport centre;
+  provider-supplied `x/y` wins (D22).
 - `onBeforeIngest` is called **once** with the whole set; a narrowing decision lands only what it
   names; `false` lands nothing.
 - Provenance: two overlapping pivots both tag a node, and `removeBySource` for one keeps it; seed
   nodes survive a `removeBySource` for any pivot.
-- Rejections are not re-offered on a second run of the same pivot.
+- Explicitly rejected candidates are not re-offered on a second run of the same pivot;
+  un-rejected leftovers **are**; "reject all remaining" rejects exactly the visible remainder;
+  and a rejection under one pivot does not hide the candidate from another pivot (D14).
 - `autoIngest: true` skips triage entirely and still passes the gate.
 - Declared-potential badges render without any provider being called — assert **zero** provider
   invocations on load, which is D11's whole point.
-- **Union by id (D7)**: re-pivoting a **collapsed** container adds the new children, updates
-  matching ones and removes none; the same again on an **expanded** container; and a child
-  contributed by a *different* source survives the merge (the D8 guarantee). Assert the child
-  set numerically — a screenshot cannot tell a merged cluster from a replaced one.
+- **Union by id (D7)**: re-pivoting a **collapsed** container adds the new children, leaves
+  matching ones untouched (data included — D23) and removes none; the union recurses into
+  grandchildren; the same again on an **expanded** container; and a child contributed by a
+  *different* source survives the merge (the D8 guarantee). Assert the child set numerically —
+  a screenshot cannot tell a merged cluster from a replaced one.
+- `run()` resolves `'refused'` / `'vetoed'` / `'staged'` / `'ingested'` correctly, carrying the
+  `runId` that provenance recorded (D16).
+- **Undo/redo (D25)**: undo removes exactly one run's contribution — a node another source
+  vouches for survives, one record lighter, and a union-added child disappears from its
+  container; redo restores it identically with **zero** provider calls; two runs of the same
+  pivot are independently undoable.
+- An edges-only result (every endpoint already on canvas) opens triage with edge rows instead
+  of silently auto-landing (D24).
 - The **safety ceiling** (D17) refuses an oversized payload instead of truncating it, and says so.
 - An **origin-less pivot** (D19) runs with nothing selected and lands through the same gate.
-- `invalidate()` makes the next selection re-run `summarise`; without it, re-selecting does not
-  (D20).
+- `invalidate()` makes the next menu open re-run `summarize`; without it, reopening on the same
+  selection does not (D20).
 - Narrowing controls offer no `regex` widget while the triage table's own filters do (D18).
 
 Known harness traps to respect: wait explicitly for async-drawn content rather than trusting
