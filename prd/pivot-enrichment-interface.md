@@ -722,9 +722,14 @@ findings are folded in (D22–D25 plus the amendments marked in §6). What remai
 
 ## 12. Not in scope
 
-- **Persisting or saving an ingested pivot result** back to the source system. Its own PRD, still
-  to be written; **rejection persistence (D14) belongs with it**, since "reviewed and rejected"
-  is exactly what a user expects to survive a reload.
+- **Persisting or saving an ingested pivot result** back to the source system. Its own PRD, and
+  **rejection persistence (D14) belongs with it**, since "reviewed and rejected" is exactly what a
+  user expects to survive a reload. **Written 2026-09-01** as
+  [`pivot-persistence.md`](pivot-persistence.md): `save` / `autoSave` on `PivotDefinition`, a
+  per-element save ledger with partial failure and retry, canonical-id aliases so a saved node is
+  not re-offered as a duplicate, and remembered rejections in `localStorage`. It also re-parks the
+  stale-attribute refresh that D7 and D23 both deferred *to* it — that needs an attribute merge
+  policy first — and rules on the collision with the workspaces effort's unwritten PRD C.
 - **Re-parenting of any kind** — no `containedBy` field, no moving an existing node into a
   different container. Children union by id (D7) is the *only* way ingest touches an existing
   node's children.
