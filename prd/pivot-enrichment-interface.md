@@ -1,11 +1,11 @@
 # Feature — a pivot/enrichment interface: advertise, run, triage, ingest
 
-**Status:** Proposed — scoped with Sami over two passes (2026-08-31, 2026-09-01) plus a sanity-check review pass (2026-09-01, findings in [`pivot-enrichment-review.md`](pivot-enrichment-review.md)). Twenty-five decisions are taken (§6): D1–D15 in the first pass; D16–D21 plus an **amended D7** in the second; **D22–D25** in the review pass, which also amended D1, D4, D7, D8, D11, D12, D14, D16, D17 and D20. Not started.
+**Status:** Proposed — scoped with Sami over two passes (2026-08-31, 2026-09-01), a sanity-check review pass (2026-09-01, findings in [`pivot-enrichment-review.md`](pivot-enrichment-review.md)), and a Phase A design pass (2026-09-01, [`pivot-enrichment-ui-states.md`](pivot-enrichment-ui-states.md) and the artboards beside it). Twenty-six decisions are taken (§6): D1–D15 in the first pass; D16–D21 plus an **amended D7** in the second; **D22–D25** in the review pass, which also amended D1, D4, D7, D8, D11, D12, D14, D16, D17 and D20; and **D26** in the design pass, which chose the surface and reversed the §12 line on rail modes. Not started.
 **Owner:** Sami Mokaddem
 **Requested:** 2026-08-31
-**Area:** greenfield `src/PivotManager.ts` + `src/interfaces/Pivot.ts`, with touch points in `src/Graph.ts` (ingest, provenance, `dataBatchChanged`), `src/Node.ts` / `src/Edge.ts` (source tags), `src/interfaces/InterractionCallbacks.ts` (`onBeforeIngest`), `src/interfaces/Plugin.ts` (`addPivot`), `src/ui/elements/Dock/` + a new `src/ui/elements/Pivot/` (the triage pane and the pivot menu), `src/interfaces/RendererOptions.ts` (declared-potential badges). Adds **public types** and a **new public option group**.
+**Area:** greenfield `src/PivotManager.ts` + `src/interfaces/Pivot.ts`, with touch points in `src/Graph.ts` (ingest, provenance, `dataBatchChanged`), `src/Node.ts` / `src/Edge.ts` (source tags), `src/interfaces/InterractionCallbacks.ts` (`onBeforeIngest`), `src/interfaces/Plugin.ts` (`addPivot`), `src/ui/elements/Dock/` + a new `src/ui/elements/Pivot/` (the triage pane and the Pivot rail mode), `src/interfaces/RendererOptions.ts` (declared-potential badges). Adds **public types** and a **new public option group**.
 **Type:** data-path capability + plugin API — a registry and an ingest pipeline, not a rewrite of anything.
-**Related:** [`plugin-rail-modes.md`](plugin-rail-modes.md) (this PRD defines the *vocabulary* an Enrich mode speaks; it does **not** ship an Enrich mode — built-ins stay hardcoded and the consumer ships the mode), [`archive/table-mode.md`](archive/table-mode.md) + [`archive/dock-tabs.md`](archive/dock-tabs.md) (the dock and the tab registry this triage pane rides on), `misp/declarative-filter-facets.md` (the facet vocabulary reused for narrowing), `misp/write-path-lifecycle-hooks.md` and `edge-create-veto-hook.md` (the before-hook / narrowing idiom mirrored by `onBeforeIngest`), `misp/edge-layers.md` (the carrier for edge provenance), [`graph-app-b3-control-layout.md`](graph-app-b3-control-layout.md) (its §7 roadmap holds the *general* undo/redo engine this PRD deliberately does not build — D25 ships pivot-run undo only, and the Mainheader's disabled undo/redo buttons stay unwired).
+**Related:** [`plugin-rail-modes.md`](plugin-rail-modes.md) (D26 ships a **built-in, gated Pivot mode** through that machinery, reversing this PRD's earlier "the consumer ships the mode" line — a consumer with no pivots registered still sees no mode at all), [`archive/table-mode.md`](archive/table-mode.md) + [`archive/dock-tabs.md`](archive/dock-tabs.md) (the dock and the tab registry this triage pane rides on), `misp/declarative-filter-facets.md` (the facet vocabulary reused for narrowing), `misp/write-path-lifecycle-hooks.md` and `edge-create-veto-hook.md` (the before-hook / narrowing idiom mirrored by `onBeforeIngest`), `misp/edge-layers.md` (the carrier for edge provenance), [`graph-app-b3-control-layout.md`](graph-app-b3-control-layout.md) (its §7 roadmap holds the *general* undo/redo engine this PRD deliberately does not build — D25 ships pivot-run undo only, and the Mainheader's disabled undo/redo buttons stay unwired).
 **Supersedes:** `misp/async-children-provider.md` and `drag-in-node-staging.md`. Both attacked subsets of this problem — lazy cluster children, and a drag-in staging tray. Both stay **deferred**, and neither should be implemented ahead of this.
 
 ---
@@ -108,8 +108,10 @@ The parts exist; the pipeline does not.
   additive: removal happens only through provenance — `removeBySource` and run undo (D25).
 - **A provenance API** — source tags on nodes and edges backed by run-scoped records (D16),
   `removeBySource`, and pivot-run undo/redo (D25).
-- **Declared-potential badges** on the node rim, plus a pivot menu on selection.
-- **Origin-less pivots** — search, import and staging, through the same pipeline.
+- **Declared-potential badges** on the node rim, plus a **gated Pivot rail mode** (D26) holding
+  the pivot list, the origin and its narrowing.
+- **Origin-less pivots** — search, import and staging, through the same pipeline, reached from
+  Pivot mode's empty origin.
 - Docs + one gallery card.
 
 ## 6. Decisions taken
@@ -214,7 +216,7 @@ already on canvas — the advertised and the ingestable count differ *by design*
 permissions, staleness, and deliberate approximation ("2000+"). A shrink must never surface as an
 error, and a count must never be load-bearing for layout or capacity.
 
-**D11 — Potential is declarative; a provider is called only on user intent.** *(amended in the review pass)*
+**D11 — Potential is declarative; a provider is called only on user intent.** *(amended in the review pass; the trigger named again by D26)*
 The library **never** speculatively calls a provider on load — that is precisely the
 N-requests-per-visible-node cost `async-children-provider.md` complained about. The first pass
 said *selection* counts as intent; the review moved the trigger one notch later, because
@@ -226,6 +228,11 @@ batched into one request for a multi-selection, debounced, cached (D20), and can
 the existing `signal` / `isStale()` pattern when superseded. A closed menu costs zero backend
 calls whatever the selection does; prefetch-on-selection can return later as an opt-in knob if
 menu latency proves annoying — the reverse migration would be much harder.
+
+**D26 names that trigger concretely: it is Pivot mode's `onEnter` / `onExit`.** Read "opening the
+menu" here, and everywhere below, as "entering Pivot mode", and "the selection" as "the origin"
+— the node set the mode's own tools built. The rule is unchanged; the mode simply gives it a
+boundary the user can see, instead of one the UI has to enforce.
 
 **D12 — Rim badges show *declared* potential only.**
 Queried counts (D11) appear in the pivot menu, not on the rim. Otherwise a count materialises on
@@ -365,7 +372,7 @@ The one below came out of the Phase A design pass (2026-09-01,
 [`pivot-enrichment-ui-states.md`](pivot-enrichment-ui-states.md) and the artboards beside it),
 which chose the surface after three earlier placements were drawn and rejected.
 
-**D26 — the library ships a **Pivot rail mode**, and it is absent unless a pivot exists.**
+**D26 — the library ships a Pivot rail mode, and it is absent unless a pivot exists.**
 *(reverses the §12 line below, Sami's call)*
 The first pass said the consumer builds their own Enrich mode. Three placements were drawn against
 the real chrome before this was reversed: a section inside the Select tool panel (mode-scoped, so
@@ -659,12 +666,20 @@ edge-only rows in their own section (D24), the ingest action, explicit rejection
 all remaining" (D14), the post-ingest undo affordance (D25), and honest empty and error states —
 a failed `fetch` included.
 
-**M3 — surfaces and docs.** The pivot menu — opening it triggers `summarize`, re-run live while
-it stays open as the selection changes (D11), with an honest error state for a failed
-`summarize`; an entry point for origin-less pivots (D19, §11.1); declared-potential badges
-(D12); a context-menu and tool-panel entry; `addPivot` on `PluginContext`; a failed `autoIngest`
-fetch reporting through the notifier; a docs page; and one gallery card (a fake provider with a
-deliberately large candidate set, so the card demonstrates narrowing rather than merging).
+**M3 — surfaces and docs.** The **Pivot rail mode** (D26): a `kind: 'pointer'` mode gated on
+`UI.pivotMode`, its *Pick origin* / *Lasso origin* tools, the origin display, and the pivot list
+with narrowing in its `render()` slot. `onEnter` triggers `summarize`, re-run live as the origin
+or the narrowing changes while the mode is active (D11), with an honest error state for a failed
+`summarize`. Origin-less pivots reached from an empty origin (D19, §11.1); declared-potential
+badges (D12); a context-menu entry routing into the mode; `addPivot` on `PluginContext`; a failed
+`autoIngest` fetch reporting through the notifier; a docs page; and one gallery card (a fake
+provider with a deliberately large candidate set, so the card demonstrates narrowing rather than
+merging).
+
+Two small library changes this milestone depends on, both flagged by the Phase A pass: a
+**per-mode tool-panel width** (it is a fixed 216px today and Pivot mode wants 300px), and an
+**actionable notification** — an action, a longer lifetime, hover-pause, dismiss and a returned
+handle — without which the post-ingest undo of D25 has nowhere to live for `autoIngest` pivots.
 
 ## 11. Open questions
 
