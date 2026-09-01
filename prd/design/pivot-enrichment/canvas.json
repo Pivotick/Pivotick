@@ -5,11 +5,11 @@
     { "id": "page-3", "name": "Ruled out (round 1)" }
   ],
   "artboards": [
-    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 1600, "h": 1500, "page": "page-1", "title": "Recommendation" },
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 1600, "h": 1580, "page": "page-1", "title": "Recommendation" },
     { "file": "EntryStates.dc.html", "x": 1700, "y": 0, "w": 1140, "h": 1470, "page": "page-1", "title": "Pivot entry — every state" },
 
-    { "file": "VariantD.dc.html", "x": 0, "y": 1620, "w": 1600, "h": 950, "page": "page-1", "title": "Variant D — Pivot rail mode" },
-    { "file": "VariantE.dc.html", "x": 1700, "y": 1620, "w": 1600, "h": 950, "page": "page-1", "title": "Variant E — menu in the dock" },
+    { "file": "VariantD.dc.html", "x": 0, "y": 1700, "w": 1600, "h": 950, "page": "page-1", "title": "Variant D — Pivot rail mode" },
+    { "file": "VariantE.dc.html", "x": 1700, "y": 1700, "w": 1600, "h": 950, "page": "page-1", "title": "Variant E — menu in the dock" },
 
     { "file": "Triage.dc.html", "x": 0, "y": 0, "w": 1620, "h": 830, "page": "page-2", "title": "Triage pane" },
     { "file": "TriageStates.dc.html", "x": 1720, "y": 0, "w": 1620, "h": 1270, "page": "page-2", "title": "Triage — empty, error, refusal" },
@@ -32,20 +32,20 @@
       "y": -210,
       "w": 760,
       "page": "page-1",
-      "text": "Round 2. The sidebar placement is out — measured: property rows are 61px and the sidebar scrolls as one column, so a Pivots tab falls below the fold at 13 properties.\n\nD is the rail mode you asked for, built as a POINTER mode rather than a flyout — that is what gives it tools, a render slot for narrowing, and onEnter/onExit as the summarize boundary.\n\nE is the other new one: the menu in the dock, where narrowing finally has width.\n\nRuled-out round 1 is on page 3."
+      "text": "SETTLED: D — Pivot is its own rail mode, gated so it does not exist until a pivot is registered. Recorded as D26 in the PRD, which reverses the old §12 line and the brief's matching hard rule.\n\nBuilt as a POINTER mode rather than a flyout — that is what gives it tools, a render slot for narrowing, and onEnter/onExit as the summarize boundary.\n\nE is kept in reserve: the menu in the dock, where narrowing has width.\n\nThe three placements ruled out in round 1 are on page 3."
     },
     {
       "id": "variant-d-note",
       "x": 0,
-      "y": 2660,
+      "y": 2740,
       "w": 620,
       "page": "page-1",
-      "text": "D — Pivot as its own rail mode — RECOMMENDED\n\nIts own tools: Pick origin / Lasso origin. Its own options: dim nodes with no pivots. Its own panel, full canvas height, indifferent to how many properties a node carries — the sidebar here has 18 and it changes nothing.\n\nThe argument that decided it: entering the mode IS the intent that fires summarize, and leaving it IS the disinterest that stops every call. D11 stops being a rule to enforce and becomes a property of the mode.\n\nTwo asks: the tool panel is 216px today and this wants 300px; and a full-height panel pushes the legend off the canvas's left edge (drawn here as the legend moving)."
+      "text": "D — Pivot as its own rail mode — CHOSEN (D26)\n\nIts own tools: Pick origin / Lasso origin. Its own options: dim nodes with no pivots. Its own panel, full canvas height, indifferent to how many properties a node carries — the sidebar here has 15 and it changes nothing.\n\nThe argument that decided it: entering the mode IS the intent that fires summarize, and leaving it IS the disinterest that stops every call. D11 stops being a rule to enforce and becomes a property of the mode.\n\nGated: UI.pivotMode defaults to 'auto', so the rail button appears when the first pivot registers and goes when the last unregisters. A consumer with no pivots sees nothing — which is what the old §12 line was protecting.\n\nTwo asks remain: the tool panel is 216px today and this wants 300px; and a full-height panel pushes the legend off the canvas's left edge (drawn here as the legend moving)."
     },
     {
       "id": "variant-e-note",
       "x": 1700,
-      "y": 2660,
+      "y": 2740,
       "w": 620,
       "page": "page-1",
       "text": "E — the menu in the dock, beside its own results\n\nThe only placement where narrowing is laid out ACROSS rather than down: 1,260px, four facets visible at once, nothing scrolled. Choose the pivot, narrow it, fetch, triage — all adjacent tabs in one region.\n\nCosts: it needs the dock open (332px, 35% of the viewport) to do anything at all, it turns a surface framed as read-only reflection into an action surface, and it gives the canvas no part to play.\n\nKeep it in reserve: if four facets in a 300px column prove too tight once real providers are wired, this is the fallback that already has the room."

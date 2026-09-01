@@ -89,18 +89,18 @@
 <div class="board">
 
   <div style="display: flex; flex-direction: column; gap: 8px">
-    <span class="kicker">Phase A · round 2</span>
+    <span class="kicker">Phase A · settled</span>
     <h1 class="board-title">Where the pivot menu lives</h1>
-    <p class="board-sub">Round 1's three placements are ruled out below. These two are new: <strong>D</strong>
-      makes Pivot a rail mode of its own, with its own tools and options; <strong>E</strong> puts the menu
-      in the dock, beside the results it produces. The states and every word are fixed in
-      <code>pivot-enrichment-ui-states.md</code>, so these differ in <strong>placement only</strong>.</p>
+    <p class="board-sub"><strong>Decided: D — Pivot is its own rail mode, gated so it does not exist
+      until a pivot is registered.</strong> Now <strong>D26</strong> in the PRD, which reverses the old
+      §12 line and the brief's matching hard rule. E is kept as the named fallback; round 1's three
+      placements are ruled out below and drawn on page 3.</p>
   </div>
 
   <div class="cards">
 
     <div class="card win">
-      <div class="card-head"><span class="card-id">D</span><span class="card-name">Pivot as its own rail mode</span><span class="verdict">recommended</span></div>
+      <div class="card-head"><span class="card-id">D</span><span class="card-name">Pivot as its own rail mode</span><span class="verdict">chosen · D26</span></div>
       <div class="thumb">
         <div class="t-side"></div><div class="t-dock"></div><div class="t-rail"></div>
         <div class="t-hot" style="left: 55px; top: 46px; width: 12px; height: 20px"></div>
@@ -112,13 +112,14 @@
         <div class="plus"><span class="mark">+</span><span>Full canvas height, and <strong>completely independent of how many properties a node has</strong>.</span></div>
         <div class="plus"><span class="mark">+</span><span>It has <em>tools</em>: Pick origin / Lasso origin make the 50-node bulk flow first-class instead of an afterthought.</span></div>
         <div class="plus"><span class="mark">+</span><span>Mode-scoped canvas options — "dim nodes with no pivots" — that no other placement can offer.</span></div>
+        <div class="plus"><span class="mark">+</span><span><strong>Gated: <code>UI.pivotMode</code> defaults to <code>'auto'</code></strong>, so the rail button exists only while a pivot is registered. A consumer with none sees nothing — which is what the old §12 line was protecting.</span></div>
         <div class="minus"><span class="mark">−</span><span>Still a column: 4 facets with counts want more than the panel's 216px, so this asks for <strong>300px</strong>.</span></div>
         <div class="minus"><span class="mark">−</span><span>A full-height panel pushes the legend off the canvas's left edge.</span></div>
       </div>
     </div>
 
     <div class="card">
-      <div class="card-head"><span class="card-id">E</span><span class="card-name">The menu in the dock</span><span class="verdict">strong alternate</span></div>
+      <div class="card-head"><span class="card-id">E</span><span class="card-name">The menu in the dock</span><span class="verdict">kept in reserve</span></div>
       <div class="thumb">
         <div class="t-side"></div><div class="t-dock" style="height: 66px"></div><div class="t-rail"></div>
         <div class="t-hot" style="left: 52px; right: 0; bottom: 0; height: 66px; border-radius: 0; opacity: 0.5"></div>
@@ -190,12 +191,17 @@
   </div>
 
   <div class="decision">
-    <h2>Recommendation — Variant D</h2>
+    <h2>Decision — Variant D, gated</h2>
     <p>D is the only placement whose <em>open/closed</em> boundary is a real thing the user does rather than
       a thing we invent. Entering Pivot mode is unambiguous intent, leaving it is unambiguous
       disinterest, and D11's "a closed menu costs zero backend calls" becomes a property of the mode
       rather than a rule to enforce. Nothing else on offer has that. It also makes the bulk flow — pick
       or lasso an origin set — a first-class gesture rather than something borrowed from Select mode.</p>
+    <p><strong>The gate is what makes shipping it in the library safe.</strong> <code>UI.pivotMode</code>
+      is <code>'auto'</code> by default: the rail button appears when the first pivot registers and goes
+      when the last unregisters; <code>true</code> forces it for pivots that arrive asynchronously,
+      <code>false</code> never shows it. Constructor-registered pivots land before the UI is built, so
+      the first paint is already right — D15's ordering constraint paying for itself.</p>
     <p>E is genuinely better at one thing, and it is not a small thing: <strong>narrowing has room to
       breathe.</strong> If four facets in a 300px column turn out to be the pinch point once real
       providers are wired, E is the fallback that already has the width — and D's own results already
@@ -203,11 +209,10 @@
   </div>
 
   <div class="open">
-    <h2>What D changes, and what it still needs</h2>
+    <h2>What D still needs</h2>
     <ul>
-      <li><strong>It reverses a PRD decision.</strong> §12 and D25 say the library ships no Enrich rail
-        mode and the consumer builds it. A built-in Pivot mode is the opposite; the brief's §5 hard rule
-        needs rewriting with it.</li>
+      <li><s>It reverses a PRD decision.</s> <strong>Done</strong> — recorded as D26; PRD §12 and the
+        brief's §5 hard rule are amended. The gate is what reconciles them: no pivots, no mode.</li>
       <li><strong>A 300px tool panel</strong> — the panel is a fixed 216px today, so this needs a
         per-mode width.</li>
       <li><strong>The legend moves</strong> while Pivot mode is open, or the panel scrolls instead of

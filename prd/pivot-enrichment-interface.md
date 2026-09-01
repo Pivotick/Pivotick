@@ -359,6 +359,40 @@ likely never be needed, and the operations that might want operation-level undo 
 undo/redo buttons stay unwired; the surfaces are the API plus a post-ingest notifier action
 ("Ingested 12 — Undo").
 
+---
+
+The one below came out of the Phase A design pass (2026-09-01,
+[`pivot-enrichment-ui-states.md`](pivot-enrichment-ui-states.md) and the artboards beside it),
+which chose the surface after three earlier placements were drawn and rejected.
+
+**D26 — the library ships a **Pivot rail mode**, and it is absent unless a pivot exists.**
+*(reverses the §12 line below, Sami's call)*
+The first pass said the consumer builds their own Enrich mode. Three placements were drawn against
+the real chrome before this was reversed: a section inside the Select tool panel (mode-scoped, so
+switching to Create to draw one edge discards a narrowing session), a popover on the selection
+(overlaps the dock by 168px at an ordinary anchor, no honest anchor for fifty nodes), and a tab in
+the selection sidebar — killed by measurement, since property rows are 61px and the sidebar scrolls
+as one column, putting the tab below the fold at **thirteen** properties, on exactly the
+attribute-heavy nodes MISP produces.
+
+Pivot is therefore a **`kind: 'pointer'` rail mode**, not a flyout: only a pointer mode gets
+`tools` as a function re-read per render (the pivot list follows the origin), a `render()` slot for
+the narrowing controls, and `onEnter`/`onExit`. That last pair is the reason this is the right
+surface rather than merely an available one — **entering the mode is the intent that starts
+`summarize` and leaving it is what stops every call**, so D11 becomes a property of the mode
+instead of a rule to police. The mode's own tools (*Pick origin*, *Lasso origin*) make the bulk
+flow first-class, and its *origin* — which may legitimately be empty — is where origin-less pivots
+(D19) live, so they need no second door.
+
+**Gating, which is what keeps §12's intent alive:** `UI.pivotMode?: boolean | 'auto'`, default
+`'auto'` — the rail button exists only while at least one pivot is registered, appearing when the
+first arrives and going when the last leaves. `true` forces it (for a consumer whose pivots
+register asynchronously), `false` never. A consumer who registers no pivots therefore sees exactly
+what §12 promised: nothing. Registration through the constructor (`new Graph(el, data, { pivots })`)
+lands before `new UIManager(...)` runs, so the initial state is correct without a special case —
+that is D15's ordering constraint paying for itself. In `viewer` and `static` modes the mode is
+never registered at all.
+
 ## 7. The shape of the door
 
 ```ts
@@ -672,8 +706,9 @@ all of it is M2-or-later:
   modification will likely never be needed, and the operations that might justify
   operation-level undo later (workspace switching, graph coarsening/reduction) don't exist
   yet. The Mainheader's disabled undo/redo buttons stay unwired.
-- **Shipping an Enrich rail mode.** This PRD gives such a mode its vocabulary; the consumer ships
-  the mode, per `plugin-rail-modes.md`.
+- ~~**Shipping an Enrich rail mode.** This PRD gives such a mode its vocabulary; the consumer ships
+  the mode, per `plugin-rail-modes.md`.~~ **Reversed by D26**: the library ships a Pivot rail mode,
+  gated so that it does not exist for a consumer with no pivots registered.
 - **Lazy cluster children** (`misp/async-children-provider.md`) and the **drag-in staging tray**
   (`drag-in-node-staging.md`) — superseded, and not to be revived ahead of this.
 - Any query language of our own.

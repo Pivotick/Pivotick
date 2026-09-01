@@ -10,6 +10,13 @@ here re-decides a D-numbered decision.
 direction built as a single-page interactive HTML prototype with a fake provider, so the whole
 flow can be *felt*: menu → narrow → gate → fetch → triage → ingest → undo.
 
+**Phase A is done (2026-09-01) and the surface is settled: a gated Pivot rail mode (D26).** Five
+placements were drawn — a section in the Select tool panel, a popover on the selection, a tab in
+the selection sidebar, the Pivot rail mode, and the menu in the dock. §3.2's three variants below
+are therefore a record of what was asked for, not of what won; the states and copy that survived
+are in [`pivot-enrichment-ui-states.md`](pivot-enrichment-ui-states.md), and the triage pane was
+approved as drawn. Phase B builds the Pivot mode.
+
 ---
 
 ## 0. Instructions for the prototyping agent
@@ -192,9 +199,9 @@ row it can't stand behind.
 - Rejection is explicit; closing the pane rejects nothing.
 - Rim badges show declared potential only — nothing on the rim changes because of a selection
   or an open menu.
-- Selection alone triggers zero provider calls; only an open menu does.
-- No Enrich rail mode is shipped by the library, and the Mainheader undo/redo buttons stay
-  disabled.
+- Selection alone triggers zero provider calls; only being in Pivot mode does (D26).
+- The library ships a **Pivot rail mode** (D26, reversing this brief's original rule), and it is
+  absent unless at least one pivot is registered. The Mainheader undo/redo buttons stay disabled.
 - In `viewer` and `static` UI modes, all pivot chrome is absent.
 
 ## 6. Fake provider spec (Phase B)
@@ -232,9 +239,10 @@ like the PRD.
 
 ## 8. Out of scope — do not design
 
-An Enrich rail mode; persistence / save-back UI; a general undo/redo history (and wiring the
-Mainheader buttons); streaming or progress bars for partial results; cluster-merge internals;
-any change to existing chrome beyond hosting these surfaces.
+Persistence / save-back UI; a general undo/redo history (and wiring the Mainheader buttons);
+streaming or progress bars for partial results; cluster-merge internals; any change to existing
+chrome beyond hosting these surfaces. *(An Enrich rail mode was listed here until D26 made the
+Pivot mode the chosen surface.)*
 
 ## 9. Pointers
 

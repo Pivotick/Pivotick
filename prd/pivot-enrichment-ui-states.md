@@ -26,12 +26,13 @@ own options. Two consequences run through everything below:
   **empty origin** is a legitimate state, not an error, and it is where origin-less pivots live
   (C14).
 
-**This reverses a PRD decision, deliberately.** PRD §12 and D25 say the library ships no Enrich
-rail mode and the consumer builds one; brief §5 repeats it as a hard rule. A built-in Pivot mode
-is the opposite, and both documents need amending to match. Recorded here rather than silently
-applied. Note that `RailModeDefinition`'s own doc comment already imagines the mode — "the door an
-integrator builds their own Explore or **Enrich** mode through" — it just expected the consumer to
-walk through it.
+**The mode is gated, and that is what settles the old objection.** `UI.pivotMode?: boolean |
+'auto'`, default `'auto'` — the rail button exists only while at least one pivot is registered.
+So a consumer who registers none sees exactly what PRD §12 originally promised: nothing. This is
+now **D26** in the PRD, which reverses the old §12 line and the brief's matching hard rule; both
+have been amended. `RailModeDefinition`'s own doc comment had already imagined the door — "the
+door an integrator builds their own Explore or **Enrich** mode through" — it just expected the
+consumer to walk through it.
 
 ---
 
@@ -104,6 +105,12 @@ nodes` (D2 batches it into one request; nothing can decompose it, D20).
 | **M2** | an origin is picked, nothing applies to it | `No pivots apply to this origin` |
 | **M3** | **empty origin** | the mode's instruction — `Nothing picked — click a node on the canvas, or run one of the pivots below` — over the origin-less pivots (C14) |
 | **M4** | no pivots registered at all | the rail button is absent — not an empty mode |
+
+M4 is the default behaviour, not an edge case: `UI.pivotMode` defaults to `'auto'`, so the button
+**appears when the first pivot registers and goes when the last unregisters**. `true` forces it
+(for pivots that arrive asynchronously), `false` never shows it. Constructor-registered pivots
+(`new Graph(el, data, { pivots })`) land before the UI is built, so the first paint is already
+correct — D15's ordering constraint paying for itself.
 
 Leaving the mode cancels nothing that is already fetching (see C3). In `viewer` and `static` UI
 modes the mode is never registered, so the rail button does not exist (brief §5).
