@@ -65,6 +65,25 @@ Full mode at 1600×950, dock open:
 - The node context menu today: a quick-action topbar (pin / focus / hide) over *Select Neighbors ·
   Hide Children · Connect to… · Inspect Properties · Delete Node*.
 
+## 4b. What the Phase B prototype added to this list
+
+Built against the real library ([`../prototype/`](../prototype/README.md)), so these are
+observed rather than read:
+
+- **A registered rail mode's button shows its *armed tool*, not the mode.**
+  `ModeRail.paintFace` uses `tool?.label ?? mode.label`, so a `defaultTool` renames the rail
+  button — Pivot mode must declare none.
+- **`RailModeDefinition.render()` is only re-invoked when the panel rebuilds** (a mode change),
+  not when data settles. A live panel has to own a persistent host element.
+- **`addNode` / `addEdge` each emit their own `dataBatchChanged`** — 24 events for a 12-node,
+  12-edge ingest. This is the concrete case behind the PRD's "clean `dataBatchChanged` emission".
+- **Badge text is capped at three characters**, so `2.1k` renders as `99+`; a 2,100 potential
+  must be abbreviated to `2k` by the consumer.
+- **`Graph.nodes` / `Graph.edges` are private**; `getMutableNode(id)` is the door for the
+  existence checks dedup needs (`getNode` returns a clone).
+- **A per-mode tool-panel width is genuinely needed**, confirmed in use: 216px cannot hold a
+  `multiselect` with counts above a `numberRange` pair. The prototype overrides to 300px.
+
 ## 5. One arithmetic note on the fake provider
 
 The §6 facet counts sum exactly: 1,800 + 210 + 95 + 38 = **2,143**, and *URLs* alone is **210**.
