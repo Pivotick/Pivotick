@@ -1,6 +1,6 @@
 # Feature — a pivot/enrichment interface: advertise, run, triage, ingest
 
-**Status:** Proposed — scoped with Sami over two passes (2026-08-31, 2026-09-01), a sanity-check review pass (2026-09-01, findings in [`pivot-enrichment-review.md`](pivot-enrichment-review.md)), and a Phase A design pass (2026-09-01, [`pivot-enrichment-ui-states.md`](pivot-enrichment-ui-states.md) and the artboards beside it). Twenty-six decisions are taken (§6): D1–D15 in the first pass; D16–D21 plus an **amended D7** in the second; **D22–D25** in the review pass, which also amended D1, D4, D7, D8, D11, D12, D14, D16, D17 and D20; and **D26** in the design pass, which chose the surface and reversed the §12 line on rail modes. **M1 and M1b are built** (2026-09-01) — see §10, §14 and §15.
+**Status:** Proposed — scoped with Sami over two passes (2026-08-31, 2026-09-01), a sanity-check review pass (2026-09-01, findings in [`pivot-enrichment-review.md`](pivot-enrichment-review.md)), and a Phase A design pass (2026-09-01, [`pivot-enrichment-ui-states.md`](pivot-enrichment-ui-states.md) and the artboards beside it). Twenty-seven decisions are taken (§6): D1–D15 in the first pass; D16–D21 plus an **amended D7** in the second; **D22–D25** in the review pass, which also amended D1, D4, D7, D8, D11, D12, D14, D16, D17 and D20; **D26** in the design pass, which chose the surface and reversed the §12 line on rail modes; and **D27**, which closed §11.4's triage concurrency when M1 landed. **M1 and M1b are built** (2026-09-01) — see §10, §14 and §15.
 **Owner:** Sami Mokaddem
 **Requested:** 2026-08-31
 **Area:** greenfield `src/PivotManager.ts` + `src/interfaces/Pivot.ts`, with touch points in `src/Graph.ts` (ingest, provenance, `dataBatchChanged`), `src/Node.ts` / `src/Edge.ts` (source tags), `src/interfaces/InterractionCallbacks.ts` (`onBeforeIngest`), `src/interfaces/Plugin.ts` (`addPivot`), `src/ui/elements/Dock/` + a new `src/ui/elements/Pivot/` (the triage pane and the Pivot rail mode), `src/interfaces/RendererOptions.ts` (declared-potential badges). Adds **public types** and a **new public option group**.
@@ -400,6 +400,22 @@ lands before `new UIManager(...)` runs, so the initial state is correct without 
 that is D15's ordering constraint paying for itself. In `viewer` and `static` modes the mode is
 never registered at all.
 
+---
+
+The one below was taken when M1 landed and M2 was scoped (2026-09-01, Sami's call), closing
+§11.4.
+
+**D27 — one triage pane per pivot id.**
+A re-run **replaces** that pivot's candidate set; panes for different pivots **coexist** as dock
+tabs. This is the shape the review pass recommended and the Phase B prototype demonstrated, and
+the runtime already enforces it: `PivotManager` holds at most one `PivotCandidateSet` per pivot
+id, so "stack or replace" was never a UI choice to make later.
+
+What it commits M2 to: a re-run while rows are marked is a visible event, not a silent swap (the
+prototype announced it in the pane rather than discarding the analyst's marks unasked); closing a
+pane calls `discard`, which rejects nothing; and a pivot's tab carries its own label and count,
+which needs `DockTabHandle.setLabel` (§10's M3 note) or a count in the pane header instead.
+
 ## 7. The shape of the door
 
 ```ts
@@ -697,10 +713,9 @@ all of it is M2-or-later:
    rather than pre-emptively here.
 3. **The 10,000 safety ceiling (D17) is a proposal, not a measurement.** Confirm it against a
    real AIL payload before M2 ships; it is a knob, so being wrong is cheap.
-4. **Triage concurrency (from the review pass).** Run pivot A, leave it un-ingested, run pivot
-   B — do the candidate sets stack, replace, or refuse? Recommendation on the table: one pane
-   per pivot id (a re-run replaces that pivot's candidate set; panes for different pivots
-   coexist as dock tabs). Decide in M2, when the pane exists.
+4. ~~**Triage concurrency (from the review pass).**~~ **Closed by D27**: one pane per pivot id —
+   a re-run replaces that pivot's candidate set, and panes for different pivots coexist as dock
+   tabs.
 
 ## 12. Not in scope
 
@@ -908,3 +923,36 @@ child-mutation API beside `setChildren`; `Graph.unionChildren`, `Graph.removeChi
   (every delete affordance would see it) and belongs to the cluster/children refactor.
 - **`removeBySource` had the same hole** and was fixed here: a removed child now comes out of its
   parent as well as out of the graph.
+
+## 16. Where M2 starts
+
+The pane is a **reader** of `graph.pivots`. It should add no state of its own beyond what is on
+screen — which view is showing, which filter is typed, where the scroll is.
+
+**What it reads:** `pivots.staged()` (one `PivotCandidateSet` per pivot, so one dock tab each —
+D27) · `pivots.candidates(pivotId)` · a set's `fetched` / `deduped` / `suppressed` / `loading` /
+`error` / `refused`, which are exactly the header line's numbers and the empty, error and ceiling
+states · `nodes` (rows, each `candidate` | `marked` | `rejected`, `deduped` rows not ingestable) ·
+`edges` (the edge-only section, D24) · `origin` and `narrowing` for the pane's subtitle.
+
+**What it calls:** `mark` / `markAll` (silently — they do not notify, because re-rendering the
+pane on every tick loses the analyst's place; update the row and the footer in place) ·
+`reject` / `unreject` / `rejectRemaining` / `rejectedIds` · `discard` (closing the pane) ·
+`ingest(pivotId)` → `PivotRunOutcome` · `run(pivotId, origin, narrowing)` for **Re-run** ·
+`cancelFetch` · `undo(runId)` for the post-ingest affordance.
+
+**How it knows to repaint:** `pivots.on(change => …)`, where `change` is `'registry'` |
+`'summarize'` | `'candidates'` | `'runs'`.
+
+**The two library gaps it will hit** (both already flagged in §10): an **actionable
+notification** — the post-ingest "Ingested 12 — Undo" needs an action, a longer lifetime,
+hover-pause, dismiss and a returned handle — and **`DockTabHandle.setLabel`**, without which a
+tab cannot carry a live count.
+
+**Prior art to lift from, not re-derive:** the approved artboards and copy in
+[`pivot-enrichment-ui-states.md`](pivot-enrichment-ui-states.md) and
+[`pivot-enrichment-ui-groundwork.md`](pivot-enrichment-ui-groundwork.md), and the working pane in
+[`../prototype/pivot/triage.ts`](../prototype/pivot/triage.ts) — built against the real library,
+so its dock wiring and its row-lifecycle behaviour transfer directly. Its `manager.ts` is
+superseded by `src/PivotManager.ts`; the API names differ slightly (`sets` → `staged()`,
+`applicable` → `for`).
