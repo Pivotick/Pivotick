@@ -394,6 +394,15 @@ export class Graph {
      * Normalizes a node, marking its children and hiding them.
      * @private
      */
+    /**
+     * @private
+     * Normalize plain child data into `Node`s — what {@link unionChildren} merges in.
+     * Each one is re-parented by the union itself, so the depth here is provisional.
+     */
+    public static normalizeChildren(children: RawNode[]): Node[] {
+        return children.map(child => Graph.normalizeNode(child, 1))
+    }
+
     private static normalizeNode(n: RawNode | Node, depth=0): Node {
         let children: Node[] = []
         if (!(n instanceof Node) && n.children) {
@@ -572,6 +581,50 @@ export class Graph {
     }
 
     /**
+     * @private
+     * Merge plain child data into a node already on canvas, by id: new children are
+     * added, matching ones are left untouched, none are removed — and the union
+     * recurses. Registers what was added in the graph's own node map.
+     *
+     * The added children are announced on the data bus: unlike the nested children of
+     * a node being *loaded*, these arrive while the graph is live, and a surface
+     * showing a container's contents has no other way to hear about them.
+     *
+     * @returns every node newly added, at any depth.
+     */
+    public unionChildren(parent: Node, children: RawNode[]): Node[] {
+        const added = parent.unionChildren(Graph.normalizeChildren(children))
+        if (!added.length) return added
+        for (const child of added) this.nodes.set(child.id, child)
+        this.dataBatchChanged(added.map(child => ({ type: 'node:add', node: child } as GraphDataChange)))
+        this.onChange()
+        return added
+    }
+
+    /**
+     * @private
+     * Remove a node wherever it lives: a container's child comes out of its parent as
+     * well as out of the graph, a top-level node is an ordinary removal.
+     */
+    public dropNode(node: Node): void {
+        if (node.parentNode) this.removeChildNode(node.parentNode, node.id)
+        else this.removeNode(node.id)
+    }
+
+    /**
+     * @private
+     * Remove one child of a container, and its own subtree with it — the only way a
+     * union-added child goes, and only ever because nothing vouches for it any more.
+     */
+    public removeChildNode(parent: Node, childId: string): void {
+        const child = parent.removeChildById(childId)
+        if (!child) return
+        for (const node of [child, ...child.descendants()]) this.removeNode(node.id)
+        parent.markDirty()
+        this.onChange()
+    }
+
+    /**
      * Remove everything a source vouches for. An element several sources vouch for
      * survives, one claim lighter — the same uniform rule pivot undo follows, and the
      * only way anything a pivot brought is removed.
@@ -593,7 +646,7 @@ export class Graph {
                 if (!node.hasSource(source)) continue
                 if (!node.dropSource(source)) continue
                 nodes.push(node)
-                this.removeNode(node.id)
+                this.dropNode(node)
             }
         })
         return { nodes, edges }
@@ -824,6 +877,9 @@ export class Graph {
             throw new Error(`Node with id ${node.id} already exists.`)
         }
         this.nodes.set(node.id, node)
+        // A container's children belong to the graph too — `_setData` has always
+        // registered them, and an expanded cluster looks its children up by id.
+        for (const child of node.descendants()) this.nodes.set(child.id, child)
         this.dataBatchChanged([{
             type: 'node:add',
             node: node

@@ -532,6 +532,64 @@ export class Node {
         }
     }
 
+    /**
+     * Merge `children` in by id: new ones are added, matching ones are left
+     * untouched — their own children merged in turn — and none are ever removed. The
+     * union is how a pivot re-discovering a container adds what it found without
+     * disturbing what is already there.
+     *
+     * @returns every node newly added, at any depth, so the caller can register and
+     * tag them.
+     */
+    unionChildren(children: Node[]): Node[] {
+        const added: Node[] = []
+        const byId = new Map(this.children.map(child => [child.id, child]))
+        for (const incoming of children) {
+            const existing = byId.get(incoming.id)
+            if (existing) {
+                // An id match keeps what is already there; only new structure travels.
+                added.push(...existing.unionChildren(incoming.children))
+                continue
+            }
+            this.children.push(incoming)
+            this.claim(incoming)
+            byId.set(incoming.id, incoming)
+            added.push(incoming, ...incoming.descendants())
+        }
+        this.isParent = this.hasChildren()
+        this.markDirty()
+        return added
+    }
+
+    /**
+     * Drop one child, and its own subtree with it. Returns the removed child so the
+     * caller can clean up after its descendants.
+     */
+    removeChildById(id: string): Node | undefined {
+        const index = this.children.findIndex(child => child.id === id)
+        if (index < 0) return undefined
+        const [child] = this.children.splice(index, 1)
+        this.isParent = this.hasChildren()
+        if (!this.isParent) this.expanded = false
+        this.markDirty()
+        return child
+    }
+
+    /** Every node below this one, depth first. */
+    descendants(): Node[] {
+        return this.children.flatMap(child => [child, ...child.descendants()])
+    }
+
+    /**
+     * Mark a subtree as ours: the parent link, the depth and the hidden state a
+     * collapsed cluster's contents carry.
+     */
+    private claim(child: Node): void {
+        child.markAsChild(this, this.childrenDepth + 1)
+        child.hide()
+        for (const grandchild of child.children) child.claim(grandchild)
+    }
+
     hasChildren(): boolean {
         return this.children.length > 0
     }

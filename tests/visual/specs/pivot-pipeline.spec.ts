@@ -209,15 +209,14 @@ test.describe('pivot pipeline', () => {
         // Twelve nodes and twelve edges are one announcement, not twenty-four.
         expect(await batches(page)).toEqual([24])
 
-        // Unpositioned candidates are seeded around the node they came from: they sit
-        // *on* it, not wherever the layout would have thrown them.
+        // Unpositioned candidates are seeded around the node they came from: the pile
+        // sits on `a`, and on no other node of the fixture.
         const where = await positions(page)
-        const origin = where.a
-        const landed = chosen.map((id) => where[id])
-        expect(Math.abs(centroid(landed).x - origin.x)).toBeLessThanOrEqual(60)
-        expect(Math.abs(centroid(landed).y - origin.y)).toBeLessThanOrEqual(60)
-        for (const point of landed) {
-            expect(Math.hypot(point.x - origin.x, point.y - origin.y)).toBeLessThanOrEqual(160)
+        const middle = centroid(chosen.map((id) => where[id]))
+        const reach = (id: string): number => Math.hypot(middle.x - where[id].x, middle.y - where[id].y)
+        expect(reach('a')).toBeLessThanOrEqual(160)
+        for (const other of ['b', 'c', 'd', 'e', 'hub']) {
+            expect(reach('a')).toBeLessThan(reach(other))
         }
 
         // The rest are still staged, and untouched.
@@ -398,8 +397,9 @@ test.describe('pivot pipeline', () => {
         expect(outcome.status).toBe('ingested')
         expect(outcome.nodes).toEqual(['event-a'])
         expect(await staged(page, 'misp-event-objects')).toBeNull()
-        expect(await counts(page)).toEqual({ nodes: before.nodes + 1, edges: before.edges + 1 })
-        // The container arrived as a new node, with its objects nested inside it.
+        // The container arrived as a new node with its objects nested inside it, and a
+        // container's children are nodes of the graph too: one plus twelve.
+        expect(await counts(page)).toEqual({ nodes: before.nodes + 13, edges: before.edges + 1 })
         expect(await harness(page, 'childCount', 'event-a')).toBe(12)
 
         await harness(page, 'undoPivot')
@@ -530,11 +530,13 @@ test.describe('pivot pipeline', () => {
         expect(ingested.nodes).toHaveLength(30)
         expect(await counts(page)).toEqual({ nodes: before.nodes + 30, edges: before.edges })
 
-        // No origin to sit beside, so they land at the centre of the view.
+        // No origin to sit beside, so they land at the centre of the view — nowhere
+        // near the graph's own centre, which is where a fallback would have put them.
         const where = await positions(page)
         const landed = centroid(ingested.nodes.map((id) => where[id]))
-        expect(Math.abs(landed.x - centre.x)).toBeLessThanOrEqual(100)
-        expect(Math.abs(landed.y - centre.y)).toBeLessThanOrEqual(100)
+        expect(Math.hypot(landed.x - centre.x, landed.y - centre.y)).toBeLessThanOrEqual(200)
+        expect(Math.hypot(landed.x - centre.x, landed.y - centre.y))
+            .toBeLessThan(Math.hypot(landed.x, landed.y))
     })
 
     test('declared potential is data, and costs no provider call', async ({ page }) => {

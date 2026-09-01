@@ -259,13 +259,21 @@ export interface PivotCandidateSet {
 export interface PivotRun {
     runId: string
     pivotId: string
-    /** Nodes this run added. */
+    /** Top-level nodes this run added. */
     nodeIds: string[]
+    /**
+     * Nodes this run added *inside* a container: a new container's own subtree, and
+     * children merged into a container already on canvas. Undone before the
+     * top-level nodes, so nothing is left orphaned in the graph.
+     */
+    childIds: string[]
     /** Edges this run added. */
     edgeIds: string[]
     /** Elements already on canvas that this run vouched for without adding. */
     vouchedNodeIds: string[]
     vouchedEdgeIds: string[]
+    /** Children merged into a node already on canvas, so redo can merge them again. */
+    unions: Array<{ parentId: string, children: RawNode[] }>
     nodes: RawNode[]
     edges: RawEdge[]
     at: number

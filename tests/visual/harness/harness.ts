@@ -758,6 +758,7 @@ export type PivotFixtureName =
     | 'oversized'
     | 'search-ail'
     | 'blind'
+    | 'union-children'
 
 /** One provider call, as the log records it — how "zero calls" is demonstrated. */
 export interface PivotCall {
@@ -783,6 +784,12 @@ export interface PivotFixtureSpec {
     fail?: boolean
     /** Absolute candidate ceiling, when a test wants a reachable one. */
     ceiling?: number
+    /**
+     * What the `union-children` pivot returns: one container, already on canvas, plus
+     * the children to merge into it. A nested entry carries grandchildren, so the
+     * recursion has something to recurse into.
+     */
+    union?: { parent: string; children: Array<string | { id: string; children: string[] }> }
 }
 
 /** `onBeforeIngest` behaviours, since a function can't cross `page.evaluate`. */
@@ -888,6 +895,12 @@ export interface HarnessApi {
     pointViewAt(x: number, y: number): void
     /** How many child nodes a container holds — what a union or a nested result is judged on. */
     childCount(nodeId: string): number
+    /** A container's child ids, in order — so a union can be told from a replace. */
+    childIds(nodeId: string): string[]
+    /** Whether a container is currently expanded. */
+    isExpanded(nodeId: string): boolean
+    /** How many nodes an expanded container's subgraph holds (-1 when it has none). */
+    subgraphNodeCount(nodeId: string): number
     /** How many entries each `dataBatchChanged` since the last load carried. */
     batchSizes(): number[]
     resetBatchSizes(): void
@@ -1445,7 +1458,10 @@ export interface HarnessApi {
 }
 
 
-/** Every fake pivot, which is what `loadWithPivots` installs by default. */
+/**
+ * The fake pivots `loadWithPivots` installs by default. `union-children` is left out:
+ * it needs a container to merge into, so a test names it explicitly.
+ */
 const ALL_FAKE_PIVOTS: PivotFixtureName[] = [
     'ail-correlation', 'misp-event-objects', 'oversized', 'search-ail', 'blind',
 ]
@@ -4206,6 +4222,18 @@ class Harness implements HarnessApi {
         return this.g.getMutableNode(nodeId)?.children.length ?? -1
     }
 
+    childIds(nodeId: string): string[] {
+        return this.g.getMutableNode(nodeId)?.children.map((child) => child.id) ?? []
+    }
+
+    isExpanded(nodeId: string): boolean {
+        return this.g.getMutableNode(nodeId)?.expanded === true
+    }
+
+    subgraphNodeCount(nodeId: string): number {
+        return this.g.getMutableNode(nodeId)?.getSubgraph()?.getNodeCount() ?? -1
+    }
+
     batchSizes(): number[] {
         return [...this.batchLog]
     }
@@ -4338,6 +4366,35 @@ class Harness implements HarnessApi {
                             })),
                             edges: [],
                         })
+                    ),
+                }
+            case 'union-children':
+                return {
+                    id: 'union-children',
+                    label: 'More objects',
+                    fetch: (nodes, narrowing, ctx) => this.serveProvider(
+                        'union-children', 'fetch', nodes, narrowing, ctx,
+                        (): PivotResult => {
+                            const union = this.pivotSpec.union ?? { parent: 'event-a', children: [] }
+                            const child = (entry: string | { id: string; children: string[] }): RawNode =>
+                                typeof entry === 'string'
+                                    ? { id: entry, data: { label: entry, from: 'union' } }
+                                    : {
+                                        id: entry.id,
+                                        data: { label: entry.id, from: 'union' },
+                                        children: entry.children.map((id) => child(id)),
+                                    }
+                            return {
+                                // The container is already on canvas, so it dedups — and
+                                // its children are what the union merges in.
+                                nodes: [{
+                                    id: union.parent,
+                                    data: { label: 'replaced?', from: 'union' },
+                                    children: union.children.map((entry) => child(entry)),
+                                }],
+                                edges: [],
+                            }
+                        }
                     ),
                 }
             case 'blind':

@@ -1,6 +1,6 @@
 # Feature — a pivot/enrichment interface: advertise, run, triage, ingest
 
-**Status:** Proposed — scoped with Sami over two passes (2026-08-31, 2026-09-01), a sanity-check review pass (2026-09-01, findings in [`pivot-enrichment-review.md`](pivot-enrichment-review.md)), and a Phase A design pass (2026-09-01, [`pivot-enrichment-ui-states.md`](pivot-enrichment-ui-states.md) and the artboards beside it). Twenty-six decisions are taken (§6): D1–D15 in the first pass; D16–D21 plus an **amended D7** in the second; **D22–D25** in the review pass, which also amended D1, D4, D7, D8, D11, D12, D14, D16, D17 and D20; and **D26** in the design pass, which chose the surface and reversed the §12 line on rail modes. **M1 is built** (2026-09-01) — see §10 and §14.
+**Status:** Proposed — scoped with Sami over two passes (2026-08-31, 2026-09-01), a sanity-check review pass (2026-09-01, findings in [`pivot-enrichment-review.md`](pivot-enrichment-review.md)), and a Phase A design pass (2026-09-01, [`pivot-enrichment-ui-states.md`](pivot-enrichment-ui-states.md) and the artboards beside it). Twenty-six decisions are taken (§6): D1–D15 in the first pass; D16–D21 plus an **amended D7** in the second; **D22–D25** in the review pass, which also amended D1, D4, D7, D8, D11, D12, D14, D16, D17 and D20; and **D26** in the design pass, which chose the surface and reversed the §12 line on rail modes. **M1 and M1b are built** (2026-09-01) — see §10, §14 and §15.
 **Owner:** Sami Mokaddem
 **Requested:** 2026-08-31
 **Area:** greenfield `src/PivotManager.ts` + `src/interfaces/Pivot.ts`, with touch points in `src/Graph.ts` (ingest, provenance, `dataBatchChanged`), `src/Node.ts` / `src/Edge.ts` (source tags), `src/interfaces/InterractionCallbacks.ts` (`onBeforeIngest`), `src/interfaces/Plugin.ts` (`addPivot`), `src/ui/elements/Dock/` + a new `src/ui/elements/Pivot/` (the triage pane and the Pivot rail mode), `src/interfaces/RendererOptions.ts` (declared-potential badges). Adds **public types** and a **new public option group**.
@@ -654,7 +654,7 @@ provenance run records with `removeBySource` and run undo/redo (D8, D16, D25), `
 (§4). Drivable entirely from the console and testable without a pane — a pivot with
 `autoIngest: true` is end-to-end here.
 
-**M1b — children union by id** (D7, amended). The new child-mutation API beside `setChildren`,
+**M1b — children union by id** (D7, amended). **DONE (2026-09-01).** The new child-mutation API beside `setChildren`,
 plus the collapsed and expanded merge paths. Kept as its own slice because it is the one part
 that reaches into the cluster subsystem, and because it is deliberately the *cheap* version:
 reuse the existing expand path, no new `ClusterDrawer` abstraction. Sequence it after M1 so the
@@ -865,5 +865,46 @@ remaining", and a closed pane rejecting nothing; the 10,000 ceiling and a failin
 retry; run-scoped undo/redo with no refetch, and two runs of one pivot undone separately;
 declared potential as data.
 
-Still to cover: everything under union by id (M1b), and the facet-count arithmetic as rendered
-(M2/M3).
+Still to cover: the facet-count arithmetic as rendered (M2/M3). Union by id is covered by
+M1b's own spec (§15).
+
+## 15. M1b as built (2026-09-01)
+
+Children union by id, driven by
+[`tests/visual/specs/pivot-children-union.spec.ts`](../tests/visual/specs/pivot-children-union.spec.ts)
+(7 cases). `Node.unionChildren` / `Node.removeChildById` / `Node.descendants` are the new
+child-mutation API beside `setChildren`; `Graph.unionChildren`, `Graph.removeChildNode` and
+`Graph.dropNode` are the doors the pipeline uses.
+
+### 15.1 What it settled
+
+- **Union-added children ride with their container.** They are not triage rows of their own —
+  there is nowhere else to put a child, and D7 forbids re-parenting — so they land when the
+  analyst ingests the run that found them, exactly as a carried edge lands with its endpoints.
+  For the same reason they are not itemized in `IngestContext.candidates`: a veto stops
+  everything, and narrowing by node id reaches the top-level candidates only.
+- **The expanded-container rebuild cost nothing.** `NodeDrawer.render` calls
+  `ClusterDrawer.render` for any expanded node, and that always builds a *fresh* subgraph from
+  `node.children` — so marking the container dirty is the whole implementation. No new
+  `ClusterDrawer` abstraction, as D7 asked, and the position reset §11.2 accepted is precisely
+  what happens.
+- **A container's whole subtree is vouched for, not just the container.** `PivotRun.childIds`
+  records every node a run added inside a container — a new container's own children as well as
+  merged ones — and undo walks them *before* the top-level nodes, so nothing is ever left
+  orphaned. This is what makes `removeBySource` reach into containers, which D7 promised.
+- **A matching child keeps its own provenance.** A union that re-asserts an existing child adds
+  nothing and tags nothing: the child still belongs to the run that brought it, so undoing the
+  merge leaves it alone and undoing its own run takes it away. The D8 guarantee, at child level.
+
+### 15.2 What it found
+
+- **`Graph.addNode` did not register a container's children** in the node map, though `_setData`
+  always has — and `ClusterDrawer.createSubgraph` looks each child up by id. So a container a
+  pivot ingested could not be expanded at all: the very end of the MISP walkthrough. `addNode`
+  now recurses, which is also why `getNodeCount()` after an auto-ingest is 1 + 12 rather than 1.
+- **`Graph.removeNode` on a container leaves its children behind** in the node map, and does not
+  splice a child out of its parent's array. The pivot path routes around both through
+  `dropNode` / `childIds`; making `removeNode` itself symmetric with `addNode` is a wider change
+  (every delete affordance would see it) and belongs to the cluster/children refactor.
+- **`removeBySource` had the same hole** and was fixed here: a removed child now comes out of its
+  parent as well as out of the graph.
