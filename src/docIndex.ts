@@ -30,6 +30,8 @@ import { UIComponent } from './ui/UIComponent'
 import type { UIPhase } from './ui/UIComponent'
 import { Flyout } from './ui/elements/Flyout/Flyout'
 import type { PivotickPlugin, PluginContext } from './interfaces/Plugin'
+import type * as Pivot from './interfaces/Pivot'
+import type { PivotManager } from './PivotManager'
 
 export type {
     GraphOptions,
@@ -69,6 +71,8 @@ export type {
     UIPhase,
     PivotickPlugin,
     PluginContext,
+    Pivot,
+    PivotManager,
 }
 
 export {

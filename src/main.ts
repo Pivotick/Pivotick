@@ -300,7 +300,6 @@ export function createSampleGraph(): Pivotick {
             // onEdgeBlur: (edge) => console.log(`onEdgeBlur: ${edge.id}`),
             // onNodeHoverIn: (e, node) => console.log(`nodeHoverIn: ${node.id}`),
             // onNodeHoverOut: (e, node) => console.log(`nodeHoverOut: ${node.id}`),
-            // onNodeExpansion: (e, node) => console.log(`nodeExpansion: ${node.id}`),
             // onEdgeClick: (e, edge) => console.log(`onEdgeClick: ${edge.id}`),
         },
         render: {

@@ -6,6 +6,8 @@ import type { NodeEditSession } from '../editing/NodeEditSession'
 import type { Note } from '../Note'
 import type { NodeBadge, NodeStyle, PartialEdgeFullStyle } from './RendererOptions'
 import type { FieldConfig } from '../utils/FormFactory'
+import type { PivotResult } from './Pivot'
+import type { RawEdge, RawNode } from './GraphOptions'
 
 export interface InterractionCallbacks<TElement = unknown> {
     /**
@@ -55,11 +57,6 @@ export interface InterractionCallbacks<TElement = unknown> {
     * Called when a node is unselected by the user.
     */
     onNodeBlur?: (node: Node, element: TElement) => void
-
-    /**
-     * Called when a node is expanded (e.g., drilled down or pivoted).
-     */
-    onNodeExpansion?: (event: PointerEvent, edge: Edge, element: TElement) => void
 
     /**
      * Called when any of a node's rim badges is clicked, after that badge's own
@@ -280,6 +277,29 @@ export interface InterractionCallbacks<TElement = unknown> {
     onBeforeDelete?: (context: DeleteContext) => DeleteDecision | Promise<DeleteDecision>
 
     /**
+     * Called once, with the whole candidate set, just before a pivot ingests it —
+     * the one gate on the ingest pipeline.
+     *
+     * - Return `false` / `{ accept: false }` to veto: nothing lands, and the run
+     *   reports `'vetoed'`.
+     * - Return `true` to ingest exactly what was chosen.
+     * - Return `{ accept: true, nodes?, edges? }` to **narrow** the ingest to a
+     *   subset — e.g. only what the backend confirmed. An omitted key means "as
+     *   requested", so `{ accept: true }` is equivalent to `true`; pass an empty
+     *   array to land none of that kind.
+     *
+     * Called once per ingest with the entire batch, never per candidate: a pivot
+     * that found 1,800 correlations must not turn into 1,800 hook calls, and the
+     * per-gesture write-path hooks ({@link onBeforeEdgeCreate}, {@link onBeforeDelete})
+     * are deliberately about user gestures rather than a programmatic merge. It gates
+     * `autoIngest` pivots too, which is what keeps them governed.
+     *
+     * May be async (persist, then decide). {@link IngestContext.confirm} opens the
+     * shared confirmation modal.
+     */
+    onBeforeIngest?: (context: IngestContext) => IngestDecision | Promise<IngestDecision>
+
+    /**
      * Called when an edge edit session starts. Acts as a UI hook, mirroring
      * {@link onNodeEdit}: return the body to inject into the edit modal. A custom
      * body owns the draft — mutate `session.draft` (or call `session.setDraft`) as
@@ -485,6 +505,41 @@ export type DeleteDecision =
         nodes?: Node[]
         edges?: Edge[]
         notes?: Note[]
+    }
+
+/** Context passed to {@link InterractionCallbacks.onBeforeIngest}. */
+export interface IngestContext {
+    /** Which pivot produced these candidates. */
+    pivotId: string
+    /** The nodes the pivot was run on. Empty for an origin-less pivot. */
+    origin: Node[]
+    /**
+     * What is about to land, after dedup and after the analyst's picks — so a
+     * candidate already on canvas never appears here.
+     */
+    candidates: PivotResult
+    /** `'triage'` when the analyst picked, `'auto'` when the pivot auto-ingested. */
+    trigger: 'triage' | 'auto'
+    /**
+     * Open a confirmation modal, resolving `true` on confirm and `false` on any
+     * cancel path — the same primitive {@link DeleteContext.confirm} uses.
+     */
+    confirm: (options?: ConfirmOptions) => Promise<boolean>
+}
+
+/**
+ * The decision returned by {@link InterractionCallbacks.onBeforeIngest}.
+ *
+ * `true` ingests the whole batch, `false` vetoes it. The object form narrows:
+ * each supplied array replaces that kind's set, matched by id, and an omitted key
+ * leaves it as requested.
+ */
+export type IngestDecision =
+    | boolean
+    | {
+        accept: boolean
+        nodes?: RawNode[]
+        edges?: RawEdge[]
     }
 
 /** What a resolved delete actually removed — the return of `graph.editing.requestDelete`. */

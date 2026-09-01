@@ -606,6 +606,7 @@ export class UIManager {
             refreshDockTab: (id) => this.refreshDockTab(id),
             addRailMode: (mode) => this.addRailMode(mode),
             removeRailMode: (id) => this.removeRailMode(id),
+            addPivot: (definition) => this.graph.pivots.register(definition),
             onPhase: (phase, callback) => this.onPhase(phase, callback),
             addKeybinding: (binding) => { this.uiDisposables.push(this.keyManager.register(binding)) },
         }

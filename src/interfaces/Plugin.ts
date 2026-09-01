@@ -1,4 +1,5 @@
 import type { Graph } from '../Graph'
+import type { PivotDefinition } from './Pivot'
 import type { UIManager } from '../ui/UIManager'
 import type { UIComponent, UIPhase } from '../ui/UIComponent'
 import type { Layout } from '../ui/elements/Layout'
@@ -97,6 +98,15 @@ export interface PluginContext {
     addRailMode(mode: RailModeDefinition): () => void
     /** Remove a rail mode by id (equivalent to calling its disposer). */
     removeRailMode(id: string): void
+    /**
+     * Register a pivot — the same door as `graph.pivots.register` and the `pivots`
+     * option, and the way a plugin ships an enrichment. Returns a disposer.
+     *
+     * The Pivot rail mode appears as soon as the first pivot is registered and goes
+     * when the last one leaves, so a plugin does not have to ask the consumer to turn
+     * anything on.
+     */
+    addPivot(definition: PivotDefinition): () => void
     /** Hook a lifecycle phase. Returns an unsubscribe function. */
     onPhase(phase: UIPhase, callback: () => void): () => void
     /** Register a keybinding that is automatically removed when the UI is torn down. */

@@ -4,6 +4,10 @@ import type { NodeStyle } from './interfaces/RendererOptions'
 import { generateSafeDomId } from './utils/ElementCreation'
 import { rectRadiusAlongDirection } from './utils/GeometryHelper'
 import { stripFunctions } from './utils/utils'
+import {
+    ledgerDropSource, ledgerHasSource, ledgerRevokeRun, ledgerSources, ledgerVouch,
+    type SourceLedger,
+} from './Provenance'
 
 export interface NodeData {
     [key: string]: unknown;
@@ -77,6 +81,13 @@ export class Node {
     /** Measured rectangular border; unset means the node is anchored as a circle. */
     private _border?: NodeBorderBox
     private _dirty: boolean
+    /**
+     * Which sources vouch for this node, and under which runs. Absent until a pivot
+     * vouches for it — a node with no ledger came from the seed data.
+     */
+    private _sources?: SourceLedger
+    /** Potential a data source *declared* on this node, per pivot id. */
+    private _potential?: Map<string, number>
     public readonly domID: string
 
     /**
@@ -273,6 +284,8 @@ export class Node {
         clone.parentNode = this.parentNode
         clone._circleRadius = this._circleRadius
         clone.children = this.children.map((n) => n.clone())
+        if (this._sources) clone._sources = new Map([...this._sources].map(([s, r]) => [s, [...r]]))
+        if (this._potential) clone._potential = new Map(this._potential)
 
         return clone
     }
@@ -439,6 +452,75 @@ export class Node {
         const border = this._border
         if (!border) return this._circleRadius + outset
         return rectRadiusAlongDirection(border.halfWidth + outset, border.halfHeight + outset, dirX, dirY)
+    }
+
+    // --- Provenance and declared potential ---------------------------------------------
+
+    /**
+     * The sources vouching for this node — pivot ids, plus `'seed'` for data that
+     * was here to begin with. A node can be vouched for by several pivots at once,
+     * and `graph.removeBySource` deletes it only when the last one goes.
+     */
+    getSources(): string[] {
+        return ledgerSources(this._sources)
+    }
+
+    /** Whether `source` vouches for this node. `'seed'` is true for un-pivoted data. */
+    hasSource(source: string): boolean {
+        return ledgerHasSource(this._sources, source)
+    }
+
+    /**
+     * @private
+     * Record that a pivot run vouches for this node.
+     */
+    vouch(source: string, runId: string): void {
+        if (!this._sources) this._sources = new Map()
+        ledgerVouch(this._sources, source, runId)
+    }
+
+    /**
+     * @private
+     * Drop one run's vouching. Returns `true` when nothing vouches for this node any
+     * more — the caller's cue to remove it.
+     */
+    revokeRun(source: string, runId: string): boolean {
+        return ledgerRevokeRun(this._sources, source, runId)
+    }
+
+    /**
+     * @private
+     * Drop a source's vouching entirely. Returns `true` when the node is now
+     * unvouched-for.
+     */
+    dropSource(source: string): boolean {
+        return ledgerDropSource(this._sources, source)
+    }
+
+    /**
+     * Declare how much more a pivot has for this node, without asking for any of it —
+     * what the rim badge shows. `0` clears the declaration.
+     */
+    setPotential(pivotId: string, count: number): void {
+        if (!count) {
+            this._potential?.delete(pivotId)
+            if (this._potential?.size === 0) this._potential = undefined
+            this.markDirty()
+            return
+        }
+        if (!this._potential) this._potential = new Map()
+        this._potential.set(pivotId, count)
+        this.markDirty()
+    }
+
+    /** The potential declared for one pivot, or `undefined` when none was. */
+    getPotential(pivotId: string): number | undefined {
+        return this._potential?.get(pivotId)
+    }
+
+    /** Every declared potential on this node, keyed by pivot id. */
+    getPotentials(): Map<string, number> {
+        return new Map(this._potential ?? [])
     }
 
     setChildren(children: Node[]): void {

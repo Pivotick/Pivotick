@@ -16,6 +16,7 @@ import { GraphEditingManager } from './editing/GraphEditingManager'
 import { NoteManager } from './NoteManager'
 import { Note, type NoteOptions } from './Note'
 import type { PivotickPlugin } from './interfaces/Plugin'
+import { PivotManager } from './PivotManager'
 import { minimap } from './plugins/minimap'
 
 export class Graph {
@@ -34,8 +35,18 @@ export class Graph {
     private parentGraph?: Graph
     private graphDepth: number
     public readonly editing: GraphEditingManager
+    /**
+     * The pivot runtime: register enrichments, run them, triage what they return,
+     * and undo a whole run. Lives on `Graph` rather than the UI because pivots
+     * produce *data* — and because it has to exist before the UI is built.
+     */
+    public readonly pivots: PivotManager
     
     private listeners: Record<keyof GraphEvents, Array<GraphEvents[keyof GraphEvents]>>
+    /** Depth of nested {@link batchChanges} calls; > 0 means events are being collected. */
+    private batchDepth = 0
+    private batchedChanges: GraphDataChange[] = []
+    private batchNeedsChange = false
     /** Subscribers to {@link onVisibleChange} — kept apart from the data event bus. */
     private changeListeners: Array<() => void> = []
 
@@ -110,6 +121,13 @@ export class Graph {
         this.noteManager = new NoteManager(this)
         this.queryEngine = new GraphQueryEngine(this)
         this.editing = new GraphEditingManager(this)
+        // Before the UI: whether any pivot is registered decides whether the Pivot
+        // rail mode exists at all, and the rail is built inside `new UIManager`.
+        this.pivots = new PivotManager(this)
+        if (typeof this.options.pivotCandidateCeiling === 'number') {
+            this.pivots.candidateCeiling = this.options.pivotCandidateCeiling
+        }
+        this.options.pivots?.forEach(pivot => this.pivots.register(pivot))
         this.UIManager = new UIManager(this, appContainer, UIManagerOptions)
         // Declared facets carry the accessor/predicate/matchMode the engine matches
         // with, so hand them over as soon as the merged UI options exist.
@@ -397,7 +415,7 @@ export class Graph {
             child.hide()
         })
         normNode.weight = n.weight
-        normNode.expanded = n.expanded
+        normNode.expanded = n.expanded ?? false
         return normNode
     }
 
@@ -527,7 +545,65 @@ export class Graph {
         } as GraphDataChange])
     }
 
+    /**
+     * @private
+     * Run `fn` with data notifications coalesced: everything it adds or removes
+     * lands as **one** `dataBatchChanged` and one re-render, instead of one per
+     * element. Ingesting twelve nodes and twelve edges is one event, not twenty-four.
+     *
+     * Nests safely, and the model itself is mutated as it always was — only the
+     * announcing waits.
+     */
+    public batchChanges<T>(fn: () => T): T {
+        this.batchDepth++
+        try {
+            return fn()
+        } finally {
+            this.batchDepth--
+            if (this.batchDepth === 0) {
+                const changes = this.batchedChanges
+                this.batchedChanges = []
+                const needsChange = this.batchNeedsChange
+                this.batchNeedsChange = false
+                if (changes.length) this.dataBatchChanged(changes)
+                if (needsChange) this.onChange()
+            }
+        }
+    }
+
+    /**
+     * Remove everything a source vouches for. An element several sources vouch for
+     * survives, one claim lighter — the same uniform rule pivot undo follows, and the
+     * only way anything a pivot brought is removed.
+     *
+     * @param source A pivot id, or `'seed'` for data that was never pivoted.
+     * @returns What was actually removed.
+     */
+    public removeBySource(source: string): { nodes: Node[], edges: Edge[] } {
+        const nodes: Node[] = []
+        const edges: Edge[] = []
+        this.batchChanges(() => {
+            for (const edge of [...this.edges.values()]) {
+                if (!edge.hasSource(source)) continue
+                if (!edge.dropSource(source)) continue
+                edges.push(edge)
+                this.removeEdge(edge.id)
+            }
+            for (const node of [...this.nodes.values()]) {
+                if (!node.hasSource(source)) continue
+                if (!node.dropSource(source)) continue
+                nodes.push(node)
+                this.removeNode(node.id)
+            }
+        })
+        return { nodes, edges }
+    }
+
     private dataBatchChanged(changes: GraphDataChange[]): void {
+        if (this.batchDepth > 0) {
+            if (changes) this.batchedChanges.push(...changes)
+            return
+        }
         if (changes) {
             this.emit('dataBatchChanged', changes)
             changes.forEach(c => {
@@ -588,6 +664,10 @@ export class Graph {
      * @private
      */
     onChange() {
+        if (this.batchDepth > 0) {
+            this.batchNeedsChange = true
+            return
+        }
         this.renderer?.update(true)
         this.simulation?.update()
         this.renderer?.nextTick()
@@ -1204,6 +1284,7 @@ export class Graph {
      * Destroy all UI components.
      */
     destroy(): void {
+        this.pivots.destroy()
         // Stop ticking before the DOM it renders into goes away.
         this.simulation.destroy()
         this.UIManager.destroy()

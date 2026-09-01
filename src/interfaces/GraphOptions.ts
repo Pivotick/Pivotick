@@ -6,6 +6,7 @@ import type { DeepPartial } from '../utils/utils'
 import type { GraphUI, LegendToggleState } from './GraphUI'
 import type { InterractionCallbacks } from './InterractionCallbacks'
 import type { LayoutOptions } from './LayoutOptions'
+import type { PivotDefinition } from './Pivot'
 import type { PivotickPlugin } from './Plugin'
 import type { EdgeFullStyle, GraphRendererOptions, NodeStyle } from './RendererOptions'
 import type { SimulationOptions } from './SimulationOptions'
@@ -55,6 +56,20 @@ export interface GraphOptions {
     plugins?: PivotickPlugin[],
 
     /**
+     * Pivots to register before anything is built, so the UI's first paint already
+     * knows whether there are any. See {@link Graph.pivots} for the imperative door
+     * and {@link PluginContext.addPivot} for the plugin one.
+     */
+    pivots?: PivotDefinition[],
+
+    /**
+     * Absolute ceiling on how many candidates one pivot `fetch` may stage. A provider
+     * that returns more is refused, not truncated.
+     * @default 10000
+     */
+    pivotCandidateCeiling?: number,
+
+    /**
      * @private
      * Instance of a parent graph used in the context of collapsible nodes
      */
@@ -70,7 +85,11 @@ export interface GraphData {
     notes: Note[],
 }
 
-export type RawNode = { id: string | number; data?: NodeData, style?: Partial<NodeStyle>, weight?: number, expanded: boolean, domID?: string, children?: RawNode[], x?: number, y?: number, fx?: number, fy?: number }
+/**
+ * A node as plain data — what a consumer hands the graph and what a pivot returns.
+ * `expanded` defaults to `false`, so a flat result carries no boilerplate.
+ */
+export type RawNode = { id: string | number; data?: NodeData, style?: Partial<NodeStyle>, weight?: number, expanded?: boolean, domID?: string, children?: RawNode[], x?: number, y?: number, fx?: number, fy?: number }
 export type RawEdge = { id?: string | number; from: string | number; to: string | number; data?: EdgeData, style?: Partial<EdgeFullStyle> }
 
 export interface RelaxedGraphData {

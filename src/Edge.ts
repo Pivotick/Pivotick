@@ -2,6 +2,10 @@ import type { EdgeFullStyle, EdgeStyle, LabelStyle, PartialEdgeFullStyle } from 
 import { Node } from './Node'
 import { generateSafeDomId } from './utils/ElementCreation'
 import { stripFunctions } from './utils/utils'
+import {
+    ledgerDropSource, ledgerHasSource, ledgerRevokeRun, ledgerSources, ledgerVouch,
+    type SourceLedger,
+} from './Provenance'
 
 export interface EdgeData {
     [key: string]: unknown;
@@ -66,6 +70,11 @@ export class Edge {
     private _subgraphToNode?: Node
 
     private _dirty: boolean
+    /**
+     * Which sources vouch for this edge, and under which runs. Absent until a pivot
+     * vouches for it — an edge with no ledger came from the seed data.
+     */
+    private _sources?: SourceLedger
     public readonly domID: string
 
     /**
@@ -330,5 +339,48 @@ export class Edge {
      */
     getSubgraphToNode(): Node | undefined {
         return this._subgraphToNode
+    }
+
+    // --- Provenance --------------------------------------------------------------------
+
+    /**
+     * The sources vouching for this edge — pivot ids, plus `'seed'` for data that was
+     * here to begin with. Which pivot asserted a relationship is the load-bearing half
+     * of provenance, so edges carry it exactly as nodes do.
+     */
+    getSources(): string[] {
+        return ledgerSources(this._sources)
+    }
+
+    /** Whether `source` vouches for this edge. `'seed'` is true for un-pivoted data. */
+    hasSource(source: string): boolean {
+        return ledgerHasSource(this._sources, source)
+    }
+
+    /**
+     * @private
+     * Record that a pivot run vouches for this edge.
+     */
+    vouch(source: string, runId: string): void {
+        if (!this._sources) this._sources = new Map()
+        ledgerVouch(this._sources, source, runId)
+    }
+
+    /**
+     * @private
+     * Drop one run's vouching. Returns `true` when nothing vouches for this edge any
+     * more — the caller's cue to remove it.
+     */
+    revokeRun(source: string, runId: string): boolean {
+        return ledgerRevokeRun(this._sources, source, runId)
+    }
+
+    /**
+     * @private
+     * Drop a source's vouching entirely. Returns `true` when the edge is now
+     * unvouched-for.
+     */
+    dropSource(source: string): boolean {
+        return ledgerDropSource(this._sources, source)
     }
 }

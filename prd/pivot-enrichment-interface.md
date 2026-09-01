@@ -1,6 +1,6 @@
 # Feature — a pivot/enrichment interface: advertise, run, triage, ingest
 
-**Status:** Proposed — scoped with Sami over two passes (2026-08-31, 2026-09-01), a sanity-check review pass (2026-09-01, findings in [`pivot-enrichment-review.md`](pivot-enrichment-review.md)), and a Phase A design pass (2026-09-01, [`pivot-enrichment-ui-states.md`](pivot-enrichment-ui-states.md) and the artboards beside it). Twenty-six decisions are taken (§6): D1–D15 in the first pass; D16–D21 plus an **amended D7** in the second; **D22–D25** in the review pass, which also amended D1, D4, D7, D8, D11, D12, D14, D16, D17 and D20; and **D26** in the design pass, which chose the surface and reversed the §12 line on rail modes. Not started.
+**Status:** Proposed — scoped with Sami over two passes (2026-08-31, 2026-09-01), a sanity-check review pass (2026-09-01, findings in [`pivot-enrichment-review.md`](pivot-enrichment-review.md)), and a Phase A design pass (2026-09-01, [`pivot-enrichment-ui-states.md`](pivot-enrichment-ui-states.md) and the artboards beside it). Twenty-six decisions are taken (§6): D1–D15 in the first pass; D16–D21 plus an **amended D7** in the second; **D22–D25** in the review pass, which also amended D1, D4, D7, D8, D11, D12, D14, D16, D17 and D20; and **D26** in the design pass, which chose the surface and reversed the §12 line on rail modes. **M1 is built** (2026-09-01) — see §10 and §14.
 **Owner:** Sami Mokaddem
 **Requested:** 2026-08-31
 **Area:** greenfield `src/PivotManager.ts` + `src/interfaces/Pivot.ts`, with touch points in `src/Graph.ts` (ingest, provenance, `dataBatchChanged`), `src/Node.ts` / `src/Edge.ts` (source tags), `src/interfaces/InterractionCallbacks.ts` (`onBeforeIngest`), `src/interfaces/Plugin.ts` (`addPivot`), `src/ui/elements/Dock/` + a new `src/ui/elements/Pivot/` (the triage pane and the Pivot rail mode), `src/interfaces/RendererOptions.ts` (declared-potential badges). Adds **public types** and a **new public option group**.
@@ -645,7 +645,7 @@ placement), provenance tags with their run records, pivot-run undo/redo, and the
 
 ## 10. Work plan
 
-**M1 — contract and pipeline, no new UI.** `interfaces/Pivot.ts`, `PivotManager` on `Graph`,
+**M1 — contract and pipeline, no new UI. DONE (2026-09-01).** `interfaces/Pivot.ts`, `PivotManager` on `Graph`,
 `summarize` / `fetch` invocation with cancellation, the summarize cache and `invalidate` (D20),
 dedup (D23), origin-seeded placement (D22), the narrowing gate and safety ceiling (D4, D17),
 provenance run records with `removeBySource` and run undo/redo (D8, D16, D25), `onBeforeIngest`,
@@ -778,3 +778,92 @@ re-fit races the capture); and do not assert force-simulation outcomes in the pa
 
 Docs: a page under the callbacks / plugin area covering the two-call contract, the narrowing
 gate, provenance and `onBeforeIngest`, plus the gallery card from M3.
+
+## 14. M1 as built (2026-09-01)
+
+The contract and the pipeline are in `src/`, driven by
+[`tests/visual/specs/pivot-pipeline.spec.ts`](../tests/visual/specs/pivot-pipeline.spec.ts) (29
+cases) against a fake provider in the harness. No UI: `graph.pivots` is the whole surface, and an
+`autoIngest` pivot is end to end from the console.
+
+**Files:** `src/interfaces/Pivot.ts` (the contract, §7 as written) · `src/PivotManager.ts` (the
+runtime) · `src/Provenance.ts` (the ledger helpers Node and Edge share) · touch points in
+`Graph.ts` (`pivots`, `removeBySource`, `batchChanges`), `Node.ts` / `Edge.ts` (`getSources`,
+`hasSource`, and `setPotential` / `getPotential` on nodes), `interfaces/InterractionCallbacks.ts`
+(`onBeforeIngest`, `IngestContext`, `IngestDecision`), `interfaces/GraphOptions.ts` (`pivots`,
+`pivotCandidateCeiling`), `interfaces/Plugin.ts` + `ui/UIManager.ts` (`ctx.addPivot`).
+
+### 14.1 What the implementation settled
+
+Nothing here reverses a D-numbered decision; each one is a hole the code had to fill.
+
+- **The candidate model landed in M1, not M2.** `'staged'` has to mean something for
+  `PivotRunOutcome` to be honest, so the candidate sets, the mark/reject/ingest verbs and the
+  session rejection memory (D14) are all in `PivotManager`. M2's pane is then a *reader* — which
+  is what D6 and D15 were arguing for anyway.
+- **Two more `PivotRunOutcome` statuses: `'failed'` and `'cancelled'`.** §7 listed four. A
+  provider that throws and a run that was superseded both need somewhere to be reported, and
+  making the caller catch exceptions for one and not the other would be arbitrary. A failing
+  `summarize` *inside the gate* is a `'failed'` run too: the gate never saw a count, so there is
+  nothing to judge and nothing is fetched.
+- **A refusal carries its numbers.** `PivotRunOutcome.refusal = { kind: 'cap' | 'ceiling', count,
+  limit }`, because §5's rule is that a refusal explains the number, the limit and the way
+  forward — the UI cannot write that copy from a bare `'refused'`.
+- **`runId` is minted per run, and re-minted per ingest.** A staged run's first ingest is recorded
+  under the id `run()` returned, exactly as §7 promises. A *second*, partial ingest out of the
+  same staged set gets a fresh id, so each batch is separately undoable rather than collapsing
+  into one giant undo of "everything I ever took from this set".
+- **Dedup records the vouching (a clarification of D23).** An id-matched candidate leaves the
+  existing node's data, style and children untouched — but the run *did* assert that node exists,
+  so it takes a source record. Without this, D8's "two overlapping pivots both tag a node" is
+  unreachable: the second pivot's candidate always dedups. Provenance is not data, and this is
+  what makes `removeBySource` for one pivot honest when another still vouches.
+- **The seed's claim is written down lazily.** An element with no records reports
+  `getSources() === ['seed']`, and vouching for something already on canvas writes an explicit
+  `'seed'` record first. Otherwise undoing a run that merely *vouched* for seed data would empty
+  the ledger and delete a node the pivot never brought.
+- **The ceiling is `pivotCandidateCeiling` in the options** (and `graph.pivots.candidateCeiling`
+  at runtime), defaulting to 10,000 — D17's "overridable through options", with no new nested
+  group for one number.
+- **`graph.batchChanges(fn)`** is the "clean `dataBatchChanged` emission" M1 asked for: one event
+  and one re-render for a whole ingest, undo or redo, rather than one per element. It coalesces
+  `onChange` as well, which is the half that actually costs — twelve nodes and twelve edges were
+  24 events and 24 renderer passes. Used only by the pivot pipeline; `updateData`'s own
+  double-fire is untouched and still its own bug.
+- **Carried edges follow *this run's* landed nodes.** An edge staged alongside a candidate stays
+  with that candidate until it lands, so ingesting 12 of 210 rows does not throw away the other
+  198 edges. An edge whose endpoints are all already on canvas is a triage row of its own (D24),
+  and an edge with an endpoint that is neither staged nor on canvas is never offered, because it
+  could never land.
+- **An auto-ingest leaves nothing staged**, even after an `onBeforeIngest` veto: nothing was ever
+  offered for triage, so nothing is left waiting for it.
+
+### 14.2 What M1 found in the rest of the library
+
+- **`addNode` does not register a container's children in the graph's node map.** `_setData`
+  recurses into `children`, `addNode` does not — so an ingested MISP container has its 12 children
+  as `Node` objects (and expands correctly), but `getNodeCount()` does not see them. M1b touches
+  this area; it is the right place to decide whether ingest should recurse.
+- **Adding nodes moves the graph even with `simulation.enabled: false`.** `Simulation.update()`
+  ends in `restart()`, which sets `engineRunning = true` unconditionally, and the render tick then
+  settles the new nodes by a few tens of pixels. Harmless here, and the reason the placement tests
+  assert a centroid rather than a per-node bound — but it means "physics off" is not quite off.
+- **`Graph.getNode()` returns `structuredClone(node)`**, which does not preserve the prototype, so
+  the result has no `Node` methods at all. Provenance is therefore read through
+  `getMutableNode(id).getSources()`. Pre-existing, and worth its own fix.
+
+### 14.3 §13's test list, against what is covered
+
+Covered by the new spec: zero provider calls on load and on applicability; one aggregated
+`summarize` for a multi-node origin; a superseded `summarize` dropped; the cache and
+`invalidate`; the gate refusing at 2,143 against a cap of 2,000 and lifting at 210; candidates
+absent from the graph until ingest; ingest landing exactly the chosen subset; origin-seeded and
+viewport-centre placement (D22); dedup leaving data untouched (D23); edge-only rows (D24);
+`onBeforeIngest` called once, vetoing, and narrowing — including for an `autoIngest` pivot;
+provenance across two pivots plus `removeBySource`; rejection memory per pivot, "reject all
+remaining", and a closed pane rejecting nothing; the 10,000 ceiling and a failing `fetch` with a
+retry; run-scoped undo/redo with no refetch, and two runs of one pivot undone separately;
+declared potential as data.
+
+Still to cover: everything under union by id (M1b), and the facet-count arithmetic as rendered
+(M2/M3).

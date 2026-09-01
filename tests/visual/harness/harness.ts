@@ -34,10 +34,16 @@ import type { RailMode } from '../../../src/ui/ModeStore'
 import type { UIManager } from '../../../src/ui/UIManager'
 import type { RailModeDefinition, RailTool } from '../../../src/interfaces/GraphUI'
 import type { RenderContext } from '../../../src/interfaces/AsyncContent'
+import type { RawEdge, RawNode } from '../../../src/interfaces/GraphOptions'
+import type {
+    PivotDefinition, PivotNarrowing, PivotResult, PivotRunOutcome, PivotSummary,
+} from '../../../src/interfaces/Pivot'
 import { Edge as EdgeInstance, type Edge } from '../../../src/Edge'
 import type {
     DeleteContext,
     DeleteDecision,
+    IngestContext,
+    IngestDecision,
     EdgeCreateContext,
     EdgeCreateDecision,
     InterractionCallbacks,
@@ -741,6 +747,72 @@ export interface AnchorProbe {
     borderBox: { halfWidth: number; halfHeight: number } | null
 }
 
+/**
+ * Fake pivot providers, mirroring the PRD's §6 spec so the walkthrough numbers
+ * (2,143 / 210 / 12) fall out of the data rather than being asserted: the AIL
+ * facet counts sum exactly, and *URLs* alone is 210, so the cap genuinely lifts.
+ */
+export type PivotFixtureName =
+    | 'ail-correlation'
+    | 'misp-event-objects'
+    | 'oversized'
+    | 'search-ail'
+    | 'blind'
+
+/** One provider call, as the log records it — how "zero calls" is demonstrated. */
+export interface PivotCall {
+    pivot: string
+    call: 'summarize' | 'fetch'
+    /** The origin the call was made with, so a bulk run can be seen to be one request. */
+    nodes: string[]
+    narrowing: PlainObject
+    outcome: 'served' | 'cancelled' | 'failed'
+}
+
+/** What `loadWithPivots` installs. */
+export interface PivotFixtureSpec {
+    /** Which fake pivots to register. Defaults to all of them. */
+    pivots?: PivotFixtureName[]
+    /** Latency for every provider call, in ms. @default 0 */
+    latency?: number
+    /** Existing node ids the AIL provider re-uses, so dedup has something to skip. */
+    collide?: string[]
+    /** Edges between nodes already on canvas — the edge-only triage rows. */
+    edgeOnly?: Array<[string, string]>
+    /** Reject the next provider call. */
+    fail?: boolean
+    /** Absolute candidate ceiling, when a test wants a reachable one. */
+    ceiling?: number
+}
+
+/** `onBeforeIngest` behaviours, since a function can't cross `page.evaluate`. */
+export type IngestHookBehavior = 'accept' | 'accept-async' | 'veto' | 'narrow-first' | 'narrow-none' | 'confirm'
+
+/** A serialisable {@link PivotRunOutcome}. */
+export interface RecordedRunOutcome {
+    status: string
+    runId: string
+    nodes: string[]
+    edges: string[]
+    deduped: number
+    suppressed: number
+    refusal: { kind: string; count: number; limit: number } | null
+    error: string | null
+}
+
+/** A serialisable candidate set — what the triage pane will render in M2. */
+export interface RecordedCandidates {
+    fetched: number
+    deduped: number
+    suppressed: number
+    loading: boolean
+    error: string | null
+    refused: { kind: string; count: number; limit: number } | null
+    rows: Array<{ id: string; deduped: boolean; state: string }>
+    edgeRows: Array<{ id: string; state: string }>
+    carried: number
+}
+
 export interface HarnessApi {
     /** Build a graph from a named fixture; resolves once it has finished rendering. */
     load(name: FixtureName, overrides?: PlainObject): Promise<void>
@@ -759,6 +831,66 @@ export interface HarnessApi {
     growAuto(count: number, radius: number): void
     /** What auto chose, what the layout looks like, and what the camera made of it. */
     autoState(): AutoState
+
+    // --- Pivots (M1: the pipeline, driven without a pane) ---------------------------
+
+    /**
+     * Boot a fixture with the fake pivot providers registered through the `pivots`
+     * option — the door that lands before the UI is built.
+     */
+    loadWithPivots(name: FixtureName, spec?: PivotFixtureSpec, overrides?: PlainObject): Promise<void>
+    /** Every provider call since the last load or reset, in order. */
+    pivotCalls(): PivotCall[]
+    resetPivotCalls(): void
+    /** Make the next provider call reject, or stop doing so. */
+    setPivotFail(fail: boolean): void
+    /** `graph.pivots.for(nodes)` — which pivots apply to these ids (none = an empty origin). */
+    pivotsFor(nodeIds?: string[]): string[]
+    /** Register / unregister at runtime, to watch the registry drive the rail gate. */
+    registerTestPivot(name: PivotFixtureName): void
+    unregisterPivot(id: string): void
+    pivotCount(): number
+    /** `graph.pivots.summarize` — resolves `null` when the call was superseded. */
+    pivotSummarize(id: string, nodeIds?: string[], narrowing?: PivotNarrowing): Promise<{ total: number; facets: Array<{ key: string; type: string; options: number }> } | null>
+    /** Start a summarize without awaiting it, so the next one supersedes it. */
+    startPivotSummarize(id: string, nodeIds?: string[], narrowing?: PivotNarrowing): void
+    /** How the summarizes started with {@link startPivotSummarize} settled. */
+    summarizeResults(): Array<{ id: string; total: number | null }>
+    cachedPivotSummary(id: string, nodeIds?: string[], narrowing?: PivotNarrowing): number | null
+    invalidatePivot(id?: string, nodeIds?: string[]): void
+    cancelPivot(id?: string): void
+    /** `graph.pivots.run` — the gate, then either staging or an auto-ingest. */
+    runPivot(id: string, nodeIds?: string[], narrowing?: PivotNarrowing): Promise<RecordedRunOutcome>
+    /** The staged candidates for one pivot, or `null` when nothing is staged. */
+    pivotCandidates(id: string): RecordedCandidates | null
+    markPivotCandidates(id: string, ids: string[] | 'all'): void
+    rejectPivotCandidates(id: string, ids: string[]): void
+    rejectRemainingPivotCandidates(id: string): void
+    rejectedPivotIds(id: string): string[]
+    discardPivot(id: string): void
+    ingestPivot(id: string): Promise<RecordedRunOutcome>
+    /** Install an `onBeforeIngest` behaviour, and count its calls. */
+    configureIngestHook(behavior: IngestHookBehavior): void
+    ingestHookCalls(): number
+    /** What the hook was handed, so "once, with the whole set" is observable. */
+    ingestHookContexts(): Array<{ pivotId: string; origin: string[]; nodes: string[]; edges: string[]; trigger: string }>
+    undoPivot(runId?: string): string | null
+    redoPivot(): string | null
+    pivotRunIds(): string[]
+    /** Provenance. `'seed'` for anything no pivot vouches for. */
+    nodeSources(nodeId: string): string[]
+    edgeSources(edgeId: string): string[]
+    removeBySource(source: string): { nodes: string[]; edges: string[] }
+    /** Declared potential — the data half of the rim badges. */
+    setNodePotential(nodeId: string, pivotId: string, count: number): void
+    nodePotentials(nodeId: string): Array<[string, number]>
+    /** Point the view at a graph-space position, so "the viewport centre" is not the origin. */
+    pointViewAt(x: number, y: number): void
+    /** How many child nodes a container holds — what a union or a nested result is judged on. */
+    childCount(nodeId: string): number
+    /** How many entries each `dataBatchChanged` since the last load carried. */
+    batchSizes(): number[]
+    resetBatchSizes(): void
     /** Reheats since the last `loadAuto` or `resetReheatCount`. */
     reheatCount(): number
     resetReheatCount(): void
@@ -1312,6 +1444,49 @@ export interface HarnessApi {
     noteIds(): string[]
 }
 
+
+/** Every fake pivot, which is what `loadWithPivots` installs by default. */
+const ALL_FAKE_PIVOTS: PivotFixtureName[] = [
+    'ail-correlation', 'misp-event-objects', 'oversized', 'search-ail', 'blind',
+]
+
+/**
+ * The AIL breakdown from the PRD's fake-provider spec. The counts sum to exactly
+ * 2,143 and *URLs* alone is 210, so the cap lifts because the arithmetic says so.
+ */
+const AIL_TYPES = [
+    { value: 'domain', label: 'Domains', count: 1800 },
+    { value: 'url', label: 'URLs', count: 210 },
+    { value: 'paste', label: 'Pastes', count: 95 },
+    { value: 'ip', label: 'IPs', count: 38 },
+]
+
+/** Which types a narrowing chose — all of them when it chose none. */
+function chosenTypes(narrowing: PivotNarrowing): typeof AIL_TYPES {
+    const chosen = narrowing.type
+    if (!Array.isArray(chosen) || chosen.length === 0) return AIL_TYPES
+    const wanted = chosen.map(String)
+    return AIL_TYPES.filter((type) => wanted.includes(type.value))
+}
+
+function ailTotal(narrowing: PivotNarrowing): number {
+    return chosenTypes(narrowing).reduce((sum, type) => sum + type.count, 0)
+}
+
+/** A run outcome, flattened for `page.evaluate`. */
+function recordOutcome(outcome: PivotRunOutcome): RecordedRunOutcome {
+    return {
+        status: outcome.status,
+        runId: outcome.runId,
+        nodes: outcome.nodes.map((node) => node.id),
+        edges: outcome.edges.map((edge) => edge.id),
+        deduped: outcome.deduped,
+        suppressed: outcome.suppressed,
+        refusal: outcome.refusal ? { ...outcome.refusal } : null,
+        error: outcome.error ? String((outcome.error as Error).message ?? outcome.error) : null,
+    }
+}
+
 class Harness implements HarnessApi {
     public graph?: Pivotick
     private readonly container: HTMLElement
@@ -1352,6 +1527,15 @@ class Harness implements HarnessApi {
     private dockTabDisposers = new Map<string, () => void>()
     /** What `loadWithPluginPane`'s pane has recorded, painted or not. */
     private pluginPaneEntries: string[] = []
+    /** Pivot observation state, reset by {@link loadWithPivots}. */
+    private pivotSpec: PivotFixtureSpec = {}
+    private pivotLog: PivotCall[] = []
+    private pivotFail = false
+    private ingestHook: IngestHookBehavior = 'accept'
+    private ingestHookCallCount = 0
+    private seenIngestContexts: Array<{ pivotId: string; origin: string[]; nodes: string[]; edges: string[]; trigger: string }> = []
+    private summarizeSettled: Array<{ id: string; total: number | null }> = []
+    private batchLog: number[] = []
 
     constructor(container: HTMLElement) {
         this.container = container
@@ -3809,6 +3993,395 @@ class Harness implements HarnessApi {
             coverage: measured.fill * zoom,
         }
     }
+
+    // --- Pivots ------------------------------------------------------------------------
+
+    async loadWithPivots(name: FixtureName, spec: PivotFixtureSpec = {}, overrides: PlainObject = {}): Promise<void> {
+        this.pivotSpec = spec
+        this.pivotFail = spec.fail === true
+        this.pivotLog = []
+        this.summarizeSettled = []
+        this.batchLog = []
+        this.ingestHook = 'accept'
+        this.ingestHookCallCount = 0
+        this.seenIngestContexts = []
+
+        const names = spec.pivots ?? ALL_FAKE_PIVOTS
+        const options: PlainObject = { pivots: names.map((n) => this.fakePivot(n)) }
+        if (spec.ceiling !== undefined) options.pivotCandidateCeiling = spec.ceiling
+        await this.boot(name, mergeOptions(options, overrides))
+        // Registered after the load, so the fixture's own batch isn't counted.
+        this.g.on('dataBatchChanged', (changes) => { this.batchLog.push(changes.length) })
+    }
+
+    pivotCalls(): PivotCall[] {
+        return this.pivotLog.map((call) => ({ ...call }))
+    }
+
+    resetPivotCalls(): void {
+        this.pivotLog = []
+    }
+
+    setPivotFail(fail: boolean): void {
+        this.pivotFail = fail
+    }
+
+    pivotsFor(nodeIds: string[] = []): string[] {
+        return this.g.pivots.for(this.pivotNodes(nodeIds)).map((def) => def.id)
+    }
+
+    registerTestPivot(name: PivotFixtureName): void {
+        this.g.pivots.register(this.fakePivot(name))
+    }
+
+    unregisterPivot(id: string): void {
+        this.g.pivots.unregister(id)
+    }
+
+    pivotCount(): number {
+        return this.g.pivots.size
+    }
+
+    async pivotSummarize(
+        id: string,
+        nodeIds: string[] = [],
+        narrowing: PivotNarrowing = {}
+    ): Promise<{ total: number; facets: Array<{ key: string; type: string; options: number }> } | null> {
+        const summary = await this.g.pivots.summarize(id, this.pivotNodes(nodeIds), narrowing)
+        if (!summary) return null
+        return {
+            total: summary.total,
+            facets: (summary.facets ?? []).map((facet) => ({
+                key: facet.key,
+                type: facet.type,
+                options: facet.options?.length ?? 0,
+            })),
+        }
+    }
+
+    startPivotSummarize(id: string, nodeIds: string[] = [], narrowing: PivotNarrowing = {}): void {
+        void this.g.pivots.summarize(id, this.pivotNodes(nodeIds), narrowing)
+            .then((summary) => { this.summarizeSettled.push({ id, total: summary?.total ?? null }) })
+            .catch(() => { this.summarizeSettled.push({ id, total: null }) })
+    }
+
+    summarizeResults(): Array<{ id: string; total: number | null }> {
+        return [...this.summarizeSettled]
+    }
+
+    cachedPivotSummary(id: string, nodeIds: string[] = [], narrowing: PivotNarrowing = {}): number | null {
+        return this.g.pivots.cachedSummary(id, this.pivotNodes(nodeIds), narrowing)?.total ?? null
+    }
+
+    invalidatePivot(id?: string, nodeIds?: string[]): void {
+        this.g.pivots.invalidate(id, nodeIds ? this.pivotNodes(nodeIds) : undefined)
+    }
+
+    cancelPivot(id?: string): void {
+        this.g.pivots.cancel(id)
+    }
+
+    async runPivot(id: string, nodeIds: string[] = [], narrowing: PivotNarrowing = {}): Promise<RecordedRunOutcome> {
+        return recordOutcome(await this.g.pivots.run(id, this.pivotNodes(nodeIds), narrowing))
+    }
+
+    pivotCandidates(id: string): RecordedCandidates | null {
+        const set = this.g.pivots.candidates(id)
+        if (!set) return null
+        return {
+            fetched: set.fetched,
+            deduped: set.deduped,
+            suppressed: set.suppressed,
+            loading: set.loading,
+            error: set.error ? String((set.error as Error).message ?? set.error) : null,
+            refused: set.refused ? { ...set.refused } : null,
+            rows: set.nodes.map((c) => ({ id: c.id, deduped: c.deduped, state: c.state })),
+            edgeRows: set.edges.map((e) => ({ id: e.id, state: e.state })),
+            carried: set.carried?.length ?? 0,
+        }
+    }
+
+    markPivotCandidates(id: string, ids: string[] | 'all'): void {
+        if (ids === 'all') {
+            this.g.pivots.markAll(id)
+            return
+        }
+        for (const candidateId of ids) this.g.pivots.mark(id, candidateId)
+    }
+
+    rejectPivotCandidates(id: string, ids: string[]): void {
+        this.g.pivots.reject(id, ids)
+    }
+
+    rejectRemainingPivotCandidates(id: string): void {
+        this.g.pivots.rejectRemaining(id)
+    }
+
+    rejectedPivotIds(id: string): string[] {
+        return this.g.pivots.rejectedIds(id)
+    }
+
+    discardPivot(id: string): void {
+        this.g.pivots.discard(id)
+    }
+
+    async ingestPivot(id: string): Promise<RecordedRunOutcome> {
+        return recordOutcome(await this.g.pivots.ingest(id))
+    }
+
+    configureIngestHook(behavior: IngestHookBehavior): void {
+        this.ingestHook = behavior
+        this.ingestHookCallCount = 0
+        this.seenIngestContexts = []
+
+        const opts = this.g.getOptions() as { callbacks?: InterractionCallbacks }
+        const callbacks: InterractionCallbacks = opts.callbacks ?? (opts.callbacks = {})
+        callbacks.onBeforeIngest = async (ctx: IngestContext): Promise<IngestDecision> => {
+            this.ingestHookCallCount++
+            this.seenIngestContexts.push({
+                pivotId: ctx.pivotId,
+                origin: ctx.origin.map((node) => node.id),
+                nodes: ctx.candidates.nodes.map((raw) => String(raw.id)),
+                edges: ctx.candidates.edges.map((raw) => String(raw.id ?? `${raw.from}-${raw.to}`)),
+                trigger: ctx.trigger,
+            })
+            if (behavior === 'accept-async') await new Promise((resolve) => setTimeout(resolve, 40))
+            if (behavior === 'veto') return false
+            if (behavior === 'narrow-first') return { accept: true, nodes: ctx.candidates.nodes.slice(0, 1) }
+            if (behavior === 'narrow-none') return { accept: true, nodes: [], edges: [] }
+            if (behavior === 'confirm') return await ctx.confirm({ title: 'Ingest?' })
+            return true
+        }
+    }
+
+    ingestHookCalls(): number {
+        return this.ingestHookCallCount
+    }
+
+    ingestHookContexts(): Array<{ pivotId: string; origin: string[]; nodes: string[]; edges: string[]; trigger: string }> {
+        return this.seenIngestContexts.map((ctx) => ({ ...ctx }))
+    }
+
+    undoPivot(runId?: string): string | null {
+        return this.g.pivots.undo(runId)?.runId ?? null
+    }
+
+    redoPivot(): string | null {
+        return this.g.pivots.redo()?.runId ?? null
+    }
+
+    pivotRunIds(): string[] {
+        return this.g.pivots.runs().map((run) => run.runId)
+    }
+
+    nodeSources(nodeId: string): string[] {
+        return this.g.getMutableNode(nodeId)?.getSources() ?? []
+    }
+
+    edgeSources(edgeId: string): string[] {
+        return this.g.getMutableEdge(edgeId)?.getSources() ?? []
+    }
+
+    removeBySource(source: string): { nodes: string[]; edges: string[] } {
+        const removed = this.g.removeBySource(source)
+        return {
+            nodes: removed.nodes.map((node) => node.id),
+            edges: removed.edges.map((edge) => edge.id),
+        }
+    }
+
+    setNodePotential(nodeId: string, pivotId: string, count: number): void {
+        this.g.getMutableNode(nodeId)?.setPotential(pivotId, count)
+    }
+
+    nodePotentials(nodeId: string): Array<[string, number]> {
+        return [...(this.g.getMutableNode(nodeId)?.getPotentials() ?? [])]
+    }
+
+    pointViewAt(x: number, y: number): void {
+        this.g.renderer.setViewport({ x, y })
+    }
+
+    childCount(nodeId: string): number {
+        return this.g.getMutableNode(nodeId)?.children.length ?? -1
+    }
+
+    batchSizes(): number[] {
+        return [...this.batchLog]
+    }
+
+    resetBatchSizes(): void {
+        this.batchLog = []
+    }
+
+    /** Live nodes for the ids a test names — an empty list is a legitimate empty origin. */
+    private pivotNodes(ids: string[]): Node[] {
+        return ids
+            .map((id) => this.g.getMutableNode(id))
+            .filter((node): node is Node => !!node)
+    }
+
+    /**
+     * Log the call, apply the configured latency and failure, then honour
+     * cancellation — so the call log tells served from cancelled from failed.
+     */
+    private async serveProvider<T>(
+        pivot: string,
+        call: 'summarize' | 'fetch',
+        nodes: Node[],
+        narrowing: PivotNarrowing,
+        ctx: RenderContext,
+        produce: () => T
+    ): Promise<T> {
+        const entry: PivotCall = {
+            pivot,
+            call,
+            nodes: nodes.map((node) => node.id),
+            narrowing: { ...narrowing },
+            outcome: 'served',
+        }
+        this.pivotLog.push(entry)
+
+        if (this.pivotFail) {
+            this.pivotFail = false
+            entry.outcome = 'failed'
+            throw new Error(`${pivot}.${call} failed`)
+        }
+        const latency = this.pivotSpec.latency ?? 0
+        if (latency) await new Promise((resolve) => setTimeout(resolve, latency))
+        if (ctx.isStale()) {
+            entry.outcome = 'cancelled'
+            throw new DOMException(`${pivot}.${call} aborted`, 'AbortError')
+        }
+        return produce()
+    }
+
+    /** One of the fake providers from the PRD's fake-provider spec. */
+    private fakePivot(name: PivotFixtureName): PivotDefinition {
+        switch (name) {
+            case 'ail-correlation':
+                return {
+                    id: 'ail-correlation',
+                    label: 'Correlations',
+                    maxCandidates: 2000,
+                    summarize: (nodes, narrowing, ctx) => this.serveProvider(
+                        'ail-correlation', 'summarize', nodes, narrowing, ctx,
+                        (): PivotSummary => ({
+                            total: ailTotal(narrowing),
+                            facets: [
+                                {
+                                    key: 'type',
+                                    label: 'Type',
+                                    type: 'multiselect',
+                                    options: AIL_TYPES.map((t) => ({ label: t.label, value: t.value, count: t.count })),
+                                },
+                                { key: 'seen', label: 'First seen', type: 'numberRange' },
+                            ],
+                        })
+                    ),
+                    fetch: (nodes, narrowing, ctx) => this.serveProvider(
+                        'ail-correlation', 'fetch', nodes, narrowing, ctx,
+                        () => this.ailFragment(narrowing, nodes)
+                    ),
+                }
+            case 'misp-event-objects':
+                return {
+                    id: 'misp-event-objects',
+                    label: 'Objects & attributes',
+                    autoIngest: true,
+                    appliesTo: (nodes) => nodes.length === 1,
+                    fetch: (nodes, narrowing, ctx) => this.serveProvider(
+                        'misp-event-objects', 'fetch', nodes, narrowing, ctx,
+                        (): PivotResult => ({
+                            nodes: [{
+                                id: `event-${nodes[0]?.id ?? 'orphan'}`,
+                                data: { label: 'Event 5f2a', type: 'event' },
+                                children: Array.from({ length: 12 }, (_, i) => ({
+                                    id: `object-${i}`,
+                                    data: { label: `object ${i}`, type: 'object' },
+                                })),
+                            }],
+                            edges: nodes[0] ? [{ from: nodes[0].id, to: `event-${nodes[0].id}` }] : [],
+                        })
+                    ),
+                }
+            case 'oversized':
+                return {
+                    id: 'oversized',
+                    label: 'Everything, everywhere',
+                    fetch: (nodes, narrowing, ctx) => this.serveProvider(
+                        'oversized', 'fetch', nodes, narrowing, ctx,
+                        (): PivotResult => ({
+                            nodes: Array.from({ length: 14_203 }, (_, i) => ({ id: `huge-${i}` })),
+                            edges: [],
+                        })
+                    ),
+                }
+            case 'search-ail':
+                return {
+                    id: 'search-ail',
+                    label: 'Search AIL',
+                    origin: 'none',
+                    summarize: (nodes, narrowing, ctx) => this.serveProvider(
+                        'search-ail', 'summarize', nodes, narrowing, ctx,
+                        (): PivotSummary => ({
+                            total: 30,
+                            facets: [{ key: 'query', label: 'Query', type: 'text' }],
+                        })
+                    ),
+                    fetch: (nodes, narrowing, ctx) => this.serveProvider(
+                        'search-ail', 'fetch', nodes, narrowing, ctx,
+                        (): PivotResult => ({
+                            nodes: Array.from({ length: 30 }, (_, i) => ({
+                                id: `hit-${i}`,
+                                data: { label: `hit ${i}`, query: String(narrowing.query ?? '') },
+                            })),
+                            edges: [],
+                        })
+                    ),
+                }
+            case 'blind':
+                return {
+                    id: 'blind',
+                    label: 'No advertised count',
+                    maxCandidates: 1,
+                    fetch: (nodes, narrowing, ctx) => this.serveProvider(
+                        'blind', 'fetch', nodes, narrowing, ctx,
+                        (): PivotResult => ({
+                            nodes: Array.from({ length: 3 }, (_, i) => ({ id: `blind-${i}` })),
+                            edges: [],
+                        })
+                    ),
+                }
+        }
+    }
+
+    /**
+     * The AIL fragment, sized by the narrowing so 2,143 → 210 is the same arithmetic
+     * in both calls. The first `collide` ids are re-used from the graph, which is what
+     * dedup has to skip.
+     */
+    private ailFragment(narrowing: PivotNarrowing, origin: Node[]): PivotResult {
+        const collide = this.pivotSpec.collide ?? []
+        const nodes: RawNode[] = []
+        for (const type of chosenTypes(narrowing)) {
+            for (let i = 0; i < type.count; i++) {
+                const seq = nodes.length
+                nodes.push({
+                    id: seq < collide.length ? collide[seq] : `${type.value}-${i}`,
+                    data: { label: `${type.value} ${i}`, type: type.value, seen: i },
+                })
+            }
+        }
+        const edges: RawEdge[] = origin[0]
+            ? nodes.map((node) => ({ from: origin[0].id, to: node.id, data: { label: 'correlates' } }))
+            : []
+        for (const [from, to] of this.pivotSpec.edgeOnly ?? []) {
+            edges.push({ id: `only-${from}-${to}`, from, to, data: { label: 'correlates' } })
+        }
+        return { nodes, edges }
+    }
+
 }
 
 /** {@link HarnessApi.autoState}'s return shape. */
