@@ -82,6 +82,20 @@ const CARD_PREP = {
         await page.locator('.pvt-moderail-button[data-mode="pivot"]').click()
         await page.locator('.pvt-pivot-count').first().waitFor({ state: 'visible', timeout: 10_000 })
     },
+    // Same entry, one step further: this card's subject is the triage pane rather than
+    // the panel, so fetch as well. The fixture declares a pivotable node first — its
+    // case node is excluded by every `appliesTo`, and would offer nothing to fetch.
+    'pivot-triage': async (page) => {
+        const { x, y } = await nodeCenter(page.locator('.pvt-canvas .node').first())
+        await page.mouse.click(x, y)
+        await page.locator('.pvt-moderail-button[data-mode="pivot"]').click()
+        await page.locator('.pvt-pivot-count').first().waitFor({ state: 'visible', timeout: 10_000 })
+        await page
+            .locator('.pvt-pivot-entry', { hasText: 'Correlations' })
+            .locator('.pvt-pivot-button', { hasText: 'Fetch' })
+            .click()
+        await page.locator('.pvt-triage').first().waitFor({ state: 'visible', timeout: 10_000 })
+    },
 }
 
 async function captureCard(page, slug) {
