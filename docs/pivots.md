@@ -18,6 +18,54 @@ candidates · **reject** — an explicit act, remembered · **source** — prove
 See it working: the [Pivot & enrich](/examples/gallery/pivot-enrichment/content) gallery
 card.
 
+## Using one
+
+Everything below [Registering one](#registering-one) is written for whoever wires a pivot
+up. This section is the other half — what an analyst does with one, in order, and what each
+step costs a backend.
+
+**1 · Enter Pivot mode.** Press <kbd>P</kbd>, or click the **Pivot** slot on the left rail.
+The slot only exists while at least one pivot is registered. Nothing has been asked of any
+backend yet, and selecting nodes while the mode is closed asks nothing either — box-selecting
+fifty nodes to drag them must not fire fifty count queries.
+
+**2 · Pick an origin.** The origin is the node set the question is about. *Pick origin* is
+the resting tool, so a plain click sets it; *Lasso origin* draws around several. Whatever was
+already selected when you entered the mode **is** the origin, so arriving with a selection
+just works, and **Clear** empties it. An empty origin is not a dead end: pivots declared
+`origin: 'none'` — search, import, paste a list of indicators — are exactly the ones that
+apply when nothing is picked.
+
+**3 · Read what applies.** Entering the mode is the *intent* that runs `summarize`, once per
+applicable pivot, batched into one call for a multi-node origin. Each entry shows what its
+provider claims is out there — `~2,143` — and the tilde is load-bearing: it marks a number
+the provider asserted rather than one the library counted. A pivot with no `summarize` shows
+a bare **Run**. If nothing applies, the panel says so rather than showing an empty list.
+
+**4 · Narrow until the gate opens.** A pivot that declares `maxCandidates` puts **Fetch** out
+of reach while the count exceeds it, and says the number, the limit and the way forward.
+Ticking a narrowing control re-asks `summarize` with that choice, so 2,143 becomes 210 and
+**Fetch** turns on by itself. **Clear narrowing** starts over. This is the negotiation the
+whole feature exists for: you never fetch two thousand rows to find out you wanted twelve.
+
+**5 · Triage what came back.** Results do **not** touch the graph. They open a pane in the
+bottom dock — one tab per pivot, coexisting — where *Search rows…* filters (with a regex
+toggle), the columns sort, and marking rows is how you choose. *Select all n matching*
+respects the filter, so narrow-then-select-all is one gesture. **Reject selected** and
+**Reject all remaining** dispose of rows explicitly and are remembered for the session;
+**Close** rejects nothing, so anything you never ruled on comes back next time. **Re-run**
+asks again with the same narrowing — and if you have rows marked it offers *Show new* /
+*Keep triaging* rather than discarding your work unasked.
+
+**6 · Ingest, and undo if it was wrong.** **Ingest selected (12)** commits exactly those
+twelve, placed around the node you pivoted from, tagged with the pivot as their source. The
+toast reads `Ingested 12 nodes, 14 edges` and carries **Undo** — which takes the whole run
+back out, including edges and any children it merged in.
+
+Three doors lead to the same place: the rail mode, a node's context-menu **Pivot…** entry
+(absent, never disabled, when nothing applies), and a rim badge, which opens the mode scoped
+to its own pivot.
+
 ## Registering one
 
 Three doors, one registry, in the order you would reach for them:
@@ -36,6 +84,88 @@ ctx.addPivot(correlations)
 
 `graph.pivots` is the registry and the runtime both — `for()`, `run()`, `undo()`,
 `invalidate()` and the candidate model all hang off it.
+
+## A complete provider
+
+Everything a working pivot needs, with nothing elided. The rest of this page is the
+reference for each piece; this is the thing to copy first and cut down.
+
+```js
+// One helper, so the pivot below is about the contract rather than about HTTP.
+const post = (url, body, signal) =>
+    window.fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal,
+    }).then(res => {
+        if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
+        return res.json()
+    })
+
+const correlations = {
+    id: 'correlations',              // the provenance tag written on everything it lands
+    label: 'Correlations',           // shown verbatim, so translate it yourself
+    maxCandidates: 2000,             // refuse to fetch while the count is above this
+
+    // Which origins this offers itself for. Omit it and it applies to everything.
+    appliesTo: nodes => nodes.every(node => node.getData()?.type !== 'event'),
+
+    // The cheap call: what is out there, and what you could narrow by.
+    summarize: async (nodes, narrowing, { signal }) => {
+        const { total, byType } = await post('/api/correlations/count', {
+            ids: nodes.map(node => node.id),
+            types: narrowing.type ?? [],          // pass the narrowing on, or the gate can never lift
+        }, signal)
+
+        return {
+            total,                                 // judged against maxCandidates
+            facets: [{
+                key: 'type',                       // the key you will read back out of `narrowing`
+                label: 'Type',
+                type: 'multiselect',
+                options: byType.map(row => ({ label: row.label, value: row.value, count: row.count })),
+            }],
+        }
+    },
+
+    // The expensive call: a flat fragment, only ever run on a number the analyst agreed to.
+    fetch: async (nodes, narrowing, { signal }) => {
+        const { items } = await post('/api/correlations', {
+            ids: nodes.map(node => node.id),
+            types: narrowing.type ?? [],
+        }, signal)
+
+        return {
+            nodes: items.map(item => ({
+                id: item.uuid,                     // an id already on canvas is skipped, never overwritten
+                data: { label: item.value, type: item.type, seen: item.first_seen },
+            })),
+            edges: items.map(item => ({
+                from: item.origin_uuid,            // both endpoints must end up on canvas for the edge to land
+                to: item.uuid,
+                data: { type: 'correlation' },
+            })),
+        }
+    },
+}
+
+new Pivotick(document.querySelector('#graph'), data, { pivots: [correlations] })
+```
+
+Four things that are easy to get wrong, all of them visible above:
+
+- **`narrowing` is yours to honour.** It arrives as `{ [facetKey]: value }` using the keys
+  your own facets declared. Ignoring it is legal, but then the count never moves and a pivot
+  over the cap can never be unblocked.
+- **`signal` is not optional politeness.** Leaving Pivot mode, or changing the origin,
+  aborts questions in flight. Pass it to every request or you will pay for answers nobody
+  is waiting for. `ctx.isStale()` is the same check for non-`fetch` transports.
+- **Throw for a failure, return empty for an empty.** A thrown error surfaces on the pivot
+  entry with a **Retry**; `{ total: 0 }` is an honest "nothing out there" and reads
+  completely differently to an analyst.
+- **Ids are the dedup key.** Return the source system's stable id, not a per-response one,
+  or every re-run lands the same nodes again as fresh candidates.
 
 ## The provider contract
 
@@ -206,8 +336,8 @@ is separately undoable.
 
 ## The Pivot rail mode
 
-Where all of this is reached: a mode on the left rail with *Pick origin* and *Lasso origin*
-tools, the current **origin**, and the pivot list with its narrowing controls.
+The surface [Using one](#using-one) walks through — its tools, its origin and the pivot
+list. What matters when you are configuring rather than driving it is the rule underneath:
 
 Entering the mode is the **intent** that calls a provider; leaving it stops every question
 in flight. That is deliberate and it is the whole rule: the library never speculatively
@@ -224,10 +354,6 @@ UI: { pivotMode: false }    // never
 
 So a consumer who registers no pivots sees no trace of the feature. It is never mounted in
 `viewer` or `static` mode.
-
-Two other ways in, both landing in the same place: a node's context menu carries a
-**Pivot…** entry (absent, not disabled, where nothing applies), and a rim badge opens the
-mode scoped to its own pivot.
 
 ### Origin-less pivots
 

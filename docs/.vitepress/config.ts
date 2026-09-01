@@ -32,7 +32,6 @@ export default defineConfig({
           { text: 'Callbacks', link: '/callbacks' },
           { text: 'Edge layers', link: '/edge-layers' },
           { text: 'Layout', link: '/layout' },
-          { text: 'Pivots & enrichment', link: '/pivots' },
           { text: 'Render', link: '/render' },
           { text: 'Simulation', link: '/simulation' },
           {
@@ -53,6 +52,7 @@ export default defineConfig({
           { text: 'Pivotick API', link: '/api' },
         ]
       },
+      { text: 'Pivots & enrichment', link: '/pivots' },
       { text: 'Security', link: '/security' },
       { text: 'API docs', link: '/generated-api' },
       {
