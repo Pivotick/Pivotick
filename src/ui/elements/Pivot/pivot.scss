@@ -576,3 +576,10 @@
         margin-top: 8px;
     }
 }
+
+// Where a rim badge or a context-menu entry lands: the pivot that was asked about,
+// marked so it is not lost in a list of five.
+.pvt-pivot-entry.pvt-pivot-focus {
+    border-color: var(--pvt-theme-primary);
+    background-color: color-mix(in srgb, var(--pvt-theme-primary) 8%, transparent);
+}

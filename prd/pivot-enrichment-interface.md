@@ -682,7 +682,7 @@ edge-only rows in their own section (D24), the ingest action, explicit rejection
 all remaining" (D14), the post-ingest undo affordance (D25), and honest empty and error states —
 a failed `fetch` included.
 
-**M3 — surfaces and docs.** The **Pivot rail mode** (D26): a `kind: 'pointer'` mode gated on
+**M3 — surfaces and docs. DONE (2026-09-01).** The **Pivot rail mode** (D26): a `kind: 'pointer'` mode gated on
 `UI.pivotMode`, its *Pick origin* / *Lasso origin* tools, the origin display, and the pivot list
 with narrowing in its `render()` slot. `onEnter` triggers `summarize`, re-run live as the origin
 or the narrowing changes while the mode is active (D11), with an honest error state for a failed
@@ -697,18 +697,17 @@ Two small library changes this milestone depends on, both flagged by the Phase A
 **actionable notification** — an action, a longer lifetime, hover-pause, dismiss and a returned
 handle — without which the post-ingest undo of D25 has nowhere to live for `autoIngest` pivots.
 The notification **was built in M2** (§17.1), along with `DockTabHandle.setLabel`; the tool-panel
-width is all that is left.
+width landed in M3, along with three other rail-mode changes it turned out to need (§19.2).
 
 ## 11. Open questions
 
 The first pass's seven questions are all closed (D7 amended, D16–D21), and the review pass's
-findings are folded in (D22–D25 plus the amendments marked in §6). What remains is smaller, and
-all of it is M2-or-later:
+findings are folded in (D22–D25 plus the amendments marked in §6). What remains is smaller;
+§19.6 records where each landed once M3 was built:
 
-1. **The entry point for origin-less pivots (D19).** They cannot sit in the selection-driven
-   menu, so where? A rail mode is the consumer's to ship (`plugin-rail-modes.md`), which leaves
-   a mainheader action, a dock-pane action, or a slot the consumer fills. Decide during M3, when
-   there is something to place.
+1. ~~**The entry point for origin-less pivots (D19).**~~ **Closed in M3**: an empty origin is
+   where they live (C14), and once one is picked they fold into a *Without an origin (n)* group
+   at the foot of the panel. No second door, exactly as D19 argued.
 2. **Inner positions reset when an expanded container's subgraph is rebuilt (D7).** Accepted as
    the cost of the cheap implementation. Whether it is *tolerable in practice* is unknown until
    an analyst re-pivots an expanded event; revisit with the cluster/children/subgraph refactor
@@ -1093,3 +1092,115 @@ Two hand-offs from this milestone:
 - The controller already reports **every** run, including ones it did not trigger, so M3's
   "a failed `autoIngest` fetch reporting through the notifier" is the only reporting still
   missing: a failure produces no run, so nothing announces it.
+
+## 19. M3 as built (2026-09-01)
+
+The last milestone. Pivot mode is in `src/ui/elements/Pivot/`, driven by
+[`tests/visual/specs/pivot-mode.spec.ts`](../tests/visual/specs/pivot-mode.spec.ts) (23 cases).
+Where M2's spec asserted *what the pane shows*, this one mostly asserts **when a provider is
+called** — the D11 boundary is the half of this milestone no screenshot can see.
+
+**Files:** `Pivot/PivotMode.ts` (the gated registration, the two tools, the origin) ·
+`Pivot/PivotPanel.ts` (the panel and one `PivotEntry` per pivot — the S1–S10 machine) ·
+the panel half of `Pivot/pivot.scss` · `ui/lasso.ts` (the lasso, extracted) ·
+`UIManager.openPivotMode()` · a *Pivot…* entry in `ContextMenu` · potential badges in
+`renderers/svg/BadgeDrawer.ts` · `docs/pivots.md` · the `pivot-enrichment` gallery card.
+
+### 19.1 What the mode is, concretely
+
+`UI.pivotMode` defaults to `'auto'`, so the rail button follows the registry: it appears with
+the first pivot and goes with the last. The component is built in `full` and `light` and may
+still put no button on the rail — which is the shape D26 asked for, since a consumer with no
+pivots must see nothing rather than an empty mode.
+
+**The origin is the selection, while the mode is active.** *Pick origin* is the resting tool
+(the plain pointer) and *Lasso origin* is the same lasso Select mode has; both build a
+selection, and the panel reads it. This is the cheapest honest reading of "the node set the
+mode's own tools built", and it means the origin survives arriving in the mode with something
+already selected. `onEnter` asks; `onExit` stops asking.
+
+### 19.2 Four library changes it needed
+
+- **`RailModeDefinition.panelWidth`** — C15's 300px, per mode, cleared when the mode is left.
+- **`RailModeDefinition.keepPanelOpen`** — arming a tool normally collapses the panel so the
+  canvas is clear, which is right for Select's Lasso and wrong for a mode whose panel *is* the
+  workspace. Without it, *Lasso origin* hides the pivot list it is feeding.
+- **A registered mode's rail slot keeps the mode's name while its `defaultTool` is armed.** The
+  built-ins already do this — Select armed on Pointer still reads `Select` — but the registered
+  path took the armed tool's face unconditionally, so any mode declaring a resting tool was
+  permanently renamed by it. Fixing it is what lets Pivot declare *Pick origin* at all.
+- **`pivots.cancel(pivotId?, kind?)`** — leaving the mode must stop the *questions* it was
+  asking without cancelling a `fetch` that already has a candidate set and a pane (C3).
+
+Two smaller ones: the tool panel publishes `--pvt-toolpanel-height` and the bottom-left legend
+now caps against `max(rail, tool panel)` rather than the rail alone; and the cache-key separator
+in `PivotManager` is written as a `\u0000` escape rather than a literal NUL byte, which had been
+quietly making the whole file binary to `grep` and `rg`.
+
+### 19.3 Where it reads differently from the states doc
+
+- **The count line drops the noun.** S3 specs `~2,143 correlations`, but the entry's heading
+  already says *Correlations*; repeating it says the same thing twice — the argument M2 used for
+  the tab count. So it is `~2,143`, and C2's multi-node form is `~2,143 across 3 nodes`.
+- **Facet labels are used verbatim in the breakdown**, not lower-cased: `1,800 Domains · 210
+  URLs`. Lower-casing a provider's label is wrong the moment it is translated (a German noun is
+  capitalised), and "used verbatim" is what every other label in the library promises.
+- **C15's "the legend moves" became "the legend caps".** A tall Pivot panel does collide with the
+  bottom-left legend, but every other corner is occupied, and the legend *already* shrinks
+  against the mode rail's height and scrolls. Extending that same mechanism to the tool panel
+  costs one CSS `max()` and moves nothing under the analyst. The panel itself is not capped,
+  which is what C15 was actually protecting.
+- **The pane's *Re-run* still uses the narrowing its set was fetched with**, against §18's
+  hand-off. Now that the panel exists the two gestures mean different things and both are
+  wanted: the pane's is *run that query again* (its neighbour is a failed fetch's **Retry**), and
+  the panel's **Fetch** is *run the current one*, which replaces the set by D27 anyway. Reaching
+  across from the pane into a panel the analyst may not even have open would be the surprising
+  one.
+
+### 19.4 What it found
+
+- **A new entry both starts and is told the origin changed.** Clicking one node fires an
+  unselect then a select, so the origin empties and refills; the pivot entry is destroyed and
+  rebuilt in between, and the rebuilt one asked twice. Entries now remember which origin they
+  last asked about, which is a guard on the question rather than on who is asking.
+- **`RailModeDefinition.render()` is only re-invoked when the panel rebuilds** — confirmed; the
+  Phase B prototype had already found it. The panel is therefore a persistent element that
+  repaints its own parts, and the narrowing form is rebuilt only when the facets move, never
+  while a field has focus.
+- **A node's DOM id is randomised in a real page** (`node-id-R5o15Xfy`), so the thumbnail
+  script's node lookup has to go through `.pvt-canvas .node` — and `page.mouse` needs the embed
+  scrolled into view first, since a card with much prose above it sits 2,000px below the fold.
+- **The library draws no node labels by default** (`defaultNodeStyle.text` is `undefined`), which
+  is why the gallery card's nodes are bare circles like every other card's.
+
+### 19.5 §13's test list, against what is covered
+
+Covered by the new spec: the registry gate both ways plus `pivotMode: true|false`; selection
+firing zero calls and the mode firing exactly one per applicable pivot; a re-entry served from
+cache; the origin changing re-asking once; the empty-origin state (M3) and the origin-less group
+(C14); S3's count line and breakdown; C2's multi-node line; S7's bare **Run**; a declared
+potential as the only number before anything is asked; **the gate refusing and lifting through
+the real multiselect widget** — the one §17.5 left open; a fetch staging without moving the
+graph and linking into its pane; S6's retry; the 300px panel and its staying open when a tool is
+armed; the rail slot's face; the badge's compacted text, its self-contained tooltip and the
+scoped mode it opens; a potential for an unregistered pivot wearing nothing; a zero potential
+clearing; the context-menu entry routing in and being absent when nothing applies; a failed
+auto-ingest and an over-ceiling auto-ingest both reported through the notifier; and an
+origin-less run staging into the same pane.
+
+Not covered, and worth saying: **the panel in `light` mode**, where there is a rail but no dock,
+so a staged set has nowhere to show — the same shape as §17.5's note, and the `n in triage ▸`
+link simply has no tab to activate there.
+
+### 19.6 What is left of §11
+
+1. **The entry point for origin-less pivots** — closed. C14's empty origin is where they live,
+   and the *Without an origin (n)* group is what they fold into once one is picked.
+2. **Inner positions reset on an expanded container's re-merge** — still open, still deliberately
+   deferred to the cluster/children/subgraph refactor.
+3. **The 10,000 ceiling** — still a proposal, still not measured against a real AIL payload. M3
+   changed only its reporting: an auto-ingest that hits it now says so.
+4. Closed by D27 during M1.
+
+Every milestone in §10 is built. What this PRD does not cover, and never intended to, is §12 —
+persistence above all, which is its own document.

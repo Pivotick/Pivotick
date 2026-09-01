@@ -24,7 +24,7 @@ import { ViewFlyout } from './elements/ViewFlyout/ViewFlyout'
 import { PhysicsFlyout } from './elements/PhysicsFlyout/PhysicsFlyout'
 import { Legend } from './elements/Legend/Legend'
 import { Dock, type DockConfig } from './elements/Dock/Dock'
-import { PivotMode } from './elements/Pivot/PivotMode'
+import { PivotMode, PIVOT_MODE } from './elements/Pivot/PivotMode'
 import { PivotTriage } from './elements/Pivot/PivotTriage'
 import { Table } from './elements/Table/Table'
 import type { PivotickPlugin, PluginContext } from '../interfaces/Plugin'
@@ -425,6 +425,30 @@ export class UIManager {
     public get table(): Table | undefined { return this.byKey.get('table') as Table | undefined }
     public get tooltip(): Tooltip | undefined { return this.byKey.get('tooltip') as Tooltip | undefined }
     public get contextMenu(): ContextMenu | undefined { return this.byKey.get('contextMenu') as ContextMenu | undefined }
+    public get pivotMode(): PivotMode | undefined { return this.byKey.get('pivotMode') as PivotMode | undefined }
+
+    /**
+     * Enter Pivot mode with `nodes` as its origin — the route a rim badge and a context
+     * menu entry both take. Selecting the nodes is deliberate, not a side effect: the
+     * origin *is* the selection while the mode is active, and a badge click otherwise
+     * consumes the click that would have made it.
+     *
+     * `pivotId` scopes the arrival: that pivot's entry is brought into view and marked,
+     * so a badge for one pivot does not land the analyst on a list of five.
+     *
+     * A no-op where the mode does not exist — `UI.pivotMode: false`, no pivot registered,
+     * or a UI mode with no rail.
+     */
+    public openPivotMode(nodes: Node[] = [], pivotId?: string): void {
+        if (!this.modeStore.hasMode(PIVOT_MODE)) return
+        const interaction = this.graph.renderer.getGraphInteraction()
+        if (nodes.length) {
+            interaction.selectNodes(nodes.map(node => ({ node, element: node.getGraphElement() as SVGGElement })))
+        }
+        this.modeStore.setMode(PIVOT_MODE)
+        this.modeStore.setPanelOpen(PIVOT_MODE, true)
+        if (pivotId) this.pivotMode?.focus(pivotId)
+    }
 
     public getRootContainer(): HTMLElement {
         return this.container

@@ -49,6 +49,9 @@ async function waitForServer(url, timeoutMs = 120_000) {
 // so (like the visual-test harness) we drive them via bounding-box + page.mouse.
 const nodeCenter = async (locator) => {
     await locator.waitFor({ state: 'attached', timeout: 10_000 })
+    // `page.mouse` works in viewport coordinates, and the embed sits well below the
+    // fold on a card with much prose above it — measure only once it is on screen.
+    await locator.scrollIntoViewIfNeeded()
     const box = await locator.boundingBox()
     if (!box) throw new Error('node has no bounding box')
     return { x: box.x + box.width / 2, y: box.y + box.height / 2 }
@@ -69,6 +72,15 @@ const CARD_PREP = {
     'dock-panes': async (page) => {
         await page.locator('.pvt-dock-tab', { hasText: 'Summary' }).click()
         await page.locator('.pvt-dock-body').first().waitFor({ state: 'visible', timeout: 5_000 })
+    },
+    // Pick the origin and enter Pivot mode, because a static load shows only the rim
+    // badge — and the card is about the panel that badge is a hint towards.
+    'pivot-enrichment': async (page) => {
+        // The first node the fixture declares is the one with the potential on it.
+        const { x, y } = await nodeCenter(page.locator('.pvt-canvas .node').first())
+        await page.mouse.click(x, y)
+        await page.locator('.pvt-moderail-button[data-mode="pivot"]').click()
+        await page.locator('.pvt-pivot-count').first().waitFor({ state: 'visible', timeout: 10_000 })
     },
 }
 

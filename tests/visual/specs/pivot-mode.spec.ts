@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test'
-import { test, expect, gotoHarness, loadFixture, harness } from '../helpers'
+import { test, expect, gotoHarness, loadFixture, harness, nodeEl } from '../helpers'
 import type { PivotFixtureSpec } from '../harness/harness'
 
 // Pivot mode (M3): the rail mode that advertises what each pivot can reach, narrows it
@@ -20,6 +20,18 @@ const heading = (page: Page): Locator => panel(page).locator('.pvt-pivot-heading
 const originBlock = (page: Page): Locator => panel(page).locator('.pvt-pivot-origin')
 
 const button = (scope: Locator, name: string): Locator => scope.locator('button', { hasText: name }).first()
+
+/** The active rail mode, read from the live store. */
+const railMode = (page: Page): Promise<string> => page.evaluate(() =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window.__pivotick as any).graph.UIManager.modeStore.getMode() as string
+)
+
+/** Right-click a node, the way the context menu is actually reached. */
+const openNodeMenu = async (page: Page, id: string): Promise<void> => {
+    await nodeEl(page, id).click({ button: 'right' })
+    await expect(page.locator('.pvt-contextmenu')).toHaveClass(/shown/)
+}
 
 const load = async (page: Page, spec: PivotFixtureSpec = {}, overrides: object = FULL): Promise<void> => {
     await harness(page, 'loadWithPivots', 'basic', spec, overrides)
@@ -153,7 +165,7 @@ test.describe('pivot mode', () => {
         await enterMode(page)
 
         await expect(count(page, AIL)).toHaveText('~2,143')
-        await expect(breakdown(page, AIL)).toHaveText('1,800 domains · 210 urls · 95 pastes · 38 ips')
+        await expect(breakdown(page, AIL)).toHaveText('1,800 Domains · 210 URLs · 95 Pastes · 38 IPs')
     })
 
     test('a multi-node origin is one line, never one per node', async ({ page }) => {
@@ -250,6 +262,90 @@ test.describe('pivot mode', () => {
         // Back to Select and the built-in width returns.
         await page.locator('.pvt-moderail-button[data-mode="select"]').click()
         expect(await width()).toBe(216)
+    })
+
+    // ── the ways in (D12, C12, and the flat context-menu entry) ─────────────
+    test('a declared potential wears a badge that opens the mode scoped to it', async ({ page }) => {
+        await load(page)
+        await harness(page, 'setNodePotential', 'a', AIL, 2100)
+
+        const badge = nodeEl(page, 'a').locator('.pvt-node-badge').first()
+        // Three characters is all a badge draws, so 2,100 arrives as `2k` rather than
+        // being turned into `99+` on the way in (C11).
+        await expect(badge.locator('.pvt-node-badge-text')).toHaveText('2k')
+        // Self-contained, because the `+n` badge stacks these one per line (C13).
+        await expect(badge.locator('title')).toHaveText('~2,100 · Correlations')
+
+        await badge.click()
+        expect(await railMode(page)).toBe('pivot')
+        // The click is consumed by the badge, so selecting the node is deliberate here —
+        // and it has to be, because the origin is the selection.
+        await expect(originBlock(page)).toContainText('a')
+        await expect(entry(page, AIL)).toHaveClass(/pvt-pivot-focus/)
+    })
+
+    test('a potential for an unregistered pivot wears nothing', async ({ page }) => {
+        await load(page, { pivots: [] })
+        await harness(page, 'setNodePotential', 'a', AIL, 2100)
+
+        await expect(nodeEl(page, 'a').locator('.pvt-node-badge')).toHaveCount(0)
+    })
+
+    test('a zero potential clears the badge', async ({ page }) => {
+        await load(page)
+        await harness(page, 'setNodePotential', 'a', AIL, 12)
+        await expect(nodeEl(page, 'a').locator('.pvt-node-badge')).toHaveCount(1)
+
+        await harness(page, 'setNodePotential', 'a', AIL, 0)
+        await expect(nodeEl(page, 'a').locator('.pvt-node-badge')).toHaveCount(0)
+    })
+
+    test('the context menu routes into the mode, and is absent with no pivots', async ({ page }) => {
+        await load(page)
+        await openNodeMenu(page, 'a')
+        const item = page.locator('.pvt-contextmenu .pvt-action-item', { hasText: 'Pivot…' })
+        await expect(item).toHaveCount(1)
+
+        await item.click()
+        expect(await railMode(page)).toBe('pivot')
+        await expect(heading(page)).toHaveText('4 pivots apply')
+
+        // Nothing applies, so there is no entry — absent, never disabled.
+        await loadFixture(page, 'basic', FULL)
+        await openNodeMenu(page, 'a')
+        await expect(page.locator('.pvt-contextmenu .pvt-action-item', { hasText: 'Pivot…' })).toHaveCount(0)
+    })
+
+    // ── the one reporting gap M2 left ───────────────────────────────────────
+    test('a failed auto-ingest fetch is reported, since it has no pane', async ({ page }) => {
+        await load(page, { pivots: ['misp-event-objects'], fail: true })
+
+        await harness(page, 'runPivot', 'misp-event-objects', ['a'])
+
+        // No pane was ever offered, so the notifier is the only place this can be seen.
+        expect(await harness(page, 'dockTabIds')).toEqual(['table'])
+        await expect(page.locator('.pivotick-toast')).toContainText("Couldn't fetch Objects & attributes")
+    })
+
+    test('an auto-ingest over the ceiling says the number and the limit', async ({ page }) => {
+        await load(page, { pivots: ['oversized'], ceiling: 100, autoIngest: ['oversized'] })
+
+        await harness(page, 'runPivot', 'oversized', ['a'])
+
+        await expect(page.locator('.pivotick-toast')).toContainText('14,203 candidates, over the 100 limit')
+    })
+
+    // ── origin-less pivots (D19) ────────────────────────────────────────────
+    test('an origin-less pivot runs with no origin and stages into the same pane', async ({ page }) => {
+        await load(page)
+        await enterMode(page)
+
+        const search = entry(page, 'search-ail')
+        await expect(count(page, 'search-ail')).toHaveText('~30')
+        await button(search, 'Fetch').click()
+
+        await expect(search.locator('.pvt-pivot-triage-link')).toHaveText('30 in triage ▸')
+        expect(await harness(page, 'dockTabIds')).toEqual(['table', 'pivot-triage:search-ail'])
     })
 
     test('the rail slot keeps the mode name while its resting tool is armed', async ({ page }) => {

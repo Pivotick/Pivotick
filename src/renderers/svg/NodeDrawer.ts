@@ -88,7 +88,7 @@ export class NodeDrawer {
             })
         }
 
-        this.badgeDrawer.render(theNodeSelection, node, resolveBadges(style, node))
+        this.badgeDrawer.render(theNodeSelection, node, resolveBadges(style, node, this.graph))
 
         if (this.rendererOptions.enableNodeExpansion && node.hasChildren()) {
             if (node.expanded) {

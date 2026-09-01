@@ -48,6 +48,7 @@ listed in `plugins` and re-applied through `graph.use` without doubling up.
 | `addPanel(panel)` / `removePanel(id)` / `refreshPanel(id?)` | sidebar panels — the same door as `UI.extraPanels` |
 | `addDockTab(tab)` / `removeDockTab(id)` | a pane in the bottom dock — the same door the built-in table comes through |
 | `addRailMode(mode)` / `removeRailMode(id)` | a mode on the left rail, beside Select / Create / View / Physics |
+| `addPivot(definition)` | a runnable enrichment — see [Pivots & enrichment](/pivots) |
 | `onPhase(phase, cb)` | hook `afterMount` / `graphReady` / `destroy`; returns an unsubscribe |
 | `addKeybinding(binding)` | a shortcut that is removed when the UI is torn down |
 | `keyManager` | the keybinding registry, for anything more involved |

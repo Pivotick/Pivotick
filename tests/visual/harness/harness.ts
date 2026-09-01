@@ -785,6 +785,12 @@ export interface PivotFixtureSpec {
     /** Absolute candidate ceiling, when a test wants a reachable one. */
     ceiling?: number
     /**
+     * Flip these fixtures to `autoIngest`. The auto-ingest paths are the ones with no
+     * pane to carry a failure or a refusal, so a test needs to be able to put any
+     * provider on them.
+     */
+    autoIngest?: PivotFixtureName[]
+    /**
      * What the `union-children` pivot returns: one container, already on canvas, plus
      * the children to merge into it. A nested entry carries grandchildren, so the
      * recursion has something to recurse into.
@@ -4026,6 +4032,9 @@ class Harness implements HarnessApi {
 
         const names = spec.pivots ?? ALL_FAKE_PIVOTS
         const options: PlainObject = { pivots: names.map((n) => this.fakePivot(n)) }
+        for (const definition of options.pivots as PivotDefinition[]) {
+            if (spec.autoIngest?.includes(definition.id as PivotFixtureName)) definition.autoIngest = true
+        }
         if (spec.ceiling !== undefined) options.pivotCandidateCeiling = spec.ceiling
         await this.boot(name, mergeOptions(options, overrides))
         // Registered after the load, so the fixture's own batch isn't counted.
@@ -4214,6 +4223,9 @@ class Harness implements HarnessApi {
 
     setNodePotential(nodeId: string, pivotId: string, count: number): void {
         this.g.getMutableNode(nodeId)?.setPotential(pivotId, count)
+        // `setPotential` marks the node dirty; the badge appears on the next render, which
+        // is what a consumer setting one from a data handler would already be inside.
+        this.g.renderer.update()
     }
 
     nodePotentials(nodeId: string): Array<[string, number]> {

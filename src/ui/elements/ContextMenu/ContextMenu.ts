@@ -1,7 +1,7 @@
 import { Edge } from '../../../Edge'
 import type { Node } from '../../../Node'
 import { createActionList, createQuickActionList, generateSafeDomId } from '../../../utils/ElementCreation'
-import { addCircle, edit, expand, focusElement, fullscreen, graphEdgeIcon, hide, inspect, pin, selectNeighbor, stickyNote, trash, unpin } from '../../icons'
+import { addCircle, edit, expand, focusElement, fullscreen, graphEdgeIcon, hide, inspect, pin, selectNeighbor, sparkles, stickyNote, trash, unpin } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
 import './contextmenu.scss'
@@ -328,7 +328,33 @@ export class ContextMenu extends UIComponent {
         this.menuEdge = deepMerge(this.gate(defaultMenuEdge), this.uiManager.getOptions().contextMenu.menuEdge ?? {})
         this.menuNote = deepMerge(this.gate(defaultMenuNote), this.uiManager.getOptions().contextMenu.menuNote ?? {})
         this.menuCanvas = deepMerge(this.gate(defaultMenuCanvas), this.uiManager.getOptions().contextMenu.menuCanvas ?? {})
+        // Pivot's entry is added here rather than declared with the others because its
+        // `visible` has to read the live registry, and a predicate is resolved without
+        // `this` bound (`ElementCreation.tryResolveBoolean`).
+        this.menuNode.menu.unshift(this.pivotEntry())
         this.wrapOnclickActions()
+    }
+
+    /**
+     * *Pivot…* — one flat entry into Pivot mode with the clicked node as its origin.
+     * Absent rather than disabled where nothing applies, which is what `appliesTo`
+     * promises; absent too where the mode itself does not exist. Flat because the
+     * context menu has no submenus, so "Pivot ▸ one entry per pivot" would put a
+     * consumer's whole registry in the node menu.
+     */
+    private pivotEntry(): MenuActionItemOptions {
+        const ui = this.uiManager
+        return {
+            text: 'Pivot…',
+            title: 'Pivot…',
+            svgIcon: sparkles,
+            variant: 'outline-primary',
+            // The node menu only ever carries a node, so the cast is the shape of this
+            // section rather than an assumption about the element.
+            visible: (element) =>
+                !!ui.pivotMode && !!element && ui.graph.pivots.for([element as Node]).length > 0,
+            onclick: (_evt, element) => ui.openPivotMode(element ? [element as Node] : []),
+        }
     }
 
     /**

@@ -500,6 +500,9 @@ export class Node {
     /**
      * Declare how much more a pivot has for this node, without asking for any of it —
      * what the rim badge shows. `0` clears the declaration.
+     *
+     * Marks the node dirty like every other setter here, so the badge appears on the
+     * next render — call `graph.renderer.update()` if nothing else is about to.
      */
     setPotential(pivotId: string, count: number): void {
         if (!count) {

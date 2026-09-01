@@ -97,6 +97,18 @@ export class PivotPanel {
         for (const entry of this.entries.values()) entry.originChanged()
     }
 
+    /**
+     * Scope the panel to one pivot: its entry is scrolled to and marked. Deferred a frame
+     * because the caller is usually the same gesture that entered the mode, and the tool
+     * panel has not laid the entry out yet.
+     */
+    public focus(pivotId: string): void {
+        window.requestAnimationFrame(() => {
+            for (const [id, entry] of this.entries) entry.element().classList.toggle('pvt-pivot-focus', id === pivotId)
+            this.entries.get(pivotId)?.element().scrollIntoView({ block: 'nearest' })
+        })
+    }
+
     public destroy(): void {
         this.unsubscribe()
         for (const entry of this.entries.values()) entry.destroy()
@@ -417,8 +429,10 @@ class PivotEntry {
     private paintBreakdown(): void {
         const facets = this.summary?.facets ?? []
         const counted = facets.flatMap(facet => (facet.options ?? []).filter(o => o.count !== undefined))
+        // The label is the provider's, used verbatim like every other label in the
+        // library — lower-casing one would mangle a translated noun.
         this.breakdown.textContent = counted
-            .map(option => `${fmt(option.count as number)} ${option.label.toLowerCase()}`)
+            .map(option => `${fmt(option.count as number)} ${option.label}`)
             .join(' · ')
         this.breakdown.hidden = counted.length === 0
     }

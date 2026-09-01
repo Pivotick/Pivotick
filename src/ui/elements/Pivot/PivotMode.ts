@@ -126,6 +126,11 @@ export class PivotMode extends UIComponent {
         })
     }
 
+    /** Bring one pivot's entry into view and mark it — where a badge click lands. */
+    public focus(pivotId: string): void {
+        this.panel?.focus(pivotId)
+    }
+
     /** The nodes the mode is asking about: whatever is selected right now. */
     private origin(): Node[] {
         return this.uiManager.graph.renderer.getGraphInteraction()

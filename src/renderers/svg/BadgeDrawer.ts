@@ -95,12 +95,57 @@ interface PlacedBadge {
 }
 
 /**
- * Resolve `NodeStyle.badges` for one node. Kept here rather than in `getNodeStyle` so the
- * consumer's function runs once per render, next to the drawing that consumes it.
+ * Resolve `NodeStyle.badges` for one node, plus the declared potential the library adds
+ * of its own. Kept here rather than in `getNodeStyle` so the consumer's function runs
+ * once per render, next to the drawing that consumes it.
+ *
+ * The potential badges come *after* the declared ones, so a consumer who fills all four
+ * corners keeps them and the potential collapses into the `+n` — the rim is a hint, and
+ * the pivot panel is the full surface (D12).
  */
-export function resolveBadges(style: NodeStyle, node: Node): NodeBadge[] {
+export function resolveBadges(style: NodeStyle, node: Node, graph: Graph): NodeBadge[] {
     const declared = typeof style.badges === 'function' ? style.badges(node) : style.badges
-    return Array.isArray(declared) ? declared.filter(Boolean) : []
+    const own = Array.isArray(declared) ? declared.filter(Boolean) : []
+    return [...own, ...potentialBadges(node, graph)]
+}
+
+/**
+ * One badge per pivot that declared a potential for this node (D12).
+ *
+ * Only *declared* potential — never a queried count, which would materialise on one node
+ * the moment it was asked about and leave the canvas telling two different stories. A
+ * potential for a pivot nobody registered is skipped: there would be nothing to open.
+ */
+function potentialBadges(node: Node, graph: Graph): NodeBadge[] {
+    const potentials = node.getPotentials()
+    if (!potentials.size) return []
+
+    const badges: NodeBadge[] = []
+    for (const [pivotId, count] of potentials) {
+        if (!count || count < 0) continue
+        const definition = graph.pivots.get(pivotId)
+        if (!definition) continue
+        badges.push({
+            text: compactCount(count),
+            // Self-contained, because the automatic `+n` badge stacks the hidden badges'
+            // titles one per line — a fragment becomes gibberish up there.
+            title: `~${count.toLocaleString()} · ${definition.label}`,
+            onClick: (_event, clicked) => graph.UIManager?.openPivotMode([clicked], pivotId),
+        })
+    }
+    return badges
+}
+
+/**
+ * A count a badge can wear: three characters is the most it draws literally, so 2,100
+ * has to arrive as `2k` rather than being turned into `99+` on the way in.
+ */
+function compactCount(count: number): string {
+    if (count < 1000) return String(count)
+    if (count < 100_000) return `${Math.floor(count / 1000)}k`
+    // Nothing honest fits in three characters past here, and the tooltip carries the
+    // exact number anyway — so it says "lots", the same way an over-long badge does.
+    return '99+'
 }
 
 export class BadgeDrawer {
