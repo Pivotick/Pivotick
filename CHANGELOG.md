@@ -2,6 +2,53 @@
 
 ## Unreleased
 
+### Pivots: fetch more graph, and choose what lands
+
+- **`graph.pivots` runs enrichments and stages what comes back.** A pivot is two functions —
+  `summarize(nodes, narrowing, ctx)` for the cheap "what's out there", `fetch(...)` for the
+  real thing — declared through the `pivots` option, `graph.pivots.register()` or a plugin's
+  `ctx.addPivot`. Results are **candidates**: not in the graph, not in the table, not in a
+  facet count, until someone commits them. The hard part of walking a correlated dataset is
+  never the fetching; it is that 1,800 neighbours are useless on a canvas, so deciding what
+  lands is the feature.
+- **The narrowing gate refuses rather than truncates.** A pivot's `maxCandidates` is judged
+  against `summarize`'s advertised count, which re-runs as the analyst narrows — so a refusal
+  says the number, the limit and the way forward, and *lifts* once the narrowing brings the
+  count under the cap. An absolute `pivotCandidateCeiling` (10,000) backstops a provider that
+  ignores the cap. Nothing is ever silently sampled.
+- **A triage pane in the dock** — one tab per pivot that has been run, with the candidates as
+  a table you can search (regex included), filter per column, sort and page. Rows are marked,
+  ingested, or explicitly rejected; a rejection is remembered for the session, struck through
+  in place rather than swept away, and reversible. **Reject all remaining** is the one gesture
+  that turns 1,800 into 12. Closing the pane rejects nothing.
+- **Ingest is purely additive.** An id already on the canvas is skipped, never overwritten;
+  children merge into a container by id; edges follow their endpoints, except edges whose ends
+  are *both* already on canvas, which become triage rows of their own. The whole batch goes
+  through **`onBeforeIngest`** once — accept, veto, or hand back a narrowed set — and lands as
+  a single `dataBatchChanged`.
+- **Provenance and run-scoped undo.** Nodes and edges carry the set of sources vouching for
+  them (`getSources()`, `'seed'` for everything that was already there), `graph.removeBySource`
+  drops one source's contribution and deletes only what nothing else vouches for, and
+  `graph.pivots.undo(runId)` / `redo()` do the same for one run. The post-ingest toast carries
+  the undo.
+
+### Two things the pane needed, useful on their own
+
+- **A notification can carry an action, and outlive four seconds.** `notifier.success(title,
+  message, { action: { label, onClick }, duration })` returns a **handle** — so a toast can be
+  rewritten in place (`Ingested 12 — Undo` becoming `Undone — Redo`) or dismissed. With an
+  action a toast stays 12s instead of 4, pauses while the pointer is on it, and always draws a
+  dismiss control. Existing calls are unchanged.
+- **`DockTabHandle.setLabel(label)`** renames a tab in the strip without touching its body, its
+  scroll position or whether it is on show — which re-registering the tab to change a word
+  would have thrown away. Also `UIManager.setDockTabLabel(id, label)` and `ctx.setDockTabLabel`.
+
+### Breaking
+
+- **`InterractionCallbacks.onNodeExpansion` is gone.** It was declared but never called from
+  anywhere in the library, and its signature took an `Edge` where a node was meant. Pivots are
+  the door it was pointing at.
+
 ### The mode rail takes your own modes
 
 - **`addRailMode` puts a mode of your own on the left rail**, beside Select, Create, View and

@@ -858,6 +858,12 @@ export interface DockTabHandle {
      * its own DOM would leave the dock holding a stale reference to re-attach later.
      */
     refresh(): void
+    /**
+     * Rename the tab in the strip. Nothing else moves — the body, its scroll position
+     * and whether the tab is on show all survive, which re-registering the tab to
+     * change a word would not. This is how a pane carries a live count.
+     */
+    setLabel(label: string): void
     /** Unregister the tab and take its DOM with it. */
     remove(): void
 }

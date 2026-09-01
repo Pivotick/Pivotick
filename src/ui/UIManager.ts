@@ -7,7 +7,8 @@ import { Sidebar } from './elements/Sidebar/Sidebar'
 import { SlidePanel, type SlidepanelOptions } from './elements/SlidePanel/SlidePanel'
 import { Mainheader } from './elements/Mainheader/Mainheader'
 import { Modal, type ModalOptions } from './components/Modal'
-import type { Notification } from './Notifier'
+import { mountToast } from './Notifier'
+import type { Notification, NotificationHandle } from './Notifier'
 import merge from 'lodash.merge'
 import { Tooltip } from './elements/Tooltip/Tooltip'
 import { ContextMenu } from './elements/ContextMenu/ContextMenu'
@@ -23,6 +24,7 @@ import { ViewFlyout } from './elements/ViewFlyout/ViewFlyout'
 import { PhysicsFlyout } from './elements/PhysicsFlyout/PhysicsFlyout'
 import { Legend } from './elements/Legend/Legend'
 import { Dock, type DockConfig } from './elements/Dock/Dock'
+import { PivotTriage } from './elements/Pivot/PivotTriage'
 import { Table } from './elements/Table/Table'
 import type { PivotickPlugin, PluginContext } from '../interfaces/Plugin'
 
@@ -156,6 +158,8 @@ export type DockTabChange =
     | { type: 'activate', id: string }
     /** Rebuild one tab's body — how a pane switches between its own internal views. */
     | { type: 'refresh', id: string }
+    /** The registry has the new label already; the strip has to catch up. */
+    | { type: 'relabel', id: string }
 
 /**
  * A change to the rail-mode registry, broadcast to the {@link ModeRail} and the
@@ -297,6 +301,14 @@ const UI_ELEMENTS: UIElementSpec[] = [
         enabled: o => tableWanted(o.table),
         make: ui => new Table(ui, tableOptions(ui.getOptions().table), ui.dock),
         slot: () => undefined
+    },
+    {
+        // A contributor to the dock as well, and costing nothing until a pivot is run:
+        // it registers a tab per staged candidate set and none while there are none.
+        // `full` only, because the dock is — a staged set in another mode stays reachable
+        // through `graph.pivots` and simply has no pane.
+        key: 'pivotTriage', modes: ['full'],
+        make: ui => new PivotTriage(ui), slot: () => undefined
     },
     {
         key: 'mainHeader', modes: ['full', 'light'],
@@ -604,6 +616,7 @@ export class UIManager {
             addDockTab: (tab) => this.addDockTab(tab),
             removeDockTab: (id) => this.removeDockTab(id),
             refreshDockTab: (id) => this.refreshDockTab(id),
+            setDockTabLabel: (id, label) => this.setDockTabLabel(id, label),
             addRailMode: (mode) => this.addRailMode(mode),
             removeRailMode: (id) => this.removeRailMode(id),
             addPivot: (definition) => this.graph.pivots.register(definition),
@@ -823,6 +836,24 @@ export class UIManager {
             return
         }
         this.emitDockTabChange({ type: 'refresh', id })
+    }
+
+    /**
+     * Rename a registered tab. Only the strip's button changes: the pane keeps its
+     * body, its scroll position and whether it is on show — which is the whole point,
+     * since re-registering the tab to change a word would throw all three away.
+     *
+     * A live count in the label is what this is for (`Correlations (198)`).
+     */
+    public setDockTabLabel(id: string, label: string): void {
+        const tab = this.dockTabs.find(t => t.id === id)
+        if (!tab) {
+            if (!this.destroyed) console.warn(`No dock tab with id "${id}" to relabel.`)
+            return
+        }
+        if (tab.label === label) return
+        tab.label = label
+        this.emitDockTabChange({ type: 'relabel', id })
     }
 
     /** The registered tabs, in display order (a copy — mutate through addDockTab / removeDockTab). */
@@ -1072,39 +1103,13 @@ export class UIManager {
    * Show a notification in the UI.
    *
    * @param notification - The notification to display
+   * @returns A handle onto the toast — update it in place or take it away — or
+   * `undefined` in a UI mode with nowhere to show one.
    */
-    public showNotification(notification: Notification): void {
-        const { level, title, message } = notification
+    public showNotification(notification: Notification): NotificationHandle | undefined {
         const container = this.layout?.notification
         if (!container) return
-
-        const template = document.createElement('template')
-        template.innerHTML = `
-  <div class="pivotick-toast pivotick-toast-${level}">
-    <div class="pivotick-toast-title">
-    </div>
-    <div class="pivotick-toast-body">
-    </div>
-  </div>
-`
-        const toast = template.content.firstElementChild as HTMLDivElement
-        const titleEl = toast.querySelector('.pivotick-toast-title')
-        const bodyEl = toast.querySelector('.pivotick-toast-body')
-
-        if (titleEl) titleEl.textContent = title
-        if (bodyEl) bodyEl.textContent = message ?? ''
-
-        container.appendChild(toast)
-        requestAnimationFrame(() => {
-            toast.classList.add('show')
-        })
-
-        setTimeout(() => {
-            toast.classList.remove('show')
-            toast.addEventListener('transitionend', () => {
-                toast.remove()
-            }, { once: true })
-        }, 4000)
+        return mountToast(container, notification)
     }
 
    /**

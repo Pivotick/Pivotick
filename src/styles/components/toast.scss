@@ -11,13 +11,74 @@
     z-index: 1000;
 
     .pivotick-toast-title {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5em;
         font-weight: 600;
         padding: 0.5em 0.75em;
+
+        span {
+            flex: 1;
+        }
     }
 
     .pivotick-toast-body {
         padding: 0.5em 0.75em;
         border-top: 1px solid color-mix(in srgb, var(--pvt-toast-bg) 85%, black);
+    }
+
+    .pivotick-toast-close {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 16px;
+        height: 16px;
+        margin-top: 1px;
+        padding: 0;
+        border: 0;
+        border-radius: 3px;
+        background: transparent;
+        color: inherit;
+        opacity: 0.65;
+        cursor: pointer;
+
+        svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        &:hover {
+            opacity: 1;
+            background: color-mix(in srgb, var(--pvt-toast-color) 18%, transparent);
+        }
+    }
+
+    .pivotick-toast-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5em;
+        padding: 0.4em 0.75em 0.55em;
+
+        // `display: flex` outranks the UA's `[hidden]` rule, so say it again here.
+        &[hidden] {
+            display: none;
+        }
+    }
+
+    .pivotick-toast-action {
+        padding: 3px 10px;
+        border: 1px solid color-mix(in srgb, var(--pvt-toast-color) 45%, transparent);
+        border-radius: 3px;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+
+        &:hover {
+            background: color-mix(in srgb, var(--pvt-toast-color) 18%, transparent);
+        }
     }
 
     &.show {

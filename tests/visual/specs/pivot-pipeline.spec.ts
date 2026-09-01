@@ -355,8 +355,11 @@ test.describe('pivot pipeline', () => {
 
         expect(outcome.status).toBe('refused')
         expect(outcome.refusal).toEqual({ kind: 'ceiling', count: 14203, limit: 10000 })
-        // Refused, so nothing was staged and nothing was kept.
-        expect(await staged(page, 'oversized')).toBeNull()
+        // No candidate was kept — but the set is, carrying the refusal, so the pane has
+        // somewhere to say the number, the limit and the way forward.
+        const set = await staged(page, 'oversized')
+        expect(set?.rows).toEqual([])
+        expect(set?.refused).toEqual({ kind: 'ceiling', count: 14203, limit: 10000 })
         expect(await counts(page)).toEqual(before)
     })
 

@@ -88,6 +88,11 @@ export interface PluginContext {
      */
     refreshDockTab(id: string): void
     /**
+     * Rename a dock tab in the strip, leaving its body and its scroll position alone —
+     * a live count, without re-registering the tab.
+     */
+    setDockTabLabel(id: string, label: string): void
+    /**
      * Register a mode on the mode rail — the same door as `UIManager.addRailMode`, and
      * the way a plugin ships its own Explore or Enrich mode. Returns a disposer.
      *

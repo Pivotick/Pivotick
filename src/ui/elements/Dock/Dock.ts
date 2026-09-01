@@ -255,6 +255,8 @@ export class Dock extends UIComponent {
     private onTabsChanged(change: DockTabChange): void {
         if (change.type === 'activate') return this.setActive(change.id, true)
         if (change.type === 'refresh') return this.refreshTab(change.id)
+        // The label lives in the strip and nowhere else, so nothing else has to move.
+        if (change.type === 'relabel') return this.renderStrip()
         if (change.type === 'remove') this.forgetTab(change.tab)
         this.syncTabs()
     }
@@ -391,6 +393,7 @@ export class Dock extends UIComponent {
             // itself takes the same path as everyone else.
             activate: () => this.uiManager.activateDockTab(tab.id),
             refresh: () => this.uiManager.refreshDockTab(tab.id),
+            setLabel: label => this.uiManager.setDockTabLabel(tab.id, label),
             remove: () => this.uiManager.removeDockTab(tab.id),
         }
         this.handles.set(tab.id, handle)

@@ -1,8 +1,4 @@
-import type { Edge } from '../../../Edge'
-import type { Node } from '../../../Node'
 import type { TableColumn } from '../../../interfaces/GraphUI'
-
-type Element = Node | Edge
 
 /**
  * A column's row filter, in the shape its control produces.
@@ -80,9 +76,17 @@ export function columnChoices(values: unknown[]): string[] {
     return [...choices].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
 }
 
+/**
+ * What a filter control needs to know about the thing it narrows: its name and its
+ * facet type, and nothing about the elements behind it. Stated as its own type so the
+ * triage pane — whose rows are candidates, not graph elements — speaks the same
+ * vocabulary through the same widgets.
+ */
+export type FilterableColumn = Pick<TableColumn, 'key' | 'label' | 'type'>
+
 /** Which widget a column's `type` asks for, given what its values turned out to be. */
 function widgetFor(
-    column: TableColumn<Element>,
+    column: FilterableColumn,
     choices: string[],
     current: RowFilter | undefined,
 ): 'range' | 'choice' | 'text' {
@@ -105,7 +109,7 @@ function widgetFor(
  * `onChange` receives `undefined` when the control is cleared back to matching everything.
  */
 export function buildRowFilterControl(
-    column: TableColumn<Element>,
+    column: FilterableColumn,
     current: RowFilter | undefined,
     choices: string[],
     onChange: (filter: RowFilter | undefined) => void,

@@ -1,0 +1,336 @@
+// The triage pane — one pivot's candidates, staged and not yet graph.
+//
+// The region belongs to the dock (`Dock/dock.scss`); this file styles the occupant.
+// The per-column filter controls are built by `Table/TableRowFilters.ts` and carry its
+// `pvt-table-filter*` classes, so they are styled there and stay identical to the data
+// table's — two tables in the same dock must not offer two different-looking filters.
+
+.pvt-triage {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    font-size: 12px;
+    color: var(--pvt-text-color-6);
+}
+
+// The empty, error and refusal endings. Deliberately roomy: each one is a sentence the
+// analyst has to read, not a row they are scanning.
+.pvt-triage-state {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 18px 16px;
+}
+
+.pvt-triage-state-title {
+    font-weight: 600;
+}
+
+.pvt-triage-state-sub {
+    color: var(--pvt-text-color-4);
+}
+
+.pvt-triage-error .pvt-triage-state-title,
+.pvt-triage-refused .pvt-triage-state-title {
+    color: var(--pvt-theme-danger);
+}
+
+// A re-run that landed on top of marked rows. It sits above everything and stays until
+// the analyst chooses, because the alternative is discarding their triage unasked.
+.pvt-triage-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--pvt-chrome-border);
+    background-color: color-mix(in srgb, var(--pvt-theme-primary) 12%, transparent);
+}
+
+.pvt-triage-head {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--pvt-chrome-border);
+}
+
+.pvt-triage-dot {
+    color: var(--pvt-text-color-3);
+}
+
+.pvt-triage-spacer {
+    flex: 1;
+}
+
+.pvt-triage-muted {
+    color: var(--pvt-text-color-4);
+}
+
+.pvt-triage-strong {
+    color: var(--pvt-theme-primary);
+    font-weight: 600;
+}
+
+// The suppression is a claim the analyst would otherwise have to trust, so it is a
+// button that opens the list rather than a note.
+.pvt-triage-seg {
+    padding: 1px 6px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--pvt-text-color-4);
+    font: inherit;
+    cursor: pointer;
+
+    &:hover {
+        border-color: var(--pvt-chrome-border);
+        color: var(--pvt-text-color-6);
+    }
+
+    &[aria-expanded='true'] {
+        border-color: var(--pvt-chrome-border);
+        color: var(--pvt-text-color-6);
+    }
+}
+
+.pvt-triage-suppressed {
+    max-height: 140px;
+    overflow-y: auto;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--pvt-chrome-border);
+    background-color: var(--pvt-chrome-bg);
+}
+
+.pvt-triage-suppressed-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 0;
+}
+
+.pvt-triage-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+}
+
+.pvt-triage-grid {
+    min-width: min-content;
+}
+
+.pvt-triage-headrow {
+    display: grid;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    grid-template-columns: var(--pvt-triage-columns);
+    background-color: var(--pvt-chrome-bg);
+    border-bottom: 1px solid var(--pvt-chrome-border);
+}
+
+.pvt-triage-th {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 5px 8px;
+    min-width: 0;
+}
+
+.pvt-triage-th-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--pvt-text-color-4);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:hover,
+    &.pvt-triage-sorted {
+        color: var(--pvt-text-color-6);
+    }
+}
+
+.pvt-triage-sort-arrow svg {
+    width: 11px;
+    height: 11px;
+}
+
+.pvt-triage-row {
+    display: grid;
+    grid-template-columns: var(--pvt-triage-columns);
+    align-items: center;
+    min-height: 24px;
+    border-bottom: 1px solid color-mix(in srgb, var(--pvt-chrome-border) 50%, transparent);
+
+    &:hover {
+        background-color: var(--pvt-chrome-bg);
+    }
+}
+
+.pvt-triage-row-marked {
+    background-color: color-mix(in srgb, var(--pvt-theme-primary) 10%, transparent);
+}
+
+// Struck in place rather than moved into a group: re-ordering the table under the
+// analyst's cursor mid-triage is worse than the row staying where it happened.
+.pvt-triage-row-rejected {
+    color: var(--pvt-text-color-3);
+    text-decoration: line-through;
+}
+
+.pvt-triage-row-deduped {
+    color: var(--pvt-text-color-4);
+}
+
+.pvt-triage-cell {
+    padding: 3px 8px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pvt-triage-tick {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.pvt-triage-state-cell {
+    font-size: 11px;
+    text-align: right;
+}
+
+.pvt-triage-rejected-mark {
+    color: var(--pvt-text-color-3);
+}
+
+.pvt-triage-link {
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--pvt-theme-primary);
+    font: inherit;
+    font-size: 11px;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+// Drawn above the node table, so a handful of edge rows are not buried under a page of
+// nodes. Its header does not stick: two sticky headers in one scroller would stack.
+.pvt-triage-edges {
+    .pvt-triage-headrow {
+        position: static;
+    }
+}
+
+.pvt-triage-sechead {
+    padding: 5px 10px;
+    background-color: var(--pvt-chrome-bg);
+    border-top: 1px solid var(--pvt-chrome-border);
+    border-bottom: 1px solid var(--pvt-chrome-border);
+    color: var(--pvt-text-color-4);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.pvt-triage-foot {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-top: 1px solid var(--pvt-chrome-border);
+    background-color: var(--pvt-chrome-bg);
+}
+
+.pvt-triage-note {
+    font-size: 11px;
+}
+
+.pvt-triage-btn {
+    padding: 3px 10px;
+    border: 1px solid var(--pvt-theme-primary);
+    border-radius: 4px;
+    background-color: var(--pvt-theme-primary);
+    color: var(--pvt-text-color-for-primary);
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+
+    &:disabled {
+        opacity: 0.45;
+        cursor: default;
+    }
+}
+
+.pvt-triage-ghost {
+    border-color: var(--pvt-chrome-border);
+    background: transparent;
+    color: var(--pvt-text-color-6);
+
+    &:hover:not(:disabled) {
+        background-color: var(--pvt-bg);
+    }
+}
+
+// Toolbar controls, laid out by the dock's header row.
+.pvt-triage-search {
+    box-sizing: border-box;
+    width: 180px;
+    padding: 2px 6px;
+    border: 1px solid var(--pvt-chrome-border);
+    border-radius: 3px;
+    background-color: var(--pvt-bg);
+    color: var(--pvt-text-color-6);
+    font-family: inherit;
+    font-size: 11px;
+
+    .pvt-dock-collapsed & {
+        display: none;
+    }
+}
+
+.pvt-triage-regex {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--pvt-text-color-4);
+    font-size: 11px;
+    cursor: pointer;
+
+    .pvt-dock-collapsed & {
+        display: none;
+    }
+}
+
+.pvt-triage-toolbtn {
+    padding: 2px 8px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--pvt-text-color-4);
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+
+    &:hover {
+        border-color: var(--pvt-chrome-border);
+        color: var(--pvt-text-color-6);
+    }
+
+    .pvt-dock-collapsed & {
+        display: none;
+    }
+}

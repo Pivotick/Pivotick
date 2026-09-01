@@ -248,6 +248,16 @@ export interface PivotCandidateSet {
     error?: unknown
     /** Set when the provider blew through the absolute ceiling. Nothing was staged. */
     refused?: PivotRefusal
+    /**
+     * A re-run of this pivot, waiting rather than replacing: it landed while rows
+     * were marked, and throwing the analyst's triage away unasked is not a swap the
+     * library gets to make. The surface announces it and offers both ways out —
+     * {@link PivotManagerLike.showPending} and
+     * {@link PivotManagerLike.dismissPending}.
+     *
+     * A re-run with nothing marked replaces outright, and never lands here.
+     */
+    pending?: PivotCandidateSet
 }
 
 /**
@@ -297,6 +307,10 @@ export interface PivotManagerLike {
     /** What applies to this origin. An empty origin yields the origin-less pivots. */
     for(nodes: Node[]): PivotDefinition[]
     run(id: string, nodes?: Node[], narrowing?: PivotNarrowing): Promise<PivotRunOutcome>
+    /** Promote a waiting re-run to the set on show. */
+    showPending(pivotId: string): void
+    /** Drop a waiting re-run and keep triaging what is on show. */
+    dismissPending(pivotId: string): void
     invalidate(pivotId?: string, nodes?: Node[]): void
     undo(runId?: string): PivotRun | undefined
     redo(): PivotRun | undefined

@@ -868,6 +868,8 @@ export interface HarnessApi {
     cancelPivot(id?: string): void
     /** `graph.pivots.run` — the gate, then either staging or an auto-ingest. */
     runPivot(id: string, nodeIds?: string[], narrowing?: PivotNarrowing): Promise<RecordedRunOutcome>
+    /** Start a run without awaiting it, so a test can watch the pane while it is in flight. */
+    startPivotRun(id: string, nodeIds?: string[], narrowing?: PivotNarrowing): void
     /** The staged candidates for one pivot, or `null` when nothing is staged. */
     pivotCandidates(id: string): RecordedCandidates | null
     markPivotCandidates(id: string, ids: string[] | 'all'): void
@@ -4099,6 +4101,10 @@ class Harness implements HarnessApi {
 
     async runPivot(id: string, nodeIds: string[] = [], narrowing: PivotNarrowing = {}): Promise<RecordedRunOutcome> {
         return recordOutcome(await this.g.pivots.run(id, this.pivotNodes(nodeIds), narrowing))
+    }
+
+    startPivotRun(id: string, nodeIds: string[] = [], narrowing: PivotNarrowing = {}): void {
+        void this.g.pivots.run(id, this.pivotNodes(nodeIds), narrowing).catch(() => {})
     }
 
     pivotCandidates(id: string): RecordedCandidates | null {
