@@ -24,6 +24,7 @@ import { ViewFlyout } from './elements/ViewFlyout/ViewFlyout'
 import { PhysicsFlyout } from './elements/PhysicsFlyout/PhysicsFlyout'
 import { Legend } from './elements/Legend/Legend'
 import { Dock, type DockConfig } from './elements/Dock/Dock'
+import { PivotMode } from './elements/Pivot/PivotMode'
 import { PivotTriage } from './elements/Pivot/PivotTriage'
 import { Table } from './elements/Table/Table'
 import type { PivotickPlugin, PluginContext } from '../interfaces/Plugin'
@@ -301,6 +302,14 @@ const UI_ELEMENTS: UIElementSpec[] = [
         enabled: o => tableWanted(o.table),
         make: ui => new Table(ui, tableOptions(ui.getOptions().table), ui.dock),
         slot: () => undefined
+    },
+    {
+        // The Pivot rail mode registers itself, and only while the registry says it should
+        // (`UI.pivotMode`) — so it is built here in every mode that has a rail, and may
+        // still put no button on it. `viewer` and `static` have no rail at all.
+        key: 'pivotMode', modes: ['full', 'light'],
+        enabled: o => o.pivotMode !== false,
+        make: ui => new PivotMode(ui), slot: () => undefined
     },
     {
         // A contributor to the dock as well, and costing nothing until a pivot is run:

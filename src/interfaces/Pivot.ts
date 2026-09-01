@@ -312,6 +312,8 @@ export interface PivotManagerLike {
     /** Drop a waiting re-run and keep triaging what is on show. */
     dismissPending(pivotId: string): void
     invalidate(pivotId?: string, nodes?: Node[]): void
+    /** Abort in-flight calls — one pivot's or all, and optionally only one kind. */
+    cancel(pivotId?: string, kind?: 'summarize' | 'fetch'): void
     undo(runId?: string): PivotRun | undefined
     redo(): PivotRun | undefined
 }

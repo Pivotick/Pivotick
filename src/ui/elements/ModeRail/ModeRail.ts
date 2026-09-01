@@ -190,9 +190,14 @@ export class ModeRail extends UIComponent {
      * The same treatment for a registered mode, taken straight off the armed tool — a
      * registered mode needs no hook for this, because its tools already carry an icon and
      * a label.
+     *
+     * The mode's *resting* tool is the exception, and it matches what the built-ins do:
+     * Select armed on Pointer still reads `Select`. Otherwise a mode that declares a
+     * default tool would be permanently renamed by it.
      */
     private applyRegisteredFace(mode: RailModeDefinition, armed: string | null) {
-        const tool = armed ? resolveRailTools(mode).find(t => t.id === armed) : undefined
+        const resting = armed === null || armed === (mode.defaultTool ?? null)
+        const tool = resting ? undefined : resolveRailTools(mode).find(t => t.id === armed)
         this.paintFace(mode.id, tool?.icon ?? mode.icon, tool?.label ?? mode.label)
     }
 

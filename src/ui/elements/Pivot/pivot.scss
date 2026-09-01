@@ -334,3 +334,245 @@
         display: none;
     }
 }
+
+// Pivot mode's panel — the origin, and what can be done to it. It lives inside the
+// contextual tool panel (`ToolPanel/toolpanel.scss`), which widens to 300px for this
+// mode, so everything here sizes against that rather than the canvas.
+
+.pvt-pivot-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px 9px 4px;
+    font-size: 12px;
+    color: var(--pvt-text-color-6);
+}
+
+.pvt-pivot-origin {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--pvt-chrome-border);
+}
+
+.pvt-pivot-origin-label {
+    width: 100%;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--pvt-text-color-4);
+}
+
+.pvt-pivot-origin-empty {
+    line-height: 1.45;
+    color: var(--pvt-text-color-4);
+}
+
+.pvt-pivot-chips {
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-width: 0;
+}
+
+.pvt-pivot-chip {
+    max-width: 100%;
+    padding: 1px 7px;
+    border-radius: 9px;
+    background-color: color-mix(in srgb, var(--pvt-theme-primary) 15%, transparent);
+    color: var(--pvt-text-color-6);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pvt-pivot-chip-more {
+    background-color: var(--pvt-chrome-border);
+    color: var(--pvt-text-color-4);
+}
+
+.pvt-pivot-clear {
+    padding: 1px 6px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--pvt-text-color-4);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 11px;
+
+    &:hover {
+        background-color: var(--pvt-chrome-border);
+        color: var(--pvt-text-color-6);
+    }
+}
+
+.pvt-pivot-heading {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--pvt-text-color-4);
+}
+
+.pvt-pivot-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pvt-pivot-entry {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 8px;
+    border: 1px solid var(--pvt-chrome-border);
+    border-radius: 9px;
+}
+
+.pvt-pivot-entry-head {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-weight: 600;
+
+    .pvt-pivot-entry-icon {
+        display: flex;
+        line-height: 0;
+        color: var(--pvt-theme-primary);
+
+        svg {
+            width: 15px;
+            height: 15px;
+        }
+    }
+}
+
+.pvt-pivot-count {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--pvt-text-color-6);
+
+    // A re-summarize keeps the last number on screen rather than blanking it: the
+    // narrowing tick that caused it must not read as a reset.
+    &.pvt-pivot-dim {
+        opacity: 0.45;
+    }
+}
+
+// Where the count will be, while the first one is still out.
+.pvt-pivot-skeleton {
+    width: 72px;
+    height: 1em;
+    border-radius: 4px;
+    background: linear-gradient(90deg,
+        var(--pvt-chrome-border) 25%,
+        color-mix(in srgb, var(--pvt-chrome-border) 45%, transparent) 50%,
+        var(--pvt-chrome-border) 75%);
+    background-size: 200% 100%;
+    animation: pvt-pivot-shimmer 1.1s linear infinite;
+}
+
+@keyframes pvt-pivot-shimmer {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+}
+
+.pvt-pivot-breakdown {
+    line-height: 1.45;
+    color: var(--pvt-text-color-4);
+}
+
+.pvt-pivot-refusal {
+    padding: 5px 7px;
+    border-radius: 6px;
+    line-height: 1.45;
+    background-color: color-mix(in srgb, var(--pvt-theme-warning) 14%, transparent);
+    color: var(--pvt-text-color-6);
+}
+
+.pvt-pivot-narrowing {
+    .pvt-form {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    label {
+        font-size: 11px;
+        color: var(--pvt-text-color-4);
+    }
+}
+
+.pvt-pivot-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.pvt-pivot-progress {
+    flex: 1;
+    color: var(--pvt-text-color-4);
+}
+
+.pvt-pivot-button {
+    padding: 3px 9px;
+    border: 1px solid var(--pvt-chrome-border);
+    border-radius: 7px;
+    background: transparent;
+    color: var(--pvt-text-color-5);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+
+    &:hover:not(:disabled) {
+        background-color: var(--pvt-chrome-border);
+        color: var(--pvt-text-color-6);
+    }
+
+    &:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+    }
+}
+
+.pvt-pivot-button-primary {
+    margin-left: auto;
+    border-color: transparent;
+    background-color: var(--pvt-bg-color-primary);
+    color: var(--pvt-text-color-for-primary);
+
+    &:hover:not(:disabled) {
+        background-color: var(--pvt-bg-color-primary);
+        filter: brightness(1.08);
+    }
+}
+
+// The way into the pane this fetch filled. Full width under the actions row, so it
+// reads as an outcome rather than a third button competing with Fetch.
+.pvt-pivot-triage-link {
+    width: 100%;
+    border-color: transparent;
+    text-align: left;
+    color: var(--pvt-theme-primary);
+}
+
+.pvt-pivot-originless {
+    summary {
+        cursor: pointer;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--pvt-text-color-4);
+    }
+
+    .pvt-pivot-list {
+        margin-top: 8px;
+    }
+}

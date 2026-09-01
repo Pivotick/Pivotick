@@ -31,13 +31,15 @@
 
     &[data-position='bottom-left'] {
         --pvt-legend-bottom: 14px;
-        // What this column has left once the mode rail has taken its share: the 28px
-        // is the rail's own top offset plus the gap kept below it. `100%` is the
-        // canvas, which already excludes the data dock's row, so this tracks the dock
-        // opening and closing for free.
+        // What this column has left once the left-edge chrome has taken its share: the
+        // 28px is its top offset plus the gap kept below it. Both the rail and the tool
+        // panel start at that offset and grow down, so the taller of the two is what the
+        // legend has to clear — an open Pivot panel reaches much further than the rail.
+        // `100%` is the canvas, which already excludes the data dock's row, so this
+        // tracks the dock opening and closing for free.
         --pvt-legend-room: calc(
             100% - var(--pvt-legend-bottom) - var(--pvt-mainheader-height)
-                - var(--pvt-moderail-height, 0px) - 28px
+                - max(var(--pvt-moderail-height, 0px), var(--pvt-toolpanel-height, 0px)) - 28px
         );
 
         bottom: var(--pvt-legend-bottom);

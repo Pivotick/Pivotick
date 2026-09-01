@@ -85,6 +85,19 @@ export interface GraphUI {
      * the only way to reach the dock a plugin's tab brings with it.
      */
     dock?: DockOptions,
+    /**
+     * The Pivot rail mode — where an analyst picks an origin, reads what each
+     * registered pivot advertises, narrows it and runs it.
+     *
+     * `'auto'` (the default) ties the rail button to the registry: it appears when the
+     * first pivot registers and goes when the last one leaves, so a consumer with no
+     * pivots sees no trace of the feature. `true` keeps it there regardless, for pivots
+     * that arrive asynchronously; `false` never shows it. Never mounted in `viewer` or
+     * `static` mode.
+     *
+     * @default 'auto'
+     */
+    pivotMode?: boolean | 'auto',
     keybindings?: Keybinding[];
 }
 
@@ -205,6 +218,19 @@ export interface RailModeDefinition {
      * @default true
      */
     panelOpen?: boolean
+    /**
+     * How wide this mode's tool panel is, in pixels. The built-in width fits a row of
+     * icon + label; a mode whose {@link render} slot holds a form or a list needs more.
+     * @default 216
+     */
+    panelWidth?: number
+    /**
+     * Keep the panel open when one of this mode's tools is armed. Arming normally
+     * collapses the panel so the canvas is clear — right for Select's Lasso, wrong for a
+     * mode whose panel *is* the workspace and whose tools only say how to feed it.
+     * @default false
+     */
+    keepPanelOpen?: boolean
     /**
      * The mode's tools, as rows in its panel. Pass a function when the set depends on
      * the current selection or data; it is re-read on every render.

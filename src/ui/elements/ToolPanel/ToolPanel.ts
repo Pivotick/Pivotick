@@ -3,7 +3,7 @@ import { UIComponent } from '../../UIComponent'
 import type { ModeState, PointerMode, RailMode } from '../../ModeStore'
 import type { RailModeDefinition } from '../../../interfaces/GraphUI'
 import { resolveRailTools } from '../../railModes'
-import type { GraphInteractionContext } from '../../../interfaces/GraphInteractions'
+import { LassoArm } from '../../lasso'
 import type { GraphConnectManager } from '../../../editing/GraphConnectManager'
 import { Note } from '../../../Note'
 import { createShortcutBadge } from '../../../utils/ElementCreation'
@@ -48,6 +48,8 @@ export class ToolPanel extends UIComponent {
     private prevMode: RailMode | null = null
     /** Which pointer-mode's tool-set is currently rendered (avoids needless rebuilds). */
     private renderedMode: RailMode | null = null
+    /** Select mode's lasso. One-shot: the selection it makes disarms it back to Pointer. */
+    private readonly lasso = new LassoArm(this.uiManager, () => this.disarmLasso())
 
     constructor(uiManager: UIManager) {
         super(uiManager)
@@ -72,6 +74,14 @@ export class ToolPanel extends UIComponent {
         connectManager.on('start', onConnectStart)
         connectManager.on('stop', onConnectStop)
         this.track(() => { connectManager.off('start', onConnectStart); connectManager.off('stop', onConnectStop) })
+
+        // The panel's height moves with its mode's content, not only with which mode is
+        // active — a pivot list grows as its summaries land.
+        if (this.panel && typeof ResizeObserver !== 'undefined') {
+            const observer = new ResizeObserver(() => this.publishHeight())
+            observer.observe(this.panel)
+            this.track(() => observer.disconnect())
+        }
 
         // Escape cancels the active armed tool — a running edge-connect session or
         // an armed lasso (previously owned by the classic toolbar).
@@ -99,6 +109,8 @@ export class ToolPanel extends UIComponent {
     }
 
     protected onDestroy() {
+        (this.panel?.closest('.pvt-layout') as HTMLElement | null)?.style.removeProperty('--pvt-toolpanel-height')
+        this.applyWidth(undefined)
         this.disarmLasso()
         this.panel?.remove()
         this.panel = undefined
@@ -142,6 +154,23 @@ export class ToolPanel extends UIComponent {
     /** Show/hide the panel with a short animation (see `.pvt-collapsed` in scss). */
     private setCollapsed(collapsed: boolean) {
         this.panel?.classList.toggle('pvt-collapsed', collapsed)
+        this.publishHeight()
+    }
+
+    /**
+     * Publish the panel's height as `--pvt-toolpanel-height`, zero while it is
+     * collapsed. The panel shares the canvas's left column with the mode rail and the
+     * legend, and a mode with a tall {@link RailModeDefinition.render} slot reaches
+     * further down it than the rail ever does — so the legend sizes against both
+     * (see `legend.scss`) rather than against the rail alone.
+     */
+    private publishHeight(): void {
+        const panel = this.panel
+        const root = panel?.closest('.pvt-layout') as HTMLElement | null
+        if (!panel || !root) return
+        const collapsed = panel.classList.contains('pvt-collapsed')
+        const height = collapsed ? 0 : panel.getBoundingClientRect().height
+        root.style.setProperty('--pvt-toolpanel-height', `${height}px`)
     }
 
     /** The registered mode with this id, or undefined for one of the four built-ins. */
@@ -219,7 +248,20 @@ export class ToolPanel extends UIComponent {
         const extra = registered?.render?.()
         if (extra) this.panel.appendChild(extra)
 
+        this.applyWidth(registered?.panelWidth)
         this.refreshEnabled()
+    }
+
+    /**
+     * Widen the panel for a mode that asked for it. Written onto the wrapper the panel
+     * is slotted into, since that is what the stylesheet sizes; clearing the property
+     * hands the built-in width back to the next mode.
+     */
+    private applyWidth(width?: number): void {
+        const wrapper = this.panel?.parentElement
+        if (!wrapper) return
+        if (width) wrapper.style.setProperty('--pvt-toolpanel-width', `${width}px`)
+        else wrapper.style.removeProperty('--pvt-toolpanel-width')
     }
 
     /**
@@ -262,15 +304,18 @@ export class ToolPanel extends UIComponent {
      */
     private onToolClick(mode: RailMode, spec: ToolSpec) {
         const store = this.uiManager.modeStore
+        // A mode whose panel is its workspace keeps it open — arming there says how to
+        // feed the panel, so collapsing it hides the thing being fed.
+        const collapse = !this.registered(mode)?.keepPanelOpen
         if (spec.kind === 'toggle') {
             const nowArmed = store.getArmedTool(mode) !== spec.id
             spec.run?.(nowArmed)
             store.armTool(mode, nowArmed ? spec.id : this.defaultTool(mode))
-            store.setPanelOpen(mode, false)
+            if (collapse) store.setPanelOpen(mode, false)
         } else if (spec.kind === 'default') {
             spec.run?.(true)
             store.armTool(mode, spec.id)
-            store.setPanelOpen(mode, false)
+            if (collapse) store.setPanelOpen(mode, false)
         } else {
             spec.run?.(true) // one-shot action: leave the armed tool + panel as-is
         }
@@ -297,48 +342,15 @@ export class ToolPanel extends UIComponent {
     /* ---------- leaf logic (reused from the classic toolbar) ---------- */
 
     private toggleLasso(enabled: boolean) {
-        const canvas = this.uiManager.layout?.canvas
-        const interaction = this.uiManager.graph.renderer.getGraphInteraction()
-        canvas?.classList.toggle('canvas--lasso-mode', enabled)
-        this.uiManager.graph.renderer.toggleLassoMode(enabled)
-        if (enabled) {
-            interaction.on('canvasBeforeZoom', this.cancelPan)
-            interaction.on('canvasClick', this.cancelClick)
-            // Lasso is one-shot: the selection it makes (selectNode for one hit,
-            // selectNodes otherwise) disarms it back to Select.
-            interaction.on('selectNode', this.onLassoComplete)
-            interaction.on('selectNodes', this.onLassoComplete)
-        } else {
-            interaction.off('canvasBeforeZoom', this.cancelPan)
-            interaction.off('canvasClick', this.cancelClick)
-            interaction.off('selectNode', this.onLassoComplete)
-            interaction.off('selectNodes', this.onLassoComplete)
-        }
+        this.lasso.set(enabled)
     }
 
     private disarmLasso() {
         if (this.uiManager.modeStore.getArmedTool('select') === 'lasso') {
-            this.toggleLasso(false)
+            this.lasso.set(false)
             this.uiManager.modeStore.armTool('select', 'pointer')
         }
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private cancelPan = (event: any, context: GraphInteractionContext) => {
-        if (event?.type === 'wheel' || event?.button === 1) return
-        context.cancel()
-    }
-    private cancelClick = (_event: PointerEvent, context: GraphInteractionContext) => context.cancel()
-    // Disarm the lasso once it has produced a selection (see toggleLasso).
-    // Deferred to a microtask so it runs *after* the whole pointer gesture has
-    // settled — disarming synchronously would clear() the overlay mid-gesture
-    // (resetting `drawing`) and cancel the very selection that triggered it.
-    // Disarm the lasso once it has produced a selection (see toggleLasso).
-    // Deferred past the current gesture: disarming synchronously would drop the
-    // cancelClick guard, so the trailing canvas click that follows the drag would
-    // clear the selection we just made. A macrotask lets that click be swallowed
-    // by the still-armed guard first, then the lasso reverts to Select.
-    private onLassoComplete = () => { setTimeout(() => this.disarmLasso(), 0) }
 
     private invertSelection() {
         const interaction = this.uiManager.graph.renderer.getGraphInteraction()
