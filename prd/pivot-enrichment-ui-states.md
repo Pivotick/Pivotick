@@ -247,13 +247,13 @@ Nothing on the rim ever changes because of a selection or an open menu (brief §
 
 ## 8. Origin-less pivots (PRD §11.1)
 
-**C14 — they get a section in the same menu, shown when nothing is selected (M3), plus a
-mainheader entry point.** The reasoning: the brief asks for one proposal, and the cheapest honest
-one reuses the surface that already exists rather than inventing a second door — D19's whole
-argument was one pipeline, not two. The mainheader entry is what makes them reachable *while*
-something is selected, since the selection-driven menu is then busy. Their results route into the
-same triage pane and land at the viewport centre (D22). Kept deliberately quiet: no rail mode, no
-hero placement.
+**C14 — they get no new chrome at all.** They occupy the same Pivots surface: alone when nothing
+is selected (M3), and folded into a collapsed **"Without a selection (2)"** group at the bottom
+when something is. The reasoning: the brief asks for one proposal and asks it to stay quiet, and
+D19's whole argument was one pipeline rather than two. A mainheader entry — the first draft of
+this decision — would give a secondary door the most prominent chrome in the app; a rail mode is
+the consumer's to ship, never the library's. Their results route into the same triage pane and
+land at the viewport centre (D22).
 
 ---
 

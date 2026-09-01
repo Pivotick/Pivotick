@@ -1,0 +1,358 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    /* Values lifted from the running app: form control 30px/7px radius/1px #ccc,
+       section label 11px 600 uppercase 0.66px #666, table row 24px, th label 11px 600. */
+    :root {
+      --bg: #ffffff; --bg1: #fafafa; --bg2: #f3f3f3; --bg3: #ededed; --bg4: #e6e6e6;
+      --border: #cccccc; --soft: #dcdcdc;
+      --ink: #000000; --ink5: #333333; --ink4: #666666; --ink3: #999999;
+      --primary: #eb2e53; --badge: #f0636a;
+      --warning: #F59E0B; --danger: #DC2626; --success: #16A34A;
+    }
+    body { margin: 0; font-family: system-ui, sans-serif; background: var(--bg2); color: var(--ink); }
+    a { color: var(--primary); } a:hover { color: #c41f41; }
+
+    .board { padding: 40px; display: flex; flex-direction: column; gap: 28px; }
+    .board-title { font-size: 22px; font-weight: 600; letter-spacing: -0.2px; margin: 0; }
+    .board-sub { font-size: 13px; line-height: 19px; color: var(--ink4); margin: 0; max-width: 760px; }
+
+    .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; }
+    .cell { display: flex; flex-direction: column; gap: 8px; }
+    .cell-head { display: flex; align-items: baseline; gap: 8px; }
+    .cell-id {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.5px; color: var(--bg);
+      background: var(--ink5); border-radius: 3px; padding: 1px 5px;
+    }
+    .cell-name { font-size: 12px; font-weight: 600; color: var(--ink5); }
+    .cell-note { font-size: 11px; line-height: 16px; color: var(--ink4); }
+
+    /* --- the pivot entry itself --- */
+    .entry {
+      width: 316px; box-sizing: border-box; background: var(--bg);
+      border: 1px solid var(--soft); border-radius: 7px; padding: 10px 12px 12px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .entry-top { display: flex; align-items: flex-start; gap: 8px; }
+    .entry-icon { flex: 0 0 auto; color: var(--ink4); margin-top: 1px; }
+    .entry-label { flex: 1 1 auto; font-size: 13px; font-weight: 600; color: var(--ink); }
+    .entry-count { font-size: 13px; font-weight: 600; color: var(--ink); white-space: nowrap; }
+    .entry-count.muted { color: var(--ink3); }
+    .entry-hint { font-size: 11px; color: var(--ink3); }
+    .breakdown { font-size: 11px; line-height: 16px; color: var(--ink4); }
+
+    .facet-label {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.66px;
+      text-transform: uppercase; color: var(--ink4);
+    }
+    .opts { display: flex; flex-direction: column; gap: 4px; }
+    .opt { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--ink5); }
+    .box {
+      width: 13px; height: 13px; border-radius: 3px; border: 1px solid var(--border);
+      background: var(--bg); flex: 0 0 auto;
+    }
+    .box.on { background: var(--primary); border-color: var(--primary); }
+    .opt-count { margin-left: auto; font-size: 11px; color: var(--ink3); }
+
+    .control {
+      height: 30px; box-sizing: border-box; border: 1px solid var(--border); border-radius: 7px;
+      background: var(--bg); padding: 6px 8px; font-size: 14.4px; color: var(--ink3);
+      display: flex; align-items: center;
+    }
+
+    .actions { display: flex; gap: 8px; align-items: center; }
+    .btn {
+      font-size: 12px; font-weight: 600; border-radius: 7px; padding: 6px 12px;
+      border: 1px solid transparent; background: var(--primary); color: #fff; cursor: default;
+    }
+    .btn.ghost { background: transparent; color: var(--ink4); border-color: var(--border); }
+    .btn.disabled { background: var(--bg4); color: var(--ink3); }
+    .spacer { flex: 1 1 auto; }
+
+    .refusal {
+      display: flex; gap: 7px; align-items: flex-start;
+      background: #fdf3e4; border: 1px solid #f3d7a6; border-radius: 6px;
+      padding: 7px 9px; font-size: 11px; line-height: 16px; color: #7a4b06;
+    }
+    .errline {
+      display: flex; gap: 7px; align-items: center;
+      font-size: 11px; line-height: 16px; color: var(--danger);
+    }
+    .skel { background: linear-gradient(90deg, var(--bg3), var(--bg2), var(--bg3)); border-radius: 4px; height: 11px; }
+    .link { font-size: 11px; font-weight: 600; color: var(--primary); }
+    .stale { opacity: 0.4; }
+  </style>
+</helmet>
+
+<div class="board">
+  <div style="display: flex; flex-direction: column; gap: 6px">
+    <h1 class="board-title">Pivot entry — every state</h1>
+    <p class="board-sub">One entry in the pivot menu, drawn once. These states belong to the
+      entry, not to the surface hosting it, so all three placement variants show exactly these.
+      Copy is fixed in <strong>pivot-enrichment-ui-states.md</strong> §2. The tilde marks a number the
+      provider claims; a bare number is one we counted.</p>
+  </div>
+
+  <div class="grid">
+
+    <!-- S1 -->
+    <div class="cell">
+      <div class="cell-head"><span class="cell-id">S1</span><span class="cell-name">idle</span></div>
+      <div class="entry">
+        <div class="entry-top">
+          <svg class="entry-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+          <span class="entry-label">Correlations</span>
+          <span class="entry-hint">~2,100 declared</span>
+        </div>
+      </div>
+      <div class="cell-note">Painted before <code>summarize</code> resolves. The hint is the
+        node's declared potential (D12) — the same number the rim badge shows.</div>
+    </div>
+
+    <!-- S2 -->
+    <div class="cell">
+      <div class="cell-head"><span class="cell-id">S2</span><span class="cell-name">summarizing</span></div>
+      <div class="entry">
+        <div class="entry-top">
+          <svg class="entry-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+          <span class="entry-label">Correlations</span>
+          <div class="skel" style="width: 54px"></div>
+        </div>
+        <div class="skel" style="width: 76%"></div>
+      </div>
+      <div class="cell-note"><strong>Skipped on a cache hit</strong> (D20) — reopening the menu
+        shows the number at once, which is the visible proof the cache exists.</div>
+    </div>
+
+    <!-- S3 -->
+    <div class="cell">
+      <div class="cell-head"><span class="cell-id">S3</span><span class="cell-name">ready</span></div>
+      <div class="entry">
+        <div class="entry-top">
+          <svg class="entry-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+          <span class="entry-label">Correlations</span>
+          <span class="entry-count">~210</span>
+        </div>
+        <div class="breakdown">210 URLs</div>
+        <div class="facet-label">Type</div>
+        <div class="opts">
+          <div class="opt"><span class="box"></span>Domains<span class="opt-count">1,800</span></div>
+          <div class="opt"><span class="box on"></span>URLs<span class="opt-count">210</span></div>
+          <div class="opt"><span class="box"></span>Pastes<span class="opt-count">95</span></div>
+          <div class="opt"><span class="box"></span>IPs<span class="opt-count">38</span></div>
+        </div>
+        <div class="actions">
+          <span class="link">Clear</span>
+          <span class="spacer"></span>
+          <button class="btn">Fetch 210</button>
+        </div>
+      </div>
+      <div class="cell-note">Narrowed and under the cap. The gate has lifted — this is the
+        moment the whole feature turns on.</div>
+    </div>
+
+    <!-- S4 -->
+    <div class="cell">
+      <div class="cell-head"><span class="cell-id">S4</span><span class="cell-name">over-cap</span></div>
+      <div class="entry">
+        <div class="entry-top">
+          <svg class="entry-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+          <span class="entry-label">Correlations</span>
+          <span class="entry-count">~2,143</span>
+        </div>
+        <div class="breakdown">1,800 domains · 210 URLs · 95 pastes · 38 IPs</div>
+        <div class="refusal">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex: 0 0 auto; margin-top: 1px"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+          <span>~2,143 exceeds this pivot's cap of 2,000 — narrow further to fetch</span>
+        </div>
+        <div class="facet-label">Type</div>
+        <div class="opts">
+          <div class="opt"><span class="box"></span>Domains<span class="opt-count">1,800</span></div>
+          <div class="opt"><span class="box"></span>URLs<span class="opt-count">210</span></div>
+        </div>
+        <div class="actions">
+          <span class="spacer"></span>
+          <button class="btn disabled">Fetch</button>
+        </div>
+      </div>
+      <div class="cell-note">Number, limit, way forward — in that order, always. The narrowing
+        controls stay <em>live</em>: a refusal you cannot act on is a dead end.</div>
+    </div>
+
+    <!-- S5 -->
+    <div class="cell">
+      <div class="cell-head"><span class="cell-id">S5</span><span class="cell-name">re-summarizing</span></div>
+      <div class="entry">
+        <div class="entry-top">
+          <svg class="entry-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+          <span class="entry-label">Correlations</span>
+          <span class="entry-count stale">~2,143</span>
+        </div>
+        <div class="breakdown stale">1,800 domains · 210 URLs · 95 pastes · 38 IPs</div>
+        <div class="facet-label">Type</div>
+        <div class="opts">
+          <div class="opt"><span class="box"></span>Domains<span class="opt-count">1,800</span></div>
+          <div class="opt"><span class="box on"></span>URLs<span class="opt-count">210</span></div>
+        </div>
+        <div class="actions">
+          <span class="spacer"></span>
+          <button class="btn disabled">Fetch</button>
+        </div>
+      </div>
+      <div class="cell-note"><strong>Dimmed, never blanked.</strong> A blank count reads as "gone";
+        a dim one reads as "being replaced" — which is the truth.</div>
+    </div>
+
+    <!-- S6 -->
+    <div class="cell">
+      <div class="cell-head"><span class="cell-id">S6</span><span class="cell-name">summarize-failed</span></div>
+      <div class="entry">
+        <div class="entry-top">
+          <svg class="entry-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+          <span class="entry-label">Correlations</span>
+        </div>
+        <div class="errline">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex: 0 0 auto"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
+          <span>Couldn't reach the source.</span>
+          <span class="link" style="margin-left: auto">Retry</span>
+        </div>
+      </div>
+      <div class="cell-note">The entry survives its own failure — one pivot going down never
+        empties the menu.</div>
+    </div>
+
+    <!-- S7 -->
+    <div class="cell">
+      <div class="cell-head"><span class="cell-id">S7</span><span class="cell-name">no-summarize</span></div>
+      <div class="entry">
+        <div class="entry-top">
+          <svg class="entry-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+          <span class="entry-label">Objects &amp; attributes</span>
+          <button class="btn" style="padding: 4px 10px">Run</button>
+        </div>
+      </div>
+      <div class="cell-note">A provider may ship no <code>summarize</code> at all (PRD §7). No
+        count, no narrowing, no gate — just a verb. MISP's expand-event is this.</div>
+    </div>
+
+    <!-- S8 -->
+    <div class="cell">
+      <div class="cell-head"><span class="cell-id">S8</span><span class="cell-name">fetching</span></div>
+      <div class="entry">
+        <div class="entry-top">
+          <svg class="entry-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+          <span class="entry-label">Correlations</span>
+          <span class="entry-count muted">Fetching ~210…</span>
+        </div>
+        <div style="height: 3px; border-radius: 2px; background: var(--bg3); overflow: hidden">
+          <div style="width: 42%; height: 3px; background: var(--primary); border-radius: 2px"></div>
+        </div>
+        <div class="actions">
+          <span class="spacer"></span>
+          <span class="link" style="color: var(--ink4)">Cancel</span>
+        </div>
+      </div>
+      <div class="cell-note">Indeterminate — never a percentage. There is no streaming and no
+        cursor (D3), so a progress bar would be a lie.</div>
+    </div>
+
+    <!-- S9 -->
+    <div class="cell">
+      <div class="cell-head"><span class="cell-id">S9</span><span class="cell-name">staged</span></div>
+      <div class="entry">
+        <div class="entry-top">
+          <svg class="entry-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+          <span class="entry-label">Correlations</span>
+          <span class="entry-count">~210</span>
+        </div>
+        <div class="breakdown">210 URLs</div>
+        <div class="actions">
+          <span class="spacer"></span>
+          <span class="link">210 in triage →</span>
+        </div>
+      </div>
+      <div class="cell-note">The results are in the dock, not here and not on the canvas. The
+        link is the only thread back to them.</div>
+    </div>
+
+    <!-- S10 -->
+    <div class="cell">
+      <div class="cell-head"><span class="cell-id">S10</span><span class="cell-name">auto-ingested</span></div>
+      <div class="entry">
+        <div class="entry-top">
+          <svg class="entry-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+          <span class="entry-label">Objects &amp; attributes</span>
+          <span class="entry-count" style="color: var(--success); font-size: 11px">✓ 12 ingested</span>
+        </div>
+      </div>
+      <div class="cell-note">No pane opened (D13). The toast carries the outcome and the undo;
+        the entry only acknowledges.</div>
+    </div>
+
+    <!-- absent -->
+    <div class="cell">
+      <div class="cell-head"><span class="cell-id">—</span><span class="cell-name">doesn't apply</span></div>
+      <div class="entry" style="border-style: dashed; background: transparent; align-items: center; justify-content: center; min-height: 44px">
+        <span style="font-size: 11px; color: var(--ink3); font-style: italic">nothing is drawn</span>
+      </div>
+      <div class="cell-note">A pivot whose <code>appliesTo</code> is false is <strong>absent</strong>,
+        never greyed. A disabled row invites a click that can never work.</div>
+    </div>
+
+    <!-- narrowing vocabulary -->
+    <div class="cell" style="grid-column: span 2">
+      <div class="cell-head"><span class="cell-id">§4</span><span class="cell-name">the five narrowing controls</span></div>
+      <div class="entry" style="width: 100%">
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+          <div style="display: flex; flex-direction: column; gap: 5px">
+            <span class="facet-label">Text</span>
+            <div class="control">Contains…</div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 5px">
+            <span class="facet-label">Select</span>
+            <div class="control" style="justify-content: space-between">Any
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 5px">
+            <span class="facet-label">Multiselect</span>
+            <div class="opts">
+              <div class="opt"><span class="box on"></span>URLs<span class="opt-count">210</span></div>
+              <div class="opt"><span class="box"></span>Pastes<span class="opt-count">95</span></div>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 5px">
+            <span class="facet-label">Number range</span>
+            <div style="display: flex; gap: 6px">
+              <div class="control" style="flex: 1 1 0">Min</div>
+              <div class="control" style="flex: 1 1 0">Max</div>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 5px">
+            <span class="facet-label">Boolean</span>
+            <div class="opt"><span class="box on"></span>Seen since last week</div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 5px; opacity: 0.45">
+            <span class="facet-label" style="color: var(--danger)">Regex — never here</span>
+            <div class="control" style="border-style: dashed; border-color: var(--danger)">not offered</div>
+          </div>
+        </div>
+      </div>
+      <div class="cell-note">Exactly <code>Exclude&lt;FilterFacetType, 'regex'&gt;</code> (D18) — verified
+        against <code>GraphQueryEngine.ts:49</code>. Narrowing is server-bound, so regex is out; the
+        triage pane's own client-side filters keep it. Controls reuse the filter panel's anatomy:
+        30px tall, 7px radius, 1px&nbsp;#ccc.</div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

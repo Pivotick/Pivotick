@@ -1,0 +1,205 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    :root {
+      --bg: #ffffff; --bg1: #fafafa; --bg2: #f3f3f3; --bg3: #ededed; --bg4: #e6e6e6;
+      --border: #cccccc; --soft: #dcdcdc;
+      --ink: #000000; --ink5: #333333; --ink4: #666666; --ink3: #999999;
+      --primary: #eb2e53; --success: #16A34A; --danger: #DC2626; --warning: #F59E0B;
+    }
+    body { margin: 0; font-family: system-ui, sans-serif; background: var(--bg2); color: var(--ink); }
+    a { color: var(--primary); } a:hover { color: #c41f41; }
+
+    .board { padding: 36px 40px; display: flex; flex-direction: column; gap: 18px; }
+    .board-title { font-size: 22px; font-weight: 600; letter-spacing: -0.2px; margin: 0; }
+    .board-sub { font-size: 13px; line-height: 19px; color: var(--ink4); margin: 0; max-width: 880px; }
+
+    .dock {
+      width: 1500px; box-sizing: border-box; background: var(--bg3);
+      border: 1px solid var(--soft); border-radius: 8px; overflow: hidden;
+    }
+    .dock-head {
+      height: 34px; box-sizing: border-box; border-bottom: 1px solid var(--soft);
+      padding: 0 10px; display: flex; align-items: center; gap: 10px; background: var(--bg3);
+    }
+    .dock-view { font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 4px; color: var(--ink); }
+    .dock-view.on { background: var(--bg4); }
+
+    .headline {
+      display: flex; align-items: center; gap: 8px; padding: 9px 12px;
+      background: var(--bg1); border-bottom: 1px solid var(--soft); font-size: 12px; color: var(--ink4);
+    }
+    .headline b { font-size: 12px; font-weight: 600; color: var(--ink); }
+    .seg-btn {
+      font-size: 12px; color: var(--ink4); border: 1px solid var(--soft); border-radius: 20px;
+      padding: 1px 9px; background: var(--bg); display: inline-flex; align-items: center; gap: 5px;
+    }
+    .dot { color: var(--ink3); }
+
+    .th-label { font-size: 11px; font-weight: 600; letter-spacing: 0.22px; text-transform: uppercase; color: var(--ink4); }
+    .filt {
+      height: 21px; box-sizing: border-box; font-size: 11px; color: var(--ink3);
+      border: 1px solid var(--soft); border-radius: 3px; padding: 2px 5px; background: var(--bg);
+      display: flex; align-items: center;
+    }
+    .row { height: 24px; border-bottom: 1px solid var(--soft); display: flex; align-items: center; background: var(--bg); }
+    .td { font-size: 12px; color: var(--ink); padding: 4px 8px; box-sizing: border-box; }
+    .box { width: 13px; height: 13px; border-radius: 3px; border: 1px solid var(--border); background: var(--bg); flex: 0 0 auto; }
+    .box.on { background: var(--primary); border-color: var(--primary); }
+
+    .row.marked { background: rgba(235,46,83,0.06); }
+    .row.rejected { background: var(--bg1); color: var(--ink3); }
+    .row.rejected .td { color: var(--ink3); text-decoration: line-through; }
+
+    .footer {
+      display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+      background: var(--bg3); border-top: 1px solid var(--border);
+    }
+    .btn { font-size: 12px; font-weight: 600; border-radius: 7px; padding: 6px 12px; border: 1px solid transparent; background: var(--primary); color: #fff; }
+    .btn.ghost { background: var(--bg); color: var(--ink4); border-color: var(--border); }
+    .spacer { flex: 1 1 auto; }
+    .note { font-size: 11px; line-height: 16px; color: var(--ink4); }
+    .callout {
+      display: flex; gap: 8px; align-items: flex-start; font-size: 11px; line-height: 16px;
+      color: var(--ink4); background: var(--bg); border: 1px solid var(--soft);
+      border-radius: 6px; padding: 8px 10px; max-width: 420px;
+    }
+    .kbd { font-size: 11px; font-weight: 600; color: #fff; background: var(--ink5); border-radius: 3px; padding: 1px 5px; }
+    .sec-head {
+      display: flex; align-items: center; gap: 8px; padding: 7px 12px; background: var(--bg2);
+      border-bottom: 1px solid var(--soft); border-top: 1px solid var(--soft);
+      font-size: 11px; font-weight: 600; letter-spacing: 0.66px; text-transform: uppercase; color: var(--ink4);
+    }
+  </style>
+</helmet>
+
+<div class="board">
+  <div style="display: flex; flex-direction: column; gap: 6px">
+    <h1 class="board-title">Triage pane — candidates, staged, never on the canvas</h1>
+    <p class="board-sub">A dock tab holding the fetched candidate set. Nothing here is in the
+      graph, the data table, or any facet count until it is ingested. The table is the existing
+      <strong>TableGrid</strong> — 24px rows, 11px uppercase column heads, typed per-column filters —
+      because this is the one surface that is identical for every provider (D6).
+      <strong>Only one tab is registered here, so the dock draws no tab strip at all.</strong></p>
+  </div>
+
+  <div class="dock">
+    <div class="dock-head">
+      <span style="color: var(--ink4)">⌄</span>
+      <span class="dock-view on">Correlations</span>
+      <span class="dock-view">Nodes</span>
+      <span class="dock-view">Edges</span>
+      <span class="spacer"></span>
+      <span style="font-size: 12px; color: var(--ink4)">Select all 47 matching</span>
+      <span style="font-size: 12px; color: var(--ink3)">Columns</span>
+    </div>
+
+    <!-- the honest header line -->
+    <div class="headline">
+      <b>210 fetched</b>
+      <span class="dot">·</span>
+      <span>12 already on canvas (skipped)</span>
+      <span class="dot">·</span>
+      <span class="seg-btn">3 rejected earlier
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+      </span>
+      <span class="spacer"></span>
+      <span style="font-size: 11px; color: var(--ink3)">from ~210 advertised — a shrink is expected, not an error</span>
+    </div>
+
+    <!-- column heads + typed filters -->
+    <div style="display: flex; align-items: center; padding: 6px 12px 6px; background: var(--bg1); border-bottom: 1px solid var(--border); gap: 0">
+      <span style="width: 34px"></span>
+      <div style="width: 300px; display: flex; flex-direction: column; gap: 4px; padding-right: 8px">
+        <span class="th-label">Value</span><div class="filt">Filter rows…</div>
+      </div>
+      <div style="width: 150px; display: flex; flex-direction: column; gap: 4px; padding-right: 8px">
+        <span class="th-label">Type</span><div class="filt" style="justify-content: space-between">All <span>⌄</span></div>
+      </div>
+      <div style="width: 170px; display: flex; flex-direction: column; gap: 4px; padding-right: 8px">
+        <span class="th-label">First seen</span>
+        <div style="display: flex; gap: 4px"><div class="filt" style="width: 50%">Min</div><div class="filt" style="width: 50%">Max</div></div>
+      </div>
+      <div style="width: 300px; display: flex; flex-direction: column; gap: 4px; padding-right: 8px">
+        <span class="th-label">Context <span style="text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--primary)">· regex ok here</span></span>
+        <div class="filt">/paste\.\w+/</div>
+      </div>
+      <div style="width: 130px; display: flex; flex-direction: column; gap: 4px">
+        <span class="th-label">Occurrences</span>
+        <div style="display: flex; gap: 4px"><div class="filt" style="width: 50%">Min</div><div class="filt" style="width: 50%">Max</div></div>
+      </div>
+      <span class="spacer"></span>
+      <span style="width: 90px" class="th-label">State</span>
+    </div>
+
+    <!-- rows -->
+    <div class="row marked"><span style="width: 34px; padding-left: 12px"><span class="box on"></span></span><span class="td" style="width: 300px">hxxp://paste.circl.lu/2f9c</span><span class="td" style="width: 150px">url</span><span class="td" style="width: 170px">2026-08-14</span><span class="td" style="width: 300px">seen in 3 pastes</span><span class="td" style="width: 130px">7</span><span class="spacer"></span><span class="td" style="width: 90px; color: var(--primary); font-weight: 600">will ingest</span></div>
+    <div class="row marked"><span style="width: 34px; padding-left: 12px"><span class="box on"></span></span><span class="td" style="width: 300px">hxxp://paste.circl.lu/77ab</span><span class="td" style="width: 150px">url</span><span class="td" style="width: 170px">2026-08-13</span><span class="td" style="width: 300px">seen in 2 pastes</span><span class="td" style="width: 130px">4</span><span class="spacer"></span><span class="td" style="width: 90px; color: var(--primary); font-weight: 600">will ingest</span></div>
+    <div class="row"><span style="width: 34px; padding-left: 12px"><span class="box"></span></span><span class="td" style="width: 300px">hxxp://paste.circl.lu/91de</span><span class="td" style="width: 150px">url</span><span class="td" style="width: 170px">2026-08-12</span><span class="td" style="width: 300px">seen in 1 paste</span><span class="td" style="width: 130px">1</span><span class="spacer"></span><span class="td" style="width: 90px"></span></div>
+    <div class="row rejected"><span style="width: 34px; padding-left: 12px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg></span><span class="td" style="width: 300px">hxxp://paste.circl.lu/0c14</span><span class="td" style="width: 150px">url</span><span class="td" style="width: 170px">2026-08-11</span><span class="td" style="width: 300px">seen in 1 paste</span><span class="td" style="width: 130px">1</span><span class="spacer"></span><span class="td" style="width: 90px; text-decoration: none; color: var(--primary); font-weight: 600">undo</span></div>
+    <div class="row"><span style="width: 34px; padding-left: 12px"><span class="box"></span></span><span class="td" style="width: 300px">hxxp://paste.circl.lu/b8e2</span><span class="td" style="width: 150px">url</span><span class="td" style="width: 170px">2026-08-10</span><span class="td" style="width: 300px">seen in 5 pastes</span><span class="td" style="width: 130px">9</span><span class="spacer"></span><span class="td" style="width: 90px"></span></div>
+    <div class="row"><span style="width: 34px; padding-left: 12px"><span class="box"></span></span><span class="td" style="width: 300px">hxxp://paste.circl.lu/44a0</span><span class="td" style="width: 150px">url</span><span class="td" style="width: 170px">2026-08-09</span><span class="td" style="width: 300px">seen in 1 paste</span><span class="td" style="width: 130px">2</span><span class="spacer"></span><span class="td" style="width: 90px"></span></div>
+
+    <!-- edge-only results get their own section, never the node columns -->
+    <div class="sec-head">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="2.5"/><circle cx="19" cy="12" r="2.5"/><path d="M7.5 12h9"/></svg>
+      Edges between nodes already on canvas — 14
+      <span style="font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--ink3)">
+        both endpoints exist, so these would otherwise land silently (D24)</span>
+    </div>
+    <div style="display: flex; align-items: center; padding: 5px 12px; background: var(--bg1); border-bottom: 1px solid var(--soft)">
+      <span style="width: 34px"></span>
+      <span class="th-label" style="width: 300px">From</span>
+      <span class="th-label" style="width: 300px">To</span>
+      <span class="th-label" style="width: 150px">Kind</span>
+    </div>
+    <div class="row"><span style="width: 34px; padding-left: 12px"><span class="box on"></span></span><span class="td" style="width: 300px">paste-2f9c</span><span class="td" style="width: 300px">circl.lu</span><span class="td" style="width: 150px">mentions</span></div>
+    <div class="row"><span style="width: 34px; padding-left: 12px"><span class="box"></span></span><span class="td" style="width: 300px">paste-77ab</span><span class="td" style="width: 300px">185.12.44.3</span><span class="td" style="width: 150px">resolves</span></div>
+
+    <div class="footer">
+      <button class="btn">Ingest selected (12)</button>
+      <button class="btn ghost">Reject selected</button>
+      <button class="btn ghost">Reject all remaining</button>
+      <span class="spacer"></span>
+      <span style="font-size: 11px; color: var(--ink4)">Closing this pane rejects nothing — leftovers are re-offered next run</span>
+    </div>
+  </div>
+
+  <div style="display: flex; gap: 16px; flex-wrap: wrap">
+    <div class="callout">
+      <span class="kbd">C5</span>
+      <span><strong>The rejected count is a button.</strong> Clicking it reveals the suppressed rows
+        in place, so "previously rejected are suppressed" is inspectable rather than a claim — and
+        it is the only way back from a mis-rejection, since the memory is per-session and
+        per-pivot (D14).</span>
+    </div>
+    <div class="callout">
+      <span class="kbd">C6</span>
+      <span><strong>A rejected row is struck in place, not moved.</strong> Moving it re-orders the
+        table under the analyst's cursor mid-triage. It also loses its checkbox entirely — an
+        unchecked box would read as mere deselection, and rejection is a deliberate act with
+        memory.</span>
+    </div>
+    <div class="callout">
+      <span class="kbd">D23</span>
+      <span><strong>"Skipped", never "removed".</strong> A deduped candidate is already on the
+        canvas and its data was deliberately left untouched. Nothing was lost, so the word must
+        not suggest it was.</span>
+    </div>
+    <div class="callout">
+      <span class="kbd">D5</span>
+      <span><strong>Regex lives here and only here.</strong> These filters are client-side over
+        data already in hand. Narrowing, which is server-bound, has no regex widget at all.</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

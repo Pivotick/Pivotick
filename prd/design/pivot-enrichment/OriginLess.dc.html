@@ -1,0 +1,174 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    :root {
+      --bg: #ffffff; --bg1: #fafafa; --bg2: #f3f3f3; --bg3: #ededed; --bg4: #e6e6e6;
+      --border: #cccccc; --soft: #dcdcdc;
+      --ink: #000000; --ink5: #333333; --ink4: #666666; --ink3: #999999;
+      --primary: #eb2e53;
+    }
+    body { margin: 0; font-family: system-ui, sans-serif; background: var(--bg2); color: var(--ink); }
+    a { color: var(--primary); } a:hover { color: #c41f41; }
+
+    .board { padding: 36px 40px; display: flex; flex-direction: column; gap: 26px; }
+    .board-title { font-size: 22px; font-weight: 600; letter-spacing: -0.2px; margin: 0; }
+    .board-sub { font-size: 13px; line-height: 19px; color: var(--ink4); margin: 0; max-width: 900px; }
+    .cap { font-size: 12px; font-weight: 600; color: var(--ink5); }
+    .note { font-size: 11px; line-height: 16px; color: var(--ink4); max-width: 340px; }
+    .col { display: flex; flex-direction: column; gap: 8px; }
+
+    .sidebar {
+      width: 340px; box-sizing: border-box; background: var(--bg);
+      border: 1px solid var(--soft); border-radius: 8px; overflow: hidden;
+    }
+    .sb-head { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--soft); }
+    .sb-title { font-size: 20px; font-weight: 400; color: var(--ink5); }
+    .sb-sec { font-size: 11px; font-weight: 600; letter-spacing: 0.66px; text-transform: uppercase; color: var(--ink4); }
+    .tabs { display: flex; gap: 6px; padding: 12px 16px 10px; }
+    .tab { font-size: 13.3px; color: var(--ink4); padding: 5px 6px; }
+    .tab.on { font-weight: 600; color: #fff; background: var(--primary); border-radius: 7px; padding: 5px 10px; }
+
+    .entry {
+      background: var(--bg); border: 1px solid var(--soft); border-radius: 7px; padding: 10px 12px 12px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .entry-top { display: flex; align-items: flex-start; gap: 8px; }
+    .entry-label { flex: 1 1 auto; font-size: 13px; font-weight: 600; }
+    .entry-count { font-size: 13px; font-weight: 600; white-space: nowrap; }
+    .facet-label { font-size: 11px; font-weight: 600; letter-spacing: 0.66px; text-transform: uppercase; color: var(--ink4); }
+    .control {
+      height: 30px; box-sizing: border-box; border: 1px solid var(--border); border-radius: 7px;
+      background: var(--bg); padding: 6px 8px; font-size: 14.4px; color: var(--ink3);
+      display: flex; align-items: center;
+    }
+    .btn { font-size: 12px; font-weight: 600; border-radius: 7px; padding: 6px 12px; border: none; background: var(--primary); color: #fff; }
+    .actions { display: flex; align-items: center; gap: 8px; }
+    .spacer { flex: 1 1 auto; }
+
+    .group {
+      display: flex; align-items: center; gap: 7px; padding: 9px 12px;
+      background: var(--bg1); border: 1px solid var(--soft); border-radius: 7px;
+      font-size: 12px; color: var(--ink4);
+    }
+    .kbd { font-size: 11px; font-weight: 600; color: #fff; background: var(--ink5); border-radius: 3px; padding: 1px 5px; }
+    .callout {
+      display: flex; gap: 8px; align-items: flex-start; font-size: 11px; line-height: 16px;
+      color: var(--ink4); background: var(--bg); border: 1px solid var(--soft);
+      border-radius: 6px; padding: 8px 10px; max-width: 520px;
+    }
+    .canvas-demo {
+      width: 420px; height: 230px; background: var(--bg); border: 1px solid var(--soft); border-radius: 8px;
+      position: relative; overflow: hidden;
+    }
+  </style>
+</helmet>
+
+<div class="board">
+  <div style="display: flex; flex-direction: column; gap: 6px">
+    <h1 class="board-title">Origin-less pivots — the quiet second door</h1>
+    <p class="board-sub">Search, import and staging pivots run with no selection at all (D19), so
+      they cannot live in a selection-driven list. <strong>Proposal: they need no new chrome.</strong>
+      They occupy the same Pivots surface — alone when nothing is selected, and folded into a
+      collapsed group at the bottom when something is. One registry, one pipeline, one triage pane,
+      exactly as D19 argued.</p>
+  </div>
+
+  <div style="display: flex; gap: 34px; flex-wrap: wrap; align-items: flex-start">
+
+    <div class="col">
+      <span class="cap">Nothing selected — the sidebar's empty state earns its keep</span>
+      <div class="sidebar">
+        <div class="sb-head"><span class="sb-title" style="font-size: 14px; color: var(--ink4)">Showing 24 nodes and 31 edges</span></div>
+        <div class="tabs"><span class="tab on">Pivots</span></div>
+        <div style="padding: 0 12px 14px; display: flex; flex-direction: column; gap: 10px">
+          <div style="padding: 0 4px"><span class="sb-sec">Run without a selection</span></div>
+          <div class="entry">
+            <div class="entry-top"><span class="entry-label">Search AIL</span></div>
+            <div class="facet-label">Query</div>
+            <div class="control">ransomware</div>
+            <div class="actions"><span class="spacer"></span><button class="btn">Search</button></div>
+          </div>
+          <div class="entry">
+            <div class="entry-top"><span class="entry-label">Import a list of indicators</span></div>
+            <div class="actions"><span class="spacer"></span><button class="btn">Choose file…</button></div>
+          </div>
+        </div>
+      </div>
+      <p class="note">Today this sidebar shows a node count and nothing else. Giving it the
+        origin-less pivots costs no chrome and puts them exactly where an analyst with nothing
+        selected is already looking.</p>
+    </div>
+
+    <div class="col">
+      <span class="cap">Something selected — folded away, not gone</span>
+      <div class="sidebar">
+        <div class="sb-head">
+          <div style="width: 34px; height: 34px; border-radius: 50%; background: #8fd14f"></div>
+          <span class="sb-title">paste-2f9c</span>
+        </div>
+        <div class="tabs">
+          <span class="tab">Neighbours</span><span class="tab">Stats</span><span class="tab">List</span><span class="tab on">Pivots</span>
+        </div>
+        <div style="padding: 0 12px 14px; display: flex; flex-direction: column; gap: 10px">
+          <div style="padding: 0 4px"><span class="sb-sec">2 pivots apply</span></div>
+          <div class="entry">
+            <div class="entry-top"><span class="entry-label">Correlations</span><span class="entry-count">~2,143</span></div>
+            <div style="font-size: 11px; color: var(--ink4)">1,800 domains · 210 URLs · 95 pastes · 38 IPs</div>
+          </div>
+          <div class="entry">
+            <div class="entry-top"><span class="entry-label">Same-source pastes</span><span class="entry-count">~18</span></div>
+          </div>
+          <div class="group">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+            Without a selection (2)
+          </div>
+        </div>
+      </div>
+      <p class="note">Collapsed and last, because a pivot that ignores the selection is never what
+        the analyst came here for. One click opens it.</p>
+    </div>
+
+    <div class="col">
+      <span class="cap">Results land at the viewport centre (D22)</span>
+      <div class="canvas-demo">
+        <svg width="420" height="230">
+          <g stroke="#c8dcf0" stroke-width="1.5" fill="none">
+            <path d="M60 40 L110 70"/><path d="M340 190 L300 160"/>
+          </g>
+          <circle cx="60" cy="40" r="8" fill="#8fd14f"/><circle cx="110" cy="70" r="8" fill="#8fd14f"/>
+          <circle cx="340" cy="190" r="8" fill="#8fd14f"/><circle cx="300" cy="160" r="8" fill="#8fd14f"/>
+          <g opacity="0.9">
+            <circle cx="196" cy="106" r="7" fill="#25B6EB"/><circle cx="228" cy="118" r="7" fill="#25B6EB"/>
+            <circle cx="184" cy="132" r="7" fill="#25B6EB"/><circle cx="222" cy="90" r="7" fill="#25B6EB"/>
+            <circle cx="248" cy="140" r="7" fill="#25B6EB"/><circle cx="168" cy="104" r="7" fill="#25B6EB"/>
+          </g>
+          <circle cx="210" cy="115" r="52" fill="none" stroke="#eb2e53" stroke-width="1.5" stroke-dasharray="4 4"/>
+          <text x="210" y="196" text-anchor="middle" font-size="11" fill="#666">30 ingested at centre</text>
+        </svg>
+      </div>
+      <p class="note">There is no origin node to jitter around, so the viewport centre is the only
+        honest anchor — and the analyst is already looking at it.</p>
+    </div>
+
+  </div>
+
+  <div class="callout">
+    <span class="kbd">C14</span>
+    <span><strong>No mainheader pill, no rail mode, no new surface.</strong> The brief asks for one
+      proposal and asks it to stay quiet. A mainheader entry would give a secondary door the most
+      prominent chrome in the app; a rail mode is the consumer's to ship, never the library's
+      (<code>plugin-rail-modes.md</code>, and brief §5). Reusing the Pivots surface keeps D19's
+      argument intact — the gap was never "the data came from elsewhere", it was "there is no node
+      to run this on".</span>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

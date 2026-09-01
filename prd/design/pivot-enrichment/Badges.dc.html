@@ -1,0 +1,152 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    :root {
+      --bg: #ffffff; --bg1: #fafafa; --bg2: #f3f3f3; --bg3: #ededed; --bg4: #e6e6e6;
+      --border: #cccccc; --soft: #dcdcdc;
+      --ink: #000000; --ink5: #333333; --ink4: #666666; --ink3: #999999;
+      --primary: #eb2e53; --badge: #f0636a;
+    }
+    body { margin: 0; font-family: system-ui, sans-serif; background: var(--bg2); color: var(--ink); }
+    a { color: var(--primary); } a:hover { color: #c41f41; }
+
+    .board { padding: 36px 40px; display: flex; flex-direction: column; gap: 26px; }
+    .board-title { font-size: 22px; font-weight: 600; letter-spacing: -0.2px; margin: 0; }
+    .board-sub { font-size: 13px; line-height: 19px; color: var(--ink4); margin: 0; max-width: 860px; }
+    .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
+    .cell { display: flex; flex-direction: column; gap: 8px; }
+    .cell-head { display: flex; align-items: baseline; gap: 8px; }
+    .cell-id { font-size: 11px; font-weight: 600; letter-spacing: 0.5px; color: #fff; background: var(--ink5); border-radius: 3px; padding: 1px 5px; }
+    .cell-name { font-size: 12px; font-weight: 600; color: var(--ink5); }
+    .cell-note { font-size: 11px; line-height: 16px; color: var(--ink4); }
+    .stage {
+      background: var(--bg); border: 1px solid var(--soft); border-radius: 8px;
+      height: 190px; display: flex; align-items: center; justify-content: center;
+    }
+    .kbd { font-size: 11px; font-weight: 600; color: #fff; background: var(--ink5); border-radius: 3px; padding: 1px 5px; }
+    .callout {
+      display: flex; gap: 8px; align-items: flex-start; font-size: 11px; line-height: 16px;
+      color: var(--ink4); background: var(--bg); border: 1px solid var(--soft);
+      border-radius: 6px; padding: 8px 10px; max-width: 480px;
+    }
+    .tip {
+      background: #2b2b2e; color: #fff; font-size: 11px; border-radius: 4px;
+      padding: 4px 8px; display: inline-block;
+    }
+  </style>
+</helmet>
+
+<div class="board">
+  <div style="display: flex; flex-direction: column; gap: 6px">
+    <h1 class="board-title">Rim badges — declared potential only</h1>
+    <p class="board-sub">A badge says the data source <em>declared</em> there is more here, before any
+      provider has been called. Queried counts never reach the rim — otherwise a number would
+      materialise on one node the moment it is selected and the canvas would stop being consistent
+      (D12). Nothing on the rim ever changes because of a selection or an open menu.</p>
+  </div>
+
+  <div class="grid">
+
+    <div class="cell">
+      <div class="cell-head"><span class="cell-id">B1</span><span class="cell-name">one pivot declares</span></div>
+      <div class="stage">
+        <svg width="150" height="130" viewBox="0 0 150 130">
+          <circle cx="70" cy="66" r="26" fill="#8fd14f" stroke="#fff" stroke-width="2"/>
+          <text x="70" y="108" text-anchor="middle" font-size="11" fill="#333">paste-2f9c</text>
+          <g transform="translate(89, 47)">
+            <rect x="-15" y="-9" width="32" height="18" rx="9" fill="#f0636a"/>
+            <text x="1" y="4" text-anchor="middle" font-size="10" font-weight="600" fill="#fff">2.1k</text>
+          </g>
+        </svg>
+      </div>
+      <div class="cell-note">A pill on the NE corner, in <code>var(--pvt-badge-color)</code>. Past three
+        characters the library renders <code>99+</code>, so large counts are abbreviated by hand —
+        <code>2.1k</code>, not <code>2,143</code>.</div>
+    </div>
+
+    <div class="cell">
+      <div class="cell-head"><span class="cell-id">B2</span><span class="cell-name">several declare</span></div>
+      <div class="stage">
+        <svg width="150" height="130" viewBox="0 0 150 130">
+          <circle cx="70" cy="66" r="26" fill="#8fd14f" stroke="#fff" stroke-width="2"/>
+          <text x="70" y="108" text-anchor="middle" font-size="11" fill="#333">paste-2f9c</text>
+          <g transform="translate(89, 47)"><rect x="-15" y="-9" width="32" height="18" rx="9" fill="#f0636a"/><text x="1" y="4" text-anchor="middle" font-size="10" font-weight="600" fill="#fff">2.1k</text></g>
+          <g transform="translate(89, 85)"><circle r="9" fill="#f0636a"/><text y="4" text-anchor="middle" font-size="10" font-weight="600" fill="#fff">18</text></g>
+          <g transform="translate(51, 85)"><circle r="9" fill="#f0636a"/><text y="4" text-anchor="middle" font-size="10" font-weight="600" fill="#fff">+2</text></g>
+        </svg>
+      </div>
+      <div class="cell-note">Four corners, so three badges and the library's own <code>+n</code> overflow.
+        The collapse is <strong>automatic</strong> — <code>BadgeDrawer</code> already hands out corners
+        clockwise from NE and spends the last one on <code>+n</code>.</div>
+    </div>
+
+    <div class="cell">
+      <div class="cell-head"><span class="cell-id">B2′</span><span class="cell-name">on a container</span></div>
+      <div class="stage">
+        <svg width="150" height="130" viewBox="0 0 150 130">
+          <circle cx="70" cy="66" r="26" fill="#c9a227" stroke="#fff" stroke-width="2"/>
+          <text x="70" y="108" text-anchor="middle" font-size="11" fill="#333">event 5f2a</text>
+          <g transform="translate(89, 47)"><circle r="9" fill="#666"/><text y="4" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">+</text></g>
+          <g transform="translate(89, 85)"><circle r="9" fill="#666"/><text y="4" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">+</text></g>
+          <g transform="translate(51, 47)"><rect x="-15" y="-9" width="30" height="18" rx="9" fill="#f0636a"/><text x="0" y="4" text-anchor="middle" font-size="10" font-weight="600" fill="#fff">12</text></g>
+          <g transform="translate(51, 85)"><circle r="9" fill="#f0636a"/><text y="4" text-anchor="middle" font-size="10" font-weight="600" fill="#fff">+3</text></g>
+        </svg>
+      </div>
+      <div class="cell-note">A node with children reserves <strong>both</strong> east corners for the
+        expand affordance, whatever its state — so exactly two are left, and a second pivot already
+        forces <code>+3</code>. This bites hardest on precisely the container nodes MISP cares about.</div>
+    </div>
+
+    <div class="cell">
+      <div class="cell-head"><span class="cell-id">B3</span><span class="cell-name">cleared</span></div>
+      <div class="stage">
+        <svg width="150" height="130" viewBox="0 0 150 130">
+          <circle cx="70" cy="66" r="26" fill="#8fd14f" stroke="#fff" stroke-width="2"/>
+          <text x="70" y="108" text-anchor="middle" font-size="11" fill="#333">paste-2f9c</text>
+        </svg>
+      </div>
+      <div class="cell-note"><code>setPotential(id, 0)</code> removes the badge outright. There is no
+        "0" state on the rim — a zero badge would advertise the absence of data, which is noise.</div>
+    </div>
+
+  </div>
+
+  <div style="display: flex; gap: 30px; align-items: flex-start; flex-wrap: wrap">
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <span style="font-size: 12px; font-weight: 600; color: var(--ink5)">Tooltip copy — one self-contained line</span>
+      <div class="tip">~2,100 correlations · AIL</div>
+      <span style="font-size: 12px; font-weight: 600; color: var(--ink5); margin-top: 8px">…and how the same line reads inside the <code>+n</code> badge</span>
+      <div class="tip">~2,100 correlations · AIL<br>18 same-source pastes · AIL<br>~40 related events · MISP</div>
+      <p style="font-size: 11px; line-height: 16px; color: var(--ink4); max-width: 380px; margin: 0">
+        <span class="kbd">C13</span> The overflow badge concatenates the hidden badges' titles one per
+        line, so every line has to stand alone. A fragment like "and 40 more" becomes gibberish
+        when stacked.</p>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px; max-width: 480px">
+      <div class="callout">
+        <span class="kbd">C11</span>
+        <span><strong>The count, not a glyph.</strong> The number <em>is</em> the content of declared
+          potential. A glyph says only "something", which the analyst then has to open a menu to
+          resolve — which is the cost the badge exists to avoid.</span>
+      </div>
+      <div class="callout">
+        <span class="kbd">C12</span>
+        <span><strong>Clicking a badge opens the pivot menu, scoped to that pivot.</strong>
+          <code>NodeBadge.onClick</code> exists and <em>consumes</em> the click, so the node is not
+          also selected by accident — meaning the shortcut can select the node and open the menu
+          deliberately, as one gesture.</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

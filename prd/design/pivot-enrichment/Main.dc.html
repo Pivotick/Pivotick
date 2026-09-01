@@ -1,0 +1,210 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    :root {
+      --bg: #ffffff; --bg1: #fafafa; --bg2: #f3f3f3; --bg3: #ededed; --bg4: #e6e6e6;
+      --border: #cccccc; --soft: #dcdcdc;
+      --ink: #000000; --ink5: #333333; --ink4: #666666; --ink3: #999999;
+      --primary: #eb2e53; --success: #16A34A; --danger: #DC2626;
+    }
+    body { margin: 0; font-family: system-ui, sans-serif; background: var(--bg2); color: var(--ink); }
+    a { color: var(--primary); } a:hover { color: #c41f41; }
+
+    .board { padding: 40px 44px; display: flex; flex-direction: column; gap: 28px; }
+    .kicker { font-size: 11px; font-weight: 600; letter-spacing: 0.9px; text-transform: uppercase; color: var(--primary); }
+    .board-title { font-size: 27px; font-weight: 600; letter-spacing: -0.4px; margin: 0; }
+    .board-sub { font-size: 13.5px; line-height: 20px; color: var(--ink4); margin: 0; max-width: 960px; }
+
+    .cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+    .card {
+      background: var(--bg); border: 1px solid var(--soft); border-radius: 10px;
+      padding: 16px; display: flex; flex-direction: column; gap: 12px;
+    }
+    .card.win { border-color: var(--primary); border-width: 2px; padding: 15px; }
+    .card-head { display: flex; align-items: baseline; gap: 8px; }
+    .card-id { font-size: 11px; font-weight: 700; letter-spacing: 0.5px; color: #fff; background: var(--ink5); border-radius: 3px; padding: 2px 6px; }
+    .card.win .card-id { background: var(--primary); }
+    .card-name { font-size: 14px; font-weight: 600; }
+    .verdict { margin-left: auto; font-size: 11px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; color: var(--ink3); }
+    .card.win .verdict { color: var(--primary); }
+
+    .plus, .minus { display: flex; gap: 7px; font-size: 12px; line-height: 17px; }
+    .plus { color: var(--ink5); }
+    .minus { color: var(--ink4); }
+    .mark { flex: 0 0 auto; font-weight: 700; }
+    .plus .mark { color: var(--success); }
+    .minus .mark { color: var(--danger); }
+    .args { display: flex; flex-direction: column; gap: 6px; }
+
+    /* schematic thumbnails — the shape of the app, not a render */
+    .thumb { height: 108px; background: var(--bg2); border: 1px solid var(--soft); border-radius: 6px; position: relative; overflow: hidden; }
+    .t-side { position: absolute; left: 0; top: 0; bottom: 0; width: 44px; background: var(--bg); border-right: 1px solid var(--soft); }
+    .t-dock { position: absolute; left: 44px; right: 0; bottom: 0; height: 34px; background: var(--bg3); border-top: 1px solid var(--soft); }
+    .t-rail { position: absolute; left: 50px; top: 8px; width: 11px; bottom: 40px; background: var(--bg3); border: 1px solid var(--soft); border-radius: 3px; }
+    .t-hot { position: absolute; background: var(--primary); border-radius: 3px; opacity: 0.85; }
+    .t-node { position: absolute; width: 9px; height: 9px; border-radius: 50%; background: #8fd14f; }
+
+    table { border-collapse: collapse; width: 100%; background: var(--bg); border: 1px solid var(--soft); border-radius: 8px; overflow: hidden; }
+    th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--soft); font-size: 12px; }
+    th { font-size: 11px; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; color: var(--ink4); background: var(--bg1); }
+    td.num { font-variant-numeric: tabular-nums; }
+    tr:last-child td { border-bottom: none; }
+
+    .decision {
+      background: var(--bg); border: 2px solid var(--primary); border-radius: 10px;
+      padding: 18px 20px; display: flex; flex-direction: column; gap: 10px; max-width: 1050px;
+    }
+    .decision h2 { font-size: 15px; margin: 0; }
+    .decision p { font-size: 12.5px; line-height: 19px; color: var(--ink5); margin: 0; }
+    .open {
+      background: #fdf3e4; border: 1px solid #f3d7a6; border-radius: 8px; padding: 14px 16px;
+      display: flex; flex-direction: column; gap: 8px; max-width: 1050px;
+    }
+    .open h2 { font-size: 13px; margin: 0; color: #7a4b06; }
+    .open li { font-size: 12px; line-height: 18px; color: #7a4b06; }
+    ol, ul { margin: 0; padding-left: 18px; }
+    .menu {
+      width: 210px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+      box-shadow: rgba(0,0,0,0.16) 0px 3px 6px; overflow: hidden;
+    }
+    .mi { display: flex; align-items: center; gap: 9px; padding: 6px 11px; font-size: 12.5px; color: var(--ink5); }
+    .mi.hot { color: var(--primary); font-weight: 600; }
+    .mi-sep { height: 1px; background: var(--soft); margin: 3px 0; }
+  </style>
+</helmet>
+
+<div class="board">
+
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <span class="kicker">Phase A · recommendation</span>
+    <h1 class="board-title">Where the pivot menu lives</h1>
+    <p class="board-sub">Three placements, one flow: select the AIL paste node → open the menu →
+      <strong>~2,143</strong> against a cap of 2,000 → refusal → tick <em>URLs</em> → <strong>~210</strong>,
+      under cap → fetch → triage → ingest <strong>12</strong>. The states and every word are fixed
+      elsewhere (<code>pivot-enrichment-ui-states.md</code>), so these three differ in
+      <strong>placement only</strong> — which is the actual decision.</p>
+  </div>
+
+  <div class="cards">
+
+    <div class="card">
+      <div class="card-head"><span class="card-id">A</span><span class="card-name">Mode-rail tool panel</span><span class="verdict">not this</span></div>
+      <div class="thumb">
+        <div class="t-side"></div><div class="t-dock"></div><div class="t-rail"></div>
+        <div class="t-hot" style="left: 66px; top: 8px; width: 46px; bottom: 40px"></div>
+        <div class="t-node" style="left: 190px; top: 34px"></div>
+      </div>
+      <div class="args">
+        <div class="plus"><span class="mark">+</span><span>Full canvas height, and it is already the contextual surface.</span></div>
+        <div class="minus"><span class="mark">−</span><span><strong>Mode-scoped.</strong> Switching to Create to draw an edge hides a narrowing session mid-flight.</span></div>
+        <div class="minus"><span class="mark">−</span><span>No Enrich mode ships (D25), so it has to live <em>inside</em> Select — mixing "how I point" with "what I ask the backend".</span></div>
+        <div class="minus"><span class="mark">−</span><span>Far left: ~700px from a node on the right of the canvas.</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="card-id">B</span><span class="card-name">Popover on the selection</span><span class="verdict">not this</span></div>
+      <div class="thumb">
+        <div class="t-side"></div><div class="t-dock"></div><div class="t-rail"></div>
+        <div class="t-node" style="left: 150px; top: 30px"></div>
+        <div class="t-hot" style="left: 164px; top: 26px; width: 60px; height: 66px"></div>
+      </div>
+      <div class="args">
+        <div class="plus"><span class="mark">+</span><span>Matches the mental model exactly: pivot <em>from this thing</em>. Zero travel.</span></div>
+        <div class="minus"><span class="mark">−</span><span><strong>Overlaps the dock by ~168px</strong> at an ordinary anchor — the very pane it is about to fill.</span></div>
+        <div class="minus"><span class="mark">−</span><span>Must re-anchor on every pan and zoom, and it competes with the context menu for the same gesture.</span></div>
+        <div class="minus"><span class="mark">−</span><span>No honest anchor for 50 selected nodes — and a popover that must survive selection changes has stopped being a popover.</span></div>
+      </div>
+    </div>
+
+    <div class="card win">
+      <div class="card-head"><span class="card-id">C</span><span class="card-name">A Pivots tab in the sidebar</span><span class="verdict">recommended</span></div>
+      <div class="thumb">
+        <div class="t-side"></div><div class="t-dock"></div><div class="t-rail"></div>
+        <div class="t-hot" style="left: 4px; top: 38px; width: 36px; bottom: 6px"></div>
+        <div class="t-node" style="left: 190px; top: 34px"></div>
+      </div>
+      <div class="args">
+        <div class="plus"><span class="mark">+</span><span>The sidebar <em>is</em> the "what is selected" surface, and a pivot is a property of the selection.</span></div>
+        <div class="plus"><span class="mark">+</span><span><strong>No new chrome.</strong> A fourth tab beside Neighbours / Stats / List.</span></div>
+        <div class="plus"><span class="mark">+</span><span>Open/closed maps exactly onto D11: the tab being frontmost <em>is</em> the intent that fires <code>summarize</code>, and leaving it stops the calls.</span></div>
+        <div class="plus"><span class="mark">+</span><span>340px hosts the existing 332px control vocabulary unchanged, and 50 selected nodes need no special case.</span></div>
+        <div class="minus"><span class="mark">−</span><span>Furthest from the node — answered by the badge click and the context-menu entry, both of which route here.</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap">
+    <div style="flex: 1 1 620px; min-width: 0; display: flex; flex-direction: column; gap: 10px">
+      <span style="font-size: 12px; font-weight: 600; color: var(--ink5)">What the measurements actually say</span>
+      <table>
+        <tr><th>Measured</th><th>Value</th><th>Consequence</th></tr>
+        <tr><td>Bottom dock, open</td><td class="num">332.5px</td><td>35% of a 950px viewport — the canvas is not the roomy surface it looks like</td></tr>
+        <tr><td>Free canvas corners</td><td class="num">0</td><td>rail + panel, navigation, legend, minimap already hold all four</td></tr>
+        <tr><td>Selection sidebar</td><td class="num">340px</td><td>the filter panel's controls are 332px — they drop in unchanged</td></tr>
+        <tr><td>Sidebar, one node selected</td><td>full to the fold</td><td>a Pivots <em>block</em> would sit below it; a Pivots <em>tab</em> gets the whole remainder</td></tr>
+        <tr><td>Tool panel scope</td><td>per rail mode</td><td>a narrowing session cannot survive a mode change</td></tr>
+      </table>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <span style="font-size: 12px; font-weight: 600; color: var(--ink5)">The fast path in, whichever wins</span>
+      <div class="menu">
+        <div class="mi">Select Neighbors</div>
+        <div class="mi">Hide Children</div>
+        <div class="mi">Connect to…</div>
+        <div class="mi-sep"></div>
+        <div class="mi hot">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+          Pivot…
+        </div>
+        <div class="mi-sep"></div>
+        <div class="mi">Inspect Properties</div>
+        <div class="mi">Delete Node</div>
+      </div>
+      <p style="font-size: 11px; line-height: 16px; color: var(--ink4); margin: 0; max-width: 240px">
+        One flat entry, not a <code>Pivot ▸</code> submenu: <code>MenuActionItemOptions</code> has no
+        children (<code>GraphUI.ts:706</code>). It opens the winning surface. <code>visible</code> takes
+        a predicate, so it hides itself when nothing applies — free <code>appliesTo</code>.</p>
+    </div>
+  </div>
+
+  <div class="decision">
+    <h2>Recommendation — Variant C</h2>
+    <p>Variant B is the one that looks right and the measurements kill: it collides with the dock,
+      needs re-anchoring machinery on every pan, and has no answer for a bulk selection. Variant A
+      is defensible but buys its room by putting an analytic surface inside a <em>pointer-mode</em>
+      panel, where a stray click on Create discards the narrowing.</p>
+    <p>Variant C wins on the thing that is easy to miss: <strong>the PRD's own behaviour is already
+      tab-shaped.</strong> <code>summarize</code> fires when the menu opens, re-runs while it stays open as
+      the selection changes, and costs nothing while closed (D11) — which is precisely the lifecycle
+      of a sidebar tab, for free, with no new chrome and no new open/close concept. It also fits the
+      existing control vocabulary at its existing width, and treats 50 selected nodes the same way
+      it treats one.</p>
+  </div>
+
+  <div class="open">
+    <h2>Three things this design needs that the library does not have yet</h2>
+    <ul>
+      <li><strong>An actionable toast.</strong> Not just a button: today's dies on a hard 4s timer
+        with no handle, which is less time than it takes to read "Ingested 12 nodes, 14 edges".
+        Without it, auto-ingest pivots have no undo surface at all.</li>
+      <li><strong>A live dock-tab label</strong>, or the count stays in the pane header.
+        <code>DockTabHandle</code> has no <code>setLabel</code>.</li>
+      <li><strong>Two dark tokens</strong> — the refusal amber and the success-toast green have no
+        dark counterpart in <code>_variables.scss</code>.</li>
+    </ul>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

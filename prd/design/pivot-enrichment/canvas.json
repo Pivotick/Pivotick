@@ -1,0 +1,67 @@
+{
+  "pages": [
+    { "id": "page-1", "name": "Where the menu lives" },
+    { "id": "page-2", "name": "Triage, badges, undo" }
+  ],
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 1560, "h": 1360, "page": "page-1", "title": "Recommendation" },
+    { "file": "EntryStates.dc.html", "x": 1660, "y": 0, "w": 1140, "h": 1470, "page": "page-1", "title": "Pivot entry — every state" },
+
+    { "file": "VariantA.dc.html", "x": 0, "y": 1590, "w": 1600, "h": 950, "page": "page-1", "title": "Variant A — tool panel" },
+    { "file": "VariantB.dc.html", "x": 1700, "y": 1590, "w": 1600, "h": 950, "page": "page-1", "title": "Variant B — popover" },
+    { "file": "VariantC.dc.html", "x": 3400, "y": 1590, "w": 1600, "h": 950, "page": "page-1", "title": "Variant C — sidebar tab" },
+
+    { "file": "Triage.dc.html", "x": 0, "y": 0, "w": 1620, "h": 830, "page": "page-2", "title": "Triage pane" },
+    { "file": "TriageStates.dc.html", "x": 1720, "y": 0, "w": 1620, "h": 1270, "page": "page-2", "title": "Triage — empty, error, refusal" },
+
+    { "file": "Concurrency.dc.html", "x": 0, "y": 1390, "w": 1260, "h": 750, "page": "page-2", "title": "Concurrency" },
+    { "file": "Toast.dc.html", "x": 1360, "y": 1390, "w": 1030, "h": 1220, "page": "page-2", "title": "Ingest, toast, undo" },
+    { "file": "Themes.dc.html", "x": 2490, "y": 1390, "w": 1130, "h": 1010, "page": "page-2", "title": "Both themes" },
+
+    { "file": "Badges.dc.html", "x": 0, "y": 2730, "w": 1340, "h": 790, "page": "page-2", "title": "Rim badges" },
+    { "file": "OriginLess.dc.html", "x": 1440, "y": 2730, "w": 1300, "h": 850, "page": "page-2", "title": "Origin-less pivots" }
+  ],
+  "annotations": [
+    {
+      "id": "start-here",
+      "x": 0,
+      "y": -200,
+      "w": 700,
+      "page": "page-1",
+      "text": "Start at Recommendation, then read the three variants below it.\n\nThe states and every string are fixed in prd/pivot-enrichment-ui-states.md, so A, B and C differ in PLACEMENT ONLY — that is the decision being asked for. Anything numbered C1–C14 there is a presentation call I made and can be argued separately from the layout."
+    },
+    {
+      "id": "variant-a-note",
+      "x": 0,
+      "y": 2580,
+      "w": 520,
+      "page": "page-1",
+      "text": "A — mode-rail tool panel\n\nRequired to be shown. It resolves the no-Enrich-mode tension by living as a section INSIDE Select mode.\n\nThe cost is structural, not cosmetic: the panel is scoped to a pointer mode, so switching to Create to draw one edge throws away a narrowing session. It also sits ~700px from a node on the right of the canvas."
+    },
+    {
+      "id": "variant-b-note",
+      "x": 1700,
+      "y": 2580,
+      "w": 520,
+      "page": "page-1",
+      "text": "B — popover anchored to the selection\n\nThe Maltego shape, and the one that feels most right until it is measured.\n\nDrawn at an ordinary anchor it overlaps the dock by 168px — the pane it is about to fill. It needs re-anchoring on every pan and zoom, competes with the context menu for the same gesture, and has no honest anchor for 50 selected nodes."
+    },
+    {
+      "id": "variant-c-note",
+      "x": 3400,
+      "y": 2580,
+      "w": 520,
+      "page": "page-1",
+      "text": "C — a Pivots tab in the selection sidebar — RECOMMENDED\n\nNo new chrome: a fourth tab beside Neighbours / Stats / List.\n\nThe argument that decided it: D11's lifecycle is already tab-shaped. summarize fires when the menu opens, re-runs while it stays open as the selection changes, and costs nothing while closed — which is exactly what a sidebar tab does for free.\n\nHonest cost: it is the furthest surface from the node. The badge click and the context-menu entry both route here to answer that."
+    },
+    {
+      "id": "gaps-note",
+      "x": 0,
+      "y": 3620,
+      "w": 700,
+      "page": "page-2",
+      "text": "Three library gaps this design depends on:\n\n1. An actionable toast — and not merely a button. Today's dies on a hard 4s timer with no handle, which is less time than it takes to read \"Ingested 12 nodes, 14 edges\". Without it, auto-ingest pivots have no undo surface at all.\n\n2. DockTabHandle.setLabel(), or the candidate count stays in the pane header rather than the tab strip.\n\n3. Dark tokens for the refusal amber and the success-toast green — the only two colours here that are not already in _variables.scss."
+    }
+  ],
+  "launch": { "view": "canvas", "page": "page-1" }
+}
