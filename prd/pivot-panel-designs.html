@@ -1,0 +1,1225 @@
+<title>Pivot Panel Bench</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ─── tokens ────────────────────────────────────────────────────────────────
+   Ground is a plum-black pulled from the hue of Pivotick's own accent
+   (#eb2e53), so the specimens sit on a surface related to the product rather
+   than on an arbitrary neutral. The accent is used only where Pivotick uses it. */
+:root {
+    --ink:       #16121b;
+    --ink-2:     #1e1824;
+    --line:      #322a3a;
+    --chalk:     #ece7f0;
+    --mute:      #9489a1;
+    --amaranth:  #eb2e53;
+
+    --display: "Bricolage Grotesque", "Arial Black", sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    /* Inside a specimen this is what Pivotick actually sets. Do not change it. */
+    --panel-font: system-ui, sans-serif;
+
+    --frame-h: 620px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: var(--ink);
+    color: var(--chalk);
+    font-family: var(--display);
+    font-weight: 500;
+    -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+/* ─── page frame ───────────────────────────────────────────────────────── */
+
+.wrap { max-width: 1500px; margin: 0 auto; padding: 56px 32px 96px; }
+
+.masthead { border-bottom: 1px solid var(--line); padding-bottom: 28px; }
+
+.eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--amaranth);
+    margin: 0 0 18px;
+}
+
+h1 {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: clamp(34px, 6vw, 68px);
+    line-height: 0.94;
+    letter-spacing: -0.03em;
+    margin: 0 0 22px;
+    max-width: 15ch;
+}
+
+.standfirst {
+    max-width: 62ch;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--mute);
+    margin: 0;
+}
+
+.standfirst strong { color: var(--chalk); font-weight: 700; }
+
+/* The measured problem, stated as data because that is what it is. */
+.readouts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    margin: 32px 0 0;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.readout {
+    flex: 1 1 160px;
+    padding: 14px 18px;
+    border-right: 1px solid var(--line);
+    font-family: var(--mono);
+}
+
+.readout:last-child { border-right: 0; }
+
+.readout dt {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--mute);
+    margin: 0 0 6px;
+}
+
+.readout dd { margin: 0; font-size: 21px; font-weight: 700; }
+.readout dd.bad { color: var(--amaranth); }
+
+/* ─── shared control ───────────────────────────────────────────────────── */
+
+.control {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 18px;
+    margin: 40px 0 26px;
+    padding: 13px 16px;
+    background: color-mix(in srgb, var(--ink) 92%, transparent);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+}
+
+.control-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--mute);
+}
+
+.origins { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.origin-btn {
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 6px 11px;
+    background: transparent;
+    color: var(--mute);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: color .12s, border-color .12s;
+}
+
+.origin-btn:hover { color: var(--chalk); border-color: var(--mute); }
+
+.origin-btn[aria-pressed="true"] {
+    color: var(--ink);
+    background: var(--chalk);
+    border-color: var(--chalk);
+    font-weight: 700;
+}
+
+.origin-btn:focus-visible,
+.mono-btn:focus-visible { outline: 2px solid var(--amaranth); outline-offset: 2px; }
+
+.control-note {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--mute);
+}
+
+.control-note b { color: var(--chalk); font-weight: 700; }
+
+/* ─── the filmstrip ────────────────────────────────────────────────────── */
+
+.strip {
+    display: flex;
+    gap: 26px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding: 4px 0 22px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) transparent;
+}
+
+.strip::-webkit-scrollbar { height: 9px; }
+.strip::-webkit-scrollbar-thumb { background: var(--line); border-radius: 5px; }
+
+.spec {
+    flex: 0 0 auto;
+    width: 476px;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+}
+
+.spec-head { min-height: 132px; padding-bottom: 16px; }
+
+.spec-idx {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    color: var(--amaranth);
+}
+
+.spec-name {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 26px;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin: 7px 0 9px;
+}
+
+.spec-thesis { font-size: 13.5px; line-height: 1.5; color: var(--mute); margin: 0; max-width: 44ch; }
+
+/* Panel + gauge sit together: the gauge is the signature, so it is never
+   more than a hairline of ink and always beside the thing it measures. */
+.spec-body { display: flex; gap: 12px; align-items: flex-start; }
+
+/* The specimen frame is a real 620px viewport. Whatever a design cannot fit
+   is genuinely clipped here, exactly as it is clipped in the product. */
+.frame {
+    width: 420px;
+    height: var(--frame-h);
+    flex: none;
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+    background: #fff;
+    background-image: radial-gradient(circle, #e7e7ec 1px, transparent 1px);
+    background-size: 22px 22px;
+    box-shadow: 0 18px 44px rgba(0, 0, 0, .45);
+
+    --pv-primary: #eb2e53;
+    --pv-border: #dcdcdc;
+    --pv-chrome: #ededed;
+    --pv-t6: #000;
+    --pv-t4: #666;
+    --pv-t3: #999;
+}
+
+.gauge { width: 14px; flex: none; }
+
+.gauge-track {
+    width: 6px;
+    height: var(--frame-h);
+    border-radius: 3px;
+    background: var(--line);
+    position: relative;
+    overflow: hidden;
+}
+
+/* The lit segment is the share of the list you can actually see. */
+.gauge-lit {
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    background: var(--chalk);
+    border-radius: 3px;
+    transition: height .18s ease;
+}
+
+.gauge-lit.bad { background: var(--amaranth); }
+
+.spec-foot { padding-top: 18px; }
+
+.metric {
+    font-family: var(--mono);
+    font-size: 12px;
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+    color: var(--mute);
+}
+
+.metric b { color: var(--chalk); font-weight: 700; }
+.metric b.bad { color: var(--amaranth); }
+
+.costs { margin: 0; padding: 0; list-style: none; font-size: 12.5px; line-height: 1.55; }
+
+.costs li { display: flex; gap: 9px; color: var(--mute); margin-bottom: 5px; }
+
+.costs li::before {
+    content: attr(data-k);
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--amaranth);
+    flex: none;
+    width: 44px;
+    padding-top: 3px;
+}
+
+.costs li.con::before { color: var(--mute); }
+
+/* ─── inside a specimen: Pivotick's own chrome, matched ─────────────────── */
+/* Tokens below are lifted from src/styles/_variables.scss and pivot.scss so a
+   specimen is a fair likeness and not a redesign of the whole panel. */
+
+.pv {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    max-height: calc(100% - 20px);
+    display: flex;
+    flex-direction: column;
+    font-family: var(--panel-font);
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--pv-t6);
+    background: #fff;
+    border: 1px solid var(--pv-border);
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, .10);
+    padding: 10px;
+}
+
+.pv-title {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-weight: 600;
+    padding: 0 2px 9px;
+}
+
+.pv-title svg { color: var(--pv-primary); width: 15px; height: 15px; flex: none; }
+.pv-title span { flex: 1; }
+
+.kbd {
+    font: 600 10px/1 var(--panel-font);
+    padding: 3px 5px;
+    border: 1px solid var(--pv-border);
+    border-radius: 3px;
+    color: var(--pv-t4);
+}
+
+.pv-tool {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 8px;
+    border-radius: 6px;
+    color: var(--pv-t4);
+}
+
+.pv-tool.on { background: color-mix(in srgb, var(--pv-primary) 12%, transparent); color: var(--pv-primary); }
+
+.pv-legend {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--pv-t3);
+    padding: 12px 2px 6px;
+}
+
+.pv-origin {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 9px;
+    border: 1px solid var(--pv-border);
+    border-radius: 7px;
+}
+
+.pv-origin i { width: 8px; height: 8px; border-radius: 50%; background: #88c0d0; flex: none; }
+.pv-origin span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pv-origin b { font-weight: 400; color: var(--pv-t3); font-size: 12px; }
+
+/* The scroller every design shares, so the clipping is identical. */
+.pv-scroll {
+    flex: 0 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-right: -3px;
+    padding-right: 3px;
+    scrollbar-width: thin;
+}
+
+.pv-scroll > * { flex: none; }
+
+.pv-entry {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px;
+    border: 1px solid var(--pv-border);
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    background: #fff;
+}
+
+.pv-entry:hover { border-color: var(--pv-primary); }
+.pv-entry > svg { color: var(--pv-primary); width: 15px; height: 15px; flex: none; }
+.pv-entry .lbl { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.pv-entry .run {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--pv-primary);
+    opacity: 0;
+    flex: none;
+}
+
+.pv-entry:hover .run { opacity: 1; }
+
+.pv-entry.locked { color: var(--pv-t3); border-style: dashed; }
+.pv-entry.locked > svg { color: var(--pv-t3); }
+
+.keyglyph { width: 12px; height: 12px; flex: none; color: var(--pv-t3); }
+
+.pv-empty { color: var(--pv-t3); font-size: 12px; padding: 14px 4px; text-align: center; }
+</style>
+
+<style>
+/* ─── A · search ────────────────────────────────────────────────────────── */
+
+.pv-search {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 9px;
+    margin-bottom: 8px;
+    border: 1px solid var(--pv-border);
+    border-radius: 7px;
+}
+
+.pv-search:focus-within { border-color: var(--pv-primary); box-shadow: 0 0 0 2px color-mix(in srgb, var(--pv-primary) 25%, transparent); }
+.pv-search svg { width: 13px; height: 13px; color: var(--pv-t3); flex: none; }
+
+.pv-search input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    font: 400 13px var(--panel-font);
+    color: var(--pv-t6);
+    background: none;
+}
+
+.pv-search input::placeholder { color: var(--pv-t3); }
+.pv-search .hits { font-size: 11px; color: var(--pv-t3); flex: none; }
+.pv-entry.cursor { border-color: var(--pv-primary); background: color-mix(in srgb, var(--pv-primary) 8%, transparent); }
+
+/* ─── B · dense rows ────────────────────────────────────────────────────── */
+
+/* No gap and no per-row border: at this height a box around every row is more
+   ink than the row itself. A hairline does the same job for a tenth of the space. */
+.pv-dense { gap: 0; }
+
+.pv-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 28px;
+    padding: 0 7px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 12.5px;
+    cursor: pointer;
+}
+
+.pv-row:last-child { border-bottom: 0; }
+.pv-row:hover { background: color-mix(in srgb, var(--pv-primary) 7%, transparent); }
+.pv-row > svg { width: 12px; height: 12px; color: var(--pv-primary); flex: none; }
+.pv-row .lbl { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pv-row .run { font-size: 11px; font-weight: 600; color: var(--pv-primary); opacity: 0; flex: none; }
+.pv-row:hover .run { opacity: 1; }
+.pv-row .keyglyph { opacity: .55; }
+
+/* still used by C's disclosure */
+.chev { width: 9px; height: 9px; flex: none; color: var(--pv-t3); transition: transform .15s; }
+.pv-group-body { padding: 0; display: flex; flex-direction: column; gap: 6px; }
+
+/* ─── C · ready / locked ────────────────────────────────────────────────── */
+
+.pv-band {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--pv-t3);
+    padding: 4px 2px 0;
+}
+
+.pv-band::after { content: ""; flex: 1; height: 1px; background: var(--pv-border); }
+
+.pv-locked-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px dashed var(--pv-border);
+    border-radius: 9px;
+    background: #fff;
+    font: 400 12.5px var(--panel-font);
+    color: var(--pv-t4);
+    cursor: pointer;
+    text-align: left;
+}
+
+.pv-locked-toggle:hover { background: #fafafa; }
+.pv-locked-toggle .nm { flex: 1; }
+.pv-hint { font-size: 11.5px; line-height: 1.45; color: var(--pv-t3); padding: 2px 3px 0; }
+
+/* ─── D · basket ────────────────────────────────────────────────────────── */
+
+.pv-pick { display: flex; align-items: center; gap: 9px; padding: 7px 9px; }
+.pv-pick input { accent-color: var(--pv-primary); width: 14px; height: 14px; flex: none; margin: 0; }
+.pv-pick.on { border-color: var(--pv-primary); background: color-mix(in srgb, var(--pv-primary) 6%, transparent); }
+
+.pv-tray {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-top: 8px;
+    padding: 9px;
+    border: 1px solid var(--pv-border);
+    border-radius: 9px;
+    background: var(--pv-chrome);
+}
+
+.pv-tray .txt { flex: 1; font-size: 12px; color: var(--pv-t4); }
+.pv-tray .txt b { color: var(--pv-t6); }
+
+.pv-btn {
+    font: 600 12px var(--panel-font);
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--pv-primary);
+    background: var(--pv-primary);
+    color: #fff;
+    cursor: pointer;
+}
+
+.pv-btn[disabled] { opacity: .4; cursor: default; }
+.pv-btn.ghost { background: none; color: var(--pv-primary); border-color: transparent; }
+
+/* ─── E · palette ───────────────────────────────────────────────────────── */
+
+.pv-recent { display: flex; flex-direction: column; gap: 6px; }
+
+.pv-find {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--pv-border);
+    border-radius: 9px;
+    background: #fff;
+    font: 600 13px var(--panel-font);
+    color: var(--pv-t6);
+    cursor: pointer;
+    text-align: left;
+}
+
+.pv-find:hover { border-color: var(--pv-primary); }
+.pv-find svg { width: 15px; height: 15px; color: var(--pv-primary); flex: none; }
+.pv-find .nm { flex: 1; }
+
+/* The palette is an overlay on the canvas, not part of the panel: it is drawn
+   over the whole specimen frame for exactly that reason. */
+.pv-palette {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    padding: 44px 22px 22px;
+    background: rgba(22, 18, 27, .52);
+}
+
+.pv-palette[hidden] { display: none; }
+
+.pal-box {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    border-radius: 11px;
+    background: #fff;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, .3);
+    overflow: hidden;
+    font-family: var(--panel-font);
+    color: var(--pv-t6);
+}
+
+.pal-input {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 12px 13px;
+    border-bottom: 1px solid var(--pv-border);
+}
+
+.pal-input:focus-within { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--pv-primary) 30%, transparent); }
+.pal-input svg { width: 15px; height: 15px; color: var(--pv-t3); flex: none; }
+
+.pal-input input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    font: 400 14px var(--panel-font);
+    background: none;
+    color: var(--pv-t6);
+}
+
+.pal-list { overflow-y: auto; padding: 6px; scrollbar-width: thin; }
+
+.pal-group {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--pv-t3);
+    padding: 8px 7px 4px;
+}
+
+.pal-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 7px 8px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.pal-row .lbl { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pal-row .mod { font: 400 11px var(--mono); color: var(--pv-t3); flex: none; }
+.pal-row.cursor { background: color-mix(in srgb, var(--pv-primary) 11%, transparent); }
+.pal-row.cursor .lbl { font-weight: 600; }
+.pal-row > svg { width: 14px; height: 14px; color: var(--pv-primary); flex: none; }
+.pal-row.locked > svg, .pal-row.locked .lbl { color: var(--pv-t3); }
+
+.pal-foot {
+    display: flex;
+    gap: 14px;
+    padding: 8px 13px;
+    border-top: 1px solid var(--pv-border);
+    font-size: 11px;
+    color: var(--pv-t3);
+}
+
+.pal-foot b { font-weight: 600; color: var(--pv-t4); }
+
+.pv-row:focus-visible,
+.pv-entry:focus-visible,
+.pal-row:focus-visible,
+.pv-find:focus-visible,
+.pv-locked-toggle:focus-visible,
+.pv-btn:focus-visible,
+.pv-group-head:focus-visible { outline: 2px solid var(--pv-primary); outline-offset: -2px; }
+
+/* ─── closing note ─────────────────────────────────────────────────────── */
+
+.closer { margin-top: 60px; padding-top: 34px; border-top: 1px solid var(--line); }
+.closer h2 { font-family: var(--display); font-weight: 700; font-size: 27px; letter-spacing: -.02em; margin: 0 0 20px; }
+.closer p { max-width: 66ch; font-size: 14px; line-height: 1.65; color: var(--mute); margin: 0 0 14px; }
+.closer p strong { color: var(--chalk); font-weight: 700; }
+.closer code { font-family: var(--mono); font-size: .88em; color: var(--chalk); }
+
+.stack { display: grid; gap: 12px; margin-top: 26px; }
+
+.stack-row {
+    display: grid;
+    grid-template-columns: 30px 1fr;
+    gap: 16px;
+    padding: 15px 0;
+    border-top: 1px solid var(--line);
+    align-items: start;
+}
+
+.stack-row .k { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--amaranth); padding-top: 2px; }
+.stack-row .v { font-size: 13.5px; line-height: 1.6; color: var(--mute); }
+.stack-row .v b { color: var(--chalk); font-weight: 700; }
+
+@media (max-width: 760px) {
+    .wrap { padding: 36px 18px 64px; }
+    .spec { width: 90vw; max-width: 476px; }
+    .frame { width: 100%; }
+    .control { position: static; }
+}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+    <p class="eyebrow">Pivotick · pivot panel · design bench</p>
+    <h1>Fifty providers in a 420&nbsp;pixel panel</h1>
+    <p class="standfirst">
+        A live misp-modules service advertises <strong>118 enrichment modules</strong>. Register one pivot
+        per module and a single IP address puts <strong>50 of them</strong> in the pivot panel at once —
+        a flat, unsearchable list nine times taller than the space it is given. Five ways to fix it,
+        each built here as a real panel at real size, running on the real catalogue.
+    </p>
+
+    <dl class="readouts">
+        <div class="readout"><dt>List height today</dt><dd class="bad">3611px</dd></div>
+        <div class="readout"><dt>Viewport it gets</dt><dd>376px</dd></div>
+        <div class="readout"><dt>Tallest single entry</dt><dd class="bad">1061px</dd></div>
+        <div class="readout"><dt>Need an API key</dt><dd>86 / 118</dd></div>
+    </dl>
+</header>
+
+<div class="control">
+    <span class="control-label">Origin node</span>
+    <div class="origins" id="origins"></div>
+    <span class="control-note" id="controlNote"></span>
+</div>
+
+<div class="strip" id="strip"></div>
+
+<section class="closer">
+    <h2>What each one costs</h2>
+    <p>
+        The five are not variants of one idea. <strong>A</strong> and <strong>B</strong> keep the panel
+        as it is and make the list navigable. <strong>C</strong> changes what the list is <em>about</em>.
+        <strong>D</strong> changes what a run is. <strong>E</strong> moves the list off the panel entirely.
+        They combine: A is the floor, and C stacks cleanly on top of B or D.
+    </p>
+
+    <div class="stack">
+        <div class="stack-row"><span class="k">A+C</span><span class="v"><b>The cheap, honest pair.</b> A filter box is a contained change to <code>PivotPanel</code>. Availability needs one optional field on <code>PivotDefinition</code> and is the only thing here that stops an analyst running a provider that cannot answer.</span></div>
+        <div class="stack-row"><span class="k">D</span><span class="v"><b>Retires the 1061px facet.</b> The <code>Enrich (all applicable)</code> meta-pivot exists because there was no way to run several providers at once. If the list itself is the selection, the meta-pivot and its fifty-checkbox facet both go away.</span></div>
+        <div class="stack-row"><span class="k">E</span><span class="v"><b>The most change for the most headroom.</b> A palette stops the panel caring how long the catalogue is — but it hides browsing, and browsing is how an analyst learns what a new deployment can do.</span></div>
+        <div class="stack-row"><span class="k">cut</span><span class="v"><b>Grouping does not work here, and the catalogue says so.</b> Group by what a module accepts and <b>46 of the 50</b> IP providers land in one bucket; by what it does, <b>32</b> are called Lookup; by what it returns, <b>50 of 118</b> declare nothing at all. Fifty ways to look an address up do not sort into six drawers, so no design above tries.</span></div>
+    </div>
+
+    <p style="margin-top:28px">
+        Every panel above is interactive. Type in A and E, open a group in B, unlock C, tick rows in D,
+        and switch the origin to watch each design at 50 providers, at 11, and at 1.
+    </p>
+</section>
+
+</div>
+
+<script>
+/* ─── the real catalogue ────────────────────────────────────────────────────
+   118 expansion modules read from a live misp-modules service: name, label,
+   accepted input types, whether it needs an API key, and its dominant family. */
+const CAT = [{"n":"abuseipdb","l":"Abuse IPDB","i":["ip-src","ip-dst","hostname","domain","domain|ip"],"k":1,"f":"network","d":"AbuseIPDB MISP expansion module"},{"n":"otx","l":"AlienVault OTX Lookup","i":["hostname","domain","ip-src","ip-dst","md5","sha1","sha256","sha512"],"k":1,"f":"network","d":"Module to get information from AlienVault OTX."},{"n":"alphaMountain","l":"alphaMountain_risk","i":["ip","ip-src","ip-dst","ip-src|port","ip-dst|port","domain","hostname","url","uri","link"],"k":1,"f":"network","d":"alphaMountain threat intelligence lookup for IPs, domains, hostnames, and URLs - adds risk score tags"},{"n":"anyrun_sandbox_submit","l":"ANYRUN Sandbox Submit","i":["attachment","malware-sample","url"],"k":1,"f":"file","d":"A module designed to submit URLs or files to the ANY.RUN Sandbox for analysis and return the unique analysis l"},{"n":"apivoid","l":"APIVoid","i":["domain","hostname","email","email-src","email-dst","email-reply-to","dns-soa-email","target-email","whois-registrant-email"],"k":1,"f":"identity","d":"Module to query APIVoid with some domain attributes."},{"n":"assemblyline_query","l":"AssemblyLine Query","i":["link"],"k":1,"f":"network","d":"A module tu query the AssemblyLine API with a submission ID to get the submission report and parse it."},{"n":"assemblyline_submit","l":"AssemblyLine Submit","i":["attachment","malware-sample","url"],"k":1,"f":"file","d":"A module to submit samples and URLs to AssemblyLine for advanced analysis, and return the link of the submissi"},{"n":"backscatter_io","l":"Backscatter.io","i":["ip-src","ip-dst"],"k":1,"f":"network","d":"Backscatter.io module to bring mass-scanning observations into MISP."},{"n":"btc_scam_check","l":"BTC Scam Check","i":["btc"],"k":0,"f":"financial","d":"An expansion hover module to query a special dns blacklist to check if a bitcoin address has been abused."},{"n":"btc_steroids","l":"BTC Steroids","i":["btc"],"k":0,"f":"financial","d":"An expansion hover module to get a blockchain balance from a BTC address in MISP."},{"n":"censys_enrich","l":"Censys Enrich","i":["ip-src","ip-dst","domain","hostname","hostname|port","domain|ip","ip-dst|port","ip-src|port","x509-fingerprint-md5","x509-fingerprint-sha1","x509-fingerprint-sha256"],"k":1,"f":"network","d":"An expansion module to enrich attributes in MISP by quering the censys.io API"},{"n":"hashlookup","l":"CIRCL Hashlookup Lookup","i":["md5","sha1","sha256"],"k":1,"f":"hash","d":"An expansion module to query the CIRCL hashlookup services to find it if a hash is part of a known set such as"},{"n":"circl_passivedns","l":"CIRCL Passive DNS","i":["hostname","domain","ip-src","ip-dst","ip-src|port","ip-dst|port"],"k":1,"f":"network","d":"Module to access CIRCL Passive DNS."},{"n":"circl_passivessl","l":"CIRCL Passive SSL","i":["ip-src","ip-dst","ip-src|port","ip-dst|port"],"k":1,"f":"network","d":"Modules to access CIRCL Passive SSL."},{"n":"clamav","l":"ClaamAV","i":["attachment","malware-sample"],"k":1,"f":"file","d":"Submit file to ClamAV"},{"n":"cluster25_expand","l":"Cluster25 Expand","i":["domain","email-src","email-dst","filename","md5","sha1","sha256","ip-src","ip-dst","url","vulnerability","btc","xmr","ja3-fingerprint-md5"],"k":1,"f":"network","d":"Module to query Cluster25 CTI."},{"n":"countrycode","l":"Country Code","i":["hostname","domain"],"k":0,"f":"network","d":"Module to expand country codes."},{"n":"cpe","l":"CPE Lookup","i":["cpe"],"k":1,"f":"vulnerability","d":"An expansion module to query the CVE search API with a cpe code to get its related vulnerabilities."},{"n":"crowdsec","l":"CrowdSec CTI","i":["ip-dst","ip-src"],"k":1,"f":"network","d":"Module to access CrowdSec CTI API."},{"n":"crowdstrike_falcon","l":"CrowdStrike Falcon","i":["domain","email-attachment","email-dst","email-reply-to","email-src","email-subject","filename","hostname","ip","ip-src","ip-dst","md5","mutex","regkey","sha1","sha256","uri","url","user-agent","whois-registrant-email","x509-fingerprint-md5"],"k":1,"f":"network","d":"Module to query CrowdStrike Falcon."},{"n":"cuckoo_submit","l":"Cuckoo Submit","i":["attachment","malware-sample","url","domain"],"k":1,"f":"file","d":"Submit files and URLs to Cuckoo Sandbox"},{"n":"custom_custom","l":"custom_custom","i":["hostname","domain"],"k":1,"f":"network","d":"MISP module using the MISP standard skeleton"},{"n":"custom_custom_2","l":"custom_custom_2","i":["onion-address"],"k":0,"f":"network","d":"MISP module using the MISP standard. Query the onion-lookup service"},{"n":"custom_lookup","l":"custom_lookup","i":["onion-address"],"k":0,"f":"network","d":"Uses the onion-lookup CIRCL's service to get meta information about .onion"},{"n":"custom_lookup_2","l":"custom_lookup_2","i":["onion-address"],"k":0,"f":"network","d":"MISP module using the MISP standard to enrich onion addresses using the onion-lookup service"},{"n":"cve_advanced","l":"CVE Advanced Lookup","i":["vulnerability"],"k":1,"f":"vulnerability","d":"An expansion module to query the CIRCL CVE search API for more information about a vulnerability (CVE)."},{"n":"cve","l":"CVE Lookup","i":["vulnerability"],"k":0,"f":"vulnerability","d":"An expansion hover module to expand information about CVE id."},{"n":"cytomic_orion","l":"Cytomic Orion Lookup","i":["md5"],"k":1,"f":"hash","d":"An expansion module to enrich attributes in MISP by quering the Cytomic Orion API"},{"n":"dbl_spamhaus","l":"DBL Spamhaus Lookup","i":["domain","domain|ip","hostname","hostname|port"],"k":0,"f":"network","d":"Checks Spamhaus DBL for a domain name."},{"n":"dns","l":"DNS Resolver","i":["hostname","domain","domain|ip"],"k":1,"f":"network","d":"Simple DNS expansion service to resolve IP address from MISP attributes"},{"n":"docx_enrich","l":"DOCX Enrich","i":["attachment"],"k":0,"f":"file","d":"Module to extract freetext from a .docx document."},{"n":"domaintools","l":"DomainTools Lookup","i":["domain","email-src","email-dst","target-email","whois-registrant-email","whois-registrant-name","whois-registrant-phone","ip-src","ip-dst"],"k":1,"f":"identity","d":"DomainTools MISP expansion module."},{"n":"eql","l":"EQL Query Generator","i":["ip-src","ip-dst","filename"],"k":0,"f":"network","d":"EQL query generation for a MISP attribute."},{"n":"eupi","l":"EUPI Lookup","i":["hostname","domain","url"],"k":1,"f":"network","d":"A module to query the Phishing Initiative service (https://phishing-initiative.lu)."},{"n":"farsight_passivedns","l":"Farsight DNSDB Lookup","i":["hostname","domain","ip-src","ip-dst","btc","dkim","email","email-src","email-dst","domain|ip","hex","mac-address","mac-eui-64","other","pattern-filename","target-email","text","uri","url","whois-registrant-email"],"k":1,"f":"network","d":"Module to access Farsight DNSDB Passive DNS."},{"n":"geoip_asn","l":"GeoIP ASN Lookup","i":["ip-src","ip-dst","domain|ip"],"k":1,"f":"network","d":"Query a local copy of the Maxmind Geolite ASN database (MMDB format)"},{"n":"geoip_city","l":"GeoIP City Lookup","i":["ip-src","ip-dst","domain|ip"],"k":1,"f":"network","d":"An expansion module to query a local copy of Maxmind's Geolite database with an IP address, in order to get in"},{"n":"geoip_country","l":"GeoIP Country Lookup","i":["ip-src","ip-dst","domain|ip"],"k":1,"f":"network","d":"Query a local copy of Maxminds Geolite database, updated for MMDB format"},{"n":"mmdb_lookup","l":"GeoIP Enrichment","i":["ip-src","ip-src|port","ip-dst","ip-dst|port"],"k":1,"f":"network","d":"A hover and expansion module to enrich an ip with geolocation and ASN information from an mmdb server instance"},{"n":"google_safe_browsing","l":"Google Safe Browsing Lookup","i":["url"],"k":1,"f":"network","d":"Google safe browsing expansion module"},{"n":"google_threat_intelligence","l":"Google Threat Intelligence Lookup","i":["hostname","domain","ip-src","ip-dst","md5","sha1","sha256","url"],"k":1,"f":"network","d":"An expansion module to have the observable's threat score assessed by Google Threat Intelligence."},{"n":"greynoise","l":"GreyNoise Lookup","i":["ip-src","ip-dst","vulnerability"],"k":1,"f":"network","d":"Module to query IP and CVE information from GreyNoise"},{"n":"hashdd","l":"Hashdd Lookup","i":["md5"],"k":0,"f":"hash","d":"A hover module to check hashes against hashdd.com including NSLR dataset."},{"n":"hibp","l":"Have I Been Pwned Lookup","i":["email-dst","email-src"],"k":1,"f":"identity","d":"Module to access haveibeenpwned.com API."},{"n":"html_to_markdown","l":"HTML to Markdown","i":["url"],"k":0,"f":"network","d":"Expansion module to fetch the html content from an url and convert it into markdown."},{"n":"hyasinsight","l":"HYAS Insight Lookup","i":["ip-src","ip-dst","hostname","domain","email","email-src","email-dst","target-email","whois-registrant-email","phone-number","whois-registrant-phone","md5","x509-fingerprint-md5","ja3-fingerprint-md5","hassh-md5","hasshserver-md5","sha1","x509-fingerprint-sha1","sha256","x509-fingerprint-sha256","sha512"],"k":1,"f":"identity","d":"HYAS Insight integration to MISP provides direct, high volume access to HYAS Insight data. It enables investig"},{"n":"xforceexchange","l":"IBM X-Force Exchange Lookup","i":["ip-src","ip-dst","vulnerability","md5","sha1","sha256","domain","hostname","url"],"k":1,"f":"network","d":"An expansion module for IBM X-Force Exchange."},{"n":"intel471","l":"Intel471 Lookup","i":["hostname","domain","url","ip-src","ip-dst","email-src","email-dst","target-email","whois-registrant-email","whois-registrant-name","md5","sha1","sha256"],"k":1,"f":"network","d":"Module to access Intel 471"},{"n":"ip2locationio","l":"IP2Location.io Lookup","i":["ip-src","ip-dst"],"k":1,"f":"network","d":"An expansion module to query IP2Location.io to gather more information on a given IP address."},{"n":"ipasn","l":"IPASN-History Lookup","i":["ip-src","ip-dst","ip"],"k":1,"f":"network","d":"Module to query an IP ASN history service (https://github.com/D4-project/IPASN-History)."},{"n":"ipinfo","l":"IPInfo.io Lookup","i":["ip-src","ip-dst"],"k":1,"f":"network","d":"An expansion module to query ipinfo.io to gather more information on a given IP address."},{"n":"ipqs_fraud_and_risk_scoring","l":"IPQualityScore Lookup","i":["ip-src","ip-dst","hostname","domain","url","uri","email","email-src","email-dst","target-email","whois-registrant-email","first-name","last-name","middle-name","github-username","text","phone-number","whois-registrant-phone","attachment","malware-sample"],"k":1,"f":"identity","d":"IPQualityScore MISP Expansion Module for IP reputation,        Email Validation, Phone Number Validation, Mali"},{"n":"iprep","l":"IPRep Lookup","i":["ip-src","ip-dst"],"k":1,"f":"network","d":"Module to query IPRep data for IP addresses."},{"n":"joesandbox_query","l":"Joe Sandbox Import","i":["link"],"k":1,"f":"network","d":"Query Joe Sandbox API with a submission url to get the json report and extract its data that is parsed and con"},{"n":"joesandbox_submit","l":"Joe Sandbox Submit","i":["attachment","malware-sample","url","domain"],"k":1,"f":"file","d":"A module to submit files or URLs to Joe Sandbox for an advanced analysis, and return the link of the submissio"},{"n":"lastline_query","l":"Lastline Lookup","i":["link"],"k":1,"f":"network","d":"Deprecation notice: this module will be deprecated by December 2021, please use vmware_nsx module.\n\nQuery Last"},{"n":"lastline_submit","l":"Lastline Submit","i":["attachment","malware-sample","url"],"k":1,"f":"file","d":"Deprecation notice: this module will be deprecated by December 2021, please use vmware_nsx module.\n\nModule to "},{"n":"macaddress_io","l":"Macaddress.io Lookup","i":["mac-address"],"k":1,"f":"network","d":"MISP hover module for macaddress.io"},{"n":"macvendors","l":"Macvendors Lookup","i":["mac-address"],"k":1,"f":"network","d":"Module to access Macvendors API."},{"n":"malshare_upload","l":"MalShare Upload","i":["attachment","malware-sample"],"k":1,"f":"file","d":"Module to push malware samples to MalShare"},{"n":"malwarebazaar","l":"Malware Bazaar Lookup","i":["md5","sha1","sha256"],"k":1,"f":"hash","d":"Query Malware Bazaar to get additional information about the input hash."},{"n":"mcafee_insights_enrich","l":"McAfee MVISION Insights Lookup","i":["md5","sha1","sha256"],"k":1,"f":"hash","d":"Lookup McAfee MVISION Insights Details"},{"n":"mwdb","l":"MWDB Submit","i":["attachment","malware-sample"],"k":1,"f":"file","d":"Module to push malware samples to a MWDB instance"},{"n":"jinja_template_rendering","l":"Ninja Template Rendering","i":["text"],"k":0,"f":"other","d":"Render the template with the data passed"},{"n":"ocr_enrich","l":"OCR Enrich","i":["attachment"],"k":0,"f":"file","d":"Module to process some optical character recognition on pictures."},{"n":"ods_enrich","l":"ODS Enrich","i":["attachment"],"k":0,"f":"file","d":"Module to extract freetext from a .ods document."},{"n":"odt_enrich","l":"ODT Enrich","i":["attachment"],"k":0,"f":"file","d":"Module to extract freetext from a .odt document."},{"n":"onion_lookup","l":"Onion Lookup","i":["onion-address"],"k":0,"f":"network","d":"MISP module using the MISP standard. Uses the onion-lookup service to get information about an onion."},{"n":"onyphe_full","l":"Onyphe Full Lookup","i":["ip-src","ip-dst","hostname","domain"],"k":1,"f":"network","d":"Module to process a full query on Onyphe."},{"n":"onyphe","l":"Onyphe Lookup","i":["ip-src","ip-dst","hostname","domain"],"k":1,"f":"network","d":"Module to process a query on Onyphe."},{"n":"apiosintds","l":"OSINT DigitalSide","i":["domain","domain|ip","hostname","ip-dst","ip-src","ip-dst|port","ip-src|port","url","md5","sha1","sha256","filename|md5","filename|sha1","filename|sha256"],"k":1,"f":"network","d":"On demand query API for OSINT.digitalside.it project."},{"n":"passive_ssh","l":"Passive SSH Enrichment","i":["ip-src","ip-dst","ssh-fingerprint"],"k":1,"f":"network","d":"An expansion module to enrich, SSH key fingerprints and IP addresses with information collected by passive-ssh"},{"n":"passivetotal","l":"PassiveTotal Lookup","i":["hostname","domain","ip-src","ip-dst","x509-fingerprint-sha1","email-src","email-dst","target-email","whois-registrant-email","whois-registrant-phone","text","whois-registrant-name","whois-registrar","whois-creation-date"],"k":1,"f":"identity","d":"The PassiveTotal MISP expansion module brings the datasets derived from Internet scanning directly into your M"},{"n":"pptx_enrich","l":"PPTX Enrich","i":["attachment"],"k":0,"f":"file","d":"Module to extract freetext from a .pptx document."},{"n":"qintel_qsentry","l":"Qintel QSentry Lookup","i":["ip-src","ip-dst"],"k":1,"f":"network","d":"A hover and expansion module which queries Qintel QSentry for ip reputation data"},{"n":"qrcode","l":"QR Code Decode","i":["attachment","url","link"],"k":0,"f":"network","d":"Decode QR codes from attachments OR remote URLs (Anti-Quishing)."},{"n":"ransomcoindb","l":"RandomcoinDB Lookup","i":["sha1","sha256","md5","btc"],"k":1,"f":"hash","d":"Module to access the ransomcoinDB (see https://ransomcoindb.concinnity-risks.com)"},{"n":"rapid7_attackerkb","l":"Rapid7 AttackerKB lookup","i":["vulnerability","comment"],"k":1,"f":"vulnerability","d":"Module to lookup CVE attributes in Rapid7 AttackerKB."},{"n":"rbl","l":"Real-time Blackhost Lists Lookup","i":["ip-src","ip-dst"],"k":1,"f":"network","d":"Module to check an IPv4 address against known RBLs."},{"n":"recordedfuture","l":"Recorded Future Enrich","i":["ip","ip-src","ip-dst","ip-src|port","ip-dst|port","domain","hostname","md5","sha1","sha256","uri","url","vulnerability","weakness"],"k":1,"f":"network","d":"Module to enrich attributes with threat intelligence from Recorded Future."},{"n":"reversedns","l":"Reverse DNS","i":["ip-src","ip-dst","domain|ip"],"k":1,"f":"network","d":"Simple Reverse DNS expansion service to resolve reverse DNS from MISP attributes."},{"n":"reversinglabs_spectra_analyze","l":"ReversingLabs Spectra Analyze","i":["md5","sha1","sha256","domain","hostname","ip","ip-src","ip-dst","url"],"k":1,"f":"network","d":"Module to enrich file hashes, domains, IPs and URLs with ReversingLabs Spectra Analyze threat intelligence."},{"n":"securitytrails","l":"SecurityTrails Lookup","i":["hostname","domain","ip-src","ip-dst"],"k":1,"f":"network","d":"An expansion modules for SecurityTrails."},{"n":"shodan","l":"Shodan Lookup","i":["ip-src","ip-dst"],"k":1,"f":"network","d":"Module to query on Shodan."},{"n":"sigma_queries","l":"Sigma Rule Converter","i":["sigma"],"k":0,"f":"detection","d":"An expansion hover module to display the result of sigma queries."},{"n":"sigma_syntax_validator","l":"Sigma Syntax Validator","i":["sigma"],"k":0,"f":"detection","d":"An expansion hover module to perform a syntax check on sigma rules."},{"n":"sigmf_expand","l":"SigMF Expansion","i":["sigmf-recording","sigmf-archive"],"k":0,"f":"other","d":"Expands a SigMF Recording object into a SigMF Expanded Recording object, extracts a SigMF archive into a SigMF"},{"n":"socialscan","l":"Socialscan Lookup","i":["github-username","target-user","email","email-src","email-dst","target-email","whois-registrant-email"],"k":0,"f":"identity","d":"A hover module to get information on the availability of an email address or username on some online platforms"},{"n":"socradar_lookup","l":"SOCRadar Threat Intelligence","i":["ip-src","ip-dst","domain","hostname","url","md5","sha1","sha256","email-src","email-dst"],"k":1,"f":"network","d":"Enrich MISP attributes with SOCRadar threat intelligence. Queries SOCRadar IoC Enrichment API for categorizati"},{"n":"sophoslabs_intelix","l":"SophosLabs Intelix Lookup","i":["sha256","ip","ip-src","ip-dst","uri","url","domain","hostname"],"k":1,"f":"network","d":"An expansion module to query the Sophoslabs intelix API to get additional information about an ip address, url"},{"n":"stairwell","l":"Stairwell Lookup","i":["md5","sha1","sha256"],"k":1,"f":"hash","d":"Module to query the Stairwell API to get additional information about the input hash attribute"},{"n":"stix2_pattern_syntax_validator","l":"STIX2 Pattern Syntax Validator","i":["stix2-pattern"],"k":0,"f":"detection","d":"An expansion hover module to perform a syntax check on stix2 patterns."},{"n":"threatfox","l":"ThreadFox Lookup","i":["md5","sha1","sha256","domain","url","email-src","ip-dst|port","ip-src|port"],"k":1,"f":"network","d":"Module to search for an IOC on ThreatFox by abuse.ch."},{"n":"threatcrowd","l":"ThreatCrowd Lookup","i":["hostname","domain","ip-src","ip-dst","md5","sha1","sha256","sha512","whois-registrant-email"],"k":0,"f":"network","d":"Module to get information from ThreatCrowd."},{"n":"threatminer","l":"ThreatMiner Lookup","i":["hostname","domain","ip-src","ip-dst","md5","sha1","sha256","sha512"],"k":0,"f":"network","d":"Module to get information from ThreatMiner."},{"n":"triage_submit","l":"Triage Submit","i":["attachment","malware-sample","url"],"k":1,"f":"file","d":"Module to submit samples to tria.ge"},{"n":"sourcecache","l":"URL Archiver","i":["link","url"],"k":1,"f":"network","d":"Module to cache web pages of analysis reports, OSINT sources. The module returns a link of the cached page."},{"n":"extract_url_components","l":"URL Components Extractor","i":["url"],"k":0,"f":"network","d":"Extract URL components"},{"n":"urlhaus","l":"URLhaus Lookup","i":["domain","hostname","ip-src","ip-dst","md5","sha256","url"],"k":1,"f":"network","d":"Query of the URLhaus API to get additional information about the input attribute."},{"n":"urlscan","l":"URLScan Lookup","i":["hostname","domain","ip-src","ip-dst","url"],"k":1,"f":"network","d":"An expansion module to query urlscan.io."},{"n":"validin","l":"Validin DNS History","i":["domain","hostname","ip-src","ip-dst"],"k":1,"f":"network","d":"Validin internet dataset expansion. Returns dns-records, web crawls, registration (WHOIS) records, and certifi"},{"n":"variotdbs","l":"VARIoT db Lookup","i":["vulnerability"],"k":1,"f":"vulnerability","d":"An expansion module to query the VARIoT db API for more information about a vulnerability."},{"n":"virustotal_public","l":"VirusTotal Public API Lookup","i":["hostname","domain","ip-src","ip-dst","md5","sha1","sha256","url"],"k":1,"f":"network","d":"Enrich observables with the VirusTotal v3 public API"},{"n":"virustotal_upload","l":"VirusTotal Upload","i":["attachment","malware-sample"],"k":1,"f":"file","d":"Module to push malware samples to VirusTotal"},{"n":"virustotal","l":"VirusTotal v3 Lookup","i":["hostname","domain","ip-src","ip-dst","md5","sha1","sha256","url","ip-src|port","ip-dst|port"],"k":1,"f":"network","d":"Enrich observables with the VirusTotal v3 API"},{"n":"vmray_submit","l":"VMRay Submit","i":["attachment","malware-sample"],"k":1,"f":"file","d":"Module to submit a sample to VMRay."},{"n":"vmware_nsx","l":"VMware NSX Defender Enrich","i":["attachment","malware-sample","url","md5","sha1","sha256"],"k":1,"f":"hash","d":"Module to enrich a file or URL with VMware NSX Defender."},{"n":"vulndb","l":"VulnDB Lookup","i":["vulnerability"],"k":1,"f":"vulnerability","d":"Module to query VulnDB (RiskBasedSecurity.com)."},{"n":"vulnerability_lookup","l":"Vulnerability Lookup","i":["vulnerability"],"k":0,"f":"vulnerability","d":"An expansion module to query Vulnerability Lookup"},{"n":"vulners","l":"Vulners Lookup","i":["vulnerability"],"k":1,"f":"vulnerability","d":"An expansion hover module to expand information about CVE id using Vulners API."},{"n":"vysion","l":"Vysion Enrich","i":["email","domain","hostname","url","text","btc","phone-number","target-org","xmr","dash"],"k":1,"f":"identity","d":"Module to enrich the information by making use of the Vysion API."},{"n":"whois","l":"Whois Lookup","i":["domain","ip-src","ip-dst"],"k":1,"f":"network","d":"Module to query a local instance of uwhois (https://github.com/rafiot/uwhoisd)."},{"n":"whoisfreaks","l":"WhoisFreaks Lookup","i":["domain"],"k":1,"f":"network","d":"An expansion module for https://whoisfreaks.com/ that will provide an enriched analysis of the provided domain"},{"n":"wiki","l":"Wikidata Lookup","i":["text"],"k":0,"f":"other","d":"An expansion hover module to extract information from Wikidata to have additional information about particular"},{"n":"xlsx_enrich","l":"XLXS Enrich","i":["attachment"],"k":0,"f":"file","d":"Module to extract freetext from a .xlsx document."},{"n":"yara_query","l":"YARA Rule Generator","i":["md5","sha1","sha256","filename|md5","filename|sha1","filename|sha256","imphash"],"k":0,"f":"hash","d":"The module takes a hash attribute (md5, sha1, sha256, imphash) as input, and is returning a YARA rule from it."},{"n":"yara_syntax_validator","l":"YARA Syntax Validator","i":["yara"],"k":0,"f":"detection","d":"An expansion hover module to perform a syntax check on if yara rules are valid or not."},{"n":"yeti","l":"Yeti Lookup","i":["AS","ip-src","ip-dst","hostname","domain","sha256","sha1","md5","url"],"k":1,"f":"network","d":"Module to process a query on Yeti."}];
+
+const ORIGINS = [
+    { type: 'ip-src',        label: '8.8.8.8',        kind: 'ip-src'    },
+    { type: 'domain',        label: 'circl.lu',       kind: 'domain'    },
+    { type: 'vulnerability', label: 'CVE-2021-44228', kind: 'vulnerability' },
+    { type: 'AS',            label: 'AS197692',       kind: 'AS'        },
+];
+
+const FAMILY_LABEL = {
+    network: 'Network', hash: 'Hashes', file: 'Files', identity: 'People & accounts',
+    vulnerability: 'Vulnerabilities', financial: 'Financial', detection: 'Detection rules', other: 'Other',
+};
+
+let origin = ORIGINS[0];
+
+const applicable = () => CAT.filter(m => m.i.includes(origin.type));
+
+/* ─── icons ─────────────────────────────────────────────────────────────── */
+
+const ICON = {
+    spark: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.1 5.9L20 10l-5.9 2.1L12 18l-2.1-5.9L4 10l5.9-2.1z"/></svg>',
+    search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
+    key: '<svg class="keyglyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="9.5" rx="2"/><path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3"/></svg>',
+    chev: '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>',
+};
+
+const el = (tag, cls, html) => {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (html != null) n.innerHTML = html;
+    return n;
+};
+
+/* ─── the shell every specimen shares ───────────────────────────────────── */
+/* Header, tools and origin block are Pivotick's, unchanged, so the only thing
+   that differs between the five is the list itself. */
+
+function shell(frame, headingText) {
+    frame.innerHTML = '';
+    const pv = el('div', 'pv');
+
+    const title = el('div', 'pv-title', ICON.spark + '<span>Pivot</span>');
+    title.append(el('kbd', 'kbd', 'P'));
+    pv.append(title);
+
+    pv.append(el('div', 'pv-tool on', '<span>Pick origin</span>'));
+    pv.append(el('div', 'pv-legend', 'Origin'));
+
+    const org = el('div', 'pv-origin');
+    org.append(el('i'), el('span', null, origin.label), el('b', null, origin.type));
+    pv.append(org);
+
+    pv.append(el('div', 'pv-legend', headingText));
+    frame.append(pv);
+    return pv;
+}
+
+/** One provider row. */
+function entry(m, opts = {}) {
+    const row = el('div', 'pv-entry' + (opts.locked ? ' locked' : ''));
+    row.innerHTML = ICON.spark;
+    row.append(el('span', 'lbl', m.l));
+    if (opts.locked) row.insertAdjacentHTML('beforeend', ICON.key);
+    else row.append(el('span', 'run', 'Run'));
+    row.title = m.d || m.n;
+    return row;
+}
+
+const plural = n => n === 1 ? '1 provider applies' : n + ' providers apply';
+
+/* ─── A · search first ──────────────────────────────────────────────────── */
+
+const designA = {
+    key: 'A', name: 'Search first',
+    thesis: 'Everything stays where it is. One filter box, pinned above the list, and a keyboard path from typing to running.',
+    costs: [
+        ['solves', 'Reaching a provider you can already name — the common case once you know a deployment.'],
+        ['keeps', 'One click to run. Nothing is hidden, nothing moves.'],
+        ['costs', 'Still a flat list when you do not know what to type. Discovery is unchanged.', 'con'],
+    ],
+    build(frame) {
+        const list = applicable();
+        const pv = shell(frame, plural(list.length));
+
+        const box = el('div', 'pv-search', ICON.search);
+        const input = el('input');
+        input.type = 'search';
+        input.placeholder = 'Filter providers…';
+        input.setAttribute('aria-label', 'Filter providers');
+        const hits = el('span', 'hits');
+        box.append(input, hits);
+        pv.append(box);
+
+        const scroll = el('div', 'pv-scroll');
+        pv.append(scroll);
+
+        let cursor = -1;
+        const paint = () => {
+            const q = input.value.trim().toLowerCase();
+            const found = q
+                ? list.filter(m => (m.l + ' ' + m.n + ' ' + m.i.join(' ')).toLowerCase().includes(q))
+                : list;
+            hits.textContent = q ? found.length + ' of ' + list.length : '';
+            scroll.innerHTML = '';
+            if (!found.length) {
+                scroll.append(el('div', 'pv-empty', 'No provider matches “' + input.value.trim() + '”.'));
+            }
+            found.forEach((m, i) => {
+                const row = entry(m);
+                if (i === cursor) row.classList.add('cursor');
+                scroll.append(row);
+            });
+            measure(frame);
+        };
+
+        input.addEventListener('input', () => { cursor = -1; paint(); });
+        input.addEventListener('keydown', e => {
+            const rows = scroll.querySelectorAll('.pv-entry');
+            if (e.key === 'ArrowDown') { e.preventDefault(); cursor = Math.min(cursor + 1, rows.length - 1); }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); cursor = Math.max(cursor - 1, 0); }
+            else if (e.key === 'Enter' && rows[cursor]) { flash(rows[cursor]); return; }
+            else return;
+            paint();
+            scroll.querySelector('.cursor')?.scrollIntoView({ block: 'nearest' });
+        });
+
+        paint();
+    },
+};
+
+/* ─── B · dense rows ────────────────────────────────────────────────────── */
+
+const designB = {
+    key: 'B', name: 'One line each',
+    thesis: 'A provider that can advertise nothing needs one line, not a card. Same list, same order, no new concepts — just rows sized to what they actually say.',
+    costs: [
+        ['solves', 'Density. Two and a half times as many providers on screen for no new interaction at all.'],
+        ['keeps', 'Everything. No click is added, nothing is hidden, no contract changes.'],
+        ['costs', 'Not enough on its own — fifty rows still overflow — and a card has room for a count when a provider can give one.', 'con'],
+    ],
+    build(frame) {
+        const list = applicable();
+        const pv = shell(frame, plural(list.length));
+        const scroll = el('div', 'pv-scroll pv-dense');
+        pv.append(scroll);
+        for (const m of list) {
+            const row = el('div', 'pv-row', ICON.spark);
+            row.append(el('span', 'lbl', m.l));
+            if (m.k) row.insertAdjacentHTML('beforeend', ICON.key);
+            row.append(el('span', 'run', 'Run'));
+            row.title = m.d || m.n;
+            row.addEventListener('click', () => flash(row));
+            scroll.append(row);
+        }
+    },
+};
+
+/* ─── C · ready vs. needs setup ─────────────────────────────────────────── */
+
+const designC = {
+    key: 'C', name: 'Ready, then the rest',
+    thesis: 'Most of the catalogue cannot answer: it wants an API key nobody has set. Show what works now at full size and fold the rest away, still visible, still honest.',
+    costs: [
+        ['solves', 'The wrong click. Today a provider that will fail looks exactly like one that will not.'],
+        ['keeps', 'The full catalogue one click away, so nobody thinks the deployment is smaller than it is.'],
+        ['costs', 'Needs a contract change — an availability signal on the definition, since appliesTo can only delete.', 'con'],
+    ],
+    build(frame) {
+        const list = applicable();
+        const ready = list.filter(m => !m.k);
+        const locked = list.filter(m => m.k);
+        const pv = shell(frame, plural(list.length));
+        const scroll = el('div', 'pv-scroll');
+        pv.append(scroll);
+
+        scroll.append(el('div', 'pv-band', '<span>Ready · ' + ready.length + '</span>'));
+        if (!ready.length) {
+            scroll.append(el('div', 'pv-hint', 'Nothing here can run yet. Every provider for this type needs credentials.'));
+        }
+        for (const m of ready) scroll.append(entry(m));
+
+        if (locked.length) {
+            scroll.append(el('div', 'pv-band', '<span>Needs setup · ' + locked.length + '</span>'));
+            const toggle = el('button', 'pv-locked-toggle', ICON.chev);
+            toggle.type = 'button';
+            toggle.setAttribute('aria-expanded', 'false');
+            toggle.append(el('span', 'nm', locked.length + ' waiting on an API key'));
+            const body = el('div', 'pv-group-body');
+            body.style.padding = '0';
+            body.hidden = true;
+            for (const m of locked) body.append(entry(m, { locked: true }));
+
+            toggle.addEventListener('click', () => {
+                const now = body.hidden;
+                body.hidden = !now;
+                toggle.setAttribute('aria-expanded', String(now));
+                toggle.classList.toggle('open', now);
+                toggle.querySelector('.chev').style.transform = now ? 'rotate(90deg)' : '';
+                measure(frame);
+            });
+
+            scroll.append(toggle, body);
+        }
+    },
+};
+
+/* ─── D · basket ────────────────────────────────────────────────────────── */
+
+const designD = {
+    key: 'D', name: 'Pick, then run',
+    thesis: 'Analysts rarely want one provider — they want four and a comparison. Make the list the selection, and the fifty-checkbox facet that exists today has nothing left to do.',
+    costs: [
+        ['solves', 'The 1061px facet. Running several providers stops needing a pivot of its own.'],
+        ['keeps', 'One-click single runs on hover, so the common case did not get slower.'],
+        ['costs', 'A tray is state the panel has to hold, and a half-built selection survives losing the origin.', 'con'],
+    ],
+    build(frame) {
+        const list = applicable();
+        const pv = shell(frame, plural(list.length));
+        const scroll = el('div', 'pv-scroll');
+        pv.append(scroll);
+
+        const picked = new Set();
+        const tray = el('div', 'pv-tray');
+        const txt = el('span', 'txt');
+        const clear = el('button', 'pv-btn ghost', 'Clear');
+        const run = el('button', 'pv-btn', 'Run');
+        clear.type = run.type = 'button';
+        tray.append(txt, clear, run);
+
+        const paintTray = () => {
+            const n = picked.size;
+            txt.innerHTML = n ? '<b>' + n + '</b> selected' : 'Nothing selected';
+            run.textContent = n ? 'Run ' + n : 'Run';
+            run.disabled = !n;
+            clear.style.visibility = n ? 'visible' : 'hidden';
+        };
+
+        for (const m of list) {
+            const row = el('label', 'pv-entry pv-pick');
+            const cb = el('input');
+            cb.type = 'checkbox';
+            row.append(cb);
+            row.insertAdjacentHTML('beforeend', ICON.spark);
+            row.append(el('span', 'lbl', m.l), el('span', 'run', 'Run only this'));
+            cb.addEventListener('change', () => {
+                cb.checked ? picked.add(m.n) : picked.delete(m.n);
+                row.classList.toggle('on', cb.checked);
+                paintTray();
+            });
+            scroll.append(row);
+        }
+
+        clear.addEventListener('click', () => {
+            picked.clear();
+            scroll.querySelectorAll('input').forEach(c => { c.checked = false; });
+            scroll.querySelectorAll('.pv-pick').forEach(r => r.classList.remove('on'));
+            paintTray();
+        });
+        run.addEventListener('click', () => flash(tray));
+
+        paintTray();
+        pv.append(tray);
+    },
+};
+
+/* ─── E · command palette ───────────────────────────────────────────────── */
+
+const designE = {
+    key: 'E', name: 'Off the panel',
+    thesis: 'The panel keeps the origin and the three providers you actually reuse. The catalogue moves to a palette over the canvas, where being long costs nothing.',
+    costs: [
+        ['solves', 'Length, permanently. The panel stops scaling with the catalogue at all.'],
+        ['keeps', 'A short, honest panel: origin, recents, one way in.'],
+        ['costs', 'Browsing is gone unless you open the palette, and a modal over the canvas hides the graph you are working on.', 'con'],
+    ],
+    build(frame) {
+        const list = applicable();
+        const pv = shell(frame, 'Recent');
+        const recent = el('div', 'pv-recent');
+        const top = list.slice(0, Math.min(3, list.length));
+        for (const m of top) recent.append(entry(m));
+        if (!top.length) recent.append(el('div', 'pv-empty', 'Nothing run against this type yet.'));
+        pv.append(recent);
+
+        pv.append(el('div', 'pv-legend', 'Catalogue'));
+        const find = el('button', 'pv-find', ICON.search);
+        find.type = 'button';
+        find.append(el('span', 'nm', 'Find a provider'), el('kbd', 'kbd', '⌘K'));
+        pv.append(find);
+        pv.append(el('div', 'pv-hint', plural(list.length) + ' to this origin, of 118 in the catalogue.'));
+
+        // The scroller still exists so every specimen is measured the same way;
+        // here it simply has nothing to hold.
+        const scroll = el('div', 'pv-scroll');
+        pv.append(scroll);
+
+        /* the palette */
+        const pal = el('div', 'pv-palette');
+        pal.hidden = true;
+        const box = el('div', 'pal-box');
+        const inputRow = el('div', 'pal-input', ICON.search);
+        const input = el('input');
+        input.type = 'text';
+        input.placeholder = 'Search 118 providers…';
+        input.setAttribute('aria-label', 'Search providers');
+        inputRow.append(input);
+        const palList = el('div', 'pal-list');
+        const foot = el('div', 'pal-foot',
+            '<span><b>↑↓</b> move</span><span><b>⏎</b> run</span><span><b>esc</b> close</span>');
+        box.append(inputRow, palList, foot);
+        pal.append(box);
+        frame.querySelector('.pv').after(pal);
+
+        let cursor = 0;
+        const paintPal = () => {
+            const q = input.value.trim().toLowerCase();
+            const pool = q ? CAT : list;
+            const found = q
+                ? pool.filter(m => (m.l + ' ' + m.n + ' ' + m.i.join(' ')).toLowerCase().includes(q))
+                : pool;
+            cursor = Math.min(cursor, Math.max(found.length - 1, 0));
+            palList.innerHTML = '';
+
+            if (!found.length) {
+                palList.append(el('div', 'pv-empty', 'Nothing matches “' + input.value.trim() + '”.'));
+                return;
+            }
+            // With a query the whole catalogue is in scope, so say plainly which
+            // rows do not apply to what is selected rather than hiding them.
+            const applies = found.filter(m => m.i.includes(origin.type));
+            const others = found.filter(m => !m.i.includes(origin.type));
+            let i = 0;
+            const push = (label, arr) => {
+                if (!arr.length) return;
+                palList.append(el('div', 'pal-group', label));
+                for (const m of arr) {
+                    const row = el('div', 'pal-row' + (m.k ? ' locked' : ''), ICON.spark);
+                    row.append(el('span', 'lbl', m.l), el('span', 'mod', m.n));
+                    if (i === cursor) row.classList.add('cursor');
+                    row.dataset.i = String(i++);
+                    row.addEventListener('click', () => { cursor = Number(row.dataset.i); paintPal(); flash(row); });
+                    palList.append(row);
+                }
+            };
+            push('Applies to ' + origin.label, applies);
+            push('Other input types', others);
+            palList.querySelector('.cursor')?.scrollIntoView({ block: 'nearest' });
+            measure(frame);
+        };
+
+        const open = () => { pal.hidden = false; input.value = ''; cursor = 0; paintPal(); input.focus(); measure(frame); };
+        const close = () => { pal.hidden = true; find.focus(); measure(frame); };
+
+        find.addEventListener('click', open);
+        input.addEventListener('input', () => { cursor = 0; paintPal(); });
+        pal.addEventListener('mousedown', e => { if (e.target === pal) close(); });
+        input.addEventListener('keydown', e => {
+            const rows = palList.querySelectorAll('.pal-row');
+            if (e.key === 'Escape') { close(); }
+            else if (e.key === 'ArrowDown') { e.preventDefault(); cursor = Math.min(cursor + 1, rows.length - 1); paintPal(); }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); cursor = Math.max(cursor - 1, 0); paintPal(); }
+            else if (e.key === 'Enter' && rows[cursor]) { flash(rows[cursor]); }
+        });
+    },
+};
+
+const DESIGNS = [designA, designB, designC, designD, designE];
+
+/* ─── the signature: every specimen reports its own height ──────────────── */
+
+function measure(frame) {
+    const spec = frame.closest('.spec');
+    if (!spec) return;
+
+    const scroll = frame.querySelector('.pv-scroll');
+    const pal = frame.querySelector('.pal-list');
+    const palOpen = pal && !pal.closest('.pv-palette').hidden;
+
+    let total, seen, noun;
+    if (palOpen) {
+        total = pal.scrollHeight; seen = pal.clientHeight; noun = 'palette';
+    } else if (scroll && scroll.scrollHeight > 4) {
+        total = scroll.scrollHeight; seen = scroll.clientHeight; noun = 'list';
+    } else {
+        // No list to measure: report the panel itself against the space it has.
+        const pv = frame.querySelector('.pv');
+        total = pv ? pv.offsetHeight : 0;
+        seen = frame.clientHeight - 20;
+        noun = 'panel';
+    }
+
+    const share = total > 0 ? Math.min(seen / total, 1) : 1;
+    const over = total > seen + 1;
+
+    const lit = spec.querySelector('.gauge-lit');
+    lit.style.height = Math.max(share * 100, 1.2) + '%';
+    lit.classList.toggle('bad', over);
+
+    const m = spec.querySelector('.metric');
+    m.innerHTML = over
+        ? noun + ' <b class="bad">' + total + 'px</b> in <b>' + seen + 'px</b> · <b class="bad">'
+          + Math.round(share * 100) + '%</b> visible'
+        : noun + ' <b>' + total + 'px</b> in <b>' + seen + 'px</b> · <b>all of it</b> visible';
+}
+
+function flash(node) {
+    node.animate(
+        [{ outline: '2px solid #eb2e53', outlineOffset: '1px' }, { outline: '2px solid transparent', outlineOffset: '1px' }],
+        { duration: 620, easing: 'ease-out' },
+    );
+}
+
+/* ─── build the bench ───────────────────────────────────────────────────── */
+
+const strip = document.getElementById('strip');
+
+function buildStrip() {
+    strip.innerHTML = '';
+    for (const d of DESIGNS) {
+        const spec = el('section', 'spec');
+
+        const head = el('div', 'spec-head');
+        head.append(el('div', 'spec-idx', d.key));
+        head.append(el('h2', 'spec-name', d.name));
+        head.append(el('p', 'spec-thesis', d.thesis));
+        spec.append(head);
+
+        const body = el('div', 'spec-body');
+        const frame = el('div', 'frame');
+        const gauge = el('div', 'gauge', '<div class="gauge-track"><div class="gauge-lit"></div></div>');
+        body.append(frame, gauge);
+        spec.append(body);
+
+        const foot = el('div', 'spec-foot');
+        foot.append(el('div', 'metric'));
+        const costs = el('ul', 'costs');
+        for (const [k, text, cls] of d.costs) {
+            const li = el('li', cls || '', '<span>' + text + '</span>');
+            li.dataset.k = k;
+            costs.append(li);
+        }
+        foot.append(costs);
+        spec.append(foot);
+
+        strip.append(spec);
+        d.build(frame);
+        measure(frame);
+    }
+}
+
+function buildOrigins() {
+    const host = document.getElementById('origins');
+    host.innerHTML = '';
+    for (const o of ORIGINS) {
+        const b = el('button', 'origin-btn', o.label);
+        b.type = 'button';
+        b.setAttribute('aria-pressed', String(o === origin));
+        b.addEventListener('click', () => {
+            origin = o;
+            buildOrigins();
+            buildStrip();
+        });
+        host.append(b);
+    }
+    const n = applicable().length;
+    document.getElementById('controlNote').innerHTML =
+        '<b>' + n + '</b> of 118 providers accept <b>' + origin.type + '</b>'
+        + ' · <b>' + applicable().filter(m => !m.k).length + '</b> need no API key';
+}
+
+buildOrigins();
+buildStrip();
+addEventListener('resize', () => strip.querySelectorAll('.frame').forEach(measure));
+</script>

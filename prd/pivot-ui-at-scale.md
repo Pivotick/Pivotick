@@ -113,10 +113,33 @@ could take — has no first-class expression.
 Each staged set opens its own tab. Two runs gave `CVE Lookup` and `DNS Resolver`;
 at 51 available providers the strip is a queue waiting to happen.
 
+## Five ways out
+
+[`pivot-panel-designs.html`](pivot-panel-designs.html) is a design bench: five
+interactive panels at real size, running on the real 118-module catalogue, each
+reporting its own list height as you use it. Open it alongside this document.
+
+| | | Answers |
+| --- | --- | --- |
+| **A** | Search first | a filter box pinned above the list, keyboard to run | #1 |
+| **B** | One line each | 28px rows instead of 43px cards: 2192px → 1400px | #4 |
+| **C** | Ready, then the rest | keyless providers at full size, the other 47 folded away | #3 |
+| **D** | Pick, then run | the list *is* the selection, which retires the 1061px facet | #2 |
+| **E** | Off the panel | origin and recents stay; the catalogue moves to a palette | #1, #4 |
+
+They compose. A is the floor and costs least; C stacks on any of the others and is
+the only one needing a contract change.
+
+**Grouping was tried and the data killed it.** Group the 50 IP providers by the
+attribute types they accept and 46 land in one bucket; by the verb in their name
+and 32 are `Lookup`; by what they return and 50 of the 118 declare nothing at all.
+Fifty ways to look an address up do not sort into six drawers, so none of the five
+tries.
+
 ## Cheapest first
 
-1. Filter box on the provider list (#1).
-2. `max-height` + scroll on the checkbox facet (#2).
+1. Filter box on the provider list (#1) — design **A**.
+2. `max-height` + scroll on the checkbox facet (#2), or retire it with **D**.
 3. Child count on container triage rows (#5).
-4. Availability state on `PivotDefinition` (#3) — the only one needing a contract
-   change.
+4. Availability state on `PivotDefinition` (#3) — design **C**, the only one
+   needing a contract change.
