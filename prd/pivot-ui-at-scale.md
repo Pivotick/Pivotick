@@ -1,7 +1,14 @@
 # Pivot UI at scale — findings from a real misp-modules backend
 
-Observations only. Nothing here is decided, and no library code was changed to
-produce it.
+**Status:** measured 2026-09-01; findings **1**, **2** and **4** were built
+2026-09-02 (`e0e6f97`, `8809640`, `c8d95e8`, `b54f090`) and are marked below.
+Finding **3** is withdrawn. Findings **5**, **6**, **7** and **8** are open, and
+finding 8 got worse. The measurements are left exactly as taken, so every number
+here describes the panel *before* the search-plus-tray rework, not the one in the
+code now.
+
+Observations only when written: nothing was decided here, and no library code was
+changed to produce the measurements.
 
 `/misp-modules.html` registers one pivot per expansion module a live
 [misp-modules](https://github.com/MISP/misp-modules) service advertises. Against
@@ -26,7 +33,7 @@ at 2, and the same seed produces both.
 
 ## What breaks down
 
-### 1. The list has no search
+### 1. The list has no search — *shipped*
 
 With 51 entries there is no way to reach a named provider except by scrolling.
 `PivotPanel` has no filter input — the only `input` listener in the file is on
@@ -36,7 +43,10 @@ an order of magnitude longer, has none.
 This is the single biggest win available. A one-line filter over label and id
 would make 51 entries as usable as 6.
 
-### 2. One expanded facet buries every other provider
+**Built** as `.pvt-pivot-filter`, matching label and id, with the whole bar hidden
+below two pivots because one provider has nothing to filter.
+
+### 2. One expanded facet buries every other provider — *shipped*
 
 The meta-pivot's "Modules to query" facet is a `multiselect`, which
 `facetToField` renders as `checkboxes` — an unbounded list, by deliberate design:
@@ -54,6 +64,10 @@ fold. `.pvt-pivot-scroll` scrolls, but nothing caps the facet itself.
 A `max-height` with its own scroll on the checkbox list — the treatment
 `.pvt-triage-suppressed` already gets at 140px — fixes this without giving up the
 inline counts.
+
+**Built differently:** the facet was not capped, it was removed. The run tray does
+what the meta-pivot's checkbox list was for, so `8809640` retired the meta-pivot
+and the 1061px facet went with it. Nothing in the panel is unbounded now.
 
 ### 3. Nothing separates a provider that cannot work from one that can — *withdrawn*
 
@@ -76,7 +90,7 @@ read alongside `appliesTo`, rendering the entry present but disabled with the
 reason on it. It would also cover rate-limited and quota-exhausted providers,
 which a real deployment hits constantly.
 
-### 4. With no counts, the panel degrades to a button list
+### 4. With no counts, the panel degrades to a button list — *shipped*
 
 misp-modules has no "how much is out there" endpoint — the only question it
 answers is the expensive one. So the per-module pivots declare no `summarize`,
@@ -89,7 +103,11 @@ like this is the common case, not the exotic one. A denser row for the
 no-summarize case — no reserved space for a count that will never arrive — would
 buy back a lot of the 3611px.
 
-### 5. A 58-child container is one undifferentiated triage row
+**Built** as `.pvt-pivot-entry-plain`: an entry with no `summarize` reserves no
+room for a count, drops the narrowing block and the gate line, and reads as one
+row whose primary button says *Run* rather than *Fetch*.
+
+### 5. A 58-child container is one undifferentiated triage row — *open, next*
 
 `cve` on CVE-2021-44228 returns one MISP object carrying **58 attributes**. It
 stages as a single row labelled `vulnerability`. `TriagePane` never reads
@@ -100,24 +118,29 @@ A child count in the row, and ideally an expandable row, would make the decision
 an informed one. (The page's `Objects: flattened` knob shows the alternative:
 58 separate rows, which is worse in a different way.)
 
-### 6. A pivot applies to the whole origin or not at all
+### 6. A pivot applies to the whole origin or not at all — *open*
 
 `appliesTo` gets the origin as a set and answers once. So a selection mixing a
 domain and an IP only offers providers accepting *both* types, and the count
 silently collapses. There is no way to say "this applies to 3 of your 5 selected
 nodes" — which for enrichment is the normal situation.
 
-### 7. Rim badges have no notion of "how many enrichments apply"
+### 7. Rim badges have no notion of "how many enrichments apply" — *open*
 
 `setPotential` is keyed per pivot. With 118 of them there is no sensible
 per-provider badge, so the page hangs the count off the meta-pivot instead. The
 number an analyst actually wants on the rim — how many enrichments this node
 could take — has no first-class expression.
 
-### 8. One dock tab per run
+### 8. One dock tab per run — *open, and sharper than when written*
 
 Each staged set opens its own tab. Two runs gave `CVE Lookup` and `DNS Resolver`;
 at 51 available providers the strip is a queue waiting to happen.
+
+The tray from finding 2 is what makes this pressing. `PivotPanel.runSelected()`
+calls `run()` once per selected pivot, so a single click on *Run 6* opens six
+tabs. `02a1ad0` gave the strip icons and a stable order, which helps read a queue
+but does not shorten one.
 
 ## The design bench
 
@@ -148,6 +171,22 @@ The cost is real: clicking a row now picks it rather than running it, because
 mis-picking is free and mis-running spends a request. Running one provider is the
 labelled button on the row.
 
+### What shipped from the bench, and the one thing that did not
+
+The panel in the code is the bench's shape: a filter box, per-entry tick boxes, a
+tray that holds its place while empty, and all three rules above enforced by
+`pivot-mode.spec.ts`. Clicking a row picks it; the row's own labelled button runs
+just that one.
+
+`maxCandidates` did **not** move onto the tray. It is still per-pivot, still
+gating *Fetch* against a provider's asserted count, because the pivots that
+declare it are exactly the ones that can answer it, and taking it away would have
+removed a working gate to serve a backend that never sets it. What the tray got
+instead is its own guard on request volume: past eight ticked it says out loud
+that this asks every one of them at once, and it cautions rather than refuses,
+because an analyst who ticked twelve may well mean it. Two separate concerns, so
+two separate limits, and the bench was wrong to fold them together.
+
 ### Two options that were built and dropped
 
 **Grouping.** The catalogue does not partition. Group the 50 IP providers by the
@@ -162,12 +201,22 @@ option — 47 of 50 IP providers unusable. It is an artifact of the test rig: MI
 never lists a module it has not configured. Everything in a real panel works, so
 there is nothing to split, and #3 above is not a defect a real deployment has.
 
-## Cheapest first
+## Where each finding stands
 
-1. Filter box on the provider list (#1).
-2. Selection tray, which retires the facet rather than capping it (#2).
-3. One-line rows for the no-summarize case (#4).
-4. Child count on container triage rows (#5).
+| | | |
+| --- | --- | --- |
+| 1 | Filter box on the provider list | **shipped** `e0e6f97` |
+| 2 | Selection tray, which retired the facet rather than capping it | **shipped** `e0e6f97` `8809640` |
+| 3 | Nothing separates a provider that cannot work | *withdrawn* |
+| 4 | One-line rows for the no-summarize case | **shipped** `c8d95e8` |
+| 5 | Child count on container triage rows | **open** — the next one |
+| 6 | Partial applicability across a mixed origin | **open** |
+| 7 | An aggregate "enrichments available" badge | **open** |
+| 8 | One dock tab per run | **open** |
 
-Finding #3 (availability) is withdrawn — see above. Findings #6, #7 and #8 are
-untouched by the bench and still open.
+Finding 5 is next because it is the last cheap one: the child count is already in
+the payload the pane holds, so nothing in the contract has to change to show it.
+
+Findings 6 and 7 both want contract additions and should be scoped together — a
+pivot that applies to 3 of 5 selected nodes is also the thing an aggregate rim
+count would have to add up. Finding 8 is a dock question, not a pivot one.
