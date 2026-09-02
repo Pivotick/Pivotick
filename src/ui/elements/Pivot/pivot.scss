@@ -579,7 +579,56 @@
         height: 13px;
         margin: 0;
         accent-color: var(--pvt-theme-primary);
-        cursor: pointer;
+        // Every pointer click lands on the row, which is what actually toggles.
+        pointer-events: none;
+    }
+}
+
+// ── the bare row ────────────────────────────────────────────────────────────────
+// An entry with nothing under its head row (`pvt-pivot-entry-plain`, set by the
+// panel) is a row, not a card: a box around one line is more ink than the line, and
+// fifty of them is a column of boxes. One hairline separates them instead.
+
+// Two classes deliberately: `.pvt-pivot-entry` is declared further down this file, so
+// a single-class selector here would lose the tie on source order and keep the card's
+// padding and border.
+.pvt-pivot-entry.pvt-pivot-entry-plain {
+    gap: 0;
+    min-height: 30px;
+    padding: 0 6px;
+    border: none;
+    border-radius: 0;
+    box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--pvt-chrome-border) 60%, transparent);
+    cursor: pointer;
+
+    // The whole row picks, so the whole row lights up under the pointer.
+    &:hover {
+        background-color: color-mix(in srgb, var(--pvt-theme-primary) 7%, transparent);
+    }
+
+    .pvt-pivot-entry-head {
+        min-height: 30px;
+        font-weight: 400;
+    }
+
+    &.pvt-pivot-picked {
+        background-color: color-mix(in srgb, var(--pvt-theme-primary) 10%, transparent);
+        border: none;
+
+        .pvt-pivot-entry-label {
+            font-weight: 600;
+        }
+    }
+
+    // Hidden until wanted: at forty rows a permanent verb on each is a column of
+    // solid colour. Focus reveals it too, so the keyboard is not left guessing.
+    .pvt-pivot-status .pvt-pivot-button {
+        opacity: 0;
+    }
+
+    &:hover .pvt-pivot-status .pvt-pivot-button,
+    &:focus-within .pvt-pivot-status .pvt-pivot-button {
+        opacity: 1;
     }
 }
 
@@ -587,10 +636,8 @@
     border-color: var(--pvt-theme-primary);
 }
 
-// A filled Run on every entry is right when there are four of them and the verb is
-// the point. At forty it is a column of solid colour with no hierarchy left in it,
-// so in bulk mode the per-entry verb steps back to an outline and fills in under the
-// pointer. The tray's Run keeps its weight: there it is the primary action.
+// The row's own verb steps back to an outline: the tray's Run is the primary action
+// in this panel, and two filled buttons on screen would argue about which.
 .pvt-pivot-bulk .pvt-pivot-entry .pvt-pivot-button-primary {
     border-color: var(--pvt-chrome-border);
     background-color: transparent;
@@ -683,7 +730,12 @@
 .pvt-pivot-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+}
+
+// Bare rows sit flush against each other; an entry that has grown into a card takes
+// its breathing room back.
+.pvt-pivot-entry:not(.pvt-pivot-entry-plain) {
+    margin-block: 4px;
 }
 
 .pvt-pivot-entry {

@@ -16,15 +16,11 @@ const TRIAGE_TAB_PREFIX = 'pivot-triage:'
 const TYPED_DELAY_MS = 400
 
 /**
- * How many applicable pivots it takes before the panel grows a filter box, per-entry
- * checkboxes and a run tray.
- *
- * Below this the list is short enough to read, and the controls would be chrome around
- * nothing. Above it neither is true: a backend that registers one pivot per enrichment
- * module puts fifty in the panel at once, none of which can advertise a count, so the
- * list is both long and undifferentiated.
+ * How many pivots it takes before the panel grows a filter box, per-entry tick boxes
+ * and a run tray: more than one. A single pivot has nothing to filter and nothing to
+ * batch with, so it is left as the plain entry it always was.
  */
-const BULK_MIN = 8
+const BULK_MIN = 2
 
 /**
  * How many pivots may be selected before the tray says out loud what running them
@@ -249,8 +245,6 @@ export class PivotPanel {
         // (C14): they are still runnable, they just answer a different question.
         const detached = this.origin.length ? pivots.for([]) : []
 
-        // The controls are earned by the length of the list, not switched on: a panel
-        // with four pivots in it has nothing to search and nothing to batch.
         const bulk = applicable.length + detached.length >= BULK_MIN
         this.root.classList.toggle('pvt-pivot-bulk', bulk)
         this.filterBar.hidden = !bulk
@@ -562,9 +556,11 @@ class PivotEntry {
     private readonly uiManager: UIManager
     private readonly def: PivotDefinition
     private readonly origin: () => Node[]
-    /** The tick box, present only while the panel is long enough to batch (`BULK_MIN`). */
+    /** The tick box, present only while there is more than one pivot to choose between. */
     private readonly check: HTMLElement
     private readonly checkInput: HTMLInputElement
+    /** What the panel says about this entry, which the box only reflects. */
+    private isSelected = false
 
     constructor(
         uiManager: UIManager,
@@ -580,19 +576,32 @@ class PivotEntry {
 
         const head = el('div', 'pvt-pivot-entry-head')
 
-        // Selection rides on its own control rather than on the entry: the entry already
-        // has a Run of its own, and a card that both selects and runs depending on where
-        // it was clicked spends a request on a slip.
-        this.check = el('label', 'pvt-pivot-check')
+        // The tick box is a state light, not the hit target: the whole row picks, so the
+        // gesture is the size of the thing it acts on. `pointer-events: none` in the
+        // stylesheet keeps every pointer click on the row, leaving one code path.
+        this.check = el('span', 'pvt-pivot-check')
         this.checkInput = document.createElement('input')
         this.checkInput.type = 'checkbox'
         this.checkInput.value = def.id
         this.checkInput.setAttribute('aria-label', `Select ${def.label}`)
-        this.checkInput.addEventListener('change', () => selection.toggle(this.checkInput.checked))
         this.checkInput.addEventListener('keydown', event => selection.key(event, this.checkInput))
         this.check.appendChild(this.checkInput)
         this.check.hidden = true
         head.appendChild(this.check)
+
+        head.addEventListener('click', event => {
+            if (this.check.hidden) return
+            const target = event.target as HTMLElement
+            // Space on the focused tick box arrives here as a click on the input; let the
+            // repaint set `checked` from the panel's state rather than toggling twice.
+            if (target === this.checkInput) event.preventDefault()
+            // Everything the entry offers in its own right — Run, Retry, the triage link
+            // — keeps its own meaning.
+            else if (target.closest('button, a, input, select, textarea')) return
+            // From the panel's state, never the box's: a keyboard Space has already
+            // flipped `checked` by the time this runs, so reading it inverts the answer.
+            selection.toggle(!this.isSelected)
+        })
 
         if (def.icon) {
             const icon = el('span', 'pvt-pivot-entry-icon')
@@ -625,9 +634,10 @@ class PivotEntry {
 
     /** Whether this entry can be ticked, and whether it currently is. */
     public setSelectable(on: boolean, selected: boolean): void {
+        this.isSelected = on && selected
         this.check.hidden = !on
-        this.checkInput.checked = on && selected
-        this.root.classList.toggle('pvt-pivot-picked', on && selected)
+        this.checkInput.checked = this.isSelected
+        this.root.classList.toggle('pvt-pivot-picked', this.isSelected)
     }
 
     /**
@@ -756,6 +766,26 @@ class PivotEntry {
         this.paintGate()
         this.paintNarrowing()
         this.paintActions()
+        this.paintDensity()
+    }
+
+    /**
+     * An entry with nothing under its head row is drawn as a row rather than a card:
+     * no border, no gap, one hairline between it and the next.
+     *
+     * A card around a single line is more ink than the line, and a list of fifty of
+     * them is a column of boxes. The moment an entry has something else to say — a
+     * breakdown, a gate, a failure, facets, a link into triage — it becomes a card
+     * again, which is what makes it stand out from the ones that have not.
+     */
+    private paintDensity(): void {
+        const bare = this.breakdown.hidden
+            && this.errorLine.hidden
+            && this.gateLine.hidden
+            && this.progress.hidden
+            && this.narrowingHost.childElementCount === 0
+            && this.actions.childElementCount === 0
+        this.root.classList.toggle('pvt-pivot-entry-plain', bare)
     }
 
     /**

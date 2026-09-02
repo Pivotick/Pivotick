@@ -415,14 +415,59 @@ test.describe('pivot mode', () => {
         await expect(filterBox(page)).toBeVisible()
     }
 
-    test('a short list earns no filter box and no tick boxes', async ({ page }) => {
-        await load(page)
+    // One pivot has nothing to filter and nothing to batch with, so it stays the plain
+    // entry it always was. Two is enough to be worth choosing between.
+    test('a lone pivot earns no filter box and no tick boxes', async ({ page }) => {
+        await load(page, { pivots: [AIL] })
         await pickOrigin(page, 'a')
         await enterMode(page)
 
+        await expect(entry(page, AIL)).toBeVisible()
         await expect(filterBox(page)).toBeHidden()
         await expect(panel(page).locator('.pvt-pivot-check:visible')).toHaveCount(0)
         await expect(tray(page)).toBeHidden()
+    })
+
+    test('two of them are enough for the filter and the tick boxes', async ({ page }) => {
+        await load(page, { pivots: [AIL, 'blind'] })
+        await pickOrigin(page, 'a')
+        await enterMode(page)
+
+        await expect(filterBox(page)).toBeVisible()
+        await expect(panel(page).locator('.pvt-pivot-check:visible')).toHaveCount(2)
+    })
+
+    // The row is the hit target, not the 13px box inside it.
+    test('clicking anywhere on a row picks it, but its own buttons still work', async ({ page }) => {
+        await loadBulk(page)
+        await filterInput(page).fill('geo')
+
+        await entry(page, 'bulk-04').locator('.pvt-pivot-entry-label').click()
+        await expect(trayCount(page)).toHaveText('1 selected')
+        await expect(entry(page, 'bulk-04')).toHaveClass(/pvt-pivot-picked/)
+
+        await entry(page, 'bulk-04').locator('.pvt-pivot-entry-label').click()
+        await expect(tray(page)).toBeHidden()
+
+        // Run belongs to the entry, so it runs rather than picking.
+        await button(entry(page, 'bulk-04'), 'Run').click()
+        await expect.poll(async () => (await calls(page)).filter(c => c === 'bulk-04:fetch').length)
+            .toBe(1)
+        await expect(tray(page)).toBeHidden()
+    })
+
+    // A card around one line is more ink than the line; fifty of them is a column of
+    // boxes. An entry only becomes a card once it has something else to say.
+    test('an entry with nothing under its head row is drawn as a bare row', async ({ page }) => {
+        await loadBulk(page)
+        await expect(entry(page, 'bulk-01')).toHaveClass(/pvt-pivot-entry-plain/)
+        // The AIL pivot carries a count, a breakdown and a gate, so it keeps its card.
+        await expect(entry(page, AIL)).not.toHaveClass(/pvt-pivot-entry-plain/)
+
+        const row = await entryHeight(page, 'bulk-01')
+        const card = await entryHeight(page, AIL)
+        expect(row).toBeLessThan(40)
+        expect(card).toBeGreaterThan(row)
     })
 
     test('a long one grows a filter, tick boxes and a tray', async ({ page }) => {
