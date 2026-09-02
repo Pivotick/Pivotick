@@ -166,18 +166,43 @@
 
 .pvt-triage-row {
     display: grid;
+    position: relative;
     grid-template-columns: var(--pvt-triage-columns);
     align-items: center;
     min-height: 24px;
     border-bottom: 1px solid color-mix(in srgb, var(--pvt-chrome-border) 50%, transparent);
+    cursor: pointer;
 
     &:hover {
         background-color: var(--pvt-chrome-bg);
+    }
+
+    // A row with no verdict left to give is not a target: rejection is undone by its
+    // own link, and a row already on canvas cannot be marked at all.
+    &.pvt-triage-row-rejected,
+    &.pvt-triage-row-deduped {
+        cursor: default;
     }
 }
 
 .pvt-triage-row-marked {
     background-color: color-mix(in srgb, var(--pvt-theme-primary) 10%, transparent);
+
+    // A bar down the leading edge, as a picked row in the pivot panel carries: with
+    // Shift-click a run of marked rows is the normal case, and the bar reads as one
+    // block from the side where a 10% tint has to be compared against its neighbours.
+    // Drawn as a pseudo-element rather than an inset shadow so it can cross the row's
+    // hairline — a shadow stops at the padding box and leaves the bar notched once a
+    // row — and so a row's height never depends on whether it is marked.
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: -1px;
+        left: 0;
+        width: 2px;
+        background-color: var(--pvt-theme-primary);
+    }
 }
 
 // Struck in place rather than moved into a group: re-ordering the table under the
@@ -204,6 +229,14 @@
     align-items: center;
     justify-content: center;
     padding: 0;
+
+    input {
+        margin: 0;
+        accent-color: var(--pvt-theme-primary);
+        // Every pointer click lands on the row, which is what actually marks it. The box
+        // stays focusable, so Space still ticks the row it belongs to.
+        pointer-events: none;
+    }
 }
 
 .pvt-triage-state-cell {

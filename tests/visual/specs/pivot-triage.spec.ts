@@ -1,6 +1,6 @@
 import type { Locator, Page } from '@playwright/test'
 import { test, expect, gotoHarness, harness } from '../helpers'
-import type { PivotFixtureSpec } from '../harness/harness'
+import type { PivotFixtureSpec, RecordedCandidates } from '../harness/harness'
 
 // The triage pane (M2): the dock tab that holds one pivot's candidates, and the two
 // library additions it needed — an actionable toast, and a dock tab that can be
@@ -28,6 +28,12 @@ const paneTabs = (page: Page): Locator => page.locator('.pvt-dock-tab')
 
 const row = (page: Page, id: string): Locator => page.locator(`.pvt-triage-row[data-candidate="${id}"]`)
 const tick = (page: Page, id: string): Locator => row(page, id).locator('input[type="checkbox"]')
+
+/** Mark a row the way the pane offers it: the whole row is the hit target. */
+const markRow = (page: Page, id: string): Promise<void> => row(page, id).click()
+
+/** Shift-click, which carries the last click's verdict across the rows between. */
+const markRange = (page: Page, id: string): Promise<void> => row(page, id).click({ modifiers: ['Shift'] })
 
 const button = (scope: Locator, name: string): Locator => scope.locator('button', { hasText: name }).first()
 
@@ -135,7 +141,7 @@ test.describe('pivot triage pane', () => {
         await harness(page, 'runPivot', 'blind', ['a'])
         await expect(rows(page)).toHaveCount(3)
 
-        await tick(page, 'blind-0').check()
+        await markRow(page, 'blind-0')
         await expect(row(page, 'blind-0')).toHaveClass(/pvt-triage-row-marked/)
         await expect(row(page, 'blind-0')).toContainText('will ingest')
         await expect(button(footer(page), 'Ingest selected')).toContainText('(1)')
@@ -160,7 +166,7 @@ test.describe('pivot triage pane', () => {
         await load(page, { pivots: ['blind'] })
         await harness(page, 'runPivot', 'blind', ['a'])
 
-        await tick(page, 'blind-1').check()
+        await markRow(page, 'blind-1')
         await button(footer(page), 'Reject all remaining').click()
 
         expect(await harness(page, 'rejectedPivotIds', 'blind')).toEqual(['blind-0', 'blind-2'])
@@ -169,6 +175,75 @@ test.describe('pivot triage pane', () => {
         await button(footer(page), 'Ingest selected').click()
         await expect(stateBox(page)).toContainText('Nothing left to triage')
         await expect(stateBox(page)).toContainText('1 ingested · 2 rejected')
+    })
+
+    test('the whole row marks, and Shift takes the range from the last row clicked', async ({ page }) => {
+        await load(page)
+        await stageUrls(page)
+
+        // The tick box is a state light rather than the hit target, so a click anywhere
+        // on the row is the gesture — and it reaches the manager, not just the tint.
+        await markRow(page, 'url-2')
+        await expect(tick(page, 'url-2')).toBeChecked()
+        await expect(row(page, 'url-2')).toContainText('will ingest')
+        expect(await markedIds(page, AIL)).toEqual(['url-2'])
+
+        // The leading bar a marked row carries, read numerically: the suite's pixel
+        // threshold cannot see 2px of colour. It has to span the row's hairline too, or
+        // a run of marked rows shows a notch at every row it crosses.
+        const bar = await row(page, 'url-2').evaluate(element => {
+            const height = parseFloat(getComputedStyle(element, '::before').height)
+            return {
+                width: getComputedStyle(element, '::before').width,
+                spansTheHairline: Math.abs(height - element.getBoundingClientRect().height) < 0.5,
+            }
+        })
+        expect(bar).toEqual({ width: '2px', spansTheHairline: true })
+
+        await markRange(page, 'url-6')
+        expect(await markedIds(page, AIL)).toEqual(['url-2', 'url-3', 'url-4', 'url-5', 'url-6'])
+        await expect(button(footer(page), 'Ingest selected')).toContainText('(5)')
+        // A range redraws the table, but never moves the analyst off the page they are on.
+        await expect(rows(page)).toHaveCount(100)
+
+        // A range applies the verdict its anchoring click reached, so unmarking a run of
+        // rows is the same two gestures rather than one click per row.
+        await markRow(page, 'url-3')
+        expect(await markedIds(page, AIL)).toEqual(['url-2', 'url-4', 'url-5', 'url-6'])
+        await markRange(page, 'url-5')
+        expect(await markedIds(page, AIL)).toEqual(['url-2', 'url-6'])
+
+        // The box keeps its own focus and its own key, and ticks its row exactly once —
+        // which is the trap in making the row the hit target as well.
+        await tick(page, 'url-8').focus()
+        await page.keyboard.press('Space')
+        await expect(tick(page, 'url-8')).toBeChecked()
+        expect(await markedIds(page, AIL)).toEqual(['url-2', 'url-6', 'url-8'])
+    })
+
+    test('a range skips what has no verdict to give, and never leaves its own table', async ({ page }) => {
+        // `b` and `c` come back already on canvas, so they head the table untickable.
+        await load(page, { collide: ['b', 'c'], edgeOnly: [['a', 'b']] })
+        await stageUrls(page)
+        await harness(page, 'rejectPivotCandidates', AIL, ['url-3'])
+
+        await markRow(page, 'url-5')
+        // A row already on the canvas has no verdict to give: the click does nothing at
+        // all, and leaves the anchor where it was.
+        await markRow(page, 'b')
+        await expect(tick(page, 'b')).toHaveCount(0)
+        expect(await markedIds(page, AIL)).toEqual(['url-5'])
+
+        // Upwards from the anchor, across both untickable rows and one already rejected.
+        await markRange(page, 'url-2')
+        expect(await markedIds(page, AIL)).toEqual(['url-2', 'url-4', 'url-5'])
+        // A range must not overrule a verdict — that is what `undo` on the row is for.
+        await expect(row(page, 'url-3')).toHaveClass(/pvt-triage-row-rejected/)
+
+        // The edge table is a list of its own, so a Shift-click in it starts a selection
+        // rather than dragging one out of the node table above.
+        await page.locator('.pvt-triage-edges .pvt-triage-row').first().click({ modifiers: ['Shift'] })
+        expect(await markedIds(page, AIL)).toEqual(['url-2', 'url-4', 'url-5', 'a-b'])
     })
 
     test('filtering, sorting and paging are the pane reading, and never the graph', async ({ page }) => {
@@ -214,8 +289,8 @@ test.describe('pivot triage pane', () => {
         await stageUrls(page)
         const before = await nodeCount(page)
 
-        await tick(page, 'url-0').check()
-        await tick(page, 'url-1').check()
+        await markRow(page, 'url-0')
+        await markRow(page, 'url-1')
         // Marking is silent by design, so the table must not have been redrawn under us.
         await expect(rows(page)).toHaveCount(100)
 
@@ -240,7 +315,7 @@ test.describe('pivot triage pane', () => {
     test('a re-run over marked rows is announced, never swapped in', async ({ page }) => {
         await load(page)
         await stageUrls(page)
-        await tick(page, 'url-0').check()
+        await markRow(page, 'url-0')
 
         await harness(page, 'runPivot', AIL, ['a'], { type: ['url'] })
 
@@ -314,6 +389,12 @@ test.describe('pivot triage pane', () => {
 })
 
 /** The ids of the rows on screen, in the order they are drawn. */
+/** What the manager holds as marked — the state **Ingest** reads, rather than the tint. */
+async function markedIds(page: Page, pivotId: string): Promise<string[]> {
+    const staged = await harness(page, 'pivotCandidates', pivotId) as RecordedCandidates
+    return [...staged.rows, ...staged.edgeRows].filter(candidate => candidate.state === 'marked').map(candidate => candidate.id)
+}
+
 async function rowIds(page: Page): Promise<string[]> {
     return rows(page).evaluateAll(nodes => nodes.map(node => (node as HTMLElement).dataset.candidate ?? ''))
 }

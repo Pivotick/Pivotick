@@ -28,6 +28,16 @@ interface SortState {
     direction: 'asc' | 'desc'
 }
 
+/** Which of the pane's two tables a row belongs to. A range never crosses them. */
+type RowSection = 'nodes' | 'edges'
+
+/** What the row gestures need of a row, which both node and edge candidates satisfy. */
+interface TriageRow {
+    id: string
+    state: PivotCandidate['state']
+    deduped?: boolean
+}
+
 /** What the pane needs from whoever owns it — every one of them an act, not a query. */
 export interface TriagePaneDeps {
     pivots: PivotManager
@@ -46,8 +56,9 @@ export interface TriagePaneDeps {
  *
  * It is a **reader** of {@link PivotManager}: the candidates, their states and the
  * session's rejections all live there, and the only state here is what is on screen —
- * which filters are typed, how the rows are sorted, which page is showing. So a pane
- * torn down and rebuilt loses a scroll position and nothing else.
+ * which filters are typed, how the rows are sorted, which page is showing, where a
+ * range anchors. So a pane torn down and rebuilt loses a scroll position and nothing
+ * else.
  *
  * Nothing in it is in the graph. A candidate becomes data at exactly one moment, when
  * the analyst presses **Ingest selected** — which is the distinction the whole feature
@@ -67,6 +78,13 @@ export class TriagePane {
     private readonly filters = new Map<string, RowFilter>()
     private sort: SortState | null = null
     private page = 0
+    /**
+     * Anchor for a Shift-click range: the row that anchors it, and the verdict its own
+     * click reached. Held per section, since the edge table is a list of its own.
+     */
+    private anchor: { section: RowSection, id: string, mark: boolean } | null = null
+    /** The node rows as currently listed on this page — what a range runs over. */
+    private pageRows: PivotCandidate[] = []
     /** Whether the "rejected earlier" list is open — C5's inspectable suppression. */
     private showSuppressed = false
     /** Live only while the tab is on show: a hidden pane rebuilding is invisible work. */
@@ -212,7 +230,8 @@ export class TriagePane {
         // Edges first: there are usually a handful of them against hundreds of nodes,
         // and below a full page of rows a core AIL result would never be seen at all.
         if (this.set.edges.length) scroller.appendChild(this.edgeSection())
-        scroller.appendChild(this.grid(columns, matching.slice(this.page * PAGE_SIZE, (this.page + 1) * PAGE_SIZE)))
+        this.pageRows = matching.slice(this.page * PAGE_SIZE, (this.page + 1) * PAGE_SIZE)
+        scroller.appendChild(this.grid(columns, this.pageRows))
         this.root.appendChild(scroller)
         this.scroller = scroller
 
@@ -535,14 +554,26 @@ export class TriagePane {
         if (candidate.deduped) row.classList.add('pvt-triage-row-deduped')
 
         const state = text('span', '', 'pvt-triage-cell pvt-triage-state-cell')
-        row.appendChild(this.tickCell(candidate, row, state))
+        const tick = this.tickCell(candidate)
+        row.appendChild(tick.cell)
         for (const column of columns) row.appendChild(text('span', cellText(column.read(candidate)), 'pvt-triage-cell'))
         this.paintState(candidate, state)
         row.appendChild(state)
+
+        this.wireRow(row, candidate, 'nodes', marked => {
+            row.classList.toggle('pvt-triage-row-marked', marked)
+            if (tick.box) tick.box.checked = marked
+            this.paintState(candidate, state)
+        })
         return row
     }
 
-    private tickCell(candidate: PivotCandidate, row: HTMLElement, state: HTMLElement): HTMLElement {
+    /**
+     * The tick box is a state light rather than the hit target: the whole row marks, so
+     * the gesture is the size of the thing it acts on. `pointer-events: none` in the
+     * stylesheet keeps every pointer click on the row, leaving one code path.
+     */
+    private tickCell(candidate: PivotCandidate): { cell: HTMLElement, box?: HTMLInputElement } {
         const cell = document.createElement('span')
         cell.className = 'pvt-triage-cell pvt-triage-tick'
 
@@ -550,26 +581,87 @@ export class TriagePane {
         // rejection is a verdict, and must not read as mere deselection (C6).
         if (candidate.state === 'rejected') {
             cell.appendChild(text('span', '✕', 'pvt-triage-rejected-mark'))
-            return cell
+            return { cell }
         }
         if (candidate.deduped) {
             cell.appendChild(text('span', '–', 'pvt-triage-muted'))
-            return cell
+            return { cell }
         }
 
-        const box = document.createElement('input')
-        box.type = 'checkbox'
-        box.checked = candidate.state === 'marked'
-        box.addEventListener('change', () => {
+        const box = tickBox(candidate.state === 'marked', `Select ${cellText(candidate.raw.data?.label ?? candidate.id)}`)
+        cell.appendChild(box)
+        return { cell, box }
+    }
+
+    /* ---------- row gestures ---------- */
+
+    /**
+     * Row gestures, the same shape as the data dock's: the whole row is the hit target,
+     * a plain click marks or unmarks it, and Shift takes a range from the last row
+     * clicked. What a range applies is the verdict that anchoring click reached, so
+     * unmarking forty rows after a too-wide *Select all matching* is two clicks.
+     *
+     * The range runs over the rows **as currently listed** — sorted, narrowed, on this
+     * page — because that is what the analyst can see.
+     *
+     * A mark is not a canvas selection: nothing in this pane is in the graph, so these
+     * gestures stage nothing and move nothing on the canvas.
+     */
+    private wireRow(element: HTMLElement, row: TriageRow, section: RowSection, reflect: (marked: boolean) => void): void {
+        // Shift-click is a range gesture here, but it is also the browser's own "extend
+        // the text selection to here", which drags a blue smear across every row the
+        // range covers. Cancelled at mousedown, where that selection is actually made.
+        // Only when Shift is held: a plain click still puts a caret in the cell, so the
+        // values stay selectable text.
+        element.addEventListener('mousedown', event => {
+            if (event.shiftKey) event.preventDefault()
+        })
+
+        element.addEventListener('click', event => {
+            const target = event.target as HTMLElement
+            // The row's own verbs — undo, restore — keep their own meaning. The tick box
+            // is not one of them: it is this row's own control, and a click on it, which
+            // only the keyboard can produce, marks the row like any other click would.
+            if (!(target instanceof HTMLInputElement) && target.closest('button, a, select, textarea')) return
+            if (!markable(row)) return
+
+            const anchor = this.anchor
+            if (event.shiftKey && anchor?.section === section && this.applyRange(section, anchor, row.id)) return
+
+            const mark = row.state !== 'marked'
+            this.anchor = { section, id: row.id, mark }
             // `mark` is silent by design: repainting the table on every tick would lose
             // the analyst's place. The row, the state cell and the footer move instead.
-            this.deps.pivots.mark(this.pivotId, candidate.id, box.checked)
-            row.classList.toggle('pvt-triage-row-marked', box.checked)
-            this.paintState(candidate, state)
+            this.deps.pivots.mark(this.pivotId, row.id, mark)
+            // Read off the row's state and written back to the box, so a keyboard Space —
+            // which flips that box itself before any of this runs — cannot toggle twice.
+            // Cancelling its flip instead does not work: the browser restores the box
+            // after the handler returns, leaving the tick disagreeing with the row.
+            reflect(mark)
             this.refreshFooter()
         })
-        cell.appendChild(box)
-        return cell
+    }
+
+    /**
+     * Apply the anchor's verdict to every markable row between it and `toId`. Answers
+     * `false` when the anchor has since been sorted, filtered or paged off the screen,
+     * which leaves the caller to treat the click as the plain click it now looks like
+     * — a range to a row nobody can see is worse than no range at all.
+     */
+    private applyRange(section: RowSection, anchor: { id: string, mark: boolean }, toId: string): boolean {
+        const rows: TriageRow[] = section === 'nodes' ? this.pageRows : this.set.edges
+        const from = rows.findIndex(row => row.id === anchor.id)
+        const to = rows.findIndex(row => row.id === toId)
+        if (from < 0 || to < 0) return false
+
+        const [start, end] = from <= to ? [from, to] : [to, from]
+        for (const row of rows.slice(start, end + 1)) {
+            if (markable(row)) this.deps.pivots.mark(this.pivotId, row.id, anchor.mark)
+        }
+        // A range moves too many rows to touch one by one, and `paint` keeps the scroll
+        // position, so the analyst's place survives it.
+        this.paint()
+        return true
     }
 
     private paintState(candidate: PivotCandidate, cell: HTMLElement): void {
@@ -629,19 +721,19 @@ export class TriagePane {
 
             const cell = document.createElement('span')
             cell.className = 'pvt-triage-cell pvt-triage-tick'
-            const box = document.createElement('input')
-            box.type = 'checkbox'
-            box.checked = edge.state === 'marked'
-            box.addEventListener('change', () => {
-                this.deps.pivots.mark(this.pivotId, edge.id, box.checked)
-                row.classList.toggle('pvt-triage-row-marked', box.checked)
-                this.refreshFooter()
-            })
-            cell.appendChild(box)
+            const label = `${cellText(edge.raw.from)} → ${cellText(edge.raw.to)}`
+            // Rejected here means what it means in the node table: a verdict, not an
+            // unticked box (C6).
+            const box = edge.state === 'rejected' ? undefined : tickBox(edge.state === 'marked', `Select ${label}`)
+            cell.appendChild(box ?? text('span', '✕', 'pvt-triage-rejected-mark'))
             row.appendChild(cell)
 
             for (const column of columns) row.appendChild(text('span', cellText(column.read(edge)), 'pvt-triage-cell'))
             row.appendChild(document.createElement('span'))
+            this.wireRow(row, edge, 'edges', marked => {
+                row.classList.toggle('pvt-triage-row-marked', marked)
+                if (box) box.checked = marked
+            })
             grid.appendChild(row)
         }
 
@@ -737,6 +829,19 @@ export class TriagePane {
 /** A `RawNode` / `RawEdge` seen as something with a data bag, for the shared scan. */
 function dataOf(raw: RawNode | RawEdge): { getData(): Record<string, unknown> } {
     return { getData: () => (raw.data ?? {}) as Record<string, unknown> }
+}
+
+/** Whether a row can still be marked at all: not rejected, not already on the canvas. */
+function markable(row: TriageRow): boolean {
+    return !row.deduped && row.state !== 'rejected'
+}
+
+function tickBox(checked: boolean, label: string): HTMLInputElement {
+    const box = document.createElement('input')
+    box.type = 'checkbox'
+    box.checked = checked
+    box.setAttribute('aria-label', label)
+    return box
 }
 
 function text(tag: string, content: string, className?: string): HTMLElement {

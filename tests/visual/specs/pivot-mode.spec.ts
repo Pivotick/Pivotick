@@ -580,6 +580,8 @@ test.describe('pivot mode', () => {
         await expect(tick(page, 'bulk-04')).toBeFocused()
         await page.keyboard.press('Space')
         await expect(trayCount(page)).toHaveText('1 selected')
+        // The box has to agree with the tray: it is the state light for exactly this.
+        await expect(tick(page, 'bulk-04')).toBeChecked()
 
         await page.keyboard.press('Escape')
         await expect(filterInput(page)).toBeFocused()

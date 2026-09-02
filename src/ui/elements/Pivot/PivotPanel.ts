@@ -602,14 +602,15 @@ class PivotEntry {
         head.addEventListener('click', event => {
             if (this.check.hidden) return
             const target = event.target as HTMLElement
-            // Space on the focused tick box arrives here as a click on the input; let the
-            // repaint set `checked` from the panel's state rather than toggling twice.
-            if (target === this.checkInput) event.preventDefault()
             // Everything the entry offers in its own right — Run, Retry, the triage link
-            // — keeps its own meaning.
-            else if (target.closest('button, a, input, select, textarea')) return
+            // — keeps its own meaning. The tick box is not one of them: it is this row's
+            // own control, and a click on it picks the row like any other click would.
+            if (target !== this.checkInput && target.closest('button, a, input, select, textarea')) return
             // From the panel's state, never the box's: a keyboard Space has already
             // flipped `checked` by the time this runs, so reading it inverts the answer.
+            // The repaint writes the box back from that state, which is why the flip is
+            // left to stand — cancelling it has the browser restore the box after this
+            // handler returns, leaving the tick disagreeing with the tray.
             selection.toggle(!this.isSelected)
         })
 

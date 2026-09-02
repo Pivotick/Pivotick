@@ -52,8 +52,9 @@ forward. Ticking a narrowing control re-asks `summarize` with that choice, so 2,
 
 **5 · Triage what came back.** Results do not touch the graph. They open a pane in the
 bottom dock, one tab per pivot, where *Search rows…* filters (with a regex toggle), the
-columns sort, and marking rows is how you choose. *Select all n matching* respects the
-current filter, so narrow-then-select-all is one gesture. **Reject selected** and **Reject
+columns sort, and marking rows is how you choose. Click anywhere on a row to mark it, and
+Shift-click to carry that mark across every row between the two. *Select all n matching*
+respects the current filter, so narrow-then-select-all is one gesture. **Reject selected** and **Reject
 all remaining** dispose of rows explicitly, and both are remembered for the session.
 **Close** rejects nothing, so anything you never ruled on comes back next time. **Re-run**
 asks again with the same narrowing, and offers *Show new* / *Keep triaging* if you have rows
