@@ -18,7 +18,7 @@ page driven in a 1600×1000 viewport.
 | Apply to one `ip-src` node | **51** |
 | Apply to one `domain` | 44 · `hostname` 37 · `url` 34 · `md5` 28 |
 | Apply to one `AS` | 2 |
-| Modules wanting an API key | 86 of 118 |
+| Modules wanting an API key | 86 of 118 *(bare service only — see #3)* |
 | No-key modules returning real data | 19 of 32 |
 
 The distribution is the important part: the panel has to work at 51 entries and
@@ -55,7 +55,13 @@ A `max-height` with its own scroll on the checkbox list — the treatment
 `.pvt-triage-suppressed` already gets at 140px — fixes this without giving up the
 inline counts.
 
-### 3. Nothing separates a provider that cannot work from one that can
+### 3. Nothing separates a provider that cannot work from one that can — *withdrawn*
+
+**This one does not survive contact with MISP.** A bare misp-modules service
+advertises every module whether or not it has credentials; MISP itself lists only
+what it has configured. Everything in a real panel works, so there is nothing to
+separate. Kept here because the numbers below were the basis of an earlier
+recommendation, and the correction is the useful part.
 
 86 of the 118 modules need an API key this instance does not have. They render
 identically to the 32 that do not, and the only way to find out is to run one and
@@ -113,33 +119,55 @@ could take — has no first-class expression.
 Each staged set opens its own tab. Two runs gave `CVE Lookup` and `DNS Resolver`;
 at 51 available providers the strip is a queue waiting to happen.
 
-## Five ways out
+## The design bench
 
-[`pivot-panel-designs.html`](pivot-panel-designs.html) is a design bench: five
-interactive panels at real size, running on the real 118-module catalogue, each
-reporting its own list height as you use it. Open it alongside this document.
+[`pivot-panel-designs.html`](pivot-panel-designs.html) is one panel at real size,
+running on the real catalogue: a filter box combined with a run tray. Open it
+alongside this document.
 
-| | | Answers |
-| --- | --- | --- |
-| **A** | Search first | a filter box pinned above the list, keyboard to run | #1 |
-| **B** | One line each | 28px rows instead of 43px cards: 2192px → 1400px | #4 |
-| **C** | Ready, then the rest | keyless providers at full size, the other 47 folded away | #3 |
-| **D** | Pick, then run | the list *is* the selection, which retires the 1061px facet | #2 |
-| **E** | Off the panel | origin and recents stay; the catalogue moves to a palette | #1, #4 |
+Search alone finds one provider and forgets it. A tray alone makes you scroll to
+find each one. Together they let you assemble a run out of several searches —
+type `geo`, take four, type `virus`, take two, run six — which is the only reason
+to put them in the same panel. Three rules make that work, and all three are easy
+to get wrong:
 
-They compose. A is the floor and costs least; C stacks on any of the others and is
-the only one needing a contract change.
+1. **Selection outlives the filter.** Clearing the search box must not empty the
+   tray, or searching destroys what you picked.
+2. **Select-all is scoped to the search**, and the button says so: *Select 4
+   matching*, never *Select all*.
+3. **The count reveals what it hides.** Six picked and two on screen is the
+   footgun the first two rules create, so the tray reads *6 selected · 4 hidden*
+   and clicking it shows exactly those.
 
-**Grouping was tried and the data killed it.** Group the 50 IP providers by the
+It also retires two things: the `Enrich (all applicable)` meta-pivot, which exists
+only because there was no way to run several providers at once (#2), and
+`maxCandidates`, which moves onto the tray where it guards how many requests one
+click fires rather than a count no provider can supply.
+
+The cost is real: clicking a row now picks it rather than running it, because
+mis-picking is free and mis-running spends a request. Running one provider is the
+labelled button on the row.
+
+### Two options that were built and dropped
+
+**Grouping.** The catalogue does not partition. Group the 50 IP providers by the
 attribute types they accept and 46 land in one bucket; by the verb in their name
-and 32 are `Lookup`; by what they return and 50 of the 118 declare nothing at all.
-Fifty ways to look an address up do not sort into six drawers, so none of the five
-tries.
+and 32 are `Lookup`; by vendor and you get 44 folders of which 40 hold exactly
+one; by what they return and 50 of the 118 declare nothing at all. A folder tree
+or a cascading menu inherits that, so neither is on the bench.
+
+**Splitting ready from unconfigured.** A bare misp-modules service advertises all
+118 whether or not they have credentials, which made this look like the strongest
+option — 47 of 50 IP providers unusable. It is an artifact of the test rig: MISP
+never lists a module it has not configured. Everything in a real panel works, so
+there is nothing to split, and #3 above is not a defect a real deployment has.
 
 ## Cheapest first
 
-1. Filter box on the provider list (#1) — design **A**.
-2. `max-height` + scroll on the checkbox facet (#2), or retire it with **D**.
-3. Child count on container triage rows (#5).
-4. Availability state on `PivotDefinition` (#3) — design **C**, the only one
-   needing a contract change.
+1. Filter box on the provider list (#1).
+2. Selection tray, which retires the facet rather than capping it (#2).
+3. One-line rows for the no-summarize case (#4).
+4. Child count on container triage rows (#5).
+
+Finding #3 (availability) is withdrawn — see above. Findings #6, #7 and #8 are
+untouched by the bench and still open.
