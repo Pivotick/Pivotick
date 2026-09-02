@@ -563,12 +563,19 @@
     color: var(--pvt-text-color-4);
 }
 
-.pvt-pivot-refusal {
+// The gate between the count and a fetch. Blocked it is tinted like the warning it is;
+// clear it is a quiet note that the cap exists and is being met. One box either way —
+// see `PivotPanel.paintGate` for why the line never leaves.
+.pvt-pivot-gate {
     padding: 5px 7px;
     border-radius: 6px;
     line-height: 1.45;
-    background-color: color-mix(in srgb, var(--pvt-theme-warning) 14%, transparent);
-    color: var(--pvt-text-color-6);
+    color: var(--pvt-text-color-4);
+
+    &.pvt-pivot-gate-blocked {
+        background-color: color-mix(in srgb, var(--pvt-theme-warning) 14%, transparent);
+        color: var(--pvt-text-color-6);
+    }
 }
 
 // One pivot going down never empties the menu, so the sentence and its way out sit

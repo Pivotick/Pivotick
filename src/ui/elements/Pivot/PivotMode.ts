@@ -9,8 +9,13 @@ import './pivot.scss'
 /** The rail mode's id — also the `data-mode` on its rail button and its keyboard shortcut. */
 export const PIVOT_MODE = 'pivot'
 
-/** Wide enough for a multiselect with counts over a number-range pair; 216px is not. */
-const PANEL_WIDTH = 300
+/**
+ * Wide enough for an entry to hold its breakdown, its gate and a facet form without
+ * any of them wrapping: at 300px the breakdown and the cap line each take two lines,
+ * at 420px one. Past 420 nothing else fits on a line that did not already, so the
+ * extra width would only be canvas taken for nothing.
+ */
+const PANEL_WIDTH = 420
 
 /**
  * The Pivot rail mode: where an analyst picks an *origin*, reads what each registered

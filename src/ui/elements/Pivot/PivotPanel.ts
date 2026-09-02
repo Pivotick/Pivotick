@@ -239,7 +239,7 @@ class PivotEntry {
     private readonly status: HTMLElement
     private readonly breakdown: HTMLElement
     private readonly errorLine: HTMLElement
-    private readonly refusalLine: HTMLElement
+    private readonly gateLine: HTMLElement
     private readonly progress: HTMLElement
     private readonly narrowingHost: HTMLElement
     private readonly actions: HTMLElement
@@ -287,14 +287,14 @@ class PivotEntry {
 
         this.breakdown = el('div', 'pvt-pivot-breakdown')
         this.errorLine = el('div', 'pvt-pivot-error')
-        this.refusalLine = el('div', 'pvt-pivot-refusal')
+        this.gateLine = el('div', 'pvt-pivot-gate')
         this.progress = el('div', 'pvt-pivot-progress')
         this.progress.appendChild(el('span', 'pvt-pivot-progress-bar'))
         this.narrowingHost = el('div', 'pvt-pivot-narrowing')
         this.actions = el('div', 'pvt-pivot-actions')
 
         this.root.append(
-            head, this.breakdown, this.errorLine, this.refusalLine,
+            head, this.breakdown, this.errorLine, this.gateLine,
             this.progress, this.narrowingHost, this.actions,
         )
         this.paint()
@@ -417,7 +417,7 @@ class PivotEntry {
         this.paintStatus()
         this.paintBreakdown()
         this.paintError()
-        this.paintRefusal()
+        this.paintGate()
         this.paintNarrowing()
         this.paintActions()
     }
@@ -544,20 +544,36 @@ class PivotEntry {
         this.errorLine.append(text, retry)
     }
 
-    private paintRefusal(): void {
-        const capped = this.overCap()
-        if (capped) {
-            this.refusalLine.textContent =
-                `~${fmt(this.summary?.total ?? 0)} exceeds this pivot's cap of ${fmt(this.def.maxCandidates as number)}`
-                + ' — narrow further to fetch'
+    /**
+     * What stands between the count and a fetch, said in both directions.
+     *
+     * A capped pivot keeps this line from its first summary on: the refusal while the
+     * count is over the cap, the cap it is now within once narrowing gets under. Both
+     * are one box of the same height, because the moment it would otherwise appear and
+     * disappear — ticking a facet across the cap — is the moment the analyst is aiming
+     * at a checkbox, and every entry below would move under the cursor.
+     */
+    private paintGate(): void {
+        const cap = this.def.maxCandidates
+        const blocked = this.overCap() || this.refusal?.kind === 'ceiling'
+
+        if (this.overCap()) {
+            // The count itself is in the head row directly above, so the line says what
+            // it means rather than repeating it — and stays one line wide, which is what
+            // holds the height equal to the cleared state.
+            this.gateLine.textContent = `Over the cap of ${fmt(cap as number)} — narrow further to fetch`
         } else if (this.refusal?.kind === 'ceiling') {
-            this.refusalLine.textContent =
+            this.gateLine.textContent =
                 `The source returned ${fmt(this.refusal.count)} candidates, over the ${fmt(this.refusal.limit)} limit.`
                 + ' Nothing was staged — narrow and run again.'
+        } else if (cap !== undefined && this.summary !== undefined) {
+            this.gateLine.textContent = `Within the cap of ${fmt(cap)}`
         } else {
-            this.refusalLine.textContent = ''
+            this.gateLine.textContent = ''
         }
-        this.refusalLine.hidden = !this.refusalLine.textContent
+
+        this.gateLine.classList.toggle('pvt-pivot-gate-blocked', blocked)
+        this.gateLine.hidden = !this.gateLine.textContent
     }
 
     /** Over the pivot's own cap, judged on the freshest advisory count (D4). */

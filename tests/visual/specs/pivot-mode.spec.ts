@@ -20,11 +20,24 @@ const count = (page: Page, id: string): Locator => entry(page, id).locator('.pvt
 const hint = (page: Page, id: string): Locator => entry(page, id).locator('.pvt-pivot-hint')
 const errorLine = (page: Page, id: string): Locator => entry(page, id).locator('.pvt-pivot-error')
 const breakdown = (page: Page, id: string): Locator => entry(page, id).locator('.pvt-pivot-breakdown')
-const refusal = (page: Page, id: string): Locator => entry(page, id).locator('.pvt-pivot-refusal')
+// The gate line is always there for a capped pivot; the assertion is which way it
+// reads, so `refusal` matches only its blocked state.
+const gate = (page: Page, id: string): Locator => entry(page, id).locator('.pvt-pivot-gate')
+const refusal = (page: Page, id: string): Locator =>
+    entry(page, id).locator('.pvt-pivot-gate.pvt-pivot-gate-blocked')
 const heading = (page: Page): Locator => panel(page).locator('.pvt-pivot-heading')
 const originBlock = (page: Page): Locator => panel(page).locator('.pvt-pivot-origin')
 
 const button = (scope: Locator, name: string): Locator => scope.locator('button', { hasText: name }).first()
+
+/**
+ * An entry's laid-out height, to assert that a state change did not move the ones below.
+ * `offsetHeight` rather than a bounding box: the panel scales as it opens, so a box read
+ * mid-transition is a fraction of the real one.
+ */
+function entryHeight(page: Page, id: string): Promise<number> {
+    return entry(page, id).evaluate(el => (el as HTMLElement).offsetHeight)
+}
 
 /** The active rail mode, read from the live store. */
 const railMode = (page: Page): Promise<string> => page.evaluate(() =>
@@ -215,16 +228,24 @@ test.describe('pivot mode', () => {
         await enterMode(page)
 
         const ail = entry(page, AIL)
-        await expect(refusal(page, AIL)).toHaveText(
-            "~2,143 exceeds this pivot's cap of 2,000 — narrow further to fetch"
-        )
+        await expect(refusal(page, AIL)).toHaveText('Over the cap of 2,000 — narrow further to fetch')
         await expect(button(ail, 'Fetch')).toBeDisabled()
+
+        // The breakdown is what tells the analyst which type to tick, so it stays
+        // readable while the gate is blocking.
+        await expect(breakdown(page, AIL)).toBeVisible()
+        const blockedHeight = await entryHeight(page, AIL)
 
         // Tick URLs: 210 of the 2,143, so the same question comes back under the cap.
         await narrowTo(page, AIL, 'type', 'URLs')
         await expect(count(page, AIL)).toHaveText('~210')
         await expect(refusal(page, AIL)).toBeHidden()
+        await expect(gate(page, AIL)).toHaveText('Within the cap of 2,000')
         await expect(button(ail, 'Fetch')).toBeEnabled()
+
+        // Crossing the cap is a click on a checkbox the analyst is still aiming at, so
+        // the entry must not change height and shift everything below it.
+        expect(await entryHeight(page, AIL)).toBe(blockedHeight)
     })
 
     test('a fetch stages candidates and links into their pane', async ({ page }) => {
@@ -267,7 +288,7 @@ test.describe('pivot mode', () => {
         const width = () => page.locator('.pvt-toolpanel').evaluate(
             el => Math.round(el.getBoundingClientRect().width)
         )
-        expect(await width()).toBe(300)
+        expect(await width()).toBe(420)
 
         await page.locator('.pvt-toolpanel-tool[data-tool="lasso-origin"]').click()
         await expect(page.locator('.pvt-toolpanel-panel')).not.toHaveClass(/pvt-collapsed/)

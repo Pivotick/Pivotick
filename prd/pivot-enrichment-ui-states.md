@@ -71,8 +71,8 @@ leaving it (`onExit`) — never on selection (D11, and the call log makes this v
 |---|---|---|---|
 | **S1** | `idle` | Label, icon, and the declared hint if the node carries one (D12) | `Correlations` · `~2,100 declared` |
 | **S2** | `summarizing` | Skeleton where the count will be. **Skipped on a cache hit** (D20) — a re-opened menu shows its number at once | — |
-| **S3** | `ready` | Count, facet breakdown, narrowing controls, **Fetch** enabled | `~2,143 correlations` / `1,800 domains · 210 URLs · 95 pastes · 38 IPs` |
-| **S4** | `over-cap` | Same as S3, **Fetch disabled**, refusal line under the count | `~2,143 exceeds this pivot's cap of 2,000 — narrow further to fetch` |
+| **S3** | `ready` | Count, facet breakdown, the gate line (capped pivots only), narrowing controls, **Fetch** enabled | `~2,143 correlations` / `1,800 domains · 210 URLs · 95 pastes · 38 IPs` / `Within the cap of 2,000` |
+| **S4** | `over-cap` | Same as S3, **Fetch disabled**, the gate line tinted. One line in both states, so crossing the cap mid-narrowing does not resize the entry | `Over the cap of 2,000 — narrow further to fetch` |
 | **S5** | `re-summarizing` | The previous count **dimmed, never blanked**; facets stay live; Fetch disabled | last count at reduced opacity |
 | **S6** | `summarize-failed` | Inline error in place of the count, **Retry** | `Couldn't reach the source. Retry` |
 | **S7** | `no-summarize` | No count, no narrowing, just **Run** — a legal provider shape (PRD §7) | `Objects & attributes` · `Run` |

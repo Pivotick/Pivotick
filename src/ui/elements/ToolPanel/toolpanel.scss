@@ -5,13 +5,20 @@
 // scrollbar around the whole thing — a mode's header and tools have to stay reachable
 // while its own content scrolls. A mode that declares no inner scroller still can't
 // overflow the canvas; it scrolls as one, as before.
+
+// Left of the panel: the rail, and the gap between the two.
+$rail-gutter: 84px;
+
 .pvt-toolpanel {
     position: absolute;
     top: calc(var(--pvt-mainheader-height) + 14px);
-    left: 84px;
+    left: $rail-gutter;
     z-index: 6;
     // Per-mode: a registered mode may widen it through `RailModeDefinition.panelWidth`.
     width: var(--pvt-toolpanel-width, 216px);
+    // The mirror of `max-height`: a mode wide enough for a desktop canvas must still
+    // fit whatever canvas the host actually gave it, rather than running off the edge.
+    max-width: calc(100% - #{$rail-gutter} - 14px);
     max-height: calc(100% - 28px);
     display: flex;
     flex-direction: column;
