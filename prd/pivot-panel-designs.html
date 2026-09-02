@@ -156,6 +156,8 @@ h1 {
 .origin-btn:focus-visible,
 .mono-btn:focus-visible { outline: 2px solid var(--amaranth); outline-offset: 2px; }
 
+.control-sep { width: 1px; align-self: stretch; background: var(--line); }
+
 .control-note {
     margin-left: auto;
     font-family: var(--mono);
@@ -167,28 +169,29 @@ h1 {
 
 /* ─── the filmstrip ────────────────────────────────────────────────────── */
 
+/* A grid, not a scroller. These are tall narrow panels, so a horizontal strip
+   was tempting — but it puts specimens off the right edge with no affordance
+   saying they are there, and a reader who does not scroll sideways never learns
+   the last two exist. Wrapping costs a little side-by-side width and makes the
+   whole set reachable with the scroll people already do. */
 .strip {
-    display: flex;
-    gap: 26px;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(446px, 100%), 1fr));
+    gap: 46px 26px;
+    align-items: start;
     padding: 4px 0 22px;
-    scrollbar-width: thin;
-    scrollbar-color: var(--line) transparent;
 }
-
-.strip::-webkit-scrollbar { height: 9px; }
-.strip::-webkit-scrollbar-thumb { background: var(--line); border-radius: 5px; }
 
 .spec {
-    flex: 0 0 auto;
-    width: 476px;
-    scroll-snap-align: start;
+    min-width: 0;
+    max-width: 476px;
     display: flex;
     flex-direction: column;
+    /* clears the sticky control bar when a letter chip jumps here */
+    scroll-margin-top: 76px;
 }
 
-.spec-head { min-height: 132px; padding-bottom: 16px; }
+.spec-head { min-height: 124px; padding-bottom: 16px; }
 
 .spec-idx {
     font-family: var(--mono);
@@ -216,9 +219,12 @@ h1 {
 /* The specimen frame is a real 620px viewport. Whatever a design cannot fit
    is genuinely clipped here, exactly as it is clipped in the product. */
 .frame {
-    width: 420px;
+    /* 420px where there is room, and shrinking rather than pushing the gauge off
+       the page where there is not. */
+    flex: 1 1 420px;
+    max-width: 420px;
+    min-width: 0;
     height: var(--frame-h);
-    flex: none;
     position: relative;
     overflow: hidden;
     border-radius: 12px;
@@ -660,6 +666,8 @@ h1 {
 .pv-btn:focus-visible,
 .pv-group-head:focus-visible { outline: 2px solid var(--pv-primary); outline-offset: -2px; }
 
+.jump-btn { min-width: 30px; text-align: center; font-weight: 700; }
+
 /* ─── closing note ─────────────────────────────────────────────────────── */
 
 .closer { margin-top: 60px; padding-top: 34px; border-top: 1px solid var(--line); }
@@ -714,6 +722,9 @@ h1 {
 <div class="control">
     <span class="control-label">Origin node</span>
     <div class="origins" id="origins"></div>
+    <span class="control-sep" aria-hidden="true"></span>
+    <span class="control-label">Five designs</span>
+    <div class="origins" id="jump"></div>
     <span class="control-note" id="controlNote"></span>
 </div>
 
@@ -736,8 +747,8 @@ h1 {
     </div>
 
     <p style="margin-top:28px">
-        Every panel above is interactive. Type in A and E, open a group in B, unlock C, tick rows in D,
-        and switch the origin to watch each design at 50 providers, at 11, and at 1.
+        Every panel above is interactive. Type in A and E, unlock the 47 in C, tick rows in D, and
+        switch the origin to watch all five at 50 providers, at 11, and at 1.
     </p>
 </section>
 
@@ -1199,6 +1210,23 @@ function buildStrip() {
     }
 }
 
+/* Five letters in the bar: the count is stated, and each one jumps to its panel. */
+function buildJump() {
+    const host = document.getElementById('jump');
+    host.innerHTML = '';
+    for (const d of DESIGNS) {
+        const b = el('button', 'origin-btn jump-btn', d.key);
+        b.type = 'button';
+        b.title = d.name;
+        b.setAttribute('aria-label', 'Go to design ' + d.key + ': ' + d.name);
+        b.addEventListener('click', () => {
+            const spec = [...strip.children][DESIGNS.indexOf(d)];
+            spec?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+        });
+        host.append(b);
+    }
+}
+
 function buildOrigins() {
     const host = document.getElementById('origins');
     host.innerHTML = '';
@@ -1221,5 +1249,6 @@ function buildOrigins() {
 
 buildOrigins();
 buildStrip();
+buildJump();
 addEventListener('resize', () => strip.querySelectorAll('.frame').forEach(measure));
 </script>
