@@ -19,7 +19,11 @@ $rail-gutter: 84px;
     // The mirror of `max-height`: a mode wide enough for a desktop canvas must still
     // fit whatever canvas the host actually gave it, rather than running off the edge.
     max-width: calc(100% - #{$rail-gutter} - 14px);
-    max-height: calc(100% - 28px);
+    // 100% is the canvas row, which the panel does not start at the top of: it is
+    // offset by the header. Without that subtracted the panel may end up to 62px
+    // taller than the space it has, running under the dock — where anything pinned to
+    // its own bottom edge sits beneath the dock's resize handle, visible but unclickable.
+    max-height: calc(100% - var(--pvt-mainheader-height) - 28px);
     display: flex;
     flex-direction: column;
     // The wrapper is click-through; only the visible panel opts back in, so a

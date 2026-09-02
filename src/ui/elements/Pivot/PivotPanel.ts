@@ -15,6 +15,24 @@ const TRIAGE_TAB_PREFIX = 'pivot-triage:'
 /** How long a typed narrowing field waits before it re-asks the provider. */
 const TYPED_DELAY_MS = 400
 
+/**
+ * How many applicable pivots it takes before the panel grows a filter box, per-entry
+ * checkboxes and a run tray.
+ *
+ * Below this the list is short enough to read, and the controls would be chrome around
+ * nothing. Above it neither is true: a backend that registers one pivot per enrichment
+ * module puts fifty in the panel at once, none of which can advertise a count, so the
+ * list is both long and undifferentiated.
+ */
+const BULK_MIN = 8
+
+/**
+ * How many pivots may be selected before the tray says out loud what running them
+ * costs. A caution, not a refusal — the analyst may well mean it, and refusing here
+ * would only teach them to tick fewer boxes.
+ */
+const BATCH_CAUTION = 8
+
 /** The field kinds that commit as you type; everything else commits on `change`. */
 const TYPED_FIELDS: ReadonlySet<string> = new Set(['text', 'numberRange'])
 
@@ -41,6 +59,30 @@ export class PivotPanel {
     private readonly unsubscribe: () => void
     private readonly uiManager: UIManager
 
+    /* ---------- the bulk controls, live only past {@link BULK_MIN} ---------- */
+
+    private readonly filterBar: HTMLElement
+    private readonly filterInput: HTMLInputElement
+    private readonly filterClear: HTMLButtonElement
+    private readonly hits: HTMLElement
+    private readonly selectAll: HTMLButtonElement
+    private readonly tray: HTMLElement
+    private readonly trayCount: HTMLButtonElement
+    private readonly trayClear: HTMLButtonElement
+    private readonly trayRun: HTMLButtonElement
+    private readonly trayCaution: HTMLElement
+    private readonly noMatches: HTMLElement
+
+    private query = ''
+    /**
+     * Which pivots are ticked, by id. Deliberately not cleared when the filter changes:
+     * if it were, searching would destroy the selection, and building one run out of two
+     * searches — the only reason to have both controls — would be impossible.
+     */
+    private readonly selected = new Set<string>()
+    /** Show only what is ticked, ignoring the filter, so nothing can hide off-screen. */
+    private reveal = false
+
     constructor(uiManager: UIManager) {
         this.uiManager = uiManager
         this.root = el('div', 'pvt-pivot-panel')
@@ -55,11 +97,76 @@ export class PivotPanel {
         this.originlessList = el('div', 'pvt-pivot-list')
         this.originless.appendChild(this.originlessList)
 
+        this.filterInput = document.createElement('input')
+        this.filterInput.type = 'text'
+        this.filterInput.className = 'pvt-pivot-filter-input'
+        this.filterInput.placeholder = 'Filter pivots'
+        this.filterInput.setAttribute('aria-label', 'Filter pivots')
+
+        this.filterClear = button('Clear the filter', () => {
+            this.query = ''
+            this.filterInput.value = ''
+            this.reveal = false
+            this.rebuild()
+            this.filterInput.focus()
+        })
+        this.filterClear.className = 'pvt-pivot-filter-clear'
+        this.filterClear.textContent = '×'
+
+        const filterBox = el('div', 'pvt-pivot-filter-box')
+        filterBox.append(this.filterInput, this.filterClear)
+
+        this.hits = el('span', 'pvt-pivot-hits')
+        this.selectAll = button('', () => this.toggleAllShown())
+        this.selectAll.className = 'pvt-pivot-selectall'
+        const subbar = el('div', 'pvt-pivot-subbar')
+        subbar.append(this.hits, this.selectAll)
+
+        this.filterBar = el('div', 'pvt-pivot-filter')
+        this.filterBar.append(filterBox, subbar)
+
+        this.noMatches = el('div', 'pvt-pivot-nomatch')
+
         // Only the pivots scroll. The origin and the count of what applies to it are
         // what the whole panel is about, so they stay put however long the list gets.
         const scroll = el('div', 'pvt-pivot-scroll')
-        scroll.append(this.list, this.originless)
-        this.root.append(this.originBlock, this.heading, scroll)
+        scroll.append(this.list, this.noMatches, this.originless)
+
+        this.trayCount = button('', () => {
+            if (!this.selected.size) return
+            this.reveal = !this.reveal
+            this.rebuild()
+        })
+        this.trayCount.className = 'pvt-pivot-tray-count'
+        this.trayClear = button('Clear the selection', () => {
+            this.selected.clear()
+            this.reveal = false
+            this.rebuild()
+        })
+        this.trayClear.className = 'pvt-pivot-button'
+        this.trayClear.textContent = 'Clear'
+        this.trayRun = button('Run every selected pivot', () => this.runSelected())
+        this.trayRun.className = 'pvt-pivot-button pvt-pivot-button-primary'
+        this.trayCaution = el('div', 'pvt-pivot-tray-caution')
+        this.tray = el('div', 'pvt-pivot-tray')
+        this.tray.append(this.trayCount, this.trayClear, this.trayRun, this.trayCaution)
+
+        this.root.append(this.originBlock, this.heading, this.filterBar, scroll, this.tray)
+
+        this.filterInput.addEventListener('input', () => {
+            this.query = this.filterInput.value
+            // Typing is a new question; it must not keep showing the answer to the old one.
+            this.reveal = false
+            this.rebuild()
+        })
+        // Reveal ignores the filter, so the box must not look like it is still in force —
+        // and typing again is the natural way back out of it.
+        this.filterInput.addEventListener('focus', () => {
+            if (!this.reveal) return
+            this.reveal = false
+            this.rebuild()
+        })
+        this.filterInput.addEventListener('keydown', event => this.onFilterKey(event))
 
         // A pivot registered or unregistered while the mode is open changes the list.
         this.unsubscribe = this.uiManager.graph.pivots.on(change => {
@@ -97,6 +204,11 @@ export class PivotPanel {
     public setOrigin(nodes: Node[]): void {
         if (sameIds(nodes, this.origin)) return
         this.origin = nodes
+        // A different origin is a different question, so a selection built for the old
+        // one does not carry. The filter does: it is a lens on the catalogue, not on the
+        // origin, and an analyst hunting one provider across several nodes keeps it.
+        this.selected.clear()
+        this.reveal = false
         this.rebuild()
         if (!this.active) return
         for (const entry of this.entries.values()) entry.originChanged()
@@ -108,6 +220,14 @@ export class PivotPanel {
      * panel has not laid the entry out yet.
      */
     public focus(pivotId: string): void {
+        // Being sent to one pivot outranks the filter that was hiding it — a badge that
+        // opened the mode and then scrolled to nothing would be a dead end.
+        if (this.query || this.reveal) {
+            this.query = ''
+            this.filterInput.value = ''
+            this.reveal = false
+            this.rebuild()
+        }
         window.requestAnimationFrame(() => {
             for (const [id, entry] of this.entries) entry.element().classList.toggle('pvt-pivot-focus', id === pivotId)
             this.entries.get(pivotId)?.element().scrollIntoView({ block: 'nearest' })
@@ -129,14 +249,33 @@ export class PivotPanel {
         // (C14): they are still runnable, they just answer a different question.
         const detached = this.origin.length ? pivots.for([]) : []
 
+        // The controls are earned by the length of the list, not switched on: a panel
+        // with four pivots in it has nothing to search and nothing to batch.
+        const bulk = applicable.length + detached.length >= BULK_MIN
+        this.root.classList.toggle('pvt-pivot-bulk', bulk)
+        this.filterBar.hidden = !bulk
+        // The query is kept but stops applying, never cleared. Clicking a node fires an
+        // unselect and a select, so the origin is briefly empty and the list briefly
+        // short — and a filter wiped by that would vanish as the analyst changed node.
+        if (!bulk) this.reveal = false
+
+        const shownApplicable = bulk ? this.shown(applicable) : applicable
+        const shownDetached = bulk ? this.shown(detached) : detached
+
         this.paintOrigin()
         this.paintHeading(applicable.length)
-        this.paintList(this.list, applicable)
-        this.paintList(this.originlessList, detached)
+        this.paintList(this.list, applicable, shownApplicable)
+        this.paintList(this.originlessList, detached, shownDetached)
 
-        this.originless.hidden = detached.length === 0
+        // A detached group that is entirely filtered out is a disclosure onto nothing.
+        this.originless.hidden = shownDetached.length === 0
         const summary = this.originless.querySelector('summary')
-        if (summary) summary.textContent = `Without an origin (${detached.length})`
+        if (summary) summary.textContent = `Without an origin (${shownDetached.length})`
+
+        this.noMatches.hidden = !bulk || shownApplicable.length + shownDetached.length > 0
+        this.noMatches.textContent = this.reveal
+            ? 'Nothing selected.'
+            : `No pivot matches “${this.query.trim()}”.`
 
         // Anything no longer in either list is gone for good — drop its state with it.
         const live = new Set([...applicable, ...detached].map(def => def.id))
@@ -144,7 +283,135 @@ export class PivotPanel {
             if (live.has(id)) continue
             entry.destroy()
             this.entries.delete(id)
+            this.selected.delete(id)
         }
+
+        this.paintBulk(bulk, [...shownApplicable, ...shownDetached])
+    }
+
+    /** What the list shows: the selection when revealing, otherwise what the filter keeps. */
+    private shown(defs: PivotDefinition[]): PivotDefinition[] {
+        if (this.reveal) return defs.filter(def => this.selected.has(def.id))
+        const needle = this.query.trim().toLowerCase()
+        if (!needle) return defs
+        return defs.filter(def => `${def.label} ${def.id}`.toLowerCase().includes(needle))
+    }
+
+    /** The filter line, the select-all verb and the tray, from one pass over what is on show. */
+    private paintBulk(bulk: boolean, shownDefs: PivotDefinition[]): void {
+        if (!bulk) {
+            this.tray.hidden = true
+            return
+        }
+
+        const filtering = Boolean(this.query.trim()) || this.reveal
+        this.filterClear.hidden = !this.query
+        // Revealing ignores the query, so the box must not go on looking like it is in
+        // force. Focusing it is the way back out, and it says so by waking up.
+        this.filterBar.classList.toggle('pvt-pivot-filter-inert', this.reveal)
+        this.hits.textContent = this.reveal
+            ? `Showing your ${fmt(this.selected.size)} selected`
+            : filtering ? `${fmt(shownDefs.length)} match` : ''
+
+        // The verb names the number it will actually add, and that number is always
+        // scoped to what is on screen: an unscoped "select all" in a list this long is a
+        // way to fire fifty requests by accident.
+        const unpicked = shownDefs.filter(def => !this.selected.has(def.id)).length
+        this.selectAll.disabled = shownDefs.length === 0
+        this.selectAll.textContent = shownDefs.length === 0 ? 'Select none'
+            : unpicked === 0 ? `Deselect ${fmt(shownDefs.length)}`
+            : filtering ? `Select ${fmt(unpicked)} matching`
+            : `Select all ${fmt(unpicked)}`
+
+        const picked = this.selected.size
+        // Empty selection has nothing to reveal; staying in the mode would strand the
+        // list on a set that can never repopulate.
+        if (!picked) this.reveal = false
+        this.tray.hidden = picked === 0
+        if (!picked) return
+
+        const shownIds = new Set(shownDefs.map(def => def.id))
+        const hidden = [...this.selected].filter(id => !shownIds.has(id)).length
+
+        this.trayCount.replaceChildren()
+        this.trayCount.append(strong(fmt(picked)), document.createTextNode(' selected'))
+        if (hidden) {
+            const away = el('span', 'pvt-pivot-tray-hidden')
+            away.textContent = `${fmt(hidden)} hidden`
+            this.trayCount.append(document.createTextNode(' · '), away)
+        }
+        this.trayCount.setAttribute('aria-pressed', String(this.reveal))
+        this.trayCount.title = this.reveal
+            ? 'Back to the filtered list'
+            : 'Show only what is selected'
+
+        this.trayRun.textContent = `Run ${fmt(picked)}`
+        const over = picked > BATCH_CAUTION
+        this.tray.classList.toggle('pvt-pivot-tray-over', over)
+        this.trayCaution.hidden = !over
+        this.trayCaution.textContent = over
+            ? `${fmt(picked)} pivots is over ${fmt(BATCH_CAUTION)} — this asks every one of them at once.`
+            : ''
+    }
+
+    private toggleAllShown(): void {
+        const shownDefs = this.shown(this.uiManager.graph.pivots.for(this.origin))
+            .concat(this.origin.length ? this.shown(this.uiManager.graph.pivots.for([])) : [])
+        const unpicked = shownDefs.filter(def => !this.selected.has(def.id))
+        if (unpicked.length) for (const def of unpicked) this.selected.add(def.id)
+        else for (const def of shownDefs) this.selected.delete(def.id)
+        this.rebuild()
+    }
+
+    /**
+     * Run every ticked pivot. Each goes through its own entry, so each keeps its own
+     * narrowing, its own gate and its own candidate set — a batch is several runs, not
+     * one run of several things.
+     */
+    private runSelected(): void {
+        for (const id of this.selected) this.entries.get(id)?.run()
+    }
+
+    private onFilterKey(event: KeyboardEvent): void {
+        if (event.key === 'ArrowDown') {
+            event.preventDefault()
+            this.checkboxes()[0]?.focus()
+            return
+        }
+        if (event.key !== 'Enter') return
+        event.preventDefault()
+        // Once anything is ticked the tray owns Enter, so the action Enter takes is
+        // always the one the panel is showing.
+        if (this.selected.size) return this.runSelected()
+        const only = this.checkboxes()
+        if (only.length === 1) this.entries.get(only[0].value)?.run()
+    }
+
+    /** Every on-screen entry's tick box, in list order — what the arrow keys walk. */
+    private checkboxes(): HTMLInputElement[] {
+        return [...this.root.querySelectorAll<HTMLInputElement>('.pvt-pivot-check input')]
+    }
+
+    /** Arrow keys walk the list; Escape hands the keyboard back to the filter. */
+    private onListKey(event: KeyboardEvent, box: HTMLInputElement): void {
+        if (event.key === 'Escape') {
+            event.preventDefault()
+            this.filterInput.focus()
+            return
+        }
+        if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
+        event.preventDefault()
+        const boxes = this.checkboxes()
+        const index = boxes.indexOf(box)
+        if (event.key === 'ArrowUp' && index === 0) return this.filterInput.focus()
+        const next = boxes[index + (event.key === 'ArrowDown' ? 1 : -1)]
+        next?.focus()
+    }
+
+    private toggle(id: string, on: boolean): void {
+        if (on) this.selected.add(id)
+        else this.selected.delete(id)
+        this.rebuild()
     }
 
     private paintOrigin(): void {
@@ -210,16 +477,41 @@ export class PivotPanel {
             : 'No pivots apply to this origin'
     }
 
-    /** Put each definition's entry in `host`, in order, creating what is new. */
-    private paintList(host: HTMLElement, defs: PivotDefinition[]): void {
+    /**
+     * Put each definition's entry in `host`, in order, creating what is new.
+     *
+     * `shown` is the subset the filter kept. An entry the filter hides is taken out of
+     * the DOM but not destroyed: it keeps its summary, its narrowing and its place in
+     * the selection, because filtering is a way of looking at the list rather than a
+     * change to it.
+     */
+    private paintList(host: HTMLElement, defs: PivotDefinition[], shown: PivotDefinition[]): void {
+        const visible = new Set(shown.map(def => def.id))
+        const bulk = this.root.classList.contains('pvt-pivot-bulk')
+        // Where the next visible entry belongs. Re-inserting an element that is already
+        // in the right place still blurs whatever inside it had focus, and a repaint
+        // fires on every tick — so an entry is only moved when it has actually moved.
+        let slot = 0
         for (const def of defs) {
             let entry = this.entries.get(def.id)
             if (!entry) {
-                entry = new PivotEntry(this.uiManager, def, () => this.originFor(def))
+                entry = new PivotEntry(
+                    this.uiManager, def, () => this.originFor(def),
+                    {
+                        toggle: (on: boolean) => this.toggle(def.id, on),
+                        key: (event: KeyboardEvent, box: HTMLInputElement) => this.onListKey(event, box),
+                    },
+                )
                 this.entries.set(def.id, entry)
                 if (this.active) entry.start()
             }
-            host.appendChild(entry.element())
+            entry.setSelectable(bulk, this.selected.has(def.id))
+            if (!visible.has(def.id)) {
+                entry.element().remove()
+                continue
+            }
+            if (host.children[slot] !== entry.element()) host.insertBefore(entry.element(), host.children[slot] ?? null)
+            slot++
         }
     }
 
@@ -266,8 +558,16 @@ class PivotEntry {
     private readonly uiManager: UIManager
     private readonly def: PivotDefinition
     private readonly origin: () => Node[]
+    /** The tick box, present only while the panel is long enough to batch (`BULK_MIN`). */
+    private readonly check: HTMLElement
+    private readonly checkInput: HTMLInputElement
 
-    constructor(uiManager: UIManager, def: PivotDefinition, origin: () => Node[]) {
+    constructor(
+        uiManager: UIManager,
+        def: PivotDefinition,
+        origin: () => Node[],
+        selection: { toggle: (on: boolean) => void, key: (event: KeyboardEvent, box: HTMLInputElement) => void },
+    ) {
         this.uiManager = uiManager
         this.def = def
         this.origin = origin
@@ -275,6 +575,21 @@ class PivotEntry {
         this.root.dataset.pivot = def.id
 
         const head = el('div', 'pvt-pivot-entry-head')
+
+        // Selection rides on its own control rather than on the entry: the entry already
+        // has a Run of its own, and a card that both selects and runs depending on where
+        // it was clicked spends a request on a slip.
+        this.check = el('label', 'pvt-pivot-check')
+        this.checkInput = document.createElement('input')
+        this.checkInput.type = 'checkbox'
+        this.checkInput.value = def.id
+        this.checkInput.setAttribute('aria-label', `Select ${def.label}`)
+        this.checkInput.addEventListener('change', () => selection.toggle(this.checkInput.checked))
+        this.checkInput.addEventListener('keydown', event => selection.key(event, this.checkInput))
+        this.check.appendChild(this.checkInput)
+        this.check.hidden = true
+        head.appendChild(this.check)
+
         if (def.icon) {
             const icon = el('span', 'pvt-pivot-entry-icon')
             icon.innerHTML = def.icon
@@ -302,6 +617,23 @@ class PivotEntry {
 
     public element(): HTMLElement {
         return this.root
+    }
+
+    /** Whether this entry can be ticked, and whether it currently is. */
+    public setSelectable(on: boolean, selected: boolean): void {
+        this.check.hidden = !on
+        this.checkInput.checked = on && selected
+        this.root.classList.toggle('pvt-pivot-picked', on && selected)
+    }
+
+    /**
+     * Run this pivot, as the tray does for each one it holds. The gate is not repeated
+     * here: a run over the pivot's own cap is refused by the manager and reported on
+     * this entry, which is where the analyst would look for it.
+     */
+    public run(): void {
+        if (this.phase === 'fetching') return
+        void this.fetch()
     }
 
     /** Entering the mode is the intent that starts the first call (D11). */
@@ -693,6 +1025,20 @@ class PivotEntry {
 function el(tag: string, className: string): HTMLElement {
     const element = document.createElement(tag)
     element.className = className
+    return element
+}
+
+function button(title: string, onClick: () => void): HTMLButtonElement {
+    const element = document.createElement('button')
+    element.type = 'button'
+    if (title) element.title = title
+    element.addEventListener('click', onClick)
+    return element
+}
+
+function strong(text: string): HTMLElement {
+    const element = document.createElement('strong')
+    element.textContent = text
     return element
 }
 

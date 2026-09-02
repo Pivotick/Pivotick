@@ -787,6 +787,13 @@ export interface PivotFixtureSpec {
     /** Absolute candidate ceiling, when a test wants a reachable one. */
     ceiling?: number
     /**
+     * Register this many extra bare-run pivots, named `bulk-01`… — enough of them and
+     * the panel earns its filter box, its tick boxes and its run tray. This is the
+     * shape a per-enrichment-module backend actually produces: many pivots, none of
+     * which can advertise a count.
+     */
+    bulk?: number
+    /**
      * Flip these fixtures to `autoIngest`. The auto-ingest paths are the ones with no
      * pane to carry a failure or a refusal, so a test needs to be able to put any
      * provider on them.
@@ -4036,6 +4043,9 @@ class Harness implements HarnessApi {
 
         const names = spec.pivots ?? ALL_FAKE_PIVOTS
         const options: PlainObject = { pivots: names.map((n) => this.fakePivot(n)) }
+        for (let i = 1; i <= (spec.bulk ?? 0); i++) {
+            (options.pivots as PivotDefinition[]).push(this.bulkPivot(i))
+        }
         for (const definition of options.pivots as PivotDefinition[]) {
             if (spec.autoIngest?.includes(definition.id as PivotFixtureName)) definition.autoIngest = true
         }
@@ -4304,6 +4314,26 @@ class Harness implements HarnessApi {
             throw new DOMException(`${pivot}.${call} aborted`, 'AbortError')
         }
         return produce()
+    }
+
+    /**
+     * A bare-run pivot with nothing to advertise: no `summarize`, so no count, no facets
+     * and no cap. Every name carries a searchable word so a filter can be aimed at a
+     * subset rather than at one row.
+     */
+    private bulkPivot(index: number): PivotDefinition {
+        const family = ['geo', 'hash', 'whois', 'sandbox'][index % 4]
+        const id = `bulk-${String(index).padStart(2, '0')}`
+        return {
+            id,
+            label: `${family} lookup ${index}`,
+            fetch: (nodes, narrowing, ctx) => this.serveProvider(id, 'fetch', nodes, narrowing, ctx, () => ({
+                nodes: [{ id: `${id}-result`, expanded: false, data: { label: `${id} result` } }],
+                edges: nodes.length
+                    ? [{ from: String(nodes[0].id), to: `${id}-result`, data: {} }]
+                    : [],
+            })),
+        }
     }
 
     /** One of the fake providers from the PRD's fake-provider spec. */

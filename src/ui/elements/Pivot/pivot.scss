@@ -451,6 +451,205 @@
     }
 }
 
+// ── the bulk controls ───────────────────────────────────────────────────────────
+// Present only past `BULK_MIN` applicable pivots. Below that the list is short enough
+// to read and none of this is earned.
+
+.pvt-pivot-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 0 3px;
+
+    // An author `display` outranks the UA's `[hidden]` rule, so say it here too.
+    &[hidden] {
+        display: none;
+    }
+}
+
+.pvt-pivot-filter-box {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 8px;
+    border: 1px solid var(--pvt-chrome-border);
+    border-radius: 7px;
+
+    &:focus-within {
+        border-color: var(--pvt-theme-primary);
+    }
+}
+
+.pvt-pivot-filter-input {
+    flex: 1;
+    // A full-width control with padding needs its own box-sizing: there is no global one.
+    box-sizing: border-box;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--pvt-text-color-6);
+    font-family: inherit;
+    font-size: 12px;
+
+    &::placeholder {
+        color: var(--pvt-text-color-3);
+    }
+}
+
+// Only the box dims: the line under it is saying what is on show instead, and is the
+// one thing in the block still telling the truth.
+.pvt-pivot-filter-inert .pvt-pivot-filter-box {
+    opacity: 0.45;
+}
+
+.pvt-pivot-filter-clear {
+    flex: none;
+    padding: 0 3px;
+    border: none;
+    background: transparent;
+    color: var(--pvt-text-color-3);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1;
+
+    &:hover {
+        color: var(--pvt-text-color-6);
+    }
+}
+
+.pvt-pivot-subbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 22px;
+    padding: 0 3px;
+}
+
+.pvt-pivot-hits {
+    flex: 1;
+    color: var(--pvt-text-color-3);
+    font-size: 11px;
+}
+
+.pvt-pivot-selectall {
+    flex: none;
+    padding: 3px 8px;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    background: transparent;
+    color: var(--pvt-theme-primary);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+
+    &:hover:not(:disabled) {
+        border-color: var(--pvt-chrome-border);
+    }
+
+    &:disabled {
+        color: var(--pvt-text-color-3);
+        cursor: default;
+    }
+}
+
+.pvt-pivot-nomatch {
+    padding: 14px 6px;
+    color: var(--pvt-text-color-3);
+    text-align: center;
+}
+
+// The tick box sits ahead of the icon so every entry's controls start on the same
+// vertical line, however long its label runs.
+.pvt-pivot-check {
+    display: flex;
+    flex: none;
+    align-items: center;
+    line-height: 0;
+
+    // An author `display` outranks the UA's `[hidden]` rule, so say it here too.
+    &[hidden] {
+        display: none;
+    }
+
+    input {
+        width: 13px;
+        height: 13px;
+        margin: 0;
+        accent-color: var(--pvt-theme-primary);
+        cursor: pointer;
+    }
+}
+
+.pvt-pivot-entry.pvt-pivot-picked {
+    border-color: var(--pvt-theme-primary);
+}
+
+// ── the run tray ────────────────────────────────────────────────────────────────
+// Outside the scroller: what is selected must not scroll away from the button that
+// runs it.
+
+.pvt-pivot-tray {
+    display: flex;
+    flex: none;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 7px;
+    border: 1px solid var(--pvt-chrome-border);
+    border-radius: 9px;
+    background-color: var(--pvt-chrome-bg);
+
+    // An author `display` outranks the UA's `[hidden]` rule, so say it here too.
+    &[hidden] {
+        display: none;
+    }
+}
+
+// A button rather than a label: it has somewhere to take you — the picks the filter
+// is hiding.
+.pvt-pivot-tray-count {
+    flex: 1;
+    min-width: 0;
+    padding: 3px 6px;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    background: transparent;
+    color: var(--pvt-text-color-4);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 11px;
+    text-align: left;
+
+    strong {
+        color: var(--pvt-text-color-6);
+    }
+
+    &:hover,
+    &[aria-pressed='true'] {
+        border-color: var(--pvt-chrome-border);
+        background-color: var(--pvt-ui-bg);
+    }
+}
+
+.pvt-pivot-tray-hidden {
+    color: var(--pvt-theme-primary);
+    font-weight: 600;
+}
+
+.pvt-pivot-tray-caution {
+    flex: none;
+    width: 100%;
+    padding: 6px 8px;
+    border-radius: 6px;
+    background-color: color-mix(in srgb, var(--pvt-theme-warning) 16%, transparent);
+    color: var(--pvt-text-color-warning);
+    font-size: 11px;
+    line-height: 1.4;
+}
+
 // The one part of the panel that scrolls. `padding-right` keeps an overlay scrollbar
 // off the entry borders; the negative margin gives that back to the layout.
 .pvt-pivot-scroll {

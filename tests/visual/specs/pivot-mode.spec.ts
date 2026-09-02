@@ -273,7 +273,7 @@ test.describe('pivot mode', () => {
         await enterMode(page)
 
         // The sentence and its way out are one line inside the entry that failed.
-        await expect(errorLine(page, AIL)).toContainText("Couldn't reach the source.")
+        await expect(errorLine(page, AIL)).toContainText('Couldn\'t reach the source.')
         await harness(page, 'setPivotFail', false)
         await button(errorLine(page, AIL), 'Retry').click()
         await expect(count(page, AIL)).toHaveText('~2,143')
@@ -358,7 +358,7 @@ test.describe('pivot mode', () => {
 
         // No pane was ever offered, so the notifier is the only place this can be seen.
         expect(await harness(page, 'dockTabIds')).toEqual(['table'])
-        await expect(page.locator('.pivotick-toast')).toContainText("Couldn't fetch Objects & attributes")
+        await expect(page.locator('.pivotick-toast')).toContainText('Couldn\'t fetch Objects & attributes')
     })
 
     test('an auto-ingest over the ceiling says the number and the limit', async ({ page }) => {
@@ -389,5 +389,160 @@ test.describe('pivot mode', () => {
 
         await page.locator('.pvt-toolpanel-tool[data-tool="lasso-origin"]').click()
         await expect(railButton(page).locator('.pvt-moderail-label')).toHaveText('Lasso origin')
+    })
+
+    // ── the bulk controls ───────────────────────────────────────────────────────
+    // A backend that registers one pivot per enrichment module puts dozens in the
+    // panel, none of which can advertise a count. Past `BULK_MIN` the panel grows a
+    // filter box, tick boxes and a run tray; the three rules below are what make the
+    // two of them worth having together rather than separately.
+
+    const filterBox = (page: Page): Locator => panel(page).locator('.pvt-pivot-filter')
+    const filterInput = (page: Page): Locator => panel(page).locator('.pvt-pivot-filter-input')
+    const hits = (page: Page): Locator => panel(page).locator('.pvt-pivot-hits')
+    const selectAll = (page: Page): Locator => panel(page).locator('.pvt-pivot-selectall')
+    const tray = (page: Page): Locator => panel(page).locator('.pvt-pivot-tray')
+    const trayCount = (page: Page): Locator => panel(page).locator('.pvt-pivot-tray-count')
+    const trayRun = (page: Page): Locator => tray(page).locator('button', { hasText: /^Run / })
+    const shownEntries = (page: Page): Locator => panel(page).locator('.pvt-pivot-entry')
+    const tick = (page: Page, id: string): Locator => entry(page, id).locator('.pvt-pivot-check input')
+
+    /** Load a panel long enough to earn the controls, with an origin picked. */
+    const loadBulk = async (page: Page, bulk = 12): Promise<void> => {
+        await load(page, { bulk })
+        await pickOrigin(page, 'a')
+        await enterMode(page)
+        await expect(filterBox(page)).toBeVisible()
+    }
+
+    test('a short list earns no filter box and no tick boxes', async ({ page }) => {
+        await load(page)
+        await pickOrigin(page, 'a')
+        await enterMode(page)
+
+        await expect(filterBox(page)).toBeHidden()
+        await expect(panel(page).locator('.pvt-pivot-check:visible')).toHaveCount(0)
+        await expect(tray(page)).toBeHidden()
+    })
+
+    test('a long one grows a filter, tick boxes and a tray', async ({ page }) => {
+        await loadBulk(page)
+        await expect(tick(page, 'bulk-01')).toBeVisible()
+        // The tray stays away until something is actually selected.
+        await expect(tray(page)).toBeHidden()
+
+        await filterInput(page).fill('whois')
+        await expect(hits(page)).toHaveText('3 match')
+        await expect(shownEntries(page)).toHaveCount(3)
+    })
+
+    // Rule 01. If clearing the box emptied the tray, searching would destroy the
+    // selection and building one run out of two searches would be impossible.
+    test('the selection outlives the filter that made it', async ({ page }) => {
+        await loadBulk(page)
+
+        await filterInput(page).fill('whois')
+        await selectAll(page).click()
+        await expect(trayCount(page)).toHaveText('3 selected')
+
+        await filterInput(page).fill('')
+        await expect(shownEntries(page)).toHaveCount(17)
+        await expect(trayCount(page)).toHaveText('3 selected')
+
+        // …and a second search adds to it rather than replacing it.
+        await filterInput(page).fill('sandbox')
+        await selectAll(page).click()
+        await expect(trayRun(page)).toHaveText('Run 6')
+    })
+
+    // Rule 02. An unscoped "select all" in a list this long is a way to fire every
+    // request at once by accident, so the verb always names what it will add.
+    test('select-all names the number it will add, scoped to the filter', async ({ page }) => {
+        await loadBulk(page)
+        await expect(selectAll(page)).toHaveText('Select all 17')
+
+        await filterInput(page).fill('geo')
+        await expect(selectAll(page)).toHaveText('Select 3 matching')
+        await selectAll(page).click()
+        await expect(selectAll(page)).toHaveText('Deselect 3')
+    })
+
+    // Rule 03. Rules 01 and 02 make it possible to hold picks off-screen; this is the
+    // control that admits it, and the same control shows them.
+    test('the count says what the filter is hiding, and reveals it', async ({ page }) => {
+        await loadBulk(page)
+        await filterInput(page).fill('geo')
+        await selectAll(page).click()
+
+        await filterInput(page).fill('sandbox')
+        await expect(trayCount(page)).toHaveText('3 selected · 3 hidden')
+
+        await trayCount(page).click()
+        await expect(hits(page)).toHaveText('Showing your 3 selected')
+        await expect(shownEntries(page)).toHaveCount(3)
+        await expect(trayCount(page)).toHaveText('3 selected')
+    })
+
+    test('the tray runs every selected pivot, one run each', async ({ page }) => {
+        await loadBulk(page)
+        await filterInput(page).fill('geo')
+        await selectAll(page).click()
+        await trayRun(page).click()
+
+        await expect.poll(async () => (await calls(page)).filter(c => c.endsWith(':fetch')).sort())
+            .toEqual(['bulk-04:fetch', 'bulk-08:fetch', 'bulk-12:fetch'])
+        // Each keeps its own candidate set, so each gets its own pane.
+        await expect.poll(async () => (await harness(page, 'dockTabIds') as string[]).length)
+            .toBeGreaterThan(3)
+    })
+
+    test('the keyboard reaches the list and comes back', async ({ page }) => {
+        await loadBulk(page)
+        await filterInput(page).fill('geo')
+        await filterInput(page).press('ArrowDown')
+        await filterInput(page).press('ArrowDown')
+
+        await expect(tick(page, 'bulk-04')).toBeFocused()
+        await page.keyboard.press('Space')
+        await expect(trayCount(page)).toHaveText('1 selected')
+
+        await page.keyboard.press('Escape')
+        await expect(filterInput(page)).toBeFocused()
+    })
+
+    test('over the caution the tray says what the click costs', async ({ page }) => {
+        await loadBulk(page)
+        await selectAll(page).click()
+        await expect(tray(page).locator('.pvt-pivot-tray-caution'))
+            .toHaveText(/17 pivots is over 8 — this asks every one of them at once\./)
+    })
+
+    // Being sent to one pivot outranks the filter: the badge would otherwise open the
+    // mode and scroll to an entry the filter had taken out of the DOM.
+    test('a badge clears a filter that would hide the pivot it opens', async ({ page }) => {
+        await load(page, { bulk: 12, pivots: [AIL] })
+        await harness(page, 'setNodePotential', 'a', AIL, 2100)
+        await pickOrigin(page, 'a')
+        await enterMode(page)
+        await filterInput(page).fill('geo')
+        await expect(entry(page, AIL)).toBeHidden()
+
+        await nodeEl(page, 'a').locator('.pvt-node-badge').first().click()
+
+        await expect(filterInput(page)).toHaveValue('')
+        await expect(entry(page, AIL)).toBeVisible()
+    })
+
+    // A different origin is a different question; a selection built for the old one
+    // would run against nodes it was never chosen for.
+    test('a new origin drops the selection but keeps the filter', async ({ page }) => {
+        await loadBulk(page)
+        await filterInput(page).fill('geo')
+        await selectAll(page).click()
+        await expect(trayCount(page)).toHaveText('3 selected')
+
+        await pickOrigin(page, 'b')
+        await expect(tray(page)).toBeHidden()
+        await expect(filterInput(page)).toHaveValue('geo')
     })
 })
