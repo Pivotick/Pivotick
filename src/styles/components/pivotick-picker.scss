@@ -165,12 +165,17 @@
     // Floating menu surface, matching the chrome menus (context menu / rails):
     // the shared menu tokens, a 1px border, rounded corners and inner padding so
     // the rounded option highlights sit within the panel.
+    //
+    // The menu is portaled out of the control while open, so that no scrolling
+    // ancestor clips it; `PivotickPicker.reposition` sets left/top/width/max-height
+    // against the control. Portaling also leaves `.pvt-picker` behind, so the font
+    // is restated here.
     &__dropdown {
-        position: absolute;
-        top: calc(100% + 4px);
-        left: 0;
-        right: 0;
+        position: fixed;
+        font-family: var(--pvt-font-family);
 
+        // The control's width is handed over as a border-box width.
+        box-sizing: border-box;
         padding: 4px;
         background: var(--pvt-menu-bg-color);
         border: 1px solid var(--pvt-border-color);
@@ -180,7 +185,8 @@
         overflow-y: auto;
         overflow-x: hidden;
 
-        z-index: 1000;
+        // Above the modal surface (1000): a picker inside a modal opens over it.
+        z-index: 9999;
 
         opacity: 0;
         transform: translateY(-6px);

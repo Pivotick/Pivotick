@@ -30,6 +30,8 @@ export class PivotickPicker {
     private searchWrap!: HTMLDivElement
     private searchInput!: HTMLInputElement
     private focusedIndex = -1
+    private opened = false
+    private anchorWatch = 0
 
     constructor(select: HTMLSelectElement, options: PickerOptions = {}) {
         this.select = select
@@ -122,11 +124,95 @@ export class PivotickPicker {
             this.dropdown.insertBefore(this.searchWrap, this.listContainer)
         }
 
+        // Only the control goes in the page; the menu enters the document while
+        // open, parented elsewhere — see openDropdown().
         this.root.appendChild(container)
-        this.root.appendChild(this.dropdown)
 
         this.renderList()
         this.renderChips()
+    }
+
+    /**
+     * Show the menu, anchored to the control but parented well above it.
+     *
+     * A dropdown drawn inside its own control is clipped by every scrolling or
+     * hiding ancestor between them — a filter sheet, the pivot panel's list, a
+     * modal body — and out of flow it still counts toward those scrollers' height.
+     * Parenting it to the widget root instead (`.pivotick`, keeping the theme and
+     * its scrollbars; `<body>` for a picker built outside one) leaves nothing in
+     * between to clip it, and `position: fixed` ignores the ancestors' `overflow`.
+     */
+    private openDropdown() {
+        if (this.opened) return
+        this.opened = true
+
+        const host = this.root.closest('.pivotick') ?? document.body
+        host.appendChild(this.dropdown)
+
+        // Positioned before `.open` so the fade-in has a frame to start from.
+        this.reposition()
+        this.dropdown.classList.add('open')
+
+        // Capture, so a scroll of any ancestor between control and host is seen too.
+        window.addEventListener('scroll', this.reposition, true)
+        window.addEventListener('resize', this.reposition)
+        this.anchorWatch = requestAnimationFrame(this.watchAnchor)
+    }
+
+    private closeDropdown() {
+        if (!this.opened) return
+        this.opened = false
+
+        this.dropdown.classList.remove('open')
+        this.dropdown.remove()
+
+        window.removeEventListener('scroll', this.reposition, true)
+        window.removeEventListener('resize', this.reposition)
+        cancelAnimationFrame(this.anchorWatch)
+    }
+
+    /**
+     * Close a menu whose control has left the document. The menu no longer hangs
+     * off the control, so a panel rebuilt under it — the filter form after a data
+     * change, the pivot form after new counts — would otherwise leave it floating
+     * over nothing.
+     */
+    private watchAnchor = () => {
+        if (!this.opened) return
+        if (!this.root.isConnected) {
+            this.closeDropdown()
+            return
+        }
+        this.anchorWatch = requestAnimationFrame(this.watchAnchor)
+    }
+
+    /**
+     * Anchor the menu under the control in screen space, as wide as it, flipping
+     * above when the room below cannot hold the list and there is more room above.
+     * Whichever side wins, the list is capped to the room actually there and
+     * scrolls within it.
+     */
+    private reposition = () => {
+        if (!this.opened) return
+
+        const rect = this.root.getBoundingClientRect()
+        const style = this.dropdown.style
+        const gap = 4
+        const margin = 8
+
+        style.left = `${rect.left}px`
+        style.width = `${rect.width}px`
+        style.maxHeight = ''
+
+        const natural = this.dropdown.offsetHeight
+        const below = window.innerHeight - rect.bottom - gap - margin
+        const above = rect.top - gap - margin
+        const flip = natural > below && above > below
+
+        style.maxHeight = `${Math.max(0, Math.min(natural, flip ? above : below))}px`
+        style.top = flip
+            ? `${rect.top - gap - this.dropdown.offsetHeight}px`
+            : `${rect.bottom + gap}px`
     }
 
     private attach() {
@@ -135,37 +221,39 @@ export class PivotickPicker {
 
         control?.addEventListener('click', (e) => {
             if (this.mode === 'single') {
-                this.dropdown.classList.toggle('open')
                 this.focusedIndex = -1
-                if (this.dropdown.classList.contains('open')) {
-                    // Preserve current selection display
-                    if (this.selected.size === 0) {
-                        const placeholder = this.select.getAttribute('placeholder') || 'Select...'
-                        this.input.placeholder = placeholder
-                        this.input.value = ''
-                    }
-                    this.renderList()
-                    // Auto-focus first option for keyboard nav
-                    if (this.focusedIndex === -1) {
-                        this.focusedIndex = 0
-                        this.updateFocusedOption()
-                    }
+                if (this.opened) {
+                    this.closeDropdown()
+                    return
                 }
+                // Preserve current selection display
+                if (this.selected.size === 0) {
+                    const placeholder = this.select.getAttribute('placeholder') || 'Select...'
+                    this.input.placeholder = placeholder
+                    this.input.value = ''
+                }
+                // The list is filled before the menu is placed, so it is measured
+                // at the height it will actually have.
+                this.renderList()
+                this.openDropdown()
+                // Auto-focus first option for keyboard nav
+                this.focusedIndex = 0
+                this.updateFocusedOption()
                 return
             }
             // multi-select: toggle dropdown
             if ((e.target as HTMLElement).tagName !== 'BUTTON' &&
                 !(e.target as HTMLElement).classList.contains('pvt-picker__chip-remove')) {
-                this.dropdown.classList.toggle('open')
                 this.focusedIndex = -1
-                if (this.dropdown.classList.contains('open')) {
-                    this.searchInput.focus()
-                    // Auto-focus first option for keyboard nav
-                    if (this.focusedIndex === -1) {
-                        this.focusedIndex = 0
-                        this.updateFocusedOption()
-                    }
+                if (this.opened) {
+                    this.closeDropdown()
+                    return
                 }
+                // Opened first: the search box cannot take focus while detached.
+                this.openDropdown()
+                this.searchInput.focus()
+                this.focusedIndex = 0
+                this.updateFocusedOption()
             }
         })
 
@@ -180,7 +268,7 @@ export class PivotickPicker {
 
             this.searchInput.addEventListener('focus', (e) => {
                 e.stopPropagation()
-                this.dropdown.classList.add('open')
+                this.openDropdown()
             })
 
             this.searchInput.addEventListener('keydown', onKeyDown)
@@ -202,10 +290,12 @@ export class PivotickPicker {
             })
         }
 
-        // close on outside click
+        // close on outside click — the menu is no longer inside the control, so it
+        // has to be excluded by hand or clicking an option would close first
         document.addEventListener('pointerdown', (e) => {
-            if (!this.root.contains(e.target as Node)) {
-                this.dropdown.classList.remove('open')
+            const target = e.target as Node
+            if (!this.root.contains(target) && !this.dropdown.contains(target)) {
+                this.closeDropdown()
             }
         })
 
@@ -218,7 +308,7 @@ export class PivotickPicker {
             this.selected.clear()
             this.syncToSelect()
             this.syncFromSelect()
-            this.dropdown.classList.remove('open')
+            this.closeDropdown()
         })
 
         // observe DOM changes on original select to auto-sync
@@ -276,7 +366,7 @@ export class PivotickPicker {
                     this.input.value = selectedOpt ? selectedOpt.label : ''
                     this.input.placeholder = ''
                     this.focusedIndex = -1
-                    this.dropdown.classList.remove('open')
+                    this.closeDropdown()
                     this.syncToSelect()
                     this.syncFromSelect()
                     return
@@ -295,10 +385,14 @@ export class PivotickPicker {
 
             this.listContainer.appendChild(item)
         })
+
+        // The list is what gives the menu its height, so a filtered or re-rendered
+        // one has to be placed again.
+        this.reposition()
     }
 
     private handleKeyDown(e: KeyboardEvent) {
-        if (!this.dropdown.classList.contains('open')) return
+        if (!this.opened) return
 
         const filtered = this.searchable
             ? this.options.filter((o) =>
@@ -355,7 +449,7 @@ export class PivotickPicker {
                         // In single-select, if already selected just close
                         if (this.mode === 'single' && this.selected.has(opt.value)) {
                             this.focusedIndex = -1
-                            this.dropdown.classList.remove('open')
+                            this.closeDropdown()
                             return
                         }
                         if (this.mode === 'single') {
@@ -365,7 +459,7 @@ export class PivotickPicker {
                             this.input.value = selectedOpt ? selectedOpt.label : ''
                             this.input.placeholder = ''
                             this.focusedIndex = -1
-                            this.dropdown.classList.remove('open')
+                            this.closeDropdown()
                             this.syncToSelect()
                             this.syncFromSelect()
                         } else {
@@ -384,7 +478,7 @@ export class PivotickPicker {
                 break
             case 'Escape':
                 e.preventDefault()
-                this.dropdown.classList.remove('open')
+                this.closeDropdown()
                 break
         }
     }
@@ -506,7 +600,7 @@ export class PivotickPicker {
         this.syncToSelect()
         this.syncFromSelect()
         this.renderList(this.searchInput.value)
-        this.dropdown.classList.remove('open')
+        this.closeDropdown()
     }
 
     /**

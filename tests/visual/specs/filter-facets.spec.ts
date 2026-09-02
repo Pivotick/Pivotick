@@ -303,7 +303,8 @@ test.describe('the attribute form applies itself', () => {
 
         const tagField = panel.locator('.pvt-form-element').filter({ hasText: 'Tag' }).first()
         await tagField.locator('.pvt-picker__control').click()
-        await tagField.locator('.pvt-picker__option', { hasText: 'malware' }).first().click()
+        // The open menu is portaled out of the field, so it is addressed on its own.
+        await page.locator('.pvt-picker__dropdown .pvt-picker__option', { hasText: 'malware' }).first().click()
 
         // a1 is the only node tagged `malware`.
         await expectVisibleSoon(page, ['a1'])

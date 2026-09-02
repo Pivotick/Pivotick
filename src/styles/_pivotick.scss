@@ -710,13 +710,6 @@ dl.pvt-property-list {
     box-shadow: none;
 }
 
-// An open picker dropdown sits in normal flow inside the prompt modal, so it grows
-// the (otherwise short) body to fit its options instead of overflowing it and being
-// clipped into a one-row scroll. Closed, it stays out of flow — no reserved gap.
-.pvt-prompt-modal-body .pvt-picker__dropdown.open {
-    position: static;
-}
-
 .pvt-confirm-modal-body .pvt-confirm-modal-text {
     margin: 0;
     color: var(--pvt-text-color-primary);

@@ -681,26 +681,6 @@
             padding: 0;
             font-size: 12px;
         }
-
-        // A picker's dropdown opens *into* this column rather than over it. Overlaid,
-        // it is clipped by the list's own scroller — and on a panel that fits exactly
-        // there is no scrolling left to reach what got cut. In the flow it pushes the
-        // list down instead, which the scroller can always follow.
-        //
-        // Closed, it goes out of flow entirely: it is transparent but still laid out,
-        // and an absolutely positioned descendant still counts toward a scroll
-        // container's height, so three invisible options would add a scrollbar to a
-        // list that fits. The cost is its fade-in, from behind a closed control.
-        .pvt-picker__dropdown {
-            &:not(.open) {
-                display: none;
-            }
-
-            &.open {
-                position: static;
-                margin-top: 4px;
-            }
-        }
     }
 }
 

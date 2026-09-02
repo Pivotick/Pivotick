@@ -56,23 +56,25 @@ async function expectShadowShown(page: Page): Promise<void> {
 
 /**
  * Assert the open label-picker dropdown shows every option at once: each row's box
- * lies fully within the modal body's visible bounds, not clipped past its bottom
- * into a one-row scroll. Regression guard for the prompt-modal dropdown-overflow fix
- * (a short body used to clip the absolutely-positioned dropdown; it now grows to fit).
+ * lies fully on screen and the menu itself has nothing hidden behind a scroll.
+ * Regression guard for the short modal body that used to clip the dropdown into a
+ * one-row scroll — the menu now floats over the page instead of inside the body.
  */
 async function expectAllOptionsVisible(page: Page): Promise<void> {
-    const bodyBox = await page.locator('.pvt-modal__body').boundingBox()
-    const options = page.locator('.pvt-edge-prompt-modal-body .pvt-picker__option')
+    const viewport = page.viewportSize()!
+    const menu = page.locator('.pvt-picker__dropdown')
+    const options = menu.locator('.pvt-picker__option')
     const count = await options.count()
     expect(count, 'a real option list, so "all visible" is meaningful').toBeGreaterThan(1)
+
+    const scrolled = await menu.evaluate(el => el.scrollHeight - el.clientHeight)
+    expect(scrolled, 'the whole list fits the menu, with no options behind a scroll').toBeLessThanOrEqual(1)
+
     for (let i = 0; i < count; i++) {
         const box = await options.nth(i).boundingBox()
         expect(box, `option ${i} has a layout box`).not.toBeNull()
-        expect(box!.y, `option ${i} top not clipped above the body`).toBeGreaterThanOrEqual(bodyBox!.y - 1)
-        expect(
-            box!.y + box!.height,
-            `option ${i} bottom not clipped below the body`
-        ).toBeLessThanOrEqual(bodyBox!.y + bodyBox!.height + 1)
+        expect(box!.y, `option ${i} top on screen`).toBeGreaterThanOrEqual(-1)
+        expect(box!.y + box!.height, `option ${i} bottom on screen`).toBeLessThanOrEqual(viewport.height + 1)
     }
 }
 
@@ -441,11 +443,12 @@ test.describe('edge creation — label prompt chosen per gesture origin', () => 
         await clickConnect(page, 'a', 'b')
 
         // The dropdown is the custom PivotickPicker (.pvt-picker) inside the modal:
-        // open the control, then click the option row.
+        // open the control, then click the option row. The menu itself is portaled
+        // out of the modal, so the rows are addressed through it rather than the body.
         await page.locator('.pvt-edge-prompt-modal-body .pvt-picker__control').click()
         // The whole predefined-label list is readable at once — not clipped into a scroll.
         await expectAllOptionsVisible(page)
-        await page.locator('.pvt-edge-prompt-modal-body .pvt-picker__option', { hasText: 'manages' }).click()
+        await page.locator('.pvt-picker__dropdown .pvt-picker__option', { hasText: 'manages' }).click()
         await page.locator('.pvt-modal__footer button', { hasText: 'Add' }).click()
 
         await expect.poll(() => edgeCount(page)).toBe(1)
