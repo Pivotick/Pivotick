@@ -614,6 +614,12 @@
     &.pvt-pivot-picked {
         background-color: color-mix(in srgb, var(--pvt-theme-primary) 10%, transparent);
         border: none;
+        // A bar down the leading edge, so a run of picked rows reads as one block from
+        // the side rather than as a tint you have to compare against its neighbours.
+        // It shares the box-shadow with the row's own hairline, which stays.
+        box-shadow:
+            inset 2px 0 0 var(--pvt-theme-primary),
+            inset 0 -1px 0 color-mix(in srgb, var(--pvt-chrome-border) 60%, transparent);
 
         .pvt-pivot-entry-label {
             font-weight: 600;
@@ -691,10 +697,16 @@
         color: var(--pvt-text-color-6);
     }
 
-    &:hover,
+    &:hover:not(:disabled),
     &[aria-pressed='true'] {
         border-color: var(--pvt-chrome-border);
         background-color: var(--pvt-ui-bg);
+    }
+
+    // Empty, it is a label holding the tray's place rather than a way in.
+    &:disabled {
+        cursor: default;
+        color: var(--pvt-text-color-3);
     }
 }
 

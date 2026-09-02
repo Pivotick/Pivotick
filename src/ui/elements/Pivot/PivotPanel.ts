@@ -321,25 +321,35 @@ export class PivotPanel {
         // Empty selection has nothing to reveal; staying in the mode would strand the
         // list on a set that can never repopulate.
         if (!picked) this.reveal = false
-        this.tray.hidden = picked === 0
-        if (!picked) return
+
+        // The tray holds its place whether or not anything is in it. Appearing on the
+        // first tick would take 41px off the scroller, and the list would jump under
+        // the pointer at the exact moment the analyst is aiming at the next row.
+        this.tray.hidden = false
 
         const shownIds = new Set(shownDefs.map(def => def.id))
         const hidden = [...this.selected].filter(id => !shownIds.has(id)).length
 
         this.trayCount.replaceChildren()
-        this.trayCount.append(strong(fmt(picked)), document.createTextNode(' selected'))
-        if (hidden) {
-            const away = el('span', 'pvt-pivot-tray-hidden')
-            away.textContent = `${fmt(hidden)} hidden`
-            this.trayCount.append(document.createTextNode(' · '), away)
+        if (picked) {
+            this.trayCount.append(strong(fmt(picked)), document.createTextNode(' selected'))
+            if (hidden) {
+                const away = el('span', 'pvt-pivot-tray-hidden')
+                away.textContent = `${fmt(hidden)} hidden`
+                this.trayCount.append(document.createTextNode(' · '), away)
+            }
+        } else {
+            this.trayCount.textContent = 'Nothing selected'
         }
+        this.trayCount.disabled = !picked
         this.trayCount.setAttribute('aria-pressed', String(this.reveal))
-        this.trayCount.title = this.reveal
-            ? 'Back to the filtered list'
+        this.trayCount.title = !picked ? ''
+            : this.reveal ? 'Back to the filtered list'
             : 'Show only what is selected'
 
-        this.trayRun.textContent = `Run ${fmt(picked)}`
+        this.trayClear.hidden = !picked
+        this.trayRun.disabled = !picked
+        this.trayRun.textContent = picked ? `Run ${fmt(picked)}` : 'Run'
         const over = picked > BATCH_CAUTION
         this.tray.classList.toggle('pvt-pivot-tray-over', over)
         this.trayCaution.hidden = !over

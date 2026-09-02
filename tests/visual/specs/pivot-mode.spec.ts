@@ -403,7 +403,8 @@ test.describe('pivot mode', () => {
     const selectAll = (page: Page): Locator => panel(page).locator('.pvt-pivot-selectall')
     const tray = (page: Page): Locator => panel(page).locator('.pvt-pivot-tray')
     const trayCount = (page: Page): Locator => panel(page).locator('.pvt-pivot-tray-count')
-    const trayRun = (page: Page): Locator => tray(page).locator('button', { hasText: /^Run / })
+    // `/^Run/` without the space: at rest the button is just "Run".
+    const trayRun = (page: Page): Locator => tray(page).locator('button', { hasText: /^Run/ })
     const shownEntries = (page: Page): Locator => panel(page).locator('.pvt-pivot-entry')
     const tick = (page: Page, id: string): Locator => entry(page, id).locator('.pvt-pivot-check input')
 
@@ -445,15 +446,21 @@ test.describe('pivot mode', () => {
         await entry(page, 'bulk-04').locator('.pvt-pivot-entry-label').click()
         await expect(trayCount(page)).toHaveText('1 selected')
         await expect(entry(page, 'bulk-04')).toHaveClass(/pvt-pivot-picked/)
+        // The leading bar, read numerically: the suite's pixel threshold cannot see a
+        // colour-only change, and this one shares its box-shadow with the row hairline.
+        const shadow = await entry(page, 'bulk-04')
+            .evaluate(el => getComputedStyle(el).boxShadow)
+        expect(shadow).toContain('2px 0px 0px 0px inset')
+        expect(shadow).toContain('0px -1px 0px 0px inset')
 
         await entry(page, 'bulk-04').locator('.pvt-pivot-entry-label').click()
-        await expect(tray(page)).toBeHidden()
+        await expect(trayCount(page)).toHaveText('Nothing selected')
 
         // Run belongs to the entry, so it runs rather than picking.
         await button(entry(page, 'bulk-04'), 'Run').click()
         await expect.poll(async () => (await calls(page)).filter(c => c === 'bulk-04:fetch').length)
             .toBe(1)
-        await expect(tray(page)).toBeHidden()
+        await expect(trayCount(page)).toHaveText('Nothing selected')
     })
 
     // A card around one line is more ink than the line; fifty of them is a column of
@@ -473,8 +480,9 @@ test.describe('pivot mode', () => {
     test('a long one grows a filter, tick boxes and a tray', async ({ page }) => {
         await loadBulk(page)
         await expect(tick(page, 'bulk-01')).toBeVisible()
-        // The tray stays away until something is actually selected.
-        await expect(tray(page)).toBeHidden()
+        // The tray is there from the start, holding its place and saying it is empty.
+        await expect(trayCount(page)).toHaveText('Nothing selected')
+        await expect(trayRun(page)).toBeDisabled()
 
         await filterInput(page).fill('whois')
         await expect(hits(page)).toHaveText('3 match')
@@ -526,6 +534,28 @@ test.describe('pivot mode', () => {
         await expect(hits(page)).toHaveText('Showing your 3 selected')
         await expect(shownEntries(page)).toHaveCount(3)
         await expect(trayCount(page)).toHaveText('3 selected')
+    })
+
+    // The tray appearing on the first tick would take its height off the scroller, and
+    // the list would jump under the pointer just as the analyst aims at the next row.
+    test('picking a row moves nothing', async ({ page }) => {
+        await loadBulk(page)
+        const geometry = () => panel(page).evaluate(el => {
+            const box = (sel: string) => {
+                const node = el.querySelector(sel) as HTMLElement | null
+                return node ? [node.offsetWidth, node.offsetHeight] : null
+            }
+            return JSON.stringify({
+                scroll: box('.pvt-pivot-scroll'),
+                first: box('.pvt-pivot-entry'),
+                tray: box('.pvt-pivot-tray'),
+            })
+        })
+
+        const before = await geometry()
+        await entry(page, 'bulk-01').locator('.pvt-pivot-entry-label').click()
+        await expect(entry(page, 'bulk-01')).toHaveClass(/pvt-pivot-picked/)
+        expect(await geometry()).toBe(before)
     })
 
     test('the tray runs every selected pivot, one run each', async ({ page }) => {
@@ -587,7 +617,7 @@ test.describe('pivot mode', () => {
         await expect(trayCount(page)).toHaveText('3 selected')
 
         await pickOrigin(page, 'b')
-        await expect(tray(page)).toBeHidden()
+        await expect(trayCount(page)).toHaveText('Nothing selected')
         await expect(filterInput(page)).toHaveValue('geo')
     })
 })
