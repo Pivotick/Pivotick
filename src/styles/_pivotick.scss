@@ -331,6 +331,57 @@ dl.pvt-property-list {
             font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
         }
 
+        // A `checkboxes` field: every option and its count on screen at once. The
+        // box out-specifies the ambient `input` rule above, which would otherwise
+        // size it like a text field.
+        .pvt-checkbox-list {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+
+            input[type="checkbox"] {
+                flex: none;
+                width: 13px;
+                height: 13px;
+                min-width: 0;
+                margin: 0;
+                padding: 0;
+                accent-color: var(--pvt-theme-primary);
+                cursor: pointer;
+            }
+        }
+
+        .pvt-checkbox-option {
+            display: flex;
+            align-items: center;
+            // The ambient `label` rule shrink-wraps to its text; these rows have a
+            // count column to hold against their right-hand edge.
+            align-self: stretch;
+            gap: 7px;
+            margin: 0;
+            font-size: 12px;
+            font-weight: 400;
+            color: var(--pvt-text-color-6);
+            cursor: pointer;
+        }
+
+        .pvt-checkbox-label {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        // The numbers line up down the right-hand edge, so the labels stay a
+        // scannable list of names.
+        .pvt-checkbox-count {
+            margin-left: auto;
+            padding-left: 8px;
+            font-size: 11px;
+            font-variant-numeric: tabular-nums;
+            color: var(--pvt-text-color-4);
+        }
+
         // Field-level validation (FormFactory.setFieldError) — e.g. an
         // uncompilable regex facet pattern.
         .pvt-invalid {

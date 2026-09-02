@@ -4,6 +4,12 @@ import { PivotickPicker } from './PivotickPicker'
 export type FieldType =
     | 'select'
     | 'multiselect'
+    /**
+     * The same many-of-N choice as `multiselect`, drawn as a list of checkboxes
+     * instead of a picker: every option and its {@link FieldOption.count} are on
+     * screen at once, and choosing one costs no menu.
+     */
+    | 'checkboxes'
     | 'checkbox'
     | 'text'
     /** A text field holding a regular-expression pattern (see `UI.filter.facets`). */
@@ -13,6 +19,8 @@ export type FieldType =
 export interface FieldOption {
     label: string
     value: string
+    /** How many rows this option stands for, shown beside it by `checkboxes`. */
+    count?: number
 }
 
 export interface FieldConfig {
@@ -85,6 +93,12 @@ export class FormFactory {
 
                     break }
 
+                case 'checkboxes':
+                    values[key] = Array.from(
+                        el.querySelectorAll<HTMLInputElement>('input[type="checkbox"]:checked')
+                    ).map(input => input.value)
+                    break
+
                 case 'checkbox':
                     values[key] = (el as HTMLInputElement).checked
                     break
@@ -140,6 +154,15 @@ export class FormFactory {
                     break
                 }
 
+                case 'checkboxes': {
+                    const wanted = new Set(
+                        (Array.isArray(value) ? value : value != null ? [value] : []).map(String)
+                    )
+                    el.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')
+                        .forEach(input => { input.checked = wanted.has(input.value) })
+                    break
+                }
+
                 case 'checkbox': {
                     const input = el as HTMLInputElement
                     input.checked = value === true
@@ -178,6 +201,10 @@ export class FormFactory {
 
             case 'multiselect':
                 wrapper.appendChild(this.createMultiSelect(field))
+                break
+
+            case 'checkboxes':
+                wrapper.appendChild(this.createCheckboxes(field))
                 break
 
             case 'checkbox':
@@ -296,6 +323,48 @@ export class FormFactory {
         })
 
         return select
+    }
+
+    /**
+     * A many-of-N choice with every option on screen. The count rides in a column of
+     * its own rather than in the label, so the options stay scannable as a list of
+     * names and the numbers line up down the right-hand edge.
+     */
+    private static createCheckboxes(field: FieldConfig): HTMLElement {
+        const list = document.createElement('div')
+        list.className = 'pvt-checkbox-list'
+        this.baseAttrs(list, field)
+
+        const chosen = new Set(
+            (Array.isArray(field.defaultValue) ? field.defaultValue : []).map(String)
+        )
+
+        field.options?.forEach(option => {
+            const row = document.createElement('label')
+            row.className = 'pvt-checkbox-option'
+
+            const input = document.createElement('input')
+            input.type = 'checkbox'
+            input.value = option.value
+            input.checked = chosen.has(option.value)
+
+            const label = document.createElement('span')
+            label.className = 'pvt-checkbox-label'
+            label.textContent = option.label
+
+            row.append(input, label)
+
+            if (option.count !== undefined) {
+                const count = document.createElement('span')
+                count.className = 'pvt-checkbox-count'
+                count.textContent = option.count.toLocaleString()
+                row.appendChild(count)
+            }
+
+            list.appendChild(row)
+        })
+
+        return list
     }
 
     private static createCheckbox(field: FieldConfig): HTMLInputElement {
