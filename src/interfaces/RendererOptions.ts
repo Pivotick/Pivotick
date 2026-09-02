@@ -161,7 +161,7 @@ export interface GraphRendererOptions {
      * }
      * ```
      */
-    nodeStyleMap?: Record<string, NodeStyle>
+    nodeStyleMap?: Record<string, Partial<NodeStyle>>
     /**
      * Function to access the kind of an edge — the dimension {@link edgeStyleMap}
      * keys on, and the one an `edge` legend section and edge filter facets derive
