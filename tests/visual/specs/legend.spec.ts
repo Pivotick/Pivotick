@@ -405,7 +405,11 @@ test.describe('canvas legend', () => {
         test.use({ viewport: { width: 1024, height: 620 } })
 
         test('shrinks to the room left beside the mode rail instead of growing into it', async ({ page }) => {
-            await harness(page, 'loadWithLegend', 'mispLike', {}, { UI: { mode: 'full', sidebar: { collapsed: false } } })
+            // The corner is named: `full` mode defaults to bottom-right, and this is
+            // the left column's behaviour — what a consumer gets by asking for it.
+            await harness(page, 'loadWithLegend', 'mispLike', {}, {
+                UI: { mode: 'full', sidebar: { collapsed: false }, legend: { position: 'bottom-left' } },
+            })
             await expect(page.locator('.pvt-legend-entry')).toHaveCount(4)
 
             // Enough categories to want far more height than the column has: the row

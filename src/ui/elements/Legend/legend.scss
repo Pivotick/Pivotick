@@ -30,7 +30,7 @@
     }
 
     &[data-position='bottom-left'] {
-        --pvt-legend-bottom: 14px;
+        --pvt-legend-bottom: calc(14px + var(--pvt-minimap-clearance-bottom-left, 0px));
         // What this column has left once the left-edge chrome has taken its share: the
         // 28px is its top offset plus the gap kept below it. Both the rail and the tool
         // panel start at that offset and grow down, so the taller of the two is what the
@@ -50,9 +50,19 @@
         max-height: max(var(--pvt-legend-floor), var(--pvt-legend-room));
     }
 
+    // Sharing a corner with the minimap: stack on it rather than cover it. The minimap
+    // publishes the room it needs in the corner it holds (`Minimap.publishFootprint`),
+    // so this follows it collapsing, resizing and unmounting for free — and falls back
+    // to the bare corner inset when that corner has no minimap in it.
     &[data-position='bottom-right'] {
-        bottom: 14px;
+        bottom: calc(14px + var(--pvt-minimap-clearance-bottom-right, 0px));
         right: 14px;
+        // The stack has to fit under the header too, so a long list scrolls rather
+        // than growing up past it.
+        max-height: max(var(--pvt-legend-floor), calc(
+            100% - var(--pvt-mainheader-height) - 28px
+                - var(--pvt-minimap-clearance-bottom-right, 0px)
+        ));
     }
 
     // Clear of the mode rail (54px at left:14px), lining up with the tool panel and
@@ -63,7 +73,7 @@
     }
 
     &[data-position='top-right'] {
-        top: calc(var(--pvt-mainheader-height) + 14px);
+        top: calc(var(--pvt-mainheader-height) + 14px + var(--pvt-minimap-clearance-top-right, 0px));
         right: 14px;
     }
 }
@@ -74,7 +84,7 @@
 // instead of covering it. Lifting it also spends 30px of the room above, which the
 // `max-height` above subtracts on its own.
 .pvt-layout.mode-full .pvt-legend[data-position='bottom-left'] {
-    --pvt-legend-bottom: 44px;
+    --pvt-legend-bottom: calc(44px + var(--pvt-minimap-clearance-bottom-left, 0px));
 }
 
 // Cut a capped legend on a row boundary plus the half row that says "there is more

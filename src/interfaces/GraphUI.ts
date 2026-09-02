@@ -380,7 +380,12 @@ export interface LegendSection {
  * ```
  */
 export interface LegendOptions extends LegendSection {
-    /** @default 'bottom-left' */
+    /**
+     * Which corner it docks in. In `full` mode the default is the right column,
+     * stacked above the minimap — the left one belongs to the mode rail and its
+     * panels. Other modes keep the bottom-left corner.
+     * @default 'bottom-right' in `full` mode, `'bottom-left'` otherwise
+     */
     position?: LegendPosition
 }
 
@@ -413,7 +418,10 @@ export interface LegendOptions extends LegendSection {
 export interface LegendGroupOptions {
     /** @default true when the block is present */
     enabled?: boolean
-    /** Which corner the whole card docks in. @default 'bottom-left' */
+    /**
+     * Which corner the whole card docks in.
+     * @default 'bottom-right' in `full` mode, `'bottom-left'` otherwise
+     */
     position?: LegendPosition
     /** The sections, rendered top to bottom in declaration order. */
     sections: LegendSection[]

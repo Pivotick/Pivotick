@@ -214,6 +214,19 @@ export class Legend extends UIComponent {
         })
     }
 
+    /**
+     * Which corner the legend takes when the consumer hasn't named one.
+     *
+     * `full` mode docks it bottom-right, stacked above the minimap it also mounts: the
+     * left column belongs to the mode rail and its panels, and a rail mode whose panel
+     * is a workspace rather than a settings sheet reaches far enough down it to squeeze
+     * the legend to a single row. The other modes keep the bottom-left corner — they
+     * have no minimap to stack on, and much shorter panels beside them.
+     */
+    private defaultPosition(): LegendPosition {
+        return this.uiManager.getOptions().mode === 'full' ? 'bottom-right' : 'bottom-left'
+    }
+
     private rebuild() {
         if (!this.panel) return
         const config = this.config
@@ -224,7 +237,7 @@ export class Legend extends UIComponent {
 
         this.rebuilding = true
         try {
-            this.slot?.setAttribute('data-position', config.position ?? 'bottom-left')
+            this.slot?.setAttribute('data-position', config.position ?? this.defaultPosition())
             this.syncViews(config)
 
             // A section with nothing to list (a key no node carries, an empty

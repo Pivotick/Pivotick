@@ -12,6 +12,11 @@ const DETAIL_NODE_LIMIT = 1500
 /** …and edges are dropped past this many, well before they turn into a grey wash. */
 const DETAIL_EDGE_LIMIT = 4000
 
+/** The corners a minimap can dock in, for clearing the footprint it published. */
+const MINIMAP_CORNERS = ['bottom-right', 'bottom-left', 'top-right', 'top-left'] as const
+/** The gap kept between the minimap and anything stacking on it — the canvas inset. */
+const CORNER_GAP = 14
+
 /** Notes are blocks rather than dots, so the fill is translucent to keep nodes readable. */
 const NOTE_FILL_ALPHA = 0.45
 /** A note with no colour of its own — the Note default, so it matches the canvas. */
@@ -212,6 +217,9 @@ export class Minimap extends UIComponent {
         this.paintFrame = null
         this.observer?.disconnect()
         this.observer = undefined
+        // Give the corner back before the root goes, or whatever was stacking above it
+        // keeps clearing a minimap that is no longer there.
+        this.clearFootprint(this.root?.closest('.pvt-layout') as HTMLElement | null)
         this.root?.remove()
         this.root = undefined
         this.toggle = undefined
@@ -283,6 +291,31 @@ export class Minimap extends UIComponent {
         return canvas.clientWidth >= width * ratio && canvas.clientHeight >= height * ratio
     }
 
+    /**
+     * Publish how much room the minimap needs in the corner it holds, as
+     * `--pvt-minimap-clearance-<corner>` on the layout root — its height plus the gap
+     * anything stacking on it should keep. The legend reads it (see `legend.scss`) so
+     * the two share a corner instead of covering each other.
+     *
+     * Only the held corner is set, so a consumer of any *other* corner falls back to
+     * the variable's `0px` default and is unaffected.
+     */
+    private publishFootprint(): void {
+        this.clearFootprint(this.root?.closest('.pvt-layout') as HTMLElement | null)
+        const layout = this.root?.closest('.pvt-layout') as HTMLElement | null
+        if (!layout || !this.root) return
+        const height = this.root.getBoundingClientRect().height
+        if (!height) return
+        const corner = this.root.dataset.position ?? 'bottom-right'
+        layout.style.setProperty(`--pvt-minimap-clearance-${corner}`, `${height + CORNER_GAP}px`)
+    }
+
+    private clearFootprint(layout: HTMLElement | null): void {
+        for (const corner of MINIMAP_CORNERS) {
+            layout?.style.removeProperty(`--pvt-minimap-clearance-${corner}`)
+        }
+    }
+
     /** Reflect the collapsed state on the DOM: the CSS does the rest. */
     private applyCollapsed() {
         if (!this.root || !this.toggle) return
@@ -293,6 +326,7 @@ export class Minimap extends UIComponent {
             this.root.style.width = ''
             this.root.style.height = ''
         }
+        this.publishFootprint()
 
         const label = this.collapsed ? 'Show the minimap' : 'Collapse the minimap'
         this.toggle.title = label
@@ -332,6 +366,7 @@ export class Minimap extends UIComponent {
         const cssHeight = this.surface.clientHeight || height
         this.surface.width = Math.round(cssWidth * this.dpr)
         this.surface.height = Math.round(cssHeight * this.dpr)
+        this.publishFootprint()
     }
 
     /** Nothing to do while we're collapsed, display:none, detached or zero-sized. */

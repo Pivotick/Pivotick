@@ -320,7 +320,7 @@ below minus `position`, and `enabled` / `position` describe the whole card.
 | `title` | `string` | prettified `key`, else `'Legend'` | Header text, used verbatim (so it can be translated). |
 | `key` | `string` | — | Data key the rows are derived from, and the default predicate for declared entries. Omit both this and `entries` for the [automatic](#on-by-default) legend. |
 | `entries` | `LegendEntry[] \| (graph) => LegendEntry[]` | — | Declared rows; a function is re-resolved on data change. |
-| `position` | `'bottom-left' \| 'bottom-right' \| 'top-left' \| 'top-right'` | `'bottom-left'` | Which canvas corner it docks in. Belongs to the card, so it is **not** a section option. `'top-left'` shares its anchor with the contextual tool panel, which covers the legend while open. |
+| `position` | `'bottom-left' \| 'bottom-right' \| 'top-left' \| 'top-right'` | `'bottom-right'` in `full` mode, else `'bottom-left'` | Which canvas corner it docks in. Belongs to the card, so it is **not** a section option. `'top-left'` shares its anchor with the contextual tool panel, which covers the legend while open. |
 | `collapsible` | `boolean` | `true` | Show the chevron that folds it to its title. |
 | `collapsed` | `boolean` | `false` | Start folded. |
 | `showCounts` | `boolean` | `true` | Show the per-category node count (over the whole graph, so it doesn't flicker as you toggle). |
@@ -330,8 +330,15 @@ below minus `position`, and `enabled` / `position` describe the whole card.
 A `LegendEntry` is `{ id, label?, color, predicate?, order? }`. `id` is the row's
 identity, the value written to the filter, and the label's fallback.
 
-`maxVisibleEntries` is one ceiling on the legend's height; the canvas is the other. A
-`bottom-left` legend shares its column with the mode rail, so on a short viewport it
+`maxVisibleEntries` is one ceiling on the legend's height; the canvas is the other.
+
+In `full` mode the legend docks bottom-right by default, stacking above the minimap
+that mode also mounts: the left column belongs to the mode rail and its panels, and a
+rail mode whose panel is a workspace rather than a settings sheet reaches far enough
+down it to leave the legend a single row. Where a minimap shares the chosen corner the
+legend sits on top of it, following it as it collapses, resizes or unmounts.
+
+A `bottom-left` legend shares its column with the mode rail, so on a short viewport it
 shrinks to the room between them and scrolls at whatever row that lands on, rather
 than growing up under the rail. It never moves corner on its own.
 
