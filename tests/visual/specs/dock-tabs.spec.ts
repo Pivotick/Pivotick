@@ -363,3 +363,78 @@ test.describe('a pane contributed by a plugin', () => {
         await expect(page.locator('.pvt-plugin-pane-row', { hasText: 'Early' })).toHaveCount(1)
     })
 })
+
+// ── the strip's own furniture ────────────────────────────────────────────────────
+test.describe('the tab strip', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoHarness(page)
+    })
+
+    const sep = (page: Page) => page.locator('.pvt-dock-sep')
+    const ICON = '<svg viewBox="0 0 24 24"><path d="M12 2l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"/></svg>'
+
+    // Several tabs that are the same *kind* of pane read as one list of strangers
+    // without a glyph saying where each came from.
+    test('a tab draws the icon it declared, and one without draws none', async ({ page }) => {
+        await openDock(page)
+        await harness(page, 'addTestDockTab', 'plain', 'Plain')
+        await harness(page, 'addTestDockTab', 'marked', 'Marked', undefined, ICON)
+
+        const icons = (id: string) =>
+            page.locator(`.pvt-dock-tab[data-tab="${id}"] .pvt-dock-tab-icon svg`)
+        await expect(icons('marked')).toHaveCount(1)
+        await expect(icons('plain')).toHaveCount(0)
+        await expect(icons('table')).toHaveCount(0)
+        // The glyph is decoration on a button that already says what it is.
+        await expect(page.locator('.pvt-dock-tab[data-tab="marked"]')).toHaveText('Marked')
+    })
+
+    // It divides two things, so it is drawn only with something on both sides.
+    test('the separator needs a strip on one side and controls on the other', async ({ page }) => {
+        // Table alone: one tab, so no strip at all.
+        await openDock(page)
+        await expect(paneTabs(page)).toHaveCount(0)
+        await expect(sep(page)).toBeHidden()
+
+        // Two tabs and the table's own controls.
+        await harness(page, 'addTestDockTab', 'second', 'Second')
+        await expect(paneTabs(page)).toHaveCount(2)
+        await expect(sep(page)).toBeVisible()
+    })
+
+    // Closing one review pane should leave you in the next one, not back at the table.
+    test('a closed tab hands over to the last one open, not the first', async ({ page }) => {
+        await openDock(page)
+        await harness(page, 'addTestDockTab', 'one', 'One')
+        await harness(page, 'addTestDockTab', 'two', 'Two')
+        await harness(page, 'addTestDockTab', 'three', 'Three')
+
+        // Each in turn, which is what a run of fetches does: every pane comes to the
+        // front as it arrives.
+        for (const id of ['one', 'two', 'three']) {
+            await page.locator(`.pvt-dock-tab[data-tab="${id}"]`).click()
+        }
+        expect(await harness(page, 'activeDockTabId')).toBe('three')
+
+        // Closing walks back down the panes rather than jumping to the table.
+        await harness(page, 'removeTestDockTab', 'three')
+        expect(await harness(page, 'activeDockTabId')).toBe('two')
+
+        await harness(page, 'removeTestDockTab', 'two')
+        expect(await harness(page, 'activeDockTabId')).toBe('one')
+
+        await harness(page, 'removeTestDockTab', 'one')
+        expect(await harness(page, 'activeDockTabId')).toBe('table')
+    })
+
+    // A tab nobody ever opened is not somewhere to be sent back to.
+    test('the hand-over skips panes that were never on show', async ({ page }) => {
+        await openDock(page)
+        await harness(page, 'addTestDockTab', 'unseen', 'Unseen')
+        await harness(page, 'addTestDockTab', 'seen', 'Seen')
+        await page.locator('.pvt-dock-tab[data-tab="seen"]').click()
+
+        await harness(page, 'removeTestDockTab', 'seen')
+        expect(await harness(page, 'activeDockTabId')).toBe('table')
+    })
+})

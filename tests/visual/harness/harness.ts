@@ -1211,7 +1211,7 @@ export interface HarnessApi {
      * Register a bare dock tab through the public API, the way a consumer would.
      * Returns its id; `removeTestDockTab` disposes it.
      */
-    addTestDockTab(id: string, label: string, order?: number): string
+    addTestDockTab(id: string, label: string, order?: number, icon?: string): string
     removeTestDockTab(id: string): void
 
     /* ---------- rail modes ---------- */
@@ -2838,11 +2838,12 @@ class Harness implements HarnessApi {
         return this.g.UIManager.dock?.getActiveTabId() ?? null
     }
 
-    addTestDockTab(id: string, label: string, order?: number): string {
+    addTestDockTab(id: string, label: string, order?: number, icon?: string): string {
         this.dockTabDisposers.set(id, this.g.UIManager.addDockTab({
             id,
             label,
             order,
+            icon,
             render: () => {
                 const body = document.createElement('div')
                 body.className = 'pvt-test-dock-body'

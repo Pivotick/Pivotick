@@ -952,6 +952,15 @@ export interface DockTab {
     /** The strip's label, used verbatim (so it can be translated). */
     label: string
     /**
+     * A glyph drawn before the label in the strip, marking where the pane came from.
+     *
+     * An SVG string, injected with `innerHTML` and **not sanitised** — it must be
+     * trusted, exactly like {@link PivotDefinition.icon}. Useful when several tabs are
+     * the same *kind* of pane: four candidate reviews and a data table read as one list
+     * of five otherwise.
+     */
+    icon?: string
+    /**
      * Build the pane's body. Called **once**, lazily, the first time the tab comes to
      * the front — a tab nobody opens costs nothing. The element is kept and re-attached
      * on later activations, so it holds its own state (scroll position included).

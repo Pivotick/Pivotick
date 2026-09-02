@@ -110,12 +110,10 @@
     align-self: stretch;
     // Hard against the chevron: these belong to the region, not to what is in it.
     margin-left: -2px;
-    // A full-height rule closing the group off from whatever the active pane puts on the
-    // bar. Without it the outer switch runs straight into the inner one and the eye has
-    // only the styling to go on; with it the nesting is unmistakable. It comes and goes
-    // with the strip, so a single-pane dock is unaffected.
-    padding-right: 8px;
-    border-right: 1px solid var(--pvt-chrome-border);
+    // The rule that closes this group off from the active pane's own controls is drawn
+    // by `.pvt-dock-sep` rather than as a border here: it must also come and go with
+    // the *toolbar*, and a border on the strip cannot see whether there is anything on
+    // the other side of it to divide from.
 
     &:empty {
         display: none;
@@ -126,8 +124,30 @@
     }
 }
 
+// Between which pane is on show and what that pane offers: the tab strip and the
+// active tab's own controls are different kinds of thing sitting adjacent in one row,
+// and without a rule a tab and a filter read as neighbours in the same list.
+.pvt-dock-sep {
+    flex: none;
+    align-self: center;
+    width: 1px;
+    height: 16px;
+    margin: 0 2px;
+    // Stronger than `--pvt-chrome-border`, which is tuned for panel edges and all but
+    // disappears inside the header's own tinted bar.
+    background-color: color-mix(in srgb, var(--pvt-text-color-4) 50%, transparent);
+
+    // An author `display` outranks the UA's `[hidden]` rule, so say it here too.
+    &[hidden] {
+        display: none;
+    }
+}
+
 .pvt-dock-tab {
     align-self: stretch;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
     padding: 0 10px;
     border: none;
     // Overlaps the header's bottom rule, so an active tab reads as joined to the pane
@@ -148,6 +168,24 @@
         border-bottom-color: var(--pvt-theme-primary);
         color: var(--pvt-text-color-6);
         font-weight: 600;
+    }
+
+    // Marks what kind of pane the tab opens. Dimmed until the tab is the one on show,
+    // so a strip of them does not compete with the label you are actually reading.
+    .pvt-dock-tab-icon {
+        display: flex;
+        flex: none;
+        line-height: 0;
+        color: var(--pvt-text-color-3);
+
+        svg {
+            width: 13px;
+            height: 13px;
+        }
+    }
+
+    &.active .pvt-dock-tab-icon {
+        color: var(--pvt-theme-primary);
     }
 }
 

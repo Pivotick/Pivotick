@@ -65,6 +65,8 @@ export class Dock extends UIComponent {
     private header?: HTMLDivElement
     private tabStrip?: HTMLDivElement
     private toolbar?: HTMLDivElement
+    /** The rule between the tab strip and the active tab's own controls. */
+    private separator?: HTMLSpanElement
     private body?: HTMLDivElement
     private toggle?: HTMLButtonElement
 
@@ -82,6 +84,14 @@ export class Dock extends UIComponent {
      * added. Anything else in the slot belongs to someone else and is left alone.
      */
     private toolbarItems: HTMLElement[] = []
+    /**
+     * Tab ids in the order they were last on show, newest first.
+     *
+     * What a tab that goes away hands over to. Falling back to the first tab instead
+     * would send an analyst closing one review pane back to the data table, past the
+     * three other review panes they still have open.
+     */
+    private readonly recent: string[] = []
 
     private open: boolean
     private collapsed: boolean
@@ -163,6 +173,15 @@ export class Dock extends UIComponent {
         })
         this.header.appendChild(this.tabStrip)
 
+        // A rule between which pane you are looking at and what that pane offers. The
+        // two are different kinds of control and sit adjacent in one row, so without it
+        // a tab and a filter read as neighbours in the same list.
+        this.separator = document.createElement('span')
+        this.separator.className = 'pvt-dock-sep'
+        this.separator.setAttribute('aria-hidden', 'true')
+        this.separator.hidden = true
+        this.header.appendChild(this.separator)
+
         // `display: contents`, so what the occupant puts here lays out as if it sat in
         // the header itself — and an occupant with nothing to add leaves no gap.
         this.toolbar = document.createElement('div')
@@ -222,6 +241,7 @@ export class Dock extends UIComponent {
         this.root = undefined
         this.divider = undefined
         this.header = undefined
+        this.separator = undefined
         this.tabStrip = undefined
         this.toolbar = undefined
         this.body = undefined
@@ -297,7 +317,10 @@ export class Dock extends UIComponent {
         if (activeIsGone) this.activeId = null
         // Silently, without revealing: a tab arriving must not unfold a dock the
         // consumer asked to keep folded. Only `activateDockTab` reveals.
-        if (this.activeId === null && tabs.length) this.setActive(tabs[0].id, false)
+        if (this.activeId === null && tabs.length) {
+            const back = this.recent.find(id => tabs.some(tab => tab.id === id))
+            this.setActive(back ?? tabs[0].id, false)
+        }
         this.renderStrip()
         // The registry changing can hand the row back, or ask for it again.
         this.apply()
@@ -326,6 +349,7 @@ export class Dock extends UIComponent {
             }
 
             this.activeId = id
+            this.remember(id)
             let element = this.bodies.get(id)
             if (!element) {
                 element = next.render(this.handleFor(next))
@@ -353,6 +377,18 @@ export class Dock extends UIComponent {
         this.bodies.get(tab.id)?.remove()
         this.bodies.delete(tab.id)
         this.handles.delete(tab.id)
+        this.forget(tab.id)
+    }
+
+    /** Move `id` to the front of the hand-over order. */
+    private remember(id: string): void {
+        this.forget(id)
+        this.recent.unshift(id)
+    }
+
+    private forget(id: string): void {
+        const at = this.recent.indexOf(id)
+        if (at >= 0) this.recent.splice(at, 1)
     }
 
     private fillToolbar(tab: RegisteredDockTab): void {
@@ -363,6 +399,14 @@ export class Dock extends UIComponent {
             slot.appendChild(element)
             this.toolbarItems.push(element)
         }
+        this.paintSeparator()
+    }
+
+    /** Only worth drawing with a strip on one side of it and controls on the other. */
+    private paintSeparator(): void {
+        if (!this.separator) return
+        const strip = Boolean(this.tabStrip?.childElementCount)
+        this.separator.hidden = !strip || this.toolbarItems.length === 0
     }
 
     /**
@@ -373,6 +417,7 @@ export class Dock extends UIComponent {
     private clearToolbar(): void {
         for (const item of this.toolbarItems) item.remove()
         this.toolbarItems = []
+        this.paintSeparator()
     }
 
     /**
@@ -408,20 +453,30 @@ export class Dock extends UIComponent {
         const tabs = this.tabs()
         // One tab is not a choice — nothing should point at a switch with one setting.
         // Same rule the table's own Nodes / Edges strip followed before the dock took it.
-        if (tabs.length < 2) return
+        if (tabs.length < 2) return this.paintSeparator()
 
         for (const tab of tabs) {
             const button = document.createElement('button')
             button.type = 'button'
             button.className = 'pvt-dock-tab'
             button.dataset.tab = tab.id
-            button.textContent = tab.label
+            if (tab.icon) {
+                const glyph = document.createElement('span')
+                glyph.className = 'pvt-dock-tab-icon'
+                // Trusted, like every other icon the consumer hands the library.
+                glyph.innerHTML = tab.icon
+                button.appendChild(glyph)
+            }
+            const text = document.createElement('span')
+            text.textContent = tab.label
+            button.appendChild(text)
             const active = tab.id === this.activeId
             button.classList.toggle('active', active)
             button.setAttribute('role', 'tab')
             button.setAttribute('aria-selected', String(active))
             strip.appendChild(button)
         }
+        this.paintSeparator()
     }
 
     /* ---------- open / collapse ---------- */

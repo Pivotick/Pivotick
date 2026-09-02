@@ -1,6 +1,7 @@
 import type { PivotCandidateSet, PivotRunOutcome } from '../../../interfaces/Pivot'
 import { NotificationLevel } from '../../Notifier'
 import type { NotificationHandle } from '../../Notifier'
+import { sparkles } from '../../icons'
 import { UIComponent } from '../../UIComponent'
 import type { UIManager } from '../../UIManager'
 import { TriagePane } from './TriagePane'
@@ -90,6 +91,10 @@ export class PivotTriage extends UIComponent {
         const dispose = this.uiManager.addDockTab({
             id: TAB_PREFIX + set.pivotId,
             label: pane.label(),
+            // The rail mode's own glyph, so a review pane is recognisable as one among
+            // the dock's other tabs — and several of them read as a group rather than
+            // as unrelated panes that happen to be open.
+            icon: sparkles,
             order: TAB_ORDER,
             render: () => pane.render(),
             toolbar: () => pane.toolbar(),
