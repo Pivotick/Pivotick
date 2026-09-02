@@ -108,7 +108,9 @@ SCSS (modern compiler API) with CSS custom properties for theming; split into `c
 
 ## Demo / scratch files
 
-`src/main.ts` is the dev demo page. `src/ail-graph.ts`, `src/ail-graph2.ts`, `src/vt-graph.ts` are large static datasets used only by the demo — not part of the library.
+`src/main.ts` is the dev demo page, served by `index.html`. `src/ail-graph.ts`, `src/ail-graph2.ts`, `src/vt-graph.ts` are large static datasets used only by the demo — not part of the library.
+
+`pivot.html` + `src/pivot-demo.ts` are a second dev page (`npm run dev`, then `/pivot.html`) for pivots and enrichment: a 20-node investigation graph, six providers covering the contract's distinct paths, and a toolbar whose latency / failure / ingest-veto knobs reach the states a well-behaved backend never produces. Neither file is imported by `src/index.ts`, so nothing here reaches the bundles.
 
 ## Documentation
 

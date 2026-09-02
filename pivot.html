@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pivotick — pivots & enrichment (dev)</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            height: 100%;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            font: 13px/1.4 system-ui, sans-serif;
+            color: #2e3440;
+            background: #fff;
+        }
+
+        /* The dev toolbar. Deliberately plain, and outside the widget, so nothing
+           here can be mistaken for library chrome. */
+        #devbar {
+            flex: none;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px 14px;
+            padding: 7px 12px;
+            border-bottom: 1px solid #d8dee9;
+            background: #f7f8fa;
+        }
+
+        .devbar-field {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+
+        .devbar-field > span {
+            color: #6b7280;
+        }
+
+        #devbar select,
+        #devbar input,
+        #devbar button {
+            font: inherit;
+            padding: 2px 6px;
+            border: 1px solid #cbd2dc;
+            border-radius: 4px;
+            background: #fff;
+            color: inherit;
+        }
+
+        #devbar input[type="number"] {
+            width: 5.5em;
+        }
+
+        #devbar button {
+            cursor: pointer;
+        }
+
+        #devbar button:hover {
+            background: #eef1f6;
+        }
+
+        .devbar-status {
+            margin-left: auto;
+            color: #6b7280;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .devbar-sheet {
+            flex-basis: 100%;
+            color: #6b7280;
+        }
+
+        .devbar-sheet summary {
+            cursor: pointer;
+        }
+
+        .devbar-sheet ul {
+            margin: 6px 0 2px;
+            padding-left: 1.2em;
+        }
+
+        .devbar-sheet strong {
+            color: #2e3440;
+        }
+
+        /* The graph takes the rest. `.pivotick` sizes itself to 100% of this, so
+           the row needs a definite height — hence flex: 1 with min-height: 0. */
+        #app {
+            flex: 1 1 auto;
+            min-height: 0;
+            display: flex;
+        }
+    </style>
+</head>
+
+<body>
+    <header id="devbar"></header>
+    <div id="app"></div>
+    <script type="module" src="/src/pivot-demo.ts"></script>
+</body>
+
+</html>
