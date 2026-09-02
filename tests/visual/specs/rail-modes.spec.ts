@@ -166,6 +166,67 @@ test.describe('rail-modes', () => {
         await expect(page.locator('.pvt-flyout-panel.pvt-flyout-inspect')).toHaveCount(0)
     })
 
+    // ── the resize handle ────────────────────────────────────────────────────
+    // Only a mode whose panel is a workspace asks for it, so the handle is opt-in and
+    // the width it produces belongs to that mode alone.
+
+    const panelWidth = (page: import('@playwright/test').Page): Promise<number> =>
+        page.locator('.pvt-toolpanel').evaluate(el => (el as HTMLElement).offsetWidth)
+
+    const divider = (page: import('@playwright/test').Page) =>
+        page.locator('.pvt-toolpanel-divider')
+
+    /** Drag the panel's right edge by `dx`, the way a person does. */
+    async function dragEdge(page: import('@playwright/test').Page, dx: number): Promise<void> {
+        const handle = await divider(page).boundingBox()
+        expect(handle, 'the handle is on screen to grab').not.toBeNull()
+        const y = handle!.y + Math.min(handle!.height / 2, 200)
+        await page.mouse.move(handle!.x + handle!.width / 2, y)
+        await page.mouse.down()
+        await page.mouse.move(handle!.x + handle!.width / 2 + dx, y, { steps: 8 })
+        await page.mouse.up()
+    }
+
+    test('the handle is there only for a mode that asked for it', async ({ page }) => {
+        await harness(page, 'addTestRailMode', { id: 'plain', label: 'Plain' })
+        await harness(page, 'addTestRailMode', { id: 'wide', label: 'Wide', panelWidth: 320, panelResizable: true })
+
+        await page.locator('.pvt-moderail-button[data-mode="plain"]').click()
+        await expect(divider(page)).toBeHidden()
+
+        await page.locator('.pvt-moderail-button[data-mode="wide"]').click()
+        await expect(divider(page)).toBeVisible()
+    })
+
+    test('dragging the edge resizes the panel, and only that mode keeps the width', async ({ page }) => {
+        await harness(page, 'addTestRailMode', { id: 'wide', label: 'Wide', panelWidth: 320, panelResizable: true })
+        await page.locator('.pvt-moderail-button[data-mode="wide"]').click()
+        expect(await panelWidth(page)).toBe(320)
+
+        await dragEdge(page, 140)
+        const dragged = await panelWidth(page)
+        expect(dragged).toBeGreaterThan(320)
+
+        // Select declares no width of its own, so it is back to the built-in one …
+        await page.locator('.pvt-moderail-button[data-mode="select"]').click()
+        expect(await panelWidth(page)).toBe(216)
+
+        // … and returning finds the width this analyst chose, not the declared 320.
+        await page.locator('.pvt-moderail-button[data-mode="wide"]').click()
+        expect(await panelWidth(page)).toBe(dragged)
+    })
+
+    // The canvas is what the panel floats over, so the drag stops at its edge rather
+    // than growing a number behind a panel that has visibly stopped moving.
+    test('the drag cannot push the panel off the canvas', async ({ page }) => {
+        await harness(page, 'addTestRailMode', { id: 'wide', label: 'Wide', panelWidth: 320, panelResizable: true })
+        await page.locator('.pvt-moderail-button[data-mode="wide"]').click()
+
+        await dragEdge(page, 4000)
+        const canvas = await page.locator('.pvt-canvas').evaluate(el => el.getBoundingClientRect().width)
+        expect(await panelWidth(page)).toBeLessThan(canvas)
+    })
+
     // A mode declaring `tools` as a function gets them re-read, so the row set can
     // follow the selection rather than only greying out.
     test('a flyout mode with no factory is refused', async ({ page }) => {

@@ -225,6 +225,17 @@ export interface RailModeDefinition {
      */
     panelWidth?: number
     /**
+     * Let the analyst drag this mode's panel wider or narrower by its right edge.
+     *
+     * Off by default: a panel of icon rows has one right width, and a handle on it is a
+     * control with nothing to do. A mode whose panel is the workspace — a form, a list,
+     * a set of results — is where the choice is worth offering. The width is remembered
+     * per mode for the session and is not persisted, so a reload starts from
+     * {@link panelWidth} again.
+     * @default false
+     */
+    panelResizable?: boolean
+    /**
      * Keep the panel open when one of this mode's tools is armed. Arming normally
      * collapses the panel so the canvas is clear — right for Select's Lasso, wrong for a
      * mode whose panel *is* the workspace and whose tools only say how to feed it.

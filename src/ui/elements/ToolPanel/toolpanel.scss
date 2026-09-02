@@ -27,6 +27,42 @@ $rail-gutter: 84px;
     pointer-events: none;
 }
 
+// Grab handle straddling the right edge, the mirror of the dock's. Wider than it looks
+// so it is easy to hit, but drawn as a hairline so it reads as an edge rather than a
+// bar. It opts back into pointer events the wrapper above turned off.
+.pvt-toolpanel-divider {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: -3px;
+    width: 7px;
+    cursor: col-resize;
+    touch-action: none;
+    pointer-events: auto;
+    z-index: 2;
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 3px;
+        width: 1px;
+        background-color: transparent;
+        transition: background-color 0.1s ease-out;
+    }
+
+    &:hover::after,
+    &.pvt-toolpanel-divider-dragging::after {
+        background-color: var(--pvt-theme-primary);
+    }
+}
+
+// A collapsed panel is a tucked-away card, not something to size.
+.pvt-toolpanel:has(> .pvt-toolpanel-panel.pvt-collapsed) .pvt-toolpanel-divider {
+    display: none;
+}
+
 .pvt-toolpanel-panel {
     display: flex;
     flex-direction: column;

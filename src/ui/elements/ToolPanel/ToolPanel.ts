@@ -29,6 +29,11 @@ interface ToolSpec {
 /** Keyboard shortcut shown in each mode's panel header. */
 const MODE_SHORTCUT: Record<PointerMode, string> = { select: 'V', create: 'C' }
 
+/** The narrowest a dragged panel goes: the built-in width, which fits icon + label. */
+const MIN_PANEL_WIDTH = 216
+/** Canvas kept to the right of a dragged panel — the `max-width` in the stylesheet. */
+const PANEL_EDGE_MARGIN = 14
+
 /**
  * The contextual tool panel, anchored beside the mode rail. It subscribes to
  * {@link UIManager.modeStore} and shows the tool-set for the active pointer-mode:
@@ -44,6 +49,16 @@ const MODE_SHORTCUT: Record<PointerMode, string> = { select: 'V', create: 'C' }
  */
 export class ToolPanel extends UIComponent {
     private panel?: HTMLDivElement
+    /** The right-edge grab handle, shown only for a mode that asked to be resizable. */
+    private divider?: HTMLDivElement
+    /** Pointer id held for the duration of a divider drag. */
+    private dragPointer: number | null = null
+    /**
+     * Widths the analyst dragged to, per mode. A mode's declared `panelWidth` is what
+     * it is worth on arrival; this is what this analyst made of it, and it outranks the
+     * declaration until the page is reloaded.
+     */
+    private readonly draggedWidths = new Map<RailMode, number>()
     /** The last mode seen, so disarm-on-leave runs only on real mode changes. */
     private prevMode: RailMode | null = null
     /** Which pointer-mode's tool-set is currently rendered (avoids needless rebuilds). */
@@ -60,9 +75,20 @@ export class ToolPanel extends UIComponent {
         this.panel = document.createElement('div')
         this.panel.className = 'pvt-toolpanel-panel'
         container.appendChild(this.panel)
+
+        // Beside the panel rather than inside it: the panel is a scroller, and a handle
+        // within one scrolls away from the edge it is supposed to be.
+        this.divider = document.createElement('div')
+        this.divider.className = 'pvt-toolpanel-divider'
+        this.divider.setAttribute('role', 'separator')
+        this.divider.setAttribute('aria-orientation', 'vertical')
+        this.divider.setAttribute('aria-label', 'Resize the tool panel')
+        this.divider.hidden = true
+        container.appendChild(this.divider)
     }
 
     protected onAfterMount() {
+        this.wireDivider()
         this.onState(this.uiManager.modeStore.getState())
         this.track(this.uiManager.modeStore.subscribe((state) => this.onState(state)))
 
@@ -114,6 +140,9 @@ export class ToolPanel extends UIComponent {
         this.disarmLasso()
         this.panel?.remove()
         this.panel = undefined
+        this.divider?.remove()
+        this.divider = undefined
+        this.draggedWidths.clear()
         this.renderedMode = null
         this.prevMode = null
     }
@@ -248,7 +277,8 @@ export class ToolPanel extends UIComponent {
         const extra = registered?.render?.()
         if (extra) this.panel.appendChild(extra)
 
-        this.applyWidth(registered?.panelWidth)
+        this.applyWidth(this.draggedWidths.get(mode) ?? registered?.panelWidth)
+        if (this.divider) this.divider.hidden = registered?.panelResizable !== true
         this.refreshEnabled()
     }
 
@@ -262,6 +292,66 @@ export class ToolPanel extends UIComponent {
         if (!wrapper) return
         if (width) wrapper.style.setProperty('--pvt-toolpanel-width', `${width}px`)
         else wrapper.style.removeProperty('--pvt-toolpanel-width')
+    }
+
+    /* ---------- the divider ---------- */
+
+    /**
+     * Drag the right edge to resize the panel, for a mode that declared
+     * {@link RailModeDefinition.panelResizable}. The width is written the same way a
+     * declared one is, so nothing downstream has to know a person chose it.
+     */
+    private wireDivider(): void {
+        const divider = this.divider
+        if (!divider) return
+
+        this.listen(divider, 'pointerdown', (event) => {
+            const pointer = event as PointerEvent
+            this.dragPointer = pointer.pointerId
+            divider.setPointerCapture(pointer.pointerId)
+            divider.classList.add('pvt-toolpanel-divider-dragging')
+            // The panel floats over the canvas, which pans on a drag of its own.
+            pointer.preventDefault()
+            pointer.stopPropagation()
+        })
+
+        this.listen(divider, 'pointermove', (event) => {
+            const pointer = event as PointerEvent
+            if (this.dragPointer !== pointer.pointerId) return
+            const mode = this.renderedMode
+            const left = this.panel?.parentElement?.getBoundingClientRect().left
+            if (mode === null || left === undefined) return
+            const width = this.clampWidth(pointer.clientX - left)
+            this.draggedWidths.set(mode, width)
+            this.applyWidth(width)
+        })
+
+        const end = (event: Event) => {
+            const pointer = event as PointerEvent
+            if (this.dragPointer !== pointer.pointerId) return
+            divider.releasePointerCapture(pointer.pointerId)
+            divider.classList.remove('pvt-toolpanel-divider-dragging')
+            this.dragPointer = null
+        }
+        this.listen(divider, 'pointerup', end)
+        this.listen(divider, 'pointercancel', end)
+    }
+
+    /**
+     * Keep a dragged width between the built-in width and the canvas's right edge. The
+     * stylesheet caps the drawn panel at the same edge; without the same ceiling here
+     * the number would keep growing behind a panel that had stopped moving, and the
+     * drag back would do nothing until it caught up.
+     */
+    private clampWidth(px: number): number {
+        const wrapper = this.panel?.parentElement
+        const root = this.panel?.closest('.pvt-layout')
+        if (!wrapper || !root) return Math.round(Math.max(px, MIN_PANEL_WIDTH))
+        const available = root.getBoundingClientRect().right
+            - wrapper.getBoundingClientRect().left
+            - PANEL_EDGE_MARGIN
+        const ceiling = Math.max(available, MIN_PANEL_WIDTH)
+        return Math.round(Math.min(Math.max(px, MIN_PANEL_WIDTH), ceiling))
     }
 
     /**

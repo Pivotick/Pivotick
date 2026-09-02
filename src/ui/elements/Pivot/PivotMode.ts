@@ -98,6 +98,9 @@ export class PivotMode extends UIComponent {
             shortcut: 'P',
             order: -10,
             panelWidth: PANEL_WIDTH,
+            // The panel is this mode's workspace, and how much of the canvas it is
+            // worth covering is the analyst's call, not a number decided here.
+            panelResizable: true,
             // The panel is this mode's workspace: arming a tool says how to feed it, so
             // collapsing it on the way would hide the thing being fed.
             keepPanelOpen: true,

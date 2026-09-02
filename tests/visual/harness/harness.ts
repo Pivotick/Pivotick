@@ -120,6 +120,8 @@ export interface RailModeSpec {
     shortcut?: string
     order?: number
     panelOpen?: boolean
+    panelWidth?: number
+    panelResizable?: boolean
     defaultTool?: string | null
     /** Tool rows to declare. `kind` defaults to `'action'`. */
     tools?: Array<{ id: string, label?: string, kind?: 'default' | 'toggle' | 'action' }>
@@ -2881,6 +2883,8 @@ class Harness implements HarnessApi {
             shortcut: spec.shortcut,
             order: spec.order,
             panelOpen: spec.panelOpen,
+            panelWidth: spec.panelWidth,
+            panelResizable: spec.panelResizable,
             defaultTool: spec.defaultTool,
             tools: spec.dynamicTools ? () => tools : tools,
             onEnter: () => { this.railEnters.push(spec.id) },
