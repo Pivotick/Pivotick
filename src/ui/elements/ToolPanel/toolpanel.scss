@@ -1,4 +1,10 @@
 // Contextual tool panel — anchored just right of the mode rail.
+//
+// A column flex box with a bound: the panel below is a flex item, so a mode whose
+// content is taller than the canvas shrinks *inside* the panel instead of pushing a
+// scrollbar around the whole thing — a mode's header and tools have to stay reachable
+// while its own content scrolls. A mode that declares no inner scroller still can't
+// overflow the canvas; it scrolls as one, as before.
 .pvt-toolpanel {
     position: absolute;
     top: calc(var(--pvt-mainheader-height) + 14px);
@@ -7,7 +13,8 @@
     // Per-mode: a registered mode may widen it through `RailModeDefinition.panelWidth`.
     width: var(--pvt-toolpanel-width, 216px);
     max-height: calc(100% - 28px);
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
     // The wrapper is click-through; only the visible panel opts back in, so a
     // collapsed (still laid-out) panel never intercepts canvas interaction.
     pointer-events: none;
@@ -16,6 +23,10 @@
 .pvt-toolpanel-panel {
     display: flex;
     flex-direction: column;
+    // Flex items floor at their content height without this, which would put the
+    // bound above back on the wrapper.
+    min-height: 0;
+    overflow-y: auto;
     padding: 6px;
     border-radius: 11px;
     background-color: var(--pvt-chrome-bg);

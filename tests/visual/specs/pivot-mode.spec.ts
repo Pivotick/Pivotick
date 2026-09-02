@@ -13,7 +13,12 @@ const FULL = { UI: { mode: 'full', sidebar: { collapsed: true }, table: { open: 
 const railButton = (page: Page): Locator => page.locator('.pvt-moderail-button[data-mode="pivot"]')
 const panel = (page: Page): Locator => page.locator('.pvt-pivot-panel')
 const entry = (page: Page, id: string): Locator => page.locator(`.pvt-pivot-entry[data-pivot="${id}"]`)
+// The head row's right-hand slot says one of several things, and which one it is *is*
+// the assertion: a count the source answered with, the weaker declared hint, or the
+// sentence a failure left behind.
 const count = (page: Page, id: string): Locator => entry(page, id).locator('.pvt-pivot-count')
+const hint = (page: Page, id: string): Locator => entry(page, id).locator('.pvt-pivot-hint')
+const errorLine = (page: Page, id: string): Locator => entry(page, id).locator('.pvt-pivot-error')
 const breakdown = (page: Page, id: string): Locator => entry(page, id).locator('.pvt-pivot-breakdown')
 const refusal = (page: Page, id: string): Locator => entry(page, id).locator('.pvt-pivot-refusal')
 const heading = (page: Page): Locator => panel(page).locator('.pvt-pivot-heading')
@@ -48,15 +53,16 @@ const calls = async (page: Page): Promise<string[]> => {
  * Tick one option of a narrowing multiselect, through the real picker. This is the
  * gesture the whole gate turns on, so it goes through the widget rather than around it.
  */
+/**
+ * Narrow by one option of a multiselect facet, the way an analyst does: those are
+ * drawn as a checkbox list with every option and its count on screen, so there is no
+ * menu to open and nothing to close afterwards.
+ */
 const narrowTo = async (page: Page, pivotId: string, key: string, option: string): Promise<void> => {
     const field = entry(page, pivotId).locator(`.pvt-form-element:has([data-field-key="${key}"])`)
-    await field.locator('.pvt-picker__control').waitFor()
-    await field.locator('.pvt-picker__control').click()
-    await field.locator('.pvt-picker__option', { hasText: option }).first().click()
-    // The picker stays open after a pick (it is a multiselect); an outside click inside
-    // the panel closes it, so the buttons underneath are reachable again.
-    await entry(page, pivotId).locator('.pvt-pivot-entry-label').click()
-    await expect(field.locator('.pvt-picker__dropdown.open')).toHaveCount(0)
+    const row = field.locator('.pvt-checkbox-option', { hasText: option }).first()
+    await row.waitFor()
+    await row.locator('input[type="checkbox"]').check()
 }
 
 /** Enter Pivot mode from the rail, the way an analyst does. */
@@ -182,9 +188,12 @@ test.describe('pivot mode', () => {
         await enterMode(page)
 
         const blind = entry(page, 'blind')
-        await expect(count(page, 'blind')).toHaveText('')
+        // No count to gate on and no facets to narrow, so the verb takes the slot the
+        // count would have had and the entry is a single line (S7).
+        await expect(count(page, 'blind')).toHaveCount(0)
         await expect(button(blind, 'Run')).toBeEnabled()
         await expect(button(blind, 'Fetch')).toHaveCount(0)
+        await expect(blind.locator('.pvt-pivot-entry-head button')).toHaveText('Run')
     })
 
     test('a declared potential is the number shown before anything is asked', async ({ page }) => {
@@ -193,8 +202,10 @@ test.describe('pivot mode', () => {
         await pickOrigin(page, 'a')
         await enterMode(page)
 
-        // No summarize on this pivot, so the declared count is all there is (D12).
-        await expect(count(page, 'misp-event-objects')).toHaveText('~2,100 declared')
+        // No summarize on this pivot, so the declared count is all there is (D12) — and
+        // it reads as the weaker claim it is, not as a count the source just answered.
+        await expect(hint(page, 'misp-event-objects')).toHaveText('~2,100 declared')
+        await expect(count(page, 'misp-event-objects')).toHaveCount(0)
     })
 
     // ── the gate, and it lifting (D4 — the most important moment in the flow) ──
@@ -240,10 +251,12 @@ test.describe('pivot mode', () => {
         await pickOrigin(page, 'a')
         await enterMode(page)
 
-        await expect(count(page, AIL)).toHaveText("Couldn't reach the source.")
+        // The sentence and its way out are one line inside the entry that failed.
+        await expect(errorLine(page, AIL)).toContainText("Couldn't reach the source.")
         await harness(page, 'setPivotFail', false)
-        await button(entry(page, AIL), 'Retry').click()
+        await button(errorLine(page, AIL), 'Retry').click()
         await expect(count(page, AIL)).toHaveText('~2,143')
+        await expect(errorLine(page, AIL)).toBeHidden()
     })
 
     // ── the panel is the mode's workspace ───────────────────────────────────

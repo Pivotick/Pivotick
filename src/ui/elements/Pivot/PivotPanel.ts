@@ -4,6 +4,7 @@ import type {
 } from '../../../interfaces/Pivot'
 import type { FieldConfig, FieldOption, FormValues } from '../../../utils/FormFactory'
 import { FormFactory } from '../../../utils/FormFactory'
+import { tryResolveString } from '../../../utils/Getters'
 import type { UIManager } from '../../UIManager'
 
 const fmt = (value: number): string => value.toLocaleString()
@@ -45,7 +46,7 @@ export class PivotPanel {
         this.root = el('div', 'pvt-pivot-panel')
 
         this.originBlock = el('div', 'pvt-pivot-origin')
-        this.heading = el('div', 'pvt-pivot-heading')
+        this.heading = el('div', 'pvt-pivot-section pvt-pivot-heading')
         this.list = el('div', 'pvt-pivot-list')
 
         this.originless = document.createElement('details')
@@ -54,7 +55,11 @@ export class PivotPanel {
         this.originlessList = el('div', 'pvt-pivot-list')
         this.originless.appendChild(this.originlessList)
 
-        this.root.append(this.originBlock, this.heading, this.list, this.originless)
+        // Only the pivots scroll. The origin and the count of what applies to it are
+        // what the whole panel is about, so they stay put however long the list gets.
+        const scroll = el('div', 'pvt-pivot-scroll')
+        scroll.append(this.list, this.originless)
+        this.root.append(this.originBlock, this.heading, scroll)
 
         // A pivot registered or unregistered while the mode is open changes the list.
         this.unsubscribe = this.uiManager.graph.pivots.on(change => {
@@ -144,7 +149,7 @@ export class PivotPanel {
 
     private paintOrigin(): void {
         this.originBlock.replaceChildren()
-        const label = el('div', 'pvt-pivot-origin-label')
+        const label = el('div', 'pvt-pivot-section pvt-pivot-origin-label')
         label.textContent = 'Origin'
         this.originBlock.appendChild(label)
 
@@ -155,12 +160,22 @@ export class PivotPanel {
             return
         }
 
+        // A bordered well, like the narrowing fields below it: what is picked is a
+        // value the panel is holding, not a heading.
+        const box = el('div', 'pvt-pivot-origin-box')
         const chips = el('div', 'pvt-pivot-chips')
         const shown = this.origin.slice(0, 3)
         for (const node of shown) {
             const chip = el('span', 'pvt-pivot-chip')
-            const label = node.getData()?.label
-            chip.textContent = typeof label === 'string' && label ? label : String(node.id)
+            const dot = el('span', 'pvt-pivot-dot')
+            // The canvas colour, so the chip and the node it stands for are the same
+            // thing at a glance — and the legend already reads in these colours.
+            const colour = tryResolveString(this.uiManager.graph.renderer.getNodeStyle(node).color, node)
+            if (colour) dot.style.backgroundColor = colour
+            const name = el('span', 'pvt-pivot-chip-name')
+            const text = node.getData()?.label
+            name.textContent = typeof text === 'string' && text ? text : String(node.id)
+            chip.append(dot, name)
             chip.title = String(node.id)
             chips.appendChild(chip)
         }
@@ -179,7 +194,8 @@ export class PivotPanel {
             this.setOrigin([])
         })
 
-        this.originBlock.append(chips, clear)
+        box.append(chips, clear)
+        this.originBlock.appendChild(box)
     }
 
     private paintHeading(applicable: number): void {
@@ -219,9 +235,12 @@ export class PivotPanel {
  */
 class PivotEntry {
     private readonly root: HTMLElement
-    private readonly countLine: HTMLElement
+    /** The right-hand slot of the head row: whatever this entry has to say in one line. */
+    private readonly status: HTMLElement
     private readonly breakdown: HTMLElement
+    private readonly errorLine: HTMLElement
     private readonly refusalLine: HTMLElement
+    private readonly progress: HTMLElement
     private readonly narrowingHost: HTMLElement
     private readonly actions: HTMLElement
 
@@ -229,6 +248,8 @@ class PivotEntry {
     private summary?: PivotSummary
     private narrowing: PivotNarrowing = {}
     private refusal?: PivotRefusal
+    /** What an auto-ingest run just landed, until the next run or a new origin (S10). */
+    private ingested?: number
     private form?: HTMLFormElement
     /** The facet shape the current form was built from, so it is only rebuilt when it moves. */
     private facetSignature = ''
@@ -261,15 +282,21 @@ class PivotEntry {
         }
         const label = el('span', 'pvt-pivot-entry-label')
         label.textContent = def.label
-        head.appendChild(label)
+        this.status = el('span', 'pvt-pivot-status')
+        head.append(label, this.status)
 
-        this.countLine = el('div', 'pvt-pivot-count')
         this.breakdown = el('div', 'pvt-pivot-breakdown')
+        this.errorLine = el('div', 'pvt-pivot-error')
         this.refusalLine = el('div', 'pvt-pivot-refusal')
+        this.progress = el('div', 'pvt-pivot-progress')
+        this.progress.appendChild(el('span', 'pvt-pivot-progress-bar'))
         this.narrowingHost = el('div', 'pvt-pivot-narrowing')
         this.actions = el('div', 'pvt-pivot-actions')
 
-        this.root.append(head, this.countLine, this.breakdown, this.refusalLine, this.narrowingHost, this.actions)
+        this.root.append(
+            head, this.breakdown, this.errorLine, this.refusalLine,
+            this.progress, this.narrowingHost, this.actions,
+        )
         this.paint()
     }
 
@@ -309,6 +336,9 @@ class PivotEntry {
     public originChanged(): void {
         if (this.def.origin === 'none') return
         if (this.askedFor === this.originKey()) return
+        // The acknowledgement was about the origin that has just gone.
+        this.ingested = undefined
+        this.paint()
         this.started = true
         void this.ask(true)
     }
@@ -364,6 +394,7 @@ class PivotEntry {
         const token = ++this.token
         this.phase = 'fetching'
         this.refusal = undefined
+        this.ingested = undefined
         this.paint()
 
         const outcome = await this.uiManager.graph.pivots.run(this.def.id, this.origin(), this.narrowing)
@@ -371,6 +402,9 @@ class PivotEntry {
 
         this.phase = this.summary ? 'ready' : 'idle'
         if (outcome.status === 'refused') this.refusal = outcome.refusal
+        // An auto-ingest run opens no pane (D13): the toast carries the outcome and the
+        // undo, and the entry only acknowledges that it happened.
+        if (outcome.status === 'ingested') this.ingested = outcome.nodes.length
         // A failed or vetoed run is reported where it happened: a staged pivot's pane
         // carries the error and its retry, and an auto-ingest one is the notifier's.
         this.paint()
@@ -380,35 +414,81 @@ class PivotEntry {
 
     private paint(): void {
         this.root.dataset.phase = this.phase
-        this.paintCount()
+        this.paintStatus()
         this.paintBreakdown()
+        this.paintError()
         this.paintRefusal()
         this.paintNarrowing()
         this.paintActions()
     }
 
-    private paintCount(): void {
-        const line = this.countLine
-        line.classList.toggle('pvt-pivot-dim', this.phase === 'resummarizing')
-        line.classList.remove('pvt-pivot-skeleton')
+    /**
+     * The head row's right-hand side. Everything this entry has to say about itself
+     * fits on the label's own line — a count, the number behind a verb, or the verb
+     * itself — so the entry stays one line tall until it has facets to show.
+     */
+    private paintStatus(): void {
+        const slot = this.status
+        slot.replaceChildren()
+        slot.className = 'pvt-pivot-status'
 
-        if (this.phase === 'failed') {
-            line.textContent = 'Couldn\'t reach the source.'
+        // The error line below carries both the sentence and its Retry.
+        if (this.phase === 'failed') return
+
+        if (this.phase === 'fetching') {
+            slot.classList.add('pvt-pivot-muted')
+            slot.textContent = this.summary ? `Fetching ~${fmt(this.summary.total)}…` : 'Fetching…'
             return
         }
+
         if (this.phase === 'summarizing') {
-            line.textContent = ''
-            line.classList.add('pvt-pivot-skeleton')
+            slot.classList.add('pvt-pivot-skeleton')
             return
         }
+
         if (this.summary) {
-            line.textContent = this.countText(this.summary.total)
+            slot.classList.add('pvt-pivot-count')
+            // A re-summarize keeps the last number on screen rather than blanking it: the
+            // narrowing tick that caused it must not read as a reset (S5).
+            slot.classList.toggle('pvt-pivot-dim', this.phase === 'resummarizing')
+            slot.textContent = this.countText(this.summary.total)
             return
         }
+
+        if (this.ingested !== undefined) {
+            slot.classList.add('pvt-pivot-ingested')
+            slot.textContent = `${fmt(this.ingested)} ingested`
+            return
+        }
+
+        if (this.verbInHead()) {
+            slot.appendChild(this.button('Run', true, () => void this.fetch()))
+            return
+        }
+
         // Nothing asked yet, or nothing to ask: a declared potential is the only number
         // the canvas ever shows unprompted, so it is the only one that belongs here (D12).
         const declared = this.declared()
-        line.textContent = declared ? `~${fmt(declared)} declared` : ''
+        if (!declared) return
+        slot.classList.add('pvt-pivot-hint')
+        slot.textContent = `~${fmt(declared)} declared`
+    }
+
+    /**
+     * A pivot with no `summarize` has no count to gate on and no facets to narrow, so
+     * it is a label and a verb (S7) — and the verb takes the slot the count would have
+     * had, leaving the entry one line tall with nothing under it.
+     *
+     * Only when that slot is genuinely empty, though. A declared potential, a fetch in
+     * flight, a failure or an acknowledgement all have something to say there, and the
+     * verb goes back to the actions row rather than displacing it.
+     */
+    private verbInHead(): boolean {
+        return !this.def.summarize
+            && this.ingested === undefined
+            && !this.declared()
+            && this.phase !== 'fetching'
+            && this.phase !== 'failed'
     }
 
     /** `~2,143`, and C2's one line for a multi-node origin — never one line per node. */
@@ -426,15 +506,42 @@ class PivotEntry {
         return this.origin().reduce((sum, node) => sum + (node.getPotential(this.def.id) ?? 0), 0)
     }
 
+    /**
+     * What the total is made of, along one dimension.
+     *
+     * Only a `multiselect` facet's options partition the result, so only those are
+     * summed here. A single-choice facet's counts are *alternatives* — what the total
+     * would become under each — and reading them as a breakdown states something
+     * false: passive DNS's four windows would add up to three times its own total.
+     * Those counts stay where they answer the question the analyst is asking, beside
+     * the option itself.
+     */
     private paintBreakdown(): void {
         const facets = this.summary?.facets ?? []
-        const counted = facets.flatMap(facet => (facet.options ?? []).filter(o => o.count !== undefined))
+        const partition = facets.find(facet => facet.type === 'multiselect')
+        const counted = (partition?.options ?? []).filter(o => o.count !== undefined)
         // The label is the provider's, used verbatim like every other label in the
         // library — lower-casing one would mangle a translated noun.
         this.breakdown.textContent = counted
             .map(option => `${fmt(option.count as number)} ${option.label}`)
             .join(' · ')
         this.breakdown.hidden = counted.length === 0
+    }
+
+    /** The entry survives its own failure — one pivot going down never empties the menu. */
+    private paintError(): void {
+        this.errorLine.replaceChildren()
+        this.errorLine.hidden = this.phase !== 'failed'
+        if (this.phase !== 'failed') return
+
+        const text = el('span', 'pvt-pivot-error-text')
+        text.textContent = 'Couldn\'t reach the source.'
+        const retry = this.button('Retry', false, () => {
+            this.uiManager.graph.pivots.invalidate(this.def.id, this.origin())
+            void this.ask(false)
+        })
+        retry.classList.add('pvt-pivot-retry')
+        this.errorLine.append(text, retry)
     }
 
     private paintRefusal(): void {
@@ -513,24 +620,19 @@ class PivotEntry {
 
     private paintActions(): void {
         this.actions.replaceChildren()
+        // Indeterminate, never a percentage: there is no streaming and no cursor (D3),
+        // so a filling bar would be a lie.
+        this.progress.hidden = this.phase !== 'fetching'
 
         if (this.phase === 'fetching') {
-            const total = this.summary ? `~${fmt(this.summary.total)}` : ''
-            const label = el('span', 'pvt-pivot-progress')
-            label.textContent = total ? `Fetching ${total}…` : 'Fetching…'
-            this.actions.append(label, this.button('Cancel', true, () => {
+            this.actions.appendChild(this.button('Cancel', false, () => {
                 this.uiManager.graph.pivots.cancelFetch(this.def.id)
             }))
             return
         }
 
-        if (this.phase === 'failed') {
-            this.actions.appendChild(this.button('Retry', true, () => {
-                this.uiManager.graph.pivots.invalidate(this.def.id, this.origin())
-                void this.ask(false)
-            }))
-            return
-        }
+        // Failure states its own sentence and its own Retry, on the error line.
+        if (this.phase === 'failed') return
 
         if (Object.keys(this.narrowing).length) {
             this.actions.appendChild(this.button('Clear narrowing', false, () => {
@@ -541,12 +643,13 @@ class PivotEntry {
             }))
         }
 
-        // A pivot with no `summarize` has no count to gate on, so it just runs (S7).
-        const primary = this.def.summarize ? 'Fetch' : 'Run'
-        const busy = this.phase === 'summarizing' || this.phase === 'resummarizing'
-        const fetch = this.button(primary, true, () => void this.fetch())
-        fetch.disabled = busy || this.overCap()
-        this.actions.appendChild(fetch)
+        if (!this.verbInHead()) {
+            const primary = this.def.summarize ? 'Fetch' : 'Run'
+            const busy = this.phase === 'summarizing' || this.phase === 'resummarizing'
+            const fetch = this.button(primary, true, () => void this.fetch())
+            fetch.disabled = busy || this.overCap()
+            this.actions.appendChild(fetch)
+        }
 
         const staged = this.uiManager.graph.pivots.candidates(this.def.id)
         const waiting = staged?.nodes.filter(c => c.state !== 'rejected' && !c.deduped).length ?? 0
@@ -583,8 +686,12 @@ function sameIds(a: Node[], b: Node[]): boolean {
 
 /**
  * A facet as a form field. `boolean` becomes a true/false/unset dropdown for the same
- * reason the filter panel does it — a checkbox has no "unset" — and an option's count
- * rides in its label, which is the only place the widget has for it.
+ * reason the filter panel does it — a checkbox has no "unset".
+ *
+ * A `multiselect` is drawn as a list of checkboxes rather than a picker: its options
+ * *are* the breakdown the summary just reported, so hiding them behind a menu hides
+ * the numbers the analyst is narrowing by. A single-choice `select` stays a dropdown —
+ * one line is all it ever shows.
  */
 function facetToField(facet: PivotFacet): FieldConfig {
     const label = facet.label ?? FormFactory.niceLabelFromKey(facet.key)
@@ -594,13 +701,22 @@ function facetToField(facet: PivotFacet): FieldConfig {
             options: [{ label: 'true', value: 'true' }, { label: 'false', value: 'false' }],
         }
     }
-    const field: FieldConfig = { key: facet.key, label, type: facet.type }
-    if (facet.type === 'select' || facet.type === 'multiselect') {
+    const type = facet.type === 'multiselect' ? 'checkboxes' : facet.type
+    const field: FieldConfig = { key: facet.key, label, type }
+    if (type === 'select' || type === 'checkboxes') {
         field.allowEmpty = true
-        field.options = (facet.options ?? []).map((option): FieldOption => ({
-            label: option.count === undefined ? option.label : `${option.label}  ${fmt(option.count)}`,
-            value: option.value,
-        }))
+        field.options = (facet.options ?? []).map((option): FieldOption => (
+            // A checkbox row has a column for the count; a dropdown's option has only
+            // its label, so that is where the number has to ride.
+            type === 'checkboxes'
+                ? { label: option.label, value: option.value, count: option.count }
+                : {
+                    label: option.count === undefined
+                        ? option.label
+                        : `${option.label}  ${fmt(option.count)}`,
+                    value: option.value,
+                }
+        ))
     }
     return field
 }

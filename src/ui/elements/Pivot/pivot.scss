@@ -339,26 +339,33 @@
 // contextual tool panel (`ToolPanel/toolpanel.scss`), which widens to 300px for this
 // mode, so everything here sizes against that rather than the canvas.
 
+// This mode brings its own scroller, so the tool panel must not also be one: a
+// scrolling parent grows to its content and would never squeeze the list below into
+// scrolling. Declared here rather than in `toolpanel.scss`, which knows nothing about
+// what a registered mode puts in its render slot.
+.pvt-toolpanel-panel:has(> .pvt-pivot-panel) {
+    overflow: hidden;
+}
+
 .pvt-pivot-panel {
     display: flex;
     flex-direction: column;
+    // A flex item of the tool panel, free to shrink so its list can scroll.
+    min-height: 0;
     gap: 8px;
-    padding: 8px 9px 4px;
+    // A rule between the mode's tools above and its workspace below — the same one
+    // that separates Origin from the pivots it applies to.
+    margin-top: 7px;
+    padding: 9px 3px 3px;
+    border-top: 1px solid var(--pvt-chrome-border);
     font-size: 12px;
     color: var(--pvt-text-color-6);
 }
 
-.pvt-pivot-origin {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid var(--pvt-chrome-border);
-}
-
-.pvt-pivot-origin-label {
-    width: 100%;
+// Origin / "N pivots apply" / "Without an origin": the panel's own structure, said
+// the same way each time.
+.pvt-pivot-section {
+    padding: 0 6px;
     font-size: 10px;
     font-weight: 700;
     letter-spacing: 0.06em;
@@ -366,7 +373,28 @@
     color: var(--pvt-text-color-4);
 }
 
+.pvt-pivot-origin {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding-bottom: 9px;
+    border-bottom: 1px solid var(--pvt-chrome-border);
+}
+
+// What is picked is a value the panel is holding, so it sits in the same bordered
+// well as the narrowing fields below rather than reading as another heading.
+.pvt-pivot-origin-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 9px;
+    border: 1px solid var(--pvt-chrome-border);
+    border-radius: 8px;
+    background-color: var(--pvt-bg-color-0);
+}
+
 .pvt-pivot-origin-empty {
+    padding: 0 6px;
     line-height: 1.45;
     color: var(--pvt-text-color-4);
 }
@@ -375,23 +403,35 @@
     display: flex;
     flex: 1;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: 3px 10px;
     min-width: 0;
 }
 
 .pvt-pivot-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
     max-width: 100%;
-    padding: 1px 7px;
-    border-radius: 9px;
-    background-color: color-mix(in srgb, var(--pvt-theme-primary) 15%, transparent);
     color: var(--pvt-text-color-6);
+}
+
+.pvt-pivot-chip-name {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
+// The node's own canvas colour: the chip and the thing it stands for read as one.
+.pvt-pivot-dot {
+    flex: none;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background-color: var(--pvt-text-color-3);
+}
+
 .pvt-pivot-chip-more {
-    background-color: var(--pvt-chrome-border);
     color: var(--pvt-text-color-4);
 }
 
@@ -411,12 +451,17 @@
     }
 }
 
-.pvt-pivot-heading {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--pvt-text-color-4);
+// The one part of the panel that scrolls. `padding-right` keeps an overlay scrollbar
+// off the entry borders; the negative margin gives that back to the layout.
+.pvt-pivot-scroll {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 0;
+    margin-right: -3px;
+    padding-right: 3px;
+    overflow-y: auto;
+    scrollbar-width: thin;
 }
 
 .pvt-pivot-list {
@@ -434,10 +479,15 @@
     border-radius: 9px;
 }
 
+// Name and number on one line. Everything an entry has to say about itself — a count,
+// a declared hint, a fetch in progress, an acknowledgement, or the verb itself — takes
+// the same slot on the label's own row, so an entry with nothing to narrow is one line.
 .pvt-pivot-entry-head {
     display: flex;
     align-items: center;
     gap: 7px;
+    min-height: 20px;
+    font-size: 13px;
     font-weight: 600;
 
     .pvt-pivot-entry-icon {
@@ -452,9 +502,20 @@
     }
 }
 
+.pvt-pivot-entry-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pvt-pivot-status {
+    flex: none;
+    white-space: nowrap;
+}
+
 .pvt-pivot-count {
-    font-size: 15px;
-    font-weight: 600;
     color: var(--pvt-text-color-6);
 
     // A re-summarize keeps the last number on screen rather than blanking it: the
@@ -464,9 +525,24 @@
     }
 }
 
+// The declared potential, and a fetch in flight. Both are weaker claims than a count
+// the source has just answered with, and read as such.
+.pvt-pivot-hint,
+.pvt-pivot-muted {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--pvt-text-color-4);
+}
+
+.pvt-pivot-ingested {
+    font-size: 11px;
+    color: var(--pvt-text-color-success);
+}
+
 // Where the count will be, while the first one is still out.
 .pvt-pivot-skeleton {
-    width: 72px;
+    display: inline-block;
+    width: 54px;
     height: 1em;
     border-radius: 4px;
     background: linear-gradient(90deg,
@@ -495,16 +571,136 @@
     color: var(--pvt-text-color-6);
 }
 
+// One pivot going down never empties the menu, so the sentence and its way out sit
+// inside the entry that failed rather than replacing it.
+.pvt-pivot-error {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--pvt-text-color-4);
+
+    // An author `display` outranks the UA's `[hidden]` rule, so say it here too.
+    &[hidden] {
+        display: none;
+    }
+
+    .pvt-pivot-retry {
+        margin-left: auto;
+        border-color: transparent;
+        color: var(--pvt-theme-primary);
+        font-size: 11px;
+        font-weight: 600;
+    }
+}
+
+// Indeterminate: there is no streaming and no cursor, so a filling bar would be a lie.
+.pvt-pivot-progress {
+    height: 3px;
+    border-radius: 2px;
+    background-color: var(--pvt-chrome-border);
+    overflow: hidden;
+}
+
+.pvt-pivot-progress-bar {
+    display: block;
+    width: 40%;
+    height: 100%;
+    border-radius: 2px;
+    background-color: var(--pvt-theme-primary);
+    animation: pvt-pivot-slide 1.2s ease-in-out infinite;
+}
+
+@keyframes pvt-pivot-slide {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(250%); }
+}
+
+// The narrowing controls. Same anatomy as the filter panel's fields — a bordered
+// well, a picker flattened into it — at this panel's own scale: a facet stack has to
+// sit under a count and a breakdown inside a 300px column, where the filter panel's
+// 34px rows have a sheet to themselves.
 .pvt-pivot-narrowing {
+    &:empty {
+        display: none;
+    }
+
     .pvt-form {
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 8px;
     }
 
-    label {
-        font-size: 11px;
-        color: var(--pvt-text-color-4);
+    .pvt-form .pvt-form-element {
+        // A facet name is a section label, like ORIGIN above it.
+        > label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--pvt-text-color-4);
+        }
+
+        // Min and Max are one control, so they share one row.
+        .pvt-number-range {
+            display: flex;
+            gap: 6px;
+        }
+
+        .pvt-picker__control {
+            background: transparent;
+            border: none;
+        }
+
+        .pvt-picker__chips,
+        .pvt-picker__input-wrap,
+        > input[type],
+        .pvt-number-range > input[type] {
+            box-sizing: border-box;
+            width: 100%;
+            min-height: 28px;
+            padding: 4px 8px;
+            border: 1px solid var(--pvt-chrome-border);
+            border-radius: 7px;
+            background: var(--pvt-bg-color-0);
+            color: var(--pvt-text-color-6);
+            font-family: inherit;
+            font-size: 12px;
+
+            &:focus,
+            &:focus-within {
+                outline: none;
+                border-color: var(--pvt-theme-primary);
+                box-shadow: none;
+            }
+        }
+
+        // The picker's own input is the inside of that well, not a box of its own.
+        .pvt-picker__input {
+            padding: 0;
+            font-size: 12px;
+        }
+
+        // A picker's dropdown opens *into* this column rather than over it. Overlaid,
+        // it is clipped by the list's own scroller — and on a panel that fits exactly
+        // there is no scrolling left to reach what got cut. In the flow it pushes the
+        // list down instead, which the scroller can always follow.
+        //
+        // Closed, it goes out of flow entirely: it is transparent but still laid out,
+        // and an absolutely positioned descendant still counts toward a scroll
+        // container's height, so three invisible options would add a scrollbar to a
+        // list that fits. The cost is its fade-in, from behind a closed control.
+        .pvt-picker__dropdown {
+            &:not(.open) {
+                display: none;
+            }
+
+            &.open {
+                position: static;
+                margin-top: 4px;
+            }
+        }
     }
 }
 
@@ -513,11 +709,11 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 6px;
-}
 
-.pvt-pivot-progress {
-    flex: 1;
-    color: var(--pvt-text-color-4);
+    // An entry whose verb sits in its head row has nothing left down here.
+    &:empty {
+        display: none;
+    }
 }
 
 .pvt-pivot-button {
@@ -565,6 +761,7 @@
 .pvt-pivot-originless {
     summary {
         cursor: pointer;
+        padding: 0 6px;
         font-size: 10px;
         font-weight: 700;
         letter-spacing: 0.06em;

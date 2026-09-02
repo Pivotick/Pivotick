@@ -230,6 +230,14 @@ Narrowing uses every facet type the query engine knows except `regex`, which no 
 be asked to evaluate: `text`, `select`, `multiselect`, `numberRange`, `boolean`. Regex lives
 in the triage pane's own client-side filters, where the rows are already in hand.
 
+A `multiselect` is drawn as a list of checkboxes with every option and its `count` on screen,
+so the numbers you are narrowing by stay visible while you narrow. A single-choice `select`
+stays a dropdown and carries its counts in the option labels.
+
+Under the total, the panel prints what it is made of, taken from the first `multiselect`
+facet: those options partition the result. A single-choice facet's counts are alternatives
+rather than parts, so they are not summed there.
+
 ## Counts are advisory. Always.
 
 `summarize` returns a claim, not a contract. It legitimately differs from what ingest lands.
