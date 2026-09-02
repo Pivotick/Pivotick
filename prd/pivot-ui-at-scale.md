@@ -2,9 +2,9 @@
 
 **Status:** measured 2026-09-01; findings **1**, **2**, **4** and **5** were built
 2026-09-02 and are marked below. Finding **3** is withdrawn. Findings **6**, **7**
-and **8** are open, and finding 8 got worse. The measurements are left exactly as taken, so every number
-here describes the panel *before* the search-plus-tray rework, not the one in the
-code now.
+and **8** are open, and finding 8 got worse. The measurements are left exactly as
+taken, so every number here describes the panel *before* the search-plus-tray
+rework, not the one in the code now.
 
 Observations only when written: nothing was decided here, and no library code was
 changed to produce the measurements.
@@ -231,7 +231,7 @@ there is nothing to split, and #3 above is not a defect a real deployment has.
 | 2 | Selection tray, which retired the facet rather than capping it | **shipped** `e0e6f97` `8809640` |
 | 3 | Nothing separates a provider that cannot work | *withdrawn* |
 | 4 | One-line rows for the no-summarize case | **shipped** `c8d95e8` |
-| 5 | Child count on container triage rows, and a way inside | **shipped** `47b4058` `1b6aee9` |
+| 5 | Child count on container triage rows, and a way inside | **shipped** `47b4058` `0e28ee9` |
 | 6 | Partial applicability across a mixed origin | **open** |
 | 7 | An aggregate "enrichments available" badge | **open** |
 | 8 | One dock tab per run | **open** |
