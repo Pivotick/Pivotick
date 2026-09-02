@@ -32,6 +32,13 @@
     color: var(--pvt-text-color-4);
 }
 
+// The ways out of a state, side by side: the box itself is a column, so two buttons
+// left as its own children would stack.
+.pvt-triage-state-actions {
+    display: flex;
+    gap: 6px;
+}
+
 .pvt-triage-error .pvt-triage-state-title,
 .pvt-triage-refused .pvt-triage-state-title {
     color: var(--pvt-theme-danger);

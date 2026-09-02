@@ -113,6 +113,23 @@ test.describe('pivot triage pane', () => {
         await expect(headline(page)).toContainText('210 fetched')
     })
 
+    test('a failed fetch can be given up on as well as retried', async ({ page }) => {
+        await load(page)
+        await harness(page, 'pivotSummarize', AIL, ['a'], { type: ['url'] })
+        await harness(page, 'setPivotFail', true)
+        await harness(page, 'runPivot', AIL, ['a'], { type: ['url'] })
+        await expect(stateBox(page)).toContainText("Couldn't fetch candidates.")
+
+        // Beside Retry, since giving up is an answer to a failed fetch and the toolbar
+        // should not be the only place holding it.
+        await button(stateBox(page), 'Close').click()
+
+        await expect(pane(page)).toHaveCount(0)
+        expect(await harness(page, 'dockTabIds')).toEqual(['table'])
+        // Nothing was staged, so there is nothing for it to have rejected either.
+        expect(await harness(page, 'rejectedPivotIds', AIL)).toEqual([])
+    })
+
     test('a ceiling refusal states the number, the limit and the way forward', async ({ page }) => {
         await load(page)
 

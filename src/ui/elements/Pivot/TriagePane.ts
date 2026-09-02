@@ -28,6 +28,13 @@ interface SortState {
     direction: 'asc' | 'desc'
 }
 
+/** A way out of one of the pane's states. The first is the primary; the rest are ghosts. */
+interface StateAction {
+    label: string
+    run: () => void
+    ghost?: boolean
+}
+
 /** Which of the pane's two tables a row belongs to. A range never crosses them. */
 type RowSection = 'nodes' | 'edges'
 
@@ -198,12 +205,18 @@ export class TriagePane {
 
         if (set.loading) return this.state('loading', 'Fetching candidates…', {
             sub: 'Nothing is on the canvas yet — candidates are staged, not merged.',
-            action: { label: 'Cancel', run: () => this.deps.pivots.cancelFetch(this.pivotId) },
+            actions: [{ label: 'Cancel', run: () => this.deps.pivots.cancelFetch(this.pivotId) }],
         })
 
         if (set.error) return this.state('error', 'Couldn\'t fetch candidates.', {
             sub: 'Nothing was staged. Retrying runs the same request with the narrowing you already chose.',
-            action: { label: 'Retry', run: () => this.deps.rerun(set) },
+            actions: [
+                { label: 'Retry', run: () => this.deps.rerun(set) },
+                // Giving up is an answer to a failed fetch, and it needs to be here
+                // rather than only in the toolbar. Nothing was staged, so it rejects
+                // nothing either way.
+                { label: 'Close', run: () => this.deps.close(this.pivotId), ghost: true },
+            ],
         })
 
         if (set.refused) {
@@ -211,7 +224,7 @@ export class TriagePane {
                 `The source returned ${fmt(set.refused.count)} candidates, over the ${fmt(set.refused.limit)} limit.`,
                 {
                     sub: 'Nothing was staged — narrow and run again.',
-                    action: { label: 'Dismiss', run: () => this.deps.close(this.pivotId) },
+                    actions: [{ label: 'Dismiss', run: () => this.deps.close(this.pivotId) }],
                 })
         }
 
@@ -249,7 +262,7 @@ export class TriagePane {
         if (set.fetched === 0) {
             return this.state('empty', 'No candidates came back', {
                 sub: 'The narrowing may be tighter than the data.',
-                action: { label: 'Close', run: () => this.deps.close(this.pivotId) },
+                actions: [{ label: 'Close', run: () => this.deps.close(this.pivotId) }],
             })
         }
 
@@ -259,7 +272,7 @@ export class TriagePane {
             // Their data was left untouched — a normal outcome, not a failed run (D23).
             return this.state('done', `All ${fmt(set.fetched)} are already on the canvas — nothing to triage`, {
                 sub: 'Nothing was changed: an id already here is left exactly as it was.',
-                action: { label: 'Close', run: () => this.deps.close(this.pivotId) },
+                actions: [{ label: 'Close', run: () => this.deps.close(this.pivotId) }],
             })
         }
 
@@ -269,26 +282,32 @@ export class TriagePane {
         if (set.deduped) tally.push(`${fmt(set.deduped)} already on canvas`)
         return this.state('done', 'Nothing left to triage', {
             sub: tally.join(' · '),
-            action: { label: 'Close', run: () => this.deps.close(this.pivotId) },
+            actions: [{ label: 'Close', run: () => this.deps.close(this.pivotId) }],
         })
     }
 
     private state(
         kind: string,
         title: string,
-        extra: { sub?: string, action?: { label: string, run: () => void } },
+        extra: { sub?: string, actions?: StateAction[] },
     ): void {
         const box = document.createElement('div')
         box.className = `pvt-triage-state pvt-triage-${kind}`
         box.appendChild(text('div', title, 'pvt-triage-state-title'))
         if (extra.sub) box.appendChild(text('div', extra.sub, 'pvt-triage-state-sub'))
-        if (extra.action) {
-            const button = document.createElement('button')
-            button.type = 'button'
-            button.className = 'pvt-triage-btn'
-            button.textContent = extra.action.label
-            button.addEventListener('click', extra.action.run)
-            box.appendChild(button)
+
+        if (extra.actions?.length) {
+            const row = document.createElement('div')
+            row.className = 'pvt-triage-state-actions'
+            for (const action of extra.actions) {
+                const button = document.createElement('button')
+                button.type = 'button'
+                button.className = `pvt-triage-btn${action.ghost ? ' pvt-triage-ghost' : ''}`
+                button.textContent = action.label
+                button.addEventListener('click', action.run)
+                row.appendChild(button)
+            }
+            box.appendChild(row)
         }
         this.root.appendChild(box)
     }
