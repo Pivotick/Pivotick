@@ -10,9 +10,12 @@ one: a cheap call that says what is out there, and an expensive call that only e
 a number the analyst agreed to.
 
 ::: tip Vocabulary, used consistently everywhere below
-**pivot** is the runnable enrichment · **provider** is the two functions you supply ·
-**candidates** are fetched results, not yet in the graph · **ingest** commits chosen
-candidates · **reject** is an explicit act, remembered · **source** is provenance.
+- **pivot**: the runnable enrichment
+- **provider**: the two functions you supply
+- **candidates**: fetched results, not yet in the graph
+- **ingest**: committing the chosen candidates into the graph
+- **reject**: an explicit dismissal, remembered for the session
+- **source**: the provenance tag written on everything a pivot lands
 :::
 
 See it working: [Pivot & enrich](/examples/gallery/pivot-enrichment/content) for the
