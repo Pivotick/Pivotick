@@ -60,6 +60,12 @@ all remaining** dispose of rows explicitly, and both are remembered for the sess
 asks again with the same narrowing, and offers *Show new* / *Keep triaging* if you have rows
 marked.
 
+A provider that returns containers gets a **Children** column, counting what each row
+carries directly, and a caret at the start of the row opens it: the row lists what is
+inside, with each child's shared attributes and a note where a child is a container itself.
+Opening a row is not marking it, and nothing inside can be picked on its own — ingesting the
+row takes the whole container.
+
 **6 · Ingest, and undo if it was wrong.** **Ingest selected (12)** commits exactly those
 twelve, placed around the node you pivoted from and tagged with the pivot as their source.
 The toast reads `Ingested 12 nodes, 14 edges` and carries **Undo**, which takes the whole

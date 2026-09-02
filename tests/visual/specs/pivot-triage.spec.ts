@@ -28,6 +28,8 @@ const paneTabs = (page: Page): Locator => page.locator('.pvt-dock-tab')
 
 const row = (page: Page, id: string): Locator => page.locator(`.pvt-triage-row[data-candidate="${id}"]`)
 const childCell = (page: Page, id: string): Locator => row(page, id).locator('[data-column="pvt:children"]')
+const childToggle = (page: Page, id: string): Locator => row(page, id).locator('.pvt-triage-caret')
+const childPanel = (page: Page): Locator => page.locator('.pvt-triage-children')
 const tick = (page: Page, id: string): Locator => row(page, id).locator('input[type="checkbox"]')
 
 /** Mark a row the way the pane offers it: the whole row is the hit target. */
@@ -413,6 +415,50 @@ test.describe('pivot triage pane', () => {
         await button(footer(page), 'Ingest selected').click()
         await expect(toast(page)).toContainText('Ingested')
         expect(await harness(page, 'childIds', 'event-a')).toHaveLength(12)
+    })
+
+    test('a container opens to show what it holds, and opening is not wanting it', async ({ page }) => {
+        await load(page, {
+            pivots: ['union-children'],
+            // Nothing has ingested this container, so it stages as a new candidate —
+            // and one of its children is a container in its own right.
+            union: {
+                parent: 'objects-5f2a',
+                children: ['attr-0', 'attr-1', { id: 'attr-2', children: ['sub-0', 'sub-1'] }],
+            },
+        })
+
+        await harness(page, 'runPivot', 'union-children', ['a'])
+        await rows(page).first().waitFor()
+        await expect(childCell(page, 'objects-5f2a')).toHaveText('3')
+
+        await childToggle(page, 'objects-5f2a').click()
+
+        // Each child by name, the keys they share, and the level the count never reached.
+        await expect(childPanel(page)).toContainText('3 children — ingesting this row takes all of them.')
+        await expect(childPanel(page).locator('.pvt-triage-childrow')).toHaveCount(3)
+        await expect(childPanel(page)).toContainText('attr-2')
+        await expect(childPanel(page)).toContainText('+2 inside')
+
+        // The row is the mark target, so the guard that matters is this one: a click
+        // meaning "let me look" left no verdict behind.
+        expect(await markedIds(page, 'union-children')).toEqual([])
+        await expect(row(page, 'objects-5f2a')).not.toHaveClass(/pvt-triage-row-marked/)
+
+        // The caret is a hole in a hit target, so the rest of the row has to still be
+        // one. This is the click that broke when the caret sat on the count instead:
+        // with one data column, the row's centre landed on it.
+        await markRow(page, 'objects-5f2a')
+        expect(await markedIds(page, 'union-children')).toEqual(['objects-5f2a'])
+        await markRow(page, 'objects-5f2a')
+
+        // Open is the pane's own state, so a sort redraws the table with it still open.
+        await page.locator('.pvt-triage-th-label[data-column="pvt:candidate"]').click()
+        await expect(childPanel(page).locator('.pvt-triage-childrow')).toHaveCount(3)
+
+        await childToggle(page, 'objects-5f2a').click()
+        await expect(childPanel(page)).toHaveCount(0)
+        expect(await markedIds(page, 'union-children')).toEqual([])
     })
 
     test('a set of flat candidates grows no Children column', async ({ page }) => {

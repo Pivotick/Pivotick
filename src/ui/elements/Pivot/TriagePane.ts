@@ -23,8 +23,14 @@ const NAME_COLUMN = 'pvt:candidate'
  */
 const CHILDREN_COLUMN = 'pvt:children'
 
-/** A count column earns room for its digits and no more. */
-const COUNT_WIDTH = '80px'
+/** The dock's own count columns, so a range filter has room for both its inputs. */
+const COUNT_WIDTH = '96px'
+
+/** How many of a container's children the opened panel draws before it says "more". */
+const CHILDREN_SHOWN = 200
+
+/** How many of the children's own data keys the panel shows beside each label. */
+const CHILD_DATA_KEYS = 3
 
 /** The track a column gets when it does not ask for a width. */
 const DEFAULT_TRACK = 'minmax(110px, 1fr)'
@@ -34,6 +40,12 @@ const fmt = (value: number): string => value.toLocaleString()
 /** One column of the candidate table: what to call it, and how to read it off a row. */
 interface TriageColumn<T> extends FilterableColumn {
     read: (row: T) => unknown
+    /**
+     * Draw the cell's contents instead of the text of `read`. Sorting, filtering and
+     * the search box all keep reading `read`, so a rendered cell is never a cell that
+     * cannot be narrowed.
+     */
+    render?: (row: T) => HTMLElement | undefined
     /** A grid track for this column. @default {@link DEFAULT_TRACK} */
     width?: string
     /** Cell alignment, declared as the dock's columns declare it. */
@@ -111,6 +123,8 @@ export class TriagePane {
     private pageRows: PivotCandidate[] = []
     /** Whether the "rejected earlier" list is open — C5's inspectable suppression. */
     private showSuppressed = false
+    /** Containers showing what they hold. Survives a sort, a filter and a page turn. */
+    private readonly expanded = new Set<string>()
     /** Live only while the tab is on show: a hidden pane rebuilding is invisible work. */
     private active = false
     private dirty = true
@@ -438,18 +452,20 @@ export class TriagePane {
      * over each column is the one its values ask for.
      */
     private nodeColumns(): TriageColumn<PivotCandidate>[] {
+        const containers = this.set.nodes.some(row => childCount(row.raw) > 0)
         const columns: TriageColumn<PivotCandidate>[] = [{
             key: NAME_COLUMN,
             label: 'Candidate',
             type: 'text',
             read: row => row.raw.data?.label ?? row.id,
+            render: containers ? row => this.nameCell(row) : undefined,
         }]
 
         // A container's size belongs beside its name, not after five discovered data
         // columns: one MISP object stages 58 attributes under a single row, and how many
         // there are is most of the decision to ingest it. Only when the set holds a
         // container at all, or the column is zeros — the rule the dock's column follows.
-        if (this.set.nodes.some(row => childCount(row.raw) > 0)) {
+        if (containers) {
             columns.push({
                 key: CHILDREN_COLUMN,
                 label: 'Children',
@@ -548,7 +564,10 @@ export class TriagePane {
         grid.style.setProperty('--pvt-triage-columns', track(columns))
 
         grid.appendChild(this.head(columns))
-        for (const row of rows) grid.appendChild(this.row(row, columns))
+        for (const row of rows) {
+            grid.appendChild(this.row(row, columns))
+            if (this.expanded.has(row.id)) grid.appendChild(this.childrenPanel(row))
+        }
         return grid
     }
 
@@ -616,6 +635,101 @@ export class TriagePane {
             this.paintState(candidate, state)
         })
         return row
+    }
+
+    /**
+     * The name, behind a caret where the row is a container.
+     *
+     * The caret is a hole in a hit target — the whole row marks — so where it sits is
+     * the decision. At the leading edge it is always in the same place, next to the tick
+     * box, and the rest of the row is uninterrupted. On the count instead, which is
+     * where this started, it lands wherever the provider's data columns happen to push
+     * it: with one data key that is the middle of the row, which is exactly where a
+     * click means "mark this".
+     */
+    private nameCell(candidate: PivotCandidate): HTMLElement {
+        const cell = text('span', '', 'pvt-triage-name')
+        // A leaf keeps the caret's room, so a column of names does not go ragged.
+        cell.appendChild(childCount(candidate.raw)
+            ? this.childrenToggle(candidate)
+            : text('span', '', 'pvt-triage-caret-slot'))
+        cell.appendChild(text('span', cellText(candidate.raw.data?.label ?? candidate.id)))
+        return cell
+    }
+
+    private childrenToggle(candidate: PivotCandidate): HTMLElement {
+        const toggle = document.createElement('button')
+        toggle.type = 'button'
+        toggle.className = 'pvt-triage-caret'
+        this.paintToggle(toggle, this.expanded.has(candidate.id))
+        toggle.addEventListener('click', event => {
+            // The whole row marks, so a click meaning "let me look" must not also mean
+            // "I want this". Stopping here is what keeps the two gestures apart.
+            event.stopPropagation()
+            const open = !this.expanded.has(candidate.id)
+            if (open) this.expanded.add(candidate.id)
+            else this.expanded.delete(candidate.id)
+            this.paintToggle(toggle, open)
+
+            // Swapped in beside its own row rather than by repainting the table: the
+            // analyst is looking at this row, and a repaint would move it under them.
+            const row = toggle.closest('.pvt-triage-row')
+            const panel = row?.nextElementSibling
+            if (panel?.classList.contains('pvt-triage-children')) panel.remove()
+            if (open && row) row.after(this.childrenPanel(candidate))
+        })
+        return toggle
+    }
+
+    private paintToggle(toggle: HTMLElement, open: boolean): void {
+        toggle.textContent = open ? '▾' : '▸'
+        toggle.setAttribute('aria-expanded', String(open))
+        toggle.title = open ? 'Hide what this row holds' : 'Show what this row holds'
+    }
+
+    /**
+     * What a container holds, drawn as a listing rather than as rows: nothing in here
+     * can be marked, because ingest is per candidate and takes the whole container with
+     * it. Reading like the table above would promise a choice that does not exist.
+     */
+    private childrenPanel(candidate: PivotCandidate): HTMLElement {
+        const children = candidate.raw.children ?? []
+        const panel = document.createElement('div')
+        panel.className = 'pvt-triage-children'
+        panel.dataset.children = candidate.id
+
+        const total = children.length
+        panel.appendChild(text('div',
+            `${fmt(total)} ${total === 1 ? 'child' : 'children'} — ingesting this row takes all of them.`,
+            'pvt-triage-state-sub'))
+
+        const keys = collectDataAttributes(children.map(child => dataOf(child)), ['label'])
+            .sort((a, b) => b.count - a.count)
+            .slice(0, CHILD_DATA_KEYS)
+            .map(attribute => attribute.key)
+
+        const list = document.createElement('div')
+        list.className = 'pvt-triage-childlist'
+        for (const child of children.slice(0, CHILDREN_SHOWN)) {
+            const row = document.createElement('div')
+            row.className = 'pvt-triage-childrow'
+            row.appendChild(text('span', cellText(child.data?.label ?? child.id), 'pvt-triage-childname'))
+
+            for (const key of keys) {
+                const value = cellText(child.data?.[key])
+                if (value) row.appendChild(text('span', `${key}: ${value}`, 'pvt-triage-muted'))
+            }
+            // A child that is itself a container says so, since the row above it counted
+            // only one level and this is where the level below shows up.
+            const nested = childCount(child)
+            if (nested) row.appendChild(text('span', `+${fmt(nested)} inside`, 'pvt-triage-muted'))
+            list.appendChild(row)
+        }
+        if (total > CHILDREN_SHOWN) {
+            list.appendChild(text('div', `…and ${fmt(total - CHILDREN_SHOWN)} more`, 'pvt-triage-muted'))
+        }
+        panel.appendChild(list)
+        return panel
     }
 
     /**
@@ -883,7 +997,11 @@ function track<T>(columns: TriageColumn<T>[]): string {
 
 /** A body cell, carrying whatever its column declared about how to read it. */
 function cellFor<T>(column: TriageColumn<T>, row: T): HTMLElement {
-    const cell = text('span', cellText(column.read(row)), 'pvt-triage-cell')
+    const drawn = column.render?.(row)
+    const cell = drawn
+        ? text('span', '', 'pvt-triage-cell')
+        : text('span', cellText(column.read(row)), 'pvt-triage-cell')
+    if (drawn) cell.appendChild(drawn)
     cell.dataset.column = column.key
     if (column.align) cell.dataset.align = column.align
     return cell

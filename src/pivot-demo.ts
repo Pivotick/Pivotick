@@ -30,6 +30,12 @@ const knobs = {
     fail: 'none' as 'none' | 'summarize' | 'fetch',
     /** What `onBeforeIngest` does with a batch. */
     ingest: 'off' as 'off' | 'veto' | 'halve',
+    /**
+     * Whether the container provider stages instead of auto-ingesting. Staged is the
+     * only way to see a container in the pane, which is where its child count and the
+     * panel under it live.
+     */
+    stageObjects: false,
 }
 
 const aborted = (): DOMException => new DOMException('Aborted', 'AbortError')
@@ -400,7 +406,7 @@ const eventObjects: PivotDefinition = {
     id: 'event-objects',
     label: 'Objects & attributes',
     icon: expand,
-    autoIngest: true,
+    get autoIngest() { return !knobs.stageObjects },
     appliesTo: nodes => nodes.length === 1 && typeOf(nodes[0]) === 'event',
 
     fetch: (nodes, _narrowing, ctx) => answer('fetch', ctx, () => {
@@ -695,6 +701,11 @@ bar.append(
         [['off', 'as asked'], ['veto', 'veto every batch'], ['halve', 'keep every other node']],
         knobs.ingest,
         value => { knobs.ingest = value as typeof knobs.ingest },
+    )),
+    field('Objects', select(
+        [['auto', 'auto-ingest'], ['stage', 'stage for triage']],
+        knobs.stageObjects ? 'stage' : 'auto',
+        value => { knobs.stageObjects = value === 'stage' },
     )),
     field('Ceiling', ceiling),
     button('Undo', 'graph.pivots.undo() — take the last ingested run back out', () => {

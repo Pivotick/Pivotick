@@ -227,6 +227,58 @@
     color: var(--pvt-text-color-4);
 }
 
+// The way into a container, and the one hole in a row that is otherwise all hit target.
+// Kept at the leading edge beside the tick box: a click in the middle of a row means
+// "mark this", and a control that drifts there with the provider's columns is a trap.
+// The slot keeps a leaf's name aligned with a container's.
+.pvt-triage-caret,
+.pvt-triage-caret-slot {
+    display: inline-block;
+    width: 14px;
+}
+
+.pvt-triage-caret {
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--pvt-text-color-4);
+    font: inherit;
+    line-height: 1;
+    cursor: pointer;
+
+    &:hover {
+        color: var(--pvt-theme-primary);
+    }
+}
+
+// What a container holds, opened beneath its own row. Inset and quieter than the table
+// so it reads as a look inside one row, not as more rows: nothing in here can be picked
+// on its own, and looking like a row would offer a choice that does not exist.
+.pvt-triage-children {
+    padding: 6px 10px 6px 36px;
+    border-bottom: 1px solid var(--pvt-chrome-border);
+    background-color: var(--pvt-chrome-bg);
+    font-size: 11px;
+}
+
+.pvt-triage-childlist {
+    max-height: 160px;
+    margin-top: 4px;
+    overflow-y: auto;
+}
+
+.pvt-triage-childrow {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 1px 0;
+    white-space: nowrap;
+}
+
+.pvt-triage-childname {
+    min-width: 140px;
+}
+
 .pvt-triage-cell {
     padding: 3px 8px;
     min-width: 0;

@@ -1,9 +1,8 @@
 # Pivot UI at scale — findings from a real misp-modules backend
 
-**Status:** measured 2026-09-01; findings **1**, **2** and **4** were built
-2026-09-02 (`e0e6f97`, `8809640`, `c8d95e8`, `b54f090`) and are marked below.
-Finding **3** is withdrawn. Findings **5**, **6**, **7** and **8** are open, and
-finding 8 got worse. The measurements are left exactly as taken, so every number
+**Status:** measured 2026-09-01; findings **1**, **2**, **4** and **5** were built
+2026-09-02 and are marked below. Finding **3** is withdrawn. Findings **6**, **7**
+and **8** are open, and finding 8 got worse. The measurements are left exactly as taken, so every number
 here describes the panel *before* the search-plus-tray rework, not the one in the
 code now.
 
@@ -107,7 +106,7 @@ buy back a lot of the 3611px.
 room for a count, drops the narrowing block and the gate line, and reads as one
 row whose primary button says *Run* rather than *Fetch*.
 
-### 5. A 58-child container is one undifferentiated triage row — *open, next*
+### 5. A 58-child container is one undifferentiated triage row — *shipped*
 
 `cve` on CVE-2021-44228 returns one MISP object carrying **58 attributes**. It
 stages as a single row labelled `vulnerability`. `TriagePane` never reads
@@ -117,6 +116,29 @@ before ingesting it. MISP objects are routinely this size.
 A child count in the row, and ideally an expandable row, would make the decision
 an informed one. (The page's `Objects: flattened` knob shows the alternative:
 58 separate rows, which is worse in a different way.)
+
+**Built as both.** A staged set holding a container grows a `Children` column on
+the dock column's terms — direct children, right-aligned, its own narrow track —
+and a caret at the row's leading edge opens a listing of what is inside, each
+child with the keys its siblings share and a note where a child is a container
+itself. The column appears only when something in the set carries children;
+everywhere else it would be a column of zeros, which is the rule the dock's
+column follows.
+
+Two things the shape forced, both learned the hard way:
+
+- **The listing is deliberately not rows.** Ingest is per candidate and takes the
+  whole container, so anything that looked like a markable row would offer a
+  choice that does not exist. It is inset, quieter, and says so in a line: *9
+  children — ingesting this row takes all of them.*
+- **A disclosure inside a row that marks has to sit at an edge.** The first build
+  made the count itself the button, which reads well and was wrong: the count's
+  position depends on how many data columns the provider returned, and with one
+  data key it lands in the middle of the row — where a click means *mark this*. A
+  row click opened the container instead of marking it, and it was a test clicking
+  the row's centre that caught it. The caret is at the leading edge next to the
+  tick box, where its position never moves, and a leaf keeps the caret's room so
+  the names stay aligned.
 
 ### 6. A pivot applies to the whole origin or not at all — *open*
 
@@ -209,14 +231,15 @@ there is nothing to split, and #3 above is not a defect a real deployment has.
 | 2 | Selection tray, which retired the facet rather than capping it | **shipped** `e0e6f97` `8809640` |
 | 3 | Nothing separates a provider that cannot work | *withdrawn* |
 | 4 | One-line rows for the no-summarize case | **shipped** `c8d95e8` |
-| 5 | Child count on container triage rows | **open** — the next one |
+| 5 | Child count on container triage rows, and a way inside | **shipped** `47b4058` `1b6aee9` |
 | 6 | Partial applicability across a mixed origin | **open** |
 | 7 | An aggregate "enrichments available" badge | **open** |
 | 8 | One dock tab per run | **open** |
 
-Finding 5 is next because it is the last cheap one: the child count is already in
-the payload the pane holds, so nothing in the contract has to change to show it.
+Nothing in the contract changed for any of the four: every one of them was a way
+of drawing what the pane already held.
 
-Findings 6 and 7 both want contract additions and should be scoped together — a
-pivot that applies to 3 of 5 selected nodes is also the thing an aggregate rim
-count would have to add up. Finding 8 is a dock question, not a pivot one.
+What is left is not. Findings 6 and 7 both want contract additions and should be
+scoped together — a pivot that applies to 3 of 5 selected nodes is also the thing
+an aggregate rim count would have to add up. Finding 8 is a dock question rather
+than a pivot one, and the tray made it the one an analyst meets first.
