@@ -587,6 +587,23 @@
     border-color: var(--pvt-theme-primary);
 }
 
+// A filled Run on every entry is right when there are four of them and the verb is
+// the point. At forty it is a column of solid colour with no hierarchy left in it,
+// so in bulk mode the per-entry verb steps back to an outline and fills in under the
+// pointer. The tray's Run keeps its weight: there it is the primary action.
+.pvt-pivot-bulk .pvt-pivot-entry .pvt-pivot-button-primary {
+    border-color: var(--pvt-chrome-border);
+    background-color: transparent;
+    color: var(--pvt-theme-primary);
+
+    &:hover:not(:disabled),
+    &:focus-visible {
+        border-color: var(--pvt-theme-primary);
+        background-color: var(--pvt-bg-color-primary);
+        color: var(--pvt-text-color-for-primary);
+    }
+}
+
 // ── the run tray ────────────────────────────────────────────────────────────────
 // Outside the scroller: what is selected must not scroll away from the button that
 // runs it.

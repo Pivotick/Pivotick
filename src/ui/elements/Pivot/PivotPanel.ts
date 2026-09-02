@@ -422,7 +422,11 @@ export class PivotPanel {
 
         if (!this.origin.length) {
             const empty = el('div', 'pvt-pivot-origin-empty')
-            empty.textContent = 'Nothing picked — click a node on the canvas, or run one of the pivots below'
+            // Only offer what is actually there: with no origin-less pivots registered,
+            // the list below is empty and pointing at it is a dead end.
+            empty.textContent = this.uiManager.graph.pivots.for([]).length
+                ? 'Nothing picked — click a node on the canvas, or run one of the pivots below'
+                : 'Nothing picked — click a node on the canvas to see what can be run on it'
             this.originBlock.appendChild(empty)
             return
         }

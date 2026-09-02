@@ -617,70 +617,15 @@ function pivotFor(module: MispModule): PivotDefinition {
     }
 }
 
-/** Which modules could run against this origin at all. */
-const applicableTo = (nodes: Node[]): MispModule[] => {
-    if (!nodes.length) return []
-    const types = nodes.map(typeOf)
-    return catalogue.expansion.filter(module => {
-        const accepted = inputsOf(module)
-        return types.every(type => accepted.includes(type))
-    })
-}
-
 /**
- * Everything applicable at once, narrowed by which modules to ask.
+ * There is deliberately no "run everything" pivot here any more.
  *
- * The one place this page bends the contract, deliberately: `total` counts the
- * *module queries* a run would fire, not the candidates it would return, because
- * no module will say how many candidates it has. Read that way the cap is still
- * exactly what a cap is for — it stops a click from firing forty requests at a
- * live service — and the facet it forces you through is a checkbox list a hundred
- * options long, which is the narrowing control under the load this page is about.
+ * There used to be: one pivot whose narrowing facet was a checkbox list of every
+ * applicable module, because running several at once had nowhere else to live. The
+ * panel now holds that itself — tick the providers, run the tray — so the meta-pivot
+ * was a second way to do the same thing, and the louder of the two: its facet alone
+ * stood taller than the panel and pushed every real provider below the fold.
  */
-const enrichAll: PivotDefinition = {
-    id: 'misp:enrich-all',
-    label: 'Enrich (all applicable)',
-    icon: sparkles,
-    maxCandidates: 8,
-    appliesTo: nodes => applicableTo(nodes).length > 0,
-
-    summarize: (nodes, narrowing) => {
-        const applicable = applicableTo(nodes)
-        const chosen = asList(narrowing.modules)
-        const selected = chosen.length ? applicable.filter(module => chosen.includes(module.name)) : applicable
-        return {
-            total: selected.length,
-            facets: [{
-                key: 'modules',
-                label: 'Modules to query',
-                type: 'multiselect',
-                options: applicable.map(module => ({
-                    label: module.meta.name?.trim() || module.name,
-                    value: module.name,
-                })),
-            }],
-        }
-    },
-
-    fetch: async (nodes, narrowing, ctx) => {
-        const applicable = applicableTo(nodes)
-        const chosen = asList(narrowing.modules)
-        const selected = applicable.filter(module => chosen.includes(module.name))
-        const fragments = await pooled(selected, CONCURRENCY, async module => {
-            try {
-                return await runModule(module, nodes, ctx)
-            } catch (error) {
-                if (ctx.signal.aborted) throw error
-                // A module that wants an API key must not take the other seven with it.
-                return { nodes: [], edges: [] } as PivotResult
-            }
-        })
-        return {
-            nodes: fragments.flatMap(fragment => fragment.nodes),
-            edges: fragments.flatMap(fragment => fragment.edges),
-        }
-    },
-}
 
 /* --------------------------------------------------------------------- boot */
 
@@ -708,7 +653,7 @@ async function main(): Promise<void> {
 
     // Registered up front rather than after the first paint, so the rail button and
     // every rim badge are already right when the graph first draws.
-    const pivots = [enrichAll, ...catalogue.expansion.map(pivotFor)]
+    const pivots = catalogue.expansion.map(pivotFor)
 
     const graph = new Pivotick(
         app,
@@ -752,13 +697,10 @@ async function main(): Promise<void> {
 
     window.pivotick = graph
 
-    // A real declared potential for once: how many of the catalogue's modules accept
-    // this node's type. Nothing was queried to know it — it is read off the modules'
-    // own `input` lists, which is exactly what a declared hint is meant to be.
-    for (const node of graph.getMutableNodes()) {
-        const n = applicableTo([node]).length
-        if (n) node.setPotential('misp:enrich-all', n)
-    }
+    // No rim badges here. `setPotential` is keyed per pivot, and the number worth
+    // showing on a node — how many of the catalogue's modules accept its type — belongs
+    // to no single one of them. It hung off the "run everything" pivot while that
+    // existed; with it gone there is nothing honest to hang it on.
 
     buildToolbar(graph)
 }
@@ -804,8 +746,7 @@ function buildToolbar(graph: Pivotick): void {
     const registered = new Map<string, () => void>()
 
     /**
-     * Re-register under the "which modules" knob. Only the per-module pivots move;
-     * `enrich-all` reads the catalogue itself and stays.
+     * Re-register under the "which modules" knob.
      */
     const setScope = (scope: string): void => {
         for (const off of registered.values()) off()
