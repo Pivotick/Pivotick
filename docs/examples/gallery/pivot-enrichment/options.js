@@ -19,8 +19,8 @@ const data = {
 // #region options
 // A **pivot** is a runnable enrichment: two functions and some metadata. `summarize`
 // says cheaply what is out there, and its facets become the narrowing controls; `fetch`
-// goes and gets it. What comes back are *candidates* — staged in the dock for triage,
-// never on the canvas — until someone ingests them.
+// goes and gets it. What comes back are *candidates*, staged in the dock for triage and
+// never on the canvas, until someone ingests them.
 //
 // The whole point is the node with 2,143 correlations. Fetching all of them would ruin
 // the graph, so the pivot advertises the count, declares a cap it refuses to fetch past,
@@ -34,7 +34,7 @@ const BY_TYPE = [
     { value: 'ip', label: 'IPs', count: 38 },
 ]
 
-/** The types a narrowing chose — all of them when it chose none. */
+/** The types a narrowing chose, or all of them when it chose none. */
 const chosen = (narrowing) => {
     const picked = Array.isArray(narrowing.type) ? narrowing.type.map(String) : []
     return picked.length ? BY_TYPE.filter((t) => picked.includes(t.value)) : BY_TYPE
@@ -43,7 +43,7 @@ const chosen = (narrowing) => {
 const correlations = {
     id: 'correlations',
     label: 'Correlations',
-    // Nothing correlates with an event, so the entry is absent for one — never greyed.
+    // Nothing correlates with an event, so the entry is absent for one.
     appliesTo: (nodes) => nodes.every((node) => node.getData()?.type !== 'event'),
 
     // Runs when Pivot mode is entered, and again whenever the origin or the narrowing
@@ -106,9 +106,8 @@ const options = {
     UI: {
         mode: 'full',
         sidebar: { collapsed: true },
-        // The dock is where triage happens, but it starts folded: the panel is the
-        // subject, and a staged set unfolds the dock by itself when it arrives. The
-        // minimap would only take a corner this card has no use for.
+        // Triage happens in the dock, which starts folded: a staged set unfolds it
+        // by itself when it arrives.
         minimap: false,
         table: { open: false },
     },
@@ -125,7 +124,7 @@ const options = {
 // #endregion options
 
 // Declared potential: a hint on the rim, put there by whoever loaded the data. Never a
-// queried count — the library will not call a provider just to draw a badge.
+// queried count, because the library will not call a provider just to draw a badge.
 function onLoaded(graph) {
     graph.getMutableNode('paste-9f21')?.setPotential('correlations', 2143)
     graph.renderer.update()

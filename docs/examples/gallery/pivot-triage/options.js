@@ -1,10 +1,10 @@
 // #region data
 // One case and the three indicators already attached to it. Everything else in this card
-// arrives through a pivot — and most of it gets thrown away again, which is the point.
+// arrives through a pivot, and most of it gets thrown away again.
 const data = {
     nodes: [
-        // Declared first because it is the one to pivot from — the case node is excluded
-        // by every `appliesTo` below, so an origin of `Case 77` finds nothing to offer.
+        // Declared first because it is the one to pivot from. Every `appliesTo` below
+        // excludes the case node, so an origin of `Case 77` finds nothing to offer.
         { id: 'mail.example', data: { label: 'mail.example', type: 'domain' } },
         { id: 'case-77', data: { label: 'Case 77', type: 'case' } },
         { id: '203.0.113.9', data: { label: '203.0.113.9', type: 'ip' } },
@@ -24,9 +24,9 @@ const data = {
 // provider that fails is a state you can recover from rather than a dead end.
 
 /**
- * Stable ids are not a detail here. A rejection is remembered as (pivot, candidate id),
- * so a provider that renumbers its results on every call can never be usefully rejected —
- * the same row comes back wearing a new id and the memory has nothing to match.
+ * Stable ids matter here. A rejection is remembered as (pivot, candidate id), so a
+ * provider that renumbers its results on every call can never be usefully rejected:
+ * the same row comes back wearing a new id, and the memory has nothing to match.
  */
 const indicators = (count, prefix, type) =>
     Array.from({ length: count }, (_, i) => ({
@@ -40,8 +40,8 @@ const fanOut = (nodes, found, fallback) => {
     return { nodes: found, edges: found.map((node) => ({ from: origin, to: node.id })) }
 }
 
-// 1 — the reliable one. Forty candidates, the same forty every time, so rejecting five
-// and running again actually demonstrates something.
+// 1. The reliable one. Forty candidates, the same forty every time, so rejecting five
+// and running again demonstrates something.
 const correlations = {
     id: 'correlations',
     label: 'Correlations',
@@ -51,12 +51,12 @@ const correlations = {
     fetch: (nodes) => fanOut(nodes, indicators(40, 'ind', 'indicator'), 'mail.example'),
 }
 
-// Both providers below fail on their first call and work on every one after it. Nothing
-// random: a card that promises a failure has to be able to deliver it on demand.
+// Both providers below fail on their first call and work on every one after it. The
+// failure is deterministic so the card can promise it.
 let feedCalls = 0
 let reputationCalls = 0
 
-// 2 — the fetch fails. `summarize` is fine, so the entry looks healthy and the failure
+// 2. The fetch fails. `summarize` is fine, so the entry looks healthy and the failure
 // only appears once you commit to the expensive call: the pane's own error state.
 const feed = {
     id: 'feed',
@@ -69,8 +69,8 @@ const feed = {
     },
 }
 
-// 3 — the summary fails. This one is broken before you touch it, so its entry carries
-// the error the moment the mode opens. Retry re-asks; nothing else on the panel cares.
+// 3. The summary fails. This one is broken before you touch it, so its entry carries the
+// error the moment the mode opens. Retry re-asks, and nothing else on the panel cares.
 const reputation = {
     id: 'reputation',
     label: 'Reputation lookup',
@@ -87,8 +87,8 @@ const options = {
     UI: {
         mode: 'full',
         sidebar: { collapsed: true },
-        // The dock is the subject of this card, but it still starts folded — a staged
-        // set unfolds it by itself, which is worth seeing happen.
+        // The dock is the subject of this card, but it still starts folded: a staged
+        // set unfolds it by itself.
         minimap: false,
         table: { open: false },
     },

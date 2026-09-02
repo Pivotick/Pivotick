@@ -1,66 +1,65 @@
 # Pivots & enrichment
 
 A **pivot** is a runnable enrichment: "show me what else the source has about this". You
-declare it, the library runs it, stages the results for triage and — once the analyst
-says so — commits them into the graph with provenance on every element.
+declare it, the library runs it, stages the results for triage, and commits them into the
+graph with provenance on every element once the analyst says so.
 
-The problem it exists to solve is that the interesting node usually has too many
-connections. A MISP attribute can correlate with thousands of others; an AIL paste with
-more. So a pivot is deliberately **two calls, not one**: a cheap one that says what is out
-there, and an expensive one that only ever runs on a number the analyst agreed to.
+The problem it solves is that the interesting node usually has too many connections. A
+single indicator can be related to thousands of others. So a pivot is two calls rather than
+one: a cheap call that says what is out there, and an expensive call that only ever runs on
+a number the analyst agreed to.
 
 ::: tip Vocabulary, used consistently everywhere below
-**pivot** — the runnable enrichment · **provider** — the two functions you supply ·
-**candidates** — fetched results, not yet in the graph · **ingest** — commit chosen
-candidates · **reject** — an explicit act, remembered · **source** — provenance.
+**pivot** is the runnable enrichment · **provider** is the two functions you supply ·
+**candidates** are fetched results, not yet in the graph · **ingest** commits chosen
+candidates · **reject** is an explicit act, remembered · **source** is provenance.
 :::
 
-See it working: the [Pivot & enrich](/examples/gallery/pivot-enrichment/content) gallery
-card.
+See it working: [Pivot & enrich](/examples/gallery/pivot-enrichment/content) for the
+narrowing flow, and [Reject & retry](/examples/gallery/pivot-triage/content) for triage
+and failure states.
 
 ## Using one
 
-Everything below [Registering one](#registering-one) is written for whoever wires a pivot
-up. This section is the other half — what an analyst does with one, in order, and what each
-step costs a backend.
+Everything from [Registering one](#registering-one) onwards is written for whoever wires a
+pivot up. This section is the other half: what an analyst does with one, in order, and what
+each step costs a backend.
 
 **1 · Enter Pivot mode.** Press <kbd>P</kbd>, or click the **Pivot** slot on the left rail.
 The slot only exists while at least one pivot is registered. Nothing has been asked of any
-backend yet, and selecting nodes while the mode is closed asks nothing either — box-selecting
-fifty nodes to drag them must not fire fifty count queries.
+backend yet, and selecting nodes while the mode is closed asks nothing either. Box-selecting
+fifty nodes to drag them should not fire fifty count queries.
 
 **2 · Pick an origin.** The origin is the node set the question is about. *Pick origin* is
-the resting tool, so a plain click sets it; *Lasso origin* draws around several. Whatever was
-already selected when you entered the mode **is** the origin, so arriving with a selection
-just works, and **Clear** empties it. An empty origin is not a dead end: pivots declared
-`origin: 'none'` — search, import, paste a list of indicators — are exactly the ones that
-apply when nothing is picked.
+the resting tool, so a plain click sets it. *Lasso origin* draws around several. Whatever
+was already selected when you entered the mode becomes the origin, and **Clear** empties it.
+An empty origin still has uses: pivots declared `origin: 'none'` are the ones that apply
+when nothing is picked.
 
-**3 · Read what applies.** Entering the mode is the *intent* that runs `summarize`, once per
-applicable pivot, batched into one call for a multi-node origin. Each entry shows what its
-provider claims is out there — `~2,143` — and the tilde is load-bearing: it marks a number
-the provider asserted rather than one the library counted. A pivot with no `summarize` shows
-a bare **Run**. If nothing applies, the panel says so rather than showing an empty list.
+**3 · Read what applies.** Entering the mode is the intent that runs `summarize`, once per
+applicable pivot, batched into a single call for a multi-node origin. Each entry shows what
+its provider claims is out there, written as `~2,143`. The tilde marks a number the provider
+asserted rather than one the library counted. A pivot with no `summarize` shows a bare
+**Run** instead. If nothing applies, the panel says so rather than showing an empty list.
 
-**4 · Narrow until the gate opens.** A pivot that declares `maxCandidates` puts **Fetch** out
-of reach while the count exceeds it, and says the number, the limit and the way forward.
-Ticking a narrowing control re-asks `summarize` with that choice, so 2,143 becomes 210 and
-**Fetch** turns on by itself. **Clear narrowing** starts over. This is the negotiation the
-whole feature exists for: you never fetch two thousand rows to find out you wanted twelve.
+**4 · Narrow until the gate opens.** A pivot that declares `maxCandidates` keeps **Fetch**
+out of reach while the count exceeds it, and states the number, the limit and the way
+forward. Ticking a narrowing control re-asks `summarize` with that choice, so 2,143 becomes
+210 and **Fetch** turns on by itself. **Clear narrowing** starts over.
 
-**5 · Triage what came back.** Results do **not** touch the graph. They open a pane in the
-bottom dock — one tab per pivot, coexisting — where *Search rows…* filters (with a regex
-toggle), the columns sort, and marking rows is how you choose. *Select all n matching*
-respects the filter, so narrow-then-select-all is one gesture. **Reject selected** and
-**Reject all remaining** dispose of rows explicitly and are remembered for the session;
+**5 · Triage what came back.** Results do not touch the graph. They open a pane in the
+bottom dock, one tab per pivot, where *Search rows…* filters (with a regex toggle), the
+columns sort, and marking rows is how you choose. *Select all n matching* respects the
+current filter, so narrow-then-select-all is one gesture. **Reject selected** and **Reject
+all remaining** dispose of rows explicitly, and both are remembered for the session.
 **Close** rejects nothing, so anything you never ruled on comes back next time. **Re-run**
-asks again with the same narrowing — and if you have rows marked it offers *Show new* /
-*Keep triaging* rather than discarding your work unasked.
+asks again with the same narrowing, and offers *Show new* / *Keep triaging* if you have rows
+marked.
 
 **6 · Ingest, and undo if it was wrong.** **Ingest selected (12)** commits exactly those
-twelve, placed around the node you pivoted from, tagged with the pivot as their source. The
-toast reads `Ingested 12 nodes, 14 edges` and carries **Undo** — which takes the whole run
-back out, including edges and any children it merged in.
+twelve, placed around the node you pivoted from and tagged with the pivot as their source.
+The toast reads `Ingested 12 nodes, 14 edges` and carries **Undo**, which takes the whole
+run back out, including its edges and any children it merged in.
 
 Three doors lead to the same place: the rail mode, a node's context-menu **Pivot…** entry
 (absent, never disabled, when nothing applies), and a rim badge, which opens the mode scoped
@@ -82,12 +81,12 @@ const remove = graph.pivots.register(correlations)
 ctx.addPivot(correlations)
 ```
 
-`graph.pivots` is the registry and the runtime both — `for()`, `run()`, `undo()`,
+`graph.pivots` is both the registry and the runtime. `for()`, `run()`, `undo()`,
 `invalidate()` and the candidate model all hang off it.
 
 ## A complete provider
 
-Everything a working pivot needs, with nothing elided. The rest of this page is the
+Everything a working pivot needs, with nothing left out. The rest of this page is the
 reference for each piece; this is the thing to copy first and cut down.
 
 ```js
@@ -109,19 +108,19 @@ const correlations = {
     maxCandidates: 2000,             // refuse to fetch while the count is above this
 
     // Which origins this offers itself for. Omit it and it applies to everything.
-    appliesTo: nodes => nodes.every(node => node.getData()?.type !== 'event'),
+    appliesTo: nodes => nodes.every(node => node.getData()?.type !== 'case'),
 
     // The cheap call: what is out there, and what you could narrow by.
     summarize: async (nodes, narrowing, { signal }) => {
         const { total, byType } = await post('/api/correlations/count', {
             ids: nodes.map(node => node.id),
-            types: narrowing.type ?? [],          // pass the narrowing on, or the gate can never lift
+            types: narrowing.type ?? [],       // pass the narrowing on so the count tracks it
         }, signal)
 
         return {
-            total,                                 // judged against maxCandidates
+            total,                             // judged against maxCandidates
             facets: [{
-                key: 'type',                       // the key you will read back out of `narrowing`
+                key: 'type',                   // the key you read back out of `narrowing`
                 label: 'Type',
                 type: 'multiselect',
                 options: byType.map(row => ({ label: row.label, value: row.value, count: row.count })),
@@ -129,7 +128,7 @@ const correlations = {
         }
     },
 
-    // The expensive call: a flat fragment, only ever run on a number the analyst agreed to.
+    // The expensive call: a flat fragment, run only on a number the analyst agreed to.
     fetch: async (nodes, narrowing, { signal }) => {
         const { items } = await post('/api/correlations', {
             ids: nodes.map(node => node.id),
@@ -138,11 +137,11 @@ const correlations = {
 
         return {
             nodes: items.map(item => ({
-                id: item.uuid,                     // an id already on canvas is skipped, never overwritten
+                id: item.uuid,                 // an id already on canvas is skipped, never overwritten
                 data: { label: item.value, type: item.type, seen: item.first_seen },
             })),
             edges: items.map(item => ({
-                from: item.origin_uuid,            // both endpoints must end up on canvas for the edge to land
+                from: item.origin_uuid,        // both endpoints must land for the edge to land
                 to: item.uuid,
                 data: { type: 'correlation' },
             })),
@@ -155,14 +154,14 @@ new Pivotick(document.querySelector('#graph'), data, { pivots: [correlations] })
 
 Four things that are easy to get wrong, all of them visible above:
 
-- **`narrowing` is yours to honour.** It arrives as `{ [facetKey]: value }` using the keys
+- **`narrowing` is yours to honour.** It arrives as `{ [facetKey]: value }`, using the keys
   your own facets declared. Ignoring it is legal, but then the count never moves and a pivot
   over the cap can never be unblocked.
-- **`signal` is not optional politeness.** Leaving Pivot mode, or changing the origin,
-  aborts questions in flight. Pass it to every request or you will pay for answers nobody
-  is waiting for. `ctx.isStale()` is the same check for non-`fetch` transports.
+- **`signal` is not optional politeness.** Leaving Pivot mode or changing the origin aborts
+  questions in flight. Pass it to every request, or you pay for answers nobody is waiting
+  for. `ctx.isStale()` is the same check for transports that take no signal.
 - **Throw for a failure, return empty for an empty.** A thrown error surfaces on the pivot
-  entry with a **Retry**; `{ total: 0 }` is an honest "nothing out there" and reads
+  entry with a **Retry**. `{ total: 0 }` is an honest "nothing out there", and the two read
   completely differently to an analyst.
 - **Ids are the dedup key.** Return the source system's stable id, not a per-response one,
   or every re-run lands the same nodes again as fresh candidates.
@@ -183,12 +182,11 @@ interface PivotDefinition {
 }
 ```
 
-Both calls take an **array** of nodes, from day one, so a bulk pivot over fifty of them is
-one backend request rather than fifty — and adding bulk later is not a breaking change.
-Both take the current **narrowing**. Both get a `PivotContext` carrying `signal` and
-`isStale()`, the same cancellation pattern every async hook in the library uses.
+Both calls take an **array** of nodes, so a pivot over fifty of them is one backend request
+rather than fifty. Both take the current **narrowing**. Both get a `PivotContext` carrying
+`signal` and `isStale()`, the same cancellation pattern every async hook in the library uses.
 
-### `summarize` — the cheap one
+### `summarize`: the cheap one
 
 ```js
 summarize: async (nodes, narrowing, { signal }) => {
@@ -208,35 +206,34 @@ summarize: async (nodes, narrowing, { signal }) => {
 }
 ```
 
-Its `total` is the number the cap is judged against, and its `facets` **become** the
-narrowing controls — you declare the shape, the library draws the widgets. Pass the
-narrowing on to your backend: the count has to track what the analyst chose, or the gate
-can never lift.
+Its `total` is the number the cap is judged against, and its `facets` become the narrowing
+controls: you declare the shape, the library draws the widgets. Pass the narrowing on to
+your backend so the count tracks what the analyst chose, otherwise the gate can never lift.
 
 Omit `summarize` entirely and the pivot offers no count and no narrowing, just a **Run**
-button. That is legal, and then `fetch` must be safe to call blind — nothing can gate it.
+button. That is legal, and then `fetch` must be safe to call blind, because nothing can gate
+it.
 
-### `fetch` — the real one
+### `fetch`: the real one
 
-Returns a flat fragment: `{ nodes: RawNode[], edges: RawEdge[] }`. No returned node names
-an existing on-canvas parent; nesting travels in `RawNode.children`, so a container
-arrives as a new node carrying its own subtree. An **edges-only** result is legal — edges
-whose endpoints are all already on canvas become triage rows of their own.
+Returns a flat fragment: `{ nodes: RawNode[], edges: RawEdge[] }`. No returned node names an
+existing on-canvas parent. Nesting travels in `RawNode.children`, so a container arrives as a
+new node carrying its own subtree. An **edges-only** result is legal: edges whose endpoints
+are all already on canvas become triage rows of their own.
 
 ### Facet types
 
-Narrowing uses every facet type the query engine knows **except `regex`**, which no
-backend can be asked to evaluate: `text`, `select`, `multiselect`, `numberRange`,
-`boolean`. Regex lives in the triage pane's own client-side filters, where the rows are
-already in hand.
+Narrowing uses every facet type the query engine knows except `regex`, which no backend can
+be asked to evaluate: `text`, `select`, `multiselect`, `numberRange`, `boolean`. Regex lives
+in the triage pane's own client-side filters, where the rows are already in hand.
 
 ## Counts are advisory. Always.
 
-`summarize` returns a claim, not a contract. It legitimately differs from what ingest
-lands — dedup is the common case, then permissions, staleness, and providers that
-deliberately approximate. The UI marks the difference with a tilde: `~2,143 correlations`
-is the provider's number, `210 fetched` and `12 selected` are the library's own. A shrink
-is never an error, and a count is never load-bearing for layout.
+`summarize` returns a claim, not a contract. It legitimately differs from what ingest lands.
+Dedup is the common case, then permissions, staleness, and providers that deliberately
+approximate. The UI marks the difference with a tilde: `~2,143 correlations` is the
+provider's number, while `210 fetched` and `12 selected` are the library's own. A shrink is
+never an error, and a count is never load-bearing for layout.
 
 ## Gating: the cap, and the ceiling
 
@@ -245,27 +242,27 @@ maxCandidates: 2000              // per pivot: refuse to fetch while the count e
 new Pivotick(el, data, { pivotCandidateCeiling: 10_000 })   // absolute, all pivots
 ```
 
-Both **refuse**; neither truncates or samples. A refusal always carries three things in
-order — the number, the limit, and the way forward — because "too many results" with no
-number is not a thing an analyst can act on.
+Both refuse, and neither truncates or samples. A refusal always carries three things in
+order: the number, the limit, and the way forward. "Too many results" with no number is not
+something an analyst can act on.
 
-The cap is judged on the freshest count *for the current narrowing*, which is what lets it
-lift: narrow from 2,143 to 210 and **Fetch** turns on by itself. The ceiling is about
-memory for candidate objects rather than about the table, which virtualises.
+The cap is judged on the freshest count for the current narrowing, which is what lets it
+lift. Narrow from 2,143 to 210 and **Fetch** turns on by itself. The ceiling is about memory
+for candidate objects rather than about the table, which virtualises.
 
 ## Candidates are not the graph
 
 Nothing a pivot returns is in the graph, in the data table, or in any facet count until it
-is ingested. Results open a **triage pane** in the dock — one per pivot, coexisting as tabs
-— with the provider's own columns, the data table's filters, sorting, paging and an ingest
+is ingested. Results open a **triage pane** in the dock, one per pivot, coexisting as tabs,
+with the provider's own columns, the data table's filters, sorting, paging and an ingest
 action.
 
-- **Rejection is explicit and remembered** for the session, keyed per pivot: the next run
-  does not offer that candidate again, and the header line says how many it suppressed.
-  A rejected row is struck through **in place** rather than moved, and stays reversible.
-- **Closing the pane rejects nothing.** Untriaged leftovers come back on the next run;
+- **Rejection is explicit and remembered** for the session, keyed per pivot. The next run
+  does not offer that candidate again, and the header line says how many it suppressed. A
+  rejected row is struck through in place rather than moved, and stays reversible.
+- **Closing the pane rejects nothing.** Untriaged leftovers come back on the next run.
   *Reject all remaining* is the one gesture that disposes of them.
-- **A re-run replaces its own pane** — but if you have rows marked it says so and offers
+- **A re-run replaces its own pane.** If you have rows marked it says so and offers
   *Show new* / *Keep triaging*, rather than throwing your triage away unasked.
 
 Everything the pane does is also reachable programmatically:
@@ -279,20 +276,20 @@ graph.pivots.discard('correlations')         // close it; rejects nothing
 
 ### `autoIngest`
 
-For a small, trusted result that nobody wants to pick through — expanding an event into
-its twelve objects — declare `autoIngest: true` and results land directly, with an undo on
-the toast. There is no library threshold for this: the provider knows, and a magic number
-would surprise someone.
+For a small, trusted result that nobody wants to pick through, such as expanding a container
+into its dozen children, declare `autoIngest: true`. Results land directly, with an undo on
+the toast. The provider decides this, because only it knows whether its own results are
+small and trusted enough to skip triage.
 
 ## Ingest, and what it is allowed to do
 
-One gesture, one batch, one `dataBatchChanged`. In order: **dedup** (an id already on
-canvas is skipped, never overwritten), **children union by id**, **placement** near the
-origin node (jittered; a provider's own `x`/`y` wins; an origin-less run seeds at the
-viewport centre), **provenance**, then the batch lands.
+One gesture, one batch, one `dataBatchChanged`. In order: **dedup** (an id already on canvas
+is skipped, never overwritten), **children union by id**, **placement** near the origin node
+(jittered, and a provider's own `x`/`y` wins, while an origin-less run seeds at the viewport
+centre), **provenance**, then the batch lands.
 
-Ingest is **purely additive**. The only things that ever remove are `removeBySource` and
-run undo.
+Ingest is purely additive. The only things that ever remove are `removeBySource` and run
+undo.
 
 One gate, called once with the whole set:
 
@@ -305,18 +302,18 @@ callbacks: {
 }
 ```
 
-Return `false` to veto, or `{ accept: true, nodes, edges }` to land a subset — an omitted
-key means "as requested", exactly as `onBeforeDelete` reads.
+Return `false` to veto, or `{ accept: true, nodes, edges }` to land a subset. An omitted key
+means "as requested", exactly as `onBeforeDelete` reads.
 
 ## Provenance
 
 Every node and edge carries the **set** of sources vouching for it. A set rather than a
-scalar because two pivots overlapping on one node is the normal case: with a scalar, the
+scalar, because two pivots overlapping on one node is the normal case. With a scalar, the
 second one to arrive erases the first one's claim, and removing either takes the node with
 it.
 
 ```js
-node.getSources()             // ['seed', 'correlations']  — 'seed' is the loaded data
+node.getSources()             // ['seed', 'correlations'], where 'seed' is the loaded data
 node.hasSource('correlations')
 edge.getSources()             // edges carry it too, which is the load-bearing half
 graph.removeBySource('correlations')   // drop the tag; delete only when the set empties
@@ -326,72 +323,73 @@ graph.removeBySource('correlations')   // drop the tag; delete only when the set
 
 ```js
 graph.pivots.undo()           // the most recent ingest
-graph.pivots.undo(runId)      // a particular one — every outcome carries its runId
+graph.pivots.undo(runId)      // a particular one; every outcome carries its runId
 graph.pivots.redo()           // re-lands the recorded delta; no refetch, no re-gating
 ```
 
-This is run-scoped undo, not a general history engine: it covers what pivots added and
-nothing else. A partial ingest out of one staged set gets its own `runId`, so each batch
+This is run-scoped undo rather than a general history engine: it covers what pivots added
+and nothing else. A partial ingest out of one staged set gets its own `runId`, so each batch
 is separately undoable.
 
 ## The Pivot rail mode
 
-The surface [Using one](#using-one) walks through — its tools, its origin and the pivot
-list. What matters when you are configuring rather than driving it is the rule underneath:
+[Using one](#using-one) walks through the surface, its tools, its origin and the pivot list.
+What matters when you are configuring rather than driving it is the rule underneath.
 
-Entering the mode is the **intent** that calls a provider; leaving it stops every question
-in flight. That is deliberate and it is the whole rule: the library never speculatively
-calls a provider, and selection alone — the same gesture as dragging, styling and bulk
-edit — costs nothing.
+Entering the mode is the intent that calls a provider, and leaving it stops every question
+in flight. The library never speculatively calls a provider, and selection alone costs
+nothing, because selection is also the gesture for dragging, styling and bulk edit.
 
 The mode is **gated on the registry**:
 
 ```js
 UI: { pivotMode: 'auto' }   // default: the button exists only while a pivot is registered
-UI: { pivotMode: true }     // force it — for pivots that arrive asynchronously
+UI: { pivotMode: true }     // force it, for pivots that arrive asynchronously
 UI: { pivotMode: false }    // never
 ```
 
-So a consumer who registers no pivots sees no trace of the feature. It is never mounted in
-`viewer` or `static` mode.
+A consumer who registers no pivots therefore sees no trace of the feature. It is never
+mounted in `viewer` or `static` mode.
 
 ### Origin-less pivots
 
-Some enrichments have no node to run on — search, import, pasting a list of indicators.
-Declare `origin: 'none'` and the pivot receives `[]`, applies when the origin is empty, and
-folds into a *Without an origin* group once one is picked. Results route through the same
-triage pane, the same gate and the same provenance model; they land at the viewport centre.
+Some enrichments have no node to run on, such as search, import, or pasting a list of
+indicators. Declare `origin: 'none'` and the pivot receives `[]`, applies when the origin is
+empty, and folds into a *Without an origin* group once one is picked. Results route through
+the same triage pane, the same gate and the same provenance model, and they land at the
+viewport centre.
 
-`appliesTo` is meaningless for one and is not consulted.
+`appliesTo` is meaningless for one of these and is not consulted.
 
 ## Declared potential
 
-A hint on the node's rim: "there are 2,100 correlations here", put there by whoever loaded
-the data.
+A hint on the node's rim, saying "there are 2,100 correlations here", put there by whoever
+loaded the data.
 
 ```js
 node.setPotential('correlations', 2100)   // 0 clears it
 node.getPotential('correlations')
 ```
 
-It is **declared**, never queried — the library will not call a provider to draw a badge,
-or a count would materialise on one node the moment it was asked about and the canvas would
-be telling two different stories. Clicking the badge opens Pivot mode scoped to that pivot.
+It is **declared**, never queried. The library will not call a provider to draw a badge,
+because a count that materialised on one node the moment it was asked about would leave the
+canvas telling two different stories. Clicking the badge opens Pivot mode scoped to that
+pivot.
 
 Like every other setter on `Node`, it marks the node dirty: call `graph.renderer.update()`
 if nothing else is about to render.
 
 ::: warning Two free corners on a container
 The expand affordance reserves the East side of a node with children, so several declared
-potentials collapse into a `+n` badge early — on exactly the container nodes MISP produces.
-The rim is a hint; the panel is the full surface.
+potentials collapse into a `+n` badge early, on exactly the nodes that carry children. The
+rim is a hint; the panel is the full surface.
 :::
 
 ## Caching
 
-The library caches one thing: `summarize` results, keyed by (pivot, origin, narrowing) —
-because a multi-selection summary is an aggregate nothing can decompose. Everything else
-is yours:
+The library caches one thing: `summarize` results, keyed by (pivot, origin, narrowing),
+because a multi-selection summary is an aggregate that nothing can decompose. Everything
+else is yours:
 
 ```js
 graph.pivots.invalidate()                       // all of it
@@ -400,16 +398,16 @@ graph.pivots.invalidate('correlations', nodes)  // only what was asked about the
 ```
 
 Auth, retry, rate limiting and any cache of your own belong in your provider functions,
-which are plain functions you wrote — anything the library added there would only be in
-the way.
+which are plain functions you wrote. Anything the library added there would only be in the
+way.
 
 ## What this is not
 
-- **No streaming and no server cursor.** Narrowing replaces them: never fetch 2,000, ask
-  what is there and let the analyst choose. The contract must never require a streaming
-  backend, because MISP does not have one.
-- **No re-parenting.** A returned node never names an existing parent. Children union by
-  id is the only way ingest touches an existing node's children.
+- **No streaming and no server cursor.** Narrowing replaces them: rather than fetching two
+  thousand rows, ask what is there and let the analyst choose. The contract never requires a
+  streaming backend, because many sources do not have one.
+- **No re-parenting.** A returned node never names an existing parent. Children union by id
+  is the only way ingest touches an existing node's children.
 - **No general undo history.** `graph.pivots.undo()` covers pivot runs and nothing else.
-- **No persistence.** Saving an ingested result back to the source system — and remembering
-  rejections across a reload — is a separate piece of work.
+- **No persistence.** Saving an ingested result back to the source system, and remembering
+  rejections across a reload, is a separate piece of work.

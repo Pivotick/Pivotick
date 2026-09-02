@@ -22,6 +22,9 @@ export const GALLERY_CATEGORIES = [
     { id: 'I', title: 'Filtering, search & hierarchy', anchor: 'filtering-search-hierarchy' },
     { id: 'J', title: 'Programmatic control', anchor: 'programmatic-control' },
     { id: 'K', title: 'Theming & performance', anchor: 'theming-performance' },
+    // Display order follows this array, not the letters, so a category can be slotted
+    // where it reads best while keeping its id stable for the cards already using it.
+    { id: 'M', title: 'Pivots & enrichment', anchor: 'pivots-enrichment' },
     { id: 'L', title: 'Showpieces', anchor: 'showpieces' },
 ]
 
