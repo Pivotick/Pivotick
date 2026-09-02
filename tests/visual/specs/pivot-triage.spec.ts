@@ -27,6 +27,7 @@ const toast = (page: Page): Locator => page.locator('.pivotick-toast')
 const paneTabs = (page: Page): Locator => page.locator('.pvt-dock-tab')
 
 const row = (page: Page, id: string): Locator => page.locator(`.pvt-triage-row[data-candidate="${id}"]`)
+const childCell = (page: Page, id: string): Locator => row(page, id).locator('[data-column="pvt:children"]')
 const tick = (page: Page, id: string): Locator => row(page, id).locator('input[type="checkbox"]')
 
 /** Mark a row the way the pane offers it: the whole row is the hit target. */
@@ -393,6 +394,37 @@ test.describe('pivot triage pane', () => {
         expect(await harness(page, 'rejectedPivotIds', 'blind')).toEqual(['blind-2'])
     })
 
+    test('a staged container says how many children it carries', async ({ page }) => {
+        // The container fixture normally lands straight on the canvas; staged, it is the
+        // shape a real MISP object arrives in — one row holding a dozen attributes.
+        await load(page, { pivots: ['misp-event-objects'], stage: ['misp-event-objects'] })
+
+        const outcome = await harness(page, 'runPivot', 'misp-event-objects', ['a'])
+        expect((outcome as { status: string }).status).toBe('staged')
+        await rows(page).first().waitFor()
+
+        // Still one row, as it always was — but no longer a row that hides its size.
+        await expect(rows(page)).toHaveCount(1)
+        expect(await columnLabels(page)).toEqual(['Candidate', 'Children', 'type'])
+        await expect(childCell(page, 'event-a')).toHaveText('12')
+
+        // And the number was true: ingesting it lands exactly the twelve it claimed.
+        await markRow(page, 'event-a')
+        await button(footer(page), 'Ingest selected').click()
+        await expect(toast(page)).toContainText('Ingested')
+        expect(await harness(page, 'childIds', 'event-a')).toHaveLength(12)
+    })
+
+    test('a set of flat candidates grows no Children column', async ({ page }) => {
+        await load(page)
+        await stageUrls(page)
+
+        // A column of zeros says nothing. The pane only asks the question when some
+        // candidate in the set is a container, which is the dock column's rule too.
+        expect(await columnLabels(page)).not.toContain('Children')
+        await expect(childCell(page, 'url-0')).toHaveCount(0)
+    })
+
     test('an auto-ingest pivot brings no pane at all', async ({ page }) => {
         await load(page)
 
@@ -414,6 +446,12 @@ async function markedIds(page: Page, pivotId: string): Promise<string[]> {
 
 async function rowIds(page: Page): Promise<string[]> {
     return rows(page).evaluateAll(nodes => nodes.map(node => (node as HTMLElement).dataset.candidate ?? ''))
+}
+
+/** The node table's column headers, in the order they are drawn. */
+async function columnLabels(page: Page): Promise<string[]> {
+    return page.locator('.pvt-triage-grid').first().locator('.pvt-triage-th-label')
+        .evaluateAll(nodes => nodes.map(node => (node.textContent ?? '').trim()))
 }
 
 /** The nth data cell of the first three rows — how a sort is read off the table. */

@@ -800,6 +800,12 @@ export interface PivotFixtureSpec {
      */
     autoIngest?: PivotFixtureName[]
     /**
+     * Flip these fixtures off `autoIngest`, so a provider that normally lands straight
+     * on the canvas stages instead. `misp-event-objects` is the container fixture, and
+     * a container is only visible in the pane if it gets there.
+     */
+    stage?: PivotFixtureName[]
+    /**
      * What the `union-children` pivot returns: one container, already on canvas, plus
      * the children to merge into it. A nested entry carries grandchildren, so the
      * recursion has something to recurse into.
@@ -4049,6 +4055,7 @@ class Harness implements HarnessApi {
         }
         for (const definition of options.pivots as PivotDefinition[]) {
             if (spec.autoIngest?.includes(definition.id as PivotFixtureName)) definition.autoIngest = true
+            if (spec.stage?.includes(definition.id as PivotFixtureName)) definition.autoIngest = false
         }
         if (spec.ceiling !== undefined) options.pivotCandidateCeiling = spec.ceiling
         await this.boot(name, mergeOptions(options, overrides))

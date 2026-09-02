@@ -16,11 +16,28 @@ const MAX_DATA_COLUMNS = 5
 /** The leading column, which is a candidate's name rather than one of its data keys. */
 const NAME_COLUMN = 'pvt:candidate'
 
+/**
+ * How many nodes a container candidate carries. Label, type and terms are the dock's
+ * `Children` column unchanged — direct children, not the whole subtree — so the count
+ * means the same thing in both grids.
+ */
+const CHILDREN_COLUMN = 'pvt:children'
+
+/** A count column earns room for its digits and no more. */
+const COUNT_WIDTH = '80px'
+
+/** The track a column gets when it does not ask for a width. */
+const DEFAULT_TRACK = 'minmax(110px, 1fr)'
+
 const fmt = (value: number): string => value.toLocaleString()
 
 /** One column of the candidate table: what to call it, and how to read it off a row. */
 interface TriageColumn<T> extends FilterableColumn {
     read: (row: T) => unknown
+    /** A grid track for this column. @default {@link DEFAULT_TRACK} */
+    width?: string
+    /** Cell alignment, declared as the dock's columns declare it. */
+    align?: 'right'
 }
 
 interface SortState {
@@ -428,6 +445,21 @@ export class TriagePane {
             read: row => row.raw.data?.label ?? row.id,
         }]
 
+        // A container's size belongs beside its name, not after five discovered data
+        // columns: one MISP object stages 58 attributes under a single row, and how many
+        // there are is most of the decision to ingest it. Only when the set holds a
+        // container at all, or the column is zeros — the rule the dock's column follows.
+        if (this.set.nodes.some(row => childCount(row.raw) > 0)) {
+            columns.push({
+                key: CHILDREN_COLUMN,
+                label: 'Children',
+                type: 'numberRange',
+                width: COUNT_WIDTH,
+                align: 'right',
+                read: row => childCount(row.raw),
+            })
+        }
+
         const attributes = collectDataAttributes(this.set.nodes.map(row => dataOf(row.raw)), ['label'])
             .sort((a, b) => b.count - a.count)
             .slice(0, MAX_DATA_COLUMNS)
@@ -513,9 +545,7 @@ export class TriagePane {
     private grid(columns: TriageColumn<PivotCandidate>[], rows: PivotCandidate[]): HTMLElement {
         const grid = document.createElement('div')
         grid.className = 'pvt-triage-grid'
-        // One tick column, the data columns, and the row's own state on the right.
-        const template = `28px ${columns.map(() => 'minmax(110px, 1fr)').join(' ')} 96px`
-        grid.style.setProperty('--pvt-triage-columns', template)
+        grid.style.setProperty('--pvt-triage-columns', track(columns))
 
         grid.appendChild(this.head(columns))
         for (const row of rows) grid.appendChild(this.row(row, columns))
@@ -530,6 +560,7 @@ export class TriagePane {
         for (const column of columns) {
             const cell = document.createElement('div')
             cell.className = 'pvt-triage-th'
+            if (column.align) cell.dataset.align = column.align
 
             const button = document.createElement('button')
             button.type = 'button'
@@ -575,7 +606,7 @@ export class TriagePane {
         const state = text('span', '', 'pvt-triage-cell pvt-triage-state-cell')
         const tick = this.tickCell(candidate)
         row.appendChild(tick.cell)
-        for (const column of columns) row.appendChild(text('span', cellText(column.read(candidate)), 'pvt-triage-cell'))
+        for (const column of columns) row.appendChild(cellFor(column, candidate))
         this.paintState(candidate, state)
         row.appendChild(state)
 
@@ -719,7 +750,7 @@ export class TriagePane {
         const columns = this.edgeColumns()
         const grid = document.createElement('div')
         grid.className = 'pvt-triage-grid'
-        grid.style.setProperty('--pvt-triage-columns', `28px ${columns.map(() => 'minmax(110px, 1fr)').join(' ')} 96px`)
+        grid.style.setProperty('--pvt-triage-columns', track(columns))
 
         const head = document.createElement('div')
         head.className = 'pvt-triage-headrow'
@@ -747,7 +778,7 @@ export class TriagePane {
             cell.appendChild(box ?? text('span', '✕', 'pvt-triage-rejected-mark'))
             row.appendChild(cell)
 
-            for (const column of columns) row.appendChild(text('span', cellText(column.read(edge)), 'pvt-triage-cell'))
+            for (const column of columns) row.appendChild(cellFor(column, edge))
             row.appendChild(document.createElement('span'))
             this.wireRow(row, edge, 'edges', marked => {
                 row.classList.toggle('pvt-triage-row-marked', marked)
@@ -843,6 +874,24 @@ export class TriagePane {
         for (const filter of this.filters.values()) if (isRowFilterActive(filter)) return true
         return false
     }
+}
+
+/** One tick column, the columns themselves, and the row's own state on the right. */
+function track<T>(columns: TriageColumn<T>[]): string {
+    return `28px ${columns.map(column => column.width ?? DEFAULT_TRACK).join(' ')} 96px`
+}
+
+/** A body cell, carrying whatever its column declared about how to read it. */
+function cellFor<T>(column: TriageColumn<T>, row: T): HTMLElement {
+    const cell = text('span', cellText(column.read(row)), 'pvt-triage-cell')
+    cell.dataset.column = column.key
+    if (column.align) cell.dataset.align = column.align
+    return cell
+}
+
+/** Direct children, so a nested container's own row reports the level below it. */
+function childCount(raw: RawNode): number {
+    return raw.children?.length ?? 0
 }
 
 /** A `RawNode` / `RawEdge` seen as something with a data bag, for the shared scan. */

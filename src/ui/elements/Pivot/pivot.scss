@@ -143,6 +143,10 @@
     gap: 3px;
     padding: 5px 8px;
     min-width: 0;
+
+    &[data-align='right'] {
+        align-items: flex-end;
+    }
 }
 
 .pvt-triage-th-label {
@@ -229,6 +233,11 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+
+    &[data-align='right'] {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+    }
 }
 
 .pvt-triage-tick {
