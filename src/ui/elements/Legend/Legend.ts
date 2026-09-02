@@ -67,12 +67,13 @@ export class Legend extends UIComponent {
         // Delegated once on the panel, which survives every rebuild — per-row
         // listeners would pile up each time the entries are re-resolved.
         this.listen(this.panel, 'click', (event) => this.onPanelClick(event as MouseEvent))
+        this.listen(this.panel, 'pointerover', (event) => this.onPanelPointerOver(event as PointerEvent))
+        this.listen(this.panel, 'pointerleave', () => this.endHover())
     }
 
     private onPanelClick(event: MouseEvent) {
         const target = event.target as HTMLElement
-        const block = target.closest('.pvt-legend-section') as HTMLElement | null
-        const view = block?.dataset.section !== undefined ? this.views.get(block.dataset.section) : undefined
+        const view = this.viewFor(target)
         if (!view) return
 
         const action = target.closest('.pvt-legend-action') as HTMLElement | null
@@ -91,6 +92,43 @@ export class Legend extends UIComponent {
 
         const row = target.closest('.pvt-legend-entry') as HTMLElement | null
         if (row?.dataset.id) view.onEntryClick(row.dataset.id, event.altKey)
+    }
+
+    /**
+     * Hovering an entry reads its category off the canvas. Delegated like the click,
+     * and on `pointerover` rather than `pointerenter` so it bubbles: moving from one
+     * row to the next fires here once, with no gap in which the canvas un-dims.
+     */
+    private onPanelPointerOver(event: PointerEvent) {
+        // A tap fires this too, and nothing follows it to say the finger left — the
+        // canvas would be stranded dim.
+        if (event.pointerType === 'touch') return
+
+        const target = event.target as HTMLElement
+        const row = target.closest('.pvt-legend-entry') as HTMLElement | null
+        const view = row ? this.viewFor(row) : undefined
+        // The header, the gap between sections, a row whose section has gone: the
+        // pointer is inside the card but not on a category.
+        if (!view || !row?.dataset.id) {
+            this.endHover()
+            return
+        }
+        this.endHover(view)
+        view.onEntryHover(row.dataset.id)
+    }
+
+    /** Drop the hover every section but `keep` is holding — one pointer, one category. */
+    private endHover(keep?: LegendSectionView) {
+        for (const view of this.views.values()) {
+            if (view !== keep) view.endHover()
+        }
+    }
+
+    /** The section an event inside the panel landed in. */
+    private viewFor(target: HTMLElement): LegendSectionView | undefined {
+        const block = target.closest('.pvt-legend-section') as HTMLElement | null
+        if (block?.dataset.section === undefined) return undefined
+        return this.views.get(block.dataset.section)
     }
 
     protected onAfterMount() {
@@ -242,7 +280,11 @@ export class Legend extends UIComponent {
             this.rebuilding = false
         }
 
-        for (const view of this.views.values()) view.refreshFilter()
+        for (const view of this.views.values()) {
+            view.refreshFilter()
+            // The row the pointer is on was just replaced, and no pointer event says so.
+            view.refreshHover()
+        }
     }
 
     /**

@@ -10,7 +10,9 @@ pageClass: gallery-wide
 
 A colour-coded graph needs a key — and once it has one, the key is the fastest
 filter in the UI. `UI.legend` docks one in a canvas corner: a swatch, a label and a
-node count per category, and **clicking a row hides that category**.
+node count per category, and **clicking a row hides that category**. Pointing at a
+row first lights its nodes on the canvas and dims the rest, so a category can be
+found before it is switched off.
 
 One line configures it: `legend: { key: 'type' }`. The library collects the distinct
 values of `data.type`, reads each swatch from the colour the **renderer already
@@ -71,7 +73,8 @@ const onUnmounted = () => { graph.value = null }
 <p class="lgd-hint">
     In a section header: <em>show all</em>, <em>invert</em>, and a chevron that folds
     that section to its title — <strong>alt-click</strong> the chevron to fold every
-    section. <strong>Alt-click</strong> a row to show only that category. Toggles are
+    section. <strong>Hover</strong> a row to light its category on the canvas;
+    <strong>alt-click</strong> one to show only that category. Toggles are
     logged to the console through <code>legendToggle</code>, which names its section.
 </p>
 

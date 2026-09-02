@@ -429,6 +429,25 @@ test.describe('an edge-scoped legend section', () => {
         await expectElement(page.locator('.pvt-legend-panel'), 'edge-layers-legend-mixed.png')
     })
 
+    test('hovering a kind lights its lines and dims the rest of the canvas', async ({ page }) => {
+        await harness(page, 'loadWithEdgeLayers', 'edgeLayers', { legend: true })
+
+        await page.locator('.pvt-legend-entry[data-id="correlation"]').hover()
+
+        // The two correlations stand out of a receded graph — nodes included, since
+        // the category is a kind of relation, not a kind of node.
+        await expect.poll(() => harness(page, 'emphasis', 'edge')).toEqual({
+            lit: ['a-b', 'c-d'],
+            dimmed: ['b-d', 'd-e', 'hub-a', 'hub-b', 'hub-c', 'hub-e'],
+        })
+        await expect.poll(() => harness(page, 'emphasis')).toEqual({
+            lit: [],
+            dimmed: ['a', 'b', 'c', 'd', 'e', 'hub'],
+        })
+        // Pointing at a layer doesn't switch it off.
+        expect(await drawnEdges(page)).toHaveLength(8)
+    })
+
     test('filters standalone, with no edge facet declared', async ({ page }) => {
         await harness(page, 'loadWithEdgeLayers', 'edgeLayers', { legend: true, facet: false })
 
