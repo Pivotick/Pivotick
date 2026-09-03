@@ -53,6 +53,13 @@ listed in `plugins` and re-applied through `graph.use` without doubling up.
 | `addKeybinding(binding)` | a shortcut that is removed when the UI is torn down |
 | `keyManager` | the keybinding registry, for anything more involved |
 
+A binding's `key` is modifiers then the key, joined by `+`: `'Shift+K'`, `'Ctrl+F'`,
+`'ArrowUp'`. Write modifiers as `Ctrl`, `Meta` (Cmd on macOS), `Shift`, `Alt`, in that
+order, and use **`Mod`** to match either `Ctrl` or `Meta` — which is what a shortcut meant
+to work on both platforms wants. The key itself is `KeyboardEvent.key` verbatim, so it is
+case-sensitive and shift changes it: the two halves of an undo pair are `'Mod+z'` and
+`'Mod+Shift+Z'`. Bindings never fire while a text field has focus.
+
 Which `layout` slots exist depends on the mode: `canvas` and `notification` always,
 `graphnavigation` in every mode but `static`, `mainheader` / `modal` / `slidePanel` /
 `moderail` / `toolpanel` / `flyout` / `legend` in `full` and `light`, and `sidebar` in

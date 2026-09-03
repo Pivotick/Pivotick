@@ -483,7 +483,7 @@ test.describe('pivot triage pane', () => {
         expect(await counts(page)).toEqual({ nodes: before.nodes, edges: before.edges + 1 })
     })
 
-    test('ingest lands the marked rows, and the toast undoes the whole run', async ({ page }) => {
+    test('ingest lands the marked rows, and the top bar takes the run back', async ({ page }) => {
         await load(page)
         await stageUrls(page)
         const before = await nodeCount(page)
@@ -503,13 +503,15 @@ test.describe('pivot triage pane', () => {
         expect(await providerRows(page)).toEqual(['Correlations 208'])
         expect(await tabLabels(page)).toContain('Review (208)')
 
-        await button(toast(page), 'Undo').click()
-        expect(await nodeCount(page)).toBe(before)
-        await expect(toast(page)).toContainText('Undone')
+        // The toast is a report and nothing more: taking it back is the top bar's, and
+        // lives there permanently rather than on a twelve-second fuse.
+        await expect(button(toast(page), 'Undo')).toHaveCount(0)
 
-        await button(toast(page), 'Redo').click()
+        await page.locator('#pvt-undo-button').click()
+        expect(await nodeCount(page)).toBe(before)
+
+        await page.locator('#pvt-redo-button').click()
         expect(await nodeCount(page)).toBe(before + 2)
-        await expect(toast(page)).toContainText('Redone')
     })
 
     test('a re-run over marked rows is announced, never swapped in', async ({ page }) => {

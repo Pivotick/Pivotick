@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test'
+import type { Locator, Page } from '@playwright/test'
 import { test, expect, gotoHarness, loadFixture, harness } from '../helpers'
 import type {
     RecordedCandidates, RecordedHistoryEntry, RecordedHistoryPreview, RecordedRunOutcome,
@@ -286,5 +286,69 @@ test.describe('history — a deletion remembers who vouched for what', () => {
         // …so the run can still account for it.
         await undoThrough(page, run.runId)
         expect(await hasNode(page, first)).toBe(false)
+    })
+})
+
+test.describe('history — the top bar', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoHarness(page)
+        await loadFixture(page, 'basic', B3_FULL)
+        await harness(page, 'configureWritePath', {})
+    })
+
+    const undoButton = (page: Page): Locator => page.locator('#pvt-undo-button')
+    const redoButton = (page: Page): Locator => page.locator('#pvt-redo-button')
+
+    test('the two buttons follow the history, and say what they would take back', async ({ page }) => {
+        // They shipped as hardcoded placeholders for two releases. An Undo button reads
+        // as a promise, so an empty history is the only reason one is disabled.
+        await expect(undoButton(page)).toBeDisabled()
+        await expect(redoButton(page)).toBeDisabled()
+
+        await harness(page, 'excludeNode', 'b')
+        await expect(undoButton(page)).toBeEnabled()
+        await expect(undoButton(page)).toHaveAttribute('aria-label', 'Undo Hid 1 node')
+        await expect(redoButton(page)).toBeDisabled()
+
+        await undoButton(page).click()
+        expect(await hidden(page)).toEqual([])
+        await expect(undoButton(page)).toBeDisabled()
+        await expect(redoButton(page)).toBeEnabled()
+        await expect(redoButton(page)).toHaveAttribute('aria-label', 'Redo Hid 1 node')
+
+        await redoButton(page).click()
+        expect(await hidden(page)).toEqual(['b'])
+    })
+
+    test('the keyboard reaches them without the header', async ({ page }) => {
+        await harness(page, 'excludeNode', 'b')
+        await page.locator('.pvt-layout').click({ position: { x: 5, y: 5 } })
+
+        await page.keyboard.press('Control+z')
+        expect(await hidden(page)).toEqual([])
+
+        await page.keyboard.press('Control+Shift+Z')
+        expect(await hidden(page)).toEqual(['b'])
+
+        // Cmd, for the same reason: `Mod+` answers to either.
+        await page.keyboard.press('Meta+z')
+        expect(await hidden(page)).toEqual([])
+    })
+
+    test('Ctrl+Z inside a text field is the browser\'s text undo, not the graph\'s', async ({ page }) => {
+        // `filterable` for its numeric `ports` field, which the generated form draws as
+        // a real text input.
+        await loadFixture(page, 'filterable', B3_FULL)
+        await harness(page, 'excludeNode', 'h2')
+        await harness(page, 'openFilterPanel')
+        const field = page.locator('.pvt-slide-panel.open input[type="number"], .pvt-slide-panel.open input[type="text"]').first()
+        await field.waitFor({ state: 'visible' })
+        await field.click()
+
+        await page.keyboard.press('Control+z')
+
+        // The graph is exactly where it was: the key never left the input.
+        expect(await hidden(page)).toEqual(['h2'])
+        expect(await entries(page)).toHaveLength(1)
     })
 })

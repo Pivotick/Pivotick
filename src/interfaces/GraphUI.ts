@@ -448,7 +448,16 @@ export interface LegendToggleState {
     visible: string[]
 }
 
-export type Key = string; // e.g. 'Ctrl+C', 'Ctrl+F', 'ArrowUp'
+/**
+ * A key combination: modifiers then the key, joined by `+` — `'Ctrl+C'`, `'Shift+K'`,
+ * `'ArrowUp'`. Modifiers are written `Ctrl`, `Meta` (Cmd on macOS), `Shift`, `Alt`, in
+ * that order, and **`Mod` matches either `Ctrl` or `Meta`**, which is what a shortcut
+ * meant to work on both platforms should use.
+ *
+ * The key itself is `KeyboardEvent.key` verbatim, so it is case-sensitive and shift
+ * changes it: the two halves of an undo pair are `'Mod+z'` and `'Mod+Shift+Z'`.
+ */
+export type Key = string;
 export interface Keybinding {
     key: Key;
     callback: (event: KeyboardEvent) => void;

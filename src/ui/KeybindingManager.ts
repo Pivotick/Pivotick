@@ -43,7 +43,9 @@ export class KeybindingManager {
         }
 
         const keyCombo = this.getKeyCombo(event)
-        const stack = this.bindings.get(keyCombo)
+        // The exact combo first, then the platform-agnostic alias: a `Mod+z` binding
+        // answers to Ctrl and to Cmd, while `Ctrl+z` still means Ctrl alone.
+        const stack = this.bindings.get(keyCombo) ?? this.bindings.get(modAlias(keyCombo))
         const callback = stack?.[stack.length - 1]
         if (callback) {
             event.preventDefault()
@@ -65,9 +67,22 @@ export class KeybindingManager {
     private getKeyCombo(event: KeyboardEvent): string {
         const keys = []
         if (event.ctrlKey) keys.push('Ctrl')
+        // Cmd on macOS. Its own token rather than folded into Ctrl, so a binding can
+        // still ask for one specifically; `Mod` is how you ask for either.
+        if (event.metaKey) keys.push('Meta')
         if (event.shiftKey) keys.push('Shift')
         if (event.altKey) keys.push('Alt')
         keys.push(event.key)
         return keys.join('+')
     }
+}
+
+/**
+ * `Ctrl+z` and `Meta+z` both as `Mod+z`. Anything else is returned unchanged, so the
+ * second lookup simply misses.
+ */
+function modAlias(combo: string): string {
+    if (combo.startsWith('Ctrl+')) return `Mod+${combo.slice(5)}`
+    if (combo.startsWith('Meta+')) return `Mod+${combo.slice(5)}`
+    return combo
 }

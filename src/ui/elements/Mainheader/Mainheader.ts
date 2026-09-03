@@ -137,6 +137,8 @@ export class Mainheader extends UIComponent {
             })
         }
 
+        this.wireHistory()
+
         // These action pills are role="button" divs — activate them on Enter/Space.
         for (const btn of [searchBoxButton, filterButton, noteButton]) {
             if (!btn) continue
@@ -149,4 +151,55 @@ export class Mainheader extends UIComponent {
             })
         }
     }
+
+    /**
+     * The two buttons, and the keyboard that reaches them without the header. Each
+     * takes back one entry per press; the dropdowns that travel a whole span hang off
+     * the same buttons.
+     *
+     * `Mod+` so Cmd works on macOS. The key manager's editable-target guard means a
+     * press inside a filter box falls through to the browser's own text undo, which is
+     * what it should do.
+     */
+    private wireHistory(): void {
+        const history = this.uiManager.graph.history
+        const { undoButton, redoButton } = this
+        if (!undoButton || !redoButton) return
+
+        this.listen(undoButton, 'click', () => history.undo())
+        this.listen(redoButton, 'click', () => history.redo())
+        this.track(this.uiManager.keyManager.register({
+            key: 'Mod+z', description: 'Undo', callback: () => history.undo(),
+        }))
+        this.track(this.uiManager.keyManager.register({
+            key: 'Mod+Shift+Z', description: 'Redo', callback: () => history.redo(),
+        }))
+
+        const paint = (): void => {
+            const [next] = history.entries()
+            const [back] = history.redoable()
+            paintButton(undoButton, 'Undo', next?.label, history.canUndo())
+            paintButton(redoButton, 'Redo', back?.label, history.canRedo())
+        }
+        this.track(history.on(paint))
+        paint()
+    }
+}
+
+/**
+ * A history button's enabled state and its label. The title names what is about to
+ * happen — `Undo — Hid 3 nodes` — because a bare "Undo" on a canvas that moved while
+ * the analyst was reading is the one thing they cannot check.
+ */
+function paintButton(button: HTMLButtonElement, verb: string, entry: string | undefined, enabled: boolean): void {
+    button.disabled = !enabled
+    const shortcut = verb === 'Undo' ? modLabel('Z') : modLabel('⇧Z')
+    button.title = enabled && entry ? `${verb} — ${entry} (${shortcut})` : `${verb} (${shortcut})`
+    button.setAttribute('aria-label', enabled && entry ? `${verb} ${entry}` : verb)
+}
+
+/** `⌘Z` on macOS, `Ctrl+Z` everywhere else. */
+function modLabel(key: string): string {
+    const mac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.userAgent)
+    return mac ? `⌘${key}` : `Ctrl+${key}`
 }

@@ -55,6 +55,18 @@
 - **A deletion remembers each element's provenance**, so undoing it restores who vouched for
   what. Without that, undoing a deletion and then the run that landed those nodes would leave
   orphans nothing accounts for.
+- **The top bar's Undo and Redo buttons do something.** They shipped as hardcoded disabled
+  placeholders with the current chrome; they are now wired to `graph.history`, enable and
+  disable with it, and name what they would take back (`Undo — Hid 3 nodes`). `Ctrl+Z` /
+  `Ctrl+Shift+Z`, and `⌘Z` / `⌘⇧Z` on macOS, reach them without the header. `full` and
+  `light` only, which is where the header lives.
+- **`Mod` in a keybinding matches either `Ctrl` or `Meta`**, and `Meta` (Cmd) is now a
+  modifier the key manager can express at all — it read `ctrlKey`, `shiftKey` and `altKey`
+  and nothing else, so a macOS shortcut could not be declared. `'Mod+z'` is one binding for
+  both platforms; `'Ctrl+z'` still means Ctrl alone.
+- **The post-ingest toast is a plain report again.** It carried an Undo on a twelve-second
+  fuse; with the history permanently in the top bar, a second undo affordance that expires is
+  a race the analyst can lose for no reason. `Notifier`'s action API is unchanged.
 
 ### Two things the pane needed, useful on their own
 

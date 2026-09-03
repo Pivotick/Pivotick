@@ -1,6 +1,4 @@
 import type { PivotCandidateSet, PivotRunOutcome } from '../../../interfaces/Pivot'
-import { NotificationLevel } from '../../Notifier'
-import type { NotificationHandle } from '../../Notifier'
 import { closeIcon, sparkles } from '../../icons'
 import { UIComponent } from '../../UIComponent'
 import type { UIManager } from '../../UIManager'
@@ -429,18 +427,18 @@ export class PivotTriage extends UIComponent {
         item.close.title = 'Drop these candidates. Nothing is rejected.'
     }
 
-    /* ---------- ingest, and the undo that follows it ---------- */
+    /* ---------- ingest, and the report that follows it ---------- */
 
     /**
      * An ingest that did not come through a pane still landed nodes on the canvas —
-     * an auto-ingest pivot (D13), or a consumer calling `pivots.ingest` itself. It gets
-     * the same toast, and the same undo on it, because the analyst has the same problem.
+     * an auto-ingest pivot, or a consumer calling `pivots.ingest` itself. It gets the
+     * same toast, because the analyst has the same question about it.
      */
     private reportUnannounced(): void {
         const latest = this.uiManager.graph.history.entries().find(entry => entry.kind === 'pivot')
         if (!latest || this.reported.has(latest.id)) return
         this.reported.add(latest.id)
-        this.toastIngest(latest.id, latest.nodeIds.length, 0, latest.edgeIds.length)
+        this.toastIngest(latest.nodeIds.length, 0, latest.edgeIds.length)
     }
 
     private async ingest(pivotId: string): Promise<void> {
@@ -466,7 +464,7 @@ export class PivotTriage extends UIComponent {
 
         this.reported.add(outcome.runId)
         this.dismissIfDone(pivotId)
-        this.toastIngest(outcome.runId, outcome.nodes.length, asked, outcome.edges.length)
+        this.toastIngest(outcome.nodes.length, asked, outcome.edges.length)
     }
 
     /**
@@ -482,34 +480,17 @@ export class PivotTriage extends UIComponent {
         if (this.panes.get(pivotId)?.finished()) this.pivots.discard(pivotId)
     }
 
-    private toastIngest(runId: string, landed: number, asked: number, edges: number): void {
+    /**
+     * A plain report of what landed, on the default lifetime. Taking it back lives in
+     * the top bar now, permanently — a second undo affordance on a twelve-second fuse
+     * is a race the analyst can lose for no reason.
+     */
+    private toastIngest(landed: number, asked: number, edges: number): void {
         if (!landed && !edges) {
             this.uiManager.graph.notifier.info('Nothing was ingested')
             return
         }
-        this.uiManager.graph.notifier.success(ingestTitle(landed, asked, edges), undefined, {
-            action: { label: 'Undo', onClick: toast => this.undo(runId, toast) },
-        })
-    }
-
-    private undo(runId: string, toast: NotificationHandle): void {
-        const history = this.uiManager.graph.history
-        // The run's id is its entry's, so this reaches the ingest the toast is about —
-        // and, contiguously, anything done since.
-        if (!history.undo(runId).length) {
-            toast.update({ level: NotificationLevel.Warning, title: 'Nothing left to undo', action: null })
-            return
-        }
-        toast.update({
-            title: 'Undone',
-            action: {
-                label: 'Redo',
-                onClick: next => {
-                    history.redo()
-                    next.update({ title: 'Redone', action: null })
-                },
-            },
-        })
+        this.uiManager.graph.notifier.success(ingestTitle(landed, asked, edges))
     }
 }
 

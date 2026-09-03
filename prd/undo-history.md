@@ -1,8 +1,10 @@
 # Feature — undo/redo with a history dropdown: taking back what the canvas holds
 
-**Status:** **M1 shipped** 2026-09-03 on `worktree-undo-history` — `graph.history` is complete
-and driveable from the console, with 13 behavioural tests in `tests/visual/specs/history.spec.ts`.
-M2 (the surface) and M3 (re-staging, docs, gallery) remain. Grilled with Sami 2026-09-03;
+**Status:** **M1 shipped and half of M2** 2026-09-03 on `worktree-undo-history` —
+`graph.history` is complete, both top-bar buttons are wired with keyboard undo/redo, and the
+toast is a plain report again. 16 behavioural tests in `tests/visual/specs/history.spec.ts`.
+What is left of M2 is the dropdown (gated on B vs B2) and the hover highlight (gated on the
+legend-hover merge); M3 (re-staging, docs, gallery) is untouched. Grilled with Sami 2026-09-03;
 twenty-four decisions taken (§6). Four competing designs for the dropdown were built as
 prototypes (§10) and **B, the timeline, is chosen**; a reversed draft, B2, followed. Still open
 before M2: B against B2 (§10.2) — an ordering, not a direction — and merging the legend-hover
@@ -518,9 +520,12 @@ state, and on one thing that is not frequency — B2's resting position *is* scr
 
   Small public additions the wiring needed: `queryEngine.getExcludedNodeIds()`, and
   `connectManager.createEdge` now returns the `Edge` it made.
-- **M2 — the surface.** Wire both buttons, build the winning dropdown, `metaKey` plus the two
-  keybindings (H24), the hover highlight (H16), and the toast change (H20). Depends on the
-  legend-hover merge.
+- **M2 — the surface.** Half done. **Shipped:** both buttons wired and following the history,
+  naming what they would take back (H22); `Meta` in the key manager plus a `Mod+` alias that
+  matches Ctrl *or* Cmd, so `Mod+z` / `Mod+Shift+Z` is one binding for both platforms (H24);
+  the toast reduced to a plain report (H20). **Left:** the dropdown itself, which waits on B
+  against B2 (§10.2), and the hover highlight (H16), which waits on the legend-hover merge —
+  `emphasiseElements` is in `develop` as `a17e138`, one commit away.
 - **M3 — triage re-staging (H21), docs and the gallery card.** Re-staging is separable from M2
   and is the one behaviour that reaches back into `PivotManager`, so it goes last.
 
