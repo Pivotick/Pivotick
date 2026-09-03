@@ -5,8 +5,9 @@ outline: [2, 3]
 # Legend
 
 `UI.legend` docks a **legend** in a canvas corner: one row per category, each with a
-colour swatch, a label and the number of nodes behind it. Clicking a row hides that
-category, so the legend doubles as the fastest filter in the UI.
+colour swatch, a label and the number of nodes behind it. Pointing at a row lights
+that category on the canvas; clicking one hides it, so the legend doubles as the
+fastest filter in the UI.
 
 ```ts
 const options = {
@@ -225,6 +226,32 @@ A section that resolves to **no entries** (a key no node carries, an empty
 declaration) is skipped entirely rather than shown as an empty titled box; a card
 whose sections are all empty renders nothing at all.
 
+## Hovering a category
+
+Point at a row and the canvas answers: the elements that category stands for keep the
+look they have, everything else dims until the pointer leaves. Nothing is filtered and
+nothing moves, so it is the cheap way to find where a category sits before deciding
+whether to switch it off.
+
+A row on a [`scope: 'edge'`](#keying-edges-instead-of-nodes) section lights its
+**lines**, with the nodes receding along with the other layers.
+
+Pointing at a category that is already switched off dims nothing — there is nothing
+left on the canvas for it to light.
+
+`highlightOnHover: false` turns it off for a section. A `filterable: false` key
+highlights too, where it is the only thing a row does.
+
+The same set can be lit from code, and holds until it is cleared:
+
+```js
+graph.emphasiseElements(graph.getMutableNodes().filter((node) => node.getData()?.type === 'md5'))
+graph.clearEmphasis()
+```
+
+Both take the elements the renderer drew, so they read `getMutableNodes()` /
+`getMutableEdges()` rather than the cloning getters.
+
 ## Filtering
 
 Toggling a row writes a filter to `graph.queryEngine` — the same engine the
@@ -325,6 +352,7 @@ below minus `position`, and `enabled` / `position` describe the whole card.
 | `collapsed` | `boolean` | `false` | Start folded. |
 | `showCounts` | `boolean` | `true` | Show the per-category node count (over the whole graph, so it doesn't flicker as you toggle). |
 | `filterable` | `boolean` | `true` | `false` renders a plain, non-interactive key. |
+| `highlightOnHover` | `boolean` | `true` | Hovering a row lights that category on the canvas and dims the rest. |
 | `maxVisibleEntries` | `number` | `12` | Rows shown before the list scrolls inside the legend. |
 
 A `LegendEntry` is `{ id, label?, color, predicate?, order? }`. `id` is the row's
@@ -346,6 +374,7 @@ than growing up under the rail. It never moves corner on its own.
 
 | Gesture | Effect |
 |---|---|
+| Hover a row | Light that category on the canvas, dim everything else |
 | Click a row | Hide / show that category |
 | **Alt**-click a row | Show only that category |
 | Header **show all** | Re-light every row (clears the legend's filter) |

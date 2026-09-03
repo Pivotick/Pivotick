@@ -3,7 +3,7 @@ import type { Page, Locator } from '@playwright/test'
 
 /** The shape `Locator.boundingBox()` resolves to. */
 interface BoundingBox { x: number; y: number; width: number; height: number }
-import type { LegendGroupSpec, LegendRow, LegendSectionSnapshot, LegendSpec } from '../harness/harness'
+import type { EmphasisSnapshot, LegendGroupSpec, LegendRow, LegendSectionSnapshot, LegendSpec } from '../harness/harness'
 
 /**
  * The canvas legend (prd/archive/filterable-legend.md).
@@ -49,6 +49,17 @@ async function expectVisible(page: Page, ids: string[]): Promise<void> {
 async function activeFilterKeys(page: Page): Promise<string[]> {
     return (await harness(page, 'activeFilterKeys')) as string[]
 }
+
+/** Which nodes the canvas is holding at full strength, and which it has dimmed. */
+async function expectEmphasis(page: Page, expected: EmphasisSnapshot): Promise<void> {
+    await expect.poll(() => harness(page, 'emphasis')).toEqual({
+        lit: expected.lit.slice().sort(),
+        dimmed: expected.dimmed.slice().sort(),
+    })
+}
+
+/** The whole fixture, drawn as it draws itself: what "nothing is emphasised" looks like. */
+const ALL_LIT = { lit: ['a1', 'a2', 'a3', 'obj'], dimmed: [] }
 
 /** Do two on-screen boxes intersect at all? */
 function overlaps(a: BoundingBox, b: BoundingBox): boolean {
@@ -106,6 +117,15 @@ async function collapsedFlags(page: Page): Promise<boolean[]> {
 async function loadGroup(page: Page, spec: LegendGroupSpec, expectedSections: number): Promise<void> {
     await harness(page, 'loadWithLegendGroup', 'mispLike', spec)
     await expect(page.locator('.pvt-legend-section')).toHaveCount(expectedSections)
+}
+
+/**
+ * Park the pointer clear of the legend. A click leaves it on the control it hit, and a
+ * fold slides another row up under it — either way the card comes out hovered, and the
+ * canvas dimmed behind it, in a screenshot that is about neither.
+ */
+async function pointerAway(page: Page): Promise<void> {
+    await page.mouse.move(0, 0)
 }
 
 /** Does the card scroll rather than grow past the canvas? */
@@ -353,7 +373,63 @@ test.describe('canvas legend', () => {
 
         await legendRow(page, 'md5').click()
         await expectVisible(page, ['a1', 'a2', 'a3', 'obj'])
+        await pointerAway(page)
         await expectCanvas(page, 'legend-plain-key.png')
+    })
+
+    test.describe('hovering an entry', () => {
+        test('lights that category on the canvas and dims the rest', async ({ page }) => {
+            await loadLegend(page)
+            await expectEmphasis(page, ALL_LIT)
+
+            await legendRow(page, 'md5').hover()
+
+            await expectEmphasis(page, { lit: ['a3'], dimmed: ['a1', 'a2', 'obj'] })
+            await expectCanvas(page, 'legend-hover-highlight.png')
+            // Pointing at a category asks nothing of the graph — nothing is filtered.
+            await expectVisible(page, ['a1', 'a2', 'a3', 'obj'])
+            expect(await activeFilterKeys(page)).toEqual([])
+        })
+
+        test('the next row takes it over, and leaving the card gives it back', async ({ page }) => {
+            await loadLegend(page)
+
+            await legendRow(page, 'md5').hover()
+            await legendRow(page, 'domain').hover()
+            // One pointer, one category: the rows don't accumulate.
+            await expectEmphasis(page, { lit: ['a2'], dimmed: ['a1', 'a3', 'obj'] })
+
+            // Still inside the card, but the header is not a category.
+            await page.locator('.pvt-legend-title').hover()
+            await expectEmphasis(page, ALL_LIT)
+
+            await legendRow(page, 'domain').hover()
+            await expectEmphasis(page, { lit: ['a2'], dimmed: ['a1', 'a3', 'obj'] })
+
+            await canvas(page).hover({ position: { x: 8, y: 8 } })
+            await expectEmphasis(page, ALL_LIT)
+        })
+
+        test('a category switched off dims nothing, there being nothing to light', async ({ page }) => {
+            await loadLegend(page)
+
+            // A click leaves the pointer on the row, so the hover outlives the filter
+            // that just took its nodes off the canvas.
+            await legendRow(page, 'md5').click()
+
+            await expectVisible(page, ['a1', 'a2', 'obj'])
+            await expectEmphasis(page, { lit: ['a1', 'a2', 'obj'], dimmed: [] })
+        })
+
+        test('a plain key highlights too; `highlightOnHover: false` leaves the canvas alone', async ({ page }) => {
+            await loadLegend(page, { filterable: false })
+            await legendRow(page, 'md5').hover()
+            await expectEmphasis(page, { lit: ['a3'], dimmed: ['a1', 'a2', 'obj'] })
+
+            await loadLegend(page, { highlightOnHover: false })
+            await legendRow(page, 'md5').hover()
+            await expectEmphasis(page, ALL_LIT)
+        })
     })
 
     test('the legend collapses to its header', async ({ page }) => {
@@ -649,6 +725,18 @@ test.describe('canvas legend', () => {
             expect(await activeFilterKeys(page)).toEqual(['__legend:attr-type'])
         })
 
+        test('the hover passes from one section to the next', async ({ page }) => {
+            await loadGroup(page, { sections: [{ key: 'attr-type' }, { key: 'category' }] }, 2)
+
+            await sectionRow(page, 'attr-type', 'md5').hover()
+            await expectEmphasis(page, { lit: ['a3'], dimmed: ['a1', 'a2', 'obj'] })
+
+            // A row in the *other* section takes it over rather than adding to it: two
+            // sections filter independently, but there is only one pointer.
+            await sectionRow(page, 'category', 'Network activity').hover()
+            await expectEmphasis(page, { lit: ['a1', 'a2'], dimmed: ['a3', 'obj'] })
+        })
+
         test('sections fold one at a time, or all at once with alt', async ({ page }) => {
             await loadGroup(page, {
                 sections: [{ key: 'attr-type' }, { key: 'category' }, { key: 'to_ids' }],
@@ -657,6 +745,7 @@ test.describe('canvas legend', () => {
 
             await sectionAction(page, 'category', 'collapse').click()
             expect(await collapsedFlags(page)).toEqual([false, true, false])
+            await pointerAway(page)
             await expectCanvas(page, 'legend-section-collapsed.png')
 
             // Alt-click is collapse-all, so a card keying four dimensions gets out of

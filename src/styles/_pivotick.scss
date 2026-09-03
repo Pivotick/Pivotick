@@ -458,6 +458,21 @@ dl.pvt-property-list {
     animation: var(--pvt-node-highlighted-animation);
 }
 
+// Set emphasis (a hovered legend entry): the marked elements keep their look and the
+// rest of the canvas recedes. Opacity only, for the reason the focus-mode note above
+// gives, and deeper than its 0.5 so the gesture in hand wins on a selected graph.
+//
+// Child combinators only, so an expanded cluster's nested subgraph rides along with
+// its parent instead of being dimmed again from the inside. `:has()` covers the
+// emphasised elements leaving the DOM under the pointer — hovering a category, then
+// clicking to hide it — which would otherwise dim the canvas with nothing left lit.
+.zoom-layer.pvt-emphasis-active:has(.pvt-node-emphasised, .pvt-edge-emphasised) {
+    > .nodes > .pvt-node:not(.pvt-node-emphasised) > *,
+    > .edges > .pvt-edge-group:not(.pvt-edge-emphasised) > * {
+        opacity: 0.25;
+    }
+}
+
 .pvt-edge-group {
     path {
         filter: var(--pvt-edge-filter);

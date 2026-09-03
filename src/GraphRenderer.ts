@@ -73,6 +73,8 @@ export abstract class GraphRenderer {
     abstract highlightElement(element: Node | Edge): void
     abstract unHighlightElement(element: Node | Edge): void
     abstract clearHighlightedElements(): void
+    abstract emphasiseElements(elements: (Node | Edge)[]): void
+    abstract clearEmphasis(): void
     abstract showShadowEdge(params: { source: Node | Note, targetNode?: Node, targetPosition?: { x: number, y: number }, invalid?: boolean }): void
     abstract hideShadowEdge(): void
     abstract enterNoteEditMode(note: Note): void

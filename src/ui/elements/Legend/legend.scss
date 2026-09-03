@@ -270,13 +270,16 @@
 .pvt-legend-section:not(.pvt-legend-static) .pvt-legend-entry {
     cursor: pointer;
 
-    &:hover:not(:disabled) {
-        background-color: var(--pvt-chrome-border);
-    }
-
     &:disabled {
         cursor: default;
     }
+}
+
+// A row the pointer does something to says so — it filters, or it reads its category
+// off the canvas, which a plain key does too.
+.pvt-legend-section:not(.pvt-legend-static) .pvt-legend-entry:hover:not(:disabled),
+.pvt-legend-section.pvt-legend-highlights .pvt-legend-entry:hover:not(:disabled) {
+    background-color: var(--pvt-chrome-border);
 }
 
 // Hidden category: hollow swatch *and* dimmed text — colour alone must not be

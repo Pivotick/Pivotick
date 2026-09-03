@@ -389,6 +389,7 @@ export interface LegendSpec {
     collapsed?: boolean
     collapsible?: boolean
     filterable?: boolean
+    highlightOnHover?: boolean
     showCounts?: boolean
     maxVisibleEntries?: number
     /** Also declare `UI.filter.facets`, so a legend `key` naming one is adopted. */
@@ -538,6 +539,17 @@ export interface NodeShapePaint {
     strokeOpacity: string
     /** The resolved `filter`, which carries the state glow. */
     filter: string
+}
+
+/**
+ * What the canvas is emphasising, read off resolved opacity rather than class names —
+ * the answer to "did the dimming actually land", which is the whole of the effect.
+ */
+export interface EmphasisSnapshot {
+    /** Ids drawn at full strength. Everything, when nothing is emphasised. */
+    lit: string[]
+    /** Ids the canvas has receded behind the emphasis. */
+    dimmed: string[]
 }
 
 export interface NodeVisual {
@@ -1084,6 +1096,12 @@ export interface HarnessApi {
      * the zoom a screenshot would be taken at.
      */
     nodeShapePaint(id: string): NodeShapePaint | null
+    /**
+     * Which elements the canvas is holding at full strength and which it has dimmed —
+     * `graph.emphasiseElements`, and so a hovered legend entry. Read off computed
+     * opacity, so it answers whether the emphasis is *visible*, not merely marked.
+     */
+    emphasis(scope?: 'node' | 'edge'): EmphasisSnapshot
     /**
      * A theme colour custom property, resolved to the `rgb(...)` form a computed `fill` or
      * `stroke` comes back in, so a test can name the colour it expects instead of
@@ -2208,6 +2226,25 @@ class Harness implements HarnessApi {
         }
     }
 
+    emphasis(scope: 'node' | 'edge' = 'node'): EmphasisSnapshot {
+        const drawn: { id: string, element: SVGGElement | null }[] = scope === 'edge'
+            ? this.g.getMutableEdges().filter((edge) => edge.visible)
+                .map((edge) => ({ id: edge.id, element: edge.getGraphElement() }))
+            : this.g.getMutableNodes().filter((node) => node.childrenDepth === 0 && node.visible)
+                .map((node) => ({ id: node.id, element: node.getGraphElement() }))
+
+        const lit: string[] = []
+        const dimmed: string[] = []
+        for (const { id, element } of drawn) {
+            // The dim lands on the group's children, not the group, so read one of them.
+            const painted = element?.firstElementChild
+            if (!painted) continue
+            if (Number(getComputedStyle(painted).opacity) < 1) dimmed.push(id)
+            else lit.push(id)
+        }
+        return { lit: lit.sort(), dimmed: dimmed.sort() }
+    }
+
     edgeMarkers(id: string): { start: string | null, end: string | null } | null {
         const path = this.g.getMutableEdge(id)?.getGraphElement()?.querySelector('path')
         if (!path) return null
@@ -2703,6 +2740,7 @@ class Harness implements HarnessApi {
         if (spec.collapsed !== undefined) section.collapsed = spec.collapsed
         if (spec.collapsible !== undefined) section.collapsible = spec.collapsible
         if (spec.filterable !== undefined) section.filterable = spec.filterable
+        if (spec.highlightOnHover !== undefined) section.highlightOnHover = spec.highlightOnHover
         if (spec.showCounts !== undefined) section.showCounts = spec.showCounts
         if (spec.maxVisibleEntries !== undefined) section.maxVisibleEntries = spec.maxVisibleEntries
         return section

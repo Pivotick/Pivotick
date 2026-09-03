@@ -1522,4 +1522,23 @@ export class Graph {
     clearHighlightedElements(): void {
         this.renderer.clearHighlightedElements()
     }
+
+    /**
+     * Pick a **set** of elements out of the graph: they keep the look they already have
+     * while everything else on the canvas dims, until {@link clearEmphasis}. This is
+     * how hovering a legend entry reads its category off the canvas.
+     *
+     * Where {@link highlightElement} points at one element, this describes a group.
+     * Elements that aren't drawn right now are skipped, and an empty set dims nothing.
+     *
+     * @param elements The `Node`s and `Edge`s to emphasise.
+     */
+    emphasiseElements(elements: (Node | Edge)[]): void {
+        this.renderer.emphasiseElements(elements)
+    }
+
+    /** End the emphasis {@link emphasiseElements} started: the canvas reads normally again. */
+    clearEmphasis(): void {
+        this.renderer.clearEmphasis()
+    }
 }

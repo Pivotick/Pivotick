@@ -78,6 +78,8 @@ export class LegendSectionView {
     private readonly rows = new Map<string, HTMLElement>()
     /** Entry ids the user switched off. */
     private hiddenIds = new Set<string>()
+    /** The entry the pointer is on, while it is emphasising the canvas. */
+    private hoveredId?: string
     private collapsed = false
     /** Set once `collapsed` has been seeded, so a rebuild doesn't unfold the section. */
     private collapseSeeded = false
@@ -127,6 +129,10 @@ export class LegendSectionView {
 
     private get filterable(): boolean {
         return this.config.filterable !== false
+    }
+
+    private get highlightsOnHover(): boolean {
+        return this.config.highlightOnHover !== false
     }
 
     /** Which collection this section keys on, and therefore which facets it drives. */
@@ -206,6 +212,7 @@ export class LegendSectionView {
 
     /** Drop everything this section holds — its facet, and any filter it was driving. */
     public dispose() {
+        this.endHover()
         if (this.hiddenIds.size > 0) this.removeOwnFilter(this.filterKey)
         this.releaseFacet()
         this.hiddenIds.clear()
@@ -566,6 +573,9 @@ export class LegendSectionView {
         }
 
         this.applyEntryStates()
+        // Filtering redrew the canvas under the pointer: the elements of a category
+        // just switched off are gone, and those of one switched back on are new.
+        this.refreshHover()
         if (emitEvent) {
             this.uiManager.graph.legendToggled({
                 section: this.id,
@@ -632,6 +642,42 @@ export class LegendSectionView {
         this.applyFilter()
     }
 
+    /**
+     * The pointer is on one of this section's entries: read that category off the
+     * canvas — its elements keep their look, everything else dims. Held until
+     * {@link endHover}; moving between rows just replaces the set.
+     */
+    public onEntryHover(id: string) {
+        if (!this.highlightsOnHover || this.hoveredId === id) return
+        this.hoveredId = id
+        this.emphasise(id)
+    }
+
+    /** The pointer left: the canvas reads normally again. No-op unless it was here. */
+    public endHover() {
+        if (this.hoveredId === undefined) return
+        this.hoveredId = undefined
+        this.uiManager.graph.clearEmphasis()
+    }
+
+    /**
+     * Re-read the hovered category off entries that were re-derived under the pointer.
+     * No-op unless this section holds the hover.
+     */
+    public refreshHover() {
+        if (this.hoveredId !== undefined) this.emphasise(this.hoveredId)
+    }
+
+    /**
+     * Hand the canvas the elements one entry stands for. An id that no longer resolves
+     * — the entries were re-derived under the pointer — emphasises nothing, which is
+     * how the emphasis is dropped rather than left pointing at the previous data.
+     */
+    private emphasise(id: string) {
+        const entry = this.entries.find(candidate => candidate.id === id)
+        this.uiManager.graph.emphasiseElements(entry ? this.items().filter(entry.predicate) : [])
+    }
+
     private showAll() {
         if (this.hiddenIds.size === 0) return
         this.hiddenIds.clear()
@@ -686,6 +732,7 @@ export class LegendSectionView {
             'data-section': this.id,
         })
         block.classList.toggle('pvt-legend-static', !this.filterable)
+        block.classList.toggle('pvt-legend-highlights', this.highlightsOnHover)
         this.block = block
 
         block.appendChild(this.renderHeader())

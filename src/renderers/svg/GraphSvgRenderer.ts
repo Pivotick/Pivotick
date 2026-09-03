@@ -84,6 +84,9 @@ export class GraphSvgRenderer extends GraphRenderer {
 
     private lassoModeActive = false
 
+    /** The elements {@link emphasiseElements} marked, so clearing costs the set, not the graph. */
+    private emphasised: SVGGElement[] = []
+
     /** Fires when the canvas becomes visible, to re-measure node sizes. */
     private sizeObserver: IntersectionObserver | null = null
 
@@ -693,6 +696,33 @@ export class GraphSvgRenderer extends GraphRenderer {
     public clearHighlightedElements(): void {
         this.edgeSelection.classed('pvt-edge-highlighted', false)
         this.nodeSelection.classed('pvt-node-highlighted', false)
+    }
+
+    /**
+     * Emphasise a *set* of elements: they keep the look they already have while
+     * everything else on the canvas dims. {@link highlightElement} points at one
+     * element and holds only that one; this reads a group out of the graph.
+     *
+     * An element that isn't drawn resolves to no element and is skipped — and with
+     * nothing left to light, the canvas is left alone rather than greyed out whole.
+     */
+    public emphasiseElements(elements: (Node | Edge)[]): void {
+        this.clearEmphasis()
+        for (const element of elements) {
+            const target = element.getGraphElement()
+            if (!target) continue
+            target.classList.add(element instanceof Edge ? 'pvt-edge-emphasised' : 'pvt-node-emphasised')
+            this.emphasised.push(target)
+        }
+        this.zoomGroup.classed('pvt-emphasis-active', this.emphasised.length > 0)
+    }
+
+    public clearEmphasis(): void {
+        for (const target of this.emphasised) {
+            target.classList.remove('pvt-node-emphasised', 'pvt-edge-emphasised')
+        }
+        this.emphasised = []
+        this.zoomGroup.classed('pvt-emphasis-active', false)
     }
 
     private updateNodePositions(nodes?: Node[]): void {

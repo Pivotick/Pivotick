@@ -360,6 +360,13 @@ export interface LegendSection {
     showCounts?: boolean
     /** Clicking an entry filters the graph. `false` renders a pure key. @default true */
     filterable?: boolean
+    /**
+     * Hovering an entry reads its category off the canvas: the elements it stands for
+     * keep their look, everything else dims until the pointer leaves. Works on a
+     * `filterable: false` key too — pointing at a category asks nothing of the graph.
+     * @default true
+     */
+    highlightOnHover?: boolean
     /** Entries shown before the list scrolls. @default 12 */
     maxVisibleEntries?: number
 }
