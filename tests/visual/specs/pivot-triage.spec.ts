@@ -225,7 +225,7 @@ test.describe('pivot triage pane', () => {
         expect(await harness(page, 'rejectedPivotIds', 'blind')).toEqual([])
     })
 
-    test('reject all remaining leaves what was marked and ends the triage', async ({ page }) => {
+    test('reject all remaining leaves what was marked, and the ingest closes the pane', async ({ page }) => {
         await load(page, { pivots: ['blind'] })
         await harness(page, 'runPivot', 'blind', ['a'])
 
@@ -236,8 +236,36 @@ test.describe('pivot triage pane', () => {
         await expect(row(page, 'blind-1')).toHaveClass(/pvt-triage-row-marked/)
 
         await button(footer(page), 'Ingest selected').click()
+
+        // Nothing is left to decide on here, so the pane goes rather than emptying
+        // itself out behind a Close the analyst has to find before reaching the canvas.
+        await expect(toast(page)).toContainText('Ingested 1 node')
+        await expect(pane(page)).toHaveCount(0)
+        expect(await harness(page, 'dockTabIds')).toEqual(['table'])
+        // Closing is not a verdict: the two rejections are the session's, the ingested
+        // row is on the canvas, and nothing else was decided on the analyst's behalf.
+        expect(await harness(page, 'rejectedPivotIds', 'blind')).toEqual(['blind-0', 'blind-2'])
+    })
+
+    test('a pane emptied by an ingest stays while a re-run waits in it', async ({ page }) => {
+        await load(page, { pivots: ['blind'] })
+        await harness(page, 'runPivot', 'blind', ['a'])
+
+        await markRow(page, 'blind-1')
+        await harness(page, 'runPivot', 'blind', ['a'])
+        await expect(banner(page)).toContainText('This pivot was run again.')
+
+        await button(footer(page), 'Reject all remaining').click()
+        await button(footer(page), 'Ingest selected').click()
+
+        // The re-run's candidates are reachable from this banner and nowhere else, so
+        // closing the pane would be a silent discard of them (D27).
+        await expect(toast(page)).toContainText('Ingested 1 node')
+        await expect(banner(page)).toContainText('This pivot was run again.')
         await expect(stateBox(page)).toContainText('Nothing left to triage')
-        await expect(stateBox(page)).toContainText('1 ingested · 2 rejected')
+
+        await button(banner(page), 'Show new').click()
+        await expect(rows(page)).toHaveCount(3)
     })
 
     test('the whole row marks, and Shift takes the range from the last row clicked', async ({ page }) => {

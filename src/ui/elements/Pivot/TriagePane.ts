@@ -173,6 +173,18 @@ export class TriagePane {
         return this.untriaged().length + this.set.edges.filter(row => row.state !== 'rejected').length
     }
 
+    /**
+     * Whether there is nothing left in here to read — what puts one of the endings on
+     * screen instead of the table.
+     *
+     * Edge rows are verdicts of their own (D24), so a result that is nothing but edges
+     * between nodes already on canvas has plenty to triage: reading only the node rows
+     * told the analyst nothing came back over a table of them.
+     */
+    public finished(): boolean {
+        return !this.untriaged().length && !this.set.edges.length
+    }
+
     /** The pane's own header controls, in the slot the dock hands it. */
     public toolbar(): HTMLElement[] {
         const items: HTMLElement[] = []
@@ -258,10 +270,7 @@ export class TriagePane {
         }
 
         const actionable = this.untriaged()
-        // Edge rows are verdicts of their own (D24), so a result that is nothing but
-        // edges between nodes already on canvas has plenty to triage — reading only the
-        // node rows here told the analyst nothing came back over a table of them.
-        if (!actionable.length && !this.set.edges.length) return this.finishedState()
+        if (this.finished()) return this.finishedState()
 
         this.root.appendChild(this.headline())
 

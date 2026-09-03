@@ -466,7 +466,21 @@ export class PivotTriage extends UIComponent {
         }
 
         this.reported.add(outcome.runId)
+        this.dismissIfDone(pivotId)
         this.toastIngest(outcome.runId, outcome.nodes.length, asked, outcome.edges.length)
+    }
+
+    /**
+     * Triage over, pane gone: an ingest that took the last row otherwise leaves a pane
+     * holding nothing but a *Close*, one more click for a report the toast carries.
+     *
+     * A re-run keeps it open, fetching or waiting for a verdict — those candidates are
+     * reachable from the banner inside this pane and nowhere else.
+     */
+    private dismissIfDone(pivotId: string): void {
+        const set = this.pivots.candidates(pivotId)
+        if (!set || set.loading || set.pending) return
+        if (this.panes.get(pivotId)?.finished()) this.pivots.discard(pivotId)
     }
 
     private toastIngest(runId: string, landed: number, asked: number, edges: number): void {

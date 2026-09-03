@@ -5,7 +5,8 @@ written 2026-09-01. **§5 and §6 are built** — see §17 of the PRD, which ame
 suppressed rows are an id list with a restore, because M1 does not stage them), **C8** (reversed:
 `DockTabHandle.setLabel` exists, so the count is in the tab) and **C9** (built as specified).
 **§5.6** was amended again on 2026-09-03: the panes coexist inside one **Review** tab, as
-vertical tabs down its side, rather than as tabs of the dock's own (at-scale finding 8).
+vertical tabs down its side, rather than as tabs of the dock's own (at-scale finding 8). **T6** was
+amended the same day by **C16**: an ingest that empties a pane closes it.
 Groundwork in
 [`pivot-enrichment-ui-groundwork.md`](pivot-enrichment-ui-groundwork.md); behaviour in
 [`pivot-enrichment-interface.md`](pivot-enrichment-interface.md), which wins on any disagreement.
@@ -172,8 +173,16 @@ so the single-pivot case has no tab at all.
 | **T3** | zero results | `No candidates came back` |
 | **T4** | fetch failed | `Couldn't fetch candidates.` + **Retry** (re-runs `fetch` with the same narrowing) |
 | **T5** | ceiling refusal | `The source returned 14,203 candidates, over the 10,000 limit. Nothing was staged — narrow and run again.` (D17 — a refusal, never a truncation) |
-| **T6** | triage finished | `Nothing left to triage` + what happened: `12 ingested · 198 rejected` |
+| **T6** | triage finished | `Nothing left to triage` + what happened: `12 ingested · 198 rejected` — but see C16 |
 | **T7** | replaced | a re-run of the same pivot replaced this set — see C6 |
+
+**C16 — an ingest that empties the pane closes it.** T6 is where triage *ends*, not where it is
+reported: an emptied pane holding nothing but a **Close** is one more click between the analyst
+and the canvas they have just changed, for a tally the ingest toast already carries. So the
+pane goes, and the provider strip hands over to the next one waiting. T6 is still reached the
+other way, by rejecting the last rows — there is no toast on that path, so the tally is the only
+report of it. A re-run waiting in the pane (C6) keeps it open either way: its candidates are
+reachable from that banner and nowhere else.
 
 ### 5.2 The header line
 
