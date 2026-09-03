@@ -1,7 +1,8 @@
 import type { Locator, Page } from '@playwright/test'
 import { test, expect, gotoHarness, loadFixture, harness } from '../helpers'
 import type {
-    RecordedCandidates, RecordedHistoryEntry, RecordedHistoryPreview, RecordedRunOutcome,
+    RecordedCandidates, RecordedEdgeBinding, RecordedHistoryEntry, RecordedHistoryPreview,
+    RecordedRunOutcome,
 } from '../harness/harness'
 
 // `graph.history` — the engine, with no UI on it yet.
@@ -54,6 +55,12 @@ const sources = async (page: Page, nodeId: string): Promise<string[]> =>
 
 const hasNode = async (page: Page, id: string): Promise<boolean> =>
     (await harness(page, 'hasGraphNode', id)) as boolean
+
+const binding = async (page: Page, edgeId: string): Promise<RecordedEdgeBinding | null> =>
+    (await harness(page, 'edgeBinding', edgeId)) as RecordedEdgeBinding | null
+
+/** An edge stops on the node's rim, a few px clear of it — never further than this. */
+const RIM = 40
 
 // ── the dropdown ─────────────────────────────────────────────────────────────
 const menuRows = (page: Page): Locator => page.locator('.pvt-history-row')
@@ -307,6 +314,39 @@ test.describe('history — a deletion remembers who vouched for what', () => {
         // …so the run can still account for it.
         await undoThrough(page, run.runId)
         expect(await hasNode(page, first)).toBe(false)
+    })
+})
+
+test.describe('history — what a restored element hangs off', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoHarness(page)
+        await harness(page, 'loadWithPivots', 'basic', {})
+        await page.locator('.zoom-layer:not(.hidden)').first().waitFor({ state: 'attached' })
+        await harness(page, 'configureWritePath', {})
+    })
+
+    test('an edge redone onto a replayed node follows that node, not the copy it was drawn against', async ({ page }) => {
+        const run = await ingest(page, 1)
+        const landed = run.nodes[0]
+        await harness(page, 'connect', 'b', landed)
+
+        const [drawn] = await entries(page)
+        expect(drawn.kind).toBe('create')
+        const edgeId = drawn.edges[0]
+
+        // Down past the ingest and back up again. The node is rebuilt from the run's
+        // raw data, so it is a *different* object than the edge was drawn against.
+        await undoThrough(page, run.runId)
+        await redoThrough(page, drawn.id)
+
+        const restored = await binding(page, edgeId)
+        expect(restored?.bound).toBe(true)
+        expect(restored?.counted).toBe(true)
+
+        // And it is that node the drawn path tracks: move the node, the edge moves.
+        await harness(page, 'moveNode', landed, 600, 260)
+        const moved = await binding(page, edgeId)
+        expect(moved?.toGap).toBeLessThan(RIM)
     })
 })
 

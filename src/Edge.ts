@@ -104,6 +104,25 @@ export class Edge {
         this.to.registerEdgeIn(this as Edge)
     }
 
+    /**
+     * @private
+     * Point this edge at these endpoints and register it on them, as the constructor
+     * does. For an edge re-entering a graph whose nodes are no longer the objects it
+     * was built with.
+     */
+    bindEndpoints(from: Node, to: Node): void {
+        if (this.from !== from) {
+            this.from = from
+            this.markDirty()
+        }
+        if (this.to !== to) {
+            this.to = to
+            this.markDirty()
+        }
+        from.registerEdgeOut(this as Edge)
+        to.registerEdgeIn(this as Edge)
+    }
+
     /** Required by d3-force */
     get source(): Node {
         return this.from

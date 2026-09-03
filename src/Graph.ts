@@ -988,9 +988,16 @@ export class Graph {
         if (this.edges.has(edge.id)) {
             throw new Error(`Edge with id ${edge.id} already exists.`)
         }
-        if (!this.nodes.has(edge.from.id) || !this.nodes.has(edge.to.id)) {
+        const from = this.nodes.get(edge.from.id)
+        const to = this.nodes.get(edge.to.id)
+        if (!from || !to) {
             throw new Error('Both nodes must exist in the graph before adding an edge.')
         }
+        // An Edge instance remembers endpoint *objects*, and the graph may hold other
+        // ones under those ids: a node dropped and re-created — a pivot replayed from
+        // its raw data on redo, an `updateData` — is a new object, and an edge left
+        // pointing at the old one hangs off something nothing moves again.
+        edge.bindEndpoints(from, to)
         this.edges.set(edge.id, edge)
         this.dataBatchChanged([{
             type: 'edge:add',

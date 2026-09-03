@@ -209,6 +209,17 @@ export interface RecordedHistoryEntry {
     ordinal?: number
 }
 
+/** One edge as everything downstream of it sees it — see {@link HarnessApi.edgeBinding}. */
+export interface RecordedEdgeBinding {
+    /** Both endpoints are the very Node objects the graph holds under those ids. */
+    bound: boolean
+    /** Both endpoints count this edge among their own, so degree and neighbour lists see it. */
+    counted: boolean
+    /** Distance from each end of the drawn path to the centre of the node the graph holds. */
+    fromGap: number
+    toGap: number
+}
+
 /** What a span would do, flattened the same way. */
 export interface RecordedHistoryPreview {
     entries: string[]
@@ -960,6 +971,14 @@ export interface HarnessApi {
     includeNode(id: string): void
     /** Whether an id is in the model at all — a *hidden* node is still there. */
     hasGraphNode(id: string): boolean
+    /**
+     * One edge as everything downstream of it sees it: whether it hangs off the very
+     * Node objects the graph holds, whether those count it in their own degree, and
+     * how far the drawn path's ends sit from their centres.
+     */
+    edgeBinding(edgeId: string): RecordedEdgeBinding | null
+    /** Put a node where you want it and redraw, so a test can watch what follows it. */
+    moveNode(id: string, x: number, y: number): void
     /** Provenance. `'seed'` for anything no pivot vouches for. */
     nodeSources(nodeId: string): string[]
     edgeSources(edgeId: string): string[]
@@ -4349,6 +4368,37 @@ class Harness implements HarnessApi {
     /** Whether an id is in the model at all — a *hidden* node is still there. */
     hasGraphNode(id: string): boolean {
         return Boolean(this.g.getMutableNode(id))
+    }
+
+    edgeBinding(edgeId: string): RecordedEdgeBinding | null {
+        const edge = this.g.getMutableEdge(edgeId)
+        if (!edge) return null
+        const from = this.g.getMutableNode(edge.from.id)
+        const to = this.g.getMutableNode(edge.to.id)
+        const drawn = document.querySelector(`#edge-${edge.domID} path`)?.getAttribute('d') ?? ''
+        const numbers = (drawn.match(/-?\d+(?:\.\d+)?(?:e-?\d+)?/g) ?? []).map(Number)
+        const gap = (node: Node | undefined, x?: number, y?: number): number => {
+            if (!node || x === undefined || y === undefined) return Infinity
+            return Math.hypot(x - (node.x ?? 0), y - (node.y ?? 0))
+        }
+        return {
+            bound: from === edge.from && to === edge.to,
+            counted: Boolean(
+                from?.getEdgesOut().includes(edge) && to?.getEdgesIn().includes(edge)
+            ),
+            fromGap: gap(from, numbers[0], numbers[1]),
+            toGap: gap(to, numbers[numbers.length - 2], numbers[numbers.length - 1]),
+        }
+    }
+
+    moveNode(id: string, x: number, y: number): void {
+        const node = this.g.getMutableNode(id)
+        if (!node) return
+        node.x = x
+        node.y = y
+        node.fx = x
+        node.fy = y
+        this.g.renderer.nextTick()
     }
 
     redoableEntryIds(): string[] {
