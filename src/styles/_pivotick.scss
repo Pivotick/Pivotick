@@ -539,6 +539,62 @@ dl.pvt-property-list {
     }
 }
 
+// Forecast: what an action would do, painted on the elements it would change and
+// nowhere else. Deliberately not the emphasis treatment above — the question a
+// forecast answers is "what happens if I click", so the graph has to keep reading
+// normally around the few elements that would move.
+//
+// After `.pvt-edge-group` on purpose: `.pvt-edge-group.selected path` ties on
+// specificity, and a forecast is the gesture in hand.
+.pvt-node.pvt-forecast-removing,
+.pvt-node.pvt-forecast-hiding {
+    // Children rather than the group, for the reason the focus-mode note gives above.
+    > * {
+        opacity: 0.34;
+    }
+
+    > .node {
+        stroke: var(--pvt-theme-primary);
+        stroke-dasharray: 3 2.5;
+    }
+}
+
+.pvt-node.pvt-forecast-touch > .node {
+    stroke: var(--pvt-theme-primary);
+}
+
+.pvt-edge-group {
+    &.pvt-forecast-removing path,
+    &.pvt-forecast-hiding path {
+        stroke: var(--pvt-theme-primary);
+        stroke-dasharray: 4 3;
+        opacity: 0.4;
+    }
+
+    &.pvt-forecast-touch path {
+        stroke: var(--pvt-theme-primary);
+    }
+}
+
+// The outlines: what is not on the canvas yet, where it would land.
+.pvt-forecast {
+    .pvt-forecast-node {
+        fill: none;
+        stroke: var(--pvt-theme-primary);
+        stroke-width: 2;
+        stroke-dasharray: 3 2.5;
+        opacity: 0.9;
+    }
+
+    .pvt-forecast-edge {
+        fill: none;
+        stroke: var(--pvt-theme-primary);
+        stroke-width: 1.7;
+        stroke-dasharray: 4 3;
+        opacity: 0.6;
+    }
+}
+
 .pvt-node {
     // transition: transform 0.3s ease;
 

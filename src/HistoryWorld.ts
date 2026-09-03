@@ -252,6 +252,27 @@ export class ScratchWorld implements HistoryWorld {
         this.hidden = new Set(this.hiddenBefore)
     }
 
+    /**
+     * Every element the play changed the state of — the ids a forecast has to ask
+     * about. Cheaper and more honest than walking the span's entries: an edge that
+     * only left because a node it hung off did is in here, and is named nowhere else.
+     */
+    touched(): { nodes: string[], edges: string[] } {
+        const nodes = new Set(this.nodePresent.keys())
+        for (const id of this.hidden) if (!this.hiddenBefore.has(id)) nodes.add(id)
+        for (const id of this.hiddenBefore) if (!this.hidden.has(id)) nodes.add(id)
+        return { nodes: [...nodes], edges: [...this.edgePresent.keys()] }
+    }
+
+    /** Where the play leaves one node: in the graph at all, and shown or hidden. */
+    nodeAfter(id: string): { present: boolean, hidden: boolean } {
+        return { present: this.hasNode(id), hidden: this.hidden.has(id) }
+    }
+
+    edgeAfter(id: string): boolean {
+        return this.hasEdge(id)
+    }
+
     /** What playing the span did, against what the canvas holds now. */
     effect(): HistoryEffect {
         const effect: HistoryEffect = {

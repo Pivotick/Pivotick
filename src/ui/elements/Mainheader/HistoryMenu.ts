@@ -136,7 +136,7 @@ export class HistoryMenu extends UIComponent {
     }
 
     protected onDestroy(): void {
-        this.uiManager.graph.renderer.clearEmphasis()
+        this.uiManager.graph.clearForecast()
         this.root?.remove()
         this.root = undefined
     }
@@ -168,7 +168,7 @@ export class HistoryMenu extends UIComponent {
         this.opened = false
         this.armed = undefined
         this.root?.classList.remove('open')
-        this.uiManager.graph.renderer.clearEmphasis()
+        this.uiManager.graph.clearForecast()
         this.paintCarets()
     }
 
@@ -327,13 +327,13 @@ export class HistoryMenu extends UIComponent {
             this.root!.dataset.side = this.openedFrom
             this.paintSideChip(this.openedFrom)
             this.footIdle()
-            this.uiManager.graph.renderer.clearEmphasis()
+            this.uiManager.graph.clearForecast()
             return
         }
 
         const { rows, direction } = span
         const preview = this.uiManager.graph.history.preview(this.armed!, direction)
-        // The emphasis follows what is being aimed at, not only what opened the menu.
+        // The forecast follows what is being aimed at, not only what opened the menu.
         this.root!.dataset.side = direction
         this.paintSideChip(direction)
 
@@ -363,7 +363,10 @@ export class HistoryMenu extends UIComponent {
         }
 
         this.footSpan(direction, preview)
-        this.uiManager.graph.renderer.emphasiseElements([...preview.nodes, ...preview.edges])
+        // A forecast, not an emphasis: the canvas keeps reading as itself and only what
+        // the click would change is marked — an outline included for what would come
+        // back, which is all a redo has to show.
+        this.uiManager.graph.showForecast(preview.forecast)
     }
 
     /** The contiguous block between a row and the line — always touching the line. */
@@ -382,8 +385,8 @@ export class HistoryMenu extends UIComponent {
         const history = this.uiManager.graph.history
         if (span.direction === 'undo') history.undo(entryId)
         else history.redo(entryId)
-        // `history.on` re-renders; the emphasis is stale the moment the graph moves.
-        this.uiManager.graph.renderer.clearEmphasis()
+        // `history.on` re-renders; the forecast is stale the moment the graph moves.
+        this.uiManager.graph.clearForecast()
         this.armed = undefined
         this.decorate()
     }

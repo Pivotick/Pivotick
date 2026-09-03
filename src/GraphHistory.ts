@@ -1,8 +1,9 @@
 import type { Edge } from './Edge'
 import type { Graph } from './Graph'
+import type { ForecastEdge, ForecastNode, GraphForecast } from './GraphRenderer'
 import {
     LiveWorld, ScratchWorld, reapply, reverse,
-    type HistoryPayload, type HistoryWorld,
+    type HistoryPayload,
 } from './HistoryWorld'
 import type {
     GraphHistoryLike, HistoryEffect, HistoryEntry, HistoryPreview,
@@ -14,6 +15,28 @@ import { generateSafeDomId } from './utils/ElementCreation'
 /** An entry with the payload that makes it reversible. The payload never leaves this file. */
 interface HistoryRecord extends HistoryEntry {
     payload: HistoryPayload
+    /**
+     * Where this entry's elements stood, noted as an undo took them off the canvas.
+     * A pivot replays from raw provider data, which carries no coordinates — so
+     * without this a redone ingest scatters its nodes anew, and a forecast of one
+     * would have nothing to point at.
+     */
+    dropped?: Dropped
+}
+
+/** Where an element stood, and how big it was drawn. */
+interface Placement {
+    x: number
+    y: number
+    radius: number
+    fx?: number
+    fy?: number
+}
+
+interface Dropped {
+    nodes: Map<string, Placement>
+    /** `[fromId, toId]` per edge: an outline needs both ends, and the edge is gone. */
+    edges: Map<string, [string, string]>
 }
 
 /**
@@ -90,7 +113,7 @@ export class GraphHistory implements GraphHistoryLike {
         const span = this.undoSpan(throughEntryId)
         if (!span.length) return []
 
-        const reversed = this.travel(span, reverse)
+        const reversed = this.travel(span, 'undo')
         this.cursor -= span.length
         this.restageNewest(span[0])
         this.notify()
@@ -108,7 +131,7 @@ export class GraphHistory implements GraphHistoryLike {
         const span = this.redoSpan(throughEntryId)
         if (!span.length) return []
 
-        const applied = this.travel(span, reapply)
+        const applied = this.travel(span, 'redo')
         this.cursor += span.length
         this.notify()
         return applied.reverse()
@@ -150,6 +173,12 @@ export class GraphHistory implements GraphHistoryLike {
             }
         }
 
+        const forecast = this.forecast(world, applied)
+        const changing = new Set([
+            ...(forecast.removing ?? []).map(element => element.id),
+            ...(forecast.hiding ?? []).map(node => node.id),
+        ])
+
         const ordered = direction === 'undo' ? span : [...span].reverse()
         return {
             entries: ordered.map(publicEntry),
@@ -157,6 +186,13 @@ export class GraphHistory implements GraphHistoryLike {
             nodes: dedupe(nodes),
             edges: dedupe(edges),
             effect: world.effect(),
+            // A ring goes on what the span touches and *keeps* — a node a second run
+            // also vouches for. What is on its way out is drained instead, and saying
+            // both about one element says neither.
+            forecast: {
+                ...forecast,
+                touching: [...dedupe(nodes), ...dedupe(edges)].filter(element => !changing.has(element.id)),
+            },
         }
     }
 
@@ -308,10 +344,8 @@ export class GraphHistory implements GraphHistoryLike {
     }
 
     /** Apply a span through the live world, sealed entries passed over. */
-    private travel(
-        span: HistoryRecord[],
-        step: (payload: HistoryPayload, world: HistoryWorld) => void,
-    ): HistoryEntry[] {
+    private travel(span: HistoryRecord[], direction: 'undo' | 'redo'): HistoryEntry[] {
+        const step = direction === 'undo' ? reverse : reapply
         const touched: HistoryRecord[] = []
         this.applying = true
         try {
@@ -319,7 +353,13 @@ export class GraphHistory implements GraphHistoryLike {
             this.graph.batchChanges(() => {
                 for (const record of span) {
                     if (record.sealed) continue
+                    // Note where everything stands before an undo takes it away, and put
+                    // it back there on the way in: what a redo replays is raw provider
+                    // data, which has no coordinates in it.
+                    if (direction === 'undo') this.capture(record)
+                    const missing = direction === 'redo' ? this.missingNodes(record) : undefined
                     step(record.payload, world)
+                    if (missing) this.place(record, missing)
                     touched.push(record)
                 }
             })
@@ -327,6 +367,144 @@ export class GraphHistory implements GraphHistoryLike {
             this.applying = false
         }
         return touched.map(publicEntry)
+    }
+
+    /** Note where this entry's elements stand, while they are still on the canvas. */
+    private capture(record: HistoryRecord): void {
+        const nodes = new Map<string, Placement>()
+        for (const id of record.nodeIds) {
+            const placement = placementOf(this.graph.getMutableNode(id))
+            if (placement) nodes.set(id, placement)
+        }
+        const edges = new Map<string, [string, string]>()
+        for (const id of record.edgeIds) {
+            const edge = this.graph.getMutableEdge(id)
+            if (edge) edges.set(id, [edge.from.id, edge.to.id])
+        }
+        record.dropped = { nodes, edges }
+    }
+
+    /** Which of an entry's nodes are off the canvas right now, before it is re-applied. */
+    private missingNodes(record: HistoryRecord): Set<string> {
+        const missing = new Set<string>()
+        for (const id of record.nodeIds) {
+            if (!this.graph.getMutableNode(id)) missing.add(id)
+        }
+        return missing
+    }
+
+    /**
+     * Put the nodes that were away back where they stood. Only those: a node that
+     * never left has moved since, and its old position is not where it is.
+     */
+    private place(record: HistoryRecord, missing: Set<string>): void {
+        for (const [id, at] of record.dropped?.nodes ?? []) {
+            if (!missing.has(id)) continue
+            const node = this.graph.getMutableNode(id)
+            if (!node) continue
+            node.x = at.x
+            node.y = at.y
+            // A node that was pinned comes back pinned; one that was not stays free.
+            if (at.fx !== undefined) node.fx = at.fx
+            if (at.fy !== undefined) node.fy = at.fy
+        }
+    }
+
+    /**
+     * Turn the played span into something the canvas can wear: the drawn elements it
+     * would take away or hide, and outlines for what it would put back. That last
+     * part is what a redo is mostly made of — its elements are not on the canvas, so
+     * there is nothing there to light up.
+     */
+    private forecast(world: ScratchWorld, applied: HistoryRecord[]): GraphForecast {
+        const known = this.knownPlacements(applied)
+        const removing: (Node | Edge)[] = []
+        const hiding: Node[] = []
+        const arrivingNodes: ForecastNode[] = []
+        const arrivingEdges: ForecastEdge[] = []
+        const excluded = new Set(this.graph.queryEngine.getExcludedNodeIds())
+        const touched = world.touched()
+
+        for (const id of touched.nodes) {
+            const live = this.graph.getMutableNode(id)
+            // Kept off the canvas by something the history does not model — a query
+            // filter, a collapsed ancestor. The span would not draw it either, so it
+            // is left out of the forecast rather than promised.
+            if (live && !live.visible && !excluded.has(id)) continue
+
+            const after = world.nodeAfter(id)
+            const drawnNow = Boolean(live?.visible)
+            const drawnAfter = after.present && !after.hidden
+            if (drawnNow === drawnAfter) continue
+
+            if (live && drawnNow) {
+                if (after.present) hiding.push(live)
+                else removing.push(live)
+                continue
+            }
+            const at = placementOf(live) ?? known.nodes.get(id)
+            if (at) arrivingNodes.push({ id, x: at.x, y: at.y, radius: at.radius })
+        }
+
+        // An arriving edge is drawn between wherever its ends will be: the live node
+        // for one that never left, the noted position for one arriving with it.
+        const arrived = new Map(arrivingNodes.map(node => [node.id, node]))
+        const pointFor = (nodeId: string): { x: number, y: number } | undefined => {
+            const node = this.graph.getMutableNode(nodeId)
+            if (node?.visible && typeof node.x === 'number' && typeof node.y === 'number') {
+                return { x: node.x, y: node.y }
+            }
+            const at = arrived.get(nodeId) ?? known.nodes.get(nodeId)
+            return at ? { x: at.x, y: at.y } : undefined
+        }
+
+        for (const id of touched.edges) {
+            const live = this.graph.getMutableEdge(id)
+            if (live && !live.visible) continue
+            const drawnNow = Boolean(live?.visible)
+            const drawnAfter = world.edgeAfter(id)
+            if (drawnNow === drawnAfter) continue
+
+            if (live && drawnNow) {
+                removing.push(live)
+                continue
+            }
+            const ends = live ? [live.from.id, live.to.id] : known.edges.get(id)
+            const from = ends && pointFor(ends[0])
+            const to = ends && pointFor(ends[1])
+            if (from && to) arrivingEdges.push({ id, from, to })
+        }
+
+        return { removing, hiding, arriving: { nodes: arrivingNodes, edges: arrivingEdges } }
+    }
+
+    /**
+     * Where the elements a span would bring back stood: what an undo noted on its way
+     * out, and what the payloads hold outright — a deleted element is kept alive, so
+     * it still knows where it was standing.
+     */
+    private knownPlacements(records: HistoryRecord[]): Dropped {
+        const nodes = new Map<string, Placement>()
+        const edges = new Map<string, [string, string]>()
+        for (const record of records) {
+            for (const [id, at] of record.dropped?.nodes ?? []) nodes.set(id, at)
+            for (const [id, ends] of record.dropped?.edges ?? []) edges.set(id, ends)
+
+            const { payload } = record
+            const held = payload.kind === 'delete'
+                ? { nodes: payload.nodes, edges: payload.edges }
+                : payload.kind === 'create'
+                    ? { nodes: payload.node ? [payload.node] : [], edges: payload.edge ? [payload.edge] : [] }
+                    : { nodes: [], edges: [] }
+            for (const node of held.nodes) {
+                const at = placementOf(node)
+                if (at && !nodes.has(node.id)) nodes.set(node.id, at)
+            }
+            for (const edge of held.edges) {
+                if (!edges.has(edge.id)) edges.set(edge.id, [edge.from.id, edge.to.id])
+            }
+        }
+        return { nodes, edges }
     }
 
     private push(record: HistoryRecord): void {
@@ -368,6 +546,12 @@ function publicEntry(record: HistoryRecord): HistoryEntry {
         ordinal: record.ordinal,
         at: record.at,
     }
+}
+
+/** Where a node stands, if it stands anywhere: an unplaced node forecasts nothing. */
+function placementOf(node?: Node): Placement | undefined {
+    if (!node || typeof node.x !== 'number' || typeof node.y !== 'number') return undefined
+    return { x: node.x, y: node.y, radius: node.getCircleRadius(), fx: node.fx, fy: node.fy }
 }
 
 function visibilityRecord(hidden: boolean, nodeIds: string[]): HistoryRecord {

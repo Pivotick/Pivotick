@@ -1,7 +1,7 @@
 import { Node, type NodeData } from './Node'
 import { Edge, type EdgeData } from './Edge'
 import { createGraphRenderer } from './renderers/GraphRendererFactory'
-import type { GraphRenderer, ProgressType } from './GraphRenderer'
+import type { GraphForecast, GraphRenderer, ProgressType } from './GraphRenderer'
 import { Simulation } from './Simulation'
 import { UIManager } from './ui/UIManager'
 import { Notifier } from './ui/Notifier'
@@ -1547,5 +1547,24 @@ export class Graph {
     /** End the emphasis {@link emphasiseElements} started: the canvas reads normally again. */
     clearEmphasis(): void {
         this.renderer.clearEmphasis()
+    }
+
+    /**
+     * Paint what an action *would* do, and change nothing else: the elements it would
+     * take away drain in place, the ones it would hide with them, and whatever it
+     * would bring back is outlined where it would land.
+     *
+     * Where {@link emphasiseElements} reads a set out of the canvas by receding the
+     * rest, a forecast answers "what happens if I click" — so the graph has to keep
+     * reading normally around the few elements that would change.
+     * `graph.history.preview(...)` returns one ready-made.
+     */
+    showForecast(forecast: GraphForecast): void {
+        this.renderer.showForecast(forecast)
+    }
+
+    /** Take the forecast down. */
+    clearForecast(): void {
+        this.renderer.clearForecast()
     }
 }

@@ -11,7 +11,7 @@ import { EventHandler } from './EventHandler'
 import type { Graph } from '../../Graph'
 import merge from 'lodash.merge'
 import { GraphInteractions } from '../../GraphInteractions'
-import { GraphRenderer, type GraphBounds, type ViewportTarget } from '../../GraphRenderer'
+import { GraphRenderer, type GraphBounds, type GraphForecast, type ViewportTarget } from '../../GraphRenderer'
 import { SelectionBox } from './SelectionBox'
 import type { EdgeStyle, GraphRendererOptions, NodeStyle, SelectionBox as SelectionBoxI } from '../../interfaces/RendererOptions'
 import { ClusterDrawer } from './ClusterDrawer'
@@ -87,6 +87,10 @@ export class GraphSvgRenderer extends GraphRenderer {
     /** The elements {@link emphasiseElements} marked, so clearing costs the set, not the graph. */
     private emphasised: SVGGElement[] = []
 
+    /** Where {@link showForecast} draws its outlines, and the elements it marked. */
+    private forecastGroup!: Selection<SVGGElement, unknown, null, undefined>
+    private forecastMarks: SVGGElement[] = []
+
     /** Fires when the canvas becomes visible, to re-measure node sizes. */
     private sizeObserver: IntersectionObserver | null = null
 
@@ -121,6 +125,12 @@ export class GraphSvgRenderer extends GraphRenderer {
 
         this.selectionBoxGroup = this.svg.append('g').attr('class', 'selection-box')
         this.nodeGroup = this.zoomGroup.append('g').attr('class', 'nodes')
+
+        // Above the nodes: an outline of what a forecast says is *coming back* would
+        // be worthless drawn underneath what is already there.
+        this.forecastGroup = this.zoomGroup.append('g')
+            .attr('class', 'pvt-forecast')
+            .style('pointer-events', 'none')
 
         // Notes sit above the graph — they are annotations meant to stay readable,
         // never obscured by a node. Their connectors stay in the note-edges layer
@@ -723,6 +733,56 @@ export class GraphSvgRenderer extends GraphRenderer {
         }
         this.emphasised = []
         this.zoomGroup.classed('pvt-emphasis-active', false)
+    }
+
+    /**
+     * Paint what an action would do, and change nothing else: the elements on their
+     * way out drain in place, the ones being hidden with them, and whatever would
+     * come back is outlined where it would land. The rest of the canvas is left
+     * exactly as it reads now — a forecast is a change to a few elements, not a
+     * spotlight on them.
+     */
+    public showForecast(forecast: GraphForecast): void {
+        this.clearForecast()
+
+        this.markForecast(forecast.touching, 'pvt-forecast-touch')
+        this.markForecast(forecast.removing, 'pvt-forecast-removing')
+        this.markForecast(forecast.hiding, 'pvt-forecast-hiding')
+
+        // Edges first, so an outlined node sits on top of the line reaching it.
+        for (const edge of forecast.arriving?.edges ?? []) {
+            this.forecastGroup.append('line')
+                .attr('class', 'pvt-forecast-edge')
+                .attr('data-forecast', edge.id)
+                .attr('x1', edge.from.x).attr('y1', edge.from.y)
+                .attr('x2', edge.to.x).attr('y2', edge.to.y)
+        }
+        for (const node of forecast.arriving?.nodes ?? []) {
+            this.forecastGroup.append('circle')
+                .attr('class', 'pvt-forecast-node')
+                .attr('data-forecast', node.id)
+                .attr('cx', node.x).attr('cy', node.y).attr('r', node.radius)
+        }
+    }
+
+    public clearForecast(): void {
+        for (const target of this.forecastMarks) {
+            target.classList.remove(
+                'pvt-forecast-touch', 'pvt-forecast-removing', 'pvt-forecast-hiding',
+            )
+        }
+        this.forecastMarks = []
+        this.forecastGroup?.selectAll('*').remove()
+    }
+
+    /** Mark the drawn elements of one forecast set; anything undrawn is skipped. */
+    private markForecast(elements: (Node | Edge)[] | undefined, className: string): void {
+        for (const element of elements ?? []) {
+            const target = element.getGraphElement()
+            if (!target) continue
+            target.classList.add(className)
+            this.forecastMarks.push(target)
+        }
     }
 
     private updateNodePositions(nodes?: Node[]): void {

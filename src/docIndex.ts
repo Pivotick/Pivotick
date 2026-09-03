@@ -13,7 +13,7 @@ import type * as RendererOptions from './interfaces/RendererOptions'
 import type * as SimulationOptions from './interfaces/SimulationOptions'
 import type * as GraphInteractionsI from './interfaces/GraphInteractions'
 import * as GraphInteractions from './GraphInteractions'
-import type { GraphRenderer, AbstractSelectionBox, GraphBounds, ViewportTarget } from './GraphRenderer'
+import type { GraphRenderer, AbstractSelectionBox, ForecastEdge, ForecastNode, GraphBounds, GraphForecast, ViewportTarget } from './GraphRenderer'
 import { minimap } from './plugins/minimap'
 import type { MinimapOptions, MinimapPosition } from './plugins/minimap'
 import { tableColumns } from './ui/elements/Table/TableColumns'
@@ -51,6 +51,9 @@ export type {
     GraphRenderer,
     GraphBounds,
     ViewportTarget,
+    GraphForecast,
+    ForecastNode,
+    ForecastEdge,
     MinimapOptions,
     MinimapPosition,
     TableVisibility,

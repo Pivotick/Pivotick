@@ -1,4 +1,5 @@
 import type { Edge } from '../Edge'
+import type { GraphForecast } from '../GraphRenderer'
 import type { Node } from '../Node'
 
 /**
@@ -75,13 +76,19 @@ export interface HistoryPreview {
     /** Inside the span, left alone because they are sealed. */
     skipped: HistoryEntry[]
     /**
-     * The elements the span touches that are on the canvas *now* — what a hover
-     * highlights. An entry whose elements are gone lights nothing, honestly.
+     * The elements the span touches that are on the canvas *now*. An entry whose
+     * elements are gone names none, honestly — see {@link forecast} for those.
      */
     nodes: Node[]
     edges: Edge[]
     /** The simulated net effect of committing it. */
     effect: HistoryEffect
+    /**
+     * The same thing as something the canvas can wear: what would go, what would be
+     * hidden, and where what is *not* on the canvas would come back. Hand it to
+     * `graph.showForecast`.
+     */
+    forecast: GraphForecast
 }
 
 /**

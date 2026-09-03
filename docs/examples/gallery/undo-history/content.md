@@ -18,9 +18,10 @@ Make some history, then open it:
 - **Create ▸ Add node** on the left rail, then click the canvas
 - Run a pivot, if you have one — an ingest is an entry like any other
 
-Hover a row and it marks the span a click would reverse, lights those elements on the
-canvas, and states the net effect in the footer first. <kbd>`Ctrl`</kbd> + <kbd>`Z`</kbd>
-steps back without the menu.
+Hover a row and it marks the span a click would reverse, states the net effect in the footer,
+and forecasts it on the canvas: what would go drains where it stands, and what would come
+back is outlined where it would land. <kbd>`Ctrl`</kbd> + <kbd>`Z`</kbd> steps back without
+the menu.
 
 Undo is contiguous: aiming three rows down reverses those three, as one batch.
 

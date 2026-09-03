@@ -77,8 +77,15 @@
     footer cannot disagree.
   - The footer states the exact net effect of the hovered span before it is committed, from
     `preview()`, so it is what the click will actually do rather than a summary of the rows.
-  - Hovering a row **lights the elements it touched on the canvas** and dims the rest. A row
-    whose elements are gone — a deletion — lights nothing, honestly.
+  - Hovering a row **forecasts the change on the canvas** and leaves everything else exactly
+    as it reads: what the click would take out drains where it stands, what it would hide with
+    it, and what it would *bring back* is outlined where it would land. The outlines are the
+    half a highlight cannot do — a redo is about elements the canvas does not hold yet.
+    `preview()` returns the forecast as data, and `graph.showForecast` / `graph.clearForecast`
+    paint any forecast of your own.
+  - **An undo notes where it took things from, and a redo puts them back there.** A pivot
+    replays from raw provider data, which has no coordinates in it, so a redone ingest used to
+    come back scattered somewhere new — and no forecast of one could have been honest.
   - A long span shows its two ends and lets its middle recede, so aiming twenty-five rows deep
     does not paint the whole menu one colour; when the *now* line scrolls out of reach the menu
     says which way it went and puts it back on a click.

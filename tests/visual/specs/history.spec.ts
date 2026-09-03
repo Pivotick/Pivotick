@@ -1,8 +1,8 @@
 import type { Locator, Page } from '@playwright/test'
-import { test, expect, gotoHarness, loadFixture, harness } from '../helpers'
+import { test, expect, canvas, gotoHarness, loadFixture, harness, waitForViewSettled } from '../helpers'
 import type {
-    RecordedCandidates, RecordedEdgeBinding, RecordedHistoryEntry, RecordedHistoryPreview,
-    RecordedRunOutcome,
+    ForecastSnapshot, RecordedCandidates, RecordedEdgeBinding, RecordedHistoryEntry,
+    RecordedHistoryPreview, RecordedRunOutcome,
 } from '../harness/harness'
 
 // `graph.history` — the engine, with no UI on it yet.
@@ -58,6 +58,21 @@ const hasNode = async (page: Page, id: string): Promise<boolean> =>
 
 const binding = async (page: Page, edgeId: string): Promise<RecordedEdgeBinding | null> =>
     (await harness(page, 'edgeBinding', edgeId)) as RecordedEdgeBinding | null
+
+const forecast = async (page: Page): Promise<ForecastSnapshot> =>
+    (await harness(page, 'forecast')) as ForecastSnapshot
+
+/** Where a named set of nodes is standing: `[id, x, y]` each, in the order asked for. */
+const positions = async (page: Page, ids: string[]): Promise<Array<[string, number, number]>> => {
+    const all = (await harness(page, 'nodePositions')) as Record<string, { x: number, y: number }>
+    return ids.map(id => [id, all[id]?.x ?? NaN, all[id]?.y ?? NaN])
+}
+
+const away = (point: { x: number, y: number }, x: number, y: number): number =>
+    Math.hypot(point.x - x, point.y - y)
+
+/** How far the layout may breathe after elements land back on the canvas. */
+const SETTLE = 20
 
 /** An edge stops on the node's rim, a few px clear of it — never further than this. */
 const RIM = 40
@@ -460,30 +475,75 @@ test.describe('history — the dropdown', () => {
         await expect(page.locator('.pvt-history-delta')).toHaveText('1 node back in view')
     })
 
-    test('hovering a row lights what it touched on the canvas', async ({ page }) => {
+    test('hovering a row forecasts the change and leaves the rest of the canvas alone', async ({ page }) => {
         const created = (await harness(page, 'createNodeAt', 40, 40)) as string
-        await harness(page, 'requestDelete', { nodes: ['a'], origin: 'bulk-action' })
         // A new node is selected on creation, and a selection dims the graph too — so
         // clear it, or the reader cannot tell the two kinds of dimming apart.
         await harness(page, 'deselectAll')
         await openHistory(page, 'undo')
 
-        // Row 1 is the creation, so its span reaches an element still on the canvas:
-        // it keeps its ink while every other node recedes.
-        await menuRows(page).nth(1).hover()
-        await expect.poll(() => harness(page, 'emphasis')).toEqual({
-            lit: [created],
-            dimmed: ['b', 'c', 'd', 'e', 'hub'],
-        })
-
-        // Row 0 is the deletion, and its elements are gone — so it lights nothing,
-        // honestly, rather than greying the canvas for no reason.
+        // The created node is what an undo would take out, so it drains — and it is the
+        // *only* thing that changes. Nothing recedes to make it stand out.
         await menuRows(page).nth(0).hover()
-        await expect(menuRows(page).nth(0)).toHaveClass(/armed/)
-        await expect.poll(() => harness(page, 'emphasis')).toEqual({
-            lit: [created, 'b', 'c', 'd', 'e', 'hub'].sort(),
-            dimmed: [],
+        await expect.poll(() => forecast(page).then(seen => seen.removing)).toEqual([created])
+        expect(await harness(page, 'emphasis')).toEqual({
+            lit: ['a', 'b', 'c', 'd', 'e', 'hub'],
+            dimmed: [created],
         })
+    })
+
+    test('hovering a redo row outlines what would come back', async ({ page }) => {
+        const created = (await harness(page, 'createNodeAt', 40, 40)) as string
+        await harness(page, 'deselectAll')
+        // Read where it stands only once the layout has stopped moving it, or the
+        // expectation is a position the node has already left.
+        await waitForViewSettled(page)
+        const [[, x, y]] = await positions(page, [created])
+
+        // Take it back out. Now the redo row's element is not on the canvas at all,
+        // which is exactly the case a highlight cannot speak about.
+        await undoThrough(page)
+        expect(await hasNode(page, created)).toBe(false)
+
+        await openHistory(page, 'redo')
+        await menuRows(page).nth(0).hover()
+
+        const seen = await forecast(page)
+        expect(seen.arriving.map(outline => outline.id)).toEqual([created])
+        expect(seen.removing).toEqual([])
+        // Where it would land, not just somewhere: the outline stands where the node did.
+        expect(seen.arriving[0].kind).toBe('node')
+        expect(away(seen.arriving[0], x, y)).toBeLessThan(2)
+        // …and the graph around it is untouched.
+        expect((await harness(page, 'emphasis')).dimmed).toEqual([])
+    })
+
+    test('a redone ingest comes back where it was, so the outline was not a guess', async ({ page }) => {
+        await harness(page, 'loadWithPivots', 'basic', {})
+        await page.locator('.zoom-layer:not(.hidden)').first().waitFor({ state: 'attached' })
+        await harness(page, 'configureWritePath', {})
+
+        const run = (await harness(page, 'runPivot', AIL, ['a'], { type: ['url'] })) as RecordedRunOutcome
+        const set = (await harness(page, 'pivotCandidates', AIL)) as RecordedCandidates
+        const ids = set.rows.filter(row => !row.deduped && row.state === 'candidate').slice(0, 3).map(row => row.id)
+        await harness(page, 'markPivotCandidates', AIL, ids)
+        const ingested = (await harness(page, 'ingestPivot', AIL)) as RecordedRunOutcome
+        expect(ingested.nodes).toHaveLength(3)
+        await waitForViewSettled(page)
+
+        const before = await positions(page, ingested.nodes)
+        await undoThrough(page, run.runId)
+        await redoThrough(page)
+        await waitForViewSettled(page)
+
+        // The provider's raw data carries no coordinates, so a redo that did not
+        // remember them would scatter these three somewhere else entirely. They land
+        // back where they were and the layout then breathes a few px, no further.
+        const after = await positions(page, ingested.nodes)
+        for (const [index, [id, x, y]] of after.entries()) {
+            const [, wasX, wasY] = before[index]
+            expect(away({ x, y }, wasX, wasY), `${id} came back somewhere else`).toBeLessThan(SETTLE)
+        }
     })
 
     test('clicking a row travels the whole span, and the rows stay listed', async ({ page }) => {
@@ -632,5 +692,48 @@ test.describe('history — how the dropdown looks', () => {
         await openHistory(page, 'redo')
         await expect(page.locator('.pvt-history-side')).toContainText('Redo side')
         await expect(page.locator('.pvt-history')).toHaveScreenshot('history-menu-redo.png')
+    })
+
+    /**
+     * The forecast itself, which is the half of this feature only a picture shows: the
+     * canvas keeps every bit of its ink, and the few elements the click would change
+     * say so where they stand. Both shots arm the row from the keyboard, for the
+     * reason the thirty-row shot gives.
+     */
+    test('a span that would take elements out drains them where they are', async ({ page }) => {
+        await loadFixture(page, 'basic', B3_FULL)
+        await harness(page, 'configureWritePath', {})
+        await harness(page, 'requestDelete', { nodes: ['c'], origin: 'bulk-action' })
+        await undoThrough(page)
+        await waitForViewSettled(page)
+
+        // Redoing the deletion takes the node and its edges back out.
+        await openHistory(page, 'redo')
+        await page.keyboard.press('ArrowDown')
+        await expect(menuRows(page).nth(0)).toHaveClass(/armed/)
+        await expect(canvas(page)).toHaveScreenshot('history-forecast-remove.png')
+    })
+
+    test('a span that would bring elements back outlines them where they stood', async ({ page }) => {
+        await harness(page, 'loadWithPivots', 'basic', B3_FULL)
+        await page.locator('.zoom-layer:not(.hidden)').first().waitFor({ state: 'attached' })
+        await harness(page, 'configureWritePath', {})
+        await ingest(page, 3)
+        await waitForViewSettled(page)
+        await undoThrough(page)
+        await waitForViewSettled(page)
+        // The undo left a smaller graph, so the view fitted in around it and the three
+        // remembered positions are now off the edges. Pull back to bring them in frame —
+        // a forecast points at where things were, which is not always where you are
+        // looking.
+        await harness(page, 'fit', 0.75)
+        await waitForViewSettled(page)
+
+        // Nothing of the ingest is on the canvas now, which is the case a highlight
+        // has nothing to say about.
+        await openHistory(page, 'redo')
+        await page.keyboard.press('ArrowDown')
+        await expect(menuRows(page).nth(0)).toHaveClass(/armed/)
+        await expect(canvas(page)).toHaveScreenshot('history-forecast-restore.png')
     })
 })

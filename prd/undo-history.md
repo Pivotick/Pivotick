@@ -2,7 +2,7 @@
 
 **Status:** **Complete.** M1, M2 and M3 all shipped 2026-09-03 on `worktree-undo-history`:
 `graph.history`, both top-bar split buttons with keyboard undo/redo, the **B2** dropdown with
-its canvas hover highlight, triage re-staging, `docs/history.md`, and the `undo-history`
+its canvas hover forecast, triage re-staging, `docs/history.md`, and the `undo-history`
 gallery card. 29 tests in `tests/visual/specs/history.spec.ts` (4 of them screenshots) plus 3
 in `pivot-triage.spec.ts`; both of §12's design questions are closed, and the third — how H6
 meets `pivot-persistence.md` P13 — stays open because save-back has not shipped. Grilled with Sami 2026-09-03;
@@ -252,10 +252,20 @@ verb-and-object labels; an enrichment history cannot, because running the same p
 is the normal case. Counts, time, origin node — the composition is a design variable, and §10
 is where it is decided.
 
-**H16 — Hovering a row highlights the elements it touched, on the canvas.** The affordance a
-graph tool can offer that a text editor's undo menu never could: it answers "which run was
-that?" without committing to anything. Rows whose elements are gone — a deletion — light
-nothing, honestly. Needs `emphasiseElements`/`clearEmphasis`.
+**H16 — Hovering a row forecasts the change on the canvas.** The affordance a graph tool can
+offer that a text editor's undo menu never could: it answers "what happens if I click this?"
+without committing to anything.
+
+*Revised after the build (2026-09-03).* This was written as "highlights the elements it
+touched" and built on `emphasiseElements`, which was wrong twice over. It **dimmed the whole
+canvas** to spotlight the row's elements, when the question is what changes rather than which
+elements a row names — and it could say nothing at all about a **redo**, whose elements are not
+on the canvas to light up. The B2 prototype had it right and the implementation did not follow
+it: elements on their way out drain in place, and what would come back is drawn as an outline
+where it stood. So `preview()` now also returns a `GraphForecast`, painted by
+`graph.showForecast` / `graph.clearForecast` (`emphasiseElements` stays what the legend hover
+uses). For the outlines to be honest, an undo notes where it took each element from and a redo
+puts it back there — a pivot replays raw provider data, which carries no coordinates.
 
 ### Shape and limits
 
@@ -525,7 +535,8 @@ state, and on one thing that is not frequency — B2's resting position *is* scr
   would take back (H22); `Meta` in the key manager plus a `Mod+` alias matching Ctrl *or* Cmd,
   so `Mod+z` / `Mod+Shift+Z` is one binding for both platforms (H24); the toast reduced to a
   plain report (H20); and **B2** built as `src/ui/elements/Mainheader/HistoryMenu.ts` with the
-  hover highlight (H16) on `emphasiseElements`. Notes:
+  hover forecast (H16) — first on `emphasiseElements`, since replaced by `showForecast`, see
+  H16. Notes:
   - **The ruler shipped** (§10.2's strongest finding): every row carries how many steps a
     click on it travels, and that number is the `M` in the footer's `Undoes N of M`.
   - **The two open questions from §12 are answered below.**
@@ -596,7 +607,7 @@ state, and on one thing that is not frequency — B2's resting position *is* scr
   one cut idea that answers a question the dropdown cannot: not "what did I do" but "where did
   this come from".
 - **Persistence across reloads** (H23), a timeline scrubber, a searchable history overlay, and
-  on-canvas run hulls — the last of these largely subsumed by H16's hover highlight.
+  on-canvas run hulls — the last of these largely subsumed by H16's hover forecast.
 
 ---
 

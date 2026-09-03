@@ -18,6 +18,48 @@ export interface GraphBounds {
 }
 
 /**
+ * One element a forecast has to *outline* because it is not on the canvas: where it
+ * would land, and how big it would be.
+ */
+export interface ForecastNode {
+    id: string
+    x: number
+    y: number
+    /** The radius it was last drawn at, so the outline is the size of what returns. */
+    radius: number
+}
+
+/** An edge a forecast outlines, as the two points it would run between. */
+export interface ForecastEdge {
+    id: string
+    from: { x: number, y: number }
+    to: { x: number, y: number }
+}
+
+/**
+ * What an action would do to the canvas, ready to paint.
+ *
+ * A forecast leaves the graph exactly as it is — nothing dims, nothing moves — and
+ * marks only what the action would change: what would go, what would be hidden, and
+ * an outline of what would come back. That is the difference between a forecast and
+ * {@link GraphRenderer.emphasiseElements}, which reads a set *out* of the canvas by
+ * receding everything else.
+ *
+ * {@link GraphHistoryLike.preview} hands one over ready-made, which is how hovering
+ * a history row shows what the click would do.
+ */
+export interface GraphForecast {
+    /** Touched by the action and staying: ringed, otherwise left alone. */
+    touching?: (Node | Edge)[]
+    /** On their way out: still in place, drained. */
+    removing?: (Node | Edge)[]
+    /** Staying in the graph, but about to be hidden. */
+    hiding?: Node[]
+    /** Not on the canvas at all — drawn as an outline where it would land. */
+    arriving?: { nodes: ForecastNode[], edges: ForecastEdge[] }
+}
+
+/**
  * Where to point the view. `x` / `y` is the graph-space point to put in the middle
  * of the canvas.
  */
@@ -75,6 +117,8 @@ export abstract class GraphRenderer {
     abstract clearHighlightedElements(): void
     abstract emphasiseElements(elements: (Node | Edge)[]): void
     abstract clearEmphasis(): void
+    abstract showForecast(forecast: GraphForecast): void
+    abstract clearForecast(): void
     abstract showShadowEdge(params: { source: Node | Note, targetNode?: Node, targetPosition?: { x: number, y: number }, invalid?: boolean }): void
     abstract hideShadowEdge(): void
     abstract enterNoteEditMode(note: Note): void

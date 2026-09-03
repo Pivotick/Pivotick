@@ -563,6 +563,22 @@ export interface EmphasisSnapshot {
     dimmed: string[]
 }
 
+/**
+ * What the canvas is forecasting: the marks on the elements that are there, and the
+ * outlines drawn for the ones that are not. Read off the DOM, so it answers what a
+ * reader would see rather than what the forecast asked for.
+ */
+export interface ForecastSnapshot {
+    /** Ids marked as leaving the graph. */
+    removing: string[]
+    /** Ids marked as about to be hidden. */
+    hiding: string[]
+    /** Ids ringed because the span touches them and keeps them. */
+    touching: string[]
+    /** One entry per outline: what would come back, and where. */
+    arriving: Array<{ id: string, kind: 'node' | 'edge', x: number, y: number }>
+}
+
 export interface NodeVisual {
     /** Tag of the `.node` element, `null` when the node drew none at all. */
     shapeTag: string | null
@@ -1121,6 +1137,11 @@ export interface HarnessApi {
      * opacity, so it answers whether the emphasis is *visible*, not merely marked.
      */
     emphasis(scope?: 'node' | 'edge'): EmphasisSnapshot
+    /**
+     * `graph.showForecast` — what the canvas says a click would do: which drawn
+     * elements are marked, and what outlines stand where nothing is drawn yet.
+     */
+    forecast(): ForecastSnapshot
     /**
      * A theme colour custom property, resolved to the `rgb(...)` form a computed `fill` or
      * `stroke` comes back in, so a test can name the colour it expects instead of
@@ -2262,6 +2283,28 @@ class Harness implements HarnessApi {
             else lit.push(id)
         }
         return { lit: lit.sort(), dimmed: dimmed.sort() }
+    }
+
+    forecast(): ForecastSnapshot {
+        const marked = (className: string): string[] => {
+            const elements: Array<Node | Edge> = [...this.g.getMutableNodes(), ...this.g.getMutableEdges()]
+            return elements
+                .filter((element) => element.getGraphElement()?.classList.contains(className))
+                .map((element) => element.id)
+                .sort()
+        }
+        const outlines = [...document.querySelectorAll('.pvt-forecast [data-forecast]')]
+        return {
+            removing: marked('pvt-forecast-removing'),
+            hiding: marked('pvt-forecast-hiding'),
+            touching: marked('pvt-forecast-touch'),
+            arriving: outlines.map((element) => ({
+                id: element.getAttribute('data-forecast') ?? '',
+                kind: element.tagName === 'circle' ? 'node' : 'edge',
+                x: Number(element.getAttribute('cx') ?? element.getAttribute('x1')),
+                y: Number(element.getAttribute('cy') ?? element.getAttribute('y1')),
+            })),
+        }
     }
 
     edgeMarkers(id: string): { start: string | null, end: string | null } | null {

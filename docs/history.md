@@ -67,10 +67,27 @@ it: the rows above it have been undone, the rows below are what can still be und
 row and the line travels past it, which is the same gesture in both directions.
 
 Each row carries its kind's icon, its label, and **how many steps a click on it travels**.
-That number is the one the footer states, so the list and the footer cannot disagree.
-Hovering a row marks the span and lights the elements it touched on the canvas; a row whose
-elements are gone lights nothing. The footer states the exact net effect before anything is
-committed. Arrow keys aim, Enter travels, Escape closes.
+That number is the one the footer states, so the list and the footer cannot disagree. The
+footer states the exact net effect before anything is committed. Arrow keys aim, Enter
+travels, Escape closes.
+
+### The canvas answers too
+
+Hovering a row **forecasts the change on the canvas**, and changes nothing else: the elements
+the click would take out drain where they stand, the nodes it would hide with them, and
+whatever it would bring back is **outlined where it would land** — a node the graph does not
+hold yet, drawn as a ring at the position it left. That last part is most of what a redo has
+to say, and the reason a forecast is not a highlight: nothing recedes to make the marked
+elements stand out, because the question is what would change, not which elements a row names.
+
+The outlines are not guesses. An undo notes where each element stood as it took it off the
+canvas, and a redo puts it back there — so what the forecast draws is where the click lands
+things. A pivot replays from its provider's raw data, which carries no coordinates, so
+without that an ingest would come back scattered somewhere new.
+
+`preview()` returns the same thing as data, under `forecast`, and `graph.showForecast(…)` /
+`graph.clearForecast()` paint it — so a consumer's own history UI, or anything else that
+wants to ask "what if", gets the canvas language for free.
 
 ## Sealed entries
 
@@ -153,11 +170,14 @@ replays the span against a copy of the graph's state, through the same code the 
 commits, and diffs the result:
 
 ```js
-const { entries, skipped, nodes, edges, effect } = graph.history.preview(entryId)
-// entries  the span, newest first
-// skipped  the sealed ones inside it, which will be left alone
-// nodes    the elements it would touch that are on the canvas now
-// effect   { nodesRemoved, nodesRestored, edgesRemoved, edgesRestored, nodesHidden, nodesShown }
+const { entries, skipped, nodes, edges, effect, forecast } = graph.history.preview(entryId)
+// entries   the span, newest first
+// skipped   the sealed ones inside it, which will be left alone
+// nodes     the elements it would touch that are on the canvas now
+// effect    { nodesRemoved, nodesRestored, edgesRemoved, edgesRestored, nodesHidden, nodesShown }
+// forecast  the same change as something to paint: { removing, hiding, touching, arriving }
+
+graph.showForecast(forecast)   // …and take it back down with graph.clearForecast()
 ```
 
 Because it is played rather than described, the awkward cases come out right for nothing: a
