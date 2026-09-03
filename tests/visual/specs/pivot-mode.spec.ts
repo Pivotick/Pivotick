@@ -264,7 +264,11 @@ test.describe('pivot mode', () => {
         expect((await harness(page, 'counts') as { nodes: number }).nodes).toBe(before)
 
         await link.click()
-        expect(await harness(page, 'activeDockTabId')).toBe(`pivot-triage:${AIL}`)
+        // One review tab holds every staged provider, so the link reveals this pivot's
+        // row in its strip.
+        expect(await harness(page, 'activeDockTabId')).toBe('pivot-triage')
+        await expect(page.locator('.pvt-review-tab:has(.pvt-review-main.active)'))
+            .toHaveAttribute('data-pivot', AIL)
     })
 
     test('a failed summarize offers a retry that asks again', async ({ page }) => {
@@ -379,7 +383,8 @@ test.describe('pivot mode', () => {
         await button(search, 'Fetch').click()
 
         await expect(search.locator('.pvt-pivot-triage-link')).toHaveText('30 in triage ▸')
-        expect(await harness(page, 'dockTabIds')).toEqual(['table', 'pivot-triage:search-ail'])
+        expect(await harness(page, 'dockTabIds')).toEqual(['table', 'pivot-triage'])
+        await expect(page.locator('.pvt-review-tab')).toHaveAttribute('data-pivot', 'search-ail')
     })
 
     test('the rail slot keeps the mode name while its resting tool is armed', async ({ page }) => {
@@ -566,9 +571,10 @@ test.describe('pivot mode', () => {
 
         await expect.poll(async () => (await calls(page)).filter(c => c.endsWith(':fetch')).sort())
             .toEqual(['bulk-04:fetch', 'bulk-08:fetch', 'bulk-12:fetch'])
-        // Each keeps its own candidate set, so each gets its own pane.
-        await expect.poll(async () => (await harness(page, 'dockTabIds') as string[]).length)
-            .toBeGreaterThan(3)
+        // Each keeps its own candidate set, so each gets its own pane — three rows down
+        // the review tab's strip, and still one tab in the dock.
+        await expect(page.locator('.pvt-review-tab')).toHaveCount(3)
+        expect(await harness(page, 'dockTabIds')).toEqual(['table', 'pivot-triage'])
     })
 
     test('the keyboard reaches the list and comes back', async ({ page }) => {

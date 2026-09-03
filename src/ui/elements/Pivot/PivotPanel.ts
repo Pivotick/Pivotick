@@ -9,9 +9,6 @@ import type { UIManager } from '../../UIManager'
 
 const fmt = (value: number): string => value.toLocaleString()
 
-/** Dock tab ids are namespaced by pivot — the same prefix `PivotTriage` registers under. */
-const TRIAGE_TAB_PREFIX = 'pivot-triage:'
-
 /** How long a typed narrowing field waits before it re-asks the provider. */
 const TYPED_DELAY_MS = 400
 
@@ -1048,7 +1045,9 @@ class PivotEntry {
         const waiting = staged?.nodes.filter(c => c.state !== 'rejected' && !c.deduped).length ?? 0
         if (staged && !staged.loading && waiting) {
             const link = this.button(`${fmt(waiting)} in triage ▸`, false, () => {
-                this.uiManager.activateDockTab(TRIAGE_TAB_PREFIX + this.def.id)
+                // One review tab holds every staged provider, so this reveals a row in
+                // its strip rather than activating a tab of its own.
+                this.uiManager.pivotTriage?.reveal(this.def.id)
             })
             link.classList.add('pvt-pivot-triage-link')
             this.actions.appendChild(link)

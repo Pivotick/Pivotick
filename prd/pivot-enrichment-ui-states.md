@@ -4,6 +4,8 @@
 written 2026-09-01. **§5 and §6 are built** — see §17 of the PRD, which amends **C5** (the
 suppressed rows are an id list with a restore, because M1 does not stage them), **C8** (reversed:
 `DockTabHandle.setLabel` exists, so the count is in the tab) and **C9** (built as specified).
+**§5.6** was amended again on 2026-09-03: the panes coexist inside one **Review** tab, as
+vertical tabs down its side, rather than as tabs of the dock's own (at-scale finding 8).
 Groundwork in
 [`pivot-enrichment-ui-groundwork.md`](pivot-enrichment-ui-groundwork.md); behaviour in
 [`pivot-enrichment-interface.md`](pivot-enrichment-interface.md), which wins on any disagreement.
@@ -219,7 +221,8 @@ table's columns. Present only when the run produced them.
 
 ### 5.6 Concurrency
 
-One pane per pivot id; different pivots coexist as tabs (PRD §11.4).
+One pane per pivot id; different pivots coexist as tabs (PRD §11.4) — vertical tabs inside the
+dock's one **Review** tab, since a tray run of six providers otherwise opens six dock tabs.
 
 **C7 — a re-run replaces its own pane, and says so instead of silently swapping.** If a re-run
 lands while rows are marked, the pane shows T7 — `This pivot was run again. 210 new candidates

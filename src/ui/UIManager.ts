@@ -313,7 +313,7 @@ const UI_ELEMENTS: UIElementSpec[] = [
     },
     {
         // A contributor to the dock as well, and costing nothing until a pivot is run:
-        // it registers a tab per staged candidate set and none while there are none.
+        // it registers one review tab while anything is staged, and none while nothing is.
         // `full` only, because the dock is — a staged set in another mode stays reachable
         // through `graph.pivots` and simply has no pane.
         key: 'pivotTriage', modes: ['full'],
@@ -426,6 +426,7 @@ export class UIManager {
     public get tooltip(): Tooltip | undefined { return this.byKey.get('tooltip') as Tooltip | undefined }
     public get contextMenu(): ContextMenu | undefined { return this.byKey.get('contextMenu') as ContextMenu | undefined }
     public get pivotMode(): PivotMode | undefined { return this.byKey.get('pivotMode') as PivotMode | undefined }
+    public get pivotTriage(): PivotTriage | undefined { return this.byKey.get('pivotTriage') as PivotTriage | undefined }
 
     /**
      * Enter Pivot mode with `nodes` as its origin — the route a rim badge and a context

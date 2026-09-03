@@ -26,6 +26,18 @@ const stateBox = (page: Page): Locator => page.locator('.pvt-triage-state')
 const toast = (page: Page): Locator => page.locator('.pivotick-toast')
 const paneTabs = (page: Page): Locator => page.locator('.pvt-dock-tab')
 
+// ── the provider strip: the review tab's own vertical tabs ───────────────────
+const providers = (page: Page): Locator => page.locator('.pvt-review-tab')
+const provider = (page: Page, pivotId: string): Locator => page.locator(`.pvt-review-tab[data-pivot="${pivotId}"]`)
+const onShow = (page: Page): Locator => page.locator('.pvt-review-tab:has(.pvt-review-main.active)')
+
+/** `Correlations 210` — the name each staged provider carries, and its count. */
+const providerRows = (page: Page): Promise<string[]> =>
+    providers(page).evaluateAll(rows => rows.map(row => [
+        row.querySelector('.pvt-review-label')?.textContent ?? '',
+        row.querySelector('.pvt-review-count')?.textContent ?? '',
+    ].filter(Boolean).join(' ')))
+
 const row = (page: Page, id: string): Locator => page.locator(`.pvt-triage-row[data-candidate="${id}"]`)
 const childCell = (page: Page, id: string): Locator => row(page, id).locator('[data-column="pvt:children"]')
 const childToggle = (page: Page, id: string): Locator => row(page, id).locator('.pvt-triage-caret')
@@ -40,8 +52,22 @@ const markRange = (page: Page, id: string): Promise<void> => row(page, id).click
 
 const button = (scope: Locator, name: string): Locator => scope.locator('button', { hasText: name }).first()
 
+/** The row search in the dock's header, which belongs to the provider on show. */
+const searchBox = (page: Page): Locator => page.locator('.pvt-triage-search')
+
 const tabLabels = (page: Page): Promise<string[]> =>
     paneTabs(page).evaluateAll(nodes => nodes.map(node => (node.textContent ?? '').trim()))
+
+/** How visible a provider row's close button is — it is revealed by the row, not drawn. */
+const closeButtonOpacity = (page: Page, pivotId: string): Promise<string> =>
+    provider(page, pivotId).locator('.pvt-review-close')
+        .evaluate(button => window.getComputedStyle(button).opacity)
+
+/** Drop a provider's candidates the way the strip offers it: the row's own ×. */
+const closeProvider = async (page: Page, pivotId: string): Promise<void> => {
+    await provider(page, pivotId).hover()
+    await provider(page, pivotId).locator('.pvt-review-close').click()
+}
 
 const load = async (page: Page, spec: PivotFixtureSpec = {}): Promise<void> => {
     await harness(page, 'loadWithPivots', 'basic', spec, FULL)
@@ -63,17 +89,20 @@ test.describe('pivot triage pane', () => {
         await gotoHarness(page)
     })
 
-    test('a staged set opens its own pane, and nothing in it is in the graph', async ({ page }) => {
+    test('a staged set opens the review pane, and nothing in it is in the graph', async ({ page }) => {
         await load(page)
         const before = await nodeCount(page)
 
         await stageUrls(page)
 
-        // One pane per pivot, beside the table rather than replacing it (D27).
-        expect(await harness(page, 'dockTabIds')).toEqual(['table', `pivot-triage:${AIL}`])
-        expect(await harness(page, 'activeDockTabId')).toBe(`pivot-triage:${AIL}`)
+        // One review tab for every staged provider, beside the table rather than
+        // replacing it (D27).
+        expect(await harness(page, 'dockTabIds')).toEqual(['table', 'pivot-triage'])
+        expect(await harness(page, 'activeDockTabId')).toBe('pivot-triage')
         // The tab carries a live count, which is what `DockTabHandle.setLabel` is for.
-        expect(await tabLabels(page)).toEqual(['Table', 'Correlations (210)'])
+        expect(await tabLabels(page)).toEqual(['Table', 'Review (210)'])
+        // The provider itself is named down the side, with its own share of that count.
+        expect(await providerRows(page)).toEqual(['Correlations 210'])
 
         await expect(headline(page)).toContainText('210 fetched')
         // Paged, not truncated: the first hundred are on screen and the rest are a page away.
@@ -174,8 +203,8 @@ test.describe('pivot triage pane', () => {
         await expect(rejected).toHaveClass(/pvt-triage-row-rejected/)
         await expect(rejected.locator('input[type="checkbox"]')).toHaveCount(0)
         expect(await rowIds(page)).toEqual(['blind-0', 'blind-1', 'blind-2'])
-        // Still counted as untriaged? No — the tab's count is what is left to decide on.
-        expect(await tabLabels(page)).toContain('No advertised count (2)')
+        // Still counted as untriaged? No — the count is what is left to decide on.
+        expect(await providerRows(page)).toEqual(['No advertised count 2'])
 
         await button(rejected, 'undo').click()
         await expect(row(page, 'blind-0')).not.toHaveClass(/pvt-triage-row-rejected/)
@@ -321,7 +350,8 @@ test.describe('pivot triage pane', () => {
         expect(await nodeCount(page)).toBe(before + 2)
         // Ingested rows leave the set; the rest are still waiting.
         await expect(headline(page)).toContainText('210 fetched')
-        expect(await tabLabels(page)).toContain('Correlations (208)')
+        expect(await providerRows(page)).toEqual(['Correlations 208'])
+        expect(await tabLabels(page)).toContain('Review (208)')
 
         await button(toast(page), 'Undo').click()
         expect(await nodeCount(page)).toBe(before)
@@ -364,12 +394,73 @@ test.describe('pivot triage pane', () => {
         await expect(headline(page)).toContainText('38 fetched')
     })
 
-    test('closing the pane rejects nothing', async ({ page }) => {
+    test('several providers share one review tab, and switch from its strip', async ({ page }) => {
+        await load(page)
+        await stageUrls(page)
+        await harness(page, 'runPivot', 'blind', ['a'])
+        await harness(page, 'runPivot', 'search-ail', [], { query: 'ransom' })
+
+        // Three fetches, one tab: the dock's own strip lists panes, and these three are
+        // one pane — the review of what is staged.
+        expect(await harness(page, 'dockTabIds')).toEqual(['table', 'pivot-triage'])
+        expect(await providerRows(page)).toEqual([
+            'Correlations 210', 'No advertised count 3', 'Search AIL 30',
+        ])
+        // The tab's count is the whole queue's; the strip breaks it down.
+        expect(await tabLabels(page)).toContain('Review (243)')
+        // The analyst asked for the last fetch, so that is the one on show.
+        await expect(onShow(page)).toHaveAttribute('data-pivot', 'search-ail')
+        await expect(rows(page)).toHaveCount(30)
+
+        await provider(page, AIL).locator('.pvt-review-main').click()
+        await expect(rows(page)).toHaveCount(100)
+        await expect(headline(page)).toContainText('210 fetched')
+
+        // The search box narrows the provider it belongs to, and stays with it across a
+        // detour through another one.
+        await searchBox(page).fill('url 209')
+        await expect(rows(page)).toHaveCount(1)
+        await provider(page, 'blind').locator('.pvt-review-main').click()
+        await expect(searchBox(page)).toHaveValue('')
+        await expect(rows(page)).toHaveCount(3)
+        await provider(page, AIL).locator('.pvt-review-main').click()
+        await expect(searchBox(page)).toHaveValue('url 209')
+        await expect(rows(page)).toHaveCount(1)
+
+        // The way out is revealed by the row the pointer is on rather than drawn on
+        // every row in the queue.
+        expect(await closeButtonOpacity(page, 'search-ail')).toBe('0')
+        await provider(page, 'search-ail').hover()
+        expect(await closeButtonOpacity(page, 'search-ail')).toBe('1')
+        // And by the row holding the focus, so a keyboard reaches it as well: this one
+        // is nowhere near the pointer.
+        await provider(page, 'blind').locator('.pvt-review-main').focus()
+        expect(await closeButtonOpacity(page, 'blind')).toBe('1')
+
+        // The arrows walk the queue, which is what keeps a fifty-provider strip to one
+        // tab stop instead of a hundred.
+        await onShow(page).locator('.pvt-review-main').press('ArrowDown')
+        await expect(onShow(page)).toHaveAttribute('data-pivot', 'blind')
+        await expect(rows(page)).toHaveCount(3)
+        await onShow(page).locator('.pvt-review-main').press('ArrowUp')
+        await expect(onShow(page)).toHaveAttribute('data-pivot', AIL)
+
+        await closeProvider(page, AIL)
+
+        // The next provider down takes over, rather than the top of the queue: closing
+        // one review sends the analyst to the next one waiting.
+        expect(await providerRows(page)).toEqual(['No advertised count 3', 'Search AIL 30'])
+        await expect(onShow(page)).toHaveAttribute('data-pivot', 'blind')
+        expect(await harness(page, 'dockTabIds')).toEqual(['table', 'pivot-triage'])
+    })
+
+    test('closing a provider rejects nothing', async ({ page }) => {
         await load(page)
         await stageUrls(page)
 
-        await page.locator('.pvt-triage-toolbtn', { hasText: 'Close' }).click()
+        await closeProvider(page, AIL)
 
+        // The last provider takes the review tab with it.
         expect(await harness(page, 'dockTabIds')).toEqual(['table'])
         expect(await harness(page, 'rejectedPivotIds', AIL)).toEqual([])
         // Leftovers are re-offered on the next run, all 210 of them.

@@ -50,13 +50,15 @@ out of reach while the count exceeds it, and states the number, the limit and th
 forward. Ticking a narrowing control re-asks `summarize` with that choice, so 2,143 becomes
 210 and **Fetch** turns on by itself. **Clear narrowing** starts over.
 
-**5 · Triage what came back.** Results do not touch the graph. They open a pane in the
-bottom dock, one tab per pivot, where *Search rows…* filters (with a regex toggle), the
+**5 · Triage what came back.** Results do not touch the graph. They open the **Review**
+tab in the bottom dock, with every provider you have run listed down its side and the one
+you are reading filling the rest, where *Search rows…* filters (with a regex toggle), the
 columns sort, and marking rows is how you choose. Click anywhere on a row to mark it, and
 Shift-click to carry that mark across every row between the two. *Select all n matching*
 respects the current filter, so narrow-then-select-all is one gesture. **Reject selected** and **Reject
 all remaining** dispose of rows explicitly, and both are remembered for the session.
-**Close** rejects nothing, so anything you never ruled on comes back next time. **Re-run**
+The × on a provider's row closes it, and rejects nothing, so anything you never ruled on
+comes back next time. **Re-run**
 asks again with the same narrowing, and offers *Show new* / *Keep triaging* if you have rows
 marked.
 
@@ -180,7 +182,7 @@ Four things that are easy to get wrong, all of them visible above:
 
 ```ts
 interface PivotDefinition {
-    id: string                  // provenance tag, menu key, triage tab id
+    id: string                  // provenance tag, menu key, triage key
     label: string               // used verbatim, so it can be translated
     icon?: string               // trusted SVG, injected as-is
     origin?: 'selection' | 'none'
@@ -271,16 +273,16 @@ for candidate objects rather than about the table, which virtualises.
 ## Candidates are not the graph
 
 Nothing a pivot returns is in the graph, in the data table, or in any facet count until it
-is ingested. Results open a **triage pane** in the dock, one per pivot, coexisting as tabs,
-with the provider's own columns, the data table's filters, sorting, paging and an ingest
-action.
+is ingested. Results open the dock's **Review** tab — one pane per pivot, listed as vertical
+tabs down its side, each with its own count and its own way out — with the provider's own
+columns, the data table's filters, sorting, paging and an ingest action.
 
 - **Rejection is explicit and remembered** for the session, keyed per pivot. The next run
   does not offer that candidate again, and the header line says how many it suppressed. A
   rejected row is struck through in place rather than moved, and stays reversible.
-- **Closing the pane rejects nothing.** Untriaged leftovers come back on the next run.
+- **Closing a provider rejects nothing.** Untriaged leftovers come back on the next run.
   *Reject all remaining* is the one gesture that disposes of them.
-- **A re-run replaces its own pane.** If you have rows marked it says so and offers
+- **A re-run replaces that provider's pane.** If you have rows marked it says so and offers
   *Show new* / *Keep triaging*, rather than throwing your triage away unasked.
 
 Everything the pane does is also reachable programmatically:

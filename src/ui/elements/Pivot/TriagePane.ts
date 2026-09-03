@@ -83,12 +83,13 @@ export interface TriagePaneDeps {
     rerun: (set: PivotCandidateSet) => void
     /** Drop the set, and the pane with it. Rejects nothing. */
     close: (pivotId: string) => void
-    /** The tab's label has to follow the count of what is still waiting. */
-    relabel: (pivotId: string, label: string) => void
+    /** This provider's row in the review strip carries the count of what is waiting. */
+    counted: (pivotId: string) => void
 }
 
 /**
- * One pivot's candidates, as a dock pane.
+ * One pivot's candidates, as the body of the review tab. Which one is on show is
+ * `PivotTriage`'s business — this class is only ever one provider's rows.
  *
  * It is a **reader** of {@link PivotManager}: the candidates, their states and the
  * session's rejections all live there, and the only state here is what is on screen —
@@ -148,7 +149,7 @@ export class TriagePane {
         this.set = set
         this.dirty = true
         if (this.active) this.paint()
-        this.deps.relabel(this.pivotId, this.label())
+        this.deps.counted(this.pivotId)
     }
 
     public activate(): void {
@@ -167,10 +168,9 @@ export class TriagePane {
         return this.root
     }
 
-    /** The strip's label: the pivot, and how many rows are still waiting for a verdict. */
-    public label(): string {
-        const waiting = this.untriaged().length
-        return waiting > 0 ? `${this.set.label} (${fmt(waiting)})` : this.set.label
+    /** How many rows are still waiting for a verdict — the count on this pane's row. */
+    public waiting(): number {
+        return this.untriaged().length
     }
 
     /** The pane's own header controls, in the slot the dock hands it. */
@@ -202,13 +202,11 @@ export class TriagePane {
             this.useRegex = box.checked
             this.page = 0
             this.paint()
-            this.deps.relabel(this.pivotId, this.label())
         })
         regex.append(box, text('span', 'regex'))
         items.push(regex)
 
         items.push(this.toolbarButton('Re-run', 'Fetch again with the same narrowing', () => this.deps.rerun(this.set)))
-        items.push(this.toolbarButton('Close', 'Drop these candidates. Nothing is rejected.', () => this.deps.close(this.pivotId)))
         return items
     }
 
@@ -911,7 +909,7 @@ export class TriagePane {
         if (!this.footer) return
         const matching = this.matchingRows(this.nodeColumns())
         this.paintFooter(matching, Math.max(1, Math.ceil(matching.length / PAGE_SIZE)))
-        this.deps.relabel(this.pivotId, this.label())
+        this.deps.counted(this.pivotId)
     }
 
     private paintFooter(matching: PivotCandidate[], pages: number): void {

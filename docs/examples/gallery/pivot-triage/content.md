@@ -18,8 +18,9 @@ Press `P`, click `mail.example`, then fetch **Correlations**.
   stop coming back. Click the segment to reveal and restore them.
 - **Ingest three and re-run again.** Now it reads
   `40 fetched · 3 already on canvas (skipped) · 5 rejected earlier`. Three reasons, one line.
-- **Close rejects nothing.** Only *Reject selected* and *Reject all remaining* are decisions;
-  anything you never ruled on is offered again.
+- **Closing a provider rejects nothing.** Its row in the **Review** tab carries the ×. Only
+  *Reject selected* and *Reject all remaining* are decisions; anything you never ruled on is
+  offered again.
 - **A failed summary** costs one entry, not the panel: *Reputation lookup* shows
   `Couldn't reach the source.` with a **Retry**.
 - **A failed fetch** surfaces in the pane: *Enrich from feed* opens with

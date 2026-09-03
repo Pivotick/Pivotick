@@ -19,7 +19,7 @@ Press `P`, click `paste 9f21`, and read the panel.
   library's own count, so it does not.
 - **The gate refuses** while the count is over `maxCandidates: 2000`, and says how to lift it.
 - **Tick *URLs*** and 210 comes back under the cap, so **Fetch** turns on by itself.
-- **What arrives is not the graph.** The 210 candidates open a triage pane in the dock. The
+- **What arrives is not the graph.** The 210 candidates open the dock's Review tab. The
   canvas does not move until you ingest, and the toast that follows carries **Undo**.
 
 Select `Event 5f2a` for the other shape: `Objects & attributes` declares `autoIngest`, so its

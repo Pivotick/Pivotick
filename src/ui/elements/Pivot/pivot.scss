@@ -1,9 +1,183 @@
-// The triage pane — one pivot's candidates, staged and not yet graph.
+// The review pane — candidates staged and not yet graph, one provider at a time.
 //
 // The region belongs to the dock (`Dock/dock.scss`); this file styles the occupant.
 // The per-column filter controls are built by `Table/TableRowFilters.ts` and carry its
 // `pvt-table-filter*` classes, so they are styled there and stay identical to the data
 // table's — two tables in the same dock must not offer two different-looking filters.
+
+// The review pane's frame: the queue of staged providers down the side, and the one on
+// show filling the rest. A single dock tab holds all of them, so the switch between
+// providers lives here — vertical, because fifty staged providers is a normal length for
+// this list and fifty tabs across the dock's own strip is not.
+.pvt-review {
+    display: flex;
+    height: 100%;
+    min-height: 0;
+}
+
+.pvt-review-strip {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    // The offset parent its rows are measured against when the strip scrolls one of
+    // them into view.
+    position: relative;
+    width: 172px;
+    min-height: 0;
+    overflow-y: auto;
+    border-right: 1px solid var(--pvt-chrome-border);
+    background-color: var(--pvt-chrome-bg);
+    font-size: 12px;
+}
+
+// A row holding two controls rather than one control: closing is a button of its own,
+// and a button inside a button is neither valid nor reachable by keyboard.
+.pvt-review-tab {
+    position: relative;
+    display: flex;
+    flex: none;
+    box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--pvt-chrome-border) 60%, transparent);
+}
+
+.pvt-review-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 30px;
+    // Room at the trailing edge for the close button, which is drawn over it.
+    padding: 0 26px 0 8px;
+    border: none;
+    background: transparent;
+    color: var(--pvt-text-color-4);
+    font: inherit;
+    font-size: 12px;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover {
+        background-color: color-mix(in srgb, var(--pvt-theme-primary) 7%, transparent);
+        color: var(--pvt-text-color-6);
+    }
+
+    // The bar down the leading edge is the panel's own picked-row treatment, so the
+    // list of providers you ran and the list of providers you are reviewing read as
+    // the same kind of list.
+    &.active {
+        box-shadow: inset 2px 0 0 var(--pvt-theme-primary);
+        background-color: color-mix(in srgb, var(--pvt-theme-primary) 10%, transparent);
+        color: var(--pvt-text-color-6);
+        font-weight: 600;
+    }
+}
+
+// Reserved for every row as soon as anything in the queue has a glyph: a ragged left
+// edge down a column of names is worse than an empty slot.
+.pvt-review-icon {
+    display: none;
+
+    svg {
+        width: 13px;
+        height: 13px;
+    }
+
+    .pvt-review-strip-icons & {
+        display: flex;
+        flex: none;
+        justify-content: center;
+        width: 13px;
+        line-height: 0;
+        color: var(--pvt-text-color-3);
+    }
+}
+
+.pvt-review-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pvt-review-count {
+    flex: none;
+    color: var(--pvt-text-color-3);
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
+
+    &:empty {
+        display: none;
+    }
+}
+
+.pvt-review-tab-failed .pvt-review-count {
+    color: var(--pvt-theme-danger);
+    font-weight: 700;
+}
+
+.pvt-review-close {
+    position: absolute;
+    top: 50%;
+    right: 4px;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--pvt-text-color-4);
+    cursor: pointer;
+    // Revealed by the row, below: a column of fifty rows each showing a way to close
+    // itself is fifty invitations to throw candidates away.
+    opacity: 0;
+    pointer-events: none;
+
+    svg {
+        width: 10px;
+        height: 10px;
+    }
+
+    &:hover {
+        background-color: color-mix(in srgb, var(--pvt-theme-danger) 16%, transparent);
+        color: var(--pvt-theme-danger);
+    }
+}
+
+// The keyboard as well as the pointer: the button is in the tab order, and a focused
+// control nobody can see is worse than one that is always drawn.
+.pvt-review-tab:hover .pvt-review-close,
+.pvt-review-tab:focus-within .pvt-review-close {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+// Nothing to hover with, so nothing would ever reveal it.
+@media (hover: none) {
+    .pvt-review-close {
+        opacity: 1;
+        pointer-events: auto;
+    }
+}
+
+// The pane's controls in the dock's header row. It generates no box of its own, so
+// they lay out as the header's own children — the same trick the dock's toolbar slot
+// uses, for the same reason.
+.pvt-review-tools {
+    display: contents;
+}
+
+.pvt-review-host {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
 
 .pvt-triage {
     display: flex;

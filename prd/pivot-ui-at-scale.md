@@ -1,8 +1,8 @@
 # Pivot UI at scale — findings from a real misp-modules backend
 
 **Status:** measured 2026-09-01; findings **1**, **2**, **4** and **5** were built
-2026-09-02 and are marked below. Finding **3** is withdrawn. Findings **6**, **7**
-and **8** are open, and finding 8 got worse. The measurements are left exactly as
+2026-09-02 and finding **8** on 2026-09-03, all marked below. Finding **3** is
+withdrawn. Findings **6** and **7** are open. The measurements are left exactly as
 taken, so every number here describes the panel *before* the search-plus-tray
 rework, not the one in the code now.
 
@@ -154,7 +154,7 @@ per-provider badge, so the page hangs the count off the meta-pivot instead. The
 number an analyst actually wants on the rim — how many enrichments this node
 could take — has no first-class expression.
 
-### 8. One dock tab per run — *open, and sharper than when written*
+### 8. One dock tab per run — *shipped*
 
 Each staged set opens its own tab. Two runs gave `CVE Lookup` and `DNS Resolver`;
 at 51 available providers the strip is a queue waiting to happen.
@@ -163,6 +163,28 @@ The tray from finding 2 is what makes this pressing. `PivotPanel.runSelected()`
 calls `run()` once per selected pivot, so a single click on *Run 6* opens six
 tabs. `02a1ad0` gave the strip icons and a stable order, which helps read a queue
 but does not shorten one.
+
+**Built** as one **Review** tab holding all of them, with the providers as vertical
+tabs down its left edge: name, glyph, its own count, and a × revealed by the row
+under the pointer or holding the focus. The dock's strip is back to two entries
+whatever the queue is doing, and the tab's own count is the whole queue's — so a
+folded dock still says how much is waiting. Three things the shape decided:
+
+- **The switch is in the pane, not in the toolbar.** The dock's convention for a
+  pane with internal views is a pill group in the header slot and a
+  `DockTabHandle.refresh()` per switch, which is what the data table does. That
+  detaches the body on every switch, and detaching resets the scroll of everything
+  inside it — including the provider strip. At fifty providers that means clicking
+  a row throws away your place in the queue. So the review pane keeps **one**
+  toolbar element for the life of the tab and refills it itself; nothing is
+  detached, and the strip holds its scroll.
+- **A closed provider hands over downwards.** The neighbour below, then above,
+  then the first: closing one review sends the analyst to the next one waiting
+  rather than back to the top of a queue they are working through.
+- **The row's × is at a fixed edge**, and the count sits beside it rather than
+  under it, for finding 5's reason — a control whose position depends on the text
+  beside it drifts into the middle of a row that already means something when
+  clicked.
 
 ## The design bench
 
@@ -234,12 +256,13 @@ there is nothing to split, and #3 above is not a defect a real deployment has.
 | 5 | Child count on container triage rows, and a way inside | **shipped** `47b4058` `0e28ee9` |
 | 6 | Partial applicability across a mixed origin | **open** |
 | 7 | An aggregate "enrichments available" badge | **open** |
-| 8 | One dock tab per run | **open** |
+| 8 | One review tab, providers as vertical tabs inside it | **shipped** |
 
 Nothing in the contract changed for any of the four: every one of them was a way
 of drawing what the pane already held.
 
 What is left is not. Findings 6 and 7 both want contract additions and should be
 scoped together — a pivot that applies to 3 of 5 selected nodes is also the thing
-an aggregate rim count would have to add up. Finding 8 is a dock question rather
-than a pivot one, and the tray made it the one an analyst meets first.
+an aggregate rim count would have to add up. Finding 8 turned out to need nothing
+from the contract either: it was a question of which surface owns the switch
+between staged sets, and the answer was the pane rather than the dock.

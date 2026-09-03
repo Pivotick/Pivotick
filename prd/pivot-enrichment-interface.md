@@ -406,8 +406,9 @@ The one below was taken when M1 landed and M2 was scoped (2026-09-01, Sami's cal
 §11.4.
 
 **D27 — one triage pane per pivot id.**
-A re-run **replaces** that pivot's candidate set; panes for different pivots **coexist** as dock
-tabs. This is the shape the review pass recommended and the Phase B prototype demonstrated, and
+A re-run **replaces** that pivot's candidate set; panes for different pivots **coexist**. (They
+coexisted as dock tabs until 2026-09-03, when at-scale finding 8 moved them inside a single
+**Review** tab as vertical tabs of their own — the pane-per-pivot rule below is unchanged.) This is the shape the review pass recommended and the Phase B prototype demonstrated, and
 the runtime already enforces it: `PivotManager` holds at most one `PivotCandidateSet` per pivot
 id, so "stack or replace" was never a UI choice to make later.
 
@@ -415,6 +416,7 @@ What it commits M2 to: a re-run while rows are marked is a visible event, not a 
 prototype announced it in the pane rather than discarding the analyst's marks unasked); closing a
 pane calls `discard`, which rejects nothing; and a pivot's tab carries its own label and count,
 which needs `DockTabHandle.setLabel` (§10's M3 note) or a count in the pane header instead.
+The review tab uses `setLabel` for the queue's total, and each provider's row carries its own.
 
 ## 7. The shape of the door
 
@@ -937,8 +939,8 @@ child-mutation API beside `setChildren`; `Graph.unionChildren`, `Graph.removeChi
 The pane is a **reader** of `graph.pivots`. It should add no state of its own beyond what is on
 screen — which view is showing, which filter is typed, where the scroll is.
 
-**What it reads:** `pivots.staged()` (one `PivotCandidateSet` per pivot, so one dock tab each —
-D27) · `pivots.candidates(pivotId)` · a set's `fetched` / `deduped` / `suppressed` / `loading` /
+**What it reads:** `pivots.staged()` (one `PivotCandidateSet` per pivot, so one pane each —
+D27, listed down the review tab's strip) · `pivots.candidates(pivotId)` · a set's `fetched` / `deduped` / `suppressed` / `loading` /
 `error` / `refused`, which are exactly the header line's numbers and the empty, error and ceiling
 states · `nodes` (rows, each `candidate` | `marked` | `rejected`, `deduped` rows not ingestable) ·
 `edges` (the edge-only section, D24) · `origin` and `narrowing` for the pane's subtitle.
@@ -974,8 +976,8 @@ which state is showing, what the header line says, which rows are ingestable —
 precisely the half M1 could not reach. The one M1 fact it re-asserts at every ingest is the one
 the whole feature rests on: a candidate is not in the graph until someone commits it.
 
-**Files:** `src/ui/elements/Pivot/PivotTriage.ts` (the controller: one dock tab per staged set,
-and the post-ingest toast) · `src/ui/elements/Pivot/TriagePane.ts` (one pane) ·
+**Files:** `src/ui/elements/Pivot/PivotTriage.ts` (the controller: the review tab, its provider
+strip, and the post-ingest toast) · `src/ui/elements/Pivot/TriagePane.ts` (one pane) ·
 `src/ui/elements/Pivot/pivot.scss` · the two library additions in `src/ui/Notifier.ts` /
 `src/ui/UIManager.ts` (actionable toasts) and `src/interfaces/GraphUI.ts` / `Dock.ts` /
 `interfaces/Plugin.ts` (`setLabel`) · a `pending` slice in `PivotManager` · one signature
@@ -1092,8 +1094,9 @@ Two hand-offs from this milestone:
 
 - The pane's **Re-run** calls `run(pivotId, set.origin, set.narrowing)` — the narrowing the set
   was fetched with. Once Pivot mode owns the narrowing controls, a re-run should take the
-  *current* narrowing instead, and S9's `210 in triage ▸` link should activate the pane's tab
-  (`UIManager.activateDockTab('pivot-triage:<pivotId>')`).
+  *current* narrowing instead, and S9's `210 in triage ▸` link should reveal the pivot's own
+  pane (`UIManager.pivotTriage?.reveal(pivotId)`, which selects its row in the review tab's
+  strip and brings the tab to the front).
 - The controller already reports **every** run, including ones it did not trigger, so M3's
   "a failed `autoIngest` fetch reporting through the notifier" is the only reporting still
   missing: a failure produces no run, so nothing announces it.
