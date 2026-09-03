@@ -364,7 +364,9 @@ that source's vouching and deletes only what nothing else vouches for — a forw
 recorded as one.
 
 A partial ingest out of one staged set gets its own `runId`, so each batch is a separate
-entry.
+entry. And undoing an ingest that is still the newest entry **puts its candidates back in
+the Review pane** rather than asking the provider for them again. See
+[Undo & history](/history) for the whole of it.
 
 ## The Pivot rail mode
 

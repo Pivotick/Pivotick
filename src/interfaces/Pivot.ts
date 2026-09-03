@@ -288,6 +288,34 @@ export interface PivotRun {
     nodes: RawNode[]
     edges: RawEdge[]
     at: number
+    /**
+     * What this ingest took out of the staged set. Only the newest ingest is ever
+     * re-staged, so this is a record of what *could* be restored rather than a
+     * promise that it will be.
+     */
+    restage?: PivotRestageRecord
+}
+
+/**
+ * One ingest's rows, kept so undoing it can put them back rather than asking the
+ * provider for them a second time — which matters most when the alternative is
+ * refetching two thousand correlations through a rate-limited API.
+ *
+ * Costs little: the candidate wrappers point at the same raws the run already holds,
+ * and the record dies with its entry when the history evicts it.
+ *
+ * @category Pivots
+ */
+export interface PivotRestageRecord {
+    /** Enough of the set's identity to rebuild it, if the ingest emptied and closed it. */
+    label: string
+    origin: Node[]
+    narrowing: PivotNarrowing
+    fetched: number
+    /** Each row with the index it sat at, so it goes back in place rather than at the end. */
+    nodes: Array<{ at: number, row: PivotCandidate }>
+    edges: Array<{ at: number, row: PivotCandidateEdge }>
+    carried: RawEdge[]
 }
 
 /**

@@ -1,10 +1,11 @@
 # Feature — undo/redo with a history dropdown: taking back what the canvas holds
 
-**Status:** **M1 and M2 shipped** 2026-09-03 on `worktree-undo-history` — `graph.history` is
-complete, both top-bar split buttons are wired with keyboard undo/redo, and the **B2** dropdown
-is built with the canvas hover highlight. 29 tests in `tests/visual/specs/history.spec.ts`
-(4 of them screenshots), and both of §12's design questions are closed. **M3** —
-triage re-staging (H21), `docs/history.md` and the gallery card — is what remains. Grilled with Sami 2026-09-03;
+**Status:** **Complete.** M1, M2 and M3 all shipped 2026-09-03 on `worktree-undo-history`:
+`graph.history`, both top-bar split buttons with keyboard undo/redo, the **B2** dropdown with
+its canvas hover highlight, triage re-staging, `docs/history.md`, and the `undo-history`
+gallery card. 29 tests in `tests/visual/specs/history.spec.ts` (4 of them screenshots) plus 3
+in `pivot-triage.spec.ts`; both of §12's design questions are closed, and the third — how H6
+meets `pivot-persistence.md` P13 — stays open because save-back has not shipped. Grilled with Sami 2026-09-03;
 twenty-four decisions taken (§6). Four competing designs for the dropdown were built as
 prototypes (§10) and **B, the timeline, is chosen**; a reversed draft, B2, followed. Still open
 before M2: B against B2 (§10.2) — an ordering, not a direction — and merging the legend-hover
@@ -531,8 +532,22 @@ state, and on one thing that is not frequency — B2's resting position *is* scr
   - The caret buttons are enabled as soon as the list has anything in it *at all*, in either
     direction — either caret opens the same list, so gating each on its own direction would
     hide the timeline from the side you happened to reach for.
-- **M3 — triage re-staging (H21), docs and the gallery card.** Re-staging is separable from M2
-  and is the one behaviour that reaches back into `PivotManager`, so it goes last.
+- **M3 — triage re-staging (H21), docs and the gallery card. Done.** `PivotManager.restage`
+  puts an undone ingest's rows back where they were, `docs/history.md` is the page, and the
+  gallery card is `undo-history` under **G · Editing & authoring**. Notes:
+  - **`PivotRestageRecord` hangs off the run**, not off a map in `PivotManager`. The history
+    already bounds itself at 30 and drops a record when it evicts an entry, so the lifetime
+    comes free — and the wrappers point at raws the run already holds, so it costs almost
+    nothing. A `Map` in the manager would have had to be pruned against the history anyway.
+  - **Rows go back at the index they sat at**, not onto the end: they were appended in the
+    first attempt and turned up on the last page of the table, which is not "back where they
+    came from".
+  - **They come back untriaged.** They were `marked` when they landed, and restoring them
+    marked would mean one click re-lands the same twelve — the opposite of §8's "ready to be
+    triaged properly".
+  - `GraphHistory` calls `pivots.restage` directly for the newest entry of a span. Both are
+    library components and the history already holds a `PivotRun`, so there is nothing to
+    abstract; the "newest only" test is `span[0]`, which is where H21 puts it.
 
 ---
 

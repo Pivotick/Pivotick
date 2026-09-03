@@ -82,6 +82,32 @@ const CARD_PREP = {
         await page.locator('.pvt-moderail-button[data-mode="pivot"]').click()
         await page.locator('.pvt-pivot-count').first().waitFor({ state: 'visible', timeout: 10_000 })
     },
+    // Make three entries the way the card asks the reader to, then open the dropdown
+    // over them — the card's subject is the list, and a static load shows two
+    // greyed-out buttons and nothing else.
+    'undo-history': async (page) => {
+        // The first *drawn* node each time: a hidden one leaves the canvas, so this
+        // walks along the graph rather than aiming at the same node three times.
+        const pickFrom = async (title) => {
+            const { x, y } = await nodeCenter(page.locator('.pvt-canvas .node').first())
+            await page.mouse.click(x, y, { button: 'right' })
+            await page.locator('.pvt-contextmenu.shown').first().waitFor({ state: 'visible', timeout: 5_000 })
+            // Icon-only entries carry their name in `title` rather than in their text.
+            await page.locator(`.pvt-contextmenu [title="${title}"]`).first().click()
+            await page.waitForTimeout(250)
+        }
+        await pickFrom('Hide Node')
+        await pickFrom('Hide Node')
+        await pickFrom('Delete Node')
+
+        await page.locator('#pvt-undo-caret').click()
+        await page.locator('.pvt-history.open').waitFor({ state: 'visible', timeout: 5_000 })
+        // Arm the oldest row, so the shot carries the whole span marked and the
+        // footer's verdict on it. From the keyboard: a hover would leave the pointer
+        // in the picture and the framing at the mercy of `hover`'s own scrolling.
+        for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowDown')
+        await page.locator('.pvt-history-row.armed').waitFor({ state: 'visible', timeout: 5_000 })
+    },
     // Same entry, one step further: this card's subject is the triage pane rather than
     // the panel, so fetch as well. The fixture declares a pivotable node first — its
     // case node is excluded by every `appliesTo`, and would offer nothing to fetch.

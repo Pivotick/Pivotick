@@ -691,12 +691,29 @@ export class PivotManager implements PivotManagerLike {
             }
         })
 
-        // Ingested rows leave the set; rejections and untriaged leftovers stay.
+        // Ingested rows leave the set; rejections and untriaged leftovers stay. What
+        // leaves is written down, so undoing this ingest can put it back (H21).
         const landedIds = new Set(run.nodeIds)
-        set.nodes = set.nodes.filter(c => !landedIds.has(c.id))
         const landedEdgeKeys = new Set(run.edgeIds)
+        const keptCarried = set.carried?.filter(
+            raw => !landedIds.has(String(raw.from)) && !landedIds.has(String(raw.to)),
+        )
+        run.restage = {
+            label: set.label,
+            origin: set.origin,
+            narrowing: set.narrowing,
+            fetched: set.fetched,
+            nodes: set.nodes
+                .map((row, at) => ({ at, row }))
+                .filter(({ row }) => landedIds.has(row.id)),
+            edges: set.edges
+                .map((row, at) => ({ at, row }))
+                .filter(({ row }) => landedEdgeKeys.has(row.id) || row.state === 'marked'),
+            carried: (set.carried ?? []).filter(raw => !keptCarried?.includes(raw)),
+        }
+        set.nodes = set.nodes.filter(c => !landedIds.has(c.id))
         set.edges = set.edges.filter(e => !landedEdgeKeys.has(e.id) && e.state !== 'marked')
-        set.carried = set.carried?.filter(raw => !landedIds.has(String(raw.from)) && !landedIds.has(String(raw.to)))
+        set.carried = keptCarried
         set.deduped = set.nodes.filter(c => c.deduped).length
 
         if (run.nodeIds.length || run.edgeIds.length || run.vouchedNodeIds.length || run.vouchedEdgeIds.length) {
@@ -715,6 +732,74 @@ export class PivotManager implements PivotManagerLike {
             deduped: deduped.length,
             suppressed: set.suppressed,
         }
+    }
+
+    // --- re-staging --------------------------------------------------------------------
+
+    /**
+     * @private
+     * Put an undone ingest's candidates back where they came from: the rows return to
+     * the staged set, the pane reopens if the ingest had closed it, and no provider is
+     * called — which matters most when the alternative is refetching two thousand
+     * correlations through a rate-limited API.
+     *
+     * Called by {@link GraphHistory} for an ingest that is still the newest entry, and
+     * only then. An immediate "wrong twelve" costs nothing; a pane resurrecting itself
+     * over later work would be worse than the refetch.
+     */
+    public restage(run: PivotRun): void {
+        const stash = run.restage
+        if (!stash) return
+
+        let set = this.candidateSets.get(run.pivotId)
+        if (!set) {
+            set = {
+                pivotId: run.pivotId,
+                label: stash.label,
+                origin: stash.origin,
+                narrowing: stash.narrowing,
+                // A fresh id: the undone run is on the redo stack, and a re-ingest is a
+                // new act that must not be recorded under an id already spoken for.
+                runId: this.nextRunId(run.pivotId),
+                fetched: stash.fetched,
+                deduped: 0,
+                suppressed: 0,
+                nodes: [],
+                edges: [],
+                loading: false,
+            }
+            this.candidateSets.set(run.pivotId, set)
+        }
+
+        const rejected = this.rejected.get(run.pivotId)
+        const known = new Set(set.nodes.map(c => c.id))
+        // Ascending, so re-inserting at the recorded indices rebuilds the provider's
+        // own order — the rows go back where they were, not onto the end.
+        for (const { at, row } of stash.nodes) {
+            if (known.has(row.id)) continue
+            // A rejection made since holds: it is not re-offered, and it is counted so
+            // the pane can still say why the number is what it is.
+            if (rejected?.has(row.id)) {
+                set.suppressed++
+                continue
+            }
+            // Back untriaged rather than still marked — the point of taking the run back
+            // is to go through it properly, not to re-land the same twelve on one click.
+            row.state = 'candidate'
+            row.deduped = Boolean(this.graph.getMutableNode(row.id))
+            set.nodes.splice(Math.min(at, set.nodes.length), 0, row)
+        }
+
+        const knownEdges = new Set(set.edges.map(e => e.id))
+        for (const { at, row } of stash.edges) {
+            if (knownEdges.has(row.id)) continue
+            row.state = 'candidate'
+            set.edges.splice(Math.min(at, set.edges.length), 0, row)
+        }
+        if (stash.carried.length) set.carried = [...(set.carried ?? []), ...stash.carried]
+        set.deduped = set.nodes.filter(c => c.deduped).length
+
+        this.notify('candidates')
     }
 
     // --- change bus --------------------------------------------------------------------

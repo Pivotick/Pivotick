@@ -514,6 +514,77 @@ test.describe('pivot triage pane', () => {
         expect(await nodeCount(page)).toBe(before + 2)
     })
 
+    test('undoing the newest ingest puts its rows back, untriaged, with no second fetch', async ({ page }) => {
+        await load(page)
+        await stageUrls(page)
+        const before = await counts(page)
+
+        await markRow(page, 'url-0')
+        await markRow(page, 'url-1')
+        await button(footer(page), 'Ingest selected').click()
+        await expect(toast(page)).toContainText('Ingested 2 nodes, 2 edges')
+        expect(await providerRows(page)).toEqual(['Correlations 208'])
+        const callsAfterIngest = (await harness(page, 'pivotCalls')) as unknown[]
+
+        await page.locator('#pvt-undo-button').click()
+
+        // The two rows are back where they came from, and the provider was not asked
+        // anything — which is the whole point when the alternative is refetching two
+        // thousand correlations through a rate-limited API.
+        expect(await counts(page)).toEqual(before)
+        await expect.poll(() => providerRows(page)).toEqual(['Correlations 210'])
+        expect((await harness(page, 'pivotCalls') as unknown[]).length).toBe(callsAfterIngest.length)
+        // Untriaged, not still marked: taking the run back is for going through it
+        // properly, not for re-landing the same two on one click.
+        await expect(row(page, 'url-0')).not.toHaveClass(/marked/)
+        await expect(footer(page)).toContainText('Ingest selected (0)')
+        await expect(footer(page)).toContainText('1\u2013100 of 210')
+    })
+
+    test('an ingest that closed the pane brings it back on the undo', async ({ page }) => {
+        await load(page, { pivots: ['blind'] })
+        await harness(page, 'runPivot', 'blind', ['a'])
+        const before = await counts(page)
+
+        await markRow(page, 'blind-1')
+        await button(footer(page), 'Reject all remaining').click()
+        await button(footer(page), 'Ingest selected').click()
+        await expect(pane(page)).toHaveCount(0)
+
+        await page.locator('#pvt-undo-button').click()
+
+        // The pane is back with the row in it, and the two rejections still hold — so
+        // there is exactly one thing left to decide on, which is what there was before.
+        await expect(pane(page)).toHaveCount(1)
+        await expect(row(page, 'blind-1')).toBeVisible()
+        await expect(rows(page)).toHaveCount(1)
+        expect(await harness(page, 'rejectedPivotIds', 'blind')).toEqual(['blind-0', 'blind-2'])
+        expect(await counts(page)).toEqual(before)
+    })
+
+    test('an ingest with later work on top of it is taken back without the pane refilling', async ({ page }) => {
+        await load(page)
+        await stageUrls(page)
+        const before = await counts(page)
+
+        await markRow(page, 'url-0')
+        await markRow(page, 'url-1')
+        await button(footer(page), 'Ingest selected').click()
+        await expect(toast(page)).toContainText('Ingested 2 nodes')
+
+        // Something else happens, so the ingest is no longer the newest thing.
+        await harness(page, 'excludeNode', 'b')
+        const entries = (await harness(page, 'historyEntries')) as Array<{ id: string, kind: string }>
+        expect(entries.map(entry => entry.kind)).toEqual(['visibility', 'pivot'])
+
+        await harness(page, 'undoThrough', entries[1].id)
+
+        // The nodes go, as always. The rows do not come back: a pane resurrecting
+        // itself over later work would be worse than the refetch.
+        expect(await counts(page)).toEqual(before)
+        expect(await providerRows(page)).toEqual(['Correlations 208'])
+    })
+
     test('a re-run over marked rows is announced, never swapped in', async ({ page }) => {
         await load(page)
         await stageUrls(page)

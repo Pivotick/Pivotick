@@ -83,6 +83,12 @@
     does not paint the whole menu one colour; when the *now* line scrolls out of reach the menu
     says which way it went and puts it back on a click.
   - Arrow keys aim, Enter travels, Escape closes.
+- **Undoing an ingest puts its candidates back in the Review pane**, untriaged, with the pane
+  reopening if the ingest had closed it and earlier rejections still standing — and without
+  calling the provider again, which is what matters when the alternative is refetching two
+  thousand correlations to fix a mistake made two seconds ago. Only while the ingest is still
+  the newest entry: a pane resurrecting itself over later work would be worse than the
+  refetch. `PivotRun` gains a `restage` record, and `PivotRestageRecord` is exported.
 
 ### Two things the pane needed, useful on their own
 

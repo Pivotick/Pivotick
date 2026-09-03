@@ -92,6 +92,7 @@ export class GraphHistory implements GraphHistoryLike {
 
         const reversed = this.travel(span, reverse)
         this.cursor -= span.length
+        this.restageNewest(span[0])
         this.notify()
         return reversed
     }
@@ -278,6 +279,17 @@ export class GraphHistory implements GraphHistoryLike {
     }
 
     // --- internals ---------------------------------------------------------------------
+
+    /**
+     * An ingest that was the newest thing to happen puts its candidates back in the
+     * triage pane, so an immediate "wrong twelve" costs no second provider call. Only
+     * the newest: if anything has happened since, a pane resurrecting itself over that
+     * later work would be worse than the refetch.
+     */
+    private restageNewest(newest?: HistoryRecord): void {
+        if (!newest || newest.sealed || newest.payload.kind !== 'pivot') return
+        this.graph.pivots.restage(newest.payload.run)
+    }
 
     /** The span an undo would travel, newest first — the order the rows are marked in. */
     private undoSpan(throughEntryId?: string): HistoryRecord[] {

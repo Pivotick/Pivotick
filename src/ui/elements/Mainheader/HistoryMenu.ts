@@ -548,15 +548,32 @@ function rowDetail(entry: HistoryEntry): string {
     return parts.join(' · ')
 }
 
+/**
+ * What the canvas will have more or less of. Composition first, then visibility, and
+ * edges only when neither moved — a span that adds nothing and hides nothing but
+ * asserts three relations still changed something.
+ */
 function deltaLabel(preview: HistoryPreview): string {
     const { effect } = preview
+    const parts: string[] = []
+
     const nodes = effect.nodesRestored - effect.nodesRemoved
-    if (nodes) return `${nodes > 0 ? '+' : '−'}${plural(Math.abs(nodes), 'node')}`
+    if (nodes) parts.push(`${nodes > 0 ? '+' : '−'}${plural(Math.abs(nodes), 'node')}`)
+
     const shown = effect.nodesShown - effect.nodesHidden
-    if (shown) return `${plural(Math.abs(shown), 'node')} ${shown > 0 ? 'back in view' : 'hidden'}`
-    const edges = effect.edgesRestored - effect.edgesRemoved
-    if (edges) return `${edges > 0 ? '+' : '−'}${plural(Math.abs(edges), 'edge')}`
-    return 'nothing changes'
+    if (shown) {
+        const count = Math.abs(shown)
+        // The noun is dropped when something already carries it, so the two halves read
+        // as one line rather than saying "node" twice.
+        const subject = parts.length ? String(count) : plural(count, 'node')
+        parts.push(shown > 0 ? `${subject} back in view` : `${subject} hidden`)
+    }
+
+    if (!parts.length) {
+        const edges = effect.edgesRestored - effect.edgesRemoved
+        if (edges) parts.push(`${edges > 0 ? '+' : '−'}${plural(Math.abs(edges), 'edge')}`)
+    }
+    return parts.join(' · ') || 'nothing changes'
 }
 
 function terminal(text: string): HTMLDivElement {
