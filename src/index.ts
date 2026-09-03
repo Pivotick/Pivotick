@@ -43,4 +43,8 @@ export type {
     PivotCandidateSet, PivotRun,
 } from './interfaces/Pivot'
 export type { PivotManager, PivotChange } from './PivotManager'
+export type {
+    GraphHistoryLike, HistoryEffect, HistoryEntry, HistoryKind, HistoryPreview,
+} from './interfaces/History'
+export type { GraphHistory } from './GraphHistory'
 export type { IngestContext, IngestDecision } from './interfaces/InterractionCallbacks'

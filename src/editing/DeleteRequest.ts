@@ -19,6 +19,15 @@ export interface DeleteRequest {
     origin: DeleteOrigin
 }
 
+/** Normalised form of an {@link InterractionCallbacks.onBeforeDelete} return value. */
+interface ResolvedDecision {
+    accept: boolean
+    nodes?: Node[]
+    edges?: Edge[]
+    notes?: Note[]
+    persisted?: boolean
+}
+
 /** A delete request once resolved against the live graph — the hook's target set. */
 interface ResolvedTargets {
     nodes: Node[]
@@ -47,7 +56,7 @@ export async function runDeleteRequest(graph: Graph, request: DeleteRequest): Pr
     const hook = graph.getOptions().callbacks?.onBeforeDelete
 
     if (!hook) {
-        return remove(graph, targets.nodes, targets.edges, targets.notes)
+        return remove(graph, targets.nodes, targets.edges, targets.notes, false)
     }
 
     const context: DeleteContext = {
@@ -72,6 +81,7 @@ export async function runDeleteRequest(graph: Graph, request: DeleteRequest): Pr
         narrow(targets.nodes, decision.nodes),
         narrow(targets.edges, decision.edges),
         narrow(targets.notes, decision.notes),
+        decision.persisted === true,
     )
 }
 
@@ -113,10 +123,16 @@ function dedupe<T extends { id: string }>(elements: T[]): T[] {
 }
 
 /** `true`/`false` and the object form collapse to one shape. */
-function normalise(decision: DeleteDecision): { accept: boolean, nodes?: Node[], edges?: Edge[], notes?: Note[] } {
+function normalise(decision: DeleteDecision): ResolvedDecision {
     if (decision === true) return { accept: true }
     if (!decision) return { accept: false }
-    return { accept: decision.accept, nodes: decision.nodes, edges: decision.edges, notes: decision.notes }
+    return {
+        accept: decision.accept,
+        nodes: decision.nodes,
+        edges: decision.edges,
+        notes: decision.notes,
+        persisted: decision.persisted,
+    }
 }
 
 /** Narrow a requested set to the consumer's subset, ignoring anything unrequested. */
@@ -130,7 +146,7 @@ function narrow<T extends { id: string }>(requested: T[], subset?: T[]): T[] {
  * Remove the surviving set. Notes go first (independent), then nodes — whose removal
  * cascades into their incident edges — then whatever named edges are still standing.
  */
-function remove(graph: Graph, nodes: Node[], edges: Edge[], notes: Note[]): DeleteOutcome {
+function remove(graph: Graph, nodes: Node[], edges: Edge[], notes: Note[], persisted: boolean): DeleteOutcome {
 
     // Resolve the cascade before mutating, so the outcome can report the edges that
     // went with the nodes even though nothing asked for them by name.
@@ -145,6 +161,10 @@ function remove(graph: Graph, nodes: Node[], edges: Edge[], notes: Note[]): Dele
         graph.removeEdge(edge.id)
         removedEdges.push(edge)
     }
+
+    // The nodes and edges are recorded so the delete can be taken back; the notes are
+    // not — a note is authored text, closer to an edit than to graph composition.
+    graph.history.recordDelete(nodes, removedEdges, persisted)
 
     return { accepted: true, nodes, edges: removedEdges, notes }
 }

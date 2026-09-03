@@ -127,8 +127,11 @@ export class SidebarBulkActions extends UIComponent {
     }
 
     private hideSelection(): void {
-        const queryEngine = this.uiManager.graph.queryEngine
-        for (const node of this.selectedNodes()) queryEngine.excludeNode(node)
+        const graph = this.uiManager.graph
+        // One act, so one history entry: hiding five nodes is not five things done.
+        graph.history.group(() => {
+            for (const node of this.selectedNodes()) graph.queryEngine.excludeNode(node)
+        })
         this.clearSelection()
     }
 

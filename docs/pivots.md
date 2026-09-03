@@ -346,17 +346,25 @@ edge.getSources()             // edges carry it too, which is the load-bearing h
 graph.removeBySource('correlations')   // drop the tag; delete only when the set empties
 ```
 
-### Undo, per run
+### Taking a run back
+
+An ingest is one entry in `graph.history`, alongside the other things that change what the
+canvas holds: deletions, durable hides, and elements drawn by hand.
 
 ```js
-graph.pivots.undo()           // the most recent ingest
-graph.pivots.undo(runId)      // a particular one; every outcome carries its runId
-graph.pivots.redo()           // re-lands the recorded delta; no refetch, no re-gating
+graph.history.entries()       // newest first; a pivot entry's `id` is its runId
+graph.history.undo()          // the newest entry
+graph.history.undo(runId)     // that ingest, and contiguously anything done since
+graph.history.redo()          // re-lands the recorded delta; no refetch, no re-gating
 ```
 
-This is run-scoped undo rather than a general history engine: it covers what pivots added
-and nothing else. A partial ingest out of one staged set gets its own `runId`, so each batch
-is separately undoable.
+Undo is **contiguous**: aiming at an older entry reverses every entry above it as well, as
+one batch. Reversing one old run on its own is `graph.removeBySource(pivotId)`, which drops
+that source's vouching and deletes only what nothing else vouches for — a forward operation,
+recorded as one.
+
+A partial ingest out of one staged set gets its own `runId`, so each batch is a separate
+entry.
 
 ## The Pivot rail mode
 
@@ -435,6 +443,8 @@ way.
   streaming backend, because many sources do not have one.
 - **No re-parenting.** A returned node never names an existing parent. Children union by id
   is the only way ingest touches an existing node's children.
-- **No general undo history.** `graph.pivots.undo()` covers pivot runs and nothing else.
+- **No property-edit undo.** `graph.history` covers what the canvas holds and shows — what
+  came in, what went out, what is hidden. A node's data is backend state the library did not
+  author, so reverting a field locally is `onBeforeNodeEditCommit`'s job, not ours.
 - **No persistence.** Saving an ingested result back to the source system, and remembering
   rejections across a reload, is a separate piece of work.

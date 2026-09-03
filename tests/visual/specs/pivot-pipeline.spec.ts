@@ -494,7 +494,7 @@ test.describe('pivot pipeline', () => {
         expect(await harness(page, 'pivotRunIds')).toEqual([outcome.runId])
     })
 
-    test('two runs of one pivot are separately undoable', async ({ page }) => {
+    test('two runs of one pivot are separate entries, undone as one contiguous span', async ({ page }) => {
         await load(page)
         const before = await counts(page)
 
@@ -508,11 +508,37 @@ test.describe('pivot pipeline', () => {
 
         expect(runOne.runId).not.toBe(runTwo.runId)
         expect(await harness(page, 'pivotRunIds')).toEqual([runOne.runId, runTwo.runId])
+        // The same pivot twice: only the ordinal tells the two rows apart.
+        const entries = await harness(page, 'historyEntries') as HistoryRow[]
+        expect(entries.map((entry) => entry.ordinal)).toEqual([2, 1])
+        expect(entries[0].label).toEqual(entries[1].label)
 
-        // Undo the *older* run by id: the newer one's nodes stay.
-        await harness(page, 'undoPivot', runOne.runId)
-        expect(await counts(page)).toEqual({ nodes: before.nodes + 2, edges: before.edges + 2 })
-        expect(await harness(page, 'pivotRunIds')).toEqual([runTwo.runId])
+        // Aiming at the older run takes the newer one with it: undo is contiguous, and
+        // reversing one old run alone is `removeBySource`, not this menu.
+        const reversed = await harness(page, 'undoThrough', runOne.runId)
+        expect(reversed).toEqual([runTwo.runId, runOne.runId])
+        expect(await counts(page)).toEqual(before)
+        expect(await harness(page, 'pivotRunIds')).toEqual([])
+        expect(await harness(page, 'redoableEntryIds')).toEqual([runTwo.runId, runOne.runId])
+    })
+
+    test('a preview states what the span would do, without doing any of it', async ({ page }) => {
+        await load(page)
+        const before = await counts(page)
+
+        const set = await stageUrls(page)
+        await harness(page, 'markPivotCandidates', AIL, landableIds(set, 4))
+        const outcome = await ingest(page)
+
+        const preview = await harness(page, 'historyPreview', outcome.runId) as HistoryPreviewRow
+        expect(preview.entries).toEqual([outcome.runId])
+        expect(preview.skipped).toEqual([])
+        expect(preview.effect.nodesRemoved).toBe(4)
+        // Looking is free: the canvas has not moved.
+        expect(await counts(page)).toEqual({ nodes: before.nodes + 4, edges: before.edges + 4 })
+
+        await harness(page, 'undoThrough', outcome.runId)
+        expect(await counts(page)).toEqual(before)
     })
 
     test('an origin-less pivot runs with no selection and lands at the viewport centre', async ({ page }) => {

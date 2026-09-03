@@ -26,11 +26,35 @@
   are *both* already on canvas, which become triage rows of their own. The whole batch goes
   through **`onBeforeIngest`** once — accept, veto, or hand back a narrowed set — and lands as
   a single `dataBatchChanged`.
-- **Provenance and run-scoped undo.** Nodes and edges carry the set of sources vouching for
-  them (`getSources()`, `'seed'` for everything that was already there), `graph.removeBySource`
-  drops one source's contribution and deletes only what nothing else vouches for, and
-  `graph.pivots.undo(runId)` / `redo()` do the same for one run. The post-ingest toast carries
-  the undo.
+- **Provenance.** Nodes and edges carry the set of sources vouching for them
+  (`getSources()`, `'seed'` for everything that was already there, `'manual'` for anything
+  drawn by hand), and `graph.removeBySource` drops one source's contribution and deletes only
+  what nothing else vouches for. A set rather than a scalar, because two pivots overlapping on
+  one node is the normal case. An ingest is reversible through `graph.history` (below); the
+  post-ingest toast carries the undo.
+
+### `graph.history`: taking back what the canvas holds
+
+- **A bounded, session-scoped history of what the canvas holds and shows.** Four kinds of
+  entry — a pivot ingest, a deletion, a durable hide or unhide (`queryEngine.excludeNode` /
+  `includeNode`), and a node or edge drawn by hand — recorded automatically, thirty deep,
+  oldest evicted. `entries()`, `redoable()`, `undo(throughEntryId?)`, `redo(...)`,
+  `preview(...)`, `canUndo()`, `canRedo()`, `on(listener)` and `clear()`. Property edits are
+  deliberately out: a node's data is backend state the library did not author.
+- **Undo is contiguous, in both directions.** Aiming at an entry three rows down reverses
+  those three, as one `dataBatchChanged` and one re-render. Any new action strands whatever
+  had been undone. Reversing one *old* operation alone stays `graph.removeBySource(source)`,
+  which is a forward operation and appears as its own entry.
+- **`preview(entryId)` plays the span against a copy of the graph** rather than summing the
+  entries, so it states the exact net effect: a hide cancelled by a later unhide nets to zero,
+  and a node a second pivot also vouches for is not counted as leaving.
+- **A consumer that wrote an operation through says so, and the entry seals.**
+  `onBeforeNodeCreate`, `onBeforeEdgeCreate` and `onBeforeDelete` decisions take
+  `persisted?: boolean`. A sealed entry is listed — it is part of how the canvas got this way
+  — but never reversed, and a span containing one passes over it instead of stopping at it.
+- **A deletion remembers each element's provenance**, so undoing it restores who vouched for
+  what. Without that, undoing a deletion and then the run that landed those nodes would leave
+  orphans nothing accounts for.
 
 ### Two things the pane needed, useful on their own
 
@@ -45,6 +69,14 @@
 
 ### Breaking
 
+- **`graph.pivots.undo` / `redo` / `runs` / `canUndo` / `canRedo` are gone**, replaced by
+  `graph.history`, which covers pivot ingests alongside deletions, hides and hand-drawn
+  elements. `graph.history.undo(runId)` reaches an ingest by the same id — but contiguously,
+  taking anything done since with it. Pulling one old run out of the middle is
+  `graph.removeBySource(pivotId)`. `graph.removeBySource` itself is unchanged.
+- **A hand-created node or edge reports `['manual']` from `getSources()`**, not `['seed']`.
+  It is vouched for like anything else, so `graph.removeBySource('manual')` reaches hand-drawn
+  work and undoing a creation removes the element only when nothing else still vouches for it.
 - **`InterractionCallbacks.onNodeExpansion` is gone.** It was declared but never called from
   anywhere in the library, and its signature took an `Edge` where a node was meant. Pivots are
   the door it was pointing at.

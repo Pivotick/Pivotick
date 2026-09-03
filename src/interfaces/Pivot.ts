@@ -167,9 +167,10 @@ export interface PivotRunOutcome {
     status: 'ingested' | 'staged' | 'refused' | 'vetoed' | 'failed' | 'cancelled'
     /**
      * This run's identity in the provenance records — the handle for
-     * {@link PivotManagerLike.undo}. A staged run's later ingest announces itself
-     * under this same id; a *second*, partial ingest out of one staged set gets a
-     * fresh id of its own, so each batch is separately undoable.
+     * `graph.history`, whose pivot entries are keyed by it. A staged run's later
+     * ingest announces itself under this same id; a *second*, partial ingest out of
+     * one staged set gets a fresh id of its own, so each batch is separately
+     * undoable.
      */
     runId: string
     /** What landed. Empty unless `'ingested'`. */
@@ -314,16 +315,24 @@ export interface PivotManagerLike {
     invalidate(pivotId?: string, nodes?: Node[]): void
     /** Abort in-flight calls — one pivot's or all, and optionally only one kind. */
     cancel(pivotId?: string, kind?: 'summarize' | 'fetch'): void
-    undo(runId?: string): PivotRun | undefined
-    redo(): PivotRun | undefined
 }
 
 /** Every element with no pivot vouching for it is vouched for by the seed. */
 export const SEED_SOURCE = 'seed'
 
 /**
+ * What vouches for an element the analyst drew by hand. It is a source like any
+ * other, so `graph.removeBySource('manual')` reaches hand-drawn work and undoing a
+ * creation removes the element only when nothing else still vouches for it.
+ *
+ * A hand-created node therefore reports `['manual']` from `getSources()`, not
+ * `['seed']`.
+ */
+export const MANUAL_SOURCE = 'manual'
+
+/**
  * One run's vouching for one element. Kept internally so two runs of the same
- * pivot stay distinguishable — {@link PivotManagerLike.undo} is built on it —
+ * pivot stay distinguishable — undoing one is built on it —
  * while the public surface stays `getSources(): string[]`.
  *
  * @category Pivots

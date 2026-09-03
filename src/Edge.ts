@@ -3,7 +3,7 @@ import { Node } from './Node'
 import { generateSafeDomId } from './utils/ElementCreation'
 import { stripFunctions } from './utils/utils'
 import {
-    ledgerDropSource, ledgerHasSource, ledgerRevokeRun, ledgerSources, ledgerVouch,
+    ledgerClone, ledgerDropSource, ledgerHasSource, ledgerRevokeRun, ledgerSources, ledgerVouch,
     type SourceLedger,
 } from './Provenance'
 
@@ -383,4 +383,22 @@ export class Edge {
     dropSource(source: string): boolean {
         return ledgerDropSource(this._sources, source)
     }
+
+    /**
+     * @private
+     * A copy of the vouching, for a history preview to play against.
+     */
+    cloneLedger(): SourceLedger {
+        return ledgerClone(this._sources)
+    }
+}
+
+/**
+ * The id a raw edge lands under: its own when it declares one, `from-to` otherwise.
+ * The rule ingest follows, so anything re-adding a recorded edge finds the same one.
+ *
+ * @private
+ */
+export function rawEdgeKey(raw: { id?: string | number, from: string | number, to: string | number }): string {
+    return raw.id !== undefined ? String(raw.id) : `${raw.from}-${raw.to}`
 }

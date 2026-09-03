@@ -19,7 +19,8 @@ const SEED_JITTER = 160
 /**
  * The pivot runtime: the registry, the two provider calls with their cancellation
  * and cache, the narrowing gate, the candidate sets awaiting triage, and ingest
- * with its provenance and run-scoped undo.
+ * with its provenance. Taking a run back is `graph.history`'s job, alongside every
+ * other thing the analyst can reverse.
  *
  * It holds no UI. Everything here is drivable from the console — a pivot with
  * `autoIngest: true` is end to end without a single pane — and the triage pane and
@@ -53,9 +54,9 @@ export class PivotManager implements PivotManagerLike {
     /** At most one candidate set per pivot: a re-run replaces it. */
     private readonly candidateSets = new Map<string, PivotCandidateSet>()
 
-    private readonly undoStack: PivotRun[] = []
-    private readonly redoStack: PivotRun[] = []
     private readonly listeners = new Set<(change: PivotChange) => void>()
+    /** How many times each pivot has landed a run, so two runs of one are told apart. */
+    private readonly ordinals = new Map<string, number>()
 
     private runSeq = 0
 
@@ -218,7 +219,7 @@ export class PivotManager implements PivotManagerLike {
      *
      * Resolves at the hand-off — a staged run does not wait on the analyst. The
      * outcome's `runId` is the id the resulting ingest is recorded under, so it is
-     * the handle for {@link undo}.
+     * the handle for `graph.history.undo`.
      */
     public async run(id: string, nodes: Node[] = [], narrowing: PivotNarrowing = {}): Promise<PivotRunOutcome> {
         const def = this.defs.get(id)
@@ -546,8 +547,8 @@ export class PivotManager implements PivotManagerLike {
      * Commit the marked candidates of one staged set.
      *
      * Purely additive: an id already on canvas is skipped, never overwritten, and
-     * removal only ever happens through {@link undo} or `graph.removeBySource`. The
-     * whole batch goes through `onBeforeIngest` once, and lands as one
+     * removal only ever happens through `graph.history` or `graph.removeBySource`.
+     * The whole batch goes through `onBeforeIngest` once, and lands as one
      * `dataBatchChanged`.
      */
     public async ingest(pivotId: string, trigger: 'triage' | 'auto' = 'triage'): Promise<PivotRunOutcome> {
@@ -699,8 +700,9 @@ export class PivotManager implements PivotManagerLike {
         set.deduped = set.nodes.filter(c => c.deduped).length
 
         if (run.nodeIds.length || run.edgeIds.length || run.vouchedNodeIds.length || run.vouchedEdgeIds.length) {
-            this.undoStack.push(run)
-            this.redoStack.length = 0
+            const ordinal = (this.ordinals.get(pivotId) ?? 0) + 1
+            this.ordinals.set(pivotId, ordinal)
+            this.graph.history.recordPivotRun(run, this.get(pivotId)?.label ?? pivotId, ordinal)
             this.notify('runs')
         }
         this.notify('candidates')
@@ -713,108 +715,6 @@ export class PivotManager implements PivotManagerLike {
             deduped: deduped.length,
             suppressed: set.suppressed,
         }
-    }
-
-    // --- undo / redo -------------------------------------------------------------------
-
-    /** The runs that can be undone, oldest first. */
-    public runs(): PivotRun[] {
-        return [...this.undoStack]
-    }
-
-    public canUndo(): boolean {
-        return this.undoStack.length > 0
-    }
-
-    public canRedo(): boolean {
-        return this.redoStack.length > 0
-    }
-
-    /**
-     * Undo a whole pivot run — the most recent by default. Drops the run's vouching
-     * from everything it touched and deletes whatever nothing vouches for any more, so
-     * a node a second pivot also found survives, one record lighter.
-     */
-    public undo(runId?: string): PivotRun | undefined {
-        const index = runId
-            ? this.undoStack.findIndex(r => r.runId === runId)
-            : this.undoStack.length - 1
-        if (index < 0) return undefined
-        const [run] = this.undoStack.splice(index, 1)
-
-        this.graph.batchChanges(() => {
-            for (const id of [...run.edgeIds, ...run.vouchedEdgeIds]) {
-                const edge = this.graph.getMutableEdge(id)
-                if (edge?.revokeRun(run.pivotId, run.runId)) this.graph.removeEdge(id)
-            }
-            // Children first, so removing a container never leaves one behind — and
-            // only when nothing else vouches for them: a child a different source
-            // found stays where it is.
-            for (const id of run.childIds) {
-                const node = this.graph.getMutableNode(id)
-                // Already gone: an ancestor this run removed took it along.
-                if (!node) continue
-                if (!node.revokeRun(run.pivotId, run.runId)) continue
-                this.graph.dropNode(node)
-            }
-            for (const id of [...run.nodeIds, ...run.vouchedNodeIds]) {
-                const node = this.graph.getMutableNode(id)
-                if (node?.revokeRun(run.pivotId, run.runId)) this.graph.dropNode(node)
-            }
-        })
-
-        this.redoStack.push(run)
-        this.notify('runs')
-        return run
-    }
-
-    /**
-     * Re-land the most recently undone run exactly as it was: no refetch, no
-     * re-gating, no second trip through `onBeforeIngest`. It already passed once.
-     */
-    public redo(): PivotRun | undefined {
-        const run = this.redoStack.pop()
-        if (!run) return undefined
-
-        this.graph.batchChanges(() => {
-            for (const raw of run.nodes) {
-                let node: Node | undefined
-                try {
-                    node = this.graph.addNode(raw)
-                } catch {
-                    node = this.graph.getMutableNode(String(raw.id))
-                }
-                if (!node) continue
-                node.vouch(run.pivotId, run.runId)
-                for (const child of node.descendants()) child.vouch(run.pivotId, run.runId)
-            }
-            for (const raw of run.edges) {
-                try {
-                    this.graph.addEdge(raw).vouch(run.pivotId, run.runId)
-                } catch {
-                    this.graph.getMutableEdge(this.edgeKey(raw))?.vouch(run.pivotId, run.runId)
-                }
-            }
-            for (const id of run.vouchedNodeIds) {
-                const node = this.graph.getMutableNode(id)
-                if (node) this.vouchExisting(node, run.pivotId, run.runId)
-            }
-            for (const id of run.vouchedEdgeIds) {
-                const edge = this.graph.getMutableEdge(id)
-                if (edge) this.vouchExisting(edge, run.pivotId, run.runId)
-            }
-            for (const union of run.unions) {
-                const parent = this.graph.getMutableNode(union.parentId)
-                if (!parent) continue
-                for (const child of this.graph.unionChildren(parent, union.children)) {
-                    child.vouch(run.pivotId, run.runId)
-                }
-            }
-        })
-
-        this.undoStack.push(run)
-        this.notify('runs')
-        return run
     }
 
     // --- change bus --------------------------------------------------------------------

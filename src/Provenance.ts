@@ -24,6 +24,17 @@ export function ledgerSources(ledger: SourceLedger | undefined): string[] {
     return [...ledger.keys()]
 }
 
+/**
+ * A copy nothing shares with the element, so a history preview can play a span
+ * against it without the canvas noticing.
+ *
+ * @private
+ */
+export function ledgerClone(ledger: SourceLedger | undefined): SourceLedger {
+    if (!ledger) return new Map()
+    return new Map([...ledger].map(([source, records]) => [source, [...records]]))
+}
+
 /** @private */
 export function ledgerHasSource(ledger: SourceLedger | undefined, source: string): boolean {
     if (!ledger || ledger.size === 0) return source === SEED_SOURCE

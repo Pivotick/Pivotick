@@ -5,7 +5,7 @@ import { generateSafeDomId } from './utils/ElementCreation'
 import { rectRadiusAlongDirection } from './utils/GeometryHelper'
 import { stripFunctions } from './utils/utils'
 import {
-    ledgerDropSource, ledgerHasSource, ledgerRevokeRun, ledgerSources, ledgerVouch,
+    ledgerClone, ledgerDropSource, ledgerHasSource, ledgerRevokeRun, ledgerSources, ledgerVouch,
     type SourceLedger,
 } from './Provenance'
 
@@ -495,6 +495,14 @@ export class Node {
      */
     dropSource(source: string): boolean {
         return ledgerDropSource(this._sources, source)
+    }
+
+    /**
+     * @private
+     * A copy of the vouching, for a history preview to play against.
+     */
+    cloneLedger(): SourceLedger {
+        return ledgerClone(this._sources)
     }
 
     /**

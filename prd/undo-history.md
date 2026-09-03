@@ -1,9 +1,12 @@
 # Feature — undo/redo with a history dropdown: taking back what the canvas holds
 
-**Status:** Proposed — grilled with Sami 2026-09-03. Twenty-four decisions taken (§6). Four
-competing designs for the dropdown were built as prototypes (§10) and **B, the timeline, is
-chosen**; a reversed draft, B2, followed. The only thing still open is B against B2 (§10.2) —
-an ordering, not a direction.
+**Status:** **M1 shipped** 2026-09-03 on `worktree-undo-history` — `graph.history` is complete
+and driveable from the console, with 13 behavioural tests in `tests/visual/specs/history.spec.ts`.
+M2 (the surface) and M3 (re-staging, docs, gallery) remain. Grilled with Sami 2026-09-03;
+twenty-four decisions taken (§6). Four competing designs for the dropdown were built as
+prototypes (§10) and **B, the timeline, is chosen**; a reversed draft, B2, followed. Still open
+before M2: B against B2 (§10.2) — an ordering, not a direction — and merging the legend-hover
+work (`develop`'s `a17e138`) that H16 needs.
 **Owner:** Sami Mokaddem
 **Requested:** 2026-09-03
 **Area:** greenfield `src/GraphHistory.ts` + history types in `src/interfaces/`, with touch
@@ -485,11 +488,36 @@ state, and on one thing that is not frequency — B2's resting position *is* scr
 
 ## 11. Work plan
 
-- **M1 — the engine.** `src/GraphHistory.ts` plus its interfaces. Move `PivotManager`'s stacks
-  out (H19), drop the selective splice (H9), keep every existing behaviour. Deletions,
-  visibility and hand-created elements record themselves; deletions snapshot ledgers (H10);
-  `persisted` lands on the three decisions (H6); hand-created elements get a real source tag
-  (§4.8). No UI. `graph.history` is complete and driveable from the console.
+- **M1 — the engine. Done.** `src/GraphHistory.ts` (the timeline, the cursor, recording) plus
+  `src/HistoryWorld.ts` (the reversal) and `src/interfaces/History.ts`. `PivotManager`'s stacks
+  moved out (H19) and the selective splice went with them (H9). Deletions, visibility and
+  hand-created elements record themselves; `persisted` landed on the three decisions (H6);
+  hand-drawn elements are vouched for by `MANUAL_SOURCE` (§4.8). No UI. Eight deviations from
+  what this section assumed, all deliberate:
+  - **`preview()` simulates.** The reversal is written once against a `HistoryWorld`
+    interface with two implementations — `LiveWorld` mutates the canvas, `ScratchWorld`
+    mirrors presence, ledgers and the exclusion set. §10.1 asked for this and §7 did not
+    specify it; `HistoryPreview` therefore gained an `effect: HistoryEffect` carrying the
+    six net counts the footer states.
+  - **`HistoryEntry.ordinal`**, closing §10.1's H15 hole: two runs of one pivot in the same
+    minute returning the same count are told apart by a run ordinal, not a clock.
+  - **H10 by construction, not by copy.** A delete entry keeps the live `Node`/`Edge`
+    objects rather than a snapshot, so the ledger comes back with the element. Same outcome
+    as the `Map` copy H10 costed, with no second copy of the truth to drift.
+  - **`GraphHistoryLike` is the interface, `GraphHistory` the class** — mirroring
+    `PivotManagerLike` / `PivotManager`, rather than §7's single `GraphHistory` interface.
+  - **`redoable()` is newest-first and `redo(id)` travels up through that entry**, because
+    the implementation is the one timeline B and B2 both assume: entries plus a cursor, not
+    two stacks. A sealed entry is inert — the cursor passes over it in both directions.
+  - **`history.group(fn)`** (internal) coalesces the visibility changes made inside one act,
+    so hiding a selection of five is one entry. Bulk-hide is its only caller today.
+  - **The toast keeps its Undo**, repointed at `graph.history.undo(runId)`. H20 removes it
+    in M2; taking it out now would leave the release with no undo surface at all.
+  - **A note deleted alongside nodes is not restored.** H4 keeps notes out of the kinds, so
+    a mixed delete records and reverses its nodes and edges only. Flag if that bites.
+
+  Small public additions the wiring needed: `queryEngine.getExcludedNodeIds()`, and
+  `connectManager.createEdge` now returns the `Edge` it made.
 - **M2 — the surface.** Wire both buttons, build the winning dropdown, `metaKey` plus the two
   keybindings (H24), the hover highlight (H16), and the toast change (H20). Depends on the
   legend-hover merge.
@@ -511,9 +539,10 @@ state, and on one thing that is not frequency — B2's resting position *is* scr
   are defensible — an explicit Save is a deliberate act the analyst remembers, while a
   write-through on create is invisible — but if save-back ever ships, the two rules should be
   settled together rather than inherited separately.
-- **What a `manual` source tag does to `getSources()`.** Hand-created elements report `'seed'`
-  today (§4.8). Giving them their own tag is right for the history, and is a change to the
-  output of a documented public accessor. Contract call.
+- ~~**What a `manual` source tag does to `getSources()`.**~~ **Taken in M1.** A hand-created
+  node or edge now reports `['manual']`, exported as `MANUAL_SOURCE`, and
+  `graph.removeBySource('manual')` reaches hand-drawn work. The changelog carries it as
+  breaking. Say so if the old `'seed'` answer was load-bearing somewhere.
 
 ---
 

@@ -20,6 +20,7 @@ type ResolvedDecision = {
     style?: PartialEdgeFullStyle
     id?: string
     directed?: boolean | null
+    persisted?: boolean
 }
 
 
@@ -308,7 +309,8 @@ export class EdgeCreationSession {
             data: decision.data,
             style: decision.style,
             id: decision.id,
-            directed: decision.directed
+            directed: decision.directed,
+            persisted: decision.persisted
         }
     }
 

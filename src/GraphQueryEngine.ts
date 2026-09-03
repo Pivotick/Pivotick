@@ -285,7 +285,13 @@ export class GraphQueryEngine {
         const node = this.graph.getMutableNode(nodeOrId)
         if (node === undefined) return
 
-        this.excludedNodeIds.add(node.id)
+        // Only a hide that changed the set is an act. The hide that *survives* is the
+        // one worth recording at all: `graph.hideNode()` is wiped by the next
+        // re-derive, so an entry for it would reverse something already reverted.
+        if (!this.excludedNodeIds.has(node.id)) {
+            this.excludedNodeIds.add(node.id)
+            this.graph.history.recordVisibility(node.id, true)
+        }
         const manuallyHidenFilter: FilterFieldConfig = {
             value: node.id,
             matchMode: 'exact'
@@ -300,7 +306,7 @@ export class GraphQueryEngine {
         const node = this.graph.getMutableNode(nodeOrId)
         if (node === undefined) return
 
-        this.excludedNodeIds.delete(node.id)
+        if (this.excludedNodeIds.delete(node.id)) this.graph.history.recordVisibility(node.id, false)
         this.apply()
 
         this.emit('filterRemove', MANUALLY_HIDDEN_FILTER_KEY)
@@ -316,6 +322,11 @@ export class GraphQueryEngine {
 
     getExcludedNodeCount(): number {
         return this.excludedNodeIds.size
+    }
+
+    /** The ids of the durably hidden nodes, whether or not they are still in the graph. */
+    getExcludedNodeIds(): string[] {
+        return [...this.excludedNodeIds]
     }
 
     getExcludedNodes(): Node[] {

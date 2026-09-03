@@ -432,6 +432,12 @@ export type EdgeCreateDecision =
         style?: PartialEdgeFullStyle
         id?: string
         directed?: boolean | null
+    /**
+     * The consumer wrote this operation through to its own backend. The history
+     * lists the entry but never reverses it — only the consumer can know a write
+     * happened, so only the consumer can declare it.
+     */
+    persisted?: boolean
     }
 
 export interface NodeEditCommitContext {
@@ -505,6 +511,12 @@ export type DeleteDecision =
         nodes?: Node[]
         edges?: Edge[]
         notes?: Note[]
+    /**
+     * The consumer wrote this operation through to its own backend. The history
+     * lists the entry but never reverses it — only the consumer can know a write
+     * happened, so only the consumer can declare it.
+     */
+    persisted?: boolean
     }
 
 /** Context passed to {@link InterractionCallbacks.onBeforeIngest}. */
@@ -585,4 +597,10 @@ export type NodeCreateDecision =
         id?: string
         data?: NodeData
         style?: Partial<NodeStyle>
+    /**
+     * The consumer wrote this operation through to its own backend. The history
+     * lists the entry but never reverses it — only the consumer can know a write
+     * happened, so only the consumer can declare it.
+     */
+    persisted?: boolean
     }

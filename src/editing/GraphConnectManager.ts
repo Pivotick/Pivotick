@@ -206,11 +206,14 @@ export class GraphConnectManager {
     public createEdge(
         source: Node,
         target: Node,
-        decision?: { data?: EdgeData, style?: PartialEdgeFullStyle, id?: string, directed?: boolean | null },
+        decision?: {
+            data?: EdgeData, style?: PartialEdgeFullStyle, id?: string,
+            directed?: boolean | null, persisted?: boolean,
+        },
         { allowDuplicate = false }: { allowDuplicate?: boolean } = {}
-    ): void {
+    ): Edge | undefined {
 
-        if (!allowDuplicate && this.edgeExists(source, target)) return
+        if (!allowDuplicate && this.edgeExists(source, target)) return undefined
 
         const edgeID = decision?.id ?? generateSafeDomId(8, 'edge-')
         const edge = new Edge(edgeID, source, target, decision?.data ?? {}, undefined, decision?.directed ?? null)
@@ -218,6 +221,8 @@ export class GraphConnectManager {
         // constructor's `style` param expects a full style, not partial-at-both-levels).
         if (decision?.style) edge.updateStyle(decision.style)
         this.graph.addEdge(edge)
+        this.graph.history.recordCreate({ edge }, decision?.persisted === true)
+        return edge
     }
 
     public createNoteLink(source: Note, target: Node): void {

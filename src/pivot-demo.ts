@@ -680,10 +680,11 @@ const paintStatus = (): void => {
         + set.nodes.filter(candidate => candidate.state === 'marked').length
         + set.edges.filter(edge => edge.state === 'marked').length, 0)
     status.textContent = `${staged.length} staged · ${rows} rows · ${marked} marked`
-        + ` · ${graph.pivots.runs().length} runs`
+        + ` · ${graph.history.entries().length} entries`
 }
 
 graph.pivots.on(paintStatus)
+graph.history.on(paintStatus)
 paintStatus()
 
 bar.append(
@@ -708,11 +709,11 @@ bar.append(
         value => { knobs.stageObjects = value === 'stage' },
     )),
     field('Ceiling', ceiling),
-    button('Undo', 'graph.pivots.undo() — take the last ingested run back out', () => {
-        if (!graph.pivots.undo()) graph.notifier.info('Undo', 'No run left to undo')
+    button('Undo', 'graph.history.undo() — take the newest entry back', () => {
+        if (!graph.history.undo().length) graph.notifier.info('Undo', 'Nothing left to undo')
     }),
-    button('Redo', 'graph.pivots.redo() — re-land the recorded delta', () => {
-        if (!graph.pivots.redo()) graph.notifier.info('Redo', 'Nothing to redo')
+    button('Redo', 'graph.history.redo() — put it back, no refetch', () => {
+        if (!graph.history.redo().length) graph.notifier.info('Redo', 'Nothing to redo')
     }),
     button('Invalidate', 'graph.pivots.invalidate() — drop every cached summary', () => {
         graph.pivots.invalidate()
@@ -721,7 +722,7 @@ bar.append(
     button('Cancel', 'graph.pivots.cancel() — abort every call in flight', () => graph.pivots.cancel()),
     button('Log', 'Dump the staged sets, the run log and the rejections to the console', () => {
         console.log('staged', graph.pivots.staged())
-        console.log('runs', graph.pivots.runs())
+        console.log('history', graph.history.entries())
         console.log('rejected', Object.fromEntries(
             PIVOTS.map(pivot => [pivot.id, graph.pivots.rejectedIds(pivot.id)]),
         ))

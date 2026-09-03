@@ -11,6 +11,7 @@ import type { InterractionCallbacks } from './interfaces/InterractionCallbacks'
 import type { LayoutOptions } from './interfaces/LayoutOptions'
 import { generateSafeDomId } from './utils/ElementCreation'
 import { GraphQueryEngine } from './GraphQueryEngine'
+import { GraphHistory } from './GraphHistory'
 import type { GraphRendererOptions } from './interfaces/RendererOptions'
 import { GraphEditingManager } from './editing/GraphEditingManager'
 import { NoteManager } from './NoteManager'
@@ -41,7 +42,13 @@ export class Graph {
      * produce *data* — and because it has to exist before the UI is built.
      */
     public readonly pivots: PivotManager
-    
+    /**
+     * What the canvas holds and shows, and how it came to: every ingest, deletion,
+     * durable hide and hand-drawn element, contiguously reversible. Bounded and
+     * session-scoped — it does not survive a reload.
+     */
+    public readonly history: GraphHistory
+
     private listeners: Record<keyof GraphEvents, Array<GraphEvents[keyof GraphEvents]>>
     /** Depth of nested {@link batchChanges} calls; > 0 means events are being collected. */
     private batchDepth = 0
@@ -119,6 +126,9 @@ export class Graph {
         container.appendChild(appContainer)
 
         this.noteManager = new NoteManager(this)
+        // Before everything that records into it: the query engine's hides, the editing
+        // manager's deletes and creations, and every pivot ingest are all entries.
+        this.history = new GraphHistory(this)
         this.queryEngine = new GraphQueryEngine(this)
         this.editing = new GraphEditingManager(this)
         // Before the UI: whether any pivot is registered decides whether the Pivot

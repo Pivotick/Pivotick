@@ -32,6 +32,8 @@ import { Flyout } from './ui/elements/Flyout/Flyout'
 import type { PivotickPlugin, PluginContext } from './interfaces/Plugin'
 import type * as Pivot from './interfaces/Pivot'
 import type { PivotManager } from './PivotManager'
+import type * as History from './interfaces/History'
+import type { GraphHistory } from './GraphHistory'
 
 export type {
     GraphOptions,
@@ -73,6 +75,8 @@ export type {
     PluginContext,
     Pivot,
     PivotManager,
+    History,
+    GraphHistory,
 }
 
 export {

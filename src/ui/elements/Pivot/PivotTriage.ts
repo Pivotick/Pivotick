@@ -437,11 +437,10 @@ export class PivotTriage extends UIComponent {
      * the same toast, and the same undo on it, because the analyst has the same problem.
      */
     private reportUnannounced(): void {
-        const runs = this.pivots.runs()
-        const latest = runs[runs.length - 1]
-        if (!latest || this.reported.has(latest.runId)) return
-        this.reported.add(latest.runId)
-        this.toastIngest(latest.runId, latest.nodeIds.length, 0, latest.edgeIds.length)
+        const latest = this.uiManager.graph.history.entries().find(entry => entry.kind === 'pivot')
+        if (!latest || this.reported.has(latest.id)) return
+        this.reported.add(latest.id)
+        this.toastIngest(latest.id, latest.nodeIds.length, 0, latest.edgeIds.length)
     }
 
     private async ingest(pivotId: string): Promise<void> {
@@ -494,18 +493,19 @@ export class PivotTriage extends UIComponent {
     }
 
     private undo(runId: string, toast: NotificationHandle): void {
-        if (!this.pivots.undo(runId)) {
+        const history = this.uiManager.graph.history
+        // The run's id is its entry's, so this reaches the ingest the toast is about —
+        // and, contiguously, anything done since.
+        if (!history.undo(runId).length) {
             toast.update({ level: NotificationLevel.Warning, title: 'Nothing left to undo', action: null })
             return
         }
-        // Redo lives here and nowhere else: a second home for it would imply a history
-        // surface this feature deliberately does not build (D25).
         toast.update({
             title: 'Undone',
             action: {
                 label: 'Redo',
                 onClick: next => {
-                    this.pivots.redo()
+                    history.redo()
                     next.update({ title: 'Redone', action: null })
                 },
             },

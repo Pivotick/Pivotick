@@ -34,7 +34,7 @@ import type { RailMode } from '../../../src/ui/ModeStore'
 import type { UIManager } from '../../../src/ui/UIManager'
 import type { RailModeDefinition, RailTool } from '../../../src/interfaces/GraphUI'
 import type { RenderContext } from '../../../src/interfaces/AsyncContent'
-import type { RawEdge, RawNode } from '../../../src/interfaces/GraphOptions'
+import type { GraphDataChange, RawEdge, RawNode } from '../../../src/interfaces/GraphOptions'
 import type {
     PivotDefinition, PivotNarrowing, PivotResult, PivotRunOutcome, PivotSummary,
 } from '../../../src/interfaces/Pivot'
@@ -198,6 +198,26 @@ export interface ConnectConfig {
     asyncDelayMs?: number
 }
 
+/** One history row, flattened to what crosses `page.evaluate`. */
+export interface RecordedHistoryEntry {
+    id: string
+    kind: string
+    label: string
+    sealed: boolean
+    nodes: string[]
+    edges: string[]
+    ordinal?: number
+}
+
+/** What a span would do, flattened the same way. */
+export interface RecordedHistoryPreview {
+    entries: string[]
+    skipped: string[]
+    nodes: string[]
+    edges: string[]
+    effect: Record<string, number>
+}
+
 /** Named `onBeforeDelete` behaviours the harness can install. */
 export type DeleteHookBehavior =
     | 'accept'
@@ -210,6 +230,8 @@ export type DeleteHookBehavior =
     | 'spare-edges'
     /** Gate on `ctx.confirm()`, then accept — the library-provided confirm modal. */
     | 'confirm'
+    /** Accept, reporting the delete as written through to a backend: the entry seals. */
+    | 'accept-persisted'
 
 /** Named `onBeforeNodeCreate` behaviours. */
 export type NodeCreateHookBehavior =
@@ -220,6 +242,8 @@ export type NodeCreateHookBehavior =
     | 'accept-data'
     /** Collect the payload through `ctx.promptData({ fields })`, or veto on cancel. */
     | 'prompt-data'
+    /** Accept, reporting the node as written through to a backend: the entry seals. */
+    | 'accept-persisted'
 
 /** Named `onBeforeEdgeEditCommit` / `onBeforeNodeEditCommit` behaviours. */
 export type EdgeEditHookBehavior = 'accept' | 'accept-async' | 'veto' | 'veto-async'
@@ -907,6 +931,23 @@ export interface HarnessApi {
     undoPivot(runId?: string): string | null
     redoPivot(): string | null
     pivotRunIds(): string[]
+    // --- graph.history ---
+    /** Every entry, newest first. */
+    historyEntries(): RecordedHistoryEntry[]
+    /** What has been undone and can be redone, newest first. */
+    redoableEntryIds(): string[]
+    /** Undo the span down through an entry; reports which entries actually reversed. */
+    undoThrough(entryId?: string): string[]
+    redoThrough(entryId?: string): string[]
+    /** What a span would do, without doing any of it. */
+    historyPreview(entryId: string, direction?: 'undo' | 'redo'): RecordedHistoryPreview
+    /** Draw a node the way the Create tool does, so it records a `create` entry. */
+    createNodeAt(x: number, y: number): Promise<string | null>
+    clearHistory(): void
+    excludedNodeIds(): string[]
+    includeNode(id: string): void
+    /** Whether an id is in the model at all — a *hidden* node is still there. */
+    hasGraphNode(id: string): boolean
     /** Provenance. `'seed'` for anything no pivot vouches for. */
     nodeSources(nodeId: string): string[]
     edgeSources(edgeId: string): string[]
@@ -927,6 +968,8 @@ export interface HarnessApi {
     /** How many entries each `dataBatchChanged` since the last load carried. */
     batchSizes(): number[]
     resetBatchSizes(): void
+    /** Start counting `dataBatchChanged` announcements (`loadWithPivots` does it itself). */
+    watchBatches(): void
     /** Reheats since the last `loadAuto` or `resetReheatCount`. */
     reheatCount(): number
     resetReheatCount(): void
@@ -1575,6 +1618,7 @@ class Harness implements HarnessApi {
     private seenIngestContexts: Array<{ pivotId: string; origin: string[]; nodes: string[]; edges: string[]; trigger: string }> = []
     private summarizeSettled: Array<{ id: string; total: number | null }> = []
     private batchLog: number[] = []
+    private batchListener?: (changes: GraphDataChange[]) => void
 
     constructor(container: HTMLElement) {
         this.container = container
@@ -3707,6 +3751,7 @@ class Harness implements HarnessApi {
                 if (behavior === 'confirm') {
                     return await ctx.confirm({ title: 'Delete?', body: `${ctx.nodes.length} node(s) will go.` })
                 }
+                if (behavior === 'accept-persisted') return { accept: true, persisted: true }
                 return true
             }
         }
@@ -3736,6 +3781,9 @@ class Harness implements HarnessApi {
                     })
                     if (values === null) return false
                     return { accept: true, id: 'prompted', data: values }
+                }
+                if (behavior === 'accept-persisted') {
+                    return { accept: true, id: 'persisted-node', persisted: true }
                 }
                 return true
             }
@@ -4043,7 +4091,6 @@ class Harness implements HarnessApi {
         this.pivotFail = spec.fail === true
         this.pivotLog = []
         this.summarizeSettled = []
-        this.batchLog = []
         this.ingestHook = 'accept'
         this.ingestHookCallCount = 0
         this.seenIngestContexts = []
@@ -4060,7 +4107,7 @@ class Harness implements HarnessApi {
         if (spec.ceiling !== undefined) options.pivotCandidateCeiling = spec.ceiling
         await this.boot(name, mergeOptions(options, overrides))
         // Registered after the load, so the fixture's own batch isn't counted.
-        this.g.on('dataBatchChanged', (changes) => { this.batchLog.push(changes.length) })
+        this.watchBatches()
     }
 
     pivotCalls(): PivotCall[] {
@@ -4216,15 +4263,79 @@ class Harness implements HarnessApi {
     }
 
     undoPivot(runId?: string): string | null {
-        return this.g.pivots.undo(runId)?.runId ?? null
+        return this.g.history.undo(runId)[0]?.id ?? null
     }
 
     redoPivot(): string | null {
-        return this.g.pivots.redo()?.runId ?? null
+        return this.g.history.redo()[0]?.id ?? null
     }
 
     pivotRunIds(): string[] {
-        return this.g.pivots.runs().map((run) => run.runId)
+        return this.g.history.entries()
+            .filter((entry) => entry.kind === 'pivot')
+            .map((entry) => entry.id)
+            .reverse()
+    }
+
+    /** Every entry, newest first, flattened to what a test can assert on. */
+    historyEntries(): RecordedHistoryEntry[] {
+        return this.g.history.entries().map((entry) => ({
+            id: entry.id,
+            kind: entry.kind,
+            label: entry.label,
+            sealed: entry.sealed,
+            nodes: [...entry.nodeIds],
+            edges: [...entry.edgeIds],
+            ordinal: entry.ordinal,
+        }))
+    }
+
+    /** Draw a node the way the Create tool does, so it records a `create` entry. */
+    async createNodeAt(x: number, y: number): Promise<string | null> {
+        const node = await this.g.editing.requestNodeCreate({ position: { x, y }, origin: 'tool' })
+        return node?.id ?? null
+    }
+
+    clearHistory(): void {
+        this.g.history.clear()
+    }
+
+    excludedNodeIds(): string[] {
+        return this.g.queryEngine.getExcludedNodeIds()
+    }
+
+    includeNode(id: string): void {
+        this.g.queryEngine.includeNode(id)
+    }
+
+    /** Whether an id is in the model at all — a *hidden* node is still there. */
+    hasGraphNode(id: string): boolean {
+        return Boolean(this.g.getMutableNode(id))
+    }
+
+    redoableEntryIds(): string[] {
+        return this.g.history.redoable().map((entry) => entry.id)
+    }
+
+    /** Undo the span down through an entry, and report which entries actually reversed. */
+    undoThrough(entryId?: string): string[] {
+        return this.g.history.undo(entryId).map((entry) => entry.id)
+    }
+
+    redoThrough(entryId?: string): string[] {
+        return this.g.history.redo(entryId).map((entry) => entry.id)
+    }
+
+    /** What a span would do, without doing it — the numbers the menu's footer states. */
+    historyPreview(entryId: string, direction: 'undo' | 'redo' = 'undo'): RecordedHistoryPreview {
+        const preview = this.g.history.preview(entryId, direction)
+        return {
+            entries: preview.entries.map((entry) => entry.id),
+            skipped: preview.skipped.map((entry) => entry.id),
+            nodes: preview.nodes.map((node) => node.id),
+            edges: preview.edges.map((edge) => edge.id),
+            effect: { ...preview.effect },
+        }
     }
 
     nodeSources(nodeId: string): string[] {
@@ -4280,6 +4391,17 @@ class Harness implements HarnessApi {
 
     resetBatchSizes(): void {
         this.batchLog = []
+    }
+
+    /**
+     * Start counting `dataBatchChanged` announcements on the live graph. Safe to call
+     * again after a reload; `loadWithPivots` does it itself.
+     */
+    watchBatches(): void {
+        this.batchLog = []
+        if (this.batchListener) this.g.off('dataBatchChanged', this.batchListener)
+        this.batchListener = (changes: GraphDataChange[]): void => { this.batchLog.push(changes.length) }
+        this.g.on('dataBatchChanged', this.batchListener)
     }
 
     /** Live nodes for the ids a test names — an empty list is a legitimate empty origin. */

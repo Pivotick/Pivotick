@@ -23,6 +23,7 @@ interface ResolvedDecision {
     id?: string
     data?: NodeData
     style?: Partial<NodeStyle>
+    persisted?: boolean
 }
 
 /** What a node with no consumer-supplied data carries, so it is at least addressable. */
@@ -57,6 +58,10 @@ export async function runNodeCreateRequest(graph: Graph, request: NodeCreateRequ
     node.y = request.position.y
 
     graph.addNode(node)
+    // A hand-drawn node is vouched for by `manual`, not by the seed data it would
+    // otherwise be indistinguishable from. A consumer that wrote it through to its
+    // own backend says so, and the entry seals.
+    graph.history.recordCreate({ node }, decision.persisted === true)
 
     // Select it so the selection-gated affordances (Edit node, the bulk row) can act
     // on the node the user just placed.
@@ -77,5 +82,11 @@ function buildContext(graph: Graph, request: NodeCreateRequest): NodeCreateConte
 function normalise(decision: NodeCreateDecision): ResolvedDecision {
     if (decision === true) return { accept: true }
     if (!decision) return { accept: false }
-    return { accept: decision.accept, id: decision.id, data: decision.data, style: decision.style }
+    return {
+        accept: decision.accept,
+        id: decision.id,
+        data: decision.data,
+        style: decision.style,
+        persisted: decision.persisted,
+    }
 }
