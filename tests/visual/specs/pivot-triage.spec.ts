@@ -39,6 +39,7 @@ const providerRows = (page: Page): Promise<string[]> =>
     ].filter(Boolean).join(' ')))
 
 const row = (page: Page, id: string): Locator => page.locator(`.pvt-triage-row[data-candidate="${id}"]`)
+const edgeRow = (page: Page, id: string): Locator => page.locator(`.pvt-triage-row[data-edge="${id}"]`)
 const childCell = (page: Page, id: string): Locator => row(page, id).locator('[data-column="pvt:children"]')
 const childToggle = (page: Page, id: string): Locator => row(page, id).locator('.pvt-triage-caret')
 const childPanel = (page: Page): Locator => page.locator('.pvt-triage-children')
@@ -54,6 +55,13 @@ const button = (scope: Locator, name: string): Locator => scope.locator('button'
 
 /** The row search in the dock's header, which belongs to the provider on show. */
 const searchBox = (page: Page): Locator => page.locator('.pvt-triage-search')
+
+/** `Edges 2` — each block's lid, as its name and the count on it. */
+const sections = (page: Page): Promise<string[]> =>
+    page.locator('.pvt-triage-sechead').evaluateAll(heads => heads.map(head => [
+        head.querySelector('.pvt-triage-sechead-title')?.textContent ?? '',
+        head.querySelector('.pvt-triage-sechead-count')?.textContent ?? '',
+    ].join(' ')))
 
 const tabLabels = (page: Page): Promise<string[]> =>
     paneTabs(page).evaluateAll(nodes => nodes.map(node => (node.textContent ?? '').trim()))
@@ -76,6 +84,12 @@ const load = async (page: Page, spec: PivotFixtureSpec = {}): Promise<void> => {
 
 const nodeCount = async (page: Page): Promise<number> =>
     ((await harness(page, 'counts')) as { nodes: number }).nodes
+
+/** Nodes and edges on the canvas, which is what an ingest is judged by. */
+const counts = async (page: Page): Promise<{ nodes: number, edges: number }> => {
+    const all = await harness(page, 'counts') as { nodes: number, edges: number }
+    return { nodes: all.nodes, edges: all.edges }
+}
 
 /** Stage the AIL pivot narrowed to URLs — 210 candidates, the pane's working state. */
 const stageUrls = async (page: Page): Promise<void> => {
@@ -328,9 +342,48 @@ test.describe('pivot triage pane', () => {
 
         // Both endpoints already on canvas, so following-the-nodes would land them
         // unasked; they are rows instead (D24), and never squeezed into the node columns.
-        await expect(page.locator('.pvt-triage-sechead')).toContainText('Edges between nodes already on canvas — 2')
         await expect(page.locator('.pvt-triage-edges .pvt-triage-row')).toHaveCount(2)
         await expect(page.locator('.pvt-triage-edges .pvt-triage-th-label').first()).toHaveText('From')
+
+        // Two blocks in one scroller, so each says what it is and how much it holds:
+        // unnamed, the node table's column labels read as a stray row among the edges.
+        expect(await sections(page)).toEqual(['Edges 2', 'Nodes 210'])
+        await expect(page.locator('.pvt-triage-sechead').first())
+            .toContainText('both ends are already on the canvas')
+    })
+
+    test('one table on its own is not named, since there is nothing to tell it from', async ({ page }) => {
+        await load(page)
+        await stageUrls(page)
+
+        // The common case: nodes only. A title over a single table is a row of chrome
+        // repeating the count the header line above it already carries.
+        expect(await sections(page)).toEqual([])
+        await expect(headline(page)).toContainText('210 fetched')
+    })
+
+    test('a result made only of edges is a table, not an empty pane', async ({ page }) => {
+        await load(page, { edgeOnly: [['a', 'b'], ['c', 'd']] })
+        const before = await counts(page)
+
+        // A narrowing no node matches: everything that came back is edges.
+        await harness(page, 'runPivot', AIL, ['a'], { type: ['nothing-of-that-kind'] })
+        await expect(page.locator('.pvt-triage-edges .pvt-triage-row')).toHaveCount(2)
+
+        // Reading the node rows alone called this an empty result and hid two verdicts.
+        await expect(stateBox(page)).toHaveCount(0)
+        await expect(headline(page)).toContainText('2 fetched')
+        expect(await providerRows(page)).toEqual(['Correlations 2'])
+        // Paging and select-all read the node table, so neither is drawn for a set
+        // that has none.
+        await expect(footer(page)).not.toContainText('shown')
+        await expect(button(footer(page), 'Select all')).toHaveCount(0)
+
+        await edgeRow(page, 'only-a-b').click()
+        await button(footer(page), 'Ingest selected').click()
+
+        await expect(toast(page)).toContainText('Ingested 1 edge')
+        expect(await counts(page)).toEqual({ nodes: before.nodes, edges: before.edges + 1 })
     })
 
     test('ingest lands the marked rows, and the toast undoes the whole run', async ({ page }) => {

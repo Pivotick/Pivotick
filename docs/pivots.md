@@ -280,6 +280,8 @@ columns, the data table's filters, sorting, paging and an ingest action.
 - **Rejection is explicit and remembered** for the session, keyed per pivot. The next run
   does not offer that candidate again, and the header line says how many it suppressed. A
   rejected row is struck through in place rather than moved, and stays reversible.
+- **Nodes and edges are separate blocks**, each named and counted when a run returns both.
+  An edges-only result is a table of its own, not an empty pane.
 - **Closing a provider rejects nothing.** Untriaged leftovers come back on the next run.
   *Reject all remaining* is the one gesture that disposes of them.
 - **A re-run replaces that provider's pane.** If you have rows marked it says so and offers

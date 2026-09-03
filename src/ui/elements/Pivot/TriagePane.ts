@@ -170,7 +170,7 @@ export class TriagePane {
 
     /** How many rows are still waiting for a verdict — the count on this pane's row. */
     public waiting(): number {
-        return this.untriaged().length
+        return this.untriaged().length + this.set.edges.filter(row => row.state !== 'rejected').length
     }
 
     /** The pane's own header controls, in the slot the dock hands it. */
@@ -258,7 +258,10 @@ export class TriagePane {
         }
 
         const actionable = this.untriaged()
-        if (!actionable.length) return this.finishedState()
+        // Edge rows are verdicts of their own (D24), so a result that is nothing but
+        // edges between nodes already on canvas has plenty to triage — reading only the
+        // node rows here told the analyst nothing came back over a table of them.
+        if (!actionable.length && !this.set.edges.length) return this.finishedState()
 
         this.root.appendChild(this.headline())
 
@@ -271,9 +274,15 @@ export class TriagePane {
         scroller.className = 'pvt-triage-scroll'
         // Edges first: there are usually a handful of them against hundreds of nodes,
         // and below a full page of rows a core AIL result would never be seen at all.
+        // Both blocks are named only when there are two of them: one table needs no
+        // title, and the count is already in the header line above it.
+        const split = this.set.edges.length > 0 && actionable.length > 0
         if (this.set.edges.length) scroller.appendChild(this.edgeSection())
         this.pageRows = matching.slice(this.page * PAGE_SIZE, (this.page + 1) * PAGE_SIZE)
-        scroller.appendChild(this.grid(columns, this.pageRows))
+        if (actionable.length) {
+            scroller.appendChild(this.grid(columns, this.pageRows,
+                split ? this.sectionHead('Nodes', matching.length) : undefined))
+        }
         this.root.appendChild(scroller)
         this.scroller = scroller
 
@@ -383,7 +392,9 @@ export class TriagePane {
         const line = document.createElement('div')
         line.className = 'pvt-triage-head'
 
-        line.appendChild(text('b', `${fmt(set.fetched)} fetched`))
+        // `fetched` counts the nodes a provider returned, so a result made entirely of
+        // edges would lead with a zero.
+        line.appendChild(text('b', `${fmt(set.fetched || set.edges.length)} fetched`))
         if (set.deduped) line.appendChild(segment(`${fmt(set.deduped)} already on canvas (skipped)`))
 
         if (set.suppressed) {
@@ -491,9 +502,12 @@ export class TriagePane {
 
     /** From and To are the point of an edge row; the rest of its data follows (D24). */
     private edgeColumns(): TriageColumn<PivotCandidateEdge>[] {
+        // Narrower than a node column on purpose: with the same tracks as the table
+        // below, an endpoint id lands under `Candidate` and two blocks read as one.
+        const pair = 'minmax(90px, 0.7fr)'
         const columns: TriageColumn<PivotCandidateEdge>[] = [
-            { key: 'pvt:from', label: 'From', type: 'text', read: row => row.raw.from },
-            { key: 'pvt:to', label: 'To', type: 'text', read: row => row.raw.to },
+            { key: 'pvt:from', label: 'From', type: 'text', read: row => row.raw.from, width: pair },
+            { key: 'pvt:to', label: 'To', type: 'text', read: row => row.raw.to, width: pair },
         ]
         const attributes = collectDataAttributes(this.set.edges.map(row => dataOf(row.raw)))
             .sort((a, b) => b.count - a.count)
@@ -556,17 +570,44 @@ export class TriagePane {
 
     /* ---------- the grid ---------- */
 
-    private grid(columns: TriageColumn<PivotCandidate>[], rows: PivotCandidate[]): HTMLElement {
+    private grid(
+        columns: TriageColumn<PivotCandidate>[],
+        rows: PivotCandidate[],
+        section?: HTMLElement,
+    ): HTMLElement {
         const grid = document.createElement('div')
         grid.className = 'pvt-triage-grid'
         grid.style.setProperty('--pvt-triage-columns', track(columns))
 
-        grid.appendChild(this.head(columns))
+        grid.appendChild(this.cap(this.head(columns), section))
         for (const row of rows) {
             grid.appendChild(this.row(row, columns))
             if (this.expanded.has(row.id)) grid.appendChild(this.childrenPanel(row))
         }
         return grid
+    }
+
+    /**
+     * A block's lid: what it is called and how many rows it holds, sitting directly on
+     * the column labels so the two read as one band. Without it the second block's
+     * column labels are a stray header row in the middle of the first block's rows —
+     * two grids of the same shape, stacked, with nothing to say where one ends.
+     */
+    private cap(head: HTMLElement, section?: HTMLElement): HTMLElement {
+        if (!section) return head
+        const cap = document.createElement('div')
+        cap.className = 'pvt-triage-cap'
+        cap.append(section, head)
+        return cap
+    }
+
+    private sectionHead(title: string, count: number, note?: string): HTMLElement {
+        const head = document.createElement('div')
+        head.className = 'pvt-triage-sechead'
+        head.appendChild(text('span', title, 'pvt-triage-sechead-title'))
+        head.appendChild(text('span', fmt(count), 'pvt-triage-sechead-count'))
+        if (note) head.appendChild(text('span', note, 'pvt-triage-sechead-note'))
+        return head
     }
 
     private head(columns: TriageColumn<PivotCandidate>[]): HTMLElement {
@@ -857,7 +898,6 @@ export class TriagePane {
     private edgeSection(): HTMLElement {
         const wrap = document.createElement('div')
         wrap.className = 'pvt-triage-edges'
-        wrap.appendChild(text('div', `Edges between nodes already on canvas — ${fmt(this.set.edges.length)}`, 'pvt-triage-sechead'))
 
         const columns = this.edgeColumns()
         const grid = document.createElement('div')
@@ -874,7 +914,8 @@ export class TriagePane {
             head.appendChild(cell)
         }
         head.appendChild(document.createElement('span'))
-        grid.appendChild(head)
+        grid.appendChild(this.cap(head, this.sectionHead(
+            'Edges', this.set.edges.length, 'both ends are already on the canvas')))
 
         for (const edge of this.set.edges) {
             const row = document.createElement('div')
@@ -929,10 +970,12 @@ export class TriagePane {
         foot.appendChild(ingest)
 
         // Named after what it matched, never a bare "select all" while a filter narrows
-        // the table — the two are different acts on a 1,800-row set.
+        // the table — the two are different acts on a 1,800-row set. Both this and the
+        // pager below read the node table, so a set of nothing but edge rows has neither.
+        const hasNodes = this.untriaged().length > 0
         const selectable = matching.filter(c => c.state === 'candidate' && !c.deduped)
         const narrowed = this.narrowing()
-        foot.appendChild(this.footButton(
+        if (hasNodes) foot.appendChild(this.footButton(
             narrowed ? `Select all ${fmt(selectable.length)} matching` : `Select all ${fmt(selectable.length)}`,
             selectable.length === 0,
             () => {
@@ -956,7 +999,7 @@ export class TriagePane {
             foot.appendChild(this.footButton('‹', this.page === 0, () => { this.page--; this.paint() }))
             foot.appendChild(text('span', `${fmt(from)}–${fmt(to)} of ${fmt(matching.length)}`, 'pvt-triage-muted'))
             foot.appendChild(this.footButton('›', this.page >= pages - 1, () => { this.page++; this.paint() }))
-        } else {
+        } else if (hasNodes) {
             foot.appendChild(text('span', `${fmt(matching.length)} shown`, 'pvt-triage-muted'))
         }
 

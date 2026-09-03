@@ -217,7 +217,12 @@ only `Reject all remaining` disposes of them, and it is one gesture.
 ### 5.5 Edge-only results (D24)
 
 Their own section in the pane with `from` / `to` / `kind` columns, never forced into the node
-table's columns. Present only when the run produced them.
+table's columns. Present only when the run produced them. Amended 2026-09-03: when a run
+produces both, **each block is named and counted** over its own column labels — unnamed, the
+node table's labels read as a stray header row among the edge rows — and the edge block's
+columns are deliberately narrower so the two grids do not line up. A run of nothing *but*
+edges shows that block rather than the empty state, which is what the node-row-only check
+used to do.
 
 ### 5.6 Concurrency
 

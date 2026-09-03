@@ -501,6 +501,9 @@ export class PivotTriage extends UIComponent {
 
 /** `Ingested 12 nodes, 14 edges` — or `9 of 12` when a hook landed fewer than asked. */
 function ingestTitle(landed: number, asked: number, edges: number): string {
+    // A run whose whole result was edges between nodes already on canvas. Saying
+    // `0 nodes` first would lead with the half that never had anything in it.
+    if (!landed && edges) return `Ingested ${edges.toLocaleString()} ${edges === 1 ? 'edge' : 'edges'}`
     const nodes = asked && landed < asked
         ? `Ingested ${landed.toLocaleString()} of ${asked.toLocaleString()} nodes`
         : `Ingested ${landed.toLocaleString()} ${landed === 1 ? 'node' : 'nodes'}`

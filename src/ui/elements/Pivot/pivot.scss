@@ -295,6 +295,13 @@
     flex: 1;
     min-height: 0;
     overflow: auto;
+
+    // One rule between the blocks a run can return, and only between them: the edge
+    // section is followed by the node grid, and the header line above the scroller
+    // draws its own edge already.
+    > * + * {
+        border-top: 1px solid var(--pvt-chrome-border);
+    }
 }
 
 .pvt-triage-grid {
@@ -504,21 +511,63 @@
 // Drawn above the node table, so a handful of edge rows are not buried under a page of
 // nodes. Its header does not stick: two sticky headers in one scroller would stack.
 .pvt-triage-edges {
-    .pvt-triage-headrow {
+    // A gutter under the handful of edge rows, so the eye can see the block end before
+    // the next one's lid says so.
+    padding-bottom: 6px;
+
+    // The upper block, so its lid scrolls away rather than sticking under the node
+    // block's — two lids holding the top of one scroller would overlap.
+    .pvt-triage-cap {
         position: static;
     }
 }
 
-.pvt-triage-sechead {
-    padding: 5px 10px;
+// A block's lid: its name and count over its own column labels, as one band. The two
+// blocks are grids of the same shape stacked in one scroller, so what separates them
+// has to be the band rather than a rule they both have anyway.
+.pvt-triage-cap {
+    position: sticky;
+    top: 0;
+    z-index: 1;
     background-color: var(--pvt-chrome-bg);
-    border-top: 1px solid var(--pvt-chrome-border);
     border-bottom: 1px solid var(--pvt-chrome-border);
-    color: var(--pvt-text-color-4);
+
+    // Sticking is the band's job now, and the rule inside it would cut it in two.
+    .pvt-triage-headrow {
+        position: static;
+        z-index: auto;
+        border-bottom: none;
+    }
+}
+
+.pvt-triage-sechead {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px 4px;
+    color: var(--pvt-text-color-6);
     font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.02em;
+}
+
+.pvt-triage-sechead-title {
+    font-weight: 700;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
+}
+
+// The count belongs to the name, so it is drawn on it rather than beside it as one
+// more word in a sentence.
+.pvt-triage-sechead-count {
+    padding: 0 5px;
+    border-radius: 999px;
+    background-color: color-mix(in srgb, var(--pvt-text-color-4) 16%, transparent);
+    color: var(--pvt-text-color-5);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+}
+
+.pvt-triage-sechead-note {
+    color: var(--pvt-text-color-4);
 }
 
 .pvt-triage-foot {
