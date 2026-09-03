@@ -256,7 +256,7 @@ there is nothing to split, and #3 above is not a defect a real deployment has.
 | 5 | Child count on container triage rows, and a way inside | **shipped** `47b4058` `0e28ee9` |
 | 6 | Partial applicability across a mixed origin | **open** |
 | 7 | An aggregate "enrichments available" badge | **open** |
-| 8 | One review tab, providers as vertical tabs inside it | **shipped** |
+| 8 | One review tab, providers as vertical tabs inside it | **shipped** `d0f60c5` |
 
 Nothing in the contract changed for any of the four: every one of them was a way
 of drawing what the pane already held.
