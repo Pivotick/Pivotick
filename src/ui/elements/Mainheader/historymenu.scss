@@ -1,0 +1,474 @@
+// The history dropdown: one timeline through both directions, newest at the top,
+// with a *now* line through it. Rows above the line have been undone, rows below
+// are what can still be undone; clicking a row drags the line past it.
+//
+// The gutter is a ruler — each row shows how many steps a click on it travels,
+// counted away from the line — so the list and the footer can never disagree.
+
+.pvt-history {
+    position: absolute;
+    top: calc(var(--pvt-mainheader-height) + 2px);
+    right: 14px;
+    width: 424px;
+    max-width: calc(100% - 28px);
+    // Above the slide panel, which floats in exactly this corner.
+    z-index: 1001;
+    display: none;
+    background: var(--pvt-menu-bg-color);
+    border: 1px solid var(--pvt-menu-border-color);
+    border-radius: 10px;
+    box-shadow: var(--pvt-chrome-shadow), var(--pvt-box-shadow-medium);
+    overflow: hidden;
+    font-size: 12.5px;
+    color: var(--pvt-text-color-5);
+
+    &.open {
+        display: block;
+        animation: pvt-dropdown-open 120ms ease-out forwards;
+    }
+
+    &:focus {
+        outline: none;
+    }
+
+    .pvt-history-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 11px 8px;
+        border-bottom: 1px solid var(--pvt-menu-border-color);
+    }
+
+    .pvt-history-title {
+        font-weight: 700;
+        font-size: 12.5px;
+        color: var(--pvt-text-color-6);
+        letter-spacing: -0.1px;
+    }
+
+    .pvt-history-side {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        padding: 2px 7px 2px 5px;
+        border-radius: 999px;
+        color: var(--pvt-theme-primary);
+        background: color-mix(in srgb, var(--pvt-theme-primary) 12%, transparent);
+        border: 1px solid color-mix(in srgb, var(--pvt-theme-primary) 35%, transparent);
+
+        svg { width: 10px; height: 10px; }
+    }
+
+    .pvt-history-count {
+        margin-left: auto;
+        font-size: 11px;
+        color: var(--pvt-text-color-3);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .pvt-history-scrollwrap {
+        position: relative;
+
+        // A partial row at either edge should read as scrolled, not as clipped.
+        &::before,
+        &::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 10px;
+            height: 9px;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        &::before {
+            top: 0;
+            background: linear-gradient(var(--pvt-menu-bg-color), transparent);
+        }
+
+        &::after {
+            bottom: 0;
+            background: linear-gradient(transparent, var(--pvt-menu-bg-color));
+        }
+    }
+
+    .pvt-history-scroll {
+        max-height: 358px;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding: 5px 6px 6px;
+        scrollbar-width: thin;
+        scrollbar-color: var(--pvt-scrollbar-thumb) transparent;
+
+        &::-webkit-scrollbar { width: 10px; }
+
+        &::-webkit-scrollbar-thumb {
+            background: var(--pvt-scrollbar-thumb);
+            border-radius: 6px;
+            border: 3px solid transparent;
+            background-clip: padding-box;
+        }
+
+        &::-webkit-scrollbar-thumb:hover {
+            background: var(--pvt-scrollbar-thumb-hover);
+            background-clip: padding-box;
+        }
+    }
+
+    // At thirty rows the now-line can scroll out of view. These say which way it
+    // went and put it back.
+    .pvt-history-jump {
+        position: absolute;
+        left: 10px;
+        display: none;
+        align-items: center;
+        gap: 4px;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.6px;
+        padding: 2px 8px;
+        border: none;
+        border-radius: 999px;
+        color: var(--pvt-bg-color-1);
+        background: var(--pvt-theme-primary);
+        box-shadow: var(--pvt-chrome-shadow);
+        cursor: pointer;
+        z-index: 3;
+
+        &.on { display: inline-flex; }
+        &.top { top: 5px; }
+        &.bottom { bottom: 5px; }
+
+        svg { width: 9px; height: 9px; }
+    }
+
+    /* ---------- rows ---------- */
+
+    .pvt-history-row {
+        position: relative;
+        display: grid;
+        grid-template-columns: 16px 18px minmax(0, 1fr) auto 40px;
+        align-items: center;
+        gap: 8px;
+        height: 34px;
+        padding: 0 8px;
+        border-left: 2px solid transparent;
+        border-radius: 0 6px 6px 0;
+        cursor: pointer;
+        user-select: none;
+        transition: background-color 90ms ease, opacity 140ms ease;
+
+        // The ruler: how many steps a click on this row travels. The number on the
+        // armed row is the M in "Undoes N of M".
+        .pvt-history-step {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: -0.2px;
+            font-variant-numeric: tabular-nums;
+            color: var(--pvt-text-color-2);
+        }
+
+        .pvt-history-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            svg { width: 14px; height: 14px; display: block; }
+        }
+
+        .pvt-history-main {
+            display: flex;
+            align-items: baseline;
+            gap: 7px;
+            min-width: 0;
+        }
+    }
+
+    .pvt-history-label {
+        white-space: nowrap;
+        font-weight: 600;
+        font-size: 12.5px;
+        color: var(--pvt-text-color-6);
+    }
+
+    .pvt-history-detail {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 11.5px;
+        color: var(--pvt-text-color-3);
+    }
+
+    .pvt-history-time {
+        font-size: 10.5px;
+        color: var(--pvt-text-color-3);
+        font-variant-numeric: tabular-nums;
+        text-align: right;
+    }
+
+    .pvt-history-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        font-size: 9.5px;
+        font-weight: 700;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+        padding: 2px 6px;
+        border-radius: 4px;
+        white-space: nowrap;
+        color: var(--pvt-text-color-4);
+        background: var(--pvt-bg-color-4);
+        border: 1px solid var(--pvt-chrome-border);
+
+        svg { width: 9px; height: 9px; }
+    }
+
+    // The four kinds, told apart by shape and hue.
+    .kind-pivot .pvt-history-icon svg { color: var(--pvt-theme-info); }
+    .kind-create .pvt-history-icon svg { color: var(--pvt-theme-success); }
+    .kind-delete .pvt-history-icon svg { color: var(--pvt-theme-danger); }
+    .kind-visibility .pvt-history-icon svg { color: var(--pvt-text-color-3); }
+
+    // Newest first, so the undone rows are the ones *above* the line. The rail down
+    // the left of every row keeps telling you which side of the line you are on when
+    // the line itself has scrolled out of view.
+    .pvt-history-row.done {
+        border-left-color: color-mix(in srgb, var(--pvt-text-color-3) 45%, transparent);
+    }
+
+    .pvt-history-row.undone {
+        border-left-style: dashed;
+        border-left-color: color-mix(in srgb, var(--pvt-text-color-3) 32%, transparent);
+
+        .pvt-history-label { color: var(--pvt-text-color-3); font-weight: 500; }
+        .pvt-history-detail { color: var(--pvt-text-color-2); }
+        .pvt-history-icon svg { opacity: 0.45; }
+        .pvt-history-time { color: var(--pvt-text-color-2); }
+        .pvt-history-step { color: var(--pvt-text-color-1); }
+    }
+
+    // The side you opened from gets the accent rail.
+    &[data-side='undo'] .pvt-history-row.done,
+    &[data-side='redo'] .pvt-history-row.undone {
+        border-left-color: color-mix(in srgb, var(--pvt-theme-primary) 55%, transparent);
+    }
+
+    // A sealed row above the line is undone by position but applied in fact, so it
+    // keeps full ink — greying it would be a lie.
+    .pvt-history-row.kept {
+        .pvt-history-label { color: var(--pvt-text-color-5); font-weight: 600; }
+        .pvt-history-detail { color: var(--pvt-text-color-3); }
+        .pvt-history-icon svg { opacity: 1; }
+    }
+
+    .pvt-history-row.sealed .pvt-history-chip {
+        color: var(--pvt-theme-warning);
+        border-color: color-mix(in srgb, var(--pvt-theme-warning) 40%, transparent);
+        background: color-mix(in srgb, var(--pvt-theme-warning) 12%, transparent);
+    }
+
+    .pvt-history-row:hover {
+        background-color: color-mix(in srgb, var(--pvt-text-color-6) 5%, transparent);
+    }
+
+    // The hovered span. One accent wash in both directions; the arrow in the gutter
+    // and the ink change say which way it goes. The wash is capped to the rows near
+    // either end of a long span — at the 30 cap a deep aim would otherwise paint the
+    // whole menu one colour — while the rail and the ink still run the full length.
+    .pvt-history-row.in-span .pvt-history-step { color: var(--pvt-theme-primary); }
+
+    .pvt-history-row.in-span.washed {
+        background-color: color-mix(in srgb, var(--pvt-theme-primary) 9%, transparent);
+    }
+
+    .pvt-history-row.armed {
+        background-color: color-mix(in srgb, var(--pvt-theme-primary) 15%, transparent);
+
+        .pvt-history-step { color: var(--pvt-theme-primary); font-size: 10.5px; }
+    }
+
+    // Preview: an undo span drains to grey, a redo span fills back in.
+    .pvt-history-row.preview-remove {
+        .pvt-history-label {
+            color: var(--pvt-text-color-3);
+            font-weight: 500;
+            text-decoration: line-through;
+            text-decoration-color: color-mix(in srgb, var(--pvt-theme-primary) 60%, transparent);
+        }
+
+        .pvt-history-detail { color: var(--pvt-text-color-2); }
+        .pvt-history-icon svg { opacity: 0.4; }
+    }
+
+    .pvt-history-row.preview-restore {
+        .pvt-history-label { color: var(--pvt-text-color-6); font-weight: 600; }
+        .pvt-history-detail { color: var(--pvt-text-color-4); }
+        .pvt-history-icon svg { opacity: 1; }
+    }
+
+    .pvt-history-row.preview-kept {
+        background-image: repeating-linear-gradient(
+            135deg,
+            transparent 0 5px,
+            color-mix(in srgb, var(--pvt-text-color-6) 5%, transparent) 5px 10px
+        );
+
+        .pvt-history-label {
+            text-decoration: none;
+            color: var(--pvt-text-color-5);
+            font-weight: 600;
+        }
+    }
+
+    .pvt-history-row.noop { cursor: not-allowed; }
+
+    // The ghost line: where the now-line lands if you click.
+    .pvt-history-ghost {
+        position: absolute;
+        right: 6px;
+        display: none;
+        align-items: center;
+        gap: 3px;
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: 0.7px;
+        padding: 1px 6px;
+        border-radius: 999px;
+        color: var(--pvt-theme-primary);
+        background: var(--pvt-menu-bg-color);
+        border: 1px dashed var(--pvt-theme-primary);
+        z-index: 2;
+
+        svg { width: 8px; height: 8px; }
+    }
+
+    .pvt-history-row.edge-top .pvt-history-ghost,
+    .pvt-history-row.edge-bottom .pvt-history-ghost { display: inline-flex; }
+
+    .pvt-history-row.edge-top .pvt-history-ghost { top: -8px; }
+    .pvt-history-row.edge-bottom .pvt-history-ghost { bottom: -8px; }
+
+    .pvt-history-row.edge-top::after,
+    .pvt-history-row.edge-bottom::after {
+        content: '';
+        position: absolute;
+        left: -2px;
+        right: 0;
+        border-top: 2px dashed var(--pvt-theme-primary);
+        opacity: 0.85;
+    }
+
+    .pvt-history-row.edge-top::after { top: -1px; }
+    .pvt-history-row.edge-bottom::after { bottom: -1px; }
+
+    /* ---------- the now-line ---------- */
+
+    .pvt-history-now {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 26px;
+        margin: 3px 0;
+        padding: 0 8px 0 6px;
+
+        &::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 6px;
+            top: 50%;
+            height: 2px;
+            background: var(--pvt-theme-primary);
+            border-radius: 2px;
+        }
+    }
+
+    .pvt-history-now-pill {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 9.5px;
+        font-weight: 800;
+        letter-spacing: 1.1px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        color: var(--pvt-bg-color-1);
+        background: var(--pvt-theme-primary);
+    }
+
+    .pvt-history-now-meta {
+        position: relative;
+        margin-left: auto;
+        margin-right: -6px;
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--pvt-theme-primary);
+        background: var(--pvt-menu-bg-color);
+        padding: 0 6px;
+        font-variant-numeric: tabular-nums;
+    }
+
+    // What lies beyond either end of the list.
+    .pvt-history-terminal {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        height: 30px;
+        padding: 0 10px;
+        margin-left: 2px;
+        font-size: 11px;
+        font-style: italic;
+        color: var(--pvt-text-color-3);
+
+        svg { width: 12px; height: 12px; opacity: 0.6; }
+    }
+
+    /* ---------- the footer: the sentence that must be true before the click ---------- */
+
+    .pvt-history-foot {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 11px;
+        min-height: 36px;
+        border-top: 1px solid var(--pvt-menu-border-color);
+        background: color-mix(in srgb, var(--pvt-text-color-6) 3%, transparent);
+        font-size: 11.5px;
+
+        .pvt-history-dir {
+            display: flex;
+            align-items: center;
+
+            svg { width: 13px; height: 13px; color: var(--pvt-theme-primary); }
+        }
+
+        .pvt-history-say {
+            font-weight: 700;
+            color: var(--pvt-text-color-6);
+
+            em { font-style: normal; font-weight: 500; color: var(--pvt-text-color-4); }
+        }
+
+        .pvt-history-delta {
+            margin-left: auto;
+            font-size: 10.5px;
+            color: var(--pvt-text-color-3);
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+
+        &.idle .pvt-history-say { font-weight: 500; color: var(--pvt-text-color-4); }
+    }
+}

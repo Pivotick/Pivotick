@@ -67,6 +67,22 @@
 - **The post-ingest toast is a plain report again.** It carried an Undo on a twelve-second
   fuse; with the history permanently in the top bar, a second undo affordance that expires is
   a race the analyst can lose for no reason. `Notifier`'s action API is unchanged.
+- **A dropdown on each button, listing the history as one timeline.** Newest at the top with a
+  *now* line through it: the rows above have been undone, the rows below are what can still be
+  undone, and clicking a row drags the line past it — the same gesture in both directions.
+  Because a span is always the block between the row you point at and the line, the contiguous
+  rule is the shape of the list rather than a caveat about it.
+  - Each row carries its kind's icon, what it touched, and **how many steps a click on it
+    travels** — and that number is the *M* in the footer's `Undoes 3 of 4`, so the list and the
+    footer cannot disagree.
+  - The footer states the exact net effect of the hovered span before it is committed, from
+    `preview()`, so it is what the click will actually do rather than a summary of the rows.
+  - Hovering a row **lights the elements it touched on the canvas** and dims the rest. A row
+    whose elements are gone — a deletion — lights nothing, honestly.
+  - A long span shows its two ends and lets its middle recede, so aiming twenty-five rows deep
+    does not paint the whole menu one colour; when the *now* line scrolls out of reach the menu
+    says which way it went and puts it back on a click.
+  - Arrow keys aim, Enter travels, Escape closes.
 
 ### Two things the pane needed, useful on their own
 

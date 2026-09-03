@@ -140,12 +140,14 @@
                 background-color: var(--pvt-chrome-bg);
                 border: 1px solid var(--pvt-chrome-border);
 
+                // A split button: the icon half steps once, the caret opens the history.
                 button {
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     width: 30px;
                     height: 28px;
+                    padding: 0;
                     border: none;
                     background: transparent;
                     border-radius: 6px;
@@ -167,6 +169,28 @@
                         opacity: 0.45;
                         cursor: default;
                     }
+                }
+
+                button.pvt-undoredo-caret {
+                    width: 16px;
+
+                    svg {
+                        width: 10px;
+                        height: 10px;
+                        opacity: 0.75;
+                    }
+
+                    &[aria-expanded='true']:not(:disabled) {
+                        background-color: color-mix(in srgb, var(--pvt-theme-primary) 18%, transparent);
+                        color: var(--pvt-theme-primary);
+                    }
+                }
+
+                .pvt-undoredo-sep {
+                    width: 1px;
+                    height: 18px;
+                    background: var(--pvt-chrome-border);
+                    margin: 0 3px;
                 }
             }
         }

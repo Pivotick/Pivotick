@@ -55,6 +55,27 @@ const sources = async (page: Page, nodeId: string): Promise<string[]> =>
 const hasNode = async (page: Page, id: string): Promise<boolean> =>
     (await harness(page, 'hasGraphNode', id)) as boolean
 
+// ── the dropdown ─────────────────────────────────────────────────────────────
+const menuRows = (page: Page): Locator => page.locator('.pvt-history-row')
+
+/** The one sentence in the footer that must be true before the click. */
+const footSay = (page: Page): Locator => page.locator('.pvt-history-say')
+
+const openHistory = async (page: Page, side: 'undo' | 'redo'): Promise<void> => {
+    await page.locator(`#pvt-${side}-caret`).click()
+    await expect(page.locator('.pvt-history')).toHaveClass(/open/)
+}
+
+/**
+ * `n` visibility entries, each naming a different node, so every row is distinct
+ * and the labels and clocks a screenshot captures never drift.
+ */
+const fillHistory = async (page: Page, n: number): Promise<void> => {
+    await harness(page, 'configureWritePath', {})
+    for (let i = 1; i <= n; i++) await harness(page, 'addNode', `n${i}`, 300 + i * 4, 300)
+    for (let i = 1; i <= n; i++) await harness(page, 'excludeNode', `n${i}`)
+}
+
 /** Stage the AIL pivot narrowed to URLs, then ingest the first `n` landable rows. */
 async function ingest(page: Page, n: number): Promise<RecordedRunOutcome> {
     const outcome = (await harness(page, 'runPivot', AIL, ['a'], { type: ['url'] })) as RecordedRunOutcome
@@ -350,5 +371,226 @@ test.describe('history — the top bar', () => {
         // The graph is exactly where it was: the key never left the input.
         expect(await hidden(page)).toEqual(['h2'])
         expect(await entries(page)).toHaveLength(1)
+    })
+})
+
+test.describe('history — the dropdown', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoHarness(page)
+        await loadFixture(page, 'basic', B3_FULL)
+        await harness(page, 'configureWritePath', {})
+    })
+
+    /** A hide, a delete and a hand-drawn node — one of each of three kinds. */
+    const threeThings = async (page: Page): Promise<void> => {
+        await harness(page, 'excludeNode', 'b')
+        await harness(page, 'requestDelete', { nodes: ['a'], origin: 'bulk-action' })
+        await harness(page, 'createNodeAt', 40, 40)
+    }
+
+    test('the caret is dead until something has happened, then it opens the timeline', async ({ page }) => {
+        await expect(page.locator('#pvt-undo-caret')).toBeDisabled()
+
+        await threeThings(page)
+        await openHistory(page, 'undo')
+
+        // Newest first, so the rows read in the reverse of the order they happened.
+        await expect(menuRows(page)).toHaveCount(3)
+        await expect(menuRows(page).nth(0).locator('.pvt-history-label')).toHaveText('Created \u201cNew node\u201d')
+        await expect(menuRows(page).nth(2).locator('.pvt-history-label')).toHaveText('Hid 1 node')
+        // The gutter is a ruler: how many steps a click on that row travels.
+        await expect(menuRows(page).locator('.pvt-history-step')).toHaveText(['1', '2', '3'])
+        // Nothing undone, so the line is the first thing in the list and no scrolling
+        // is needed to see it — which is the whole reason the newest sits at the top.
+        await expect(page.locator('.pvt-history-now')).toBeVisible()
+        expect(await page.locator('.pvt-history-scroll').evaluate((el) => el.scrollTop)).toBe(0)
+        await expect(page.locator('.pvt-history-side')).toContainText('Undo side')
+    })
+
+    test('hovering the third row arms all three, and the footer states the effect', async ({ page }) => {
+        await threeThings(page)
+        await openHistory(page, 'undo')
+
+        await menuRows(page).nth(2).hover()
+
+        await expect(page.locator('.pvt-history-row.in-span')).toHaveCount(3)
+        await expect(menuRows(page).nth(2)).toHaveClass(/armed/)
+        await expect(footSay(page)).toHaveText('Undoes 3 steps')
+        // The delete's node comes back, the created one goes: the net is the hide.
+        await expect(page.locator('.pvt-history-delta')).toHaveText('1 node back in view')
+    })
+
+    test('hovering a row lights what it touched on the canvas', async ({ page }) => {
+        const created = (await harness(page, 'createNodeAt', 40, 40)) as string
+        await harness(page, 'requestDelete', { nodes: ['a'], origin: 'bulk-action' })
+        // A new node is selected on creation, and a selection dims the graph too — so
+        // clear it, or the reader cannot tell the two kinds of dimming apart.
+        await harness(page, 'deselectAll')
+        await openHistory(page, 'undo')
+
+        // Row 1 is the creation, so its span reaches an element still on the canvas:
+        // it keeps its ink while every other node recedes.
+        await menuRows(page).nth(1).hover()
+        await expect.poll(() => harness(page, 'emphasis')).toEqual({
+            lit: [created],
+            dimmed: ['b', 'c', 'd', 'e', 'hub'],
+        })
+
+        // Row 0 is the deletion, and its elements are gone — so it lights nothing,
+        // honestly, rather than greying the canvas for no reason.
+        await menuRows(page).nth(0).hover()
+        await expect(menuRows(page).nth(0)).toHaveClass(/armed/)
+        await expect.poll(() => harness(page, 'emphasis')).toEqual({
+            lit: [created, 'b', 'c', 'd', 'e', 'hub'].sort(),
+            dimmed: [],
+        })
+    })
+
+    test('clicking a row travels the whole span, and the rows stay listed', async ({ page }) => {
+        const before = await counts(page)
+        await threeThings(page)
+        await openHistory(page, 'undo')
+
+        await menuRows(page).nth(2).click()
+
+        expect(await counts(page)).toEqual(before)
+        expect(await hidden(page)).toEqual([])
+        // They moved above the line rather than out of the list.
+        await expect(menuRows(page)).toHaveCount(3)
+        await expect(page.locator('.pvt-history-row.undone')).toHaveCount(3)
+        await expect(page.locator('.pvt-history-now-meta')).toHaveText('3 undone \u00b7 0 done')
+    })
+
+    test('a sealed row is hatched, and the footer says how many are kept', async ({ page }) => {
+        await harness(page, 'configureWritePath', { deleteHook: 'accept-persisted' })
+        await harness(page, 'requestDelete', { nodes: ['a'], origin: 'bulk-action' })
+        await harness(page, 'excludeNode', 'b')
+        await openHistory(page, 'undo')
+
+        await expect(menuRows(page).nth(1)).toHaveClass(/sealed/)
+        await expect(menuRows(page).nth(1).locator('.pvt-history-chip')).toContainText('saved')
+
+        await menuRows(page).nth(1).hover()
+        await expect(menuRows(page).nth(1)).toHaveClass(/preview-kept/)
+        await expect(footSay(page)).toHaveText('Undoes 1 of 2 \u00b7 1 saved item kept')
+
+        await menuRows(page).nth(1).click()
+        // The hide reversed; the delete the consumer wrote through did not.
+        expect(await hidden(page)).toEqual([])
+        expect(await hasNode(page, 'a')).toBe(false)
+    })
+
+    test('the redo caret opens the same list from the other side', async ({ page }) => {
+        await threeThings(page)
+        await undoThrough(page)
+        await undoThrough(page)
+
+        await openHistory(page, 'redo')
+        await expect(page.locator('.pvt-history-side')).toContainText('Redo side')
+        await expect(page.locator('.pvt-history-row.undone')).toHaveCount(2)
+
+        // The undone rows sit above the line, and the one touching it redoes first.
+        await page.locator('.pvt-history-row.undone').last().hover()
+        await expect(footSay(page)).toHaveText('Redoes 1 step')
+        await page.locator('.pvt-history-row.undone').first().hover()
+        await expect(footSay(page)).toHaveText('Redoes 2 steps')
+
+        await page.locator('.pvt-history-row.undone').first().click()
+        await expect(page.locator('.pvt-history-row.undone')).toHaveCount(0)
+    })
+
+    test('at the cap a deep aim keeps its ends readable and says where now went', async ({ page }) => {
+        await fillHistory(page, 31)
+        await openHistory(page, 'undo')
+
+        await expect(menuRows(page)).toHaveCount(30)
+        await expect(page.locator('.pvt-history-count')).toHaveText('30 of 30 \u00b7 oldest evicted')
+
+        await menuRows(page).nth(24).hover()
+
+        // The rail and the strike run the span's whole length; the accent wash is
+        // capped, so a 25-row aim does not paint the entire menu one colour.
+        await expect(page.locator('.pvt-history-row.in-span')).toHaveCount(25)
+        await expect(page.locator('.pvt-history-row.washed')).toHaveCount(8)
+        await expect(footSay(page)).toHaveText('Undoes 25 steps')
+        // The line has scrolled out of reach, so the menu says which way it went.
+        await expect(page.locator('.pvt-history-jump.top')).toHaveClass(/on/)
+        await page.locator('.pvt-history-jump.top').click()
+        await expect(page.locator('.pvt-history-jump.top')).not.toHaveClass(/on/)
+    })
+
+    test('Escape closes it, and so does a click on the canvas', async ({ page }) => {
+        await threeThings(page)
+        await openHistory(page, 'undo')
+
+        await page.keyboard.press('Escape')
+        await expect(page.locator('.pvt-history')).not.toHaveClass(/open/)
+
+        await openHistory(page, 'undo')
+        await page.locator('.pvt-canvas').first().click({ position: { x: 260, y: 600 } })
+        await expect(page.locator('.pvt-history')).not.toHaveClass(/open/)
+        // Closing clears the highlight with it.
+        await harness(page, 'deselectAll')
+        await expect.poll(() => (harness(page, 'emphasis') as Promise<{ dimmed: string[] }>)
+            .then(snapshot => snapshot.dimmed)).toEqual([])
+    })
+
+    test('the arrow keys aim and Enter travels', async ({ page }) => {
+        const before = await counts(page)
+        await threeThings(page)
+        await openHistory(page, 'undo')
+
+        await page.keyboard.press('ArrowDown')
+        await expect(menuRows(page).nth(0)).toHaveClass(/armed/)
+        await page.keyboard.press('ArrowDown')
+        await page.keyboard.press('ArrowDown')
+        await expect(menuRows(page).nth(2)).toHaveClass(/armed/)
+        await expect(footSay(page)).toHaveText('Undoes 3 steps')
+
+        await page.keyboard.press('Enter')
+        expect(await counts(page)).toEqual(before)
+    })
+})
+
+test.describe('history — how the dropdown looks', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoHarness(page)
+    })
+
+    test('five entries', async ({ page }) => {
+        await loadFixture(page, 'basic', B3_FULL)
+        await fillHistory(page, 5)
+        await openHistory(page, 'undo')
+        await expect(page.locator('.pvt-history')).toHaveScreenshot('history-menu-five.png')
+    })
+
+    test('five entries, dark', async ({ page }) => {
+        await loadFixture(page, 'basic', { UI: { mode: 'full', sidebar: { collapsed: false }, theme: 'dark' } })
+        await fillHistory(page, 5)
+        await openHistory(page, 'undo')
+        await expect(page.locator('.pvt-history')).toHaveScreenshot('history-menu-five-dark.png')
+    })
+
+    test('thirty entries, with a nine-row span armed', async ({ page }) => {
+        await loadFixture(page, 'basic', B3_FULL)
+        await fillHistory(page, 30)
+        await openHistory(page, 'undo')
+        // Armed from the keyboard rather than the pointer: `hover` scrolls to reach a
+        // row and how far it goes varies with load, which would reframe the shot.
+        for (let i = 0; i < 9; i++) await page.keyboard.press('ArrowDown')
+        await expect(menuRows(page).nth(8)).toHaveClass(/armed/)
+        // `block: 'nearest'` nudges by the padding at most, so the line stays in frame.
+        expect(await page.locator('.pvt-history-scroll').evaluate((el) => el.scrollTop)).toBeLessThan(10)
+        await expect(page.locator('.pvt-history')).toHaveScreenshot('history-menu-thirty.png')
+    })
+
+    test('the redo side, with everything undone', async ({ page }) => {
+        await loadFixture(page, 'basic', B3_FULL)
+        await fillHistory(page, 4)
+        await openHistory(page, 'undo')
+        await menuRows(page).nth(3).click()
+        await openHistory(page, 'redo')
+        await expect(page.locator('.pvt-history-side')).toContainText('Redo side')
+        await expect(page.locator('.pvt-history')).toHaveScreenshot('history-menu-redo.png')
     })
 })

@@ -1,4 +1,4 @@
-import { funnel, magnifyingGlass, redo, stickyNote, undo } from '../../icons'
+import { chevronDown, funnel, magnifyingGlass, redo, stickyNote, undo } from '../../icons'
 import type { UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
 // import { SearchBox } from './SearchBox'
@@ -10,6 +10,7 @@ import type { Modal } from '../../components/Modal'
 import { createShortcutBadge } from '../../../utils/ElementCreation'
 import { NoteSidebar } from '../NoteSidebar/NoteSidebar'
 import { pickNode } from '../../components/NodePickers'
+import { HistoryMenu } from './HistoryMenu'
 
 export class Mainheader extends UIComponent {
     public mainheader?: HTMLDivElement
@@ -18,6 +19,10 @@ export class Mainheader extends UIComponent {
     public noteButton?: HTMLDivElement
     public undoButton?: HTMLButtonElement
     public redoButton?: HTMLButtonElement
+    public undoCaret?: HTMLButtonElement
+    public redoCaret?: HTMLButtonElement
+    /** The history dropdown both carets open. */
+    public historyMenu?: HistoryMenu
     public filteringSlidepanel?: SlidePanel
     public noteSlidepanel?: SlidePanel
     private searchModal?: Modal
@@ -72,22 +77,31 @@ export class Mainheader extends UIComponent {
         this.noteButton = templateNoteSidebar.content.firstElementChild as HTMLDivElement
         this.mainheader.appendChild(this.noteButton)
 
-        /** Undo/Redo */
+        /** Undo/Redo — each a split button: the icon steps once, the caret opens the history */
         const templateRight = document.createElement('template')
         templateRight.innerHTML = `
   <div class="pvt-right">
     <div class="pvt-undoredo-group">
-        <button id="pvt-undo-button" class="pvt-button-undo" disabled>
+        <button id="pvt-undo-button" class="pvt-button-undo pvt-undoredo-step" disabled>
             ${undo}
         </button>
-        <button id="pvt-redo-button" class="pvt-button-redo" disabled>
+        <button id="pvt-undo-caret" class="pvt-undoredo-caret" disabled aria-label="Undo history" aria-haspopup="menu">
+            ${chevronDown}
+        </button>
+        <span class="pvt-undoredo-sep"></span>
+        <button id="pvt-redo-button" class="pvt-button-redo pvt-undoredo-step" disabled>
             ${redo}
+        </button>
+        <button id="pvt-redo-caret" class="pvt-undoredo-caret" disabled aria-label="Redo history" aria-haspopup="menu">
+            ${chevronDown}
         </button>
     </div>
   </div>`
         const filterContainer = templateRight.content.firstElementChild as HTMLDivElement
         this.undoButton = filterContainer.querySelector('#pvt-undo-button') ?? undefined
         this.redoButton = filterContainer.querySelector('#pvt-redo-button') ?? undefined
+        this.undoCaret = filterContainer.querySelector('#pvt-undo-caret') ?? undefined
+        this.redoCaret = filterContainer.querySelector('#pvt-redo-caret') ?? undefined
         this.mainheader.appendChild(filterContainer)
 
         container.appendChild(this.mainheader)
@@ -163,11 +177,27 @@ export class Mainheader extends UIComponent {
      */
     private wireHistory(): void {
         const history = this.uiManager.graph.history
-        const { undoButton, redoButton } = this
-        if (!undoButton || !redoButton) return
+        const { undoButton, redoButton, undoCaret, redoCaret } = this
+        if (!undoButton || !redoButton || !undoCaret || !redoCaret) return
 
-        this.listen(undoButton, 'click', () => history.undo())
-        this.listen(redoButton, 'click', () => history.redo())
+        // The menu goes in the canvas, not the header: the header is a 48px strip with
+        // `overflow: hidden`, which would clip a dropdown to nothing.
+        const canvas = this.uiManager.layout?.canvas
+        if (canvas) {
+            const menu = new HistoryMenu(this.uiManager, { undo: undoCaret, redo: redoCaret })
+            this.historyMenu = this.addChild(menu, canvas)
+        }
+
+        this.listen(undoButton, 'click', () => {
+            this.historyMenu?.close()
+            history.undo()
+        })
+        this.listen(redoButton, 'click', () => {
+            this.historyMenu?.close()
+            history.redo()
+        })
+        this.listen(undoCaret, 'click', () => this.historyMenu?.toggle('undo'))
+        this.listen(redoCaret, 'click', () => this.historyMenu?.toggle('redo'))
         this.track(this.uiManager.keyManager.register({
             key: 'Mod+z', description: 'Undo', callback: () => history.undo(),
         }))
@@ -180,6 +210,12 @@ export class Mainheader extends UIComponent {
             const [back] = history.redoable()
             paintButton(undoButton, 'Undo', next?.label, history.canUndo())
             paintButton(redoButton, 'Redo', back?.label, history.canRedo())
+            // Either caret opens the same list, so either one is useful as soon as the
+            // list has anything in it at all.
+            const anyEntries = history.canUndo() || history.canRedo()
+            undoCaret.disabled = !anyEntries
+            redoCaret.disabled = !anyEntries
+            if (!anyEntries) this.historyMenu?.close()
         }
         this.track(history.on(paint))
         paint()

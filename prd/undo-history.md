@@ -1,10 +1,10 @@
 # Feature — undo/redo with a history dropdown: taking back what the canvas holds
 
-**Status:** **M1 shipped and half of M2** 2026-09-03 on `worktree-undo-history` —
-`graph.history` is complete, both top-bar buttons are wired with keyboard undo/redo, and the
-toast is a plain report again. 16 behavioural tests in `tests/visual/specs/history.spec.ts`.
-What is left of M2 is the dropdown (gated on B vs B2) and the hover highlight (gated on the
-legend-hover merge); M3 (re-staging, docs, gallery) is untouched. Grilled with Sami 2026-09-03;
+**Status:** **M1 and M2 shipped** 2026-09-03 on `worktree-undo-history` — `graph.history` is
+complete, both top-bar split buttons are wired with keyboard undo/redo, and the **B2** dropdown
+is built with the canvas hover highlight. 29 tests in `tests/visual/specs/history.spec.ts`
+(4 of them screenshots), and both of §12's design questions are closed. **M3** —
+triage re-staging (H21), `docs/history.md` and the gallery card — is what remains. Grilled with Sami 2026-09-03;
 twenty-four decisions taken (§6). Four competing designs for the dropdown were built as
 prototypes (§10) and **B, the timeline, is chosen**; a reversed draft, B2, followed. Still open
 before M2: B against B2 (§10.2) — an ordering, not a direction — and merging the legend-hover
@@ -520,12 +520,17 @@ state, and on one thing that is not frequency — B2's resting position *is* scr
 
   Small public additions the wiring needed: `queryEngine.getExcludedNodeIds()`, and
   `connectManager.createEdge` now returns the `Edge` it made.
-- **M2 — the surface.** Half done. **Shipped:** both buttons wired and following the history,
-  naming what they would take back (H22); `Meta` in the key manager plus a `Mod+` alias that
-  matches Ctrl *or* Cmd, so `Mod+z` / `Mod+Shift+Z` is one binding for both platforms (H24);
-  the toast reduced to a plain report (H20). **Left:** the dropdown itself, which waits on B
-  against B2 (§10.2), and the hover highlight (H16), which waits on the legend-hover merge —
-  `emphasiseElements` is in `develop` as `a17e138`, one commit away.
+- **M2 — the surface. Done.** Both buttons wired and following the history, naming what they
+  would take back (H22); `Meta` in the key manager plus a `Mod+` alias matching Ctrl *or* Cmd,
+  so `Mod+z` / `Mod+Shift+Z` is one binding for both platforms (H24); the toast reduced to a
+  plain report (H20); and **B2** built as `src/ui/elements/Mainheader/HistoryMenu.ts` with the
+  hover highlight (H16) on `emphasiseElements`. Notes:
+  - **The ruler shipped** (§10.2's strongest finding): every row carries how many steps a
+    click on it travels, and that number is the `M` in the footer's `Undoes N of M`.
+  - **The two open questions from §12 are answered below.**
+  - The caret buttons are enabled as soon as the list has anything in it *at all*, in either
+    direction — either caret opens the same list, so gating each on its own direction would
+    hide the timeline from the side you happened to reach for.
 - **M3 — triage re-staging (H21), docs and the gallery card.** Re-staging is separable from M2
   and is the one behaviour that reaches back into `PivotManager`, so it goes last.
 
@@ -533,12 +538,22 @@ state, and on one thing that is not frequency — B2's resting position *is* scr
 
 ## 12. Open questions
 
-- **B or B2** (§10.2) — an ordering, not a direction. The evidence leans B2: it satisfies H8 as
-  written, it rests at scroll-top in the common case, and newest-first is how every other menu in
-  the app runs. B keeps the cleaner timeline metaphor, top-to-bottom as time flowing forward.
-- **How a long span is previewed without flooding the menu** (§10.2). Aiming 25 steps deep
-  paints 25 of 30 rows and pushes the now-line out of view, in both drafts. Wanted: a cap on the
-  previewed span, or an elision of its middle, that keeps both ends and the line on screen.
+- ~~**B or B2**~~ **B2, chosen by Sami 2026-09-03** and built. Newest at the top, undone above
+  the line, done below; clicking below the line undoes, which satisfies H8 as written.
+- ~~**How a long span is previewed without flooding the menu**~~ **Answered by capping the
+  wash, not the span.** Every row in the span keeps the rail and the ink — a strike for a
+  removal, full ink for a restore — so its extent is never in doubt, but the accent *background*
+  is painted only on the four rows at either end. A long span then shows its two ends and lets
+  its middle recede instead of turning the menu into one block of colour. When the now-line
+  itself scrolls out of reach a chip appears at that edge of the list saying which way it went,
+  and a click on it brings the line back. Eliding the middle *structurally* was tried and set
+  aside: collapsing rows moves the armed row out from under the pointer, so it needs
+  scroll-anchoring to not flicker, and the ruler plus the footer already carry the magnitude.
+- **The menu covers the canvas it is highlighting** (§10.1). Owned and decided rather than
+  solved: the footer always states the net effect, so occlusion can never hide the answer — the
+  canvas highlight says *where*, the footer says *what*. The menu is held to 424px, right
+  anchored under its buttons, which leaves most of the canvas visible. Revisit if an analyst
+  reports losing the highlight behind it.
 - **How H6 meets P13.** `pivot-persistence.md` P13 decided that undoing a *saved* pivot run
   stays possible and warns that it is canvas-only. H6 seals persisted *creations* outright. Both
   are defensible — an explicit Save is a deliberate act the analyst remembers, while a
