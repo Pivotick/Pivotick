@@ -1,0 +1,1559 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Undo history — Variant C, consequence forward</title>
+<style>
+/* ------------------------------------------------------------------
+   Tokens. Only the --pvt-* the prototype actually uses, copied from
+   src/styles/_variables.scss (light map + the dark palette-2 map that
+   $dark-theme merges in). Prototype-local names are --uh-*.
+   ------------------------------------------------------------------ */
+.pivotick[data-theme="light"] {
+    --pvt-bg-color-0: #fff;
+    --pvt-bg-color-1: #fafafa;
+    --pvt-bg-color-2: #f3f3f3;
+    --pvt-bg-color-3: #ededed;
+    --pvt-bg-color-4: #e6e6e6;
+    --pvt-bg-color-5: #e0e0e0;
+    --pvt-bg-color-6: #d6d6d6;
+    --pvt-bg-color-7: #cccccc;
+    --pvt-bg: var(--pvt-bg-color-0);
+    --pvt-border-color: var(--pvt-bg-color-7);
+    --pvt-chrome-bg: var(--pvt-bg-color-3);
+    --pvt-chrome-border: #dcdcdc;
+    --pvt-theme-primary: #eb2e53;
+    --pvt-text-color-1: #e0e0e0;
+    --pvt-text-color-2: #bbb;
+    --pvt-text-color-3: #999;
+    --pvt-text-color-4: #666;
+    --pvt-text-color-5: #333;
+    --pvt-text-color-6: #000;
+    --pvt-menu-bg-color: var(--pvt-bg-color-1);
+    --pvt-menu-border-color: var(--pvt-text-color-1);
+    --pvt-graph-grid-color: var(--pvt-bg-color-2);
+    --pvt-edge-stroke: #9fc9e6;
+    --pvt-scrollbar-thumb: rgba(0, 0, 0, 0.22);
+
+    --uh-menu-shadow: 0 14px 34px rgba(0, 0, 0, 0.16), 0 3px 8px rgba(0, 0, 0, 0.10);
+    --uh-remove: #eb2e53;
+    --uh-add: #0b78bd;
+    --uh-keep: #64748b;
+    --uh-page: #e9eaec;
+
+    --uh-t-domain: #2f7dc4;
+    --uh-t-ip: #2a9d8f;
+    --uh-t-url: #b06a2c;
+    --uh-t-file: #b06a2c;
+    --uh-t-hash: #7a6bd4;
+    --uh-t-email: #7a6bd4;
+    --uh-t-paste: #7a6bd4;
+    --uh-t-case: #566072;
+    --uh-t-event: #566072;
+    --uh-t-org: #3f8f5f;
+
+    color-scheme: light;
+}
+
+.pivotick[data-theme="dark"] {
+    --pvt-bg-color-0: #0F0F10;
+    --pvt-bg-color-1: #131314;
+    --pvt-bg-color-2: #171719;
+    --pvt-bg-color-3: #1A1A1D;
+    --pvt-bg-color-4: #1D1D20;
+    --pvt-bg-color-5: #202023;
+    --pvt-bg-color-6: #252528;
+    --pvt-bg-color-7: #343437;
+    --pvt-bg: var(--pvt-bg-color-2);
+    --pvt-border-color: var(--pvt-bg-color-7);
+    --pvt-chrome-bg: var(--pvt-bg-color-6);
+    --pvt-chrome-border: var(--pvt-bg-color-7);
+    --pvt-theme-primary: #eb2e53;
+    --pvt-text-color-1: #333;
+    --pvt-text-color-2: #666;
+    --pvt-text-color-3: #999;
+    --pvt-text-color-4: #bbb;
+    --pvt-text-color-5: #e0e0e0;
+    --pvt-text-color-6: #fff;
+    --pvt-menu-bg-color: #2E2E31;
+    --pvt-menu-border-color: var(--pvt-bg-color-2);
+    --pvt-graph-grid-color: var(--pvt-bg-color-4);
+    --pvt-edge-stroke: #3f5175;
+    --pvt-scrollbar-thumb: rgba(255, 255, 255, 0.18);
+
+    --uh-menu-shadow: 0 16px 38px rgba(0, 0, 0, 0.50), 0 3px 8px rgba(0, 0, 0, 0.38);
+    --uh-remove: #f2545b;
+    --uh-add: #7EA2FB;
+    --uh-keep: #8b98a8;
+    --uh-page: #0b0b0c;
+
+    --uh-t-domain: #7EA2FB;
+    --uh-t-ip: #4fc0b0;
+    --uh-t-url: #d99a5b;
+    --uh-t-file: #d99a5b;
+    --uh-t-hash: #a08ef0;
+    --uh-t-email: #a08ef0;
+    --uh-t-paste: #a08ef0;
+    --uh-t-case: #94a0b2;
+    --uh-t-event: #94a0b2;
+    --uh-t-org: #6dbf8a;
+
+    color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+    margin: 0;
+    font-family: system-ui, sans-serif;
+}
+
+.pivotick {
+    min-height: 100%;
+    background: var(--uh-page);
+    color: var(--pvt-text-color-5);
+    padding: 26px 26px 40px;
+}
+
+/* ---- prototype scaffolding (not part of the design) ---- */
+.scaffold {
+    max-width: 1000px;
+    margin: 0 auto 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 10px 12px;
+    border: 1px dashed var(--pvt-border-color);
+    border-radius: 10px;
+    font-size: 12px;
+    color: var(--pvt-text-color-4);
+}
+.scaffold .sc-label {
+    font-size: 10px;
+    letter-spacing: 0.7px;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--pvt-text-color-3);
+    margin-right: 2px;
+}
+.scaffold button, .scaffold .seg {
+    font: inherit;
+    font-size: 12px;
+    border-radius: 7px;
+    border: 1px solid var(--pvt-border-color);
+    background: var(--pvt-bg);
+    color: var(--pvt-text-color-5);
+    padding: 5px 10px;
+    cursor: pointer;
+}
+.scaffold .seg { padding: 0; display: inline-flex; overflow: hidden; }
+.scaffold .seg button { border: none; border-radius: 0; background: transparent; }
+.scaffold .seg button + button { border-left: 1px solid var(--pvt-border-color); }
+.scaffold .seg button[aria-pressed="true"] {
+    background: color-mix(in srgb, var(--pvt-theme-primary) 14%, transparent);
+    color: var(--pvt-text-color-6);
+    font-weight: 600;
+}
+.scaffold .readout {
+    margin-left: auto;
+    font-variant-numeric: tabular-nums;
+    color: var(--pvt-text-color-3);
+}
+.scaffold .readout b { color: var(--pvt-text-color-5); font-weight: 600; }
+
+/* ---- the app frame ---- */
+.app {
+    position: relative;
+    max-width: 1000px;
+    margin: 0 auto;
+    height: 640px;
+    border-radius: 12px;
+    border: 1px solid var(--pvt-border-color);
+    background: var(--pvt-bg);
+    overflow: visible;
+}
+.app-canvas {
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    background-image:
+        linear-gradient(to right, var(--pvt-graph-grid-color) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--pvt-graph-grid-color) 1px, transparent 1px);
+    background-size: 28px 28px;
+}
+.app-canvas svg { width: 100%; height: 100%; display: block; }
+
+/* ---- Mainheader strip (mirrors mainheader.scss) ---- */
+.pvt-mainheader {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 54px;
+    pointer-events: none;
+    z-index: 5;
+}
+.pvt-mainheader-elements {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    height: 100%;
+    padding: 0 14px;
+}
+.pvt-mainheader-elements .pvt-action-button,
+.pvt-mainheader-elements .pvt-right { pointer-events: auto; }
+
+.pvt-action-button .action-container {
+    position: relative;
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    height: 34px;
+    padding: 0 12px;
+    cursor: pointer;
+    border-radius: 9px;
+    background-color: var(--pvt-chrome-bg);
+    border: 1px solid var(--pvt-chrome-border);
+    color: var(--pvt-text-color-5);
+    user-select: none;
+    transition: background-color 0.06s ease;
+}
+.pvt-action-button:hover .action-container { background-color: var(--pvt-chrome-border); }
+.pvt-action-button .action-text { font-size: 0.8em; }
+.pvt-action-button .icon-container { display: inline-flex; align-items: center; justify-content: center; }
+.pvt-action-button .icon-container svg { width: 16px; height: 16px; color: var(--pvt-text-color-4); }
+#pvt-searchbox-button .action-container { width: 200px; }
+#pvt-searchbox-button .action-text { color: var(--pvt-text-color-3); }
+#pvt-searchbox-button .pvt-keyboard-shortcut { margin-left: auto; }
+
+.pvt-keyboard-shortcut {
+    padding: 4px 6px;
+    font-size: 0.8em;
+    font-weight: 500;
+    border-radius: 4px;
+    background: transparent;
+    white-space: nowrap;
+    border: 1px solid var(--pvt-bg-color-7);
+    color: var(--pvt-text-color-4);
+    user-select: none;
+    letter-spacing: -0.01em;
+}
+
+.pvt-right {
+    margin-left: auto;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+}
+.pvt-undoredo-group {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 2px;
+    padding: 4px;
+    border-radius: 9px;
+    background-color: var(--pvt-chrome-bg);
+    border: 1px solid var(--pvt-chrome-border);
+}
+.pvt-undoredo-group button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 28px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    color: var(--pvt-text-color-4);
+    cursor: pointer;
+    transition: background-color 0.06s ease, color 0.06s ease;
+}
+.pvt-undoredo-group button svg { width: 16px; height: 16px; }
+.pvt-undoredo-group button:hover:not(:disabled) {
+    background-color: var(--pvt-chrome-border);
+    color: var(--pvt-text-color-6);
+}
+.pvt-undoredo-group button:disabled { opacity: 0.45; cursor: default; }
+
+/* the split: icon button + its own caret, so the menu is a separate target */
+.uh-anchor { position: relative; display: inline-flex; align-items: center; }
+.uh-anchor .uh-main { width: 28px; border-top-right-radius: 3px; border-bottom-right-radius: 3px; }
+.uh-anchor .uh-caret { width: 17px; border-top-left-radius: 3px; border-bottom-left-radius: 3px; }
+.uh-anchor .uh-caret svg { width: 11px; height: 11px; }
+.uh-anchor.open .uh-main,
+.uh-anchor.open .uh-caret {
+    background-color: var(--pvt-chrome-border);
+    color: var(--pvt-text-color-6);
+}
+.uh-sep {
+    width: 1px;
+    height: 18px;
+    margin: 0 4px;
+    background: var(--pvt-chrome-border);
+    filter: brightness(0.94);
+}
+
+/* ------------------------------------------------------------------
+   The history menu.
+   ------------------------------------------------------------------ */
+.uh-menu {
+    position: absolute;
+    top: calc(100% + 9px);
+    right: 0;
+    width: 404px;
+    background: var(--pvt-menu-bg-color);
+    border: 1px solid var(--pvt-menu-border-color);
+    border-radius: 10px;
+    box-shadow: var(--uh-menu-shadow);
+    overflow: hidden;
+    z-index: 20;
+    text-align: left;
+    animation: uh-open 120ms ease-out;
+}
+.uh-menu[hidden] { display: none; }
+@keyframes uh-open {
+    from { transform: translateY(-6px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.uh-menu-head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 9px 12px 8px;
+    border-bottom: 1px solid var(--pvt-menu-border-color);
+}
+.uh-menu-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--pvt-text-color-6);
+    letter-spacing: -0.01em;
+}
+.uh-menu-count {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--pvt-text-color-3);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ---- the list ---- */
+.uh-list-wrap { position: relative; }
+.uh-list {
+    max-height: 302px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--pvt-scrollbar-thumb) transparent;
+}
+
+.uh-row {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    width: 100%;
+    border: none;
+    background: none;
+    font: inherit;
+    text-align: left;
+    padding: 7px 11px 8px 15px;
+    cursor: pointer;
+    color: var(--pvt-text-color-5);
+    user-select: none;
+    outline: none;
+    transition: background-color 0.08s ease;
+}
+.uh-l2 { display: block; }
+.uh-row + .uh-row { box-shadow: inset 0 1px 0 color-mix(in srgb, var(--pvt-text-color-6) 7%, transparent); }
+
+/* The span rail: a 3px bar down the left gutter, continuous across every
+   marked row, so the span reads as one block even where it runs off the top. */
+.uh-rail {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: transparent;
+}
+.uh-row.in-span { background: color-mix(in srgb, var(--uh-remove) 8%, var(--pvt-menu-bg-color)); }
+.uh-row.in-span .uh-rail { background: var(--uh-remove); }
+.uh-row.span-end { box-shadow: inset 0 -1px 0 var(--uh-remove), inset 0 1px 0 color-mix(in srgb, var(--pvt-text-color-6) 7%, transparent); }
+.uh-row.pointed { background: color-mix(in srgb, var(--uh-remove) 13%, var(--pvt-menu-bg-color)); }
+
+/* A sealed row inside the span is kept, not reversed: it never takes the
+   remove tint, and it says so on the row itself before the click. */
+.uh-row.sealed.in-span { background: color-mix(in srgb, var(--uh-keep) 12%, var(--pvt-menu-bg-color)); }
+.uh-row.sealed.in-span .uh-rail {
+    background: repeating-linear-gradient(to bottom, var(--uh-keep) 0 3px, transparent 3px 6px);
+}
+.uh-row.sealed.pointed { background: color-mix(in srgb, var(--uh-keep) 17%, var(--pvt-menu-bg-color)); }
+
+.uh-ico {
+    flex: 0 0 auto;
+    width: 17px;
+    height: 17px;
+    margin-top: 1px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--pvt-text-color-3);
+}
+.uh-ico svg { width: 15px; height: 15px; }
+.uh-row.k-pivot .uh-ico { color: var(--uh-t-domain); }
+.uh-row.k-create .uh-ico { color: var(--uh-t-org); }
+
+.uh-body { flex: 1 1 auto; min-width: 0; }
+.uh-l1 {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    font-size: 12.5px;
+    line-height: 16px;
+    color: var(--pvt-text-color-6);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+.uh-l1 > span:first-child { white-space: nowrap; flex: 0 0 auto; }
+.uh-l1 .uh-origin {
+    font-weight: 400;
+    font-size: 11.5px;
+    color: var(--pvt-text-color-4);
+    flex: 0 1 auto;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.uh-l2 {
+    font-size: 11px;
+    line-height: 15px;
+    margin-top: 1px;
+    color: var(--pvt-text-color-3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.uh-meta {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 3px;
+    padding-top: 1px;
+}
+.uh-time {
+    font-size: 10.5px;
+    color: var(--pvt-text-color-3);
+    font-variant-numeric: tabular-nums;
+}
+.uh-seal {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    color: var(--uh-keep);
+    border: 1px solid color-mix(in srgb, var(--uh-keep) 45%, transparent);
+    border-radius: 4px;
+    padding: 1px 4px 1px 3px;
+    white-space: nowrap;
+}
+.uh-seal svg { width: 9px; height: 9px; }
+.uh-row.sealed.in-span .uh-seal {
+    background: color-mix(in srgb, var(--uh-keep) 14%, transparent);
+    border-color: color-mix(in srgb, var(--uh-keep) 55%, transparent);
+}
+
+/* Scrolled-past indicator, so the contiguity rule stays visible when the top
+   of the span is above the fold. */
+.uh-sticky {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 24px;
+    padding: 0 11px 0 15px;
+    font-size: 10.5px;
+    color: var(--pvt-text-color-4);
+    background: color-mix(in srgb, var(--pvt-menu-bg-color) 93%, transparent);
+    backdrop-filter: blur(3px);
+    border-bottom: 1px solid color-mix(in srgb, var(--pvt-text-color-6) 9%, transparent);
+    pointer-events: none;
+}
+.uh-sticky[hidden] { display: none; }
+.uh-sticky b { color: var(--pvt-text-color-6); font-variant-numeric: tabular-nums; }
+.uh-sticky::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: transparent;
+}
+.uh-sticky.spanned {
+    color: var(--pvt-text-color-5);
+    background: color-mix(in srgb, var(--uh-remove) 9%, var(--pvt-menu-bg-color));
+}
+.uh-sticky.spanned::before { background: var(--uh-remove); }
+
+/* Terminal line: says why the list stops where it does. */
+.uh-end {
+    padding: 8px 11px 9px 15px;
+    font-size: 10.5px;
+    line-height: 15px;
+    color: var(--pvt-text-color-3);
+    border-top: 1px dashed color-mix(in srgb, var(--pvt-text-color-6) 13%, transparent);
+    background: color-mix(in srgb, var(--pvt-text-color-6) 3%, transparent);
+}
+
+/* ------------------------------------------------------------------
+   The consequence footer. Always present, fixed height, never empty:
+   with nothing hovered it describes the plain button press.
+   ------------------------------------------------------------------ */
+.uh-foot {
+    border-top: 1px solid var(--pvt-menu-border-color);
+    background: color-mix(in srgb, var(--pvt-text-color-6) 4%, var(--pvt-menu-bg-color));
+    padding: 9px 13px 11px;
+}
+.uh-foot-head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 7px;
+}
+.uh-foot-lead {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--pvt-text-color-6);
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+}
+.uh-foot-sub {
+    font-size: 11px;
+    color: var(--pvt-text-color-3);
+}
+.uh-foot-hint {
+    margin-left: auto;
+    font-size: 10px;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--pvt-text-color-3);
+    white-space: nowrap;
+}
+.uh-foot.idle .uh-foot-lead { color: var(--pvt-text-color-5); }
+
+/* Fixed height for three lines, contents centred: one effect or three, the
+   box is the same size and the menu never resizes under the pointer. */
+.uh-fx {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    min-height: 62px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+}
+.uh-fx li {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 11.5px;
+    line-height: 16px;
+    color: var(--pvt-text-color-5);
+}
+.uh-fx li > span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.uh-fx li b {
+    font-weight: 600;
+    color: var(--pvt-text-color-6);
+    font-variant-numeric: tabular-nums;
+}
+/* The marker is the same mark the canvas draws, at 9px. */
+.uh-fx i {
+    flex: 0 0 auto;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    align-self: center;
+    box-sizing: border-box;
+}
+.uh-fx .fx-go i { border: 2.5px solid var(--uh-remove); }
+.uh-fx .fx-come i { border: 2px dashed var(--uh-add); }
+.uh-fx .fx-keep i { border: 2px dotted var(--uh-keep); }
+.uh-fx .fx-none i { border: 2px solid color-mix(in srgb, var(--pvt-text-color-6) 18%, transparent); }
+.uh-fx .fx-none { color: var(--pvt-text-color-3); }
+
+/* ---- redo's empty state ---- */
+.uh-empty {
+    padding: 26px 22px 28px;
+    text-align: center;
+}
+.uh-empty .uh-empty-ico {
+    display: inline-flex;
+    color: var(--pvt-text-color-3);
+    opacity: 0.4;
+    margin-bottom: 9px;
+}
+.uh-empty .uh-empty-ico svg { width: 26px; height: 26px; }
+.uh-empty-title {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--pvt-text-color-5);
+    margin-bottom: 4px;
+}
+.uh-empty-body {
+    font-size: 11px;
+    line-height: 16px;
+    color: var(--pvt-text-color-3);
+    max-width: 260px;
+    margin: 0 auto;
+}
+
+/* ------------------------------------------------------------------
+   Canvas marks. Three, and only three, so the footer's three lines and
+   the canvas say the same thing: going / coming / kept.
+   ------------------------------------------------------------------ */
+.nd .body { transition: opacity 0.18s ease; }
+.nd .ring {
+    fill: none;
+    stroke: none;
+    stroke-width: 2.4;
+    opacity: 0.55;
+    transition: opacity 0.18s ease;
+}
+.nd .lbl {
+    font-size: 9.5px;
+    fill: var(--pvt-text-color-4);
+    text-anchor: middle;
+    pointer-events: none;
+}
+.nd .dot { stroke: var(--pvt-bg); stroke-width: 2; }
+.nd.is-hidden .body { opacity: 0.22; }
+.nd.is-gone { display: none; }
+.nd.is-gone.mark-come { display: block; }
+.nd.is-gone.mark-come .dot { fill: none; stroke: var(--uh-add); stroke-width: 1.6; stroke-dasharray: 3 3; }
+.nd.is-gone.mark-come .lbl { fill: var(--uh-add); }
+
+.nd.mark-go .body { opacity: 0.4; }
+.nd.mark-go.is-hidden .body { opacity: 0.16; }
+.nd.mark-go .ring { stroke: var(--uh-remove); }
+.nd.mark-come .ring { stroke: var(--uh-add); }
+.nd.mark-keep .ring { stroke: var(--uh-keep); stroke-dasharray: 2.5 3; }
+.nd.own .ring { opacity: 1; stroke-width: 2.8; }
+
+.eg line { transition: opacity 0.18s ease; }
+.eg .wire { stroke: var(--pvt-edge-stroke); stroke-width: 1.6; }
+.eg.dimmed .wire { opacity: 0.2; }
+.eg.is-gone { display: none; }
+.eg.is-gone.mark-come { display: block; }
+.eg.mark-go .wire { stroke: var(--uh-remove); stroke-width: 2.2; opacity: 0.75; stroke-dasharray: 5 3; }
+.eg.mark-come .wire { stroke: var(--uh-add); stroke-width: 2.2; opacity: 0.9; stroke-dasharray: 5 3; }
+.eg.own .wire { opacity: 1; }
+
+/* committed: the departing elements fade out before the redraw */
+.nd.leaving, .eg.leaving { opacity: 0; transform: scale(0.85); transition: opacity 0.3s ease, transform 0.3s ease; transform-origin: center; transform-box: fill-box; }
+
+/* A quiet caption under the canvas, so the numbers can be checked against
+   the picture without opening the menu. */
+.canvas-key {
+    position: absolute;
+    left: 14px;
+    bottom: 12px;
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    font-size: 10.5px;
+    color: var(--pvt-text-color-3);
+    background: color-mix(in srgb, var(--pvt-bg) 82%, transparent);
+    border: 1px solid var(--pvt-chrome-border);
+    border-radius: 8px;
+    padding: 5px 10px;
+    backdrop-filter: blur(2px);
+    z-index: 4;
+}
+.canvas-key span { display: inline-flex; align-items: center; gap: 6px; }
+.canvas-key em {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    font-style: normal;
+    box-sizing: border-box;
+}
+.canvas-key .k-go em { border: 2.5px solid var(--uh-remove); }
+.canvas-key .k-come em { border: 2px dashed var(--uh-add); }
+.canvas-key .k-keep em { border: 2px dotted var(--uh-keep); }
+.canvas-key b { color: var(--pvt-text-color-5); font-weight: 600; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<div class="pivotick" id="root" data-theme="light">
+
+  <div class="scaffold">
+    <span class="sc-label">Prototype controls</span>
+    <span class="seg" id="themeSeg">
+      <button data-theme="light" aria-pressed="true">Light</button>
+      <button data-theme="dark" aria-pressed="false">Dark</button>
+    </span>
+    <span class="seg" id="sizeSeg">
+      <button data-size="12" aria-pressed="true">12 steps</button>
+      <button data-size="30" aria-pressed="false">30 steps (full)</button>
+    </span>
+    <button id="newAction">New action on the graph</button>
+    <button id="resetBtn">Reset</button>
+    <span class="readout" id="readout"></span>
+  </div>
+
+  <div class="app">
+    <div class="app-canvas"><svg id="canvas" viewBox="0 -52 660 486" preserveAspectRatio="xMidYMid meet"></svg></div>
+
+    <div class="canvas-key">
+      <span class="k-go"><em></em>leaves / hidden <b></b></span>
+      <span class="k-come"><em></em>comes back / shown <b></b></span>
+      <span class="k-keep"><em></em>sealed, kept <b></b></span>
+      <span id="keyCount"></span>
+    </div>
+
+    <div class="pvt-mainheader">
+      <div class="pvt-mainheader-elements">
+
+        <div id="pvt-searchbox-button" class="pvt-action-button" role="button" tabindex="0" aria-label="Search for a node">
+          <div class="action-container">
+            <span class="icon-container" data-icon="magnifyingGlass"></span>
+            <span class="action-text">Search</span>
+            <span class="pvt-keyboard-shortcut">&#8679;J</span>
+          </div>
+        </div>
+
+        <div id="pvt-filter-button" class="pvt-action-button" role="button" tabindex="0" aria-label="Filter the graph">
+          <div class="action-container">
+            <span class="icon-container" data-icon="funnel"></span>
+            <span class="action-text">Filter Graph</span>
+            <span class="pvt-keyboard-shortcut">&#8679;K</span>
+          </div>
+        </div>
+
+        <div id="pvt-notes-button" class="pvt-action-button" role="button" tabindex="0" aria-label="Notes">
+          <div class="action-container">
+            <span class="icon-container" data-icon="stickyNote"></span>
+            <span class="action-text">Notes</span>
+            <span class="pvt-keyboard-shortcut">&#8679;N</span>
+          </div>
+        </div>
+
+        <div class="pvt-right">
+          <div class="pvt-undoredo-group">
+
+            <div class="uh-anchor" id="undoAnchor">
+              <button class="uh-main" id="undoBtn" title="Undo the last step"></button>
+              <button class="uh-caret" id="undoCaret" aria-haspopup="true" aria-expanded="false" title="Undo history"></button>
+              <div class="uh-menu" id="undoMenu" hidden>
+                <div class="uh-menu-head">
+                  <span class="uh-menu-title">Undo</span>
+                  <span class="uh-menu-count" id="undoCount"></span>
+                </div>
+                <div class="uh-list-wrap">
+                  <div class="uh-list" id="undoList"></div>
+                  <div class="uh-sticky" id="undoSticky" hidden></div>
+                </div>
+                <div class="uh-foot" id="undoFoot"></div>
+              </div>
+            </div>
+
+            <span class="uh-sep"></span>
+
+            <div class="uh-anchor" id="redoAnchor">
+              <button class="uh-main" id="redoBtn" title="Redo the last undone step"></button>
+              <button class="uh-caret" id="redoCaret" aria-haspopup="true" aria-expanded="false" title="Redo history"></button>
+              <div class="uh-menu" id="redoMenu" hidden>
+                <div class="uh-menu-head">
+                  <span class="uh-menu-title">Redo</span>
+                  <span class="uh-menu-count" id="redoCount"></span>
+                </div>
+                <div class="uh-list-wrap">
+                  <div class="uh-list" id="redoList"></div>
+                  <div class="uh-sticky" id="redoSticky" hidden></div>
+                </div>
+                <div class="uh-foot" id="redoFoot"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+<script>
+/* ==================================================================
+   Icons — all of them lifted verbatim from src/ui/icons.ts.
+   ================================================================== */
+const ICON = {
+  magnifyingGlass: '<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/></svg>',
+  funnel: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path fill="currentColor" d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5z"/></svg>',
+  stickyNote: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="m14 19l5-5h-4q-.425 0-.712.288T14 15zm-9 2q-.825 0-1.412-.587T3 19V5q0-.825.588-1.412T5 3h14q.825 0 1.413.588T21 5v9.175q0 .4-.15.763t-.425.637l-4.85 4.85q-.275.275-.637.425t-.763.15zm3-7h3q.425 0 .713-.288T12 13t-.288-.712T11 12H8q-.425 0-.712.288T7 13t.288.713T8 14m0-4h8q.425 0 .713-.288T17 9t-.288-.712T16 8H8q-.425 0-.712.288T7 9t.288.713T8 10"/></svg>',
+  undo: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"><path d="M11.272 36.728A17.94 17.94 0 0 0 24 42c9.941 0 18-8.059 18-18S33.941 6 24 6c-4.97 0-9.47 2.015-12.728 5.272C9.614 12.93 6 17 6 17"/><path d="M6 9v8h8"/></g></svg>',
+  redo: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 48 48" style="transform: scaleX(-1); transform-origin: center;"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"><path d="M11.272 36.728A17.94 17.94 0 0 0 24 42c9.941 0 18-8.059 18-18S33.941 6 24 6c-4.97 0-9.47 2.015-12.728 5.272C9.614 12.93 6 17 6 17"/><path d="M6 9v8h8"/></g></svg>',
+  arrowDown: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M11 4h2v12l5.5-5.5l1.42 1.42L12 19.84l-7.92-7.92L5.5 10.5L11 16z"/></svg>',
+  sparkles: '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2l2.09 5.91L20 10l-5.91 2.09L12 18l-2.09-5.91L4 10l5.91-2.09z"/><path fill="currentColor" d="M18 14l.94 2.56L21.5 17.5l-2.56.94L18 21l-.94-2.56L14.5 17.5l2.56-.94z"/></svg>',
+  trash: '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6zM19 4h-3.5l-1-1h-5l-1 1H5v2h14z"/></svg>',
+  hide: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M11.83 9L15 12.16V12a3 3 0 0 0-3-3zm-4.3.8l1.55 1.55c-.05.21-.08.42-.08.65a3 3 0 0 0 3 3c.22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53a5 5 0 0 1-5-5c0-.79.2-1.53.53-2.2M2 4.27l2.28 2.28l.45.45C3.08 8.3 1.78 10 1 12c1.73 4.39 6 7.5 11 7.5c1.55 0 3.03-.3 4.38-.84l.43.42L19.73 22L21 20.73L3.27 3M12 7a5 5 0 0 1 5 5c0 .64-.13 1.26-.36 1.82l2.93 2.93c1.5-1.25 2.7-2.89 3.43-4.75c-1.73-4.39-6-7.5-11-7.5c-1.4 0-2.74.25-4 .7l2.17 2.15C10.74 7.13 11.35 7 12 7"/></svg>',
+  show: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 9a3 3 0 0 0-3 3a3 3 0 0 0 3 3a3 3 0 0 0 3-3a3 3 0 0 0-3-3m0 8a5 5 0 0 1-5-5a5 5 0 0 1 5-5a5 5 0 0 1 5 5a5 5 0 0 1-5 5m0-12.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5"/></svg>',
+  addCircle: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M11 13v3q0 .425.288.713T12 17t.713-.288T13 16v-3h3q.425 0 .713-.288T17 12t-.288-.712T16 11h-3V8q0-.425-.288-.712T12 7t-.712.288T11 8v3H8q-.425 0-.712.288T7 12t.288.713T8 13zm1 9q-2.075 0-3.9-.788t-3.175-2.137T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22m0-2q3.35 0 5.675-2.325T20 12t-2.325-5.675T12 4T6.325 6.325T4 12t2.325 5.675T12 20m0-8"/></svg>',
+  pin: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="m15.113 3.21l.094.083l5.5 5.5a1 1 0 0 1-1.175 1.59l-3.172 3.171l-1.424 3.797a1 1 0 0 1-.158.277l-.07.08l-1.5 1.5a1 1 0 0 1-1.32.082l-.095-.083L9 16.415l-3.793 3.792a1 1 0 0 1-1.497-1.32l.083-.094L7.585 15l-2.792-2.793a1 1 0 0 1-.083-1.32l.083-.094l1.5-1.5a1 1 0 0 1 .258-.187l.098-.042l3.796-1.425l3.171-3.17a1 1 0 0 1 1.497-1.26z"/></svg>'
+}
+const KIND_ICON = { pivot: 'sparkles', delete: 'trash', create: 'addCircle' }
+
+/* ==================================================================
+   The mock graph. Every element the history can touch is declared once;
+   the 14 live nodes and 20 live edges below are what the canvas shows at
+   rest. Ghost ids (g_*) are elements a deletion took away — they exist in
+   the model so an undo can bring them back. Spares (sp*) are what the
+   "New action" control adds.
+   ================================================================== */
+/* Laid out around the open menu rather than under it: the graph fills the
+   left column and a strip along the bottom, so every element the footer
+   counts stays visible while the list is open. */
+const NODES = {
+  case2481: { label: 'Case 2481', type: 'case', x: 72, y: 78 },
+  ev5f2a:   { label: 'Event 5f2a', type: 'event', x: 186, y: 40 },
+  hash9f:   { label: '9f21ac77bb0e', type: 'hash', x: 286, y: 40 },
+  ip198:    { label: '198.51.100.7', type: 'ip', x: 300, y: 108 },
+  ip192:    { label: '192.0.2.19', type: 'ip', x: 320, y: 180 },
+  mail:     { label: 'mail.evil.example', type: 'domain', x: 196, y: 196 },
+  acme:     { label: 'acme.org', type: 'domain', x: 36, y: 150 },
+  cdn:      { label: 'cdn.evil.example', type: 'domain', x: 74, y: 262 },
+  paste:    { label: 'paste 9f21', type: 'paste', x: 296, y: 250 },
+  billing:  { label: 'billing@evil.example', type: 'email', x: 232, y: 320 },
+  ip203:    { label: '203.0.113.42', type: 'ip', x: 58, y: 356 },
+  portal:   { label: 'login-portal.example', type: 'domain', x: 390, y: 368 },
+  sso:      { label: 'login-portal/sso', type: 'url', x: 508, y: 386 },
+  regqh:    { label: 'Quiet Harbour', type: 'org', x: 620, y: 366 },
+
+  g_pay:     { label: 'cdn.evil/pay.php', type: 'url', x: 140, y: 330 },
+  g_hash1:   { label: 'a1b2c3d4e5f6', type: 'hash', x: 330, y: 330 },
+  g_webmail: { label: 'webmail.evil.example', type: 'domain', x: 124, y: 124 },
+  g_old1:    { label: 'old.evil.example', type: 'domain', x: 34, y: 214 },
+  g_old2:    { label: 'temp-report.pdf', type: 'file', x: 452, y: 368 },
+  g_old3:    { label: '2001:db8::7', type: 'ip', x: 168, y: 262 },
+
+  sp1: { label: 'beacon.evil.example', type: 'domain', x: 112, y: 196 },
+  sp2: { label: '10.10.4.9', type: 'ip', x: 566, y: 348 }
+}
+const EDGES = {
+  s1: ['case2481', 'ev5f2a'], s2: ['ev5f2a', 'mail'], s3: ['mail', 'ip198'],
+  e_cm: ['case2481', 'mail'], e_cc: ['case2481', 'cdn'], e_mc: ['mail', 'cdn'], e_ei: ['ev5f2a', 'ip198'],
+  p_cdn203: ['cdn', 'ip203'], p_mail203: ['mail', 'ip203'],
+  c1_mp: ['mail', 'paste'], c1_pb: ['paste', 'billing'], c1_bm: ['billing', 'mail'], c1_m192: ['mail', 'ip192'],
+  c2_mp: ['mail', 'portal'], c2_ps: ['portal', 'sso'], c2_p192: ['portal', 'ip192'],
+  w_pr: ['portal', 'regqh'],
+  a_eh: ['ev5f2a', 'hash9f'],
+  a_ca: ['case2481', 'acme'],
+  o_ec: ['ev5f2a', 'cdn'],
+
+  d_cdn_pay: ['cdn', 'g_pay'], d_pay_hash: ['g_pay', 'g_hash1'],
+  d_mail_web: ['mail', 'g_webmail'],
+  d_mail_old3: ['mail', 'g_old3'],
+  d_case_old1: ['case2481', 'g_old1'], d_ip198_old2: ['ip198', 'g_old2'],
+
+  x1: ['mail', 'sp1'], x2: ['sso', 'sp2']
+}
+const LIVE_NODES_0 = ['case2481', 'ev5f2a', 'mail', 'cdn', 'ip198', 'ip203', 'paste', 'billing', 'ip192', 'portal', 'sso', 'acme', 'hash9f', 'regqh']
+const LIVE_EDGES_0 = ['s1', 's2', 's3', 'e_cm', 'e_cc', 'e_mc', 'e_ei', 'p_cdn203', 'p_mail203', 'c1_mp', 'c1_pb', 'c1_bm', 'c1_m192', 'c2_mp', 'c2_ps', 'c2_p192', 'w_pr', 'a_eh', 'a_ca', 'o_ec']
+const HIDDEN_0 = ['paste', 'billing', 'ip192']
+
+/* ==================================================================
+   The history. Index 0 is the newest step. Everything is temporally
+   consistent: a step only ever touches elements that already existed at
+   its time, so undoing any contiguous span from the top leaves a graph
+   that could really have happened.
+
+   BASE is the 12-step session; PAD adds the 18 older steps that fill the
+   30-step window. Padding changes only ATTRIBUTION — the same nodes and
+   edges are on the canvas either way — so the two densities can be
+   compared without the picture moving.
+   ================================================================== */
+const BASE = [
+  { id: 'h0', kind: 'visibility', dir: 'hide', title: 'Hid 3 nodes',
+    detail: 'paste 9f21 &middot; billing@evil.example &middot; 192.0.2.19', time: '16:42',
+    hideNodes: ['paste', 'billing', 'ip192'] },
+
+  { id: 'h1', kind: 'pivot', title: 'Whois', origin: 'login-portal.example',
+    detail: '1 node, 1 edge', time: '16:38',
+    addNodes: ['regqh'], addEdges: ['w_pr'] },
+
+  { id: 'h2', kind: 'create', title: 'Added &ldquo;9f21ac77bb0e&hellip;&rdquo;',
+    detail: 'hash, linked to Event 5f2a', time: '16:31',
+    addNodes: ['hash9f'], addEdges: ['a_eh'] },
+
+  { id: 'h3', kind: 'pivot', title: 'Correlations', origin: 'mail.evil.example',
+    detail: '2 nodes, 3 edges', time: '16:20',
+    addNodes: ['portal', 'sso'], addEdges: ['c2_mp', 'c2_ps', 'c2_p192'] },
+
+  { id: 'h4', kind: 'visibility', dir: 'show', title: 'Unhid 2 nodes',
+    detail: 'cdn.evil.example &middot; 198.51.100.7', time: '16:12',
+    showNodes: ['cdn', 'ip198'] },
+
+  { id: 'h5', kind: 'create', sealed: true, title: 'Added &ldquo;acme.org&rdquo;',
+    detail: 'domain, written back to the case record', time: '15:58',
+    addNodes: ['acme'], addEdges: ['a_ca'] },
+
+  { id: 'h6', kind: 'delete', title: 'Deleted 2 nodes',
+    detail: 'cdn.evil/pay.php &middot; a1b2c3d4e5f6&hellip;', time: '15:44',
+    delNodes: ['g_pay', 'g_hash1'], delEdges: ['d_cdn_pay', 'd_pay_hash'] },
+
+  { id: 'h7', kind: 'pivot', title: 'Correlations', origin: 'mail.evil.example',
+    detail: '3 nodes, 4 edges', time: '15:30',
+    addNodes: ['paste', 'billing', 'ip192'], addEdges: ['c1_mp', 'c1_pb', 'c1_bm', 'c1_m192'] },
+
+  { id: 'h8', kind: 'pivot', title: 'Passive DNS', origin: 'cdn.evil.example',
+    detail: '1 node, 2 edges', time: '15:21',
+    addNodes: ['ip203'], addEdges: ['p_cdn203', 'p_mail203'] },
+
+  { id: 'h9', kind: 'pivot', title: 'Objects &amp; attributes', origin: 'Event 5f2a',
+    detail: 'no new nodes, 1 edge &mdash; the rest was already here', time: '15:04',
+    addEdges: ['o_ec'] },
+
+  { id: 'h10', kind: 'visibility', dir: 'hide', title: 'Hid 2 nodes',
+    detail: 'cdn.evil.example &middot; 198.51.100.7', time: '14:58',
+    hideNodes: ['cdn', 'ip198'] },
+
+  { id: 'h11', kind: 'delete', title: 'Deleted 1 node',
+    detail: 'webmail.evil.example', time: '14:52',
+    delNodes: ['g_webmail'], delEdges: ['d_mail_web'] }
+]
+
+const PAD = [
+  { id: 'p12', kind: 'pivot', title: 'Shared infrastructure', origin: 'mail.evil.example',
+    detail: 'no new nodes, 1 edge', time: '14:41', addEdges: ['e_mc'] },
+  { id: 'p13', kind: 'visibility', dir: 'show', title: 'Unhid 1 node',
+    detail: 'mail.evil.example', time: '14:33', showNodes: ['mail'] },
+  { id: 'p14', kind: 'pivot', title: 'Objects &amp; attributes', origin: 'Case 2481',
+    detail: 'no new nodes, 2 edges', time: '14:20', addEdges: ['e_cm', 'e_cc'] },
+  { id: 'p15', kind: 'visibility', dir: 'hide', title: 'Hid 1 node',
+    detail: 'mail.evil.example', time: '14:11', hideNodes: ['mail'] },
+  { id: 'p16', kind: 'delete', title: 'Deleted 1 node',
+    detail: '2001:db8::7', time: '13:57', delNodes: ['g_old3'], delEdges: ['d_mail_old3'] },
+  { id: 'p17', kind: 'pivot', title: 'Correlations', origin: 'Event 5f2a',
+    detail: 'no new nodes, 1 edge', time: '13:46', addEdges: ['e_ei'] },
+  { id: 'p18', kind: 'visibility', dir: 'show', title: 'Unhid 2 nodes',
+    detail: 'Case 2481 &middot; Event 5f2a', time: '13:38', showNodes: ['case2481', 'ev5f2a'] },
+  { id: 'p19', kind: 'pivot', title: 'Passive DNS', origin: 'mail.evil.example',
+    detail: 'no new nodes, 1 edge', time: '13:25', addEdges: ['s3'] },
+  { id: 'p20', kind: 'visibility', dir: 'hide', title: 'Hid 2 nodes',
+    detail: 'Case 2481 &middot; Event 5f2a', time: '13:12', hideNodes: ['case2481', 'ev5f2a'] },
+  { id: 'p21', kind: 'delete', title: 'Deleted 2 nodes',
+    detail: 'old.evil.example &middot; temp-report.pdf', time: '12:58',
+    delNodes: ['g_old1', 'g_old2'], delEdges: ['d_case_old1', 'd_ip198_old2'] },
+  /* p22 and p17 are the same pivot from the same origin with the same counts.
+     Only the clock tells them apart — the case rule 4 has to survive. */
+  { id: 'p22', kind: 'pivot', title: 'Correlations', origin: 'Event 5f2a',
+    detail: 'no new nodes, 1 edge', time: '12:44', addEdges: ['s2'] },
+  { id: 'p23', kind: 'pivot', title: 'Shared infrastructure', origin: 'Case 2481',
+    detail: 'no new nodes, 1 edge', time: '12:31', addEdges: ['s1'] },
+  { id: 'p24', kind: 'create', title: 'Added &ldquo;old.evil.example&rdquo;',
+    detail: 'domain', time: '12:19', addNodes: ['g_old1'], addEdges: ['d_case_old1'] },
+  { id: 'p25', kind: 'create', title: 'Added &ldquo;198.51.100.7&rdquo;',
+    detail: 'ip', time: '12:07', addNodes: ['ip198'] },
+  { id: 'p26', kind: 'create', sealed: true, title: 'Added &ldquo;cdn.evil.example&rdquo;',
+    detail: 'domain, written back to the case record', time: '11:54', addNodes: ['cdn'] },
+  { id: 'p27', kind: 'create', sealed: true, title: 'Added &ldquo;mail.evil.example&rdquo;',
+    detail: 'domain, written back to the case record', time: '11:40', addNodes: ['mail'] },
+  { id: 'p28', kind: 'create', title: 'Added &ldquo;Event 5f2a&rdquo;',
+    detail: 'event', time: '11:31', addNodes: ['ev5f2a'] },
+  { id: 'p29', kind: 'create', title: 'Added &ldquo;Case 2481&rdquo;',
+    detail: 'case', time: '11:18', addNodes: ['case2481'] }
+]
+
+const SPARES = [
+  { node: 'sp1', edge: 'x1', label: 'beacon.evil.example' },
+  { node: 'sp2', edge: 'x2', label: '10.10.4.9' }
+]
+
+/* ==================================================================
+   State and the simulator.
+
+   The footer's numbers are never authored. Every span is replayed
+   against a copy of the real state, then diffed against the live one —
+   which is the same function the click uses to commit. So the sentence
+   and the canvas cannot drift apart, and interactions the eye would
+   miss (a hide at the top cancelled by an unhide further down) come out
+   right on their own.
+   ================================================================== */
+let state, undoStack, redoStack, padded = false, spareIx = 0
+
+function freshState () {
+  return { nodes: new Set(LIVE_NODES_0), edges: new Set(LIVE_EDGES_0), hidden: new Set(HIDDEN_0) }
+}
+function clone (s) {
+  return { nodes: new Set(s.nodes), edges: new Set(s.edges), hidden: new Set(s.hidden) }
+}
+function invert (st, e) {
+  (e.addNodes || []).forEach(n => { st.nodes.delete(n); st.hidden.delete(n) })
+  ;(e.addEdges || []).forEach(x => st.edges.delete(x))
+  ;(e.delNodes || []).forEach(n => st.nodes.add(n))
+  ;(e.delEdges || []).forEach(x => st.edges.add(x))
+  ;(e.hideNodes || []).forEach(n => st.hidden.delete(n))
+  ;(e.showNodes || []).forEach(n => st.hidden.add(n))
+}
+function apply (st, e) {
+  (e.addNodes || []).forEach(n => st.nodes.add(n))
+  ;(e.addEdges || []).forEach(x => st.edges.add(x))
+  ;(e.delNodes || []).forEach(n => { st.nodes.delete(n); st.hidden.delete(n) })
+  ;(e.delEdges || []).forEach(x => st.edges.delete(x))
+  ;(e.hideNodes || []).forEach(n => st.hidden.add(n))
+  ;(e.showNodes || []).forEach(n => st.hidden.delete(n))
+}
+/* An edge cannot outlive its endpoints. This is also what keeps a sealed
+   node honest: it stays, but the links to whatever left do not. */
+function prune (st) {
+  for (const id of [...st.edges]) {
+    const [a, b] = EDGES[id]
+    if (!st.nodes.has(a) || !st.nodes.has(b)) st.edges.delete(id)
+  }
+  for (const n of [...st.hidden]) if (!st.nodes.has(n)) st.hidden.delete(n)
+}
+
+function previewUndo (i) {
+  const st = clone(state)
+  for (let k = 0; k <= i; k++) if (!undoStack[k].sealed) invert(st, undoStack[k])
+  prune(st)
+  return st
+}
+function previewRedo (i) {
+  const st = clone(state)
+  for (let k = 0; k <= i; k++) apply(st, redoStack[k])
+  prune(st)
+  return st
+}
+
+function diff (cur, next) {
+  const d = { goN: [], comeN: [], hideN: [], showN: [], goE: [], comeE: [] }
+  for (const n of cur.nodes) {
+    if (!next.nodes.has(n)) { d.goN.push(n); continue }
+    const was = cur.hidden.has(n), will = next.hidden.has(n)
+    if (!was && will) d.hideN.push(n)
+    if (was && !will) d.showN.push(n)
+  }
+  for (const n of next.nodes) if (!cur.nodes.has(n)) d.comeN.push(n)
+  for (const x of cur.edges) if (!next.edges.has(x)) d.goE.push(x)
+  for (const x of next.edges) if (!cur.edges.has(x)) d.comeE.push(x)
+  return d
+}
+
+/* ---- phrasing ---------------------------------------------------
+   Three lines, one per canvas mark, and each short enough that it can
+   never wrap — a footer that reflows is a footer that moves the row
+   under the pointer. The visibility clause rides on the line whose mark
+   it shares rather than claiming a fourth line of its own.
+   ----------------------------------------------------------------- */
+const n = (c, one, many) => '<b>' + c + '</b> ' + (c === 1 ? one : many)
+
+function pair (a, aOne, aMany, b, bOne, bMany) {
+  if (a && b) return n(a, aOne, aMany) + ' and ' + n(b, bOne, bMany)
+  if (a) return n(a, aOne, aMany)
+  return n(b, bOne, bMany)
+}
+
+function effectLines (d, sealedCount, sealedLabel) {
+  const out = []
+
+  if (d.goN.length || d.goE.length || d.hideN.length) {
+    let t = ''
+    if (d.goN.length || d.goE.length) {
+      t = pair(d.goN.length, 'node', 'nodes', d.goE.length, 'edge', 'edges')
+        + (d.hideN.length ? ' leave' : ' leave the canvas')
+      if (d.goN.length + d.goE.length === 1) t = t.replace(' leave', ' leaves')
+    }
+    if (d.hideN.length) {
+      t += (t ? ' &middot; ' : '') + n(d.hideN.length, 'node is', 'nodes are') + ' hidden again'
+    }
+    out.push({ cls: 'fx-go', text: t })
+  }
+
+  if (d.comeN.length || d.comeE.length || d.showN.length) {
+    let t = ''
+    if (d.comeN.length || d.comeE.length) {
+      t = pair(d.comeN.length, 'node', 'nodes', d.comeE.length, 'edge', 'edges') + ' come back'
+      if (d.comeN.length + d.comeE.length === 1) t = t.replace(' come back', ' comes back')
+    }
+    if (d.showN.length) {
+      t += (t ? ' &middot; ' : '') + n(d.showN.length, 'hidden node is', 'hidden nodes are') + ' shown again'
+    }
+    out.push({ cls: 'fx-come', text: t })
+  }
+
+  if (sealedCount) {
+    out.push({
+      cls: 'fx-keep',
+      text: n(sealedCount, 'sealed step is kept', 'sealed steps are kept') + (sealedLabel ? ' &mdash; ' + sealedLabel : '')
+    })
+  }
+  /* A span made only of sealed steps reverses nothing. Say so plainly
+     rather than leaving the reader to infer it from a missing line. */
+  if (!netChange(d)) out.push({ cls: 'fx-none', text: 'Nothing on the canvas changes.' })
+  return out
+}
+
+function netChange (d) {
+  return d.goN.length + d.goE.length + d.comeN.length + d.comeE.length + d.hideN.length + d.showN.length
+}
+
+/* ==================================================================
+   Canvas. Static positions, drawn once; state and marks are classes.
+   ================================================================== */
+const svg = document.getElementById('canvas')
+const SVGNS = 'http://www.w3.org/2000/svg'
+
+function buildCanvas () {
+  const gE = document.createElementNS(SVGNS, 'g')
+  const gN = document.createElementNS(SVGNS, 'g')
+  svg.append(gE, gN)
+
+  for (const [id, [a, b]] of Object.entries(EDGES)) {
+    const g = document.createElementNS(SVGNS, 'g')
+    g.setAttribute('class', 'eg')
+    g.dataset.id = id
+    const l = document.createElementNS(SVGNS, 'line')
+    l.setAttribute('class', 'wire')
+    l.setAttribute('x1', NODES[a].x); l.setAttribute('y1', NODES[a].y)
+    l.setAttribute('x2', NODES[b].x); l.setAttribute('y2', NODES[b].y)
+    g.appendChild(l)
+    gE.appendChild(g)
+  }
+  for (const [id, nd] of Object.entries(NODES)) {
+    const g = document.createElementNS(SVGNS, 'g')
+    g.setAttribute('class', 'nd')
+    g.dataset.id = id
+    const ring = document.createElementNS(SVGNS, 'circle')
+    ring.setAttribute('class', 'ring')
+    ring.setAttribute('cx', nd.x); ring.setAttribute('cy', nd.y); ring.setAttribute('r', 19)
+    const body = document.createElementNS(SVGNS, 'g')
+    body.setAttribute('class', 'body')
+    const dot = document.createElementNS(SVGNS, 'circle')
+    dot.setAttribute('class', 'dot')
+    dot.setAttribute('cx', nd.x); dot.setAttribute('cy', nd.y); dot.setAttribute('r', 12)
+    dot.setAttribute('fill', 'var(--uh-t-' + nd.type + ')')
+    const lbl = document.createElementNS(SVGNS, 'text')
+    lbl.setAttribute('class', 'lbl')
+    lbl.setAttribute('x', nd.x); lbl.setAttribute('y', nd.y + 25)
+    lbl.textContent = nd.label.length > 17 ? nd.label.slice(0, 16) + '…' : nd.label
+    body.append(dot, lbl)
+    g.append(ring, body)
+    gN.appendChild(g)
+  }
+}
+
+/* One pass: rest state first, then the marks for the hovered span. The
+   marks are computed from the very same diff the footer prints. */
+function paintCanvas (d, keepNodes, ownNodes, ownEdges) {
+  d = d || { goN: [], comeN: [], hideN: [], showN: [], goE: [], comeE: [] }
+  keepNodes = keepNodes || new Set()
+  ownNodes = ownNodes || new Set()
+  ownEdges = ownEdges || new Set()
+  const go = new Set([...d.goN, ...d.hideN])
+  const come = new Set([...d.comeN, ...d.showN])
+  const goE = new Set(d.goE), comeE = new Set(d.comeE)
+
+  for (const g of svg.querySelectorAll('.nd')) {
+    const id = g.dataset.id
+    g.setAttribute('class', 'nd'
+      + (state.nodes.has(id) ? '' : ' is-gone')
+      + (state.hidden.has(id) ? ' is-hidden' : '')
+      + (go.has(id) ? ' mark-go' : '')
+      + (come.has(id) ? ' mark-come' : '')
+      + (keepNodes.has(id) ? ' mark-keep' : '')
+      + (ownNodes.has(id) ? ' own' : ''))
+  }
+  for (const g of svg.querySelectorAll('.eg')) {
+    const id = g.dataset.id
+    const [a, b] = EDGES[id]
+    const live = state.edges.has(id)
+    const dim = live && (state.hidden.has(a) || state.hidden.has(b))
+    g.setAttribute('class', 'eg'
+      + (live ? '' : ' is-gone')
+      + (dim ? ' dimmed' : '')
+      + (goE.has(id) ? ' mark-go' : '')
+      + (comeE.has(id) ? ' mark-come' : '')
+      + (ownEdges.has(id) ? ' own' : ''))
+  }
+}
+
+/* ==================================================================
+   The two menus. Same component, two directions.
+   ================================================================== */
+const el = id => document.getElementById(id)
+
+const MENUS = {
+  undo: {
+    key: 'undo', verb: 'Undo',
+    anchor: el('undoAnchor'), menu: el('undoMenu'), list: el('undoList'),
+    sticky: el('undoSticky'), foot: el('undoFoot'), count: el('undoCount'),
+    caret: el('undoCaret'), main: el('undoBtn'),
+    stack: () => undoStack, preview: previewUndo, skipSealed: true
+  },
+  redo: {
+    key: 'redo', verb: 'Redo',
+    anchor: el('redoAnchor'), menu: el('redoMenu'), list: el('redoList'),
+    sticky: el('redoSticky'), foot: el('redoFoot'), count: el('redoCount'),
+    caret: el('redoCaret'), main: el('redoBtn'),
+    stack: () => redoStack, preview: previewRedo, skipSealed: false
+  }
+}
+
+function kindIcon (e) {
+  if (e.kind === 'visibility') return ICON[e.dir === 'hide' ? 'hide' : 'show']
+  return ICON[KIND_ICON[e.kind]]
+}
+
+function rowHTML (e, i) {
+  const origin = e.origin ? '<span class="uh-origin">from ' + e.origin + '</span>' : ''
+  const seal = e.sealed
+    ? '<span class="uh-seal">' + ICON.pin + '<span data-seal-word>sealed</span></span>'
+    : ''
+  /* a role="button" div, not a <button>: Chrome refuses to size a flex
+     <button> to a two-line child, and the codebase already uses this idiom
+     for the header pills */
+  return '<div class="uh-row k-' + e.kind + (e.sealed ? ' sealed' : '') + '" role="button" tabindex="-1" data-i="' + i + '">'
+    + '<span class="uh-rail"></span>'
+    + '<span class="uh-ico">' + kindIcon(e) + '</span>'
+    + '<span class="uh-body">'
+    + '<span class="uh-l1"><span>' + e.title + '</span>' + origin + '</span>'
+    + '<span class="uh-l2">' + e.detail + '</span>'
+    + '</span>'
+    + '<span class="uh-meta">' + seal + '<span class="uh-time">' + e.time + '</span></span>'
+    + '</div>'
+}
+
+function renderMenu (m) {
+  const stack = m.stack()
+  m.count.textContent = stack.length === 0 ? 'empty' : stack.length === 1 ? '1 step' : stack.length + ' steps'
+
+  if (!stack.length) {
+    m.list.innerHTML = '<div class="uh-empty">'
+      + '<span class="uh-empty-ico">' + ICON[m.key] + '</span>'
+      + '<div class="uh-empty-title">Nothing to ' + m.verb.toLowerCase() + '</div>'
+      + '<div class="uh-empty-body">'
+      + (m.key === 'redo'
+        ? 'Steps you undo land here. Anything you do to the graph clears them.'
+        : 'This session has no steps yet.')
+      + '</div></div>'
+    m.foot.hidden = true
+    m.sticky.hidden = true
+    return
+  }
+
+  m.foot.hidden = false
+  let html = stack.map(rowHTML).join('')
+  html += '<div class="uh-end">' + (m.key === 'redo'
+    ? 'Redo runs from the top down and holds only what was just undone.'
+    : (stack.length >= 30
+      ? 'Older steps have been dropped &mdash; the history keeps the last 30.'
+      : 'The start of this session.')) + '</div>'
+  m.list.innerHTML = html
+  setSpan(m, -1)
+  updateSticky(m)
+}
+
+/* -1 means idle: the span is the single top step, which is exactly what
+   pressing the button does. The footer is therefore never blank and never
+   changes height as the pointer moves. */
+function setSpan (m, pointed) {
+  const stack = m.stack()
+  if (!stack.length) return
+  const idle = pointed < 0
+  const i = idle ? 0 : pointed
+
+  const rows = m.list.querySelectorAll('.uh-row')
+  rows.forEach((r, k) => {
+    r.classList.toggle('in-span', !idle && k <= i)
+    r.classList.toggle('pointed', !idle && k === i)
+    r.classList.toggle('span-end', !idle && k === i)
+    const w = r.querySelector('[data-seal-word]')
+    if (w) w.textContent = (!idle && k <= i) ? 'sealed — kept' : 'sealed'
+  })
+
+  const next = m.preview(i)
+  const d = diff(state, next)
+
+  const span = stack.slice(0, i + 1)
+  const sealed = m.skipSealed ? span.filter(e => e.sealed) : []
+  const keepNodes = new Set()
+  sealed.forEach(e => (e.addNodes || []).forEach(x => {
+    if (state.nodes.has(x) && next.nodes.has(x)) keepNodes.add(x)
+  }))
+  const sealedLabel = sealed.length === 1
+    ? '“' + (NODES[(sealed[0].addNodes || [])[0]] || {}).label + '” stays'
+    : ''
+
+  const own = stack[i]
+  const ownNodes = new Set([...(own.addNodes || []), ...(own.delNodes || []), ...(own.hideNodes || []), ...(own.showNodes || [])])
+  const ownEdges = new Set([...(own.addEdges || []), ...(own.delEdges || [])])
+
+  paintCanvas(d, keepNodes, idle ? new Set() : ownNodes, idle ? new Set() : ownEdges)
+  renderFoot(m, i, idle, d, sealed.length, sealedLabel)
+  m.list.dataset.pointed = idle ? '' : String(i)
+  updateSticky(m)
+  updateKeyCount(d, keepNodes)
+}
+
+function renderFoot (m, i, idle, d, sealedCount, sealedLabel) {
+  const steps = i + 1
+  const lines = effectLines(d, sealedCount, sealedLabel)
+  const nothing = !netChange(d)
+  m.foot.className = 'uh-foot' + (idle ? ' idle' : '')
+  m.foot.innerHTML =
+    '<div class="uh-foot-head">'
+    + '<span class="uh-foot-lead">' + m.verb + ' ' + steps + (steps === 1 ? ' step' : ' steps') + '</span>'
+    + '<span class="uh-foot-sub">' + (idle
+      ? (m.key === 'undo' ? 'the most recent' : 'the next one forward') + ' &mdash; what the button does'
+      : 'everything down to ' + m.stack()[i].time) + '</span>'
+    + '<span class="uh-foot-hint">' + (nothing ? 'nothing to apply' : 'click to apply') + '</span>'
+    + '</div>'
+    + '<ul class="uh-fx">'
+    + lines.map(l => '<li class="' + l.cls + '"><i></i><span>' + l.text + '</span></li>').join('')
+    + '</ul>'
+}
+
+function updateSticky (m) {
+  const stack = m.stack()
+  if (!stack.length) { m.sticky.hidden = true; return }
+  const first = m.list.querySelector('.uh-row')
+  if (!first) { m.sticky.hidden = true; return }
+  const h = first.offsetHeight || 47
+  const above = Math.floor((m.list.scrollTop + 3) / h)
+  if (above < 1) { m.sticky.hidden = true; return }
+  const pointed = m.list.dataset.pointed
+  const spanned = pointed !== '' && Number(pointed) >= above
+  m.sticky.hidden = false
+  m.sticky.classList.toggle('spanned', spanned)
+  m.sticky.innerHTML = '↑ <b>' + above + '</b> earlier step' + (above === 1 ? '' : 's')
+    + ' above' + (spanned ? ' &mdash; all of them included' : '')
+}
+
+/* ==================================================================
+   Canvas caption. The same three numbers the footer prints, so the
+   picture can be counted against the sentence.
+   ================================================================== */
+const keyEl = document.querySelector('.canvas-key')
+function updateKeyCount (d, keepNodes) {
+  const go = d ? d.goN.length + d.hideN.length : 0
+  const come = d ? d.comeN.length + d.showN.length : 0
+  const keep = keepNodes ? keepNodes.size : 0
+  const put = (sel, v) => {
+    const b = keyEl.querySelector(sel + ' b')
+    if (b) b.textContent = v ? String(v) : ''
+  }
+  put('.k-go', go); put('.k-come', come); put('.k-keep', keep)
+  el('keyCount').innerHTML = '<b>' + state.nodes.size + '</b> nodes &middot; <b>'
+    + state.edges.size + '</b> edges &middot; <b>' + state.hidden.size + '</b> hidden'
+}
+
+/* ==================================================================
+   Commit.
+   ================================================================== */
+function sortStack (s) { return s.slice().sort((a, b) => a.seq - b.seq) }
+
+function fadeOut (d, then) {
+  const ids = new Set(d.goN), eids = new Set(d.goE)
+  let any = false
+  svg.querySelectorAll('.nd').forEach(g => { if (ids.has(g.dataset.id)) { g.classList.add('leaving'); any = true } })
+  svg.querySelectorAll('.eg').forEach(g => { if (eids.has(g.dataset.id)) { g.classList.add('leaving'); any = true } })
+  setTimeout(then, any ? 320 : 0)
+}
+
+function commitUndo (i) {
+  const span = undoStack.slice(0, i + 1)
+  const moved = span.filter(e => !e.sealed)
+  if (!moved.length) return
+  const next = previewUndo(i)
+  const d = diff(state, next)
+  fadeOut(d, () => {
+    state = next
+    undoStack = sortStack(span.filter(e => e.sealed).concat(undoStack.slice(i + 1)))
+    redoStack = moved.slice().reverse().concat(redoStack)
+    closeMenus()
+    refresh()
+  })
+}
+
+function commitRedo (i) {
+  const span = redoStack.slice(0, i + 1)
+  const next = previewRedo(i)
+  const d = diff(state, next)
+  fadeOut(d, () => {
+    state = next
+    redoStack = redoStack.slice(i + 1)
+    undoStack = sortStack(span.concat(undoStack))
+    closeMenus()
+    refresh()
+  })
+}
+
+/* ==================================================================
+   Open / close, hover, keyboard.
+   ================================================================== */
+let openMenu = null
+
+function closeMenus () {
+  Object.values(MENUS).forEach(m => {
+    m.menu.hidden = true
+    m.anchor.classList.remove('open')
+    m.caret.setAttribute('aria-expanded', 'false')
+  })
+  openMenu = null
+  paintCanvas(null)
+  updateKeyCount(null, null)
+}
+
+function openTheMenu (m) {
+  if (openMenu === m) { closeMenus(); return }
+  closeMenus()
+  if (!m.stack().length && m.key === 'undo') return
+  openMenu = m
+  m.menu.hidden = false
+  m.anchor.classList.add('open')
+  m.caret.setAttribute('aria-expanded', 'true')
+  m.list.scrollTop = 0
+  renderMenu(m)
+}
+
+function wireMenu (m) {
+  m.caret.innerHTML = ICON.arrowDown
+  m.main.innerHTML = ICON[m.key]
+  m.caret.addEventListener('click', ev => { ev.stopPropagation(); openTheMenu(m) })
+  m.main.addEventListener('click', ev => {
+    ev.stopPropagation()
+    if (!m.stack().length) return
+    m.key === 'undo' ? commitUndo(0) : commitRedo(0)
+  })
+  m.menu.addEventListener('click', ev => ev.stopPropagation())
+  m.list.addEventListener('scroll', () => updateSticky(m))
+  m.list.addEventListener('mouseover', ev => {
+    const row = ev.target.closest('.uh-row')
+    if (row) setSpan(m, Number(row.dataset.i))
+  })
+  m.list.addEventListener('mouseleave', () => setSpan(m, -1))
+  m.list.addEventListener('click', ev => {
+    const row = ev.target.closest('.uh-row')
+    if (!row) return
+    const i = Number(row.dataset.i)
+    m.key === 'undo' ? commitUndo(i) : commitRedo(i)
+  })
+}
+
+document.addEventListener('click', closeMenus)
+document.addEventListener('keydown', ev => {
+  if (!openMenu) return
+  const m = openMenu
+  const stack = m.stack()
+  if (ev.key === 'Escape') { closeMenus(); return }
+  if (!stack.length) return
+  const cur = m.list.dataset.pointed === '' ? -1 : Number(m.list.dataset.pointed)
+  if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
+    ev.preventDefault()
+    let nx = ev.key === 'ArrowDown' ? cur + 1 : cur - 1
+    nx = Math.max(0, Math.min(stack.length - 1, nx))
+    setSpan(m, nx)
+    const row = m.list.querySelectorAll('.uh-row')[nx]
+    if (row) row.scrollIntoView({ block: 'nearest' })
+  } else if (ev.key === 'Enter' && cur >= 0) {
+    ev.preventDefault()
+    m.key === 'undo' ? commitUndo(cur) : commitRedo(cur)
+  }
+})
+
+/* ==================================================================
+   Refresh, scaffolding, boot.
+   ================================================================== */
+function refresh () {
+  MENUS.undo.main.disabled = !undoStack.some(e => !e.sealed)
+  MENUS.redo.main.disabled = !redoStack.length
+  MENUS.undo.caret.disabled = false
+  MENUS.redo.caret.disabled = false
+  paintCanvas(null)
+  updateKeyCount(null, null)
+  el('readout').innerHTML = 'undo <b>' + undoStack.length + '</b> &middot; redo <b>' + redoStack.length + '</b>'
+  if (openMenu) renderMenu(openMenu)
+}
+
+function buildStack () {
+  const src = (padded ? BASE.concat(PAD) : BASE).map((e, i) => Object.assign({}, e, { seq: i }))
+  return src
+}
+
+function reset () {
+  state = freshState()
+  undoStack = buildStack()
+  redoStack = []
+  spareIx = 0
+  closeMenus()
+  refresh()
+}
+
+/* A new action clears redo — rule 6, shown rather than asserted. */
+el('newAction').addEventListener('click', ev => {
+  ev.stopPropagation()
+  const s = SPARES[spareIx % SPARES.length]
+  spareIx++
+  if (state.nodes.has(s.node)) { reset(); return }
+  const entry = {
+    id: 'new' + spareIx, kind: 'create',
+    title: 'Added &ldquo;' + s.label + '&rdquo;',
+    detail: NODES[s.node].type + ', linked to ' + NODES[EDGES[s.edge][0]].label,
+    time: 'now', addNodes: [s.node], addEdges: [s.edge],
+    seq: (undoStack.length ? Math.min.apply(null, undoStack.map(e => e.seq)) : 0) - 1
+  }
+  apply(state, entry)
+  undoStack = [entry].concat(undoStack)
+  redoStack = []
+  closeMenus()
+  refresh()
+})
+
+el('resetBtn').addEventListener('click', ev => { ev.stopPropagation(); reset() })
+
+el('themeSeg').addEventListener('click', ev => {
+  const b = ev.target.closest('button')
+  if (!b) return
+  ev.stopPropagation()
+  el('root').dataset.theme = b.dataset.theme
+  ;[...ev.currentTarget.children].forEach(c => c.setAttribute('aria-pressed', String(c === b)))
+})
+
+el('sizeSeg').addEventListener('click', ev => {
+  const b = ev.target.closest('button')
+  if (!b) return
+  ev.stopPropagation()
+  ;[...ev.currentTarget.children].forEach(c => c.setAttribute('aria-pressed', String(c === b)))
+  padded = b.dataset.size === '30'
+  reset()
+})
+
+document.querySelectorAll('[data-icon]').forEach(s => { s.innerHTML = ICON[s.dataset.icon] })
+Object.values(MENUS).forEach(wireMenu)
+buildCanvas()
+reset()
+</script>
+</body>
+</html>
