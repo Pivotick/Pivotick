@@ -174,15 +174,20 @@ so the single-pivot case has no tab at all.
 | **T4** | fetch failed | `Couldn't fetch candidates.` + **Retry** (re-runs `fetch` with the same narrowing) |
 | **T5** | ceiling refusal | `The source returned 14,203 candidates, over the 10,000 limit. Nothing was staged — narrow and run again.` (D17 — a refusal, never a truncation) |
 | **T6** | triage finished | `Nothing left to triage` + what happened: `12 ingested · 198 rejected` — but see C16 |
-| **T7** | replaced | a re-run of the same pivot replaced this set — see C6 |
+| **T7** | replaced | a re-run of the same pivot replaced this set — see C7 |
 
 **C16 — an ingest that empties the pane closes it.** T6 is where triage *ends*, not where it is
 reported: an emptied pane holding nothing but a **Close** is one more click between the analyst
 and the canvas they have just changed, for a tally the ingest toast already carries. So the
 pane goes, and the provider strip hands over to the next one waiting. T6 is still reached the
 other way, by rejecting the last rows — there is no toast on that path, so the tally is the only
-report of it. A re-run waiting in the pane (C6) keeps it open either way: its candidates are
+report of it. A re-run waiting in the pane (C7) keeps it open either way: its candidates are
 reachable from that banner and nowhere else.
+
+The region goes with it: a dock the review tab unfolded to show itself folds back once the last
+pane leaves, so an analyst who never opened the data table is not left reading it. That is the
+dock's own mechanism, not the pivot's — folding it, resizing it or switching to another pane
+ends the loan, since each is the analyst saying what they want the region to do.
 
 ### 5.2 The header line
 

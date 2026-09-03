@@ -99,6 +99,15 @@ export class Dock extends UIComponent {
     private readonly autoCollapse: boolean
     /** Latched by the first explicit collapse/expand, which ends {@link autoCollapse}. */
     private userChose = false
+    /**
+     * The tab that opened the region to show itself, and the state it found.
+     *
+     * A transient pane — a pivot review, a plugin's own — reveals the dock on arrival,
+     * and gives it back when it leaves: finishing one pivot should not leave the data
+     * table open in front of an analyst who never asked for it. Null once the analyst
+     * takes the fold over, or once a second pane asks to be seen.
+     */
+    private borrowed: { id: string, open: boolean, collapsed: boolean } | null = null
     /** Occupants watching the fold, via {@link onCollapsedChange}. */
     private readonly collapseWatchers = new Set<(collapsed: boolean) => void>()
 
@@ -153,7 +162,7 @@ export class Dock extends UIComponent {
         this.toggle.className = 'pvt-dock-toggle'
         this.toggle.innerHTML = COLLAPSE_ICON
         this.listen(this.toggle, 'click', () => {
-            this.userChose = true
+            this.foldChosen()
             this.setCollapsed(!this.collapsed)
         })
         this.header.appendChild(this.toggle)
@@ -169,7 +178,11 @@ export class Dock extends UIComponent {
         this.listen(this.tabStrip, 'click', (event) => {
             const target = event.target as HTMLElement | null
             const id = target?.closest<HTMLElement>('.pvt-dock-tab')?.dataset.tab
-            if (id) this.setActive(id, false)
+            if (!id) return
+            // Reading another pane is a reason of its own for the region to be open, so
+            // the pane that opened it no longer owes anybody the fold back.
+            if (this.borrowed && this.borrowed.id !== id) this.borrowed = null
+            this.setActive(id, false)
         })
         this.header.appendChild(this.tabStrip)
 
@@ -216,7 +229,7 @@ export class Dock extends UIComponent {
         this.track(this.uiManager.keyManager.register({
             key: 'Shift+T',
             callback: () => {
-                this.userChose = true
+                this.foldChosen()
                 const wasShowingContent = this.open && !this.collapsed
                 if (!this.open) this.setOpen(true)
                 this.setCollapsed(wasShowingContent)
@@ -362,13 +375,39 @@ export class Dock extends UIComponent {
         }
 
         if (reveal) {
+            // Only what was hidden is on loan, and only to the first pane to ask: a
+            // reveal onto a dock already on show borrows nothing, and a second pane
+            // revealing itself is another reason for the region to stay.
+            if (!this.borrowed && (!this.open || this.collapsed)) {
+                this.borrowed = { id, open: this.open, collapsed: this.collapsed }
+            } else if (this.borrowed && this.borrowed.id !== id) {
+                this.borrowed = null
+            }
             if (!this.open) this.setOpen(true)
             if (this.collapsed) this.setCollapsed(false)
         }
     }
 
+    /**
+     * Hand the region back to the state the borrowing pane found it in — but only while
+     * that is still the state its reveal produced. A fold, a resize or a switch to
+     * another pane has already ended the loan, and each of those is the analyst saying
+     * what they want the dock to do.
+     */
+    private returnBorrowed(id: string): void {
+        const borrowed = this.borrowed
+        if (!borrowed || borrowed.id !== id) return
+        this.borrowed = null
+        if (!this.open || this.collapsed) return
+        this.setCollapsed(borrowed.collapsed)
+        this.setOpen(borrowed.open)
+    }
+
     /** Drop everything held for a tab that has left the registry. */
     private forgetTab(tab: RegisteredDockTab): void {
+        // Before the hand-over below picks a successor, since that is what would
+        // otherwise be left on show in a region this tab is the only reason for.
+        this.returnBorrowed(tab.id)
         if (this.activeId === tab.id) {
             this.clearToolbar()
             this.activeId = null
@@ -511,6 +550,15 @@ export class Dock extends UIComponent {
         this.emitCollapsed()
     }
 
+    /**
+     * The analyst has taken the fold over: auto-management ends, and so does any loan —
+     * a region they opened or folded themselves does not undo that on their behalf.
+     */
+    private foldChosen(): void {
+        this.userChose = true
+        this.borrowed = null
+    }
+
     private emitCollapsed(): void {
         for (const watcher of [...this.collapseWatchers]) watcher(this.collapsed)
     }
@@ -613,7 +661,7 @@ export class Dock extends UIComponent {
             const pointer = event as PointerEvent
             // Dragging the divider is an explicit choice about the dock's size, so it
             // ends auto-management the same way clicking the toggle does.
-            this.userChose = true
+            this.foldChosen()
             if (this.collapsed) this.setCollapsed(false)
             this.dragPointer = pointer.pointerId
             divider.setPointerCapture(pointer.pointerId)

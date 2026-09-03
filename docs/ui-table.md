@@ -412,6 +412,11 @@ makes that decision for you and folds the dock away on a layout too short for bo
 a usable canvas; the first time you collapse or expand it by hand, or drag the divider,
 it stops deciding and leaves it to you.
 
+A pane that unfolded the dock to show itself hands the region back when it is removed, so
+a pane that comes and goes leaves a closed dock closed. Folding it, resizing it or
+switching to another pane ends that: each one is a decision of your own about the region,
+and nothing undoes it on your behalf.
+
 ::: tip Opening the dock never moves the graph
 The simulation tunes itself against the **container**, not the canvas, so chrome opening
 and closing cannot change a layout. Resize the dock as much as you like: the graph stays

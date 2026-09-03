@@ -585,7 +585,7 @@ const graph = new Pivotick(
         UI: {
             mode: 'full',
             sidebar: { collapsed: true },
-            // Folded to its bar; a staged set unfolds it by itself.
+            // Away entirely; a staged set opens it, and it goes back when triage ends.
             dock: { open: false },
         },
         callbacks: {

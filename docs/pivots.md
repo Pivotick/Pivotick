@@ -74,7 +74,9 @@ The toast reads `Ingested 12 nodes, 14 edges` and carries **Undo**, which takes 
 run back out, including its edges and any children it merged in.
 
 An ingest that leaves nothing to rule on closes the pane, and the strip moves on to the next
-provider waiting. Leftovers keep it open, and so does a re-run waiting in it.
+provider waiting. Leftovers keep it open, and so does a re-run waiting in it. Once the last
+pane goes, a dock the review opened folds back to where it was, so a pivot leaves the layout
+it found.
 
 Three doors lead to the same place: the rail mode, a node's context-menu **Pivot…** entry
 (absent, never disabled, when nothing applies), and a rim badge, which opens the mode scoped

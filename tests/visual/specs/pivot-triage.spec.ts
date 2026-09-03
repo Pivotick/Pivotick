@@ -15,6 +15,8 @@ import type { PivotFixtureSpec, RecordedCandidates } from '../harness/harness'
 
 const AIL = 'ail-correlation'
 const FULL = { UI: { mode: 'full', sidebar: { collapsed: true }, table: { open: true } } }
+/** The dock left as the demo page has it: taking no room until something asks for it. */
+const DOCK_SHUT = { UI: { mode: 'full', sidebar: { collapsed: true }, dock: { open: false } } }
 
 // ── the pane, and the pieces of it that carry meaning ────────────────────────
 const pane = (page: Page): Locator => page.locator('.pvt-triage')
@@ -77,9 +79,23 @@ const closeProvider = async (page: Page, pivotId: string): Promise<void> => {
     await provider(page, pivotId).locator('.pvt-review-close').click()
 }
 
-const load = async (page: Page, spec: PivotFixtureSpec = {}): Promise<void> => {
-    await harness(page, 'loadWithPivots', 'basic', spec, FULL)
+const load = async (page: Page, spec: PivotFixtureSpec = {}, ui: object = FULL): Promise<void> => {
+    await harness(page, 'loadWithPivots', 'basic', spec, ui)
     await page.locator('.zoom-layer:not(.hidden)').first().waitFor({ state: 'attached' })
+}
+
+/** Height of the dock's grid row, as the layout actually resolved it. */
+const dockHeight = (page: Page): Promise<number> =>
+    page.evaluate(() => {
+        const layout = document.querySelector('.pvt-layout') as HTMLElement
+        return parseFloat(getComputedStyle(layout).getPropertyValue('--pvt-dock-height')) || 0
+    })
+
+/** Mark everything the provider offered and commit it, which empties the pane. */
+const ingestEverything = async (page: Page): Promise<void> => {
+    await button(footer(page), 'Select all').click()
+    await button(footer(page), 'Ingest selected').click()
+    await expect(toast(page)).toContainText('Ingested')
 }
 
 const nodeCount = async (page: Page): Promise<number> =>
@@ -245,6 +261,59 @@ test.describe('pivot triage pane', () => {
         // Closing is not a verdict: the two rejections are the session's, the ingested
         // row is on the canvas, and nothing else was decided on the analyst's behalf.
         expect(await harness(page, 'rejectedPivotIds', 'blind')).toEqual(['blind-0', 'blind-2'])
+    })
+
+    // The region is the dock's, and so is this mechanism: a pane that reveals the dock
+    // to show itself gives it back when it goes. Pivot is what drives it — the review
+    // tab is the only pane in the library that comes and goes.
+    test('a review pane hands the dock back the way it found it', async ({ page }) => {
+        await load(page, { pivots: ['blind'] }, DOCK_SHUT)
+
+        // Nothing has asked for the region yet, so it takes no room at all.
+        expect(await dockHeight(page)).toBe(0)
+
+        await harness(page, 'runPivot', 'blind', ['a'])
+        await expect(rows(page)).toHaveCount(3)
+        expect(await dockHeight(page)).toBeGreaterThan(0)
+
+        await ingestEverything(page)
+
+        // Back to a bare canvas. An analyst who never opened the data table must not be
+        // left reading it because a pivot borrowed the row it sits in.
+        await expect(pane(page)).toHaveCount(0)
+        expect(await dockHeight(page)).toBe(0)
+    })
+
+    test('a dock that was already open is left open', async ({ page }) => {
+        // FULL opens the dock up front, which is how every other test here loads it:
+        // the review tab borrows nothing, so it has nothing to give back.
+        await load(page, { pivots: ['blind'] })
+        const before = await dockHeight(page)
+        expect(before).toBeGreaterThan(0)
+
+        await harness(page, 'runPivot', 'blind', ['a'])
+        await ingestEverything(page)
+
+        await expect(pane(page)).toHaveCount(0)
+        expect(await dockHeight(page)).toBe(before)
+    })
+
+    test('reading the table during triage keeps the dock afterwards', async ({ page }) => {
+        await load(page, { pivots: ['blind'] }, DOCK_SHUT)
+        await harness(page, 'runPivot', 'blind', ['a'])
+        const borrowed = await dockHeight(page)
+
+        // Looking at another pane is a reason of its own for the region to be open, so
+        // the loan is off — closing the review pane must not shut the table they chose.
+        await page.locator('.pvt-dock-tab[data-tab="table"]').click()
+        await expect(page.locator('.pvt-table-row').first()).toBeVisible()
+        await page.locator('.pvt-dock-tab[data-tab="pivot-triage"]').click()
+
+        await ingestEverything(page)
+
+        await expect(pane(page)).toHaveCount(0)
+        expect(await dockHeight(page)).toBe(borrowed)
+        await expect(page.locator('.pvt-table-row').first()).toBeVisible()
     })
 
     test('a pane emptied by an ingest stays while a re-run waits in it', async ({ page }) => {
