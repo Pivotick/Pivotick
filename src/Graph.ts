@@ -140,6 +140,9 @@ export class Graph {
         if (this.options.pivotRimBadge) {
             this.pivots.rimBadge = this.options.pivotRimBadge
         }
+        if (this.options.pivotMarkUnsaved === true) {
+            this.pivots.markUnsaved = true
+        }
         this.options.pivots?.forEach(pivot => this.pivots.register(pivot))
         this.UIManager = new UIManager(this, appContainer, UIManagerOptions)
         // Declared facets carry the accessor/predicate/matchMode the engine matches

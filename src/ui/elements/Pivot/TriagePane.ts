@@ -124,6 +124,8 @@ export class TriagePane {
     private pageRows: PivotCandidate[] = []
     /** Whether the "rejected earlier" list is open — C5's inspectable suppression. */
     private showSuppressed = false
+    /** True between the click on *save* and its outcome, so it cannot be pressed twice. */
+    private saving = false
     /** Containers showing what they hold. Survives a sort, a filter and a page turn. */
     private readonly expanded = new Set<string>()
     /** Live only while the tab is on show: a hidden pane rebuilding is invisible work. */
@@ -421,6 +423,24 @@ export class TriagePane {
             line.appendChild(reveal)
         }
 
+        // What this provider has already landed and not written back. Here rather than
+        // in the footer: the footer acts on the rows still staged, and these have left
+        // the set — they are on the canvas, waiting on a different decision.
+        const pending = this.deps.pivots.unsavedCount(this.pivotId)
+        const unsaved = pending.nodes + pending.edges
+        if (unsaved) {
+            line.appendChild(text('span', '·', 'pvt-triage-dot'))
+            line.appendChild(text('span', `${fmt(unsaved)} unsaved`, 'pvt-triage-seg-static'))
+            const save = document.createElement('button')
+            save.type = 'button'
+            save.className = 'pvt-triage-link'
+            save.textContent = this.saving ? 'saving…' : 'save'
+            save.disabled = this.saving
+            save.title = 'Write this provider\'s ingested results back to the source system'
+            save.addEventListener('click', () => void this.save())
+            line.appendChild(save)
+        }
+
         line.appendChild(text('span', '', 'pvt-triage-spacer'))
         const subtitle = set.origin.length
             ? `${fmt(set.origin.length)} origin ${set.origin.length === 1 ? 'node' : 'nodes'}`
@@ -432,6 +452,23 @@ export class TriagePane {
         wrap.appendChild(line)
         if (this.showSuppressed) wrap.appendChild(this.suppressedList())
         return wrap
+    }
+
+    /**
+     * Write back everything this provider has ingested and not yet saved — its runs
+     * only, so a Save here cannot write another provider's work. The outcome and any
+     * retry are the manager's toast.
+     */
+    private async save(): Promise<void> {
+        if (this.saving) return
+        this.saving = true
+        this.paint()
+        try {
+            await this.deps.pivots.save(this.pivotId)
+        } finally {
+            this.saving = false
+            this.paint()
+        }
     }
 
     /**

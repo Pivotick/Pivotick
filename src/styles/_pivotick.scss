@@ -473,6 +473,14 @@ dl.pvt-property-list {
     }
 }
 
+// A pivot brought this node in and it has not been written back yet
+// (`pivotMarkUnsaved`). A dashed rim rather than a colour: the palette is the
+// consumer's to mean what they want, and provisional is what a dashed edge already
+// says everywhere else on the canvas. Override the variable, or the rule.
+.pvt-node-unsaved > .node {
+    stroke-dasharray: var(--pvt-node-unsaved-dasharray, 4 3);
+}
+
 .pvt-edge-group {
     path {
         filter: var(--pvt-edge-filter);

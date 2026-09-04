@@ -66,6 +66,14 @@ export class PivotPanel {
     private readonly trayCaution: HTMLElement
     private readonly noMatches: HTMLElement
 
+    /* ---------- the unsaved ledger, live only while something is waiting ---------- */
+
+    private readonly saveBar: HTMLElement
+    private readonly saveCount: HTMLElement
+    private readonly saveButton: HTMLButtonElement
+    /** True between the click and the outcome, so the button cannot be pressed twice. */
+    private saving = false
+
     private query = ''
     /**
      * Which pivots are ticked, by id. Deliberately not cleared when the filter changes:
@@ -144,7 +152,17 @@ export class PivotPanel {
         this.tray = el('div', 'pvt-pivot-tray')
         this.tray.append(this.trayCount, this.trayClear, this.trayRun, this.trayCaution)
 
-        this.root.append(this.originBlock, this.heading, this.filterBar, scroll, this.tray)
+        // What this session has brought in and not written back. Below the tray, and
+        // hidden whenever the number is zero: an always-present "0 unsaved" is a
+        // permanent reminder of nothing.
+        this.saveCount = el('span', 'pvt-pivot-unsaved-count')
+        this.saveButton = button('Write these back to the source system', () => void this.save())
+        this.saveButton.className = 'pvt-pivot-button pvt-pivot-button-primary'
+        this.saveBar = el('div', 'pvt-pivot-unsaved')
+        this.saveBar.append(this.saveCount, this.saveButton)
+        this.saveBar.hidden = true
+
+        this.root.append(this.originBlock, this.heading, this.filterBar, scroll, this.tray, this.saveBar)
 
         this.filterInput.addEventListener('input', () => {
             this.query = this.filterInput.value
@@ -162,10 +180,55 @@ export class PivotPanel {
         this.filterInput.addEventListener('keydown', event => this.onFilterKey(event))
 
         // A pivot registered or unregistered while the mode is open changes the list.
-        this.unsubscribe = this.uiManager.graph.pivots.on(change => {
+        const offPivots = this.uiManager.graph.pivots.on(change => {
             if (change === 'registry') this.rebuild()
             if (change === 'candidates') for (const entry of this.entries.values()) entry.refreshStaged()
+            if (change === 'registry' || change === 'runs' || change === 'save') this.paintUnsaved()
         })
+        // An undo takes a run's nodes off the canvas, and with them what a save would
+        // have sent — which the pivot bus never hears about.
+        const offHistory = this.uiManager.graph.history.on(() => this.paintUnsaved())
+        this.unsubscribe = () => { offPivots(); offHistory() }
+        this.paintUnsaved()
+    }
+
+    /**
+     * The ledger line: how much this session has pulled in and not written back, and
+     * the one gesture that writes it. Exact, unlike everything a provider advertises —
+     * it is a record of what the library did, not an estimate of what is out there.
+     *
+     * Elements from a pivot that declares no `save` are *not savable* rather than
+     * unsaved: they never reach this count, so it never shows a number with no remedy.
+     */
+    private paintUnsaved(): void {
+        const { nodes, edges } = this.uiManager.graph.pivots.unsavedCount()
+        const total = nodes + edges
+        this.saveBar.hidden = !total && !this.saving
+        if (this.saveBar.hidden) return
+
+        this.saveCount.textContent = `${fmt(total)} unsaved`
+        this.saveCount.title = edges
+            ? `${fmt(nodes)} ${nodes === 1 ? 'node' : 'nodes'} and ${fmt(edges)} ${edges === 1 ? 'edge' : 'edges'} this session's pivots brought in and have not written back`
+            : 'Brought in by a pivot this session, and not written back'
+        this.saveButton.textContent = this.saving ? 'Saving…' : 'Save'
+        this.saveButton.disabled = this.saving || !total
+    }
+
+    /**
+     * Write every unsaved run back. The outcome — including the retry for a partial
+     * write — is the manager's toast, so a save from the console reports itself the
+     * same way this button does.
+     */
+    private async save(): Promise<void> {
+        if (this.saving) return
+        this.saving = true
+        this.paintUnsaved()
+        try {
+            await this.uiManager.graph.pivots.save()
+        } finally {
+            this.saving = false
+            this.paintUnsaved()
+        }
     }
 
     public element(): HTMLElement {

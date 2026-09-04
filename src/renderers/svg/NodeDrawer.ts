@@ -90,6 +90,14 @@ export class NodeDrawer {
 
         this.badgeDrawer.render(theNodeSelection, node, resolveBadges(style, node, this.graph))
 
+        // Only a node a pivot run created and could still write can be unsaved: one
+        // whose pivot declares no `save` is not savable, and marking it would be a nag
+        // with no remedy.
+        if (this.graph.pivots.markUnsaved) {
+            const pivots = this.graph.pivots
+            theNodeSelection.classed('pvt-node-unsaved', pivots.isSavable(node) && !pivots.isSaved(node))
+        }
+
         if (this.rendererOptions.enableNodeExpansion && node.hasChildren()) {
             if (node.expanded) {
                 const cluster = this.clusterDrawer.render(theNodeSelection, node, () => {

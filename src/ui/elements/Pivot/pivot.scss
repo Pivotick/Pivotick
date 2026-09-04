@@ -1379,3 +1379,45 @@
     border-color: var(--pvt-theme-primary);
     background-color: color-mix(in srgb, var(--pvt-theme-primary) 8%, transparent);
 }
+
+// The unsaved ledger: what this session's pivots brought in and have not written
+// back, and the one gesture that writes it. Below the run tray, and away entirely
+// whenever the number is zero — a standing "0 unsaved" is a reminder of nothing.
+.pvt-pivot-unsaved {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 6px;
+    padding: 7px;
+    border: 1px solid var(--pvt-chrome-border);
+    border-radius: 9px;
+    background-color: var(--pvt-chrome-bg);
+
+    // An author `display` outranks the UA's `[hidden]` rule, so say it here too.
+    &[hidden] {
+        display: none;
+    }
+}
+
+.pvt-pivot-unsaved-count {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--pvt-text-color-5);
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+// The count beside the pane's own save link. Reads like the segments around it
+// without being a button, which the number is not.
+.pvt-triage-seg-static {
+    padding: 1px 6px;
+    color: var(--pvt-text-color-4);
+}
+
+.pvt-triage-link:disabled {
+    color: var(--pvt-text-color-4);
+    text-decoration: none;
+    cursor: default;
+}

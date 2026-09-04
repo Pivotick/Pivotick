@@ -89,6 +89,18 @@ export interface GraphOptions {
     pivotRimBadge?: PivotRimBadge,
 
     /**
+     * Put a `pvt-node-unsaved` class on every node a pivot run created and has not
+     * written back yet, so a stylesheet can mark them.
+     *
+     * A class rather than a badge: the rim rations four corners and only two on the
+     * container nodes an enrichment produces, and a marker that pushes a declared
+     * potential off the rim costs more than it says. Off by default — the count in
+     * the Pivot panel is the surface that always tells the truth about this.
+     * @default false
+     */
+    pivotMarkUnsaved?: boolean,
+
+    /**
      * @private
      * Instance of a parent graph used in the context of collapsible nodes
      */

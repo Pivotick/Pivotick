@@ -218,6 +218,22 @@ export class GraphHistory implements GraphHistoryLike {
 
     /**
      * @private
+     * This entry has been written through to a backend. Not sealing: a creation still
+     * reverses, and the row simply says the canvas is the only thing the undo reaches.
+     *
+     * Called by {@link PivotManager} once a run's save has written the whole of it —
+     * a partial write leaves the row unmarked, because a warning that the backend
+     * keeps it would be false for the part that never got there.
+     */
+    public markPersisted(entryId: string): void {
+        const record = this.records.find(entry => entry.id === entryId)
+        if (!record || record.persisted) return
+        record.persisted = true
+        this.notify()
+    }
+
+    /**
+     * @private
      * One pivot ingest. The entry's id **is** the run's, so an outcome addresses its
      * own row.
      */

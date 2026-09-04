@@ -1,18 +1,20 @@
-import type { Edge } from './Edge'
+import { Edge } from './Edge'
 import type { Graph } from './Graph'
 import type { RawEdge, RawNode } from './interfaces/GraphOptions'
 import type { IngestContext, IngestDecision } from './interfaces/InterractionCallbacks'
 import type {
     PivotCandidate, PivotCandidateEdge, PivotCandidateSet, PivotContext, PivotDefinition,
     PivotManagerLike, PivotNarrowing, PivotRefusal, PivotRimBadge, PivotRun, PivotRunOutcome,
-    PivotSummary,
+    PivotSaveContext, PivotSaveOutcome, PivotSavePayload, PivotSaveReport, PivotSummary,
 } from './interfaces/Pivot'
 import { SEED_SOURCE } from './interfaces/Pivot'
 import type { Node } from './Node'
 import { confirmModal } from './editing/PromptModal'
+import type { Notification, NotificationAction, NotificationHandle } from './ui/Notifier'
+import { NotificationLevel } from './ui/Notifier'
 
 /** What changed, so a surface can re-render only what it shows. */
-export type PivotChange = 'registry' | 'summarize' | 'candidates' | 'runs'
+export type PivotChange = 'registry' | 'summarize' | 'candidates' | 'runs' | 'save'
 
 /** How far unpositioned candidates are scattered around their origin. */
 const SEED_JITTER = 160
@@ -39,6 +41,13 @@ export class PivotManager implements PivotManagerLike {
      * virtualises. Override it through `pivotCandidateCeiling` in the graph options.
      */
     public candidateCeiling = 10_000
+
+    /**
+     * Whether a node a run created and has not written back carries a
+     * `pvt-node-unsaved` class. Set it through `pivotMarkUnsaved` in the graph
+     * options, or here to change it later.
+     */
+    public markUnsaved = false
 
     private _rimBadge: PivotRimBadge = 'per-pivot'
 
@@ -81,6 +90,29 @@ export class PivotManager implements PivotManagerLike {
     private readonly listeners = new Set<(change: PivotChange) => void>()
     /** How many times each pivot has landed a run, so two runs of one are told apart. */
     private readonly ordinals = new Map<string, number>()
+
+    /**
+     * Every run this session, by id — the ledger below hangs off these. Kept for the
+     * session rather than dropped with an undo: undoing a run takes its nodes off the
+     * canvas, and a redo puts the same nodes back, which must not present a saved run
+     * as unsaved and invite a second write of the same twelve objects. What is
+     * *pending* is computed against what is on canvas, so an undone run is already
+     * absent from every count without the record having to go.
+     */
+    private readonly runs = new Map<string, PivotRun>()
+    /** Which run created each node, and each edge — the ledger's key space. */
+    private readonly nodeRun = new Map<string, string>()
+    private readonly edgeRun = new Map<string, string>()
+    /** Written to the source system, and therefore not in any payload again. */
+    private readonly savedNodes = new Set<string>()
+    private readonly savedEdges = new Set<string>()
+    /** The id the source system minted, by local id, and the way back. */
+    private readonly canonical = new Map<string, string>()
+    private readonly aliases = new Map<string, string>()
+    /** Saves in flight, by run id: a second Save on the same run is a no-op, not a double write. */
+    private readonly saving = new Map<string, AbortController>()
+    /** How many times each run's save has been attempted. */
+    private readonly attempts = new Map<string, number>()
 
     private runSeq = 0
 
@@ -468,7 +500,12 @@ export class PivotManager implements PivotManagerLike {
      * Sort one fetch's results into candidates. Nothing here touches the graph: this
      * is exactly the point at which results are *not yet* data.
      */
-    private stage(set: PivotCandidateSet, result: { nodes: RawNode[], edges: RawEdge[] }): void {
+    private stage(set: PivotCandidateSet, fetched: { nodes: RawNode[], edges: RawEdge[] }): void {
+        // Before anything reads an id: a run that saved minted canonical ids upstream,
+        // and the next fetch returns those same objects under them. Translating here
+        // means dedup, the children union and the edge endpoints all see the ids the
+        // canvas actually holds, instead of each having to know about aliases.
+        const result = this.deAlias(fetched)
         set.loading = false
         set.fetched = result.nodes.length
 
@@ -691,6 +728,7 @@ export class PivotManager implements PivotManagerLike {
         const run: PivotRun = {
             runId,
             pivotId,
+            origin: set.origin,
             nodeIds: [],
             childIds: [],
             edgeIds: [],
@@ -700,6 +738,7 @@ export class PivotManager implements PivotManagerLike {
             nodes: [],
             edges: [],
             at: Date.now(),
+            saved: 0,
         }
         const landedNodes: Node[] = []
         const landedEdges: Edge[] = []
@@ -820,8 +859,16 @@ export class PivotManager implements PivotManagerLike {
         if (run.nodeIds.length || run.edgeIds.length || run.vouchedNodeIds.length || run.vouchedEdgeIds.length) {
             const ordinal = (this.ordinals.get(pivotId) ?? 0) + 1
             this.ordinals.set(pivotId, ordinal)
+            // After the batch, so the run's ids are known — which means the nodes have
+            // already been drawn once, as not-savable, and have to be asked again.
+            this.enrol(run)
+            this.repaintUnsaved()
             this.graph.history.recordPivotRun(run, this.get(pivotId)?.label ?? pivotId, ordinal)
             this.notify('runs')
+            // After the run is announced and the outcome is on its way back: the write
+            // is the analyst's business only if it fails, and holding the canvas for a
+            // slow backend would make an automatic save feel like a slow ingest.
+            if (this.defs.get(pivotId)?.autoSave) void this.save(run.runId)
         }
         this.notify('candidates')
 
@@ -832,6 +879,355 @@ export class PivotManager implements PivotManagerLike {
             edges: landedEdges,
             deduped: deduped.length,
             suppressed: set.suppressed,
+        }
+    }
+
+    // --- saving ------------------------------------------------------------------------
+
+    /**
+     * Write ingested runs back out to the systems their pivots speak to: one run, or
+     * every savable run with something still unsaved.
+     *
+     * The library contributes the bookkeeping, not the transport — which elements a
+     * run created, which of them have been written, and what a retry should carry.
+     * The write itself is {@link PivotDefinition.save}'s, and a pivot that declares
+     * none is skipped entirely rather than counted as failing.
+     *
+     * Runs go one at a time: a backend being written to is not helped by six parallel
+     * batches, and a sequential pass makes the report exact.
+     *
+     * @param target A run id for one run, a pivot id for every unsaved run of that
+     * pivot, or nothing for all of them.
+     */
+    public async save(target?: string): Promise<PivotSaveReport> {
+        return this.runSave(target)
+    }
+
+    /**
+     * The save itself, with the toast it should rewrite rather than stack on top of,
+     * and what earlier attempts on that toast already wrote — which together are what
+     * make `Saved 9 of 12 — Retry` become `Saved 12` rather than `Saved 3`.
+     */
+    private async runSave(
+        target?: string,
+        toast?: NotificationHandle,
+        sofar: { nodes: number, edges: number } = { nodes: 0, edges: 0 },
+    ): Promise<PivotSaveReport> {
+        const targets = this.targeted(target)
+
+        const report: PivotSaveReport = {
+            runs: 0, savedNodes: 0, savedEdges: 0, pendingNodes: 0, pendingEdges: 0, errors: [],
+        }
+        let message: string | undefined
+
+        for (const run of targets) {
+            // Already being written by an earlier click: asking twice is not a reason
+            // to send the same batch twice.
+            if (this.saving.has(run.runId)) continue
+            const before = this.pending(run)
+            if (!countOf(before)) continue
+
+            report.runs++
+            const outcome = await this.write(run, before)
+            if (outcome.error !== undefined) report.errors.push({ runId: run.runId, error: outcome.error })
+            message = outcome.message ?? message
+
+            report.savedNodes += outcome.nodes
+            report.savedEdges += outcome.edges
+            const after = this.pending(run)
+            report.pendingNodes += after.nodes.length + after.children.length
+            report.pendingEdges += after.edges.length
+        }
+
+        if (report.runs) {
+            this.notify('save')
+            this.repaintUnsaved()
+            this.reportSave(report, message, target, toast, sofar)
+        }
+        return report
+    }
+
+    /**
+     * Which runs a target names. A run id addresses one run; a pivot id addresses
+     * every unsaved run that pivot has landed, which is what a triage pane's own Save
+     * means — its provider may have been ingested more than once. The two never
+     * collide: a run id is `<pivotId>#<n>`.
+     */
+    private targeted(target?: string): PivotRun[] {
+        if (!target) return this.unsaved()
+        const run = this.runs.get(target)
+        if (run) return this.savable(run) ? [run] : []
+        return this.unsaved().filter(candidate => candidate.pivotId === target)
+    }
+
+    /** Savable runs with elements still on canvas and not yet written. */
+    public unsaved(): PivotRun[] {
+        return [...this.runs.values()].filter(run => this.savable(run) && countOf(this.pending(run)) > 0)
+    }
+
+    /** What a Save would send — across every savable run, or one pivot's. */
+    public unsavedCount(pivotId?: string): { nodes: number, edges: number } {
+        let nodes = 0
+        let edges = 0
+        for (const run of this.unsaved()) {
+            if (pivotId && run.pivotId !== pivotId) continue
+            const pending = this.pending(run)
+            nodes += pending.nodes.length + pending.children.length
+            edges += pending.edges.length
+        }
+        return { nodes, edges }
+    }
+
+    /**
+     * Written to the source system. `false` both for an element still waiting and for
+     * one whose pivot can never write it anywhere — {@link isSavable} is the question
+     * that tells those two apart.
+     */
+    public isSaved(element: Node | Edge): boolean {
+        return element instanceof Edge ? this.savedEdges.has(element.id) : this.savedNodes.has(element.id)
+    }
+
+    /** Whether this element came from a run whose pivot declares a `save`. */
+    public isSavable(element: Node | Edge): boolean {
+        const runId = (element instanceof Edge ? this.edgeRun : this.nodeRun).get(element.id)
+        const run = runId ? this.runs.get(runId) : undefined
+        return !!run && this.savable(run)
+    }
+
+    /** The id the source system assigned this element, when it assigned one. */
+    public canonicalId(element: Node | Edge): string | undefined {
+        return this.canonical.get(element.id)
+    }
+
+    /**
+     * Take a landed run into the ledger. Every element it created is keyed to it, so
+     * the questions the surfaces ask — is this saved, can it ever be, what would a
+     * retry send — are all a lookup rather than a scan.
+     *
+     * An element belongs to exactly one run: a later run that finds it already on
+     * canvas vouches for it instead of creating it, so the two never contend for it.
+     */
+    private enrol(run: PivotRun): void {
+        this.runs.set(run.runId, run)
+        for (const id of [...run.nodeIds, ...run.childIds]) this.nodeRun.set(id, run.runId)
+        for (const id of run.edgeIds) this.edgeRun.set(id, run.runId)
+    }
+
+    /** Whether this run's pivot is still registered and can write at all. */
+    private savable(run: PivotRun): boolean {
+        return typeof this.defs.get(run.pivotId)?.save === 'function'
+    }
+
+    /**
+     * What this run still has to write: its own created elements, minus the ones
+     * already written, minus the ones no longer on the canvas.
+     *
+     * The canvas check is what makes an undone run cost nothing — its nodes are gone,
+     * so it has nothing pending — while leaving the record intact for the redo that
+     * brings them back.
+     */
+    private pending(run: PivotRun): { nodes: Node[], children: Node[], edges: Edge[] } {
+        const live = (ids: string[]): Node[] => ids
+            .filter(id => !this.savedNodes.has(id))
+            .map(id => this.graph.getMutableNode(id))
+            .filter((node): node is Node => !!node)
+        return {
+            nodes: live(run.nodeIds),
+            children: live(run.childIds),
+            edges: run.edgeIds
+                .filter(id => !this.savedEdges.has(id))
+                .map(id => this.graph.getMutableEdge(id))
+                .filter((edge): edge is Edge => !!edge),
+        }
+    }
+
+    /** One run's write, and what the consumer said about it. */
+    private async write(
+        run: PivotRun,
+        pending: { nodes: Node[], children: Node[], edges: Edge[] },
+    ): Promise<{ nodes: number, edges: number, message?: string, error?: unknown }> {
+        const def = this.defs.get(run.pivotId)
+        if (!def?.save) return { nodes: 0, edges: 0 }
+
+        const attempt = (this.attempts.get(run.runId) ?? 0) + 1
+        this.attempts.set(run.runId, attempt)
+
+        const payload: PivotSavePayload = {
+            runId: run.runId,
+            pivotId: run.pivotId,
+            origin: run.origin,
+            nodes: pending.nodes,
+            children: pending.children,
+            edges: pending.edges,
+            vouched: {
+                nodes: run.vouchedNodeIds
+                    .map(id => this.graph.getMutableNode(id))
+                    .filter((node): node is Node => !!node),
+                edges: run.vouchedEdgeIds
+                    .map(id => this.graph.getMutableEdge(id))
+                    .filter((edge): edge is Edge => !!edge),
+            },
+            attempt,
+        }
+
+        const controller = new AbortController()
+        this.saving.set(run.runId, controller)
+        const context: PivotSaveContext = { graph: this.graph, pivotId: run.pivotId, signal: controller.signal }
+
+        let outcome: PivotSaveOutcome
+        try {
+            outcome = await def.save(payload, context)
+        } catch (error) {
+            return { nodes: 0, edges: 0, error }
+        } finally {
+            if (this.saving.get(run.runId) === controller) this.saving.delete(run.runId)
+        }
+
+        return this.record(run, payload, outcome)
+    }
+
+    /**
+     * Write the outcome into the ledger. Anything the consumer did not name stays
+     * unsaved, and an id naming an element this run did not create is ignored — a
+     * pivot never writes what it did not produce, so it cannot report it written.
+     */
+    private record(
+        run: PivotRun,
+        payload: PivotSavePayload,
+        outcome: PivotSaveOutcome,
+    ): { nodes: number, edges: number, message?: string } {
+        const sent = {
+            nodes: new Set([...payload.nodes, ...payload.children].map(node => node.id)),
+            edges: new Set(payload.edges.map(edge => edge.id)),
+        }
+        const whole = outcome === undefined || outcome === true
+        if (outcome === false) return { nodes: 0, edges: 0 }
+
+        const detail = whole ? undefined : outcome as Exclude<PivotSaveOutcome, void | boolean>
+        const nodeIds = whole ? [...sent.nodes] : (detail?.savedNodeIds ?? []).filter(id => sent.nodes.has(id))
+        // Taken at face value even where the endpoints did not save: what the source
+        // system says it wrote is not the library's to overrule.
+        const edgeIds = whole ? [...sent.edges] : (detail?.savedEdgeIds ?? []).filter(id => sent.edges.has(id))
+
+        for (const id of nodeIds) this.savedNodes.add(id)
+        for (const id of edgeIds) this.savedEdges.add(id)
+
+        for (const [local, minted] of Object.entries(detail?.canonicalIds ?? {})) {
+            if (!sent.nodes.has(local) && !sent.edges.has(local)) continue
+            this.canonical.set(local, String(minted))
+            this.aliases.set(String(minted), local)
+        }
+
+        run.saved += nodeIds.length + edgeIds.length
+        // Only a run written whole can claim the history's `persisted` chip: a run
+        // that wrote 9 of 12 has not been persisted, and saying so would license an
+        // undo warning that is false for a quarter of it.
+        const after = this.pending(run)
+        if (!after.nodes.length && !after.children.length && !after.edges.length) {
+            this.graph.history.markPersisted(run.runId)
+        }
+        return { nodes: nodeIds.length, edges: edgeIds.length, message: detail?.message }
+    }
+
+    /**
+     * The result, and the retry when there is one to offer. The toast is the manager's
+     * rather than a surface's so that a save driven from the console reports itself the
+     * same way the panel's button does.
+     */
+    private reportSave(
+        report: PivotSaveReport,
+        message: string | undefined,
+        target?: string,
+        toast?: NotificationHandle,
+        sofar: { nodes: number, edges: number } = { nodes: 0, edges: 0 },
+    ): void {
+        // Everything this toast has stood for, not just the latest attempt: an analyst
+        // who retried twice wants to read what is written, not to add up three toasts.
+        const total = { nodes: sofar.nodes + report.savedNodes, edges: sofar.edges + report.savedEdges }
+        const saved = total.nodes + total.edges
+        const pending = report.pendingNodes + report.pendingEdges
+        const detail = message ?? errorText(report.errors[0]?.error)
+
+        /** The retry takes over the toast it was clicked on, so one toast tracks one save. */
+        const retry: NotificationAction = {
+            label: 'Retry',
+            onClick: handle => {
+                handle.update({ title: 'Saving…', message: undefined, action: null })
+                void this.runSave(target, handle, total)
+            },
+        }
+
+        const result: Pick<Notification, 'level' | 'title' | 'message' | 'action'> = !pending
+            ? {
+                level: NotificationLevel.Success,
+                title: `Saved ${countText(total.nodes, total.edges)}`,
+                message: undefined,
+                action: undefined,
+            }
+            : !saved
+                ? {
+                    level: NotificationLevel.Danger,
+                    title: `Couldn't save ${countText(report.pendingNodes, report.pendingEdges)}`,
+                    message: detail ?? 'Nothing was written, and nothing left the canvas.',
+                    action: retry,
+                }
+                : {
+                    level: NotificationLevel.Warning,
+                    title: `Saved ${saved.toLocaleString()} of ${(saved + pending).toLocaleString()}`,
+                    message: detail ?? `${pending.toLocaleString()} still unsaved.`,
+                    action: retry,
+                }
+
+        if (toast && !toast.dismissed) {
+            // `null` rather than `undefined`: a spent Retry has to be taken off the
+            // toast, and omitting it would leave the one that is already there.
+            toast.update({ ...result, action: result.action ?? null })
+            return
+        }
+        this.graph.notifier?.notify(result.level, result.title, result.message, { action: result.action })
+    }
+
+    /**
+     * Repaint the nodes an unsaved marker would be on. Only when the option asked for
+     * one: without it the ledger is bookkeeping, and bookkeeping does not redraw.
+     */
+    private repaintUnsaved(): void {
+        if (!this.markUnsaved) return
+        for (const id of this.nodeRun.keys()) this.graph.getMutableNode(id)?.markDirty()
+        this.graph.renderer?.update(false)
+    }
+
+    /**
+     * Translate the ids a source system minted back to the ones the canvas holds.
+     * Without it the feature arms a bug of its own making: a run saves twelve objects,
+     * MISP assigns them UUIDs, tomorrow's re-run returns them under those UUIDs, and
+     * dedup — which only knows the ids the provider used the first time — offers
+     * twelve duplicates of nodes the analyst already has.
+     *
+     * Only the ids are rewritten, and only where there is an alias, so a provider that
+     * never mints anything pays a `Map` miss per row.
+     */
+    private deAlias(result: { nodes: RawNode[], edges: RawEdge[] }): { nodes: RawNode[], edges: RawEdge[] } {
+        if (!this.aliases.size) return result
+        const local = (id: unknown): string => this.aliases.get(String(id)) ?? String(id)
+
+        const node = (raw: RawNode): RawNode => {
+            const id = local(raw.id)
+            const children = raw.children?.map(node)
+            const same = id === String(raw.id)
+                && (!children || children.every((child, at) => child === raw.children?.[at]))
+            return same ? raw : { ...raw, id, ...(children ? { children } : {}) }
+        }
+        return {
+            nodes: result.nodes.map(node),
+            edges: result.edges.map(raw => {
+                const from = local(raw.from)
+                const to = local(raw.to)
+                if (from === String(raw.from) && to === String(raw.to)) return raw
+                // An edge with no id of its own is keyed on its endpoints, so rewriting
+                // them is also what keeps its key matching the one already on canvas.
+                return { ...raw, from, to }
+            }),
         }
     }
 
@@ -924,6 +1320,10 @@ export class PivotManager implements PivotManagerLike {
     /** @private Tear down: abort everything in flight and forget every listener. */
     public destroy(): void {
         this.cancel()
+        // The one place a save is aborted. Nothing is left that could report its
+        // outcome, so letting it run on would write into a graph that no longer exists.
+        for (const controller of this.saving.values()) controller.abort()
+        this.saving.clear()
         this.listeners.clear()
     }
 
@@ -1020,4 +1420,22 @@ export class PivotManager implements PivotManagerLike {
 function normaliseDecision(decision: IngestDecision): { accept: boolean, nodes?: RawNode[], edges?: RawEdge[] } {
     if (typeof decision === 'boolean') return { accept: decision }
     return decision ?? { accept: true }
+}
+
+/** How much a run has left to write. Children are nodes, and are counted as such. */
+function countOf(pending: { nodes: unknown[], children: unknown[], edges: unknown[] }): number {
+    return pending.nodes.length + pending.children.length + pending.edges.length
+}
+
+/** `12 nodes`, `12 nodes and 3 edges`, `3 edges` — whichever halves are non-zero. */
+function countText(nodes: number, edges: number): string {
+    const parts: string[] = []
+    if (nodes) parts.push(`${nodes.toLocaleString()} ${nodes === 1 ? 'node' : 'nodes'}`)
+    if (edges) parts.push(`${edges.toLocaleString()} ${edges === 1 ? 'edge' : 'edges'}`)
+    return parts.join(' and ') || 'nothing'
+}
+
+function errorText(error: unknown): string | undefined {
+    if (error === undefined) return undefined
+    return String((error as Error)?.message ?? error)
 }

@@ -77,6 +77,128 @@ export interface PivotDefinition {
      * `fetch` returns).
      */
     maxCandidates?: number
+    /**
+     * Write an ingested run's result back to the source system — the one half of the
+     * contract that is not read-only.
+     *
+     * Omit it and this pivot's results are *not savable*: they never enter the
+     * ledger, are never counted unsaved, and no Save appears for them. A pivot over
+     * derived data that could not be written anywhere should omit it rather than
+     * declare one that fails.
+     *
+     * Never called by the library on its own — an explicit
+     * {@link PivotManagerLike.save}, or {@link PivotDefinition.autoSave}. The
+     * consumer performs the write; the library only asks for it and records the
+     * answer.
+     */
+    save?: (payload: PivotSavePayload, ctx: PivotSaveContext) => PivotSaveOutcome | Promise<PivotSaveOutcome>
+    /**
+     * Write each run the moment it lands, with no gesture. For a pivot whose results
+     * are the source system's own data already — expanding an event into its
+     * objects — where saving is an update rather than a decision.
+     *
+     * The save runs after the ingest resolves rather than inside it, so a slow
+     * backend never holds up the canvas; its outcome is reported by the notifier.
+     * @default false
+     */
+    autoSave?: boolean
+}
+
+/**
+ * What the consumer is asked to write. Live graph objects rather than raw
+ * fragments, so the payload carries whatever the graph has made of them.
+ *
+ * A retry carries only what is still unsaved, which is why this is built fresh per
+ * attempt rather than kept with the run.
+ *
+ * @category Pivots
+ */
+export interface PivotSavePayload {
+    runId: string
+    pivotId: string
+    /** The nodes the pivot was run on — "which event does this attach to". */
+    origin: Node[]
+    /** Top-level nodes this run created and that are still unsaved. */
+    nodes: Node[]
+    /**
+     * Nodes this run added *inside* a container, flattened. Each one's container is
+     * reachable through {@link Node.parentNode}, so a payload can be grouped by
+     * parent without a second traversal.
+     */
+    children: Node[]
+    edges: Edge[]
+    /**
+     * Already on canvas before this run: vouched for, not created. Context only —
+     * writing these is the job of the run that produced them.
+     */
+    vouched: { nodes: Node[], edges: Edge[] }
+    /** 1 on the first attempt, incremented by each retry. */
+    attempt: number
+}
+
+/**
+ * Handed to {@link PivotDefinition.save} as the last argument. Mirrors
+ * {@link PivotContext} minus the narrowing concerns.
+ *
+ * `signal` is here so a write can be forwarded like any other request, but the
+ * library never aborts it except when the graph is destroyed: cancelling a write
+ * mid-flight leaves nobody knowing what happened, which is worse than waiting.
+ *
+ * @category Pivots
+ */
+export interface PivotSaveContext {
+    graph: Graph
+    pivotId: string
+    signal: AbortSignal
+}
+
+/**
+ * What {@link PivotDefinition.save} reports back.
+ *
+ * `void` or `true` means everything in the payload was written; `false` means none
+ * of it. An object reports a partial write — **anything not named is treated as
+ * still unsaved**, so a save that names nothing saved nothing. Throwing is
+ * equivalent to `false`, with the error surfaced in the retry toast.
+ *
+ * Ids naming an element this run did not create are ignored: a pivot never writes
+ * what it did not produce, so it cannot report it written either.
+ *
+ * @category Pivots
+ */
+export type PivotSaveOutcome =
+    | void
+    | boolean
+    | {
+        /** Covers both {@link PivotSavePayload.nodes} and its `children`. */
+        savedNodeIds?: string[]
+        /**
+         * Taken at face value, including for an edge whose endpoints did not save:
+         * what the source system says it wrote is not the library's to second-guess.
+         */
+        savedEdgeIds?: string[]
+        /** Ids the source system assigned, keyed by the local id. */
+        canonicalIds?: Record<string, string>
+        /** Shown verbatim in the result toast — why the rest did not save. */
+        message?: string
+    }
+
+/**
+ * What {@link PivotManagerLike.save} resolves with.
+ *
+ * Every count here is **exact**, unlike the advisory ones a provider advertises:
+ * this is a ledger of what the library asked for and was told, not an estimate.
+ *
+ * @category Pivots
+ */
+export interface PivotSaveReport {
+    /** How many runs were attempted. */
+    runs: number
+    savedNodes: number
+    savedEdges: number
+    /** Still unsaved after this attempt — what a retry would send. */
+    pendingNodes: number
+    pendingEdges: number
+    errors: Array<{ runId: string, error: unknown }>
 }
 
 /**
@@ -284,6 +406,11 @@ export interface PivotCandidateSet {
 export interface PivotRun {
     runId: string
     pivotId: string
+    /**
+     * The nodes the pivot was run on. Empty for an origin-less pivot, and what a
+     * save payload carries as "which event does this attach to".
+     */
+    origin: Node[]
     /** Top-level nodes this run added. */
     nodeIds: string[]
     /**
@@ -302,6 +429,13 @@ export interface PivotRun {
     nodes: RawNode[]
     edges: RawEdge[]
     at: number
+    /**
+     * How many of this run's elements have been written to the source system —
+     * nodes, children and edges together. A surface reads it to warn *before* an
+     * undo rather than after: undo takes things off the canvas and issues no
+     * compensating write, so what was saved stays saved upstream.
+     */
+    saved: number
     /**
      * What this ingest took out of the staged set. Only the newest ingest is ever
      * re-staged, so this is a record of what *could* be restored rather than a
@@ -370,6 +504,37 @@ export interface PivotManagerLike {
     invalidate(pivotId?: string, nodes?: Node[]): void
     /** Abort in-flight calls — one pivot's or all, and optionally only one kind. */
     cancel(pivotId?: string, kind?: 'summarize' | 'fetch'): void
+
+    // --- saving ------------------------------------------------------------------------
+
+    /**
+     * Write ingested runs back to their source systems. Runs go one at a time, and a
+     * run whose pivot declares no `save` is never among them.
+     *
+     * Each run is sent only what is still unsaved, so a retry is the same call.
+     *
+     * @param target A run id for one run, a pivot id for every unsaved run of that
+     * pivot, or nothing for all of them.
+     */
+    save(target?: string): Promise<PivotSaveReport>
+    /** Savable runs with elements still on canvas and not yet written. */
+    unsaved(): PivotRun[]
+    /**
+     * What a Save would send, exact rather than advisory. Narrowed to one pivot's
+     * runs when given an id — what a triage pane's own line counts.
+     */
+    unsavedCount(pivotId?: string): { nodes: number, edges: number }
+    /** Written to the source system. `false` for the unsaved *and* the not-savable. */
+    isSaved(element: Node | Edge): boolean
+    /** Whether this element belongs to a run whose pivot can write it anywhere. */
+    isSavable(element: Node | Edge): boolean
+    /**
+     * The id the source system assigned this element when it was saved, when it
+     * assigned one. The element keeps its own id — re-keying reaches into edges,
+     * clusters, selection, the query engine and the history — so
+     * `graph.getNode(canonicalId)` still misses and this is the read that does not.
+     */
+    canonicalId(element: Node | Edge): string | undefined
 }
 
 /**

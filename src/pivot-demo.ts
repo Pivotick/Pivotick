@@ -2,18 +2,22 @@
  * Pivot & enrichment dev page. `npm run dev`, then open `/pivot.html`.
  *
  * Not part of the library and not published: it exists so the pivot surfaces —
- * the rail mode, the narrowing panel, the triage pane, rim badges, run undo —
- * can be driven against providers that behave like real ones, including the ways
- * real ones misbehave.
+ * the rail mode, the narrowing panel, the triage pane, rim badges, run undo, the
+ * unsaved ledger — can be driven against providers that behave like real ones,
+ * including the ways real ones misbehave.
  *
- * The toolbar is the point. Latency, a forced failure and the ingest decision are
- * switchable while the page runs, so the states that normally need a broken
- * backend are one click away. `window.pivotick` is the graph, for the console.
+ * The toolbar is the point. Latency, a forced failure, the ingest decision and what
+ * a `save` does with the batch are all switchable while the page runs, so the states
+ * that normally need a broken backend are one click away. `window.pivotick` is the
+ * graph, for the console.
  */
 import { Pivotick } from './index'
 import type { Node } from './Node'
 import type { RawEdge, RawNode } from './interfaces/GraphOptions'
-import type { PivotContext, PivotDefinition, PivotNarrowing, PivotResult } from './interfaces/Pivot'
+import type {
+    PivotContext, PivotDefinition, PivotNarrowing, PivotResult,
+    PivotSaveContext, PivotSaveOutcome, PivotSavePayload,
+} from './interfaces/Pivot'
 import { expand, groupNodes, link, magnifyingGlass, nodeProperty, sparkles } from './ui/icons'
 
 declare global {
@@ -36,6 +40,10 @@ const knobs = {
      * panel under it live.
      */
     stageObjects: false,
+    /** What a `save` does with the batch it is handed. */
+    save: 'ok' as 'ok' | 'half' | 'throw' | 'mint',
+    /** Whether the container provider writes its runs back with no gesture. */
+    autoSave: false,
 }
 
 const aborted = (): DOMException => new DOMException('Aborted', 'AbortError')
@@ -64,6 +72,66 @@ async function answer<T>(kind: 'summarize' | 'fetch', ctx: PivotContext, produce
     await wait(knobs.latency, ctx.signal)
     if (knobs.fail === kind) throw new Error(`Forced ${kind} failure — dev toolbar`)
     return produce()
+}
+
+/* --------------------------------------------------------------- writing back */
+
+/**
+ * Ids this fake source system has assigned, by the id the provider first used.
+ * A real one does the same on every create, and it is what makes the *mint* knob
+ * worth having: without the library's aliases the next run offers duplicates of
+ * everything already saved.
+ */
+const minted = new Map<string, string>()
+
+/** What the source would return today: anything it has minted an id for wears it. */
+function asSourceSees(result: PivotResult): PivotResult {
+    if (!minted.size) return result
+    const out = (id: unknown): string => minted.get(String(id)) ?? String(id)
+    const node = (raw: RawNode): RawNode => ({
+        ...raw,
+        id: out(raw.id),
+        ...(raw.children ? { children: raw.children.map(node) } : {}),
+    })
+    return {
+        nodes: result.nodes.map(node),
+        edges: result.edges.map(raw => ({ ...raw, from: out(raw.from), to: out(raw.to) })),
+    }
+}
+
+/** Every `fetch` goes through here, so the whole page speaks the source's ids. */
+async function fetched(ctx: PivotContext, produce: () => PivotResult): Promise<PivotResult> {
+    return asSourceSees(await answer('fetch', ctx, produce))
+}
+
+/**
+ * The write half, shared by every provider that has one. The knob picks which of
+ * the four answers a real backend gives: all of it, some of it, none of it, or all
+ * of it under ids of the source system's own choosing.
+ */
+async function writeBack(payload: PivotSavePayload, ctx: PivotSaveContext): Promise<PivotSaveOutcome> {
+    await wait(knobs.latency, ctx.signal)
+    const nodes = [...payload.nodes, ...payload.children]
+
+    if (knobs.save === 'throw') throw new Error('Forced save failure — dev toolbar')
+    if (knobs.save === 'half') {
+        // Every other node, and none of the edges: the normal shape of a partial
+        // write, and what a Retry has to be able to pick up from.
+        const kept = nodes.filter((_, i) => i % 2 === 0)
+        return {
+            savedNodeIds: kept.map(node => node.id),
+            message: `${nodes.length - kept.length} refused by the server — dev toolbar`,
+        }
+    }
+    if (knobs.save === 'mint') {
+        for (const node of nodes) minted.set(node.id, `uuid-${node.id}`)
+        return {
+            savedNodeIds: nodes.map(node => node.id),
+            savedEdgeIds: payload.edges.map(edge => edge.id),
+            canonicalIds: Object.fromEntries(nodes.map(node => [node.id, `uuid-${node.id}`])),
+        }
+    }
+    return true
 }
 
 /* --------------------------------------------------------------- the canvas */
@@ -311,11 +379,12 @@ const correlations: PivotDefinition = {
         }
     }),
 
-    fetch: (nodes, narrowing, ctx) => answer('fetch', ctx, () => fanOut(
+    fetch: (nodes, narrowing, ctx) => fetched(ctx, () => fanOut(
         nodes,
         CORPUS.filter(record => matchesCorpus(record, narrowing)).map(record => asRawNode(record, 'correlations')),
         'correlated-with',
     )),
+    save: writeBack,
 }
 
 /** How far back the passive-DNS provider is asked to look. */
@@ -350,7 +419,7 @@ const passiveDns: PivotDefinition = {
         }],
     })),
 
-    fetch: (nodes, narrowing, ctx) => answer('fetch', ctx, () => {
+    fetch: (nodes, narrowing, ctx) => fetched(ctx, () => {
         const per = pdnsWindow(narrowing).count
         const result: PivotResult = { nodes: [], edges: [] }
 
@@ -379,6 +448,7 @@ const passiveDns: PivotDefinition = {
 
         return result
     }),
+    save: writeBack,
 }
 
 /** No `summarize` at all: one record, nothing to advertise, so a bare Run. */
@@ -388,7 +458,9 @@ const whois: PivotDefinition = {
     icon: nodeProperty,
     appliesTo: nodes => nodes.length === 1 && typeOf(nodes[0]) === 'domain',
 
-    fetch: (nodes, _narrowing, ctx) => answer('fetch', ctx, () => {
+    // No `save`: registration data is the registry's, not ours to write back. Its
+    // runs are *not savable* — never counted unsaved, and no Save offered for them.
+    fetch: (nodes, _narrowing, ctx) => fetched(ctx, () => {
         const domain = String(nodes[0].id)
         // An email already on the canvas for the evil.example domains, a fresh one
         // otherwise: the same pivot dedups or does not, depending on the origin.
@@ -409,9 +481,10 @@ const eventObjects: PivotDefinition = {
     label: 'Objects & attributes',
     icon: expand,
     get autoIngest() { return !knobs.stageObjects },
+    get autoSave() { return knobs.autoSave },
     appliesTo: nodes => nodes.length === 1 && typeOf(nodes[0]) === 'event',
 
-    fetch: (nodes, _narrowing, ctx) => answer('fetch', ctx, () => {
+    fetch: (nodes, _narrowing, ctx) => fetched(ctx, () => {
         const event = String(nodes[0].id)
         const container = `${event}-objects`
         return {
@@ -429,6 +502,7 @@ const eventObjects: PivotDefinition = {
             edges: [{ id: `objects:${event}`, from: event, to: container, data: { label: 'has-objects' } }],
         }
     }),
+    save: writeBack,
 }
 
 const searchHits = (narrowing: PivotNarrowing): CorrelationRecord[] => {
@@ -476,10 +550,11 @@ const searchSource: PivotDefinition = {
 
     // A tray of loose nodes: there is no origin to attach it to, and an edge to the
     // case node would be a claim the source never made.
-    fetch: (_nodes, narrowing, ctx) => answer('fetch', ctx, () => ({
+    fetch: (_nodes, narrowing, ctx) => fetched(ctx, () => ({
         nodes: searchHits(narrowing).slice(0, 200).map(record => asRawNode(record, 'search')),
         edges: [],
     })),
+    save: writeBack,
 }
 
 /** Two or more origins, and both kinds of triage row in one pane. */
@@ -493,7 +568,7 @@ const sharedInfra: PivotDefinition = {
         total: nodes.length - 1 + 2,
     })),
 
-    fetch: (nodes, _narrowing, ctx) => answer('fetch', ctx, () => {
+    fetch: (nodes, _narrowing, ctx) => fetched(ctx, () => {
         const first = String(nodes[0].id)
         // Both endpoints already on the canvas, so each of these is a triage row in
         // its own right — nothing else would stage it.
@@ -523,6 +598,7 @@ const sharedInfra: PivotDefinition = {
 
         return { nodes: hosts, edges }
     }),
+    save: writeBack,
 }
 
 const PIVOTS = [correlations, passiveDns, whois, eventObjects, searchSource, sharedInfra]
@@ -531,8 +607,8 @@ const PIVOTS = [correlations, passiveDns, whois, eventObjects, searchSource, sha
 const NOTES: Record<string, string> = {
     'correlations': 'facets with moving counts, and a cap only narrowing lifts (2,143 → under 250)',
     'passive-dns': 'one select facet, no cap, and a row that always dedups',
-    'whois': 'no summarize at all — the bare Run path',
-    'event-objects': 'autoIngest: a container carrying its own children, straight onto the canvas',
+    'whois': 'no summarize at all — the bare Run path, and no save either, so it is never counted unsaved',
+    'event-objects': 'autoIngest: a container carrying its own children, straight onto the canvas — and autoSave with the knob on',
     'search': 'origin: none — runs with nothing selected, narrowed by typed text',
     'shared-infra': 'two or more origins: edge-only rows, plus carried edges that are not rows',
 }
@@ -686,8 +762,10 @@ const paintStatus = (): void => {
     const marked = staged.reduce((sum, set) => sum
         + set.nodes.filter(candidate => candidate.state === 'marked').length
         + set.edges.filter(edge => edge.state === 'marked').length, 0)
+    const pending = graph.pivots.unsavedCount()
     status.textContent = `${staged.length} staged · ${rows} rows · ${marked} marked`
         + ` · ${graph.history.entries().length} entries`
+        + ` · ${pending.nodes + pending.edges} unsaved`
 }
 
 graph.pivots.on(paintStatus)
@@ -726,7 +804,36 @@ bar.append(
             graph.renderer.update(false)
         },
     )),
+    field('Save', select(
+        [
+            ['ok', 'writes everything'],
+            ['half', 'writes every other node'],
+            ['throw', 'refuses the batch'],
+            ['mint', 'writes, and renames'],
+        ],
+        knobs.save,
+        value => { knobs.save = value as typeof knobs.save },
+    )),
+    field('Auto-save', select(
+        [['off', 'on the gesture'], ['on', 'Objects writes itself']],
+        knobs.autoSave ? 'on' : 'off',
+        value => { knobs.autoSave = value === 'on' },
+    )),
+    field('Mark', select(
+        [['off', 'no unsaved class'], ['on', 'pvt-node-unsaved']],
+        graph.pivots.markUnsaved ? 'on' : 'off',
+        value => {
+            graph.pivots.markUnsaved = value === 'on'
+            for (const node of graph.getMutableNodes()) node.markDirty()
+            graph.renderer.update(false)
+        },
+    )),
     field('Ceiling', ceiling),
+    button('Save', 'graph.pivots.save() — write every unsaved run back', () => {
+        const pending = graph.pivots.unsavedCount()
+        if (!pending.nodes && !pending.edges) graph.notifier.info('Save', 'Nothing is waiting to be written')
+        else void graph.pivots.save()
+    }),
     button('Undo', 'graph.history.undo() — take the newest entry back', () => {
         if (!graph.history.undo().length) graph.notifier.info('Undo', 'Nothing left to undo')
     }),
@@ -738,11 +845,17 @@ bar.append(
         graph.notifier.info('Invalidate', 'Cached summaries dropped; re-enter Pivot mode to re-ask')
     }),
     button('Cancel', 'graph.pivots.cancel() — abort every call in flight', () => graph.pivots.cancel()),
-    button('Log', 'Dump the staged sets, the run log and the rejections to the console', () => {
+    button('Log', 'Dump the staged sets, the run log, the rejections and the ledger to the console', () => {
         console.log('staged', graph.pivots.staged())
         console.log('history', graph.history.entries())
         console.log('rejected', Object.fromEntries(
             PIVOTS.map(pivot => [pivot.id, graph.pivots.rejectedIds(pivot.id)]),
+        ))
+        console.log('unsaved', graph.pivots.unsaved(), graph.pivots.unsavedCount())
+        console.log('canonical', Object.fromEntries(
+            graph.getMutableNodes()
+                .map(node => [node.id, graph.pivots.canonicalId(node)])
+                .filter(([, canonical]) => canonical),
         ))
     }),
     button('Reload', 'Start over: rejection memory and the run log are session-only', () => location.reload()),
