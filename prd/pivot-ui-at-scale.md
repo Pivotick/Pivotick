@@ -1,6 +1,6 @@
-# Pivot UI at scale — findings from a real misp-modules backend
+# Pivot UI at scale — findings from a real enrichment backend
 
-**Status:** measured 2026-09-01; findings **1**, **2**, **4** and **5** were built
+**Status:** **Closed.** Measured 2026-09-01; findings **1**, **2**, **4** and **5** were built
 2026-09-02, finding **8** on 2026-09-03, and findings **6** and **7** on 2026-09-04,
 all marked below. Finding **3** is withdrawn — so every finding here is now closed.
 The measurements are left exactly as taken, so every number here describes the panel
@@ -9,9 +9,9 @@ The measurements are left exactly as taken, so every number here describes the p
 Observations only when written: nothing was decided here, and no library code was
 changed to produce the measurements.
 
-`/misp-modules.html` registers one pivot per expansion module a live
-[misp-modules](https://github.com/MISP/misp-modules) service advertises. Against
-the instance used here that is **118 pivots**, plus one meta-pivot, against a
+The measurements come from a dev page that registers one pivot per expansion
+module a live third-party enrichment service advertises. Against the instance
+used here that is **118 pivots**, plus one meta-pivot, against a
 23-node seed of real public indicators. The measurements below come from that
 page driven in a 1600×1000 viewport.
 
@@ -70,9 +70,9 @@ and the 1061px facet went with it. Nothing in the panel is unbounded now.
 
 ### 3. Nothing separates a provider that cannot work from one that can — *withdrawn*
 
-**This one does not survive contact with MISP.** A bare misp-modules service
-advertises every module whether or not it has credentials; MISP itself lists only
-what it has configured. Everything in a real panel works, so there is nothing to
+**This one does not survive contact with a real deployment.** A bare service
+advertises every module whether or not it has credentials; a configured host lists
+only what it can actually run. Everything in a real panel works, so there is nothing to
 separate. Kept here because the numbers below were the basis of an earlier
 recommendation, and the correction is the useful part.
 
@@ -91,7 +91,7 @@ which a real deployment hits constantly.
 
 ### 4. With no counts, the panel degrades to a button list — *shipped*
 
-misp-modules has no "how much is out there" endpoint — the only question it
+The service has no "how much is out there" endpoint — the only question it
 answers is the expensive one. So the per-module pivots declare no `summarize`,
 and with it go the advertised total, the narrowing facets and the cap. 118 of 119
 entries are bare Runs.
@@ -108,10 +108,10 @@ row whose primary button says *Run* rather than *Fetch*.
 
 ### 5. A 58-child container is one undifferentiated triage row — *shipped*
 
-`cve` on CVE-2021-44228 returns one MISP object carrying **58 attributes**. It
+`cve` on CVE-2021-44228 returns one container object carrying **58 attributes**. It
 stages as a single row labelled `vulnerability`. `TriagePane` never reads
 `raw.children`, so the analyst cannot see, count, or pick among what is inside
-before ingesting it. MISP objects are routinely this size.
+before ingesting it. Container objects are routinely this size.
 
 A child count in the row, and ideally an expandable row, would make the decision
 an informed one. (The page's `Objects: flattened` knob shows the alternative:
@@ -281,10 +281,10 @@ and 32 are `Lookup`; by vendor and you get 44 folders of which 40 hold exactly
 one; by what they return and 50 of the 118 declare nothing at all. A folder tree
 or a cascading menu inherits that, so neither is on the bench.
 
-**Splitting ready from unconfigured.** A bare misp-modules service advertises all
+**Splitting ready from unconfigured.** A bare service advertises all
 118 whether or not they have credentials, which made this look like the strongest
-option — 47 of 50 IP providers unusable. It is an artifact of the test rig: MISP
-never lists a module it has not configured. Everything in a real panel works, so
+option — 47 of 50 IP providers unusable. It is an artifact of the test rig: a
+configured host never lists a module it cannot run. Everything in a real panel works, so
 there is nothing to split, and #3 above is not a defect a real deployment has.
 
 ## Where each finding stands

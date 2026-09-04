@@ -2,16 +2,16 @@
 
 **Status:** Review findings, 2026-09-01, against `pivot-enrichment-interface.md` as of `8dfa4a6`.
 **How it was done:** every codebase claim in the PRD was verified against `src/`, the twenty-one
-decisions were each re-examined, and four gaps the PRD does not cover were put to Sami as
+decisions were each re-examined, and four gaps the PRD does not cover were raised as
 questions during the review — his answers are recorded in §2 and are ready to become D22–D25.
-**Outcome (2026-09-01, same day):** folded into the PRD with Sami's rulings. The four answers
+**Outcome (2026-09-01, same day):** folded into the PRD with the rulings. The four answers
 became **D22 (placement), D23 (dedup skips), D24 (hybrid edge triage)** and the rejection answer
 was folded into an amended D14 — numbering in the PRD differs from this doc's proposal. F1–F2,
 F4–F7 and F9–F11 plus the nits were applied as recommended; **F3 accepted with a refinement**
 (menu-open trigger, *and* a live `summarize` re-run when the selection changes while the menu
 stays open); **F4 strengthened** ("same pivot MUST be distinguishable" — runId recorded, and
 **D25** now ships pivot-scoped undo/redo on top of it, while the general history engine from
-`graph-app-b3-control-layout.md` §7 stays unbuilt: Sami's call is that data-modification undo
+`graph-app-b3-control-layout.md` §7 stays unbuilt: the ruling is that data-modification undo
 will likely never be needed, and candidates for operation-level undo — workspace, graph
 coarsening/reduction — don't exist yet); **F8** became §11's fourth open question.
 **Verdict:** the architecture holds. Two-phase summarise/fetch, candidates-not-graph, one batch
@@ -28,11 +28,11 @@ and naming fixes.
 The compact version of everything below:
 
 - **The design is right.** Count first, fetch narrow, stage results, let the analyst pick,
-  remember where things came from. That is what Maltego does and it is what MISP and AIL need.
+  remember where things came from. That is what Maltego does and it is what both backends need.
   Nothing here says "redesign".
 - **But the gate can't do its job as specified (F1).** The rule is "refuse to fetch above the
   cap, tell the analyst to narrow". Except `summarise` never hears about the narrowing — so
-  once the gate refuses, nothing can ever lift the refusal. The AIL walkthrough in the PRD
+  once the gate refuses, nothing can ever lift the refusal. The correlation walkthrough in the PRD
   (2,143 total, tick *URLs*, fetch 210) only works by accident of having a single facet with
   per-option counts. Fix: pass the narrowing to `summarise` too, same as `fetch`.
 - **The PRD never says where 200 new nodes land (answered).** They should appear around the
@@ -59,7 +59,7 @@ The compact version of everything below:
 
 ## 2. Gaps not covered by the PRD — answered during this review
 
-Four questions were put to Sami on 2026-09-01. The answers below are decisions, ready to be
+Four questions were raised on 2026-09-01. The answers below are decisions, ready to be
 absorbed into the PRD as D22–D25.
 
 **A1 (→D22) — Ingested nodes seed near their origin.**
@@ -90,7 +90,7 @@ creates the D7 contradiction in F2 below, which must be resolved the same way.
 Candidate edges ride along with their endpoint nodes (an edge lands iff both endpoints end up
 on canvas) — *except* edges whose endpoints are **all already on canvas**, which get their own
 triage rows. Without this, a link-discovery pivot — return correlations *between* nodes already
-on screen, a core AIL case — produces an empty node table and its edges silently auto-land,
+on screen, a core correlation case — produces an empty node table and its edges silently auto-land,
 which violates the staging principle. M2 note: don't force edge rows into the node table's
 columns; a separate section or toggle inside the triage tab is enough.
 
@@ -101,7 +101,7 @@ Ordered by how much they matter.
 **F1 — The narrowing gate cannot see the narrowed count. Make `summarise` narrowing-aware.**
 D4: above `maxCandidates` the UI refuses to fetch and says "narrow further". But
 `summarise(nodes, ctx)` takes no narrowing — so after the analyst narrows, there is no honest
-way to know the new count, and the refusal can never lift. The PRD's own AIL walkthrough
+way to know the new count, and the refusal can never lift. The PRD's own correlation walkthrough
 (total 2,143 > cap 2,000; tick *URLs*; fetch 210) only works because a single `multiselect`
 facet's option counts happen to be summable client-side; combine two facets, or narrow by
 `text` or `numberRange`, and no arithmetic over facet options can estimate anything.
@@ -119,7 +119,7 @@ level apart. *Change:* amend D7 to "new children added by id, matching ones left
 none removed". This is also the more defensible semantics: pivots discover *structure*;
 refreshing stale attributes is a data-sync concern that belongs to the deferred persistence
 PRD, not to ingest. Two clarifications D7 needs while it is being amended:
-- **Union recurses.** MISP nests event → objects → attributes, so the union must apply by id
+- **Union recurses.** An event platform nests event → objects → attributes, so the union must apply by id
   at every level of `RawNode.children`, not just the first.
 - **Provenance reaches children.** Union-added children must carry the source tag, and
   `removeBySource` must remove a child only its source vouches for — the PRD's own test list
@@ -131,7 +131,7 @@ PRD, not to ingest. Two clarifications D7 needs while it is being amended:
 "Selection counts as intent" is the one settled decision worth reopening. Selection in
 Pivotick is also the gesture for dragging, styling, bulk edit and delete — box-selecting fifty
 nodes to *move* them would fire every registered pivot's `summarise` against the backend, and
-AIL count queries are not free. Batching, debouncing and caching (all kept) reduce the waste;
+Count queries are not free. Batching, debouncing and caching (all kept) reduce the waste;
 they don't change that it is waste. *Change:* move the trigger one notch later — run
 `summarise` when the **pivot menu is first opened** for a selection. For the actual pivot
 gesture the difference is one spinner beat; for every other selection the cost drops to zero.
@@ -140,8 +140,8 @@ opt-in knob — the reverse migration (clawing back default backend chatter) is 
 D12 is untouched either way: rim badges stay declared-only.
 
 **F4 — Provenance can't distinguish two runs of the same pivot. Record a run id internally.**
-The provenance tag is the pivot id (D8), so running `ail-correlation` on node A today and node
-B tomorrow writes the same tag, and `removeBySource('ail-correlation')` removes both — "undo
+The provenance tag is the pivot id (D8), so running `correlation` on node A today and node
+B tomorrow writes the same tag, and `removeBySource('correlation')` removes both — "undo
 that enrichment" (§8) is actually "undo that enrichment *type*". That may be acceptable for
 v1's public surface, but D16 already keeps internal timestamped records precisely so richer
 history can be exposed additively later. *Change:* extend D16's internal record to
@@ -180,7 +180,7 @@ chosen, it should be §11's fourth open question rather than an M2 surprise.
 **F9 — `RawNode.expanded` is required; providers will curse it.**
 `RawNode` (`interfaces/GraphOptions.ts:73`) declares `expanded: boolean` with no `?`, so every
 provider returning 200 flat candidates must write `expanded: false` two hundred times — the
-PRD's own MISP example already has to. *Change:* make `expanded` optional, defaulting to
+PRD's own container example already has to. *Change:* make `expanded` optional, defaulting to
 `false`, as part of M1. Existing callers are unaffected (they all pass it today because they
 must).
 
@@ -190,11 +190,11 @@ run and ingested, and nothing reads it back. *Change:* define `setPotential(pivo
 explicit `clearPotential`) as removing the badge, and add `getPotential(pivotId?)`. Also worth
 one honest sentence in D12: a node with children has only **two** free rim corners (the expand
 affordance reserves East, `RendererOptions.ts` badges doc), so declared-potential badges will
-collapse into `+n` early on exactly the container nodes MISP cares about.
+collapse into `+n` early on exactly the container nodes that matter most.
 
 **F11 — Edge-layer provenance styling oversells slightly (D8/§9).**
 `edgeTypeAccessor` maps an edge to **one** string kind; provenance is a *set*, and consumers
-(MISP) may already key edge layers on domain relationship types. Styling-by-provenance
+(a consumer) may already key edge layers on domain relationship types. Styling-by-provenance
 therefore works only when the consumer dedicates the accessor to it and only for a chosen
 primary source. Fine as an opt-in pattern — but the PRD should say "can", not imply it comes
 for free alongside domain-typed layers.

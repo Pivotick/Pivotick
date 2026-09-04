@@ -55,7 +55,7 @@ when the answer is short.
 **D — Grouped for density.** Opens at the full 30 entries in five groups, newest expanded and
 the rest collapsed: 9 rows, no scrollbar. Groups break on an **idle gap** — more than 8 minutes,
 or 8 entries — rather than on clock buckets, because fixed buckets cut through the middle of a
-sweep while idle gaps cut where the analyst stopped. Derived group titles ("AIL sweep",
+sweep while idle gaps cut where the analyst stopped. Derived group titles ("Correlation sweep",
 "Cleanup") were built and thrown away: three of five came out "Mixed work". The contiguous rule
 is drawn rather than stated — one unbroken rail from the top of the list to the cursor, past
 collapsed headers and through sealed rows, ending in a dashed cut labelled `↑ reversed · ↓

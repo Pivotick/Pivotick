@@ -4,9 +4,8 @@
 [`pivot-enrichment-interface.md`](pivot-enrichment-interface.md) at `76fc4ad`. The PRD is the
 authority on *behaviour*; this brief is the authority on *what to show and explore*. Nothing
 here re-decides a D-numbered decision.
-**Owner:** Sami Mokaddem
-**Deliverable shape (Sami's call):** two phases. **Phase A** — a Claude Design canvas
-(artboards per surface, variant and state), reviewed with Sami. **Phase B** — the winning
+**Deliverable shape:** two phases. **Phase A** — a Claude Design canvas
+(artboards per surface, variant and state), reviewed. **Phase B** — the winning
 direction built as a single-page interactive HTML prototype with a fake provider, so the whole
 flow can be *felt*: menu → narrow → gate → fetch → triage → ingest → undo.
 
@@ -25,7 +24,7 @@ approved as drawn. Phase B builds the Pivot mode.
   consumer walkthroughs). When this brief and the PRD disagree, the PRD wins — and say so.
 - Where this brief says **explore**, produce the variants and argue a winner. Where it says
   **hard rule** (§5), every variant must satisfy it.
-- Ask Sami rather than guess, in short plain questions — one decision per question, no option
+- Ask rather than guess, in short plain questions — one decision per question, no option
   essays.
 - Run `npm run dev` and look at the real chrome before drawing anything. The gallery
   (`docs/`) has screenshots of every UI element in both themes.
@@ -47,8 +46,8 @@ Vocabulary the UI copy must keep straight (PRD §2): **pivot** = one runnable en
 awaiting triage, not in the graph; **ingest** = committing chosen candidates; **provenance** =
 which sources vouch for a node/edge.
 
-Two personas to design for, from the PRD: **AIL** (a node can have 2,000+ correlations —
-narrowing *is* the product) and **MISP** (expand an event into its 12 objects — one click,
+Two personas to design for, from the PRD: **a correlation engine** (a node can have 2,000+ correlations —
+narrowing *is* the product) and **an event platform** (expand an event into its 12 objects — one click,
 auto-ingest, undo).
 
 ## 2. The chrome this designs into
@@ -89,7 +88,7 @@ States: declared count (pill, `99+`), several pivots declaring on one node (coll
 early — containers only have two free corners), cleared (count 0 → badge gone).
 **Explore:** count vs. glyph-only; whether clicking the badge opens the pivot menu
 (machinery exists via badge `onClick` — a natural shortcut); tooltip copy ("~2,100
-correlations · AIL").
+correlations · correlation engine").
 
 ### 3.2 The pivot menu — the main exploration (D1, D4, D11)
 
@@ -111,8 +110,8 @@ re-summarize in flight must **dim the stale count, never blank it**.
 Narrowing controls: `text`, `select`, `multiselect` (options may carry counts), `numberRange`,
 `boolean`. **No regex widget here** — hard rule.
 
-**Variants — show the same AIL flow in all three, then argue a winner:**
-1. **Mode-rail tool panel** *(required by Sami)*. One tension this variant must answer
+**Variants — show the same correlation flow in all three, then argue a winner:**
+1. **Mode-rail tool panel** *(required)*. One tension this variant must answer
    honestly: tool panels are mode-scoped (Select/Create) and the library ships **no Enrich
    mode** (PRD §12) — so either the panel appears as a selection-scoped section under Select
    mode, or the library ships the panel *content* and a consumer's own rail mode mounts it.
@@ -177,10 +176,10 @@ row it can't stand behind.
 
 ## 4. Flows the Phase B prototype must walk
 
-1. **AIL narrowing, end to end:** select one node → open menu → ~2,143 vs cap 2,000 →
+1. **Correlation narrowing, end to end:** select one node → open menu → ~2,143 vs cap 2,000 →
    refusal → tick *URLs* → re-summarize → 210, under cap → fetch → triage → filter → select
    12 → ingest → nodes land around origin → toast → **Undo** → **Redo**.
-2. **MISP auto-ingest:** select an event node → run → 12 objects land as its children → toast
+2. **Container auto-ingest:** select an event node → run → 12 objects land as its children → toast
    → undo.
 3. **Bulk:** select 50 nodes → one aggregated summarize → the same narrowing flow.
 4. **Origin-less:** run the search pivot with nothing selected → triage → ingest at centre.
@@ -208,19 +207,19 @@ row it can't stand behind.
 
 Ship the prototype with an in-page fake provider — no network:
 
-- **`ail-correlation`** (triage): total ~2,143; facets `type: multiselect` {domain 1,800,
+- **`correlation`** (triage): total ~2,143; facets `type: multiselect` {domain 1,800,
   url 210, paste 95, ip 38} + `seen: numberRange`; `maxCandidates: 2000`; latency 400–900 ms;
   narrowed counts derived from the facet data so the gate genuinely lifts.
-- **`misp-event-objects`** (autoIngest): applies to single event nodes, returns a container
+- **`event-objects`** (autoIngest): applies to single event nodes, returns a container
   with 12 children.
 - **`oversized`**: returns 14,203 candidates, to demonstrate the ceiling refusal.
-- **`search-ail`** (origin-less): a query box, returns ~30 results.
+- **`search-archive`** (origin-less): a query box, returns ~30 results.
 - A **failure toggle** (next call rejects) and adjustable latency.
 - A visible **provider call log** panel (call name, args, cancelled/served) — it is how the
   zero-calls-on-selection rule and cancellation are *demonstrated* rather than claimed.
 
-The canvas in the prototype can be a simplified static SVG graph (a dozen nodes, one fat AIL
-node, one MISP event) — embedding the real library is optional, not required.
+The canvas in the prototype can be a simplified static SVG graph (a dozen nodes, one fat correlation
+node, one container event) — embedding the real library is optional, not required.
 
 ## 7. Deliverables and review checklist
 

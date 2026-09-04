@@ -94,7 +94,7 @@ Consolidated from four codebase maps. This is why M1 is mostly reorganization.
 | **Mode state machine** + `ModeRail` + contextual `ToolPanel` + `ViewFlyout` | The spine. No tri-mode exists today (only a binary "Edit Graph" toggle on `e`, `GraphToolbar.ts:71-103`). |
 | **Physics presets** (Tight / Loose / Default) | No preset concept exists; each is a named bundle calling the new setters. |
 | **Sidebar bulk-action row** | Relocate from `GraphToolbar`; wire Pin/Unpin/Hide/Delete; Group/Ungroup/Isolate/Bulk-edit disabled "SOON". |
-| **Future capabilities** (§7, not this effort) | undo/redo (no history engine at all), group/ungroup-to-cluster, isolate, path-select, interactive add-node, bulk-edit — all shipped as disabled "SOON" stubs. |
+| **Future capabilities** (§7, not this effort) | undo/redo (no history engine at the time — since delivered, see `undo-history.md`), group/ungroup-to-cluster, isolate, path-select, interactive add-node, bulk-edit — all shipped as disabled "SOON" stubs. |
 
 ## 5. Target architecture
 
@@ -156,7 +156,7 @@ The mockup surfaces six *new* graph capabilities that do not exist on `develop`.
 - **group / ungroup** — create/dissolve a cluster from a selection, reusing the collapse/expand infra + the ego-graph "+N Group" visual.
 - **bulk-edit** — property changes across a selection, generalizing the edit modal.
 - **path-select** — shortest path via `src/plugins/analytics/`.
-- **undo/redo** — a command/history stack over the mutation API (`addNode/addEdge`, `NodeEditSession.commit`, `NoteManager`, `queryEngine`, cluster ops), hooked to the existing disabled buttons and the `dataBatchChanged` event.
+- **undo/redo** — **delivered**, though not as the command stack sketched here: `undo-history.md` records what the canvas *holds* rather than every mutation, and deliberately leaves property edits out. `graph.history` plus both top-bar split buttons and their dropdown.
 
 ## 8. Backward compatibility (breaking — D9)
 

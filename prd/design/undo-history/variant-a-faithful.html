@@ -530,20 +530,20 @@ const POOL = {
   p1:{l:'ns1.evil-cdn', x:75, y:95, r:8, t:'b'},
   p2:{l:'ns2.evil-cdn', x:65, y:205,r:8, t:'b'},
   c3:{l:'phish-login.co',x:140,y:245,r:9, t:'c'},
-  m1:{l:'misp:2291',    x:100,y:340,r:8, t:'b'},
-  m2:{l:'misp:2318',    x:235,y:355,r:8, t:'b'},
+  m1:{l:'feed:2291',    x:100,y:340,r:8, t:'b'},
+  m2:{l:'feed:2318',    x:235,y:355,r:8, t:'b'},
   sh1:{l:'tcp/8080',    x:360,y:330,r:8, t:'b'},
   sh2:{l:'tcp/22',      x:435,y:350,r:8, t:'b'},
   c2:{l:'10.0.4.19',    x:490,y:310,r:9, t:'c'},
-  a1:{l:'ail:leak-114', x:440,y:145,r:8, t:'b'},
-  a2:{l:'ail:paste-77', x:485,y:245,r:8, t:'b'},
+  a1:{l:'corr:leak-114',x:440,y:145,r:8, t:'b'},
+  a2:{l:'corr:paste-77',x:485,y:245,r:8, t:'b'},
   v1:{l:'cdn-77.net',   x:490,y:85, r:8, t:'b'},
   v2:{l:'mx.evil.io',   x:495,y:175,r:8, t:'b'},
   v3:{l:'91.203.4.8',   x:405,y:70, r:8, t:'b'},
   c1:{l:'acme.org',     x:295,y:85, r:9, t:'c'},
-  b1:{l:'ail:leak-207', x:210,y:70, r:8, t:'b'},
-  b3:{l:'ail:corr-31',  x:275,y:250,r:8, t:'b'},
-  b4:{l:'ail:corr-32',  x:255,y:150,r:8, t:'b'}
+  b1:{l:'corr:leak-207',x:210,y:70, r:8, t:'b'},
+  b3:{l:'corr:31',      x:275,y:250,r:8, t:'b'},
+  b4:{l:'corr:32',      x:255,y:150,r:8, t:'b'}
 };
 const EDGES = [
   ['s1','s2',null],['s1','s3',null],['s2','s3',null],
@@ -560,18 +560,18 @@ const EDGES = [
    (delete/hide/unhide); undo reverses that. `sealed` entries are listed but
    never reversed. */
 const BASE = [
-  {id:'h1', kind:'pivot',  name:'AIL correlations',       n:'+3', time:'14:52', nodes:['b1','b3','b4']},
+  {id:'h1', kind:'pivot',  name:'Correlations',       n:'+3', time:'14:52', nodes:['b1','b3','b4']},
   {id:'h2', kind:'hide',   name:'Hid 2 nodes',                    time:'14:49', nodes:['sh2','v3']},
   {id:'h3', kind:'delete', name:'Deleted 2 nodes',                time:'14:47', nodes:['p1','m2']},
   {id:'h4', kind:'create', name:'Added “acme.org”',               time:'14:44', nodes:['c1'], sealed:true},
-  {id:'h5', kind:'pivot',  name:'VirusTotal resolutions', n:'+3', time:'14:41', nodes:['v1','v2','v3']},
+  {id:'h5', kind:'pivot',  name:'Reputation resolutions', n:'+3', time:'14:41', nodes:['v1','v2','v3']},
   {id:'h6', kind:'unhide', name:'Unhid 1 node',                   time:'14:38', nodes:['m1']},
-  {id:'h7', kind:'pivot',  name:'AIL correlations',       n:'+2', time:'14:33', nodes:['a1','a2']},
+  {id:'h7', kind:'pivot',  name:'Correlations',       n:'+2', time:'14:33', nodes:['a1','a2']},
   {id:'h8', kind:'create', name:'Added “10.0.4.19”',              time:'14:29', nodes:['c2']},
   {id:'h9', kind:'delete', name:'Deleted 1 node',                 time:'14:26', nodes:['p2']},
-  {id:'h10',kind:'pivot',  name:'Shodan services',        n:'+2', time:'14:22', nodes:['sh1','sh2']},
+  {id:'h10',kind:'pivot',  name:'Netscan services',        n:'+2', time:'14:22', nodes:['sh1','sh2']},
   {id:'h11',kind:'hide',   name:'Hid 1 node',                     time:'14:17', nodes:['m1']},
-  {id:'h12',kind:'pivot',  name:'MISP sightings',         n:'+2', time:'14:11', nodes:['m1','m2']},
+  {id:'h12',kind:'pivot',  name:'Feed sightings',         n:'+2', time:'14:11', nodes:['m1','m2']},
   {id:'h13',kind:'create', name:'Added “phish-login.co”',         time:'14:04', nodes:['c3'], sealed:true},
   {id:'h14',kind:'pivot',  name:'Passive DNS',            n:'+2', time:'13:58', nodes:['p1','p2']}
 ];
@@ -583,15 +583,15 @@ const PAD = [
   {id:'p17',kind:'delete', name:'Deleted 1 node',                 time:'13:41', nodes:['c1']},
   {id:'p18',kind:'unhide', name:'Unhid 3 nodes',                  time:'13:36', nodes:['m1','sh1','b3']},
   {id:'p19',kind:'create', name:'Added “13.55.2.9”',              time:'13:30', nodes:['c2'], sealed:true},
-  {id:'p20',kind:'pivot',  name:'Shodan services',        n:'+1', time:'13:24', nodes:['sh1']},
+  {id:'p20',kind:'pivot',  name:'Netscan services',        n:'+1', time:'13:24', nodes:['sh1']},
   {id:'p21',kind:'hide',   name:'Hid 1 node',                     time:'13:19', nodes:['a2']},
-  {id:'p22',kind:'pivot',  name:'MISP sightings',         n:'+3', time:'13:12', nodes:['m1','m2','b3']},
+  {id:'p22',kind:'pivot',  name:'Feed sightings',         n:'+3', time:'13:12', nodes:['m1','m2','b3']},
   {id:'p23',kind:'unhide', name:'Unhid 1 node',                   time:'13:06', nodes:['a2']},
   {id:'p24',kind:'delete', name:'Deleted 2 nodes',                time:'12:59', nodes:['v1','v2']},
-  {id:'p25',kind:'pivot',  name:'VirusTotal resolutions', n:'+1', time:'12:53', nodes:['v1']},
+  {id:'p25',kind:'pivot',  name:'Reputation resolutions', n:'+1', time:'12:53', nodes:['v1']},
   {id:'p26',kind:'create', name:'Added “ops-vpn.io”',             time:'12:48', nodes:['c3']},
   {id:'p27',kind:'hide',   name:'Hid 2 nodes',                    time:'12:41', nodes:['p1','p2']},
-  {id:'p28',kind:'pivot',  name:'AIL correlations',       n:'+4', time:'12:35', nodes:['b1','b3','b4','a1']},
+  {id:'p28',kind:'pivot',  name:'Correlations',       n:'+4', time:'12:35', nodes:['b1','b3','b4','a1']},
   {id:'p29',kind:'unhide', name:'Unhid 2 nodes',                  time:'12:28', nodes:['p1','p2']},
   {id:'p30',kind:'pivot',  name:'Passive DNS',            n:'+3', time:'12:20', nodes:['p1','p2','c3']}
 ];

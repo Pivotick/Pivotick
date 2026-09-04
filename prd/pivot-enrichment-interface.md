@@ -1,12 +1,11 @@
 # Feature — a pivot/enrichment interface: advertise, run, triage, ingest
 
-**Status:** Proposed — scoped with Sami over two passes (2026-08-31, 2026-09-01), a sanity-check review pass (2026-09-01, findings in [`pivot-enrichment-review.md`](pivot-enrichment-review.md)), and a Phase A design pass (2026-09-01, [`pivot-enrichment-ui-states.md`](pivot-enrichment-ui-states.md) and the artboards beside it). Twenty-seven decisions are taken (§6): D1–D15 in the first pass; D16–D21 plus an **amended D7** in the second; **D22–D25** in the review pass, which also amended D1, D4, D7, D8, D11, D12, D14, D16, D17 and D20; **D26** in the design pass, which chose the surface and reversed the §12 line on rail modes; and **D27**, which closed §11.4's triage concurrency when M1 landed. **M1, M1b and M2 are built** (2026-09-01) — see §10, §14, §15 and §17. Only **M3** — the Pivot rail mode, the badges and the docs — is left; §18 says where it starts.
-**Owner:** Sami Mokaddem
+**Status:** **Complete.** Scoped over two passes (2026-08-31, 2026-09-01), a sanity-check review pass (2026-09-01, findings in [`pivot-enrichment-review.md`](pivot-enrichment-review.md)), and a Phase A design pass (2026-09-01, [`pivot-enrichment-ui-states.md`](pivot-enrichment-ui-states.md) and the artboards beside it). Twenty-seven decisions are taken (§6): D1–D15 in the first pass; D16–D21 plus an **amended D7** in the second; **D22–D25** in the review pass, which also amended D1, D4, D7, D8, D11, D12, D14, D16, D17 and D20; **D26** in the design pass, which chose the surface and reversed the §12 line on rail modes; and **D27**, which closed §11.4's triage concurrency when M1 landed. **M1, M1b, M2 and M3 are all built** (2026-09-01) — §14, §15, §17 and §19 record each milestone as built, §19.6 what is left of §11, and §20 what was added after M3. Two halves this document deliberately leaves to others: saving an ingested run back ([`pivot-persistence.md`](pivot-persistence.md)), and the panel under a provider count no hand-written demo reaches ([`pivot-ui-at-scale.md`](pivot-ui-at-scale.md)).
 **Requested:** 2026-08-31
 **Area:** greenfield `src/PivotManager.ts` + `src/interfaces/Pivot.ts`, with touch points in `src/Graph.ts` (ingest, provenance, `dataBatchChanged`), `src/Node.ts` / `src/Edge.ts` (source tags), `src/interfaces/InterractionCallbacks.ts` (`onBeforeIngest`), `src/interfaces/Plugin.ts` (`addPivot`), `src/ui/elements/Dock/` + a new `src/ui/elements/Pivot/` (the triage pane and the Pivot rail mode), `src/interfaces/RendererOptions.ts` (declared-potential badges). Adds **public types** and a **new public option group**.
 **Type:** data-path capability + plugin API — a registry and an ingest pipeline, not a rewrite of anything.
-**Related:** [`plugin-rail-modes.md`](plugin-rail-modes.md) (D26 ships a **built-in, gated Pivot mode** through that machinery, reversing this PRD's earlier "the consumer ships the mode" line — a consumer with no pivots registered still sees no mode at all), [`archive/table-mode.md`](archive/table-mode.md) + [`archive/dock-tabs.md`](archive/dock-tabs.md) (the dock and the tab registry this triage pane rides on), `misp/declarative-filter-facets.md` (the facet vocabulary reused for narrowing), `misp/write-path-lifecycle-hooks.md` and `edge-create-veto-hook.md` (the before-hook / narrowing idiom mirrored by `onBeforeIngest`), `misp/edge-layers.md` (the carrier for edge provenance), [`graph-app-b3-control-layout.md`](graph-app-b3-control-layout.md) (its §7 roadmap holds the *general* undo/redo engine this PRD deliberately does not build — D25 ships pivot-run undo only, and the Mainheader's disabled undo/redo buttons stay unwired).
-**Supersedes:** `misp/async-children-provider.md` and `drag-in-node-staging.md`. Both attacked subsets of this problem — lazy cluster children, and a drag-in staging tray. Both stay **deferred**, and neither should be implemented ahead of this.
+**Related:** [`plugin-rail-modes.md`](plugin-rail-modes.md) (D26 ships a **built-in, gated Pivot mode** through that machinery, reversing this PRD's earlier "the consumer ships the mode" line — a consumer with no pivots registered still sees no mode at all), [`archive/table-mode.md`](archive/table-mode.md) + [`archive/dock-tabs.md`](archive/dock-tabs.md) (the dock and the tab registry this triage pane rides on), `declarative-filter-facets.md` (the facet vocabulary reused for narrowing), `write-path-lifecycle-hooks.md` and `edge-create-veto-hook.md` (the before-hook / narrowing idiom mirrored by `onBeforeIngest`), `edge-layers.md` (the carrier for edge provenance), [`graph-app-b3-control-layout.md`](graph-app-b3-control-layout.md) (its §7 roadmap held the *general* undo/redo engine this PRD deliberately did not build — D25 ships pivot-run undo only. That engine has since shipped under [`undo-history.md`](undo-history.md), which wires the Mainheader's buttons and re-stages an undone ingest).
+**Supersedes:** `async-children-provider.md` and `drag-in-node-staging.md`. Both attacked subsets of this problem — lazy cluster children, and a drag-in staging tray. Both stay **deferred**, and neither should be implemented ahead of this.
 
 ---
 
@@ -24,10 +23,10 @@ Pivotick today assumes the opposite: whatever you want on screen must already be
 
 Two consumers need the same thing and would otherwise each build it:
 
-- **MISP** — correlations and object references are the pivot point of the whole tool. An
+- **An event platform** — correlations and object references are the pivot point of the whole tool. An
   analyst lands on an event and wants to walk outwards through correlated events, then into
   their objects and attributes.
-- **AIL-Framework** — extensive correlation capability, and **a single node can carry 2000+
+- **A correlation engine** — extensive correlation capability, and **a single node can carry 2000+
   connections**. Ingesting them all is not merely slow, it is *useless*: an analyst cannot read
   a 2000-neighbour hairball.
 
@@ -129,11 +128,11 @@ forever.)
 
 **D2 — Array-shaped signatures from day one.**
 Both calls take `Node[]`; a single-node pivot is `[node]`. Bulk pivot on a selection is
-*essential*, not a later phase, and MISP/AIL must be able to serve it as **one** backend request
+*essential*, not a later phase, and both backends must be able to serve it as **one** backend request
 rather than fifty. Array-first also means bulk is not a breaking v2.
 
 **D3 — Narrowing replaces streaming. No streaming, no server cursor in v1.**
-The constraint is **backend** capability, not client support: MISP is AJAX-only, AIL may have
+The constraint is **backend** capability, not client support: one is AJAX-only, another may have
 websocket/event-stream. So the contract must never *require* progressive delivery. With
 `summarize` in front you never fetch 2000 — the analyst narrows to ~40 and one ordinary request
 serves it. Secondary reason streaming is wrong here anyway: a partially-arrived candidate set
@@ -156,14 +155,14 @@ the table's own behaviour over data already in hand. None of it appears in the p
 contract. Server-side cursor paging is a v2 escape hatch (§11).
 
 **D6 — The library ships the triage table; plugins only define pivots.**
-A filterable table of candidates is entirely domain-agnostic — identical for MISP and AIL — so
+A filterable table of candidates is entirely domain-agnostic — identical for either — so
 shipping it once is right, and it reuses the dock, `DockTab` and the facet machinery already
 built. This is consistent with, not contrary to, `plugin-rail-modes.md`: the *domain* knowledge
 (what a pivot is, what it returns) stays with the consumer; the generic surface does not.
 
 **D7 — Flat fragments and no re-parenting, but children union by id.** *(amended in pass 2 and the review pass)*
 A returned node **never** names an existing on-canvas parent: there is no `containedBy` field and
-no arbitrary re-parenting. MISP's collapsed-event case needs no new mechanism at all — the
+no arbitrary re-parenting. The collapsed-event case needs no new mechanism at all — the
 container arrives as a **new** node, and `RawNode.children?: RawNode[]`
 (`interfaces/GraphOptions.ts:73`) already nests.
 
@@ -174,7 +173,7 @@ to align with D23: an id collision is handled the same way at every level — pi
 *structure*; refreshing stale attributes is the deferred persistence PRD's business.) A child
 whose id names a node **already on canvas** is the same collision seen from below, and resolves
 the same way: the node on canvas is left untouched, and the container arrives without it. The union
-**recurses** — MISP nests event → objects → attributes — and union-added children **carry the
+**recurses** — an event platform nests event → objects → attributes — and union-added children **carry the
 source tag**, so `removeBySource` and run undo reach into containers and remove a child only its
 own sources vouch for. This is what makes re-pivoting a container work, and it fixes the
 invariant for the whole feature: **ingest is purely additive; removal happens only through
@@ -196,7 +195,7 @@ refactor, not this PRD, is where the good version of this belongs. Anything more
 would be written to be thrown away.
 
 **D8 — Provenance is a *set* of source tags, on nodes **and** edges, seed included.**
-A scalar `source` breaks the moment two pivots overlap — guaranteed with AIL correlations. Node
+A scalar `source` breaks the moment two pivots overlap — guaranteed with correlations. Node
 X can arrive from pivot A, then pivot B, and have been in the seed all along. Treating the seed
 as just another source (`'seed'`) makes removal one uniform rule: **drop the tag; delete only if
 the set is now empty.** Edge provenance is the load-bearing half (which pivot asserted this
@@ -241,12 +240,12 @@ Queried counts (D11) appear in the pivot menu, not on the rim. Otherwise a count
 one node the moment it is selected and the canvas looks inconsistent. One honest limit: a node
 with children has only **two** free rim corners (the expand affordance reserves the East side —
 `RendererOptions.ts` badges doc), so several declared-potential badges collapse into `+n` early,
-on exactly the container nodes MISP cares about. Acceptable — the menu is the full surface, the
+on exactly the container nodes that matter most. Acceptable — the menu is the full surface, the
 rim is a hint.
 
 **D13 — Auto-ingest is provider-declared.**
-Each pivot says whether its results land directly or open triage — MISP's expand-an-event
-auto-ingests 12 objects; AIL's correlations always triage. No library threshold: a magic number
+Each pivot says whether its results land directly or open triage — an expand-an-event pivot
+auto-ingests 12 objects; a correlation engine's always triage. No library threshold: a magic number
 would surprise someone, and the provider genuinely knows.
 
 **D14 — Rejections are explicit, remembered for the session, keyed per pivot.** *(amended in the review pass)*
@@ -275,7 +274,7 @@ The six below came out of the second scoping pass, which closed the first pass's
 The tension between "a timestamp is cheap now and awkward later" and "a set of strings is
 simpler" dissolves by separating storage from surface: keep internal records per node and edge —
 `Map<string, Array<{ runId: string, at: number }>>`, one entry per run that vouched — and expose
-`getSources(): string[]`. Two runs of the same pivot **must be distinguishable** (Sami, review
+`getSources(): string[]`. Two runs of the same pivot **must be distinguishable** (raised in the review
 pass): with the pivot-id tag alone, "undo that enrichment" silently means "undo that enrichment
 *type*", and D25's run-level undo is built on exactly these records. The timestamp exists for
 the deferred persistence PRD and for "what did this pivot add, and when", without a public
@@ -350,7 +349,7 @@ concern that belongs to the deferred persistence PRD.
 Candidate edges ride along with their endpoint nodes — an edge lands iff both its endpoints end
 up on canvas, and it is not itself a triage row. **Except** edges whose endpoints are *all
 already on canvas*: a pivot returning correlations *between* nodes already on screen is a core
-AIL case, and with follow-the-nodes semantics alone it would produce an empty triage table and
+correlation case, and with follow-the-nodes semantics alone it would produce an empty triage table and
 silently auto-land its edges, violating the staging principle. Such edge-only results get their
 own triage rows (M2 note: a separate section or toggle in the pane, not edge rows forced into
 the node table's columns).
@@ -362,7 +361,7 @@ children — and deletes whatever empties, the same uniform rule as `removeBySou
 another source vouches for survives, one record lighter. Redo re-lands the recorded delta
 exactly: no refetch, no re-gating (it already passed once). The stack is session-scoped and
 holds only pivot runs. Deliberately **not** built: the general command/history stack from
-`graph-app-b3-control-layout.md` §7 — Sami's call is that undo on plain data modification will
+`graph-app-b3-control-layout.md` §7 — the ruling is that undo on plain data modification will
 likely never be needed, and the operations that might want operation-level undo later
 (workspace switching, graph coarsening/reduction) do not exist yet. The Mainheader's disabled
 undo/redo buttons stay unwired; the surfaces are the API plus a post-ingest notifier action
@@ -375,14 +374,14 @@ The one below came out of the Phase A design pass (2026-09-01,
 which chose the surface after three earlier placements were drawn and rejected.
 
 **D26 — the library ships a Pivot rail mode, and it is absent unless a pivot exists.**
-*(reverses the §12 line below, Sami's call)*
+*(reverses the §12 line below)*
 The first pass said the consumer builds their own Enrich mode. Three placements were drawn against
 the real chrome before this was reversed: a section inside the Select tool panel (mode-scoped, so
 switching to Create to draw one edge discards a narrowing session), a popover on the selection
 (overlaps the dock by 168px at an ordinary anchor, no honest anchor for fifty nodes), and a tab in
 the selection sidebar — killed by measurement, since property rows are 61px and the sidebar scrolls
 as one column, putting the tab below the fold at **thirteen** properties, on exactly the
-attribute-heavy nodes MISP produces.
+attribute-heavy nodes such a backend produces.
 
 Pivot is therefore a **`kind: 'pointer'` rail mode**, not a flyout: only a pointer mode gets
 `tools` as a function re-read per render (the pivot list follows the origin), a `render()` slot for
@@ -404,7 +403,7 @@ never registered at all.
 
 ---
 
-The one below was taken when M1 landed and M2 was scoped (2026-09-01, Sami's call), closing
+The one below was taken when M1 landed and M2 was scoped (2026-09-01), closing
 §11.4.
 
 **D27 — one triage pane per pivot id.**
@@ -558,7 +557,7 @@ await graph.pivots.run(id)                  // an origin: 'none' pivot (D19)
 graph.pivots.invalidate(pivotId?: string, nodes?: Node[])
 
 // Provenance (D8) — string[] publicly, run-scoped timestamped records internally (D16)
-node.getSources(): string[]                 // e.g. ['seed', 'misp-correlation']
+node.getSources(): string[]                 // e.g. ['seed', 'correlation']
 node.hasSource(source: string): boolean
 edge.getSources(): string[]
 graph.removeBySource(source: string)        // drop tag; delete only when the set empties
@@ -574,11 +573,11 @@ node.getPotential(pivotId: string): number | undefined
 
 ## 8. What the consumer does
 
-**AIL — a correlation pivot on a 2000-connection node.** Narrowing is the whole point:
+**A correlation pivot on a 2000-connection node.** Narrowing is the whole point:
 
 ```ts
 const correlations: PivotDefinition = {
-    id: 'ail-correlation',
+    id: 'correlation',
     label: 'Correlations',
     appliesTo: nodes => nodes.every(n => n.getData()?.type !== 'note'),
     summarize: async (nodes, narrowing, { signal }) => {
@@ -616,12 +615,12 @@ An analyst selects the node, opens the pivot menu, sees **"~2,143 correlations �
 them down in the dock, and ingests 12 — which appear around the node they pivoted from (D22).
 Nothing else ever enters the graph.
 
-**MISP — expanding a correlated event, auto-ingesting because the result is small.** The
+**Expanding a correlated event, auto-ingesting because the result is small.** The
 container is a new node carrying its own children (D7):
 
 ```ts
 const expandEvent: PivotDefinition = {
-    id: 'misp-event-objects',
+    id: 'event-objects',
     label: 'Objects & attributes',
     appliesTo: nodes => nodes.length === 1 && nodes[0].getData()?.type === 'event',
     fetch: async ([node], _narrowing, { signal }) => {
@@ -639,7 +638,7 @@ const expandEvent: PivotDefinition = {
 **Undoing an enrichment**, which is what provenance buys — by pivot, or by run (D25):
 
 ```ts
-graph.removeBySource('ail-correlation')   // every run of that pivot; other vouchers survive
+graph.removeBySource('correlation')   // every run of that pivot; other vouchers survive
 graph.pivots.undo()                       // just the last run
 graph.pivots.redo()                       // changed your mind — lands identically, no refetch
 ```
@@ -717,7 +716,7 @@ findings are folded in (D22–D25 plus the amendments marked in §6). What remai
    an analyst re-pivots an expanded event; revisit with the cluster/children/subgraph refactor
    rather than pre-emptively here.
 3. **The 10,000 safety ceiling (D17) is a proposal, not a measurement.** Confirm it against a
-   real AIL payload; it is a knob, so being wrong is cheap. **Still not measured** — M2 shipped
+   real correlation payload; it is a knob, so being wrong is cheap. **Still not measured** — M2 shipped
    without it, since nothing in the pane depends on where the number sits, only on the refusal
    being honest when it is hit (T5, covered).
 4. ~~**Triage concurrency (from the review pass).**~~ **Closed by D27**: one pane per pivot id —
@@ -744,14 +743,15 @@ findings are folded in (D22–D25 plus the amendments marked in §6). What remai
   origin-less pivots (D19) — one pipeline, not two.
 - **Streaming or server-cursor providers** (D3, D5, D21).
 - **A general undo/redo history engine.** `graph-app-b3-control-layout.md` §7 keeps that
-  roadmap; D25 ships run-scoped undo for pivots only. Sami's call: undo on plain data
+  roadmap; D25 ships run-scoped undo for pivots only. The ruling: undo on plain data
   modification will likely never be needed, and the operations that might justify
   operation-level undo later (workspace switching, graph coarsening/reduction) don't exist
-  yet. The Mainheader's disabled undo/redo buttons stay unwired.
+  yet. *(Superseded: `undo-history.md` reversed this and shipped the engine, with the
+  data-modification exclusion intact.)*
 - ~~**Shipping an Enrich rail mode.** This PRD gives such a mode its vocabulary; the consumer ships
   the mode, per `plugin-rail-modes.md`.~~ **Reversed by D26**: the library ships a Pivot rail mode,
   gated so that it does not exist for a consumer with no pivots registered.
-- **Lazy cluster children** (`misp/async-children-provider.md`) and the **drag-in staging tray**
+- **Lazy cluster children** (`async-children-provider.md`) and the **drag-in staging tray**
   (`drag-in-node-staging.md`) — superseded, and not to be revived ahead of this.
 - Any query language of our own.
 
@@ -868,7 +868,7 @@ Nothing here reverses a D-numbered decision; each one is a hole the code had to 
 ### 14.2 What M1 found in the rest of the library
 
 - **`addNode` does not register a container's children in the graph's node map.** `_setData`
-  recurses into `children`, `addNode` does not — so an ingested MISP container has its 12 children
+  recurses into `children`, `addNode` does not — so an ingested container has its 12 children
   as `Node` objects (and expands correctly), but `getNodeCount()` does not see them. M1b touches
   this area; it is the right place to decide whether ingest should recurse.
 - **Adding nodes moves the graph even with `simulation.enabled: false`.** `Simulation.update()`
@@ -923,7 +923,7 @@ child-mutation API beside `setChildren`; `Graph.unionChildren`, `Graph.removeChi
   nothing and tags nothing: the child still belongs to the run that brought it, so undoing the
   merge leaves it alone and undoing its own run takes it away. The D8 guarantee, at child level.
 - **A child whose id is already on canvas is dropped, not landed** *(added 2026-09-04)*. This is
-  everyday MISP shape — `vulnerability_lookup` answers with an object containing the very CVE
+  an everyday shape — `vulnerability_lookup` answers with an object containing the very CVE
   that was pivoted on. Registering that child would have to displace the node on canvas, whose
   edges, position and simulation entry all belong to the object the graph already holds, so the
   container gives the child up instead. D23's rule for an id-matched candidate, one level down.
@@ -932,7 +932,7 @@ child-mutation API beside `setChildren`; `Graph.unionChildren`, `Graph.removeChi
 
 - **`Graph.addNode` did not register a container's children** in the node map, though `_setData`
   always has — and `ClusterDrawer.createSubgraph` looks each child up by id. So a container a
-  pivot ingested could not be expanded at all: the very end of the MISP walkthrough. `addNode`
+  pivot ingested could not be expanded at all: the very end of the container walkthrough. `addNode`
   now recurses, which is also why `getNodeCount()` after an auto-ingest is 1 + 12 rather than 1.
 - **`Graph.removeNode` on a container leaves its children behind** in the node map, and does not
   splice a child out of its parent's array. The pivot path routes around both through
@@ -1024,7 +1024,7 @@ relaxed in `Table/TableRowFilters.ts`.
   `^url 1[0-9]$` match nothing, which is a silent lie about the analyst's own pattern. Regex
   lives here and only here (D5): these rows are already in hand.
 - **Edge-only rows are drawn *above* the node table.** There are usually a handful of them
-  against hundreds of nodes, and under a full page of rows a core AIL result would never be
+  against hundreds of nodes, and under a full page of rows a core correlation result would never be
   seen at all. §5.5 fixed that they get their own section; it did not fix where.
 - **The pane brings itself to the front on its first appearance, and never again.** The
   analyst asked for the fetch, so its results should not wait behind the table — but a later
@@ -1213,9 +1213,49 @@ link simply has no tab to activate there.
    and the *Without an origin (n)* group is what they fold into once one is picked.
 2. **Inner positions reset on an expanded container's re-merge** — still open, still deliberately
    deferred to the cluster/children/subgraph refactor.
-3. **The 10,000 ceiling** — still a proposal, still not measured against a real AIL payload. M3
+3. **The 10,000 ceiling** — still a proposal, still not measured against a real correlation payload. M3
    changed only its reporting: an auto-ingest that hits it now says so.
 4. Closed by D27 during M1.
 
 Every milestone in §10 is built. What this PRD does not cover, and never intended to, is §12 —
 persistence above all, which is its own document.
+
+---
+
+## 20. Added after M3 (2026-09-04)
+
+D14 made a rejection session-scoped and keyed per `(pivotId, candidate id)`, and M2 built the
+memory. What it did not build was any way to *see* it: once the pane was closed, a suppressed
+candidate was invisible and the only route back was re-running the pivot to find the row again.
+Two changes close that, both additive.
+
+**The rejections are listed on the provider's own entry.** A pivot the session is holding
+something back for grows a list under it, one row per rejection, named as the triage table named
+it, with *restore* on each and *Restore all* beneath them. It outlives the pane, so a rejection
+can be reconsidered without spending a provider call to rediscover what it was.
+
+This needed the memory to keep more than an id. It stored bare ids, and a list of ids is not
+something a decision can be reconsidered from, so it now keeps the row beside the id it keys on:
+
+```ts
+interface PivotRejection {
+    id: string             // what suppresses the candidate on the next run
+    raw: RawNode | RawEdge // the row exactly as the provider returned it
+    label: string          // data.label, or the id when it had none
+}
+```
+
+**Two public methods**, alongside the `unreject` M2 already shipped:
+
+```ts
+graph.pivots.rejectedRows(pivotId)  // PivotRejection[], newest last
+graph.pivots.unrejectAll(pivotId)   // take back every one of them
+```
+
+**One bug went with it.** A run whose every row the session had already rejected reported itself
+as *already on canvas* — the dedup wording — because nothing distinguished "the provider returned
+nothing new" from "you turned all of this down before". The finished pane now names the
+rejections and opens the list holding them.
+
+Covered by tests in `pivot-mode.spec.ts` and `pivot-triage.spec.ts`, and documented in the
+triage section of `docs/pivots.md`.

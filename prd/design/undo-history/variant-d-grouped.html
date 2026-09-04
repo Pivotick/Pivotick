@@ -554,7 +554,7 @@ h1{font-size:19px;font-weight:650;margin:0 0 3px;letter-spacing:-.01em}
     <div class="note">
       <h3>Two runs are never one row</h3>
       <p>Every pivot row carries a global <b>run</b> number for its provider, the origin it was
-      run from, and its own node/edge counts and timestamp. Four AIL runs read as four different
+      run from, and its own node/edge counts and timestamp. Four CORR runs read as four different
       lines even when collapsed into the same group.</p>
       <p>All counts in this prototype are computed from the mock graph, not written by hand — the
       footer numbers are the real diff of the state the click would produce.</p>
@@ -628,22 +628,22 @@ const SEED_EDGES = ['n1-n2','n1-n3','n3-n4']
  * =================================================================== */
 const BASE_HISTORY = [
   {id:'a1',t:'11:05',kind:'pivot', provider:'Passive DNS',            origin:'n1', nodes:['n12','n20'],edges:['n1-n12','n1-n20','n12-n20']},
-  {id:'a2',t:'11:07',kind:'pivot', provider:'AIL correlations',       origin:'n1', nodes:['n6','n22'], edges:['n1-n6','n1-n22']},
+  {id:'a2',t:'11:07',kind:'pivot', provider:'Correlations',       origin:'n1', nodes:['n6','n22'], edges:['n1-n6','n1-n22']},
   {id:'a3',t:'11:09',kind:'create',node:'n21',origin:'n2', edges:['n2-n21']},
   {id:'a4',t:'11:11',kind:'hide',  nodes:['n20','n22']},
-  {id:'a5',t:'11:12',kind:'pivot', provider:'VirusTotal resolutions', origin:'n2', nodes:['n5','n7'],  edges:['n2-n5','n2-n7','n5-n7']},
+  {id:'a5',t:'11:12',kind:'pivot', provider:'Reputation resolutions', origin:'n2', nodes:['n5','n7'],  edges:['n2-n5','n2-n7','n5-n7']},
   {id:'a6',t:'11:14',kind:'delete',nodes:['n7']},
 
   {id:'b1',t:'13:47',kind:'pivot', provider:'Passive DNS',            origin:'n2', nodes:['n11'],      edges:['n2-n11','n5-n11']},
-  {id:'b2',t:'13:49',kind:'pivot', provider:'AIL correlations',       origin:'n3', nodes:['n10','n17'],edges:['n3-n10','n10-n17']},
+  {id:'b2',t:'13:49',kind:'pivot', provider:'Correlations',       origin:'n3', nodes:['n10','n17'],edges:['n3-n10','n10-n17']},
   {id:'b3',t:'13:51',kind:'create',node:'n8', origin:'n2', edges:['n2-n8'], sealed:true},
   {id:'b4',t:'13:53',kind:'delete',nodes:['n17','n21']},
-  {id:'b5',t:'13:55',kind:'pivot', provider:'MISP sightings',         origin:'n4', nodes:['n9'],       edges:['n4-n9','n9-n10']},
+  {id:'b5',t:'13:55',kind:'pivot', provider:'Feed sightings',         origin:'n4', nodes:['n9'],       edges:['n4-n9','n9-n10']},
   {id:'b6',t:'13:57',kind:'hide',  nodes:['n9','n11','n12']},
   {id:'b7',t:'13:58',kind:'unhide',nodes:['n11','n12']},
 
-  {id:'c1',t:'14:12',kind:'pivot', provider:'VirusTotal resolutions', origin:'n11',nodes:['n15','n16'],edges:['n11-n15','n15-n16']},
-  {id:'c2',t:'14:14',kind:'pivot', provider:'AIL correlations',       origin:'n10',nodes:['n18'],      edges:['n10-n18','n11-n18']},
+  {id:'c1',t:'14:12',kind:'pivot', provider:'Reputation resolutions', origin:'n11',nodes:['n15','n16'],edges:['n11-n15','n15-n16']},
+  {id:'c2',t:'14:14',kind:'pivot', provider:'Correlations',       origin:'n10',nodes:['n18'],      edges:['n10-n18','n11-n18']},
   {id:'c3',t:'14:16',kind:'delete',nodes:['n16','n22'], restore:{n22:'hidden'}},
   {id:'c4',t:'14:18',kind:'create',node:'n13',origin:'n8', edges:['n8-n13']},
   {id:'c5',t:'14:20',kind:'hide',  nodes:['n13']},
@@ -660,7 +660,7 @@ const BASE_HISTORY = [
   {id:'e1',t:'14:51',kind:'hide',  nodes:['n12','n13','n15']},
   {id:'e2',t:'14:52',kind:'delete',nodes:['n10','n18']},
   {id:'e3',t:'14:53',kind:'create',node:'n26',origin:'n11',edges:['n11-n26']},
-  {id:'e4',t:'14:55',kind:'pivot', provider:'AIL correlations',       origin:'n5', nodes:['n24','n25'],edges:['n5-n24','n24-n25','n5-n25']}
+  {id:'e4',t:'14:55',kind:'pivot', provider:'Correlations',       origin:'n5', nodes:['n24','n25'],edges:['n5-n24','n24-n25','n5-n25']}
 ]
 
 /* Derived, once: node lists, edge lists, run numbers, labels. */
@@ -1187,12 +1187,12 @@ function newAction(){
   if (absent.length) {
     const mint = absent.slice(0, 2).map(n => n.id)
     const origin = live[0].id
-    raw = { id:'x' + clock, t, kind:'pivot', provider:'AIL correlations', origin,
+    raw = { id:'x' + clock, t, kind:'pivot', provider:'Correlations', origin,
             nodes:mint, edges:mint.map(id => origin + '-' + id) }
   } else {
     raw = { id:'x' + clock, t, kind:'hide', nodes:live.slice(0, 2).map(n => n.id) }
   }
-  const runs = S.undo.filter(e => e.kind === 'pivot' && e.provider === 'AIL correlations').length
+  const runs = S.undo.filter(e => e.kind === 'pivot' && e.provider === 'Correlations').length
   const [e] = prepare([raw])
   if (e.kind === 'pivot') { e.run = runs + 1; e.detail = 'from ' + NODE[e.origin].l + ' · ' +
     e.nodes.length + ' node' + (e.nodes.length === 1 ? '' : 's') + ', ' + e.edges.length + ' edges' }

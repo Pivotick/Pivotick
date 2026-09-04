@@ -1,6 +1,6 @@
 # Feature — rail modes as a plugin extension point
 
-**Status:** **done** — grilled 2026-08-28, implemented 2026-08-31 on `worktree-plugin-rail-modes` (M1 `9b162c4`, M2 `de6aa0e`, M3 `ebe30e2`, gallery card `70df168`). Unmerged. One decision moved during the build: **D4's fallback was taken** — TypeDoc renders `(string & {})` as `string & object`, so `RailMode` is a plain `string`.
+**Status:** **done** — grilled 2026-08-28, implemented 2026-08-31 on `worktree-plugin-rail-modes` (M1 `9b162c4`, M2 `de6aa0e`, M3 `ebe30e2`, gallery card `70df168`), since merged into develop. One decision moved during the build: **D4's fallback was taken** — TypeDoc renders `(string & {})` as `string & object`, so `RailMode` is a plain `string`.
 **Owner:** Sami Mokaddem
 **Requested:** 2026-08-28
 **Area:** `src/ui/ModeStore.ts`, `src/ui/elements/ModeRail/`, `src/ui/elements/ToolPanel/`, `src/ui/elements/Flyout/`, `src/ui/UIManager.ts`, `src/interfaces/Plugin.ts`, `src/interfaces/GraphUI.ts`, `src/index.ts` + `src/docIndex.ts`. Touches **public types** (`RailMode` / `PointerMode` / `FlyoutMode`) and **removes a public option** (`UI.modeRail`).

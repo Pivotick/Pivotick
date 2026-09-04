@@ -1,11 +1,10 @@
 # Feature — pivot persistence: saving an ingested result back, and remembering rejections
 
-**Status:** **Built** 2026-09-04 on `worktree-undo-history`. The save half shipped whole; rejection persistence was **dropped** — Sami reversed P4 on 2026-09-04 (§6, P4′), taking S3 with it. §11.1 was settled the same day. What is here now describes what exists, with the two rulings and every implementation deviation recorded in §15.
-**Owner:** Sami Mokaddem
+**Status:** **Built** 2026-09-04. The save half shipped whole; rejection persistence was **dropped** — P4 was reversed on 2026-09-04 (§6, P4′), taking S3 with it. §11.1 was settled the same day. What is here now describes what exists, with the two rulings and every implementation deviation recorded in §15.
 **Requested:** 2026-09-01
 **Area:** `src/PivotManager.ts` (the save ledger and `save`), `src/interfaces/Pivot.ts` (`save` / `autoSave` on `PivotDefinition`, the save types), `src/ui/elements/Pivot/PivotPanel.ts` + `TriagePane.ts` (the unsaved count and the Save affordance), `src/ui/Notifier.ts` (the result and retry toasts — no change needed, see §4.3), `src/GraphHistory.ts` (`markPersisted`), `src/interfaces/GraphOptions.ts` (`pivotMarkUnsaved`), `src/renderers/svg/NodeDrawer.ts` (the unsaved class). Additive — no breaking changes to anything M1–M3 shipped.
 **Type:** data-path capability — a second half to the pivot pipeline (`summarize` → `fetch` → triage → **ingest** → **save**). The browser storage this document originally carried is gone (P4′).
-**Related:** [`pivot-enrichment-interface.md`](pivot-enrichment-interface.md) (D7, D8, D13, D14, D16, D23, D25 and D27 all constrain this document — it may not contradict them), `misp/write-path-lifecycle-hooks.md` and `edge-create-veto-hook.md` (the five gesture hooks, which already own persistence for everything a *user* does by hand — §4.1), `graph-workspaces-overview.md` + its unwritten PRD **C** `staging-overlay-and-promotion.md` (§10 rules on the collision — most of C has since been shipped under other names, and this document takes the rest of its save half), `view-state-serialization.md` (PRD A of that effort; the rejected alternative home for the rejection store, P4).
+**Related:** [`pivot-enrichment-interface.md`](pivot-enrichment-interface.md) (D7, D8, D13, D14, D16, D23, D25 and D27 all constrain this document — it may not contradict them), `write-path-lifecycle-hooks.md` and `edge-create-veto-hook.md` (the five gesture hooks, which already own persistence for everything a *user* does by hand — §4.1), `graph-workspaces-overview.md` + its unwritten PRD **C** `staging-overlay-and-promotion.md` (§10 rules on the collision — most of C has since been shipped under other names, and this document takes the rest of its save half), `view-state-serialization.md` (PRD A of that effort; the rejected alternative home for the rejection store, P4).
 
 ---
 
@@ -31,7 +30,7 @@ M1–M3 built the whole road up to the canvas and then stop there. An analyst ca
 correlations, narrow to 210, triage down to 12, ingest them with provenance and undo the run —
 and every bit of that is **local**. Close the tab and the twelve objects the analyst decided were
 real are gone, along with the 1,800 they decided were noise. The work that survives is the work
-the analyst redoes by hand, in MISP's own UI, from memory.
+the analyst redoes by hand, in the source system's own UI, from memory.
 
 Two halves of one problem, which is why they share a document (and why §12 of the parent PRD
 named them in one breath):
@@ -67,7 +66,7 @@ Extends the parent PRD's §2 (pivot / provider / candidates / ingest), which sta
 | Term | Meaning |
 |---|---|
 | **Save** | Writing an ingested result **out** of Pivotick, into the system the provider speaks to. The consumer performs it; the library asks for it and records the answer. |
-| **Source system** | Whatever the provider fetched from — MISP, AIL, a case management system. Pivotick never talks to it directly and holds no credentials. |
+| **Source system** | Whatever the provider fetched from — an event platform, a correlation engine, a case management system. Pivotick never talks to it directly and holds no credentials. |
 | **Unsaved** | An element a pivot run created that has not been confirmed written. A precise ledger, not an estimate. |
 | **Not savable** | An element whose pivot declared no `save`. It is never counted as unsaved — P5, which is what keeps the count honest. |
 | **Canonical id** | The id the source system assigns on save, which is usually **not** the id the provider used while it was a candidate (P8). |
@@ -92,7 +91,7 @@ pushing findings back into a repository is a separate, deliberate act.
 
 **Pivotick is structurally the second and wants one door to the first.** The graph is a workspace
 (candidates stage, undo is local — D25), the provider is read-only by contract (`fetch` returns
-data; nothing in M1–M3 writes anywhere), and MISP is a system with its own write API and its own
+data; nothing in M1–M3 writes anywhere), and a source system has its own write API and its own
 permission model. So the honest design is Maltego's — the canvas is not the database — with one
 explicit, analyst-triggered path back, which is what P2 chose. What Pivotick adds over Maltego is
 that the path back is *tracked*: the analyst can see what has crossed it and what has not.
@@ -165,7 +164,7 @@ any kind (D20 stands).
 
 ## 6. Decisions taken
 
-P1–P4 are Sami's answers to the four shaping questions (2026-09-01). P5–P13 are derived — each
+P1–P4 answer the four shaping questions (2026-09-01). P5–P13 are derived — each
 one is a consequence of those four meeting the built runtime, and each says which.
 
 **P1 — The library owns the ledger; the consumer owns the write.**
@@ -179,10 +178,10 @@ both bookkeeping, not transport. The rejected third option, full two-way sync, i
 **P2 — Save runs on an explicit gesture, with per-pivot opt-in to automatic.**
 The analyst clicks **Save**; a pivot may declare `autoSave: true` and have its runs written the
 moment they land. Default is explicit. Triage exists precisely because these results are not
-trusted (D4, D14) — writing into a shared MISP event unasked is the least defensible default in
+trusted (D4, D14) — writing into a shared event unasked is the least defensible default in
 the document, and an analyst who ingests twelve nodes to *look* at them has not decided anything
-about MISP yet. The opt-in exists because the symmetrical case is real and already has a name:
-D13's `autoIngest` for MISP's expand-an-event, where the objects are already MISP's own and
+about any of it yet. The opt-in exists because the symmetrical case is real and already has a name:
+D13's `autoIngest` for expand-an-event, where the objects are already the source system's own and
 "saving" them is a no-op or an update. `autoIngest: true` + `autoSave: true` is a legitimate,
 fully hands-off pivot.
 
@@ -196,7 +195,7 @@ hook in so many words (§4.1), and adding a second door would mean a consumer's 
 persisting twice or, worse, once through each door with different payloads. `graph.pivots.save()`,
 never `graph.save()`.
 
-**P4 — Remembered rejections live in `localStorage`, owned by the library.** *(Sami's ruling,
+**P4 — Remembered rejections live in `localStorage`, owned by the library.** *(Ruled,
 against this document's recommendation — recorded honestly on both sides.)*
 The case for it, which won: it works with **zero consumer code**. A consumer who registers one
 pivot gets rejection memory for free, and the alternative — a read/write hook — means every
@@ -218,10 +217,10 @@ an implementation obligation rather than an objection:
 
 Both are therefore built: `localStorage` is the **default implementation**, and P12 keeps the
 store swappable so a consumer with a server can supply their own without a breaking change. The
-default is what Sami chose; the seam is what stops the choice from being permanent.
+default is the one chosen; the seam is what stops the choice from being permanent.
 
-**P4′ — reversed, 2026-09-04. Rejection persistence is dropped entirely.** *(Sami, asked to
-settle §11.2's hashing question, answered the question above it instead.)*
+**P4′ — reversed, 2026-09-04. Rejection persistence is dropped entirely.** *(Asked to
+settle §11.2's hashing question, the answer settled the question above it instead.)*
 
 > "I'd definitely not put rejection in the local storage. A rejection is per-graph session, it
 > might not be a rejection in another graph/context."
@@ -246,7 +245,7 @@ the 1,800 the analyst dismissed today. The counter-argument that won is that "to
 Savability is declared, exactly as narrowing is (`summarize` omitted ⇒ no narrowing). Elements
 from a pivot with no `save` are *not savable* rather than *unsaved*: they never enter the ledger,
 never appear in a count, and the Save affordance does not exist for them. Without this rule an
-AIL correlation pivot that can never write anywhere would show a permanent, unfixable "210
+correlation pivot that can never write anywhere would show a permanent, unfixable "210
 unsaved" — a nag with no remedy, which trains the analyst to ignore the number that matters.
 
 **P6 — The unit of save is the run; the unit of record is the element.**
@@ -271,7 +270,7 @@ analyst already is. A *second* toast reports the result of a save, and that one 
 action for **Retry** when the save was partial. No notifier change is needed.
 
 **P8 — A save may mint ids, and the library records them as aliases.**
-Saving into MISP creates an object, and MISP assigns it a UUID that is not the provider's
+Saving into the source system creates an object, and it assigns a UUID that is not the provider's
 candidate id. Unhandled, this is a bug the feature itself creates: tomorrow's re-run returns the
 object under its *canonical* id, D23's dedup does not recognise it, and the analyst gets a
 duplicate of the node they saved yesterday. So `save` may return a `canonicalIds` map, and the
@@ -321,7 +320,7 @@ undo entirely). So the ledger drops with the run, the UI states plainly that sav
 the source system, and `PivotRun` gains a `saved` count so a surface can warn before the click
 rather than after it.
 
-**This is now the library's general rule, not this document's local one** *(settled with Sami
+**This is now the library's general rule, not this document's local one** *(settled
 2026-09-04; `undo-history.md` H6 was amended to match)*. The history and this document had
 reached opposite answers about the same condition — the element is in a backend. One rule
 replaced both, and it turns on the direction of the write: **undo always takes things off the
@@ -362,7 +361,7 @@ export interface PivotDefinition {
 export interface PivotSavePayload {
     runId: string
     pivotId: string
-    /** The nodes the pivot was run on — MISP's "which event does this attach to". */
+    /** The nodes the pivot was run on — the source system's "which event does this attach to". */
     origin: Node[]
     /** New nodes this run created, containers before their children (P6). */
     nodes: Node[]
@@ -458,13 +457,13 @@ aliases, which are pivot state, not node data, and stay off the data bus too.
 
 ## 8. What the consumer does
 
-**MISP — objects the analyst keeps become real objects in the event.**
+**the event platform — objects the analyst keeps become real objects in the event.**
 
 ```ts
 const objectPivot: PivotDefinition = {
-    id: 'misp-objects',
+    id: 'objects',
     label: 'Objects & attributes',
-    autoIngest: true,          // D13 — MISP's own data, no triage
+    autoIngest: true,          // D13 — the source system's own data, no triage
     autoSave: false,           // but writing back is still a decision (P2)
     fetch: (nodes, _n, ctx) => api.objects(nodes[0].id, { signal: ctx.signal }),
     save: async ({ origin, nodes, children, edges }, ctx) => {
@@ -481,20 +480,20 @@ const objectPivot: PivotDefinition = {
 }
 ```
 
-The second run of that pivot on the same event now returns the twelve objects under their MISP
+The second run of that pivot on the same event now returns the twelve objects under their the event platform
 UUIDs. Because P8 recorded the aliases, dedup recognises them and the analyst sees "12 already on
 canvas" instead of twelve duplicates — which is the whole reason `canonicalIds` exists.
 
-**AIL — a correlation pivot that cannot write, and says nothing about saving.**
+**the correlation engine — a correlation pivot that cannot write, and says nothing about saving.**
 
 ```ts
 const correlationPivot: PivotDefinition = {
-    id: 'ail-correlations',
+    id: 'correlations',
     label: 'Correlations',
     summarize: (nodes, narrowing, ctx) => api.count(nodes, narrowing, { signal: ctx.signal }),
     fetch: (nodes, narrowing, ctx) => api.correlations(nodes, narrowing, { signal: ctx.signal }),
     maxCandidates: 2000,
-    // no `save` — AIL's correlations are derived, not authored. P5: nothing is ever
+    // no `save` — these correlations are derived, not authored. P5: nothing is ever
     // reported as unsaved, and no Save button appears for this pivot's runs.
 }
 ```
@@ -503,7 +502,7 @@ const correlationPivot: PivotDefinition = {
 
 ```ts
 const objects: PivotDefinition = {
-    id: 'misp-objects',
+    id: 'objects',
     label: 'Objects & attributes',
     autoIngest: true,    // D13 — no triage
     autoSave: true,      // …and no gesture: saving these is an update, not a decision
@@ -567,7 +566,7 @@ accident.
 resolve them — it reports them:** W5 dropped undo/redo from the roadmap entirely, and D25 then
 shipped pivot-run undo/redo (deliberately, with the general history engine still refused). W4 made
 promotion async and vetoable through `onBeforePromote`; that hook now exists as `onBeforeIngest`.
-The umbrella says it "wins until amended". **It needs amending, and that is Sami's call, not this
+The umbrella says it "wins until amended". **It needs amending, and that is the owner's call, not this
 document's** — §11.5.
 
 ## 11. Open questions
@@ -595,12 +594,12 @@ document's** — §11.5.
    open. Nothing else does — not leaving Pivot mode, not a second Save (that is refused as a
    no-op rather than superseding the first). Cancelling a write mid-flight leaves nobody knowing
    what happened, and at `destroy()` there is nobody left to tell.
-5. **Amending the workspaces umbrella** (§10). **Done 2026-09-04**, on Sami's instruction: W4 and
+5. **Amending the workspaces umbrella** (§10). **Done 2026-09-04**, as instructed: W4 and
    W5 carry supersession notes, PRD D is marked superseded, and PRD C's remaining scope is
    narrowed to the two-tier store and the attribute merge policy.
 6. **Does the unsaved count belong on the rim?** Still open, and unchanged by what shipped:
    `pivotMarkUnsaved` is a class and an off-by-default option rather than a badge, because D12
-   already rations two free corners on exactly the container nodes MISP produces. The default
+   already rations two free corners on exactly the container nodes such a backend produces. The default
    style is a dashed rim, which costs no corner. If real use wants a badge, it should be designed
    against that constraint rather than bolted on.
 7. **Should the post-ingest toast offer Save?** New, and only askable now — see §15.9. The action

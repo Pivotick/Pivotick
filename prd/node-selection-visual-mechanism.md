@@ -1,6 +1,6 @@
 # Node selection: ring instead of fill-recolouring
 
-**Status:** done, on `worktree-selection-ring`. Cleared the 1.6 release gate.
+**Status:** done, since merged into develop. Cleared the 1.6 release gate.
 
 ## What changes
 

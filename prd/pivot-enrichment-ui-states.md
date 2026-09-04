@@ -10,18 +10,17 @@ amended the same day by **C16**: an ingest that empties a pane closes it.
 Groundwork in
 [`pivot-enrichment-ui-groundwork.md`](pivot-enrichment-ui-groundwork.md); behaviour in
 [`pivot-enrichment-interface.md`](pivot-enrichment-interface.md), which wins on any disagreement.
-**Owner:** Sami Mokaddem
 
 This is the surface-independent half of the design: every state each surface can be in, what
 takes it there, and the exact words. It re-decides no D-number; where it decides something the
 PRD left open it says so as a **C-number**, so those can be argued separately from the layouts.
 
-**Why it comes first.** The brief's §3.2 asks for the same AIL flow in three placements. If each
+**Why it comes first.** The brief's §3.2 asks for the same correlation flow in three placements. If each
 variant invents its own states and wording, they differ in a dozen incidental ways and the
 comparison stops being about placement — which is the only thing actually being chosen. So: this
 document fixes states and copy, the artboards vary placement, and Phase B implements this.
 
-**The surface, settled in round 2 (Sami's call).** Pivot is **its own rail mode** — a
+**The surface, settled in round 2.** Pivot is **its own rail mode** — a
 `kind: 'pointer'` mode with its own tools (*Pick origin*, *Lasso origin*), its own panel, and its
 own options. Two consequences run through everything below:
 
@@ -251,7 +250,7 @@ of the run's effects.
 
 **C8 — the tab label carries the pivot label only; the count lives in the pane header.** Not a
 preference: `DockTabHandle` has no `setLabel` (groundwork G2), so a live count in the tab would
-mean re-registering the tab and losing its state. If Sami wants `Correlations (210)` in the strip,
+mean re-registering the tab and losing its state. If `Correlations (210)` is wanted in the strip,
 that is a small library addition to spec, not a free choice.
 
 ---
@@ -298,7 +297,7 @@ potential"; a glyph says only "something", which the analyst must then open a me
 and consumes the click, so the node is not also selected — meaning the shortcut can be made to
 select the node *and* open the menu deliberately, rather than by accident.
 
-**C13 — badge tooltip copy is one self-contained line:** `~2,100 correlations · AIL`. It has to
+**C13 — badge tooltip copy is one self-contained line:** `~2,100 correlations · Correlations`. It has to
 stand alone because the automatic `+n` badge concatenates the hidden badges' titles one per line
 (`BadgeDrawer.ts`), so anything that reads as a fragment becomes gibberish when stacked.
 

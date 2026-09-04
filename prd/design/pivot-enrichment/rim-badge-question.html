@@ -215,7 +215,7 @@ figcaption {
     <span class="step-no">01</span>
     <h2>A badge is a provider saying &ldquo;there's more here&rdquo;</h2>
     <p>A provider can tell the graph how much it holds on a node without fetching any of it:</p>
-    <pre><code>node.setPotential('ail-correlations', 2143)</code></pre>
+    <pre><code>node.setPotential('correlations', 2143)</code></pre>
     <p>The graph draws that number on the node's corner. Click it and the Pivot panel opens on that provider. That is the whole feature as it stands today.</p>
     <figure>
         <div class="plate" data-fig="one"></div>
@@ -229,7 +229,7 @@ figcaption {
     <p><code>setPotential</code> takes a provider id. Two providers with something to say put two separate numbers on the node, each opening its own provider when clicked. A plain node has four corners, so four of them fit.</p>
     <figure>
         <div class="plate" data-fig="two"></div>
-        <figcaption>AIL 2,143 · Passive DNS 44</figcaption>
+        <figcaption>Correlations 2,143 · Passive DNS 44</figcaption>
     </figure>
 </section>
 
@@ -247,12 +247,12 @@ figcaption {
 <section class="step">
     <span class="step-no">04</span>
     <h2>Then the real service turned up</h2>
-    <p>misp-modules registers 118 providers, and 51 of them apply to a single <code>ip-src</code>. There is no arrangement of fifty-one numbers on four corners.</p>
+    <p>A real enrichment service registers 118 providers, and 51 of them apply to a single <code>ip-src</code>. There is no arrangement of fifty-one numbers on four corners.</p>
     <figure>
         <div class="plate" data-fig="swarm"></div>
         <figcaption>51 providers apply to one ip-src</figcaption>
     </figure>
-    <p>So the misp-modules page does not use badges at all. It invents one fake provider whose only job is to own a badge, and hangs a number off that. <strong>That workaround is finding 7.</strong></p>
+    <p>So the at-scale dev page does not use badges at all. It invents one fake provider whose only job is to own a badge, and hangs a number off that. <strong>That workaround is finding 7.</strong></p>
 </section>
 
 <section class="step settled">
@@ -278,7 +278,7 @@ figcaption {
     <span class="step-no">Open</span>
     <h2>When a node carries both kinds at once</h2>
     <p>This is the question I asked badly. Once the number above ships, a node can wear two <em>kinds</em> of badge: the per-provider ones from step 02, and the single one that belongs to no provider. The corners did not become more numerous. So which kind gets one?</p>
-    <p>All three rims below are the same node with the same declarations: <strong>AIL 2,143 · Passive DNS 44 · VirusTotal 12 · Shodan 3</strong>, plus a declared total of <strong>~2,202</strong>. It has children, so it has two corners.</p>
+    <p>All three rims below are the same node with the same declarations: <strong>Correlations 2,143 · Passive DNS 44 · Reputation 12 · Netscan 3</strong>, plus a declared total of <strong>~2,202</strong>. It has children, so it has two corners.</p>
 
     <div class="options">
         <div class="option pick">
@@ -296,7 +296,7 @@ figcaption {
                 <span class="tag">Option B</span>
                 <h3>Only ever the total</h3>
                 <p>The graph adds the per-provider numbers together and shows one badge, always. The simplest possible rim.</p>
-                <p class="cost">Cost: two providers on a plain node used to give a click straight into AIL. Now nothing does.</p>
+                <p class="cost">Cost: two providers on a plain node used to give a click straight into CORR. Now nothing does.</p>
             </div>
         </div>
         <div class="option">
@@ -305,7 +305,7 @@ figcaption {
                 <span class="tag">Option C</span>
                 <h3>The total takes what's left</h3>
                 <p>Per-provider badges keep their corners; the total appears only if a corner happens to be spare.</p>
-                <p class="cost">Cost: on a node with children it never appears at all — the exact node type MISP produces most.</p>
+                <p class="cost">Cost: on a node with children it never appears at all — the exact node type such a backend produces most.</p>
             </div>
         </div>
     </div>
@@ -433,20 +433,20 @@ function swarm(count) {
     return svg
 }
 
-const AIL = { text: '2k', title: 'AIL' }
+const CORR = { text: '2k', title: 'Correlator' }
 const PDNS = { text: '44', title: 'Passive DNS' }
-const VT = { text: '12', title: 'VirusTotal' }
-const SHODAN = { text: '3', title: 'Shodan' }
+const REP = { text: '12', title: 'Reputation' }
+const NETSCAN = { text: '3', title: 'Netscan' }
 const TOTAL = { text: '2.2k', title: 'everything' }
 
 const figures = {
-    one:   () => rim({ label: 'mail.evil.example', badges: [AIL] }),
-    two:   () => rim({ label: 'mail.evil.example', badges: [AIL, PDNS] }),
-    three: () => rim({ label: 'event-5f2a', children: true, badges: [AIL, PDNS, VT, SHODAN] }),
+    one:   () => rim({ label: 'mail.evil.example', badges: [CORR] }),
+    two:   () => rim({ label: 'mail.evil.example', badges: [CORR, PDNS] }),
+    three: () => rim({ label: 'event-5f2a', children: true, badges: [CORR, PDNS, REP, NETSCAN] }),
     swarm: () => swarm(51),
-    optA:  () => rim({ label: 'event-5f2a', children: true, badges: [TOTAL, AIL, PDNS, VT, SHODAN], width: 200, height: 140 }),
+    optA:  () => rim({ label: 'event-5f2a', children: true, badges: [TOTAL, CORR, PDNS, REP, NETSCAN], width: 200, height: 140 }),
     optB:  () => rim({ label: 'event-5f2a', children: true, badges: [TOTAL], width: 200, height: 140 }),
-    optC:  () => rim({ label: 'event-5f2a', children: true, badges: [AIL, PDNS, VT, SHODAN], width: 200, height: 140 }),
+    optC:  () => rim({ label: 'event-5f2a', children: true, badges: [CORR, PDNS, REP, NETSCAN], width: 200, height: 140 }),
 }
 
 for (const key in figures) {

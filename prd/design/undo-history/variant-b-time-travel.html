@@ -875,14 +875,14 @@ function realEntries() {
     return [
         E('pivot',  'Passive DNS',                  'from 88.12.4.9 · +2n 2e',            72, { owns: ['n7', 'n8'], edges: [['n1', 'n7'], ['n1', 'n8']] }),
         E('create', 'Added "vault.acme.io"',        'domain',                             64, { owns: ['n9'], sealed: true }),
-        E('pivot',  'AIL correlations',             'from acme-corp.net · +3n 3e',        58, { owns: ['n10', 'n11', 'n12'], edges: [['n2', 'n10'], ['n2', 'n11'], ['n2', 'n12']] }),
+        E('pivot',  'Correlations',             'from acme-corp.net · +3n 3e',        58, { owns: ['n10', 'n11', 'n12'], edges: [['n2', 'n10'], ['n2', 'n11'], ['n2', 'n12']] }),
         E('hide',   'Hid 2 nodes',                  'AS4134, ns1.acme-corp.net',          51, { owns: ['n6', 'n8'] }),
         E('delete', 'Deleted 1 node',               'paste-4d1',                          44, { owns: ['n10'] }),
         E('create', 'Added "admin@vault.acme.io"',  'email',                              39, { owns: ['n13'], sealed: true }),
-        E('pivot',  'VirusTotal hashes',            'from bd1f7a…a3 · +1n 1e',            33, { owns: ['n14'], edges: [['n4', 'n14']] }),
+        E('pivot',  'Reputation hashes',            'from bd1f7a…a3 · +1n 1e',            33, { owns: ['n14'], edges: [['n4', 'n14']] }),
         E('show',   'Unhid 2 nodes',                'AS4134, ns1.acme-corp.net',          27, { owns: ['n6', 'n8'] }),
         E('delete', 'Deleted 2 nodes',              't.me/acmeleak, leak-2411.csv',       21, { owns: ['n11', 'n12'] }),
-        E('pivot',  'AIL correlations',             'from vault.acme.io · +1n 1e',        16, { owns: ['n15'], edges: [['n9', 'n15']] }),
+        E('pivot',  'Correlations',             'from vault.acme.io · +1n 1e',        16, { owns: ['n15'], edges: [['n9', 'n15']] }),
         E('hide',   'Hid 3 nodes',                  'mail.acme…, dropper.exe, AS4134',    11, { owns: ['n7', 'n14', 'n6'] }),
         E('create', 'Added "c2.acme-vault.top"',    'domain',                              6, { owns: ['n17'] }),
         E('delete', 'Deleted 2 nodes',              'mail.acme…, ns1.acme-corp.net',       2, { owns: ['n7', 'n8'] })
@@ -893,10 +893,10 @@ function realEntries() {
 function padEntries() {
     return [
         E('create', 'Imported case file',       '6 nodes · 5 edges',                402, { owns: BASE.owns.slice(), sealed: true }),
-        E('pivot',  'Shodan services',          'from 88.12.4.9 · +2n 2e',          374, { owns: ['n18', 'n19'], edges: [['n1', 'n18'], ['n1', 'n19']] }),
+        E('pivot',  'Netscan services',          'from 88.12.4.9 · +2n 2e',          374, { owns: ['n18', 'n19'], edges: [['n1', 'n18'], ['n1', 'n19']] }),
         E('hide',   'Hid 4 nodes',              'low confidence',                   358, { owns: ['n3', 'n5', 'n18', 'n19'] }),
         E('show',   'Unhid 4 nodes',            'low confidence',                   341, { owns: ['n3', 'n5', 'n18', 'n19'] }),
-        E('pivot',  'MISP sightings',           'from acme-corp.net · +1n 1e',      320, { owns: ['n20'], edges: [['n2', 'n20']] }),
+        E('pivot',  'Feed sightings',           'from acme-corp.net · +1n 1e',      320, { owns: ['n20'], edges: [['n2', 'n20']] }),
         E('delete', 'Deleted 1 node',           '45.9.148.23 — duplicate host',     302, { owns: ['n19'] }),
         E('hide',   'Hid 2 nodes',              'out of scope',                     284, { owns: ['n6', 'n20'] }),
         E('create', 'Added "10.4.0.0/16"',      'cidr',                             266, { owns: ['n21'] }),
@@ -1356,8 +1356,8 @@ function showNotice(text) {
 const SPARES = ['s1', 's2', 's3', 's4'];
 const NEW_LABELS = [
     ['Passive DNS', 'from acme-corp.net · +1n 1e'],
-    ['AIL correlations', 'from acme-corp.net · +1n 1e'],
-    ['Shodan services', 'from acme-corp.net · +1n 1e'],
+    ['Correlations', 'from acme-corp.net · +1n 1e'],
+    ['Netscan services', 'from acme-corp.net · +1n 1e'],
     ['URLhaus lookup', 'from acme-corp.net · +1n 1e']
 ];
 

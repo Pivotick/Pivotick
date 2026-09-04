@@ -1,16 +1,14 @@
 # Feature — undo/redo with a history dropdown: taking back what the canvas holds
 
-**Status:** **Complete.** M1, M2 and M3 all shipped 2026-09-03 on `worktree-undo-history`:
+**Status:** **Complete.** M1, M2 and M3 all shipped 2026-09-03:
 `graph.history`, both top-bar split buttons with keyboard undo/redo, the **B2** dropdown with
 its canvas hover forecast, triage re-staging, `docs/history.md`, and the `undo-history`
 gallery card. 29 tests in `tests/visual/specs/history.spec.ts` (4 of them screenshots) plus 3
 in `pivot-triage.spec.ts`; all three of §12's design questions are closed — the third, how H6
-meets `pivot-persistence.md` P13, was settled with Sami 2026-09-04 and **H6 is amended**.
-Grilled with Sami 2026-09-03; twenty-four decisions taken (§6). Four competing designs for the dropdown were built as
-prototypes (§10) and **B, the timeline, is chosen**; a reversed draft, B2, followed. Still open
-before M2: B against B2 (§10.2) — an ordering, not a direction — and merging the legend-hover
-work (`develop`'s `a17e138`) that H16 needs.
-**Owner:** Sami Mokaddem
+meets `pivot-persistence.md` P13, was settled 2026-09-04 and **H6 is amended**.
+Stress-tested 2026-09-03; twenty-four decisions taken (§6). Four competing designs for the
+dropdown were built as prototypes (§10); **B, the timeline, was chosen**, and the reversed
+draft **B2** is what shipped.
 **Requested:** 2026-09-03
 **Area:** greenfield `src/GraphHistory.ts` + history types in `src/interfaces/`, with touch
 points in `src/PivotManager.ts` (its undo/redo moves out), `src/editing/GraphEditingManager.ts`
@@ -66,8 +64,8 @@ disabled placeholders since the B3 chrome landed. A user reads an Undo button as
 this one has been lying for two releases.
 
 The fix is not the general command stack from `graph-app-b3-control-layout.md` §7 — that
-proposes recording every mutation the library can perform, including property edits, which Sami
-does not want and which no integration would trust anyway, because a property edit is backend
+proposes recording every mutation the library can perform, including property edits, which are
+unwanted and which no integration would trust anyway, because a property edit is backend
 state and the library has no authority over it. The fix is a history of **what the canvas holds
 and shows**: what was brought in, what was taken out, what was hidden. That is a much smaller
 object, and it is exactly the object an analyst reasons about.
@@ -165,8 +163,8 @@ somewhere other than the undo menu, or forward-only. So it stays out of the menu
 
 **H1 — The history records what the canvas *holds and shows*, not what the data *says*.**
 Four kinds, a closed set: **pivot** (an ingest), **delete**, **visibility** (the durable
-`excludeNode`/`includeNode`), **create** (a node or edge drawn by hand). This is the line Sami
-drew and it is a better one than either option originally offered: it is exactly the set of
+`excludeNode`/`includeNode`), **create** (a node or edge drawn by hand). This is the line that was
+drawn, and it is a better one than either option originally offered: it is exactly the set of
 operations whose reversal the library has the authority to perform, because each is a change to
 composition, and composition is the library's own.
 
@@ -204,7 +202,7 @@ a canvas operation and issues no compensating write, so:
 | **creation** | reverses, marked *saved* | The canvas loses something the backend keeps. Recoverable — a re-fetch or a re-run brings it back — and the row and the footer both say so before the click. |
 | **deletion** | **seals** | Restoring would put a node back that the record of truth no longer has. It looks like every other node, and a later save could push it upstream again. Nothing self-corrects it. |
 
-The first version of this decision sealed both, extending Sami's rule about creations to its
+The first version of this decision sealed both, extending the rule about creations to its
 mirror case. That was wrong about which case is the mirror: it is the *removal* that is
 dangerous, because it is the only one where undo invents something. The rule as amended is also
 the one `pivot-persistence.md` P13 reached from the other side, so the two documents now share it
@@ -285,7 +283,7 @@ puts it back there — a pivot replays raw provider data, which carries no coord
 
 ### Shape and limits
 
-**H17 — 30 entries, oldest evicted.** Office keeps a hundred; thirty is Sami's call and is
+**H17 — 30 entries, oldest evicted.** Office keeps a hundred; thirty is the chosen figure and is
 plenty for a session's real work. Eviction loses the ability to **restore** an old run, not to
 **remove** it — provenance lives on the elements, so `removeBySource` still reaches an evicted
 run. Document the asymmetry rather than hiding it.
@@ -344,7 +342,7 @@ capital Z while the unshifted one is `Ctrl+z`.
 export interface HistoryEntry {
     id: string
     kind: 'pivot' | 'delete' | 'visibility' | 'create'
-    /** What the row says: 'AIL correlations', 'Deleted 3 nodes', 'Hid 5 nodes'. */
+    /** What the row says: 'Correlations', 'Deleted 3 nodes', 'Hid 5 nodes'. */
     label: string
     /** Elements this entry touched — the row's counts, and what hover highlights. */
     nodeIds: string[]
@@ -401,7 +399,7 @@ through `graph.batchChanges`, exactly as `PivotManager.undo` already does.
 
 ## 8. What the analyst does
 
-**The wrong pivot.** Select a domain, run AIL correlations, and two hundred nodes land where
+**The wrong pivot.** Select a domain, run correlations, and two hundred nodes land where
 twelve were wanted. Ctrl+Z, or the Undo button, and they are gone — and because the ingest is
 still the newest entry, the candidates are back in the triage pane with the earlier rejections
 intact, ready to be triaged properly without a second provider call (H21).
@@ -412,12 +410,12 @@ rows mark, and on the canvas the elements they touched light up. Click. All thre
 one, one `dataBatchChanged`, one re-render.
 
 **The saved node.** The same three steps, but one of them created a node the integration wrote
-back to MISP. It is listed, marked as saved, and the hover reads `Undoes 2 of 3 · 1 saved item
+back to the source system. It is listed, marked as saved, and the hover reads `Undoes 2 of 3 · 1 saved item
 kept`. Click, and the two reverse while the saved node stays exactly where it is — the canvas
 and the backend still agree (H6, H12).
 
 **The bad provider.** Five runs deep, run three turns out to be junk, and runs four and five are
-good. The menu will not do this, by design. `graph.removeBySource('ail-correlation')` will,
+good. The menu will not do this, by design. `graph.removeBySource('correlation')` will,
 dropping that source's vouching and deleting only what nothing else vouches for — a node run
 five also found stays, one claim lighter (H9).
 
@@ -486,7 +484,7 @@ Four things came out of the drawing that belong in the implementation whichever 
 
 ### 10.2 B is chosen; B2 is the same design, reversed
 
-Sami picked **B, the timeline**: one list from either button with a *now* line through it,
+**B, the timeline**, was picked: one list from either button with a *now* line through it,
 travelled by clicking rather than two separate stacks. **B2** followed as a draft of the same
 design with the list reversed — newest at the top, as every other menu in the app runs.
 
@@ -583,7 +581,7 @@ state, and on one thing that is not frequency — B2's resting position *is* scr
 
 ## 12. Open questions
 
-- ~~**B or B2**~~ **B2, chosen by Sami 2026-09-03** and built. Newest at the top, undone above
+- ~~**B or B2**~~ **B2, chosen 2026-09-03** and built. Newest at the top, undone above
   the line, done below; clicking below the line undoes, which satisfies H8 as written.
 - ~~**How a long span is previewed without flooding the menu**~~ **Answered by capping the
   wash, not the span.** Every row in the span keeps the rail and the ink — a strike for a
@@ -599,7 +597,7 @@ state, and on one thing that is not frequency — B2's resting position *is* scr
   canvas highlight says *where*, the footer says *what*. The menu is held to 424px, right
   anchored under its buttons, which leaves most of the canvas visible. Revisit if an analyst
   reports losing the highlight behind it.
-- ~~**How H6 meets P13.**~~ **Settled with Sami 2026-09-04, and H6 is amended.** The two rules
+- ~~**How H6 meets P13.**~~ **Settled 2026-09-04, and H6 is amended.** The two rules
   described the same condition — the element is in a backend — and answered opposite. They are
   now one rule that turns on *direction*, not on which gesture caused the write: **undo can
   always take things off the canvas, and it never resurrects what the backend deleted.** So a
