@@ -144,9 +144,11 @@ const options = {
         mode: 'full',
         sidebar: { collapsed: true },
         // Triage happens in the dock, which starts folded: a staged set unfolds it
-        // by itself when it arrives.
+        // by itself when it arrives. The height is worth setting explicitly — the
+        // default share leaves the candidate table too short to read.
         minimap: false,
         table: { open: false },
+        dock: { height: 380 },
     },
     render: {
         defaultNodeStyle: {

@@ -32,7 +32,7 @@ Both providers recover on their first **Retry**. Throwing is the whole error pro
 import { data, options } from './options.js'
 </script>
 
-<Pivotick :data="data" :options="options" useInlineStyle="margin: 1em 0; height: 780px; border: 1px solid #cccccc99; border-radius: 8px"></Pivotick>
+<Pivotick :data="data" :options="options" useInlineStyle="margin: 1em 0; height: 860px; border: 1px solid #cccccc99; border-radius: 8px"></Pivotick>
 
 ::: code-group
 <<< ./options.js#options [Options]

@@ -53,6 +53,7 @@ export default defineConfig({
         ]
       },
       { text: 'Pivots & enrichment', link: '/pivots' },
+      { text: 'Saving pivot results', link: '/pivots-saving' },
       { text: 'Undo & history', link: '/history' },
       { text: 'Security', link: '/security' },
       { text: 'API docs', link: '/generated-api' },

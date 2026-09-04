@@ -35,11 +35,12 @@ unsaved.
 import { data, options, onLoaded } from './options.js'
 </script>
 
-<Pivotick :data="data" :options="options" :onLoadedCallback="onLoaded" useInlineStyle="margin: 1em 0; height: 620px; border: 1px solid #cccccc99; border-radius: 8px"></Pivotick>
+<Pivotick :data="data" :options="options" :onLoadedCallback="onLoaded" useInlineStyle="margin: 1em 0; height: 880px; border: 1px solid #cccccc99; border-radius: 8px"></Pivotick>
 
 ::: code-group
 <<< ./options.js#options [Options]
 <<< ./options.js#data [Data]
 :::
 
-Full reference: [Pivots & enrichment](/pivots).
+Full reference: [Pivots & enrichment](/pivots), and [Saving pivot results](/pivots-saving)
+for the write half this card ends on.

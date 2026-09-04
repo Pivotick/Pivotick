@@ -88,9 +88,11 @@ const options = {
         mode: 'full',
         sidebar: { collapsed: true },
         // The dock is the subject of this card, but it still starts folded: a staged
-        // set unfolds it by itself.
+        // set unfolds it by itself. Its height is set explicitly, because the default
+        // share leaves the candidate table too short to read.
         minimap: false,
         table: { open: false },
+        dock: { height: 380 },
     },
     render: {
         defaultNodeStyle: {
