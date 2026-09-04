@@ -1167,6 +1167,14 @@
     color: var(--pvt-text-color-4);
 }
 
+// What a pivot took of a mixed origin. Quieter than the breakdown beneath it: it
+// qualifies the count rather than saying anything about the result.
+.pvt-pivot-scope {
+    line-height: 1.45;
+    color: var(--pvt-text-color-3);
+    font-style: italic;
+}
+
 // The gate between the count and a fetch. Blocked it is tinted like the warning it is;
 // clear it is a quiet note that the cap exists and is being met. One box either way —
 // see `PivotPanel.paintGate` for why the line never leaves.

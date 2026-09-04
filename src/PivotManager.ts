@@ -4,7 +4,8 @@ import type { RawEdge, RawNode } from './interfaces/GraphOptions'
 import type { IngestContext, IngestDecision } from './interfaces/InterractionCallbacks'
 import type {
     PivotCandidate, PivotCandidateEdge, PivotCandidateSet, PivotContext, PivotDefinition,
-    PivotManagerLike, PivotNarrowing, PivotRefusal, PivotRun, PivotRunOutcome, PivotSummary,
+    PivotManagerLike, PivotNarrowing, PivotRefusal, PivotRimBadge, PivotRun, PivotRunOutcome,
+    PivotSummary,
 } from './interfaces/Pivot'
 import { SEED_SOURCE } from './interfaces/Pivot'
 import type { Node } from './Node'
@@ -39,6 +40,27 @@ export class PivotManager implements PivotManagerLike {
      */
     public candidateCeiling = 10_000
 
+    private _rimBadge: PivotRimBadge = 'per-pivot'
+
+    /**
+     * What the library draws on a node's rim for its pivots: one badge per pivot that
+     * declared a potential, one badge for all of them, or nothing. Set it through
+     * `pivotRimBadge` in the graph options, or here to change it later.
+     *
+     * Assigning marks every node dirty, the way `setPotential` does for one — the rim
+     * redraws on the next render, so call `graph.renderer.update()` if nothing else is
+     * about to.
+     */
+    public get rimBadge(): PivotRimBadge {
+        return this._rimBadge
+    }
+
+    public set rimBadge(mode: PivotRimBadge) {
+        if (mode === this._rimBadge) return
+        this._rimBadge = mode
+        for (const node of this.graph.getMutableNodes()) node.markDirty()
+    }
+
     private readonly graph: Graph
     private readonly defs = new Map<string, PivotDefinition>()
 
@@ -48,6 +70,8 @@ export class PivotManager implements PivotManagerLike {
     private readonly cacheNodes = new Map<string, Set<string>>()
     /** In-flight provider calls, keyed `summarize:<id>` / `fetch:<id>`. */
     private readonly inFlight = new Map<string, AbortController>()
+    /** How many pivots apply to each node, for the rim. Dropped wholesale, never per key. */
+    private readonly counts = new Map<string, number>()
 
     /** Explicitly rejected candidates, keyed by pivot id then candidate id. */
     private readonly rejected = new Map<string, Set<string>>()
@@ -65,6 +89,13 @@ export class PivotManager implements PivotManagerLike {
         // A cached summary about a node that no longer exists is a lie waiting to be
         // told; every other invalidation is the consumer's call.
         graph.on('nodeRemove', (node: Node) => this.dropCacheFor(node.id))
+        // `appliesTo` reads node data, so anything that moves a node's data moves the
+        // answer. Dropped whole rather than per node: the predicates are cheap, the
+        // bookkeeping to know which node an edit touched is not.
+        graph.on('nodeAdd', () => this.counts.clear())
+        graph.on('nodeChange', () => this.counts.clear())
+        graph.on('nodeRemove', () => this.counts.clear())
+        graph.on('dataBatchChanged', () => this.counts.clear())
     }
 
     // --- registry ----------------------------------------------------------------------
@@ -124,10 +155,61 @@ export class PivotManager implements PivotManagerLike {
      * What applies to this origin. An empty origin yields the origin-less pivots —
      * search, import, staging — and nothing else, because a selection-driven pivot
      * with no selection has nothing to run on.
+     *
+     * A pivot that applies to only *part* of the origin is in: a selection mixing a
+     * domain and an IP offers the domain-only providers too, and each is run against
+     * the nodes it kept.
      */
     public for(nodes: Node[]): PivotDefinition[] {
         if (!nodes.length) return this.all().filter(d => d.origin === 'none')
-        return this.all().filter(d => d.origin !== 'none' && (!d.appliesTo || d.appliesTo(nodes)))
+        return this.all().filter(d => d.origin !== 'none' && this.applicable(d, nodes).length > 0)
+    }
+
+    /**
+     * How many pivots apply to one node — what the `'summary'` rim badge counts when
+     * nothing was declared for it.
+     *
+     * Memoised, because the rim asks this for every node on every render and the
+     * answer is one `appliesTo` call per registered pivot: at a hundred providers and
+     * a thousand nodes, asking each time is a hundred thousand calls a frame. The memo
+     * is dropped whenever the registry or the graph's nodes change, so a predicate
+     * reading anything *else* can go stale — acceptable for a hint on the rim, and the
+     * panel is always the exact answer.
+     */
+    public applicableCount(node: Node): number {
+        const cached = this.counts.get(node.id)
+        if (cached !== undefined) return cached
+        const count = this.for([node]).length
+        this.counts.set(node.id, count)
+        return count
+    }
+
+    /**
+     * How much of `nodes` one pivot applies to. Empty when it does not apply, and
+     * empty for an origin-less pivot, which is asked about nothing by definition.
+     */
+    public originFor(id: string, nodes: Node[]): Node[] {
+        const def = this.defs.get(id)
+        if (!def || def.origin === 'none') return []
+        return this.applicable(def, nodes)
+    }
+
+    /**
+     * The origin a pivot would actually be called with: everything `appliesTo` kept.
+     *
+     * `true` keeps the origin whole, `false` and an empty array both mean it does not
+     * apply, and an array is taken as-is — minus anything that was not in the origin
+     * to begin with, so a provider cannot widen its own reach by returning a node
+     * nobody picked.
+     */
+    private applicable(def: PivotDefinition, nodes: Node[]): Node[] {
+        if (def.origin === 'none') return []
+        if (!def.appliesTo) return nodes
+        const verdict = def.appliesTo(nodes)
+        if (typeof verdict === 'boolean') return verdict ? nodes : []
+        if (!Array.isArray(verdict)) return []
+        const picked = new Set(verdict)
+        return nodes.filter(node => picked.has(node))
     }
 
     // --- summarize ---------------------------------------------------------------------
@@ -148,7 +230,7 @@ export class PivotManager implements PivotManagerLike {
         const def = this.defs.get(id)
         if (!def?.summarize) return undefined
 
-        const origin = def.origin === 'none' ? [] : nodes
+        const origin = this.applicable(def, nodes)
         const key = this.cacheKey(id, origin, narrowing)
         const cached = this.cache.get(key)
         if (cached) return cached
@@ -225,8 +307,27 @@ export class PivotManager implements PivotManagerLike {
         const def = this.defs.get(id)
         if (!def) throw new Error(`No pivot is registered with id "${id}".`)
 
-        const origin = def.origin === 'none' ? [] : nodes
+        // Only what the pivot said it applies to. A caller handing over a mixed
+        // selection gets the same narrowing the panel would have done, and the set's
+        // `origin` records what was actually asked about.
+        const origin = this.applicable(def, nodes)
         const runId = this.nextRunId(id)
+
+        // Offered nodes and kept none of them: asking the provider about an empty
+        // origin instead would be a run that looks fine and answers nothing. An origin
+        // that was empty to begin with is a different thing, and still allowed — as is
+        // an origin-less pivot, which is asked about nothing whatever is selected (D19).
+        if (def.origin !== 'none' && nodes.length && !origin.length) {
+            return {
+                status: 'failed',
+                runId,
+                nodes: [],
+                edges: [],
+                deduped: 0,
+                suppressed: 0,
+                error: new Error(`Pivot "${id}" does not apply to any of the ${nodes.length} node(s) it was run on.`),
+            }
+        }
 
         // The gate. Judged on the freshest advisory count for the *current* narrowing,
         // which is what lets a refusal lift as the analyst narrows. A cache hit here is
@@ -815,6 +916,8 @@ export class PivotManager implements PivotManagerLike {
 
     /** @private */
     public notify(change: PivotChange): void {
+        // A pivot arriving or leaving changes how many apply to every node on canvas.
+        if (change === 'registry') this.counts.clear()
         for (const listener of [...this.listeners]) listener(change)
     }
 

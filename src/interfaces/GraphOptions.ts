@@ -6,7 +6,7 @@ import type { DeepPartial } from '../utils/utils'
 import type { GraphUI, LegendToggleState } from './GraphUI'
 import type { InterractionCallbacks } from './InterractionCallbacks'
 import type { LayoutOptions } from './LayoutOptions'
-import type { PivotDefinition } from './Pivot'
+import type { PivotDefinition, PivotRimBadge } from './Pivot'
 import type { PivotickPlugin } from './Plugin'
 import type { EdgeFullStyle, GraphRendererOptions, NodeStyle } from './RendererOptions'
 import type { SimulationOptions } from './SimulationOptions'
@@ -68,6 +68,25 @@ export interface GraphOptions {
      * @default 10000
      */
     pivotCandidateCeiling?: number,
+
+    /**
+     * What the library puts on a node's rim for its pivots.
+     *
+     * - `'per-pivot'` — one badge per pivot that declared a potential for this node,
+     *   each opening that pivot. What a handful of providers wants.
+     * - `'summary'` — **one** badge for all of them, whatever the provider count. It
+     *   shows the total declared through {@link Node.setPotential} with no pivot id,
+     *   or, failing that, how many pivots apply to the node. Clicking it opens the
+     *   Pivot panel on that node — unless exactly one pivot applies and it has nothing
+     *   to narrow, which runs straight away.
+     * - `'off'` — nothing. `NodeStyle.badges` still draws.
+     *
+     * A node has four rim corners and only two once it has children, so `'per-pivot'`
+     * stops being readable somewhere around a dozen providers. `'summary'` is the
+     * answer at a hundred.
+     * @default 'per-pivot'
+     */
+    pivotRimBadge?: PivotRimBadge,
 
     /**
      * @private

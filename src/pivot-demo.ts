@@ -272,9 +272,10 @@ const correlations: PivotDefinition = {
     label: 'Correlations',
     icon: sparkles,
     maxCandidates: 250,
-    // Nothing correlates with the case or the campaign, so the entry is absent
-    // for those rather than disabled.
-    appliesTo: nodes => nodes.every(node => typeOf(node) !== 'case' && typeOf(node) !== 'campaign'),
+    // Nothing correlates with the case or the campaign, so they are dropped from the
+    // origin rather than taking the whole entry down with them. Pick a domain and the
+    // case together and the entry says it applies to one of the two.
+    appliesTo: nodes => nodes.filter(node => typeOf(node) !== 'case' && typeOf(node) !== 'campaign'),
 
     summarize: (nodes, narrowing, ctx) => answer('summarize', ctx, () => {
         const within = (ignore: string): CorrelationRecord[] =>
@@ -335,8 +336,9 @@ const passiveDns: PivotDefinition = {
     id: 'passive-dns',
     label: 'Passive DNS',
     icon: link,
-    appliesTo: nodes => nodes.length > 0
-        && nodes.every(node => typeOf(node) === 'domain' || typeOf(node) === 'ip'),
+    // Per node, not per origin: a selection holding a domain and an email still gets
+    // passive DNS, run against the domain alone.
+    appliesTo: nodes => nodes.filter(node => typeOf(node) === 'domain' || typeOf(node) === 'ip'),
 
     summarize: (nodes, narrowing, ctx) => answer('summarize', ctx, () => ({
         total: pdnsWindow(narrowing).count * Math.max(nodes.length, 1),
@@ -621,6 +623,11 @@ graph.getMutableNode('cdn.evil.example')?.setPotential('correlations', 812)
 graph.getMutableNode('login-portal.example')?.setPotential('passive-dns', 44)
 graph.getMutableNode('event-5f2a')?.setPotential('event-objects', 9)
 
+// One total belonging to no pivot, which is what the `summary` rim badge prefers. Only
+// this node declares one, so switching the Rim knob shows both halves of that rule:
+// here the declared 2,199, and on every other node the number of pivots that apply.
+graph.getMutableNode('mail.evil.example')?.setPotential(2199)
+
 /* ------------------------------------------------------------------- toolbar */
 
 const bar = document.getElementById('devbar')!
@@ -707,6 +714,17 @@ bar.append(
         [['auto', 'auto-ingest'], ['stage', 'stage for triage']],
         knobs.stageObjects ? 'stage' : 'auto',
         value => { knobs.stageObjects = value === 'stage' },
+    )),
+    // Six providers is comfortably inside what a rim can name, so the summary shape
+    // has to be asked for here. On the misp-modules page, with 119, it is the default.
+    field('Rim', select(
+        [['per-pivot', 'one per pivot'], ['summary', 'one for all'], ['off', 'none']],
+        graph.pivots.rimBadge,
+        value => {
+            graph.pivots.rimBadge = value as typeof graph.pivots.rimBadge
+            // Not a data change: only what the rim draws moved.
+            graph.renderer.update(false)
+        },
     )),
     field('Ceiling', ceiling),
     button('Undo', 'graph.history.undo() — take the newest entry back', () => {

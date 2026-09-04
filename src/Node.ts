@@ -1,5 +1,6 @@
 import type { Edge } from './Edge'
 import type { Graph } from './Graph'
+import { SUMMARY_POTENTIAL } from './interfaces/Pivot'
 import type { NodeStyle } from './interfaces/RendererOptions'
 import { generateSafeDomId } from './utils/ElementCreation'
 import { rectRadiusAlongDirection } from './utils/GeometryHelper'
@@ -516,13 +517,27 @@ export class Node {
     }
 
     /**
-     * Declare how much more a pivot has for this node, without asking for any of it —
+     * Declare how much more there is for this node, without asking for any of it —
      * what the rim badge shows. `0` clears the declaration.
+     *
+     * With a pivot id it is that pivot's number, and its badge opens that pivot. With
+     * a count alone it is the total across everything, which is the number the
+     * `'summary'` rim badge prefers — the one to declare when there are more providers
+     * than a rim could ever name.
      *
      * Marks the node dirty like every other setter here, so the badge appears on the
      * next render — call `graph.renderer.update()` if nothing else is about to.
+     *
+     * ```ts
+     * node.setPotential('ail-correlations', 2143) // AIL has this much
+     * node.setPotential(2199)                     // everything has this much
+     * ```
      */
-    setPotential(pivotId: string, count: number): void {
+    setPotential(count: number): void
+    setPotential(pivotId: string, count: number): void
+    setPotential(pivotIdOrCount: string | number, maybeCount?: number): void {
+        const pivotId = typeof pivotIdOrCount === 'string' ? pivotIdOrCount : SUMMARY_POTENTIAL
+        const count = typeof pivotIdOrCount === 'string' ? (maybeCount ?? 0) : pivotIdOrCount
         if (!count) {
             this._potential?.delete(pivotId)
             if (this._potential?.size === 0) this._potential = undefined
@@ -534,8 +549,11 @@ export class Node {
         this.markDirty()
     }
 
-    /** The potential declared for one pivot, or `undefined` when none was. */
-    getPotential(pivotId: string): number | undefined {
+    /**
+     * The potential declared for one pivot, or — with no argument — the total declared
+     * for no particular pivot. `undefined` when none was.
+     */
+    getPotential(pivotId: string = SUMMARY_POTENTIAL): number | undefined {
         return this._potential?.get(pivotId)
     }
 

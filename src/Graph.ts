@@ -137,6 +137,9 @@ export class Graph {
         if (typeof this.options.pivotCandidateCeiling === 'number') {
             this.pivots.candidateCeiling = this.options.pivotCandidateCeiling
         }
+        if (this.options.pivotRimBadge) {
+            this.pivots.rimBadge = this.options.pivotRimBadge
+        }
         this.options.pivots?.forEach(pivot => this.pivots.register(pivot))
         this.UIManager = new UIManager(this, appContainer, UIManagerOptions)
         // Declared facets carry the accessor/predicate/matchMode the engine matches

@@ -32,11 +32,25 @@ export interface PivotDefinition {
      */
     origin?: 'selection' | 'none'
     /**
-     * Whether this pivot applies to a given origin. Re-read on every origin change,
-     * so it must be synchronous and cheap. Omit it and the pivot applies to
-     * everything. Not consulted when `origin` is `'none'`.
+     * Whether this pivot applies to a given origin, and to how much of it. Re-read on
+     * every origin change, so it must be synchronous and cheap. Omit it and the pivot
+     * applies to everything. Not consulted when `origin` is `'none'`.
+     *
+     * Return a **boolean** for a rule about the origin as a whole — "only with two or
+     * more picked", "never on a note". Return the **nodes it applies to** for a rule
+     * that reads one node at a time, which is the normal case for enrichment: a
+     * selection mixing a domain and an IP still offers the domain-only providers,
+     * against the domain alone. An empty array means the same as `false`.
+     *
+     * Whatever it keeps is the origin the provider is called with — `summarize` and
+     * `fetch` never see a node this turned down.
+     *
+     * ```ts
+     * appliesTo: nodes => nodes.length >= 2                          // whole origin
+     * appliesTo: nodes => nodes.filter(n => accepted.has(typeOf(n))) // per node
+     * ```
      */
-    appliesTo?: (nodes: Node[]) => boolean
+    appliesTo?: (nodes: Node[]) => boolean | Node[]
     /**
      * Cheap "what's out there". Called with `{}` before any narrowing exists, and
      * re-run as the origin or the narrowing changes; its facets become the narrowing
@@ -328,6 +342,8 @@ export interface PivotRestageRecord {
 export interface PivotManagerLike {
     /** Absolute ceiling on what one `fetch` may stage. Refuses rather than truncates. */
     candidateCeiling: number
+    /** What the library draws on a node's rim for its pivots. */
+    rimBadge: PivotRimBadge
     register(definition: PivotDefinition): () => void
     unregister(id: string): void
     get(id: string): PivotDefinition | undefined
@@ -335,6 +351,17 @@ export interface PivotManagerLike {
     all(): PivotDefinition[]
     /** What applies to this origin. An empty origin yields the origin-less pivots. */
     for(nodes: Node[]): PivotDefinition[]
+    /**
+     * How much of `nodes` one pivot applies to — the origin it would actually be run
+     * with. Empty when it does not apply at all, and always empty for an origin-less
+     * pivot. What a surface reads to say "3 of the 5 you picked".
+     */
+    originFor(id: string, nodes: Node[]): Node[]
+    /**
+     * How many pivots apply to one node — what the `'summary'` rim badge counts. Held
+     * between graph changes, so it is cheap to ask per node per render.
+     */
+    applicableCount(node: Node): number
     run(id: string, nodes?: Node[], narrowing?: PivotNarrowing): Promise<PivotRunOutcome>
     /** Promote a waiting re-run to the set on show. */
     showPending(pivotId: string): void
@@ -344,6 +371,25 @@ export interface PivotManagerLike {
     /** Abort in-flight calls — one pivot's or all, and optionally only one kind. */
     cancel(pivotId?: string, kind?: 'summarize' | 'fetch'): void
 }
+
+/**
+ * What the library draws on a node's rim for its pivots. See
+ * `GraphOptions.pivotRimBadge`.
+ *
+ * @category Pivots
+ */
+export type PivotRimBadge = 'per-pivot' | 'summary' | 'off'
+
+/**
+ * The key a potential declared for no particular pivot is held under — what
+ * `node.setPotential(count)` writes and the `'summary'` rim badge reads.
+ *
+ * Exported so a consumer clearing declarations by hand can name it; the one-argument
+ * `setPotential` is the way to write it.
+ *
+ * @category Pivots
+ */
+export const SUMMARY_POTENTIAL = '*'
 
 /** Every element with no pivot vouching for it is vouched for by the seed. */
 export const SEED_SOURCE = 'seed'

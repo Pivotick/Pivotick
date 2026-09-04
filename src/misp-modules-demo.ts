@@ -612,7 +612,10 @@ function pivotFor(module: MispModule): PivotDefinition {
         id: `misp:${module.name}`,
         label: module.meta.name?.trim() || module.name,
         icon: FAMILY_ICONS[family] ?? expand,
-        appliesTo: nodes => nodes.length > 0 && nodes.every(node => accepted.includes(typeOf(node))),
+        // A module reads one attribute type, so it answers per node: a selection
+        // holding an IP and a domain offers both modules that take an IP and modules
+        // that take a domain, each against its own share of it.
+        appliesTo: nodes => nodes.filter(node => accepted.includes(typeOf(node))),
         fetch: (nodes, _narrowing, ctx) => runModule(module, nodes, ctx),
     }
 }
@@ -660,6 +663,8 @@ async function main(): Promise<void> {
         { nodes: SEED_NODES, edges: SEED_EDGES },
         {
             pivots,
+            // 119 providers is well past the point where a badge each is readable.
+            pivotRimBadge: 'summary',
             render: {
                 nodeTypeAccessor: node => familyOf(typeOf(node)),
                 nodeStyleMap: FAMILY_STYLES,
@@ -697,10 +702,10 @@ async function main(): Promise<void> {
 
     window.pivotick = graph
 
-    // No rim badges here. `setPotential` is keyed per pivot, and the number worth
-    // showing on a node — how many of the catalogue's modules accept its type — belongs
-    // to no single one of them. It hung off the "run everything" pivot while that
-    // existed; with it gone there is nothing honest to hang it on.
+    // The rim carries one badge per node saying how many of the catalogue's modules
+    // accept its type — 51 on an ip-src, 2 on an AS. Nothing declares it: with no count
+    // endpoint there is no total to declare, so the library counts what applies.
+    // Clicking it opens the panel, which at this provider count is always the answer.
 
     buildToolbar(graph)
 }

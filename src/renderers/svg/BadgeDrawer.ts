@@ -1,6 +1,7 @@
 import { select as d3Select, type Selection } from 'd3-selection'
 import type { Node } from '../../Node'
 import type { Graph } from '../../Graph'
+import { SUMMARY_POTENTIAL } from '../../interfaces/Pivot'
 import type { NodeBadge, NodeBadgePosition, NodeStyle } from '../../interfaces/RendererOptions'
 import { resolveIcon } from '../../utils/Getters'
 import { parseSvgIconMarkup } from '../../utils/SvgSanitizer'
@@ -110,19 +111,31 @@ export function resolveBadges(style: NodeStyle, node: Node, graph: Graph): NodeB
 }
 
 /**
+ * What the library puts on the rim for its pivots, in the shape the graph was
+ * configured for. The two modes never mix: a node wears per-pivot badges or one
+ * summary badge, so the corner budget is never a contest between them.
+ */
+function potentialBadges(node: Node, graph: Graph): NodeBadge[] {
+    const mode = graph.pivots.rimBadge
+    if (mode === 'off') return []
+    return mode === 'summary' ? summaryBadge(node, graph) : perPivotBadges(node, graph)
+}
+
+/**
  * One badge per pivot that declared a potential for this node (D12).
  *
  * Only *declared* potential — never a queried count, which would materialise on one node
  * the moment it was asked about and leave the canvas telling two different stories. A
- * potential for a pivot nobody registered is skipped: there would be nothing to open.
+ * potential for a pivot nobody registered is skipped: there would be nothing to open,
+ * which is also why the summary declaration is passed over here.
  */
-function potentialBadges(node: Node, graph: Graph): NodeBadge[] {
+function perPivotBadges(node: Node, graph: Graph): NodeBadge[] {
     const potentials = node.getPotentials()
     if (!potentials.size) return []
 
     const badges: NodeBadge[] = []
     for (const [pivotId, count] of potentials) {
-        if (!count || count < 0) continue
+        if (!count || count < 0 || pivotId === SUMMARY_POTENTIAL) continue
         const definition = graph.pivots.get(pivotId)
         if (!definition) continue
         badges.push({
@@ -134,6 +147,52 @@ function potentialBadges(node: Node, graph: Graph): NodeBadge[] {
         })
     }
     return badges
+}
+
+/**
+ * One badge for every pivot at once — the only shape that survives a hundred providers,
+ * where a rim of four corners can name none of them.
+ *
+ * It prefers the total the consumer declared, because only a backend knows how much is
+ * actually out there. With nothing declared it falls back to what the library can prove
+ * on its own: how many pivots apply. Both are counts of *potential*, so neither costs a
+ * provider call, and D12 holds.
+ */
+function summaryBadge(node: Node, graph: Graph): NodeBadge[] {
+    const declared = node.getPotential()
+    const applies = graph.pivots.applicableCount(node)
+    if (!applies) return []
+
+    const count = declared && declared > 0 ? declared : applies
+    const title = declared && declared > 0
+        ? `~${declared.toLocaleString()} across ${applies} pivot${applies === 1 ? '' : 's'}`
+        : `${applies} pivot${applies === 1 ? '' : 's'} appl${applies === 1 ? 'ies' : 'y'}`
+
+    return [{
+        text: compactCount(count),
+        title,
+        onClick: (_event, clicked) => runOrOpen(clicked, graph),
+    }]
+}
+
+/**
+ * The badge's gesture. Opening the panel is the honest default — it is where the counts,
+ * the narrowing and the choice between providers live.
+ *
+ * The exception is the case where the panel would be ceremony around a single button:
+ * exactly one pivot applies, and it declares no `summarize`, so there is no count to
+ * read first and nothing to narrow. Then the click *is* the run. Where it lands is the
+ * provider's own call — `autoIngest` decides between the canvas and the triage pane,
+ * exactly as it does everywhere else (D13).
+ */
+function runOrOpen(node: Node, graph: Graph): void {
+    const applicable = graph.pivots.for([node])
+    const only = applicable.length === 1 ? applicable[0] : undefined
+    if (only && !only.summarize) {
+        void graph.pivots.run(only.id, [node])
+        return
+    }
+    graph.UIManager?.openPivotMode([node])
 }
 
 /**

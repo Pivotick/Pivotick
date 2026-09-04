@@ -501,7 +501,7 @@ export class PivotPanel {
             let entry = this.entries.get(def.id)
             if (!entry) {
                 entry = new PivotEntry(
-                    this.uiManager, def, () => this.originFor(def),
+                    this.uiManager, def, () => this.originFor(def), () => this.origin,
                     {
                         toggle: (on: boolean) => this.toggle(def.id, on),
                         key: (event: KeyboardEvent, box: HTMLInputElement) => this.onListKey(event, box),
@@ -520,9 +520,15 @@ export class PivotPanel {
         }
     }
 
-    /** An origin-less pivot is asked about nothing, whatever is selected (D19). */
+    /**
+     * This pivot's share of what is picked: an origin-less pivot is asked about
+     * nothing, whatever is selected (D19), and everything else gets exactly the nodes
+     * its `appliesTo` kept — the same origin the manager will run it with, so the
+     * summary cached here is the one the run reads.
+     */
     private originFor(def: PivotDefinition): Node[] {
-        return def.origin === 'none' ? [] : this.origin
+        if (def.origin === 'none') return []
+        return this.uiManager.graph.pivots.originFor(def.id, this.origin)
     }
 }
 
@@ -534,6 +540,8 @@ class PivotEntry {
     private readonly root: HTMLElement
     /** The right-hand slot of the head row: whatever this entry has to say in one line. */
     private readonly status: HTMLElement
+    /** Present only while the pivot took part of the origin rather than all of it. */
+    private readonly scopeLine: HTMLElement
     private readonly breakdown: HTMLElement
     private readonly errorLine: HTMLElement
     private readonly gateLine: HTMLElement
@@ -563,6 +571,8 @@ class PivotEntry {
     private readonly uiManager: UIManager
     private readonly def: PivotDefinition
     private readonly origin: () => Node[]
+    /** Everything the analyst picked, which `origin` is this pivot's share of. */
+    private readonly offered: () => Node[]
     /** The tick box, present only while there is more than one pivot to choose between. */
     private readonly check: HTMLElement
     private readonly checkInput: HTMLInputElement
@@ -573,11 +583,13 @@ class PivotEntry {
         uiManager: UIManager,
         def: PivotDefinition,
         origin: () => Node[],
+        offered: () => Node[],
         selection: { toggle: (on: boolean) => void, key: (event: KeyboardEvent, box: HTMLInputElement) => void },
     ) {
         this.uiManager = uiManager
         this.def = def
         this.origin = origin
+        this.offered = offered
         this.root = el('div', 'pvt-pivot-entry')
         this.root.dataset.pivot = def.id
 
@@ -621,6 +633,7 @@ class PivotEntry {
         this.status = el('span', 'pvt-pivot-status')
         head.append(label, this.status)
 
+        this.scopeLine = el('div', 'pvt-pivot-scope')
         this.breakdown = el('div', 'pvt-pivot-breakdown')
         this.errorLine = el('div', 'pvt-pivot-error')
         this.gateLine = el('div', 'pvt-pivot-gate')
@@ -630,7 +643,7 @@ class PivotEntry {
         this.actions = el('div', 'pvt-pivot-actions')
 
         this.root.append(
-            head, this.breakdown, this.errorLine, this.gateLine,
+            head, this.scopeLine, this.breakdown, this.errorLine, this.gateLine,
             this.progress, this.narrowingHost, this.actions,
         )
         this.paint()
@@ -769,6 +782,7 @@ class PivotEntry {
     private paint(): void {
         this.root.dataset.phase = this.phase
         this.paintStatus()
+        this.paintScope()
         this.paintBreakdown()
         this.paintError()
         this.paintGate()
@@ -787,7 +801,8 @@ class PivotEntry {
      * again, which is what makes it stand out from the ones that have not.
      */
     private paintDensity(): void {
-        const bare = this.breakdown.hidden
+        const bare = this.scopeLine.hidden
+            && this.breakdown.hidden
             && this.errorLine.hidden
             && this.gateLine.hidden
             && this.progress.hidden
@@ -869,6 +884,21 @@ class PivotEntry {
     private countText(total: number): string {
         const nodes = this.origin().length
         return nodes > 1 ? `~${fmt(total)} across ${fmt(nodes)} nodes` : `~${fmt(total)}`
+    }
+
+    /**
+     * What this pivot took of what was picked, said once and said plainly. Without it
+     * the count line reads `across 3 nodes` beside an origin block showing five chips,
+     * and the missing two look like a bug rather than a decision the provider made.
+     */
+    private paintScope(): void {
+        const taken = this.origin().length
+        const offered = this.offered().length
+        const partial = this.def.origin !== 'none' && offered > 0 && taken < offered
+        this.scopeLine.hidden = !partial
+        this.scopeLine.textContent = partial
+            ? `Applies to ${fmt(taken)} of the ${fmt(offered)} picked`
+            : ''
     }
 
     private originKey(): string {
