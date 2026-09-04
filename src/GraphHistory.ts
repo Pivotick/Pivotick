@@ -183,6 +183,9 @@ export class GraphHistory implements GraphHistoryLike {
         return {
             entries: ordered.map(publicEntry),
             skipped: skipped.map(publicEntry),
+            // Reversed here, kept there: a persisted creation comes off the canvas
+            // while the backend holds on to it.
+            canvasOnly: applied.filter(record => record.persisted).map(publicEntry),
             nodes: dedupe(nodes),
             edges: dedupe(edges),
             effect: world.effect(),
@@ -229,6 +232,7 @@ export class GraphHistory implements GraphHistoryLike {
             edgeIds: [...run.edgeIds],
             label,
             sealed: false,
+            persisted: false,
             pivotId: run.pivotId,
             ordinal,
             at: run.at,
@@ -252,6 +256,7 @@ export class GraphHistory implements GraphHistoryLike {
             edgeIds: edges.map(edge => edge.id),
             label: deleteLabel(nodes.length, edges.length),
             sealed: persisted,
+            persisted,
             at: Date.now(),
             payload: { kind: 'delete', nodes: [...nodes], edges: [...edges] },
         })
@@ -293,7 +298,8 @@ export class GraphHistory implements GraphHistoryLike {
             nodeIds: node ? [node.id] : [],
             edgeIds: edge ? [edge.id] : [],
             label: createLabel(node, edge),
-            sealed: persisted,
+            sealed: false,
+            persisted,
             at: Date.now(),
             payload: { kind: 'create', entryId: id, node, edge },
         })
@@ -542,6 +548,7 @@ function publicEntry(record: HistoryRecord): HistoryEntry {
         nodeIds: [...record.nodeIds],
         edgeIds: [...record.edgeIds],
         sealed: record.sealed,
+        persisted: record.persisted,
         pivotId: record.pivotId,
         ordinal: record.ordinal,
         at: record.at,
@@ -562,6 +569,7 @@ function visibilityRecord(hidden: boolean, nodeIds: string[]): HistoryRecord {
         edgeIds: [],
         label: `${hidden ? 'Hid' : 'Showed'} ${count(nodeIds.length, 'node')}`,
         sealed: false,
+        persisted: false,
         at: Date.now(),
         payload: { kind: 'visibility', hidden, nodeIds: [...nodeIds] },
     }

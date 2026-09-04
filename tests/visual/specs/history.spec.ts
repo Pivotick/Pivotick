@@ -241,13 +241,22 @@ test.describe('history — sealed entries', () => {
         expect(await hasNode(page, 'a')).toBe(false)
     })
 
-    test('a sealed creation is listed but never taken back', async ({ page }) => {
+    test('a creation written through still reverses, on the canvas only', async ({ page }) => {
         await harness(page, 'configureWritePath', { nodeCreateHook: 'accept-persisted' })
         await harness(page, 'createNodeAt', 40, 40)
 
-        expect((await entries(page))[0].sealed).toBe(true)
+        const row = (await entries(page))[0]
+        // Marked as written through, but nothing walls off the undo: taking it off the
+        // canvas loses nothing the backend cannot hand back.
+        expect(row.sealed).toBe(false)
+        expect(row.persisted).toBe(true)
+
+        const planned = await preview(page, row.id)
+        expect(planned.skipped).toEqual([])
+        expect(planned.canvasOnly).toEqual([row.id])
+
         await undoThrough(page)
-        expect(await hasNode(page, 'persisted-node')).toBe(true)
+        expect(await hasNode(page, 'persisted-node')).toBe(false)
     })
 })
 
@@ -568,7 +577,7 @@ test.describe('history — the dropdown', () => {
         await openHistory(page, 'undo')
 
         await expect(menuRows(page).nth(1)).toHaveClass(/sealed/)
-        await expect(menuRows(page).nth(1).locator('.pvt-history-chip')).toContainText('saved')
+        await expect(menuRows(page).nth(1).locator('.pvt-history-chip')).toContainText('locked')
 
         await menuRows(page).nth(1).hover()
         await expect(menuRows(page).nth(1)).toHaveClass(/preview-kept/)
@@ -578,6 +587,27 @@ test.describe('history — the dropdown', () => {
         // The hide reversed; the delete the consumer wrote through did not.
         expect(await hidden(page)).toEqual([])
         expect(await hasNode(page, 'a')).toBe(false)
+    })
+
+    test('a saved row previews as a removal, and the footer says it stays upstream', async ({ page }) => {
+        await harness(page, 'configureWritePath', { nodeCreateHook: 'accept-persisted' })
+        await harness(page, 'createNodeAt', 40, 40)
+        await harness(page, 'deselectAll')
+        await harness(page, 'excludeNode', 'b')
+        await openHistory(page, 'undo')
+
+        // Row 1 is the creation: chipped like a sealed row, but marked to go.
+        await expect(menuRows(page).nth(1)).toHaveClass(/canvas-only/)
+        await expect(menuRows(page).nth(1)).not.toHaveClass(/sealed/)
+        await expect(menuRows(page).nth(1).locator('.pvt-history-chip')).toContainText('saved')
+
+        await menuRows(page).nth(1).hover()
+        await expect(menuRows(page).nth(1)).toHaveClass(/preview-remove/)
+        await expect(footSay(page)).toHaveText('Undoes 2 steps \u00b7 1 item saved upstream')
+
+        await menuRows(page).nth(1).click()
+        expect(await hidden(page)).toEqual([])
+        expect(await hasNode(page, 'persisted-node')).toBe(false)
     })
 
     test('the redo caret opens the same list from the other side', async ({ page }) => {

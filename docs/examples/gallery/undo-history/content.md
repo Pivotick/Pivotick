@@ -37,9 +37,11 @@ import { data, options } from './options.js'
 <<< ./options.js#data [Data]
 :::
 
-A change your integration wrote through to a backend is **sealed**: still listed, never
-reversed, and a span containing one passes over it and says so (`Undoes 2 of 3 · 1 saved
-item kept`).
+Undo never writes to your backend, so a change you wrote through follows the direction it
+went. A **creation** still reverses — the canvas loses what the backend keeps, and the footer
+counts it (`Undoes 2 steps · 1 item saved upstream`). A **deletion** is **sealed**: listed,
+never reversed, and a span containing one passes over it (`Undoes 2 of 3 · 1 saved item
+kept`).
 
 See [Undo & history](/history) for the four kinds of entry, what is deliberately not
 recorded, and how undoing an ingest puts its candidates back in the triage pane.

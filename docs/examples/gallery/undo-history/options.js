@@ -36,9 +36,10 @@ const options = {
 // #endregion options
 
 // #region persisted
-// A consumer that writes a change through to its own backend says so, and the entry
-// seals: it stays listed, because it is part of how the canvas got this way, but it is
-// never reversed — the canvas and the record of truth would disagree.
+// A consumer that writes a change through to its own backend says so. Undo makes no
+// compensating write, so it follows the direction of yours: a creation still reverses
+// and the row is chipped `saved`, while a deletion is sealed — undoing it would put
+// back a node your backend no longer has.
 const writeThrough = {
     callbacks: {
         onBeforeNodeCreate: async (ctx) => {
@@ -48,6 +49,10 @@ const writeThrough = {
             if (!values) return false
             const saved = await myBackend.create(values)
             return { accept: true, id: saved.uuid, data: values, persisted: true }
+        },
+        onBeforeDelete: async (ctx) => {
+            await myBackend.remove(ctx.nodes.map((node) => node.id))
+            return { accept: true, persisted: true }
         }
     }
 }

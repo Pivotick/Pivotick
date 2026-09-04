@@ -13,7 +13,8 @@ an analyst reasons about: twelve nodes arrived, three went, five are hidden.
 - **entry**: one reversible thing that happened, as one row in the menu
 - **kind**: which of the four sorts of entry it is
 - **span**: the contiguous block from the newest entry down to the one you clicked
-- **sealed**: an entry the consumer wrote through to a backend — listed, never reversed
+- **persisted**: an entry the consumer wrote through to a backend
+- **sealed**: a persisted *deletion* — listed, never reversed
 :::
 
 ## The four kinds
@@ -89,7 +90,7 @@ without that an ingest would come back scattered somewhere new.
 `graph.clearForecast()` paint it — so a consumer's own history UI, or anything else that
 wants to ask "what if", gets the canvas language for free.
 
-## Sealed entries
+## Operations written through to a backend
 
 Only the consumer can know that an operation was written through to a backend, so only the
 consumer can say so. `onBeforeNodeCreate`, `onBeforeEdgeCreate` and `onBeforeDelete` each
@@ -106,9 +107,23 @@ callbacks: {
 }
 ```
 
-A sealed entry is **listed**, because it is part of how the canvas got this way, but never
-reversed. A span containing one passes over it rather than stopping at it, and says so
-before the click: `Undoes 2 of 3 · 1 saved item kept`.
+Undo issues no compensating write, so what it does with such an entry depends on which way
+the write went.
+
+A persisted **creation** still reverses. The canvas loses something the backend keeps, which
+a re-fetch undoes, so the entry is marked *saved* rather than held back and the footer counts
+it before the click: `Undoes 2 steps · 1 item saved upstream`.
+
+A persisted **deletion** is **sealed**: it is listed, because it is part of how the canvas got
+this way, but never reversed. Restoring it would put back a node the backend no longer has,
+and nothing on the canvas afterwards would say so. A span containing one passes over it rather
+than stopping at it, and says so first: `Undoes 2 of 3 · 1 saved item kept`.
+
+```js
+const [newest] = graph.history.entries()
+newest.persisted   // the consumer wrote it through
+newest.sealed      // …and it was a deletion, so undo will not take it back
+```
 
 Skipping works because every entry names the specific elements it touched, so there are no
 state diffs to get out of order. That is also why the four kinds are closed and a consumer
@@ -170,12 +185,13 @@ replays the span against a copy of the graph's state, through the same code the 
 commits, and diffs the result:
 
 ```js
-const { entries, skipped, nodes, edges, effect, forecast } = graph.history.preview(entryId)
-// entries   the span, newest first
-// skipped   the sealed ones inside it, which will be left alone
-// nodes     the elements it would touch that are on the canvas now
-// effect    { nodesRemoved, nodesRestored, edgesRemoved, edgesRestored, nodesHidden, nodesShown }
-// forecast  the same change as something to paint: { removing, hiding, touching, arriving }
+const { entries, skipped, canvasOnly, nodes, edges, effect, forecast } = graph.history.preview(entryId)
+// entries    the span, newest first
+// skipped    the sealed ones inside it, which will be left alone
+// canvasOnly the ones it reverses that the backend keeps a copy of
+// nodes      the elements it would touch that are on the canvas now
+// effect     { nodesRemoved, nodesRestored, edgesRemoved, edgesRestored, nodesHidden, nodesShown }
+// forecast   the same change as something to paint: { removing, hiding, touching, arriving }
 
 graph.showForecast(forecast)   // …and take it back down with graph.clearForecast()
 ```

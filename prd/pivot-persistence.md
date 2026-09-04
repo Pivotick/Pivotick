@@ -300,6 +300,23 @@ undo entirely). So the ledger drops with the run, the UI states plainly that sav
 the source system, and `PivotRun` gains a `saved` count so a surface can warn before the click
 rather than after it.
 
+**This is now the library's general rule, not this document's local one** *(settled with Sami
+2026-09-04; `undo-history.md` H6 was amended to match)*. The history and this document had
+reached opposite answers about the same condition — the element is in a backend. One rule
+replaced both, and it turns on the direction of the write: **undo always takes things off the
+canvas, and never resurrects what the backend deleted.** A save is a write in the creation
+direction, so it falls on the reversible side, exactly as this decision wanted.
+
+Two things follow, and both are already built:
+
+- **The warning surface exists.** A run's history entry is marked `persisted` when its save
+  succeeds; the row is then chipped *saved* and the menu's footer counts what a span would leave
+  behind (`3 items saved upstream`). `PivotRun.saved` still earns its place for the panel, but
+  the history needs nothing new.
+- **Partial saves stay expressible.** Sealing is per-entry, and a run that wrote 9 of 12 nodes
+  could not have been sealed honestly. Because nothing about a save seals, the question never
+  arises — which is a cost the alternative would have imposed on this document's own P10.
+
 ## 7. The shape of the door
 
 Everything below is additive. No existing signature changes.

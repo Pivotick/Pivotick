@@ -233,9 +233,11 @@ export class HistoryMenu extends UIComponent {
         const element = document.createElement('div')
         // Sealed *and* above the line: undone by position, applied in fact.
         const kept = entry.sealed && row.undone
+        // Written through, but still reversible — the removal just stops at the canvas.
+        const canvasOnly = entry.persisted && !entry.sealed
         element.className = [
             'pvt-history-row', `kind-${entry.kind}`, row.undone ? 'undone' : 'done',
-            entry.sealed ? 'sealed' : '', kept ? 'kept' : '',
+            entry.sealed ? 'sealed' : '', kept ? 'kept' : '', canvasOnly ? 'canvas-only' : '',
         ].filter(Boolean).join(' ')
         element.dataset.entry = entry.id
         element.setAttribute('role', 'menuitem')
@@ -260,10 +262,10 @@ export class HistoryMenu extends UIComponent {
         main.append(label, detail)
 
         const chip = document.createElement('span')
-        if (entry.sealed) {
+        if (entry.persisted) {
             chip.className = 'pvt-history-chip'
             chip.innerHTML = pin
-            chip.append(kept ? 'kept' : 'saved')
+            chip.append(entry.sealed ? (kept ? 'kept' : 'locked') : 'saved')
         }
 
         const time = document.createElement('span')
@@ -409,19 +411,28 @@ export class HistoryMenu extends UIComponent {
         const total = preview.entries.length
         const kept = preview.skipped.length
         const acting = total - kept
+        // Coming off the canvas while the source system keeps its copy. Only on the way
+        // out — a redo puts them back and the two agree again.
+        const upstream = direction === 'undo' ? preview.canvasOnly.length : 0
         const verb = direction === 'undo' ? 'Undoes' : 'Redoes'
         const say = this.footSay
         if (say) {
+            const tails: string[] = []
+            if (kept) {
+                tails.push(direction === 'undo'
+                    ? `${plural(kept, 'saved item')} kept`
+                    : `${kept} already applied`)
+            }
+            if (upstream) tails.push(`${plural(upstream, 'item')} saved upstream`)
+
             say.replaceChildren()
+            const head = kept ? `${verb} ${acting} of ${total}` : `${verb} ${plural(acting, 'step')}`
             if (!acting) {
                 say.append(muted('Nothing to reverse'), ` · ${plural(kept, 'saved item')} kept`)
-            } else if (kept) {
-                const tail = direction === 'undo'
-                    ? `${plural(kept, 'saved item')} kept`
-                    : `${kept} already applied`
-                say.append(`${verb} ${acting} of ${total} `, muted(`· ${tail}`))
+            } else if (tails.length) {
+                say.append(`${head} `, muted(`· ${tails.join(' · ')}`))
             } else {
-                say.append(`${verb} ${plural(acting, 'step')}`)
+                say.append(head)
             }
         }
         if (this.footDelta) this.footDelta.textContent = deltaLabel(preview)

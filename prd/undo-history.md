@@ -4,9 +4,9 @@
 `graph.history`, both top-bar split buttons with keyboard undo/redo, the **B2** dropdown with
 its canvas hover forecast, triage re-staging, `docs/history.md`, and the `undo-history`
 gallery card. 29 tests in `tests/visual/specs/history.spec.ts` (4 of them screenshots) plus 3
-in `pivot-triage.spec.ts`; both of §12's design questions are closed, and the third — how H6
-meets `pivot-persistence.md` P13 — stays open because save-back has not shipped. Grilled with Sami 2026-09-03;
-twenty-four decisions taken (§6). Four competing designs for the dropdown were built as
+in `pivot-triage.spec.ts`; all three of §12's design questions are closed — the third, how H6
+meets `pivot-persistence.md` P13, was settled with Sami 2026-09-04 and **H6 is amended**.
+Grilled with Sami 2026-09-03; twenty-four decisions taken (§6). Four competing designs for the dropdown were built as
 prototypes (§10) and **B, the timeline, is chosen**; a reversed draft, B2, followed. Still open
 before M2: B against B2 (§10.2) — an ordering, not a direction — and merging the legend-hover
 work (`develop`'s `a17e138`) that H16 needs.
@@ -189,18 +189,34 @@ had already reverted itself.
 
 ### Sealed entries
 
-**H6 — A consumer that persisted an operation says so, and the entry is listed but never
-reversed.** `NodeCreateDecision`, `EdgeCreateDecision` and `DeleteDecision` all already have an
-object form with `accept`; each gains an optional `persisted?: boolean`. A consumer that wrote
-the new node to its backend returns `{ accept: true, persisted: true }` and the entry seals.
-Only the consumer can know this, so only the consumer can declare it.
+**H6 — A consumer that persisted an operation says so. Undo will still take it off the canvas;
+it will not put back what the backend no longer has.** *(Amended 2026-09-04 — see §12.)*
+`NodeCreateDecision`, `EdgeCreateDecision` and `DeleteDecision` all already have an object form
+with `accept`; each gains an optional `persisted?: boolean`. A consumer that wrote the new node
+to its backend returns `{ accept: true, persisted: true }`. Only the consumer can know this, so
+only the consumer can declare it.
 
-Sealing deletions as well as creations extends Sami's rule to its mirror case: a delete that was
-propagated to a backend cannot be undone canvas-side without the canvas and the record of truth
-disagreeing. The rule is the same rule; flag it if the symmetry is unwanted.
+**One rule, and it follows the direction of the write, not the gesture that caused it.** Undo is
+a canvas operation and issues no compensating write, so:
+
+| The consumer wrote through a… | Undo | Why |
+|---|---|---|
+| **creation** | reverses, marked *saved* | The canvas loses something the backend keeps. Recoverable — a re-fetch or a re-run brings it back — and the row and the footer both say so before the click. |
+| **deletion** | **seals** | Restoring would put a node back that the record of truth no longer has. It looks like every other node, and a later save could push it upstream again. Nothing self-corrects it. |
+
+The first version of this decision sealed both, extending Sami's rule about creations to its
+mirror case. That was wrong about which case is the mirror: it is the *removal* that is
+dangerous, because it is the only one where undo invents something. The rule as amended is also
+the one `pivot-persistence.md` P13 reached from the other side, so the two documents now share it
+rather than inheriting two.
+
+The entry carries both facts: `sealed` is what will never move, `persisted` is what the backend
+has. A sealed entry is always persisted; a persisted one is only sealed when it is a deletion.
 
 **H7 — Sealed entries are listed.** They are part of the story of the graph, and a history that
-silently omitted them would misexplain how the canvas got this way.
+silently omitted them would misexplain how the canvas got this way. A persisted creation is
+listed too, chipped *saved*, and the footer counts it — `2 items saved upstream` — for the one
+span that would take it off the canvas.
 
 ### The mechanic
 
@@ -580,11 +596,16 @@ state, and on one thing that is not frequency — B2's resting position *is* scr
   canvas highlight says *where*, the footer says *what*. The menu is held to 424px, right
   anchored under its buttons, which leaves most of the canvas visible. Revisit if an analyst
   reports losing the highlight behind it.
-- **How H6 meets P13.** `pivot-persistence.md` P13 decided that undoing a *saved* pivot run
-  stays possible and warns that it is canvas-only. H6 seals persisted *creations* outright. Both
-  are defensible — an explicit Save is a deliberate act the analyst remembers, while a
-  write-through on create is invisible — but if save-back ever ships, the two rules should be
-  settled together rather than inherited separately.
+- ~~**How H6 meets P13.**~~ **Settled with Sami 2026-09-04, and H6 is amended.** The two rules
+  described the same condition — the element is in a backend — and answered opposite. They are
+  now one rule that turns on *direction*, not on which gesture caused the write: **undo can
+  always take things off the canvas, and it never resurrects what the backend deleted.** So a
+  persisted creation reverses and says the removal is canvas-only, which is exactly P13's
+  behaviour for a saved run; only a persisted deletion seals. The old symmetry was the wrong
+  one: losing something the backend keeps is recoverable, while putting back something it
+  dropped is a phantom that a later save can push upstream. Built the same day — `sealed` and
+  `persisted` are now separate fields on `HistoryEntry`, `HistoryPreview.canvasOnly` names what
+  a span would leave behind, and the footer counts it.
 - ~~**What a `manual` source tag does to `getSources()`.**~~ **Taken in M1.** A hand-created
   node or edge now reports `['manual']`, exported as `MANUAL_SOURCE`, and
   `graph.removeBySource('manual')` reaches hand-drawn work. The changelog carries it as

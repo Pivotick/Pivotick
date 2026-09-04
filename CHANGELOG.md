@@ -48,10 +48,13 @@
 - **`preview(entryId)` plays the span against a copy of the graph** rather than summing the
   entries, so it states the exact net effect: a hide cancelled by a later unhide nets to zero,
   and a node a second pivot also vouches for is not counted as leaving.
-- **A consumer that wrote an operation through says so, and the entry seals.**
-  `onBeforeNodeCreate`, `onBeforeEdgeCreate` and `onBeforeDelete` decisions take
-  `persisted?: boolean`. A sealed entry is listed — it is part of how the canvas got this way
-  — but never reversed, and a span containing one passes over it instead of stopping at it.
+- **A consumer that wrote an operation through says so.** `onBeforeNodeCreate`,
+  `onBeforeEdgeCreate` and `onBeforeDelete` decisions take `persisted?: boolean`. Undo issues
+  no compensating write, so it follows the direction of the write: a persisted **creation**
+  still reverses — the canvas loses what the backend keeps, the row is chipped *saved* and the
+  footer counts it (`1 item saved upstream`) — while a persisted **deletion** is **sealed**,
+  listed but never reversed, because restoring it would put back a node the backend no longer
+  has. A span containing a sealed entry passes over it instead of stopping at it.
 - **A deletion remembers each element's provenance**, so undoing it restores who vouched for
   what. Without that, undoing a deletion and then the run that landed those nodes would leave
   orphans nothing accounts for.

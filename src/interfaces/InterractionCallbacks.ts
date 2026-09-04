@@ -433,9 +433,10 @@ export type EdgeCreateDecision =
         id?: string
         directed?: boolean | null
     /**
-     * The consumer wrote this operation through to its own backend. The history
-     * lists the entry but never reverses it — only the consumer can know a write
-     * happened, so only the consumer can declare it.
+     * The consumer wrote this creation through to its own backend — only the consumer
+     * can know a write happened, so only the consumer can declare it. The history row
+     * is marked saved and still reverses: undo takes the element off the canvas, the
+     * backend keeps its copy, and the menu says so before the click.
      */
     persisted?: boolean
     }
@@ -512,9 +513,10 @@ export type DeleteDecision =
         edges?: Edge[]
         notes?: Note[]
     /**
-     * The consumer wrote this operation through to its own backend. The history
-     * lists the entry but never reverses it — only the consumer can know a write
-     * happened, so only the consumer can declare it.
+     * The consumer wrote this deletion through to its own backend — only the consumer
+     * can know a write happened, so only the consumer can declare it. The history row
+     * is listed and never reversed: undo issues no compensating write, so restoring
+     * these would put back what the record of truth no longer has.
      */
     persisted?: boolean
     }
@@ -598,9 +600,10 @@ export type NodeCreateDecision =
         data?: NodeData
         style?: Partial<NodeStyle>
     /**
-     * The consumer wrote this operation through to its own backend. The history
-     * lists the entry but never reverses it — only the consumer can know a write
-     * happened, so only the consumer can declare it.
+     * The consumer wrote this creation through to its own backend — only the consumer
+     * can know a write happened, so only the consumer can declare it. The history row
+     * is marked saved and still reverses: undo takes the element off the canvas, the
+     * backend keeps its copy, and the menu says so before the click.
      */
     persisted?: boolean
     }

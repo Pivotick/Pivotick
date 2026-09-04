@@ -277,6 +277,14 @@
         background: color-mix(in srgb, var(--pvt-theme-warning) 12%, transparent);
     }
 
+    // A saved row is only worth a plain note at rest — it reverses like any other. The
+    // chip warms up in the span that would take it off the canvas, which is the one
+    // moment the source system's copy is about to be left behind.
+    .pvt-history-row.canvas-only.preview-remove .pvt-history-chip {
+        color: var(--pvt-theme-warning);
+        border-color: color-mix(in srgb, var(--pvt-theme-warning) 40%, transparent);
+    }
+
     .pvt-history-row:hover {
         background-color: color-mix(in srgb, var(--pvt-text-color-6) 5%, transparent);
     }

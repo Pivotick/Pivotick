@@ -33,11 +33,18 @@ export interface HistoryEntry {
     nodeIds: string[]
     edgeIds: string[]
     /**
-     * The consumer reported this operation as written through to its backend. Listed,
-     * because it is part of how the canvas got this way, but never reversed: the
-     * canvas and the record of truth would disagree.
+     * Never reversed — a deletion the consumer wrote through to its backend. Undo is
+     * a canvas operation and issues no compensating write, so restoring these would
+     * put back nodes the record of truth no longer has. Listed, and stepped over
+     * inside a span rather than walling it.
      */
     sealed: boolean
+    /**
+     * The consumer reported this operation as written through to its backend. A
+     * persisted *creation* still reverses: the canvas loses what the backend keeps,
+     * which a re-fetch undoes. The row says so, and the footer counts it.
+     */
+    persisted: boolean
     /** For a pivot entry, which pivot produced it — two runs of one pivot share it. */
     pivotId?: string
     /**
@@ -75,6 +82,11 @@ export interface HistoryPreview {
     entries: HistoryEntry[]
     /** Inside the span, left alone because they are sealed. */
     skipped: HistoryEntry[]
+    /**
+     * Inside the span and reversed, but written through to a backend that keeps its
+     * copy — so the reversal is canvas-only. What the footer warns about.
+     */
+    canvasOnly: HistoryEntry[]
     /**
      * The elements the span touches that are on the canvas *now*. An entry whose
      * elements are gone names none, honestly — see {@link forecast} for those.

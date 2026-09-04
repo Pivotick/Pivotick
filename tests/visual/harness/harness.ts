@@ -204,6 +204,7 @@ export interface RecordedHistoryEntry {
     kind: string
     label: string
     sealed: boolean
+    persisted: boolean
     nodes: string[]
     edges: string[]
     ordinal?: number
@@ -224,6 +225,7 @@ export interface RecordedEdgeBinding {
 export interface RecordedHistoryPreview {
     entries: string[]
     skipped: string[]
+    canvasOnly: string[]
     nodes: string[]
     edges: string[]
     effect: Record<string, number>
@@ -4384,6 +4386,7 @@ class Harness implements HarnessApi {
             kind: entry.kind,
             label: entry.label,
             sealed: entry.sealed,
+            persisted: entry.persisted,
             nodes: [...entry.nodeIds],
             edges: [...entry.edgeIds],
             ordinal: entry.ordinal,
@@ -4463,6 +4466,7 @@ class Harness implements HarnessApi {
         return {
             entries: preview.entries.map((entry) => entry.id),
             skipped: preview.skipped.map((entry) => entry.id),
+            canvasOnly: preview.canvasOnly.map((entry) => entry.id),
             nodes: preview.nodes.map((node) => node.id),
             edges: preview.edges.map((edge) => edge.id),
             effect: { ...preview.effect },
