@@ -124,6 +124,16 @@
   something. On the edge side the discarded incoming object was left registered on its
   endpoints, counting one edge twice in every degree and neighbour list it touched; and an edge
   updated onto different nodes now stops being counted by the pair it left.
+- **A container's child no longer takes over an id already on canvas.** Registering an ingested
+  container's children wrote each one into the node map under its id, and an id already held by
+  a node on canvas was simply overwritten — the same identity swap as above, one level down. The
+  node the analyst had been looking at was gone from the graph while its edges went on pointing
+  at it, so they hung off a fixed point nothing moves again, and the id now named something
+  hidden inside a cluster. The collision is resolved the other way now: the node on canvas
+  stands and the child is dropped from its container, which is the rule an id-matched *candidate*
+  already gets. The same holds for a container carrying the same child id twice, and for
+  `unionChildren` merging one in. This is everyday MISP shape — the object a lookup returns
+  contains the very attribute that was pivoted on.
 
 ### Breaking
 

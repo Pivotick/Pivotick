@@ -606,12 +606,40 @@ export class Graph {
      * @returns every node newly added, at any depth.
      */
     public unionChildren(parent: Node, children: RawNode[]): Node[] {
-        const added = parent.unionChildren(Graph.normalizeChildren(children))
+        const merged = parent.unionChildren(Graph.normalizeChildren(children))
+        if (!merged.length) return merged
+        this.registerChildren(parent)
+        // A merged-in child whose id was already taken has been dropped again, so it
+        // is not something this call added.
+        const added = merged.filter(child => this.nodes.get(child.id) === child)
         if (!added.length) return added
-        for (const child of added) this.nodes.set(child.id, child)
         this.dataBatchChanged(added.map(child => ({ type: 'node:add', node: child } as GraphDataChange)))
         this.onChange()
         return added
+    }
+
+    /**
+     * @private
+     * Register a container's children under their ids, depth first.
+     *
+     * An id the graph already holds is **not** taken over. The node on canvas is the
+     * one its edges, the simulation and the DOM binding are all using, and writing a
+     * container's child over it strands every one of them: the edges go on pointing at
+     * an object nothing moves again, and the id now names something hidden inside a
+     * cluster. So the collision is resolved the other way — the child is dropped from
+     * its container and the node on canvas stands, which is the rule an id-matched
+     * candidate already gets one level up.
+     */
+    private registerChildren(parent: Node): void {
+        for (const child of [...parent.children]) {
+            const held = this.nodes.get(child.id)
+            if (held && held !== child) {
+                parent.removeChildById(child.id)
+                continue
+            }
+            this.nodes.set(child.id, child)
+            this.registerChildren(child)
+        }
     }
 
     /**
@@ -895,15 +923,6 @@ export class Graph {
      * @private
      */
     private _setData(nodes: Array<Node>, edges: Array<Edge>, notes: Array<Note>): void {
-        const recurseAddChildren = (node: Node) => {
-            node.children.forEach((child: Node) => {
-                this.nodes.set(child.id, child)
-                if (child.hasChildren()) {
-                    recurseAddChildren(child)
-                }
-            })
-        }
-
         const changes: GraphDataChange[] = []
         nodes.forEach(node => {
             this.nodes.set(node.id, node)
@@ -911,7 +930,7 @@ export class Graph {
                 type: 'node:add',
                 node: node
             } as GraphDataChange)
-            recurseAddChildren(node)
+            this.registerChildren(node)
         })
         edges.forEach(edge => {
             if (
@@ -946,9 +965,9 @@ export class Graph {
             throw new Error(`Node with id ${node.id} already exists.`)
         }
         this.nodes.set(node.id, node)
-        // A container's children belong to the graph too — `_setData` has always
-        // registered them, and an expanded cluster looks its children up by id.
-        for (const child of node.descendants()) this.nodes.set(child.id, child)
+        // A container's children belong to the graph too: an expanded cluster looks
+        // them up by id.
+        this.registerChildren(node)
         this.dataBatchChanged([{
             type: 'node:add',
             node: node

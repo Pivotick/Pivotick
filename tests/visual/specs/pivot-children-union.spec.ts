@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test'
 import { test, expect, gotoHarness, harness } from '../helpers'
-import type { PivotFixtureSpec, RecordedRunOutcome } from '../harness/harness'
+import type { PivotFixtureSpec, RecordedEdgeBinding, RecordedRunOutcome } from '../harness/harness'
 
 // Children union by id (M1b): a pivot result whose node id matches one already on
 // canvas merges its children in — added, never updated, never removed — and the
@@ -25,6 +25,9 @@ const run = async (
 
 const childIds = async (page: Page, nodeId: string): Promise<string[]> =>
     (await harness(page, 'childIds', nodeId)) as string[]
+
+const binding = async (page: Page, edgeId: string): Promise<RecordedEdgeBinding> =>
+    (await harness(page, 'edgeBinding', edgeId)) as RecordedEdgeBinding
 
 test.describe('pivot children union', () => {
     test.beforeEach(async ({ page }) => {
@@ -168,5 +171,74 @@ test.describe('pivot children union', () => {
         expect(await childIds(page, 'event-a')).toHaveLength(12)
         // The container itself is vouched for by the other pivot, so it stays.
         expect(await harness(page, 'nodeData', 'event-a')).not.toBeNull()
+    })
+})
+
+// A container arrives carrying a child whose id is already a node on canvas — the
+// everyday MISP shape, where the object a lookup returns contains the very attribute
+// that was pivoted on. Registering that child under the taken id used to hand the id
+// to something hidden inside a cluster, while the node's own edges went on pointing
+// at an object the graph no longer held and nothing moves again.
+//
+// `b` is the collision throughout: a seed node of the `basic` fixture, with `a-b`
+// already hanging off it.
+test.describe('a container child whose id is already on canvas', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoHarness(page)
+    })
+
+    const collides = async (page: Page, parent: string): Promise<void> => {
+        await load(page, { pivots: ['union-children'], union: { parent, children: ['b', 'object-12'] } })
+    }
+
+    test('a new container leaves it on canvas, with its edges still on it', async ({ page }) => {
+        await collides(page, 'container')
+        await run(page, 'union-children', ['a'])
+        // The container is a new node, so it is a triage row rather than a dedup.
+        await harness(page, 'markPivotCandidates', 'union-children', 'all')
+        await harness(page, 'ingestPivot', 'union-children')
+
+        // The container landed, without taking the id it does not own.
+        expect(await childIds(page, 'container')).toEqual(['object-12'])
+        expect(await harness(page, 'nodeContainer', 'b')).toBeNull()
+
+        const bound = await binding(page, 'a-b')
+        expect(bound.bound, 'a-b is bound to the graph\'s own node').toBe(true)
+        expect(bound.counted, 'a-b is counted by its endpoints').toBe(true)
+    })
+
+    test('a deduped container merging it in does the same', async ({ page }) => {
+        await load(page, {
+            pivots: ['misp-event-objects', 'union-children'],
+            union: { parent: 'event-a', children: ['b', 'object-12'] },
+        })
+        await run(page, 'misp-event-objects', ['a'])
+        await run(page, 'union-children', ['a'])
+        await harness(page, 'ingestPivot', 'union-children')
+
+        // Only the free id merged in, and it is what the run reports having added.
+        expect(await childIds(page, 'event-a')).toHaveLength(13)
+        expect(await childIds(page, 'event-a')).toContain('object-12')
+        expect(await childIds(page, 'event-a')).not.toContain('b')
+        expect(await harness(page, 'nodeContainer', 'b')).toBeNull()
+        expect(await harness(page, 'nodeSources', 'b')).toEqual(['seed'])
+
+        const bound = await binding(page, 'a-b')
+        expect(bound.bound).toBe(true)
+        expect(bound.counted).toBe(true)
+    })
+
+    test('a container carrying the same child twice keeps one of it', async ({ page }) => {
+        await load(page, {
+            pivots: ['union-children'],
+            union: { parent: 'container', children: ['object-12', 'object-12'] },
+        })
+        await run(page, 'union-children', ['a'])
+        await harness(page, 'markPivotCandidates', 'union-children', 'all')
+        await harness(page, 'ingestPivot', 'union-children')
+
+        // Both entries used to be kept as children while the map held only the second,
+        // so an expanded container drew the same node twice.
+        expect(await childIds(page, 'container')).toEqual(['object-12'])
     })
 })

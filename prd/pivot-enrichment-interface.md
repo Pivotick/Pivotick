@@ -171,7 +171,9 @@ What *is* supported: when a returned node's **id matches a node already on canva
 carries `children`, those children are **merged into the existing node by id** — new ones added,
 matching ones **left untouched**, none removed. (The review pass changed "matching ones updated"
 to align with D23: an id collision is handled the same way at every level — pivots discover
-*structure*; refreshing stale attributes is the deferred persistence PRD's business.) The union
+*structure*; refreshing stale attributes is the deferred persistence PRD's business.) A child
+whose id names a node **already on canvas** is the same collision seen from below, and resolves
+the same way: the node on canvas is left untouched, and the container arrives without it. The union
 **recurses** — MISP nests event → objects → attributes — and union-added children **carry the
 source tag**, so `removeBySource` and run undo reach into containers and remove a child only its
 own sources vouch for. This is what makes re-pivoting a container work, and it fixes the
@@ -920,6 +922,11 @@ child-mutation API beside `setChildren`; `Graph.unionChildren`, `Graph.removeChi
 - **A matching child keeps its own provenance.** A union that re-asserts an existing child adds
   nothing and tags nothing: the child still belongs to the run that brought it, so undoing the
   merge leaves it alone and undoing its own run takes it away. The D8 guarantee, at child level.
+- **A child whose id is already on canvas is dropped, not landed** *(added 2026-09-04)*. This is
+  everyday MISP shape — `vulnerability_lookup` answers with an object containing the very CVE
+  that was pivoted on. Registering that child would have to displace the node on canvas, whose
+  edges, position and simulation entry all belong to the object the graph already holds, so the
+  container gives the child up instead. D23's rule for an id-matched candidate, one level down.
 
 ### 15.2 What it found
 

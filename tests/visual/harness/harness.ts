@@ -1043,6 +1043,8 @@ export interface HarnessApi {
     childCount(nodeId: string): number
     /** A container's child ids, in order — so a union can be told from a replace. */
     childIds(nodeId: string): string[]
+    /** The container a node sits inside, or `null` for one of the graph's own. */
+    nodeContainer(nodeId: string): string | null
     /** Whether a container is currently expanded. */
     isExpanded(nodeId: string): boolean
     /** How many nodes an expanded container's subgraph holds (-1 when it has none). */
@@ -4602,6 +4604,10 @@ class Harness implements HarnessApi {
 
     childIds(nodeId: string): string[] {
         return this.g.getMutableNode(nodeId)?.children.map((child) => child.id) ?? []
+    }
+
+    nodeContainer(nodeId: string): string | null {
+        return this.g.getMutableNode(nodeId)?.parentNode?.id ?? null
     }
 
     isExpanded(nodeId: string): boolean {
