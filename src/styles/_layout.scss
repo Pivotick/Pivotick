@@ -49,6 +49,11 @@
     &.mode-full.sidebar-collapsed {
         grid-template-columns: 0px 1fr;
     }
+
+    // No header strip: the chrome that offsets below it starts at the canvas edge.
+    &.pvt-no-mainheader {
+        --pvt-mainheader-height: 0px;
+    }
 }
 
 .pvt-sidebar {

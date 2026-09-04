@@ -559,6 +559,11 @@ export interface MarkerStyle {
  */
 export type MarkerStyleMap = Record<string, MarkerStyle>
 
+/**
+ * Region selection — dragging a shape across the canvas to select what it covers:
+ * the marquee on the canvas, and the Select ▸ Lasso tool that draws a freehand one.
+ * `enabled: false` takes both away, leaving click and shift-click selection.
+ */
 export interface SelectionBox {
     /** @default true */
     enabled: boolean

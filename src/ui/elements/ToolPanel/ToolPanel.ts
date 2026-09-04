@@ -213,9 +213,14 @@ export class ToolPanel extends UIComponent {
         if (registered) return resolveRailTools(registered)
 
         if (mode === 'select') {
+            // The lasso is region selection like the marquee is, and answers to the
+            // same switch — a canvas with no drag-select has no freehand one either.
+            const regionSelect = this.uiManager.graph.getOptions().render?.selectionBox?.enabled !== false
             return [
                 { id: 'pointer', label: 'Pointer', icon: cursor, kind: 'default', run: () => this.disarmLasso() },
-                { id: 'lasso', label: 'Lasso', icon: lassoTool, kind: 'toggle', run: (armed) => this.toggleLasso(armed) },
+                ...(regionSelect
+                    ? [{ id: 'lasso', label: 'Lasso', icon: lassoTool, kind: 'toggle', run: (armed: boolean) => this.toggleLasso(armed) } as ToolSpec]
+                    : []),
                 { id: 'path', label: 'Path select', icon: pathSelection, kind: 'soon' },
                 { id: 'invert', label: 'Invert selection', icon: selectionInverse, kind: 'action', run: () => this.invertSelection() },
             ]
@@ -229,8 +234,12 @@ export class ToolPanel extends UIComponent {
             ...(this.uiManager.isEditorEnabled('nodeCreator')
                 ? [{ id: 'add-node', label: 'Add node', icon: addCircle, kind: 'action', run: () => this.addNode() } as ToolSpec]
                 : []),
-            { id: 'add-edge', label: 'Add edge', icon: graphEdgeIcon(18), kind: 'toggle', run: (armed) => this.toggleAddEdge(armed) },
-            { id: 'add-note', label: 'Add note', icon: stickyNote, kind: 'action', run: () => this.addNote() },
+            ...(this.uiManager.isEditorEnabled('edgeCreator')
+                ? [{ id: 'add-edge', label: 'Add edge', icon: graphEdgeIcon(18), kind: 'toggle', run: (armed: boolean) => this.toggleAddEdge(armed) } as ToolSpec]
+                : []),
+            ...(this.uiManager.isFeatureEnabled('notes')
+                ? [{ id: 'add-note', label: 'Add note', icon: stickyNote, kind: 'action', run: () => this.addNote() } as ToolSpec]
+                : []),
             ...(this.uiManager.isEditorEnabled('nodeEditor')
                 ? [{ id: 'edit', label: 'Edit node', icon: edit, kind: 'action', run: () => this.editSelectedNode(), enabled: () => this.hasEditableSelection() } as ToolSpec]
                 : []),

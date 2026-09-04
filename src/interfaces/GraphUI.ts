@@ -13,8 +13,22 @@ import type { AsyncContentOptions, RenderContext, RenderResult } from './AsyncCo
 import type { MinimapOptions } from '../plugins/minimap/options'
 
 /**
+ * A UI feature that is either offered or not.
+ *
+ * Every one of these is **on unless it is switched off**, and switching one off
+ * removes its affordances rather than leaving them to refuse: no button, no menu
+ * entry, no keyboard shortcut, no panel. See {@link UIManager.isFeatureEnabled}.
+ *
  * @category Main Options
- * 
+ */
+export interface FeatureToggle {
+    /** @default true */
+    enabled?: boolean
+}
+
+/**
+ * @category Main Options
+ *
  * Options for the UI
  */
 export interface GraphUI {
@@ -35,6 +49,69 @@ export interface GraphUI {
     contextMenu: ContextMenu,
     navigation: Navigation,
     editors: Editors,
+    /**
+     * The strip along the top of the canvas: the Search / Filter / Notes pills and the
+     * undo-redo group. `enabled: false` removes the strip, the 48px it reserved and the
+     * shortcuts its controls own.
+     *
+     * Not to be confused with {@link GraphUI.mainHeader}, which is how elements are
+     * *named* wherever they are shown. Each pill also has its own switch
+     * ({@link GraphUI.search}, `UI.filter.enabled`, {@link GraphUI.notes},
+     * {@link GraphUI.history}) for taking one away rather than all of them.
+     * @default { enabled: true }
+     */
+    topBar?: FeatureToggle,
+    /**
+     * Free-floating notes on the canvas: the strip's **Notes** button and its panel,
+     * the Create ▸ Add note tool, the canvas menu's **Add Note**, and the `N` /
+     * `Shift+N` shortcuts.
+     *
+     * `enabled: false` takes every one of them away *and* closes the door behind them:
+     * `graph.noteManager.addNote` refuses, so nothing — not a plugin, not the initial
+     * data — puts a note on a canvas that offers no way to read or remove one.
+     * @default { enabled: true }
+     */
+    notes?: FeatureToggle,
+    /**
+     * Node search: the header's **Search** button, its picker modal and `Shift+J`.
+     * `graph.selectElement` and the pickers other features open are untouched.
+     * @default { enabled: true }
+     */
+    search?: FeatureToggle,
+    /**
+     * The undo / redo split buttons, their history dropdown and `Mod+Z` / `Mod+Shift+Z`.
+     *
+     * Only the controls: `graph.history` goes on recording either way, so a consumer
+     * driving undo from its own chrome switches this off and keeps the engine.
+     * @default { enabled: true }
+     */
+    history?: FeatureToggle,
+    /**
+     * The inspect-properties modal — the node menu's **Inspect Properties** entry and
+     * the `I` shortcut.
+     * @default { enabled: true }
+     */
+    inspector?: FeatureToggle,
+    /**
+     * Toast notifications. `enabled: false` silences the corner: every
+     * `graph.notifier.*` call becomes a no-op returning `undefined`, which is already
+     * what a mode with no notification slot returns.
+     * @default { enabled: true }
+     */
+    notifications?: FeatureToggle,
+    /**
+     * The **View** rail mode — the flyout holding the layout, grid and visibility
+     * switches. `enabled: false` takes its rail button and its panel away.
+     * @default { enabled: true }
+     */
+    viewFlyout?: FeatureToggle,
+    /**
+     * The **Physics** rail mode — the flyout holding the simulation sliders and
+     * presets. `enabled: false` takes its rail button and its panel away; whether the
+     * simulation runs at all is `simulation.enabled`'s business.
+     * @default { enabled: true }
+     */
+    physicsFlyout?: FeatureToggle,
     /**
      * The filter panel's facets. Omit to derive them by scanning node data
      * (the zero-config default); declare `facets` to generate the form from
@@ -482,6 +559,13 @@ export type GraphUIMode = 'viewer' | 'full' | 'light' | 'static';
 
 export interface SidebarOptions {
     /**
+     * Whether the sidebar exists at all. `false` gives `full` mode a canvas with no
+     * side column — the properties, neighbours and extra panels have nowhere to go,
+     * and `addPanel()` keeps its registry without a host to draw it.
+     * @default true
+     */
+    enabled?: boolean
+    /**
      * Determines whether the sidebar is collapsed by default.
      * - `'auto'` Keeps the sidebar open unless there isn't enough screen space, in which case it collapses automatically.
      * @default 'auto'
@@ -491,6 +575,11 @@ export interface SidebarOptions {
 
 /**
  * Define what should be displayed in the sidebar's main header slot for node or edges.
+ *
+ * These maps also name elements elsewhere — the tooltip's header, the table's `Name`
+ * column, `[[node]]` note references — so they are about *naming*, not about one
+ * panel. The strip along the top of the canvas is a different thing entirely: switch
+ * that off with {@link GraphUI.topBar}.
  */
 export interface MainHeader {
     nodeHeaderMap: HeaderMapEntry<Node>
@@ -552,6 +641,12 @@ export interface PropertyEntry {
  */
 export interface PropertiesPanel {
     /**
+     * Whether the sidebar shows a properties panel at all. `false` removes it and its
+     * separator, leaving the header, the neighbours panel and any extra panels.
+     * @default true
+     */
+    enabled?: boolean
+    /**
      * A function that computes the list of node properties to display.
      *
      * May be `async` — return a promise of the entries and the panel shows a
@@ -588,6 +683,12 @@ export interface PropertiesPanel {
  * @default All neighbor for the chosen entity
  */
 export interface NeighborsPanel {
+    /**
+     * Whether the sidebar shows a neighbours panel at all. `false` removes it and its
+     * separator — right for a graph whose edges say nothing worth listing.
+     * @default true
+     */
+    enabled?: boolean
     /**
      * @remarks A returned `string` renders as plain text; return an `HTMLElement` to render HTML.
      * May be `async`: the slot shows a placeholder until it resolves, and a result
@@ -818,6 +919,20 @@ export interface Editors {
     nodeCreator?: {
         /**
          * Offer the create-node affordances at all.
+         * @default true
+         */
+        enabled?: boolean
+    }
+    /**
+     * Interactive edge creation — the Create ▸ Add edge tool (drag-to-connect and
+     * click-click alike) and the node context-menu's "Connect to…". What the new edge
+     * carries, and whether it is allowed, is decided by
+     * {@link InterractionCallbacks.onBeforeEdgeCreate}.
+     */
+    edgeCreator?: {
+        /**
+         * Offer the connect affordances at all. `false` removes them, so a graph whose
+         * relations come only from the backend never arms a connect session.
          * @default true
          */
         enabled?: boolean

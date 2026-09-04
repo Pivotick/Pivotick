@@ -36,7 +36,10 @@ export class GraphInteractions<TElement = unknown> {
             selectNodes: [], unselectNodes: [], selectEdges: [], unselectEdges: [],
         }
 
+        // Enter expands the selection — the keyboard twin of the chevron, and gone
+        // with it when `render.enableNodeExpansion` is false.
         this.graph.UIManager.keyManager.register({ key: 'Enter', callback: () => {
+            if (this.graph.renderer?.getOptions().enableNodeExpansion === false) return
             this.expandNodeSelection()
         } })
     }

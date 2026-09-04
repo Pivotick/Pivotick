@@ -159,6 +159,16 @@ export interface EdgeFacetValue {
 /** `UI.filter` — how the filter panel is populated. */
 export interface FilterOptions {
     /**
+     * Whether the filter panel is offered at all: the header's **Filter Graph** pill,
+     * the panel it opens and `Shift+K`.
+     *
+     * The panel only, not filtering: `graph.queryEngine` still answers to code, the
+     * legend still filters, and the dock's own column filters answer to
+     * `UI.table.filterGraph`.
+     * @default true
+     */
+    enabled?: boolean
+    /**
      * The facets the graph is filterable by. When set, the filter form is
      * generated from this declaration and auto-derivation is skipped entirely.
      * @default undefined — derive facets by scanning node data

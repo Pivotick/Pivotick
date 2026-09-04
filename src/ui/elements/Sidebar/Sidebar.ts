@@ -18,8 +18,9 @@ export class Sidebar extends UIComponent {
     private sidebarOpen: boolean = true
 
     private sidebarMainHeader: SidebarMainHeader
-    private sidebarProperties: SidebarProperties
-    private sidebarNeighbors: SidebarNeighbors
+    /** Absent while `UI.propertiesPanel.enabled` / `UI.neighborsPanel.enabled` is false. */
+    private sidebarProperties?: SidebarProperties
+    private sidebarNeighbors?: SidebarNeighbors
     private bulkActions: SidebarBulkActions
     private extraPanelManager: ExtraPanelManager
 
@@ -33,8 +34,8 @@ export class Sidebar extends UIComponent {
     constructor(uiManager: UIManager) {
         super(uiManager)
         this.sidebarMainHeader = new SidebarMainHeader(this.uiManager)
-        this.sidebarProperties = new SidebarProperties(this.uiManager)
-        this.sidebarNeighbors = new SidebarNeighbors(this.uiManager)
+        if (this.uiManager.isFeatureEnabled('propertiesPanel')) this.sidebarProperties = new SidebarProperties(this.uiManager)
+        if (this.uiManager.isFeatureEnabled('neighborsPanel')) this.sidebarNeighbors = new SidebarNeighbors(this.uiManager)
         this.bulkActions = new SidebarBulkActions(this.uiManager)
         this.extraPanelManager = new ExtraPanelManager(this.uiManager)
     }
@@ -42,14 +43,20 @@ export class Sidebar extends UIComponent {
     protected onMount(container: HTMLElement | undefined) {
         if (!container) return
 
+        // A switched-off panel takes its separator with it, so the sidebar doesn't
+        // grow a rule with nothing under it.
+        const properties = this.uiManager.isFeatureEnabled('propertiesPanel')
+            ? '<div class="pvt-sidebar-separator"></div>\n    <div class="pvt-properties-panel pvt-sidebar-panel"></div>'
+            : ''
+        const neighbors = this.uiManager.isFeatureEnabled('neighborsPanel')
+            ? '<div class="pvt-sidebar-separator"></div>\n    <div class="pvt-neighbor-panel pvt-sidebar-panel"></div>'
+            : ''
         const template = `
 <div class="pvt-sidebar-elements">
     <div class="pvt-mainheader-panel"></div>
     <div class="pvt-sidebar-bulkactions-slot"></div>
-    <div class="pvt-sidebar-separator"></div>
-    <div class="pvt-properties-panel pvt-sidebar-panel"></div>
-    <div class="pvt-sidebar-separator"></div>
-    <div class="pvt-neighbor-panel pvt-sidebar-panel"></div>
+    ${properties}
+    ${neighbors}
     <div class="pvt-sidebar-separator"></div>
     <div class="pvt-extra-panel pvt-sidebar-panel"></div>
 </div>`
@@ -75,9 +82,9 @@ export class Sidebar extends UIComponent {
         const bulkActionsSlot = this.sidebar.querySelector<HTMLDivElement>('.pvt-sidebar-bulkactions-slot') ?? undefined
         this.addChild(this.bulkActions, bulkActionsSlot)
         this.mainBodyPanel = this.sidebar.querySelector('.pvt-properties-panel') ?? undefined
-        this.addChild(this.sidebarProperties, this.mainBodyPanel)
+        if (this.sidebarProperties) this.addChild(this.sidebarProperties, this.mainBodyPanel)
         this.neighborPanel = this.sidebar.querySelector('.pvt-neighbor-panel') ?? undefined
-        this.addChild(this.sidebarNeighbors, this.neighborPanel)
+        if (this.sidebarNeighbors) this.addChild(this.sidebarNeighbors, this.neighborPanel)
         this.extraPanelContainer = this.sidebar.querySelector('.pvt-extra-panel') ?? undefined
         this.addChild(this.extraPanelManager, this.extraPanelContainer)
 
@@ -121,8 +128,8 @@ export class Sidebar extends UIComponent {
         })
         this.trackInteraction('selectEdge', (edge: Edge) => {
             this.sidebarMainHeader.updateEdgeOverview(edge)
-            this.sidebarProperties.updateEdgeProperties(edge)
-            this.sidebarNeighbors.updateEdgeNeighbors(edge)
+            this.sidebarProperties?.updateEdgeProperties(edge)
+            this.sidebarNeighbors?.updateEdgeNeighbors(edge)
             this.extraPanelManager.updateEdge(edge)
             this.showSelectionActions('edge')
         })
@@ -142,8 +149,8 @@ export class Sidebar extends UIComponent {
         })
         this.trackInteraction('selectEdges', (edges: EdgeSelection<unknown>[]) => {
             this.sidebarMainHeader.updateEdgesOverview(edges)
-            this.sidebarProperties.updateEdgesProperties(edges)
-            this.sidebarNeighbors.updateEdgesNeighbors(edges)
+            this.sidebarProperties?.updateEdgesProperties(edges)
+            this.sidebarNeighbors?.updateEdgesNeighbors(edges)
             this.extraPanelManager.updateEdges(edges)
             this.showSelectionActions('edge')
         })
@@ -186,8 +193,8 @@ export class Sidebar extends UIComponent {
 
     private renderSingleNodeSelection(node: Node, element: unknown): void {
         this.sidebarMainHeader.updateNodeOverview(node, element)
-        this.sidebarProperties.updateNodeProperties(node)
-        this.sidebarNeighbors.updateNodeNeighbors(node)
+        this.sidebarProperties?.updateNodeProperties(node)
+        this.sidebarNeighbors?.updateNodeNeighbors(node)
         this.extraPanelManager.updateNode(node)
         // Per-node actions live in the header + right-click ContextMenu; the
         // clear-X and bulk-row are for multi-selection (see showSelectionActions).
@@ -196,16 +203,16 @@ export class Sidebar extends UIComponent {
 
     private renderMultiNodeSelection(fullSelection: NodeSelection<unknown>[]): void {
         this.sidebarMainHeader.updateNodesOverview(fullSelection)
-        this.sidebarProperties.updateNodesProperties(fullSelection)
-        this.sidebarNeighbors.updateNodesNeighbors(fullSelection)
+        this.sidebarProperties?.updateNodesProperties(fullSelection)
+        this.sidebarNeighbors?.updateNodesNeighbors(fullSelection)
         this.extraPanelManager.updateNodes(fullSelection)
         this.showSelectionActions('node')
     }
 
     private clearSelection(): void {
         this.sidebarMainHeader.clearOverview()
-        this.sidebarProperties.clearProperties()
-        this.sidebarNeighbors.clearNeighbors()
+        this.sidebarProperties?.clearProperties()
+        this.sidebarNeighbors?.clearNeighbors()
         this.extraPanelManager.clear()
         this.hideSelectionActions()
     }

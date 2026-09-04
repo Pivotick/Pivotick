@@ -38,46 +38,60 @@ export class Mainheader extends UIComponent {
         this.mainheader = document.createElement('div')
         this.mainheader.className = 'pvt-mainheader-elements'
 
+        // Each pill is its own feature, and a feature that is switched off contributes
+        // no pill — so a header can end up holding one of them, or none at all.
         /** Searchbox */
-        const templateSearch = document.createElement('template')
-        templateSearch.innerHTML = `
+        if (this.uiManager.isFeatureEnabled('search')) {
+            this.searchBoxButton = this.makePill(`
   <div id="pvt-searchbox-button" class="pvt-action-button" role="button" tabindex="0" aria-label="Search for a node">
     <div class="action-container">
         <span class="icon-container">${magnifyingGlass}</span>
         <span class="action-text">Search</span>
         ${createShortcutBadge('Shift+J').outerHTML}
     </div>
-  </div>`
-        this.searchBoxButton = templateSearch.content.firstElementChild as HTMLDivElement
-        this.mainheader.appendChild(this.searchBoxButton)
+  </div>`)
+        }
 
         /** Filterbox */
-        const templateFilter = document.createElement('template')
-        templateFilter.innerHTML = `
+        if (this.uiManager.isFeatureEnabled('filter')) {
+            this.filterButton = this.makePill(`
   <div id="pvt-filter-button" class="pvt-action-button" role="button" tabindex="0" aria-label="Filter the graph">
     <div class="action-container">
         <span class="icon-container">${funnel}</span>
         <span class="action-text">Filter Graph</span>
         ${createShortcutBadge('Shift+K').outerHTML}
     </div>
-  </div>`
-        this.filterButton = templateFilter.content.firstElementChild as HTMLDivElement
-        this.mainheader.appendChild(this.filterButton)
+  </div>`)
+        }
 
         /** Notebox */
-        const templateNoteSidebar = document.createElement('template')
-        templateNoteSidebar.innerHTML = `
+        if (this.uiManager.isFeatureEnabled('notes')) {
+            this.noteButton = this.makePill(`
   <div id="pvt-notes-button" class="pvt-action-button" role="button" tabindex="0" aria-label="Notes">
     <div class="action-container">
         <span class="icon-container">${stickyNote}</span>
         <span class="action-text">Notes</span>
         ${createShortcutBadge('Shift+N').outerHTML}
     </div>
-  </div>`
-        this.noteButton = templateNoteSidebar.content.firstElementChild as HTMLDivElement
-        this.mainheader.appendChild(this.noteButton)
+  </div>`)
+        }
 
-        /** Undo/Redo — each a split button: the icon steps once, the caret opens the history */
+        if (this.uiManager.isFeatureEnabled('history')) this.buildHistoryGroup()
+
+        container.appendChild(this.mainheader)
+    }
+
+    /** Build one header pill from its markup and append it to the strip. */
+    private makePill(markup: string): HTMLDivElement {
+        const template = document.createElement('template')
+        template.innerHTML = markup
+        const pill = template.content.firstElementChild as HTMLDivElement
+        this.mainheader!.appendChild(pill)
+        return pill
+    }
+
+    /** Undo/Redo — each a split button: the icon steps once, the caret opens the history */
+    private buildHistoryGroup() {
         const templateRight = document.createElement('template')
         templateRight.innerHTML = `
   <div class="pvt-right">
@@ -97,14 +111,12 @@ export class Mainheader extends UIComponent {
         </button>
     </div>
   </div>`
-        const filterContainer = templateRight.content.firstElementChild as HTMLDivElement
-        this.undoButton = filterContainer.querySelector('#pvt-undo-button') ?? undefined
-        this.redoButton = filterContainer.querySelector('#pvt-redo-button') ?? undefined
-        this.undoCaret = filterContainer.querySelector('#pvt-undo-caret') ?? undefined
-        this.redoCaret = filterContainer.querySelector('#pvt-redo-caret') ?? undefined
-        this.mainheader.appendChild(filterContainer)
-
-        container.appendChild(this.mainheader)
+        const group = templateRight.content.firstElementChild as HTMLDivElement
+        this.undoButton = group.querySelector('#pvt-undo-button') ?? undefined
+        this.redoButton = group.querySelector('#pvt-redo-button') ?? undefined
+        this.undoCaret = group.querySelector('#pvt-undo-caret') ?? undefined
+        this.redoCaret = group.querySelector('#pvt-redo-caret') ?? undefined
+        this.mainheader!.appendChild(group)
     }
 
     protected onDestroy() {
@@ -114,36 +126,40 @@ export class Mainheader extends UIComponent {
 
     protected onAfterMount() {
         const { filterButton, noteButton, searchBoxButton } = this
-        if (!filterButton || !noteButton) return
 
-        this.track(this.uiManager.keyManager.register({ key: 'Shift+J', callback: () => this.searchBoxButton?.click() }))
-        this.track(this.uiManager.keyManager.register({ key: 'Shift+K', callback: () => this.filterButton?.click() }))
-        this.track(this.uiManager.keyManager.register({ key: 'Shift+N', callback: () => this.noteButton?.click() }))
+        // A pill's panel and its shortcut are built beside the pill: with the feature
+        // off there is no key to press and no panel to open behind its back.
+        if (filterButton) {
+            this.track(this.uiManager.keyManager.register({ key: 'Shift+K', callback: () => this.filterButton?.click() }))
+            const graphFilter = new GraphFilter(this.uiManager)
+            this.filteringSlidepanel = this.uiManager.createSlidepanel({
+                header: 'Graph Filters',
+                body: graphFilter.build()
+            })
+            // Only one slide panel open at a time: opening one closes the other.
+            this.listen(filterButton, 'click', () => {
+                this.noteSlidepanel?.close()
+                this.filteringSlidepanel!.toggle()
+            })
+        }
 
-        const graphFilter = new GraphFilter(this.uiManager)
-        this.filteringSlidepanel = this.uiManager.createSlidepanel({
-            header: 'Graph Filters',
-            body: graphFilter.build()
-        })
-        // Only one slide panel open at a time: opening one closes the other.
-        this.listen(filterButton, 'click', () => {
-            this.noteSlidepanel?.close()
-            this.filteringSlidepanel!.toggle()
-        })
-
-        this.noteSidebar = new NoteSidebar(this.uiManager)
-        this.noteSlidepanel = this.uiManager.createSlidepanel({
-            header: 'Notes',
-            body: this.noteSidebar.build()
-        })
-        this.listen(noteButton, 'click', () => {
-            this.filteringSlidepanel?.close()
-            this.noteSlidepanel!.toggle()
-        })
-        // NoteSidebar's afterMount (bind) / destroy (unbind) are driven by UIComponent
-        this.addChild(this.noteSidebar)
+        if (noteButton) {
+            this.track(this.uiManager.keyManager.register({ key: 'Shift+N', callback: () => this.noteButton?.click() }))
+            this.noteSidebar = new NoteSidebar(this.uiManager)
+            this.noteSlidepanel = this.uiManager.createSlidepanel({
+                header: 'Notes',
+                body: this.noteSidebar.build()
+            })
+            this.listen(noteButton, 'click', () => {
+                this.filteringSlidepanel?.close()
+                this.noteSlidepanel!.toggle()
+            })
+            // NoteSidebar's afterMount (bind) / destroy (unbind) are driven by UIComponent
+            this.addChild(this.noteSidebar)
+        }
 
         if (searchBoxButton) {
+            this.track(this.uiManager.keyManager.register({ key: 'Shift+J', callback: () => this.searchBoxButton?.click() }))
             this.listen(searchBoxButton, 'click', async () => {
                 const node = await pickNode(this.uiManager)
                 if (!node) return

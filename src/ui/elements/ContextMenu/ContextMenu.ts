@@ -7,6 +7,7 @@ import { UIComponent } from '../../UIComponent'
 import './contextmenu.scss'
 import { deepMerge } from '../../../utils/utils'
 import type { Editors, MenuActionItemOptions, MenuQuickActionItemOptions } from '../../../interfaces/GraphUI'
+import type { UIFeature } from '../../UIManager'
 import { createInspectModal } from '../modals/InspectNodeModal/InspectNodeModal'
 import { openImageLightbox } from '../modals/ImageLightboxModal/ImageLightboxModal'
 import { Note } from '../../../Note'
@@ -15,11 +16,12 @@ import { nodeNameGetter } from '../../../utils/GraphGetters'
 import { getNodeImageHref } from '../../../utils/NodePreview'
 
 /**
- * A library default that is only offered while its editor is enabled — the write-path
- * entries (delete, edit, create), which a read-only integration wants gone rather than
- * present-but-refusing. Consumer-supplied entries are never gated.
+ * A library default that is only offered while the feature behind it is enabled — the
+ * write-path entries (delete, edit, create), which a read-only integration wants gone
+ * rather than present-but-refusing, and the entries that are a door into a switchable
+ * feature (notes, the inspector). Consumer-supplied entries are never gated.
  */
-type GatedMenuItem = { requires?: keyof Editors }
+type GatedMenuItem = { requires?: keyof Editors | UIFeature }
 
 type GatedActionItem = MenuActionItemOptions & GatedMenuItem
 type GatedQuickActionItem = MenuQuickActionItemOptions & GatedMenuItem
@@ -118,6 +120,7 @@ const defaultMenuNode = {
         {
             text: 'Connect to...',
             title: 'Connect to...',
+            requires: 'edgeCreator',
             svgIcon: graphEdgeIcon(24),
             variant: 'outline-primary',
             visible: (node: Node) => {
@@ -155,6 +158,7 @@ const defaultMenuNode = {
         {
             text: 'Inspect Properties',
             title: 'Inspect Properties',
+            requires: 'inspector',
             svgIcon: inspect,
             variant: 'outline-primary',
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -255,6 +259,7 @@ const defaultMenuCanvas = {
         {
             title: 'Add Note',
             text: 'Add Note',
+            requires: 'notes',
             svgIcon: stickyNote,
             variant: 'outline-primary',
             visible: true,
@@ -358,13 +363,17 @@ export class ContextMenu extends UIComponent {
     }
 
     /**
-     * Drop the default entries whose editor is disabled, before the consumer's own
-     * entries are merged in — those are never gated.
+     * Drop the default entries whose editor or feature is disabled, before the
+     * consumer's own entries are merged in — those are never gated.
      */
     private gate(section: MenuSection): MenuSection {
+        const editors: Array<keyof Editors> = ['nodeEditor', 'nodeCreator', 'edgeCreator', 'edgeEditor', 'deletion']
         const offered = <T>(item: T): boolean => {
             const requires = (item as GatedMenuItem).requires
-            return !requires || this.uiManager.isEditorEnabled(requires)
+            if (!requires) return true
+            return editors.includes(requires as keyof Editors)
+                ? this.uiManager.isEditorEnabled(requires as keyof Editors)
+                : this.uiManager.isFeatureEnabled(requires as UIFeature)
         }
         return { topbar: section.topbar.filter(offered), menu: section.menu.filter(offered) }
     }
@@ -432,6 +441,9 @@ export class ContextMenu extends UIComponent {
 
     private noteClicked(event: PointerEvent, note: Note): void {
         if (!this.menu) return
+        // Nothing can put a note on the canvas while notes are off, but a note that
+        // predates the switch must not open a menu for hiding and removing one either.
+        if (!this.uiManager.isFeatureEnabled('notes')) return
 
         this.element = note
         this.createNoteMenu(note)

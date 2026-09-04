@@ -210,6 +210,36 @@ shipped, and the one to read is the retirement of `UI.modeRail`.
 - **`onExit` is called when a mode is left, and when it is removed while active** — the rail
   then falls back to Select. It is not called on UI teardown.
 
+### Every feature has a switch
+
+The UI mode decided how much chrome a graph got, and beyond that a handful of features were
+simply always there. Now each one carries its own `enabled` flag, and switching it off takes
+**everything** that reaches it — the button, the panel, the context-menu entry and the
+keyboard shortcut — so a removed feature leaves nothing behind to press and quietly refuse.
+
+- **New switches**, all on by default: `UI.topBar` (the strip along the top of the canvas),
+  `UI.notes`, `UI.search`, `UI.history`, `UI.inspector`, `UI.notifications`, `UI.viewFlyout`,
+  `UI.physicsFlyout`, plus `enabled` on `UI.sidebar`, `UI.propertiesPanel`,
+  `UI.neighborsPanel`, `UI.filter` and a new `UI.editors.edgeCreator`.
+  `UIManager.isFeatureEnabled(feature)` reads any of them, the way `isEditorEnabled` already
+  read the write-path editors. (`UI.mainHeader` is untouched: it is how elements are *named*,
+  in the sidebar header, the tooltip, the table's `Name` column and `[[node]]` references.)
+- **`UI.notes.enabled: false` closes the door behind it**: no Notes pill or panel, no Add note
+  tool, no canvas menu entry, no `N` / `Shift+N` / `Shift+E`, no note context menu — and
+  `noteManager.addNote` refuses, initial data included, since a note nothing can open or remove
+  has no business on the canvas.
+- **`UI.history.enabled: false` removes the controls, not the engine.** `graph.history` goes on
+  recording, for a consumer driving undo from its own chrome. Same split for `UI.filter`
+  (`graph.queryEngine` still filters) and `UI.notifications` (`notifier.*` returns `undefined`).
+- **The Create rail mode follows its tools.** Switch off node creation, edge creation, notes and
+  the node editor and the mode leaves the rail with its `C` shortcut, instead of opening onto an
+  empty panel. Select always stays.
+- **Shortcuts that outlived their affordance are gone.** `Shift+E` no longer opens a node editor
+  that `editors.nodeEditor` switched off, `I` no longer opens the inspector, `Enter` no longer
+  expands a node when `render.enableNodeExpansion` is false, and `render.zoomEnabled: false`
+  takes the rail's zoom buttons (fit-and-center stays). `render.selectionBox.enabled: false` now
+  takes the Select ▸ Lasso tool along with the marquee: both are region selection.
+
 ### Smaller things, useful on their own
 
 - **A notification can carry an action, and outlive four seconds.** `notifier.success(title,

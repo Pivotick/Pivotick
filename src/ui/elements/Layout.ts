@@ -37,9 +37,13 @@ export class Layout extends UIComponent {
         this.canvas.appendChild(this.notification)
 
         if (mode === 'full') {
-            this.sidebar = document.createElement('div')
-            this.sidebar.className = 'pvt-sidebar'
-            this.layout.appendChild(this.sidebar)
+            // No slot for a sidebar that was switched off: the grid's first column is
+            // `auto`, so with nothing in it the canvas takes the whole width.
+            if (this.uiManager.isFeatureEnabled('sidebar')) {
+                this.sidebar = document.createElement('div')
+                this.sidebar.className = 'pvt-sidebar'
+                this.layout.appendChild(this.sidebar)
+            }
 
             // Always present, even with no `UI.table`, so the dock has a slot to mount
             // into later. It occupies no height until the dock puts something in it.
@@ -49,9 +53,15 @@ export class Layout extends UIComponent {
         }
 
         if (mode === 'light' || mode === 'full') {
-            this.mainheader = document.createElement('div')
-            this.mainheader.className = 'pvt-mainheader'
-            this.layout.appendChild(this.mainheader)
+            // The strip overlays the canvas and the rest of the chrome offsets down by
+            // its height, so a header nobody asked for gives that height back too.
+            if (this.uiManager.isFeatureEnabled('topBar')) {
+                this.mainheader = document.createElement('div')
+                this.mainheader.className = 'pvt-mainheader'
+                this.layout.appendChild(this.mainheader)
+            } else {
+                this.layout.classList.add('pvt-no-mainheader')
+            }
 
             this.modal = document.createElement('div')
             this.modal.className = 'pvt-modalcontainer'

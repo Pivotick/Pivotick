@@ -6,12 +6,27 @@ export class NoteManager {
     private notes = new Map<string, Note>()
     private hiddenNotes: Set<Note> = new Set()
     private graph: Graph
+    /** One warning per page for a refused note, not one per call. */
+    private static warnedDisabled = false
 
     constructor(graph: Graph) {
         this.graph = graph
     }
 
+    /**
+     * Register a note and draw it. Refused while `UI.notes.enabled` is `false`: with
+     * the feature off there is no panel to read a note in and no menu to remove one
+     * with, so a note that got in would be unreachable. The warning names the option
+     * rather than letting the call vanish quietly.
+     */
     public addNote(note: Note, noEmit=false): void {
+        if (this.graph.UIManager?.isFeatureEnabled('notes') === false) {
+            if (!NoteManager.warnedDisabled) {
+                NoteManager.warnedDisabled = true
+                console.warn('Notes are disabled (UI.notes.enabled === false); addNote() is a no-op.')
+            }
+            return
+        }
         this.notes.set(note.id, note)
         if (!noEmit) {
             this.graph.noteAdd(note)

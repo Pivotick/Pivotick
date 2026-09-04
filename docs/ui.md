@@ -13,6 +13,7 @@ Pivotick provides a flexible UI layer on top of your graph, allowing you to cont
 - Declare the [**filter**](./ui-filter) panel's facets, or let them be derived from your data.
 - Dock a [**legend**](./ui-legend) on the canvas — a key for your colours that doubles as a filter, and that appears by itself when your colours are explained by a declared node type.
 - Fill any of those surfaces [**asynchronously**](#async-content), from data you fetch on demand.
+- [**Turn off**](#turning-features-off) any feature your integration has no use for.
 
 ### UI Mode {#ui-mode}
 The `mode` option controls the overall behavior and interaction level of the graph UI.
@@ -54,7 +55,7 @@ const options = {
 In `full` mode the chrome is a mode-driven layout: a left **mode rail**
 (Select / Create / View / Physics), a **contextual tool panel** for the active
 pointer-mode, two settings flyouts — **View** (canvas background and switches) and
-**Physics** (layout + simulation) — the top **main header** (search, filter, notes),
+**Physics** (layout + simulation) — the **top bar** (search, filter, notes, undo/redo),
 the selection **sidebar** (properties, facets, neighbours, and a bulk-action row), and
 a right-side **viewport rail** (fit-and-center, zoom, settings, fullscreen), and a
 [**minimap**](./plugins#minimap) in the free bottom-right corner, which folds itself away
@@ -79,6 +80,69 @@ renamed to `graphNavigation`. The `UI.modeRail` option and its disabled `Explore
 The rail's four modes are built in, but not the only ones it can hold: a plugin adds its
 own with [`addRailMode`](./plugins#rail-mode), which is how an Explore or Enrich mode that
 knows what *your* data means gets built.
+
+## Turning features off {#turning-features-off}
+
+The UI mode decides how much chrome a graph gets. Every feature inside that chrome
+can also be switched off one at a time, which is how an integration drops what its
+backend or its users have no use for.
+
+A switched-off feature takes **everything** that reaches it: the button, the panel,
+the context-menu entry and the keyboard shortcut all go together, so nothing is left
+behind to click or press and quietly refuse.
+
+```ts
+const options = {
+    UI: {
+        mode: 'full',
+        notes: { enabled: false },        // [!code focus:4]
+        history: { enabled: false },
+        inspector: { enabled: false },
+        editors: { deletion: { enabled: false } },
+    },
+}
+```
+
+### The switches
+
+| Option | What goes with it |
+| --- | --- |
+| `UI.topBar.enabled` | The top strip, the height it reserved, and the shortcuts its controls own (`Shift+J`, `Shift+K`, `Shift+N`, `Mod+Z`). Use the switches below to drop one pill and keep the rest. |
+| `UI.search.enabled` | The Search pill, its node picker and `Shift+J`. |
+| `UI.filter.enabled` | The Filter Graph pill, its panel and `Shift+K`. `graph.queryEngine` still filters from code. |
+| `UI.notes.enabled` | The Notes pill and panel, `Shift+N`, the Add note tool, the canvas menu's Add Note, `N`, the note context menu, and `noteManager.addNote`, which refuses. |
+| `UI.history.enabled` | The undo / redo buttons, their history dropdown and `Mod+Z` / `Mod+Shift+Z`. `graph.history` goes on recording. |
+| `UI.inspector.enabled` | The node menu's Inspect Properties entry and `I`. |
+| `UI.notifications.enabled` | Toasts. `graph.notifier.*` becomes a no-op returning `undefined`. |
+| `UI.sidebar.enabled` | The whole side column, and the width it took. |
+| `UI.propertiesPanel.enabled` | The sidebar's properties panel and its separator. |
+| `UI.neighborsPanel.enabled` | The sidebar's neighbours panel and its separator. |
+| `UI.viewFlyout.enabled` | The View rail button and its panel. |
+| `UI.physicsFlyout.enabled` | The Physics rail button and its panel. |
+| `UI.tooltip.enabled` | Hover tooltips, pinned ones included. |
+| `UI.contextMenu.enabled` | Every context menu. |
+| `UI.navigation.enabled` | The viewport rail: fit, zoom and fullscreen. |
+| `UI.legend: false` | The canvas legend, including the one it would derive by itself. |
+| `UI.minimap: false` | The minimap. |
+| `UI.table: false` | The data dock and its `Shift+T`. |
+| `UI.pivotMode: false` | The Pivot rail mode, whatever is registered. |
+
+Write-path features have the same switch under `UI.editors`, so a read-only
+integration removes the affordance rather than vetoing every click:
+`nodeCreator`, `edgeCreator`, `nodeEditor`, `edgeEditor` and `deletion`.
+
+Renderer behaviour is switched off under `render`: `zoomEnabled` (which also takes
+the rail's zoom buttons, keeping fit-and-center), `dragEnabled`,
+`selectionBox.enabled` (the marquee **and** the Select ▸ Lasso tool),
+`enableNodeExpansion` (the chevron and its `Enter`), `enableFocusMode`, and
+`interactionEnabled` for all of it at once. `simulation.enabled` stops the layout
+from running.
+
+::: info The Create mode follows its tools
+The Create rail mode holds exactly four tools: Add node, Add edge, Add note and Edit
+node. Switch all four off and the mode leaves the rail, along with its `C` shortcut,
+rather than opening onto an empty panel. Select always stays.
+:::
 
 ## Asynchronous content {#async-content}
 

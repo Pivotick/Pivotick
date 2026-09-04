@@ -41,11 +41,20 @@ export class ModeRail extends UIComponent {
         this.rail = document.createElement('div')
         this.rail.className = 'pvt-moderail-rail'
 
-        // The four exclusive built-in modes: Select, Create, View, Physics.
+        // The four exclusive built-in modes: Select, Create, View, Physics. Select is
+        // the guaranteed fallback and always here; the other three answer to their
+        // options — Create to whether any of its four tools survived, the two flyouts
+        // to their own switches.
         this.rail.appendChild(this.makeButton('select', 'Select', cursor, 'V'))
-        this.rail.appendChild(this.makeButton('create', 'Create', addCircle, 'C'))
-        this.rail.appendChild(this.makeButton('view', 'View', show))
-        this.rail.appendChild(this.makeButton('physics', 'Physics', atom))
+        if (this.uiManager.hasCreateTools()) {
+            this.rail.appendChild(this.makeButton('create', 'Create', addCircle, 'C'))
+        }
+        if (this.uiManager.isFeatureEnabled('viewFlyout')) {
+            this.rail.appendChild(this.makeButton('view', 'View', show))
+        }
+        if (this.uiManager.isFeatureEnabled('physicsFlyout')) {
+            this.rail.appendChild(this.makeButton('physics', 'Physics', atom))
+        }
 
         // Everything registered through `addRailMode` lands here, after the built-ins.
         this.pluginZone = document.createElement('div')
@@ -62,9 +71,11 @@ export class ModeRail extends UIComponent {
         this.buttons.get('physics')?.addEventListener('click', () => this.uiManager.modeStore.toggleFlyout('physics'))
 
         // Keyboard mirrors the rail slot: V/C switch to the mode, or toggle its
-        // tool panel if that mode is already active.
+        // tool panel if that mode is already active. A mode with no slot has no key.
         this.track(this.uiManager.keyManager.register({ key: 'v', callback: () => this.activateOrToggle('select'), description: 'Select mode / toggle its tools' }))
-        this.track(this.uiManager.keyManager.register({ key: 'c', callback: () => this.activateOrToggle('create'), description: 'Create mode / toggle its tools' }))
+        if (this.buttons.has('create')) {
+            this.track(this.uiManager.keyManager.register({ key: 'c', callback: () => this.activateOrToggle('create'), description: 'Create mode / toggle its tools' }))
+        }
 
         // Registered modes can arrive at any point, including before this runs.
         this.rebuildPluginZone()

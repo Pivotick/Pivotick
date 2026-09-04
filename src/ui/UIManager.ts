@@ -12,7 +12,7 @@ import type { Notification, NotificationHandle } from './Notifier'
 import merge from 'lodash.merge'
 import { Tooltip } from './elements/Tooltip/Tooltip'
 import { ContextMenu } from './elements/ContextMenu/ContextMenu'
-import type { DockTab, Editors, ExtraPanel, GraphUI, GraphUIMode, LegendGroupOptions, LegendOptions, PropertyEntry, RailModeDefinition, RegisteredDockTab, RegisteredExtraPanel, TableOptions } from '../interfaces/GraphUI'
+import type { DockTab, Editors, ExtraPanel, FeatureToggle, GraphUI, GraphUIMode, LegendGroupOptions, LegendOptions, PropertyEntry, RailModeDefinition, RegisteredDockTab, RegisteredExtraPanel, TableOptions } from '../interfaces/GraphUI'
 import { KeybindingManager } from './KeybindingManager'
 import { createInspectModal } from './elements/modals/InspectNodeModal/InspectNodeModal'
 import { Note } from '../Note'
@@ -120,7 +120,25 @@ export const DEFAULT_UI_OPTIONS: GraphUI = {
             enabled: true
         }
     },
+    topBar: { enabled: true },
+    notes: { enabled: true },
+    search: { enabled: true },
+    history: { enabled: true },
+    inspector: { enabled: true },
+    notifications: { enabled: true },
+    viewFlyout: { enabled: true },
+    physicsFlyout: { enabled: true },
 }
+
+/**
+ * The UI features that carry a plain on/off switch — the argument to
+ * {@link UIManager.isFeatureEnabled}. Each names an option block of its own whose
+ * `enabled` is read; `filter` reaches `UI.filter.enabled`, the rest their own block.
+ */
+export type UIFeature =
+    | 'notes' | 'search' | 'filter' | 'history' | 'inspector' | 'notifications'
+    | 'sidebar' | 'topBar' | 'propertiesPanel' | 'neighborsPanel'
+    | 'viewFlyout' | 'physicsFlyout'
 
 export interface UIElement {
     mount(container?: HTMLElement): void;
@@ -267,10 +285,12 @@ const UI_ELEMENTS: UIElementSpec[] = [
     {
         // viewer-mode flyouts are an open question (§9.4); full/light for now.
         key: 'viewFlyout', modes: ['full', 'light'],
+        enabled: o => o.viewFlyout?.enabled !== false,
         make: ui => new ViewFlyout(ui), slot: ui => ui.layout?.flyout
     },
     {
         key: 'physicsFlyout', modes: ['full', 'light'],
+        enabled: o => o.physicsFlyout?.enabled !== false,
         make: ui => new PhysicsFlyout(ui), slot: ui => ui.layout?.flyout
     },
     {
@@ -321,10 +341,12 @@ const UI_ELEMENTS: UIElementSpec[] = [
     },
     {
         key: 'mainHeader', modes: ['full', 'light'],
+        enabled: o => o.topBar?.enabled !== false,
         make: ui => new Mainheader(ui), slot: ui => ui.layout?.mainheader
     },
     {
         key: 'sidebar', modes: ['full'],
+        enabled: o => o.sidebar?.enabled !== false,
         make: ui => new Sidebar(ui), slot: ui => ui.layout?.sidebar
     },
 ]
@@ -566,48 +588,59 @@ export class UIManager {
         this.uiDisposables.push(() => this.container.removeEventListener('keydown', onKeydown))
         this.container.setAttribute('tabindex', '0') // make it focusable
 
-        this.uiDisposables.push(this.keyManager.register({
-            key: 'i',
-            callback: () => {
-                const node = this.graph.renderer.getNodeClosestToCursor(100)
-                if (node) createInspectModal(node, this)
-            }
-        }))
-        this.uiDisposables.push(this.keyManager.register({
-            key: 'Shift+E',
-            callback: () => {
-                const element = this.graph.renderer.getClosestElementToCursor(100)
-                if (!element) return
-
-                if (element instanceof Node) {
-                    this.graph.renderer.getGraphInteraction().selectNode(element.getGraphElement(), element)
-                    requestAnimationFrame(() => {
-                        this.graph.editing.openNodeSession(element)
-                    })
-                } else if (element instanceof Note) {
-                    this.graph.renderer.enterNoteEditMode(element)
+        // Every shortcut below belongs to a feature that can be switched off, and a
+        // shortcut is an affordance like any other: an unregistered key does nothing
+        // rather than reaching past a removed button.
+        if (this.isFeatureEnabled('inspector')) {
+            this.uiDisposables.push(this.keyManager.register({
+                key: 'i',
+                callback: () => {
+                    const node = this.graph.renderer.getNodeClosestToCursor(100)
+                    if (node) createInspectModal(node, this)
                 }
-            }
-        }))
-        this.uiDisposables.push(this.keyManager.register({
-            key: 'n',
-            callback: () => {
-                const renderer = this.graph.renderer
-                const pointerEvent = this.graph.renderer.getGraphInteraction().getLastPointerEvent()
-                if (!pointerEvent) return
+            }))
+        }
+        if (this.isEditorEnabled('nodeEditor') || this.isFeatureEnabled('notes')) {
+            this.uiDisposables.push(this.keyManager.register({
+                key: 'Shift+E',
+                callback: () => {
+                    const element = this.graph.renderer.getClosestElementToCursor(100)
+                    if (!element) return
 
-                const { x, y } = renderer.screenToGraphCoordinates(
-                    pointerEvent.clientX,
-                    pointerEvent.clientY
-                )
-                const note: Note = new Note({
-                    content: 'This is not a note.',
-                    x,
-                    y
-                })
-                this.graph.noteManager.addNote(note)
-            }
-        }))
+                    if (element instanceof Node) {
+                        if (!this.isEditorEnabled('nodeEditor')) return
+                        this.graph.renderer.getGraphInteraction().selectNode(element.getGraphElement(), element)
+                        requestAnimationFrame(() => {
+                            this.graph.editing.openNodeSession(element)
+                        })
+                    } else if (element instanceof Note) {
+                        if (!this.isFeatureEnabled('notes')) return
+                        this.graph.renderer.enterNoteEditMode(element)
+                    }
+                }
+            }))
+        }
+        if (this.isFeatureEnabled('notes')) {
+            this.uiDisposables.push(this.keyManager.register({
+                key: 'n',
+                callback: () => {
+                    const renderer = this.graph.renderer
+                    const pointerEvent = this.graph.renderer.getGraphInteraction().getLastPointerEvent()
+                    if (!pointerEvent) return
+
+                    const { x, y } = renderer.screenToGraphCoordinates(
+                        pointerEvent.clientX,
+                        pointerEvent.clientY
+                    )
+                    const note: Note = new Note({
+                        content: 'This is not a note.',
+                        x,
+                        y
+                    })
+                    this.graph.noteManager.addNote(note)
+                }
+            }))
+        }
     }
 
     /* ---------- plugins ---------- */
@@ -1124,6 +1157,30 @@ export class UIManager {
         return this.options.editors?.[editor]?.enabled !== false
     }
 
+    /**
+     * Whether a UI feature is offered at all, per its own `enabled` flag (on unless
+     * explicitly `false`). The same rule as {@link isEditorEnabled}, for the features
+     * that are not write-path editors: every affordance asks before rendering itself,
+     * and every shortcut before registering, so a switched-off feature leaves nothing
+     * behind that could be clicked or pressed.
+     */
+    public isFeatureEnabled(feature: UIFeature): boolean {
+        return (this.options[feature] as FeatureToggle | undefined)?.enabled !== false
+    }
+
+    /**
+     * Whether the Create rail mode has anything to offer — its four tools are node
+     * creation, edge creation, notes and the node editor, each with its own switch.
+     * With all four off the mode is dropped from the rail rather than opening onto an
+     * empty panel.
+     */
+    public hasCreateTools(): boolean {
+        return this.isEditorEnabled('nodeCreator')
+            || this.isEditorEnabled('edgeCreator')
+            || this.isEditorEnabled('nodeEditor')
+            || this.isFeatureEnabled('notes')
+    }
+
     public getAppContainer(): HTMLElement {
         const appID = this.graph.getAppID()
         return document.getElementById(appID)!
@@ -1141,6 +1198,7 @@ export class UIManager {
    * `undefined` in a UI mode with nowhere to show one.
    */
     public showNotification(notification: Notification): NotificationHandle | undefined {
+        if (!this.isFeatureEnabled('notifications')) return
         const container = this.layout?.notification
         if (!container) return
         return mountToast(container, notification)
