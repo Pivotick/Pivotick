@@ -621,7 +621,7 @@ class PivotEntry {
     private summary?: PivotSummary
     private narrowing: PivotNarrowing = {}
     private refusal?: PivotRefusal
-    /** What an auto-ingest run just landed, until the next run or a new origin (S10). */
+    /** What an auto-ingest run just landed, until the next run or a new origin. */
     private ingested?: number
     private form?: HTMLFormElement
     /** The facet shape the current form was built from, so it is only rebuilt when it moves. */
@@ -798,7 +798,7 @@ class PivotEntry {
 
     /**
      * Ask the provider what is out there. `resummarize` keeps the previous count on
-     * screen, dimmed — blanking it makes every narrowing tick look like a reset (S5).
+     * screen, dimmed — blanking it makes every narrowing tick look like a reset.
      */
     private async ask(resummarize: boolean): Promise<void> {
         if (!this.def.summarize) return
@@ -806,7 +806,7 @@ class PivotEntry {
         this.askedFor = this.originKey()
         const cached = this.uiManager.graph.pivots.cachedSummary(this.def.id, this.origin(), this.narrowing)
         if (cached) {
-            // A cache hit skips the skeleton entirely (S2): a re-opened mode shows its
+            // A cache hit skips the skeleton entirely: a re-opened mode shows its
             // number at once rather than flickering through a loading state.
             this.summary = cached
             this.phase = 'ready'
@@ -914,7 +914,7 @@ class PivotEntry {
         if (this.summary) {
             slot.classList.add('pvt-pivot-count')
             // A re-summarize keeps the last number on screen rather than blanking it: the
-            // narrowing tick that caused it must not read as a reset (S5).
+            // narrowing tick that caused it must not read as a reset.
             slot.classList.toggle('pvt-pivot-dim', this.phase === 'resummarizing')
             slot.textContent = this.countText(this.summary.total)
             return
@@ -941,7 +941,7 @@ class PivotEntry {
 
     /**
      * A pivot with no `summarize` has no count to gate on and no facets to narrow, so
-     * it is a label and a verb (S7) — and the verb takes the slot the count would have
+     * it is a label and a verb — and the verb takes the slot the count would have
      * had, leaving the entry one line tall with nothing under it.
      *
      * Only when that slot is genuinely empty, though. A declared potential, a fetch in

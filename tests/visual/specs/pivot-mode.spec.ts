@@ -137,7 +137,7 @@ test.describe('pivot mode', () => {
         await pickOrigin(page, 'a')
         expect((await calls(page)).length).toBe(asked)
 
-        // Same question, so the cached answer is painted without a skeleton (S2).
+        // Same question, so the cached answer is painted without a skeleton.
         await enterMode(page)
         await expect(count(page, CORRELATION)).toHaveText('~2,143')
         expect((await calls(page)).length).toBe(asked)
@@ -202,7 +202,7 @@ test.describe('pivot mode', () => {
 
         const blind = entry(page, 'blind')
         // No count to gate on and no facets to narrow, so the verb takes the slot the
-        // count would have had and the entry is a single line (S7).
+        // count would have had and the entry is a single line.
         await expect(count(page, 'blind')).toHaveCount(0)
         await expect(button(blind, 'Run')).toBeEnabled()
         await expect(button(blind, 'Fetch')).toHaveCount(0)
