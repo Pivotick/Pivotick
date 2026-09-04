@@ -106,16 +106,16 @@ test.describe('updateData — the graph keeps what the node had learned', () => 
     })
 
     test('a pivot still vouches for an ingested node whose data was refreshed', async ({ page }) => {
-        await harness(page, 'runPivot', 'misp-event-objects', ['a'])
-        expect(await sources(page, 'event-a')).toEqual(['misp-event-objects'])
+        await harness(page, 'runPivot', 'event-objects', ['a'])
+        expect(await sources(page, 'event-a')).toEqual(['event-objects'])
 
         await refresh(page, 'event-a')
 
         // A replacement reported 'seed' here — the answer for a node no pivot vouches
         // for — so removal by source stopped reaching anything that had been updated.
-        expect(await sources(page, 'event-a')).toEqual(['misp-event-objects'])
+        expect(await sources(page, 'event-a')).toEqual(['event-objects'])
 
-        const dropped = (await harness(page, 'removeBySource', 'misp-event-objects')) as {
+        const dropped = (await harness(page, 'removeBySource', 'event-objects')) as {
             nodes: string[]
         }
         expect(dropped.nodes).toContain('event-a')

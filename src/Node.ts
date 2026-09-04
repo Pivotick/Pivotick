@@ -529,8 +529,8 @@ export class Node {
      * next render — call `graph.renderer.update()` if nothing else is about to.
      *
      * ```ts
-     * node.setPotential('ail-correlations', 2143) // AIL has this much
-     * node.setPotential(2199)                     // everything has this much
+     * node.setPotential('correlations', 2143) // this provider has this much
+     * node.setPotential(2199)                 // everything has this much
      * ```
      */
     setPotential(count: number): void

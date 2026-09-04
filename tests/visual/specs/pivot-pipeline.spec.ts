@@ -13,10 +13,10 @@ import type {
 // cannot tell a staged candidate from an ingested node, which is the one distinction
 // this whole feature rests on.
 //
-// The fake provider's arithmetic is the PRD's: 1,800 + 210 + 95 + 38 = 2,143, and
+// The fake provider's arithmetic: 1,800 + 210 + 95 + 38 = 2,143, and
 // *URLs* alone is 210 — so the cap at 2,000 lifts because the numbers say so.
 
-const AIL = 'ail-correlation'
+const CORRELATION = 'correlation'
 
 // ── readers over the serialisable harness API ────────────────────────────────
 const load = async (page: Page, spec: PivotFixtureSpec = {}): Promise<void> => {
@@ -45,10 +45,10 @@ const run = async (
 ): Promise<RecordedRunOutcome> =>
     (await harness(page, 'runPivot', id, nodeIds, narrowing)) as RecordedRunOutcome
 
-const staged = async (page: Page, id = AIL): Promise<RecordedCandidates | null> =>
+const staged = async (page: Page, id = CORRELATION): Promise<RecordedCandidates | null> =>
     (await harness(page, 'pivotCandidates', id)) as RecordedCandidates | null
 
-const ingest = async (page: Page, id = AIL): Promise<RecordedRunOutcome> =>
+const ingest = async (page: Page, id = CORRELATION): Promise<RecordedRunOutcome> =>
     (await harness(page, 'ingestPivot', id)) as RecordedRunOutcome
 
 const sources = async (page: Page, nodeId: string): Promise<string[]> =>
@@ -77,9 +77,9 @@ function landableIds(set: RecordedCandidates, n: number): string[] {
     return set.rows.filter((row) => !row.deduped && row.state === 'candidate').slice(0, n).map((row) => row.id)
 }
 
-/** Stage the AIL pivot narrowed to URLs — the state every triage case starts from. */
+/** Stage the CORRELATION pivot narrowed to URLs — the state every triage case starts from. */
 async function stageUrls(page: Page): Promise<RecordedCandidates> {
-    const outcome = await run(page, AIL, ['a'], { type: ['url'] })
+    const outcome = await run(page, CORRELATION, ['a'], { type: ['url'] })
     expect(outcome.status).toBe('staged')
     const set = await staged(page)
     expect(set).not.toBeNull()
@@ -96,11 +96,11 @@ test.describe('pivot pipeline', () => {
 
         expect(await harness(page, 'pivotCount')).toBe(5)
         // An empty origin is not "nothing applies": it is where origin-less pivots live.
-        expect(await harness(page, 'pivotsFor', [])).toEqual(['search-ail'])
+        expect(await harness(page, 'pivotsFor', [])).toEqual(['search-archive'])
         // `appliesTo` filters rather than greys out, so a two-node origin simply has no
-        // MISP entry.
-        expect(await harness(page, 'pivotsFor', ['a'])).toEqual([AIL, 'misp-event-objects', 'oversized', 'blind'])
-        expect(await harness(page, 'pivotsFor', ['a', 'b'])).toEqual([AIL, 'oversized', 'blind'])
+        // container entry.
+        expect(await harness(page, 'pivotsFor', ['a'])).toEqual([CORRELATION, 'event-objects', 'oversized', 'blind'])
+        expect(await harness(page, 'pivotsFor', ['a', 'b'])).toEqual([CORRELATION, 'oversized', 'blind'])
 
         // The whole point of D11: nothing above cost a backend call.
         expect(await calls(page)).toEqual([])
@@ -109,28 +109,28 @@ test.describe('pivot pipeline', () => {
     test('a summarize is cached per question and invalidated on demand', async ({ page }) => {
         await load(page)
 
-        expect(await harness(page, 'pivotSummarize', AIL, ['a'])).toEqual({
+        expect(await harness(page, 'pivotSummarize', CORRELATION, ['a'])).toEqual({
             total: 2143,
             facets: [{ key: 'type', type: 'multiselect', options: 4 }, { key: 'seen', type: 'numberRange', options: 0 }],
         })
         // The same question again is served from the cache: still one call.
-        await harness(page, 'pivotSummarize', AIL, ['a'])
-        expect(await callNames(page)).toEqual([`${AIL}.summarize`])
+        await harness(page, 'pivotSummarize', CORRELATION, ['a'])
+        expect(await callNames(page)).toEqual([`${CORRELATION}.summarize`])
 
         // A different narrowing is a different question, and the count follows the facets.
-        expect(((await harness(page, 'pivotSummarize', AIL, ['a'], { type: ['url'] })) as { total: number }).total).toBe(210)
-        expect(await callNames(page)).toEqual([`${AIL}.summarize`, `${AIL}.summarize`])
+        expect(((await harness(page, 'pivotSummarize', CORRELATION, ['a'], { type: ['url'] })) as { total: number }).total).toBe(210)
+        expect(await callNames(page)).toEqual([`${CORRELATION}.summarize`, `${CORRELATION}.summarize`])
 
-        await harness(page, 'invalidatePivot', AIL)
-        expect(await harness(page, 'cachedPivotSummary', AIL, ['a'])).toBeNull()
-        await harness(page, 'pivotSummarize', AIL, ['a'])
+        await harness(page, 'invalidatePivot', CORRELATION)
+        expect(await harness(page, 'cachedPivotSummary', CORRELATION, ['a'])).toBeNull()
+        await harness(page, 'pivotSummarize', CORRELATION, ['a'])
         expect(await callNames(page)).toHaveLength(3)
     })
 
     test('a multi-node origin is one aggregated request', async ({ page }) => {
         await load(page)
 
-        await harness(page, 'pivotSummarize', AIL, ['a', 'b', 'c', 'd', 'e'])
+        await harness(page, 'pivotSummarize', CORRELATION, ['a', 'b', 'c', 'd', 'e'])
 
         const log = await calls(page)
         expect(log).toHaveLength(1)
@@ -140,8 +140,8 @@ test.describe('pivot pipeline', () => {
     test('a superseded summarize is dropped, not rendered late', async ({ page }) => {
         await load(page, { latency: 120 })
 
-        await harness(page, 'startPivotSummarize', AIL, ['a'])
-        await harness(page, 'startPivotSummarize', AIL, ['a'], { type: ['url'] })
+        await harness(page, 'startPivotSummarize', CORRELATION, ['a'])
+        await harness(page, 'startPivotSummarize', CORRELATION, ['a'], { type: ['url'] })
         await expect.poll(async () => ((await harness(page, 'summarizeResults')) as unknown[]).length).toBe(2)
 
         // The first call is cancelled and resolves with nothing; only the live question
@@ -154,16 +154,16 @@ test.describe('pivot pipeline', () => {
     test('the gate refuses above the cap, and the refusal lifts once narrowed', async ({ page }) => {
         await load(page)
 
-        const refused = await run(page, AIL, ['a'])
+        const refused = await run(page, CORRELATION, ['a'])
         expect(refused.status).toBe('refused')
         expect(refused.refusal).toEqual({ kind: 'cap', count: 2143, limit: 2000 })
         // Refused *before* fetching: that is what two-phase buys.
-        expect(await callNames(page)).toEqual([`${AIL}.summarize`])
+        expect(await callNames(page)).toEqual([`${CORRELATION}.summarize`])
         expect(await staged(page)).toBeNull()
 
-        const narrowed = await run(page, AIL, ['a'], { type: ['url'] })
+        const narrowed = await run(page, CORRELATION, ['a'], { type: ['url'] })
         expect(narrowed.status).toBe('staged')
-        expect(await callNames(page)).toEqual([`${AIL}.summarize`, `${AIL}.summarize`, `${AIL}.fetch`])
+        expect(await callNames(page)).toEqual([`${CORRELATION}.summarize`, `${CORRELATION}.summarize`, `${CORRELATION}.fetch`])
         expect((await staged(page))?.fetched).toBe(210)
     })
 
@@ -197,7 +197,7 @@ test.describe('pivot pipeline', () => {
         const set = await stageUrls(page)
         const chosen = landableIds(set, 12)
 
-        await harness(page, 'markPivotCandidates', AIL, chosen)
+        await harness(page, 'markPivotCandidates', CORRELATION, chosen)
         const outcome = await ingest(page)
 
         expect(outcome.status).toBe('ingested')
@@ -228,18 +228,18 @@ test.describe('pivot pipeline', () => {
         const set = await stageUrls(page)
         const chosen = landableIds(set, 3)
 
-        await harness(page, 'markPivotCandidates', AIL, chosen)
+        await harness(page, 'markPivotCandidates', CORRELATION, chosen)
         const outcome = await ingest(page)
 
-        expect(await sources(page, chosen[0])).toEqual([AIL])
-        expect(await harness(page, 'edgeSources', outcome.edges[0])).toEqual([AIL])
+        expect(await sources(page, chosen[0])).toEqual([CORRELATION])
+        expect(await harness(page, 'edgeSources', outcome.edges[0])).toEqual([CORRELATION])
         // Nothing pivoted vouches for the fixture's own nodes.
         expect(await sources(page, 'a')).toEqual(['seed'])
         expect(await harness(page, 'edgeSources', 'a-b')).toEqual(['seed'])
     })
 
     test('two pivots vouching for one node: removing one source keeps it', async ({ page }) => {
-        // `blind` lands blind-0..2; the AIL provider then re-offers blind-0 as its first
+        // `blind` lands blind-0..2; the CORRELATION provider then re-offers blind-0 as its first
         // candidate, so the same node is found by both pivots.
         await load(page, { collide: ['blind-0'] })
 
@@ -255,12 +255,12 @@ test.describe('pivot pipeline', () => {
 
         const outcome = await ingest(page)
         expect(outcome.deduped).toBe(1)
-        expect(await sources(page, 'blind-0')).toEqual(['blind', AIL])
+        expect(await sources(page, 'blind-0')).toEqual(['blind', CORRELATION])
 
         const removed = (await harness(page, 'removeBySource', 'blind')) as { nodes: string[] }
         expect(removed.nodes).toEqual(['blind-1', 'blind-2'])
-        // blind-0 survives, one claim lighter, because AIL still vouches for it.
-        expect(await sources(page, 'blind-0')).toEqual([AIL])
+        // blind-0 survives, one claim lighter, because CORRELATION still vouches for it.
+        expect(await sources(page, 'blind-0')).toEqual([CORRELATION])
     })
 
     test('a deduped candidate leaves the existing node untouched', async ({ page }) => {
@@ -269,7 +269,7 @@ test.describe('pivot pipeline', () => {
 
         const set = await stageUrls(page)
         expect(set.rows.find((row) => row.id === 'a')?.deduped).toBe(true)
-        await harness(page, 'markPivotCandidates', AIL, 'all')
+        await harness(page, 'markPivotCandidates', CORRELATION, 'all')
         await ingest(page)
 
         expect(await harness(page, 'nodeData', 'a')).toEqual(dataBefore)
@@ -284,7 +284,7 @@ test.describe('pivot pipeline', () => {
         // Untriaged, so it has not landed.
         expect(await counts(page)).toEqual(before)
 
-        await harness(page, 'markPivotCandidates', AIL, ['only-b-d'])
+        await harness(page, 'markPivotCandidates', CORRELATION, ['only-b-d'])
         const outcome = await ingest(page)
         expect(outcome.edges).toEqual(['only-b-d'])
         expect(await counts(page)).toEqual({ nodes: before.nodes, edges: before.edges + 1 })
@@ -295,8 +295,8 @@ test.describe('pivot pipeline', () => {
         const set = await stageUrls(page)
         const rejects = landableIds(set, 5)
 
-        await harness(page, 'rejectPivotCandidates', AIL, rejects)
-        expect(await harness(page, 'rejectedPivotIds', AIL)).toEqual(rejects)
+        await harness(page, 'rejectPivotCandidates', CORRELATION, rejects)
+        expect(await harness(page, 'rejectedPivotIds', CORRELATION)).toEqual(rejects)
 
         // A re-run replaces the set — the provider still returns 210, and the five are
         // suppressed rather than silently missing.
@@ -315,13 +315,13 @@ test.describe('pivot pipeline', () => {
         const set = await stageUrls(page)
         const keep = landableIds(set, 2)
 
-        await harness(page, 'markPivotCandidates', AIL, keep)
-        await harness(page, 'rejectRemainingPivotCandidates', AIL)
+        await harness(page, 'markPivotCandidates', CORRELATION, keep)
+        await harness(page, 'rejectRemainingPivotCandidates', CORRELATION)
 
         const after = await staged(page) as RecordedCandidates
         expect(after.rows.filter((row) => row.state === 'marked').map((row) => row.id)).toEqual(keep)
         expect(after.rows.filter((row) => row.state === 'rejected')).toHaveLength(208)
-        expect(await harness(page, 'rejectedPivotIds', AIL)).toHaveLength(208)
+        expect(await harness(page, 'rejectedPivotIds', CORRELATION)).toHaveLength(208)
     })
 
     test('a rejection under one pivot does not hide the candidate from another', async ({ page }) => {
@@ -330,7 +330,7 @@ test.describe('pivot pipeline', () => {
         await run(page, 'blind', ['a'])
         await harness(page, 'rejectPivotCandidates', 'blind', ['blind-0'])
 
-        // AIL offers the same id, in a different analytic context.
+        // CORRELATION offers the same id, in a different analytic context.
         const set = await stageUrls(page)
         expect(set.suppressed).toBe(0)
         expect(set.rows.find((row) => row.id === 'blind-0')).toBeDefined()
@@ -340,10 +340,10 @@ test.describe('pivot pipeline', () => {
         await load(page)
         await stageUrls(page)
 
-        await harness(page, 'discardPivot', AIL)
+        await harness(page, 'discardPivot', CORRELATION)
 
         expect(await staged(page)).toBeNull()
-        expect(await harness(page, 'rejectedPivotIds', AIL)).toEqual([])
+        expect(await harness(page, 'rejectedPivotIds', CORRELATION)).toEqual([])
         expect((await stageUrls(page)).rows).toHaveLength(210)
     })
 
@@ -367,16 +367,16 @@ test.describe('pivot pipeline', () => {
         await load(page)
         // Cache the summary first, so the gate is a cache hit and the failure lands on
         // the call under test.
-        await harness(page, 'pivotSummarize', AIL, ['a'], { type: ['url'] })
+        await harness(page, 'pivotSummarize', CORRELATION, ['a'], { type: ['url'] })
         await harness(page, 'setPivotFail', true)
 
-        const failed = await run(page, AIL, ['a'], { type: ['url'] })
+        const failed = await run(page, CORRELATION, ['a'], { type: ['url'] })
         expect(failed.status).toBe('failed')
         expect(failed.error).toContain('failed')
         // The set survives the failure, so a pane has somewhere to offer the retry.
         expect((await staged(page))?.error).toContain('failed')
 
-        const retried = await run(page, AIL, ['a'], { type: ['url'] })
+        const retried = await run(page, CORRELATION, ['a'], { type: ['url'] })
         expect(retried.status).toBe('staged')
         expect((await staged(page))?.error).toBeNull()
     })
@@ -385,9 +385,9 @@ test.describe('pivot pipeline', () => {
         await load(page, { fail: true })
 
         // The gate never saw a count, so there is nothing to judge and nothing to fetch.
-        const outcome = await run(page, AIL, ['a'], { type: ['url'] })
+        const outcome = await run(page, CORRELATION, ['a'], { type: ['url'] })
         expect(outcome.status).toBe('failed')
-        expect(await callNames(page)).toEqual([`${AIL}.summarize`])
+        expect(await callNames(page)).toEqual([`${CORRELATION}.summarize`])
         expect(await staged(page)).toBeNull()
     })
 
@@ -395,11 +395,11 @@ test.describe('pivot pipeline', () => {
         await load(page)
         const before = await counts(page)
 
-        const outcome = await run(page, 'misp-event-objects', ['a'])
+        const outcome = await run(page, 'event-objects', ['a'])
 
         expect(outcome.status).toBe('ingested')
         expect(outcome.nodes).toEqual(['event-a'])
-        expect(await staged(page, 'misp-event-objects')).toBeNull()
+        expect(await staged(page, 'event-objects')).toBeNull()
         // The container arrived as a new node with its objects nested inside it, and a
         // container's children are nodes of the graph too: one plus twelve.
         expect(await counts(page)).toEqual({ nodes: before.nodes + 13, edges: before.edges + 1 })
@@ -415,7 +415,7 @@ test.describe('pivot pipeline', () => {
         const set = await stageUrls(page)
         const chosen = landableIds(set, 4)
 
-        await harness(page, 'markPivotCandidates', AIL, chosen)
+        await harness(page, 'markPivotCandidates', CORRELATION, chosen)
         await ingest(page)
 
         expect(await harness(page, 'ingestHookCalls')).toBe(1)
@@ -431,7 +431,7 @@ test.describe('pivot pipeline', () => {
         const before = await counts(page)
         const set = await stageUrls(page)
 
-        await harness(page, 'markPivotCandidates', AIL, landableIds(set, 6))
+        await harness(page, 'markPivotCandidates', CORRELATION, landableIds(set, 6))
         const outcome = await ingest(page)
 
         expect(outcome.status).toBe('vetoed')
@@ -446,7 +446,7 @@ test.describe('pivot pipeline', () => {
         const set = await stageUrls(page)
         const chosen = landableIds(set, 6)
 
-        await harness(page, 'markPivotCandidates', AIL, chosen)
+        await harness(page, 'markPivotCandidates', CORRELATION, chosen)
         const outcome = await ingest(page)
 
         expect(outcome.nodes).toEqual([chosen[0]])
@@ -458,7 +458,7 @@ test.describe('pivot pipeline', () => {
         await harness(page, 'configureIngestHook', 'veto')
         const before = await counts(page)
 
-        const outcome = await run(page, 'misp-event-objects', ['a'])
+        const outcome = await run(page, 'event-objects', ['a'])
 
         expect(outcome.status).toBe('vetoed')
         const seen = (await harness(page, 'ingestHookContexts')) as Array<{ trigger: string }>
@@ -472,7 +472,7 @@ test.describe('pivot pipeline', () => {
         const set = await stageUrls(page)
         const chosen = landableIds(set, 12)
 
-        await harness(page, 'markPivotCandidates', AIL, chosen)
+        await harness(page, 'markPivotCandidates', CORRELATION, chosen)
         const outcome = await ingest(page)
         expect(await harness(page, 'pivotRunIds')).toEqual([outcome.runId])
 
@@ -488,7 +488,7 @@ test.describe('pivot pipeline', () => {
         await harness(page, 'resetBatchSizes')
         expect(await harness(page, 'redoPivot')).toBe(outcome.runId)
         expect(await counts(page)).toEqual({ nodes: before.nodes + 12, edges: before.edges + 12 })
-        expect(await sources(page, chosen[0])).toEqual([AIL])
+        expect(await sources(page, chosen[0])).toEqual([CORRELATION])
         // Redo re-lands the recorded delta: no provider was asked anything.
         expect(await callNames(page)).toEqual(callsAfterIngest)
         expect(await harness(page, 'pivotRunIds')).toEqual([outcome.runId])
@@ -499,11 +499,11 @@ test.describe('pivot pipeline', () => {
         const before = await counts(page)
 
         const first = await stageUrls(page)
-        await harness(page, 'markPivotCandidates', AIL, landableIds(first, 3))
+        await harness(page, 'markPivotCandidates', CORRELATION, landableIds(first, 3))
         const runOne = await ingest(page)
 
         const second = await staged(page) as RecordedCandidates
-        await harness(page, 'markPivotCandidates', AIL, landableIds(second, 2))
+        await harness(page, 'markPivotCandidates', CORRELATION, landableIds(second, 2))
         const runTwo = await ingest(page)
 
         expect(runOne.runId).not.toBe(runTwo.runId)
@@ -527,7 +527,7 @@ test.describe('pivot pipeline', () => {
         const before = await counts(page)
 
         const set = await stageUrls(page)
-        await harness(page, 'markPivotCandidates', AIL, landableIds(set, 4))
+        await harness(page, 'markPivotCandidates', CORRELATION, landableIds(set, 4))
         const outcome = await ingest(page)
 
         const preview = await harness(page, 'historyPreview', outcome.runId) as HistoryPreviewRow
@@ -545,17 +545,17 @@ test.describe('pivot pipeline', () => {
         await load(page)
         const before = await counts(page)
 
-        const outcome = await run(page, 'search-ail', [], { query: 'onion' })
+        const outcome = await run(page, 'search-archive', [], { query: 'onion' })
         expect(outcome.status).toBe('staged')
-        expect((await staged(page, 'search-ail'))?.fetched).toBe(30)
+        expect((await staged(page, 'search-archive'))?.fetched).toBe(30)
 
-        await harness(page, 'markPivotCandidates', 'search-ail', 'all')
+        await harness(page, 'markPivotCandidates', 'search-archive', 'all')
         // Point the view away from the graph's own centre, so "the viewport centre" is a
         // number the seed can only have got from the camera.
         await harness(page, 'pointViewAt', 600, -400)
         const centre = (await harness(page, 'viewCenter')) as { x: number; y: number }
         expect(Math.round(centre.x)).toBe(600)
-        const ingested = await ingest(page, 'search-ail')
+        const ingested = await ingest(page, 'search-archive')
         expect(ingested.nodes).toHaveLength(30)
         expect(await counts(page)).toEqual({ nodes: before.nodes + 30, edges: before.edges })
 
@@ -571,13 +571,13 @@ test.describe('pivot pipeline', () => {
     test('declared potential is data, and costs no provider call', async ({ page }) => {
         await load(page)
 
-        await harness(page, 'setNodePotential', 'a', AIL, 2100)
+        await harness(page, 'setNodePotential', 'a', CORRELATION, 2100)
         await harness(page, 'setNodePotential', 'a', 'blind', 4)
-        expect(await harness(page, 'nodePotentials', 'a')).toEqual([[AIL, 2100], ['blind', 4]])
+        expect(await harness(page, 'nodePotentials', 'a')).toEqual([[CORRELATION, 2100], ['blind', 4]])
 
         // Zero clears the declaration rather than showing a zero.
         await harness(page, 'setNodePotential', 'a', 'blind', 0)
-        expect(await harness(page, 'nodePotentials', 'a')).toEqual([[AIL, 2100]])
+        expect(await harness(page, 'nodePotentials', 'a')).toEqual([[CORRELATION, 2100]])
         expect(await calls(page)).toEqual([])
     })
 
@@ -585,14 +585,14 @@ test.describe('pivot pipeline', () => {
         await load(page, { pivots: ['blind'] as PivotFixtureName[] })
         expect(await harness(page, 'pivotCount')).toBe(1)
 
-        await harness(page, 'registerTestPivot', 'ail-correlation')
+        await harness(page, 'registerTestPivot', 'correlation')
         expect(await harness(page, 'pivotCount')).toBe(2)
         // A duplicate is skipped, not stacked.
-        await harness(page, 'registerTestPivot', 'ail-correlation')
+        await harness(page, 'registerTestPivot', 'correlation')
         expect(await harness(page, 'pivotCount')).toBe(2)
 
         await stageUrls(page)
-        await harness(page, 'unregisterPivot', AIL)
+        await harness(page, 'unregisterPivot', CORRELATION)
         expect(await harness(page, 'pivotCount')).toBe(1)
         // Unregistering takes its staged candidates with it.
         expect(await staged(page)).toBeNull()

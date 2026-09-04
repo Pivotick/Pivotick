@@ -1,8 +1,8 @@
 import { test, expect, gotoHarness, loadFixture } from '../helpers'
 
 /**
- * Non-visual regression cover for the UI-lifecycle reentrancy fix
- * (prd/ui-lifecycle-emitphase-reentrancy.md). The invariants are about how many
+ * Non-visual regression cover for the UI-lifecycle reentrancy fix.
+ * The invariants are about how many
  * times a lifecycle phase fires during a broadcast, not about pixels, so every
  * test runs its logic in-page against the live UIManager
  * (`window.__pivotick.graph.UIManager`, a public field) and asserts on returned

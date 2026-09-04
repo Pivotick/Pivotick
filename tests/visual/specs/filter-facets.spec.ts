@@ -2,9 +2,9 @@ import { test, expect, gotoHarness, loadFixture, harness } from '../helpers'
 import type { Page, Locator } from '@playwright/test'
 
 /**
- * Declarative filter facets (prd/misp/declarative-filter-facets.md).
+ * Declarative filter facets.
  *
- * Two halves, both against the MISP-shaped `mispLike` fixture:
+ * Two halves, both against the attribute-shaped `mispLike` fixture:
  *
  *  - **the panel** — with `UI.filter.facets` declared, the form is generated from
  *    the declaration (exact fields, verbatim labels, declared widgets and order);
@@ -82,7 +82,7 @@ test.describe('declared filter facets', () => {
     })
 
     // Auto-derivation contributes nothing once facets are declared — the noisy keys
-    // that dominate a derived MISP panel are simply absent.
+    // that dominate a derived panel are simply absent.
     test('declared facets replace auto-derivation', async ({ page }) => {
         await harness(page, 'loadWithFacets', 'mispLike')
 

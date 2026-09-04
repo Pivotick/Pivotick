@@ -7,7 +7,6 @@ import { test, expect, gotoHarness, harness } from '../helpers'
  * firing its re-measure callback used to throw
  * `Cannot read properties of undefined (reading 'each')` — a misleading
  * secondary error that masked the real construction failure.
- * See prd/bug-intersection-observer-nodeselection-undefined.md.
  */
 test.describe('canvas visibility observer', () => {
     test.beforeEach(async ({ page }) => {

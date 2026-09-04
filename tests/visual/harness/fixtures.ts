@@ -596,8 +596,8 @@ export const fixtures = {
      * The mirror of {@link fixtures.tree}: the same three tiers, with every arrow
      * pointing the other way. Twelve leaves each point at one of four hubs, and the
      * hubs point at a single sink — so **every leaf is a source** and no node reaches
-     * the graph by following the arrows, which is the shape of provenance data (the
-     * AIL demo graph is 259 messages pointing at 41 chats).
+     * the graph by following the arrows, which is the shape of provenance data (one
+     * real example is 259 messages pointing at 41 chats).
      *
      * A directed spanning walk cannot lay this out: it leaves all twelve leaves as
      * roots of their own and drops most edges out of the hierarchy. Drives the
@@ -1028,7 +1028,7 @@ export const fixtures = {
     },
 
     /**
-     * MISP-shaped nodes for **declared filter facets** (`UI.filter.facets`). Every
+     * attribute-shaped nodes for **declared filter facets** (`UI.filter.facets`). Every
      * shape the declaration has to cope with is here:
      *
      *  - `tags` is **array-valued** — the facet kind that was impossible before.
@@ -1081,8 +1081,8 @@ export const fixtures = {
     },
 
     /**
-     * Regression fixture for prd/bug-graphfilter-null-value-crash.md: node-data
-     * fields whose value is `null`/`undefined`. MISP (and most real datasets)
+     * Regression fixture for the Graph-Filter null-value crash: node-data
+     * fields whose value is `null`/`undefined`. Most real datasets
      * serialise an absent optional attribute as `null`; a single such value used
      * to crash the Graph-Filter facet builder (`v.length` on `null`) during
      * construction — the form is (re)built on every `dataBatchChanged`, which

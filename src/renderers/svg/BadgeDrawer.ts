@@ -102,7 +102,7 @@ interface PlacedBadge {
  *
  * The potential badges come *after* the declared ones, so a consumer who fills all four
  * corners keeps them and the potential collapses into the `+n` — the rim is a hint, and
- * the pivot panel is the full surface (D12).
+ * the pivot panel is the full surface.
  */
 export function resolveBadges(style: NodeStyle, node: Node, graph: Graph): NodeBadge[] {
     const declared = typeof style.badges === 'function' ? style.badges(node) : style.badges
@@ -122,7 +122,7 @@ function potentialBadges(node: Node, graph: Graph): NodeBadge[] {
 }
 
 /**
- * One badge per pivot that declared a potential for this node (D12).
+ * One badge per pivot that declared a potential for this node.
  *
  * Only *declared* potential — never a queried count, which would materialise on one node
  * the moment it was asked about and leave the canvas telling two different stories. A
@@ -156,7 +156,7 @@ function perPivotBadges(node: Node, graph: Graph): NodeBadge[] {
  * It prefers the total the consumer declared, because only a backend knows how much is
  * actually out there. With nothing declared it falls back to what the library can prove
  * on its own: how many pivots apply. Both are counts of *potential*, so neither costs a
- * provider call, and D12 holds.
+ * provider call, and the rim stays a hint.
  */
 function summaryBadge(node: Node, graph: Graph): NodeBadge[] {
     const declared = node.getPotential()
@@ -183,7 +183,7 @@ function summaryBadge(node: Node, graph: Graph): NodeBadge[] {
  * exactly one pivot applies, and it declares no `summarize`, so there is no count to
  * read first and nothing to narrow. Then the click *is* the run. Where it lands is the
  * provider's own call — `autoIngest` decides between the canvas and the triage pane,
- * exactly as it does everywhere else (D13).
+ * exactly as it does everywhere else.
  */
 function runOrOpen(node: Node, graph: Graph): void {
     const applicable = graph.pivots.for([node])

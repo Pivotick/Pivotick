@@ -4,10 +4,9 @@ import { test, expect, gotoHarness, loadFixture, harness } from '../helpers'
  * Regression: a node-data field whose value is `null`/`undefined` must not crash
  * the Graph-Filter facet builder. The filter form is (re)built on every
  * `dataBatchChanged` — which fires synchronously inside `new Graph()` — so a
- * single `null`-valued field (MISP serialises absent attributes as `null`) used
+ * single `null`-valued field (real datasets serialise absent attributes as `null`) used
  * to throw `TypeError: Cannot read properties of null (reading 'length')` from
  * `GraphFilter.rebuild()`, aborting construction.
- * See prd/bug-graphfilter-null-value-crash.md.
  */
 test.describe('graph filter — null/undefined field values', () => {
     test.beforeEach(async ({ page }) => {

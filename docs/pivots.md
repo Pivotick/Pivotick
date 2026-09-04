@@ -445,7 +445,7 @@ failed, and what a retry should carry — because that is the part only it knows
 
 ```js
 const objects = {
-    id: 'misp-objects',
+    id: 'objects',
     label: 'Objects & attributes',
     fetch: (nodes, narrowing, ctx) => api.objects(nodes[0].id, { signal: ctx.signal }),
 

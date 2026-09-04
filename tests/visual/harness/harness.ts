@@ -823,15 +823,15 @@ export interface AnchorProbe {
 }
 
 /**
- * Fake pivot providers, mirroring the PRD's §6 spec so the walkthrough numbers
- * (2,143 / 210 / 12) fall out of the data rather than being asserted: the AIL
+ * Fake pivot providers, shaped so the walkthrough numbers
+ * (2,143 / 210 / 12) fall out of the data rather than being asserted: the CORRELATION
  * facet counts sum exactly, and *URLs* alone is 210, so the cap genuinely lifts.
  */
 export type PivotFixtureName =
-    | 'ail-correlation'
-    | 'misp-event-objects'
+    | 'correlation'
+    | 'event-objects'
     | 'oversized'
-    | 'search-ail'
+    | 'search-archive'
     | 'blind'
     | 'union-children'
     | 'subset-only'
@@ -852,7 +852,7 @@ export interface PivotFixtureSpec {
     pivots?: PivotFixtureName[]
     /** Latency for every provider call, in ms. @default 0 */
     latency?: number
-    /** Existing node ids the AIL provider re-uses, so dedup has something to skip. */
+    /** Existing node ids the CORRELATION provider re-uses, so dedup has something to skip. */
     collide?: string[]
     /** Edges between nodes already on canvas — the edge-only triage rows. */
     edgeOnly?: Array<[string, string]>
@@ -875,7 +875,7 @@ export interface PivotFixtureSpec {
     autoIngest?: PivotFixtureName[]
     /**
      * Flip these fixtures off `autoIngest`, so a provider that normally lands straight
-     * on the canvas stages instead. `misp-event-objects` is the container fixture, and
+     * on the canvas stages instead. `event-objects` is the container fixture, and
      * a container is only visible in the pane if it gets there.
      */
     stage?: PivotFixtureName[]
@@ -1156,8 +1156,7 @@ export interface HarnessApi {
     /**
      * Construct a graph with NO data so `init()` is skipped and the renderer's
      * `nodeSelection` is never assigned — the precondition for the canvas
-     * visibility-observer null-deref (see
-     * prd/bug-intersection-observer-nodeselection-undefined.md). Invokes the
+     * visibility-observer null-deref. Invokes the
      * exact re-measure callback the `IntersectionObserver` fires and reports
      * whether `nodeSelection` was unset and whether the callback threw. Pre-fix
      * it throws `Cannot read properties of undefined (reading 'each')`.
@@ -1359,7 +1358,7 @@ export interface HarnessApi {
     /** Apply several filters at once (each keyed by node-data field). */
     setFilters(filters: GraphFilters): void
     /**
-     * Load a fixture with the MISP-shaped `UI.filter.facets` declaration installed
+     * Load a fixture with the attribute-shaped `UI.filter.facets` declaration installed
      * (see {@link DECLARED_FACETS}). Facets carry `accessor`/`predicate`/`options`
      * functions, which can't cross `page.evaluate` — so they're built page-side here.
      */
@@ -1696,17 +1695,17 @@ export interface HarnessApi {
  * it needs a container to merge into, so a test names it explicitly.
  */
 const ALL_FAKE_PIVOTS: PivotFixtureName[] = [
-    'ail-correlation', 'misp-event-objects', 'oversized', 'search-ail', 'blind',
+    'correlation', 'event-objects', 'oversized', 'search-archive', 'blind',
 ]
 
 /** The nodes `subset-only` accepts — everything in the basic fixture except `hub`. */
 const SUBSET_ACCEPTS = ['a', 'b', 'c', 'd', 'e']
 
 /**
- * The AIL breakdown from the PRD's fake-provider spec. The counts sum to exactly
+ * The breakdown the fake correlation provider reports. The counts sum to exactly
  * 2,143 and *URLs* alone is 210, so the cap lifts because the arithmetic says so.
  */
-const AIL_TYPES = [
+const CORRELATION_TYPES = [
     { value: 'domain', label: 'Domains', count: 1800 },
     { value: 'url', label: 'URLs', count: 210 },
     { value: 'paste', label: 'Pastes', count: 95 },
@@ -1714,14 +1713,14 @@ const AIL_TYPES = [
 ]
 
 /** Which types a narrowing chose — all of them when it chose none. */
-function chosenTypes(narrowing: PivotNarrowing): typeof AIL_TYPES {
+function chosenTypes(narrowing: PivotNarrowing): typeof CORRELATION_TYPES {
     const chosen = narrowing.type
-    if (!Array.isArray(chosen) || chosen.length === 0) return AIL_TYPES
+    if (!Array.isArray(chosen) || chosen.length === 0) return CORRELATION_TYPES
     const wanted = chosen.map(String)
-    return AIL_TYPES.filter((type) => wanted.includes(type.value))
+    return CORRELATION_TYPES.filter((type) => wanted.includes(type.value))
 }
 
-function ailTotal(narrowing: PivotNarrowing): number {
+function correlationTotal(narrowing: PivotNarrowing): number {
     return chosenTypes(narrowing).reduce((sum, type) => sum + type.count, 0)
 }
 
@@ -4888,42 +4887,42 @@ class Harness implements HarnessApi {
         }
     }
 
-    /** One of the fake providers from the PRD's fake-provider spec. */
+    /** One of the fake providers the pivot specs share. */
     private fakePivot(name: PivotFixtureName): PivotDefinition {
         switch (name) {
-            case 'ail-correlation':
+            case 'correlation':
                 return {
-                    id: 'ail-correlation',
+                    id: 'correlation',
                     label: 'Correlations',
                     maxCandidates: 2000,
                     summarize: (nodes, narrowing, ctx) => this.serveProvider(
-                        'ail-correlation', 'summarize', nodes, narrowing, ctx,
+                        'correlation', 'summarize', nodes, narrowing, ctx,
                         (): PivotSummary => ({
-                            total: ailTotal(narrowing),
+                            total: correlationTotal(narrowing),
                             facets: [
                                 {
                                     key: 'type',
                                     label: 'Type',
                                     type: 'multiselect',
-                                    options: AIL_TYPES.map((t) => ({ label: t.label, value: t.value, count: t.count })),
+                                    options: CORRELATION_TYPES.map((t) => ({ label: t.label, value: t.value, count: t.count })),
                                 },
                                 { key: 'seen', label: 'First seen', type: 'numberRange' },
                             ],
                         })
                     ),
                     fetch: (nodes, narrowing, ctx) => this.serveProvider(
-                        'ail-correlation', 'fetch', nodes, narrowing, ctx,
-                        () => this.ailFragment(narrowing, nodes)
+                        'correlation', 'fetch', nodes, narrowing, ctx,
+                        () => this.correlationFragment(narrowing, nodes)
                     ),
                 }
-            case 'misp-event-objects':
+            case 'event-objects':
                 return {
-                    id: 'misp-event-objects',
+                    id: 'event-objects',
                     label: 'Objects & attributes',
                     autoIngest: true,
                     appliesTo: (nodes) => nodes.length === 1,
                     fetch: (nodes, narrowing, ctx) => this.serveProvider(
-                        'misp-event-objects', 'fetch', nodes, narrowing, ctx,
+                        'event-objects', 'fetch', nodes, narrowing, ctx,
                         (): PivotResult => ({
                             nodes: [{
                                 id: `event-${nodes[0]?.id ?? 'orphan'}`,
@@ -4949,20 +4948,20 @@ class Harness implements HarnessApi {
                         })
                     ),
                 }
-            case 'search-ail':
+            case 'search-archive':
                 return {
-                    id: 'search-ail',
-                    label: 'Search AIL',
+                    id: 'search-archive',
+                    label: 'Search the archive',
                     origin: 'none',
                     summarize: (nodes, narrowing, ctx) => this.serveProvider(
-                        'search-ail', 'summarize', nodes, narrowing, ctx,
+                        'search-archive', 'summarize', nodes, narrowing, ctx,
                         (): PivotSummary => ({
                             total: 30,
                             facets: [{ key: 'query', label: 'Query', type: 'text' }],
                         })
                     ),
                     fetch: (nodes, narrowing, ctx) => this.serveProvider(
-                        'search-ail', 'fetch', nodes, narrowing, ctx,
+                        'search-archive', 'fetch', nodes, narrowing, ctx,
                         (): PivotResult => ({
                             nodes: Array.from({ length: 30 }, (_, i) => ({
                                 id: `hit-${i}`,
@@ -5038,11 +5037,11 @@ class Harness implements HarnessApi {
     }
 
     /**
-     * The AIL fragment, sized by the narrowing so 2,143 → 210 is the same arithmetic
+     * The CORRELATION fragment, sized by the narrowing so 2,143 → 210 is the same arithmetic
      * in both calls. The first `collide` ids are re-used from the graph, which is what
      * dedup has to skip.
      */
-    private ailFragment(narrowing: PivotNarrowing, origin: Node[]): PivotResult {
+    private correlationFragment(narrowing: PivotNarrowing, origin: Node[]): PivotResult {
         const collide = this.pivotSpec.collide ?? []
         const nodes: RawNode[] = []
         for (const type of chosenTypes(narrowing)) {

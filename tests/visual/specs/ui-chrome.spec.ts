@@ -15,7 +15,7 @@ import {
 //
 // **Mode (the P0.7 question, resolved).** The toolbar, navigation, controls and
 // the modal/mainheader containers are already built by the harness's existing
-// **light** mode (the P0.7 correction in the PRD), and are positioned as canvas
+// **light** mode, and are positioned as canvas
 // overlays / a top bar independent of the grid mode — so they look identical in
 // light and full mode. T8.2–T8.5 therefore use the default light-mode harness.
 // The **sidebar** is the one piece built *only* in `'full'` mode, so T8.1 loads

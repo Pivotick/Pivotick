@@ -352,7 +352,7 @@ export class PivotManager implements PivotManagerLike {
         // Offered nodes and kept none of them: asking the provider about an empty
         // origin instead would be a run that looks fine and answers nothing. An origin
         // that was empty to begin with is a different thing, and still allowed — as is
-        // an origin-less pivot, which is asked about nothing whatever is selected (D19).
+        // an origin-less pivot, which is asked about nothing whatever is selected.
         if (def.origin !== 'none' && nodes.length && !origin.length) {
             return {
                 status: 'failed',
@@ -396,9 +396,9 @@ export class PivotManager implements PivotManagerLike {
             loading: true,
         }
         // A re-run over triage already done waits beside the set on show rather than
-        // replacing it: D27 makes a re-run one pane, not a stack, but discarding the
-        // analyst's marks unasked is not the library's call. With nothing marked there
-        // is nothing to lose, and it replaces outright.
+        // replacing it: a re-run is one pane, not a stack, but discarding the analyst's
+        // marks unasked is not the library's call. With nothing marked there is nothing
+        // to lose, and it replaces outright.
         const live = this.candidateSets.get(id)
         const waiting = !def.autoIngest && !!live && !live.loading && this.hasMarks(live)
 
@@ -860,7 +860,7 @@ export class PivotManager implements PivotManagerLike {
         })
 
         // Ingested rows leave the set; rejections and untriaged leftovers stay. What
-        // leaves is written down, so undoing this ingest can put it back (H21).
+        // leaves is written down, so undoing this ingest can put it back.
         const landedIds = new Set(run.nodeIds)
         const landedEdgeKeys = new Set(run.edgeIds)
         const keptCarried = set.carried?.filter(
@@ -1228,7 +1228,7 @@ export class PivotManager implements PivotManagerLike {
     /**
      * Translate the ids a source system minted back to the ones the canvas holds.
      * Without it the feature arms a bug of its own making: a run saves twelve objects,
-     * MISP assigns them UUIDs, tomorrow's re-run returns them under those UUIDs, and
+     * the backend assigns them UUIDs, tomorrow's re-run returns them under those UUIDs, and
      * dedup — which only knows the ids the provider used the first time — offers
      * twelve duplicates of nodes the analyst already has.
      *

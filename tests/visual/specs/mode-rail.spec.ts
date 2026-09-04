@@ -29,7 +29,7 @@ test.describe('mode-rail', () => {
         await gotoHarness(page)
     })
 
-    // Default landing: Select active, both flyouts closed (PRD D5).
+    // Default landing: Select active, both flyouts closed.
     test('renders with Select active by default', async ({ page }) => {
         await loadFixture(page, 'basic', B3)
 

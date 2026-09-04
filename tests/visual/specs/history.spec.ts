@@ -16,7 +16,7 @@ import type {
 // with its provenance intact from one that came back an orphan, and that distinction
 // is what the whole feature rests on.
 
-const AIL = 'ail-correlation'
+const CORRELATION = 'correlation'
 
 /** The sidebar bulk-action row only exists in full mode with the sidebar open. */
 const B3_FULL = { UI: { mode: 'full', sidebar: { collapsed: false } } }
@@ -98,17 +98,17 @@ const fillHistory = async (page: Page, n: number): Promise<void> => {
     for (let i = 1; i <= n; i++) await harness(page, 'excludeNode', `n${i}`)
 }
 
-/** Stage the AIL pivot narrowed to URLs, then ingest the first `n` landable rows. */
+/** Stage the CORRELATION pivot narrowed to URLs, then ingest the first `n` landable rows. */
 async function ingest(page: Page, n: number): Promise<RecordedRunOutcome> {
-    const outcome = (await harness(page, 'runPivot', AIL, ['a'], { type: ['url'] })) as RecordedRunOutcome
+    const outcome = (await harness(page, 'runPivot', CORRELATION, ['a'], { type: ['url'] })) as RecordedRunOutcome
     expect(outcome.status).toBe('staged')
-    const set = (await harness(page, 'pivotCandidates', AIL)) as RecordedCandidates
+    const set = (await harness(page, 'pivotCandidates', CORRELATION)) as RecordedCandidates
     const ids = set.rows
         .filter((row) => !row.deduped && row.state === 'candidate')
         .slice(0, n)
         .map((row) => row.id)
-    await harness(page, 'markPivotCandidates', AIL, ids)
-    return (await harness(page, 'ingestPivot', AIL)) as RecordedRunOutcome
+    await harness(page, 'markPivotCandidates', CORRELATION, ids)
+    return (await harness(page, 'ingestPivot', CORRELATION)) as RecordedRunOutcome
 }
 
 test.describe('history — what it records', () => {
@@ -333,7 +333,7 @@ test.describe('history — a deletion remembers who vouched for what', () => {
         await undoThrough(page)
 
         expect(await hasNode(page, first)).toBe(true)
-        expect(await sources(page, first)).toEqual([AIL])
+        expect(await sources(page, first)).toEqual([CORRELATION])
 
         // …so the run can still account for it.
         await undoThrough(page, run.runId)
@@ -532,11 +532,11 @@ test.describe('history — the dropdown', () => {
         await page.locator('.zoom-layer:not(.hidden)').first().waitFor({ state: 'attached' })
         await harness(page, 'configureWritePath', {})
 
-        const run = (await harness(page, 'runPivot', AIL, ['a'], { type: ['url'] })) as RecordedRunOutcome
-        const set = (await harness(page, 'pivotCandidates', AIL)) as RecordedCandidates
+        const run = (await harness(page, 'runPivot', CORRELATION, ['a'], { type: ['url'] })) as RecordedRunOutcome
+        const set = (await harness(page, 'pivotCandidates', CORRELATION)) as RecordedCandidates
         const ids = set.rows.filter(row => !row.deduped && row.state === 'candidate').slice(0, 3).map(row => row.id)
-        await harness(page, 'markPivotCandidates', AIL, ids)
-        const ingested = (await harness(page, 'ingestPivot', AIL)) as RecordedRunOutcome
+        await harness(page, 'markPivotCandidates', CORRELATION, ids)
+        const ingested = (await harness(page, 'ingestPivot', CORRELATION)) as RecordedRunOutcome
         expect(ingested.nodes).toHaveLength(3)
         await waitForViewSettled(page)
 

@@ -1,9 +1,8 @@
 import { test, expect, gotoHarness, loadFixture } from '../helpers'
 
 /**
- * Non-visual cover for the plugin-API contract fixes
- * (prd/plugin-api-contract-truth.md): name-based de-duplication and the live
- * `ctx.layout` getter. Both run in-page against the live graph
+ * Non-visual cover for the plugin-API contract fixes: name-based
+ * de-duplication and the live `ctx.layout` getter. Both run in-page against the live graph
  * (`window.__pivotick.graph`, whose `UIManager` field is public), asserting on
  * returned values rather than pixels. The harness boots in `light` mode, so the
  * layout and its slots exist.

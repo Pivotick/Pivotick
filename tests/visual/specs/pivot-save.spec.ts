@@ -17,8 +17,8 @@ import type {
 // a backend that writes everything, half of it, none of it, or all of it under names
 // of its own choosing are four different problems for the ledger.
 
-const AIL = 'ail-correlation'
-const SEARCH = 'search-ail'
+const CORRELATION = 'correlation'
+const SEARCH = 'search-archive'
 
 // ── readers over the serialisable harness API ────────────────────────────────
 const load = async (page: Page, spec: PivotFixtureSpec = {}, overrides: object = {}): Promise<void> => {
@@ -27,7 +27,7 @@ const load = async (page: Page, spec: PivotFixtureSpec = {}, overrides: object =
 }
 
 /**
- * The AIL fixture advertises 2,143 against a cap of 2,000, so every run here narrows
+ * The CORRELATION fixture advertises 2,143 against a cap of 2,000, so every run here narrows
  * to *URLs* — 210, which the cap lets through. The arithmetic is the fixture's, not
  * this file's.
  */
@@ -41,7 +41,7 @@ const run = async (
 ): Promise<RecordedRunOutcome> =>
     (await harness(page, 'runPivot', id, nodeIds, narrowing)) as RecordedRunOutcome
 
-const ingest = async (page: Page, id = AIL): Promise<RecordedRunOutcome> =>
+const ingest = async (page: Page, id = CORRELATION): Promise<RecordedRunOutcome> =>
     (await harness(page, 'ingestPivot', id)) as RecordedRunOutcome
 
 const save = async (page: Page, target?: string): Promise<RecordedSaveReport> =>
@@ -56,7 +56,7 @@ const saveCalls = async (page: Page): Promise<SaveCall[]> =>
 const savedState = async (page: Page, nodeId: string): Promise<{ saved: boolean; savable: boolean }> =>
     (await harness(page, 'pivotSavedState', nodeId)) as { saved: boolean; savable: boolean }
 
-const staged = async (page: Page, id = AIL): Promise<RecordedCandidates | null> =>
+const staged = async (page: Page, id = CORRELATION): Promise<RecordedCandidates | null> =>
     (await harness(page, 'pivotCandidates', id)) as RecordedCandidates | null
 
 const entries = async (page: Page): Promise<RecordedHistoryEntry[]> =>
@@ -85,9 +85,9 @@ test.describe('pivot save — the ledger', () => {
     test('a pivot with no save produces nothing unsaved', async ({ page }) => {
         await gotoHarness(page)
         // `save: 'none'` is the default: the fixtures declare no `save` at all.
-        await load(page, { pivots: [AIL] })
+        await load(page, { pivots: [CORRELATION] })
 
-        const landed = await runAndIngest(page, AIL)
+        const landed = await runAndIngest(page, CORRELATION)
         expect(landed.nodes.length).toBeGreaterThan(0)
 
         expect(await unsaved(page)).toEqual({ nodes: 0, edges: 0 })
@@ -98,9 +98,9 @@ test.describe('pivot save — the ledger', () => {
 
     test('what a run lands is unsaved until it is written, then it is not', async ({ page }) => {
         await gotoHarness(page)
-        await load(page, { pivots: [AIL], save: 'ok' })
+        await load(page, { pivots: [CORRELATION], save: 'ok' })
 
-        const landed = await runAndIngest(page, AIL)
+        const landed = await runAndIngest(page, CORRELATION)
         const pending = await unsaved(page)
         expect(pending.nodes).toBe(landed.nodes.length)
         expect(pending.edges).toBe(landed.edges.length)
@@ -119,9 +119,9 @@ test.describe('pivot save — the ledger', () => {
 
     test('a half-succeeding save keeps the rest pending, and the retry carries exactly it', async ({ page }) => {
         await gotoHarness(page)
-        await load(page, { pivots: [AIL], save: 'half' })
+        await load(page, { pivots: [CORRELATION], save: 'half' })
 
-        const landed = await runAndIngest(page, AIL)
+        const landed = await runAndIngest(page, CORRELATION)
         const total = landed.nodes.length
         const first = await save(page)
 
@@ -149,9 +149,9 @@ test.describe('pivot save — the ledger', () => {
 
     test('a throwing save leaves every node on the canvas and every one of them unsaved', async ({ page }) => {
         await gotoHarness(page)
-        await load(page, { pivots: [AIL], save: 'throw' })
+        await load(page, { pivots: [CORRELATION], save: 'throw' })
 
-        const landed = await runAndIngest(page, AIL)
+        const landed = await runAndIngest(page, CORRELATION)
         const before = await counts(page)
 
         const report = await save(page)
@@ -167,32 +167,32 @@ test.describe('pivot save — the ledger', () => {
 
     test('two pivots keep separate ledgers, and saving one leaves the other alone', async ({ page }) => {
         await gotoHarness(page)
-        await load(page, { pivots: [AIL, SEARCH], save: 'ok' })
+        await load(page, { pivots: [CORRELATION, SEARCH], save: 'ok' })
 
-        const first = await runAndIngest(page, AIL)
+        const first = await runAndIngest(page, CORRELATION)
         const second = await runAndIngest(page, SEARCH, [], {})
 
-        expect((await unsaved(page, AIL)).nodes).toBe(first.nodes.length)
+        expect((await unsaved(page, CORRELATION)).nodes).toBe(first.nodes.length)
         expect((await unsaved(page, SEARCH)).nodes).toBe(second.nodes.length)
 
         // Addressed by pivot id: what a triage pane's own Save means.
-        await save(page, AIL)
-        expect(await unsaved(page, AIL)).toEqual({ nodes: 0, edges: 0 })
+        await save(page, CORRELATION)
+        expect(await unsaved(page, CORRELATION)).toEqual({ nodes: 0, edges: 0 })
         expect((await unsaved(page, SEARCH)).nodes).toBe(second.nodes.length)
-        expect((await saveCalls(page)).map((call) => call.pivot)).toEqual([AIL])
+        expect((await saveCalls(page)).map((call) => call.pivot)).toEqual([CORRELATION])
     })
 
     test('a node one run created and another only vouched for saves with the run that created it', async ({ page }) => {
         await gotoHarness(page)
-        await load(page, { pivots: [AIL], save: 'ok' })
+        await load(page, { pivots: [CORRELATION], save: 'ok' })
 
-        const first = await runAndIngest(page, AIL)
+        const first = await runAndIngest(page, CORRELATION)
         // A second run of the same pivot re-offers what is now on canvas; those rows
         // are deduped, so the run vouches for them rather than creating them.
-        await run(page, AIL, ['a'], URLS)
+        await run(page, CORRELATION, ['a'], URLS)
         const set = await staged(page)
         expect(set?.deduped).toBeGreaterThan(0)
-        await harness(page, 'markPivotCandidates', AIL, 'all')
+        await harness(page, 'markPivotCandidates', CORRELATION, 'all')
         const second = await ingest(page)
 
         await save(page)
@@ -209,9 +209,9 @@ test.describe('pivot save — the ledger', () => {
 
     test('autoSave writes with no gesture', async ({ page }) => {
         await gotoHarness(page)
-        await load(page, { pivots: [AIL], save: 'ok', autoSave: [AIL] })
+        await load(page, { pivots: [CORRELATION], save: 'ok', autoSave: [CORRELATION] })
 
-        await runAndIngest(page, AIL)
+        await runAndIngest(page, CORRELATION)
         // The save is fired after the ingest resolves rather than inside it, so the
         // canvas is never held up by a slow backend.
         await expect.poll(async () => (await saveCalls(page)).length).toBe(1)
@@ -220,9 +220,9 @@ test.describe('pivot save — the ledger', () => {
 
     test('a failed autoSave reports, and leaves the data on the canvas and unsaved', async ({ page }) => {
         await gotoHarness(page)
-        await load(page, { pivots: [AIL], save: 'throw', autoSave: [AIL] })
+        await load(page, { pivots: [CORRELATION], save: 'throw', autoSave: [CORRELATION] })
 
-        const landed = await runAndIngest(page, AIL)
+        const landed = await runAndIngest(page, CORRELATION)
         await expect.poll(async () => (await saveCalls(page)).length).toBe(1)
         await expect.poll(async () => (await unsaved(page)).nodes).toBe(landed.nodes.length)
         expect((await counts(page)).nodes).toBeGreaterThan(landed.nodes.length)
@@ -231,9 +231,9 @@ test.describe('pivot save — the ledger', () => {
 
     test('undo after a save takes the nodes off the canvas and says the backend keeps them', async ({ page }) => {
         await gotoHarness(page)
-        await load(page, { pivots: [AIL], save: 'ok' })
+        await load(page, { pivots: [CORRELATION], save: 'ok' })
 
-        const landed = await runAndIngest(page, AIL)
+        const landed = await runAndIngest(page, CORRELATION)
         await save(page)
 
         const marked = (await entries(page)).find((entry) => entry.id === landed.runId)
@@ -261,29 +261,29 @@ test.describe('pivot save — the ledger', () => {
 test.describe('pivot save — canonical ids', () => {
     test('a re-run under the ids a save minted dedups instead of duplicating', async ({ page }) => {
         await gotoHarness(page)
-        await load(page, { pivots: [AIL], save: 'mint' })
+        await load(page, { pivots: [CORRELATION], save: 'mint' })
 
-        const landed = await runAndIngest(page, AIL)
+        const landed = await runAndIngest(page, CORRELATION)
         await save(page)
         const after = await counts(page)
 
         // The fake source now hands the same objects back under its own ids.
-        await run(page, AIL, ['a'], URLS)
+        await run(page, CORRELATION, ['a'], URLS)
         const set = await staged(page)
         expect(set?.deduped).toBe(landed.nodes.length)
         expect(set?.rows.every((row) => row.deduped)).toBe(true)
 
         // Nothing new landed even if the analyst takes the lot: they are all already here.
-        await harness(page, 'markPivotCandidates', AIL, 'all')
+        await harness(page, 'markPivotCandidates', CORRELATION, 'all')
         await ingest(page)
         expect(await counts(page)).toEqual(after)
     })
 
     test('canonicalId reads back, and the node keeps the id it landed under', async ({ page }) => {
         await gotoHarness(page)
-        await load(page, { pivots: [AIL], save: 'mint' })
+        await load(page, { pivots: [CORRELATION], save: 'mint' })
 
-        const landed = await runAndIngest(page, AIL)
+        const landed = await runAndIngest(page, CORRELATION)
         await save(page)
 
         const id = landed.nodes[0]
@@ -318,14 +318,14 @@ const enterMode = async (page: Page): Promise<void> => {
 test.describe('pivot save — the surfaces', () => {
     test('the panel says how much is unsaved, and the one button clears it', async ({ page }) => {
         await gotoHarness(page)
-        await load(page, { pivots: [AIL], save: 'ok' }, FULL)
+        await load(page, { pivots: [CORRELATION], save: 'ok' }, FULL)
         await enterMode(page)
 
         // Nothing pulled in yet: an always-present "0 unsaved" would be a standing
         // reminder of nothing, so the line is away entirely.
         await expect(saveBar(page)).toBeHidden()
 
-        const landed = await runAndIngest(page, AIL)
+        const landed = await runAndIngest(page, CORRELATION)
         const total = landed.nodes.length + landed.edges.length
         await expect(saveBar(page)).toBeVisible()
         await expect(saveBar(page)).toContainText(`${total.toLocaleString()} unsaved`)
@@ -338,10 +338,10 @@ test.describe('pivot save — the surfaces', () => {
 
     test('a partial save leaves the count at what is left, and one toast carries the retry', async ({ page }) => {
         await gotoHarness(page)
-        await load(page, { pivots: [AIL], save: 'half' }, FULL)
+        await load(page, { pivots: [CORRELATION], save: 'half' }, FULL)
         await enterMode(page)
 
-        const landed = await runAndIngest(page, AIL)
+        const landed = await runAndIngest(page, CORRELATION)
         const total = landed.nodes.length + landed.edges.length
         await saveBar(page).locator('button').click()
 
@@ -363,38 +363,38 @@ test.describe('pivot save — the surfaces', () => {
 
     test('a triage pane carries its own provider\'s count, and saves only that provider', async ({ page }) => {
         await gotoHarness(page)
-        await load(page, { pivots: [AIL, SEARCH], save: 'ok' }, FULL)
+        await load(page, { pivots: [CORRELATION, SEARCH], save: 'ok' }, FULL)
 
         // Another provider's work, ingested first, so "only that provider" has something
         // to be true about.
         const other = await runAndIngest(page, SEARCH, [], {})
 
         // A partial ingest, so the pane stays open with rows still waiting.
-        await run(page, AIL, ['a'], URLS)
+        await run(page, CORRELATION, ['a'], URLS)
         const set = await staged(page)
         const some = (set?.rows ?? []).filter((row) => !row.deduped).slice(0, 4).map((row) => row.id)
-        await harness(page, 'markPivotCandidates', AIL, some)
+        await harness(page, 'markPivotCandidates', CORRELATION, some)
         const landed = await ingest(page)
 
         // Everything the run landed, edges included: a carried edge rides in with its
         // endpoints, and it is as unwritten as they are.
         const pending = landed.nodes.length + landed.edges.length
-        expect(pending).toBe((await unsaved(page, AIL)).nodes + (await unsaved(page, AIL)).edges)
+        expect(pending).toBe((await unsaved(page, CORRELATION)).nodes + (await unsaved(page, CORRELATION)).edges)
         await expect(paneHead(page)).toContainText(`${pending.toLocaleString()} unsaved`)
         await paneHead(page).locator('.pvt-triage-link').click()
 
         await expect(paneHead(page)).not.toContainText('unsaved')
-        expect(await unsaved(page, AIL)).toEqual({ nodes: 0, edges: 0 })
+        expect(await unsaved(page, CORRELATION)).toEqual({ nodes: 0, edges: 0 })
         // The other provider's runs were never in the payload.
         expect((await unsaved(page, SEARCH)).nodes).toBe(other.nodes.length)
-        expect((await saveCalls(page)).every((call) => call.pivot === AIL)).toBe(true)
+        expect((await saveCalls(page)).every((call) => call.pivot === CORRELATION)).toBe(true)
     })
 
     test('pivotMarkUnsaved marks what has not been written, and unmarks it once it has', async ({ page }) => {
         await gotoHarness(page)
-        await load(page, { pivots: [AIL], save: 'ok' }, { ...FULL, pivotMarkUnsaved: true })
+        await load(page, { pivots: [CORRELATION], save: 'ok' }, { ...FULL, pivotMarkUnsaved: true })
 
-        const landed = await runAndIngest(page, AIL)
+        const landed = await runAndIngest(page, CORRELATION)
         await expect(page.locator('.pvt-node-unsaved')).toHaveCount(landed.nodes.length)
 
         await save(page)

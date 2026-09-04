@@ -65,7 +65,7 @@ const originsSeen = async (page: Page, id: string): Promise<string[][]> => {
 test.describe('pivot applicability — a pivot takes its share of a mixed origin', () => {
     test.beforeEach(async ({ page }) => {
         await gotoHarness(page)
-        await load(page, { pivots: [SUBSET, 'ail-correlation'] })
+        await load(page, { pivots: [SUBSET, 'correlation'] })
     })
 
     test('a pivot that accepts only some of the origin is still offered', async ({ page }) => {
@@ -84,7 +84,7 @@ test.describe('pivot applicability — a pivot takes its share of a mixed origin
     })
 
     test('a pivot with no appliesTo still takes the whole origin', async ({ page }) => {
-        expect(await originFor(page, 'ail-correlation', ['a', 'hub'])).toEqual(['a', 'hub'])
+        expect(await originFor(page, 'correlation', ['a', 'hub'])).toEqual(['a', 'hub'])
     })
 
     test('the provider is never called with a node it turned down', async ({ page }) => {
@@ -102,13 +102,13 @@ test.describe('pivot applicability — a pivot takes its share of a mixed origin
     })
 
     test('the panel says which part of the origin it applies to', async ({ page }) => {
-        await load(page, { pivots: [SUBSET, 'ail-correlation'] }, FULL)
+        await load(page, { pivots: [SUBSET, 'correlation'] }, FULL)
         await enterModeOn(page, ['a', 'hub'])
         const entry = page.locator('.pvt-pivot-entry[data-pivot="subset-only"]')
         await expect(entry.locator('.pvt-pivot-scope')).toHaveText('Applies to 1 of the 2 picked')
         // A pivot that took the whole origin says nothing — the line is only ever a
         // qualification, never a restatement of what the origin block already shows.
-        const whole = page.locator('.pvt-pivot-entry[data-pivot="ail-correlation"]')
+        const whole = page.locator('.pvt-pivot-entry[data-pivot="correlation"]')
         await expect(whole.locator('.pvt-pivot-scope')).toBeHidden()
     })
 })
@@ -116,11 +116,11 @@ test.describe('pivot applicability — a pivot takes its share of a mixed origin
 test.describe('pivot rim badge — one badge, whatever the provider count', () => {
     test.beforeEach(async ({ page }) => {
         await gotoHarness(page)
-        await load(page, { pivots: [SUBSET, 'ail-correlation', 'blind'] })
+        await load(page, { pivots: [SUBSET, 'correlation', 'blind'] })
     })
 
     test('per-pivot is the default, and one badge per declaring pivot', async ({ page }) => {
-        await harness(page, 'setNodePotential', 'a', 'ail-correlation', 2143)
+        await harness(page, 'setNodePotential', 'a', 'correlation', 2143)
         await harness(page, 'setNodePotential', 'a', SUBSET, 44)
         expect(await badgeTexts(page, 'a')).toEqual(['2k', '44'])
         // A node nobody declared for stays bare.
@@ -134,7 +134,7 @@ test.describe('pivot rim badge — one badge, whatever the provider count', () =
     })
 
     test('summary collapses several declarations to one badge', async ({ page }) => {
-        await harness(page, 'setNodePotential', 'a', 'ail-correlation', 2143)
+        await harness(page, 'setNodePotential', 'a', 'correlation', 2143)
         await harness(page, 'setNodePotential', 'a', SUBSET, 44)
         await harness(page, 'setPivotRimBadge', 'summary')
 
@@ -169,7 +169,7 @@ test.describe('pivot rim badge — one badge, whatever the provider count', () =
     })
 
     test('off draws no library badge at all', async ({ page }) => {
-        await harness(page, 'setNodePotential', 'a', 'ail-correlation', 2143)
+        await harness(page, 'setNodePotential', 'a', 'correlation', 2143)
         await harness(page, 'setPivotRimBadge', 'off')
         expect(await badgeTexts(page, 'a')).toEqual([])
         expect(await badgeTexts(page, 'hub')).toEqual([])

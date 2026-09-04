@@ -6,7 +6,7 @@ interface BoundingBox { x: number; y: number; width: number; height: number }
 import type { EmphasisSnapshot, LegendGroupSpec, LegendRow, LegendSectionSnapshot, LegendSpec } from '../harness/harness'
 
 /**
- * The canvas legend (prd/archive/filterable-legend.md).
+ * The canvas legend.
  *
  * The legend is **descriptive**: the fixture is coloured by a palette mapper the
  * way an integrator would colour it, and the legend only reports those colours

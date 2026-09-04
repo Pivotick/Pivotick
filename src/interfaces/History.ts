@@ -27,7 +27,7 @@ export interface HistoryEntry {
      */
     id: string
     kind: HistoryKind
-    /** What the row says: `AIL correlations`, `Deleted 3 nodes`, `Hid 5 nodes`. */
+    /** What the row says: `Correlations`, `Deleted 3 nodes`, `Hid 5 nodes`. */
     label: string
     /** The elements this entry touched — the row's counts, and what a hover highlights. */
     nodeIds: string[]

@@ -98,7 +98,7 @@ test.describe('notes', () => {
 // `attached.type === 'node'` and have no edge case, so an `{ type:'edge' }`
 // attachment renders no connector (it falls through to the unlinked state). There
 // is nothing to snapshot; a baseline would lock in a note that simply looks
-// unattached. See the PRD note.
+// unattached.
 test.describe('notes — content, colours & sizing', () => {
     test.beforeEach(async ({ page }) => {
         await gotoHarness(page)

@@ -246,7 +246,7 @@ export class PivotPanel {
     }
 
     /**
-     * Called when the mode is left. Every *question* in flight goes with it (D11) — but
+     * Called when the mode is left. Every *question* in flight goes with it — but
      * not a fetch: that already has a candidate set and a pane of its own, so leaving is
      * not a cancellation (C3). Cancel is still reachable from both.
      */
@@ -588,7 +588,7 @@ export class PivotPanel {
 
     /**
      * This pivot's share of what is picked: an origin-less pivot is asked about
-     * nothing, whatever is selected (D19), and everything else gets exactly the nodes
+     * nothing, whatever is selected, and everything else gets exactly the nodes
      * its `appliesTo` kept — the same origin the manager will run it with, so the
      * summary cached here is the one the run reads.
      */
@@ -743,7 +743,7 @@ class PivotEntry {
         void this.fetch()
     }
 
-    /** Entering the mode is the intent that starts the first call (D11). */
+    /** Entering the mode is the intent that starts the first call. */
     public start(): void {
         if (this.started) return
         this.started = true
@@ -844,7 +844,7 @@ class PivotEntry {
 
         this.phase = this.summary ? 'ready' : 'idle'
         if (outcome.status === 'refused') this.refusal = outcome.refusal
-        // An auto-ingest run opens no pane (D13): the toast carries the outcome and the
+        // An auto-ingest run opens no pane: the toast carries the outcome and the
         // undo, and the entry only acknowledges that it happened.
         if (outcome.status === 'ingested') this.ingested = outcome.nodes.length
         // A failed or vetoed run is reported where it happened: a staged pivot's pane
@@ -932,7 +932,7 @@ class PivotEntry {
         }
 
         // Nothing asked yet, or nothing to ask: a declared potential is the only number
-        // the canvas ever shows unprompted, so it is the only one that belongs here (D12).
+        // the canvas ever shows unprompted, so it is the only one that belongs here.
         const declared = this.declared()
         if (!declared) return
         slot.classList.add('pvt-pivot-hint')
@@ -1056,7 +1056,7 @@ class PivotEntry {
         this.gateLine.hidden = !this.gateLine.textContent
     }
 
-    /** Over the pivot's own cap, judged on the freshest advisory count (D4). */
+    /** Over the pivot's own cap, judged on the freshest advisory count. */
     private overCap(): boolean {
         return this.def.maxCandidates !== undefined
             && this.summary !== undefined
@@ -1105,7 +1105,7 @@ class PivotEntry {
         })
     }
 
-    /** Read the form and re-ask — narrowing and the count are one question (D4). */
+    /** Read the form and re-ask — narrowing and the count are one question. */
     private commitNarrowing(): void {
         if (!this.form) return
         window.clearTimeout(this.typedTimer)
@@ -1116,7 +1116,7 @@ class PivotEntry {
 
     private paintActions(): void {
         this.actions.replaceChildren()
-        // Indeterminate, never a percentage: there is no streaming and no cursor (D3),
+        // Indeterminate, never a percentage: there is no streaming and no cursor,
         // so a filling bar would be a lie.
         this.progress.hidden = this.phase !== 'fetching'
 

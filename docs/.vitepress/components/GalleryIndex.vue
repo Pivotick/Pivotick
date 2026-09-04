@@ -45,7 +45,7 @@ import { data as categories } from '../../gallery.data.js'
 defineOptions({ name: 'GalleryIndex' })
 
 // Resolve each card's thumbnail through Vite's asset pipeline so it gets a
-// hashed, base-prefixed URL — the file stays in the card folder (PRD §4.1).
+// hashed, base-prefixed URL — the file stays in the card folder.
 const thumbs = import.meta.glob('../../examples/gallery/*/pic.png', {
     eager: true,
     query: '?url',

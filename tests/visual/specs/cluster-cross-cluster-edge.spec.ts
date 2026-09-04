@@ -2,8 +2,7 @@ import { test, expect, gotoHarness, loadFixture } from '../helpers'
 import type { Page } from '@playwright/test'
 
 /**
- * Behavioural (non-screenshot) test for the child↔child cross-cluster edge
- * (library-fixes PRD #6).
+ * Behavioural (non-screenshot) test for the child↔child cross-cluster edge.
  *
  * The `linkedClusters` fixture has `group-a {a1,a2,a3}`, `group-b {b1,b2,b3}` and a
  * real edge `a3 → b1` whose endpoints are children of *different* clusters. Before

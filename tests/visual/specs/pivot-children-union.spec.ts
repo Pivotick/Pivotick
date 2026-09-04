@@ -4,7 +4,7 @@ import type { PivotFixtureSpec, RecordedEdgeBinding, RecordedRunOutcome } from '
 
 // Children union by id (M1b): a pivot result whose node id matches one already on
 // canvas merges its children in — added, never updated, never removed — and the
-// union recurses. Plus the thing that makes the MISP walkthrough real: a container a
+// union recurses. Plus the thing that makes the walkthrough real: a container a
 // pivot brought must expand like any other.
 //
 // Child sets are asserted numerically and by id: a screenshot cannot tell a merged
@@ -36,7 +36,7 @@ test.describe('pivot children union', () => {
 
     test('a container a pivot ingested expands like any other', async ({ page }) => {
         await load(page)
-        await run(page, 'misp-event-objects', ['a'])
+        await run(page, 'event-objects', ['a'])
 
         expect(await childIds(page, 'event-a')).toHaveLength(12)
         // Children belong to the graph, not only to their parent's array.
@@ -49,12 +49,12 @@ test.describe('pivot children union', () => {
 
     test('a re-pivot adds children by id, updates none and removes none', async ({ page }) => {
         await load(page, {
-            pivots: ['misp-event-objects', 'union-children'],
+            pivots: ['event-objects', 'union-children'],
             // object-0 is already there, object-12 is new, and the container itself
             // matches a node on canvas so it dedups.
             union: { parent: 'event-a', children: ['object-0', 'object-12'] },
         })
-        await run(page, 'misp-event-objects', ['a'])
+        await run(page, 'event-objects', ['a'])
         const before = await childIds(page, 'event-a')
         const containerData = await harness(page, 'nodeData', 'event-a')
         const matchedData = await harness(page, 'nodeData', 'object-0')
@@ -75,10 +75,10 @@ test.describe('pivot children union', () => {
 
     test('the union recurses into grandchildren', async ({ page }) => {
         await load(page, {
-            pivots: ['misp-event-objects', 'union-children'],
+            pivots: ['event-objects', 'union-children'],
             union: { parent: 'event-a', children: [{ id: 'object-0', children: ['attr-1', 'attr-2'] }] },
         })
-        await run(page, 'misp-event-objects', ['a'])
+        await run(page, 'event-objects', ['a'])
         expect(await childIds(page, 'object-0')).toEqual([])
 
         await run(page, 'union-children', ['a'])
@@ -92,10 +92,10 @@ test.describe('pivot children union', () => {
 
     test('an expanded container merges too, and its subgraph follows', async ({ page }) => {
         await load(page, {
-            pivots: ['misp-event-objects', 'union-children'],
+            pivots: ['event-objects', 'union-children'],
             union: { parent: 'event-a', children: ['object-12', 'object-13'] },
         })
-        await run(page, 'misp-event-objects', ['a'])
+        await run(page, 'event-objects', ['a'])
         await harness(page, 'expand', 'event-a')
         expect(await harness(page, 'subgraphNodeCount', 'event-a')).toBe(12)
 
@@ -110,10 +110,10 @@ test.describe('pivot children union', () => {
 
     test('undo takes union-added children back out; redo merges them again', async ({ page }) => {
         await load(page, {
-            pivots: ['misp-event-objects', 'union-children'],
+            pivots: ['event-objects', 'union-children'],
             union: { parent: 'event-a', children: ['object-12', { id: 'object-13', children: ['attr-9'] }] },
         })
-        await run(page, 'misp-event-objects', ['a'])
+        await run(page, 'event-objects', ['a'])
         await run(page, 'union-children', ['a'])
         const ingested = await harness(page, 'ingestPivot', 'union-children') as RecordedRunOutcome
         expect(await childIds(page, 'event-a')).toHaveLength(14)
@@ -134,16 +134,16 @@ test.describe('pivot children union', () => {
 
     test('a child another source vouches for survives the undo', async ({ page }) => {
         await load(page, {
-            pivots: ['misp-event-objects', 'union-children'],
-            // object-0 came from the MISP run; the union asserts it again.
+            pivots: ['event-objects', 'union-children'],
+            // object-0 came from the container run; the union asserts it again.
             union: { parent: 'event-a', children: ['object-0', 'object-12'] },
         })
-        const misp = await run(page, 'misp-event-objects', ['a'])
+        const container = await run(page, 'event-objects', ['a'])
         await run(page, 'union-children', ['a'])
         const merge = await harness(page, 'ingestPivot', 'union-children') as RecordedRunOutcome
 
         // A matching child is not re-added, so only the new one carries the union's tag.
-        expect(await harness(page, 'nodeSources', 'object-0')).toEqual(['misp-event-objects'])
+        expect(await harness(page, 'nodeSources', 'object-0')).toEqual(['event-objects'])
         expect(await harness(page, 'nodeSources', 'object-12')).toEqual(['union-children'])
 
         await harness(page, 'undoPivot', merge.runId)
@@ -151,17 +151,17 @@ test.describe('pivot children union', () => {
         expect(await harness(page, 'nodeData', 'object-12')).toBeNull()
 
         // And the run that did bring them takes the whole container with it.
-        await harness(page, 'undoPivot', misp.runId)
+        await harness(page, 'undoPivot', container.runId)
         expect(await harness(page, 'nodeData', 'event-a')).toBeNull()
         expect(await harness(page, 'nodeData', 'object-0')).toBeNull()
     })
 
     test('removeBySource reaches into a container', async ({ page }) => {
         await load(page, {
-            pivots: ['misp-event-objects', 'union-children'],
+            pivots: ['event-objects', 'union-children'],
             union: { parent: 'event-a', children: ['object-12'] },
         })
-        await run(page, 'misp-event-objects', ['a'])
+        await run(page, 'event-objects', ['a'])
         await run(page, 'union-children', ['a'])
         await harness(page, 'ingestPivot', 'union-children')
 
@@ -175,7 +175,7 @@ test.describe('pivot children union', () => {
 })
 
 // A container arrives carrying a child whose id is already a node on canvas — the
-// everyday MISP shape, where the object a lookup returns contains the very attribute
+// everyday shape, where the object a lookup returns contains the very attribute
 // that was pivoted on. Registering that child under the taken id used to hand the id
 // to something hidden inside a cluster, while the node's own edges went on pointing
 // at an object the graph no longer held and nothing moves again.
@@ -209,10 +209,10 @@ test.describe('a container child whose id is already on canvas', () => {
 
     test('a deduped container merging it in does the same', async ({ page }) => {
         await load(page, {
-            pivots: ['misp-event-objects', 'union-children'],
+            pivots: ['event-objects', 'union-children'],
             union: { parent: 'event-a', children: ['b', 'object-12'] },
         })
-        await run(page, 'misp-event-objects', ['a'])
+        await run(page, 'event-objects', ['a'])
         await run(page, 'union-children', ['a'])
         await harness(page, 'ingestPivot', 'union-children')
 

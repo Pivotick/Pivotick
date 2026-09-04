@@ -13,7 +13,7 @@ import type { PivotFixtureSpec, RecordedCandidates } from '../harness/harness'
 // one fact the whole feature rests on, which is checked at every ingest: a candidate is
 // not in the graph until someone commits it.
 
-const AIL = 'ail-correlation'
+const CORRELATION = 'correlation'
 const FULL = { UI: { mode: 'full', sidebar: { collapsed: true }, table: { open: true } } }
 /** The dock left as the demo page has it: taking no room until something asks for it. */
 const DOCK_SHUT = { UI: { mode: 'full', sidebar: { collapsed: true }, dock: { open: false } } }
@@ -107,9 +107,9 @@ const counts = async (page: Page): Promise<{ nodes: number, edges: number }> => 
     return { nodes: all.nodes, edges: all.edges }
 }
 
-/** Stage the AIL pivot narrowed to URLs — 210 candidates, the pane's working state. */
+/** Stage the CORRELATION pivot narrowed to URLs — 210 candidates, the pane's working state. */
 const stageUrls = async (page: Page): Promise<void> => {
-    const outcome = await harness(page, 'runPivot', AIL, ['a'], { type: ['url'] })
+    const outcome = await harness(page, 'runPivot', CORRELATION, ['a'], { type: ['url'] })
     expect((outcome as { status: string }).status).toBe('staged')
     await rows(page).first().waitFor()
 }
@@ -126,7 +126,7 @@ test.describe('pivot triage pane', () => {
         await stageUrls(page)
 
         // One review tab for every staged provider, beside the table rather than
-        // replacing it (D27).
+        // replacing it.
         expect(await harness(page, 'dockTabIds')).toEqual(['table', 'pivot-triage'])
         expect(await harness(page, 'activeDockTabId')).toBe('pivot-triage')
         // The tab carries a live count, which is what `DockTabHandle.setLabel` is for.
@@ -148,7 +148,7 @@ test.describe('pivot triage pane', () => {
         // ~350ms assertion polling: at 400ms the window fits between two polls.
         await load(page, { latency: 1200 })
 
-        await harness(page, 'startPivotRun', AIL, ['a'], { type: ['url'] })
+        await harness(page, 'startPivotRun', CORRELATION, ['a'], { type: ['url'] })
         await expect(stateBox(page)).toContainText('Fetching candidates…')
 
         await button(stateBox(page), 'Cancel').click()
@@ -162,10 +162,10 @@ test.describe('pivot triage pane', () => {
         await load(page)
         // Cache the summary first, so the gate is a cache hit and the failure lands on
         // the fetch under test.
-        await harness(page, 'pivotSummarize', AIL, ['a'], { type: ['url'] })
+        await harness(page, 'pivotSummarize', CORRELATION, ['a'], { type: ['url'] })
         await harness(page, 'setPivotFail', true)
 
-        await harness(page, 'runPivot', AIL, ['a'], { type: ['url'] })
+        await harness(page, 'runPivot', CORRELATION, ['a'], { type: ['url'] })
         await expect(stateBox(page)).toContainText("Couldn't fetch candidates.")
 
         await harness(page, 'setPivotFail', false)
@@ -177,9 +177,9 @@ test.describe('pivot triage pane', () => {
 
     test('a failed fetch can be given up on as well as retried', async ({ page }) => {
         await load(page)
-        await harness(page, 'pivotSummarize', AIL, ['a'], { type: ['url'] })
+        await harness(page, 'pivotSummarize', CORRELATION, ['a'], { type: ['url'] })
         await harness(page, 'setPivotFail', true)
-        await harness(page, 'runPivot', AIL, ['a'], { type: ['url'] })
+        await harness(page, 'runPivot', CORRELATION, ['a'], { type: ['url'] })
         await expect(stateBox(page)).toContainText("Couldn't fetch candidates.")
 
         // Beside Retry, since giving up is an answer to a failed fetch and the toolbar
@@ -189,7 +189,7 @@ test.describe('pivot triage pane', () => {
         await expect(pane(page)).toHaveCount(0)
         expect(await harness(page, 'dockTabIds')).toEqual(['table'])
         // Nothing was staged, so there is nothing for it to have rejected either.
-        expect(await harness(page, 'rejectedPivotIds', AIL)).toEqual([])
+        expect(await harness(page, 'rejectedPivotIds', CORRELATION)).toEqual([])
     })
 
     test('a ceiling refusal states the number, the limit and the way forward', async ({ page }) => {
@@ -197,7 +197,7 @@ test.describe('pivot triage pane', () => {
 
         await harness(page, 'runPivot', 'oversized', ['a'])
 
-        // Never a truncation, and never a bare "too many results" (D17).
+        // Never a truncation, and never a bare "too many results".
         await expect(stateBox(page)).toContainText('The source returned 14,203 candidates, over the 10,000 limit.')
         await expect(stateBox(page)).toContainText('Nothing was staged — narrow and run again.')
         await expect(rows(page)).toHaveCount(0)
@@ -205,11 +205,11 @@ test.describe('pivot triage pane', () => {
 
     test('an empty result and an all-deduped one read as outcomes, not failures', async ({ page }) => {
         await load(page)
-        await harness(page, 'runPivot', AIL, ['a'], { type: ['nothing-of-that-kind'] })
+        await harness(page, 'runPivot', CORRELATION, ['a'], { type: ['nothing-of-that-kind'] })
         await expect(stateBox(page)).toContainText('No candidates came back')
 
         // A pivot whose one result is a node already on canvas: normal, and its data was
-        // deliberately left untouched (D23).
+        // deliberately left untouched.
         await load(page, { pivots: ['union-children'], union: { parent: 'a', children: [] } })
         await harness(page, 'runPivot', 'union-children', ['a'])
         await expect(stateBox(page)).toContainText('already on the canvas — nothing to triage')
@@ -328,7 +328,7 @@ test.describe('pivot triage pane', () => {
         await button(footer(page), 'Ingest selected').click()
 
         // The re-run's candidates are reachable from this banner and nowhere else, so
-        // closing the pane would be a silent discard of them (D27).
+        // closing the pane would be a silent discard of them.
         await expect(toast(page)).toContainText('Ingested 1 node')
         await expect(banner(page)).toContainText('This pivot was run again.')
         await expect(stateBox(page)).toContainText('Nothing left to triage')
@@ -346,7 +346,7 @@ test.describe('pivot triage pane', () => {
         await markRow(page, 'url-2')
         await expect(tick(page, 'url-2')).toBeChecked()
         await expect(row(page, 'url-2')).toContainText('will ingest')
-        expect(await markedIds(page, AIL)).toEqual(['url-2'])
+        expect(await markedIds(page, CORRELATION)).toEqual(['url-2'])
 
         // The leading bar a marked row carries, read numerically: the suite's pixel
         // threshold cannot see 2px of colour. It has to span the row's hairline too, or
@@ -361,7 +361,7 @@ test.describe('pivot triage pane', () => {
         expect(bar).toEqual({ width: '2px', spansTheHairline: true })
 
         await markRange(page, 'url-6')
-        expect(await markedIds(page, AIL)).toEqual(['url-2', 'url-3', 'url-4', 'url-5', 'url-6'])
+        expect(await markedIds(page, CORRELATION)).toEqual(['url-2', 'url-3', 'url-4', 'url-5', 'url-6'])
         await expect(button(footer(page), 'Ingest selected')).toContainText('(5)')
         // A range redraws the table, but never moves the analyst off the page they are on.
         await expect(rows(page)).toHaveCount(100)
@@ -369,41 +369,41 @@ test.describe('pivot triage pane', () => {
         // A range applies the verdict its anchoring click reached, so unmarking a run of
         // rows is the same two gestures rather than one click per row.
         await markRow(page, 'url-3')
-        expect(await markedIds(page, AIL)).toEqual(['url-2', 'url-4', 'url-5', 'url-6'])
+        expect(await markedIds(page, CORRELATION)).toEqual(['url-2', 'url-4', 'url-5', 'url-6'])
         await markRange(page, 'url-5')
-        expect(await markedIds(page, AIL)).toEqual(['url-2', 'url-6'])
+        expect(await markedIds(page, CORRELATION)).toEqual(['url-2', 'url-6'])
 
         // The box keeps its own focus and its own key, and ticks its row exactly once —
         // which is the trap in making the row the hit target as well.
         await tick(page, 'url-8').focus()
         await page.keyboard.press('Space')
         await expect(tick(page, 'url-8')).toBeChecked()
-        expect(await markedIds(page, AIL)).toEqual(['url-2', 'url-6', 'url-8'])
+        expect(await markedIds(page, CORRELATION)).toEqual(['url-2', 'url-6', 'url-8'])
     })
 
     test('a range skips what has no verdict to give, and never leaves its own table', async ({ page }) => {
         // `b` and `c` come back already on canvas, so they head the table untickable.
         await load(page, { collide: ['b', 'c'], edgeOnly: [['a', 'b']] })
         await stageUrls(page)
-        await harness(page, 'rejectPivotCandidates', AIL, ['url-3'])
+        await harness(page, 'rejectPivotCandidates', CORRELATION, ['url-3'])
 
         await markRow(page, 'url-5')
         // A row already on the canvas has no verdict to give: the click does nothing at
         // all, and leaves the anchor where it was.
         await markRow(page, 'b')
         await expect(tick(page, 'b')).toHaveCount(0)
-        expect(await markedIds(page, AIL)).toEqual(['url-5'])
+        expect(await markedIds(page, CORRELATION)).toEqual(['url-5'])
 
         // Upwards from the anchor, across both untickable rows and one already rejected.
         await markRange(page, 'url-2')
-        expect(await markedIds(page, AIL)).toEqual(['url-2', 'url-4', 'url-5'])
+        expect(await markedIds(page, CORRELATION)).toEqual(['url-2', 'url-4', 'url-5'])
         // A range must not overrule a verdict — that is what `undo` on the row is for.
         await expect(row(page, 'url-3')).toHaveClass(/pvt-triage-row-rejected/)
 
         // The edge table is a list of its own, so a Shift-click in it starts a selection
         // rather than dragging one out of the node table above.
         await page.locator('.pvt-triage-edges .pvt-triage-row').first().click({ modifiers: ['Shift'] })
-        expect(await markedIds(page, AIL)).toEqual(['url-2', 'url-4', 'url-5', 'a-b'])
+        expect(await markedIds(page, CORRELATION)).toEqual(['url-2', 'url-4', 'url-5', 'a-b'])
     })
 
     test('filtering, sorting and paging are the pane reading, and never the graph', async ({ page }) => {
@@ -438,7 +438,7 @@ test.describe('pivot triage pane', () => {
         await stageUrls(page)
 
         // Both endpoints already on canvas, so following-the-nodes would land them
-        // unasked; they are rows instead (D24), and never squeezed into the node columns.
+        // unasked; they are rows instead, and never squeezed into the node columns.
         await expect(page.locator('.pvt-triage-edges .pvt-triage-row')).toHaveCount(2)
         await expect(page.locator('.pvt-triage-edges .pvt-triage-th-label').first()).toHaveText('From')
 
@@ -464,7 +464,7 @@ test.describe('pivot triage pane', () => {
         const before = await counts(page)
 
         // A narrowing no node matches: everything that came back is edges.
-        await harness(page, 'runPivot', AIL, ['a'], { type: ['nothing-of-that-kind'] })
+        await harness(page, 'runPivot', CORRELATION, ['a'], { type: ['nothing-of-that-kind'] })
         await expect(page.locator('.pvt-triage-edges .pvt-triage-row')).toHaveCount(2)
 
         // Reading the node rows alone called this an empty result and hid two verdicts.
@@ -590,9 +590,9 @@ test.describe('pivot triage pane', () => {
         await stageUrls(page)
         await markRow(page, 'url-0')
 
-        await harness(page, 'runPivot', AIL, ['a'], { type: ['url'] })
+        await harness(page, 'runPivot', CORRELATION, ['a'], { type: ['url'] })
 
-        // The analyst's triage is not the library's to throw away (D27).
+        // The analyst's triage is not the library's to throw away.
         await expect(banner(page)).toContainText('This pivot was run again. 210 new candidates are ready.')
         await expect(row(page, 'url-0')).toHaveClass(/pvt-triage-row-marked/)
 
@@ -600,7 +600,7 @@ test.describe('pivot triage pane', () => {
         await expect(banner(page)).toHaveCount(0)
         await expect(row(page, 'url-0')).toHaveClass(/pvt-triage-row-marked/)
 
-        await harness(page, 'runPivot', AIL, ['a'], { type: ['url'] })
+        await harness(page, 'runPivot', CORRELATION, ['a'], { type: ['url'] })
         await button(banner(page), 'Show new').click()
         await expect(banner(page)).toHaveCount(0)
         // The replacement is of the candidate set, so nothing carries a mark now.
@@ -611,7 +611,7 @@ test.describe('pivot triage pane', () => {
         await load(page)
         await stageUrls(page)
 
-        await harness(page, 'runPivot', AIL, ['a'], { type: ['ip'] })
+        await harness(page, 'runPivot', CORRELATION, ['a'], { type: ['ip'] })
 
         await expect(banner(page)).toHaveCount(0)
         await expect(headline(page)).toContainText('38 fetched')
@@ -621,21 +621,21 @@ test.describe('pivot triage pane', () => {
         await load(page)
         await stageUrls(page)
         await harness(page, 'runPivot', 'blind', ['a'])
-        await harness(page, 'runPivot', 'search-ail', [], { query: 'ransom' })
+        await harness(page, 'runPivot', 'search-archive', [], { query: 'ransom' })
 
         // Three fetches, one tab: the dock's own strip lists panes, and these three are
         // one pane — the review of what is staged.
         expect(await harness(page, 'dockTabIds')).toEqual(['table', 'pivot-triage'])
         expect(await providerRows(page)).toEqual([
-            'Correlations 210', 'No advertised count 3', 'Search AIL 30',
+            'Correlations 210', 'No advertised count 3', 'Search the archive 30',
         ])
         // The tab's count is the whole queue's; the strip breaks it down.
         expect(await tabLabels(page)).toContain('Review (243)')
         // The analyst asked for the last fetch, so that is the one on show.
-        await expect(onShow(page)).toHaveAttribute('data-pivot', 'search-ail')
+        await expect(onShow(page)).toHaveAttribute('data-pivot', 'search-archive')
         await expect(rows(page)).toHaveCount(30)
 
-        await provider(page, AIL).locator('.pvt-review-main').click()
+        await provider(page, CORRELATION).locator('.pvt-review-main').click()
         await expect(rows(page)).toHaveCount(100)
         await expect(headline(page)).toContainText('210 fetched')
 
@@ -646,15 +646,15 @@ test.describe('pivot triage pane', () => {
         await provider(page, 'blind').locator('.pvt-review-main').click()
         await expect(searchBox(page)).toHaveValue('')
         await expect(rows(page)).toHaveCount(3)
-        await provider(page, AIL).locator('.pvt-review-main').click()
+        await provider(page, CORRELATION).locator('.pvt-review-main').click()
         await expect(searchBox(page)).toHaveValue('url 209')
         await expect(rows(page)).toHaveCount(1)
 
         // The way out is revealed by the row the pointer is on rather than drawn on
         // every row in the queue.
-        expect(await closeButtonOpacity(page, 'search-ail')).toBe('0')
-        await provider(page, 'search-ail').hover()
-        expect(await closeButtonOpacity(page, 'search-ail')).toBe('1')
+        expect(await closeButtonOpacity(page, 'search-archive')).toBe('0')
+        await provider(page, 'search-archive').hover()
+        expect(await closeButtonOpacity(page, 'search-archive')).toBe('1')
         // And by the row holding the focus, so a keyboard reaches it as well: this one
         // is nowhere near the pointer.
         await provider(page, 'blind').locator('.pvt-review-main').focus()
@@ -666,13 +666,13 @@ test.describe('pivot triage pane', () => {
         await expect(onShow(page)).toHaveAttribute('data-pivot', 'blind')
         await expect(rows(page)).toHaveCount(3)
         await onShow(page).locator('.pvt-review-main').press('ArrowUp')
-        await expect(onShow(page)).toHaveAttribute('data-pivot', AIL)
+        await expect(onShow(page)).toHaveAttribute('data-pivot', CORRELATION)
 
-        await closeProvider(page, AIL)
+        await closeProvider(page, CORRELATION)
 
         // The next provider down takes over, rather than the top of the queue: closing
         // one review sends the analyst to the next one waiting.
-        expect(await providerRows(page)).toEqual(['No advertised count 3', 'Search AIL 30'])
+        expect(await providerRows(page)).toEqual(['No advertised count 3', 'Search the archive 30'])
         await expect(onShow(page)).toHaveAttribute('data-pivot', 'blind')
         expect(await harness(page, 'dockTabIds')).toEqual(['table', 'pivot-triage'])
     })
@@ -681,11 +681,11 @@ test.describe('pivot triage pane', () => {
         await load(page)
         await stageUrls(page)
 
-        await closeProvider(page, AIL)
+        await closeProvider(page, CORRELATION)
 
         // The last provider takes the review tab with it.
         expect(await harness(page, 'dockTabIds')).toEqual(['table'])
-        expect(await harness(page, 'rejectedPivotIds', AIL)).toEqual([])
+        expect(await harness(page, 'rejectedPivotIds', CORRELATION)).toEqual([])
         // Leftovers are re-offered on the next run, all 210 of them.
         await stageUrls(page)
         await expect(headline(page)).toContainText('210 fetched')
@@ -753,10 +753,10 @@ test.describe('pivot triage pane', () => {
 
     test('a staged container says how many children it carries', async ({ page }) => {
         // The container fixture normally lands straight on the canvas; staged, it is the
-        // shape a real MISP object arrives in — one row holding a dozen attributes.
-        await load(page, { pivots: ['misp-event-objects'], stage: ['misp-event-objects'] })
+        // shape a real container object arrives in — one row holding a dozen attributes.
+        await load(page, { pivots: ['event-objects'], stage: ['event-objects'] })
 
-        const outcome = await harness(page, 'runPivot', 'misp-event-objects', ['a'])
+        const outcome = await harness(page, 'runPivot', 'event-objects', ['a'])
         expect((outcome as { status: string }).status).toBe('staged')
         await rows(page).first().waitFor()
 
@@ -829,7 +829,7 @@ test.describe('pivot triage pane', () => {
     test('an auto-ingest pivot brings no pane at all', async ({ page }) => {
         await load(page)
 
-        const outcome = await harness(page, 'runPivot', 'misp-event-objects', ['a'])
+        const outcome = await harness(page, 'runPivot', 'event-objects', ['a'])
 
         expect((outcome as { status: string }).status).toBe('ingested')
         // Nothing was ever offered for triage, so there is nothing waiting for it.

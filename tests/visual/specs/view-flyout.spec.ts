@@ -29,7 +29,7 @@ test.describe('view-flyout', () => {
         await gotoHarness(page)
     })
 
-    // Closed on load (D5); the rail's View button opens it.
+    // Closed on load; the rail's View button opens it.
     test('is closed until the View button opens it', async ({ page }) => {
         await loadFixture(page, 'basic', B3)
         await expect(panel(page)).not.toHaveClass(/open/)

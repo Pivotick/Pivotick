@@ -7,7 +7,7 @@ import type { PivotFixtureSpec, RecordedCandidates } from '../harness/harness'
 // provider — so most of what is asserted here is *when a call happens*, which no
 // screenshot can see, alongside the panel's own states.
 
-const AIL = 'ail-correlation'
+const CORRELATION = 'correlation'
 const FULL = { UI: { mode: 'full', sidebar: { collapsed: true }, table: { open: true } } }
 
 const railButton = (page: Page): Locator => page.locator('.pvt-moderail-button[data-mode="pivot"]')
@@ -94,15 +94,15 @@ test.describe('pivot mode', () => {
         await gotoHarness(page)
     })
 
-    // ── the gate (D26) ──────────────────────────────────────────────────────
+    // ── the gate ────────────────────────────────────────────────────────────
     test('the rail button exists only while a pivot is registered', async ({ page }) => {
         await loadFixture(page, 'basic', FULL)
         await expect(railButton(page)).toHaveCount(0)
 
-        await harness(page, 'registerTestPivot', AIL)
+        await harness(page, 'registerTestPivot', CORRELATION)
         await expect(railButton(page)).toHaveCount(1)
 
-        await harness(page, 'unregisterPivot', AIL)
+        await harness(page, 'unregisterPivot', CORRELATION)
         await expect(railButton(page)).toHaveCount(0)
     })
 
@@ -121,15 +121,15 @@ test.describe('pivot mode', () => {
         expect(await calls(page)).toEqual([])
 
         await enterMode(page)
-        await expect(count(page, AIL)).toHaveText('~2,143')
-        expect(await calls(page)).toEqual([`${AIL}:summarize`, 'search-ail:summarize'])
+        await expect(count(page, CORRELATION)).toHaveText('~2,143')
+        expect(await calls(page)).toEqual([`${CORRELATION}:summarize`, 'search-archive:summarize'])
     })
 
     test('leaving the mode stops asking, and re-entering serves the cache', async ({ page }) => {
         await load(page)
         await pickOrigin(page, 'a')
         await enterMode(page)
-        await expect(count(page, AIL)).toHaveText('~2,143')
+        await expect(count(page, CORRELATION)).toHaveText('~2,143')
         const asked = (await calls(page)).length
 
         await page.locator('.pvt-moderail-button[data-mode="select"]').click()
@@ -139,7 +139,7 @@ test.describe('pivot mode', () => {
 
         // Same question, so the cached answer is painted without a skeleton (S2).
         await enterMode(page)
-        await expect(count(page, AIL)).toHaveText('~2,143')
+        await expect(count(page, CORRELATION)).toHaveText('~2,143')
         expect((await calls(page)).length).toBe(asked)
     })
 
@@ -147,10 +147,10 @@ test.describe('pivot mode', () => {
         await load(page)
         await pickOrigin(page, 'a')
         await enterMode(page)
-        await expect(count(page, AIL)).toHaveText('~2,143')
+        await expect(count(page, CORRELATION)).toHaveText('~2,143')
 
         await pickOrigin(page, 'b')
-        await expect.poll(async () => (await calls(page)).filter(c => c === `${AIL}:summarize`).length)
+        await expect.poll(async () => (await calls(page)).filter(c => c === `${CORRELATION}:summarize`).length)
             .toBe(2)
     })
 
@@ -161,9 +161,9 @@ test.describe('pivot mode', () => {
 
         await expect(originBlock(page)).toContainText('Nothing picked')
         await expect(heading(page)).toBeHidden()
-        // Only `origin: 'none'` pivots apply to nothing at all (D19).
-        await expect(entry(page, 'search-ail')).toBeVisible()
-        await expect(entry(page, AIL)).toHaveCount(0)
+        // Only `origin: 'none'` pivots apply to nothing at all.
+        await expect(entry(page, 'search-archive')).toBeVisible()
+        await expect(entry(page, CORRELATION)).toHaveCount(0)
     })
 
     test('an origin lists what applies, and folds the origin-less ones away', async ({ page }) => {
@@ -172,10 +172,10 @@ test.describe('pivot mode', () => {
         await enterMode(page)
 
         await expect(heading(page)).toHaveText('4 pivots apply')
-        await expect(entry(page, AIL)).toBeVisible()
+        await expect(entry(page, CORRELATION)).toBeVisible()
         // Still runnable, just answering a different question (C14).
         await expect(page.locator('.pvt-pivot-originless summary')).toHaveText('Without an origin (1)')
-        await expect(page.locator('.pvt-pivot-originless').locator(entry(page, 'search-ail'))).toHaveCount(1)
+        await expect(page.locator('.pvt-pivot-originless').locator(entry(page, 'search-archive'))).toHaveCount(1)
     })
 
     test('the summary fills the count line and the breakdown', async ({ page }) => {
@@ -183,8 +183,8 @@ test.describe('pivot mode', () => {
         await pickOrigin(page, 'a')
         await enterMode(page)
 
-        await expect(count(page, AIL)).toHaveText('~2,143')
-        await expect(breakdown(page, AIL)).toHaveText('1,800 Domains · 210 URLs · 95 Pastes · 38 IPs')
+        await expect(count(page, CORRELATION)).toHaveText('~2,143')
+        await expect(breakdown(page, CORRELATION)).toHaveText('1,800 Domains · 210 URLs · 95 Pastes · 38 IPs')
     })
 
     test('a multi-node origin is one line, never one per node', async ({ page }) => {
@@ -192,7 +192,7 @@ test.describe('pivot mode', () => {
         await harness(page, 'multiSelect', ['a', 'b', 'c'])
         await enterMode(page)
 
-        await expect(count(page, AIL)).toHaveText('~2,143 across 3 nodes')
+        await expect(count(page, CORRELATION)).toHaveText('~2,143 across 3 nodes')
     })
 
     test('a pivot with no summarize just offers Run', async ({ page }) => {
@@ -210,15 +210,15 @@ test.describe('pivot mode', () => {
     })
 
     test('a declared potential is the number shown before anything is asked', async ({ page }) => {
-        await load(page, { pivots: ['misp-event-objects'] })
-        await harness(page, 'setNodePotential', 'a', 'misp-event-objects', 2100)
+        await load(page, { pivots: ['event-objects'] })
+        await harness(page, 'setNodePotential', 'a', 'event-objects', 2100)
         await pickOrigin(page, 'a')
         await enterMode(page)
 
-        // No summarize on this pivot, so the declared count is all there is (D12) — and
+        // No summarize on this pivot, so the declared count is all there is — and
         // it reads as the weaker claim it is, not as a count the source just answered.
-        await expect(hint(page, 'misp-event-objects')).toHaveText('~2,100 declared')
-        await expect(count(page, 'misp-event-objects')).toHaveCount(0)
+        await expect(hint(page, 'event-objects')).toHaveText('~2,100 declared')
+        await expect(count(page, 'event-objects')).toHaveCount(0)
     })
 
     // ── the gate, and it lifting (D4 — the most important moment in the flow) ──
@@ -227,38 +227,38 @@ test.describe('pivot mode', () => {
         await pickOrigin(page, 'a')
         await enterMode(page)
 
-        const ail = entry(page, AIL)
-        await expect(refusal(page, AIL)).toHaveText('Over the cap of 2,000 — narrow further to fetch')
-        await expect(button(ail, 'Fetch')).toBeDisabled()
+        const correlation = entry(page, CORRELATION)
+        await expect(refusal(page, CORRELATION)).toHaveText('Over the cap of 2,000 — narrow further to fetch')
+        await expect(button(correlation, 'Fetch')).toBeDisabled()
 
         // The breakdown is what tells the analyst which type to tick, so it stays
         // readable while the gate is blocking.
-        await expect(breakdown(page, AIL)).toBeVisible()
-        const blockedHeight = await entryHeight(page, AIL)
+        await expect(breakdown(page, CORRELATION)).toBeVisible()
+        const blockedHeight = await entryHeight(page, CORRELATION)
 
         // Tick URLs: 210 of the 2,143, so the same question comes back under the cap.
-        await narrowTo(page, AIL, 'type', 'URLs')
-        await expect(count(page, AIL)).toHaveText('~210')
-        await expect(refusal(page, AIL)).toBeHidden()
-        await expect(gate(page, AIL)).toHaveText('Within the cap of 2,000')
-        await expect(button(ail, 'Fetch')).toBeEnabled()
+        await narrowTo(page, CORRELATION, 'type', 'URLs')
+        await expect(count(page, CORRELATION)).toHaveText('~210')
+        await expect(refusal(page, CORRELATION)).toBeHidden()
+        await expect(gate(page, CORRELATION)).toHaveText('Within the cap of 2,000')
+        await expect(button(correlation, 'Fetch')).toBeEnabled()
 
         // Crossing the cap is a click on a checkbox the analyst is still aiming at, so
         // the entry must not change height and shift everything below it.
-        expect(await entryHeight(page, AIL)).toBe(blockedHeight)
+        expect(await entryHeight(page, CORRELATION)).toBe(blockedHeight)
     })
 
     test('a fetch stages candidates and links into their pane', async ({ page }) => {
         await load(page)
         await pickOrigin(page, 'a')
         await enterMode(page)
-        await narrowTo(page, AIL, 'type', 'URLs')
-        await expect(count(page, AIL)).toHaveText('~210')
+        await narrowTo(page, CORRELATION, 'type', 'URLs')
+        await expect(count(page, CORRELATION)).toHaveText('~210')
 
         const before = (await harness(page, 'counts') as { nodes: number }).nodes
-        await button(entry(page, AIL), 'Fetch').click()
+        await button(entry(page, CORRELATION), 'Fetch').click()
 
-        const link = entry(page, AIL).locator('.pvt-pivot-triage-link')
+        const link = entry(page, CORRELATION).locator('.pvt-pivot-triage-link')
         await expect(link).toHaveText('210 in triage ▸')
         // Staged is not ingested: the graph has not moved (M1's one invariant).
         expect((await harness(page, 'counts') as { nodes: number }).nodes).toBe(before)
@@ -268,23 +268,23 @@ test.describe('pivot mode', () => {
         // row in its strip.
         expect(await harness(page, 'activeDockTabId')).toBe('pivot-triage')
         await expect(page.locator('.pvt-review-tab:has(.pvt-review-main.active)'))
-            .toHaveAttribute('data-pivot', AIL)
+            .toHaveAttribute('data-pivot', CORRELATION)
     })
 
     test('the panel lists what a pivot rejected, names it, and takes it back', async ({ page }) => {
         await load(page)
         await pickOrigin(page, 'a')
         await enterMode(page)
-        await narrowTo(page, AIL, 'type', 'IPs')
-        await button(entry(page, AIL), 'Fetch').click()
-        await expect(entry(page, AIL).locator('.pvt-pivot-triage-link')).toHaveText('38 in triage ▸')
+        await narrowTo(page, CORRELATION, 'type', 'IPs')
+        await button(entry(page, CORRELATION), 'Fetch').click()
+        await expect(entry(page, CORRELATION).locator('.pvt-pivot-triage-link')).toHaveText('38 in triage ▸')
 
-        await harness(page, 'rejectPivotCandidates', AIL, ['ip-0', 'ip-1'])
-        const link = entry(page, AIL).locator('.pvt-pivot-rejected-link')
+        await harness(page, 'rejectPivotCandidates', CORRELATION, ['ip-0', 'ip-1'])
+        const link = entry(page, CORRELATION).locator('.pvt-pivot-rejected-link')
         await expect(link).toHaveText('2 rejected ▸')
 
         await link.click()
-        const rejected = entry(page, AIL).locator('.pvt-pivot-rejected-row')
+        const rejected = entry(page, CORRELATION).locator('.pvt-pivot-rejected-row')
         await expect(rejected).toHaveCount(2)
         // Named as the triage table named them: `ip-0` is not something an analyst can
         // recognise well enough to change their mind about.
@@ -292,36 +292,36 @@ test.describe('pivot mode', () => {
 
         await button(rejected.first(), 'restore').click()
         await expect(rejected).toHaveCount(1)
-        expect(await harness(page, 'rejectedPivotIds', AIL)).toEqual(['ip-1'])
+        expect(await harness(page, 'rejectedPivotIds', CORRELATION)).toEqual(['ip-1'])
     })
 
     test('rejections outlive the pane they were made in, and Restore all clears them', async ({ page }) => {
         await load(page)
         await pickOrigin(page, 'a')
         await enterMode(page)
-        await narrowTo(page, AIL, 'type', 'IPs')
-        await button(entry(page, AIL), 'Fetch').click()
-        await expect(entry(page, AIL).locator('.pvt-pivot-triage-link')).toBeVisible()
+        await narrowTo(page, CORRELATION, 'type', 'IPs')
+        await button(entry(page, CORRELATION), 'Fetch').click()
+        await expect(entry(page, CORRELATION).locator('.pvt-pivot-triage-link')).toBeVisible()
 
-        await harness(page, 'rejectPivotCandidates', AIL, ['ip-0', 'ip-1', 'ip-2'])
+        await harness(page, 'rejectPivotCandidates', CORRELATION, ['ip-0', 'ip-1', 'ip-2'])
         // Dropping the set takes the pane and its rows with it. The verdicts are the
         // session's, not the pane's, so the panel still holds them.
-        await harness(page, 'discardPivot', AIL)
-        await expect(entry(page, AIL).locator('.pvt-pivot-triage-link')).toHaveCount(0)
+        await harness(page, 'discardPivot', CORRELATION)
+        await expect(entry(page, CORRELATION).locator('.pvt-pivot-triage-link')).toHaveCount(0)
 
-        const link = entry(page, AIL).locator('.pvt-pivot-rejected-link')
+        const link = entry(page, CORRELATION).locator('.pvt-pivot-rejected-link')
         await expect(link).toHaveText('3 rejected ▸')
         await link.click()
-        await expect(entry(page, AIL).locator('.pvt-pivot-rejected-row')).toHaveCount(3)
+        await expect(entry(page, CORRELATION).locator('.pvt-pivot-rejected-row')).toHaveCount(3)
 
-        await button(entry(page, AIL).locator('.pvt-pivot-rejected-foot'), 'Restore all').click()
+        await button(entry(page, CORRELATION).locator('.pvt-pivot-rejected-foot'), 'Restore all').click()
         await expect(link).toHaveCount(0)
-        expect(await harness(page, 'rejectedPivotIds', AIL)).toEqual([])
+        expect(await harness(page, 'rejectedPivotIds', CORRELATION)).toEqual([])
 
         // And the proof it was the memory that cleared, not just the list: the next run
         // offers all 38 again.
-        await harness(page, 'runPivot', AIL, ['a'], { type: ['ip'] })
-        const staged = await harness(page, 'pivotCandidates', AIL) as RecordedCandidates
+        await harness(page, 'runPivot', CORRELATION, ['a'], { type: ['ip'] })
+        const staged = await harness(page, 'pivotCandidates', CORRELATION) as RecordedCandidates
         expect(staged.suppressed).toBe(0)
         expect(staged.rows).toHaveLength(38)
     })
@@ -332,11 +332,11 @@ test.describe('pivot mode', () => {
         await enterMode(page)
 
         // The sentence and its way out are one line inside the entry that failed.
-        await expect(errorLine(page, AIL)).toContainText('Couldn\'t reach the source.')
+        await expect(errorLine(page, CORRELATION)).toContainText('Couldn\'t reach the source.')
         await harness(page, 'setPivotFail', false)
-        await button(errorLine(page, AIL), 'Retry').click()
-        await expect(count(page, AIL)).toHaveText('~2,143')
-        await expect(errorLine(page, AIL)).toBeHidden()
+        await button(errorLine(page, CORRELATION), 'Retry').click()
+        await expect(count(page, CORRELATION)).toHaveText('~2,143')
+        await expect(errorLine(page, CORRELATION)).toBeHidden()
     })
 
     // ── the panel is the mode's workspace ───────────────────────────────────
@@ -360,7 +360,7 @@ test.describe('pivot mode', () => {
     // ── the ways in (D12, C12, and the flat context-menu entry) ─────────────
     test('a declared potential wears a badge that opens the mode scoped to it', async ({ page }) => {
         await load(page)
-        await harness(page, 'setNodePotential', 'a', AIL, 2100)
+        await harness(page, 'setNodePotential', 'a', CORRELATION, 2100)
 
         const badge = nodeEl(page, 'a').locator('.pvt-node-badge').first()
         // Three characters is all a badge draws, so 2,100 arrives as `2k` rather than
@@ -374,22 +374,22 @@ test.describe('pivot mode', () => {
         // The click is consumed by the badge, so selecting the node is deliberate here —
         // and it has to be, because the origin is the selection.
         await expect(originBlock(page)).toContainText('a')
-        await expect(entry(page, AIL)).toHaveClass(/pvt-pivot-focus/)
+        await expect(entry(page, CORRELATION)).toHaveClass(/pvt-pivot-focus/)
     })
 
     test('a potential for an unregistered pivot wears nothing', async ({ page }) => {
         await load(page, { pivots: [] })
-        await harness(page, 'setNodePotential', 'a', AIL, 2100)
+        await harness(page, 'setNodePotential', 'a', CORRELATION, 2100)
 
         await expect(nodeEl(page, 'a').locator('.pvt-node-badge')).toHaveCount(0)
     })
 
     test('a zero potential clears the badge', async ({ page }) => {
         await load(page)
-        await harness(page, 'setNodePotential', 'a', AIL, 12)
+        await harness(page, 'setNodePotential', 'a', CORRELATION, 12)
         await expect(nodeEl(page, 'a').locator('.pvt-node-badge')).toHaveCount(1)
 
-        await harness(page, 'setNodePotential', 'a', AIL, 0)
+        await harness(page, 'setNodePotential', 'a', CORRELATION, 0)
         await expect(nodeEl(page, 'a').locator('.pvt-node-badge')).toHaveCount(0)
     })
 
@@ -411,9 +411,9 @@ test.describe('pivot mode', () => {
 
     // ── the one reporting gap M2 left ───────────────────────────────────────
     test('a failed auto-ingest fetch is reported, since it has no pane', async ({ page }) => {
-        await load(page, { pivots: ['misp-event-objects'], fail: true })
+        await load(page, { pivots: ['event-objects'], fail: true })
 
-        await harness(page, 'runPivot', 'misp-event-objects', ['a'])
+        await harness(page, 'runPivot', 'event-objects', ['a'])
 
         // No pane was ever offered, so the notifier is the only place this can be seen.
         expect(await harness(page, 'dockTabIds')).toEqual(['table'])
@@ -428,18 +428,18 @@ test.describe('pivot mode', () => {
         await expect(page.locator('.pivotick-toast')).toContainText('14,203 candidates, over the 100 limit')
     })
 
-    // ── origin-less pivots (D19) ────────────────────────────────────────────
+    // ── origin-less pivots ──────────────────────────────────────────────────
     test('an origin-less pivot runs with no origin and stages into the same pane', async ({ page }) => {
         await load(page)
         await enterMode(page)
 
-        const search = entry(page, 'search-ail')
-        await expect(count(page, 'search-ail')).toHaveText('~30')
+        const search = entry(page, 'search-archive')
+        await expect(count(page, 'search-archive')).toHaveText('~30')
         await button(search, 'Fetch').click()
 
         await expect(search.locator('.pvt-pivot-triage-link')).toHaveText('30 in triage ▸')
         expect(await harness(page, 'dockTabIds')).toEqual(['table', 'pivot-triage'])
-        await expect(page.locator('.pvt-review-tab')).toHaveAttribute('data-pivot', 'search-ail')
+        await expect(page.locator('.pvt-review-tab')).toHaveAttribute('data-pivot', 'search-archive')
     })
 
     test('the rail slot keeps the mode name while its resting tool is armed', async ({ page }) => {
@@ -479,18 +479,18 @@ test.describe('pivot mode', () => {
     // One pivot has nothing to filter and nothing to batch with, so it stays the plain
     // entry it always was. Two is enough to be worth choosing between.
     test('a lone pivot earns no filter box and no tick boxes', async ({ page }) => {
-        await load(page, { pivots: [AIL] })
+        await load(page, { pivots: [CORRELATION] })
         await pickOrigin(page, 'a')
         await enterMode(page)
 
-        await expect(entry(page, AIL)).toBeVisible()
+        await expect(entry(page, CORRELATION)).toBeVisible()
         await expect(filterBox(page)).toBeHidden()
         await expect(panel(page).locator('.pvt-pivot-check:visible')).toHaveCount(0)
         await expect(tray(page)).toBeHidden()
     })
 
     test('two of them are enough for the filter and the tick boxes', async ({ page }) => {
-        await load(page, { pivots: [AIL, 'blind'] })
+        await load(page, { pivots: [CORRELATION, 'blind'] })
         await pickOrigin(page, 'a')
         await enterMode(page)
 
@@ -528,11 +528,11 @@ test.describe('pivot mode', () => {
     test('an entry with nothing under its head row is drawn as a bare row', async ({ page }) => {
         await loadBulk(page)
         await expect(entry(page, 'bulk-01')).toHaveClass(/pvt-pivot-entry-plain/)
-        // The AIL pivot carries a count, a breakdown and a gate, so it keeps its card.
-        await expect(entry(page, AIL)).not.toHaveClass(/pvt-pivot-entry-plain/)
+        // The CORRELATION pivot carries a count, a breakdown and a gate, so it keeps its card.
+        await expect(entry(page, CORRELATION)).not.toHaveClass(/pvt-pivot-entry-plain/)
 
         const row = await entryHeight(page, 'bulk-01')
-        const card = await entryHeight(page, AIL)
+        const card = await entryHeight(page, CORRELATION)
         expect(row).toBeLessThan(40)
         expect(card).toBeGreaterThan(row)
     })
@@ -658,17 +658,17 @@ test.describe('pivot mode', () => {
     // Being sent to one pivot outranks the filter: the badge would otherwise open the
     // mode and scroll to an entry the filter had taken out of the DOM.
     test('a badge clears a filter that would hide the pivot it opens', async ({ page }) => {
-        await load(page, { bulk: 12, pivots: [AIL] })
-        await harness(page, 'setNodePotential', 'a', AIL, 2100)
+        await load(page, { bulk: 12, pivots: [CORRELATION] })
+        await harness(page, 'setNodePotential', 'a', CORRELATION, 2100)
         await pickOrigin(page, 'a')
         await enterMode(page)
         await filterInput(page).fill('geo')
-        await expect(entry(page, AIL)).toBeHidden()
+        await expect(entry(page, CORRELATION)).toBeHidden()
 
         await nodeEl(page, 'a').locator('.pvt-node-badge').first().click()
 
         await expect(filterInput(page)).toHaveValue('')
-        await expect(entry(page, AIL)).toBeVisible()
+        await expect(entry(page, CORRELATION)).toBeVisible()
     })
 
     // A different origin is a different question; a selection built for the old one

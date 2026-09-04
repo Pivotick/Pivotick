@@ -182,7 +182,7 @@ export class TriagePane {
      * Whether there is nothing left in here to read — what puts one of the endings on
      * screen instead of the table.
      *
-     * Edge rows are verdicts of their own (D24), so a result that is nothing but edges
+     * Edge rows are verdicts of their own, so a result that is nothing but edges
      * between nodes already on canvas has plenty to triage: reading only the node rows
      * told the analyst nothing came back over a table of them.
      */
@@ -208,7 +208,7 @@ export class TriagePane {
         items.push(search)
 
         // Regex belongs here and not in the narrowing controls: these filters run over
-        // rows already in hand, so the full facet vocabulary is available (D5).
+        // rows already in hand, so the full facet vocabulary is available.
         const regex = document.createElement('label')
         regex.className = 'pvt-triage-regex'
         regex.title = 'Read the search box as a regular expression'
@@ -287,7 +287,7 @@ export class TriagePane {
         const scroller = document.createElement('div')
         scroller.className = 'pvt-triage-scroll'
         // Edges first: there are usually a handful of them against hundreds of nodes,
-        // and below a full page of rows a core AIL result would never be seen at all.
+        // and below a full page of rows a core result would never be seen at all.
         // Both blocks are named only when there are two of them: one table needs no
         // title, and the count is already in the header line above it.
         const split = this.set.edges.length > 0 && actionable.length > 0
@@ -336,7 +336,7 @@ export class TriagePane {
         }
 
         if (!ingested && !rejected && !set.suppressed && set.deduped === set.nodes.length) {
-            // Their data was left untouched — a normal outcome, not a failed run (D23).
+            // Their data was left untouched — a normal outcome, not a failed run.
             return this.state('done', `All ${fmt(set.fetched)} are already on the canvas — nothing to triage`, {
                 sub: 'Nothing was changed: an id already here is left exactly as it was.',
                 actions: [close],
@@ -392,7 +392,7 @@ export class TriagePane {
         this.root.appendChild(box)
     }
 
-    /** A re-run landed while rows were marked: announced, never swapped in unasked (D27). */
+    /** A re-run landed while rows were marked: announced, never swapped in unasked. */
     private banner(pending: PivotCandidateSet): HTMLElement {
         const bar = document.createElement('div')
         bar.className = 'pvt-triage-banner'
@@ -427,7 +427,7 @@ export class TriagePane {
     /**
      * The honest header: what came back, what was already here, what the session had
      * already rejected. Segments only when they are non-zero, and the shrink from the
-     * advertised count is stated rather than left to look like a bug (D10).
+     * advertised count is stated rather than left to look like a bug.
      */
     private headline(): HTMLElement {
         const set = this.set
@@ -504,7 +504,7 @@ export class TriagePane {
 
     /**
      * What the session is holding back, and the way out of a mis-rejection. Rejections
-     * are per (pivot, candidate) and remembered for the session (D14), so a restored id
+     * are per (pivot, candidate) and remembered for the session, so a restored id
      * is offered by the next run rather than appearing here.
      */
     private suppressedList(all = false): HTMLElement {
@@ -567,7 +567,7 @@ export class TriagePane {
         }]
 
         // A container's size belongs beside its name, not after five discovered data
-        // columns: one MISP object stages 58 attributes under a single row, and how many
+        // columns: one container object stages 58 attributes under a single row, and how many
         // there are is most of the decision to ingest it. Only when the set holds a
         // container at all, or the column is zeros — the rule the dock's column follows.
         if (containers) {
@@ -596,7 +596,7 @@ export class TriagePane {
         return columns
     }
 
-    /** From and To are the point of an edge row; the rest of its data follows (D24). */
+    /** From and To are the point of an edge row; the rest of its data follows. */
     private edgeColumns(): TriageColumn<PivotCandidateEdge>[] {
         // Narrower than a node column on purpose: with the same tracks as the table
         // below, an endpoint id lands under `Candidate` and two blocks read as one.
@@ -989,7 +989,7 @@ export class TriagePane {
 
     /**
      * Edges whose ends are all already on canvas are decisions of their own, so they get
-     * their own section rather than being squeezed into the node table's columns (D24).
+     * their own section rather than being squeezed into the node table's columns.
      */
     private edgeSection(): HTMLElement {
         const wrap = document.createElement('div')

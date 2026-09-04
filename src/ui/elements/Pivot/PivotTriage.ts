@@ -26,7 +26,7 @@ interface StripItem {
 
 /**
  * Keeps the dock in step with what is staged for triage: **one** review tab, holding a
- * pane per pivot that has been run and not yet cleared (D27), each created the moment
+ * pane per pivot that has been run and not yet cleared, each created the moment
  * its `fetch` starts so a slow fetch and a failed one both have somewhere to live.
  *
  * One tab rather than one per pivot because the providers are a queue, not a set of

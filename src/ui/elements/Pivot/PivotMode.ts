@@ -22,9 +22,8 @@ const PANEL_WIDTH = 420
  * pivot advertises about it, narrows that down and runs it.
  *
  * The mode is the feature's intent boundary. Entering it is what starts `summarize`;
- * leaving it cancels every call in flight. That is the whole of D11 — selection alone
- * costs nothing, because box-selecting fifty nodes to move them is not a question about
- * enrichment.
+ * leaving it cancels every call in flight. Selection alone costs nothing, because
+ * box-selecting fifty nodes to move them is not a question about enrichment.
  *
  * **Gated on the registry.** With `UI.pivotMode: 'auto'` (the default) the rail button
  * exists only while at least one pivot is registered: it appears when the first arrives
