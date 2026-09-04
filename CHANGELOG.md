@@ -111,6 +111,20 @@
   scroll position or whether it is on show — which re-registering the tab to change a word
   would have thrown away. Also `UIManager.setDockTabLabel(id, label)` and `ctx.setDockTabLabel`.
 
+### Fixed
+
+- **`graph.updateData` no longer throws away the node or edge it is updating.** An id the graph
+  already held was replaced *literally* — a new object written into the map under the old id —
+  while its edges, the simulation and the DOM binding all went on holding the old one. An
+  updated node's edges ended up pointing at a discarded object that nothing ever moves again,
+  and everything the node had learned since it was built went with it: which sources vouch for
+  it (so `removeBySource` stopped reaching it), where it sat, whether it was pinned. Updates now
+  land **in place**: data, style and weight become what you handed over, the object keeps its
+  identity, and a position on the incoming element still wins so an update can also move
+  something. On the edge side the discarded incoming object was left registered on its
+  endpoints, counting one edge twice in every degree and neighbour list it touched; and an edge
+  updated onto different nodes now stops being counted by the pair it left.
+
 ### Breaking
 
 - **`graph.pivots.undo` / `redo` / `runs` / `canUndo` / `canRedo` are gone**, replaced by

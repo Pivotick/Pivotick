@@ -12,7 +12,7 @@ import type { LayoutOptions } from './interfaces/LayoutOptions'
 import { generateSafeDomId } from './utils/ElementCreation'
 import { GraphQueryEngine } from './GraphQueryEngine'
 import { GraphHistory } from './GraphHistory'
-import type { GraphRendererOptions } from './interfaces/RendererOptions'
+import type { EdgeFullStyle, GraphRendererOptions } from './interfaces/RendererOptions'
 import { GraphEditingManager } from './editing/GraphEditingManager'
 import { NoteManager } from './NoteManager'
 import { Note, type NoteOptions } from './Note'
@@ -756,10 +756,20 @@ export class Graph {
 
     /**
      * Updates the graph with new nodes and/or edges.
-     * 
-     * Existing nodes or edges with matching IDs are replaced; new ones are added.
+     *
+     * An id the graph already holds is updated **in place**: what the element *is* —
+     * its data, style and weight — becomes what you handed over, while the object
+     * itself keeps its identity. It has to work that way. Its edges, the simulation
+     * and the DOM binding all hold that object, and so does everything it has learned
+     * since it was built: which sources vouch for it, where it sits, whether it is
+     * pinned. A position on the incoming element still wins, so `updateData` can move
+     * something as well as refresh it. Unknown ids are added.
+     *
+     * A container's `children` are not restructured here — pass the container through
+     * {@link removeNode} and {@link addNode} to change what it holds.
+     *
      * Triggers the `onChange` callback if any updates were applied.
-     * 
+     *
      * @param newNodes Optional array of nodes to update or add.
      * @param newEdges Optional array of edges to update or add.
      * Triggers `onChange`
@@ -769,14 +779,15 @@ export class Graph {
 
         if (newNodes) {
             newNodes.forEach(newNode => {
-                if (this.nodes.has(newNode.id)) {
+                const existing = this.nodes.get(newNode.id)
+                if (existing) {
                     changes.push({
                         type: 'node:change',
-                        node: newNode,
-                        previousData: this.nodes.get(newNode.id)?.getData(),
+                        node: existing,
+                        previousData: existing.getData(),
                         nextData: newNode.getData(),
                     } as GraphDataChange)
-                    this.nodes.set(newNode.id, newNode)
+                    this.applyNodeUpdate(existing, newNode)
                 } else {
                     this.addNode(newNode)
                     changes.push({
@@ -788,14 +799,15 @@ export class Graph {
         }
         if (newEdges) {
             newEdges.forEach(newEdge => {
-                if (this.edges.has(newEdge.id)) {
+                const existing = this.edges.get(newEdge.id)
+                if (existing) {
                     changes.push({
                         type: 'edge:change',
-                        edge: newEdge,
-                        previousData: this.edges.get(newEdge.id)?.getData(),
+                        edge: existing,
+                        previousData: existing.getData(),
                         nextData: newEdge.getData(),
                     } as GraphDataChange)
-                    this.edges.set(newEdge.id, newEdge)
+                    this.applyEdgeUpdate(existing, newEdge)
                 } else {
                     this.addEdge(newEdge)
                     changes.push({
@@ -812,6 +824,50 @@ export class Graph {
         if (triggerChangeEvent) {
             this.dataBatchChanged(changes)
         }
+    }
+
+    /**
+     * Apply an incoming node onto the one the graph is using. Data, style and weight
+     * are what the caller handed over; a position is copied only when the incoming
+     * node has one, because a caller who built a bare `new Node(id, data)` means
+     * "refresh this" and not "forget where it is".
+     */
+    private applyNodeUpdate(existing: Node, incoming: Node): void {
+        // The simulation announces a finished layout pass by handing the graph its own
+        // nodes back. There is nothing to copy from an object onto itself, and marking
+        // it dirty for a change that did not happen makes the renderer re-measure.
+        if (existing === incoming) return
+        existing.setData(incoming.getData())
+        existing.setStyle(incoming.getStyle())
+        existing.weight = incoming.weight
+        if (incoming.x !== undefined) existing.x = incoming.x
+        if (incoming.y !== undefined) existing.y = incoming.y
+        if (incoming.fx !== undefined) existing.fx = incoming.fx
+        if (incoming.fy !== undefined) existing.fy = incoming.fy
+    }
+
+    /**
+     * The edge twin. Endpoints are resolved by id against the graph's own nodes, so
+     * an edge built against copies still ends up on the real ones; and an edge moved
+     * to different endpoints stops being counted by the pair it used to join.
+     */
+    private applyEdgeUpdate(existing: Edge, incoming: Edge): void {
+        if (existing === incoming) return
+        existing.setData(incoming.getData())
+        existing.setStyle(incoming.getStyle() as EdgeFullStyle)
+
+        // Building an Edge registers it on its endpoints, and this one is about to be
+        // thrown away: left counted, every degree and neighbour list it touches is one
+        // too high.
+        incoming.from.unregisterEdge(incoming)
+        incoming.to.unregisterEdge(incoming)
+
+        const from = this.nodes.get(incoming.from.id)
+        const to = this.nodes.get(incoming.to.id)
+        if (!from || !to) return
+        if (existing.from !== from) existing.from.unregisterEdge(existing)
+        if (existing.to !== to) existing.to.unregisterEdge(existing)
+        existing.bindEndpoints(from, to)
     }
 
     /**
@@ -995,8 +1051,8 @@ export class Graph {
         }
         // An Edge instance remembers endpoint *objects*, and the graph may hold other
         // ones under those ids: a node dropped and re-created — a pivot replayed from
-        // its raw data on redo, an `updateData` — is a new object, and an edge left
-        // pointing at the old one hangs off something nothing moves again.
+        // its raw data on redo — is a new object, and an edge left pointing at the old
+        // one hangs off something nothing moves again.
         edge.bindEndpoints(from, to)
         this.edges.set(edge.id, edge)
         this.dataBatchChanged([{

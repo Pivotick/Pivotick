@@ -221,6 +221,13 @@ export interface RecordedEdgeBinding {
     toGap: number
 }
 
+/** Where a node sits, and whether the simulation is holding it there. */
+export interface RecordedPlacement {
+    x?: number
+    y?: number
+    pinned: boolean
+}
+
 /** What a span would do, flattened the same way. */
 export interface RecordedHistoryPreview {
     entries: string[]
@@ -995,6 +1002,23 @@ export interface HarnessApi {
      * how far the drawn path's ends sit from their centres.
      */
     edgeBinding(edgeId: string): RecordedEdgeBinding | null
+    /**
+     * Push a changed copy of a node the graph already holds back through
+     * `updateData` — a fresh `Node` under an id that is already taken, which is what
+     * a consumer refreshing one node's data hands over.
+     */
+    updateExistingNode(id: string, data: Record<string, unknown>): void
+    /**
+     * The edge twin: an edge pushed back through `updateData` under an id the graph
+     * already holds — same endpoints by default, or different ones to re-point it.
+     */
+    updateExistingEdge(edgeId: string, fromId?: string, toId?: string): void
+    /** Which nodes an edge joins, by id. */
+    edgeEnds(edgeId: string): { from: string; to: string } | null
+    /** How many edges a node counts as its own — what a stale registration inflates. */
+    nodeDegree(id: string): { out: number; in: number } | null
+    /** Where a node sits, and whether it is pinned there. */
+    nodePlacement(id: string): RecordedPlacement | null
     /** Put a node where you want it and redraw, so a test can watch what follows it. */
     moveNode(id: string, x: number, y: number): void
     /** Provenance. `'seed'` for anything no pivot vouches for. */
@@ -4435,6 +4459,39 @@ class Harness implements HarnessApi {
             fromGap: gap(from, numbers[0], numbers[1]),
             toGap: gap(to, numbers[numbers.length - 2], numbers[numbers.length - 1]),
         }
+    }
+
+    updateExistingNode(id: string, data: Record<string, unknown>): void {
+        const existing = this.g.getMutableNode(id)
+        if (!existing) return
+        this.g.updateData([new Node(id, { ...existing.getData(), ...data })])
+    }
+
+    updateExistingEdge(edgeId: string, fromId?: string, toId?: string): void {
+        const existing = this.g.getMutableEdge(edgeId)
+        if (!existing) return
+        const from = this.g.getMutableNode(fromId ?? existing.from.id)
+        const to = this.g.getMutableNode(toId ?? existing.to.id)
+        if (!from || !to) return
+        this.g.updateData(undefined, [new EdgeInstance(edgeId, from, to, { label: 'refreshed' })])
+    }
+
+    edgeEnds(edgeId: string): { from: string; to: string } | null {
+        const edge = this.g.getMutableEdge(edgeId)
+        if (!edge) return null
+        return { from: edge.from.id, to: edge.to.id }
+    }
+
+    nodeDegree(id: string): { out: number; in: number } | null {
+        const node = this.g.getMutableNode(id)
+        if (!node) return null
+        return { out: node.getEdgesOut().length, in: node.getEdgesIn().length }
+    }
+
+    nodePlacement(id: string): RecordedPlacement | null {
+        const node = this.g.getMutableNode(id)
+        if (!node) return null
+        return { x: node.x, y: node.y, pinned: node.fx !== undefined && node.fy !== undefined }
     }
 
     moveNode(id: string, x: number, y: number): void {

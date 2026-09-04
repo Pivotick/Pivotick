@@ -155,6 +155,16 @@ export class Node {
 
     /**
      * @private
+     * Stop counting this edge — for one re-pointed away from this node, which would
+     * otherwise keep inflating its degree and its neighbour list.
+     */
+    unregisterEdge(edge: Edge): void {
+        this.edgesOut.delete(edge)
+        this.edgesIn.delete(edge)
+    }
+
+    /**
+     * @private
      */
     emptyEdges(): void {
         this.edgesOut.clear()
