@@ -71,6 +71,32 @@ const positions = async (page: Page, ids: string[]): Promise<Array<[string, numb
 const away = (point: { x: number, y: number }, x: number, y: number): number =>
     Math.hypot(point.x - x, point.y - y)
 
+/**
+ * Where a node stands once nothing is moving it any more.
+ *
+ * `waitForViewSettled` watches the zoom transform, which goes still the moment the
+ * fit commits — while the simulation carries on nudging nodes for many frames after.
+ * A position read straight after it is one the node may already have left by the
+ * time the next call records it.
+ */
+const stillPosition = async (page: Page, id: string): Promise<{ x: number, y: number }> => {
+    let seen = { x: NaN, y: NaN }
+    let stable = 0
+    await expect
+        .poll(
+            async () => {
+                const [[, x, y]] = await positions(page, [id])
+                // NaN never equals itself, so the first sample always starts the count over.
+                stable = x === seen.x && y === seen.y ? stable + 1 : 0
+                seen = { x, y }
+                return stable
+            },
+            { timeout: 5000, intervals: [50] }
+        )
+        .toBeGreaterThanOrEqual(3)
+    return seen
+}
+
 /** How far the layout may breathe after elements land back on the canvas. */
 const SETTLE = 20
 
@@ -504,10 +530,9 @@ test.describe('history — the dropdown', () => {
     test('hovering a redo row outlines what would come back', async ({ page }) => {
         const created = (await harness(page, 'createNodeAt', 40, 40)) as string
         await harness(page, 'deselectAll')
-        // Read where it stands only once the layout has stopped moving it, or the
-        // expectation is a position the node has already left.
-        await waitForViewSettled(page)
-        const [[, x, y]] = await positions(page, [created])
+        // Read where it stands only once nothing is moving it, or the expectation is
+        // a position the node has already left.
+        const { x, y } = await stillPosition(page, created)
 
         // Take it back out. Now the redo row's element is not on the canvas at all,
         // which is exactly the case a highlight cannot speak about.
