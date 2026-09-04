@@ -794,7 +794,7 @@ bar.append(
         value => { knobs.stageObjects = value === 'stage' },
     )),
     // Six providers is comfortably inside what a rim can name, so the summary shape
-    // has to be asked for here. On the misp-modules page, with 119, it is the default.
+    // has to be asked for here rather than chosen automatically.
     field('Rim', select(
         [['per-pivot', 'one per pivot'], ['summary', 'one for all'], ['off', 'none']],
         graph.pivots.rimBadge,
