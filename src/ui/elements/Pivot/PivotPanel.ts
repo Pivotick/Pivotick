@@ -1,6 +1,6 @@
 import type { Node } from '../../../Node'
 import type {
-    PivotDefinition, PivotFacet, PivotNarrowing, PivotRefusal, PivotSummary,
+    PivotDefinition, PivotFacet, PivotNarrowing, PivotRefusal, PivotRejection, PivotSummary,
 } from '../../../interfaces/Pivot'
 import type { FieldConfig, FieldOption, FormValues } from '../../../utils/FormFactory'
 import { FormFactory } from '../../../utils/FormFactory'
@@ -18,6 +18,9 @@ const TYPED_DELAY_MS = 400
  * batch with, so it is left as the plain entry it always was.
  */
 const BULK_MIN = 2
+
+/** How many rejections an entry lists before it says how many more it is holding. */
+const REJECTED_SHOWN = 50
 
 /**
  * How many pivots may be selected before the tray says out loud what running them
@@ -611,6 +614,8 @@ class PivotEntry {
     private readonly progress: HTMLElement
     private readonly narrowingHost: HTMLElement
     private readonly actions: HTMLElement
+    /** The rejections this pivot is holding back, drawn only while they are asked for. */
+    private readonly rejectedHost: HTMLElement
 
     private phase: 'idle' | 'summarizing' | 'ready' | 'resummarizing' | 'failed' | 'fetching' = 'idle'
     private summary?: PivotSummary
@@ -641,6 +646,8 @@ class PivotEntry {
     private readonly checkInput: HTMLInputElement
     /** What the panel says about this entry, which the box only reflects. */
     private isSelected = false
+    /** Whether the rejected list is open. Per entry: it is that provider's memory. */
+    private showRejected = false
 
     constructor(
         uiManager: UIManager,
@@ -704,10 +711,12 @@ class PivotEntry {
         this.progress.appendChild(el('span', 'pvt-pivot-progress-bar'))
         this.narrowingHost = el('div', 'pvt-pivot-narrowing')
         this.actions = el('div', 'pvt-pivot-actions')
+        this.rejectedHost = el('div', 'pvt-pivot-rejected')
+        this.rejectedHost.hidden = true
 
         this.root.append(
             head, this.scopeLine, this.breakdown, this.errorLine, this.gateLine,
-            this.progress, this.narrowingHost, this.actions,
+            this.progress, this.narrowingHost, this.actions, this.rejectedHost,
         )
         this.paint()
     }
@@ -776,6 +785,9 @@ class PivotEntry {
     /** A staged set appeared, changed or went — only the `n in triage` link moves. */
     public refreshStaged(): void {
         this.paintActions()
+        // A first rejection gives an entry something to say, which is what tells a card
+        // from a row.
+        this.paintDensity()
     }
 
     public destroy(): void {
@@ -871,6 +883,7 @@ class PivotEntry {
             && this.progress.hidden
             && this.narrowingHost.childElementCount === 0
             && this.actions.childElementCount === 0
+            && this.rejectedHost.hidden
         this.root.classList.toggle('pvt-pivot-entry-plain', bare)
     }
 
@@ -1145,6 +1158,72 @@ class PivotEntry {
             link.classList.add('pvt-pivot-triage-link')
             this.actions.appendChild(link)
         }
+
+        // A rejection outlives the pane it was made in, and the panel is the one surface
+        // that is always there — so this is where what the session is holding back can
+        // be read, and taken back, without running the pivot again to see it.
+        const rejected = this.uiManager.graph.pivots.rejectedRows(this.def.id)
+        if (rejected.length) {
+            const link = this.button(
+                `${fmt(rejected.length)} rejected ${this.showRejected ? '▾' : '▸'}`,
+                false,
+                () => {
+                    this.showRejected = !this.showRejected
+                    this.paintActions()
+                    this.paintDensity()
+                })
+            link.classList.add('pvt-pivot-rejected-link')
+            link.title = 'What you rejected here this session. It is not offered again until restored.'
+            link.setAttribute('aria-expanded', String(this.showRejected))
+            this.actions.appendChild(link)
+        }
+        this.paintRejected(rejected)
+    }
+
+    /**
+     * The rejections themselves. Each one is a row the provider returned, named as the
+     * triage table named it — a list of ids would be a list of things the analyst
+     * cannot recognise well enough to change their mind about.
+     */
+    private paintRejected(rows: PivotRejection[]): void {
+        this.rejectedHost.replaceChildren()
+        this.rejectedHost.hidden = !this.showRejected || rows.length === 0
+        if (this.rejectedHost.hidden) return
+
+        const note = el('div', 'pvt-pivot-rejected-note')
+        note.textContent = 'Not offered again this session. Restoring one brings it back on the next run.'
+        this.rejectedHost.appendChild(note)
+
+        for (const row of rows.slice(0, REJECTED_SHOWN)) {
+            const line = el('div', 'pvt-pivot-rejected-row')
+            line.dataset.rejected = row.id
+            const label = el('span', 'pvt-pivot-rejected-label')
+            label.textContent = row.label
+            label.title = row.label === row.id ? row.id : `${row.label} · ${row.id}`
+            const restore = button('Offer this again on the next run', () => {
+                this.uiManager.graph.pivots.unreject(this.def.id, row.id)
+            })
+            restore.className = 'pvt-pivot-rejected-restore'
+            restore.textContent = 'restore'
+            line.append(label, restore)
+            this.rejectedHost.appendChild(line)
+        }
+
+        const foot = el('div', 'pvt-pivot-rejected-foot')
+        if (rows.length > REJECTED_SHOWN) {
+            const more = el('span', 'pvt-pivot-rejected-more')
+            more.textContent = `…and ${fmt(rows.length - REJECTED_SHOWN)} more`
+            foot.appendChild(more)
+        }
+        if (rows.length > 1) {
+            const all = button('Take back every rejection this pivot holds', () => {
+                this.uiManager.graph.pivots.unrejectAll(this.def.id)
+            })
+            all.className = 'pvt-pivot-rejected-restore'
+            all.textContent = 'Restore all'
+            foot.appendChild(all)
+        }
+        if (foot.childElementCount) this.rejectedHost.appendChild(foot)
     }
 
     private button(label: string, primary: boolean, onClick: () => void): HTMLButtonElement {

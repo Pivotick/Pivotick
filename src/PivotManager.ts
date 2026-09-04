@@ -4,7 +4,7 @@ import type { RawEdge, RawNode } from './interfaces/GraphOptions'
 import type { IngestContext, IngestDecision } from './interfaces/InterractionCallbacks'
 import type {
     PivotCandidate, PivotCandidateEdge, PivotCandidateSet, PivotContext, PivotDefinition,
-    PivotManagerLike, PivotNarrowing, PivotRefusal, PivotRimBadge, PivotRun, PivotRunOutcome,
+    PivotManagerLike, PivotNarrowing, PivotRefusal, PivotRejection, PivotRimBadge, PivotRun, PivotRunOutcome,
     PivotSaveContext, PivotSaveOutcome, PivotSavePayload, PivotSaveReport, PivotSummary,
 } from './interfaces/Pivot'
 import { SEED_SOURCE } from './interfaces/Pivot'
@@ -82,8 +82,12 @@ export class PivotManager implements PivotManagerLike {
     /** How many pivots apply to each node, for the rim. Dropped wholesale, never per key. */
     private readonly counts = new Map<string, number>()
 
-    /** Explicitly rejected candidates, keyed by pivot id then candidate id. */
-    private readonly rejected = new Map<string, Set<string>>()
+    /**
+     * Explicitly rejected candidates, keyed by pivot id then candidate id, holding the
+     * row the verdict was given on. The memory outlives the set that carried it, so
+     * keeping the row is the only way a surface can name what is being held back.
+     */
+    private readonly rejected = new Map<string, Map<string, RawNode | RawEdge>>()
     /** At most one candidate set per pivot: a re-run replaces it. */
     private readonly candidateSets = new Map<string, PivotCandidateSet>()
 
@@ -594,12 +598,12 @@ export class PivotManager implements PivotManagerLike {
      * it in a different analytic context.
      */
     public reject(pivotId: string, ids: string[]): void {
-        const remembered = this.rejected.get(pivotId) ?? new Set<string>()
+        const remembered = this.rejected.get(pivotId) ?? new Map<string, RawNode | RawEdge>()
         for (const id of ids) {
             const candidate = this.findCandidate(pivotId, id)
             if (!candidate) continue
             candidate.state = 'rejected'
-            remembered.add(id)
+            remembered.set(id, candidate.raw)
         }
         this.rejected.set(pivotId, remembered)
         this.notify('candidates')
@@ -627,6 +631,21 @@ export class PivotManager implements PivotManagerLike {
         this.reject(pivotId, set.nodes.filter(c => c.state === 'candidate').map(c => c.id))
     }
 
+    /**
+     * Take every rejection this pivot holds back. The way out of a `Reject all
+     * remaining` that went too far, which one-by-one restoring is not.
+     */
+    public unrejectAll(pivotId: string): void {
+        const remembered = this.rejected.get(pivotId)
+        if (!remembered?.size) return
+        for (const id of remembered.keys()) {
+            const candidate = this.findCandidate(pivotId, id)
+            if (candidate) candidate.state = 'candidate'
+        }
+        this.rejected.delete(pivotId)
+        this.notify('candidates')
+    }
+
     /** How many candidates have been rejected for this pivot this session. */
     public rejectedCount(pivotId: string): number {
         return this.rejected.get(pivotId)?.size ?? 0
@@ -634,7 +653,16 @@ export class PivotManager implements PivotManagerLike {
 
     /** The rejected candidate ids for this pivot — what the pane reveals on demand. */
     public rejectedIds(pivotId: string): string[] {
-        return [...(this.rejected.get(pivotId) ?? [])]
+        return [...(this.rejected.get(pivotId)?.keys() ?? [])]
+    }
+
+    /**
+     * The rejections themselves, rows and all, newest last. What a surface listing them
+     * shows: an id names nothing once the run that carried it is gone.
+     */
+    public rejectedRows(pivotId: string): PivotRejection[] {
+        return [...(this.rejected.get(pivotId)?.entries() ?? [])]
+            .map(([id, raw]) => ({ id, raw, label: String(raw.data?.label ?? id) }))
     }
 
     /** Whether the analyst has marked anything here — what a re-run must not discard. */

@@ -1,6 +1,6 @@
 import type { Locator, Page } from '@playwright/test'
 import { test, expect, gotoHarness, loadFixture, harness, nodeEl } from '../helpers'
-import type { PivotFixtureSpec } from '../harness/harness'
+import type { PivotFixtureSpec, RecordedCandidates } from '../harness/harness'
 
 // Pivot mode (M3): the rail mode that advertises what each pivot can reach, narrows it
 // and runs it. The mode is the feature's intent boundary — entering it is what calls a
@@ -269,6 +269,61 @@ test.describe('pivot mode', () => {
         expect(await harness(page, 'activeDockTabId')).toBe('pivot-triage')
         await expect(page.locator('.pvt-review-tab:has(.pvt-review-main.active)'))
             .toHaveAttribute('data-pivot', AIL)
+    })
+
+    test('the panel lists what a pivot rejected, names it, and takes it back', async ({ page }) => {
+        await load(page)
+        await pickOrigin(page, 'a')
+        await enterMode(page)
+        await narrowTo(page, AIL, 'type', 'IPs')
+        await button(entry(page, AIL), 'Fetch').click()
+        await expect(entry(page, AIL).locator('.pvt-pivot-triage-link')).toHaveText('38 in triage ▸')
+
+        await harness(page, 'rejectPivotCandidates', AIL, ['ip-0', 'ip-1'])
+        const link = entry(page, AIL).locator('.pvt-pivot-rejected-link')
+        await expect(link).toHaveText('2 rejected ▸')
+
+        await link.click()
+        const rejected = entry(page, AIL).locator('.pvt-pivot-rejected-row')
+        await expect(rejected).toHaveCount(2)
+        // Named as the triage table named them: `ip-0` is not something an analyst can
+        // recognise well enough to change their mind about.
+        await expect(rejected.first().locator('.pvt-pivot-rejected-label')).toHaveText('ip 0')
+
+        await button(rejected.first(), 'restore').click()
+        await expect(rejected).toHaveCount(1)
+        expect(await harness(page, 'rejectedPivotIds', AIL)).toEqual(['ip-1'])
+    })
+
+    test('rejections outlive the pane they were made in, and Restore all clears them', async ({ page }) => {
+        await load(page)
+        await pickOrigin(page, 'a')
+        await enterMode(page)
+        await narrowTo(page, AIL, 'type', 'IPs')
+        await button(entry(page, AIL), 'Fetch').click()
+        await expect(entry(page, AIL).locator('.pvt-pivot-triage-link')).toBeVisible()
+
+        await harness(page, 'rejectPivotCandidates', AIL, ['ip-0', 'ip-1', 'ip-2'])
+        // Dropping the set takes the pane and its rows with it. The verdicts are the
+        // session's, not the pane's, so the panel still holds them.
+        await harness(page, 'discardPivot', AIL)
+        await expect(entry(page, AIL).locator('.pvt-pivot-triage-link')).toHaveCount(0)
+
+        const link = entry(page, AIL).locator('.pvt-pivot-rejected-link')
+        await expect(link).toHaveText('3 rejected ▸')
+        await link.click()
+        await expect(entry(page, AIL).locator('.pvt-pivot-rejected-row')).toHaveCount(3)
+
+        await button(entry(page, AIL).locator('.pvt-pivot-rejected-foot'), 'Restore all').click()
+        await expect(link).toHaveCount(0)
+        expect(await harness(page, 'rejectedPivotIds', AIL)).toEqual([])
+
+        // And the proof it was the memory that cleared, not just the list: the next run
+        // offers all 38 again.
+        await harness(page, 'runPivot', AIL, ['a'], { type: ['ip'] })
+        const staged = await harness(page, 'pivotCandidates', AIL) as RecordedCandidates
+        expect(staged.suppressed).toBe(0)
+        expect(staged.rows).toHaveLength(38)
     })
 
     test('a failed summarize offers a retry that asks again', async ({ page }) => {

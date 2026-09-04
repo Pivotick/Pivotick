@@ -337,6 +337,10 @@ columns, the data table's filters, sorting, paging and an ingest action.
 - **Rejection is explicit and remembered** for the session, keyed per pivot. The next run
   does not offer that candidate again, and the header line says how many it suppressed. A
   rejected row is struck through in place rather than moved, and stays reversible.
+- **What a pivot is holding back is listed on its entry** in the Pivot panel, named as the
+  table named it, with *restore* on each row and *Restore all* under them. It stays there
+  once the pane is closed, so a rejection can be reconsidered without running the pivot
+  again to find it.
 - **Nodes and edges are separate blocks**, each named and counted when a run returns both.
   An edges-only result is a table of its own, not an empty pane.
 - **Closing a provider rejects nothing.** Untriaged leftovers come back on the next run.
@@ -351,6 +355,8 @@ graph.pivots.candidates('correlations')      // the staged set
 graph.pivots.mark('correlations', id)        // …markAll / reject / rejectRemaining
 await graph.pivots.ingest('correlations')    // commit the marked ones
 graph.pivots.discard('correlations')         // close it; rejects nothing
+graph.pivots.rejectedRows('correlations')    // what the session is holding back
+graph.pivots.unreject('correlations', id)    // …unrejectAll for every one of them
 ```
 
 ### `autoIngest`

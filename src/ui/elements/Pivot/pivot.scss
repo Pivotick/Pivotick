@@ -284,11 +284,20 @@
     background-color: var(--pvt-chrome-bg);
 }
 
-.pvt-triage-suppressed-row {
+.pvt-triage-suppressed-row,
+.pvt-triage-suppressed-foot {
     display: flex;
     align-items: center;
     gap: 8px;
     padding: 2px 0;
+}
+
+// The whole-list gesture, kept off the end of the rows it acts on.
+.pvt-triage-suppressed-foot {
+    justify-content: flex-end;
+    border-top: 1px solid var(--pvt-chrome-border);
+    margin-top: 4px;
+    padding-top: 4px;
 }
 
 .pvt-triage-scroll {
@@ -1355,6 +1364,71 @@
     border-color: transparent;
     text-align: left;
     color: var(--pvt-theme-primary);
+}
+
+// The session's own verdicts, which is why this one is muted where the triage link is
+// primary: it is there to be reconsidered, not to be acted on.
+.pvt-pivot-rejected-link {
+    width: 100%;
+    border-color: transparent;
+    text-align: left;
+    color: var(--pvt-text-color-4);
+}
+
+.pvt-pivot-rejected {
+    max-height: 168px;
+    overflow-y: auto;
+    padding: 4px 8px 6px;
+    border-radius: 7px;
+    background-color: var(--pvt-chrome-bg);
+}
+
+.pvt-pivot-rejected-note {
+    padding-bottom: 4px;
+    color: var(--pvt-text-color-4);
+    font-size: 10px;
+    line-height: 1.35;
+}
+
+.pvt-pivot-rejected-row,
+.pvt-pivot-rejected-foot {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 2px 0;
+}
+
+.pvt-pivot-rejected-foot {
+    justify-content: flex-end;
+    border-top: 1px solid var(--pvt-chrome-border);
+    margin-top: 4px;
+    padding-top: 4px;
+}
+
+.pvt-pivot-rejected-label {
+    overflow: hidden;
+    color: var(--pvt-text-color-5);
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pvt-pivot-rejected-more {
+    color: var(--pvt-text-color-4);
+    font-size: 10px;
+}
+
+.pvt-pivot-rejected-restore {
+    flex: none;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--pvt-theme-primary);
+    font: inherit;
+    font-size: 11px;
+    text-decoration: underline;
+    cursor: pointer;
 }
 
 .pvt-pivot-originless {

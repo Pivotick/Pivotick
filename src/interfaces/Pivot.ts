@@ -338,6 +338,22 @@ export interface PivotCandidate {
 }
 
 /**
+ * A rejection the session is holding, as a surface can show it. The row is kept
+ * alongside the id it keys on: the memory outlives the run that carried it, and a
+ * list of bare ids is not something a rejection can be reconsidered from.
+ *
+ * @category Pivots
+ */
+export interface PivotRejection {
+    /** The candidate id the rejection keys on — what suppresses it on the next run. */
+    id: string
+    /** The row exactly as the provider returned it. An edge row can be rejected too. */
+    raw: RawNode | RawEdge
+    /** The row's `data.label`, or its id when it had none: the name the table gave it. */
+    label: string
+}
+
+/**
  * A candidate edge that is a triage row in its own right — both its endpoints are
  * already on canvas, so nothing else would stage it.
  *

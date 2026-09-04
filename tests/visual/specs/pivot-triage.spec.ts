@@ -736,6 +736,21 @@ test.describe('pivot triage pane', () => {
         await expect(rows(page)).toHaveCount(1)
     })
 
+    test('a rejection taken too far goes back in one gesture', async ({ page }) => {
+        await load(page, { pivots: ['blind'] })
+        await harness(page, 'runPivot', 'blind', ['a'])
+        await button(footer(page), 'Reject all remaining').click()
+
+        // Every row is a verdict now, so the pane is finished and the table is gone —
+        // and undoing three rejections one at a time is not the way back from one click.
+        await expect(stateBox(page)).toContainText('3 rejected')
+        await button(stateBox(page), 'Show the 3 rejected').click()
+        await button(page.locator('.pvt-triage-suppressed-foot'), 'restore all').click()
+
+        expect(await harness(page, 'rejectedPivotIds', 'blind')).toEqual([])
+        await expect(rows(page)).toHaveCount(3)
+    })
+
     test('a staged container says how many children it carries', async ({ page }) => {
         // The container fixture normally lands straight on the canvas; staged, it is the
         // shape a real MISP object arrives in — one row holding a dozen attributes.

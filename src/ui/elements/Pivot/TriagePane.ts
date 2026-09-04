@@ -29,6 +29,9 @@ const COUNT_WIDTH = '96px'
 /** How many of a container's children the opened panel draws before it says "more". */
 const CHILDREN_SHOWN = 200
 
+/** How many rejections a list draws before it says how many more there are. */
+const REJECTED_SHOWN = 50
+
 /** How many of the children's own data keys the panel shows beside each label. */
 const CHILD_DATA_KEYS = 3
 
@@ -326,7 +329,7 @@ export class TriagePane {
             // click away rather than gone with the rows.
             this.state('done', `All ${fmt(set.fetched)} were rejected earlier this session`, {
                 sub: 'Nothing new came back. Restoring one offers it again on the next run.',
-                actions: [this.revealAction(set.suppressed), close],
+                actions: [this.revealAction(set.suppressed), { ...close, ghost: true }],
             })
             if (this.showSuppressed) this.root.appendChild(this.suppressedList(true))
             return
@@ -347,7 +350,7 @@ export class TriagePane {
         const held = rejected + set.suppressed
         this.state('done', 'Nothing left to triage', {
             sub: tally.join(' · '),
-            actions: held ? [this.revealAction(held), close] : [close],
+            actions: held ? [this.revealAction(held), { ...close, ghost: true }] : [close],
         })
         if (this.showSuppressed) this.root.appendChild(this.suppressedList(true))
     }
@@ -356,7 +359,6 @@ export class TriagePane {
     private revealAction(suppressed: number): StateAction {
         return {
             label: this.showSuppressed ? 'Hide the rejected' : `Show the ${fmt(suppressed)} rejected`,
-            ghost: this.showSuppressed,
             run: () => {
                 this.showSuppressed = !this.showSuppressed
                 this.paint()
@@ -510,27 +512,40 @@ export class TriagePane {
         // repeating it here would offer two undos for one verdict. In a finished state
         // there is no table, so this list is the only place any of them exist.
         const staged = new Set(all ? [] : this.set.nodes.map(c => c.id))
-        const ids = this.deps.pivots.rejectedIds(this.pivotId).filter(id => !staged.has(id))
+        const rows = this.deps.pivots.rejectedRows(this.pivotId).filter(row => !staged.has(row.id))
 
         const box = document.createElement('div')
         box.className = 'pvt-triage-suppressed'
         box.appendChild(text('div', 'Rejected earlier, so not offered again this session. Restoring one brings it back on the next run.', 'pvt-triage-state-sub'))
 
-        const labels = new Map(this.set.nodes.map(c => [c.id, String(c.raw.data?.label ?? c.id)]))
-        for (const id of ids) {
-            const row = document.createElement('div')
-            row.className = 'pvt-triage-suppressed-row'
-            // A rejection outlives the row it was made on: the session remembers the id
-            // and nothing else, so a label is only there while the run that carried it is.
-            row.appendChild(text('span', labels.get(id) ?? id))
+        for (const row of rows.slice(0, REJECTED_SHOWN)) {
+            const line = document.createElement('div')
+            line.className = 'pvt-triage-suppressed-row'
+            line.dataset.rejected = row.id
+            line.appendChild(text('span', row.label))
             const restore = document.createElement('button')
             restore.type = 'button'
             restore.className = 'pvt-triage-link'
             restore.textContent = 'restore'
-            restore.addEventListener('click', () => this.deps.pivots.unreject(this.pivotId, id))
-            row.appendChild(restore)
-            box.appendChild(row)
+            restore.addEventListener('click', () => this.deps.pivots.unreject(this.pivotId, row.id))
+            line.appendChild(restore)
+            box.appendChild(line)
         }
+
+        const foot = document.createElement('div')
+        foot.className = 'pvt-triage-suppressed-foot'
+        if (rows.length > REJECTED_SHOWN) {
+            foot.appendChild(text('span', `…and ${fmt(rows.length - REJECTED_SHOWN)} more`, 'pvt-triage-muted'))
+        }
+        if (rows.length > 1) {
+            const every = document.createElement('button')
+            every.type = 'button'
+            every.className = 'pvt-triage-link'
+            every.textContent = 'restore all'
+            every.addEventListener('click', () => this.deps.pivots.unrejectAll(this.pivotId))
+            foot.appendChild(every)
+        }
+        if (foot.childElementCount) box.appendChild(foot)
         return box
     }
 
