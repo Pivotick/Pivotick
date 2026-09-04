@@ -317,11 +317,26 @@ export class TriagePane {
 
         const ingested = set.fetched - set.suppressed - set.nodes.length
         const rejected = set.nodes.filter(c => c.state === 'rejected').length
-        if (!ingested && !rejected && set.deduped === set.nodes.length) {
+        const close: StateAction = { label: 'Close', run: () => this.deps.close(this.pivotId) }
+
+        if (!set.nodes.length && set.suppressed) {
+            // The run came back full and the session emptied it: everything in it had
+            // been rejected before. Saying "already on the canvas" here would blame the
+            // graph for a verdict the analyst made, so the list that holds them is one
+            // click away rather than gone with the rows.
+            this.state('done', `All ${fmt(set.fetched)} were rejected earlier this session`, {
+                sub: 'Nothing new came back. Restoring one offers it again on the next run.',
+                actions: [this.revealAction(set.suppressed), close],
+            })
+            if (this.showSuppressed) this.root.appendChild(this.suppressedList(true))
+            return
+        }
+
+        if (!ingested && !rejected && !set.suppressed && set.deduped === set.nodes.length) {
             // Their data was left untouched — a normal outcome, not a failed run (D23).
             return this.state('done', `All ${fmt(set.fetched)} are already on the canvas — nothing to triage`, {
                 sub: 'Nothing was changed: an id already here is left exactly as it was.',
-                actions: [{ label: 'Close', run: () => this.deps.close(this.pivotId) }],
+                actions: [close],
             })
         }
 
@@ -329,10 +344,24 @@ export class TriagePane {
         if (ingested) tally.push(`${fmt(ingested)} ingested`)
         if (rejected + set.suppressed) tally.push(`${fmt(rejected + set.suppressed)} rejected`)
         if (set.deduped) tally.push(`${fmt(set.deduped)} already on canvas`)
-        return this.state('done', 'Nothing left to triage', {
+        const held = rejected + set.suppressed
+        this.state('done', 'Nothing left to triage', {
             sub: tally.join(' · '),
-            actions: [{ label: 'Close', run: () => this.deps.close(this.pivotId) }],
+            actions: held ? [this.revealAction(held), close] : [close],
         })
+        if (this.showSuppressed) this.root.appendChild(this.suppressedList(true))
+    }
+
+    /** Open or shut the list of what the session is holding back. */
+    private revealAction(suppressed: number): StateAction {
+        return {
+            label: this.showSuppressed ? 'Hide the rejected' : `Show the ${fmt(suppressed)} rejected`,
+            ghost: this.showSuppressed,
+            run: () => {
+                this.showSuppressed = !this.showSuppressed
+                this.paint()
+            },
+        }
     }
 
     private state(
@@ -476,18 +505,24 @@ export class TriagePane {
      * are per (pivot, candidate) and remembered for the session (D14), so a restored id
      * is offered by the next run rather than appearing here.
      */
-    private suppressedList(): HTMLElement {
-        const staged = new Set(this.set.nodes.map(c => c.id))
+    private suppressedList(all = false): HTMLElement {
+        // With the table on screen a staged rejection already has a row of its own, and
+        // repeating it here would offer two undos for one verdict. In a finished state
+        // there is no table, so this list is the only place any of them exist.
+        const staged = new Set(all ? [] : this.set.nodes.map(c => c.id))
         const ids = this.deps.pivots.rejectedIds(this.pivotId).filter(id => !staged.has(id))
 
         const box = document.createElement('div')
         box.className = 'pvt-triage-suppressed'
         box.appendChild(text('div', 'Rejected earlier, so not offered again this session. Restoring one brings it back on the next run.', 'pvt-triage-state-sub'))
 
+        const labels = new Map(this.set.nodes.map(c => [c.id, String(c.raw.data?.label ?? c.id)]))
         for (const id of ids) {
             const row = document.createElement('div')
             row.className = 'pvt-triage-suppressed-row'
-            row.appendChild(text('span', id))
+            // A rejection outlives the row it was made on: the session remembers the id
+            // and nothing else, so a label is only there while the run that carried it is.
+            row.appendChild(text('span', labels.get(id) ?? id))
             const restore = document.createElement('button')
             restore.type = 'button'
             restore.className = 'pvt-triage-link'

@@ -710,6 +710,32 @@ test.describe('pivot triage pane', () => {
         expect(await harness(page, 'rejectedPivotIds', 'blind')).toEqual(['blind-2'])
     })
 
+    test('a run the session rejected in full says so, and is still restorable', async ({ page }) => {
+        await load(page, { pivots: ['blind'] })
+        await harness(page, 'runPivot', 'blind', ['a'])
+        await harness(page, 'rejectPivotCandidates', 'blind', ['blind-0', 'blind-1', 'blind-2'])
+
+        // Re-running returns the same three, and the session holds every one of them
+        // back. The shrink to nothing is the analyst's own verdict, not the canvas
+        // already holding these ids — which is what the pane used to claim.
+        await harness(page, 'runPivot', 'blind', ['a'])
+        await expect(rows(page)).toHaveCount(0)
+        await expect(stateBox(page)).toContainText('All 3 were rejected earlier this session')
+        await expect(stateBox(page)).not.toContainText('already on the canvas')
+
+        // With no table on screen this list is the only place the three exist, so it
+        // holds all of them — and restoring one puts its row back.
+        await button(stateBox(page), 'Show the 3 rejected').click()
+        await expect(page.locator('.pvt-triage-suppressed-row')).toHaveCount(3)
+        await button(page.locator('.pvt-triage-suppressed-row').first(), 'restore').click()
+        expect(await harness(page, 'rejectedPivotIds', 'blind')).toEqual(['blind-1', 'blind-2'])
+
+        // A restored id is offered by the next run, which is the whole point of taking
+        // a rejection back.
+        await harness(page, 'runPivot', 'blind', ['a'])
+        await expect(rows(page)).toHaveCount(1)
+    })
+
     test('a staged container says how many children it carries', async ({ page }) => {
         // The container fixture normally lands straight on the canvas; staged, it is the
         // shape a real MISP object arrives in — one row holding a dozen attributes.
