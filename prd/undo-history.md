@@ -322,9 +322,12 @@ D25's "the Mainheader's disabled undo/redo buttons stay unwired",
 
 ### Assumed, not asked — flag if wrong
 
-**H23 — Session-only.** The history does not survive a reload. Maltego treats restoring an
-earlier graph as a separate feature (version history) and so should this;
-`pivot-persistence.md` is where that conversation lives.
+**H23 — Session-only, and there is nothing to settle.** The history records what you *do*:
+pivots run, elements drawn or deleted, nodes hidden. Open a graph and none of that has happened
+yet, so there is no history to lose — the same way there is no provenance until a pivot vouches
+for something. Surviving a reload would mean restoring an earlier *graph*, which is a different
+feature (Maltego calls it version history) and needs the dataset itself to come back; the
+library does not do that and this PRD does not propose it.
 
 **H24 — `Ctrl+Z` / `Ctrl+Shift+Z`, plus `metaKey` support so macOS gets `Cmd+Z`.** All four are
 free. The key manager's editable-target guard already means Ctrl+Z inside a filter box falls

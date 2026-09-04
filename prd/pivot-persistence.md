@@ -575,10 +575,13 @@ document's** — §11.5.
    in S3, not after.
 3. **What is the ledger's lifetime across a reload?** P4 persists *rejections*; the save ledger is
    session-scoped like the runs it hangs off, so a reload forgets that twelve nodes were unsaved —
-   along with the nodes themselves, which is why it is defensible. It stops being defensible the
-   moment the graph's own data is restored from a snapshot (workspaces PRD A), because then
-   unsaved nodes come back with no mark. Not this document's problem yet; it becomes one the day
-   `applyViewState` lands.
+   along with the nodes themselves, which is why it is defensible. It stops being defensible only
+   where the *nodes* come back without the ledger. **Not `applyViewState`**, despite an earlier
+   draft of this note saying so: PRD A's §5 is explicit that a snapshot references the dataset and
+   never copies it, and its `overlay` — the one field that could hold staged data — is specified
+   as always empty until PRD C. The case that does bite is a consumer persisting its own dataset,
+   which needs no PRD at all: ingested nodes sit in the graph like any others, so they come back
+   unmarked. Cheap to leave open while nothing here is built.
 4. **Should a save be cancellable?** `ctx.signal` is in the contract for symmetry, but the library
    never aborts it: cancelling a write mid-flight leaves the analyst not knowing what happened,
    which is worse than waiting. Leaving Pivot mode does not cancel a save, and `destroy()` while
