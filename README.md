@@ -1,12 +1,18 @@
 # Pivotick
 
-Pivotick is a hackable TypeScript graph visualization library built on top of [D3 force simulations](https://d3js.org/d3-force/simulation). It renders directed or undirected graphs with interactive controls, force simulation, tree layout support, and optional UI elements such as sidebars, toolbars, context menus, and tooltips.
+Pivotick is a hackable TypeScript graph visualization library built on top of [D3 force simulations](https://d3js.org/d3-force/simulation). It renders directed or undirected graphs with interactive controls, force simulation, tree layout support, and optional UI elements such as a sidebar, a data table, context menus and tooltips.
+
+It also does the thing it is named for: a **pivot** fetches more graph from wherever your data lives, stages the results as candidates you triage rather than dropping them on the canvas, and can write back what you keep — with an undo history over everything the canvas holds.
 
 ![Pivotick Full UI](./docs/pictures/graph-full-ui.png)
 
 ## Core Features
 
 - Directed and undirected graph rendering
+- Pivots — run an enrichment against what is on the canvas, triage the results in a dock pane, and ingest only what you keep
+- Saving a pivot's results back to the system they came from, with a ledger of what has crossed and what has not
+- Undo and redo over what the canvas holds — ingests, deletions, hides and hand-drawn elements — as one timeline
+- Provenance: every node and edge knows which sources vouch for it, and one source's contribution can be dropped
 - Force-based simulation with optional worker support
 - Tree/hierarchy layout support, with the hierarchy inferred or declared by the data
 - Self-tuning force layout, or hand-tuned from the Physics flyout
@@ -16,7 +22,7 @@ Pivotick is a hackable TypeScript graph visualization library built on top of [D
 - Different UI modes (`full`, `light`, `viewer`, `static`)
 - Configurable node/edge styles, labels, rim badges, and callbacks
 - Interactive editing — node editing and edge creation (drag or click) with validation and enrichment hooks
-- Extensible plugin API for adding custom UI
+- Extensible plugin API for adding custom UI, including your own mode on the left rail
 
 
 ## Getting Started

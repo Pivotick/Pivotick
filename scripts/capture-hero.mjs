@@ -57,8 +57,8 @@ try {
         // Emulate a dark-mode visitor rather than restyling the page.
         colorScheme: 'dark',
     })
-    // `?hero` drops the demo's opt-in "coming soon" rail modes, so the shot shows
-    // the rail as it ships by default.
+    // `?hero` skips the demo's registered rail mode, so the shot shows the rail as
+    // it ships by default.
     await page.goto(`${ORIGIN}/?hero`, { waitUntil: 'networkidle' })
 
     await page
