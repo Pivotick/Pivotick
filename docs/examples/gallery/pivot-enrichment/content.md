@@ -20,10 +20,16 @@ Press `P`, click `paste 9f21`, and read the panel.
 - **The gate refuses** while the count is over `maxCandidates: 2000`, and says how to lift it.
 - **Tick *URLs*** and 210 comes back under the cap, so **Fetch** turns on by itself.
 - **What arrives is not the graph.** The 210 candidates open the dock's Review tab. The
-  canvas does not move until you ingest, and the toast that follows carries **Undo**.
+  canvas does not move until you ingest.
+- **Ingest is not saving.** Once they land, the foot of the panel reads `420 unsaved` — the
+  210 nodes and the 210 edges that came with them — and offers **Save**. Writing them back
+  out is a second decision. This provider refuses every fifth node, so the toast reads
+  `Saved 378 of 420`, the count drops to `42`, and **Retry** sends exactly those.
 
-Select `Event 5f2a` for the other shape: `Objects & attributes` declares `autoIngest`, so its
-twelve objects land directly with no pane.
+Select `Event 5f2a` for the other shape: `Objects & attributes` declares `autoIngest` and
+`autoSave`, so its twelve objects land and are written back with no pane and no gesture.
+`Passive DNS` is the third state — no `save` at all, so nothing it brings is ever counted
+unsaved.
 
 <script setup>
 import { data, options, onLoaded } from './options.js'

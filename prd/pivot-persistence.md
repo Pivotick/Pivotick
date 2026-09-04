@@ -1,21 +1,21 @@
 # Feature — pivot persistence: saving an ingested result back, and remembering rejections
 
-**Status:** Proposed — the follow-up [`pivot-enrichment-interface.md`](pivot-enrichment-interface.md) §12 parked ("*persisting or saving an ingested pivot result back to the source system. Its own PRD, still to be written; rejection persistence (D14) belongs with it*"). Scoped with Sami on 2026-09-01, after that PRD's M1–M3 were all built. Four shaping questions are answered (§6, P1–P4); the rest of §6 is derived from them and from what the built runtime already does. **Nothing here is built yet.**
+**Status:** **Built** 2026-09-04 on `worktree-undo-history`. The save half shipped whole; rejection persistence was **dropped** — Sami reversed P4 on 2026-09-04 (§6, P4′), taking S3 with it. §11.1 was settled the same day. What is here now describes what exists, with the two rulings and every implementation deviation recorded in §15.
 **Owner:** Sami Mokaddem
 **Requested:** 2026-09-01
-**Area:** `src/PivotManager.ts` (the save ledger, the rejection store, `save`), `src/interfaces/Pivot.ts` (`save` / `autoSave` on `PivotDefinition`, the save types), `src/ui/elements/Pivot/PivotPanel.ts` + `TriagePane.ts` (the unsaved count and the Save affordance), `src/ui/Notifier.ts` (the result and retry toasts — no change needed, see §4.3), `src/interfaces/GraphOptions.ts` (a storage key, and the option group for the store). Additive — no breaking changes to anything M1–M3 shipped.
-**Type:** data-path capability — a second half to the pivot pipeline (`summarize` → `fetch` → triage → **ingest** → **save**), plus the library's first use of browser storage.
+**Area:** `src/PivotManager.ts` (the save ledger and `save`), `src/interfaces/Pivot.ts` (`save` / `autoSave` on `PivotDefinition`, the save types), `src/ui/elements/Pivot/PivotPanel.ts` + `TriagePane.ts` (the unsaved count and the Save affordance), `src/ui/Notifier.ts` (the result and retry toasts — no change needed, see §4.3), `src/GraphHistory.ts` (`markPersisted`), `src/interfaces/GraphOptions.ts` (`pivotMarkUnsaved`), `src/renderers/svg/NodeDrawer.ts` (the unsaved class). Additive — no breaking changes to anything M1–M3 shipped.
+**Type:** data-path capability — a second half to the pivot pipeline (`summarize` → `fetch` → triage → **ingest** → **save**). The browser storage this document originally carried is gone (P4′).
 **Related:** [`pivot-enrichment-interface.md`](pivot-enrichment-interface.md) (D7, D8, D13, D14, D16, D23, D25 and D27 all constrain this document — it may not contradict them), `misp/write-path-lifecycle-hooks.md` and `edge-create-veto-hook.md` (the five gesture hooks, which already own persistence for everything a *user* does by hand — §4.1), `graph-workspaces-overview.md` + its unwritten PRD **C** `staging-overlay-and-promotion.md` (§10 rules on the collision — most of C has since been shipped under other names, and this document takes the rest of its save half), `view-state-serialization.md` (PRD A of that effort; the rejected alternative home for the rejection store, P4).
 
 ---
 
 ## 0. Instructions
 
-§6's decisions were taken deliberately; if the implementation makes one look wrong, **say so and
-stop** rather than quietly choosing differently. §11 is genuinely open — ask before picking.
-**P4 in particular is Sami's overrule of this document's own recommendation**: it is settled, and
-§6's P4 records the case against it so the cost is chosen with open eyes rather than rediscovered
-halfway through S3.
+This document is now a record of what was built rather than a brief. §6 carries the decisions
+as they were taken *and* the two that moved on 2026-09-04 — P4 was reversed by its own author,
+and §11.1 was settled — with both readings kept, because a reversal that erases the case it
+overturned teaches nobody anything. §15 lists every place the implementation departed from what
+§7 sketched, and why.
 
 Two rules inherited from the parent PRD, neither negotiable here:
 
@@ -71,7 +71,7 @@ Extends the parent PRD's §2 (pivot / provider / candidates / ingest), which sta
 | **Unsaved** | An element a pivot run created that has not been confirmed written. A precise ledger, not an estimate. |
 | **Not savable** | An element whose pivot declared no `save`. It is never counted as unsaved — P5, which is what keeps the count honest. |
 | **Canonical id** | The id the source system assigns on save, which is usually **not** the id the provider used while it was a candidate (P8). |
-| **Remembered rejection** | A `(pivotId, candidateId)` pair the analyst explicitly rejected, surviving a reload (P4). |
+| **Remembered rejection** | ~~A `(pivotId, candidateId)` pair surviving a reload.~~ Dropped by P4′: a rejection is a verdict in one session's context and is held for that session only, exactly as D14 built it. |
 
 The word **promote** is deliberately avoided, though the workspaces umbrella uses it for
 something adjacent — §10 explains why this is not that.
@@ -155,14 +155,13 @@ Not opinions — what the code does, and each one closed a design option.
   not quietly arm a duplicate for the next run.
 - The **Save affordance**: an unsaved count and one button in the Pivot panel, the same line in a
   triage pane, and a result toast that becomes its own **Retry** on partial failure.
-- **Remembered rejections** in `localStorage` (P4) — namespaced, timestamped, expiring, capped,
-  and degrading to memory whenever storage is unavailable — plus `clearRejections()` and the pane
-  affordance that reveals and clears them.
 - A docs section and a gallery-card update, both on surfaces that already exist.
 
-Not shipped, named here so the boundary is visible from the summary: **no refresh of existing
-nodes from the source** (§12), no write path for manual edits (P3), no rollback of the canvas on
-a failed save (P10), and no credential, retry or transport policy of any kind (D20 stands).
+Not shipped, named here so the boundary is visible from the summary: **remembered rejections**
+in any form (P4′ — the store, its key, its expiry, its cap and its interface are all gone), **no
+refresh of existing nodes from the source** (§12), no write path for manual edits (P3), no
+rollback of the canvas on a failed save (P10), and no credential, retry or transport policy of
+any kind (D20 stands).
 
 ## 6. Decisions taken
 
@@ -220,6 +219,28 @@ an implementation obligation rather than an objection:
 Both are therefore built: `localStorage` is the **default implementation**, and P12 keeps the
 store swappable so a consumer with a server can supply their own without a breaking change. The
 default is what Sami chose; the seam is what stops the choice from being permanent.
+
+**P4′ — reversed, 2026-09-04. Rejection persistence is dropped entirely.** *(Sami, asked to
+settle §11.2's hashing question, answered the question above it instead.)*
+
+> "I'd definitely not put rejection in the local storage. A rejection is per-graph session, it
+> might not be a rejection in another graph/context."
+
+That is an argument against persisting rejections *at all*, not merely against the storage
+medium: if a verdict is scoped to one investigation's context, carrying it into the next one is
+wrong wherever it is kept. Offered the seam-without-a-default middle (`PivotRejectionStore` as an
+interface, nothing shipped that writes), he took the further option — **no store, no interface,
+no option**. Rejections stay in the session `Map` D14 already built, and no further.
+
+What this takes with it: **P9** (the storage key `Graph` has no identity for), **P11** (the TTL,
+the cap, the opt-out), **P12** (the swappable store), the whole of **S3**, the rejection half of
+§13, and §11.2 — hashing an id that never reaches disk is not a question. §4.3.2 stands as a
+finding about `app_id` rather than as a constraint on anything here, and §4.2's "no storage of
+any kind" is still true of the library today.
+
+The cost, stated plainly because it was a real problem: re-running a pivot tomorrow re-offers
+the 1,800 the analyst dismissed today. The counter-argument that won is that "today" and
+"tomorrow" are different investigations, and a verdict is not obviously portable between them.
 
 **P5 — A pivot with no `save` produces nothing unsaved.**
 Savability is declared, exactly as narrowing is (`summarize` omitted ⇒ no narrowing). Elements
@@ -396,49 +417,35 @@ export interface PivotSaveReport {
 **The ledger and the store:**
 
 ```ts
-// Saving — one run, or every unsaved savable run
-await graph.pivots.save(runId?: string): Promise<PivotSaveReport>
+// Saving — a run id, a pivot id, or everything (§15.2)
+await graph.pivots.save(target?: string): Promise<PivotSaveReport>
 
 // Reading the ledger
 graph.pivots.unsaved(): PivotRun[]                       // savable runs not yet fully written
-graph.pivots.unsavedCount(): { nodes: number, edges: number }
+graph.pivots.unsavedCount(pivotId?: string): { nodes: number, edges: number }
 graph.pivots.isSaved(element: Node | Edge): boolean       // false for unsaved AND for not-savable
 graph.pivots.isSavable(element: Node | Edge): boolean     // P5's distinction, made queryable
 graph.pivots.canonicalId(element: Node | Edge): string | undefined   // P8
 
-// Remembered rejections (P4, P11, P12)
-graph.pivots.clearRejections(pivotId?: string): void
-
-export interface PivotRejectionStore {
-    load(): Record<string, Record<string, number>>        // pivotId -> candidateId -> epochMs
-    save(state: Record<string, Record<string, number>>): void
-    clear(): void
-}
+// Rejections stay exactly what D14 built: a session Map, and nothing more (P4′).
+graph.pivots.rejectedIds(pivotId): string[]
+graph.pivots.unreject(pivotId, id): void
 ```
 
-**Options.** `GraphUI` has no pivot *group* today — M3 shipped a single flat `UI.pivotMode`
-(`src/interfaces/GraphUI.ts:100`). This document adds one, and deliberately leaves `pivotMode`
-where it is: moving it under the group would be a breaking change for every consumer M3 already
-has, for tidiness alone. The asymmetry is the cheaper of two bad options and should be stated in
-the docs rather than quietly lived with.
+**Options.** The `UI.pivots` group this document proposed existed to hold six storage settings.
+P4′ removed five of them, and a group with one member is worse than no group — so the one that
+survived joins the flat root-level `pivot*` options M1 and M3 already established
+(`pivotCandidateCeiling`, `pivotRimBadge`), with a manager field beside `candidateCeiling` and
+`rimBadge` so it can be changed at runtime the same way:
 
 ```ts
-UI: {
-    pivots?: {
-        /** Storage identity (P9). Falls back to the container's DOM id, then to memory. */
-        storageKey?: string
-        /** @default true */
-        rememberRejections?: boolean
-        /** @default 30 */
-        ttlDays?: number
-        /** @default 5000, per pivot, LRU by timestamp */
-        maxRejections?: number
-        /** Swap the localStorage default for your own (P12). */
-        rejectionStore?: PivotRejectionStore
-        /** Mark unsaved nodes with a `pvt-unsaved` class for styling. @default false */
-        markUnsaved?: boolean
-    }
-}
+new Pivotick(el, data, {
+    pivots: [objectPivot],
+    /** A `pvt-node-unsaved` class on what a run created and has not written back. @default false */
+    pivotMarkUnsaved: true,
+})
+
+graph.pivots.markUnsaved = false   // and at runtime, like `rimBadge`
 ```
 
 **Events.** The ledger changes are announced through the existing `PivotChange` bus that M1
@@ -492,13 +499,17 @@ const correlationPivot: PivotDefinition = {
 }
 ```
 
-**A consumer who wants rejections on their server instead of the browser (P12):**
+**A pivot whose data is the source's own already — hands-off end to end (P2):**
 
 ```ts
-new Graph(el, data, {
-    pivots: [correlationPivot],
-    UI: { pivots: { rejectionStore: myServerBackedStore } },
-})
+const objects: PivotDefinition = {
+    id: 'misp-objects',
+    label: 'Objects & attributes',
+    autoIngest: true,    // D13 — no triage
+    autoSave: true,      // …and no gesture: saving these is an update, not a decision
+    fetch: (nodes, _n, ctx) => api.objects(nodes[0].id, { signal: ctx.signal }),
+    save: payload => api.createObjects(payload.origin[0].id, payload.nodes),
+}
 ```
 
 ## 9. Why this is cheap — what already holds
@@ -561,18 +572,15 @@ document's** — §11.5.
 
 ## 11. Open questions
 
-1. **Does an edge save separately from its nodes?** This document assumes not: a candidate edge
-   rides with its endpoints (D24), and `save` receives both in one payload, so a backend that
-   creates a relationship in a second call does it inside one `save`. The case that would break
-   it is a backend where the relationship write can succeed while the node write fails — the
-   outcome type can already express that (`savedNodeIds` without `savedEdgeIds`), but no surface
-   explains a saved edge between unsaved nodes. Worth deciding before S2 draws anything.
-2. **Should stored rejection ids be hashed?** Storing a plaintext email address or paste id in
-   `localStorage` is the sharpest edge of P4. Membership tests and "reject all remaining" work
-   perfectly over hashes; what breaks is *revealing* the remembered rejections after a reload
-   (the pane's "5 rejected earlier ▸" would show hashes for anything not in the current candidate
-   set). Cheap to add, impossible to add later without invalidating every stored set — so decide
-   in S3, not after.
+1. **Does an edge save separately from its nodes?** **Settled 2026-09-04: the report is taken at
+   face value.** A save that names an edge written but not the nodes it connects is recorded
+   exactly as it says — the ledger does not clamp an edge to its endpoints, and the count reads
+   "1 edge saved, 2 nodes pending" without apology. What the source system says it wrote is not
+   the library's to overrule, and the alternative would have had the library silently contradict
+   the consumer it just asked. One line in `PivotSaveOutcome`'s docs carries it; no surface was
+   needed, because the count already expresses it.
+2. **Should stored rejection ids be hashed?** **Moot.** P4′ dropped the store, so no id reaches
+   disk. Kept as a numbered entry so §11's numbering does not shift under the references to it.
 3. **What is the ledger's lifetime across a reload?** P4 persists *rejections*; the save ledger is
    session-scoped like the runs it hangs off, so a reload forgets that twelve nodes were unsaved —
    along with the nodes themselves, which is why it is defensible. It stops being defensible only
@@ -582,17 +590,21 @@ document's** — §11.5.
    as always empty until PRD C. The case that does bite is a consumer persisting its own dataset,
    which needs no PRD at all: ingested nodes sit in the graph like any others, so they come back
    unmarked. Cheap to leave open while nothing here is built.
-4. **Should a save be cancellable?** `ctx.signal` is in the contract for symmetry, but the library
-   never aborts it: cancelling a write mid-flight leaves the analyst not knowing what happened,
-   which is worse than waiting. Leaving Pivot mode does not cancel a save, and `destroy()` while
-   one is in flight is the only genuinely open case.
-5. **Amending the workspaces umbrella** (§10). Its W4 and W5 are contradicted by shipped code and
-   its document map lists two superseded PRDs. Sami's call whether to amend it now or when the
-   workspaces effort next moves.
-6. **Does the unsaved count belong on the rim?** `markUnsaved` ships as a class and an off-by-
-   default option (§7) rather than a badge, because D12 already rations two free corners on
-   exactly the container nodes MISP produces. If real use wants a visible marker, it should be
-   designed against that constraint, not bolted on.
+4. **Should a save be cancellable?** **Closed as built.** `ctx.signal` is in the contract and the
+   library aborts it in exactly one place: `destroy()`, which was the only case this note left
+   open. Nothing else does — not leaving Pivot mode, not a second Save (that is refused as a
+   no-op rather than superseding the first). Cancelling a write mid-flight leaves nobody knowing
+   what happened, and at `destroy()` there is nobody left to tell.
+5. **Amending the workspaces umbrella** (§10). **Done 2026-09-04**, on Sami's instruction: W4 and
+   W5 carry supersession notes, PRD D is marked superseded, and PRD C's remaining scope is
+   narrowed to the two-tier store and the attribute merge policy.
+6. **Does the unsaved count belong on the rim?** Still open, and unchanged by what shipped:
+   `pivotMarkUnsaved` is a class and an off-by-default option rather than a badge, because D12
+   already rations two free corners on exactly the container nodes MISP produces. The default
+   style is a dashed rim, which costs no corner. If real use wants a badge, it should be designed
+   against that constraint rather than bolted on.
+7. **Should the post-ingest toast offer Save?** New, and only askable now — see §15.9. The action
+   slot P7 reasoned was spent is free.
 
 ## 12. Not in scope
 
@@ -640,22 +652,25 @@ succeed, half-succeed, throw and mint ids on demand.
   duplicating — the case P8 exists for, and the one that fails silently without it.
 - `graph.pivots.canonicalId(node)` reads back; the node's own id is unchanged.
 
-**Rejections**
+**The surfaces** *(added — S2's states were not in the original list, and they are what an
+analyst actually reads)*
 
-- Reject 5, reload, re-run: the pane reads `5 rejected earlier` from storage and suppresses them.
-- An entry older than `ttlDays` is pruned on load; `maxRejections` evicts oldest-first.
-- `rememberRejections: false` stores nothing and the pane still works.
-- Storage that throws on write (quota, disabled, private mode) degrades to memory, warns once,
-  and never breaks the pane — driven by stubbing `localStorage` in the page.
-- Two graphs on one page with different `storageKey`s do not see each other's rejections; with no
-  key and no container id, both are memory-only and warn (P9).
-- `clearRejections()` empties one pivot and leaves the other.
+- The panel's line is away at zero, reads `n unsaved` once a run lands, and goes again on a save.
+- A partial save leaves the count at what is left; the retry rewrites *the same* toast rather
+  than stacking a second one, and reports the whole rather than its own share.
+- A triage pane carries its own provider's count and saves only that provider's runs.
+- `pivotMarkUnsaved` marks what has not been written, and unmarks it once it has.
+
+**Not tested, because it no longer exists:** everything under the original *Rejections* heading
+(storage, TTL, cap, opt-out, quota failure, two graphs on one page, `clearRejections`). P4′.
 
 **Docs.** A *Saving results* section in `docs/pivots.md` (the page M3 shipped), carrying the
-pipeline diagram extended by one step, the `save` contract, the honest statement that undo does
-not reach the source system (P13), and a storage note naming `storageKey`, the TTL and the
-opt-out. The `pivot-enrichment` gallery card gains a save-back to its fake provider so the count,
-the button and the partial-failure retry are demonstrable rather than described.
+pipeline diagram extended by one step, the `save` contract, the outcome table, the canonical-id
+story and the honest statement that undo does not reach the source system (P13). The storage note
+became its opposite: a *What this is not* bullet saying rejections are held for the session and no
+further, with P4′'s reason. The `pivot-enrichment` gallery card gained a save-back — one provider
+that refuses every fifth node so the partial retry is demonstrable, one `autoIngest` +
+`autoSave` provider, and one with no `save` at all so the *not savable* third state is visible.
 
 ## 14. Work plan
 
@@ -669,11 +684,93 @@ test above is reachable here.
 pane header, `markUnsaved`, and the honest states — nothing to save, saving…, partial, and the
 undo-after-save warning (P13). Depends on S1; touches no data path.
 
-**S3 — remembered rejections.** `PivotRejectionStore`, the `localStorage` implementation, P9's key
-resolution and its warning, P11's TTL / cap / opt-out, `clearRejections()`, the pane's "n rejected
-earlier" reading from disk, and the docs. Independent of S1 and S2 — it could ship first, and
-should if the save half stalls on §11.1.
+**S3 — remembered rejections.** ~~`PivotRejectionStore`, the `localStorage` implementation, P9's
+key resolution, P11's TTL / cap / opt-out, `clearRejections()`.~~ **Cancelled by P4′.** Nothing of
+it was built, and nothing of it should be: the reversal is an argument against the feature, not
+against one implementation of it.
 
-No library-wide changes are needed, which is the point of §9: unlike M3 (which needed four
+No library-wide changes were needed, which is the point of §9: unlike M3 (which needed four
 rail-mode additions) and M2 (which needed the actionable toast and `DockTabHandle.setLabel`),
-every surface this document lands on was built by the milestone before it.
+every surface this document landed on was built by the milestone before it. The one exception is
+`GraphHistory.markPersisted` (§15.4), which is four lines.
+
+## 15. What was actually built, where it departed from §7, and why
+
+Ten notes. Every one of them is a place a reader of §7 alone would guess wrong.
+
+**15.1 — The ledger does not drop with the run; *pending* is computed against the canvas.**
+P13 said "the ledger drops with the run", and taken literally that breaks redo: undo removes a
+saved run's nodes, redo puts the same nodes back, and a dropped ledger would present them as
+unsaved and invite a second write of twelve objects the source system already has. So the run
+records and the saved set are kept for the session, and what a run has *pending* is its created
+ids minus the written ones minus **the ones no longer on the canvas**. An undone run therefore
+has nothing pending and is absent from every count without its record having to go, and a redone
+one comes back exactly as saved as it was. P13's actual content — no compensating writes, undo is
+canvas-only — is untouched.
+
+**15.2 — `save` takes a run id *or* a pivot id.** §7 specified `save(runId?)`. A triage pane's
+own Save means "write what this provider has ingested", and a provider may have been ingested
+more than once, so `save(pivotId)` was needed and a loop of `save(runId)` calls would have
+produced one toast per run. The two never collide: a run id is `<pivotId>#<n>`. `unsavedCount()`
+took the same optional narrowing, which is what the pane's header reads.
+
+**15.3 — `PivotRun` gained `origin` as well as `saved`.** §7's payload carries `origin`, and the
+run record had it only inside `restage`, which is an optional field about re-staging rather than
+about the run. It is now a field of its own, and the payload is the projection §9 claims it is.
+
+**15.4 — `GraphHistory.markPersisted(entryId)` is new.** P13 wanted a run's history entry marked
+`persisted` when its save succeeds; nothing could mark one after the fact. Four lines, `@private`,
+beside `recordPivotRun`. **Only a run written whole is marked** — a run that wrote 9 of 12 has not
+been persisted, and saying so would license an undo warning that is false for a quarter of it.
+Everything downstream of the flag (the *saved* chip, the footer's canvas-only count) was already
+built, exactly as P13 predicted.
+
+**15.5 — Canonical ids are resolved at the fetch boundary, not at the two dedup sites.** P8 named
+"ingest dedup and the children union" as the two call sites. Doing it there would have missed a
+third: an edge whose *endpoints* are canonical ids, which `addEdge` would fail on — and that is
+the normal case, since a re-run returns relationships alongside the objects. A `deAlias` pass over
+the incoming `PivotResult` rewrites node ids, nested children and edge endpoints once, so nothing
+downstream has to know aliases exist. Strictly more correct, and one place instead of three.
+
+**15.6 — The unsaved marker repaints on ingest, not only on save.** A run's nodes are drawn by
+the ingest batch *before* the run is enrolled in the ledger, so they are drawn as not-savable and
+nothing asks again. `enrol` is now followed by a repaint. Found by a test that read zero marked
+nodes where it wanted twelve.
+
+**15.7 — The retry toast reports the whole, not its own share.** §7 pictured `Saved 9 of 12`
+becoming `Saved 12`. A first pass reported each attempt separately, so a retry that finished the
+job read `Saved 3` and left the analyst to add up. The running total is carried through the retry
+chain instead, which also makes `Saved 10 of 27` right on a second partial attempt.
+
+**15.8 — The toast lives in the manager.** So a save driven from the console reports itself the
+same way the panel's button does — which is what makes S1 "drivable entirely from the console"
+true of the reporting as well as the ledger. It follows the precedent `report()` already set for
+the auto-ingest paths.
+
+**15.9 — §4.3.1's premise went stale before this was built, and P7 survives anyway.** That
+constraint reasoned from "the post-ingest toast has already spent its one action slot on D25's
+Undo". It has not: the undo-history work moved undo to the top bar permanently and left the ingest
+toast plain (`PivotTriage.toastIngest`), so the slot is free. P7's *conclusion* was built as
+written, because its second argument is the load-bearing one — Save is a deliberate act still
+available five minutes later, and the panel is where the analyst already is. **Worth revisiting
+deliberately**: a Save on the post-ingest toast is now available and was not when P7 was written.
+It was not added here, because adding it is a design decision this document did not take.
+
+**15.10 — A stale line in `docs/pivots.md` was corrected in passing.** The step-6 walkthrough
+still said the ingest toast "carries **Undo**", which stopped being true for the same reason
+15.9 gives. One sentence, in the section the new one sits under.
+
+### Where it lives
+
+| | |
+|---|---|
+| Contract and types | `src/interfaces/Pivot.ts` — `save`, `autoSave`, `PivotSavePayload`, `PivotSaveContext`, `PivotSaveOutcome`, `PivotSaveReport`, `PivotRun.origin`, `PivotRun.saved` |
+| Ledger and `save` | `src/PivotManager.ts` — the `--- saving ---` block, plus `deAlias` in `stage` and `enrol` in `ingest` |
+| History | `src/GraphHistory.ts` — `markPersisted` |
+| Panel | `src/ui/elements/Pivot/PivotPanel.ts` — `paintUnsaved`, `save` |
+| Pane | `src/ui/elements/Pivot/TriagePane.ts` — the `headline` segment, `save` |
+| Marker | `src/renderers/svg/NodeDrawer.ts`, `src/styles/_pivotick.scss`, `pivotMarkUnsaved` |
+| Tests | `tests/visual/specs/pivot-save.spec.ts` (15), harness `SaveBehavior` / `serveSave` |
+| Docs | `docs/pivots.md` *Saving results*, `docs/examples/gallery/pivot-enrichment/` |
+| Dev page | `src/pivot-demo.ts` — the Save / Auto-save / Mark knobs and a Save button |
+

@@ -75,16 +75,37 @@ const correlations = {
 
     // Refuse to fetch while the source claims more than this. Narrowing lifts it.
     maxCandidates: 2000,
+
+    // The write half. Ingest puts candidates on the canvas; this is what puts them in
+    // the source system, and it is the only thing that clears the panel's unsaved
+    // count. A real one would POST them and report what the server accepted.
+    //
+    // This one deliberately refuses every fifth node, because a partial write is the
+    // normal case at any scale and the retry is the interesting part: anything not
+    // named in `savedNodeIds` stays unsaved, and **Retry** sends exactly that.
+    save: ({ nodes, edges }) => {
+        const written = nodes.filter((_, i) => i % 5 !== 0)
+        const refused = nodes.length - written.length
+        return {
+            savedNodeIds: written.map((node) => node.id),
+            savedEdgeIds: edges.map((edge) => edge.id),
+            message: refused ? `${refused} refused by the server` : undefined,
+        }
+    },
 }
 
 // The other shape a pivot takes: a small, trusted result that needs no triage. It comes
-// back as one container carrying its own children and lands straight on the canvas, with
-// an Undo on the toast that follows it.
+// back as one container carrying its own children and lands straight on the canvas.
+//
+// These objects are the source's own already, so both halves are automatic: `autoIngest`
+// lands them with no triage, `autoSave` writes them back with no gesture.
 const expandEvent = {
     id: 'event-objects',
     label: 'Objects & attributes',
     appliesTo: (nodes) => nodes.length === 1 && nodes[0].getData()?.type === 'event',
     autoIngest: true,
+    autoSave: true,
+    save: () => true,
     fetch: ([node]) => ({
         nodes: [{
             id: `${node.id}-objects`,
@@ -98,11 +119,27 @@ const expandEvent = {
     }),
 }
 
+// A pivot with no `save` at all. Passive DNS is somebody else's observation, not ours to
+// write anywhere — so its results are *not savable*: never counted unsaved, and no Save
+// offered for them. That third state is what keeps the count honest.
+const resolves = {
+    id: 'passive-dns',
+    label: 'Passive DNS',
+    appliesTo: (nodes) => nodes.every((node) => node.getData()?.type === 'domain'),
+    fetch: ([node]) => ({
+        nodes: Array.from({ length: 6 }, (_, i) => ({
+            id: `198.51.100.${20 + i}`,
+            data: { label: `198.51.100.${20 + i}`, type: 'ip' },
+        })),
+        edges: Array.from({ length: 6 }, (_, i) => ({ from: node.id, to: `198.51.100.${20 + i}` })),
+    }),
+}
+
 const options = {
     // Registering here rather than later is what makes the rail button correct on the
     // very first paint: `UI.pivotMode` defaults to `'auto'`, and the constructor's
     // pivots land before the UI is built.
-    pivots: [correlations, expandEvent],
+    pivots: [correlations, expandEvent, resolves],
     UI: {
         mode: 'full',
         sidebar: { collapsed: true },
