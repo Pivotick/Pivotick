@@ -45,7 +45,11 @@ You can configure these menus for these scopes:
 
 The write-path entries (delete, edit, create) go through their before-hooks — see
 [Write-path lifecycle hooks](/callbacks#write-path-lifecycle-hooks) — and each disappears
-when its `editors.<editor>.enabled` flag is `false`. Your own entries are never gated.
+when its `editors.<editor>.enabled` flag is `false`: **Delete** with `deletion`,
+**Edit Edge** with `edgeEditor`, **Add Node Here** with `nodeCreator`, **Connect to…**
+with `edgeCreator`. The same goes for entries that are a door into a switchable feature:
+**Add Note** and the whole `menuNote` follow [`UI.notes`](/ui#turning-features-off),
+**Inspect Properties** follows `UI.inspector`. Your own entries are never gated.
 Both "…here" entries place their element where the **menu was opened**, whatever the
 zoom or pan.
 

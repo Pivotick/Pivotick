@@ -19,6 +19,9 @@ const options = {
 }
 ```
 
+`UI.filter.enabled: false` removes the panel, its pill and **Shift+K** altogether;
+`graph.queryEngine` still filters from code.
+
 The form **applies itself**: a pick or a tick commits the moment you make it, a text or
 pattern field a beat after you stop typing. There is no apply button, so the panel can
 never be showing a filter the canvas hasn't got. **Reset**, beside the section label,

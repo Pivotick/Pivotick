@@ -130,6 +130,7 @@ Pivotick provides a flexible UI layer on top of your graph, allowing you to cont
 - Customize [**sidebar**](./ui-sidebar) and panels to show properties or extra information.
 - Define [**tooltips**](./ui-tooltip) for nodes and edges, with optional custom renderers.
 - Configure [**context menus**](./ui-context-menu) for nodes, edges, and the canvas.
+- [**Turn off**](./ui#turning-features-off) any feature your integration has no use for.
 
 ### UI Mode {#ui-mode}
 The `mode` option controls the overall behavior and interaction level of the graph UI.

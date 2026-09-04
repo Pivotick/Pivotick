@@ -20,6 +20,11 @@ The sidebar displays contextual information for graph elements. It has three cus
 - <span style="color: darkred;">**Properties Panel**</span> as [`propertiesPanel`](/api/html/interfaces/GraphUI.PropertiesPanel.html)
 - <span style="color: darkred;">**Extra Panels**</span> as [`extraPanels`](/api/html/interfaces/GraphUI.ExtraPanel.html)
 
+`UI.sidebar.enabled: false` drops the whole column and hands its width back to the canvas.
+The properties and neighbours panels have a switch each — `UI.propertiesPanel.enabled`,
+`UI.neighborsPanel.enabled` — which removes that panel and its separator while the rest of
+the sidebar stays. See [Turning features off](/ui#turning-features-off).
+
 
 <Pivotick
     :data="dataUISidebarRendering"

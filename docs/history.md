@@ -61,7 +61,9 @@ stranded by later work is gone; getting it back means running the pivot again.
 Each of the two buttons in the header is a split button: the icon steps once, the caret
 opens the history. `Ctrl+Z` and `Ctrl+Shift+Z` (`⌘Z` and `⌘⇧Z` on macOS) reach the same two
 steps without the header, and fall through to the browser's own text undo while a text field
-has focus. Both buttons live in `full` and `light` mode, which is where the header is.
+has focus. Both buttons live in `full` and `light` mode, which is where the header is, and
+`UI.history: { enabled: false }` takes them, the dropdown and the two shortcuts away for a
+consumer driving undo from its own chrome — `graph.history` goes on recording either way.
 
 The dropdown is one list from either button, newest at the top, with a **now** line through
 it: the rows above it have been undone, the rows below are what can still be undone. Click a
