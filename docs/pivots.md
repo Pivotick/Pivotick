@@ -339,9 +339,9 @@ graph.pivots.unreject('correlations', id)    // …unrejectAll for every one of 
 ### `autoIngest`
 
 For a small, trusted result that nobody wants to pick through, such as expanding a container
-into its dozen children, declare `autoIngest: true`. Results land directly, with an undo on
-the toast. The provider decides this, because only it knows whether its own results are
-small and trusted enough to skip triage.
+into its dozen children, declare `autoIngest: true`. Results land directly, and the top bar's
+undo takes them back like any other ingest. The provider decides this, because only it knows
+whether its own results are small and trusted enough to skip triage.
 
 ## Ingest, and what it is allowed to do
 

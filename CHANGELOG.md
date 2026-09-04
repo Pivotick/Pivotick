@@ -1,6 +1,18 @@
 # Changelog
 
-## Unreleased
+## 2.0.0
+
+Two subsystems, and they are the ones the name has been promising. **Pivots** run an enrichment
+against what is on the canvas and stage what comes back — the results are candidates, not graph,
+until someone commits them, because the hard part of walking a correlated dataset is never the
+fetching, it is that 1,800 neighbours are useless on a canvas. **`graph.history`** is the way
+back out: one bounded record of what the canvas holds, contiguously reversible, with the top
+bar's Undo and Redo buttons finally wired to something and a timeline dropdown behind each.
+Between the two sits **saving** — a pivot can write its own results back into the system they
+came from, and the library keeps the books on what has crossed. The **mode rail takes modes of
+your own**, so the Pivot mode is built out of the same door a consumer gets. The breaking
+changes are collected at the end with a migration table; most of them touch APIs that never
+shipped, and the one to read is the retirement of `UI.modeRail`.
 
 ### Pivots: fetch more graph, and choose what lands
 
@@ -16,11 +28,36 @@
   says the number, the limit and the way forward, and *lifts* once the narrowing brings the
   count under the cap. An absolute `pivotCandidateCeiling` (10,000) backstops a provider that
   ignores the cap. Nothing is ever silently sampled.
-- **A triage pane in the dock** — one tab per pivot that has been run, with the candidates as
-  a table you can search (regex included), filter per column, sort and page. Rows are marked,
-  ingested, or explicitly rejected; a rejection is remembered for the session, struck through
-  in place rather than swept away, and reversible. **Reject all remaining** is the one gesture
-  that turns 1,800 into 12. Closing the pane rejects nothing.
+- **`appliesTo` keeps the share of the origin it wants**, rather than bowing out of a mixed one.
+  Return a boolean for a rule about the origin as a whole, or the nodes you accept for a rule
+  that reads one node at a time. So a domain and an IP picked together each keep their own
+  providers instead of leaving only the ones that accept both, and the panel says so on the
+  entry — *Applies to 3 of the 5 picked*. Whatever it keeps is the origin the provider is
+  called with: `summarize` and `fetch` never see a node it turned down, and the cached summary
+  is keyed by that narrowed origin. `graph.pivots.for(nodes)` and
+  `graph.pivots.originFor(id, nodes)` read it.
+- **One Review tab in the dock, with the providers as tabs down its side.** The candidates are
+  a table you can search (regex included), filter per column, sort and page, in the provider's
+  own columns. Rows are marked, ingested, or explicitly rejected; a rejection is remembered for
+  the session, struck through in place rather than swept away, and reversible. **Reject all
+  remaining** is the one gesture that turns 1,800 into 12. Closing a provider rejects nothing —
+  untriaged leftovers come back on the next run — and a re-run offers *Show new* /
+  *Keep triaging* rather than throwing marked rows away unasked. One tab, because a tray run of
+  six providers opening six dock tabs buries the dock it was meant to use.
+  - **Nodes and edges are separate blocks**, each named and counted when a run returns both. An
+    edges-only result is a table of its own; it used to show the empty state while its rows sat
+    staged behind it.
+  - **A container row opens.** It carries a **Children** count of what it holds directly, and a
+    caret at the row's leading edge lists the contents. Opening a row is not marking it, and
+    nothing inside can be picked on its own: ingesting the row takes the whole container.
+  - The whole row marks, **Shift** takes a range, and a picked row carries a leading bar rather
+    than only a tint, which has to be compared against its neighbours to be read at all.
+  - **A pane that unfolded the dock hands the region back when it goes**, so a review opened
+    over a closed dock leaves it closed.
+- **What a pivot is holding back stays listed on its entry** in the Pivot panel, named as the
+  table named it, with *restore* on each row and *Restore all* under them. The list outlives
+  the pane, so a rejection can be reconsidered without re-running the pivot just to find it
+  again. `graph.pivots.rejectedRows(id)`, `unreject(id, rowId)` and `unrejectAll(id)`.
 - **Ingest is purely additive.** An id already on the canvas is skipped, never overwritten;
   children merge into a container by id; edges follow their endpoints, except edges whose ends
   are *both* already on canvas, which become triage rows of their own. The whole batch goes
@@ -30,8 +67,64 @@
   (`getSources()`, `'seed'` for everything that was already there, `'manual'` for anything
   drawn by hand), and `graph.removeBySource` drops one source's contribution and deletes only
   what nothing else vouches for. A set rather than a scalar, because two pivots overlapping on
-  one node is the normal case. An ingest is reversible through `graph.history` (below); the
-  post-ingest toast carries the undo.
+  one node is the normal case. An ingest is reversible through `graph.history` (below), which
+  is where the undo lives.
+- **The panel holds a catalogue, not a handful.** Past eight applicable pivots it grows a
+  filter box, tick boxes and a run tray, so one run can be assembled out of several searches;
+  the tray keeps its place in the layout while empty so the first tick does not shorten the
+  list under the pointer. Entries are bare rows with their name and number on one line, their
+  Run hidden until hover, and a gate line that never resizes the entry — crossing the candidate
+  cap while ticking a facet used to shift every row below the cursor. A mode's panel can also
+  be dragged wider by its right edge (see `panelResizable`, below).
+- **`pivotRimBadge` picks what the rim draws.** A node has four rim corners and only two once
+  it has children, so one badge per provider is readable at a handful and impossible at a
+  hundred. `'per-pivot'` (the default) gives one badge per pivot that declared a potential,
+  collapsing into `+n`; `'summary'` gives **one** badge whatever the provider count, which
+  opens the Pivot panel on that node because at any real provider count the panel is where the
+  counts and the choice live; `'off'` draws none, leaving `NodeStyle.badges` alone.
+
+### Saving what a pivot brought back
+
+- **`save` writes a run's results back into the system they came from**, declared on the pivot
+  beside `fetch`. It is handed live graph objects rather than raw fragments: `origin` (what the
+  run was for), the `nodes`, `children` and `edges` it created, what was already `vouched` for,
+  and the `attempt` number. The library never writes anywhere itself and holds no credential.
+  What it contributes is the part only it knows — which elements a run created, which have
+  crossed, which failed, and what a retry should carry.
+- **All four answers a save can give are distinct.** `undefined` or `true` means the whole
+  payload was written; `false` or a throw means none of it was, and the error reaches the retry
+  toast; `{ savedNodeIds, savedEdgeIds }` is a **partial** write, where anything not named
+  stays unsaved; `{ message }` is shown verbatim in the result toast. An id naming an element
+  the run did not create is ignored — a pivot never writes what it did not produce, so it
+  cannot report it written either.
+- **Omitting `save` makes a pivot's results not savable at all**: never in the ledger, never
+  counted unsaved, no Save offered. That is the right declaration for a pivot over derived data
+  that is not the consumer's to write back, and it is what stops a permanent `210 unsaved` with
+  no remedy. `graph.pivots.isSaved(node)` and `isSavable(node)` tell the two apart.
+- **`canonicalIds` stops a re-run duplicating what was saved.** The source system usually mints
+  its own id for what it has just created, so tomorrow's run returns the same objects under ids
+  dedup does not recognise, and the analyst gets twelve duplicates of yesterday's work. Return
+  the mapping and the library keeps the alias: ingest dedup, the children union and edge
+  endpoints all consult it, so the re-run says *12 already on canvas*. The node keeps the id it
+  landed under, because re-keying would reach into edges, clusters, selection, the query
+  engine, provenance and the history for a benefit the alias already delivers;
+  `graph.pivots.canonicalId(node)` is the read that resolves it.
+- **`graph.pivots.save()`** writes every savable run with something outstanding, `save(runId)`
+  one run, `save(pivotId)` one pivot's share. Runs go one at a time and each is sent only what
+  is still unsaved, so a retry is the same call. `unsaved()` and `unsavedCount(pivotId?)` are
+  exact rather than advisory. In the UI the count and the button sit at the foot of the Pivot
+  panel and a Review pane carries its own provider's share in its header, with nothing shown
+  while the number is zero. **`autoSave: true`** writes each run the moment it lands, after the
+  ingest resolves rather than inside it, so a slow backend never holds up the canvas.
+- **Undo does not reach the source system, and says so rather than leaving you to find out.** A
+  written-through run is chipped **saved** in the history and the footer counts what a span
+  would leave behind. The library issues no compensating write, which would be a distributed
+  transaction wearing a ⌘Z costume. A *failed* save never touches the canvas either: the
+  analyst accepted those twelve nodes, and a backend refusal is information about the backend,
+  not a reversal of their decision. They stay, stay unsaved, and stay retryable.
+- **`pivotMarkUnsaved`** puts a `pvt-node-unsaved` class on every node a run created and has
+  not written back, a dashed rim by default. Off by default, and a class rather than a rim
+  badge: a marker that pushes a declared potential off a two-corner rim costs more than it says.
 
 ### `graph.history`: taking back what the canvas holds
 
@@ -100,7 +193,24 @@
   the newest entry: a pane resurrecting itself over later work would be worse than the
   refetch. `PivotRun` gains a `restage` record, and `PivotRestageRecord` is exported.
 
-### Two things the pane needed, useful on their own
+### The mode rail takes your own modes
+
+- **`addRailMode` puts a mode of your own on the left rail**, beside Select, Create, View and
+  Physics — on `UIManager`, and on a plugin's `ctx`. The rail was picked as the default chrome
+  because it scales: modes drop in without crowding it. Until now only we could add one. A
+  pointer mode declares `tools` and the contextual panel draws them with the arming, the
+  enabled states and the collapse handled for you; arming a `'toggle'` morphs the rail button
+  to that tool's icon and label, the way Select's slot becomes `Lasso`. `tools` may be a
+  function when the rows depend on the selection, and `render()` adds anything a row cannot
+  express, below them. Registered modes render below a divider, after the built-ins.
+- **A mode can open a flyout instead.** `kind: 'flyout'` plus a `flyout` factory mounts your
+  own panel in the settings overlay, exclusive with View and Physics for free. **`Flyout` is
+  now exported** so you can subclass it and inherit its header, section and switch-row
+  helpers.
+- **`onExit` is called when a mode is left, and when it is removed while active** — the rail
+  then falls back to Select. It is not called on UI teardown.
+
+### Smaller things, useful on their own
 
 - **A notification can carry an action, and outlive four seconds.** `notifier.success(title,
   message, { action: { label, onClick }, duration })` returns a **handle** — so a toast can be
@@ -110,6 +220,26 @@
 - **`DockTabHandle.setLabel(label)`** renames a tab in the strip without touching its body, its
   scroll position or whether it is on show — which re-registering the tab to change a word
   would have thrown away. Also `UIManager.setDockTabLabel(id, label)` and `ctx.setDockTabLabel`.
+- **`graph.emphasiseElements(elements)` reads a set out of the canvas**: they keep the look
+  they already have while everything else dims, until `clearEmphasis()`. Where
+  `highlightElement` points at one element, this describes a group. **Hovering a legend entry
+  now uses it**, so a category stands out of the graph instead of only being counted in a
+  corner.
+- **`panelResizable` lets a rail mode's panel be dragged wider or narrower by its right edge.**
+  Off by default: a panel of icon rows has one right width, and a handle on it is a control
+  with nothing to do. A mode whose panel *is* the workspace — a form, a list, a set of results
+  — is where the choice is worth offering. Remembered per mode for the session, clamped between
+  the declared `panelWidth` and the canvas edge.
+- **A `checkboxes` form field**: the same many-of-N choice as `multiselect`, drawn as a list
+  instead of a picker so every option and its `count` stays on screen rather than behind a
+  click.
+- **`DockTab.icon`, and a hand-over order for a closed tab.** An icon marks a pane's kind;
+  closing a tab now returns to the last one on show rather than to the first.
+- **In `full` mode the legend docks above the minimap.** The left column belongs to the mode
+  rail, whose panel can leave the legend a single row, so the minimap publishes the room it
+  needs and the two stack instead of competing for the corner.
+- **The minimap draws notes**, rasterised as blocks to scale and re-drawn when one is added,
+  moved, resized, recoloured or hidden. A note drop now emits `noteChange`.
 
 ### Fixed
 
@@ -134,6 +264,16 @@
   already gets. The same holds for a container carrying the same child id twice, and for
   `unionChildren` merging one in. This is an everyday shape — the object a lookup returns
   contains the very attribute that was pivoted on.
+- **`nodeStyleMap` takes partial node styles.** The declared `Record<string, NodeStyle>`
+  demanded nine properties nobody supplies — its own documented example would not compile —
+  while its only consumer reads each entry into a `Partial<NodeStyle>` and merges it over the
+  defaults.
+- **An open picker menu floats over the page instead of pushing it down.** The menu is portaled
+  out of its control and anchored with `position: fixed`, so no scrolling ancestor clips it,
+  and the two in-flow workarounds it had grown are gone.
+- **A run the session rejected in full no longer reads as already on canvas.** The finished pane
+  names the rejections and opens the list that holds them, rather than implying the candidates
+  had landed.
 
 ### Breaking
 
@@ -148,32 +288,28 @@
 - **`InterractionCallbacks.onNodeExpansion` is gone.** It was declared but never called from
   anywhere in the library, and its signature took an `Edge` where a node was meant. Pivots are
   the door it was pointing at.
-
-### The mode rail takes your own modes
-
-- **`addRailMode` puts a mode of your own on the left rail**, beside Select, Create, View and
-  Physics — on `UIManager`, and on a plugin's `ctx`. The rail was picked as the default chrome
-  because it scales: modes drop in without crowding it. Until now only we could add one. A
-  pointer mode declares `tools` and the contextual panel draws them with the arming, the
-  enabled states and the collapse handled for you; arming a `'toggle'` morphs the rail button
-  to that tool's icon and label, the way Select's slot becomes `Lasso`. `tools` may be a
-  function when the rows depend on the selection, and `render()` adds anything a row cannot
-  express, below them. Registered modes render below a divider, after the built-ins.
-- **A mode can open a flyout instead.** `kind: 'flyout'` plus a `flyout` factory mounts your
-  own panel in the settings overlay, exclusive with View and Physics for free. **`Flyout` is
-  now exported** so you can subclass it and inherit its header, section and switch-row
-  helpers.
-- **`onExit` is called when a mode is left, and when it is removed while active** — the rail
-  then falls back to Select. It is not called on UI teardown.
-
-### Breaking
-
 - **`UI.modeRail` is gone**, along with the disabled `Explore` / `Enrich` "SOON" slots it
   showed. They advertised work that was never scheduled, and they occupied exactly the slot
   `addRailMode` now fills — build the mode instead. If you had `UI: { modeRail: … }`, delete
   it; nothing replaces it.
 - **`RailMode` is now `string`** rather than a union of the four built-in names, since a
   registered mode's id is arbitrary. `PointerMode` and `FlyoutMode` still name the built-ins.
+
+### Migration
+
+| Before | After |
+|---|---|
+| `graph.pivots.undo()` / `redo()` | `graph.history.undo()` / `redo()` — contiguous, so it takes anything done since with it |
+| `graph.pivots.canUndo` / `canRedo` | `graph.history.canUndo()` / `canRedo()` |
+| `graph.pivots.runs` | The ingest rows of `graph.history.entries()`; `graph.pivots.unsaved()` for the ones with something still to write |
+| Reversing one old run on its own | `graph.removeBySource(pivotId)` — a forward operation, and its own history entry |
+| `getSources()` → `['seed']` for hand-drawn work | `['manual']`; `'seed'` now means only what was there at load |
+| `InterractionCallbacks.onNodeExpansion` | Nothing — it was never called. Declare a pivot instead |
+| `UI: { modeRail: … }` | Delete it. Register your own mode with `UIManager.addRailMode` |
+| `RailMode` as a union of the four built-ins | `string`; `PointerMode` / `FlyoutMode` still name them |
+
+See [Pivots & enrichment](./docs/pivots.md), [Saving pivot results](./docs/pivots-saving.md)
+and [Undo & history](./docs/history.md).
 
 ## 1.6.0 — 2026-08-28
 
