@@ -36,7 +36,8 @@ import type { RailModeDefinition, RailTool } from '../../../src/interfaces/Graph
 import type { RenderContext } from '../../../src/interfaces/AsyncContent'
 import type { GraphDataChange, RawEdge, RawNode } from '../../../src/interfaces/GraphOptions'
 import type {
-    PivotDefinition, PivotNarrowing, PivotResult, PivotRimBadge, PivotRunOutcome, PivotSummary,
+    PivotDefinition, PivotNarrowing, PivotResult, PivotRimBadge, PivotRunOutcome,
+    PivotSaveContext, PivotSaveOutcome, PivotSavePayload, PivotSummary,
 } from '../../../src/interfaces/Pivot'
 import { Edge as EdgeInstance, type Edge } from '../../../src/Edge'
 import type {
@@ -884,10 +885,47 @@ export interface PivotFixtureSpec {
      * recursion has something to recurse into.
      */
     union?: { parent: string; children: Array<string | { id: string; children: string[] }> }
+    /**
+     * What every savable fixture's `save` does. `'none'` (the default) declares no
+     * `save` at all, which is the *not savable* path: nothing is ever counted unsaved.
+     */
+    save?: SaveBehavior
+    /** Flip these fixtures to `autoSave`, so their runs write with no gesture. */
+    autoSave?: PivotFixtureName[]
+}
+
+/**
+ * How a fixture's `save` answers. `'half'` writes every other node and no edges,
+ * which is the shape a retry has to be able to pick up from; `'mint'` writes
+ * everything under ids of the source system's own choosing, so the next fetch
+ * returns them renamed.
+ */
+export type SaveBehavior = 'none' | 'ok' | 'half' | 'throw' | 'mint'
+
+/** One `save` call, as the log records it. */
+export interface SaveCall {
+    pivot: string
+    runId: string
+    attempt: number
+    nodes: string[]
+    children: string[]
+    edges: string[]
+    origin: string[]
+    vouchedNodes: string[]
 }
 
 /** `onBeforeIngest` behaviours, since a function can't cross `page.evaluate`. */
 export type IngestHookBehavior = 'accept' | 'accept-async' | 'veto' | 'narrow-first' | 'narrow-none' | 'confirm'
+
+/** A serialisable {@link PivotSaveReport}. */
+export interface RecordedSaveReport {
+    runs: number
+    savedNodes: number
+    savedEdges: number
+    pendingNodes: number
+    pendingEdges: number
+    errors: string[]
+}
 
 /** A serialisable {@link PivotRunOutcome}. */
 export interface RecordedRunOutcome {
@@ -1037,6 +1075,40 @@ export interface HarnessApi {
     pivotOriginFor(id: string, nodeIds: string[]): string[]
     /** How many pivots apply to one node — what a `summary` badge counts. */
     pivotApplicableCount(nodeId: string): number
+
+    /* --- saving --- */
+
+    /** `graph.pivots.save` — a run id, a pivot id, or everything. */
+    pivotSave(target?: string): Promise<RecordedSaveReport>
+    /** Every `save` the fixtures have been asked to perform, in order. */
+    saveCalls(): SaveCall[]
+    /** `graph.pivots.unsavedCount` — all of it, or one pivot's. */
+    pivotUnsavedCount(pivotId?: string): { nodes: number; edges: number }
+    /** The run ids `graph.pivots.unsaved()` still lists. */
+    pivotUnsavedRuns(): string[]
+    /** `graph.pivots.isSaved` / `isSavable` for one node. */
+    pivotSavedState(nodeId: string): { saved: boolean; savable: boolean }
+    /** `graph.pivots.canonicalId` for one node — the id the source system minted. */
+    pivotCanonicalId(nodeId: string): string | null
+    /** Change the save behaviour of the registered fixtures mid-test. */
+    setSaveBehavior(behavior: SaveBehavior): void
+
+    /* --- saving --- */
+
+    /** `graph.pivots.save` — a run id, a pivot id, or everything. */
+    pivotSave(target?: string): Promise<RecordedSaveReport>
+    /** Every `save` the fixtures have been asked to perform, in order. */
+    saveCalls(): SaveCall[]
+    /** `graph.pivots.unsavedCount` — all of it, or one pivot's. */
+    pivotUnsavedCount(pivotId?: string): { nodes: number; edges: number }
+    /** The run ids `graph.pivots.unsaved()` still lists. */
+    pivotUnsavedRuns(): string[]
+    /** `graph.pivots.isSaved` / `isSavable` for one node. */
+    pivotSavedState(nodeId: string): { saved: boolean; savable: boolean }
+    /** `graph.pivots.canonicalId` for one node — the id the source system minted. */
+    pivotCanonicalId(nodeId: string): string | null
+    /** Change the save behaviour of the registered fixtures mid-test. */
+    setSaveBehavior(behavior: SaveBehavior): void
     /** Point the view at a graph-space position, so "the viewport centre" is not the origin. */
     pointViewAt(x: number, y: number): void
     /** How many child nodes a container holds — what a union or a nested result is judged on. */
@@ -1715,6 +1787,11 @@ class Harness implements HarnessApi {
     private ingestHookCallCount = 0
     private seenIngestContexts: Array<{ pivotId: string; origin: string[]; nodes: string[]; edges: string[]; trigger: string }> = []
     private summarizeSettled: Array<{ id: string; total: number | null }> = []
+    /** Save observation state: what the fixtures were asked to write, and how they answer. */
+    private saveBehavior: SaveBehavior = 'none'
+    private saveLog: SaveCall[] = []
+    /** Ids this fake source system has assigned, so a later fetch returns them renamed. */
+    private mintedIds = new Map<string, string>()
     private batchLog: number[] = []
     private batchListener?: (changes: GraphDataChange[]) => void
 
@@ -4234,6 +4311,9 @@ class Harness implements HarnessApi {
         this.ingestHook = 'accept'
         this.ingestHookCallCount = 0
         this.seenIngestContexts = []
+        this.saveBehavior = spec.save ?? 'none'
+        this.saveLog = []
+        this.mintedIds.clear()
 
         const names = spec.pivots ?? ALL_FAKE_PIVOTS
         const options: PlainObject = { pivots: names.map((n) => this.fakePivot(n)) }
@@ -4243,6 +4323,12 @@ class Harness implements HarnessApi {
         for (const definition of options.pivots as PivotDefinition[]) {
             if (spec.autoIngest?.includes(definition.id as PivotFixtureName)) definition.autoIngest = true
             if (spec.stage?.includes(definition.id as PivotFixtureName)) definition.autoIngest = false
+            // `'none'` leaves `save` undeclared, which is the *not savable* path: the
+            // ledger never hears about the pivot's results at all.
+            if (this.saveBehavior !== 'none') {
+                definition.save = (payload, ctx) => this.serveSave(payload, ctx)
+            }
+            if (spec.autoSave?.includes(definition.id as PivotFixtureName)) definition.autoSave = true
         }
         if (spec.ceiling !== undefined) options.pivotCandidateCeiling = spec.ceiling
         await this.boot(name, mergeOptions(options, overrides))
@@ -4276,6 +4362,45 @@ class Harness implements HarnessApi {
 
     pivotCount(): number {
         return this.g.pivots.size
+    }
+
+    async pivotSave(target?: string): Promise<RecordedSaveReport> {
+        const report = await this.g.pivots.save(target)
+        return {
+            runs: report.runs,
+            savedNodes: report.savedNodes,
+            savedEdges: report.savedEdges,
+            pendingNodes: report.pendingNodes,
+            pendingEdges: report.pendingEdges,
+            errors: report.errors.map((entry) => String((entry.error as Error)?.message ?? entry.error)),
+        }
+    }
+
+    saveCalls(): SaveCall[] {
+        return this.saveLog.map((call) => ({ ...call }))
+    }
+
+    pivotUnsavedCount(pivotId?: string): { nodes: number; edges: number } {
+        return this.g.pivots.unsavedCount(pivotId)
+    }
+
+    pivotUnsavedRuns(): string[] {
+        return this.g.pivots.unsaved().map((run) => run.runId)
+    }
+
+    pivotSavedState(nodeId: string): { saved: boolean; savable: boolean } {
+        const node = this.g.getMutableNode(nodeId)
+        if (!node) return { saved: false, savable: false }
+        return { saved: this.g.pivots.isSaved(node), savable: this.g.pivots.isSavable(node) }
+    }
+
+    pivotCanonicalId(nodeId: string): string | null {
+        const node = this.g.getMutableNode(nodeId)
+        return (node && this.g.pivots.canonicalId(node)) ?? null
+    }
+
+    setSaveBehavior(behavior: SaveBehavior): void {
+        this.saveBehavior = behavior
     }
 
     async pivotSummarize(
@@ -4676,7 +4801,71 @@ class Harness implements HarnessApi {
             entry.outcome = 'cancelled'
             throw new DOMException(`${pivot}.${call} aborted`, 'AbortError')
         }
-        return produce()
+        const produced = produce()
+        // A fetch after a minting save speaks the source's ids, not the ones it first
+        // used — the whole reason canonical-id aliases exist.
+        return call === 'fetch' && this.mintedIds.size
+            ? this.asSourceSees(produced as PivotResult) as T
+            : produced
+    }
+
+    /**
+     * The write half. Logs what it was handed — which is how "the retry carries
+     * exactly the three that failed, as attempt 2" is asserted rather than assumed —
+     * then answers the way {@link SaveBehavior} says.
+     */
+    private async serveSave(payload: PivotSavePayload, ctx: PivotSaveContext): Promise<PivotSaveOutcome> {
+        this.saveLog.push({
+            pivot: payload.pivotId,
+            runId: payload.runId,
+            attempt: payload.attempt,
+            nodes: payload.nodes.map((node) => node.id),
+            children: payload.children.map((node) => node.id),
+            edges: payload.edges.map((edge) => edge.id),
+            origin: payload.origin.map((node) => node.id),
+            vouchedNodes: payload.vouched.nodes.map((node) => node.id),
+        })
+
+        const latency = this.pivotSpec.latency ?? 0
+        if (latency) await new Promise((resolve) => setTimeout(resolve, latency))
+        if (ctx.signal.aborted) throw new DOMException(`${payload.pivotId}.save aborted`, 'AbortError')
+
+        const nodes = [...payload.nodes, ...payload.children]
+        if (this.saveBehavior === 'throw') throw new Error(`${payload.pivotId}.save refused`)
+        if (this.saveBehavior === 'half') {
+            const kept = nodes.filter((_, i) => i % 2 === 0)
+            return {
+                savedNodeIds: kept.map((node) => node.id),
+                message: `${nodes.length - kept.length} refused`,
+            }
+        }
+        if (this.saveBehavior === 'mint') {
+            for (const node of nodes) this.mintedIds.set(node.id, `uuid-${node.id}`)
+            return {
+                savedNodeIds: nodes.map((node) => node.id),
+                savedEdgeIds: payload.edges.map((edge) => edge.id),
+                canonicalIds: Object.fromEntries(nodes.map((node) => [node.id, `uuid-${node.id}`])),
+            }
+        }
+        return true
+    }
+
+    /**
+     * What the fake source would return today: anything it has minted an id for comes
+     * back wearing it, which is the case the library's aliases exist to survive.
+     */
+    private asSourceSees(result: PivotResult): PivotResult {
+        if (!this.mintedIds.size) return result
+        const out = (id: unknown): string => this.mintedIds.get(String(id)) ?? String(id)
+        const node = (raw: RawNode): RawNode => ({
+            ...raw,
+            id: out(raw.id),
+            ...(raw.children ? { children: raw.children.map(node) } : {}),
+        })
+        return {
+            nodes: result.nodes.map(node),
+            edges: result.edges.map((raw) => ({ ...raw, from: out(raw.from), to: out(raw.to) })),
+        }
     }
 
     /**
