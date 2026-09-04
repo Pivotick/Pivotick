@@ -368,7 +368,7 @@ function distinctValues(graph: Pivotick, key: string): FilterFacetOption[] {
 
 /**
  * The facet declaration {@link HarnessApi.loadWithFacets} installs — one facet per
- * shape the feature has to cover, against the `mispLike` fixture:
+ * shape the feature has to cover, against the `facetShapes` fixture:
  *
  *  - `category` / `attr-type` — plain multiselects whose options follow the graph
  *  - `to_ids`        — a boolean (true / false / unset)
@@ -675,7 +675,7 @@ export interface LegendRow {
     disabled: boolean
 }
 
-/** The key a `LegendSpec` defaults to: four distinct values across `mispLike`'s top level. */
+/** The key a `LegendSpec` defaults to: four distinct values across `facetShapes`'s top level. */
 const LEGEND_KEY = 'attr-type'
 
 /** The values a `declared-array` legend lists, in declaration order. */

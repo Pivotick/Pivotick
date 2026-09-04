@@ -439,7 +439,7 @@ test.describe('table grid', () => {
 
     // Declared facets describe the data once; the filter panel and the grid both read them.
     test('declared facets become the data columns', async ({ page }) => {
-        await loadFixture(page, 'mispLike', {
+        await loadFixture(page, 'facetShapes', {
             UI: {
                 mode: 'full',
                 sidebar: { collapsed: false },
@@ -455,7 +455,7 @@ test.describe('table grid', () => {
         await page.locator('.pvt-table-row').first().waitFor()
 
         const columns = await headings(page)
-        // `mispLike` has a cluster, so `Cluster` joins the leading pair and `Children`
+        // `facetShapes` has a cluster, so `Cluster` joins the leading pair and `Children`
         // joins Degree in the trailing counts — the facets still supply every *data*
         // column, which is what this is about.
         expect(columns).toEqual(['Visibility', 'Label', 'Cluster', 'Category', 'To IDs', 'Degree', 'Children'])

@@ -80,7 +80,7 @@ function legendAction(page: Page, action: string): Locator {
  * resolution is deferred a frame (the renderer it samples is built after the UI).
  */
 async function loadLegend(page: Page, spec: LegendSpec = {}, expectedEntries = 4): Promise<void> {
-    await harness(page, 'loadWithLegend', 'mispLike', spec)
+    await harness(page, 'loadWithLegend', 'facetShapes', spec)
     await expect(page.locator('.pvt-legend-entry')).toHaveCount(expectedEntries)
 }
 
@@ -115,7 +115,7 @@ async function collapsedFlags(page: Page): Promise<boolean[]> {
 
 /** Load a stacked legend and wait until every section has resolved its entries. */
 async function loadGroup(page: Page, spec: LegendGroupSpec, expectedSections: number): Promise<void> {
-    await harness(page, 'loadWithLegendGroup', 'mispLike', spec)
+    await harness(page, 'loadWithLegendGroup', 'facetShapes', spec)
     await expect(page.locator('.pvt-legend-section')).toHaveCount(expectedSections)
 }
 
@@ -246,7 +246,7 @@ test.describe('canvas legend', () => {
 
     test('a category painted two colours keeps the first, and says so', async ({ page }) => {
         // a1 and a4 are both `ip-src`, but a4 is painted off-palette.
-        await harness(page, 'loadWithLegend', 'mispLike', { conflictNodeId: 'a4' })
+        await harness(page, 'loadWithLegend', 'facetShapes', { conflictNodeId: 'a4' })
         await expect(page.locator('.pvt-legend-entry')).toHaveCount(4)
         await harness(page, 'addNode', 'a4', 200, 40, 'A4', { 'attr-type': 'ip-src' })
         await expect
@@ -340,7 +340,7 @@ test.describe('canvas legend', () => {
     })
 
     test('setLegend adds a legend to a graph that had none, and removes it again', async ({ page }) => {
-        await loadFixture(page, 'mispLike')
+        await loadFixture(page, 'facetShapes')
         await expect(page.locator('.pvt-legend-entry')).toHaveCount(0)
 
         await harness(page, 'setLegend', { key: 'attr-type' })
@@ -483,7 +483,7 @@ test.describe('canvas legend', () => {
         test('shrinks to the room left beside the mode rail instead of growing into it', async ({ page }) => {
             // The corner is named: `full` mode defaults to bottom-right, and this is
             // the left column's behaviour — what a consumer gets by asking for it.
-            await harness(page, 'loadWithLegend', 'mispLike', {}, {
+            await harness(page, 'loadWithLegend', 'facetShapes', {}, {
                 UI: { mode: 'full', sidebar: { collapsed: false }, legend: { position: 'bottom-left' } },
             })
             await expect(page.locator('.pvt-legend-entry')).toHaveCount(4)
@@ -534,7 +534,7 @@ test.describe('canvas legend', () => {
     test('does not cover the sidebar collapse toggle in full mode', async ({ page }) => {
         // Full mode hangs that toggle over the canvas's bottom-left corner — the
         // legend's own default corner.
-        await harness(page, 'loadWithLegend', 'mispLike', { key: 'attr-type' },
+        await harness(page, 'loadWithLegend', 'facetShapes', { key: 'attr-type' },
             { UI: { mode: 'full', sidebar: { collapsed: false } } })
         await expect(page.locator('.pvt-legend-entry')).toHaveCount(4)
 
@@ -566,14 +566,14 @@ test.describe('canvas legend', () => {
     test('full mode has the legend, viewer mode has none', async ({ page }) => {
         // The specs above run in `light` (the harness default); full mode is the other
         // half of the gate.
-        await harness(page, 'loadWithLegend', 'mispLike', { key: 'attr-type' }, { UI: { mode: 'full' } })
+        await harness(page, 'loadWithLegend', 'facetShapes', { key: 'attr-type' }, { UI: { mode: 'full' } })
         await expect(page.locator('.pvt-legend-entry')).toHaveCount(4)
         await legendRow(page, 'md5').click()
         await expectVisible(page, ['a1', 'a2', 'obj'])
 
         // The legend is chrome, and `viewer` / `static` have none — the layout doesn't
         // even build a slot for it.
-        await harness(page, 'loadWithLegend', 'mispLike', { key: 'attr-type' }, { UI: { mode: 'viewer' } })
+        await harness(page, 'loadWithLegend', 'facetShapes', { key: 'attr-type' }, { UI: { mode: 'viewer' } })
         await expect(page.locator('.pvt-legend-panel')).toHaveCount(0)
         await expectVisible(page, ['a1', 'a2', 'a3', 'obj'])
     })
@@ -583,7 +583,7 @@ test.describe('canvas legend', () => {
     // colour dimension. These cover both halves of that check.
     test.describe('without any UI.legend', () => {
         test('derives one when the declared type accessor explains the colours', async ({ page }) => {
-            await harness(page, 'loadAutoLegend', 'mispLike')
+            await harness(page, 'loadAutoLegend', 'facetShapes')
 
             await expect(page.locator('.pvt-legend-entry')).toHaveCount(4)
             expect(await rowIds(page)).toEqual(['ip-src', 'domain', 'md5', 'object'])
@@ -599,7 +599,7 @@ test.describe('canvas legend', () => {
         test('stays silent when nothing declares the colour dimension', async ({ page }) => {
             // The common shape: colours come from an opaque accessor and no
             // `nodeTypeAccessor` is declared, so the library has nothing to key on.
-            await harness(page, 'loadAutoLegend', 'mispLike', { accessor: null })
+            await harness(page, 'loadAutoLegend', 'facetShapes', { accessor: null })
 
             await expect(page.locator('.pvt-legend-panel')).toBeEmpty()
             expect(await harness(page, 'warnings')).toEqual([])
@@ -609,7 +609,7 @@ test.describe('canvas legend', () => {
             // One colour for the whole graph: `attr-type` partitions the data but says
             // nothing about what the canvas looks like, so a swatch per type would be
             // an invention.
-            await harness(page, 'loadAutoLegend', 'mispLike', { constantColor: true })
+            await harness(page, 'loadAutoLegend', 'facetShapes', { constantColor: true })
 
             await expect(page.locator('.pvt-legend-panel')).toBeEmpty()
             // Nobody asked for a legend, so its absence is not worth a warning.
@@ -617,7 +617,7 @@ test.describe('canvas legend', () => {
         })
 
         test('stays silent when the dimension has too many values to be categories', async ({ page }) => {
-            await harness(page, 'loadAutoLegend', 'mispLike')
+            await harness(page, 'loadAutoLegend', 'facetShapes')
             await expect(page.locator('.pvt-legend-entry')).toHaveCount(4)
 
             // An id-like dimension passes "one colour per value" trivially; what rules
@@ -632,13 +632,13 @@ test.describe('canvas legend', () => {
         })
 
         test('`legend: false` suppresses it even when the colours would explain themselves', async ({ page }) => {
-            await harness(page, 'loadAutoLegend', 'mispLike', { legend: false })
+            await harness(page, 'loadAutoLegend', 'facetShapes', { legend: false })
 
             await expect(page.locator('.pvt-legend-panel')).toHaveCount(0)
         })
 
         test('`legend: true` derives one even when the check is inconclusive', async ({ page }) => {
-            await harness(page, 'loadAutoLegend', 'mispLike', { constantColor: true, legend: true })
+            await harness(page, 'loadAutoLegend', 'facetShapes', { constantColor: true, legend: true })
 
             expect(await rowIds(page)).toEqual(['ip-src', 'domain', 'md5', 'object'])
             // Every swatch is the same colour — which is the truth about this graph.
@@ -646,7 +646,7 @@ test.describe('canvas legend', () => {
         })
 
         test('`legend: true` with nothing to key on says so', async ({ page }) => {
-            await harness(page, 'loadAutoLegend', 'mispLike', { accessor: null, legend: true })
+            await harness(page, 'loadAutoLegend', 'facetShapes', { accessor: null, legend: true })
 
             await expect(page.locator('.pvt-legend-panel')).toBeEmpty()
             expect(await harness(page, 'warnings')).toEqual(
@@ -657,7 +657,7 @@ test.describe('canvas legend', () => {
         test('an options block with no key or entries still derives', async ({ page }) => {
             // `UI.legend` is about presentation here — where it sits — so the entries
             // are still worked out automatically.
-            await harness(page, 'loadAutoLegend', 'mispLike', {}, { UI: { legend: { position: 'top-right' } } })
+            await harness(page, 'loadAutoLegend', 'facetShapes', {}, { UI: { legend: { position: 'top-right' } } })
 
             await expect(page.locator('.pvt-legend-entry')).toHaveCount(4)
             await expect(page.locator('.pvt-legend')).toHaveAttribute('data-position', 'top-right')

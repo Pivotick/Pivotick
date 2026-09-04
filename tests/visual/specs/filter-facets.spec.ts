@@ -4,7 +4,7 @@ import type { Page, Locator } from '@playwright/test'
 /**
  * Declarative filter facets.
  *
- * Two halves, both against the attribute-shaped `mispLike` fixture:
+ * Two halves, both against the attribute-shaped `facetShapes` fixture:
  *
  *  - **the panel** — with `UI.filter.facets` declared, the form is generated from
  *    the declaration (exact fields, verbatim labels, declared widgets and order);
@@ -66,7 +66,7 @@ test.describe('declared filter facets', () => {
     // The declaration is the single source of truth: exactly the declared fields,
     // in declared order (`order` overriding it), with labels used verbatim.
     test('the panel is generated from the declaration', async ({ page }) => {
-        await harness(page, 'loadWithFacets', 'mispLike')
+        await harness(page, 'loadWithFacets', 'facetShapes')
 
         expect(await panelFields(page)).toEqual([
             // Declared last, but `order: -1` puts it first.
@@ -84,7 +84,7 @@ test.describe('declared filter facets', () => {
     // Auto-derivation contributes nothing once facets are declared — the noisy keys
     // that dominate a derived panel are simply absent.
     test('declared facets replace auto-derivation', async ({ page }) => {
-        await harness(page, 'loadWithFacets', 'mispLike')
+        await harness(page, 'loadWithFacets', 'facetShapes')
 
         const keys = await panelFieldKeys(page)
         for (const derivedOnly of ['uuid', 'label', 'sightings']) {
@@ -93,7 +93,7 @@ test.describe('declared filter facets', () => {
     })
 
     test('the generated form renders', async ({ page }) => {
-        await harness(page, 'loadWithFacets', 'mispLike')
+        await harness(page, 'loadWithFacets', 'facetShapes')
         // 5 multiselects + the boolean select are picker-backed.
         const panel = await openFilterPanel(page, 6)
         await expect(panel).toHaveScreenshot('filter-panel-declared-facets.png')
@@ -102,14 +102,14 @@ test.describe('declared filter facets', () => {
     // §3.3 — the blocker: `tags` is an array, so a filter has to test membership.
     // `a2` is tagged `not-malware`, which a substring match would wrongly match.
     test('array-valued data filters by membership, not substring', async ({ page }) => {
-        await harness(page, 'loadWithFacets', 'mispLike')
+        await harness(page, 'loadWithFacets', 'facetShapes')
         await harness(page, 'setFilter', 'tags', { value: 'malware' })
 
         await expectVisible(page, ['a1'])
     })
 
     test('a multiselect over array data is any-of', async ({ page }) => {
-        await harness(page, 'loadWithFacets', 'mispLike')
+        await harness(page, 'loadWithFacets', 'facetShapes')
         await harness(page, 'setFilter', 'tags', { value: ['malware', 'tlp:green'] })
 
         await expectVisible(page, ['a1', 'a3'])
@@ -117,7 +117,7 @@ test.describe('declared filter facets', () => {
 
     // matchMode 'all': every selected tag must be present. Only a3 carries both.
     test("matchMode 'all' requires every selected value", async ({ page }) => {
-        await harness(page, 'loadWithFacets', 'mispLike')
+        await harness(page, 'loadWithFacets', 'facetShapes')
         await harness(page, 'setFilter', 'tags_all', { value: ['tlp:amber', 'tlp:green'] })
 
         await expectVisible(page, ['a3'])
@@ -125,7 +125,7 @@ test.describe('declared filter facets', () => {
 
     // A computed facet: `child_type` lives on the node's children, not its own data.
     test('an accessor facet filters on a computed value', async ({ page }) => {
-        await harness(page, 'loadWithFacets', 'mispLike')
+        await harness(page, 'loadWithFacets', 'facetShapes')
         await harness(page, 'setFilter', 'child_type', { value: 'md5' })
 
         await expectVisible(page, ['obj'])
@@ -133,7 +133,7 @@ test.describe('declared filter facets', () => {
 
     // A predicate facet decides membership itself (to_ids AND sightings >= n).
     test('a predicate facet decides for itself', async ({ page }) => {
-        await harness(page, 'loadWithFacets', 'mispLike')
+        await harness(page, 'loadWithFacets', 'facetShapes')
         await harness(page, 'setFilter', 'min_sightings', { value: '3' })
 
         await expectVisible(page, ['a1', 'a3'])
@@ -143,7 +143,7 @@ test.describe('declared filter facets', () => {
     // engine hands them down. Without that, `min_sightings` would fall back to a
     // (non-existent) data key inside the cluster and hide both children.
     test('facets reach the nodes inside an expanded cluster', async ({ page }) => {
-        await harness(page, 'loadWithFacets', 'mispLike')
+        await harness(page, 'loadWithFacets', 'facetShapes')
         await harness(page, 'expand', 'obj')
         await harness(page, 'setFilter', 'min_sightings', { value: '2' })
 
@@ -152,7 +152,7 @@ test.describe('declared filter facets', () => {
     })
 
     test('a regex facet matches case-insensitively', async ({ page }) => {
-        await harness(page, 'loadWithFacets', 'mispLike')
+        await harness(page, 'loadWithFacets', 'facetShapes')
         await harness(page, 'setFilter', 'value', { value: '^EVIL\\.' })
 
         await expectVisible(page, ['a2'])
@@ -162,7 +162,7 @@ test.describe('declared filter facets', () => {
     // and whatever was already applied stays applied. Reported as you type: nothing
     // has to be pressed for it to show up.
     test('an invalid pattern is reported and leaves the filters alone', async ({ page }) => {
-        await harness(page, 'loadWithFacets', 'mispLike')
+        await harness(page, 'loadWithFacets', 'facetShapes')
         await harness(page, 'setFilter', 'tags', { value: 'malware' })
         await expectVisible(page, ['a1'])
 
@@ -175,7 +175,7 @@ test.describe('declared filter facets', () => {
 
     // Editing the offending field clears the error, and the fixed pattern applies.
     test('fixing the pattern clears the error and applies', async ({ page }) => {
-        await harness(page, 'loadWithFacets', 'mispLike')
+        await harness(page, 'loadWithFacets', 'facetShapes')
         const panel = await openFilterPanel(page, 6)
         const pattern = panel.locator('[data-field-key="value"]')
 
@@ -191,7 +191,7 @@ test.describe('declared filter facets', () => {
     // Declaring facets must not cost the panel's existing wiring: a filter set from
     // code still lands in the form control, and still counts on the header pill.
     test('a programmatic filter round-trips into a declared field', async ({ page }) => {
-        await harness(page, 'loadWithFacets', 'mispLike')
+        await harness(page, 'loadWithFacets', 'facetShapes')
         await harness(page, 'setFilter', 'tags', { value: ['tlp:amber'] })
 
         const panel = await openFilterPanel(page, 6)
@@ -207,7 +207,7 @@ test.describe('declared filter facets', () => {
     // A boolean facet has to offer *false* as well as true — and read it back as a
     // boolean, or it could never match a `to_ids: false` node.
     test('a boolean facet can filter on false', async ({ page }) => {
-        await harness(page, 'loadWithFacets', 'mispLike')
+        await harness(page, 'loadWithFacets', 'facetShapes')
         await openFilterPanel(page, 6)
 
         await harness(page, 'setPanelValue', 'to_ids', 'false')
@@ -226,7 +226,7 @@ test.describe('auto-derived facets', () => {
     // §4.3 — `numberRange` was unreachable: integers were folded into the value list
     // and the range branch guarded by an always-true test.
     test('a purely numeric field derives a numberRange', async ({ page }) => {
-        await loadFixture(page, 'mispLike')
+        await loadFixture(page, 'facetShapes')
 
         expect(await panelFields(page)).toContainEqual({
             key: 'sightings', label: 'Sightings', type: 'numberRange',
@@ -234,7 +234,7 @@ test.describe('auto-derived facets', () => {
     })
 
     test('a derived numberRange filters by range', async ({ page }) => {
-        await loadFixture(page, 'mispLike')
+        await loadFixture(page, 'facetShapes')
         await harness(page, 'setFilter', 'sightings', { value: { min: 3, max: undefined } })
 
         await expectVisible(page, ['a1', 'a3'])
@@ -242,7 +242,7 @@ test.describe('auto-derived facets', () => {
 
     // The cheap escape from `uuid`-style noise without declaring everything.
     test('excludeKeys drops keys from derivation', async ({ page }) => {
-        await loadFixture(page, 'mispLike', { UI: { filter: { excludeKeys: ['uuid', 'value'] } } })
+        await loadFixture(page, 'facetShapes', { UI: { filter: { excludeKeys: ['uuid', 'value'] } } })
 
         const keys = await panelFieldKeys(page)
         expect(keys).not.toContain('uuid')
@@ -252,7 +252,7 @@ test.describe('auto-derived facets', () => {
 
     // Derived labels are prettified from the key (the panel's long-standing look).
     test('derived labels are prettified keys', async ({ page }) => {
-        await loadFixture(page, 'mispLike')
+        await loadFixture(page, 'facetShapes')
 
         expect(await panelFields(page)).toContainEqual({
             key: 'attr-type', label: 'Attr Type', type: 'multiselect',
@@ -262,7 +262,7 @@ test.describe('auto-derived facets', () => {
     // §3.6 — the documented default is 'exact'; the runtime used to default to
     // 'partial', so a programmatic filter substring-matched without being asked to.
     test('matchMode defaults to exact', async ({ page }) => {
-        await loadFixture(page, 'mispLike')
+        await loadFixture(page, 'facetShapes')
         await harness(page, 'setFilter', 'category', { value: 'Payload' })
 
         // 'Payload' is a prefix of 'Payload delivery' but not equal to it.
@@ -270,7 +270,7 @@ test.describe('auto-derived facets', () => {
     })
 
     test('an explicit partial match still substring-matches', async ({ page }) => {
-        await loadFixture(page, 'mispLike')
+        await loadFixture(page, 'facetShapes')
         await harness(page, 'setFilter', 'category', { value: 'Payload', matchMode: 'partial' })
 
         await expectVisible(page, ['a3', 'obj'])
@@ -288,7 +288,7 @@ test.describe('the attribute form applies itself', () => {
     })
 
     test('the panel has no apply button', async ({ page }) => {
-        await harness(page, 'loadWithFacets', 'mispLike')
+        await harness(page, 'loadWithFacets', 'facetShapes')
         const panel = await openFilterPanel(page, 6)
 
         // Reset is still there; the thing that used to apply is not. (The header
@@ -298,7 +298,7 @@ test.describe('the attribute form applies itself', () => {
     })
 
     test('picking a value in a picker filters the graph on the spot', async ({ page }) => {
-        await harness(page, 'loadWithFacets', 'mispLike')
+        await harness(page, 'loadWithFacets', 'facetShapes')
         const panel = await openFilterPanel(page, 6)
 
         const tagField = panel.locator('.pvt-form-element').filter({ hasText: 'Tag' }).first()
@@ -313,7 +313,7 @@ test.describe('the attribute form applies itself', () => {
     // pressSequentially, not fill: it fires `input` per key and never `change`, so
     // this is the debounced path and not a commit on blur.
     test('a typed field applies once the keystrokes stop', async ({ page }) => {
-        await harness(page, 'loadWithFacets', 'mispLike')
+        await harness(page, 'loadWithFacets', 'facetShapes')
         const panel = await openFilterPanel(page, 6)
 
         await panel.locator('[data-field-key="value"]').pressSequentially('^8\\.')
@@ -324,7 +324,7 @@ test.describe('the attribute form applies itself', () => {
     // A form with one text field and no button in it submits on Enter, which would
     // reload the page. Enter has to mean "apply now" instead.
     test('Enter applies the field instead of submitting the form', async ({ page }) => {
-        await loadFixture(page, 'mispLike', {
+        await loadFixture(page, 'facetShapes', {
             UI: { filter: { facets: [{ key: 'value', label: 'Value', type: 'text' }] } },
         })
         await harness(page, 'openFilterPanel')

@@ -1028,7 +1028,7 @@ export const fixtures = {
     },
 
     /**
-     * attribute-shaped nodes for **declared filter facets** (`UI.filter.facets`). Every
+     * Attribute-shaped nodes for **declared filter facets** (`UI.filter.facets`). Every
      * shape the declaration has to cope with is here:
      *
      *  - `tags` is **array-valued** — the facet kind that was impossible before.
@@ -1044,7 +1044,7 @@ export const fixtures = {
      * `tlp:amber` is on `a1`, `a3` and `obj`; `tlp:green` on `a3` and the child
      * `c1` — so any-of and `'all'` semantics give visibly different answers.
      */
-    mispLike(): BuiltFixture {
+    facetShapes(): BuiltFixture {
         const c1 = mkNode('c1', -60, 120, {
             'attr-type': 'md5', category: 'Payload delivery', to_ids: true,
             value: 'd41d8cd98f00b204e9800998ecf8427e', tags: ['tlp:green'], uuid: 'u-c1', sightings: 2,
