@@ -1,10 +1,10 @@
 # Pivot UI at scale — findings from a real misp-modules backend
 
 **Status:** measured 2026-09-01; findings **1**, **2**, **4** and **5** were built
-2026-09-02 and finding **8** on 2026-09-03, all marked below. Finding **3** is
-withdrawn. Findings **6** and **7** are open. The measurements are left exactly as
-taken, so every number here describes the panel *before* the search-plus-tray
-rework, not the one in the code now.
+2026-09-02, finding **8** on 2026-09-03, and findings **6** and **7** on 2026-09-04,
+all marked below. Finding **3** is withdrawn — so every finding here is now closed.
+The measurements are left exactly as taken, so every number here describes the panel
+*before* the search-plus-tray rework, not the one in the code now.
 
 Observations only when written: nothing was decided here, and no library code was
 changed to produce the measurements.
@@ -140,19 +140,61 @@ Two things the shape forced, both learned the hard way:
   tick box, where its position never moves, and a leaf keeps the caret's room so
   the names stay aligned.
 
-### 6. A pivot applies to the whole origin or not at all — *open*
+### 6. A pivot applies to the whole origin or not at all — *shipped*
 
 `appliesTo` gets the origin as a set and answers once. So a selection mixing a
 domain and an IP only offers providers accepting *both* types, and the count
 silently collapses. There is no way to say "this applies to 3 of your 5 selected
 nodes" — which for enrichment is the normal situation.
 
-### 7. Rim badges have no notion of "how many enrichments apply" — *open*
+**Built** by letting `appliesTo` return **the nodes it keeps** instead of a verdict:
+`boolean | Node[]`, where an empty array means the same as `false`. One function still
+covers both kinds of rule — `nodes.length >= 2` is about the origin as a whole,
+`nodes.filter(…)` about one node at a time — so nothing that reads the origin whole had
+to change. Three things the shape decided:
+
+- **The kept set is the origin.** `summarize` and `fetch` are called with it, and the
+  summary cache is keyed by it, so a provider never sees a node it turned down and two
+  origins that narrow to the same nodes share one cached answer. `originFor(id, nodes)`
+  is what a surface reads to show the share.
+- **A rejected origin fails rather than narrowing to nothing.** `run` with nodes a pivot
+  keeps none of resolves `'failed'` with a message. Fetching on an empty origin instead
+  would be a run that looks fine and answers nothing. An origin that was empty to begin
+  with is untouched, as is an origin-less pivot (D19).
+- **The panel states it once, in its own line.** *Applies to 1 of the 2 picked*, under
+  the head row. Folding it into the count line was tried and dropped: a pivot with no
+  `summarize` has no count line, and `~2,143 across 3 nodes` beside an origin block
+  showing five chips reads as a bug unless something says otherwise.
+
+### 7. Rim badges have no notion of "how many enrichments apply" — *shipped*
 
 `setPotential` is keyed per pivot. With 118 of them there is no sensible
 per-provider badge, so the page hangs the count off the meta-pivot instead. The
 number an analyst actually wants on the rim — how many enrichments this node
 could take — has no first-class expression.
+
+**Built** as a mode rather than an addition — `pivotRimBadge: 'per-pivot' | 'summary' |
+'off'`. A node wears per-pivot badges *or* one summary badge, never both, which is what
+keeps the corner budget from becoming a contest between them and leaves the default
+rim byte-identical. In `summary` the number is the total declared through the new
+unkeyed `setPotential(count)`, or, with nothing declared, how many pivots apply — which
+the library derives from `appliesTo` at no provider cost, memoised and dropped whenever
+the registry or the graph's nodes move.
+
+The gesture was the part worth getting right. A badge used to open the panel scoped to
+its own pivot, which at 51 applicable providers hands over one arbitrary one. The
+summary badge opens the panel **on the node**, except where exactly one pivot applies
+*and* it declares no `summarize` — nothing to read first, nothing to narrow — where the
+click runs it. Where the result lands stays the provider's call: `autoIngest` decides
+between the canvas and the triage pane, so the gesture needed no new contract and could
+not dump a thousand nodes on the canvas by surprise.
+
+Two things considered and dropped. **Summing several per-pivot declarations into one
+badge** puts a number on the rim whose value depends on rim geometry — the same node
+shows a partial sum with children and nothing without them. And a **popover listing what
+would run, with a Run all button**: the panel already has `Select all 51` → `Run 51` with
+its own over-threshold caution, so a second surface would have drifted from it for an
+ergonomic win the panel mostly already delivers.
 
 ### 8. One dock tab per run — *shipped*
 
@@ -254,8 +296,8 @@ there is nothing to split, and #3 above is not a defect a real deployment has.
 | 3 | Nothing separates a provider that cannot work | *withdrawn* |
 | 4 | One-line rows for the no-summarize case | **shipped** `c8d95e8` |
 | 5 | Child count on container triage rows, and a way inside | **shipped** `47b4058` `0e28ee9` |
-| 6 | Partial applicability across a mixed origin | **open** |
-| 7 | An aggregate "enrichments available" badge | **open** |
+| 6 | Partial applicability across a mixed origin | **shipped** |
+| 7 | One rim badge for all of a node's pivots | **shipped** |
 | 8 | One review tab, providers as vertical tabs inside it | **shipped** `d0f60c5` |
 
 Nothing in the contract changed for any of the four: every one of them was a way

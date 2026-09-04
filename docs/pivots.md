@@ -79,8 +79,8 @@ pane goes, a dock the review opened folds back to where it was, so a pivot leave
 it found.
 
 Three doors lead to the same place: the rail mode, a node's context-menu **Pivot…** entry
-(absent, never disabled, when nothing applies), and a rim badge, which opens the mode scoped
-to its own pivot.
+(absent, never disabled, when nothing applies), and a rim badge — which opens the mode scoped
+to its own pivot, or, where the rim carries one badge for all of them, to the node.
 
 ## Registering one
 
@@ -124,8 +124,9 @@ const correlations = {
     label: 'Correlations',           // shown verbatim, so translate it yourself
     maxCandidates: 2000,             // refuse to fetch while the count is above this
 
-    // Which origins this offers itself for. Omit it and it applies to everything.
-    appliesTo: nodes => nodes.every(node => node.getData()?.type !== 'case'),
+    // Which nodes this offers itself for — return the ones you accept, and a mixed
+    // selection runs it against just those. Omit it and it applies to everything.
+    appliesTo: nodes => nodes.filter(node => node.getData()?.type !== 'case'),
 
     // The cheap call: what is out there, and what you could narrow by.
     summarize: async (nodes, narrowing, { signal }) => {
@@ -191,7 +192,7 @@ interface PivotDefinition {
     label: string               // used verbatim, so it can be translated
     icon?: string               // trusted SVG, injected as-is
     origin?: 'selection' | 'none'
-    appliesTo?: (nodes: Node[]) => boolean
+    appliesTo?: (nodes: Node[]) => boolean | Node[]
     summarize?: (nodes: Node[], narrowing: PivotNarrowing, ctx: PivotContext) => PivotSummary | Promise<…>
     fetch:      (nodes: Node[], narrowing: PivotNarrowing, ctx: PivotContext) => PivotResult | Promise<…>
     autoIngest?: boolean
@@ -202,6 +203,33 @@ interface PivotDefinition {
 Both calls take an **array** of nodes, so a pivot over fifty of them is one backend request
 rather than fifty. Both take the current **narrowing**. Both get a `PivotContext` carrying
 `signal` and `isStale()`, the same cancellation pattern every async hook in the library uses.
+
+### `appliesTo`: all of the origin, or some of it
+
+Return a **boolean** for a rule about the origin as a whole, and the **nodes you accept** for
+a rule that reads one node at a time. An empty array means the same thing as `false`.
+
+```ts
+appliesTo: nodes => nodes.length >= 2                          // whole origin
+appliesTo: nodes => nodes.filter(n => n.getData()?.type === 'domain') // per node
+```
+
+The per-node form matters as soon as a selection is mixed. A domain and an IP picked together
+used to offer only the providers that accepted both, and anything domain-only disappeared —
+which for enrichment is the common case, not the edge case. Now each pivot takes its share,
+and the panel says so on the entry: *Applies to 3 of the 5 picked*.
+
+Whatever it keeps is the origin the provider is called with: `summarize` and `fetch` never see
+a node it turned down, and the cached summary is keyed by that narrowed origin. It is re-read
+on every origin change, so keep it synchronous and cheap.
+
+```js
+graph.pivots.for(nodes)                 // everything that applies, partially included
+graph.pivots.originFor('whois', nodes)  // the share this one would run on
+```
+
+Calling `run` with an origin a pivot rejects entirely resolves `'failed'` rather than fetching
+on an empty origin — a run that looked fine and answered nothing would be worse.
 
 ### `summarize`: the cheap one
 
@@ -406,6 +434,9 @@ loaded the data.
 ```js
 node.setPotential('correlations', 2100)   // 0 clears it
 node.getPotential('correlations')
+
+node.setPotential(2199)                   // the total across every pivot
+node.getPotential()
 ```
 
 It is **declared**, never queried. The library will not call a provider to draw a badge,
@@ -416,11 +447,32 @@ pivot.
 Like every other setter on `Node`, it marks the node dirty: call `graph.renderer.update()`
 if nothing else is about to render.
 
-::: warning Two free corners on a container
-The expand affordance reserves the East side of a node with children, so several declared
-potentials collapse into a `+n` badge early, on exactly the nodes that carry children. The
-rim is a hint; the panel is the full surface.
-:::
+### What the rim draws
+
+A node has four rim corners, and only two once it has children — the expand affordance
+reserves the East side. So one badge per provider is readable at a handful and impossible at
+a hundred. `pivotRimBadge` picks the shape:
+
+```js
+new Pivotick(el, data, { pivots, pivotRimBadge: 'summary' })
+graph.pivots.rimBadge = 'per-pivot'   // or later; it dirties every node
+```
+
+| | |
+| --- | --- |
+| `'per-pivot'` *(default)* | One badge per pivot that declared a potential, each opening that pivot. Several of them collapse into a `+n` early on a node with children. |
+| `'summary'` | **One** badge, whatever the provider count. It shows the total declared with no pivot id, or — with nothing declared — how many pivots apply. |
+| `'off'` | Nothing. `NodeStyle.badges` still draws. |
+
+In `summary` the badge is one gesture: it opens the Pivot panel on that node, because at any
+real provider count the panel is where the counts and the choice live. The exception is a node
+where exactly one pivot applies *and* it declares no `summarize` — nothing to read first and
+nothing to narrow — where the click runs it. Where the result lands is the provider's own call:
+`autoIngest` decides between the canvas and the triage pane, as everywhere else.
+
+The count of applying pivots is derived, not declared, so it costs no provider call. It is held
+between graph changes and refreshed when the registry or the graph's nodes move; an `appliesTo`
+reading something else can lag on the rim, and the panel is always the exact answer.
 
 ## Caching
 
