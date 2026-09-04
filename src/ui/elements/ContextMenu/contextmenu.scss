@@ -1,5 +1,7 @@
 .pvt-contextmenu {
-    position: absolute;
+    // Fixed, not absolute: the menu is parented to the `.pivotick` root so it
+    // survives fullscreen, and that root clips its overflow.
+    position: fixed;
     pointer-events: auto;
     background-color: var(--pvt-menu-bg-color);
     // Match the chrome family (rails / modal / slide panel): a 1px border and

@@ -63,6 +63,6 @@
 .pvt-typeahead,         // ui/components/Typeahead.ts — the `[[node]]` note autocomplete
 .pvt-dropdown,          // ui/components/Dropdown.ts
 .pvt-picker__dropdown,  // utils/PivotickPicker.ts — only when built outside a `.pivotick`
-.pvt-contextmenu {      // ui/elements/ContextMenu/ContextMenu.ts
+.pvt-contextmenu {      // ui/elements/ContextMenu/ContextMenu.ts — only outside a `.pivotick`
     @include themed-scrollbars;
 }

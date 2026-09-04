@@ -274,6 +274,14 @@ shipped, and the one to read is the retirement of `UI.modeRail`.
 - **A run the session rejected in full no longer reads as already on canvas.** The finished pane
   names the rejections and opens the list that holds them, rather than implying the candidates
   had landed.
+- **The context menu opens while the graph is fullscreen.** It was parented to `<body>`, and a
+  browser renders only the fullscreened element's own subtree — so the menu was built, styled
+  and positioned, and then painted nowhere. A right-click looked like it did nothing. It now
+  hangs off the `.pivotick` root, which is the element that goes fullscreen, and is
+  `position: fixed` so the root's `overflow: hidden` cannot clip it. Two things fall out: the
+  menu no longer runs off the right or bottom edge — near one it opens back towards the
+  pointer instead of growing the page — and two graphs on a page stop sharing a single menu
+  element, where destroying either used to take it away from both.
 
 ### Breaking
 

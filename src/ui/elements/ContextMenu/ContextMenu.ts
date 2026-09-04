@@ -312,7 +312,7 @@ export class ContextMenu extends UIComponent {
 
     private element: Node | Edge | Note | null = null
 
-    /** Page coords the menu was last opened at (see {@link openPoint}). */
+    /** Client coords the menu was last opened at (see {@link openPoint}). */
     private openedAt: { x: number, y: number } | null = null
 
     private menuNode: MenuSection
@@ -372,8 +372,13 @@ export class ContextMenu extends UIComponent {
     protected onMount(container: HTMLElement | undefined) {
         if (!container) return
 
-        this.parentContainer = document.querySelector('body')!
-        const menuContainer: HTMLDivElement | null = this.parentContainer.querySelector('.pvt-contextmenu')
+        // Parented to the widget root rather than `<body>`: while the container is
+        // fullscreen the browser renders only its subtree, so a body-level menu
+        // opened to nothing. `position: fixed` keeps it clear of the root's own
+        // `overflow: hidden` — the same pairing `PivotickPicker` uses.
+        this.parentContainer = container.closest('.pivotick') ?? document.body
+        const menuContainer: HTMLDivElement | null =
+            this.parentContainer.querySelector(':scope > .pvt-contextmenu')
         if (menuContainer) {
             this.menu = menuContainer
             return
@@ -552,12 +557,7 @@ export class ContextMenu extends UIComponent {
         const renderer = this.uiManager.graph.renderer
         const canvas = this.uiManager.layout?.canvas
         if (this.openedAt) {
-            // Page → client coords, resolved now: the document may have scrolled
-            // between opening the menu and picking the entry.
-            return renderer.screenToGraphCoordinates(
-                this.openedAt.x - window.scrollX,
-                this.openedAt.y - window.scrollY
-            )
+            return renderer.screenToGraphCoordinates(this.openedAt.x, this.openedAt.y)
         }
 
         // No menu has been opened (programmatic call): fall back to the view centre.
@@ -572,12 +572,24 @@ export class ContextMenu extends UIComponent {
         if (!this.menu) return
 
         const offset = 10
-        const x = event.pageX
-        const y = event.pageY
+        // Client coords, because the menu is `position: fixed` — and because a page
+        // that scrolls between opening the menu and picking an entry then needs no
+        // correction at all.
+        const x = event.clientX
+        const y = event.clientY
 
         this.openedAt = { x, y }
 
-        this.menu.style.left = `${x + offset}px`
-        this.menu.style.top = `${y + offset}px`
+        // Keep the whole menu on screen. `position: fixed` cannot spill past the
+        // viewport — it just gets cut off — so near the right or bottom edge the
+        // menu opens back towards the pointer instead. The content is built before
+        // this runs, so the measured box is the real one.
+        const box = this.menu.getBoundingClientRect()
+        const margin = 8
+        const flipsLeft = x + offset + box.width + margin > window.innerWidth
+        const flipsUp = y + offset + box.height + margin > window.innerHeight
+
+        this.menu.style.left = `${flipsLeft ? Math.max(margin, x - offset - box.width) : x + offset}px`
+        this.menu.style.top = `${flipsUp ? Math.max(margin, y - offset - box.height) : y + offset}px`
     }
 }

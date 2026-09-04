@@ -1,3 +1,4 @@
+import type { Page } from '@playwright/test'
 import {
     test,
     expect,
@@ -8,7 +9,30 @@ import {
     centerOf,
     canvas,
     expectElement,
+    waitForViewSettled,
 } from '../helpers'
+
+/** Whether the menu sits in the fullscreened subtree — the only part the browser paints. */
+const menuIsInsideFullscreen = (page: Page): Promise<boolean> =>
+    page.evaluate(() =>
+        Boolean(document.fullscreenElement?.contains(document.querySelector('.pvt-contextmenu')))
+    )
+
+/**
+ * What a click at the menu's own centre would land on.
+ *
+ * An element outside the fullscreened subtree keeps its box and its computed
+ * style, so `toBeVisible()` calls it visible while the browser paints and
+ * hit-tests straight through it. This is the difference the eye sees.
+ */
+const whatIsAtMenuCentre = (page: Page): Promise<string> =>
+    page.evaluate(() => {
+        const menu = document.querySelector('.pvt-contextmenu')
+        if (!menu) return 'no menu'
+        const box = menu.getBoundingClientRect()
+        const hit = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2)
+        return hit?.closest('.pvt-contextmenu') ? 'the menu' : (hit?.tagName.toLowerCase() ?? 'nothing')
+    })
 
 // ── Area 7 — hover, tooltip & context menu ──────────────────────────────────
 // All of these are driven with *real* pointer gestures (P0.6 explicitly allows
@@ -98,5 +122,29 @@ test.describe('interactions', () => {
         const menu = page.locator('.pvt-contextmenu')
         await expect(menu).toHaveClass(/shown/)
         await expectElement(menu, 'contextmenu-note.png')
+    })
+
+    // The menu is parented to the `.pivotick` root rather than `<body>`: while the
+    // container is fullscreen the browser renders only its subtree, so a body-level
+    // menu still had a box and its styles but was never painted, and a right-click
+    // looked like it did nothing.
+    test('opens the context menu while fullscreen', async ({ page }) => {
+        await loadFixture(page, 'basic')
+        await harness(page, 'pin')
+
+        // Clicking the rail button is the user gesture the Fullscreen API demands.
+        await page.locator('#pvt-graphnavigation-fullscreen').click()
+        await expect
+            .poll(() => page.evaluate(() => Boolean(document.fullscreenElement)))
+            .toBe(true)
+        // Going fullscreen resizes the canvas, which re-fits the view.
+        await waitForViewSettled(page)
+
+        await nodeEl(page, 'a').click({ button: 'right' })
+
+        const fsMenu = page.locator('.pvt-contextmenu')
+        await expect(fsMenu).toHaveClass(/shown/)
+        expect(await menuIsInsideFullscreen(page)).toBe(true)
+        expect(await whatIsAtMenuCentre(page)).toBe('the menu')
     })
 })
