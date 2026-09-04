@@ -36,7 +36,7 @@ import type { RailModeDefinition, RailTool } from '../../../src/interfaces/Graph
 import type { RenderContext } from '../../../src/interfaces/AsyncContent'
 import type { GraphDataChange, RawEdge, RawNode } from '../../../src/interfaces/GraphOptions'
 import type {
-    PivotDefinition, PivotNarrowing, PivotResult, PivotRunOutcome, PivotSummary,
+    PivotDefinition, PivotNarrowing, PivotResult, PivotRimBadge, PivotRunOutcome, PivotSummary,
 } from '../../../src/interfaces/Pivot'
 import { Edge as EdgeInstance, type Edge } from '../../../src/Edge'
 import type {
@@ -833,6 +833,7 @@ export type PivotFixtureName =
     | 'search-ail'
     | 'blind'
     | 'union-children'
+    | 'subset-only'
 
 /** One provider call, as the log records it — how "zero calls" is demonstrated. */
 export interface PivotCall {
@@ -1028,6 +1029,14 @@ export interface HarnessApi {
     /** Declared potential — the data half of the rim badges. */
     setNodePotential(nodeId: string, pivotId: string, count: number): void
     nodePotentials(nodeId: string): Array<[string, number]>
+    /** The total belonging to no pivot — what the `summary` rim badge prefers. */
+    setNodeSummaryPotential(nodeId: string, count: number): void
+    /** Switch what the rim draws, and repaint. */
+    setPivotRimBadge(mode: PivotRimBadge): void
+    /** How much of an origin one pivot took: the nodes it will actually be run with. */
+    pivotOriginFor(id: string, nodeIds: string[]): string[]
+    /** How many pivots apply to one node — what a `summary` badge counts. */
+    pivotApplicableCount(nodeId: string): number
     /** Point the view at a graph-space position, so "the viewport centre" is not the origin. */
     pointViewAt(x: number, y: number): void
     /** How many child nodes a container holds — what a union or a nested result is judged on. */
@@ -1615,6 +1624,9 @@ export interface HarnessApi {
 const ALL_FAKE_PIVOTS: PivotFixtureName[] = [
     'ail-correlation', 'misp-event-objects', 'oversized', 'search-ail', 'blind',
 ]
+
+/** The nodes `subset-only` accepts — everything in the basic fixture except `hub`. */
+const SUBSET_ACCEPTS = ['a', 'b', 'c', 'd', 'e']
 
 /**
  * The AIL breakdown from the PRD's fake-provider spec. The counts sum to exactly
@@ -4553,6 +4565,29 @@ class Harness implements HarnessApi {
         this.g.renderer.update()
     }
 
+    /** The total belonging to no pivot — what the `summary` rim badge prefers. */
+    setNodeSummaryPotential(nodeId: string, count: number): void {
+        this.g.getMutableNode(nodeId)?.setPotential(count)
+        this.g.renderer.update()
+    }
+
+    /** Switch what the rim draws. The setter dirties every node; this repaints them. */
+    setPivotRimBadge(mode: PivotRimBadge): void {
+        this.g.pivots.rimBadge = mode
+        this.g.renderer.update()
+    }
+
+    /** How much of an origin one pivot took: the nodes it will actually be run with. */
+    pivotOriginFor(id: string, nodeIds: string[]): string[] {
+        return this.g.pivots.originFor(id, this.pivotNodes(nodeIds)).map((node) => String(node.id))
+    }
+
+    /** How many pivots apply to one node — what a `summary` badge counts. */
+    pivotApplicableCount(nodeId: string): number {
+        const node = this.g.getMutableNode(nodeId)
+        return node ? this.g.pivots.applicableCount(node) : -1
+    }
+
     nodePotentials(nodeId: string): Array<[string, number]> {
         return [...(this.g.getMutableNode(nodeId)?.getPotentials() ?? [])]
     }
@@ -4769,6 +4804,26 @@ class Harness implements HarnessApi {
                                 edges: [],
                             }
                         }
+                    ),
+                }
+            case 'subset-only':
+                // The per-node `appliesTo`: it returns the nodes it accepts rather than a
+                // verdict on the origin, so a mixed selection keeps it and it is run
+                // against its own share. `hub` is deliberately outside the set.
+                return {
+                    id: 'subset-only',
+                    label: 'Only a, b and c',
+                    appliesTo: (nodes) => nodes.filter((node) => SUBSET_ACCEPTS.includes(String(node.id))),
+                    summarize: (nodes, narrowing, ctx) => this.serveProvider(
+                        'subset-only', 'summarize', nodes, narrowing, ctx,
+                        (): PivotSummary => ({ total: nodes.length * 10 })
+                    ),
+                    fetch: (nodes, narrowing, ctx) => this.serveProvider(
+                        'subset-only', 'fetch', nodes, narrowing, ctx,
+                        (): PivotResult => ({
+                            nodes: nodes.map((node) => ({ id: `subset-${node.id}` })),
+                            edges: nodes.map((node) => ({ from: String(node.id), to: `subset-${node.id}`, data: {} })),
+                        })
                     ),
                 }
             case 'blind':
