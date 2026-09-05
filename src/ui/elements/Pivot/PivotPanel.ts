@@ -599,8 +599,8 @@ export class PivotPanel {
 }
 
 /**
- * One pivot in the panel — the state machine of §2 of the states doc, from what the
- * provider has advertised down to the link into the triage pane its fetch filled.
+ * One pivot in the panel — its whole state machine, from what the provider has
+ * advertised down to the link into the triage pane its fetch filled.
  */
 class PivotEntry {
     private readonly root: HTMLElement

@@ -99,7 +99,7 @@ test.describe('declared filter facets', () => {
         await expect(panel).toHaveScreenshot('filter-panel-declared-facets.png')
     })
 
-    // §3.3 — the blocker: `tags` is an array, so a filter has to test membership.
+    // The blocker: `tags` is an array, so a filter has to test membership.
     // `a2` is tagged `not-malware`, which a substring match would wrongly match.
     test('array-valued data filters by membership, not substring', async ({ page }) => {
         await harness(page, 'loadWithFacets', 'facetShapes')
@@ -223,7 +223,7 @@ test.describe('auto-derived facets', () => {
         await gotoHarness(page)
     })
 
-    // §4.3 — `numberRange` was unreachable: integers were folded into the value list
+    // `numberRange` was unreachable: integers were folded into the value list
     // and the range branch guarded by an always-true test.
     test('a purely numeric field derives a numberRange', async ({ page }) => {
         await loadFixture(page, 'facetShapes')
@@ -259,7 +259,7 @@ test.describe('auto-derived facets', () => {
         })
     })
 
-    // §3.6 — the documented default is 'exact'; the runtime used to default to
+    // The documented default is 'exact'; the runtime used to default to
     // 'partial', so a programmatic filter substring-matched without being asked to.
     test('matchMode defaults to exact', async ({ page }) => {
         await loadFixture(page, 'facetShapes')

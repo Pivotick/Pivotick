@@ -290,7 +290,7 @@ test.describe('auto-physics', () => {
         // size is topology. Auto should not, and does not, fold it into one screen.
     })
 
-    // §8.4: auto computes and stores knobs whatever the simulation is doing, but it
+    // Auto computes and stores knobs whatever the simulation is doing, but it
     // never restarts one the user (or the watchdog) switched off.
     test('auto never wakes a paused simulation', async ({ page }) => {
         await loadAuto(page, { nodes: 6, radius: 18 })

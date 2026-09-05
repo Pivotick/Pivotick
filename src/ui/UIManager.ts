@@ -283,7 +283,7 @@ const UI_ELEMENTS: UIElementSpec[] = [
         make: ui => new ToolPanel(ui), slot: ui => ui.layout?.toolpanel
     },
     {
-        // viewer-mode flyouts are an open question (§9.4); full/light for now.
+        // The flyouts are full/light only; viewer mode is read-only chrome.
         key: 'viewFlyout', modes: ['full', 'light'],
         enabled: o => o.viewFlyout?.enabled !== false,
         make: ui => new ViewFlyout(ui), slot: ui => ui.layout?.flyout
