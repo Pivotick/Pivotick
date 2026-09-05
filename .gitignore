@@ -34,3 +34,6 @@ blob-report
 *.njsproj
 *.sln
 *.sw?
+
+# Planning docs — local scratch, not part of the library
+prd/
