@@ -439,10 +439,10 @@ five also found stays, one claim lighter (H9).
 
 ## 10. The four prototypes
 
-Four competing designs of the dropdown, built as self-contained interactive pages in
-`prd/design/undo-history/`. Each shows the Mainheader in situ, a mock canvas that reacts to row
-hover, a fake history covering all four kinds with a sealed row mid-stack and two runs of one
-pivot, both menus including Redo's empty state, and a light/dark toggle.
+Four competing designs of the dropdown, built as self-contained interactive pages and since
+removed. Each showed the Mainheader in situ, a mock canvas that reacted to row hover, a fake
+history covering all four kinds with a sealed row mid-stack and two runs of one pivot, both
+menus including Redo's empty state, and a light/dark toggle.
 
 | | Direction | The bet |
 |---|---|---|
@@ -463,7 +463,6 @@ wrong.
 ### 10.1 What building them surfaced
 
 Four things came out of the drawing that belong in the implementation whichever variant wins.
-[`design/undo-history/README.md`](design/undo-history/README.md) has the per-variant detail.
 
 - **`preview()` must simulate, not describe.** C and D arrived at this independently: replay the
   span against a copy of the state and diff it, using the same code path the click commits.
