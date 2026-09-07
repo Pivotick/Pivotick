@@ -91,8 +91,13 @@ and **Pivot ▸** lists every pivot that applies to it; picking one runs it ther
 with no panel and nothing to fill in.
 
 The origin is the selection when the node you clicked belongs to it, and that node alone
-otherwise, so a bulk pivot is reachable without leaving the menu. Where the results go
-depends on how many of them are new to the canvas:
+otherwise, so a bulk pivot is reachable without leaving the menu.
+
+A registry longer than the menu can hold scrolls, and the list is cut mid-row so it reads as
+continuing rather than complete. One pivot per enrichment module is thirty rows for an IP
+address, which the submenu will show but the panel is better at: it has a filter box.
+
+Where the results go depends on how many of them are new to the canvas:
 
 - **Up to `pivotQuickIngestLimit` new candidates** (50 by default) land directly, tagged and
   undoable like any other ingest.

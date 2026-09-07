@@ -68,6 +68,28 @@
             // The menu gets this from its topbar; a flyout has none, so its first and
             // last rows would otherwise sit against the rounded edge.
             padding: 4px 0;
+
+            // A registry is as long as the consumer's: one pivot per enrichment module
+            // is thirty rows for an IP address. About eleven rows, and never more of
+            // the viewport than it can spare, whichever is smaller.
+            //
+            // The cap goes on the list, not on this flex row: capping a
+            // `align-items: center` container centres the overflow instead of putting
+            // it below the fold, and the rows that end up *above* the top edge are
+            // unreachable, because scrollTop cannot go negative.
+            //
+            // This is the ceiling; `trimToHalfRow` lowers it to end mid-row, which is
+            // what actually says "there is more" — the scrollbar here can be an
+            // overlay that paints nothing at rest, and a fade to the row's own
+            // background colour is invisible. The scrollbar, when drawn, is themed
+            // from `.pivotick` — see `_scrollbars.scss`.
+            .pvt-action-list {
+                max-height: min(58vh, 380px);
+                overflow-y: auto;
+                // A wheel at either end stays here rather than reaching the canvas
+                // behind, where it would zoom the graph and close the menu it came from.
+                overscroll-behavior: contain;
+            }
         }
     }
 

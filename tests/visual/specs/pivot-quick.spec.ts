@@ -21,6 +21,8 @@ const flyoutRows = (page: Page): Promise<string[]> =>
         rows => rows.map(row => (row.querySelector('.pvt-action-text')?.textContent ?? '').trim())
     )
 const entry = (page: Page, id: string): Locator => page.locator(`.pvt-pivot-entry[data-pivot="${id}"]`)
+/** The submenu's scroll container: the list itself, not the flex row holding it. */
+const list = (page: Page): Locator => flyout(page).locator('.pvt-action-list')
 
 /** The active rail mode, read from the live store. */
 const railMode = (page: Page): Promise<string> => page.evaluate(() =>
@@ -45,6 +47,10 @@ const openPivotSubmenu = async (page: Page, id: string): Promise<void> => {
     await pivotRow(page).hover()
     await expect(flyout(page)).toHaveClass(/shown/)
 }
+
+/** The zoom layer's transform, to show the graph behind the menu was left alone. */
+const zoomTransform = (page: Page): Promise<string> =>
+    page.locator('.zoom-layer:not(.hidden)').first().evaluate(el => el.getAttribute('transform') ?? '')
 
 /** Nodes and edges on the canvas — what a run that landed is judged by. */
 const counts = async (page: Page): Promise<{ nodes: number, edges: number }> => {
@@ -130,6 +136,67 @@ test.describe('one-click pivot', () => {
         const viewport = page.viewportSize()!
         expect(flyoutBox.x + flyoutBox.width).toBeLessThanOrEqual(viewport.width)
         expect(flyoutBox.y + flyoutBox.height).toBeLessThanOrEqual(viewport.height)
+    })
+
+    test('a long registry scrolls inside the submenu instead of running off the screen', async ({ page }) => {
+        // One pivot per enrichment module is the shape that reaches thirty: bare runs,
+        // none of which can advertise a count.
+        await load(page, { pivots: ['blind'], bulk: 30 })
+        await openPivotSubmenu(page, 'a')
+        await expect(flyout(page).locator('.pvt-action-item')).toHaveCount(32)
+
+        // Capped, and inside the viewport rather than cut off by it.
+        const box = (await flyout(page).boundingBox())!
+        const viewport = page.viewportSize()!
+        expect(box.height).toBeLessThanOrEqual(390)
+        expect(box.y + box.height).toBeLessThanOrEqual(viewport.height)
+
+        // Which means the rest of the list has to be somewhere: it scrolls, and it ends
+        // mid-row so that it says so. An overlay scrollbar paints nothing at rest, so a
+        // row cut in half is the only mark that there is more below.
+        const cut = await list(page).evaluate(el => {
+            const rowHeight = el.firstElementChild!.getBoundingClientRect().height
+            return {
+                hidden: el.scrollHeight - el.clientHeight,
+                fraction: (el.clientHeight / rowHeight) % 1,
+            }
+        })
+        expect(cut.hidden).toBeGreaterThan(0)
+        expect(cut.fraction).toBeGreaterThan(0.3)
+        expect(cut.fraction).toBeLessThan(0.7)
+
+        // The list opens at its top. Capping a centring flex row instead of the list
+        // put the first ten rows *above* the top edge, where scrollTop cannot reach.
+        const firstRow = await list(page).evaluate(el => {
+            const row = el.querySelector('.pvt-action-item')!.getBoundingClientRect()
+            const box = el.getBoundingClientRect()
+            return { above: box.top - row.top, text: el.querySelector('.pvt-action-text')?.textContent }
+        })
+        expect(firstRow.above).toBeLessThanOrEqual(0)
+        expect(firstRow.text).toBe('No advertised count')
+
+        // Reachable has to mean runnable, so a row past the fold is run.
+        const last = flyout(page).locator('.pvt-action-item', { hasText: 'whois lookup 30' })
+        await last.scrollIntoViewIfNeeded()
+        await last.click()
+        await expect.poll(() => harness(page, 'nodeData', 'bulk-30-result')).not.toBeNull()
+    })
+
+    test('a wheel inside the submenu scrolls it, and leaves the graph alone', async ({ page }) => {
+        await load(page, { pivots: ['blind'], bulk: 30 })
+        await openPivotSubmenu(page, 'a')
+        const before = await zoomTransform(page)
+
+        const box = (await flyout(page).boundingBox())!
+        await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+        await page.mouse.wheel(0, 600)
+
+        await expect.poll(() => list(page).evaluate(el => el.scrollTop)).toBeGreaterThan(0)
+        // The canvas behind it did not zoom — which would also have closed the menu the
+        // wheel came from, since a zoom hides it.
+        expect(await zoomTransform(page)).toBe(before)
+        await expect(flyout(page)).toHaveClass(/shown/)
+        await expect(menu(page)).toHaveClass(/shown/)
     })
 
     test('with no pivots registered there is no Pivot row at all', async ({ page }) => {

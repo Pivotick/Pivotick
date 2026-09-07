@@ -652,7 +652,8 @@ export class ContextMenu extends UIComponent {
         panel.className = 'pvt-contextmenu pvt-contextmenu-flyout'
         const list = document.createElement('div')
         list.className = 'pvt-contextmenu-mainmenu'
-        list.appendChild(createActionList<ContextMenu>(this, items, this.element, this.rowWiring(depth + 1)))
+        const rows = createActionList<ContextMenu>(this, items, this.element, this.rowWiring(depth + 1))
+        list.appendChild(rows)
         panel.appendChild(list)
         panel.addEventListener('pointerenter', () => this.cancelClose())
         panel.addEventListener('pointerleave', () => this.closeSoon(depth))
@@ -662,8 +663,31 @@ export class ContextMenu extends UIComponent {
         row.classList.add('pvt-submenu-open')
         // Measured before it is shown: opacity does not move anything, so the box is
         // already the real one.
+        // Before placing, since it changes the height the placement is measured from.
+        this.trimToHalfRow(rows)
         this.placeFlyout(panel, row)
         panel.classList.add('shown')
+    }
+
+    /**
+     * Lower a capped list to end **mid-row**, so a row cut in half says there is more
+     * below. Nothing else here does: this platform's scrollbar can be an overlay that
+     * paints nothing at rest, and a fade to the rows' own background is invisible.
+     *
+     * The stylesheet keeps the ceiling; this only ever trims it, and only for a list
+     * long enough to be cut in the first place.
+     */
+    private trimToHalfRow(rows: HTMLElement): void {
+        const first = rows.firstElementChild as HTMLElement | null
+        if (!first) return
+        const rowHeight = first.getBoundingClientRect().height
+        const capped = rows.clientHeight
+        if (!rowHeight || rows.scrollHeight <= capped) return
+
+        const half = Math.round(rowHeight / 2)
+        const whole = Math.floor((capped - half) / rowHeight)
+        if (whole < 1) return
+        rows.style.maxHeight = `${whole * rowHeight + half}px`
     }
 
     /** Beside its row, flipping back over the menu rather than off the viewport. */
