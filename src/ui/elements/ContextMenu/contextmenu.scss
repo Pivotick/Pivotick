@@ -31,7 +31,10 @@
     .pvt-contextmenu-topbar {
         display: flex;
         align-items: center;
-        background-color: var(--pvt-sidebar-mainpanelheader-bg);
+        // The menu's own background, not the sidebar's: the two are the same colour in
+        // the light theme, but the dark palette leaves the sidebar token light, which
+        // put light text on a light panel.
+        background-color: var(--pvt-menu-bg-color);
         border-bottom: 1px solid var(--pvt-tooltip-floating-bg-color);
         padding: 2px;
         margin-bottom: 4px;
@@ -60,7 +63,7 @@
         flex-direction: row;
         align-items: center;
         gap: 10px;
-        background-color: var(--pvt-sidebar-mainpanelheader-bg);
+        background-color: var(--pvt-menu-bg-color);
         border-bottom-right-radius: 10px;
         border-bottom-left-radius: 10px;
 
