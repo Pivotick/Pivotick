@@ -15,18 +15,27 @@
     min-height: 0;
 }
 
-.pvt-review-strip {
+// The queue's column: the strip scrolls, the footer under it does not, so the way to
+// clear fifty providers at once is still on screen at the fiftieth.
+.pvt-review-side {
     flex: none;
+    display: flex;
+    flex-direction: column;
+    width: 172px;
+    min-height: 0;
+    border-right: 1px solid var(--pvt-chrome-border);
+    background-color: var(--pvt-chrome-bg);
+}
+
+.pvt-review-strip {
+    flex: 1;
     display: flex;
     flex-direction: column;
     // The offset parent its rows are measured against when the strip scrolls one of
     // them into view.
     position: relative;
-    width: 172px;
     min-height: 0;
     overflow-y: auto;
-    border-right: 1px solid var(--pvt-chrome-border);
-    background-color: var(--pvt-chrome-bg);
     font-size: 12px;
 }
 
@@ -162,6 +171,54 @@
         opacity: 1;
         pointer-events: auto;
     }
+}
+
+// Queue-wide, so it belongs to the queue rather than to the dock's header row, which
+// carries the controls of the one provider on show.
+.pvt-review-actions {
+    flex: none;
+    display: flex;
+    // A narrow column and two labels: stacking beats truncating either of them.
+    flex-wrap: wrap;
+    // Anchored at the trailing edge, like the × on every row above. It is also what
+    // keeps *Close all* still: growing into the space *Close failed* leaves behind
+    // would slide it under a pointer that has just clicked there.
+    justify-content: flex-end;
+    gap: 4px;
+    padding: 5px 6px;
+    border-top: 1px solid var(--pvt-chrome-border);
+
+    // Set while a single provider is staged, when there is nothing queue-wide to do.
+    // Spelled out because `display: flex` above would otherwise win over the UA's rule.
+    &[hidden] {
+        display: none;
+    }
+}
+
+.pvt-review-action {
+    flex: none;
+    padding: 3px 6px;
+    border: 1px solid var(--pvt-chrome-border);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--pvt-text-color-4);
+    font: inherit;
+    font-size: 11px;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:hover {
+        background-color: color-mix(in srgb, var(--pvt-theme-primary) 10%, transparent);
+        color: var(--pvt-text-color-6);
+    }
+}
+
+// The one that only appears when there is something to clear, tinted like the row-level
+// close it stands in for.
+.pvt-review-action-danger:hover {
+    border-color: color-mix(in srgb, var(--pvt-theme-danger) 40%, transparent);
+    background-color: color-mix(in srgb, var(--pvt-theme-danger) 12%, transparent);
+    color: var(--pvt-theme-danger);
 }
 
 // The pane's controls in the dock's header row. It generates no box of its own, so

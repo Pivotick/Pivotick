@@ -65,8 +65,9 @@ on a row to mark it, Shift-click to carry the mark across a range, and *Select a
 respects the current filter; *Search rows…* filters (regex optional) and the columns sort.
 **Reject selected** and **Reject all remaining** dispose of rows explicitly and are remembered
 for the session, while the × merely closes a pane and rejects nothing. **Re-run** asks again
-with the same narrowing. [Candidates are not the graph](#candidates-are-not-the-graph) has the
-rest of it.
+with the same narrowing. At the foot of the strip, **Close failed** drops every fetch that
+brought nothing back and **Close all** empties the queue; neither rejects anything either.
+[Candidates are not the graph](#candidates-are-not-the-graph) has the rest of it.
 
 **6 · Ingest, and undo if it was wrong.** **Ingest selected (12)** commits exactly those
 twelve, placed around the node you pivoted from and tagged with the pivot as their source.

@@ -73,6 +73,22 @@ const closeButtonOpacity = (page: Page, pivotId: string): Promise<string> =>
     provider(page, pivotId).locator('.pvt-review-close')
         .evaluate(button => window.getComputedStyle(button).opacity)
 
+// ── the strip's footer: the two ways to clear the whole queue ────────────────
+const queueActions = (page: Page): Locator => page.locator('.pvt-review-actions')
+const closeFailedButton = (page: Page): Locator => page.locator('.pvt-review-action-danger')
+const closeAllButton = (page: Page): Locator =>
+    queueActions(page).locator('.pvt-review-action:not(.pvt-review-action-danger)')
+
+/**
+ * Where *Close all* sits, in its own offset parent's coordinates — read that way
+ * rather than from a client rect, which is measured through whatever is transforming
+ * the dock.
+ */
+const closeAllBox = (page: Page): Promise<[left: number, width: number]> =>
+    closeAllButton(page).evaluate(el => [
+        (el as HTMLElement).offsetLeft, (el as HTMLElement).offsetWidth,
+    ] as [number, number])
+
 /** Drop a provider's candidates the way the strip offers it: the row's own ×. */
 const closeProvider = async (page: Page, pivotId: string): Promise<void> => {
     await provider(page, pivotId).hover()
@@ -675,6 +691,54 @@ test.describe('pivot triage pane', () => {
         expect(await providerRows(page)).toEqual(['No advertised count 3', 'Search the archive 30'])
         await expect(onShow(page)).toHaveAttribute('data-pivot', 'blind')
         expect(await harness(page, 'dockTabIds')).toEqual(['table', 'pivot-triage'])
+    })
+
+    test('the queue clears its failed fetches, or empties itself, from the foot of the strip', async ({ page }) => {
+        await load(page)
+        await stageUrls(page)
+
+        // One provider closes itself from its own row, so there is nothing queue-wide
+        // to offer yet.
+        await expect(queueActions(page)).toBeHidden()
+
+        await harness(page, 'runPivot', 'blind', ['a'])
+        await expect(queueActions(page)).toBeVisible()
+        // Nothing has failed, so the control that clears failures is not drawn.
+        await expect(closeFailedButton(page)).toBeHidden()
+
+        // Two fetches that staged nothing: one over the ceiling, one that threw.
+        await harness(page, 'runPivot', 'oversized', ['a'])
+        await harness(page, 'setPivotFail', true)
+        await harness(page, 'runPivot', 'search-archive', [], { query: 'ransom' })
+        await harness(page, 'setPivotFail', false)
+
+        expect(await providerRows(page)).toEqual([
+            'Correlations 210', 'No advertised count 3',
+            'Everything, everywhere !', 'Search the archive !',
+        ])
+        await expect(closeFailedButton(page)).toBeVisible()
+
+        const before = await closeAllBox(page)
+        await closeFailedButton(page).click()
+
+        // The two failures go and the two queues of candidates stay, with nothing
+        // rejected on the way out.
+        expect(await providerRows(page)).toEqual(['Correlations 210', 'No advertised count 3'])
+        expect(await harness(page, 'rejectedPivotIds', 'oversized')).toEqual([])
+        expect(await harness(page, 'rejectedPivotIds', 'search-archive')).toEqual([])
+        await expect(closeFailedButton(page)).toBeHidden()
+        // *Close all* holds its place rather than growing into the gap: the click that
+        // cleared the failures must not land on it a second time.
+        expect(await closeAllBox(page)).toEqual(before)
+
+        await closeAllButton(page).click()
+
+        // The last provider takes the review tab with it, and emptying the queue is no
+        // more a verdict than closing one pane is — the 210 come back on the next run.
+        expect(await harness(page, 'dockTabIds')).toEqual(['table'])
+        expect(await harness(page, 'rejectedPivotIds', CORRELATION)).toEqual([])
+        await stageUrls(page)
+        await expect(headline(page)).toContainText('210 fetched')
     })
 
     test('closing a provider rejects nothing', async ({ page }) => {

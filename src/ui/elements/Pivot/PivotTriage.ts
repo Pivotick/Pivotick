@@ -67,6 +67,10 @@ export class PivotTriage extends UIComponent {
     private tools?: HTMLElement
     /** Strip rows by pivot id, in strip order — so a count repaints one row, not fifty. */
     private readonly items = new Map<string, StripItem>()
+    /** The strip's footer: the two ways to clear the queue without walking it. */
+    private actions?: HTMLElement
+    private closeFailed?: HTMLButtonElement
+    private closeAll?: HTMLButtonElement
     /**
      * Panes built for a set that had not offered anything yet, and so were never brought
      * forward. Kept so that a set which *stops* being provisional is revealed then —
@@ -208,6 +212,7 @@ export class PivotTriage extends UIComponent {
         this.shown = null
         for (const item of this.items.values()) item.root.remove()
         this.items.clear()
+        if (this.actions) this.actions.hidden = true
         this.host?.replaceChildren()
     }
 
@@ -237,6 +242,10 @@ export class PivotTriage extends UIComponent {
             this.root = document.createElement('div')
             this.root.className = 'pvt-review'
 
+            // The queue's column: the scrolling strip, and the footer that clears it.
+            const side = document.createElement('div')
+            side.className = 'pvt-review-side'
+
             this.strip = document.createElement('div')
             this.strip.className = 'pvt-review-strip'
             this.strip.setAttribute('role', 'tablist')
@@ -254,7 +263,8 @@ export class PivotTriage extends UIComponent {
             })
             // Arrow keys walk the queue, the same way the panel's provider list walks.
             this.listen(this.strip, 'keydown', event => this.onStripKey(event as KeyboardEvent))
-            this.root.appendChild(this.strip)
+            side.append(this.strip, this.buildActions())
+            this.root.appendChild(side)
 
             this.host = document.createElement('div')
             this.host.className = 'pvt-review-host'
@@ -371,6 +381,61 @@ export class PivotTriage extends UIComponent {
             // Appending an element already in place moves it, so this is also the sort.
             strip.appendChild(item.root)
         }
+
+        this.paintActions(staged)
+    }
+
+    /**
+     * The foot of the queue. A provider's own × is a row-level control, and clearing six
+     * failed fetches through it is six hunts for a button that only shows itself under
+     * the pointer, when the answer to all six is the same one.
+     *
+     * Two buttons rather than one behind a caret: both are two words long, and the safe
+     * one — dropping fetches that staged nothing — should not need a menu opened first.
+     */
+    private buildActions(): HTMLElement {
+        const actions = document.createElement('div')
+        actions.className = 'pvt-review-actions'
+        actions.hidden = true
+        this.closeFailed = this.action('Close failed', () => this.closeMany(failed))
+        this.closeFailed.classList.add('pvt-review-action-danger')
+        this.closeAll = this.action('Close all', () => this.closeMany(() => true))
+        actions.append(this.closeFailed, this.closeAll)
+        this.actions = actions
+        return actions
+    }
+
+    private action(label: string, onClick: () => void): HTMLButtonElement {
+        const button = document.createElement('button')
+        button.type = 'button'
+        button.className = 'pvt-review-action'
+        button.textContent = label
+        this.listen(button, 'click', onClick)
+        return button
+    }
+
+    /** Counts in the titles rather than the labels: a label that resizes on every fetch jitters. */
+    private paintActions(staged: PivotCandidateSet[]): void {
+        if (!this.actions || !this.closeFailed || !this.closeAll) return
+        const broken = staged.filter(failed).length
+        // One provider closes itself from its own row, and "all" of one is a trap
+        // dressed as a shortcut.
+        this.actions.hidden = staged.length < 2
+        this.closeFailed.hidden = broken === 0
+        this.closeFailed.title = broken === 1
+            ? 'Drop the one provider whose fetch brought nothing back'
+            : `Drop the ${fmt(broken)} providers whose fetches brought nothing back`
+        this.closeAll.title = `Drop all ${fmt(staged.length)} staged providers. Nothing is rejected.`
+    }
+
+    /**
+     * `staged()` hands back a copy, so dropping sets while walking it is safe. Each
+     * discard notifies, and the last one takes the tab with it.
+     */
+    private closeMany(match: (set: PivotCandidateSet) => boolean): void {
+        for (const set of this.pivots.staged()) {
+            if (match(set)) this.pivots.discard(set.pivotId)
+        }
     }
 
     private createItem(set: PivotCandidateSet): StripItem {
@@ -430,13 +495,13 @@ export class PivotTriage extends UIComponent {
         item.close.tabIndex = on ? 0 : -1
 
         // A set with no rows to count is in one of two states, and the row says which.
-        const failed = Boolean(set.error || set.refused)
-        item.root.classList.toggle('pvt-review-tab-failed', failed)
-        item.count.textContent = set.loading ? '…' : failed ? '!' : waiting ? fmt(waiting) : ''
+        const broken = failed(set)
+        item.root.classList.toggle('pvt-review-tab-failed', broken)
+        item.count.textContent = set.loading ? '…' : broken ? '!' : waiting ? fmt(waiting) : ''
 
         // Also the accessible name, since '…' and '!' are marks rather than words.
         const summary = set.loading ? 'fetching'
-            : failed ? 'the fetch failed'
+            : broken ? 'the fetch failed'
                 : waiting ? `${fmt(waiting)} waiting for a verdict`
                     : 'nothing waiting'
         item.main.title = `${set.label} — ${summary}`
@@ -511,6 +576,12 @@ export class PivotTriage extends UIComponent {
         this.uiManager.graph.notifier.success(ingestTitle(landed, asked, edges))
     }
 }
+
+/**
+ * A set whose fetch is over and staged nothing: it threw, or it blew the ceiling. Both
+ * carry a report and no candidates, so closing one throws no triage away.
+ */
+const failed = (set: PivotCandidateSet): boolean => Boolean(set.error || set.refused)
 
 /** `Ingested 12 nodes, 14 edges` — or `9 of 12` when a hook landed fewer than asked. */
 function ingestTitle(landed: number, asked: number, edges: number): string {
