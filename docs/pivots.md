@@ -71,6 +71,8 @@ brought nothing back and **Close all** empties the queue; neither rejects anythi
 
 **6 · Ingest, and undo if it was wrong.** **Ingest selected (12)** commits exactly those
 twelve, placed around the node you pivoted from and tagged with the pivot as their source.
+**Ingest all 213** beside it skips the marking and commits everything the provider is still
+offering, whatever the table is filtered to.
 The toast reads `Ingested 12 nodes, 14 edges`. Taking it back is the undo control in the top
 bar, which is there permanently rather than for as long as a toast lasts, and reverses the
 whole run — its edges and any children it merged in included.
@@ -412,7 +414,8 @@ new Pivotick(el, data, { pivotQuickIngestLimit: 50 })   // that size, all pivots
 
 One gesture, one batch, one `dataBatchChanged`, in this order:
 
-1. **Dedup** — an id already on canvas is skipped, never overwritten.
+1. **Dedup** — an id already on canvas is skipped, never overwritten, whether it was there
+   when the candidates were staged or another run landed it while they waited.
 2. **Children union by id.**
 3. **Placement** near the origin node, jittered. A provider's own `x`/`y` wins, and an
    origin-less run seeds at the viewport centre.

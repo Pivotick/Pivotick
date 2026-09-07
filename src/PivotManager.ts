@@ -825,6 +825,12 @@ export class PivotManager implements PivotManagerLike {
         }
         const landedNodes: Node[] = []
         const landedEdges: Edge[] = []
+        /**
+         * Marked rows that turned out to be on the canvas already: staged before some
+         * other run landed the same id, so stage-time dedup could not have seen it.
+         * They join the deduped below and are treated exactly as if it had.
+         */
+        const collided: PivotCandidate[] = []
         const seed = this.seedPoint(set.origin)
 
         this.graph.batchChanges(() => {
@@ -840,8 +846,14 @@ export class PivotManager implements PivotManagerLike {
                 try {
                     node = this.graph.addNode(raw)
                 } catch {
-                    // Already there. Dedup catches this at stage time; a race is not
-                    // worth killing a run over.
+                    // Already there — another run landed this id while these candidates
+                    // sat in triage, which is the normal shape of a queue of pivots
+                    // ingested one after another. It becomes a deduped row like any
+                    // other: this run vouches for what is there, and the row stops
+                    // waiting for an ingest that can never take it.
+                    candidate.deduped = true
+                    candidate.state = 'candidate'
+                    collided.push(candidate)
                     continue
                 }
                 node.vouch(pivotId, runId)
@@ -892,7 +904,7 @@ export class PivotManager implements PivotManagerLike {
             // assert it exists — so it vouches for it. That is what makes two
             // overlapping pivots both hold a claim on the same node, and what lets
             // undo drop one claim without deleting what the other still vouches for.
-            for (const candidate of deduped) {
+            for (const candidate of [...deduped, ...collided]) {
                 const existing = this.graph.getMutableNode(candidate.id)
                 if (!existing) continue
                 this.vouchExisting(existing, pivotId, runId)
@@ -960,7 +972,7 @@ export class PivotManager implements PivotManagerLike {
             runId,
             nodes: landedNodes,
             edges: landedEdges,
-            deduped: deduped.length,
+            deduped: deduped.length + collided.length,
             suppressed: set.suppressed,
         }
     }

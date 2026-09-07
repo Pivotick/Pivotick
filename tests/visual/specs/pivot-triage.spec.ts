@@ -55,6 +55,13 @@ const markRange = (page: Page, id: string): Promise<void> => row(page, id).click
 
 const button = (scope: Locator, name: string): Locator => scope.locator('button', { hasText: name }).first()
 
+/** The one-click commit: everything the provider on show still offers, as one run. */
+const ingestAll = (page: Page): Locator => footer(page).locator('button', { hasText: /^Ingest all/ })
+
+/** Where it sits in the footer, so the queue can be shown to hand over under it. */
+const ingestAllLeft = (page: Page): Promise<number> =>
+    ingestAll(page).evaluate(el => (el as HTMLElement).offsetLeft)
+
 /** The row search in the dock's header, which belongs to the provider on show. */
 const searchBox = (page: Page): Locator => page.locator('.pvt-triage-search')
 
@@ -112,6 +119,12 @@ const ingestEverything = async (page: Page): Promise<void> => {
     await button(footer(page), 'Select all').click()
     await button(footer(page), 'Ingest selected').click()
     await expect(toast(page)).toContainText('Ingested')
+}
+
+/** How many pivot runs the history holds — one per ingest, which is one per undo. */
+const pivotEntries = async (page: Page): Promise<number> => {
+    const entries = await harness(page, 'historyEntries') as Array<{ kind: string }>
+    return entries.filter(entry => entry.kind === 'pivot').length
 }
 
 const nodeCount = async (page: Page): Promise<number> =>
@@ -528,6 +541,79 @@ test.describe('pivot triage pane', () => {
 
         await page.locator('#pvt-redo-button').click()
         expect(await nodeCount(page)).toBe(before + 2)
+    })
+
+    test('one click takes everything a provider is offering, whatever the table shows', async ({ page }) => {
+        await load(page, { edgeOnly: [['a', 'b'], ['c', 'd']] })
+        await stageUrls(page)
+        const before = await counts(page)
+
+        // Node rows and edge rows both: this one click is a verdict on all of them.
+        await expect(ingestAll(page)).toHaveText('Ingest all 212')
+
+        // Blind to the filter on purpose. *All* is the whole set, which is what keeps
+        // the count true whatever the table is showing — and *Select all n matching*
+        // beside it is the pair that reads the table.
+        await searchBox(page).fill('url 209')
+        // One matching node row, and the two edge rows no filter reaches.
+        await expect(rows(page)).toHaveCount(3)
+        await expect(button(footer(page), 'Select all')).toHaveText('Select all 1 matching')
+        await expect(ingestAll(page)).toHaveText('Ingest all 212')
+
+        await ingestAll(page).click()
+
+        await expect(toast(page)).toContainText('Ingested 210 nodes, 212 edges')
+        expect(await counts(page)).toEqual({ nodes: before.nodes + 210, edges: before.edges + 212 })
+        // One run, so one gesture in the top bar takes the whole provider back.
+        expect(await pivotEntries(page)).toBe(1)
+        await page.locator('#pvt-undo-button').click()
+        expect(await counts(page)).toEqual(before)
+    })
+
+    test('a queue is taken a click at a time, from the same place in the footer', async ({ page }) => {
+        await load(page)
+        await stageUrls(page)
+        await harness(page, 'runPivot', 'blind', ['a'])
+        await expect(onShow(page)).toHaveAttribute('data-pivot', 'blind')
+
+        const at = await ingestAllLeft(page)
+        await ingestAll(page).click()
+        await expect(toast(page)).toContainText('Ingested 3 nodes')
+
+        // Nothing left to rule on there, so the pane closes and the next provider comes
+        // forward — with the same button waiting in the same place. That is what makes
+        // five staged pivots five clicks rather than ten.
+        expect(await providerRows(page)).toEqual(['Correlations 210'])
+        await expect(onShow(page)).toHaveAttribute('data-pivot', CORRELATION)
+        await expect(ingestAll(page)).toHaveText('Ingest all 210')
+        expect(await ingestAllLeft(page)).toBe(at)
+
+        await ingestAll(page).click()
+        // The first provider's report is still on screen behind this one.
+        await expect(toast(page).last()).toContainText('Ingested 210 nodes')
+        expect(await harness(page, 'dockTabIds')).toEqual(['table'])
+
+        // A run each, so a provider taken by mistake is taken back on its own.
+        expect(await pivotEntries(page)).toBe(2)
+    })
+
+    test('a candidate that lands elsewhere while it waits stops waiting', async ({ page }) => {
+        await load(page)
+        await stageUrls(page)
+
+        // Something else puts one of the staged ids on the canvas while the candidates
+        // sit in triage. That is the shape a queue of pivots ingested one after another
+        // has whenever two of them offer the same node: stage-time dedup ran before the
+        // id existed, so it could not have seen it.
+        await harness(page, 'addNode', 'url-0', 400, 300)
+
+        await ingestAll(page).click()
+
+        // 209 of the 210 land, and the one already there becomes a deduped row rather
+        // than one left marked for an ingest that can never take it — which is what
+        // lets the pane finish and hand the dock back.
+        await expect(toast(page)).toContainText('Ingested 209 of 210 nodes')
+        expect(await harness(page, 'dockTabIds')).toEqual(['table'])
     })
 
     test('undoing the newest ingest puts its rows back, untriaged, with no second fetch', async ({ page }) => {

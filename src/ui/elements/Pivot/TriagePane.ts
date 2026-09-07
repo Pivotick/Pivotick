@@ -1065,6 +1065,18 @@ export class TriagePane {
         ingest.addEventListener('click', () => this.deps.ingest(this.pivotId))
         foot.appendChild(ingest)
 
+        // *Select all* then *Ingest selected* is the answer to a provider the analyst
+        // already trusts, and a queue of five of them is ten clicks. This is those two
+        // in one — and deliberately blind to the filter, which is what keeps its count
+        // true whatever the table is showing. A narrowed batch goes through *Select all
+        // n matching* beside it, which is the pair that reads the table.
+        const onOffer = this.untriaged().length
+            + this.set.edges.filter(edge => edge.state !== 'rejected').length
+        if (onOffer > 0) foot.appendChild(this.footButton(`Ingest all ${fmt(onOffer)}`, false, () => {
+            this.deps.pivots.markAll(this.pivotId, true)
+            this.deps.ingest(this.pivotId)
+        }))
+
         // Named after what it matched, never a bare "select all" while a filter narrows
         // the table — the two are different acts on a 1,800-row set. Both this and the
         // pager below read the node table, so a set of nothing but edge rows has neither.
