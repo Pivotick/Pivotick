@@ -4,6 +4,7 @@ import type { Node } from '../Node'
 import type { Edge } from '../Edge'
 import type { Note } from '../Note'
 import { createButton } from '../ui/components/Button'
+import { chevronRight } from '../ui/icons'
 import type { UIElement } from '../ui/UIManager'
 import type { IconClass, IconUnicode, ImagePath, MenuActionItemOptions, MenuQuickActionItemOptions, SVGIcon } from '../interfaces/GraphUI'
 
@@ -116,7 +117,17 @@ export function createQuickActionList<TThis extends UIElement = UIElement>(thisC
         return div
     }
 
-export function createActionList<TThis extends UIElement = UIElement>(thisContext: TThis, actions: MenuActionItemOptions[], element: Node[] | Node | Edge | Note | null): HTMLDivElement {
+/**
+ * `decorate` is called with each row that was drawn and the entry it came from — the
+ * pairing a host needs to wire behaviour the row itself cannot carry, such as opening
+ * a {@link MenuActionItemOptions.submenu} panel it has to position on screen.
+ */
+export function createActionList<TThis extends UIElement = UIElement>(
+    thisContext: TThis,
+    actions: MenuActionItemOptions[],
+    element: Node[] | Node | Edge | Note | null,
+    decorate?: (row: HTMLDivElement, action: MenuActionItemOptions) => void
+): HTMLDivElement {
     const div = createHtmlElement('div', { class: 'pvt-action-list' })
     const firstElement = Array.isArray(element) ? element[0] : element
     actions.forEach(action => {
@@ -125,6 +136,7 @@ export function createActionList<TThis extends UIElement = UIElement>(thisContex
         const isVisible = tryResolveBoolean(action.visible, firstElement) ?? true
         if (isVisible) {
             const row = createActionItem(thisContext, action, element)
+            decorate?.(row, action)
             div.appendChild(row)
         }
     })
@@ -162,9 +174,12 @@ export function createActionItem<TThis extends UIElement = UIElement>(thisContex
         shortcut.classList.add('pvt-ms-auto')
         shortcut.style.borderColor = 'var(--pvt-bg-color-8)'
     }
+    const classes = ['pvt-action-item', `pvt-action-item-${action.variant}`]
+    if (action.submenu) classes.push('pvt-has-submenu')
+    if (action.dividerBefore) classes.push('pvt-action-item-divided')
     const div = createHtmlElement('div',
         {
-            class: ['pvt-action-item', `pvt-action-item-${action.variant}`]
+            class: classes
         },
         [
             createIcon({ fixedWidth: true, ...action }),
@@ -173,11 +188,18 @@ export function createActionItem<TThis extends UIElement = UIElement>(thisContex
                 title: action.title ?? '',
             }, [ action.text ?? '' ]),
             shortcut,
+            // The affordance is part of what a submenu row *is*; opening the panel is
+            // the host's, since only it knows where on screen the panel can go.
+            action.submenu
+                ? createHtmlElement('span', { class: 'pvt-submenu-caret', 'aria-hidden': 'true' }, [createIcon({ svgIcon: chevronRight })])
+                : '',
         ]
     )
-    if (typeof action.onclick === 'function') {
+    if (action.submenu) div.setAttribute('aria-haspopup', 'true')
+    const onclick = action.onclick
+    if (typeof onclick === 'function') {
         div.addEventListener('click', (event: MouseEvent) => {
-            action.onclick.call(thisContext, event, element)
+            onclick.call(thisContext, event, element)
         })
     }
     return div

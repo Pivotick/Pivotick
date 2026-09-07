@@ -753,6 +753,20 @@ ceiling.addEventListener('change', () => {
     graph.notifier.info('Ceiling', `One fetch may now stage ${graph.pivots.candidateCeiling}`)
 })
 
+// The one-click pivot's threshold: how many new candidates a *Pivot ▸* row lands
+// before it opens triage instead. Small numbers put both endings within reach of the
+// providers here, none of which returns fifty of anything.
+const quickLimit = document.createElement('input')
+quickLimit.type = 'number'
+quickLimit.min = '0'
+quickLimit.step = '5'
+quickLimit.value = String(graph.pivots.quickIngestLimit)
+quickLimit.addEventListener('change', () => {
+    graph.pivots.quickIngestLimit = Math.max(0, Number(quickLimit.value) || 0)
+    graph.notifier.info('Quick limit',
+        `A one-click pivot now lands up to ${graph.pivots.quickIngestLimit} new candidates`)
+})
+
 const status = document.createElement('span')
 status.className = 'devbar-status'
 
@@ -829,6 +843,7 @@ bar.append(
         },
     )),
     field('Ceiling', ceiling),
+    field('Quick', quickLimit),
     button('Save', 'graph.pivots.save() — write every unsaved run back', () => {
         const pending = graph.pivots.unsavedCount()
         if (!pending.nodes && !pending.edges) graph.notifier.info('Save', 'Nothing is waiting to be written')

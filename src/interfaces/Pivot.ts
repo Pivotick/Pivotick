@@ -67,7 +67,12 @@ export interface PivotDefinition {
      * Land results directly instead of staging them for triage. For small, trusted
      * results — expanding an event into its objects — not for anything an analyst
      * would want to pick through. The cap still applies.
-     * @default false
+     *
+     * `true` and `false` are both answers, and both hold however the run was started.
+     * Leaving it unset is *not* the same as `false`: it says the pivot has no view, so
+     * a one-click run may decide on size alone — see
+     * {@link PivotRunOptions.autoIngestUpTo}. Runs made any other way still stage.
+     * @default undefined — stages, unless the run itself sets a size to land under
      */
     autoIngest?: boolean
     /**
@@ -293,6 +298,21 @@ export interface PivotRefusal {
  *
  * @category Pivots
  */
+/** What a caller can say about one run beyond its origin and its narrowing. */
+export interface PivotRunOptions {
+    /**
+     * Land the results with no triage when this many candidates or fewer are new to
+     * the canvas — the deal a one-click pivot makes: no counts to read and nothing to
+     * narrow, so size decides. Deduped candidates do not count towards it; edge-only
+     * rows do, because they are rows an analyst would otherwise have been asked about.
+     *
+     * Only consulted where the pivot left {@link PivotDefinition.autoIngest} unset. A
+     * pivot that declared it either way has already answered the question, and its
+     * answer holds however the run was started.
+     */
+    autoIngestUpTo?: number
+}
+
 export interface PivotRunOutcome {
     /**
      * `'ingested'` an auto-ingest pivot landed its results; `'staged'` candidates
@@ -492,6 +512,12 @@ export interface PivotRestageRecord {
 export interface PivotManagerLike {
     /** Absolute ceiling on what one `fetch` may stage. Refuses rather than truncates. */
     candidateCeiling: number
+    /**
+     * How many new candidates a one-click pivot lands without triage — what
+     * the UI manager's `quickPivot` passes as {@link PivotRunOptions.autoIngestUpTo}.
+     * A run made any other way is unaffected.
+     */
+    quickIngestLimit: number
     /** What the library draws on a node's rim for its pivots. */
     rimBadge: PivotRimBadge
     register(definition: PivotDefinition): () => void
@@ -512,7 +538,7 @@ export interface PivotManagerLike {
      * between graph changes, so it is cheap to ask per node per render.
      */
     applicableCount(node: Node): number
-    run(id: string, nodes?: Node[], narrowing?: PivotNarrowing): Promise<PivotRunOutcome>
+    run(id: string, nodes?: Node[], narrowing?: PivotNarrowing, options?: PivotRunOptions): Promise<PivotRunOutcome>
     /** Promote a waiting re-run to the set on show. */
     showPending(pivotId: string): void
     /** Drop a waiting re-run and keep triaging what is on show. */

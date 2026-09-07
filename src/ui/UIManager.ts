@@ -28,6 +28,7 @@ import { PivotMode, PIVOT_MODE } from './elements/Pivot/PivotMode'
 import { PivotTriage } from './elements/Pivot/PivotTriage'
 import { Table } from './elements/Table/Table'
 import type { PivotickPlugin, PluginContext } from '../interfaces/Plugin'
+import type { PivotRunOutcome } from '../interfaces/Pivot'
 
 
 const basicPropertyGetter = (element: Node | Edge): PropertyEntry[] => {
@@ -471,6 +472,29 @@ export class UIManager {
         this.modeStore.setMode(PIVOT_MODE)
         this.modeStore.setPanelOpen(PIVOT_MODE, true)
         if (pivotId) this.pivotMode?.focus(pivotId)
+    }
+
+    /**
+     * Run one pivot on the spot, with no panel and nothing to fill in — the gesture
+     * behind a context-menu pivot row, and behind a rim badge with only one pivot to
+     * offer. The selection is left alone: this is a question about `nodes`, not a move
+     * to somewhere the analyst can then work.
+     *
+     * Nothing is narrowed, so where the results go is the pivot's `autoIngest` if it
+     * declared one and otherwise their size — `pivots.quickIngestLimit` new candidates
+     * or fewer land on the canvas, more than that opens triage.
+     *
+     * The one answer a single click cannot show by itself is a refusal made *before*
+     * the fetch: nothing was staged, so there is no pane to carry the number or the way
+     * past it. Then the panel opens on that pivot, where the count and the narrowing
+     * that lifts it both live.
+     */
+    public async quickPivot(nodes: Node[], pivotId: string): Promise<PivotRunOutcome> {
+        const pivots = this.graph.pivots
+        const outcome = await pivots.run(pivotId, nodes, {}, { autoIngestUpTo: pivots.quickIngestLimit })
+        const unshown = outcome.status === 'refused' || outcome.status === 'failed'
+        if (unshown && !pivots.candidates(pivotId)) this.openPivotMode(nodes, pivotId)
+        return outcome
     }
 
     public getRootContainer(): HTMLElement {

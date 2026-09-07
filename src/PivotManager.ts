@@ -4,7 +4,8 @@ import type { RawEdge, RawNode } from './interfaces/GraphOptions'
 import type { IngestContext, IngestDecision } from './interfaces/InterractionCallbacks'
 import type {
     PivotCandidate, PivotCandidateEdge, PivotCandidateSet, PivotContext, PivotDefinition,
-    PivotManagerLike, PivotNarrowing, PivotRefusal, PivotRejection, PivotRimBadge, PivotRun, PivotRunOutcome,
+    PivotManagerLike, PivotNarrowing, PivotRefusal, PivotRejection, PivotRimBadge, PivotRun, PivotRunOptions,
+    PivotRunOutcome,
     PivotSaveContext, PivotSaveOutcome, PivotSavePayload, PivotSaveReport, PivotSummary,
 } from './interfaces/Pivot'
 import { SEED_SOURCE } from './interfaces/Pivot'
@@ -41,6 +42,15 @@ export class PivotManager implements PivotManagerLike {
      * virtualises. Override it through `pivotCandidateCeiling` in the graph options.
      */
     public candidateCeiling = 10_000
+
+    /**
+     * How many new candidates a one-click pivot lands without triage. The number is
+     * about the canvas rather than the clicking: undo takes an ingest back but not the
+     * layout the simulation made around it, so the limit is roughly what a graph can
+     * absorb and still be the graph the analyst was reading. Override it through
+     * `pivotQuickIngestLimit` in the graph options.
+     */
+    public quickIngestLimit = 50
 
     /**
      * Whether a node a run created and has not written back carries a
@@ -339,7 +349,12 @@ export class PivotManager implements PivotManagerLike {
      * outcome's `runId` is the id the resulting ingest is recorded under, so it is
      * the handle for `graph.history.undo`.
      */
-    public async run(id: string, nodes: Node[] = [], narrowing: PivotNarrowing = {}): Promise<PivotRunOutcome> {
+    public async run(
+        id: string,
+        nodes: Node[] = [],
+        narrowing: PivotNarrowing = {},
+        options: PivotRunOptions = {}
+    ): Promise<PivotRunOutcome> {
         const def = this.defs.get(id)
         if (!def) throw new Error(`No pivot is registered with id "${id}".`)
 
@@ -461,7 +476,7 @@ export class PivotManager implements PivotManagerLike {
             return this.refuse(runId, set.refused)
         }
 
-        if (!def.autoIngest) {
+        if (!this.landsWithoutTriage(def, set, options)) {
             return {
                 status: 'staged',
                 runId,
@@ -472,8 +487,8 @@ export class PivotManager implements PivotManagerLike {
             }
         }
 
-        // Auto-ingest: no triage, so everything landable is marked and committed. The
-        // gate above still applied, and `onBeforeIngest` still gets its say.
+        // Landing: no triage, so everything landable is marked and committed. The gate
+        // above still applied, and `onBeforeIngest` still gets its say.
         for (const candidate of set.nodes) if (!candidate.deduped) candidate.state = 'marked'
         for (const edge of set.edges) edge.state = 'marked'
         try {
@@ -484,6 +499,31 @@ export class PivotManager implements PivotManagerLike {
             this.candidateSets.delete(id)
             this.notify('candidates')
         }
+    }
+
+    /**
+     * Whether this run's results go onto the canvas rather than into triage.
+     *
+     * `autoIngest` is the pivot's own answer and it wins in both directions. A pivot
+     * that never gave one leaves the decision to size, which only a caller who asked
+     * for it supplies — so the same pivot run from the panel still stages, and going
+     * there to read the counts is never answered by having them land instead.
+     */
+    private landsWithoutTriage(def: PivotDefinition, set: PivotCandidateSet, options: PivotRunOptions): boolean {
+        if (def.autoIngest !== undefined) return def.autoIngest
+        if (options.autoIngestUpTo === undefined) return false
+        return this.newRows(set) <= options.autoIngestUpTo
+    }
+
+    /**
+     * The rows triage would put in front of the analyst: candidates that are not
+     * already on canvas, plus the edge-only rows. Neither `set.fetched` nor the
+     * provider's own count is this number — the first counts every node returned,
+     * including the ones dedup skips and the ones a rejection suppressed, and neither
+     * counts an edge between two nodes already on screen.
+     */
+    private newRows(set: PivotCandidateSet): number {
+        return set.nodes.filter(candidate => !candidate.deduped).length + set.edges.length
     }
 
     /**

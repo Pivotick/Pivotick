@@ -877,7 +877,19 @@ export type MenuActionItemOptions<TThis extends UIElement = UIElement> = {
     /** @default outline-primary */
     variant?: UIBaseVariant | UIOutlineVariant | UIOutlineSoftVariant,
     visible?: boolean | ((element: Node | Edge | Note | null) => boolean)
-    onclick: (this: TThis, evt: PointerEvent | MouseEvent, element?: Node | Node[] | Edge | Edge[] | Note | Note[] | null) => void,
+    /** Optional: a row that only opens a {@link MenuActionItemOptions.submenu} needs no action of its own. */
+    onclick?: (this: TThis, evt: PointerEvent | MouseEvent, element?: Node | Node[] | Edge | Edge[] | Note | Note[] | null) => void,
+    /**
+     * Rows that open in a panel beside this one, which then carries the click. The
+     * function form is resolved every time the menu opens, so a submenu may depend on
+     * the element it was opened over.
+     *
+     * A row with a submenu keeps its own `onclick` if it has one; the click opens the
+     * panel either way, and closes it again on a second click.
+     */
+    submenu?: MenuActionItemOptions<TThis>[] | ((element: Node | Edge | Note | null) => MenuActionItemOptions<TThis>[]),
+    /** Draw a rule above this row, to group what follows apart from what came before. */
+    dividerBefore?: boolean,
     /** The keybinding activates this function. This is just visual. The actual binding is defined in UIManager */
     shortcut?: string
 }

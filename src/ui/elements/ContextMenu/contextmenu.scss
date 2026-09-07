@@ -58,6 +58,19 @@
         }
     }
 
+    // A submenu, drawn beside the row that opens it. It wears `.pvt-contextmenu` too,
+    // so the chrome and every row style below are one stylesheet rather than two.
+    &.pvt-contextmenu-flyout {
+        // Above the menu it hangs off, which is the one thing it can overlap.
+        z-index: 1021;
+
+        .pvt-contextmenu-mainmenu {
+            // The menu gets this from its topbar; a flyout has none, so its first and
+            // last rows would otherwise sit against the rounded edge.
+            padding: 4px 0;
+        }
+    }
+
     .pvt-contextmenu-mainmenu {
         display: flex;
         flex-direction: row;
@@ -153,6 +166,33 @@
         }
     }
 
+
+    // Always at the right edge, never after the text: a caret that follows the label
+    // lands under the pointer in a different place on every row.
+    .pvt-submenu-caret {
+        margin-left: auto;
+        padding-left: 1em;
+        display: flex;
+        align-items: center;
+        opacity: 0.55;
+
+        .pvt-icon {
+            font-size: 14px;
+        }
+    }
+
+    .pvt-action-item-divided {
+        border-top: 1px solid var(--pvt-border-color);
+    }
+
+    // A row whose submenu stands open keeps the highlight, so the pointer moving into
+    // the panel does not look like it left the menu.
+    @each $variant in (primary, secondary, info, warning, danger, success) {
+        .pvt-action-item-outline-#{$variant}.pvt-submenu-open {
+            background-color: var(--pvt-bg-color-#{$variant});
+            color: var(--pvt-text-color-for-#{$variant});
+        }
+    }
 
     .pvt-action-item-outline-primary:hover {
         background-color: var(--pvt-bg-color-primary);

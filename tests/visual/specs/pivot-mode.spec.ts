@@ -393,20 +393,17 @@ test.describe('pivot mode', () => {
         await expect(nodeEl(page, 'a').locator('.pvt-node-badge')).toHaveCount(0)
     })
 
-    test('the context menu routes into the mode, and is absent with no pivots', async ({ page }) => {
+    test('the context menu routes into the mode with the clicked node as its origin', async ({ page }) => {
         await load(page)
         await openNodeMenu(page, 'a')
-        const item = page.locator('.pvt-contextmenu .pvt-action-item', { hasText: 'Pivot…' })
-        await expect(item).toHaveCount(1)
 
-        await item.click()
+        // The rows above it are the one-click runs, and are pivot-quick.spec's; this is
+        // the one that opens the panel.
+        await page.locator('.pvt-contextmenu .pvt-action-item', { hasText: 'Pivot' }).first().click()
+        await page.locator('.pvt-contextmenu-flyout .pvt-action-item', { hasText: 'Open pivot panel…' }).click()
+
         expect(await railMode(page)).toBe('pivot')
         await expect(heading(page)).toHaveText('4 pivots apply')
-
-        // Nothing applies, so there is no entry — absent, never disabled.
-        await loadFixture(page, 'basic', FULL)
-        await openNodeMenu(page, 'a')
-        await expect(page.locator('.pvt-contextmenu .pvt-action-item', { hasText: 'Pivot…' })).toHaveCount(0)
     })
 
     // ── the one reporting gap M2 left ───────────────────────────────────────

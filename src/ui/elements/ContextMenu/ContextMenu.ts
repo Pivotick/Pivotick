@@ -325,6 +325,21 @@ export class ContextMenu extends UIComponent {
     private menuNote: MenuSection
     private menuCanvas: MenuSection
 
+    /**
+     * The submenu panels standing open, outermost first. A stack rather than one
+     * panel: a row inside a submenu may open one of its own, and closing a level has
+     * to take everything it opened with it.
+     */
+    private flyouts: Array<{ panel: HTMLDivElement, row: HTMLElement }> = []
+    /**
+     * Closing runs on a short delay, cancelled by arriving somewhere that should keep
+     * the panel open. Without it, the diagonal from a row to its panel crosses the row
+     * below and shuts the thing being reached for.
+     */
+    private closeTimer?: number
+    /** Entries whose `onclick` is already wrapped, so opening a menu twice does not stack wrappers. */
+    private readonly wrapped = new WeakSet<object>()
+
     constructor(uiManager: UIManager) {
         super(uiManager)
         this.visible = false
@@ -341,25 +356,65 @@ export class ContextMenu extends UIComponent {
     }
 
     /**
-     * *Pivot…* — one flat entry into Pivot mode with the clicked node as its origin.
+     * *Pivot ▸* — the registry's applicable pivots, each one click from running, with
+     * the panel behind the last row for the runs that want reading and narrowing first.
      * Absent rather than disabled where nothing applies, which is what `appliesTo`
-     * promises; absent too where the mode itself does not exist. Flat because the
-     * context menu has no submenus, so "Pivot ▸ one entry per pivot" would put a
-     * consumer's whole registry in the node menu.
+     * promises; absent too where the mode itself does not exist.
      */
     private pivotEntry(): MenuActionItemOptions {
         const ui = this.uiManager
         return {
-            text: 'Pivot…',
-            title: 'Pivot…',
+            text: 'Pivot',
+            title: 'Pivot',
             svgIcon: sparkles,
             variant: 'outline-primary',
             // The node menu only ever carries a node, so the cast is the shape of this
-            // section rather than an assumption about the element.
+            // section rather than an assumption about the element. Judged on the clicked
+            // node, not the origin below: with a selection nothing applies to, the panel
+            // row is still the way to find that out.
             visible: (element) =>
                 !!ui.pivotMode && !!element && ui.graph.pivots.for([element as Node]).length > 0,
-            onclick: (_evt, element) => ui.openPivotMode(element ? [element as Node] : []),
+            submenu: (element) => this.pivotSubmenu(element as Node),
         }
+    }
+
+    /**
+     * One row per pivot that applies, then the panel. A row *is* the run: no counts to
+     * read and nothing to narrow, so where the results land is decided by their size
+     * and the pivot's own `autoIngest` — see {@link UIManager.quickPivot}.
+     */
+    private pivotSubmenu(node: Node): MenuActionItemOptions[] {
+        const ui = this.uiManager
+        const origin = this.pivotOrigin(node)
+        const rows: MenuActionItemOptions[] = ui.graph.pivots.for(origin).map(definition => ({
+            text: definition.label,
+            title: definition.label,
+            svgIcon: definition.icon ?? sparkles,
+            variant: 'outline-primary',
+            onclick: () => void ui.quickPivot(origin, definition.id),
+        }))
+        rows.push({
+            text: 'Open pivot panel…',
+            title: 'Read the counts, narrow, then run',
+            svgIcon: sparkles,
+            variant: 'outline-primary',
+            dividerBefore: rows.length > 0,
+            onclick: () => ui.openPivotMode(origin),
+        })
+        return rows
+    }
+
+    /**
+     * What the pivot runs on: the selection when the clicked node belongs to it, the
+     * clicked node alone otherwise. A right-click changes no selection, so this is the
+     * only way a bulk pivot is reachable from the menu — and clicking outside the
+     * selection is the ordinary way of saying "this one, not those".
+     */
+    private pivotOrigin(node: Node): Node[] {
+        const selected = this.uiManager.graph.renderer.getGraphInteraction()
+            .getSelectedNodes()
+            .map(selection => selection.node)
+        return selected.some(candidate => candidate.id === node.id) ? selected : [node]
     }
 
     /**
@@ -386,8 +441,10 @@ export class ContextMenu extends UIComponent {
         // opened to nothing. `position: fixed` keeps it clear of the root's own
         // `overflow: hidden` — the same pairing `PivotickPicker` uses.
         this.parentContainer = container.closest('.pivotick') ?? document.body
+        // `:not()` because a flyout wears the same class for its chrome, and adopting
+        // one as the menu would leave the real menu unreachable.
         const menuContainer: HTMLDivElement | null =
-            this.parentContainer.querySelector(':scope > .pvt-contextmenu')
+            this.parentContainer.querySelector(':scope > .pvt-contextmenu:not(.pvt-contextmenu-flyout)')
         if (menuContainer) {
             this.menu = menuContainer
             return
@@ -405,6 +462,7 @@ export class ContextMenu extends UIComponent {
     }
 
     protected onDestroy() {
+        this.closeFlyouts(0)
         this.menu?.remove()
         this.menu = undefined
     }
@@ -479,6 +537,10 @@ export class ContextMenu extends UIComponent {
     }
 
     private wrapOnclickAction(entry: MenuQuickActionItemOptions | MenuActionItemOptions) {
+        // A row that opens a submenu must not close the menu the submenu hangs off.
+        if ((entry as MenuActionItemOptions).submenu) return
+        if (this.wrapped.has(entry)) return
+        this.wrapped.add(entry)
         if (entry.onclick) {
             const originalOnClick = entry.onclick
             // eslint-disable-next-line @typescript-eslint/no-this-alias
@@ -500,10 +562,11 @@ export class ContextMenu extends UIComponent {
 
         const topbar = this.menu.querySelector('.pvt-contextmenu-topbar')!
         const mainMenu = this.menu.querySelector('.pvt-contextmenu-mainmenu')!
+        this.closeFlyouts(0)
         topbar.innerHTML = ''
         mainMenu.innerHTML = ''
         topbar.appendChild(createQuickActionList<ContextMenu>(this, this.menuNode.topbar, this.element))
-        mainMenu.appendChild(createActionList<ContextMenu>(this, this.menuNode.menu, this.element))
+        mainMenu.appendChild(createActionList<ContextMenu>(this, this.menuNode.menu, this.element, this.rowWiring(0)))
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -512,10 +575,11 @@ export class ContextMenu extends UIComponent {
 
         const topbar = this.menu.querySelector('.pvt-contextmenu-topbar')!
         const mainMenu = this.menu.querySelector('.pvt-contextmenu-mainmenu')!
+        this.closeFlyouts(0)
         topbar.innerHTML = ''
         mainMenu.innerHTML = ''
         topbar.appendChild(createQuickActionList<ContextMenu>(this, this.menuEdge.topbar, this.element))
-        mainMenu.appendChild(createActionList<ContextMenu>(this, this.menuEdge.menu, this.element))
+        mainMenu.appendChild(createActionList<ContextMenu>(this, this.menuEdge.menu, this.element, this.rowWiring(0)))
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -524,10 +588,11 @@ export class ContextMenu extends UIComponent {
 
         const topbar = this.menu.querySelector('.pvt-contextmenu-topbar')!
         const mainMenu = this.menu.querySelector('.pvt-contextmenu-mainmenu')!
+        this.closeFlyouts(0)
         topbar.innerHTML = ''
         mainMenu.innerHTML = ''
         topbar.appendChild(createQuickActionList<ContextMenu>(this, this.menuNote.topbar, this.element))
-        mainMenu.appendChild(createActionList<ContextMenu>(this, this.menuNote.menu, this.element))
+        mainMenu.appendChild(createActionList<ContextMenu>(this, this.menuNote.menu, this.element, this.rowWiring(0)))
     }
 
     private createCanvasMenu(): void {
@@ -535,10 +600,114 @@ export class ContextMenu extends UIComponent {
 
         const topbar = this.menu.querySelector('.pvt-contextmenu-topbar')!
         const mainMenu = this.menu.querySelector('.pvt-contextmenu-mainmenu')!
+        this.closeFlyouts(0)
         topbar.innerHTML = ''
         mainMenu.innerHTML = ''
         topbar.appendChild(createQuickActionList<ContextMenu>(this, this.menuCanvas.topbar, this.element))
-        mainMenu.appendChild(createActionList<ContextMenu>(this, this.menuCanvas.menu, this.element))
+        mainMenu.appendChild(createActionList<ContextMenu>(this, this.menuCanvas.menu, this.element, this.rowWiring(0)))
+    }
+
+    // --- submenus ----------------------------------------------------------------------
+
+    /**
+     * What every row in a list at `depth` needs: its own submenu opened on hover and
+     * toggled on click, and everything a *deeper* panel opened closed as soon as the
+     * pointer lands on a sibling.
+     */
+    private rowWiring(depth: number): (row: HTMLDivElement, action: MenuActionItemOptions) => void {
+        return (row, action) => {
+            row.addEventListener('pointerenter', () => {
+                this.cancelClose()
+                this.closeFlyouts(depth + (action.submenu ? 1 : 0))
+                if (action.submenu) this.openFlyout(row, action, depth)
+            })
+            row.addEventListener('pointerleave', () => this.closeSoon(depth + 1))
+            if (!action.submenu) return
+            row.addEventListener('click', event => {
+                // The row is a door, not an action: the click must not reach the canvas,
+                // and must not be read as "picked something". It opens and never closes
+                // — the pointer arriving here has already opened the panel, so a toggle
+                // would shut what the click was aimed at. Leaving is what closes it.
+                event.stopPropagation()
+                this.openFlyout(row, action, depth)
+            })
+        }
+    }
+
+    /** Draw one submenu beside its row, replacing whatever stood at that depth. */
+    private openFlyout(row: HTMLDivElement, action: MenuActionItemOptions, depth: number): void {
+        if (!this.parentContainer) return
+        if (this.flyouts[depth]?.row === row) return
+        this.closeFlyouts(depth)
+
+        const items = typeof action.submenu === 'function'
+            ? action.submenu(this.element)
+            : action.submenu ?? []
+        if (!items.length) return
+        for (const item of items) this.wrapOnclickAction(item)
+
+        // The same classes as the menu, so the chrome, the row styling and the theme
+        // are one stylesheet rather than two that drift.
+        const panel = document.createElement('div')
+        panel.className = 'pvt-contextmenu pvt-contextmenu-flyout'
+        const list = document.createElement('div')
+        list.className = 'pvt-contextmenu-mainmenu'
+        list.appendChild(createActionList<ContextMenu>(this, items, this.element, this.rowWiring(depth + 1)))
+        panel.appendChild(list)
+        panel.addEventListener('pointerenter', () => this.cancelClose())
+        panel.addEventListener('pointerleave', () => this.closeSoon(depth))
+        this.parentContainer.appendChild(panel)
+
+        this.flyouts[depth] = { panel, row }
+        row.classList.add('pvt-submenu-open')
+        // Measured before it is shown: opacity does not move anything, so the box is
+        // already the real one.
+        this.placeFlyout(panel, row)
+        panel.classList.add('shown')
+    }
+
+    /** Beside its row, flipping back over the menu rather than off the viewport. */
+    private placeFlyout(panel: HTMLDivElement, row: HTMLElement): void {
+        const rowBox = row.getBoundingClientRect()
+        const box = panel.getBoundingClientRect()
+        const margin = 8
+        // A few pixels of overlap, so travelling from the row to its panel never
+        // crosses a gap that belongs to neither.
+        const overlap = 4
+
+        let left = rowBox.right - overlap
+        if (left + box.width + margin > window.innerWidth) {
+            left = Math.max(margin, rowBox.left - box.width + overlap)
+        }
+        let top = rowBox.top - 4
+        if (top + box.height + margin > window.innerHeight) {
+            top = Math.max(margin, window.innerHeight - box.height - margin)
+        }
+        panel.style.left = `${left}px`
+        panel.style.top = `${top}px`
+    }
+
+    /** Close every panel from `depth` down. `closeFlyouts(0)` leaves none open. */
+    private closeFlyouts(depth: number): void {
+        for (let level = this.flyouts.length - 1; level >= depth; level--) {
+            const open = this.flyouts[level]
+            if (!open) continue
+            open.row.classList.remove('pvt-submenu-open')
+            open.panel.remove()
+        }
+        this.flyouts.length = Math.min(this.flyouts.length, depth)
+        if (!this.flyouts.length) this.cancelClose()
+    }
+
+    private closeSoon(depth: number): void {
+        this.cancelClose()
+        this.closeTimer = window.setTimeout(() => this.closeFlyouts(depth), 180)
+    }
+
+    private cancelClose(): void {
+        if (this.closeTimer === undefined) return
+        window.clearTimeout(this.closeTimer)
+        this.closeTimer = undefined
     }
 
     public show(): void {
@@ -553,6 +722,8 @@ export class ContextMenu extends UIComponent {
     public hide(): void {
         if (!this.visible) return
         if (!this.menu) return
+
+        this.closeFlyouts(0)
 
         this.element = null
         this.menu.classList.remove('shown')

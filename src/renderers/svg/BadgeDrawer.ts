@@ -181,15 +181,15 @@ function summaryBadge(node: Node, graph: Graph): NodeBadge[] {
  *
  * The exception is the case where the panel would be ceremony around a single button:
  * exactly one pivot applies, and it declares no `summarize`, so there is no count to
- * read first and nothing to narrow. Then the click *is* the run. Where it lands is the
- * provider's own call — `autoIngest` decides between the canvas and the triage pane,
- * exactly as it does everywhere else.
+ * read first and nothing to narrow. Then the click *is* the run — the same one-click
+ * pivot the context menu offers, and it goes through the same door so that where the
+ * results land is decided identically.
  */
 function runOrOpen(node: Node, graph: Graph): void {
     const applicable = graph.pivots.for([node])
     const only = applicable.length === 1 ? applicable[0] : undefined
     if (only && !only.summarize) {
-        void graph.pivots.run(only.id, [node])
+        void graph.UIManager?.quickPivot([node], only.id)
         return
     }
     graph.UIManager?.openPivotMode([node])

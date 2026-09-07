@@ -861,6 +861,12 @@ export interface PivotFixtureSpec {
     /** Absolute candidate ceiling, when a test wants a reachable one. */
     ceiling?: number
     /**
+     * How many new candidates a one-click pivot lands without triage. A small number
+     * here puts the threshold within reach of a fixture that returns three nodes,
+     * instead of needing one that returns fifty-one.
+     */
+    quickLimit?: number
+    /**
      * Register this many extra bare-run pivots, named `bulk-01`… — enough of them and
      * the panel earns its filter box, its tick boxes and its run tray. This is the
      * shape a per-enrichment-module backend actually produces: many pivots, none of
@@ -1002,6 +1008,12 @@ export interface HarnessApi {
     runPivot(id: string, nodeIds?: string[], narrowing?: PivotNarrowing): Promise<RecordedRunOutcome>
     /** Start a run without awaiting it, so a test can watch the pane while it is in flight. */
     startPivotRun(id: string, nodeIds?: string[], narrowing?: PivotNarrowing): void
+    /**
+     * `UIManager.quickPivot` — the one-click run a context-menu pivot row makes, where
+     * the size of the result decides between the canvas and triage. The door the menu
+     * uses, so the arithmetic can be tested without the menu choreography.
+     */
+    runQuickPivot(id: string, nodeIds?: string[]): Promise<RecordedRunOutcome>
     /** The staged candidates for one pivot, or `null` when nothing is staged. */
     pivotCandidates(id: string): RecordedCandidates | null
     markPivotCandidates(id: string, ids: string[] | 'all'): void
@@ -4330,6 +4342,7 @@ class Harness implements HarnessApi {
             if (spec.autoSave?.includes(definition.id as PivotFixtureName)) definition.autoSave = true
         }
         if (spec.ceiling !== undefined) options.pivotCandidateCeiling = spec.ceiling
+        if (spec.quickLimit !== undefined) options.pivotQuickIngestLimit = spec.quickLimit
         await this.boot(name, mergeOptions(options, overrides))
         // Registered after the load, so the fixture's own batch isn't counted.
         this.watchBatches()
@@ -4447,6 +4460,10 @@ class Harness implements HarnessApi {
 
     startPivotRun(id: string, nodeIds: string[] = [], narrowing: PivotNarrowing = {}): void {
         void this.g.pivots.run(id, this.pivotNodes(nodeIds), narrowing).catch(() => {})
+    }
+
+    async runQuickPivot(id: string, nodeIds: string[] = []): Promise<RecordedRunOutcome> {
+        return recordOutcome(await this.g.UIManager.quickPivot(this.pivotNodes(nodeIds), id))
     }
 
     pivotCandidates(id: string): RecordedCandidates | null {
@@ -5029,7 +5046,12 @@ class Harness implements HarnessApi {
                         'blind', 'fetch', nodes, narrowing, ctx,
                         (): PivotResult => ({
                             nodes: Array.from({ length: 3 }, (_, i) => ({ id: `blind-${i}` })),
-                            edges: [],
+                            // Three nodes and, on request, edges between nodes already on
+                            // canvas: the small result a one-click run lands, with the
+                            // edge-only rows that count towards its limit like any other.
+                            edges: (this.pivotSpec.edgeOnly ?? []).map(([from, to]) => ({
+                                id: `only-${from}-${to}`, from, to, data: { label: 'correlates' },
+                            })),
                         })
                     ),
                 }

@@ -84,9 +84,34 @@ provider waiting. Leftovers keep it open, and so does a re-run waiting in it. On
 pane goes, a dock the review opened folds back to where it was, so a pivot leaves the layout
 it found.
 
-Three ways in, all landing in the same place: the rail mode, a node's context-menu **Pivot…**
-entry (absent, never disabled, when nothing applies), and a rim badge — which opens the mode
-scoped to its own pivot, or, where the rim carries one badge for all of them, to the node.
+### The one-click pivot
+
+Steps 2 to 4 are for a question worth reading about first. Most are not. Right-click a node
+and **Pivot ▸** lists every pivot that applies to it; picking one runs it there and then,
+with no panel and nothing to fill in.
+
+The origin is the selection when the node you clicked belongs to it, and that node alone
+otherwise, so a bulk pivot is reachable without leaving the menu. Where the results go
+depends on how many of them are new to the canvas:
+
+- **Up to `pivotQuickIngestLimit` new candidates** (50 by default) land directly, tagged and
+  undoable like any other ingest.
+- **More than that** open the **Review** tab instead, exactly as a panel run would.
+- **A cap refusal** happens before anything is fetched, so there is nothing to review. The
+  Pivot panel opens on that pivot with the number and the narrowing that lifts it.
+
+Candidates already on canvas are not new and never fill the limit, so re-running a pivot over
+ground you have covered stays a one-click gesture. An edge between two nodes already on
+screen does count, because it is a row you would otherwise have been asked about.
+
+A pivot that declared [`autoIngest`](#autoingest) has already answered this question, and its
+answer holds: `true` always lands, `false` always reviews. The limit only decides for pivots
+that left it unset, and only for this gesture. A run started from the panel still stages.
+
+Three ways in, then: the rail mode, a node's context-menu **Pivot ▸** submenu (absent, never
+disabled, when nothing applies), and a rim badge, which opens the mode scoped to its own
+pivot, or, where the rim carries one badge for all of them, to the node. A badge for a node
+with exactly one pivot that has nothing to narrow runs it directly, like a menu row.
 
 ## Registering one
 
@@ -342,6 +367,17 @@ For a small, trusted result that nobody wants to pick through, such as expanding
 into its dozen children, declare `autoIngest: true`. Results land directly, and the top bar's
 undo takes them back like any other ingest. The provider decides this, because only it knows
 whether its own results are small and trusted enough to skip triage.
+
+Leaving it unset is not the same as `false`. It says the pivot has no view, which leaves a
+[one-click pivot](#the-one-click-pivot) free to decide on size alone; `false` says results
+always need eyes on them, and is honoured however the run was started.
+
+```js
+autoIngest: true                 // always lands
+autoIngest: false                // always reviewed
+                                 // unset: a one-click run decides on size
+new Pivotick(el, data, { pivotQuickIngestLimit: 50 })   // that size, all pivots
+```
 
 ## Ingest, and what it is allowed to do
 

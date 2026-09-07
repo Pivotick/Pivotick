@@ -70,6 +70,21 @@ export interface GraphOptions {
     pivotCandidateCeiling?: number,
 
     /**
+     * How many candidates a one-click pivot may land on the canvas without offering
+     * triage first — a context-menu pivot row, or a rim badge with a single pivot to
+     * offer. Only candidates that are *new* count: what dedup will skip does not, and
+     * an edge between two nodes already on screen does.
+     *
+     * It decides nothing for a pivot that declared {@link PivotDefinition.autoIngest}
+     * either way, and nothing at all for a run started from the Pivot panel — going
+     * there to read the counts is never answered by having the results land instead.
+     *
+     * `0` sends every one-click run with something new in it to triage.
+     * @default 50
+     */
+    pivotQuickIngestLimit?: number,
+
+    /**
      * What the library puts on a node's rim for its pivots.
      *
      * - `'per-pivot'` — one badge per pivot that declared a potential for this node,
