@@ -244,6 +244,40 @@ test.describe('the two levels of switch', () => {
         await expect(dock(page)).not.toHaveClass(/pvt-dock-collapsed/)
     })
 
+    test('the folded bar still lists the panes', async ({ page }) => {
+        await openDock(page)
+        await harness(page, 'addTestDockTab', 'audit', 'Audit')
+
+        await page.locator('.pvt-dock-toggle').click()
+        await expect(dock(page)).toHaveClass(/pvt-dock-collapsed/)
+
+        // Folded, the bar is the only thing saying what the region holds — a pane that
+        // arrived while it was away would otherwise be invisible.
+        await expect(paneStrip(page)).toBeVisible()
+        expect(await paneLabels(page)).toEqual(['Table', 'Audit'])
+        // But it is not claiming to be joined to a pane that is not on show.
+        const underline = await paneTabs(page).first().evaluate(
+            el => getComputedStyle(el).borderBottomColor
+        )
+        expect(underline).toBe('rgba(0, 0, 0, 0)')
+    })
+
+    test('a click on the folded bar opens the region onto that pane', async ({ page }) => {
+        await openDock(page)
+        await harness(page, 'addTestDockTab', 'audit', 'Audit')
+        const before = await rowHeight(page)
+        await page.locator('.pvt-dock-toggle').click()
+        await expect(dock(page)).toHaveClass(/pvt-dock-collapsed/)
+
+        // Folded, the strip is a list of what is in there rather than a switch between
+        // panes on show: a click asks to see one, which means unfolding onto it.
+        await page.locator('.pvt-dock-tab[data-tab="audit"]').click()
+
+        await expect(dock(page)).not.toHaveClass(/pvt-dock-collapsed/)
+        expect(await rowHeight(page)).toBeCloseTo(before, 1)
+        await expect(page.locator('.pvt-dock-tab[data-tab="audit"]')).toHaveClass(/active/)
+    })
+
     test('each inner view keeps its own sort across a detour through another pane', async ({ page }) => {
         await openDock(page)
         await harness(page, 'addTestDockTab', 'audit', 'Audit')

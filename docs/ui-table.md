@@ -311,6 +311,10 @@ the built-in one). The returned disposer removes it.
 There is one region, so there is one height and one fold, however many panes are in it.
 Two panes cannot each stand up a resizable strip and fight over the canvas.
 
+A pane can therefore be *added* without being shown: it joins the strip, the folded bar
+included, and waits to be clicked. `activateDockTab` is the separate act of bringing one
+to the front, and the only thing that unfolds the dock.
+
 ### Two levels of switch, and why they look different {#two-levels}
 
 `Nodes` and `Edges` are **the table's own** tabs, not the dock's. They are two views of a
@@ -411,6 +415,11 @@ The collapse chevron folds the dock to its header bar. Left alone, `collapsed: '
 makes that decision for you and folds the dock away on a layout too short for both it and
 a usable canvas; the first time you collapse or expand it by hand, or drag the divider,
 it stops deciding and leaves it to you.
+
+The folded bar still names its panes, and the active one's controls stay in it — the
+table's row count, a pivot review saying it is fetching. That is what lets a pane arrive
+while the dock is folded and be noticed without taking the screen to say so. Clicking a
+pane there opens the dock onto it.
 
 A pane that unfolded the dock to show itself hands the region back when it is removed, so
 a pane that comes and goes leaves a closed dock closed. Folding it, resizing it or

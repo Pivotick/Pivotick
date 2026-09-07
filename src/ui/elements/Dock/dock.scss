@@ -100,6 +100,10 @@
 // setting is not a switch, which is why `:empty` has to collapse it rather than merely
 // look empty.
 //
+// It is the one part of the header that outlives the fold: a folded dock is a bar with
+// the active pane's own controls in it, and without the strip nothing says what else is
+// in there — a pane that arrives while it is folded would be invisible.
+//
 // These are deliberately *tabs*: full-height, square, joined to the pane below by an
 // underline that lands on the header's own bottom rule. A pane's internal switch — the
 // table's Nodes / Edges — is a small pill group instead (`.pvt-dock-views` below), so the
@@ -116,10 +120,6 @@
     // the other side of it to divide from.
 
     &:empty {
-        display: none;
-    }
-
-    .pvt-dock-collapsed & {
         display: none;
     }
 }
@@ -168,6 +168,14 @@
         border-bottom-color: var(--pvt-theme-primary);
         color: var(--pvt-text-color-6);
         font-weight: 600;
+    }
+
+    // Folded there is no pane underneath to be joined to, so the underline goes and the
+    // tab on show is marked by its label alone. The strip is then a list of what the
+    // region holds — including a pane that arrived while it was folded — and a click
+    // opens the region onto it.
+    .pvt-dock-collapsed &.active {
+        border-bottom-color: transparent;
     }
 
     // Marks what kind of pane the tab opens. Dimmed until the tab is the one on show,

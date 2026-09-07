@@ -169,7 +169,8 @@ export class Dock extends UIComponent {
 
         // The tab strip sits between the chevron and the toolbar — which is exactly
         // where the table drew its own Nodes / Edges strip before the dock took the job,
-        // so nothing moved when it did.
+        // so nothing moved when it did. It survives the fold: a folded dock that says
+        // nothing about what is in it hides panes that arrived while it was away.
         this.tabStrip = document.createElement('div')
         this.tabStrip.className = 'pvt-dock-tabs'
         this.tabStrip.setAttribute('role', 'tablist')
@@ -179,10 +180,15 @@ export class Dock extends UIComponent {
             const target = event.target as HTMLElement | null
             const id = target?.closest<HTMLElement>('.pvt-dock-tab')?.dataset.tab
             if (!id) return
+            // Folded, the strip is a list of what the region holds rather than a switch
+            // between panes on show, so a click on it asks to *see* one. Unfolding is the
+            // analyst taking the fold over, exactly as the chevron is.
+            if (this.collapsed) this.foldChosen()
             // Reading another pane is a reason of its own for the region to be open, so
             // the pane that opened it no longer owes anybody the fold back.
-            if (this.borrowed && this.borrowed.id !== id) this.borrowed = null
+            else if (this.borrowed && this.borrowed.id !== id) this.borrowed = null
             this.setActive(id, false)
+            this.setCollapsed(false)
         })
         this.header.appendChild(this.tabStrip)
 
