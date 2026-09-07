@@ -1,13 +1,14 @@
 # Changelog
 
-## 2.0.0
+## 2.0.0 — 2026-09-07
 
 Two subsystems, and they are the ones the name has been promising. **Pivots** run an enrichment
-against what is on the canvas and stage what comes back — the results are candidates, not graph,
-until someone commits them, because the hard part of walking a correlated dataset is never the
-fetching, it is that 1,800 neighbours are useless on a canvas. **`graph.history`** is the way
-back out: one bounded record of what the canvas holds, contiguously reversible, with the top
-bar's Undo and Redo buttons finally wired to something and a timeline dropdown behind each.
+against what is on the canvas and stage what comes back: the results are candidates, not graph,
+until someone commits them. A question worth reading about first gets the Pivot mode's panel; the
+rest get **`Pivot ▸` in the node's context menu**, where the row is the run. **`graph.history`**
+is the way back out: one bounded record of what the canvas holds, contiguously reversible, with
+the top bar's Undo and Redo buttons finally wired to something and a timeline dropdown behind
+each.
 Between the two sits **saving** — a pivot can write its own results back into the system they
 came from, and the library keeps the books on what has crossed. The **mode rail takes modes of
 your own**, so the Pivot mode is built out of the same door a consumer gets. The breaking
@@ -36,6 +37,25 @@ shipped, and the one to read is the retirement of `UI.modeRail`.
   called with: `summarize` and `fetch` never see a node it turned down, and the cached summary
   is keyed by that narrowed origin. `graph.pivots.for(nodes)` and
   `graph.pivots.originFor(id, nodes)` read it.
+- **`Pivot ▸` in the node context menu runs one without opening anything.** Every applicable
+  pivot is a row, and the row *is* the run. Opening the submenu asks each pivot with a
+  `summarize` the panel's own question, so a row also carries what its provider is advertising
+  (`~2,143`) — after a short hold, so a pointer crossing `Pivot ▸` on its way to *Delete* costs
+  a thirty-provider registry nothing, and into the same cache the panel reads. The origin is the
+  selection when the clicked node belongs to it and that node alone otherwise, which is how the
+  menu reaches a bulk pivot. A long registry scrolls, cut mid-row.
+  - **Where the result goes is decided on size**: up to `pivotQuickIngestLimit` candidates new
+    to the canvas (50) land directly, more than that open the Review tab. `autoIngest` still
+    wins where a provider declared one — it is now three-state, and *unset* is what lets a
+    one-click run decide.
+  - **A one-click run answers where it was made.** While the fetch is out, a `Review…` tab joins
+    the dock's strip and nothing is unfolded or brought forward; only a result that needs
+    deciding on comes forward, and a run that lands takes its tab away with it. A failed fetch
+    and a ceiling refusal are toasts, the failure carrying a **Retry** that repeats the gesture.
+    A cap refusal is the one that opens the panel, because narrowing is what lifts it.
+  - `UIManager.quickPivot(nodes, pivotId)` is the door, and `ContextMenu` grew what this needed:
+    `submenu` on a menu item (an array or a function of the element), `suffix` for an element
+    pinned to a row's right-hand end, and `dividerBefore`.
 - **One Review tab in the dock, with the providers as tabs down its side.** The candidates are
   a table you can search (regex included), filter per column, sort and page, in the provider's
   own columns. Rows are marked, ingested, or explicitly rejected; a rejection is remembered for
@@ -52,6 +72,11 @@ shipped, and the one to read is the retirement of `UI.modeRail`.
     nothing inside can be picked on its own: ingesting the row takes the whole container.
   - The whole row marks, **Shift** takes a range, and a picked row carries a leading bar rather
     than only a tint, which has to be compared against its neighbours to be read at all.
+  - **Ingest all 213** beside *Ingest selected* commits everything the provider is still
+    offering, whatever the table is filtered to, for a result that needs no picking through.
+  - **The provider strip clears itself from its foot**: *Close failed* drops every fetch that
+    brought nothing back, drawn only while something has failed, and *Close all* empties the
+    queue. Neither rejects anything, like the × on a pane.
   - **A pane that unfolded the dock hands the region back when it goes**, so a review opened
     over a closed dock leaves it closed.
 - **What a pivot is holding back stays listed on its entry** in the Pivot panel, named as the
@@ -265,6 +290,10 @@ keyboard shortcut — so a removed feature leaves nothing behind to press and qu
   click.
 - **`DockTab.icon`, and a hand-over order for a closed tab.** An icon marks a pane's kind;
   closing a tab now returns to the last one on show rather than to the first.
+- **The dock's folded bar keeps its tab strip.** A pane that arrived while the dock was folded
+  was invisible until something else unfolded it, which a one-click pivot now depends on;
+  clicking a tab there unfolds the region onto that pane. The active tab drops its underline
+  while folded, since the pane it joins is not on show.
 - **In `full` mode the legend docks above the minimap.** The left column belongs to the mode
   rail, whose panel can leave the legend a single row, so the minimap publishes the room it
   needs and the two stack instead of competing for the corner.
@@ -301,6 +330,12 @@ keyboard shortcut — so a removed feature leaves nothing behind to press and qu
 - **An open picker menu floats over the page instead of pushing it down.** The menu is portaled
   out of its control and anchored with `position: fixed`, so no scrolling ancestor clips it,
   and the two in-flow workarounds it had grown are gone.
+- **A candidate another run landed while it waited is deduped, not carried.** A marked row
+  whose id reached the canvas after it was staged stayed marked for an ingest that could never
+  take it; it now reads as already on canvas, like any other id-matched candidate.
+- **The context menu draws on its own background in the dark theme.** It borrowed the sidebar's
+  token, which the dark palette sets to `unset` — and for a custom property that means
+  *inherit*, so both menu panels re-inherited the light value and drew light text on `#fafafa`.
 - **A run the session rejected in full no longer reads as already on canvas.** The finished pane
   names the rejections and opens the list that holds them, rather than implying the candidates
   had landed.
