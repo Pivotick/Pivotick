@@ -26,6 +26,10 @@ Press `P`, click `paste 9f21`, and read the panel.
   out is a second decision. This provider refuses every fifth node, so the toast reads
   `Saved 378 of 420`, the count drops to `42`, and **Retry** sends exactly those.
 
+Or skip the panel: right-click `paste 9f21` and **Pivot ▸** lists the same providers with the
+same counts, where picking a row *is* the run. Results land directly while few enough of them
+are new to the canvas, and open the Review tab when there are more.
+
 Select `Event 5f2a` for the other shape: `Objects & attributes` declares `autoIngest` and
 `autoSave`, so its twelve objects land and are written back with no pane and no gesture.
 `Passive DNS` is the third state — no `save` at all, so nothing it brings is ever counted

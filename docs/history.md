@@ -3,11 +3,10 @@
 `graph.history` is a record of **what the canvas holds and shows** — what was brought in,
 what was taken out, what is hidden — and a way to take any of it back.
 
-That line is deliberate: it is not a record of every mutation the library can perform. A
-node's data belongs to your backend. The library did not author it and cannot speak for it,
-so reverting a field locally while the record of truth disagreed would be worse than
-offering no undo at all. What the library can speak for is composition, which is also what
-an analyst reasons about: twelve nodes arrived, three went, five are hidden.
+It is not a record of every mutation the library can perform. A node's data belongs to your
+backend, so the library will not offer to revert a field it did not author. What it can speak
+for is composition, which is also what an analyst reasons about: twelve nodes arrived, three
+went, five are hidden.
 
 ::: tip Vocabulary, used consistently below
 - **entry**: one reversible thing that happened, as one row in the menu

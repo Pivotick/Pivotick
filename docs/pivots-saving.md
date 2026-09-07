@@ -99,10 +99,9 @@ objects that are already the source's own.
 ## Ids the source system mints
 
 Saving usually creates something, and the thing created usually gets an id of the source
-system's choosing — not the one your provider used while it was a candidate. Left alone,
-that is a bug the feature creates for itself: tomorrow's run returns the same objects under
-their new ids, dedup does not recognise them, and the analyst gets twelve duplicates of
-what they saved yesterday.
+system's choosing, not the one your provider used while it was a candidate. Tomorrow's run
+then returns the same objects under ids dedup does not recognise, and the analyst gets twelve
+duplicates of what they saved yesterday.
 
 Return `canonicalIds` and the library keeps the alias. Ingest dedup, the children union and
 edge endpoints all consult it, so the re-run says *12 already on canvas* instead.
@@ -120,8 +119,8 @@ history, for a benefit the alias already delivers where it matters. The honest c
 ## Undo does not reach the source system
 
 Undoing a saved run removes its nodes from the canvas. It does **not** remove anything from
-the system they were written to, and the library will not issue compensating writes — that
-is a distributed transaction wearing a ⌘Z costume.
+the system they were written to, and the library issues no compensating writes: undoing a
+local view is not a transaction across two systems.
 
 The history says so rather than leaving you to find out: a run marked written-through is
 chipped **saved**, and the menu's footer counts what a span would leave behind. `PivotRun`

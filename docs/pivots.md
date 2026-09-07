@@ -72,10 +72,10 @@ brought nothing back and **Close all** empties the queue; neither rejects anythi
 **6 · Ingest, and undo if it was wrong.** **Ingest selected (12)** commits exactly those
 twelve, placed around the node you pivoted from and tagged with the pivot as their source.
 **Ingest all 213** beside it skips the marking and commits everything the provider is still
-offering, whatever the table is filtered to.
-The toast reads `Ingested 12 nodes, 14 edges`. Taking it back is the undo control in the top
-bar, which is there permanently rather than for as long as a toast lasts, and reverses the
-whole run — its edges and any children it merged in included.
+offering, whatever the table is filtered to. The toast reads `Ingested 12 nodes, 14 edges`.
+Taking it back is the undo control in the top bar, which is there permanently rather than for
+as long as a toast lasts, and reverses the whole run — its edges and any children it merged
+in included.
 
 **7 · Save it back, if the pivot can.** Ingest puts the twelve on the canvas; it does not
 write them anywhere. The foot of the Pivot panel says how many elements this session has
@@ -89,27 +89,21 @@ it found.
 
 ### The one-click pivot
 
-Steps 2 to 4 are for a question worth reading about first. Most are not. Right-click a node
-and **Pivot ▸** lists every pivot that applies to it, with what each one is advertising;
-picking one runs it there and then, with no panel and nothing to fill in.
-
-The origin is the selection when the node you clicked belongs to it, and that node alone
-otherwise, so a bulk pivot is reachable without leaving the menu.
+Steps 2 to 4 are for a question worth reading about first. Most are not. Right-click a node,
+and **Pivot ▸** lists every pivot that applies to it with what each one is advertising.
+Picking a row runs it there and then: no panel, nothing to fill in. The origin is the
+selection when the clicked node belongs to it and that node alone otherwise, so a bulk pivot
+is reachable without leaving the menu.
 
 Opening the submenu is also what asks. Every pivot with a
-[`summarize`](#summarize-the-cheap-one) is put the panel's own question — this origin, nothing
-narrowed — and its row shows a placeholder until the answer arrives, then the count: `~2,143`,
-advisory like every number a provider advertises. A pivot that advertises nothing shows
-nothing, and the row runs just the same.
-
-Opening the menu asks nothing, and neither does a pointer crossing **Pivot ▸** on its way
-somewhere else: the questions go out only once the submenu has been held for a moment, and
-they are cancelled if it closes before they land. The answers are cached, so a second look
-paints at once and the panel behind it re-uses what the menu already learned.
-
-A registry longer than the menu can hold scrolls, and the list is cut mid-row so it reads as
-continuing rather than complete. One pivot per enrichment module is thirty rows for an IP
-address, which the submenu will show but the panel is better at: it has a filter box.
+[`summarize`](#summarize-the-cheap-one) is put the panel's own question, this origin with
+nothing narrowed, and its row holds a placeholder until the count arrives: `~2,143`, advisory
+like every number a provider advertises. A pivot that advertises nothing shows nothing and
+runs just the same. The questions go out only once the submenu has been held for a moment, so
+a pointer crossing **Pivot ▸** on its way elsewhere asks nothing, and they are cancelled if
+it closes first. Answers are cached both ways: a second look paints at once, and the panel
+re-uses what the menu learned. A registry longer than the menu can hold scrolls, cut mid-row
+so it reads as continuing.
 
 Where the results go depends on how many of them are new to the canvas:
 
@@ -119,25 +113,20 @@ Where the results go depends on how many of them are new to the canvas:
 - **A cap refusal** happens before anything is fetched, so there is nothing to review. The
   Pivot panel opens on that pivot with the number and the narrowing that lifts it.
 
-Until that is known the run has offered nothing, so it takes none of the screen to say it
-is working: a **Review** tab joins the dock's strip and reads `Review…` while the fetch is
-out. The dock is not unfolded and no pane is brought forward — click the tab to watch the
-run or cancel it. Only a result that needs deciding on comes forward, and a run that lands
-takes its tab away with it.
-
-The two answers with nothing to decide are the notifier's: a **failed fetch** says so with
-a Retry, and a result over the absolute
-[`candidateCeiling`](#gating-the-cap-and-the-ceiling) says the number and the limit. Neither
-stages a pane, and neither moves you into the Pivot panel — a cap refusal is the one that
-does, because narrowing is what lifts it.
-
 Candidates already on canvas are not new and never fill the limit, so re-running a pivot over
-ground you have covered stays a one-click gesture. An edge between two nodes already on
-screen does count, because it is a row you would otherwise have been asked about.
+ground you have covered stays a one-click gesture. An edge between two nodes already on screen
+does count, because it is a row you would otherwise have been asked about. A pivot that
+declared [`autoIngest`](#autoingest) has already answered the question and its answer holds:
+`true` always lands, `false` always reviews. The limit decides only for pivots that left it
+unset, and only for this gesture; a run started from the panel always stages.
 
-A pivot that declared [`autoIngest`](#autoingest) has already answered this question, and its
-answer holds: `true` always lands, `false` always reviews. The limit only decides for pivots
-that left it unset, and only for this gesture. A run started from the panel still stages.
+Until the answer is known the run has offered nothing, so it takes none of the screen to say
+it is working. A **Review** tab joins the dock's strip reading `Review…` while the fetch is
+out, without unfolding the dock or bringing a pane forward; click it to watch the run or
+cancel it. Only a result that needs deciding on comes forward, and a run that lands takes its
+tab away with it. The two answers with nothing to decide are the notifier's: a **failed fetch**
+says so with a Retry, and a result over the absolute
+[`candidateCeiling`](#gating-the-cap-and-the-ceiling) says the number and the limit.
 
 Three ways in, then: the rail mode, a node's context-menu **Pivot ▸** submenu (absent, never
 disabled, when nothing applies), and a rim badge, which opens the mode scoped to its own
