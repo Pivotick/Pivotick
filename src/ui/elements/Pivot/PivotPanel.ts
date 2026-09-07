@@ -186,6 +186,7 @@ export class PivotPanel {
         const offPivots = this.uiManager.graph.pivots.on(change => {
             if (change === 'registry') this.rebuild()
             if (change === 'candidates') for (const entry of this.entries.values()) entry.refreshStaged()
+            if (change === 'summarize') for (const entry of this.entries.values()) entry.adoptCached()
             if (change === 'registry' || change === 'runs' || change === 'save') this.paintUnsaved()
         })
         // An undo takes a run's nodes off the canvas, and with them what a save would
@@ -780,6 +781,21 @@ class PivotEntry {
         this.paint()
         this.started = true
         void this.ask(true)
+    }
+
+    /**
+     * A summary reached the cache. It may be the answer to *this* entry's own question,
+     * asked again by somewhere else — the context menu's pivot submenu peeks with the
+     * same `{}` narrowing — which supersedes the call this entry is waiting on and
+     * would otherwise leave it on its skeleton for good.
+     */
+    public adoptCached(): void {
+        if (this.phase !== 'summarizing' && this.phase !== 'resummarizing') return
+        const cached = this.uiManager.graph.pivots.cachedSummary(this.def.id, this.origin(), this.narrowing)
+        if (!cached) return
+        this.summary = cached
+        this.phase = 'ready'
+        this.paint()
     }
 
     /** A staged set appeared, changed or went — only the `n in triage` link moves. */

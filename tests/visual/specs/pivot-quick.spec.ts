@@ -3,13 +3,16 @@ import { test, expect, gotoHarness, loadFixture, harness, nodeEl } from '../help
 import type { PivotFixtureSpec } from '../harness/harness'
 
 // The one-click pivot: *Pivot ▸* in the context menu, one row per pivot that applies,
-// and a row that *is* the run — no counts to read, nothing to narrow.
+// and a row that *is* the run — nothing to narrow, and the count read rather than
+// asked for.
 //
-// Two things are asserted here, and they are the whole feature. The surface: a submenu
-// the context menu never had, listing the registry filtered by `appliesTo`. And the
-// deal that makes a blind run safe: where the results land is the pivot's `autoIngest`
-// where it declared one, and otherwise how many candidates are *new* — few enough and
-// they land, more and triage opens. A run made from the panel is untouched by it.
+// Three things are asserted here, and they are the whole feature. The surface: a
+// submenu the context menu never had, listing the registry filtered by `appliesTo`.
+// The peek: opening that submenu asks every pivot advertising a count what is out
+// there, so a row says how much it would bring before it is clicked. And the deal that
+// makes a one-click run safe: where the results land is the pivot's `autoIngest` where
+// it declared one, and otherwise how many candidates are *new* — few enough and they
+// land, more and triage opens. A run made from the panel is untouched by it.
 
 const FULL = { UI: { mode: 'full', sidebar: { collapsed: true }, table: { open: true } } }
 
@@ -23,6 +26,17 @@ const flyoutRows = (page: Page): Promise<string[]> =>
 const entry = (page: Page, id: string): Locator => page.locator(`.pvt-pivot-entry[data-pivot="${id}"]`)
 /** The submenu's scroll container: the list itself, not the flex row holding it. */
 const list = (page: Page): Locator => flyout(page).locator('.pvt-action-list')
+
+/**
+ * What each row of the submenu advertises, top to bottom: the count, `waiting` while it
+ * is still out, and `null` for a row that has no count to carry at all.
+ */
+const peeks = (page: Page): Promise<Array<string | null>> =>
+    flyout(page).locator('.pvt-action-item').evaluateAll(rows => rows.map(row => {
+        const slot = row.querySelector('.pvt-contextmenu-peek')
+        if (!slot) return null
+        return slot.classList.contains('pvt-contextmenu-peek-waiting') ? 'waiting' : slot.textContent
+    }))
 
 /** The active rail mode, read from the live store. */
 const railMode = (page: Page): Promise<string> => page.evaluate(() =>
@@ -64,6 +78,12 @@ const calls = async (page: Page): Promise<string[]> => {
     return log.map(call => `${call.pivot}:${call.call}`)
 }
 
+/** How each provider call ended — served, cancelled or failed. */
+const outcomes = async (page: Page): Promise<string[]> => {
+    const log = await harness(page, 'pivotCalls') as Array<{ pivot: string, call: string, outcome: string }>
+    return log.map(call => `${call.pivot}:${call.call}:${call.outcome}`)
+}
+
 /** The origin each fetch was made with, which is the only place a bulk run is visible. */
 const fetchOrigins = async (page: Page): Promise<string[][]> => {
     const log = await harness(page, 'pivotCalls') as Array<{ call: string, nodes: string[] }>
@@ -86,8 +106,9 @@ test.describe('one-click pivot', () => {
             'Correlations', 'Objects & attributes', 'Everything, everywhere', 'No advertised count',
             'Open pivot panel…',
         ])
-        // Reading the menu costs nothing: the panel is where counts are asked for.
-        expect(await calls(page)).toEqual([])
+        // Reading is reading: the peek below is the only call opening this makes, and
+        // nothing here fetches anything.
+        expect((await calls(page)).filter(call => call.endsWith(':fetch'))).toEqual([])
     })
 
     test('the row is a door, not an action: it opens a panel and keeps the menu', async ({ page }) => {
@@ -203,6 +224,94 @@ test.describe('one-click pivot', () => {
         await loadFixture(page, 'basic', FULL)
         await openNodeMenu(page, 'a')
         await expect(menu(page).locator('.pvt-action-item', { hasText: 'Pivot' })).toHaveCount(0)
+    })
+
+    // ── the peek ────────────────────────────────────────────────────────────
+    test('opening the submenu asks what is out there, and the rows carry the answer', async ({ page }) => {
+        await load(page, { pivots: ['correlation', 'subset-only', 'blind'], latency: 300 })
+        await openPivotSubmenu(page, 'a')
+
+        // A pivot that advertises nothing has no slot at all — an empty one would read
+        // as a count of nothing — and neither has the row into the panel.
+        await expect.poll(() => peeks(page)).toEqual(['waiting', 'waiting', null, null])
+        // Advisory, and drawn as such. `subset-only` counts ten per node it was given.
+        await expect.poll(() => peeks(page)).toEqual(['~2,143', '~10', null, null])
+
+        // The cheap call, and only the cheap call: a peek never fetches.
+        expect((await calls(page)).sort()).toEqual(['correlation:summarize', 'subset-only:summarize'])
+
+        // Both flush to the same edge, under two labels of different widths: a number
+        // that trailed its label would sit somewhere new on every row.
+        const edges = await flyout(page).locator('.pvt-contextmenu-peek').evaluateAll(slots => {
+            const panel = slots[0].closest('.pvt-action-list')!.getBoundingClientRect()
+            return slots.map(slot => Math.round(panel.right - slot.getBoundingClientRect().right))
+        })
+        expect(edges).toEqual([edges[0], edges[0]])
+        expect(edges[0]).toBeLessThan(16)
+    })
+
+    test('a pointer passing over the row asks nothing', async ({ page }) => {
+        await load(page, { pivots: ['correlation'], latency: 300 })
+        await openNodeMenu(page, 'a')
+
+        // *Pivot ▸* is the first row, so every trip to a row below crosses it, opening
+        // the submenu in passing. Crossing is not asking — a registry of thirty would
+        // put thirty questions to a backend nobody meant to ask.
+        const box = (await menu(page).boundingBox())!
+        await page.mouse.move(box.x + 40, box.y + 8)
+        await page.mouse.move(box.x + 40, box.y + box.height - 8, { steps: 10 })
+        await expect(flyout(page)).toHaveCount(0)
+        expect(await calls(page)).toEqual([])
+
+        // Staying on it is.
+        await pivotRow(page).hover()
+        await expect.poll(() => calls(page)).toEqual(['correlation:summarize'])
+    })
+
+    test('a count already known is painted at once, and never asked for twice', async ({ page }) => {
+        await load(page, { pivots: ['correlation'], latency: 200 })
+        await openPivotSubmenu(page, 'a')
+        await expect.poll(() => peeks(page)).toEqual(['~2,143', null])
+
+        // Away and back. The answer to the same question is served from the cache, so
+        // the row shows its number with no loading state to flicker through.
+        await menu(page).locator('.pvt-action-item', { hasText: 'Select Neighbors' }).hover()
+        await expect(flyout(page)).toHaveCount(0)
+        await pivotRow(page).hover()
+        await expect(flyout(page)).toHaveClass(/shown/)
+
+        expect(await peeks(page)).toEqual(['~2,143', null])
+        expect(await calls(page)).toEqual(['correlation:summarize'])
+    })
+
+    test('a peek nobody is looking at is cancelled with its panel', async ({ page }) => {
+        await load(page, { pivots: ['correlation'], latency: 3000 })
+        await openPivotSubmenu(page, 'a')
+        await expect.poll(() => calls(page)).toEqual(['correlation:summarize'])
+
+        // The question goes with the panel that asked it, the way leaving the pivot mode
+        // takes its own: an answer nobody can see is work a backend should not still be
+        // doing. The provider is told, rather than left to finish into nothing.
+        await menu(page).locator('.pvt-action-item', { hasText: 'Select Neighbors' }).hover()
+        await expect(flyout(page)).toHaveCount(0)
+        await expect.poll(() => outcomes(page)).toEqual(['correlation:summarize:cancelled'])
+    })
+
+    test('running a row hands it the peek instead of cancelling it', async ({ page }) => {
+        await load(page, { pivots: ['correlation'], latency: 600 })
+        await openPivotSubmenu(page, 'a')
+        // Clicked while the count is still out, which is the case the run has to survive:
+        // it asks the same question, and the menu closing behind the click must not abort
+        // the call the cap is about to be judged against.
+        await expect.poll(() => calls(page)).toEqual(['correlation:summarize'])
+        await flyout(page).locator('.pvt-action-item', { hasText: 'Correlations' }).click()
+
+        // 2,143 against a cap of 2,000: refused before the fetch, and a refusal is only
+        // reachable from a summary that survived. Cancelled, the run would have fetched
+        // blind.
+        await expect.poll(() => railMode(page)).toBe('pivot')
+        await expect(entry(page, 'correlation').locator('.pvt-pivot-gate-blocked')).toBeVisible()
+        expect((await calls(page)).filter(call => call.endsWith(':fetch'))).toEqual([])
     })
 
     // ── the run ─────────────────────────────────────────────────────────────

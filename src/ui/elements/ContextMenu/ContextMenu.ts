@@ -1,6 +1,6 @@
 import { Edge } from '../../../Edge'
 import type { Node } from '../../../Node'
-import { createActionList, createQuickActionList, generateSafeDomId } from '../../../utils/ElementCreation'
+import { createActionList, createHtmlElement, createQuickActionList, generateSafeDomId } from '../../../utils/ElementCreation'
 import { addCircle, edit, expand, focusElement, fullscreen, graphEdgeIcon, hide, inspect, pin, selectNeighbor, sparkles, stickyNote, trash, unpin } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
@@ -28,6 +28,16 @@ type GatedQuickActionItem = MenuQuickActionItemOptions & GatedMenuItem
 
 /** A menu section, as both the defaults and the merged options are shaped. */
 type MenuSection = { topbar: GatedQuickActionItem[]; menu: GatedActionItem[] }
+
+/**
+ * How long *Pivot ▸* has to stay under the pointer before its rows ask what is out
+ * there. It is the first row of the node menu, so the pointer crossing it on the way
+ * to anything below opens the submenu in passing, and a registry of thirty providers
+ * would ask a backend thirty questions nobody meant to ask.
+ */
+const PEEK_DELAY = 200
+
+const fmt = (value: number): string => value.toLocaleString()
 
 const defaultMenuNode = {
     topbar: [
@@ -339,6 +349,18 @@ export class ContextMenu extends UIComponent {
     private closeTimer?: number
     /** Entries whose `onclick` is already wrapped, so opening a menu twice does not stack wrappers. */
     private readonly wrapped = new WeakSet<object>()
+    /** Pivot rows waiting for a question to be put, collected as the submenu is built. */
+    private peeks: Array<{ id: string, nodes: Node[], slot: HTMLElement }> = []
+    /**
+     * The pivots a question is out for, and the panel whose rows the answers belong to.
+     * A peek outlives neither: a question nobody is looking at is work a backend should
+     * not still be doing.
+     */
+    private asked: string[] = []
+    private peekHost?: HTMLElement
+    private peekTimer?: number
+    /** Bumped whenever the peeks are dropped, so a late answer cannot paint a dead row. */
+    private peekToken = 0
 
     constructor(uiManager: UIManager) {
         super(uiManager)
@@ -379,9 +401,14 @@ export class ContextMenu extends UIComponent {
     }
 
     /**
-     * One row per pivot that applies, then the panel. A row *is* the run: no counts to
-     * read and nothing to narrow, so where the results land is decided by their size
-     * and the pivot's own `autoIngest` — see {@link UIManager.quickPivot}.
+     * One row per pivot that applies, then the panel. A row *is* the run: nothing to
+     * narrow, so where the results land is decided by their size and the pivot's own
+     * `autoIngest` — see {@link UIManager.quickPivot}.
+     *
+     * Opening the submenu is also the gesture that asks every pivot advertising a count
+     * what is out there, so a row says how much it would bring before it is clicked. The
+     * question is the pivot panel's own — `{}` narrowing over this origin — so the answer
+     * is the one the mode would show, and it is cached for whichever asks second.
      */
     private pivotSubmenu(node: Node): MenuActionItemOptions[] {
         const ui = this.uiManager
@@ -391,8 +418,15 @@ export class ContextMenu extends UIComponent {
             title: definition.label,
             svgIcon: definition.icon ?? sparkles,
             variant: 'outline-primary',
-            onclick: () => void ui.quickPivot(origin, definition.id),
+            suffix: definition.summarize ? this.peekSlot(definition.id, origin) : undefined,
+            onclick: () => {
+                // The run asks this pivot the same question, so the peek is handed over
+                // rather than aborted from under it when the menu closes.
+                this.asked = this.asked.filter(id => id !== definition.id)
+                void ui.quickPivot(origin, definition.id)
+            },
         }))
+        this.startPeeks()
         rows.push({
             text: 'Open pivot panel…',
             title: 'Read the counts, narrow, then run',
@@ -415,6 +449,76 @@ export class ContextMenu extends UIComponent {
             .getSelectedNodes()
             .map(selection => selection.node)
         return selected.some(candidate => candidate.id === node.id) ? selected : [node]
+    }
+
+    /**
+     * The right-hand end of a pivot row, where its advertised count goes. A cached
+     * answer is painted at once: asking twice about the same question is what the cache
+     * is for, and a number already known must not flicker through a loading state.
+     */
+    private peekSlot(id: string, origin: Node[]): HTMLElement {
+        const pivots = this.uiManager.graph.pivots
+        const slot = createHtmlElement('span', { class: 'pvt-contextmenu-peek' })
+        const nodes = pivots.originFor(id, origin)
+        const cached = pivots.cachedSummary(id, nodes)
+        if (cached) {
+            this.paintPeek(slot, cached.total, nodes.length)
+            return slot
+        }
+        slot.classList.add('pvt-contextmenu-peek-waiting')
+        this.peeks.push({ id, nodes, slot })
+        return slot
+    }
+
+    /** Ask, once the pointer has stayed — see {@link PEEK_DELAY}. */
+    private startPeeks(): void {
+        if (!this.peeks.length) return
+        const peeks = this.peeks
+        const token = this.peekToken
+        this.peeks = []
+        this.asked = peeks.map(peek => peek.id)
+        this.peekTimer = window.setTimeout(() => {
+            for (const peek of peeks) void this.peek(peek.id, peek.nodes, peek.slot, token)
+        }, PEEK_DELAY)
+    }
+
+    /** One pivot's question, and whatever it answers, written into its own row. */
+    private async peek(id: string, nodes: Node[], slot: HTMLElement, token: number): Promise<void> {
+        try {
+            const summary = await this.uiManager.graph.pivots.summarize(id, nodes)
+            if (token !== this.peekToken) return
+            // `undefined` is a superseded call rather than an answer: something newer is
+            // on its way and owns the slot from here. The row keeps its place, blank.
+            if (summary) this.paintPeek(slot, summary.total, nodes.length)
+            else slot.classList.remove('pvt-contextmenu-peek-waiting')
+        } catch {
+            if (token !== this.peekToken) return
+            // A peek that failed is worth a mark: the row still runs, but a provider
+            // that cannot say what is out there rarely fetches it either.
+            slot.classList.remove('pvt-contextmenu-peek-waiting')
+            slot.textContent = '—'
+            slot.title = 'This pivot could not say what is out there'
+        }
+    }
+
+    /** Advisory, and drawn as such — the `~` the pivot panel uses for the same number. */
+    private paintPeek(slot: HTMLElement, total: number, nodes: number): void {
+        slot.classList.remove('pvt-contextmenu-peek-waiting')
+        slot.textContent = `~${fmt(total)}`
+        slot.title = nodes > 1
+            ? `About ${fmt(total)} across ${fmt(nodes)} nodes`
+            : `About ${fmt(total)} out there`
+    }
+
+    /** Stop asking: the panel the answers were for has gone. */
+    private cancelPeeks(): void {
+        this.peekToken++
+        window.clearTimeout(this.peekTimer)
+        this.peekTimer = undefined
+        this.peeks = []
+        this.peekHost = undefined
+        for (const id of this.asked) this.uiManager.graph.pivots.cancel(id, 'summarize')
+        this.asked = []
     }
 
     /**
@@ -660,6 +764,7 @@ export class ContextMenu extends UIComponent {
         this.parentContainer.appendChild(panel)
 
         this.flyouts[depth] = { panel, row }
+        if (this.asked.length) this.peekHost = panel
         row.classList.add('pvt-submenu-open')
         // Measured before it is shown: opacity does not move anything, so the box is
         // already the real one.
@@ -717,6 +822,9 @@ export class ContextMenu extends UIComponent {
             const open = this.flyouts[level]
             if (!open) continue
             open.row.classList.remove('pvt-submenu-open')
+            // Only when the panel that asked is the one going: the pointer moving between
+            // the pivot rows closes deeper levels, and must not take their counts with it.
+            if (open.panel === this.peekHost) this.cancelPeeks()
             open.panel.remove()
         }
         this.flyouts.length = Math.min(this.flyouts.length, depth)

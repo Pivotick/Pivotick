@@ -189,6 +189,48 @@
     }
 
 
+    // Anything a row carries after its label: pinned to the right edge, never trailing
+    // the text, so the width of one row's label does not place another row's.
+    .pvt-action-suffix {
+        margin-left: auto;
+        padding-left: 2em;
+    }
+
+    // What a pivot advertises, on the row that will run it. Sized down and dimmed
+    // against whatever the row is painted with — a hovered row is filled with the
+    // primary colour, so a fixed text colour reads on one of the two states only.
+    .pvt-contextmenu-peek {
+        font-size: 11px;
+        font-variant-numeric: tabular-nums;
+        opacity: 0.7;
+    }
+
+    // Where the count will be, while it is still out. The same shimmer the pivot
+    // panel's own skeleton uses, at the size of the number it stands in for.
+    .pvt-contextmenu-peek-waiting {
+        width: 32px;
+        height: 0.8em;
+        border-radius: 4px;
+        opacity: 0.45;
+        background: linear-gradient(90deg,
+            currentColor 25%,
+            color-mix(in srgb, currentColor 35%, transparent) 50%,
+            currentColor 75%);
+        background-size: 200% 100%;
+        animation: pvt-menu-peek-shimmer 1.1s linear infinite;
+    }
+
+    @keyframes pvt-menu-peek-shimmer {
+        from { background-position: 200% 0; }
+        to { background-position: -200% 0; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .pvt-contextmenu-peek-waiting {
+            animation: none;
+        }
+    }
+
     // Always at the right edge, never after the text: a caret that follows the label
     // lands under the pointer in a different place on every row.
     .pvt-submenu-caret {

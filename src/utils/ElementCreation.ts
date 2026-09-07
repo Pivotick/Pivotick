@@ -169,6 +169,8 @@ export function createQuickActionItem<TThis extends UIElement = UIElement>(thisC
 }
 
 export function createActionItem<TThis extends UIElement = UIElement>(thisContext: TThis, action: MenuActionItemOptions, element: Node[] | Node | Edge | Note | null): HTMLDivElement {
+    const suffix = action.suffix ?? ''
+    if (action.suffix) action.suffix.classList.add('pvt-action-suffix')
     const shortcut = createShortcut(action.shortcut)
     if (shortcut instanceof HTMLSpanElement) {
         shortcut.classList.add('pvt-ms-auto')
@@ -187,6 +189,9 @@ export function createActionItem<TThis extends UIElement = UIElement>(thisContex
                 class: 'pvt-action-text',
                 title: action.title ?? '',
             }, [ action.text ?? '' ]),
+            // Classed here rather than by whoever passed it: where it sits on the row is
+            // the row's business, and the caller only owns what it says.
+            suffix,
             shortcut,
             // The affordance is part of what a submenu row *is*; opening the panel is
             // the host's, since only it knows where on screen the panel can go.

@@ -87,11 +87,22 @@ it found.
 ### The one-click pivot
 
 Steps 2 to 4 are for a question worth reading about first. Most are not. Right-click a node
-and **Pivot ▸** lists every pivot that applies to it; picking one runs it there and then,
-with no panel and nothing to fill in.
+and **Pivot ▸** lists every pivot that applies to it, with what each one is advertising;
+picking one runs it there and then, with no panel and nothing to fill in.
 
 The origin is the selection when the node you clicked belongs to it, and that node alone
 otherwise, so a bulk pivot is reachable without leaving the menu.
+
+Opening the submenu is also what asks. Every pivot with a
+[`summarize`](#summarize-the-cheap-one) is put the panel's own question — this origin, nothing
+narrowed — and its row shows a placeholder until the answer arrives, then the count: `~2,143`,
+advisory like every number a provider advertises. A pivot that advertises nothing shows
+nothing, and the row runs just the same.
+
+Opening the menu asks nothing, and neither does a pointer crossing **Pivot ▸** on its way
+somewhere else: the questions go out only once the submenu has been held for a moment, and
+they are cancelled if it closes before they land. The answers are cached, so a second look
+paints at once and the panel behind it re-uses what the menu already learned.
 
 A registry longer than the menu can hold scrolls, and the list is cut mid-row so it reads as
 continuing rather than complete. One pivot per enrichment module is thirty rows for an IP
@@ -465,9 +476,10 @@ undo will and will not reach: **[Saving pivot results](/pivots-saving)**.
 ## The Pivot rail mode
 
 [Using one](#using-one) walks the surface. What matters when you are configuring rather than
-driving it: entering the mode is the intent that calls a provider, leaving it stops every
-question in flight, and selection alone costs nothing — selection is also the gesture for
-dragging, styling and bulk edit, so the library never calls a provider speculatively.
+driving it: entering the mode is the intent that calls a provider — as is holding
+**Pivot ▸** open in the context menu — leaving it stops every question in flight, and
+selection alone costs nothing. Selection is also the gesture for dragging, styling and bulk
+edit, so the library never calls a provider speculatively.
 
 The mode is **gated on the registry**:
 

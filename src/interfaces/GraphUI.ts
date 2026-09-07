@@ -888,6 +888,16 @@ export type MenuActionItemOptions<TThis extends UIElement = UIElement> = {
      * panel either way, and closes it again on a second click.
      */
     submenu?: MenuActionItemOptions<TThis>[] | ((element: Node | Edge | Note | null) => MenuActionItemOptions<TThis>[]),
+    /**
+     * An element pinned to the row's right-hand end, after the label — a count, a
+     * badge, anything the row's own text should not have to carry.
+     *
+     * Held by the caller rather than described to the library, so it can still be
+     * written to once the menu is drawn: a value that is still being fetched fills its
+     * slot when it arrives. An element is in one place at a time, so a row built fresh
+     * on every open needs a fresh one too.
+     */
+    suffix?: HTMLElement,
     /** Draw a rule above this row, to group what follows apart from what came before. */
     dividerBefore?: boolean,
     /** The keybinding activates this function. This is just visual. The actual binding is defined in UIManager */
