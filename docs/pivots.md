@@ -33,7 +33,8 @@ and failure states.
 
 **[Using one](#using-one)** is what an analyst does, in order, and what each step costs a
 backend. Everything from **[Registering one](#registering-one)** onwards is the reference for
-whoever wires one up.
+whoever wires one up, and **[What your source has to offer](#what-your-source-has-to-offer)**
+is the same contract read from the service's side.
 
 ## Using one
 
@@ -571,6 +572,35 @@ graph.pivots.invalidate('correlations', nodes)  // only what was asked about the
 
 Auth, retry, rate limiting and any cache of your own belong in your provider functions,
 which are plain functions you wrote.
+
+## What your source has to offer
+
+The pages above are for whoever writes the provider. This is the same contract read from the
+other side, for whoever owns the service it calls.
+
+- **A fetch call**, returning the objects and their relations. The only required one. Two
+  things about it matter: it takes **many ids in one request**, so a pivot over fifty nodes
+  costs one call, and the ids it returns are **stable across runs**, because that is what
+  dedup keys on. A per-response id lands yesterday's results again as fresh candidates.
+- **A count call**, taking the same ids and the same filters, returning a total and the
+  per-value counts for whatever can be narrowed by. It is what makes the gate and the
+  narrowing work, and it is re-asked on every change to them, so it has to be cheap.
+  Approximate is fine: [counts are advisory](#counts-are-advisory-always). Without one a
+  pivot still runs, with a bare **Run** and nothing to gate it.
+- **The same filters honoured by both.** A count that ignores them never moves, so a pivot
+  over its cap can never be unblocked.
+- **A way to cancel.** Questions are abandoned when the analyst moves on, and the `signal`
+  the provider is handed is only worth passing on if the transport acts on it.
+- **A write call**, if the results are yours to write back. It should return the ids it
+  assigned, so [`canonicalIds`](/pivots-saving#ids-the-source-system-mints) can stop
+  tomorrow's run duplicating what was saved, and be able to report a partial success.
+
+Both read calls should tell an empty answer apart from a failure: no results is a fact about
+the data, an error is a fact about the service, and they read completely differently to an
+analyst.
+
+Nothing here needs pagination, a cursor or a streaming transport. Narrowing is what replaces
+them.
 
 ## What this is not
 
