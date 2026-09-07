@@ -116,6 +116,18 @@ Where the results go depends on how many of them are new to the canvas:
 - **A cap refusal** happens before anything is fetched, so there is nothing to review. The
   Pivot panel opens on that pivot with the number and the narrowing that lifts it.
 
+Until that is known the run has offered nothing, so it takes none of the screen to say it
+is working: a **Review** tab joins the dock's strip and reads `Review…` while the fetch is
+out. The dock is not unfolded and no pane is brought forward — click the tab to watch the
+run or cancel it. Only a result that needs deciding on comes forward, and a run that lands
+takes its tab away with it.
+
+The two answers with nothing to decide are the notifier's: a **failed fetch** says so with
+a Retry, and a result over the absolute
+[`candidateCeiling`](#gating-the-cap-and-the-ceiling) says the number and the limit. Neither
+stages a pane, and neither moves you into the Pivot panel — a cap refusal is the one that
+does, because narrowing is what lifts it.
+
 Candidates already on canvas are not new and never fill the limit, so re-running a pivot over
 ground you have covered stays a one-click gesture. An edge between two nodes already on
 screen does count, because it is a row you would otherwise have been asked about.
@@ -344,7 +356,7 @@ for candidate objects rather than about the table, which virtualises.
 ## Candidates are not the graph
 
 Nothing a pivot returns is in the graph, in the data table, or in any facet count until it
-is ingested. Results open the dock's **Review** tab — one pane per pivot, listed as vertical
+is ingested. Results staged for triage open the dock's **Review** tab — one pane per pivot, listed as vertical
 tabs down its side, each with its own count and its own way out — with the provider's own
 columns, the data table's filters, sorting, paging and an ingest action.
 

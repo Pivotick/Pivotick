@@ -663,8 +663,10 @@ const graph = new Pivotick(
         UI: {
             mode: 'full',
             sidebar: { collapsed: true },
-            // Away entirely; a staged set opens it, and it goes back when triage ends.
-            dock: { open: false },
+            // Folded to its bar rather than away entirely: that bar is where a one-click
+            // run says it is working, and it takes 34px to say so. A staged set unfolds
+            // it, and it folds back when triage ends.
+            dock: {},
         },
         callbacks: {
             onBeforeIngest: context => {

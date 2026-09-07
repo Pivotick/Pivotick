@@ -13,6 +13,10 @@ import type { PivotFixtureSpec } from '../harness/harness'
 // makes a one-click run safe: where the results land is the pivot's `autoIngest` where
 // it declared one, and otherwise how many candidates are *new* — few enough and they
 // land, more and triage opens. A run made from the panel is untouched by it.
+//
+// The gesture answers where it was made. Until the size is known the run has offered
+// nothing, so it says it is working in the dock's folded bar and takes no more of the
+// screen than that; only a result that needs deciding on comes forward.
 
 const FULL = { UI: { mode: 'full', sidebar: { collapsed: true }, table: { open: true } } }
 
@@ -37,6 +41,17 @@ const peeks = (page: Page): Promise<Array<string | null>> =>
         if (!slot) return null
         return slot.classList.contains('pvt-contextmenu-peek-waiting') ? 'waiting' : slot.textContent
     }))
+
+const dock = (page: Page): Locator => page.locator('.pvt-dock')
+/** What the dock's own strip names, which is all a folded dock says about itself. */
+const paneLabels = (page: Page): Promise<string[]> =>
+    page.locator('.pvt-dock-tab').evaluateAll(tabs => tabs.map(tab => (tab.textContent ?? '').trim()))
+
+/** Fold the dock, which is where an analyst who is not reviewing anything leaves it. */
+const foldDock = async (page: Page): Promise<void> => {
+    await page.locator('.pvt-dock-toggle').click()
+    await expect(dock(page)).toHaveClass(/pvt-dock-collapsed/)
+}
 
 /** The active rail mode, read from the live store. */
 const railMode = (page: Page): Promise<string> => page.evaluate(() =>
@@ -331,15 +346,39 @@ test.describe('one-click pivot', () => {
         await expect(menu(page)).not.toHaveClass(/shown/)
     })
 
+    test('a run that lands says so in the folded bar, and takes nothing else', async ({ page }) => {
+        await load(page, { pivots: ['blind'], latency: 800 })
+        const before = await counts(page)
+        await foldDock(page)
+
+        await openPivotSubmenu(page, 'a')
+        await flyout(page).locator('.pvt-action-item', { hasText: 'No advertised count' }).click()
+
+        // In flight it is one word in a 34px bar: enough to say a run is out and to open
+        // it if you want to watch or cancel it, and not the half of the screen a pane
+        // about to disappear would have taken.
+        await expect.poll(() => paneLabels(page)).toEqual(['Table', 'Review…'])
+        await expect(dock(page)).toHaveClass(/pvt-dock-collapsed/)
+
+        // And when it lands there was never anything to review: the tab goes with it.
+        await expect.poll(() => counts(page).then(c => c.nodes)).toBe(before.nodes + 3)
+        expect(await harness(page, 'dockTabIds')).toEqual(['table'])
+        await expect(dock(page)).toHaveClass(/pvt-dock-collapsed/)
+    })
+
     test('over the limit the same run opens triage instead, and lands nothing', async ({ page }) => {
         await load(page, { pivots: ['blind'], quickLimit: 2 })
         const before = await counts(page)
+        await foldDock(page)
 
         const outcome = await harness(page, 'runQuickPivot', 'blind', ['a'])
         expect((outcome as { status: string }).status).toBe('staged')
 
         expect(await harness(page, 'dockTabIds')).toEqual(['table', 'pivot-triage'])
         expect(await counts(page)).toEqual(before)
+        // Rows to rule on is the one answer that has to be seen, so this is where the
+        // review comes forward — folded bar or not.
+        await expect(dock(page)).not.toHaveClass(/pvt-dock-collapsed/)
     })
 
     test('the limit counts the rows triage would show, not what the provider returned', async ({ page }) => {
@@ -416,6 +455,40 @@ test.describe('one-click pivot', () => {
         expect(await railMode(page)).toBe('pivot')
         await expect(entry(page, 'correlation')).toHaveClass(/pvt-pivot-focus/)
         await expect(entry(page, 'correlation').locator('.pvt-pivot-gate-blocked')).toBeVisible()
+    })
+
+    test('a failure answers where the gesture was made, and leaves no pane behind', async ({ page }) => {
+        await load(page, { pivots: ['blind'], fail: true })
+
+        await openPivotSubmenu(page, 'a')
+        await flyout(page).locator('.pvt-action-item', { hasText: 'No advertised count' }).click()
+
+        // Nothing was ever offered for triage, so a pane holding one sentence and a
+        // Retry is half the screen for a sentence. The notifier carries both.
+        const toast = page.locator('.pivotick-toast')
+        await expect(toast).toContainText('Couldn\'t fetch No advertised count')
+        expect(await harness(page, 'dockTabIds')).toEqual(['table'])
+        // Nor is a failure a reason to move the analyst: there is nothing to narrow.
+        expect(await railMode(page)).toBe('select')
+
+        // The way back the pane would have offered comes with it.
+        const before = await counts(page)
+        await harness(page, 'setPivotFail', false)
+        await toast.locator('.pivotick-toast-action', { hasText: 'Retry' }).click()
+        await expect.poll(() => counts(page).then(c => c.nodes)).toBe(before.nodes + 3)
+    })
+
+    test('a ceiling refusal is reported too, and stages nothing to report it in', async ({ page }) => {
+        await load(page, { pivots: ['oversized'], ceiling: 100 })
+
+        await openPivotSubmenu(page, 'a')
+        await flyout(page).locator('.pvt-action-item', { hasText: 'Everything, everywhere' }).click()
+
+        await expect(page.locator('.pivotick-toast')).toContainText('14,203 candidates, over the 100 limit')
+        expect(await harness(page, 'dockTabIds')).toEqual(['table'])
+        // Unlike a cap refusal, there is no narrowing that lifts this one — the panel has
+        // nothing to add, so the analyst is left where they were.
+        expect(await railMode(page)).toBe('select')
     })
 
     // ── the origin ──────────────────────────────────────────────────────────

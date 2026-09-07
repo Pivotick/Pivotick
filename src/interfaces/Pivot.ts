@@ -417,6 +417,17 @@ export interface PivotCandidateSet {
     carried?: RawEdge[]
     /** True while `fetch` is in flight. */
     loading: boolean
+    /**
+     * The run might still land without triage, so nothing here has been *offered* yet.
+     * The set exists from the moment `fetch` starts — that is what makes the run
+     * watchable and cancellable — but a surface must not put a provisional set in front
+     * of the analyst: it is about to disappear onto the canvas, and taking the screen to
+     * say so costs more than the result it is announcing.
+     *
+     * Cleared the moment the run turns out to need triage, which is the surface's cue to
+     * come forward. A run that was always going to stage is never provisional.
+     */
+    provisional?: boolean
     /** Set when `fetch` rejected — the pane offers a retry. */
     error?: unknown
     /** Set when the provider blew through the absolute ceiling. Nothing was staged. */

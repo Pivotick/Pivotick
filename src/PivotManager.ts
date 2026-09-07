@@ -397,6 +397,11 @@ export class PivotManager implements PivotManagerLike {
             }
         }
 
+        // Whether this run might answer on the canvas rather than in a pane. It decides
+        // two things: that no surface reveals itself for the set while that is still
+        // open, and that what a pane would have carried — a failure, a ceiling — is the
+        // notifier's instead, since there is no pane the analyst is looking at.
+        const mightLand = def.autoIngest ?? options.autoIngestUpTo !== undefined
         const set: PivotCandidateSet = {
             pivotId: id,
             label: def.label,
@@ -409,6 +414,7 @@ export class PivotManager implements PivotManagerLike {
             nodes: [],
             edges: [],
             loading: true,
+            provisional: mightLand,
         }
         // A re-run over triage already done waits beside the set on show rather than
         // replacing it: a re-run is one pane, not a stack, but discarding the analyst's
@@ -440,11 +446,15 @@ export class PivotManager implements PivotManagerLike {
                 drop()
                 return { status: 'cancelled', runId, nodes: [], edges: [], deduped: 0, suppressed: 0 }
             }
-            // Nothing was ever offered for triage on an auto-ingest, so its failure has
-            // no pane to live in — it is the notifier's to report.
-            if (def.autoIngest) {
+            // Nothing was ever offered for triage on a run that was going to land, so its
+            // failure has no pane the analyst is looking at — it is the notifier's to
+            // report, with the retry the pane would have offered.
+            if (mightLand) {
                 drop()
-                this.report(def, `Couldn't fetch ${def.label}`, String((error as Error)?.message ?? error))
+                this.report(def, `Couldn't fetch ${def.label}`, String((error as Error)?.message ?? error), {
+                    label: 'Retry',
+                    onClick: () => void this.run(id, nodes, narrowing, options),
+                })
             } else {
                 set.loading = false
                 set.error = error
@@ -459,24 +469,28 @@ export class PivotManager implements PivotManagerLike {
         }
 
         this.stage(set, result)
-        this.notify('candidates')
 
         // The set is kept, empty of candidates and carrying its refusal — same as a
         // failed fetch, and for the same reason: the number, the limit and the way
-        // forward have to be shown somewhere, and only a pane can show them.
+        // forward have to be shown somewhere. A pane shows them where there is one to
+        // look at, and the notifier where there is not.
         if (set.refused) {
-            if (def.autoIngest) {
+            if (mightLand) {
                 drop()
-                // Same reason as a failure: the number, the limit and the way forward
-                // have to be seen somewhere, and there is no pane on this path.
                 this.report(def, `${def.label} returned too much`,
                     `${set.refused.count.toLocaleString()} candidates, over the ${set.refused.limit.toLocaleString()} limit.`
                     + ' Nothing was ingested — narrow and run again.')
-            }
+            } else this.notify('candidates')
             return this.refuse(runId, set.refused)
         }
 
-        if (!this.landsWithoutTriage(def, set, options)) {
+        // Where it goes is now known, and a run that needs triage has offered something:
+        // it stops being provisional, which is what brings the pane forward.
+        const lands = this.landsWithoutTriage(def, set, options)
+        if (!lands) set.provisional = false
+        this.notify('candidates')
+
+        if (!lands) {
             return {
                 status: 'staged',
                 runId,
@@ -527,12 +541,13 @@ export class PivotManager implements PivotManagerLike {
     }
 
     /**
-     * Say something went wrong on a path with no surface of its own. Only the
-     * auto-ingest paths use it: everything staged for triage carries its own error or
-     * refusal into its pane, where the analyst is already looking.
+     * Say something went wrong on a path with no surface of its own — a run that was
+     * going to land, and so was never going to open a pane. Everything that stages
+     * carries its own error or refusal into its pane, where the analyst is already
+     * looking.
      */
-    private report(def: PivotDefinition, title: string, message: string): void {
-        this.graph.notifier?.error(title, message)
+    private report(def: PivotDefinition, title: string, message: string, action?: NotificationAction): void {
+        this.graph.notifier?.error(title, message, action ? { action } : undefined)
     }
 
     /** Cancel a fetch in flight. The candidate set goes with it; nothing is staged. */

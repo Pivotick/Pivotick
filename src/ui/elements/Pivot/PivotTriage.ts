@@ -67,6 +67,12 @@ export class PivotTriage extends UIComponent {
     private tools?: HTMLElement
     /** Strip rows by pivot id, in strip order — so a count repaints one row, not fifty. */
     private readonly items = new Map<string, StripItem>()
+    /**
+     * Panes built for a set that had not offered anything yet, and so were never brought
+     * forward. Kept so that a set which *stops* being provisional is revealed then —
+     * the pane already exists by that point, and only its status has changed.
+     */
+    private readonly provisional = new Set<string>()
 
     constructor(uiManager: UIManager) {
         super(uiManager)
@@ -88,6 +94,7 @@ export class PivotTriage extends UIComponent {
     protected onDestroy(): void {
         this.closeTab()
         this.panes.clear()
+        this.provisional.clear()
     }
 
     /**
@@ -111,18 +118,25 @@ export class PivotTriage extends UIComponent {
             if (live.has(pivotId)) continue
             this.panes.get(pivotId)?.deactivate()
             this.panes.delete(pivotId)
+            this.provisional.delete(pivotId)
         }
 
-        /** The last set to arrive, which is the one the analyst just asked for. */
+        /** The last set to come forward, which is the one the analyst is owed a look at. */
         let arrived: string | undefined
         for (const set of staged) {
             const pane = this.panes.get(set.pivotId)
-            if (pane) {
-                pane.update(set)
+            if (pane) pane.update(set)
+            else this.panes.set(set.pivotId, this.build(set))
+
+            // A provisional set has offered nothing yet — it may still land on the canvas
+            // — so it takes its place in the dock's strip and waits there. It comes
+            // forward when it turns out to need triage, whether that is on arrival or
+            // when a one-click run proves too big to land.
+            if (set.provisional) {
+                this.provisional.add(set.pivotId)
                 continue
             }
-            this.panes.set(set.pivotId, this.build(set))
-            arrived = set.pivotId
+            if (!pane || this.provisional.delete(set.pivotId)) arrived = set.pivotId
         }
 
         if (!staged.length) return this.closeTab()
@@ -205,7 +219,11 @@ export class PivotTriage extends UIComponent {
     private tabLabel(): string {
         let waiting = 0
         for (const pane of this.panes.values()) waiting += pane.waiting()
-        return waiting > 0 ? `Review (${fmt(waiting)})` : 'Review'
+        if (waiting > 0) return `Review (${fmt(waiting)})`
+        // A run in flight is the only reason this tab exists before there is anything to
+        // review, and the folded dock shows this strip and little else — so the label is
+        // where a one-click run says it is still working.
+        return this.pivots.staged().some(set => set.loading) ? 'Review…' : 'Review'
     }
 
     private pane(): TriagePane | undefined {

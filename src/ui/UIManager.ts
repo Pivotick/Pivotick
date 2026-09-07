@@ -484,16 +484,18 @@ export class UIManager {
      * declared one and otherwise their size — `pivots.quickIngestLimit` new candidates
      * or fewer land on the canvas, more than that opens triage.
      *
-     * The one answer a single click cannot show by itself is a refusal made *before*
-     * the fetch: nothing was staged, so there is no pane to carry the number or the way
-     * past it. Then the panel opens on that pivot, where the count and the narrowing
-     * that lifts it both live.
+     * Nothing opens on the way: the run only comes forward if it turns out to need
+     * triage. The one answer that has to move the analyst is a refusal made *before* the
+     * fetch — nothing was staged, so there is no pane to carry the number, and lifting a
+     * cap means narrowing. Then the panel opens on that pivot, where the count and the
+     * narrowing both live. A failure has nothing to decide, only something to retry, and
+     * says so from the notifier.
      */
     public async quickPivot(nodes: Node[], pivotId: string): Promise<PivotRunOutcome> {
         const pivots = this.graph.pivots
         const outcome = await pivots.run(pivotId, nodes, {}, { autoIngestUpTo: pivots.quickIngestLimit })
-        const unshown = outcome.status === 'refused' || outcome.status === 'failed'
-        if (unshown && !pivots.candidates(pivotId)) this.openPivotMode(nodes, pivotId)
+        const capped = outcome.status === 'refused' && outcome.refusal?.kind === 'cap'
+        if (capped && !pivots.candidates(pivotId)) this.openPivotMode(nodes, pivotId)
         return outcome
     }
 
