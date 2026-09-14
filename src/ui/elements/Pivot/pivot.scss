@@ -988,6 +988,7 @@
     padding: 0 6px;
     border: none;
     border-radius: 0;
+    background-color: transparent;
     box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--pvt-chrome-border) 60%, transparent);
     cursor: pointer;
 
@@ -1145,8 +1146,12 @@
     flex-direction: column;
     gap: 5px;
     padding: 8px;
-    border: 1px solid var(--pvt-chrome-border);
+    // Carded the way the flyouts card their nested content, but outlined a step harder
+    // than they are: a column of these has to be read apart at a glance, and the border
+    // tones nearer the chrome disappear into it.
+    border: 1px solid var(--pvt-bg-color-8);
     border-radius: 9px;
+    background-color: var(--pvt-bg-color-4);
 }
 
 // Name and number on one line. Everything an entry has to say about itself — a count,
