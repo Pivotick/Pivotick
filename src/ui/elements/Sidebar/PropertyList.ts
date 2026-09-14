@@ -6,7 +6,7 @@ import { tryResolveHTMLElement } from '../../../utils/Getters'
 import { checkmark, copy as copyIcon, externalLink } from '../../icons'
 import { createPrimitive } from '../../components/JsonViewer'
 import { escapeHtml } from '../../../utils/utils'
-import { hasAllowedScheme, SAFE_LINK_SCHEMES } from '../../../utils/urlSafety'
+import { hasAllowedScheme, isProtocolRelative, SAFE_LINK_SCHEMES } from '../../../utils/urlSafety'
 import './properties.scss'
 
 // Keys whose value we render as a link even when the value isn't an absolute URL
@@ -100,14 +100,18 @@ export function createCopyButton(text: string): HTMLElement {
 }
 
 function createLinkValue(value: string): HTMLElement {
-    const isAbsolute = ABSOLUTE_URL.test(value)
+    // `//host/path` carries no scheme but still leaves the origin, so it opens away from the
+    // app like any absolute URL rather than replacing the tab the graph is in. `rel` is set
+    // whatever the target: a link that stays in the tab has no reason to hand over the opener.
+    const leavesOrigin = ABSOLUTE_URL.test(value) || isProtocolRelative(value)
     return createHtmlElement(
         'a',
         {
             class: 'pvt-prop-value pvt-prop-value--link',
             href: value,
             title: value,
-            ...(isAbsolute ? { target: '_blank', rel: 'noopener noreferrer' } : {}),
+            rel: 'noopener noreferrer',
+            ...(leavesOrigin ? { target: '_blank' } : {}),
         },
         [
             createHtmlElement('span', { class: 'pvt-prop-link-text' }, [value]),
