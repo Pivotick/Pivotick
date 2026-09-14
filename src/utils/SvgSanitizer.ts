@@ -11,6 +11,12 @@ import DOMPurify from 'dompurify'
  * DOMPurify's HTML parser only namespaces SVG content under an `<svg>` root, so a bare fragment
  * (a lone `<path>`, as the SVG-namespace parse this replaces accepted) is wrapped for the round
  * trip and unwrapped again — callers get back exactly the nodes they passed in, minus scripting.
+ *
+ * The SVG profile is wider than an icon needs, so two of its tags are taken back out. An inline
+ * `<style>` is not scoped to the icon, or even to the graph: its rules apply to the whole
+ * embedding page. An `<a>` turns a click on the node — the commonest gesture there is — into a
+ * navigation, since the click handler stops propagation but never the default action. Neither
+ * has a place in an icon. `href` itself stays, so `<image href>` keeps loading pictures.
  */
 export function parseSvgIconMarkup(markup: string): DocumentFragment {
     const trimmed = markup.trim()
@@ -18,6 +24,7 @@ export function parseSvgIconMarkup(markup: string): DocumentFragment {
 
     const clean = DOMPurify.sanitize(isRooted ? trimmed : `<svg>${trimmed}</svg>`, {
         USE_PROFILES: { svg: true, svgFilters: true },
+        FORBID_TAGS: ['style', 'a'],
         RETURN_DOM_FRAGMENT: true,
     })
     if (isRooted) return clean
