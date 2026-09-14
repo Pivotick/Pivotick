@@ -183,6 +183,27 @@ export class FormFactory {
         })
     }
 
+    /**
+     * Rewrite a `checkboxes` field's labels and counts in place, leaving what is ticked
+     * — and whatever has focus — where it is. Counts that answer to a field the analyst
+     * is still typing in have to move without the form moving under them.
+     *
+     * Answers `false` when the options no longer line up with what is drawn: that is a
+     * different list of choices, and only a rebuild can put it right.
+     */
+    static updateCheckboxOptions(form: HTMLFormElement, key: string, options: FieldOption[]): boolean {
+        const list = form.querySelector(`[data-field-key="${key}"]`)
+        if (list?.getAttribute('data-field-type') !== 'checkboxes') return false
+
+        const rows = [...list.querySelectorAll<HTMLElement>('.pvt-checkbox-option')]
+        const linedUp = rows.length === options.length && rows.every((row, index) =>
+            row.querySelector<HTMLInputElement>('input')?.value === options[index].value)
+        if (!linedUp) return false
+
+        rows.forEach((row, index) => this.paintCheckboxOption(row, options[index]))
+        return true
+    }
+
     static createField(field: FieldConfig): HTMLElement {
         const wrapper = document.createElement('div')
         wrapper.className = 'pvt-form-element'
@@ -350,21 +371,31 @@ export class FormFactory {
 
             const label = document.createElement('span')
             label.className = 'pvt-checkbox-label'
-            label.textContent = option.label
 
             row.append(input, label)
-
-            if (option.count !== undefined) {
-                const count = document.createElement('span')
-                count.className = 'pvt-checkbox-count'
-                count.textContent = option.count.toLocaleString()
-                row.appendChild(count)
-            }
-
+            this.paintCheckboxOption(row, option)
             list.appendChild(row)
         })
 
         return list
+    }
+
+    /** Write an option's label and count into a row that already holds its checkbox. */
+    private static paintCheckboxOption(row: HTMLElement, option: FieldOption): void {
+        const label = row.querySelector('.pvt-checkbox-label')
+        if (label) label.textContent = option.label
+
+        let count = row.querySelector('.pvt-checkbox-count')
+        if (option.count === undefined) {
+            count?.remove()
+            return
+        }
+        if (!count) {
+            count = document.createElement('span')
+            count.className = 'pvt-checkbox-count'
+            row.appendChild(count)
+        }
+        count.textContent = option.count.toLocaleString()
     }
 
     private static createCheckbox(field: FieldConfig): HTMLInputElement {

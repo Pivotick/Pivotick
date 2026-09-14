@@ -625,8 +625,11 @@ class PivotEntry {
     /** What an auto-ingest run just landed, until the next run or a new origin. */
     private ingested?: number
     private form?: HTMLFormElement
-    /** The facet shape the current form was built from, so it is only rebuilt when it moves. */
+    /** The facets the form's fields were built from, and their signature to compare against. */
+    private drawnFacets: PivotFacet[] = []
     private facetSignature = ''
+    /** The same facets minus their counts: what the form is built from, and rebuilt for. */
+    private facetShape = ''
     /** Rebuild the form once the analyst's cursor has left it, never under their fingers. */
     private formStale = false
     /** Bumped on every ask, so a superseded answer is dropped rather than painted. */
@@ -1081,19 +1084,31 @@ class PivotEntry {
 
     /**
      * Build the narrowing form from the facets the provider declared. Rebuilt only when
-     * the facets themselves move — including their option counts, which are the source's
-     * answer to the current narrowing (C4) — and never while a field has focus.
+     * the choices themselves move, and never while a field has focus.
+     *
+     * Option counts are the source's running answer to what is being typed (C4), so
+     * they are written into the boxes that are already there rather than waiting for a
+     * rebuild the caret would have to survive — the same numbers the breakdown line
+     * above them is already showing.
      */
     private paintNarrowing(): void {
         const facets = this.summary?.facets ?? []
         const signature = JSON.stringify(facets)
         if (signature === this.facetSignature) return
 
+        if (this.form && facetShape(facets) === this.facetShape && this.refreshCounts(facets)) {
+            this.drawnFacets = facets
+            this.facetSignature = signature
+            return
+        }
+
         if (this.form?.contains(document.activeElement)) {
             this.formStale = true
             return
         }
+        this.drawnFacets = facets
         this.facetSignature = signature
+        this.facetShape = facetShape(facets)
         this.formStale = false
         this.narrowingHost.replaceChildren()
         this.form = undefined
@@ -1119,6 +1134,30 @@ class PivotEntry {
         form.addEventListener('focusout', () => {
             if (this.formStale) window.setTimeout(() => this.paintNarrowing(), 0)
         })
+    }
+
+    /**
+     * Push fresh option counts into the form as it stands, and say whether that left it
+     * saying everything the summary does.
+     *
+     * Only a `multiselect` keeps its counts in a column of their own. A `select` carries
+     * them inside its option labels, behind a picker built from the field itself, so a
+     * change to one of those still needs the rebuild — but the boxes are brought up to
+     * date either way, rather than waiting on a field the analyst is not looking at.
+     */
+    private refreshCounts(facets: PivotFacet[]): boolean {
+        const form = this.form
+        if (!form) return false
+
+        const patched = facets
+            .filter(facet => facet.type === 'multiselect')
+            .map(facet => FormFactory.updateCheckboxOptions(form, facet.key, facetToField(facet).options ?? []))
+            .every(Boolean)
+
+        const elsewhere = facets.some((facet, index) => facet.type !== 'multiselect'
+            && JSON.stringify(facet) !== JSON.stringify(this.drawnFacets[index]))
+
+        return patched && !elsewhere
     }
 
     /** Read the form and re-ask — narrowing and the count are one question. */
@@ -1276,6 +1315,18 @@ function strong(text: string): HTMLElement {
 
 function sameIds(a: Node[], b: Node[]): boolean {
     return a.length === b.length && a.every((node, index) => node.id === b[index].id)
+}
+
+/**
+ * The facets with the moving parts taken out: the fields, and which choices each one
+ * offers. Two summaries that agree on this are the same form, however far their counts
+ * have drifted apart.
+ */
+function facetShape(facets: PivotFacet[]): string {
+    return JSON.stringify(facets.map(facet => ({
+        ...facet,
+        options: facet.options?.map(option => option.value),
+    })))
 }
 
 /**
