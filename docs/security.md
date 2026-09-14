@@ -14,10 +14,17 @@ node and edge labels, descriptions, ids, property keys and values, and note cont
 
 - Labels, descriptions and property names/values are written with `textContent`.
 - Note content is Markdown, rendered with `marked` and then sanitized with
-  [DOMPurify](https://github.com/cure53/DOMPurify) before insertion.
+  [DOMPurify](https://github.com/cure53/DOMPurify) against an allow-list of the tags Markdown
+  itself produces. `<style>`, the form elements and inline `style` attributes are not on it.
 - `style.svgIcon` markup is sanitized (SVG profile) before it reaches the document, so event
-  handlers, `<script>` and `<foreignObject>` are stripped.
+  handlers, `<script>` and `<foreignObject>` are stripped, as are `<style>` and `<a>`. An
+  inline `<style>` is not scoped to the icon, and an `<a>` would turn selecting the node into
+  a navigation.
 - `style.imagePath` is restricted to the `http:`, `https:`, `data:` and `blob:` schemes.
+- Colours from the data, a node's `style.color` and a note's `color`, have to parse as CSS
+  colours before they reach the document, so they cannot smuggle a `url()` into a `background`.
+- Property values rendered as links carry `rel="noopener noreferrer"`, and any that leave your
+  origin, `//host/path` included, open in a new tab rather than replacing yours.
 
 A **`string` therefore always renders as text.** Wherever an option accepts
 `string | HTMLElement`, returning a string gets you text; to render your own HTML, build and
@@ -87,10 +94,12 @@ Content-Security-Policy:
     script-src 'self';
     img-src 'self' data: blob: https://images.example.com;
     style-src 'self' 'unsafe-inline';
+    form-action 'self';
 ```
 
 - `script-src` without `'unsafe-inline'` is what neutralizes injected event handlers.
 - `img-src` is where you pin down which hosts node pictures may come from.
+- `form-action` bounds where any injected form could post, whatever its `action` says.
 - `style-src 'unsafe-inline'` is currently required: the renderer sets inline styles, and
   Pivotick's stylesheet is normally injected by your bundler. Serve the CSS as a file and use a
   nonce or hash if you need to drop it.

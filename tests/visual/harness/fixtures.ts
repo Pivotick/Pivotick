@@ -16,7 +16,7 @@ import type {
     LabelStyle,
     EdgeFullStyle,
 } from '../../../src/interfaces/RendererOptions'
-import { xssPayload, xssSvgIcon } from '../xssPayloads'
+import { chromeSvgIcon, CSS_BEACON, OFF_ORIGIN_RELATIVE, xssPayload, xssSvgIcon } from '../xssPayloads'
 
 /** A plain, structured-cloneable bag — what a fixture can carry across `page.evaluate`. */
 type PlainObject = Record<string, unknown>
@@ -1135,7 +1135,25 @@ export const fixtures = {
             svgIcon: xssSvgIcon('svg-icon'),
         }, { label: 'Icon node' })
 
-        return { nodes: [label, prop, icon], edges: [], notes: [] }
+        // Payloads that ride in on the *style* bag rather than the data: a colour that is really
+        // a request, and an icon carrying the page-wide chrome an icon has no use for.
+        const color = mkStyledNode('xss-color', -170, 120, {
+            color: CSS_BEACON,
+        }, { label: 'Colour node' })
+        const chrome = mkStyledNode('xss-chrome', 170, 120, {
+            size: 30,
+            svgIcon: chromeSvgIcon(),
+        }, { label: 'Chrome node' })
+
+        // A property that reads as a relative path but leaves the origin, beside a null one —
+        // routine in a feed, and enough to throw the editor's form builder.
+        const link = mkStyledNode('xss-link', 0, -110, {}, {
+            label: 'Link node',
+            url: OFF_ORIGIN_RELATIVE,
+            asn: null,
+        })
+
+        return { nodes: [label, prop, icon, color, chrome, link], edges: [], notes: [] }
     },
 
     /**
