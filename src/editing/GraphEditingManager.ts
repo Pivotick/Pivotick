@@ -91,7 +91,14 @@ export class GraphEditingManager {
         // The modal invokes the handler to build its body — once, not twice.
         const customHandler = this.graph.getOptions().callbacks?.onNodeEdit
 
-        createNodeEditModal(node, session, this.graph.UIManager, customHandler)
+        // A session that outlives a failed build reads as active forever after, and this node
+        // could never be edited again — one unbuildable body would retire it for good.
+        try {
+            createNodeEditModal(node, session, this.graph.UIManager, customHandler)
+        } catch (error) {
+            this.nodeSessions.delete(nodeId)
+            throw error
+        }
 
         return session
     }
@@ -124,7 +131,13 @@ export class GraphEditingManager {
         const customHandler = this.graph.getOptions().callbacks?.onEdgeEdit
             ?? this.graph.UIManager.getOptions().editors?.edgeEditor?.render
 
-        createEdgeEditModal(edge, session, this.graph.UIManager, customHandler)
+        // As in `openNodeSession`: a failed build must not leave the session behind.
+        try {
+            createEdgeEditModal(edge, session, this.graph.UIManager, customHandler)
+        } catch (error) {
+            this.edgeSessions.delete(edge.id)
+            throw error
+        }
 
         return session
     }

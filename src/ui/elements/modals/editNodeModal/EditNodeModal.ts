@@ -91,7 +91,7 @@ function createEditModalBody(node: Node): { body: HTMLDivElement, form: HTMLForm
             key: k,
             label: FormFactory.niceLabelFromKey(k),
             type: 'text',
-            defaultValue: (v as string).toString()
+            defaultValue: v == null ? '' : String(v)
         }
         fields.push(fieldConfig)
     })
