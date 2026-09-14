@@ -283,8 +283,9 @@ export class NoteDrawer {
                 const pills = nodeContainer.querySelectorAll('.pvt-note-color-pill')
                 pills.forEach((p) => p.classList.remove('pill-active'))
                 pill.classList.add('pill-active')
-                nodeContainer.style.setProperty('--note-color', color)
+                // Set from the note, not from the pill: the note is what vets the colour.
                 note.setColor(color)
+                nodeContainer.style.setProperty('--note-color', note.color)
                 this.graph.noteManager.editNote(note)
 
             })

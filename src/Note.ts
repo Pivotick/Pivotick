@@ -1,8 +1,21 @@
 import { generateSafeDomId } from './utils/ElementCreation'
+import { isSafeColor } from './utils/colorSafety'
 
 export interface AttachedElement {
     type: 'node' | 'edge'
     id: string
+}
+
+/** The swatch a note takes when it is given no colour, or one that is not a colour. */
+const DEFAULT_NOTE_COLOR = '#FDE68A'
+
+/**
+ * A note's colour reaches the CSSOM as `--note-color`, which the terminal surface's accent rule
+ * substitutes into `background:` whole — so a value that is not a colour would render there as an
+ * outbound request. Anything that does not parse falls back to the default swatch.
+ */
+function safeNoteColor(color: string | undefined): string {
+    return color && isSafeColor(color) ? color : DEFAULT_NOTE_COLOR
 }
 
 /** Note surface finish: a deep full-colour card, or a neutral terminal panel. */
@@ -56,7 +69,7 @@ export class Note {
         this.height = options.height ?? 160
 
         this.content = options.content ?? ''
-        this.color = options.color ?? '#FDE68A'
+        this.color = safeNoteColor(options.color)
         this.surface = options.surface ?? 'jewel'
         this.visible = true
 
@@ -81,7 +94,7 @@ export class Note {
     }
 
     public setColor(color: string): void {
-        this.color = color
+        this.color = safeNoteColor(color)
         this.markDirty()
     }
 
