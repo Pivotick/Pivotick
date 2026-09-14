@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0.0 — 2026-09-07
+## 2.0.0 — 2026-09-14
 
 Two subsystems, and they are the ones the name has been promising. **Pivots** run an enrichment
 against what is on the canvas and stage what comes back: the results are candidates, not graph,
@@ -300,6 +300,33 @@ keyboard shortcut — so a removed feature leaves nothing behind to press and qu
 - **The minimap draws notes**, rasterised as blocks to scale and re-drawn when one is added,
   moved, resized, recoloured or hidden. A note drop now emits `noteChange`.
 
+### Security
+
+An external review of the note and node-styling paths found no way to run script — the sanitizer
+already held that line — and several narrower routes out of a note and into the page around it.
+Those are closed. Reported by Jeroen Pinoy.
+
+- **A note's Markdown renders against an allow-list.** The sanitizer's default profile is wider
+  than Markdown needs: it keeps `<style>`, which is scoped to the document rather than to the note
+  and so restyles the page around it, and it keeps the form elements, which post from the host's
+  own origin. A note now renders the tags Markdown itself emits plus the `<span>` behind a
+  `[[node]]` reference, and nothing else. **A task list loses its checkbox** as a result: removing
+  a tag keeps its children, so allowing the box would have left a form's password field standing
+  in the note once the form around it went.
+- **An `svgIcon` can no longer style the page or link away from it.** Icon markup arrives as graph
+  data like anything else, and a `<style>` inside it is document-scoped exactly as in a note,
+  while an `<a>` turns the node it draws into a link. Both are dropped from icon markup.
+  `<image href>` is untouched — it is what the markup is for.
+- **A colour from the data is checked before it reaches the CSSOM.** Note colours and
+  `[[node]]`-reference colours were assigned straight into a style declaration. Asking the browser
+  whether it supports the value is not the guard it looks like, since it answers yes for anything
+  sitting in a substitution function's fallback, so a value carrying `url(`, `var(`, `env(`,
+  `attr(`, a backslash or a comment is now refused before that question is asked.
+- **A scheme-less URL is not taken for a same-origin one.** `//host/path` names no scheme and
+  still leaves the origin, so a property-list link built from one replaced the tab the graph was
+  in instead of opening away from it. It now opens away like any absolute URL, and every property
+  link carries `rel="noopener noreferrer"` whatever its target.
+
 ### Fixed
 
 - **`graph.updateData` no longer throws away the node or edge it is updating.** An id the graph
@@ -347,6 +374,13 @@ keyboard shortcut — so a removed feature leaves nothing behind to press and qu
   menu no longer runs off the right or bottom edge — near one it opens back towards the
   pointer instead of growing the page — and two graphs on a page stop sharing a single menu
   element, where destroying either used to take it away from both.
+- **A node whose data holds a `null` no longer loses its editor for good.** The form builder read
+  every property through `toString()` and threw on the first one that was `null` or `undefined` —
+  after the edit session had been stored. The stuck session then answered every later attempt to
+  edit that node, so one empty property retired the editor permanently. Such a property now builds
+  an empty field, and a session whose body fails to build is dropped rather than left behind.
+- **A pivot entry's card has a boundary in both themes.** The hairline around a provider's options
+  was a chrome tone drawn on a chrome tone, leaving the box it grows with no visible edge.
 
 ### Breaking
 
@@ -367,6 +401,9 @@ keyboard shortcut — so a removed feature leaves nothing behind to press and qu
   it; nothing replaces it.
 - **`RailMode` is now `string`** rather than a union of the four built-in names, since a
   registered mode's id is arbitrary. `PointerMode` and `FlyoutMode` still name the built-ins.
+- **A note renders only Markdown's own tags.** Raw HTML beyond them is dropped rather than
+  sanitized case by case, and a task list no longer draws its checkbox. See Security above for
+  what this closes.
 
 ### Migration
 
@@ -380,6 +417,7 @@ keyboard shortcut — so a removed feature leaves nothing behind to press and qu
 | `InterractionCallbacks.onNodeExpansion` | Nothing — it was never called. Declare a pivot instead |
 | `UI: { modeRail: … }` | Delete it. Register your own mode with `UIManager.addRailMode` |
 | `RailMode` as a union of the four built-ins | `string`; `PointerMode` / `FlyoutMode` still name them |
+| Raw HTML in a note's Markdown | Only Markdown's own tags and `[[node]]` spans render; a task list has no checkbox |
 
 See [Pivots & enrichment](./docs/pivots.md), [Saving pivot results](./docs/pivots-saving.md)
 and [Undo & history](./docs/history.md).
