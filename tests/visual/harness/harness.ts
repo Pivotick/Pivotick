@@ -1724,12 +1724,25 @@ const CORRELATION_TYPES = [
     { value: 'ip', label: 'IPs', count: 38 },
 ]
 
+/**
+ * What a `seen` floor leaves of each type. The fixture numbers its rows by `seen`, so
+ * asking for the ones first seen at or after N drops the first N of every type — which
+ * is what gives the facet counts something to do while the range is being typed in.
+ */
+function correlationTypes(narrowing: PivotNarrowing): typeof CORRELATION_TYPES {
+    const range = narrowing.seen as { min?: number } | undefined
+    const floor = Number(range?.min ?? 0)
+    if (!floor) return CORRELATION_TYPES
+    return CORRELATION_TYPES.map((type) => ({ ...type, count: Math.max(type.count - floor, 0) }))
+}
+
 /** Which types a narrowing chose — all of them when it chose none. */
 function chosenTypes(narrowing: PivotNarrowing): typeof CORRELATION_TYPES {
+    const types = correlationTypes(narrowing)
     const chosen = narrowing.type
-    if (!Array.isArray(chosen) || chosen.length === 0) return CORRELATION_TYPES
+    if (!Array.isArray(chosen) || chosen.length === 0) return types
     const wanted = chosen.map(String)
-    return CORRELATION_TYPES.filter((type) => wanted.includes(type.value))
+    return types.filter((type) => wanted.includes(type.value))
 }
 
 function correlationTotal(narrowing: PivotNarrowing): number {
@@ -4921,7 +4934,11 @@ class Harness implements HarnessApi {
                                     key: 'type',
                                     label: 'Type',
                                     type: 'multiselect',
-                                    options: CORRELATION_TYPES.map((t) => ({ label: t.label, value: t.value, count: t.count })),
+                                    // Counted under the rest of the narrowing but not
+                                    // under the type picks, so ticking one type does
+                                    // not zero the others.
+                                    options: correlationTypes(narrowing)
+                                        .map((t) => ({ label: t.label, value: t.value, count: t.count })),
                                 },
                                 { key: 'seen', label: 'First seen', type: 'numberRange' },
                             ],

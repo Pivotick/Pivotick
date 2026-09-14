@@ -78,6 +78,16 @@ const narrowTo = async (page: Page, pivotId: string, key: string, option: string
     await row.locator('input[type="checkbox"]').check()
 }
 
+/** The counts a multiselect facet's checkbox list is showing, top to bottom. */
+const facetCounts = (page: Page, pivotId: string, key: string): Promise<string[]> =>
+    entry(page, pivotId).locator(`[data-field-key="${key}"] .pvt-checkbox-option`)
+        .evaluateAll(rows => rows.map(row =>
+            row.querySelector('.pvt-checkbox-count')?.textContent ?? ''))
+
+/** Which narrowing field holds the caret, if any. */
+const caretField = (page: Page): Promise<string | null> => page.evaluate(() =>
+    document.activeElement?.closest('[data-field-key]')?.getAttribute('data-field-key') ?? null)
+
 /** Enter Pivot mode from the rail, the way an analyst does. */
 const enterMode = async (page: Page): Promise<void> => {
     await railButton(page).click()
@@ -246,6 +256,27 @@ test.describe('pivot mode', () => {
         // Crossing the cap is a click on a checkbox the analyst is still aiming at, so
         // the entry must not change height and shift everything below it.
         expect(await entryHeight(page, CORRELATION)).toBe(blockedHeight)
+    })
+
+    test('facet counts move under a field the analyst is still typing in', async ({ page }) => {
+        await load(page)
+        await pickOrigin(page, 'a')
+        await enterMode(page)
+        await expect(count(page, CORRELATION)).toHaveText('~2,143')
+        expect(await facetCounts(page, CORRELATION, 'type')).toEqual(['1,800', '210', '95', '38'])
+
+        // Typed, not filled: the caret stays in the field, which is the whole point —
+        // the count and the breakdown above move with every keystroke, and the boxes
+        // they are the sum of cannot be the last thing to hear about it.
+        const floor = entry(page, CORRELATION).locator('[data-field-key="seen"] input.min')
+        await floor.click()
+        await floor.type('100')
+
+        await expect(count(page, CORRELATION)).toHaveText('~1,810')
+        await expect(breakdown(page, CORRELATION))
+            .toHaveText('1,700 Domains · 110 URLs · 0 Pastes · 0 IPs')
+        expect(await facetCounts(page, CORRELATION, 'type')).toEqual(['1,700', '110', '0', '0'])
+        expect(await caretField(page)).toBe('seen')
     })
 
     test('a fetch stages candidates and links into their pane', async ({ page }) => {
