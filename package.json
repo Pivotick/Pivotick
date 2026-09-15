@@ -17,7 +17,8 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc && npm run build:es && npm run build:browser && npm run build:worker",
+    "build": "npm run clean && tsc && npm run build:es && npm run build:browser && npm run build:worker",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "build:es": "vite build --config vite.config.es.js",
     "build:browser": "vite build --config vite.config.browser.js",
     "build:worker": "vite build --config vite.config.worker.js",
@@ -49,6 +50,7 @@
     "@types/lodash.merge": "^4.6.9",
     "@typescript-eslint/eslint-plugin": "^8.34.1",
     "@typescript-eslint/parser": "^8.34.1",
+    "esbuild": "^0.25.0",
     "eslint": "^9.29.0",
     "globals": "^16.2.0",
     "sass": "^1.90.0",

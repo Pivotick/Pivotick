@@ -1,8 +1,9 @@
-import base, { entry } from './vite.config.base'
+import base, { entry, minifyWhitespace } from './vite.config.base'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
     ...base,
+    plugins: [minifyWhitespace()],
     build: {
         ...base.build,
         lib: {
@@ -11,16 +12,12 @@ export default defineConfig({
             fileName: () => 'pivotick.es.js'
         },
         rollupOptions: {
-            external: [
-                'd3-drag',
-                'd3-force',
-                'd3-hierarchy',
-                'd3-selection',
-                'd3-transition',
-                'd3-zoom',
-                'lodash.merge'
-            ],
-            ...base.rollupOptions
+            // Nothing external. `dist` is consumed as it ships, where a bare
+            // `import 'd3-force'` has nothing to resolve against.
+            external: [],
+            output: {
+                ...base.build.rollupOptions.output
+            }
         }
     }
 })
