@@ -10,6 +10,7 @@
  * and times the swap. `window.__bench` is the whole surface a driver script needs.
  */
 import { Pivotick, Node } from './index'
+import type { RawEdge, RawNode } from './interfaces/GraphOptions'
 
 type Tier = 'shape' | 'card'
 
@@ -44,17 +45,47 @@ function buildData(n: number): { nodes: Node[]; edges: never[] } {
     return { nodes, edges: [] }
 }
 
+/**
+ * A connected graph laid out by the simulation rather than placed on a grid —
+ * what the spacing question actually applies to. Each node attaches to one
+ * earlier node (a spanning tree), plus a few extra edges for structure.
+ */
+function buildConnected(n: number): { nodes: RawNode[]; edges: RawEdge[] } {
+    const nodes: RawNode[] = []
+    const edges: RawEdge[] = []
+    for (let i = 0; i < n; i++) {
+        nodes.push({ id: `n-${i}`, data: { label: `10.13.${Math.floor(i / 256)}.${i % 256}` } })
+        if (i > 0) {
+            // Deterministic parent, biased towards recent nodes so the tree branches.
+            const parent = Math.max(0, i - 1 - ((i * 7919) % Math.min(i, 6)))
+            edges.push({ id: `e-${i}`, from: `n-${parent}`, to: `n-${i}` })
+        }
+    }
+    for (let j = 0; j < Math.floor(n / 8); j++) {
+        const a = (j * 3571) % n
+        const b = (j * 6949 + 13) % n
+        if (a !== b) edges.push({ id: `x-${j}`, from: `n-${a}`, to: `n-${b}` })
+    }
+    return { nodes, edges }
+}
+
 const params = new URLSearchParams(location.search)
 const N = Number(params.get('n') ?? 500)
 /** `?sim=1` leaves physics on, so the bench can see a swap reheat the layout. */
 const SIM = params.get('sim') === '1'
+/** `?physics=auto` uses the shipped Auto preset — the spacing a real integrator gets. */
+const PHYSICS = params.get('physics') === 'auto' ? 'auto' : 'manual'
+/** `?graph=connected` lays out a real connected graph instead of a fixed grid. */
+const CONNECTED = params.get('graph') === 'connected'
 
 const container = document.getElementById('app') as HTMLElement
 
-const graph = new Pivotick(container, buildData(N) as never, {
+const data = CONNECTED ? buildConnected(N) : buildData(N)
+
+const graph = new Pivotick(container, data as never, {
     isDirected: false,
     UI: { mode: 'light', theme: 'light', sidebar: { collapsed: true } },
-    simulation: { enabled: SIM, useWorker: false, physics: 'manual' },
+    simulation: { enabled: SIM, useWorker: false, physics: PHYSICS },
     render: {
         zoomAnimation: false,
         defaultNodeStyle: {
@@ -210,6 +241,77 @@ const api = {
             max = Math.max(max, Math.hypot(dx, dy))
         }
         return max
+    },
+
+    /**
+     * What spacing the shipped physics actually produced, and what that means for
+     * tier unlocking under rule B. Distances are graph units, which are CSS pixels
+     * at zoom 1. `fitZoom` is the zoom the initial fit chose, so the `xFromFit`
+     * figures say how far a user has to zoom in from first sight.
+     */
+    spacing(tierWidths: Record<string, number>): Record<string, unknown> {
+        const nodes = graph.getMutableNodes().filter(n => n.visible)
+        const nearest: number[] = []
+        for (const a of nodes) {
+            let best = Infinity
+            for (const b of nodes) {
+                if (a === b) continue
+                const d = Math.hypot((a.x ?? 0) - (b.x ?? 0), (a.y ?? 0) - (b.y ?? 0))
+                if (d < best) best = d
+            }
+            if (isFinite(best)) nearest.push(best)
+        }
+        nearest.sort((a, b) => a - b)
+        const at = (q: number) => nearest[Math.floor(nearest.length * q)] ?? 0
+        const median = at(0.5)
+
+        const fitZoom = (graph.renderer as unknown as {
+            getZoomTransform(): { k: number }
+        }).getZoomTransform().k
+
+        // Under rule B a tier unlocks when the on-screen gap can hold it:
+        // spacing x zoom >= tierWidth.
+        const unlock: Record<string, unknown> = {}
+        for (const [name, width] of Object.entries(tierWidths)) {
+            const zoom = median > 0 ? width / median : Infinity
+            unlock[name] = {
+                zoom: +zoom.toFixed(2),
+                xFromFit: fitZoom > 0 ? +(zoom / fitZoom).toFixed(2) : null,
+            }
+        }
+
+        return {
+            nodes: nodes.length,
+            nodeRadius: nodes[0]?.getCircleRadius() ?? 0,
+            nearestNeighbour: {
+                p10: +at(0.1).toFixed(1),
+                median: +median.toFixed(1),
+                p90: +at(0.9).toFixed(1),
+            },
+            fitZoom: +fitZoom.toFixed(3),
+            unlock,
+        }
+    },
+
+    /**
+     * Cost of one `nextTick()` — rewriting every node transform and every edge path.
+     * A fixed-screen-size mode has to do exactly this on each zoom event, because a
+     * counter-scaled node changes both its own transform and where its edges land.
+     */
+    tickCost(runs = 30): { median: number; mean: number; edges: number } {
+        const renderer = graph.renderer as unknown as { nextTick(): void }
+        const times: number[] = []
+        for (let i = 0; i < runs; i++) {
+            const t0 = performance.now()
+            renderer.nextTick()
+            times.push(performance.now() - t0)
+        }
+        times.sort((a, b) => a - b)
+        return {
+            median: times[Math.floor(times.length / 2)],
+            mean: times.reduce((a, b) => a + b, 0) / times.length,
+            edges: graph.getMutableEdges().filter(e => e.visible).length,
+        }
     },
 
     /** Current simulation temperature — non-zero means the layout is still moving. */
