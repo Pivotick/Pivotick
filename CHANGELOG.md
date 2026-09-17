@@ -1,5 +1,57 @@
 # Changelog
 
+## Unreleased
+
+### Detail that follows the zoom
+
+A node can carry several drawings and let the view choose between them: a dot on an overview, a
+chip once there is room, a card up close. The box it reserves in the layout does not change with
+the drawing, so nothing moves when one gives way to the next.
+
+- **`NodeStyle.tiers` picks a drawing from how large the node currently renders.** Each tier
+  declares the `width` and `height` it is designed to fill, plus an optional `minRenderedSize`;
+  the richest one that fits wins, and the style you already have is the floor when none does, so
+  a graph declaring no tiers is unaffected. The decision is on rendered pixels
+  (`footprint × zoom`) rather than the zoom scale, because a scale multiplies coordinates the
+  layout invented and the same value means a different apparent size on the next dataset. A tier
+  that has engaged holds until the rendered size falls to 85% of its threshold, so a canvas
+  parked on a threshold does not flicker.
+- **`NodeStyle.layoutSize` separates the footprint from the drawing.** It defaults to half the
+  widest declared tier, so tiers buy the right spacing without a second number, and it is the
+  only size the simulation ever sees. Declared rather than measured, because the layout needs it
+  before the first tick and a card only reports its size once it has been drawn.
+- **`NodeStyle.focusTier` is the drawing for the node under the pointer**, or selected on its
+  own, whatever the zoom. It is counter-scaled against the zoom, so a 280x150 card measures
+  280x150 pixels however far out the graph is, and it never touches the node's geometry: edges
+  keep landing on the tier underneath and hovering moves nothing.
+  `render.focusTierTrigger` says when it fires (`'both'`, `'hover'`, `'selection'` or `'off'`).
+  Tooltips are independent and still fire.
+- **A node cross-fades from one drawing to the next.** The outgoing drawing waits out the fade
+  on a layer of its own while the two pass through each other, so a node is never absent
+  mid-swap. `render.tierTransition` is the length in milliseconds, `160` by default and `0` for
+  a single-frame replacement. `prefers-reduced-motion` turns it off whatever the option says.
+- **A tier can take a channel away, not only override it.** Set one to `null` in a tier and it
+  is cleared, which `undefined` cannot express: it means "I am not naming this channel", which
+  is exactly how the base's value survives. A base `svgIcon` used to outrank the `html` card a
+  tier asked for, with nothing in the configuration to say why. Only the tier layer works this
+  way; everywhere else in the style chain `null` still falls through, so a style callback
+  handing back a null straight out of node data keeps getting the default.
+
+### Fixes
+
+- **An edge keeps its line when it is redrawn.** A path's geometry was only ever written on a
+  simulation tick, so any redraw on a settled graph left arrowheads floating with no line
+  between them.
+- **A fit frames declared footprints rather than the current drawing.** Measuring what was drawn
+  let the fit's own zoom change the tier, which changed what was drawn, so the view it settled
+  on was not the one it measured.
+- **A tier swap agrees across the canvas and takes its edges with it.** The hysteresis band
+  belongs to the tier configuration rather than to each node, so identical nodes can no longer
+  settle on different drawings; and a swap refreshes the edges landing on the nodes that
+  changed, which a settled graph has nothing else to do for it.
+- **Sanitized SVG icon markup is cached** instead of being re-sanitized for every node on every
+  render.
+
 ## 2.0.1 — 2026-09-17
 
 - **The library is published on npm.** `npm install pivotick` now pulls it from the public
