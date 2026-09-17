@@ -41,43 +41,57 @@ export class EdgeDrawer {
         }
 
         if (this.renderLabelCB) {
-            const fo = edgeSelection
-                .append('g').classed('label-container', true)
-                .append('foreignObject')
-            const rendered = this?.renderLabelCB?.(edge)
-            fo.attr('width', 200)
-                .attr('height', 100)
-
-            if (typeof rendered === 'string') {
-                fo.text(rendered)
-            } else if (rendered instanceof HTMLElement) {
-                fo.node()?.append(rendered)
-            }
-
-            // In here, we could add support of other lightweight framework such as jQuery, Vue.js, ..
-
-            requestAnimationFrame(() => {
-                const foNode = fo.node() as SVGForeignObjectElement
-                if (!foNode) return
-
-                const content = foNode.firstElementChild as HTMLElement | null
-                if (!content) return
-
-                const bcr = content.getBoundingClientRect()
-                const width = Math.ceil(bcr.width)
-                const height = Math.ceil(bcr.height)
-
-                fo.attr('width', width)
-                    .attr('height', height)
-
-                // Offset the position so it's centered
-                fo.attr('x', -width / 2)
-                    .attr('y', -height / 2)
-            })
+            this.customLabelRender(edgeSelection, edge)
         } else {
             this.defaultLabelRender(edgeSelection, edge, labelStyle)
         }
 
+    }
+
+    /**
+     * Draw whatever `render.renderLabel` returns for this edge, in a foreign object sized to
+     * it.
+     *
+     * The callback runs before anything is appended: a callback that labels some edges and
+     * leaves the rest alone used to give every unlabelled edge a 200x100 foreign object and
+     * a measuring frame, which is the most expensive thing an edge can carry.
+     */
+    private customLabelRender(edgeSelection: Selection<SVGGElement, Edge, null, undefined>, edge: Edge): void {
+        const rendered = this.renderLabelCB?.(edge)
+        if (rendered === undefined || rendered === null || rendered === '') return
+
+        const fo = edgeSelection
+            .append('g').classed('label-container', true)
+            .append('foreignObject')
+        fo.attr('width', 200)
+            .attr('height', 100)
+
+        if (typeof rendered === 'string') {
+            fo.text(rendered)
+        } else if (rendered instanceof HTMLElement) {
+            fo.node()?.append(rendered)
+        }
+
+        // In here, we could add support of other lightweight framework such as jQuery, Vue.js, ..
+
+        requestAnimationFrame(() => {
+            const foNode = fo.node() as SVGForeignObjectElement
+            if (!foNode) return
+
+            const content = foNode.firstElementChild as HTMLElement | null
+            if (!content) return
+
+            const bcr = content.getBoundingClientRect()
+            const width = Math.ceil(bcr.width)
+            const height = Math.ceil(bcr.height)
+
+            fo.attr('width', width)
+                .attr('height', height)
+
+            // Offset the position so it's centered
+            fo.attr('x', -width / 2)
+                .attr('y', -height / 2)
+        })
     }
 
     private getLabelStyle(edge: Edge): LabelStyle {
@@ -539,12 +553,15 @@ export class EdgeDrawer {
     }
 
     private defaultLabelRender(edgeSelection: Selection<SVGGElement, Edge, null, undefined>, edge: Edge, style: LabelStyle): void {
+        const labelContent = edgeLabelGetter(edge)
+        // Read before the container is appended, not after: an unlabelled edge given one is
+        // still walked and repositioned on every tick, which is what an unlabelled graph was
+        // paying for.
+        if (!labelContent || labelContent === '') return
+
         const labelContainer = edgeSelection
             .append('g')
             .classed('label-container', true)
-
-        const labelContent = edgeLabelGetter(edge)
-        if (!labelContent || labelContent === '') return
 
         const text = labelContainer.append('text')
             .text(labelContent)
