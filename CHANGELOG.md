@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+- **The library is published on npm.** `npm install pivotick` now pulls it from the public
+  registry. Pushing a `v*.*.*` tag builds the library, attaches the dist archive to the GitHub
+  release as before, and publishes the package with provenance. The tag has to match the version
+  in `package.json` or the release stops before anything is published.
+- **TypeScript declarations ship with the package.** `dist/types` is generated from the source,
+  so an editor resolves `Pivotick`, its options and every exported type without a hand-written
+  shim.
+- **The stylesheet is reachable from the package.** `import 'pivotick/dist/pivotick.css'`, the
+  line the README has always shown, was not listed in the package's `exports` map and would not
+  have resolved under a bundler that honours it. Everything under `dist/` is exported now.
+
 ## 2.0.0 — 2026-09-14
 
 Two subsystems, and they are the ones the name has been promising. **Pivots** run an enrichment
