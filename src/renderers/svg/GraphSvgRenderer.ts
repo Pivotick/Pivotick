@@ -135,6 +135,11 @@ export class GraphSvgRenderer extends GraphRenderer {
         for (const event of ['selectNode', 'unselectNode', 'selectNodes', 'unselectNodes'] as const) {
             this.graphInteraction.on(event, () => this.nodeDrawer.updateFocusTier())
         }
+        // A selected edge answers "what is this" with its label and nothing else: an edge has
+        // no tooltip and no panel of its own.
+        for (const event of ['selectEdge', 'unselectEdge', 'selectEdges', 'unselectEdges'] as const) {
+            this.graphInteraction.on(event, () => this.edgeDrawer.updateForcedLabel())
+        }
 
         this.svgCanvas = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
         this.svgCanvas.setAttribute('width', '100%')
@@ -440,6 +445,7 @@ export class GraphSvgRenderer extends GraphRenderer {
     /** Called on every zoom event, which d3 also fires on pan. */
     public onZoom(): void {
         this.nodeDrawer.rescaleFocusTier()
+        this.edgeDrawer.rescaleForcedLabel()
         this.refreshDetail()
     }
 

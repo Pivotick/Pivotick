@@ -23,6 +23,11 @@ export class EdgeDrawer {
      * absent from it and is never looked at again.
      */
     private labelState = new WeakMap<Edge, EdgeLabelState>()
+    /**
+     * The edge whose label is drawn whatever the zoom says, because it is the lone selection.
+     * There is only ever one: a box-select of fifty would be a wall of overlapping labels.
+     */
+    private forcedEdge: Edge | null = null
 
     public constructor(rendererOptions: GraphRendererOptions, graph: Graph, graphSvgRenderer: GraphSvgRenderer) {
         this.graphSvgRenderer = graphSvgRenderer
@@ -60,23 +65,103 @@ export class EdgeDrawer {
      * mean rendering the thing the gate is there to avoid rendering.
      */
     private renderLabel(edgeSelection: Selection<SVGGElement, Edge, null, undefined>, edge: Edge, labelStyle: LabelStyle): void {
-        const text = this.renderLabelCB ? undefined : edgeLabelGetter(edge)
         // An edge the library has no text for is not a label the gate has anything to say
         // about, and a state entry for it would put it back in the per-zoom pass.
-        if (!this.renderLabelCB && (!text || text === '')) {
+        if (!this.renderLabelCB && !edgeLabelGetter(edge)) {
             this.labelState.delete(edge)
             return
         }
 
-        const fontSize = labelStyleFontSize(labelStyle.fontSize)
-        const showing = this.graphSvgRenderer.labelGate.shows(fontSize)
-        this.labelState.set(edge, { fontSize, showing, style: labelStyle })
-        if (!showing) return
+        const state: EdgeLabelState = {
+            fontSize: labelStyleFontSize(labelStyle.fontSize),
+            style: labelStyle,
+            showing: false,
+            counterScaled: false,
+        }
+        this.labelState.set(edge, state)
+        this.drawLabelIfWanted(edgeSelection, edge, state)
+    }
+
+    /**
+     * Whether `edge`'s label is drawn at the current zoom, and whether it is drawn only
+     * because the edge is selected — in which case it is held at a readable size rather than
+     * left at the size it was hidden at, which would say a label exists without saying what
+     * it reads.
+     */
+    private wantedLabel(edge: Edge, state: EdgeLabelState): { showing: boolean, counterScaled: boolean } {
+        // Asked either way, never short-circuited: the band is shared, and an edge that
+        // skipped its turn would leave the answer for its font size a step behind.
+        const gated = this.graphSvgRenderer.labelGate.shows(state.fontSize)
+        const forced = this.forcedEdge === edge
+        return { showing: gated || forced, counterScaled: forced && !gated }
+    }
+
+    /** Draw `edge`'s label if it is wanted, and record what was drawn. */
+    private drawLabelIfWanted(edgeSelection: Selection<SVGGElement, Edge, null, undefined>, edge: Edge, state: EdgeLabelState): void {
+        const wanted = this.wantedLabel(edge, state)
+        state.showing = wanted.showing
+        state.counterScaled = wanted.counterScaled
+        if (!wanted.showing) return
 
         if (this.renderLabelCB) {
             this.customLabelRender(edgeSelection, edge)
         } else {
-            this.defaultLabelRender(edgeSelection, text as string, labelStyle)
+            const text = edgeLabelGetter(edge)
+            if (text) this.defaultLabelRender(edgeSelection, text, state.style)
+        }
+        if (wanted.counterScaled) this.counterScaleLabel(edgeSelection.node())
+    }
+
+    /**
+     * Hold a forced label at a constant size on screen, by counter-scaling the zoom inside
+     * the container the position is written on.
+     *
+     * A group of its own rather than a second transform on the container: the container's is
+     * rewritten on every tick, and composing the two there would mean recomputing the
+     * midpoint on every zoom event to write a scale.
+     */
+    private counterScaleLabel(element: SVGGElement | null): void {
+        const container = element?.querySelector(':scope > g.label-container')
+        if (!container) return
+        const wrapper = document.createElementNS('http://www.w3.org/2000/svg', 'g')
+        wrapper.setAttribute('class', COUNTER_SCALE_CLASS)
+        wrapper.append(...container.childNodes)
+        container.append(wrapper)
+        this.rescaleForcedLabel()
+    }
+
+    /** Hold the forced label's screen size across a zoom. One transform write, at most. */
+    public rescaleForcedLabel(): void {
+        if (!this.forcedEdge) return
+        const wrapper = this.forcedEdge.getGraphElement()
+            ?.querySelector(`:scope > g.label-container > g.${COUNTER_SCALE_CLASS}`)
+        wrapper?.setAttribute('transform', `scale(${1 / this.graphSvgRenderer.getZoomTransform().k})`)
+    }
+
+    /**
+     * Promote the lone-selected edge's label and demote the one that was.
+     *
+     * This is what rescues edge creation: you type a label, commit it, and can read what you
+     * typed at the zoom you typed it at. Only ever the lone selection, and only while the
+     * gate is on — with it off every label is drawn at its own size already, which is the
+     * behaviour turning it off asks for.
+     */
+    public updateForcedLabel(): void {
+        const selected = this.graphSvgRenderer.labelGate.isEnabled()
+            ? this.graphSvgRenderer.getGraphInteraction().getSelectedEdge()?.edge ?? null
+            : null
+        if (selected === this.forcedEdge) return
+
+        const previous = this.forcedEdge
+        this.forcedEdge = selected
+        for (const edge of [previous, selected]) {
+            const element = edge?.getGraphElement()
+            if (!edge || !element) continue
+            // A label built here has no transform yet, and on a settled graph nothing ticks
+            // to give it one.
+            if (this.reconcileLabel(element, edge, null)) {
+                this.updatePositions(d3Select(element) as unknown as Selection<SVGGElement, Edge, SVGGElement, unknown>)
+            }
         }
     }
 
@@ -86,29 +171,21 @@ export class EdgeDrawer {
      * Reports whether anything changed, because a label built here has no transform yet and
      * the caller is what positions it.
      */
-    public reconcileLabel(element: SVGGElement, edge: Edge, visible: GraphBounds | null): boolean {
+    public reconcileLabel(element: SVGGElement | null, edge: Edge, visible: GraphBounds | null): boolean {
         const state = this.labelState.get(edge)
-        if (!state) return false
+        if (!element || !state) return false
         if (visible && !labelInBounds(edge, visible)) return false
 
-        const showing = this.graphSvgRenderer.labelGate.shows(state.fontSize)
-        if (showing === state.showing) return false
-        state.showing = showing
+        const wanted = this.wantedLabel(edge, state)
+        if (wanted.showing === state.showing && wanted.counterScaled === state.counterScaled) return false
 
         const ms = this.graphSvgRenderer.detailTransitionMs()
-        const selection = d3Select<SVGGElement, Edge>(element)
-        if (!showing) {
-            const container = element.querySelector(':scope > g.label-container')
-            if (container) this.graphSvgRenderer.fadeAwayOnGhostLayer(container, ms)
-            return true
-        }
+        // Whatever is there goes, even when a label stays: a forced label and a gated one are
+        // drawn at different sizes, and the crossing between them is a new drawing.
+        const previous = element.querySelector(':scope > g.label-container')
+        if (previous) this.graphSvgRenderer.fadeAwayOnGhostLayer(previous, state.showing && !wanted.showing ? ms : 0)
 
-        if (this.renderLabelCB) {
-            this.customLabelRender(selection, edge)
-        } else {
-            const text = edgeLabelGetter(edge)
-            if (text) this.defaultLabelRender(selection, text, state.style)
-        }
+        this.drawLabelIfWanted(d3Select<SVGGElement, Edge>(element), edge, state)
         const container = element.querySelector(':scope > g.label-container')
         if (ms > 0 && container) this.graphSvgRenderer.fade(container, 0, 1, ms)
         return true
@@ -741,9 +818,15 @@ export class EdgeDrawer {
 /** What the per-zoom pass needs to put an edge's label back without re-running its style. */
 interface EdgeLabelState {
     fontSize: number
+    /** Whether a label is in the DOM for this edge right now. */
     showing: boolean
+    /** Whether the one that is there is held at a constant screen size (see {@link updateForcedLabel}). */
+    counterScaled: boolean
     style: LabelStyle
 }
+
+/** The group a forced label's counter-scale is written on. */
+const COUNTER_SCALE_CLASS = 'pvt-edge-label-fixed'
 
 /**
  * Whether this edge's label is somewhere on screen.
