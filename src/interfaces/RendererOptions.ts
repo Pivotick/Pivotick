@@ -238,6 +238,23 @@ export interface GraphRendererOptions {
      */
     detailTransition?: number,
     /**
+     * The rendered font size, in CSS pixels, below which a label is not drawn.
+     *
+     * A label rides the graph and scales with it, so past a certain zoom it is text nobody
+     * can read — and on a graph large enough to open zoomed out, every label at once. Below
+     * this size the library draws none of them, which also takes them out of the pass that
+     * repositions a label on every simulation tick.
+     *
+     * One number for the whole canvas: an edge's label and a node's alike. The difference
+     * between them falls out of the font size already, since a node's label is derived from
+     * its size — a big node keeps its label longer than a small one.
+     *
+     * `0` draws every label at every zoom.
+     *
+     * @default 9
+     */
+    minLabelFontSize?: number,
+    /**
      * Callback executed during the init phase, before the first rendering
      * @param graph The Graph instance
      */

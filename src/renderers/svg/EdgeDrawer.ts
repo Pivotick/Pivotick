@@ -8,6 +8,8 @@ import { tryResolveBoolean, tryResolveNumber, tryResolveString } from '../../uti
 import { edgeLabelGetter, edgeTypeGetter } from '../../utils/GraphGetters'
 import { isInvisiblePaint } from '../../utils/utils'
 import type { CurveStyle, EdgeStyle, GraphRendererOptions, LabelStyle, MarkerStyle } from '../../interfaces/RendererOptions'
+import { labelStyleFontSize } from './LabelGate'
+import type { GraphBounds } from '../../GraphRenderer'
 
 export class EdgeDrawer {
 
@@ -15,6 +17,12 @@ export class EdgeDrawer {
     private rendererOptions: GraphRendererOptions
     private graphSvgRenderer: GraphSvgRenderer
     private renderLabelCB?: GraphRendererOptions['renderLabel']
+    /**
+     * What each labelled edge's label resolved to last time it was drawn, so the per-zoom
+     * pass can answer for it without re-running the style chain. An edge with no label is
+     * absent from it and is never looked at again.
+     */
+    private labelState = new WeakMap<Edge, EdgeLabelState>()
 
     public constructor(rendererOptions: GraphRendererOptions, graph: Graph, graphSvgRenderer: GraphSvgRenderer) {
         this.graphSvgRenderer = graphSvgRenderer
@@ -40,12 +48,63 @@ export class EdgeDrawer {
             this.drawEdgeMarker(pathSelection, style, edge)
         }
 
+        this.renderLabel(edgeSelection, edge, labelStyle)
+    }
+
+    /**
+     * Draw this edge's label, unless the current zoom has made it too small to read.
+     *
+     * What the gate measures is the resolved {@link LabelStyle.fontSize} either way, custom
+     * HTML included: a card's own height says nothing about whether its text is legible — a
+     * 100px card at a tenth of the zoom is 10px tall with 1px text — and measuring it would
+     * mean rendering the thing the gate is there to avoid rendering.
+     */
+    private renderLabel(edgeSelection: Selection<SVGGElement, Edge, null, undefined>, edge: Edge, labelStyle: LabelStyle): void {
+        const text = this.renderLabelCB ? undefined : edgeLabelGetter(edge)
+        // An edge the library has no text for is not a label the gate has anything to say
+        // about, and a state entry for it would put it back in the per-zoom pass.
+        if (!this.renderLabelCB && (!text || text === '')) {
+            this.labelState.delete(edge)
+            return
+        }
+
+        const fontSize = labelStyleFontSize(labelStyle.fontSize)
+        const showing = this.graphSvgRenderer.labelGate.shows(fontSize)
+        this.labelState.set(edge, { fontSize, showing, style: labelStyle })
+        if (!showing) return
+
         if (this.renderLabelCB) {
             this.customLabelRender(edgeSelection, edge)
         } else {
-            this.defaultLabelRender(edgeSelection, edge, labelStyle)
+            this.defaultLabelRender(edgeSelection, text as string, labelStyle)
         }
+    }
 
+    /**
+     * Draw or take away `edge`'s label if the zoom has carried it across the threshold.
+     *
+     * Reports whether anything changed, because a label built here has no transform yet and
+     * the caller is what positions it.
+     */
+    public reconcileLabel(element: SVGGElement, edge: Edge, visible: GraphBounds | null): boolean {
+        const state = this.labelState.get(edge)
+        if (!state) return false
+        if (visible && !labelInBounds(edge, visible)) return false
+
+        const showing = this.graphSvgRenderer.labelGate.shows(state.fontSize)
+        if (showing === state.showing) return false
+        state.showing = showing
+
+        const selection = d3Select<SVGGElement, Edge>(element)
+        if (!showing) {
+            element.querySelector(':scope > g.label-container')?.remove()
+        } else if (this.renderLabelCB) {
+            this.customLabelRender(selection, edge)
+        } else {
+            const text = edgeLabelGetter(edge)
+            if (text) this.defaultLabelRender(selection, text, state.style)
+        }
+        return true
     }
 
     /**
@@ -552,13 +611,7 @@ export class EdgeDrawer {
         return null
     }
 
-    private defaultLabelRender(edgeSelection: Selection<SVGGElement, Edge, null, undefined>, edge: Edge, style: LabelStyle): void {
-        const labelContent = edgeLabelGetter(edge)
-        // Read before the container is appended, not after: an unlabelled edge given one is
-        // still walked and repositioned on every tick, which is what an unlabelled graph was
-        // paying for.
-        if (!labelContent || labelContent === '') return
-
+    private defaultLabelRender(edgeSelection: Selection<SVGGElement, Edge, null, undefined>, labelContent: string, style: LabelStyle): void {
         const labelContainer = edgeSelection
             .append('g')
             .classed('label-container', true)
@@ -676,4 +729,24 @@ export class EdgeDrawer {
         }
 
     }
+}
+
+/** What the per-zoom pass needs to put an edge's label back without re-running its style. */
+interface EdgeLabelState {
+    fontSize: number
+    showing: boolean
+    style: LabelStyle
+}
+
+/**
+ * Whether this edge's label is somewhere on screen.
+ *
+ * The label sits at the edge's midpoint, so that is what is tested — a long edge crossing the
+ * view with both ends outside it carries its label outside too.
+ */
+function labelInBounds(edge: Edge, bounds: GraphBounds): boolean {
+    const x = ((edge.from.x ?? 0) + (edge.to.x ?? 0)) / 2
+    const y = ((edge.from.y ?? 0) + (edge.to.y ?? 0)) / 2
+    return x >= bounds.x && x <= bounds.x + bounds.width
+        && y >= bounds.y && y <= bounds.y + bounds.height
 }

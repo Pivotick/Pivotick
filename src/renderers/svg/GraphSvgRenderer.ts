@@ -19,6 +19,7 @@ import { NoteDrawer } from './NoteDrawer'
 import { Note } from '../../Note'
 import type { Point } from '../../utils/GeometryHelper'
 import { defaultMarkerStyleMap, defaultNodeStyle, defaultEdgeStyle, defaultLabelStyle } from '../../styles/defaults'
+import { LabelGate } from './LabelGate'
 d3Select.prototype.transition = d3Transition
 
 const DEFAULT_RENDERER_OPTIONS = {
@@ -26,6 +27,7 @@ const DEFAULT_RENDERER_OPTIONS = {
     enableFocusMode: true,
     focusTierTrigger: 'both',
     detailTransition: 160,
+    minLabelFontSize: 9,
     enableNodeExpansion: true,
     beforeRender: () => {},
     zoomEnabled: true,
@@ -44,6 +46,14 @@ const DEFAULT_RENDERER_OPTIONS = {
     } as SelectionBoxI
 } satisfies GraphRendererOptions
 
+/**
+ * Whether the viewer has asked for less motion. Queried once: it is a user setting, and
+ * matching a media query per swap would be a lookup inside the hot loop.
+ */
+const PREFERS_REDUCED_MOTION = typeof matchMedia === 'function'
+    ? matchMedia('(prefers-reduced-motion: reduce)')
+    : null
+
 export class GraphSvgRenderer extends GraphRenderer {
     protected options: GraphRendererOptions
 
@@ -54,6 +64,8 @@ export class GraphSvgRenderer extends GraphRenderer {
     public graphInteraction: GraphInteractions<SVGGElement | SVGPathElement>
     public nodeDrawer: NodeDrawer
     public edgeDrawer: EdgeDrawer
+    /** Which labels are worth drawing at the current zoom. Shared by both drawers. */
+    public labelGate: LabelGate
     public noteDrawer: NoteDrawer
     public lassoOverlay: LassoOverlay
 
@@ -97,6 +109,9 @@ export class GraphSvgRenderer extends GraphRenderer {
     /** Fires when the canvas becomes visible, to re-measure node sizes. */
     private sizeObserver: IntersectionObserver | null = null
 
+    /** Pending frame for the coalesced detail pass, if any. */
+    private detailFrame: number | null = null
+
     constructor(graph: Graph, container: HTMLElement, graphInteraction: GraphInteractions<SVGGElement | SVGPathElement>, options: Partial<GraphRendererOptions>) {
         super(graph, container, options)
 
@@ -104,6 +119,7 @@ export class GraphSvgRenderer extends GraphRenderer {
 
         this.graphInteraction = graphInteraction
         this.eventHandler = new EventHandler(this.graph)
+        this.labelGate = new LabelGate(this.options, this)
         this.nodeDrawer = new NodeDrawer(this.options, this.graph, this)
         this.edgeDrawer = new EdgeDrawer(this.options, this.graph, this)
         this.noteDrawer = new NoteDrawer(this.options, this.graph, this)
@@ -202,8 +218,8 @@ export class GraphSvgRenderer extends GraphRenderer {
             .on('zoom', (event) => {
                 this.zoomGroup.attr('transform', event.transform)
                 // Fires on pan as well as on scale, and is meant to: panning is what brings a
-                // node with a stale tier into view.
-                this.nodeDrawer.onZoom()
+                // node with a stale tier, or a label it has outgrown, into view.
+                this.onZoom()
                 this.graphInteraction.canvasZoom(event)
             })
 
@@ -360,10 +376,77 @@ export class GraphSvgRenderer extends GraphRenderer {
     }
 
     /**
-     * The layer a node's previous drawing fades out on, above the nodes themselves.
+     * The layer a drawing on its way out fades on, above the nodes themselves.
      */
     public getDetailGhostLayer(): SVGGElement | null {
         return this.detailGhostGroup?.node() ?? null
+    }
+
+    /**
+     * How long a drawing takes to fade into or out of the graph, in milliseconds.
+     *
+     * Zero whenever the viewer has asked for less motion: a change the whole canvas performs
+     * at once is exactly the kind of movement that setting exists for.
+     */
+    public detailTransitionMs(): number {
+        const declared = this.options.detailTransition ?? 0
+        if (declared <= 0) return 0
+        return PREFERS_REDUCED_MOTION?.matches ? 0 : declared
+    }
+
+    /** Called on every zoom event, which d3 also fires on pan. */
+    public onZoom(): void {
+        this.nodeDrawer.rescaleFocusTier()
+        this.refreshDetail()
+    }
+
+    /**
+     * Re-pick what the graph draws at the new zoom: which tier each node is at, and which
+     * labels are large enough to be worth drawing.
+     *
+     * One coalesced pass for both, because both answer the same event and a gesture fires it
+     * far more often than a frame can absorb.
+     */
+    private refreshDetail(): void {
+        if (this.detailFrame !== null) return
+        if (!this.nodeDrawer.hasTiers() && !this.labelGate.isEnabled()) return
+        this.detailFrame = requestAnimationFrame(() => {
+            this.detailFrame = null
+            // Tiers first: a node it redraws comes back through the draw path, which asks the
+            // gate itself, so the label pass then finds it already agreeing.
+            this.nodeDrawer.applyTierChanges()
+            this.applyLabelChanges()
+        })
+    }
+
+    /**
+     * Show or hide each label the zoom has taken across the threshold, in place.
+     *
+     * In place, and never through a redraw: rebuilding every node's drawing to change some
+     * text would cost more than the pass this feature exists to remove.
+     */
+    private applyLabelChanges(): void {
+        if (!this.labelGate.isEnabled() || !this.nodeSelection || !this.edgeSelection) return
+
+        // Off-screen elements keep the label they have and are reconciled when they scroll
+        // in. Safe because the band is keyed to the font size: a missed pass leaves a stale
+        // drawing behind, never a decision that disagrees with the rest of the canvas.
+        const visible = this.getVisibleBounds()
+
+        const changedEdges = new Set<string>()
+        this.edgeSelection.each((edge: Edge, i: number, groups: ArrayLike<SVGGElement>) => {
+            if (this.edgeDrawer.reconcileLabel(groups[i], edge, visible)) changedEdges.add(edge.id)
+        })
+        this.nodeSelection.each((node: Node, i: number, groups: ArrayLike<SVGGElement>) => {
+            this.nodeDrawer.reconcileLabel(groups[i], node, visible)
+        })
+
+        // A label just built sits at the edge group's origin until something positions it,
+        // and on a settled graph nothing ticks to do that. A node's label needs none of this:
+        // it is drawn inside a group the node already carries the transform of.
+        if (changedEdges.size) {
+            this.edgeDrawer.updatePositions(this.edgeSelection.filter((edge: Edge) => changedEdges.has(edge.id)))
+        }
     }
 
     /**

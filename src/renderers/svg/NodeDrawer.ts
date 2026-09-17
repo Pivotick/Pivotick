@@ -14,6 +14,7 @@ import { ClusterDrawer } from './ClusterDrawer'
 import { BadgeDrawer, nodeRimAnchor, resolveBadges, RIM_PADDING } from './BadgeDrawer'
 import { forceConstrainParent } from '../../plugins/d3Forces/ForceConstrainParent'
 import { imageOff } from '../../ui/icons'
+import { DETAIL_HYSTERESIS } from './LabelGate'
 d3Select.prototype.transition = d3Transition
 
 export class NodeDrawer {
@@ -45,8 +46,12 @@ export class NodeDrawer {
      * runs the per-zoom pass at all.
      */
     private tiersDeclared = false
-    /** Pending frame for the coalesced tier pass, if any. */
-    private tierRefreshFrame: number | null = null
+    /**
+     * What each node's label resolved to last time it was drawn. As with {@link tierState},
+     * the per-zoom pass reads this rather than re-running the style chain — and a node with
+     * no label is absent from it, so the pass never looks at one.
+     */
+    private labelState = new WeakMap<Node, NodeLabelState>()
     /** The drawing each node is currently fading out of, while it is still fading. */
     private tierGhosts = new WeakMap<Node, SVGGElement>()
     /** The node under the pointer, whatever the focus trigger does with it. */
@@ -387,7 +392,7 @@ export class NodeDrawer {
             // The tier already showing holds until the node shrinks well past its threshold.
             // Without the band a node parked on the line flips every frame — and since every
             // node shares a footprint, they are all parked on the same line at once.
-            const engageAt = i === previous ? threshold * TIER_HYSTERESIS : threshold
+            const engageAt = i === previous ? threshold * DETAIL_HYSTERESIS : threshold
             if (rendered >= engageAt && threshold >= pickedThreshold) {
                 picked = i
                 pickedThreshold = threshold
@@ -402,31 +407,14 @@ export class NodeDrawer {
         return this.tierState.get(node)?.index ?? BASE_TIER
     }
 
-    /**
-     * Re-pick every on-screen node's tier and redraw the ones that changed.
-     *
-     * Wired to the zoom event, which d3 fires on pan as well as on scale — and must, since
-     * panning is what brings a node with a stale tier into view. Coalesced to one pass per
-     * frame so it keeps up with the gesture instead of lagging behind it.
-     */
-    public refreshTiers(): void {
-        if (!this.tiersDeclared || this.tierRefreshFrame !== null) return
-        this.tierRefreshFrame = requestAnimationFrame(() => {
-            this.tierRefreshFrame = null
-            this.applyTierChanges()
-        })
+    /** Whether any node on this graph declares `tiers`. One that declares none is never walked. */
+    public hasTiers(): boolean {
+        return this.tiersDeclared
     }
 
-    /**
-     * How long a drawing takes to cross-fade into the next one, in milliseconds.
-     *
-     * Zero whenever the viewer has asked for less motion: a swap that every node performs at
-     * once is exactly the kind of movement that setting exists for.
-     */
+    /** How long a drawing takes to cross-fade into the next one, in milliseconds. */
     private transitionMs(): number {
-        const declared = this.rendererOptions.detailTransition ?? 0
-        if (declared <= 0) return 0
-        return PREFERS_REDUCED_MOTION?.matches ? 0 : declared
+        return this.graphSvgRenderer.detailTransitionMs()
     }
 
     /**
@@ -478,7 +466,14 @@ export class NodeDrawer {
         )
     }
 
-    private applyTierChanges(): void {
+    /**
+     * Re-pick every on-screen node's tier and redraw the ones that changed.
+     *
+     * Driven by the renderer's detail pass, which the zoom event fires on pan as well as on
+     * scale — and must, since panning is what brings a node with a stale tier into view.
+     */
+    public applyTierChanges(): void {
+        if (!this.tiersDeclared) return
         const visible = this.graphSvgRenderer.getVisibleBounds()
         const changed: Node[] = []
         for (const node of this.graph.getMutableNodes()) {
@@ -527,12 +522,6 @@ export class NodeDrawer {
     }
 
     // --- Focus tier ---------------------------------------------------------------------
-
-    /** Called on every zoom event, which d3 also fires on pan. */
-    public onZoom(): void {
-        this.rescaleFocusTier()
-        this.refreshTiers()
-    }
 
     /** Remember the node under the pointer and promote or demote accordingly. */
     public setHoveredNode(node: Node | null): void {
@@ -624,7 +613,7 @@ export class NodeDrawer {
     }
 
     /** Hold the focus drawing's screen size across a zoom. One transform write, at most. */
-    private rescaleFocusTier(): void {
+    public rescaleFocusTier(): void {
         if (!this.focusedNode) return
         const wrapper = this.focusedNode.getGraphElement()
             ?.querySelector<SVGGElement>(':scope > g.pvt-node-focus:not(.pvt-node-focus-leaving)')
@@ -936,67 +925,115 @@ export class NodeDrawer {
         }
         // Do not have text dislay be mutually exclusive with icons
         if (style.text) {
-            // label and background group to allow for rotating together
-            const labelG = nodeSelection.append('g')
-                .classed('pvt-node-label-group', true)
-
-            // Shifted clear of the node, so it is laid out with no shape to fit inside.
-            const floated = Math.abs(style.textVerticalShift) >= 1 || Math.abs(style.textHorizontalShift) >= 1
-            // …and a shapeless node's label has nothing behind it wherever it sits, so it
-            // gets the same treatment: the node's own `textColor` is white by default, which
-            // here would be drawn straight onto the canvas.
-            const isOusideNode = floated || shapeless
-            const [fontSize, text] = this.computeTextLayout(style.text, style.size, floated, style.textTruncate as boolean)
-
-            const x_pos = style.textHorizontalShift * (style.size + fontSize/2*1.2)
-            const y_pos = - style.textVerticalShift * (style.size + fontSize/2*1.2)
-
-            const textSelection = labelG
-                .append('text')
-                .attr('class', 'pvt-node-label')
-                .attr('text-anchor', style.textAnchorPosition)
-                .attr('x', x_pos)
-                .attr('y', y_pos)
-                .attr('dominant-baseline', 'central')
-                .attr('font-size', fontSize)
-                .attr('font-family', style.fontFamily)
-                // Labels floated outside sit on the edge-label pill (rect below),
-                // so pair them with its themed colour to stay readable in any theme.
-                .attr('fill', isOusideNode ? defaultLabelStyle.color : style.textColor)
-                .text(text)
-
-            const bbox = textSelection.node()?.getBBox()
-            // An untruncated label spills past the shape, where the node's own text colour
-            // is drawn against the canvas instead of the node (white on white, by default).
-            // Give it the floated label's pill + colour so the whole string stays readable.
-            const spillsOutOfNode = !isOusideNode && style.textTruncate === false
-                && !!bbox && bbox.width > (style.size as number) * 2
-            if (spillsOutOfNode) textSelection.attr('fill', defaultLabelStyle.color)
-
-            if ((isOusideNode || spillsOutOfNode) && bbox) {
-                const paddingX = 4
-                const paddingY = 2
-                labelG.insert('rect', 'text')
-                    .attr('x', bbox.x - paddingX)
-                    .attr('y', bbox.y - paddingY)
-                    .attr('width', bbox.width + 2 * paddingX)
-                    .attr('height', bbox.height + 2 * paddingY)
-                    .attr('fill', defaultLabelStyle.backgroundColor)
-                    .attr('rx', 2)
-                    .attr('ry', 2)
+            const fontSize = nodeLabelFontSize(style.size)
+            // The focus drawing is counter-scaled to stay readable whatever the zoom, so
+            // there is nothing for the gate to decide about its label.
+            const showing = !writesGeometry || this.graphSvgRenderer.labelGate.shows(fontSize)
+            if (writesGeometry) {
+                this.labelState.set(node, { fontSize, showing, style, shapeless, footprint: labelReach(style, fontSize) })
             }
-            
-            // Remember the label's own placement so an expanding cluster can pull it
-            // along with the node (and steer an outside label clear of the dashed
-            // boundary) without re-deriving the style. See handleChildrenExpanded.
-            labelG
-                .attr('data-pvt-label-outside', isOusideNode ? '1' : '0')
-                .attr('data-pvt-label-x', x_pos)
-                .attr('data-pvt-label-y', y_pos)
-                .attr('data-pvt-label-rotate', style.textRotateDegree)
-                .attr('transform', `rotate(${style.textRotateDegree}, ${x_pos}, ${y_pos})`)
-
+            if (showing) this.renderNodeLabel(nodeSelection, style, shapeless)
+        } else if (writesGeometry) {
+            this.labelState.delete(node)
         }
+    }
+
+    /**
+     * Draw a node's label, in its own group beside whatever the node is drawn as.
+     *
+     * Separate from the drawing so the zoom pass can put a label back without rebuilding the
+     * node around it — which is the pass this whole gate exists to avoid.
+     */
+    private renderNodeLabel(nodeSelection: Selection<SVGGElement, Node, null, undefined>, style: NodeStyle, shapeless: boolean): void {
+        // Every channel a label reads is resolved to a value by the time it is drawn — the
+        // style chain collapses the callbacks — so this is where that is spelled out.
+        const size = style.size as number
+        const horizontalShift = style.textHorizontalShift as number
+        const verticalShift = style.textVerticalShift as number
+
+        // label and background group to allow for rotating together
+        const labelG = nodeSelection.append('g')
+            .classed('pvt-node-label-group', true)
+
+        // Shifted clear of the node, so it is laid out with no shape to fit inside.
+        const floated = Math.abs(verticalShift) >= 1 || Math.abs(horizontalShift) >= 1
+        // …and a shapeless node's label has nothing behind it wherever it sits, so it
+        // gets the same treatment: the node's own `textColor` is white by default, which
+        // here would be drawn straight onto the canvas.
+        const isOusideNode = floated || shapeless
+        const [fontSize, text] = this.computeTextLayout(style.text as string, size, floated, style.textTruncate as boolean)
+
+        const x_pos = horizontalShift * (size + fontSize/2*1.2)
+        const y_pos = - verticalShift * (size + fontSize/2*1.2)
+
+        const textSelection = labelG
+            .append('text')
+            .attr('class', 'pvt-node-label')
+            .attr('text-anchor', style.textAnchorPosition)
+            .attr('x', x_pos)
+            .attr('y', y_pos)
+            .attr('dominant-baseline', 'central')
+            .attr('font-size', fontSize)
+            .attr('font-family', style.fontFamily)
+            // Labels floated outside sit on the edge-label pill (rect below),
+            // so pair them with its themed colour to stay readable in any theme.
+            .attr('fill', isOusideNode ? defaultLabelStyle.color : style.textColor)
+            .text(text)
+
+        const bbox = textSelection.node()?.getBBox()
+        // An untruncated label spills past the shape, where the node's own text colour
+        // is drawn against the canvas instead of the node (white on white, by default).
+        // Give it the floated label's pill + colour so the whole string stays readable.
+        const spillsOutOfNode = !isOusideNode && style.textTruncate === false
+            && !!bbox && bbox.width > size * 2
+        if (spillsOutOfNode) textSelection.attr('fill', defaultLabelStyle.color)
+
+        if ((isOusideNode || spillsOutOfNode) && bbox) {
+            const paddingX = 4
+            const paddingY = 2
+            labelG.insert('rect', 'text')
+                .attr('x', bbox.x - paddingX)
+                .attr('y', bbox.y - paddingY)
+                .attr('width', bbox.width + 2 * paddingX)
+                .attr('height', bbox.height + 2 * paddingY)
+                .attr('fill', defaultLabelStyle.backgroundColor)
+                .attr('rx', 2)
+                .attr('ry', 2)
+        }
+        
+        // Remember the label's own placement so an expanding cluster can pull it
+        // along with the node (and steer an outside label clear of the dashed
+        // boundary) without re-deriving the style. See handleChildrenExpanded.
+        labelG
+            .attr('data-pvt-label-outside', isOusideNode ? '1' : '0')
+            .attr('data-pvt-label-x', x_pos)
+            .attr('data-pvt-label-y', y_pos)
+            .attr('data-pvt-label-rotate', style.textRotateDegree)
+            .attr('transform', `rotate(${style.textRotateDegree}, ${x_pos}, ${y_pos})`)
+    }
+
+    /**
+     * Draw or take away `node`'s label if the zoom has carried it across the threshold.
+     *
+     * Reports whether anything changed. Off-screen nodes are left alone and reconciled when
+     * they scroll in; a stale label is a stale drawing, never a stale decision, because the
+     * band is keyed to the font size rather than to the node.
+     */
+    public reconcileLabel(element: SVGGElement, node: Node, visible: GraphBounds | null): boolean {
+        const state = this.labelState.get(node)
+        if (!state) return false
+        if (visible && !intersectsBounds(node, state.footprint, visible)) return false
+
+        const showing = this.graphSvgRenderer.labelGate.shows(state.fontSize)
+        if (showing === state.showing) return false
+        state.showing = showing
+
+        if (showing) {
+            this.renderNodeLabel(d3Select<SVGGElement, Node>(element), state.style, state.shapeless)
+        } else {
+            element.querySelector(':scope > g.pvt-node-label-group')?.remove()
+        }
+        return true
     }
 
     /**
@@ -1068,8 +1105,7 @@ export class NodeDrawer {
         const base = nodeSize * 0.9
         // Allow wider strings when text is outside the node
         const maxWidth = isOusideNode ? base * 5 : base * 2
-        // Scale font to node size, ensuring readability with 12px
-        const fontSize = Math.max(12, base * 0.5)
+        const fontSize = nodeLabelFontSize(nodeSize)
  
         // Approximate width: ~0.55em per character
         const charWidth = fontSize * 0.55
@@ -1248,17 +1284,6 @@ function clusterRimOffset(clusterRadius: number): number {
  * hands the node back to the normal styling pipeline. An empty string counts as nothing,
  * the same way `text: ''` and `badges: []` opt out of their channels.
  */
-/** How far a tier's rendered size falls below its threshold before it gives way. */
-/**
- * Whether the viewer has asked for less motion. Queried once: it is a user setting, and
- * matching a media query per node per swap would be a lookup inside the hot loop.
- */
-const PREFERS_REDUCED_MOTION = typeof matchMedia === 'function'
-    ? matchMedia('(prefers-reduced-motion: reduce)')
-    : null
-
-const TIER_HYSTERESIS = 0.85
-
 /** No tier qualifies: the node draws at its base style, which is the floor. */
 export const BASE_TIER = -1
 
@@ -1267,6 +1292,29 @@ interface TierState {
     tiers: NodeTier[]
     footprint: number
     index: number
+}
+
+/** The same, for a node's label: what it takes to put one back without redrawing the node. */
+interface NodeLabelState {
+    fontSize: number
+    showing: boolean
+    style: NodeStyle
+    shapeless: boolean
+    footprint: number
+}
+
+/**
+ * The font a node's label is drawn at: derived from the node's own size, with a floor at the
+ * size text stops being worth setting. A big node therefore keeps its label longer than a
+ * small one, which is the per-element difference the single threshold would otherwise lose.
+ */
+function nodeLabelFontSize(nodeSize: number | undefined): number {
+    return Math.max(12, (nodeSize ?? 0) * 0.45)
+}
+
+/** How far from a node's centre its label can reach, for the pass's on-screen check. */
+function labelReach(style: NodeStyle, fontSize: number): number {
+    return Math.max((style.layoutSize as number) ?? 0, (style.size as number) ?? 0) + fontSize * 3
 }
 
 /** The rendered footprint, in CSS pixels, at which `tier` takes over. */
