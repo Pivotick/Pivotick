@@ -261,41 +261,6 @@ export class NodeDrawer {
             })
     }
 
-    /**
-     * Fill whatever the node and the style map left unset from `defaultNodeStyle` —
-     * from its `styleCb` first, then its literals. The default callback is the computed
-     * form of the default slot, so it yields to anything that names this node more
-     * narrowly and fills what a per-node `styleCb` left out.
-     */
-    private mergeNodeStylingOptions(style: Partial<NodeStyle>, node: Node): NodeStyle {
-        const defaults = this.rendererOptions.defaultNodeStyle
-        const fromDefaultCb = defaults.styleCb?.(node) ?? {}
-        const mergedStyle = {
-            shape: style?.shape ?? fromDefaultCb.shape ?? defaults.shape,
-            strokeColor: style?.strokeColor ?? fromDefaultCb.strokeColor ?? defaults.strokeColor,
-            strokeWidth: style?.strokeWidth ?? fromDefaultCb.strokeWidth ?? defaults.strokeWidth,
-            fontFamily: style?.fontFamily ?? fromDefaultCb.fontFamily ?? defaults.fontFamily,
-            size: style?.size ?? fromDefaultCb.size ?? defaults.size,
-            color: style?.color ?? fromDefaultCb.color ?? defaults.color,
-            textColor: style?.textColor ?? fromDefaultCb.textColor ?? defaults.textColor,
-            textAnchorPosition: style?.textAnchorPosition ?? fromDefaultCb.textAnchorPosition ?? defaults.textAnchorPosition,
-            textHorizontalShift: style?.textHorizontalShift ?? fromDefaultCb.textHorizontalShift ?? defaults.textHorizontalShift,
-            textVerticalShift: style?.textVerticalShift ?? fromDefaultCb.textVerticalShift ?? defaults.textVerticalShift,
-            textRotateDegree: style?.textRotateDegree ?? fromDefaultCb.textRotateDegree ?? defaults.textRotateDegree,
-            textTruncate: style?.textTruncate ?? fromDefaultCb.textTruncate ?? defaults.textTruncate,
-            iconUnicode: style?.iconUnicode ?? fromDefaultCb.iconUnicode ?? defaults.iconUnicode,
-            iconClass: style?.iconClass ?? fromDefaultCb.iconClass ?? defaults.iconClass,
-            svgIcon: style?.svgIcon ?? fromDefaultCb.svgIcon ?? defaults.svgIcon,
-            imagePath: style?.imagePath ?? fromDefaultCb.imagePath ?? defaults.imagePath,
-            imageFit: style?.imageFit ?? fromDefaultCb.imageFit ?? defaults.imageFit,
-            text: style?.text ?? fromDefaultCb.text ?? defaults.text,
-            html: style?.html ?? fromDefaultCb.html ?? defaults.html,
-            badges: style?.badges ?? fromDefaultCb.badges ?? defaults.badges,
-        }
-
-        return mergedStyle
-    }
-
     private computeNodeStyle(node: Node): NodeStyle {
         let styleFromStyleMap: Partial<NodeStyle> = {}
         if (this.rendererOptions.nodeStyleMap && typeof this.rendererOptions.nodeTypeAccessor === 'function') {
@@ -306,34 +271,21 @@ export class NodeDrawer {
         }
 
         const style = node.getStyle()
-        let styleFromNode: Partial<NodeStyle> = {}
-        if (style.styleCb) {
-            styleFromNode = style.styleCb(node)
-        } else {
-            styleFromNode = {
-                shape: style?.shape ?? styleFromStyleMap?.shape,
-                strokeColor: style?.strokeColor ?? styleFromStyleMap?.strokeColor,
-                strokeWidth: style?.strokeWidth ?? styleFromStyleMap?.strokeWidth,
-                fontFamily: style?.fontFamily ?? styleFromStyleMap?.fontFamily,
-                size: style?.size ?? styleFromStyleMap?.size,
-                color: style?.color ?? styleFromStyleMap?.color,
-                textColor: style?.textColor ?? styleFromStyleMap?.textColor,
-                textAnchorPosition: style?.textAnchorPosition ?? styleFromStyleMap?.textAnchorPosition,
-                textHorizontalShift: style?.textHorizontalShift ?? styleFromStyleMap?.textHorizontalShift,
-                textVerticalShift: style?.textVerticalShift ?? styleFromStyleMap?.textVerticalShift,
-                textRotateDegree: style?.textRotateDegree ?? styleFromStyleMap?.textRotateDegree,
-                textTruncate: style?.textTruncate ?? styleFromStyleMap?.textTruncate,
-                iconUnicode: style?.iconUnicode ?? styleFromStyleMap?.iconUnicode,
-                iconClass: style?.iconClass ?? styleFromStyleMap?.iconClass,
-                svgIcon: style?.svgIcon ?? styleFromStyleMap?.svgIcon,
-                imagePath: style?.imagePath ?? styleFromStyleMap?.imagePath,
-                imageFit: style?.imageFit ?? styleFromStyleMap?.imageFit,
-                text: style?.text ?? styleFromStyleMap?.text,
-                html: style?.html ?? styleFromStyleMap?.html,
-                badges: style?.badges ?? styleFromStyleMap?.badges,
-            }
-        }
-        return this.mergeNodeStylingOptions(styleFromNode, node)
+        // A node's own `styleCb` wins outright and takes the style map out of the chain with
+        // it. The fold below merges whatever layers it is handed, so the short-circuit is
+        // resolved here, before folding, rather than expressed as a precedence rule.
+        const styleFromNode = style.styleCb ? style.styleCb(node) : style
+        const styleMapLayer = style.styleCb ? {} : styleFromStyleMap
+
+        const defaults = this.rendererOptions.defaultNodeStyle
+        return mergeStyleLayers([
+            styleFromNode,
+            styleMapLayer,
+            // The computed form of the default slot: it fills what neither the node nor the
+            // style map named, and still loses to both.
+            defaults.styleCb?.(node) ?? {},
+            defaults,
+        ])
     }
 
     public getNodeStyle(node: Node): NodeStyle {
@@ -934,6 +886,46 @@ function clusterRimOffset(clusterRadius: number): number {
  * hands the node back to the normal styling pipeline. An empty string counts as nothing,
  * the same way `text: ''` and `badges: []` opt out of their channels.
  */
+/**
+ * Every channel the style chain resolves. The fold walks this list rather than the keys of
+ * whatever layer it is handed: `defaultNodeStyle` leaves `svgIcon`, `imagePath`, `html` and
+ * `badges` unset, so deriving the list from it would silently drop a node's own values for
+ * them.
+ */
+const NODE_STYLE_KEYS = [
+    'shape', 'strokeColor', 'strokeWidth', 'fontFamily', 'size', 'color', 'textColor',
+    'textAnchorPosition', 'textHorizontalShift', 'textVerticalShift', 'textRotateDegree',
+    'textTruncate', 'iconUnicode', 'iconClass', 'svgIcon', 'imagePath', 'imageFit', 'text',
+    'html', 'badges',
+] as const satisfies readonly (keyof NodeStyle)[]
+
+/**
+ * Collapse an ordered list of style layers, narrowest first, into one resolved style: for
+ * each channel the first layer that names it wins.
+ *
+ * Layers arrive already collapsed — a `styleCb` has been called, and any layer a narrower one
+ * takes out of the chain has been replaced with `{}`. The fold expresses precedence between
+ * layers, nothing else.
+ *
+ * `null` falls through like `undefined`, matching the `??` chains this replaces: a `styleCb`
+ * returning an explicit `undefined` for a channel has always meant "I am not naming this one".
+ */
+function mergeStyleLayers(layers: Partial<NodeStyle>[]): NodeStyle {
+    const merged: Record<string, unknown> = {}
+    for (const key of NODE_STYLE_KEYS) {
+        let resolved: unknown = undefined
+        for (const layer of layers) {
+            const value = layer?.[key]
+            if (value !== undefined && value !== null) {
+                resolved = value
+                break
+            }
+        }
+        merged[key] = resolved
+    }
+    return merged as unknown as NodeStyle
+}
+
 function cardContent(rendered: unknown): HTMLElement | string | undefined {
     if (typeof rendered === 'string') return rendered === '' ? undefined : rendered
     return rendered instanceof HTMLElement ? rendered : undefined
