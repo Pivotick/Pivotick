@@ -7,7 +7,7 @@ on:
 
 permissions:
   contents: write
-  id-token: write # npm provenance
+  id-token: write # npm trusted publishing
 
 jobs:
   release:
@@ -20,7 +20,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version: 24 # npm 11.5.1+, which trusted publishing needs
           cache: npm
           registry-url: https://registry.npmjs.org
 
@@ -51,7 +51,10 @@ jobs:
 
       # Last: publishing a version cannot be undone, so everything that can be
       # re-run on a failed release runs before it.
+      #
+      # No token — npm trades this job's OIDC identity for a short-lived
+      # credential and attaches provenance itself. The trusted publisher is
+      # registered on npmjs.com against this file's name, so renaming it breaks
+      # the release until the publisher is registered again.
       - name: Publish to npm
-        run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish
