@@ -217,14 +217,15 @@ export interface GraphRendererOptions {
      */
     focusTierTrigger?: 'both' | 'hover' | 'selection' | 'off',
     /**
-     * How long, in milliseconds, a node takes to cross-fade from one drawing to the next.
-     * `0` replaces the drawing in a single frame, which is what a graph declaring no
-     * transition does.
+     * How long, in milliseconds, a drawing takes to fade into or out of the graph as the zoom
+     * changes what is worth drawing. `0` makes every such change in a single frame, which is
+     * what a graph declaring no transition does.
      *
-     * The outgoing drawing is kept alive on a layer of its own and the two fade past each
-     * other, so a node is never absent mid-swap — only briefly softer where they overlap.
-     * It covers both the zoom-driven {@link NodeStyle.tiers} and the
-     * {@link NodeStyle.focusTier} drawing.
+     * It covers a node swapping between its {@link NodeStyle.tiers}, its
+     * {@link NodeStyle.focusTier} drawing arriving and leaving, and a label crossing
+     * {@link GraphRendererOptions.minLabelFontSize}. An outgoing drawing is kept alive on a
+     * layer of its own and the two fade past each other, so a node is never absent mid-swap —
+     * only briefly softer where they overlap.
      *
      * Every node on screen crosses a threshold at the same moment, so this starts as many
      * fades as there are nodes changing. `prefers-reduced-motion` turns it off.

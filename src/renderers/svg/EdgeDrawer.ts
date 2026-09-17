@@ -95,15 +95,22 @@ export class EdgeDrawer {
         if (showing === state.showing) return false
         state.showing = showing
 
+        const ms = this.graphSvgRenderer.detailTransitionMs()
         const selection = d3Select<SVGGElement, Edge>(element)
         if (!showing) {
-            element.querySelector(':scope > g.label-container')?.remove()
-        } else if (this.renderLabelCB) {
+            const container = element.querySelector(':scope > g.label-container')
+            if (container) this.graphSvgRenderer.fadeAwayOnGhostLayer(container, ms)
+            return true
+        }
+
+        if (this.renderLabelCB) {
             this.customLabelRender(selection, edge)
         } else {
             const text = edgeLabelGetter(edge)
             if (text) this.defaultLabelRender(selection, text, state.style)
         }
+        const container = element.querySelector(':scope > g.label-container')
+        if (ms > 0 && container) this.graphSvgRenderer.fade(container, 0, 1, ms)
         return true
     }
 

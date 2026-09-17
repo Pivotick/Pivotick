@@ -157,10 +157,11 @@ export class GraphSvgRenderer extends GraphRenderer {
         this.selectionBoxGroup = this.svg.append('g').attr('class', 'selection-box')
         this.nodeGroup = this.zoomGroup.append('g').attr('class', 'nodes')
 
-        // Where a node's previous drawing waits out its cross-fade, directly above the nodes
-        // so it dissolves off the new one rather than from behind it. A layer of its own, not
-        // a child of the node group: a ghost inside the node would be wiped by the next
-        // redraw and would answer the queries the renderer runs against a node's children.
+        // Where a drawing on its way out waits out its fade — a node's previous tier, or a
+        // label the zoom has taken away — directly above the nodes so it dissolves off the new
+        // drawing rather than from behind it. A layer of its own, not a child of the node
+        // group: a ghost inside the node would be wiped by the next redraw and would answer
+        // the queries the renderer runs against a node's children.
         this.detailGhostGroup = this.zoomGroup.append('g')
             .attr('class', 'pvt-detail-ghosts')
             .style('pointer-events', 'none')
@@ -400,6 +401,40 @@ export class GraphSvgRenderer extends GraphRenderer {
         const declared = this.options.detailTransition ?? 0
         if (declared <= 0) return 0
         return PREFERS_REDUCED_MOTION?.matches ? 0 : declared
+    }
+
+    /** Fade `element` between two opacities, and hand back the animation. */
+    public fade(element: Element, from: number, to: number, ms: number): Animation {
+        // `fill: 'backwards'` and not `'both'`: once the fade is over the element goes back to
+        // whatever opacity the stylesheet gives it, so a node dimmed by a highlight or a
+        // filter is not pinned at 1 by an animation that has finished.
+        return element.animate(
+            [{ opacity: from }, { opacity: to }],
+            { duration: ms, easing: 'ease-out', fill: 'backwards' },
+        )
+    }
+
+    /**
+     * Lift `element` off the graph and let it fade out on the ghost layer.
+     *
+     * It leaves its node or edge group at once, so the pass that repositions a label on every
+     * tick stops seeing it on the very next tick rather than tracking it for the length of the
+     * fade. The ghost carries a copy of the transform the element was drawn under; it lives
+     * for one fade, and whatever it hung off moves by less than the fade hides.
+     */
+    public fadeAwayOnGhostLayer(element: Element, ms: number): void {
+        const layer = this.getDetailGhostLayer()
+        if (ms <= 0 || !layer) {
+            element.remove()
+            return
+        }
+
+        const ghost = document.createElementNS('http://www.w3.org/2000/svg', 'g')
+        const owner = element.parentNode instanceof Element ? element.parentNode.getAttribute('transform') : null
+        if (owner) ghost.setAttribute('transform', owner)
+        ghost.append(element)
+        layer.append(ghost)
+        this.fade(element, 1, 0, ms).onfinish = () => ghost.remove()
     }
 
     /** Called on every zoom event, which d3 also fires on pan. */

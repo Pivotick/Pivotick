@@ -455,17 +455,6 @@ export class NodeDrawer {
         if (this.tierGhosts.get(node) === ghost) this.tierGhosts.delete(node)
     }
 
-    /** Fade `element` between two opacities, and hand back the animation. */
-    private fade(element: Element, from: number, to: number, ms: number): Animation {
-        // `fill: 'backwards'` and not `'both'`: once the fade is over the element goes back to
-        // whatever opacity the stylesheet gives it, so a node dimmed by a highlight or a
-        // filter is not pinned at 1 by an animation that has finished.
-        return element.animate(
-            [{ opacity: from }, { opacity: to }],
-            { duration: ms, easing: 'ease-out', fill: 'backwards' },
-        )
-    }
-
     /**
      * Re-pick every on-screen node's tier and redraw the ones that changed.
      *
@@ -510,10 +499,10 @@ export class NodeDrawer {
         if (ms > 0) {
             for (const node of changed) {
                 const element = node.getGraphElement()
-                if (element) this.fade(element, 0, 1, ms)
+                if (element) this.graphSvgRenderer.fade(element, 0, 1, ms)
             }
             for (const [node, ghost] of ghosts) {
-                this.fade(ghost, 1, 0, ms).onfinish = () => this.retireGhost(node, ghost)
+                this.graphSvgRenderer.fade(ghost, 1, 0, ms).onfinish = () => this.retireGhost(node, ghost)
             }
         }
         // The new drawing has a new radius, so the edges landing on these nodes now stop in
@@ -587,7 +576,7 @@ export class NodeDrawer {
 
         const ms = this.transitionMs()
         const wrapperEl = wrapper.node()
-        if (ms > 0 && wrapperEl) this.fade(wrapperEl, 0, 1, ms)
+        if (ms > 0 && wrapperEl) this.graphSvgRenderer.fade(wrapperEl, 0, 1, ms)
     }
 
     /**
@@ -608,7 +597,7 @@ export class NodeDrawer {
             // currently showing should be told about it.
             wrapper.classList.add('pvt-node-focus-leaving')
             wrapper.setAttribute('pointer-events', 'none')
-            this.fade(wrapper, 1, 0, ms).onfinish = () => wrapper.remove()
+            this.graphSvgRenderer.fade(wrapper, 1, 0, ms).onfinish = () => wrapper.remove()
         })
     }
 
@@ -944,7 +933,7 @@ export class NodeDrawer {
      * Separate from the drawing so the zoom pass can put a label back without rebuilding the
      * node around it — which is the pass this whole gate exists to avoid.
      */
-    private renderNodeLabel(nodeSelection: Selection<SVGGElement, Node, null, undefined>, style: NodeStyle, shapeless: boolean): void {
+    private renderNodeLabel(nodeSelection: Selection<SVGGElement, Node, null, undefined>, style: NodeStyle, shapeless: boolean): SVGGElement | null {
         // Every channel a label reads is resolved to a value by the time it is drawn — the
         // style chain collapses the callbacks — so this is where that is spelled out.
         const size = style.size as number
@@ -1010,6 +999,8 @@ export class NodeDrawer {
             .attr('data-pvt-label-y', y_pos)
             .attr('data-pvt-label-rotate', style.textRotateDegree)
             .attr('transform', `rotate(${style.textRotateDegree}, ${x_pos}, ${y_pos})`)
+
+        return labelG.node()
     }
 
     /**
@@ -1028,10 +1019,13 @@ export class NodeDrawer {
         if (showing === state.showing) return false
         state.showing = showing
 
+        const ms = this.transitionMs()
         if (showing) {
-            this.renderNodeLabel(d3Select<SVGGElement, Node>(element), state.style, state.shapeless)
+            const labelGroup = this.renderNodeLabel(d3Select<SVGGElement, Node>(element), state.style, state.shapeless)
+            if (ms > 0 && labelGroup) this.graphSvgRenderer.fade(labelGroup, 0, 1, ms)
         } else {
-            element.querySelector(':scope > g.pvt-node-label-group')?.remove()
+            const labelGroup = element.querySelector(':scope > g.pvt-node-label-group')
+            if (labelGroup) this.graphSvgRenderer.fadeAwayOnGhostLayer(labelGroup, ms)
         }
         return true
     }
