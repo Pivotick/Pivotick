@@ -252,6 +252,98 @@ Badges describe **only the node they sit on**. A collapsed cluster does not
 aggregate its children's — walk `node.children` in your own `badges` function if
 that is what you want, since only you know whether a fact sums, wins, or neither.
 
+## Detail that follows the zoom {#node-tiers}
+
+A drawing that reads well close up is unreadable on an overview, and a dot that fits an
+overview cannot say what it is. `tiers` lets one node carry several drawings and picks
+between them from how large the node currently renders.
+
+```ts
+const options = {
+    render: {
+        defaultNodeStyle: {
+            tiers: [
+                // Small: a coloured dot.
+                { width: 32, height: 32, style: { shape: 'circle', size: 16 } },
+                // Once there is room for it: a labelled chip.
+                { width: 140, height: 44, style: { shape: 'none', html: buildChip } },
+            ],
+        },
+    },
+}
+```
+
+Tiers are ordered smallest first and the richest one that fits wins. When none does, the
+node draws at its base style, so the style you already have is the floor: a graph that
+declares no `tiers` is unaffected in every respect.
+
+### What picks a tier
+
+The **rendered size**: the node's footprint in CSS pixels, which is `footprint × zoom`. A
+tier engages once that reaches its `minRenderedSize`, which defaults to the tier's own
+`width`, so `{ width: 140 }` reads as "engage once there is room to draw 140 pixels of
+node".
+
+The zoom scale on its own would not do. It multiplies coordinates the layout invented, so
+the same scale means a different apparent size on a different graph, and a threshold tuned
+on one dataset would be wrong on the next.
+
+A tier that has engaged holds until the rendered size falls to 85% of its threshold. Every
+node shares a threshold, so without that band a canvas parked on one would flicker as a
+whole.
+
+### The footprint stays put
+
+The box a node reserves in the layout does not change when its drawing does. It is
+`layoutSize`, and it defaults to half the widest declared tier, so declaring tiers gives
+the graph the right spacing without a second number. Nothing moves when a tier swaps: the
+drawing changes inside a box that was already the right size, and the forces never see the
+difference.
+
+`width` and `height` are declared rather than measured, for the same reason. The layout has
+to know the footprint before the first tick, and a measured card only reports its size once
+it has been drawn.
+
+Set `layoutSize` yourself to space the graph tighter or wider than the widest tier. Note
+that a tier is drawn at its design size only when its width equals the footprint; a
+narrower one engages proportionally earlier and is drawn proportionally smaller. Give it an
+explicit `minRenderedSize` if that matters.
+
+### The focus drawing
+
+`focusTier` is the drawing a node uses while it is hovered, or selected on its own,
+whatever the zoom. This is where a node says everything about itself, so reading one never
+means zooming to it.
+
+```ts
+const options = {
+    render: {
+        defaultNodeStyle: {
+            tiers: [/* … */],
+            focusTier: { shape: 'none', html: buildDetailCard },
+        },
+    },
+}
+```
+
+It merges over the node's **base** style rather than over the active tier, so a chip tier's
+`shape` or `html` cannot leak into it. It holds a constant size on screen: the drawing is
+counter-scaled against the zoom, so a 280×150 card is 280×150 CSS pixels however far out
+the graph is. And it never touches the node's geometry, so edges keep landing on the tier
+underneath and hovering moves nothing.
+
+Only a node selected **on its own** is promoted. A fifty-node box selection would be a wall
+of overlapping cards.
+
+`render.focusTierTrigger` says when it fires: `'both'` (the default), `'hover'`,
+`'selection'`, or `'off'`. Reach for `'off'` when you are embedding a style preset someone
+else ships and want its focus drawing suppressed without editing it.
+
+::: tip Tooltips still fire
+A focus card does not replace the tooltip. The two are independent, and a tooltip may
+carry something the card does not.
+:::
+
 ## API
 
 Pivotick exposes a renderer controller that lets you interact directly with the rendering engine.
