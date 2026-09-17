@@ -15,6 +15,9 @@
   ],
   "license": "MIT",
   "author": "Sami Mokaddem",
+  "contributors": [
+    "CIRCL - Computer Incident Response Center Luxembourg (https://www.circl.lu)"
+  ],
   "homepage": "https://pivotick.github.io/Pivotick/",
   "repository": {
     "type": "git",
