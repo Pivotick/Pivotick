@@ -492,6 +492,18 @@ export interface EdgeLayerSpec {
  * chain. A flag set rather than overrides because callbacks cannot cross
  * `page.evaluate`.
  */
+/** How {@link PivotickHarness.loadWithTiers} builds its tiered node style. */
+export interface TierSpec {
+    /** Declare a `focusTier` card as well as the zoom tiers. @default true */
+    focus?: boolean
+    /** Declare the zoom `tiers` array. @default true */
+    tiers?: boolean
+    /** `render.focusTierTrigger`. Left unset, the library's `'both'` applies. */
+    trigger?: 'both' | 'hover' | 'selection' | 'off'
+    /** Override `layoutSize` instead of letting it derive from the widest tier. */
+    layoutSize?: number
+}
+
 export interface StyleCbSpec {
     /** `render.defaultNodeStyle.styleCb` — paints every node {@link DEFAULT_CB_COLOR}. */
     node?: boolean
@@ -506,6 +518,14 @@ export interface StyleCbSpec {
     edgeStyleMap?: boolean
     /** Give every edge its own `styleCb` too — the one that wins outright. */
     edgeOwn?: boolean
+    /**
+     * Also declare `nodeTypeAccessor` + `nodeStyleMap`, naming *both* a colour and a stroke
+     * colour — so a test can watch a node's own `styleCb` take the whole map out of the
+     * chain rather than merely outrank it on the one channel it names.
+     */
+    nodeStyleMap?: boolean
+    /** Give every node its own `styleCb` too: a colour, and nothing else. */
+    nodeOwn?: boolean
 }
 
 /** One rendered relationship-layer row in the filter panel, read off the DOM. */
@@ -702,9 +722,24 @@ const EDGE_STYLE_MAP: Record<string, Partial<EdgeStyle>> = {
 const STYLE_CB_COLOR = '#ff00ff'
 
 /** What a `render.default*Style.styleCb` paints — distinct from every other source. */
+/**
+ * The three drawings {@link PivotickHarness.loadWithTiers} declares, at the sizes MISP's
+ * Pivot Explorer designed them: a glyph, a labelled chip, and a card of metadata rows. The
+ * footprint derives from the widest zoom tier (140), so the chip engages at exactly k = 1
+ * and the dot at k = 32/140.
+ */
+const TIER_DOT = { width: 32, height: 32 }
+const TIER_CHIP = { width: 140, height: 44 }
+const FOCUS_CARD = { width: 280, height: 150 }
+
 const DEFAULT_CB_COLOR = '#00c2a8'
 /** The width a default edge `styleCb` sets; nothing else in these fixtures sets one. */
 const DEFAULT_CB_WIDTH = 7
+/** What `nodeStyleMap` paints when {@link StyleCbSpec.nodeStyleMap} is set. */
+const NODE_MAP_COLOR = '#b5651d'
+const NODE_MAP_STROKE = '#2d1a00'
+/** What a node's *own* `styleCb` paints when {@link StyleCbSpec.nodeOwn} is set. */
+const NODE_CB_COLOR = '#ff00ff'
 
 /** The off-palette colour `LegendSpec.conflictNodeId` is painted with. */
 const LEGEND_CONFLICT_COLOR = '#FF0000'
@@ -1361,6 +1396,32 @@ export interface HarnessApi {
     /** Every node's current `(x, y)` (graph coordinates) — for layout assertions. */
     nodePositions(): Record<string, { x: number; y: number }>
     /**
+     * Load a fixture whose nodes declare zoom-driven detail tiers: a dot, a labelled chip
+     * and (by default) a focus card. Every node gets the same tiers, so they all cross
+     * their thresholds together — which is the case the hysteresis band exists for.
+     */
+    loadWithTiers(spec?: TierSpec, overrides?: PlainObject): Promise<void>
+    /**
+     * Zoom to an exact scale about the canvas centre, with no animation — a threshold is a
+     * number, so the tests that straddle one need to land on a chosen `k`, not near it.
+     */
+    setZoomScale(scale: number): Promise<void>
+    /** Current zoom scale. */
+    zoomScale(): number
+    /**
+     * Which tier a node is drawn at, read off its `data-pvt-tier` attribute: the tier's
+     * index, `'base'` for the floor style, or `null` when the node declares no tiers.
+     */
+    tierOf(id: string): string | null
+    /** The footprint half-width the layout is spacing a node by. */
+    layoutSizeOf(id: string): number | undefined
+    /** The collision radius the drawing last wrote — the drawn size, not the footprint. */
+    drawnRadiusOf(id: string): number
+    /** The focus drawing's box in CSS pixels, or `null` when the node is not showing one. */
+    focusCardBox(id: string): { width: number; height: number } | null
+    /** Whether a node is currently showing its focus drawing. */
+    hasFocusCard(id: string): boolean
+    /**
      * Apply a single query filter on a node-data field. Non-matching nodes (and
      * their edges) are **removed** from the render, not dimmed. `value` follows the
      * library's {@link FilterFieldConfig} shape (a scalar/array + `matchMode`, or a
@@ -1405,6 +1466,12 @@ export interface HarnessApi {
      * so what a derived legend's swatch must equal.
      */
     nodeColor(id: string): string
+    /** The stroke colour the renderer resolved for a node. */
+    nodeStrokeColor(id: string): string
+    /** What a `nodeStyleMap` entry paints, for a test to assert against. */
+    styleMapNodeColors(): { color: string; strokeColor: string }
+    /** What a node's own `styleCb` paints. */
+    ownCallbackNodeColor(): string
     /** Every `legendToggle` event since the graph was loaded, in order. */
     legendEvents(): LegendToggleState[]
     /**
@@ -2857,6 +2924,94 @@ class Harness implements HarnessApi {
         return out
     }
 
+    async loadWithTiers(spec: TierSpec = {}, overrides: PlainObject = {}): Promise<void> {
+        // Sized in the element rather than a stylesheet so the card measures exactly its
+        // declared tier box. `box-sizing` per element: the library sets none globally.
+        const box = (w: number, h: number, label: string, rows: number) => (node: Node) => {
+            const card = document.createElement('div')
+            card.style.cssText = `box-sizing: border-box; width: ${w}px; height: ${h}px;`
+                + 'padding: 6px 10px; border: 1px solid #5b6b82; border-radius: 6px;'
+                + 'background: #eef2f7; color: #1c2b3a; font: 12px/1.4 sans-serif; overflow: hidden;'
+            const title = document.createElement('div')
+            title.style.cssText = 'font-weight: 700; white-space: nowrap;'
+            title.textContent = `${label} ${node.id}`
+            card.appendChild(title)
+            for (let i = 0; i < rows; i++) {
+                const row = document.createElement('div')
+                row.style.cssText = 'white-space: nowrap; opacity: 0.75;'
+                row.textContent = `field ${i + 1}: ${node.id}-${i}`
+                card.appendChild(row)
+            }
+            return card
+        }
+
+        const nodeStyle: PlainObject = {}
+        if (spec.tiers !== false) {
+            nodeStyle.tiers = [
+                { ...TIER_DOT, style: { shape: 'circle', size: TIER_DOT.width / 2, color: '#7a869a' } },
+                {
+                    ...TIER_CHIP,
+                    style: { shape: 'none', html: box(TIER_CHIP.width, TIER_CHIP.height, 'chip', 0) },
+                },
+            ]
+        }
+        if (spec.focus !== false) {
+            nodeStyle.focusTier = {
+                shape: 'none',
+                html: box(FOCUS_CARD.width, FOCUS_CARD.height, 'card', 3),
+            }
+        }
+        if (spec.layoutSize !== undefined) nodeStyle.layoutSize = spec.layoutSize
+
+        const render: PlainObject = { defaultNodeStyle: nodeStyle }
+        if (spec.trigger) render.focusTierTrigger = spec.trigger
+
+        await this.load('basic', mergeOptions({ render }, overrides))
+    }
+
+    async setZoomScale(scale: number): Promise<void> {
+        const renderer = this.g.renderer as unknown as {
+            getZoomBehavior(): { scaleTo: (selection: unknown, k: number) => void }
+            getCanvasSelection(): unknown
+        }
+        renderer.getZoomBehavior().scaleTo(renderer.getCanvasSelection(), scale)
+        // The tier pass is coalesced to a frame, and the redraw it triggers takes another.
+        await this.frames(3)
+    }
+
+    zoomScale(): number {
+        return (this.g.renderer as unknown as { getZoomTransform(): { k: number } }).getZoomTransform().k
+    }
+
+    tierOf(id: string): string | null {
+        return this.nodeElement(id)?.getAttribute('data-pvt-tier') ?? null
+    }
+
+    layoutSizeOf(id: string): number | undefined {
+        return this.g.getMutableNodes().find((node) => node.id === id)?.getLayoutSize()
+    }
+
+    drawnRadiusOf(id: string): number {
+        return this.g.getMutableNodes().find((node) => node.id === id)?.getCircleRadius() ?? 0
+    }
+
+    focusCardBox(id: string): { width: number; height: number } | null {
+        const card = this.nodeElement(id)?.querySelector<SVGGElement>(':scope > g.pvt-node-focus')
+        if (!card) return null
+        // A client rect, not a bbox: the point of the counter-scale is that the card measures
+        // the same in CSS pixels however far out the graph is zoomed.
+        const box = card.getBoundingClientRect()
+        return { width: Math.round(box.width), height: Math.round(box.height) }
+    }
+
+    hasFocusCard(id: string): boolean {
+        return !!this.nodeElement(id)?.querySelector(':scope > g.pvt-node-focus')
+    }
+
+    private nodeElement(id: string): SVGGElement | null {
+        return this.g.getMutableNodes().find((node) => node.id === id)?.getGraphElement() ?? null
+    }
+
     setFilter(key: string, value: FilterFieldConfig): void {
         this.g.queryEngine.setFilter(key, value)
     }
@@ -3043,6 +3198,20 @@ class Harness implements HarnessApi {
         const node = this.g.getMutableNode(id)
         if (!node) return ''
         return String(this.g.renderer.getNodeStyle(node).color)
+    }
+
+    nodeStrokeColor(id: string): string {
+        const node = this.g.getMutableNode(id)
+        if (!node) return ''
+        return String(this.g.renderer.getNodeStyle(node).strokeColor)
+    }
+
+    styleMapNodeColors(): { color: string; strokeColor: string } {
+        return { color: NODE_MAP_COLOR, strokeColor: NODE_MAP_STROKE }
+    }
+
+    ownCallbackNodeColor(): string {
+        return NODE_CB_COLOR
     }
 
     legendEvents(): LegendToggleState[] {
@@ -3425,8 +3594,20 @@ class Harness implements HarnessApi {
                 (edge.getData() as Record<string, unknown>)?.kind as string | undefined
             render.edgeStyleMap = EDGE_STYLE_MAP
         }
+        if (spec.nodeStyleMap) {
+            render.nodeTypeAccessor = () => 'plain'
+            render.nodeStyleMap = { plain: { color: NODE_MAP_COLOR, strokeColor: NODE_MAP_STROKE } }
+        }
 
         await this.load(name, mergeOptions({ render }, overrides))
+
+        if (spec.nodeOwn) {
+            // Only a colour: whether the map's stroke still lands is the point.
+            for (const node of this.g.getMutableNodes()) {
+                node.updateStyle({ styleCb: () => ({ color: NODE_CB_COLOR }) })
+            }
+            this.g.onChange()
+        }
 
         if (spec.edgeOwn) {
             // Only a colour: what the default callback's width does next is the point.

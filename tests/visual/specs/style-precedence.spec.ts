@@ -81,6 +81,26 @@ test.describe('a default styleCb', () => {
         expect(await widthOf(page, 'a-b')).toBe(await callbackWidth(page))
     })
 
+    test("a node's own styleCb takes the style map out of the chain, not just the channel", async ({ page }) => {
+        await harness(page, 'loadWithStyleCallbacks', 'edgeLayers',
+            { node: true, nodeStyleMap: true, nodeOwn: true })
+
+        const map = await harness(page, 'styleMapNodeColors')
+        // The node's own callback wins the colour, as any narrower declaration would...
+        expect(await harness(page, 'nodeColor', 'hub')).toBe(await harness(page, 'ownCallbackNodeColor'))
+        // ...but the map is skipped *entirely*, so the stroke it named never lands either.
+        expect(await harness(page, 'nodeStrokeColor', 'hub')).not.toBe(map.strokeColor)
+    })
+
+    test('a node with no styleCb of its own still takes the whole style map', async ({ page }) => {
+        await harness(page, 'loadWithStyleCallbacks', 'edgeLayers',
+            { node: true, nodeStyleMap: true })
+
+        const map = await harness(page, 'styleMapNodeColors')
+        expect(await harness(page, 'nodeColor', 'hub')).toBe(map.color)
+        expect(await harness(page, 'nodeStrokeColor', 'hub')).toBe(map.strokeColor)
+    })
+
     test('declaring none of them leaves the graph exactly as it was', async ({ page }) => {
         await harness(page, 'loadWithStyleCallbacks', 'edgeLayers')
         const untouched = await strokeOf(page, 'hub-a')

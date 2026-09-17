@@ -206,6 +206,17 @@ export interface GraphRendererOptions {
      */
     enableNodeExpansion: boolean,
     /**
+     * When a node's {@link NodeStyle.focusTier} drawing fires. The style says what the focus
+     * drawing is; this says when.
+     *
+     * Selection only promotes a node that is selected on its own — a box-select of fifty
+     * would be a wall of overlapping cards. `'off'` suppresses the behaviour without editing
+     * the style, which is what an integrator embedding someone else's preset needs.
+     *
+     * @default 'both'
+     */
+    focusTierTrigger?: 'both' | 'hover' | 'selection' | 'off',
+    /**
      * Callback executed during the init phase, before the first rendering
      * @param graph The Graph instance
      */
@@ -331,6 +342,35 @@ export interface NodeBadge {
     onClick?: (event: PointerEvent, node: Node, badge: NodeBadge) => void
 }
 
+/**
+ * What a tier is allowed to change: the drawing, never the chain or the geometry. Omitting
+ * `styleCb` and `tiers` keeps the type from recursing; omitting `layoutSize` is what makes
+ * a tier swap free of any effect on the layout.
+ */
+export type NodeTierStyle = Omit<Partial<NodeStyle>, 'styleCb' | 'tiers' | 'focusTier' | 'layoutSize'>
+
+/** One drawing of a node, and the size at which it takes over. See {@link NodeStyle.tiers}. */
+export interface NodeTier {
+    /** Merged over the resolved base style while this tier is active. */
+    style: NodeTierStyle
+    /**
+     * The box this drawing is designed to fill, in graph units. Declared rather than
+     * measured: it sets the node's footprint and this tier's default threshold before
+     * anything is drawn, so the layout never has to wait for a measurement.
+     */
+    width: number
+    height: number
+    /**
+     * Rendered footprint in CSS pixels at which this tier takes over, i.e. `footprint x zoom`.
+     *
+     * Defaults to {@link width}, which reads as "engage once there is room for this drawing".
+     * That is exact for the widest tier, which then appears at its design size at zoom 1; a
+     * narrower tier engages earlier and is drawn proportionally smaller, so set this by hand
+     * if an intermediate tier should appear at the size it was drawn at.
+     */
+    minRenderedSize?: number
+}
+
 export interface NodeStyle {
     /**
      * The shape of the node, either a standard shape or a custom SVG path
@@ -436,6 +476,36 @@ export interface NodeStyle {
      * East corners). Anything beyond that collapses into a `+n` badge naming the rest.
      */
     badges?: ((node: Node) => NodeBadge[]) | NodeBadge[]
+    /**
+     * Alternative drawings of this node, chosen by how large it currently renders — a glyph
+     * on an overview, a labelled chip once there is room for one, a card once there is room
+     * for that. Ordered smallest first; the richest one that fits wins, and the base style is
+     * the floor when none do.
+     *
+     * The node's footprint never changes with the drawing (see {@link layoutSize}), so
+     * swapping tiers moves nothing.
+     *
+     * @example
+     * ```ts
+     * tiers: [
+     *   { width: 32, height: 32, style: { shape: 'circle', size: 16 } },
+     *   { width: 140, height: 44, style: { shape: 'none', html: chipFor } },
+     * ]
+     * ```
+     */
+    tiers?: NodeTier[]
+    /**
+     * The drawing used while this node is hovered, or selected on its own — whatever the
+     * zoom. This is where a node says everything about itself.
+     *
+     * It merges over the resolved *base* style rather than over the active tier, so a chip
+     * tier's `shape` or `html` cannot leak into it, and it holds a constant size on screen
+     * however far the graph is zoomed out. It never changes the node's geometry: edges keep
+     * landing on the tier underneath and nothing moves.
+     *
+     * When it fires is {@link GraphRendererOptions.focusTierTrigger}'s to say.
+     */
+    focusTier?: NodeTierStyle
     /**
      * The half-width of the box this node reserves for itself in the layout, in graph units.
      * This is the only size the simulation ever sees: set it and the drawing no longer drives

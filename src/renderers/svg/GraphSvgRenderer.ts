@@ -24,6 +24,7 @@ d3Select.prototype.transition = d3Transition
 const DEFAULT_RENDERER_OPTIONS = {
     type: 'svg',
     enableFocusMode: true,
+    focusTierTrigger: 'both',
     enableNodeExpansion: true,
     beforeRender: () => {},
     zoomEnabled: true,
@@ -105,6 +106,15 @@ export class GraphSvgRenderer extends GraphRenderer {
         this.edgeDrawer = new EdgeDrawer(this.options, this.graph, this)
         this.noteDrawer = new NoteDrawer(this.options, this.graph, this)
 
+        // The focus drawing follows the pointer and the lone selection. Wired here rather
+        // than in the drawers' own event handlers so there is one place that decides which
+        // node, if any, is currently focused.
+        this.graphInteraction.on('nodeHoverIn', (_event, node) => this.nodeDrawer.setHoveredNode(node))
+        this.graphInteraction.on('nodeHoverOut', () => this.nodeDrawer.setHoveredNode(null))
+        for (const event of ['selectNode', 'unselectNode', 'selectNodes', 'unselectNodes'] as const) {
+            this.graphInteraction.on(event, () => this.nodeDrawer.updateFocusTier())
+        }
+
         this.svgCanvas = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
         this.svgCanvas.setAttribute('width', '100%')
         this.svgCanvas.setAttribute('height', '100%')
@@ -181,6 +191,9 @@ export class GraphSvgRenderer extends GraphRenderer {
             .scaleExtent([this.options.minZoom, this.options.maxZoom])
             .on('zoom', (event) => {
                 this.zoomGroup.attr('transform', event.transform)
+                // Fires on pan as well as on scale, and is meant to: panning is what brings a
+                // node with a stale tier into view.
+                this.nodeDrawer.onZoom()
                 this.graphInteraction.canvasZoom(event)
             })
 
@@ -270,6 +283,24 @@ export class GraphSvgRenderer extends GraphRenderer {
     }
 
     /**
+     * The zoom layer's extent, with any focus drawing left out of it.
+     *
+     * A focus drawing is counter-scaled to hold its size on screen, so its size in graph
+     * units is whatever the current zoom makes it. Measuring the graph with one open would
+     * make "how big is the graph" depend on where the pointer is: a fit while a node at the
+     * edge is hovered would zoom out to include a card that is about to disappear.
+     */
+    private measureZoomLayer(zoomLayerEl: SVGGElement): DOMRect {
+        const focus = zoomLayerEl.querySelectorAll<SVGGElement>('g.pvt-node-focus')
+        if (focus.length === 0) return zoomLayerEl.getBBox()
+
+        focus.forEach(el => el.setAttribute('display', 'none'))
+        const bounds = zoomLayerEl.getBBox()
+        focus.forEach(el => el.removeAttribute('display'))
+        return bounds
+    }
+
+    /**
      * The extent of everything drawn, in graph coordinates. Read off the zoom layer's
      * bbox — so it includes labels, cluster bubbles and notes, not just node centres —
      * and `null` whenever there is nothing measurable: no content, or a canvas that is
@@ -279,10 +310,31 @@ export class GraphSvgRenderer extends GraphRenderer {
         const zoomLayerEl = this.zoomGroup?.node() as SVGGElement | null
         if (!zoomLayerEl || !this.svgCanvas?.isConnected) return null
 
-        const bounds = zoomLayerEl.getBBox()
+        const bounds = this.measureZoomLayer(zoomLayerEl)
         if (bounds.width === 0 || bounds.height === 0) return null
 
         return { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height }
+    }
+
+    /**
+     * The part of graph space currently on screen, in graph coordinates, or `null` when the
+     * canvas cannot be measured. The inverse of what {@link getContentBounds} reports: that
+     * is what exists, this is what can be seen of it.
+     */
+    public getVisibleBounds(): GraphBounds | null {
+        if (!this.svgCanvas?.isConnected) return null
+        const rect = this.svgCanvas.getBoundingClientRect()
+        if (rect.width === 0 || rect.height === 0) return null
+
+        const transform = this.getZoomTransform()
+        const x = transform.invertX(0)
+        const y = transform.invertY(0)
+        return {
+            x,
+            y,
+            width: transform.invertX(rect.width) - x,
+            height: transform.invertY(rect.height) - y,
+        }
     }
 
     /**
@@ -570,7 +622,7 @@ export class GraphSvgRenderer extends GraphRenderer {
         // resolve relative length". Bail before touching the zoom behaviour.
         if (!svgEl.isConnected || svgEl.clientWidth === 0 || svgEl.clientHeight === 0) return
 
-        const bounds = zoomLayerEl.getBBox()
+        const bounds = this.measureZoomLayer(zoomLayerEl)
         if (bounds.width == 0 || bounds.height == 0) return
 
         const fullWidth = svgEl.clientWidth
@@ -626,7 +678,7 @@ export class GraphSvgRenderer extends GraphRenderer {
         let frame = 0
 
         const step = (): void => {
-            const b = zoomLayerEl.getBBox()
+            const b = this.measureZoomLayer(zoomLayerEl)
             const steady = prev !== null
                 && Math.abs(b.width - prev.width) < epsilon
                 && Math.abs(b.height - prev.height) < epsilon
@@ -652,7 +704,7 @@ export class GraphSvgRenderer extends GraphRenderer {
         const zoomLayerEl = canvas.select('.zoom-layer').node() as SVGGElement
 
         if (!zoomBehavior || !svgEl || !zoomLayerEl || !targetEl) return
-        const svgBounds = zoomLayerEl.getBBox()
+        const svgBounds = this.measureZoomLayer(zoomLayerEl)
 
         const fullWidth = svgEl.clientWidth
         const fullHeight = svgEl.clientHeight

@@ -1,6 +1,7 @@
 import { select as d3Select, type Selection } from 'd3-selection'
 import { transition as d3Transition } from 'd3-transition'
 import { Node } from '../../Node'
+import type { GraphBounds } from '../../GraphRenderer'
 import { Edge } from '../../Edge'
 import type { Graph } from '../../Graph'
 import { GraphSvgRenderer } from './GraphSvgRenderer'
@@ -8,7 +9,7 @@ import { defaultLabelStyle } from '../../styles/defaults'
 import { resolveIcon, tryResolveBoolean, tryResolveNumber, tryResolveString } from '../../utils/Getters'
 import { parseSvgIconMarkup } from '../../utils/SvgSanitizer'
 import { hasAllowedScheme, SAFE_IMAGE_SCHEMES } from '../../utils/urlSafety'
-import type { CustomNodeShape, GraphRendererOptions, ImageFit, NodeShape, NodeStyle } from '../../interfaces/RendererOptions'
+import type { CustomNodeShape, GraphRendererOptions, ImageFit, NodeShape, NodeStyle, NodeTier } from '../../interfaces/RendererOptions'
 import { ClusterDrawer } from './ClusterDrawer'
 import { BadgeDrawer, nodeRimAnchor, resolveBadges, RIM_PADDING } from './BadgeDrawer'
 import { forceConstrainParent } from '../../plugins/d3Forces/ForceConstrainParent'
@@ -23,6 +24,23 @@ export class NodeDrawer {
     public clusterDrawer: ClusterDrawer
     public badgeDrawer: BadgeDrawer
     private renderCB?: GraphRendererOptions['renderNode']
+    /**
+     * What each node's tiers resolved to last time it was drawn. The per-zoom pass reads this
+     * rather than re-running the style chain, which is what keeps it at ~1 us per node, and
+     * the remembered index is what gives the hysteresis band something to hold.
+     */
+    private tierState = new WeakMap<Node, TierState>()
+    /**
+     * Set the first time any node resolves a `tiers` array. A graph that declares none never
+     * runs the per-zoom pass at all.
+     */
+    private tiersDeclared = false
+    /** Pending frame for the coalesced tier pass, if any. */
+    private tierRefreshFrame: number | null = null
+    /** The node under the pointer, whatever the focus trigger does with it. */
+    private hoveredNode: Node | null = null
+    /** The node currently showing its focus drawing. There is only ever one. */
+    private focusedNode: Node | null = null
 
     public constructor(rendererOptions: GraphRendererOptions, graph: Graph, graphSvgRenderer: GraphSvgRenderer) {
         this.graphSvgRenderer = graphSvgRenderer
@@ -92,6 +110,13 @@ export class NodeDrawer {
             })
         }
 
+        // Published so a tier swap is assertable without reading pixels, and legible in the
+        // inspector. `base` is the floor style, i.e. no tier qualified.
+        if (this.tiersDeclared) {
+            const active = this.tierState.get(node)?.index ?? BASE_TIER
+            theNodeSelection.attr('data-pvt-tier', active === BASE_TIER ? 'base' : String(active))
+        }
+
         this.badgeDrawer.render(theNodeSelection, node, resolveBadges(style, node, this.graph))
 
         // Only a node a pivot run created and could still write can be unsaved: one
@@ -101,6 +126,10 @@ export class NodeDrawer {
             const pivots = this.graph.pivots
             theNodeSelection.classed('pvt-node-unsaved', pivots.isSavable(node) && !pivots.isSaved(node))
         }
+
+        // A tier swap rebuilds the node's children, taking the card with it. Redrawn last so
+        // it sits on top of whatever the tier drew.
+        if (this.focusedNode === node) this.drawFocusTier(node)
 
         if (this.rendererOptions.enableNodeExpansion && node.hasChildren()) {
             if (node.expanded) {
@@ -147,7 +176,8 @@ export class NodeDrawer {
     private fitCardToContent(
         fo: Selection<SVGForeignObjectElement, Node, null, undefined>,
         node: Node,
-        shapeHalfExtent: number
+        shapeHalfExtent: number,
+        writesGeometry = true
     ): void {
         // During the initial layout the graph's .zoom-layer is display:none, so the
         // content measures 0×0 — retry on later frames until it has real dimensions
@@ -185,7 +215,7 @@ export class NodeDrawer {
             // collision + charge see the real card, not the default r=10 (else
             // large HTML cards get packed until they overlap). Expanded clusters
             // are skipped — their bubble radius is owned by the cluster drawer.
-            if (!node.hasChildren() || !node.expanded) {
+            if (writesGeometry && (!node.hasChildren() || !node.expanded)) {
                 const halfWidth = Math.max(width / 2, shapeHalfExtent)
                 const halfHeight = Math.max(height / 2, shapeHalfExtent)
                 const measuredRadius = Math.max(halfWidth, halfHeight)
@@ -212,7 +242,7 @@ export class NodeDrawer {
                 if (backing) fitBackingBox(backing, content, width, height)
             }
             // The card's real box is only known here, so the rim moves with it.
-            this.badgeDrawer.reanchor(node)
+            if (writesGeometry) this.badgeDrawer.reanchor(node)
         }
         requestAnimationFrame(() => measureAndSize(0))
     }
@@ -266,7 +296,8 @@ export class NodeDrawer {
             })
     }
 
-    private computeNodeStyle(node: Node): NodeStyle {
+    /** The node's style before any tier is folded over it: the floor a tier merges onto. */
+    private computeBaseStyle(node: Node): NodeStyle {
         let styleFromStyleMap: Partial<NodeStyle> = {}
         if (this.rendererOptions.nodeStyleMap && typeof this.rendererOptions.nodeTypeAccessor === 'function') {
             const nodeType = this.rendererOptions.nodeTypeAccessor(node)
@@ -283,7 +314,7 @@ export class NodeDrawer {
         const styleMapLayer = style.styleCb ? {} : styleFromStyleMap
 
         const defaults = this.rendererOptions.defaultNodeStyle
-        return mergeStyleLayers([
+        const base = mergeStyleLayers([
             styleFromNode,
             styleMapLayer,
             // The computed form of the default slot: it fills what neither the node nor the
@@ -291,11 +322,193 @@ export class NodeDrawer {
             defaults.styleCb?.(node) ?? {},
             defaults,
         ])
+
+        // Declaring tiers buys the right spacing for free, and the footprint has to be known
+        // here — before the simulation starts — rather than measured after it.
+        if (base.tiers?.length) base.layoutSize = base.layoutSize ?? widestTierHalfWidth(base.tiers)
+        return base
+    }
+
+    /** The base style with whichever tier currently qualifies folded over it. */
+    private computeNodeStyle(node: Node): NodeStyle {
+        const base = this.computeBaseStyle(node)
+
+        const tiers = base.tiers
+        if (!tiers?.length) {
+            this.tierState.delete(node)
+            return base
+        }
+        this.tiersDeclared = true
+
+        const footprint = base.layoutSize as number
+        const index = this.pickTier(node, tiers, footprint)
+        this.tierState.set(node, { tiers, footprint, index })
+        return index === BASE_TIER ? base : mergeStyleLayers([tiers[index].style, base])
+    }
+
+    /**
+     * Which of `tiers` a node draws at right now, or {@link BASE_TIER} when none qualifies.
+     *
+     * The decision is on rendered size — the footprint in CSS pixels — never on the zoom
+     * scalar: `k` multiplies coordinates the force layout invented, so the same `k` means a
+     * different apparent size on a different graph.
+     */
+    private pickTier(node: Node, tiers: NodeTier[], footprint: number): number {
+        const rendered = footprint * 2 * this.graphSvgRenderer.getZoomTransform().k
+        const previous = this.tierState.get(node)?.index ?? BASE_TIER
+
+        let picked = BASE_TIER
+        let pickedThreshold = -Infinity
+        for (let i = 0; i < tiers.length; i++) {
+            const threshold = tierThreshold(tiers[i])
+            // The tier already showing holds until the node shrinks well past its threshold.
+            // Without the band a node parked on the line flips every frame — and since every
+            // node shares a footprint, they are all parked on the same line at once.
+            const engageAt = i === previous ? threshold * TIER_HYSTERESIS : threshold
+            if (rendered >= engageAt && threshold >= pickedThreshold) {
+                picked = i
+                pickedThreshold = threshold
+            }
+        }
+        return picked
+    }
+
+    /** Which tier `node` is currently drawn at, or {@link BASE_TIER} for the floor style. */
+    public getActiveTier(node: Node): number {
+        return this.tierState.get(node)?.index ?? BASE_TIER
+    }
+
+    /**
+     * Re-pick every on-screen node's tier and redraw the ones that changed.
+     *
+     * Wired to the zoom event, which d3 fires on pan as well as on scale — and must, since
+     * panning is what brings a node with a stale tier into view. Coalesced to one pass per
+     * frame so it keeps up with the gesture instead of lagging behind it.
+     */
+    public refreshTiers(): void {
+        if (!this.tiersDeclared || this.tierRefreshFrame !== null) return
+        this.tierRefreshFrame = requestAnimationFrame(() => {
+            this.tierRefreshFrame = null
+            this.applyTierChanges()
+        })
+    }
+
+    private applyTierChanges(): void {
+        const visible = this.graphSvgRenderer.getVisibleBounds()
+        let changed = false
+        for (const node of this.graph.getMutableNodes()) {
+            if (!node.visible) continue
+            const state = this.tierState.get(node)
+            // Never drawn, so it has no tier to change; its first render picks one.
+            if (!state) continue
+            // Off-screen nodes keep whatever tier they had and are re-picked when they
+            // scroll in. A local check, not library-wide culling.
+            if (visible && !intersectsBounds(node, state.footprint, visible)) continue
+
+            const index = this.pickTier(node, state.tiers, state.footprint)
+            if (index === state.index) continue
+            state.index = index
+            node.markDirty()
+            changed = true
+        }
+        // One update for the whole crossing: every node shares a footprint, so they cross
+        // together, and walking the graph per node would cost more than the redraw.
+        if (changed) this.graphSvgRenderer.update(false)
+    }
+
+    // --- Focus tier ---------------------------------------------------------------------
+
+    /** Called on every zoom event, which d3 also fires on pan. */
+    public onZoom(): void {
+        this.rescaleFocusTier()
+        this.refreshTiers()
+    }
+
+    /** Remember the node under the pointer and promote or demote accordingly. */
+    public setHoveredNode(node: Node | null): void {
+        this.hoveredNode = node
+        this.updateFocusTier()
+    }
+
+    /**
+     * Promote whichever node should be showing its focus drawing, and demote the one that
+     * was. Hover wins over selection: it is the more recent gesture, and the more specific.
+     */
+    public updateFocusTier(): void {
+        const trigger = this.rendererOptions.focusTierTrigger ?? 'both'
+        if (trigger === 'off') return this.setFocusedNode(null)
+
+        const hovered = trigger === 'selection' ? null : this.hoveredNode
+        // Only a node selected on its own: `selectedNode` is null for any wider selection,
+        // and promoting fifty box-selected nodes would be a wall of overlapping cards.
+        const selected = trigger === 'hover'
+            ? null
+            : this.graphSvgRenderer.getGraphInteraction().getSelectedNode()?.node ?? null
+
+        const candidate = hovered ?? selected
+        this.setFocusedNode(candidate && this.focusStyleOf(candidate) ? candidate : null)
+    }
+
+    private setFocusedNode(node: Node | null): void {
+        if (this.focusedNode === node) return
+        if (this.focusedNode) this.clearFocusTier(this.focusedNode)
+        this.focusedNode = node
+        if (node) this.drawFocusTier(node)
+    }
+
+    /** The focus drawing merged over the node's resolved *base* style, or null if it has none. */
+    private focusStyleOf(node: Node): NodeStyle | null {
+        // Over the base, never over the active tier: a chip tier's `shape: 'none'` or `html`
+        // would otherwise leak into a card that never asked for it.
+        const base = this.computeBaseStyle(node)
+        if (!base.focusTier) return null
+        return this.resolveStyleValues(mergeStyleLayers([base.focusTier as Partial<NodeStyle>, base]), node)
+    }
+
+    private drawFocusTier(node: Node): void {
+        const element = node.getGraphElement()
+        const style = this.focusStyleOf(node)
+        if (!element || !style) return
+
+        const selection = d3Select<SVGGElement, Node>(element)
+        this.clearFocusTier(node)
+        // Nothing in this renderer calls .order(), so a raise sticks across the next join.
+        selection.raise()
+
+        const wrapper = selection.append('g')
+            .datum(node)
+            .classed('pvt-node-focus', true)
+            // Counter-scales the zoom layer, so the drawing holds its size in CSS pixels
+            // however far out the graph is. Reading one node must not require zooming to it.
+            .attr('transform', `scale(${1 / this.graphSvgRenderer.getZoomTransform().k})`)
+
+        this.genericNodeRender(wrapper as Selection<SVGGElement, Node, null, undefined>, style, node, false)
+    }
+
+    private clearFocusTier(node: Node): void {
+        node.getGraphElement()?.querySelector(':scope > g.pvt-node-focus')?.remove()
+    }
+
+    /** Hold the focus drawing's screen size across a zoom. One transform write, at most. */
+    private rescaleFocusTier(): void {
+        if (!this.focusedNode) return
+        const wrapper = this.focusedNode.getGraphElement()
+            ?.querySelector<SVGGElement>(':scope > g.pvt-node-focus')
+        if (wrapper) {
+            wrapper.setAttribute('transform', `scale(${1 / this.graphSvgRenderer.getZoomTransform().k})`)
+        }
     }
 
     public getNodeStyle(node: Node): NodeStyle {
-        const nodeStyle = this.computeNodeStyle(node)
+        return this.resolveStyleValues(this.computeNodeStyle(node), node)
+    }
 
+    /**
+     * Collapse a merged style's resolvable channels against `node` and fill in the literal
+     * defaults. Separate from the merge so a focus drawing, which merges a different set of
+     * layers, resolves its values the same way.
+     */
+    private resolveStyleValues(nodeStyle: NodeStyle, node: Node): NodeStyle {
         if (typeof nodeStyle.shape === 'function') {
             nodeStyle.shape = nodeStyle.shape(node) as NodeShape
         }
@@ -359,7 +572,15 @@ export class NodeDrawer {
             .attr('color', style.textColor)
     }
 
-    private genericNodeRender(nodeSelection: Selection<SVGGElement, Node, null, undefined>, style: NodeStyle, node: Node): void {
+    /**
+     * Draw `style` into `nodeSelection`.
+     *
+     * `writesGeometry` is false for a focus drawing, which is transient and counter-scaled:
+     * its size in graph units means nothing to the layout, so it must not become the node's
+     * collision radius or its edge-anchoring border. It is a parameter rather than a flag on
+     * the drawer because several of the writes below land asynchronously.
+     */
+    private genericNodeRender(nodeSelection: Selection<SVGGElement, Node, null, undefined>, style: NodeStyle, node: Node, writesGeometry = true): void {
         style.size = style.size as number
         style.shape = style.shape as NodeShape
         style.text = style.text as string
@@ -406,7 +627,7 @@ export class NodeDrawer {
         switch (style.shape) {
             case 'circle':
                 renderedNode.attr('r', style.size)
-                node.setCircleRadius(style.size)
+                if (writesGeometry) node.setCircleRadius(style.size)
                 break
             case 'square':
                 renderedNode
@@ -414,7 +635,7 @@ export class NodeDrawer {
                     .attr('height', style.size * 2)
                     .attr('x', -style.size)
                     .attr('y', -style.size)
-                node.setCircleRadius(Math.SQRT1_2 * style.size)
+                if (writesGeometry) node.setCircleRadius(Math.SQRT1_2 * style.size)
                 break
             case 'triangle':
                 {
@@ -425,7 +646,7 @@ export class NodeDrawer {
                     ].map(p => p.join(',')).join(' ')
                     renderedNode
                         .attr('d', `M${trianglePath}Z`)
-                    node.setCircleRadius(style.size)
+                    if (writesGeometry) node.setCircleRadius(style.size)
                     break
                 }
             case 'none':
@@ -447,16 +668,16 @@ export class NodeDrawer {
                     }).map(p => p.join(',')).join(' ')
                     renderedNode
                         .attr('d', `M${hexPoints}Z`)
-                    node.setCircleRadius(style.size)
+                    if (writesGeometry) node.setCircleRadius(style.size)
                     break
                 }
             default:
                 if (this.isCustomShape(style.shape)) {
                     renderedNode.attr('d', style.shape.d)
-                    node.setCircleRadius(15) // Just guessing for now. Actual size is assigned on the next frame
+                    if (writesGeometry) node.setCircleRadius(15) // Just guessing for now. Actual size is assigned on the next frame
                 } else {
                     renderedNode.attr('r', style.size)
-                    node.setCircleRadius(style.size)
+                    if (writesGeometry) node.setCircleRadius(style.size)
                 }
                 break
         }
@@ -534,11 +755,13 @@ export class NodeDrawer {
                     const h = aspect >= 1 ? box / aspect : box
                     image.attr('x', -w / 2).attr('y', -h / 2).attr('width', w).attr('height', h)
                     renderedNode.attr('x', -w / 2).attr('y', -h / 2).attr('width', w).attr('height', h)
-                    node.setCircleRadius(0.5 * Math.max(w, h))
-                    node.setBorderBox(w, h) // after the radius, which clears it
-                    // The frame only takes its real proportions here; without this the rim
-                    // chrome stays pinned to the square guess and ends up over the picture.
-                    this.badgeDrawer.reanchor(node)
+                    if (writesGeometry) {
+                        node.setCircleRadius(0.5 * Math.max(w, h))
+                        node.setBorderBox(w, h) // after the radius, which clears it
+                        // The frame only takes its real proportions here; without this the rim
+                        // chrome stays pinned to the square guess and ends up over the picture.
+                        this.badgeDrawer.reanchor(node)
+                    }
                     if (this.rendererOptions.enableNodeExpansion && node.hasChildren()) {
                         this.addExpandCollapseIcons(nodeSelection, node)
                     }
@@ -574,7 +797,7 @@ export class NodeDrawer {
                 // card wider than `2 × size` is neither clipped nor anchored as a circle.
                 // The half-extent below is the shape still drawn behind it — nothing, for a
                 // shapeless node, whose card owns its geometry outright.
-                this.fitCardToContent(fo, node, shapeless ? 0 : style.size)
+                this.fitCardToContent(fo, node, shapeless ? 0 : style.size, writesGeometry)
             }
         }
         // Do not have text dislay be mutually exclusive with icons
@@ -891,6 +1114,39 @@ function clusterRimOffset(clusterRadius: number): number {
  * hands the node back to the normal styling pipeline. An empty string counts as nothing,
  * the same way `text: ''` and `badges: []` opt out of their channels.
  */
+/** How far a tier's rendered size falls below its threshold before it gives way. */
+const TIER_HYSTERESIS = 0.85
+
+/** No tier qualifies: the node draws at its base style, which is the floor. */
+export const BASE_TIER = -1
+
+/** What the per-zoom pass needs to re-pick a node's tier without re-running the style chain. */
+interface TierState {
+    tiers: NodeTier[]
+    footprint: number
+    index: number
+}
+
+/** The rendered footprint, in CSS pixels, at which `tier` takes over. */
+function tierThreshold(tier: NodeTier): number {
+    return tier.minRenderedSize ?? tier.width
+}
+
+/** Half the widest declared tier: the footprint a node gets for free by declaring tiers. */
+function widestTierHalfWidth(tiers: NodeTier[]): number {
+    return tiers.reduce((widest, tier) => Math.max(widest, tier.width), 0) / 2
+}
+
+/** Whether a node's footprint box reaches into the part of graph space that is on screen. */
+function intersectsBounds(node: Node, footprint: number, bounds: GraphBounds): boolean {
+    const x = node.x ?? 0
+    const y = node.y ?? 0
+    return x + footprint >= bounds.x
+        && x - footprint <= bounds.x + bounds.width
+        && y + footprint >= bounds.y
+        && y - footprint <= bounds.y + bounds.height
+}
+
 /**
  * Every channel the style chain resolves. The fold walks this list rather than the keys of
  * whatever layer it is handed: `defaultNodeStyle` leaves `svgIcon`, `imagePath`, `html` and
@@ -901,7 +1157,7 @@ const NODE_STYLE_KEYS = [
     'shape', 'strokeColor', 'strokeWidth', 'fontFamily', 'size', 'color', 'textColor',
     'textAnchorPosition', 'textHorizontalShift', 'textVerticalShift', 'textRotateDegree',
     'textTruncate', 'iconUnicode', 'iconClass', 'svgIcon', 'imagePath', 'imageFit', 'text',
-    'html', 'badges', 'layoutSize',
+    'html', 'badges', 'layoutSize', 'tiers', 'focusTier',
 ] as const satisfies readonly (keyof NodeStyle)[]
 
 /**
