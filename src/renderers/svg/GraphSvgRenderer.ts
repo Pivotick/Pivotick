@@ -25,6 +25,7 @@ const DEFAULT_RENDERER_OPTIONS = {
     type: 'svg',
     enableFocusMode: true,
     focusTierTrigger: 'both',
+    tierTransition: 160,
     enableNodeExpansion: true,
     beforeRender: () => {},
     zoomEnabled: true,
@@ -63,6 +64,7 @@ export class GraphSvgRenderer extends GraphRenderer {
     public zoomGroup: Selection<SVGGElement, unknown, null, undefined>
     private edgeGroup: Selection<SVGGElement, unknown, null, undefined>
     private nodeGroup: Selection<SVGGElement, unknown, null, undefined>
+    private tierGhostGroup!: Selection<SVGGElement, unknown, null, undefined>
     private noteGroup: Selection<SVGGElement, unknown, null, undefined>
     private noteEdgeGroup: Selection<SVGGElement, unknown, null, undefined>
     private selectionBoxGroup: Selection<SVGGElement, unknown, null, undefined>
@@ -135,6 +137,14 @@ export class GraphSvgRenderer extends GraphRenderer {
 
         this.selectionBoxGroup = this.svg.append('g').attr('class', 'selection-box')
         this.nodeGroup = this.zoomGroup.append('g').attr('class', 'nodes')
+
+        // Where a node's previous drawing waits out its cross-fade, directly above the nodes
+        // so it dissolves off the new one rather than from behind it. A layer of its own, not
+        // a child of the node group: a ghost inside the node would be wiped by the next
+        // redraw and would answer the queries the renderer runs against a node's children.
+        this.tierGhostGroup = this.zoomGroup.append('g')
+            .attr('class', 'pvt-tier-ghosts')
+            .style('pointer-events', 'none')
 
         // Above the nodes: an outline of what a forecast says is *coming back* would
         // be worthless drawn underneath what is already there.
@@ -283,20 +293,24 @@ export class GraphSvgRenderer extends GraphRenderer {
     }
 
     /**
-     * The zoom layer's extent, with any focus drawing left out of it.
+     * The zoom layer's extent, with any focus drawing and any fading ghost left out of it.
      *
      * A focus drawing is counter-scaled to hold its size on screen, so its size in graph
      * units is whatever the current zoom makes it. Measuring the graph with one open would
      * make "how big is the graph" depend on where the pointer is: a fit while a node at the
      * edge is hovered would zoom out to include a card that is about to disappear.
+     *
+     * A ghost is the same problem in time rather than space: it is a drawing the graph has
+     * already replaced, and framing it would size the view to something that is on its way
+     * out.
      */
     private measureZoomLayer(zoomLayerEl: SVGGElement): DOMRect {
-        const focus = zoomLayerEl.querySelectorAll<SVGGElement>('g.pvt-node-focus')
-        if (focus.length === 0) return this.growToFootprints(zoomLayerEl.getBBox())
+        const transient = zoomLayerEl.querySelectorAll<SVGGElement>('g.pvt-node-focus, g.pvt-tier-ghosts')
+        if (transient.length === 0) return this.growToFootprints(zoomLayerEl.getBBox())
 
-        focus.forEach(el => el.setAttribute('display', 'none'))
+        transient.forEach(el => el.setAttribute('display', 'none'))
         const bounds = zoomLayerEl.getBBox()
-        focus.forEach(el => el.removeAttribute('display'))
+        transient.forEach(el => el.removeAttribute('display'))
         return this.growToFootprints(bounds)
     }
 
@@ -343,6 +357,13 @@ export class GraphSvgRenderer extends GraphRenderer {
         if (bounds.width === 0 || bounds.height === 0) return null
 
         return { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height }
+    }
+
+    /**
+     * The layer a node's previous drawing fades out on, above the nodes themselves.
+     */
+    public getTierGhostLayer(): SVGGElement | null {
+        return this.tierGhostGroup?.node() ?? null
     }
 
     /**

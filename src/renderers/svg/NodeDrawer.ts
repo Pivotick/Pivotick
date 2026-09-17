@@ -47,6 +47,8 @@ export class NodeDrawer {
     private tiersDeclared = false
     /** Pending frame for the coalesced tier pass, if any. */
     private tierRefreshFrame: number | null = null
+    /** The drawing each node is currently fading out of, while it is still fading. */
+    private tierGhosts = new WeakMap<Node, SVGGElement>()
     /** The node under the pointer, whatever the focus trigger does with it. */
     private hoveredNode: Node | null = null
     /** The node currently showing its focus drawing. There is only ever one. */
@@ -415,6 +417,67 @@ export class NodeDrawer {
         })
     }
 
+    /**
+     * How long a drawing takes to cross-fade into the next one, in milliseconds.
+     *
+     * Zero whenever the viewer has asked for less motion: a swap that every node performs at
+     * once is exactly the kind of movement that setting exists for.
+     */
+    private transitionMs(): number {
+        const declared = this.rendererOptions.tierTransition ?? 0
+        if (declared <= 0) return 0
+        return PREFERS_REDUCED_MOTION?.matches ? 0 : declared
+    }
+
+    /**
+     * Lift a node's current drawing onto the ghost layer, so the redraw that follows fills an
+     * empty node group and the two can be faded past each other.
+     *
+     * The ghost carries a copy of the node's transform rather than tracking it. It lives for
+     * one fade, and a node that moves within it moves by less than the fade hides.
+     */
+    private liftToGhost(node: Node): SVGGElement | null {
+        const element = node.getGraphElement()
+        const layer = this.graphSvgRenderer.getTierGhostLayer()
+        if (!element || !layer || !element.firstChild) return null
+
+        // A crossing landing while the last one is still fading: the older ghost goes now
+        // rather than stacking up. Zooming through three tiers in one gesture is one wheel
+        // spin, so this is the ordinary case, not the corner one.
+        this.tierGhosts.get(node)?.remove()
+
+        const ghost = document.createElementNS('http://www.w3.org/2000/svg', 'g')
+        const transform = element.getAttribute('transform')
+        if (transform) ghost.setAttribute('transform', transform)
+        // The focus drawing is redrawn by the render that follows, so a ghost of it would be
+        // a second card sitting over the real one.
+        element.querySelector(':scope > g.pvt-node-focus')?.remove()
+        // One call rather than a `firstChild` loop: the whole drawing moves in a single DOM
+        // operation, and the loop's repeated reads of a live child list are what a swap of a
+        // few hundred nodes pays for.
+        ghost.append(...element.childNodes)
+        layer.append(ghost)
+        this.tierGhosts.set(node, ghost)
+        return ghost
+    }
+
+    /** Drop `node`'s ghost once its fade is over, unless a later crossing already replaced it. */
+    private retireGhost(node: Node, ghost: SVGGElement): void {
+        ghost.remove()
+        if (this.tierGhosts.get(node) === ghost) this.tierGhosts.delete(node)
+    }
+
+    /** Fade `element` between two opacities, and hand back the animation. */
+    private fade(element: Element, from: number, to: number, ms: number): Animation {
+        // `fill: 'backwards'` and not `'both'`: once the fade is over the element goes back to
+        // whatever opacity the stylesheet gives it, so a node dimmed by a highlight or a
+        // filter is not pinned at 1 by an animation that has finished.
+        return element.animate(
+            [{ opacity: from }, { opacity: to }],
+            { duration: ms, easing: 'ease-out', fill: 'backwards' },
+        )
+    }
+
     private applyTierChanges(): void {
         const visible = this.graphSvgRenderer.getVisibleBounds()
         const changed: Node[] = []
@@ -435,9 +498,29 @@ export class NodeDrawer {
         }
         if (!changed.length) return
 
+        // Before the redraw, because the redraw is what wipes the drawing being faded out.
+        const ms = this.transitionMs()
+        const ghosts: Array<[Node, SVGGElement]> = []
+        if (ms > 0) {
+            for (const node of changed) {
+                const ghost = this.liftToGhost(node)
+                if (ghost) ghosts.push([node, ghost])
+            }
+        }
+
         // One update for the whole crossing: every node shares a footprint, so they cross
         // together, and walking the graph per node would cost more than the redraw.
         this.graphSvgRenderer.update(false)
+
+        if (ms > 0) {
+            for (const node of changed) {
+                const element = node.getGraphElement()
+                if (element) this.fade(element, 0, 1, ms)
+            }
+            for (const [node, ghost] of ghosts) {
+                this.fade(ghost, 1, 0, ms).onfinish = () => this.retireGhost(node, ghost)
+            }
+        }
         // The new drawing has a new radius, so the edges landing on these nodes now stop in
         // the wrong place. On a settled graph nothing ticks to correct them.
         this.graphSvgRenderer.nextTickFor(changed)
@@ -478,7 +561,9 @@ export class NodeDrawer {
 
     private setFocusedNode(node: Node | null): void {
         if (this.focusedNode === node) return
-        if (this.focusedNode) this.clearFocusTier(this.focusedNode)
+        // Faded out, not cut: this is the node losing its card, where the swap is visible
+        // because the pointer is on it.
+        if (this.focusedNode) this.clearFocusTier(this.focusedNode, this.transitionMs())
         this.focusedNode = node
         if (node) this.drawFocusTier(node)
     }
@@ -510,17 +595,39 @@ export class NodeDrawer {
             .attr('transform', `scale(${1 / this.graphSvgRenderer.getZoomTransform().k})`)
 
         this.genericNodeRender(wrapper as Selection<SVGGElement, Node, null, undefined>, style, node, false)
+
+        const ms = this.transitionMs()
+        const wrapperEl = wrapper.node()
+        if (ms > 0 && wrapperEl) this.fade(wrapperEl, 0, 1, ms)
     }
 
-    private clearFocusTier(node: Node): void {
-        node.getGraphElement()?.querySelector(':scope > g.pvt-node-focus')?.remove()
+    /**
+     * Take `node`'s focus drawing away, over `ms` milliseconds or at once.
+     *
+     * A drawing on its way out stops taking the pointer: it is painted over the node that is
+     * about to be hovered instead, and a card that swallows the gesture that dismissed it
+     * makes the hover feel stuck.
+     */
+    private clearFocusTier(node: Node, ms = 0): void {
+        // All of them, not the first: a node re-focused while its last card is still fading
+        // out has two, and leaving one behind would stack cards on the next hover.
+        const wrappers = node.getGraphElement()?.querySelectorAll(':scope > g.pvt-node-focus')
+        wrappers?.forEach(wrapper => {
+            if (ms <= 0) return wrapper.remove()
+            // Marked as well as faded. A card on its way out is no longer the node's focus
+            // drawing — it does not take the pointer, and nothing asking what a node is
+            // currently showing should be told about it.
+            wrapper.classList.add('pvt-node-focus-leaving')
+            wrapper.setAttribute('pointer-events', 'none')
+            this.fade(wrapper, 1, 0, ms).onfinish = () => wrapper.remove()
+        })
     }
 
     /** Hold the focus drawing's screen size across a zoom. One transform write, at most. */
     private rescaleFocusTier(): void {
         if (!this.focusedNode) return
         const wrapper = this.focusedNode.getGraphElement()
-            ?.querySelector<SVGGElement>(':scope > g.pvt-node-focus')
+            ?.querySelector<SVGGElement>(':scope > g.pvt-node-focus:not(.pvt-node-focus-leaving)')
         if (wrapper) {
             wrapper.setAttribute('transform', `scale(${1 / this.graphSvgRenderer.getZoomTransform().k})`)
         }
@@ -1142,6 +1249,14 @@ function clusterRimOffset(clusterRadius: number): number {
  * the same way `text: ''` and `badges: []` opt out of their channels.
  */
 /** How far a tier's rendered size falls below its threshold before it gives way. */
+/**
+ * Whether the viewer has asked for less motion. Queried once: it is a user setting, and
+ * matching a media query per node per swap would be a lookup inside the hot loop.
+ */
+const PREFERS_REDUCED_MOTION = typeof matchMedia === 'function'
+    ? matchMedia('(prefers-reduced-motion: reduce)')
+    : null
+
 const TIER_HYSTERESIS = 0.85
 
 /** No tier qualifies: the node draws at its base style, which is the floor. */

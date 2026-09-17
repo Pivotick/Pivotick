@@ -217,6 +217,27 @@ export interface GraphRendererOptions {
      */
     focusTierTrigger?: 'both' | 'hover' | 'selection' | 'off',
     /**
+     * How long, in milliseconds, a node takes to cross-fade from one drawing to the next.
+     * `0` replaces the drawing in a single frame, which is what a graph declaring no
+     * transition does.
+     *
+     * The outgoing drawing is kept alive on a layer of its own and the two fade past each
+     * other, so a node is never absent mid-swap — only briefly softer where they overlap.
+     * It covers both the zoom-driven {@link NodeStyle.tiers} and the
+     * {@link NodeStyle.focusTier} drawing.
+     *
+     * Every node on screen crosses a threshold at the same moment, so this starts as many
+     * fades as there are nodes changing. `prefers-reduced-motion` turns it off.
+     *
+     * Measured on 210 nodes each holding a 140x44 card: the fade itself costs nothing — the
+     * canvas holds 60fps for its whole length — but keeping that many outgoing cards alive
+     * for an instant adds about 26ms to the one frame the crossing already spends. Set it to
+     * `0` on a graph where that frame matters more than the transition.
+     *
+     * @default 160
+     */
+    tierTransition?: number,
+    /**
      * Callback executed during the init phase, before the first rendering
      * @param graph The Graph instance
      */
