@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write # npm provenance
 
 jobs:
   release:
@@ -21,6 +22,16 @@ jobs:
         with:
           node-version: 24
           cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - name: Check the tag matches the package version
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          version="$(npm pkg get version | tr -d '"')"
+          if [ "$tag" != "$version" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match package.json version $version"
+            exit 1
+          fi
 
       - name: Install
         run: npm ci
@@ -37,3 +48,10 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: pivotick-dist.zip
+
+      # Last: publishing a version cannot be undone, so everything that can be
+      # re-run on a failed release runs before it.
+      - name: Publish to npm
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
