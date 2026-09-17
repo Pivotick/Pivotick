@@ -292,12 +292,41 @@ export class GraphSvgRenderer extends GraphRenderer {
      */
     private measureZoomLayer(zoomLayerEl: SVGGElement): DOMRect {
         const focus = zoomLayerEl.querySelectorAll<SVGGElement>('g.pvt-node-focus')
-        if (focus.length === 0) return zoomLayerEl.getBBox()
+        if (focus.length === 0) return this.growToFootprints(zoomLayerEl.getBBox())
 
         focus.forEach(el => el.setAttribute('display', 'none'))
         const bounds = zoomLayerEl.getBBox()
         focus.forEach(el => el.removeAttribute('display'))
-        return bounds
+        return this.growToFootprints(bounds)
+    }
+
+    /**
+     * Grow `bounds` to cover every node's declared footprint.
+     *
+     * A node that declares one draws smaller than it at most zooms, so a fit measuring only
+     * what is drawn would zoom in — which changes the tier, which changes what is drawn, and
+     * the view it settles on is not the one it measured. The footprint does not move with the
+     * drawing, so framing that instead makes the fit answer the same however the graph is
+     * currently drawn.
+     */
+    private growToFootprints(bounds: DOMRect): DOMRect {
+        let left = bounds.x, top = bounds.y
+        let right = bounds.x + bounds.width, bottom = bounds.y + bounds.height
+        let grown = false
+
+        for (const node of this.graph.getMutableNodes()) {
+            const footprint = node.getLayoutSize()
+            if (footprint === undefined || !node.visible) continue
+            const x = node.x ?? 0
+            const y = node.y ?? 0
+            left = Math.min(left, x - footprint)
+            top = Math.min(top, y - footprint)
+            right = Math.max(right, x + footprint)
+            bottom = Math.max(bottom, y + footprint)
+            grown = true
+        }
+        if (!grown) return bounds
+        return new DOMRect(left, top, right - left, bottom - top)
     }
 
     /**

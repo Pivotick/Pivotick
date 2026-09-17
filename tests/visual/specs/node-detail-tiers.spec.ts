@@ -99,6 +99,26 @@ test.describe('zoom-driven node detail', () => {
         expect(await tierOf(page, 'late')).toBe('1')
     })
 
+    test('a fit frames the footprints, so it lands the same at any tier', async ({ page }) => {
+        await harness(page, 'loadWithTiers')
+        await waitForViewSettled(page)
+
+        await harness(page, 'setZoomScale', DOT_ZOOM)
+        expect(await tierOf(page, 'a')).toBe('0')
+        await harness(page, 'fit')
+        await waitForViewSettled(page)
+        const fromDots = await harness(page, 'zoomScale')
+
+        await harness(page, 'setZoomScale', CHIP_ZOOM)
+        expect(await tierOf(page, 'a')).toBe('1')
+        await harness(page, 'fit')
+        await waitForViewSettled(page)
+
+        // Fitting from a canvas of dots and from a canvas of chips has to answer the same,
+        // or the fit's own zoom change would move the ground it measured.
+        expect(await harness(page, 'zoomScale')).toBeCloseTo(fromDots, 5)
+    })
+
     test('a graph declaring no tiers carries no tier state and keeps its own spacing', async ({ page }) => {
         await harness(page, 'loadWithTiers', { tiers: false, focus: false })
         await waitForViewSettled(page)
@@ -118,12 +138,15 @@ test.describe('focus tier', () => {
         await harness(page, 'loadWithTiers')
         await waitForViewSettled(page)
 
+        // A round zoom, so the counter-scale is exact and the card's box is not a rounding
+        // of one: the fit lands on whatever scale the content happens to imply.
+        await harness(page, 'setZoomScale', 1)
         await nodeEl(page, 'a').hover()
         await expectCardBox(page, 'a')
 
-        // Zooming moves the node out from under the pointer, which is a real mouseleave.
-        await harness(page, 'setZoomScale', CHIP_ZOOM)
-        expect(await harness(page, 'hasFocusCard', 'a')).toBe(false)
+        // And is put away again on the way out.
+        await page.mouse.move(2, 2)
+        await expect.poll(() => harness(page, 'hasFocusCard', 'a')).toBe(false)
     })
 
     test('the card holds its size in CSS pixels at any zoom, and across a tier swap', async ({ page }) => {
