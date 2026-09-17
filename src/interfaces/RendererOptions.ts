@@ -236,7 +236,7 @@ export interface GraphRendererOptions {
      *
      * @default 160
      */
-    tierTransition?: number,
+    detailTransition?: number,
     /**
      * Callback executed during the init phase, before the first rendering
      * @param graph The Graph instance

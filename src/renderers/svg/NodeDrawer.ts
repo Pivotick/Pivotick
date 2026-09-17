@@ -424,7 +424,7 @@ export class NodeDrawer {
      * once is exactly the kind of movement that setting exists for.
      */
     private transitionMs(): number {
-        const declared = this.rendererOptions.tierTransition ?? 0
+        const declared = this.rendererOptions.detailTransition ?? 0
         if (declared <= 0) return 0
         return PREFERS_REDUCED_MOTION?.matches ? 0 : declared
     }
@@ -438,7 +438,7 @@ export class NodeDrawer {
      */
     private liftToGhost(node: Node): SVGGElement | null {
         const element = node.getGraphElement()
-        const layer = this.graphSvgRenderer.getTierGhostLayer()
+        const layer = this.graphSvgRenderer.getDetailGhostLayer()
         if (!element || !layer || !element.firstChild) return null
 
         // A crossing landing while the last one is still fading: the older ghost goes now

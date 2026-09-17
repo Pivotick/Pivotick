@@ -25,7 +25,7 @@ const DEFAULT_RENDERER_OPTIONS = {
     type: 'svg',
     enableFocusMode: true,
     focusTierTrigger: 'both',
-    tierTransition: 160,
+    detailTransition: 160,
     enableNodeExpansion: true,
     beforeRender: () => {},
     zoomEnabled: true,
@@ -64,7 +64,7 @@ export class GraphSvgRenderer extends GraphRenderer {
     public zoomGroup: Selection<SVGGElement, unknown, null, undefined>
     private edgeGroup: Selection<SVGGElement, unknown, null, undefined>
     private nodeGroup: Selection<SVGGElement, unknown, null, undefined>
-    private tierGhostGroup!: Selection<SVGGElement, unknown, null, undefined>
+    private detailGhostGroup!: Selection<SVGGElement, unknown, null, undefined>
     private noteGroup: Selection<SVGGElement, unknown, null, undefined>
     private noteEdgeGroup: Selection<SVGGElement, unknown, null, undefined>
     private selectionBoxGroup: Selection<SVGGElement, unknown, null, undefined>
@@ -142,8 +142,8 @@ export class GraphSvgRenderer extends GraphRenderer {
         // so it dissolves off the new one rather than from behind it. A layer of its own, not
         // a child of the node group: a ghost inside the node would be wiped by the next
         // redraw and would answer the queries the renderer runs against a node's children.
-        this.tierGhostGroup = this.zoomGroup.append('g')
-            .attr('class', 'pvt-tier-ghosts')
+        this.detailGhostGroup = this.zoomGroup.append('g')
+            .attr('class', 'pvt-detail-ghosts')
             .style('pointer-events', 'none')
 
         // Above the nodes: an outline of what a forecast says is *coming back* would
@@ -305,7 +305,7 @@ export class GraphSvgRenderer extends GraphRenderer {
      * out.
      */
     private measureZoomLayer(zoomLayerEl: SVGGElement): DOMRect {
-        const transient = zoomLayerEl.querySelectorAll<SVGGElement>('g.pvt-node-focus, g.pvt-tier-ghosts')
+        const transient = zoomLayerEl.querySelectorAll<SVGGElement>('g.pvt-node-focus, g.pvt-detail-ghosts')
         if (transient.length === 0) return this.growToFootprints(zoomLayerEl.getBBox())
 
         transient.forEach(el => el.setAttribute('display', 'none'))
@@ -362,8 +362,8 @@ export class GraphSvgRenderer extends GraphRenderer {
     /**
      * The layer a node's previous drawing fades out on, above the nodes themselves.
      */
-    public getTierGhostLayer(): SVGGElement | null {
-        return this.tierGhostGroup?.node() ?? null
+    public getDetailGhostLayer(): SVGGElement | null {
+        return this.detailGhostGroup?.node() ?? null
     }
 
     /**

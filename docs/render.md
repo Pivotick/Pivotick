@@ -380,14 +380,14 @@ A node cross-fades from one drawing to the next rather than cutting to it. The o
 drawing is held on a layer of its own and the two fade past each other, so a node is never
 absent mid-swap, only briefly softer where they overlap.
 
-`render.tierTransition` is how long that takes, in milliseconds. It defaults to `160` and
+`render.detailTransition` is how long that takes, in milliseconds. It defaults to `160` and
 covers both zoom crossings and the focus drawing. Set it to `0` to replace the drawing in a
 single frame:
 
 ```ts
 const options = {
     render: {
-        tierTransition: 0,
+        detailTransition: 0,
         defaultNodeStyle: { tiers: [/* … */] },
     },
 }

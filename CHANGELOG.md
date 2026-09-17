@@ -28,7 +28,7 @@ the drawing, so nothing moves when one gives way to the next.
   Tooltips are independent and still fire.
 - **A node cross-fades from one drawing to the next.** The outgoing drawing waits out the fade
   on a layer of its own while the two pass through each other, so a node is never absent
-  mid-swap. `render.tierTransition` is the length in milliseconds, `160` by default and `0` for
+  mid-swap. `render.detailTransition` is the length in milliseconds, `160` by default and `0` for
   a single-frame replacement. `prefers-reduced-motion` turns it off whatever the option says.
 - **A tier can take a channel away, not only override it.** Set one to `null` in a tier and it
   is cleared, which `undefined` cannot express: it means "I am not naming this channel", which

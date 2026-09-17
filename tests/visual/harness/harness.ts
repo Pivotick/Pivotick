@@ -1430,8 +1430,8 @@ export interface HarnessApi {
     /** What a node actually drew: its card, its icon, or both. */
     nodeDrawing(id: string): { card: boolean; icon: boolean }
     /** How many outgoing tier drawings are still fading. */
-    tierGhostCount(): number
-    settleTierFade(maxFrames?: number): Promise<void>
+    detailGhostCount(): number
+    settleDetailFade(maxFrames?: number): Promise<void>
     /** Current zoom scale. */
     zoomScale(): number
     /**
@@ -3020,7 +3020,7 @@ class Harness implements HarnessApi {
         // A crossing leaves the previous drawing on screen for the length of the cross-fade,
         // so anything screenshotting or counting elements straight after a zoom would catch
         // two drawings. Pass `false` to observe that state deliberately.
-        if (settleFade) await this.settleTierFade()
+        if (settleFade) await this.settleDetailFade()
     }
 
     /**
@@ -3041,13 +3041,13 @@ class Harness implements HarnessApi {
     }
 
     /** How many outgoing drawings are still fading. */
-    tierGhostCount(): number {
-        return document.querySelectorAll('g.pvt-tier-ghosts > g').length
+    detailGhostCount(): number {
+        return document.querySelectorAll('g.pvt-detail-ghosts > g').length
     }
 
     /** Wait until no drawing is mid-fade, bounded so a stuck ghost fails the test not the run. */
-    async settleTierFade(maxFrames = 90): Promise<void> {
-        for (let i = 0; i < maxFrames && this.tierGhostCount() > 0; i++) await this.frames(1)
+    async settleDetailFade(maxFrames = 90): Promise<void> {
+        for (let i = 0; i < maxFrames && this.detailGhostCount() > 0; i++) await this.frames(1)
     }
 
     zoomScale(): number {
