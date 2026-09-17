@@ -363,12 +363,25 @@ export interface NodeBadge {
     onClick?: (event: PointerEvent, node: Node, badge: NodeBadge) => void
 }
 
+/** A style layer whose channels may also be set to `null`, meaning "draw this one not at all". */
+type Clearable<T> = { [K in keyof T]: T[K] | null }
+
 /**
  * What a tier is allowed to change: the drawing, never the chain or the geometry. Omitting
  * `styleCb` and `tiers` keeps the type from recursing; omitting `layoutSize` is what makes
  * a tier swap free of any effect on the layout.
+ *
+ * A channel set to `null` is **taken away** rather than left to the style underneath, which
+ * `undefined` cannot express — a tier that draws a card has to be able to drop the base's
+ * icon, and omitting `svgIcon` only means "I am not naming it", so the base's would survive
+ * and outrank the card. This is the one layer with that power: everywhere else in the chain
+ * `null` still falls through, because a `styleCb` handing back a null straight out of node
+ * data is an ordinary shape and has always meant "use the default".
+ *
+ * Clearing `shape` is not how a node is made shapeless — use `shape: 'none'`, which says the
+ * content is the node.
  */
-export type NodeTierStyle = Omit<Partial<NodeStyle>, 'styleCb' | 'tiers' | 'focusTier' | 'layoutSize'>
+export type NodeTierStyle = Clearable<Omit<Partial<NodeStyle>, 'styleCb' | 'tiers' | 'focusTier' | 'layoutSize'>>
 
 /** One drawing of a node, and the size at which it takes over. See {@link NodeStyle.tiers}. */
 export interface NodeTier {

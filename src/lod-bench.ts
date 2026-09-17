@@ -115,12 +115,14 @@ const graph = new Pivotick(container, data as never, {
                 size: 16,
                 color: '#97CC04',
                 strokeColor: '#4d6b00',
-                // No `svgIcon` on the base on purpose: the style fold is `??`, so a tier can
-                // override a channel but cannot unset one, and a glyph left on the base
-                // outranks the card the tier asks for.
+                svgIcon: GLYPH,
                 // One tier, 140x44, so the threshold sits at zoom 1 and a run can cross it in
-                // either direction by zooming either side.
-                tiers: [{ width: 140, height: 44, style: { shape: 'none', html: buildCard } }],
+                // either direction by zooming either side. It clears the glyph, which it has
+                // to: an inherited icon outranks the card.
+                tiers: [{
+                    width: 140, height: 44,
+                    style: { shape: 'none', html: buildCard, svgIcon: null },
+                }],
             }
             : {
                 shape: () => (tier === 'card' ? 'none' : 'circle'),

@@ -9,7 +9,7 @@ import { defaultLabelStyle } from '../../styles/defaults'
 import { resolveIcon, tryResolveBoolean, tryResolveNumber, tryResolveString } from '../../utils/Getters'
 import { parseSvgIconMarkup } from '../../utils/SvgSanitizer'
 import { hasAllowedScheme, SAFE_IMAGE_SCHEMES } from '../../utils/urlSafety'
-import type { CustomNodeShape, GraphRendererOptions, ImageFit, NodeShape, NodeStyle, NodeTier } from '../../interfaces/RendererOptions'
+import type { CustomNodeShape, GraphRendererOptions, ImageFit, NodeShape, NodeStyle, NodeTier, NodeTierStyle } from '../../interfaces/RendererOptions'
 import { ClusterDrawer } from './ClusterDrawer'
 import { BadgeDrawer, nodeRimAnchor, resolveBadges, RIM_PADDING } from './BadgeDrawer'
 import { forceConstrainParent } from '../../plugins/d3Forces/ForceConstrainParent'
@@ -361,7 +361,7 @@ export class NodeDrawer {
         const footprint = base.layoutSize as number
         const index = this.pickTier(node, tiers, footprint)
         this.tierState.set(node, { tiers, footprint, index })
-        return index === BASE_TIER ? base : mergeStyleLayers([tiers[index].style, base])
+        return index === BASE_TIER ? base : mergeTierLayer(tiers[index].style, base)
     }
 
     /**
@@ -574,7 +574,7 @@ export class NodeDrawer {
         // would otherwise leak into a card that never asked for it.
         const base = this.computeBaseStyle(node)
         if (!base.focusTier) return null
-        return this.resolveStyleValues(mergeStyleLayers([base.focusTier as Partial<NodeStyle>, base]), node)
+        return this.resolveStyleValues(mergeTierLayer(base.focusTier, base), node)
     }
 
     private drawFocusTier(node: Node): void {
@@ -1311,14 +1311,20 @@ const NODE_STYLE_KEYS = [
  * layers, nothing else.
  *
  * `null` falls through like `undefined`, matching the `??` chains this replaces: a `styleCb`
- * returning an explicit `undefined` for a channel has always meant "I am not naming this one".
+ * returning an explicit `undefined` for a channel has always meant "I am not naming this one",
+ * and one handing back a null straight out of node data has always meant the same.
+ *
+ * `firstLayerClears` is the one exception, for {@link mergeTierLayer}.
  */
-function mergeStyleLayers(layers: Partial<NodeStyle>[]): NodeStyle {
+function mergeStyleLayers(layers: Partial<NodeStyle>[], firstLayerClears = false): NodeStyle {
     const merged: Record<string, unknown> = {}
     for (const key of NODE_STYLE_KEYS) {
         let resolved: unknown = undefined
-        for (const layer of layers) {
-            const value = layer?.[key]
+        for (let i = 0; i < layers.length; i++) {
+            const value = layers[i]?.[key]
+            // A clearing layer's `null` ends the search with nothing, where every other
+            // layer's `null` would hand the channel to the one below.
+            if (value === null && i === 0 && firstLayerClears) break
             if (value !== undefined && value !== null) {
                 resolved = value
                 break
@@ -1327,6 +1333,17 @@ function mergeStyleLayers(layers: Partial<NodeStyle>[]): NodeStyle {
         merged[key] = resolved
     }
     return merged as unknown as NodeStyle
+}
+
+/**
+ * Fold a tier's drawing over the style it refines.
+ *
+ * A tier may set a channel to `null` to take it away, which the rest of the chain cannot do.
+ * Without it a base `svgIcon` survives into a tier that asked for an `html` card, outranks the
+ * card and leaves the node drawn as an icon — with nothing in the config to say why.
+ */
+function mergeTierLayer(tier: NodeTierStyle, base: NodeStyle): NodeStyle {
+    return mergeStyleLayers([tier as Partial<NodeStyle>, base], true)
 }
 
 function cardContent(rendered: unknown): HTMLElement | string | undefined {
