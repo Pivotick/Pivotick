@@ -1,6 +1,6 @@
 {
   "name": "pivotick",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "A hackable TypeScript graph visualization library built on D3 force simulations.",
   "keywords": [
     "graph",

@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.0.1 — 2026-09-17
 
 - **The library is published on npm.** `npm install pivotick` now pulls it from the public
   registry. Pushing a `v*.*.*` tag builds the library, attaches the dist archive to the GitHub
