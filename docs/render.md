@@ -344,6 +344,33 @@ A focus card does not replace the tooltip. The two are independent, and a toolti
 carry something the card does not.
 :::
 
+### The swap itself {#tier-transition}
+
+A node cross-fades from one drawing to the next rather than cutting to it. The outgoing
+drawing is held on a layer of its own and the two fade past each other, so a node is never
+absent mid-swap, only briefly softer where they overlap.
+
+`render.tierTransition` is how long that takes, in milliseconds. It defaults to `160` and
+covers both zoom crossings and the focus drawing. Set it to `0` to replace the drawing in a
+single frame:
+
+```ts
+const options = {
+    render: {
+        tierTransition: 0,
+        defaultNodeStyle: { tiers: [/* … */] },
+    },
+}
+```
+
+Every node on screen crosses at the same moment, so a crossing starts as many fades as
+there are nodes changing. Measured on 210 nodes each holding a 140×44 card, the fade runs
+at 60fps for its whole length; what it costs is about 26ms on the single frame the crossing
+already spends, and that figure does not grow with the duration. Turn it off on a graph
+where that frame matters more than the transition.
+
+`prefers-reduced-motion` turns it off on its own, whatever the option says.
+
 ## API
 
 Pivotick exposes a renderer controller that lets you interact directly with the rendering engine.

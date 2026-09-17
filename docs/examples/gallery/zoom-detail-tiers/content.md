@@ -35,6 +35,9 @@ Things worth provoking:
   node shares a footprint and therefore a threshold. Nothing moves while it happens: the
   box each node reserves in the layout is the widest tier's, and the drawing changes inside
   it.
+- **Scroll slowly through a threshold.** The drawings cross-fade rather than cutting, so
+  nothing blinks: the outgoing one is held on screen while the new one comes up underneath
+  it. `render.tierTransition` sets how long that takes, and `0` puts the hard cut back.
 - **Park the zoom right on a threshold and nudge it.** A tier that has engaged holds
   until the rendered size falls to 85% of what engaged it, so the picture settles instead
   of flickering.
