@@ -1407,7 +1407,12 @@ export interface HarnessApi {
      * Zoom to an exact scale about the canvas centre, with no animation — a threshold is a
      * number, so the tests that straddle one need to land on a chosen `k`, not near it.
      */
-    setZoomScale(scale: number): Promise<void>
+    setZoomScale(scale: number, settleFade?: boolean): Promise<void>
+    /** How many focus cards are on screen only because they are still fading out. */
+    leavingFocusCards(): number
+    /** How many outgoing tier drawings are still fading. */
+    tierGhostCount(): number
+    settleTierFade(maxFrames?: number): Promise<void>
     /** Current zoom scale. */
     zoomScale(): number
     /**
@@ -2982,7 +2987,7 @@ class Harness implements HarnessApi {
         await this.load('basic', mergeOptions({ render }, overrides))
     }
 
-    async setZoomScale(scale: number): Promise<void> {
+    async setZoomScale(scale: number, settleFade = true): Promise<void> {
         const renderer = this.g.renderer as unknown as {
             getZoomBehavior(): { scaleTo: (selection: unknown, k: number) => void }
             getCanvasSelection(): unknown
@@ -2990,6 +2995,25 @@ class Harness implements HarnessApi {
         renderer.getZoomBehavior().scaleTo(renderer.getCanvasSelection(), scale)
         // The tier pass is coalesced to a frame, and the redraw it triggers takes another.
         await this.frames(3)
+        // A crossing leaves the previous drawing on screen for the length of the cross-fade,
+        // so anything screenshotting or counting elements straight after a zoom would catch
+        // two drawings. Pass `false` to observe that state deliberately.
+        if (settleFade) await this.settleTierFade()
+    }
+
+    /** How many focus cards are on screen only because they are still fading out. */
+    leavingFocusCards(): number {
+        return document.querySelectorAll('g.pvt-node-focus.pvt-node-focus-leaving').length
+    }
+
+    /** How many outgoing drawings are still fading. */
+    tierGhostCount(): number {
+        return document.querySelectorAll('g.pvt-tier-ghosts > g').length
+    }
+
+    /** Wait until no drawing is mid-fade, bounded so a stuck ghost fails the test not the run. */
+    async settleTierFade(maxFrames = 90): Promise<void> {
+        for (let i = 0; i < maxFrames && this.tierGhostCount() > 0; i++) await this.frames(1)
     }
 
     zoomScale(): number {
@@ -3032,7 +3056,7 @@ class Harness implements HarnessApi {
     }
 
     focusCardBox(id: string): { width: number; height: number } | null {
-        const card = this.nodeElement(id)?.querySelector<SVGGElement>(':scope > g.pvt-node-focus')
+        const card = this.nodeElement(id)?.querySelector<SVGGElement>(':scope > g.pvt-node-focus:not(.pvt-node-focus-leaving)')
         if (!card) return null
         // A client rect, not a bbox: the point of the counter-scale is that the card measures
         // the same in CSS pixels however far out the graph is zoomed.
@@ -3041,7 +3065,7 @@ class Harness implements HarnessApi {
     }
 
     hasFocusCard(id: string): boolean {
-        return !!this.nodeElement(id)?.querySelector(':scope > g.pvt-node-focus')
+        return !!this.nodeElement(id)?.querySelector(':scope > g.pvt-node-focus:not(.pvt-node-focus-leaving)')
     }
 
     private nodeElement(id: string): SVGGElement | null {

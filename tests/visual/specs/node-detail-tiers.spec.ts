@@ -255,3 +255,78 @@ test.describe('focus tier', () => {
         expect(await harness(page, 'zoomScale')).toBeCloseTo(withoutCard, 5)
     })
 })
+
+test.describe('tier cross-fade', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoHarness(page)
+    })
+
+    test('a crossing cross-fades: both drawings are on screen, then only the new one', async ({ page }) => {
+        await harness(page, 'loadWithTiers')
+        await waitForViewSettled(page)
+        await harness(page, 'setZoomScale', CHIP_ZOOM)
+
+        // `false` stops the harness waiting the fade out, so the swap is caught mid-flight.
+        await harness(page, 'setZoomScale', DOT_ZOOM, false)
+        expect(await harness(page, 'tierGhostCount')).toBeGreaterThan(0)
+
+        // The node itself has already moved on; the chip still on screen is the outgoing copy.
+        expect(await tierOf(page, 'a')).toBe('0')
+
+        await expect.poll(() => harness(page, 'tierGhostCount')).toBe(0)
+    })
+
+    test('no ghost outlives its fade, however fast the zoom is driven', async ({ page }) => {
+        await harness(page, 'loadWithTiers')
+        await waitForViewSettled(page)
+
+        // Crossings back to back, each landing while the last is still fading.
+        for (const scale of [CHIP_ZOOM, DOT_ZOOM, CHIP_ZOOM, DOT_ZOOM]) {
+            await harness(page, 'setZoomScale', scale, false)
+        }
+
+        await expect.poll(() => harness(page, 'tierGhostCount')).toBe(0)
+        expect(await tierOf(page, 'a')).toBe('0')
+    })
+
+    test('tierTransition 0 swaps in one frame, with nothing left behind', async ({ page }) => {
+        await harness(page, 'loadWithTiers', {}, { render: { tierTransition: 0 } })
+        await waitForViewSettled(page)
+        await harness(page, 'setZoomScale', CHIP_ZOOM)
+
+        await harness(page, 'setZoomScale', DOT_ZOOM, false)
+        expect(await harness(page, 'tierGhostCount')).toBe(0)
+        expect(await tierOf(page, 'a')).toBe('0')
+    })
+
+    test('a node still holds its place across a cross-faded swap', async ({ page }) => {
+        await harness(page, 'loadWithTiers')
+        await waitForViewSettled(page)
+        await harness(page, 'setZoomScale', CHIP_ZOOM)
+
+        const before = await harness(page, 'nodePositions')
+        await harness(page, 'setZoomScale', DOT_ZOOM)
+        await page.waitForTimeout(400)
+
+        // The ghost is a copy on a layer of its own: it must not reach the layout, and the
+        // fade must not leave the graph re-settling once it ends.
+        expect(await harness(page, 'nodePositions')).toEqual(before)
+        expect(await harness(page, 'tierGhostCount')).toBe(0)
+    })
+
+    test('the focus card fades out rather than vanishing, and stops counting as the card', async ({ page }) => {
+        await harness(page, 'loadWithTiers')
+        await waitForViewSettled(page)
+
+        await harness(page, 'selectNode', 'a')
+        expect(await harness(page, 'hasFocusCard', 'a')).toBe(true)
+
+        // Widening the selection demotes it. The drawing is still on screen for the fade, but
+        // it is no longer the node's card, so nothing should report one.
+        await harness(page, 'multiSelect', ['a', 'b'])
+        expect(await harness(page, 'hasFocusCard', 'a')).toBe(false)
+        expect(await harness(page, 'leavingFocusCards')).toBeGreaterThan(0)
+
+        await expect.poll(() => harness(page, 'leavingFocusCards')).toBe(0)
+    })
+})
