@@ -25,7 +25,7 @@ const data = {
 // #endregion data
 
 // #region options
-/** Shared shell for the two card drawings, so they differ only in what they carry. */
+/** Shared shell for the three card drawings, so they differ only in what they carry. */
 function shell(node, width, height) {
     const d = node.getData()
     const box = document.createElement('div')
@@ -43,9 +43,9 @@ function shell(node, width, height) {
     return box
 }
 
-function row(label, value, tone) {
+function row(label, value, tone, size = 11) {
     const line = document.createElement('div')
-    line.setAttribute('style', 'display: flex; justify-content: space-between; gap: 10px; font-size: 11px; line-height: 1.6')
+    line.setAttribute('style', `display: flex; justify-content: space-between; gap: 10px; font-size: ${size}px; line-height: 1.6`)
     const left = document.createElement('span')
     left.setAttribute('style', 'color: #64748b')
     left.textContent = label
@@ -56,17 +56,46 @@ function row(label, value, tone) {
     return line
 }
 
-/** The middle tier: name and kind, and nothing that would not fit 140x44. */
+function title(text, size, weight = 600) {
+    const el = document.createElement('div')
+    el.setAttribute('style', `font: ${weight} ${size}px system-ui, sans-serif; color: #0f172a;`
+        + 'white-space: nowrap; overflow: hidden; text-overflow: ellipsis')
+    el.textContent = text
+    return el
+}
+
+/**
+ * The small card: a name and what kind of thing it is.
+ *
+ * Its type is set larger than the bigger cards' below, which looks backwards until you
+ * notice these sizes are in graph units. This tier is only ever drawn between k = 0.64 and
+ * k = 1, so 17 units lands at 11-17 CSS pixels; the card below is never drawn under k = 1,
+ * where 14 units is already 14 pixels. Each drawing is sized for the zoom it lives at.
+ */
 function chip(node) {
     const d = node.getData()
-    const box = shell(node, 140, 44)
-    const name = document.createElement('div')
-    name.setAttribute('style', 'font: 600 12px system-ui, sans-serif; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis')
-    name.textContent = d.name
+    const box = shell(node, 140, 52)
+    box.append(title(d.name, 17))
     const kind = document.createElement('div')
-    kind.setAttribute('style', `font-size: 10px; color: ${SEV[d.sev].tone}`)
+    kind.setAttribute('style', `font-size: 12px; color: ${SEV[d.sev].tone}`)
     kind.textContent = d.kind
-    box.append(name, kind)
+    box.append(kind)
+    return box
+}
+
+/** The medium card: room for the two facts you sort on, without opening anything. */
+function summaryCard(node) {
+    const d = node.getData()
+    const box = shell(node, 220, 110)
+    box.style.padding = '8px 12px'
+
+    const kind = document.createElement('div')
+    kind.setAttribute('style', `font-size: 11px; color: ${SEV[d.sev].tone}; margin-bottom: 4px`)
+    kind.textContent = d.kind
+
+    box.append(title(d.name, 14, 700), kind,
+        row('Severity', d.sev, SEV[d.sev].tone, 12),
+        row('Sightings', String(d.count), '#0f172a', 12))
     return box
 }
 
@@ -76,15 +105,11 @@ function detailCard(node) {
     const box = shell(node, 280, 150)
     box.style.padding = '10px 14px'
 
-    const head = document.createElement('div')
-    head.setAttribute('style', 'font: 700 14px system-ui, sans-serif; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis')
-    head.textContent = d.name
-
     const kind = document.createElement('div')
     kind.setAttribute('style', `font-size: 11px; color: ${SEV[d.sev].tone}; margin-bottom: 6px`)
     kind.textContent = d.kind
 
-    box.append(head, kind,
+    box.append(title(d.name, 14, 700), kind,
         row('Severity', d.sev, SEV[d.sev].tone),
         row('First seen', d.first, '#0f172a'),
         row('Sightings', String(d.count), '#0f172a'),
@@ -100,17 +125,27 @@ const options = {
             size: 7,
             color: (node) => SEV[node.getData().sev].tone,
 
-            // Ordered smallest first; the richest one that fits wins. Each tier's `width`
-            // is both its design box and, by default, the rendered size at which it takes
-            // over — so the chip engages once there is room to draw 140 pixels of node.
+            // Ordered smallest first; the richest one that fits wins. There is no limit on
+            // how many there are — three here, and the base style above is the floor when
+            // none of them qualifies.
+            //
+            // Each tier's `width` is both its design box and, by default, the rendered size
+            // at which it takes over. The widest one sets the footprint, so it engages at
+            // exactly k = 1 and is drawn at its design size; the two narrower ones engage
+            // proportionally earlier, which is why their type is sized for the zoom they
+            // live at rather than for their box.
             tiers: [
                 {
                     width: 32, height: 32,
                     style: { shape: 'circle', size: 16, color: (node) => SEV[node.getData().sev].tone },
                 },
                 {
-                    width: 140, height: 44,
+                    width: 140, height: 52,
                     style: { shape: 'none', html: chip },
+                },
+                {
+                    width: 220, height: 110,
+                    style: { shape: 'none', html: summaryCard },
                 },
             ],
 
