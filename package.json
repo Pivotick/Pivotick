@@ -29,8 +29,10 @@
   ],
   "main": "./dist/pivotick.umd.js",
   "module": "./dist/pivotick.es.js",
+  "types": "./dist/types/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/types/index.d.ts",
       "import": "./dist/pivotick.es.js",
       "require": "./dist/pivotick.umd.js",
       "default": "./dist/pivotick.umd.js"
@@ -43,11 +45,12 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "npm run clean && tsc && npm run build:es && npm run build:browser && npm run build:worker",
+    "build": "npm run clean && tsc && npm run build:es && npm run build:browser && npm run build:worker && npm run build:types",
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "build:es": "vite build --config vite.config.es.js",
     "build:browser": "vite build --config vite.config.browser.js",
     "build:worker": "vite build --config vite.config.worker.js",
+    "build:types": "tsc -p tsconfig.types.json && node scripts/strip-style-imports.mjs",
     "preview": "vite preview",
     "lint": "eslint 'src/**/*.{ts,tsx}'",
     "lint_fix": "eslint --fix 'src/**/*.{ts,tsx}'",

@@ -1,0 +1,19 @@
+// Declaration-only build for the published package. The root config is a
+// type-check pass (noEmit) that also covers the docs and the demo page.
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "emitDeclarationOnly": true,
+    "declaration": true,
+    "rootDir": "src",
+    "outDir": "dist/types"
+  },
+  "include": ["src"],
+  "exclude": [
+    "src/main.ts",
+    "src/ail-graph.ts",
+    "src/ail-graph2.ts",
+    "src/vt-graph.ts"
+  ]
+}
