@@ -56,30 +56,42 @@ function row(label, value, tone, size = 11) {
     return line
 }
 
+// Every line states its own line-height. Left to `normal` the browser picks one from the
+// font, and a box sized to fit on one machine clips its last line on another.
+const LINE = 1.2
+
 function title(text, size, weight = 600) {
     const el = document.createElement('div')
-    el.setAttribute('style', `font: ${weight} ${size}px system-ui, sans-serif; color: #0f172a;`
+    el.setAttribute('style', `font: ${weight} ${size}px/${LINE} system-ui, sans-serif; color: #0f172a;`
         + 'white-space: nowrap; overflow: hidden; text-overflow: ellipsis')
     el.textContent = text
+    return el
+}
+
+function kindLine(node, size, gap = 0) {
+    const el = document.createElement('div')
+    el.setAttribute('style', `font-size: ${size}px; line-height: ${LINE};`
+        + `color: ${SEV[node.getData().sev].tone}; margin-bottom: ${gap}px`)
+    el.textContent = node.getData().kind
     return el
 }
 
 /**
  * The small card: a name and what kind of thing it is.
  *
+ * 110 wide against the 220 footprint, so it takes over at half zoom — a narrower drawing
+ * asks for less room, and its threshold is its width.
+ *
  * Its type is set larger than the bigger cards' below, which looks backwards until you
- * notice these sizes are in graph units. This tier is only ever drawn between k = 0.64 and
- * k = 1, so 17 units lands at 11-17 CSS pixels; the card below is never drawn under k = 1,
+ * notice these sizes are in graph units. This tier is only ever drawn between k = 0.5 and
+ * k = 1, so 18 units lands at 9-18 CSS pixels; the card below is never drawn under k = 1,
  * where 14 units is already 14 pixels. Each drawing is sized for the zoom it lives at.
  */
 function chip(node) {
     const d = node.getData()
-    const box = shell(node, 140, 52)
-    box.append(title(d.name, 17))
-    const kind = document.createElement('div')
-    kind.setAttribute('style', `font-size: 12px; color: ${SEV[d.sev].tone}`)
-    kind.textContent = d.kind
-    box.append(kind)
+    const box = shell(node, 110, 46)
+    box.style.padding = '5px 8px'
+    box.append(title(d.name, 18), kindLine(node, 11))
     return box
 }
 
@@ -89,11 +101,7 @@ function summaryCard(node) {
     const box = shell(node, 220, 110)
     box.style.padding = '8px 12px'
 
-    const kind = document.createElement('div')
-    kind.setAttribute('style', `font-size: 11px; color: ${SEV[d.sev].tone}; margin-bottom: 4px`)
-    kind.textContent = d.kind
-
-    box.append(title(d.name, 14, 700), kind,
+    box.append(title(d.name, 14, 700), kindLine(node, 11, 4),
         row('Severity', d.sev, SEV[d.sev].tone, 12),
         row('Sightings', String(d.count), '#0f172a', 12))
     return box
@@ -105,11 +113,7 @@ function detailCard(node) {
     const box = shell(node, 280, 150)
     box.style.padding = '10px 14px'
 
-    const kind = document.createElement('div')
-    kind.setAttribute('style', `font-size: 11px; color: ${SEV[d.sev].tone}; margin-bottom: 6px`)
-    kind.textContent = d.kind
-
-    box.append(title(d.name, 14, 700), kind,
+    box.append(title(d.name, 14, 700), kindLine(node, 11, 6),
         row('Severity', d.sev, SEV[d.sev].tone),
         row('First seen', d.first, '#0f172a'),
         row('Sightings', String(d.count), '#0f172a'),
@@ -140,7 +144,7 @@ const options = {
                     style: { shape: 'circle', size: 16, color: (node) => SEV[node.getData().sev].tone },
                 },
                 {
-                    width: 140, height: 52,
+                    width: 110, height: 46,
                     style: { shape: 'none', html: chip },
                 },
                 {

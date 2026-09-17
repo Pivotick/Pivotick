@@ -16,7 +16,7 @@ compromise the other can live with.
 |---|---|---|
 | a bare dot | the base style | when even 32 pixels is too much |
 | a coloured dot | `tiers[0]`, 32×32 | once the node renders 32 pixels wide |
-| a labelled chip | `tiers[1]`, 140×52 | once it renders 140 |
+| a labelled chip | `tiers[1]`, 110×46 | once it renders 110, i.e. half zoom |
 | a summary card | `tiers[2]`, 220×110 | once it renders 220, which is zoom 1 here |
 | a detail card | `focusTier`, 280×150 | on hover or a lone selection, at any zoom |
 
@@ -39,9 +39,11 @@ Things worth provoking:
   until the rendered size falls to 85% of what engaged it, so the picture settles instead
   of flickering.
 - **Watch the chip on the way in.** An intermediate tier engages at `width / footprint` of
-  zoom 1, so it appears smaller than the box it was designed for and grows into it. Its type
-  is sized in graph units for the zooms it actually lives at; give it an explicit
-  `minRenderedSize` instead if you would rather it waited for more room.
+  zoom 1, so it appears smaller than the box it was designed for and grows into it. That is
+  the trade in narrowing one: a smaller drawing asks for less room and so shows up sooner,
+  but it shows up smaller too. Its type is sized in graph units for the zooms it actually
+  lives at; give it an explicit `minRenderedSize` if you would rather it waited for more room
+  without redrawing it.
 - **Hover a dot while zoomed out.** The detail card is counter-scaled against the zoom, so
   it is the same 280×150 pixels however small the node is. Reading one node never means
   zooming to it.
