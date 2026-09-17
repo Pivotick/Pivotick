@@ -33,13 +33,14 @@ function buildCard(node: Node): HTMLElement {
     return el
 }
 
-function buildData(n: number): { nodes: Node[]; edges: never[] } {
-    const cols = Math.ceil(Math.sqrt(n))
+function buildData(n: number, pitchX = 180, pitchY = 90, cols = Math.ceil(Math.sqrt(n))): {
+    nodes: Node[]; edges: never[]
+} {
     const nodes: Node[] = []
     for (let i = 0; i < n; i++) {
         const node = new Node(`n-${i}`, { label: `10.13.${Math.floor(i / 256)}.${i % 256}` }, {}, `n-${i}`)
-        node.x = (i % cols) * 180
-        node.y = Math.floor(i / cols) * 90
+        node.x = (i % cols) * pitchX
+        node.y = Math.floor(i / cols) * pitchY
         nodes.push(node)
     }
     return { nodes, edges: [] }
@@ -77,10 +78,29 @@ const SIM = params.get('sim') === '1'
 const PHYSICS = params.get('physics') === 'auto' ? 'auto' : 'manual'
 /** `?graph=connected` lays out a real connected graph instead of a fixed grid. */
 const CONNECTED = params.get('graph') === 'connected'
+/**
+ * `?tiers=1` declares the card as a real `tiers` entry instead of swapping it by hand, so a
+ * crossing runs the shipped path: rendered-size threshold, hysteresis, on-screen check, the
+ * one coalesced redraw and the edge refresh after it.
+ */
+const TIERS = params.get('tiers') === '1'
+/** `?fade=<ms>` is `render.tierTransition` — 0 is the swap as it ships today. */
+const FADE = Number(params.get('fade') ?? 0)
+/**
+ * `?pitch=x,y` sets the grid spacing, and `?cols=n` the row width.
+ *
+ * Needed to measure the worst case. A tier only engages once a node renders at its declared
+ * width, and the drawer skips nodes that are off screen — so on a loose grid the zoom that
+ * turns on 140px cards is also the zoom at which only a couple of dozen nodes are visible,
+ * and a run measures those rather than all N. Packing the grid to roughly a card's pitch
+ * puts every node on screen at the zoom where the card tier takes over.
+ */
+const PITCH = (params.get('pitch') ?? '180,90').split(',').map(Number)
+const COLS = params.get('cols') ? Number(params.get('cols')) : undefined
 
 const container = document.getElementById('app') as HTMLElement
 
-const data = CONNECTED ? buildConnected(N) : buildData(N)
+const data = CONNECTED ? buildConnected(N) : buildData(N, PITCH[0], PITCH[1], COLS)
 
 const graph = new Pivotick(container, data as never, {
     isDirected: false,
@@ -88,14 +108,28 @@ const graph = new Pivotick(container, data as never, {
     simulation: { enabled: SIM, useWorker: false, physics: PHYSICS },
     render: {
         zoomAnimation: false,
-        defaultNodeStyle: {
-            shape: () => (tier === 'card' ? 'none' : 'circle'),
-            size: 16,
-            color: '#97CC04',
-            strokeColor: '#4d6b00',
-            svgIcon: () => (tier === 'card' ? undefined : GLYPH),
-            html: (node: Node) => (tier === 'card' ? buildCard(node) : undefined),
-        },
+        tierTransition: FADE,
+        defaultNodeStyle: TIERS
+            ? {
+                shape: 'circle',
+                size: 16,
+                color: '#97CC04',
+                strokeColor: '#4d6b00',
+                // No `svgIcon` on the base on purpose: the style fold is `??`, so a tier can
+                // override a channel but cannot unset one, and a glyph left on the base
+                // outranks the card the tier asks for.
+                // One tier, 140x44, so the threshold sits at zoom 1 and a run can cross it in
+                // either direction by zooming either side.
+                tiers: [{ width: 140, height: 44, style: { shape: 'none', html: buildCard } }],
+            }
+            : {
+                shape: () => (tier === 'card' ? 'none' : 'circle'),
+                size: 16,
+                color: '#97CC04',
+                strokeColor: '#4d6b00',
+                svgIcon: () => (tier === 'card' ? undefined : GLYPH),
+                html: (node: Node) => (tier === 'card' ? buildCard(node) : undefined),
+            },
     },
 } as never)
 
@@ -113,6 +147,23 @@ async function settle(maxFrames = 240): Promise<number> {
         quiet = before === after ? quiet + 1 : 0
     }
     return performance.now() - start
+}
+
+/** Frame intervals, in ms, for the next `ms` of wall clock. */
+function recordFrames(ms: number): Promise<number[]> {
+    return new Promise((resolve) => {
+        const deltas: number[] = []
+        const start = performance.now()
+        let last = start
+        const step = (): void => {
+            const now = performance.now()
+            deltas.push(now - last)
+            last = now
+            if (now - start < ms) requestAnimationFrame(step)
+            else resolve(deltas)
+        }
+        requestAnimationFrame(step)
+    })
 }
 
 /** Long tasks (>50 ms of blocked main thread) observed since the last reset. */
@@ -172,6 +223,131 @@ const api = {
         return { sync, settled, longTasks: [...longTasks], dirtied: subset.length }
     },
 
+    /**
+     * The same swap, optionally cross-faded, with the frames after it recorded.
+     *
+     * `fadeMs = 0` is the plain swap as it ships today and is the baseline the faded run is
+     * read against. Above 0 the swap becomes:
+     *
+     *   1. lift each changing node's current drawing into a ghost group, detached;
+     *   2. redraw, which fills the now-empty node group with the new drawing;
+     *   3. wrap that new drawing, put the ghost back on top of it, fade the two past each
+     *      other and drop the ghost when its fade ends.
+     *
+     * The ghost goes back **last** so the new drawing is the one `querySelector('.node')`
+     * finds — the ghost still holds an old `.node` of its own.
+     *
+     * This is the expensive shape of the mechanism: it moves children twice per node. A
+     * renderer that always drew into a tier wrapper would swap two wrappers instead and move
+     * nothing, so these numbers are an upper bound on what the library would pay.
+     */
+    async swapFaded(next: Tier, fadeMs = 160, count?: number): Promise<{
+        sync: number; lift: number; redraw: number; attach: number
+        frames: number[]; settled: number; longTasks: number[]; dirtied: number; ghosts: number
+    }> {
+        longTasks.length = 0
+        const all = graph.getMutableNodes()
+        const subset = count === undefined ? all : all.slice(0, count)
+        const SVG_NS = 'http://www.w3.org/2000/svg'
+
+        const t0 = performance.now()
+
+        const ghosts: Array<[SVGGElement, SVGGElement]> = []
+        if (fadeMs > 0) {
+            for (const node of subset) {
+                const g = node.getGraphElement() as SVGGElement | null
+                if (!g) continue
+                const ghost = document.createElementNS(SVG_NS, 'g')
+                ghost.setAttribute('pointer-events', 'none')
+                ghost.setAttribute('class', 'pvt-node-outgoing')
+                while (g.firstChild) ghost.append(g.firstChild)
+                ghosts.push([g, ghost])
+            }
+        }
+        const lift = performance.now() - t0
+
+        for (const node of subset) node.markDirty()
+
+        const t1 = performance.now()
+        tier = next
+        graph.renderer.update(false)
+        const redraw = performance.now() - t1
+
+        const t2 = performance.now()
+        for (const [g, ghost] of ghosts) {
+            const incoming = document.createElementNS(SVG_NS, 'g')
+            while (g.firstChild) incoming.append(g.firstChild)
+            g.append(incoming, ghost)
+            incoming.animate([{ opacity: 0 }, { opacity: 1 }],
+                { duration: fadeMs, easing: 'ease-out', fill: 'both' })
+            const out = ghost.animate([{ opacity: 1 }, { opacity: 0 }],
+                { duration: fadeMs, easing: 'ease-out', fill: 'both' })
+            out.onfinish = () => ghost.remove()
+        }
+        const attach = performance.now() - t2
+        const sync = performance.now() - t0
+
+        // Long enough to cover the fade itself and the frames either side of it.
+        const frames = await recordFrames(fadeMs + 240)
+        const settled = await settle()
+        return {
+            sync, lift, redraw, attach, frames, settled,
+            longTasks: [...longTasks], dirtied: subset.length, ghosts: ghosts.length,
+        }
+    },
+
+    /**
+     * Zoom to `k` and record every frame until the canvas is quiet again.
+     *
+     * The swap is not driven from here: setting the viewport fires the zoom event, the drawer
+     * coalesces a tier pass into the next frame and decides for itself what changed. So this
+     * measures the whole crossing the way a wheel gesture produces it, fade included.
+     */
+    async crossTo(k: number, forMs = 600): Promise<{
+        frames: number[]; settled: number; longTasks: number[]
+        cardsBefore: number; cardsAfter: number; ghostsPeak: number; reachedK: number
+    }> {
+        longTasks.length = 0
+        const cardsBefore = api.counts().cards
+        const renderer = graph.renderer as unknown as {
+            getZoomTransform(): { k: number; x: number; y: number }
+            setViewport(t: { x: number; y: number; scale: number }): void
+        }
+        // `setViewport` takes the point to centre on, not the top-left corner. Handing it a
+        // corner flies the camera off the graph, and then every node fails the on-screen
+        // check and no tier changes at all — which reads as "the swap costs nothing".
+        //
+        // Taken from the renderer's own bounds rather than measured off the DOM: `#app svg`
+        // matches the first icon in the chrome, not the canvas, and a 16px "viewport" puts
+        // the centre a couple of thousand units away from the graph.
+        const view = (graph.renderer as unknown as { getVisibleBounds(): {
+            x: number; y: number; width: number; height: number
+        } | null }).getVisibleBounds()
+        const centre = view
+            ? { x: view.x + view.width / 2, y: view.y + view.height / 2 }
+            : { x: 0, y: 0 }
+
+        let ghostsPeak = 0
+        const watch = setInterval(() => {
+            const n = document.querySelectorAll('#app g.pvt-tier-ghosts > g').length
+            if (n > ghostsPeak) ghostsPeak = n
+        }, 8)
+
+        renderer.setViewport({ x: centre.x, y: centre.y, scale: k })
+        const frames = await recordFrames(forMs)
+        const settled = await settle()
+        clearInterval(watch)
+
+        return {
+            frames, settled, longTasks: [...longTasks],
+            cardsBefore, cardsAfter: api.counts().cards, ghostsPeak,
+            // Reported so a run that never reached the zoom it asked for — an initial fit
+            // landing late will overwrite it — is visible rather than silently measuring
+            // a crossing that did not happen.
+            reachedK: renderer.getZoomTransform().k,
+        }
+    },
+
     /** Frame intervals while the viewport is panned programmatically, in ms. */
     async panFrames(steps = 60): Promise<number[]> {
         const renderer = graph.renderer as unknown as {
@@ -214,6 +390,26 @@ const api = {
             last = now
         }
         return deltas
+    },
+
+    /** What the tier decision is actually reading, for a run that measured no crossing. */
+    tierDebug(): Record<string, unknown> {
+        const node = graph.getMutableNodes()[0]
+        const k = api.zoomK()
+        const layoutSize = node?.getLayoutSize()
+        return {
+            k,
+            layoutSize,
+            rendered: layoutSize === undefined ? null : layoutSize * 2 * k,
+            circleRadius: node?.getCircleRadius(),
+            drawnTier: node?.getGraphElement()?.getAttribute('data-pvt-tier'),
+            visible: node?.visible,
+        }
+    },
+
+    /** Current zoom scale. Polled by a driver waiting for the initial fit to stop moving. */
+    zoomK(): number {
+        return (graph.renderer as unknown as { getZoomTransform(): { k: number } }).getZoomTransform().k
     },
 
     zoomEventCount(): number { return zoomEvents },
