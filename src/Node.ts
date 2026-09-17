@@ -27,6 +27,7 @@ export interface SimulationNodeDTO {
     style: Partial<NodeStyle>
     weight?: number
     _circleRadius: number
+    _layoutSize?: number
     x?: number
     y?: number
     vx?: number
@@ -79,6 +80,8 @@ export class Node {
     private _subgraph?: Graph
     private _circleRadius = this.defaultCircleRadius
     private _circleRadiusCollapsed = this.defaultCircleRadius
+    /** Declared footprint half-width; unset means the drawing owns the spacing. */
+    private _layoutSize?: number
     /** Measured rectangular border; unset means the node is anchored as a circle. */
     private _border?: NodeBorderBox
     private _dirty: boolean
@@ -262,6 +265,7 @@ export class Node {
             style: stripFunctions(this.style),
             weight: this.weight,
             _circleRadius: this._circleRadius,
+            _layoutSize: this._layoutSize,
             x: this.x,
             y: this.y,
             vx: this.vx,
@@ -294,6 +298,7 @@ export class Node {
         clone.isParent = this.isParent
         clone.parentNode = this.parentNode
         clone._circleRadius = this._circleRadius
+        clone._layoutSize = this._layoutSize
         clone.children = this.children.map((n) => n.clone())
         if (this._sources) clone._sources = new Map([...this._sources].map(([s, r]) => [s, [...r]]))
         if (this._potential) clone._potential = new Map(this._potential)
@@ -432,6 +437,29 @@ export class Node {
 
     getCircleRadiusCollapsed(): number {
         return this._circleRadiusCollapsed
+    }
+
+    /**
+     * Declare the box this node reserves in the layout, as a half-width in graph units.
+     * Unlike {@link setCircleRadius} this is constant: the drawing can change inside it
+     * without anything moving.
+     */
+    setLayoutSize(halfWidth: number | undefined): void {
+        this._layoutSize = halfWidth
+    }
+
+    /** The declared footprint half-width, or `undefined` when the drawing owns the spacing. */
+    getLayoutSize(): number | undefined {
+        return this._layoutSize
+    }
+
+    /**
+     * The radius the layout spaces this node by: its declared footprint where it has one,
+     * and otherwise whatever the drawing measured. Every force reads this; the drawers read
+     * {@link getCircleRadius}, which is the drawn size.
+     */
+    getLayoutRadius(): number {
+        return this._layoutSize ?? this._circleRadius
     }
 
     /**

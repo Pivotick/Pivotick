@@ -207,7 +207,7 @@ export class TreeLayout {
             // Parked nodes are placed at a spacing this layout chose, not one the canvas
             // implied, so measuring them would have auto tuning against its own output.
             if (this.parkedIds.has(id)) continue
-            const measured = node.expanded ? node.getCircleRadiusCollapsed() : node.getCircleRadius()
+            const measured = node.expanded ? node.getCircleRadiusCollapsed() : node.getLayoutRadius()
             // A node that has not measured itself yet reports no usable radius; it asks for
             // no clearance rather than poisoning the pair's arithmetic.
             const radius = Number.isFinite(measured) ? measured : 0
@@ -609,7 +609,7 @@ export class TreeLayout {
         if (!parked.length) return []
 
         const radiusOf = (node: TreeNode) => {
-            const measured = node.getCircleRadius()
+            const measured = node.getLayoutRadius()
             return Number.isFinite(measured) ? measured : 0
         }
         const cell = 2 * parked.reduce((max, node) => Math.max(max, radiusOf(node)), 0) + PARKED_GAP

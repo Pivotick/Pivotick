@@ -437,6 +437,17 @@ export interface NodeStyle {
      */
     badges?: ((node: Node) => NodeBadge[]) | NodeBadge[]
     /**
+     * The half-width of the box this node reserves for itself in the layout, in graph units.
+     * This is the only size the simulation ever sees: set it and the drawing no longer drives
+     * the collision radius, so a node can change how it is drawn without moving anything.
+     *
+     * Leave it unset and the drawing owns the spacing, as it always has — a shape spaces by
+     * its `size`, an HTML card by what it measures.
+     *
+     * @default half the widest declared tier `width`, or unset when there are no tiers
+     */
+    layoutSize?: number
+    /**
      * Callback to dynamically override style properties based on the node.
      *
      * Where it sits depends on which style block declares it. On a **node's own**

@@ -440,7 +440,7 @@ export class Simulation {
 
                 // Charge off the collapsed radius for expanded clusters: their large bubble radius
                 // would over-repel (×parent weight below) and the sim never settles.
-                const radius = n.expanded ? n.getCircleRadiusCollapsed() : n.getCircleRadius()
+                const radius = n.expanded ? n.getCircleRadiusCollapsed() : n.getLayoutRadius()
                 const dampedRadius = 10 + Math.sqrt(Math.max(0, radius - 10)) // Slowly push other nodes if radius increases; clamp so radius < 10 doesn't yield NaN
 
                 let weight = n.weight ?? 1
@@ -459,7 +459,8 @@ export class Simulation {
             if (n.expanded) {
                 return mult * n.getCircleRadius() + 20
             }
-            return n.getCircleRadius() ? mult * n.getCircleRadius() : options.d3CollideRadius
+            const radius = n.getLayoutRadius()
+            return radius ? mult * radius : options.d3CollideRadius
         })
             .strength(options.d3CollideStrength)
     }
@@ -1232,7 +1233,7 @@ export class Simulation {
         let maxRadius = 0
         let totalArea = 0
         for (const node of nodes) {
-            const radius = node.expanded ? node.getCircleRadiusCollapsed() : node.getCircleRadius()
+            const radius = node.expanded ? node.getCircleRadiusCollapsed() : node.getLayoutRadius()
             radiusSum += radius
             maxRadius = Math.max(maxRadius, radius)
             totalArea += Math.PI * radius * radius

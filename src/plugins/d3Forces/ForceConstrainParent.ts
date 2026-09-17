@@ -30,7 +30,7 @@ export function forceConstrainParent<TNode extends Node & SimulationNodeDatum = 
 
             const dx = node.x
             const dy = node.y
-            const radius = node.getCircleRadius() ?? 10
+            const radius = node.getLayoutRadius() ?? 10
             const distance = Math.sqrt(dx * dx + dy * dy) + radius
 
             if (distance > maxDistance) {

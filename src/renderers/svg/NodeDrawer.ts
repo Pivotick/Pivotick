@@ -39,6 +39,10 @@ export class NodeDrawer {
         // default path would have resolved for itself.
         const style = this.getNodeStyle(node)
 
+        // Before anything is drawn: the footprint is declared, not measured, so the layout
+        // knows it from the first tick and the drawing below can never move the node.
+        node.setLayoutSize(style.layoutSize)
+
         // `renderNode` claims the node outright — but only for the nodes it actually draws.
         // Returning nothing hands this one back to the styling pipeline, so one callback can
         // card a few nodes and leave the rest their shapes.
@@ -190,8 +194,9 @@ export class NodeDrawer {
                     // Measurement only lands once the card is on-screen — the zoom
                     // layer is display:none during the initial layout, so this runs
                     // after the sim has cooled. Nudge it once so collision re-spaces
-                    // the freshly-sized cards.
-                    this.scheduleCollisionReheat()
+                    // the freshly-sized cards. A node with a declared footprint spaces
+                    // by that instead, so the measurement changes nothing to re-space.
+                    if (node.getLayoutSize() === undefined) this.scheduleCollisionReheat()
                 }
                 // Anchor on the card only when it reaches past the shape behind it;
                 // a shape that still sticks out keeps its circle, which fits it better.
@@ -896,7 +901,7 @@ const NODE_STYLE_KEYS = [
     'shape', 'strokeColor', 'strokeWidth', 'fontFamily', 'size', 'color', 'textColor',
     'textAnchorPosition', 'textHorizontalShift', 'textVerticalShift', 'textRotateDegree',
     'textTruncate', 'iconUnicode', 'iconClass', 'svgIcon', 'imagePath', 'imageFit', 'text',
-    'html', 'badges',
+    'html', 'badges', 'layoutSize',
 ] as const satisfies readonly (keyof NodeStyle)[]
 
 /**

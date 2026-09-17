@@ -29,6 +29,7 @@ self.onmessage = (e: MessageEvent<WorkerInput>) => {
     const nodes = plainNodes.map(n => {
         const node = new Node(n.id, n.data, n.style)
         node.setCircleRadius(n._circleRadius ?? 10)
+        node.setLayoutSize(n._layoutSize)
         // Preserve caller-supplied initial positions (seed) and fixed positions (pin).
         if (typeof n.x === 'number') node.x = n.x
         if (typeof n.y === 'number') node.y = n.y
