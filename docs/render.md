@@ -277,6 +277,36 @@ Tiers are ordered smallest first and the richest one that fits wins. When none d
 node draws at its base style, so the style you already have is the floor: a graph that
 declares no `tiers` is unaffected in every respect.
 
+### Taking a channel away {#tier-clearing}
+
+A tier merges over the base style, so anything it does not name it inherits. Set a channel
+to `null` to say the tier draws that one **not at all**:
+
+```ts
+const options = {
+    render: {
+        defaultNodeStyle: {
+            svgIcon: buildGlyph,
+            tiers: [
+                // The card is the whole node here, so the glyph has to go: omitting
+                // `svgIcon` would inherit it, and an icon outranks an `html` card.
+                { width: 140, height: 44, style: { shape: 'none', html: buildChip, svgIcon: null } },
+            ],
+        },
+    },
+}
+```
+
+Without the `null` that node draws its glyph and the chip never reaches the canvas, with
+nothing in the config to say why. `undefined` cannot stand in: it means "I am not naming
+this channel", which is exactly how the base's value survives.
+
+This is the only layer that works that way. Everywhere else in the style chain `null` still
+falls through to the layer below, because a `styleCb` handing back a null straight out of
+node data is an ordinary shape and has always meant "use the default".
+
+To make a node shapeless, use `shape: 'none'` rather than clearing `shape`.
+
 ### What picks a tier
 
 The **rendered size**: the node's footprint in CSS pixels, which is `footprint × zoom`. A

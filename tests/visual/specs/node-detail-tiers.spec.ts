@@ -330,3 +330,41 @@ test.describe('tier cross-fade', () => {
         await expect.poll(() => harness(page, 'leavingFocusCards')).toBe(0)
     })
 })
+
+test.describe('tier style precedence', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoHarness(page)
+    })
+
+    test('a tier takes away a channel the base declares', async ({ page }) => {
+        await harness(page, 'loadWithTiers', { baseIcon: true, tierClearsIcon: true })
+        await waitForViewSettled(page)
+        await harness(page, 'setZoomScale', CHIP_ZOOM)
+
+        expect(await tierOf(page, 'a')).toBe('1')
+        // The card is what the tier asked for, and the base's icon is gone rather than
+        // drawn over it.
+        expect(await harness(page, 'nodeDrawing', 'a')).toEqual({ card: true, icon: false })
+    })
+
+    test('without the clear, the base icon outranks the card the tier asked for', async ({ page }) => {
+        await harness(page, 'loadWithTiers', { baseIcon: true })
+        await waitForViewSettled(page)
+        await harness(page, 'setZoomScale', CHIP_ZOOM)
+
+        // The tier is active either way. What it cannot do by omission is unname a channel,
+        // so the base keeps the node and the tier's card never reaches the canvas.
+        expect(await tierOf(page, 'a')).toBe('1')
+        expect(await harness(page, 'nodeDrawing', 'a')).toEqual({ card: false, icon: true })
+    })
+
+    test('clearing is the tier layer only: a base icon survives with no tier to clear it', async ({ page }) => {
+        await harness(page, 'loadWithTiers', { baseIcon: true, tierClearsIcon: true })
+        await waitForViewSettled(page)
+
+        // Below every threshold, no tier is active, so nothing has cleared anything.
+        await harness(page, 'setZoomScale', 0.1)
+        expect(await tierOf(page, 'a')).toBe('base')
+        expect(await harness(page, 'nodeDrawing', 'a')).toEqual({ card: false, icon: true })
+    })
+})

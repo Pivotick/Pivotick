@@ -502,6 +502,19 @@ export interface TierSpec {
     trigger?: 'both' | 'hover' | 'selection' | 'off'
     /** Override `layoutSize` instead of letting it derive from the widest tier. */
     layoutSize?: number
+    /**
+     * Put an `svgIcon` on the **base** style, which the chip tier draws an `html` card over.
+     * The two compete for the same node, so this is what makes the tier layer's right to
+     * clear a channel observable.
+     * @default false
+     */
+    baseIcon?: boolean
+    /**
+     * Let the chip tier clear that icon with `svgIcon: null`. Without it the base's icon
+     * outranks the card and the node draws as a glyph.
+     * @default false
+     */
+    tierClearsIcon?: boolean
 }
 
 export interface StyleCbSpec {
@@ -728,6 +741,10 @@ const STYLE_CB_COLOR = '#ff00ff'
  * footprint derives from the widest zoom tier (140), so the chip engages at exactly k = 1
  * and the dot at k = 32/140.
  */
+/** A glyph distinct enough that a node drawing it instead of its card is unmistakable. */
+const TIER_BASE_GLYPH = '<svg viewBox="0 0 24 24"><path d="M4 4 L20 20 M20 4 L4 20" '
+    + 'stroke="currentColor" stroke-width="3" fill="none"/></svg>'
+
 const TIER_DOT = { width: 32, height: 32 }
 const TIER_CHIP = { width: 140, height: 44 }
 const FOCUS_CARD = { width: 280, height: 150 }
@@ -1410,6 +1427,8 @@ export interface HarnessApi {
     setZoomScale(scale: number, settleFade?: boolean): Promise<void>
     /** How many focus cards are on screen only because they are still fading out. */
     leavingFocusCards(): number
+    /** What a node actually drew: its card, its icon, or both. */
+    nodeDrawing(id: string): { card: boolean; icon: boolean }
     /** How many outgoing tier drawings are still fading. */
     tierGhostCount(): number
     settleTierFade(maxFrames?: number): Promise<void>
@@ -2964,13 +2983,16 @@ class Harness implements HarnessApi {
         }
 
         const nodeStyle: PlainObject = {}
+        if (spec.baseIcon) nodeStyle.svgIcon = TIER_BASE_GLYPH
         if (spec.tiers !== false) {
+            const chipStyle: PlainObject = {
+                shape: 'none',
+                html: box(TIER_CHIP.width, TIER_CHIP.height, 'chip', 0),
+            }
+            if (spec.tierClearsIcon) chipStyle.svgIcon = null
             nodeStyle.tiers = [
                 { ...TIER_DOT, style: { shape: 'circle', size: TIER_DOT.width / 2, color: '#7a869a' } },
-                {
-                    ...TIER_CHIP,
-                    style: { shape: 'none', html: box(TIER_CHIP.width, TIER_CHIP.height, 'chip', 0) },
-                },
+                { ...TIER_CHIP, style: chipStyle },
             ]
         }
         if (spec.focus !== false) {
@@ -2999,6 +3021,18 @@ class Harness implements HarnessApi {
         // so anything screenshotting or counting elements straight after a zoom would catch
         // two drawings. Pass `false` to observe that state deliberately.
         if (settleFade) await this.settleTierFade()
+    }
+
+    /**
+     * What a node actually put on the canvas, as opposed to what its style resolved to.
+     * A card and an icon compete for the same node, so this is how a test says which won.
+     */
+    nodeDrawing(id: string): { card: boolean; icon: boolean } {
+        const element = this.nodeElement(id)
+        return {
+            card: !!element?.querySelector(':scope > foreignObject'),
+            icon: !!element?.querySelector(':scope > svg.node-content'),
+        }
     }
 
     /** How many focus cards are on screen only because they are still fading out. */
