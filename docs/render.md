@@ -189,6 +189,11 @@ themed pill as a floated label to stay readable over the canvas. Pair it with
 `textVerticalShift: 1` (or `textHorizontalShift`) to move the whole label clear
 of the node. Edge labels are never truncated.
 
+`text` is a label on a node, not a substitute for one. A node that *is* its text should be
+drawn as the node, through [`html`](#html-nodes), `renderNode` or a
+[tier](#node-tiers) — those are the node's drawing, and the zoom keeps them whatever
+[`minLabelFontSize`](#label-zoom) does to labels.
+
 ## Node badges
 
 By the time a graph is useful, `color`, `shape`, `size` and `iconClass` are usually
@@ -381,8 +386,9 @@ drawing is held on a layer of its own and the two fade past each other, so a nod
 absent mid-swap, only briefly softer where they overlap.
 
 `render.detailTransition` is how long that takes, in milliseconds. It defaults to `160` and
-covers both zoom crossings and the focus drawing. Set it to `0` to replace the drawing in a
-single frame:
+covers every drawing the zoom decides: a tier crossing, the focus drawing, and a label
+crossing [`minLabelFontSize`](#label-zoom). Set it to `0` to replace the drawing in a single
+frame:
 
 ```ts
 const options = {
@@ -400,6 +406,60 @@ already spends, and that figure does not grow with the duration. Turn it off on 
 where that frame matters more than the transition.
 
 `prefers-reduced-motion` turns it off on its own, whatever the option says.
+
+## Labels at a readable size {#label-zoom}
+
+A label rides the graph and scales with it, so the further out the view is the smaller it is
+painted. A graph opens at whatever scale the fit picks, and that scale falls as the graph
+grows: past a few hundred nodes the opening frame is text nobody can read, drawn over the
+graph it is naming.
+
+`render.minLabelFontSize` is the rendered size, in CSS pixels, below which a label is not
+drawn. It defaults to `9`.
+
+```ts
+const options = {
+    render: {
+        minLabelFontSize: 9,
+    },
+}
+```
+
+The test is `fontSize × zoom`, in rendered pixels rather than the zoom scale: a scale
+multiplies coordinates the layout invented, so the same value means a different apparent size
+on the next dataset.
+
+It is one number for the whole canvas, edge labels and node labels alike. The difference
+between them is already in the font size: an edge label is drawn at
+`defaultLabelStyle.fontSize` (12 by default), while a node's is derived from the node,
+`max(12, size × 0.45)`, so a large node keeps its label to a lower zoom than a small one.
+
+`0` turns the gate off and draws every label at every zoom.
+
+::: tip What counts as a label
+The text the library places: an edge's `label`, a node's `text`, and whatever
+`render.renderLabel` returns. A node's `html`, `renderNode` or tier card is its *drawing*,
+and [`tiers`](#node-tiers) is what chooses between drawings.
+:::
+
+A label that is showing holds until its rendered size falls to 85% of the threshold, so a
+view parked on the line settles instead of flickering. Every label drawn at one size answers
+together, whichever element it belongs to.
+
+An edge selected **on its own** shows its label whatever the zoom, counter-scaled so it is
+readable rather than the two pixels it was hidden at. An edge has no tooltip and no panel, so
+its label is the only thing that answers "what is this". A node needs none of that: it
+already answers through its tooltip, the sidebar, and its `focusTier` drawing.
+
+A hidden label is not merely invisible, it is not in the graph — which is where the cost goes.
+A label is repositioned on every simulation tick, and on a large graph that pass alone costs
+more than a frame. What remains after the gate is the stroke, which is cheap.
+
+::: warning What it does not do
+Above the threshold, labels can still overlap each other. An edge label is typically wider
+than the edge it names, and that ratio does not change with the zoom. This option is about
+legibility, not decluttering.
+:::
 
 ## API
 

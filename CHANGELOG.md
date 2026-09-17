@@ -37,8 +37,38 @@ the drawing, so nothing moves when one gives way to the next.
   way; everywhere else in the style chain `null` still falls through, so a style callback
   handing back a null straight out of node data keeps getting the default.
 
+### Labels the view has made too small to read
+
+- **`render.minLabelFontSize` stops drawing a label below a legible rendered size**, `9` CSS
+  pixels by default. A label rides the graph, so a graph large enough to open zoomed out opens
+  as text nobody can read, drawn over the graph it is naming. One number covers node labels and
+  edge labels alike: the difference between them is already in the font size, since a node's is
+  derived from its own size, so a large node keeps its label to a lower zoom than a small one.
+  As with tiers the test is on rendered pixels, a label that is showing holds until it falls to
+  85% of the threshold, and every label at one size answers together. `0` restores the previous
+  behaviour exactly.
+- **A hidden label leaves the graph rather than being hidden in place**, which is where the cost
+  goes: a label is repositioned on every simulation tick, and that pass costs more than twice
+  what the edges themselves do. Measured on 2500 nodes and 4900 edges, a tick's reposition pass
+  falls from 23.5ms to 7.0ms.
+- **A lone-selected edge shows its label whatever the zoom**, counter-scaled to stay readable
+  rather than forced back at the size it was hidden at. An edge has no tooltip and no panel, so
+  its label is the only thing that answers for it. A node is left alone: it already answers
+  through its tooltip, the sidebar and its `focusTier` drawing.
+- **A label fades in and out rather than blinking**, on the same `render.detailTransition` as a
+  tier swap: the option covers every drawing the zoom decides. A label on its way out leaves its
+  edge or node immediately and rides out the fade on a layer of its own, so the next tick has one
+  fewer thing to reposition.
+
 ### Fixes
 
+- **An unlabelled edge no longer carries a label container.** One was appended before anything
+  checked whether there was any text, so every edge in an unlabelled graph was walked and
+  repositioned on every tick — 6.11ms of a 6.30ms pass on a 1000-node graph. With
+  `render.renderLabel` set it was worse: every edge got a 200×100 foreign object and a measuring
+  frame whether or not the callback returned anything.
+- **A fit frames the graph rather than the labels the zoom happens to allow.** Framing a label
+  would zoom in, which takes the label away, which changes the extent the next fit measures.
 - **An edge keeps its line when it is redrawn.** A path's geometry was only ever written on a
   simulation tick, so any redraw on a settled graph left arrowheads floating with no line
   between them.

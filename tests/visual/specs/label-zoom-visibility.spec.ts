@@ -150,6 +150,18 @@ test.describe('a selected edge keeps its label', () => {
         expect(await harness(page, 'edgeLabelScreenSize', 'big-small')).toEqual(size)
     })
 
+    test('selected while it is showing, it holds its size on the way back out', async ({ page }) => {
+        await harness(page, 'setZoomScale', EVERY_LABEL)
+        await harness(page, 'selectEdge', 'big-small')
+
+        await harness(page, 'setZoomScale', NO_LABEL)
+        expect(await labelShown(page, 'big-small')).toBe(true)
+        const size = await harness(page, 'edgeLabelScreenSize', 'big-small')
+
+        await harness(page, 'setZoomScale', 0.15)
+        expect(await harness(page, 'edgeLabelScreenSize', 'big-small')).toEqual(size)
+    })
+
     test('and gives it back on deselection', async ({ page }) => {
         await harness(page, 'selectEdge', 'big-small')
         expect(await labelShown(page, 'big-small')).toBe(true)

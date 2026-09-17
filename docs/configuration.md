@@ -85,6 +85,7 @@ Pivotick allows you to customize how nodes, edges, and labels are displayed, and
 | `defaultNodeStyle`  | [NodeStyle](/api/html/interfaces/RendererOptions.NodeStyle.html)     | [defaultNodeStyle](/api/html/variables/defaultNodeStyleValue.html)          | Default styling applied to all nodes.                             |
 | `nodeTypeAccessor`  | `(node: Node) => string \| undefined`                                    | `undefined` | Function to access the type of a node, used with `nodeStyleMap`.  |
 | `nodeStyleMap`      | `Record<string, NodeStyle>`                                              | `{}`        | Maps node types (from `nodeTypeAccessor`) to styles.              |
+| `minLabelFontSize`  | `number`                                                                 | `9`         | Rendered font size, in CSS pixels, below which a label is not drawn. `0` draws them at every zoom. |
 | `zoomEnabled`       | `boolean`                                                                | `true`      | Enable zoom.                                                      |
 | `dragEnabled`       | `boolean`                                                                | `true`      | Enable dragging nodes.                                            |
 
