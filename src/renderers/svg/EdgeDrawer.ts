@@ -25,6 +25,10 @@ export class EdgeDrawer {
 
     public render(theEdgeSelection: Selection<SVGGElement, Edge, null, undefined>, edge: Edge): void {
         this.defaultEdgeRender(theEdgeSelection, edge)
+        // A freshly appended path has no `d`, and `d` is otherwise only written on a
+        // simulation tick. An edge re-rendered on a settled graph would never get one, so
+        // the graph would draw as unconnected nodes with arrowheads floating in space.
+        this.updatePositions(theEdgeSelection as unknown as Selection<SVGGElement, Edge, SVGGElement, unknown>)
     }
 
     private defaultEdgeRender(edgeSelection: Selection<SVGGElement, Edge, null, undefined>, edge: Edge): void {

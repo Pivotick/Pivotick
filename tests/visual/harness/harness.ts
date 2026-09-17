@@ -1395,6 +1395,8 @@ export interface HarnessApi {
     counts(): { nodes: number; edges: number; notes: number }
     /** Every node's current `(x, y)` (graph coordinates) — for layout assertions. */
     nodePositions(): Record<string, { x: number; y: number }>
+    /** Drive a plain renderer update, the way any library-internal redraw does. */
+    rerender(): void
     /**
      * Load a fixture whose nodes declare zoom-driven detail tiers: a dot, a labelled chip
      * and (by default) a focus card. Every node gets the same tiers, so they all cross
@@ -2922,6 +2924,10 @@ class Harness implements HarnessApi {
             out[node.id] = { x: node.x ?? 0, y: node.y ?? 0 }
         }
         return out
+    }
+
+    rerender(): void {
+        this.g.renderer.update(false)
     }
 
     async loadWithTiers(spec: TierSpec = {}, overrides: PlainObject = {}): Promise<void> {
