@@ -13,6 +13,8 @@ const HYSTERESIS_ZOOM = 0.9
 
 const FOOTPRINT = 70
 const CARD = { width: 280, height: 150 }
+/** Generous room for the gap an arrowhead leaves; well under the 70 a stale chip anchor gives. */
+const ARROWHEAD_ROOM = 20
 
 /** Which drawing a node is showing, by tier index; `'base'` is the floor style. */
 async function tierOf(page: Page, id: string): Promise<string | null> {
@@ -97,6 +99,38 @@ test.describe('zoom-driven node detail', () => {
         await harness(page, 'addNode', 'late', 60, 60)
         await nodeEl(page, 'late').waitFor({ state: 'attached' })
         expect(await tierOf(page, 'late')).toBe('1')
+    })
+
+    test('every node on the same tiers draws the same one, anywhere in the band', async ({ page }) => {
+        await harness(page, 'loadWithTiers')
+        await waitForViewSettled(page)
+
+        // Walk across both thresholds and back, pausing inside each hysteresis band. Nodes
+        // scroll in and out of the viewport on the way, and an off-screen one is re-picked
+        // later than its neighbours — which used to leave it on a different tier for good.
+        for (const scale of [1.2, 0.9, 0.5, 0.28, 0.5, 0.9, 1.2]) {
+            await harness(page, 'setZoomScale', scale)
+            const tiers = await harness(page, 'tiersDrawn')
+            expect(new Set(Object.values(tiers)).size, `at zoom ${scale}: ${JSON.stringify(tiers)}`).toBe(1)
+        }
+    })
+
+    test('edges re-anchor on the new drawing after a swap', async ({ page }) => {
+        await harness(page, 'loadWithTiers')
+        await waitForViewSettled(page)
+
+        // The chip is 140 wide inside a 70 footprint; the dot is 32. An edge anchored on the
+        // chip and left there would end a long way short of the dot it now points at.
+        await harness(page, 'setZoomScale', CHIP_ZOOM)
+        expect(await tierOf(page, 'a')).toBe('1')
+        await harness(page, 'setZoomScale', DOT_ZOOM)
+        expect(await tierOf(page, 'a')).toBe('0')
+
+        // An edge stops a little short of the rim to leave room for its arrowhead, so a
+        // correctly anchored endpoint sits ~8 units out. One still anchored on the chip
+        // would sit 70 out — the chip's half-width — against the dot's 16.
+        const gap = await harness(page, 'edgeGapAtNode', 'hub-a', 'a')
+        expect(gap, 'edge endpoint should sit on the dot it points at').toBeLessThan(ARROWHEAD_ROOM)
     })
 
     test('a fit frames the footprints, so it lands the same at any tier', async ({ page }) => {

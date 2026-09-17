@@ -31,6 +31,16 @@ export class NodeDrawer {
      */
     private tierState = new WeakMap<Node, TierState>()
     /**
+     * The tier each `tiers` array last settled on, and the footprint it settled at.
+     *
+     * The hysteresis band belongs to the configuration, not to the node: every node sharing
+     * a `tiers` array shares its thresholds, so they have to answer identically however long
+     * ago each was last looked at. Held per node, the on-screen check pulled them apart — a
+     * node re-picked at a different moment entered the band from the other side and then
+     * stayed there, leaving identical nodes drawn differently for no visible reason.
+     */
+    private tierBand = new WeakMap<NodeTier[], { footprint: number, index: number }>()
+    /**
      * Set the first time any node resolves a `tiers` array. A graph that declares none never
      * runs the per-zoom pass at all.
      */
@@ -241,8 +251,14 @@ export class NodeDrawer {
                     ?.querySelector<SVGRectElement>(':scope > rect.node')
                 if (backing) fitBackingBox(backing, content, width, height)
             }
-            // The card's real box is only known here, so the rim moves with it.
-            if (writesGeometry) this.badgeDrawer.reanchor(node)
+            // The card's real box is only known here, so the rim moves with it — and so do
+            // the edges landing on it, which until now were anchored on the placeholder.
+            // A reheat used to do that as a side effect; a node with a declared footprint
+            // gets no reheat, so it is asked for directly.
+            if (writesGeometry) {
+                this.badgeDrawer.reanchor(node)
+                this.graphSvgRenderer.nextTickFor([node])
+            }
         }
         requestAnimationFrame(() => measureAndSize(0))
     }
@@ -355,7 +371,12 @@ export class NodeDrawer {
      */
     private pickTier(node: Node, tiers: NodeTier[], footprint: number): number {
         const rendered = footprint * 2 * this.graphSvgRenderer.getZoomTransform().k
-        const previous = this.tierState.get(node)?.index ?? BASE_TIER
+        // Shared across every node on these tiers. A node with a footprint of its own is not
+        // on the same thresholds, so it falls back to what it last drew.
+        const band = this.tierBand.get(tiers)
+        const previous = band?.footprint === footprint
+            ? band.index
+            : this.tierState.get(node)?.index ?? BASE_TIER
 
         let picked = BASE_TIER
         let pickedThreshold = -Infinity
@@ -370,6 +391,7 @@ export class NodeDrawer {
                 pickedThreshold = threshold
             }
         }
+        this.tierBand.set(tiers, { footprint, index: picked })
         return picked
     }
 
@@ -395,7 +417,7 @@ export class NodeDrawer {
 
     private applyTierChanges(): void {
         const visible = this.graphSvgRenderer.getVisibleBounds()
-        let changed = false
+        const changed: Node[] = []
         for (const node of this.graph.getMutableNodes()) {
             if (!node.visible) continue
             const state = this.tierState.get(node)
@@ -409,11 +431,16 @@ export class NodeDrawer {
             if (index === state.index) continue
             state.index = index
             node.markDirty()
-            changed = true
+            changed.push(node)
         }
+        if (!changed.length) return
+
         // One update for the whole crossing: every node shares a footprint, so they cross
         // together, and walking the graph per node would cost more than the redraw.
-        if (changed) this.graphSvgRenderer.update(false)
+        this.graphSvgRenderer.update(false)
+        // The new drawing has a new radius, so the edges landing on these nodes now stop in
+        // the wrong place. On a settled graph nothing ticks to correct them.
+        this.graphSvgRenderer.nextTickFor(changed)
     }
 
     // --- Focus tier ---------------------------------------------------------------------

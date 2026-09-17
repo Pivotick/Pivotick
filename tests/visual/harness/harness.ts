@@ -1415,6 +1415,13 @@ export interface HarnessApi {
      * index, `'base'` for the floor style, or `null` when the node declares no tiers.
      */
     tierOf(id: string): string | null
+    /** Every visible node's drawn tier, keyed by id — for asserting the canvas agrees with itself. */
+    tiersDrawn(): Record<string, string | null>
+    /**
+     * How far an edge's endpoint sits from the rim of the node it points at, in graph units.
+     * Near zero means the edge is anchored on what is currently drawn.
+     */
+    edgeGapAtNode(edgeId: string, nodeId: string): number | null
     /** The footprint half-width the layout is spacing a node by. */
     layoutSizeOf(id: string): number | undefined
     /** The collision radius the drawing last wrote — the drawn size, not the footprint. */
@@ -2991,6 +2998,29 @@ class Harness implements HarnessApi {
 
     tierOf(id: string): string | null {
         return this.nodeElement(id)?.getAttribute('data-pvt-tier') ?? null
+    }
+
+    tiersDrawn(): Record<string, string | null> {
+        const out: Record<string, string | null> = {}
+        for (const node of this.g.getMutableNodes()) {
+            if (node.visible) out[node.id] = this.tierOf(node.id)
+        }
+        return out
+    }
+
+    edgeGapAtNode(edgeId: string, nodeId: string): number | null {
+        const node = this.g.getMutableNode(nodeId)
+        const path = document.querySelector<SVGPathElement>(`#edge-${this.g.getMutableEdges()
+            .find((edge) => edge.id === edgeId)?.domID} path`)
+        if (!node || !path) return null
+
+        // How far the endpoint nearest this node sits outside the shape it points at: the
+        // distance from the node's centre, less the radius the drawing actually has.
+        const total = path.getTotalLength()
+        const ends = [path.getPointAtLength(0), path.getPointAtLength(total)]
+        const centre = { x: node.x ?? 0, y: node.y ?? 0 }
+        const distances = ends.map((p) => Math.hypot(p.x - centre.x, p.y - centre.y))
+        return Math.abs(Math.min(...distances) - node.getCircleRadius())
     }
 
     layoutSizeOf(id: string): number | undefined {
