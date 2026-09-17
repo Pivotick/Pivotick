@@ -57,4 +57,14 @@ jobs:
       # registered on npmjs.com against this file's name, so renaming it breaks
       # the release until the publisher is registered again.
       - name: Publish to npm
-        run: npm publish
+        run: |
+          name="$(npm pkg get name | tr -d '"')"
+          version="$(npm pkg get version | tr -d '"')"
+          # A version that was never published prints nothing and still exits 0,
+          # so what came back decides, not the exit status.
+          published="$(npm view "$name@$version" version 2>/dev/null || true)"
+          if [ -n "$published" ]; then
+            echo "::notice::$name@$version is already on the registry, nothing to publish"
+            exit 0
+          fi
+          npm publish
