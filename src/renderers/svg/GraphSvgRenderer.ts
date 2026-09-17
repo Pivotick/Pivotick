@@ -46,6 +46,9 @@ const DEFAULT_RENDERER_OPTIONS = {
     } as SelectionBoxI
 } satisfies GraphRendererOptions
 
+/** What a fit looks past: drawings the zoom itself decides whether to draw. */
+const TRANSIENT_DRAWINGS = 'g.pvt-node-focus, g.pvt-detail-ghosts, g.label-container, g.pvt-node-label-group'
+
 /**
  * Whether the viewer has asked for less motion. Queried once: it is a user setting, and
  * matching a media query per swap would be a lookup inside the hot loop.
@@ -309,7 +312,7 @@ export class GraphSvgRenderer extends GraphRenderer {
     }
 
     /**
-     * The zoom layer's extent, with any focus drawing and any fading ghost left out of it.
+     * The zoom layer's extent, with the drawings that come and go left out of it.
      *
      * A focus drawing is counter-scaled to hold its size on screen, so its size in graph
      * units is whatever the current zoom makes it. Measuring the graph with one open would
@@ -319,9 +322,14 @@ export class GraphSvgRenderer extends GraphRenderer {
      * A ghost is the same problem in time rather than space: it is a drawing the graph has
      * already replaced, and framing it would size the view to something that is on its way
      * out.
+     *
+     * A label is the problem in a circle: it is drawn only above a zoom, so a fit that framed
+     * one would zoom in, which takes the label away, which changes the extent the next fit
+     * measures. Left out, the fit answers the same however the graph happens to be drawn —
+     * the invariant {@link growToFootprints} exists for.
      */
     private measureZoomLayer(zoomLayerEl: SVGGElement): DOMRect {
-        const transient = zoomLayerEl.querySelectorAll<SVGGElement>('g.pvt-node-focus, g.pvt-detail-ghosts')
+        const transient = zoomLayerEl.querySelectorAll<SVGGElement>(TRANSIENT_DRAWINGS)
         if (transient.length === 0) return this.growToFootprints(zoomLayerEl.getBBox())
 
         transient.forEach(el => el.setAttribute('display', 'none'))
