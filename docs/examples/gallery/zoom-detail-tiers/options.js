@@ -164,6 +164,11 @@ const options = {
         // footprints apart, so the links only have to stop it spreading further.
         d3LinkDistance: 60,
     },
+    UI: {
+        // The focus tier already draws everything a hover would say, so the tooltip beside
+        // it would only repeat itself. Both fire on hover; here only one should.
+        tooltip: { enabled: false },
+    },
 }
 // #endregion options
 
