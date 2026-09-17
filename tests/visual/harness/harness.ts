@@ -1429,6 +1429,23 @@ export interface HarnessApi {
     leavingFocusCards(): number
     /** What a node actually drew: its card, its icon, or both. */
     nodeDrawing(id: string): { card: boolean; icon: boolean }
+    /**
+     * Whether a node's label is currently drawn. Presence, never pixels: the suite's own
+     * threshold cannot see a 9px glyph, which is exactly the size in question here.
+     */
+    nodeLabelVisible(id: string): boolean
+    /** The same for an edge's label, whether the library drew the text or a caller's HTML. */
+    edgeLabelVisible(id: string): boolean
+    /** Every label on the canvas, node and edge alike, by element id. */
+    labelsDrawn(): Record<string, boolean>
+    /** An edge label's size on screen, in CSS pixels — what a counter-scaled one holds. */
+    edgeLabelScreenSize(id: string): { width: number; height: number } | null
+    /** Select several edges at once, which is not the same as selecting one. */
+    multiSelectEdges(ids: string[]): void
+    /** Drop every selection, node and edge alike. */
+    clearSelection(): void
+    /** The extent a fit frames, in graph coordinates. */
+    contentBounds(): { x: number; y: number; width: number; height: number } | null
     /** How many outgoing tier drawings are still fading. */
     detailGhostCount(): number
     settleDetailFade(maxFrames?: number): Promise<void>
@@ -2631,6 +2648,10 @@ class Harness implements HarnessApi {
         const render: PlainObject = {
             nodeTypeAccessor: (node: Node) => (node.getData() as Record<string, unknown>)?.kind,
             nodeStyleMap,
+            // The scene is laid out 700 units apart so the cards do not overlap, which fits
+            // it at about k = 0.4 — where a label is 5px and the gate rightly takes it away.
+            // This suite is about what a card draws, not about the zoom.
+            minLabelFontSize: 0,
         }
         // Cards only `stretchCard`; every other node gets nothing back and falls through to
         // the styling pipeline, which is what makes a global callback usable per node.
@@ -3104,6 +3125,52 @@ class Harness implements HarnessApi {
 
     private nodeElement(id: string): SVGGElement | null {
         return this.g.getMutableNodes().find((node) => node.id === id)?.getGraphElement() ?? null
+    }
+
+    nodeLabelVisible(id: string): boolean {
+        return !!this.nodeElement(id)?.querySelector(':scope > g.pvt-node-label-group')
+    }
+
+    edgeLabelVisible(id: string): boolean {
+        const edge = this.g.getMutableEdges().find((candidate) => candidate.id === id)
+        if (!edge) return false
+        return !!document.querySelector(`#edge-${edge.domID} > g.label-container`)
+    }
+
+    labelsDrawn(): Record<string, boolean> {
+        const drawn: Record<string, boolean> = {}
+        for (const node of this.g.getMutableNodes()) {
+            if (node.visible) drawn[node.id] = this.nodeLabelVisible(node.id)
+        }
+        for (const edge of this.g.getMutableEdges()) {
+            if (edge.visible) drawn[edge.id] = this.edgeLabelVisible(edge.id)
+        }
+        return drawn
+    }
+
+    edgeLabelScreenSize(id: string): { width: number; height: number } | null {
+        const edge = this.g.getMutableEdges().find((candidate) => candidate.id === id)
+        const label = edge && document.querySelector(`#edge-${edge.domID} > g.label-container`)
+        if (!label) return null
+        const box = label.getBoundingClientRect()
+        return { width: Math.round(box.width), height: Math.round(box.height) }
+    }
+
+    multiSelectEdges(ids: string[]): void {
+        const selection = ids
+            .map((id) => this.g.getMutableEdge(id))
+            .filter((edge): edge is Edge => Boolean(edge))
+            .map((edge) => [edge, edge.getGraphElement()])
+            .filter(([, element]) => Boolean(element))
+        this.g.renderer.getGraphInteraction().selectEdges(selection as never)
+    }
+
+    clearSelection(): void {
+        this.g.renderer.getGraphInteraction().unselectAll()
+    }
+
+    contentBounds(): { x: number; y: number; width: number; height: number } | null {
+        return this.g.renderer.getContentBounds()
     }
 
     setFilter(key: string, value: FilterFieldConfig): void {

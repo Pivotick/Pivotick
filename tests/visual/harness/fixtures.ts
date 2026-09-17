@@ -483,6 +483,29 @@ export const fixtures = {
     },
 
     /**
+     * Labels at three sizes, for the zoom the library stops drawing them at.
+     *
+     * A node's label is derived from the node (`max(12, size x 0.45)`), so the big node's is
+     * 18 units and the small node's the floor of 12 — the same 12 the edge label is drawn at.
+     * The two therefore cross `render.minLabelFontSize` at different zooms, and hold
+     * independently of one another on the way down.
+     */
+    labelSizes(): BuiltFixture {
+        const color = '#0f766e'
+        const big = mkStyledNode('big', -200, 0, { size: 40, color, text: 'Big', textVerticalShift: 1 })
+        const small = mkStyledNode('small', 200, 0, { size: 10, color, text: 'Small', textVerticalShift: 1 })
+        const plain = mkStyledNode('plain', 0, 150, { size: 10, color })
+        return {
+            nodes: [big, small, plain],
+            edges: [
+                mkEdge('big-small', big, small, { label: 'named' }),
+                mkEdge('small-plain', small, plain),
+            ],
+            notes: [],
+        }
+    },
+
+    /**
      * `textTruncate: false` — the same over-long label drawn in full, inside the node
      * and floated above it, with the truncating default on top for contrast. The edge
      * label is there to show edges never truncated in the first place.
