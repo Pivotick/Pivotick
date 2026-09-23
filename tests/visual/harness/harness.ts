@@ -940,9 +940,14 @@ export interface PivotFixtureSpec {
     /**
      * What the `union-children` pivot returns: one container, already on canvas, plus
      * the children to merge into it. A nested entry carries grandchildren, so the
-     * recursion has something to recurse into.
+     * recursion has something to recurse into. `edges` join a node to a child, each
+     * keyed `corr:<from>:<to>`, the way a correlation lands on a container's contents.
      */
-    union?: { parent: string; children: Array<string | { id: string; children: string[] }> }
+    union?: {
+        parent: string
+        children: Array<string | { id: string; children: string[] }>
+        edges?: Array<[string, string]>
+    }
     /**
      * What every savable fixture's `save` does. `'none'` (the default) declares no
      * `save` at all, which is the *not savable* path: nothing is ever counted unsaved.
@@ -5371,7 +5376,7 @@ class Harness implements HarnessApi {
                                     data: { label: 'replaced?', from: 'union' },
                                     children: union.children.map((entry) => child(entry)),
                                 }],
-                                edges: [],
+                                edges: (union.edges ?? []).map(([from, to]) => ({ id: `corr:${from}:${to}`, from, to })),
                             }
                         }
                     ),

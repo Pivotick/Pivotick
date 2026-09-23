@@ -1,6 +1,8 @@
 import type { Page } from '@playwright/test'
 import { test, expect, gotoHarness, harness } from '../helpers'
-import type { PivotFixtureSpec, RecordedEdgeBinding, RecordedRunOutcome } from '../harness/harness'
+import type {
+    PivotFixtureSpec, RecordedEdgeBinding, RecordedHistoryPreview, RecordedRunOutcome,
+} from '../harness/harness'
 
 // Children union by id (M1b): a pivot result whose node id matches one already on
 // canvas merges its children in — added, never updated, never removed — and the
@@ -241,4 +243,68 @@ test.describe('a container child whose id is already on canvas', () => {
         // so an expanded container drew the same node twice.
         expect(await childIds(page, 'container')).toEqual(['object-12'])
     })
+})
+
+// A pivot whose results come inside containers, with its edges pointing at the
+// contents: a correlation from a node on canvas to an attribute of another event.
+// The edges follow their endpoints to whatever depth those land at.
+test.describe('edges to a container\'s children', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoHarness(page)
+    })
+
+    const correlations: Array<[string, string]> = [['a', 'x1'], ['a', 'x2']]
+    const edgeIds = correlations.map(([from, to]) => `corr:${from}:${to}`)
+
+    const hasEdge = async (page: Page, id: string): Promise<boolean> =>
+        (await harness(page, 'edgeData', id)) !== null
+
+    const edgesPresent = async (page: Page): Promise<boolean[]> =>
+        Promise.all(edgeIds.map((id) => hasEdge(page, id)))
+
+    // `c` is a leaf of the `basic` fixture, so the container dedups onto it;
+    // `container` is new, so it is a triage row that has to be marked.
+    const cases = [
+        { name: 'already on canvas as a leaf', parent: 'c', mark: false },
+        { name: 'new to the canvas', parent: 'container', mark: true },
+    ]
+
+    for (const { name, parent, mark } of cases) {
+        const ingest = async (page: Page): Promise<RecordedRunOutcome> => {
+            await load(page, {
+                pivots: ['union-children'],
+                union: { parent, children: ['x1', 'x2'], edges: correlations },
+            })
+            await run(page, 'union-children', ['a'])
+            if (mark) await harness(page, 'markPivotCandidates', 'union-children', 'all')
+            return (await harness(page, 'ingestPivot', 'union-children')) as RecordedRunOutcome
+        }
+
+        test(`a container ${name} lands its children and their edges`, async ({ page }) => {
+            await ingest(page)
+
+            expect(await childIds(page, parent)).toEqual(['x1', 'x2'])
+            expect(await edgesPresent(page)).toEqual([true, true])
+            const bound = await binding(page, edgeIds[0])
+            expect(bound.bound, 'the edge is bound to the child the graph holds').toBe(true)
+        })
+
+        test(`undo of a container ${name} takes the edges with the children; redo restores both`, async ({ page }) => {
+            const ingested = await ingest(page)
+
+            const undo = (await harness(page, 'historyPreview', ingested.runId, 'undo')) as RecordedHistoryPreview
+            expect(undo.effect.edgesRemoved, 'the preview counts the edges to children').toBe(2)
+
+            await harness(page, 'undoPivot', ingested.runId)
+            expect(await harness(page, 'nodeData', 'x1')).toBeNull()
+            expect(await edgesPresent(page)).toEqual([false, false])
+
+            const redo = (await harness(page, 'historyPreview', ingested.runId, 'redo')) as RecordedHistoryPreview
+            expect(redo.effect.edgesRestored, 'the redo preview counts them back').toBe(2)
+
+            await harness(page, 'redoPivot')
+            expect(await childIds(page, parent)).toEqual(['x1', 'x2'])
+            expect(await edgesPresent(page)).toEqual([true, true])
+        })
+    }
 })

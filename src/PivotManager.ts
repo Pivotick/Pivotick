@@ -11,6 +11,7 @@ import type {
 import { SEED_SOURCE } from './interfaces/Pivot'
 import type { Node } from './Node'
 import { confirmModal } from './editing/PromptModal'
+import { rawTree } from './HistoryWorld'
 import type { Notification, NotificationAction, NotificationHandle } from './ui/Notifier'
 import { NotificationLevel } from './ui/Notifier'
 
@@ -591,8 +592,17 @@ export class PivotManager implements PivotManagerLike {
         // The exception is an edge whose endpoints are *all already there* and neither
         // of which is a landable candidate — a correlation between two nodes on screen.
         // With follow-the-nodes alone it would land without ever being triaged, so it
-        // gets a row of its own.
-        const landable = new Set(set.nodes.filter(c => !c.deduped).map(c => c.id))
+        // gets a row of its own. A container's children land with it, or merge into
+        // it when it is already there, so they are endpoints an edge can follow too.
+        const landable = new Set<string>()
+        for (const candidate of set.nodes) {
+            if (!candidate.deduped) landable.add(candidate.id)
+            for (const child of candidate.raw.children ?? []) {
+                for (const id of rawTree(child)) {
+                    if (!this.graph.getMutableNode(id)) landable.add(id)
+                }
+            }
+        }
         for (const raw of result.edges) {
             const from = String(raw.from)
             const to = String(raw.to)
@@ -869,9 +879,35 @@ export class PivotManager implements PivotManagerLike {
                 }
             }
 
-            // A carried edge follows its endpoints, so only this run's landed nodes can
-            // bring one in — the rest stay with the candidates still awaiting triage.
-            const landed = new Set(run.nodeIds)
+            // A candidate that was already on canvas is not landed, but this run did
+            // assert it exists — so it vouches for it. That is what makes two
+            // overlapping pivots both hold a claim on the same node, and what lets
+            // undo drop one claim without deleting what the other still vouches for.
+            for (const candidate of [...deduped, ...collided]) {
+                const existing = this.graph.getMutableNode(candidate.id)
+                if (!existing) continue
+                this.vouchExisting(existing, pivotId, runId)
+                run.vouchedNodeIds.push(existing.id)
+
+                // …and if it brought children, they are merged in by id: added, never
+                // updated, never removed. They ride with their container the way a
+                // carried edge rides with its endpoints, so they are not rows of their
+                // own — there is nowhere else to put a child.
+                const children = candidate.raw.children
+                if (!children?.length) continue
+                const added = this.graph.unionChildren(existing, children)
+                if (!added.length) continue
+                for (const child of added) {
+                    child.vouch(pivotId, runId)
+                    run.childIds.push(child.id)
+                }
+                run.unions.push({ parentId: existing.id, children })
+            }
+
+            // A carried edge follows its endpoints, so only what this run landed can
+            // bring one in, children included — the rest stay with the candidates
+            // still awaiting triage.
+            const landed = new Set([...run.nodeIds, ...run.childIds])
             const carried = (set.carried ?? []).filter(
                 raw => landed.has(String(raw.from)) || landed.has(String(raw.to)),
             )
@@ -899,39 +935,15 @@ export class PivotManager implements PivotManagerLike {
                 run.edges.push(raw)
                 landedEdges.push(edge)
             }
-
-            // A candidate that was already on canvas is not landed, but this run did
-            // assert it exists — so it vouches for it. That is what makes two
-            // overlapping pivots both hold a claim on the same node, and what lets
-            // undo drop one claim without deleting what the other still vouches for.
-            for (const candidate of [...deduped, ...collided]) {
-                const existing = this.graph.getMutableNode(candidate.id)
-                if (!existing) continue
-                this.vouchExisting(existing, pivotId, runId)
-                run.vouchedNodeIds.push(existing.id)
-
-                // …and if it brought children, they are merged in by id: added, never
-                // updated, never removed. They ride with their container the way a
-                // carried edge rides with its endpoints, so they are not rows of their
-                // own — there is nowhere else to put a child.
-                const children = candidate.raw.children
-                if (!children?.length) continue
-                const added = this.graph.unionChildren(existing, children)
-                if (!added.length) continue
-                for (const child of added) {
-                    child.vouch(pivotId, runId)
-                    run.childIds.push(child.id)
-                }
-                run.unions.push({ parentId: existing.id, children })
-            }
         })
 
         // Ingested rows leave the set; rejections and untriaged leftovers stay. What
         // leaves is written down, so undoing this ingest can put it back.
         const landedIds = new Set(run.nodeIds)
+        const landedEndpoints = new Set([...run.nodeIds, ...run.childIds])
         const landedEdgeKeys = new Set(run.edgeIds)
         const keptCarried = set.carried?.filter(
-            raw => !landedIds.has(String(raw.from)) && !landedIds.has(String(raw.to)),
+            raw => !landedEndpoints.has(String(raw.from)) && !landedEndpoints.has(String(raw.to)),
         )
         run.restage = {
             label: set.label,

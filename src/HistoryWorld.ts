@@ -80,10 +80,11 @@ export function reapply(payload: HistoryPayload, world: HistoryWorld): void {
         case 'pivot': {
             const { run } = payload
             world.replayNodes(run.nodes, run.pivotId, run.runId)
-            world.replayEdges(run.edges, run.pivotId, run.runId)
             world.vouchExistingNodes(run.vouchedNodeIds, run.pivotId, run.runId)
-            world.vouchExistingEdges(run.vouchedEdgeIds, run.pivotId, run.runId)
+            // Before the edges: some of them end on a child the union brings back.
             world.unionChildren(run.unions, run.pivotId, run.runId)
+            world.replayEdges(run.edges, run.pivotId, run.runId)
+            world.vouchExistingEdges(run.vouchedEdgeIds, run.pivotId, run.runId)
             return
         }
         case 'delete':
@@ -465,7 +466,7 @@ function vouchExisting(element: Node | Edge, source: string, runId: string): voi
 }
 
 /** Every id in a raw node's subtree, container first. */
-function rawTree(raw: RawNode): string[] {
+export function rawTree(raw: RawNode): string[] {
     const collected = [String(raw.id)]
     for (const child of raw.children ?? []) collected.push(...rawTree(child))
     return collected
