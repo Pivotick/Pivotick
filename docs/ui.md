@@ -124,6 +124,7 @@ const options = {
 | `UI.navigation.enabled` | The viewport rail: fit, zoom and fullscreen. |
 | `UI.legend: false` | The canvas legend, including the one it would derive by itself. |
 | `UI.minimap: false` | The minimap. |
+| `UI.emptyState: false` | The card an [empty canvas](#empty-state) shows. |
 | `UI.table: false` | The data dock and its `Shift+T`. |
 | `UI.pivotMode: false` | The Pivot rail mode, whatever is registered. |
 
@@ -144,6 +145,44 @@ node. Switch all four off and the mode leaves the rail, along with its `C` short
 rather than opening onto an empty panel. Select always stays.
 :::
 
+## An empty canvas {#empty-state}
+
+A graph with no node and no note shows a card in the middle of the canvas, so a source
+with nothing to draw does not read as a graph that failed to load. It says "Nothing on
+the canvas yet" unless you give it something else to say:
+
+```ts
+const options = {
+    UI: {
+        emptyState: { // [!code focus:9]
+            render: ({ initial, graph }) => {
+                const box = document.createElement('div')
+                box.textContent = initial ? 'Nothing is related to this record.' : 'The canvas is empty.'
+                const button = document.createElement('button')
+                button.textContent = 'Find related'
+                button.onclick = () => graph.UIManager.openPivotMode()
+                box.append(button)
+                return box
+            },
+        },
+    },
+}
+```
+
+The card follows the data. Adding a node or a note takes it away, and removing the last
+of them, by hand or by undoing the ingest that brought them, brings it back. Nodes the
+filters hide still count: the graph is narrowed, not empty.
+
+`render` runs each time the card appears, not on every change while it is up. `initial`
+is `true` until the graph has held a node, so an analyst who emptied a full canvas can
+be told something other than what an empty source is told. A returned string renders as
+plain text, and `render` may be `async` like the hooks below.
+
+The card uses the chrome's surface and border, so it follows the theme. It lets the
+canvas's gestures through, so panning, zooming and the canvas menu work across it,
+except over interactive content: a button, a link, a form control or anything with a
+`tabindex` gets its own clicks. `UI.emptyState: false` shows nothing at all.
+
 ## Asynchronous content {#async-content}
 
 Every consumer-supplied content hook may return a **`Promise`** instead of the
@@ -151,8 +190,9 @@ content itself. That covers the sidebar's
 [`mainHeader.render`](./ui-sidebar#main-header-interface),
 [`propertiesPanel.render` / `nodePropertiesMap` / `edgePropertiesMap`](./ui-sidebar#properties-panel-interface),
 `neighborsPanel.render`, an [extra panel's](./ui-sidebar#extra-panels-interface)
-`title` and `render`, and the [tooltip's](./ui-tooltip#async-content)
-`render`, `renderNodeExtra`, `renderEdgeExtra` and property maps.
+`title` and `render`, the [tooltip's](./ui-tooltip#async-content)
+`render`, `renderNodeExtra`, `renderEdgeExtra` and property maps, and the
+[empty canvas's](#empty-state) `render`.
 
 This exists for the case where a node's data is a *reference* to a record rather
 than the record itself, and the interesting content is behind an HTTP call:
@@ -209,8 +249,8 @@ const options = {
 }
 ```
 
-`surface` is one of `'tooltip'`, `'properties'`, `'neighbors'`, `'mainHeader'`
-or `'extraPanel'`.
+`surface` is one of `'tooltip'`, `'properties'`, `'neighbors'`, `'mainHeader'`,
+`'extraPanel'` or `'emptyState'`.
 
 ::: info Synchronous hooks are untouched
 Returning content directly behaves exactly as it always has — same call, same

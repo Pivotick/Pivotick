@@ -23,6 +23,7 @@ import { ToolPanel } from './elements/ToolPanel/ToolPanel'
 import { ViewFlyout } from './elements/ViewFlyout/ViewFlyout'
 import { PhysicsFlyout } from './elements/PhysicsFlyout/PhysicsFlyout'
 import { Legend } from './elements/Legend/Legend'
+import { EmptyState } from './elements/EmptyState/EmptyState'
 import { Dock, type DockConfig } from './elements/Dock/Dock'
 import { PivotMode, PIVOT_MODE } from './elements/Pivot/PivotMode'
 import { PivotTriage } from './elements/Pivot/PivotTriage'
@@ -261,6 +262,11 @@ const UI_ELEMENTS: UIElementSpec[] = [
         make: ui => new Layout(ui), slot: ui => ui.getRootContainer()
     },
     {
+        key: 'emptyState', modes: '*',
+        enabled: o => o.emptyState !== false && (typeof o.emptyState !== 'object' || o.emptyState.enabled !== false),
+        make: ui => new EmptyState(ui), slot: ui => ui.layout?.emptyState
+    },
+    {
         key: 'navigation', modes: ['viewer', 'full', 'light'],
         enabled: o => !!o.navigation?.enabled,
         make: ui => new GraphNavigation(ui), slot: ui => ui.layout?.graphnavigation
@@ -444,6 +450,7 @@ export class UIManager {
     public get viewFlyout(): ViewFlyout | undefined { return this.byKey.get('viewFlyout') as ViewFlyout | undefined }
     public get physicsFlyout(): PhysicsFlyout | undefined { return this.byKey.get('physicsFlyout') as PhysicsFlyout | undefined }
     public get legend(): Legend | undefined { return this.byKey.get('legend') as Legend | undefined }
+    public get emptyState(): EmptyState | undefined { return this.byKey.get('emptyState') as EmptyState | undefined }
     public get dock(): Dock | undefined { return this.byKey.get('dock') as Dock | undefined }
     public get table(): Table | undefined { return this.byKey.get('table') as Table | undefined }
     public get tooltip(): Tooltip | undefined { return this.byKey.get('tooltip') as Tooltip | undefined }

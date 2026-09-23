@@ -60,6 +60,16 @@ the drawing, so nothing moves when one gives way to the next.
   edge or node immediately and rides out the fade on a layer of its own, so the next tick has one
   fewer thing to reposition.
 
+### An empty canvas says so
+
+- **`UI.emptyState` puts a card in the middle of a canvas with no node and no note**, reading
+  "Nothing on the canvas yet" by default, in every mode. A blank canvas otherwise reads as a
+  graph that failed to load. The card follows the data both ways, so an ingest takes it away and
+  undoing that ingest brings it back; nodes the filters hide still count. `render` replaces the
+  text, runs on each appearance, and is told through `initial` whether the graph has ever held a
+  node. The card lets the canvas's gestures through except over its interactive content.
+  `UI.emptyState: false` turns it off.
+
 ### Fixes
 
 - **An unlabelled edge no longer carries a label container.** One was appended before anything

@@ -1763,6 +1763,20 @@ export interface HarnessApi {
      */
     probePanelAfterTeardown(spec: PanelSpec): { panelsBefore: number; registered: boolean; domPanelsAfter: number }
 
+    /* ---------- empty-canvas state ---------- */
+
+    /**
+     * Load a fixture with a `UI.emptyState.render` that says whether it is the initial
+     * render and holds a button counting its clicks. Every call is recorded.
+     */
+    loadEmptyState(name: FixtureName, overrides?: PlainObject): Promise<void>
+    /** The `initial` flag of each `UI.emptyState.render` call since the last load. */
+    emptyStateRenders(): boolean[]
+    /** Clicks the empty-state button has received since the last load. */
+    emptyStateClicks(): number
+    /** Add a node and record it as a creation, so `graph.history.undo()` takes it back out. */
+    addRecordedNode(id: string): void
+
     /* ---------- async content hooks ---------- */
 
     /** Load a fixture with the content hooks {@link AsyncContentSpec} describes. */
@@ -4198,6 +4212,45 @@ class Harness implements HarnessApi {
                 return this.holdRender('extraPanel.render', id, ctx).then((text) => build(` · ${text}`))
             },
         }
+    }
+
+    /* ---------- empty-canvas state ---------- */
+
+    private emptyRenders: boolean[] = []
+    private emptyClicks = 0
+
+    async loadEmptyState(name: FixtureName, overrides: PlainObject = {}): Promise<void> {
+        this.emptyRenders = []
+        this.emptyClicks = 0
+        const render = ({ initial }: { initial: boolean }): HTMLElement => {
+            this.emptyRenders.push(initial)
+            const box = document.createElement('div')
+            box.className = 'test-empty-state'
+            const text = document.createElement('p')
+            text.textContent = initial ? 'Nothing here is related.' : 'You emptied the canvas.'
+            const button = document.createElement('button')
+            button.textContent = 'Find related'
+            button.addEventListener('click', () => { this.emptyClicks++ })
+            box.append(text, button)
+            return box
+        }
+        await this.boot(name, mergeOptions({ UI: { emptyState: { render } } }, overrides))
+    }
+
+    emptyStateRenders(): boolean[] {
+        return [...this.emptyRenders]
+    }
+
+    emptyStateClicks(): number {
+        return this.emptyClicks
+    }
+
+    addRecordedNode(id: string): void {
+        const node = new Node(id, { label: id.toUpperCase() }, {}, id)
+        node.x = 0
+        node.y = 0
+        this.g.addNode(node)
+        this.g.history.recordCreate({ node })
     }
 
     /* ---------- async content hooks ---------- */

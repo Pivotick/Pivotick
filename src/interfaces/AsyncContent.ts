@@ -5,7 +5,7 @@
  *
  * @category UI Options
  */
-export type AsyncSurface = 'tooltip' | 'properties' | 'neighbors' | 'mainHeader' | 'extraPanel'
+export type AsyncSurface = 'tooltip' | 'properties' | 'neighbors' | 'mainHeader' | 'extraPanel' | 'emptyState'
 
 /**
  * Content a consumer hook may return. A `string` renders as plain **text**;

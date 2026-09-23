@@ -140,6 +140,16 @@ export interface GraphUI {
      */
     minimap?: MinimapOptions | boolean,
     /**
+     * What the canvas says while the graph holds no node and no note: a card centred in
+     * the canvas, shown and hidden as data comes and goes, so an ingest takes it away and
+     * undoing that ingest brings it back.
+     *
+     * Left out, or `true`, it reads "Nothing on the canvas yet". `false` shows nothing.
+     * Declare `render` to say something of your own. See {@link EmptyStateOptions}.
+     * @default true
+     */
+    emptyState?: EmptyStateOptions | boolean,
+    /**
     /**
      * What to show while a content hook's promise is in flight, and if it
      * rejects. Only async hooks ever reach it — see {@link AsyncContentOptions}.
@@ -176,6 +186,54 @@ export interface GraphUI {
      */
     pivotMode?: boolean | 'auto',
     keybindings?: Keybinding[];
+}
+
+/**
+ * `UI.emptyState`: the card an empty canvas shows.
+ *
+ * The card is click-through, so panning and the canvas menu work over it, except for
+ * interactive content inside it (a button, a link, a form control, anything with a
+ * `tabindex`), which receives its own clicks.
+ *
+ * @example
+ * ```js
+ * UI: {
+ *     emptyState: {
+ *         render: ({ initial }) => {
+ *             const box = document.createElement('div')
+ *             box.textContent = initial ? 'Nothing is related to this record.' : 'The canvas is empty.'
+ *             return box
+ *         },
+ *     },
+ * }
+ * ```
+ *
+ * @category UI Options
+ */
+export interface EmptyStateOptions extends FeatureToggle {
+    /**
+     * The card's content. Run each time the card appears, not on every change while it
+     * is up, so it can say something different once the graph has held a node. A
+     * returned `string` renders as plain text; return an `HTMLElement` to render your
+     * own markup. May be `async`.
+     * @default 'Nothing on the canvas yet'
+     */
+    render?: ((ctx: EmptyStateContext) => RenderResult) | HTMLElement | string
+}
+
+/**
+ * Handed to {@link EmptyStateOptions.render}.
+ *
+ * @category UI Options
+ */
+export interface EmptyStateContext extends RenderContext {
+    graph: Graph
+    /**
+     * `true` while the graph has never held a node since it was built; `false` once it
+     * has, so an analyst emptying a full canvas can be told something other than what
+     * an empty source is told.
+     */
+    initial: boolean
 }
 
 /**

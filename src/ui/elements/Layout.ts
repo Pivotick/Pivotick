@@ -15,6 +15,8 @@ export class Layout extends UIComponent {
     public flyout?: HTMLDivElement
     /** Canvas-docked legend slot (its corner is set by the legend itself). */
     public legend?: HTMLDivElement
+    /** The empty-canvas card, centred over the canvas. Every mode has one. */
+    public emptyState?: HTMLDivElement
     /**
      * The bottom dock: a grid row under the canvas, spanning the canvas column only so
      * the sidebar stays full height beside it. `full` mode only.
@@ -35,6 +37,10 @@ export class Layout extends UIComponent {
         this.notification = document.createElement('div')
         this.notification.className = 'pvt-notification'
         this.canvas.appendChild(this.notification)
+
+        this.emptyState = document.createElement('div')
+        this.emptyState.className = 'pvt-empty-state'
+        this.canvas.appendChild(this.emptyState)
 
         if (mode === 'full') {
             // No slot for a sidebar that was switched off: the grid's first column is

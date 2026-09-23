@@ -288,6 +288,11 @@ export function buildAutoFixture(spec: AutoFixtureSpec): BuiltFixture {
 }
 
 export const fixtures = {
+    /** No node, no edge, no note: the empty canvas. */
+    empty(): BuiltFixture {
+        return { nodes: [], edges: [], notes: [] }
+    },
+
     /** A small directed graph: pentagon + hub, with a couple of labelled edges. */
     basic(): BuiltFixture {
         const n = basicNodes()
