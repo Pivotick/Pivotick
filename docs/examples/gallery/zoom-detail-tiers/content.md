@@ -19,6 +19,7 @@ compromise the other can live with.
 | a labelled chip | `tiers[1]`, 110×46 | once it renders 110, i.e. half zoom |
 | a summary card | `tiers[2]`, 220×110 | once it renders 220, which is zoom 1 here |
 | a detail card | `focusTier`, 280×150 | on hover or a lone selection, at any zoom |
+| the summary card again | an indicator's `focusTier` | on hover, until `tiers[2]` already shows it |
 
 `tiers` is an array and nothing caps its length. The widest one sets the footprint, so it is
 the one that engages at zoom 1 and is drawn at exactly its design size.
@@ -50,6 +51,10 @@ Things worth provoking:
 - **Hover a dot while zoomed out.** The detail card is counter-scaled against the zoom, so
   it is the same 280×150 pixels however small the node is. Reading one node never means
   zooming to it.
+- **Hover the IP, the file or the email, zoomed out and then at zoom 1.** Their focus
+  drawing is the summary card, which `focusTierYieldsAt: 2` retires once the summary tier
+  draws it anyway, so hovering them up close adds nothing. The campaign still opens its
+  detail card.
 - **Select a node, then shift-select a second.** One selection promotes; two do not. Twenty
   cards at once would be a wall.
 

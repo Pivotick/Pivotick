@@ -121,6 +121,8 @@ function detailCard(node) {
     return box
 }
 
+const INDICATORS = new Set(['IP', 'File', 'Email'])
+
 const options = {
     render: {
         defaultNodeStyle: {
@@ -157,6 +159,15 @@ const options = {
             // merges over the style above rather than over the active tier, and holds a
             // constant size on screen.
             focusTier: { shape: 'none', html: detailCard },
+        },
+        // A plain indicator has nothing beyond its summary to show, so its focus drawing is
+        // the summary card, and it steps aside once `tiers[2]` draws that card anyway.
+        nodeTypeAccessor: (node) => INDICATORS.has(node.getData().kind) ? 'indicator' : undefined,
+        nodeStyleMap: {
+            indicator: {
+                focusTier: { shape: 'none', html: summaryCard },
+                focusTierYieldsAt: 2,
+            },
         },
     },
     simulation: {

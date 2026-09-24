@@ -515,6 +515,8 @@ export interface TierSpec {
      * @default false
      */
     tierClearsIcon?: boolean
+    /** `focusTierYieldsAt`: the tier index from which the focus card steps aside. */
+    yieldsAt?: number
 }
 
 export interface StyleCbSpec {
@@ -3042,6 +3044,7 @@ class Harness implements HarnessApi {
             }
         }
         if (spec.layoutSize !== undefined) nodeStyle.layoutSize = spec.layoutSize
+        if (spec.yieldsAt !== undefined) nodeStyle.focusTierYieldsAt = spec.yieldsAt
 
         const render: PlainObject = { defaultNodeStyle: nodeStyle }
         if (spec.trigger) render.focusTierTrigger = spec.trigger

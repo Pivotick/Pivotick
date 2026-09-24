@@ -377,6 +377,27 @@ of overlapping cards.
 `'selection'`, or `'off'`. Reach for `'off'` when you are embedding a style preset someone
 else ships and want its focus drawing suppressed without editing it.
 
+#### When a tier already shows it
+
+Sometimes the focus drawing is the same as one of the zoom tiers: a glyph at rest that
+hovers into a chip, with the chip also drawn once the graph is zoomed in far enough. There,
+hovering would paint a second, smaller chip over the one already on screen.
+`focusTierYieldsAt` names the index into `tiers` from which the focus drawing stops firing:
+
+```ts
+defaultNodeStyle: {
+    tiers: [{ width: 140, height: 44, style: { shape: 'none', html: chipFor } }],
+    focusTier: { shape: 'none', html: chipFor },
+    focusTierYieldsAt: 0,
+}
+```
+
+While the node is drawn at that tier or a richer one, hover and a lone selection leave it as
+it is. It follows the active tier, not the zoom level, so it uses the same thresholds as the
+swap. Zooming in with the card open fades it out as the tier fades in, and zooming back out
+brings it back without moving the pointer. Leave it unset on a node whose focus drawing says
+more than any tier, and a node with no `tiers` ignores it.
+
 ::: tip Tooltips still fire
 A focus card does not replace the tooltip. The two are independent, and a tooltip may
 carry something the card does not.

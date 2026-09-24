@@ -438,8 +438,8 @@ export class NodeDrawer {
         const transform = element.getAttribute('transform')
         if (transform) ghost.setAttribute('transform', transform)
         // The focus drawing is redrawn by the render that follows, so a ghost of it would be
-        // a second card sitting over the real one.
-        element.querySelector(':scope > g.pvt-node-focus')?.remove()
+        // a second card sitting over the real one. One already leaving goes with the ghost.
+        element.querySelector(':scope > g.pvt-node-focus:not(.pvt-node-focus-leaving)')?.remove()
         // One call rather than a `firstChild` loop: the whole drawing moves in a single DOM
         // operation, and the loop's repeated reads of a live child list are what a swap of a
         // few hundred nodes pays for.
@@ -482,6 +482,12 @@ export class NodeDrawer {
         }
         if (!changed.length) return
 
+        // A focus drawing the new tier makes redundant leaves now, so it is lifted with the
+        // outgoing drawing and fades on the same crossing.
+        if (this.focusedNode && changed.includes(this.focusedNode) && !this.focusStyleOf(this.focusedNode)) {
+            this.setFocusedNode(null)
+        }
+
         // Before the redraw, because the redraw is what wipes the drawing being faded out.
         const ms = this.transitionMs()
         const ghosts: Array<[Node, SVGGElement]> = []
@@ -495,6 +501,8 @@ export class NodeDrawer {
         // One update for the whole crossing: every node shares a footprint, so they cross
         // together, and walking the graph per node would cost more than the redraw.
         this.graphSvgRenderer.update(false)
+        // And one the old tier made redundant comes back, fading in with the new drawing.
+        this.updateFocusTier()
 
         if (ms > 0) {
             for (const node of changed) {
@@ -551,8 +559,19 @@ export class NodeDrawer {
         // Over the base, never over the active tier: a chip tier's `shape: 'none'` or `html`
         // would otherwise leak into a card that never asked for it.
         const base = this.computeBaseStyle(node)
-        if (!base.focusTier) return null
+        if (!base.focusTier || this.focusYieldsToTier(node, base)) return null
         return this.resolveStyleValues(mergeTierLayer(base.focusTier, base), node)
+    }
+
+    /**
+     * Whether the tier `node` is drawn at already shows what its focus drawing would. Read
+     * off the active tier, so it moves on the same thresholds and hysteresis as the swap.
+     */
+    private focusYieldsToTier(node: Node, base: NodeStyle): boolean {
+        const yieldsAt = base.focusTierYieldsAt
+        if (yieldsAt === undefined || !base.tiers?.length) return false
+        const active = this.getActiveTier(node)
+        return active !== BASE_TIER && active >= yieldsAt
     }
 
     private drawFocusTier(node: Node): void {
@@ -1341,7 +1360,7 @@ const NODE_STYLE_KEYS = [
     'shape', 'strokeColor', 'strokeWidth', 'fontFamily', 'size', 'color', 'textColor',
     'textAnchorPosition', 'textHorizontalShift', 'textVerticalShift', 'textRotateDegree',
     'textTruncate', 'iconUnicode', 'iconClass', 'svgIcon', 'imagePath', 'imageFit', 'text',
-    'html', 'badges', 'layoutSize', 'tiers', 'focusTier',
+    'html', 'badges', 'layoutSize', 'tiers', 'focusTier', 'focusTierYieldsAt',
 ] as const satisfies readonly (keyof NodeStyle)[]
 
 /**

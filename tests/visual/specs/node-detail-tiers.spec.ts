@@ -331,6 +331,73 @@ test.describe('tier cross-fade', () => {
     })
 })
 
+/** The chip tier's index in the tiered fixture: the tier that shows what the card would. */
+const CHIP_TIER = 1
+
+/** How many outgoing focus cards are fading out inside a crossing's ghost. */
+async function focusCardsFadingWithGhost(page: Page): Promise<number> {
+    return page.evaluate(() => document.querySelectorAll('g.pvt-detail-ghosts g.pvt-node-focus').length)
+}
+
+test.describe('focus tier yields to a zoom tier', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoHarness(page)
+    })
+
+    test('a selected node drops its card once the chip tier is drawn, and gets it back', async ({ page }) => {
+        await harness(page, 'loadWithTiers', { yieldsAt: CHIP_TIER })
+        await waitForViewSettled(page)
+
+        // Below the tier it yields to, the card still fires.
+        await harness(page, 'setZoomScale', DOT_ZOOM)
+        await harness(page, 'selectNode', 'a')
+        expect(await harness(page, 'hasFocusCard', 'a')).toBe(true)
+
+        await harness(page, 'setZoomScale', CHIP_ZOOM)
+        expect(await tierOf(page, 'a')).toBe(String(CHIP_TIER))
+        expect(await harness(page, 'hasFocusCard', 'a')).toBe(false)
+
+        // Back out, with the node still selected and nothing else done.
+        await harness(page, 'setZoomScale', DOT_ZOOM)
+        expect(await harness(page, 'hasFocusCard', 'a')).toBe(true)
+    })
+
+    test('hovering yields the same way', async ({ page }) => {
+        await harness(page, 'loadWithTiers', { yieldsAt: CHIP_TIER })
+        await waitForViewSettled(page)
+
+        await harness(page, 'setZoomScale', CHIP_ZOOM)
+        await nodeEl(page, 'a').hover()
+        expect(await harness(page, 'hasFocusCard', 'a')).toBe(false)
+
+        await page.mouse.move(2, 2)
+        await harness(page, 'setZoomScale', DOT_ZOOM)
+        await nodeEl(page, 'a').hover()
+        expect(await harness(page, 'hasFocusCard', 'a')).toBe(true)
+    })
+
+    test("the card leaves on the crossing's own fade", async ({ page }) => {
+        await harness(page, 'loadWithTiers', { yieldsAt: CHIP_TIER })
+        await waitForViewSettled(page)
+        await harness(page, 'setZoomScale', DOT_ZOOM)
+        await harness(page, 'selectNode', 'a')
+
+        await harness(page, 'setZoomScale', CHIP_ZOOM, false)
+        expect(await focusCardsFadingWithGhost(page)).toBe(1)
+
+        await expect.poll(() => harness(page, 'detailGhostCount')).toBe(0)
+        expect(await harness(page, 'leavingFocusCards')).toBe(0)
+    })
+
+    test('a node with no tiers ignores it', async ({ page }) => {
+        await harness(page, 'loadWithTiers', { tiers: false, yieldsAt: 0 })
+        await waitForViewSettled(page)
+
+        await harness(page, 'selectNode', 'a')
+        expect(await harness(page, 'hasFocusCard', 'a')).toBe(true)
+    })
+})
+
 test.describe('tier style precedence', () => {
     test.beforeEach(async ({ page }) => {
         await gotoHarness(page)

@@ -402,7 +402,7 @@ type Clearable<T> = { [K in keyof T]: T[K] | null }
  * Clearing `shape` is not how a node is made shapeless — use `shape: 'none'`, which says the
  * content is the node.
  */
-export type NodeTierStyle = Clearable<Omit<Partial<NodeStyle>, 'styleCb' | 'tiers' | 'focusTier' | 'layoutSize'>>
+export type NodeTierStyle = Clearable<Omit<Partial<NodeStyle>, 'styleCb' | 'tiers' | 'focusTier' | 'focusTierYieldsAt' | 'layoutSize'>>
 
 /** One drawing of a node, and the size at which it takes over. See {@link NodeStyle.tiers}. */
 export interface NodeTier {
@@ -561,6 +561,21 @@ export interface NodeStyle {
      * When it fires is {@link GraphRendererOptions.focusTierTrigger}'s to say.
      */
     focusTier?: NodeTierStyle
+    /**
+     * The index into {@link tiers} from which {@link focusTier} stops firing. While the node
+     * is drawn at that tier or a richer one, hover and a lone selection leave it as it is,
+     * for a focus drawing that the zoom tier already shows. Unset, the focus drawing fires
+     * at every tier. Ignored on a node with no `tiers`.
+     *
+     * @example
+     * ```ts
+     * // Hovering the dot shows the chip; once the chip tier is drawn, hovering adds nothing.
+     * tiers: [{ width: 140, height: 44, style: { shape: 'none', html: chipFor } }],
+     * focusTier: { shape: 'none', html: chipFor },
+     * focusTierYieldsAt: 0,
+     * ```
+     */
+    focusTierYieldsAt?: number
     /**
      * The half-width of the box this node reserves for itself in the layout, in graph units.
      * This is the only size the simulation ever sees: set it and the drawing no longer drives
