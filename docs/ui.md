@@ -135,7 +135,8 @@ integration removes the affordance rather than vetoing every click:
 Renderer behaviour is switched off under `render`: `zoomEnabled` (which also takes
 the rail's zoom buttons, keeping fit-and-center), `dragEnabled`,
 `selectionBox.enabled` (the marquee **and** the Select ▸ Lasso tool),
-`enableNodeExpansion` (the chevron and its `Enter`), `enableFocusMode`, and
+`enableNodeExpansion` (the chevron, its `Enter` and the dashed collapsed
+outline), `enableFocusMode`, and
 `interactionEnabled` for all of it at once. `simulation.enabled` stops the layout
 from running.
 

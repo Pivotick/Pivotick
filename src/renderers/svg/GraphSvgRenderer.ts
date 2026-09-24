@@ -577,6 +577,19 @@ export class GraphSvgRenderer extends GraphRenderer {
         }
     }
 
+    /**
+     * `pvt-node-has-children` states a fact; `pvt-node-expandable` carries the collapsed
+     * cue, so it follows `enableNodeExpansion` the way the chevron does. Applied on update
+     * too, since a node can gain or lose children after it is first drawn.
+     */
+    private applyContainerClasses(selection: Selection<SVGGElement, Node, SVGGElement, unknown>): void {
+        const expansionEnabled = !!this.options.enableNodeExpansion
+        selection
+            .classed('pvt-node-has-children', (node) => node.hasChildren())
+            .classed('pvt-node-expandable', (node) => expansionEnabled && node.hasChildren())
+            .classed('pvt-node-expanded', (node) => node.expanded === true)
+    }
+
     public dataUpdate(): void {
         // Before the nodes: opening a cluster inside the join below builds its nested
         // graph, which asks the projection for its pulls straight away.
@@ -598,8 +611,7 @@ export class GraphSvgRenderer extends GraphRenderer {
                     return enter
                     .append('g')
                     .classed('pvt-node', true)
-                    .classed('pvt-node-has-children', (node) => node.hasChildren())
-                    .classed('pvt-node-expanded', (node) => node.expanded === true)
+                    .call(selection => this.applyContainerClasses(selection))
                     .each((node: Node, i: number, nodes: ArrayLike<SVGGElement>) => {
                             node.clearDirty()
                             const selection = d3Select<SVGGElement, Node>(nodes[i])
@@ -609,7 +621,7 @@ export class GraphSvgRenderer extends GraphRenderer {
                 },
                 (update) => {
                     return update
-                        .classed('pvt-node-expanded', (node) => node.expanded === true)
+                        .call(selection => this.applyContainerClasses(selection))
                         .each((node: Node, i: number, nodes: ArrayLike<SVGGElement>) => {
                             const selection = d3Select<SVGGElement, Node>(nodes[i])
                             if (node.isDirty()) {

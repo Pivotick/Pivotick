@@ -27,7 +27,7 @@ All styles defined here apply only when `render.type` is set to `svg`.
 | `maxZoom`          | `number`                                                               | `10`                                                                     | Maximum zoom level.                                                                                                                      |
 | `zoomEnabled`      | `boolean`                                                              | `true`                                                                   | Enable zoom. `false` also takes the viewport rail's zoom buttons, keeping fit-and-center.                                                 |
 | `selectionBox`     | [SelectionBox](/api/html/interfaces/RendererOptions.SelectionBox.html)  | `undefined`                                                              | Region selection: `enabled: false` drops the drag marquee **and** the Select ▸ Lasso tool.                                               |
-| `enableNodeExpansion` | `boolean`                                                           | `true`                                                                   | Expanding a cluster: `false` takes the chevron and the `Enter` shortcut with it.                                                          |
+| `enableNodeExpansion` | `boolean`                                                           | `true`                                                                   | Expanding a cluster: `false` takes the chevron, the `Enter` shortcut and the dashed collapsed outline with it.                            |
 
 ## Type of rendering
 
