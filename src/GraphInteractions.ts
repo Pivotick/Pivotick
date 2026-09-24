@@ -7,6 +7,14 @@ import type { Note } from './Note'
 import type { NodeBadge } from './interfaces/RendererOptions'
 
 
+/**
+ * The edge a gesture on a drawn line is about: a stand-in for a single real edge is that
+ * edge, so callbacks and the sidebar get its data. A line for several stays itself.
+ */
+function subjectOf(drawn: Edge): Edge {
+    return drawn.representedEdges?.length === 1 ? drawn.representedEdges[0] : drawn
+}
+
 export class GraphInteractions<TElement = unknown> {
 
     private graph: Graph
@@ -218,7 +226,8 @@ export class GraphInteractions<TElement = unknown> {
         }
     }
 
-    public edgeClick(element: TElement, event: PointerEvent, edge: Edge): void {
+    public edgeClick(element: TElement, event: PointerEvent, drawn: Edge): void {
+        const edge = subjectOf(drawn)
         const interaction: GraphInteractionContext = {
             cancelled: false,
             cancel() {
@@ -237,7 +246,8 @@ export class GraphInteractions<TElement = unknown> {
         }
     }
 
-    public edgeDbclick(element: TElement, event: PointerEvent, edge: Edge): void {
+    public edgeDbclick(element: TElement, event: PointerEvent, drawn: Edge): void {
+        const edge = subjectOf(drawn)
         const interaction: GraphInteractionContext = {
             cancelled: false,
             cancel() {
@@ -255,7 +265,8 @@ export class GraphInteractions<TElement = unknown> {
         }
     }
 
-    public edgeContextmenu(element: TElement, event: PointerEvent, edge: Edge): void {
+    public edgeContextmenu(element: TElement, event: PointerEvent, drawn: Edge): void {
+        const edge = subjectOf(drawn)
         const interaction: GraphInteractionContext = {
             cancelled: false,
             cancel() {
@@ -273,14 +284,16 @@ export class GraphInteractions<TElement = unknown> {
         }
     }
 
-    public edgeHoverIn(element: TElement, event: PointerEvent, edge: Edge): void {
+    public edgeHoverIn(element: TElement, event: PointerEvent, drawn: Edge): void {
+        const edge = subjectOf(drawn)
         this.emit('edgeHoverIn', event, edge, element)
         if (this.callbacks.onEdgeHoverIn && typeof this.callbacks.onEdgeHoverIn === 'function') {
             this.callbacks.onEdgeHoverIn(event, edge, element)
         }
     }
 
-    public edgeHoverOut(element: TElement, event: PointerEvent, edge: Edge): void {
+    public edgeHoverOut(element: TElement, event: PointerEvent, drawn: Edge): void {
+        const edge = subjectOf(drawn)
         this.emit('edgeHoverOut', event, edge, element)
         if (this.callbacks.onEdgeHoverOut && typeof this.callbacks.onEdgeHoverOut === 'function') {
             this.callbacks.onEdgeHoverOut(event, edge, element)

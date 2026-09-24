@@ -333,12 +333,20 @@ export class Edge {
     /**
      * @private
      * Point a stand-in at the real edges it now speaks for, redrawing it if they changed.
+     * Standing for one edge it takes that edge's data and style, so it looks like it (the
+     * stand-in class makes it dotted); standing for several it is plain.
      */
     standFor(members: Edge[]): void {
+        const only = members.length === 1 ? members[0] : undefined
         const previous = this.representedEdges ?? []
-        const same = previous.length === members.length && previous.every((edge, i) => edge === members[i])
+        const sameMembers = previous.length === members.length && previous.every((edge, i) => edge === members[i])
         this.representedEdges = members
-        if (!same) this.markDirty()
+        const data = only ? only.data : (sameMembers ? this.data : {})
+        const style = only ? only.style : (sameMembers ? this.style : {})
+        if (sameMembers && data === this.data && style === this.style) return
+        this.data = data
+        this.style = style
+        this.markDirty()
     }
 
     // --- Provenance --------------------------------------------------------------------

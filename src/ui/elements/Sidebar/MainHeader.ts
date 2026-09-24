@@ -162,7 +162,11 @@ export class SidebarMainHeader extends UIComponent {
             )
         }
         if (subtitleElem) {
-            subtitleElem.textContent = edgeDescriptionGetter(edge, this.uiManager.getOptions().mainHeader)
+            // A line folded onto a closed cluster for several edges has no data of its own.
+            const represented = edge.representedEdges?.length ?? 0
+            subtitleElem.textContent = represented > 1
+                ? `Stands for ${represented} edges`
+                : edgeDescriptionGetter(edge, this.uiManager.getOptions().mainHeader)
         }
 
         this.panel.appendChild(mainheaderContent)

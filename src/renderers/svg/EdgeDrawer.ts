@@ -786,8 +786,12 @@ export class EdgeDrawer {
         const interaction = this.graphSvgRenderer.getGraphInteraction()
         // A lone selection and a multi-selection are tracked separately, and an edge in a
         // multi-selection is not in `getSelectedEdge()`.
-        const selected = interaction.getSelectedEdge()?.edge.id === edge.id
-            || interaction.getSelectedEdges().some(({ edge: selectedEdge }) => selectedEdge.id === edge.id)
+        const selectedIds = new Set(interaction.getSelectedEdges().map(({ edge: selectedEdge }) => selectedEdge.id))
+        const lone = interaction.getSelectedEdge()
+        if (lone) selectedIds.add(lone.edge.id)
+        // A stand-in lights up for any real edge it speaks for.
+        const selected = selectedIds.has(edge.id)
+            || (edge.representedEdges?.some((member) => selectedIds.has(member.id)) ?? false)
 
         edgeSelection.classed('selected', selected)
         this.pointMarkersAtSelectedVariant(edgeSelection, selected)
