@@ -780,7 +780,9 @@ export class Simulation {
         // subgraph DOM, which postMessage cannot structured-clone (DataCloneError).
         // Keep caller-set fixed positions (fx/fy) so pinned nodes stay put through the layout.
         const nodesCopy = this.graph.getNodes().map((n: Node) => n.toSimulationDTO())
-        const edgesCopy = this.graph.getEdges().map((e: Edge) => e.toSimulationDTO())
+        // The stand-ins too: they are what ties a closed cluster to the edges folded onto it.
+        const standIns = this.graph.getDrawnEdges().filter((e: Edge) => e.isSynthetic)
+        const edgesCopy = [...this.graph.getEdges(), ...standIns].map((e: Edge) => e.toSimulationDTO())
 
         const onWorkerProgress = (progress: number, elapsedTime: number) => {
             this.graph.updateLayoutProgress(progress, elapsedTime, 'simulation')
