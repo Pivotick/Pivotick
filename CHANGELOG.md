@@ -70,6 +70,13 @@ the drawing, so nothing moves when one gives way to the next.
   node. The card lets the canvas's gestures through except over its interactive content.
   `UI.emptyState: false` turns it off.
 
+### Pivot badges in Pivot mode
+
+- **Pivot rim badges show only while Pivot mode is open**, where they help pick an origin.
+  `pivotRimBadgeVisible` changes that: `'always'` brings back the old behaviour, where a badge
+  is also a way into the mode, and `'never'` hides them. `graph.pivots.rimBadgeVisible` changes
+  it later. `pivotRimBadge` still picks their shape.
+
 ### Edges across clusters, at any depth
 
 One rule now decides what the canvas draws for an edge touching a cluster: each end lands on the

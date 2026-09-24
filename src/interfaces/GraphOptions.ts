@@ -6,7 +6,7 @@ import type { DeepPartial } from '../utils/utils'
 import type { GraphUI, LegendToggleState } from './GraphUI'
 import type { InterractionCallbacks } from './InterractionCallbacks'
 import type { LayoutOptions } from './LayoutOptions'
-import type { PivotDefinition, PivotRimBadge } from './Pivot'
+import type { PivotDefinition, PivotRimBadge, PivotRimBadgeVisibility } from './Pivot'
 import type { PivotickPlugin } from './Plugin'
 import type { EdgeFullStyle, GraphRendererOptions, NodeStyle } from './RendererOptions'
 import type { SimulationOptions } from './SimulationOptions'
@@ -102,6 +102,19 @@ export interface GraphOptions {
      * @default 'per-pivot'
      */
     pivotRimBadge?: PivotRimBadge,
+
+    /**
+     * When the {@link pivotRimBadge} badges are drawn.
+     *
+     * - `'pivot-mode'` — only while the Pivot rail mode is open, where they help pick
+     *   an origin. Clicking one there scopes the panel to that node and pivot.
+     * - `'always'` — whatever the mode, so a badge is also a way into Pivot mode.
+     * - `'never'` — not at all. The same as `pivotRimBadge: 'off'`.
+     *
+     * `graph.pivots.rimBadgeVisible` changes it later.
+     * @default 'pivot-mode'
+     */
+    pivotRimBadgeVisible?: PivotRimBadgeVisibility,
 
     /**
      * Put a `pvt-node-unsaved` class on every node a pivot run created and has not

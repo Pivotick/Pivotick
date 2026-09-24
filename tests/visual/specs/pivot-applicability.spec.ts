@@ -27,6 +27,8 @@ const SUBSET = 'subset-only'
 
 /** The panel and the rail only exist in full mode. */
 const FULL = { UI: { mode: 'full', sidebar: { collapsed: true } } }
+/** Rim badges otherwise show only while Pivot mode is open. */
+const BADGES_SHOWN = { pivotRimBadgeVisible: 'always' }
 
 /* ---------- readers ---------- */
 
@@ -116,7 +118,7 @@ test.describe('pivot applicability — a pivot takes its share of a mixed origin
 test.describe('pivot rim badge — one badge, whatever the provider count', () => {
     test.beforeEach(async ({ page }) => {
         await gotoHarness(page)
-        await load(page, { pivots: [SUBSET, 'correlation', 'blind'] })
+        await load(page, { pivots: [SUBSET, 'correlation', 'blind'] }, BADGES_SHOWN)
     })
 
     test('per-pivot is the default, and one badge per declaring pivot', async ({ page }) => {

@@ -117,7 +117,7 @@ export function resolveBadges(style: NodeStyle, node: Node, graph: Graph): NodeB
  */
 function potentialBadges(node: Node, graph: Graph): NodeBadge[] {
     const mode = graph.pivots.rimBadge
-    if (mode === 'off') return []
+    if (mode === 'off' || !graph.pivots.rimBadgeShown) return []
     return mode === 'summary' ? summaryBadge(node, graph) : perPivotBadges(node, graph)
 }
 

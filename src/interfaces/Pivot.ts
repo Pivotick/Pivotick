@@ -531,6 +531,8 @@ export interface PivotManagerLike {
     quickIngestLimit: number
     /** What the library draws on a node's rim for its pivots. */
     rimBadge: PivotRimBadge
+    /** When those rim badges are drawn. */
+    rimBadgeVisible: PivotRimBadgeVisibility
     register(definition: PivotDefinition): () => void
     unregister(id: string): void
     get(id: string): PivotDefinition | undefined
@@ -597,6 +599,13 @@ export interface PivotManagerLike {
  * @category Pivots
  */
 export type PivotRimBadge = 'per-pivot' | 'summary' | 'off'
+
+/**
+ * When the pivot rim badges are drawn. See `GraphOptions.pivotRimBadgeVisible`.
+ *
+ * @category Pivots
+ */
+export type PivotRimBadgeVisibility = 'pivot-mode' | 'always' | 'never'
 
 /**
  * The key a potential declared for no particular pivot is held under — what

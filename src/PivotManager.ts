@@ -4,8 +4,8 @@ import type { RawEdge, RawNode } from './interfaces/GraphOptions'
 import type { IngestContext, IngestDecision } from './interfaces/InterractionCallbacks'
 import type {
     PivotCandidate, PivotCandidateEdge, PivotCandidateSet, PivotContext, PivotDefinition,
-    PivotManagerLike, PivotNarrowing, PivotRefusal, PivotRejection, PivotRimBadge, PivotRun, PivotRunOptions,
-    PivotRunOutcome,
+    PivotManagerLike, PivotNarrowing, PivotRefusal, PivotRejection, PivotRimBadge, PivotRimBadgeVisibility,
+    PivotRun, PivotRunOptions, PivotRunOutcome,
     PivotSaveContext, PivotSaveOutcome, PivotSavePayload, PivotSaveReport, PivotSummary,
 } from './interfaces/Pivot'
 import { SEED_SOURCE } from './interfaces/Pivot'
@@ -78,6 +78,44 @@ export class PivotManager implements PivotManagerLike {
     public set rimBadge(mode: PivotRimBadge) {
         if (mode === this._rimBadge) return
         this._rimBadge = mode
+        for (const node of this.graph.getMutableNodes()) node.markDirty()
+    }
+
+    private _rimBadgeVisible: PivotRimBadgeVisibility = 'pivot-mode'
+    private modeOpen = false
+
+    /**
+     * When the rim badges of {@link rimBadge} are drawn: only while Pivot mode is open,
+     * always, or never. Set it through `pivotRimBadgeVisible` in the graph options, or
+     * here to change it later.
+     *
+     * Like {@link rimBadge}, assigning marks every node dirty.
+     */
+    public get rimBadgeVisible(): PivotRimBadgeVisibility {
+        return this._rimBadgeVisible
+    }
+
+    public set rimBadgeVisible(visibility: PivotRimBadgeVisibility) {
+        if (visibility === this._rimBadgeVisible) return
+        this._rimBadgeVisible = visibility
+        this.dirtyAll()
+    }
+
+    /** Whether the rim badges are drawn right now. */
+    public get rimBadgeShown(): boolean {
+        return this._rimBadgeVisible === 'always' || (this._rimBadgeVisible === 'pivot-mode' && this.modeOpen)
+    }
+
+    /** @private Pivot mode entering or leaving, which shows or hides the `'pivot-mode'` badges. */
+    public setModeOpen(open: boolean): void {
+        if (open === this.modeOpen) return
+        this.modeOpen = open
+        if (this._rimBadgeVisible !== 'pivot-mode') return
+        this.dirtyAll()
+        this.graph.renderer.update(false)
+    }
+
+    private dirtyAll(): void {
         for (const node of this.graph.getMutableNodes()) node.markDirty()
     }
 
@@ -1301,7 +1339,7 @@ export class PivotManager implements PivotManagerLike {
     private repaintUnsaved(): void {
         if (!this.markUnsaved) return
         for (const id of this.nodeRun.keys()) this.graph.getMutableNode(id)?.markDirty()
-        this.graph.renderer?.update(false)
+        this.graph.renderer.update(false)
     }
 
     /**

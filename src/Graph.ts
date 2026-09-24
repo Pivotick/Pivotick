@@ -149,6 +149,9 @@ export class Graph {
         if (this.options.pivotRimBadge) {
             this.pivots.rimBadge = this.options.pivotRimBadge
         }
+        if (this.options.pivotRimBadgeVisible) {
+            this.pivots.rimBadgeVisible = this.options.pivotRimBadgeVisible
+        }
         if (this.options.pivotMarkUnsaved === true) {
             this.pivots.markUnsaved = true
         }

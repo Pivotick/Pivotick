@@ -125,10 +125,12 @@ export class PivotMode extends UIComponent {
             onEnter: () => {
                 panel.setOrigin(this.origin())
                 panel.enter()
+                this.uiManager.graph.pivots.setModeOpen(true)
             },
             onExit: () => {
                 this.lasso.set(false)
                 panel.exit()
+                this.uiManager.graph.pivots.setModeOpen(false)
             },
         })
     }

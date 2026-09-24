@@ -9,6 +9,8 @@ import type { PivotFixtureSpec, RecordedCandidates } from '../harness/harness'
 
 const CORRELATION = 'correlation'
 const FULL = { UI: { mode: 'full', sidebar: { collapsed: true }, table: { open: true } } }
+/** Rim badges otherwise show only while Pivot mode is open. */
+const BADGES_SHOWN = { ...FULL, pivotRimBadgeVisible: 'always' }
 
 const railButton = (page: Page): Locator => page.locator('.pvt-moderail-button[data-mode="pivot"]')
 const panel = (page: Page): Locator => page.locator('.pvt-pivot-panel')
@@ -389,8 +391,29 @@ test.describe('pivot mode', () => {
     })
 
     // ── the ways in (D12, C12, and the flat context-menu entry) ─────────────
-    test('a declared potential wears a badge that opens the mode scoped to it', async ({ page }) => {
+    test('by default the rim badges show only while Pivot mode is open', async ({ page }) => {
         await load(page)
+        await harness(page, 'setNodePotential', 'a', CORRELATION, 2100)
+        const badges = nodeEl(page, 'a').locator('.pvt-node-badge')
+        await expect(badges).toHaveCount(0)
+
+        await enterMode(page)
+        await expect(badges).toHaveCount(1)
+
+        await page.locator('.pvt-moderail-button[data-mode="select"]').click()
+        await expect(badges).toHaveCount(0)
+    })
+
+    test('never keeps the rim badges hidden, even in Pivot mode', async ({ page }) => {
+        await load(page, {}, { ...FULL, pivotRimBadgeVisible: 'never' })
+        await harness(page, 'setNodePotential', 'a', CORRELATION, 2100)
+        await enterMode(page)
+
+        await expect(nodeEl(page, 'a').locator('.pvt-node-badge')).toHaveCount(0)
+    })
+
+    test('a declared potential wears a badge that opens the mode scoped to it', async ({ page }) => {
+        await load(page, {}, BADGES_SHOWN)
         await harness(page, 'setNodePotential', 'a', CORRELATION, 2100)
 
         const badge = nodeEl(page, 'a').locator('.pvt-node-badge').first()
@@ -409,14 +432,14 @@ test.describe('pivot mode', () => {
     })
 
     test('a potential for an unregistered pivot wears nothing', async ({ page }) => {
-        await load(page, { pivots: [] })
+        await load(page, { pivots: [] }, BADGES_SHOWN)
         await harness(page, 'setNodePotential', 'a', CORRELATION, 2100)
 
         await expect(nodeEl(page, 'a').locator('.pvt-node-badge')).toHaveCount(0)
     })
 
     test('a zero potential clears the badge', async ({ page }) => {
-        await load(page)
+        await load(page, {}, BADGES_SHOWN)
         await harness(page, 'setNodePotential', 'a', CORRELATION, 12)
         await expect(nodeEl(page, 'a').locator('.pvt-node-badge')).toHaveCount(1)
 
@@ -686,6 +709,7 @@ test.describe('pivot mode', () => {
     // Being sent to one pivot outranks the filter: the badge would otherwise open the
     // mode and scroll to an entry the filter had taken out of the DOM.
     test('a badge clears a filter that would hide the pivot it opens', async ({ page }) => {
+        // Default visibility: the badge is there because the mode is open.
         await load(page, { bulk: 12, pivots: [CORRELATION] })
         await harness(page, 'setNodePotential', 'a', CORRELATION, 2100)
         await pickOrigin(page, 'a')

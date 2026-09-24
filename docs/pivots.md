@@ -130,8 +130,9 @@ says so with a Retry, and a result over the absolute
 [`candidateCeiling`](#gating-the-cap-and-the-ceiling) says the number and the limit.
 
 Three ways in, then: the rail mode, a node's context-menu **Pivot ▸** submenu (absent, never
-disabled, when nothing applies), and a rim badge, which opens the mode scoped to its own
-pivot, or, where the rim carries one badge for all of them, to the node. A badge for a node
+disabled, when nothing applies), and, with [`pivotRimBadgeVisible: 'always'`](#what-the-rim-draws),
+a rim badge, which opens the mode scoped to its own pivot, or, where the rim carries one badge
+for all of them, to the node. A badge for a node
 with exactly one pivot that has nothing to narrow runs it directly, like a menu row.
 
 ## Registering one
@@ -530,6 +531,23 @@ Like every other setter on `Node`, it marks the node dirty: call `graph.renderer
 if nothing else is about to render.
 
 ### What the rim draws
+
+By default the rim badges show only while Pivot mode is open, where they help pick an
+origin; clicking one there scopes the panel to that node and pivot. `pivotRimBadgeVisible`
+changes when they show:
+
+```js
+new Pivotick(el, data, { pivots, pivotRimBadgeVisible: 'always' })
+graph.pivots.rimBadgeVisible = 'pivot-mode'   // or later; it dirties every node
+```
+
+| | |
+| --- | --- |
+| `'pivot-mode'` *(default)* | Only while the Pivot rail mode is open. |
+| `'always'` | Whatever the mode, so a badge is also a way into Pivot mode. |
+| `'never'` | Not at all. |
+
+Once shown, their shape is the next choice.
 
 A node has four rim corners, and only two once it has children — the expand affordance
 reserves the East side. So one badge per provider is readable at a handful and impossible at
