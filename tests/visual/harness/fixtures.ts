@@ -845,6 +845,40 @@ export const fixtures = {
         return { nodes: [core, groupA, groupB], edges, notes: [] }
     },
 
+    /**
+     * Clusters three levels deep, with one edge of every shape an edge can take across
+     * them. `A` holds `a1` and `B`; `B` holds `b1` and `C`; `C` holds `c1`. `P` holds
+     * `p1`, which holds `q1`. `X` and `Y` sit on the main canvas.
+     */
+    nestedClusters(): BuiltFixture {
+        const c1 = mkNode('c1', 0, 0)
+        const C = mkCluster('C', 30, 0, [c1])
+        const b1 = mkNode('b1', -30, 0)
+        const B = mkCluster('B', 20, 0, [b1, C])
+        const a1 = mkNode('a1', -40, 0)
+        const A = mkCluster('A', 0, 0, [a1, B])
+        markCluster(A)
+        const q1 = mkNode('q1', 0, 0)
+        const p1 = mkCluster('p1', 0, 0, [q1])
+        const P = mkCluster('P', 220, 0, [p1])
+        markCluster(P)
+        const X = mkNode('X', -220, -80)
+        const Y = mkNode('Y', -220, 80)
+        const edges = [
+            new Edge('X-a1', X, a1),    // outside → child
+            new Edge('X-b1', X, b1),    // outside → grandchild
+            new Edge('X-c1', X, c1),    // outside → three levels down
+            new Edge('X-B', X, B),      // outside → a cluster inside a cluster
+            new Edge('a1-X', a1, X),    // child → outside
+            new Edge('c1-Y', c1, Y),    // three levels down → outside
+            new Edge('a1-b1', a1, b1),  // child → a child of its sibling cluster
+            new Edge('b1-c1', b1, c1),  // two levels down, across a rim
+            new Edge('c1-q1', c1, q1),  // deep in A → deep in P
+            new Edge('A-c1', A, c1),    // a cluster → something inside itself
+        ]
+        return { nodes: [X, Y, A, P], edges, notes: [] }
+    },
+
     // ── Edge layers ─────────────────────────────────────────────────────────────
 
     /**
