@@ -18,6 +18,17 @@ async function loadPinned(page: Page, name: FixtureName, overrides: Record<strin
     await harness(page, 'pin')
 }
 
+/**
+ * How far, in screen pixels, a glyph's box centre sits below its node's centre. Text left on
+ * the alphabetic baseline rises from the centre, so this goes clearly negative.
+ */
+async function glyphOffsetFromCentre(page: Page, nodeId: string, glyphSelector: string): Promise<number> {
+    const node = await nodeEl(page, nodeId).locator('circle').first().boundingBox()
+    const glyph = await nodeEl(page, nodeId).locator(glyphSelector).boundingBox()
+    if (!node || !glyph) throw new Error(`no glyph box on node ${nodeId}`)
+    return (glyph.y + glyph.height / 2) - (node.y + node.height / 2)
+}
+
 test.describe('node & edge styling', () => {
     test.beforeEach(async ({ page }) => {
         await gotoHarness(page)
@@ -44,6 +55,18 @@ test.describe('node & edge styling', () => {
         await page.addStyleTag({ content: '.test-glyph { --fa: "\\2605"; }' })
         await loadPinned(page, 'nodeIcons')
         await expectCanvas(page, 'node-icons.png')
+    })
+
+    // T1.3b — text inside an svgIcon keeps `dominant-baseline`, so a glyph the caller
+    // centres the way Pivotick does lands where Pivotick's own glyph does.
+    test('svgIcon text keeps its baseline', async ({ page }) => {
+        await loadPinned(page, 'svgIconTextGlyph')
+        const svgText = nodeEl(page, 'svgtext').locator('svg.node-content text')
+
+        await expect(svgText).toHaveAttribute('dominant-baseline', 'central')
+        const pivotickOffset = await glyphOffsetFromCentre(page, 'unicode', 'text.icon-unicode')
+        const svgIconOffset = await glyphOffsetFromCentre(page, 'svgtext', 'svg.node-content text')
+        expect(Math.abs(svgIconOffset - pivotickOffset)).toBeLessThan(2)
     })
 
     // T1.4 — long-label truncation, vertical/horizontal shift, a rotated label.

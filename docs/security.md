@@ -19,7 +19,10 @@ node and edge labels, descriptions, ids, property keys and values, and note cont
 - `style.svgIcon` markup is sanitized (SVG profile) before it reaches the document, so event
   handlers, `<script>` and `<foreignObject>` are stripped, as are `<style>` and `<a>`. An
   inline `<style>` is not scoped to the icon, and an `<a>` would turn selecting the node into
-  a navigation.
+  a navigation. The attributes that survive are DOMPurify's SVG allow-list plus
+  `dominant-baseline` and `alignment-baseline`, so text can be centred the way Pivotick
+  centres its own glyphs. `<use>` is removed outright, so inline sprite symbols rather than
+  referencing them.
 - `style.imagePath` is restricted to the `http:`, `https:`, `data:` and `blob:` schemes.
 - Colours from the data, a node's `style.color` and a note's `color`, have to parse as CSS
   colours before they reach the document, so they cannot smuggle a `url()` into a `background`.

@@ -44,6 +44,9 @@ export function parseSvgIconMarkup(markup: string): DocumentFragment {
  * embedding page. An `<a>` turns a click on the node — the commonest gesture there is — into a
  * navigation, since the click handler stops propagation but never the default action. Neither
  * has a place in an icon. `href` itself stays, so `<image href>` keeps loading pictures.
+ *
+ * The profile also lacks the two baseline attributes, which Pivotick itself uses to centre
+ * every glyph it draws. They are purely presentational, so they are let back in.
  */
 function sanitize(markup: string): DocumentFragment {
     const trimmed = markup.trim()
@@ -52,6 +55,7 @@ function sanitize(markup: string): DocumentFragment {
     const clean = DOMPurify.sanitize(isRooted ? trimmed : `<svg>${trimmed}</svg>`, {
         USE_PROFILES: { svg: true, svgFilters: true },
         FORBID_TAGS: ['style', 'a'],
+        ADD_ATTR: ['dominant-baseline', 'alignment-baseline'],
         RETURN_DOM_FRAGMENT: true,
     })
     if (isRooted) return clean

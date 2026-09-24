@@ -454,6 +454,25 @@ export const fixtures = {
     },
 
     /**
+     * The same glyph centred two ways: by Pivotick through `iconUnicode`, and by the caller
+     * as a `<text dominant-baseline="central">` inside an `svgIcon`. The svgIcon viewport
+     * spans 1.4 × size and an iconUnicode glyph is 1.2 × size, so a 28-unit viewBox with a
+     * 24-unit font draws both at the same size.
+     */
+    svgIconTextGlyph(): BuiltFixture {
+        const base: Partial<NodeStyle> = { size: 30, color: '#334155' }
+        const svgIcon =
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28">' +
+            '<text x="14" y="14" text-anchor="middle" dominant-baseline="central" ' +
+            'font-size="24" fill="#fff">♥</text></svg>'
+        const nodes = [
+            mkStyledNode('unicode', -80, 0, { ...base, iconUnicode: '♥' }),
+            mkStyledNode('svgtext', 80, 0, { ...base, svgIcon }),
+        ]
+        return { nodes, edges: [], notes: [] }
+    },
+
+    /**
      * A picture node (`shot`) flanked by two plain nodes. `imageFit: 'cover'` keeps the
      * node compact on the canvas (the 2:1 landscape is cropped to the square); the siblings
      * keep the fit zoom sane so the node stays small on screen. Drives the hover preview,
