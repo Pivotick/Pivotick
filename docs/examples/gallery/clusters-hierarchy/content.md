@@ -7,9 +7,9 @@ order: 2
 # Clusters & hierarchy
 
 Give a node `children` and it becomes a **cluster**: collapse it to a single node
-to tame a busy graph, expand it to reveal its members laid out in a bubble. Edges
-that cross a collapsed boundary fold into a synthetic edge on the cluster, so the
-topology always stays readable. That holds even when *both* ends are hidden: the
+to tame a busy graph, expand it to reveal its members laid out in a bubble. An
+edge with an end inside a collapsed cluster is drawn to the cluster instead, at any
+depth, so the topology always stays readable. That holds even when *both* ends are hidden: the
 `a3 → b1` link between the two groups re-targets to whichever nodes are on screen —
 `group-a → group-b` when both are boxes, `a3 → group-b` once Group A opens — so the
 dependency never disappears just because you collapsed a box.

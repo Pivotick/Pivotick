@@ -180,14 +180,13 @@ Mechanically, `Edge` grew a second flag:
 | Property | Meaning |
 |---|---|
 | `layerVisible` | Whether this edge's layer is switched on. A **veto** over `visible`. |
-| `visibleIgnoringLayer` | What `visible` would be if every layer were on — endpoint, collapse and manual-hide reasons alone. |
+| `visibleIgnoringLayer` | What `visible` would be if every layer were on: the endpoint and manual-hide reasons alone. |
 | `setLayerVisible(on)` | Switch the layer, re-deriving `visible`. Returns whether anything changed. |
-| `representedEdges` | For a cross-cluster stand-in: the real edges it speaks for. |
+| `representedEdges` | For a stand-in: the real edges it speaks for. Undefined on a real edge. |
 
 The link force gates on `visibleIgnoringLayer`, so an edge whose layer is off goes
-on pulling its endpoints together. `visible` has five independent writers —
-endpoint filtering, cluster collapse, the cluster drawer, `hideNode` / `showNode`,
-and normalisation — which is why layer state could not live in it.
+on pulling its endpoints together. `visible` is also written by endpoint filtering
+and by `hideNode` / `showNode`, which is why layer state lives apart from it.
 
 ### A node left with no visible edges stays visible
 
@@ -234,9 +233,11 @@ more than one colour keeps the first and warns. Declare `entries` with your own
 
 ## Collapsed clusters
 
-When a cluster collapses, the edges crossing its boundary are replaced by
-**stand-ins**, and a stand-in is deduped by node *pair* — so one line can speak for
-several real relations of several kinds.
+While a cluster is closed, an edge with an end inside it is drawn to the cluster
+instead, at any depth. Edges whose ends land on the same two nodes on screen share
+one line, a **stand-in**, so one line can speak for several real relations of several
+kinds. Stand-ins are drawing only: `getEdges()` and the table's Edges tab list real
+edges.
 
 Each stand-in therefore carries `representedEdges`, and it survives while **any**
 of them passes the filter. Two consequences worth knowing:
@@ -248,7 +249,9 @@ of them passes the filter. Two consequences worth knowing:
   `predicate`, not just a list of kinds — because the facet is matched against the
   real edges rather than the stand-in's own (empty) data.
 
-A stand-in whose represented edges all share one kind inherits that kind's style.
+A stand-in for a single edge looks like that edge, dotted, and clicking it selects the
+edge. A stand-in for several is plain, and selecting it shows how many edges it stands
+for.
 
 ## Driving it from code
 

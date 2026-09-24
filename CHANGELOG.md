@@ -70,6 +70,33 @@ the drawing, so nothing moves when one gives way to the next.
   node. The card lets the canvas's gestures through except over its interactive content.
   `UI.emptyState: false` turns it off.
 
+### Edges across clusters, at any depth
+
+One rule now decides what the canvas draws for an edge touching a cluster: each end lands on the
+node on screen for it, the node itself or the outermost closed cluster hiding it, and edges
+landing on the same two nodes share one line. Both ends on one node draw nothing, except an edge
+from a cluster into itself, which loops on the closed cluster.
+
+- **An edge from inside a cluster to outside it is drawn.** It used to vanish, open or closed.
+- **Edges two or more levels down are drawn.** An open cluster only ever received the edges
+  touching its direct children, so an edge on a grandchild was lost below the first level.
+- **An edge added while its cluster is closed folds onto it**, as a pivot's edges into a
+  container do, instead of waiting until its end is on screen.
+- **A real edge and the edges folded onto the same pair share one line**, where they were two
+  elements stacked on top of each other.
+- **A line standing for one edge looks like that edge, dotted, and clicking it selects the
+  edge.** A line for several is plain, and the sidebar says how many edges it stands for.
+- **A line inside an open cluster takes the pointer from the cluster's fill** when the pointer
+  is within a few pixels of it. Elsewhere the fill still grabs and drags the cluster.
+- **Filters reach a closed cluster's children.** A line counts only the edges whose real ends
+  pass the filters, so it goes once every edge behind it is filtered out.
+- **The table's Edges tab reads `nested`** for an edge drawn to a closed cluster, where it read
+  `endpoint`. **The minimap draws the folded lines** too.
+- **Stand-ins are drawing only.** `getEdges()`, `getMutableEdges()`, the table and deletes see
+  real edges only, and a stand-in no longer counts in a node's degree. `Edge.isSynthetic` is now
+  a read-only getter, and the internal `isCrossCluster`, `syntheticSourceNode`,
+  `syntheticTerminalNode`, `get/setSubgraphFromNode` and `get/setSubgraphToNode` are gone.
+
 ### Fixes
 
 - **An unlabelled edge no longer carries a label container.** One was appended before anything

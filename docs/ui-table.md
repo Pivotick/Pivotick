@@ -52,8 +52,8 @@ each one stands:
 | `visible` | quiet, untinted | On the canvas now |
 | `filtered` | amber chip | Hidden by a filter — a node filter, or for an edge its [layer](/edge-layers) being switched off. Change the filter to get it back |
 | `excluded` | red chip | A node hidden by hand; restore it from the filter panel's hidden-node list |
-| `nested` | dashed outline | A node inside a cluster the canvas has shut. Nothing filtered it; open the cluster to see it |
-| `endpoint` | neutral outline | An edge whose end is not on the canvas — filtered out, or inside a collapsed cluster. Nothing was done to the edge itself |
+| `nested` | dashed outline | A node inside a cluster the canvas has shut, or an edge with an end in one: its line is drawn to the cluster. Nothing filtered it; open the cluster to see it |
+| `endpoint` | neutral outline | An edge whose end was filtered out. Nothing was done to the edge itself |
 
 Each state differs in weight and border as well as colour, so the column reads without
 relying on hue. A hidden element's whole row also recedes, keeping the eye on what is
@@ -85,9 +85,9 @@ renders a separate subgraph of its own, so:
 
 - `Visibility` reads `nested` while any cluster above the node is shut, and `visible` once
   they are all open. It is never `filtered` — no filter put it there.
-- `Degree` counts the node's real edges. While its cluster is shut the canvas draws a
-  stand-in edge to the cluster instead, so this is the node's own arithmetic rather than a
-  description of the picture. (The column already counts stand-ins for ordinary nodes.)
+- `Degree` counts the node's real edges. While its cluster is shut the canvas draws them
+  to the cluster instead, so this is the node's own count rather than a description of
+  the picture.
 - Clicking the row selects the node, so the sidebar can show it — often the only way to
   reach it. **Double-clicking opens the cluster hiding it**, one level per press.
 
