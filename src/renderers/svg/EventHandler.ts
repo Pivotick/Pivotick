@@ -5,6 +5,7 @@ import type { Node } from '../../Node'
 import type { Edge } from '../../Edge'
 import type { GraphInteractions } from '../../GraphInteractions'
 import type { Note } from '../../Note'
+import { BubbleEdgeHits } from './BubbleEdgeHits'
 
 export class EventHandler {
     private graph: Graph
@@ -20,6 +21,11 @@ export class EventHandler {
         this.graphInteraction = graphInteraction
 
         this.registerListeners()
+        // Once, and on the root only: it is the one canvas that draws lines.
+        const svg = this.renderer.getCanvasSelection().node()
+        if (svg && !this.graph.getParentGraph() && this.renderer.getOptions().interactionEnabled) {
+            new BubbleEdgeHits(this.graph, graphInteraction).install(svg)
+        }
     }
 
     public update(): void {
