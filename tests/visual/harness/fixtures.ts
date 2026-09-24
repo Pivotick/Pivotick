@@ -761,14 +761,12 @@ export const fixtures = {
         const ext1 = mkNode('ext1', -250, 0)
         const ext2 = mkNode('ext2', 250, 20)
 
-        // Edges into the cluster's children. Hidden while collapsed (mirroring the
-        // normaliser's handling of raw edges to children); the normaliser adds the
-        // *synthetic* ext→group edges that are visible in the collapsed state.
+        // Edges into the cluster's children. While it is collapsed the canvas draws them
+        // folded onto `group`.
         const intoCluster = [
             new Edge('ext1-c2', ext1, c2),
             new Edge('ext2-c1', ext2, c1),
         ]
-        intoCluster.forEach((e) => e.hide())
 
         return { nodes: [group, ext1, ext2], edges: intoCluster, notes: [] }
     },
@@ -814,7 +812,6 @@ export const fixtures = {
             new Edge('gateway-a2', gateway, a[1]),
             new Edge('a4-b1', a[3], b[0]),
         ]
-        edges.slice(1).forEach((e) => e.hide())
 
         return { nodes: [teamA, teamB, gateway, store], edges, notes: [] }
     },
@@ -845,9 +842,6 @@ export const fixtures = {
             new Edge('b2-b3', b2, b3),
             new Edge('a3-b1', a3, b1),
         ]
-        // Mirror the normaliser: any edge touching a hidden child starts hidden (the
-        // synthetic external→cluster / cross-cluster edges are what show while collapsed).
-        edges.forEach((e) => { if (e.from.isChild || e.to.isChild) e.hide() })
         return { nodes: [core, groupA, groupB], edges, notes: [] }
     },
 
@@ -942,8 +936,6 @@ export const fixtures = {
             kindEdge('a3-b1', a3, b1, 'correlation'),
             kindEdge('a2-b2', a2, b2, 'tag'),
         ]
-        // Mirror the normaliser: any edge touching a hidden child starts hidden.
-        edges.forEach((e) => { if (e.from.isChild || e.to.isChild) e.hide() })
         return { nodes: [core, groupA, groupB], edges, notes: [] }
     },
 

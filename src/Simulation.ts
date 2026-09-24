@@ -414,8 +414,8 @@ export class Simulation {
 
     private static initSimulationForceLink(force: d3ForceLinkType<Node, Edge>, options: SimulationOptions) {
         force.distance((edge) => {
-            // Cluster-anchor links (external node → expanded cluster) rest outside the
-            // bubble; their distance is precomputed off the cluster radius (see getActiveEdges).
+            // A pull reaching into an open cluster rests outside the bubble; its distance
+            // is precomputed off the cluster radius (see clusterLink).
             const anchorDistance = (edge as unknown as { __clusterAnchorDistance?: number }).__clusterAnchorDistance
             if (anchorDistance != null) return anchorDistance
 
@@ -501,70 +501,42 @@ export class Simulation {
         this.restart()
     }
 
-    /** @private */
+    /**
+     * @private
+     * The links between this graph's own nodes: the projection's pulls, one per pair of
+     * nodes the canvas connects, on the innermost canvas holding both ends.
+     */
     public getActiveEdges(): Edge[] {
-        const inSim = new Set(
-            this.graph.getMutableNodes().filter(node => node.visible).map(node => node.id)
-        )
-        // Walk up until we hit a node the sim actually holds (a hidden child resolves
-        // to its nearest visible ancestor — the expanded cluster it lives in).
-        const ancestorInSim = (node: Node): Node | undefined => {
-            let cur: Node | undefined = node
-            while (cur && !inSim.has(cur.id)) cur = cur.parentNode
-            return cur
-        }
-        const pairKey = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`)
-
-        const edges: Edge[] = []
-        const seenPairs = new Set<string>()
-
-        for (const edge of this.graph.getMutableEdges()) {
-            // `visibleIgnoringLayer`, not `visible`: an edge whose layer is switched off
-            // keeps pulling its endpoints together, so hiding a layer never moves the
-            // graph. Endpoint-hidden edges and unchosen cross-cluster stand-ins still
-            // leave the force, since those reasons do set it false.
-            if (!edge.visibleIgnoringLayer) continue
-            const source = edge.source as Node
-            const target = edge.target as Node
-
-            // Fully in-sim edge (top-level, or a collapsed-cluster synthetic edge): keep as-is.
-            if (!source.isChild && !target.isChild) {
-                edges.push(edge)
-                seenPairs.add(pairKey(source.id, target.id))
+        const links: Edge[] = []
+        for (const pull of this.graph.getClusterPulls()) {
+            // A nested graph's nodes are copies of the real ones the projection works on.
+            const source = this.graph.getMutableNode(pull.source.id)
+            const target = this.graph.getMutableNode(pull.target.id)
+            if (!source?.visible || !target?.visible) continue
+            const reaches = pull.reachesInto[0] || pull.reachesInto[1]
+            if (pull.edge && !reaches && pull.edge.from === source && pull.edge.to === target) {
+                links.push(pull.edge)
                 continue
             }
-
-            // One endpoint is a hidden child of an expanded cluster. Re-anchor the child
-            // side to its in-sim ancestor so the external node stays tied to the cluster —
-            // without this, expanding drops the anchor and the node drifts off on drag.
-            // A real child↔child link across two clusters is punted here: whenever either
-            // cluster is collapsed a visible cross-cluster stand-in edge carries the link
-            // (kept above, or re-anchored just below when its child end is folded).
-            if (source.isChild && target.isChild) continue
-            const external = source.isChild ? target : source
-            const cluster = ancestorInSim(source.isChild ? source : target)
-            if (!cluster || cluster.id === external.id) continue
-            const key = pairKey(external.id, cluster.id)
-            if (seenPairs.has(key)) continue
-            seenPairs.add(key)
-            edges.push(this.clusterAnchorLink(external, cluster))
+            links.push(this.clusterLink(source, target, pull.reachesInto))
         }
-        return edges
+        return links
     }
 
     /**
-     * A force-only link tying an external node to an expanded cluster it connects
-     * into. Not a real Edge — never rendered, never registered on the nodes — just
-     * the `{source, target, distance}` the link force needs. Its distance is the
-     * cluster radius (plus the base link distance) so the node rests outside the bubble.
+     * A force-only link for a pull that is not one real edge between its own ends. Never
+     * rendered, never registered on the nodes: just the `{source, target}` the link force
+     * needs, with its distance precomputed. A pull reaching inside an open cluster rests
+     * outside its bubble, so its distance adds that cluster's radius.
      * @private
      */
-    private clusterAnchorLink(external: Node, cluster: Node): Edge {
+    private clusterLink(source: Node, target: Node, reachesInto: [boolean, boolean]): Edge {
+        const reach = (reachesInto[0] ? source.getCircleRadius() : 0) + (reachesInto[1] ? target.getCircleRadius() : 0)
         return {
-            id: `cluster-anchor-${external.id}-${cluster.id}`,
-            source: external,
-            target: cluster,
-            __clusterAnchorDistance: cluster.getCircleRadius() + this.options.d3LinkDistance,
+            id: `cluster-pull-${source.id}-${target.id}`,
+            source,
+            target,
+            __clusterAnchorDistance: reach + this.options.d3LinkDistance,
         } as unknown as Edge
     }
 

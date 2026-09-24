@@ -19,6 +19,7 @@ import { Note, type NoteOptions } from './Note'
 import type { PivotickPlugin } from './interfaces/Plugin'
 import { PivotManager } from './PivotManager'
 import { minimap } from './plugins/minimap'
+import { ClusterProjection, type ClusterPull, type ProjectedLine, type TopVisible } from './ClusterProjection'
 
 export class Graph {
     private nodes: Map<string, Node> = new Map()
@@ -34,7 +35,11 @@ export class Graph {
     private options: GraphOptions
     private app_id: string
     private parentGraph?: Graph
+    /** For a nested graph: the real node of the open cluster whose children it draws. */
+    private clusterOwner?: Node
     private graphDepth: number
+    /** What the canvas draws for each real edge, given which clusters are open. */
+    private readonly projection = new ClusterProjection(this)
     public readonly editing: GraphEditingManager
     /**
      * The pivot runtime: register enrichments, run them, triage what they return,
@@ -106,6 +111,7 @@ export class Graph {
         }
 
         this.graphDepth = 0
+        this.clusterOwner = this.options.clusterOwner
         if (this.options.parentGraph) {
             this.setParentGraph(this.options.parentGraph)
             let pg = this.parentGraph
@@ -242,29 +248,12 @@ export class Graph {
     }
 
     /**
-     * Normalizes graph data by:
-     * 1. Building a hierarchy of nodes (including nested children)
-     * 2. Creating synthetic edges for edges that point to collapsed children
-     * 3. Hiding edges that connect to invisible child nodes
-     *
-     * Synthetic edges are placeholder edges created when an edge would point to a
-     * node inside a collapsed cluster. Instead of pointing to the invisible child,
-     * a synthetic edge is created pointing to the parent cluster node. When the
-     * cluster is expanded, synthetic edges are hidden and actual edges are shown.
-     *
-     * Two shapes are synthesised:
-     * - **external → collapsed child:** a synthetic edge to each ancestor cluster
-     *   of the child (so it re-anchors as clusters expand).
-     * - **collapsed child → collapsed child in a *different* cluster:** a single
-     *   synthetic edge between the two outermost clusters, so a "collapse every
-     *   group into a box" view still shows (and force-links) the box→box
-     *   dependency instead of the edge vanishing. It is only shown while both
-     *   clusters are collapsed; expanding either hides it (see
-     *   {@link ClusterDrawer.toggleSyntheticEdges}). The re-anchored per-child edge
-     *   for the partially-expanded case is not synthesised.
+     * Normalizes graph data: builds the node hierarchy, nested children included, and
+     * resolves each edge's endpoints. Edges into a cluster are kept as they are; what the
+     * canvas draws for them while clusters are closed is {@link ClusterProjection}'s job.
      *
      * @param data - The raw graph data to normalize
-     * @returns Normalized graph data with synthetic edges added
+     * @returns Normalized graph data
      * @private
      */
     public static normalizeGraphData(data: GraphData | RelaxedGraphData): GraphData {
@@ -287,94 +276,6 @@ export class Graph {
         const normalizedEdges: Edge[] = data.edges.map((e) => Graph.normalizeEdge(e, nodesByID))
             .filter((e): e is Edge => e !== null)
 
-        // Ancestor chain of a node from its immediate parent up to the outermost cluster.
-        const ancestorChain = (node: Node): Node[] => {
-            const chain: Node[] = []
-            let cur = node.parentNode
-            while (cur) { chain.push(cur); cur = cur.parentNode }
-            return chain
-        }
-
-        // Generate synthetic edges for edges pointing to child in collapsed nodes
-        const newEdges: Edge[] = []
-        // Dedup cross-cluster stand-ins by their (representative-from, representative-to)
-        // pair, keeping each one so a later real edge over the same pair can join its
-        // `representedEdges` instead of being lost to the dedup.
-        const crossClusterStandIns = new Map<string, Edge>()
-        for (const edge of normalizedEdges) {
-            if (!edge.from.isChild && edge.to.isChild && edge.to.parentNode) {
-
-                let currentParent = edge.to.parentNode
-                const visited = new Set<string>()
-
-                while (currentParent && !visited.has(currentParent.id)) {
-                    visited.add(currentParent.id)
-
-                    const syntheticId = `synthetic-${edge.from.id}-${currentParent.id}`
-                    const newEdge = new Edge(
-                        syntheticId,
-                        edge.from,
-                        currentParent,
-                        // { 'label': `${edge.from.id}-${currentParent.id}` },
-                        {},
-                        {},
-                        null,
-                        edge.to
-                    )
-                    if (newEdge.to.isChild) {
-                        newEdge.hide()
-                    }
-                    // One stand-in per ancestor level, all for this one real edge — so
-                    // an edge facet reads the real edge's data rather than the blank
-                    // payload a synthetic carries.
-                    newEdge.representedEdges = [edge]
-                    newEdges.push(newEdge)
-
-                    if (!currentParent.parentNode) break
-                    currentParent = currentParent.parentNode
-                }
-            } else if (edge.from.isChild && edge.to.isChild) {
-                // Both endpoints live inside clusters. If those clusters differ, the real
-                // edge is only drawable when *both* are expanded; for every other collapse
-                // state we synthesise a stand-in between the pair of nodes actually shown
-                // (each endpoint's deepest visible ancestor). We pre-create the whole
-                // cross-product of ancestors — one per collapse state — and let
-                // ClusterDrawer.resolveCrossClusterEdges pick the visible one on toggle.
-                const fromChain = [edge.from, ...ancestorChain(edge.from)]
-                const toChain = [edge.to, ...ancestorChain(edge.to)]
-                const fromTop = fromChain[fromChain.length - 1]
-                const toTop = toChain[toChain.length - 1]
-                if (fromTop.id === toTop.id) continue // same outermost cluster — intra-cluster
-                // The real edge joins the family: it's the stand-in shown once both expand.
-                // Tagging it hands its visibility to resolveCrossClusterEdges too (the same
-                // `rep` test naturally yields "shown only when both fully expanded").
-                edge.isCrossCluster = true
-                edge.syntheticSourceNode = edge.from
-                edge.syntheticTerminalNode = edge.to
-                for (const f of fromChain) {
-                    for (const t of toChain) {
-                        if (f === edge.from && t === edge.to) continue // that's the real edge, tagged above
-                        const syntheticId = `synthetic-${f.id}-${t.id}`
-                        const existing = crossClusterStandIns.get(syntheticId)
-                        if (existing) {
-                            existing.representedEdges?.push(edge)
-                            continue
-                        }
-                        const newEdge = new Edge(syntheticId, f, t, {}, {}, edge.directed, edge.to)
-                        newEdge.isCrossCluster = true
-                        newEdge.syntheticSourceNode = edge.from
-                        newEdge.representedEdges = [edge]
-                        crossClusterStandIns.set(syntheticId, newEdge)
-                        newEdges.push(newEdge)
-                    }
-                }
-            }
-        }
-
-        normalizedEdges.push(...newEdges)
-        // Pick which stand-in (or the real edge) is shown for the current collapse state.
-        Graph.resolveCrossClusterEdges(normalizedEdges)
-
         const normalisedNotes: Note[] = (data.notes ?? []).map((n) => Graph.normalizeNote(n))
             .filter((n): n is Note => n !== null)
 
@@ -382,30 +283,6 @@ export class Graph {
             nodes: normalizedNodes,
             edges: normalizedEdges,
             notes: normalisedNotes,
-        }
-    }
-
-    /**
-     * Shows exactly the cross-cluster stand-in edge that matches the current collapse
-     * state, and hides the rest. For a real child→child edge across two clusters we
-     * pre-create one synthetic edge per (from-representative, to-representative) pair
-     * (see {@link normalizeGraphData}); this picks the one whose endpoints are the
-     * nodes actually rendered right now — each endpoint's *deepest visible ancestor*
-     * (itself if every ancestor is expanded, otherwise the outermost collapsed box).
-     * When both clusters are fully expanded no stand-in matches and the real edge is
-     * drawn by the subgraphs instead. Called on load and on every expand/collapse.
-     * @private
-     */
-    public static resolveCrossClusterEdges(edges: Edge[]): void {
-        for (const edge of edges) {
-            if (!edge.isCrossCluster || !edge.syntheticSourceNode || !edge.syntheticTerminalNode) continue
-            const shouldShow =
-                edge.from === edge.syntheticSourceNode.canvasRepresentative() &&
-                edge.to === edge.syntheticTerminalNode.canvasRepresentative()
-            if (edge.visibleIgnoringLayer !== shouldShow) {
-                if (shouldShow) edge.show()
-                else edge.hide()
-            }
         }
     }
 
@@ -448,7 +325,7 @@ export class Graph {
     }
 
     /**
-     * Normalizes an edge, hiding it if it connects to a child node in a collapsed cluster.
+     * Normalizes an edge.
      * @private
      */
     private static normalizeEdge(e: RawEdge | Edge, allNodes: Map<string, Node>): Edge | null {
@@ -469,10 +346,6 @@ export class Graph {
             e.data,
             e.style
         )
-
-        if (fromNode.isChild || toNode.isChild) {
-            normEdge.hide()
-        }
         return normEdge
     }
 
@@ -1322,25 +1195,16 @@ export class Graph {
     }
 
     /**
-     * Would this edge be drawn, if `visibleIds` were the visible nodes? The endpoint,
-     * collapse and synthetic reasons only — layers are a separate veto (`layerVisible`).
+     * Would this edge count, if `visibleIds` were the visible top-level nodes? The
+     * endpoint reasons only: layers are a separate veto (`layerVisible`), and where a
+     * closed cluster puts the line is {@link ClusterProjection}'s concern.
      *
-     * Asked twice: once by {@link setVisibleNodes} as it commits, and once by the query
-     * engine *before* it commits, to find the nodes a filter left with no relation. Both
-     * ask here so there is one copy of the answer. A cross-cluster stand-in is not
-     * answerable — `resolveCrossClusterEdges` owns those — so callers handle them.
+     * Asked by {@link setVisibleNodes} as it commits, so the flag agrees with the
+     * projection's own test.
      * @private
      */
     edgeWouldBeVisible(edge: Edge, visibleIds: Set<string>): boolean {
-        // A subgraph endpoint belongs to another graph, so it can only be read as it
-        // stands; `from` / `to` are this graph's and are read off the candidate set.
-        const endVisible = (subgraphNode: Node | undefined, endpoint: Node): boolean =>
-            subgraphNode ? subgraphNode.visible : visibleIds.has(endpoint.id)
-
-        const bothEndVisible = endVisible(edge.getSubgraphFromNode(), edge.from) &&
-            endVisible(edge.getSubgraphToNode(), edge.to)
-        const isValidSynthetic = !edge.isSynthetic || !edge.to.expanded
-        return bothEndVisible && isValidSynthetic
+        return this.projection.edgePasses(edge, (node) => visibleIds.has(node.id))
     }
 
     /**
@@ -1361,10 +1225,6 @@ export class Graph {
         })
 
         this.edges.forEach(edge => {
-            // Cross-cluster stand-ins are owned by resolveCrossClusterEdges (expansion
-            // state), not by node visibility — leave their visibility as it set it.
-            if (edge.isCrossCluster) return
-
             const shouldBeVisible = this.edgeWouldBeVisible(edge, visibleSet)
             // Compared against `visibleIgnoringLayer`, not `visible`: this decides the
             // endpoint reason only, and an edge already dark because its layer is off
@@ -1469,6 +1329,64 @@ export class Graph {
      */
     public getParentGraph(): Graph | undefined {
         return this.parentGraph
+    }
+
+    /** @private The graph at the top of the nesting, whose canvas draws every edge. */
+    public getRootGraph(): Graph {
+        return this.parentGraph ? this.parentGraph.getRootGraph() : this
+    }
+
+    /**
+     * @private
+     * Recompute what the canvas draws and pulls from the real edges and the open clusters.
+     * Run by the root renderer before each redraw; a nested graph has nothing to project.
+     */
+    public refreshProjection(): void {
+        if (!this.parentGraph) this.projection.refresh()
+    }
+
+    /**
+     * @private
+     * The edges the canvas draws: real edges, and stand-ins for the ones whose ends are
+     * folded into closed clusters. Only the root graph draws edges; a nested graph returns none.
+     */
+    public getDrawnEdges(): Edge[] {
+        return this.parentGraph ? [] : this.projection.getDrawnEdges()
+    }
+
+    /**
+     * @private
+     * The lines the canvas would draw if `topVisible` said which top-level nodes are
+     * shown. Pure, so the filters can ask before they commit.
+     */
+    public projectLines(topVisible: TopVisible): ProjectedLine[] {
+        return this.projection.project(topVisible)
+    }
+
+    /** @private The drawn edges ending on any of these nodes. */
+    public getDrawnEdgesTouching(nodes: Node[]): Edge[] {
+        return this.parentGraph ? [] : this.projection.getDrawnEdgesTouching(nodes)
+    }
+
+    /** @private The physics pulls between this graph's own nodes, from the root projection. */
+    public getClusterPulls(): ClusterPull[] {
+        const root = this.getRootGraph()
+        return root.projection.getPulls(this.parentGraph ? (this.clusterOwner ?? null) : null)
+    }
+
+    /**
+     * @private
+     * The object the canvas draws for this node: itself on the main canvas, otherwise its
+     * copy in the nested graph of the open cluster holding it.
+     */
+    public getDrawnCopy(node: Node): Node {
+        let graph: Graph = this.getRootGraph()
+        for (const ancestor of node.ancestorChain()) {
+            const nested = graph.getMutableNode(ancestor.id)?.getSubgraph()
+            if (!nested) return node
+            graph = nested
+        }
+        return graph.getMutableNode(node.id) ?? node
     }
 
     public getGraphDepth(): number {

@@ -517,15 +517,15 @@ test.describe('table grid — edge visibility', () => {
         expect(byId['b-c']).toBe('visible')
     })
 
-    // The state nothing announces: opening a cluster shows the real edges into its
-    // children and hides the stand-in, with no filter and no data change. The dock polls
-    // a slow simulation tick for exactly this.
+    // The state nothing announces: opening a cluster draws the real edges into its
+    // children instead of the line folded onto it, with no filter and no data change. The
+    // dock polls a slow simulation tick for exactly this.
     test('opening a cluster updates the column with no filter event', async ({ page }) => {
         await openDock(page, 'clustered')
         await showEdges(page)
 
-        // Collapsed: the real edge into the child is hidden, so its end is off the canvas.
-        expect((await visibilityById(page))['ext1-c2']).toBe('endpoint')
+        // Collapsed: the edge into the child is drawn folded onto its cluster.
+        expect((await visibilityById(page))['ext1-c2']).toBe('nested')
 
         await harness(page, 'expand', 'group')
 

@@ -140,11 +140,13 @@ export function nodeVisibility(node: Node, graph: Graph): TableVisibility {
 /**
  * Where an edge stands relative to the canvas. Its two reasons are independent — see
  * `Edge.layerVisible` — and an end that has left the canvas is reported first: while a
- * node it touches is gone, switching its layer back on cannot bring the edge back.
+ * node it touches is gone, switching its layer back on cannot bring the edge back. A shown
+ * edge with an end inside a closed cluster is `nested`: its line is drawn to the cluster.
  */
 export function edgeVisibility(edge: Edge): TableVisibility {
-    if (edge.visible) return 'visible'
-    return edge.visibleIgnoringLayer ? 'filtered' : 'endpoint'
+    if (!edge.visible) return edge.visibleIgnoringLayer ? 'filtered' : 'endpoint'
+    const folded = edge.from.canvasRepresentative() !== edge.from || edge.to.canvasRepresentative() !== edge.to
+    return folded ? 'nested' : 'visible'
 }
 
 /**

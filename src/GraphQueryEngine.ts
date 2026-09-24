@@ -399,7 +399,7 @@ export class GraphQueryEngine {
             .filter(node => node.childrenDepth === 0)
 
         const visibleNodesInCurrentGraph = nodesInCurrentGraph
-            .filter(node => this.nodeMatchesFilters(node)) // nodes that match the filter
+            .filter(node => this.matchesNodeFilters(node)) // nodes that match the filter
 
         this.hiddenNodeCount = nodesInCurrentGraph.length - visibleNodesInCurrentGraph.length
         this.applyFiltersOnSubgraph()
@@ -430,27 +430,15 @@ export class GraphQueryEngine {
         }
 
         const candidateIds = new Set(candidates.map((node) => node.id))
-        // The node the canvas actually shows for an endpoint: a relation into an open
-        // cluster's child is drawn, and it keeps the *cluster* on screen — the child is
-        // not one of this graph's nodes.
-        const onCanvas = (node: Node): Node => {
-            let current = node
-            while (current.childrenDepth > 0 && current.parentNode) current = current.parentNode
-            return current
-        }
+        // A drawn line keeps the top-level node of each of its dots: a line into an open
+        // cluster's child keeps the cluster, since the child is not one of this graph's nodes.
+        const topLevel = (node: Node): Node => node.ancestorChain()[0] ?? node
 
         const connected = new Set<string>()
-        for (const edge of this.graph.getMutableEdges()) {
-            // A cross-cluster stand-in's visibility is the cluster drawer's answer, not
-            // one we can predict — read it, and still ask that both ends survived the
-            // node filters. `edge.visible` already folds in its layer.
-            const drawn = edge.isCrossCluster
-                ? edge.visible && candidateIds.has(edge.from.id) && candidateIds.has(edge.to.id)
-                : edge.layerVisible && this.graph.edgeWouldBeVisible(edge, candidateIds)
-            if (!drawn) continue
-
-            connected.add(onCanvas(edge.from).id)
-            connected.add(onCanvas(edge.to).id)
+        for (const line of this.graph.projectLines((node) => candidateIds.has(node.id))) {
+            if (line.shown.length === 0) continue
+            connected.add(topLevel(line.from).id)
+            connected.add(topLevel(line.to).id)
         }
 
         const kept = candidates.filter((node) => connected.has(node.id))
@@ -550,7 +538,12 @@ export class GraphQueryEngine {
             })
     }
 
-    private nodeMatchesFilters(node: Node): boolean {
+    /**
+     * @private
+     * Does this node match the active node filters? Also asked of a closed cluster's
+     * children, which are filtered nowhere else.
+     */
+    matchesNodeFilters(node: Node): boolean {
         if (this.excludedNodeIds.has(node.id)) {
             return false
         }

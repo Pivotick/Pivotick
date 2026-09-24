@@ -120,6 +120,12 @@ export interface GraphOptions {
      * Instance of a parent graph used in the context of collapsible nodes
      */
     parentGraph?: Graph
+
+    /**
+     * @private
+     * For a nested graph: the real node of the open cluster whose children it draws
+     */
+    clusterOwner?: Node
 }
 
 /**

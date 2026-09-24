@@ -3823,7 +3823,7 @@ class Harness implements HarnessApi {
 
     /** Ids of the edges currently drawn — a layer-hidden edge is removed from the render. */
     visibleEdgeIds(): string[] {
-        return this.g.getMutableVisibleEdges().map((edge) => edge.id).sort()
+        return this.g.getDrawnEdges().map((edge) => edge.id).sort()
     }
 
     /**

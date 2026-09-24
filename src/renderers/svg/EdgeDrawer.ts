@@ -303,11 +303,11 @@ export class EdgeDrawer {
         mergedStyle.dashed = mergedStyle.dashed !== undefined ? tryResolveBoolean(mergedStyle.dashed, edge) : undefined
         mergedStyle.animateDash = mergedStyle.animateDash !== undefined ? tryResolveBoolean(mergedStyle.animateDash, edge) : undefined
 
-        // Edge going from the cluster's parent bubble to a child
-        if (edge.to.parentNode && edge.to.parentNode === edge.from) {
+        // Edge going from a cluster's bubble to something inside it
+        if (edge.to.ancestorChain().includes(edge.from)) {
             mergedStyle.curveStyle = 'straight'
-            // FROM node rendering might be done in a subgraph
-            const fromNode = edge.getSubgraphFromNode() ?? edge.from
+            // The cluster may be drawn inside another cluster's nested graph
+            const fromNode = this.graph.getDrawnCopy(edge.from)
             const nodeElement = fromNode.getGraphElement()?.querySelector('.node')
             const parentFill = nodeElement ? getComputedStyle(nodeElement).fill : undefined
             // A shapeless parent's box is painted in nothing, so there is no colour to
@@ -559,7 +559,7 @@ export class EdgeDrawer {
         const normX = distance === 0 ? -Math.SQRT1_2 : dx / distance
         const normY = distance === 0 ? -Math.SQRT1_2 : dy / distance
 
-        const toNode = edge.getSubgraphToNode() ?? edge.to
+        const toNode = this.graph.getDrawnCopy(edge.to)
         const rFrom = this.borderReach(from, normX, normY)
 
         if (distance === 0) {

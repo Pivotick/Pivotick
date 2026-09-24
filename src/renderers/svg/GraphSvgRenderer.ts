@@ -578,6 +578,9 @@ export class GraphSvgRenderer extends GraphRenderer {
     }
 
     public dataUpdate(): void {
+        // Before the nodes: opening a cluster inside the join below builds its nested
+        // graph, which asks the projection for its pulls straight away.
+        this.graph.refreshProjection()
         const nodes: Node[] = this.graph.getMutableNodes()
             .filter(node => node.visible)
 
@@ -613,8 +616,6 @@ export class GraphSvgRenderer extends GraphRenderer {
                                 node.clearDirty()
                                 if (!node.expanded) { // teardown any created clusters.
                                     ClusterDrawer.collapseAllOpenedClusters(node)
-                                    ClusterDrawer.toggleSyntheticEdges(node)
-                                    ClusterDrawer.resolveCrossClusterEdges(this.nodeDrawer.graph)
                                     const parentGraph = this.nodeDrawer.graph.getParentGraph()
                                     let currParentGraph = parentGraph
                                     while (currParentGraph) {
@@ -634,10 +635,8 @@ export class GraphSvgRenderer extends GraphRenderer {
                 exit => exit.remove()
             )
 
-        const edges = this.graph.getMutableEdges()
-            .filter(edge => {
-                return edge.visible
-            })
+        // Folding and layers are already applied: these are exactly the lines to draw.
+        const edges = this.graph.getDrawnEdges()
         this.edgeGroupSelection = this.edgeGroup
             .selectAll<SVGPathElement, Edge>('g.pvt-edge-group')
 
@@ -1031,8 +1030,7 @@ export class GraphSvgRenderer extends GraphRenderer {
 
     private updateEdgePositions(nodes?: Node[]): void {
         if (nodes) {
-            const edges = nodes.flatMap(n => [...n.getEdgesOut(), ...n.getEdgesIn()])
-            const edgeIds = new Set(edges?.map(e => e.id))
+            const edgeIds = new Set(this.graph.getDrawnEdgesTouching(nodes).map(e => e.id))
             const selectedEdges = this.edgeSelection.filter(d => edgeIds.has(d.id))
             this.edgeDrawer.updatePositions(selectedEdges)
         } else {

@@ -47,27 +47,12 @@ export class Edge {
      */
     visibleIgnoringLayer: boolean
     /**
-     * For a cross-cluster stand-in: the real edges it speaks for. Stand-ins are
-     * deduped by node *pair*, so one can cover several relations of several kinds;
-     * it is filtered out only once every one of them is.
+     * For a stand-in: the real edges it speaks for. Edges landing on the same pair of dots
+     * share one line, so one stand-in can cover several relations of several kinds; it is
+     * filtered out only once every one of them is. Undefined on a real edge.
      */
     representedEdges?: Edge[]
-    /** True if this is a synthetic edge (placeholder for collapsed cluster child) */
-    isSynthetic?: boolean
-    /**
-     * True for the subclass of synthetic edges that stand in for a real edge whose
-     * *both* endpoints are children of different clusters. Unlike the external→cluster
-     * synthetic edges, these are resolved as a set (one per collapse state) by
-     * {@link ClusterDrawer.resolveCrossClusterEdges} rather than the per-node toggle.
-     */
-    isCrossCluster?: boolean
-    /** The actual child node this synthetic edge points to (for expansion logic) */
-    syntheticTerminalNode?: Node
-    /** For a cross-cluster synthetic edge: the real child the `from` side stands in for. */
-    syntheticSourceNode?: Node
     private _original_object?: Edge
-    private _subgraphFromNode?: Node
-    private _subgraphToNode?: Node
 
     private _dirty: boolean
     /**
@@ -85,7 +70,7 @@ export class Edge {
      * @param data - Optional data payload for the edge
      * @param style - Optional style for the edge
      */
-    constructor(id: string, from: Node, to: Node, data?: EdgeData, style?: Partial<EdgeFullStyle>, directed: boolean | null = null, syntheticTerminalNode?: Node) {
+    constructor(id: string, from: Node, to: Node, data?: EdgeData, style?: Partial<EdgeFullStyle>, directed: boolean | null = null) {
         this.id = id
         this.domID = generateSafeDomId()
         this.from = from
@@ -97,8 +82,6 @@ export class Edge {
         this.layerVisible = true
         this.visibleIgnoringLayer = true
         this._dirty = true
-        this.isSynthetic = syntheticTerminalNode !== undefined
-        this.syntheticTerminalNode = syntheticTerminalNode
 
         this.from.registerEdgeOut(this as Edge)
         this.to.registerEdgeIn(this as Edge)
@@ -329,35 +312,33 @@ export class Edge {
         return this._original_object
     }
 
-    /**
-     * Sets a reference to the subgraph node from the main graph.
-     * Used when the FROM node has a clone in a subgraph
-     * @private
-     */
-    setSubgraphFromNode(obj: Node) {
-        this._subgraphFromNode = obj
+    /** True for a stand-in: a line drawn for real edges whose ends are hidden in closed clusters. */
+    get isSynthetic(): boolean {
+        return this.representedEdges !== undefined
     }
+
     /**
-     * Sets a reference to the subgraph node from the main graph.
-     * Used when the TO node has a clone in a subgraph
      * @private
+     * A stand-in between two dots on the canvas. Not registered on its endpoints: it is
+     * drawing only, so it never counts in a node's degree or neighbours.
      */
-    setSubgraphToNode(obj: Node) {
-        this._subgraphToNode = obj
+    static standIn(id: string, from: Node, to: Node): Edge {
+        const edge = new Edge(id, from, to)
+        from.unregisterEdge(edge)
+        to.unregisterEdge(edge)
+        edge.representedEdges = []
+        return edge
     }
+
     /**
-     * Gets the reference to the subgraph node from the main graph.
      * @private
+     * Point a stand-in at the real edges it now speaks for, redrawing it if they changed.
      */
-    getSubgraphFromNode(): Node | undefined {
-        return this._subgraphFromNode
-    }
-    /**
-     * Gets the reference to the subgraph node from the main graph.
-     * @private
-     */
-    getSubgraphToNode(): Node | undefined {
-        return this._subgraphToNode
+    standFor(members: Edge[]): void {
+        const previous = this.representedEdges ?? []
+        const same = previous.length === members.length && previous.every((edge, i) => edge === members[i])
+        this.representedEdges = members
+        if (!same) this.markDirty()
     }
 
     // --- Provenance --------------------------------------------------------------------

@@ -2,10 +2,9 @@ import { select as d3Select, type Selection } from 'd3-selection'
 import { Node } from '../../Node'
 import { NodeDrawer } from './NodeDrawer'
 import { forceConstrainParent } from '../../plugins/d3Forces/ForceConstrainParent'
-import { Edge } from '../../Edge'
 import type { EdgeDrawer } from './EdgeDrawer'
 import { Graph } from '../../Graph'
-import type { GraphOptions, RawEdge, RawNode, RelaxedGraphData } from '../../interfaces/GraphOptions'
+import type { GraphOptions, RawNode, RelaxedGraphData } from '../../interfaces/GraphOptions'
 import { forceCenter } from 'd3-force'
 import type { GraphSvgRenderer } from './GraphSvgRenderer'
 import { isInvisiblePaint } from '../../utils/utils'
@@ -21,7 +20,6 @@ import type { NodeSelection } from '../../interfaces/GraphInteractions'
  * 1. A nested Graph instance (subgraph) is created containing the children nodes
  * 2. The subgraph uses local coordinates (relative to parent cluster center at 0,0)
  * 3. A cluster area circle is drawn around the parent node
- * 4. Synthetic edges (pointing to nested children) are hidden, actual edges are shown
  *
  * ## Coordinate Systems
  *
@@ -38,11 +36,11 @@ import type { NodeSelection } from '../../interfaces/GraphInteractions'
  * - Each subgraph node has `_original_object` (mainGraphNode) pointing to the real node
  * - Position updates flow: subgraph node → real node → parent graph hierarchy
  *
- * ## Synthetic Edges
+ * ## Edges
  *
- * Synthetic edges are created during graph normalization for edges that would point
- * to nested children. When a cluster is expanded, these are hidden and replaced with
- * the actual edges drawn within the subgraph.
+ * A nested graph holds no edges. The main canvas draws every line, including the ones
+ * inside an open cluster, as worked out by ClusterProjection; a nested graph only asks
+ * it for the physics pulls between its own nodes.
  */
 export class ClusterDrawer {
 
@@ -59,8 +57,7 @@ export class ClusterDrawer {
      * This is called when a node with children is expanded. It creates:
      * - A cluster area circle around the parent node
      * - A nested subgraph containing the children nodes
-     * - Appropriate edge visibility (hide synthetic, show actual)
-     *
+         *
      * @param theClusterSelection - D3 selection of the cluster's SVG group element
      * @param node - The node being expanded
      * @param cb - Callback invoked after cluster expansion completes, receives final radius
@@ -104,24 +101,10 @@ export class ClusterDrawer {
 
         cluster.transition().duration(250).attr('r', r)
 
-        // Collect all edges connected to children (for subgraph)
-        const seen = new Set<string>()
-        const childrenEdges = node.children
-            .flatMap(child => [
-                ...(child.getEdgesOut() ?? []),
-                ...(child.getEdgesIn() ?? []),
-            ])
-            .filter(edge => {
-                if (seen.has(edge.id)) return false
-                seen.add(edge.id)
-                return true
-            })
-
         // Create the nested subgraph containing children nodes
         const subgraphContainer: SVGGElement = theClusterSelection.node() as SVGGElement
         const subgraph = this.createSubgraph(
             node.children,
-            childrenEdges,
             subgraphContainer,
             node,
             this.nodeDrawer.graph
@@ -134,10 +117,6 @@ export class ClusterDrawer {
             .transition()
             .duration(250)
             .attr('opacity', 1)
-
-        // Update edge visibility: hide synthetic edges, show actual edges
-        ClusterDrawer.toggleSyntheticEdges(node)
-        ClusterDrawer.resolveCrossClusterEdges(this.nodeDrawer.graph)
 
         // Propagate layout updates up the parent graph hierarchy
         let currParentGraph = this.nodeDrawer.graph.getParentGraph()
@@ -166,7 +145,6 @@ export class ClusterDrawer {
      * - Has its own simulation constrained within the parent radius
      *
      * @param nodes - Child nodes to include in the subgraph
-     * @param edges - Edges connecting the child nodes
      * @param container - SVG group element to contain the subgraph
      * @param parentNode - The parent cluster node (defines the local coordinate origin)
      * @param parentGraph - Reference to the parent graph for coordinate conversion
@@ -174,7 +152,6 @@ export class ClusterDrawer {
      */
     private createSubgraph(
         nodes: Node[],
-        edges: Edge[],
         container: SVGGElement,
         parentNode: Node,
         parentGraph: Graph
@@ -189,14 +166,6 @@ export class ClusterDrawer {
                 origObject.setDeepestNodeClone(n)
                 n.isChild = true
             })
-            // Link each subgraph edges to its main graph counterpart
-            graph.getMutableEdges().forEach((e: Edge) => {
-                let origObject = parentGraph.getMutableEdge(e.id)
-                if (origObject) {
-                    origObject = origObject.getOriginalObject() ?? origObject
-                    e.setOriginalObject(origObject)
-                }
-            })
             // Fix parent references: ensure children point to the correct cluster node
             nodes.forEach((n: Node) => {
                 if (n.parentNode?.id === parentNode.id) {
@@ -204,18 +173,6 @@ export class ClusterDrawer {
                     if (subgraphNode) {
                         subgraphNode.parentNode = parentNode
                     }
-                }
-            })
-            // Link each maingraph edge's nodes to its subgraph counterpart
-            parentGraph.getMutableEdges().forEach((e: Edge) => {
-                const origEdge = e.getOriginalObject() ?? e
-                const subgraphFromNode = graph.getMutableNode(e.from.id)
-                const subgraphToNode = graph.getMutableNode(e.to.id)
-                if (subgraphFromNode) {
-                    origEdge.setSubgraphFromNode(subgraphFromNode)
-                }
-                if (subgraphToNode) {
-                    origEdge.setSubgraphToNode(subgraphToNode)
                 }
             })
         }
@@ -265,36 +222,25 @@ export class ClusterDrawer {
                     })
                     parentGraph.renderer.getGraphInteraction().addNodesToSelection(mainGraphNodes)
                 },
-                onEdgeSelect: (edge) => {
-                    const mainGraphEdge = parentGraph.getMutableEdge(edge.id)
-                    if (mainGraphEdge) {
-                        parentGraph.selectElement(mainGraphEdge)
-                    }
-                },
                 onNodeHoverIn: (event, node) => {
                     parentGraph.UIManager.tooltip?.openForNodeOnElement(event, node)
                 },
             },
-            parentGraph: this.nodeDrawer.graph
+            parentGraph: this.nodeDrawer.graph,
+            clusterOwner: parentNode.getOriginalObject() ?? parentNode,
         }
 
         const subgraphData: RelaxedGraphData = {
             nodes: [...nodes].map((n) => {
                 return n.toDict(true) as RawNode
             }),
-            edges: [...edges].map(e => {
-                return e.toDict() as RawEdge
-            })
+            edges: [],
         }
 
         const tmpHtml = document.createElement('div')
         const subgraph = new Graph(tmpHtml, subgraphData, options)
         const zoomLayer = tmpHtml.querySelector('.zoom-layer') as SVGGElement
         container.appendChild(zoomLayer)
-
-        subgraph.getMutableNodes().forEach((node) => {
-            ClusterDrawer.toggleSyntheticEdges(node)
-        })
 
         subgraph.on('ready', () => {
             subgraph.simulation.getSimulation()
@@ -394,99 +340,6 @@ export class ClusterDrawer {
                 svgRenderer.nodeDrawer.clusterDrawer.updatePositionOnRealChild(x, y, id)
             }
         }
-    }
-
-    /**
-     * Toggles visibility of synthetic edges based on cluster expansion state.
-     *
-     * Synthetic edges are placeholder edges created during graph normalization that point
-     * from external nodes to collapsed cluster children. When a cluster is expanded:
-     * - Synthetic edges pointing to children are hidden
-     * - Actual edges within the subgraph are shown
-     * When collapsed:
-     * - Synthetic edges are shown again
-     * - Actual nested edges are hidden
-     *
-     * @param node - The cluster node being expanded/collapsed
-     */
-    public static toggleSyntheticEdges(node: Node) {
-        // external→cluster synthetic edges only; cross-cluster (child↔child) stand-ins
-        // are resolved as a set by resolveCrossClusterEdges, not per-node here.
-        const synthetic = (e: Edge) => e.isSynthetic === true && e.isCrossCluster !== true
-        if (node.expanded) {
-            // Hide self-referencing synthetic edges
-            node.getEdgesIn().filter(synthetic).forEach((e: Edge) => {
-                e.hide()
-            })
-            const currentNode = node.getOriginalObject() ?? node
-            // Hide synthetic edges that point to the node of this subgraph coming from outer graph
-            currentNode.getEdgesIn().filter(synthetic).forEach((e: Edge) => {
-                e.hide()
-            })
-
-            // Show actual edges (but not cross-cluster ones — those are owned by
-            // resolveCrossClusterEdges, since their other endpoint may be a hidden child).
-            currentNode.children.forEach((child: Node) => {
-                child.getEdgesIn()
-                    .filter((e: Edge) => !currentNode.children.includes(e.from)) // Edges are already drawn in the subgraph
-                    .filter((e: Edge) => e.isCrossCluster !== true)
-                    .forEach((e: Edge) => {
-                        e.show()
-                    })
-            })
-        } else {
-            // Hide self-referencing synthetic edges
-            node.getEdgesIn().filter(synthetic).forEach((e: Edge) => {
-                e.show()
-            })
-
-            const currentNode = node.getOriginalObject() ?? node
-            currentNode.getEdgesIn().filter(synthetic).forEach((e: Edge) => {
-                if (node.visible) {
-                    e.show()
-                }
-            })
-
-            // Hide nested edges
-            ClusterDrawer.hideNestedEdges(currentNode)
-        }
-    }
-
-    /**
-     * Re-resolve which cross-cluster (child↔child) stand-in edges are visible after an
-     * expand/collapse, walking to the root graph so a nested toggle updates the whole
-     * set. Delegates the per-edge decision to {@link Graph.resolveCrossClusterEdges}.
-     *
-     * @param graph - Any graph in the hierarchy that just changed expansion state
-     */
-    public static resolveCrossClusterEdges(graph: Graph) {
-        let root = graph
-        let parent = root.getParentGraph()
-        while (parent) { root = parent; parent = root.getParentGraph() }
-        Graph.resolveCrossClusterEdges(root.getMutableEdges())
-    }
-
-    /**
-     * Recursively hides edges that point to nested children of a collapsed cluster.
-     *
-     * When a cluster is collapsed, edges that would point to its nested children
-     * need to be hidden since those children are not visible. This method traverses
-     * the entire child hierarchy.
-     *
-     * @param node - The cluster node whose nested edges should be hidden
-     */
-    private static hideNestedEdges(node: Node) {
-        node.children.forEach((child: Node) => {
-            // Recurse into nested children first
-            ClusterDrawer.hideNestedEdges(child)
-
-            // Hide edges that don't originate from siblings (i.e., edges from outside)
-            child.getEdgesIn()
-                .filter((e: Edge) => !node.children.includes(e.from))
-                .forEach((e: Edge) => {
-                    e.hide()
-                })
-        })
     }
 
     /**

@@ -38,9 +38,9 @@ async function dependencyState(page: Page, aExpanded: boolean, bExpanded: boolea
 
         // Every id that can represent the a3→b1 dependency: the real edge + its stand-ins.
         const depIds = new Set(['a3-b1', 'synthetic-group-a-group-b', 'synthetic-a3-group-b', 'synthetic-group-a-b1'])
-        const shownAs = g.getMutableEdges()
+        const shownAs = g.getDrawnEdges()
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .filter((e: any) => depIds.has(e.id) && e.visible)
+            .filter((e: any) => depIds.has(e.id))
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             .map((e: any) => `${e.id}${document.getElementById(`edge-${e.domID}`) ? '[dom]' : '[nodom]'}`)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

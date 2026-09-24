@@ -1,4 +1,3 @@
-import type { Edge } from '../../Edge'
 import type { GraphBounds } from '../../GraphRenderer'
 import type { Node } from '../../Node'
 import type { Note } from '../../Note'
@@ -443,7 +442,8 @@ export class Minimap extends UIComponent {
      * at thumbnail size a dense edge set washes out the clusters it is meant to reveal.
      */
     private drawEdges(context: CanvasRenderingContext2D, projection: Projection) {
-        const edges = this.uiManager.graph.getEdges().filter((edge: Edge) => edge.visible !== false)
+        // The lines the canvas draws, so a line folded onto a closed cluster shows here too.
+        const edges = this.uiManager.graph.getDrawnEdges()
         if (edges.length === 0 || edges.length > DETAIL_EDGE_LIMIT) return
 
         context.save()
