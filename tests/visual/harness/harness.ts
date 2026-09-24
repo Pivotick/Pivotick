@@ -504,14 +504,14 @@ export interface TierSpec {
     layoutSize?: number
     /**
      * Put an `svgIcon` on the **base** style, which the chip tier draws an `html` card over.
-     * The two compete for the same node, so this is what makes the tier layer's right to
-     * clear a channel observable.
+     * An icon outranks a card, so this is what makes a tier replacing the base's drawing
+     * observable.
      * @default false
      */
     baseIcon?: boolean
     /**
-     * Let the chip tier clear that icon with `svgIcon: null`. Without it the base's icon
-     * outranks the card and the node draws as a glyph.
+     * Let the chip tier also clear that icon with `svgIcon: null`, the rule configs were
+     * written to before a tier's drawing replaced the base's.
      * @default false
      */
     tierClearsIcon?: boolean

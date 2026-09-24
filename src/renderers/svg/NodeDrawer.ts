@@ -1377,15 +1377,25 @@ function mergeStyleLayers(layers: Partial<NodeStyle>[], firstLayerClears = false
     return merged as unknown as NodeStyle
 }
 
+/** The channels a node draws exactly one of, highest rank first. */
+const DRAWING_KEYS = ['iconUnicode', 'iconClass', 'svgIcon', 'imagePath', 'html'] as const
+
 /**
  * Fold a tier's drawing over the style it refines.
  *
- * A tier may set a channel to `null` to take it away, which the rest of the chain cannot do.
- * Without it a base `svgIcon` survives into a tier that asked for an `html` card, outranks the
- * card and leaves the node drawn as an icon — with nothing in the config to say why.
+ * The drawing channels are one slot: a tier that names any of them replaces the base's
+ * drawing, `imageFit` included, rather than competing with it on rank. Every other channel is
+ * inherited, and a tier may set one to `null` to take it away, which the rest of the chain
+ * cannot do.
  */
 function mergeTierLayer(tier: NodeTierStyle, base: NodeStyle): NodeStyle {
-    return mergeStyleLayers([tier as Partial<NodeStyle>, base], true)
+    const layer = tier as Partial<NodeStyle>
+    const namesDrawing = DRAWING_KEYS.some(key => layer[key] !== undefined && layer[key] !== null)
+    if (!namesDrawing) return mergeStyleLayers([layer, base], true)
+
+    const inherited: Partial<NodeStyle> = { ...base }
+    for (const key of [...DRAWING_KEYS, 'imageFit'] as const) delete inherited[key]
+    return mergeStyleLayers([layer, inherited], true)
 }
 
 function cardContent(rendered: unknown): HTMLElement | string | undefined {

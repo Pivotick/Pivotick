@@ -336,26 +336,42 @@ test.describe('tier style precedence', () => {
         await gotoHarness(page)
     })
 
-    test('a tier takes away a channel the base declares', async ({ page }) => {
+    test("a tier's drawing replaces the base's, with nothing to clear", async ({ page }) => {
+        await harness(page, 'loadWithTiers', { baseIcon: true })
+        await waitForViewSettled(page)
+        await harness(page, 'setZoomScale', CHIP_ZOOM)
+
+        // The chip tier names `html` only: the base's icon is not inherited to outrank it.
+        expect(await tierOf(page, 'a')).toBe('1')
+        expect(await harness(page, 'nodeDrawing', 'a')).toEqual({ card: true, icon: false })
+    })
+
+    test('an explicit clear still draws the same', async ({ page }) => {
         await harness(page, 'loadWithTiers', { baseIcon: true, tierClearsIcon: true })
         await waitForViewSettled(page)
         await harness(page, 'setZoomScale', CHIP_ZOOM)
 
         expect(await tierOf(page, 'a')).toBe('1')
-        // The card is what the tier asked for, and the base's icon is gone rather than
-        // drawn over it.
         expect(await harness(page, 'nodeDrawing', 'a')).toEqual({ card: true, icon: false })
     })
 
-    test('without the clear, the base icon outranks the card the tier asked for', async ({ page }) => {
+    test('a tier that names no drawing keeps the base icon', async ({ page }) => {
         await harness(page, 'loadWithTiers', { baseIcon: true })
         await waitForViewSettled(page)
-        await harness(page, 'setZoomScale', CHIP_ZOOM)
 
-        // The tier is active either way. What it cannot do by omission is unname a channel,
-        // so the base keeps the node and the tier's card never reaches the canvas.
-        expect(await tierOf(page, 'a')).toBe('1')
+        // The dot tier only restyles: shape, size and colour.
+        await harness(page, 'setZoomScale', DOT_ZOOM)
+        expect(await tierOf(page, 'a')).toBe('0')
         expect(await harness(page, 'nodeDrawing', 'a')).toEqual({ card: false, icon: true })
+    })
+
+    test('the focus card replaces the base icon too', async ({ page }) => {
+        await harness(page, 'loadWithTiers', { baseIcon: true })
+        await waitForViewSettled(page)
+
+        await harness(page, 'setZoomScale', 1)
+        await nodeEl(page, 'a').hover()
+        await expectCardBox(page, 'a')
     })
 
     test('clearing is the tier layer only: a base icon survives with no tier to clear it', async ({ page }) => {
