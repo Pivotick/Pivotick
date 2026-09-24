@@ -52,6 +52,75 @@ async function clickLine(page: Page, line: string): Promise<void> {
     }, line)
 }
 
+/** How a drawn line looks: its stroke colour, its label text, and whether it is dotted. */
+async function lineLook(page: Page, line: string): Promise<{ stroke: string, label: string | null, dotted: boolean }> {
+    return page.evaluate((line) => {
+        const edge = window.__pivotick.graph!.getDrawnEdges().find((e) => `${e.from.id}->${e.to.id}` === line)!
+        const group = edge.getGraphElement()!
+        const path = group.querySelector('path') as SVGPathElement
+        return {
+            stroke: getComputedStyle(path).stroke,
+            label: group.querySelector('.pvt-edge-label')?.textContent ?? null,
+            dotted: getComputedStyle(path).strokeDasharray !== 'none',
+        }
+    }, line)
+}
+
+/** A screen point `fraction` of the way along a drawn edge, and whether a bubble's fill is on top there. */
+async function pointAlong(page: Page, edgeId: string, fraction: number): Promise<{ x: number, y: number, onBubble: boolean }> {
+    return page.evaluate(([edgeId, fraction]) => {
+        const edge = window.__pivotick.graph!.getDrawnEdges().find((e) => e.id === edgeId)!
+        const path = edge.getGraphElement()!.querySelector('path') as SVGPathElement
+        const p = path.getPointAtLength(path.getTotalLength() * fraction).matrixTransform(path.getScreenCTM()!)
+        const onBubble = document.elementFromPoint(p.x, p.y)?.classList.contains('pvt-cluster-area') ?? false
+        return { x: p.x, y: p.y, onBubble }
+    }, [edgeId, fraction] as const)
+}
+
+/** A point on `cluster`'s bubble fill at least 15px from every drawn line. */
+async function pointOnBareBubble(page: Page, cluster: string): Promise<{ x: number, y: number }> {
+    return page.evaluate((cluster) => {
+        const g = window.__pivotick.graph!
+        const area = g.getMutableNode(cluster)!.getGraphElement()!.querySelector('.pvt-cluster-area')!
+        const box = area.getBoundingClientRect()
+        const paths = g.getDrawnEdges().map((e) => e.getGraphElement()!.querySelector('path') as SVGPathElement)
+        const nearALine = (x: number, y: number) => paths.some((path) => {
+            const ctm = path.getScreenCTM()!
+            const width = path.style.strokeWidth
+            path.style.strokeWidth = String(30 / Math.hypot(ctm.a, ctm.b))
+            const near = path.isPointInStroke(new DOMPoint(x, y).matrixTransform(ctm.inverse()))
+            path.style.strokeWidth = width
+            return near
+        })
+        for (let fy = 0.1; fy < 1; fy += 0.1) {
+            for (let fx = 0.1; fx < 1; fx += 0.1) {
+                const x = box.left + box.width * fx
+                const y = box.top + box.height * fy
+                if (document.elementFromPoint(x, y) === area && !nearALine(x, y)) return { x, y }
+            }
+        }
+        throw new Error(`no bare spot on ${cluster}'s bubble`)
+    }, cluster)
+}
+
+/** Start recording hover events on nodes and edges, as `edgeIn:X-b1`, `nodeOut:A`, ... */
+async function recordHovers(page: Page): Promise<void> {
+    await page.evaluate(() => {
+        const log: string[] = []
+        ;(window as unknown as { hovers: string[] }).hovers = log
+        const interaction = window.__pivotick.graph!.renderer.getGraphInteraction()
+        interaction.on('edgeHoverIn', (_event, edge) => log.push(`edgeIn:${edge.id}`))
+        interaction.on('edgeHoverOut', (_event, edge) => log.push(`edgeOut:${edge.id}`))
+        interaction.on('nodeHoverIn', (_event, node) => log.push(`nodeIn:${node.id}`))
+        interaction.on('nodeHoverOut', (_event, node) => log.push(`nodeOut:${node.id}`))
+    })
+}
+
+/** The hover events since the last call, clearing the record. */
+async function takeHovers(page: Page): Promise<string[]> {
+    return page.evaluate(() => (window as unknown as { hovers: string[] }).hovers.splice(0))
+}
+
 const ALL_CLOSED = ['X->A', 'A->X', 'A->Y', 'A->P', 'A->A']
 const A_OPEN = ['X->a1', 'X->B', 'a1->X', 'a1->B', 'B->Y', 'B->P', 'A->B']
 const A_B_OPEN = ['X->a1', 'X->b1', 'X->C', 'X->B', 'a1->X', 'a1->b1', 'b1->C', 'C->Y', 'C->P', 'A->C']
@@ -135,16 +204,92 @@ test.describe('edges across clusters', () => {
         await expectLines(page, A_B_OPEN)
 
         // Three quarters along X→b1 is well inside A's bubble, whose fill used to take it.
-        const point = await page.evaluate(() => {
-            const edge = window.__pivotick.graph!.getDrawnEdges().find((e) => e.id === 'X-b1')!
-            const path = edge.getGraphElement()!.querySelector('path') as SVGPathElement
-            const p = path.getPointAtLength(path.getTotalLength() * 0.75).matrixTransform(path.getScreenCTM()!)
-            const onBubble = document.elementFromPoint(p.x, p.y)?.classList.contains('pvt-cluster-area') ?? false
-            return { x: p.x, y: p.y, onBubble }
-        })
+        const point = await pointAlong(page, 'X-b1', 0.75)
         expect(point.onBubble).toBe(true)
 
         await page.mouse.click(point.x, point.y)
         await expect.poll(() => selectedEdgeId(page)).toBe('X-b1')
+    })
+
+    test('a line inside an open bubble takes the hover from the bubble', async ({ page }) => {
+        await harness(page, 'expand', ['A', 'B'])
+        await expectLines(page, A_B_OPEN)
+        await recordHovers(page)
+
+        // Resting on the bubble away from any line hovers the cluster, as before.
+        const bare = await pointOnBareBubble(page, 'A')
+        await page.mouse.move(bare.x, bare.y)
+        await takeHovers(page)
+
+        // Onto the line in one step, so no neighbouring line is crossed on the way: the edge
+        // is hovered, and the cluster under it hears nothing.
+        const onLine = await pointAlong(page, 'X-b1', 0.75)
+        expect(onLine.onBubble).toBe(true)
+        await page.mouse.move(onLine.x, onLine.y)
+        await expect.poll(() => takeHovers(page)).toEqual(['edgeIn:X-b1'])
+
+        await page.mouse.move(bare.x, bare.y)
+        await expect.poll(() => takeHovers(page)).toEqual(['edgeOut:X-b1'])
+    })
+
+    test('a folded line for one edge looks like that edge, dotted', async ({ page }) => {
+        // `a1→X` is red and labelled in the fixture.
+        const red = 'rgb(214, 39, 40)'
+
+        // `A→X` stands for `a1→X` alone, so it takes its colour and label.
+        expect(await lineLook(page, 'A->X')).toEqual({ stroke: red, label: 'a1-x', dotted: true })
+        // `X→A` stands for four edges, so it has no look of its own to borrow.
+        const several = await lineLook(page, 'X->A')
+        expect(several.stroke).not.toBe(red)
+        expect(several.label).toBeNull()
+        expect(several.dotted).toBe(true)
+
+        // Once A is open the real edge is drawn, solid.
+        await harness(page, 'expand', ['A'])
+        await expectLines(page, A_OPEN)
+        expect(await lineLook(page, 'a1->X')).toEqual({ stroke: red, label: 'a1-x', dotted: false })
+    })
+})
+
+test.describe('edges across clusters, in the sidebar', () => {
+    test('selecting a line for several edges says how many it stands for', async ({ page }) => {
+        await gotoHarness(page)
+        await loadFixture(page, 'nestedClusters', { ...OPTIONS, UI: { mode: 'full', sidebar: { collapsed: false } } })
+        await expectLines(page, ALL_CLOSED)
+        const subtitle = page.locator('.pvt-mainheader-nodeinfo-subtitle')
+
+        await clickLine(page, 'X->A')
+        await expect(subtitle).toHaveText('Stands for 4 edges')
+
+        // A line for one edge is that edge, so the header describes it instead.
+        await clickLine(page, 'A->X')
+        await expect.poll(() => selectedEdgeId(page)).toBe('a1-X')
+        await expect(subtitle).not.toContainText('Stands for')
+    })
+})
+
+test.describe('edges across clusters, laid out in the worker', () => {
+    test('the worker layout draws the same lines', async ({ page }) => {
+        // Count workers started, so the test cannot pass on a silent main-thread fallback.
+        await page.addInitScript(() => {
+            const RealWorker = window.Worker
+            const counter = window as unknown as { workersStarted: number }
+            counter.workersStarted = 0
+            window.Worker = class extends RealWorker {
+                constructor(...args: ConstructorParameters<typeof Worker>) {
+                    super(...args)
+                    counter.workersStarted++
+                }
+            }
+        })
+        await gotoHarness(page)
+        await loadFixture(page, 'nestedClusters', { ...OPTIONS, simulation: { enabled: true, useWorker: true } })
+
+        await expectLines(page, ALL_CLOSED)
+        const workersStarted = await page.evaluate(() => (window as unknown as { workersStarted: number }).workersStarted)
+        expect(workersStarted).toBeGreaterThan(0)
+
+        await harness(page, 'expand', ['A', 'B', 'C'])
+        await expectLines(page, A_B_C_OPEN)
     })
 })

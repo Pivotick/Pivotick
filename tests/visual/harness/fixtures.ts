@@ -869,7 +869,8 @@ export const fixtures = {
             new Edge('X-b1', X, b1),    // outside → grandchild
             new Edge('X-c1', X, c1),    // outside → three levels down
             new Edge('X-B', X, B),      // outside → a cluster inside a cluster
-            new Edge('a1-X', a1, X),    // child → outside
+            // child → outside; coloured and labelled so the line it folds into can be told apart
+            new Edge('a1-X', a1, X, { label: 'a1-x' }, { edge: { strokeColor: '#d62728' } }),
             new Edge('c1-Y', c1, Y),    // three levels down → outside
             new Edge('a1-b1', a1, b1),  // child → a child of its sibling cluster
             new Edge('b1-c1', b1, c1),  // two levels down, across a rim
