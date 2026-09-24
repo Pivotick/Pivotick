@@ -174,6 +174,35 @@ test.describe('pivot children union', () => {
         // The container itself is vouched for by the other pivot, so it stays.
         expect(await harness(page, 'nodeData', 'event-a')).not.toBeNull()
     })
+
+    test('undoing a removeBySource puts a child back inside its container', async ({ page }) => {
+        await load(page, {
+            pivots: ['event-objects', 'union-children'],
+            union: { parent: 'event-a', children: ['object-12'] },
+        })
+        await run(page, 'event-objects', ['a'])
+        await run(page, 'union-children', ['a'])
+        await harness(page, 'ingestPivot', 'union-children')
+        await harness(page, 'removeBySource', 'union-children')
+
+        await harness(page, 'undoThrough')
+        // Back as a child, not as a loose node on the canvas.
+        expect(await childIds(page, 'event-a')).toContain('object-12')
+        expect(await harness(page, 'nodeSources', 'object-12')).toEqual(['union-children'])
+    })
+
+    test('undoing the removal of a whole container brings its children with it', async ({ page }) => {
+        await load(page)
+        await run(page, 'event-objects', ['a'])
+        const children = await childIds(page, 'event-a')
+
+        await harness(page, 'removeBySource', 'event-objects')
+        expect(await harness(page, 'nodeData', 'event-a')).toBeNull()
+
+        await harness(page, 'undoThrough')
+        expect((await childIds(page, 'event-a')).sort()).toEqual([...children].sort())
+        expect(await harness(page, 'nodeSources', 'object-0')).toEqual(['event-objects'])
+    })
 })
 
 // A container arrives carrying a child whose id is already a node on canvas — the

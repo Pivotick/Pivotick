@@ -367,6 +367,135 @@ test.describe('history — a deletion remembers who vouched for what', () => {
     })
 })
 
+test.describe('history — a removal by source', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoHarness(page)
+    })
+
+    const load = async (page: Page, spec: Record<string, unknown> = {}): Promise<void> => {
+        await harness(page, 'loadWithPivots', 'basic', spec)
+        await page.locator('.zoom-layer:not(.hidden)').first().waitFor({ state: 'attached' })
+        await harness(page, 'configureWritePath', {})
+    }
+
+    const removeBySource = async (page: Page, source: string): Promise<{ nodes: string[]; edges: string[] }> =>
+        (await harness(page, 'removeBySource', source)) as { nodes: string[]; edges: string[] }
+
+    test('is one row, and undo puts back what it took', async ({ page }) => {
+        await load(page)
+        const before = await counts(page)
+        const run = await ingest(page, 3)
+        const landed = await counts(page)
+
+        const removed = await removeBySource(page, CORRELATION)
+        expect(await counts(page)).toEqual(before)
+
+        const [row] = await entries(page)
+        expect(row.kind).toBe('removal')
+        expect(row.label).toBe('Removed “Correlations”')
+        expect(row.nodes.sort()).toEqual(removed.nodes.sort())
+
+        await openHistory(page, 'undo')
+        await expect(menuRows(page).nth(0).locator('.pvt-history-detail')).toHaveText(/^3 nodes · \d+ edges?$/)
+        await page.keyboard.press('Escape')
+
+        await undoThrough(page)
+        expect(await counts(page)).toEqual(landed)
+        expect(await sources(page, run.nodes[0])).toEqual([CORRELATION])
+    })
+
+    test('the undo after it reverses the run, instead of being spent on nothing', async ({ page }) => {
+        await load(page)
+        const before = await counts(page)
+        const run = await ingest(page, 3)
+        await removeBySource(page, CORRELATION)
+
+        // Back through the removal, then the run: the second step is not a no-op on
+        // elements already gone, because the first one brought them back.
+        await undoThrough(page)
+        await undoThrough(page)
+        expect(await counts(page)).toEqual(before)
+        expect(await hasNode(page, run.nodes[0])).toBe(false)
+
+        // And forward again, to where the removal left it.
+        await redoThrough(page)
+        await redoThrough(page)
+        expect(await counts(page)).toEqual(before)
+        expect((await entries(page)).map((entry) => entry.kind)).toEqual(['removal', 'pivot'])
+    })
+
+    test('its preview counts what comes back, and moves nothing', async ({ page }) => {
+        await load(page)
+        await ingest(page, 3)
+        const removed = await removeBySource(page, CORRELATION)
+        const after = await counts(page)
+        const [row] = await entries(page)
+
+        const planned = await preview(page, row.id)
+        expect(planned.effect.nodesRestored).toBe(removed.nodes.length)
+        expect(planned.effect.edgesRestored).toBe(row.edges.length)
+        expect(await counts(page)).toEqual(after)
+    })
+
+    test('undo hands the claim back to what another source kept on the canvas', async ({ page }) => {
+        // `blind` lands blind-0..2, and CORRELATION re-offers blind-0, so both vouch for it.
+        await load(page, { collide: ['blind-0'] })
+        await harness(page, 'runPivot', 'blind', ['a'])
+        await harness(page, 'markPivotCandidates', 'blind', 'all')
+        await harness(page, 'ingestPivot', 'blind')
+        await ingest(page, 0)
+        expect(await sources(page, 'blind-0')).toEqual(['blind', CORRELATION])
+
+        const removed = await removeBySource(page, 'blind')
+        expect(removed.nodes).toEqual(['blind-1', 'blind-2'])
+        expect(await sources(page, 'blind-0')).toEqual([CORRELATION])
+        // What stayed is not what left, so the row does not count it.
+        expect((await entries(page))[0].nodes.sort()).toEqual(['blind-1', 'blind-2'])
+
+        await undoThrough(page)
+        expect(await hasNode(page, 'blind-1')).toBe(true)
+        expect(await sources(page, 'blind-0')).toEqual(['blind', CORRELATION])
+        expect(await sources(page, 'blind-1')).toEqual(['blind'])
+
+        // Redone, the same rule decides again: blind-0 stays, one claim lighter.
+        await redoThrough(page)
+        expect(await hasNode(page, 'blind-1')).toBe(false)
+        expect(await sources(page, 'blind-0')).toEqual([CORRELATION])
+    })
+
+    test('a removal that takes nothing off the canvas is still a row, and says so', async ({ page }) => {
+        await load(page, { collide: ['blind-0'] })
+        await harness(page, 'runPivot', 'blind', ['a'])
+        await harness(page, 'markPivotCandidates', 'blind', 'all')
+        await harness(page, 'ingestPivot', 'blind')
+        await ingest(page, 0)
+
+        // CORRELATION landed nothing of its own: it only asserted blind-0.
+        const before = await counts(page)
+        const removed = await removeBySource(page, CORRELATION)
+        expect(removed).toEqual({ nodes: [], edges: [] })
+        expect(await counts(page)).toEqual(before)
+
+        const [row] = await entries(page)
+        expect(row.kind).toBe('removal')
+        expect(row.nodes).toEqual([])
+
+        // The row has to say why it moved nothing, or it reads as broken.
+        await openHistory(page, 'undo')
+        await expect(menuRows(page).nth(0).locator('.pvt-history-detail')).toHaveText('Nothing left the canvas')
+        await page.keyboard.press('Escape')
+
+        await undoThrough(page)
+        expect(await sources(page, 'blind-0')).toEqual(['blind', CORRELATION])
+    })
+
+    test('a source that vouches for nothing records nothing', async ({ page }) => {
+        await load(page)
+        await removeBySource(page, CORRELATION)
+        expect(await entries(page)).toEqual([])
+    })
+})
+
 test.describe('history — what a restored element hangs off', () => {
     test.beforeEach(async ({ page }) => {
         await gotoHarness(page)

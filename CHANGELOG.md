@@ -118,6 +118,10 @@ from a cluster into itself, which loops on the closed cluster.
   changed, which a settled graph has nothing else to do for it.
 - **Sanitized SVG icon markup is cached** instead of being re-sanitized for every node on every
   render.
+- **`graph.removeBySource` is in the history**, as the documentation already said. It records a
+  `removal` entry, a new `HistoryKind`, named after the source. Undo puts back what left, children
+  inside their container, and gives the source's vouching back to what stayed. Before, the removal
+  could not be undone, and the next Undo was spent on a run whose elements were already gone.
 
 ## 2.0.1 — 2026-09-17
 

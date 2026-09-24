@@ -3,12 +3,12 @@ import type { Graph } from './Graph'
 import type { ForecastEdge, ForecastNode, GraphForecast } from './GraphRenderer'
 import {
     LiveWorld, ScratchWorld, reapply, reverse,
-    type HistoryPayload,
+    type HistoryPayload, type SourceClaim,
 } from './HistoryWorld'
 import type {
     GraphHistoryLike, HistoryEffect, HistoryEntry, HistoryPreview,
 } from './interfaces/History'
-import { MANUAL_SOURCE, type PivotRun } from './interfaces/Pivot'
+import { MANUAL_SOURCE, SEED_SOURCE, type PivotRun } from './interfaces/Pivot'
 import type { Node } from './Node'
 import { generateSafeDomId } from './utils/ElementCreation'
 
@@ -323,6 +323,32 @@ export class GraphHistory implements GraphHistoryLike {
 
     /**
      * @private
+     * One `graph.removeBySource` call. Recorded whenever the source vouched for
+     * anything, even when every element stayed: the claim is gone either way, and a
+     * later removal of the other source would now take those elements out.
+     */
+    public recordRemoval(
+        source: string,
+        claims: { nodes: SourceClaim[], edges: SourceClaim[] },
+        removed: { nodes: Node[], edges: Edge[], parents: Map<string, string> },
+    ): void {
+        if (this.applying || (!claims.nodes.length && !claims.edges.length)) return
+        this.push({
+            id: newId(),
+            kind: 'removal',
+            nodeIds: removed.nodes.map(node => node.id),
+            edgeIds: removed.edges.map(edge => edge.id),
+            label: this.removalLabel(source),
+            sealed: false,
+            persisted: false,
+            pivotId: source,
+            at: Date.now(),
+            payload: { kind: 'removal', source, claims, ...removed },
+        })
+    }
+
+    /**
+     * @private
      * Coalesce every visibility change made inside `fn` into one entry — hiding a
      * selection of five is one act, not five.
      */
@@ -512,12 +538,7 @@ export class GraphHistory implements GraphHistoryLike {
             for (const [id, at] of record.dropped?.nodes ?? []) nodes.set(id, at)
             for (const [id, ends] of record.dropped?.edges ?? []) edges.set(id, ends)
 
-            const { payload } = record
-            const held = payload.kind === 'delete'
-                ? { nodes: payload.nodes, edges: payload.edges }
-                : payload.kind === 'create'
-                    ? { nodes: payload.node ? [payload.node] : [], edges: payload.edge ? [payload.edge] : [] }
-                    : { nodes: [], edges: [] }
+            const held = heldElements(record.payload)
             for (const node of held.nodes) {
                 const at = placementOf(node)
                 if (at && !nodes.has(node.id)) nodes.set(node.id, at)
@@ -527,6 +548,12 @@ export class GraphHistory implements GraphHistoryLike {
             }
         }
         return { nodes, edges }
+    }
+
+    private removalLabel(source: string): string {
+        if (source === SEED_SOURCE) return 'Removed the loaded data'
+        if (source === MANUAL_SOURCE) return 'Removed hand-drawn work'
+        return `Removed “${this.graph.pivots.get(source)?.label ?? source}”`
     }
 
     private push(record: HistoryRecord): void {
@@ -568,6 +595,19 @@ function publicEntry(record: HistoryRecord): HistoryEntry {
         pivotId: record.pivotId,
         ordinal: record.ordinal,
         at: record.at,
+    }
+}
+
+/** The elements a payload keeps alive outright, rather than rebuilding from raw data. */
+function heldElements(payload: HistoryPayload): { nodes: Node[], edges: Edge[] } {
+    switch (payload.kind) {
+        case 'delete':
+        case 'removal':
+            return { nodes: payload.nodes, edges: payload.edges }
+        case 'create':
+            return { nodes: payload.node ? [payload.node] : [], edges: payload.edge ? [payload.edge] : [] }
+        default:
+            return { nodes: [], edges: [] }
     }
 }
 

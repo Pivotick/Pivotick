@@ -295,7 +295,7 @@ export class Graph {
      * Normalize plain child data into `Node`s — what {@link unionChildren} merges in.
      * Each one is re-parented by the union itself, so the depth here is provisional.
      */
-    public static normalizeChildren(children: RawNode[]): Node[] {
+    public static normalizeChildren(children: Array<RawNode | Node>): Node[] {
         return children.map(child => Graph.normalizeNode(child, 1))
     }
 
@@ -484,7 +484,7 @@ export class Graph {
      *
      * @returns every node newly added, at any depth.
      */
-    public unionChildren(parent: Node, children: RawNode[]): Node[] {
+    public unionChildren(parent: Node, children: Array<RawNode | Node>): Node[] {
         const merged = parent.unionChildren(Graph.normalizeChildren(children))
         if (!merged.length) return merged
         this.registerChildren(parent)
@@ -549,21 +549,58 @@ export class Graph {
      * survives, one claim lighter — the same uniform rule pivot undo follows, and the
      * only way anything a pivot brought is removed.
      *
+     * It is a forward operation, and one entry in {@link history}: undoing it puts back
+     * what left and hands the source's claim back to what stayed.
+     *
      * @param source A pivot id, or `'seed'` for data that was never pivoted.
      * @returns What was actually removed.
      */
     public removeBySource(source: string): { nodes: Node[], edges: Edge[] } {
+        const nodesBefore = [...this.nodes.values()]
+        const edgesBefore = [...this.edges.values()]
+        const vouched = {
+            nodes: nodesBefore.filter(node => node.hasSource(source)),
+            edges: edgesBefore.filter(edge => edge.hasSource(source)),
+        }
+        // Read before anything is dropped: the drop is what empties these.
+        const claims = {
+            nodes: vouched.nodes.map(node => ({ id: node.id, ledger: node.cloneLedger() })),
+            edges: vouched.edges.map(edge => ({ id: edge.id, ledger: edge.cloneLedger() })),
+        }
+        const parents = new Map<string, string>()
+        for (const node of nodesBefore) if (node.parentNode) parents.set(node.id, node.parentNode.id)
+
+        const removed = this.dropSource(source, vouched.nodes, vouched.edges)
+
+        // Everything that left, not only what the source alone vouched for: a node's
+        // edges and its subtree go with it, and the undo has to bring them back too.
+        const gone = {
+            nodes: nodesBefore.filter(node => this.nodes.get(node.id) !== node),
+            edges: edgesBefore.filter(edge => this.edges.get(edge.id) !== edge),
+        }
+        const goneIds = new Set(gone.nodes.map(node => node.id))
+        this.history.recordRemoval(source, claims, {
+            ...gone,
+            parents: new Map([...parents].filter(([id]) => goneIds.has(id))),
+        })
+        return removed
+    }
+
+    /**
+     * @private
+     * Drop `source`'s claim on these elements and remove whatever nothing vouches for
+     * any more — the rule behind {@link removeBySource}, and its redo.
+     */
+    public dropSource(source: string, vouchedNodes: Node[], vouchedEdges: Edge[]): { nodes: Node[], edges: Edge[] } {
         const nodes: Node[] = []
         const edges: Edge[] = []
         this.batchChanges(() => {
-            for (const edge of [...this.edges.values()]) {
-                if (!edge.hasSource(source)) continue
+            for (const edge of vouchedEdges) {
                 if (!edge.dropSource(source)) continue
                 edges.push(edge)
                 this.removeEdge(edge.id)
             }
-            for (const node of [...this.nodes.values()]) {
-                if (!node.hasSource(source)) continue
+            for (const node of vouchedNodes) {
                 if (!node.dropSource(source)) continue
                 nodes.push(node)
                 this.dropNode(node)

@@ -545,6 +545,15 @@ export class Node {
     }
 
     /**
+     * @private
+     * Put back vouching a {@link cloneLedger} took, exactly — undoing a removal by
+     * source hands the claim back in its old place, not appended.
+     */
+    restoreLedger(ledger: SourceLedger): void {
+        this._sources = ledgerClone(ledger)
+    }
+
+    /**
      * Declare how much more there is for this node, without asking for any of it —
      * what the rim badge shows. `0` clears the declaration.
      *

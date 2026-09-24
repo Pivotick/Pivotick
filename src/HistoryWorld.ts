@@ -5,7 +5,15 @@ import type { RawEdge, RawNode } from './interfaces/GraphOptions'
 import type { HistoryEffect } from './interfaces/History'
 import { MANUAL_SOURCE, SEED_SOURCE, type PivotRun } from './interfaces/Pivot'
 import type { Node } from './Node'
-import { ledgerRevokeRun, ledgerVouch, type SourceLedger } from './Provenance'
+import {
+    ledgerClone, ledgerDropSource, ledgerRevokeRun, ledgerVouch, type SourceLedger,
+} from './Provenance'
+
+/** One element's vouching, as a removal by source found it before dropping any. @private */
+export interface SourceClaim {
+    id: string
+    ledger: SourceLedger
+}
 
 /** What one entry holds so it can be taken back, and put back again. */
 export type HistoryPayload =
@@ -14,6 +22,17 @@ export type HistoryPayload =
     | { kind: 'delete', nodes: Node[], edges: Edge[] }
     | { kind: 'visibility', hidden: boolean, nodeIds: string[] }
     | { kind: 'create', entryId: string, node?: Node, edge?: Edge }
+    | {
+        kind: 'removal'
+        source: string
+        /** Every element the source vouched for, whether it left or stayed. */
+        claims: { nodes: SourceClaim[], edges: SourceClaim[] }
+        /** What left the canvas, kept alive so it comes back where it stood. */
+        nodes: Node[]
+        edges: Edge[]
+        /** The container each removed child sat in, so it goes back inside it. */
+        parents: Map<string, string>
+    }
 
 /**
  * The graph state a reversal reads and writes.
@@ -42,8 +61,15 @@ export interface HistoryWorld {
     unionChildren(unions: PivotRun['unions'], source: string, runId: string): void
     /** Vouch for elements this history holds outright — a hand-drawn node or edge. */
     claim(nodes: Node[], edges: Edge[], source: string, runId: string): void
-    /** Put deleted elements back, nodes first so their edges have endpoints to hang off. */
-    restore(nodes: Node[], edges: Edge[]): void
+    /**
+     * Put deleted elements back, nodes first so their edges have endpoints to hang off.
+     * A node named in `parents` goes back inside that container when it stands.
+     */
+    restore(nodes: Node[], edges: Edge[], parents?: Map<string, string>): void
+    /** Drop a source's claim outright and remove whatever nothing vouches for any more. */
+    dropSource(nodeIds: string[], edgeIds: string[], source: string): void
+    /** Hand back the vouching a {@link dropSource} took, exactly as it stood. */
+    reclaim(claims: { nodes: SourceClaim[], edges: SourceClaim[] }): void
     /** Take elements out whatever vouches for them: a delete, redone. */
     remove(nodes: Node[], edges: Edge[]): void
     hide(ids: string[]): void
@@ -71,6 +97,10 @@ export function reverse(payload: HistoryPayload, world: HistoryWorld): void {
         case 'create':
             world.revokeEdges(ids(payload.edge), MANUAL_SOURCE, payload.entryId)
             world.revokeNodes(ids(payload.node), MANUAL_SOURCE, payload.entryId)
+            return
+        case 'removal':
+            world.restore(payload.nodes, payload.edges, payload.parents)
+            world.reclaim(payload.claims)
     }
 }
 
@@ -101,7 +131,14 @@ export function reapply(payload: HistoryPayload, world: HistoryWorld): void {
             // Undoing the create emptied the ledger; without this the element would
             // come back reporting `'seed'` and never be reversible again.
             world.claim(nodes, edges, MANUAL_SOURCE, payload.entryId)
+            return
         }
+        case 'removal':
+            world.dropSource(
+                payload.claims.nodes.map(claim => claim.id),
+                payload.claims.edges.map(claim => claim.id),
+                payload.source,
+            )
     }
 }
 
@@ -187,11 +224,14 @@ export class LiveWorld implements HistoryWorld {
         for (const edge of edges) this.graph.getMutableEdge(edge.id)?.vouch(source, runId)
     }
 
-    restore(nodes: Node[], edges: Edge[]): void {
+    restore(nodes: Node[], edges: Edge[], parents?: Map<string, string>): void {
         for (const node of nodes) {
             if (this.graph.getMutableNode(node.id)) continue
+            const parentId = parents?.get(node.id)
+            const parent = parentId ? this.graph.getMutableNode(parentId) : undefined
             try {
-                this.graph.addNode(node)
+                if (parent) this.graph.unionChildren(parent, [node])
+                else this.graph.addNode(node)
             } catch {
                 // Something else claimed the id while it was gone. Leave it standing.
             }
@@ -204,6 +244,19 @@ export class LiveWorld implements HistoryWorld {
                 // An endpoint never came back, so the edge has nothing to hang off.
             }
         }
+    }
+
+    dropSource(nodeIds: string[], edgeIds: string[], source: string): void {
+        this.graph.dropSource(
+            source,
+            nodeIds.map(id => this.graph.getMutableNode(id)).filter((node): node is Node => Boolean(node)),
+            edgeIds.map(id => this.graph.getMutableEdge(id)).filter((edge): edge is Edge => Boolean(edge)),
+        )
+    }
+
+    reclaim(claims: { nodes: SourceClaim[], edges: SourceClaim[] }): void {
+        for (const { id, ledger } of claims.nodes) this.graph.getMutableNode(id)?.restoreLedger(ledger)
+        for (const { id, ledger } of claims.edges) this.graph.getMutableEdge(id)?.restoreLedger(ledger)
     }
 
     remove(nodes: Node[], edges: Edge[]): void {
@@ -381,6 +434,26 @@ export class ScratchWorld implements HistoryWorld {
             if (!this.hasNode(edge.from.id) || !this.hasNode(edge.to.id)) continue
             this.edgePresent.set(edge.id, true)
             this.registerIncidence(edge.id, edge.from.id, edge.to.id)
+        }
+    }
+
+    dropSource(nodeIds: string[], edgeIds: string[], source: string): void {
+        for (const id of edgeIds) {
+            if (!this.hasEdge(id)) continue
+            if (ledgerDropSource(this.edgeLedger(id), source)) this.edgePresent.set(id, false)
+        }
+        for (const id of nodeIds) {
+            if (!this.hasNode(id)) continue
+            if (ledgerDropSource(this.nodeLedger(id), source)) this.dropNode(id)
+        }
+    }
+
+    reclaim(claims: { nodes: SourceClaim[], edges: SourceClaim[] }): void {
+        for (const { id, ledger } of claims.nodes) {
+            if (this.hasNode(id)) this.nodeLedgers.set(id, ledgerClone(ledger))
+        }
+        for (const { id, ledger } of claims.edges) {
+            if (this.hasEdge(id)) this.edgeLedgers.set(id, ledgerClone(ledger))
         }
     }
 

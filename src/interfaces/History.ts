@@ -6,13 +6,14 @@ import type { Node } from '../Node'
  * Which sort of entry a row is — a closed set.
  *
  * `pivot` an ingest, `delete` a removal, `visibility` a durable hide or unhide,
- * `create` a node or edge drawn by hand. Every one of them is a change to what the
- * canvas *holds and shows*, which is the only thing the library has the authority
- * to reverse: a node's data is the backend's, not ours.
+ * `create` a node or edge drawn by hand, `removal` a `graph.removeBySource` call.
+ * Every one of them is a change to what the canvas *holds and shows*, which is the
+ * only thing the library has the authority to reverse: a node's data is the
+ * backend's, not ours.
  *
  * @category History
  */
-export type HistoryKind = 'pivot' | 'delete' | 'visibility' | 'create'
+export type HistoryKind = 'pivot' | 'delete' | 'visibility' | 'create' | 'removal'
 
 /**
  * One reversible thing that happened, as one row in the history.
@@ -29,7 +30,11 @@ export interface HistoryEntry {
     kind: HistoryKind
     /** What the row says: `Correlations`, `Deleted 3 nodes`, `Hid 5 nodes`. */
     label: string
-    /** The elements this entry touched — the row's counts, and what a hover highlights. */
+    /**
+     * The elements this entry touched — the row's counts, and what a hover highlights.
+     * For a `removal`, what left the canvas: an element another source still vouches
+     * for stays, and is not named here.
+     */
     nodeIds: string[]
     edgeIds: string[]
     /**
@@ -45,7 +50,10 @@ export interface HistoryEntry {
      * which a re-fetch undoes. The row says so, and the footer counts it.
      */
     persisted: boolean
-    /** For a pivot entry, which pivot produced it — two runs of one pivot share it. */
+    /**
+     * For a pivot entry, which pivot produced it — two runs of one pivot share it. For
+     * a `removal`, the source that was removed.
+     */
     pivotId?: string
     /**
      * For a pivot entry, which run of that pivot this is, counting from 1. The

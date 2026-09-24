@@ -399,6 +399,15 @@ export class Edge {
     cloneLedger(): SourceLedger {
         return ledgerClone(this._sources)
     }
+
+    /**
+     * @private
+     * Put back vouching a {@link cloneLedger} took, exactly — undoing a removal by
+     * source hands the claim back in its old place, not appended.
+     */
+    restoreLedger(ledger: SourceLedger): void {
+        this._sources = ledgerClone(ledger)
+    }
 }
 
 /**

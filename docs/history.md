@@ -10,13 +10,13 @@ went, five are hidden.
 
 ::: tip Vocabulary, used consistently below
 - **entry**: one reversible thing that happened, as one row in the menu
-- **kind**: which of the four sorts of entry it is
+- **kind**: which of the five sorts of entry it is
 - **span**: the contiguous block from the newest entry down to the one you clicked
 - **persisted**: an entry the consumer wrote through to a backend
 - **sealed**: a persisted *deletion* — listed, never reversed
 :::
 
-## The four kinds
+## The five kinds
 
 A closed set. Everything the library records is one of these, and nothing else is recorded.
 
@@ -26,6 +26,7 @@ A closed set. Everything the library records is one of these, and nothing else i
 | `delete` | A user-initiated deletion of nodes or edges | The elements come back, provenance and all |
 | `visibility` | A durable hide or unhide (`queryEngine.excludeNode` / `includeNode`) | The other one |
 | `create` | A node or edge drawn by hand | The element goes, unless something else vouches for it |
+| `removal` | A `graph.removeBySource(source)` call | What left comes back, and what stayed gets the source's vouching back |
 
 Not recorded, on purpose:
 
@@ -39,7 +40,8 @@ Not recorded, on purpose:
   survives, and the one that is recorded.
 
 Programmatic mutations — `graph.addNode()`, `graph.removeNode()` — are not entries either.
-Only a gesture is.
+Only a gesture is, plus `graph.removeBySource()`, which is how an application offers the
+analyst a "remove what this source brought" action.
 
 ## Undo is contiguous
 
@@ -51,6 +53,11 @@ For "that provider returned junk, drop it and keep the rest", use
 `graph.removeBySource(source)`. It drops one source's vouching and deletes only what nothing
 else vouches for, so a node a second run also found survives, one claim lighter. It is a
 **forward** operation, recorded as a new entry rather than a rewind.
+
+That entry is recorded whenever the source vouched for anything, even when every element stayed
+because another source also vouches for it: the claim is gone either way, and the row says
+*Nothing left the canvas*. Undoing it restores each element's vouching exactly as it stood, so
+the run entry below it is still whole and the next Undo takes that run back.
 
 Redo is strictly linear and any new action empties it. A run that was undone and then
 stranded by later work is gone; getting it back means running the pivot again.
@@ -127,7 +134,7 @@ newest.sealed      // …and it was a deletion, so undo will not take it back
 ```
 
 Skipping works because every entry names the specific elements it touched, so there are no
-state diffs to get out of order. That is also why the four kinds are closed and a consumer
+state diffs to get out of order. That is also why the five kinds are closed and a consumer
 cannot record an entry of its own: an arbitrary callback in the stack could throw halfway
 through a span, and the history would have no way to know.
 

@@ -535,6 +535,7 @@ const KIND_ICONS: Record<HistoryEntry['kind'], string> = {
     delete: trash,
     visibility: hide,
     create: addCircle,
+    removal: trash,
 }
 
 function kindIcon(entry: HistoryEntry): string {
@@ -550,15 +551,18 @@ function rowLabel(entry: HistoryEntry): string {
 }
 
 /**
- * What the entry touched, as the row's secondary line — for a pivot only. Every
- * other kind's label already carries its counts (`Deleted 3 nodes`), and repeating
- * them beside it says the same thing twice.
+ * What the entry touched, as the row's secondary line — for a pivot or a removal,
+ * whose labels name a source. Every other kind's label already carries its counts
+ * (`Deleted 3 nodes`), and repeating them beside it says the same thing twice.
  */
 function rowDetail(entry: HistoryEntry): string {
-    if (entry.kind !== 'pivot') return ''
+    if (entry.kind !== 'pivot' && entry.kind !== 'removal') return ''
     const parts: string[] = []
     if (entry.nodeIds.length) parts.push(plural(entry.nodeIds.length, 'node'))
     if (entry.edgeIds.length) parts.push(plural(entry.edgeIds.length, 'edge'))
+    // A removal whose every element another source still vouches for changed only
+    // who vouches, and the row has to say why it moved nothing.
+    if (!parts.length && entry.kind === 'removal') return 'Nothing left the canvas'
     return parts.join(' · ')
 }
 
