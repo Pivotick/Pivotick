@@ -20,6 +20,8 @@ const CORNER_GAP = 14
 const NOTE_FILL_ALPHA = 0.45
 /** A note with no colour of its own — the Note default, so it matches the canvas. */
 const NOTE_FALLBACK_COLOR = '#FDE68A'
+/** A computed colour with no alpha left: `rgba(…, 0)`, or `/ 0` in the newer syntaxes. */
+const ZERO_ALPHA = /^rgba\([^)]*,\s*0(\.0*)?\)$|\/\s*0(\.0*)?\s*\)$/
 
 const DEFAULT_WIDTH = 200
 /** Bounds for the height derived from the canvas aspect ratio. */
@@ -97,8 +99,8 @@ export class Minimap extends UIComponent {
     private observer?: ResizeObserver
     /** Hidden element used to resolve CSS colour expressions (see cssColor). */
     private probe?: HTMLSpanElement
-    /** Resolved colours, keyed by the expression they came from. */
-    private readonly colorCache = new Map<string, string>()
+    /** Resolved colours, keyed by the expression they came from; `null` paints nothing. */
+    private readonly colorCache = new Map<string, string | null>()
     private rebuildFrame: number | null = null
     private paintFrame: number | null = null
     /** Offset between the pointer and the viewport centre, held for the duration of a drag. */
@@ -462,24 +464,49 @@ export class Minimap extends UIComponent {
         context.restore()
     }
 
-    /** A dot per node in the colour the renderer actually painted it. */
+    /**
+     * A dot per node, sized to what the node covers on the canvas. A node with no colour
+     * the minimap can paint (see {@link dotFor}) still gets a dot, in the minimap's own ink.
+     */
     private drawNodes(context: CanvasRenderingContext2D, nodes: Node[], projection: Projection) {
-        const renderer = this.uiManager.graph.renderer
+        const ink = this.ink('--pvt-minimap-ink', 'rgba(90,120,190,0.75)')
         for (const node of nodes) {
             if (typeof node.x !== 'number' || typeof node.y !== 'number') continue
-            // getNodeStyle allocates and resolves strings, so it is called once per node
-            // per rebuild — never per frame.
-            const style = renderer?.getNodeStyle(node)
-            const size = typeof style?.size === 'number' ? style.size : 10
-            const radius = Math.max(1, Math.min(4 * this.dpr, size * projection.scale))
+            const dot = this.dotFor(node)
+            // A card's style size is a placeholder, so the measured radius wins when larger.
+            const extent = Math.max(dot.size, node.getCircleRadius() || 0)
+            const radius = Math.max(1, Math.min(4 * this.dpr, extent * projection.scale))
 
             context.beginPath()
-            context.fillStyle = typeof style?.color === 'string'
-                ? this.cssColor(style.color, '#7EA2FB')
-                : '#7EA2FB'
+            context.fillStyle = dot.color ?? ink
             context.arc(this.px(node.x, projection), this.py(node.y, projection), radius, 0, Math.PI * 2)
             context.fill()
         }
+    }
+
+    /**
+     * The colour and size of a node's dot, taken from the smallest drawing Pivotick paints
+     * itself: the floor style, or failing that the first tier that is a shape. An HTML card
+     * (`shape: 'none'`) is skipped, its colour lives in the consumer's markup. `color` is
+     * `null` when no drawing has a colour that shows.
+     *
+     * Each drawing is read by index, so this never moves the zoom's own tier pick, and it
+     * stops at the first match: one style resolution per node for most graphs, called once
+     * per rebuild, never per frame.
+     */
+    private dotFor(node: Node): { color: string | null, size: number } {
+        const renderer = this.uiManager.graph.renderer
+        const floor = renderer?.getNodeStyle(node, -1)
+        if (!floor) return { color: null, size: 10 }
+
+        const tierCount = floor.tiers?.length ?? 0
+        for (let tier = -1; tier < tierCount; tier++) {
+            const style = tier === -1 ? floor : renderer.getNodeStyle(node, tier)
+            if (style.shape === 'none') continue
+            const color = this.paintable(style.color)
+            if (color) return { color, size: typeof style.size === 'number' ? style.size : 10 }
+        }
+        return { color: null, size: typeof floor.size === 'number' ? floor.size : 10 }
     }
 
     /**
@@ -556,19 +583,25 @@ export class Minimap extends UIComponent {
      * probe inside the themed subtree and read back the computed `color`.
      */
     private cssColor(value: string, fallback: string): string {
-        if (!value) return fallback
-        // Plain colours (#rgb, rgb(), a keyword) need no round trip.
-        if (!value.includes('var(') && !value.includes('color-mix')) return value
+        return this.paintable(value) ?? fallback
+    }
 
-        const cached = this.colorCache.get(value)
-        if (cached) return cached
+    /**
+     * {@link cssColor} without a fallback: `null` for anything that would paint nothing,
+     * i.e. not a colour at all (`'none'`, a function) or fully transparent. A custom-drawn
+     * node often says `transparent`, and a dot in it is no dot.
+     */
+    private paintable(value: unknown): string | null {
+        if (typeof value !== 'string' || value.trim() === '') return null
+        if (this.colorCache.has(value)) return this.colorCache.get(value) ?? null
 
         const probe = this.probe
-        if (!probe) return fallback
+        if (!probe) return null
         probe.style.color = ''
         probe.style.color = value
         // An expression the browser rejects outright leaves the property empty.
-        const resolved = probe.style.color === '' ? fallback : (getComputedStyle(probe).color || fallback)
+        const computed = probe.style.color === '' ? '' : getComputedStyle(probe).color
+        const resolved = computed && !ZERO_ALPHA.test(computed) ? computed : null
         this.colorCache.set(value, resolved)
         return resolved
     }

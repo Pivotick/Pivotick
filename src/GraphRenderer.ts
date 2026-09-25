@@ -91,7 +91,11 @@ export abstract class GraphRenderer {
 
     abstract init(): void
     abstract update(dataChanged: boolean): void
-    abstract getNodeStyle(node: Node): NodeStyle
+    /**
+     * The style `node` draws with. With `tier`, the style of that one drawing instead of the
+     * one the zoom picks: `-1` for the floor style, or an index into the node's `tiers`.
+     */
+    abstract getNodeStyle(node: Node, tier?: number): NodeStyle
     abstract getEdgeStyle(edge: Edge): EdgeStyle
     abstract getOptions(): GraphRendererOptions
     abstract nextTick(): void

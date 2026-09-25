@@ -85,6 +85,36 @@ async function noteInk(page: Page): Promise<{ pixels: number, x: number, y: numb
     }, { rgb: NOTE_RGB, tolerance: NOTE_TOLERANCE })
 }
 
+/**
+ * How many minimap pixels are node dots of one colour: `ink` for the minimap's own
+ * `--pvt-minimap-ink`, resolved in the page since it is a theme expression. Exact
+ * colour with a small tolerance, for the same reason as {@link noteInk}.
+ */
+async function dotPixels(page: Page, color: 'ink' | number[]): Promise<number> {
+    return page.evaluate(({ color, tolerance }: { color: 'ink' | number[], tolerance: number }) => {
+        const surface = document.querySelector('.pvt-minimap-surface') as HTMLCanvasElement
+        let want = color as number[]
+        if (color === 'ink') {
+            const probe = document.createElement('span')
+            probe.style.color = 'var(--pvt-minimap-ink)'
+            surface.parentElement!.appendChild(probe)
+            // Painted and read back rather than parsed: a color-mix computes to color(srgb …).
+            const swatch = document.createElement('canvas').getContext('2d')!
+            swatch.fillStyle = getComputedStyle(probe).color
+            swatch.fillRect(0, 0, 1, 1)
+            want = [...swatch.getImageData(0, 0, 1, 1).data.slice(0, 3)]
+            probe.remove()
+        }
+        const { data } = surface.getContext('2d')!.getImageData(0, 0, surface.width, surface.height)
+        let pixels = 0
+        for (let index = 0; index < data.length; index += 4) {
+            if (data[index + 3] < 150) continue
+            if (want.every((channel, offset) => Math.abs(data[index + offset] - channel) <= tolerance)) pixels++
+        }
+        return pixels
+    }, { color, tolerance: NOTE_TOLERANCE })
+}
+
 /** Hide a note the way the note sidebar's own button does. */
 async function hideNote(page: Page, id: string): Promise<void> {
     await page.evaluate((noteId) => {
@@ -379,6 +409,28 @@ test.describe('minimap plugin', () => {
         expect(await harness(page, 'warnings')).toEqual(
             expect.arrayContaining([expect.stringContaining('not available in \'static\' mode')])
         )
+    })
+})
+
+/**
+ * Nodes the consumer draws. Their style colour is often `transparent`, and a dot in it is
+ * no dot at all, which left the minimap showing only the edges.
+ */
+test.describe('the minimap on custom-drawn nodes', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoHarness(page)
+    })
+
+    test('a card with no colour to paint still gets a dot, in the minimap ink', async ({ page }) => {
+        await harness(page, 'loadCardsWithMinimap', 'transparent')
+        await expect.poll(async () => await dotPixels(page, 'ink')).toBeGreaterThan(0)
+    })
+
+    test('a tiered card takes its colour from the smallest tier that is a shape', async ({ page }) => {
+        // Opens zoomed in on the cards, so the tier drawn on the canvas is a card, and the
+        // colour has to come from the circle tier below it.
+        await harness(page, 'loadCardsWithMinimap', 'tiered')
+        await expect.poll(async () => await dotPixels(page, [220, 38, 38])).toBeGreaterThan(0)
     })
 })
 

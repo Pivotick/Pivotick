@@ -554,8 +554,8 @@ export class GraphSvgRenderer extends GraphRenderer {
         return this.options
     }
 
-    public getNodeStyle(node: Node): NodeStyle {
-        return this.nodeDrawer.getNodeStyle(node)
+    public getNodeStyle(node: Node, tier?: number): NodeStyle {
+        return this.nodeDrawer.getNodeStyle(node, tier)
     }
 
     public getEdgeStyle(edge: Edge): EdgeStyle {

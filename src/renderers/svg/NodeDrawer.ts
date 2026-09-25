@@ -630,8 +630,21 @@ export class NodeDrawer {
         }
     }
 
-    public getNodeStyle(node: Node): NodeStyle {
-        return this.resolveStyleValues(this.computeNodeStyle(node), node)
+    /**
+     * The style `node` draws with. Pass `tier` to read one drawing in particular instead of
+     * the one the zoom picks: {@link BASE_TIER} for the floor style, or an index into
+     * `tiers`. An index the node does not declare reads as the floor.
+     */
+    public getNodeStyle(node: Node, tier?: number): NodeStyle {
+        const style = tier === undefined ? this.computeNodeStyle(node) : this.computeStyleAtTier(node, tier)
+        return this.resolveStyleValues(style, node)
+    }
+
+    /** The base style with `tier` folded over it, leaving the zoom's own pick untouched. */
+    private computeStyleAtTier(node: Node, tier: number): NodeStyle {
+        const base = this.computeBaseStyle(node)
+        const layer = base.tiers?.[tier]
+        return layer ? mergeTierLayer(layer.style, base) : base
     }
 
     /**

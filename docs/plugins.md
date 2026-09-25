@@ -329,6 +329,12 @@ overlapping dots; notes are drawn either way. It is all cached and only re-raste
 the picture really changed — a node dropped, a note moved, the layout settling, a filter
 applied — so panning and zooming stay free however big the graph is.
 
+An HTML card (`html` on `shape: 'none'`) has no colour the minimap can read, so its dot
+takes the colour of the smallest drawing that is a shape: the base style, or else the
+first such tier in `tiers`. With none, or with a `transparent` colour, the dot is drawn in
+the minimap's own ink (`--pvt-minimap-ink`). Dots are sized to what the node covers, so a
+card or a `renderNode` node gets a card-sized dot rather than one sized by `size`.
+
 ### Getting out of the way {#minimap-auto}
 
 A minimap you asked for stays where you put it. The one `full` mode mounts on your behalf

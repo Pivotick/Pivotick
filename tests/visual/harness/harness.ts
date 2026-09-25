@@ -492,6 +492,9 @@ export interface EdgeLayerSpec {
  * chain. A flag set rather than overrides because callbacks cannot cross
  * `page.evaluate`.
  */
+/** The circle tier {@link PivotickHarness.loadCardsWithMinimap} puts under its cards. */
+const MINIMAP_TIER_COLOR = '#dc2626'
+
 /** How {@link PivotickHarness.loadWithTiers} builds its tiered node style. */
 export interface TierSpec {
     /** Declare a `focusTier` card as well as the zoom tiers. @default true */
@@ -1611,6 +1614,12 @@ export interface HarnessApi {
      * full render each, so this builds the graph in one pass instead.
      */
     loadManyNodesWithMinimap(count: number, options?: MinimapOptions): Promise<void>
+    /**
+     * The `basic` fixture drawn as HTML cards, with the minimap installed. `transparent`
+     * cards have no colour a dot could take; `tiered` ones sit on a red circle tier,
+     * the smallest drawing Pivotick paints itself.
+     */
+    loadCardsWithMinimap(kind: 'transparent' | 'tiered'): Promise<void>
     /**
      * Boot a graph of `count` pinned, edge-less nodes with arbitrary overrides — for
      * crossing the data dock's row-windowing threshold. Each node carries a numeric
@@ -3685,6 +3694,20 @@ class Harness implements HarnessApi {
         graph.on('legendToggle', (state) => this.legendToggles.push(state))
         await this.whenReady(graph)
         if (document.fonts?.ready) await document.fonts.ready
+    }
+
+    async loadCardsWithMinimap(kind: 'transparent' | 'tiered'): Promise<void> {
+        const card = () => Harness.anchorCard(140, 44)
+        const defaultNodeStyle = kind === 'transparent'
+            ? { shape: 'none', html: card, color: 'transparent' }
+            : {
+                shape: 'none', html: card, color: 'transparent',
+                tiers: [
+                    { width: 20, height: 20, style: { shape: 'circle', size: 10, color: MINIMAP_TIER_COLOR } },
+                    { width: 140, height: 44, style: { shape: 'none', html: card } },
+                ],
+            }
+        await this.load('basic', { plugins: [minimap()], render: { defaultNodeStyle } })
     }
 
     visibleNodeIds(): string[] {
