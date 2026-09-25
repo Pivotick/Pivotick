@@ -176,7 +176,8 @@ export function createActionItem<TThis extends UIElement = UIElement>(thisContex
         shortcut.classList.add('pvt-ms-auto')
         shortcut.style.borderColor = 'var(--pvt-bg-color-8)'
     }
-    const classes = ['pvt-action-item', `pvt-action-item-${action.variant}`]
+    const variant = action.variant ?? ACTION_DEFAULT_VARIANT
+    const classes = ['pvt-action-item', `pvt-action-item-${variant}`]
     if (action.submenu) classes.push('pvt-has-submenu')
     if (action.dividerBefore) classes.push('pvt-action-item-divided')
     const div = createHtmlElement('div',
