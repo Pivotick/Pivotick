@@ -58,7 +58,9 @@ asserted rather than one the library counted. A pivot with no `summarize` shows 
 **4 · Narrow until the gate opens.** A pivot that declares `maxCandidates` keeps **Fetch**
 out of reach while the count exceeds it, and states the number, the limit and the way
 forward. Ticking a narrowing control re-asks `summarize` with that choice, so 2,143 becomes
-210 and **Fetch** turns on by itself. **Clear narrowing** starts over.
+210 and **Fetch** turns on by itself. **Clear narrowing** starts over. Beside it, **Fetch &
+ingest** lands every result on the graph without review. It is offered only where the pivot
+left [`autoIngest`](#autoingest) unset.
 
 **5 · Triage what came back.** Results do not touch the graph. They open the **Review** tab
 in the bottom dock, one pane per provider you have run, listed down its side. Click anywhere
@@ -119,7 +121,7 @@ ground you have covered stays a one-click gesture. An edge between two nodes alr
 does count, because it is a row you would otherwise have been asked about. A pivot that
 declared [`autoIngest`](#autoingest) has already answered the question and its answer holds:
 `true` always lands, `false` always reviews. The limit decides only for pivots that left it
-unset, and only for this gesture; a run started from the panel always stages.
+unset, and only for this gesture; a panel **Fetch** always stages.
 
 Until the answer is known the run has offered nothing, so it takes none of the screen to say
 it is working. A **Review** tab joins the dock's strip reading `Review…` while the fetch is

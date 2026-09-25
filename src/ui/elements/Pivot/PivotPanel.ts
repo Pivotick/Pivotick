@@ -851,14 +851,16 @@ class PivotEntry {
         this.paint()
     }
 
-    private async fetch(): Promise<void> {
+    /** `ingest` lands every result on the canvas instead of staging it for triage. */
+    private async fetch(ingest = false): Promise<void> {
         const token = ++this.token
         this.phase = 'fetching'
         this.refusal = undefined
         this.ingested = undefined
         this.paint()
 
-        const outcome = await this.uiManager.graph.pivots.run(this.def.id, this.origin(), this.narrowing)
+        const options = ingest ? { autoIngestUpTo: Infinity } : {}
+        const outcome = await this.uiManager.graph.pivots.run(this.def.id, this.origin(), this.narrowing, options)
         if (token !== this.token) return
 
         this.phase = this.summary ? 'ready' : 'idle'
@@ -947,6 +949,7 @@ class PivotEntry {
 
         if (this.verbInHead()) {
             slot.appendChild(this.button('Run', true, () => void this.fetch()))
+            if (this.offersIngest()) slot.appendChild(this.ingestButton('Run'))
             return
         }
 
@@ -1200,6 +1203,11 @@ class PivotEntry {
             const fetch = this.button(primary, true, () => void this.fetch())
             fetch.disabled = busy || this.overCap()
             this.actions.appendChild(fetch)
+            if (this.offersIngest()) {
+                const ingest = this.ingestButton(primary)
+                ingest.disabled = fetch.disabled
+                this.actions.appendChild(ingest)
+            }
         }
 
         const staged = this.uiManager.graph.pivots.candidates(this.def.id)
@@ -1279,6 +1287,22 @@ class PivotEntry {
             foot.appendChild(all)
         }
         if (foot.childElementCount) this.rejectedHost.appendChild(foot)
+    }
+
+    /**
+     * Skipping triage is only the analyst's call where the provider left it open: an
+     * `autoIngest: true` pivot's Fetch already lands, and `false` asks for every run
+     * to be reviewed.
+     */
+    private offersIngest(): boolean {
+        return this.def.autoIngest === undefined
+    }
+
+    private ingestButton(verb: string): HTMLButtonElement {
+        const ingest = this.button(`${verb} & ingest`, false, () => void this.fetch(true))
+        ingest.classList.add('pvt-pivot-ingest-button')
+        ingest.title = 'Add every result to the graph without reviewing it first'
+        return ingest
     }
 
     private button(label: string, primary: boolean, onClick: () => void): HTMLButtonElement {

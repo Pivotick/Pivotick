@@ -207,7 +207,7 @@ test.describe('pivot mode', () => {
         await expect(count(page, CORRELATION)).toHaveText('~2,143 across 3 nodes')
     })
 
-    test('a pivot with no summarize just offers Run', async ({ page }) => {
+    test('a pivot with no summarize just offers Run, and Run & ingest', async ({ page }) => {
         await load(page)
         await pickOrigin(page, 'a')
         await enterMode(page)
@@ -218,7 +218,7 @@ test.describe('pivot mode', () => {
         await expect(count(page, 'blind')).toHaveCount(0)
         await expect(button(blind, 'Run')).toBeEnabled()
         await expect(button(blind, 'Fetch')).toHaveCount(0)
-        await expect(blind.locator('.pvt-pivot-entry-head button')).toHaveText('Run')
+        await expect(blind.locator('.pvt-pivot-entry-head button')).toHaveText(['Run', 'Run & ingest'])
     })
 
     test('a declared potential is the number shown before anything is asked', async ({ page }) => {
@@ -302,6 +302,31 @@ test.describe('pivot mode', () => {
         expect(await harness(page, 'activeDockTabId')).toBe('pivot-triage')
         await expect(page.locator('.pvt-review-tab:has(.pvt-review-main.active)'))
             .toHaveAttribute('data-pivot', CORRELATION)
+    })
+
+    test('Fetch & ingest lands the results without triage', async ({ page }) => {
+        await load(page)
+        await pickOrigin(page, 'a')
+        await enterMode(page)
+        await narrowTo(page, CORRELATION, 'type', 'URLs')
+        await expect(count(page, CORRELATION)).toHaveText('~210')
+
+        const nodes = async (): Promise<number> => (await harness(page, 'counts') as { nodes: number }).nodes
+        const before = await nodes()
+        await button(entry(page, CORRELATION), 'Fetch & ingest').click()
+
+        await expect.poll(nodes).toBe(before + 210)
+        await expect(entry(page, CORRELATION).locator('.pvt-pivot-triage-link')).toHaveCount(0)
+    })
+
+    test('a pivot that pins autoIngest either way offers no ingest button', async ({ page }) => {
+        // `event-objects` always lands; `correlation` is flipped to always review.
+        await load(page, { pivots: ['correlation', 'event-objects'], stage: ['correlation'] })
+        await pickOrigin(page, 'a')
+        await enterMode(page)
+
+        await expect(button(entry(page, CORRELATION), 'Fetch')).toBeVisible()
+        await expect(panel(page).locator('.pvt-pivot-ingest-button')).toHaveCount(0)
     })
 
     test('the panel lists what a pivot rejected, names it, and takes it back', async ({ page }) => {

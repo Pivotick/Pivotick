@@ -1188,6 +1188,10 @@
 .pvt-pivot-status {
     flex: none;
     white-space: nowrap;
+
+    .pvt-pivot-ingest-button {
+        margin-left: 5px;
+    }
 }
 
 .pvt-pivot-count {
