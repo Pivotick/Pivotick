@@ -8,7 +8,7 @@ It also does the thing it is named for: a **pivot** fetches more graph from wher
 
 ## Core Features
 
-- Directed and undirected graph rendering
+- Directed and undirected Graph rendering
 - Pivots — run an enrichment against what is on the canvas, triage the results in a dock pane, and ingest only what you keep
 - Saving a pivot's results back to the system they came from, with a ledger of what has crossed and what has not
 - Undo and redo over what the canvas holds — ingests, deletions, hides and hand-drawn elements — as one timeline
