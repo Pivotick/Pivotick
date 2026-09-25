@@ -69,6 +69,15 @@ function beyondBoxCorner(badge: NodeBadgeSnapshot, box: NodeRimBox): boolean {
     return Math.abs(badge.cx) > box.hx && Math.abs(badge.cy) > box.hy
 }
 
+/** How much wider the pill is than the text it carries; negative means the text spills out. */
+async function textRoom(page: Page, id: string): Promise<number> {
+    return nodeEl(page, id).locator('.pvt-node-badge').first().evaluate((badge) => {
+        const text = badge.querySelector<SVGTextElement>('.pvt-node-badge-text')!.getBBox().width
+        const pill = Number(badge.querySelector('.pvt-node-badge-shape')!.getAttribute('width'))
+        return pill - text
+    })
+}
+
 /** Click a badge by the text it wears. */
 async function clickBadge(page: Page, id: string, text: string): Promise<void> {
     await nodeEl(page, id)
@@ -167,6 +176,22 @@ test.describe('rim geometry', () => {
         expect(medium.radius).toBeGreaterThan(small.radius)
         expect(medium.radius).toBeLessThan(big.radius)
     })
+
+    test('is sized by the node\'s short side, so a wide node does not dwarf its badge', async ({ page }) => {
+        await gotoHarness(page)
+        await loadBadges(page)
+        await expect.poll(async () => (await rimBox(page, 'framed')).hy).toBeLessThan(20)
+
+        // On a circle both sides are the radius, so nothing changes there.
+        const round = await rimBox(page, 'circle')
+        expect((await badgesOn(page, 'circle'))[0].radius).toBeCloseTo(0.45 * round.hx, 5)
+
+        // The landscape frame: its height decides, not its width.
+        const box = await rimBox(page, 'framed')
+        const [badge] = await badgesOn(page, 'framed')
+        expect(box.hx).toBeGreaterThan(box.hy)
+        expect(badge.radius).toBeCloseTo(Math.max(6, 0.45 * box.hy), 5)
+    })
 })
 
 /* ---------- staying attached ---------- */
@@ -217,6 +242,20 @@ test.describe('attachment', () => {
         expect(box.hx).toBeCloseTo(70, 0)
         expect(box.hy).toBeCloseTo(22, 0)
         expect(beyondBoxCorner(badge, box)).toBe(true)
+    })
+
+    test('a 140 × 44 card gets a badge sized by its height, and +99 still fits it', async ({ page }) => {
+        await gotoHarness(page)
+        await loadBadges(page, { customNodes: true })
+
+        // 0.45 × 22: about 45% of the card's height, where its width would have hit the cap.
+        const [badge] = await badgesOn(page, 'card-0')
+        expect(badge.radius).toBeCloseTo(9.9, 5)
+
+        const [wide] = await badgesOn(page, 'card-1')
+        expect(wide.text).toBe('+99')
+        expect(wide.radius).toBeCloseTo(9.9, 5)
+        expect(await textRoom(page, 'card-1')).toBeGreaterThan(0)
     })
 })
 

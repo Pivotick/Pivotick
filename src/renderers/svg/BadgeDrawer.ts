@@ -234,7 +234,7 @@ export class BadgeDrawer {
 
         const group = nodeSelection.append('g').classed('pvt-node-badges', true)
         const { hx, hy } = rimExtents(nodeGroup, node)
-        const radius = Math.min(MAX_RADIUS, Math.max(MIN_RADIUS, RADIUS_RATIO * Math.max(hx, hy)))
+        const radius = Math.min(MAX_RADIUS, Math.max(MIN_RADIUS, RADIUS_RATIO * Math.min(hx, hy)))
 
         for (const placed of this.place(node, badges)) {
             const anchor = nodeRimAnchor(nodeGroup, node, placed.corner)

@@ -2461,7 +2461,8 @@ class Harness implements HarnessApi {
         const nodes = [-200, 200].map((x, i) => {
             const node = new Node(`card-${i}`, {
                 label: `Card ${i}`,
-                badges: [{ text: String(i + 1), title: `Card ${i} badge` }],
+                // The second card's badge is three characters wide, the most a badge draws.
+                badges: [{ text: i === 0 ? '1' : '+99', title: `Card ${i} badge` }],
             }, {}, `card-${i}`)
             node.x = x
             node.y = 0
