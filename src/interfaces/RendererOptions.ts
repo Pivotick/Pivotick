@@ -475,6 +475,13 @@ export interface NodeStyle {
      * @default true
      */
     textTruncate: ((node: Node) => boolean) | boolean
+    /**
+     * Widest a node label may be drawn, in graph units (CSS pixels at zoom 1). A longer label
+     * is shortened with a middle ellipsis to fit. Replaces the built-in budget, which is sized
+     * to the node. Ignored when `textTruncate` is `false`.
+     * @default undefined — the built-in budget
+     */
+    textMaxWidth?: ((node: Node) => number) | number
     iconClass?: IconClass,
     iconUnicode?: IconUnicode,
     /**

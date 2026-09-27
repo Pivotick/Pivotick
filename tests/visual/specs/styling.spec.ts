@@ -29,6 +29,24 @@ async function glyphOffsetFromCentre(page: Page, nodeId: string, glyphSelector: 
     return (glyph.y + glyph.height / 2) - (node.y + node.height / 2)
 }
 
+/** A node label's drawn width in graph units, from its own `getBBox()`. */
+async function labelWidth(page: Page, nodeId: string): Promise<number> {
+    return nodeEl(page, nodeId).locator('text.pvt-node-label')
+        .evaluate(el => (el as SVGTextElement).getBBox().width)
+}
+
+/** Whether a node label sits on the themed pill (a `rect` behind the text). */
+async function labelHasPill(page: Page, nodeId: string): Promise<boolean> {
+    return await nodeEl(page, nodeId).locator('g.pvt-node-label-group > rect').count() === 1
+}
+
+/** Whether a node label was cut through a surrogate pair, leaving half a character. */
+async function hasLoneSurrogate(page: Page, nodeId: string): Promise<boolean> {
+    // Checked in the page: a lone surrogate may not survive the trip back to the test.
+    return nodeEl(page, nodeId).locator('text.pvt-node-label')
+        .evaluate(el => /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/.test(el.textContent ?? ''))
+}
+
 test.describe('node & edge styling', () => {
     test.beforeEach(async ({ page }) => {
         await gotoHarness(page)
@@ -87,6 +105,26 @@ test.describe('node & edge styling', () => {
         await expect(labelOf('full-inside')).toHaveText(full)
         await expect(labelOf('full-outside')).toHaveText(full)
         await expectCanvas(page, 'node-labels-full.png')
+    })
+
+    // T1.4c — `textMaxWidth` caps a label at a width in graph units, middle-eliding by code
+    // point, and gives an inside label that spills the floated label's pill.
+    test('node labels capped by textMaxWidth', async ({ page }) => {
+        await loadPinned(page, 'nodeLabelsMaxWidth')
+        const labelOf = (id: string) => nodeEl(page, id).locator('text.pvt-node-label')
+
+        await expect(labelOf('cap-ip')).toHaveText('185.130.44.131')
+        await expect(labelOf('default-ip')).toHaveText(/…/)
+        await expect(labelOf('cap-blob')).toHaveText(/^chunk0000.*….*chunk0049$/)
+        expect(await labelWidth(page, 'cap-blob')).toBeLessThanOrEqual(160)
+        expect(await labelWidth(page, 'cap-inside')).toBeLessThanOrEqual(160)
+        expect(await labelHasPill(page, 'cap-inside')).toBe(true)
+        await expect(labelOf('cap-ignored')).toHaveText('Supercalifragilistic')
+        await expect(labelOf('cap-emoji')).toHaveText(/…/)
+        expect(await hasLoneSurrogate(page, 'cap-emoji')).toBe(false)
+        expect(await labelWidth(page, 'cap-fn-wide')).toBeGreaterThan(160)
+        expect(await labelWidth(page, 'cap-fn-narrow')).toBeLessThanOrEqual(60)
+        await expectCanvas(page, 'node-labels-max-width.png')
     })
 
     // T1.5 — straight vs curved vs bidirectional (reciprocal edges curve apart).

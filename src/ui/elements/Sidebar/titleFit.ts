@@ -1,4 +1,5 @@
 import { createCopyButton } from './PropertyList'
+import { middleTruncate } from '../../../utils/TextFit'
 
 // Title auto-fit bounds: shrink a long title from MAX down to MIN px, wrapped
 // over at most MAX_LINES lines, before giving up and switching to the
@@ -11,15 +12,6 @@ const TITLE_MAX_LINES = 2
 // slot, so the fallback classes (.is-clamp / .is-identifier) resolve identically.
 const TITLE_BASE_CLASS = 'pvt-mainheader-nodeinfo-name'
 
-// A single hidden canvas reused to measure text width for middle-truncation.
-let textMeasurer: CanvasRenderingContext2D | null = null
-function measureTextWidth(text: string, font: string): number {
-    if (!textMeasurer) textMeasurer = document.createElement('canvas').getContext('2d')
-    if (!textMeasurer) return text.length * 8
-    textMeasurer.font = font
-    return textMeasurer.measureText(text).width
-}
-
 function elementFont(el: HTMLElement): string {
     const s = getComputedStyle(el)
     return `${s.fontWeight} ${s.fontSize} ${s.fontFamily}`
@@ -28,25 +20,6 @@ function elementFont(el: HTMLElement): string {
 /** A title with no whitespace reads as an identifier (id, URL, hash, onion…). */
 function looksLikeIdentifier(text: string): boolean {
     return !/\s/.test(text.trim())
-}
-
-/** Keep the head and tail of a too-long string, eliding the middle: `abcd…wxyz`. */
-function middleTruncate(text: string, availPx: number, font: string): string {
-    if (availPx <= 0 || measureTextWidth(text, font) <= availPx) return text
-    const ellipsis = '…'
-    // Slice by code points, not UTF-16 units, so surrogate pairs / emoji aren't cut
-    // mid-character (which renders as U+FFFD).
-    const chars = Array.from(text)
-    let lo = 1, hi = chars.length - 1, best = ellipsis
-    while (lo <= hi) {
-        const keep = (lo + hi) >> 1
-        const head = Math.ceil(keep / 2)
-        const tail = Math.floor(keep / 2)
-        const candidate = chars.slice(0, head).join('') + ellipsis + chars.slice(chars.length - tail).join('')
-        if (measureTextWidth(candidate, font) <= availPx) { best = candidate; lo = keep + 1 }
-        else hi = keep - 1
-    }
-    return best
 }
 
 /**

@@ -547,6 +547,32 @@ export const fixtures = {
         return { nodes: [truncated, inside, outside, edgeEnd], edges: [edge], notes: [] }
     },
 
+    /**
+     * `textMaxWidth` — labels capped at a width the consumer picks, floated and inside the
+     * node, next to one it's ignored on (`textTruncate: false`), a surrogate-pair label, and
+     * a function-valued cap read from each node's data.
+     */
+    nodeLabelsMaxWidth(): BuiltFixture {
+        const color = '#7c3aed'
+        const ip = '185.130.44.131'
+        const blob = Array.from({ length: 50 }, (_, i) => `chunk${String(i).padStart(4, '0')}`).join('')
+        const floated = { size: 16, color, textVerticalShift: -1.4, textMaxWidth: 160 }
+        const byData = { size: 16, color, textVerticalShift: -1.4, text: blob, textMaxWidth: (n: Node) => n.getData()?.cap as number }
+        const nodes = [
+            mkStyledNode('cap-ip', -170, -120, { ...floated, text: ip }),
+            mkStyledNode('default-ip', -170, -40, { size: 16, color, textVerticalShift: -1.4, text: ip }),
+            mkStyledNode('cap-blob', -170, 40, { ...floated, text: blob }),
+            mkStyledNode('cap-inside', -170, 120, { size: 16, color, text: blob, textMaxWidth: 160 }),
+            mkStyledNode('cap-ignored', 170, -120, {
+                size: 16, color, textVerticalShift: -1.4, text: 'Supercalifragilistic', textTruncate: false, textMaxWidth: 40,
+            }),
+            mkStyledNode('cap-emoji', 170, -40, { ...floated, text: '🦊🐙🦉🐝🦀🐢🦔🐳🦩🐞🦜🐌🦎🐬🦘🐧', textMaxWidth: 60 }),
+            mkStyledNode('cap-fn-wide', 170, 40, byData, { cap: 200 }),
+            mkStyledNode('cap-fn-narrow', 170, 120, byData, { cap: 60 }),
+        ]
+        return { nodes, edges: [], notes: [] }
+    },
+
     /** Straight, curved, and a reciprocal pair that curves apart under `bidirectional`. */
     edgeCurves(): BuiltFixture {
         const mk = (id: string, x: number, y: number) => mkStyledNode(id, x, y, { size: 14, color: '#64748b' })

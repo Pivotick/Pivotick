@@ -15,6 +15,7 @@ import { BadgeDrawer, nodeRimAnchor, resolveBadges, RIM_PADDING } from './BadgeD
 import { forceConstrainParent } from '../../plugins/d3Forces/ForceConstrainParent'
 import { imageOff } from '../../ui/icons'
 import { DETAIL_HYSTERESIS } from './LabelGate'
+import { middleTruncate } from '../../utils/TextFit'
 d3Select.prototype.transition = d3Transition
 
 export class NodeDrawer {
@@ -52,6 +53,8 @@ export class NodeDrawer {
      * no label is absent from it, so the pass never looks at one.
      */
     private labelState = new WeakMap<Node, NodeLabelState>()
+    /** Resolved weight + family per style `fontFamily`, which is usually a CSS variable a canvas can't read. */
+    private labelFontFaces = new Map<string, [string, string]>()
     /** The drawing each node is currently fading out of, while it is still fading. */
     private tierGhosts = new WeakMap<Node, SVGGElement>()
     /** The node under the pointer, whatever the focus trigger does with it. */
@@ -667,6 +670,8 @@ export class NodeDrawer {
         nodeStyle.textVerticalShift = nodeStyle.textVerticalShift !== undefined ? (tryResolveNumber(nodeStyle.textVerticalShift, node) ?? 0) : 0
         nodeStyle.textRotateDegree = nodeStyle.textRotateDegree !== undefined ? (tryResolveNumber(nodeStyle.textRotateDegree, node) ?? 0) : 0
         nodeStyle.textTruncate = nodeStyle.textTruncate !== undefined ? (tryResolveBoolean(nodeStyle.textTruncate, node) ?? true) : true
+        const textMaxWidth = nodeStyle.textMaxWidth !== undefined ? tryResolveNumber(nodeStyle.textMaxWidth, node) : undefined
+        nodeStyle.textMaxWidth = textMaxWidth !== undefined && Number.isFinite(textMaxWidth) && textMaxWidth > 0 ? textMaxWidth : undefined
         nodeStyle.text = nodeStyle.text !== undefined ? tryResolveString(nodeStyle.text, node) : undefined
 
         nodeStyle.iconUnicode = nodeStyle.iconUnicode !== undefined ? tryResolveString(nodeStyle.iconUnicode, node) : undefined
@@ -982,7 +987,9 @@ export class NodeDrawer {
         // gets the same treatment: the node's own `textColor` is white by default, which
         // here would be drawn straight onto the canvas.
         const isOusideNode = floated || shapeless
-        const [fontSize, text] = this.computeTextLayout(style.text as string, size, floated, style.textTruncate as boolean)
+        // A consumer's width cap replaces the built-in budget, and is measured once drawn.
+        const maxWidth = style.textTruncate ? style.textMaxWidth as number | undefined : undefined
+        const [fontSize, text] = this.computeTextLayout(style.text as string, size, floated, style.textTruncate as boolean && maxWidth === undefined)
 
         const x_pos = horizontalShift * (size + fontSize/2*1.2)
         const y_pos = - verticalShift * (size + fontSize/2*1.2)
@@ -1001,11 +1008,17 @@ export class NodeDrawer {
             .attr('fill', isOusideNode ? defaultLabelStyle.color : style.textColor)
             .text(text)
 
-        const bbox = textSelection.node()?.getBBox()
+        const textEl = textSelection.node()
+        if (maxWidth !== undefined && textEl) {
+            const [weight, family] = this.labelFontFace(textEl, style.fontFamily)
+            textSelection.text(middleTruncate(text, maxWidth, `${weight} ${fontSize}px ${family}`))
+        }
+
+        const bbox = textEl?.getBBox()
         // An untruncated label spills past the shape, where the node's own text colour
         // is drawn against the canvas instead of the node (white on white, by default).
         // Give it the floated label's pill + colour so the whole string stays readable.
-        const spillsOutOfNode = !isOusideNode && style.textTruncate === false
+        const spillsOutOfNode = !isOusideNode && (style.textTruncate === false || maxWidth !== undefined)
             && !!bbox && bbox.width > size * 2
         if (spillsOutOfNode) textSelection.attr('fill', defaultLabelStyle.color)
 
@@ -1125,6 +1138,18 @@ export class NodeDrawer {
 
     private isEdgeAdjacentToSelection(edge: Edge): boolean {
         return this.isNodeSelected(edge.from) || this.isNodeSelected(edge.to)
+    }
+
+    /** The weight and family a drawn label actually renders in, read once per `fontFamily`. */
+    private labelFontFace(textEl: SVGTextElement, fontFamily: string): [string, string] {
+        const cached = this.labelFontFaces.get(fontFamily)
+        if (cached) return cached
+        const computed = getComputedStyle(textEl)
+        // A detached label has no computed style; don't cache that miss.
+        if (!computed.fontFamily) return ['normal', fontFamily.startsWith('var(') ? 'sans-serif' : fontFamily]
+        const face: [string, string] = [computed.fontWeight || 'normal', computed.fontFamily]
+        this.labelFontFaces.set(fontFamily, face)
+        return face
     }
 
     private computeTextLayout(label: string, nodeSize: number, isOusideNode: boolean = false, truncate: boolean = true): [number, string] {
@@ -1372,7 +1397,7 @@ function intersectsBounds(node: Node, footprint: number, bounds: GraphBounds): b
 const NODE_STYLE_KEYS = [
     'shape', 'strokeColor', 'strokeWidth', 'fontFamily', 'size', 'color', 'textColor',
     'textAnchorPosition', 'textHorizontalShift', 'textVerticalShift', 'textRotateDegree',
-    'textTruncate', 'iconUnicode', 'iconClass', 'svgIcon', 'imagePath', 'imageFit', 'text',
+    'textTruncate', 'textMaxWidth', 'iconUnicode', 'iconClass', 'svgIcon', 'imagePath', 'imageFit', 'text',
     'html', 'badges', 'layoutSize', 'tiers', 'focusTier', 'focusTierYieldsAt',
 ] as const satisfies readonly (keyof NodeStyle)[]
 

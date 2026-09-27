@@ -184,7 +184,22 @@ const options = {
 }
 ```
 
-A full label usually spills past the node's shape, so it is drawn on the same
+Between the two, `textMaxWidth` caps the label at a width you choose, in graph units
+(CSS pixels at zoom 1), instead of the room the node gives it. A label that fits is drawn
+in full, and a longer one is shortened with a middle ellipsis to that width:
+
+```ts
+const options = {
+    render: {
+        defaultNodeStyle: { textTruncate: true, textMaxWidth: 160 },
+    },
+}
+```
+
+The cap scales with the zoom like the rest of the node, and it can be a function of the
+node. It is ignored when `textTruncate` is `false`.
+
+A full or capped label usually spills past the node's shape, so it is drawn on the same
 themed pill as a floated label to stay readable over the canvas. Pair it with
 `textVerticalShift: 1` (or `textHorizontalShift`) to move the whole label clear
 of the node. Edge labels are never truncated.
