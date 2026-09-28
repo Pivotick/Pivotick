@@ -31,6 +31,7 @@ export default defineConfig({
         items: [
           { text: 'Callbacks', link: '/callbacks' },
           { text: 'Edge layers', link: '/edge-layers' },
+          { text: 'Simplify', link: '/simplify' },
           { text: 'Layout', link: '/layout' },
           { text: 'Render', link: '/render' },
           { text: 'Simulation', link: '/simulation' },
