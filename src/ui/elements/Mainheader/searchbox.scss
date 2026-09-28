@@ -117,6 +117,17 @@
                     text-overflow: ellipsis;
                     white-space: nowrap;
                 }
+
+                .pvt-search-result__group {
+                    flex-shrink: 0;
+                    padding: 0 8px;
+                    border-radius: 999px;
+                    background-color: var(--pvt-bg-color-3);
+                    color: var(--pvt-text-color-5);
+                    font-size: 0.85em;
+                    line-height: 1.6;
+                    white-space: nowrap;
+                }
             }
         }
     }
@@ -125,7 +136,26 @@
         padding: 6px 12px;
         font-weight: 300;
         font-size: 0.9em;
-        color: var(--pvt-text-color-4)
+        color: var(--pvt-text-color-4);
+
+        > div {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+    }
+
+    .pvt-search-showall {
+        padding: 0;
+        border: 0;
+        background: none;
+        color: var(--pvt-theme-primary);
+        font: inherit;
+        font-weight: 500;
+        cursor: pointer;
+
+        &:hover, &:focus-visible { text-decoration: underline; }
     }
 
     .pvt-search-hints {

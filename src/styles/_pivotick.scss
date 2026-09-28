@@ -594,6 +594,13 @@ dl.pvt-property-list {
     opacity: 0.14;
 }
 
+// A search's share of a closed group, over its ring.
+.pvt-group-matches .pvt-group-match {
+    fill: none;
+    stroke: var(--pvt-theme-primary);
+    pointer-events: none;
+}
+
 .pvt-group-chips {
     .pvt-group-chip-box {
         overflow: visible;

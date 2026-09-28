@@ -792,3 +792,98 @@ test.describe('the table', () => {
         expect(cells).toEqual({ 'ip-0': '6 × ip', 'ttp-0': '' })
     })
 })
+
+/* ---------- search ---------- */
+
+async function searchFor(page: Page, query: string): Promise<void> {
+    await page.locator('#pvt-searchbox-button').click()
+    await page.locator('#pvt-search-input').fill(query)
+}
+
+const searchResults = (page: Page) => page.locator('.pvt-search-result')
+
+/** Which drawn dots the canvas lights and which it fades, a group named by its first member. */
+async function emphasis(page: Page): Promise<{ lit: string[], dimmed: string[] }> {
+    return page.evaluate(() => {
+        const lit: string[] = []
+        const dimmed: string[] = []
+        for (const node of window.__pivotick.graph!.getCanvasNodes()) {
+            const painted = node.getGraphElement()?.firstElementChild
+            if (!painted) continue
+            const members = node.isGroup ? (node as unknown as { info: { members: { id: string }[] } }).info.members.map((member) => member.id).sort() : []
+            const name = node.isGroup ? `group:${members[0]}` : node.id
+            if (Number(getComputedStyle(painted).opacity) < 1) dimmed.push(name)
+            else lit.push(name)
+        }
+        return { lit: lit.sort(), dimmed: dimmed.sort() }
+    })
+}
+
+/** Give two of the six shared IPs an address, so a search matches part of their group. */
+async function addressTwoIps(page: Page): Promise<void> {
+    await page.evaluate(() => {
+        const graph = window.__pivotick.graph!
+        graph.getMutableNode('ip-0')!.setData({ type: 'ip', addr: '10.0.0.1' })
+        graph.getMutableNode('ip-1')!.setData({ type: 'ip', addr: '10.0.0.2' })
+    })
+}
+
+test.describe('search inside groups', () => {
+    test('a match folded into a group names the group in its result row', async ({ page }) => {
+        await loadSimplify(page, withNeighbours())
+        await searchFor(page, 'ip')
+        // The six shared IPs, folded, and the lone IP on the canvas.
+        await expect(searchResults(page)).toHaveCount(7)
+        await expect(page.locator('.pvt-search-result__group')).toHaveCount(6)
+        await expect(page.locator('.pvt-search-result__group').first()).toHaveText('in 6 × ip')
+        await expect(searchResults(page).last().locator('.pvt-search-result__group')).toHaveCount(0)
+    })
+
+    test('picking a folded match opens its group and selects it', async ({ page }) => {
+        await loadSimplify(page, withNeighbours())
+        await searchFor(page, 'ip')
+        await page.locator('#pvt-search-input').press('Enter')
+        await expect.poll(async () => (await groupHolding(page, 'ip-0'))?.open).toBe(true)
+        await expect.poll(() => selectedIds(page)).toEqual(['ip-0'])
+    })
+
+    test('above the open limit, picking it selects the group instead', async ({ page }) => {
+        await loadSimplify(page, { UI: { mode: 'full', simplify: { rules: [{ kind: 'neighbours' }], openConfirmAbove: 3 } } })
+        await searchFor(page, 'ip')
+        await page.locator('#pvt-search-input').press('Enter')
+        const group = (await groupHolding(page, 'ip-0'))!
+        await expect.poll(() => selectedIds(page)).toEqual([group.id])
+        expect(group.open).toBe(false)
+    })
+
+    test('Show all lights every match and the group holding them, until Escape', async ({ page }) => {
+        await loadSimplify(page, withNeighbours())
+        await searchFor(page, 'ip')
+        await page.locator('.pvt-search-showall').click()
+        await expect(page.locator('.pvt-searchbox')).toHaveCount(0)
+        await expect.poll(async () => (await emphasis(page)).lit).toEqual(['group:ip-0', 'lonely'])
+        expect((await emphasis(page)).dimmed).toEqual(expect.arrayContaining(['ev-a', 'ev-b', 'group:dom-0']))
+
+        await page.keyboard.press('Escape')
+        await expect.poll(async () => (await emphasis(page)).dimmed).toEqual([])
+        await expect(page.locator('.pvt-group-matches .pvt-group-match')).toHaveCount(0)
+    })
+
+    test('a lit group draws its share over its ring and counts it in its tooltip', async ({ page }) => {
+        await loadSimplify(page, withNeighbours())
+        await addressTwoIps(page)
+        await searchFor(page, '10.0.0')
+        await expect(searchResults(page)).toHaveCount(2)
+        await page.locator('#pvt-search-input').press('Shift+Enter')
+
+        const group = (await groupHolding(page, 'ip-0'))!
+        const arc = page.locator('.pvt-group-matches .pvt-group-match')
+        await expect(arc).toHaveCount(1)
+        await expect(arc).toHaveAttribute('data-group', group.id)
+        // Two of six: one arc, not the full ring's two halves.
+        expect((await arc.getAttribute('d'))!.match(/A/g)).toHaveLength(1)
+
+        const tip = await openNodeTooltip(page, await groupDomId(page, 'ip-0'))
+        await expect(tip.locator('.pvt-group-summary-match')).toHaveText('2 of 6 match "10.0.0"')
+    })
+})

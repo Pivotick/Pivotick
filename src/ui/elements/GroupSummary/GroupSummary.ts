@@ -39,6 +39,13 @@ function section(title: string, chips: HTMLElement[]): HTMLElement {
 export function buildGroupSummary(simplify: Simplification, info: GroupInfo, options: GroupSummaryOptions): HTMLElement {
     const container = createHtmlElement('div', { class: 'pvt-group-summary' })
 
+    const matched = simplify.matchesIn(info)
+    if (matched > 0) {
+        const line = createHtmlElement('div', { class: 'pvt-group-summary-match' })
+        line.textContent = `${matched} of ${info.members.length} match "${simplify.matchQuery ?? ''}"`
+        container.append(line)
+    }
+
     const types = Object.entries(info.typeCounts).sort((a, b) => b[1] - a[1])
     if (types.length > 1) {
         container.append(section('Members', types.map(([type, count]) =>

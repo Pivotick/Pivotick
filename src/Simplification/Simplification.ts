@@ -105,6 +105,9 @@ export class Simplification {
     /** What the last run produced, to tell listeners only about a real change. */
     private signature = ''
     private destroyed = false
+    /** A search's matches, shown on the groups that hold them. */
+    private matches?: { ids: Set<string>, query: string }
+    private readonly matchListeners = new Set<() => void>()
 
     constructor(graph: Graph, options: SimplifyOptions | undefined, mode: GraphUIMode | undefined) {
         this.graph = graph
@@ -314,6 +317,34 @@ export class Simplification {
         return (typeof color === 'function' ? color(node) : color) ?? FALLBACK_COLOR
     }
 
+    /**
+     * Mark a search's matches: a closed group holding some draws their share over its ring,
+     * and its tooltip counts them. An empty list clears them.
+     */
+    setMatches(nodes: Node[], query = ''): void {
+        this.matches = nodes.length > 0 ? { ids: new Set(nodes.map(node => node.id)), query } : undefined
+        for (const listener of [...this.matchListeners]) listener()
+    }
+
+    /** How many of a group's members are among the matches set. */
+    matchesIn(group: GroupInfo | GroupNode): number {
+        const matches = this.matches
+        if (!matches) return 0
+        const info = group instanceof GroupNode ? group.info : group
+        return info.members.filter(member => matches.ids.has(member.id)).length
+    }
+
+    /** What the matches set were matched on. */
+    get matchQuery(): string | undefined {
+        return this.matches?.query
+    }
+
+    /** Subscribe to changes of the matches set. Returns its own unsubscribe. @private */
+    onMatchesChange(listener: () => void): () => void {
+        this.matchListeners.add(listener)
+        return () => { this.matchListeners.delete(listener) }
+    }
+
     /** Subscribe to changes of the grouping. Returns its own unsubscribe. */
     onChange(listener: () => void): () => void {
         this.listeners.add(listener)
@@ -454,6 +485,7 @@ export class Simplification {
     destroy(): void {
         this.destroyed = true
         this.listeners.clear()
+        this.matchListeners.clear()
     }
 
     private dropDissolvedFromSelection(): void {

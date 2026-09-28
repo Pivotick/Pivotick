@@ -623,6 +623,11 @@ export class UIManager {
         }
     }
 
+    /** Give the graph the keyboard, as a click on it would, so its shortcuts answer. */
+    focus(): void {
+        this.container.focus({ preventScroll: true })
+    }
+
     private setupGlobalInteractions() {
         const onKeydown = (event: KeyboardEvent) => this.keyManager.handleKeyPress(event)
         this.container.addEventListener('keydown', onKeydown)

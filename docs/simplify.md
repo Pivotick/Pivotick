@@ -191,6 +191,21 @@ A group is drawn as a node, and it acts for its members wherever that is unambig
 Open groups and pulled-out nodes last for the session and are not undo steps. To restore
 them, call `graph.simplify.open()` and `pullOut()`.
 
+## Searching
+
+Search looks through every node, the folded ones included.
+
+- A match inside a group says so in its result row: *in 12 × ip*.
+- Picking it opens the group and selects the node, as *Select members* would. A group with
+  more members than `openConfirmAbove` stays closed and is selected instead.
+- **Show all on the canvas**, the last row of the results or **Shift+Enter**, closes the
+  search and lights every match; everything else fades. A group holding matches is lit too,
+  and an arc in the theme colour over its ring shows their share. Its tooltip counts them:
+  *2 of 12 match "198.51"*. **Esc**, a click on empty canvas or the next search ends it.
+
+An app with a search of its own can mark its matches the same way with
+`graph.simplify.setMatches(nodes, query)`, and clear them with `setMatches([])`.
+
 ## The look
 
 A group is a ring around a disc in its type's colour, with the count on the disc once there is
@@ -253,4 +268,5 @@ group reads `grouped` too.
 | `open(group)` / `close(group)` | Put a group's members on the canvas, or fold them back. |
 | `pullOut(node)` / `putBack(node)` / `isPulledOut(node)` | Keep a node out of any group, or let it back. |
 | `summary()` | How many nodes are drawn, pass the filters, and are folded. |
+| `setMatches(nodes, query)` / `matchesIn(group)` | Mark a search's matches on the groups holding them; read how many a group holds. |
 | `onChange(listener)` | Called after the grouping changes; returns its unsubscribe. |

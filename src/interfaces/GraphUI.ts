@@ -612,6 +612,8 @@ export interface Keybinding {
     key: Key;
     callback: (event: KeyboardEvent) => void;
     description?: string;
+    /** Takes the key over from an earlier binding on purpose, until disposed: no warning. */
+    shadows?: boolean;
 }
 
 /**

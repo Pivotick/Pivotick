@@ -32,6 +32,10 @@ touching the data.
   the Leiden algorithm, at a level from fine (1) to coarse (7), a slider in the Simplify mode.
   It runs in the compute worker, the one the layout uses, and on the page where no worker can
   start; meanwhile the previous groups stay. Offered only when declared.
+- **Search finds folded nodes.** A match inside a group names it in its result row, and
+  picking it opens the group and selects the node. *Show all on the canvas* (Shift+Enter)
+  lights every match and fades the rest; a group holding matches draws their share as an arc
+  over its ring. `graph.simplify.setMatches(nodes, query)` marks an app's own matches.
 - **A rule of your own is a `partition(view)`** returning a key per node: nodes sharing a key
   become one group. Each rule sees the groups the rules above it made as ordinary nodes. A rule
   that throws is switched off and the others still run.

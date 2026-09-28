@@ -36,6 +36,28 @@ export function selectGroupMembers(uiManager: UIManager, group: GroupNode): void
     graph.selectElements(group.info.members)
 }
 
+/**
+ * Select a node wherever it is folded. The groups holding it open on the way, outermost
+ * first, as Select members opens one; a group above the open limit stays closed and is
+ * selected instead.
+ */
+export function revealNode(uiManager: UIManager, node: Node): void {
+    const graph = uiManager.graph
+    let drawn = node.canvasRepresentative()
+    while (drawn.isGroup) {
+        const group = drawn as GroupNode
+        if (group.info.members.length > graph.simplify.openConfirmAbove) {
+            graph.selectElement(group)
+            return
+        }
+        graph.simplify.open(group)
+        const next = node.canvasRepresentative()
+        if (next === drawn) break
+        drawn = next
+    }
+    graph.selectElement(node)
+}
+
 /** What an action on these nodes acts on: each group stands for its members. */
 export function expandGroups(nodes: Node[]): Node[] {
     const expanded = new Set<Node>()

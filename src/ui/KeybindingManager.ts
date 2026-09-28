@@ -14,7 +14,7 @@ export class KeybindingManager {
     /** Register a keybinding (most recent wins). Returns a disposer that restores the previous binding. */
     register(binding: Keybinding): () => void {
         const stack = this.bindings.get(binding.key) ?? []
-        if (stack.length > 0) {
+        if (stack.length > 0 && !binding.shadows) {
             console.warn(`Pivotick: keybinding "${binding.key}" is already bound; the new handler shadows it until disposed.`)
         }
         stack.push(binding.callback)

@@ -21,6 +21,7 @@ import type { Point } from '../../utils/GeometryHelper'
 import { defaultMarkerStyleMap, defaultNodeStyle, defaultEdgeStyle, defaultLabelStyle } from '../../styles/defaults'
 import { LabelGate } from './LabelGate'
 import { GroupOutlineDrawer } from './GroupOutlineDrawer'
+import { GroupMatchDrawer } from './GroupMatchDrawer'
 d3Select.prototype.transition = d3Transition
 
 const DEFAULT_RENDERER_OPTIONS = {
@@ -112,6 +113,7 @@ export class GraphSvgRenderer extends GraphRenderer {
     /** Where {@link showForecast} draws its outlines, and the elements it marked. */
     private forecastGroup!: Selection<SVGGElement, unknown, null, undefined>
     private groupOutlineDrawer!: GroupOutlineDrawer
+    private groupMatchDrawer!: GroupMatchDrawer
     private forecastMarks: SVGGElement[] = []
 
     /** Fires when the canvas becomes visible, to re-measure node sizes. */
@@ -185,6 +187,11 @@ export class GraphSvgRenderer extends GraphRenderer {
         this.forecastGroup = this.zoomGroup.append('g')
             .attr('class', 'pvt-forecast')
             .style('pointer-events', 'none')
+
+        // Above the nodes, and outside the node layer the emphasis dims.
+        const groupMatchGroup = this.zoomGroup.append('g').attr('class', 'pvt-group-matches')
+        this.groupMatchDrawer = new GroupMatchDrawer(this.graph, groupMatchGroup)
+        this.graph.simplify.onMatchesChange(() => this.groupMatchDrawer.update())
 
         // Above the nodes, so the chip that closes an open group can always be clicked.
         const groupChipGroup = this.zoomGroup.append('g').attr('class', 'pvt-group-chips')
@@ -661,6 +668,7 @@ export class GraphSvgRenderer extends GraphRenderer {
                 exit => exit.remove()
             )
         this.groupOutlineDrawer.update()
+        this.groupMatchDrawer.update()
 
         // Folding and layers are already applied: these are exactly the lines to draw.
         const edges = this.graph.getDrawnEdges()
@@ -787,12 +795,14 @@ export class GraphSvgRenderer extends GraphRenderer {
         this.updateNotePositions()
         this.updateNodePositions()
         this.groupOutlineDrawer.tick()
+        this.groupMatchDrawer.tick()
     }
 
     public nextTickFor(nodes: Node[]): void {
         this.updateEdgePositions(nodes) // Render edges first so nodes are drawn on top of them
         this.updateNodePositions(nodes)
         this.groupOutlineDrawer.tick()
+        this.groupMatchDrawer.tick()
     }
 
     public zoomIn(): void {

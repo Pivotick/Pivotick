@@ -3,13 +3,14 @@ import type { UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
 // import { SearchBox } from './SearchBox'
 import './mainheader.scss'
-import { Node } from '../../../Node'
 import type { SlidePanel } from '../SlidePanel/SlidePanel'
 import { GraphFilter } from '../GraphFilter/GraphFilter'
 import type { Modal } from '../../components/Modal'
 import { createShortcutBadge } from '../../../utils/ElementCreation'
 import { NoteSidebar } from '../NoteSidebar/NoteSidebar'
-import { pickNode } from '../../components/NodePickers'
+import { searchGraph } from '../../components/NodePickers'
+import { revealNode } from '../../groupActions'
+import { SearchHighlight } from '../../searchHighlight'
 import { HistoryMenu } from './HistoryMenu'
 
 export class Mainheader extends UIComponent {
@@ -160,10 +161,13 @@ export class Mainheader extends UIComponent {
 
         if (searchBoxButton) {
             this.track(this.uiManager.keyManager.register({ key: 'Shift+J', callback: () => this.searchBoxButton?.click() }))
+            const highlight = new SearchHighlight(this.uiManager)
+            this.track(() => highlight.clear())
             this.listen(searchBoxButton, 'click', async () => {
-                const node = await pickNode(this.uiManager)
-                if (!node) return
-                this.uiManager.graph.selectElement(node as unknown as Node)
+                highlight.clear()
+                const outcome = await searchGraph(this.uiManager)
+                if (outcome?.kind === 'pick') revealNode(this.uiManager, outcome.node)
+                else if (outcome?.kind === 'showAll') highlight.show(outcome.nodes, outcome.query)
             })
         }
 

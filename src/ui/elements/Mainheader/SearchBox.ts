@@ -6,14 +6,22 @@ import type { Node } from '../../../Node'
 import './searchbox.scss'
 import { nodeNameGetter } from '../../../utils/GraphGetters'
 import { createNodePreview } from '../../../utils/NodePreview'
+import type { GroupNode } from '../../../Simplification/GroupNode'
 
 interface Match {
     key: string,
     value: string,
 }
 
+export interface SearchBoxOptions {
+    /** Offer "Show all on the canvas", which ends the search on every match. */
+    showAll?: boolean
+}
+
 export class SearchBox extends UIComponent {
     private title?: string | HTMLElement
+    private readonly options: SearchBoxOptions
+    private query = ''
 
     public searchBox?: HTMLDivElement
     public searchInput?: HTMLInputElement
@@ -24,9 +32,10 @@ export class SearchBox extends UIComponent {
 
     private MAX_RESULT_COUNT = 12
 
-    constructor(uiManager: UIManager, title?: string | HTMLElement) {
+    constructor(uiManager: UIManager, title?: string | HTMLElement, options: SearchBoxOptions = {}) {
         super(uiManager)
         this.title = title
+        this.options = options
     }
 
     protected onMount(container: HTMLElement | undefined) {
@@ -60,6 +69,11 @@ export class SearchBox extends UIComponent {
             <span class="pvt-search-icon">${arrowEnter}</span>
             <span class="pvt-search-text">to select</span>
         </span>
+        <span class="pvt-search-hint-showall">
+            <span class="pvt-search-icon">⇧</span>
+            <span class="pvt-search-icon">${arrowEnter}</span>
+            <span class="pvt-search-text">to show all</span>
+        </span>
         <span>
             <span class="pvt-search-icon">esc</span>
             <span class="pvt-search-text">to close</span>
@@ -71,6 +85,8 @@ export class SearchBox extends UIComponent {
         this.searchInput = this.searchBox.querySelector('#pvt-search-input') ?? undefined
         this.searchResultsContainer = this.searchBox.querySelector('.pvt-search-results') ?? undefined
         this.searchSummaryContainer = this.searchBox.querySelector('.pvt-search-summary') ?? undefined
+
+        if (!this.options.showAll) this.searchBox.querySelector('.pvt-search-hint-showall')?.remove()
 
         const titleContainer = this.searchBox.querySelector('.pvt-title-container')
         if (this.title && titleContainer) {
@@ -92,6 +108,12 @@ export class SearchBox extends UIComponent {
                 return
             }
             if (!this.results || this.results.length < 1) return
+
+            if (event.key === 'Enter' && event.shiftKey && this.options.showAll) {
+                event.preventDefault()
+                this.showAll()
+                return
+            }
 
             const resultDisplayed = Math.min(this.MAX_RESULT_COUNT, this.results.length)
             switch (event.key) {
@@ -160,6 +182,15 @@ export class SearchBox extends UIComponent {
         infoKey!.textContent = `.${match.key}: `
         infoValue!.textContent = match.value
 
+        // A match folded into a group says which, since picking it opens that group.
+        const drawn = node.canvasRepresentative()
+        if (drawn.isGroup) {
+            const chip = document.createElement('span')
+            chip.className = 'pvt-search-result__group'
+            chip.textContent = `in ${this.uiManager.graph.simplify.labelOf((drawn as GroupNode).info)}`
+            container.querySelector('.pvt-search-result__info')?.appendChild(chip)
+        }
+
         return container
     }
 
@@ -220,6 +251,7 @@ export class SearchBox extends UIComponent {
         if (!this.searchResultsContainer || !this.searchSummaryContainer) return
 
         this.results = undefined
+        this.query = needle.trim()
         this.searchResultsContainer.innerHTML = ''
         this.searchSummaryContainer.innerHTML = ''
 
@@ -257,7 +289,25 @@ export class SearchBox extends UIComponent {
   </div>
 `
         const summary = template.content.firstElementChild as HTMLDivElement
+        if (this.options.showAll && this.results.length > 0) {
+            const button = document.createElement('button')
+            button.type = 'button'
+            button.className = 'pvt-search-showall'
+            button.textContent = 'Show all on the canvas'
+            button.addEventListener('click', () => this.showAll())
+            summary.appendChild(button)
+        }
         return summary
+    }
+
+    /** End the search on every match, not only the ones listed. */
+    private showAll(): void {
+        if (!this.results?.length || !this.searchBox) return
+        this.searchBox.dispatchEvent(new CustomEvent('pvt-searchbox-showall', {
+            detail: { nodes: this.results.map(([node]) => node), query: this.query },
+            bubbles: true,
+            cancelable: true,
+        }))
     }
 
 
