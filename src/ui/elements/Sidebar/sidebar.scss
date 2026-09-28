@@ -353,6 +353,11 @@
     display: flex !important;
 }
 
+// The slot takes no row of its own: a hidden group panel leaves no gap in the column.
+.pvt-sidebar-group-slot {
+    display: contents;
+}
+
 // A selected group: the group panel stands in for the properties and neighbours.
 .pvt-sidebar-elements.pvt-sidebar-group-selected {
     > .pvt-properties-panel,
