@@ -1360,11 +1360,11 @@ export const fixtures = {
         })
         const lonely = mkNode('lonely', -400, 250, { type: 'ip' })
         const edges = [
-            ...ips.flatMap((ip) => [new Edge(`ev-a-${ip.id}`, evA, ip), new Edge(`ev-b-${ip.id}`, evB, ip)]),
-            ...ttps.flatMap((ttp) => [new Edge(`ev-a-${ttp.id}`, evA, ttp), new Edge(`ev-b-${ttp.id}`, evB, ttp)]),
-            ...domains.map((dom) => new Edge(`ev-a-${dom.id}`, evA, dom)),
-            ...files.map((file) => new Edge(`hub-${file.id}`, hub, file)),
-            new Edge('ev-b-hub', evB, hub),
+            ...ips.flatMap((ip) => [new Edge(`ev-a-${ip.id}`, evA, ip, { kind: 'sighting' }), new Edge(`ev-b-${ip.id}`, evB, ip, { kind: 'sighting' })]),
+            ...ttps.flatMap((ttp) => [new Edge(`ev-a-${ttp.id}`, evA, ttp, { kind: 'uses' }), new Edge(`ev-b-${ttp.id}`, evB, ttp, { kind: 'uses' })]),
+            ...domains.map((dom) => new Edge(`ev-a-${dom.id}`, evA, dom, { kind: 'related' })),
+            ...files.map((file) => new Edge(`hub-${file.id}`, hub, file, { kind: 'related' })),
+            new Edge('ev-b-hub', evB, hub, { kind: 'related' }),
         ]
         return {
             nodes: [evA, evB, ...ips, ...ttps, ...domains, hub, ...files, lonely],

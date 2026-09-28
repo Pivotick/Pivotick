@@ -8,6 +8,8 @@
   load without being redrawn, then jump on the next redraw.
 - A node's tooltip no longer closes when the pointer crosses a gap inside the node's own
   drawing on the way in.
+- Pointing at an edge legend entry now lights edges folded into a closed cluster's line
+  instead of dimming them with everything else.
 
 ### Simplify: fold nodes that play the same role
 

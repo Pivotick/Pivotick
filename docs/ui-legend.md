@@ -234,7 +234,8 @@ nothing moves, so it is the cheap way to find where a category sits before decid
 whether to switch it off.
 
 A row on a [`scope: 'edge'`](#keying-edges-instead-of-nodes) section lights its
-**lines**, with the nodes receding along with the other layers.
+**lines**, with the nodes receding along with the other layers. An edge folded into a
+closed cluster or a [simplify](simplify.md) group lights the line drawn in its place.
 
 Pointing at a category that is already switched off dims nothing — there is nothing
 left on the canvas for it to light.

@@ -1450,6 +1450,11 @@ export class Graph {
         return this.projection.project(topVisible)
     }
 
+    /** @private The line the canvas draws for this real edge, a stand-in when its ends are folded. */
+    public getDrawnLine(edge: Edge): Edge | undefined {
+        return this.parentGraph ? undefined : this.projection.getDrawnLine(edge)
+    }
+
     /** @private The drawn edges ending on any of these nodes. */
     public getDrawnEdgesTouching(nodes: Node[]): Edge[] {
         return this.parentGraph ? [] : this.projection.getDrawnEdgesTouching(nodes)

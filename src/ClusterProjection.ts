@@ -53,6 +53,8 @@ export class ClusterProjection {
     private lines: ProjectedLine[] = []
     private pulls: ClusterPull[] = []
     private linesByNode = new Map<string, Edge[]>()
+    /** The drawn line of each real edge on a shown line, by the real edge's id. */
+    private lineByEdge = new Map<string, Edge>()
     /** Stand-ins by their pair of dots, so a line that stays keeps its DOM element. */
     private standIns = new Map<string, Edge>()
 
@@ -70,6 +72,11 @@ export class ClusterProjection {
     /** The edges the main canvas draws, from the last {@link refresh}. */
     getDrawnEdges(): Edge[] {
         return this.lines.filter(line => line.shown.length > 0).map(line => line.edge)
+    }
+
+    /** The line the main canvas draws for this real edge: itself, a stand-in, or none. */
+    getDrawnLine(edge: Edge): Edge | undefined {
+        return this.lineByEdge.get(edge.id)
     }
 
     /** The drawn edges ending on any of these nodes, for a partial re-position. */
@@ -140,6 +147,7 @@ export class ClusterProjection {
     private materialise(): void {
         const used = new Set<string>()
         this.linesByNode.clear()
+        this.lineByEdge.clear()
         for (const line of this.lines) {
             const only = line.members.length === 1 ? line.members[0] : undefined
             if (only && only.from === line.from && only.to === line.to) {
@@ -156,6 +164,7 @@ export class ClusterProjection {
                 line.edge = standIn
             }
             if (line.shown.length === 0) continue
+            for (const edge of line.shown) this.lineByEdge.set(edge.id, line.edge)
             for (const id of [line.from.id, line.to.id]) {
                 const list = this.linesByNode.get(id)
                 if (list) list.push(line.edge)

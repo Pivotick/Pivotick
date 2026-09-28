@@ -683,9 +683,13 @@ export class LegendSectionView {
         const graph = this.uiManager.graph
         const entry = this.entries.find(candidate => candidate.id === id)
         const items = entry ? this.items().filter(entry.predicate) : []
+        // An edge folded into a group or a closed cluster lights the line drawn for it.
+        if (this.scope === 'edge') {
+            const lines = (items as Edge[]).map(edge => graph.getDrawnLine(edge)).filter(line => line !== undefined)
+            return graph.emphasiseElements([...new Set(lines)])
+        }
         // A folded node lights the group drawn for it, with its share arced on the ring,
         // as search marks a group holding matches: a mixed group is not all of this entry.
-        if (this.scope === 'edge') return graph.emphasiseElements(items)
         const nodes = items as Node[]
         graph.simplify.setMatches(nodes.filter(node => node.foldedInto))
         graph.emphasiseElements([...new Set(nodes.map(node => node.canvasRepresentative()))])

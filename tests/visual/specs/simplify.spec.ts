@@ -1016,6 +1016,25 @@ async function emphasis(page: Page): Promise<{ lit: string[], dimmed: string[] }
     })
 }
 
+/** Which drawn lines the canvas lights and which it fades, named `from->to` as {@link emphasis} names dots. */
+async function lineEmphasis(page: Page): Promise<{ lit: string[], dimmed: string[] }> {
+    return page.evaluate(() => {
+        const name = (node: { id: string, isGroup?: boolean }) => node.isGroup
+            ? `group:${(node as unknown as { info: { members: { id: string }[] } }).info.members.map((member) => member.id).sort()[0]}`
+            : node.id
+        const lit: string[] = []
+        const dimmed: string[] = []
+        for (const line of window.__pivotick.graph!.getDrawnEdges()) {
+            const painted = line.getGraphElement()?.firstElementChild
+            if (!painted) continue
+            const id = `${name(line.from)}->${name(line.to)}`
+            if (Number(getComputedStyle(painted).opacity) < 1) dimmed.push(id)
+            else lit.push(id)
+        }
+        return { lit: lit.sort(), dimmed: dimmed.sort() }
+    })
+}
+
 /** Give two of the six shared IPs an address, so a search matches part of their group. */
 async function addressTwoIps(page: Page): Promise<void> {
     await page.evaluate(() => {
@@ -1049,6 +1068,14 @@ test.describe('hovering the legend', () => {
         // Three TTPs of nine members: one arc, not the full ring.
         await expect(groupArcs(page)).toHaveCount(1)
         expect((await groupArcs(page).getAttribute('d'))!.match(/A/g)).toHaveLength(1)
+    })
+
+    test('an edge entry lights the lines folded into a group', async ({ page }) => {
+        await loadSimplify(page, { UI: { mode: 'full', simplify: { rules: [{ kind: 'neighbours' }] }, legend: { sections: [{ key: 'kind', scope: 'edge' }] } } })
+        await legendEntry(page, 'sighting').hover()
+        // The twelve sightings are drawn as the two lines into the IP group.
+        await expect.poll(async () => (await lineEmphasis(page)).lit).toEqual(['ev-a->group:ip-0', 'ev-b->group:ip-0'])
+        expect((await lineEmphasis(page)).dimmed).toContain('ev-a->group:dom-0')
     })
 
     test('a search\'s marks come back once the pointer leaves', async ({ page }) => {
