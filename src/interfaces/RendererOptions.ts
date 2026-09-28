@@ -201,7 +201,8 @@ export interface GraphRendererOptions {
      */
     enableFocusMode: boolean,
     /**
-     * Controls whether nodes can be expanded or collapsed to show their children
+     * Controls whether nodes can be expanded or collapsed to show their children.
+     * `false` also drops the chevron, the `Enter` shortcut and the dashed collapsed outline.
      * @default true
      */
     enableNodeExpansion: boolean,
