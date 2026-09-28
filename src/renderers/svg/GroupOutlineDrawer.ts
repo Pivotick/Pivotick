@@ -1,4 +1,4 @@
-import type { Selection } from 'd3-selection'
+import { select, type Selection } from 'd3-selection'
 import type { Graph } from '../../Graph'
 import type { Node } from '../../Node'
 import type { GroupNode } from '../../Simplification/GroupNode'
@@ -19,8 +19,8 @@ interface Outline {
 
 /**
  * The outline of an open group: a wash in the group's colour around its members, under
- * the edges, and a chip naming the group above the nodes, which closes it. Follows the
- * members on every tick.
+ * the edges, and a chip naming the group above the nodes. Dragging the chip moves the
+ * members; its × folds them back. Follows the members on every tick.
  */
 export class GroupOutlineDrawer {
     private readonly graph: Graph
@@ -90,32 +90,37 @@ export class GroupOutlineDrawer {
 
         const shell = document.createElement('div')
         shell.className = 'pvt-group-chip-shell'
-        const chip = document.createElement('button')
-        chip.type = 'button'
+        const chip = document.createElement('div')
         chip.className = 'pvt-group-chip'
         chip.style.setProperty('--pvt-group-color', this.colorOf(group))
-        chip.title = 'Fold back into the group'
 
         const label = document.createElement('span')
         label.className = 'pvt-group-chip-label'
+        label.title = `${this.graph.simplify.ruleLabel(group.info.rule)} · drag to move the group`
         const custom = this.graph.getOptions().render?.groupOutline?.(group.info)
         if (custom instanceof HTMLElement) label.append(custom)
         else label.textContent = typeof custom === 'string' && custom !== '' ? custom : this.graph.simplify.labelOf(group.info)
+        const members = () => this.outlines.find(candidate => candidate.group.id === group.id)?.parts ?? []
+        select(label).call(this.graph.simulation.createMembersDragBehavior<HTMLSpanElement>(members)
+            // Measured in the canvas's own units, which the chip's HTML box is not.
+            .container(() => this.chipLayer.node()!))
 
-        const close = document.createElement('span')
+        const close = document.createElement('button')
+        close.type = 'button'
         close.className = 'pvt-group-chip-close'
-        close.setAttribute('aria-hidden', 'true')
+        close.title = 'Fold back into the group'
+        close.setAttribute('aria-label', 'Fold back into the group')
         close.textContent = '×'
-
-        chip.append(label, close)
-        // Kept from the canvas: a press here must not start a pan or clear the selection.
-        for (const type of ['pointerdown', 'mousedown', 'dblclick', 'wheel'] as const) {
-            chip.addEventListener(type, event => event.stopPropagation())
-        }
-        chip.addEventListener('click', (event) => {
+        close.addEventListener('click', (event) => {
             event.stopPropagation()
             this.graph.simplify.close(group)
         })
+
+        chip.append(label, close)
+        // Kept from the canvas: a press here must not start a pan or clear the selection.
+        for (const type of ['pointerdown', 'mousedown', 'click', 'dblclick', 'wheel'] as const) {
+            chip.addEventListener(type, event => event.stopPropagation())
+        }
         shell.append(chip)
         box.append(shell)
     }

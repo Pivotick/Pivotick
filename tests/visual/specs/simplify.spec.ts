@@ -1,4 +1,4 @@
-import { test, expect, gotoHarness, harness, canvas, openNodeTooltip } from '../helpers'
+import { test, expect, gotoHarness, harness, canvas, openNodeTooltip, centerOf } from '../helpers'
 import type { Page } from '@playwright/test'
 
 /**
@@ -571,6 +571,14 @@ async function isDimmed(page: Page, id: string): Promise<boolean> {
     }, id)
 }
 
+/** Where these nodes are, in graph units. */
+async function memberPositions(page: Page, ids: string[]): Promise<Record<string, { x: number, y: number }>> {
+    return page.evaluate((nodeIds) => Object.fromEntries(nodeIds.map((id) => {
+        const node = window.__pivotick.graph!.getMutableNode(id)!
+        return [id, { x: node.x!, y: node.y! }]
+    })), ids)
+}
+
 async function selectGroupOf(page: Page, member: string): Promise<void> {
     await page.evaluate((id) => {
         const graph = window.__pivotick.graph!
@@ -596,9 +604,42 @@ test.describe('opening a group', () => {
         await expect(chip(page)).toHaveText('5 × domain×')
         await expect(canvas(page)).toHaveScreenshot('simplify-open-group.png')
 
-        await chip(page).click()
+        await chip(page).locator('.pvt-group-chip-close').click()
         await expect.poll(async () => (await groupHolding(page, 'dom-0'))?.open).toBe(false)
         await expect(chip(page)).toHaveCount(0)
+    })
+
+    test('the chip names the rule that made the group', async ({ page }) => {
+        await loadSimplify(page, withNeighbours())
+        await page.evaluate(() => {
+            const simplify = window.__pivotick.graph!.simplify
+            simplify.open(simplify.groupOf('dom-0')!)
+        })
+        await expect(page.locator('.pvt-group-chip-label')).toHaveAttribute('title', 'Same neighbours · drag to move the group')
+    })
+
+    test('dragging the chip moves every member by the same amount, and leaves the group open', async ({ page }) => {
+        await loadSimplify(page, withNeighbours())
+        await page.evaluate(() => {
+            const simplify = window.__pivotick.graph!.simplify
+            simplify.open(simplify.groupOf('dom-0')!)
+        })
+        const before = await memberPositions(page, DOMAINS)
+        const bystander = await memberPositions(page, ['ev-a'])
+        const handle = await centerOf(page.locator('.pvt-group-chip-label'))
+        await page.mouse.move(handle.x, handle.y)
+        await page.mouse.down()
+        await page.mouse.move(handle.x + 120, handle.y + 60, { steps: 10 })
+        await page.mouse.up()
+
+        const after = await memberPositions(page, DOMAINS)
+        const moves = DOMAINS.map((id) => ({ dx: Math.round(after[id].x - before[id].x), dy: Math.round(after[id].y - before[id].y) }))
+        expect(moves[0].dx).toBeGreaterThan(0)
+        expect(moves[0].dy).toBeGreaterThan(0)
+        expect(moves).toEqual(DOMAINS.map(() => moves[0]))
+        // Anything else stayed where it was.
+        expect(await memberPositions(page, ['ev-a'])).toEqual(bystander)
+        expect((await groupHolding(page, 'dom-0'))!.open).toBe(true)
     })
 
     test('render.groupOutline names the chip', async ({ page }) => {

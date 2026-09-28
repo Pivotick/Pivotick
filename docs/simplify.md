@@ -178,7 +178,8 @@ A group is drawn as a node, and it acts for its members wherever that is unambig
 
 - **Open** it with a double-click, **Enter**, the sidebar or the context menu. Its members come
   back as ordinary nodes, inside a wash in the group's colour, and a light pull keeps them
-  together. The chip above them folds them back. A group with more members than
+  together. Drag the chip above them to move them all; its **×** folds them back. Its tooltip
+  names the rule that made the group. A group with more members than
   `UI.simplify.openConfirmAbove` (100) asks first.
 - **Select** it to see its members in the sidebar, in a sortable list. *Pull out* keeps one
   member out of the group until it is put back, from its context menu.
@@ -229,7 +230,7 @@ chip over an open group says:
 ```ts
 render: {
     groupStyle: (group) => group.rule === 'bySensor' ? { color: '#6b7280' } : undefined,
-    groupOutline: (group) => `Fold ${group.members.length} back`,
+    groupOutline: (group) => `${group.members.length} from ${group.rule}`,
 }
 ```
 

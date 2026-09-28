@@ -618,28 +618,51 @@ dl.pvt-property-list {
     .pvt-group-chip {
         display: inline-flex;
         align-items: center;
-        gap: 8px;
+        gap: 4px;
         height: 22px;
-        padding: 0 8px 0 11px;
-        border: 0;
+        padding: 0 4px 0 0;
         border-radius: 11px;
         background: var(--pvt-group-color);
         color: #fff;
         font: 600 12px/1 var(--pvt-font-family);
         white-space: nowrap;
-        cursor: pointer;
         pointer-events: auto;
         box-sizing: border-box;
     }
 
-    .pvt-group-chip-close {
-        font-size: 14px;
-        font-weight: 400;
-        opacity: 0.85;
+    // All of the chip but its ×, so the whole pill is the handle.
+    .pvt-group-chip-label {
+        display: inline-flex;
+        align-items: center;
+        align-self: stretch;
+        padding-left: 11px;
+        cursor: grab;
+        user-select: none;
+
+        &:active {
+            cursor: grabbing;
+        }
     }
 
-    .pvt-group-chip:hover .pvt-group-chip-close {
-        opacity: 1;
+    .pvt-group-chip-close {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        padding: 0;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        color: inherit;
+        font: 400 14px/1 var(--pvt-font-family);
+        opacity: 0.85;
+        cursor: pointer;
+
+        &:hover {
+            opacity: 1;
+            background: rgb(255 255 255 / 0.2);
+        }
     }
 }
 

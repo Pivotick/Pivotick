@@ -1273,23 +1273,9 @@ export class Simulation {
                 }
             })
             .on('drag.draggedelement', (event, d) => {
-                if (!this.dragInProgress && this.isEnabled()) {
-                    this.dragInProgress = true
-                    this.restart()
-                    this.simulation
-                        .alphaTarget(0.3)
-                        .restart()
-                }
+                this.reheatForDrag()
                 if (this.graphInteraction.hasActiveMultiselection()) {
-                    this.dragSelection.forEach(({ node, dx, dy }) => {
-                        const nx = this.applySnap(event.x + dx)
-                        const ny = this.applySnap(event.y + dy)
-
-                        node.fx = nx
-                        node.fy = ny
-                        node.x = nx
-                        node.y = ny
-                    })
+                    this.moveDragSelection(event.x, event.y)
                 } else {
                     const gx = this.applySnap(event.x)
                     const gy = this.applySnap(event.y)
@@ -1307,13 +1293,7 @@ export class Simulation {
                 }
             })
             .on('end.draggedelement', (event, d) => {
-                if (!event.active && this.dragInProgress) {
-                    this.dragInProgress = false
-                    this.restart()
-                    this.simulation
-                        .alphaTarget(this.options.d3AlphaTarget)
-                        .restart()
-                }
+                this.coolAfterDrag(event.active)
                 if (!this.options.freezeNodesOnDrag) {
                     if (this.graphInteraction.hasActiveMultiselection()) {
                         this.dragSelection.forEach(({ node }) => node.unfreeze())
@@ -1324,6 +1304,76 @@ export class Simulation {
                 }
                 this.graphInteraction.dragended(event.sourceEvent, event.subject)
             })
+    }
+
+    /**
+     * Drag a set of nodes together from a handle that is none of them, as a
+     * multi-selection drags: an open group's chip moves its members.
+     *
+     * @param members - Read when the drag starts; the first one is the drag's subject.
+     * @private
+     */
+    public createMembersDragBehavior<E extends Element>(members: () => Node[]) {
+        let anchor: Node | undefined
+        return d3Drag<E, unknown>()
+            .filter((event: MouseEvent) => !event.button && !this.graph.editing.connectManager.isActiveAndNotIdle())
+            .subject(() => {
+                anchor = members()[0]
+                return { x: anchor?.x ?? 0, y: anchor?.y ?? 0 }
+            })
+            .on('start', (event) => {
+                this.dragSelection = members().map((node) => {
+                    node.freeze()
+                    return { node, dx: node.x! - event.subject.x, dy: node.y! - event.subject.y }
+                })
+            })
+            .on('drag', (event) => {
+                if (!anchor) return
+                this.reheatForDrag()
+                this.moveDragSelection(event.x, event.y)
+                this.graphInteraction.dragging(event.sourceEvent, anchor)
+                if (!this.engineRunning || !this.isEnabled()) this.graph.nextTickFor(this.dragSelection.map(({ node }) => node))
+            })
+            .on('end', (event) => {
+                this.coolAfterDrag(event.active)
+                if (!this.options.freezeNodesOnDrag) this.dragSelection.forEach(({ node }) => node.unfreeze())
+                this.dragSelection = []
+                if (anchor) this.graphInteraction.dragended(event.sourceEvent, anchor)
+                anchor = undefined
+            })
+    }
+
+    /** Warm the simulation for the first move of a drag. */
+    private reheatForDrag(): void {
+        if (this.dragInProgress || !this.isEnabled()) return
+        this.dragInProgress = true
+        this.restart()
+        this.simulation
+            .alphaTarget(0.3)
+            .restart()
+    }
+
+    /** Let the simulation settle once the last drag ends. */
+    private coolAfterDrag(active: number): void {
+        if (active || !this.dragInProgress) return
+        this.dragInProgress = false
+        this.restart()
+        this.simulation
+            .alphaTarget(this.options.d3AlphaTarget)
+            .restart()
+    }
+
+    /** Move every node of the drag selection, keeping its offset from the pointer's node. */
+    private moveDragSelection(x: number, y: number): void {
+        this.dragSelection.forEach(({ node, dx, dy }) => {
+            const nx = this.applySnap(x + dx)
+            const ny = this.applySnap(y + dy)
+
+            node.fx = nx
+            node.fy = ny
+            node.x = nx
+            node.y = ny
+        })
     }
 
     public isDragging(): boolean {

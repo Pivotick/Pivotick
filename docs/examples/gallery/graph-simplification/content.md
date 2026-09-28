@@ -18,8 +18,8 @@ as a key, and nodes sharing a key become one group. The built-in **neighbour rul
 nodes of one type linked to exactly the same nodes.
 
 - Open the **Simplify** mode on the rail to switch a rule off or change its smallest group.
-- **Double-click** a group to put its members back on the canvas; the chip above them folds
-  them back.
+- **Double-click** a group to put its members back on the canvas. Drag the chip above them to
+  move them together; its **×** folds them back.
 - **Select** a group: the sidebar lists its members, each with *Pull out*.
 
 The [Simplify](/simplify) page covers the rules, custom rules and the group's look.
