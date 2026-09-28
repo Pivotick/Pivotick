@@ -638,14 +638,22 @@
 
 .pvt-triage-foot {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 6px;
     padding: 6px 10px;
     border-top: 1px solid var(--pvt-chrome-border);
     background-color: var(--pvt-chrome-bg);
+
+    // Fixed widths, so a button keeps its place from one provider to the next.
+    > .pvt-triage-btn {
+        flex: none;
+        white-space: nowrap;
+    }
 }
 
 .pvt-triage-note {
+    flex: 1 1 200px;
     font-size: 11px;
 }
 

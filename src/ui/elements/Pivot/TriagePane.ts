@@ -80,8 +80,13 @@ interface TriageRow {
 /** What the pane needs from whoever owns it — every one of them an act, not a query. */
 export interface TriagePaneDeps {
     pivots: PivotManager
-    /** Commit the marked rows. The owner reports the outcome and offers the undo. */
-    ingest: (pivotId: string) => void
+    /**
+     * Commit the marked rows, folded into one group per type when `group` is set. The
+     * owner reports the outcome and offers the undo.
+     */
+    ingest: (pivotId: string, options?: { group?: boolean }) => void
+    /** Whether landings can be grouped, which is whether the graph simplifies at all. */
+    canGroup: boolean
     /** Run this pivot again, with the origin and narrowing this set was fetched with. */
     rerun: (set: PivotCandidateSet) => void
     /** Drop the set, and the pane with it. Rejects nothing. */
@@ -1064,6 +1069,14 @@ export class TriagePane {
         ingest.disabled = marked === 0
         ingest.addEventListener('click', () => this.deps.ingest(this.pivotId))
         foot.appendChild(ingest)
+
+        if (this.deps.canGroup) {
+            const grouped = this.footButton(`Ingest in a group (${fmt(marked)})`, marked === 0,
+                () => this.deps.ingest(this.pivotId, { group: true }))
+            grouped.classList.add('pvt-triage-ingest-group')
+            grouped.title = 'Land the selected rows folded, one group per type'
+            foot.appendChild(grouped)
+        }
 
         // *Select all* then *Ingest selected* is the answer to a provider the analyst
         // already trusts, and a queue of five of them is ten clicks. This is those two

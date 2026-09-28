@@ -131,6 +131,25 @@ export interface CommunitiesRule {
     useWorker?: boolean
 }
 
+/**
+ * Fold what a pivot brought in: the nodes an ingest added, one group per type, when that
+ * ingest was asked to land in a group (`graph.simplify.groupLanding`). A member stays
+ * whatever links it gains. Added at the top of the rules, on, the first time a landing is
+ * grouped; declare it to place it elsewhere or preset its smallest group.
+ */
+export interface LandingsRule {
+    kind: 'landings'
+    /** @default true */
+    enabled?: boolean
+    /**
+     * Fewer nodes of one type than this land as plain nodes. Between 2 and 50.
+     * @default 2
+     */
+    minSize?: number
+    /** Overrides `render.nodeTypeAccessor` for this rule. */
+    typeOf?: (node: Node) => string | undefined
+}
+
 /** A rule of the app's own. */
 export interface CustomRule {
     kind: 'custom'
@@ -155,7 +174,7 @@ export interface CustomRule {
     partition: (view: GraphView) => Map<string, string>
 }
 
-export type SimplifyRule = NeighboursRule | ChainsRule | DegreeRule | KCoreRule | CommunitiesRule | CustomRule
+export type SimplifyRule = NeighboursRule | ChainsRule | DegreeRule | KCoreRule | CommunitiesRule | LandingsRule | CustomRule
 
 /** `UI.simplify`: which rules fold the graph, and how groups are named. */
 export interface SimplifyOptions {

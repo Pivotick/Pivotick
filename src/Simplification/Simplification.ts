@@ -6,7 +6,7 @@ import type {
 } from '../interfaces/Simplify'
 import { GroupNode } from './GroupNode'
 import { defaultGroupStyle, groupRadius } from './groupStyle'
-import { chainsPartition, degreePartition, kCorePartition, neighboursPartition } from './rules'
+import { chainsPartition, degreePartition, kCorePartition, landingsPartition, neighboursPartition } from './rules'
 import { COMMUNITY_RESOLUTIONS, type CommunityGraph } from '../plugins/analytics/Leiden'
 import { findCommunities } from '../SimulationWorkerWrapper'
 
@@ -30,6 +30,7 @@ const BUILTIN_TEXT: Record<BuiltinKind, { label: string, description: string }> 
     degree: { label: 'Few links', description: 'Nodes with fewer links than this fold into the nodes they hang from.' },
     kcore: { label: 'Outside the core', description: 'Peels off nodes with fewer links than this, again and again, into the core.' },
     communities: { label: 'Communities', description: 'Whole neighbourhoods into a few super-nodes.' },
+    landings: { label: 'Pivot landings', description: 'What a pivot brought in, one group per type.' },
 }
 
 /** Offered in full mode when no rule is declared; Communities only when declared. */
@@ -95,6 +96,8 @@ export class Simplification {
     private rules: RuleState[] = []
     private groups: GroupNode[] = []
     private readonly pulledOut = new Set<string>()
+    /** The ingests asked to land in a group, by run id. */
+    private readonly landingRuns = new Set<string>()
     /** Where each folded node sat relative to its group, to put it back there. */
     private readonly offsets = new Map<Node, { dx: number, dy: number }>()
     private readonly listeners = new Set<() => void>()
@@ -130,7 +133,8 @@ export class Simplification {
     /** Replace the rules. Their order is the order they run in. */
     setRules(rules: SimplifyRule[]): void {
         if (!this.featureEnabled) return
-        this.rules = this.buildRules(rules)
+        const keepLandings = this.landingRuns.size > 0 && !rules.some(rule => rule.kind === 'landings')
+        this.rules = this.buildRules(keepLandings ? [{ kind: 'landings' }, ...rules] : rules)
         this.regroup()
     }
 
@@ -278,6 +282,34 @@ export class Simplification {
         return this.pulledOut.has(typeof node === 'string' ? node : node.id)
     }
 
+    /**
+     * Land what this pivot run adds in groups, one per type. Call it with
+     * `graph.pivots.candidates(pivotId).runId` before `pivots.ingest`, so the nodes are
+     * never drawn loose; calling it after folds them on the next redraw. Adds the Pivot
+     * landings rule at the top when it is not declared, and switches it on.
+     */
+    groupLanding(runId: string): void {
+        if (!this.featureEnabled) return
+        this.landingRuns.add(runId)
+        const state = this.rules.find(candidate => candidate.rule.kind === 'landings')
+        if (!state) this.rules.unshift(...this.buildRules([{ kind: 'landings' }]))
+        else {
+            state.enabled = true
+            state.failed = false
+        }
+        this.regroup()
+    }
+
+    /** Let what this run added be drawn as plain nodes again. */
+    ungroupLanding(runId: string): void {
+        if (this.landingRuns.delete(runId)) this.regroup()
+    }
+
+    /** Whether this pivot run was asked to land in a group. */
+    isLandingGrouped(runId: string): boolean {
+        return this.landingRuns.has(runId)
+    }
+
     /** The members above which Open asks first (`UI.simplify.openConfirmAbove`). */
     get openConfirmAbove(): number {
         return this.openConfirmAboveValue
@@ -402,7 +434,7 @@ export class Simplification {
                     state.failed = true
                     continue
                 }
-                for (const group of this.formGroups(state, view, partition, previous, claimed)) {
+                for (const group of this.formGroups(state, view, partition, previous, claimed, next)) {
                     group.info.level = state.level
                     next.push(group)
                     state.groups++
@@ -438,6 +470,7 @@ export class Simplification {
             case 'degree': return degreePartition(view, state.threshold!)
             case 'kcore': return kCorePartition(view, state.threshold!)
             case 'communities': return this.communitiesPartition(state, view)
+            case 'landings': return landingsPartition(view, this.landingRuns)
             default: return neighboursPartition(view)
         }
     }
@@ -523,7 +556,7 @@ export class Simplification {
             const threshold = rule.kind === 'degree' ? rule.minDegree : rule.kind === 'kcore' ? rule.k : undefined
             const isThreshold = rule.kind === 'degree' || rule.kind === 'kcore'
             const isCommunities = rule.kind === 'communities'
-            const fallbackMin = rule.kind === 'custom' ? DEFAULT_CUSTOM_MIN : DEFAULT_BUILTIN_MIN
+            const fallbackMin = rule.kind === 'custom' || rule.kind === 'landings' ? DEFAULT_CUSTOM_MIN : DEFAULT_BUILTIN_MIN
             states.push({
                 rule,
                 id,
@@ -597,7 +630,8 @@ export class Simplification {
         }
 
         const accessor = this.graph.getOptions().render?.nodeTypeAccessor
-        const ownTypeOf = state.rule.kind === 'neighbours' || state.rule.kind === 'chains' ? state.rule.typeOf : undefined
+        const ownTypeOf = state.rule.kind === 'neighbours' || state.rule.kind === 'chains' || state.rule.kind === 'landings'
+            ? state.rule.typeOf : undefined
         const typeOf = ownTypeOf ?? accessor
         const nodes = dots.filter(node =>
             !annotated.has(node.id)
@@ -620,7 +654,7 @@ export class Simplification {
     }
 
     /** Turn one rule's partition into groups, keeping each one's identity where it can. */
-    private formGroups(state: RuleState, view: GraphView, partition: Map<string, string>, previous: GroupNode[], claimed: Set<GroupNode>): GroupNode[] {
+    private formGroups(state: RuleState, view: GraphView, partition: Map<string, string>, previous: GroupNode[], claimed: Set<GroupNode>, placed: GroupNode[]): GroupNode[] {
         const byId = new Map(view.nodes.map(node => [node.id, node]))
         const buckets = new Map<string, Node[]>()
         for (const [id, key] of partition) {
@@ -643,7 +677,7 @@ export class Simplification {
             group.info.members = members
             group.info.typeCounts = this.countTypes(parts, view)
             group.info.anchors = this.anchorsOf(parts, view)
-            if (!inherited) this.keepOffAnchors(group)
+            if (!inherited) this.keepOffAnchors(group, [...placed, ...formed])
             this.applyStyle(group)
             formed.push(group)
         }
@@ -686,15 +720,16 @@ export class Simplification {
      * A hub's leaves are centred on the hub, so their centroid lands on it. Then the group
      * takes the place of the member nearest that centroid instead.
      */
-    private keepOffAnchors(group: GroupNode): void {
+    private keepOffAnchors(group: GroupNode, placed: GroupNode[]): void {
         if (typeof group.x !== 'number' || typeof group.y !== 'number') return
+        const clearance = groupRadius(group.info.members.length)
+        const anchorUnder = (x: number, y: number, margin: number) => group.info.anchors.find(anchor =>
+            typeof anchor.x === 'number' && typeof anchor.y === 'number'
+            && Math.hypot(anchor.x - x, anchor.y - y) < anchor.getLayoutRadius() + margin)
         const cx = group.x
         const cy = group.y
-        const clearance = groupRadius(group.info.members.length)
-        const onAnchor = group.info.anchors.some(anchor =>
-            typeof anchor.x === 'number' && typeof anchor.y === 'number'
-            && Math.hypot(anchor.x - cx, anchor.y - cy) < anchor.getLayoutRadius() + clearance)
-        if (!onAnchor) return
+        const under = anchorUnder(cx, cy, clearance)
+        if (!under) return
         let nearest: Node | undefined
         let best = Infinity
         for (const part of group.parts) {
@@ -705,9 +740,46 @@ export class Simplification {
                 nearest = part
             }
         }
-        if (!nearest) return
-        group.x = nearest.x
-        group.y = nearest.y
+        if (nearest && !anchorUnder(nearest.x as number, nearest.y as number, 0)) {
+            group.x = nearest.x
+            group.y = nearest.y
+            return
+        }
+        this.placeBeside(group, under, clearance, placed)
+    }
+
+    /**
+     * Every part sits on the anchor, as nodes a pivot added together do: the group takes
+     * the first clear spot on rings around that anchor.
+     */
+    private placeBeside(group: GroupNode, anchor: Node, radius: number, placed: GroupNode[]): void {
+        const parts = new Set(group.parts)
+        const others: Array<{ x: number, y: number, r: number }> = []
+        const add = (node: Node) => {
+            if (typeof node.x === 'number' && typeof node.y === 'number') others.push({ x: node.x, y: node.y, r: node.getLayoutRadius() })
+        }
+        for (const node of this.graph.getMutableNodes()) {
+            if (node.childrenDepth === 0 && node.visible && !node.foldedInto && !parts.has(node)) add(node)
+        }
+        for (const other of placed) if (other !== group) add(other)
+        const clear = (x: number, y: number) => others.every(spot => Math.hypot(spot.x - x, spot.y - y) >= spot.r + radius)
+
+        const ax = anchor.x as number
+        const ay = anchor.y as number
+        const gap = anchor.getLayoutRadius() + radius * 2
+        for (let ring = 1; ring <= 6; ring++) {
+            const distance = gap * ring
+            const steps = 8 * ring
+            for (let i = 0; i < steps; i++) {
+                const angle = -Math.PI / 2 + (i * 2 * Math.PI) / steps
+                const x = ax + distance * Math.cos(angle)
+                const y = ay + distance * Math.sin(angle)
+                if (!clear(x, y)) continue
+                group.x = x
+                group.y = y
+                return
+            }
+        }
     }
 
     private countTypes(parts: Node[], view: GraphView): Record<string, number> {

@@ -920,6 +920,8 @@ export interface PivotFixtureSpec {
     latency?: number
     /** Existing node ids the CORRELATION provider re-uses, so dedup has something to skip. */
     collide?: string[]
+    /** Read `data.type` as the node type, so a grouped landing splits by type. */
+    typed?: boolean
     /** Edges between nodes already on canvas — the edge-only triage rows. */
     edgeOnly?: Array<[string, string]>
     /** Reject the next provider call. */
@@ -4835,6 +4837,7 @@ class Harness implements HarnessApi {
         }
         if (spec.ceiling !== undefined) options.pivotCandidateCeiling = spec.ceiling
         if (spec.quickLimit !== undefined) options.pivotQuickIngestLimit = spec.quickLimit
+        if (spec.typed) options.render = { nodeTypeAccessor: (node: Node) => node.getData()?.type as string | undefined }
         await this.boot(name, mergeOptions(options, overrides))
         // Registered after the load, so the fixture's own batch isn't counted.
         this.watchBatches()

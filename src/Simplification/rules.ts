@@ -22,6 +22,21 @@ export function neighboursPartition(view: GraphView): Map<string, string> {
     return partition
 }
 
+/**
+ * What each grouped ingest added, one key per run and type. Links play no part, so a
+ * member stays whatever it links to later.
+ */
+export function landingsPartition(view: GraphView, runs: ReadonlySet<string>): Map<string, string> {
+    const partition = new Map<string, string>()
+    if (runs.size === 0) return partition
+    for (const node of view.nodes) {
+        if (view.groupOf(node)) continue
+        const run = node.landedBy()
+        if (run !== undefined && runs.has(run)) partition.set(node.id, [run, view.typeOf(node) ?? ''].join(SEPARATOR))
+    }
+    return partition
+}
+
 /** The distinct drawn nodes linked to this one, either way round. */
 function linkedTo(view: GraphView, node: Node): Set<Node> {
     return new Set([...view.inNeighbours(node), ...view.outNeighbours(node)])

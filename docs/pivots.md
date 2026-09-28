@@ -385,6 +385,9 @@ columns, the data table's filters, sorting, paging and an ingest action.
   *Reject all remaining* is the one gesture that disposes of them.
 - **A re-run replaces that provider's pane.** If you have rows marked it says so and offers
   *Show new* / *Keep triaging*, rather than throwing your triage away unasked.
+- **Ingest in a group** lands the selected rows folded, one group per type, off the origin.
+  See [Pivot landings](./simplify.md#pivot-landings). It is offered unless `UI.simplify` is
+  switched off.
 
 Everything the pane does is also reachable programmatically:
 

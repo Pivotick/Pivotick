@@ -589,6 +589,16 @@ export class Node {
     }
 
     /**
+     * The run that brought this node in: its first vouching. A node that was already on
+     * the canvas when a run vouched for it holds an earlier record first.
+     * @private
+     */
+    landedBy(): string | undefined {
+        const first = this._sources?.values().next().value
+        return first?.[0]?.runId
+    }
+
+    /**
      * Declare how much more there is for this node, without asking for any of it —
      * what the rim badge shows. `0` clears the declaration.
      *

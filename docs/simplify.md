@@ -134,6 +134,33 @@ types. They are found with the Leiden algorithm, the same for the same graph eve
 - A community of one node stays a node, and annotated nodes stay out, as for every rule.
 - Unlike the other built-in rules, Communities is only in the Simplify mode when declared.
 
+### Pivot landings
+
+```ts
+{ kind: 'landings', minSize: 2 }
+```
+
+*Ingest in a group*, in the [pivot](./pivots.md) Review pane's footer, lands the selected rows
+folded: one group per type, hanging off the node you pivoted on. Forty IPs arrive as
+"40 × ip" instead of forty dots.
+
+- A group holds what that ingest **added**. A node that was already on the canvas stays
+  where it was.
+- A member **stays** whatever it links to later, unlike the neighbour rule. Pull it out, delete
+  it, or undo the ingest to take it out. Undo dissolves the group and redo brings it back.
+- A type with fewer nodes than `minSize` (2 by default) lands as plain nodes.
+- The rule runs first, so the rules after it see each landing as one node. You don't need to
+  declare it: the first grouped landing adds it at the top of the Simplify mode, switched on.
+  Declare it to put it somewhere else or change its smallest group.
+- Which landings are grouped lasts for the session, like open groups.
+
+To group a landing from code, flag the run before ingesting it:
+
+```js
+graph.simplify.groupLanding(graph.pivots.candidates('correlations').runId)
+await graph.pivots.ingest('correlations')
+```
+
 ### Custom rules
 
 A rule of your own is a `partition(view)` returning a key per node:
@@ -275,6 +302,7 @@ group reads `grouped` too.
 | `getGroups()` / `groupOf(node)` | Every group, and the group a node is in. |
 | `open(group)` / `close(group)` | Put a group's members on the canvas, or fold them back. |
 | `pullOut(node)` / `putBack(node)` / `isPulledOut(node)` | Keep a node out of any group, or let it back. |
+| `groupLanding(runId)` / `ungroupLanding(runId)` / `isLandingGrouped(runId)` | Fold what a pivot run adds into [landing groups](#pivot-landings), or draw it loose again. |
 | `summary()` | How many nodes are drawn, pass the filters, and are folded. |
 | `setMatches(nodes, query)` / `matchesIn(group)` | Mark a search's matches on the groups holding them; read how many a group holds. |
 | `onChange(listener)` | Called after the grouping changes; returns its unsubscribe. |

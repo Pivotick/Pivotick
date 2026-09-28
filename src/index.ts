@@ -49,7 +49,7 @@ export type {
 } from './interfaces/History'
 export type { GraphHistory } from './GraphHistory'
 export type {
-    SimplifyOptions, SimplifyRule, NeighboursRule, ChainsRule, DegreeRule, KCoreRule, CommunitiesRule, CustomRule, SimplifyRuleSetting, GroupInfo, GraphView, SimplifyRuleStatus,
+    SimplifyOptions, SimplifyRule, NeighboursRule, ChainsRule, DegreeRule, KCoreRule, CommunitiesRule, LandingsRule, CustomRule, SimplifyRuleSetting, GroupInfo, GraphView, SimplifyRuleStatus,
 } from './interfaces/Simplify'
 export type { Simplification } from './Simplification/Simplification'
 export type { IngestContext, IngestDecision } from './interfaces/InterractionCallbacks'

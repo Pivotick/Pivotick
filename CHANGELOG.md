@@ -36,6 +36,10 @@ touching the data.
   picking it opens the group and selects the node. *Show all on the canvas* (Shift+Enter)
   lights every match and fades the rest; a group holding matches draws their share as an arc
   over its ring. `graph.simplify.setMatches(nodes, query)` marks an app's own matches.
+- **Ingest in a group**, in the pivot Review pane, lands the selected rows folded, one group
+  per type, off the origin. The Pivot landings rule (`{ kind: 'landings' }`) holds what that
+  ingest added, whatever the members link to later; undo dissolves it.
+  `graph.simplify.groupLanding(runId)` does the same from code.
 - **A rule of your own is a `partition(view)`** returning a key per node: nodes sharing a key
   become one group. Each rule sees the groups the rules above it made as ordinary nodes. A rule
   that throws is switched off and the others still run.
