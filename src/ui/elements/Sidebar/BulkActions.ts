@@ -3,7 +3,7 @@ import type { UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
 import type { NodeSelection } from '../../../interfaces/GraphInteractions'
 import { pin, unpin, hide, focusElement, groupNodes, ungroupNodes, bulkEdit, trash } from '../../icons'
-import { expandGroups } from '../../groupActions'
+import { expandGroups, groupSelection, manualGroupsIn } from '../../groupActions'
 
 type BulkActionKind = 'action' | 'danger' | 'soon'
 
@@ -14,16 +14,17 @@ interface BulkActionSpec {
     kind: BulkActionKind
     /** Apply the action to the current node selection. */
     run?: () => void
+    /** Whether it can act on the current selection; asked each time the row shows. */
+    enabled?: () => boolean
     /** Draw a divider immediately before this action. */
     divider?: boolean
 }
 
 /**
  * The sidebar bulk-action row, shown while a node selection is active. Each
- * functional action (Pin / Unpin / Hide / Delete) applies to *every* selected
- * node; Isolate / Group / Ungroup / Bulk-edit render disabled with a "SOON"
- * affordance (deferred M2–M3 capabilities). Node-only — the Sidebar hides the
- * row for edge selections.
+ * functional action (Pin / Unpin / Hide / Group / Ungroup / Delete) applies to
+ * *every* selected node; Isolate / Bulk-edit render disabled with a "SOON"
+ * affordance. Node-only — the Sidebar hides the row for edge selections.
  *
  * Actions that shrink the selection (Hide, Delete) clear it afterwards, which
  * re-fires `unselectNodes` and lets the Sidebar tear the row back down.
@@ -51,7 +52,9 @@ export class SidebarBulkActions extends UIComponent {
 
     /** Reveal the row (a node selection is active). */
     public show(): void {
-        if (this.row) this.row.style.display = 'flex'
+        if (!this.row) return
+        this.row.style.display = 'flex'
+        this.refresh()
     }
 
     /** Hide the row (no node selection). */
@@ -65,8 +68,19 @@ export class SidebarBulkActions extends UIComponent {
             { id: 'unpin', label: 'Unpin', icon: unpin, kind: 'action', run: () => this.unpinSelection() },
             { id: 'hide', label: 'Hide', icon: hide, kind: 'action', run: () => this.hideSelection() },
             { id: 'isolate', label: 'Isolate', icon: focusElement, kind: 'soon' },
-            { id: 'group', label: 'Group', icon: groupNodes, kind: 'soon', divider: true },
-            { id: 'ungroup', label: 'Ungroup', icon: ungroupNodes, kind: 'soon' },
+            // Dropped with the feature: no simplify, no groups to make.
+            ...(this.uiManager.graph.simplify.isEnabled() ? [
+                {
+                    id: 'group', label: 'Group', icon: groupNodes, kind: 'action', divider: true,
+                    run: () => void this.groupSelected(),
+                    enabled: () => this.uiManager.graph.simplify.groupableIds(this.selectedNodes()).length >= 2,
+                },
+                {
+                    id: 'ungroup', label: 'Ungroup', icon: ungroupNodes, kind: 'action',
+                    run: () => this.ungroupSelected(),
+                    enabled: () => manualGroupsIn(this.uiManager, this.selectedNodes()).length > 0,
+                },
+            ] as BulkActionSpec[] : []),
             { id: 'bulk-edit', label: 'Bulk edit', icon: bulkEdit, kind: 'soon' },
             // Dropped entirely when deletion is disabled — a read-only integration
             // wants no Delete button, not one that always refuses.
@@ -100,6 +114,16 @@ export class SidebarBulkActions extends UIComponent {
                 this.listen(button, 'click', () => spec.run?.())
             }
             this.row.appendChild(button)
+        }
+    }
+
+    /** Enable each action that can act on the selection now. */
+    private refresh(): void {
+        if (!this.row) return
+        for (const spec of this.specs()) {
+            if (!spec.enabled) continue
+            const button = this.row.querySelector<HTMLButtonElement>(`[data-action="${spec.id}"]`)
+            if (button) button.disabled = !spec.enabled()
         }
     }
 
@@ -148,6 +172,16 @@ export class SidebarBulkActions extends UIComponent {
             origin: 'bulk-action',
         })
         if (outcome.accepted) this.clearSelection()
+    }
+
+    private async groupSelected(): Promise<void> {
+        await groupSelection(this.uiManager, this.selectedNodes())
+    }
+
+    /** Remove the hand-made groups the selection holds or sits in. */
+    private ungroupSelected(): void {
+        this.uiManager.graph.simplify.ungroup(manualGroupsIn(this.uiManager, this.selectedNodes()))
+        this.refresh()
     }
 
     private clearSelection(): void {

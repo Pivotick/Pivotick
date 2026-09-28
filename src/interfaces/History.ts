@@ -6,14 +6,15 @@ import type { Node } from '../Node'
  * Which sort of entry a row is — a closed set.
  *
  * `pivot` an ingest, `delete` a removal, `visibility` a durable hide or unhide,
- * `create` a node or edge drawn by hand, `removal` a `graph.removeBySource` call.
+ * `create` a node or edge drawn by hand, `removal` a `graph.removeBySource` call,
+ * `group` a group made, removed or renamed by hand (`graph.simplify.groupNodes`).
  * Every one of them is a change to what the canvas *holds and shows*, which is the
  * only thing the library has the authority to reverse: a node's data is the
  * backend's, not ours.
  *
  * @category History
  */
-export type HistoryKind = 'pivot' | 'delete' | 'visibility' | 'create' | 'removal'
+export type HistoryKind = 'pivot' | 'delete' | 'visibility' | 'create' | 'removal' | 'group'
 
 /**
  * One reversible thing that happened, as one row in the history.

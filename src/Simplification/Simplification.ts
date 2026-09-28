@@ -2,7 +2,7 @@ import type { Graph } from '../Graph'
 import type { Node } from '../Node'
 import type { GraphUIMode } from '../interfaces/GraphUI'
 import type {
-    GraphView, GroupInfo, SimplifyOptions, SimplifyRule, SimplifyRuleSetting, SimplifyRuleStatus,
+    GraphView, GroupInfo, ManualGroupRecord, SimplifyOptions, SimplifyRule, SimplifyRuleSetting, SimplifyRuleStatus,
 } from '../interfaces/Simplify'
 import { GroupNode } from './GroupNode'
 import { defaultGroupStyle, groupRadius } from './groupStyle'
@@ -31,6 +31,7 @@ const BUILTIN_TEXT: Record<BuiltinKind, { label: string, description: string }> 
     kcore: { label: 'Outside the core', description: 'Peels off nodes with fewer links than this, again and again, into the core.' },
     communities: { label: 'Communities', description: 'Whole neighbourhoods into a few super-nodes.' },
     landings: { label: 'Pivot landings', description: 'What a pivot brought in, one group per type.' },
+    manual: { label: 'By hand', description: 'Groups made from a selection.' },
 }
 
 /** Offered in full mode when no rule is declared; Communities only when declared. */
@@ -98,6 +99,11 @@ export class Simplification {
     private readonly pulledOut = new Set<string>()
     /** The ingests asked to land in a group, by run id. */
     private readonly landingRuns = new Set<string>()
+    /** The groups made by hand, in the order they were made. */
+    private manual: ManualGroupRecord[] = []
+    private nextManualId = 1
+    /** Told of every change to the hand-made groups, with the list before it. @private */
+    manualHistory?: (before: ManualGroupRecord[], label: string, members: string[]) => void
     /** Where each folded node sat relative to its group, to put it back there. */
     private readonly offsets = new Map<Node, { dx: number, dy: number }>()
     private readonly listeners = new Set<() => void>()
@@ -133,8 +139,9 @@ export class Simplification {
     /** Replace the rules. Their order is the order they run in. */
     setRules(rules: SimplifyRule[]): void {
         if (!this.featureEnabled) return
-        const keepLandings = this.landingRuns.size > 0 && !rules.some(rule => rule.kind === 'landings')
-        this.rules = this.buildRules(keepLandings ? [{ kind: 'landings' }, ...rules] : rules)
+        this.rules = this.buildRules(rules)
+        if (this.manual.length > 0) this.ensureRule('manual', false)
+        if (this.landingRuns.size > 0) this.ensureRule('landings', false)
         this.regroup()
     }
 
@@ -169,6 +176,7 @@ export class Simplification {
         if (state.threshold !== undefined) {
             return { label: THRESHOLD_LABEL[state.rule.kind as BuiltinKind]!, value: state.threshold, min: MIN_THRESHOLD, max: MAX_THRESHOLD, control: 'stepper' }
         }
+        if (state.rule.kind === 'manual') return undefined
         if (state.rule.kind === 'custom' && state.rule.minSize === undefined) return undefined
         return { label: 'Smallest group', value: state.minSize, min: MIN_GROUP_SIZE, max: MAX_GROUP_SIZE, control: 'stepper' }
     }
@@ -291,13 +299,25 @@ export class Simplification {
     groupLanding(runId: string): void {
         if (!this.featureEnabled) return
         this.landingRuns.add(runId)
-        const state = this.rules.find(candidate => candidate.rule.kind === 'landings')
-        if (!state) this.rules.unshift(...this.buildRules([{ kind: 'landings' }]))
-        else {
-            state.enabled = true
-            state.failed = false
-        }
+        this.ensureRule('landings', true)
         this.regroup()
+    }
+
+    /**
+     * An implicit rule, added at the top when not declared: hand-made groups first, then
+     * pivot landings. `switchOn` turns a declared one back on.
+     */
+    private ensureRule(kind: 'manual' | 'landings', switchOn: boolean): void {
+        const state = this.rules.find(candidate => candidate.rule.kind === kind)
+        if (state) {
+            if (switchOn) {
+                state.enabled = true
+                state.failed = false
+            }
+            return
+        }
+        const at = kind === 'landings' && this.rules[0]?.rule.kind === 'manual' ? 1 : 0
+        this.rules.splice(at, 0, ...this.buildRules([{ kind }]))
     }
 
     /** Let what this run added be drawn as plain nodes again. */
@@ -308,6 +328,127 @@ export class Simplification {
     /** Whether this pivot run was asked to land in a group. */
     isLandingGrouped(runId: string): boolean {
         return this.landingRuns.has(runId)
+    }
+
+    /* ---------- groups made by hand ---------- */
+
+    /**
+     * Fold these nodes into one group of their own, titled `title` (unset or the default
+     * label: labelled by its types). A group among them gives its members. A node already
+     * in a hand-made group leaves it; annotated nodes and expanded clusters stay out.
+     * Returns the new group's id, or nothing when fewer than two nodes can be grouped.
+     */
+    groupNodes(nodes: Array<Node | string>, title?: string): string | undefined {
+        if (!this.featureEnabled) return undefined
+        const ids = this.groupableIds(nodes)
+        if (ids.length < 2) return undefined
+        const before = this.getManualGroups()
+        const taken = new Set(ids)
+        this.manual = this.manual
+            .map(record => ({ ...record, members: record.members.filter(id => !taken.has(id)) }))
+            .filter(record => record.members.length >= 2)
+        const id = `pvt-manual-${this.nextManualId++}`
+        const record = { id, title: this.cleanTitle(title, ids), members: ids }
+        this.manual.push(record)
+        this.ensureRule('manual', true)
+        this.regroup()
+        this.manualHistory?.(before, `Grouped “${this.recordName(record)}”`, ids)
+        return id
+    }
+
+    /** Remove hand-made groups, as one step; their members are drawn as they would be without them. */
+    ungroup(groups: GroupRef | GroupRef[]): void {
+        const ids = new Set((Array.isArray(groups) ? groups : [groups]).map(group => typeof group === 'string' ? group : group.id))
+        const removed = this.manual.filter(record => ids.has(record.id))
+        if (removed.length === 0) return
+        const before = this.getManualGroups()
+        this.manual = this.manual.filter(record => !ids.has(record.id))
+        this.regroup()
+        const label = removed.length === 1 ? `Ungrouped “${this.recordName(removed[0])}”` : `Ungrouped ${removed.length} groups`
+        this.manualHistory?.(before, label, removed.flatMap(record => record.members))
+    }
+
+    /** Retitle a hand-made group; an empty title labels it by its types again. */
+    renameGroup(group: GroupRef, title: string): void {
+        const id = typeof group === 'string' ? group : group.id
+        const record = this.manual.find(candidate => candidate.id === id)
+        if (!record) return
+        const next = this.cleanTitle(title, record.members)
+        if (next === record.title) return
+        const before = this.getManualGroups()
+        record.title = next
+        this.regroup()
+        this.manualHistory?.(before, `Renamed to “${this.recordName(record)}”`, record.members)
+    }
+
+    /** Whether this group was made by hand. */
+    isManual(group: GroupRef): boolean {
+        const id = typeof group === 'string' ? group : group.id
+        return this.manual.some(record => record.id === id)
+    }
+
+    /** The hand-made groups, for a host to save. */
+    getManualGroups(): ManualGroupRecord[] {
+        return this.manual.map(record => ({ ...record, members: [...record.members] }))
+    }
+
+    /** Replace the hand-made groups, as a host restoring them does. Not an undo step. */
+    setManualGroups(records: ManualGroupRecord[]): void {
+        if (!this.featureEnabled) return
+        this.manual = records.map(record => ({ ...record, members: [...record.members] }))
+        for (const record of this.manual) {
+            const n = Number(/^pvt-manual-(\d+)$/.exec(record.id)?.[1])
+            if (n >= this.nextManualId) this.nextManualId = n + 1
+        }
+        if (this.manual.length > 0) this.ensureRule('manual', false)
+        this.regroup()
+    }
+
+    /** The label these nodes would get from their types, what the title prompt starts from. */
+    defaultTitle(nodes: Array<Node | string>): string {
+        const accessor = this.graph.getOptions().render?.nodeTypeAccessor
+        const typeCounts: Record<string, number> = {}
+        for (const id of this.groupableIds(nodes)) {
+            const node = this.graph.getMutableNode(id)
+            const type = (node && accessor?.(node)) ?? ''
+            typeCounts[type] = (typeCounts[type] ?? 0) + 1
+        }
+        return this.typesLabelOf({ typeCounts })
+    }
+
+    /** The real nodes a selection stands for that a hand-made group may hold. */
+    groupableIds(nodes: Array<Node | string>): string[] {
+        const annotated = this.annotatedIds()
+        const ids = new Set<string>()
+        for (const ref of nodes) {
+            const group = typeof ref === 'string' ? this.getGroupNode(ref) : ref instanceof GroupNode ? ref : undefined
+            const members = group ? group.info.members : [typeof ref === 'string' ? this.graph.getMutableNode(ref) : ref]
+            for (const node of members) {
+                if (!node || node instanceof GroupNode || node.childrenDepth !== 0 || annotated.has(node.id)) continue
+                if (node.expanded && node.hasChildren()) continue
+                if (this.graph.getMutableNode(node.id) !== node) continue
+                ids.add(node.id)
+            }
+        }
+        return [...ids]
+    }
+
+    /** Put the list back as it was, for the history. @private */
+    restoreManualGroups(records: ManualGroupRecord[]): void {
+        this.manual = records.map(record => ({ ...record, members: [...record.members] }))
+        if (this.manual.length > 0) this.ensureRule('manual', false)
+        this.regroup()
+    }
+
+    /** What a history row calls a hand-made group: its title, else its types. */
+    private recordName(record: ManualGroupRecord): string {
+        return record.title ?? this.defaultTitle(record.members)
+    }
+
+    private cleanTitle(title: string | undefined, ids: string[]): string | undefined {
+        const trimmed = title?.trim()
+        if (!trimmed || trimmed === this.defaultTitle(ids)) return undefined
+        return trimmed
     }
 
     /** The members above which Open asks first (`UI.simplify.openConfirmAbove`). */
@@ -321,8 +462,13 @@ export class Simplification {
         return `${count} × ${type ?? 'node'}`
     }
 
-    /** A group's label: its parts joined, largest first. */
+    /** A group's label: its title, else its parts joined, largest first. */
     labelOf(info: GroupInfo): string {
+        return info.title ?? this.typesLabelOf(info)
+    }
+
+    /** A group's parts joined, largest first, whatever its title. */
+    typesLabelOf(info: Pick<GroupInfo, 'typeCounts'>): string {
         return Object.entries(info.typeCounts)
             .sort((a, b) => b[1] - a[1])
             .map(([type, count]) => this.typeLabel(type === '' ? undefined : type, count))
@@ -471,8 +617,21 @@ export class Simplification {
             case 'kcore': return kCorePartition(view, state.threshold!)
             case 'communities': return this.communitiesPartition(state, view)
             case 'landings': return landingsPartition(view, this.landingRuns)
+            case 'manual': return this.manualPartition(view)
             default: return neighboursPartition(view)
         }
+    }
+
+    /** Each hand-made group's members still on the canvas, keyed by the group's id. */
+    private manualPartition(view: GraphView): Map<string, string> {
+        const recordOf = new Map<string, string>()
+        for (const record of this.manual) for (const id of record.members) recordOf.set(id, record.id)
+        const partition = new Map<string, string>()
+        for (const node of view.nodes) {
+            const id = recordOf.get(node.id)
+            if (id !== undefined) partition.set(node.id, id)
+        }
+        return partition
     }
 
     /**
@@ -562,7 +721,7 @@ export class Simplification {
                 id,
                 enabled: rule.enabled !== false,
                 minSize: isThreshold ? 1
-                    : isCommunities ? MIN_GROUP_SIZE
+                    : isCommunities || rule.kind === 'manual' ? MIN_GROUP_SIZE
                         : clamp(rule.minSize ?? fallbackMin, MIN_GROUP_SIZE, MAX_GROUP_SIZE),
                 threshold: isThreshold ? clamp(threshold ?? DEFAULT_THRESHOLD, MIN_THRESHOLD, MAX_THRESHOLD) : undefined,
                 level: isCommunities ? clamp(rule.level ?? DEFAULT_LEVEL, 1, COMMUNITY_RESOLUTIONS.length) : undefined,
@@ -670,14 +829,17 @@ export class Simplification {
             if (parts.length < state.minSize) continue
             const members = parts.flatMap(part => part instanceof GroupNode ? part.info.members : [part])
             const inherited = this.inherit(state.id, key, members, previous, claimed)
-            const group = inherited ?? this.createGroup(state.id, parts)
+            // A hand-made group is drawn under its own id, so the API and history can name it.
+            const group = inherited ?? this.createGroup(state.id, parts, state.rule.kind === 'manual' ? key : undefined)
+            if (state.rule.kind === 'manual') group.info.title = this.manual.find(record => record.id === key)?.title
             claimed.add(group)
             group.key = key
             group.parts = parts
             group.info.members = members
             group.info.typeCounts = this.countTypes(parts, view)
             group.info.anchors = this.anchorsOf(parts, view)
-            if (!inherited) this.keepOffAnchors(group, [...placed, ...formed])
+            if (!inherited && state.rule.kind === 'manual') this.placeAtClearCentroid(group, [...placed, ...formed])
+            else if (!inherited) this.keepOffAnchors(group, [...placed, ...formed])
             this.applyStyle(group)
             formed.push(group)
         }
@@ -706,8 +868,8 @@ export class Simplification {
     }
 
     /** A new, closed group, placed at its parts' centroid and never pinned. */
-    private createGroup(rule: string, parts: Node[]): GroupNode {
-        const group = new GroupNode(`pvt-group-${this.nextGroupId++}`, rule)
+    private createGroup(rule: string, parts: Node[], id?: string): GroupNode {
+        const group = new GroupNode(id ?? `pvt-group-${this.nextGroupId++}`, rule)
         const placed = parts.filter(part => typeof part.x === 'number' && typeof part.y === 'number')
         if (placed.length) {
             group.x = placed.reduce((sum, part) => sum + (part.x as number), 0) / placed.length
@@ -753,6 +915,21 @@ export class Simplification {
      * the first clear spot on rings around that anchor.
      */
     private placeBeside(group: GroupNode, anchor: Node, radius: number, placed: GroupNode[]): void {
+        this.placeClear(group, anchor.x as number, anchor.y as number, anchor.getLayoutRadius() + radius * 2, radius, placed, false)
+    }
+
+    /**
+     * A hand-made group's members can sit anywhere, so their centroid may land on any dot:
+     * the group takes it if clear, else the nearest clear spot around it.
+     */
+    private placeAtClearCentroid(group: GroupNode, placed: GroupNode[]): void {
+        if (typeof group.x !== 'number' || typeof group.y !== 'number') return
+        const radius = groupRadius(group.info.members.length)
+        this.placeClear(group, group.x, group.y, radius * 2, radius, placed, true)
+    }
+
+    /** The first spot clear of every dot, on rings `gap` apart around (cx, cy). */
+    private placeClear(group: GroupNode, cx: number, cy: number, gap: number, radius: number, placed: GroupNode[], centreFirst: boolean): void {
         const parts = new Set(group.parts)
         const others: Array<{ x: number, y: number, r: number }> = []
         const add = (node: Node) => {
@@ -762,18 +939,17 @@ export class Simplification {
             if (node.childrenDepth === 0 && node.visible && !node.foldedInto && !parts.has(node)) add(node)
         }
         for (const other of placed) if (other !== group) add(other)
-        const clear = (x: number, y: number) => others.every(spot => Math.hypot(spot.x - x, spot.y - y) >= spot.r + radius)
+        // A radius of air between the rims, so two clear dots never read as touching.
+        const clear = (x: number, y: number) => others.every(spot => Math.hypot(spot.x - x, spot.y - y) >= spot.r + radius * 2)
 
-        const ax = anchor.x as number
-        const ay = anchor.y as number
-        const gap = anchor.getLayoutRadius() + radius * 2
+        if (centreFirst && clear(cx, cy)) return
         for (let ring = 1; ring <= 6; ring++) {
             const distance = gap * ring
             const steps = 8 * ring
             for (let i = 0; i < steps; i++) {
                 const angle = -Math.PI / 2 + (i * 2 * Math.PI) / steps
-                const x = ax + distance * Math.cos(angle)
-                const y = ay + distance * Math.sin(angle)
+                const x = cx + distance * Math.cos(angle)
+                const y = cy + distance * Math.sin(angle)
                 if (!clear(x, y)) continue
                 group.x = x
                 group.y = y

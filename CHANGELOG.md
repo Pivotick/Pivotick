@@ -40,6 +40,12 @@ touching the data.
   per type, off the origin. The Pivot landings rule (`{ kind: 'landings' }`) holds what that
   ingest added, whatever the members link to later; undo dissolves it.
   `graph.simplify.groupLanding(runId)` does the same from code.
+- **Group a selection by hand.** The sidebar's bulk bar (its *Group* / *Ungroup* no longer
+  "coming soon") and the node menu fold the selected nodes into one group under a title you
+  type. A hand-made group wins over the rule groups, keeps its members whatever they link to,
+  and is renamed or ungrouped from its panel or menu. Group, rename and ungroup are undo steps
+  (a new `group` history kind). `graph.simplify.groupNodes(nodes, title)`, `renameGroup`,
+  `ungroup`, and `getManualGroups()` / `setManualGroups()` to save and restore them.
 - **A rule of your own is a `partition(view)`** returning a key per node: nodes sharing a key
   become one group. Each rule sees the groups the rules above it made as ordinary nodes. A rule
   that throws is switched off and the others still run.

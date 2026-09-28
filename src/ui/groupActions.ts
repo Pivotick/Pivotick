@@ -1,6 +1,7 @@
 import type { Node } from '../Node'
 import type { GroupNode } from '../Simplification/GroupNode'
 import type { UIManager } from './UIManager'
+import { runModal } from '../editing/PromptModal'
 
 /**
  * Open a group, unless it holds more members than `UI.simplify.openConfirmAbove`: then
@@ -66,6 +67,72 @@ export function expandGroups(nodes: Node[]): Node[] {
         else expanded.add(node)
     }
     return [...expanded]
+}
+
+/**
+ * Ask for a group's title, pre-filled. Resolves the typed title, or `null` when cancelled.
+ * Where no modal can show, the default is taken without asking.
+ */
+async function askTitle(uiManager: UIManager, heading: string, submitLabel: string, value: string, note?: string): Promise<string | null> {
+    if (!uiManager.layout?.modal) return value
+    const input = document.createElement('input')
+    input.type = 'text'
+    input.className = 'pvt-group-title-input'
+    input.value = value
+    input.setAttribute('aria-label', 'Group title')
+    return runModal<string>(uiManager.graph, {
+        title: heading,
+        submitLabel,
+        bodyClass: 'pvt-group-title-body',
+        populate: (body) => {
+            body.appendChild(input)
+            if (!note) return
+            const hint = document.createElement('p')
+            hint.className = 'pvt-group-title-note'
+            hint.textContent = note
+            body.appendChild(hint)
+        },
+        collect: () => input.value,
+    })
+}
+
+/**
+ * Group these nodes by hand, after asking for a title. The new group is selected, so its
+ * panel is where it can be renamed. Returns the group's id, or nothing when cancelled or
+ * when fewer than two of them can be grouped.
+ */
+export async function groupSelection(uiManager: UIManager, nodes: Node[]): Promise<string | undefined> {
+    const graph = uiManager.graph
+    const simplify = graph.simplify
+    const ids = simplify.groupableIds(nodes)
+    if (ids.length < 2) return undefined
+    const left = expandGroups(nodes).length - ids.length
+    const note = left > 0 ? `${left} of the selected ${left === 1 ? 'node stays' : 'nodes stay'} out: annotated, or an open cluster.` : undefined
+    const title = await askTitle(uiManager, 'Group nodes', 'Group', simplify.defaultTitle(ids), note)
+    if (title === null) return undefined
+    const id = simplify.groupNodes(ids, title)
+    const group = id ? simplify.getGroupNode(id) : undefined
+    if (group) graph.selectElement(group)
+    return id
+}
+
+/** Retitle a hand-made group, after asking. An empty title labels it by its types again. */
+export async function renameGroupPrompt(uiManager: UIManager, group: GroupNode): Promise<void> {
+    const simplify = uiManager.graph.simplify
+    const title = await askTitle(uiManager, 'Rename group', 'Rename', simplify.labelOf(group.info))
+    if (title !== null) simplify.renameGroup(group, title)
+}
+
+/** The hand-made groups among these nodes, and those holding any of them. */
+export function manualGroupsIn(uiManager: UIManager, nodes: Node[]): string[] {
+    const simplify = uiManager.graph.simplify
+    const ids = new Set<string>()
+    for (const node of nodes) {
+        if (node.isGroup && simplify.isManual(node.id)) ids.add(node.id)
+        const record = simplify.getManualGroups().find(candidate => candidate.members.includes(node.id))
+        if (record) ids.add(record.id)
+    }
+    return [...ids]
 }
 
 /**

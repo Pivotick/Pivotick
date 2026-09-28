@@ -166,6 +166,8 @@ export class Graph {
         this.options.pivots?.forEach(pivot => this.pivots.register(pivot))
         // Before the UI too: the Simplify rail mode reads its rules.
         this.simplify = new Simplification(this, this.options.UI?.simplify, this.options.UI?.mode)
+        this.simplify.manualHistory = (before, label, members) =>
+            this.history.recordGroup(label, before, this.simplify.getManualGroups(), members)
         this.UIManager = new UIManager(this, appContainer, UIManagerOptions)
         // Declared facets carry the accessor/predicate/matchMode the engine matches
         // with, so hand them over as soon as the merged UI options exist.

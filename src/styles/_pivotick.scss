@@ -874,6 +874,31 @@ dl.pvt-property-list {
     box-shadow: none;
 }
 
+// A hand-made group's title.
+.pvt-group-title-input {
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    padding: 4px 8px;
+    font: inherit;
+    font-size: 13px;
+    color: var(--pvt-text-color-6);
+    background: var(--pvt-bg-color-0);
+    border: 1px solid var(--pvt-border-color);
+    border-radius: 4px;
+    outline: none;
+
+    &:focus {
+        border-color: var(--pvt-bg-color-primary);
+    }
+}
+
+.pvt-group-title-note {
+    margin: 8px 0 0;
+    font-size: 12px;
+    color: var(--pvt-text-color-4);
+}
+
 .pvt-confirm-modal-body .pvt-confirm-modal-text {
     margin: 0;
     color: var(--pvt-text-color-primary);

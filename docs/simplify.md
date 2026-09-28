@@ -223,6 +223,31 @@ A group is drawn as a node, and it acts for its members wherever that is unambig
 Open groups and pulled-out nodes last for the session and are not undo steps. To restore
 them, call `graph.simplify.open()` and `pullOut()`.
 
+## Groups made by hand
+
+Select two nodes or more, then **Group** in the sidebar's bulk bar or *Group selected nodes*
+in a selected node's context menu. Type a title, or keep the one offered ("3 × ip, 2 × domain"),
+and the selection folds into one group under that title.
+
+- **A hand-made group wins.** Its rule, *By hand*, runs before every other, so a picked node
+  leaves any rule group. A selected group gives its members, and a node picked into a second
+  hand-made group leaves the first. Annotated nodes and open clusters stay out, and the
+  prompt says how many.
+- **It keeps its members** whatever they link to. One that is deleted or filtered out is not
+  drawn; a group left with one member is not drawn at all, and comes back with its members.
+- **Rename** and **Ungroup** it from its sidebar panel or its context menu. An empty title
+  labels it by its types again. The bulk bar's **Ungroup** removes every hand-made group the
+  selection holds or sits in.
+- **Group, Rename and Ungroup are undo steps**, unlike opening or pulling out.
+- It is view state: not exported, and gone on reload. To keep it, save `getManualGroups()`
+  and hand it back to `setManualGroups()`.
+
+```js
+const id = graph.simplify.groupNodes(['ip-1', 'ip-2', 'dom-7'], 'Suspicious infra')
+graph.simplify.renameGroup(id, 'Cleared infra')
+graph.simplify.ungroup(id)
+```
+
 ## Searching
 
 Search looks through every node, the folded ones included.
@@ -302,6 +327,8 @@ group reads `grouped` too.
 | `getGroups()` / `groupOf(node)` | Every group, and the group a node is in. |
 | `open(group)` / `close(group)` | Put a group's members on the canvas, or fold them back. |
 | `pullOut(node)` / `putBack(node)` / `isPulledOut(node)` | Keep a node out of any group, or let it back. |
+| `groupNodes(nodes, title?)` / `renameGroup(group, title)` / `ungroup(groups)` / `isManual(group)` | Make, retitle or remove [groups by hand](#groups-made-by-hand); each is an undo step. |
+| `getManualGroups()` / `setManualGroups(list)` | Save the hand-made groups, and restore them. |
 | `groupLanding(runId)` / `ungroupLanding(runId)` / `isLandingGrouped(runId)` | Fold what a pivot run adds into [landing groups](#pivot-landings), or draw it loose again. |
 | `summary()` | How many nodes are drawn, pass the filters, and are folded. |
 | `setMatches(nodes, query)` / `matchesIn(group)` | Mark a search's matches on the groups holding them; read how many a group holds. |

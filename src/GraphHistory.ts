@@ -9,6 +9,7 @@ import type {
     GraphHistoryLike, HistoryEffect, HistoryEntry, HistoryPreview,
 } from './interfaces/History'
 import { MANUAL_SOURCE, SEED_SOURCE, type PivotRun } from './interfaces/Pivot'
+import type { ManualGroupRecord } from './interfaces/Simplify'
 import type { Node } from './Node'
 import { generateSafeDomId } from './utils/ElementCreation'
 
@@ -344,6 +345,26 @@ export class GraphHistory implements GraphHistoryLike {
             pivotId: source,
             at: Date.now(),
             payload: { kind: 'removal', source, claims, ...removed },
+        })
+    }
+
+    /**
+     * @private
+     * A group made, removed or renamed by hand: the list of hand-made groups on either
+     * side, and the members concerned for the row's hover.
+     */
+    public recordGroup(label: string, before: ManualGroupRecord[], after: ManualGroupRecord[], nodeIds: string[]): void {
+        if (this.applying) return
+        this.push({
+            id: newId(),
+            kind: 'group',
+            nodeIds,
+            edgeIds: [],
+            label,
+            sealed: false,
+            persisted: false,
+            at: Date.now(),
+            payload: { kind: 'group', before, after },
         })
     }
 

@@ -11,14 +11,17 @@ import type { Page } from '@playwright/test'
 
 // ── B3 sidebar clear-X + bulk-action row ─────────────────────────────────────
 // Runs in full mode (the sidebar is full-only).
-// A node selection reveals a clear-selection X plus a bulk-action row whose four
-// functional actions (Pin / Unpin / Hide / Delete) apply to the whole selection;
-// Isolate / Group / Ungroup / Bulk-edit render disabled with a "SOON" affordance.
+// A node selection reveals a clear-selection X plus a bulk-action row whose
+// functional actions (Pin / Unpin / Hide / Group / Delete) apply to the whole
+// selection; Ungroup waits for a hand-made group in the selection, and Isolate /
+// Bulk-edit render disabled with a "SOON" affordance.
 
 const B3_FULL = { UI: { mode: 'full', sidebar: { collapsed: false } } }
 
-const FUNCTIONAL = ['pin', 'unpin', 'hide', 'delete']
-const SOON = ['isolate', 'group', 'ungroup', 'bulk-edit']
+const FUNCTIONAL = ['pin', 'unpin', 'hide', 'group', 'delete']
+/** Disabled until the selection holds a hand-made group. */
+const WAITING = ['ungroup']
+const SOON = ['isolate', 'bulk-edit']
 
 /**
  * Per-node freeze state. The `basic` fixture pins every node's `fx/fy` for
@@ -54,11 +57,11 @@ test.describe('sidebar bulk actions', () => {
 
         await expect(clearX).toBeVisible()
         await expect(row).toBeVisible()
-        await expect(row.locator('.pvt-sidebar-bulkaction')).toHaveCount(FUNCTIONAL.length + SOON.length)
+        await expect(row.locator('.pvt-sidebar-bulkaction')).toHaveCount(FUNCTIONAL.length + WAITING.length + SOON.length)
         for (const id of FUNCTIONAL) {
             await expect(row.locator(`.pvt-sidebar-bulkaction[data-action="${id}"]`)).toBeEnabled()
         }
-        for (const id of SOON) {
+        for (const id of [...WAITING, ...SOON]) {
             await expect(row.locator(`.pvt-sidebar-bulkaction[data-action="${id}"]`)).toBeDisabled()
         }
 

@@ -1,5 +1,5 @@
 import type { HistoryEntry, HistoryPreview } from '../../../interfaces/History'
-import { addCircle, arrowDown, arrowUp, circleDashed, hide, pin, show, sparkles, trash } from '../../icons'
+import { addCircle, arrowDown, arrowUp, circleDashed, groupNodes, hide, pin, show, sparkles, trash, ungroupNodes } from '../../icons'
 import type { UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
 import './historymenu.scss'
@@ -536,11 +536,13 @@ const KIND_ICONS: Record<HistoryEntry['kind'], string> = {
     visibility: hide,
     create: addCircle,
     removal: trash,
+    group: groupNodes,
 }
 
 function kindIcon(entry: HistoryEntry): string {
     // A hide and an unhide are the same kind and opposite acts, so the eye flips.
     if (entry.kind === 'visibility') return entry.label.startsWith('Showed') ? show : hide
+    if (entry.kind === 'group' && entry.label.startsWith('Ungrouped')) return ungroupNodes
     return KIND_ICONS[entry.kind]
 }
 
@@ -552,10 +554,11 @@ function rowLabel(entry: HistoryEntry): string {
 
 /**
  * What the entry touched, as the row's secondary line — for a pivot or a removal,
- * whose labels name a source. Every other kind's label already carries its counts
+ * whose labels name a source, and a group, whose label names the act. Every other kind's label already carries its counts
  * (`Deleted 3 nodes`), and repeating them beside it says the same thing twice.
  */
 function rowDetail(entry: HistoryEntry): string {
+    if (entry.kind === 'group') return plural(entry.nodeIds.length, 'node')
     if (entry.kind !== 'pivot' && entry.kind !== 'removal') return ''
     const parts: string[] = []
     if (entry.nodeIds.length) parts.push(plural(entry.nodeIds.length, 'node'))
@@ -591,6 +594,8 @@ function deltaLabel(preview: HistoryPreview): string {
         const edges = effect.edgesRestored - effect.edgesRemoved
         if (edges) parts.push(`${edges > 0 ? '+' : '−'}${plural(Math.abs(edges), 'edge')}`)
     }
+    // Groups change how nodes are drawn, not which are there.
+    if (!parts.length && preview.entries.some(entry => entry.kind === 'group')) return 'groups change'
     return parts.join(' · ') || 'nothing changes'
 }
 

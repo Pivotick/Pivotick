@@ -8,7 +8,7 @@ import type { Node } from '../Node'
 export interface GroupInfo {
     /** Stable while the group keeps its key or most of its members. */
     id: string
-    /** The id of the rule that made it: `'neighbours'`, `'chains'`, `'degree'`, `'kcore'`, `'communities'`, or a custom rule's own id. */
+    /** The id of the rule that made it: `'neighbours'`, `'chains'`, `'degree'`, `'kcore'`, `'communities'`, `'landings'`, `'manual'`, or a custom rule's own id. */
     rule: string
     /** The real nodes it stands for. */
     members: Node[]
@@ -20,6 +20,8 @@ export interface GroupInfo {
     open: boolean
     /** The Communities level it was found at. */
     level?: number
+    /** A hand-made group's title, shown in place of its type breakdown. */
+    title?: string
 }
 
 /**
@@ -150,6 +152,27 @@ export interface LandingsRule {
     typeOf?: (node: Node) => string | undefined
 }
 
+/**
+ * The groups made by hand from a selection (`graph.simplify.groupNodes`). Runs before every
+ * other rule, so a node picked into one leaves any other group. Added at the top of the
+ * rules, on, the first time a group is made; declare it to switch it off by default.
+ */
+export interface ManualRule {
+    kind: 'manual'
+    /** @default true */
+    enabled?: boolean
+}
+
+/** A group made by hand: what `getManualGroups` returns and `setManualGroups` takes. */
+export interface ManualGroupRecord {
+    /** Also the id of the group drawn for it. */
+    id: string
+    /** Shown in place of the type breakdown. Unset, the group is labelled by its types. */
+    title?: string
+    /** Every member, including ones deleted or filtered out since; only those present are drawn. */
+    members: string[]
+}
+
 /** A rule of the app's own. */
 export interface CustomRule {
     kind: 'custom'
@@ -174,7 +197,7 @@ export interface CustomRule {
     partition: (view: GraphView) => Map<string, string>
 }
 
-export type SimplifyRule = NeighboursRule | ChainsRule | DegreeRule | KCoreRule | CommunitiesRule | LandingsRule | CustomRule
+export type SimplifyRule = NeighboursRule | ChainsRule | DegreeRule | KCoreRule | CommunitiesRule | LandingsRule | ManualRule | CustomRule
 
 /** `UI.simplify`: which rules fold the graph, and how groups are named. */
 export interface SimplifyOptions {

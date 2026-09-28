@@ -98,7 +98,8 @@
                     }
                 }
 
-                &.pvt-sidebar-bulkaction-soon {
+                &.pvt-sidebar-bulkaction-soon,
+                &:disabled {
                     opacity: 0.4;
                     cursor: not-allowed;
                 }

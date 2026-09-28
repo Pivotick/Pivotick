@@ -3,6 +3,7 @@ import { rawEdgeKey } from './Edge'
 import type { Graph } from './Graph'
 import type { RawEdge, RawNode } from './interfaces/GraphOptions'
 import type { HistoryEffect } from './interfaces/History'
+import type { ManualGroupRecord } from './interfaces/Simplify'
 import { MANUAL_SOURCE, SEED_SOURCE, type PivotRun } from './interfaces/Pivot'
 import type { Node } from './Node'
 import {
@@ -33,6 +34,8 @@ export type HistoryPayload =
         /** The container each removed child sat in, so it goes back inside it. */
         parents: Map<string, string>
     }
+    /** The hand-made groups before and after a group, ungroup or rename. */
+    | { kind: 'group', before: ManualGroupRecord[], after: ManualGroupRecord[] }
 
 /**
  * The graph state a reversal reads and writes.
@@ -74,6 +77,8 @@ export interface HistoryWorld {
     remove(nodes: Node[], edges: Edge[]): void
     hide(ids: string[]): void
     show(ids: string[]): void
+    /** Put the hand-made groups back to this list. View state: no data changes. */
+    setManualGroups(records: ManualGroupRecord[]): void
 }
 
 /** Take one entry back. Sealed entries never reach here. */
@@ -101,6 +106,9 @@ export function reverse(payload: HistoryPayload, world: HistoryWorld): void {
         case 'removal':
             world.restore(payload.nodes, payload.edges, payload.parents)
             world.reclaim(payload.claims)
+            return
+        case 'group':
+            world.setManualGroups(payload.before)
     }
 }
 
@@ -139,6 +147,9 @@ export function reapply(payload: HistoryPayload, world: HistoryWorld): void {
                 payload.claims.edges.map(claim => claim.id),
                 payload.source,
             )
+            return
+        case 'group':
+            world.setManualGroups(payload.after)
     }
 }
 
@@ -276,6 +287,10 @@ export class LiveWorld implements HistoryWorld {
 
     show(nodeIds: string[]): void {
         for (const id of nodeIds) this.graph.queryEngine.includeNode(id)
+    }
+
+    setManualGroups(records: ManualGroupRecord[]): void {
+        this.graph.simplify.restoreManualGroups(records)
     }
 }
 
@@ -469,6 +484,9 @@ export class ScratchWorld implements HistoryWorld {
     show(nodeIds: string[]): void {
         for (const id of nodeIds) if (this.hasNode(id)) this.hidden.delete(id)
     }
+
+    /** Groups change no presence, visibility or vouching: nothing for the effect to count. */
+    setManualGroups(): void {}
 
     private hasNode(id: string): boolean {
         return this.nodePresent.get(id) ?? Boolean(this.graph.getMutableNode(id))

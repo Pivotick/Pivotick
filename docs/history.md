@@ -10,13 +10,13 @@ went, five are hidden.
 
 ::: tip Vocabulary, used consistently below
 - **entry**: one reversible thing that happened, as one row in the menu
-- **kind**: which of the five sorts of entry it is
+- **kind**: which of the six sorts of entry it is
 - **span**: the contiguous block from the newest entry down to the one you clicked
 - **persisted**: an entry the consumer wrote through to a backend
 - **sealed**: a persisted *deletion* — listed, never reversed
 :::
 
-## The five kinds
+## The six kinds
 
 A closed set. Everything the library records is one of these, and nothing else is recorded.
 
@@ -27,6 +27,7 @@ A closed set. Everything the library records is one of these, and nothing else i
 | `visibility` | A durable hide or unhide (`queryEngine.excludeNode` / `includeNode`) | The other one |
 | `create` | A node or edge drawn by hand | The element goes, unless something else vouches for it |
 | `removal` | A `graph.removeBySource(source)` call | What left comes back, and what stayed gets the source's vouching back |
+| `group` | A group made, renamed or removed by hand (see [Simplify](/simplify#groups-made-by-hand)) | The hand-made groups go back to how they were; no node is added or removed |
 
 Not recorded, on purpose:
 
@@ -38,10 +39,13 @@ Not recorded, on purpose:
 - **`graph.hideNode()`.** It is wiped the next time filters re-derive, so an entry for it
   would reverse something that had already reverted itself. `excludeNode` is the hide that
   survives, and the one that is recorded.
+- **Opening a group, pulling a node out, switching a Simplify rule.** A way of looking,
+  like the filters.
 
 Programmatic mutations — `graph.addNode()`, `graph.removeNode()` — are not entries either.
 Only a gesture is, plus `graph.removeBySource()`, which is how an application offers the
-analyst a "remove what this source brought" action.
+analyst a "remove what this source brought" action, and `graph.simplify.groupNodes()`,
+`renameGroup()` and `ungroup()`, the calls behind the Group gestures.
 
 ## Undo is contiguous
 
@@ -134,7 +138,7 @@ newest.sealed      // …and it was a deletion, so undo will not take it back
 ```
 
 Skipping works because every entry names the specific elements it touched, so there are no
-state diffs to get out of order. That is also why the five kinds are closed and a consumer
+state diffs to get out of order. That is also why the six kinds are closed and a consumer
 cannot record an entry of its own: an arbitrary callback in the stack could throw halfway
 through a span, and the history would have no way to know.
 

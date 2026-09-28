@@ -15,7 +15,7 @@ import { pickNode } from '../../components/NodePickers'
 import { nodeNameGetter } from '../../../utils/GraphGetters'
 import { getNodeImageHref } from '../../../utils/NodePreview'
 import type { GroupNode } from '../../../Simplification/GroupNode'
-import { expandGroups, openGroupFromCanvas, selectGroupMembers, showGroupMembersInTable } from '../../groupActions'
+import { expandGroups, groupSelection, openGroupFromCanvas, renameGroupPrompt, selectGroupMembers, showGroupMembersInTable } from '../../groupActions'
 
 /**
  * A library default that is only offered while the feature behind it is enabled — the
@@ -455,7 +455,9 @@ export class ContextMenu extends UIComponent {
         const deleteAt = this.menuNode.menu.findIndex(entry => entry.text === 'Delete Node')
         this.menuNode.menu.splice(deleteAt < 0 ? this.menuNode.menu.length : deleteAt, 0, ...this.membershipEntries())
         this.menuGroup = this.gate(defaultMenuGroup)
-        this.menuGroup.menu.splice(2, 0, this.tableEntry(), this.pivotEntry())
+        this.menuGroup.menu.splice(2, 0, this.tableEntry(), this.pivotEntry(), ...this.manualGroupEntries())
+        const pullAt = this.menuNode.menu.findIndex(entry => entry.text === 'Pull out of group')
+        this.menuNode.menu.splice(pullAt < 0 ? this.menuNode.menu.length : pullAt, 0, this.groupSelectionEntry())
         this.wrapOnclickActions()
     }
 
@@ -479,6 +481,47 @@ export class ContextMenu extends UIComponent {
             visible: (element) =>
                 !!ui.pivotMode && !!element && ui.graph.pivots.for(expandGroups([element as Node])).length > 0,
             submenu: (element) => this.pivotSubmenu(element as Node),
+        }
+    }
+
+    /** Rename or remove a group made by hand. */
+    private manualGroupEntries(): MenuActionItemOptions[] {
+        const ui = this.uiManager
+        const simplify = ui.graph.simplify
+        return [
+            {
+                text: 'Rename group',
+                title: 'Give this group a title',
+                svgIcon: edit,
+                variant: 'outline-primary',
+                visible: (element) => !!element && simplify.isManual((element as GroupNode).id),
+                onclick: (_event, element) => void renameGroupPrompt(ui, element as GroupNode),
+            },
+            {
+                text: 'Ungroup',
+                title: 'Draw the members as they were before this group',
+                svgIcon: ungroupNodes,
+                variant: 'outline-primary',
+                visible: (element) => !!element && simplify.isManual((element as GroupNode).id),
+                onclick: (_event, element) => simplify.ungroup(element as GroupNode),
+            },
+        ]
+    }
+
+    /** Group the selection the clicked node is part of. */
+    private groupSelectionEntry(): MenuActionItemOptions {
+        const ui = this.uiManager
+        const selected = (element: unknown): Node[] => {
+            const nodes = ui.graph.renderer.getGraphInteraction().getSelectedNodes().map(selection => selection.node)
+            return nodes.includes(element as Node) ? nodes : []
+        }
+        return {
+            text: 'Group selected nodes',
+            title: 'Fold the selection into one group with a title',
+            svgIcon: groupNodes,
+            variant: 'outline-primary',
+            visible: (element) => ui.graph.simplify.isEnabled() && ui.graph.simplify.groupableIds(selected(element)).length >= 2,
+            onclick: (_event, element) => void groupSelection(ui, selected(element)),
         }
     }
 
