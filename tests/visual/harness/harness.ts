@@ -903,6 +903,15 @@ export interface PivotCall {
     outcome: 'served' | 'cancelled' | 'failed'
 }
 
+/** What {@link HarnessApi.edgeSourcesEveryWay} reads. */
+export interface RecordedEdgeSourceReads {
+    mutable: string[]
+    getEdges: string[]
+    fromNode: string[]
+    toNode: string[]
+    afterCloneVouch: string[]
+}
+
 /** What `loadWithPivots` installs. */
 export interface PivotFixtureSpec {
     /** Which fake pivots to register. Defaults to all of them. */
@@ -1142,6 +1151,12 @@ export interface HarnessApi {
     /** Provenance. `'seed'` for anything no pivot vouches for. */
     nodeSources(nodeId: string): string[]
     edgeSources(edgeId: string): string[]
+    /**
+     * An edge's sources through every read: the graph's own edge, the `getEdges()`
+     * clone and the node-scoped getters. `afterCloneVouch` is the graph's edge after a
+     * `probe` vouch on the clone, which must not reach it.
+     */
+    edgeSourcesEveryWay(edgeId: string): RecordedEdgeSourceReads | null
     removeBySource(source: string): { nodes: string[]; edges: string[] }
     /** Declared potential — the data half of the rim badges. */
     setNodePotential(nodeId: string, pivotId: string, count: number): void
@@ -5139,6 +5154,21 @@ class Harness implements HarnessApi {
 
     edgeSources(edgeId: string): string[] {
         return this.g.getMutableEdge(edgeId)?.getSources() ?? []
+    }
+
+    edgeSourcesEveryWay(edgeId: string): RecordedEdgeSourceReads | null {
+        const edge = this.g.getMutableEdge(edgeId)
+        if (!edge) return null
+        const find = (edges: Edge[]): Edge | undefined => edges.find((e) => e.id === edgeId)
+        const clone = find(this.g.getEdges())
+        const reads = {
+            mutable: edge.getSources(),
+            getEdges: clone?.getSources() ?? [],
+            fromNode: find(this.g.getEdgesFromNode(edge.from.id))?.getSources() ?? [],
+            toNode: find(this.g.getEdgesToNode(edge.to.id))?.getSources() ?? [],
+        }
+        clone?.vouch('probe', 'probe-run')
+        return { ...reads, afterCloneVouch: edge.getSources() }
     }
 
     removeBySource(source: string): { nodes: string[]; edges: string[] } {

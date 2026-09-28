@@ -238,6 +238,28 @@ test.describe('pivot pipeline', () => {
         expect(await harness(page, 'edgeSources', 'a-b')).toEqual(['seed'])
     })
 
+    test('the read-only edges carry the same provenance as the graph\'s own', async ({ page }) => {
+        await load(page)
+        const set = await stageUrls(page)
+        await harness(page, 'markPivotCandidates', CORRELATION, landableIds(set, 1))
+        const pivoted = (await ingest(page)).edges[0]
+        // A hand-drawn edge, as a consumer marks one: vouched for by a source of its own.
+        await page.evaluate(() =>
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (window.__pivotick as any).graph.getMutableEdge('b-c').vouch('manual', 'manual-run'))
+
+        for (const [id, expected] of [[pivoted, [CORRELATION]], ['b-c', ['manual']], ['a-b', ['seed']]] as const) {
+            expect(await harness(page, 'edgeSourcesEveryWay', id)).toEqual({
+                mutable: expected,
+                getEdges: expected,
+                fromNode: expected,
+                toNode: expected,
+                // The clone's ledger is a copy: vouching on it leaves the graph's edge alone.
+                afterCloneVouch: expected,
+            })
+        }
+    })
+
     test('two pivots vouching for one node: removing one source keeps it', async ({ page }) => {
         // `blind` lands blind-0..2; the CORRELATION provider then re-offers blind-0 as its first
         // candidate, so the same node is found by both pivots.

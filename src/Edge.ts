@@ -244,6 +244,7 @@ export class Edge {
         clone.visible = this.visible
         clone.layerVisible = this.layerVisible
         clone.visibleIgnoringLayer = this.visibleIgnoringLayer
+        if (this._sources) clone._sources = ledgerClone(this._sources)
 
         return clone
     }
