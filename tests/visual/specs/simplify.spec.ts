@@ -579,6 +579,12 @@ async function memberPositions(page: Page, ids: string[]): Promise<Record<string
     })), ids)
 }
 
+/** Whether this node wears the selection ring. */
+async function isRinged(page: Page, id: string): Promise<boolean> {
+    return page.evaluate((nodeId) => !!window.__pivotick.graph!.getCanvasNode(nodeId)?.getGraphElement()
+        ?.classList.contains('pvt-node-selected-highlight'), id)
+}
+
 async function selectGroupOf(page: Page, member: string): Promise<void> {
     await page.evaluate((id) => {
         const graph = window.__pivotick.graph!
@@ -653,10 +659,12 @@ test.describe('opening a group', () => {
         await expect(page.locator('.pvt-group-chip-label')).toHaveText('Domains of A')
     })
 
-    test('double-clicking a group opens it', async ({ page }) => {
+    test('double-clicking a group opens it, without selecting its members', async ({ page }) => {
         await loadSimplify(page, withNeighbours())
         await (await groupDot(page, 'dom-0')).dblclick()
         await expect.poll(async () => (await groupHolding(page, 'dom-0'))?.open).toBe(true)
+        expect(await selectedIds(page)).not.toContain('dom-0')
+        expect(await isRinged(page, 'dom-0')).toBe(false)
     })
 
     test('above openConfirmAbove, a double-click asks first instead of opening', async ({ page }) => {
@@ -762,8 +770,10 @@ test.describe('the group sidebar', () => {
         await panelAction(page, 'open').click()
         await expect.poll(async () => (await groupHolding(page, 'dom-0'))?.open).toBe(true)
         await expect(panelAction(page, 'close')).toBeVisible()
-        // An open group's members are what the canvas draws of it, so they stay lit.
+        // An open group's members are what the canvas draws of it, so they stay lit, but
+        // opening it does not select them.
         expect(await isDimmed(page, 'dom-0')).toBe(false)
+        expect(await isRinged(page, 'dom-0')).toBe(false)
 
         await panelAction(page, 'close').click()
         await expect.poll(async () => (await groupHolding(page, 'dom-0'))?.open).toBe(false)
@@ -785,6 +795,7 @@ test.describe('the group sidebar', () => {
         await selectGroupOf(page, 'dom-0')
         await panelAction(page, 'select-members').click()
         await expect.poll(() => selectedIds(page)).toEqual(DOMAINS)
+        expect(await isRinged(page, 'dom-0')).toBe(true)
         expect((await groupHolding(page, 'dom-0'))!.open).toBe(true)
     })
 

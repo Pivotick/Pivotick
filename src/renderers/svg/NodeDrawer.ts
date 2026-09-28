@@ -1082,20 +1082,23 @@ export class NodeDrawer {
      * one drawn line away, and those lines. Read off the lines the canvas draws, so a
      * group and the lines landing on it count like any node. A folded member stands for
      * its group, so selecting one from the table lights the group; an open group stands
-     * for its members, which are what the canvas draws of it.
+     * for its members, which are what the canvas draws of it. They are lit, not ringed:
+     * opening a group does not select them.
      */
     public beginHighlightPass(): void {
-        const selected = this.graphSvgRenderer.getGraphInteraction().getSelectedNodes()
-            .flatMap(({ node }) => {
-                if (node.foldedInto) return [node.canvasRepresentative()]
-                if (node.isGroup && (node as GroupNode).info.open) return (node as GroupNode).parts
-                return [node]
-            })
-        const lit = new Set(selected.map(node => node.id))
+        const ringed: Node[] = []
+        const openParts: Node[] = []
+        for (const { node } of this.graphSvgRenderer.getGraphInteraction().getSelectedNodes()) {
+            if (node.foldedInto) ringed.push(node.canvasRepresentative())
+            else if (node.isGroup && (node as GroupNode).info.open) openParts.push(...(node as GroupNode).parts)
+            else ringed.push(node)
+        }
+        const selected = [...ringed, ...openParts]
+        const lit = new Set(ringed.map(node => node.id))
         const lines = new Set(this.graph.getParentGraph()
             ? selected.flatMap(node => [...node.getEdgesOut(), ...node.getEdgesIn()])
             : this.graph.getDrawnEdgesTouching(selected))
-        const adjacent = new Set<string>()
+        const adjacent = new Set<string>(openParts.map(node => node.id))
         for (const line of lines) {
             adjacent.add(line.from.id)
             adjacent.add(line.to.id)
