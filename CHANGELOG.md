@@ -28,6 +28,10 @@ touching the data.
   nodes with too few links, or everything outside the k-core, into the nodes they hang from, so
   the count stays on the canvas. Their groups may mix types and hold a single node.
   `graph.simplify.setRuleSetting(id, n)` sets any rule's stepper value.
+- **Communities** (`{ kind: 'communities', level: 4 }`) folds whole neighbourhoods, found with
+  the Leiden algorithm, at a level from fine (1) to coarse (7), a slider in the Simplify mode.
+  It runs in the compute worker, the one the layout uses, and on the page where no worker can
+  start; meanwhile the previous groups stay. Offered only when declared.
 - **A rule of your own is a `partition(view)`** returning a key per node: nodes sharing a key
   become one group. Each rule sees the groups the rules above it made as ordinary nodes. A rule
   that throws is switched off and the others still run.

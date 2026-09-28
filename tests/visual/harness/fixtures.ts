@@ -1435,6 +1435,30 @@ export const fixtures = {
     },
 
     /**
+     * Communities at two scales: four cliques of four, `a` and `c` IPs, `b` and `d` domains.
+     * `a`–`b` and `c`–`d` are tied by three links each, `b`–`c` by one, so a fine level
+     * finds the four cliques and a coarse one the two pairs. `a3` carries a note; `solo` is
+     * linked to nothing.
+     */
+    simplifyCommunities(): BuiltFixture {
+        const cliques = ['a', 'b', 'c', 'd'].map((name, c) => Array.from({ length: 4 }, (_, i) =>
+            mkNode(`${name}${i}`, -330 + c * 220 + (i % 2) * 60, -40 + Math.floor(i / 2) * 60, { type: c % 2 ? 'domain' : 'ip' })))
+        const [a, b, c, d] = cliques
+        const solo = mkNode('solo', 0, 220, { type: 'ip' })
+        const edges = [
+            ...cliques.flatMap((clique) => clique.flatMap((x, i) => clique.slice(i + 1).map((y) => new Edge(`${x.id}-${y.id}`, x, y)))),
+            ...[0, 1, 2].map((i) => new Edge(`a${i}-b${i}`, a[i], b[i])),
+            ...[0, 1, 2].map((i) => new Edge(`c${i}-d${i}`, c[i], d[i])),
+            new Edge('b3-c3', b[3], c[3]),
+        ]
+        return {
+            nodes: [...cliques.flat(), solo],
+            edges,
+            notes: [{ id: 'note-a3', x: -300, y: -160, width: 120, height: 50, content: 'Checked', attachedElement: { type: 'node', id: 'a3' } }],
+        }
+    },
+
+    /**
      * A hub linked to six closed clusters of type `host`, each holding two files. The
      * first cluster's child also links to `x`, so its cluster has a neighbour the others lack.
      */

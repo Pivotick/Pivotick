@@ -1358,6 +1358,7 @@ export class Graph {
      * Destroy all UI components.
      */
     destroy(): void {
+        this.simplify.destroy()
         this.pivots.destroy()
         // Stop ticking before the DOM it renders into goes away.
         this.simulation.destroy()

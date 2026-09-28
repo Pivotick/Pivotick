@@ -1251,7 +1251,7 @@ export interface HarnessApi {
      * Load a simplify fixture with `data.type` as the node type and a colour per type —
      * both functions or keyed on one, so they are baked in on the page side.
      */
-    loadSimplify(overrides?: PlainObject, fixture?: 'simplify' | 'simplifyClusters' | 'simplifyChains' | 'simplifyCore', look?: boolean): Promise<void>
+    loadSimplify(overrides?: PlainObject, fixture?: 'simplify' | 'simplifyClusters' | 'simplifyChains' | 'simplifyCore' | 'simplifyCommunities', look?: boolean): Promise<void>
     /**
      * Construct a graph with NO data so `init()` is skipped and the renderer's
      * `nodeSelection` is never assigned — the precondition for the canvas
@@ -2083,7 +2083,7 @@ class Harness implements HarnessApi {
         if (document.fonts?.ready) await document.fonts.ready
     }
 
-    async loadSimplify(overrides: PlainObject = {}, fixture: 'simplify' | 'simplifyClusters' | 'simplifyChains' | 'simplifyCore' = 'simplify', look = false): Promise<void> {
+    async loadSimplify(overrides: PlainObject = {}, fixture: 'simplify' | 'simplifyClusters' | 'simplifyChains' | 'simplifyCore' | 'simplifyCommunities' = 'simplify', look = false): Promise<void> {
         const typed = {
             render: {
                 nodeTypeAccessor: (node: Node) => node.getData().type as string | undefined,

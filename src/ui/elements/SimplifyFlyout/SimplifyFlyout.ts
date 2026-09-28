@@ -1,6 +1,6 @@
 import { Flyout } from '../Flyout/Flyout'
 import type { FlyoutMode } from '../../ModeStore'
-import type { SimplifyRuleStatus } from '../../../interfaces/Simplify'
+import type { SimplifyRuleSetting, SimplifyRuleStatus } from '../../../interfaces/Simplify'
 import { groupNodes } from '../../icons'
 import './simplifyflyout.scss'
 
@@ -117,7 +117,8 @@ export class SimplifyFlyout extends Flyout {
             card.appendChild(description)
         }
 
-        if (rule.setting) card.appendChild(this.buildStepper(rule.id, rule.setting.label))
+        if (rule.setting?.control === 'slider') card.appendChild(this.buildSlider(rule.id, rule.setting))
+        else if (rule.setting) card.appendChild(this.buildStepper(rule.id, rule.setting.label))
 
         const result = document.createElement('div')
         result.className = 'pvt-simplifyflyout-rule-result'
@@ -165,6 +166,29 @@ export class SimplifyFlyout extends Flyout {
         return row
     }
 
+    /** Fine to coarse, applied on release. */
+    private buildSlider(id: string, setting: SimplifyRuleSetting): HTMLElement {
+        const row = document.createElement('div')
+        row.className = 'pvt-simplifyflyout-rule-setting pvt-simplifyflyout-rule-slider'
+        const label = document.createElement('span')
+        label.textContent = setting.label
+        const slider = document.createElement('input')
+        slider.type = 'range'
+        slider.min = String(setting.min)
+        slider.max = String(setting.max)
+        slider.step = '1'
+        slider.setAttribute('aria-label', setting.label)
+        const ends = document.createElement('span')
+        ends.className = 'pvt-simplifyflyout-slider-ends'
+        ends.innerHTML = '<span>Fine</span><span>Coarse</span>'
+        const track = document.createElement('span')
+        track.className = 'pvt-simplifyflyout-slider'
+        track.append(slider, ends)
+        row.append(label, track)
+        this.listen(slider, 'change', () => this.simplify.setRuleSetting(id, Number(slider.value)))
+        return row
+    }
+
     private syncCard(rule: SimplifyRuleStatus): void {
         const card = this.query<HTMLElement>(`.pvt-simplifyflyout-rule[data-rule="${CSS.escape(rule.id)}"]`)
         if (!card) return
@@ -177,13 +201,19 @@ export class SimplifyFlyout extends Flyout {
         if (setting && input && document.activeElement !== input) input.value = String(setting.value)
         const minus = card.querySelector<HTMLButtonElement>('[data-step="-1"]')
         const plus = card.querySelector<HTMLButtonElement>('[data-step="1"]')
-        if (setting && minus) minus.disabled = setting.value <= setting.min
-        if (setting && plus) plus.disabled = setting.value >= setting.max
+        if (setting && minus) minus.disabled = rule.computing || setting.value <= setting.min
+        if (setting && plus) plus.disabled = rule.computing || setting.value >= setting.max
+        const slider = card.querySelector<HTMLInputElement>('.pvt-simplifyflyout-slider input')
+        if (setting && slider) {
+            if (document.activeElement !== slider) slider.value = String(setting.value)
+            slider.disabled = rule.computing
+        }
 
         const result = card.querySelector<HTMLElement>('.pvt-simplifyflyout-rule-result')
         if (!result) return
         if (rule.failed) result.textContent = 'This rule failed'
         else if (!rule.enabled) result.textContent = ''
+        else if (rule.computing) result.textContent = 'Grouping…'
         else if (rule.groups === 0) result.textContent = nothingToFold(rule)
         else result.textContent = `${plural(rule.groups, 'group', 'groups')} · ${plural(rule.folded, 'node', 'nodes')}`
     }

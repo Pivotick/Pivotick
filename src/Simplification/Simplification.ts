@@ -2,11 +2,13 @@ import type { Graph } from '../Graph'
 import type { Node } from '../Node'
 import type { GraphUIMode } from '../interfaces/GraphUI'
 import type {
-    GraphView, GroupInfo, SimplifyOptions, SimplifyRule, SimplifyRuleStatus,
+    GraphView, GroupInfo, SimplifyOptions, SimplifyRule, SimplifyRuleSetting, SimplifyRuleStatus,
 } from '../interfaces/Simplify'
 import { GroupNode } from './GroupNode'
 import { defaultGroupStyle, groupRadius } from './groupStyle'
 import { chainsPartition, degreePartition, kCorePartition, neighboursPartition } from './rules'
+import { COMMUNITY_RESOLUTIONS, type CommunityGraph } from '../plugins/analytics/Leiden'
+import { findCommunities } from '../SimulationWorkerWrapper'
 
 export const MIN_GROUP_SIZE = 2
 export const MAX_GROUP_SIZE = 50
@@ -15,6 +17,7 @@ export const MAX_THRESHOLD = 10
 const DEFAULT_BUILTIN_MIN = 5
 const DEFAULT_CUSTOM_MIN = 2
 const DEFAULT_THRESHOLD = 2
+const DEFAULT_LEVEL = 4
 const DEFAULT_OPEN_CONFIRM_ABOVE = 100
 const FALLBACK_COLOR = 'var(--pvt-node-color, #007acc)'
 
@@ -26,10 +29,20 @@ const BUILTIN_TEXT: Record<BuiltinKind, { label: string, description: string }> 
     chains: { label: 'Chains', description: 'Nodes leading chains of the same shape, folded level by level.' },
     degree: { label: 'Few links', description: 'Nodes with fewer links than this fold into the nodes they hang from.' },
     kcore: { label: 'Outside the core', description: 'Peels off nodes with fewer links than this, again and again, into the core.' },
+    communities: { label: 'Communities', description: 'Whole neighbourhoods into a few super-nodes.' },
 }
+
+/** Offered in full mode when no rule is declared; Communities only when declared. */
+const OFFERED: BuiltinKind[] = ['neighbours', 'chains', 'degree', 'kcore']
 
 /** The rules that fold nodes below a threshold, and what their setting is called. */
 const THRESHOLD_LABEL: Partial<Record<BuiltinKind, string>> = { degree: 'Fewest links', kcore: 'Core strength' }
+
+/** The communities found for one shape of the graph: each level's key per node id. */
+interface CommunityCache {
+    signature: string
+    levels: Array<Map<string, string>>
+}
 
 interface RuleState {
     rule: SimplifyRule
@@ -39,6 +52,10 @@ interface RuleState {
     minSize: number
     /** A threshold rule's fewest links or core strength. */
     threshold?: number
+    /** The Communities level, 1 (fine) to 7 (coarse). */
+    level?: number
+    /** The last communities found, and the shape a job is running for. */
+    communities?: { found?: CommunityCache, pending?: string }
     failed: boolean
     groups: number
     folded: number
@@ -58,6 +75,21 @@ type GroupRef = GroupInfo | GroupNode | string
  * Rules run in order on the drawn graph, after the node filters: each one sees the groups
  * the ones above it made as ordinary nodes. Recomputed before every redraw.
  */
+/** Each node's community key, named after the smallest id in it: `ids` come sorted. */
+function communityKeys(level: Int32Array, ids: string[]): Map<string, string> {
+    const names = new Map<number, string>()
+    const keys = new Map<string, string>()
+    ids.forEach((id, i) => {
+        let name = names.get(level[i])
+        if (name === undefined) {
+            name = `community\u0001${id}`
+            names.set(level[i], name)
+        }
+        keys.set(id, name)
+    })
+    return keys
+}
+
 export class Simplification {
     private readonly graph: Graph
     private rules: RuleState[] = []
@@ -72,6 +104,7 @@ export class Simplification {
     private readonly openConfirmAboveValue: number
     /** What the last run produced, to tell listeners only about a real change. */
     private signature = ''
+    private destroyed = false
 
     constructor(graph: Graph, options: SimplifyOptions | undefined, mode: GraphUIMode | undefined) {
         this.graph = graph
@@ -79,7 +112,7 @@ export class Simplification {
         this.typeLabelFn = options?.typeLabel
         this.openConfirmAboveValue = options?.openConfirmAbove ?? DEFAULT_OPEN_CONFIRM_ABOVE
         if (!this.featureEnabled) return
-        const offered = (Object.keys(BUILTIN_TEXT) as BuiltinKind[]).map(kind => ({ kind, enabled: false }))
+        const offered = OFFERED.map(kind => ({ kind, enabled: false }))
         const declared = options?.rules ?? (mode === 'full' ? offered : [])
         this.rules = this.buildRules(declared)
     }
@@ -103,24 +136,34 @@ export class Simplification {
         return this.rules.map((state) => {
             const builtin = state.rule.kind === 'custom' ? undefined : BUILTIN_TEXT[state.rule.kind]
             const custom = state.rule.kind === 'custom' ? state.rule : undefined
-            const minSize = state.threshold !== undefined || (custom && custom.minSize === undefined) ? undefined : state.minSize
-            const setting = state.threshold !== undefined
-                ? { label: THRESHOLD_LABEL[state.rule.kind as BuiltinKind]!, value: state.threshold, min: MIN_THRESHOLD, max: MAX_THRESHOLD }
-                : minSize !== undefined ? { label: 'Smallest group', value: minSize, min: MIN_GROUP_SIZE, max: MAX_GROUP_SIZE } : undefined
+            const setting = this.settingOf(state)
             return {
                 id: state.id,
                 kind: state.rule.kind,
                 label: builtin?.label ?? custom?.label ?? state.id,
                 description: builtin?.description ?? custom?.description ?? '',
                 enabled: state.enabled,
-                minSize,
+                minSize: setting?.label === 'Smallest group' ? setting.value : undefined,
                 setting,
                 custom: state.rule.kind === 'custom',
                 groups: state.groups,
                 folded: state.folded,
                 failed: state.failed,
+                computing: state.communities?.pending !== undefined,
             }
         })
+    }
+
+    /** A rule's one setting, if it has one. */
+    private settingOf(state: RuleState): SimplifyRuleSetting | undefined {
+        if (state.level !== undefined) {
+            return { label: 'Level', value: state.level, min: 1, max: COMMUNITY_RESOLUTIONS.length, control: 'slider' }
+        }
+        if (state.threshold !== undefined) {
+            return { label: THRESHOLD_LABEL[state.rule.kind as BuiltinKind]!, value: state.threshold, min: MIN_THRESHOLD, max: MAX_THRESHOLD, control: 'stepper' }
+        }
+        if (state.rule.kind === 'custom' && state.rule.minSize === undefined) return undefined
+        return { label: 'Smallest group', value: state.minSize, min: MIN_GROUP_SIZE, max: MAX_GROUP_SIZE, control: 'stepper' }
     }
 
     /** Switch one rule on or off. Switching a failed rule back on tries it again. */
@@ -132,30 +175,29 @@ export class Simplification {
         this.regroup()
     }
 
-    /** Set a rule's smallest group, clamped to 2–50. A threshold rule has none. */
+    /** Set a rule's smallest group, clamped to 2–50. A rule with another setting has none. */
     setRuleMinSize(id: string, minSize: number): void {
         const state = this.rules.find(candidate => candidate.id === id)
-        if (!state || state.threshold !== undefined || !Number.isFinite(minSize)) return
-        const clamped = clamp(minSize, MIN_GROUP_SIZE, MAX_GROUP_SIZE)
-        if (state.minSize === clamped) return
-        state.minSize = clamped
-        this.regroup()
+        if (state && this.settingOf(state)?.label === 'Smallest group') this.applySetting(state, minSize)
     }
 
     /**
-     * Set a rule's one setting, what its stepper does: the smallest group (2–50), or the
-     * fewest links / core strength of a threshold rule (1–10).
+     * Set a rule's one setting, what its stepper or slider does: the smallest group (2–50),
+     * the fewest links or core strength (1–10), or the Communities level (1–7).
      */
     setRuleSetting(id: string, value: number): void {
         const state = this.rules.find(candidate => candidate.id === id)
-        if (!state || state.threshold === undefined) {
-            this.setRuleMinSize(id, value)
-            return
-        }
-        if (!Number.isFinite(value)) return
-        const clamped = clamp(value, MIN_THRESHOLD, MAX_THRESHOLD)
-        if (state.threshold === clamped) return
-        state.threshold = clamped
+        if (state) this.applySetting(state, value)
+    }
+
+    private applySetting(state: RuleState, value: number): void {
+        const setting = this.settingOf(state)
+        if (!setting || !Number.isFinite(value)) return
+        const clamped = clamp(value, setting.min, setting.max)
+        if (clamped === setting.value) return
+        if (state.level !== undefined) state.level = clamped
+        else if (state.threshold !== undefined) state.threshold = clamped
+        else state.minSize = clamped
         this.regroup()
     }
 
@@ -319,6 +361,7 @@ export class Simplification {
                     continue
                 }
                 for (const group of this.formGroups(state, view, partition, previous, claimed)) {
+                    group.info.level = state.level
                     next.push(group)
                     state.groups++
                     state.folded += group.info.members.length
@@ -352,8 +395,65 @@ export class Simplification {
             case 'chains': return chainsPartition(view, state.minSize)
             case 'degree': return degreePartition(view, state.threshold!)
             case 'kcore': return kCorePartition(view, state.threshold!)
+            case 'communities': return this.communitiesPartition(state, view)
             default: return neighboursPartition(view)
         }
+    }
+
+    /**
+     * The communities for the graph as it stands. When its shape changed, a job starts and
+     * the last communities found stay meanwhile, for the nodes still here.
+     */
+    private communitiesPartition(state: RuleState, view: GraphView): Map<string, string> {
+        const cache = state.communities!
+        const dots = new Set<Node>(view.nodes)
+        for (const node of view.nodes) {
+            for (const neighbour of view.inNeighbours(node)) dots.add(neighbour)
+            for (const neighbour of view.outNeighbours(node)) dots.add(neighbour)
+        }
+        const ordered = [...dots].sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
+        const index = new Map(ordered.map((node, i) => [node, i]))
+        const edges: number[] = []
+        for (const node of ordered) {
+            for (const out of view.outNeighbours(node)) {
+                const to = index.get(out)
+                if (to !== undefined) edges.push(index.get(node)!, to)
+            }
+        }
+        const ids = ordered.map(node => node.id)
+        const signature = `${ids.join(',')}|${edges.join(',')}`
+        if (cache.found?.signature !== signature && cache.pending !== signature) {
+            cache.pending = signature
+            const graph: CommunityGraph = { nodeCount: ids.length, edges: Int32Array.from(edges) }
+            const useWorker = state.rule.kind === 'communities' && state.rule.useWorker !== false
+            findCommunities(graph, COMMUNITY_RESOLUTIONS, useWorker).then((levels) => {
+                if (this.destroyed || cache.pending !== signature) return
+                cache.found = { signature, levels: levels.map(level => communityKeys(level, ids)) }
+                cache.pending = undefined
+                this.regroup()
+            }, (error) => {
+                if (this.destroyed || cache.pending !== signature) return
+                console.error(`[Pivotick] Simplify rule "${state.id}" failed and was switched off.`, error)
+                cache.pending = undefined
+                state.enabled = false
+                state.failed = true
+                this.regroup()
+            })
+        }
+        const keys = cache.found?.levels[state.level! - 1]
+        const partition = new Map<string, string>()
+        if (!keys) return partition
+        for (const node of view.nodes) {
+            const key = keys.get(node.id)
+            if (key !== undefined) partition.set(node.id, key)
+        }
+        return partition
+    }
+
+    /** Stop acting on jobs still running. @private */
+    destroy(): void {
+        this.destroyed = true
+        this.listeners.clear()
     }
 
     private dropDissolvedFromSelection(): void {
@@ -379,13 +479,18 @@ export class Simplification {
             seen.add(id)
             const threshold = rule.kind === 'degree' ? rule.minDegree : rule.kind === 'kcore' ? rule.k : undefined
             const isThreshold = rule.kind === 'degree' || rule.kind === 'kcore'
+            const isCommunities = rule.kind === 'communities'
             const fallbackMin = rule.kind === 'custom' ? DEFAULT_CUSTOM_MIN : DEFAULT_BUILTIN_MIN
             states.push({
                 rule,
                 id,
                 enabled: rule.enabled !== false,
-                minSize: isThreshold ? 1 : clamp(rule.minSize ?? fallbackMin, MIN_GROUP_SIZE, MAX_GROUP_SIZE),
+                minSize: isThreshold ? 1
+                    : isCommunities ? MIN_GROUP_SIZE
+                        : clamp(rule.minSize ?? fallbackMin, MIN_GROUP_SIZE, MAX_GROUP_SIZE),
                 threshold: isThreshold ? clamp(threshold ?? DEFAULT_THRESHOLD, MIN_THRESHOLD, MAX_THRESHOLD) : undefined,
+                level: isCommunities ? clamp(rule.level ?? DEFAULT_LEVEL, 1, COMMUNITY_RESOLUTIONS.length) : undefined,
+                communities: isCommunities ? {} : undefined,
                 failed: false,
                 groups: 0,
                 folded: 0,
@@ -639,7 +744,7 @@ export class Simplification {
 
     private describe(): string {
         const groups = this.groups.map(group => `${group.id}:${group.info.members.length}:${group.info.open ? 1 : 0}:${group.foldedInto?.id ?? ''}`)
-        const rules = this.rules.map(state => `${state.id}:${state.enabled ? 1 : 0}:${state.minSize}:${state.threshold ?? ''}:${state.failed ? 1 : 0}:${state.groups}:${state.folded}`)
+        const rules = this.rules.map(state => `${state.id}:${state.enabled ? 1 : 0}:${state.minSize}:${state.threshold ?? ''}:${state.level ?? ''}:${state.communities?.pending ? 1 : 0}:${state.failed ? 1 : 0}:${state.groups}:${state.folded}`)
         return `${groups.join(',')}|${rules.join(',')}`
     }
 }

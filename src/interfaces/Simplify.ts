@@ -8,7 +8,7 @@ import type { Node } from '../Node'
 export interface GroupInfo {
     /** Stable while the group keeps its key or most of its members. */
     id: string
-    /** The id of the rule that made it: `'neighbours'`, `'chains'`, `'degree'`, `'kcore'`, or a custom rule's own id. */
+    /** The id of the rule that made it: `'neighbours'`, `'chains'`, `'degree'`, `'kcore'`, `'communities'`, or a custom rule's own id. */
     rule: string
     /** The real nodes it stands for. */
     members: Node[]
@@ -18,6 +18,8 @@ export interface GroupInfo {
     anchors: Node[]
     /** Whether its members are back on the canvas. */
     open: boolean
+    /** The Communities level it was found at. */
+    level?: number
 }
 
 /**
@@ -107,6 +109,28 @@ export interface KCoreRule {
     k?: number
 }
 
+/**
+ * Fold whole neighbourhoods into a few groups: communities of densely linked nodes, found
+ * with the Leiden algorithm, at a level from fine (1) to coarse (7). Only offered when
+ * declared. Computed off the page in the compute worker when one can start; meanwhile the
+ * previous grouping stays. A group may mix types.
+ */
+export interface CommunitiesRule {
+    kind: 'communities'
+    /** @default true */
+    enabled?: boolean
+    /**
+     * From 1, many small communities, to 7, a handful of large ones.
+     * @default 4
+     */
+    level?: number
+    /**
+     * `false` finds the communities on the page instead of in a worker.
+     * @default true
+     */
+    useWorker?: boolean
+}
+
 /** A rule of the app's own. */
 export interface CustomRule {
     kind: 'custom'
@@ -131,7 +155,7 @@ export interface CustomRule {
     partition: (view: GraphView) => Map<string, string>
 }
 
-export type SimplifyRule = NeighboursRule | ChainsRule | DegreeRule | KCoreRule | CustomRule
+export type SimplifyRule = NeighboursRule | ChainsRule | DegreeRule | KCoreRule | CommunitiesRule | CustomRule
 
 /** `UI.simplify`: which rules fold the graph, and how groups are named. */
 export interface SimplifyOptions {
@@ -159,13 +183,15 @@ export interface SimplifyOptions {
     openConfirmAbove?: number
 }
 
-/** A rule's one whole-number setting: smallest group, fewest links or core strength. */
+/** A rule's one whole-number setting: smallest group, fewest links, core strength or level. */
 export interface SimplifyRuleSetting {
     /** Its name on the rule's card. */
     label: string
     value: number
     min: number
     max: number
+    /** A stepper, or a slider applied on release. */
+    control: 'stepper' | 'slider'
 }
 
 /** Where a rule stands, for the Simplify flyout. */
@@ -187,4 +213,6 @@ export interface SimplifyRuleStatus {
     folded: number
     /** The rule threw on its last run and was switched off. */
     failed: boolean
+    /** Still finding its groups; the previous ones stay on the canvas meanwhile. */
+    computing: boolean
 }

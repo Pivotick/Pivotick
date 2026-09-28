@@ -74,7 +74,7 @@ async function openSimplifyFlyout(page: Page): Promise<void> {
     await expect(page.locator('.pvt-flyout-panel.pvt-flyout-simplify')).toHaveClass(/open/)
 }
 
-const loadSimplify = (page: Page, overrides: Record<string, unknown> = {}, fixture: 'simplify' | 'simplifyClusters' | 'simplifyChains' | 'simplifyCore' = 'simplify', look = false) =>
+const loadSimplify = (page: Page, overrides: Record<string, unknown> = {}, fixture: 'simplify' | 'simplifyClusters' | 'simplifyChains' | 'simplifyCore' | 'simplifyCommunities' = 'simplify', look = false) =>
     harness(page, 'loadSimplify', overrides, fixture, look)
 
 const withNeighbours = (extra: Record<string, unknown> = {}) =>
@@ -318,6 +318,89 @@ test.describe('the threshold steppers', () => {
         await loadSimplify(page, withRule({ kind: 'degree', minDegree: 1 }), 'simplifyChains')
         await openSimplifyFlyout(page)
         await expect(ruleResult(page, 'degree')).toHaveText('Every node has 1 link or more')
+    })
+})
+
+/*
+ * The `simplifyCommunities` fixture: cliques `a`, `b`, `c`, `d` of four; `a`–`b` and
+ * `c`–`d` tied by three links each, `b`–`c` by one. `a3` carries a note, `solo` is unlinked.
+ */
+const clique = (name: string) => [0, 1, 2, 3].map((i) => `${name}${i}`)
+const CLIQUE_A = clique('a').filter((id) => id !== 'a3')
+
+test.describe('the Communities rule', () => {
+    test('folds densely linked neighbourhoods, leaving annotated and unlinked nodes out', async ({ page }) => {
+        await loadSimplify(page, withRule({ kind: 'communities' }), 'simplifyCommunities')
+        await expectPartition(page, [CLIQUE_A, clique('b'), clique('c'), clique('d')])
+        const reading = await page.evaluate(() => window.__pivotick.graph!.simplify.getGroups().map((group) => ({ rule: group.rule, level: group.level })))
+        expect(reading.every(({ rule, level }) => rule === 'communities' && level === 4)).toBe(true)
+        expect(await groupHolding(page, 'solo')).toBeUndefined()
+    })
+
+    test('a coarser level folds the pairs of cliques, mixing their types', async ({ page }) => {
+        await loadSimplify(page, withRule({ kind: 'communities' }), 'simplifyCommunities')
+        await expectPartition(page, [CLIQUE_A, clique('b'), clique('c'), clique('d')])
+        await openSimplifyFlyout(page)
+        const slider = ruleCard(page, 'communities').locator('.pvt-simplifyflyout-slider input')
+        await expect(ruleCard(page, 'communities').locator('.pvt-simplifyflyout-rule-setting')).toContainText('Level')
+        await slider.fill('6')
+        await expectPartition(page, [[...CLIQUE_A, ...clique('b')], [...clique('c'), ...clique('d')]])
+        const typeCounts = await page.evaluate(() => window.__pivotick.graph!.simplify.getGroups().find((group) => group.members.some((member) => member.id === 'c0'))!.typeCounts)
+        expect(typeCounts).toEqual({ ip: 4, domain: 4 })
+    })
+
+    test('while it computes, the card says so and the last groups stay', async ({ page }) => {
+        await loadSimplify(page, withRule({ kind: 'communities' }), 'simplifyCommunities')
+        await expectPartition(page, [CLIQUE_A, clique('b'), clique('c'), clique('d')])
+        await openSimplifyFlyout(page)
+        // One synchronous step: the change starts a job, and nothing has come back yet.
+        const during = await page.evaluate(() => {
+            const graph = window.__pivotick.graph!
+            graph.addEdge({ id: 'solo-d0', from: 'solo', to: 'd0' } as never)
+            return {
+                computing: graph.simplify.getRules()[0].computing,
+                groups: graph.simplify.getGroups().length,
+                result: document.querySelector('.pvt-simplifyflyout-rule[data-rule="communities"] .pvt-simplifyflyout-rule-result')!.textContent,
+            }
+        })
+        expect(during).toEqual({ computing: true, groups: 4, result: 'Grouping…' })
+        await expectPartition(page, [CLIQUE_A, clique('b'), clique('c'), [...clique('d'), 'solo']])
+        await expect(ruleResult(page, 'communities')).toHaveText('4 groups · 16 nodes')
+    })
+
+    test('runs in a copy of the compute worker, and on the page when told not to', async ({ page }) => {
+        // Count the community jobs workers answered, from here on.
+        await page.evaluate(() => {
+            const counts = { answered: 0 }
+            ;(window as unknown as { workerCounts: typeof counts }).workerCounts = counts
+            const Native = window.Worker
+            window.Worker = class extends Native {
+                constructor(...args: ConstructorParameters<typeof Worker>) {
+                    super(...args)
+                    this.addEventListener('message', (e) => { if (e.data?.levels) counts.answered++ })
+                }
+            }
+        })
+        const counts = () => page.evaluate(() => (window as unknown as { workerCounts: { answered: number } }).workerCounts)
+        await loadSimplify(page, withRule({ kind: 'communities' }), 'simplifyCommunities')
+        await expectPartition(page, [CLIQUE_A, clique('b'), clique('c'), clique('d')])
+        const withWorker = await counts()
+        expect(withWorker.answered).toBe(1)
+
+        await loadSimplify(page, withRule({ kind: 'communities', useWorker: false }), 'simplifyCommunities')
+        await expectPartition(page, [CLIQUE_A, clique('b'), clique('c'), clique('d')])
+        expect((await counts()).answered).toBe(withWorker.answered)
+    })
+
+    test('the page finds the same communities as the worker', async ({ page }) => {
+        await loadSimplify(page, withRule({ kind: 'communities', level: 6, useWorker: false }), 'simplifyCommunities')
+        await expectPartition(page, [[...CLIQUE_A, ...clique('b')], [...clique('c'), ...clique('d')]])
+    })
+
+    test('is offered only when declared', async ({ page }) => {
+        await loadSimplify(page, { UI: { mode: 'full' } }, 'simplifyCommunities')
+        await openSimplifyFlyout(page)
+        await expect(ruleCard(page, 'communities')).toHaveCount(0)
     })
 })
 

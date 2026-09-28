@@ -181,6 +181,34 @@
     }
 }
 
+.pvt-simplifyflyout-rule-slider {
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.pvt-simplifyflyout-slider {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+
+    input {
+        width: 100%;
+        margin: 0;
+        accent-color: var(--pvt-theme-primary);
+        cursor: pointer;
+
+        &:disabled { opacity: 0.4; cursor: default; }
+    }
+}
+
+.pvt-simplifyflyout-slider-ends {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--pvt-text-color-3);
+}
+
 .pvt-simplifyflyout-rule-result {
     font-size: 11px;
     color: var(--pvt-text-color-3);

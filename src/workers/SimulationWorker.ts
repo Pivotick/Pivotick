@@ -8,6 +8,8 @@ import type { SimulationOptions } from '../interfaces/SimulationOptions'
 import type { EdgeFullStyle } from '../interfaces/RendererOptions'
 import type { TreeLayoutOptions } from '../interfaces/LayoutOptions'
 import { EgoTreeLayout } from '../plugins/layout/EgoTree'
+import { communityLadder } from '../plugins/analytics/Leiden'
+import { COMMUNITIES_JOB, type CommunitiesJob } from './jobs'
 
 export interface WorkerInput {
     source: string
@@ -21,10 +23,18 @@ const MAX_EXECUTION_TIME = 10000
 const MAX_EXECUTION_TICKS = 20000
 const REHEAT_TICKS = 0.15 * MAX_EXECUTION_TICKS
 
-self.onmessage = (e: MessageEvent<WorkerInput>) => {
+/** The page's compute worker: each copy runs one job, a layout or a community ladder. */
+self.onmessage = (e: MessageEvent<WorkerInput | CommunitiesJob>) => {
+    if (e.data.source === COMMUNITIES_JOB) {
+        const { graph, resolutions } = e.data as CommunitiesJob
+        postMessage({ type: 'done', levels: communityLadder(graph, resolutions) })
+        return
+    }
+    if (e.data.source === 'simulation-worker-wrapper') runLayout(e.data as WorkerInput)
+}
 
-    if (e.data.source !== 'simulation-worker-wrapper') return
-    const { nodes: plainNodes, edges: plainEdges, options, canvasBCR } = e.data
+function runLayout(input: WorkerInput) {
+    const { nodes: plainNodes, edges: plainEdges, options, canvasBCR } = input
 
     const nodes = plainNodes.map(n => {
         const node = new Node(n.id, n.data, n.style)

@@ -115,6 +115,25 @@ nothing shares one group. Both settings go from 1 to 10, and links count either 
 After the neighbour rule, a group is one node to these rules: its links are its lines. A group
 hanging alone off its anchor stays as it is.
 
+### Communities
+
+```ts
+{ kind: 'communities', level: 4 }
+```
+
+For graphs too large for the rules above, Communities folds whole neighbourhoods: nodes more
+densely linked to each other than to the rest of the graph become one group, whatever their
+types. They are found with the Leiden algorithm, the same for the same graph every time.
+
+- `level` goes from **1, fine**, many small communities, to **7, coarse**, a handful of large
+  ones. In the Simplify mode it is a slider, applied when you let go.
+- The communities are found **in a worker**, off the page, and only again when the graph's
+  shape changes. Meanwhile the card reads *Grouping…* and the previous groups stay. Where no
+  worker can start, a Content Security Policy blocking blob workers for instance, the same code
+  runs on the page; `useWorker: false` asks for that.
+- A community of one node stays a node, and annotated nodes stay out, as for every rule.
+- Unlike the other built-in rules, Communities is only in the Simplify mode when declared.
+
 ### Custom rules
 
 A rule of your own is a `partition(view)` returning a key per node:
@@ -147,10 +166,11 @@ still run.
 
 ## The Simplify mode
 
-The **Simplify** button on the rail opens one card per rule, in run order: a switch, the
-setting (a − / + stepper: the smallest group, the fewest links or the core strength) and what the rule folded. Rules declared by the app carry an
-*app* tag. The summary at the top reads how many nodes are on the canvas out of how many pass
-the filters, and the rail button counts the groups while any rule folds.
+The **Simplify** button on the rail opens one card per rule, in run order: a switch, its
+setting and what the rule folded. The setting is a − / + stepper for the smallest group, the
+fewest links or the core strength, and a slider for the Communities level. Rules declared by
+the app carry an *app* tag. The summary at the top reads how many nodes are on the canvas
+out of how many pass the filters, and the rail button counts the groups while any rule folds.
 
 ## Working with a group
 
@@ -203,11 +223,12 @@ Each receives a `GroupInfo`:
 | Field | What it is |
 |---|---|
 | `id` | Stable while the group keeps most of its members. |
-| `rule` | `'neighbours'`, `'chains'`, `'degree'`, `'kcore'`, or a custom rule's `id`. |
+| `rule` | `'neighbours'`, `'chains'`, `'degree'`, `'kcore'`, `'communities'`, or a custom rule's `id`. |
 | `members` | The real nodes it stands for. |
 | `typeCounts` | How many members of each type; `''` is no type. |
 | `anchors` | The drawn nodes it links to, groups included. |
 | `open` | Whether its members are back on the canvas. |
+| `level` | The Communities level it was found at. |
 
 The tooltip of a group names its rule, lists what it links to and, for a mixed group, its
 members by type. `tooltip.renderGroupExtra(group, ctx)` adds your own lines, as
