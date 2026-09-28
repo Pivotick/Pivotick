@@ -218,7 +218,11 @@ export class Simplification {
 
     /* ---------- groups ---------- */
 
-    /** Every group from the last run, open ones included. */
+    /**
+     * Every group from the last run, open ones included, and those a later rule folded
+     * again: the group holding one lists its members too. `summary().groups` counts the
+     * closed groups the canvas draws.
+     */
     getGroups(): GroupInfo[] {
         return this.groups.map(group => group.info)
     }

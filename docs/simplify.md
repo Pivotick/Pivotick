@@ -326,7 +326,7 @@ group reads `grouped` too.
 |---|---|
 | `setRules(rules)` / `getRules()` | Replace the rules; read each one's state and what it folded. |
 | `setRuleEnabled(id, on)` / `setRuleSetting(id, n)` | What the Simplify mode's switch and stepper do. `setRuleMinSize(id, n)` sets only a smallest group. |
-| `getGroups()` / `groupOf(node)` | Every group, and the group a node is in. |
+| `getGroups()` / `groupOf(node)` | Every group, and the first group a node was folded into. A group a later rule folded again is listed too, beside the group holding it, and both list its members; `summary().groups` counts the closed groups the canvas draws. |
 | `open(group)` / `close(group)` | Put a group's members on the canvas, or fold them back. |
 | `pullOut(node)` / `putBack(node)` / `isPulledOut(node)` | Keep a node out of any group, or let it back. |
 | `groupNodes(nodes, title?)` / `renameGroup(group, title)` / `ungroup(groups)` / `isManual(group)` | Make, retitle or remove [groups by hand](#groups-made-by-hand); each is an undo step. |
