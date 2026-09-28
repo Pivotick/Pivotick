@@ -42,7 +42,8 @@ export function buildGroupSummary(simplify: Simplification, info: GroupInfo, opt
     const matched = simplify.matchesIn(info)
     if (matched > 0) {
         const line = createHtmlElement('div', { class: 'pvt-group-summary-match' })
-        line.textContent = `${matched} of ${info.members.length} match "${simplify.matchQuery ?? ''}"`
+        const query = simplify.matchQuery
+        line.textContent = `${matched} of ${info.members.length} match${query ? ` "${query}"` : ''}`
         container.append(line)
     }
 

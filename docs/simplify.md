@@ -208,6 +208,9 @@ Search looks through every node, the folded ones included.
   and an arc in the theme colour over its ring shows their share. Its tooltip counts them:
   *2 of 12 match "198.51"*. **Esc**, a click on empty canvas or the next search ends it.
 
+Hovering a legend entry marks groups the same way: a group holding nodes of that entry is lit,
+with their share on its ring, so a group mixing types does not read as all of one.
+
 An app with a search of its own can mark its matches the same way with
 `graph.simplify.setMatches(nodes, query)`, and clear them with `setMatches([])`.
 

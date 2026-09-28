@@ -326,6 +326,17 @@ export class Simplification {
         for (const listener of [...this.matchListeners]) listener()
     }
 
+    /** The matches set now, for a caller that shows its own for a moment. @private */
+    saveMatches(): { ids: Set<string>, query: string } | undefined {
+        return this.matches
+    }
+
+    /** Put back what {@link saveMatches} returned. @private */
+    restoreMatches(saved: { ids: Set<string>, query: string } | undefined): void {
+        this.matches = saved
+        for (const listener of [...this.matchListeners]) listener()
+    }
+
     /** How many of a group's members are among the matches set. */
     matchesIn(group: GroupInfo | GroupNode): number {
         const matches = this.matches

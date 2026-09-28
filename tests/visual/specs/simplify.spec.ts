@@ -1025,6 +1025,47 @@ async function addressTwoIps(page: Page): Promise<void> {
     })
 }
 
+const legendEntry = (page: Page, id: string) => page.locator(`.pvt-legend-entry[data-id="${id}"]`)
+const groupArcs = (page: Page) => page.locator('.pvt-group-matches .pvt-group-match')
+
+test.describe('hovering the legend', () => {
+    test('an entry lights the groups holding its nodes, its share arced on each ring', async ({ page }) => {
+        await loadSimplify(page, withNeighbours())
+        await legendEntry(page, 'ip').hover()
+        await expect.poll(async () => (await emphasis(page)).lit).toEqual(['group:ip-0', 'lonely'])
+        // All six members are IPs: the arc is the whole ring, drawn as two halves.
+        await expect(groupArcs(page)).toHaveCount(1)
+        expect((await groupArcs(page).getAttribute('d'))!.match(/A/g)).toHaveLength(2)
+
+        await page.mouse.move(700, 450)
+        await expect.poll(async () => (await emphasis(page)).dimmed).toEqual([])
+        await expect(groupArcs(page)).toHaveCount(0)
+    })
+
+    test('a group mixing types is lit, with only its share of the entry arced', async ({ page }) => {
+        await loadSimplify(page, withRule({ kind: 'degree', minDegree: 3 }))
+        await legendEntry(page, 'ttp').hover()
+        await expect.poll(async () => (await emphasis(page)).lit).toContain('group:ip-0')
+        // Three TTPs of nine members: one arc, not the full ring.
+        await expect(groupArcs(page)).toHaveCount(1)
+        expect((await groupArcs(page).getAttribute('d'))!.match(/A/g)).toHaveLength(1)
+    })
+
+    test('a search\'s marks come back once the pointer leaves', async ({ page }) => {
+        await loadSimplify(page, withNeighbours())
+        await addressTwoIps(page)
+        await searchFor(page, '10.0.0')
+        await expect(searchResults(page)).toHaveCount(2)
+        await page.locator('#pvt-search-input').press('Shift+Enter')
+        const searchArc = await groupArcs(page).getAttribute('d')
+
+        await legendEntry(page, 'domain').hover()
+        await expect.poll(() => groupArcs(page).getAttribute('d')).not.toBe(searchArc)
+        await page.mouse.move(700, 450)
+        await expect.poll(() => groupArcs(page).getAttribute('d')).toBe(searchArc)
+    })
+})
+
 test.describe('search inside groups', () => {
     test('a match folded into a group names the group in its result row', async ({ page }) => {
         await loadSimplify(page, withNeighbours())

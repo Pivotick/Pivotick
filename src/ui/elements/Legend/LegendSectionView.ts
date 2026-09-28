@@ -8,6 +8,7 @@ import { FormFactory } from '../../../utils/FormFactory'
 import { createEdgeSwatch } from '../../components/EdgeSwatch'
 import { arrowDown, selectionInverse, show } from '../../icons'
 import type { UIManager } from '../../UIManager'
+import type { Simplification } from '../../../Simplification/Simplification'
 
 const DEFAULT_MAX_VISIBLE_ENTRIES = 12
 
@@ -80,6 +81,8 @@ export class LegendSectionView {
     private hiddenIds = new Set<string>()
     /** The entry the pointer is on, while it is emphasising the canvas. */
     private hoveredId?: string
+    /** The groups' matches before the hover lit its own share on their rings; put back after. */
+    private matchesBeforeHover?: { saved: ReturnType<Simplification['saveMatches']> }
     private collapsed = false
     /** Set once `collapsed` has been seeded, so a rebuild doesn't unfold the section. */
     private collapseSeeded = false
@@ -649,6 +652,7 @@ export class LegendSectionView {
      */
     public onEntryHover(id: string) {
         if (!this.highlightsOnHover || this.hoveredId === id) return
+        if (this.hoveredId === undefined) this.matchesBeforeHover = { saved: this.uiManager.graph.simplify.saveMatches() }
         this.hoveredId = id
         this.emphasise(id)
     }
@@ -658,6 +662,8 @@ export class LegendSectionView {
         if (this.hoveredId === undefined) return
         this.hoveredId = undefined
         this.uiManager.graph.clearEmphasis()
+        if (this.matchesBeforeHover) this.uiManager.graph.simplify.restoreMatches(this.matchesBeforeHover.saved)
+        this.matchesBeforeHover = undefined
     }
 
     /**
@@ -674,8 +680,15 @@ export class LegendSectionView {
      * how the emphasis is dropped rather than left pointing at the previous data.
      */
     private emphasise(id: string) {
+        const graph = this.uiManager.graph
         const entry = this.entries.find(candidate => candidate.id === id)
-        this.uiManager.graph.emphasiseElements(entry ? this.items().filter(entry.predicate) : [])
+        const items = entry ? this.items().filter(entry.predicate) : []
+        // A folded node lights the group drawn for it, with its share arced on the ring,
+        // as search marks a group holding matches: a mixed group is not all of this entry.
+        if (this.scope === 'edge') return graph.emphasiseElements(items)
+        const nodes = items as Node[]
+        graph.simplify.setMatches(nodes.filter(node => node.foldedInto))
+        graph.emphasiseElements([...new Set(nodes.map(node => node.canvasRepresentative()))])
     }
 
     private showAll() {
