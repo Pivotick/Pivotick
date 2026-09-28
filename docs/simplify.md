@@ -44,7 +44,7 @@ key become one group, as long as there are at least `minSize` of them.
   groups like any other node.
 - A declared rule is on unless it says `enabled: false`.
 
-Without `UI.simplify`, `full` mode offers the neighbour rule switched off in the Simplify rail
+Without `UI.simplify`, `full` mode offers the built-in rules switched off in the Simplify rail
 mode; the other modes run nothing. `UI.simplify.enabled: false` removes the feature.
 
 ### The neighbour rule
@@ -65,6 +65,30 @@ three groups: the shared three between A and B, and two on each side.
   that leaves fewer than `minSize`, the group dissolves.
 - A group keeps its identity while it keeps most of its members, so a new node landing with the
   same neighbours joins the existing group without moving it.
+
+### The chain rule
+
+```ts
+{ kind: 'chains', minSize: 5, typeOf: (node) => node.getData().type }
+```
+
+It folds chains that hang off one node. An event holding thirty files, each with its own hash,
+is thirty chains `file > sha256`: the files share no neighbour, since each links its own hash,
+so the neighbour rule leaves them alone. The chain rule folds them into one group of files
+linked to one group of hashes, and draws the thirty links between them as one line.
+
+- A node's **tail** is a node whose only link comes from it, followed downstream while each
+  step links only along the chain. A node linked from two others, a branch or a cycle ends the
+  chain there.
+- Nodes that **lead chains of the same shape** fold together, when they share the same other
+  links and type. Five isolated pairs `domain → ip` give one group of five domains linked to one
+  group of five IPs.
+- **Each level** of the chains folds too: under the group of their heads, or under a head of
+  their own when it has no match.
+- Links count **downstream only**: a node whose only link points at another isn't that node's
+  tail.
+- Placed after the neighbour rule, it folds what that rule left. A group the neighbour rule made
+  can be a tail.
 
 ### Custom rules
 
@@ -154,10 +178,10 @@ Each receives a `GroupInfo`:
 | Field | What it is |
 |---|---|
 | `id` | Stable while the group keeps most of its members. |
-| `rule` | `'neighbours'`, or a custom rule's `id`. |
+| `rule` | `'neighbours'`, `'chains'`, or a custom rule's `id`. |
 | `members` | The real nodes it stands for. |
 | `typeCounts` | How many members of each type; `''` is no type. |
-| `anchors` | The drawn nodes it links to. |
+| `anchors` | The drawn nodes it links to, groups included. |
 | `open` | Whether its members are back on the canvas. |
 
 The tooltip of a group names its rule, lists what it links to and, for a mixed group, its

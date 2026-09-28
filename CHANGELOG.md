@@ -20,6 +20,10 @@ touching the data.
   nodes, the same way round; the leaves of a hub are the simplest case. A node with a note
   attached, a node linked to nothing and an expanded cluster are never folded. The type is
   `render.nodeTypeAccessor`, or a rule's own `typeOf`.
+- **The chain rule** (`{ kind: 'chains' }`) folds chains that hang off one node: an event whose
+  thirty files each hold their own hash becomes one group of files linked to one group of
+  hashes. Nodes leading chains of the same shape fold together, and each level of their chains
+  folds under them.
 - **A rule of your own is a `partition(view)`** returning a key per node: nodes sharing a key
   become one group. Each rule sees the groups the rules above it made as ordinary nodes. A rule
   that throws is switched off and the others still run.
@@ -28,7 +32,7 @@ touching the data.
   id while they keep most of their members, and a node landing with the same neighbours joins
   the existing group. Edges reroute to the group as they do to a closed cluster.
 - **The Simplify rail mode** switches each rule, sets its smallest group and says what it
-  folded; the rail button counts the groups. `full` mode offers it with the neighbour rule off,
+  folded; the rail button counts the groups. `full` mode offers it with the built-in rules off,
   the other modes only when rules are declared, and `UI.simplify.enabled: false` removes it.
 - **A group is drawn as a node**: a disc in its type's colour inside a ring, the count on the
   disc once there is room, `12 × ip` below. `render.groupStyle(group)` returns a `NodeStyle` to

@@ -1374,6 +1374,40 @@ export const fixtures = {
     },
 
     /**
+     * Chains for the chain rule: `ev` holds seven files, each with its own hash, except that
+     * `ev` also links `sha-6` directly, so `file-6` leads no private chain. Five isolated
+     * pairs `dom-i → pip-i`, and two hosts linked both ways, which is a cycle, not a chain.
+     */
+    simplifyChains(): BuiltFixture {
+        const ev = mkNode('ev', -250, 0, { type: 'event' })
+        const files = Array.from({ length: 7 }, (_, i) => {
+            const angle = (i / 7) * 2 * Math.PI
+            return mkNode(`file-${i}`, -250 + 130 * Math.cos(angle), 130 * Math.sin(angle), { type: 'file' })
+        })
+        const hashes = Array.from({ length: 7 }, (_, i) => {
+            const angle = (i / 7) * 2 * Math.PI
+            return mkNode(`sha-${i}`, -250 + 240 * Math.cos(angle), 240 * Math.sin(angle), { type: 'sha256' })
+        })
+        const domains = Array.from({ length: 5 }, (_, i) => mkNode(`dom-${i}`, 200, -200 + i * 100, { type: 'domain' }))
+        const pairIps = Array.from({ length: 5 }, (_, i) => mkNode(`pip-${i}`, 330, -200 + i * 100, { type: 'ip' }))
+        const hostA = mkNode('host-a', 450, -150, { type: 'host' })
+        const hostB = mkNode('host-b', 450, 150, { type: 'host' })
+        const edges = [
+            ...files.map((file) => new Edge(`ev-${file.id}`, ev, file)),
+            ...files.map((file, i) => new Edge(`${file.id}-sha`, file, hashes[i])),
+            new Edge('ev-sha-6', ev, hashes[6]),
+            ...domains.map((dom, i) => new Edge(`${dom.id}-pip`, dom, pairIps[i])),
+            new Edge('host-a-b', hostA, hostB),
+            new Edge('host-b-a', hostB, hostA),
+        ]
+        return {
+            nodes: [ev, ...files, ...hashes, ...domains, ...pairIps, hostA, hostB],
+            edges,
+            notes: [],
+        }
+    },
+
+    /**
      * A hub linked to six closed clusters of type `host`, each holding two files. The
      * first cluster's child also links to `x`, so its cluster has a neighbour the others lack.
      */

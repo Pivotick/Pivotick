@@ -6,18 +6,21 @@ import type {
 } from '../interfaces/Simplify'
 import { GroupNode } from './GroupNode'
 import { defaultGroupStyle, groupRadius } from './groupStyle'
-import { neighboursPartition } from './rules'
+import { chainsPartition, neighboursPartition } from './rules'
 
 export const MIN_GROUP_SIZE = 2
 export const MAX_GROUP_SIZE = 50
-const DEFAULT_NEIGHBOURS_MIN = 5
+const DEFAULT_BUILTIN_MIN = 5
 const DEFAULT_CUSTOM_MIN = 2
 const DEFAULT_OPEN_CONFIRM_ABOVE = 100
 const FALLBACK_COLOR = 'var(--pvt-node-color, #007acc)'
 
-/** What a built-in rule says about itself on its card. */
-const BUILTIN_TEXT: Record<'neighbours', { label: string, description: string }> = {
+type BuiltinKind = Exclude<SimplifyRule['kind'], 'custom'>
+
+/** What a built-in rule says about itself on its card, in the order they are offered. */
+const BUILTIN_TEXT: Record<BuiltinKind, { label: string, description: string }> = {
     neighbours: { label: 'Same neighbours', description: 'Nodes of one type linked to exactly the same nodes.' },
+    chains: { label: 'Chains', description: 'Nodes leading chains of the same shape, folded level by level.' },
 }
 
 interface RuleState {
@@ -63,7 +66,8 @@ export class Simplification {
         this.typeLabelFn = options?.typeLabel
         this.openConfirmAboveValue = options?.openConfirmAbove ?? DEFAULT_OPEN_CONFIRM_ABOVE
         if (!this.featureEnabled) return
-        const declared = options?.rules ?? (mode === 'full' ? [{ kind: 'neighbours', enabled: false } as SimplifyRule] : [])
+        const offered = (Object.keys(BUILTIN_TEXT) as BuiltinKind[]).map(kind => ({ kind, enabled: false }))
+        const declared = options?.rules ?? (mode === 'full' ? offered : [])
         this.rules = this.buildRules(declared)
     }
 
@@ -272,9 +276,9 @@ export class Simplification {
                 const view = this.buildView(state, next, annotated)
                 let partition: Map<string, string>
                 try {
-                    partition = state.rule.kind === 'custom'
-                        ? state.rule.partition(view)
-                        : neighboursPartition(view)
+                    partition = state.rule.kind === 'custom' ? state.rule.partition(view)
+                        : state.rule.kind === 'chains' ? chainsPartition(view, state.minSize)
+                            : neighboursPartition(view)
                 } catch (error) {
                     console.error(`[Pivotick] Simplify rule "${state.id}" failed and was switched off.`, error)
                     state.enabled = false
@@ -292,6 +296,7 @@ export class Simplification {
         }
 
         this.groups = next
+        this.resolveAnchors()
         this.placeReleased(previousFold)
         for (const node of [...this.offsets.keys()]) {
             if (!node.foldedInto) this.offsets.delete(node)
@@ -329,7 +334,7 @@ export class Simplification {
                 continue
             }
             seen.add(id)
-            const fallbackMin = rule.kind === 'custom' ? DEFAULT_CUSTOM_MIN : DEFAULT_NEIGHBOURS_MIN
+            const fallbackMin = rule.kind === 'custom' ? DEFAULT_CUSTOM_MIN : DEFAULT_BUILTIN_MIN
             states.push({
                 rule,
                 id,
@@ -394,7 +399,7 @@ export class Simplification {
         }
 
         const accessor = this.graph.getOptions().render?.nodeTypeAccessor
-        const typeOf = (state.rule.kind === 'neighbours' ? state.rule.typeOf : undefined) ?? accessor
+        const typeOf = (state.rule.kind === 'custom' ? undefined : state.rule.typeOf) ?? accessor
         const nodes = dots.filter(node =>
             !annotated.has(node.id)
             && !this.pulledOut.has(node.id)
@@ -528,6 +533,18 @@ export class Simplification {
             }
         }
         return [...anchors]
+    }
+
+    /**
+     * A group's anchors as the canvas draws them: an anchor a rule folded since, into a
+     * chain's heads or a later rule's group, reads as that group.
+     */
+    private resolveAnchors(): void {
+        for (const group of this.groups) {
+            const drawn = new Set(group.info.anchors.map(anchor => anchor.canvasRepresentative()))
+            drawn.delete(group)
+            group.info.anchors = [...drawn]
+        }
     }
 
     /** Rebuild a group's style and label when what they show has changed. */

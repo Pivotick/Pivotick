@@ -50,6 +50,11 @@ async function drawnLines(page: Page): Promise<string[]> {
     return page.evaluate(() => window.__pivotick.graph!.getDrawnEdges().map((edge) => `${edge.from.id}->${edge.to.id}`).sort())
 }
 
+/** The drawn lines with one end on any of these nodes. */
+function linesTouching(lines: string[], ids: string[]): string[] {
+    return lines.filter((line) => line.split('->').some((end) => ids.includes(end)))
+}
+
 async function expectPartition(page: Page, expected: string[][]): Promise<void> {
     const sorted = expected.map((members) => members.slice().sort()).sort((a, b) => a[0].localeCompare(b[0]))
     await expect.poll(() => partition(page)).toEqual(sorted)
@@ -69,7 +74,7 @@ async function openSimplifyFlyout(page: Page): Promise<void> {
     await expect(page.locator('.pvt-flyout-panel.pvt-flyout-simplify')).toHaveClass(/open/)
 }
 
-const loadSimplify = (page: Page, overrides: Record<string, unknown> = {}, fixture: 'simplify' | 'simplifyClusters' = 'simplify', look = false) =>
+const loadSimplify = (page: Page, overrides: Record<string, unknown> = {}, fixture: 'simplify' | 'simplifyClusters' | 'simplifyChains' = 'simplify', look = false) =>
     harness(page, 'loadSimplify', overrides, fixture, look)
 
 const withNeighbours = (extra: Record<string, unknown> = {}) =>
@@ -81,15 +86,18 @@ test.beforeEach(async ({ page }) => {
 })
 
 test.describe('defaults', () => {
-    test('full mode offers the neighbour rule switched off, and folds nothing', async ({ page }) => {
+    test('full mode offers the built-in rules switched off, and folds nothing', async ({ page }) => {
         await loadSimplify(page, { UI: { mode: 'full' } })
         await expect(railButton(page)).toBeVisible()
         await expect(railCount(page)).toBeHidden()
         expect(await groups(page)).toEqual([])
 
         await openSimplifyFlyout(page)
-        await expect(ruleCard(page, 'neighbours')).toHaveClass(/pvt-simplifyflyout-rule-off/)
-        await expect(ruleSwitch(page, 'neighbours')).toHaveAttribute('aria-pressed', 'false')
+        for (const [order, id] of ['neighbours', 'chains'].entries()) {
+            await expect(ruleCard(page, id)).toHaveClass(/pvt-simplifyflyout-rule-off/)
+            await expect(ruleSwitch(page, id)).toHaveAttribute('aria-pressed', 'false')
+            await expect(ruleCard(page, id).locator('.pvt-simplifyflyout-rule-order')).toHaveText(String(order + 1))
+        }
     })
 
     test('light mode shows nothing unless rules are declared', async ({ page }) => {
@@ -152,6 +160,69 @@ test.describe('the neighbour rule', () => {
             return Object.fromEntries(['ip-0', 'ttp-0', 'file-0'].map((id) => [id, nodeVisibility(graph.getMutableNode(id)!, graph)]))
         })
         expect(readings).toEqual({ 'ip-0': 'grouped', 'ttp-0': 'visible', 'file-0': 'visible' })
+    })
+})
+
+/*
+ * The `simplifyChains` fixture: `ev` holds seven files, each with its own hash, but `ev`
+ * also links `sha-6`, so `file-6` leads no chain of its own. Five isolated pairs
+ * `dom-i → pip-i`, and `host-a` / `host-b` linked both ways.
+ */
+const CHAIN_FILES = ['file-0', 'file-1', 'file-2', 'file-3', 'file-4', 'file-5']
+const CHAIN_HASHES = ['sha-0', 'sha-1', 'sha-2', 'sha-3', 'sha-4', 'sha-5']
+const PAIR_HEADS = ['dom-0', 'dom-1', 'dom-2', 'dom-3', 'dom-4']
+const PAIR_TAILS = ['pip-0', 'pip-1', 'pip-2', 'pip-3', 'pip-4']
+
+const withChains = (extra: Record<string, unknown> = {}) =>
+    ({ UI: { mode: 'full', simplify: { rules: [{ kind: 'chains', ...extra }] } } })
+
+test.describe('the chain rule', () => {
+    test('folds each level of a node\'s private chains: files, then their hashes', async ({ page }) => {
+        await loadSimplify(page, withChains(), 'simplifyChains')
+        await expectPartition(page, [CHAIN_FILES, CHAIN_HASHES, PAIR_HEADS, PAIR_TAILS])
+        const files = (await groupHolding(page, 'file-0'))!
+        const hashes = (await groupHolding(page, 'sha-0'))!
+        expect(files.rule).toBe('chains')
+
+        const lines = await drawnLines(page)
+        // Twelve edges, two lines: the event to its files, the files to their hashes. The
+        // file with a shared hash keeps its own lines.
+        expect(lines).toEqual(expect.arrayContaining([`ev->${files.id}`, `${files.id}->${hashes.id}`, 'ev->file-6', 'file-6->sha-6', 'ev->sha-6']))
+        expect(linesTouching(lines, [...CHAIN_FILES, ...CHAIN_HASHES])).toEqual([])
+    })
+
+    test('isolated pairs fold into their heads and their tails, linked by one line', async ({ page }) => {
+        await loadSimplify(page, withChains(), 'simplifyChains')
+        await expectPartition(page, [CHAIN_FILES, CHAIN_HASHES, PAIR_HEADS, PAIR_TAILS])
+        const heads = (await groupHolding(page, 'dom-0'))!
+        const tails = (await groupHolding(page, 'pip-0'))!
+        expect(await drawnLines(page)).toContain(`${heads.id}->${tails.id}`)
+        // Each group's anchors are what the canvas draws: the other group, not its members.
+        expect(heads.anchors).toEqual([tails.id])
+        expect(tails.anchors).toEqual([heads.id])
+    })
+
+    test('a shared hash and a cycle break the chain', async ({ page }) => {
+        await loadSimplify(page, withChains(), 'simplifyChains')
+        await expectPartition(page, [CHAIN_FILES, CHAIN_HASHES, PAIR_HEADS, PAIR_TAILS])
+        for (const id of ['ev', 'file-6', 'sha-6', 'host-a', 'host-b']) expect(await groupHolding(page, id)).toBeUndefined()
+    })
+
+    test('a pulled-out head keeps its tail with it', async ({ page }) => {
+        await loadSimplify(page, withChains({ minSize: 4 }), 'simplifyChains')
+        await page.evaluate(() => window.__pivotick.graph!.simplify.pullOut('dom-0'))
+        await expectPartition(page, [CHAIN_FILES, CHAIN_HASHES, PAIR_HEADS.slice(1), PAIR_TAILS.slice(1)])
+        expect(await drawnLines(page)).toContain('dom-0->pip-0')
+    })
+
+    test('after the neighbour rule, it folds what that rule left', async ({ page }) => {
+        await loadSimplify(page, { UI: { mode: 'full', simplify: { rules: [{ kind: 'neighbours' }, { kind: 'chains' }] } } }, 'simplifyChains')
+        await expectPartition(page, [CHAIN_FILES, CHAIN_HASHES, PAIR_HEADS, PAIR_TAILS])
+        expect((await groups(page)).every((group) => group.rule === 'chains')).toBe(true)
+
+        await openSimplifyFlyout(page)
+        await expect(ruleResult(page, 'neighbours')).toHaveText('Nothing to fold at 5 or more')
+        await expect(ruleResult(page, 'chains')).toHaveText('4 groups · 22 nodes')
     })
 })
 

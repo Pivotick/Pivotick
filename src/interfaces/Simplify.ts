@@ -8,7 +8,7 @@ import type { Node } from '../Node'
 export interface GroupInfo {
     /** Stable while the group keeps its key or most of its members. */
     id: string
-    /** The id of the rule that made it: `'neighbours'`, or a custom rule's own id. */
+    /** The id of the rule that made it: `'neighbours'`, `'chains'`, or a custom rule's own id. */
     rule: string
     /** The real nodes it stands for. */
     members: Node[]
@@ -57,6 +57,25 @@ export interface NeighboursRule {
     typeOf?: (node: Node) => string | undefined
 }
 
+/**
+ * Fold chains that hang off a node alone: a node whose only link is from its parent, and
+ * so on down. Nodes leading chains of the same shape fold together, and so does each level
+ * of their chains. An event with thirty files, each holding its own hash, becomes one group
+ * of files linked to one group of hashes. Links count downstream only.
+ */
+export interface ChainsRule {
+    kind: 'chains'
+    /** @default true */
+    enabled?: boolean
+    /**
+     * Fewer matching nodes than this stay plain nodes. Between 2 and 50.
+     * @default 5
+     */
+    minSize?: number
+    /** Overrides `render.nodeTypeAccessor` for this rule. */
+    typeOf?: (node: Node) => string | undefined
+}
+
 /** A rule of the app's own. */
 export interface CustomRule {
     kind: 'custom'
@@ -81,7 +100,7 @@ export interface CustomRule {
     partition: (view: GraphView) => Map<string, string>
 }
 
-export type SimplifyRule = NeighboursRule | CustomRule
+export type SimplifyRule = NeighboursRule | ChainsRule | CustomRule
 
 /** `UI.simplify`: which rules fold the graph, and how groups are named. */
 export interface SimplifyOptions {
@@ -92,7 +111,7 @@ export interface SimplifyOptions {
     enabled?: boolean
     /**
      * The rules, in the order they run; each one sees the groups the ones above it made.
-     * Left out, `full` mode offers the neighbour rule switched off, and the other modes
+     * Left out, `full` mode offers the built-in rules switched off, and the other modes
      * run none.
      */
     rules?: SimplifyRule[]
