@@ -542,6 +542,10 @@ export class Simplification {
         if (!group || group.info.open === open) return
         group.info.open = open
         this.regroup()
+        // As a cluster does: a little heat to make room, and the fit if asked for.
+        const simulation = this.graph.simulation
+        if (simulation?.isEnabled()) simulation.reheat(open ? 0.1 : 0.05)
+        if (simulation?.isFitViewOnExpandCollapse()) this.graph.renderer?.fitAndCenterWhenSettled()
     }
 
     /** Nodes with a note attached, which are never grouped. */
@@ -753,25 +757,73 @@ export class Simplification {
         if (wasHere && this.offsets.has(part)) return
         const placed = typeof part.x === 'number' && typeof part.y === 'number'
             && typeof group.x === 'number' && typeof group.y === 'number'
-        this.offsets.set(part, placed
-            ? { dx: (part.x as number) - (group.x as number), dy: (part.y as number) - (group.y as number) }
-            : { dx: 0, dy: 0 })
+        // Folded before it was ever laid out: it is given a place when it leaves.
+        if (!placed) return void this.offsets.delete(part)
+        this.offsets.set(part, { dx: (part.x as number) - (group.x as number), dy: (part.y as number) - (group.y as number) })
     }
 
     /**
      * A node leaving a group comes back where it sat relative to it, so a group that moved
      * brings its members along. A pinned one returns to its pin, which the simulation holds.
+     * One with no place of its own, or whose place another member already took (nodes added
+     * together start on one point), goes to the next free point of a spiral around the group.
      */
     private placeReleased(previousFold: Map<Node, GroupNode>): void {
+        const released = new Map<GroupNode, Node[]>()
         for (const [node, group] of previousFold) {
-            if (node.foldedInto) continue
-            const offset = this.offsets.get(node)
-            if (!offset || typeof group.x !== 'number' || typeof group.y !== 'number') continue
-            node.x = group.x + offset.dx
-            node.y = group.y + offset.dy
-            node.vx = 0
-            node.vy = 0
+            if (node.foldedInto || typeof group.x !== 'number' || typeof group.y !== 'number') continue
+            const nodes = released.get(group)
+            if (nodes) nodes.push(node)
+            else released.set(group, [node])
         }
+        for (const [group, nodes] of released) this.placeAround(group, nodes)
+    }
+
+    private placeAround(group: GroupNode, nodes: Node[]): void {
+        const taken: Array<{ x: number, y: number, r: number }> = []
+        const clear = (x: number, y: number, r: number) =>
+            taken.every(spot => Math.hypot(spot.x - x, spot.y - y) >= spot.r + r)
+        const crowded: Node[] = []
+        for (const node of nodes) {
+            const r = node.getLayoutRadius()
+            const pinned = typeof node.fx === 'number' && typeof node.fy === 'number'
+            const offset = this.offsets.get(node)
+            const x = pinned ? node.fx! : offset ? group.x! + offset.dx : undefined
+            const y = pinned ? node.fy! : offset ? group.y! + offset.dy : undefined
+            if (x === undefined || y === undefined || (!pinned && !clear(x, y, r))) {
+                crowded.push(node)
+                continue
+            }
+            this.place(node, x, y)
+            taken.push({ x, y, r })
+        }
+        if (crowded.length === 0) return
+
+        // A sunflower spiral: evenly packed at any count, neighbours about three radii apart.
+        const radius = Math.max(...crowded.map(node => node.getLayoutRadius()))
+        const step = (3 * radius) / Math.sqrt(Math.PI)
+        const golden = Math.PI * (3 - Math.sqrt(5))
+        let slot = 0
+        for (const node of crowded) {
+            const r = node.getLayoutRadius()
+            let x: number
+            let y: number
+            do {
+                const distance = step * Math.sqrt(slot + 0.5)
+                x = group.x! + distance * Math.cos(slot * golden)
+                y = group.y! + distance * Math.sin(slot * golden)
+                slot++
+            } while (!clear(x, y, r))
+            this.place(node, x, y)
+            taken.push({ x, y, r })
+        }
+    }
+
+    private place(node: Node, x: number, y: number): void {
+        node.x = x
+        node.y = y
+        node.vx = 0
+        node.vy = 0
     }
 
     private describe(): string {

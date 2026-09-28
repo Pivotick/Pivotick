@@ -79,7 +79,8 @@ export interface SimulationOptions {
     /** @default 50 */
     gridSize: number
     /**
-     * Automatically fit the graph to the viewport after a cluster is expanded or collapsed.
+     * Automatically fit the graph to the viewport after a cluster is expanded or collapsed,
+     * or a group from `graph.simplify` is opened or closed.
      * @default false
      */
     fitViewOnExpandCollapse: boolean

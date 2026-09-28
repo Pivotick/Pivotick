@@ -679,6 +679,85 @@ test.describe('opening a group', () => {
     })
 })
 
+/** Record the reheats and fits that opening and closing a group ask for. */
+async function recordLayoutCalls(page: Page): Promise<void> {
+    await page.evaluate(() => {
+        const graph = window.__pivotick.graph!
+        const calls: string[] = []
+        ;(window as unknown as { layoutCalls: string[] }).layoutCalls = calls
+        graph.simulation.reheat = (alpha?: number) => { calls.push(`reheat ${alpha}`) }
+        graph.renderer.fitAndCenterWhenSettled = () => { calls.push('fit') }
+    })
+}
+
+async function openThenClose(page: Page, member: string): Promise<string[]> {
+    return page.evaluate((id) => {
+        const simplify = window.__pivotick.graph!.simplify
+        const group = simplify.groupOf(id)!
+        simplify.open(group)
+        simplify.close(group)
+        return (window as unknown as { layoutCalls: string[] }).layoutCalls
+    }, member)
+}
+
+test.describe('laying out an opened group', () => {
+    test('members that would land on each other are spread around the group; the rest keep their place', async ({ page }) => {
+        await loadSimplify(page, withNeighbours())
+        await page.evaluate(() => {
+            const graph = window.__pivotick.graph!
+            for (const id of ['ip-new-0', 'ip-new-1', 'ip-new-2']) {
+                graph.addNode({ id, data: { type: 'ip' } } as never)
+                graph.addEdge({ id: `ev-a-${id}`, from: 'ev-a', to: id } as never)
+                graph.addEdge({ id: `ev-b-${id}`, from: 'ev-b', to: id } as never)
+            }
+        })
+        await expect.poll(async () => (await groupHolding(page, 'ip-new-0'))?.members.length).toBe(9)
+
+        const placed = await page.evaluate(() => {
+            const simplify = window.__pivotick.graph!.simplify
+            const info = simplify.groupOf('ip-new-0')!
+            const group = simplify.getGroupNode(info.id)!
+            const centre = { x: group.x!, y: group.y! }
+            simplify.open(info)
+            const graph = window.__pivotick.graph!
+            const ip0 = graph.getMutableNode('ip-0')!
+            ;(window as unknown as { ip0: number[] }).ip0 = [ip0.x!, ip0.y!]
+            return ['ip-new-0', 'ip-new-1', 'ip-new-2'].map((id) => {
+                const node = graph.getMutableNode(id)!
+                return { x: node.x! - centre.x, y: node.y! - centre.y, radius: node.getLayoutRadius() }
+            })
+        })
+        // Each one clear of the next, and all of them near the group rather than scattered.
+        for (let i = 0; i < placed.length; i++) {
+            for (let j = i + 1; j < placed.length; j++) {
+                const gap = Math.hypot(placed[i].x - placed[j].x, placed[i].y - placed[j].y)
+                expect(gap).toBeGreaterThan(placed[i].radius * 2)
+            }
+            expect(Math.hypot(placed[i].x, placed[i].y)).toBeLessThan(placed[i].radius * 8)
+        }
+        // A member that had its own place went back to it: the fixture pins ip-0 there.
+        expect(await page.evaluate(() => (window as unknown as { ip0: number[] }).ip0)).toEqual([0, -125])
+    })
+
+    test('with physics on, opening reheats gently and closing more gently', async ({ page }) => {
+        await loadSimplify(page, { ...withNeighbours(), simulation: { enabled: true } })
+        await recordLayoutCalls(page)
+        expect(await openThenClose(page, 'dom-0')).toEqual(['reheat 0.1', 'reheat 0.05'])
+    })
+
+    test('with physics off, nothing reheats', async ({ page }) => {
+        await loadSimplify(page, withNeighbours())
+        await recordLayoutCalls(page)
+        expect(await openThenClose(page, 'dom-0')).toEqual([])
+    })
+
+    test('fitViewOnExpandCollapse fits the view on open and on close', async ({ page }) => {
+        await loadSimplify(page, { ...withNeighbours(), simulation: { fitViewOnExpandCollapse: true } })
+        await recordLayoutCalls(page)
+        expect(await openThenClose(page, 'dom-0')).toEqual(['fit', 'fit'])
+    })
+})
+
 test.describe('selecting a group', () => {
     test('focus mode lights a selected group and its anchors, and nothing else', async ({ page }) => {
         await loadSimplify(page, withNeighbours())

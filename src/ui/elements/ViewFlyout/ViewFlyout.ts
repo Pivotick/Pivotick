@@ -101,7 +101,7 @@ export class ViewFlyout extends Flyout {
             </div>`
             + this.toggleRow('snap', snapGrid, 'Snap to grid', 'Align nodes to the grid while you drag them.')
             + this.toggleRow('freeze', pin, 'Freeze on drag', 'Keep nodes pinned where you drop them instead of letting physics move them again.')
-            + this.toggleRow('fit', graphNavigationReset, 'Fit on expand/collapse', 'Zoom and re-center to fit the graph when clusters are expanded or collapsed.')
+            + this.toggleRow('fit', graphNavigationReset, 'Fit on expand/collapse', 'Zoom and re-center to fit the graph when clusters or groups are expanded or collapsed.')
             + this.toggleRow('orphans', hide, 'Hide unconnected',
                 'Hide nodes that have no visible relation left. Unlike hiding a relationship layer, this moves the graph.')
     }

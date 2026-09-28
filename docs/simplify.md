@@ -179,8 +179,10 @@ A group is drawn as a node, and it acts for its members wherever that is unambig
 - **Open** it with a double-click, **Enter**, the sidebar or the context menu. Its members come
   back as ordinary nodes, inside a wash in the group's colour, and a light pull keeps them
   together. Drag the chip above them to move them all; its **×** folds them back. Its tooltip
-  names the rule that made the group. A group with more members than
-  `UI.simplify.openConfirmAbove` (100) asks first.
+  names the rule that made the group. Members come back where they sat; those with no free
+  place of their own spread around the group, and live physics gets a gentle push, as for a
+  cluster. `simulation.fitViewOnExpandCollapse` fits the view on open and close. A group
+  with more members than `UI.simplify.openConfirmAbove` (100) asks first.
 - **Select** it to see its members in the sidebar, in a sortable list. *Pull out* keeps one
   member out of the group until it is put back, from its context menu.
 - **View in table**, in the sidebar or the context menu, lists the members in the data dock,
