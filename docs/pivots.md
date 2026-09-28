@@ -299,6 +299,17 @@ cap is judged against, and its `facets` become the narrowing controls: you decla
 the library draws the widgets. Pass the narrowing on to your backend so the count tracks what
 the analyst chose, otherwise the gate can never lift.
 
+A facet can declare a `default`: the option values a `multiselect` starts with ticked, or the
+value a `select` or `boolean` starts at. The panel draws it and *Clear narrowing* returns to
+it, but the key stays out of the narrowing while it holds, so your provider must read a
+missing key as the default. An emptied `multiselect` with a default is sent as `[]`, which
+means *none*.
+
+```js
+{ key: 'element', label: 'Element', type: 'multiselect', default: ['attribute', 'object'],
+  options: [/* attribute, object, tag, … */] }
+```
+
 Omit `summarize` entirely and the pivot offers no count and no narrowing, just a **Run**
 button. That is legal, and then `fetch` must be safe to call blind, because nothing can gate
 it.
@@ -330,7 +341,8 @@ so the numbers you are narrowing by stay visible while you narrow. A single-choi
 stays a dropdown and carries its counts in the option labels.
 
 Under the total, the panel prints what it is made of, taken from the first `multiselect`
-facet: those options partition the result. A single-choice facet's counts are alternatives
+facet: those options partition the result. Once that facet has a pick, sent or by default,
+only the picked options are listed. A single-choice facet's counts are alternatives
 rather than parts, so they are not summed there.
 :::
 

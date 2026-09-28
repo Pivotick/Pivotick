@@ -242,6 +242,15 @@ export interface PivotFacet {
     type: NarrowingFacetType
     /** For `select` / `multiselect`. A `count` is shown beside the option when given. */
     options?: Array<{ label: string, value: string, count?: number }>
+    /**
+     * What the provider does when this key is absent from the narrowing, drawn as the
+     * facet's starting value and the value *Clear narrowing* returns to. A `multiselect`
+     * takes the picked option values, a `select` one value, a `boolean` true or false.
+     * The key is still left out of the narrowing while the facet holds its default, so
+     * the provider must treat "absent" as this value. An emptied `multiselect` with a
+     * default is sent as `[]`, meaning *none*.
+     */
+    default?: string | string[] | boolean
 }
 
 /**

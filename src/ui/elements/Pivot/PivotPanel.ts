@@ -1017,11 +1017,18 @@ class PivotEntry {
      * false: passive DNS's four windows would add up to three times its own total.
      * Those counts stay where they answer the question the analyst is asking, beside
      * the option itself.
+     *
+     * Once the multiselect has a pick, sent or by default, only the picked options are
+     * part of the result, so only those are listed. The rest keep their counts beside
+     * their checkboxes.
      */
     private paintBreakdown(): void {
         const facets = this.summary?.facets ?? []
         const partition = facets.find(facet => facet.type === 'multiselect')
-        const counted = (partition?.options ?? []).filter(o => o.count !== undefined)
+        const sent = partition ? this.narrowing[partition.key] : undefined
+        const picked = Array.isArray(sent) ? sent.map(String) : partition && defaultPick(partition)
+        const counted = (partition?.options ?? []).filter(option => option.count !== undefined
+            && (picked === undefined || picked.includes(option.value)))
         // The label is the provider's, used verbatim like every other label in the
         // library — lower-casing one would mangle a translated noun.
         this.breakdown.textContent = counted
@@ -1118,7 +1125,7 @@ class PivotEntry {
         if (!facets.length) return
 
         const form = FormFactory.createForm({ fields: facets.map(facetToField) })
-        FormFactory.setValues(form, this.narrowing as FormValues)
+        FormFactory.setValues(form, { ...facetDefaults(facets), ...this.narrowing } as FormValues)
         this.form = form
         this.narrowingHost.appendChild(form)
 
@@ -1167,7 +1174,7 @@ class PivotEntry {
     private commitNarrowing(): void {
         if (!this.form) return
         window.clearTimeout(this.typedTimer)
-        this.narrowing = compactNarrowing(FormFactory.getValues(this.form))
+        this.narrowing = compactNarrowing(FormFactory.getValues(this.form), this.drawnFacets)
         this.refusal = undefined
         void this.ask(true)
     }
@@ -1190,7 +1197,7 @@ class PivotEntry {
 
         if (Object.keys(this.narrowing).length) {
             this.actions.appendChild(this.button('Clear narrowing', false, () => {
-                if (this.form) FormFactory.clear(this.form)
+                if (this.form) FormFactory.setValues(this.form, facetDefaults(this.drawnFacets))
                 this.narrowing = {}
                 this.refusal = undefined
                 void this.ask(true)
@@ -1366,14 +1373,16 @@ function facetToField(facet: PivotFacet): FieldConfig {
     const label = facet.label ?? FormFactory.niceLabelFromKey(facet.key)
     if (facet.type === 'boolean') {
         return {
-            key: facet.key, label, type: 'select', allowEmpty: true, valuesAreBoolean: true,
+            key: facet.key, label, type: 'select', allowEmpty: facet.default === undefined, valuesAreBoolean: true,
             options: [{ label: 'true', value: 'true' }, { label: 'false', value: 'false' }],
         }
     }
     const type = facet.type === 'multiselect' ? 'checkboxes' : facet.type
     const field: FieldConfig = { key: facet.key, label, type }
     if (type === 'select' || type === 'checkboxes') {
-        field.allowEmpty = true
+        // A dropdown with a default has no blank: picking it would show nothing while
+        // the provider answers with the default.
+        field.allowEmpty = type === 'checkboxes' || facet.default === undefined
         field.options = (facet.options ?? []).map((option): FieldOption => (
             // A checkbox row has a column for the count; a dropdown's option has only
             // its label, so that is where the number has to ride.
@@ -1390,16 +1399,52 @@ function facetToField(facet: PivotFacet): FieldConfig {
     return field
 }
 
+/** The values the facets start at, as the form reads them. */
+function facetDefaults(facets: PivotFacet[]): FormValues {
+    const values: FormValues = {}
+    for (const facet of facets) {
+        if (facet.default !== undefined) values[facet.key] = defaultPick(facet) ?? facet.default
+    }
+    return values
+}
+
+/**
+ * A multiselect's default, cut down to the options on offer: the form can only tick
+ * what exists, and options come and go with the summary.
+ */
+function defaultPick(facet: PivotFacet): string[] | undefined {
+    if (facet.type !== 'multiselect' || facet.default === undefined) return undefined
+    const offered = new Set((facet.options ?? []).map(option => option.value))
+    return [facet.default].flat().map(String).filter(value => offered.has(value))
+}
+
+/** Whether a form value is what its facet holds by default. */
+function isDefault(facet: PivotFacet, value: unknown): boolean {
+    const pick = defaultPick(facet)
+    if (pick) {
+        if (!Array.isArray(value)) return false
+        const chosen = new Set(value.map(String))
+        return chosen.size === pick.length && pick.every(v => chosen.has(v))
+    }
+    return facet.default !== undefined && value === facet.default
+}
+
 /**
  * Drop the keys the analyst has not actually set. An empty multiselect is not a
  * narrowing, and leaving it in would make `{type: []}` a different cache key — and a
  * different question — from asking nothing at all.
+ *
+ * A facet holding its default is left out too, since the provider reads absent as the
+ * default. An emptied multiselect *with* a default is kept as `[]`: dropping it would
+ * quietly bring the default back.
  */
-function compactNarrowing(values: FormValues): PivotNarrowing {
+function compactNarrowing(values: FormValues, facets: PivotFacet[]): PivotNarrowing {
     const narrowing: PivotNarrowing = {}
     for (const [key, value] of Object.entries(values)) {
+        const facet = facets.find(f => f.key === key)
+        if (facet && isDefault(facet, value)) continue
         if (value === undefined || value === '') continue
-        if (Array.isArray(value) && !value.length) continue
+        if (Array.isArray(value) && !value.length && facet?.default === undefined) continue
         if (isRange(value) && value.min === undefined && value.max === undefined) continue
         narrowing[key] = value
     }

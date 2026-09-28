@@ -918,6 +918,11 @@ export interface PivotFixtureSpec {
     /** Absolute candidate ceiling, when a test wants a reachable one. */
     ceiling?: number
     /**
+     * The CORRELATION `type` facet's declared default. The provider then reads a missing
+     * `type` as these types and `[]` as none.
+     */
+    typeDefault?: string[]
+    /**
      * How many new candidates a one-click pivot lands without triage. A small number
      * here puts the threshold within reach of a fixture that returns three nodes,
      * instead of needing one that returns fifty-one.
@@ -1883,17 +1888,20 @@ function correlationTypes(narrowing: PivotNarrowing): typeof CORRELATION_TYPES {
     return CORRELATION_TYPES.map((type) => ({ ...type, count: Math.max(type.count - floor, 0) }))
 }
 
-/** Which types a narrowing chose — all of them when it chose none. */
-function chosenTypes(narrowing: PivotNarrowing): typeof CORRELATION_TYPES {
+/**
+ * Which types a narrowing chose. With a declared default, a missing `type` is that
+ * default and `[]` is none; without one, choosing none is all of them.
+ */
+function chosenTypes(narrowing: PivotNarrowing, fallback?: string[]): typeof CORRELATION_TYPES {
     const types = correlationTypes(narrowing)
-    const chosen = narrowing.type
-    if (!Array.isArray(chosen) || chosen.length === 0) return types
+    const chosen = Array.isArray(narrowing.type) || !fallback ? narrowing.type : fallback
+    if (!Array.isArray(chosen) || (chosen.length === 0 && !fallback)) return types
     const wanted = chosen.map(String)
     return types.filter((type) => wanted.includes(type.value))
 }
 
-function correlationTotal(narrowing: PivotNarrowing): number {
-    return chosenTypes(narrowing).reduce((sum, type) => sum + type.count, 0)
+function correlationTotal(narrowing: PivotNarrowing, fallback?: string[]): number {
+    return chosenTypes(narrowing, fallback).reduce((sum, type) => sum + type.count, 0)
 }
 
 /** A run outcome, flattened for `page.evaluate`. */
@@ -5355,7 +5363,7 @@ class Harness implements HarnessApi {
                     summarize: (nodes, narrowing, ctx) => this.serveProvider(
                         'correlation', 'summarize', nodes, narrowing, ctx,
                         (): PivotSummary => ({
-                            total: correlationTotal(narrowing),
+                            total: correlationTotal(narrowing, this.pivotSpec.typeDefault),
                             facets: [
                                 {
                                     key: 'type',
@@ -5366,6 +5374,7 @@ class Harness implements HarnessApi {
                                     // not zero the others.
                                     options: correlationTypes(narrowing)
                                         .map((t) => ({ label: t.label, value: t.value, count: t.count })),
+                                    ...(this.pivotSpec.typeDefault ? { default: this.pivotSpec.typeDefault } : {}),
                                 },
                                 { key: 'seen', label: 'First seen', type: 'numberRange' },
                             ],
@@ -5510,7 +5519,7 @@ class Harness implements HarnessApi {
     private correlationFragment(narrowing: PivotNarrowing, origin: Node[]): PivotResult {
         const collide = this.pivotSpec.collide ?? []
         const nodes: RawNode[] = []
-        for (const type of chosenTypes(narrowing)) {
+        for (const type of chosenTypes(narrowing, this.pivotSpec.typeDefault)) {
             for (let i = 0; i < type.count; i++) {
                 const seq = nodes.length
                 nodes.push({

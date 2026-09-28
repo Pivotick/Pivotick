@@ -80,6 +80,24 @@ const narrowTo = async (page: Page, pivotId: string, key: string, option: string
     await row.locator('input[type="checkbox"]').check()
 }
 
+/** Untick one option of a multiselect facet, the inverse of {@link narrowTo}. */
+const unnarrow = async (page: Page, pivotId: string, key: string, option: string): Promise<void> => {
+    const field = entry(page, pivotId).locator(`.pvt-form-element:has([data-field-key="${key}"])`)
+    await field.locator('.pvt-checkbox-option', { hasText: option }).first()
+        .locator('input[type="checkbox"]').uncheck()
+}
+
+/** Which options of a multiselect facet are ticked, by label. */
+const ticked = (page: Page, pivotId: string, key: string): Promise<string[]> =>
+    entry(page, pivotId).locator(`[data-field-key="${key}"] .pvt-checkbox-option:has(input:checked)`)
+        .evaluateAll(rows => rows.map(row => row.querySelector('.pvt-checkbox-label')?.textContent ?? ''))
+
+/** The narrowing each `summarize` call to a pivot was made with, oldest first. */
+const summarizedWith = async (page: Page, pivotId: string): Promise<object[]> => {
+    const log = await harness(page, 'pivotCalls') as Array<{ pivot: string, call: string, narrowing: object }>
+    return log.filter(call => call.pivot === pivotId && call.call === 'summarize').map(call => call.narrowing)
+}
+
 /** The counts a multiselect facet's checkbox list is showing, top to bottom. */
 const facetCounts = (page: Page, pivotId: string, key: string): Promise<string[]> =>
     entry(page, pivotId).locator(`[data-field-key="${key}"] .pvt-checkbox-option`)
@@ -254,10 +272,54 @@ test.describe('pivot mode', () => {
         await expect(refusal(page, CORRELATION)).toBeHidden()
         await expect(gate(page, CORRELATION)).toHaveText('Within the cap of 2,000')
         await expect(button(correlation, 'Fetch')).toBeEnabled()
+        // Only the ticked type is part of the result now, so it is the whole breakdown.
+        await expect(breakdown(page, CORRELATION)).toHaveText('210 URLs')
 
         // Crossing the cap is a click on a checkbox the analyst is still aiming at, so
         // the entry must not change height and shift everything below it.
         expect(await entryHeight(page, CORRELATION)).toBe(blockedHeight)
+    })
+
+    // ── a facet's declared default ──────────────────────────────────────────
+    test('a facet default starts ticked, and holding it is the unnarrowed question', async ({ page }) => {
+        await load(page, { typeDefault: ['url', 'paste'] })
+        await pickOrigin(page, 'a')
+        await enterMode(page)
+
+        await expect(count(page, CORRELATION)).toHaveText('~305')
+        expect(await ticked(page, CORRELATION, 'type')).toEqual(['URLs', 'Pastes'])
+        // The breakdown adds up what the result holds, not every option on offer.
+        await expect(breakdown(page, CORRELATION)).toHaveText('210 URLs · 95 Pastes')
+        // The facets arriving with their default ask nothing a second time.
+        expect(await summarizedWith(page, CORRELATION)).toEqual([{}])
+        await expect(button(entry(page, CORRELATION), 'Clear narrowing')).toHaveCount(0)
+
+        await narrowTo(page, CORRELATION, 'type', 'IPs')
+        await expect(count(page, CORRELATION)).toHaveText('~343')
+        await expect(breakdown(page, CORRELATION)).toHaveText('210 URLs · 95 Pastes · 38 IPs')
+        expect((await summarizedWith(page, CORRELATION)).at(-1)).toEqual({ type: ['url', 'paste', 'ip'] })
+
+        // Back at the default is back at `{}`, which the cache already answered.
+        await unnarrow(page, CORRELATION, 'type', 'IPs')
+        await expect(count(page, CORRELATION)).toHaveText('~305')
+        expect(await summarizedWith(page, CORRELATION)).toEqual([{}, { type: ['url', 'paste', 'ip'] }])
+    })
+
+    test('unticking a default sends none, and Clear narrowing returns to it', async ({ page }) => {
+        await load(page, { typeDefault: ['url', 'paste'] })
+        await pickOrigin(page, 'a')
+        await enterMode(page)
+        await expect(count(page, CORRELATION)).toHaveText('~305')
+
+        await unnarrow(page, CORRELATION, 'type', 'URLs')
+        await unnarrow(page, CORRELATION, 'type', 'Pastes')
+        await expect(count(page, CORRELATION)).toHaveText('~0')
+        expect((await summarizedWith(page, CORRELATION)).at(-1)).toEqual({ type: [] })
+
+        await button(entry(page, CORRELATION), 'Clear narrowing').click()
+        await expect(count(page, CORRELATION)).toHaveText('~305')
+        expect(await ticked(page, CORRELATION, 'type')).toEqual(['URLs', 'Pastes'])
+        await expect(button(entry(page, CORRELATION), 'Clear narrowing')).toHaveCount(0)
     })
 
     test('facet counts move under a field the analyst is still typing in', async ({ page }) => {
