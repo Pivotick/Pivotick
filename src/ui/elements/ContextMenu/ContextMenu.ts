@@ -1,7 +1,7 @@
 import { Edge } from '../../../Edge'
 import type { Node } from '../../../Node'
 import { createActionList, createHtmlElement, createQuickActionList, generateSafeDomId } from '../../../utils/ElementCreation'
-import { addCircle, edit, expand, focusElement, fullscreen, graphEdgeIcon, groupNodes, hide, inspect, pin, selectNeighbor, sparkles, stickyNote, trash, ungroupNodes, unpin } from '../../icons'
+import { addCircle, dataTable, edit, expand, focusElement, fullscreen, graphEdgeIcon, groupNodes, hide, inspect, pin, selectNeighbor, sparkles, stickyNote, trash, ungroupNodes, unpin } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
 import './contextmenu.scss'
@@ -15,7 +15,7 @@ import { pickNode } from '../../components/NodePickers'
 import { nodeNameGetter } from '../../../utils/GraphGetters'
 import { getNodeImageHref } from '../../../utils/NodePreview'
 import type { GroupNode } from '../../../Simplification/GroupNode'
-import { expandGroups, openGroupFromCanvas, selectGroupMembers } from '../../groupActions'
+import { expandGroups, openGroupFromCanvas, selectGroupMembers, showGroupMembersInTable } from '../../groupActions'
 
 /**
  * A library default that is only offered while the feature behind it is enabled — the
@@ -455,7 +455,7 @@ export class ContextMenu extends UIComponent {
         const deleteAt = this.menuNode.menu.findIndex(entry => entry.text === 'Delete Node')
         this.menuNode.menu.splice(deleteAt < 0 ? this.menuNode.menu.length : deleteAt, 0, ...this.membershipEntries())
         this.menuGroup = this.gate(defaultMenuGroup)
-        this.menuGroup.menu.splice(2, 0, this.pivotEntry())
+        this.menuGroup.menu.splice(2, 0, this.tableEntry(), this.pivotEntry())
         this.wrapOnclickActions()
     }
 
@@ -482,7 +482,20 @@ export class ContextMenu extends UIComponent {
         }
     }
 
-    /** Take a member of an open group out of it, or let a pulled-out node back in. */
+    /** A group's members in the data dock. Judged when the menu opens: the table is built after this menu. */
+    private tableEntry(): MenuActionItemOptions {
+        const ui = this.uiManager
+        return {
+            text: 'View members in table',
+            title: 'List the members in the data dock, to filter and search them',
+            svgIcon: dataTable,
+            variant: 'outline-primary',
+            visible: () => !!ui.table,
+            onclick: (_event, element) => showGroupMembersInTable(ui, element as GroupNode),
+        }
+    }
+
+        /** Take a member of an open group out of it, or let a pulled-out node back in. */
     private membershipEntries(): MenuActionItemOptions[] {
         const simplify = this.uiManager.graph.simplify
         return [

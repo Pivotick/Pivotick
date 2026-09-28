@@ -2,7 +2,7 @@ import { UIComponent } from '../../UIComponent'
 import type { UIManager } from '../../UIManager'
 import type { DockTabHandle, TableExportFormat, TableOptions, TableTab } from '../../../interfaces/GraphUI'
 import type { Dock } from '../Dock/Dock'
-import { TableGrid } from './TableGrid'
+import { TableGrid, type TableScope } from './TableGrid'
 import { TableGraphFilter, sameIdSet } from './TableGraphFilter'
 import { downloadText, toCsv, toJson } from './TableExport'
 import { funnel, funnelClear, sliderTune } from '../../icons'
@@ -52,6 +52,8 @@ export class Table extends UIComponent {
     private applyButton?: HTMLButtonElement
     /** The **Nested nodes** switch, on the same terms. Absent when the tab cannot nest. */
     private nestedControl?: HTMLDivElement
+    /** The scope chip's name, so a regrouping can rename it in place. */
+    private scopeName?: HTMLSpanElement
     /** The pane's own `Nodes` / `Edges` strip, in the dock's header slot. */
     private tabs?: HTMLDivElement
     /** One grid per inner tab, so each keeps its own sort, columns and row filters. */
@@ -131,6 +133,12 @@ export class Table extends UIComponent {
             graph.queryEngine.on(event, queue)
             this.track(() => graph.queryEngine.off(event, queue))
         }
+
+        // Regrouping moves the Group column and a group's scope, and emits no data event.
+        this.track(graph.simplify.onChange(() => {
+            if (this.scopeName) this.scopeName.textContent = this.grid?.getScope()?.label() ?? ''
+            this.queueRebuild()
+        }))
 
         this.queueRebuild()
     }
@@ -305,6 +313,10 @@ export class Table extends UIComponent {
         items.push(this.tabs)
         this.renderTabs()
 
+        this.scopeName = undefined
+        const scope = this.gridFor(this.tab).getScope()
+        if (scope) items.push(this.buildScopeChip(scope))
+
         // Before the summary, because it decides *what* is being counted. Cleared first so
         // switching to a tab that cannot nest never leaves the last tab's switch behind.
         this.nestedControl = undefined
@@ -356,6 +368,42 @@ export class Table extends UIComponent {
         items.push(this.pickerButton)
 
         return items
+    }
+
+    /* ---------- scope ---------- */
+
+    /**
+     * List only a set of nodes, as a group's members, and bring the table up on them. The
+     * column filters and the sort still apply within it; its chip's × lists everything again.
+     */
+    public showScope(scope: TableScope): void {
+        if (this.active) this.showTab('nodes')
+        else this.tab = 'nodes'
+        this.gridFor('nodes').setScope(scope)
+        this.uiManager.graph.openTable()
+        this.refreshBar()
+        this.queueRebuild()
+    }
+
+    private buildScopeChip(scope: TableScope): HTMLElement {
+        const chip = document.createElement('span')
+        chip.className = 'pvt-table-scope'
+        this.scopeName = document.createElement('span')
+        this.scopeName.className = 'pvt-table-scope-name'
+        this.scopeName.textContent = scope.label()
+        const clear = document.createElement('button')
+        clear.type = 'button'
+        clear.className = 'pvt-table-scope-clear'
+        clear.title = 'List every node again'
+        clear.setAttribute('aria-label', 'List every node again')
+        clear.textContent = '×'
+        clear.addEventListener('click', () => {
+            this.gridFor('nodes').setScope(undefined)
+            this.refreshBar()
+            this.refreshApplyButton()
+        })
+        chip.append(this.scopeName, clear)
+        return chip
     }
 
     /* ---------- nested rows ---------- */
@@ -616,6 +664,7 @@ export class Table extends UIComponent {
         }
         this.grids.clear()
         this.tabs = undefined
+        this.scopeName = undefined
         this.summary = undefined
         this.applyButton = undefined
         this.pickerButton = undefined

@@ -32,6 +32,17 @@ export interface TableGridSource {
     rowAction?: { label: string, title?: string, run: (node: Node) => void }
 }
 
+/**
+ * A set the rows are narrowed to before the column filters, as a group's members. It
+ * narrows what is read only: the push to the graph still weighs every row.
+ */
+export interface TableScope {
+    /** What the toolbar calls it, as `Members of 12 × ip`. */
+    label: () => string
+    /** The ids in it, read on every render so it follows a set that changes. */
+    ids: () => string[]
+}
+
 interface SortState {
     key: string
     direction: TableSortDirection
@@ -102,6 +113,7 @@ export class TableGrid {
     /** Told when the nested switch moves, so the toolbar can redraw. */
     private nestedChanged?: () => void
     private readonly source?: TableGridSource
+    private scope?: TableScope
 
     constructor(
         uiManager: UIManager,
@@ -146,6 +158,19 @@ export class TableGrid {
     /** Told when the nested switch moves, so the toolbar can redraw. */
     public onNestedChange(listener: () => void): void {
         this.nestedChanged = listener
+    }
+
+    /* ---------- scope ---------- */
+
+    public getScope(): TableScope | undefined {
+        return this.scope
+    }
+
+    /** Narrow the rows to a set, or `undefined` to list them all again. */
+    public setScope(scope: TableScope | undefined): void {
+        this.scope = scope
+        this.lastClickedIndex = null
+        this.render()
     }
 
     public getRoot(): HTMLElement {
@@ -242,10 +267,12 @@ export class TableGrid {
     }
 
     private applyRowFilters(): Row[] {
+        const inScope = this.scope ? new Set(this.scope.ids()) : undefined
+        const rows = inScope ? this.rows.filter((row) => inScope.has(row.id)) : [...this.rows]
         const active = this.activeRowFilters()
-        if (active.length === 0) return [...this.rows]
+        if (active.length === 0) return rows
 
-        return this.rows.filter((row) => this.rowPasses(row, active))
+        return rows.filter((row) => this.rowPasses(row, active))
     }
 
     /**
@@ -555,7 +582,8 @@ export class TableGrid {
         const text = document.createElement('span')
         text.textContent = narrowed
             ? 'No rows match the column filters.'
-            : this.tab === 'edges' ? 'This graph has no edges.' : 'This graph has no nodes.'
+            : this.scope ? `${this.scope.label()}: none left.`
+                : this.tab === 'edges' ? 'This graph has no edges.' : 'This graph has no nodes.'
         empty.appendChild(text)
         return empty
     }

@@ -835,6 +835,58 @@ test.describe('the group context menu', () => {
     })
 })
 
+const dockRows = (page: Page) => page.locator('.pvt-dock .pvt-table-row')
+const dockScope = (page: Page) => page.locator('.pvt-dock .pvt-table-scope')
+const dockLabelFilter = (page: Page) => page.locator('.pvt-dock .pvt-table-th[data-column="pvt:label"] .pvt-table-filter[data-role="text"]')
+
+/** The ids the dock lists, sorted. */
+async function dockRowIds(page: Page): Promise<string[]> {
+    return (await dockRows(page).evaluateAll((rows) => rows.map((row) => (row as HTMLElement).dataset.id ?? ''))).sort()
+}
+
+test.describe('the members in the dock', () => {
+    test('View in table lists only the group\'s members, and the column filters narrow within them', async ({ page }) => {
+        await loadSimplify(page, withPanels())
+        await selectGroupOf(page, 'ip-0')
+        await panelAction(page, 'view-in-table').click()
+
+        await expect(dockScope(page)).toHaveText('Members of 6 × ip×')
+        await expect.poll(() => dockRowIds(page)).toEqual(IPS)
+        await dockLabelFilter(page).fill('ip-2')
+        await expect.poll(() => dockRowIds(page)).toEqual(['ip-2'])
+
+        await dockScope(page).locator('.pvt-table-scope-clear').click()
+        await expect(dockScope(page)).toHaveCount(0)
+        // The filter stays; every node is weighed against it again.
+        await expect.poll(() => dockRowIds(page)).toEqual(['ip-2'])
+        await dockLabelFilter(page).fill('')
+        await expect.poll(async () => (await dockRowIds(page)).length).toBeGreaterThan(IPS.length)
+    })
+
+    test('the list follows the group: a pulled-out member leaves it', async ({ page }) => {
+        await loadSimplify(page, withPanels())
+        await selectGroupOf(page, 'ip-0')
+        await panelAction(page, 'view-in-table').click()
+        await expect.poll(() => dockRowIds(page)).toEqual(IPS)
+
+        await page.evaluate(() => window.__pivotick.graph!.simplify.pullOut('ip-2'))
+        await expect.poll(() => dockRowIds(page)).toEqual(IPS.filter((ip) => ip !== 'ip-2'))
+        await expect(dockScope(page)).toHaveText('Members of 5 × ip×')
+    })
+
+    test('the context menu offers it, and not without a table', async ({ page }) => {
+        await loadSimplify(page, withNeighbours())
+        await (await groupDot(page, 'dom-0')).click({ button: 'right' })
+        await menuEntry(page, 'View members in table').click()
+        await expect.poll(() => dockRowIds(page)).toEqual(DOMAINS)
+
+        await loadSimplify(page, { UI: { mode: 'full', table: false, simplify: { rules: [{ kind: 'neighbours' }] } } })
+        await (await groupDot(page, 'dom-0')).click({ button: 'right' })
+        await expect(menuEntry(page, 'Select members')).toBeVisible()
+        await expect(menuEntry(page, 'View members in table')).toHaveCount(0)
+    })
+})
+
 test.describe('the table', () => {
     test('a Group column names the group each node is in', async ({ page }) => {
         await loadSimplify(page, withNeighbours())

@@ -33,6 +33,45 @@
     }
 }
 
+// The set the rows are narrowed to, as a group's members; its × lists every node again.
+.pvt-table-scope {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+    max-width: 260px;
+    padding: 1px 2px 1px 8px;
+    border: 1px solid var(--pvt-theme-primary);
+    border-radius: 999px;
+    color: var(--pvt-theme-primary);
+    font-size: 12px;
+    box-sizing: border-box;
+
+    .pvt-table-scope-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .pvt-table-scope-clear {
+        flex: none;
+        width: 18px;
+        height: 18px;
+        padding: 0;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        color: inherit;
+        font-size: 14px;
+        line-height: 1;
+        cursor: pointer;
+
+        &:hover {
+            background: color-mix(in srgb, var(--pvt-theme-primary) 15%, transparent);
+        }
+    }
+}
+
 // A count of what is listed — "12 of 40 nodes" once a column filter narrows it.
 .pvt-table-summary {
     font-size: 12px;

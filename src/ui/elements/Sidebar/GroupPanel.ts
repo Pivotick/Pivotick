@@ -6,7 +6,7 @@ import { buildGroupSummary } from '../GroupSummary/GroupSummary'
 import { TableGrid } from '../Table/TableGrid'
 import { DEGREE_COLUMN_KEY, LABEL_COLUMN_KEY } from '../Table/TableColumns'
 import { nodeNameGetter } from '../../../utils/GraphGetters'
-import { openGroup, selectGroupMembers } from '../../groupActions'
+import { openGroup, selectGroupMembers, showGroupMembersInTable } from '../../groupActions'
 import '../Table/table.scss'
 
 /**
@@ -134,6 +134,11 @@ export class SidebarGroupPanel extends UIComponent {
             }, { primary: true, action: 'open' }))
         }
         row.append(this.button('Select members', () => selectGroupMembers(this.uiManager, group), { action: 'select-members' }))
+        if (this.uiManager.table) {
+            row.append(this.button('View in table', () => showGroupMembersInTable(this.uiManager, group), {
+                action: 'view-in-table', title: 'List the members in the data dock, to filter and search them',
+            }))
+        }
 
         const pivots = this.uiManager.graph.pivots
         if (this.uiManager.pivotMode && pivots.for(info.members).length > 0) {

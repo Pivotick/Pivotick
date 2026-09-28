@@ -67,3 +67,20 @@ export function expandGroups(nodes: Node[]): Node[] {
     }
     return [...expanded]
 }
+
+/**
+ * List a group's members in the data dock, where its column filters and search reach them.
+ * The scope follows the group by id, so it keeps up with pull-outs and regrouping.
+ */
+export function showGroupMembersInTable(uiManager: UIManager, group: GroupNode): void {
+    const simplify = uiManager.graph.simplify
+    let name = simplify.labelOf(group.info)
+    uiManager.table?.showScope({
+        label: () => {
+            const current = simplify.getGroupNode(group.id)
+            if (current) name = simplify.labelOf(current.info)
+            return `Members of ${name}`
+        },
+        ids: () => simplify.getGroupNode(group.id)?.info.members.map(member => member.id) ?? [],
+    })
+}

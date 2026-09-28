@@ -183,6 +183,8 @@ A group is drawn as a node, and it acts for its members wherever that is unambig
   `UI.simplify.openConfirmAbove` (100) asks first.
 - **Select** it to see its members in the sidebar, in a sortable list. *Pull out* keeps one
   member out of the group until it is put back, from its context menu.
+- **View in table**, in the sidebar or the context menu, lists the members in the data dock,
+  where the column filters narrow them further. The chip over the table lists every node again.
 - **Select members**, **Pivot** and **Delete** act on the members. Pivot and Delete go through
   the usual hooks, so `onBeforeDelete` sees the real nodes. Hide, Delete and Pivot on a
   selection that holds groups act on their members too.
