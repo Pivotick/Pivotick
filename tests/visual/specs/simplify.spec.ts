@@ -669,6 +669,20 @@ test.describe('the group tooltip', () => {
         await expect(tip.locator('.pvt-group-summary-hint')).toHaveText('Double-click to open · Select for the member list')
     })
 
+    test('fits its content without a scrollbar', async ({ page }) => {
+        await loadSimplify(page, withNeighbours())
+        const tip = await openNodeTooltip(page, await groupDomId(page, 'ip-0'))
+        const overflow = await tip.locator('.pvt-tooltip-container').evaluate((box) => box.scrollHeight - box.clientHeight)
+        expect(overflow).toBe(0)
+    })
+
+    test('reads in the dark theme: its chips are not black on black', async ({ page }) => {
+        await page.emulateMedia({ colorScheme: 'dark' })
+        await loadSimplify(page, withNeighbours())
+        const tip = await openNodeTooltip(page, await groupDomId(page, 'ip-0'))
+        await expect(tip.locator('.pvt-group-summary-chip-label').first()).toHaveCSS('color', 'rgb(255, 255, 255)')
+    })
+
     test('renderGroupExtra adds its own lines', async ({ page }) => {
         await loadSimplify(page, withNeighbours())
         await page.evaluate(() => {

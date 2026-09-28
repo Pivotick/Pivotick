@@ -11,6 +11,8 @@
     border-radius: 11px;
     overflow: hidden;
     box-shadow: var(--pvt-menu-shadow);
+    // Mounted outside `.pvt-layout`, so it does not inherit the layout's colour.
+    color: var(--pvt-text-color-6);
     font-size: 13px;
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     line-height: 1.4;
@@ -74,14 +76,16 @@
             );
         }
 
+        // Stops at the bottom and right edges: past them it only added to the scroll
+        // height, and the tooltip's own overflow clips it there anyway.
         &::before {
             --oversize-container-size: 10px;
             content: '';
             position: absolute;
             top: calc(-1*var(--oversize-container-size));
             left: calc(-1*var(--oversize-container-size));
-            width: calc(100% + calc(2*var(--oversize-container-size)));
-            height: calc(100% + calc(2*var(--oversize-container-size)));
+            right: 0;
+            bottom: 0;
             background: rgba(0, 0, 0, 0);
             z-index: -1;
         }
