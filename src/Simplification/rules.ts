@@ -22,6 +22,81 @@ export function neighboursPartition(view: GraphView): Map<string, string> {
     return partition
 }
 
+/** The distinct drawn nodes linked to this one, either way round. */
+function linkedTo(view: GraphView, node: Node): Set<Node> {
+    return new Set([...view.inNeighbours(node), ...view.outNeighbours(node)])
+}
+
+/**
+ * Fold the given nodes into the nodes left standing. Each connected run of folded nodes
+ * goes with the others touching the same survivors, so a hub's leaves and a path hanging
+ * off it read as one "N more" on the hub. A run touching no survivor is a group of its own,
+ * and every unlinked node joins one group.
+ */
+function foldInto(view: GraphView, folded: Set<Node>): Map<string, string> {
+    const keyed = new Map<Node, string>()
+    const seen = new Set<Node>()
+    for (const start of folded) {
+        if (seen.has(start)) continue
+        seen.add(start)
+        const run: Node[] = []
+        const survivors = new Set<Node>()
+        const stack = [start]
+        while (stack.length > 0) {
+            const node = stack.pop()!
+            run.push(node)
+            for (const neighbour of linkedTo(view, node)) {
+                if (!folded.has(neighbour)) survivors.add(neighbour)
+                else if (!seen.has(neighbour)) {
+                    seen.add(neighbour)
+                    stack.push(neighbour)
+                }
+            }
+        }
+        const key = survivors.size > 0 ? `on${SEPARATOR}${ids([...survivors])}`
+            : run.length === 1 ? 'unlinked'
+                : `run${SEPARATOR}${ids(run).split(',')[0]}`
+        for (const node of run) keyed.set(node, key)
+    }
+    const sizes = new Map<string, number>()
+    for (const key of keyed.values()) sizes.set(key, (sizes.get(key) ?? 0) + 1)
+    const partition = new Map<string, string>()
+    for (const [node, key] of keyed) {
+        // An earlier rule's group folding alone would only redraw the same dot.
+        if (sizes.get(key) === 1 && view.groupOf(node)) continue
+        partition.set(node.id, key)
+    }
+    return partition
+}
+
+/** Nodes with fewer drawn links than `minDegree` fold into what they hang from. */
+export function degreePartition(view: GraphView, minDegree: number): Map<string, string> {
+    return foldInto(view, new Set(view.nodes.filter(node => linkedTo(view, node).size < minDegree)))
+}
+
+/**
+ * Nodes outside the k-core fold into what they hang from: peel every node with fewer than
+ * `k` links left, again until none does. Nodes the rule may not group are never peeled.
+ */
+export function kCorePartition(view: GraphView, k: number): Map<string, string> {
+    const groupable = new Set(view.nodes)
+    const degree = new Map(view.nodes.map(node => [node, linkedTo(view, node).size]))
+    const peeled = new Set<Node>()
+    const queue = view.nodes.filter(node => degree.get(node)! < k)
+    while (queue.length > 0) {
+        const node = queue.pop()!
+        if (peeled.has(node)) continue
+        peeled.add(node)
+        for (const neighbour of linkedTo(view, node)) {
+            if (!groupable.has(neighbour) || peeled.has(neighbour)) continue
+            const left = degree.get(neighbour)! - 1
+            degree.set(neighbour, left)
+            if (left < k) queue.push(neighbour)
+        }
+    }
+    return foldInto(view, peeled)
+}
+
 /**
  * A node's private tails are out-neighbours whose only link is from it, followed downstream
  * while each step links only along the chain. A head (a node with tails, not a tail itself)

@@ -90,6 +90,31 @@ linked to one group of hashes, and draws the thirty links between them as one li
 - Placed after the neighbour rule, it folds what that rule left. A group the neighbour rule made
   can be a tail.
 
+### Few links and the core
+
+```ts
+{ kind: 'degree', minDegree: 2 }
+{ kind: 'kcore', k: 2 }
+```
+
+These rules take nodes off the canvas by how well linked they are, and fold them into the
+nodes they hang from, so the count stays on the canvas:
+
+- **Few links** (`degree`) folds nodes with fewer than `minDegree` links: at 2, a hub's leaves
+  become one group on the hub.
+- **Outside the core** (`kcore`) peels off nodes with fewer than `k` links, then does it again
+  with what is left, until every node standing has `k` links among the others. At 2 it folds
+  whole trees hanging off the graph, not only their leaves.
+
+Folded nodes that touch the same nodes left standing share a group, whatever their types, and
+a group may hold a single node: it reads "1 more" on its anchor. Folded nodes linked together
+go into the same group, so a path hanging off a hub folds with the hub's leaves. A run of
+folded nodes touching nothing left standing is a group of its own, and every node linked to
+nothing shares one group. Both settings go from 1 to 10, and links count either way round.
+
+After the neighbour rule, a group is one node to these rules: its links are its lines. A group
+hanging alone off its anchor stays as it is.
+
 ### Custom rules
 
 A rule of your own is a `partition(view)` returning a key per node:
@@ -123,7 +148,7 @@ still run.
 ## The Simplify mode
 
 The **Simplify** button on the rail opens one card per rule, in run order: a switch, the
-smallest group (a − / + stepper) and what the rule folded. Rules declared by the app carry an
+setting (a − / + stepper: the smallest group, the fewest links or the core strength) and what the rule folded. Rules declared by the app carry an
 *app* tag. The summary at the top reads how many nodes are on the canvas out of how many pass
 the filters, and the rail button counts the groups while any rule folds.
 
@@ -178,7 +203,7 @@ Each receives a `GroupInfo`:
 | Field | What it is |
 |---|---|
 | `id` | Stable while the group keeps most of its members. |
-| `rule` | `'neighbours'`, `'chains'`, or a custom rule's `id`. |
+| `rule` | `'neighbours'`, `'chains'`, `'degree'`, `'kcore'`, or a custom rule's `id`. |
 | `members` | The real nodes it stands for. |
 | `typeCounts` | How many members of each type; `''` is no type. |
 | `anchors` | The drawn nodes it links to, groups included. |
@@ -202,7 +227,7 @@ group reads `grouped` too.
 | Method | What it does |
 |---|---|
 | `setRules(rules)` / `getRules()` | Replace the rules; read each one's state and what it folded. |
-| `setRuleEnabled(id, on)` / `setRuleMinSize(id, n)` | What the Simplify mode's switch and stepper do. |
+| `setRuleEnabled(id, on)` / `setRuleSetting(id, n)` | What the Simplify mode's switch and stepper do. `setRuleMinSize(id, n)` sets only a smallest group. |
 | `getGroups()` / `groupOf(node)` | Every group, and the group a node is in. |
 | `open(group)` / `close(group)` | Put a group's members on the canvas, or fold them back. |
 | `pullOut(node)` / `putBack(node)` / `isPulledOut(node)` | Keep a node out of any group, or let it back. |

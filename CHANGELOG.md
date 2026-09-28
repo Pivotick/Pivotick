@@ -24,6 +24,10 @@ touching the data.
   thirty files each hold their own hash becomes one group of files linked to one group of
   hashes. Nodes leading chains of the same shape fold together, and each level of their chains
   folds under them.
+- **Few links and the core** (`{ kind: 'degree', minDegree: 2 }`, `{ kind: 'kcore', k: 2 }`) fold
+  nodes with too few links, or everything outside the k-core, into the nodes they hang from, so
+  the count stays on the canvas. Their groups may mix types and hold a single node.
+  `graph.simplify.setRuleSetting(id, n)` sets any rule's stepper value.
 - **A rule of your own is a `partition(view)`** returning a key per node: nodes sharing a key
   become one group. Each rule sees the groups the rules above it made as ordinary nodes. A rule
   that throws is switched off and the others still run.

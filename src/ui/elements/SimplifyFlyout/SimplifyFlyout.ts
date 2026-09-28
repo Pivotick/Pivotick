@@ -1,11 +1,19 @@
 import { Flyout } from '../Flyout/Flyout'
 import type { FlyoutMode } from '../../ModeStore'
 import type { SimplifyRuleStatus } from '../../../interfaces/Simplify'
-import { MAX_GROUP_SIZE, MIN_GROUP_SIZE } from '../../../Simplification/Simplification'
 import { groupNodes } from '../../icons'
 import './simplifyflyout.scss'
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
+
+/** What a rule's card says when it is on and folds nothing, in terms of its setting. */
+function nothingToFold(rule: SimplifyRuleStatus): string {
+    const value = rule.setting?.value
+    if (value === undefined) return 'Nothing to fold'
+    if (rule.kind === 'degree') return `Every node has ${plural(value, 'link', 'links')} or more`
+    if (rule.kind === 'kcore') return `Every node is in the ${value}-core`
+    return `Nothing to fold at ${value} or more`
+}
 
 /**
  * The **Simplify** rail mode: what the canvas holds now, then one card per rule in the order
@@ -109,7 +117,7 @@ export class SimplifyFlyout extends Flyout {
             card.appendChild(description)
         }
 
-        if (rule.minSize !== undefined) card.appendChild(this.buildStepper(rule))
+        if (rule.setting) card.appendChild(this.buildStepper(rule.id, rule.setting.label))
 
         const result = document.createElement('div')
         result.className = 'pvt-simplifyflyout-rule-result'
@@ -117,11 +125,11 @@ export class SimplifyFlyout extends Flyout {
         return card
     }
 
-    /** Smallest group: − / + regroup on each click, and the number can be typed. */
-    private buildStepper(rule: SimplifyRuleStatus): HTMLElement {
+    /** The rule's setting: − / + regroup on each click, and the number can be typed. */
+    private buildStepper(id: string, label: string): HTMLElement {
         const row = document.createElement('div')
         row.className = 'pvt-simplifyflyout-rule-setting'
-        row.textContent = 'Smallest group'
+        row.textContent = label
         const stepper = document.createElement('span')
         stepper.className = 'pvt-simplifyflyout-stepper'
         const minus = document.createElement('button')
@@ -132,7 +140,7 @@ export class SimplifyFlyout extends Flyout {
         const input = document.createElement('input')
         input.type = 'text'
         input.inputMode = 'numeric'
-        input.setAttribute('aria-label', 'Smallest group')
+        input.setAttribute('aria-label', label)
         const plus = document.createElement('button')
         plus.type = 'button'
         plus.dataset.step = '1'
@@ -141,13 +149,13 @@ export class SimplifyFlyout extends Flyout {
         stepper.append(minus, input, plus)
         row.appendChild(stepper)
 
-        const current = () => this.simplify.getRules().find(candidate => candidate.id === rule.id)?.minSize ?? MIN_GROUP_SIZE
+        const current = () => this.simplify.getRules().find(candidate => candidate.id === id)?.setting?.value ?? 0
         for (const button of [minus, plus]) {
-            this.listen(button, 'click', () => this.simplify.setRuleMinSize(rule.id, current() + Number(button.dataset.step)))
+            this.listen(button, 'click', () => this.simplify.setRuleSetting(id, current() + Number(button.dataset.step)))
         }
         const commit = () => {
             const typed = parseInt(input.value, 10)
-            if (Number.isFinite(typed)) this.simplify.setRuleMinSize(rule.id, typed)
+            if (Number.isFinite(typed)) this.simplify.setRuleSetting(id, typed)
             input.value = String(current())
         }
         this.listen(input, 'change', commit)
@@ -164,18 +172,19 @@ export class SimplifyFlyout extends Flyout {
         card.classList.toggle('pvt-simplifyflyout-rule-failed', rule.failed)
         card.querySelector('.pvt-simplifyflyout-rule-switch')?.setAttribute('aria-pressed', String(rule.enabled))
 
+        const setting = rule.setting
         const input = card.querySelector<HTMLInputElement>('.pvt-simplifyflyout-stepper input')
-        if (input && document.activeElement !== input) input.value = String(rule.minSize)
+        if (setting && input && document.activeElement !== input) input.value = String(setting.value)
         const minus = card.querySelector<HTMLButtonElement>('[data-step="-1"]')
         const plus = card.querySelector<HTMLButtonElement>('[data-step="1"]')
-        if (minus) minus.disabled = (rule.minSize ?? MIN_GROUP_SIZE) <= MIN_GROUP_SIZE
-        if (plus) plus.disabled = (rule.minSize ?? MAX_GROUP_SIZE) >= MAX_GROUP_SIZE
+        if (setting && minus) minus.disabled = setting.value <= setting.min
+        if (setting && plus) plus.disabled = setting.value >= setting.max
 
         const result = card.querySelector<HTMLElement>('.pvt-simplifyflyout-rule-result')
         if (!result) return
         if (rule.failed) result.textContent = 'This rule failed'
         else if (!rule.enabled) result.textContent = ''
-        else if (rule.groups === 0) result.textContent = rule.minSize !== undefined ? `Nothing to fold at ${rule.minSize} or more` : 'Nothing to fold'
+        else if (rule.groups === 0) result.textContent = nothingToFold(rule)
         else result.textContent = `${plural(rule.groups, 'group', 'groups')} · ${plural(rule.folded, 'node', 'nodes')}`
     }
 }

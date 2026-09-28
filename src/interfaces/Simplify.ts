@@ -8,7 +8,7 @@ import type { Node } from '../Node'
 export interface GroupInfo {
     /** Stable while the group keeps its key or most of its members. */
     id: string
-    /** The id of the rule that made it: `'neighbours'`, `'chains'`, or a custom rule's own id. */
+    /** The id of the rule that made it: `'neighbours'`, `'chains'`, `'degree'`, `'kcore'`, or a custom rule's own id. */
     rule: string
     /** The real nodes it stands for. */
     members: Node[]
@@ -76,6 +76,37 @@ export interface ChainsRule {
     typeOf?: (node: Node) => string | undefined
 }
 
+/**
+ * Fold nodes with few links into the nodes they hang from: a hub's leaves become one
+ * "N more" on the hub. A group may mix types and may hold a single node.
+ */
+export interface DegreeRule {
+    kind: 'degree'
+    /** @default true */
+    enabled?: boolean
+    /**
+     * Nodes with fewer drawn links than this fold. Between 1 and 10.
+     * @default 2
+     */
+    minDegree?: number
+}
+
+/**
+ * Fold everything outside the k-core into it: nodes with fewer than `k` links are peeled
+ * off again and again, so whole trees hanging off the core fold, not only their leaves.
+ * A group may mix types and may hold a single node.
+ */
+export interface KCoreRule {
+    kind: 'kcore'
+    /** @default true */
+    enabled?: boolean
+    /**
+     * The links a node needs, among the nodes still standing, to stay. Between 1 and 10.
+     * @default 2
+     */
+    k?: number
+}
+
 /** A rule of the app's own. */
 export interface CustomRule {
     kind: 'custom'
@@ -100,7 +131,7 @@ export interface CustomRule {
     partition: (view: GraphView) => Map<string, string>
 }
 
-export type SimplifyRule = NeighboursRule | ChainsRule | CustomRule
+export type SimplifyRule = NeighboursRule | ChainsRule | DegreeRule | KCoreRule | CustomRule
 
 /** `UI.simplify`: which rules fold the graph, and how groups are named. */
 export interface SimplifyOptions {
@@ -128,6 +159,15 @@ export interface SimplifyOptions {
     openConfirmAbove?: number
 }
 
+/** A rule's one whole-number setting: smallest group, fewest links or core strength. */
+export interface SimplifyRuleSetting {
+    /** Its name on the rule's card. */
+    label: string
+    value: number
+    min: number
+    max: number
+}
+
 /** Where a rule stands, for the Simplify flyout. */
 export interface SimplifyRuleStatus {
     id: string
@@ -137,6 +177,8 @@ export interface SimplifyRuleStatus {
     enabled: boolean
     /** Set for a rule with a smallest-group setting. */
     minSize?: number
+    /** The rule's whole-number setting, what its stepper shows. */
+    setting?: SimplifyRuleSetting
     /** Declared by the app rather than shipped with the library. */
     custom: boolean
     /** Groups this rule made in the last run. */

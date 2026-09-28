@@ -6,12 +6,15 @@ import type {
 } from '../interfaces/Simplify'
 import { GroupNode } from './GroupNode'
 import { defaultGroupStyle, groupRadius } from './groupStyle'
-import { chainsPartition, neighboursPartition } from './rules'
+import { chainsPartition, degreePartition, kCorePartition, neighboursPartition } from './rules'
 
 export const MIN_GROUP_SIZE = 2
 export const MAX_GROUP_SIZE = 50
+export const MIN_THRESHOLD = 1
+export const MAX_THRESHOLD = 10
 const DEFAULT_BUILTIN_MIN = 5
 const DEFAULT_CUSTOM_MIN = 2
+const DEFAULT_THRESHOLD = 2
 const DEFAULT_OPEN_CONFIRM_ABOVE = 100
 const FALLBACK_COLOR = 'var(--pvt-node-color, #007acc)'
 
@@ -21,17 +24,27 @@ type BuiltinKind = Exclude<SimplifyRule['kind'], 'custom'>
 const BUILTIN_TEXT: Record<BuiltinKind, { label: string, description: string }> = {
     neighbours: { label: 'Same neighbours', description: 'Nodes of one type linked to exactly the same nodes.' },
     chains: { label: 'Chains', description: 'Nodes leading chains of the same shape, folded level by level.' },
+    degree: { label: 'Few links', description: 'Nodes with fewer links than this fold into the nodes they hang from.' },
+    kcore: { label: 'Outside the core', description: 'Peels off nodes with fewer links than this, again and again, into the core.' },
 }
+
+/** The rules that fold nodes below a threshold, and what their setting is called. */
+const THRESHOLD_LABEL: Partial<Record<BuiltinKind, string>> = { degree: 'Fewest links', kcore: 'Core strength' }
 
 interface RuleState {
     rule: SimplifyRule
     id: string
     enabled: boolean
+    /** Fewer parts than this stay plain nodes; 1 for a threshold rule, which folds any group. */
     minSize: number
+    /** A threshold rule's fewest links or core strength. */
+    threshold?: number
     failed: boolean
     groups: number
     folded: number
 }
+
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, Math.round(value)))
 
 type GroupRef = GroupInfo | GroupNode | string
 
@@ -90,13 +103,18 @@ export class Simplification {
         return this.rules.map((state) => {
             const builtin = state.rule.kind === 'custom' ? undefined : BUILTIN_TEXT[state.rule.kind]
             const custom = state.rule.kind === 'custom' ? state.rule : undefined
+            const minSize = state.threshold !== undefined || (custom && custom.minSize === undefined) ? undefined : state.minSize
+            const setting = state.threshold !== undefined
+                ? { label: THRESHOLD_LABEL[state.rule.kind as BuiltinKind]!, value: state.threshold, min: MIN_THRESHOLD, max: MAX_THRESHOLD }
+                : minSize !== undefined ? { label: 'Smallest group', value: minSize, min: MIN_GROUP_SIZE, max: MAX_GROUP_SIZE } : undefined
             return {
                 id: state.id,
                 kind: state.rule.kind,
                 label: builtin?.label ?? custom?.label ?? state.id,
                 description: builtin?.description ?? custom?.description ?? '',
                 enabled: state.enabled,
-                minSize: state.rule.kind === 'custom' && state.rule.minSize === undefined ? undefined : state.minSize,
+                minSize,
+                setting,
                 custom: state.rule.kind === 'custom',
                 groups: state.groups,
                 folded: state.folded,
@@ -114,13 +132,30 @@ export class Simplification {
         this.regroup()
     }
 
-    /** Set a rule's smallest group, clamped to 2–50. */
+    /** Set a rule's smallest group, clamped to 2–50. A threshold rule has none. */
     setRuleMinSize(id: string, minSize: number): void {
         const state = this.rules.find(candidate => candidate.id === id)
-        if (!state || !Number.isFinite(minSize)) return
-        const clamped = Math.min(MAX_GROUP_SIZE, Math.max(MIN_GROUP_SIZE, Math.round(minSize)))
+        if (!state || state.threshold !== undefined || !Number.isFinite(minSize)) return
+        const clamped = clamp(minSize, MIN_GROUP_SIZE, MAX_GROUP_SIZE)
         if (state.minSize === clamped) return
         state.minSize = clamped
+        this.regroup()
+    }
+
+    /**
+     * Set a rule's one setting, what its stepper does: the smallest group (2–50), or the
+     * fewest links / core strength of a threshold rule (1–10).
+     */
+    setRuleSetting(id: string, value: number): void {
+        const state = this.rules.find(candidate => candidate.id === id)
+        if (!state || state.threshold === undefined) {
+            this.setRuleMinSize(id, value)
+            return
+        }
+        if (!Number.isFinite(value)) return
+        const clamped = clamp(value, MIN_THRESHOLD, MAX_THRESHOLD)
+        if (state.threshold === clamped) return
+        state.threshold = clamped
         this.regroup()
     }
 
@@ -276,9 +311,7 @@ export class Simplification {
                 const view = this.buildView(state, next, annotated)
                 let partition: Map<string, string>
                 try {
-                    partition = state.rule.kind === 'custom' ? state.rule.partition(view)
-                        : state.rule.kind === 'chains' ? chainsPartition(view, state.minSize)
-                            : neighboursPartition(view)
+                    partition = this.partitionOf(state, view)
                 } catch (error) {
                     console.error(`[Pivotick] Simplify rule "${state.id}" failed and was switched off.`, error)
                     state.enabled = false
@@ -313,6 +346,16 @@ export class Simplification {
         return changed
     }
 
+    private partitionOf(state: RuleState, view: GraphView): Map<string, string> {
+        switch (state.rule.kind) {
+            case 'custom': return state.rule.partition(view)
+            case 'chains': return chainsPartition(view, state.minSize)
+            case 'degree': return degreePartition(view, state.threshold!)
+            case 'kcore': return kCorePartition(view, state.threshold!)
+            default: return neighboursPartition(view)
+        }
+    }
+
     private dropDissolvedFromSelection(): void {
         const interaction = this.graph.renderer?.getGraphInteraction()
         if (!interaction) return
@@ -334,12 +377,15 @@ export class Simplification {
                 continue
             }
             seen.add(id)
+            const threshold = rule.kind === 'degree' ? rule.minDegree : rule.kind === 'kcore' ? rule.k : undefined
+            const isThreshold = rule.kind === 'degree' || rule.kind === 'kcore'
             const fallbackMin = rule.kind === 'custom' ? DEFAULT_CUSTOM_MIN : DEFAULT_BUILTIN_MIN
             states.push({
                 rule,
                 id,
                 enabled: rule.enabled !== false,
-                minSize: Math.min(MAX_GROUP_SIZE, Math.max(MIN_GROUP_SIZE, rule.minSize ?? fallbackMin)),
+                minSize: isThreshold ? 1 : clamp(rule.minSize ?? fallbackMin, MIN_GROUP_SIZE, MAX_GROUP_SIZE),
+                threshold: isThreshold ? clamp(threshold ?? DEFAULT_THRESHOLD, MIN_THRESHOLD, MAX_THRESHOLD) : undefined,
                 failed: false,
                 groups: 0,
                 folded: 0,
@@ -399,7 +445,8 @@ export class Simplification {
         }
 
         const accessor = this.graph.getOptions().render?.nodeTypeAccessor
-        const typeOf = (state.rule.kind === 'custom' ? undefined : state.rule.typeOf) ?? accessor
+        const ownTypeOf = state.rule.kind === 'neighbours' || state.rule.kind === 'chains' ? state.rule.typeOf : undefined
+        const typeOf = ownTypeOf ?? accessor
         const nodes = dots.filter(node =>
             !annotated.has(node.id)
             && !this.pulledOut.has(node.id)
@@ -592,7 +639,7 @@ export class Simplification {
 
     private describe(): string {
         const groups = this.groups.map(group => `${group.id}:${group.info.members.length}:${group.info.open ? 1 : 0}:${group.foldedInto?.id ?? ''}`)
-        const rules = this.rules.map(state => `${state.id}:${state.enabled ? 1 : 0}:${state.minSize}:${state.failed ? 1 : 0}:${state.groups}:${state.folded}`)
+        const rules = this.rules.map(state => `${state.id}:${state.enabled ? 1 : 0}:${state.minSize}:${state.threshold ?? ''}:${state.failed ? 1 : 0}:${state.groups}:${state.folded}`)
         return `${groups.join(',')}|${rules.join(',')}`
     }
 }

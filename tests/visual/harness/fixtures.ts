@@ -1408,6 +1408,33 @@ export const fixtures = {
     },
 
     /**
+     * For the threshold rules: a core of four events all linked together; a tree hanging
+     * off `k0` (`k0 → t0`, and `t0` holds two files `t1`, `t2`); an IP `b` bridging `k1`
+     * and `k2`; a triangle of domains linked to nothing else; and `solo`, linked to nothing.
+     */
+    simplifyCore(): BuiltFixture {
+        const core = Array.from({ length: 4 }, (_, i) => mkNode(`k${i}`, [-60, 60, 60, -60][i], [-60, -60, 60, 60][i], { type: 'event' }))
+        const t0 = mkNode('t0', -200, -160, { type: 'host' })
+        const t1 = mkNode('t1', -300, -220, { type: 'file' })
+        const t2 = mkNode('t2', -300, -120, { type: 'file' })
+        const bridge = mkNode('b', 200, 0, { type: 'ip' })
+        const triangle = Array.from({ length: 3 }, (_, i) => mkNode(`x${i}`, 300 + [0, 80, 40][i], 200 + [0, 0, 70][i], { type: 'domain' }))
+        const solo = mkNode('solo', -300, 200, { type: 'ip' })
+        const edges = [
+            ...core.flatMap((a, i) => core.slice(i + 1).map((b) => new Edge(`${a.id}-${b.id}`, a, b))),
+            new Edge('k0-t0', core[0], t0),
+            new Edge('t0-t1', t0, t1),
+            new Edge('t0-t2', t0, t2),
+            new Edge('k1-b', core[1], bridge),
+            new Edge('b-k2', bridge, core[2]),
+            new Edge('x0-x1', triangle[0], triangle[1]),
+            new Edge('x1-x2', triangle[1], triangle[2]),
+            new Edge('x2-x0', triangle[2], triangle[0]),
+        ]
+        return { nodes: [...core, t0, t1, t2, bridge, ...triangle, solo], edges, notes: [] }
+    },
+
+    /**
      * A hub linked to six closed clusters of type `host`, each holding two files. The
      * first cluster's child also links to `x`, so its cluster has a neighbour the others lack.
      */

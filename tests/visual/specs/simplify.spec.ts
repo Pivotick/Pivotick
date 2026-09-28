@@ -74,7 +74,7 @@ async function openSimplifyFlyout(page: Page): Promise<void> {
     await expect(page.locator('.pvt-flyout-panel.pvt-flyout-simplify')).toHaveClass(/open/)
 }
 
-const loadSimplify = (page: Page, overrides: Record<string, unknown> = {}, fixture: 'simplify' | 'simplifyClusters' | 'simplifyChains' = 'simplify', look = false) =>
+const loadSimplify = (page: Page, overrides: Record<string, unknown> = {}, fixture: 'simplify' | 'simplifyClusters' | 'simplifyChains' | 'simplifyCore' = 'simplify', look = false) =>
     harness(page, 'loadSimplify', overrides, fixture, look)
 
 const withNeighbours = (extra: Record<string, unknown> = {}) =>
@@ -93,7 +93,8 @@ test.describe('defaults', () => {
         expect(await groups(page)).toEqual([])
 
         await openSimplifyFlyout(page)
-        for (const [order, id] of ['neighbours', 'chains'].entries()) {
+        await expect(page.locator('.pvt-simplifyflyout-rule')).toHaveCount(4)
+        for (const [order, id] of ['neighbours', 'chains', 'degree', 'kcore'].entries()) {
             await expect(ruleCard(page, id)).toHaveClass(/pvt-simplifyflyout-rule-off/)
             await expect(ruleSwitch(page, id)).toHaveAttribute('aria-pressed', 'false')
             await expect(ruleCard(page, id).locator('.pvt-simplifyflyout-rule-order')).toHaveText(String(order + 1))
@@ -223,6 +224,100 @@ test.describe('the chain rule', () => {
         await openSimplifyFlyout(page)
         await expect(ruleResult(page, 'neighbours')).toHaveText('Nothing to fold at 5 or more')
         await expect(ruleResult(page, 'chains')).toHaveText('4 groups · 22 nodes')
+    })
+})
+
+/*
+ * The `simplifyCore` fixture: `k0`–`k3` all linked together; `k0 → t0`, with `t0` holding
+ * `t1` and `t2`; `b` bridging `k1` and `k2`; a triangle `x0`–`x2` linked to nothing else;
+ * and `solo`, linked to nothing.
+ */
+const TREE = ['t0', 't1', 't2']
+const TRIANGLE = ['x0', 'x1', 'x2']
+
+const withRule = (rule: Record<string, unknown>) => ({ UI: { mode: 'full', simplify: { rules: [rule] } } })
+
+test.describe('the degree rule', () => {
+    test('folds nodes with fewer links into what they hang from, one group per anchor', async ({ page }) => {
+        await loadSimplify(page, withRule({ kind: 'degree' }), 'simplifyCore')
+        // Two links by default: the tree's two leaves, and the unlinked node.
+        await expectPartition(page, [['t1', 't2'], ['solo']])
+        const leaves = (await groupHolding(page, 't1'))!
+        expect(leaves).toMatchObject({ rule: 'degree', anchors: ['t0'] })
+        expect(await drawnLines(page)).toContain(`t0->${leaves.id}`)
+    })
+
+    test('a group may hold one node, and a run touching nothing left is a group of its own', async ({ page }) => {
+        await loadSimplify(page, withRule({ kind: 'degree', minDegree: 3 }), 'simplifyCore')
+        await expectPartition(page, [['t1', 't2'], ['b'], TRIANGLE, ['solo']])
+        expect((await groupHolding(page, 'b'))!.anchors).toEqual(['k1', 'k2'])
+        expect((await groupHolding(page, 'x0'))!.anchors).toEqual([])
+    })
+
+    test('a group mixes types when what it folds does', async ({ page }) => {
+        await loadSimplify(page, withRule({ kind: 'degree', minDegree: 3 }))
+        // IPs and TTPs both link only the two events.
+        const shared = (await groupHolding(page, 'ttp-0'))!
+        expect(shared.members).toEqual([...IPS, 'ttp-0', 'ttp-1', 'ttp-2'].sort())
+        const typeCounts = await page.evaluate((id) => window.__pivotick.graph!.simplify.getGroups().find((group) => group.id === id)!.typeCounts, shared.id)
+        expect(typeCounts).toEqual({ ip: 6, ttp: 3 })
+    })
+})
+
+test.describe('the k-core rule', () => {
+    test('peels whole trees, not only their leaves', async ({ page }) => {
+        await loadSimplify(page, withRule({ kind: 'kcore' }), 'simplifyCore')
+        // With its leaves gone t0 has one link left, so it goes too; the triangle and the
+        // bridge keep two each.
+        await expectPartition(page, [TREE, ['solo']])
+        expect(await groupHolding(page, 't0')).toMatchObject({ rule: 'kcore', anchors: ['k0'] })
+    })
+
+    test('a stronger core folds everything outside the four linked events', async ({ page }) => {
+        await loadSimplify(page, withRule({ kind: 'kcore', k: 3 }), 'simplifyCore')
+        await expectPartition(page, [TREE, ['b'], TRIANGLE, ['solo']])
+        expect(await canvasNodeIds(page)).toEqual(expect.arrayContaining(['k0', 'k1', 'k2', 'k3']))
+    })
+
+    test('after the neighbour rule, a group is one node to peel', async ({ page }) => {
+        await loadSimplify(page, { UI: { mode: 'full', simplify: { rules: [{ kind: 'neighbours' }, { kind: 'degree', minDegree: 3 }] } } })
+        const ipGroup = (await groupHolding(page, 'ip-0'))!
+        expect(ipGroup.rule).toBe('neighbours')
+        // The IP group and the three TTPs all hang off the two events: one group of nine.
+        const fold = (await groups(page)).find((group) => group.rule === 'degree' && group.members.includes('ttp-0'))!
+        expect(fold.members).toEqual([...IPS, 'ttp-0', 'ttp-1', 'ttp-2'].sort())
+        expect(fold.anchors).toEqual(['ev-a', 'ev-b'])
+        expect(await canvasNodeIds(page)).not.toContain(ipGroup.id)
+        // The domain and file groups hang alone off their anchors: folding them would redraw the same dot.
+        for (const member of ['dom-0', 'file-1']) expect((await groupHolding(page, member))!.rule).toBe('neighbours')
+    })
+})
+
+test.describe('the threshold steppers', () => {
+    test('each threshold rule names its own setting', async ({ page }) => {
+        await loadSimplify(page, { UI: { mode: 'full' } })
+        await openSimplifyFlyout(page)
+        await expect(ruleCard(page, 'degree').locator('.pvt-simplifyflyout-rule-setting')).toContainText('Fewest links')
+        await expect(ruleCard(page, 'kcore').locator('.pvt-simplifyflyout-rule-setting')).toContainText('Core strength')
+    })
+
+    test('fewest links steps between 1 and 10 and regroups on each click', async ({ page }) => {
+        await loadSimplify(page, withRule({ kind: 'degree' }), 'simplifyCore')
+        await openSimplifyFlyout(page)
+        await stepperButton(page, 'degree', 1).click()
+        await expectPartition(page, [['t1', 't2'], ['b'], TRIANGLE, ['solo']])
+
+        await stepperButton(page, 'degree', -1).click()
+        await stepperButton(page, 'degree', -1).click()
+        await expectPartition(page, [['solo']])
+        await expect(stepperButton(page, 'degree', -1)).toBeDisabled()
+        await expect(ruleCard(page, 'degree').locator('input')).toHaveValue('1')
+    })
+
+    test('says so when every node has enough links', async ({ page }) => {
+        await loadSimplify(page, withRule({ kind: 'degree', minDegree: 1 }), 'simplifyChains')
+        await openSimplifyFlyout(page)
+        await expect(ruleResult(page, 'degree')).toHaveText('Every node has 1 link or more')
     })
 })
 
