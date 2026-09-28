@@ -10,6 +10,8 @@
   drawing on the way in.
 - Pointing at an edge legend entry now lights edges folded into a closed cluster's line
   instead of dimming them with everything else.
+- The opening layout now includes what the host does right after `new Graph()`, instead of
+  laying out the graph as it was one call earlier.
 
 ### Simplify: fold nodes that play the same role
 

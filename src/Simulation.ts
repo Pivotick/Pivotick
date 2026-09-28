@@ -581,6 +581,9 @@ export class Simulation {
         // Tune *before* the layout pass, so the worker is handed the tuned options and
         // the opening frame is already right rather than corrected a moment later.
         if (recomputeLayout) {
+            // A microtask later, so what the host does right after `new Graph()` (groups set,
+            // opened, pulled out) is in the layout rather than corrected after it.
+            await Promise.resolve()
             this.tuneNow({ reheat: false })
             await this.runSimulationWorkerRouter()
         }
@@ -752,7 +755,8 @@ export class Simulation {
         const { nodes: updatedNodes } = runSimulation(nodesCopy,
             edgesCopy,
             optionsWithoutCBs,
-            containerBCR)
+            containerBCR,
+            this.openGroupMemberIds())
 
         this.applyComputedPositions(updatedNodes)
         this.graph.updateData(nodes, undefined, false)
@@ -809,12 +813,20 @@ export class Simulation {
             edgesCopy,
             optionsWithoutCBs,
             containerBCR,
-            onWorkerProgress
+            onWorkerProgress,
+            this.openGroupMemberIds()
         )
         this.graph.updateLayoutProgress(100, 0, 'rendering')
         this.applyComputedPositions(updatedNodes)
         this.graph.updateData(nodes, undefined, false)
         this.graph.updateLayoutProgress(100, 0, 'done')
+    }
+
+    /** The on-canvas members of each open group, by id, for a layout pass off the live forces. */
+    private openGroupMemberIds(): string[][] {
+        return this.graph.simplify.getOpenGroupNodes().map(group => group.parts
+            .filter(part => part.canvasRepresentative() === part && part.onCanvas)
+            .map(part => part.id))
     }
 
     /**

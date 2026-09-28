@@ -9,6 +9,7 @@ import type { EdgeFullStyle } from '../interfaces/RendererOptions'
 import type { TreeLayoutOptions } from '../interfaces/LayoutOptions'
 import { EgoTreeLayout } from '../plugins/layout/EgoTree'
 import { communityLadder } from '../plugins/analytics/Leiden'
+import { forceGroupCohesion } from '../plugins/d3Forces/ForceGroupCohesion'
 import { COMMUNITIES_JOB, type CommunitiesJob } from './jobs'
 
 export interface WorkerInput {
@@ -17,6 +18,8 @@ export interface WorkerInput {
     edges: SimulationEdgeDTO[]
     canvasBCR: DOMRect
     options: SimulationOptions
+    /** The member ids of each open group, pulled together as the live simulation does. */
+    groups?: string[][]
 }
 
 const MAX_EXECUTION_TIME = 10000
@@ -34,7 +37,7 @@ self.onmessage = (e: MessageEvent<WorkerInput | CommunitiesJob>) => {
 }
 
 function runLayout(input: WorkerInput) {
-    const { nodes: plainNodes, edges: plainEdges, options, canvasBCR } = input
+    const { nodes: plainNodes, edges: plainEdges, options, canvasBCR, groups = [] } = input
 
     const nodes = plainNodes.map(n => {
         const node = new Node(n.id, n.data, n.style)
@@ -71,6 +74,7 @@ function runLayout(input: WorkerInput) {
             .id((node) => node.id)
             .links(edges)
     }
+    registerGroupCohesion(simulation, groups, nodeMap)
 
     if (options.layout?.type === 'tree') {
         TreeLayout.registerForcesOnSimulation(
@@ -154,7 +158,7 @@ function runLayout(input: WorkerInput) {
     })
 }
 
-export function runSimulation(plainNodes: Node[], plainEdges: Edge[], options: SimulationOptions, canvasBCR: DOMRect): { nodes: Node[]; edges: Edge[] } {
+export function runSimulation(plainNodes: Node[], plainEdges: Edge[], options: SimulationOptions, canvasBCR: DOMRect, groups: string[][] = []): { nodes: Node[]; edges: Edge[] } {
     const nodes = plainNodes.map(n => {
         const node = new Node(n.id, n.getData(), n.getStyle())
         node.weight = n.weight || 1
@@ -190,6 +194,7 @@ export function runSimulation(plainNodes: Node[], plainEdges: Edge[], options: S
             .id((node) => node.id)
             .links(edges)
     }
+    registerGroupCohesion(simulation, groups, nodeMap)
 
     if (options.layout?.type === 'tree' || options.layout?.type === 'egoTree') {
         TreeLayout.registerForcesOnSimulation(
@@ -255,6 +260,14 @@ export function runSimulation(plainNodes: Node[], plainEdges: Edge[], options: S
         nodes: nodes,
         edges: edges,
     }
+}
+
+/** Hold each open group's members together through the layout, as the live forces do. */
+function registerGroupCohesion(simulation: d3Simulation<Node, undefined>, groups: string[][], nodeMap: Map<string, Node>) {
+    const parts = groups
+        .map(ids => ({ parts: ids.map(id => nodeMap.get(id)).filter(node => node !== undefined) }))
+        .filter(group => group.parts.length > 1)
+    if (parts.length) simulation.force('groupCohesion', forceGroupCohesion(() => parts))
 }
 
 function getProgress(_tick: number, elapsedTime: number, options: SimulationOptions): number {

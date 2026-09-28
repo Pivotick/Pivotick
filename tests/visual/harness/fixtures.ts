@@ -40,6 +40,9 @@ export interface BuiltFixture {
     notes: RawNote[]
 }
 
+/** Two leaves of every hub in {@link fixtures.simplifyHubs}: the members of a host's group. */
+export const HUB_PICKS = [0, 1, 2, 3].flatMap((h) => [`leaf-${h}-0`, `leaf-${h}-1`])
+
 /** Create a node with a fixed position and a stable, predictable domID. */
 function mkNode(id: string, x: number, y: number, data: Record<string, unknown> = {}): Node {
     const node = new Node(id, { label: id.toUpperCase(), ...data }, {}, id)
@@ -1456,6 +1459,26 @@ export const fixtures = {
             edges,
             notes: [{ id: 'note-a3', x: -300, y: -160, width: 120, height: 50, content: 'Checked', attachedElement: { type: 'node', id: 'a3' } }],
         }
+    },
+
+    /**
+     * Four chained hubs of six leaves each, with no seeded position, so the opening layout
+     * places everything. {@link HUB_PICKS} takes two leaves of every hub, far apart unless held.
+     */
+    simplifyHubs(): BuiltFixture {
+        const nodes: Node[] = []
+        const edges: Edge[] = []
+        for (let h = 0; h < 4; h++) {
+            const hub = new Node(`hub-${h}`, { label: `HUB-${h}`, type: 'hub' }, {}, `hub-${h}`)
+            nodes.push(hub)
+            if (h) edges.push(new Edge(`hub-${h - 1}-hub-${h}`, nodes.find((n) => n.id === `hub-${h - 1}`)!, hub))
+            for (let i = 0; i < 6; i++) {
+                const leaf = new Node(`leaf-${h}-${i}`, { label: `LEAF-${h}-${i}`, type: 'leaf' }, {}, `leaf-${h}-${i}`)
+                nodes.push(leaf)
+                edges.push(new Edge(`hub-${h}-leaf-${h}-${i}`, hub, leaf))
+            }
+        }
+        return { nodes, edges, notes: [] }
     },
 
     /**

@@ -240,7 +240,9 @@ and the selection folds into one group under that title.
   selection holds or sits in.
 - **Group, Rename and Ungroup are undo steps**, unlike opening or pulling out.
 - It is view state: not exported, and gone on reload. To keep it, save `getManualGroups()`
-  and hand it back to `setManualGroups()`.
+  and hand it back to `setManualGroups()`. Groups restored, opened or pulled from right after
+  `new Graph()` are part of the opening layout: a closed group is placed as one dot, an open
+  one's members are kept together.
 
 ```js
 const id = graph.simplify.groupNodes(['ip-1', 'ip-2', 'dom-7'], 'Suspicious infra')

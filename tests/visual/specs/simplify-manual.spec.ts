@@ -228,3 +228,42 @@ test.describe('grouping a selection by hand', () => {
         await expect(bulk(page, 'ungroup')).toHaveCount(0)
     })
 })
+
+/* ---------- groups a host sets at load ---------- */
+
+/** The harness's `HUB_PICKS`: two leaves of each of the four hubs. */
+const HUB_PICKS = [0, 1, 2, 3].flatMap((h) => [`leaf-${h}-0`, `leaf-${h}-1`])
+
+const loadHostGroups = (page: Page, group: 'none' | 'closed' | 'open', useWorker: boolean) =>
+    harness(page, 'loadHostGroups', group, useWorker)
+const pickSpread = (page: Page) => harness(page, 'spreadOf', HUB_PICKS) as Promise<number>
+
+test.describe('groups a host sets right after new Graph()', () => {
+    for (const useWorker of [true, false]) {
+        test(`an open one is held together by the opening layout (${useWorker ? 'worker' : 'page'})`, async ({ page }) => {
+            await loadHostGroups(page, 'none', useWorker)
+            const loose = await pickSpread(page)
+            await loadHostGroups(page, 'open', useWorker)
+            // The live pull is off (the harness disables the simulation), so only the layout
+            // pass holds them: about a quarter tighter under manual physics, none without it.
+            expect(await pickSpread(page)).toBeLessThan(loose * 0.85)
+        })
+    }
+
+    test('a closed one is laid out as one dot', async ({ page }) => {
+        await page.evaluate(() => {
+            const sent: string[][] = []
+            ;(window as unknown as { layoutSent: string[][] }).layoutSent = sent
+            const post = Worker.prototype.postMessage
+            Worker.prototype.postMessage = function (this: Worker, message: { source?: string, nodes?: { id: string }[] }, ...rest: unknown[]) {
+                if (message?.source === 'simulation-worker-wrapper') sent.push(message.nodes!.map((node) => node.id))
+                return (post as (...args: unknown[]) => void).call(this, message, ...rest)
+            } as typeof Worker.prototype.postMessage
+        })
+        await loadHostGroups(page, 'closed', true)
+        const sent = await page.evaluate(() => (window as unknown as { layoutSent: string[][] }).layoutSent)
+        expect(sent).toHaveLength(1)
+        expect(sent[0]).toContain('pvt-manual-1')
+        expect(sent[0].filter((id) => HUB_PICKS.includes(id))).toEqual([])
+    })
+})

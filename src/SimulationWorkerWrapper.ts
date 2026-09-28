@@ -52,12 +52,13 @@ export const runSimulationInWorker = (
     edges: SimulationEdgeDTO[],
     options: SimulationOptions,
     canvasBCR: DOMRect,
-    onProgress?: (progress: number, elapsedTime: number) => void
+    onProgress?: (progress: number, elapsedTime: number) => void,
+    groups: string[][] = []
 ): Promise<{ nodes: Node[]; edges: Edge[] }> => {
     return new Promise((resolve, reject) => {
         const worker = createSimulationWorker()
 
-        worker.postMessage({ source: 'simulation-worker-wrapper', nodes, edges, options, canvasBCR })
+        worker.postMessage({ source: 'simulation-worker-wrapper', nodes, edges, options, canvasBCR, groups })
 
         worker.onmessage = (e) => {
             const { type, progress, nodes, edges, elapsedTime } = e.data

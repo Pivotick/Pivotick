@@ -52,7 +52,7 @@ import type {
     NodeCreateDecision,
 } from '../../../src/interfaces/InterractionCallbacks'
 import {
-    buildAutoFixture, fixtures,
+    buildAutoFixture, fixtures, HUB_PICKS,
     type AutoFixtureSpec, type BuiltFixture, type FixtureName, type RawNote,
 } from './fixtures'
 import { measureLayout, type MeasuredLayout } from '../../../src/AutoPhysics'
@@ -1255,6 +1255,13 @@ export interface HarnessApi {
      */
     loadSimplify(overrides?: PlainObject, fixture?: 'simplify' | 'simplifyClusters' | 'simplifyChains' | 'simplifyCore' | 'simplifyCommunities', look?: boolean): Promise<void>
     /**
+     * Load the unpinned hubs, and right after `new Graph()` give them a hand-made group of
+     * {@link HUB_PICKS}, closed or open, as a host holding grouped data would.
+     */
+    loadHostGroups(group: 'none' | 'closed' | 'open', useWorker: boolean): Promise<void>
+    /** The mean distance of these nodes from their centroid. */
+    spreadOf(ids: string[]): number
+    /**
      * Construct a graph with NO data so `init()` is skipped and the renderer's
      * `nodeSelection` is never assigned — the precondition for the canvas
      * visibility-observer null-deref. Invokes the
@@ -2107,6 +2114,22 @@ class Harness implements HarnessApi {
             UI: { simplify: { typeLabel: (type: string | undefined, count: number) => `${count} ${(names[type ?? ''] ?? [type, type])[count === 1 ? 0 : 1]}` } },
         } : {}
         return this.bootData(fixtures[fixture](), mergeOptions(mergeOptions(mergeOptions(BASE_OPTIONS, typed), overrides), lookOptions))
+    }
+
+    async loadHostGroups(group: 'none' | 'closed' | 'open', useWorker: boolean): Promise<void> {
+        const options = mergeOptions(BASE_OPTIONS, { UI: { mode: 'full' }, simulation: { useWorker } })
+        return this.bootData(fixtures.simplifyHubs(), options, (graph) => {
+            if (group === 'none') return
+            graph.simplify.setManualGroups([{ id: 'pvt-manual-1', title: 'Picked', members: HUB_PICKS }])
+            if (group === 'open') graph.simplify.open('pvt-manual-1')
+        })
+    }
+
+    spreadOf(ids: string[]): number {
+        const nodes = ids.map((id) => this.g.getMutableNode(id)!)
+        const cx = nodes.reduce((sum, node) => sum + (node.x ?? 0), 0) / nodes.length
+        const cy = nodes.reduce((sum, node) => sum + (node.y ?? 0), 0) / nodes.length
+        return nodes.reduce((sum, node) => sum + Math.hypot((node.x ?? 0) - cx, (node.y ?? 0) - cy), 0) / nodes.length
     }
 
     async loadCustomNodes(overrides: PlainObject = {}): Promise<void> {
