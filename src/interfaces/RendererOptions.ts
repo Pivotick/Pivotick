@@ -2,6 +2,7 @@ import type { Edge } from '../Edge'
 import type { Graph } from '../Graph'
 import type { Node } from '../Node'
 import type { IconClass, IconUnicode, ImagePath, SVGIcon } from './GraphUI'
+import type { GroupInfo } from './Simplify'
 
 /**
  * @category Main Options
@@ -145,6 +146,18 @@ export interface GraphRendererOptions {
      * ```
      */
     nodeTypeAccessor?: (node: Node) => string | undefined
+    /**
+     * The look of a group made by `UI.simplify`, layered over the default: a disc in the
+     * type's colour inside a ring, the count on the disc once there is room, the label
+     * below. A group is drawn as a node, so `tiers`, `focusTier`, `html`, `shape` and
+     * `badges` work as they do on one. Return nothing to keep the default.
+     *
+     * @example
+     * ```ts
+     * groupStyle: (group) => group.rule === 'bySource' ? { color: '#6b7280' } : undefined
+     * ```
+     */
+    groupStyle?: (group: GroupInfo) => Partial<NodeStyle> | void
     /**
      * Maps node types to their styles.
      * 

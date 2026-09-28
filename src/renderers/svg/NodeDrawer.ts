@@ -468,8 +468,7 @@ export class NodeDrawer {
         if (!this.tiersDeclared) return
         const visible = this.graphSvgRenderer.getVisibleBounds()
         const changed: Node[] = []
-        for (const node of this.graph.getMutableNodes()) {
-            if (!node.visible) continue
+        for (const node of this.graph.getCanvasNodes()) {
             const state = this.tierState.get(node)
             // Never drawn, so it has no tier to change; its first render picks one.
             if (!state) continue

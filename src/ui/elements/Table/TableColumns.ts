@@ -40,8 +40,11 @@ const RESERVED = {
  * {@link GraphUI.TableOptions.nested} on: it is inside a cluster the canvas has shut, so nothing
  * filtered it and nothing on screen is it. Distinct from `filtered` because the action
  * that brings it back is opening a cluster, not clearing a filter.
+ *
+ * `grouped` is a node folded into a group by `graph.simplify`: it passes the filters and is
+ * on the canvas as part of its group. An edge reads `grouped` when its line is drawn to one.
  */
-export type TableVisibility = 'visible' | 'filtered' | 'excluded' | 'endpoint' | 'nested'
+export type TableVisibility = 'visible' | 'filtered' | 'excluded' | 'endpoint' | 'nested' | 'grouped'
 
 /** The `Visibility` column's key — the grid checks for it to style the cell per state. */
 export const VISIBILITY_COLUMN_KEY = RESERVED.visibility
@@ -133,8 +136,9 @@ export function nodeVisibility(node: Node, graph: Graph): TableVisibility {
     // A nested node's own `visible` flag is meaningless: `normalizeNode` hid it at load and
     // nothing ever shows it again — the canvas draws a subgraph clone instead. So the
     // reading comes from the clusters above it, and `filtered` is never the answer.
-    if (node.isChild) return node.canvasRepresentative() === node ? 'visible' : 'nested'
-    return node.visible ? 'visible' : 'filtered'
+    if (node.isChild) return node.clusterRepresentative() === node ? 'visible' : 'nested'
+    if (!node.visible) return 'filtered'
+    return node.foldedInto ? 'grouped' : 'visible'
 }
 
 /**
@@ -145,8 +149,10 @@ export function nodeVisibility(node: Node, graph: Graph): TableVisibility {
  */
 export function edgeVisibility(edge: Edge): TableVisibility {
     if (!edge.visible) return edge.visibleIgnoringLayer ? 'filtered' : 'endpoint'
-    const folded = edge.from.canvasRepresentative() !== edge.from || edge.to.canvasRepresentative() !== edge.to
-    return folded ? 'nested' : 'visible'
+    const nested = edge.from.clusterRepresentative() !== edge.from || edge.to.clusterRepresentative() !== edge.to
+    if (nested) return 'nested'
+    const grouped = edge.from.canvasRepresentative() !== edge.from || edge.to.canvasRepresentative() !== edge.to
+    return grouped ? 'grouped' : 'visible'
 }
 
 /**

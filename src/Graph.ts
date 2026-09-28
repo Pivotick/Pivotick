@@ -20,6 +20,7 @@ import type { PivotickPlugin } from './interfaces/Plugin'
 import { PivotManager } from './PivotManager'
 import { minimap } from './plugins/minimap'
 import { ClusterProjection, type ClusterPull, type ProjectedLine, type TopVisible } from './ClusterProjection'
+import { Simplification } from './Simplification/Simplification'
 
 export class Graph {
     private nodes: Map<string, Node> = new Map()
@@ -53,6 +54,11 @@ export class Graph {
      * session-scoped — it does not survive a reload.
      */
     public readonly history: GraphHistory
+    /**
+     * Folds nodes that play the same role into one group drawn in their place. The groups
+     * are view state: `getNodes()`, `getEdges()`, the table and the history see the members.
+     */
+    public readonly simplify: Simplification
 
     private listeners: Record<keyof GraphEvents, Array<GraphEvents[keyof GraphEvents]>>
     /** Depth of nested {@link batchChanges} calls; > 0 means events are being collected. */
@@ -61,6 +67,8 @@ export class Graph {
     private batchNeedsChange = false
     /** Subscribers to {@link onVisibleChange} — kept apart from the data event bus. */
     private changeListeners: Array<() => void> = []
+    /** Set while {@link onChange} runs, which updates the simulation itself. */
+    private changing = false
 
     /**
      * Initializes a graph inside the specified container using the provided data and options.
@@ -156,6 +164,8 @@ export class Graph {
             this.pivots.markUnsaved = true
         }
         this.options.pivots?.forEach(pivot => this.pivots.register(pivot))
+        // Before the UI too: the Simplify rail mode reads its rules.
+        this.simplify = new Simplification(this, this.options.UI?.simplify, this.options.UI?.mode)
         this.UIManager = new UIManager(this, appContainer, UIManagerOptions)
         // Declared facets carry the accessor/predicate/matchMode the engine matches
         // with, so hand them over as soon as the merged UI options exist.
@@ -178,6 +188,8 @@ export class Graph {
             // Before the layout and the first paint: a node the filters mean to hide must
             // never reach the canvas, and must not be in the graph the opening fit frames.
             this.queryEngine.applyInitialVisibility()
+            // Groups too, so the first layout and the opening fit see the folded graph.
+            this.refreshProjection()
             this.simulation?.update()
             this.renderer.init()
             this.renderer.fitAndCenter(1)
@@ -681,7 +693,12 @@ export class Graph {
             this.batchNeedsChange = true
             return
         }
-        this.renderer?.update(true)
+        this.changing = true
+        try {
+            this.renderer?.update(true)
+        } finally {
+            this.changing = false
+        }
         this.simulation?.update()
         this.renderer?.nextTick()
         // Last, so a listener reads the settled graph: the cluster drawer does its
@@ -1382,7 +1399,34 @@ export class Graph {
      * Run by the root renderer before each redraw; a nested graph has nothing to project.
      */
     public refreshProjection(): void {
-        if (!this.parentGraph) this.projection.refresh()
+        if (this.parentGraph) return
+        const regrouped = this.simplify.recompute()
+        this.projection.refresh()
+        // A redraw outside onChange (a note attached, say) still has to hand the simulation
+        // its new set of nodes; onChange does that itself right after.
+        if (regrouped && !this.changing && this.simulation) queueMicrotask(() => this.simulation.update())
+    }
+
+    /**
+     * @private
+     * The nodes the main canvas draws: the top-level nodes that pass the filters and are
+     * not folded, and the closed groups standing in for the folded ones. A nested graph
+     * draws its own nodes only.
+     */
+    public getCanvasNodes(): Node[] {
+        const nodes = this.getMutableNodes().filter(node => node.onCanvas)
+        if (this.parentGraph) return nodes
+        return [...nodes, ...this.simplify.getDrawnGroups()]
+    }
+
+    /** @private A node of this graph, or a group the main canvas draws, by id. */
+    public getCanvasNode(id: string): Node | undefined {
+        return this.nodes.get(id) ?? (this.parentGraph ? undefined : this.simplify.getGroupNode(id))
+    }
+
+    /** @private Whether both real ends of this edge pass the filters. */
+    public edgeCounts(edge: Edge): boolean {
+        return this.projection.edgePasses(edge, (node) => node.visible)
     }
 
     /**

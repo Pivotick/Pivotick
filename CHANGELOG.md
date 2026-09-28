@@ -2,6 +2,34 @@
 
 ## Unreleased
 
+### Simplify: fold nodes that play the same role
+
+Many graphs are mostly repetition: two events sharing forty IPs, a hub with dozens of leaves
+that link nowhere else. Simplify folds such nodes into one group drawn in their place, without
+touching the data.
+
+- **`UI.simplify.rules` lists the rules, in the order they run.** The built-in neighbour rule
+  (`{ kind: 'neighbours', minSize: 5 }`) folds nodes of one type linked to exactly the same
+  nodes, the same way round; the leaves of a hub are the simplest case. A node with a note
+  attached, a node linked to nothing and an expanded cluster are never folded. The type is
+  `render.nodeTypeAccessor`, or a rule's own `typeOf`.
+- **A rule of your own is a `partition(view)`** returning a key per node: nodes sharing a key
+  become one group. Each rule sees the groups the rules above it made as ordinary nodes. A rule
+  that throws is switched off and the others still run.
+- **Groups are view state.** `getNodes()`, `getEdges()`, the history and exports see the real
+  nodes; the table reads a folded node as `grouped`. Groups follow the node filters, keep their
+  id while they keep most of their members, and a node landing with the same neighbours joins
+  the existing group. Edges reroute to the group as they do to a closed cluster.
+- **The Simplify rail mode** switches each rule, sets its smallest group and says what it
+  folded; the rail button counts the groups. `full` mode offers it with the neighbour rule off,
+  the other modes only when rules are declared, and `UI.simplify.enabled: false` removes it.
+- **A group is drawn as a node**: a disc in its type's colour inside a ring, the count on the
+  disc once there is room, `12 × ip` below. `render.groupStyle(group)` returns a `NodeStyle` to
+  layer over it, so tiers, `html` and badges work on groups; `UI.simplify.typeLabel` names the
+  types ("12 IPs").
+- **`graph.simplify`** holds the rules and groups at runtime: `setRules`, `setRuleEnabled`,
+  `getGroups`, `groupOf`, `open` / `close` and `pullOut` / `putBack`.
+
 ### Detail that follows the zoom
 
 A node can carry several drawings and let the view choose between them: a dot on an overview, a

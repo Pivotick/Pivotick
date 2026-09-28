@@ -1341,6 +1341,64 @@ export const fixtures = {
             notes: [],
         }
     },
+
+    /**
+     * Roles to fold, typed through `data.type`: two events sharing six IPs and three TTPs,
+     * five domains on the left event only, and a hub with seven file leaves, one of them
+     * annotated. Plus a lone IP linked to nothing.
+     */
+    simplify(): BuiltFixture {
+        const evA = mkNode('ev-a', -220, 0, { type: 'event' })
+        const evB = mkNode('ev-b', 220, 0, { type: 'event' })
+        const ips = Array.from({ length: 6 }, (_, i) => mkNode(`ip-${i}`, 0, -125 + i * 50, { type: 'ip' }))
+        const ttps = Array.from({ length: 3 }, (_, i) => mkNode(`ttp-${i}`, (i - 1) * 60, 190, { type: 'ttp' }))
+        const domains = Array.from({ length: 5 }, (_, i) => mkNode(`dom-${i}`, -400, -120 + i * 60, { type: 'domain' }))
+        const hub = mkNode('hub', 330, -250, { type: 'host' })
+        const files = Array.from({ length: 7 }, (_, i) => {
+            const angle = (i / 7) * 2 * Math.PI
+            return mkNode(`file-${i}`, 330 + 110 * Math.cos(angle), -250 + 110 * Math.sin(angle), { type: 'file' })
+        })
+        const lonely = mkNode('lonely', -400, 250, { type: 'ip' })
+        const edges = [
+            ...ips.flatMap((ip) => [new Edge(`ev-a-${ip.id}`, evA, ip), new Edge(`ev-b-${ip.id}`, evB, ip)]),
+            ...ttps.flatMap((ttp) => [new Edge(`ev-a-${ttp.id}`, evA, ttp), new Edge(`ev-b-${ttp.id}`, evB, ttp)]),
+            ...domains.map((dom) => new Edge(`ev-a-${dom.id}`, evA, dom)),
+            ...files.map((file) => new Edge(`hub-${file.id}`, hub, file)),
+            new Edge('ev-b-hub', evB, hub),
+        ]
+        return {
+            nodes: [evA, evB, ...ips, ...ttps, ...domains, hub, ...files, lonely],
+            edges,
+            notes: [{ id: 'note-file', x: 470, y: -380, width: 120, height: 50, content: 'Seen twice', attachedElement: { type: 'node', id: 'file-0' } }],
+        }
+    },
+
+    /**
+     * A hub linked to six closed clusters of type `host`, each holding two files. The
+     * first cluster's child also links to `x`, so its cluster has a neighbour the others lack.
+     */
+    simplifyClusters(): BuiltFixture {
+        const hub = mkNode('hub', 0, 0, { type: 'event' })
+        const x = mkNode('x', -300, 0, { type: 'event' })
+        const clusters = Array.from({ length: 6 }, (_, i) => {
+            const angle = (i / 6) * 2 * Math.PI
+            const cx = 200 * Math.cos(angle)
+            const cy = 200 * Math.sin(angle)
+            const kids = [0, 1].map((k) => mkNode(`c${i}-k${k}`, cx + (k ? 20 : -20), cy, { type: 'file' }))
+            const cluster = mkCluster(`c${i}`, cx, cy, kids, { type: 'host' })
+            markCluster(cluster)
+            return { cluster, kids }
+        })
+        const edges = [
+            ...clusters.map(({ cluster }) => new Edge(`hub-${cluster.id}`, hub, cluster)),
+            new Edge('c0-k0-x', clusters[0].kids[0], x),
+        ]
+        return {
+            nodes: [hub, x, ...clusters.flatMap(({ cluster, kids }) => [cluster, ...kids])],
+            edges,
+            notes: [],
+        }
+    },
 }
 
 export type FixtureName = keyof typeof fixtures

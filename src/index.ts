@@ -48,4 +48,8 @@ export type {
     GraphHistoryLike, HistoryEffect, HistoryEntry, HistoryKind, HistoryPreview,
 } from './interfaces/History'
 export type { GraphHistory } from './GraphHistory'
+export type {
+    SimplifyOptions, SimplifyRule, NeighboursRule, CustomRule, GroupInfo, GraphView, SimplifyRuleStatus,
+} from './interfaces/Simplify'
+export type { Simplification } from './Simplification/Simplification'
 export type { IngestContext, IngestDecision } from './interfaces/InterractionCallbacks'

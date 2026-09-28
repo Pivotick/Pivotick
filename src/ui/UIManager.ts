@@ -22,6 +22,8 @@ import { ModeRail } from './elements/ModeRail/ModeRail'
 import { ToolPanel } from './elements/ToolPanel/ToolPanel'
 import { ViewFlyout } from './elements/ViewFlyout/ViewFlyout'
 import { PhysicsFlyout } from './elements/PhysicsFlyout/PhysicsFlyout'
+import { SimplifyFlyout } from './elements/SimplifyFlyout/SimplifyFlyout'
+import { simplifyOffered } from './railModes'
 import { Legend } from './elements/Legend/Legend'
 import { EmptyState } from './elements/EmptyState/EmptyState'
 import { Dock, type DockConfig } from './elements/Dock/Dock'
@@ -301,6 +303,11 @@ const UI_ELEMENTS: UIElementSpec[] = [
         make: ui => new PhysicsFlyout(ui), slot: ui => ui.layout?.flyout
     },
     {
+        key: 'simplifyFlyout', modes: ['full', 'light'],
+        enabled: o => simplifyOffered(o),
+        make: ui => new SimplifyFlyout(ui), slot: ui => ui.layout?.flyout
+    },
+    {
         // Built unless suppressed: with no `UI.legend` the component tries to derive
         // one from `render.nodeTypeAccessor` and renders nothing if that doesn't
         // explain the colours. `setLegend` builds it later if it was suppressed.
@@ -449,6 +456,7 @@ export class UIManager {
     public get toolPanel(): ToolPanel | undefined { return this.byKey.get('toolPanel') as ToolPanel | undefined }
     public get viewFlyout(): ViewFlyout | undefined { return this.byKey.get('viewFlyout') as ViewFlyout | undefined }
     public get physicsFlyout(): PhysicsFlyout | undefined { return this.byKey.get('physicsFlyout') as PhysicsFlyout | undefined }
+    public get simplifyFlyout(): SimplifyFlyout | undefined { return this.byKey.get('simplifyFlyout') as SimplifyFlyout | undefined }
     public get legend(): Legend | undefined { return this.byKey.get('legend') as Legend | undefined }
     public get emptyState(): EmptyState | undefined { return this.byKey.get('emptyState') as EmptyState | undefined }
     public get dock(): Dock | undefined { return this.byKey.get('dock') as Dock | undefined }

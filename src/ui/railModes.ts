@@ -1,4 +1,4 @@
-import type { RailModeDefinition, RailTool } from '../interfaces/GraphUI'
+import type { GraphUI, RailModeDefinition, RailTool } from '../interfaces/GraphUI'
 import type { RailModeKind } from './ModeStore'
 
 /**
@@ -14,4 +14,14 @@ export function resolveRailTools(mode: RailModeDefinition): RailTool[] {
 /** A registered mode's kind, defaulted. */
 export function railModeKind(mode: RailModeDefinition): RailModeKind {
     return mode.kind ?? 'pointer'
+}
+
+/**
+ * Is the Simplify rail mode offered? Declared rules decide; with none declared, `full`
+ * mode offers the built-ins. `UI.simplify.enabled: false` removes it everywhere.
+ */
+export function simplifyOffered(options: GraphUI): boolean {
+    if (options.simplify?.enabled === false) return false
+    const rules = options.simplify?.rules
+    return rules ? rules.length > 0 : options.mode === 'full'
 }

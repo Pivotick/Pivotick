@@ -122,7 +122,7 @@ export class SelectionBox extends AbstractSelectionBox {
     }
 
     private getNodesInRect(rect: DOMRect): Array<[Node, SVGGElement]> {
-        const nodes: Node[] = this.renderer.getGraphInteraction().getGraph().getMutableNodes()
+        const nodes: Node[] = this.renderer.getGraphInteraction().getGraph().getCanvasNodes()
 
         const nodesWithElem: Array<[Node, SVGGElement]> = []
         nodes.forEach((node: Node) => {

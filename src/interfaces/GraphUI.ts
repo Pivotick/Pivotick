@@ -11,6 +11,7 @@ import type { FieldConfig } from '../utils/FormFactory'
 import type { FilterFacet, FilterOptions } from './GraphQueryEngine'
 import type { AsyncContentOptions, RenderContext, RenderResult } from './AsyncContent'
 import type { MinimapOptions } from '../plugins/minimap/options'
+import type { SimplifyOptions } from './Simplify'
 
 /**
  * A UI feature that is either offered or not.
@@ -112,6 +113,13 @@ export interface GraphUI {
      * @default { enabled: true }
      */
     physicsFlyout?: FeatureToggle,
+    /**
+     * Fold nodes that play the same role into one group node, and the **Simplify** rail
+     * mode that switches the rules. Left out, `full` mode offers the neighbour rule
+     * switched off; the other modes show and run nothing unless rules are declared.
+     * `enabled: false` removes the feature.
+     */
+    simplify?: SimplifyOptions,
     /**
      * The filter panel's facets. Omit to derive them by scanning node data
      * (the zero-config default); declare `facets` to generate the form from

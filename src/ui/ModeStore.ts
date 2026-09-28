@@ -7,9 +7,10 @@ export type PointerMode = 'select' | 'create'
 
 /**
  * Built-in rail modes that open a settings flyout instead of deciding what a drag does:
- * `'view'` (grid + canvas behaviour) and `'physics'` (layout + simulation).
+ * `'view'` (grid + canvas behaviour), `'physics'` (layout + simulation) and `'simplify'`
+ * (the rules that fold nodes into groups).
  */
-export type FlyoutMode = 'view' | 'physics'
+export type FlyoutMode = 'view' | 'physics' | 'simplify'
 
 /** Whether a mode owns the tool panel or a settings flyout. */
 export type RailModeKind = 'pointer' | 'flyout'
@@ -92,6 +93,7 @@ export class ModeStore {
         ['create', { kind: 'pointer', defaultTool: DEFAULT_ARMED.create }],
         ['view', { kind: 'flyout', defaultTool: null }],
         ['physics', { kind: 'flyout', defaultTool: null }],
+        ['simplify', { kind: 'flyout', defaultTool: null }],
     ])
     // Last pointer-mode, so closing a flyout returns to a pointer-mode rather
     // than stranding the rail with nothing active.
@@ -134,7 +136,7 @@ export class ModeStore {
      * will not decide what to activate instead.
      */
     unregisterMode(mode: RailMode): void {
-        if (isBuiltinPointerMode(mode) || mode === 'view' || mode === 'physics') return
+        if (isBuiltinPointerMode(mode) || mode === 'view' || mode === 'physics' || mode === 'simplify') return
         this.modes.delete(mode)
         delete this.state.armedTool[mode]
         delete this.state.panelOpen[mode]

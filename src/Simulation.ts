@@ -486,7 +486,7 @@ export class Simulation {
         }
 
         // const visibleNodes = this.graph.getMutableVisibleNodes()
-        const visibleNodes = this.graph.getMutableNodes().filter(node => node.visible)
+        const visibleNodes = this.graph.getCanvasNodes()
 
         this.simulation
             .nodes(visibleNodes)
@@ -510,9 +510,9 @@ export class Simulation {
         const links: Edge[] = []
         for (const pull of this.graph.getClusterPulls()) {
             // A nested graph's nodes are copies of the real ones the projection works on.
-            const source = this.graph.getMutableNode(pull.source.id)
-            const target = this.graph.getMutableNode(pull.target.id)
-            if (!source?.visible || !target?.visible) continue
+            const source = this.graph.getCanvasNode(pull.source.id)
+            const target = this.graph.getCanvasNode(pull.target.id)
+            if (!source?.onCanvas || !target?.onCanvas) continue
             const reaches = pull.reachesInto[0] || pull.reachesInto[1]
             if (pull.edge && !reaches && pull.edge.from === source && pull.edge.to === target) {
                 links.push(pull.edge)
@@ -716,7 +716,7 @@ export class Simulation {
     // they can't be aligned by array index.
     private applyComputedPositions(updatedNodes: Node[]): void {
         const byId = new Map(updatedNodes.map(n => [n.id, n]))
-        for (const node of this.graph.getMutableNodes()) {
+        for (const node of [...this.graph.getMutableNodes(), ...this.graph.simplify.getDrawnGroups()]) {
             const updated = byId.get(node.id)
             if (!updated) continue
             node.x = updated.x
@@ -734,8 +734,11 @@ export class Simulation {
 
         const nodes = this.graph.getMutableNodes()
         // Keep caller-set fixed positions (fx/fy) so pinned nodes stay put through the layout.
-        const nodesCopy = this.graph.getNodes()
-        const edgesCopy = this.graph.getEdges()
+        const nodesCopy = [
+            ...this.graph.getNodes().filter((n: Node) => !this.graph.getMutableNode(n.id)?.foldedInto),
+            ...this.graph.simplify.getDrawnGroups(),
+        ]
+        const edgesCopy = [...this.graph.getEdges(), ...this.graph.getDrawnEdges().filter((e: Edge) => e.isSynthetic)]
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { callbacks, ...optionsWithoutCBs } = this.options
@@ -779,7 +782,11 @@ export class Simulation {
         // parentNode/from/to can transitively reach an expanded cluster's
         // subgraph DOM, which postMessage cannot structured-clone (DataCloneError).
         // Keep caller-set fixed positions (fx/fy) so pinned nodes stay put through the layout.
-        const nodesCopy = this.graph.getNodes().map((n: Node) => n.toSimulationDTO())
+        // Folded members stay put under their group, which is laid out in their place.
+        const nodesCopy = [
+            ...this.graph.getNodes().filter((n: Node) => !this.graph.getMutableNode(n.id)?.foldedInto),
+            ...this.graph.simplify.getDrawnGroups(),
+        ].map((n: Node) => n.toSimulationDTO())
         // The stand-ins too: they are what ties a closed cluster to the edges folded onto it.
         const standIns = this.graph.getDrawnEdges().filter((e: Edge) => e.isSynthetic)
         const edgesCopy = [...this.graph.getEdges(), ...standIns].map((e: Edge) => e.toSimulationDTO())
@@ -826,7 +833,7 @@ export class Simulation {
         // Radii may only just have been measured by a custom node, so re-tune off the
         // real sizes; the reheat below covers both changes at once.
         this.tuneNow({ reheat: false })
-        const visibleNodes = this.graph.getMutableNodes().filter(node => node.visible)
+        const visibleNodes = this.graph.getCanvasNodes()
         this.simulation.nodes(visibleNodes) // re-initialises every force → re-reads node radii
         this.reheat(alpha)
     }
@@ -1200,7 +1207,7 @@ export class Simulation {
      */
     private buildAutoContext(): AutoContext {
         const containerBCR = this.containerBCR
-        const nodes = this.graph.getMutableNodes().filter(node => node.visible)
+        const nodes = this.graph.getCanvasNodes()
         const edges = this.getActiveEdges()
 
         let radiusSum = 0

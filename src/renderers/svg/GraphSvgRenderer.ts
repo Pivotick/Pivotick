@@ -358,9 +358,9 @@ export class GraphSvgRenderer extends GraphRenderer {
         let right = bounds.x + bounds.width, bottom = bounds.y + bounds.height
         let grown = false
 
-        for (const node of this.graph.getMutableNodes()) {
+        for (const node of this.graph.getCanvasNodes()) {
             const footprint = node.getLayoutSize()
-            if (footprint === undefined || !node.visible) continue
+            if (footprint === undefined) continue
             const x = node.x ?? 0
             const y = node.y ?? 0
             left = Math.min(left, x - footprint)
@@ -594,8 +594,7 @@ export class GraphSvgRenderer extends GraphRenderer {
         // Before the nodes: opening a cluster inside the join below builds its nested
         // graph, which asks the projection for its pulls straight away.
         this.graph.refreshProjection()
-        const nodes: Node[] = this.graph.getMutableNodes()
-            .filter(node => node.visible)
+        const nodes: Node[] = this.graph.getCanvasNodes()
 
         const nodeGroupNode: SVGGElement = this.nodeGroup.node() as SVGGElement
         this.nodeGroupSelection = this.nodeGroup
@@ -1140,7 +1139,7 @@ export class GraphSvgRenderer extends GraphRenderer {
         let closestNode: Node | null = null
         let closestDistance = Infinity
 
-        const nodes: Node[] = this.graph.getMutableNodes().filter(node => node.visible)
+        const nodes: Node[] = this.graph.getCanvasNodes()
         for (const node of nodes) {
             const dx = (node.x ?? 0) - graphX
             const dy = (node.y ?? 0) - graphY
@@ -1195,9 +1194,7 @@ export class GraphSvgRenderer extends GraphRenderer {
             }
         }
 
-        for (const node of this.graph.getMutableNodes()) {
-            if (!node.visible) continue
-
+        for (const node of this.graph.getCanvasNodes()) {
             checkElement(node, node.x ?? 0, node.y ?? 0)
         }
 

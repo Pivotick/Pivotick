@@ -67,6 +67,12 @@ export class Node {
     /** Reference to the parent cluster node (if this node is a child) */
     parentNode?: Node
     /**
+     * @private
+     * The closed group the canvas draws this node as, set by `graph.simplify`. View state
+     * only: the node stays in the data and keeps its `visible` flag.
+     */
+    foldedInto?: Node
+    /**
      * Reference to the main graph node when this node is a clone in a subgraph.
      * Used for syncing position updates from subgraph back to main graph.
      */
@@ -403,17 +409,46 @@ export class Node {
 
     /**
      * The node the canvas actually draws for this one: itself when every cluster above it
-     * is expanded, otherwise the outermost collapsed cluster — the box hiding it.
+     * is expanded, otherwise the outermost collapsed cluster — the box hiding it — and in
+     * either case the closed group that dot is folded into, if any.
      *
      * This answers "which dot on screen stands for this node", not "is it visible": an
      * expanded cluster renders a *separate* subgraph built from `toDict()` data, so a
      * nested node is never drawn by this graph even when its cluster is open.
      */
     canvasRepresentative(): Node {
+        let drawn = this.clusterRepresentative()
+        while (drawn.foldedInto) drawn = drawn.foldedInto
+        return drawn
+    }
+
+    /**
+     * {@link canvasRepresentative} with groups left out: the dot as the clusters alone
+     * decide it. What the filters and the simplification rules reason about.
+     * @private
+     */
+    clusterRepresentative(): Node {
         for (const ancestor of this.ancestorChain()) {
             if (!ancestor.expanded) return ancestor
         }
         return this
+    }
+
+    /**
+     * True for a group drawn by `graph.simplify`: a stand-in for its members, never part
+     * of the data.
+     */
+    get isGroup(): boolean {
+        return false
+    }
+
+    /**
+     * Whether the main canvas draws this node itself: it passes the filters and is not
+     * folded into a closed group.
+     * @private
+     */
+    get onCanvas(): boolean {
+        return this.visible && !this.foldedInto
     }
 
     /**

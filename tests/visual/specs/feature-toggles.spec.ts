@@ -31,8 +31,8 @@ const menuEntry = (page: Page, text: string) => page.locator('.pvt-contextmenu')
  * and does nothing without one.
  */
 async function focusCanvas(page: Page): Promise<void> {
-    await page.locator('.pvt-canvas').click({ position: { x: 60, y: 320 } })
-    await page.mouse.move(70, 330)
+    await page.locator('.pvt-canvas').click({ position: { x: 200, y: 320 } })
+    await page.mouse.move(210, 330)
 }
 
 /** How many notes the graph holds. */
@@ -72,7 +72,7 @@ test.describe('feature toggles', () => {
         await expect(page.locator('.pvt-sidebar')).toBeVisible()
         await expect(page.locator('.pvt-properties-panel')).toHaveCount(1)
         await expect(page.locator('.pvt-neighbor-panel')).toHaveCount(1)
-        for (const mode of ['select', 'create', 'view', 'physics']) {
+        for (const mode of ['select', 'create', 'view', 'physics', 'simplify']) {
             await expect(railButton(page, mode)).toBeVisible()
         }
     })
@@ -182,10 +182,12 @@ test.describe('feature toggles', () => {
         await loadFixture(page, 'basic', withUI({
             viewFlyout: { enabled: false },
             physicsFlyout: { enabled: false },
+            simplify: { enabled: false },
         }))
 
         await expect(railButton(page, 'view')).toHaveCount(0)
         await expect(railButton(page, 'physics')).toHaveCount(0)
+        await expect(railButton(page, 'simplify')).toHaveCount(0)
         await expect(page.locator('.pvt-flyout .pvt-flyout-panel')).toHaveCount(0)
     })
 

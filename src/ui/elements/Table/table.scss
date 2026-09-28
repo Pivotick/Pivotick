@@ -421,6 +421,14 @@
     border-color: var(--pvt-text-color-4);
 }
 
+// Folded into a group: on the canvas, as part of something else. Neutral like `nested`,
+// with a dotted border to tell a group from a cluster.
+.pvt-table-td[data-visibility='grouped'] .pvt-table-visibility {
+    color: var(--pvt-text-color-3);
+    border-style: dotted;
+    border-color: var(--pvt-text-color-4);
+}
+
 // A hidden element's whole row recedes, so the eye lands on what is actually drawn. Any
 // state but `visible` counts, so a new one joins in without touching this.
 .pvt-table-row:has(.pvt-table-td[data-visibility]:not([data-visibility='visible'])) .pvt-table-td:not([data-visibility]) {

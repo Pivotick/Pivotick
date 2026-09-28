@@ -116,7 +116,7 @@ export class LassoOverlay {
 
     private selectNodesInsideLasso() {
         const matchingNodes = this.graph
-            .getMutableNodes()
+            .getCanvasNodes()
             .filter(node => {
                 return isPointInsidePolygon(
                     node.x ?? 0,

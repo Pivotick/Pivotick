@@ -34,6 +34,8 @@ import type * as Pivot from './interfaces/Pivot'
 import type { PivotManager } from './PivotManager'
 import type * as History from './interfaces/History'
 import type { GraphHistory } from './GraphHistory'
+import type * as Simplify from './interfaces/Simplify'
+import type { Simplification } from './Simplification/Simplification'
 
 export type {
     GraphOptions,
@@ -80,6 +82,8 @@ export type {
     PivotManager,
     History,
     GraphHistory,
+    Simplify,
+    Simplification,
 }
 
 export {

@@ -1248,6 +1248,11 @@ export interface HarnessApi {
      */
     loadCustomNodes(overrides?: PlainObject): Promise<void>
     /**
+     * Load a simplify fixture with `data.type` as the node type and a colour per type —
+     * both functions or keyed on one, so they are baked in on the page side.
+     */
+    loadSimplify(overrides?: PlainObject, fixture?: 'simplify' | 'simplifyClusters', look?: boolean): Promise<void>
+    /**
      * Construct a graph with NO data so `init()` is skipped and the renderer's
      * `nodeSelection` is never assigned — the precondition for the canvas
      * visibility-observer null-deref. Invokes the
@@ -2076,6 +2081,29 @@ class Harness implements HarnessApi {
         await this.whenReady(graph)
         // Wait for web fonts so text metrics (and thus layout/labels) are stable.
         if (document.fonts?.ready) await document.fonts.ready
+    }
+
+    async loadSimplify(overrides: PlainObject = {}, fixture: 'simplify' | 'simplifyClusters' = 'simplify', look = false): Promise<void> {
+        const typed = {
+            render: {
+                nodeTypeAccessor: (node: Node) => node.getData().type as string | undefined,
+                nodeStyleMap: {
+                    event: { color: '#7c3aed', size: 16 },
+                    ip: { color: '#0ea5e9' },
+                    ttp: { color: '#f97316' },
+                    domain: { color: '#10b981' },
+                    host: { color: '#475569', size: 14 },
+                    file: { color: '#e11d48' },
+                },
+            },
+        }
+        // `look` names the types and draws IP groups black, for the override test.
+        const names: Record<string, [string, string]> = { ip: ['IP', 'IPs'], domain: ['domain', 'domains'], file: ['file', 'files'] }
+        const lookOptions = look ? {
+            render: { groupStyle: (group: { typeCounts: Record<string, number> }) => group.typeCounts.ip ? { color: '#111111' } : undefined },
+            UI: { simplify: { typeLabel: (type: string | undefined, count: number) => `${count} ${(names[type ?? ''] ?? [type, type])[count === 1 ? 0 : 1]}` } },
+        } : {}
+        return this.bootData(fixtures[fixture](), mergeOptions(mergeOptions(mergeOptions(BASE_OPTIONS, typed), overrides), lookOptions))
     }
 
     async loadCustomNodes(overrides: PlainObject = {}): Promise<void> {

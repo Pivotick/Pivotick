@@ -62,7 +62,7 @@ export class ClusterProjection {
 
     /** Recompute from the graph as it stands. Cheap: one pass over the real edges. */
     refresh(): void {
-        this.lines = this.project((node) => node.visible, true)
+        this.lines = this.project((node) => node.visible, true, true)
         this.materialise()
         this.pulls = this.buildPulls(this.lines)
     }
@@ -92,14 +92,17 @@ export class ClusterProjection {
      *
      * `respectHidden` also drops edges hidden outright (`edge.hide()`, as `hideNode` does).
      * Off for that dry run: those flags are what the filters are about to recompute.
+     *
+     * `withGroups` lands a folded node's edges on its group. Off for that dry run too: the
+     * filters run before the grouping, so they reason about the clusters alone.
      */
-    project(topVisible: TopVisible, respectHidden = false): ProjectedLine[] {
+    project(topVisible: TopVisible, respectHidden = false, withGroups = false): ProjectedLine[] {
         const groups = new Map<string, ProjectedLine>()
         for (const edge of this.graph.getMutableEdges()) {
             if (respectHidden && !edge.visibleIgnoringLayer) continue
             if (!this.edgePasses(edge, topVisible)) continue
-            const from = edge.from.canvasRepresentative()
-            const to = edge.to.canvasRepresentative()
+            const from = withGroups ? edge.from.canvasRepresentative() : edge.from.clusterRepresentative()
+            const to = withGroups ? edge.to.canvasRepresentative() : edge.to.clusterRepresentative()
             if (from === to && from !== edge.from && from !== edge.to) continue
 
             const key = `${from.id}->${to.id}`

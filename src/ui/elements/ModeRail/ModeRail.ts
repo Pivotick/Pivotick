@@ -2,8 +2,8 @@ import type { UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
 import type { ModeState, PointerMode, RailMode } from '../../ModeStore'
 import type { RailModeDefinition } from '../../../interfaces/GraphUI'
-import { railModeKind, resolveRailTools } from '../../railModes'
-import { cursor, addCircle, show, atom, lassoTool, graphEdgeIcon } from '../../icons'
+import { railModeKind, resolveRailTools, simplifyOffered } from '../../railModes'
+import { cursor, addCircle, show, atom, lassoTool, graphEdgeIcon, groupNodes } from '../../icons'
 import './moderail.scss'
 
 /**
@@ -55,6 +55,13 @@ export class ModeRail extends UIComponent {
         if (this.uiManager.isFeatureEnabled('physicsFlyout')) {
             this.rail.appendChild(this.makeButton('physics', 'Physics', atom))
         }
+        if (simplifyOffered(this.uiManager.getOptions())) {
+            const button = this.makeButton('simplify', 'Simplify', groupNodes)
+            const count = document.createElement('span')
+            count.className = 'pvt-moderail-count'
+            button.appendChild(count)
+            this.rail.appendChild(button)
+        }
 
         // Everything registered through `addRailMode` lands here, after the built-ins.
         this.pluginZone = document.createElement('div')
@@ -69,6 +76,11 @@ export class ModeRail extends UIComponent {
         this.buttons.get('create')?.addEventListener('click', () => this.activateOrToggle('create'))
         this.buttons.get('view')?.addEventListener('click', () => this.uiManager.modeStore.toggleFlyout('view'))
         this.buttons.get('physics')?.addEventListener('click', () => this.uiManager.modeStore.toggleFlyout('physics'))
+        if (this.buttons.has('simplify')) {
+            this.buttons.get('simplify')?.addEventListener('click', () => this.uiManager.modeStore.toggleFlyout('simplify'))
+            this.renderSimplifyCount()
+            this.track(this.uiManager.graph.simplify.onChange(() => this.renderSimplifyCount()))
+        }
 
         // Keyboard mirrors the rail slot: V/C switch to the mode, or toggle its
         // tool panel if that mode is already active. A mode with no slot has no key.
@@ -160,6 +172,18 @@ export class ModeRail extends UIComponent {
 
     private layoutRoot(): HTMLElement | null {
         return (this.rail?.closest('.pvt-layout') as HTMLElement | null) ?? null
+    }
+
+    /** How many groups the canvas holds, on the Simplify slot while any rule folds. */
+    private renderSimplifyCount() {
+        const button = this.buttons.get('simplify')
+        const count = button?.querySelector<HTMLElement>('.pvt-moderail-count')
+        if (!button || !count) return
+        const { groups, folded } = this.uiManager.graph.simplify.summary()
+        count.textContent = groups ? String(groups) : ''
+        button.title = groups
+            ? `Simplify: ${groups} ${groups === 1 ? 'group' : 'groups'}, ${folded} ${folded === 1 ? 'node' : 'nodes'} folded`
+            : 'Simplify'
     }
 
     /** Click the active mode to toggle its panel; click another to switch to it. */

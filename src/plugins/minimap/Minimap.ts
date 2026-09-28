@@ -167,6 +167,9 @@ export class Minimap extends UIComponent {
         graph.queryEngine.on('filterChange', onFilterChange)
         this.track(() => graph.queryEngine.off('filterChange', onFilterChange))
 
+        // A rule folding or releasing nodes changes the dots without any of the above.
+        this.track(graph.simplify.onChange(() => this.queueRebuild()))
+
         // Notes travel on their own events rather than in a data batch, and each one
         // carries its own geometry — added, moved, resized, recoloured or hidden, they all
         // change the picture.
@@ -429,7 +432,7 @@ export class Minimap extends UIComponent {
         const scale = Math.min(bitmap.width / bounds.width, bitmap.height / bounds.height)
         const projection: Projection = { scale, offsetX: -bounds.x * scale, offsetY: -bounds.y * scale }
 
-        const nodes = this.uiManager.graph.getMutableVisibleNodes().filter((node) => !node.isChild)
+        const nodes = this.uiManager.graph.getCanvasNodes()
         if (nodes.length > DETAIL_NODE_LIMIT) {
             this.drawDensity(context, nodes, projection)
         } else {
@@ -455,7 +458,7 @@ export class Minimap extends UIComponent {
         for (const edge of edges) {
             const from = edge.from
             const to = edge.to
-            if (!from?.visible || !to?.visible) continue
+            if (!from?.onCanvas || !to?.onCanvas) continue
             if (typeof from.x !== 'number' || typeof to.x !== 'number') continue
             context.moveTo(this.px(from.x, projection), this.py(from.y as number, projection))
             context.lineTo(this.px(to.x, projection), this.py(to.y as number, projection))
