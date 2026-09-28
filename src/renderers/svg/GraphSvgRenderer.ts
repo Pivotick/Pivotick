@@ -20,6 +20,7 @@ import { Note } from '../../Note'
 import type { Point } from '../../utils/GeometryHelper'
 import { defaultMarkerStyleMap, defaultNodeStyle, defaultEdgeStyle, defaultLabelStyle } from '../../styles/defaults'
 import { LabelGate } from './LabelGate'
+import { GroupOutlineDrawer } from './GroupOutlineDrawer'
 d3Select.prototype.transition = d3Transition
 
 const DEFAULT_RENDERER_OPTIONS = {
@@ -46,8 +47,11 @@ const DEFAULT_RENDERER_OPTIONS = {
     } as SelectionBoxI
 } satisfies GraphRendererOptions
 
-/** What a fit looks past: drawings the zoom itself decides whether to draw. */
-const TRANSIENT_DRAWINGS = 'g.pvt-node-focus, g.pvt-detail-ghosts, g.label-container, g.pvt-node-label-group'
+/**
+ * What a fit looks past: drawings the zoom itself decides whether to draw, and the open
+ * groups' chips, whose box is wider than the chip it centres.
+ */
+const TRANSIENT_DRAWINGS = 'g.pvt-node-focus, g.pvt-detail-ghosts, g.label-container, g.pvt-node-label-group, g.pvt-group-chips'
 
 /**
  * Whether the viewer has asked for less motion. Queried once: it is a user setting, and
@@ -107,6 +111,7 @@ export class GraphSvgRenderer extends GraphRenderer {
 
     /** Where {@link showForecast} draws its outlines, and the elements it marked. */
     private forecastGroup!: Selection<SVGGElement, unknown, null, undefined>
+    private groupOutlineDrawer!: GroupOutlineDrawer
     private forecastMarks: SVGGElement[] = []
 
     /** Fires when the canvas becomes visible, to re-measure node sizes. */
@@ -152,6 +157,10 @@ export class GraphSvgRenderer extends GraphRenderer {
         this.svg = d3Select(this.svgCanvas)
 
         this.zoomGroup = this.svg.append('g').attr('class', 'zoom-layer hidden')
+        // Under everything: an open group's wash must not cover its members' lines.
+        const groupWashGroup = this.zoomGroup.append('g')
+            .attr('class', 'pvt-group-outlines')
+            .style('pointer-events', 'none')
         this.edgeGroup = this.zoomGroup.append('g').attr('class', 'edges')
 
         this.shadowEdgeGroup = this.zoomGroup.append('g').attr('class', 'shadow-edges').style('pointer-events', 'none')
@@ -176,6 +185,10 @@ export class GraphSvgRenderer extends GraphRenderer {
         this.forecastGroup = this.zoomGroup.append('g')
             .attr('class', 'pvt-forecast')
             .style('pointer-events', 'none')
+
+        // Above the nodes, so the chip that closes an open group can always be clicked.
+        const groupChipGroup = this.zoomGroup.append('g').attr('class', 'pvt-group-chips')
+        this.groupOutlineDrawer = new GroupOutlineDrawer(this.graph, groupWashGroup, groupChipGroup)
 
         // Notes sit above the graph — they are annotations meant to stay readable,
         // never obscured by a node. Their connectors stay in the note-edges layer
@@ -595,6 +608,7 @@ export class GraphSvgRenderer extends GraphRenderer {
         // graph, which asks the projection for its pulls straight away.
         this.graph.refreshProjection()
         const nodes: Node[] = this.graph.getCanvasNodes()
+        this.nodeDrawer.beginHighlightPass()
 
         const nodeGroupNode: SVGGElement = this.nodeGroup.node() as SVGGElement
         this.nodeGroupSelection = this.nodeGroup
@@ -616,6 +630,7 @@ export class GraphSvgRenderer extends GraphRenderer {
                             const selection = d3Select<SVGGElement, Node>(nodes[i])
                             selection.attr('id', `node-${node.domID}`)
                             this.nodeDrawer.render(selection, node)
+                            this.nodeDrawer.checkForHighlight(node)
                         })
                 },
                 (update) => {
@@ -640,11 +655,12 @@ export class GraphSvgRenderer extends GraphRenderer {
                                 selection.selectChildren().remove()
                                 this.nodeDrawer.render(selection, node)
                             }
-                            this.nodeDrawer.checkForHighlight(selection, node)
+                            this.nodeDrawer.checkForHighlight(node)
                         })
                 },
                 exit => exit.remove()
             )
+        this.groupOutlineDrawer.update()
 
         // Folding and layers are already applied: these are exactly the lines to draw.
         const edges = this.graph.getDrawnEdges()
@@ -664,6 +680,7 @@ export class GraphSvgRenderer extends GraphRenderer {
                         selection.attr('id', `edge-${edge.domID}`)
                         this.edgeDrawer.render(selection, edge)
                         this.edgeDrawer.checkForSelection(selection, edge)
+                        this.nodeDrawer.checkEdgeForHighlight(edge)
                     }),
                 update => update
                     .each((edge: Edge, i: number, edges: ArrayLike<SVGPathElement>) => {
@@ -676,6 +693,7 @@ export class GraphSvgRenderer extends GraphRenderer {
                         // Outside the dirty branch, like the node pass above: selecting an
                         // edge does not dirty it, so this is the only thing that applies it.
                         this.edgeDrawer.checkForSelection(selection, edge)
+                        this.nodeDrawer.checkEdgeForHighlight(edge)
                     }),
                 exit => exit.remove()
             )
@@ -768,11 +786,13 @@ export class GraphSvgRenderer extends GraphRenderer {
         this.updateNoteEdgePositions()
         this.updateNotePositions()
         this.updateNodePositions()
+        this.groupOutlineDrawer.tick()
     }
 
     public nextTickFor(nodes: Node[]): void {
         this.updateEdgePositions(nodes) // Render edges first so nodes are drawn on top of them
         this.updateNodePositions(nodes)
+        this.groupOutlineDrawer.tick()
     }
 
     public zoomIn(): void {

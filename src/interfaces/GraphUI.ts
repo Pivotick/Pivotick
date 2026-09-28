@@ -11,7 +11,7 @@ import type { FieldConfig } from '../utils/FormFactory'
 import type { FilterFacet, FilterOptions } from './GraphQueryEngine'
 import type { AsyncContentOptions, RenderContext, RenderResult } from './AsyncContent'
 import type { MinimapOptions } from '../plugins/minimap/options'
-import type { SimplifyOptions } from './Simplify'
+import type { GroupInfo, SimplifyOptions } from './Simplify'
 
 /**
  * A UI feature that is either offered or not.
@@ -884,6 +884,15 @@ export interface Tooltip {
     * @default undefined
     */
     renderEdgeExtra?: (edge: Edge, ctx: RenderContext) => RenderResult,
+    /**
+     * Custom renderer for a group's tooltip, made by `UI.simplify`. Added after its
+     * members and the nodes it links to. A group skips `render` and `renderNodeExtra`,
+     * which are about one node's data.
+     *
+     * May be `async`, on the same terms as {@link Tooltip.renderNodeExtra}.
+     * @default undefined
+     */
+    renderGroupExtra?: (group: GroupInfo, ctx: RenderContext) => RenderResult,
     nodeHeaderMap: Partial<HeaderMapEntry<Node>>,
     edgeHeaderMap: Partial<HeaderMapEntry<Edge>>,
     /** May be `async` — the property list shows a placeholder until it resolves. */

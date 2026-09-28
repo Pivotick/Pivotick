@@ -3,6 +3,7 @@ import type { UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
 import type { NodeSelection } from '../../../interfaces/GraphInteractions'
 import { pin, unpin, hide, focusElement, groupNodes, ungroupNodes, bulkEdit, trash } from '../../icons'
+import { expandGroups } from '../../groupActions'
 
 type BulkActionKind = 'action' | 'danger' | 'soon'
 
@@ -129,8 +130,9 @@ export class SidebarBulkActions extends UIComponent {
     private hideSelection(): void {
         const graph = this.uiManager.graph
         // One act, so one history entry: hiding five nodes is not five things done.
+        // A group is hidden by hiding what it stands for.
         graph.history.group(() => {
-            for (const node of this.selectedNodes()) graph.queryEngine.excludeNode(node)
+            for (const node of expandGroups(this.selectedNodes())) graph.queryEngine.excludeNode(node)
         })
         this.clearSelection()
     }
@@ -142,7 +144,7 @@ export class SidebarBulkActions extends UIComponent {
      */
     private async deleteSelection(): Promise<void> {
         const outcome = await this.uiManager.graph.editing.requestDelete({
-            nodes: this.selectedNodes(),
+            nodes: expandGroups(this.selectedNodes()),
             origin: 'bulk-action',
         })
         if (outcome.accepted) this.clearSelection()

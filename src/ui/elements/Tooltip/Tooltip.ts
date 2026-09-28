@@ -15,6 +15,8 @@ import { deepMerge } from '../../../utils/utils'
 import { ShadowLinkManager } from '../ShadowLinkManager'
 import { attachHtmlImageFallback, createNodePreview, getNodeImageHref } from '../../../utils/NodePreview'
 import { openImageLightbox } from '../modals/ImageLightboxModal/ImageLightboxModal'
+import { buildGroupSummary } from '../GroupSummary/GroupSummary'
+import type { GroupNode } from '../../../Simplification/GroupNode'
 
 
 const defaultTooltipOptions = {
@@ -215,7 +217,15 @@ export class Tooltip extends UIComponent {
     }
 
     public nodeHovered(event: MouseEvent, node: Node) {
-        if (this.hoveredElementID === node.id) return
+        if (this.hoveredElementID === node.id) {
+            // Back on the same node before the hide landed, as when the pointer crosses
+            // a gap inside its drawing (a group's ring): it never really left.
+            if (this.hideTimeout) {
+                clearTimeout(this.hideTimeout)
+                this.hideTimeout = null
+            }
+            return
+        }
 
         this.triggerX = event.pageX
         this.triggerY = event.pageY
@@ -255,6 +265,11 @@ export class Tooltip extends UIComponent {
         this.updateShadowLinks(true)
     }
 
+    /** A drawn node's name: a group's label, else what the header shows. */
+    private drawnName(node: Node): string {
+        return node.isGroup ? this.uiManager.graph.simplify.labelOf((node as GroupNode).info) : nodeNameGetter(node, this.headerOptions())
+    }
+
     public buildNodeTooltip(node: Node): HTMLDivElement {
         const fixedPreviewSize = 32
         const template = `
@@ -281,8 +296,10 @@ export class Tooltip extends UIComponent {
 
         previewElem.prepend(createNodePreview(node, { size: fixedPreviewSize, removeSelectionHighlight: true }))
 
-        this.renderTitle(nameElem as HTMLElement, actionElem, nodeNameGetter(node, this.headerOptions()))
-        subtitleElem.textContent = nodeDescriptionGetter(node, this.headerOptions())
+        const group = node.isGroup ? (node as GroupNode).info : undefined
+        const simplify = this.uiManager.graph.simplify
+        this.renderTitle(nameElem as HTMLElement, actionElem, group ? simplify.labelOf(group) : nodeNameGetter(node, this.headerOptions()))
+        subtitleElem.textContent = group ? `Group · ${simplify.ruleLabel(group.rule)}` : nodeDescriptionGetter(node, this.headerOptions())
 
         if (this.options.allowPinning) {
             const pinButton = createButton({
@@ -297,6 +314,19 @@ export class Tooltip extends UIComponent {
                 },
             })
             toprightElem.appendChild(pinButton)
+        }
+
+        if (group) {
+            tooltipContainer.appendChild(mainheaderContent)
+            tooltipContainer.appendChild(buildGroupSummary(simplify, group, {
+                nameOf: (anchor) => this.drawnName(anchor),
+                hint: 'Double-click to open · Select for the member list',
+            }))
+            const extra = this.renderScope.content(this.uiManager.getOptions().tooltip.renderGroupExtra, group)
+            if (extra) {
+                tooltipContainer.appendChild(createHtmlElement('div', { class: 'pivotick-extra-content-container' }, [extra]))
+            }
+            return tooltipContainer
         }
 
         const renderCb = this.uiManager.getOptions().tooltip.render

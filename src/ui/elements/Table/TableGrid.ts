@@ -20,6 +20,18 @@ interface Row {
     nested: boolean
 }
 
+/**
+ * A grid listing its own rows instead of the graph's, as the sidebar's group members do.
+ * The columns are resolved over those rows.
+ */
+export interface TableGridSource {
+    rows: () => Node[]
+    /** The columns shown, by key; the others are resolved and left hidden. */
+    shownColumns?: string[]
+    /** A button closing each row. */
+    rowAction?: { label: string, title?: string, run: (node: Node) => void }
+}
+
 interface SortState {
     key: string
     direction: TableSortDirection
@@ -89,6 +101,7 @@ export class TableGrid {
     private includeNested: boolean
     /** Told when the nested switch moves, so the toolbar can redraw. */
     private nestedChanged?: () => void
+    private readonly source?: TableGridSource
 
     constructor(
         uiManager: UIManager,
@@ -96,6 +109,7 @@ export class TableGrid {
         initialSort?: SortState,
         rowActivate: 'select' | 'selectAndCenter' | 'none' = 'select',
         virtualizeAbove = 200,
+        source?: TableGridSource,
     ) {
         this.uiManager = uiManager
         this.tab = tab
@@ -104,7 +118,8 @@ export class TableGrid {
         this.sort = initialSort ?? null
         this.rowActivate = rowActivate
         this.virtualizeAbove = virtualizeAbove
-        this.nestedOffered = tab === 'nodes' && nestedOffered(uiManager)
+        this.source = source
+        this.nestedOffered = !source && tab === 'nodes' && nestedOffered(uiManager)
         this.includeNested = this.nestedOffered
     }
 
@@ -177,9 +192,13 @@ export class TableGrid {
      * derived tier walks every element, so doing it per row would be quadratic.
      */
     public rebuild(): void {
-        this.columns = resolveColumns(this.uiManager, this.tab)
+        const elements = this.collectElements()
+        this.columns = resolveColumns(this.uiManager, this.tab, this.source ? elements : undefined)
+        // A short list of its own, read at a glance: sorting is enough.
+        if (this.source) this.columns = this.columns.map((column) => ({ ...column, filterable: false }))
+        const shown = this.source?.shownColumns
         for (const column of this.columns) {
-            if (column.hidden) this.hiddenColumns.add(column.key)
+            if (column.hidden || (shown && !shown.includes(column.key))) this.hiddenColumns.add(column.key)
         }
         if (!this.sort) {
             // Prefer the name. Visibility leads the columns but sorting by it on open is
@@ -189,7 +208,7 @@ export class TableGrid {
             if (preferred) this.sort = { key: preferred.key, direction: 'asc' }
         }
 
-        this.rows = this.collectElements().map((element) => ({
+        this.rows = elements.map((element) => ({
             id: element.id,
             element,
             // `nestedOffered` already implies the nodes tab, so this is safe on an edge.
@@ -201,6 +220,7 @@ export class TableGrid {
     }
 
     private collectElements(): Element[] {
+        if (this.source) return this.source.rows()
         const graph = this.uiManager.graph
         if (this.tab === 'edges') return graph.getMutableEdges()
         // The superset: hidden nodes are listed, not omitted — that is what the
@@ -305,9 +325,10 @@ export class TableGrid {
 
     /** One grid template shared by the header and every row, so the columns line up. */
     private gridTemplate(): string {
-        return this.getVisibleColumns()
+        const columns = this.getVisibleColumns()
             .map((column) => typeof column.width === 'number' ? `${column.width}px` : column.width ?? 'minmax(120px, 1fr)')
-            .join(' ')
+        if (this.source?.rowAction) columns.push('max-content')
+        return columns.join(' ')
     }
 
     private buildHead(): HTMLElement {
@@ -319,6 +340,7 @@ export class TableGrid {
         for (const column of this.getVisibleColumns()) {
             head.appendChild(this.buildHeadCell(column))
         }
+        if (this.source?.rowAction) head.appendChild(Object.assign(document.createElement('div'), { className: 'pvt-table-th' }))
         return head
     }
 
@@ -489,6 +511,23 @@ export class TableGrid {
             const formatted = column.format?.(value, row.element as never)
             if (formatted instanceof HTMLElement) cell.appendChild(formatted)
             else cell.textContent = formatted ?? formatValue(value)
+            element.appendChild(cell)
+        }
+        const action = this.source?.rowAction
+        if (action) {
+            const cell = document.createElement('div')
+            cell.className = 'pvt-table-td pvt-table-row-action-cell'
+            const button = document.createElement('button')
+            button.type = 'button'
+            button.className = 'pvt-table-row-action'
+            button.textContent = action.label
+            if (action.title) button.title = action.title
+            button.addEventListener('click', (event) => {
+                event.stopPropagation()
+                action.run(row.element as Node)
+            })
+            button.addEventListener('dblclick', event => event.stopPropagation())
+            cell.appendChild(button)
             element.appendChild(cell)
         }
         return element

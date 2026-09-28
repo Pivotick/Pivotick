@@ -11,6 +11,7 @@ import {
 import { type Simulation as d3Simulation } from 'd3-force'
 import { ForceGravity } from './plugins/d3Forces/ForceGravity'
 import { drag as d3Drag } from 'd3-drag'
+import { forceGroupCohesion } from './plugins/d3Forces/ForceGroupCohesion'
 import type { Graph } from './Graph'
 import type { Node } from './Node'
 import { Edge } from './Edge'
@@ -284,6 +285,7 @@ export class Simulation {
         const simulationForces = Simulation.initSimulationForces(this.options, this.containerBCR)
         this.simulation = simulationForces.simulation
         this.simulationForces = simulationForces.simulationForces
+        this.simulation.force('groupCohesion', forceGroupCohesion(() => this.graph.simplify.getOpenGroupNodes()))
         this.scaledForces.d3ManyBodyStrength = this.options.d3ManyBodyStrength || DEFAULT_SIMULATION_OPTIONS.d3ManyBodyStrength
         this.scaledForces.d3CollideStrength = this.options.d3CollideStrength || DEFAULT_SIMULATION_OPTIONS.d3CollideStrength
 
@@ -391,6 +393,9 @@ export class Simulation {
         this.initSimulationForceCollide(simulationForces.collide, options)
         // this.initSimulationForceClusterRadialConstraint(simulationForces.clusterRadialConstraint, options)
 
+        // d3 starts its own timer on creation; ticks are driven here, so a graph with the
+        // simulation off must not have unpinned nodes drifting between redraws.
+        simulation.stop()
         simulation.alphaMin(options.d3AlphaMin)
         simulation.alphaDecay(options.d3AlphaDecay)
         simulation.alphaTarget(0)

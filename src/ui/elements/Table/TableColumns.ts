@@ -24,6 +24,7 @@ const RESERVED = {
     pinned: 'pvt:pinned',
     children: 'pvt:children',
     cluster: 'pvt:cluster',
+    group: 'pvt:group',
     source: 'pvt:source',
     target: 'pvt:target',
 } as const
@@ -51,6 +52,12 @@ export const VISIBILITY_COLUMN_KEY = RESERVED.visibility
 
 /** The `Cluster` column's key — added by the `flat` nested mode, which needs the path. */
 export const CLUSTER_COLUMN_KEY = RESERVED.cluster
+
+/** The `Degree` column's key. */
+export const DEGREE_COLUMN_KEY = RESERVED.degree
+
+/** The `Group` column's key, shown while `graph.simplify` has made any group. */
+export const GROUP_COLUMN_KEY = RESERVED.group
 
 /** The `Label` column's key — the default sort prefers it over whatever comes first. */
 export const LABEL_COLUMN_KEY = RESERVED.label
@@ -124,6 +131,8 @@ export const tableColumns = {
      * rows carry no structure of their own.
      */
     cluster: { key: RESERVED.cluster, label: 'Cluster', type: 'text' } as TableColumn,
+    /** The group `graph.simplify` put a node in, by its label; empty for a node in none. */
+    group: { key: RESERVED.group, label: 'Group', type: 'text' } as TableColumn,
     /** An edge's origin, by display name. */
     source: { key: RESERVED.source, label: 'Source', type: 'text' } as TableColumn<Edge>,
     /** An edge's destination, by display name. */
@@ -176,6 +185,11 @@ function bindReservedAccessors(columns: TableColumn<Node | Edge>[], uiManager: U
                 return { ...column, accessor: (element: Node | Edge) => isEdge(element) ? nodeNameGetter(element.to, mainHeader) : '' }
             case RESERVED.cluster:
                 return { ...column, accessor: (element: Node | Edge) => isEdge(element) ? '' : clusterPath(element, mainHeader) }
+            case RESERVED.group:
+                return { ...column, accessor: (element: Node | Edge) => {
+                    const group = isEdge(element) ? undefined : graph.simplify.groupOf(element)
+                    return group ? graph.simplify.labelOf(group) : ''
+                } }
             default:
                 return column
         }
@@ -216,7 +230,7 @@ function isEdge(element: Node | Edge): element is Edge {
  * it right. Edges keep the same gutter and then read as a sentence: visibility, source,
  * label, target.
  */
-export function resolveColumns(uiManager: UIManager, tab: TableTab): TableColumn<Node | Edge>[] {
+export function resolveColumns(uiManager: UIManager, tab: TableTab, elements?: Array<Node | Edge>): TableColumn<Node | Edge>[] {
     const options = uiManager.getOptions()
     const declared = tab === 'nodes'
         ? options.table && typeof options.table === 'object' ? options.table.columns : undefined
@@ -240,11 +254,17 @@ export function resolveColumns(uiManager: UIManager, tab: TableTab): TableColumn
     // Both of these only earn a column on a graph that has clusters — everywhere else one
     // is a column of zeros and the other a column of blanks, and the derived set is meant
     // to be what *this* graph can answer.
-    if (tab === 'nodes' && uiManager.graph.getMutableNodes().some((node) => node.isParent)) {
+    // Like the cluster columns, the group column only earns its place once there are groups.
+    if (tab === 'nodes' && uiManager.graph.simplify.getGroups().length > 0) {
+        leading.push(tableColumns.group as TableColumn<Node | Edge>)
+    }
+
+    const nodes = (elements as Node[] | undefined) ?? uiManager.graph.getMutableNodes()
+    if (tab === 'nodes' && nodes.some((node) => node.isParent)) {
         trailing.push(tableColumns.children as TableColumn<Node | Edge>)
         // Nested rows are peers of the graph's own, so nothing in the row itself says
         // where one came from. Without the path they would read as top-level nodes.
-        if (nestedOffered(uiManager)) leading.push(tableColumns.cluster as TableColumn<Node | Edge>)
+        if (nestedOffered(uiManager) && !elements) leading.push(tableColumns.cluster as TableColumn<Node | Edge>)
     }
 
     // Derived columns filter themselves. Everything about them is already inferred — the
@@ -254,7 +274,7 @@ export function resolveColumns(uiManager: UIManager, tab: TableTab): TableColumn
     // Declared columns keep the literal `filterable: false`: a column set someone wrote
     // out by hand is a statement, not a guess. Copies, so the shared `tableColumns`
     // constants a consumer may also be declaring are never touched.
-    return bindReservedAccessors([...leading, ...dataColumns(uiManager, tab), ...trailing], uiManager)
+    return bindReservedAccessors([...leading, ...dataColumns(uiManager, tab, elements), ...trailing], uiManager)
         .map((column) => ({ ...column, filterable: true }))
 }
 
@@ -267,7 +287,7 @@ export function resolveColumns(uiManager: UIManager, tab: TableTab): TableColumn
  * first and the long tail of near-empty ones sits at the far right, reachable through the
  * column picker rather than in the way.
  */
-function dataColumns(uiManager: UIManager, tab: TableTab): TableColumn<Node | Edge>[] {
+function dataColumns(uiManager: UIManager, tab: TableTab, listed?: Array<Node | Edge>): TableColumn<Node | Edge>[] {
     const options = uiManager.getOptions()
     const graph = uiManager.graph
 
@@ -289,9 +309,9 @@ function dataColumns(uiManager: UIManager, tab: TableTab): TableColumn<Node | Ed
     // With nested rows on, the scan has to see nested data too, or a key that only the
     // contents of clusters carry gets no column and those rows read blank.
     const nested = nestedOffered(uiManager)
-    const elements: Array<Node | Edge> = tab === 'nodes'
+    const elements: Array<Node | Edge> = listed ?? (tab === 'nodes'
         ? graph.getMutableNodes().filter((node) => nested || !node.isChild)
-        : graph.getMutableEdges()
+        : graph.getMutableEdges())
 
     return collectDataAttributes(elements, options.filter?.excludeKeys)
         // The built-in Label column *is* the display name, and `label` is the conventional

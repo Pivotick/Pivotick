@@ -637,7 +637,7 @@ export class UIManager {
                 key: 'i',
                 callback: () => {
                     const node = this.graph.renderer.getNodeClosestToCursor(100)
-                    if (node) createInspectModal(node, this)
+                    if (node && !node.isGroup) createInspectModal(node, this)
                 }
             }))
         }
@@ -649,7 +649,7 @@ export class UIManager {
                     if (!element) return
 
                     if (element instanceof Node) {
-                        if (!this.isEditorEnabled('nodeEditor')) return
+                        if (!this.isEditorEnabled('nodeEditor') || element.isGroup) return
                         this.graph.renderer.getGraphInteraction().selectNode(element.getGraphElement(), element)
                         requestAnimationFrame(() => {
                             this.graph.editing.openNodeSession(element)

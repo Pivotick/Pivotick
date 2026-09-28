@@ -1,4 +1,6 @@
 import type { Graph } from './Graph'
+import type { GroupNode } from './Simplification/GroupNode'
+import { openGroupFromCanvas } from './ui/groupActions'
 import type { Node } from './Node'
 import type { Edge } from './Edge'
 import type { InterractionCallbacks } from './interfaces/InterractionCallbacks'
@@ -152,6 +154,7 @@ export class GraphInteractions<TElement = unknown> {
         if (this.callbacks.onNodeDbclick && typeof this.callbacks.onNodeDbclick === 'function') {
             this.callbacks.onNodeDbclick(event, node, element)
         }
+        if (node.isGroup && this.graph.UIManager) openGroupFromCanvas(this.graph.UIManager, node as GroupNode)
         // this.graph.toggleExpandNode(node)
     }
 
@@ -783,14 +786,17 @@ export class GraphInteractions<TElement = unknown> {
         return this.selectedEdges
     }
 
+    /** Expand or collapse the selected clusters, and open or close the selected groups. */
     public expandNodeSelection() {
-        if (this.selectedNodes.length > 1) {
-            this.graph.toggleExpandNodes(this.selectedNodes.map((n) => n.node))
-        } else {
-            if (this.selectedNode) {
-                this.graph.toggleExpandNode(this.selectedNode.node)
-            }
+        const nodes = this.selectedNodes.map((selection) => selection.node)
+        const groups = nodes.filter((node): node is GroupNode => node.isGroup)
+        const clusters = nodes.filter((node) => !node.isGroup)
+        for (const group of groups) {
+            if (group.info.open) this.graph.simplify.close(group)
+            else if (this.graph.UIManager) openGroupFromCanvas(this.graph.UIManager, group)
         }
+        if (clusters.length > 1) this.graph.toggleExpandNodes(clusters)
+        else if (clusters.length === 1) this.graph.toggleExpandNode(clusters[0])
     }
 
     public getLastPointerEvent(): MouseEvent | null {

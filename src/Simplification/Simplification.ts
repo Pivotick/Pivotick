@@ -13,6 +13,7 @@ export const MAX_GROUP_SIZE = 50
 const DEFAULT_NEIGHBOURS_MIN = 5
 const DEFAULT_CUSTOM_MIN = 2
 const DEFAULT_OPEN_CONFIRM_ABOVE = 100
+const FALLBACK_COLOR = 'var(--pvt-node-color, #007acc)'
 
 /** What a built-in rule says about itself on its card. */
 const BUILTIN_TEXT: Record<'neighbours', { label: string, description: string }> = {
@@ -142,6 +143,11 @@ export class Simplification {
         return this.groups.filter(group => !group.info.open && !group.foldedInto)
     }
 
+    /** The open groups, whose members are back on the canvas. @private */
+    getOpenGroupNodes(): GroupNode[] {
+        return this.groups.filter(group => group.info.open)
+    }
+
     /**
      * What the canvas holds: `total` top-level nodes pass the filters, `folded` of them sit
      * in closed groups, and `shown` dots are drawn for them, `groups` of which are groups.
@@ -205,6 +211,26 @@ export class Simplification {
             .sort((a, b) => b[1] - a[1])
             .map(([type, count]) => this.typeLabel(type === '' ? undefined : type, count))
             .join(', ')
+    }
+
+    /** The name a rule goes by on its card, for a group's subtitle. */
+    ruleLabel(id: string): string {
+        return this.getRules().find(rule => rule.id === id)?.label ?? id
+    }
+
+    /** The colour a member of this type is drawn in; `''` is no type. */
+    typeColor(info: GroupInfo, type: string): string {
+        const accessor = this.graph.getOptions().render?.nodeTypeAccessor
+        const member = info.members.find(candidate => (accessor?.(candidate) ?? '') === type) ?? info.members[0]
+        return member ? this.colorOf(member) : FALLBACK_COLOR
+    }
+
+    /** The colour a dot is drawn in: a node's style, or a group's own. */
+    colorOf(node: Node): string {
+        const color = node instanceof GroupNode || !this.graph.renderer
+            ? node.getStyle().color
+            : this.graph.renderer.getNodeStyle(node).color
+        return (typeof color === 'function' ? color(node) : color) ?? FALLBACK_COLOR
     }
 
     /** Subscribe to changes of the grouping. Returns its own unsubscribe. */
@@ -274,8 +300,23 @@ export class Simplification {
         const signature = this.describe()
         const changed = signature !== this.signature
         this.signature = signature
-        if (changed) for (const listener of [...this.listeners]) listener()
+        if (changed) {
+            for (const listener of [...this.listeners]) listener()
+            // After the redraw this run is part of: a selected group that is gone leaves the selection.
+            queueMicrotask(() => this.dropDissolvedFromSelection())
+        }
         return changed
+    }
+
+    private dropDissolvedFromSelection(): void {
+        const interaction = this.graph.renderer?.getGraphInteraction()
+        if (!interaction) return
+        const live = new Set(this.groups)
+        const gone = interaction.getSelectedNodes()
+            .filter(({ node }) => node instanceof GroupNode && !live.has(node))
+        if (gone.length === 0) return
+        if (gone.length === interaction.getSelectedNodes().length) interaction.clearNodeSelectionList()
+        else interaction.removeNodesFromSelection(gone)
     }
 
     private buildRules(rules: SimplifyRule[]): RuleState[] {
@@ -498,23 +539,11 @@ export class Simplification {
         group.styleSignature = signature
         group.setData({ label, count: info.members.length })
 
-        const colorOf = (type: string) => this.typeColor(group, type)
+        const colorOf = (type: string) => this.typeColor(info, type)
         const base = defaultGroupStyle(info, label, colorOf)
         const custom = this.graph.getOptions().render?.groupStyle?.(info)
         group.setStyle(custom ? { ...base, ...custom } : base)
         group.markDirty()
-    }
-
-    /** The colour a member of this type is drawn in. */
-    private typeColor(group: GroupNode, type: string): string {
-        const member = group.info.members.find(candidate => {
-            const accessor = this.graph.getOptions().render?.nodeTypeAccessor
-            return (accessor?.(candidate) ?? '') === type
-        }) ?? group.info.members[0]
-        const fallback = 'var(--pvt-node-color, #007acc)'
-        if (!member || !this.graph.renderer) return fallback
-        const color = this.graph.renderer.getNodeStyle(member).color
-        return (typeof color === 'function' ? color(member) : color) ?? fallback
     }
 
     /** Fold a part into its group, remembering where it sat relative to it. */

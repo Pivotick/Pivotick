@@ -623,3 +623,23 @@ export function isPointInsidePolygon(x: number, y: number, polygon: Point[]): bo
 
     return inside
 }
+/** The convex hull of a set of points, counter-clockwise (Andrew's monotone chain). */
+export function convexHull(points: Point[]): Point[] {
+    const sorted = [...points].sort((a, b) => a.x - b.x || a.y - b.y)
+    if (sorted.length < 3) return sorted
+    const cross = (o: Point, a: Point, b: Point) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x)
+    const lower: Point[] = []
+    for (const point of sorted) {
+        while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], point) <= 0) lower.pop()
+        lower.push(point)
+    }
+    const upper: Point[] = []
+    for (let i = sorted.length - 1; i >= 0; i--) {
+        const point = sorted[i]
+        while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], point) <= 0) upper.pop()
+        upper.push(point)
+    }
+    lower.pop()
+    upper.pop()
+    return [...lower, ...upper]
+}

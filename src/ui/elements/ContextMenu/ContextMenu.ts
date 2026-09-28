@@ -1,7 +1,7 @@
 import { Edge } from '../../../Edge'
 import type { Node } from '../../../Node'
 import { createActionList, createHtmlElement, createQuickActionList, generateSafeDomId } from '../../../utils/ElementCreation'
-import { addCircle, edit, expand, focusElement, fullscreen, graphEdgeIcon, hide, inspect, pin, selectNeighbor, sparkles, stickyNote, trash, unpin } from '../../icons'
+import { addCircle, edit, expand, focusElement, fullscreen, graphEdgeIcon, groupNodes, hide, inspect, pin, selectNeighbor, sparkles, stickyNote, trash, ungroupNodes, unpin } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
 import './contextmenu.scss'
@@ -14,6 +14,8 @@ import { Note } from '../../../Note'
 import { pickNode } from '../../components/NodePickers'
 import { nodeNameGetter } from '../../../utils/GraphGetters'
 import { getNodeImageHref } from '../../../utils/NodePreview'
+import type { GroupNode } from '../../../Simplification/GroupNode'
+import { expandGroups, openGroupFromCanvas, selectGroupMembers } from '../../groupActions'
 
 /**
  * A library default that is only offered while the feature behind it is enabled — the
@@ -193,6 +195,81 @@ const defaultMenuNode = {
     ] as GatedActionItem[],
 }
 
+/**
+ * A group's menu: it acts for its members. The node menu's single-node entries (edit,
+ * connect-to, inspect) have nothing to act on, and an app's own node entries expect a
+ * node's data, so a group has a section of its own.
+ */
+const defaultMenuGroup = {
+    topbar: [
+        {
+            title: 'Pin Group',
+            svgIcon: pin,
+            variant: 'outline-primary',
+            visible: (node: Node) => !node.frozen,
+            onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
+                node.freeze()
+            },
+        },
+        {
+            title: 'Unpin Group',
+            svgIcon: unpin,
+            variant: 'outline-primary',
+            visible: (node: Node) => node.frozen,
+            onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
+                node.unfreeze()
+            },
+        },
+        {
+            title: 'Focus Group',
+            svgIcon: focusElement,
+            variant: 'outline-primary',
+            onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
+                this.uiManager.graph.focusElement(node)
+            },
+        },
+    ] as GatedQuickActionItem[],
+    menu: [
+        {
+            text: 'Open group',
+            title: 'Put the members back on the canvas',
+            svgIcon: ungroupNodes,
+            variant: 'outline-primary',
+            onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
+                openGroupFromCanvas(this.uiManager, node as GroupNode)
+            },
+        },
+        {
+            text: 'Select members',
+            title: 'Select the nodes in this group',
+            svgIcon: selectNeighbor,
+            variant: 'outline-primary',
+            onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
+                selectGroupMembers(this.uiManager, node as GroupNode)
+            },
+        },
+        {
+            text: 'Select Neighbors',
+            title: 'Select the nodes this group links to',
+            svgIcon: selectNeighbor,
+            variant: 'outline-primary',
+            onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
+                this.uiManager.graph.selectElements((node as GroupNode).info.anchors)
+            },
+        },
+        {
+            text: 'Delete members',
+            title: 'Delete every node in this group',
+            requires: 'deletion',
+            svgIcon: trash,
+            variant: 'outline-danger',
+            onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
+                void this.uiManager.graph.editing.requestDelete({ nodes: (node as GroupNode).info.members, origin: 'context-menu' })
+            },
+        },
+    ] as GatedActionItem[],
+}
+
 const defaultMenuEdge: MenuSection = {
     topbar: [],
     menu: [
@@ -331,6 +408,7 @@ export class ContextMenu extends UIComponent {
     private openedAt: { x: number, y: number } | null = null
 
     private menuNode: MenuSection
+    private menuGroup: MenuSection
     private menuEdge: MenuSection
     private menuNote: MenuSection
     private menuCanvas: MenuSection
@@ -374,6 +452,10 @@ export class ContextMenu extends UIComponent {
         // `visible` has to read the live registry, and a predicate is resolved without
         // `this` bound (`ElementCreation.tryResolveBoolean`).
         this.menuNode.menu.unshift(this.pivotEntry())
+        const deleteAt = this.menuNode.menu.findIndex(entry => entry.text === 'Delete Node')
+        this.menuNode.menu.splice(deleteAt < 0 ? this.menuNode.menu.length : deleteAt, 0, ...this.membershipEntries())
+        this.menuGroup = this.gate(defaultMenuGroup)
+        this.menuGroup.menu.splice(2, 0, this.pivotEntry())
         this.wrapOnclickActions()
     }
 
@@ -395,9 +477,32 @@ export class ContextMenu extends UIComponent {
             // node, not the origin below: with a selection nothing applies to, the panel
             // row is still the way to find that out.
             visible: (element) =>
-                !!ui.pivotMode && !!element && ui.graph.pivots.for([element as Node]).length > 0,
+                !!ui.pivotMode && !!element && ui.graph.pivots.for(expandGroups([element as Node])).length > 0,
             submenu: (element) => this.pivotSubmenu(element as Node),
         }
+    }
+
+    /** Take a member of an open group out of it, or let a pulled-out node back in. */
+    private membershipEntries(): MenuActionItemOptions[] {
+        const simplify = this.uiManager.graph.simplify
+        return [
+            {
+                text: 'Pull out of group',
+                title: 'Keep this node out of its group',
+                svgIcon: ungroupNodes,
+                variant: 'outline-primary',
+                visible: (element) => !!element && !!simplify.groupOf(element as Node)?.open,
+                onclick: (_evt, element) => simplify.pullOut(element as Node),
+            },
+            {
+                text: 'Put back in group',
+                title: 'Let this node be grouped again',
+                svgIcon: groupNodes,
+                variant: 'outline-primary',
+                visible: (element) => !!element && simplify.isPulledOut(element as Node),
+                onclick: (_evt, element) => simplify.putBack(element as Node),
+            },
+        ]
     }
 
     /**
@@ -448,7 +553,8 @@ export class ContextMenu extends UIComponent {
         const selected = this.uiManager.graph.renderer.getGraphInteraction()
             .getSelectedNodes()
             .map(selection => selection.node)
-        return selected.some(candidate => candidate.id === node.id) ? selected : [node]
+        // A group pivots on its members, alone or in a selection.
+        return expandGroups(selected.some(candidate => candidate.id === node.id) ? selected : [node])
     }
 
     /**
@@ -626,6 +732,8 @@ export class ContextMenu extends UIComponent {
         [
             this.menuNode.menu,
             this.menuNode.topbar,
+            this.menuGroup.menu,
+            this.menuGroup.topbar,
             this.menuEdge.menu,
             this.menuEdge.topbar,
             this.menuNote.menu,
@@ -660,17 +768,17 @@ export class ContextMenu extends UIComponent {
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    private createNodeMenu(_node: Node): void {
+    private createNodeMenu(node: Node): void {
         if (!this.menu) return
+        const section = node.isGroup ? this.menuGroup : this.menuNode
 
         const topbar = this.menu.querySelector('.pvt-contextmenu-topbar')!
         const mainMenu = this.menu.querySelector('.pvt-contextmenu-mainmenu')!
         this.closeFlyouts(0)
         topbar.innerHTML = ''
         mainMenu.innerHTML = ''
-        topbar.appendChild(createQuickActionList<ContextMenu>(this, this.menuNode.topbar, this.element))
-        mainMenu.appendChild(createActionList<ContextMenu>(this, this.menuNode.menu, this.element, this.rowWiring(0)))
+        topbar.appendChild(createQuickActionList<ContextMenu>(this, section.topbar, this.element))
+        mainMenu.appendChild(createActionList<ContextMenu>(this, section.menu, this.element, this.rowWiring(0)))
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

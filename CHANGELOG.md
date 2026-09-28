@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Fixes
+
+- With the simulation switched off, unpinned nodes no longer drift for a few seconds after
+  load without being redrawn, then jump on the next redraw.
+- A node's tooltip no longer closes when the pointer crosses a gap inside the node's own
+  drawing on the way in.
+
 ### Simplify: fold nodes that play the same role
 
 Many graphs are mostly repetition: two events sharing forty IPs, a hub with dozens of leaves
@@ -29,6 +36,16 @@ touching the data.
   types ("12 IPs").
 - **`graph.simplify`** holds the rules and groups at runtime: `setRules`, `setRuleEnabled`,
   `getGroups`, `groupOf`, `open` / `close` and `pullOut` / `putBack`.
+- **Opening a group** (double-click, Enter, the sidebar or the menu) puts its members back on the
+  canvas inside a wash in the group's colour, with a chip that folds them back; a light pull
+  keeps them together. A group larger than `UI.simplify.openConfirmAbove` (100) asks first.
+  `render.groupOutline(group)` sets what the chip says.
+- **A group acts for its members.** Selecting one lights the nodes it links to; the sidebar lists
+  the members in a sortable grid, each with *Pull out*, next to *Open*, *Select members*,
+  *Pivot* and *Delete*. The context menu offers the same, and bulk Hide, Delete and Pivot on a
+  selection holding groups act on their members. Edit and connect-to are not offered on a group.
+  `tooltip.renderGroupExtra(group)` adds to a group's tooltip, and the table gains a `Group`
+  column while any group exists.
 
 ### Detail that follows the zoom
 

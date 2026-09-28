@@ -352,3 +352,104 @@
 .pvt-sidebar-collapsed .pvt-sidebar-collapse-button-expand {
     display: flex !important;
 }
+
+// A selected group: the group panel stands in for the properties and neighbours.
+.pvt-sidebar-elements.pvt-sidebar-group-selected {
+    > .pvt-properties-panel,
+    > .pvt-neighbor-panel,
+    > .pvt-sidebar-separator:has(+ .pvt-properties-panel),
+    > .pvt-sidebar-separator:has(+ .pvt-neighbor-panel) {
+        display: none;
+    }
+}
+
+.pvt-sidebar-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 4px 0 8px;
+
+    .pvt-group-summary {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .pvt-sidebar-group-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+    }
+
+    .pvt-sidebar-group-ask {
+        flex-basis: 100%;
+        font-size: 13px;
+        color: var(--pvt-text-color-6);
+    }
+
+    .pvt-sidebar-group-action {
+        height: 28px;
+        padding: 0 11px;
+        border: 1px solid var(--pvt-border-color);
+        border-radius: 7px;
+        background: var(--pvt-bg-color-0);
+        color: var(--pvt-text-color-6);
+        font: inherit;
+        font-size: 12.5px;
+        cursor: pointer;
+        box-sizing: border-box;
+
+        &:hover:not(:disabled) {
+            background: var(--pvt-bg-color-3);
+        }
+
+        &:disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
+
+        &.pvt-sidebar-group-action-primary {
+            border-color: var(--pvt-theme-primary);
+            background: var(--pvt-theme-primary);
+            color: var(--pvt-text-color-for-primary);
+
+            &:hover {
+                background: color-mix(in srgb, var(--pvt-theme-primary), black 10%);
+            }
+        }
+
+        &.pvt-sidebar-group-action-danger {
+            color: var(--pvt-theme-danger);
+        }
+    }
+
+    .pvt-sidebar-group-heading {
+        padding: 0 14px 4px;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--pvt-text-color-5);
+    }
+
+    .pvt-sidebar-group-scroller {
+        max-height: 320px;
+        margin: 0 14px;
+        overflow: auto;
+        border: 1px solid var(--pvt-border-color);
+        border-radius: 7px;
+    }
+
+    .pvt-table-row-action {
+        padding: 0 6px;
+        border: 0;
+        background: transparent;
+        color: var(--pvt-theme-primary);
+        font: inherit;
+        font-size: 12px;
+        cursor: pointer;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+}

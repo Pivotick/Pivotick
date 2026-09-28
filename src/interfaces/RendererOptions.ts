@@ -159,6 +159,12 @@ export interface GraphRendererOptions {
      */
     groupStyle?: (group: GroupInfo) => Partial<NodeStyle> | void
     /**
+     * What the chip over an open group shows, in place of its label. A string is shown as
+     * text. The chip keeps its close mark and still folds the group back when clicked.
+     * Return nothing to keep the label.
+     */
+    groupOutline?: (group: GroupInfo) => HTMLElement | string | void
+    /**
      * Maps node types to their styles.
      * 
      * Each key is a node type (as returned by `nodeTypeAccessor`) and maps to a `NodeStyle` object.

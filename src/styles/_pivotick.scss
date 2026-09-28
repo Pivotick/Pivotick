@@ -584,6 +584,58 @@ dl.pvt-property-list {
     }
 }
 
+// An open group: a wash in its colour around the members, no rim, so it can't pass for a
+// cluster's bubble. Fill and stroke are one colour; the round stroke pads the hull, and the
+// opacity on the whole path keeps the overlap from darkening.
+.pvt-group-outlines .pvt-group-outline {
+    fill: var(--pvt-group-color);
+    stroke: var(--pvt-group-color);
+    stroke-linejoin: round;
+    opacity: 0.14;
+}
+
+.pvt-group-chips {
+    .pvt-group-chip-box {
+        overflow: visible;
+        pointer-events: none;
+    }
+
+    .pvt-group-chip-shell {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 100%;
+    }
+
+    .pvt-group-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        height: 22px;
+        padding: 0 8px 0 11px;
+        border: 0;
+        border-radius: 11px;
+        background: var(--pvt-group-color);
+        color: #fff;
+        font: 600 12px/1 var(--pvt-font-family);
+        white-space: nowrap;
+        cursor: pointer;
+        pointer-events: auto;
+        box-sizing: border-box;
+    }
+
+    .pvt-group-chip-close {
+        font-size: 14px;
+        font-weight: 400;
+        opacity: 0.85;
+    }
+
+    .pvt-group-chip:hover .pvt-group-chip-close {
+        opacity: 1;
+    }
+}
+
 // The outlines: what is not on the canvas yet, where it would land.
 .pvt-forecast {
     .pvt-forecast-node {

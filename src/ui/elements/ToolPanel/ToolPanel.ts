@@ -392,9 +392,13 @@ export class ToolPanel extends UIComponent {
         }
     }
 
-    /** Edit acts on a single selected node, so it's usable only when exactly one is selected. */
+    /**
+     * Edit acts on a single selected node, so it's usable only when exactly one is
+     * selected, and it is not a group: a group has no data of its own.
+     */
     private hasEditableSelection(): boolean {
-        return !!this.uiManager.graph.renderer.getGraphInteraction().getSelectedNode()
+        const selection = this.uiManager.graph.renderer.getGraphInteraction().getSelectedNode()
+        return !!selection && !selection.node.isGroup
     }
 
     /**
@@ -492,6 +496,7 @@ export class ToolPanel extends UIComponent {
     }
 
     private editSelectedNode() {
+        if (!this.hasEditableSelection()) return
         const selection = this.uiManager.graph.renderer.getGraphInteraction().getSelectedNode()
         if (selection) this.uiManager.graph.editing.openNodeSession(selection.node)
     }

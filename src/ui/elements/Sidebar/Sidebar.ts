@@ -11,6 +11,8 @@ import { ExtraPanelManager } from './ExtraPanelManager'
 import { closeIcon, sidebarCollapse, sidebarExpand } from '../../icons'
 import type { EdgeSelection, NodeSelection } from '../../../interfaces/GraphInteractions'
 import { SidebarNeighbors } from './Neighbors'
+import { SidebarGroupPanel } from './GroupPanel'
+import type { GroupNode } from '../../../Simplification/GroupNode'
 
 export class Sidebar extends UIComponent {
     public sidebar?: HTMLDivElement
@@ -22,6 +24,7 @@ export class Sidebar extends UIComponent {
     private sidebarProperties?: SidebarProperties
     private sidebarNeighbors?: SidebarNeighbors
     private bulkActions: SidebarBulkActions
+    private groupPanel: SidebarGroupPanel
     private extraPanelManager: ExtraPanelManager
 
     private mainHeaderPanel?: HTMLDivElement
@@ -37,6 +40,7 @@ export class Sidebar extends UIComponent {
         if (this.uiManager.isFeatureEnabled('propertiesPanel')) this.sidebarProperties = new SidebarProperties(this.uiManager)
         if (this.uiManager.isFeatureEnabled('neighborsPanel')) this.sidebarNeighbors = new SidebarNeighbors(this.uiManager)
         this.bulkActions = new SidebarBulkActions(this.uiManager)
+        this.groupPanel = new SidebarGroupPanel(this.uiManager)
         this.extraPanelManager = new ExtraPanelManager(this.uiManager)
     }
 
@@ -55,6 +59,7 @@ export class Sidebar extends UIComponent {
 <div class="pvt-sidebar-elements">
     <div class="pvt-mainheader-panel"></div>
     <div class="pvt-sidebar-bulkactions-slot"></div>
+    <div class="pvt-sidebar-group-slot"></div>
     ${properties}
     ${neighbors}
     <div class="pvt-sidebar-separator"></div>
@@ -81,6 +86,7 @@ export class Sidebar extends UIComponent {
         this.addChild(this.sidebarMainHeader, this.mainHeaderPanel)
         const bulkActionsSlot = this.sidebar.querySelector<HTMLDivElement>('.pvt-sidebar-bulkactions-slot') ?? undefined
         this.addChild(this.bulkActions, bulkActionsSlot)
+        this.addChild(this.groupPanel, this.sidebar.querySelector<HTMLDivElement>('.pvt-sidebar-group-slot') ?? undefined)
         this.mainBodyPanel = this.sidebar.querySelector('.pvt-properties-panel') ?? undefined
         if (this.sidebarProperties) this.addChild(this.sidebarProperties, this.mainBodyPanel)
         this.neighborPanel = this.sidebar.querySelector('.pvt-neighbor-panel') ?? undefined
@@ -192,6 +198,9 @@ export class Sidebar extends UIComponent {
     }
 
     private renderSingleNodeSelection(node: Node, element: unknown): void {
+        if (node.isGroup) return this.renderGroupSelection(node as GroupNode, element)
+        this.groupPanel.hide()
+        this.sidebar?.classList.remove('pvt-sidebar-group-selected')
         this.sidebarMainHeader.updateNodeOverview(node, element)
         this.sidebarProperties?.updateNodeProperties(node)
         this.sidebarNeighbors?.updateNodeNeighbors(node)
@@ -201,7 +210,23 @@ export class Sidebar extends UIComponent {
         this.hideSelectionActions()
     }
 
+    /**
+     * A group has no data of its own: its header, then the group panel in place of the
+     * properties and neighbours, which are about one node's data and edges.
+     */
+    private renderGroupSelection(group: GroupNode, element: unknown): void {
+        this.sidebarMainHeader.updateNodeOverview(group, element)
+        this.sidebarProperties?.clearProperties()
+        this.sidebarNeighbors?.clearNeighbors()
+        this.extraPanelManager.clear()
+        this.sidebar?.classList.add('pvt-sidebar-group-selected')
+        this.groupPanel.show(group)
+        this.hideSelectionActions()
+    }
+
     private renderMultiNodeSelection(fullSelection: NodeSelection<unknown>[]): void {
+        this.groupPanel.hide()
+        this.sidebar?.classList.remove('pvt-sidebar-group-selected')
         this.sidebarMainHeader.updateNodesOverview(fullSelection)
         this.sidebarProperties?.updateNodesProperties(fullSelection)
         this.sidebarNeighbors?.updateNodesNeighbors(fullSelection)
@@ -210,6 +235,8 @@ export class Sidebar extends UIComponent {
     }
 
     private clearSelection(): void {
+        this.groupPanel.hide()
+        this.sidebar?.classList.remove('pvt-sidebar-group-selected')
         this.sidebarMainHeader.clearOverview()
         this.sidebarProperties?.clearProperties()
         this.sidebarNeighbors?.clearNeighbors()

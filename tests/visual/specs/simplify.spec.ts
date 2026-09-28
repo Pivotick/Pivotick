@@ -1,4 +1,4 @@
-import { test, expect, gotoHarness, harness, canvas } from '../helpers'
+import { test, expect, gotoHarness, harness, canvas, openNodeTooltip } from '../helpers'
 import type { Page } from '@playwright/test'
 
 /**
@@ -293,5 +293,253 @@ test.describe('the look', () => {
         await loadSimplify(page, withNeighbours())
         await expect(page.locator('.pvt-group-count')).toHaveCount(3)
         await expect(canvas(page)).toHaveScreenshot('simplify-default-look.png')
+    })
+})
+
+/* ---------- interaction ---------- */
+
+/** The DOM id suffix of the group holding a member, as `#node-<domID>` uses it. */
+async function groupDomId(page: Page, member: string): Promise<string> {
+    return page.evaluate((id) => {
+        const simplify = window.__pivotick.graph!.simplify
+        return simplify.getGroupNode(simplify.groupOf(id)!.id)!.domID
+    }, member)
+}
+
+const groupDot = async (page: Page, member: string) => canvas(page).locator(`#node-${await groupDomId(page, member)}`)
+const chip = (page: Page) => page.locator('.pvt-group-chip')
+const groupPanel = (page: Page) => page.locator('.pvt-sidebar-group')
+const panelAction = (page: Page, action: string) => groupPanel(page).locator(`.pvt-sidebar-group-action[data-action="${action}"]`)
+const memberRows = (page: Page) => groupPanel(page).locator('.pvt-table-row')
+const menuEntry = (page: Page, text: string) => page.locator('.pvt-contextmenu').getByText(text, { exact: true })
+
+/** Whether focus mode greys this node out: it is neither selected nor one line away. */
+async function isDimmed(page: Page, id: string): Promise<boolean> {
+    return page.evaluate((nodeId) => {
+        const graph = window.__pivotick.graph!
+        const node = graph.getCanvasNode(nodeId) ?? graph.simplify.getGroupNode(nodeId)
+        return !!node?.getGraphElement()?.classList.contains('pvt-node-selected-highlight-shadow')
+    }, id)
+}
+
+async function selectGroupOf(page: Page, member: string): Promise<void> {
+    await page.evaluate((id) => {
+        const graph = window.__pivotick.graph!
+        graph.selectElement(graph.simplify.getGroupNode(graph.simplify.groupOf(id)!.id)!)
+    }, member)
+}
+
+async function selectedIds(page: Page): Promise<string[]> {
+    return page.evaluate(() => (window.__pivotick.graph!.renderer.getGraphInteraction().getSelectedNodeIDs() ?? []).slice().sort())
+}
+
+/** Full mode with the sidebar open, so the group panel can be clicked. */
+const withPanels = (extra: Record<string, unknown> = {}) =>
+    ({ UI: { mode: 'full', sidebar: { collapsed: false }, simplify: { rules: [{ kind: 'neighbours' }], ...extra } } })
+
+test.describe('opening a group', () => {
+    test('an open group draws a wash and a chip; the chip folds it back', async ({ page }) => {
+        await loadSimplify(page, withNeighbours())
+        const domains = (await groupHolding(page, 'dom-0'))!
+        await page.evaluate((id) => window.__pivotick.graph!.simplify.open(id), domains.id)
+
+        await expect(page.locator(`.pvt-group-outline[data-group="${domains.id}"]`)).toHaveAttribute('d', /^M/)
+        await expect(chip(page)).toHaveText('5 × domain×')
+        await expect(canvas(page)).toHaveScreenshot('simplify-open-group.png')
+
+        await chip(page).click()
+        await expect.poll(async () => (await groupHolding(page, 'dom-0'))?.open).toBe(false)
+        await expect(chip(page)).toHaveCount(0)
+    })
+
+    test('render.groupOutline names the chip', async ({ page }) => {
+        await loadSimplify(page, withNeighbours())
+        await page.evaluate(() => {
+            // Functions don't cross into the page, so the option is set there.
+            window.__pivotick.graph!.getOptions().render!.groupOutline = () => 'Domains of A'
+            const simplify = window.__pivotick.graph!.simplify
+            simplify.open(simplify.groupOf('dom-0')!)
+        })
+        await expect(page.locator('.pvt-group-chip-label')).toHaveText('Domains of A')
+    })
+
+    test('double-clicking a group opens it', async ({ page }) => {
+        await loadSimplify(page, withNeighbours())
+        await (await groupDot(page, 'dom-0')).dblclick()
+        await expect.poll(async () => (await groupHolding(page, 'dom-0'))?.open).toBe(true)
+    })
+
+    test('above openConfirmAbove, a double-click asks first instead of opening', async ({ page }) => {
+        await loadSimplify(page, { UI: { mode: 'full', simplify: { rules: [{ kind: 'neighbours' }], openConfirmAbove: 3 } } })
+        await (await groupDot(page, 'dom-0')).dblclick()
+        const toast = page.locator('.pivotick-toast').filter({ hasText: 'Put 5 × domain on the canvas?' })
+        await expect(toast).toBeVisible()
+        expect((await groupHolding(page, 'dom-0'))!.open).toBe(false)
+
+        await toast.locator('.pivotick-toast-action').click()
+        await expect.poll(async () => (await groupHolding(page, 'dom-0'))?.open).toBe(true)
+    })
+})
+
+test.describe('selecting a group', () => {
+    test('focus mode lights a selected group and its anchors, and nothing else', async ({ page }) => {
+        await loadSimplify(page, withNeighbours())
+        await selectGroupOf(page, 'ip-0')
+        const ipGroup = (await groupHolding(page, 'ip-0'))!
+        // The group and the two events its lines run to stay lit.
+        expect(await isDimmed(page, ipGroup.id)).toBe(false)
+        expect(await isDimmed(page, 'ev-a')).toBe(false)
+        expect(await isDimmed(page, 'ev-b')).toBe(false)
+        // A node with no line to the group is greyed out.
+        expect(await isDimmed(page, 'hub')).toBe(true)
+    })
+
+    test('selecting an anchor lights the groups hanging off it', async ({ page }) => {
+        await loadSimplify(page, withNeighbours())
+        await page.evaluate(() => window.__pivotick.graph!.selectElement(window.__pivotick.graph!.getMutableNode('ev-a')!))
+        expect(await isDimmed(page, (await groupHolding(page, 'ip-0'))!.id)).toBe(false)
+        expect(await isDimmed(page, (await groupHolding(page, 'dom-0'))!.id)).toBe(false)
+        expect(await isDimmed(page, (await groupHolding(page, 'file-1'))!.id)).toBe(true)
+    })
+
+    test('a selected group that dissolves leaves the selection', async ({ page }) => {
+        await loadSimplify(page, withNeighbours())
+        await selectGroupOf(page, 'dom-0')
+        await page.evaluate(() => window.__pivotick.graph!.simplify.setRuleMinSize('neighbours', 10))
+        await expect.poll(() => selectedIds(page)).toEqual([])
+    })
+})
+
+test.describe('the group tooltip', () => {
+    test('names the group, its rule and what it links to', async ({ page }) => {
+        await loadSimplify(page, withNeighbours())
+        const tip = await openNodeTooltip(page, await groupDomId(page, 'ip-0'))
+        await expect(tip.locator('.pvt-mainheader-nodeinfo-name')).toHaveText('6 × ip')
+        await expect(tip.locator('.pvt-mainheader-nodeinfo-subtitle')).toHaveText('Group · Same neighbours')
+        await expect(tip.locator('.pvt-group-summary-chip-label')).toHaveText(['EV-A', 'EV-B'])
+        await expect(tip.locator('.pvt-group-summary-hint')).toHaveText('Double-click to open · Select for the member list')
+    })
+
+    test('renderGroupExtra adds its own lines', async ({ page }) => {
+        await loadSimplify(page, withNeighbours())
+        await page.evaluate(() => {
+            window.__pivotick.graph!.UIManager.getOptions().tooltip.renderGroupExtra = (group) => `${group.members.length} members`
+        })
+        const tip = await openNodeTooltip(page, await groupDomId(page, 'ip-0'))
+        await expect(tip.locator('.pivotick-extra-content-container')).toHaveText('6 members')
+    })
+})
+
+test.describe('the group sidebar', () => {
+    test('lists the members and the actions; Edit is disabled', async ({ page }) => {
+        await loadSimplify(page, withPanels())
+        await selectGroupOf(page, 'ip-0')
+        await expect(groupPanel(page)).toBeVisible()
+        await expect(page.locator('.pvt-properties-panel')).toBeHidden()
+        await expect(memberRows(page)).toHaveCount(6)
+        await expect(panelAction(page, 'open')).toBeEnabled()
+        await expect(panelAction(page, 'select-members')).toBeEnabled()
+        await expect(panelAction(page, 'delete')).toHaveText('Delete 6')
+        await expect(panelAction(page, 'edit')).toBeDisabled()
+    })
+
+    test('Pull out takes one member out of the group', async ({ page }) => {
+        await loadSimplify(page, withPanels())
+        await selectGroupOf(page, 'ip-0')
+        await memberRows(page).filter({ hasText: 'ip-2' }).locator('.pvt-table-row-action').click()
+        await expect.poll(async () => (await groupHolding(page, 'ip-0'))?.members).toEqual(IPS.filter((ip) => ip !== 'ip-2'))
+        expect(await canvasNodeIds(page)).toContain('ip-2')
+        await expect(memberRows(page)).toHaveCount(5)
+    })
+
+    test('Open becomes Close, and the group stays selected', async ({ page }) => {
+        await loadSimplify(page, withPanels())
+        await selectGroupOf(page, 'dom-0')
+        await panelAction(page, 'open').click()
+        await expect.poll(async () => (await groupHolding(page, 'dom-0'))?.open).toBe(true)
+        await expect(panelAction(page, 'close')).toBeVisible()
+        // An open group's members are what the canvas draws of it, so they stay lit.
+        expect(await isDimmed(page, 'dom-0')).toBe(false)
+
+        await panelAction(page, 'close').click()
+        await expect.poll(async () => (await groupHolding(page, 'dom-0'))?.open).toBe(false)
+    })
+
+    test('above openConfirmAbove, Open asks inline', async ({ page }) => {
+        await loadSimplify(page, withPanels({ openConfirmAbove: 3 }))
+        await selectGroupOf(page, 'dom-0')
+        await panelAction(page, 'open').click()
+        await expect(groupPanel(page).locator('.pvt-sidebar-group-ask')).toHaveText('Put 5 × domain on the canvas?')
+        expect((await groupHolding(page, 'dom-0'))!.open).toBe(false)
+
+        await panelAction(page, 'confirm-open').click()
+        await expect.poll(async () => (await groupHolding(page, 'dom-0'))?.open).toBe(true)
+    })
+
+    test('Select members opens the group and selects them', async ({ page }) => {
+        await loadSimplify(page, withPanels())
+        await selectGroupOf(page, 'dom-0')
+        await panelAction(page, 'select-members').click()
+        await expect.poll(() => selectedIds(page)).toEqual(DOMAINS)
+        expect((await groupHolding(page, 'dom-0'))!.open).toBe(true)
+    })
+
+    test('Delete removes the members through the delete hook', async ({ page }) => {
+        await loadSimplify(page, withPanels())
+        await page.evaluate(() => {
+            const graph = window.__pivotick.graph!
+            ;(window as unknown as { asked: number }).asked = 0
+            graph.getOptions().callbacks = graph.getOptions().callbacks ?? {}
+            graph.getOptions().callbacks!.onBeforeDelete = (context) => {
+                ;(window as unknown as { asked: number }).asked = context.nodes.length
+                return true
+            }
+        })
+        await selectGroupOf(page, 'dom-0')
+        await panelAction(page, 'delete').click()
+        await expect.poll(() => page.evaluate(() => (window as unknown as { asked: number }).asked)).toBe(5)
+        await expect.poll(() => page.evaluate(() => window.__pivotick.graph!.getNodes().some((node) => node.id.startsWith('dom-')))).toBe(false)
+    })
+})
+
+test.describe('the group context menu', () => {
+    test('offers the group actions, not the single-node ones', async ({ page }) => {
+        await loadSimplify(page, withNeighbours())
+        await (await groupDot(page, 'ip-0')).click({ button: 'right' })
+        await expect(menuEntry(page, 'Open group')).toBeVisible()
+        await expect(menuEntry(page, 'Select members')).toBeVisible()
+        await expect(menuEntry(page, 'Connect to...')).toHaveCount(0)
+        await expect(menuEntry(page, 'Inspect Properties')).toHaveCount(0)
+
+        await menuEntry(page, 'Select Neighbors').click()
+        await expect.poll(() => selectedIds(page)).toEqual(['ev-a', 'ev-b'])
+    })
+
+    test('a member of an open group can be pulled out, then put back', async ({ page }) => {
+        await loadSimplify(page, withNeighbours())
+        await page.evaluate(() => {
+            const simplify = window.__pivotick.graph!.simplify
+            simplify.open(simplify.groupOf('dom-0')!)
+        })
+        await canvas(page).locator('#node-dom-3').click({ button: 'right' })
+        await menuEntry(page, 'Pull out of group').click()
+        await expect.poll(() => page.evaluate(() => window.__pivotick.graph!.simplify.isPulledOut('dom-3'))).toBe(true)
+
+        await canvas(page).locator('#node-dom-3').click({ button: 'right' })
+        await menuEntry(page, 'Put back in group').click()
+        await expect.poll(() => page.evaluate(() => window.__pivotick.graph!.simplify.isPulledOut('dom-3'))).toBe(false)
+    })
+})
+
+test.describe('the table', () => {
+    test('a Group column names the group each node is in', async ({ page }) => {
+        await loadSimplify(page, withNeighbours())
+        const cells = await page.evaluate(async () => {
+            const { resolveColumns, GROUP_COLUMN_KEY, readCell } = await import('/src/ui/elements/Table/TableColumns.ts')
+            const graph = window.__pivotick.graph!
+            const column = resolveColumns(graph.UIManager, 'nodes').find((candidate) => candidate.key === GROUP_COLUMN_KEY)!
+            return Object.fromEntries(['ip-0', 'ttp-0'].map((id) => [id, readCell(column, graph.getMutableNode(id)!)]))
+        })
+        expect(cells).toEqual({ 'ip-0': '6 × ip', 'ttp-0': '' })
     })
 })

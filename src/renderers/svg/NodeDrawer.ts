@@ -1,4 +1,5 @@
 import { select as d3Select, type Selection } from 'd3-selection'
+import type { GroupNode } from '../../Simplification/GroupNode'
 import { transition as d3Transition } from 'd3-transition'
 import { Node } from '../../Node'
 import type { GraphBounds } from '../../GraphRenderer'
@@ -19,6 +20,8 @@ import { middleTruncate } from '../../utils/TextFit'
 d3Select.prototype.transition = d3Transition
 
 export class NodeDrawer {
+    /** What the selection lights, from the last {@link beginHighlightPass}. */
+    private focus: { lit: Set<string>, adjacent: Set<string>, lines: Set<Edge>, active: boolean } = { lit: new Set(), adjacent: new Set(), lines: new Set(), active: false }
 
     public graph: Graph
     public rendererOptions: GraphRendererOptions
@@ -1075,68 +1078,45 @@ export class NodeDrawer {
     }
 
     /**
-     * This method is called on every node
-     * Each node takes care of its own state, otherwise each node gets set multiple times
-     * Each node takes care only of edges out, to avoid setting twice the same edge (for from and to nodes)
+     * Work out, once per redraw, what the selection lights: the dots it selects, the dots
+     * one drawn line away, and those lines. Read off the lines the canvas draws, so a
+     * group and the lines landing on it count like any node. A folded member stands for
+     * its group, so selecting one from the table lights the group; an open group stands
+     * for its members, which are what the canvas draws of it.
      */
-    public checkForHighlight(nodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node): void {
-        const nodeSelected = this.isNodeSelected(node)
-        const nodeAdjacentToSelection = this.isNodeAdjacentToSelection(node)
-        const applyShadow = this.hasVisibleSelection()
-        
-        // Manage node
-        node.getGraphElement()?.classList.toggle('pvt-node-selected-highlight', nodeSelected)
-        if (this.rendererOptions.enableFocusMode && applyShadow) {
-            node.getGraphElement()?.classList.toggle('pvt-node-selected-highlight-shadow', !nodeSelected && !nodeAdjacentToSelection)
-        } else {
-            node.getGraphElement()?.classList.toggle('pvt-node-selected-highlight-shadow', false)
+    public beginHighlightPass(): void {
+        const selected = this.graphSvgRenderer.getGraphInteraction().getSelectedNodes()
+            .flatMap(({ node }) => {
+                if (node.foldedInto) return [node.canvasRepresentative()]
+                if (node.isGroup && (node as GroupNode).info.open) return (node as GroupNode).parts
+                return [node]
+            })
+        const lit = new Set(selected.map(node => node.id))
+        const lines = new Set(this.graph.getParentGraph()
+            ? selected.flatMap(node => [...node.getEdgesOut(), ...node.getEdgesIn()])
+            : this.graph.getDrawnEdgesTouching(selected))
+        const adjacent = new Set<string>()
+        for (const line of lines) {
+            adjacent.add(line.from.id)
+            adjacent.add(line.to.id)
         }
-
-        // Manage edges out
-        node.getEdgesOut().forEach((edge) => {
-            const edgeAdjacentToSelection = this.isEdgeAdjacentToSelection(edge)
-            if (this.rendererOptions.enableFocusMode && applyShadow) {
-                edge.getGraphElement()?.classList.toggle('pvt-edge-selected-highlight-shadow', !edgeAdjacentToSelection)
-            } else {
-                edge.getGraphElement()?.classList.toggle('pvt-edge-selected-highlight-shadow', false)
-            }
-        })
-
+        this.focus = { lit, adjacent, lines, active: selected.some(node => node.visible) }
     }
 
-    private getSelectedNodeIDs(): string[] {
-        const gi = this.graphSvgRenderer.getGraphInteraction()
-        const selectedIds = gi.getSelectedNodeIDs()
-        return Array.isArray(selectedIds) ? selectedIds : []
+    /** Apply the selection's highlight to one node; see {@link beginHighlightPass}. */
+    public checkForHighlight(node: Node): void {
+        const nodeSelected = this.focus.lit.has(node.id)
+        const element = node.getGraphElement()
+        element?.classList.toggle('pvt-node-selected-highlight', nodeSelected)
+        const shade = !!this.rendererOptions.enableFocusMode && this.focus.active
+            && !nodeSelected && !this.focus.adjacent.has(node.id)
+        element?.classList.toggle('pvt-node-selected-highlight-shadow', shade)
     }
 
-    /**
-     * Whether the selection contains anything that is actually on screen — the gate for
-     * focus-mode dimming.
-     *
-     * A hidden node can be selected without ever being drawn (a filtered-out search
-     * result, or a row in the data dock), and its element is gone from the DOM entirely.
-     * Dimming on the strength of a selection like that would grey out the whole canvas
-     * with nothing highlighted, which reads as a broken graph.
-     *
-     * Short-circuits on the first visible node, so the usual case costs one check.
-     */
-    private hasVisibleSelection(): boolean {
-        const gi = this.graphSvgRenderer.getGraphInteraction()
-        return gi.getSelectedNodes().some(selection => selection.node.visible)
-    }
-
-    private isNodeSelected(node: Node): boolean {
-        return this.getSelectedNodeIDs().includes(node.id)
-    }
-
-    private isNodeAdjacentToSelection(node: Node): boolean {
-        return node.getEdgesOut().some((edge) => this.isNodeSelected(edge.to))
-            || node.getEdgesIn().some((edge) => this.isNodeSelected(edge.from))
-    }
-
-    private isEdgeAdjacentToSelection(edge: Edge): boolean {
-        return this.isNodeSelected(edge.from) || this.isNodeSelected(edge.to)
+    /** Apply the selection's highlight to one drawn line. */
+    public checkEdgeForHighlight(edge: Edge): void {
+        const shade = !!this.rendererOptions.enableFocusMode && this.focus.active && !this.focus.lines.has(edge)
+        edge.getGraphElement()?.classList.toggle('pvt-edge-selected-highlight-shadow', shade)
     }
 
     /** The weight and family a drawn label actually renders in, read once per `fontFamily`. */

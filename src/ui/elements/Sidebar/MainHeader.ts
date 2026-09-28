@@ -1,4 +1,5 @@
 import { createHtmlTemplate } from '../../../utils/ElementCreation'
+import type { GroupNode } from '../../../Simplification/GroupNode'
 import type { Node } from '../../../Node'
 import type { Edge } from '../../../Edge'
 import type { UIManager } from '../../UIManager'
@@ -86,7 +87,9 @@ export class SidebarMainHeader extends UIComponent {
     updateNodeOverview(node: Node, element: unknown): void {
         if (!this.panel) return
 
-        if (this.renderCb) {
+        // A custom header renders one node's data; a group has none, so it keeps this one.
+        const group = node.isGroup ? (node as GroupNode).info : undefined
+        if (this.renderCb && !group) {
             this.renderCustomContent(node)
             return
         }
@@ -114,11 +117,13 @@ export class SidebarMainHeader extends UIComponent {
             this.renderTitle(
                 nameElem as HTMLElement,
                 actionElem as HTMLElement | null,
-                nodeNameGetter(node, this.uiManager.getOptions().mainHeader)
+                group ? this.uiManager.graph.simplify.labelOf(group) : nodeNameGetter(node, this.uiManager.getOptions().mainHeader)
             )
         }
         if (subtitleElem) {
-            const description = nodeDescriptionGetter(node, this.uiManager.getOptions().mainHeader)
+            const description = group
+                ? `Group · ${this.uiManager.graph.simplify.ruleLabel(group.rule)}`
+                : nodeDescriptionGetter(node, this.uiManager.getOptions().mainHeader)
             subtitleElem.textContent = description ?? ''
         }
 
