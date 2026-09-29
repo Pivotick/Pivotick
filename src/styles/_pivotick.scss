@@ -927,6 +927,9 @@ dl.pvt-property-list {
 // Cursor reflects the active edit tool; classes are toggled by EdgeCreationSession
 // (connect) and the lasso tool.
 .pvt-canvas.pvt-connect-mode-active {
+    // Pulling an edge off a card must not select its text.
+    user-select: none;
+
     &.select-first {
         cursor: crosshair;
     }

@@ -221,3 +221,35 @@ test.describe('renderNode', () => {
         expect(carded.shapeBox).toEqual({ width: 260, height: 60 })
     })
 })
+
+test.describe('edge creation from a card', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoHarness(page)
+        await harness(page, 'loadCustomHtmlNodes')
+        await harness(page, 'startEdgeConnect')
+    })
+
+    /** What the browser has highlighted as selected text, '' when nothing. */
+    const selectedText = (page: Page): Promise<string> =>
+        page.evaluate(() => window.getSelection()?.toString() ?? '')
+
+    // Pulling an edge off a card used to sweep a text selection across it.
+    test('dragging a connection off a card selects none of its text', async ({ page }) => {
+        const text = page.locator('#node-stringCard foreignObject').getByText('a plain string')
+        const from = await text.boundingBox()
+        const to = await page.locator('#node-cardAndLabel').boundingBox()
+        expect(from, 'the card text is on screen').not.toBeNull()
+        expect(to, 'the target node is on screen').not.toBeNull()
+
+        // Press on the text and sweep across it, as a real pull off the card does.
+        const midY = from!.y + from!.height / 2
+        await page.mouse.move(from!.x + 1, midY)
+        await page.mouse.down()
+        await page.mouse.move(from!.x + from!.width - 1, midY, { steps: 10 })
+        await page.mouse.move(to!.x + to!.width / 2, to!.y + to!.height / 2, { steps: 15 })
+
+        expect(await selectedText(page)).toBe('')
+
+        await page.mouse.up()
+    })
+})
