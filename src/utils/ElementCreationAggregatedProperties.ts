@@ -69,14 +69,15 @@ export function createTableForAggregatedProperties(
     aggregatedProperties: AggregatedProperties,
     selectedNodeCount: number,
     actionButtonCallback?: actionButtonCallback,
-    facetFilterCallback?: facetFilterCallback
+    facetFilterCallback?: facetFilterCallback,
+    multiValued: ReadonlySet<string> = new Set(),
 ): HTMLDivElement {
     const sortedAggregatedProperties = sortAggregatedProperties(aggregatedProperties, false)
     const root = createHtmlElement('div', { class: 'pvt-facets' })
 
     for (const [propName, valueCountMap] of sortedAggregatedProperties) {
         root.appendChild(
-            createFacetCard(propName, valueCountMap, selectedNodeCount, actionButtonCallback, facetFilterCallback)
+            createFacetCard(propName, valueCountMap, selectedNodeCount, multiValued.has(propName), actionButtonCallback, facetFilterCallback)
         )
     }
     return root
@@ -86,6 +87,7 @@ function createFacetCard(
     propName: string,
     valueCountMap: Map<string, number>,
     selectedNodeCount: number,
+    multiValued: boolean,
     actionButtonCallback?: actionButtonCallback,
     facetFilterCallback?: facetFilterCallback
 ): HTMLDivElement {
@@ -112,17 +114,45 @@ function createFacetCard(
 
     const body = kind === 'unique'
         ? createUniqueFacetBody(propName, valueCountMap, facetFilterCallback)
-        : createDistributionFacetBody(propName, valueCountMap, selectedNodeCount, kind, actionButtonCallback, facetFilterCallback)
+        : createDistributionFacetBody(propName, valueCountMap, selectedNodeCount, kind, multiValued, actionButtonCallback, facetFilterCallback)
 
     return createHtmlElement('div', { class: 'pvt-facet-card' }, [header, body])
 }
 
-/** `shared` (one value) and `values` (a few repeated values) share this body. */
+/** One value's bar segment: `count / selectedNodeCount` wide, and clickable when a filter is wired. */
+function createBarSegment(
+    propName: string,
+    value: string,
+    count: number,
+    index: number,
+    selectedNodeCount: number,
+    kind: FacetKind,
+    facetFilterCallback?: facetFilterCallback
+): HTMLElement {
+    const pct = selectedNodeCount > 0 ? (count / selectedNodeCount) * 100 : 0
+    const seg = createHtmlElement('div', { class: 'pvt-facet-bar-seg' })
+    seg.style.width = `${pct}%`
+    seg.style.background = valueSwatchColor(value, index, kind)
+    seg.title = `${displayValue(value)} — ${count} (${Math.round(pct)}%)`
+    if (facetFilterCallback && !isValueEmpty(value)) {
+        seg.title += `\n${FILTER_HINT}`
+        makeFacetValueFilterable(seg, propName, value, facetFilterCallback)
+    }
+    return seg
+}
+
+/**
+ * `shared` (one value) and `values` (a few repeated values) share this body.
+ *
+ * Values partition the selection only while each node holds one; a multi-valued
+ * property's values overlap, so each gets its own bar instead of a segment of one.
+ */
 function createDistributionFacetBody(
     propName: string,
     valueCountMap: Map<string, number>,
     selectedNodeCount: number,
     kind: FacetKind,
+    multiValued: boolean,
     actionButtonCallback?: actionButtonCallback,
     facetFilterCallback?: facetFilterCallback
 ): HTMLElement {
@@ -132,19 +162,29 @@ function createDistributionFacetBody(
     const overflow = entries.slice(MAX_FACET_ROWS)
     const overflowCount = overflow.reduce((sum, [, count]) => sum + count, 0)
 
+    if (multiValued) {
+        const rows = createHtmlElement('div', { class: 'pvt-facet-rows' })
+        shown.forEach(([value, count], i) => {
+            const pct = selectedNodeCount > 0 ? Math.round((count / selectedNodeCount) * 100) : 0
+            const row = createFacetRow(propName, value, count, pct, i, selectedNodeCount, kind, actionButtonCallback)
+            row.classList.add('pvt-facet-row--meter')
+            if (count === selectedNodeCount) {
+                row.insertBefore(createHtmlElement('span', { class: 'pvt-facet-shared-tag' }, ['shared']), row.querySelector('.pvt-facet-count'))
+            }
+            row.appendChild(createHtmlElement('div', { class: 'pvt-facet-bar pvt-facet-bar--meter' }, [
+                createBarSegment(propName, value, count, i, selectedNodeCount, kind, facetFilterCallback),
+            ]))
+            rows.appendChild(row)
+        })
+        // Overlapping values have no meaningful node total for the tail.
+        if (overflow.length > 0) rows.appendChild(createFacetMoreRow(overflow.length))
+        return createHtmlElement('div', { class: 'pvt-facet-body' }, [rows])
+    }
+
     // Segmented proportion bar — one coloured segment per value.
     const bar = createHtmlElement('div', { class: 'pvt-facet-bar' })
     shown.forEach(([value, count], i) => {
-        const pct = selectedNodeCount > 0 ? (count / selectedNodeCount) * 100 : 0
-        const seg = createHtmlElement('div', { class: 'pvt-facet-bar-seg' })
-        seg.style.width = `${pct}%`
-        seg.style.background = valueSwatchColor(value, i, kind)
-        seg.title = `${displayValue(value)} — ${count} (${Math.round(pct)}%)`
-        if (facetFilterCallback && !isValueEmpty(value)) {
-            seg.title += `\n${FILTER_HINT}`
-            makeFacetValueFilterable(seg, propName, value, facetFilterCallback)
-        }
-        bar.appendChild(seg)
+        bar.appendChild(createBarSegment(propName, value, count, i, selectedNodeCount, kind, facetFilterCallback))
     })
     if (overflow.length > 0) {
         const pct = selectedNodeCount > 0 ? (overflowCount / selectedNodeCount) * 100 : 0
@@ -208,15 +248,20 @@ function createFacetRow(
 }
 
 /** Summary row standing in for the collapsed long tail of a distribution facet. */
-function createFacetMoreRow(otherCount: number, nodeCount: number, pct: number): HTMLElement {
+function createFacetMoreRow(otherCount: number, nodeCount?: number, pct?: number): HTMLElement {
     const dot = createHtmlElement('span', { class: 'pvt-facet-dot' })
     dot.style.background = 'var(--pvt-text-color-3)'
-    return createHtmlElement('div', { class: 'pvt-facet-row pvt-facet-row--more' }, [
+    const children: HTMLElement[] = [
         dot,
         createHtmlElement('span', { class: 'pvt-facet-value' }, [`+${otherCount} more values`]),
-        createHtmlElement('span', { class: 'pvt-facet-count' }, [String(nodeCount)]),
-        createHtmlElement('span', { class: 'pvt-facet-percent' }, [`${pct}%`]),
-    ])
+    ]
+    if (nodeCount !== undefined && pct !== undefined) {
+        children.push(
+            createHtmlElement('span', { class: 'pvt-facet-count' }, [String(nodeCount)]),
+            createHtmlElement('span', { class: 'pvt-facet-percent' }, [`${pct}%`]),
+        )
+    }
+    return createHtmlElement('div', { class: 'pvt-facet-row pvt-facet-row--more' }, children)
 }
 
 function createUniqueFacetBody(
@@ -302,6 +347,9 @@ export function hasSpecialHighlighting(value: string): boolean {
  * }
  * ```
  *
+ * A node repeating a name (one `Tag` entry per tag) counts once per distinct
+ * value, so a count is always the number of nodes carrying that value.
+ *
  * @param allProperties Array of property entry arrays, where each inner array
  * represents the properties of a node.
  * @returns A nested map of property name → (property value → count).
@@ -310,22 +358,45 @@ export function aggregateProperties(allProperties: Array<PropertyEntry>[]): Aggr
     const aggregatedProperties: AggregatedProperties = new Map()
 
     allProperties.forEach(properties => {
-        properties.forEach(prop => {
-            if (
-                (typeof prop.name === 'string' || typeof prop.name === 'number' || typeof prop.name === 'boolean') &&
-                (typeof prop.value === 'string' || typeof prop.value === 'number' || typeof prop.value === 'boolean')
-            ) {
-                if (!aggregatedProperties.has(prop.name)) {
-                    aggregatedProperties.set(prop.name, new Map())
-                }
-                const valueCountMap = aggregatedProperties.get(prop.name)
-                const currentCount = valueCountMap!.get(prop.value) || 0
-                valueCountMap!.set(prop.value, currentCount + 1)
+        for (const [name, values] of scalarValuesByName(properties)) {
+            if (!aggregatedProperties.has(name)) {
+                aggregatedProperties.set(name, new Map())
             }
-        })
+            const valueCountMap = aggregatedProperties.get(name)!
+            for (const value of values) {
+                valueCountMap.set(value, (valueCountMap.get(value) || 0) + 1)
+            }
+        }
     })
 
     return aggregatedProperties
+}
+
+/** The names that carry more than one distinct value on at least one node. */
+export function multiValuedProperties(allProperties: Array<PropertyEntry>[]): Set<string> {
+    const multiValued = new Set<string>()
+    allProperties.forEach(properties => {
+        for (const [name, values] of scalarValuesByName(properties)) {
+            if (values.size > 1) multiValued.add(name)
+        }
+    })
+    return multiValued
+}
+
+/** One node's scalar entries, as name → its distinct values. Entries with a computed name or value are skipped. */
+function scalarValuesByName(properties: PropertyEntry[]): Map<string, Set<string>> {
+    const byName = new Map<string, Set<string>>()
+    properties.forEach(prop => {
+        if (
+            (typeof prop.name === 'string' || typeof prop.name === 'number' || typeof prop.name === 'boolean') &&
+            (typeof prop.value === 'string' || typeof prop.value === 'number' || typeof prop.value === 'boolean')
+        ) {
+            const name = prop.name as string
+            if (!byName.has(name)) byName.set(name, new Set())
+            byName.get(name)!.add(prop.value as string)
+        }
+    })
+    return byName
 }
 
 /**

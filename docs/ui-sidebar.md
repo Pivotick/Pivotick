@@ -205,6 +205,12 @@ const options = {
 
 :::
 
+A properties map may return several entries with the same name, such as one `Tag` entry per tag. In a multi-selection each value then counts the nodes carrying it, keep/exclude matches any of a node's entries, and each value gets its own bar, since the values overlap.
+
+```ts
+nodePropertiesMap: (node) => node.getData().tags.map((tag) => ({ name: 'Tag', value: tag }))
+```
+
 ::: tip
 When `render()` is provided, Pivotick skips all default mapping logic, unless it returns `undefined`. An `undefined` result (or a promise resolving to `undefined`) draws the default panel for that selection: the `nodePropertiesMap` / `edgePropertiesMap` rows for one element, and the aggregated table, with its keep/exclude filters, for several. Return `null` to leave the panel empty.
 

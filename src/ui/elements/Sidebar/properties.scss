@@ -219,6 +219,40 @@
             &:hover .pvt-aggregated-property-actions {
                 display: flex;
             }
+
+            .pvt-facet-shared-tag {
+                flex: none;
+                margin-left: auto;
+                font-family: monospace;
+                font-size: 0.62rem;
+                line-height: 1;
+                padding: 2px 6px;
+                border-radius: 5px;
+                color: hsl(165 45% 52%);
+                background: hsl(165 45% 52% / 0.13);
+
+                + .pvt-facet-count {
+                    margin-left: 0;
+                }
+            }
+
+            // Multi-valued property: values overlap, so each row carries its own bar.
+            &.pvt-facet-row--meter {
+                flex-wrap: wrap;
+                row-gap: 4px;
+
+                .pvt-facet-bar--meter {
+                    flex: 1 0 100%;
+                    height: 4px;
+                    margin: 0 0 2px;
+                    background: color-mix(in srgb, var(--pvt-text-color-3) 16%, transparent);
+                }
+
+                // Keep the hover actions on the label line, off the bar.
+                .pvt-aggregated-property-actions {
+                    bottom: 8px;
+                }
+            }
         }
     }
 

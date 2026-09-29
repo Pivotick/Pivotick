@@ -1072,6 +1072,21 @@ export const fixtures = {
     },
 
     /**
+     * Three events whose `tags` overlap: `source:feed` is on all three,
+     * `tlp:amber` is third on E1 and first on E2. `kind` is single-valued.
+     * Load with `loadMultiValuedTags`, which maps each tag to its own `Tag` entry.
+     */
+    multiTag(): BuiltFixture {
+        const event = (id: string, x: number, kind: string, tags: string[]) => mkNode(id, x, 0, { kind, tags })
+        const nodes = [
+            event('E1', -150, 'event', ['tlp:clear', 'source:feed', 'tlp:amber']),
+            event('E2', 0, 'event', ['tlp:amber', 'source:feed']),
+            event('E3', 150, 'report', ['source:feed', 'tlp:clear']),
+        ]
+        return { nodes, edges: [], notes: [] }
+    },
+
+    /**
      * A hub node ("API Gateway") wired to a mix of neighbours — used for the
      * Neighbors sidebar: the "List" tab (directions, previews, label chips,
      * long-name truncation) and the "Stats" tab facet (repeated edge labels

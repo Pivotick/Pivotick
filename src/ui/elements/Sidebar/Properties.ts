@@ -12,7 +12,7 @@ import type { EdgeSelection, NodeSelection } from '../../../interfaces/GraphInte
 import { isThenable, toRenderedElement } from '../../../utils/Getters'
 import { AsyncRenderScope } from '../../../utils/AsyncRender'
 import type { RenderContext } from '../../../interfaces/AsyncContent'
-import { aggregateProperties, createTableForAggregatedProperties } from '../../../utils/ElementCreationAggregatedProperties'
+import { aggregateProperties, createTableForAggregatedProperties, multiValuedProperties } from '../../../utils/ElementCreationAggregatedProperties'
 
 
 
@@ -198,6 +198,7 @@ export class SidebarProperties extends UIComponent {
                 count,
                 this.genActionButtons.bind(this),
                 onFacetFilter,
+                multiValuedProperties(allProperties),
             ))
         }
         return propertiesContainer
@@ -238,9 +239,10 @@ export class SidebarProperties extends UIComponent {
 
         const narrow = (allProperties: PropertyEntry[][]): void => {
             const toRemove = selected.filter((_nodeSelection: NodeSelection<unknown>, index: number) => {
-                const nodeValue = allProperties[index].find((prop) => prop.name === key)?.value
+                // Any entry counts: a multi-valued node repeats the name once per value.
                 // Strict: the facet is type-sensitive, so 80 and '80' are distinct rows.
-                return mode === 'keep' ? nodeValue !== value : nodeValue === value
+                const carries = allProperties[index].some((prop) => prop.name === key && prop.value === value)
+                return mode === 'keep' ? !carries : carries
             })
             interaction.removeNodesFromSelection(toRemove)
         }

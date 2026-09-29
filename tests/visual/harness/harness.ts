@@ -1871,6 +1871,8 @@ export interface HarnessApi {
     destroyGraph(): void
     /** Load a fixture whose `propertiesPanel.render` returns what {@link PropertiesFallbackSpec} says. */
     loadPropertiesFallback(name: FixtureName, spec: PropertiesFallbackSpec, overrides?: PlainObject): Promise<void>
+    /** Load `multiTag` with a properties map giving each tag its own `Tag` entry. */
+    loadMultiValuedTags(overrides?: PlainObject): Promise<void>
     /** Selections whose held render is still open, e.g. `'2 nodes'`. */
     pendingPropertiesRenders(): string[]
     /** Settle the held render for a selection with its configured return. */
@@ -4529,6 +4531,14 @@ class Harness implements HarnessApi {
             })
         }
         await this.boot(name, mergeOptions({ UI: { propertiesPanel: { render } } }, overrides))
+    }
+
+    async loadMultiValuedTags(overrides: PlainObject = {}): Promise<void> {
+        const nodePropertiesMap = (node: Node): PropertyEntry[] => {
+            const data = node.getData() as { kind: string, tags: string[] }
+            return [{ name: 'kind', value: data.kind }, ...data.tags.map((tag) => ({ name: 'Tag', value: tag }))]
+        }
+        await this.boot('multiTag', mergeOptions({ UI: { propertiesPanel: { nodePropertiesMap } } }, overrides))
     }
 
     pendingPropertiesRenders(): string[] {
