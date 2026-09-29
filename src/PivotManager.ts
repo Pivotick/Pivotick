@@ -975,6 +975,11 @@ export class PivotManager implements PivotManagerLike {
             }
         })
 
+        // As a group opening does: a little heat, so what landed is laid out even on a
+        // layout that had already settled.
+        const simulation = this.graph.simulation
+        if (landedNodes.length && simulation?.isEnabled()) simulation.reheat(0.1)
+
         // Ingested rows leave the set; rejections and untriaged leftovers stay. What
         // leaves is written down, so undoing this ingest can put it back.
         const landedIds = new Set(run.nodeIds)

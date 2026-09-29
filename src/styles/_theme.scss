@@ -21,10 +21,12 @@
 //     @include theme-vars(vars.$light-theme);
 // }
 
-.pivotick[data-theme="light"] {
+.pivotick[data-theme="light"],
+.pvt-portal[data-theme="light"] {
     @include theme-vars(vars.$light-theme);
 }
 
-.pivotick[data-theme="dark"] {
+.pivotick[data-theme="dark"],
+.pvt-portal[data-theme="dark"] {
     @include theme-vars(vars.$dark-theme);
 }

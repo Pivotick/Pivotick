@@ -1,6 +1,6 @@
 import type { Edge } from '../../../Edge'
 import type { Node } from '../../../Node'
-import { createHtmlElement, createHtmlTemplate, makeDraggable } from '../../../utils/ElementCreation'
+import { adoptTheme, createHtmlElement, createHtmlTemplate, makeDraggable } from '../../../utils/ElementCreation'
 import { createCopyButton, createPropertyList } from '../Sidebar/PropertyList'
 import { TitleFitController } from '../Sidebar/titleFit'
 import { AsyncRenderScope } from '../../../utils/AsyncRender'
@@ -575,6 +575,10 @@ export class Tooltip extends UIComponent {
             clearTimeout(this.tooltipTimeout)
         }
         this.tooltipTimeout = setTimeout(() => {
+            // Shared by every graph on the page, so it takes the theme of the one it shows for.
+            const root = this.uiManager.getRootContainer()
+            if (this.tooltip) adoptTheme(this.tooltip, root)
+            if (this.shadowLinkContainer) adoptTheme(this.shadowLinkContainer, root)
             if (cb) cb()
             this.tooltip?.classList.add('shown')
             requestAnimationFrame(() => {
@@ -665,7 +669,7 @@ export class Tooltip extends UIComponent {
             onDragStart: (_e: MouseEvent, pinnedTt: HTMLElement) => {
                 this.shadowLinkManager?.setBoundingBox(pinnedTt, {
                     source: pinnedTt.getBoundingClientRect(),
-                    target: this.tooltipDataMap.get(pinnedTt)!.getGraphElement()!.getBoundingClientRect(),
+                    target: this.linkTarget(this.tooltipDataMap.get(pinnedTt)!),
                 })
             },
             onDrag: (_e: MouseEvent, pinnedTt: HTMLElement) => {
@@ -686,12 +690,22 @@ export class Tooltip extends UIComponent {
         }
     }
 
+    /**
+     * Where a pinned tooltip's link lands, in client coordinates. A node's drawing box
+     * takes in its label, so its centre drifts off the node; the link aims at the node.
+     */
+    private linkTarget(element: Node | Edge): DOMRect {
+        if ('from' in element) return element.getGraphElement()!.getBoundingClientRect()
+        const { x, y } = this.uiManager.graph.renderer.graphToScreenCoordinates(element.x ?? 0, element.y ?? 0)
+        return new DOMRect(x, y, 0, 0)
+    }
+
     private updateShadowLinks(recalculateBBoxes = false): void {
         for (const [ pinnedTt, element ] of this.tooltipDataMap.entries()) {
             if (recalculateBBoxes) {
                 this.shadowLinkManager?.setBoundingBox(pinnedTt, {
                     source: pinnedTt.getBoundingClientRect(),
-                    target: element.getGraphElement()!.getBoundingClientRect(),
+                    target: this.linkTarget(element),
                 })
             }
             this.shadowLinkManager?.updateShadowLink(pinnedTt)

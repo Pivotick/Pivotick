@@ -12,6 +12,14 @@
   instead of dimming them with everything else.
 - The opening layout now includes what the host does right after `new Graph()`, instead of
   laying out the graph as it was one call earlier.
+- The sidebar's "Showing N nodes and M edges" now follows nodes and edges being added,
+  removed or filtered, instead of keeping the count from load until the selection cleared.
+- Tooltips, dropdowns and typeahead lists, which are mounted outside the graph, now take the
+  theme set by `UI.theme` instead of the operating system's.
+- A pinned tooltip's link now ends on the node's centre, not on the middle of the node and
+  its label.
+- An ingest now warms up a running layout, as opening a group does, so what lands is laid out
+  even when the layout had settled.
 
 ### Simplify: fold nodes that play the same role
 

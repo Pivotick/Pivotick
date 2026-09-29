@@ -1,5 +1,5 @@
 import type { IconClass, IconUnicode, ImagePath, SVGIcon, UIBaseVariant, UIOutlineVariant } from '../../interfaces/GraphUI'
-import { createIcon } from '../../utils/ElementCreation'
+import { adoptTheme, createIcon } from '../../utils/ElementCreation'
 
 type OptionVariant = UIBaseVariant | UIOutlineVariant
 type OptionSize = 'sm' | 'xs' | 'xxs'
@@ -155,6 +155,7 @@ export class PivotickDropdown {
     }
 
     private position() {
+        adoptTheme(this.root, this.target)
         const rect = this.target.getBoundingClientRect()
 
         this.root.style.position = 'fixed'

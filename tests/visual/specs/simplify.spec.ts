@@ -805,9 +805,14 @@ test.describe('the group tooltip', () => {
     })
 
     test('reads in the dark theme: its chips are not black on black', async ({ page }) => {
-        await page.emulateMedia({ colorScheme: 'dark' })
-        await loadSimplify(page, withNeighbours())
-        const tip = await openNodeTooltip(page, await groupDomId(page, 'ip-0'))
+        await loadSimplify(page, { UI: { ...withNeighbours().UI, theme: 'dark' } })
+        // On the disc itself: the dot's box takes in its label, so its middle can be off the disc.
+        const ring = canvas(page).locator(`#node-${await groupDomId(page, 'ip-0')} .node`).first()
+        const box = (await ring.boundingBox())!
+        await page.mouse.move(box.x + box.width / 2, box.y - 10)
+        await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 25 })
+        const tip = page.locator('.pvt-tooltip')
+        await expect(tip).toHaveClass(/shown/)
         await expect(tip.locator('.pvt-group-summary-chip-label').first()).toHaveCSS('color', 'rgb(255, 255, 255)')
     })
 

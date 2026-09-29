@@ -1,3 +1,5 @@
+import { adoptTheme } from '../../utils/ElementCreation'
+
 /** A single suggestion offered by a {@link Typeahead}. */
 export interface TypeaheadItem {
     /** Text inserted in place of the active query when this item is chosen. */
@@ -273,6 +275,7 @@ export class Typeahead {
 
     private open(): void {
         if (!this.isOpen) {
+            adoptTheme(this.dropdown, this.field)
             document.body.appendChild(this.dropdown)
             document.addEventListener('keydown', this.onKeyDown, true)
             document.addEventListener('pointerdown', this.onOutsidePointerDown, true)

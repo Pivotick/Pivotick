@@ -221,6 +221,17 @@ export function createActionItem<TThis extends UIElement = UIElement>(thisContex
  * @param {number} length - Length of the random part (default: 8)
  * @returns {string} Random DOM-safe ID
  */
+/**
+ * Give an element mounted outside the graph the theme the graph was forced to, since the
+ * theme's variables are scoped to `.pivotick[data-theme]`. `from` is any element inside it.
+ */
+export function adoptTheme(portaled: Element, from: Element | null | undefined): void {
+    portaled.classList.add('pvt-portal')
+    const theme = from?.closest('.pivotick')?.getAttribute('data-theme')
+    if (theme) portaled.setAttribute('data-theme', theme)
+    else portaled.removeAttribute('data-theme')
+}
+
 export function generateSafeDomId(length = 8, prefix = 'id-') {
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
     const chars = letters + '0123456789-_'

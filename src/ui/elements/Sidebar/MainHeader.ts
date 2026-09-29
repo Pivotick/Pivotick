@@ -54,6 +54,10 @@ export class SidebarMainHeader extends UIComponent {
 
     protected onGraphReady() {
         this.clearOverview()
+        // The count is read when shown, so it has to be read again whenever the canvas changes.
+        this.track(this.uiManager.graph.onVisibleChange(() => {
+            if (this.panel?.querySelector(':scope > .pvt-mainheader-count')) this.showTotalNodeCount()
+        }))
     }
 
     private renderCustomContent(element: Node | Edge | Node[] | Edge[] | null) {
@@ -291,7 +295,10 @@ export class SidebarMainHeader extends UIComponent {
         if (!this.panel) return
         const totalNodeCount = this.uiManager.graph.getMutableVisibleNodes().length
         const totalEdgeCount = this.uiManager.graph.getMutableVisibleEdges().length
-        this.panel.textContent = `Showing ${totalNodeCount} nodes and ${totalEdgeCount} edges`
+        const count = document.createElement('span')
+        count.className = 'pvt-mainheader-count'
+        count.textContent = `Showing ${totalNodeCount} nodes and ${totalEdgeCount} edges`
+        this.panel.replaceChildren(count)
     }
 
 }

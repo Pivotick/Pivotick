@@ -191,6 +191,23 @@ test.describe('pivot pipeline', () => {
         expect(await batches(page)).toEqual([])
     })
 
+    test('an ingest warms the layout up, as opening a group does', async ({ page }) => {
+        await harness(page, 'loadWithPivots', 'basic', {}, { simulation: { enabled: true } })
+        const set = await stageUrls(page)
+        await harness(page, 'markPivotCandidates', CORRELATION, landableIds(set, 3))
+        await page.evaluate(() => {
+            const simulation = window.__pivotick.graph!.simulation
+            const heats: number[] = []
+            ;(window as unknown as { heats: number[] }).heats = heats
+            const reheat = simulation.reheat.bind(simulation)
+            simulation.reheat = (alpha?: number) => { heats.push(alpha ?? 0.7); reheat(alpha) }
+        })
+
+        await ingest(page)
+
+        expect(await page.evaluate(() => (window as unknown as { heats: number[] }).heats)).toContain(0.1)
+    })
+
     test('ingest lands exactly the chosen subset, around its origin, as one batch', async ({ page }) => {
         await load(page)
         const before = await counts(page)
