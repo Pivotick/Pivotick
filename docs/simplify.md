@@ -154,11 +154,26 @@ folded: one group per type, hanging off the node you pivoted on. Forty IPs arriv
   Declare it to put it somewhere else or change its smallest group.
 - Which landings are grouped lasts for the session, like open groups.
 
-To group a landing from code, flag the run before ingesting it:
+To land every pivot result grouped, set `pivotIngestGrouped`. One-click runs and `autoIngest`
+pivots, which never open Review, then land grouped too:
 
 ```js
-graph.simplify.groupLanding(graph.pivots.candidates('correlations').runId)
-await graph.pivots.ingest('correlations')
+new Pivotick(el, data, { pivotIngestGrouped: true })
+```
+
+Review's footer follows the option:
+
+| `pivotIngestGrouped` | *Ingest selected* and *Ingest all* | Second button |
+|---|---|---|
+| off (default) | land loose | *Ingest in a group* |
+| on | land grouped | *Ingest loose* |
+
+With `UI.simplify` switched off, the option does nothing and there is no second button.
+
+To choose for one ingest from code, pass `group`:
+
+```js
+await graph.pivots.ingest('correlations', 'triage', { group: true })
 ```
 
 ### Custom rules

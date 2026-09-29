@@ -139,3 +139,120 @@ test.describe('ingest in a group', () => {
         await expect(footer(page).locator('.pvt-triage-ingest-group')).toHaveCount(0)
     })
 })
+
+/**
+ * `pivotIngestGrouped`: every landing arrives grouped, the one-click and auto paths
+ * included, and Review's second button becomes *Ingest loose*.
+ */
+test.describe('pivot landings grouped by default', () => {
+    const BLIND = 'blind'
+    /** Six nodes for a one-click run: five of one type, one of another. */
+    const SIX = { typed: true, blindTypes: ['ip', 'ip', 'ip', 'ip', 'ip', 'url'] }
+    const GROUPED = { ...FULL, pivotIngestGrouped: true }
+
+    async function ruleIds(page: Page): Promise<string[]> {
+        return page.evaluate(() => window.__pivotick.graph!.simplify.getRules().map((rule) => rule.id))
+    }
+
+    async function quickRun(page: Page): Promise<string> {
+        const outcome = await harness(page, 'runQuickPivot', BLIND, ['a']) as { status: string }
+        return outcome.status
+    }
+
+    test.beforeEach(async ({ page }) => {
+        await gotoHarness(page)
+    })
+
+    test('a one-click run lands one group per type, off the origin', async ({ page }) => {
+        await load(page, { ...SIX, pivots: [BLIND] }, GROUPED)
+        expect(await quickRun(page)).toBe('ingested')
+
+        await expect.poll(() => landingSizes(page)).toEqual({ blind: 5 })
+        const [group] = await landingGroups(page)
+        expect(group.members).not.toContain('blind-5')
+        expect(await isDrawn(page, 'blind-0')).toBe(false)
+        expect(await isDrawn(page, 'blind-5')).toBe(true)
+        const anchors = await page.evaluate(() => window.__pivotick.graph!.simplify.getGroups()
+            .map((group) => group.anchors.map((anchor) => anchor.id)))
+        expect(anchors).toEqual([['a']])
+        expect((await ruleIds(page))[0]).toBe('landings')
+    })
+
+    test('an autoIngest pivot lands grouped', async ({ page }) => {
+        await load(page, { ...SIX, pivots: [BLIND], autoIngest: [BLIND] }, GROUPED)
+        const outcome = await harness(page, 'runPivot', BLIND, ['a']) as { status: string }
+        expect(outcome.status).toBe('ingested')
+        await expect.poll(() => landingSizes(page)).toEqual({ blind: 5 })
+    })
+
+    test('Review lands grouped, and Ingest loose lands loose', async ({ page }) => {
+        await load(page, { typed: true }, GROUPED)
+        await stageAndMarkAll(page, { type: ['ip'] })
+        await expect(button(page, 'Ingest loose')).toHaveText('Ingest loose (38)')
+        await expect(footer(page).locator('.pvt-triage-ingest-group'))
+            .toHaveAttribute('title', 'Land the selected rows as separate nodes')
+        await button(page, 'Ingest selected').click()
+        await expect(toast(page)).toContainText('Ingested')
+        await expect.poll(() => landingSizes(page)).toEqual({ ip: 38 })
+
+        await stageAndMarkAll(page, { type: ['paste'] })
+        await button(page, 'Ingest loose').click()
+        await expect.poll(() => isDrawn(page, 'paste-0')).toBe(true)
+        expect(await landingSizes(page)).toEqual({ ip: 38 })
+    })
+
+    test('Review\'s Ingest all lands grouped', async ({ page }) => {
+        await load(page, { typed: true }, GROUPED)
+        const outcome = await harness(page, 'runPivot', CORRELATION, ['a'], { type: ['ip'] })
+        expect((outcome as { status: string }).status).toBe('staged')
+        await button(page, 'Ingest all').click()
+        await expect(toast(page)).toContainText('Ingested')
+        await expect.poll(() => landingSizes(page)).toEqual({ ip: 38 })
+    })
+
+    test('the footer does not overflow at 900 px', async ({ page }) => {
+        await page.setViewportSize({ width: 900, height: 800 })
+        await load(page, { typed: true }, GROUPED)
+        await stageAndMarkAll(page, { type: ['ip'] })
+        await expect(button(page, 'Ingest loose')).toBeVisible()
+        const spill = await footer(page).evaluate((foot) => {
+            const edge = foot.getBoundingClientRect().right
+            return [...foot.querySelectorAll('button')].filter((b) => b.getBoundingClientRect().right > edge + 0.5).length
+        })
+        expect(spill).toBe(0)
+    })
+
+    test('a vetoed one-click run lands nothing and leaves no rule behind', async ({ page }) => {
+        await load(page, { ...SIX, pivots: [BLIND] }, GROUPED)
+        await harness(page, 'configureIngestHook', 'veto')
+        expect(await quickRun(page)).toBe('vetoed')
+
+        expect(await isDrawn(page, 'blind-0')).toBe(false)
+        expect(await landingGroups(page)).toEqual([])
+        expect(await ruleIds(page)).not.toContain('landings')
+    })
+
+    test('undo dissolves a grouped one-click landing and redo brings it back', async ({ page }) => {
+        await load(page, { ...SIX, pivots: [BLIND] }, GROUPED)
+        expect(await quickRun(page)).toBe('ingested')
+        await expect.poll(() => landingSizes(page)).toEqual({ blind: 5 })
+
+        await page.evaluate(() => { window.__pivotick.graph!.history.undo() })
+        await expect.poll(() => landingGroups(page)).toEqual([])
+        expect(await isDrawn(page, 'blind-5')).toBe(false)
+        await page.evaluate(() => { window.__pivotick.graph!.history.redo() })
+        await expect.poll(() => landingSizes(page)).toEqual({ blind: 5 })
+    })
+
+    test('does nothing when the graph does not simplify', async ({ page }) => {
+        const off = { ...GROUPED, UI: { ...FULL.UI, simplify: { enabled: false } } }
+        await load(page, { ...SIX, pivots: [BLIND, CORRELATION] }, off)
+        expect(await quickRun(page)).toBe('ingested')
+        expect(await isDrawn(page, 'blind-0')).toBe(true)
+
+        await stageAndMarkAll(page, { type: ['ip'] })
+        await expect(footer(page).locator('.pvt-triage-ingest-group')).toHaveCount(0)
+        await button(page, 'Ingest selected').click()
+        await expect.poll(() => isDrawn(page, 'ip-0')).toBe(true)
+    })
+})

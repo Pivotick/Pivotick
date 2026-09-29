@@ -85,6 +85,15 @@ export interface GraphOptions {
     pivotQuickIngestLimit?: number,
 
     /**
+     * Every pivot landing arrives folded into landing groups, one per type
+     * (`graph.simplify.groupLanding`): a one-click run, an `autoIngest` pivot, and
+     * Review's main buttons. Review then offers *Ingest loose* for a landing drawn as
+     * separate nodes. Ignored while `UI.simplify` is off.
+     * @default false
+     */
+    pivotIngestGrouped?: boolean,
+
+    /**
      * What the library puts on a node's rim for its pivots.
      *
      * - `'per-pivot'` — one badge per pivot that declared a potential for this node,

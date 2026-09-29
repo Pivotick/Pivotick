@@ -924,6 +924,12 @@ export interface PivotFixtureSpec {
     typed?: boolean
     /** Edges between nodes already on canvas — the edge-only triage rows. */
     edgeOnly?: Array<[string, string]>
+    /**
+     * What BLIND returns instead of its three bare nodes: one node per entry, typed as it
+     * says and linked from the origin. A one-click run small enough to land, with types
+     * for a grouped landing to split by.
+     */
+    blindTypes?: string[]
     /** Reject the next provider call. */
     fail?: boolean
     /** Absolute candidate ceiling, when a test wants a reachable one. */
@@ -5582,15 +5588,24 @@ class Harness implements HarnessApi {
                     maxCandidates: 1,
                     fetch: (nodes, narrowing, ctx) => this.serveProvider(
                         'blind', 'fetch', nodes, narrowing, ctx,
-                        (): PivotResult => ({
-                            nodes: Array.from({ length: 3 }, (_, i) => ({ id: `blind-${i}` })),
-                            // Three nodes and, on request, edges between nodes already on
-                            // canvas: the small result a one-click run lands, with the
-                            // edge-only rows that count towards its limit like any other.
-                            edges: (this.pivotSpec.edgeOnly ?? []).map(([from, to]) => ({
-                                id: `only-${from}-${to}`, from, to, data: { label: 'correlates' },
-                            })),
-                        })
+                        (): PivotResult => {
+                            const types = this.pivotSpec.blindTypes
+                            if (types) return {
+                                nodes: types.map((type, i) => ({ id: `blind-${i}`, data: { type } })),
+                                edges: nodes[0]
+                                    ? types.map((_, i) => ({ from: String(nodes[0].id), to: `blind-${i}` }))
+                                    : [],
+                            }
+                            return {
+                                nodes: Array.from({ length: 3 }, (_, i) => ({ id: `blind-${i}` })),
+                                // Three nodes and, on request, edges between nodes already on
+                                // canvas: the small result a one-click run lands, with the
+                                // edge-only rows that count towards its limit like any other.
+                                edges: (this.pivotSpec.edgeOnly ?? []).map(([from, to]) => ({
+                                    id: `only-${from}-${to}`, from, to, data: { label: 'correlates' },
+                                })),
+                            }
+                        }
                     ),
                 }
         }

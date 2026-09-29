@@ -54,6 +54,13 @@ export class PivotManager implements PivotManagerLike {
     public quickIngestLimit = 50
 
     /**
+     * Whether an ingest lands folded into groups, one per type, when its caller does not
+     * say. Set it through `pivotIngestGrouped` in the graph options, or here to change it
+     * later. Does nothing while the graph does not simplify.
+     */
+    public ingestGrouped = false
+
+    /**
      * Whether a node a run created and has not written back carries a
      * `pvt-node-unsaved` class. Set it through `pivotMarkUnsaved` in the graph
      * options, or here to change it later.
@@ -819,8 +826,15 @@ export class PivotManager implements PivotManagerLike {
      * removal only ever happens through `graph.history` or `graph.removeBySource`.
      * The whole batch goes through `onBeforeIngest` once, and lands as one
      * `dataBatchChanged`.
+     *
+     * `group` folds the landing into groups, one per type (`graph.simplify.groupLanding`),
+     * and defaults to {@link ingestGrouped}.
      */
-    public async ingest(pivotId: string, trigger: 'triage' | 'auto' = 'triage'): Promise<PivotRunOutcome> {
+    public async ingest(
+        pivotId: string,
+        trigger: 'triage' | 'auto' = 'triage',
+        options: { group?: boolean } = {},
+    ): Promise<PivotRunOutcome> {
         const set = this.candidateSets.get(pivotId)
         if (!set) throw new Error(`No candidates are staged for pivot "${pivotId}".`)
 
@@ -855,6 +869,10 @@ export class PivotManager implements PivotManagerLike {
                 markedEdges = markedEdges.filter(e => keep.has(e.id))
             }
         }
+
+        // After the hook, so a veto leaves no rule behind; before the add, so the landing
+        // is folded on its first draw.
+        if ((options.group ?? this.ingestGrouped) && marked.length > 0) this.graph.simplify.groupLanding(runId)
 
         const run: PivotRun = {
             runId,

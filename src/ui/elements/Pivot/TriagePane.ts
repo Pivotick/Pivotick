@@ -81,8 +81,9 @@ interface TriageRow {
 export interface TriagePaneDeps {
     pivots: PivotManager
     /**
-     * Commit the marked rows, folded into one group per type when `group` is set. The
-     * owner reports the outcome and offers the undo.
+     * Commit the marked rows, folded into one group per type when `group` is set, or as
+     * the manager's `ingestGrouped` says when it is not. The owner reports the outcome
+     * and offers the undo.
      */
     ingest: (pivotId: string, options?: { group?: boolean }) => void
     /** Whether landings can be grouped, which is whether the graph simplifies at all. */
@@ -1070,12 +1071,19 @@ export class TriagePane {
         ingest.addEventListener('click', () => this.deps.ingest(this.pivotId))
         foot.appendChild(ingest)
 
+        // The other way of drawing the same landing: grouped when landings are loose by
+        // default, loose when they are grouped.
         if (this.deps.canGroup) {
-            const grouped = this.footButton(`Ingest in a group (${fmt(marked)})`, marked === 0,
-                () => this.deps.ingest(this.pivotId, { group: true }))
-            grouped.classList.add('pvt-triage-ingest-group')
-            grouped.title = 'Land the selected rows folded, one group per type'
-            foot.appendChild(grouped)
+            const loose = this.deps.pivots.ingestGrouped
+            const other = this.footButton(
+                loose ? `Ingest loose (${fmt(marked)})` : `Ingest in a group (${fmt(marked)})`,
+                marked === 0,
+                () => this.deps.ingest(this.pivotId, { group: !loose }))
+            other.classList.add('pvt-triage-ingest-group')
+            other.title = loose
+                ? 'Land the selected rows as separate nodes'
+                : 'Land the selected rows folded, one group per type'
+            foot.appendChild(other)
         }
 
         // *Select all* then *Ingest selected* is the answer to a provider the analyst

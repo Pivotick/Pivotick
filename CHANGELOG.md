@@ -52,6 +52,10 @@ touching the data.
   per type, off the origin. The Pivot landings rule (`{ kind: 'landings' }`) holds what that
   ingest added, whatever the members link to later; undo dissolves it.
   `graph.simplify.groupLanding(runId)` does the same from code.
+- **`pivotIngestGrouped: true` lands every pivot result grouped**: one-click runs, `autoIngest`
+  pivots and Review's *Ingest selected* and *Ingest all*. Review's second button then reads
+  *Ingest loose*. `graph.pivots.ingest(pivotId, trigger, { group })` picks either way for one
+  ingest.
 - **Group a selection by hand.** The sidebar's bulk bar (its *Group* / *Ungroup* no longer
   "coming soon") and the node menu fold the selected nodes into one group under a title you
   type. A hand-made group wins over the rule groups, keeps its members whatever they link to,

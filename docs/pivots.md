@@ -387,7 +387,8 @@ columns, the data table's filters, sorting, paging and an ingest action.
   *Show new* / *Keep triaging*, rather than throwing your triage away unasked.
 - **Ingest in a group** lands the selected rows folded, one group per type, off the origin.
   See [Pivot landings](./simplify.md#pivot-landings). It is offered unless `UI.simplify` is
-  switched off.
+  switched off. With `pivotIngestGrouped: true`, every landing is grouped, and the button
+  reads **Ingest loose** instead.
 
 Everything the pane does is also reachable programmatically:
 
@@ -395,6 +396,7 @@ Everything the pane does is also reachable programmatically:
 graph.pivots.candidates('correlations')      // the staged set
 graph.pivots.mark('correlations', id)        // …markAll / reject / rejectRemaining
 await graph.pivots.ingest('correlations')    // commit the marked ones
+await graph.pivots.ingest('correlations', 'triage', { group: true })  // …folded, one group per type
 graph.pivots.discard('correlations')         // close it; rejects nothing
 graph.pivots.rejectedRows('correlations')    // what the session is holding back
 graph.pivots.unreject('correlations', id)    // …unrejectAll for every one of them
@@ -416,6 +418,13 @@ autoIngest: true                 // always lands
 autoIngest: false                // always reviewed
                                  // unset: a one-click run decides on size
 new Pivotick(el, data, { pivotQuickIngestLimit: 50 })   // that size, all pivots
+```
+
+Whatever lands, from here or from Review, can arrive folded into
+[landing groups](./simplify.md#pivot-landings) instead of loose:
+
+```js
+new Pivotick(el, data, { pivotIngestGrouped: true })     // every landing, one group per type
 ```
 
 ## Ingest, and what it is allowed to do

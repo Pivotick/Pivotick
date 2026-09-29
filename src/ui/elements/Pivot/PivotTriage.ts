@@ -525,19 +525,17 @@ export class PivotTriage extends UIComponent {
         this.toastIngest(latest.nodeIds.length, 0, latest.edgeIds.length)
     }
 
-    private async ingest(pivotId: string, group = false): Promise<void> {
+    private async ingest(pivotId: string, group?: boolean): Promise<void> {
         const set = this.pivots.candidates(pivotId)
         // What was asked for, so a hook that narrowed the batch can be reported as such.
         const asked = set ? set.nodes.filter(c => c.state === 'marked' && !c.deduped).length : 0
         // Claimed before the call, not after: `ingest` announces the run on its way
         // through, and the run listener would otherwise toast it a second time.
         if (set) this.reported.add(set.runId)
-        // Before the call too, so the landing is folded on its first draw.
-        if (set && group) this.uiManager.graph.simplify.groupLanding(set.runId)
 
         let outcome: PivotRunOutcome
         try {
-            outcome = await this.pivots.ingest(pivotId)
+            outcome = await this.pivots.ingest(pivotId, 'triage', { group })
         } catch (error) {
             this.uiManager.graph.notifier.error('Ingest failed', String((error as Error)?.message ?? error))
             return

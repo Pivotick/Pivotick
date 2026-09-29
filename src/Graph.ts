@@ -154,6 +154,7 @@ export class Graph {
         if (typeof this.options.pivotQuickIngestLimit === 'number') {
             this.pivots.quickIngestLimit = this.options.pivotQuickIngestLimit
         }
+        if (this.options.pivotIngestGrouped) this.pivots.ingestGrouped = true
         if (this.options.pivotRimBadge) {
             this.pivots.rimBadge = this.options.pivotRimBadge
         }
