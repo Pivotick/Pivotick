@@ -58,8 +58,8 @@ the same nodes pointing at them and the same nodes they point at. The leaves of 
 simplest case. With events A and B sharing three TTPs and each having two of its own, you get
 three groups: the shared three between A and B, and two on each side.
 
-- The type is `render.nodeTypeAccessor`, or the rule's own `typeOf`. Nodes with no type group
-  among themselves.
+- The type is the rule's own `typeOf`, else [`UI.simplify.typeOf`](#types-and-colours-from-the-host),
+  else `render.nodeTypeAccessor`. Nodes with no type group among themselves.
 - A node linked to nothing is never grouped: a group needs something to hang off.
 - A node that gains a link leaves its group for the one that matches its new neighbours. If
   that leaves fewer than `minSize`, the group dissolves.
@@ -202,7 +202,7 @@ A rule of your own is a `partition(view)` returning a key per node:
 |---|---|
 | `nodes` | The nodes this rule may group: what passes the filters, with earlier rules' groups in place of their members. Annotated nodes, pulled-out nodes and expanded clusters are left out. |
 | `inNeighbours(node)` / `outNeighbours(node)` | The drawn nodes with a line to, or from, this one. |
-| `typeOf(node)` | The type the rule groups by. |
+| `typeOf(node)` | The type the rule groups by: `UI.simplify.typeOf`, else `render.nodeTypeAccessor`. |
 | `groupOf(node)` | The group behind a node, when it is one an earlier rule made. |
 
 A node left out of the map stays itself, and ids that are not in `view.nodes` are ignored. A
@@ -344,6 +344,36 @@ The tooltip of a group names its rule, lists what it links to and, for a mixed g
 members by type. `tooltip.renderGroupExtra(group, ctx)` adds your own lines, as
 `renderNodeExtra` does for a node. A group skips `tooltip.render` and `renderNodeExtra`, which
 are written for a node's data.
+
+### Types and colours from the host
+
+Groups count their parts by `render.nodeTypeAccessor` and colour them by each member's
+style colour. Two `UI.simplify` options change that for every rule and group, without
+touching styles, the legend or filters:
+
+- `typeOf(node)` is the type every rule groups by and every group counts its parts by: the
+  label, a mixed ring's shares, a hand-made group's title. A rule's own `typeOf` still wins
+  for that rule.
+- `colorOf(node)` is the colour a node stands for in a group: the disc and ring, the open
+  wash, the tooltip's chips. Returning `undefined` falls back to the node's style colour. A
+  group's own `groupStyle` still has the last word on the closed drawing.
+
+A host that styles by element, groups by subtype and draws its nodes itself:
+
+```ts
+const options = {
+    render: {
+        nodeTypeAccessor: (node) => node.getData().element,
+        nodeStyleMap: { attribute: { shape: 'none', html: drawAttribute } },
+    },
+    UI: {
+        simplify: {
+            typeOf: (node) => `${node.getData().element}:${node.getData().subtype}`,
+            colorOf: (node) => palette[node.getData().subtype],
+        },
+    },
+}
+```
 
 ## In the table
 
