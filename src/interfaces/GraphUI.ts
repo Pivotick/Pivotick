@@ -9,7 +9,7 @@ import type { UIElement, UIManager } from '../ui/UIManager'
 import type { Flyout } from '../ui/elements/Flyout/Flyout'
 import type { FieldConfig } from '../utils/FormFactory'
 import type { FilterFacet, FilterOptions } from './GraphQueryEngine'
-import type { AsyncContentOptions, RenderContext, RenderResult } from './AsyncContent'
+import type { AsyncContentOptions, RenderContext, Renderable, RenderResult } from './AsyncContent'
 import type { MinimapOptions } from '../plugins/minimap/options'
 import type { GroupInfo, SimplifyOptions } from './Simplify'
 
@@ -740,8 +740,15 @@ export interface PropertiesPanel {
     * @remarks A returned `string` renders as plain text; return an `HTMLElement` to render HTML.
     * May be `async`: the slot shows a placeholder until it resolves, and a result
     * arriving after the selection moved on is dropped.
+    *
+    * Return (or resolve to) `undefined` to hand the selection back to the default
+    * panel: the {@link nodePropertiesMap} / {@link edgePropertiesMap} rows for one
+    * element, the aggregated table for several. Return `null` to draw nothing.
+    * @example
+    * // A custom view for a lone node, the aggregated table for everything else.
+    * (element) => (element instanceof Node) ? viewFor(element) : undefined
     */
-    render?: ((element: Node | Edge | Node[] | Edge[] | null, ctx: RenderContext) => RenderResult) | HTMLElement | string,
+    render?: ((element: Node | Edge | Node[] | Edge[] | null, ctx: RenderContext) => RenderResult | null | undefined | Promise<Renderable | null | undefined>) | HTMLElement | string,
 }
 
 /**

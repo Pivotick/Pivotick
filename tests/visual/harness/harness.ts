@@ -183,6 +183,19 @@ export interface AsyncContentSpec {
     error?: string
 }
 
+/** What a fallback-test `propertiesPanel.render` returns: its own element, `undefined` or `null`. */
+export type PropertiesRenderReturn = 'custom' | 'undefined' | 'null'
+
+/** Per selection kind, what `propertiesPanel.render` returns. Omitted kinds return `undefined`. */
+export interface PropertiesFallbackSpec {
+    node?: PropertiesRenderReturn
+    nodes?: PropertiesRenderReturn
+    edge?: PropertiesRenderReturn
+    edges?: PropertiesRenderReturn
+    /** Hold each render open until {@link HarnessApi.settlePropertiesRender} settles it. */
+    async?: boolean
+}
+
 /** One render the harness is holding open, and what the library gave it. */
 interface HeldRender {
     resolve: (text: string) => void
@@ -1856,6 +1869,12 @@ export interface HarnessApi {
     asyncCallCount(hook: AsyncHook): number
     /** Tear the graph down, for the "in-flight work is abandoned" case. */
     destroyGraph(): void
+    /** Load a fixture whose `propertiesPanel.render` returns what {@link PropertiesFallbackSpec} says. */
+    loadPropertiesFallback(name: FixtureName, spec: PropertiesFallbackSpec, overrides?: PlainObject): Promise<void>
+    /** Selections whose held render is still open, e.g. `'2 nodes'`. */
+    pendingPropertiesRenders(): string[]
+    /** Settle the held render for a selection with its configured return. */
+    settlePropertiesRender(selection: string): void
 
     /* ---------- write-path lifecycle hooks ---------- */
 
@@ -1989,6 +2008,7 @@ class Harness implements HarnessApi {
     private asyncSpec: AsyncContentSpec = {}
     private heldRenders = new Map<string, HeldRender>()
     private asyncCalls = new Map<AsyncHook, number>()
+    private heldPropertiesRenders = new Map<string, () => void>()
 
     /** Legend observation state, reset per boot. */
     private legendToggles: LegendToggleState[] = []
@@ -4487,6 +4507,37 @@ class Harness implements HarnessApi {
 
     destroyGraph(): void {
         this.g.destroy()
+    }
+
+    async loadPropertiesFallback(name: FixtureName, spec: PropertiesFallbackSpec, overrides: PlainObject = {}): Promise<void> {
+        this.heldPropertiesRenders.clear()
+        const kindOf = (selection: ExtraPanelSelection): keyof PropertiesFallbackSpec | undefined => {
+            if (selection === null) return undefined
+            if (Array.isArray(selection)) return selection[0] instanceof Node ? 'nodes' : 'edges'
+            return selection instanceof Node ? 'node' : 'edge'
+        }
+        const outcome = (selection: ExtraPanelSelection): HTMLElement | null | undefined => {
+            const kind = kindOf(selection)
+            const returns = kind ? spec[kind] : undefined
+            if (returns === 'custom') return asyncTestElement(`custom · ${describeSelection(selection)}`)
+            return returns === 'null' ? null : undefined
+        }
+        const render = (selection: ExtraPanelSelection) => {
+            if (!spec.async) return outcome(selection)
+            return new Promise<HTMLElement | null | undefined>((resolve) => {
+                this.heldPropertiesRenders.set(describeSelection(selection), () => resolve(outcome(selection)))
+            })
+        }
+        await this.boot(name, mergeOptions({ UI: { propertiesPanel: { render } } }, overrides))
+    }
+
+    pendingPropertiesRenders(): string[] {
+        return [...this.heldPropertiesRenders.keys()]
+    }
+
+    settlePropertiesRender(selection: string): void {
+        this.heldPropertiesRenders.get(selection)?.()
+        this.heldPropertiesRenders.delete(selection)
     }
 
     /* ---------- write-path lifecycle hooks ---------- */

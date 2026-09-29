@@ -9,7 +9,7 @@ import { collectPropertyEntries, edgePropertiesGetter, nodePropertiesGetter } fr
 import { filterAdd, filterRemove } from '../../icons'
 import type { PropertiesPanel, PropertyEntry } from '../../../interfaces/GraphUI'
 import type { EdgeSelection, NodeSelection } from '../../../interfaces/GraphInteractions'
-import { isThenable } from '../../../utils/Getters'
+import { isThenable, toRenderedElement } from '../../../utils/Getters'
 import { AsyncRenderScope } from '../../../utils/AsyncRender'
 import type { RenderContext } from '../../../interfaces/AsyncContent'
 import { aggregateProperties, createTableForAggregatedProperties } from '../../../utils/ElementCreationAggregatedProperties'
@@ -60,45 +60,43 @@ export class SidebarProperties extends UIComponent {
     }
 
     public clearProperties(): void {
-        if (!this.body) return
-
-        if (this.renderCb) {
-            this.renderCustomContent(null)
-            return
-        }
-
-        this.body.innerHTML = ''
-        this.hidePanel()
+        this.renderBody(null, () => undefined, () => {
+            this.hidePanel()
+            return undefined
+        })
     }
 
     protected onGraphReady(): void { }
 
-    private renderCustomContent(element: Node | Edge | Node[] | Edge[] | null) {
-        if (!this.body || !this.renderCb) return
-
-        this.renderScope.supersede()
-        this.body.innerHTML = ''
-        const content = this.renderScope.content(this.renderCb, element)
-        if (content) {
-            this.body?.appendChild(content)
-        }
-    }
-
     /**
-     * Replace the panel body with the outcome of a render pass.
+     * Replace the panel body with the outcome of a render pass: the consumer's
+     * `render` when set, else the default drawn from `produce` and `build`.
+     * A `render` returning (or resolving to) `undefined` falls back to that
+     * default; `null` draws nothing.
      *
      * Everything the panel draws goes through here so the staleness guard is in
      * one place: whatever the last pass was still fetching is abandoned before
      * its slot leaves the DOM.
      */
     private renderBody<T>(
+        element: Node | Edge | Node[] | Edge[] | null,
         produce: (ctx: RenderContext) => T | Promise<T>,
         build: (value: T) => HTMLElement | undefined,
     ): void {
         if (!this.body) return
 
         this.renderScope.supersede()
-        const content = this.renderScope.resolve(produce, build)
+        const drawDefault = () => this.renderScope.resolve(produce, build)
+        const render = this.renderCb
+        const content = render === undefined
+            ? drawDefault()
+            : this.renderScope.resolve(
+                (ctx) => (typeof render === 'function' ? render(element, ctx) : render),
+                (value) => {
+                    if (value === undefined) return drawDefault()
+                    return value === null ? undefined : toRenderedElement(value)
+                },
+            )
         this.body.innerHTML = ''
         if (content) this.body.appendChild(content)
     }
@@ -134,12 +132,8 @@ export class SidebarProperties extends UIComponent {
         this.setHeaderBasicNode()
         this.showPanel()
 
-        if (this.renderCb) {
-            this.renderCustomContent(node)
-            return
-        }
-
         this.renderBody(
+            node,
             (ctx) => nodePropertiesGetter(node, this.uiManager.getOptions().propertiesPanel, ctx),
             (properties) => createHtmlElement('div', { class: 'pvt-properties-container' }, [
                 createPropertyList(properties, node),
@@ -152,12 +146,8 @@ export class SidebarProperties extends UIComponent {
         this.setHeaderBasicEdge()
         this.showPanel()
 
-        if (this.renderCb) {
-            this.renderCustomContent(edge)
-            return
-        }
-
         this.renderBody(
+            edge,
             (ctx) => edgePropertiesGetter(edge, this.uiManager.getOptions().propertiesPanel, ctx),
             (properties) => createHtmlElement('div', { class: 'pvt-properties-container' }, [
                 createPropertyList(properties, edge),
@@ -172,14 +162,11 @@ export class SidebarProperties extends UIComponent {
         this.setHeaderMultiSelectNode()
         this.showPanel()
 
-        if (this.renderCb) {
-            this.renderCustomContent(nodes.map((nodeS: NodeSelection<unknown>) => nodeS.node))
-            return
-        }
-
+        const selected = nodes.map((nodeS: NodeSelection<unknown>) => nodeS.node)
         this.renderBody(
+            selected,
             (ctx) => collectPropertyEntries(
-                nodes.map((selected) => selected.node),
+                selected,
                 (node) => nodePropertiesGetter(node, this.uiManager.getOptions().propertiesPanel, ctx),
             ),
             (allProperties) => this.buildAggregatedTable(allProperties, nodes.length, this.applyNodeFacetFilter.bind(this)),
@@ -221,14 +208,11 @@ export class SidebarProperties extends UIComponent {
         this.setHeaderMultiSelectEdge()
         this.showPanel()
 
-        if (this.renderCb) {
-            this.renderCustomContent(edges.map((nodeS: EdgeSelection<unknown>) => nodeS.edge))
-            return
-        }
-
+        const selected = edges.map((edgeS: EdgeSelection<unknown>) => edgeS.edge)
         this.renderBody(
+            selected,
             (ctx) => collectPropertyEntries(
-                edges.map((selected) => selected.edge),
+                selected,
                 (edge) => edgePropertiesGetter(edge, this.uiManager.getOptions().propertiesPanel, ctx),
             ),
             (allProperties) => this.buildAggregatedTable(allProperties, edges.length),

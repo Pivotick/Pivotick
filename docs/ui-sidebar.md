@@ -205,6 +205,21 @@ const options = {
 
 :::
 
+::: tip
+When `render()` is provided, Pivotick skips all default mapping logic, unless it returns `undefined`. An `undefined` result (or a promise resolving to `undefined`) draws the default panel for that selection: the `nodePropertiesMap` / `edgePropertiesMap` rows for one element, and the aggregated table, with its keep/exclude filters, for several. Return `null` to leave the panel empty.
+
+```ts
+const options = {
+    UI: {
+        propertiesPanel: {
+            // A custom view for a lone node, the default aggregated table for everything else.
+            render: (element) => (element instanceof Node) ? myNodeView(element) : undefined,
+        }
+    }
+}
+```
+:::
+
 
 ## Extra Panels <sup>[interface](/api/html/interfaces/GraphUI.ExtraPanel.html)</sup>
 Allows adding fully custom panels with dynamic or static content. These panels are ideal for showing additional contextual information, custom controls, or interactive widgets related to the selected element.
