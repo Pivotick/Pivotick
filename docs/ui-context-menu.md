@@ -32,6 +32,7 @@ You can configure these menus for these scopes:
 - `menuNode`
 - `menuEdge`
 - `menuNote`
+- `menuSelection`
 - `menuCanvas`
 
 ## Default actions
@@ -41,6 +42,7 @@ You can configure these menus for these scopes:
 | `menuNode`   | Pin / Unpin / Focus / Hide (topbar) · View Image · Select Neighbors · Hide Children · Connect to… · Inspect Properties · **Delete Node** |
 | `menuEdge`   | **Edit Edge** · **Delete Edge**                                                                                  |
 | `menuNote`   | Hide Note (topbar) · Remove Note                                                                                 |
+| `menuSelection` | Pin / Unpin / Hide Selected (topbar) · Pivot · Select Neighbors · Group selected nodes · Ungroup · Pull out of group · Put back in group · **Delete Selected** |
 | `menuCanvas` | Pin All / Unpin All (topbar) · **Add Node Here** · Add Note                                                       |
 
 The write-path entries (delete, edit, create) go through their before-hooks — see
@@ -52,6 +54,22 @@ with `edgeCreator`. The same goes for entries that are a door into a switchable 
 **Inspect Properties** follows `UI.inspector`. Your own entries are never gated.
 Both "…here" entries place their element where the **menu was opened**, whatever the
 zoom or pan.
+
+## Acting on a selection {#selection}
+
+Right-clicking a node that is part of a selection of several nodes opens `menuSelection`,
+headed with how many nodes it acts on. Every entry acts on the whole selection, as the
+sidebar's bulk actions do, and the entries that only make sense for one node (Inspect,
+Connect to…, View Image) are left out. Right-clicking a node outside the selection opens
+that node's own menu and leaves the selection as it is, and the canvas keeps its own menu.
+Entries of `menuSelection` receive the selected nodes as a `Node[]`, in `visible` as in
+`onclick`.
+
+A row of the [data table](/ui-table#selecting) opens the same menu as its element on the
+canvas.
+
+**Del** hides the selected nodes. It hides rather than deletes because a hide costs
+nothing to undo; **Delete Selected** is in the menu.
 
 
 ::: code-group
@@ -84,6 +102,6 @@ The interface for action items are defined [here](/api/html/types/GraphUI.MenuAc
 | `text`        | `string`                                                                                        | **required**  | The action’s label shown in menus and toolbars.       |
 | `title`       | `string`                                                                                        | `undefined` | Optional text label displayed next to the item.       |
 | `variant`     | `UIVariant`                                                                                     | `outline-primary` | Visual variant (style) of the menu item.              |
-| `visible`     | `boolean \| (element: Node \| Edge \| null) => boolean`                                         | `true`       | Controls whether the item is visible. Can be dynamic. |
+| `visible`     | `boolean \| (element: Node \| Node[] \| Edge \| null) => boolean`                               | `true`       | Controls whether the item is visible. Can be dynamic. |
 | `onclick`     | `(evt: PointerEvent \| MouseEvent, element?: Node \| Node[] \| Edge \| Edge[] \| null) => void` | **required** | Triggered when the user activates the menu item.      |
 

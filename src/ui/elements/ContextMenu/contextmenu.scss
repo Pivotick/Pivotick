@@ -48,6 +48,14 @@
             align-items: center;
             gap: 0.5em;
 
+            // How many nodes a selection's menu acts on.
+            .pvt-contextmenu-caption {
+                padding: 0 4px 0 6px;
+                font-size: 12px;
+                font-weight: 600;
+                color: var(--pvt-text-color-6);
+            }
+
             .pivotick-button {
                 border-radius: 4px;
                 .pvt-icon {

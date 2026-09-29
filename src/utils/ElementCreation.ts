@@ -104,11 +104,10 @@ export function createShortcutBadge(keyCombo: string, classString?: string | str
 
 export function createQuickActionList<TThis extends UIElement = UIElement>(thisContext: TThis, actions: MenuQuickActionItemOptions[], element: Node[] | Node | Edge | Note | null): HTMLDivElement {
         const div = createHtmlElement('div', { class: 'pvt-action-list' })
-        const firstElement = Array.isArray(element) ? element[0] : element
         actions.forEach(action => {
             action.visible = action.visible ?? true
 
-            const isVisible = tryResolveBoolean(action.visible, firstElement) ?? true
+            const isVisible = tryResolveBoolean(action.visible, element) ?? true
             if (isVisible) {
                 const row = createQuickActionItem(thisContext, action, element)
                 div.appendChild(row)
@@ -129,11 +128,10 @@ export function createActionList<TThis extends UIElement = UIElement>(
     decorate?: (row: HTMLDivElement, action: MenuActionItemOptions) => void
 ): HTMLDivElement {
     const div = createHtmlElement('div', { class: 'pvt-action-list' })
-    const firstElement = Array.isArray(element) ? element[0] : element
     actions.forEach(action => {
         action.visible = action.visible ?? true
 
-        const isVisible = tryResolveBoolean(action.visible, firstElement) ?? true
+        const isVisible = tryResolveBoolean(action.visible, element) ?? true
         if (isVisible) {
             const row = createActionItem(thisContext, action, element)
             decorate?.(row, action)

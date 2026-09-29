@@ -15,7 +15,8 @@ import { pickNode } from '../../components/NodePickers'
 import { nodeNameGetter } from '../../../utils/GraphGetters'
 import { getNodeImageHref } from '../../../utils/NodePreview'
 import type { GroupNode } from '../../../Simplification/GroupNode'
-import { expandGroups, groupSelection, openGroupFromCanvas, renameGroupPrompt, selectGroupMembers, showGroupMembersInTable } from '../../groupActions'
+import { expandGroups, groupSelection, manualGroupsIn, openGroupFromCanvas, renameGroupPrompt, selectGroupMembers, showGroupMembersInTable } from '../../groupActions'
+import { clearNodeSelection, deleteNodes, hideNodes, pinNodes, selectNeighbours, selectionAround, unpinNodes } from '../../selectionActions'
 
 /**
  * A library default that is only offered while the feature behind it is enabled — the
@@ -40,6 +41,9 @@ type MenuSection = { topbar: GatedQuickActionItem[]; menu: GatedActionItem[] }
 const PEEK_DELAY = 200
 
 const fmt = (value: number): string => value.toLocaleString()
+
+/** The nodes a menu was opened over: the selection's, or the one clicked. */
+const asNodes = (element: unknown): Node[] => Array.isArray(element) ? element as Node[] : element ? [element as Node] : []
 
 const defaultMenuNode = {
     topbar: [
@@ -270,6 +274,65 @@ const defaultMenuGroup = {
     ] as GatedActionItem[],
 }
 
+/**
+ * The menu over a node that is part of a multi-selection: every entry acts on the whole
+ * selection, as the bulk bar does. Entries that only make sense for one node are left out.
+ */
+const defaultMenuSelection = {
+    topbar: [
+        {
+            title: 'Pin Selected',
+            svgIcon: pin,
+            variant: 'outline-primary',
+            visible: (nodes: Node[]) => nodes.some(node => !node.frozen),
+            onclick(this: ContextMenu, _evt: PointerEvent, nodes: Node[]) {
+                pinNodes(nodes)
+            },
+        },
+        {
+            title: 'Unpin Selected',
+            svgIcon: unpin,
+            variant: 'outline-primary',
+            visible: (nodes: Node[]) => nodes.some(node => node.frozen),
+            onclick(this: ContextMenu, _evt: PointerEvent, nodes: Node[]) {
+                unpinNodes(this.uiManager, nodes)
+            },
+        },
+        {
+            title: 'Hide Selected',
+            svgIcon: hide,
+            variant: 'outline-danger',
+            flushRight: true,
+            onclick(this: ContextMenu, _evt: PointerEvent, nodes: Node[]) {
+                hideNodes(this.uiManager, nodes)
+                clearNodeSelection(this.uiManager)
+            },
+        },
+    ] as GatedQuickActionItem[],
+    menu: [
+        {
+            text: 'Select Neighbors',
+            title: 'Select the nodes linked to the selection',
+            svgIcon: selectNeighbor,
+            variant: 'outline-primary',
+            onclick(this: ContextMenu, _evt: PointerEvent, nodes: Node[]) {
+                selectNeighbours(this.uiManager, nodes)
+            },
+        },
+        {
+            text: 'Delete Selected',
+            title: 'Delete every selected node',
+            requires: 'deletion',
+            svgIcon: trash,
+            variant: 'outline-danger',
+            onclick(this: ContextMenu, _evt: PointerEvent, nodes: Node[]) {
+                const ui = this.uiManager
+                void deleteNodes(ui, nodes, 'context-menu').then(deleted => { if (deleted) clearNodeSelection(ui) })
+            },
+        },
+    ] as GatedActionItem[],
+}
+
 const defaultMenuEdge: MenuSection = {
     topbar: [],
     menu: [
@@ -402,13 +465,14 @@ export class ContextMenu extends UIComponent {
     public visible: boolean
     private parentContainer?: HTMLElement
 
-    private element: Node | Edge | Note | null = null
+    private element: Node | Node[] | Edge | Note | null = null
 
     /** Client coords the menu was last opened at (see {@link openPoint}). */
     private openedAt: { x: number, y: number } | null = null
 
     private menuNode: MenuSection
     private menuGroup: MenuSection
+    private menuSelection: MenuSection
     private menuEdge: MenuSection
     private menuNote: MenuSection
     private menuCanvas: MenuSection
@@ -456,8 +520,13 @@ export class ContextMenu extends UIComponent {
         this.menuNode.menu.splice(deleteAt < 0 ? this.menuNode.menu.length : deleteAt, 0, ...this.membershipEntries())
         this.menuGroup = this.gate(defaultMenuGroup)
         this.menuGroup.menu.splice(2, 0, this.tableEntry(), this.pivotEntry(), ...this.manualGroupEntries())
-        const pullAt = this.menuNode.menu.findIndex(entry => entry.text === 'Pull out of group')
-        this.menuNode.menu.splice(pullAt < 0 ? this.menuNode.menu.length : pullAt, 0, this.groupSelectionEntry())
+        this.menuSelection = deepMerge(this.gate(defaultMenuSelection), this.uiManager.getOptions().contextMenu.menuSelection ?? {})
+        this.menuSelection.menu.unshift(this.pivotEntry())
+        const selectionDeleteAt = this.menuSelection.menu.findIndex(entry => entry.text === 'Delete Selected')
+        this.menuSelection.menu.splice(
+            selectionDeleteAt < 0 ? this.menuSelection.menu.length : selectionDeleteAt, 0,
+            this.groupSelectionEntry(), this.ungroupSelectionEntry(), ...this.membershipEntries(),
+        )
         this.wrapOnclickActions()
     }
 
@@ -479,8 +548,8 @@ export class ContextMenu extends UIComponent {
             // node, not the origin below: with a selection nothing applies to, the panel
             // row is still the way to find that out.
             visible: (element) =>
-                !!ui.pivotMode && !!element && ui.graph.pivots.for(expandGroups([element as Node])).length > 0,
-            submenu: (element) => this.pivotSubmenu(element as Node),
+                !!ui.pivotMode && !!element && ui.graph.pivots.for(expandGroups(asNodes(element))).length > 0,
+            submenu: (element) => this.pivotSubmenu(element as Node | Node[]),
         }
     }
 
@@ -508,20 +577,29 @@ export class ContextMenu extends UIComponent {
         ]
     }
 
-    /** Group the selection the clicked node is part of. */
+    /** Group the selection. */
     private groupSelectionEntry(): MenuActionItemOptions {
         const ui = this.uiManager
-        const selected = (element: unknown): Node[] => {
-            const nodes = ui.graph.renderer.getGraphInteraction().getSelectedNodes().map(selection => selection.node)
-            return nodes.includes(element as Node) ? nodes : []
-        }
         return {
             text: 'Group selected nodes',
             title: 'Fold the selection into one group with a title',
             svgIcon: groupNodes,
             variant: 'outline-primary',
-            visible: (element) => ui.graph.simplify.isEnabled() && ui.graph.simplify.groupableIds(selected(element)).length >= 2,
-            onclick: (_event, element) => void groupSelection(ui, selected(element)),
+            visible: (element) => ui.graph.simplify.isEnabled() && ui.graph.simplify.groupableIds(asNodes(element)).length >= 2,
+            onclick: (_event, element) => void groupSelection(ui, asNodes(element)),
+        }
+    }
+
+    /** Remove the hand-made groups the selection holds or sits in. */
+    private ungroupSelectionEntry(): MenuActionItemOptions {
+        const ui = this.uiManager
+        return {
+            text: 'Ungroup',
+            title: 'Draw the members of these hand-made groups as they were',
+            svgIcon: ungroupNodes,
+            variant: 'outline-primary',
+            visible: (element) => ui.graph.simplify.isEnabled() && manualGroupsIn(ui, asNodes(element)).length > 0,
+            onclick: (_event, element) => ui.graph.simplify.ungroup(manualGroupsIn(ui, asNodes(element))),
         }
     }
 
@@ -538,25 +616,30 @@ export class ContextMenu extends UIComponent {
         }
     }
 
-        /** Take a member of an open group out of it, or let a pulled-out node back in. */
+    /**
+     * Take members out of their groups, or let pulled-out nodes back in. A closed group's
+     * members are reached from the data dock.
+     */
     private membershipEntries(): MenuActionItemOptions[] {
         const simplify = this.uiManager.graph.simplify
+        const grouped = (element: unknown) => asNodes(element).filter(node => !node.isGroup && simplify.groupOf(node))
+        const pulled = (element: unknown) => asNodes(element).filter(node => simplify.isPulledOut(node))
         return [
             {
                 text: 'Pull out of group',
-                title: 'Keep this node out of its group',
+                title: 'Keep these nodes out of their groups',
                 svgIcon: ungroupNodes,
                 variant: 'outline-primary',
-                visible: (element) => !!element && !!simplify.groupOf(element as Node)?.open,
-                onclick: (_evt, element) => simplify.pullOut(element as Node),
+                visible: (element) => grouped(element).length > 0,
+                onclick: (_evt, element) => simplify.pullOut(grouped(element)),
             },
             {
                 text: 'Put back in group',
-                title: 'Let this node be grouped again',
+                title: 'Let these nodes be grouped again',
                 svgIcon: groupNodes,
                 variant: 'outline-primary',
-                visible: (element) => !!element && simplify.isPulledOut(element as Node),
-                onclick: (_evt, element) => simplify.putBack(element as Node),
+                visible: (element) => pulled(element).length > 0,
+                onclick: (_evt, element) => simplify.putBack(pulled(element)),
             },
         ]
     }
@@ -571,9 +654,10 @@ export class ContextMenu extends UIComponent {
      * question is the pivot panel's own — `{}` narrowing over this origin — so the answer
      * is the one the mode would show, and it is cached for whichever asks second.
      */
-    private pivotSubmenu(node: Node): MenuActionItemOptions[] {
+    private pivotSubmenu(element: Node | Node[]): MenuActionItemOptions[] {
         const ui = this.uiManager
-        const origin = this.pivotOrigin(node)
+        // A group pivots on its members, alone or in a selection.
+        const origin = expandGroups(asNodes(element))
         const rows: MenuActionItemOptions[] = ui.graph.pivots.for(origin).map(definition => ({
             text: definition.label,
             title: definition.label,
@@ -597,20 +681,6 @@ export class ContextMenu extends UIComponent {
             onclick: () => ui.openPivotMode(origin),
         })
         return rows
-    }
-
-    /**
-     * What the pivot runs on: the selection when the clicked node belongs to it, the
-     * clicked node alone otherwise. A right-click changes no selection, so this is the
-     * only way a bulk pivot is reachable from the menu — and clicking outside the
-     * selection is the ordinary way of saying "this one, not those".
-     */
-    private pivotOrigin(node: Node): Node[] {
-        const selected = this.uiManager.graph.renderer.getGraphInteraction()
-            .getSelectedNodes()
-            .map(selection => selection.node)
-        // A group pivots on its members, alone or in a selection.
-        return expandGroups(selected.some(candidate => candidate.id === node.id) ? selected : [node])
     }
 
     /**
@@ -729,6 +799,7 @@ export class ContextMenu extends UIComponent {
 
     protected onDestroy() {
         this.closeFlyouts(0)
+        document.removeEventListener('pointerdown', this.onOutsidePointerDown, true)
         this.menu?.remove()
         this.menu = undefined
     }
@@ -746,19 +817,30 @@ export class ContextMenu extends UIComponent {
     }
 
     private nodeClicked(event: PointerEvent, node: Node): void {
-        if (!this.menu) return
-
-        this.element = node
-        this.createNodeMenu(node)
-        this.setPosition(event)
-        this.show()
+        this.openFor(event, node)
     }
 
     private edgeClicked(event: PointerEvent, edge: Edge): void {
+        this.openFor(event, edge)
+    }
+
+    /**
+     * Open the menu for a node or an edge at the pointer, as a right-click on it does. A
+     * node inside a multi-selection gets the selection's menu, whose entries act on all
+     * of it; any other node gets its own, and the selection is left alone.
+     */
+    public openFor(event: MouseEvent, element: Node | Edge): void {
         if (!this.menu) return
 
-        this.element = edge
-        this.createEdgeMenu(edge)
+        if (element instanceof Edge) {
+            this.element = element
+            this.createEdgeMenu(element)
+        } else {
+            const selection = selectionAround(this.uiManager, element)
+            this.element = selection ?? element
+            if (selection) this.createSelectionMenu(selection)
+            else this.createNodeMenu(element)
+        }
         this.setPosition(event)
         this.show()
     }
@@ -790,6 +872,8 @@ export class ContextMenu extends UIComponent {
             this.menuNode.topbar,
             this.menuGroup.menu,
             this.menuGroup.topbar,
+            this.menuSelection.menu,
+            this.menuSelection.topbar,
             this.menuEdge.menu,
             this.menuEdge.topbar,
             this.menuNote.menu,
@@ -835,6 +919,20 @@ export class ContextMenu extends UIComponent {
         mainMenu.innerHTML = ''
         topbar.appendChild(createQuickActionList<ContextMenu>(this, section.topbar, this.element))
         mainMenu.appendChild(createActionList<ContextMenu>(this, section.menu, this.element, this.rowWiring(0)))
+    }
+
+    private createSelectionMenu(nodes: Node[]): void {
+        if (!this.menu) return
+
+        const topbar = this.menu.querySelector('.pvt-contextmenu-topbar')!
+        const mainMenu = this.menu.querySelector('.pvt-contextmenu-mainmenu')!
+        this.closeFlyouts(0)
+        topbar.innerHTML = ''
+        mainMenu.innerHTML = ''
+        const quickActions = createQuickActionList<ContextMenu>(this, this.menuSelection.topbar, nodes)
+        quickActions.prepend(createHtmlElement('span', { class: 'pvt-contextmenu-caption' }, [`${fmt(nodes.length)} selected`]))
+        topbar.appendChild(quickActions)
+        mainMenu.appendChild(createActionList<ContextMenu>(this, this.menuSelection.menu, nodes, this.rowWiring(0)))
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -1013,6 +1111,14 @@ export class ContextMenu extends UIComponent {
         this.uiManager.tooltip?.hide()
         this.menu.classList.add('shown')
         this.visible = true
+        // The canvas closes it on its own clicks; this covers the rest, such as the dock.
+        document.addEventListener('pointerdown', this.onOutsidePointerDown, true)
+    }
+
+    private readonly onOutsidePointerDown = (event: PointerEvent): void => {
+        const target = event.target as globalThis.Node | null
+        if (target && (this.menu?.contains(target) || this.flyouts.some(open => open.panel.contains(target)))) return
+        this.hide()
     }
 
     public hide(): void {
@@ -1020,6 +1126,7 @@ export class ContextMenu extends UIComponent {
         if (!this.menu) return
 
         this.closeFlyouts(0)
+        document.removeEventListener('pointerdown', this.onOutsidePointerDown, true)
 
         this.element = null
         this.menu.classList.remove('shown')
@@ -1047,7 +1154,7 @@ export class ContextMenu extends UIComponent {
         )
     }
 
-    private setPosition(event: PointerEvent): void {
+    private setPosition(event: MouseEvent): void {
         if (!this.menu) return
 
         const offset = 10

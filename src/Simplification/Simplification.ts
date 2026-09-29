@@ -66,6 +66,10 @@ interface RuleState {
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, Math.round(value)))
 
 type GroupRef = GroupInfo | GroupNode | string
+type NodeRef = Node | string
+
+const refIds = (refs: NodeRef | NodeRef[]): string[] =>
+    (Array.isArray(refs) ? refs : [refs]).map(ref => typeof ref === 'string' ? ref : ref.id)
 
 /**
  * Folds nodes that play the same role into one group drawn in their place — `graph.simplify`.
@@ -274,19 +278,25 @@ export class Simplification {
         this.setOpen(group, false)
     }
 
-    /** Take a node out of its group for the session; it stays a plain node until put back. */
-    pullOut(node: Node | string): void {
-        const id = typeof node === 'string' ? node : node.id
-        if (this.pulledOut.has(id)) return
-        this.pulledOut.add(id)
-        this.regroup()
+    /**
+     * Take nodes out of their groups for the session; each stays a plain node until put
+     * back. Several at once regroup once.
+     */
+    pullOut(nodes: NodeRef | NodeRef[]): void {
+        let changed = false
+        for (const id of refIds(nodes)) {
+            if (this.pulledOut.has(id)) continue
+            this.pulledOut.add(id)
+            changed = true
+        }
+        if (changed) this.regroup()
     }
 
-    /** Let a pulled-out node be grouped again. */
-    putBack(node: Node | string): void {
-        const id = typeof node === 'string' ? node : node.id
-        if (!this.pulledOut.delete(id)) return
-        this.regroup()
+    /** Let pulled-out nodes be grouped again. */
+    putBack(nodes: NodeRef | NodeRef[]): void {
+        let changed = false
+        for (const id of refIds(nodes)) changed = this.pulledOut.delete(id) || changed
+        if (changed) this.regroup()
     }
 
     /** Whether a node was pulled out of its group. */

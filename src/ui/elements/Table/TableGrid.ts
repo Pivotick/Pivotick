@@ -514,6 +514,13 @@ export class TableGrid {
         element.style.gridTemplateColumns = template
         if (row.nested) element.dataset.nestedRow = 'true'
         if (this.rowActivate !== 'none') this.wireRow(element, row)
+        // The canvas's menu for the row's element, so a row offers what its dot does.
+        element.addEventListener('contextmenu', (event) => {
+            const menu = this.uiManager.contextMenu
+            if (!menu) return
+            event.preventDefault()
+            menu.openFor(event, row.element)
+        })
 
         for (const column of columns) {
             const cell = document.createElement('div')

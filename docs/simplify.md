@@ -210,8 +210,10 @@ A group is drawn as a node, and it acts for its members wherever that is unambig
   place of their own spread around the group, and live physics gets a gentle push, as for a
   cluster. `simulation.fitViewOnExpandCollapse` fits the view on open and close. A group
   with more members than `UI.simplify.openConfirmAbove` (100) asks first.
-- **Select** it to see its members in the sidebar, in a sortable list. *Pull out* keeps one
-  member out of the group until it is put back, from its context menu.
+- **Select** it to see its members in the sidebar, in a sortable list. *Pull out* keeps a
+  member out of the group until it is put back, from its context menu: on the canvas while
+  the group is open, or from its row in the data dock whether the group is open or not.
+  Over a selection it pulls out every selected member.
 - **View in table**, in the sidebar or the context menu, lists the members in the data dock,
   where the column filters narrow them further. The chip over the table lists every node again.
 - **Select members**, **Pivot** and **Delete** act on the members. Pivot and Delete go through

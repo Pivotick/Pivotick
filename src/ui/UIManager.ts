@@ -30,6 +30,7 @@ import { Dock, type DockConfig } from './elements/Dock/Dock'
 import { PivotMode, PIVOT_MODE } from './elements/Pivot/PivotMode'
 import { PivotTriage } from './elements/Pivot/PivotTriage'
 import { Table } from './elements/Table/Table'
+import { clearNodeSelection, hideNodes, selectedNodes } from './selectionActions'
 import type { PivotickPlugin, PluginContext } from '../interfaces/Plugin'
 import type { PivotRunOutcome } from '../interfaces/Pivot'
 
@@ -109,6 +110,10 @@ export const DEFAULT_UI_OPTIONS: GraphUI = {
             menu: [],
         },
         menuNote: {
+            topbar: [],
+            menu: [],
+        },
+        menuSelection: {
             topbar: [],
             menu: [],
         },
@@ -634,7 +639,19 @@ export class UIManager {
         this.uiDisposables.push(() => this.container.removeEventListener('keydown', onKeydown))
         this.container.setAttribute('tabindex', '0') // make it focusable
 
-        // Every shortcut below belongs to a feature that can be switched off, and a
+        // Del hides rather than deletes: a hide costs nothing to undo.
+        this.uiDisposables.push(this.keyManager.register({
+            key: 'Delete',
+            description: 'Hide the selected nodes',
+            callback: () => {
+                const nodes = selectedNodes(this)
+                if (!nodes.length) return
+                hideNodes(this, nodes)
+                clearNodeSelection(this)
+            },
+        }))
+
+        // Every other shortcut below belongs to a feature that can be switched off, and a
         // shortcut is an affordance like any other: an unregistered key does nothing
         // rather than reaching past a removed button.
         if (this.isFeatureEnabled('inspector')) {

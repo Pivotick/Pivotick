@@ -171,6 +171,7 @@ const options = {
 | **Select all** | Every row currently listed — post-sort, post-filter |
 | Double-click | Select **and** centre the canvas on it |
 | Hover | Highlight the element on the canvas |
+| Right-click | The element's [context menu](/ui-context-menu#selection); a row of a multi-selection opens the selection's |
 
 It works in both directions: rubber-band a group on the canvas and the matching rows are
 marked and scrolled to. The selection is the same one the sidebar's bulk actions read, so

@@ -3,7 +3,8 @@ import type { UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
 import type { NodeSelection } from '../../../interfaces/GraphInteractions'
 import { pin, unpin, hide, focusElement, groupNodes, ungroupNodes, bulkEdit, trash } from '../../icons'
-import { expandGroups, groupSelection, manualGroupsIn } from '../../groupActions'
+import { groupSelection, manualGroupsIn } from '../../groupActions'
+import { clearNodeSelection, deleteNodes, hideNodes, pinNodes, unpinNodes } from '../../selectionActions'
 
 type BulkActionKind = 'action' | 'danger' | 'soon'
 
@@ -138,26 +139,15 @@ export class SidebarBulkActions extends UIComponent {
     }
 
     private pinSelection(): void {
-        // Freeze fixes each node at its current position; no reheat, so the rest
-        // of the layout stays put around the pin.
-        for (const node of this.selectedNodes()) node.freeze()
+        pinNodes(this.selectedNodes())
     }
 
     private unpinSelection(): void {
-        for (const node of this.selectedNodes()) node.unfreeze()
-        // Released nodes only move once the simulation has some energy again —
-        // and only when physics is actually running (mirrors reheatIfEnabled).
-        const simulation = this.uiManager.graph.simulation
-        if (simulation.isEnabled()) simulation.reheat()
+        unpinNodes(this.uiManager, this.selectedNodes())
     }
 
     private hideSelection(): void {
-        const graph = this.uiManager.graph
-        // One act, so one history entry: hiding five nodes is not five things done.
-        // A group is hidden by hiding what it stands for.
-        graph.history.group(() => {
-            for (const node of expandGroups(this.selectedNodes())) graph.queryEngine.excludeNode(node)
-        })
+        hideNodes(this.uiManager, this.selectedNodes())
         this.clearSelection()
     }
 
@@ -167,11 +157,7 @@ export class SidebarBulkActions extends UIComponent {
      * that actually happened clears it.
      */
     private async deleteSelection(): Promise<void> {
-        const outcome = await this.uiManager.graph.editing.requestDelete({
-            nodes: expandGroups(this.selectedNodes()),
-            origin: 'bulk-action',
-        })
-        if (outcome.accepted) this.clearSelection()
+        if (await deleteNodes(this.uiManager, this.selectedNodes(), 'bulk-action')) this.clearSelection()
     }
 
     private async groupSelected(): Promise<void> {
@@ -185,6 +171,6 @@ export class SidebarBulkActions extends UIComponent {
     }
 
     private clearSelection(): void {
-        this.uiManager.graph.renderer.getGraphInteraction().clearNodeSelectionList()
+        clearNodeSelection(this.uiManager)
     }
 }

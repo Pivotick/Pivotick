@@ -931,6 +931,14 @@ export interface ContextMenu {
         topbar?: MenuQuickActionItemOptions[],
         menu?: MenuActionItemOptions[],
     },
+    /**
+     * The menu over a node that is part of a multi-selection. Its entries receive the
+     * selected nodes, as a `Node[]`, in both `visible` and `onclick`.
+     */
+    menuSelection?: {
+        topbar?: MenuQuickActionItemOptions[],
+        menu?: MenuActionItemOptions[],
+    },
     menuCanvas?: {
         topbar?: MenuQuickActionItemOptions[],
         menu?: MenuActionItemOptions[],
@@ -953,7 +961,7 @@ export type MenuActionItemOptions<TThis extends UIElement = UIElement> = {
     title?: string,
     /** @default outline-primary */
     variant?: UIBaseVariant | UIOutlineVariant | UIOutlineSoftVariant,
-    visible?: boolean | ((element: Node | Edge | Note | null) => boolean)
+    visible?: boolean | ((element: Node | Node[] | Edge | Note | null) => boolean)
     /** Optional: a row that only opens a {@link MenuActionItemOptions.submenu} needs no action of its own. */
     onclick?: (this: TThis, evt: PointerEvent | MouseEvent, element?: Node | Node[] | Edge | Edge[] | Note | Note[] | null) => void,
     /**
@@ -964,7 +972,7 @@ export type MenuActionItemOptions<TThis extends UIElement = UIElement> = {
      * A row with a submenu keeps its own `onclick` if it has one; the click opens the
      * panel either way, and closes it again on a second click.
      */
-    submenu?: MenuActionItemOptions<TThis>[] | ((element: Node | Edge | Note | null) => MenuActionItemOptions<TThis>[]),
+    submenu?: MenuActionItemOptions<TThis>[] | ((element: Node | Node[] | Edge | Note | null) => MenuActionItemOptions<TThis>[]),
     /**
      * An element pinned to the row's right-hand end, after the label — a count, a
      * badge, anything the row's own text should not have to carry.

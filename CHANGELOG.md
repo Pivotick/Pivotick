@@ -85,6 +85,18 @@ touching the data.
   `tooltip.renderGroupExtra(group)` adds to a group's tooltip, and the table gains a `Group`
   column while any group exists.
 
+### Acting on a selection
+
+- **A right-click on a node of a multi-selection acts on the whole selection.** The new
+  `contextMenu.menuSelection` section is headed with the count and offers Pin, Unpin, Hide,
+  Pivot, Select Neighbors, Group, Ungroup, Pull out, Put back and Delete, each for every
+  selected node. A node outside the selection still opens its own menu, and the selection
+  stays as it is. A `visible` predicate now receives the selected nodes as a `Node[]` there.
+- **Table rows have the context menu** their element has on the canvas, so a member of a
+  closed group can be pulled out from its row. `graph.simplify.pullOut()` and `putBack()`
+  take a list.
+- **Del hides the selected nodes**, as one undo step.
+
 ### Detail that follows the zoom
 
 A node can carry several drawings and let the view choose between them: a dot on an overview, a
