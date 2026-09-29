@@ -9,7 +9,12 @@
   is `true`. `(element, kind) => boolean` is asked on every hover, and one that throws shows
   nothing. The neighbour graph in the sidebar follows the same choice.
 
-### Group styles
+### Simplify groups
+
+- **`UI.simplify.typeOf`** sets the type every rule groups by and every group counts its
+  parts by, in place of `render.nodeTypeAccessor`. A rule's own `typeOf` still wins.
+- **`UI.simplify.colorOf`** sets the colour a node stands for in a group (disc, ring, open
+  wash, tooltip chips), for hosts that draw their nodes with no `color`.
 
 - **`render.groupStyle(group, base)`** also receives the default style, so a host can add a
   tier with `tiers: [...(base.tiers ?? []), mine]` and keep the count on the disc.

@@ -1212,3 +1212,82 @@ test.describe('search inside groups', () => {
         await expect(tip.locator('.pvt-group-summary-match')).toHaveText('2 of 6 match "10.0.0"')
     })
 })
+
+/* ---------- a host's own types and colours ---------- */
+
+type HostSwitches = { colorOf?: boolean, drawn?: boolean, ruleTypeOf?: boolean }
+
+/** Styled by element (`a`), grouped by `a:<type>` through `UI.simplify.typeOf`. */
+const loadSimplifyHost = (page: Page, overrides: Record<string, unknown>, host: HostSwitches = {}) =>
+    harness(page, 'loadSimplifyHost', overrides, host)
+
+async function typeCountsOf(page: Page, member: string): Promise<Record<string, number>> {
+    return page.evaluate((id) => window.__pivotick.graph!.simplify.groupOf(id)!.typeCounts, member)
+}
+
+/** The colour a member's closed group is drawn in. */
+async function groupColor(page: Page, member: string): Promise<unknown> {
+    return page.evaluate((id) => {
+        const simplify = window.__pivotick.graph!.simplify
+        return simplify.getGroupNode(simplify.groupOf(id)!.id)!.getStyle().color
+    }, member)
+}
+
+/** The stroke of each share of a mixed group's split ring, in order. */
+async function ringShares(page: Page, member: string): Promise<string[]> {
+    return page.evaluate((id) => {
+        const simplify = window.__pivotick.graph!.simplify
+        const group = simplify.getGroupNode(simplify.groupOf(id)!.id)!
+        const ring = group.getStyle().tiers![0].style.html!(group) as HTMLElement
+        return [...ring.querySelectorAll('path')].map((arc) => arc.getAttribute('stroke')!)
+    }, member)
+}
+
+test.describe('a host\'s own types and colours', () => {
+    test('a Few links group counts its parts by UI.simplify.typeOf, not the element', async ({ page }) => {
+        await loadSimplifyHost(page, withRule({ kind: 'degree', minDegree: 3 }))
+        expect(await typeCountsOf(page, 'ttp-0')).toEqual({ 'a:ip': 6, 'a:ttp': 3 })
+    })
+
+    test('a hand-made group\'s title prompt and parts count the same way', async ({ page }) => {
+        await loadSimplifyHost(page, withRule({ kind: 'degree' }))
+        const [title, expected] = await page.evaluate(() => {
+            const simplify = window.__pivotick.graph!.simplify
+            return [simplify.defaultTitle(['ip-0', 'ip-1', 'ttp-0']), simplify.typesLabelOf({ typeCounts: { 'a:ip': 2, 'a:ttp': 1 } })]
+        })
+        expect(title).toBe(expected)
+
+        await page.evaluate(() => window.__pivotick.graph!.simplify.setManualGroups([{ id: 'pvt-manual-1', members: ['ip-0', 'ip-1', 'ttp-0'] }]))
+        await expect.poll(() => typeCountsOf(page, 'ip-0')).toEqual({ 'a:ip': 2, 'a:ttp': 1 })
+    })
+
+    test('a mixed group\'s ring draws each share in its own colour', async ({ page }) => {
+        await loadSimplifyHost(page, withRule({ kind: 'degree', minDegree: 3 }), { colorOf: true })
+        expect(await ringShares(page, 'ttp-0')).toEqual(['#0ea5e9', '#f97316'])
+    })
+
+    test('nodes drawn with no colour: the disc takes none without UI.simplify.colorOf', async ({ page }) => {
+        await loadSimplifyHost(page, withNeighbours(), { drawn: true })
+        expect(await groupColor(page, 'ip-0')).toBe('transparent')
+    })
+
+    test('nodes drawn with no colour: UI.simplify.colorOf colours the disc, the open wash and the tooltip', async ({ page }) => {
+        await loadSimplifyHost(page, withNeighbours(), { drawn: true, colorOf: true })
+        expect(await groupColor(page, 'ip-0')).toBe('#0ea5e9')
+
+        const tip = await openNodeTooltip(page, await groupDomId(page, 'ip-0'))
+        // The anchors are the two events.
+        const dots = await tip.locator('.pvt-group-summary-dot').evaluateAll((all) => all.map((dot) => getComputedStyle(dot).backgroundColor))
+        expect(dots).toEqual(['rgb(124, 58, 237)', 'rgb(124, 58, 237)'])
+
+        const domains = (await groupHolding(page, 'dom-0'))!
+        await page.evaluate((id) => window.__pivotick.graph!.simplify.open(id), domains.id)
+        const wash = page.locator(`.pvt-group-outline[data-group="${domains.id}"]`)
+        await expect(wash).toHaveAttribute('style', /--pvt-group-color:\s*#10b981/)
+    })
+
+    test('a rule\'s own typeOf still wins over UI.simplify.typeOf', async ({ page }) => {
+        await loadSimplifyHost(page, withNeighbours(), { ruleTypeOf: true })
+        expect(await typeCountsOf(page, 'ip-0')).toEqual({ 'rule:ip': 6 })
+    })
+})

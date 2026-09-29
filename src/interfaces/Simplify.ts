@@ -40,7 +40,7 @@ export interface GraphView {
     inNeighbours(node: Node): Node[]
     /** The drawn nodes this one has a line to. */
     outNeighbours(node: Node): Node[]
-    /** The type the rule groups by: its own `typeOf`, else `render.nodeTypeAccessor`. */
+    /** The type the rule groups by: its own `typeOf`, else `UI.simplify.typeOf`, else `render.nodeTypeAccessor`. */
     typeOf(node: Node): string | undefined
     /** The group behind this node, when it is one made by an earlier rule. */
     groupOf(node: Node): GroupInfo | undefined
@@ -59,7 +59,7 @@ export interface NeighboursRule {
      * @default 5
      */
     minSize?: number
-    /** Overrides `render.nodeTypeAccessor` for this rule. */
+    /** Overrides `UI.simplify.typeOf` and `render.nodeTypeAccessor` for this rule. */
     typeOf?: (node: Node) => string | undefined
 }
 
@@ -78,7 +78,7 @@ export interface ChainsRule {
      * @default 5
      */
     minSize?: number
-    /** Overrides `render.nodeTypeAccessor` for this rule. */
+    /** Overrides `UI.simplify.typeOf` and `render.nodeTypeAccessor` for this rule. */
     typeOf?: (node: Node) => string | undefined
 }
 
@@ -150,7 +150,7 @@ export interface LandingsRule {
      * @default 2
      */
     minSize?: number
-    /** Overrides `render.nodeTypeAccessor` for this rule. */
+    /** Overrides `UI.simplify.typeOf` and `render.nodeTypeAccessor` for this rule. */
     typeOf?: (node: Node) => string | undefined
 }
 
@@ -225,6 +225,19 @@ export interface SimplifyOptions {
      * @default 100
      */
     openConfirmAbove?: number
+    /**
+     * The type every rule groups by and every group counts its parts by. A rule's own
+     * `typeOf` still wins for that rule.
+     * @default render.nodeTypeAccessor
+     */
+    typeOf?: (node: Node) => string | undefined
+    /**
+     * The colour a node stands for in a group: the disc and ring, the open wash, the
+     * tooltip's chips, a mixed ring's share. For hosts whose nodes carry no `color`.
+     * Returning `undefined` falls back to the node's resolved style colour.
+     * @default the node's resolved style colour
+     */
+    colorOf?: (node: Node) => string | undefined
 }
 
 /** A rule's one whole-number setting: smallest group, fewest links, core strength or level. */

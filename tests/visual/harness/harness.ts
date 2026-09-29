@@ -836,6 +836,9 @@ function isPlainObject(value: unknown): value is PlainObject {
 }
 
 /** Recursively merge `override` into a deep copy of `base` (arrays are replaced). */
+/** The colours `loadSimplifyHost` gives each type through `UI.simplify.colorOf`. */
+const HOST_TYPE_COLORS: Record<string, string> = { event: '#7c3aed', ip: '#0ea5e9', ttp: '#f97316', domain: '#10b981', host: '#475569', file: '#e11d48' }
+
 function mergeOptions(base: PlainObject, override: PlainObject): PlainObject {
     const out: PlainObject = { ...base }
     for (const [key, value] of Object.entries(override)) {
@@ -1260,6 +1263,13 @@ export interface HarnessApi {
      * both functions or keyed on one, so they are baked in on the page side.
      */
     loadSimplify(overrides?: PlainObject, fixture?: 'simplify' | 'simplifyClusters' | 'simplifyChains' | 'simplifyCore' | 'simplifyCommunities', look?: boolean | 'chip'): Promise<void>
+    /**
+     * The `simplify` fixture as a host that types its nodes by element (`a`) for styling and by
+     * `a:<type>` for grouping, through `UI.simplify.typeOf`. `colorOf` colours by type through
+     * `UI.simplify.colorOf`, `drawn` draws every node itself with no colour, and `ruleTypeOf`
+     * gives each declared rule its own `typeOf`, `rule:<type>`.
+     */
+    loadSimplifyHost(overrides: PlainObject, host?: { colorOf?: boolean, drawn?: boolean, ruleTypeOf?: boolean }): Promise<void>
     /**
      * Load the unpinned hubs, and right after `new Graph()` give them a hand-made group of
      * {@link HUB_PICKS}, closed or open, as a host holding grouped data would.
@@ -2133,6 +2143,27 @@ class Harness implements HarnessApi {
             UI: { simplify: { typeLabel: (type: string | undefined, count: number) => `${count} ${(names[type ?? ''] ?? [type, type])[count === 1 ? 0 : 1]}` } },
         } : {}
         return this.bootData(fixtures[fixture](), mergeOptions(mergeOptions(mergeOptions(BASE_OPTIONS, typed), overrides), lookOptions))
+    }
+
+    async loadSimplifyHost(overrides: PlainObject, host: { colorOf?: boolean, drawn?: boolean, ruleTypeOf?: boolean } = {}): Promise<void> {
+        const typeOf = (node: Node) => node.getData().type as string | undefined
+        const options = mergeOptions(mergeOptions(BASE_OPTIONS, {
+            render: {
+                nodeTypeAccessor: () => 'a',
+                ...(host.drawn ? { nodeStyleMap: { a: { shape: 'none', color: 'transparent' } } } : {}),
+            },
+            UI: {
+                simplify: {
+                    typeOf: (node: Node) => `a:${typeOf(node)}`,
+                    ...(host.colorOf ? { colorOf: (node: Node) => HOST_TYPE_COLORS[typeOf(node) ?? ''] } : {}),
+                },
+            },
+        }), overrides)
+        if (host.ruleTypeOf) {
+            const simplify = (options.UI as PlainObject).simplify as PlainObject
+            simplify.rules = (simplify.rules as PlainObject[]).map((rule) => ({ ...rule, typeOf: (node: Node) => `rule:${typeOf(node)}` }))
+        }
+        return this.bootData(fixtures.simplify(), options)
     }
 
     async loadHostGroups(group: 'none' | 'closed' | 'open', useWorker: boolean): Promise<void> {

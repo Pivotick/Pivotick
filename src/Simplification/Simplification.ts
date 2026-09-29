@@ -114,6 +114,8 @@ export class Simplification {
     private nextGroupId = 1
     private readonly featureEnabled: boolean
     private readonly typeLabelFn?: SimplifyOptions['typeLabel']
+    private readonly typeOfFn?: SimplifyOptions['typeOf']
+    private readonly colorOfFn?: SimplifyOptions['colorOf']
     private readonly openConfirmAboveValue: number
     /** What the last run produced, to tell listeners only about a real change. */
     private signature = ''
@@ -126,6 +128,8 @@ export class Simplification {
         this.graph = graph
         this.featureEnabled = options?.enabled !== false
         this.typeLabelFn = options?.typeLabel
+        this.typeOfFn = options?.typeOf
+        this.colorOfFn = options?.colorOf
         this.openConfirmAboveValue = options?.openConfirmAbove ?? DEFAULT_OPEN_CONFIRM_ABOVE
         if (!this.featureEnabled) return
         const offered = OFFERED.map(kind => ({ kind, enabled: false }))
@@ -420,11 +424,11 @@ export class Simplification {
 
     /** The label these nodes would get from their types, what the title prompt starts from. */
     defaultTitle(nodes: Array<Node | string>): string {
-        const accessor = this.graph.getOptions().render?.nodeTypeAccessor
+        const typeOf = this.typeResolver('manual')
         const typeCounts: Record<string, number> = {}
         for (const id of this.groupableIds(nodes)) {
             const node = this.graph.getMutableNode(id)
-            const type = (node && accessor?.(node)) ?? ''
+            const type = (node && typeOf?.(node)) ?? ''
             typeCounts[type] = (typeCounts[type] ?? 0) + 1
         }
         return this.typesLabelOf({ typeCounts })
@@ -496,13 +500,15 @@ export class Simplification {
 
     /** The colour a member of this type is drawn in; `''` is no type. */
     typeColor(info: GroupInfo, type: string): string {
-        const accessor = this.graph.getOptions().render?.nodeTypeAccessor
-        const member = info.members.find(candidate => (accessor?.(candidate) ?? '') === type) ?? info.members[0]
+        const typeOf = this.typeResolver(info.rule)
+        const member = info.members.find(candidate => (typeOf?.(candidate) ?? '') === type) ?? info.members[0]
         return member ? this.colorOf(member) : FALLBACK_COLOR
     }
 
-    /** The colour a dot is drawn in: a node's style, or a group's own. */
+    /** The colour a dot is drawn in: `UI.simplify.colorOf`, else a node's style, or a group's own. */
     colorOf(node: Node): string {
+        const own = node instanceof GroupNode ? undefined : this.colorOfFn?.(node)
+        if (own !== undefined) return own
         const color = node instanceof GroupNode || !this.graph.renderer
             ? node.getStyle().color
             : this.graph.renderer.getNodeStyle(node).color
@@ -802,10 +808,7 @@ export class Simplification {
             link(ins, to, from)
         }
 
-        const accessor = this.graph.getOptions().render?.nodeTypeAccessor
-        const ownTypeOf = state.rule.kind === 'neighbours' || state.rule.kind === 'chains' || state.rule.kind === 'landings'
-            ? state.rule.typeOf : undefined
-        const typeOf = ownTypeOf ?? accessor
+        const typeOf = this.typeResolver(state.id)
         const nodes = dots.filter(node =>
             !annotated.has(node.id)
             && !this.pulledOut.has(node.id)
@@ -824,6 +827,14 @@ export class Simplification {
             },
             groupOf: (node) => node instanceof GroupNode ? node.info : undefined,
         }
+    }
+
+    /** What a rule types a real node by: its own `typeOf`, else `UI.simplify.typeOf`, else `nodeTypeAccessor`. */
+    private typeResolver(ruleId: string): ((node: Node) => string | undefined) | undefined {
+        const rule = this.rules.find(state => state.id === ruleId)?.rule
+        const own = rule && (rule.kind === 'neighbours' || rule.kind === 'chains' || rule.kind === 'landings')
+            ? rule.typeOf : undefined
+        return own ?? this.typeOfFn ?? this.graph.getOptions().render?.nodeTypeAccessor
     }
 
     /** Turn one rule's partition into groups, keeping each one's identity where it can. */
