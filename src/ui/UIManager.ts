@@ -10,7 +10,7 @@ import { Modal, type ModalOptions } from './components/Modal'
 import { mountToast } from './Notifier'
 import type { Notification, NotificationHandle } from './Notifier'
 import merge from 'lodash.merge'
-import { Tooltip } from './elements/Tooltip/Tooltip'
+import { Tooltip, tooltipMounts } from './elements/Tooltip/Tooltip'
 import { ContextMenu } from './elements/ContextMenu/ContextMenu'
 import type { DockTab, Editors, ExtraPanel, FeatureToggle, GraphUI, GraphUIMode, LegendGroupOptions, LegendOptions, PropertyEntry, RailModeDefinition, RegisteredDockTab, RegisteredExtraPanel, TableOptions } from '../interfaces/GraphUI'
 import { KeybindingManager } from './KeybindingManager'
@@ -280,7 +280,7 @@ const UI_ELEMENTS: UIElementSpec[] = [
     },
     {
         key: 'tooltip', modes: ['viewer', 'full', 'light'],
-        enabled: o => !!o.tooltip?.enabled,
+        enabled: o => tooltipMounts(o.tooltip?.enabled),
         make: ui => new Tooltip(ui), slot: ui => ui.layout?.canvas
     },
     {

@@ -119,7 +119,7 @@ const options = {
 | `UI.neighborsPanel.enabled` | The sidebar's neighbours panel and its separator. |
 | `UI.viewFlyout.enabled` | The View rail button and its panel. |
 | `UI.physicsFlyout.enabled` | The Physics rail button and its panel. |
-| `UI.tooltip.enabled` | Hover tooltips, pinned ones included. |
+| `UI.tooltip.enabled` | Hover tooltips, pinned ones included. Also takes `{ nodes, edges, groups }` or `(element, kind) => boolean`, see [Tooltips](./ui-tooltip#choosing-what-shows-a-tooltip). |
 | `UI.contextMenu.enabled` | Every context menu. |
 | `UI.navigation.enabled` | The viewport rail: fit, zoom and fullscreen. |
 | `UI.legend: false` | The canvas legend, including the one it would derive by itself. |

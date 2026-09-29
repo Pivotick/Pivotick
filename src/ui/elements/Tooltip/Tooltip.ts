@@ -10,7 +10,7 @@ import { graphEdgeIcon, pin, closeIcon, selectElement, focusElement } from '../.
 import type { UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
 import './tooltip.scss'
-import type { Tooltip as TooltipOptions, MainHeader, PropertiesPanel } from '../../../interfaces/GraphUI'
+import type { Tooltip as TooltipOptions, TooltipKind, TooltipKinds, MainHeader, PropertiesPanel } from '../../../interfaces/GraphUI'
 import { deepMerge } from '../../../utils/utils'
 import { ShadowLinkManager } from '../ShadowLinkManager'
 import { attachHtmlImageFallback, createNodePreview, getNodeImageHref } from '../../../utils/NodePreview'
@@ -18,6 +18,20 @@ import { openImageLightbox } from '../modals/ImageLightboxModal/ImageLightboxMod
 import { buildGroupSummary } from '../GroupSummary/GroupSummary'
 import type { GroupNode } from '../../../Simplification/GroupNode'
 
+
+const KIND_KEYS: Record<TooltipKind, keyof TooltipKinds> = { node: 'nodes', edge: 'edges', group: 'groups' }
+
+function tooltipKind(element: Node | Edge): TooltipKind {
+    if (!('isGroup' in element)) return 'edge'
+    return element.isGroup ? 'group' : 'node'
+}
+
+/** Whether `UI.tooltip.enabled` leaves any hover a tooltip, which is whether one is mounted. */
+export function tooltipMounts(enabled: TooltipOptions['enabled']): boolean {
+    if (typeof enabled === 'function') return true
+    if (enabled && typeof enabled === 'object') return Object.values(KIND_KEYS).some(key => enabled[key] !== false)
+    return !!enabled
+}
 
 const defaultTooltipOptions = {
     enabled: true,
@@ -48,6 +62,8 @@ export class Tooltip extends UIComponent {
     private hideTimeout: ReturnType<typeof setTimeout> | null = null
 
     private tooltipDataMap = new Map<HTMLElement, Node | Edge>()
+    /** Elements whose `enabled` predicate threw, so each is reported once. */
+    private readonly predicateFailed = new Set<string>()
 
     // Auto-fits the live tooltip's title on resize; each pinned copy gets its own.
     private titleFit?: TitleFitController
@@ -200,7 +216,27 @@ export class Tooltip extends UIComponent {
         return true
     }
 
+    /** Whether `enabled` lets this element show a tooltip. */
+    private allows(element: Node | Edge): boolean {
+        const enabled = this.uiManager.getOptions().tooltip.enabled
+        const kind = tooltipKind(element)
+        if (typeof enabled === 'function') {
+            try {
+                return !!enabled(element, kind)
+            } catch (error) {
+                if (!this.predicateFailed.has(element.id)) {
+                    this.predicateFailed.add(element.id)
+                    console.error(`UI.tooltip.enabled threw for ${kind} "${element.id}"`, error)
+                }
+                return false
+            }
+        }
+        if (enabled && typeof enabled === 'object') return enabled[KIND_KEYS[kind]] !== false
+        return enabled !== false
+    }
+
     public openForNodeOnElement(event: MouseEvent, node: Node) {
+        if (!this.allows(node)) return
         this.triggerX = event.pageX
         this.triggerY = event.pageY
 
@@ -226,6 +262,8 @@ export class Tooltip extends UIComponent {
             }
             return
         }
+        // Refused before taking the hover over, so the tooltip it leaves hides as usual.
+        if (!this.allows(node)) return
 
         this.triggerX = event.pageX
         this.triggerY = event.pageY
@@ -240,6 +278,7 @@ export class Tooltip extends UIComponent {
 
     public edgeHovered(event: MouseEvent, edge: Edge) {
         if (this.hoveredElementID === edge.id) return
+        if (!this.allows(edge)) return
 
         this.triggerX = event.pageX
         this.triggerY = event.pageY

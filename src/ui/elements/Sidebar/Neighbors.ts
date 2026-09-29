@@ -6,7 +6,7 @@ import { UIComponent } from '../../UIComponent'
 import './properties.scss'
 import type { EdgeSelection, NodeSelection } from '../../../interfaces/GraphInteractions'
 import { AsyncRenderScope } from '../../../utils/AsyncRender'
-import type { NeighborsPanel } from '../../../interfaces/GraphUI'
+import type { NeighborsPanel, Tooltip as TooltipOptions } from '../../../interfaces/GraphUI'
 import { createTabs } from '../../components/Tabs'
 import type { GraphOptions, RawEdge, RawNode, RelaxedGraphData } from '../../../interfaces/GraphOptions'
 import { Graph } from '../../../Graph'
@@ -218,6 +218,15 @@ export class SidebarNeighbors extends UIComponent {
         }
     }
 
+    /**
+     * The host's per-kind choice holds in the neighbour graph too. A plain `true` or `false`
+     * does not: that graph's tooltip is always on.
+     */
+    private egoTooltipEnabled(): TooltipOptions['enabled'] {
+        const enabled = this.uiManager.getOptions().tooltip?.enabled
+        return typeof enabled === 'boolean' || enabled === undefined ? true : enabled
+    }
+
     private buildEgoGraph(egoNode: Node, selectEgoNode: boolean = true): void {
         if (!this.egographContainer) return
 
@@ -301,7 +310,7 @@ export class SidebarNeighbors extends UIComponent {
             UI: {
                 mode: 'viewer',
                 tooltip: {
-                    enabled: true,
+                    enabled: this.egoTooltipEnabled(),
                     allowPinning: false,
                     setPosition: (tooltip: HTMLElement, hoveredBCR: DOMRect, canvasBbox: DOMRect) => {
                         tooltip.style.left = `${canvasBbox.x+canvasBbox.width + 15}px`

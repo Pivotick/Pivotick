@@ -867,8 +867,26 @@ export interface RegisteredExtraPanel extends ExtraPanel {
     id: string
 }
 
+/** What a tooltip is shown for: a group made by `UI.simplify`, any other node, or an edge. */
+export type TooltipKind = 'node' | 'edge' | 'group'
+
+/** Which kinds show a tooltip. A missing key is `true`. */
+export interface TooltipKinds {
+    nodes?: boolean
+    edges?: boolean
+    groups?: boolean
+}
+
 export interface Tooltip {
-    enabled?: boolean /** @default true */
+    /**
+     * Which hovers show a tooltip.
+     * - `true` / `false`: all or none.
+     * - `{ nodes, edges, groups }`: per kind. A missing key is `true`, so `{ edges: false }`
+     *   means everything but edges.
+     * - `(element, kind) => boolean`: asked on every hover. One that throws counts as `false`.
+     * @default true
+     */
+    enabled?: boolean | TooltipKinds | ((element: Node | Edge, kind: TooltipKind) => boolean)
     allowPinning?: boolean /** @default true */
     /**
      * Custom renderer for node tooltips. This content is added after the default tooltip.

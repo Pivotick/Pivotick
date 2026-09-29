@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Tooltips per kind
+
+- **`UI.tooltip.enabled` takes a map or a function** besides `true` / `false`.
+  `{ nodes: false, edges: false, groups: true }` keeps only the group tooltips; a missing key
+  is `true`. `(element, kind) => boolean` is asked on every hover, and one that throws shows
+  nothing. The neighbour graph in the sidebar follows the same choice.
+
 ### Fixes
 
 - With the simulation switched off, unpinned nodes no longer drift for a few seconds after

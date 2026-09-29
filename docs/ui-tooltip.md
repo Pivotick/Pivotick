@@ -20,6 +20,40 @@ const options = {
 }
 ```
 
+## Choosing what shows a tooltip
+
+`enabled` also takes a map of kinds or a function, for a graph that wants tooltips on some
+hovers only. The kinds are `nodes`, `edges` and `groups`, the groups [Simplify](/simplify)
+draws. A missing key is `true`, so `{ edges: false }` keeps nodes and groups.
+
+A graph whose nodes already grow into a detailed card on hover has no use for a node tooltip,
+but a group only explains itself in its tooltip before it is opened:
+
+```ts [Groups only]
+const options = {
+    UI: {
+        tooltip: { // [!code focus:3]
+            enabled: { nodes: false, edges: false, groups: true }
+        }
+    }
+}
+```
+
+A function is asked on every hover, with the element and its kind (`'node'`, `'edge'` or
+`'group'`). A function that throws counts as `false`, and the error is logged once per element.
+
+```ts [Only flagged nodes]
+const options = {
+    UI: {
+        tooltip: { // [!code focus:3]
+            enabled: (element, kind) => kind === 'node' && element.getData().important === true
+        }
+    }
+}
+```
+
+The tooltip itself is left out only when `enabled` is `false`, or a map with every kind off.
+
 ## Header mapping
 Similar to the mapping done in the sidebar's [main header](/ui-sidebar#main-header-interface), you can provide mapping for the tooltip's header for both nodes and edges.
 
