@@ -112,7 +112,14 @@ const options = {
 :::
 
 ::: warning
-When `render()` is provided, Pivotick skips all default mapping logic.
+When `render()` is provided, Pivotick skips all default mapping logic, unless it returns `undefined`. An `undefined` result (or a promise resolving to `undefined`) draws the default header for that selection: the `nodeHeaderMap` / `edgeHeaderMap` title for one element, the selection count for several, and the canvas total when nothing is selected. Return `null` to leave the header empty.
+
+```ts
+mainHeader: {
+    // A custom header for a lone element, the default counts for everything else.
+    render: (element) => (element && !Array.isArray(element)) ? myHeader(element) : undefined,
+}
+```
 :::
 
 ## Properties Panel <sup>[interface](/api/html/interfaces/GraphUI.PropertiesPanel.html)</sup>
@@ -230,7 +237,7 @@ const options = {
 ## Extra Panels <sup>[interface](/api/html/interfaces/GraphUI.ExtraPanel.html)</sup>
 Allows adding fully custom panels with dynamic or static content. These panels are ideal for showing additional contextual information, custom controls, or interactive widgets related to the selected element.
 
-Each extra panel has an optional `title` and a `render()`, both of which can be static (string/HTMLElement) or a function of the current selection. A returned `string` renders as **text**; return an `HTMLElement` to render your own markup.
+Each extra panel has an optional `title` and a `render()`, both of which can be static (string/HTMLElement) or a function of the current selection. A returned `string` renders as **text**; return an `HTMLElement` to render your own markup. Return `null` to leave the panel body empty.
 
 ::: code-group
 

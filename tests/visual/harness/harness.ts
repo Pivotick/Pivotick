@@ -186,8 +186,12 @@ export interface AsyncContentSpec {
 /** What a fallback-test `propertiesPanel.render` returns: its own element, `undefined` or `null`. */
 export type PropertiesRenderReturn = 'custom' | 'undefined' | 'null'
 
-/** Per selection kind, what `propertiesPanel.render` returns. Omitted kinds return `undefined`. */
+/** A surface whose `render` the fallback tests stub. */
+export type FallbackSurface = 'propertiesPanel' | 'mainHeader' | 'extraPanel'
+
+/** Per selection kind, what the stubbed `render` returns. Omitted kinds return `undefined`. */
 export interface PropertiesFallbackSpec {
+    none?: PropertiesRenderReturn
     node?: PropertiesRenderReturn
     nodes?: PropertiesRenderReturn
     edge?: PropertiesRenderReturn
@@ -1871,6 +1875,8 @@ export interface HarnessApi {
     destroyGraph(): void
     /** Load a fixture whose `propertiesPanel.render` returns what {@link PropertiesFallbackSpec} says. */
     loadPropertiesFallback(name: FixtureName, spec: PropertiesFallbackSpec, overrides?: PlainObject): Promise<void>
+    /** The same stub on any {@link FallbackSurface}; an extra panel is mounted titled `Fallback`. */
+    loadRenderFallback(surface: FallbackSurface, name: FixtureName, spec: PropertiesFallbackSpec, overrides?: PlainObject): Promise<void>
     /** Load `multiTag` with a properties map giving each tag its own `Tag` entry. */
     loadMultiValuedTags(overrides?: PlainObject): Promise<void>
     /** Selections whose held render is still open, e.g. `'2 nodes'`. */
@@ -4512,15 +4518,18 @@ class Harness implements HarnessApi {
     }
 
     async loadPropertiesFallback(name: FixtureName, spec: PropertiesFallbackSpec, overrides: PlainObject = {}): Promise<void> {
+        await this.loadRenderFallback('propertiesPanel', name, spec, overrides)
+    }
+
+    async loadRenderFallback(surface: FallbackSurface, name: FixtureName, spec: PropertiesFallbackSpec, overrides: PlainObject = {}): Promise<void> {
         this.heldPropertiesRenders.clear()
-        const kindOf = (selection: ExtraPanelSelection): keyof PropertiesFallbackSpec | undefined => {
-            if (selection === null) return undefined
+        const kindOf = (selection: ExtraPanelSelection): Exclude<keyof PropertiesFallbackSpec, 'async'> => {
+            if (selection === null) return 'none'
             if (Array.isArray(selection)) return selection[0] instanceof Node ? 'nodes' : 'edges'
             return selection instanceof Node ? 'node' : 'edge'
         }
         const outcome = (selection: ExtraPanelSelection): HTMLElement | null | undefined => {
-            const kind = kindOf(selection)
-            const returns = kind ? spec[kind] : undefined
+            const returns = spec[kindOf(selection)]
             if (returns === 'custom') return asyncTestElement(`custom · ${describeSelection(selection)}`)
             return returns === 'null' ? null : undefined
         }
@@ -4530,7 +4539,10 @@ class Harness implements HarnessApi {
                 this.heldPropertiesRenders.set(describeSelection(selection), () => resolve(outcome(selection)))
             })
         }
-        await this.boot(name, mergeOptions({ UI: { propertiesPanel: { render } } }, overrides))
+        const ui = surface === 'extraPanel'
+            ? { extraPanels: [{ id: 'fallback', title: 'Fallback', render, alwaysVisible: true }] }
+            : { [surface]: { render } }
+        await this.boot(name, mergeOptions({ UI: ui }, overrides))
     }
 
     async loadMultiValuedTags(overrides: PlainObject = {}): Promise<void> {

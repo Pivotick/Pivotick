@@ -24,9 +24,19 @@ export type Renderable = HTMLElement | string
  * panel was torn down). See {@link RenderContext} for cancelling the work that
  * produced it.
  *
+ * `null` renders nothing: the slot stays empty.
+ *
  * @category UI Options
  */
-export type RenderResult = Renderable | Promise<Renderable>
+export type RenderResult = Renderable | null | Promise<Renderable | null>
+
+/**
+ * A {@link RenderResult} for a hook that replaces a default drawing (the properties
+ * panel, the main header): `undefined`, or a promise of it, draws that default instead.
+ *
+ * @category UI Options
+ */
+export type FallbackRenderResult = RenderResult | undefined | Promise<Renderable | null | undefined>
 
 /**
  * Passed as the **last** argument to every async-capable content hook, so a

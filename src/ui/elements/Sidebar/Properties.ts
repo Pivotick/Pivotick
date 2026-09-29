@@ -92,10 +92,7 @@ export class SidebarProperties extends UIComponent {
             ? drawDefault()
             : this.renderScope.resolve(
                 (ctx) => (typeof render === 'function' ? render(element, ctx) : render),
-                (value) => {
-                    if (value === undefined) return drawDefault()
-                    return value === null ? undefined : toRenderedElement(value)
-                },
+                (value) => (value === undefined ? drawDefault() : toRenderedElement(value)),
             )
         this.body.innerHTML = ''
         if (content) this.body.appendChild(content)

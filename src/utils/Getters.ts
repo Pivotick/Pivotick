@@ -118,6 +118,8 @@ export function isThenable(value: unknown): value is PromiseLike<unknown> {
  * @returns An html element, or undefined when there is nothing to render.
  */
 export function toRenderedElement(resolved: unknown): HTMLElement | undefined {
+    // `null` means "render nothing"; it must not reach the object branch below.
+    if (resolved === null) return undefined
     // Element, not HTMLElement: an SVG element a render callback hands back passes through too.
     if (resolved instanceof Element) {
         return resolved as HTMLElement

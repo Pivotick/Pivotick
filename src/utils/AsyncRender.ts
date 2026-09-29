@@ -1,4 +1,4 @@
-import type { AsyncContentOptions, AsyncSurface, RenderContext, Renderable } from '../interfaces/AsyncContent'
+import type { AsyncContentOptions, AsyncSurface, RenderContext, RenderResult, Renderable } from '../interfaces/AsyncContent'
 import { isThenable, toRenderedElement } from './Getters'
 
 /**
@@ -171,7 +171,7 @@ export class AsyncRenderScope {
      * surface's own arguments plus a trailing {@link RenderContext}.
      */
     public content<A extends unknown[]>(
-        input: Renderable | ((...args: [...A, RenderContext]) => Renderable | Promise<Renderable>) | undefined,
+        input: Renderable | ((...args: [...A, RenderContext]) => RenderResult) | undefined,
         ...args: A
     ): HTMLElement | undefined {
         if (input === undefined) return undefined

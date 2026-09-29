@@ -11,6 +11,7 @@ import type { EdgeSelection, NodeSelection } from '../../../interfaces/GraphInte
 import { createNodePreview } from '../../../utils/NodePreview'
 import { TitleFitController } from './titleFit'
 import { AsyncRenderScope } from '../../../utils/AsyncRender'
+import { toRenderedElement } from '../../../utils/Getters'
 import type { MainHeader as MainHeaderOptions } from '../../../interfaces/GraphUI'
 
 
@@ -56,51 +57,47 @@ export class SidebarMainHeader extends UIComponent {
         this.clearOverview()
         // The count is read when shown, so it has to be read again whenever the canvas changes.
         this.track(this.uiManager.graph.onVisibleChange(() => {
-            if (this.panel?.querySelector(':scope > .pvt-mainheader-count')) this.showTotalNodeCount()
+            if (this.panel?.querySelector(':scope > .pvt-mainheader-count')) this.panel.replaceChildren(this.buildTotalNodeCount())
         }))
     }
 
-    private renderCustomContent(element: Node | Edge | Node[] | Edge[] | null) {
-        if (!this.panel || !this.renderCb) return
+    /**
+     * Replace the header with the selection's content: the consumer's `render`
+     * when set (and `useRender`), else `drawDefault`. A `render` returning (or
+     * resolving to) `undefined` falls back to `drawDefault`.
+     */
+    private renderHeader(
+        element: Node | Edge | Node[] | Edge[] | null,
+        drawDefault: () => HTMLElement,
+        useRender = true,
+    ): void {
+        if (!this.panel) return
 
         // Abandon the previous selection's render before its slot is wiped, so a
         // late resolution can't paint over the element now selected.
         this.renderScope.supersede()
-        this.panel.innerHTML = ''
-        const content = this.renderScope.content(this.renderCb, element)
-        if (content) {
-            this.panel?.appendChild(content)
-        }
+        this.titleFit?.clear()
+        const render = useRender ? this.renderCb : undefined
+        const content = render === undefined
+            ? drawDefault()
+            : this.renderScope.resolve(
+                (ctx) => (typeof render === 'function' ? render(element, ctx) : render),
+                (value) => (value === undefined ? drawDefault() : toRenderedElement(value)),
+            )
+        this.panel.replaceChildren(...(content ? [content] : []))
     }
 
     public clearOverview(): void {
-        if (!this.panel) return
-
-        this.titleFit?.clear()
-
-        if (this.renderCb) {
-            this.renderCustomContent(null)
-            return
-        }
-
-        this.panel.innerHTML = ''
-        this.showTotalNodeCount()
+        this.renderHeader(null, () => this.buildTotalNodeCount())
     }
 
     /* Single selection */
     updateNodeOverview(node: Node, element: unknown): void {
-        if (!this.panel) return
-
         // A custom header renders one node's data; a group has none, so it keeps this one.
         const group = node.isGroup ? (node as GroupNode).info : undefined
-        if (this.renderCb && !group) {
-            this.renderCustomContent(node)
-            return
-        }
-
-        this.panel.innerHTML = ''
-        const fixedPreviewSize = 42
-        const template = `
+        this.renderHeader(node, () => {
+            const fixedPreviewSize = 42
+            const template = `
 <div class="enter-ready">
     <div class="pvt-mainheader-nodepreview"></div>
     <div class="pvt-mainheader-nodeinfo">
@@ -110,44 +107,34 @@ export class SidebarMainHeader extends UIComponent {
     <div class="pvt-mainheader-nodeinfo-action">
     </div>
 </div>`
-        const mainheaderContent = createHtmlTemplate(template) as HTMLDivElement
-        const previewElem = mainheaderContent.querySelector('.pvt-mainheader-nodepreview')
-        const nameElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-name')
-        const subtitleElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-subtitle')
-        const actionElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-action')
+            const mainheaderContent = createHtmlTemplate(template) as HTMLDivElement
+            const previewElem = mainheaderContent.querySelector('.pvt-mainheader-nodepreview')
+            const nameElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-name')
+            const subtitleElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-subtitle')
+            const actionElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-action')
 
-        previewElem?.appendChild(createNodePreview(element instanceof SVGGElement ? element : node, { size: fixedPreviewSize }))
-        if (nameElem) {
-            this.renderTitle(
-                nameElem as HTMLElement,
-                actionElem as HTMLElement | null,
-                group ? this.uiManager.graph.simplify.labelOf(group) : nodeNameGetter(node, this.uiManager.getOptions().mainHeader)
-            )
-        }
-        if (subtitleElem) {
-            const description = group
-                ? `Group · ${this.uiManager.graph.simplify.ruleLabel(group.rule)}`
-                : nodeDescriptionGetter(node, this.uiManager.getOptions().mainHeader)
-            subtitleElem.textContent = description ?? ''
-        }
-
-        this.panel.appendChild(mainheaderContent)
-        requestAnimationFrame(() => {
-            this.panel?.firstElementChild?.classList.add('enter-active')
-        })
+            previewElem?.appendChild(createNodePreview(element instanceof SVGGElement ? element : node, { size: fixedPreviewSize }))
+            if (nameElem) {
+                this.renderTitle(
+                    nameElem as HTMLElement,
+                    actionElem as HTMLElement | null,
+                    group ? this.uiManager.graph.simplify.labelOf(group) : nodeNameGetter(node, this.uiManager.getOptions().mainHeader)
+                )
+            }
+            if (subtitleElem) {
+                const description = group
+                    ? `Group · ${this.uiManager.graph.simplify.ruleLabel(group.rule)}`
+                    : nodeDescriptionGetter(node, this.uiManager.getOptions().mainHeader)
+                subtitleElem.textContent = description ?? ''
+            }
+            return enter(mainheaderContent)
+        }, !group)
     }
 
     updateEdgeOverview(edge: Edge): void {
-        if (!this.panel) return
-
-        if (this.renderCb) {
-            this.renderCustomContent(edge)
-            return
-        }
-
-        this.panel.innerHTML = ''
-        const fixedPreviewSize = 42
-        const template = `<div class="enter-ready">
+        this.renderHeader(edge, () => {
+            const fixedPreviewSize = 42
+            const template = `<div class="enter-ready">
 <div class="pvt-mainheader-nodepreview">
     ${graphEdgeIcon(fixedPreviewSize)}
 </div>
@@ -158,46 +145,34 @@ export class SidebarMainHeader extends UIComponent {
 <div class="pvt-mainheader-nodeinfo-action">
 </div>
 </div>`
-        const mainheaderContent = createHtmlTemplate(template) as HTMLDivElement
-        const nameElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-name')
-        const subtitleElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-subtitle')
-        const actionElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-action')
+            const mainheaderContent = createHtmlTemplate(template) as HTMLDivElement
+            const nameElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-name')
+            const subtitleElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-subtitle')
+            const actionElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-action')
 
-        if (nameElem) {
-            this.renderTitle(
-                nameElem as HTMLElement,
-                actionElem as HTMLElement | null,
-                edgeNameGetter(edge, this.uiManager.getOptions().mainHeader)
-            )
-        }
-        if (subtitleElem) {
-            // A line folded onto a closed cluster for several edges has no data of its own.
-            const represented = edge.representedEdges?.length ?? 0
-            subtitleElem.textContent = represented > 1
-                ? `Stands for ${represented} edges`
-                : edgeDescriptionGetter(edge, this.uiManager.getOptions().mainHeader)
-        }
-
-        this.panel.appendChild(mainheaderContent)
-        requestAnimationFrame(() => {
-            this.panel?.firstElementChild?.classList.add('enter-active')
+            if (nameElem) {
+                this.renderTitle(
+                    nameElem as HTMLElement,
+                    actionElem as HTMLElement | null,
+                    edgeNameGetter(edge, this.uiManager.getOptions().mainHeader)
+                )
+            }
+            if (subtitleElem) {
+                // A line folded onto a closed cluster for several edges has no data of its own.
+                const represented = edge.representedEdges?.length ?? 0
+                subtitleElem.textContent = represented > 1
+                    ? `Stands for ${represented} edges`
+                    : edgeDescriptionGetter(edge, this.uiManager.getOptions().mainHeader)
+            }
+            return enter(mainheaderContent)
         })
     }
 
     /* Multi selection */
     public updateNodesOverview(nodes: NodeSelection<unknown>[]): void {
-        if (!this.panel) return
-
-        this.titleFit?.clear()
-
-        if (this.renderCb) {
-            this.renderCustomContent(nodes.map((nodeS: NodeSelection<unknown>) => nodeS.node))
-            return
-        }
-
-        this.panel.innerHTML = ''
-        const fixedPreviewSize = 42
-        const template = `<div class="enter-ready">
+        this.renderHeader(nodes.map((nodeS: NodeSelection<unknown>) => nodeS.node), () => {
+            const fixedPreviewSize = 42
+            const template = `<div class="enter-ready">
     <div class="pvt-mainheader-nodepreview">
         <svg class="pvt-node-preview-icon" width="${fixedPreviewSize}" height="${fixedPreviewSize}" viewBox="0 0 ${fixedPreviewSize} ${fixedPreviewSize}" preserveAspectRatio="xMidYMid meet"></svg>
     </div>
@@ -208,43 +183,30 @@ export class SidebarMainHeader extends UIComponent {
     <div class="pvt-mainheader-nodeinfo-action">
     </div>
 </div>`
-        const mainheaderContent = createHtmlTemplate(template) as HTMLDivElement
-        const iconElem = mainheaderContent.querySelector('.pvt-node-preview-icon')
-        const nameElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-name')
-        const subtitleElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-subtitle')
-        // const actionElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-action')
+            const mainheaderContent = createHtmlTemplate(template) as HTMLDivElement
+            const iconElem = mainheaderContent.querySelector('.pvt-node-preview-icon')
+            const nameElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-name')
+            const subtitleElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-subtitle')
 
-        if (iconElem) {
-            const selectionIconTemplate = graphMultiSelectNode(fixedPreviewSize)
-            const selectionIcon = createHtmlTemplate(selectionIconTemplate) as HTMLElement
-            iconElem.appendChild(selectionIcon)
-        }
-        if (nameElem) {
-            nameElem.textContent = `${nodes.length} nodes selected`
-        }
-        if (subtitleElem) {
-            subtitleElem.textContent = `Out of ${this.uiManager.graph.getNodeCount()} total`
-        }
-
-        this.panel.appendChild(mainheaderContent)
-        requestAnimationFrame(() => {
-            this.panel?.firstElementChild?.classList.add('enter-active')
+            if (iconElem) {
+                const selectionIconTemplate = graphMultiSelectNode(fixedPreviewSize)
+                const selectionIcon = createHtmlTemplate(selectionIconTemplate) as HTMLElement
+                iconElem.appendChild(selectionIcon)
+            }
+            if (nameElem) {
+                nameElem.textContent = `${nodes.length} nodes selected`
+            }
+            if (subtitleElem) {
+                subtitleElem.textContent = `Out of ${this.uiManager.graph.getNodeCount()} total`
+            }
+            return enter(mainheaderContent)
         })
     }
 
     public updateEdgesOverview(edges: EdgeSelection<unknown>[]): void {
-        if (!this.panel) return
-
-        this.titleFit?.clear()
-
-        if (this.renderCb) {
-            this.renderCustomContent(edges.map((nodeS: EdgeSelection<unknown>) => nodeS.edge))
-            return
-        }
-
-        this.panel.innerHTML = ''
-        const fixedPreviewSize = 42
-        const template = `<div class="enter-ready">
+        this.renderHeader(edges.map((edgeS: EdgeSelection<unknown>) => edgeS.edge), () => {
+            const fixedPreviewSize = 42
+            const template = `<div class="enter-ready">
 <div class="pvt-mainheader-nodepreview">
     ${graphEdgeIcon(fixedPreviewSize)}
 </div>
@@ -255,21 +217,17 @@ export class SidebarMainHeader extends UIComponent {
 <div class="pvt-mainheader-nodeinfo-action">
 </div>
 </div>`
-        const mainheaderContent = createHtmlTemplate(template) as HTMLDivElement
-        const nameElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-name')
-        const subtitleElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-subtitle')
-        // const actionElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-action')
+            const mainheaderContent = createHtmlTemplate(template) as HTMLDivElement
+            const nameElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-name')
+            const subtitleElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-subtitle')
 
-        if (nameElem) {
-            nameElem.textContent = `${edges.length} edges selected`
-        }
-        if (subtitleElem) {
-            subtitleElem.textContent = `Out of ${this.uiManager.graph.getEdgeCount() } total`
-        }
-
-        this.panel.appendChild(mainheaderContent)
-        requestAnimationFrame(() => {
-            this.panel?.firstElementChild?.classList.add('enter-active')
+            if (nameElem) {
+                nameElem.textContent = `${edges.length} edges selected`
+            }
+            if (subtitleElem) {
+                subtitleElem.textContent = `Out of ${this.uiManager.graph.getEdgeCount() } total`
+            }
+            return enter(mainheaderContent)
         })
     }
 
@@ -291,14 +249,19 @@ export class SidebarMainHeader extends UIComponent {
     }
 
     /* Private methods */
-    private showTotalNodeCount(): void {
-        if (!this.panel) return
+    private buildTotalNodeCount(): HTMLElement {
         const totalNodeCount = this.uiManager.graph.getMutableVisibleNodes().length
         const totalEdgeCount = this.uiManager.graph.getMutableVisibleEdges().length
         const count = document.createElement('span')
         count.className = 'pvt-mainheader-count'
         count.textContent = `Showing ${totalNodeCount} nodes and ${totalEdgeCount} edges`
-        this.panel.replaceChildren(count)
+        return count
     }
 
+}
+
+/** Plays the header's enter transition once the element has been mounted. */
+function enter(element: HTMLElement): HTMLElement {
+    requestAnimationFrame(() => element.classList.add('enter-active'))
+    return element
 }
