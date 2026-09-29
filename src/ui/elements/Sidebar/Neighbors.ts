@@ -305,6 +305,7 @@ export class SidebarNeighbors extends UIComponent {
             edges: egoEdgeList,
         }
         
+        const hostOverrides = this.uiManager.getOptions().neighborsPanel.graph
         const egoGraphOptions: GraphOptions = {
             isDirected: this.uiManager.graph.getOptions().isDirected,
             UI: {
@@ -325,13 +326,15 @@ export class SidebarNeighbors extends UIComponent {
                 }
             },
             layout: {
-                type: 'egoTree',
                 radial: true,
                 radialGap: 120,
+                ...hostOverrides?.layout,
+                type: 'egoTree',
                 rootId: egoNode.id,
             },
             render: {
                 ...this.uiManager.graph.getOptions().render,
+                ...hostOverrides?.render,
                 dragEnabled: false,
                 enableFocusMode: false,
                 enableNodeExpansion: false,

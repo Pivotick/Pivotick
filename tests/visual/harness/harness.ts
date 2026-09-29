@@ -1877,6 +1877,12 @@ export interface HarnessApi {
     loadPropertiesFallback(name: FixtureName, spec: PropertiesFallbackSpec, overrides?: PlainObject): Promise<void>
     /** The same stub on any {@link FallbackSurface}; an extra panel is mounted titled `Fallback`. */
     loadRenderFallback(surface: FallbackSurface, name: FixtureName, spec: PropertiesFallbackSpec, overrides?: PlainObject): Promise<void>
+    /** Load `filterable` with `render.nodeTypeAccessor` reading `data.type`, so a `nodeStyleMap` override applies. */
+    loadTypedFilterable(overrides?: PlainObject): Promise<void>
+    /** A node's shape fill in the neighbours panel's ego graph, or null while it has none. */
+    egoNodeFill(id: string): string | null
+    /** A node's position in the ego graph, in graph units. */
+    egoNodePosition(id: string): { x: number, y: number } | null
     /** Load `multiTag` with a properties map giving each tag its own `Tag` entry. */
     loadMultiValuedTags(overrides?: PlainObject): Promise<void>
     /** Selections whose held render is still open, e.g. `'2 nodes'`. */
@@ -4543,6 +4549,27 @@ class Harness implements HarnessApi {
             ? { extraPanels: [{ id: 'fallback', title: 'Fallback', render, alwaysVisible: true }] }
             : { [surface]: { render } }
         await this.boot(name, mergeOptions({ UI: ui }, overrides))
+    }
+
+    async loadTypedFilterable(overrides: PlainObject = {}): Promise<void> {
+        const nodeTypeAccessor = (node: Node): unknown => node.getData()?.type
+        await this.boot('filterable', mergeOptions({ render: { nodeTypeAccessor } }, overrides))
+    }
+
+    /** The neighbours panel's ego graph, reached through the sidebar's private fields. */
+    private egoGraph(): Graph | undefined {
+        const sidebar = this.g.UIManager.sidebar as unknown as { sidebarNeighbors?: { egoGraph?: Graph } } | undefined
+        return sidebar?.sidebarNeighbors?.egoGraph
+    }
+
+    egoNodeFill(id: string): string | null {
+        const shape = this.egoGraph()?.getMutableNode(id)?.getGraphElement()?.querySelector(':scope > .node')
+        return shape ? getComputedStyle(shape).fill : null
+    }
+
+    egoNodePosition(id: string): { x: number, y: number } | null {
+        const node = this.egoGraph()?.getMutableNode(id)
+        return node && node.x !== undefined && node.y !== undefined ? { x: node.x, y: node.y } : null
     }
 
     async loadMultiValuedTags(overrides: PlainObject = {}): Promise<void> {

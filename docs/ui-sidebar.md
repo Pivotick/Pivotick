@@ -234,6 +234,31 @@ const options = {
 :::
 
 
+## Neighbours Panel <sup>[interface](/api/html/interfaces/GraphUI.NeighborsPanel.html)</sup>
+Shows the selected node's connections: a small graph of its neighbours, connection stats, and a list.
+
+The neighbour graph draws with the main graph's render options by default. Styles that suit a full canvas, such as node detail tiers or a focus card, can crowd a panel this size, so `graph` takes overrides of its own:
+
+- `graph.render` is merged over the main graph's render options. The panel's own settings (no drag, no zoom, no node expansion) still apply. A `maxZoom` here also caps how far the graph zooms in to fit, so a node with one neighbour is not blown up.
+- `graph.layout` is merged over the panel's radial layout. The root is always the selected node.
+
+```ts
+const options = {
+    UI: {
+        neighborsPanel: {
+            graph: {
+                render: {
+                    // Plain small nodes: no tiers, no focus card.
+                    nodeStyleMap: { event: { shape: 'circle', size: 10 } },
+                    maxZoom: 1,
+                },
+                layout: { radialGap: 80 },
+            },
+        },
+    },
+}
+```
+
 ## Extra Panels <sup>[interface](/api/html/interfaces/GraphUI.ExtraPanel.html)</sup>
 Allows adding fully custom panels with dynamic or static content. These panels are ideal for showing additional contextual information, custom controls, or interactive widgets related to the selected element.
 

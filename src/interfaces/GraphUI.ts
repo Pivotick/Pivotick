@@ -12,6 +12,9 @@ import type { FilterFacet, FilterOptions } from './GraphQueryEngine'
 import type { AsyncContentOptions, FallbackRenderResult, RenderContext, RenderResult } from './AsyncContent'
 import type { MinimapOptions } from '../plugins/minimap/options'
 import type { GroupInfo, SimplifyOptions } from './Simplify'
+import type { GraphRendererOptions } from './RendererOptions'
+import type { EgoTreeLayoutOptions } from './LayoutOptions'
+import type { DeepPartial } from '../utils/utils'
 
 /**
  * A UI feature that is either offered or not.
@@ -778,6 +781,30 @@ export interface NeighborsPanel {
      * arriving after the selection moved on is dropped.
      */
     render?: ((element: Node | Edge | Node[] | Edge[] | null, ctx: RenderContext) => RenderResult) | HTMLElement | string,
+    /**
+     * Options for the panel's neighbour graph, which otherwise draws with the main
+     * graph's render options.
+     * @example
+     * // Small plain nodes in the panel, never zoomed past 1×.
+     * graph: { render: { nodeStyleMap: plainStyles, maxZoom: 1 }, layout: { radialGap: 80 } }
+     */
+    graph?: NeighborsGraphOptions
+}
+
+/**
+ * Overrides for the neighbours panel's graph. See {@link NeighborsPanel.graph}.
+ */
+export interface NeighborsGraphOptions {
+    /**
+     * Shallow-merged over the main graph's render options. The panel's own settings
+     * (no drag, no zoom, no node expansion, no focus mode) still win.
+     */
+    render?: DeepPartial<GraphRendererOptions>
+    /**
+     * Merged over the panel's radial `egoTree` layout. The root is always the
+     * selected node.
+     */
+    layout?: Partial<Omit<EgoTreeLayoutOptions, 'type' | 'rootId'>>
 }
 
 /**

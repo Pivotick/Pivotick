@@ -865,7 +865,8 @@ export class GraphSvgRenderer extends GraphRenderer {
                 fullWidth / width,
                 fullHeight / height
             ) * 0.8
-            scale = Math.min(scale, 3)
+            // Never past 3×, nor past a lower `maxZoom` the host set.
+            scale = Math.min(scale, 3, this.options.maxZoom)
         }
 
         // The bounds and scale above are this method's own; the write itself belongs to
