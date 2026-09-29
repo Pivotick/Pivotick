@@ -153,6 +153,9 @@ folded: one group per type, hanging off the node you pivoted on. Forty IPs arriv
   declare it: the first grouped landing adds it at the top of the Simplify mode, switched on.
   Declare it to put it somewhere else or change its smallest group.
 - Which landings are grouped lasts for the session, like open groups.
+- A landing group's `landing` names where it came from: `{ runId, pivotId, pivotLabel }`,
+  with the label from the pivot's definition. A chip can read `12 × ip · Event elements`
+  without parsing the run id.
 
 To land every pivot result grouped, set `pivotIngestGrouped`. One-click runs and `autoIngest`
 pivots, which never open Review, then land grouped too:
@@ -312,17 +315,30 @@ render: {
 }
 ```
 
+`groupStyle` also receives `base`, the style the library would draw. What you return replaces
+its keys, so a host that adds a tier spreads `base.tiers` to keep the count on the disc:
+
+```ts
+render: {
+    groupStyle: (group, base) => ({
+        tiers: [...(base.tiers ?? []), { width: 140, height: 44, style: { html: () => chip(group) } }],
+    }),
+}
+```
+
 Each receives a `GroupInfo`:
 
 | Field | What it is |
 |---|---|
 | `id` | Stable while the group keeps most of its members. |
-| `rule` | `'neighbours'`, `'chains'`, `'degree'`, `'kcore'`, `'communities'`, or a custom rule's `id`. |
+| `rule` | `'neighbours'`, `'chains'`, `'degree'`, `'kcore'`, `'communities'`, `'landings'`, `'manual'`, or a custom rule's `id`. |
 | `members` | The real nodes it stands for. |
 | `typeCounts` | How many members of each type; `''` is no type. |
 | `anchors` | The drawn nodes it links to, groups included. |
 | `open` | Whether its members are back on the canvas. |
 | `level` | The Communities level it was found at. |
+| `title` | A hand-made group's title. |
+| `landing` | A landing group's run and pivot: `{ runId, pivotId, pivotLabel }`. |
 
 The tooltip of a group names its rule, lists what it links to and, for a mixed group, its
 members by type. `tooltip.renderGroupExtra(group, ctx)` adds your own lines, as

@@ -152,12 +152,19 @@ export interface GraphRendererOptions {
      * below. A group is drawn as a node, so `tiers`, `focusTier`, `html`, `shape` and
      * `badges` work as they do on one. Return nothing to keep the default.
      *
+     * `base` is the style the library would draw. What you return replaces its keys, so
+     * to keep the count on the disc while adding a tier, spread `base.tiers`.
+     *
      * @example
      * ```ts
      * groupStyle: (group) => group.rule === 'bySource' ? { color: '#6b7280' } : undefined
      * ```
+     * @example
+     * ```ts
+     * groupStyle: (group, base) => ({ tiers: [...(base.tiers ?? []), { width: 140, height: 44, style: { html: () => chip(group) } }] })
+     * ```
      */
-    groupStyle?: (group: GroupInfo) => Partial<NodeStyle> | void
+    groupStyle?: (group: GroupInfo, base: Readonly<Partial<NodeStyle>>) => Partial<NodeStyle> | void
     /**
      * What the chip over an open group shows, in place of its label. A string is shown as
      * text. The chip keeps its close mark and still folds the group back when clicked.

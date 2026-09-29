@@ -42,12 +42,26 @@ const load = async (page: Page, spec: PivotFixtureSpec = {}, ui: object = FULL):
     await page.locator('.zoom-layer:not(.hidden)').first().waitFor({ state: 'attached' })
 }
 
-/** Stage CORRELATION on `a` for these types, then mark every row. */
-async function stageAndMarkAll(page: Page, narrowing: Record<string, unknown>): Promise<void> {
-    const outcome = await harness(page, 'runPivot', CORRELATION, ['a'], narrowing)
-    expect((outcome as { status: string }).status).toBe('staged')
+/** Stage CORRELATION on `a` for these types, then mark every row. Returns the run's id. */
+async function stageAndMarkAll(page: Page, narrowing: Record<string, unknown>): Promise<string> {
+    const outcome = await harness(page, 'runPivot', CORRELATION, ['a'], narrowing) as { status: string, runId: string }
+    expect(outcome.status).toBe('staged')
     await page.locator('.pvt-triage-row').first().waitFor()
     await button(page, 'Select all').click()
+    return outcome.runId
+}
+
+/** What each landing group says it landed from, one entry per group. */
+async function landingsNamed(page: Page): Promise<unknown[]> {
+    return page.evaluate(() => window.__pivotick.graph!.simplify.getGroups()
+        .filter((group) => group.rule === 'landings')
+        .map((group) => group.landing))
+}
+
+/** The `landing` a group made by this run of CORRELATION should carry. */
+async function expectedLanding(page: Page, runId: string): Promise<unknown> {
+    const pivotLabel = await page.evaluate((id) => window.__pivotick.graph!.pivots.get(id)!.label, CORRELATION)
+    return { runId, pivotId: CORRELATION, pivotLabel }
 }
 
 async function ingestInAGroup(page: Page): Promise<void> {
@@ -118,6 +132,21 @@ test.describe('ingest in a group', () => {
         await expect.poll(() => landingGroups(page)).toEqual([])
         await page.evaluate(() => { window.__pivotick.graph!.history.redo() })
         await expect.poll(() => landingSizes(page)).toEqual({ ip: 38 })
+    })
+
+    test('each group names the run and pivot it landed from, through undo and redo', async ({ page }) => {
+        await load(page, { typed: true })
+        const runId = await stageAndMarkAll(page, { type: ['ip', 'paste'] })
+        await ingestInAGroup(page)
+        await expect.poll(() => landingSizes(page)).toEqual({ ip: 38, paste: 95 })
+        const landing = await expectedLanding(page, runId)
+        expect(await landingsNamed(page)).toEqual([landing, landing])
+
+        await page.evaluate(() => { window.__pivotick.graph!.history.undo() })
+        await expect.poll(() => landingGroups(page)).toEqual([])
+        await page.evaluate(() => { window.__pivotick.graph!.history.redo() })
+        await expect.poll(() => landingSizes(page)).toEqual({ ip: 38, paste: 95 })
+        expect(await landingsNamed(page)).toEqual([landing, landing])
     })
 
     test('a plain ingest lands loose and adds no rule', async ({ page }) => {

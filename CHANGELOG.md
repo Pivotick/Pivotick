@@ -9,6 +9,13 @@
   is `true`. `(element, kind) => boolean` is asked on every hover, and one that throws shows
   nothing. The neighbour graph in the sidebar follows the same choice.
 
+### Group styles
+
+- **`render.groupStyle(group, base)`** also receives the default style, so a host can add a
+  tier with `tiers: [...(base.tiers ?? []), mine]` and keep the count on the disc.
+- **A landing group names its pivot**: `GroupInfo.landing` is `{ runId, pivotId, pivotLabel }`
+  on a group made by the Pivot landings rule.
+
 ### Fixes
 
 - With the simulation switched off, unpinned nodes no longer drift for a few seconds after
@@ -23,6 +30,8 @@
   removed or filtered, instead of keeping the count from load until the selection cleared.
 - Tooltips, dropdowns and typeahead lists, which are mounted outside the graph, now take the
   theme set by `UI.theme` instead of the operating system's.
+- A tooltip's header under `UI.theme: 'dark'` no longer takes the light background when the
+  operating system is set to light.
 - A pinned tooltip's link now ends on the node's centre, not on the middle of the node and
   its label.
 - An ingest now warms up a running layout, as opening a group does, so what lands is laid out

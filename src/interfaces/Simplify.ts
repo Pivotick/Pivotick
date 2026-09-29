@@ -22,6 +22,8 @@ export interface GroupInfo {
     level?: number
     /** A hand-made group's title, shown in place of its type breakdown. */
     title?: string
+    /** A `landings` group's run: its id and the pivot that ran it. */
+    landing?: { runId: string, pivotId: string, pivotLabel: string }
 }
 
 /**

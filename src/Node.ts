@@ -594,8 +594,17 @@ export class Node {
      * @private
      */
     landedBy(): string | undefined {
-        const first = this._sources?.values().next().value
-        return first?.[0]?.runId
+        return this.landing()?.runId
+    }
+
+    /**
+     * The run that brought this node in and the pivot that ran it.
+     * @private
+     */
+    landing(): { pivotId: string, runId: string } | undefined {
+        const first = this._sources?.entries().next().value
+        const runId = first?.[1][0]?.runId
+        return first && runId !== undefined ? { pivotId: first[0], runId } : undefined
     }
 
     /**

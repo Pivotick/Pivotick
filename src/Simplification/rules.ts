@@ -37,6 +37,11 @@ export function landingsPartition(view: GraphView, runs: ReadonlySet<string>): M
     return partition
 }
 
+/** The run a {@link landingsPartition} key stands for. */
+export function landingRunOf(key: string): string {
+    return key.split(SEPARATOR)[0]
+}
+
 /** The distinct drawn nodes linked to this one, either way round. */
 function linkedTo(view: GraphView, node: Node): Set<Node> {
     return new Set([...view.inNeighbours(node), ...view.outNeighbours(node)])

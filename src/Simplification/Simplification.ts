@@ -6,7 +6,7 @@ import type {
 } from '../interfaces/Simplify'
 import { GroupNode } from './GroupNode'
 import { defaultGroupStyle, groupRadius } from './groupStyle'
-import { chainsPartition, degreePartition, kCorePartition, landingsPartition, neighboursPartition } from './rules'
+import { chainsPartition, degreePartition, kCorePartition, landingRunOf, landingsPartition, neighboursPartition } from './rules'
 import { COMMUNITY_RESOLUTIONS, type CommunityGraph } from '../plugins/analytics/Leiden'
 import { findCommunities } from '../SimulationWorkerWrapper'
 
@@ -846,6 +846,7 @@ export class Simplification {
             // A hand-made group is drawn under its own id, so the API and history can name it.
             const group = inherited ?? this.createGroup(state.id, parts, state.rule.kind === 'manual' ? key : undefined)
             if (state.rule.kind === 'manual') group.info.title = this.manual.find(record => record.id === key)?.title
+            if (state.rule.kind === 'landings') group.info.landing = this.landingOf(landingRunOf(key), members)
             claimed.add(group)
             group.key = key
             group.parts = parts
@@ -858,6 +859,13 @@ export class Simplification {
             formed.push(group)
         }
         return formed
+    }
+
+    /** A landings group's run, with the pivot its members were vouched for by. */
+    private landingOf(runId: string, members: Node[]): GroupInfo['landing'] {
+        const pivotId = members.map(member => member.landing()).find(landing => landing?.runId === runId)?.pivotId
+        if (pivotId === undefined) return undefined
+        return { runId, pivotId, pivotLabel: this.graph.pivots.get(pivotId)?.label ?? pivotId }
     }
 
     /**
@@ -1019,7 +1027,7 @@ export class Simplification {
 
         const colorOf = (type: string) => this.typeColor(info, type)
         const base = defaultGroupStyle(info, label, colorOf)
-        const custom = this.graph.getOptions().render?.groupStyle?.(info)
+        const custom = this.graph.getOptions().render?.groupStyle?.(info, base)
         group.setStyle(custom ? { ...base, ...custom } : base)
         group.markDirty()
     }

@@ -1,4 +1,4 @@
-import { test, expect, gotoHarness, harness, canvas, openNodeTooltip, centerOf } from '../helpers'
+import { test, expect, gotoHarness, harness, canvas, openNodeTooltip, centerOf, waitForViewSettled } from '../helpers'
 import type { Page } from '@playwright/test'
 
 /**
@@ -74,7 +74,7 @@ async function openSimplifyFlyout(page: Page): Promise<void> {
     await expect(page.locator('.pvt-flyout-panel.pvt-flyout-simplify')).toHaveClass(/open/)
 }
 
-const loadSimplify = (page: Page, overrides: Record<string, unknown> = {}, fixture: 'simplify' | 'simplifyClusters' | 'simplifyChains' | 'simplifyCore' | 'simplifyCommunities' = 'simplify', look = false) =>
+const loadSimplify = (page: Page, overrides: Record<string, unknown> = {}, fixture: 'simplify' | 'simplifyClusters' | 'simplifyChains' | 'simplifyCore' | 'simplifyCommunities' = 'simplify', look: boolean | 'chip' = false) =>
     harness(page, 'loadSimplify', overrides, fixture, look)
 
 const withNeighbours = (extra: Record<string, unknown> = {}) =>
@@ -525,6 +525,38 @@ test.describe('clusters', () => {
     })
 })
 
+/** The default count tier, and the chip tier the harness's chip look adds, as `[width, height]`. */
+const COUNT_TIER = [26, 26]
+const CHIP_TIER = [140, 44]
+
+/** The tiers a member's group declares, as `[width, height]`. */
+async function groupTiers(page: Page, member: string): Promise<number[][]> {
+    return page.evaluate((id) => {
+        const simplify = window.__pivotick.graph!.simplify
+        const tiers = simplify.getGroupNode(simplify.groupOf(id)!.id)!.getStyle().tiers ?? []
+        return tiers.map((tier) => [tier.width, tier.height])
+    }, member)
+}
+
+/** Centre on a member's group, zoom to `scale`, and read which tier it draws and what is in it. */
+async function groupDrawnAt(page: Page, member: string, scale: number): Promise<{ tier: string | null, count: boolean, chip: boolean }> {
+    await page.evaluate((id) => {
+        const graph = window.__pivotick.graph!
+        const group = graph.simplify.getGroupNode(graph.simplify.groupOf(id)!.id)!
+        graph.renderer.setViewport({ x: group.x!, y: group.y! })
+    }, member)
+    await harness(page, 'setZoomScale', scale)
+    return page.evaluate((id) => {
+        const simplify = window.__pivotick.graph!.simplify
+        const element = simplify.getGroupNode(simplify.groupOf(id)!.id)!.getGraphElement()!
+        return {
+            tier: element.getAttribute('data-pvt-tier'),
+            count: !!element.querySelector('.pvt-group-count'),
+            chip: !!element.querySelector('.test-group-chip'),
+        }
+    }, member)
+}
+
 test.describe('the look', () => {
     test('groupStyle and typeLabel override the default', async ({ page }) => {
         // The harness's look: IP groups drawn black, types named `6 IPs`.
@@ -536,6 +568,29 @@ test.describe('the look', () => {
         }, member)
         expect(await readStyle('ip-0')).toEqual({ color: '#111111', label: '6 IPs' })
         expect(await readStyle('dom-0')).toEqual({ color: '#10b981', label: '5 domains' })
+    })
+
+    test('groupStyle gets the default style as base, so a host can add a tier to it', async ({ page }) => {
+        // The harness's chip look: base.tiers plus a 140 x 44 chip.
+        await loadSimplify(page, withNeighbours(), 'simplify', 'chip')
+        await waitForViewSettled(page)
+        await expect.poll(() => groupTiers(page, 'ip-0')).toEqual([COUNT_TIER, CHIP_TIER])
+
+        // A 6-member group's disc fits the count from zoom 1 and the chip from zoom 6.
+        expect(await groupDrawnAt(page, 'ip-0', 0.6)).toEqual({ tier: 'base', count: false, chip: false })
+        expect(await groupDrawnAt(page, 'ip-0', 1)).toEqual({ tier: '0', count: true, chip: false })
+        expect(await groupDrawnAt(page, 'ip-0', 6)).toEqual({ tier: '1', count: false, chip: true })
+    })
+
+    test('a groupStyle returning only a colour keeps the default tiers', async ({ page }) => {
+        await loadSimplify(page, withNeighbours(), 'simplify', true)
+        expect(await groupTiers(page, 'ip-0')).toEqual([COUNT_TIER])
+    })
+
+    test('a group made by a rule other than landings names no landing', async ({ page }) => {
+        await loadSimplify(page, withNeighbours())
+        const landings = await page.evaluate(() => window.__pivotick.graph!.simplify.getGroups().map((group) => group.landing))
+        expect(landings).toEqual([undefined, undefined, undefined])
     })
 
     test('the default look: a ringed disc with its count, the label below', async ({ page }) => {

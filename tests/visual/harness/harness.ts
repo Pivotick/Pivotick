@@ -1259,7 +1259,7 @@ export interface HarnessApi {
      * Load a simplify fixture with `data.type` as the node type and a colour per type —
      * both functions or keyed on one, so they are baked in on the page side.
      */
-    loadSimplify(overrides?: PlainObject, fixture?: 'simplify' | 'simplifyClusters' | 'simplifyChains' | 'simplifyCore' | 'simplifyCommunities', look?: boolean): Promise<void>
+    loadSimplify(overrides?: PlainObject, fixture?: 'simplify' | 'simplifyClusters' | 'simplifyChains' | 'simplifyCore' | 'simplifyCommunities', look?: boolean | 'chip'): Promise<void>
     /**
      * Load the unpinned hubs, and right after `new Graph()` give them a hand-made group of
      * {@link HUB_PICKS}, closed or open, as a host holding grouped data would.
@@ -2098,7 +2098,7 @@ class Harness implements HarnessApi {
         if (document.fonts?.ready) await document.fonts.ready
     }
 
-    async loadSimplify(overrides: PlainObject = {}, fixture: 'simplify' | 'simplifyClusters' | 'simplifyChains' | 'simplifyCore' | 'simplifyCommunities' = 'simplify', look = false): Promise<void> {
+    async loadSimplify(overrides: PlainObject = {}, fixture: 'simplify' | 'simplifyClusters' | 'simplifyChains' | 'simplifyCore' | 'simplifyCommunities' = 'simplify', look: boolean | 'chip' = false): Promise<void> {
         const typed = {
             render: {
                 nodeTypeAccessor: (node: Node) => node.getData().type as string | undefined,
@@ -2114,8 +2114,21 @@ class Harness implements HarnessApi {
             },
         }
         // `look` names the types and draws IP groups black, for the override test.
+        // `'chip'` instead adds a zoomed-in chip after the library's own tiers.
         const names: Record<string, [string, string]> = { ip: ['IP', 'IPs'], domain: ['domain', 'domains'], file: ['file', 'files'] }
-        const lookOptions = look ? {
+        const chip = (group: { members: unknown[] }) => {
+            const element = document.createElement('div')
+            element.className = 'test-group-chip'
+            element.style.cssText = 'width:140px;height:44px'
+            element.textContent = `${group.members.length} members`
+            return element
+        }
+        const lookOptions = look === 'chip' ? {
+            render: {
+                groupStyle: (group: { members: unknown[] }, base: { tiers?: unknown[] }) =>
+                    ({ tiers: [...(base.tiers ?? []), { width: 140, height: 44, style: { html: () => chip(group) } }] }),
+            },
+        } : look ? {
             render: { groupStyle: (group: { typeCounts: Record<string, number> }) => group.typeCounts.ip ? { color: '#111111' } : undefined },
             UI: { simplify: { typeLabel: (type: string | undefined, count: number) => `${count} ${(names[type ?? ''] ?? [type, type])[count === 1 ? 0 : 1]}` } },
         } : {}
