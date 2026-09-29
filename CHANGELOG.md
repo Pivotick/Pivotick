@@ -21,6 +21,15 @@
 - **A landing group names its pivot**: `GroupInfo.landing` is `{ runId, pivotId, pivotLabel }`
   on a group made by the Pivot landings rule.
 
+### Context menus
+
+- The node, selection and group menus now read in one order: **Pivot ▸** first, then the
+  group entries, then the rest with the app's own entries, and the delete last. An app's
+  `menuNode` / `menuSelection` entries now sit above **Delete Node** / **Delete Selected**
+  instead of below it.
+- **Release pinned nodes** in the canvas menu unpins every pinned node and group at once. It
+  shows only while something is pinned.
+
 ### Fixes
 
 - With the simulation switched off, unpinned nodes no longer drift for a few seconds after

@@ -186,16 +186,6 @@ const defaultMenuNode = {
             },
             shortcut: 'I'
         },
-        {
-            text: 'Delete Node',
-            title: 'Delete Node',
-            requires: 'deletion',
-            svgIcon: trash,
-            variant: 'outline-danger',
-            onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
-                void this.uiManager.graph.editing.requestDelete({ nodes: [node], origin: 'context-menu' })
-            },
-        },
     ] as GatedActionItem[],
 }
 
@@ -235,40 +225,12 @@ const defaultMenuGroup = {
     ] as GatedQuickActionItem[],
     menu: [
         {
-            text: 'Open group',
-            title: 'Put the members back on the canvas',
-            svgIcon: ungroupNodes,
-            variant: 'outline-primary',
-            onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
-                openGroupFromCanvas(this.uiManager, node as GroupNode)
-            },
-        },
-        {
-            text: 'Select members',
-            title: 'Select the nodes in this group',
-            svgIcon: selectNeighbor,
-            variant: 'outline-primary',
-            onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
-                selectGroupMembers(this.uiManager, node as GroupNode)
-            },
-        },
-        {
             text: 'Select Neighbors',
             title: 'Select the nodes this group links to',
             svgIcon: selectNeighbor,
             variant: 'outline-primary',
             onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
                 this.uiManager.graph.selectElements((node as GroupNode).info.anchors)
-            },
-        },
-        {
-            text: 'Delete members',
-            title: 'Delete every node in this group',
-            requires: 'deletion',
-            svgIcon: trash,
-            variant: 'outline-danger',
-            onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
-                void this.uiManager.graph.editing.requestDelete({ nodes: (node as GroupNode).info.members, origin: 'context-menu' })
             },
         },
     ] as GatedActionItem[],
@@ -319,19 +281,65 @@ const defaultMenuSelection = {
                 selectNeighbours(this.uiManager, nodes)
             },
         },
-        {
-            text: 'Delete Selected',
-            title: 'Delete every selected node',
-            requires: 'deletion',
-            svgIcon: trash,
-            variant: 'outline-danger',
-            onclick(this: ContextMenu, _evt: PointerEvent, nodes: Node[]) {
-                const ui = this.uiManager
-                void deleteNodes(ui, nodes, 'context-menu').then(deleted => { if (deleted) clearNodeSelection(ui) })
-            },
-        },
     ] as GatedActionItem[],
 }
+
+/** Each menu's delete, kept apart so it can close the menu below an app's own entries. */
+const deleteNodeEntry = {
+    text: 'Delete Node',
+    title: 'Delete Node',
+    requires: 'deletion',
+    svgIcon: trash,
+    variant: 'outline-danger',
+    onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
+        void this.uiManager.graph.editing.requestDelete({ nodes: [node], origin: 'context-menu' })
+    },
+} as GatedActionItem
+
+const deleteMembersEntry = {
+    text: 'Delete members',
+    title: 'Delete every node in this group',
+    requires: 'deletion',
+    svgIcon: trash,
+    variant: 'outline-danger',
+    onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
+        void this.uiManager.graph.editing.requestDelete({ nodes: (node as GroupNode).info.members, origin: 'context-menu' })
+    },
+} as GatedActionItem
+
+const deleteSelectedEntry = {
+    text: 'Delete Selected',
+    title: 'Delete every selected node',
+    requires: 'deletion',
+    svgIcon: trash,
+    variant: 'outline-danger',
+    onclick(this: ContextMenu, _evt: PointerEvent, nodes: Node[]) {
+        const ui = this.uiManager
+        void deleteNodes(ui, nodes, 'context-menu').then(deleted => { if (deleted) clearNodeSelection(ui) })
+    },
+} as GatedActionItem
+
+/** A group's own entries, which open its menu after *Pivot ▸*. */
+const groupEntries = [
+    {
+        text: 'Open group',
+        title: 'Put the members back on the canvas',
+        svgIcon: ungroupNodes,
+        variant: 'outline-primary',
+        onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
+            openGroupFromCanvas(this.uiManager, node as GroupNode)
+        },
+    },
+    {
+        text: 'Select members',
+        title: 'Select the nodes in this group',
+        svgIcon: selectNeighbor,
+        variant: 'outline-primary',
+        onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
+            selectGroupMembers(this.uiManager, node as GroupNode)
+        },
+    },
+] as GatedActionItem[]
 
 const defaultMenuEdge: MenuSection = {
     topbar: [],
@@ -508,25 +516,37 @@ export class ContextMenu extends UIComponent {
         super(uiManager)
         this.visible = false
 
-        this.menuNode = deepMerge(this.gate(defaultMenuNode), this.uiManager.getOptions().contextMenu.menuNode ?? {})
-        this.menuEdge = deepMerge(this.gate(defaultMenuEdge), this.uiManager.getOptions().contextMenu.menuEdge ?? {})
-        this.menuNote = deepMerge(this.gate(defaultMenuNote), this.uiManager.getOptions().contextMenu.menuNote ?? {})
-        this.menuCanvas = deepMerge(this.gate(defaultMenuCanvas), this.uiManager.getOptions().contextMenu.menuCanvas ?? {})
-        // Pivot's entry is added here rather than declared with the others because its
-        // `visible` has to read the live registry, and a predicate is resolved without
-        // `this` bound (`ElementCreation.tryResolveBoolean`).
-        this.menuNode.menu.unshift(this.pivotEntry())
-        const deleteAt = this.menuNode.menu.findIndex(entry => entry.text === 'Delete Node')
-        this.menuNode.menu.splice(deleteAt < 0 ? this.menuNode.menu.length : deleteAt, 0, ...this.membershipEntries())
+        const options = this.uiManager.getOptions().contextMenu
+        this.menuEdge = deepMerge(this.gate(defaultMenuEdge), options.menuEdge ?? {})
+        this.menuNote = deepMerge(this.gate(defaultMenuNote), options.menuNote ?? {})
+        const canvasMenu = this.gate(defaultMenuCanvas)
+        canvasMenu.menu.push(this.releasePinnedEntry())
+        this.menuCanvas = deepMerge(canvasMenu, options.menuCanvas ?? {})
+        // Every node-ish menu reads in four bands: *Pivot ▸*, the group entries, everything
+        // else (the app's entries last), then the delete. Pivot's entry is built here rather
+        // than declared because its `visible` reads the live registry, and a predicate is
+        // resolved without `this` bound (`ElementCreation.tryResolveBoolean`).
+        this.menuNode = deepMerge(this.gate(defaultMenuNode), options.menuNode ?? {})
+        this.menuNode.menu = [
+            this.pivotEntry(),
+            ...this.membershipEntries(),
+            ...this.menuNode.menu,
+            ...this.gateEntries([deleteNodeEntry]),
+        ]
         this.menuGroup = this.gate(defaultMenuGroup)
-        this.menuGroup.menu.splice(2, 0, this.tableEntry(), this.pivotEntry(), ...this.manualGroupEntries())
-        this.menuSelection = deepMerge(this.gate(defaultMenuSelection), this.uiManager.getOptions().contextMenu.menuSelection ?? {})
-        this.menuSelection.menu.unshift(this.pivotEntry())
-        const selectionDeleteAt = this.menuSelection.menu.findIndex(entry => entry.text === 'Delete Selected')
-        this.menuSelection.menu.splice(
-            selectionDeleteAt < 0 ? this.menuSelection.menu.length : selectionDeleteAt, 0,
-            this.groupSelectionEntry(), this.ungroupSelectionEntry(), ...this.membershipEntries(),
-        )
+        this.menuGroup.menu = [
+            this.pivotEntry(),
+            ...this.gateEntries(groupEntries), this.tableEntry(), ...this.manualGroupEntries(),
+            ...this.menuGroup.menu,
+            ...this.gateEntries([deleteMembersEntry]),
+        ]
+        this.menuSelection = deepMerge(this.gate(defaultMenuSelection), options.menuSelection ?? {})
+        this.menuSelection.menu = [
+            this.pivotEntry(),
+            this.groupSelectionEntry(), ...this.membershipEntries(), this.ungroupSelectionEntry(),
+            ...this.menuSelection.menu,
+            ...this.gateEntries([deleteSelectedEntry]),
+        ]
         this.wrapOnclickActions()
     }
 
@@ -550,6 +570,20 @@ export class ContextMenu extends UIComponent {
             visible: (element) =>
                 !!ui.pivotMode && !!element && ui.graph.pivots.for(expandGroups(asNodes(element))).length > 0,
             submenu: (element) => this.pivotSubmenu(element as Node | Node[]),
+        }
+    }
+
+    /** Unpin every pinned node and group at once; shown only while something is pinned. */
+    private releasePinnedEntry(): MenuActionItemOptions {
+        const ui = this.uiManager
+        const pinned = () => [...new Set([...ui.graph.getMutableNodes(), ...ui.graph.getCanvasNodes()])].filter(node => node.frozen)
+        return {
+            text: 'Release pinned nodes',
+            title: 'Unpin every pinned node so the layout can move them again',
+            svgIcon: unpin,
+            variant: 'outline-primary',
+            visible: () => pinned().length > 0,
+            onclick: () => unpinNodes(ui, pinned()),
         }
     }
 
@@ -767,6 +801,11 @@ export class ContextMenu extends UIComponent {
                 : this.uiManager.isFeatureEnabled(requires as UIFeature)
         }
         return { topbar: section.topbar.filter(offered), menu: section.menu.filter(offered) }
+    }
+
+    /** {@link gate} for entries kept outside a section, such as the deletes. */
+    private gateEntries(entries: GatedActionItem[]): MenuActionItemOptions[] {
+        return this.gate({ topbar: [], menu: entries }).menu
     }
 
     protected onMount(container: HTMLElement | undefined) {
