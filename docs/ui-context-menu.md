@@ -4,7 +4,7 @@ The [context menu options](/api/html/interfaces/GraphUI.ContextMenu.html) config
 **By default:**
 - Context menus are enabled.
 - Each menu (node, edge, canvas) have separate actions.
-- Any additional custom actions are added after the default actions.
+- Any additional custom actions are added after the default actions, above the delete.
 
 ## Disabling tooltips
 Pretty straightforward by setting the `enabled` property to `false`.
@@ -39,11 +39,18 @@ You can configure these menus for these scopes:
 
 | Scope        | Default entries                                                                                                  |
 | ------------ | ---------------------------------------------------------------------------------------------------------------- |
-| `menuNode`   | Pin / Unpin / Focus / Hide (topbar) · View Image · Select Neighbors · Hide Children · Connect to… · Inspect Properties · **Delete Node** |
+| `menuNode`   | Pin / Unpin / Focus / Hide (topbar) · Pivot · Pull out of group · Put back in group · View Image · Select Neighbors · Hide Children · Connect to… · Inspect Properties · **Delete Node** |
 | `menuEdge`   | **Edit Edge** · **Delete Edge**                                                                                  |
 | `menuNote`   | Hide Note (topbar) · Remove Note                                                                                 |
-| `menuSelection` | Pin / Unpin / Hide Selected (topbar) · Pivot · Select Neighbors · Group selected nodes · Ungroup · Pull out of group · Put back in group · **Delete Selected** |
-| `menuCanvas` | Pin All / Unpin All (topbar) · **Add Node Here** · Add Note                                                       |
+| `menuSelection` | Pin / Unpin / Hide Selected (topbar) · Pivot · Group selected nodes · Pull out of group · Put back in group · Ungroup · Select Neighbors · **Delete Selected** |
+| `menuCanvas` | Pin All / Unpin All (topbar) · **Add Node Here** · Add Note · Release pinned nodes (while any node is pinned) |
+
+The node, selection and group menus read in the same order: **Pivot ▸** first, then the
+[group](/simplify#working-with-a-group) entries that apply, then the other entries with
+yours after them, and the delete last. A group's menu (Pivot · Open group · Select members ·
+View members in table · Rename group · Ungroup · Select Neighbors · **Delete members**) is the
+library's own and takes no entries of yours. An entry that doesn't apply is left out without
+moving the others.
 
 The write-path entries (delete, edit, create) go through their before-hooks — see
 [Write-path lifecycle hooks](/callbacks#write-path-lifecycle-hooks) — and each disappears
