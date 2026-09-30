@@ -1,0 +1,30 @@
+// A node badge drawn as a legend key. The canvas styles its badges under `.pvt-node`,
+// which a legend row is not, so the themed look is repeated here.
+.pvt-badge-swatch {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+
+    > svg {
+        display: block;
+        overflow: visible;
+    }
+
+    .pvt-node-badge-shape {
+        fill: var(--pvt-badge-color);
+        stroke: var(--pvt-badge-stroke);
+        stroke-width: 1.5;
+    }
+
+    .pvt-node-badge-text {
+        fill: var(--pvt-badge-text-color);
+        font-family: var(--pvt-font-family);
+        font-weight: 600;
+    }
+
+    .pvt-node-badge-icon {
+        color: var(--pvt-badge-text-color);
+    }
+}

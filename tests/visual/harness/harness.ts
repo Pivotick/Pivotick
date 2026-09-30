@@ -11,7 +11,7 @@
  */
 import { Pivotick, Node, ColorPaletteMapper, minimap } from '../../../src/index'
 import { Note } from '../../../src/Note'
-import { ROUNDED_CARD_RADIUS } from './sceneConstants'
+import { FOCUS_TIER_BADGES, LEGEND_BADGE_TEXT, ROUNDED_CARD_RADIUS, TIER_BADGES } from './sceneConstants'
 import { TreeLayout } from '../../../src/plugins/layout/Tree'
 import { EgoTreeLayout } from '../../../src/plugins/layout/EgoTree'
 import { createInspectModal } from '../../../src/ui/elements/modals/InspectNodeModal/InspectNodeModal'
@@ -440,6 +440,8 @@ export interface LegendSpec {
     withFacets?: boolean
     /** Paint this node off-palette, so its category resolves to two colours. */
     conflictNodeId?: string
+    /** Give the first declared entry a `badge` swatch ({@link LEGEND_BADGE_TEXT}, no colour of its own). */
+    badgeFirst?: boolean
 }
 
 /**
@@ -543,6 +545,24 @@ export interface TierSpec {
     tierClearsIcon?: boolean
     /** `focusTierYieldsAt`: the tier index from which the focus card steps aside. */
     yieldsAt?: number
+    /** Give every node the {@link TIER_BADGES} badges. @default false */
+    badges?: boolean
+    /** Have `focusTier` declare {@link FOCUS_TIER_BADGES} of its own. @default false */
+    focusBadges?: boolean
+}
+
+/** One badge on a focus card, measured on screen against the card it sits on. */
+export interface FocusBadgeSnapshot {
+    text: string
+    position: string
+    /** Badge centre, in CSS pixels from the card's centre. */
+    cx: number
+    cy: number
+    /** The pill's on-screen height. */
+    height: number
+    /** Half the card's on-screen box. */
+    cardHx: number
+    cardHy: number
 }
 
 export interface StyleCbSpec {
@@ -734,6 +754,17 @@ export interface LegendRow {
     color: string
     hidden: boolean
     disabled: boolean
+}
+
+/** A legend row's badge swatch, as drawn. */
+export interface LegendSwatchBadge {
+    text: string
+    /** The pill's painted fill, and its text's, as the browser reports them. */
+    fill: string
+    textFill: string
+    /** The pill's on-screen box. */
+    width: number
+    height: number
 }
 
 /** The key a `LegendSpec` defaults to: four distinct values across `facetShapes`'s top level. */
@@ -1554,6 +1585,10 @@ export interface HarnessApi {
     focusCardBox(id: string): { width: number; height: number } | null
     /** Whether a node is currently showing its focus drawing. */
     hasFocusCard(id: string): boolean
+    /** The badges on a node's focus card, measured on screen against the card. */
+    focusBadges(id: string): FocusBadgeSnapshot[]
+    /** Whether a node's own badge group is drawn and visible. */
+    nodeBadgesShown(id: string): boolean
     /**
      * Apply a single query filter on a node-data field. Non-matching nodes (and
      * their edges) are **removed** from the render, not dimmed. `value` follows the
@@ -1592,6 +1627,8 @@ export interface HarnessApi {
     legendSections(): LegendSectionSnapshot[]
     /** The rendered legend rows, in display order. */
     legendRows(): LegendRow[]
+    /** The badge a legend row draws as its swatch, or `null` for a dot or a line. */
+    legendSwatchBadge(id: string): LegendSwatchBadge | null
     /** The legend's header text, or `null` when there is no legend. */
     legendTitle(): string | null
     /**
@@ -3273,6 +3310,10 @@ class Harness implements HarnessApi {
         }
         if (spec.layoutSize !== undefined) nodeStyle.layoutSize = spec.layoutSize
         if (spec.yieldsAt !== undefined) nodeStyle.focusTierYieldsAt = spec.yieldsAt
+        if (spec.badges) nodeStyle.badges = TIER_BADGES.map((text) => ({ text, title: `Badge ${text}` }))
+        if (spec.focusBadges && nodeStyle.focusTier) {
+            (nodeStyle.focusTier as PlainObject).badges = FOCUS_TIER_BADGES.map((text) => ({ text }))
+        }
 
         const render: PlainObject = { defaultNodeStyle: nodeStyle }
         if (spec.trigger) render.focusTierTrigger = spec.trigger
@@ -3361,7 +3402,10 @@ class Harness implements HarnessApi {
     }
 
     focusCardBox(id: string): { width: number; height: number } | null {
-        const card = this.nodeElement(id)?.querySelector<SVGGElement>(':scope > g.pvt-node-focus:not(.pvt-node-focus-leaving)')
+        // The card's own box, which the backing rect is fitted to: the wrapper's would also
+        // take in the badges reaching past its corners.
+        const card = this.nodeElement(id)
+            ?.querySelector<SVGGElement>(':scope > g.pvt-node-focus:not(.pvt-node-focus-leaving) > .node')
         if (!card) return null
         // A client rect, not a bbox: the point of the counter-scale is that the card measures
         // the same in CSS pixels however far out the graph is zoomed.
@@ -3371,6 +3415,32 @@ class Harness implements HarnessApi {
 
     hasFocusCard(id: string): boolean {
         return !!this.nodeElement(id)?.querySelector(':scope > g.pvt-node-focus:not(.pvt-node-focus-leaving)')
+    }
+
+    focusBadges(id: string): FocusBadgeSnapshot[] {
+        const wrapper = this.nodeElement(id)?.querySelector<SVGGElement>(':scope > g.pvt-node-focus:not(.pvt-node-focus-leaving)')
+        const card = wrapper?.querySelector<SVGGraphicsElement>(':scope > .node')
+        if (!wrapper || !card) return []
+        const box = card.getBoundingClientRect()
+        const centreX = box.left + box.width / 2
+        const centreY = box.top + box.height / 2
+        return [...wrapper.querySelectorAll<SVGGElement>(':scope > .pvt-node-badges > .pvt-node-badge')].map((badge) => {
+            const pill = badge.querySelector('.pvt-node-badge-shape')!.getBoundingClientRect()
+            return {
+                text: badge.querySelector('.pvt-node-badge-text')?.textContent ?? '',
+                position: badge.getAttribute('data-pvt-badge-position') ?? '',
+                cx: pill.left + pill.width / 2 - centreX,
+                cy: pill.top + pill.height / 2 - centreY,
+                height: pill.height,
+                cardHx: box.width / 2,
+                cardHy: box.height / 2,
+            }
+        })
+    }
+
+    nodeBadgesShown(id: string): boolean {
+        const group = this.nodeElement(id)?.querySelector(':scope > .pvt-node-badges')
+        return !!group && getComputedStyle(group).visibility !== 'hidden'
     }
 
     private nodeElement(id: string): SVGGElement | null {
@@ -3577,6 +3647,7 @@ class Harness implements HarnessApi {
             if (!spec.omitKey) {
                 entry.predicate = (node) => String(node.getData()?.[key] ?? '') === value
             }
+            if (spec.badgeFirst && index === 0) entry.badge = { text: LEGEND_BADGE_TEXT }
             return entry
         })
     }
@@ -3598,6 +3669,21 @@ class Harness implements HarnessApi {
                 || '',
             hidden: row.classList.contains('pvt-legend-hidden'),
             disabled: (row as HTMLButtonElement).disabled === true,
+        }
+    }
+
+    legendSwatchBadge(id: string): LegendSwatchBadge | null {
+        const row = document.querySelector(`.pvt-legend-entry[data-id="${CSS.escape(id)}"]`)
+        if (!row) return null
+        const shape = row.querySelector<SVGRectElement>('.pvt-badge-swatch .pvt-node-badge-shape')
+        if (!shape) return null
+        const pill = shape.getBoundingClientRect()
+        return {
+            text: row.querySelector('.pvt-badge-swatch .pvt-node-badge-text')?.textContent ?? '',
+            fill: getComputedStyle(shape).fill,
+            textFill: getComputedStyle(row.querySelector('.pvt-badge-swatch .pvt-node-badge-text') ?? shape).fill,
+            width: pill.width,
+            height: pill.height,
         }
     }
 

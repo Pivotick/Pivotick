@@ -356,8 +356,17 @@ below minus `position`, and `enabled` / `position` describe the whole card.
 | `highlightOnHover` | `boolean` | `true` | Hovering a row lights that category on the canvas and dims the rest. |
 | `maxVisibleEntries` | `number` | `12` | Rows shown before the list scrolls inside the legend. |
 
-A `LegendEntry` is `{ id, label?, color, predicate?, order? }`. `id` is the row's
+A `LegendEntry` is `{ id, label?, color, badge?, predicate?, order? }`. `id` is the row's
 identity, the value written to the filter, and the label's fallback.
+
+When nodes are told apart by a [badge](/render#node-badges) rather than by their fill, give
+the entry that `badge` and the row shows the mark instead of a dot. It is drawn the way the
+canvas draws it, and a badge naming no `color` takes the entry's. Filtering is unchanged.
+
+```js
+{ id: 'enriched', label: 'From enrichment', color: '#8b5cf6',
+  badge: { svgIcon: sparkle }, predicate: (node) => node.getData().enriched }
+```
 
 `maxVisibleEntries` is one ceiling on the legend's height; the canvas is the other.
 

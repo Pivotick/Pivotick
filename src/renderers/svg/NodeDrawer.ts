@@ -271,6 +271,8 @@ export class NodeDrawer {
             if (writesGeometry) {
                 this.badgeDrawer.reanchor(node)
                 this.graphSvgRenderer.nextTickFor([node])
+            } else {
+                this.badgeDrawer.reanchorFocus(foNode.closest<SVGGElement>('g.pvt-node-focus'), node)
             }
         }
         requestAnimationFrame(() => measureAndSize(0))
@@ -597,6 +599,8 @@ export class NodeDrawer {
             .attr('transform', `scale(${1 / this.graphSvgRenderer.getZoomTransform().k})`)
 
         this.genericNodeRender(wrapper as Selection<SVGGElement, Node, null, undefined>, style, node, false)
+        // On the card's own rim: it covers the node's badges, which are hidden while it shows.
+        this.badgeDrawer.renderFocus(wrapper as Selection<SVGGElement, Node, null, undefined>, node, resolveBadges(style, node, this.graph))
 
         const ms = this.transitionMs()
         const wrapperEl = wrapper.node()
@@ -912,6 +916,8 @@ export class NodeDrawer {
                         // The frame only takes its real proportions here; without this the rim
                         // chrome stays pinned to the square guess and ends up over the picture.
                         this.badgeDrawer.reanchor(node)
+                    } else {
+                        this.badgeDrawer.reanchorFocus(nodeSelection.node(), node)
                     }
                     if (this.rendererOptions.enableNodeExpansion && node.hasChildren()) {
                         this.addExpandCollapseIcons(nodeSelection, node)

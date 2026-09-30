@@ -12,7 +12,7 @@ import type { FilterFacet, FilterOptions } from './GraphQueryEngine'
 import type { AsyncContentOptions, FallbackRenderResult, RenderContext, RenderResult } from './AsyncContent'
 import type { MinimapOptions } from '../plugins/minimap/options'
 import type { GroupInfo, SimplifyOptions } from './Simplify'
-import type { GraphRendererOptions } from './RendererOptions'
+import type { GraphRendererOptions, NodeBadge } from './RendererOptions'
 import type { EgoTreeLayoutOptions } from './LayoutOptions'
 import type { DeepPartial } from '../utils/utils'
 
@@ -476,6 +476,19 @@ export interface LegendEntry {
      * the node's fill, or an edge's stroke in an `edge`-scoped section.
      */
     color: string
+    /**
+     * Draw this badge as the swatch instead of a dot, for elements told apart by a
+     * `NodeStyle.badges` mark rather than by their fill. It is drawn the way the canvas
+     * draws it, so the legend shows the same mark. A badge naming no `color` takes the
+     * entry's. Ignored in an `edge`-scoped section, whose swatch is a line.
+     *
+     * @example
+     * ```js
+     * { id: 'enriched', label: 'From enrichment', color: '#8b5cf6',
+     *   badge: { svgIcon: sparkle }, predicate: (node) => node.getData().enriched }
+     * ```
+     */
+    badge?: NodeBadge
     /**
      * Which elements this entry stands for. Defaults to matching `id` against
      * `LegendOptions.key` on the element's data, when a `key` is declared.

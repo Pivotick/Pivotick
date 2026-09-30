@@ -1,5 +1,7 @@
 import { test, expect, gotoHarness, harness, waitForViewSettled, nodeEl } from '../helpers'
 import type { Page } from '@playwright/test'
+import type { FocusBadgeSnapshot } from '../harness/harness'
+import { FOCUS_TIER_BADGES, TIER_BADGES } from '../harness/sceneConstants'
 
 /**
  * The tiered fixture declares a 32-wide dot and a 140-wide chip, so the footprint is 70 and
@@ -27,6 +29,27 @@ async function tierOf(page: Page, id: string): Promise<string | null> {
  */
 async function expectCardBox(page: Page, id: string): Promise<void> {
     await expect.poll(() => harness(page, 'focusCardBox', id)).toEqual(CARD)
+}
+
+async function focusBadges(page: Page, id: string): Promise<FocusBadgeSnapshot[]> {
+    return (await harness(page, 'focusBadges', id)) as FocusBadgeSnapshot[]
+}
+
+/** Is the badge centred on the card's corner, within the rim's small outset? */
+function onCardCorner(badge: FocusBadgeSnapshot): boolean {
+    return Math.abs(Math.abs(badge.cx) - badge.cardHx) < 4
+        && Math.abs(Math.abs(badge.cy) - badge.cardHy) < 4
+}
+
+/**
+ * The card carries exactly `texts`, each on one of its corners. Polled: the card measures
+ * a frame after it opens, and its badges re-anchor on that measurement.
+ */
+async function expectBadgesOnCardCorners(page: Page, id: string, texts: string[]): Promise<void> {
+    await expect.poll(async () => {
+        const badges = await focusBadges(page, id)
+        return { texts: badges.map((badge) => badge.text), onCorners: badges.every(onCardCorner) }
+    }).toEqual({ texts, onCorners: true })
 }
 
 test.describe('zoom-driven node detail', () => {
@@ -238,6 +261,37 @@ test.describe('focus tier', () => {
 
         await harness(page, 'selectNode', 'a')
         expect(await harness(page, 'hasFocusCard', 'a')).toBe(false)
+    })
+
+    test('the card wears the node\'s badges on its own corners, at the same size at any zoom', async ({ page }) => {
+        await harness(page, 'loadWithTiers', { badges: true })
+        await waitForViewSettled(page)
+        expect(await harness(page, 'nodeBadgesShown', 'a')).toBe(true)
+
+        // Selection rather than hover, so the card stays open across the zoom.
+        await harness(page, 'selectNode', 'a')
+        const heights: number[] = []
+        for (const zoom of [DOT_ZOOM, 2]) {
+            await harness(page, 'setZoomScale', zoom)
+            await expectCardBox(page, 'a')
+            await expectBadgesOnCardCorners(page, 'a', TIER_BADGES)
+            heights.push((await focusBadges(page, 'a'))[0].height)
+            // Covered by the card, so drawing them too would show every badge twice.
+            expect(await harness(page, 'nodeBadgesShown', 'a')).toBe(false)
+        }
+        expect(heights[1]).toBeCloseTo(heights[0], 0)
+
+        await harness(page, 'clearSelection')
+        await expect.poll(() => harness(page, 'nodeBadgesShown', 'a')).toBe(true)
+    })
+
+    test('a focusTier declaring its own badges draws those instead', async ({ page }) => {
+        await harness(page, 'loadWithTiers', { badges: true, focusBadges: true })
+        await waitForViewSettled(page)
+        await harness(page, 'setZoomScale', 1)
+        await nodeEl(page, 'a').hover()
+        await expectCardBox(page, 'a')
+        await expectBadgesOnCardCorners(page, 'a', FOCUS_TIER_BADGES)
     })
 
     test('a fit ignores the open card', async ({ page }) => {

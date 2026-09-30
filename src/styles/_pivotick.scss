@@ -699,6 +699,12 @@ dl.pvt-property-list {
 
     // Rim badges. Hit-testable on purpose: a native <title> tooltip needs to be hit to show,
     // and node click/drag/hover are bound on the group above, so nothing is stolen from them.
+    // The focus card draws its own badges, so the node's stay hidden rather than show twice
+    // wherever the card does not cover them.
+    &:has(> .pvt-node-focus:not(.pvt-node-focus-leaving)) > .pvt-node-badges {
+        visibility: hidden;
+    }
+
     .pvt-node-badge {
         user-select: none;
 

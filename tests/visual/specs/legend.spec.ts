@@ -3,7 +3,8 @@ import type { Page, Locator } from '@playwright/test'
 
 /** The shape `Locator.boundingBox()` resolves to. */
 interface BoundingBox { x: number; y: number; width: number; height: number }
-import type { EmphasisSnapshot, LegendGroupSpec, LegendRow, LegendSectionSnapshot, LegendSpec } from '../harness/harness'
+import type { EmphasisSnapshot, LegendGroupSpec, LegendRow, LegendSectionSnapshot, LegendSpec, LegendSwatchBadge } from '../harness/harness'
+import { LEGEND_BADGE_TEXT } from '../harness/sceneConstants'
 
 /**
  * The canvas legend.
@@ -868,6 +869,43 @@ test.describe('canvas legend', () => {
                 ])
             )
         })
+    })
+})
+
+test.describe('legend badge swatch', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoHarness(page)
+    })
+
+    async function swatchBadge(page: Page, id: string): Promise<LegendSwatchBadge | null> {
+        return (await harness(page, 'legendSwatchBadge', id)) as LegendSwatchBadge | null
+    }
+
+    for (const theme of ['light', 'dark'] as const) {
+        test(`an entry with a badge shows the mark in its entry's colour (${theme})`, async ({ page }) => {
+            await harness(page, 'loadWithLegend', 'facetShapes',
+                { mode: 'declared-array', badgeFirst: true }, { UI: { theme } })
+            await expect(page.locator('.pvt-legend-entry')).toHaveCount(4)
+
+            const badge = await swatchBadge(page, 'ip-src')
+            expect(badge?.text).toBe(LEGEND_BADGE_TEXT)
+            // The badge names no colour, so it takes the entry's #7EA2FB.
+            expect(badge?.fill).toBe('rgb(126, 162, 251)')
+            // Themed like a canvas badge: the text is not the unstyled black.
+            expect(badge?.textFill).not.toBe('rgb(0, 0, 0)')
+            expect(badge?.height).toBeGreaterThanOrEqual(12)
+        })
+    }
+
+    test('an entry with only a colour keeps its dot, and a badged one filters as before', async ({ page }) => {
+        await loadLegend(page, { mode: 'declared-array', badgeFirst: true })
+
+        expect(await swatchBadge(page, 'domain')).toBeNull()
+        await expect(legendRow(page, 'domain').locator('.pvt-legend-swatch')).toHaveCount(1)
+
+        await legendRow(page, 'ip-src').click()
+        await expectVisible(page, ['a2', 'a3', 'obj'])
+        expect(await hiddenRowIds(page)).toEqual(['ip-src'])
     })
 })
 

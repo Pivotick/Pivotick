@@ -212,6 +212,8 @@ export class BadgeDrawer {
     private graph: Graph
     /** What each node is currently wearing, so a re-anchor can redraw without re-resolving the style. */
     private drawn: WeakMap<Node, NodeBadge[]> = new WeakMap()
+    /** The same for focus drawings, keyed by wrapper: a node can have one leaving while another arrives. */
+    private focusDrawn: WeakMap<SVGGElement, NodeBadge[]> = new WeakMap()
 
     public constructor(graph: Graph) {
         this.graph = graph
@@ -225,7 +227,27 @@ export class BadgeDrawer {
      */
     public render(nodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node, badges: NodeBadge[]): void {
         this.drawn.set(node, badges)
+        this.draw(nodeSelection, node, badges)
+    }
 
+    /**
+     * Draw `badges` on a focus drawing's rim. Its wrapper is counter-scaled to CSS pixels,
+     * so the badges are sized against the card and hold its on-screen size.
+     */
+    public renderFocus(wrapper: Selection<SVGGElement, Node, null, undefined>, node: Node, badges: NodeBadge[]): void {
+        const wrapperEl = wrapper.node()
+        if (wrapperEl) this.focusDrawn.set(wrapperEl, badges)
+        this.draw(wrapper, node, badges)
+    }
+
+    /** {@link reanchor} for a focus drawing, once its card has measured. */
+    public reanchorFocus(wrapper: SVGGElement | null, node: Node): void {
+        const badges = wrapper ? this.focusDrawn.get(wrapper) : undefined
+        if (!wrapper || !badges || badges.length === 0) return
+        this.draw(d3Select<SVGGElement, Node>(wrapper), node, badges)
+    }
+
+    private draw(nodeSelection: Selection<SVGGElement, Node, null, undefined>, node: Node, badges: NodeBadge[]): void {
         nodeSelection.selectAll<SVGGElement, unknown>(':scope > .pvt-node-badges').remove()
         if (badges.length === 0) return
 
@@ -324,36 +346,7 @@ export class BadgeDrawer {
         if (overflow) group.classed('pvt-node-badge-overflow', true)
         if (badge.title) group.append('title').text(badge.title)
 
-        const label = badge.text ? this.labelFor(badge.text) : undefined
-        const characters = label?.length ?? 1
-        const fontSize = radius * (characters >= 3 ? 0.9 : characters === 2 ? 1.05 : 1.25)
-        const width = label
-            ? Math.max(2 * radius, characters * fontSize * 0.64 + radius * 0.7)
-            : 2 * radius
-
-        const shape = group.append('rect')
-            .attr('class', 'pvt-node-badge-shape')
-            .attr('x', -width / 2)
-            .attr('y', -radius)
-            .attr('width', width)
-            .attr('height', 2 * radius)
-            .attr('rx', radius)
-            .attr('ry', radius)
-        // Written as an inline style, not a `fill` attribute: a presentation attribute loses
-        // to any stylesheet rule, so the themed default would silently win over the consumer.
-        // Left unset entirely when no colour was named, so that default does apply.
-        if (badge.color) shape.style('fill', badge.color)
-
-        if (label !== undefined) {
-            group.append('text')
-                .attr('class', 'pvt-node-badge-text')
-                .attr('text-anchor', 'middle')
-                .attr('dominant-baseline', 'central')
-                .attr('font-size', fontSize)
-                .text(label)
-        } else {
-            this.drawIcon(group, badge, radius)
-        }
+        drawBadgeMark(group, badge, radius)
 
         if (overflow) return
 
@@ -366,47 +359,87 @@ export class BadgeDrawer {
             this.graph.renderer.getGraphInteraction()?.badgeClick(element, event, node, badge)
         })
     }
+}
 
-    /** Text a badge can actually wear: three characters, then it just reports "lots". */
-    private labelFor(text: string): string {
-        return text.length > MAX_TEXT_LENGTH ? '99+' : text
+/**
+ * Draw one badge's pill and what it carries into `group`, centred on the origin. Shared
+ * with the legend, so a legend entry shows exactly the mark the canvas draws.
+ *
+ * @returns the pill's width, which text wider than the disc stretches past `2 × radius`
+ */
+export function drawBadgeMark<Datum>(group: Selection<SVGGElement, Datum, null, undefined>, badge: NodeBadge, radius: number): number {
+    const label = badge.text ? labelFor(badge.text) : undefined
+    const characters = label?.length ?? 1
+    const fontSize = radius * (characters >= 3 ? 0.9 : characters === 2 ? 1.05 : 1.25)
+    const width = label
+        ? Math.max(2 * radius, characters * fontSize * 0.64 + radius * 0.7)
+        : 2 * radius
+
+    const shape = group.append('rect')
+        .attr('class', 'pvt-node-badge-shape')
+        .attr('x', -width / 2)
+        .attr('y', -radius)
+        .attr('width', width)
+        .attr('height', 2 * radius)
+        .attr('rx', radius)
+        .attr('ry', radius)
+    // Written as an inline style, not a `fill` attribute: a presentation attribute loses
+    // to any stylesheet rule, so the themed default would silently win over the consumer.
+    // Left unset entirely when no colour was named, so that default does apply.
+    if (badge.color) shape.style('fill', badge.color)
+
+    if (label !== undefined) {
+        group.append('text')
+            .attr('class', 'pvt-node-badge-text')
+            .attr('text-anchor', 'middle')
+            .attr('dominant-baseline', 'central')
+            .attr('font-size', fontSize)
+            .text(label)
+    } else {
+        drawIcon(group, badge, radius)
+    }
+    return width
+}
+
+/** Text a badge can actually wear: three characters, then it just reports "lots". */
+function labelFor(text: string): string {
+    return text.length > MAX_TEXT_LENGTH ? '99+' : text
+}
+
+function drawIcon<Datum>(group: Selection<SVGGElement, Datum, null, undefined>, badge: NodeBadge, radius: number): void {
+    if (badge.iconClass || badge.iconUnicode) {
+        const resolved = badge.iconClass ? resolveIcon(badge.iconClass) : undefined
+        const glyph = badge.iconUnicode ?? resolved?.glyph
+        if (!glyph) return
+        const icon = group.append('text')
+            .attr('class', 'pvt-node-badge-text icon icon-unicode')
+            .attr('text-anchor', 'middle')
+            .attr('dominant-baseline', 'central')
+            .attr('font-size', radius * 1.1)
+            .text(glyph)
+        if (resolved && resolved.glyph !== '') {
+            icon
+                .style('font-family', resolved.fontFamily)
+                .style('font-weight', resolved.fontWeight)
+                .style('font-style', resolved.fontStyle)
+        }
+        return
     }
 
-    private drawIcon(group: Selection<SVGGElement, Node, null, undefined>, badge: NodeBadge, radius: number): void {
-        if (badge.iconClass || badge.iconUnicode) {
-            const resolved = badge.iconClass ? resolveIcon(badge.iconClass) : undefined
-            const glyph = badge.iconUnicode ?? resolved?.glyph
-            if (!glyph) return
-            const icon = group.append('text')
-                .attr('class', 'pvt-node-badge-text icon icon-unicode')
-                .attr('text-anchor', 'middle')
-                .attr('dominant-baseline', 'central')
-                .attr('font-size', radius * 1.1)
-                .text(glyph)
-            if (resolved && resolved.glyph !== '') {
-                icon
-                    .style('font-family', resolved.fontFamily)
-                    .style('font-weight', resolved.fontWeight)
-                    .style('font-style', resolved.fontStyle)
-            }
-            return
+    if (badge.svgIcon) {
+        const svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+        // svgIcon can be driven by graph data, so it never reaches the live tree unsanitized.
+        svgEl.appendChild(parseSvgIconMarkup(badge.svgIcon))
+        if (svgEl.children[0]?.nodeName === 'svg') {
+            svgEl.children[0].removeAttribute('width')
+            svgEl.children[0].removeAttribute('height')
         }
-
-        if (badge.svgIcon) {
-            const svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-            // svgIcon can be driven by graph data, so it never reaches the live tree unsanitized.
-            svgEl.appendChild(parseSvgIconMarkup(badge.svgIcon))
-            if (svgEl.children[0]?.nodeName === 'svg') {
-                svgEl.children[0].removeAttribute('width')
-                svgEl.children[0].removeAttribute('height')
-            }
-            const extent = radius * 1.3
-            group.append(() => svgEl)
-                .attr('class', 'pvt-node-badge-icon')
-                .attr('x', -extent / 2)
-                .attr('y', -extent / 2)
-                .attr('width', extent)
-                .attr('height', extent)
-        }
+        const extent = radius * 1.3
+        group.append(() => svgEl)
+            .attr('class', 'pvt-node-badge-icon')
+            .attr('x', -extent / 2)
+            .attr('y', -extent / 2)
+            .attr('width', extent)
+            .attr('height', extent)
     }
 }

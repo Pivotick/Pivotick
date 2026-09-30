@@ -8,3 +8,11 @@
 
 /** The `border-radius` the `roundedCard` subject carries, which its ring has to match. */
 export const ROUNDED_CARD_RADIUS = 12
+
+/** The badges `TierSpec.badges` puts on every node. */
+export const TIER_BADGES = ['1', '2']
+/** The badges `TierSpec.focusBadges` has the focus card declare instead. */
+export const FOCUS_TIER_BADGES = ['F']
+
+/** The text on the badge `LegendSpec.badgeFirst` declares. */
+export const LEGEND_BADGE_TEXT = 'E'

@@ -289,8 +289,9 @@
         background-color: transparent;
     }
 
-    // A line has no fill to hollow out, so it fades instead.
-    .pvt-legend-swatch-line {
+    // A line or a badge has no fill to hollow out, so it fades instead.
+    .pvt-legend-swatch-line,
+    .pvt-legend-swatch-badge {
         opacity: 0.35;
     }
 

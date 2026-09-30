@@ -3,8 +3,10 @@ import type { Node } from '../../../Node'
 import { EDGE_FILTER_PREFIX } from '../../../GraphQueryEngine'
 import type { EdgeFacet, FilterFacet, FilterValue, GraphFilters } from '../../../interfaces/GraphQueryEngine'
 import type { LegendEntry, LegendScope, LegendSection } from '../../../interfaces/GraphUI'
+import type { NodeBadge } from '../../../interfaces/RendererOptions'
 import { createHtmlElement } from '../../../utils/ElementCreation'
 import { FormFactory } from '../../../utils/FormFactory'
+import { createBadgeSwatch } from '../../components/BadgeSwatch'
 import { createEdgeSwatch } from '../../components/EdgeSwatch'
 import { arrowDown, selectionInverse, show } from '../../icons'
 import type { UIManager } from '../../UIManager'
@@ -32,6 +34,8 @@ interface ResolvedLegendEntry {
     id: string
     label: string
     color: string
+    /** A declared entry's mark, drawn as its swatch instead of the dot. */
+    badge?: NodeBadge
     predicate: (item: LegendItem) => boolean
     count: number
     /**
@@ -332,6 +336,7 @@ export class LegendSectionView {
                 // panel's own option labels. Only keys get prettified.
                 label: entry.label ?? entry.id,
                 color: entry.color,
+                badge: entry.badge,
                 predicate: safePredicate,
                 count: items.reduce((total, item) => total + (safePredicate(item) ? 1 : 0), 0),
             }
@@ -828,6 +833,8 @@ export class LegendSectionView {
                 : undefined
             return createEdgeSwatch(style ?? { strokeColor: entry.color }, 'pvt-legend-swatch-line')
         }
+
+        if (entry.badge) return createBadgeSwatch({ ...entry.badge, color: entry.badge.color ?? entry.color }, 'pvt-legend-swatch-badge')
 
         const swatch = createHtmlElement('span', { class: 'pvt-legend-swatch' })
         // Via the CSSOM, not an interpolated style attribute: the colour comes from

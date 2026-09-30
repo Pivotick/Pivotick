@@ -387,6 +387,10 @@ counter-scaled against the zoom, so a 280×150 card is 280×150 CSS pixels howev
 the graph is. And it never touches the node's geometry, so edges keep landing on the tier
 underneath and hovering moves nothing.
 
+The focus drawing wears the node's [badges](#node-badges) on its own rim, at the same
+on-screen size as the card. The node's own badges are hidden while it shows, so none is drawn
+twice. Give `focusTier` a `badges` of its own to show a different set on the card.
+
 Only a node selected **on its own** is promoted. A fifty-node box selection would be a wall
 of overlapping cards.
 
