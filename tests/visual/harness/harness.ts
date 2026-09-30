@@ -949,6 +949,8 @@ export type PivotFixtureName =
     | 'blind'
     | 'union-children'
     | 'subset-only'
+    | 'unknown-count'
+    | 'known-zero'
 
 /** One provider call, as the log records it — how "zero calls" is demonstrated. */
 export interface PivotCall {
@@ -1137,7 +1139,7 @@ export interface HarnessApi {
     unregisterPivot(id: string): void
     pivotCount(): number
     /** `graph.pivots.summarize` — resolves `null` when the call was superseded. */
-    pivotSummarize(id: string, nodeIds?: string[], narrowing?: PivotNarrowing): Promise<{ total: number; facets: Array<{ key: string; type: string; options: number }> } | null>
+    pivotSummarize(id: string, nodeIds?: string[], narrowing?: PivotNarrowing): Promise<{ total: number | null; facets: Array<{ key: string; type: string; options: number }> } | null>
     /** Start a summarize without awaiting it, so the next one supersedes it. */
     startPivotSummarize(id: string, nodeIds?: string[], narrowing?: PivotNarrowing): void
     /** How the summarizes started with {@link startPivotSummarize} settled. */
@@ -5270,11 +5272,11 @@ class Harness implements HarnessApi {
         id: string,
         nodeIds: string[] = [],
         narrowing: PivotNarrowing = {}
-    ): Promise<{ total: number; facets: Array<{ key: string; type: string; options: number }> } | null> {
+    ): Promise<{ total: number | null; facets: Array<{ key: string; type: string; options: number }> } | null> {
         const summary = await this.g.pivots.summarize(id, this.pivotNodes(nodeIds), narrowing)
         if (!summary) return null
         return {
-            total: summary.total,
+            total: summary.total ?? null,
             facets: (summary.facets ?? []).map((facet) => ({
                 key: facet.key,
                 type: facet.type,
@@ -5906,6 +5908,48 @@ class Harness implements HarnessApi {
                             nodes: nodes.map((node) => ({ id: `subset-${node.id}` })),
                             edges: nodes.map((node) => ({ from: String(node.id), to: `subset-${node.id}`, data: {} })),
                         })
+                    ),
+                }
+            case 'unknown-count':
+                // A source asked live: it offers facets but cannot say how much is out
+                // there. The cap of 1 would refuse its three results if it were judged.
+                return {
+                    id: 'unknown-count',
+                    label: 'Enrich',
+                    maxCandidates: 1,
+                    summarize: (nodes, narrowing, ctx) => this.serveProvider(
+                        'unknown-count', 'summarize', nodes, narrowing, ctx,
+                        (): PivotSummary => ({
+                            total: null,
+                            facets: [{
+                                key: 'module',
+                                label: 'Module',
+                                type: 'multiselect',
+                                options: [{ label: 'dns', value: 'dns' }, { label: 'whois', value: 'whois' }],
+                            }],
+                        })
+                    ),
+                    fetch: (nodes, narrowing, ctx) => this.serveProvider(
+                        'unknown-count', 'fetch', nodes, narrowing, ctx,
+                        (): PivotResult => ({
+                            nodes: Array.from({ length: 3 }, (_, i) => ({ id: `enriched-${i}` })),
+                            edges: nodes[0]
+                                ? Array.from({ length: 3 }, (_, i) => ({ from: String(nodes[0].id), to: `enriched-${i}` }))
+                                : [],
+                        })
+                    ),
+                }
+            case 'known-zero':
+                return {
+                    id: 'known-zero',
+                    label: 'Nothing out there',
+                    summarize: (nodes, narrowing, ctx) => this.serveProvider(
+                        'known-zero', 'summarize', nodes, narrowing, ctx,
+                        (): PivotSummary => ({ total: 0 })
+                    ),
+                    fetch: (nodes, narrowing, ctx) => this.serveProvider(
+                        'known-zero', 'fetch', nodes, narrowing, ctx,
+                        (): PivotResult => ({ nodes: [], edges: [] })
                     ),
                 }
             case 'blind':

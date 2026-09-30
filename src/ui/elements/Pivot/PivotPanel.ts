@@ -2,6 +2,7 @@ import type { Node } from '../../../Node'
 import type {
     PivotDefinition, PivotFacet, PivotNarrowing, PivotRefusal, PivotRejection, PivotSummary,
 } from '../../../interfaces/Pivot'
+import { knownTotal } from '../../../PivotManager'
 import type { FieldConfig, FieldOption, FormValues } from '../../../utils/FormFactory'
 import { FormFactory } from '../../../utils/FormFactory'
 import { tryResolveString } from '../../../utils/Getters'
@@ -923,7 +924,8 @@ class PivotEntry {
 
         if (this.phase === 'fetching') {
             slot.classList.add('pvt-pivot-muted')
-            slot.textContent = this.summary ? `Fetching ~${fmt(this.summary.total)}…` : 'Fetching…'
+            const total = knownTotal(this.summary)
+            slot.textContent = total !== undefined ? `Fetching ~${fmt(total)}…` : 'Fetching…'
             return
         }
 
@@ -937,7 +939,7 @@ class PivotEntry {
             // A re-summarize keeps the last number on screen rather than blanking it: the
             // narrowing tick that caused it must not read as a reset.
             slot.classList.toggle('pvt-pivot-dim', this.phase === 'resummarizing')
-            slot.textContent = this.countText(this.summary.total)
+            slot.textContent = this.countText(knownTotal(this.summary))
             return
         }
 
@@ -978,8 +980,12 @@ class PivotEntry {
             && this.phase !== 'failed'
     }
 
-    /** `~2,143`, and C2's one line for a multi-node origin — never one line per node. */
-    private countText(total: number): string {
+    /**
+     * `~2,143`, and one line for a multi-node origin, never one line per node. Nothing for
+     * a count the provider does not know: `~0` would claim there is nothing out there.
+     */
+    private countText(total: number | undefined): string {
+        if (total === undefined) return ''
         const nodes = this.origin().length
         return nodes > 1 ? `~${fmt(total)} across ${fmt(nodes)} nodes` : `~${fmt(total)}`
     }
@@ -1075,7 +1081,7 @@ class PivotEntry {
             this.gateLine.textContent =
                 `The source returned ${fmt(this.refusal.count)} candidates, over the ${fmt(this.refusal.limit)} limit.`
                 + ' Nothing was staged — narrow and run again.'
-        } else if (cap !== undefined && this.summary !== undefined) {
+        } else if (cap !== undefined && knownTotal(this.summary) !== undefined) {
             this.gateLine.textContent = `Within the cap of ${fmt(cap)}`
         } else {
             this.gateLine.textContent = ''
@@ -1087,9 +1093,10 @@ class PivotEntry {
 
     /** Over the pivot's own cap, judged on the freshest advisory count. */
     private overCap(): boolean {
+        const total = knownTotal(this.summary)
         return this.def.maxCandidates !== undefined
-            && this.summary !== undefined
-            && this.summary.total > this.def.maxCandidates
+            && total !== undefined
+            && total > this.def.maxCandidates
     }
 
     /**

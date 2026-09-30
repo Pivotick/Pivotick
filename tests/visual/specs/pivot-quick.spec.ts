@@ -265,6 +265,13 @@ test.describe('one-click pivot', () => {
         expect(edges[0]).toBeLessThan(16)
     })
 
+    test('a count the provider does not know leaves the row blank; a known zero reads ~0', async ({ page }) => {
+        await load(page, { pivots: ['unknown-count', 'known-zero'] })
+        await openPivotSubmenu(page, 'a')
+
+        await expect.poll(() => peeks(page)).toEqual(['', '~0', null])
+    })
+
     test('a pointer passing over the row asks nothing', async ({ page }) => {
         await load(page, { pivots: ['correlation'], latency: 300 })
         await openNodeMenu(page, 'a')

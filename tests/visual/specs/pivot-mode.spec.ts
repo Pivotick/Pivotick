@@ -280,6 +280,22 @@ test.describe('pivot mode', () => {
         expect(await entryHeight(page, CORRELATION)).toBe(blockedHeight)
     })
 
+    test('a pivot that does not know its count shows none, and still narrows and fetches', async ({ page }) => {
+        await load(page, { pivots: ['unknown-count', 'known-zero'] })
+        await pickOrigin(page, 'a')
+        await enterMode(page)
+
+        const unknown = entry(page, 'unknown-count')
+        await expect(unknown.locator('[data-field-key="module"]').first()).toBeAttached()
+        await expect(count(page, 'unknown-count')).toHaveText('')
+        // Neither side of the cap: an unknown count is not within it either.
+        await expect(gate(page, 'unknown-count')).toBeHidden()
+        await expect(button(unknown, 'Fetch')).toBeEnabled()
+
+        // A known zero is a claim, and is drawn as one.
+        await expect(count(page, 'known-zero')).toHaveText('~0')
+    })
+
     // ── a facet's declared default ──────────────────────────────────────────
     test('a facet default starts ticked, and holding it is the unnarrowed question', async ({ page }) => {
         await load(page, { typeDefault: ['url', 'paste'] })

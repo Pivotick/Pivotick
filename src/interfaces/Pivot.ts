@@ -76,7 +76,8 @@ export interface PivotDefinition {
      */
     autoIngest?: boolean
     /**
-     * Refuse to fetch while the advertised count exceeds this. There is no library
+     * Refuse to fetch while the advertised count exceeds this. A count the provider does
+     * not know (`total: null`) is never refused. There is no library
      * default: a pivot that declares no cap is never gated by one (the absolute
      * ceiling of {@link PivotManagerLike.candidateCeiling} still applies to what
      * `fetch` returns).
@@ -215,8 +216,14 @@ export interface PivotSaveReport {
  * @category Pivots
  */
 export interface PivotSummary {
-    /** Advisory total. Render it as approximate. */
-    total: number
+    /**
+     * Advisory total. Render it as approximate.
+     *
+     * `null` or left out means the provider does not know, which is not the same claim as
+     * `0`. No count is drawn for it, and {@link PivotDefinition.maxCandidates} is not judged
+     * on it: only {@link PivotManagerLike.candidateCeiling} bounds what the fetch returns.
+     */
+    total?: number | null
     /** Optional breakdown; each entry becomes one narrowing control. */
     facets?: PivotFacet[]
 }

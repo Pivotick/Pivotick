@@ -178,6 +178,23 @@ test.describe('pivot pipeline', () => {
         expect(await callNames(page)).toEqual(['blind.fetch'])
     })
 
+    test('a count the provider does not know is not judged against the cap', async ({ page }) => {
+        // `unknown-count` declares maxCandidates: 1 and summarizes `total: null`. Three
+        // results would be over that cap, but there is no count to be over.
+        await load(page, { pivots: ['unknown-count'] })
+        const outcome = await run(page, 'unknown-count', ['a'])
+        expect(outcome.status).toBe('staged')
+        expect((await staged(page, 'unknown-count'))?.fetched).toBe(3)
+        expect(await callNames(page)).toEqual(['unknown-count.summarize', 'unknown-count.fetch'])
+    })
+
+    test('the ceiling still bounds a fetch whose count was unknown', async ({ page }) => {
+        await load(page, { pivots: ['unknown-count'], ceiling: 2 })
+        const outcome = await run(page, 'unknown-count', ['a'])
+        expect(outcome.status).toBe('refused')
+        expect(outcome.refusal).toEqual({ kind: 'ceiling', count: 3, limit: 2 })
+    })
+
     test('candidates are staged, and are not in the graph', async ({ page }) => {
         await load(page)
         const before = await counts(page)

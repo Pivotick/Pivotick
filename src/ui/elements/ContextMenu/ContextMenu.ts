@@ -1,5 +1,6 @@
 import { Edge } from '../../../Edge'
 import type { Node } from '../../../Node'
+import { knownTotal } from '../../../PivotManager'
 import { createActionList, createHtmlElement, createQuickActionList, generateSafeDomId } from '../../../utils/ElementCreation'
 import { addCircle, dataTable, edit, expand, focusElement, fullscreen, graphEdgeIcon, groupNodes, hide, inspect, pin, selectNeighbor, sparkles, stickyNote, trash, ungroupNodes, unpin } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
@@ -728,7 +729,7 @@ export class ContextMenu extends UIComponent {
         const nodes = pivots.originFor(id, origin)
         const cached = pivots.cachedSummary(id, nodes)
         if (cached) {
-            this.paintPeek(slot, cached.total, nodes.length)
+            this.paintPeek(slot, knownTotal(cached), nodes.length)
             return slot
         }
         slot.classList.add('pvt-contextmenu-peek-waiting')
@@ -755,7 +756,7 @@ export class ContextMenu extends UIComponent {
             if (token !== this.peekToken) return
             // `undefined` is a superseded call rather than an answer: something newer is
             // on its way and owns the slot from here. The row keeps its place, blank.
-            if (summary) this.paintPeek(slot, summary.total, nodes.length)
+            if (summary) this.paintPeek(slot, knownTotal(summary), nodes.length)
             else slot.classList.remove('pvt-contextmenu-peek-waiting')
         } catch {
             if (token !== this.peekToken) return
@@ -767,9 +768,13 @@ export class ContextMenu extends UIComponent {
         }
     }
 
-    /** Advisory, and drawn as such — the `~` the pivot panel uses for the same number. */
-    private paintPeek(slot: HTMLElement, total: number, nodes: number): void {
+    /**
+     * Advisory, and drawn as such — the `~` the pivot panel uses for the same number. A
+     * count the provider does not know leaves the row blank, as a superseded peek does.
+     */
+    private paintPeek(slot: HTMLElement, total: number | undefined, nodes: number): void {
         slot.classList.remove('pvt-contextmenu-peek-waiting')
+        if (total === undefined) return
         slot.textContent = `~${fmt(total)}`
         slot.title = nodes > 1
             ? `About ${fmt(total)} across ${fmt(nodes)} nodes`

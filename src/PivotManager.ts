@@ -16,6 +16,12 @@ import { rawTree } from './HistoryWorld'
 import type { Notification, NotificationAction, NotificationHandle } from './ui/Notifier'
 import { NotificationLevel } from './ui/Notifier'
 
+/** A summary's total, or `undefined` when the provider said it does not know. */
+export function knownTotal(summary: PivotSummary | undefined): number | undefined {
+    const total = summary?.total
+    return typeof total === 'number' && Number.isFinite(total) ? total : undefined
+}
+
 /** What changed, so a surface can re-render only what it shows. */
 export type PivotChange = 'registry' | 'summarize' | 'candidates' | 'runs' | 'save'
 
@@ -439,8 +445,10 @@ export class PivotManager implements PivotManagerLike {
                 // caller gets an outcome to render, not an exception to catch.
                 return { status: 'failed', runId, nodes: [], edges: [], deduped: 0, suppressed: 0, error }
             }
-            if (summary && summary.total > def.maxCandidates) {
-                return this.refuse(runId, { kind: 'cap', count: summary.total, limit: def.maxCandidates })
+            // An unknown count cannot be over anything; the ceiling still bounds the fetch.
+            const total = knownTotal(summary)
+            if (total !== undefined && total > def.maxCandidates) {
+                return this.refuse(runId, { kind: 'cap', count: total, limit: def.maxCandidates })
             }
         }
 

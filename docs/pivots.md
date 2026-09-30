@@ -241,6 +241,9 @@ Four things that are easy to get wrong, all of them visible above:
 - **Throw for a failure, return empty for an empty.** A thrown error surfaces on the pivot
   entry with a **Retry**. `{ total: 0 }` is an honest "nothing out there", and the two read
   completely differently to an analyst.
+- **Say when you do not know.** A source asked live may have no count before it answers.
+  Return `{ total: null, facets }`: no count is drawn, `maxCandidates` does not refuse it,
+  and `candidateCeiling` still bounds what `fetch` returns. `0` would claim there is nothing.
 - **Ids are the dedup key.** Return the source system's stable id, not a per-response one,
   or every re-run lands the same nodes again as fresh candidates.
 
