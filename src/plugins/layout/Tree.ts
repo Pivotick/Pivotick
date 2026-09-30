@@ -174,8 +174,7 @@ export class TreeLayout {
     }
 
     private layoutOnce(): void {
-        const nodes = this.graph.getNodes()
-        const edges = this.graph.getEdges()
+        const { nodes, edges } = this.drawnGraph()
         // Built once and handed on to `buildTree`: `levels` is what the radial force assigns
         // rings by, so a second walk picking another root would put nodes on rings their own
         // positions do not sit on.
@@ -194,6 +193,37 @@ export class TreeLayout {
     }
 
     /**
+     * The graph as the canvas draws it: a folded node gives its place to its group, and its
+     * edges end there. So a group takes one slot on its members' level, under their parent.
+     */
+    protected drawnGraph(): { nodes: Node[], edges: Edge[] } {
+        const nodes = this.graph.getNodes().filter(node => !this.graph.getMutableNode(node.id)?.foldedInto)
+        const groups = new Map(this.graph.simplify.getDrawnGroups().map(group => [group.id, group.clone()]))
+        if (groups.size === 0) return { nodes, edges: this.graph.getEdges() }
+        nodes.push(...groups.values())
+
+        const drawnEnd = (node: Node): Node => node.foldedInto ? drawnEnd(node.foldedInto) : node
+        const edges: Edge[] = []
+        const lines = new Set<string>()
+        for (const edge of this.graph.getMutableEdges()) {
+            const from = drawnEnd(edge.from)
+            const to = drawnEnd(edge.to)
+            if (from === edge.from && to === edge.to) {
+                edges.push(edge.clone())
+                continue
+            }
+            // Inside one group, or a second edge onto the same line.
+            const key = `${from.id}->${to.id}`
+            if (from === to || lines.has(key)) continue
+            lines.add(key)
+            const line = edge.clone()
+            line.bindEndpoints(groups.get(from.id) ?? from.clone(), groups.get(to.id) ?? to.clone())
+            edges.push(line)
+        }
+        return { nodes, edges }
+    }
+
+    /**
      * The tightest pair on each axis of the tree as currently laid out, for
      * {@link tuneTreeSpacing}. Measured in *hierarchy* space (`x` = breadth or angle,
      * `y` = depth or radius), which is the layout's own answer, unpolluted by whatever
@@ -202,7 +232,7 @@ export class TreeLayout {
     protected measureAutoContext(): AutoTreeContext {
         const byDepth = new Map<number, Array<{ node: HierarchyNode<TreeNode>, radius: number }>>()
         for (const [id, positioned] of this.positionedNodesByID) {
-            const node = this.graph.getMutableNode(id)
+            const node = this.graph.getCanvasNode(id)
             if (!node) continue
             // Parked nodes are placed at a spacing this layout chose, not one the canvas
             // implied, so measuring them would have auto tuning against its own output.
@@ -271,7 +301,7 @@ export class TreeLayout {
 
     protected setNodePositions(positionedNodes: HierarchyNode<TreeNode>[], options: TreeLayoutOptions): void {
         for (const positionedNode of positionedNodes) {
-            const node = this.graph.getMutableNode(positionedNode.data.id)
+            const node = this.graph.getCanvasNode(positionedNode.data.id)
             if (node) {
                 if (options.radial) {
                     const angle = positionedNode.x ?? 0
@@ -299,7 +329,7 @@ export class TreeLayout {
     }
 
     protected unsetNodePositions(): void {
-        this.graph.getMutableNodes().forEach(mutableNode => {
+        ;[...this.graph.getMutableNodes(), ...this.graph.simplify.getDrawnGroups()].forEach(mutableNode => {
             delete mutableNode.fy
             delete mutableNode.fx
         })
