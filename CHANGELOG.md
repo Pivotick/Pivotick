@@ -41,6 +41,9 @@
 
 ### Fixes
 
+- Hovering a history row now drains a group or closed cluster whose members it would
+  take out, and the lines to it, instead of leaving them at full strength. Edges of a
+  node about to be hidden drain with it.
 - With the simulation switched off, unpinned nodes no longer drift for a few seconds after
   load without being redrawn, then jump on the next redraw.
 - A node's tooltip no longer closes when the pointer crosses a gap inside the node's own

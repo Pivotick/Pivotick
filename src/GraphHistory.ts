@@ -11,6 +11,7 @@ import type {
 import { MANUAL_SOURCE, SEED_SOURCE, type PivotRun } from './interfaces/Pivot'
 import type { ManualGroupRecord } from './interfaces/Simplify'
 import type { Node } from './Node'
+import type { GroupNode } from './Simplification/GroupNode'
 import { generateSafeDomId } from './utils/ElementCreation'
 
 /** An entry with the payload that makes it reversible. The payload never leaves this file. */
@@ -174,12 +175,6 @@ export class GraphHistory implements GraphHistoryLike {
             }
         }
 
-        const forecast = this.forecast(world, applied)
-        const changing = new Set([
-            ...(forecast.removing ?? []).map(element => element.id),
-            ...(forecast.hiding ?? []).map(node => node.id),
-        ])
-
         const ordered = direction === 'undo' ? span : [...span].reverse()
         return {
             entries: ordered.map(publicEntry),
@@ -190,13 +185,7 @@ export class GraphHistory implements GraphHistoryLike {
             nodes: dedupe(nodes),
             edges: dedupe(edges),
             effect: world.effect(),
-            // A ring goes on what the span touches and *keeps* — a node a second run
-            // also vouches for. What is on its way out is drained instead, and saying
-            // both about one element says neither.
-            forecast: {
-                ...forecast,
-                touching: [...dedupe(nodes), ...dedupe(edges)].filter(element => !changing.has(element.id)),
-            },
+            forecast: this.forecast(world, applied, dedupe(nodes), dedupe(edges)),
         }
     }
 
@@ -485,9 +474,10 @@ export class GraphHistory implements GraphHistoryLike {
      * part is what a redo is mostly made of — its elements are not on the canvas, so
      * there is nothing there to light up.
      */
-    private forecast(world: ScratchWorld, applied: HistoryRecord[]): GraphForecast {
+    private forecast(world: ScratchWorld, applied: HistoryRecord[], touchedNodes: Node[], touchedEdges: Edge[]): GraphForecast {
         const known = this.knownPlacements(applied)
-        const removing: (Node | Edge)[] = []
+        const removing: Node[] = []
+        const removingEdges: Edge[] = []
         const hiding: Node[] = []
         const arrivingNodes: ForecastNode[] = []
         const arrivingEdges: ForecastEdge[] = []
@@ -535,7 +525,7 @@ export class GraphHistory implements GraphHistoryLike {
             if (drawnNow === drawnAfter) continue
 
             if (live && drawnNow) {
-                removing.push(live)
+                removingEdges.push(live)
                 continue
             }
             const ends = live ? [live.from.id, live.to.id] : known.edges.get(id)
@@ -544,7 +534,70 @@ export class GraphHistory implements GraphHistoryLike {
             if (from && to) arrivingEdges.push({ id, from, to })
         }
 
-        return { removing, hiding, arriving: { nodes: arrivingNodes, edges: arrivingEdges } }
+        return {
+            ...this.drawnMarks(removing, hiding, removingEdges, touchedNodes, touchedEdges),
+            arriving: { nodes: arrivingNodes, edges: arrivingEdges },
+        }
+    }
+
+    /**
+     * Move the marks onto what the canvas draws. A node folded into a group or a closed
+     * cluster has no dot of its own, and an edge sharing a line has no line of its own,
+     * so the dot or line standing in for them wears the mark: drained once everything
+     * it stands for is leaving, ringed while some of it stays. A line leaves with
+     * either of its ends, hidden or removed.
+     */
+    private drawnMarks(
+        removingNodes: Node[], hidingNodes: Node[], removingEdges: Edge[],
+        touchedNodes: Node[], touchedEdges: Edge[],
+    ): Pick<GraphForecast, 'removing' | 'hiding' | 'touching'> {
+        const leaving = new Map<string, 'removing' | 'hiding'>()
+        for (const node of hidingNodes) leaving.set(node.id, 'hiding')
+        for (const node of removingNodes) leaving.set(node.id, 'removing')
+        const goneEdges = new Set(removingEdges.map(edge => edge.id))
+
+        const removing = new Set<Node | Edge>()
+        const hiding = new Set<Node>()
+        const touching = new Set<Node | Edge>()
+
+        for (const node of [...removingNodes, ...hidingNodes]) {
+            const drawn = node.canvasRepresentative()
+            // A group is a stand-in for its members; a closed cluster is a node of its
+            // own, so it only leaves when it is itself on the list.
+            const members = drawn.isGroup ? (drawn as GroupNode).info.members : [drawn]
+            if (!members.every(member => leaving.has(member.id))) {
+                touching.add(drawn)
+            } else if (members.every(member => leaving.get(member.id) === 'removing')) {
+                removing.add(drawn)
+            } else {
+                hiding.add(drawn)
+            }
+        }
+
+        const lines = new Map<Edge, { all: number, gone: number }>()
+        for (const edge of this.graph.getMutableEdges()) {
+            const line = this.graph.getDrawnLine(edge)
+            if (!line) continue
+            const tally = lines.get(line) ?? { all: 0, gone: 0 }
+            lines.set(line, tally)
+            tally.all++
+            if (goneEdges.has(edge.id) || leaving.has(edge.from.id) || leaving.has(edge.to.id)) tally.gone++
+        }
+        for (const [line, tally] of lines) {
+            if (tally.gone === tally.all) removing.add(line)
+            else if (tally.gone) touching.add(line)
+        }
+
+        // A ring goes on what the span touches and *keeps*, a node a second run also
+        // vouches for. Saying both about one element says neither.
+        for (const node of touchedNodes) touching.add(node.canvasRepresentative())
+        for (const edge of touchedEdges) {
+            const line = this.graph.getDrawnLine(edge)
+            if (line) touching.add(line)
+        }
+        for (const element of [...removing, ...hiding]) touching.delete(element)
+
+        return { removing: [...removing], hiding: [...hiding], touching: [...touching] }
     }
 
     /**

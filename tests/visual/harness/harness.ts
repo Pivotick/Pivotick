@@ -2847,8 +2847,13 @@ class Harness implements HarnessApi {
 
     forecast(): ForecastSnapshot {
         const marked = (className: string): string[] => {
-            const elements: Array<Node | Edge> = [...this.g.getMutableNodes(), ...this.g.getMutableEdges()]
-            return elements
+            // What the canvas draws too: a group's dot and a stand-in line wear the marks
+            // of the members folded into them.
+            const elements = new Set<Node | Edge>([
+                ...this.g.getMutableNodes(), ...this.g.getMutableEdges(),
+                ...this.g.getCanvasNodes(), ...this.g.getDrawnEdges(),
+            ])
+            return [...elements]
                 .filter((element) => element.getGraphElement()?.classList.contains(className))
                 .map((element) => element.id)
                 .sort()

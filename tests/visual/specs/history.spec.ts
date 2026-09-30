@@ -68,6 +68,28 @@ const positions = async (page: Page, ids: string[]): Promise<Array<[string, numb
     return ids.map(id => [id, all[id]?.x ?? NaN, all[id]?.y ?? NaN])
 }
 
+/** The ids of the edges ending on this node, sorted like the forecast reader's. */
+const edgesOf = (page: Page, id: string): Promise<string[]> =>
+    page.evaluate((id) => window.__pivotick.graph!.getMutableEdges()
+        .filter((edge) => edge.from.id === id || edge.to.id === id)
+        .map((edge) => edge.id)
+        .sort(), id)
+
+/** What the canvas draws for the landing groups: each group's dot and the lines ending on it. */
+const landingGroupsDrawn = (page: Page): Promise<{ groups: string[], lines: string[] }> =>
+    page.evaluate(() => {
+        const graph = window.__pivotick.graph!
+        const groups = graph.simplify.getDrawnGroups().filter((group) => group.info.rule === 'landings')
+        const ids = new Set(groups.map((group) => group.id))
+        return {
+            groups: [...ids].sort(),
+            lines: graph.getDrawnEdges()
+                .filter((edge) => ids.has(edge.from.id) || ids.has(edge.to.id))
+                .map((edge) => edge.id)
+                .sort(),
+        }
+    })
+
 const away = (point: { x: number, y: number }, x: number, y: number): number =>
     Math.hypot(point.x - x, point.y - y)
 
@@ -709,6 +731,19 @@ test.describe('history — the dropdown', () => {
         }
     })
 
+    test('a node about to be hidden takes its edges with it in the forecast', async ({ page }) => {
+        await harness(page, 'excludeNode', 'b')
+        await harness(page, 'includeNode', 'b')
+        const edges = await edgesOf(page, 'b')
+        expect(edges.length).toBeGreaterThan(0)
+
+        // Undoing the show hides `b` again, and a hidden node's lines go with it.
+        await openHistory(page, 'undo')
+        await menuRows(page).nth(0).hover()
+        await expect.poll(() => forecast(page).then(seen => seen.hiding)).toEqual(['b'])
+        expect((await forecast(page)).removing).toEqual(edges)
+    })
+
     test('clicking a row travels the whole span, and the rows stay listed', async ({ page }) => {
         const before = await counts(page)
         await threeThings(page)
@@ -833,6 +868,31 @@ test.describe('history — the dropdown', () => {
 
         await page.keyboard.press('Enter')
         expect(await counts(page)).toEqual(before)
+    })
+})
+
+test.describe('history — forecasting what a group stands for', () => {
+    test('undoing an ingest that landed in a group drains the group and its line', async ({ page }) => {
+        await gotoHarness(page)
+        await harness(page, 'loadWithPivots', 'basic', { typed: true },
+            { UI: { mode: 'full', sidebar: { collapsed: true }, table: { open: true } } })
+        await page.locator('.zoom-layer:not(.hidden)').first().waitFor({ state: 'attached' })
+        await harness(page, 'runPivot', CORRELATION, ['a'], { type: ['ip'] })
+        const foot = page.locator('.pvt-triage-foot')
+        await foot.locator('button', { hasText: 'Select all' }).first().click()
+        await foot.locator('button', { hasText: 'Ingest in a group' }).first().click()
+
+        // Every landed node is folded, so the group's dot and the one line to it are
+        // all the canvas draws of the ingest: they are what has to drain.
+        const drawn = await landingGroupsDrawn(page)
+        expect(drawn.groups).toHaveLength(1)
+        expect(drawn.lines).toHaveLength(1)
+
+        await openHistory(page, 'undo')
+        await menuRows(page).nth(0).hover()
+        await expect.poll(() => forecast(page).then(seen => seen.removing))
+            .toEqual([...drawn.groups, ...drawn.lines].sort())
+        expect((await harness(page, 'emphasis')).dimmed).toEqual([])
     })
 })
 
