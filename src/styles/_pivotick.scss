@@ -36,6 +36,12 @@
     display: none;
 }
 
+// Room for the toolbar and rail. A viewer or a static graph takes the size it is given.
+.pvt-layout.mode-full .pvt-canvas,
+.pvt-layout.mode-light .pvt-canvas {
+    min-height: 300px;
+}
+
 .pvt-disable-selection,
 .pvt-disable-selection * {
     user-select: none !important;
@@ -45,7 +51,6 @@
 
 .pvt-canvas {
     display: block;
-    min-height: 300px;
     max-height: 100%;
 
     // Decorative grid pitch — kept equal to the simulation `gridSize` default (50)
