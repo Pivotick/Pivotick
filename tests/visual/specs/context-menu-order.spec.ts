@@ -130,9 +130,22 @@ test.describe('context menu order', () => {
 })
 
 /** Right-click an empty stretch of the canvas, away from the chrome in its corners. */
+/** A point on bare canvas, 30px clear of any node, edge or chrome in each direction. */
+const bareCanvasPoint = (page: Page) => page.evaluate(() => {
+    const svg = document.querySelector('.pvt-canvas-element')!
+    const box = svg.getBoundingClientRect()
+    const bare = (x: number, y: number) => document.elementFromPoint(x, y) === svg
+    for (let y = box.top + 60; y < box.bottom - 30; y += 20) {
+        for (let x = box.left + 30; x < box.right - 30; x += 20) {
+            if ([[0, 0], [30, 0], [-30, 0], [0, 30], [0, -30]].every(([dx, dy]) => bare(x + dx, y + dy))) return { x, y }
+        }
+    }
+    throw new Error('no bare canvas point')
+})
+
 async function rightClickCanvas(page: Page): Promise<string[]> {
-    const box = (await canvas(page).boundingBox())!
-    await page.mouse.click(box.x + box.width / 2, box.y + 60, { button: 'right' })
+    const point = await bareCanvasPoint(page)
+    await page.mouse.click(point.x, point.y, { button: 'right' })
     return menuRows(page)
 }
 
