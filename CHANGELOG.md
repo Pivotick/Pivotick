@@ -54,6 +54,8 @@
   selected with the sidebar collapsed, now fits and centres once the container gets one,
   instead of staying stuck in the top-left corner.
 - Dragging a new edge off a node card no longer selects the card's text.
+- Undoing a pivot run that landed without review (a one-click pivot, or `autoIngest`) no
+  longer opens a Review pane holding its rows.
 
 ### Simplify: fold nodes that play the same role
 

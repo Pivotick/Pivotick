@@ -999,14 +999,15 @@ export class PivotManager implements PivotManagerLike {
         if (landedNodes.length && simulation?.isEnabled()) simulation.reheat(0.1)
 
         // Ingested rows leave the set; rejections and untriaged leftovers stay. What
-        // leaves is written down, so undoing this ingest can put it back.
+        // leaves a reviewed set is written down, so undoing this ingest can put it back.
+        // A run that landed without review came from no pane, so its undo opens none.
         const landedIds = new Set(run.nodeIds)
         const landedEndpoints = new Set([...run.nodeIds, ...run.childIds])
         const landedEdgeKeys = new Set(run.edgeIds)
         const keptCarried = set.carried?.filter(
             raw => !landedEndpoints.has(String(raw.from)) && !landedEndpoints.has(String(raw.to)),
         )
-        run.restage = {
+        if (trigger === 'triage') run.restage = {
             label: set.label,
             origin: set.origin,
             narrowing: set.narrowing,

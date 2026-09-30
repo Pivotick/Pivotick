@@ -346,6 +346,23 @@ test.describe('one-click pivot', () => {
         await expect(menu(page)).not.toHaveClass(/shown/)
     })
 
+    // Undo re-stages an ingest's rows into the pane they came from; a run that landed
+    // without review came from no pane, so undoing it only takes the nodes off.
+    test('undoing a run that landed brings no review pane back', async ({ page }) => {
+        await load(page, { pivots: ['blind'] })
+        const before = await counts(page)
+
+        await openPivotSubmenu(page, 'a')
+        await flyout(page).locator('.pvt-action-item', { hasText: 'No advertised count' }).click()
+        await expect.poll(() => counts(page).then(c => c.nodes)).toBe(before.nodes + 3)
+
+        await page.locator('#pvt-undo-button').click()
+
+        await expect.poll(() => counts(page)).toEqual(before)
+        expect(await harness(page, 'dockTabIds')).toEqual(['table'])
+        expect(await harness(page, 'pivotCandidates', 'blind')).toBeNull()
+    })
+
     test('a run that lands says so in the folded bar, and takes nothing else', async ({ page }) => {
         await load(page, { pivots: ['blind'], latency: 800 })
         const before = await counts(page)

@@ -152,6 +152,9 @@ thousand correlations through a rate-limited API to fix a mistake made two secon
 They come back untriaged rather than still marked. Taking the run back is for going through
 it properly, not for re-landing the same twelve on one click.
 
+A run that landed without review, such as a one-click pivot from the context menu or a
+provider that sets `autoIngest`, came from no pane, so undoing it only takes its nodes off.
+
 This happens **only when the ingest is still the newest entry**. If anything at all has
 happened since, undo removes the nodes and no pane appears: a pane resurrecting itself over
 later work would be worse than the refetch.
