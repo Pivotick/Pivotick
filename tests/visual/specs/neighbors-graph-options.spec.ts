@@ -117,4 +117,30 @@ test.describe('neighbours graph options', () => {
         await openEgoGraph(page, 'h3', 'sw2')
         expect(await settledEgoScale(page)).toBeCloseTo(1, 5)
     })
+
+    // Built while the collapsed sidebar gave it no width, the ego graph used to skip its
+    // fit and stay pinned to the top-left corner once the sidebar opened.
+    test('an ego graph built in a collapsed sidebar fits once the sidebar opens', async ({ page }) => {
+        await load(page)
+        await openEgoGraph(page, 'r1', 'r2')
+        await settledEgoScale(page)
+        const fitted = await egoViewport(page)
+
+        await harness(page, 'loadTypedFilterable', { UI: { mode: 'full', sidebar: { collapsed: true } } })
+        await harness(page, 'selectNode', 'r1')
+        await expect.poll(() => harness(page, 'egoNodeFill', 'r2')).not.toBeNull()
+        await page.locator('.pvt-sidebar-collapse-container').click()
+
+        await expect.poll(() => egoViewport(page)).toEqual(fitted)
+    })
 })
+
+/** The ego graph's zoom layer transform, rounded so two equal fits compare equal. */
+function egoViewport(page: Page): Promise<{ x: number, y: number, scale: number }> {
+    return page.evaluate((ego) => {
+        const layer = document.querySelector(`${ego} .zoom-layer`) as SVGGraphicsElement | null
+        const m = layer?.transform.baseVal.consolidate()?.matrix
+        const round = (v: number) => Math.round(v * 100) / 100
+        return { x: round(m?.e ?? 0), y: round(m?.f ?? 0), scale: round(m?.a ?? 1) }
+    }, EGO)
+}

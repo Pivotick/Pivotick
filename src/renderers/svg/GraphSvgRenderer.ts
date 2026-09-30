@@ -118,6 +118,9 @@ export class GraphSvgRenderer extends GraphRenderer {
 
     /** Fires when the canvas becomes visible, to re-measure node sizes. */
     private sizeObserver: IntersectionObserver | null = null
+    private deferredFit: { forceScale?: number } | null = null
+    private fitObserver: ResizeObserver | null = null
+    private fitSettleFrame: number | null = null
 
     /** Pending frame for the coalesced detail pass, if any. */
     private detailFrame: number | null = null
@@ -298,6 +301,46 @@ export class GraphSvgRenderer extends GraphRenderer {
     public override destroy(): void {
         this.sizeObserver?.disconnect()
         this.sizeObserver = null
+        this.cancelDeferredFit()
+    }
+
+    /**
+     * Hold a fit asked for while the canvas has no size (built in a collapsed sidebar, a
+     * hidden tab) and run it once the canvas gets one. It re-fits on every resize, so a
+     * container that grows over a transition ends fitted to its final size, and settles
+     * once the size holds for a frame.
+     */
+    private deferFit(forceScale?: number): void {
+        this.deferredFit = { forceScale }
+        if (this.fitObserver || typeof ResizeObserver === 'undefined') return
+
+        this.fitObserver = new ResizeObserver(() => {
+            if (!this.deferredFit) return this.cancelDeferredFit()
+            if (!this.hasSize()) return
+            const pending = this.deferredFit
+            this.fitAndCenter(pending.forceScale)
+            // fitAndCenter cleared it; keep it alive until the size stops changing.
+            this.deferredFit = pending
+            if (this.fitSettleFrame !== null) cancelAnimationFrame(this.fitSettleFrame)
+            this.fitSettleFrame = requestAnimationFrame(() => {
+                this.fitSettleFrame = requestAnimationFrame(() => this.cancelDeferredFit())
+            })
+        })
+        this.fitObserver.observe(this.svgCanvas)
+    }
+
+    private cancelDeferredFit(): void {
+        this.deferredFit = null
+        this.fitObserver?.disconnect()
+        this.fitObserver = null
+        if (this.fitSettleFrame !== null) cancelAnimationFrame(this.fitSettleFrame)
+        this.fitSettleFrame = null
+    }
+
+    /** d3-zoom can only resolve the SVG's relative size once it is attached and laid out. */
+    private hasSize(): boolean {
+        const svgEl = this.svgCanvas
+        return svgEl.isConnected && svgEl.clientWidth > 0 && svgEl.clientHeight > 0
     }
 
     public getZoomBehavior(): ZoomBehavior<SVGSVGElement, unknown> {
@@ -841,8 +884,13 @@ export class GraphSvgRenderer extends GraphRenderer {
 
         // d3-zoom resolves the SVG's relative 100% width/height against its
         // viewport; a detached or unrendered (0-size) SVG throws "Could not
-        // resolve relative length". Bail before touching the zoom behaviour.
-        if (!svgEl.isConnected || svgEl.clientWidth === 0 || svgEl.clientHeight === 0) return
+        // resolve relative length". Wait for a size instead.
+        if (!this.hasSize()) {
+            this.deferFit(forceScale)
+            return
+        }
+        // A fit that runs supersedes one still waiting for a size.
+        this.deferredFit = null
 
         const bounds = this.measureZoomLayer(zoomLayerEl)
         if (bounds.width == 0 || bounds.height == 0) return

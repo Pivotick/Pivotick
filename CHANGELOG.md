@@ -50,6 +50,10 @@
   its label.
 - An ingest now warms up a running layout, as opening a group does, so what lands is laid out
   even when the layout had settled.
+- A graph built while its container has no size, such as the neighbour graph of a node
+  selected with the sidebar collapsed, now fits and centres once the container gets one,
+  instead of staying stuck in the top-left corner.
+- Dragging a new edge off a node card no longer selects the card's text.
 
 ### Simplify: fold nodes that play the same role
 
