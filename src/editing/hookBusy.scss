@@ -1,0 +1,61 @@
+// A consumer hook is being waited on.
+.pivotick[data-pvt-busy],
+.pivotick[data-pvt-busy] * {
+    cursor: progress !important;
+}
+
+// Bottom-centre pill by default; a small spinner alone when anchored to a point.
+.pvt-busy-indicator {
+    position: absolute;
+    left: 50%;
+    bottom: 16px;
+    transform: translateX(-50%);
+    // Above the graph and the empty-state card, below the chrome.
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background-color: var(--pvt-chrome-bg);
+    border: 1px solid var(--pvt-chrome-border);
+    box-shadow: var(--pvt-chrome-shadow);
+    color: var(--pvt-text-color-4);
+    font-size: 12px;
+    line-height: 1;
+    pointer-events: none;
+    white-space: nowrap;
+
+    &.pvt-busy-indicator--at-point {
+        bottom: auto;
+        transform: translate(-50%, -50%);
+        padding: 4px;
+
+        .pvt-busy-label {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip: rect(0 0 0 0);
+            white-space: nowrap;
+        }
+    }
+}
+
+.pvt-busy-spinner {
+    box-sizing: border-box;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid var(--pvt-chrome-border);
+    border-top-color: var(--pvt-theme-primary);
+    animation: pvt-busy-spin 0.8s linear infinite;
+
+    @media (prefers-reduced-motion: reduce) {
+        animation-duration: 2.4s;
+    }
+}
+
+@keyframes pvt-busy-spin {
+    to { transform: rotate(360deg); }
+}

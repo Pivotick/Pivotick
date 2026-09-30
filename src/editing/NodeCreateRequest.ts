@@ -8,6 +8,7 @@ import type {
 import type { NodeStyle } from '../interfaces/RendererOptions'
 import { Node, type NodeData } from '../Node'
 import { generateSafeDomId } from '../utils/ElementCreation'
+import { runHook, type PromptWrap } from './HookBusy'
 import { promptData } from './PromptModal'
 
 /** What an affordance asks the library to create. */
@@ -42,7 +43,7 @@ export async function runNodeCreateRequest(graph: Graph, request: NodeCreateRequ
     const hook = graph.getOptions().callbacks?.onBeforeNodeCreate
 
     const decision = hook
-        ? normalise(await hook(buildContext(graph, request)))
+        ? normalise(await runHook(graph, request.position, wrap => hook(buildContext(graph, request, wrap))))
         : { accept: true }
 
     if (!decision.accept) return null
@@ -70,12 +71,12 @@ export async function runNodeCreateRequest(graph: Graph, request: NodeCreateRequ
     return node
 }
 
-function buildContext(graph: Graph, request: NodeCreateRequest): NodeCreateContext {
+function buildContext(graph: Graph, request: NodeCreateRequest, wrap: PromptWrap): NodeCreateContext {
     return {
         position: request.position,
         origin: request.origin,
-        promptData: (options: NodePromptDataOptions) =>
-            promptData<NodeData>(graph, options, { title: 'Node details' }),
+        promptData: wrap((options: NodePromptDataOptions) =>
+            promptData<NodeData>(graph, options, { title: 'Node details' })),
     }
 }
 

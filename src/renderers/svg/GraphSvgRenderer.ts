@@ -1417,4 +1417,11 @@ export class GraphSvgRenderer extends GraphRenderer {
     public hideShadowEdge(): void {
         this.shadowEdgePath.style('display', 'none')
     }
+
+    public getShadowEdgeEnd(): Point | null {
+        const path = this.shadowEdgePath.node()
+        if (!path || path.style.display === 'none') return null
+        const end = path.getPointAtLength(path.getTotalLength())
+        return { x: end.x, y: end.y }
+    }
 }

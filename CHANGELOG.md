@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Waiting on a hook
+
+- **The canvas shows when it waits on an async hook.** After 200 ms without an answer from
+  `onBeforeEdgeCreate`, `onBeforeNodeCreate`, `onBeforeDelete`, an edit-commit hook or
+  `onBeforeIngest`, the cursor turns to progress and a spinner appears at the end of the
+  preview edge, at the drop point, or at the bottom of the canvas. It steps aside while a
+  prompt the hook opened is on screen. `UI.busyIndicator` sets `delay` and `label`, and
+  `false` turns it off.
+
 ### Tooltips per kind
 
 - **`UI.tooltip.enabled` takes a map or a function** besides `true` / `false`.

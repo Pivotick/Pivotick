@@ -5,6 +5,7 @@ import type {
     EdgeCreateOrigin,
     EdgeLabelPromptMode,
     EdgeLabelPromptOptions,
+    EdgePromptDataOptions,
     InterractionCallbacks,
 } from '../interfaces/InterractionCallbacks'
 import type { PartialEdgeFullStyle } from '../interfaces/RendererOptions'
@@ -12,6 +13,7 @@ import { Node } from '../Node'
 import { Note } from '../Note'
 import { promptEdgeData, promptEdgeLabel } from './EdgeLabelPrompt'
 import { GraphConnectManager } from './GraphConnectManager'
+import { runHook } from './HookBusy'
 
 /** Normalised form of an {@link InterractionCallbacks.onBeforeEdgeCreate} return value. */
 type ResolvedDecision = {
@@ -55,6 +57,9 @@ export class EdgeCreationSession {
     /** True while an async `onBeforeEdgeCreate` decision is in flight — locks out new gestures. */
     private deciding = false
 
+    /** Takes the busy cue down when the gesture is cancelled mid-decision. */
+    private decisionAbort: AbortController | null = null
+
     private static readonly DRAG_THRESHOLD = 4
 
     public constructor(
@@ -94,6 +99,9 @@ export class EdgeCreationSession {
     }
 
     public cancel(): void {
+
+        this.decisionAbort?.abort()
+        this.decisionAbort = null
 
         this.clearSource()
 
@@ -291,15 +299,18 @@ export class EdgeCreationSession {
         if (!hook) return { accept: true }
 
         const kind = source instanceof Note ? 'note-link' : 'edge'
-        const context: EdgeCreateContext = {
-            source,
-            target,
-            origin,
-            kind,
-            promptLabel: (options?: EdgeLabelPromptOptions) => this.promptEdgeLabel(source, target, options),
-            promptData: (options) => promptEdgeData(this.graph, options)
-        }
-        const decision = await hook(context)
+        this.decisionAbort = new AbortController()
+        const decision = await runHook(this.graph, () => this.graph.renderer.getShadowEdgeEnd(), wrap => {
+            const context: EdgeCreateContext = {
+                source,
+                target,
+                origin,
+                kind,
+                promptLabel: wrap((options?: EdgeLabelPromptOptions) => this.promptEdgeLabel(source, target, options)),
+                promptData: wrap((options: EdgePromptDataOptions) => promptEdgeData(this.graph, options))
+            }
+            return hook(context)
+        }, this.decisionAbort.signal)
 
         if (decision === true) return { accept: true }
         if (!decision) return { accept: false }

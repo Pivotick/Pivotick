@@ -161,6 +161,15 @@ export interface GraphUI {
      */
     emptyState?: EmptyStateOptions | boolean,
     /**
+     * What the canvas shows while it waits on one of your async hooks
+     * (`onBeforeEdgeCreate`, `onBeforeDelete`, `onBeforeNodeCreate`, the edit-commit
+     * hooks, `onBeforeIngest`): a progress cursor and a small spinner, never while a
+     * prompt the hook opened through its context is on screen. `false` shows nothing,
+     * for a consumer that draws its own. See {@link BusyIndicatorOptions}.
+     * @default true
+     */
+    busyIndicator?: BusyIndicatorOptions | boolean,
+    /**
     /**
      * What to show while a content hook's promise is in flight, and if it
      * rejects. Only async hooks ever reach it — see {@link AsyncContentOptions}.
@@ -230,6 +239,30 @@ export interface EmptyStateOptions extends FeatureToggle {
      * @default 'Nothing on the canvas yet'
      */
     render?: ((ctx: EmptyStateContext) => RenderResult) | HTMLElement | string
+}
+
+/**
+ * `UI.busyIndicator`: the cue shown while an async hook is in flight.
+ *
+ * It sits at the end of the preview edge for `onBeforeEdgeCreate`, at the drop point
+ * for `onBeforeNodeCreate`, and at the bottom-centre of the canvas otherwise. While it
+ * shows, the graph's root carries `data-pvt-busy`.
+ *
+ * @category UI Options
+ */
+export interface BusyIndicatorOptions extends FeatureToggle {
+    /**
+     * Milliseconds to wait before showing anything, so a fast hook never flickers.
+     * Applies again each time a prompt the hook opened closes.
+     * @default 200
+     */
+    delay?: number
+    /**
+     * Announced to assistive technology, and shown beside the spinner at the
+     * bottom-centre.
+     * @default 'Waiting…'
+     */
+    label?: string
 }
 
 /**

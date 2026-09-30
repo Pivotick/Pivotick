@@ -1,5 +1,6 @@
 import type { Edge, EdgeData } from '../Edge'
 import type { GraphEditingManager } from './GraphEditingManager'
+import { runHook } from './HookBusy'
 
 /**
  * Represents an active edge editing session — the edge twin of
@@ -78,12 +79,12 @@ export class EdgeEditSession {
         const callback = graph.getOptions().callbacks?.onBeforeEdgeEditCommit
 
         if (callback) {
-            const accepted = await callback({
+            const accepted = await runHook(graph, 'canvas', () => callback({
                 edge: this.edge,
                 previousData,
                 nextData,
                 session: this,
-            })
+            }))
 
             if (accepted === false) return false
         }

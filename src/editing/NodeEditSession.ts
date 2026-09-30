@@ -1,5 +1,6 @@
 import type { Node, NodeData } from '../Node'
 import type { GraphEditingManager } from './GraphEditingManager'
+import { runHook } from './HookBusy'
 
 /**
  * Represents an active node editing session.
@@ -79,12 +80,12 @@ export class NodeEditSession {
         const callback = graph.getOptions().callbacks?.onBeforeNodeEditCommit
 
         if (callback) {
-            const accepted = await callback({
+            const accepted = await runHook(graph, 'canvas', () => callback({
                 node: this.node,
                 previousData,
                 nextData,
                 session: this,
-            })
+            }))
 
             if (accepted === false) return false
         }

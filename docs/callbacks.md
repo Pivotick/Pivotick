@@ -105,6 +105,28 @@ callbacks: {
 cancel path. `ctx.origin` says which affordance asked (`'bulk-action'` or
 `'context-menu'`).
 
+### While a hook decides {#busy-indicator}
+
+A hook that fetches or saves before it answers leaves the user waiting. After 200 ms
+without an answer, the graph shows that it is waiting: a progress cursor, and a small
+spinner at the end of the preview edge (`onBeforeEdgeCreate`), at the drop point
+(`onBeforeNodeCreate`), or as a "Waiting…" pill at the bottom of the canvas (deletes,
+edit commits, `onBeforeIngest`). A hook that answers sooner shows nothing.
+
+A prompt the hook opens through its context (`promptLabel`, `promptData`, `confirm`)
+takes the cue down while it is on screen, and the wait after it closes gets the same
+treatment, so a hook that asks and then saves reads as busy only while it is busy.
+Escape during a connect gesture's wait leaves connect mode and takes the cue down; a hook
+that accepts after that still gets its edge, since it may already have saved it.
+
+```js
+UI: {
+    busyIndicator: { delay: 300, label: 'Saving…' }, // or false, to draw your own
+}
+```
+
+While the cue shows, the graph's root element carries `data-pvt-busy`.
+
 ### Removing the affordance instead
 
 A veto is the wrong answer when an operation is *never* allowed — for an integration

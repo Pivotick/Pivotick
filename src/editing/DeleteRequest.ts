@@ -9,6 +9,7 @@ import type {
 } from '../interfaces/InterractionCallbacks'
 import type { Node } from '../Node'
 import type { Note } from '../Note'
+import { runHook } from './HookBusy'
 import { confirmModal } from './PromptModal'
 
 /** What an affordance asks the library to delete. */
@@ -59,16 +60,17 @@ export async function runDeleteRequest(graph: Graph, request: DeleteRequest): Pr
         return remove(graph, targets.nodes, targets.edges, targets.notes, false)
     }
 
-    const context: DeleteContext = {
-        nodes: targets.nodes,
-        edges: targets.edges,
-        notes: targets.notes,
-        cascadingEdges: targets.cascadingEdges,
-        origin: request.origin,
-        confirm: (options?: ConfirmOptions) => confirmModal(graph, options),
-    }
-
-    const decision = normalise(await hook(context))
+    const decision = normalise(await runHook(graph, 'canvas', wrap => {
+        const context: DeleteContext = {
+            nodes: targets.nodes,
+            edges: targets.edges,
+            notes: targets.notes,
+            cascadingEdges: targets.cascadingEdges,
+            origin: request.origin,
+            confirm: wrap((options?: ConfirmOptions) => confirmModal(graph, options)),
+        }
+        return hook(context)
+    }))
 
     if (!decision.accept) {
         return { accepted: false, nodes: [], edges: [], notes: [] }

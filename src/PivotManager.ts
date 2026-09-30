@@ -1,7 +1,7 @@
 import { Edge } from './Edge'
 import type { Graph } from './Graph'
 import type { RawEdge, RawNode } from './interfaces/GraphOptions'
-import type { IngestContext, IngestDecision } from './interfaces/InterractionCallbacks'
+import type { ConfirmOptions, IngestContext, IngestDecision } from './interfaces/InterractionCallbacks'
 import type {
     PivotCandidate, PivotCandidateEdge, PivotCandidateSet, PivotContext, PivotDefinition,
     PivotManagerLike, PivotNarrowing, PivotRefusal, PivotRejection, PivotRimBadge, PivotRimBadgeVisibility,
@@ -11,6 +11,7 @@ import type {
 import { SEED_SOURCE } from './interfaces/Pivot'
 import type { Node } from './Node'
 import { confirmModal } from './editing/PromptModal'
+import { runHook } from './editing/HookBusy'
 import { rawTree } from './HistoryWorld'
 import type { Notification, NotificationAction, NotificationHandle } from './ui/Notifier'
 import { NotificationLevel } from './ui/Notifier'
@@ -849,14 +850,16 @@ export class PivotManager implements PivotManagerLike {
 
         const hook = this.graph.getCallbacks()?.onBeforeIngest
         if (hook) {
-            const context: IngestContext = {
-                pivotId,
-                origin: set.origin,
-                candidates: { nodes: marked.map(c => c.raw), edges: markedEdges.map(e => e.raw) },
-                trigger,
-                confirm: options => confirmModal(this.graph, options),
-            }
-            const decision = normaliseDecision(await hook(context))
+            const decision = normaliseDecision(await runHook(this.graph, 'canvas', wrap => {
+                const context: IngestContext = {
+                    pivotId,
+                    origin: set.origin,
+                    candidates: { nodes: marked.map(c => c.raw), edges: markedEdges.map(e => e.raw) },
+                    trigger,
+                    confirm: wrap((options?: ConfirmOptions) => confirmModal(this.graph, options)),
+                }
+                return hook(context)
+            }))
             if (!decision.accept) {
                 return { status: 'vetoed', runId, nodes: [], edges: [], deduped: set.deduped, suppressed: set.suppressed }
             }

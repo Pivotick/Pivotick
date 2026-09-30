@@ -125,6 +125,11 @@ export abstract class GraphRenderer {
     abstract clearForecast(): void
     abstract showShadowEdge(params: { source: Node | Note, targetNode?: Node, targetPosition?: { x: number, y: number }, invalid?: boolean }): void
     abstract hideShadowEdge(): void
+
+    /** Graph-space point where the preview edge ends, or `null` while none is drawn. */
+    public getShadowEdgeEnd(): Point | null {
+        return null
+    }
     abstract enterNoteEditMode(note: Note): void
 
     /**

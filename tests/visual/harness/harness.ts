@@ -77,6 +77,11 @@ export type EdgeHookBehavior =
     | 'prompt-data-render'
     // Mirrors the gallery card: drag → inline free-text label, click → modal dropdown.
     | 'prompt-by-origin'
+    // Wait, collect a label through `ctx.promptData`, wait again, then accept — the
+    // shape of a hook that fetches a vocabulary, asks, then saves.
+    | 'slow-prompt-slow'
+    // Wait, then throw.
+    | 'reject-async'
 
 /** Named `isValidConnection` live-predicate behaviours. */
 export type ValidConnBehavior = 'reject-all' | 'reject-target-b'
@@ -1804,6 +1809,15 @@ export interface HarnessApi {
     edgeEvents(): RecordedEdge[]
     /** How many times each connect callback was invoked (proves the pending lock blocks re-entry). */
     hookCalls(): { edge: number; validConnection: number }
+    /**
+     * Start recording every time the graph's root gains or loses `data-pvt-busy`,
+     * timed from the latest `onBeforeEdgeCreate` call.
+     */
+    watchBusy(): void
+    /** What {@link watchBusy} recorded: `ms` after the hook was called, and the state it entered. */
+    busyLog(): Array<{ ms: number; busy: boolean }>
+    /** Set `UI.busyIndicator`. */
+    setBusyIndicator(options: { enabled?: boolean; delay?: number; label?: string } | boolean): void
     /** The `{ origin, kind }` of every `onBeforeEdgeCreate` context seen (verifies note-link vs edge). */
     hookContexts(): Array<{ origin: string; kind: string }>
     /**
@@ -2009,6 +2023,9 @@ class Harness implements HarnessApi {
     private edgeHookCalls = 0
     private validConnCalls = 0
     private seenHookContexts: Array<{ origin: string; kind: string }> = []
+    private edgeHookCalledAt = 0
+    private busyTransitions: Array<{ at: number; busy: boolean }> = []
+    private busyObserver?: MutationObserver
     /** Extra-panel observation state: render counts and the disposers `addPanel` returned. */
     private panelRenders = new Map<string, number>()
     private panelDisposers = new Map<string, () => void>()
@@ -4194,8 +4211,17 @@ class Harness implements HarnessApi {
             const behavior = config.edgeHook
             callbacks.onBeforeEdgeCreate = async (ctx: EdgeCreateContext): Promise<EdgeCreateDecision> => {
                 this.edgeHookCalls++
+                this.edgeHookCalledAt = performance.now()
                 this.seenHookContexts.push({ origin: ctx.origin, kind: ctx.kind })
                 if (behavior.endsWith('-async')) await sleep(delay)
+                if (behavior === 'reject-async') throw new Error('hook failed')
+                if (behavior === 'slow-prompt-slow') {
+                    await sleep(delay)
+                    const values = await ctx.promptData({ fields: [{ key: 'label', label: 'Label', type: 'text' }] })
+                    if (values === null) return false
+                    await sleep(delay)
+                    return { accept: true, data: values }
+                }
                 // Veto the first attempt only, so a test can prove connect mode
                 // stays usable and a retry succeeds.
                 if (behavior === 'veto-once') return this.edgeHookCalls > 1
@@ -4284,6 +4310,26 @@ class Harness implements HarnessApi {
 
     hookCalls(): { edge: number; validConnection: number } {
         return { edge: this.edgeHookCalls, validConnection: this.validConnCalls }
+    }
+
+    watchBusy(): void {
+        const root = this.g.UIManager.getRootContainer()
+        this.busyTransitions = []
+        this.busyObserver?.disconnect()
+        this.busyObserver = new MutationObserver(() => {
+            const busy = root.hasAttribute('data-pvt-busy')
+            const last = this.busyTransitions[this.busyTransitions.length - 1]
+            if (last?.busy !== busy) this.busyTransitions.push({ at: performance.now(), busy })
+        })
+        this.busyObserver.observe(root, { attributes: true, attributeFilter: ['data-pvt-busy'] })
+    }
+
+    busyLog(): Array<{ ms: number; busy: boolean }> {
+        return this.busyTransitions.map(({ at, busy }) => ({ ms: Math.round(at - this.edgeHookCalledAt), busy }))
+    }
+
+    setBusyIndicator(options: { enabled?: boolean; delay?: number; label?: string } | boolean): void {
+        (this.g.UIManager.getOptions() as { busyIndicator?: unknown }).busyIndicator = options
     }
 
     hookContexts(): Array<{ origin: string; kind: string }> {
