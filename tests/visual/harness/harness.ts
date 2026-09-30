@@ -37,7 +37,7 @@ import type { RenderContext } from '../../../src/interfaces/AsyncContent'
 import type { GraphDataChange, RawEdge, RawNode } from '../../../src/interfaces/GraphOptions'
 import type { GraphView } from '../../../src/interfaces/Simplify'
 import type {
-    PivotDefinition, PivotNarrowing, PivotResult, PivotRimBadge, PivotRunOutcome,
+    PivotDefinition, PivotMenuChoice, PivotNarrowing, PivotResult, PivotRimBadge, PivotRunOutcome,
     PivotSaveContext, PivotSaveOutcome, PivotSavePayload, PivotSummary,
 } from '../../../src/interfaces/Pivot'
 import { Edge as EdgeInstance, type Edge } from '../../../src/Edge'
@@ -951,6 +951,7 @@ export type PivotFixtureName =
     | 'subset-only'
     | 'unknown-count'
     | 'known-zero'
+    | 'enrich-object'
 
 /** One provider call, as the log records it — how "zero calls" is demonstrated. */
 export interface PivotCall {
@@ -993,6 +994,8 @@ export interface PivotFixtureSpec {
     fail?: boolean
     /** Absolute candidate ceiling, when a test wants a reachable one. */
     ceiling?: number
+    /** What ENRICH offers in the context menu instead of {@link ENRICH_CHOICES}; `[]` for a plain row. */
+    enrichChoices?: PivotMenuChoice[]
     /**
      * The CORRELATION `type` facet's declared default. The provider then reads a missing
      * `type` as these types and `[]` as none.
@@ -1992,6 +1995,17 @@ export interface HarnessApi {
  * The fake pivots `loadWithPivots` installs by default. `union-children` is left out:
  * it needs a container to merge into, so a test names it explicitly.
  */
+/** ENRICH's menu choices: one run per attribute. `ip` offers 3 modules, over its cap of 2. */
+const ENRICH_CHOICES: PivotMenuChoice[] = [
+    { label: 'ip: 8.8.8.8', narrowing: { attribute: ['ip'] } },
+    { label: 'domain: example.com', narrowing: { attribute: ['domain'] } },
+]
+
+/** A multiselect narrowing's values, or `undefined` when nothing is ticked. */
+function asList(value: unknown): string[] | undefined {
+    return Array.isArray(value) && value.length ? value.map(String) : undefined
+}
+
 const ALL_FAKE_PIVOTS: PivotFixtureName[] = [
     'correlation', 'event-objects', 'oversized', 'search-archive', 'blind',
 ]
@@ -5910,6 +5924,61 @@ class Harness implements HarnessApi {
                         })
                     ),
                 }
+            case 'enrich-object': {
+                // An object enriched through its attributes: which modules are on offer
+                // depends on which attributes are ticked, and a text filter narrows them.
+                const modulesOf: Record<string, string[]> = {
+                    ip: ['dns', 'whois', 'geo'], domain: ['dns', 'whois'], email: ['mx'],
+                }
+                const pairs = (narrowing: PivotNarrowing): Array<[string, string]> => {
+                    const attributes = asList(narrowing.attribute) ?? Object.keys(modulesOf)
+                    const modules = asList(narrowing.module)
+                    const filter = String(narrowing.filter ?? '')
+                    return attributes.flatMap((attribute) => (modulesOf[attribute] ?? [])
+                        .filter((module) => module.includes(filter) && (!modules || modules.includes(module)))
+                        .map((module): [string, string] => [attribute, module]))
+                }
+                const offered = (narrowing: PivotNarrowing): string[] => {
+                    const attributes = asList(narrowing.attribute) ?? Object.keys(modulesOf)
+                    const filter = String(narrowing.filter ?? '')
+                    return [...new Set(attributes.flatMap((attribute) => modulesOf[attribute] ?? []))]
+                        .filter((module) => module.includes(filter))
+                }
+                return {
+                    id: 'enrich-object',
+                    label: 'Enrich',
+                    maxCandidates: 2,
+                    menuChoices: () => this.pivotSpec.enrichChoices ?? ENRICH_CHOICES,
+                    summarize: (nodes, narrowing, ctx) => this.serveProvider(
+                        'enrich-object', 'summarize', nodes, narrowing, ctx,
+                        (): PivotSummary => ({
+                            total: pairs(narrowing).length,
+                            facets: [
+                                {
+                                    key: 'attribute', label: 'Attribute', type: 'multiselect',
+                                    options: Object.keys(modulesOf).map((value) => ({ label: value, value })),
+                                },
+                                {
+                                    key: 'module', label: 'Module', type: 'multiselect',
+                                    options: offered(narrowing).map((value) => ({ label: value, value })),
+                                },
+                                { key: 'filter', label: 'Filter modules', type: 'text' },
+                            ],
+                        })
+                    ),
+                    fetch: (nodes, narrowing, ctx) => this.serveProvider(
+                        'enrich-object', 'fetch', nodes, narrowing, ctx,
+                        (): PivotResult => ({
+                            nodes: pairs(narrowing).map(([attribute, module]) => ({ id: `enrich-${attribute}-${module}` })),
+                            edges: nodes[0]
+                                ? pairs(narrowing).map(([attribute, module]) => ({
+                                    from: String(nodes[0].id), to: `enrich-${attribute}-${module}`,
+                                }))
+                                : [],
+                        })
+                    ),
+                }
+            }
             case 'unknown-count':
                 // A source asked live: it offers facets but cannot say how much is out
                 // there. The cap of 1 would refuse its three results if it were judged.

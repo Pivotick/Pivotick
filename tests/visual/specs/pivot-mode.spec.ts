@@ -8,6 +8,7 @@ import type { PivotFixtureSpec, RecordedCandidates } from '../harness/harness'
 // screenshot can see, alongside the panel's own states.
 
 const CORRELATION = 'correlation'
+const ENRICH = 'enrich-object'
 const FULL = { UI: { mode: 'full', sidebar: { collapsed: true }, table: { open: true } } }
 /** Rim badges otherwise show only while Pivot mode is open. */
 const BADGES_SHOWN = { ...FULL, pivotRimBadgeVisible: 'always' }
@@ -103,6 +104,18 @@ const facetCounts = (page: Page, pivotId: string, key: string): Promise<string[]
     entry(page, pivotId).locator(`[data-field-key="${key}"] .pvt-checkbox-option`)
         .evaluateAll(rows => rows.map(row =>
             row.querySelector('.pvt-checkbox-count')?.textContent ?? ''))
+
+/** A multiselect facet's option labels, top to bottom. */
+const optionLabels = (page: Page, pivotId: string, key: string): Promise<string[]> =>
+    entry(page, pivotId).locator(`[data-field-key="${key}"] .pvt-checkbox-label`)
+        .evaluateAll(labels => labels.map(label => label.textContent ?? ''))
+
+/** The field and option value of the focused control, if it is in a narrowing form. */
+const focusedOption = (page: Page): Promise<{ key: string | null, value: string } | null> => page.evaluate(() => {
+    const active = document.activeElement
+    if (!(active instanceof HTMLInputElement)) return null
+    return { key: active.closest('[data-field-key]')?.getAttribute('data-field-key') ?? null, value: active.value }
+})
 
 /** Which narrowing field holds the caret, if any. */
 const caretField = (page: Page): Promise<string | null> => page.evaluate(() =>
@@ -357,6 +370,44 @@ test.describe('pivot mode', () => {
             .toHaveText('1,700 Domains · 110 URLs · 0 Pastes · 0 IPs')
         expect(await facetCounts(page, CORRELATION, 'type')).toEqual(['1,700', '110', '0', '0'])
         expect(await caretField(page)).toBe('seen')
+    })
+
+    test('a pick in one facet redraws a facet that depends on it, with no click elsewhere', async ({ page }) => {
+        await load(page, { pivots: [ENRICH] })
+        await pickOrigin(page, 'a')
+        await enterMode(page)
+        await expect(count(page, ENRICH)).toHaveText('~6')
+        expect(await optionLabels(page, ENRICH, 'module')).toEqual(['dns', 'whois', 'geo', 'mx'])
+
+        // Ticking leaves focus on the box, which is where the form used to wait.
+        await narrowTo(page, ENRICH, 'attribute', 'domain')
+        await expect.poll(() => optionLabels(page, ENRICH, 'module')).toEqual(['dns', 'whois'])
+        // The box the analyst clicked is the one focused in the new form.
+        expect(await focusedOption(page)).toEqual({ key: 'attribute', value: 'domain' })
+
+        await unnarrow(page, ENRICH, 'attribute', 'domain')
+        await expect.poll(() => optionLabels(page, ENRICH, 'module')).toEqual(['dns', 'whois', 'geo', 'mx'])
+        expect(await focusedOption(page)).toEqual({ key: 'attribute', value: 'domain' })
+    })
+
+    test('typing in a text facet never redraws the form under the caret', async ({ page }) => {
+        await load(page, { pivots: [ENRICH] })
+        await pickOrigin(page, 'a')
+        await enterMode(page)
+        await expect(count(page, ENRICH)).toHaveText('~6')
+
+        const filter = entry(page, ENRICH).locator('[data-field-key="filter"]')
+        await filter.click()
+        await filter.type('wh')
+
+        // The count follows the typing; the facet it changed waits for the field to be left.
+        await expect(count(page, ENRICH)).toHaveText('~2')
+        expect(await caretField(page)).toBe('filter')
+        await expect(filter).toHaveValue('wh')
+        expect(await optionLabels(page, ENRICH, 'module')).toEqual(['dns', 'whois', 'geo', 'mx'])
+
+        await heading(page).click()
+        await expect.poll(() => optionLabels(page, ENRICH, 'module')).toEqual(['whois'])
     })
 
     test('a fetch stages candidates and links into their pane', async ({ page }) => {

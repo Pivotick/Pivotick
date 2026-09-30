@@ -1,6 +1,7 @@
 import { Edge } from '../../../Edge'
 import type { Node } from '../../../Node'
 import { knownTotal } from '../../../PivotManager'
+import type { PivotMenuChoice } from '../../../interfaces/Pivot'
 import { createActionList, createHtmlElement, createQuickActionList, generateSafeDomId } from '../../../utils/ElementCreation'
 import { addCircle, dataTable, edit, expand, focusElement, fullscreen, graphEdgeIcon, groupNodes, hide, inspect, pin, selectNeighbor, sparkles, stickyNote, trash, ungroupNodes, unpin } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
@@ -693,19 +694,27 @@ export class ContextMenu extends UIComponent {
         const ui = this.uiManager
         // A group pivots on its members, alone or in a selection.
         const origin = expandGroups(asNodes(element))
-        const rows: MenuActionItemOptions[] = ui.graph.pivots.for(origin).map(definition => ({
-            text: definition.label,
-            title: definition.label,
-            svgIcon: definition.icon ?? sparkles,
-            variant: 'outline-primary',
-            suffix: definition.summarize ? this.peekSlot(definition.id, origin) : undefined,
-            onclick: () => {
+        const rows: MenuActionItemOptions[] = ui.graph.pivots.for(origin).map(definition => {
+            const row: MenuActionItemOptions = {
+                text: definition.label,
+                title: definition.label,
+                svgIcon: definition.icon ?? sparkles,
+                variant: 'outline-primary',
+                suffix: definition.summarize ? this.peekSlot(definition.id, origin) : undefined,
+            }
+            const choices = definition.menuChoices?.(ui.graph.pivots.originFor(definition.id, origin)) ?? []
+            if (choices.length) {
+                row.submenu = this.pivotChoices(definition.id, origin, choices)
+                return row
+            }
+            row.onclick = () => {
                 // The run asks this pivot the same question, so the peek is handed over
                 // rather than aborted from under it when the menu closes.
                 this.asked = this.asked.filter(id => id !== definition.id)
                 void ui.quickPivot(origin, definition.id)
-            },
-        }))
+            }
+            return row
+        })
         this.startPeeks()
         rows.push({
             text: 'Open pivot panel…',
@@ -714,6 +723,35 @@ export class ContextMenu extends UIComponent {
             variant: 'outline-primary',
             dividerBefore: rows.length > 0,
             onclick: () => ui.openPivotMode(origin),
+        })
+        return rows
+    }
+
+    /**
+     * A pivot's own choices, each a run with its narrowing, then its panel. The choices
+     * carry no peek: a pivot answers one question at a time, so several would supersede
+     * one another. The pivot's row above keeps the unnarrowed count.
+     */
+    private pivotChoices(id: string, origin: Node[], choices: PivotMenuChoice[]): MenuActionItemOptions[] {
+        const ui = this.uiManager
+        const rows: MenuActionItemOptions[] = choices.map(choice => ({
+            text: choice.label,
+            title: choice.title ?? choice.label,
+            variant: 'outline-primary',
+            onclick: () => {
+                // Closing the menu cancels what its peeks asked, which would take the
+                // run's own gate question with it.
+                this.asked = this.asked.filter(asked => asked !== id)
+                void ui.quickPivot(origin, id, choice.narrowing)
+            },
+        }))
+        rows.push({
+            text: 'Open pivot panel…',
+            title: 'Read the counts, narrow, then run',
+            svgIcon: sparkles,
+            variant: 'outline-primary',
+            dividerBefore: true,
+            onclick: () => ui.openPivotMode(origin, id),
         })
         return rows
     }
@@ -1070,7 +1108,8 @@ export class ContextMenu extends UIComponent {
         this.parentContainer.appendChild(panel)
 
         this.flyouts[depth] = { panel, row }
-        if (this.asked.length) this.peekHost = panel
+        // The panel whose rows asked, not a deeper one opened from it.
+        if (this.asked.length) this.peekHost ??= panel
         row.classList.add('pvt-submenu-open')
         // Measured before it is shown: opacity does not move anything, so the box is
         // already the real one.

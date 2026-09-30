@@ -32,7 +32,7 @@ import { PivotTriage } from './elements/Pivot/PivotTriage'
 import { Table } from './elements/Table/Table'
 import { clearNodeSelection, hideNodes, selectedNodes } from './selectionActions'
 import type { PivotickPlugin, PluginContext } from '../interfaces/Plugin'
-import type { PivotRunOutcome } from '../interfaces/Pivot'
+import type { PivotNarrowing, PivotRunOutcome } from '../interfaces/Pivot'
 
 
 const basicPropertyGetter = (element: Node | Edge): PropertyEntry[] => {
@@ -478,12 +478,13 @@ export class UIManager {
      * consumes the click that would have made it.
      *
      * `pivotId` scopes the arrival: that pivot's entry is brought into view and marked,
-     * so a badge for one pivot does not land the analyst on a list of five.
+     * so a badge for one pivot does not land the analyst on a list of five. `narrowing`
+     * is set on that entry and asked about, so a capped run opens on its own question.
      *
      * A no-op where the mode does not exist — `UI.pivotMode: false`, no pivot registered,
      * or a UI mode with no rail.
      */
-    public openPivotMode(nodes: Node[] = [], pivotId?: string): void {
+    public openPivotMode(nodes: Node[] = [], pivotId?: string, narrowing?: PivotNarrowing): void {
         if (!this.modeStore.hasMode(PIVOT_MODE)) return
         const interaction = this.graph.renderer.getGraphInteraction()
         if (nodes.length) {
@@ -491,7 +492,7 @@ export class UIManager {
         }
         this.modeStore.setMode(PIVOT_MODE)
         this.modeStore.setPanelOpen(PIVOT_MODE, true)
-        if (pivotId) this.pivotMode?.focus(pivotId)
+        if (pivotId) this.pivotMode?.focus(pivotId, narrowing)
     }
 
     /**
@@ -500,8 +501,8 @@ export class UIManager {
      * offer. The selection is left alone: this is a question about `nodes`, not a move
      * to somewhere the analyst can then work.
      *
-     * Nothing is narrowed, so where the results go is the pivot's `autoIngest` if it
-     * declared one and otherwise their size — `pivots.quickIngestLimit` new candidates
+     * `narrowing` is `{}` unless a menu choice names one. Where the results go is the
+     * pivot's `autoIngest` if it declared one and otherwise their size — `pivots.quickIngestLimit` new candidates
      * or fewer land on the canvas, more than that opens triage.
      *
      * Nothing opens on the way: the run only comes forward if it turns out to need
@@ -511,11 +512,11 @@ export class UIManager {
      * narrowing both live. A failure has nothing to decide, only something to retry, and
      * says so from the notifier.
      */
-    public async quickPivot(nodes: Node[], pivotId: string): Promise<PivotRunOutcome> {
+    public async quickPivot(nodes: Node[], pivotId: string, narrowing: PivotNarrowing = {}): Promise<PivotRunOutcome> {
         const pivots = this.graph.pivots
-        const outcome = await pivots.run(pivotId, nodes, {}, { autoIngestUpTo: pivots.quickIngestLimit })
+        const outcome = await pivots.run(pivotId, nodes, narrowing, { autoIngestUpTo: pivots.quickIngestLimit })
         const capped = outcome.status === 'refused' && outcome.refusal?.kind === 'cap'
-        if (capped && !pivots.candidates(pivotId)) this.openPivotMode(nodes, pivotId)
+        if (capped && !pivots.candidates(pivotId)) this.openPivotMode(nodes, pivotId, narrowing)
         return outcome
     }
 

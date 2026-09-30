@@ -116,6 +116,20 @@ Where the results go depends on how many of them are new to the canvas:
 - **A cap refusal** happens before anything is fetched, so there is nothing to review. The
   Pivot panel opens on that pivot with the number and the narrowing that lifts it.
 
+A row runs with nothing narrowed. When one pivot is really several runs the analyst picks
+between, such as enriching an object through one of its attributes, declare `menuChoices`:
+the row then opens a submenu with one row per choice, each running the pivot with its own
+narrowing, and a last row opening the panel on that pivot. It is synchronous and runs each
+time the menu opens, like `appliesTo`. A cap refusal from a choice opens the panel on the
+choice's narrowing. Return `[]` for a plain row.
+
+```js
+menuChoices: ([object]) => attributesOf(object).map((a) => ({
+    label: `${a.type}: ${a.value}`,
+    narrowing: { attribute: [a.id] },
+})),
+```
+
 Candidates already on canvas are not new and never fill the limit, so re-running a pivot over
 ground you have covered stays a one-click gesture. An edge between two nodes already on screen
 does count, because it is a row you would otherwise have been asked about. A pivot that

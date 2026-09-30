@@ -52,6 +52,24 @@ export interface PivotDefinition {
      */
     appliesTo?: (nodes: Node[]) => boolean | Node[]
     /**
+     * Choices for the context menu. With any, the pivot's row opens a submenu with one row
+     * per choice, each running the pivot on the spot with that narrowing, and a last row
+     * opening the pivot panel. Receives the nodes the pivot applies to. Synchronous and
+     * cheap, like {@link appliesTo}: it runs every time the menu opens.
+     *
+     * Return `[]`, or omit the hook, for a plain row that runs with no narrowing.
+     *
+     * @example
+     * ```ts
+     * // Enrich an object through one of its attributes.
+     * menuChoices: ([object]) => attributesOf(object).map(a => ({
+     *     label: `${a.type}: ${a.value}`,
+     *     narrowing: { attribute: [a.id] },
+     * }))
+     * ```
+     */
+    menuChoices?: (nodes: Node[]) => PivotMenuChoice[]
+    /**
      * Cheap "what's out there". Called with `{}` before any narrowing exists, and
      * re-run as the origin or the narrowing changes; its facets become the narrowing
      * controls and its `total` is the number the cap is judged against.
@@ -205,6 +223,19 @@ export interface PivotSaveReport {
     pendingNodes: number
     pendingEdges: number
     errors: Array<{ runId: string, error: unknown }>
+}
+
+/**
+ * One row of a pivot's context-menu submenu. See {@link PivotDefinition.menuChoices}.
+ *
+ * @category Pivots
+ */
+export interface PivotMenuChoice {
+    label: string
+    /** What the pivot is run with, and what the panel opens on if the run is capped. */
+    narrowing: PivotNarrowing
+    /** Native tooltip. @default the label */
+    title?: string
 }
 
 /**

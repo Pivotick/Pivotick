@@ -77,6 +77,26 @@ const openPivotSubmenu = async (page: Page, id: string): Promise<void> => {
     await expect(flyout(page)).toHaveClass(/shown/)
 }
 
+/** The submenu a pivot's own row opens: the second flyout deep. */
+const choices = (page: Page): Locator => page.locator('.pvt-contextmenu-flyout').nth(1)
+const choiceRows = (page: Page): Promise<string[]> =>
+    choices(page).locator('.pvt-action-item').evaluateAll(
+        rows => rows.map(row => (row.querySelector('.pvt-action-text')?.textContent ?? '').trim())
+    )
+
+/** Pivot ▸ Enrich ▸, the pointer resting on each row in turn. */
+const openChoices = async (page: Page): Promise<void> => {
+    await openPivotSubmenu(page, 'a')
+    await flyout(page).first().locator('.pvt-action-item', { hasText: 'Enrich' }).hover()
+    await expect(choices(page)).toHaveClass(/shown/)
+}
+
+/** The narrowing each `fetch` call to a pivot was made with, oldest first. */
+const fetchedWith = async (page: Page, pivotId: string): Promise<object[]> => {
+    const log = await harness(page, 'pivotCalls') as Array<{ pivot: string, call: string, narrowing: object }>
+    return log.filter(call => call.pivot === pivotId && call.call === 'fetch').map(call => call.narrowing)
+}
+
 /** The zoom layer's transform, to show the graph behind the menu was left alone. */
 const zoomTransform = (page: Page): Promise<string> =>
     page.locator('.zoom-layer:not(.hidden)').first().evaluate(el => el.getAttribute('transform') ?? '')
@@ -464,6 +484,47 @@ test.describe('one-click pivot', () => {
         const outcome = await harness(page, 'runPivot', 'blind', ['a'])
         expect((outcome as { status: string }).status).toBe('staged')
         expect(await harness(page, 'dockTabIds')).toEqual(['table', 'pivot-triage'])
+    })
+
+    // ── a pivot offering choices ─────────────────────────────────────────────
+    test('a pivot with menu choices opens them, and each runs with exactly its narrowing', async ({ page }) => {
+        await load(page, { pivots: ['enrich-object'] })
+        await openChoices(page)
+
+        expect(await choiceRows(page)).toEqual(['ip: 8.8.8.8', 'domain: example.com', 'Open pivot panel…'])
+        const before = await counts(page)
+        await choices(page).locator('.pvt-action-item', { hasText: 'domain: example.com' }).click()
+
+        // Two modules offer a domain, under the cap: the run lands both.
+        await expect.poll(() => counts(page).then(c => c.nodes)).toBe(before.nodes + 2)
+        expect(await fetchedWith(page, 'enrich-object')).toEqual([{ attribute: ['domain'] }])
+    })
+
+    test('a cap refusal from a choice opens the panel on that choice', async ({ page }) => {
+        await load(page, { pivots: ['enrich-object'] })
+        await openChoices(page)
+
+        // Three modules offer an ip, over the cap of two.
+        await choices(page).locator('.pvt-action-item', { hasText: 'ip: 8.8.8.8' }).click()
+
+        await expect.poll(() => railMode(page)).toBe('pivot')
+        const panelEntry = entry(page, 'enrich-object')
+        await expect(panelEntry.locator('.pvt-pivot-count')).toHaveText('~3')
+        await expect(panelEntry.locator('[data-field-key="attribute"] .pvt-checkbox-option:has(input:checked)'))
+            .toHaveText(['ip'])
+        await expect(panelEntry.locator('.pvt-pivot-gate-blocked')).toBeVisible()
+    })
+
+    test('a pivot with no choices keeps its plain row', async ({ page }) => {
+        await load(page, { pivots: ['enrich-object'], enrichChoices: [] })
+        await openPivotSubmenu(page, 'a')
+
+        const row = flyout(page).locator('.pvt-action-item', { hasText: 'Enrich' })
+        await expect(row).not.toHaveClass(/pvt-has-submenu/)
+        await row.click()
+        // Six modules against a cap of two, asked with nothing narrowed.
+        await expect.poll(() => railMode(page)).toBe('pivot')
+        await expect(entry(page, 'enrich-object').locator('.pvt-pivot-count')).toHaveText('~6')
     })
 
     // ── the answer a click cannot show by itself ─────────────────────────────

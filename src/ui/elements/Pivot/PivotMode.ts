@@ -1,4 +1,5 @@
 import type { Node } from '../../../Node'
+import type { PivotNarrowing } from '../../../interfaces/Pivot'
 import { UIComponent } from '../../UIComponent'
 import type { UIManager } from '../../UIManager'
 import { LassoArm } from '../../lasso'
@@ -135,9 +136,9 @@ export class PivotMode extends UIComponent {
         })
     }
 
-    /** Bring one pivot's entry into view and mark it — where a badge click lands. */
-    public focus(pivotId: string): void {
-        this.panel?.focus(pivotId)
+    /** Bring one pivot's entry into view and mark it, optionally narrowed — where a badge click lands. */
+    public focus(pivotId: string, narrowing?: PivotNarrowing): void {
+        this.panel?.focus(pivotId, narrowing)
     }
 
     /** The nodes the mode is asking about: whatever is selected right now. */

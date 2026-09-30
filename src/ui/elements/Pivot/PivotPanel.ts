@@ -280,7 +280,7 @@ export class PivotPanel {
      * because the caller is usually the same gesture that entered the mode, and the tool
      * panel has not laid the entry out yet.
      */
-    public focus(pivotId: string): void {
+    public focus(pivotId: string, narrowing?: PivotNarrowing): void {
         // Being sent to one pivot outranks the filter that was hiding it — a badge that
         // opened the mode and then scrolled to nothing would be a dead end.
         if (this.query || this.reveal) {
@@ -289,6 +289,7 @@ export class PivotPanel {
             this.reveal = false
             this.rebuild()
         }
+        if (narrowing) this.entries.get(pivotId)?.narrowTo(narrowing)
         window.requestAnimationFrame(() => {
             for (const [id, entry] of this.entries) entry.element().classList.toggle('pvt-pivot-focus', id === pivotId)
             this.entries.get(pivotId)?.element().scrollIntoView({ block: 'nearest' })
@@ -748,6 +749,20 @@ class PivotEntry {
         void this.fetch()
     }
 
+    /**
+     * Take `narrowing` as this entry's question, as if the analyst had set the form to it:
+     * how a capped run from a menu choice arrives on the question it asked.
+     */
+    public narrowTo(narrowing: PivotNarrowing): void {
+        this.narrowing = { ...narrowing }
+        this.refusal = undefined
+        if (this.form) {
+            FormFactory.setValues(this.form, { ...facetDefaults(this.drawnFacets), ...this.narrowing } as FormValues)
+        }
+        if (this.started) void this.ask(true)
+        else this.paint()
+    }
+
     /** Entering the mode is the intent that starts the first call. */
     public start(): void {
         if (this.started) return
@@ -1101,7 +1116,7 @@ class PivotEntry {
 
     /**
      * Build the narrowing form from the facets the provider declared. Rebuilt only when
-     * the choices themselves move, and never while a field has focus.
+     * the choices themselves move, and never while a field is being typed in.
      *
      * Option counts are the source's running answer to what is being typed (C4), so
      * they are written into the boxes that are already there rather than waiting for a
@@ -1119,10 +1134,19 @@ class PivotEntry {
             return
         }
 
-        if (this.form?.contains(document.activeElement)) {
+        // Only a field being typed in holds the rebuild off, since that would eat keystrokes.
+        // A checkbox or a select has finished its gesture by the time `change` fired.
+        const focused = this.form?.contains(document.activeElement) ? document.activeElement : null
+        const focusedField = focused?.closest('[data-field-key]')
+        if (focused && TYPED_FIELDS.has(focusedField?.getAttribute('data-field-type') ?? '')) {
             this.formStale = true
             return
         }
+        const refocus = focusedField ? {
+            key: focusedField.getAttribute('data-field-key') ?? '',
+            value: focused instanceof HTMLInputElement ? focused.value : undefined,
+        } : undefined
+
         this.drawnFacets = facets
         this.facetSignature = signature
         this.facetShape = facetShape(facets)
@@ -1135,6 +1159,7 @@ class PivotEntry {
         FormFactory.setValues(form, { ...facetDefaults(facets), ...this.narrowing } as FormValues)
         this.form = form
         this.narrowingHost.appendChild(form)
+        if (refocus) refocusControl(form, refocus.key, refocus.value)
 
         form.addEventListener('submit', event => {
             event.preventDefault()
@@ -1360,6 +1385,24 @@ function sameIds(a: Node[], b: Node[]): boolean {
  * offers. Two summaries that agree on this are the same form, however far their counts
  * have drifted apart.
  */
+/**
+ * Put focus back on the control that had it before a rebuild: the same field, and the same
+ * option for a checkbox list. Nothing is focused if that option is gone.
+ */
+function refocusControl(form: HTMLFormElement, key: string, value: string | undefined): void {
+    const field = [...form.querySelectorAll<HTMLElement>('[data-field-key]')]
+        .find(el => el.getAttribute('data-field-key') === key)
+    if (!field) return
+    // A single control carries the key itself; a checkbox list carries it on its container.
+    const controls = field.matches('input, select, button')
+        ? [field]
+        : [...field.querySelectorAll<HTMLElement>('input, select, button')]
+    const target = value !== undefined && value !== ''
+        ? controls.find(control => control instanceof HTMLInputElement && control.value === value)
+        : controls[0]
+    target?.focus({ preventScroll: true })
+}
+
 function facetShape(facets: PivotFacet[]): string {
     return JSON.stringify(facets.map(facet => ({
         ...facet,
