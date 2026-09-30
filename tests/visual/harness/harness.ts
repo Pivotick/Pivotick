@@ -35,6 +35,7 @@ import type { UIManager } from '../../../src/ui/UIManager'
 import type { RailModeDefinition, RailTool } from '../../../src/interfaces/GraphUI'
 import type { RenderContext } from '../../../src/interfaces/AsyncContent'
 import type { GraphDataChange, RawEdge, RawNode } from '../../../src/interfaces/GraphOptions'
+import type { GraphView } from '../../../src/interfaces/Simplify'
 import type {
     PivotDefinition, PivotNarrowing, PivotResult, PivotRimBadge, PivotRunOutcome,
     PivotSaveContext, PivotSaveOutcome, PivotSavePayload, PivotSummary,
@@ -2227,6 +2228,43 @@ class Harness implements HarnessApi {
             if (group === 'open') graph.simplify.open('pvt-manual-1')
         })
     }
+
+    /**
+     * {@link fixtures.neighbourhood} as a tree hung from `value`, with a rule folding the
+     * objects of one event into a group. Records the zoom as `ready` fires, in
+     * {@link zoomAtReady}.
+     */
+    async loadNeighbourhood(overrides: PlainObject = {}): Promise<void> {
+        const byEvent = {
+            kind: 'custom', id: 'by-event', label: 'By event', minSize: 3,
+            partition: (view: GraphView) => {
+                const keys = new Map<string, string>()
+                for (const node of view.nodes) {
+                    if (view.groupOf(node) || node.getData().type !== 'object') continue
+                    const event = view.outNeighbours(node).find((out) => out.getData().type === 'event')
+                    if (event) keys.set(node.id, `event:${event.id}`)
+                }
+                return keys
+            },
+        }
+        const options = mergeOptions(mergeOptions(BASE_OPTIONS, {
+            render: {
+                nodeTypeAccessor: (node: Node) => node.getData().type as string | undefined,
+                edgeTypeAccessor: (edge: Edge) => (edge.getData() as Record<string, unknown>)?.kind,
+            },
+            layout: { type: 'tree', rootId: 'value', horizontal: true },
+            UI: { simplify: { rules: [byEvent] } },
+        }), overrides)
+        this.zoomAtReady = null
+        return this.bootData(fixtures.neighbourhood(), options, (graph) => {
+            graph.on('ready', () => {
+                this.zoomAtReady = (graph.renderer as unknown as { getZoomTransform: () => { k: number } }).getZoomTransform().k
+            })
+        })
+    }
+
+    /** The zoom as the last {@link loadNeighbourhood} graph fired `ready`. */
+    zoomAtReady: number | null = null
 
     spreadOf(ids: string[]): number {
         const nodes = ids.map((id) => this.g.getMutableNode(id)!)

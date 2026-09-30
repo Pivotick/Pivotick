@@ -1522,6 +1522,30 @@ export const fixtures = {
             notes: [],
         }
     },
+
+    /**
+     * A value and the objects it occurs in, each object in one event: 12 in `ev-1`, 2 in
+     * `ev-2`, 5 in `ev-3` and 1 in `ev-4`. Every `value → object` edge is labelled `ip-dst`,
+     * except in `ev-3`, where they alternate with `ip-src`. Unplaced, for a tree to lay out.
+     */
+    neighbourhood(): BuiltFixture {
+        const value = new Node('value', { label: 'VALUE', type: 'value' }, {}, 'value')
+        const nodes: Node[] = [value]
+        const edges: Edge[] = []
+        for (const [event, count] of [['ev-1', 12], ['ev-2', 2], ['ev-3', 5], ['ev-4', 1]] as const) {
+            const holder = new Node(event, { label: event.toUpperCase(), type: 'event' }, {}, event)
+            nodes.push(holder)
+            for (let i = 0; i < count; i++) {
+                const id = `${event}-obj-${i}`
+                const object = new Node(id, { label: id.toUpperCase(), type: 'object' }, {}, id)
+                nodes.push(object)
+                const label = event === 'ev-3' && i % 2 ? 'ip-src' : 'ip-dst'
+                edges.push(new Edge(`value-${id}`, value, object, { kind: 'occurrence', label }))
+                edges.push(new Edge(`${id}-${event}`, object, holder, { kind: 'in-event' }))
+            }
+        }
+        return { nodes, edges, notes: [] }
+    },
 }
 
 export type FixtureName = keyof typeof fixtures
