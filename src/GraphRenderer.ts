@@ -136,9 +136,11 @@ export abstract class GraphRenderer {
      * Fit-and-centre once the content has stopped resizing. Renderers that lay
      * out over several frames after the sim stops (e.g. expanded clusters)
      * override this to wait for a stable bbox; the default fits immediately.
+     * Resolves once the fit is applied.
      */
-    public fitAndCenterWhenSettled(forceScale?: number): void {
+    public fitAndCenterWhenSettled(forceScale?: number): Promise<void> {
         this.fitAndCenter(forceScale)
+        return Promise.resolve()
     }
 
     /**

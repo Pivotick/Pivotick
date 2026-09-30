@@ -297,6 +297,18 @@ export interface GraphRendererOptions {
     minZoom: number
     /** @default 10 */
     maxZoom: number
+    /**
+     * The lowest scale a fit zooms out to. Content that would need less is shown at this
+     * scale, centred on {@link fitAnchor}, and runs past the canvas edges. Unset, a fit
+     * always shows everything. An explicit scale passed to `fitAndCenter` ignores it.
+     */
+    minFitScale?: number
+    /**
+     * The node a fit held at {@link minFitScale} centres on, by id; a folded node's group
+     * stands in for it. The view stops at the content's edges, so an anchor near one sits
+     * near that side of the canvas. Unset, or not drawn, the fit centres on the content.
+     */
+    fitAnchor?: string
     /** @default true */
     dragEnabled: boolean
     /** @default true */

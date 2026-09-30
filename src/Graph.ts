@@ -260,7 +260,8 @@ export class Graph {
         await this.simulation.start()
         await this.simulation.waitForSimulationStop()
         this.renderer.nextTick()
-        this.renderer.fitAndCenterWhenSettled()
+        // Before `ready`, so a host reading or setting the view then finds the opening fit done.
+        await this.renderer.fitAndCenterWhenSettled()
         this.UIManager.callGraphReady()
         this.ready()
     }

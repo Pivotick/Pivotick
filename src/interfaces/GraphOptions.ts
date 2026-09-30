@@ -177,6 +177,7 @@ export interface RelaxedGraphData {
  * @category Main Options
  */
 export type GraphEvents = {
+    /** The first layout has settled and the opening fit is under way; a view set now stays. */
     ready: () => void
     nodeAdd: (node: Node) => void
     nodeRemove: (node: Node) => void

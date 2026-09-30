@@ -901,8 +901,8 @@ export class GraphSvgRenderer extends GraphRenderer {
         const height = bounds.height
 
         // Midpoint of content
-        const midX = bounds.x + width / 2
-        const midY = bounds.y + height / 2
+        let midX = bounds.x + width / 2
+        let midY = bounds.y + height / 2
 
         let scale
         if (forceScale) {
@@ -915,11 +915,38 @@ export class GraphSvgRenderer extends GraphRenderer {
             ) * 0.8
             // Never past 3×, nor past a lower `maxZoom` the host set.
             scale = Math.min(scale, 3, this.options.maxZoom)
+
+            const floor = this.options.minFitScale
+            if (floor !== undefined && floor > 0 && scale < floor) {
+                scale = Math.min(floor, this.options.maxZoom)
+                const anchor = this.fitAnchorPoint()
+                if (anchor) {
+                    midX = GraphSvgRenderer.centreWithin(anchor.x, bounds.x, width, fullWidth / scale)
+                    midY = GraphSvgRenderer.centreWithin(anchor.y, bounds.y, height, fullHeight / scale)
+                }
+            }
         }
 
         // The bounds and scale above are this method's own; the write itself belongs to
         // setViewport, so there is exactly one place a viewport transform is applied.
         this.setViewport({ x: midX, y: midY, scale, animate: this.options.zoomAnimation })
+    }
+
+    /** Where the `fitAnchor` node is drawn, or nothing when it is not on the canvas. */
+    private fitAnchorPoint(): Point | undefined {
+        const id = this.options.fitAnchor
+        const node = id === undefined ? undefined : this.graph.getCanvasNode(id)?.canvasRepresentative()
+        if (!node?.visible || typeof node.x !== 'number' || typeof node.y !== 'number') return undefined
+        return { x: node.x, y: node.y }
+    }
+
+    /**
+     * The centre of a view `view` wide on one axis: at `at`, but moved in so the view stays
+     * over content `extent` wide from `start`. Content narrower than the view is centred.
+     */
+    private static centreWithin(at: number, start: number, extent: number, view: number): number {
+        if (extent <= view) return start + extent / 2
+        return Math.min(Math.max(at, start + view / 2), start + extent - view / 2)
     }
 
     /**
@@ -933,13 +960,17 @@ export class GraphSvgRenderer extends GraphRenderer {
      * until it holds steady for a few frames (hard-capped so it can never hang),
      * then fit. This is cause-agnostic: a static layout is already steady and
      * resolves in a few frames; anything still moving is waited out.
+     *
+     * Resolves once the fit is applied, or held for a canvas with no size yet.
      */
-    public fitAndCenterWhenSettled(forceScale?: number): void {
+    public fitAndCenterWhenSettled(forceScale?: number): Promise<void> {
         const zoomLayerEl = this.zoomGroup.node()
         if (!zoomLayerEl) {
             this.fitAndCenter(forceScale)
-            return
+            return Promise.resolve()
         }
+        let done!: () => void
+        const fitted = new Promise<void>(resolve => { done = resolve })
 
         const maxFrames = 180    // ~3s @60fps: a hard cap, not the usual path
         const stableTarget = 3   // consecutive steady frames before we commit
@@ -960,11 +991,13 @@ export class GraphSvgRenderer extends GraphRenderer {
             frame++
             if (stableFrames >= stableTarget || frame >= maxFrames) {
                 this.fitAndCenter(forceScale)
+                done()
                 return
             }
             requestAnimationFrame(step)
         }
         requestAnimationFrame(step)
+        return fitted
     }
 
     public focusElement(element: Node | Edge | Note): void {
