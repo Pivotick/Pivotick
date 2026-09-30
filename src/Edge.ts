@@ -21,6 +21,27 @@ export interface SimulationEdgeDTO {
     directed: boolean | null
 }
 
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && Object.getPrototypeOf(value) === Object.prototype
+}
+
+/** The entries every object has, with the same value; nested plain objects keep their shared part. */
+function sharedEntries<T>(objects: T[]): T {
+    const [first, ...rest] = objects
+    const shared: Record<string, unknown> = {}
+    if (!isPlainObject(first)) return shared as T
+    for (const [key, value] of Object.entries(first)) {
+        const others = rest.map(other => isPlainObject(other) ? other[key] : undefined)
+        if (isPlainObject(value) && others.every(isPlainObject)) {
+            const nested = sharedEntries<unknown>([value, ...others]) as Record<string, unknown>
+            if (Object.keys(nested).length > 0) shared[key] = nested
+        } else if (value !== undefined && others.every(other => other === value)) {
+            shared[key] = value
+        }
+    }
+    return shared as T
+}
+
 /**
  * Represents an edge (connection) between two nodes in a graph.
  */
@@ -335,19 +356,27 @@ export class Edge {
      * @private
      * Point a stand-in at the real edges it now speaks for, redrawing it if they changed.
      * Standing for one edge it takes that edge's data and style, so it looks like it (the
-     * stand-in class makes it dotted); standing for several it is plain.
+     * stand-in class makes it dotted); standing for several it keeps what they all share,
+     * a common label or colour, and drops the rest.
      */
     standFor(members: Edge[]): void {
         const only = members.length === 1 ? members[0] : undefined
-        const previous = this.representedEdges ?? []
-        const sameMembers = previous.length === members.length && previous.every((edge, i) => edge === members[i])
         this.representedEdges = members
-        const data = only ? only.data : (sameMembers ? this.data : {})
-        const style = only ? only.style : (sameMembers ? this.style : {})
-        if (sameMembers && data === this.data && style === this.style) return
+        const data = only ? only.data : sharedEntries(members.map(edge => edge.data))
+        const style = only ? only.style : sharedEntries(members.map(edge => edge.style))
+        if (Edge.sameEntries(data, this.data) && Edge.sameEntries(style, this.style)) return
         this.data = data
         this.style = style
         this.markDirty()
+    }
+
+    /** The same object, or two plain objects with the same entries all the way down. */
+    private static sameEntries(a: unknown, b: unknown): boolean {
+        if (a === b) return true
+        if (!isPlainObject(a) || !isPlainObject(b)) return false
+        const keys = Object.keys(a)
+        return keys.length === Object.keys(b).length
+            && keys.every(key => key in b && Edge.sameEntries(a[key], b[key]))
     }
 
     // --- Provenance --------------------------------------------------------------------
