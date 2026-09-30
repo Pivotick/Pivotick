@@ -435,6 +435,72 @@ test.describe('the minimap on custom-drawn nodes', () => {
 })
 
 /**
+ * Nodes drawn as an outline: a pale fill with the hue in a saturated stroke. The minimap
+ * used to paint the fill alone, which on a light theme is a dot nobody can see.
+ */
+test.describe('the minimap on outlined nodes', () => {
+    const WASH = '#F2F6E8'
+    const CORE = '#6E9600'
+
+    const loadStyled = (page: Page, style: object) =>
+        harness(page, 'loadWithMinimap', 'basic', {}, { render: { defaultNodeStyle: style } })
+
+    test.beforeEach(async ({ page }) => {
+        await gotoHarness(page)
+    })
+
+    test('a stroked node\'s dot carries its stroke', async ({ page }) => {
+        await loadStyled(page, { color: WASH, strokeColor: CORE, strokeWidth: 1.5 })
+        expect(await harness(page, 'minimapDot', 'a')).toEqual({ color: 'rgb(242, 246, 232)', stroke: 'rgb(110, 150, 0)' })
+    })
+
+    test('a stroke of no width is no stroke', async ({ page }) => {
+        await loadStyled(page, { color: WASH, strokeColor: CORE, strokeWidth: 0 })
+        expect(await harness(page, 'minimapDot', 'a')).toEqual({ color: 'rgb(242, 246, 232)', stroke: null })
+    })
+
+    test('an outline with a transparent fill still counts, and keeps its stroke', async ({ page }) => {
+        await loadStyled(page, { color: 'transparent', strokeColor: CORE, strokeWidth: 1.5 })
+        expect(await harness(page, 'minimapDot', 'a')).toEqual({ color: null, stroke: 'rgb(110, 150, 0)' })
+    })
+
+    test('the stroke\'s hue is what the minimap paints', async ({ page }) => {
+        await loadStyled(page, { color: WASH, strokeColor: CORE, strokeWidth: 1.5 })
+        await expect.poll(async () => await greenPixels(page)).toBeGreaterThan(0)
+    })
+})
+
+/**
+ * Opaque minimap pixels whose green clearly leads red and blue: the stroke's olive hue.
+ * Read by hue rather than exact colour, since a 1px ring on a 4px dot is mostly
+ * anti-aliased. The pale wash under it (242, 246, 232) does not count.
+ */
+async function greenPixels(page: Page): Promise<number> {
+    return page.evaluate(() => {
+        const surface = document.querySelector('.pvt-minimap-surface') as HTMLCanvasElement
+        const { data } = surface.getContext('2d')!.getImageData(0, 0, surface.width, surface.height)
+        let pixels = 0
+        for (let index = 0; index < data.length; index += 4) {
+            const [r, g, b, a] = data.slice(index, index + 4)
+            if (a >= 150 && g > r + 15 && g > b + 15) pixels++
+        }
+        return pixels
+    })
+}
+
+test.describe('the minimap stroke leaves filled nodes alone', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoHarness(page)
+    })
+
+    test('a node that set no stroke width gets no ring', async ({ page }) => {
+        // The default width is a CSS `var(...)`, which is no number.
+        await harness(page, 'loadWithMinimap', 'basic')
+        expect((await harness(page, 'minimapDot', 'a') as { stroke: string | null }).stroke).toBeNull()
+    })
+})
+
+/**
  * The minimap `full` mode mounts for you. Same plugin, installed by the mode rather than
  * by the consumer — so what is being tested here is the *gating*: which modes get one,
  * who wins when both the mode and the consumer ask, and the `collapsed: 'auto'` that

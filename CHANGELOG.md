@@ -56,6 +56,9 @@
 - Dragging a new edge off a node card no longer selects the card's text.
 - Undoing a pivot run that landed without review (a one-click pivot, or `autoIngest`) no
   longer opens a Review pane holding its rows.
+- The minimap draws a node's stroke as a ring around its dot, so a node drawn as an outline
+  (pale fill, coloured stroke) shows its colour instead of a near-white dot that vanishes on
+  the light theme.
 
 ### Simplify: fold nodes that play the same role
 

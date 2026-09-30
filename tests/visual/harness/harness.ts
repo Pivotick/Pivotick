@@ -1673,6 +1673,8 @@ export interface HarnessApi {
     minimapViewport(): GraphBounds | null
     /** How many times the minimap has rasterised its content bitmap. */
     minimapRebuilds(): number
+    /** The fill and stroke the minimap resolves for one node's dot, `null` for none. */
+    minimapDot(id: string): { color: string | null, stroke: string | null } | null
     /** Centre of the main view in graph coordinates — moves when the minimap drives it. */
     viewCenter(): { x: number, y: number } | null
     /**
@@ -3796,6 +3798,17 @@ class Harness implements HarnessApi {
 
     minimapRebuilds(): number {
         return this.minimapElement()?.getRebuildCount() ?? -1
+    }
+
+    minimapDot(id: string): { color: string | null, stroke: string | null } | null {
+        const map = this.minimapElement()
+        const node = this.g.getMutableNode(id)
+        if (!map || !node) return null
+        // `dotFor` is private; this reads what the minimap would paint for one node.
+        const { color, stroke } = (map as unknown as {
+            dotFor(node: Node): { color: string | null, stroke: string | null }
+        }).dotFor(node)
+        return { color, stroke }
     }
 
     viewCenter(): { x: number, y: number } | null {

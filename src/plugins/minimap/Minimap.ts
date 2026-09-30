@@ -59,6 +59,13 @@ interface Projection {
     offsetY: number
 }
 
+/** How one node is drawn in the minimap; a `null` colour paints nothing. */
+interface MinimapDot {
+    color: string | null
+    stroke: string | null
+    size: number
+}
+
 /**
  * The minimap: a cached overview of the whole graph with a rectangle showing what is
  * currently on screen. Click to recentre, drag to pan, and fold it away with the small
@@ -470,6 +477,8 @@ export class Minimap extends UIComponent {
     /**
      * A dot per node, sized to what the node covers on the canvas. A node with no colour
      * the minimap can paint (see {@link dotFor}) still gets a dot, in the minimap's own ink.
+     * A stroked node gets a ring in its stroke colour over the fill, as on the canvas: an
+     * outlined node's hue is in its stroke, and its pale fill alone vanishes on a light theme.
      */
     private drawNodes(context: CanvasRenderingContext2D, nodes: Node[], projection: Projection) {
         const ink = this.ink('--pvt-minimap-ink', 'rgba(90,120,190,0.75)')
@@ -484,6 +493,13 @@ export class Minimap extends UIComponent {
             context.fillStyle = dot.color ?? ink
             context.arc(this.px(node.x, projection), this.py(node.y, projection), radius, 0, Math.PI * 2)
             context.fill()
+            if (dot.stroke) {
+                // Not the canvas's own width: on a dot of at most 4px it would round to
+                // nothing or cover the fill.
+                context.strokeStyle = dot.stroke
+                context.lineWidth = Math.max(1, this.dpr)
+                context.stroke()
+            }
         }
     }
 
@@ -491,25 +507,30 @@ export class Minimap extends UIComponent {
      * The colour and size of a node's dot, taken from the smallest drawing Pivotick paints
      * itself: the floor style, or failing that the first tier that is a shape. An HTML card
      * (`shape: 'none'`) is skipped, its colour lives in the consumer's markup. `color` is
-     * `null` when no drawing has a colour that shows.
+     * `null` when no drawing has a colour that shows. `stroke` comes from the same drawing,
+     * and a drawing with only a stroke that shows (an outline) counts as a match.
      *
      * Each drawing is read by index, so this never moves the zoom's own tier pick, and it
      * stops at the first match: one style resolution per node for most graphs, called once
      * per rebuild, never per frame.
      */
-    private dotFor(node: Node): { color: string | null, size: number } {
+    private dotFor(node: Node): MinimapDot {
         const renderer = this.uiManager.graph.renderer
         const floor = renderer?.getNodeStyle(node, -1)
-        if (!floor) return { color: null, size: 10 }
+        if (!floor) return { color: null, stroke: null, size: 10 }
 
         const tierCount = floor.tiers?.length ?? 0
         for (let tier = -1; tier < tierCount; tier++) {
             const style = tier === -1 ? floor : renderer.getNodeStyle(node, tier)
             if (style.shape === 'none') continue
             const color = this.paintable(style.color)
-            if (color) return { color, size: typeof style.size === 'number' ? style.size : 10 }
+            // The resolved style can hand the width back as a string ('1.5'). The default, a
+            // `var(...)`, reads as no number, so a node that never set one gets no ring.
+            const strokeWidth = Number(style.strokeWidth)
+            const stroke = strokeWidth > 0 ? this.paintable(style.strokeColor) : null
+            if (color || stroke) return { color, stroke, size: typeof style.size === 'number' ? style.size : 10 }
         }
-        return { color: null, size: typeof floor.size === 'number' ? floor.size : 10 }
+        return { color: null, stroke: null, size: typeof floor.size === 'number' ? floor.size : 10 }
     }
 
     /**
